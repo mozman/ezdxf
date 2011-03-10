@@ -6,9 +6,10 @@ Abstract
 --------
 
 A Python package to create and modify DXF drawings, independent from the DXF
-version. Important: ezdxf is not a conversion tool, so if you open a DXF R12
-drawing, you can not save the drawing as R2000 DXF file, but you can open or
-create new DXF drawings for every supported DXF version.
+version. Important: ezdxf is not a converting tool, so if you open a DXF R12
+drawing, you can not save the drawing as DXF R2000 file, but you can open or
+create new DXF drawings for every supported DXF version. If you need a DXF
+converter search for the free program *DWG TrueView* from Autodesk.
 You can open/save every DXF file without loosing any content, but not every
 content is supported by this package. Unknown tags in the DXF files were simple
 ignored but preserved for saving. With this behavior it should be possible to
@@ -37,57 +38,10 @@ a simple example::
     drawing.add(dxf.text('Test', insert=(0, 0.2), layer='TEXTLAYER')
     drawing.save()
 
-supported DXF entities
-----------------------
-
- * ARC
- * ATTDEF
- * ATTRIB
- * BLOCK
- * CIRCLE
- * 3DFACE
- * INSERT
- * LINE
- * POINT
- * POLYLINE (special Polyface and Polymesh objects are available)
- * SHAPE (not tested)
- * SOLID
- * TRACE
- * TEXT
- * VERTEX (only for internal use, see Polyline, Polyface and Polymesh objects)
- * MTEXT
- * ELLIPSE
- * SPLINE
- * LWPOLYLINE
-
-read/write AutoCAD ctb-files
-----------------------------
-
-The module ``acadctb`` provides the ability to read and write AutoCAD ctb-files.
-With ctb-files you can assign a new color or lineweight to a dxf-color-index for
-plotting or printing, but this has to be supported by the used application.
-
-a simple example::
-
-    from ezdxf import acadctb
-    ctb = acadctb.load('test.ctb')
-    style1 = ctb.get_style(1) # dxf color index (1 .. 255)
-    style1.set_color(23, 177, 68) # set rgb values (0..255)
-    style1.set_lineweight(0.7)
-    ctb.save('new.ctb')
-
 Installation
 ============
 
-with easy_install::
-
-    easy_install ezdxf
-
-with pip::
-
-    pip install dxfwrite
-
-or from source::
+from source::
 
     python setup.py install
 
