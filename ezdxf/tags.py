@@ -37,7 +37,7 @@ class TagIterator:
         def next_tag():
             code = int(self.readline())
             value = self.readline().rstrip('\n')
-            self.lasttag = DXFTag(code, value)
+            self.lasttag = tagcast( (code, value) )
             return self.lasttag
 
         if self.undo:
@@ -64,21 +64,61 @@ class StringIterator(TagIterator):
 
 DXFInfo = namedtuple('DXFInfo', 'release encoding')
 def dxfinfo(stream):
-    def get_release(dxfversion):
-        try:
-            return acadrelease[dxfversion]
-        except KeyError:
-            return 'R12'
-
     release = 'R12'
     encoding = 'cp1252'
     tag = (999999, '')
     tagreader = TagIterator(stream)
     while tag != (0, 'ENDSEC'):
         tag = next(tagreader)
-        if tag == (9, '$DWGCODEPAGE'):
+        if tag.code != 9:
+            continue
+        if tag.value == '$DWGCODEPAGE':
             encoding = toencoding(next(tagreader).value)
-        elif tag == (9, '$ACADVER'):
-            release = get_release(next(tagreader).value)
+        elif tag.value == '$ACADVER':
+            release = acadrelease.get(next(tagreader).value, 'R12')
 
     return DXFInfo(release, encoding)
+
+class TagCaster:
+    def __init__(self):
+        self._cast = self._build()
+
+    def _build(self):
+        table = {}
+        for caster, codes in TYPES:
+            for code in codes:
+                table[code] = caster
+        return table
+
+    def cast(self, tag):
+        typecaster = self._cast.get(tag[0], str)
+        return DXFTag(tag[0], typecaster(tag[1]))
+
+TYPES = [
+    (str, range(0, 10)),
+    (float, range(10, 60)),
+    (int, range(60, 100)),
+    (str, range(100, 106)),
+    (float, range(110, 150)),
+    (int, range(170, 180)),
+    (float, range(210, 240)),
+    (int, range(270, 290)),
+    (int, range(290, 300)), # bool 1=True 0=False
+    (str, range(300, 370)),
+    (int, range(370, 390)),
+    (str, range(390, 400)),
+    (int, range(400, 410)),
+    (str, range(410, 420)),
+    (int, range(420, 430)),
+    (str, range(430, 440)),
+    (int, range(440, 460)),
+    (float, range(460, 470)),
+    (str, range(470, 480)),
+    (str, range(480, 482)),
+    (str, range(999, 1010)),
+    (float, range(1010, 1060)),
+    (int, range(1060, 1072)),
+]
+
+_TagCaster = TagCaster()
+tagcast = _TagCaster.cast
