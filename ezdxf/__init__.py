@@ -8,3 +8,6 @@
 
 version = (0, 1, 0)
 VERSION = "%d.%d.%d"  % version
+
+from .options import options
+# example: ezdxf.options['templatedir'] = 'c:\templates'
