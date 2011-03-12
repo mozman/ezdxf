@@ -3,19 +3,25 @@
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: test header section
 # Created: 12.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 import sys
 import unittest
 
+from ezdxf.dxfengine import dxfengine
+
 from ezdxf.tags import text2tags
 from ezdxf.header import HeaderSection
+
+class DrawingProxy:
+    dxfengine = dxfengine('AC1009')
+
 
 class TestHeaderSection(unittest.TestCase):
     def setUp(self):
         tags = text2tags(TESTHEADER)
-        self.header = HeaderSection(tags)
+        self.header = HeaderSection(tags, DrawingProxy())
 
     def test_get_acadver(self):
         result = self.header['$ACADVER']
