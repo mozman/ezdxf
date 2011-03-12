@@ -18,8 +18,8 @@ class TestDrawing(unittest.TestCase):
     def setUp(self):
         self.dwg = Drawing(StringIterator(TEST_HEADER))
 
-    def test_default_dxfversion(self):
-        self.assertEqual('AC1009', self.dwg.dxfversion)
+    def test_dxfversion(self):
+        self.assertEqual('AC1018', self.dwg.dxfversion)
 
     def test_copy_file(self):
         fp = StringIO(TESTCOPY)

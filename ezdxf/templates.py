@@ -8,6 +8,8 @@
 
 import os
 
+from .tags import dxfinfo
+
 class TemplateFinder:
     def __init__(self, template_dir=None):
         self._template_dir = self._get_template_dir(template_dir)
@@ -31,3 +33,8 @@ class TemplateFinder:
 
     def filename(self, dxfversion):
         return "%s.dxf" % dxfversion
+
+    def getstream(self, dxfversion):
+        filename = self.filepath(dxfversion)
+        return open(self.filepath(dxfversion), encoding='cp1252')
+

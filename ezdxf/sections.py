@@ -7,7 +7,9 @@
 # License: GPLv3
 
 from collections import OrderedDict
-from .tags import TAG_STRING_FORMAT
+from .tags import TAG_STRING_FORMAT, DXFTag
+
+from .header import HeaderSection
 
 class Sections:
     def __init__(self, drawing, tagreader):
@@ -46,7 +48,6 @@ class Sections:
             section.write(stream)
         write_eof()
 
-
 def iter_sections(tagreader):
     while True:
         tag = next(tagreader)
@@ -66,12 +67,14 @@ class DefaultSection:
     @property
     def name(self):
         return self.tags[1].value.lower()
+
     def write(self, stream):
         for tag in self.tags:
             stream.write(TAG_STRING_FORMAT % tag)
 
 SECTIONMAP = {
-
+    'HEADER': HeaderSection,
 }
+
 def get_section_class(name):
     return SECTIONMAP.get(name, DefaultSection)

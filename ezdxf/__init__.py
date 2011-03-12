@@ -18,12 +18,12 @@ def read(stream):
     return Drawing.read(stream)
 
 def readfile(filename):
+    def get_encoding():
+        with open(filename) as fp:
+            info = dxfinfo(fp)
+        return info.encoding
+
     from .drawing import Drawing
-    enc = _get_encoding(filename)
-    with open(filename, encoding=enc) as fp:
+    with open(filename, encoding=get_encoding()) as fp:
         return Drawing.read(fp)
 
-def _get_encoding(filename):
-    with open(filename) as fp:
-        info = dxfinfo(fp)
-    return info.encoding
