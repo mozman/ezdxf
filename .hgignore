@@ -2,6 +2,7 @@ syntax: glob
 build/*
 dist/*
 docs/_build/*
+bigtestfiles/*
 .coverage
 *.err
 *.orig

@@ -28,3 +28,9 @@ def toencoding(dxfcodepage):
         if dxfcodepage.endswith(codepage):
             return encoding
     return 'cp1252'
+
+def tocodepage(encoding):
+    for codepage, enc in codepages.items():
+        if enc == encoding:
+            return 'ANSI_'+codepage
+    return 'ANSI_1252'

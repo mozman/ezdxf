@@ -26,24 +26,22 @@ class TagIterator:
         return self
 
     def __next__(self):
-        def stop_iteration():
-            return self.lasttag == (0, 'EOF')
-
         def undo_tag():
             self.undo = False
             self.lineno += 2
             return self.lasttag
 
         def next_tag():
-            code = int(self.readline())
-            value = self.readline().rstrip('\n')
+            try:
+                code = int(self.readline())
+                value = self.readline().rstrip('\n')
+            except:
+                raise StopIteration()
             self.lasttag = tagcast( (code, value) )
             return self.lasttag
 
         if self.undo:
             return undo_tag()
-        elif stop_iteration():
-            raise StopIteration()
         else:
             return next_tag()
 
@@ -62,22 +60,44 @@ class StringIterator(TagIterator):
     def __init__(self, dxfcontent):
         super(StringIterator, self).__init__(StringIO(dxfcontent))
 
-DXFInfo = namedtuple('DXFInfo', 'release encoding')
+def text2tags(text):
+    return list(StringIterator(text))
+
+class DXFInfo:
+    def __init__(self):
+        self.release = 'R12'
+        self.version = 'AC1009'
+        self.encoding = 'cp1252'
+        self.handseed = 0
+
+    def DWGCODEPAGE(self, value):
+        self.encoding = toencoding(value)
+
+    def ACADVER(self, value):
+        self.version = value
+        self.release = acadrelease.get(value, 'R12')
+
+    def HANDSEED(self, value):
+        self.handseed = int(value, 16)
+
+
 def dxfinfo(stream):
-    release = 'R12'
-    encoding = 'cp1252'
+    info = DXFInfo()
     tag = (999999, '')
     tagreader = TagIterator(stream)
     while tag != (0, 'ENDSEC'):
         tag = next(tagreader)
         if tag.code != 9:
             continue
-        if tag.value == '$DWGCODEPAGE':
-            encoding = toencoding(next(tagreader).value)
-        elif tag.value == '$ACADVER':
-            release = acadrelease.get(next(tagreader).value, 'R12')
+        name = tag.value[1:]
+        method = getattr(info, name, None)
+        if method is not None:
+            method(next(tagreader).value)
+    return info
 
-    return DXFInfo(release, encoding)
+TAG_STRING_FORMAT = '%3d\n%s\n'
+def strtag(tag):
+    return TAG_STRING_FORMAT % tag
 
 class TagCaster:
     def __init__(self):
