@@ -11,7 +11,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.tags import StringIterator
-from ezdxf.tags import dxfinfo
+from ezdxf.tags import dxfinfo, strtag
 
 TEST_TAGREADER = """  0
 SECTION
@@ -29,6 +29,23 @@ ANSI_1252
 ENDSEC
   0
 EOF
+"""
+
+TEST_NO_EOF = """  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1018
+  9
+$DWGCODEPAGE
+  3
+ANSI_1252
+  0
+ENDSEC
+
 """
 
 class TestTagReader(unittest.TestCase):
@@ -81,6 +98,20 @@ class TestTagReader(unittest.TestCase):
         self.assertEqual((0, 'EOF'), tag)
         with self.assertRaises(StopIteration):
             self.reader.__next__()
+
+    def test_no_eof(self):
+        tags = list(StringIterator(TEST_NO_EOF))
+        self.assertEqual(7, len(tags))
+        self.assertEqual((0, 'ENDSEC'), tags[-1])
+
+    def test_strtag_int(self):
+        self.assertEqual('  1\n1\n', strtag( (1,1) ))
+
+    def test_strtag_float(self):
+        self.assertEqual(' 10\n3.1415\n', strtag( (10, 3.1415) ))
+
+    def test_strtag_str(self):
+        self.assertEqual('  0\nSECTION\n', strtag( (0, 'SECTION') ))
 
 class TestGetDXFInfo(unittest.TestCase):
     def test_dxfinfo(self):

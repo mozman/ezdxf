@@ -13,11 +13,11 @@ class TemplateFinder:
         self._template_dir = self._get_template_dir(template_dir)
 
     @property
-    def template_dir(self):
+    def templatedir(self):
         return self._template_dir
 
-    @template_dir.setter
-    def template_dir(self, template_dir):
+    @templatedir.setter
+    def templatedir(self, template_dir):
         self._template_dir = self._get_template_dir(template_dir)
 
     def _get_template_dir(self, template_dir):
@@ -26,8 +26,8 @@ class TemplateFinder:
             template_dir = os.path.join(mydir, 'templates')
         return template_dir
 
-    def template_filepath(self, dxfversion):
-        return os.path.join(self._template_dir, self.template_filename(dxfversion))
+    def filepath(self, dxfversion):
+        return os.path.join(self._template_dir, self.filename(dxfversion))
 
-    def template_filename(self, dxfversion):
+    def filename(self, dxfversion):
         return "%s.dxf" % dxfversion

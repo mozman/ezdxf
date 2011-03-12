@@ -12,13 +12,13 @@ class EntityDB:
     def __init__(self):
         self._database = {}
 
-    def __del__(self, key):
+    def __delitem__(self, key):
         del self._database[key]
 
     def __getitem__(self, handle):
         return self.aquire(handle)
 
-    def __setitem__(self, handle, value):
+    def __setitem__(self, handle, entity):
         self.commit(handle, entity)
 
     def aquire(self, handle):
@@ -28,3 +28,6 @@ class EntityDB:
     def commit(self, handle, entity):
         assert isinstance(handle, int)
         self._database[handle] = entity
+
+    def remove(self, key):
+        del self._database[key]

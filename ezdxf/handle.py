@@ -11,14 +11,17 @@ class HandleGenerator:
         self._handle = startvalue
 
     @property
-    def current_max_handle(self):
+    def seed(self):
         return self._handle
 
     @property
-    def next_handle(self):
+    def next(self):
         nexthandle = self._handle
         self._handle += 1
         return nexthandle
 
     def reset(self, startvalue):
         self._handle = startvalue
+
+def hexstr(number):
+    return "%X" % number
