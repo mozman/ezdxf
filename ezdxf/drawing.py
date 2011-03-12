@@ -21,12 +21,13 @@ class Drawing:
         self._dxfversion = 'AC1009' # readonly
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
-        self._handlegenerator = HandleGenerator()
         self.entitydb = EntityDB()
         self.sections = Sections(self, tagreader)
         self._dxfversion = self.header['$ACADVER']
         self.encoding = self._get_encoding()
-        self.dxfengine = dxfengine(self._dxfversion)
+        nexthandle = int(self.header.get('$HANDSEED', '500'), 16)
+        self.handlegenerator = HandleGenerator(startvalue=nexthandle)
+        self.dxfengine = dxfengine(self._dxfversion, self)
 
     @property
     def header(self):

@@ -12,15 +12,19 @@ from .ac1018 import AC1018Engine
 from .ac1021 import AC1021Engine
 from .ac1024 import AC1024Engine
 
-defaultengine = AC1009Engine()
+defaultengine = AC1009Engine
 
 engines = {
     'AC1009': defaultengine,
-    'AC1015': AC1015Engine(),
-    'AC1018': AC1018Engine(),
-    'AC1021': AC1021Engine(),
-    'AC1024': AC1024Engine(),
+    'AC1015': AC1015Engine,
+    'AC1018': AC1018Engine,
+    'AC1021': AC1021Engine,
+    'AC1024': AC1024Engine,
 }
 
-def dxfengine(dxfversion):
-    return engines.get(dxfversion, defaultengine)
+def dxfengine(dxfversion, drawing=None):
+    engineclass = engines.get(dxfversion, defaultengine)
+    engine = engineclass()
+    engine.drawing = drawing
+    return engine
+

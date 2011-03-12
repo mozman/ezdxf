@@ -6,14 +6,8 @@
 # Copyright (C), Manfred Moitzi
 # License: GPLv3
 
-from .hdrvars import SingleValue, Point2D, Point3D
-
+from .ac1024hdrvars import VARMAP
 from .ac1021 import AC1021Engine
 
 class AC1024Engine(AC1021Engine):
-    def __init__(self):
-        super(AC1024Engine, self).__init__()
-        self.HEADERVARS.update(AC1024VARMAP)
-
-AC1024VARMAP = {
-}
+    HEADERVARS = dict(VARMAP)
