@@ -25,5 +25,10 @@ def readfile(filename):
 
     from .drawing import Drawing
     with open(filename, encoding=get_encoding()) as fp:
-        return Drawing.read(fp)
+        dwg = Drawing.read(fp)
+    dwg.filename = filename
+    return dwg
 
+def new(dxfversion='AC1009'):
+    from .drawing import Drawing
+    return Drawing.new(dxfversion)
