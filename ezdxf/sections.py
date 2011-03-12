@@ -3,7 +3,7 @@
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: sections module
 # Created: 12.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 from collections import OrderedDict
@@ -37,7 +37,7 @@ class Sections:
 
         for section in iter_sections(self.tagreader):
             section_class = get_section_class(name(section))
-            new_section = section_class(section)
+            new_section = section_class(section, self._drawing)
             self._sections[new_section.name] = new_section
 
     def write(self, stream):
@@ -61,8 +61,13 @@ def iter_sections(tagreader):
         yield tags
 
 class DefaultSection:
-    def __init__(self, tags):
+    def __init__(self, tags, drawing):
         self.tags = tags
+        self.drawing = drawing
+
+    @property
+    def dxfengine(self):
+        return self.drawing.dxfengine
 
     @property
     def name(self):

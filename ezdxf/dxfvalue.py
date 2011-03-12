@@ -3,7 +3,7 @@
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: dxfvalue
 # Created: 12.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 from .tags import TAG_STRING_FORMAT

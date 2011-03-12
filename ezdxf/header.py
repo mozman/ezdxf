@@ -3,17 +3,21 @@
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose:
 # Created: 12.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 from collections import OrderedDict
 from .dxfvalue import DXFValue
-from .hdrvars import getvartags
 
 class HeaderSection:
     name = 'header'
-    def __init__(self, tags):
+    def __init__(self, tags, drawing):
         self.hdrvars = self.build_dict(tags)
+        self.drawing = drawing
+
+    @property
+    def dxfengine(self):
+        return self.drawing.dxfengine
 
     def build_dict(self, tags):
         def itervars():
@@ -68,4 +72,5 @@ class HeaderSection:
             return default
 
     def __setitem__(self, key, value):
-        self.hdrvars[key] = DXFValue(getvartags(key, value))
+        tags = self.dxfengine.new_header_var(key, value)
+        self.hdrvars[key] = DXFValue(tags)

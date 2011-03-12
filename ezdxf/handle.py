@@ -3,7 +3,7 @@
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: handle module
 # Created: 11.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 class HandleGenerator:
