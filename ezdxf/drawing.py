@@ -12,7 +12,7 @@ from .tags import TagIterator, dxfinfo
 from .dxfengine import dxfengine
 from .templates import TemplateFinder
 from .options import options
-from .codepage import tocodepage
+from .codepage import tocodepage, toencoding
 from .sections import Sections
 
 class Drawing:
@@ -24,27 +24,30 @@ class Drawing:
         self._handlegenerator = HandleGenerator()
         self.entitydb = EntityDB()
         self.sections = Sections(self, tagreader)
-        self._dxfversion = self._get_dxfversion()
+        self._dxfversion = self.header['$ACADVER']
         self.encoding = self._get_encoding()
         self.dxfengine = dxfengine(self._dxfversion)
+
+    @property
+    def header(self):
+        return self.sections.header
 
     @property
     def dxfversion(self):
         return self._dxfversion
 
-    def _get_dxfversion(self):
-        return 'AC1009' # self.sections.header['$ACADVER']
-
     def _get_encoding(self):
-        return 'cp1252' # toencoding(self.sections.header['$DWGCODEPAGE'])
+        codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
+        return toencoding(codepage)
 
     @staticmethod
-    def new(self, dxfversion='AC1009', encoding='cp1252'):
-        if template is None:
-            finder = TemplateFinder(options['templatedir'])
-            template = finder.filepath(dxfversion)
-        with open(template, encoding=encoding):
-            return self.open(fp)
+    def new(dxfversion='AC1009'):
+        finder = TemplateFinder(options['templatedir'])
+        try:
+            stream = finder.getstream(dxfversion)
+            return Drawing.read(stream)
+        finally:
+            stream.close()
 
     @staticmethod
     def read(stream):
