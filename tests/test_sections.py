@@ -18,30 +18,27 @@ class DrawingMock:
 class TestSections(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingMock()
-        self.sections = Sections(self.dwg, StringIterator(TEST_HEADER))
+        self.sections = Sections(StringIterator(TEST_HEADER), self.dwg)
 
     def test_constructor(self):
-        self.assertTrue('header' in self.sections)
-
-    def test_getitem(self):
-        result = self.sections['header']
-        self.assertIsNotNone(result)
+        header = self.sections.header
+        self.assertIsNotNone(header)
 
     def test_getattr(self):
         result = self.sections.header
         self.assertIsNotNone(result)
 
     def test_error_getitem(self):
-        with self.assertRaises(KeyError):
-            self.sections['test']
+        with self.assertRaises(AttributeError):
+            self.sections.test
 
     def test_error_getattr(self):
         with self.assertRaises(AttributeError):
             self.sections.test
 
     def test_ignore_struct_error(self):
-        sections = Sections(self.dwg, StringIterator(TEST_NO_EOF))
-        self.assertTrue('header' in self.sections)
+        sections = Sections(StringIterator(TEST_NO_EOF), self.dwg)
+        self.assertIsNotNone(self.sections.header)
 
 TEST_HEADER = """  0
 SECTION

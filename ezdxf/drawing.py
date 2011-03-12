@@ -22,7 +22,7 @@ class Drawing:
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
         self.entitydb = EntityDB()
-        self.sections = Sections(self, tagreader)
+        self.sections = Sections(tagreader, self)
         self._dxfversion = self.header['$ACADVER']
         self.encoding = self._get_encoding()
         nexthandle = int(self.header.get('$HANDSEED', '500'), 16)

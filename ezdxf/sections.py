@@ -9,36 +9,30 @@
 from collections import OrderedDict
 from .tags import TAG_STRING_FORMAT, DXFTag
 
+from .defaultchunk import DefaultChunk, iterchunks
 from .header import HeaderSection
+from .tables import TablesSection
 
 class Sections:
-    def __init__(self, drawing, tagreader):
-        self._drawing = drawing
-        self.tagreader = tagreader
+    def __init__(self, tagreader, drawing):
+        self.drawing = drawing
         self._sections = OrderedDict()
-        self._setup_sections()
-        del self.tagreader
+        self._setup_sections(tagreader)
 
-    def __getitem__(self, key):
-        return self._sections[key]
+    def _setup_sections(self, tagreader):
+        def name(section):
+            return section[1].value
 
-    def __contains__(self, key):
-        return key in self._sections
+        for section in iterchunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
+            section_class = get_section_class(name(section))
+            new_section = section_class(section, self.drawing)
+            self._sections[new_section.name] = new_section
 
     def __getattr__(self, key):
         try:
             return self._sections[key]
         except KeyError:
             raise AttributeError(key)
-
-    def _setup_sections(self):
-        def name(section):
-            return section[1].value
-
-        for section in iter_sections(self.tagreader):
-            section_class = get_section_class(name(section))
-            new_section = section_class(section, self._drawing)
-            self._sections[new_section.name] = new_section
 
     def write(self, stream):
         def write_eof():
@@ -48,38 +42,10 @@ class Sections:
             section.write(stream)
         write_eof()
 
-def iter_sections(tagreader):
-    while True:
-        tag = next(tagreader)
-        if tag == (0, 'EOF'):
-            return
-        assert tag == (0, 'SECTION')
-        tags = [tag]
-        while tag != (0, 'ENDSEC'):
-            tag = next(tagreader)
-            tags.append(tag)
-        yield tags
-
-class DefaultSection:
-    def __init__(self, tags, drawing):
-        self.tags = tags
-        self.drawing = drawing
-
-    @property
-    def dxfengine(self):
-        return self.drawing.dxfengine
-
-    @property
-    def name(self):
-        return self.tags[1].value.lower()
-
-    def write(self, stream):
-        for tag in self.tags:
-            stream.write(TAG_STRING_FORMAT % tag)
-
 SECTIONMAP = {
     'HEADER': HeaderSection,
+    'TABLES': TablesSection,
 }
 
 def get_section_class(name):
-    return SECTIONMAP.get(name, DefaultSection)
+    return SECTIONMAP.get(name, DefaultChunk)
