@@ -22,11 +22,9 @@ class EntityDB:
         self.commit(handle, entity)
 
     def aquire(self, handle):
-        assert isinstance(handle, int)
         return self._database[handle]
 
     def commit(self, handle, entity):
-        assert isinstance(handle, int)
         self._database[handle] = entity
 
     def remove(self, key):

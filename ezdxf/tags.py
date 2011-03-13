@@ -61,7 +61,7 @@ class StringIterator(TagIterator):
         super(StringIterator, self).__init__(StringIO(dxfcontent))
 
 def text2tags(text):
-    return list(StringIterator(text))
+    return Tags(StringIterator(text))
 
 class DXFInfo:
     def __init__(self):
@@ -142,3 +142,43 @@ TYPES = [
 
 _TagCaster = TagCaster()
 tagcast = _TagCaster.cast
+
+class Tags(list):
+    def write(self, stream):
+        for tag in self:
+            stream.write(strtag(tag))
+
+    def gethandle(self, handles):
+        handle = None
+        try:
+            index = self.findfirst(5)
+            return self[index].value
+        except ValueError:
+            pass
+        try:
+            index = self.findfirst(105)
+            return self[index].value
+        except ValueError:
+            return handles.next
+
+    def findall(self, code):
+        return [ tag for tag in self if tag.code == code ]
+
+    def findfirst(self, code):
+        return self.findnext(code, 0)
+
+    def findnext(self, code, start=0):
+        for index in range(start, len(self)):
+            if self[index].code == code:
+                return index
+        raise ValueError(code)
+
+    def settag(self, code, value):
+        for index, tag in enumerate(self):
+            if tag.code == code:
+                self[index] = DXFTag(code, value)
+                return
+
+    @staticmethod
+    def fromtext(text):
+        return Tags(StringIterator(text))

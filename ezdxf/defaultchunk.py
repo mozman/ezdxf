@@ -6,10 +6,11 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from .tags import TAG_STRING_FORMAT
+from .tags import TAG_STRING_FORMAT, Tags
 
 class DefaultChunk:
     def __init__(self, tags, drawing):
+        assert isinstance(tags, Tags)
         self.tags = tags
         self.drawing = drawing
 
@@ -22,15 +23,14 @@ class DefaultChunk:
         return self.tags[1].value.lower()
 
     def write(self, stream):
-        for tag in self.tags:
-            stream.write(TAG_STRING_FORMAT % tag)
+        self.tags.write(stream)
 
 def iterchunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
     while True:
         tag = next(tagreader)
         if tag == (0, stoptag):
             return
-        tags = [tag]
+        tags = Tags([tag])
         while tag != (0, endofchunk):
             tag = next(tagreader)
             tags.append(tag)
