@@ -12,11 +12,11 @@ class DefaultChunk:
     def __init__(self, tags, drawing):
         assert isinstance(tags, Tags)
         self.tags = tags
-        self.drawing = drawing
+        self._drawing = drawing
 
     @property
     def dxfengine(self):
-        return self.drawing.dxfengine
+        return self._drawing.dxfengine
 
     @property
     def name(self):

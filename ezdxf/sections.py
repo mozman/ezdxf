@@ -12,6 +12,7 @@ from .tags import TAG_STRING_FORMAT, DXFTag
 from .defaultchunk import DefaultChunk, iterchunks
 from .header import HeaderSection
 from .tables import TablesSection
+from .entitysection import EntitySection
 
 class Sections:
     def __init__(self, tagreader, drawing):
@@ -45,6 +46,7 @@ class Sections:
 SECTIONMAP = {
     'HEADER': HeaderSection,
     'TABLES': TablesSection,
+    'ENTITIES': EntitySection,
 }
 
 def get_section_class(name):

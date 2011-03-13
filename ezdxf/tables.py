@@ -14,7 +14,7 @@ from .table import GenericTable, Table
 class TablesSection:
     name = 'tables'
     def __init__(self, tags, drawing):
-        self.drawing = drawing
+        self._drawing = drawing
         self._tables = OrderedDict()
         self._setup_tables(tags)
 
@@ -30,7 +30,7 @@ class TablesSection:
         itertags = skiptags(iter(tags), 2) # (0, 'SECTION'), (2, 'TABELS')
         for table in iterchunks(itertags, stoptag='ENDSEC', endofchunk='ENDTAB'):
             table_class = get_table_class(name(table))
-            new_table = table_class(table, self.drawing)
+            new_table = table_class(table, self._drawing)
             self._tables[new_table.name] = new_table
 
     def __getattr__(self, key):
@@ -38,10 +38,6 @@ class TablesSection:
             return self._tables[key]
         except KeyError:
             raise AttributeError(key)
-
-    @property
-    def dxfengine(self):
-        return self.drawing.dxfengine
 
     def write(self, stream):
         stream.write('  0\nSECTION\n  2\nTABLES\n')

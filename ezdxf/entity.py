@@ -7,19 +7,36 @@
 # License: GPLv3
 
 class Entity:
+    """
+    Proxy for entities stored in the entitydb of the drawing.
+
+    '_handle' is the database-key
+    '_tags' are the temporary stored entity data
+    """
     def __init__(self, handle, drawing):
         self._handle = handle
         self._drawing = drawing
-        self._data = None
+        self._tags = None
 
     @property
     def handle(self):
         return self._handle
 
-    def _aquire_data(self):
-        self._data = self._drawing.entitydb.aquire(self._handle)
+    @property
+    def tags(self):
+        if self._tags is None:
+            self._getdata()
+        return self._tags
 
-    def _commit(self):
-        self._drawing.entitydb.commit(self._handle, self._data)
-        self._data = None
+    @property
+    def entitydb(self):
+        return self._drawing.entitydb
+
+    def _getdata(self):
+        self._tags = self.entitydb[self._handle]
+
+    def _putdata(self):
+        if self._tags is not None:
+            self.entitydb[self._handle] = self._tags
+            self._tags = None
 

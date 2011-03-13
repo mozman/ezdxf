@@ -7,18 +7,24 @@
 # License: GPLv3
 
 from .ac1009hdrvars import VARMAP
-from .handle import HandleGenerator
 
 class AC1009Engine:
     HEADERVARS = dict(VARMAP)
     def __init__(self):
         self.drawing = None
 
-    def nexthandle(self):
-        return "%X" % self.drawing.handles.next()
-
     def new_header_var(self, key, value):
         factory = self.HEADERVARS[key]
         return factory(value)
 
+    def table_entry_wrapper(self, tags, handle):
+        return GenericTableEntry(tags, handle)
 
+class GenericTableEntry:
+    def __init__(self, tags, handle):
+        self.tags = tags
+        self.handle = handle
+
+    @property
+    def name(self):
+        return self.tags[self.tags.findfirst(2)].value
