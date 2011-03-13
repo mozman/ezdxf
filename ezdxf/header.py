@@ -7,46 +7,33 @@
 # License: GPLv3
 
 from collections import OrderedDict
+
 from .dxfvalue import DXFValue
+from .tags import TagGroups
 
 class HeaderSection:
     name = 'header'
     def __init__(self, tags, drawing):
-        self.hdrvars = self.build_dict(tags)
+        self.hdrvars = OrderedDict()
         self.drawing = drawing
+        self._build(tags)
 
     @property
     def dxfengine(self):
         return self.drawing.dxfengine
 
-    def build_dict(self, tags):
-        def itervars():
-            def getpoint(x):
-                y = tags[index + 1]
-                z = tags[index + 2]
-                return (x, y, z) if z.code == 30 else (x, y)
-
-            def gettag():
-                tag = tags[index]
-                return getpoint(tag) if tag.code == 10 else tag
-
-            def tagcount(tag):
-                return len(value) if isinstance(tag[0], tuple) else 1
-
-            index = 2
-            tag = tags[index]
-            while tag != (0, 'ENDSEC'):
-                name = tag.value
-                index += 1
-                value = gettag()
-                index += tagcount(value)
-                yield (name, value)
-                tag = tags[index]
-
-        d = OrderedDict()
-        for name, value in itervars():
-            d[name] = DXFValue(value)
-        return d
+    def _build(self, tags):
+        assert tags[0] == (0, 'SECTION')
+        assert tags[1] == (2, 'HEADER')
+        assert tags[-1] == (0, 'ENDSEC')
+        groups = TagGroups(tags[2:-1], splitcode=9)
+        for group in groups:
+            name = group[0].value
+            if len(group) > 2:
+                value = tuple(group[1:])
+            else:
+                value = group[1]
+            self.hdrvars[name] =DXFValue(value)
 
     def write(self, stream):
         def _write(name, value):

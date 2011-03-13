@@ -96,7 +96,8 @@ $EXTMAX
  30
 -1.0000000000000000E+020
   0
-ENDSEC"""
+ENDSEC
+"""
 
 if __name__=='__main__':
     unittest.main()
