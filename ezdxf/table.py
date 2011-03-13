@@ -34,10 +34,10 @@ class GenericTable(DefaultChunk):
 
 class Table:
     def __init__(self, tags, drawing):
-        self.dxfname = tags[1].value
-        self.name = tablename(self.dxfname)
-        self.drawing = drawing
-        self._tableentries = OrderedDict()
+        self._dxfname = tags[1].value
+        self.name = tablename(self._dxfname)
+        self._drawing = drawing
+        self._tableentries = list()
         self._build_tableentries(tags)
 
     def __len__(self):
@@ -50,32 +50,51 @@ class Table:
 
         self._prologuetags = Tags(groups[0][1:])
         for entrytags in groups[1:-1]:
-            entry = GenericTableEntry(entrytags, self.drawing)
-            self.add(entry)
+            self.add(entrytags)
 
     @property
     def entitydb(self):
-        return self.drawing.entitydb
+        return self._drawing.entitydb
+
+    @property
+    def handles(self):
+        return self._drawing.handles
+
+    @property
+    def dxfengine(self):
+        return self._drawing.dxfengine
 
     def __iter__(self):
-        for handle in self._tableentries.values():
+        for handle in self._tableentries:
             yield self.entitydb[handle]
 
-    def add(self, table_entry):
-        self.entitydb[table_entry.handle] = table_entry
-        self._tableentries[table_entry.name] = table_entry.handle
+    def add(self, entry):
+        if isinstance(entry, Tags):
+            handle = entry.gethandle(self.handles)
+            self.entitydb[handle] = entry
+        else:
+            handle = entry.handle
+        self._tableentries.append(handle)
 
     def get(self, name):
         handle = self.get_handle(name)
-        return self.entitydb[handle]
+        tags = self.entitydb[handle]
+        return self.dxfengine.table_entry_wrapper(tags, handle)
 
     def remove(self, name):
         handle = self.get_handle(name)
-        del self._tableentries[name]
+        self._tableentries.remove(handle)
         del self.entitydb[handle]
 
     def get_handle(self, name):
-        return self._tableentries[name]
+        def tablename(tags):
+            return tags[tags.findfirst(2)].value
+
+        for handle in self._tableentries:
+            entry = self.entitydb[handle]
+            if tablename(entry) == name:
+                return handle
+        raise ValueError(name)
 
     def write(self, stream):
         def prologue():
@@ -96,13 +115,3 @@ class Table:
 
     def _update_entrycount(self):
         self._prologuetags.settag(70, len(self))
-
-class GenericTableEntry(DefaultChunk):
-    def __init__(self, tags, drawing):
-        super(GenericTableEntry, self).__init__(tags, drawing)
-        self.handle = tags.gethandle(drawing.handles)
-        self._name = tags[tags.findfirst(2)].value
-
-    @property
-    def name(self):
-        return self._name

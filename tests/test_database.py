@@ -28,18 +28,6 @@ class testEntityDB(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.db[0]
 
-    def test_aquire_data(self):
-        self.assertEqual('TEST', self.db.aquire(0))
-
-    def test_commit_data(self):
-        self.db.commit(0, 'XTEST')
-        self.assertEqual('XTEST', self.db[0])
-
-    def test_remove_value(self):
-        self.db.remove(0)
-        with self.assertRaises(KeyError):
-            self.db[0]
-
 
 if __name__=='__main__':
     unittest.main()

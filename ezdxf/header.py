@@ -15,12 +15,12 @@ class HeaderSection:
     name = 'header'
     def __init__(self, tags, drawing):
         self.hdrvars = OrderedDict()
-        self.drawing = drawing
+        self._drawing = drawing
         self._build(tags)
 
     @property
     def dxfengine(self):
-        return self.drawing.dxfengine
+        return self._drawing.dxfengine
 
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
