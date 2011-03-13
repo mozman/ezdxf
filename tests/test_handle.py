@@ -9,20 +9,22 @@
 import sys
 import unittest
 
-from ezdxf.handle import HandleGenerator, hexstr
+from ezdxf.handle import HandleGenerator
 
 class TestHandleGenerator(unittest.TestCase):
     def test_next(self):
-        handgen = HandleGenerator(100)
-        self.assertEqual(100, handgen.next)
+        handles = HandleGenerator('100')
+        self.assertEqual('100', handles.next)
 
     def test_seed(self):
-        handgen = HandleGenerator(200)
-        handgen.next
-        self.assertEqual(201, handgen.seed)
+        handles = HandleGenerator('200')
+        handles.next
+        self.assertEqual('201', handles.seed)
 
-    def test_hexstr(self):
-        self.assertEqual('FF', hexstr(255))
+    def test_reset(self):
+        handles = HandleGenerator('200')
+        handles.reset('300')
+        self.assertEqual('300', handles.seed)
 
 if __name__=='__main__':
     unittest.main()

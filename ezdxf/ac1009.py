@@ -15,7 +15,7 @@ class AC1009Engine:
         self.drawing = None
 
     def nexthandle(self):
-        return "%X" % self.drawing.handlegenerator.next()
+        return "%X" % self.drawing.handles.next()
 
     def new_header_var(self, key, value):
         factory = self.HEADERVARS[key]

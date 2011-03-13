@@ -7,21 +7,21 @@
 # License: GPLv3
 
 class HandleGenerator:
-    def __init__(self, startvalue=0):
-        self._handle = startvalue
+    def __init__(self, startvalue='0'):
+        self._handle = int(startvalue, 16)
 
     @property
     def seed(self):
-        return self._handle
+        return _hexstr(self._handle)
 
     @property
     def next(self):
         nexthandle = self._handle
         self._handle += 1
-        return nexthandle
+        return _hexstr(nexthandle)
 
     def reset(self, startvalue):
-        self._handle = startvalue
+        self._handle = int(startvalue, 16)
 
-def hexstr(number):
+def _hexstr(number):
     return "%X" % number

@@ -10,7 +10,7 @@ import sys
 import unittest
 from io import StringIO
 
-from ezdxf.tags import StringIterator
+from ezdxf.tags import StringIterator, Tags
 from ezdxf.tags import dxfinfo, strtag
 
 TEST_TAGREADER = """  0
@@ -118,6 +118,85 @@ class TestGetDXFInfo(unittest.TestCase):
         info = dxfinfo(StringIO(TEST_TAGREADER))
         self.assertEqual(info.release, 'R2004')
         self.assertEqual(info.encoding, 'cp1252')
+
+TESTHANDLE5 = """ 0
+TEST
+  5
+F5
+"""
+
+TESTHANDLE105 = """ 0
+TEST
+105
+F105
+"""
+
+TESTFINDALL = """  0
+TEST0
+  0
+TEST1
+  0
+TEST2
+"""
+
+class HandlesMock:
+    calls = 0
+    @property
+    def next(self):
+        self.calls = self.calls + 1
+        return 'FF'
+
+class TestTags(unittest.TestCase):
+    def setUp(self):
+        self.tags = Tags.fromtext(TEST_TAGREADER)
+
+    def test_from_text(self):
+        self.assertEqual(8, len(self.tags))
+
+    def test_write(self):
+        stream = StringIO()
+        self.tags.write(stream)
+        result = stream.getvalue()
+        stream.close()
+        self.assertEqual(TEST_TAGREADER, result)
+
+    def test_settag(self):
+        self.tags.settag(2, 'XHEADER')
+        self.assertEqual('XHEADER', self.tags[1].value)
+
+    def test_gethandle_5(self):
+        tags = Tags.fromtext(TESTHANDLE5)
+        handles = HandlesMock()
+        self.assertEqual('F5', tags.gethandle(handles))
+        self.assertEqual(0, handles.calls)
+
+    def test_gethandle_105(self):
+        tags = Tags.fromtext(TESTHANDLE105)
+        handles = HandlesMock()
+        self.assertEqual('F105', tags.gethandle(handles))
+        self.assertEqual(0, handles.calls)
+
+    def test_gethandle_create_new(self):
+        handles = HandlesMock()
+        self.assertEqual('FF', self.tags.gethandle(handles))
+        self.assertEqual(1, handles.calls)
+
+    def test_findall(self):
+        tags = Tags.fromtext(TESTFINDALL)
+        self.assertEqual(3, len(tags.findall(0)))
+
+    def test_findfirst(self):
+        tags = Tags.fromtext(TESTFINDALL)
+        index = tags.findfirst(0)
+        self.assertEqual(0, index)
+        index = tags.findnext(0, index+1)
+        self.assertEqual(1, index)
+
+    def test_findfirst_value_error(self):
+        tags = Tags.fromtext(TESTFINDALL)
+        with self.assertRaises(ValueError):
+            tags.findfirst(1)
+
 
 if __name__=='__main__':
     unittest.main()

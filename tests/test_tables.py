@@ -10,19 +10,17 @@ import sys
 import unittest
 from io import StringIO
 
+from ezdxf.handle import HandleGenerator
 from ezdxf.tags import text2tags
 from ezdxf.tables import TablesSection
 
 class DrawingMock:
-    pass
+    handles = HandleGenerator()
+    entitydb = {}
 
-def cmplines(text1, text2):
-    lines1 = text1.split('\n')
-    lines2 = text2.split('\n')
-    for line1, line2 in zip(lines1, lines2):
-        if line1.strip() != line2.strip():
-            return False
-    return True
+def normlines(text):
+    lines = text.split('\n')
+    return [line.strip() for line in lines]
 
 
 class TestTables(unittest.TestCase):
@@ -31,10 +29,10 @@ class TestTables(unittest.TestCase):
         self.tables = TablesSection(text2tags(TEST_TABLES), self.dwg)
 
     def test_constructor(self):
-        self.assertIsNotNone(self.tables.layer)
+        self.assertIsNotNone(self.tables.layers)
 
     def test_getattr(self):
-        self.assertIsNotNone(self.tables.ltype)
+        self.assertIsNotNone(self.tables.linetypes)
 
     def test_error_getattr(self):
         with self.assertRaises(AttributeError):
@@ -45,7 +43,7 @@ class TestTables(unittest.TestCase):
         self.tables.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.assertTrue(cmplines(TEST_TABLES, result))
+        self.assertEqual(normlines(TEST_TABLES), normlines(result))
 
 
 TEST_TABLES = """  0

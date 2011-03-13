@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
-# Purpose: tables
+# Purpose: tables section
 # Created: 12.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 from collections import OrderedDict
 
-from .defaultchunk import DefaultChunk, iterchunks
+from .defaultchunk import iterchunks
+from .table import GenericTable, Table
 
 class TablesSection:
     name = 'tables'
@@ -49,7 +50,10 @@ class TablesSection:
         stream.write('  0\nENDSEC\n')
 
 TABLESMAP = {
+    'LAYER': Table,
+    'LTYPE': Table,
+    'STYLE': Table,
 }
 
 def get_table_class(name):
-    return TABLESMAP.get(name, DefaultChunk)
+    return TABLESMAP.get(name, GenericTable)

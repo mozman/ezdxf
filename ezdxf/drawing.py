@@ -22,16 +22,25 @@ class Drawing:
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
         self.entitydb = EntityDB()
+        self.handles = HandleGenerator(startvalue='A0')
         self.sections = Sections(tagreader, self)
         self._dxfversion = self.header['$ACADVER']
         self.encoding = self._get_encoding()
-        nexthandle = int(self.header.get('$HANDSEED', '500'), 16)
-        self.handlegenerator = HandleGenerator(startvalue=nexthandle)
+        seed = self.header.get('$HANDSEED', self.handles.seed)
+        self.handles.reset(seed)
         self.dxfengine = dxfengine(self._dxfversion, self)
 
     @property
     def header(self):
         return self.sections.header
+
+    @property
+    def tables(self):
+        return self.sections.tables
+
+    @property
+    def layers(self):
+        return self.tables.layer
 
     @property
     def dxfversion(self):
