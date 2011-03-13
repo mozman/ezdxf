@@ -31,37 +31,7 @@ class GenericTable(DefaultChunk):
     @property
     def name(self):
         return tablename(self.tags[1].value)
-"""
-  0
-SECTION
-  2
-TABLES
-  0
-TABLE
-  2
-VPORT
-  5
-8
-330
-0
-100
-AcDbSymbolTable
- 70
-     1
-  0
-VPORT
-  5
-94
-330
-8
-100
-AcDbSymbolTableRecord
-100
-AcDbViewportTableRecord
-  2
-*Active
- 70
-"""
+
 class Table:
     def __init__(self, tags, drawing):
         self.dxfname = tags[1].value
