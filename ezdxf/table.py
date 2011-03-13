@@ -9,7 +9,7 @@
 from collections import OrderedDict
 
 from .defaultchunk import DefaultChunk
-from .tags import Tags, DXFTag
+from .tags import Tags, DXFTag, TagGroups
 
 TABLENAMES = {
     'layer': 'layers',
@@ -74,29 +74,12 @@ class Table:
         return len(self._tableentries)
 
     def _build_tableentries(self, tags):
-        # (0, TABLE), (2, TABLENAME), (..., prologuetag), (70, maxentries),  ...
-        # ... entry#1, entry#2, ... (0, ENDTAB)
-        # entry# = (0, TABLENAME), (2, ENTRYNAME) ....
-        def prologuetags():
-            start = tags.index( DXFTag(2, self.dxfname) )
-            end = tags.index( DXFTag(0, self.dxfname) )
-            return Tags(tags[start:end])
+        groups = TagGroups(tags)
+        assert groups.getname(0) == 'TABLE'
+        assert groups.getname(-1) == 'ENDTAB'
 
-        def tableentries():
-            end = 0
-            reached_tableend = False
-            while not reached_tableend:
-                table_start_tag = DXFTag(0, self.dxfname)
-                start = tags.index(table_start_tag, end)
-                try:
-                    end = tags.index(table_start_tag, start+1)
-                except ValueError:
-                    end = len(tags) - 1
-                    reached_tableend = True
-                yield Tags(tags[start:end])
-
-        self._prologuetags = prologuetags()
-        for entrytags in tableentries():
+        self._prologuetags = Tags(groups[0][1:])
+        for entrytags in groups[1:-1]:
             entry = GenericTableEntry(entrytags, self.drawing)
             self.add(entry)
 

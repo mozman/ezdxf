@@ -182,3 +182,44 @@ class Tags(list):
     @staticmethod
     def fromtext(text):
         return Tags(StringIterator(text))
+
+class TagGroups(list):
+    """
+    Group of tags starting with a SplitTag and ending before the next SplitTag.
+
+    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode=0.
+
+    """
+    def __init__(self, tags, splitcode=0):
+        super(TagGroups, self).__init__()
+        self.splitcode = splitcode
+        self._buildgroups(tags)
+
+    def _buildgroups(self, tags):
+        def pushgroup():
+            if len(group) > 0:
+                self.append(group)
+
+        def starttag(itags):
+            tag = next(itags)
+            while tag.code != self.splitcode:
+                tag = next(itags)
+            return tag
+
+        itags = iter(tags)
+        group = Tags([starttag(itags)])
+
+        for tag in itags:
+            if tag.code == self.splitcode:
+                pushgroup()
+                group = Tags([tag])
+            else:
+                group.append(tag)
+        pushgroup()
+
+    def getname(self, index):
+        return self[index][0].value
+
+    @staticmethod
+    def fromtext(text, splitcode=0):
+        return TagGroups(Tags.fromtext(text), splitcode)
