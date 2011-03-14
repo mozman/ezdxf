@@ -269,7 +269,7 @@ class TestR12Table(unittest.TestCase):
         self.assertEqual(normlines(self.TABLE), normlines(result))
 
     def test_get_table_entry(self):
-        entry = self.table.get('ACAD')
+        entry = self.table.get_entry('ACAD')
         self.assertEqual('ACAD', entry.name)
 
 class TestR2010Table(TestR12Table):

@@ -37,20 +37,21 @@ class Table:
         self._dxfname = tags[1].value
         self.name = tablename(self._dxfname)
         self._drawing = drawing
-        self._tableentries = list()
-        self._build_tableentries(tags)
+        self._table_entries = list()
+        self._table_header = None
+        self._build_table_entries(tags)
 
     def __len__(self):
-        return len(self._tableentries)
+        return len(self._table_entries)
 
-    def _build_tableentries(self, tags):
+    def _build_table_entries(self, tags):
         groups = TagGroups(tags)
         assert groups.getname(0) == 'TABLE'
         assert groups.getname(-1) == 'ENDTAB'
 
-        self._prologuetags = Tags(groups[0][1:])
+        self._table_header = Tags(groups[0][1:])
         for entrytags in groups[1:-1]:
-            self.add(entrytags)
+            self.add_entry(entrytags)
 
     @property
     def entitydb(self):
@@ -65,45 +66,51 @@ class Table:
         return self._drawing.dxfengine
 
     def __iter__(self):
-        for handle in self._tableentries:
-            yield self.entitydb[handle]
+        """ Iterate over handles of table-entries """
+        return iter(self._table_entries)
 
-    def add(self, entry):
+    def iter_entry_tags(self):
+        return ( self.entitydb[handle] for handle in self )
+
+    def add_entry(self, entry):
         if isinstance(entry, Tags):
             handle = entry.gethandle(self.handles)
             self.entitydb[handle] = entry
         else:
             handle = entry.handle
-        self._tableentries.append(handle)
+        self._table_entries.append(handle)
 
-    def get(self, name):
-        handle = self.get_handle(name)
+    def get_entry(self, name):
+        handle = self.get_entry_handle(name)
         tags = self.entitydb[handle]
         return self.dxfengine.table_entry_wrapper(tags, handle)
 
-    def remove(self, name):
-        handle = self.get_handle(name)
-        self._tableentries.remove(handle)
+    def remove_entry(self, name):
+        handle = self.get_entry_handle(name)
+        self._table_entries.remove(handle)
         del self.entitydb[handle]
 
-    def get_handle(self, name):
-        def tablename(tags):
+    def get_entry_handle(self, name):
+        def table_entry_name(tags):
             return tags[tags.findfirst(2)].value
 
-        for handle in self._tableentries:
+        for handle in self._table_entries:
             entry = self.entitydb[handle]
-            if tablename(entry) == name:
+            if table_entry_name(entry) == name:
                 return handle
         raise ValueError(name)
+
+    def _get_table_wrapper(self):
+        return self.dxfengine.table_wrapper(self)
 
     def write(self, stream):
         def prologue():
             stream.write('  0\nTABLE\n')
-            self._update_entrycount()
-            self._prologuetags.write(stream)
+            self._get_table_wrapper().set_count(len(self))
+            self._table_header.write(stream)
 
         def content():
-            for entry in self:
+            for entry in self.iter_entry_tags():
                 entry.write(stream)
 
         def epilogue():
@@ -113,5 +120,4 @@ class Table:
         content()
         epilogue()
 
-    def _update_entrycount(self):
-        self._prologuetags.settag(70, len(self))
+
