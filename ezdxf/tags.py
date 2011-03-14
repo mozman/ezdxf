@@ -15,6 +15,9 @@ from .const import acadrelease
 DXFTag = namedtuple('DXFTag', 'code value')
 NONETAG = DXFTag(999999, 'NONE')
 
+class DXFStructureError(Exception):
+    pass
+
 class TagIterator:
     def __init__(self, textfile):
         self.textfile = textfile
@@ -68,7 +71,7 @@ class DXFInfo:
         self.release = 'R12'
         self.version = 'AC1009'
         self.encoding = 'cp1252'
-        self.handseed = 0
+        self.handseed = '0'
 
     def DWGCODEPAGE(self, value):
         self.encoding = toencoding(value)
@@ -78,8 +81,7 @@ class DXFInfo:
         self.release = acadrelease.get(value, 'R12')
 
     def HANDSEED(self, value):
-        self.handseed = int(value, 16)
-
+        self.handseed = value
 
 def dxfinfo(stream):
     info = DXFInfo()
@@ -149,15 +151,14 @@ class Tags(list):
             stream.write(strtag(tag))
 
     def gethandle(self, handles):
-        handle = None
+        handle = ''
+        for tag in self:
+            if tag.code in (5, 105):
+                handle = tag.value
+                break
         try:
-            index = self.findfirst(5)
-            return self[index].value
-        except ValueError:
-            pass
-        try:
-            index = self.findfirst(105)
-            return self[index].value
+            int(handle, 16) # is valid handle
+            return handle
         except ValueError:
             return handles.next
 

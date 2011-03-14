@@ -17,16 +17,22 @@ class EntitySpace(list):
     The EntitySpace stores only handles to the entity-database.
 
     """
-    def __init__(self, parent):
+    def __init__(self, drawing):
         super(EntitySpace, self).__init__()
-        self._parent = parent
+        self._drawing = drawing
 
     def add(self, entity):
         if isinstance(entity, Tags):
-            handle = entity.gethandle(self._parent.handles)
-            self._parent.entitydb[handle] = entity
+            handle = entity.gethandle(self._drawing.handles)
+            self._drawing.entitydb[handle] = entity
         elif isinstance(entity, Entity):
             handle = entity.handle
         self.append(handle)
+
+    def write(self, stream):
+        db = self._drawing.entitydb
+        for handle in self:
+            db[handle].write(stream)
+
 
 
