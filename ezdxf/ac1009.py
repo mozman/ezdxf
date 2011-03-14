@@ -84,7 +84,7 @@ class AC1009Engine:
 
 class TableWrapper:
     """
-    Encapsulte all DXF version specific details for all DXF tables.
+    Encapsulate all DXF-Version specific details for all DXF tables.
 
     Tables are: LTYPE, LAYER, STYLE, ... in the TABLES section
 
@@ -101,9 +101,10 @@ class TableWrapper:
 
 class TableEntryWrapper:
     """
-    Encapsulte all DXF version specific details for all DXF table entries.
+    Encapsulate all DXF-Version specific details for all DXF table entries.
 
-    Table entries are: LTYPE, LAYER, STYLE, ... in a TABLE chunk
+    Table entries starting with tag (0, TABLENAME): (0, LTYPE), (0, LAYER), ...
+    in the TABLE tag-chunk.
 
     """
     def __init__(self, tags, handle):
