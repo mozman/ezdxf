@@ -20,7 +20,7 @@ TABLENAMES = {
     'ucs': 'ucs',
     'view': 'views',
     'vport': 'viewports',
-    'block_record': 'blockrecords',
+    'block_record': 'block_records',
 }
 
 def tablename(dxfname):

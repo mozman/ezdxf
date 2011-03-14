@@ -16,9 +16,8 @@ class HandleGenerator:
 
     @property
     def next(self):
-        nexthandle = self._handle
         self._handle += 1
-        return _hexstr(nexthandle)
+        return self.seed
 
     def reset(self, startvalue):
         self._handle = int(startvalue, 16)

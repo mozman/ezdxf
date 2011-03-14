@@ -22,7 +22,7 @@ class Drawing:
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
         self.entitydb = EntityDB()
-        self.handles = HandleGenerator(startvalue='A0')
+        self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
         self._dxfversion = self.header['$ACADVER']
         self.encoding = self._get_encoding()
@@ -76,6 +76,10 @@ class Drawing:
             self.write(fp)
 
     def write(self, stream):
+        self._update_handle_seed()
         self.sections.write(stream)
 
+    def _update_handle_seed(self):
+        if '$HANDSEED' in self.header:
+            self.header['$HANDSEED'] = self.handles.seed
 

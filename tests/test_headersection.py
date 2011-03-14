@@ -12,7 +12,7 @@ import unittest
 from ezdxf.dxfengine import dxfengine
 
 from ezdxf.tags import text2tags
-from ezdxf.header import HeaderSection
+from ezdxf.headersection import HeaderSection
 
 class DrawingProxy:
     dxfengine = dxfengine('AC1009')
@@ -62,6 +62,12 @@ class TestHeaderSection(unittest.TestCase):
     def test_create_var_wrong_args_3d(self):
         with self.assertRaises(IndexError):
             self.header['$PUCSORG'] = (10, 20)
+
+    def test_contains(self):
+        self.assertTrue('$ACADVER' in self.header)
+
+    def test_not_contains(self):
+        self.assertFalse('$MOZMAN' in self.header)
 
 TESTHEADER = """  0
 SECTION

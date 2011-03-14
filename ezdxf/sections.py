@@ -10,8 +10,9 @@ from collections import OrderedDict
 from .tags import TAG_STRING_FORMAT, DXFTag
 
 from .defaultchunk import DefaultChunk, iterchunks
-from .header import HeaderSection
-from .tables import TablesSection
+from .headersection import HeaderSection
+from .tablessection import TablesSection
+from .blockssection import BlocksSection
 from .entitysection import EntitySection
 
 class Sections:
@@ -47,6 +48,7 @@ SECTIONMAP = {
     'HEADER': HeaderSection,
     'TABLES': TablesSection,
     'ENTITIES': EntitySection,
+    'BLOCKS': BlocksSection,
 }
 
 def get_section_class(name):

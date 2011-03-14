@@ -13,7 +13,7 @@ from io import StringIO
 from ezdxf.handle import HandleGenerator
 from ezdxf.ac1009 import AC1009Engine
 from ezdxf.tags import text2tags
-from ezdxf.tables import TablesSection
+from ezdxf.tablessection import TablesSection
 
 class DrawingMock:
     handles = HandleGenerator()

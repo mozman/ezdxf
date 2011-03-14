@@ -18,6 +18,9 @@ class HeaderSection:
         self._drawing = drawing
         self._build(tags)
 
+    def __contains__(self, key):
+        return key in self.hdrvars
+
     @property
     def dxfengine(self):
         return self._drawing.dxfengine
