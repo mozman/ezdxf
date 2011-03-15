@@ -13,7 +13,7 @@ from .defaultchunk import DefaultChunk, iterchunks
 from .headersection import HeaderSection
 from .tablessection import TablesSection
 from .blockssection import BlocksSection
-from .entitysection import EntitySection
+from .entitysection import EntitySection, ClassesSection, ObjectsSection
 
 class Sections:
     def __init__(self, tagreader, drawing):
@@ -46,9 +46,11 @@ class Sections:
 
 SECTIONMAP = {
     'HEADER': HeaderSection,
+    'CLASSES': ClassesSection,
     'TABLES': TablesSection,
-    'ENTITIES': EntitySection,
     'BLOCKS': BlocksSection,
+    'ENTITIES': EntitySection,
+    'OBJECTS': ObjectsSection,
 }
 
 def get_section_class(name):
