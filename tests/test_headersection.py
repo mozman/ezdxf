@@ -69,6 +69,10 @@ class TestHeaderSection(unittest.TestCase):
     def test_not_contains(self):
         self.assertFalse('$MOZMAN' in self.header)
 
+    def test_remove_headervar(self):
+        del self.header['$ACADVER']
+        self.assertTrue('$ACADVER' not in self.header)
+
 TESTHEADER = """  0
 SECTION
   2

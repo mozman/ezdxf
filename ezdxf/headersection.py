@@ -64,3 +64,6 @@ class HeaderSection:
     def __setitem__(self, key, value):
         tags = self.dxfengine.new_header_var(key, value)
         self.hdrvars[key] = DXFValue(tags)
+
+    def __delitem__(self, key):
+        del self.hdrvars[key]
