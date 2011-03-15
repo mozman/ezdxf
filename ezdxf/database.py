@@ -6,6 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
+from collections import OrderedDict
+
 def factory(debug=False):
     return DebugDB() if debug else EntityDB()
 
@@ -47,7 +49,7 @@ class EntityDB:
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
     def __init__(self):
-        super(DebugDB, self).__init__()
+        self._database = OrderedDict()
         self._collisions = {}
         self._stream = None
         self._verbose = True

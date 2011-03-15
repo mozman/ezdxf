@@ -7,16 +7,20 @@
 # License: GPLv3
 
 import sys
+import os
 import ezdxf
 
 def main(filename):
     ezdxf.options['DEBUG'] = True
     drawing = ezdxf.readfile(filename)
-    print('writing content to dbcontent.txt')
-    with open('dbcontent.txt', 'wt', encoding='utf8') as stream:
+    folder = os.path.dirname(filename)
+    dbcontent = os.path.join(folder, 'dbcontent.txt')
+    print('writing content to: %s' % dbcontent)
+    with open(dbcontent, 'wt') as stream:
         drawing.entitydb.dumpcontent(stream, verbose=False)
-    print('writing collisions to dbcollisions.txt')
-    with open('dbcollisions.txt', 'wt') as stream:
+    dbcollisions = os.path.join(folder, 'dbcollisions.txt')
+    print('writing collisions to: %s' % dbcollisions)
+    with open(dbcollisions, 'wt') as stream:
         drawing.entitydb.dumpcollisions(stream)
 
 if __name__=='__main__':

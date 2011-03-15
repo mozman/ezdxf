@@ -17,6 +17,8 @@ class HeaderSection:
         self.hdrvars = OrderedDict()
         self._drawing = drawing
         self._build(tags)
+        # update important dxf properties before processing other sections!!!
+        self._drawing.read_header_vars(self)
 
     def __contains__(self, key):
         return key in self.hdrvars
