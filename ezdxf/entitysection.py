@@ -5,6 +5,7 @@
 # Created: 13.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+
 from itertools import islice
 
 from .tags import TagGroups, DXFStructureError
@@ -18,7 +19,7 @@ class EntitySection:
 
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
-        assert tags[1] == (2, 'ENTITIES')
+        assert tags[1] == (2, self.name.upper())
         assert tags[-1] == (0, 'ENDSEC')
 
         if len(tags) == 3: # empty entities section
@@ -28,6 +29,12 @@ class EntitySection:
             self._workspace.add(group)
 
     def write(self, stream):
-        stream.write("  0\nSECTION\n  2\nENTITIES\n")
+        stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
         self._workspace.write(stream)
         stream.write("  0\nENDSEC\n")
+
+class ObjectsSection(EntitySection):
+    name = 'objects'
+
+class ClassesSection(EntitySection):
+    name = 'classes'
