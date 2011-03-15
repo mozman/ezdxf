@@ -25,11 +25,16 @@ class Drawing:
         self.entitydb = database.factory(debug=options.get('DEBUG', False))
         self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
-        self._dxfversion = self.header['$ACADVER']
-        self.encoding = self._get_encoding()
-        seed = self.header.get('$HANDSEED', self.handles.seed)
-        self.handles.reset(seed)
         self.dxfengine = dxfengine(self._dxfversion, self)
+
+    def read_header_vars(self, header):
+        # called from HeaderSection() object to update important dxf properties
+        # before processing sections, which depends from this properties.
+        self._dxfversion = header['$ACADVER']
+        seed = header.get('$HANDSEED', self.handles.seed)
+        self.handles.reset(seed)
+        codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
+        self.encoding = toencoding(codepage)
 
     @property
     def dxfversion(self):

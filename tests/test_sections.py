@@ -9,11 +9,15 @@
 import sys
 import unittest
 
+from ezdxf.handle import HandleGenerator
 from ezdxf.tags import StringIterator
 from ezdxf.sections import Sections
 
 class DrawingMock:
-    pass
+    handles = HandleGenerator()
+    def read_header_vars(self, header):
+        pass
+
 
 class TestSections(unittest.TestCase):
     def setUp(self):
