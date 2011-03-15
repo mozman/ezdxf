@@ -31,20 +31,32 @@ class Drawing:
         self.dxfengine = dxfengine(self._dxfversion, self)
 
     @property
+    def dxfversion(self):
+        return self._dxfversion
+
+    @property
     def header(self):
         return self.sections.header
 
     @property
-    def tables(self):
-        return self.sections.tables
-
-    @property
     def layers(self):
-        return self.tables.layer
+        return self.sections.tables.layers
 
     @property
-    def dxfversion(self):
-        return self._dxfversion
+    def linetypes(self):
+        return self.sections.tables.linetypes
+
+    @property
+    def styles(self):
+        return self.sections.tables.styles
+
+    @property
+    def blocks(self):
+        return self.sections.tables.blocks
+
+    @property
+    def modelspace(self):
+        return self.sections.entities
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
@@ -76,8 +88,50 @@ class Drawing:
             self.write(fp)
 
     def write(self, stream):
+        self._check_handling()
         self._update_handle_seed()
         self.sections.write(stream)
+
+    def _check_handling(self):
+        """ Only for DXF R12, if usage of handles is disabled, remove all entity
+        handles.
+
+        This is only possible if the drawing was created with another application
+        (or my dxfwrite-package ;-), which doesn't use handles, but this package
+        creates always new entities with handles, so we have to remove all
+        handle-tags (code== 5|105) from new created entities.
+
+        """
+        if self.dxfversion == 'AC1009':
+            try:
+                if self.header['$HANDLING'] == 0:
+                    self._remove_handles()
+            except KeyError:
+                self._remove_handles()
+
+    def _remove_handles(self):
+        """ Remove all handle-tags (code == 5|105) from entities and
+        table-entries.
+        """
+        def remove_handle(entity):
+            def remove(code):
+                try:
+                    index = entity.findfirst(code)
+                    entity.pop(index)
+                except ValueError:
+                    pass
+
+            if entity[0] == (2, 'DIMSTYLE'):
+                remove(105)
+            else:
+                remove(5)
+
+        try:
+            del self.header['$HANDSEED']
+        except KeyError:
+            pass
+        for entity in self.entitydb.values():
+            remove_handle(entity)
 
     def _update_handle_seed(self):
         if '$HANDSEED' in self.header:
