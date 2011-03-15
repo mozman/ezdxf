@@ -6,7 +6,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from .database import EntityDB
+from . import database
 from .handle import HandleGenerator
 from .tags import TagIterator, dxfinfo
 from .dxfengine import dxfengine
@@ -21,7 +21,8 @@ class Drawing:
         self._dxfversion = 'AC1009' # readonly
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
-        self.entitydb = EntityDB()
+
+        self.entitydb = database.factory(debug=options.get('DEBUG', False))
         self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
         self._dxfversion = self.header['$ACADVER']

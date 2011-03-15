@@ -9,4 +9,5 @@
 # Global Options
 options = {
     'templatedir': None,
+    'DEBUG': False,
 }
