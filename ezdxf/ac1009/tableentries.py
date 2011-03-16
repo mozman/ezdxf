@@ -48,7 +48,7 @@ LAYER
   5
 XXXX
   2
-DEFAULT
+LayerName
  70
      0
  62

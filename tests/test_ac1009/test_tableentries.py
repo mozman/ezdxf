@@ -25,7 +25,7 @@ class TestNewLayer(unittest.TestCase):
         self.assertEqual('FFFF', self.layer.handle)
 
     def test_get_name(self):
-        self.assertEqual('DEFAULT', self.layer.name)
+        self.assertEqual('LayerName', self.layer.name)
 
     def test_get_flags(self):
         self.assertEqual(0, self.layer.flags)
