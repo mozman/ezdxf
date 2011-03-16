@@ -24,8 +24,8 @@ class HeaderSection:
         return key in self.hdrvars
 
     @property
-    def dxfengine(self):
-        return self._drawing.dxfengine
+    def dxffactory(self):
+        return self._drawing.dxffactory
 
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
@@ -64,7 +64,7 @@ class HeaderSection:
             return default
 
     def __setitem__(self, key, value):
-        tags = self.dxfengine.new_header_var(key, value)
+        tags = self.dxffactory.new_header_var(key, value)
         self.hdrvars[key] = DXFValue(tags)
 
     def __delitem__(self, key):

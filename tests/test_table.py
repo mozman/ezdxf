@@ -11,7 +11,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.handle import HandleGenerator
-from ezdxf.dxfengine import dxffactory
+from ezdxf.dxffactory import dxffactory
 
 from ezdxf.tags import Tags
 from ezdxf.table import Table
@@ -20,7 +20,7 @@ class DrawingMock:
     def __init__(self):
         self.entitydb = dict()
         self.handles = HandleGenerator()
-        self.dxfengine = dxffactory('AC1009')
+        self.dxffactory = dxffactory('AC1009')
 
 def normlines(text):
     lines = text.split('\n')

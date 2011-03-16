@@ -9,14 +9,14 @@
 import sys
 import unittest
 
-from ezdxf.dxfengine import dxfengine
+from ezdxf.dxffactory import dxffactory
 from ezdxf.handle import HandleGenerator
 
 from ezdxf.tags import text2tags
 from ezdxf.headersection import HeaderSection
 
 class DrawingProxy:
-    dxfengine = dxfengine('AC1009')
+    dxffactory = dxffactory('AC1009')
     handles = HandleGenerator()
     def read_header_vars(self, header):
         pass

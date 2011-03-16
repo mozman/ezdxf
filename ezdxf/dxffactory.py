@@ -22,11 +22,10 @@ factories = {
     'AC1024': AC1024Factory,
 }
 
-def dxfengine(dxfversion, drawing=None):
+def dxffactory(dxfversion, drawing=None):
     factory_class = factories.get(dxfversion, default_factory)
     factory = factory_class()
     factory.drawing = drawing
     return factory
 
-dxffactory=dxfengine
 
