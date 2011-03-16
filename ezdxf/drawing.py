@@ -9,7 +9,7 @@
 from . import database
 from .handle import HandleGenerator
 from .tags import TagIterator, dxfinfo
-from .dxfengine import dxfengine
+from .dxffactory import dxffactory
 from .templates import TemplateFinder
 from .options import options
 from .codepage import tocodepage, toencoding
@@ -25,7 +25,7 @@ class Drawing:
         self.entitydb = database.factory(debug=options.get('DEBUG', False))
         self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
-        self.dxfengine = dxfengine(self._dxfversion, self)
+        self.dxffactory = dxffactory(self._dxfversion, self)
 
     def read_header_vars(self, header):
         # called from HeaderSection() object to update important dxf properties

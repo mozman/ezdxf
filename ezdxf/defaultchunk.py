@@ -15,8 +15,8 @@ class DefaultChunk:
         self._drawing = drawing
 
     @property
-    def dxfengine(self):
-        return self._drawing.dxfengine
+    def dxffactory(self):
+        return self._drawing.dxffactory
 
     @property
     def name(self):

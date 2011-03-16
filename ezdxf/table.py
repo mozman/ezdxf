@@ -62,8 +62,8 @@ class Table:
         return self._drawing.handles
 
     @property
-    def dxfengine(self):
-        return self._drawing.dxfengine
+    def dxffactory(self):
+        return self._drawing.dxffactory
 
     def __iter__(self):
         """ Iterate over handles of table-entries """
@@ -83,7 +83,7 @@ class Table:
     def get_entry(self, name):
         handle = self.get_entry_handle(name)
         tags = self.entitydb[handle]
-        return self.dxfengine.table_entry_wrapper(tags, handle)
+        return self.dxffactory.table_entry_wrapper(tags, handle)
 
     def remove_entry(self, name):
         handle = self.get_entry_handle(name)
@@ -101,7 +101,7 @@ class Table:
         raise ValueError(name)
 
     def _get_table_wrapper(self):
-        return self.dxfengine.table_wrapper(self)
+        return self.dxffactory.table_wrapper(self)
 
     def write(self, stream):
         def prologue():
