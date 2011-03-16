@@ -116,6 +116,10 @@ class TagCaster:
         typecaster = self._cast.get(tag[0], str)
         return DXFTag(tag[0], typecaster(tag[1]))
 
+    def castvalue(self, code, value):
+        typecaster = self._cast.get(code, str)
+        return typecaster(value)
+
 TYPES = [
     (str, range(0, 10)),
     (float, range(10, 60)),
@@ -144,6 +148,7 @@ TYPES = [
 
 _TagCaster = TagCaster()
 tagcast = _TagCaster.cast
+casttagvalue = _TagCaster.castvalue
 
 class Tags(list):
     def write(self, stream):
@@ -174,15 +179,29 @@ class Tags(list):
                 return index
         raise ValueError(code)
 
-    def settag(self, code, value):
+    def update(self, code, value):
         for index, tag in enumerate(self):
             if tag.code == code:
                 self[index] = DXFTag(code, value)
                 return
+        raise ValueError("Tag code=%d does not exist." % code)
+
+    def new_or_update(self, code, value):
+        try:
+            self.update(code, value)
+        except ValueError:
+            self.append( DXFTag(code, value) )
+
+    def getvalue(self, code):
+        for tag in self:
+            if tag.code == code:
+                return tag.value
+        raise ValueError(code)
 
     @staticmethod
     def fromtext(text):
         return Tags(StringIterator(text))
+
 
 class TagGroups(list):
     """

@@ -160,9 +160,17 @@ class TestTags(unittest.TestCase):
         stream.close()
         self.assertEqual(TEST_TAGREADER, result)
 
-    def test_settag(self):
-        self.tags.settag(2, 'XHEADER')
+    def test_update(self):
+        self.tags.update(2, 'XHEADER')
         self.assertEqual('XHEADER', self.tags[1].value)
+
+    def test_update_error(self):
+        with self.assertRaises(ValueError):
+            self.tags.update(999, 'DOESNOTEXIST')
+
+    def test_new_or_update(self):
+        self.tags.new_or_update(999, 'NEWTAG')
+        self.assertEqual('NEWTAG', self.tags[-1].value)
 
     def test_gethandle_5(self):
         tags = Tags.fromtext(TESTHANDLE5)
