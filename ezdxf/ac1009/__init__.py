@@ -65,10 +65,17 @@ the section markers and table headers present:
 
 """
 
+from ..tags import Tags
+
 from .headervars import VARMAP
+from .tableentries import Layer
 
 class AC1009Factory:
     HEADERVARS = dict(VARMAP)
+    TABLE_ENTRY_WRAPPERS = {
+        'LAYER': Layer,
+    }
+
     def __init__(self):
         self.drawing = None
 
@@ -76,8 +83,18 @@ class AC1009Factory:
         factory = self.HEADERVARS[key]
         return factory(value)
 
+    def new_layer(self, name, attribs):
+        tags = Tags.fromtext(Layer.TEMPLATE)
+        handle = self.drawing.handles.next
+        layer = Layer(tags, handle)
+        layer.name = name
+        layer.update(attribs)
+        return layer
+
     def table_entry_wrapper(self, tags, handle):
-        return TableEntryWrapper(tags, handle)
+        type_ = tags[0].value
+        wrapper = self.TABLE_ENTRY_WRAPPERS.get(type_, TableEntryWrapper)
+        return wrapper(tags, handle)
 
     def table_wrapper(self, table):
         return TableWrapper(table)
@@ -97,7 +114,7 @@ class TableWrapper:
         return self._table.name
 
     def set_count(self, count):
-        self._table._table_header.settag(70, count)
+        self._table._table_header.update(70, count)
 
 class TableEntryWrapper:
     """
