@@ -6,8 +6,8 @@
 # Copyright (C) , Manfred Moitzi
 # License: GPLv3
 
-from .ac1021hdrvars import VARMAP
-from .ac1018 import AC1018Engine
+from .headervars import VARMAP
+from ..ac1018 import AC1018Factory
 
-class AC1021Engine(AC1018Engine):
+class AC1021Factory(AC1018Factory):
     HEADERVARS = dict(VARMAP)

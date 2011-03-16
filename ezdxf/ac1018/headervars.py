@@ -4,7 +4,7 @@
 # License: GPLv3
 
 from functools import partial
-from .hdrvars import SingleValue, Point2D, Point3D
+from ..hdrvars import SingleValue, Point2D, Point3D
 
 VARMAP = {
     '$ACADMAINTVER': partial(SingleValue, code=70),
