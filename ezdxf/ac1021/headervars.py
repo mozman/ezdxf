@@ -4,7 +4,7 @@
 # License: GPLv3
 
 from functools import partial
-from .hdrvars import SingleValue, Point2D, Point3D
+from ..hdrvars import SingleValue, Point2D, Point3D
 
 VARMAP = {
     '$3DDWFPREC': partial(SingleValue, code=40),
@@ -107,7 +107,6 @@ VARMAP = {
     '$DIMTVP': partial(SingleValue, code=40),
     '$DIMTXSTY': partial(SingleValue, code=7),
     '$DIMTXT': partial(SingleValue, code=40),
-    '$DIMTXTDIRECTION': partial(SingleValue, code=70),
     '$DIMTZIN': partial(SingleValue, code=70),
     '$DIMUPT': partial(SingleValue, code=70),
     '$DIMZIN': partial(SingleValue, code=70),
@@ -257,6 +256,6 @@ VARMAP = {
     '$VERSIONGUID': partial(SingleValue, code=2),
     '$VISRETAIN': partial(SingleValue, code=70),
     '$WORLDVIEW': partial(SingleValue, code=70),
-    '$XCLIPFRAME': partial(SingleValue, code=280),
+    '$XCLIPFRAME': partial(SingleValue, code=290),
     '$XEDIT': partial(SingleValue, code=290),
 }
