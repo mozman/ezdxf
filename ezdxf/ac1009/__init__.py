@@ -83,15 +83,25 @@ class AC1009Factory:
         factory = self.HEADERVARS[key]
         return factory(value)
 
-    def new_layer(self, name, attribs):
-        tags = Tags.fromtext(Layer.TEMPLATE)
-        handle = self.drawing.handles.next
-        layer = Layer(tags, handle)
-        layer.name = name
+    def new_layer(self, handle, attribs):
+        """ Create a new table-entry 'LAYER'. Does not add the new table-entry
+        to the entitydb.
+        """
+        layer_class = self.TABLE_ENTRY_WRAPPERS['layer']
+        tags = Tags.fromtext(layer_class.TEMPLATE)
+        layer = layer_class(tags, handle)
         layer.update(attribs)
         return layer
 
+    def new_table_entry(self, type_, handle, attribs):
+        # dont use a dict: preserves the possibility of overwritting new_layer()
+        if type_=='LAYER':
+            return self.new_layer(handle, attribs)
+        else:
+            raise ValueError('Unsupported table type: %s' % type_)
+
     def table_entry_wrapper(self, tags, handle):
+        """ Wraps 'tags' into a WrapperClass(). """
         type_ = tags[0].value
         wrapper = self.TABLE_ENTRY_WRAPPERS.get(type_, TableEntryWrapper)
         return wrapper(tags, handle)

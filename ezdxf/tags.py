@@ -155,14 +155,14 @@ class Tags(list):
         for tag in self:
             stream.write(strtag(tag))
 
-    def gethandle(self, handles):
+    def gethandle(self, handles=None):
         handle = ''
         for tag in self:
             if tag.code in (5, 105):
                 handle = tag.value
                 break
         try:
-            int(handle, 16) # is valid handle
+            int(handle, 16) # check for valid handle
             return handle
         except ValueError:
             return handles.next

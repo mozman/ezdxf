@@ -39,11 +39,11 @@ class Layer(AC1009Layer):
         'lineweight': 370, # enum value???
     }
     def __init__(self, tags, handle):
-        # __init__ is also the wrapper interface!
+        # __init__ (tags, handle) is also the wrapper interface! do not change!
         super(Layer, self).__init__(tags, handle)
 
     def update_handle(self, handle):
-        # beyond AC1009, handles should always present
+        # beyond AC1009, handles should always be present
         self.tags.update(5, handle)
 
 """

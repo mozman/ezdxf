@@ -8,7 +8,7 @@
 
 from . import database
 from .handle import HandleGenerator
-from .tags import TagIterator, dxfinfo
+from .tags import TagIterator, dxfinfo, DXFTag
 from .dxffactory import dxffactory
 from .templates import TemplateFinder
 from .options import options
@@ -26,6 +26,7 @@ class Drawing:
         self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
         self.dxffactory = dxffactory(self._dxfversion, self)
+        self._enable_handles() # only for AC1009
 
     def read_header_vars(self, header):
         # called from HeaderSection() object to update important dxf properties
@@ -94,52 +95,43 @@ class Drawing:
             self.write(fp)
 
     def write(self, stream):
-        self._check_handling()
-        self._update_handle_seed()
+        self.header['$HANDSEED'] = self.handles.seed
         self.sections.write(stream)
 
-    def _check_handling(self):
-        """ Only for DXF R12, if usage of handles is disabled, remove all entity
-        handles.
+    def _enable_handles(self):
+        """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.
 
-        This is only possible if the drawing was created with another application
-        (or my dxfwrite-package ;-), which doesn't use handles, but this package
-        creates always new entities with handles, so we have to remove all
-        handle-tags (code== 5|105) from new created entities.
-
+        Write entitydb-handles into entits-tags.
         """
-        if self.dxfversion == 'AC1009':
-            try:
-                if self.header['$HANDLING'] == 0:
-                    self._remove_handles()
-            except KeyError:
-                self._remove_handles()
+        def has_handle(entity):
+            for tag in entity:
+                if tag.code in (5, 105):
+                    return True
+            return False
 
-    def _remove_handles(self):
-        """ Remove all handle-tags (code == 5|105) from entities and
-        table-entries.
-        """
-        def remove_handle(entity):
-            def remove(code):
-                try:
-                    index = entity.findfirst(code)
-                    entity.pop(index)
-                except ValueError:
-                    pass
+        def write_handles():
+            for handle in self.entitydb:
+                entity = self.entitydb[handle]
+                if not has_handle(entity):
+                    code = 5 if entity[0].value != 'DIMSTYLE' else 105 # legacy shit!!!
+                    # handle should be the second tag
+                    entity.insert(1, DXFTag(code, handle))
 
-            if entity[0] == (2, 'DIMSTYLE'):
-                remove(105)
-            else:
-                remove(5)
+        if self._dxfversion != 'AC1009':
+            return
+        write_handles()
+        self.header['$HANDLING'] = 1
 
-        try:
-            del self.header['$HANDSEED']
-        except KeyError:
-            pass
-        for entity in self.entitydb.values():
-            remove_handle(entity)
+    def add_layer(self, name, attribs):
+        if self.layers.entry_exists(name):
+            raise ValueError('Layer %s already exists!' % name)
+        attribs['name'] = name
+        return self.layers.new_entry(attribs)
 
-    def _update_handle_seed(self):
-        if '$HANDSEED' in self.header:
-            self.header['$HANDSEED'] = self.handles.seed
+    def get_layer(self, name):
+        return self.layers.get_entry(name)
+
+    def remove_layer(self, name):
+        self.layers.remove_entry(name)
+
 
