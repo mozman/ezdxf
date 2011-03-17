@@ -10,7 +10,7 @@ from ..tags import casttagvalue
 
 class TableEntry:
     def __init__(self, tags, handle):
-        # __init__ is also the wrapper interface!
+        # __init__ (tags, handle) is also the wrapper interface! do not change!
         assert tags[0] == (0, 'LAYER')
         self.tags = tags
         self.update_handle(handle)
@@ -39,8 +39,8 @@ class TableEntry:
         code = self.CODE[key]
         self.tags.new_or_update(code, casttagvalue(code, value))
 
-    def update(self, attribmap):
-        for key, value in attribmap.items():
+    def update(self, attribs):
+        for key, value in attribs.items():
             self._set_tag(key, code)
 
 _LAYERTEMPLATE = """  0
