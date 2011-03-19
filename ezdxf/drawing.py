@@ -109,9 +109,8 @@ class Drawing:
                     return True
             return False
 
-        def write_handles():
-            for handle in self.entitydb:
-                entity = self.entitydb[handle]
+        def put_handles_into_entity_tags():
+            for handle, entity in self.entitydb.items():
                 if not has_handle(entity):
                     code = 5 if entity[0].value != 'DIMSTYLE' else 105 # legacy shit!!!
                     # handle should be the second tag
@@ -119,7 +118,7 @@ class Drawing:
 
         if self._dxfversion != 'AC1009':
             return
-        write_handles()
+        put_handles_into_entity_tags()
         self.header['$HANDLING'] = 1
 
     def add_layer(self, name, attribs):

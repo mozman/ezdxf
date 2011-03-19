@@ -25,7 +25,7 @@ class EntitySpace(list):
         if isinstance(entity, Tags):
             handle = entity.gethandle(self._drawing.handles)
             self._drawing.entitydb[handle] = entity
-        elif isinstance(entity, Entity):
+        else:
             handle = entity.handle
         self.append(handle)
 
