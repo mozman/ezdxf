@@ -12,7 +12,9 @@ def factory(debug=False):
     return DebugDB() if debug else EntityDB()
 
 class EntityDB:
-    """ A simple key/value database a.k.a. dict(), but can be replaced.
+    """ A simple key/value database a.k.a. dict(), but can be replaced other
+    classes that implements all of the methods of `EntityDB`. The entities
+    have no order.
 
     The Data Model
 
@@ -38,13 +40,28 @@ class EntityDB:
         self._database[handle] = entity
 
     def __contains__(self, handle):
+        """ Database contains handle? """
         return handle in self._database
 
     def __len__(self):
+        """ Count of database items. """
         return len(self._database)
 
     def __iter__(self):
-        return iter(self._database)
+        """ Iterate over all handles. """
+        return iter(self._database.keys())
+
+    def keys(self):
+        """ Iterate over all handles. """
+        return self._database.keys()
+
+    def values(self):
+        """ Iterate over all entities. """
+        return self._database.values()
+
+    def items(self):
+        """ Iterate over all (handle, entities) pairs. """
+        return self._database.items()
 
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
