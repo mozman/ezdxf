@@ -9,7 +9,7 @@
 from collections import OrderedDict
 
 from .defaultchunk import iterchunks
-from .table import GenericTable, Table
+from .table import GenericTable, Table, ViewportTable
 
 class TablesSection:
     name = 'tables'
@@ -49,6 +49,7 @@ TABLESMAP = {
     'LAYER': Table,
     'LTYPE': Table,
     'STYLE': Table,
+    'VPORT': ViewportTable,
 }
 
 def get_table_class(name):
