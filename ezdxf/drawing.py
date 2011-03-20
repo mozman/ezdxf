@@ -84,9 +84,7 @@ class Drawing:
         tagreader = TagIterator(stream)
         return Drawing(tagreader)
 
-    def saveas(self, filename, encoding=None):
-        if encoding is not None:
-            self.encoding = encoding
+    def saveas(self, filename):
         self.filename = filename
         self.save()
 
