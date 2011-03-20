@@ -95,8 +95,11 @@ class Drawing:
             self.write(fp)
 
     def write(self, stream):
-        self.header['$HANDSEED'] = self.handles.seed
+        self._update_metadata()
         self.sections.write(stream)
+
+    def _update_metadata(self):
+        self.header['$HANDSEED'] = self.handles.seed
 
     def _enable_handles(self):
         """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.
@@ -120,17 +123,5 @@ class Drawing:
             return
         put_handles_into_entity_tags()
         self.header['$HANDLING'] = 1
-
-    def add_layer(self, name, attribs):
-        if self.layers.entry_exists(name):
-            raise ValueError('Layer %s already exists!' % name)
-        attribs['name'] = name
-        return self.layers.new_entry(attribs)
-
-    def get_layer(self, name):
-        return self.layers.get_entry(name)
-
-    def remove_layer(self, name):
-        self.layers.remove_entry(name)
 
 

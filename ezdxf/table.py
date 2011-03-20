@@ -41,12 +41,38 @@ class Table:
         self._table_header = None
         self._build_table_entries(tags)
 
-    @property
-    def name(self):
-        return tablename(self._dxfname)
+    # start public interface
+
+    def create(self, name, attribs=None):
+        if self.__contains__(name):
+            raise ValueError('%s %s already exists!' % (self._dxfname, name))
+        if attribs is None:
+            attribs = {}
+        attribs['name'] = name
+        return self.new_entry(attribs)
+
+    def get(self, name):
+        return self.get_entry(name)
+
+    def remove(self, name):
+        self.remove_entry(name)
+
+    def __contains__(self, name):
+        return self.entry_exists(name)
 
     def __len__(self):
         return len(self._table_entries)
+
+    def __iter__(self):
+        for handle in self._table_entries:
+            tags = self.entitydb[handle]
+            yield self.dxffactory.table_entry_wrapper(tags)
+
+    # end public interface
+
+    @property
+    def name(self):
+        return tablename(self._dxfname)
 
     def _build_table_entries(self, tags):
         groups = TagGroups(tags)
@@ -55,7 +81,7 @@ class Table:
 
         self._table_header = Tags(groups[0][1:])
         for entrytags in groups[1:-1]:
-            self.add_entry(entrytags)
+            self._add_entry(entrytags)
 
     @property
     def entitydb(self):
@@ -69,18 +95,14 @@ class Table:
     def dxffactory(self):
         return self._drawing.dxffactory
 
-    def __iter__(self):
-        """ Iterate over handles of table-entries. """
-        return iter(self._table_entries)
-
-    def iter_table_entries_as_tags(self):
+    def _iter_table_entries_as_tags(self):
         """ Iterate over table-entries as Tags(). """
-        return ( self.entitydb[handle] for handle in self )
+        return ( self.entitydb[handle] for handle in self._table_entries )
 
     def entry_exists(self, name):
         """ Check if an table-entry 'name' exists. """
         try:
-            hande = self.get_entry_handle(name)
+            handle = self.get_entry_handle(name)
             return True
         except ValueError:
             return False
@@ -94,16 +116,18 @@ class Table:
         """
         handle = self.handles.next
         entry = self.dxffactory.new_table_entry(self._dxfname, handle, attribs)
-        self.add_entry(entry.tags)
+        self._add_entry(entry)
         return entry
 
-    def add_entry(self, entry):
+    def _add_entry(self, entry):
         """ Add table-entry to table and entitydb. """
         if isinstance(entry, Tags):
             handle = entry.gethandle(self.handles)
+            tags = entry
         else:
             handle = entry.handle
-        self.entitydb[handle] = entry
+            tags = entry.tags
+        self.entitydb[handle] = tags
         self._table_entries.append(handle)
 
     def get_entry(self, name):
@@ -139,7 +163,7 @@ class Table:
             self._table_header.write(stream)
 
         def content():
-            for tags in self.iter_table_entries_as_tags():
+            for tags in self._iter_table_entries_as_tags():
                 tags.write(stream)
 
         def epilogue():
@@ -148,3 +172,11 @@ class Table:
         prologue()
         content()
         epilogue()
+
+class ViewportTable(Table):
+    ## TODO: Viewport-Table can have multiple entries with same name
+    def create(self, name, attribs=None):
+        if attribs is None:
+            attribs = {}
+        attribs['name'] = name
+        return self.new_entry(attribs)

@@ -6,7 +6,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from collections import namedtuple
+from collections import namedtuple, Counter
 from io import StringIO
 
 from .codepage import toencoding
@@ -243,3 +243,29 @@ class TagGroups(list):
     @staticmethod
     def fromtext(text, splitcode=0):
         return TagGroups(Tags.fromtext(text), splitcode)
+
+class UniqueTags:
+    """ Access tags by code, this works only for tags with unique codes.
+
+    Multiple existing codes are treated as not existing.
+
+    """
+    def __init__(self, tags):
+        self._counter = Counter( (tag.code for tag in tags) )
+        self._tags = tags
+        self._pos = { tag.code:pos for pos, tag in enumerate(tags) }
+
+    def __contains__(self, code):
+        return self._counter[code] == 1
+
+    def __getitem__(self, code):
+        if self.__contains__(code):
+            return self._tags[self._pos[code]].value
+        else:
+            raise KeyError(code)
+
+    def __setitem__(self, code, value):
+        if self.__contains__(code):
+            self._tags[self._pos[code]] = DXFTag(code, value)
+        else:
+            raise KeyError(code)

@@ -51,7 +51,7 @@ class GenericTableEntry:
 
     def update(self, attribs):
         for key, value in attribs.items():
-            self._set_tag(key, code)
+            self._set_tag(key, value)
 
 # DIMSTYLE is not really supported, this class just exists because of the
 # different handle-code

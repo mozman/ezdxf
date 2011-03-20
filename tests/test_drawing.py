@@ -31,6 +31,45 @@ class TestDrawing(unittest.TestCase):
         dest.close()
         self.assertEqual(TESTCOPY, result)
 
+class TestNewDrawingAC1009(unittest.TestCase):
+    def setUp(self):
+        self.dwg = Drawing.new('AC1009')
+
+    def test_get_layer(self):
+        layer = self.dwg.layers.get('0')
+        self.assertEqual('0', layer.name)
+
+    def test_error_getting_not_existing_layer(self):
+        with self.assertRaises(ValueError):
+            layer = self.dwg.layers.get('TEST_NOT_EXISTING_LAYER')
+
+    def test_create_layer(self):
+        layer = self.dwg.layers.create('TEST_NEW_LAYER')
+        self.assertEqual('TEST_NEW_LAYER', layer.name)
+
+    def test_error_adding_existing_layer(self):
+        with self.assertRaises(ValueError):
+            layer = self.dwg.layers.create('0')
+
+    def test_has_layer(self):
+        self.assertTrue('0' in self.dwg.layers)
+
+    def test_has_not_layer(self):
+        self.assertFalse('TEST_LAYER_NOT_EXISTS' in self.dwg.layers)
+
+    def test_removing_layer(self):
+        self.dwg.layers.remove('0')
+        self.assertFalse('0' in self.dwg.layers)
+
+    def test_error_removing_not_existing_layer(self):
+        with self.assertRaises(ValueError):
+            self.dwg.layers.remove('TEST_LAYER_NOT_EXISTS')
+
+
+class TestNewDrawingAC1015(TestNewDrawingAC1009):
+    def setUp(self):
+        self.dwg = Drawing.new('AC1015')
+
 
 TEST_HEADER = """  0
 SECTION
