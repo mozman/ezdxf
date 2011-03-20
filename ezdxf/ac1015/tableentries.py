@@ -8,6 +8,7 @@
 
 from ..tags import casttagvalue
 from ..ac1009.tableentries import Layer as AC1009Layer
+from ..ac1009.tableentries import DimStyle
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -38,13 +39,7 @@ class Layer(AC1009Layer):
         'plot': 290, # dont plot this layer if 0 else 1
         'lineweight': 370, # enum value???
     }
-    def __init__(self, tags, handle):
-        # __init__ (tags, handle) is also the wrapper interface! do not change!
-        super(Layer, self).__init__(tags, handle)
 
-    def update_handle(self, handle):
-        # beyond AC1009, handles should always be present
-        self.tags.update(5, handle)
 
 """
 ATTRIBUTES = {

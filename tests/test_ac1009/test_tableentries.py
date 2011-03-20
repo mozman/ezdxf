@@ -15,8 +15,7 @@ from ezdxf.ac1009.tableentries import Layer
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
-        tags = Tags.fromtext(Layer.TEMPLATE)
-        self.layer = Layer(tags, 'FFFF')
+        self.layer = Layer.new('FFFF')
 
     def test_new_layer(self):
         self.assertEqual(6, len(self.layer.tags))

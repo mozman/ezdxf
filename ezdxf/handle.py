@@ -7,7 +7,7 @@
 # License: GPLv3
 
 class HandleGenerator:
-    def __init__(self, startvalue='0'):
+    def __init__(self, startvalue='1'):
         self._handle = int(startvalue, 16)
 
     @property
@@ -16,8 +16,9 @@ class HandleGenerator:
 
     @property
     def next(self):
+        next_handle =  self.seed
         self._handle += 1
-        return self.seed
+        return next_handle
 
     def reset(self, startvalue):
         self._handle = int(startvalue, 16)
