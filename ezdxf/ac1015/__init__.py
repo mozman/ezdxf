@@ -9,10 +9,11 @@ from ..tags import Tags
 
 from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
-from .tableentries import Layer
+from .tableentries import Layer, DimStyle
 
 class AC1015Factory(AC1009Factory):
     HEADERVARS = dict(VARMAP)
     TABLE_ENTRY_WRAPPERS = {
         'LAYER': Layer,
+        'DIMSTYLE': DimStyle,
     }

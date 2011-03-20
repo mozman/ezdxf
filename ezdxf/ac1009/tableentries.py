@@ -6,22 +6,32 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..tags import casttagvalue
+from ..tags import casttagvalue, Tags
 
-class TableEntry:
-    def __init__(self, tags, handle):
-        # __init__ (tags, handle) is also the wrapper interface! do not change!
-        assert tags[0] == (0, 'LAYER')
+# GenericTableEntry works as wrapper-class for all table-entries except DIMSTYLE,
+# because the handle-code for DIMSTYLE is 105 and not 5. (legacy issue)
+# GenericTableEntry deos not work as factory-class, because it represents no
+# specific table-entry. So use the class-method new(...) only from a subclass of
+# GenericTableEntry.
+
+class GenericTableEntry:
+    TEMPLATE = ""
+    CODE = {
+        'handle': 5,
+        'name': 2,
+    }
+    def __init__(self, tags):
         self.tags = tags
-        self.update_handle(handle)
 
-    def update_handle(self, handle):
-        try:
-            self.tags.update(5, handle)
-        except ValueError:
-            # for AC1009: handles must not be present
-            # important insert as second tag
-            self.tags.insert(1, (5, handle))
+    @classmethod
+    def new(cls, handle, attribs=None):
+        # works only for none generic table-entries, because a table-entry has to
+        # have a specific type!!!
+        table_entry = cls(Tags.fromtext(cls.TEMPLATE))
+        table_entry.handle = handle
+        if attribs is not None:
+            table_entry.update(attribs)
+        return table_entry
 
     def __getattr__(self, key):
         if key in self.CODE:
@@ -33,7 +43,7 @@ class TableEntry:
         if key in self.CODE:
             self._set_tag(key, value)
         else:
-            super(TableEntry, self).__setattr__(key, value)
+            super(GenericTableEntry, self).__setattr__(key, value)
 
     def _set_tag(self, key, value):
         code = self.CODE[key]
@@ -42,6 +52,17 @@ class TableEntry:
     def update(self, attribs):
         for key, value in attribs.items():
             self._set_tag(key, code)
+
+# DIMSTYLE is not really supported, this class just exists because of the
+# different handle-code
+class DimStyle(GenericTableEntry):
+    CODE = {
+        'handle': 105,
+        'name': 2,
+    }
+    @classmethod
+    def new(cls, handle, attribs=None):
+        raise NotImplementedError("DimStyle creation is not supported.")
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -60,7 +81,7 @@ CONTINUOUS
 LAYER_LOCK = 0b00000100
 LAYER_UNLOCK = 0b11111011
 
-class Layer(TableEntry):
+class Layer(GenericTableEntry):
     TEMPLATE = _LAYERTEMPLATE
     CODE = {
         'handle': 5,
@@ -91,7 +112,6 @@ class Layer(TableEntry):
     def set_color(self, color):
         sign = -1 if self.color < 0 else 1
         self.color = color * sign
-
 
 """
 ATTRIBUTES = {

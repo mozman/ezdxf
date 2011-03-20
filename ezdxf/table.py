@@ -36,11 +36,14 @@ class GenericTable(DefaultChunk):
 class Table:
     def __init__(self, tags, drawing):
         self._dxfname = tags[1].value
-        self.name = tablename(self._dxfname)
         self._drawing = drawing
         self._table_entries = list()
         self._table_header = None
         self._build_table_entries(tags)
+
+    @property
+    def name(self):
+        return tablename(self._dxfname)
 
     def __len__(self):
         return len(self._table_entries)
@@ -70,7 +73,7 @@ class Table:
         """ Iterate over handles of table-entries. """
         return iter(self._table_entries)
 
-    def iter_entry_tags(self):
+    def iter_table_entries_as_tags(self):
         """ Iterate over table-entries as Tags(). """
         return ( self.entitydb[handle] for handle in self )
 
@@ -107,7 +110,7 @@ class Table:
         """ Get table-entry by name as WrapperClass(). """
         handle = self.get_entry_handle(name)
         tags = self.entitydb[handle]
-        return self.dxffactory.table_entry_wrapper(tags, handle)
+        return self.dxffactory.table_entry_wrapper(tags)
 
     def remove_entry(self, name):
         """ Remove table-entry from table and entitydb by name. """
@@ -136,8 +139,8 @@ class Table:
             self._table_header.write(stream)
 
         def content():
-            for entry in self.iter_entry_tags():
-                entry.write(stream)
+            for tags in self.iter_table_entries_as_tags():
+                tags.write(stream)
 
         def epilogue():
             stream.write('  0\nENDTAB\n')

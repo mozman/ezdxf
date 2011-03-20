@@ -68,13 +68,16 @@ the section markers and table headers present:
 from ..tags import Tags
 
 from .headervars import VARMAP
-from .tableentries import Layer
+from .tableentries import GenericTableEntry, Layer, DimStyle
 
 class AC1009Factory:
     HEADERVARS = dict(VARMAP)
     TABLE_ENTRY_WRAPPERS = {
         'LAYER': Layer,
+        'DIMSTYLE': DimStyle,
     }
+    # extra class for DIMSTYLE is ALWAYS required, because of the different
+    # handle-code,
 
     def __init__(self):
         self.drawing = None
@@ -83,28 +86,19 @@ class AC1009Factory:
         factory = self.HEADERVARS[key]
         return factory(value)
 
-    def new_layer(self, handle, attribs):
-        """ Create a new table-entry 'LAYER'. Does not add the new table-entry
-        to the entitydb.
-        """
-        layer_class = self.TABLE_ENTRY_WRAPPERS['layer']
-        tags = Tags.fromtext(layer_class.TEMPLATE)
-        layer = layer_class(tags, handle)
-        layer.update(attribs)
-        return layer
-
     def new_table_entry(self, type_, handle, attribs):
-        # dont use a dict: preserves the possibility of overwritting new_layer()
-        if type_=='LAYER':
-            return self.new_layer(handle, attribs)
-        else:
+        try:
+            class_ = self.TABLE_ENTRY_WRAPPERS['LAYER']
+            return class_.new(handle, attribs)
+        except KeyError:
             raise ValueError('Unsupported table type: %s' % type_)
 
-    def table_entry_wrapper(self, tags, handle):
+
+    def table_entry_wrapper(self, tags):
         """ Wraps 'tags' into a WrapperClass(). """
         type_ = tags[0].value
-        wrapper = self.TABLE_ENTRY_WRAPPERS.get(type_, TableEntryWrapper)
-        return wrapper(tags, handle)
+        wrapper = self.TABLE_ENTRY_WRAPPERS.get(type_, GenericTableEntry)
+        return wrapper(tags)
 
     def table_wrapper(self, table):
         return TableWrapper(table)
@@ -126,18 +120,3 @@ class TableWrapper:
     def set_count(self, count):
         self._table._table_header.update(70, count)
 
-class TableEntryWrapper:
-    """
-    Encapsulate all DXF-Version specific details for all DXF table entries.
-
-    Table entries starting with tag (0, TABLENAME): (0, LTYPE), (0, LAYER), ...
-    in the TABLE tag-chunk.
-
-    """
-    def __init__(self, tags, handle):
-        self.tags = tags
-        self.handle = handle
-
-    @property
-    def name(self):
-        return self.tags[self.tags.findfirst(2)].value
