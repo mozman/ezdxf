@@ -24,7 +24,7 @@ class GenericTableEntry:
         self.tags = tags
 
     @classmethod
-    def new(cls, handle, attribs=None):
+    def new(cls, handle, attribs=None, dxffactory=None):
         # works only for none generic table-entries, because a table-entry has to
         # have a specific type!!!
         table_entry = cls(Tags.fromtext(cls.TEMPLATE))
@@ -61,7 +61,7 @@ class DimStyle(GenericTableEntry):
         'name': 2,
     }
     @classmethod
-    def new(cls, handle, attribs=None):
+    def new(cls, handle, attribs=None, dxffactory=None):
         raise NotImplementedError("DimStyle creation is not supported.")
 
 _LAYERTEMPLATE = """  0

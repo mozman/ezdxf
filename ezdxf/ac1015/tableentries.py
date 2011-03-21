@@ -27,14 +27,17 @@ LayerName
   6
 Continuous
 390
-  F
+F
 """
 
 # code 390 is required for AutoCAD
 # Pointer/handle to PlotStyleName
 # points in the template-file:
 # handle 'F': <ACDBPLACEHOLDER> object
-# handle 'E': <ACDBDICTIONARYWDFLT> object
+# this will not work with opened drawings
+# possible solution: use tag(390, ...) from the '0' layer
+
+from ..tags import UniqueTags
 
 class Layer(AC1009Layer):
     TEMPLATE = _LAYERTEMPLATE
@@ -48,6 +51,11 @@ class Layer(AC1009Layer):
         'lineweight': 370, # enum value???
     }
 
+    @classmethod
+    def new(cls, handle, attribs=None, dxffactory=None):
+        layer = super(Layer, cls).new(handle, attribs)
+        layer.tags.update(390, dxffactory._get_default_plot_style_handle())
+        return layer
 
 """
 ATTRIBUTES = {

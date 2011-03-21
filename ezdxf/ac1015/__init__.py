@@ -17,3 +17,5 @@ class AC1015Factory(AC1009Factory):
         'LAYER': Layer,
         'DIMSTYLE': DimStyle,
     }
+    def _get_default_plot_style_handle(self):
+        return self.drawing._system_default_table['DefaultPlotStyleHandle']
