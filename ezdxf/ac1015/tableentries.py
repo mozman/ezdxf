@@ -32,10 +32,7 @@ F
 
 # code 390 is required for AutoCAD
 # Pointer/handle to PlotStyleName
-# points in the template-file:
-# handle 'F': <ACDBPLACEHOLDER> object
-# this will not work with opened drawings
-# possible solution: use tag(390, ...) from the '0' layer
+# uses tag(390, ...) from the '0' layer
 
 from ..tags import UniqueTags
 

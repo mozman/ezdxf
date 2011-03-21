@@ -14,6 +14,9 @@ from .templates import TemplateFinder
 from .options import options
 from .codepage import tocodepage, toencoding
 from .sections import Sections
+from .systemtable import SystemTable
+from .juliandate import juliandate
+from datetime import datetime
 
 class Drawing:
     def __init__(self, tagreader):
@@ -26,9 +29,11 @@ class Drawing:
         self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
         self.dxffactory = dxffactory(self._dxfversion, self)
-        self._enable_handles() # only for AC1009
-        self._system_default_table = {}
-        self._setup_system_default_table()
+
+        if self._dxfversion > 'AC1009':
+            self.system_table = SystemTable(self)
+        else:
+            self._enable_handles()
 
     def read_header_vars(self, header):
         # called from HeaderSection() object to update important dxf properties
@@ -38,9 +43,6 @@ class Drawing:
         self.handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
-
-    def _setup_system_default_table(self):
-        self._system_default_table['DefaultPlotStyleHandle'] = 'F' ##TODO: get default from layer '0'
 
     @property
     def dxfversion(self):
@@ -79,9 +81,11 @@ class Drawing:
         finder = TemplateFinder(options['templatedir'])
         try:
             stream = finder.getstream(dxfversion)
-            return Drawing.read(stream)
+            dwg = Drawing.read(stream)
         finally:
             stream.close()
+        dwg.header['$TDCREATE'] = juliandate(datetime.now())
+        return dwg
 
     @staticmethod
     def read(stream):
@@ -102,6 +106,7 @@ class Drawing:
         self.sections.write(stream)
 
     def _update_metadata(self):
+        self.header['$TDUPDATE'] = juliandate(datetime.now())
         self.header['$HANDSEED'] = self.handles.seed
 
     def _enable_handles(self):
@@ -126,5 +131,3 @@ class Drawing:
             return
         put_handles_into_entity_tags()
         self.header['$HANDLING'] = 1
-
-

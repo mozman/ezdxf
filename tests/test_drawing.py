@@ -21,16 +21,6 @@ class TestDrawing(unittest.TestCase):
     def test_dxfversion(self):
         self.assertEqual('AC1018', self.dwg.dxfversion)
 
-    def test_copy_file(self):
-        fp = StringIO(TESTCOPY)
-        dwg = Drawing.read(fp)
-        fp.close()
-        dest = StringIO()
-        dwg.write(dest)
-        result = dest.getvalue()
-        dest.close()
-        self.assertEqual(TESTCOPY, result)
-
 class TestNewDrawingAC1009(unittest.TestCase):
     def setUp(self):
         self.dwg = Drawing.new('AC1009')
@@ -105,6 +95,10 @@ AC1018
 $DWGCODEPAGE
   3
 ANSI_1252
+  9
+$TDUPDATE
+ 40
+0.
   9
 $HANDSEED
   5
