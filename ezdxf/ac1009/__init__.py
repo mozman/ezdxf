@@ -89,7 +89,7 @@ class AC1009Factory:
     def new_table_entry(self, type_, handle, attribs):
         try:
             class_ = self.TABLE_ENTRY_WRAPPERS[type_]
-            return class_.new(handle, attribs)
+            return class_.new(handle, attribs, self)
         except KeyError:
             raise ValueError('Unsupported table type: %s' % type_)
 

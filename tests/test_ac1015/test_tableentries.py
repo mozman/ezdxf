@@ -13,12 +13,13 @@ from ezdxf.tags import Tags
 
 from ezdxf.ac1015.tableentries import Layer
 
+class DXFFactory:
+    def _get_default_plot_style_handle(self):
+        return 'AFAF'
+
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
-        self.layer = Layer.new('FFFF')
-
-    def test_new_layer(self):
-        self.assertEqual(8, len(self.layer.tags))
+        self.layer = Layer.new('FFFF', dxffactory=DXFFactory())
 
     def test_get_handle(self):
         self.assertEqual('FFFF', self.layer.handle)
@@ -42,6 +43,10 @@ class TestNewLayer(unittest.TestCase):
     def test_set_color(self):
         self.layer.color = '1'
         self.assertEqual(1, self.layer.color)
+
+    def test_default_plotstylename(self):
+        handle = self.layer.tags.getvalue(390)
+        self.assertEqual('AFAF', handle)
 
 
 if __name__=='__main__':

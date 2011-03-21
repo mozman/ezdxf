@@ -27,6 +27,8 @@ class Drawing:
         self.sections = Sections(tagreader, self)
         self.dxffactory = dxffactory(self._dxfversion, self)
         self._enable_handles() # only for AC1009
+        self._system_default_table = {}
+        self._setup_system_default_table()
 
     def read_header_vars(self, header):
         # called from HeaderSection() object to update important dxf properties
@@ -36,6 +38,9 @@ class Drawing:
         self.handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
+
+    def _setup_system_default_table(self):
+        self._system_default_table['DefaultPlotStyleHandle'] = 'F' ##TODO: get default from layer '0'
 
     @property
     def dxfversion(self):
