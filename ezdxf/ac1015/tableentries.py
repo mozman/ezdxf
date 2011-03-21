@@ -26,7 +26,15 @@ LayerName
 7
   6
 Continuous
+390
+  F
 """
+
+# code 390 is required for AutoCAD
+# Pointer/handle to PlotStyleName
+# points in the template-file:
+# handle 'F': <ACDBPLACEHOLDER> object
+# handle 'E': <ACDBDICTIONARYWDFLT> object
 
 class Layer(AC1009Layer):
     TEMPLATE = _LAYERTEMPLATE

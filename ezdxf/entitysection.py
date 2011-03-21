@@ -17,6 +17,9 @@ class EntitySection:
         self._workspace = EntitySpace(drawing)
         self._build(tags)
 
+    def iterhandles(self):
+        return iter(self._workspace)
+
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
         assert tags[1] == (2, self.name.upper())

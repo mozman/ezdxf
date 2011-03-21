@@ -120,3 +120,4 @@ class DebugDB(EntityDB):
         self.println("Database contains %d entries." % len(self))
         for handle in self:
             dump_entry(handle)
+
