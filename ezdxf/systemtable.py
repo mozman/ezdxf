@@ -9,7 +9,10 @@
 import logging
 
 class SystemTable:
-    """ Store some required system values, mostly only required for AutoCAD. """
+    """ Store some required system values, mostly only required for AutoCAD.
+
+    Use the first DICTIONARY in the OBJECTS-SECTION
+    """
     def __init__(self, drawing):
         self._values = dict()
         self._drawing = drawing

@@ -84,8 +84,11 @@ class Drawing:
             dwg = Drawing.read(stream)
         finally:
             stream.close()
-        dwg.header['$TDCREATE'] = juliandate(datetime.now())
+        dwg._setup_metadata()
         return dwg
+
+    def _setup_metadata(self):
+        dwg.header['$TDCREATE'] = juliandate(datetime.now())
 
     @staticmethod
     def read(stream):
