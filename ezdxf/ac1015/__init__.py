@@ -13,9 +13,14 @@ from .tableentries import Layer, DimStyle
 
 class AC1015Factory(AC1009Factory):
     HEADERVARS = dict(VARMAP)
-    TABLE_ENTRY_WRAPPERS = {
+    ENTITY_WRAPPERS = {
         'LAYER': Layer,
         'DIMSTYLE': DimStyle,
     }
+
+    @property
+    def rootdict(self):
+        return self.drawing.rootdict
+
     def _get_default_plot_style_handle(self):
-        return self.drawing.system_table['DefaultPlotStyleHandle']
+        return self.rootdict['ACAD_PLOTSTYLENAME']

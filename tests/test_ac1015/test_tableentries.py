@@ -14,8 +14,7 @@ from ezdxf.tags import Tags
 from ezdxf.ac1015.tableentries import Layer
 
 class DXFFactory:
-    def _get_default_plot_style_handle(self):
-        return 'AFAF'
+    rootdict = { 'ACAD_PLOTSTYLENAME': 'AFAF' }
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):

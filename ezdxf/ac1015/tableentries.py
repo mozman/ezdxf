@@ -51,7 +51,7 @@ class Layer(AC1009Layer):
     @classmethod
     def new(cls, handle, attribs=None, dxffactory=None):
         layer = super(Layer, cls).new(handle, attribs)
-        layer.tags.update(390, dxffactory._get_default_plot_style_handle())
+        layer.tags.update(390, dxffactory.rootdict['ACAD_PLOTSTYLENAME'])
         return layer
 
 """

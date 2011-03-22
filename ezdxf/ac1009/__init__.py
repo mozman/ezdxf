@@ -72,7 +72,7 @@ from .tableentries import GenericTableEntry, Layer, DimStyle
 
 class AC1009Factory:
     HEADERVARS = dict(VARMAP)
-    TABLE_ENTRY_WRAPPERS = {
+    ENTITY_WRAPPERS =  {
         'LAYER': Layer,
         'DIMSTYLE': DimStyle,
     }
@@ -86,17 +86,17 @@ class AC1009Factory:
         factory = self.HEADERVARS[key]
         return factory(value)
 
-    def new_table_entry(self, type_, handle, attribs):
+    def new_entity(self, type_, handle, attribs):
         try:
-            class_ = self.TABLE_ENTRY_WRAPPERS[type_]
+            class_ = self.ENTITY_WRAPPERS[type_]
             return class_.new(handle, attribs, self)
         except KeyError:
-            raise ValueError('Unsupported table type: %s' % type_)
+            raise ValueError('Unsupported entiy type: %s' % type_)
 
-    def table_entry_wrapper(self, tags):
+    def wrap_entity(self, tags):
         """ Wraps 'tags' into a WrapperClass(). """
         type_ = tags[0].value
-        wrapper = self.TABLE_ENTRY_WRAPPERS.get(type_, GenericTableEntry)
+        wrapper = self.ENTITY_WRAPPERS.get(type_, GenericTableEntry)
         return wrapper(tags)
 
     def table_wrapper(self, table):
