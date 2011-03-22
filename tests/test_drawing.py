@@ -19,7 +19,7 @@ class TestDrawing(unittest.TestCase):
         self.dwg = Drawing(StringIterator(TEST_HEADER))
 
     def test_dxfversion(self):
-        self.assertEqual('AC1018', self.dwg.dxfversion)
+        self.assertEqual('AC1009', self.dwg.dxfversion)
 
 class TestNewDrawingAC1009(unittest.TestCase):
     def setUp(self):
@@ -68,7 +68,7 @@ HEADER
   9
 $ACADVER
   1
-AC1018
+AC1009
   9
 $DWGCODEPAGE
   3

@@ -9,18 +9,19 @@ from ..tags import Tags
 
 from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
-from .tableentries import Layer, DimStyle
+from .tableentries import Layer, BlockRecord
+
+UPDATE_ENTITY_WRAPPERS = {
+    'LAYER': Layer,
+    'BLOCK_RECORD': BlockRecord,
+}
 
 class AC1015Factory(AC1009Factory):
     HEADERVARS = dict(VARMAP)
-    ENTITY_WRAPPERS = {
-        'LAYER': Layer,
-        'DIMSTYLE': DimStyle,
-    }
+    def __init__(self):
+        super(AC1015Factory, self).__init__()
+        self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
 
     @property
     def rootdict(self):
         return self.drawing.rootdict
-
-    def _get_default_plot_style_handle(self):
-        return self.rootdict['ACAD_PLOTSTYLENAME']

@@ -68,18 +68,29 @@ the section markers and table headers present:
 from ..tags import Tags
 
 from .headervars import VARMAP
-from .tableentries import GenericTableEntry, Layer, DimStyle
+from .tableentries import Layer, DimStyle, AppID, Style, Linetype, View, Viewport, UCS
+from ..dxfobjects import DXFDictionary
+from ..entity import GenericWrapper
+
+ENTITY_WRAPPERS =  {
+    # tables entries
+    'LAYER': Layer,
+    'DIMSTYLE': DimStyle,
+    'LTYPE': Linetype,
+    'APPID': AppID,
+    'STYLE': Style,
+    'USC': UCS,
+    'VIEW': View,
+    'VPORT': Viewport,
+    # dxf objects
+    'DICTIONARY': DXFDictionary,
+    # dxf entities
+}
 
 class AC1009Factory:
     HEADERVARS = dict(VARMAP)
-    ENTITY_WRAPPERS =  {
-        'LAYER': Layer,
-        'DIMSTYLE': DimStyle,
-    }
-    # extra class for DIMSTYLE is ALWAYS required, because of the different
-    # handle-code,
-
     def __init__(self):
+        self.ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)
         self.drawing = None
 
     def new_header_var(self, key, value):
@@ -91,12 +102,12 @@ class AC1009Factory:
             class_ = self.ENTITY_WRAPPERS[type_]
             return class_.new(handle, attribs, self)
         except KeyError:
-            raise ValueError('Unsupported entiy type: %s' % type_)
+            raise ValueError('Unsupported entity type: %s' % type_)
 
     def wrap_entity(self, tags):
         """ Wraps 'tags' into a WrapperClass(). """
         type_ = tags[0].value
-        wrapper = self.ENTITY_WRAPPERS.get(type_, GenericTableEntry)
+        wrapper = self.ENTITY_WRAPPERS.get(type_, GenericWrapper)
         return wrapper(tags)
 
     def table_wrapper(self, table):

@@ -10,7 +10,7 @@ from itertools import islice
 
 from .tags import TagGroups, DXFStructureError
 from .entityspace import EntitySpace
-from .dxfobjects import DXFDictinary
+from .dxfobjects import DXFDictionary
 
 class EntitySection:
     name = 'entities'
@@ -39,9 +39,8 @@ class EntitySection:
 
 class ObjectsSection(EntitySection):
     name = 'objects'
-
-    def get_rootdict(self):
-        return DXFDictinary(self._workspace[0])
+    def roothandle(self):
+        return self._workspace[0]
 
 class ClassesSection(EntitySection):
     name = 'classes'

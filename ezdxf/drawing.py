@@ -14,13 +14,17 @@ from .templates import TemplateFinder
 from .options import options
 from .codepage import tocodepage, toencoding
 from .sections import Sections
-from .systemtable import SystemTable
+from .dxfobjects import DXFDictionary
 from .juliandate import juliandate
 from datetime import datetime
 
 class Drawing:
     def __init__(self, tagreader):
         """ Create a new drawing. """
+        def get_rootdict():
+            roothandle = self.sections.objects.roothandle()
+            return DXFDictionary(self.entitydb[roothandle])
+
         self._dxfversion = 'AC1009' # readonly
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
@@ -31,7 +35,7 @@ class Drawing:
         self.dxffactory = dxffactory(self._dxfversion, self)
 
         if self._dxfversion > 'AC1009':
-            self.rootdict = SystemTable(self)
+            self.rootdict = get_rootdict()
         else:
             self._enable_handles()
 
