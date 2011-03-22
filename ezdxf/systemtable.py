@@ -23,7 +23,7 @@ class SystemTable:
         return self._values[key]
 
     def _setup(self):
-        self._values['DefaultPlotStyleHandle'] = self._get_default_plot_style_handle()
+        self._values['ACAD_PLOTSTYLENAME'] = self._get_default_plot_style_handle()
 
     def _get_default_plot_style_handle(self):
         handle = None

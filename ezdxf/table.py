@@ -66,7 +66,7 @@ class Table:
     def __iter__(self):
         for handle in self._table_entries:
             tags = self.entitydb[handle]
-            yield self.dxffactory.table_entry_wrapper(tags)
+            yield self.dxffactory.wrap_entity(tags)
 
     # end public interface
 
@@ -115,7 +115,7 @@ class Table:
         Duplicate entries are possible for Viewports.
         """
         handle = self.handles.next
-        entry = self.dxffactory.new_table_entry(self._dxfname, handle, attribs)
+        entry = self.dxffactory.new_entity(self._dxfname, handle, attribs)
         self._add_entry(entry)
         return entry
 
@@ -134,7 +134,7 @@ class Table:
         """ Get table-entry by name as WrapperClass(). """
         handle = self.get_entry_handle(name)
         tags = self.entitydb[handle]
-        return self.dxffactory.table_entry_wrapper(tags)
+        return self.dxffactory.wrap_entity(tags)
 
     def remove_entry(self, name):
         """ Remove table-entry from table and entitydb by name. """

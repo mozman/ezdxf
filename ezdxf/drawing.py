@@ -31,7 +31,7 @@ class Drawing:
         self.dxffactory = dxffactory(self._dxfversion, self)
 
         if self._dxfversion > 'AC1009':
-            self.system_table = SystemTable(self)
+            self.rootdict = SystemTable(self)
         else:
             self._enable_handles()
 
@@ -88,7 +88,7 @@ class Drawing:
         return dwg
 
     def _setup_metadata(self):
-        dwg.header['$TDCREATE'] = juliandate(datetime.now())
+        self.header['$TDCREATE'] = juliandate(datetime.now())
 
     @staticmethod
     def read(stream):
