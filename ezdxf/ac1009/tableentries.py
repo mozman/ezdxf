@@ -6,7 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..tags import casttagvalue, Tags
+from ..entity import GenericWrapper
+from ..tags import DXFTag
 
 # GenericTableEntry works as wrapper-class for all table-entries except DIMSTYLE,
 # because the handle-code for DIMSTYLE is 105 and not 5. (legacy issue)
@@ -14,44 +15,11 @@ from ..tags import casttagvalue, Tags
 # specific table-entry. So use the class-method new(...) only from a subclass of
 # GenericTableEntry.
 
-class GenericTableEntry:
-    TEMPLATE = ""
+class GenericTableEntry(GenericWrapper):
     CODE = {
         'handle': 5,
         'name': 2,
     }
-    def __init__(self, tags):
-        self.tags = tags
-
-    @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
-        # works only for none generic table-entries, because a table-entry has to
-        # have a specific type!!!
-        table_entry = cls(Tags.fromtext(cls.TEMPLATE))
-        table_entry.handle = handle
-        if attribs is not None:
-            table_entry.update(attribs)
-        return table_entry
-
-    def __getattr__(self, key):
-        if key in self.CODE:
-            return self.tags.getvalue(self.CODE[key])
-        else:
-            raise AttributeError(key)
-
-    def __setattr__(self, key, value):
-        if key in self.CODE:
-            self._set_tag(key, value)
-        else:
-            super(GenericTableEntry, self).__setattr__(key, value)
-
-    def _set_tag(self, key, value):
-        code = self.CODE[key]
-        self.tags.new_or_update(code, casttagvalue(code, value))
-
-    def update(self, attribs):
-        for key, value in attribs.items():
-            self._set_tag(key, value)
 
 # DIMSTYLE is not really supported, this class just exists because of the
 # different handle-code
@@ -67,13 +35,13 @@ class DimStyle(GenericTableEntry):
 _LAYERTEMPLATE = """  0
 LAYER
   5
-XXXX
+0
   2
 LayerName
  70
-     0
+0
  62
-     7
+7
   6
 CONTINUOUS
 """
@@ -81,7 +49,7 @@ CONTINUOUS
 LAYER_LOCK = 0b00000100
 LAYER_UNLOCK = 0b11111011
 
-class Layer(GenericTableEntry):
+class Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
     CODE = {
         'handle': 5,
@@ -113,79 +81,260 @@ class Layer(GenericTableEntry):
         sign = -1 if self.color < 0 else 1
         self.color = color * sign
 
-"""
-ATTRIBUTES = {
-    'LTYPE': {
-        'name': AttribDef(DXFString, 2, priority=52),
-        'flags': AttribDef(DXFInt, 70, priority=53),
-        'description': AttribDef(DXFString, 3, priority=101),
-        'pattern': AttribDef(PassThroughFactory, priority=102),
-        },
-    'STYLE': {
-        'name': AttribDef(DXFString, 2, priority=52),
-        'flags': AttribDef(DXFInt, 70, priority=53),
-        'height': AttribDef(DXFFloat, 40, priority=101),
-        'width': AttribDef(DXFFloat, 41, priority=102),
-        'last_height': AttribDef(DXFFloat, 42, priority=103),
-        'oblique': AttribDef(DXFAngle, 50, priority=104),
-        'generation_flags': AttribDef(DXFInt, 71, priority=105),
-        'font': AttribDef(DXFString, 3, priority=106),
-        'bigfont': AttribDef(DXFString, 4, priority=107),
-        },
-    'VIEW': {
-        'name': AttribDef(DXFString, 2, priority=52),
-        'flags': AttribDef(DXFInt, 70, priority=53),
-        'height': AttribDef(DXFFloat, 40, priority=101),
-        'width': AttribDef(DXFFloat, 41, priority=102),
-        'center_point': AttribDef(DXFPoint2D, 0, priority=103),
-        'direction_point': AttribDef(DXFPoint3D, 1, priority=104),
-        'target_point': AttribDef(DXFPoint3D, 2, priority=105),
-        'lens_length': AttribDef(DXFFloat, 42, priority=106),
-        'front_clipping': AttribDef(DXFFloat, 43, priority=107),
-        'back_clipping': AttribDef(DXFFloat, 44, priority=108),
-        'view_twist': AttribDef(DXFAngle, 50, priority=109),
-        'view_mode': AttribDef(DXFInt, 71, priority=110),
-        },
-    'VPORT': {
-        'name': AttribDef(DXFString, 2, priority=52),
-        'flags': AttribDef(DXFInt, 70, priority=53),
-        'lower_left': AttribDef(DXFPoint2D, 0,priority=101),
-        'upper_right': AttribDef(DXFPoint2D, 1, priority=102),
-        'center_point': AttribDef(DXFPoint2D, 2, priority=103),
-        'snap_base': AttribDef(DXFPoint2D, 3, priority=104),
-        'snap_spacing': AttribDef(DXFPoint2D, 4, priority=105),
-        'grid_spacing': AttribDef(DXFPoint2D, 5, priority=106),
-        'direction_point': AttribDef(DXFPoint3D, 6, priority=107),
-        'target_point': AttribDef(DXFPoint3D, 7, priority=108),
-        'height': AttribDef(DXFFloat, 40, priority=112),
-        'aspect_ratio': AttribDef(DXFFloat, 41, priority=113),
-        'lens_length': AttribDef(DXFFloat, 42, priority=109),
-        'front_clipping': AttribDef(DXFFloat, 43, priority=110),
-        'back_clipping': AttribDef(DXFFloat, 44, priority=111),
-        'snap_rotation': AttribDef(DXFAngle, 50, priority=115),
-        'view_twist': AttribDef(DXFAngle, 51, priority=116),
-        'status': AttribDef(DXFInt, 68, priority=117),
-        'id': AttribDef(DXFInt, 69, priority=118),
-        'view_mode': AttribDef(DXFInt, 71, priority=122),
-        'circle_zoom': AttribDef(DXFInt, 72, priority=123),
-        'fast_zoom': AttribDef(DXFInt, 73, priority=124),
-        'ucs_icon': AttribDef(DXFInt, 74, priority=126),
-        'snap_on': AttribDef(DXFInt, 75, priority=127),
-        'grid_on': AttribDef(DXFInt, 76, priority=128),
-        'snap_style': AttribDef(DXFInt, 77, priority=129),
-        'snap_isopair': AttribDef(DXFInt, 78, priority=130)
-        },
-    'APPID': {
-        'name': AttribDef(DXFString, 2, priority=52),
-        'flags': AttribDef(DXFInt, 70, priority=53),
-        },
-    'UCS': {
-        'name': AttribDef(DXFString, 2, priority=52),
-        'flags': AttribDef(DXFInt, 70, priority=53),
-        'origin': AttribDef(DXFPoint3D, 0,priority=101),
-        'xaxis': AttribDef(DXFPoint3D, 1, priority=102),
-        'yaxis': AttribDef(DXFPoint3D, 2, priority=103),
-        },
-    }
+_STYLETEMPLATE = """  0
+STYLE
+  5
+0
+  2
+STANDARD
+ 70
+0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+1.0
+  3
+arial.ttf
+  4
 
 """
+
+class Style(GenericWrapper):
+    TEMPLATE = _STYLETEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2, # style name
+        'flags': 70,
+        'height': 40, # fixed height, 0 if not fixed
+        'width': 41, # width factor
+        'oblique': 50, # oblique angle in degree, 0 = vertical
+        'generation_flags': 71, # 2 = backward, 4 = mirrored in Y
+        'font': 3, # primary font file name
+        'bigfont': 4, # big font name, blank if none
+    }
+
+_APPIDTEMPLATE = """  0
+APPID
+  5
+0
+  2
+NEWAPPID
+ 70
+0
+"""
+
+class AppID(GenericWrapper):
+    TEMPLATE = _APPIDTEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+    }
+
+_UCSTEMPLATE = """  0
+UCS
+  5
+0
+  2
+UCSName
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+0.0
+ 31
+0.0
+ 12
+0.0
+ 22
+1.0
+ 32
+0.0
+"""
+
+class UCS(GenericWrapper):
+    TEMPLATE = _UCSTEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+        'origin': 10,
+        'xaxis': 11,
+        'yaxis': 12,
+    }
+
+_LTYPETEMPLATE = """  0
+LTYPE
+  5
+0
+  2
+LTYPENAME
+ 70
+0
+  3
+LTYPEDESCRIPTION
+ 72
+65
+"""
+
+class Linetype(GenericWrapper):
+    TEMPLATE = _UCSTEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'description': 3,
+    }
+    @classmethod
+    def new(cls, handle, attribs=None, dxffactory=None):
+        if attribs is not None:
+            pattern = attribs.pop('pattern', [0.])
+        else:
+            pattern = [0.]
+        entity = super(Linetype, cls).new(handle, attribs, dxffactory)
+        entity._setup_pattern(pattern)
+        return entity
+
+    def _setup_pattern(self, pattern):
+        self.tags.append(DXFTag(73), len(pattern)-1)
+        self.tags.append(DXFTag(40), float(pattern[0]))
+        self.tags.extend( (DXFTag(49, float(p)) for p in pattern[1:]) )
+
+class View(GenericWrapper):
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+        'height': 40,
+        'width': 41,
+        'center_point': 10,
+        'direction_point': 11,
+        'target_point': 12,
+        'lens_length': 42,
+        'front_clipping': 43,
+        'back_clipping': 44,
+        'view_twist': 50,
+        'view_mode': 71,
+    }
+    @classmethod
+    def new(cls, handle, attribs=None, dxffactory=None):
+        raise NotImplementedError("View creation is not supported.")
+
+_VPORTTEMPLATE = """  0
+VPORT
+  2
+NAME
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 11
+1.0
+ 21
+1.0
+ 12
+70.0
+ 22
+50.0
+ 13
+0.0
+ 23
+0.0
+ 14
+0.5
+ 24
+0.5
+ 15
+0.5
+ 25
+0.5
+ 16
+0.0
+ 26
+0.0
+ 36
+1.0
+ 17
+0.0
+ 27
+0.0
+ 37
+0.0
+ 40
+70.
+ 41
+1.34
+ 42
+50.0
+ 43
+0.0
+ 44
+0.0
+ 50
+0.0
+ 51
+0.0
+ 71
+0
+ 72
+1000
+ 73
+1
+ 74
+3
+ 75
+0
+ 76
+0
+ 77
+0
+ 78
+0
+"""
+
+class Viewport(GenericWrapper):
+    TEMPLATE = _VPORTTEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+        'lower_left': 10,
+        'upper_right': 11,
+        'center_point': 12,
+        'snap_base': 13,
+        'snap_spacing': 14,
+        'grid_spacing': 15,
+        'direction_point': 16,
+        'target_point': 17,
+        'height': 40,
+        'aspect_ratio': 41,
+        'lens_length': 42,
+        'front_clipping': 43,
+        'back_clipping': 44,
+        'snap_rotation': 50,
+        'view_twist': 51,
+        'status': 68,
+        'id': 69,
+        'view_mode': 71,
+        'circle_zoom': 72,
+        'fast_zoom': 73,
+        'ucs_icon': 74,
+        'snap_on': 75,
+        'grid_on': 76,
+        'snap_style': 77,
+        'snap_isopair': 78,
+    }

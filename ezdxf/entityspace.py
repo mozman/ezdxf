@@ -7,7 +7,6 @@
 # License: GPLv3
 
 from .tags import Tags
-from .entity import Entity
 
 class EntitySpace(list):
     """
