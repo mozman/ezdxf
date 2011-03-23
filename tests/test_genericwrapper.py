@@ -9,13 +9,13 @@
 import sys
 import unittest
 
-from ezdxf.tags import Tags
+from ezdxf.tags import Tags, DXFStructureError
 from ezdxf.entity import GenericWrapper
 
 class PointAccessor(GenericWrapper):
     CODE = {
-        'point': 10, # test 3d points
-        'xp': 12, # test second 3d points
+        'point': (10, 'Point3D'),
+        'xp': (12, 'Point3D'),
     }
 class TestPointAccessor(unittest.TestCase):
     def test_get_3d_point(self):
@@ -23,32 +23,30 @@ class TestPointAccessor(unittest.TestCase):
         point = PointAccessor(tags)
         self.assertEqual( (1., 2., 3.), point.point)
 
-    def test_get_2d_point(self):
+    def test_error_get_2d_point_for_required_3d_point(self):
         tags = Tags.fromtext("10\n1.0\n20\n2.0\n")
         point = PointAccessor(tags)
-        self.assertEqual( (1., 2.), point.point)
+        with self.assertRaises(DXFStructureError):
+            point.point
 
     def test_set_point(self):
         tags = Tags.fromtext("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        point.point = (7, 8)
+        point.point = (7, 8, 9)
         self.assertEqual(3, len(tags))
-        self.assertEqual( (7., 8., 0.), point.point)
+        self.assertEqual( (7., 8., 9.), point.point)
 
-    def test_add_coordinate(self):
+    def test_error_only_2_axis_exists(self):
         tags = Tags.fromtext("10\n1.0\n20\n2.0\n70\n0\n")
         point = PointAccessor(tags)
-        point.point = (7, 8, 9)
-        self.assertEqual(4, len(tags))
-        self.assertEqual( (30, 9.), tags[2])
+        with self.assertRaises(DXFStructureError):
+            point.point = (7, 8, 9)
 
-    def test_add_two_coordinates(self):
+    def test_error_only_1_axis_exists(self):
         tags = Tags.fromtext("10\n1.0\n70\n0\n")
         point = PointAccessor(tags)
-        point.point = (7, 8, 9)
-        self.assertEqual(4, len(tags))
-        self.assertEqual( (20, 8.), tags[1])
-        self.assertEqual( (30, 9.), tags[2])
+        with self.assertRaises(DXFStructureError):
+            point.point = (7, 8, 9)
 
     def test_get_3d_point_shift(self):
         tags = Tags.fromtext("12\n1.0\n22\n2.0\n32\n3.0\n")
