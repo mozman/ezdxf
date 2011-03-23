@@ -9,35 +9,12 @@
 from ..entity import GenericWrapper
 from ..tags import DXFTag
 
-# GenericTableEntry works as wrapper-class for all table-entries except DIMSTYLE,
-# because the handle-code for DIMSTYLE is 105 and not 5. (legacy issue)
-# GenericTableEntry deos not work as factory-class, because it represents no
-# specific table-entry. So use the class-method new(...) only from a subclass of
-# GenericTableEntry.
-
-class GenericTableEntry(GenericWrapper):
-    CODE = {
-        'handle': 5,
-        'name': 2,
-    }
-
-# DIMSTYLE is not really supported, this class just exists because of the
-# different handle-code
-class DimStyle(GenericTableEntry):
-    CODE = {
-        'handle': 105,
-        'name': 2,
-    }
-    @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
-        raise NotImplementedError("DimStyle creation is not supported.")
-
 _LAYERTEMPLATE = """  0
 LAYER
   5
 0
   2
-LayerName
+LAYERNAME
  70
 0
  62
@@ -46,25 +23,24 @@ LayerName
 CONTINUOUS
 """
 
-LAYER_LOCK = 0b00000100
-LAYER_UNLOCK = 0b11111011
-
 class Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
     CODE = {
         'handle': 5,
-        'name': 2, # layer name
+        'name': 2,
         'flags': 70,
         'color': 62, # dxf color index, if < 0 layer is off
-        'linetype': 6, # linetype name
+        'linetype': 6,
     }
+    LOCK = 0b00000100
+    UNLOCK = 0b11111011
 
     def is_locked(self):
-        return self.flags & LAYER_LOCK > 0
+        return self.flags & Layer.LOCK > 0
     def lock(self):
-        self.flags = self.flags | LAYERLOCK
+        self.flags = self.flags | Layer.LOCK
     def unlock(self):
-        self.flags = self.flags & LAYERUNLOCK
+        self.flags = self.flags & Layer.UNLOCK
 
     def is_off(self):
         return self.color < 0
@@ -81,12 +57,13 @@ class Layer(GenericWrapper):
         sign = -1 if self.color < 0 else 1
         self.color = color * sign
 
+
 _STYLETEMPLATE = """  0
 STYLE
   5
 0
   2
-STANDARD
+STYLENAME
  70
 0
  40
@@ -109,72 +86,17 @@ class Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
     CODE = {
         'handle': 5,
-        'name': 2, # style name
+        'name': 2,
         'flags': 70,
         'height': 40, # fixed height, 0 if not fixed
         'width': 41, # width factor
         'oblique': 50, # oblique angle in degree, 0 = vertical
         'generation_flags': 71, # 2 = backward, 4 = mirrored in Y
+        'last_height': 42, # last height used
         'font': 3, # primary font file name
         'bigfont': 4, # big font name, blank if none
     }
 
-_APPIDTEMPLATE = """  0
-APPID
-  5
-0
-  2
-NEWAPPID
- 70
-0
-"""
-
-class AppID(GenericWrapper):
-    TEMPLATE = _APPIDTEMPLATE
-    CODE = {
-        'handle': 5,
-        'name': 2,
-        'flags': 70,
-    }
-
-_UCSTEMPLATE = """  0
-UCS
-  5
-0
-  2
-UCSName
- 70
-0
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 11
-1.0
- 21
-0.0
- 31
-0.0
- 12
-0.0
- 22
-1.0
- 32
-0.0
-"""
-
-class UCS(GenericWrapper):
-    TEMPLATE = _UCSTEMPLATE
-    CODE = {
-        'handle': 5,
-        'name': 2,
-        'flags': 70,
-        'origin': 10,
-        'xaxis': 11,
-        'yaxis': 12,
-    }
 
 _LTYPETEMPLATE = """  0
 LTYPE
@@ -200,9 +122,9 @@ class Linetype(GenericWrapper):
     @classmethod
     def new(cls, handle, attribs=None, dxffactory=None):
         if attribs is not None:
-            pattern = attribs.pop('pattern', [0.])
+            pattern = attribs.pop('pattern', [0.0])
         else:
-            pattern = [0.]
+            pattern = [0.0]
         entity = super(Linetype, cls).new(handle, attribs, dxffactory)
         entity._setup_pattern(pattern)
         return entity
@@ -212,30 +134,11 @@ class Linetype(GenericWrapper):
         self.tags.append(DXFTag(40), float(pattern[0]))
         self.tags.extend( (DXFTag(49, float(p)) for p in pattern[1:]) )
 
-class View(GenericWrapper):
-    CODE = {
-        'handle': 5,
-        'name': 2,
-        'flags': 70,
-        'height': 40,
-        'width': 41,
-        'center_point': 10,
-        'direction_point': 11,
-        'target_point': 12,
-        'lens_length': 42,
-        'front_clipping': 43,
-        'back_clipping': 44,
-        'view_twist': 50,
-        'view_mode': 71,
-    }
-    @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
-        raise NotImplementedError("View creation is not supported.")
 
 _VPORTTEMPLATE = """  0
 VPORT
   2
-NAME
+VPORTNAME
  70
 0
  10
@@ -306,6 +209,7 @@ NAME
 0
 """
 
+
 class Viewport(GenericWrapper):
     TEMPLATE = _VPORTTEMPLATE
     CODE = {
@@ -338,3 +242,133 @@ class Viewport(GenericWrapper):
         'snap_style': 77,
         'snap_isopair': 78,
     }
+
+
+_UCSTEMPLATE = """  0
+UCS
+  5
+0
+  2
+UCSNAME
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+0.0
+ 31
+0.0
+ 12
+0.0
+ 22
+1.0
+ 32
+0.0
+"""
+
+class UCS(GenericWrapper):
+    TEMPLATE = _UCSTEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+        'origin': 10,
+        'xaxis': 11,
+        'yaxis': 12,
+    }
+
+
+_APPIDTEMPLATE = """  0
+APPID
+  5
+0
+  2
+APPNAME
+ 70
+0
+"""
+
+class AppID(GenericWrapper):
+    TEMPLATE = _APPIDTEMPLATE
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+    }
+
+
+class View(GenericWrapper):
+    CODE = {
+        'handle': 5,
+        'name': 2,
+        'flags': 70,
+        'height': 40,
+        'width': 41,
+        'center_point': 10,
+        'direction_point': 11,
+        'target_point': 12,
+        'lens_length': 42,
+        'front_clipping': 43,
+        'back_clipping': 44,
+        'view_twist': 50,
+        'view_mode': 71,
+    }
+    @classmethod
+    def new(cls, handle, attribs=None, dxffactory=None):
+        raise NotImplementedError("View creation is not supported.")
+
+
+class DimStyle(GenericWrapper):
+    CODE = {
+        'handle': 105,
+        'name': 2,
+        'flags': 70,
+        'dimpost':3,
+        'dimapost': 4,
+        'dimblk': 5,
+        'dimblk1': 6,
+        'dimblk2': 7,
+        'dimscale': 40,
+        'dimasz': 41,
+        'dimexo': 42,
+        'dimdli': 43,
+        'dimexe': 44,
+        'dimrnd':45,
+        'dimdle':46,
+        'dimtp':47,
+        'dimtm':48,
+        'dimtxt': 140,
+        'dimcen': 141,
+        'dimtsz': 142,
+        'dimaltf': 143,
+        'dimlfac': 144,
+        'dimtvp': 145,
+        'dimtfac': 146,
+        'dimgap': 147,
+        'dimtol': 71,
+        'dimlim': 72,
+        'dimtih': 73,
+        'dimtoh': 74,
+        'dimse1': 75,
+        'dimse2': 76,
+        'dimtad': 77,
+        'dimzin': 78,
+        'dimalt': 170,
+        'dimaltd': 171,
+        'dimtofl': 172,
+        'dimsah': 173,
+        'dimtix': 174,
+        'dimsoxd': 175,
+        'dimclrd': 176,
+        'dimclre': 177,
+        'dimclrt': 178,
+    }
+    @classmethod
+    def new(cls, handle, attribs=None, dxffactory=None):
+        raise NotImplementedError("DimStyle creation is not supported.")
