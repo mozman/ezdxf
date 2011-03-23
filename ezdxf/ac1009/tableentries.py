@@ -113,7 +113,7 @@ LTYPEDESCRIPTION
 """
 
 class Linetype(GenericWrapper):
-    TEMPLATE = _UCSTEMPLATE
+    TEMPLATE = _LTYPETEMPLATE
     CODE = {
         'handle': 5,
         'name': 2,
@@ -216,14 +216,14 @@ class Viewport(GenericWrapper):
         'handle': 5,
         'name': 2,
         'flags': 70,
-        'lower_left': 10,
-        'upper_right': 11,
-        'center_point': 12,
-        'snap_base': 13,
-        'snap_spacing': 14,
-        'grid_spacing': 15,
-        'direction_point': 16,
-        'target_point': 17,
+        'lower_left': (10, 'Point2D'),
+        'upper_right': (11, 'Point2D'),
+        'center_point': (12, 'Point2D'),
+        'snap_base': (13, 'Point2D'),
+        'snap_spacing': (14, 'Point2D'),
+        'grid_spacing': (15, 'Point2D'),
+        'direction_point': (16, 'Point3D'),
+        'target_point': (17, 'Point3D'),
         'height': 40,
         'aspect_ratio': 41,
         'lens_length': 42,
@@ -278,9 +278,9 @@ class UCS(GenericWrapper):
         'handle': 5,
         'name': 2,
         'flags': 70,
-        'origin': 10,
-        'xaxis': 11,
-        'yaxis': 12,
+        'origin': (10, 'Point3D'),
+        'xaxis': (11, 'Point3D'),
+        'yaxis': (12, 'Point3D'),
     }
 
 
@@ -310,9 +310,9 @@ class View(GenericWrapper):
         'flags': 70,
         'height': 40,
         'width': 41,
-        'center_point': 10,
-        'direction_point': 11,
-        'target_point': 12,
+        'center_point': (10, 'Point2D'),
+        'direction_point': (11, 'Point3D'),
+        'target_point': (12, 'Point3D'),
         'lens_length': 42,
         'front_clipping': 43,
         'back_clipping': 44,
