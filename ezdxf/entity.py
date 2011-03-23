@@ -80,51 +80,57 @@ class GenericWrapper:
             settag(index + x, DXFTag(code + x*10, float(coord)))
 
     def _set_flexible_point(self, code, value):
-        def insert_tag_if_required(pos, axiscode):
-            if len(self.tags) <= pos or self.tags[pos]!= axiscode:
-                self.tags.insert(pos, DXFTag(axiscode, 0.0))
-
-        def extend_point(axis):
+        def append_axis():
             index = self.tags.findfirst(code)
-            for x in range(axis):
-                insert_tag_if_required(index+x, code + x*10)
+            self.tags.insert(index+2, DXFTag(code+20, 0.0))
 
-        axis = len(value)
-        if axis not in (2, 3):
+        def remove_axis():
+            index = self.tags.findfirst(code)
+            self.tags.pop(index+2)
+
+        newaxis = len(value)
+        if newaxis not in (2, 3):
             raise ValueError("2D or 3D point required (tuple).")
-        extend_point(axis)
+        oldaxis = self._count_axis(code)
+        if oldaxis > 1:
+            if newaxis == 2 and oldaxis == 3:
+                remove_axis()
+            elif newaxis == 3 and oldaxis == 2:
+                append_axis()
+        else:
+            raise DXFStructureError("Invalid axis count of point.")
         self._set_point(code, value)
 
+    def _count_axis(self, code):
+        return len(self._get_point(code))
 
     def _get_extended_type(self, extcode):
         code, type_ = extcode
         if type_ == 'Point2D':
-            return self._point(code, axis=2)
+            return self._get_fix_point(code, axis=2)
         elif type_ == 'Point3D':
-            return self._get_point(code, axis=3)
+            return self._get_fix_point(code, axis=3)
         elif type_ == 'Point2D/3D':
             return self._get_flexible_point(code)
         else:
             raise TypeError('Unknown extended type: %s' % type_)
 
-    def _get_point(self, code, axis):
+    def _get_point(self, code):
         index = self.tags.findfirst(code)
-        coords = []
-        for x in range(axis):
-            try:
-                tag = self.tags[index + x]
-            except IndexError:
-                raise DXFStructureError('DXF coordinate error')
-            if tag.code != code + x*10:
-                raise DXFStructureError('DXF coordinate error')
-            coords.append(tag.value)
-        return tuple(coords)
+        return tuple(
+            ( tag.value for x, tag in enumerate(self.tags[index:index+3])
+              if tag.code == code + x*10 )
+        )
+
+    def _get_fix_point(self, code, axis):
+        point = self._get_point(code)
+        if len(point) != axis:
+            raise DXFStructureError('Invalid axis count for code: %d' % code)
+        return point
 
     def _get_flexible_point(self, code):
-        try:
-            return self._get_point(code, axis=3)
-        except DXFStructureError:
-            return self._get_point(code, axis=2)
-
-
-
+        point = self._get_point(code)
+        if len(point) in (2, 3):
+            return point
+        else:
+            raise DXFStructureError('Invalid axis count for code: %d' % code)

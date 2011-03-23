@@ -16,7 +16,9 @@ class PointAccessor(GenericWrapper):
     CODE = {
         'point': (10, 'Point3D'),
         'xp': (12, 'Point3D'),
+        'flex': (13, 'Point2D/3D'),
     }
+
 class TestPointAccessor(unittest.TestCase):
     def test_get_3d_point(self):
         tags = Tags.fromtext("10\n1.0\n20\n2.0\n30\n3.0\n")
@@ -59,6 +61,56 @@ class TestPointAccessor(unittest.TestCase):
         with self.assertRaises(ValueError):
             point.point
 
+class TestFlexPoint(unittest.TestCase):
+    def test_get_2d_point(self):
+        tags = Tags.fromtext("13\n1.0\n23\n2.0\n")
+        point = PointAccessor(tags)
+        self.assertEqual( (1., 2.), point.flex)
+
+    def test_get_3d_point(self):
+        tags = Tags.fromtext("13\n1.0\n23\n2.0\n33\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertEqual( (1., 2., 3.), point.flex)
+
+    def test_error_get_1d_point(self):
+        point = PointAccessor(Tags.fromtext("13\n1.0\n"))
+        with self.assertRaises(DXFStructureError):
+            point.flex
+
+    def test_set_2d_point(self):
+        tags = Tags.fromtext("13\n1.0\n23\n2.0\n")
+        point = PointAccessor(tags)
+        point.flex = (3., 4.)
+        self.assertEqual(2, len(tags))
+        self.assertEqual( (3., 4.), point.flex)
+
+    def test_set_3d_point(self):
+        tags = Tags.fromtext("13\n1.0\n23\n2.0\n40\n0.0\n")
+        point = PointAccessor(tags)
+        point.flex = (3., 4., 5.)
+        self.assertEqual(4, len(tags))
+        self.assertEqual( (3., 4., 5.), point.flex)
+
+    def test_set_2d_point_at_existing_3d_point(self):
+        tags = Tags.fromtext("13\n1.0\n23\n2.0\n33\n3.0\n")
+        point = PointAccessor(tags)
+        point.flex = (3., 4.)
+        self.assertEqual(2, len(tags))
+        self.assertEqual( (3., 4.), point.flex)
+
+    def test_error_set_point_dxf_structure_error(self):
+        tags = Tags.fromtext("13\n1.0\n40\n0.0\n")
+        point = PointAccessor(tags)
+        with self.assertRaises(DXFStructureError):
+            point.flex = (3., 4., 5.)
+
+    def test_error_set_point_with_wrong_axis_count(self):
+        tags = Tags.fromtext("13\n1.0\n23\n2.0\n40\n0.0\n")
+        point = PointAccessor(tags)
+        with self.assertRaises(ValueError):
+            point.flex = (3., 4., 5., 6.)
+        with self.assertRaises(ValueError):
+            point.flex = (3., )
 
 if __name__=='__main__':
     unittest.main()
