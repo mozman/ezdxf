@@ -8,7 +8,7 @@
 
 from ..tags import casttagvalue
 from ..ac1009.tableentries import Layer as AC1009Layer
-from ..ac1009.tableentries import GenericTableEntry
+from ..entity import GenericWrapper
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -54,4 +54,8 @@ class Layer(AC1009Layer):
         layer.tags.update(390, dxffactory.rootdict['ACAD_PLOTSTYLENAME'])
         return layer
 
-BlockRecord = GenericTableEntry
+class BlockRecord(GenericWrapper):
+    CODE = {
+        'handle': 5,
+        'name': 2,
+    }
