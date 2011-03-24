@@ -56,17 +56,27 @@ Drawing Attributes
 .. attribute:: Drawing.layers
 
     Reference to the layers table, where you can create, get and
-    remove layers, see also :class:`Tables`.
+    remove layers, see also :class:`Table` and :class:`Layer`
 
 .. attribute:: Drawing.styles
 
-    Reference to the styles table, where you can create, get and
-    remove textstyles, see also :class:`Tables`.
+    Reference to the styles table, see also :class:`Style`.
 
 .. attribute:: Drawing.linetypes
 
-    Reference to the linetypes table, where you can create, get and
-    remove linetypes, see also :class:`Tables`.
+    Reference to the linetypes table, see also :class:`Linetype`.
+
+.. attribute:: Drawing.views
+
+    Reference to the views table, see also :class:`View`.
+
+.. attribute:: Drawing.viewports
+
+    Reference to the viewports table, see also :class:`Viewport`.
+
+.. attribute:: Drawing.dimstyles
+
+    Reference to the dimstyles table, see also :class:`DimStyle`.
 
 .. attribute:: Drawing.blocks
 
