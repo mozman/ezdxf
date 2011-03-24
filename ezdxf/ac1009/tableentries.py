@@ -118,6 +118,8 @@ class Linetype(GenericWrapper):
         'handle': 5,
         'name': 2,
         'description': 3,
+        'length': 40,
+        'items': 73,
     }
     @classmethod
     def new(cls, handle, attribs=None, dxffactory=None):
@@ -130,8 +132,8 @@ class Linetype(GenericWrapper):
         return entity
 
     def _setup_pattern(self, pattern):
-        self.tags.append(DXFTag(73), len(pattern)-1)
-        self.tags.append(DXFTag(40), float(pattern[0]))
+        self.tags.append(DXFTag(73, len(pattern)-1))
+        self.tags.append(DXFTag(40, float(pattern[0])))
         self.tags.extend( (DXFTag(49, float(p)) for p in pattern[1:]) )
 
 
@@ -302,8 +304,46 @@ class AppID(GenericWrapper):
         'flags': 70,
     }
 
+_VIEWTEMPLATE = """  0
+VIEW
+  2
+VIEWNAME
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 11
+1.0
+ 21
+1.0
+ 31
+1.0
+ 12
+0.0
+ 22
+0.0
+ 32
+0.0
+ 40
+70.
+ 41
+1.0
+ 42
+50.0
+ 43
+0.0
+ 44
+0.0
+ 50
+0.0
+ 71
+0
+"""
 
 class View(GenericWrapper):
+    TEMPLATE = _VIEWTEMPLATE
     CODE = {
         'handle': 5,
         'name': 2,
@@ -319,12 +359,97 @@ class View(GenericWrapper):
         'view_twist': 50,
         'view_mode': 71,
     }
-    @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
-        raise NotImplementedError("View creation is not supported.")
 
+_DIMSTYLETEMPLATE = """  0
+DIMSTYLE
+105
+0
+  2
+STANDARD
+ 70
+0
+  3
+
+  4
+
+  5
+
+  6
+
+  7
+
+ 40
+1.0
+ 41
+3.0
+ 42
+2.0
+ 43
+9.0
+ 44
+5.0
+ 45
+0.0
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+140
+3.0
+141
+2.0
+142
+0.0
+143
+25.399999999999999
+144
+1.0
+145
+0.0
+146
+1.0
+147
+2.0
+ 71
+     0
+ 72
+     0
+ 73
+     1
+ 74
+     1
+ 75
+     0
+ 76
+     0
+ 77
+     0
+ 78
+     0
+170
+     0
+171
+     2
+172
+     0
+173
+     0
+174
+     0
+175
+     0
+176
+     0
+177
+     0
+178
+     0
+"""
 
 class DimStyle(GenericWrapper):
+    TEMPLATE = _DIMSTYLETEMPLATE
     CODE = {
         'handle': 105,
         'name': 2,
@@ -369,6 +494,3 @@ class DimStyle(GenericWrapper):
         'dimclre': 177,
         'dimclrt': 178,
     }
-    @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
-        raise NotImplementedError("DimStyle creation is not supported.")

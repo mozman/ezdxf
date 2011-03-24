@@ -6,6 +6,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
+from functools import lru_cache
 from .tags import Tags, casttagvalue, DXFTag, DXFStructureError
 
 class GenericWrapper:
@@ -38,25 +39,30 @@ class GenericWrapper:
 
     def __setattr__(self, key, value):
         if key in self.CODE:
-            code = self.CODE[key]
-            if isinstance(code, tuple):
-                self._set_extended_type(code, value)
-            else:
-                self._settag(code, value)
+            self._setattrib(key, value)
         else:
             super(GenericWrapper, self).__setattr__(key, value)
+
+    def _setattrib(self, key, value):
+        code = self.CODE[key]
+        if isinstance(code, tuple):
+            self._set_extended_type(code, value)
+        else:
+            self._settag(code, value)
 
     def _settag(self, code, value):
         self.tags.new_or_update(code, casttagvalue(code, value))
 
     def update(self, attribs):
         for key, value in attribs.items():
-            self._settag(self.CODE[key], value)
+            self._setattrib(key, value)
 
     def _set_extended_type(self, extcode, value):
         def set_point(code, axis):
             if len(value) != axis:
                 raise ValueError('%d axis required' % axis)
+            if self._count_axis(code) != axis:
+                raise DXFStructureError('Invalid axis count for code: %d' % code)
             self._set_point(code, value)
 
         code, type_ = extcode
@@ -75,17 +81,17 @@ class GenericWrapper:
                 self.tags[index] = tag
             else:
                 raise DXFStructureError('DXF coordinate error')
-        index = self.tags.findfirst(code)
+        index = self._point_index(code)
         for x, coord in enumerate(value):
             settag(index + x, DXFTag(code + x*10, float(coord)))
 
     def _set_flexible_point(self, code, value):
         def append_axis():
-            index = self.tags.findfirst(code)
+            index = self._point_index(code)
             self.tags.insert(index+2, DXFTag(code+20, 0.0))
 
         def remove_axis():
-            index = self.tags.findfirst(code)
+            index = self._point_index(code)
             self.tags.pop(index+2)
 
         newaxis = len(value)
@@ -115,8 +121,11 @@ class GenericWrapper:
         else:
             raise TypeError('Unknown extended type: %s' % type_)
 
+    def _point_index(self, code):
+        return self.tags.findfirst(code)
+
     def _get_point(self, code):
-        index = self.tags.findfirst(code)
+        index = self._point_index(code)
         return tuple(
             ( tag.value for x, tag in enumerate(self.tags[index:index+3])
               if tag.code == code + x*10 )

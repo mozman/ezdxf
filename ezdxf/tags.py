@@ -202,7 +202,6 @@ class Tags(list):
     def fromtext(text):
         return Tags(StringIterator(text))
 
-
 class TagGroups(list):
     """
     Group of tags starting with a SplitTag and ending before the next SplitTag.

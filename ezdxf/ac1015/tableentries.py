@@ -27,7 +27,7 @@ LayerName
   6
 Continuous
 390
-F
+0
 """
 
 # code 390 is required for AutoCAD
@@ -46,16 +46,42 @@ class Layer(AC1009Layer):
         'linetype': 6, # linetype name
         'plot': 290, # dont plot this layer if 0 else 1
         'lineweight': 370, # enum value???
+        'plotstylename': 390, # handle to PlotStyleName object
     }
 
     @classmethod
     def new(cls, handle, attribs=None, dxffactory=None):
         layer = super(Layer, cls).new(handle, attribs)
-        layer.tags.update(390, dxffactory.rootdict['ACAD_PLOTSTYLENAME'])
+        layer.plotstylename= dxffactory.rootdict['ACAD_PLOTSTYLENAME']
         return layer
 
+_BLOCKRECORDTEMPLATE = """  0
+BLOCK_RECORD
+  5
+0
+330
+0
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+BLOCK_RECORD_NAME
+340
+0
+"""
+
 class BlockRecord(GenericWrapper):
+    """ Internal Object - use at your own risk!
+
+    Required fields:
+    owner: Soft-pointer ID/handle to owner object
+    layout: Hard-pointer ID/handle to associated LAYOUT object
+    """
+    TEMPLATE = _BLOCKRECORDTEMPLATE
     CODE = {
         'handle': 5,
+        'owner': 330,
         'name': 2,
+        'layout': 340,
     }
