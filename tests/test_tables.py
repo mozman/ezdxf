@@ -15,7 +15,7 @@ from ezdxf.dxffactory import dxffactory
 from ezdxf.tags import text2tags
 from ezdxf.tablessection import TablesSection
 
-class DrawingMock:
+class DrawingProxy:
     handles = HandleGenerator()
     entitydb = {}
     dxffactory = dxffactory('AC1009')
@@ -27,7 +27,7 @@ def normlines(text):
 
 class TestTables(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingMock()
+        self.dwg = DrawingProxy()
         self.tables = TablesSection(text2tags(TEST_TABLES), self.dwg)
 
     def test_constructor(self):
