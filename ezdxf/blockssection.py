@@ -8,7 +8,7 @@
 
 from itertools import islice
 
-from .tags import TagGroups, Tags, DXFStructureError
+from .tags import TagGroups, Tags, ExtendedTags, DXFStructureError
 from .entityspace import EntitySpace
 
 class BlocksSection:
@@ -37,7 +37,7 @@ class BlocksSection:
 
         entities = []
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            entities.append(group)
+            entities.append(ExtendedTags(group))
             if group[0].value == 'ENDBLK':
                 self._blocks.append(build_block(entities))
                 entities = []
@@ -51,8 +51,8 @@ class BlocksSection:
 class Block:
     def __init__(self, drawing):
         self._workspace = EntitySpace(drawing)
-        self._head = Tags()
-        self._tail = Tags()
+        self._head = ExtendedTags()
+        self._tail = ExtendedTags()
 
     def set_head(self, tags):
         self._head = tags
