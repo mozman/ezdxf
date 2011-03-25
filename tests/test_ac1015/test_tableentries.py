@@ -11,14 +11,14 @@ import unittest
 
 from ezdxf.tags import Tags
 
-from ezdxf.ac1015.tableentries import Layer
+from ezdxf.ac1015.tableentries import AC1015Layer
 
 class DXFFactory:
     rootdict = { 'ACAD_PLOTSTYLENAME': 'AFAF' }
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
-        self.layer = Layer.new('FFFF', dxffactory=DXFFactory())
+        self.layer = AC1015Layer.new('FFFF', dxffactory=DXFFactory())
 
     def test_get_handle(self):
         self.assertEqual('FFFF', self.layer.handle)

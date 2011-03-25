@@ -11,13 +11,13 @@ import unittest
 
 from ezdxf.tags import Tags
 
-from ezdxf.ac1009.tableentries import Layer, Linetype, Style, AppID, UCS
-from ezdxf.ac1009.tableentries import View, Viewport, DimStyle
-from ezdxf.ac1015.tableentries import BlockRecord
+from ezdxf.ac1009.tableentries import AC1009Layer, AC1009Linetype, AC1009Style, AC1009AppID, AC1009UCS
+from ezdxf.ac1009.tableentries import AC1009View, AC1009Viewport, AC1009DimStyle
+from ezdxf.ac1015.tableentries import AC1015BlockRecord
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
-        self.layer = Layer.new('FFFF')
+        self.layer = AC1009Layer.new('FFFF')
 
     def test_new_layer(self):
         self.assertEqual(6, len(self.layer.tags))
@@ -47,7 +47,7 @@ class TestNewLayer(unittest.TestCase):
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
-        self.ltype = Linetype.new('FFFF', attribs={
+        self.ltype = AC1009Linetype.new('FFFF', attribs={
             'name':'TEST',
             'description': 'TESTDESC',
             'pattern': [0.2, 0.1, -0.1]
@@ -70,7 +70,7 @@ class TestNewLinetype(unittest.TestCase):
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
-        self.style = Style.new('FFFF', attribs={
+        self.style = AC1009Style.new('FFFF', attribs={
             'name':'TEST',
             'font': 'NOFONT.ttf',
             'width': 2.0,
@@ -96,7 +96,7 @@ class TestNewStyle(unittest.TestCase):
 
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
-        self.appid = AppID.new('FFFF', attribs={
+        self.appid = AC1009AppID.new('FFFF', attribs={
             'name':'EZDXF',
         })
 
@@ -105,7 +105,7 @@ class TestNewAppID(unittest.TestCase):
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
-        self.ucs = UCS.new('FFFF', attribs={
+        self.ucs = AC1009UCS.new('FFFF', attribs={
             'name': 'UCS+90',
             'origin': (1.0, 1.0, 1.0),
             'xaxis': (0.0, 1.0, 0.0),
@@ -126,7 +126,7 @@ class TestNewUCS(unittest.TestCase):
 
 class TestViewport(unittest.TestCase):
     def setUp(self):
-        self.vport = Viewport.new('FFFF', attribs={
+        self.vport = AC1009Viewport.new('FFFF', attribs={
             'name':'VP1',
         })
 
@@ -135,7 +135,7 @@ class TestViewport(unittest.TestCase):
 
 class TestView(unittest.TestCase):
     def setUp(self):
-        self.view = View.new('FFFF', attribs={
+        self.view = AC1009View.new('FFFF', attribs={
         'name': 'VIEW1',
         'flags': 0,
         'height': 1.0,
@@ -155,7 +155,7 @@ class TestView(unittest.TestCase):
 
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
-        self.dimstyle = DimStyle.new('FFFF', attribs={
+        self.dimstyle = AC1009DimStyle.new('FFFF', attribs={
             'name':'DIMSTYLE1',
         })
 
@@ -167,7 +167,7 @@ class TestDimstyle(unittest.TestCase):
 
 class TestBlockRecord(unittest.TestCase):
     def setUp(self):
-        self.blockrec = BlockRecord.new('FFFF', attribs={
+        self.blockrec = AC1015BlockRecord.new('FFFF', attribs={
             'name':'BLOCKREC1',
         })
 

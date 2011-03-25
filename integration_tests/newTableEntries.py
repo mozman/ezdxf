@@ -12,7 +12,15 @@ import ezdxf
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
 
 def add_table_entries(dwg):
-    dwg.layers.create('ADDING_A_NEW_LAYER')
+    # public table-entries
+    dwg.layers.create('MOZMAN-LAYER')
+    dwg.styles.create('MOZMAN-STY')
+    dwg.linetypes.create('MOZMAN-LTY', {'pattern': [1.0, .5, -.5]})
+    dwg.dimstyles.create('MOZMAN-DIMSTY')
+    dwg.views.create('MOZMAN-VIEW')
+    dwg.viewports.create('MOZMAN-VPORT')
+    dwg.ucs.create('MOZMAN-UCS')
+    dwg.appids.create('MOZMANAPP')
 
 def make_drawing(version):
     dwg = ezdxf.new(version)

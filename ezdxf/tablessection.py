@@ -49,7 +49,11 @@ TABLESMAP = {
     'LAYER': Table,
     'LTYPE': Table,
     'STYLE': Table,
+    'DIMSTYLE': Table,
     'VPORT': ViewportTable,
+    'VIEW': Table,
+    'UCS': Table,
+    'APPID': Table,
 }
 
 def get_table_class(name):
