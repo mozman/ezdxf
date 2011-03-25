@@ -9,11 +9,19 @@ from ..tags import Tags
 
 from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
-from .tableentries import Layer, BlockRecord
+from .tableentries import AC1015Layer, AC1015Style, AC1015BlockRecord, AC1015Linetype
+from .tableentries import AC1015AppID, AC1015DimStyle, AC1015UCS, AC1015View, AC1015Viewport
 
 UPDATE_ENTITY_WRAPPERS = {
-    'LAYER': Layer,
-    'BLOCK_RECORD': BlockRecord,
+    'LAYER': AC1015Layer,
+    'STYLE': AC1015Style,
+    'LTYPE': AC1015Linetype,
+    'DIMSTYLE': AC1015DimStyle,
+    'VIEW': AC1015View,
+    'VPORT': AC1015Viewport,
+    'UCS': AC1015UCS,
+    'APPID': AC1015AppID,
+    'BLOCK_RECORD': AC1015BlockRecord,
 }
 
 class AC1015Factory(AC1009Factory):

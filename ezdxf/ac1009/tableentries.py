@@ -23,7 +23,7 @@ LAYERNAME
 CONTINUOUS
 """
 
-class Layer(GenericWrapper):
+class AC1009Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
     CODE = {
         'handle': 5,
@@ -82,7 +82,7 @@ arial.ttf
 
 """
 
-class Style(GenericWrapper):
+class AC1009Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
     CODE = {
         'handle': 5,
@@ -112,7 +112,7 @@ LTYPEDESCRIPTION
 65
 """
 
-class Linetype(GenericWrapper):
+class AC1009Linetype(GenericWrapper):
     TEMPLATE = _LTYPETEMPLATE
     CODE = {
         'handle': 5,
@@ -127,7 +127,7 @@ class Linetype(GenericWrapper):
             pattern = attribs.pop('pattern', [0.0])
         else:
             pattern = [0.0]
-        entity = super(Linetype, cls).new(handle, attribs, dxffactory)
+        entity = super(AC1009Linetype, cls).new(handle, attribs, dxffactory)
         entity._setup_pattern(pattern)
         return entity
 
@@ -139,6 +139,8 @@ class Linetype(GenericWrapper):
 
 _VPORTTEMPLATE = """  0
 VPORT
+  5
+0
   2
 VPORTNAME
  70
@@ -212,7 +214,7 @@ VPORTNAME
 """
 
 
-class Viewport(GenericWrapper):
+class AC1009Viewport(GenericWrapper):
     TEMPLATE = _VPORTTEMPLATE
     CODE = {
         'handle': 5,
@@ -274,7 +276,7 @@ UCSNAME
 0.0
 """
 
-class UCS(GenericWrapper):
+class AC1009UCS(GenericWrapper):
     TEMPLATE = _UCSTEMPLATE
     CODE = {
         'handle': 5,
@@ -296,7 +298,7 @@ APPNAME
 0
 """
 
-class AppID(GenericWrapper):
+class AC1009AppID(GenericWrapper):
     TEMPLATE = _APPIDTEMPLATE
     CODE = {
         'handle': 5,
@@ -306,6 +308,8 @@ class AppID(GenericWrapper):
 
 _VIEWTEMPLATE = """  0
 VIEW
+  5
+0
   2
 VIEWNAME
  70
@@ -342,7 +346,7 @@ VIEWNAME
 0
 """
 
-class View(GenericWrapper):
+class AC1009View(GenericWrapper):
     TEMPLATE = _VIEWTEMPLATE
     CODE = {
         'handle': 5,
@@ -365,7 +369,7 @@ DIMSTYLE
 105
 0
   2
-STANDARD
+DIMSTYLENAME
  70
 0
   3
@@ -448,7 +452,7 @@ STANDARD
      0
 """
 
-class DimStyle(GenericWrapper):
+class AC1009DimStyle(GenericWrapper):
     TEMPLATE = _DIMSTYLETEMPLATE
     CODE = {
         'handle': 105,

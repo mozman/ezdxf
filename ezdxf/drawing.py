@@ -69,6 +69,27 @@ class Drawing:
         return self.sections.tables.styles
 
     @property
+    def dimstyles(self):
+        return self.sections.tables.dimstyles
+
+    @property
+    def ucs(self):
+        return self.sections.tables.ucs
+
+    @property
+    def appids(self):
+        return self.sections.tables.appids
+
+    @property
+    def views(self):
+        return self.sections.tables.views
+
+    @property
+    def viewports(self):
+        return self.sections.tables.viewports
+
+
+    @property
     def blocks(self):
         return self.sections.tables.blocks
 

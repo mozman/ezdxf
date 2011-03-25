@@ -68,20 +68,20 @@ the section markers and table headers present:
 from ..tags import Tags
 
 from .headervars import VARMAP
-from .tableentries import Layer, DimStyle, AppID, Style, Linetype, View, Viewport, UCS
+from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style, AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
 from ..dxfobjects import DXFDictionary
 from ..entity import GenericWrapper
 
 ENTITY_WRAPPERS =  {
     # tables entries
-    'LAYER': Layer,
-    'DIMSTYLE': DimStyle,
-    'LTYPE': Linetype,
-    'APPID': AppID,
-    'STYLE': Style,
-    'USC': UCS,
-    'VIEW': View,
-    'VPORT': Viewport,
+    'LAYER': AC1009Layer,
+    'DIMSTYLE': AC1009DimStyle,
+    'LTYPE': AC1009Linetype,
+    'APPID': AC1009AppID,
+    'STYLE': AC1009Style,
+    'UCS': AC1009UCS,
+    'VIEW': AC1009View,
+    'VPORT': AC1009Viewport,
     # dxf objects
     'DICTIONARY': DXFDictionary,
     # dxf entities
