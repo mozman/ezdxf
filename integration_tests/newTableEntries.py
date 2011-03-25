@@ -12,7 +12,6 @@ import ezdxf
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
 
 def add_table_entries(dwg):
-    # public table-entries
     dwg.layers.create('MOZMAN-LAYER')
     dwg.styles.create('MOZMAN-STY')
     dwg.linetypes.create('MOZMAN-LTY', {'pattern': [1.0, .5, -.5]})

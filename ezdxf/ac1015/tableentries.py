@@ -82,7 +82,7 @@ arial.ttf
   4
 
 """
-class AC1015Style(AC1009Layer):
+class AC1015Style(AC1009Style):
     TEMPLATE = _STYLETEMPLATE
 
 _LTYPETEMPLATE = """  0

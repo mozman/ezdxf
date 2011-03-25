@@ -62,6 +62,10 @@ Drawing Attributes
 
     Reference to the styles table, see also :class:`Style`.
 
+.. attribute:: Drawing.dimstyles
+
+    Reference to the dimstyles table, see also :class:`DimStyle`.
+
 .. attribute:: Drawing.linetypes
 
     Reference to the linetypes table, see also :class:`Linetype`.
@@ -74,9 +78,13 @@ Drawing Attributes
 
     Reference to the viewports table, see also :class:`Viewport`.
 
-.. attribute:: Drawing.dimstyles
+.. attribute:: Drawing.ucs
 
-    Reference to the dimstyles table, see also :class:`DimStyle`.
+    Reference to the ucs table, see also :class:`UCS`.
+
+.. attribute:: Drawing.appids
+
+    Reference to the appids table, see also :class:`AppID`.
 
 .. attribute:: Drawing.blocks
 

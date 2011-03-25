@@ -13,7 +13,6 @@ from ezdxf.tags import Tags
 
 from ezdxf.ac1009.tableentries import AC1009Layer, AC1009Linetype, AC1009Style, AC1009AppID, AC1009UCS
 from ezdxf.ac1009.tableentries import AC1009View, AC1009Viewport, AC1009DimStyle
-from ezdxf.ac1015.tableentries import AC1015BlockRecord
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
@@ -164,16 +163,6 @@ class TestDimstyle(unittest.TestCase):
 
     def test_handle_code(self):
         self.assertEqual('FFFF', self.dimstyle.tags.getvalue(105))
-
-class TestBlockRecord(unittest.TestCase):
-    def setUp(self):
-        self.blockrec = AC1015BlockRecord.new('FFFF', attribs={
-            'name':'BLOCKREC1',
-        })
-
-    def test_name(self):
-        self.assertEqual('BLOCKREC1', self.blockrec.name)
-
 
 if __name__=='__main__':
     unittest.main()
