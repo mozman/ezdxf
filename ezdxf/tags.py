@@ -268,3 +268,71 @@ class UniqueTags:
             self._tags[self._pos[code]] = DXFTag(code, value)
         else:
             raise KeyError(code)
+
+class ExtendedTags:
+    def __init__(self, iterable):
+        self.tags = Tags()
+        self.xdata = dict() # code >= 1000, keys are "APPNAME", values are Tags()
+        self.appdata = dict() # code == 102, keys are "{<arbitrary name>", values are Tags()
+        self._setup(iterable)
+
+    def _setup(self, iterable):
+        def get_data(store, exitcondition):
+            tag = self.tags[-1]
+            name = tag.value
+            data = Tags([tag])
+            while True:
+                try:
+                    tag = next(tagstream)
+                except StopIteration:
+                    break
+                data.append(tag)
+                if exitcondition(tag.code):
+                    break
+            store[name] = data
+            return
+
+        def get_appdata():
+            get_data(self.appdata, lambda code: code == 102)
+
+        def get_xdata():
+            get_data(self.xdata, lambda code: code == 1001 or code < 1000)
+
+        tagstream = iter(iterable)
+        try:
+            while True:
+                tag = next(tagstream)
+                self.tags.append(tag)
+                if tag.code == 102:
+                    get_appdata()
+                elif tag.code == 1001:
+                    get_xdata()
+        except StopIteration:
+            return
+
+    def __getitem__(self, index):
+        return self.tags.__getitem__(index)
+
+    def __setitem__(self, index, value):
+        return self.tags.__setitem__(index, value)
+
+    def __len__(self):
+        return len(self.tags)
+
+    def __iter__(self):
+        return iter(self.tags)
+
+    def iterxtags(self):
+        for tag in self.tags:
+            if tag.code == 102:
+                for subtag in self.appdata[tag.value]:
+                    yield subtag
+            elif tag.code == 1001:
+                for subtag in self.xdata[tag.value]:
+                    yield subtag
+            else:
+                yield tag
+
+    def write(self, stream):
+        for tag in self.iterxtags():
+            stream.write(strtag(tag))
