@@ -34,8 +34,6 @@ Continuous
 # Pointer/handle to PlotStyleName
 # uses tag(390, ...) from the '0' layer
 
-from ..tags import UniqueTags
-
 class Layer(AC1009Layer):
     TEMPLATE = _LAYERTEMPLATE
     CODE = {

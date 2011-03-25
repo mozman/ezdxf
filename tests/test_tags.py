@@ -168,8 +168,8 @@ class TestTags(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.tags.update(999, 'DOESNOTEXIST')
 
-    def test_new_or_update(self):
-        self.tags.new_or_update(999, 'NEWTAG')
+    def test_setfirst(self):
+        self.tags.setfirst(999, 'NEWTAG')
         self.assertEqual('NEWTAG', self.tags[-1].value)
 
     def test_gethandle_5(self):
@@ -193,17 +193,17 @@ class TestTags(unittest.TestCase):
         tags = Tags.fromtext(TESTFINDALL)
         self.assertEqual(3, len(tags.findall(0)))
 
-    def test_findfirst(self):
+    def test_tagindex(self):
         tags = Tags.fromtext(TESTFINDALL)
-        index = tags.findfirst(0)
+        index = tags.tagindex(0)
         self.assertEqual(0, index)
-        index = tags.findnext(0, index+1)
+        index = tags.tagindex(0, index+1)
         self.assertEqual(1, index)
 
     def test_findfirst_value_error(self):
         tags = Tags.fromtext(TESTFINDALL)
         with self.assertRaises(ValueError):
-            tags.findfirst(1)
+            tags.tagindex(1)
 
 
 if __name__=='__main__':

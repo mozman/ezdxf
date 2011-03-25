@@ -151,11 +151,16 @@ tagcast = _TagCaster.cast
 casttagvalue = _TagCaster.castvalue
 
 class Tags(list):
+    """ DXFTag() chunk as flat list. """
     def write(self, stream):
         for tag in self:
             stream.write(strtag(tag))
 
     def gethandle(self, handles=None):
+        """ Search handle of a DXFTag() chunk.
+
+        :returns: handle as hex-string like 'FF'
+        """
         handle = ''
         for tag in self:
             if tag.code in (5, 105):
@@ -168,35 +173,36 @@ class Tags(list):
             return handles.next
 
     def findall(self, code):
+        """ Returns a list of DXFTag(code, ...). """
         return [ tag for tag in self if tag.code == code ]
 
-    def findfirst(self, code):
-        return self.findnext(code, 0)
-
-    def findnext(self, code, start=0):
-        for index in range(start, len(self)):
+    def tagindex(self, code, start=0, end=None):
+        """ Return first index of DXFTag(code, ...). """
+        if end is None:
+            end = len(self)
+        for index in range(start, end):
             if self[index].code == code:
                 return index
         raise ValueError(code)
 
     def update(self, code, value):
-        for index, tag in enumerate(self):
-            if tag.code == code:
-                self[index] = DXFTag(code, value)
-                return
-        raise ValueError("Tag code=%d does not exist." % code)
+        """ Update first existing tag, raises ValueError if tag not exists. """
+        index = self.tagindex(code)
+        self[index] = DXFTag(code, value)
 
-    def new_or_update(self, code, value):
+    def setfirst(self, code, value):
+        """ Update first existing DXFTag(code, ...) or append a new
+        DXFTag(code, value).
+
+        """
         try:
             self.update(code, value)
         except ValueError:
             self.append( DXFTag(code, value) )
 
     def getvalue(self, code):
-        for tag in self:
-            if tag.code == code:
-                return tag.value
-        raise ValueError(code)
+        index = self.tagindex(code)
+        return self[index].value
 
     @staticmethod
     def fromtext(text):
@@ -243,42 +249,21 @@ class TagGroups(list):
     def fromtext(text, splitcode=0):
         return TagGroups(Tags.fromtext(text), splitcode)
 
-class UniqueTags:
-    """ Access tags by code, this works only for tags with unique codes.
+APPDATACODE = 102
+XDATACODE = 1001
 
-    Multiple existing codes are treated as not existing.
-
-    """
-    def __init__(self, tags):
-        self._counter = Counter( (tag.code for tag in tags) )
-        self._tags = tags
-        self._pos = { tag.code:pos for pos, tag in enumerate(tags) }
-
-    def __contains__(self, code):
-        return self._counter[code] == 1
-
-    def __getitem__(self, code):
-        if self.__contains__(code):
-            return self._tags[self._pos[code]].value
-        else:
-            raise KeyError(code)
-
-    def __setitem__(self, code, value):
-        if self.__contains__(code):
-            self._tags[self._pos[code]] = DXFTag(code, value)
-        else:
-            raise KeyError(code)
-
-class ExtendedTags:
-    def __init__(self, iterable):
-        self.tags = Tags()
-        self.xdata = dict() # code >= 1000, keys are "APPNAME", values are Tags()
+class ExtendedTags(Tags):
+    """ Manage AppData and XData in separated dicts. """
+    __slots__ = ('xdata', 'appdata')
+    def __init__(self, iterable=None):
         self.appdata = dict() # code == 102, keys are "{<arbitrary name>", values are Tags()
-        self._setup(iterable)
+        self.xdata = dict() # code >= 1000, keys are "APPNAME", values are Tags()
+        if iterable is not None:
+            self.extend(iterable)
 
-    def _setup(self, iterable):
-        def get_data(store, exitcondition):
-            tag = self.tags[-1]
+    def extend(self, iterable):
+        def collect_appdata():
+            tag = self[-1]
             name = tag.value
             data = Tags([tag])
             while True:
@@ -287,47 +272,51 @@ class ExtendedTags:
                 except StopIteration:
                     break
                 data.append(tag)
-                if exitcondition(tag.code):
+                if tag.code == APPDATACODE:
                     break
-            store[name] = data
-            return
+            self.appdata[name] = data
 
-        def get_appdata():
-            get_data(self.appdata, lambda code: code == 102)
-
-        def get_xdata():
-            get_data(self.xdata, lambda code: code == 1001 or code < 1000)
+        def collect_xdata():
+            retval = None
+            tag = self[-1]
+            name = tag.value
+            data = Tags([tag])
+            while True:
+                try:
+                    tag = next(tagstream)
+                except StopIteration:
+                    break
+                if tag.code == XDATACODE or tag.code < 1000:
+                    retval = tag
+                    break
+                else:
+                    data.append(tag)
+            self.xdata[name] = data
+            return retval
 
         tagstream = iter(iterable)
+        undotag = None
         try:
             while True:
-                tag = next(tagstream)
-                self.tags.append(tag)
-                if tag.code == 102:
-                    get_appdata()
-                elif tag.code == 1001:
-                    get_xdata()
+                if undotag is None:
+                    tag = next(tagstream)
+                else:
+                    tag = undotag
+                    undotag = None
+                self.append(tag)
+                if tag.code == APPDATACODE:
+                    collect_appdata()
+                elif tag.code == XDATACODE:
+                    undotag = collect_xdata()
         except StopIteration:
             return
 
-    def __getitem__(self, index):
-        return self.tags.__getitem__(index)
-
-    def __setitem__(self, index, value):
-        return self.tags.__setitem__(index, value)
-
-    def __len__(self):
-        return len(self.tags)
-
-    def __iter__(self):
-        return iter(self.tags)
-
     def iterxtags(self):
-        for tag in self.tags:
-            if tag.code == 102:
+        for tag in self:
+            if tag.code == APPDATACODE:
                 for subtag in self.appdata[tag.value]:
                     yield subtag
-            elif tag.code == 1001:
+            elif tag.code == XDATACODE:
                 for subtag in self.xdata[tag.value]:
                     yield subtag
             else:
@@ -336,3 +325,7 @@ class ExtendedTags:
     def write(self, stream):
         for tag in self.iterxtags():
             stream.write(strtag(tag))
+
+    @staticmethod
+    def fromtext(text):
+        return ExtendedTags(StringIterator(text))

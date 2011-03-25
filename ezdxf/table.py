@@ -9,7 +9,7 @@
 from collections import OrderedDict
 
 from .defaultchunk import DefaultChunk
-from .tags import Tags, DXFTag, TagGroups
+from .tags import ExtendedTags, Tags, DXFTag, TagGroups
 
 TABLENAMES = {
     'layer': 'layers',
@@ -79,9 +79,9 @@ class Table:
         assert groups.getname(0) == 'TABLE'
         assert groups.getname(-1) == 'ENDTAB'
 
-        self._table_header = Tags(groups[0][1:])
+        self._table_header = ExtendedTags(groups[0][1:])
         for entrytags in groups[1:-1]:
-            self._add_entry(entrytags)
+            self._add_entry(ExtendedTags(entrytags))
 
     @property
     def entitydb(self):
@@ -144,7 +144,7 @@ class Table:
 
     def get_entry_handle(self, name):
         def table_entry_name(tags):
-            return tags[tags.findfirst(2)].value
+            return tags[tags.tagindex(2)].value
 
         for handle in self._table_entries:
             entry = self.entitydb[handle]

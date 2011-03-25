@@ -6,8 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from functools import lru_cache
-from .tags import Tags, casttagvalue, DXFTag, DXFStructureError
+from .tags import casttagvalue, DXFTag, DXFStructureError
+from .tags import ExtendedTags
 
 class GenericWrapper:
     TEMPLATE = ""
@@ -21,7 +21,7 @@ class GenericWrapper:
     def new(cls, handle, attribs=None, dxffactory=None):
         if cls.TEMPLATE == "":
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
-        entity = cls(Tags.fromtext(cls.TEMPLATE))
+        entity = cls(ExtendedTags.fromtext(cls.TEMPLATE))
         entity.handle = handle
         if attribs is not None:
             entity.update(attribs)
@@ -51,7 +51,7 @@ class GenericWrapper:
             self._settag(code, value)
 
     def _settag(self, code, value):
-        self.tags.new_or_update(code, casttagvalue(code, value))
+        self.tags.setfirst(code, casttagvalue(code, value))
 
     def update(self, attribs):
         for key, value in attribs.items():
@@ -122,7 +122,7 @@ class GenericWrapper:
             raise TypeError('Unknown extended type: %s' % type_)
 
     def _point_index(self, code):
-        return self.tags.findfirst(code)
+        return self.tags.tagindex(code)
 
     def _get_point(self, code):
         index = self._point_index(code)
