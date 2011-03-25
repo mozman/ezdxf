@@ -27,6 +27,9 @@ class GenericWrapper:
             entity.update(attribs)
         return entity
 
+    def dxftype(self):
+        return self.tags[0].value
+
     def __getattr__(self, key):
         if key in self.CODE:
             code = self.CODE[key]

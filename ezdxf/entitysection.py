@@ -21,6 +21,9 @@ class EntitySection:
     def iterhandles(self):
         return iter(self._workspace)
 
+    def add(self, entity):
+        self._workspace.add(entity)
+
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
         assert tags[1] == (2, self.name.upper())

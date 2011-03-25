@@ -68,8 +68,10 @@ the section markers and table headers present:
 from ..tags import Tags
 
 from .headervars import VARMAP
-from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style, AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
+from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style
+from .tableentries import AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
 from ..dxfobjects import DXFDictionary
+from .graphics import AC1009Line
 from ..entity import GenericWrapper
 
 ENTITY_WRAPPERS =  {
@@ -85,6 +87,7 @@ ENTITY_WRAPPERS =  {
     # dxf objects
     'DICTIONARY': DXFDictionary,
     # dxf entities
+    'LINE': AC1009Line,
 }
 
 class AC1009Factory:
@@ -112,6 +115,17 @@ class AC1009Factory:
 
     def table_wrapper(self, table):
         return TableWrapper(table)
+
+    def line(self, start, end, attribs={}):
+        attribs['start'] = start
+        attribs['end'] = end
+        return self._create_db_entry('LINE', attribs)
+
+    def _create_db_entry(self, type_, attribs):
+        handle = self.drawing.handles.next
+        dbentry = self.new_entity(type_, handle, attribs)
+        self.drawing.entitydb[handle] = dbentry.tags
+        return dbentry
 
 class TableWrapper:
     """
