@@ -54,6 +54,7 @@ TABLESMAP = {
     'VIEW': Table,
     'UCS': Table,
     'APPID': Table,
+    'BLOCK_RECORD': Table,
 }
 
 def get_table_class(name):

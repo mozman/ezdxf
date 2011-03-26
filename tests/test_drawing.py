@@ -15,11 +15,10 @@ from ezdxf.tags import StringIterator
 from ezdxf.drawing import Drawing
 
 class TestDrawing(unittest.TestCase):
-    def setUp(self):
-        self.dwg = Drawing(StringIterator(TEST_HEADER))
 
     def test_dxfversion(self):
-        self.assertEqual('AC1009', self.dwg.dxfversion)
+        dwg = Drawing(StringIterator(TEST_HEADER))
+        self.assertEqual('AC1009', dwg.dxfversion)
 
 class TestNewDrawingAC1009(unittest.TestCase):
     def setUp(self):
@@ -77,6 +76,12 @@ ANSI_1252
 $HANDSEED
   5
 FF
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
   0
 ENDSEC
   0

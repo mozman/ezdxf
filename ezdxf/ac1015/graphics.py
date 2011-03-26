@@ -38,7 +38,7 @@ class AC1015Line(AC1009Line):
     TEMPLATE = _LINETEMPLATE
     CODE = {
         'handle': 5,
-        'owner': 330, # Soft-pointer ID/handle to owner BLOCK_RECORD object
+        'parent': 330, # Soft-pointer ID/handle to owner BLOCK_RECORD object
         'layer': 8, # layername as string, default is '0'
         'linetype': 6, # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
         'ltscale': 48, # linetype scale, default is 1.0

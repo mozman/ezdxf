@@ -9,24 +9,15 @@
 import sys
 import unittest
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.dxffactory import dxffactory
-
-class DrawingProxy:
-    def __init__(self):
-        self.handles = HandleGenerator()
-        self.entitydb = {}
-        self.dxffactory = dxffactory('AC1015')
-        self.dxffactory.drawing = self
-
+import ezdxf
 
 class TestLine(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingProxy()
-        self.factory = self.dwg.dxffactory
+        self.dwg = ezdxf.new('AC1015')
+        self.workspace = self.dwg.modelspace()
 
     def test_create_line(self):
-        line = self.factory.line((0, 0), (1, 1))
+        line = self.workspace.add_line((0, 0), (1, 1))
         self.assertEqual((0.,0.), line.start)
         self.assertEqual((1.,1.), line.end)
 

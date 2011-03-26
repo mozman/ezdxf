@@ -70,8 +70,10 @@ from ..tags import Tags
 from .headervars import VARMAP
 from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style
 from .tableentries import AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
-from ..dxfobjects import DXFDictionary
 from .graphics import AC1009Line
+
+from ..dxfobjects import DXFDictionary, DXFLayout
+from .layouts import AC1009Layouts
 from ..entity import GenericWrapper
 
 ENTITY_WRAPPERS =  {
@@ -86,6 +88,7 @@ ENTITY_WRAPPERS =  {
     'VPORT': AC1009Viewport,
     # dxf objects
     'DICTIONARY': DXFDictionary,
+    'LAYOUT': DXFLayout,
     # dxf entities
     'LINE': AC1009Line,
 }
@@ -101,6 +104,10 @@ class AC1009Factory:
         return factory(value)
 
     def new_entity(self, type_, handle, attribs):
+        """ Create a new entity.
+
+        :returns: wrapper class
+        """
         try:
             class_ = self.ENTITY_WRAPPERS[type_]
             return class_.new(handle, attribs, self)
@@ -108,24 +115,26 @@ class AC1009Factory:
             raise ValueError('Unsupported entity type: %s' % type_)
 
     def wrap_entity(self, tags):
-        """ Wraps 'tags' into a WrapperClass(). """
+        """ :returns: wrapper class """
         type_ = tags[0].value
         wrapper = self.ENTITY_WRAPPERS.get(type_, GenericWrapper)
         return wrapper(tags)
 
-    def table_wrapper(self, table):
-        return TableWrapper(table)
+    def create_db_entry(self, type_, attribs):
+        """ Create new entity and add to drawing-database.
 
-    def line(self, start, end, attribs={}):
-        attribs['start'] = start
-        attribs['end'] = end
-        return self._create_db_entry('LINE', attribs)
-
-    def _create_db_entry(self, type_, attribs):
+        :returns: wrapper class
+        """
         handle = self.drawing.handles.next
         dbentry = self.new_entity(type_, handle, attribs)
         self.drawing.entitydb[handle] = dbentry.tags
         return dbentry
+
+    def get_layouts(self):
+        return AC1009Layouts(self.drawing)
+
+    def table_wrapper(self, table):
+        return TableWrapper(table)
 
 class TableWrapper:
     """

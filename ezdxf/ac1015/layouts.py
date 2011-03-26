@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
-# Purpose: layout manager
+# Purpose: AC1009 layout manager
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-# The ModelSpace is a special Layout called 'Model'
+# The ModelSpace is a special Layout called '$MODEL_SPACE'
+from ..ac1009.layouts import AC1009Layouts
 
-class Layouts:
+class AC1015Layouts(AC1009Layouts):
     def __init__(self, drawing):
         self._layouts = {}
         self._drawing = drawing
@@ -17,7 +18,7 @@ class Layouts:
         return name in self._layouts
 
     def create(self, name):
-        pass
+        raise NotImplementedError('DXF AC1009 (R12) allwos only one paperspace')
 
     def get(self, name):
         return self._layouts[name]

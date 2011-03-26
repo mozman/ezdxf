@@ -5,6 +5,7 @@
 # Created: 11.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from datetime import datetime
 
 from . import database
 from .handle import HandleGenerator
@@ -14,16 +15,14 @@ from .templates import TemplateFinder
 from .options import options
 from .codepage import tocodepage, toencoding
 from .sections import Sections
-from .dxfobjects import DXFDictionary
 from .juliandate import juliandate
-from datetime import datetime
 
 class Drawing:
     def __init__(self, tagreader):
         """ Create a new drawing. """
         def get_rootdict():
             roothandle = self.sections.objects.roothandle()
-            return DXFDictionary(self.entitydb[roothandle])
+            return self.dxffactory.wrap_entity(self.entitydb[roothandle])
 
         self._dxfversion = 'AC1009' # readonly
         self.encoding = 'cp1252' # read/write
@@ -38,6 +37,7 @@ class Drawing:
             self.rootdict = get_rootdict()
         else:
             self._enable_handles()
+        self.layouts = self.dxffactory.get_layouts()
 
     def read_header_vars(self, header):
         # called from HeaderSection() object to update important dxf properties
@@ -88,14 +88,15 @@ class Drawing:
     def viewports(self):
         return self.sections.tables.viewports
 
-
     @property
     def blocks(self):
-        return self.sections.tables.blocks
+        return self.sections.blocks
 
-    @property
     def modelspace(self):
-        return self.sections.entities
+        return self.layouts.get('$MODEL_SPACE')
+
+    def paperspace(self, name='$PAPER_SPACE'):
+        return self.layouts.get(name)
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
