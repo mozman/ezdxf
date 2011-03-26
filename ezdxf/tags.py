@@ -204,6 +204,23 @@ class Tags(list):
         index = self.tagindex(code)
         return self[index].value
 
+    def setlast(self, code, value):
+        try:
+            index = self.lastindex(code)
+            self[index] = DXFTag(code, value)
+        except ValueError:
+            self.append( DXFTag(code, value) )
+
+    def lastindex(self, code):
+        for index in reversed(range(len(self))):
+            if self[index].code == code:
+                return index
+        raise ValueError(code)
+
+    def getlastvalue(self, code):
+        index = self.lastindex(code)
+        return self[index].value
+
     @staticmethod
     def fromtext(text):
         return Tags(StringIterator(text))
