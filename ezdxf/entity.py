@@ -7,12 +7,12 @@
 # License: GPLv3
 
 from .tags import casttagvalue, DXFTag, DXFStructureError
-from .tags import ExtendedTags
+from .tags import ExtendedTags, DXFAttr
 
 class GenericWrapper:
     TEMPLATE = ""
     CODE = {
-        'handle': 5,
+        'handle': DXFAttr(5, None, None)
     }
     def __init__(self, tags):
         self.tags = tags
@@ -33,34 +33,104 @@ class GenericWrapper:
     def __getattr__(self, key):
         if key in self.CODE:
             code = self.CODE[key]
-            if isinstance(code, tuple):
-                return self._get_extended_type(code)
-            else:
-                return self.tags.getvalue(code)
+            return self._get_attrib(code)
         else:
             raise AttributeError(key)
 
+    def _get_attrib(self, dxfattr):
+        if dxfattr.subclass is not None:
+            return self._get_subclass_value(dxfattr)
+        elif dxfattr.xtype is not None:
+            return self._get_extended_type(dxfattr.code, dxfattr.xtype)
+        else:
+            return self.tags.getvalue(dxfattr.code)
+
+    def _get_subclass_value(self, dxfattr):
+        subclasstags = self.tags.subclass[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            tags = ExtendedType(subclasstags)
+            return tags.get_value(dxfattr.code, dxfattr.xtype)
+        else:
+            return subclasstags.getvalue(dxfattr.code)
+
+    def _get_extended_type(self, code, xtype):
+        tags = ExtendedType(self.tags)
+        return tags.get_value(code, xtype)
+
     def __setattr__(self, key, value):
         if key in self.CODE:
-            self._setattrib(key, value)
+            self._set_attrib(key, value)
         else:
             super(GenericWrapper, self).__setattr__(key, value)
 
-    def _setattrib(self, key, value):
-        code = self.CODE[key]
-        if isinstance(code, tuple):
-            self._set_extended_type(code, value)
+    def _set_attrib(self, key, value):
+        dxfattr = self.CODE[key]
+        if dxfattr.subclass is not None:
+            self._set_subclass_value(dxfattr, value)
+        elif dxfattr.xtype is not None:
+            self._set_extended_type(dxfattr.code, dxfattr.xtype, value)
         else:
-            self._settag(code, value)
+            self._settag(self.tags, dxfattr.code, value)
 
-    def _settag(self, code, value):
-        self.tags.setfirst(code, casttagvalue(code, value))
+    def _set_extended_type(self, code, xtype, value):
+        tags = ExtendedType(self.tags)
+        return tags.set_value(code, xtype, value)
+
+    def _set_subclass_value(self, dxfattr, value):
+        subclasstags = self.tags.subclass[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            tags = ExtendedType(subclasstags)
+            tags.set_value(dxfattr.code, dxfattr.xtype, value)
+        else:
+            self._settag(subclasstags, dxfattr.code, value)
+
+    @staticmethod
+    def _settag(tags, code, value):
+        tags.setfirst(code, casttagvalue(code, value))
 
     def update(self, attribs):
         for key, value in attribs.items():
-            self._setattrib(key, value)
+            self._set_attrib(key, value)
 
-    def _set_extended_type(self, extcode, value):
+
+class ExtendedType:
+    def __init__(self, tags):
+        self.tags = tags
+
+    def get_value(self, code, xtype):
+        if xtype == 'Point2D':
+            return self._get_fix_point(code, axis=2)
+        elif xtype == 'Point3D':
+            return self._get_fix_point(code, axis=3)
+        elif xtype == 'Point2D/3D':
+            return self._get_flexible_point(code)
+        else:
+            raise TypeError('Unknown extended type: %s' % xtype)
+
+    def _get_fix_point(self, code, axis):
+        point = self._get_point(code)
+        if len(point) != axis:
+            raise DXFStructureError('Invalid axis count for code: %d' % code)
+        return point
+
+    def _get_point(self, code):
+        index = self._point_index(code)
+        return tuple(
+            ( tag.value for x, tag in enumerate(self.tags[index:index+3])
+              if tag.code == code + x*10 )
+        )
+
+    def _point_index(self, code):
+        return self.tags.tagindex(code)
+
+    def _get_flexible_point(self, code):
+        point = self._get_point(code)
+        if len(point) in (2, 3):
+            return point
+        else:
+            raise DXFStructureError('Invalid axis count for code: %d' % code)
+
+    def set_value(self, code, xtype, value):
         def set_point(code, axis):
             if len(value) != axis:
                 raise ValueError('%d axis required' % axis)
@@ -68,15 +138,14 @@ class GenericWrapper:
                 raise DXFStructureError('Invalid axis count for code: %d' % code)
             self._set_point(code, value)
 
-        code, type_ = extcode
-        if type_ == 'Point2D':
+        if xtype == 'Point2D':
             set_point(code, axis=2)
-        elif type_ == 'Point3D':
+        elif xtype == 'Point3D':
             set_point(code, axis=3)
-        elif type_ == 'Point2D/3D':
+        elif xtype == 'Point2D/3D':
             self._set_flexible_point(code, value)
         else:
-            raise TypeError('Unknown extended type: %s' % type_)
+            raise TypeError('Unknown extended type: %s' % xtype)
 
     def _set_point(self, code, value):
         def settag(index, tag):
@@ -112,37 +181,3 @@ class GenericWrapper:
 
     def _count_axis(self, code):
         return len(self._get_point(code))
-
-    def _get_extended_type(self, extcode):
-        code, type_ = extcode
-        if type_ == 'Point2D':
-            return self._get_fix_point(code, axis=2)
-        elif type_ == 'Point3D':
-            return self._get_fix_point(code, axis=3)
-        elif type_ == 'Point2D/3D':
-            return self._get_flexible_point(code)
-        else:
-            raise TypeError('Unknown extended type: %s' % type_)
-
-    def _point_index(self, code):
-        return self.tags.tagindex(code)
-
-    def _get_point(self, code):
-        index = self._point_index(code)
-        return tuple(
-            ( tag.value for x, tag in enumerate(self.tags[index:index+3])
-              if tag.code == code + x*10 )
-        )
-
-    def _get_fix_point(self, code, axis):
-        point = self._get_point(code)
-        if len(point) != axis:
-            raise DXFStructureError('Invalid axis count for code: %d' % code)
-        return point
-
-    def _get_flexible_point(self, code):
-        point = self._get_point(code)
-        if len(point) in (2, 3):
-            return point
-        else:
-            raise DXFStructureError('Invalid axis count for code: %d' % code)

@@ -18,7 +18,7 @@ def add_line_entities(workspace, offset):
 def make_drawing(version):
     dwg = ezdxf.new(version)
     add_line_entities(dwg.modelspace(), 0)
-    add_line_entities(dwg.paperspace(), 70)
+    add_line_entities(dwg.layout(), 70)
     dwg.saveas('basic_graphics_%s.dxf' % version)
 
 def main():

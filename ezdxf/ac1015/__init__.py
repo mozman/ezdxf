@@ -11,6 +11,8 @@ from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
 from .tableentries import AC1015Layer, AC1015Style, AC1015BlockRecord, AC1015Linetype
 from .tableentries import AC1015AppID, AC1015DimStyle, AC1015UCS, AC1015View, AC1015Viewport
+from .layouts import AC1015Layouts
+from .graphics import AC1015Line
 
 UPDATE_ENTITY_WRAPPERS = {
     'LAYER': AC1015Layer,
@@ -22,6 +24,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'UCS': AC1015UCS,
     'APPID': AC1015AppID,
     'BLOCK_RECORD': AC1015BlockRecord,
+    'LINE': AC1015Line,
 }
 
 class AC1015Factory(AC1009Factory):
@@ -33,3 +36,26 @@ class AC1015Factory(AC1009Factory):
     @property
     def rootdict(self):
         return self.drawing.rootdict
+
+    def get_layouts(self):
+        return AC1015Layouts(self.drawing)
+
+    def table_wrapper(self, table):
+        return TableWrapper(table)
+
+class TableWrapper:
+    """
+    Encapsulate all DXF-Version specific details for all DXF tables.
+
+    Tables are: LTYPE, LAYER, STYLE, ... in the TABLES section
+
+    """
+    def __init__(self, table):
+        self. _table = table
+
+    @property
+    def name(self):
+        return self._table.name
+
+    def set_count(self, count):
+        self._table._table_header.subclass['AcDbSymbolTable'].update(70, count)

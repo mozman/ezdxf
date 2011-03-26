@@ -10,15 +10,15 @@ import sys
 import unittest
 from functools import lru_cache
 
-from ezdxf.tags import Tags, DXFStructureError
+from ezdxf.tags import Tags, DXFStructureError, DXFAttr
 from ezdxf.entity import GenericWrapper
 
 class PointAccessor(GenericWrapper):
     CODE = {
-        'point': (10, 'Point3D'),
-        'flat': (11, 'Point2D'),
-        'xp': (12, 'Point3D'),
-        'flex': (13, 'Point2D/3D'),
+        'point': DXFAttr(10, None, 'Point3D'),
+        'flat': DXFAttr(11, None, 'Point2D'),
+        'xp': DXFAttr(12, None, 'Point3D'),
+        'flex': DXFAttr(13, None, 'Point2D/3D'),
     }
 
 class TestPoint3D(unittest.TestCase):
