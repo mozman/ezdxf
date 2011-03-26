@@ -13,7 +13,7 @@ from io import StringIO
 from ezdxf.handle import HandleGenerator
 from ezdxf.dxffactory import dxffactory
 
-from ezdxf.tags import Tags
+from ezdxf.tags import Tags, ExtendedTags
 from ezdxf.table import Table
 
 class DrawingMock:
@@ -253,10 +253,9 @@ ENDTAB
 """
 
 class TestR12Table(unittest.TestCase):
-    TABLE = AC1009TABLE
     def setUp(self):
         self.dwg = DrawingMock()
-        self.table = Table(Tags.fromtext(self.TABLE), self.dwg)
+        self.table = Table(Tags.fromtext(AC1009TABLE), self.dwg)
 
     def test_table_setup(self):
         self.assertEqual(10, len(self.table))
@@ -266,15 +265,36 @@ class TestR12Table(unittest.TestCase):
         self.table.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.maxDiff = None
-        self.assertEqual(normlines(self.TABLE), normlines(result))
+        self.assertEqual(normlines(AC1009TABLE), normlines(result))
 
     def test_get_table_entry(self):
         entry = self.table.get_entry('ACAD')
         self.assertEqual('ACAD', entry.name)
 
-class TestR2010Table(TestR12Table):
-    TABLE = AC1024TABLE
+class DrawingMockAC1024:
+    def __init__(self):
+        self.entitydb = dict()
+        self.handles = HandleGenerator()
+        self.dxffactory = dxffactory('AC1024')
+
+class TestR2010Table(unittest.TestCase):
+    def setUp(self):
+        self.dwg = DrawingMockAC1024()
+        self.table = Table(Tags.fromtext(AC1024TABLE), self.dwg)
+
+    def test_table_setup(self):
+        self.assertEqual(10, len(self.table))
+
+    def test_write(self):
+        stream = StringIO()
+        self.table.write(stream)
+        result = stream.getvalue()
+        stream.close()
+        self.assertEqual(normlines(AC1024TABLE), normlines(result))
+
+    def test_get_table_entry(self):
+        entry = self.table.get_entry('ACAD')
+        self.assertEqual('ACAD', entry.name)
 
 if __name__=='__main__':
     unittest.main()

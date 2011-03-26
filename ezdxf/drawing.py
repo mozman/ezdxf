@@ -93,10 +93,13 @@ class Drawing:
         return self.sections.blocks
 
     def modelspace(self):
-        return self.layouts.get('$MODEL_SPACE')
+        return self.layouts.modelspace()
 
-    def paperspace(self, name='$PAPER_SPACE'):
+    def layout(self, name=None):
         return self.layouts.get(name)
+
+    def layoutnames(self):
+        return list(self.layouts.names())
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')

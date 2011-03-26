@@ -29,8 +29,7 @@ class TestNewLayer(unittest.TestCase):
         self.assertEqual('LayerName', self.layer.name)
 
     def test_default_plotstylename(self):
-        handle = self.layer.tags.getvalue(390)
-        self.assertEqual('AFAF', handle)
+        self.assertEqual('AFAF', self.layer.plotstylename)
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
@@ -48,7 +47,8 @@ class TestNewLinetype(unittest.TestCase):
 
     def test_pattern_items_count(self):
         def count_items():
-            return len(self.ltype.tags.findall(49))
+            subclass = self.ltype.tags.subclass['AcDbLinetypeTableRecord']
+            return len(subclass.findall(49))
         self.assertEqual(2, self.ltype.items)
         self.assertEqual(self.ltype.items, count_items())
 

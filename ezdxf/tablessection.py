@@ -27,7 +27,7 @@ class TablesSection:
                 next(tags)
             return tags
 
-        itertags = skiptags(iter(tags), 2) # (0, 'SECTION'), (2, 'TABELS')
+        itertags = skiptags(iter(tags), 2) # (0, 'SECTION'), (2, 'TABLES')
         for table in iterchunks(itertags, stoptag='ENDSEC', endofchunk='ENDTAB'):
             table_class = get_table_class(name(table))
             new_table = table_class(table, self._drawing)

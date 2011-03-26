@@ -12,6 +12,7 @@ from io import StringIO
 from .codepage import toencoding
 from .const import acadrelease
 
+DXFAttr = namedtuple('DXFAttr', 'code subclass xtype')
 DXFTag = namedtuple('DXFTag', 'code value')
 NONETAG = DXFTag(999999, 'NONE')
 
@@ -266,50 +267,79 @@ class TagGroups(list):
     def fromtext(text, splitcode=0):
         return TagGroups(Tags.fromtext(text), splitcode)
 
-APPDATACODE = 102
-XDATACODE = 1001
+APP_DATA_MARKER = 102
+SUBCLASS_MARKER = 100
+XDATA_MARKER = 1001
 
 class ExtendedTags(Tags):
     """ Manage AppData and XData in separated dicts. """
-    __slots__ = ('xdata', 'appdata')
+    __slots__ = ('xdata', 'appdata', 'subclass')
     def __init__(self, iterable=None):
         self.appdata = dict() # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.xdata = dict() # code >= 1000, keys are "APPNAME", values are Tags()
+        self.subclass = dict() # code == 100, keys are "subclassname", values are Tags()
         if iterable is not None:
             self.extend(iterable)
 
     def extend(self, iterable):
-        def collect_appdata():
-            tag = self[-1]
-            name = tag.value
-            data = Tags([tag])
+        def isappdata(tag):
+            return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
+
+        def collect_subclass(starttag):
+            """ a subclass can contain appdata, but not xdata, ends with
+            SUBCLASSMARKER or XDATACODE.
+            """
+            name = starttag.value
+            data = Tags([starttag])
+            try:
+                while True:
+                    tag = next(tagstream)
+                    if isappdata(tag):
+                        data.append(tag)
+                        collect_appdata(tag)
+                    elif tag.code in (SUBCLASS_MARKER, XDATA_MARKER):
+                        self.subclass[name] = data
+                        return tag
+                    else:
+                        data.append(tag)
+            except StopIteration:
+                pass
+            self.subclass[name] = data
+            return None
+
+        def collect_appdata(starttag):
+            """ appdata, cannot contain xdata or subclasses """
+            name = starttag.value
+            data = Tags([starttag])
             while True:
                 try:
                     tag = next(tagstream)
                 except StopIteration:
-                    break
+                    raise DXFStructureError("Missing closing DXFTag(102, '}') for appdata structure.")
                 data.append(tag)
-                if tag.code == APPDATACODE:
+                if tag.code == APP_DATA_MARKER:
                     break
             self.appdata[name] = data
 
-        def collect_xdata():
-            retval = None
-            tag = self[-1]
-            name = tag.value
-            data = Tags([tag])
-            while True:
-                try:
+        def collect_xdata(starttag):
+            """ xdata are always at the end of the entity and can not contain
+            appdata or subclasses
+            """
+            name = starttag.value
+            data = Tags([starttag])
+            try:
+                while True:
                     tag = next(tagstream)
-                except StopIteration:
-                    break
-                if tag.code == XDATACODE or tag.code < 1000:
-                    retval = tag
-                    break
-                else:
-                    data.append(tag)
+                    if tag.code == XDATA_MARKER:
+                        self.xdata[name] = data
+                        return tag
+                    else:
+                        data.append(tag)
+            except StopIteration:
+                pass
             self.xdata[name] = data
-            return retval
+            return None
+
 
         tagstream = iter(iterable)
         undotag = None
@@ -321,20 +351,37 @@ class ExtendedTags(Tags):
                     tag = undotag
                     undotag = None
                 self.append(tag)
-                if tag.code == APPDATACODE:
-                    collect_appdata()
-                elif tag.code == XDATACODE:
-                    undotag = collect_xdata()
+                if isappdata(tag):
+                    collect_appdata(tag)
+                elif tag.code == SUBCLASS_MARKER:
+                    undotag = collect_subclass(tag)
+                elif tag.code == XDATA_MARKER:
+                    # xdata are always the last tags in entity
+                    undotag = collect_xdata(tag)
         except StopIteration:
             return
 
     def iterxtags(self):
+        def isappdata(tag):
+            return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
+
+        def itersubclass(subclassname):
+            for tag in self.subclass[subclassname]:
+                if isappdata(tag):
+                    for subtag in self.appdata[tag.value]:
+                        yield subtag
+                else:
+                    yield tag
+
         for tag in self:
-            if tag.code == APPDATACODE:
+            if isappdata(tag):
                 for subtag in self.appdata[tag.value]:
                     yield subtag
-            elif tag.code == XDATACODE:
+            elif tag.code == XDATA_MARKER:
                 for subtag in self.xdata[tag.value]:
+                    yield subtag
+            elif tag.code == SUBCLASS_MARKER:
+                for subtag in itersubclass(tag.value):
                     yield subtag
             else:
                 yield tag

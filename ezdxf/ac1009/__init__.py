@@ -120,6 +120,10 @@ class AC1009Factory:
         wrapper = self.ENTITY_WRAPPERS.get(type_, GenericWrapper)
         return wrapper(tags)
 
+    def wrap_handle(self, handle):
+        tags = self.drawing.entitydb[handle]
+        return self.wrap_entity(tags)
+
     def create_db_entry(self, type_, attribs):
         """ Create new entity and add to drawing-database.
 

@@ -23,7 +23,7 @@ class TestExtendedTags(unittest.TestCase):
     def test_init_with_tags(self):
         tags = Tags.fromtext(XTAGS1)
         xtags = ExtendedTags(tags)
-        self.assertEqual(14, len(xtags))
+        self.assertEqual(7, len(xtags))
 
     def test_init_xdata(self):
         self.assertTrue('RAK' in self.xtags.xdata)
@@ -68,7 +68,18 @@ class TestExtendedTags(unittest.TestCase):
 
     def test_tagscount(self):
         """ apdata counts as one tag and xdata counts as one tag. """
-        self.assertEqual(14, len(self.xtags))
+        self.assertEqual(7, len(self.xtags))
+
+    def test_subclass_count(self):
+        self.assertEqual(2, len(self.xtags.subclass))
+
+    def test_subclass_AcDbSymbolTableRecord(self):
+        subclass = self.xtags.subclass['AcDbSymbolTableRecord']
+        self.assertEqual(1, len(subclass))
+
+    def test_subclass_AcDbLayerTableRecord(self):
+        subclass = self.xtags.subclass['AcDbLayerTableRecord']
+        self.assertEqual(8, len(subclass))
 
 XTAGS1 = """  0
 LAYER
@@ -144,11 +155,8 @@ class TestXDATA(unittest.TestCase):
         self.assertEqual(3, len(self.tags.xdata))
 
     def test_tags_count(self):
-        """ 3 xdata chunks and three 'normal' tag. """
-        self.assertEqual(6, len(self.tags))
-
-    def test_tag_40(self):
-        self.assertEqual(self.tags.getvalue(40), 1)
+        """ 3 xdata chunks and two 'normal' tag. """
+        self.assertEqual(5, len(self.tags))
 
     def test_xdata3_tags(self):
         xdata = self.tags.xdata['XDATA3']
@@ -177,8 +185,6 @@ TEXT-MOZMAN
 2
 1070
 2
- 40
-1
 1001
 XDATA3
 1000

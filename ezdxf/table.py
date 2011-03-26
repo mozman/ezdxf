@@ -144,7 +144,13 @@ class Table:
 
     def get_entry_handle(self, name):
         def table_entry_name(tags):
-            return tags[tags.tagindex(2)].value
+            if self._drawing == 'AC1009':
+                return tags.getvalue(2)
+            else:
+                for tag in tags.iterxtags():
+                    if tag.code == 2:
+                        return tag.value
+                raise ValueError
 
         for handle in self._table_entries:
             entry = self.entitydb[handle]
