@@ -65,8 +65,7 @@ class Table:
 
     def __iter__(self):
         for handle in self._table_entries:
-            tags = self.entitydb[handle]
-            yield self.dxffactory.wrap_entity(tags)
+            yield self.get_table_entry_wrapper(handle)
 
     # end public interface
 
@@ -102,7 +101,7 @@ class Table:
     def entry_exists(self, name):
         """ Check if an table-entry 'name' exists. """
         try:
-            handle = self.get_entry_handle(name)
+            entry = self.get_entry(name)
             return True
         except ValueError:
             return False
@@ -132,31 +131,21 @@ class Table:
 
     def get_entry(self, name):
         """ Get table-entry by name as WrapperClass(). """
-        handle = self.get_entry_handle(name)
+        for entry in iter(self):
+            if entry.name == name:
+                return entry
+        raise ValueError(name)
+
+    def get_table_entry_wrapper(self, handle):
         tags = self.entitydb[handle]
         return self.dxffactory.wrap_entity(tags)
 
     def remove_entry(self, name):
         """ Remove table-entry from table and entitydb by name. """
-        handle = self.get_entry_handle(name)
+        entry = self.get_entry(name)
+        handle = entry.handle
         self._table_entries.remove(handle)
         del self.entitydb[handle]
-
-    def get_entry_handle(self, name):
-        def table_entry_name(tags):
-            if self._drawing == 'AC1009':
-                return tags.getvalue(2)
-            else:
-                for tag in tags.iterxtags():
-                    if tag.code == 2:
-                        return tag.value
-                raise ValueError
-
-        for handle in self._table_entries:
-            entry = self.entitydb[handle]
-            if table_entry_name(entry) == name:
-                return handle
-        raise ValueError(name)
 
     def _get_table_wrapper(self):
         return self.dxffactory.table_wrapper(self)
