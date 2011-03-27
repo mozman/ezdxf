@@ -8,9 +8,9 @@
 
 import sys
 import unittest
-from functools import lru_cache
 
-from ezdxf.tags import Tags, DXFStructureError, DXFAttr
+from tools import Tags, DXFStructureError, DXFAttr
+
 from ezdxf.entity import GenericWrapper
 
 class PointAccessor(GenericWrapper):

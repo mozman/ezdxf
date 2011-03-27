@@ -9,7 +9,7 @@
 import sys
 import unittest
 
-from ezdxf.tags import Tags
+from tests.tools import Tags
 
 from ezdxf.ac1015.tableentries import AC1015Layer, AC1015Linetype, AC1015Style
 from ezdxf.ac1015.tableentries import AC1015AppID, AC1015BlockRecord, AC1015DimStyle

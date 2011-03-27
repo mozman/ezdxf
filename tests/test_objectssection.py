@@ -10,22 +10,13 @@ import sys
 import unittest
 from io import StringIO
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.tags import Tags
+from tools import DrawingProxy, Tags, normlines
 
 from ezdxf.entitysection import ObjectsSection
 
-class DrawingMock:
-    entitydb = dict()
-    handles = HandleGenerator()
-
-def normlines(text):
-    lines = text.split('\n')
-    return [line.strip() for line in lines]
-
 class TestObjectsSection(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingMock()
+        self.dwg = DrawingProxy('AC1009')
         self.section = ObjectsSection(Tags.fromtext(TESTOBJECTS), self.dwg)
 
     def test_write(self):

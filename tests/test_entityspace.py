@@ -9,18 +9,13 @@
 import sys
 import unittest
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.tags import TagGroups
+from tools import DrawingProxy, TagGroups
 
 from ezdxf.entityspace import EntitySpace
 
-class DrawingMock:
-    entitydb = dict()
-    handles = HandleGenerator()
-
 class TestEntitySpace(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingMock()
+        self.dwg = DrawingProxy('AC1009')
         self.space = EntitySpace(self.dwg)
 
     def test_add(self):

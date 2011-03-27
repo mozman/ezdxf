@@ -10,21 +10,9 @@ import sys
 import unittest
 from io import StringIO
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.dxffactory import dxffactory
+from tools import DrawingProxy, normlines, Tags
 
-from ezdxf.tags import Tags, ExtendedTags
 from ezdxf.table import Table
-
-class DrawingMock:
-    def __init__(self):
-        self.entitydb = dict()
-        self.handles = HandleGenerator()
-        self.dxffactory = dxffactory('AC1009')
-
-def normlines(text):
-    lines = text.split('\n')
-    return [line.strip() for line in lines]
 
 AC1009TABLE = """  0
 TABLE
@@ -254,7 +242,7 @@ ENDTAB
 
 class TestR12Table(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingMock()
+        self.dwg = DrawingProxy('AC1009')
         self.table = Table(Tags.fromtext(AC1009TABLE), self.dwg)
 
     def test_table_setup(self):
@@ -271,15 +259,10 @@ class TestR12Table(unittest.TestCase):
         entry = self.table.get_entry('ACAD')
         self.assertEqual('ACAD', entry.name)
 
-class DrawingMockAC1024:
-    def __init__(self):
-        self.entitydb = dict()
-        self.handles = HandleGenerator()
-        self.dxffactory = dxffactory('AC1024')
 
 class TestR2010Table(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingMockAC1024()
+        self.dwg = DrawingProxy('AC1024')
         self.table = Table(Tags.fromtext(AC1024TABLE), self.dwg)
 
     def test_table_setup(self):

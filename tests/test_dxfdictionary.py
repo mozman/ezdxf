@@ -9,7 +9,8 @@
 import sys
 import unittest
 
-from ezdxf.tags import ExtendedTags
+from tools import ExtendedTags
+
 from ezdxf.dxfobjects import DXFDictionary
 
 class TestDXFDict(unittest.TestCase):
