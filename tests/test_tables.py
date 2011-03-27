@@ -10,25 +10,14 @@ import sys
 import unittest
 from io import StringIO
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.dxffactory import dxffactory
-from ezdxf.tags import text2tags
+from tools import DrawingProxy, normlines, Tags
+
 from ezdxf.tablessection import TablesSection
-
-class DrawingProxy:
-    handles = HandleGenerator()
-    entitydb = {}
-    dxffactory = dxffactory('AC1009')
-
-def normlines(text):
-    lines = text.split('\n')
-    return [line.strip() for line in lines]
-
 
 class TestTables(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingProxy()
-        self.tables = TablesSection(text2tags(TEST_TABLES), self.dwg)
+        self.dwg = DrawingProxy('AC1009')
+        self.tables = TablesSection(Tags.fromtext(TEST_TABLES), self.dwg)
 
     def test_constructor(self):
         self.assertIsNotNone(self.tables.layers)

@@ -147,14 +147,11 @@ class Table:
         self._table_entries.remove(handle)
         del self.entitydb[handle]
 
-    def _get_table_wrapper(self):
-        return self.dxffactory.table_wrapper(self)
-
     def write(self, stream):
         """ Write DXF represention to stream, stream opened with mode='wt'. """
         def prologue():
             stream.write('  0\nTABLE\n')
-            self._get_table_wrapper().set_count(len(self))
+            self._update_meta_data()
             self._table_header.write(stream)
 
         def content():
@@ -167,6 +164,13 @@ class Table:
         prologue()
         content()
         epilogue()
+
+    def _update_meta_data(self):
+        count = len(self)
+        if self._drawing.dxfversion > 'AC1009':
+            self._table_header.subclass['AcDbSymbolTable'].update(70, count)
+        else:
+            self._table_header.update(70, count)
 
 class ViewportTable(Table):
     ## TODO: Viewport-Table can have multiple entries with same name

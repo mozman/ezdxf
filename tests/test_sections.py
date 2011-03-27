@@ -9,19 +9,13 @@
 import sys
 import unittest
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.tags import StringIterator
+from tools import DrawingProxy, normlines, StringIterator
+
 from ezdxf.sections import Sections
-
-class DrawingMock:
-    handles = HandleGenerator()
-    def read_header_vars(self, header):
-        pass
-
 
 class TestSections(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingMock()
+        self.dwg = DrawingProxy('AC1009')
         self.sections = Sections(StringIterator(TEST_HEADER), self.dwg)
 
     def test_constructor(self):

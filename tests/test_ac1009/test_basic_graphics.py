@@ -9,16 +9,8 @@
 import sys
 import unittest
 
-from ezdxf.handle import HandleGenerator
-from ezdxf.dxffactory import dxffactory
+from tests.tools import DrawingProxy
 from ezdxf.entityspace import EntitySpace
-
-
-class DrawingProxy:
-    def __init__(self, version):
-        self.handles = HandleGenerator()
-        self.entitydb = {}
-        self.dxffactory = dxffactory(version, self)
 
 from ezdxf.ac1009.layouts import AC1009ModelSpaceLayout, AC1009PaperSpaceLayout
 

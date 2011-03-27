@@ -136,24 +136,3 @@ class AC1009Factory:
 
     def get_layouts(self):
         return AC1009Layouts(self.drawing)
-
-    def table_wrapper(self, table):
-        return TableWrapper(table)
-
-class TableWrapper:
-    """
-    Encapsulate all DXF-Version specific details for all DXF tables.
-
-    Tables are: LTYPE, LAYER, STYLE, ... in the TABLES section
-
-    """
-    def __init__(self, table):
-        self. _table = table
-
-    @property
-    def name(self):
-        return self._table.name
-
-    def set_count(self, count):
-        self._table._table_header.update(70, count)
-

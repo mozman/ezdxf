@@ -9,23 +9,15 @@
 import sys
 import unittest
 
-from ezdxf.dxffactory import dxffactory
-from ezdxf.handle import HandleGenerator
+from tools import DrawingProxy, Tags
 
-from ezdxf.tags import text2tags
 from ezdxf.headersection import HeaderSection
-
-class DrawingProxy:
-    dxffactory = dxffactory('AC1009')
-    handles = HandleGenerator()
-    def read_header_vars(self, header):
-        pass
-
 
 class TestHeaderSection(unittest.TestCase):
     def setUp(self):
-        tags = text2tags(TESTHEADER)
-        self.header = HeaderSection(tags, DrawingProxy())
+        tags = Tags.fromtext(TESTHEADER)
+        dwg = DrawingProxy('AC1009')
+        self.header = HeaderSection(tags, dwg)
 
     def test_get_acadver(self):
         result = self.header['$ACADVER']
