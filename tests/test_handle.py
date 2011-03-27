@@ -14,11 +14,11 @@ from ezdxf.handle import HandleGenerator
 class TestHandleGenerator(unittest.TestCase):
     def test_next(self):
         handles = HandleGenerator('100')
-        self.assertEqual('100', handles.next)
+        self.assertEqual('100', handles.next())
 
     def test_seed(self):
         handles = HandleGenerator('200')
-        handles.next
+        handles.next()
         self.assertEqual('201', handles.seed)
 
     def test_reset(self):

@@ -129,7 +129,7 @@ class AC1009Factory:
 
         :returns: wrapper class
         """
-        handle = self.drawing.handles.next
+        handle = self.drawing.handles.next()
         dbentry = self.new_entity(type_, handle, attribs)
         self.drawing.entitydb[handle] = dbentry.tags
         return dbentry
