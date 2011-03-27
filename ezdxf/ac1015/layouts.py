@@ -6,9 +6,9 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-# The ModelSpace is a special Layout called '$MODEL_SPACE'
+# The ModelSpace is a special Layout called 'Model'
 
-from .graphics import AC1015GraphicsBuilder
+from .gbuilder import AC1015GraphicsBuilder
 
 class AC1015Layouts:
     def __init__(self, drawing):

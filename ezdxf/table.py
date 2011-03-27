@@ -6,8 +6,6 @@
 # Copyright (C) , Manfred Moitzi
 # License: GPLv3
 
-from collections import OrderedDict
-
 from .defaultchunk import DefaultChunk
 from .tags import ExtendedTags, Tags, DXFTag, TagGroups
 
