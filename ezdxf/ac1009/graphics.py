@@ -9,6 +9,9 @@
 from ..tags import DXFAttr
 from ..entity import GenericWrapper, ExtendedType
 
+class GraphicEntity(GenericWrapper):
+    pass
+
 class ColorMixin:
     def set_extcolor(self, color):
         """ Set color by color-name or rgb-tuple, for DXF R12 the nearest
@@ -22,20 +25,23 @@ class ColorMixin:
     def get_colorname(self):
         return 'Black'
 
-class FourPointsMixin:
+class QuadrilateralMixin:
     def __getitem__(self, num):
         if num in (0, 1, 2, 3):
-            tags = ExtendedType(self.tags)
-            return self._get_value(10+num, 'Point2D/3D')
+            tags = self._get_subtags()
+            return tags._get_value(10+num, 'Point2D/3D')
         else:
             raise IndexError(num)
 
     def __setitem__(self, num, value):
         if num in (0, 1, 2, 3):
-            tags = ExtendedType(self.tags)
-            return self._set_value(10+num, 'Point2D/3D', value)
+            tags = self._get_subtags()
+            return tags._set_value(10+num, 'Point2D/3D', value)
         else:
             raise IndexError(num)
+
+    def _get_subtags(self):
+        return ExtendedType(self.tags)
 
 def make_AC1009_attribs(additional={}):
     attribs = {
@@ -69,7 +75,7 @@ LINE
 1.0
 """
 
-class AC1009Line(GenericWrapper, ColorMixin):
+class AC1009Line(GraphicEntity, ColorMixin):
     TEMPLATE = _LINE_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'start': DXFAttr(10, None, 'Point2D/3D'),
@@ -90,7 +96,7 @@ POINT
 0.0
 """
 
-class AC1009Point(GenericWrapper, ColorMixin):
+class AC1009Point(GraphicEntity, ColorMixin):
     TEMPLATE = _POINT_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'point': DXFAttr(10, None, 'Point2D/3D'),
@@ -112,7 +118,7 @@ CIRCLE
 1.0
 """
 
-class AC1009Circle(GenericWrapper, ColorMixin):
+class AC1009Circle(GraphicEntity, ColorMixin):
     TEMPLATE = _CIRCLE_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'center': DXFAttr(10, None, 'Point2D/3D'),
@@ -139,7 +145,7 @@ ARC
 360
 """
 
-class AC1009Arc(GenericWrapper, ColorMixin):
+class AC1009Arc(GraphicEntity, ColorMixin):
     TEMPLATE = _ARC_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'center': DXFAttr(10, None, 'Point2D/3D'),
@@ -180,7 +186,7 @@ TRACE
 0.0
 """
 
-class AC1009Trace(GenericWrapper, ColorMixin, FourPointsMixin):
+class AC1009Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _TRACE_TPL
     DXFATTRIBS = make_AC1009_attribs()
 
@@ -232,7 +238,7 @@ STANDARD
 0.0
 """
 
-class AC1009Text(GenericWrapper, ColorMixin):
+class AC1009Text(GraphicEntity, ColorMixin):
     TEMPLATE = _TEXT_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'insert': DXFAttr(10, None, 'Point2D/3D'),
@@ -269,7 +275,7 @@ BLOCKNAME
   1
 
 """
-class AC1009Block(GenericWrapper):
+class AC1009Block(GraphicEntity):
     TEMPLATE = _BLOCK_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'name': DXFAttr(2, None, None),
@@ -279,7 +285,7 @@ class AC1009Block(GenericWrapper):
         'xrefpath': DXFAttr(1, None, None),
     })
 
-class AC1009EndBlk(GenericWrapper):
+class AC1009EndBlk(GraphicEntity):
     TEMPLATE = "  0\nENDBLK\n  5\n0\n"
     DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
 
@@ -308,7 +314,7 @@ BLOCKNAME
  50
 0.0
 """
-class AC1009Insert(GenericWrapper):
+class AC1009Insert(GraphicEntity):
     TEMPLATE = _INSERT_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'attribsfollow': DXFAttr(66, None, None),
@@ -324,7 +330,7 @@ class AC1009Insert(GenericWrapper):
         'rowspacing': DXFAttr(45, None, None),
     })
 
-class AC1009SeqEnd(GenericWrapper):
+class AC1009SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
     DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
 
@@ -373,7 +379,7 @@ STANDARD
  31
 0.0
 """
-class AC1009Attdef(GenericWrapper):
+class AC1009Attdef(GraphicEntity):
     TEMPLATE = _ATTDEF_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'insert': DXFAttr(10, None, 'Point2D/3D'),
@@ -436,7 +442,7 @@ STANDARD
  31
 0.0
 """
-class AC1009Attrib(GenericWrapper):
+class AC1009Attrib(GraphicEntity):
     TEMPLATE = _ATTRIB_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'insert': DXFAttr(10, None, 'Point2D/3D'),
@@ -474,7 +480,7 @@ POLYLINE
  70
 0
 """
-class AC1009Polyline(GenericWrapper, ColorMixin):
+class AC1009Polyline(GraphicEntity, ColorMixin):
     TEMPLATE = _POLYLINE_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'elevation': DXFAttr(10, None, 'Point2D/3D'),
@@ -494,7 +500,7 @@ class AC1009Polyline(GenericWrapper, ColorMixin):
     POLYFACE = 64
 
     def setbuilder(self, builder):
-        self.builder = builder
+        self._builder = builder
 
     def setmode(self, mode):
         if mode == 'polyline3d':
@@ -506,6 +512,17 @@ class AC1009Polyline(GenericWrapper, ColorMixin):
         else:
             raise ValueError(mode)
 
+    def getmode(self):
+        flags = self.flags
+        if flags & self.POLYLINE3D > 0:
+            return 'polyline3d'
+        elif flags & self.POLYMESH > 0:
+            return 'polymesh'
+        elif flags & self.POLYFACE > 0:
+            return 'polyface'
+        else:
+            return 'polyline2d'
+
     def mclose(self):
         self.flags = self.flags | self.MCLOSED
     def nclose(self):
@@ -516,6 +533,86 @@ class AC1009Polyline(GenericWrapper, ColorMixin):
             self.mclose()
         if nclose:
             self.nclose()
+
+    def __len__(self):
+        return self._getendpos() - self._getstartpos() - 1
+
+    def __iter__(self):
+        """ Iterate over all vertices. """
+        index = self._getstartpos() + 1
+        while True:
+            entity = self._builder._get_entity(index)
+            if entiy.dxftype == 'VERTEX':
+                yield entity
+            index += 1
+
+    def __getitem__(self, pos):
+        return self._builder._get_entity(self._getstartpos() + pos + 1)
+
+    def append_vertices(self, points, attribs={}):
+        index = self._getendpos()
+        self.insert_vertices(index, points, attribs)
+
+    def insert_vertices(self, pos, points, attribs={}):
+        index = self._getstartpos() + pos + 1
+        for point in points:
+            newattr = dict(attribs)
+            newattr['location'] = point
+            vertex = self._builder._build_entity('VERTEX', newattr)
+            self.builder._insert_entity(index, vertex)
+            index += 1
+
+    def delete_vertices(self, pos, count=1):
+        index = self._getstartpos() + pos + 1
+        for x in range(count):
+            self.builder._remove_entity(index + x)
+
+    def _getendpos(self):
+        # position can not be cached, because insertion and deletion in
+        # entity-space, can change the polyline position
+        pos = self._getstartpos()
+        while True:
+            pos += 1
+            entity = self._builder._get_entity(pos)
+            if entity.dxftype == 'SEQEND':
+                return pos
+
+    def _getstartpos(self):
+        # position can not be cached, because insertion and deletion in
+        # entity-space, can change the polyline position
+        return self.builder._get_position(self)
+
+    def cast(self):
+        mode = self.getmode()
+        if mode == 'polyface':
+            return AC1009Polyface(self)
+        elif mode == 'polymesh':
+            return AC1009Polymesh(self)
+        else:
+            return self
+
+class AC1009Polyface(AC1009Polyline):
+    def __init__(self, polyline):
+        self.setbuilder(polyline._builder)
+        self.tags = polyline.tags
+
+    def append_face(self, face, attribs={}):
+        raise NotImplementedError
+
+    def faces(self):
+        """ Iterate over all faces. """
+        raise NotImplementedError
+
+class AC1009Polymesh(AC1009Polyline):
+    def __init__(self, polyline):
+        self.setbuilder(polyline._builder)
+        self.tags = polyline.tags
+
+    def set_vertex(self, mnpos, point, attribs={}):
+        raise NotImplementedError
+
+    def get_vertex(self, mnpos):
+        raise NotImplementedError
 
 _VERTEX_TPL = """ 0
 VERTEX
@@ -538,7 +635,7 @@ VERTEX
  70
 0
 """
-class AC1009Vertex(GenericWrapper, ColorMixin):
+class AC1009Vertex(GraphicEntity, ColorMixin):
     TEMPLATE = _VERTEX_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'location': DXFAttr(10, None, 'Point2D/3D'),
@@ -579,7 +676,7 @@ MVIEW
 1002
 {
 """
-class AC1009Viewport(GenericWrapper):
+class AC1009Viewport(GraphicEntity):
     TEMPLATE = _VPORT_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'center': DXFAttr(10, None, 'Point2D/3D'),
@@ -651,7 +748,7 @@ DIMSTYLE
  50
 0.0
 """
-class AC1009Dimension(GenericWrapper):
+class AC1009Dimension(GraphicEntity):
     TEMPLATE = _DIMENSION_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'geometry': DXFAttr(2, None, None),

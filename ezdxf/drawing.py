@@ -101,6 +101,10 @@ class Drawing:
     def layoutnames(self):
         return list(self.layouts.names())
 
+    @property
+    def entities(self):
+        return self.sections.entities
+
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
         return toencoding(codepage)

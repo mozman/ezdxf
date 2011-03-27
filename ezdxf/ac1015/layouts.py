@@ -9,7 +9,7 @@
 # The ModelSpace is a special Layout called 'Model'
 
 from .gbuilder import AC1015GraphicsBuilder
-from ..ac1009.layouts import AC1009ModelSpaceLayout
+from ..ac1009.layouts import AC1009Layout
 
 class AC1015Layouts:
     def __init__(self, drawing):
@@ -47,13 +47,30 @@ class AC1015Layouts:
         return [name for order, name in sorted(names)]
 
 
-class AC1015Layout(AC1009ModelSpaceLayout, AC1015GraphicsBuilder):
+class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
     def __init__(self, drawing, layout_handle):
         self._layout_handle = layout_handle
         self._dxffactory = drawing.dxffactory
         self._block_record = self.dxflayout.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
         self._workspace = drawing.sections.entities.workspace
+
+    # start of public interface
+
+    def __iter__(self):
+        for entity in self._iter_all_entities():
+            if entity.getdxfattr('block_record') == self._block_record:
+                yield entity
+
+    def __contains__(self, entity):
+        if isinstance(entity, str): # handle
+            entity = self._dxffactory.wrap_handle(entity)
+        if entity.getdxfattr('block_record') == self._block_record:
+            return True
+        else:
+            return False
+
+    # end of public interface
 
     @property
     def dxflayout(self):
