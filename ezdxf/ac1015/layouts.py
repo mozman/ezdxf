@@ -34,7 +34,8 @@ class AC1015Layouts:
 
     def get(self, name):
         if name is None:
-            return self.names_in_taborder()[1]
+            first_layout_name = self.names_in_taborder()[1]
+            return self._layouts[first_layout_name]
         else:
             return self._layouts[name]
 
@@ -49,7 +50,7 @@ class AC1015Layout(AC1015GraphicsBuilder):
     def __init__(self, drawing, layout_handle):
         self._layout_handle = layout_handle
         self._dxffactory = drawing.dxffactory
-        self._block_record = self.dxflayout.get_block_record()
+        self._block_record = self.dxflayout.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
         self._workspace = drawing.sections.entities
 

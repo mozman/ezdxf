@@ -14,7 +14,7 @@ from tools import Tags, DXFStructureError, DXFAttr
 from ezdxf.entity import GenericWrapper
 
 class PointAccessor(GenericWrapper):
-    CODE = {
+    DXFATTRIBS = {
         'point': DXFAttr(10, None, 'Point3D'),
         'flat': DXFAttr(11, None, 'Point2D'),
         'xp': DXFAttr(12, None, 'Point3D'),

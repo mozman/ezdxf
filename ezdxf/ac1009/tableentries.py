@@ -25,7 +25,7 @@ CONTINUOUS
 
 class AC1009Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
@@ -84,7 +84,7 @@ arial.ttf
 
 class AC1009Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
@@ -114,7 +114,7 @@ LTYPEDESCRIPTION
 
 class AC1009Linetype(GenericWrapper):
     TEMPLATE = _LTYPETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'description': DXFAttr(3, None, None),
@@ -216,7 +216,7 @@ VPORTNAME
 
 class AC1009Viewport(GenericWrapper):
     TEMPLATE = _VPORTTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
@@ -278,7 +278,7 @@ UCSNAME
 
 class AC1009UCS(GenericWrapper):
     TEMPLATE = _UCSTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
@@ -300,7 +300,7 @@ APPNAME
 
 class AC1009AppID(GenericWrapper):
     TEMPLATE = _APPIDTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
@@ -348,7 +348,7 @@ VIEWNAME
 
 class AC1009View(GenericWrapper):
     TEMPLATE = _VIEWTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
@@ -454,7 +454,7 @@ DIMSTYLENAME
 
 class AC1009DimStyle(GenericWrapper):
     TEMPLATE = _DIMSTYLETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(105, None, None),
         'name': DXFAttr(2, None, None),
         'flags': DXFAttr(70, None, None),
