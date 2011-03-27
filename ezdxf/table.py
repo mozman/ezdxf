@@ -113,7 +113,7 @@ class Table:
         Does not check if an entry attribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        handle = self.handles.next
+        handle = self.handles.next()
         entry = self.dxffactory.new_entity(self._dxfname, handle, attribs)
         self._add_entry(entry)
         return entry
@@ -121,7 +121,10 @@ class Table:
     def _add_entry(self, entry):
         """ Add table-entry to table and entitydb. """
         if isinstance(entry, Tags):
-            handle = entry.gethandle(self.handles)
+            try:
+                handle = entry.gethandle()
+            except ValueError:
+                handle = self.handles.next()
             tags = entry
         else:
             handle = entry.handle

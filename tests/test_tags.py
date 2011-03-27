@@ -174,20 +174,15 @@ class TestTags(unittest.TestCase):
 
     def test_gethandle_5(self):
         tags = Tags.fromtext(TESTHANDLE5)
-        handles = HandlesMock()
-        self.assertEqual('F5', tags.gethandle(handles))
-        self.assertEqual(0, handles.calls)
+        self.assertEqual('F5', tags.gethandle())
 
     def test_gethandle_105(self):
         tags = Tags.fromtext(TESTHANDLE105)
-        handles = HandlesMock()
-        self.assertEqual('F105', tags.gethandle(handles))
-        self.assertEqual(0, handles.calls)
+        self.assertEqual('F105', tags.gethandle())
 
     def test_gethandle_create_new(self):
-        handles = HandlesMock()
-        self.assertEqual('FF', self.tags.gethandle(handles))
-        self.assertEqual(1, handles.calls)
+        with self.assertRaises(ValueError):
+            self.tags.gethandle()
 
     def test_findall(self):
         tags = Tags.fromtext(TESTFINDALL)

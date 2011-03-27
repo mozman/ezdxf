@@ -157,8 +157,9 @@ class Tags(list):
         for tag in self:
             stream.write(strtag(tag))
 
-    def gethandle(self, handles=None):
-        """ Search handle of a DXFTag() chunk.
+    def gethandle(self):
+        """ Search handle of a DXFTag() chunk. Raises ValueError if handle
+        not exists.
 
         :returns: handle as hex-string like 'FF'
         """
@@ -167,11 +168,8 @@ class Tags(list):
             if tag.code in (5, 105):
                 handle = tag.value
                 break
-        try:
-            int(handle, 16) # check for valid handle
-            return handle
-        except ValueError:
-            return handles.next
+        int(handle, 16) # check for valid handle
+        return handle
 
     def findall(self, code):
         """ Returns a list of DXFTag(code, ...). """

@@ -14,7 +14,6 @@ class HandleGenerator:
     def seed(self):
         return _hexstr(self._handle)
 
-    @property
     def next(self):
         next_handle =  self.seed
         self._handle += 1

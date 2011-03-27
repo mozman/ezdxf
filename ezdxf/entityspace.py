@@ -22,7 +22,11 @@ class EntitySpace(list):
 
     def add(self, entity):
         if isinstance(entity, Tags):
-            handle = entity.gethandle(self._drawing.handles)
+            try:
+                handle = entity.gethandle()
+            except ValueError:
+                handle = self._drawing.handles.next()
+
             self._drawing.entitydb[handle] = entity
         else:
             handle = entity.handle
