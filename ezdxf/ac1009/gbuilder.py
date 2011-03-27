@@ -14,7 +14,7 @@ class AC1009GraphicBuilder:
     # def _get_position(self, entity):
     # def _get_entity(self, pos):
     # def _insert_entity(self, pos, entity):
-    # def _delete_entity(self, entity):
+    # def _remove_entity(self, pos or entity):
 
     def add_line(self, start, end, attribs={}):
         attribs['start'] = start
@@ -52,14 +52,13 @@ class AC1009GraphicBuilder:
         attribs['insert'] = insert
         return self._create('INSERT', attribs)
 
-    def add_polyline2D(self, points, attribs={}, seqend=True):
+    def add_polyline2D(self, points, attribs={}):
         closed = attribs.pop('closed', False)
         polyline = self._create('POLYLINE', attribs)
         polyline.setbuilder(self)
         for point in points:
             polyline.add_vertex(point)
-        if seqend:
-            self.add_seqend()
+        self.add_seqend()
         self._close_polyline(polyline, closed)
         return polyline
 
@@ -90,7 +89,7 @@ class AC1009GraphicBuilder:
         polymesh.setmode('polymesh')
         append_null_points(msize * nsize)
         polymesh.close(mclose, nclose)
-        return polymesh
+        return polymesh.cast()
 
     def add_polyface(self, attribs={}):
         mclose = attribs.pop('mclose', False)
@@ -99,7 +98,7 @@ class AC1009GraphicBuilder:
         polyline.setbuilder(self)
         polyface.setmode('polyface')
         polyface.close(mclose, nclose)
-        return polyface
+        return polyface.cast()
 
     def _add_quadrilateral(self, type_, points, attribs={}):
         entity = self._create(type_, attribs)

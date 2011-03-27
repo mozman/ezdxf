@@ -30,6 +30,12 @@ class GenericWrapper:
     def dxftype(self):
         return self.tags[0].value
 
+    def getdxfattr(self, key, default=None):
+        if key in self.DXFATTRIBS:
+            return self.__getattr__(key)
+        else:
+            return default
+
     def __getattr__(self, key):
         if key in self.DXFATTRIBS:
             code = self.DXFATTRIBS[key]

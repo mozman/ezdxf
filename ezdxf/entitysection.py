@@ -16,10 +16,28 @@ class EntitySection:
     name = 'entities'
     def __init__(self, tags, drawing):
         self.workspace = EntitySpace(drawing)
+        self._drawing = drawing
         self._build(tags)
 
-    def iterhandles(self):
-        return iter(self.workspace)
+    @property
+    def dxffactory(self):
+        return self.drawing.dxffactory
+
+    # start of public interface
+
+    def __len__(self):
+        return len(self.workspace)
+
+    def __iter__(self):
+        for handle in self.workspace:
+            yield self.dxffactory.wrap_handle(handle)
+
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            raise ValueError('Integer index required')
+        return self.workspace[index]
+
+    # end of public interface
 
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')

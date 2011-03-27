@@ -11,8 +11,8 @@ from .gbuilder import AC1009GraphicBuilder
 class AC1009Layouts:
     def __init__(self, drawing):
         workspace = drawing.sections.entities.workspace
-        self._modelspace = AC1009ModelSpaceLayout(workspace, drawing.dxffactory)
-        self._paperspace = AC1009PaperSpaceLayout(workspace, drawing.dxffactory)
+        self._modelspace = AC1009Layout(workspace, drawing.dxffactory, 0)
+        self._paperspace = AC1009Layout(workspace, drawing.dxffactory, 1)
 
     def modelspace(self):
         return self._modelspace
@@ -24,13 +24,32 @@ class AC1009Layouts:
     def names(self):
         return []
 
-class AC1009ModelSpaceLayout(AC1009GraphicBuilder):
-    def __init__(self, workspace, dxffactory):
+class AC1009Layout(AC1009GraphicBuilder):
+    def __init__(self, workspace, dxffactory, paperspace=0):
         self._workspace = workspace # where all the entities go ...
         self._dxffactory = dxffactory
+        self._paperspace = paperspace
 
-    def _set_paper_space(self, attribs):
-        pass
+    # start of public interface
+
+    def __iter__(self):
+        for entity in self._iter_all_entities():
+            if entity.getdxfattr('paperspace', 0) == self._paperspace:
+                yield entity
+
+    def __contains__(self, entity):
+        if isinstance(entity, str): # handle
+            entity = self._dxffactory.wrap_handle(entity)
+        if entity.getdxfattr('paperspace', 0) == self._paperspace:
+            return True
+        else:
+            return False
+
+    # end of public interface
+
+    def _iter_all_entities(self):
+        for handle in self._workspace:
+            yield self._dxffactory.wrap_handle(handle)
 
     # start of interface for GraphicBuilder
 
@@ -52,11 +71,12 @@ class AC1009ModelSpaceLayout(AC1009GraphicBuilder):
         self._workspace.insert(pos, entity.handle)
 
     def _remove_entity(self, entity):
-        self._workspace.remove(entity.handle)
+        if isinstance(entity, int):
+            del self._workspace[entity]
+        else:
+            self._workspace.remove(entity.handle)
 
     # end of interface for GraphicBuilder
 
-class AC1009PaperSpaceLayout(AC1009ModelSpaceLayout):
     def _set_paper_space(self, attribs):
-        attribs['paperspace'] = 1
-
+        attribs['paperspace'] = self._paperspace

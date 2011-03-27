@@ -12,17 +12,17 @@ import unittest
 from tests.tools import DrawingProxy
 from ezdxf.entityspace import EntitySpace
 
-from ezdxf.ac1009.layouts import AC1009ModelSpaceLayout, AC1009PaperSpaceLayout
+from ezdxf.ac1009.layouts import AC1009Layout
 
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
         self.workspace = EntitySpace(self.dwg)
-        self.layout = AC1009ModelSpaceLayout(self.workspace, self.dwg.dxffactory)
+        self.layout = AC1009Layout(self.workspace, self.dwg.dxffactory, 0)
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
-        paperspace = AC1009PaperSpaceLayout(self.workspace, self.dwg.dxffactory)
+        paperspace = AC1009Layout(self.workspace, self.dwg.dxffactory, 1)
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.paperspace)
 
