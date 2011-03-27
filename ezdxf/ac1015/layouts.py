@@ -9,6 +9,7 @@
 # The ModelSpace is a special Layout called 'Model'
 
 from .gbuilder import AC1015GraphicsBuilder
+from ..ac1009.layouts import AC1009ModelSpaceLayout
 
 class AC1015Layouts:
     def __init__(self, drawing):
@@ -46,13 +47,13 @@ class AC1015Layouts:
         return [name for order, name in sorted(names)]
 
 
-class AC1015Layout(AC1015GraphicsBuilder):
+class AC1015Layout(AC1009ModelSpaceLayout, AC1015GraphicsBuilder):
     def __init__(self, drawing, layout_handle):
         self._layout_handle = layout_handle
         self._dxffactory = drawing.dxffactory
         self._block_record = self.dxflayout.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
-        self._workspace = drawing.sections.entities
+        self._workspace = drawing.sections.entities.workspace
 
     @property
     def dxflayout(self):
@@ -65,12 +66,6 @@ class AC1015Layout(AC1015GraphicsBuilder):
     @property
     def taborder(self):
         return self.dxflayout.taborder
-
-    def _build_entity(self, type_, attribs):
-        return self._dxffactory.create_db_entry(type_, attribs)
-
-    def _add_entity(self, entity):
-        self._workspace.add(entity)
 
     def _set_paper_space(self, attribs):
         attribs['paperspace'] = self._paperspace

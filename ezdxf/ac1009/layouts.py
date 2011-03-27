@@ -10,7 +10,7 @@ from .gbuilder import AC1009GraphicBuilder
 
 class AC1009Layouts:
     def __init__(self, drawing):
-        workspace = drawing.sections.entities
+        workspace = drawing.sections.entities.workspace
         self._modelspace = AC1009ModelSpaceLayout(workspace, drawing.dxffactory)
         self._paperspace = AC1009PaperSpaceLayout(workspace, drawing.dxffactory)
 
@@ -29,11 +29,32 @@ class AC1009ModelSpaceLayout(AC1009GraphicBuilder):
         self._workspace = workspace # where all the entities go ...
         self._dxffactory = dxffactory
 
+    def _set_paper_space(self, attribs):
+        pass
+
+    # start of interface for GraphicBuilder
+
     def _build_entity(self, type_, attribs):
+        self._set_paper_space(attribs)
         return self._dxffactory.create_db_entry(type_, attribs)
 
-    def _add_entity(self, entity):
+    def _append_entity(self, entity):
         self._workspace.add(entity)
+
+    def _get_position(self, entity):
+        return self._workspace.index(entity.handle)
+
+    def _get_entity(self, pos):
+        handle = self._workspace[pos]
+        return self._dxffactory.wrap_handle(handle)
+
+    def _insert_entity(self, pos, entity):
+        self._workspace.insert(pos, entity.handle)
+
+    def _remove_entity(self, entity):
+        self._workspace.remove(entity.handle)
+
+    # end of interface for GraphicBuilder
 
 class AC1009PaperSpaceLayout(AC1009ModelSpaceLayout):
     def _set_paper_space(self, attribs):

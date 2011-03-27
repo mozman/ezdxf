@@ -6,7 +6,5 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..ac1009.gbuilder import AC1009GraphicBuilder
-
-class AC1015GraphicsBuilder(AC1009GraphicBuilder):
+class AC1015GraphicsBuilder:
     pass
