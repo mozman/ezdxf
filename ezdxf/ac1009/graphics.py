@@ -210,6 +210,11 @@ _SOLID_TPL = _TRACE_TPL.replace('TRACE', 'SOLID')
 class AC1009Solid(AC1009Trace):
     TEMPLATE = _SOLID_TPL
 
+_3DFACE_TPL = _TRACE_TPL.replace('TRACE', '3DFACE')
+
+class AC10093DFace(AC1009Trace):
+    TEMPLATE = _3DFACE_TPL
+
 _TEXT_TPL = """  0
 TEXT
   5
@@ -295,6 +300,10 @@ class AC1009Block(GenericWrapper):
         'xrefpath': DXFAttr(1, None, None),
     })
 
+class AC1009EndBlk(GenericWrapper):
+    TEMPLATE = "  0\nENDBLK\n  5\n0\n"
+    DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
+
 _INSERT_TPL = """  0
 INSERT
   5
@@ -334,4 +343,319 @@ class AC1009Insert(GenericWrapper):
         'rowcount': DXFAttr(71, None, None),
         'colspacing': DXFAttr(44, None, None),
         'rowspacing': DXFAttr(45, None, None),
+    })
+
+class AC1009SeqEnd(GenericWrapper):
+    TEMPLATE = "  0\nSEQEND\n  5\n0\n"
+    DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
+
+_ATTDEF_TPL = """  0
+ATTDEF
+  5
+0
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  1
+DEFAULTTEXT
+  3
+PROMPTTEXT
+  2
+TAG
+ 70
+0
+ 50
+0.0
+ 51
+0.0
+ 41
+1.0
+  7
+STANDARD
+ 71
+0
+ 72
+0
+ 73
+0
+ 74
+0
+ 11
+0.0
+ 21
+0.0
+ 31
+0.0
+"""
+class AC1009Attdef(GenericWrapper):
+    TEMPLATE = _ATTDEF_TPL
+    DXFATTRIBS = make_AC1009_attribs({
+        'insert': DXFAttr(10, None, 'Point2D/3D'),
+        'height': DXFAttr(40, None, None),
+        'text': DXFAttr(1, None, None),
+        'prompt': DXFAttr(3, None, None),
+        'tag': DXFAttr(2, None, None),
+        'flags': DXFAttr(70, None, None),
+        'fieldlength': DXFAttr(73, None, None),
+        'rotation': DXFAttr(50, None, None),
+        'oblique': DXFAttr(51, None, None),
+        'width': DXFAttr(41, None, None), # width factor
+        'style': DXFAttr(7, None, None),
+        'textgenerationflag': DXFAttr(71, None, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None, None), # horizontal justification
+        'valign': DXFAttr(74, None, None), # vertical justification
+        'alignpoint': DXFAttr(11, None, 'Point2D/3D'),
+    })
+
+_ATTRIB_TPL = """  0
+ATTRIB
+  5
+0
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  1
+DEFAULTTEXT
+  2
+TAG
+ 70
+0
+ 50
+0.0
+ 51
+0.0
+ 41
+1.0
+  7
+STANDARD
+ 71
+0
+ 72
+0
+ 73
+0
+ 74
+0
+ 11
+0.0
+ 21
+0.0
+ 31
+0.0
+"""
+class AC1009Attrib(GenericWrapper):
+    TEMPLATE = _ATTRIB_TPL
+    DXFATTRIBS = make_AC1009_attribs({
+        'insert': DXFAttr(10, None, 'Point2D/3D'),
+        'height': DXFAttr(40, None, None),
+        'text': DXFAttr(1, None, None),
+        'tag': DXFAttr(2, None, None),
+        'flags': DXFAttr(70, None, None),
+        'fieldlength': DXFAttr(73, None, None),
+        'rotation': DXFAttr(50, None, None),
+        'oblique': DXFAttr(51, None, None),
+        'width': DXFAttr(41, None, None), # width factor
+        'style': DXFAttr(7, None, None),
+        'textgenerationflag': DXFAttr(71, None, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None, None), # horizontal justification
+        'valign': DXFAttr(74, None, None), # vertical justification
+        'alignpoint': DXFAttr(11, None, 'Point2D/3D'),
+    })
+
+_POLYLINE_TPL = """  0
+POLYLINE
+  5
+0
+  8
+0
+ 66
+1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+0
+"""
+class AC1009Polyline(GenericWrapper, ColorMixin):
+    TEMPLATE = _POLYLINE_TPL
+    DXFATTRIBS = make_AC1009_attribs({
+        'elevation': DXFAttr(10, None, 'Point2D/3D'),
+        'flags': DXFAttr(70, None, None),
+        'defaultstartwidth': DXFAttr(40, None, None),
+        'defaultendwidth': DXFAttr(41, None, None),
+        'mcount': DXFAttr(71, None, None),
+        'ncount': DXFAttr(72, None, None),
+        'msmoothdensity': DXFAttr(73, None, None),
+        'nsmoothdensity': DXFAttr(74, None, None),
+        'smoothtype': DXFAttr(75, None, None),
+    })
+
+_VERTEX_TPL = """ 0
+VERTEX
+  5
+0
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.0
+ 41
+0.0
+ 42
+0.0
+ 70
+0
+"""
+class AC1009Vertex(GenericWrapper, ColorMixin):
+    TEMPLATE = _VERTEX_TPL
+    DXFATTRIBS = make_AC1009_attribs({
+        'location': DXFAttr(10, None, 'Point2D/3D'),
+        'startwidth': DXFAttr(40, None, None),
+        'endwidth': DXFAttr(41, None, None),
+        'bulge': DXFAttr(42, None, None),
+        'flags': DXFAttr(70, None, None),
+        'tangent': DXFAttr(50, None, None),
+    })
+_VPORT_TPL = """  0
+VIEWPORT
+  5
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+ 41
+1.0
+ 68
+ 1
+1001
+ACAD
+1000
+MVIEW
+1002
+{
+1070
+16
+1002
+{
+1002
+{
+1002
+{
+"""
+class AC1009Viewport(GenericWrapper):
+    TEMPLATE = _VPORT_TPL
+    DXFATTRIBS = make_AC1009_attribs({
+        'center': DXFAttr(10, None, 'Point2D/3D'),
+        # center point of entity in paper space coordinates)
+        'width': DXFAttr(40, None, None),
+        # width in paper space units
+        'height': DXFAttr(41, None, None),
+        # height in paper space units
+        'status': DXFAttr(68, None, None),
+        'id': DXFAttr(69, None, None),
+    })
+
+_DIMENSION_TPL = """  0
+DIMENSION
+  5
+0
+  2
+*BLOCKNAME
+  3
+DIMSTYLE
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+0.0
+ 21
+0.0
+ 31
+0.0
+ 12
+0.0
+ 22
+0.0
+ 32
+0.0
+ 70
+0
+  1
+
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 14
+0.0
+ 24
+0.0
+ 34
+0.0
+ 15
+0.0
+ 25
+0.0
+ 35
+0.0
+ 16
+0.0
+ 26
+0.0
+ 36
+0.0
+ 40
+1.0
+ 50
+0.0
+"""
+class AC1009Dimension(GenericWrapper):
+    TEMPLATE = _DIMENSION_TPL
+    DXFATTRIBS = make_AC1009_attribs({
+        'geometry': DXFAttr(2, None, None),
+        # name of pseudo-Block containing the current dimension  entity geometry
+        'dimstyle': DXFAttr(3, None, None),
+        'defpoint1': DXFAttr(10, None, 'Point2D/3D'),
+        'midpoint': DXFAttr(11, None, 'Point2D/3D'),
+        'translationvector': DXFAttr(12, None, 'Point3D'),
+        'dimtype': DXFAttr(70, None, None),
+        'usertext': DXFAttr(1, None, None),
+        'defpoint2': DXFAttr(13, None, 'Point2D/3D'),
+        'defpoint3': DXFAttr(14, None, 'Point2D/3D'),
+        'defpoint4': DXFAttr(15, None, 'Point2D/3D'),
+        'defpoint5': DXFAttr(16, None, 'Point2D/3D'),
+        'leaderlength': DXFAttr(40, None, None),
+        'angle': DXFAttr(50, None, None),
     })

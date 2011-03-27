@@ -6,7 +6,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from .graphics import AC1009GraphicBuilder
+from .gbuilder import AC1009GraphicBuilder
 
 class AC1009Layouts:
     def __init__(self, drawing):

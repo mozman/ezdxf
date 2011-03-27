@@ -7,11 +7,7 @@
 # License: GPLv3
 from ..tags import DXFAttr
 
-from ..ac1009.graphics import AC1009Line, AC1009GraphicBuilder
-
-
-class AC1015GraphicsBuilder(AC1009GraphicBuilder):
-    pass
+from ..ac1009.graphics import AC1009Line
 
 _LINETEMPLATE = """  0
 LINE
