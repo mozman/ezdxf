@@ -41,7 +41,7 @@ AcDbLine
 
 class AC1015Line(AC1009Line):
     TEMPLATE = _LINETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'block_record': DXFAttr(330, None, None), # Soft-pointer ID/handle to owner BLOCK_RECORD object
         'paperspace': DXFAttr(67, 'AcDbEntity', None), # 0 .. modelspace, 1 .. paperspace, default is 0

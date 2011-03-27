@@ -38,7 +38,7 @@ Continuous
 
 class AC1015Layer(AC1009Layer):
     TEMPLATE = _LAYERTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2,  'AcDbLayerTableRecord', None), # layer name
         'flags': DXFAttr(70, 'AcDbLayerTableRecord', None),
@@ -84,7 +84,7 @@ arial.ttf
 """
 class AC1015Style(AC1009Style):
     TEMPLATE = _STYLETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, 'AcDbTextStyleTableRecord', None),
         'flags': DXFAttr(70, 'AcDbTextStyleTableRecord', None),
@@ -116,7 +116,7 @@ LTYPEDESCRIPTION
 """
 class AC1015Linetype(AC1009Linetype):
     TEMPLATE = _LTYPETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, 'AcDbLinetypeTableRecord', None),
         'description': DXFAttr(3, 'AcDbLinetypeTableRecord', None),
@@ -148,7 +148,7 @@ APPIDNAME
 """
 class AC1015AppID(AC1009AppID):
     TEMPLATE = _APPIDTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, 'AcDbRegAppTableRecord', None),
         'flags': DXFAttr(70, 'AcDbRegAppTableRecord', None),
@@ -247,7 +247,7 @@ STANDARD
 """
 class AC1015DimStyle(AC1009DimStyle):
     TEMPLATE = _DIMSTYLETEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(105, None, None),
         'name': DXFAttr(2, 'AcDbDimStyleTableRecord', None),
         'flags': DXFAttr(70, 'AcDbDimStyleTableRecord', None),
@@ -324,7 +324,7 @@ UCSNAME
 """
 class AC1015UCS(AC1009UCS):
     TEMPLATE = _UCSTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, 'AcDbUCSTableRecord', None),
         'flags': DXFAttr(70, 'AcDbUCSTableRecord', None),
@@ -378,7 +378,7 @@ VIEWNAME
 """
 class AC1015View(AC1009View):
     TEMPLATE = _VIEWTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, 'AcDbViewTableRecord', None),
         'flags': DXFAttr(70, 'AcDbViewTableRecord', None),
@@ -475,7 +475,7 @@ VPORTNAME
 """
 class AC1015Viewport(AC1009Viewport):
     TEMPLATE = _VPORTTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'name': DXFAttr(2, 'AcDbViewportTableRecord', None),
         'flags': DXFAttr(70, 'AcDbViewportTableRecord', None),
@@ -528,7 +528,7 @@ class AC1015BlockRecord(GenericWrapper):
     layout: Hard-pointer ID/handle to associated LAYOUT object
     """
     TEMPLATE = _BLOCKRECORDTEMPLATE
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'owner': DXFAttr(330, 'AcDbBlockTableRecord', None),
         'name': DXFAttr(2, 'AcDbBlockTableRecord', None),

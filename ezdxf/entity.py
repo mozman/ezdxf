@@ -11,7 +11,7 @@ from .tags import ExtendedTags, DXFAttr
 
 class GenericWrapper:
     TEMPLATE = ""
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None)
     }
     def __init__(self, tags):
@@ -31,8 +31,8 @@ class GenericWrapper:
         return self.tags[0].value
 
     def __getattr__(self, key):
-        if key in self.CODE:
-            code = self.CODE[key]
+        if key in self.DXFATTRIBS:
+            code = self.DXFATTRIBS[key]
             return self._get_attrib(code)
         else:
             raise AttributeError(key)
@@ -58,13 +58,13 @@ class GenericWrapper:
         return tags.get_value(code, xtype)
 
     def __setattr__(self, key, value):
-        if key in self.CODE:
+        if key in self.DXFATTRIBS:
             self._set_attrib(key, value)
         else:
             super(GenericWrapper, self).__setattr__(key, value)
 
     def _set_attrib(self, key, value):
-        dxfattr = self.CODE[key]
+        dxfattr = self.DXFATTRIBS[key]
         if dxfattr.subclass is not None:
             self._set_subclass_value(dxfattr, value)
         elif dxfattr.xtype is not None:

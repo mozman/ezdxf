@@ -11,7 +11,7 @@ from .tags import TagGroups, DXFAttr
 from .entity import GenericWrapper
 
 class DXFDictionary(GenericWrapper):
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'parent': DXFAttr(330, None, None),
     }
@@ -40,7 +40,7 @@ class DXFDictionary(GenericWrapper):
         return self._values.get(key, default)
 
 class DXFLayout(GenericWrapper):
-    CODE = {
+    DXFATTRIBS = {
         'handle': DXFAttr(5, None, None),
         'parent': DXFAttr(330, None, None),
         'name': DXFAttr(1, 'AcDbLayout', None), # layout name
@@ -70,12 +70,3 @@ class DXFLayout(GenericWrapper):
         # orthographic (76 code is non-zero). If not present and
         # 76 code is non-zero, then base UCS is taken to be WORLD
     }
-
-
-    def get_block_record(self):
-        # block_record has same group-code as parent(330)
-        # ID/handle to this layout’s associated paper space block table record
-        return self.tags.getlastvalue(330)
-
-    def set_block_record(self, value):
-        self.tags.setlast(330, value)
