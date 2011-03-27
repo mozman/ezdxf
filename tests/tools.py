@@ -11,7 +11,14 @@ from ezdxf.dxffactory import dxffactory
 from ezdxf.tags import StringIterator
 from ezdxf.tags import Tags, ExtendedTags, TagGroups, DXFStructureError, DXFAttr
 
+from ezdxf.drawing import Drawing
+
 class DrawingProxy:
+    """ a lightweight drawing proxy for testing
+
+    TestDrawingProxy in test_tools.py checks if all none private! attributes
+    exists in the Drawing() class, private means starts with '__'.
+    """
     def __init__(self, version):
         self.dxfversion = version
         self.handles = HandleGenerator()
@@ -20,6 +27,9 @@ class DrawingProxy:
 
     def read_header_vars(self, header):
         pass
+
+    def __does_not_exist_in_Drawing(self):
+        """ ATTENTION: private attributes will not be checked in TestDrawingProxy! """
 
 def normlines(text):
     lines = text.split('\n')
