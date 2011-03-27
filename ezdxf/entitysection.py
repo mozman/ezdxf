@@ -15,14 +15,11 @@ from .dxfobjects import DXFDictionary
 class EntitySection:
     name = 'entities'
     def __init__(self, tags, drawing):
-        self._workspace = EntitySpace(drawing)
+        self.workspace = EntitySpace(drawing)
         self._build(tags)
 
     def iterhandles(self):
-        return iter(self._workspace)
-
-    def add(self, entity):
-        self._workspace.add(entity)
+        return iter(self.workspace)
 
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
@@ -33,17 +30,17 @@ class EntitySection:
             return
 
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            self._workspace.add(ExtendedTags(group))
+            self.workspace.add(ExtendedTags(group))
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        self._workspace.write(stream)
+        self.workspace.write(stream)
         stream.write("  0\nENDSEC\n")
 
 class ObjectsSection(EntitySection):
     name = 'objects'
     def roothandle(self):
-        return self._workspace[0]
+        return self.workspace[0]
 
 class ClassesSection(EntitySection):
     name = 'classes'

@@ -9,27 +9,6 @@
 from ..tags import DXFAttr
 from ..entity import GenericWrapper, ExtendedType
 
-class AC1009GraphicBuilder:
-    def add_line(self, start, end, attribs={}):
-        def update_attribs():
-            self._set_paper_space(attribs)
-            attribs['start'] = start
-            attribs['end'] = end
-
-        update_attribs()
-        entity = self._build_entity('LINE', attribs)
-        self._add_entity(entity)
-        return entity
-
-    def _build_entity(self, type_, attribs):
-        pass # abstract method
-
-    def _add_entity(self, entity):
-        pass # abstract method
-
-    def _set_paper_space(self, attribs):
-        pass # abstract method
-
 class ColorMixin:
     def set_extcolor(self, color):
         """ Set color by color-name or rgb-tuple, for DXF R12 the nearest
@@ -484,6 +463,8 @@ POLYLINE
 0
  66
 1
+ 70
+0
  10
 0.0
  20
@@ -506,6 +487,35 @@ class AC1009Polyline(GenericWrapper, ColorMixin):
         'nsmoothdensity': DXFAttr(74, None, None),
         'smoothtype': DXFAttr(75, None, None),
     })
+    MCLOSED = 1
+    POLYLINE3D = 8
+    POLYMESH = 16
+    NCLOSED = 32
+    POLYFACE = 64
+
+    def setbuilder(self, builder):
+        self.builder = builder
+
+    def setmode(self, mode):
+        if mode == 'polyline3d':
+            self.flags = self.flags | self.POLYLINE3D
+        elif mode == 'polymesh':
+            self.flags = self.flags | self.POLYMESH
+        elif mode == 'polyface':
+            self.flags = self.flags | self.POLYFACE
+        else:
+            raise ValueError(mode)
+
+    def mclose(self):
+        self.flags = self.flags | self.MCLOSED
+    def nclose(self):
+        self.flags = self.flags | self.NCLOSED
+
+    def close(self, mclose, nclose=False):
+        if mclose:
+            self.mclose()
+        if nclose:
+            self.nclose()
 
 _VERTEX_TPL = """ 0
 VERTEX
