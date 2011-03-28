@@ -29,7 +29,6 @@ class Drawing:
         self.filename = None # read/write
         self.entitydb = database.factory(debug=options.get('DEBUG', False))
         self.sections = Sections(tagreader, self)
-        #self.dxffactory = dxffactory(self._dxfversion, self)
 
         if self._dxfversion > 'AC1009':
             self.rootdict = get_rootdict()

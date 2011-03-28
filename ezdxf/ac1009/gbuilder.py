@@ -15,7 +15,7 @@ class BuilderConnector:
     requires: IBuilderConnector
     ---------------------------
     def _set_paperspace(entity)
-    self._entityspace
+    self._entityspace (a list of handles)
     self._dxffactory
 
     """
@@ -24,24 +24,22 @@ class BuilderConnector:
         self._set_paperspace(entity)
         return entity
 
-    def _append_entity(self, entity):
-        self._entityspace.add(entity)
-
-    def _get_position(self, entity):
-        return self._entityspace.index(entity.handle)
-
     def _get_entity(self, pos):
         handle = self._entityspace[pos]
         return self._dxffactory.wrap_handle(handle)
 
-    def _insert_entity(self, pos, entity):
-        self._entityspace.insert(pos, entity.handle)
+    def _append_entity(self, entity):
+        self._entityspace.append(entity.handle)
 
-    def _remove_entity(self, entity):
-        if isinstance(entity, int):
-            del self._entityspace[entity]
-        else:
-            self._entityspace.remove(entity.handle)
+    def _get_position(self, entity):
+        return self._entityspace.index(entity.handle)
+
+    def _insert_entities(self, pos, entities):
+        handles = [entity.handle for entity in entities]
+        self._entityspace[pos:pos] = handles
+
+    def _remove_entities(self, pos, count=1):
+        self._entityspace[pos:pos+count] = []
 
 class AC1009GraphicBuilder:
     """ A mixin for classes like Layout, Block.
@@ -49,11 +47,11 @@ class AC1009GraphicBuilder:
     required interface: IGraphicBuilder
     -----------------------------------
     def _build_entity(type_, attribs)
-    def _append_entity(entity):
-    def _get_position(entity):
-    def _get_entity(pos):
-    def _insert_entity(pos, entity):
-    def _remove_entity(pos or entity):
+    def _append_entity(entity)
+    def _get_position(entity)
+    def _get_entity(pos)
+    def _insert_entities(pos, entities)
+    def _remove_entities(pos, count=1)
 
     """
     def add_line(self, start, end, attribs={}):
@@ -73,13 +71,13 @@ class AC1009GraphicBuilder:
         attribs['endangle'] = endangle
         return self._create('ARC', attribs)
 
-    def add_solid(self, points, attribs):
+    def add_solid(self, points, attribs={}):
         return self._add_quadrilateral('SOLID', points, attribs={})
 
-    def add_trace(self, points, attribs):
+    def add_trace(self, points, attribs={}):
         return self._add_quadrilateral('TRACE', points, attribs={})
 
-    def add_3Dface(self, points, attribs):
+    def add_3Dface(self, points, attribs={}):
         return self._add_quadrilateral('3DFACE', points, attribs={})
 
     def add_text(self, text, style='STANDARD', attribs={}):
@@ -96,25 +94,25 @@ class AC1009GraphicBuilder:
         closed = attribs.pop('closed', False)
         polyline = self._create('POLYLINE', attribs)
         polyline.setbuilder(self)
+        polyline.close(closed)
         for point in points:
-            polyline.add_vertex(point)
+            self.add_vertex(point)
         self.add_seqend()
-        self._close_polyline(polyline, closed)
         return polyline
 
-    def add_polyline3D(self, points, attribs={}, seqend=True):
-        polyline = self.add_polyline2d(points, attribs, seqend)
+    def add_polyline3D(self, points, attribs={}):
+        polyline = self.add_polyline2D(points, attribs)
         polyline.setmode('polyline3d')
         return polyline
 
-    def add_vertex(self, point, attribs={}):
-        attribs['location'] = point
+    def add_vertex(self, location, attribs={}):
+        attribs['location'] = location
         return self._create('VERTEX', attribs)
 
     def add_seqend(self):
         return self._create('SEQEND', {})
 
-    def add_polymesh(self, size=(10, 10), attribs={}):
+    def add_polymesh(self, size=(3, 3), attribs={}):
         def append_null_points(count):
             for x in range(count):
                 self.add_vertex((0, 0, 0))

@@ -25,23 +25,13 @@ class ColorMixin:
     def get_colorname(self):
         return 'Black'
 
+VERTEXNAMES = ('vtx0', 'vtx1', 'vtx2', 'vtx3')
 class QuadrilateralMixin:
     def __getitem__(self, num):
-        if num in (0, 1, 2, 3):
-            tags = self._get_subtags()
-            return tags._get_value(10+num, 'Point2D/3D')
-        else:
-            raise IndexError(num)
+        return self.__getattr__(VERTEXNAMES[num])
 
     def __setitem__(self, num, value):
-        if num in (0, 1, 2, 3):
-            tags = self._get_subtags()
-            return tags._set_value(10+num, 'Point2D/3D', value)
-        else:
-            raise IndexError(num)
-
-    def _get_subtags(self):
-        return ExtendedType(self.tags)
+        return self.__setattr__(VERTEXNAMES[num], value)
 
 def make_AC1009_attribs(additional={}):
     attribs = {
@@ -188,7 +178,12 @@ TRACE
 
 class AC1009Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _TRACE_TPL
-    DXFATTRIBS = make_AC1009_attribs()
+    DXFATTRIBS = make_AC1009_attribs({
+        'vtx0' : DXFAttr(10, None, 'Point2D/3D'),
+        'vtx1' : DXFAttr(11, None, 'Point2D/3D'),
+        'vtx2' : DXFAttr(12, None, 'Point2D/3D'),
+        'vtx3' : DXFAttr(13, None, 'Point2D/3D'),
+    })
 
 _SOLID_TPL = _TRACE_TPL.replace('TRACE', 'SOLID')
 
@@ -535,66 +530,82 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
             self.nclose()
 
     def __len__(self):
-        return self._getendpos() - self._getstartpos() - 1
+        return len(list(iter(self)))
 
     def __iter__(self):
         """ Iterate over all vertices. """
-        index = self._getstartpos() + 1
-        while True:
-            entity = self._builder._get_entity(index)
-            if entiy.dxftype == 'VERTEX':
-                yield entity
+        index = self._builder._get_position(self) + 1
+        entity = self._builder._get_entity(index)
+        while entity.dxftype() != 'SEQEND':
+            yield entity
             index += 1
+            entity = self._builder._get_entity(index)
 
     def __getitem__(self, pos):
-        return self._builder._get_entity(self._getstartpos() + pos + 1)
+        return list(iter(self)).__getitem__(pos)
+
+    def topoints(self):
+        return [vertex.location for vertex in self]
 
     def append_vertices(self, points, attribs={}):
-        index = self._getendpos()
-        self.insert_vertices(index, points, attribs)
+        if len(points) > 0:
+            first_vertex_index, last_vertex_index = self._get_index_range()
+            self._insert_vertices(last_vertex_index+1, points, attribs)
 
     def insert_vertices(self, pos, points, attribs={}):
-        index = self._getstartpos() + pos + 1
+        if len(points) > 0:
+            first_vertex_index, last_vertex_index = self._get_index_range()
+            self._insert_vertices(first_vertex_index+pos, points, attribs)
+
+    def _insert_vertices(self, index, points, attribs):
+        vertices = self._points_to_vertices(points, attribs)
+        self.builder._insert_entities(index, vertices)
+
+    def _points_to_vertices(self, points, attribs):
+        vertices = []
         for point in points:
-            newattr = dict(attribs)
-            newattr['location'] = point
-            vertex = self._builder._build_entity('VERTEX', newattr)
-            self.builder._insert_entity(index, vertex)
-            index += 1
+            attribs['location'] = point
+            vertices.append(self._builder._build_entity('VERTEX', attribs))
+        return vertices
 
     def delete_vertices(self, pos, count=1):
-        index = self._getstartpos() + pos + 1
-        for x in range(count):
-            self.builder._remove_entity(index + x)
+        index = self._pos_to_index_with_range_check(pos, count)
+        self.builder._remove_entities(index, count)
 
-    def _getendpos(self):
-        # position can not be cached, because insertion and deletion in
-        # entity-space, can change the polyline position
-        pos = self._getstartpos()
+    def _pos_to_index_with_range_check(self, pos, count=1):
+        first_vertex_index, last_vertex_index = self._get_index_range()
+        length = last_vertex_index - first_vertex_index + 1
+        if pos < 0:
+            pos = length + pos
+        if 0 <= pos and pos+count-1 < length:
+            return first_vertex_index + pos
+        else:
+            raise IndexError(repr((pos, count)))
+
+    def _get_index_range(self):
+        first_vertex_index = self._builder._get_position(self) + 1
+        last_vertex_index = first_vertex_index
         while True:
-            pos += 1
-            entity = self._builder._get_entity(pos)
-            if entity.dxftype == 'SEQEND':
-                return pos
-
-    def _getstartpos(self):
-        # position can not be cached, because insertion and deletion in
-        # entity-space, can change the polyline position
-        return self.builder._get_position(self)
+            entity = self._builder._get_entity(last_vertex_index)
+            if entity.dxftype() == 'SEQEND':
+                return (first_vertex_index, last_vertex_index-1)
+            last_vertex_index += 1
 
     def cast(self):
         mode = self.getmode()
         if mode == 'polyface':
-            return AC1009Polyface(self)
+            return AC1009Polyface.convert(self)
         elif mode == 'polymesh':
-            return AC1009Polymesh(self)
+            return AC1009Polymesh.convert(self)
         else:
             return self
 
 class AC1009Polyface(AC1009Polyline):
-    def __init__(self, polyline):
-        self.setbuilder(polyline._builder)
-        self.tags = polyline.tags
+    @staticmethod
+    def convert(polyline):
+        face = AC1009Polyface(polyline.tags)
+        face.setbuilder(polyline._builder)
+        return face
 
     def append_face(self, face, attribs={}):
         raise NotImplementedError
@@ -604,9 +615,11 @@ class AC1009Polyface(AC1009Polyline):
         raise NotImplementedError
 
 class AC1009Polymesh(AC1009Polyline):
-    def __init__(self, polyline):
-        self.setbuilder(polyline._builder)
-        self.tags = polyline.tags
+    @staticmethod
+    def convert(polyline):
+        mesh = AC1009Polymesh(polyline.tags)
+        mesh.setbuilder(polyline._builder)
+        return mesh
 
     def set_vertex(self, mnpos, point, attribs={}):
         raise NotImplementedError
@@ -635,7 +648,7 @@ VERTEX
  70
 0
 """
-class AC1009Vertex(GraphicEntity, ColorMixin):
+class AC1009Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _VERTEX_TPL
     DXFATTRIBS = make_AC1009_attribs({
         'location': DXFAttr(10, None, 'Point2D/3D'),
@@ -644,6 +657,10 @@ class AC1009Vertex(GraphicEntity, ColorMixin):
         'bulge': DXFAttr(42, None, None),
         'flags': DXFAttr(70, None, None),
         'tangent': DXFAttr(50, None, None),
+        'vtx0': DXFAttr(71, None, None),
+        'vtx1': DXFAttr(72, None, None),
+        'vtx2': DXFAttr(73, None, None),
+        'vtx3': DXFAttr(74, None, None),
     })
 _VPORT_TPL = """  0
 VIEWPORT

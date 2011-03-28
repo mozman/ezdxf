@@ -13,12 +13,12 @@ from .tags import TagGroups
 
 class HeaderSection:
     name = 'header'
-    def __init__(self, tags, drawing):
+    def __init__(self, tags):
         self.hdrvars = OrderedDict()
         self._build(tags)
-        # update important dxf properties before processing other sections!!!
-        drawing._bootstraphook(self)
-        self._headervar_factory = drawing.dxffactory.new_header_var
+
+    def set_headervar_factory(self, factory):
+        self._headervar_factory = factory
 
     def __contains__(self, key):
         return key in self.hdrvars

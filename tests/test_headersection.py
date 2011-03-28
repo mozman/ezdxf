@@ -17,7 +17,8 @@ class TestHeaderSection(unittest.TestCase):
     def setUp(self):
         tags = Tags.fromtext(TESTHEADER)
         dwg = DrawingProxy('AC1009')
-        self.header = HeaderSection(tags, dwg)
+        self.header = HeaderSection(tags)
+        self.header.set_headervar_factory(dwg.dxffactory.headervar_factory)
 
     def test_get_acadver(self):
         result = self.header['$ACADVER']
