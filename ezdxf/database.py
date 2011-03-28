@@ -11,6 +11,12 @@ from collections import OrderedDict
 def factory(debug=False):
     return DebugDB() if debug else EntityDB()
 
+from .handle import HandleGenerator
+
+class SimpleDB(dict):
+    def __init__(self):
+        self.handles = HandleGenerator()
+
 class EntityDB:
     """ A simple key/value database a.k.a. dict(), but can be replaced other
     classes that implements all of the methods of `EntityDB`. The entities
@@ -29,6 +35,7 @@ class EntityDB:
     """
     def __init__(self):
         self._database = {}
+        self.handles = HandleGenerator()
 
     def __delitem__(self, key):
         del self._database[key]

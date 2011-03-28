@@ -59,7 +59,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
         self._dxffactory = drawing.dxffactory
         self._block_record = self.dxflayout.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
-        self._entityspace = drawing.sections.entities.entityspace
+        self._entityspace = drawing.sections.entities.get_entityspace()
 
     # start of public interface
 

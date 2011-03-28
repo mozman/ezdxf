@@ -15,12 +15,12 @@ class BlocksSection:
     name = 'blocks'
     def __init__(self, tags, drawing):
         self._blocks = list()
-        self._drawing = drawing
+        self._entitydb = drawing.entitydb
         self._build(tags)
 
     def _build(self, tags):
         def build_block(entities):
-            block = Block(self._drawing)
+            block = Block(self._entitydb)
             block.set_tail(entities.pop())
             iterentities = iter(entities)
             block.set_head(next(iterentities))
@@ -49,8 +49,8 @@ class BlocksSection:
         stream.write("  0\nENDSEC\n")
 
 class Block:
-    def __init__(self, drawing):
-        self._entityspace = EntitySpace(drawing)
+    def __init__(self, entitydb):
+        self._entityspace = EntitySpace(entitydb)
         self._head = ExtendedTags()
         self._tail = ExtendedTags()
 

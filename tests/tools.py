@@ -12,6 +12,7 @@ from ezdxf.tags import StringIterator
 from ezdxf.tags import Tags, ExtendedTags, TagGroups, DXFStructureError, DXFAttr
 
 from ezdxf.drawing import Drawing
+from ezdxf.database import SimpleDB
 
 class DrawingProxy:
     """ a lightweight drawing proxy for testing
@@ -21,11 +22,10 @@ class DrawingProxy:
     """
     def __init__(self, version):
         self.dxfversion = version
-        self.handles = HandleGenerator()
-        self.entitydb = {}
+        self.entitydb = SimpleDB()
         self.dxffactory = dxffactory(self.dxfversion, self)
 
-    def read_header_vars(self, header):
+    def _bootstraphook(self, header):
         pass
 
     def __does_not_exist_in_Drawing(self):

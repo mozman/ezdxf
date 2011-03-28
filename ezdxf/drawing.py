@@ -27,11 +27,9 @@ class Drawing:
         self._dxfversion = 'AC1009' # readonly
         self.encoding = 'cp1252' # read/write
         self.filename = None # read/write
-
         self.entitydb = database.factory(debug=options.get('DEBUG', False))
-        self.handles = HandleGenerator()
         self.sections = Sections(tagreader, self)
-        self.dxffactory = dxffactory(self._dxfversion, self)
+        #self.dxffactory = dxffactory(self._dxfversion, self)
 
         if self._dxfversion > 'AC1009':
             self.rootdict = get_rootdict()
@@ -39,14 +37,19 @@ class Drawing:
             self._enable_handles()
         self.layouts = self.dxffactory.get_layouts()
 
-    def read_header_vars(self, header):
+    @property
+    def _handles(self):
+        return self.entitydb.handles
+
+    def _bootstraphook(self, header):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
         self._dxfversion = header['$ACADVER']
-        seed = header.get('$HANDSEED', self.handles.seed)
-        self.handles.reset(seed)
+        seed = header.get('$HANDSEED', self._handles.seed)
+        self._handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
+        self.dxffactory = dxffactory(self._dxfversion, self)
 
     @property
     def dxfversion(self):
@@ -143,7 +146,7 @@ class Drawing:
 
     def _update_metadata(self):
         self.header['$TDUPDATE'] = juliandate(datetime.now())
-        self.header['$HANDSEED'] = self.handles.seed
+        self.header['$HANDSEED'] = self._handles.seed
 
     def _enable_handles(self):
         """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.

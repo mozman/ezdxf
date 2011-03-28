@@ -86,7 +86,7 @@ class Table:
 
     @property
     def handles(self):
-        return self._drawing.handles
+        return self.entitydb.handles
 
     @property
     def dxffactory(self):

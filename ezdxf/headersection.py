@@ -15,17 +15,13 @@ class HeaderSection:
     name = 'header'
     def __init__(self, tags, drawing):
         self.hdrvars = OrderedDict()
-        self._drawing = drawing
         self._build(tags)
         # update important dxf properties before processing other sections!!!
-        self._drawing.read_header_vars(self)
+        drawing._bootstraphook(self)
+        self._headervar_factory = drawing.dxffactory.new_header_var
 
     def __contains__(self, key):
         return key in self.hdrvars
-
-    @property
-    def dxffactory(self):
-        return self._drawing.dxffactory
 
     def _build(self, tags):
         assert tags[0] == (0, 'SECTION')
@@ -64,7 +60,7 @@ class HeaderSection:
             return default
 
     def __setitem__(self, key, value):
-        tags = self.dxffactory.new_header_var(key, value)
+        tags = self._headervar_factory(key, value)
         self.hdrvars[key] = DXFValue(tags)
 
     def __delitem__(self, key):

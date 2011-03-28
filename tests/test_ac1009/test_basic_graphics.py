@@ -17,7 +17,7 @@ from ezdxf.ac1009.layouts import AC1009Layout
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.entityspace = EntitySpace(self.dwg)
+        self.entityspace = EntitySpace(self.dwg.entitydb)
         self.layout = AC1009Layout(self.entityspace, self.dwg.dxffactory, 0)
 
 class TestPaperSpace(SetupDrawing):
