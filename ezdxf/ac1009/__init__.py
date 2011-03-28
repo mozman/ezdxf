@@ -99,6 +99,14 @@ class AC1009Factory:
         self.ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)
         self.drawing = None
 
+    @property
+    def entitydb(self):
+        return self.drawing.entitydb
+
+    @property
+    def handles(self):
+        return self.entitydb.handles
+
     def new_header_var(self, key, value):
         factory = self.HEADERVARS[key]
         return factory(value)
@@ -121,7 +129,7 @@ class AC1009Factory:
         return wrapper(tags)
 
     def wrap_handle(self, handle):
-        tags = self.drawing.entitydb[handle]
+        tags = self.entitydb[handle]
         return self.wrap_entity(tags)
 
     def create_db_entry(self, type_, attribs):
@@ -129,9 +137,9 @@ class AC1009Factory:
 
         :returns: wrapper class
         """
-        handle = self.drawing.handles.next()
+        handle = self.handles.next()
         dbentry = self.new_entity(type_, handle, attribs)
-        self.drawing.entitydb[handle] = dbentry.tags
+        self.entitydb[handle] = dbentry.tags
         return dbentry
 
     def get_layouts(self):

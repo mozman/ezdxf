@@ -10,7 +10,7 @@ from .gbuilder import AC1009GraphicBuilder, BuilderConnector
 
 class AC1009Layouts:
     def __init__(self, drawing):
-        entityspace = drawing.sections.entities.entityspace
+        entityspace = drawing.sections.entities.get_entityspace()
         self._modelspace = AC1009Layout(entityspace, drawing.dxffactory, 0)
         self._paperspace = AC1009Layout(entityspace, drawing.dxffactory, 1)
 

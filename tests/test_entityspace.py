@@ -16,7 +16,7 @@ from ezdxf.entityspace import EntitySpace
 class TestEntitySpace(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.space = EntitySpace(self.dwg)
+        self.space = EntitySpace(self.dwg.entitydb)
 
     def test_add(self):
         for group in TagGroups.fromtext(TESTENTITIES):
