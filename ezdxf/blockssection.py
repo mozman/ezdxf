@@ -16,6 +16,7 @@ class BlocksSection:
     def __init__(self, tags, drawing):
         self._blocks = list()
         self._entitydb = drawing.entitydb
+        self._dxffactory = drawing.dxffactory
         self._build(tags)
 
     def _build(self, tags):

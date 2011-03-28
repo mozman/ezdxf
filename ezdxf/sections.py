@@ -17,17 +17,23 @@ from .entitysection import EntitySection, ClassesSection, ObjectsSection
 
 class Sections:
     def __init__(self, tagreader, drawing):
-        self.drawing = drawing
         self._sections = OrderedDict()
-        self._setup_sections(tagreader)
+        self._setup_sections(tagreader, drawing)
 
-    def _setup_sections(self, tagreader):
+    def _setup_sections(self, tagreader, drawing):
         def name(section):
             return section[1].value
 
+        bootstrap = True
         for section in iterchunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
-            section_class = get_section_class(name(section))
-            new_section = section_class(section, self.drawing)
+            if bootstrap:
+                new_section = HeaderSection(section)
+                drawing._bootstraphook(new_section)
+                new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
+                bootstrap = False
+            else:
+                section_class = get_section_class(name(section))
+                new_section = section_class(section, drawing)
             self._sections[new_section.name] = new_section
 
     def __getattr__(self, key):
@@ -45,7 +51,6 @@ class Sections:
         write_eof()
 
 SECTIONMAP = {
-    'HEADER': HeaderSection,
     'CLASSES': ClassesSection,
     'TABLES': TablesSection,
     'BLOCKS': BlocksSection,

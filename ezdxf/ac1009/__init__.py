@@ -70,7 +70,10 @@ from ..tags import Tags
 from .headervars import VARMAP
 from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style
 from .tableentries import AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
-from .graphics import AC1009Line
+from .graphics import AC1009Line, AC1009Circle, AC1009Arc, AC1009Trace, AC1009Solid
+from .graphics import AC10093DFace, AC1009Text, AC1009Attrib, AC1009Attdef
+from .graphics import AC1009Insert, AC1009Block, AC1009Polyline, AC1009Vertex, AC1009SeqEnd
+from .graphics import AC1009Polymesh, AC1009Polyface
 
 from ..dxfobjects import DXFDictionary, DXFLayout
 from .layouts import AC1009Layouts
@@ -91,6 +94,21 @@ ENTITY_WRAPPERS =  {
     'LAYOUT': DXFLayout,
     # dxf entities
     'LINE': AC1009Line,
+    'CIRCLE': AC1009Circle,
+    'ARC': AC1009Arc,
+    'TRACE': AC1009Trace,
+    'SOLID': AC1009Solid,
+    '3DFACE': AC10093DFace,
+    'TEXT': AC1009Text,
+    'ATTRIB': AC1009Attrib,
+    'ATTDEF': AC1009Attdef,
+    'INSERT': AC1009Insert,
+    'BLOCK': AC1009Block,
+    'POLYLINE': AC1009Polyline,
+    'POLYFACE': AC1009Polyface, # not really a DXF entity, just for dxffactory.new_entity()
+    'POLYMESH': AC1009Polymesh, # not really a DXF entity, just for dxffactory.new_entity()
+    'VERTEX': AC1009Vertex,
+    'SEQEND': AC1009SeqEnd,
 }
 
 class AC1009Factory:
@@ -107,7 +125,7 @@ class AC1009Factory:
     def handles(self):
         return self.entitydb.handles
 
-    def new_header_var(self, key, value):
+    def headervar_factory(self, key, value):
         factory = self.HEADERVARS[key]
         return factory(value)
 
