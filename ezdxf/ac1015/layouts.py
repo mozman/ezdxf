@@ -48,12 +48,18 @@ class AC1015Layouts:
 
 
 class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
+    """ Layout representation
+
+    provides: IBuilderConnector
+    provides: IGraphicBuilder
+
+    """
     def __init__(self, drawing, layout_handle):
         self._layout_handle = layout_handle
         self._dxffactory = drawing.dxffactory
         self._block_record = self.dxflayout.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
-        self._workspace = drawing.sections.entities.workspace
+        self._entityspace = drawing.sections.entities.entityspace
 
     # start of public interface
 
@@ -84,6 +90,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
     def taborder(self):
         return self.dxflayout.taborder
 
-    def _set_paper_space(self, attribs):
-        attribs['paperspace'] = self._paperspace
-        attribs['block_record'] = self._block_record
+    def _set_paperspace(self, entity):
+        # part of IBuilderConnector
+        entity.paperspace = self._paperspace
+        entity.block_record = self._block_record

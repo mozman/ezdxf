@@ -6,13 +6,13 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from .gbuilder import AC1009GraphicBuilder
+from .gbuilder import AC1009GraphicBuilder, BuilderConnector
 
 class AC1009Layouts:
     def __init__(self, drawing):
-        workspace = drawing.sections.entities.workspace
-        self._modelspace = AC1009Layout(workspace, drawing.dxffactory, 0)
-        self._paperspace = AC1009Layout(workspace, drawing.dxffactory, 1)
+        entityspace = drawing.sections.entities.entityspace
+        self._modelspace = AC1009Layout(entityspace, drawing.dxffactory, 0)
+        self._paperspace = AC1009Layout(entityspace, drawing.dxffactory, 1)
 
     def modelspace(self):
         return self._modelspace
@@ -24,9 +24,14 @@ class AC1009Layouts:
     def names(self):
         return []
 
-class AC1009Layout(AC1009GraphicBuilder):
-    def __init__(self, workspace, dxffactory, paperspace=0):
-        self._workspace = workspace # where all the entities go ...
+class AC1009Layout(AC1009GraphicBuilder, BuilderConnector):
+    """ Layout representation
+
+    provides: IBuilderConnector
+    provides: IGraphicBuilder
+    """
+    def __init__(self, entityspace, dxffactory, paperspace=0):
+        self._entityspace = entityspace # where all the entities go ...
         self._dxffactory = dxffactory
         self._paperspace = paperspace
 
@@ -48,35 +53,9 @@ class AC1009Layout(AC1009GraphicBuilder):
     # end of public interface
 
     def _iter_all_entities(self):
-        for handle in self._workspace:
+        for handle in self._entityspace:
             yield self._dxffactory.wrap_handle(handle)
 
-    # start of interface for GraphicBuilder
-
-    def _build_entity(self, type_, attribs):
-        self._set_paper_space(attribs)
-        return self._dxffactory.create_db_entry(type_, attribs)
-
-    def _append_entity(self, entity):
-        self._workspace.add(entity)
-
-    def _get_position(self, entity):
-        return self._workspace.index(entity.handle)
-
-    def _get_entity(self, pos):
-        handle = self._workspace[pos]
-        return self._dxffactory.wrap_handle(handle)
-
-    def _insert_entity(self, pos, entity):
-        self._workspace.insert(pos, entity.handle)
-
-    def _remove_entity(self, entity):
-        if isinstance(entity, int):
-            del self._workspace[entity]
-        else:
-            self._workspace.remove(entity.handle)
-
-    # end of interface for GraphicBuilder
-
-    def _set_paper_space(self, attribs):
-        attribs['paperspace'] = self._paperspace
+    def _set_paperspace(self, entity):
+        # part of IBuilderConnector
+        entity.paperspace = self._paperspace

@@ -500,7 +500,7 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
     POLYFACE = 64
 
     def setbuilder(self, builder):
-        self._builder = builder
+        self._builder = builder # IGraphicBuilder
 
     def setmode(self, mode):
         if mode == 'polyline3d':

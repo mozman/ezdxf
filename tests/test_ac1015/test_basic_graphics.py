@@ -14,10 +14,10 @@ import ezdxf
 class TestLine(unittest.TestCase):
     def setUp(self):
         self.dwg = ezdxf.new('AC1015')
-        self.workspace = self.dwg.modelspace()
+        self.entityspace = self.dwg.modelspace()
 
     def test_create_line(self):
-        line = self.workspace.add_line((0, 0), (1, 1))
+        line = self.entityspace.add_line((0, 0), (1, 1))
         self.assertEqual((0.,0.), line.start)
         self.assertEqual((1.,1.), line.end)
 

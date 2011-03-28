@@ -6,16 +6,56 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-class AC1009GraphicBuilder:
-    # Used as mixin for layout objects.
-    # Required interface of host object:
-    # def _build_entity(type_, attribs)
-    # def _append_entity(self, entity):
-    # def _get_position(self, entity):
-    # def _get_entity(self, pos):
-    # def _insert_entity(self, pos, entity):
-    # def _remove_entity(self, pos or entity):
+class BuilderConnector:
+    """ A mixin for classes like: Layout, EntitySection.
 
+    implements: IGraphicBuilder
+    ---------------------------
+
+    requires: IBuilderConnector
+    ---------------------------
+    def _set_paperspace(entity)
+    self._entityspace
+    self._dxffactory
+
+    """
+    def _build_entity(self, type_, attribs):
+        entity = self._dxffactory.create_db_entry(type_, attribs)
+        self._set_paperspace(entity)
+        return entity
+
+    def _append_entity(self, entity):
+        self._entityspace.add(entity)
+
+    def _get_position(self, entity):
+        return self._entityspace.index(entity.handle)
+
+    def _get_entity(self, pos):
+        handle = self._entityspace[pos]
+        return self._dxffactory.wrap_handle(handle)
+
+    def _insert_entity(self, pos, entity):
+        self._entityspace.insert(pos, entity.handle)
+
+    def _remove_entity(self, entity):
+        if isinstance(entity, int):
+            del self._entityspace[entity]
+        else:
+            self._entityspace.remove(entity.handle)
+
+class AC1009GraphicBuilder:
+    """ A mixin for classes like Layout, Block.
+
+    required interface: IGraphicBuilder
+    -----------------------------------
+    def _build_entity(type_, attribs)
+    def _append_entity(entity):
+    def _get_position(entity):
+    def _get_entity(pos):
+    def _insert_entity(pos, entity):
+    def _remove_entity(pos or entity):
+
+    """
     def add_line(self, start, end, attribs={}):
         attribs['start'] = start
         attribs['end'] = end
