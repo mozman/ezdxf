@@ -50,7 +50,7 @@ class BlocksSection:
 
 class Block:
     def __init__(self, drawing):
-        self._workspace = EntitySpace(drawing)
+        self._entityspace = EntitySpace(drawing)
         self._head = ExtendedTags()
         self._tail = ExtendedTags()
 
@@ -61,9 +61,9 @@ class Block:
         self._tail = tags
 
     def add(self, entity):
-        self._workspace.add(entity)
+        self._entityspace.add(entity)
 
     def write(self, stream):
         self._head.write(stream)
-        self._workspace.write(stream)
+        self._entityspace.write(stream)
         self._tail.write(stream)

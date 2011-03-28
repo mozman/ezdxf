@@ -15,7 +15,7 @@ from .dxfobjects import DXFDictionary
 class EntitySection:
     name = 'entities'
     def __init__(self, tags, drawing):
-        self.workspace = EntitySpace(drawing)
+        self.entityspace = EntitySpace(drawing)
         self._drawing = drawing
         self._build(tags)
 
@@ -26,16 +26,16 @@ class EntitySection:
     # start of public interface
 
     def __len__(self):
-        return len(self.workspace)
+        return len(self.entityspace)
 
     def __iter__(self):
-        for handle in self.workspace:
+        for handle in self.entityspace:
             yield self.dxffactory.wrap_handle(handle)
 
     def __getitem__(self, index):
         if isinstance(index, int):
             raise ValueError('Integer index required')
-        return self.workspace[index]
+        return self.entityspace[index]
 
     # end of public interface
 
@@ -48,17 +48,17 @@ class EntitySection:
             return
 
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            self.workspace.add(ExtendedTags(group))
+            self.entityspace.add(ExtendedTags(group))
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        self.workspace.write(stream)
+        self.entityspace.write(stream)
         stream.write("  0\nENDSEC\n")
 
 class ObjectsSection(EntitySection):
     name = 'objects'
     def roothandle(self):
-        return self.workspace[0]
+        return self.entityspace[0]
 
 class ClassesSection(EntitySection):
     name = 'classes'

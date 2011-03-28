@@ -11,9 +11,9 @@ import ezdxf
 
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
 
-def add_line_entities(workspace, offset):
+def add_line_entities(entityspace, offset):
     for color in range(1, 256):
-        line = workspace.add_line((offset+0, color), (offset+50, color), {'color': color})
+        line = entityspace.add_line((offset+0, color), (offset+50, color), {'color': color})
 
 def make_drawing(version):
     dwg = ezdxf.new(version)
