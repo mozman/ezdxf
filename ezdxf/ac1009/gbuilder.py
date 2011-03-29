@@ -6,6 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
+from .. import const
+
 class BuilderConnector:
     """ A mixin for classes like: Layout, EntitySection.
 
@@ -95,14 +97,15 @@ class AC1009GraphicBuilder:
         polyline = self._create('POLYLINE', attribs)
         polyline.setbuilder(self)
         polyline.close(closed)
+        attribs = {'flags': polyline.get_vertex_flags()}
         for point in points:
-            self.add_vertex(point)
+            self.add_vertex(point, attribs)
         self.add_seqend()
         return polyline
 
     def add_polyline3D(self, points, attribs={}):
+        attribs['flags'] = attribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
         polyline = self.add_polyline2D(points, attribs)
-        polyline.setmode('polyline3d')
         return polyline
 
     def add_vertex(self, location, attribs={}):
@@ -113,9 +116,10 @@ class AC1009GraphicBuilder:
         return self._create('SEQEND', {})
 
     def add_polymesh(self, size=(3, 3), attribs={}):
-        def append_null_points(count):
+        def append_null_points(count, vtxflags):
             for x in range(count):
-                self.add_vertex((0, 0, 0))
+                self.add_vertex((0, 0, 0), vtxflags)
+        attribs['flags'] = attribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
         msize = max(size[0], 2)
         nsize = max(size[1], 2)
         attribs['mcount'] = msize
@@ -123,18 +127,20 @@ class AC1009GraphicBuilder:
         mclose = attribs.pop('mclose', False)
         nclose = attribs.pop('nclose', False)
         polymesh = self._create('POLYLINE', attribs)
-        polyline.setbuilder(self)
-        polymesh.setmode('polymesh')
-        append_null_points(msize * nsize)
+        polymesh.setbuilder(self)
+        vtxflags = { 'flags': polymesh.get_vertex_flags() }
+        append_null_points(msize * nsize, vtxflags)
+        self.add_seqend()
         polymesh.close(mclose, nclose)
         return polymesh.cast()
 
     def add_polyface(self, attribs={}):
+        attribs['flags'] = attribs.get('flags', 0) | const.POLYLINE_POLYFACE
         mclose = attribs.pop('mclose', False)
         nclose = attribs.pop('nclose', False)
         polyface = self._create('POLYLINE', attribs)
-        polyline.setbuilder(self)
-        polyface.setmode('polyface')
+        polyface.setbuilder(self)
+        self.add_seqend()
         polyface.close(mclose, nclose)
         return polyface.cast()
 

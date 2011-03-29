@@ -32,9 +32,12 @@ class GenericWrapper:
 
     def getdxfattr(self, key, default=None):
         if key in self.DXFATTRIBS:
-            return self.__getattr__(key)
+            try:
+                return self.__getattr__(key)
+            except ValueError:
+                return default
         else:
-            return default
+            raise AttributeError(key)
 
     def __getattr__(self, key):
         if key in self.DXFATTRIBS:

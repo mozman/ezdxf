@@ -8,6 +8,7 @@
 
 from ..tags import DXFAttr
 from ..entity import GenericWrapper, ExtendedType
+from .. import const
 
 class GraphicEntity(GenericWrapper):
     pass
@@ -488,40 +489,28 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
         'nsmoothdensity': DXFAttr(74, None, None),
         'smoothtype': DXFAttr(75, None, None),
     })
-    MCLOSED = 1
-    POLYLINE3D = 8
-    POLYMESH = 16
-    NCLOSED = 32
-    POLYFACE = 64
 
     def setbuilder(self, builder):
         self._builder = builder # IGraphicBuilder
 
-    def setmode(self, mode):
-        if mode == 'polyline3d':
-            self.flags = self.flags | self.POLYLINE3D
-        elif mode == 'polymesh':
-            self.flags = self.flags | self.POLYMESH
-        elif mode == 'polyface':
-            self.flags = self.flags | self.POLYFACE
-        else:
-            raise ValueError(mode)
+    def get_vertex_flags(self):
+        return const.VERTEX_FLAGS[self.getmode()]
 
     def getmode(self):
         flags = self.flags
-        if flags & self.POLYLINE3D > 0:
+        if flags & const.POLYLINE_3D_POLYLINE > 0:
             return 'polyline3d'
-        elif flags & self.POLYMESH > 0:
+        elif flags & const.POLYLINE_3D_POLYMESH > 0:
             return 'polymesh'
-        elif flags & self.POLYFACE > 0:
+        elif flags & const.POLYLINE_POLYFACE > 0:
             return 'polyface'
         else:
             return 'polyline2d'
 
     def mclose(self):
-        self.flags = self.flags | self.MCLOSED
+        self.flags = self.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
     def nclose(self):
-        self.flags = self.flags | self.NCLOSED
+        self.flags = self.flags | const.POLYLINE_MESH_CLOSED_N_DIRECTION
 
     def close(self, mclose, nclose=False):
         if mclose:
@@ -544,7 +533,8 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
     def __getitem__(self, pos):
         return list(iter(self)).__getitem__(pos)
 
-    def topoints(self):
+    @property
+    def points(self):
         return [vertex.location for vertex in self]
 
     def append_vertices(self, points, attribs={}):
@@ -559,9 +549,10 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
 
     def _insert_vertices(self, index, points, attribs):
         vertices = self._points_to_vertices(points, attribs)
-        self.builder._insert_entities(index, vertices)
+        self._builder._insert_entities(index, vertices)
 
     def _points_to_vertices(self, points, attribs):
+        attribs['flags'] =  attribs.get('flags', 0) | self.get_vertex_flags()
         vertices = []
         for point in points:
             attribs['location'] = point
@@ -570,7 +561,7 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
 
     def delete_vertices(self, pos, count=1):
         index = self._pos_to_index_with_range_check(pos, count)
-        self.builder._remove_entities(index, count)
+        self._builder._remove_entities(index, count)
 
     def _pos_to_index_with_range_check(self, pos, count=1):
         first_vertex_index, last_vertex_index = self._get_index_range()
@@ -600,6 +591,11 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
         else:
             return self
 
+    def _get_vertex_at_trusted_position(self, pos):
+        # performs not index check - for meshes and faces
+        index = self._builder._get_position(self) + 1 + pos
+        return self._builder._get_entity(index)
+
 class AC1009Polyface(AC1009Polyline):
     @staticmethod
     def convert(polyline):
@@ -608,11 +604,40 @@ class AC1009Polyface(AC1009Polyline):
         return face
 
     def append_face(self, face, attribs={}):
-        raise NotImplementedError
+        """ face is a list/tuple of points """
+        vertices = self._points_to_vertices(face, attribs)
+        firstindex, lastindex = self._get_index_range()
+        pos = lastindex - firstindex + 2
+        attribs = { 'flags': const.VTX_3D_POLYFACE_MESH_VERTEX }
+        for x in range(len(face)):
+            attribs[VERTEXNAMES[x]] =  pos + x
+        vertices.append(self._builder._build_entity('VERTEX', attribs))
+        self._builder._insert_entities(lastindex+1, vertices)
 
     def faces(self):
-        """ Iterate over all faces. """
-        raise NotImplementedError
+        """ Iterate over all faces, a face is a tuple of vertices. """
+        def isface(vertex):
+            flags = vertex.flags
+            if flags & const.VTX_3D_POLYFACE_MESH_VERTEX > 0 and \
+               flags & const.VTX_3D_POLYGON_MESH_VERTEX == 0:
+                return True
+            else:
+                return False
+
+        def getface(vertex):
+            indices = []
+            for vtx in VERTEXNAMES:
+                index = vertex.getdxfattr(vtx, 0)
+                if index != 0:
+                    indices.append(abs(index)-1)
+                else:
+                    break
+            return tuple( (vertices[index] for index in indices) )
+
+        vertices = list(iter(self))
+        for vertex in vertices:
+            if isface(vertex):
+                yield getface(vertex)
 
 class AC1009Polymesh(AC1009Polyline):
     @staticmethod
@@ -621,11 +646,20 @@ class AC1009Polymesh(AC1009Polyline):
         mesh.setbuilder(polyline._builder)
         return mesh
 
-    def set_vertex(self, mnpos, point, attribs={}):
-        raise NotImplementedError
+    def set_mesh_vertex(self, mnpos, point, attribs={}):
+        attribs['location'] = point
+        vertex = self.get_mesh_vertex(mnpos)
+        vertex.update(attribs)
 
-    def get_vertex(self, mnpos):
-        raise NotImplementedError
+    def get_mesh_vertex(self, mnpos):
+        mcount = self.mcount
+        ncount = self.ncount
+        m, n = mnpos
+        if 0 <= m < mcount and 0 <= n < ncount:
+            pos = m * ncount + n
+            return self._get_vertex_at_trusted_position(pos)
+        else:
+            raise IndexError(repr(mnpos))
 
 _VERTEX_TPL = """ 0
 VERTEX
