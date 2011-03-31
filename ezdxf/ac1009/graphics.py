@@ -646,20 +646,20 @@ class AC1009Polymesh(AC1009Polyline):
         mesh.setbuilder(polyline._builder)
         return mesh
 
-    def set_mesh_vertex(self, mnpos, point, attribs={}):
+    def set_mesh_vertex(self, pos, point, attribs={}):
         attribs['location'] = point
-        vertex = self.get_mesh_vertex(mnpos)
+        vertex = self.get_mesh_vertex(pos)
         vertex.update(attribs)
 
-    def get_mesh_vertex(self, mnpos):
+    def get_mesh_vertex(self, pos):
         mcount = self.mcount
         ncount = self.ncount
-        m, n = mnpos
+        m, n = pos
         if 0 <= m < mcount and 0 <= n < ncount:
             pos = m * ncount + n
             return self._get_vertex_at_trusted_position(pos)
         else:
-            raise IndexError(repr(mnpos))
+            raise IndexError(repr(pos))
 
 _VERTEX_TPL = """ 0
 VERTEX
