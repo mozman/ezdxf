@@ -473,8 +473,6 @@ POLYLINE
 0.0
  30
 0.0
- 70
-0
 """
 class AC1009Polyline(GraphicEntity, ColorMixin):
     TEMPLATE = _POLYLINE_TPL
