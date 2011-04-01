@@ -9,7 +9,7 @@
 import sys
 import unittest
 
-from tools import Tags, DXFStructureError, DXFAttr
+from ezdxf.testtools import Tags, DXFStructureError, DXFAttr
 
 from ezdxf.entity import GenericWrapper
 

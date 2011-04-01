@@ -9,7 +9,7 @@
 import sys
 import unittest
 
-from tools import ExtendedTags
+from ezdxf.testtools import ExtendedTags
 
 from ezdxf.dxfobjects import DXFDictionary
 

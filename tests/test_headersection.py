@@ -9,7 +9,7 @@
 import sys
 import unittest
 
-from tools import DrawingProxy, Tags
+from ezdxf.testtools import DrawingProxy, Tags
 
 from ezdxf.headersection import HeaderSection
 
