@@ -9,7 +9,7 @@
 import sys
 import unittest
 
-from tests.tools import DrawingProxy
+from ezdxf.testtools import DrawingProxy
 from ezdxf.entityspace import EntitySpace
 
 from ezdxf.ac1009.layouts import AC1009Layout

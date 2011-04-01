@@ -9,7 +9,7 @@
 import sys
 import unittest
 
-from tools import DrawingProxy, TagGroups
+from ezdxf.testtools import DrawingProxy, TagGroups
 
 from ezdxf.entityspace import EntitySpace
 

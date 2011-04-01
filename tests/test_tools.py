@@ -11,7 +11,7 @@ import unittest
 
 import ezdxf
 
-from tools import DrawingProxy
+from ezdxf.testtools import DrawingProxy
 
 def getattributes(obj):
     return ( attr for attr in dir(obj) if not attr.startswith('_DrawingProxy__') )

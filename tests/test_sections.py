@@ -9,8 +9,7 @@
 import sys
 import unittest
 
-from tools import DrawingProxy, normlines, StringIterator
-
+from ezdxf.testtools import DrawingProxy, normlines, StringIterator
 from ezdxf.sections import Sections
 
 class TestSections(unittest.TestCase):

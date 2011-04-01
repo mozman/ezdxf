@@ -10,7 +10,7 @@ import sys
 import unittest
 from io import StringIO
 
-from tools import DrawingProxy, Tags, normlines
+from ezdxf.testtools import DrawingProxy, Tags, normlines
 
 from ezdxf.entitysection import ObjectsSection
 
