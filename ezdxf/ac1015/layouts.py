@@ -9,7 +9,7 @@
 # The ModelSpace is a special Layout called 'Model'
 
 from .gbuilder import AC1015GraphicsBuilder
-from ..ac1009.layouts import AC1009Layout
+from ..ac1009.layouts import AC1009Layout, AC1009BlockLayout
 
 class AC1015Layouts:
     def __init__(self, drawing):
@@ -94,3 +94,6 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
         # part of IBuilderConnector
         entity.paperspace = self._paperspace
         entity.block_record = self._block_record
+
+class AC1015BlockLayout(AC1009BlockLayout, AC1015GraphicsBuilder):
+    pass

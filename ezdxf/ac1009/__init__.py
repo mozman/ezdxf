@@ -72,11 +72,12 @@ from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style
 from .tableentries import AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
 from .graphics import AC1009Line, AC1009Circle, AC1009Arc, AC1009Trace, AC1009Solid
 from .graphics import AC10093DFace, AC1009Text, AC1009Attrib, AC1009Attdef
-from .graphics import AC1009Insert, AC1009Block, AC1009Polyline, AC1009Vertex, AC1009SeqEnd
+from .graphics import AC1009Insert, AC1009Block, AC1009EndBlk, AC1009Polyline
+from .graphics import AC1009Vertex, AC1009SeqEnd
 from .graphics import AC1009Polymesh, AC1009Polyface
 
 from ..dxfobjects import DXFDictionary, DXFLayout
-from .layouts import AC1009Layouts
+from .layouts import AC1009Layouts, AC1009BlockLayout
 from ..entity import GenericWrapper
 
 ENTITY_WRAPPERS =  {
@@ -104,9 +105,8 @@ ENTITY_WRAPPERS =  {
     'ATTDEF': AC1009Attdef,
     'INSERT': AC1009Insert,
     'BLOCK': AC1009Block,
+    'ENDBLK': AC1009EndBlk,
     'POLYLINE': AC1009Polyline,
-    'POLYFACE': AC1009Polyface, # not really a DXF entity, just for dxffactory.new_entity()
-    'POLYMESH': AC1009Polymesh, # not really a DXF entity, just for dxffactory.new_entity()
     'VERTEX': AC1009Vertex,
     'SEQEND': AC1009SeqEnd,
 }
@@ -162,3 +162,6 @@ class AC1009Factory:
 
     def get_layouts(self):
         return AC1009Layouts(self.drawing)
+
+    def new_block_layout(self):
+        return AC1009BlockLayout(self.entitydb, self)

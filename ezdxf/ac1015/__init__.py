@@ -11,7 +11,7 @@ from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
 from .tableentries import AC1015Layer, AC1015Style, AC1015BlockRecord, AC1015Linetype
 from .tableentries import AC1015AppID, AC1015DimStyle, AC1015UCS, AC1015View, AC1015Viewport
-from .layouts import AC1015Layouts
+from .layouts import AC1015Layouts, AC1015BlockLayout
 from .graphics import AC1015Line
 
 UPDATE_ENTITY_WRAPPERS = {
@@ -39,3 +39,6 @@ class AC1015Factory(AC1009Factory):
 
     def get_layouts(self):
         return AC1015Layouts(self.drawing)
+
+    def new_block_layout(self):
+        return AC1015BlockLayout(self.entitydb, self)
