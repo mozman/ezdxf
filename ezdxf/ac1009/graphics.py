@@ -603,14 +603,25 @@ class AC1009Polyface(AC1009Polyline):
 
     def append_face(self, face, attribs={}):
         """ face is a list/tuple of points """
+        def get_index_vertex(indices):
+            attribs = { 'flags': const.VTX_3D_POLYFACE_MESH_VERTEX }
+            for x, index in enumerate(indices):
+                attribs[VERTEXNAMES[x]] = index
+            return self._builder._build_entity('VERTEX', attribs)
+
         vertices = self._points_to_vertices(face, attribs)
         firstindex, lastindex = self._get_index_range()
         pos = lastindex - firstindex + 2
-        attribs = { 'flags': const.VTX_3D_POLYFACE_MESH_VERTEX }
-        for x in range(len(face)):
-            attribs[VERTEXNAMES[x]] =  pos + x
-        vertices.append(self._builder._build_entity('VERTEX', attribs))
+        indices = [ pos + x for x in range(len(face))]
+        vertices.append(get_index_vertex(indices))
         self._builder._insert_entities(lastindex+1, vertices)
+        self.update_count(len(face))
+
+    def update_count(self, count):
+        nvertices = self.getdxfattr('mcount', 0)
+        nfaces = self.getdxfattr('ncount', 0)
+        self.mcount = nvertices + count
+        self.ncount = nfaces + 1
 
     def faces(self):
         """ Iterate over all faces, a face is a tuple of vertices. """

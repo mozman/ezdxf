@@ -39,6 +39,12 @@ class GenericWrapper:
         else:
             raise AttributeError(key)
 
+    def setdxfattr(self, key, value):
+        if key in self.DXFATTRIBS:
+            self.__setattr__(key, value)
+        else:
+            raise AttributeError(key)
+
     def __getattr__(self, key):
         if key in self.DXFATTRIBS:
             code = self.DXFATTRIBS[key]
