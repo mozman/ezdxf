@@ -277,9 +277,10 @@ class AC1009Block(GraphicEntity):
         'name': DXFAttr(2, None, None),
         'name2': DXFAttr(3, None, None),
         'flags': DXFAttr(70, None, None),
-        'insert': DXFAttr(10, None, 'Point2D/3D'),
+        'basepoint': DXFAttr(10, None, 'Point2D/3D'),
         'xrefpath': DXFAttr(1, None, None),
     })
+
 
 class AC1009EndBlk(GraphicEntity):
     TEMPLATE = "  0\nENDBLK\n  5\n0\n"

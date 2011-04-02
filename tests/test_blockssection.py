@@ -34,6 +34,18 @@ class TestBlocksSection(unittest.TestCase):
         stream.close()
         self.assertEqual(EMPTYSEC, result)
 
+    def test_create_block(self):
+        block = self.section.new('TEST')
+        self.assertTrue(block in self.section)
+
+    def test_not_in_blocks_section(self):
+        self.assertFalse('TEST' in self.section)
+
+    def test_getitem(self):
+        newblock = self.section.new('TEST')
+        block = self.section['TEST']
+        self.assertEqual('TEST', block.name)
+
 EMPTYSEC = """  0
 SECTION
   2

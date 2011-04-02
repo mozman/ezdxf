@@ -17,6 +17,14 @@ class SimpleDB(dict):
     def __init__(self):
         self.handles = HandleGenerator()
 
+    def add_tags(self, tags):
+        try:
+            handle = tags.gethandle()
+        except ValueError:
+            handle = self.handles.next()
+        self.__setitem__(handle, tags)
+        return handle
+
 class EntityDB:
     """ A simple key/value database a.k.a. dict(), but can be replaced other
     classes that implements all of the methods of `EntityDB`. The entities
@@ -69,6 +77,14 @@ class EntityDB:
     def items(self):
         """ Iterate over all (handle, entities) pairs. """
         return self._database.items()
+
+    def add_tags(self, tags):
+        try:
+            handle = tags.gethandle()
+        except ValueError:
+            handle = self.handles.next()
+        self.__setitem__(handle, tags)
+        return handle
 
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
