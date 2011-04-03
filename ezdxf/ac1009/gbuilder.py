@@ -17,6 +17,7 @@ class BuilderConnector:
     requires: IBuilderConnector
     ---------------------------
     def _set_paperspace(entity)
+    def _get_entity_by_handle(handle) -- set connection to Layout or BlockLayout
     self._entityspace (a list of handles)
     self._dxffactory
 
@@ -26,22 +27,21 @@ class BuilderConnector:
         self._set_paperspace(entity)
         return entity
 
-    def _get_entity(self, pos):
-        handle = self._entityspace[pos]
-        return self._dxffactory.wrap_handle(handle)
+    def _get_entity_at_index(self, index):
+        return self._get_entity_by_handle(self._entityspace[index])
 
     def _append_entity(self, entity):
         self._entityspace.append(entity.handle)
 
-    def _get_position(self, entity):
+    def _get_index(self, entity):
         return self._entityspace.index(entity.handle)
 
-    def _insert_entities(self, pos, entities):
+    def _insert_entities(self, index, entities):
         handles = [entity.handle for entity in entities]
-        self._entityspace[pos:pos] = handles
+        self._entityspace[index:index] = handles
 
-    def _remove_entities(self, pos, count=1):
-        self._entityspace[pos:pos+count] = []
+    def _remove_entities(self, index, count=1):
+        self._entityspace[index:index+count] = []
 
 class AC1009GraphicBuilder:
     """ A mixin for classes like Layout, Block.
@@ -50,10 +50,10 @@ class AC1009GraphicBuilder:
     -----------------------------------
     def _build_entity(type_, attribs)
     def _append_entity(entity)
-    def _get_position(entity)
-    def _get_entity(pos)
-    def _insert_entities(pos, entities)
-    def _remove_entities(pos, count=1)
+    def _get_index(entity)
+    def _get_entity_at_index(index)
+    def _insert_entities(index, entities)
+    def _remove_entities(index, count=1)
 
     """
     def add_line(self, start, end, attribs={}):
@@ -90,7 +90,15 @@ class AC1009GraphicBuilder:
     def add_blockref(self, name, insert, attribs={}):
         attribs['name'] = name
         attribs['insert'] = insert
-        return self._create('INSERT', attribs)
+        blockref = self._create('INSERT', attribs)
+        blockref.setbuilder(self)
+        return blockref
+
+    def add_attrib(self, tag, text, insert, attribs={}):
+        attribs['tag'] = tag
+        attribs['text'] = text
+        attribs['insert'] = insert
+        return self._create('ATTRIB', attribs)
 
     def add_polyline2D(self, points, attribs={}):
         closed = attribs.pop('closed', False)

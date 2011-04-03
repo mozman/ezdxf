@@ -125,6 +125,10 @@ class AC1009Factory:
     def handles(self):
         return self.entitydb.handles
 
+    @property
+    def blocks(self):
+        return self.drawing.blocks
+
     def headervar_factory(self, key, value):
         factory = self.HEADERVARS[key]
         return factory(value)

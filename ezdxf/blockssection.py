@@ -9,6 +9,7 @@
 from itertools import islice
 
 from .tags import TagGroups, Tags, ExtendedTags, DXFStructureError
+from . import const
 
 class BlocksSection:
     name = 'blocks'
@@ -50,7 +51,7 @@ class BlocksSection:
     def _append_block_layout(self, block_layout):
         self._blocks.append(block_layout)
 
-    # start public interface
+    # start of public interface
 
     def __iter__(self):
         return iter(self._blocks)
@@ -91,7 +92,25 @@ class BlocksSection:
         self._append_block_layout(newblock)
         return newblock
 
-    # start public interface
+    def new_anonymous_block(self, typechar='U', basepoint=(0, 0)):
+        blockname = self.anonymous_blockname(typechar)
+        block = self.new(blockname, basepoint, { 'flags': const.BLK_ANONYMOUS })
+        return block
+
+    def anonymous_blockname(self, typechar):
+        """ Create name for an anonymous block.
+
+        typechar
+            U = *U### anonymous blocks
+            E = *E### anonymous non-uniformly scaled blocks
+            X = *X### anonymous hatches
+            D = *D### anonymous dimensions
+            A = *A### anonymous groups
+        """
+        name = self._entitydb.handles.next
+        return "*%s%s" % (typechar, name)
+
+    # end of public interface
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\nBLOCKS\n")

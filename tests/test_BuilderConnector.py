@@ -15,6 +15,9 @@ class Entity:
     def __init__(self, handle):
         self.handle = handle
 
+    def setbuilder(self, builder):
+        pass
+
 class DXFFactory:
     def wrap_handle(self, handle):
         return Entity(handle)
@@ -29,6 +32,11 @@ class Host(BuilderConnector):
 
     def _set_paperspace(self, entity):
         self.paperspace = True
+
+    def _get_entity_by_handle(self, handle):
+        entity = self._dxffactory.wrap_handle(handle)
+        entity.setbuilder(self)
+        return entity
 
 class TestBuilderConnector(unittest.TestCase):
     def setUp(self):
@@ -57,7 +65,7 @@ class TestBuilderConnector(unittest.TestCase):
         self.assertEqual(handles, self.host._entityspace[-5:])
 
     def test_get_position(self):
-        pos = self.host._get_position(Entity(5))
+        pos = self.host._get_index(Entity(5))
         self.assertEqual(5, pos)
 
     def test_remove_entities_begin(self):
@@ -73,7 +81,7 @@ class TestBuilderConnector(unittest.TestCase):
         self.assertEqual([0, 1, 2, 3, 4, 5, 6, 7], self.host._entityspace)
 
     def test_get_entity(self):
-        entity = self.host._get_entity(7)
+        entity = self.host._get_entity_at_index(7)
         self.assertEqual(7, entity.handle)
 
     def test_build_entity(self):
