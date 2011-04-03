@@ -200,15 +200,6 @@ class TestTags(unittest.TestCase):
         with self.assertRaises(ValueError):
             tags.tagindex(1)
 
-    def test_getlastvalue(self):
-        tags = Tags.fromtext(DUPLICATETAGS)
-        self.assertEqual('LAST', tags.getlastvalue(0))
-
-    def test_setlast(self):
-        tags = Tags.fromtext(DUPLICATETAGS)
-        tags.setlast(0, 'XXX')
-        self.assertEqual((0, 'XXX'), tags[1])
-
 DUPLICATETAGS = """  0
 FIRST
   0

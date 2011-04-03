@@ -18,13 +18,13 @@ class GenericWrapper:
         self.tags = tags
 
     @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
+    def new(cls, handle, dxfattribs=None, dxffactory=None):
         if cls.TEMPLATE == "":
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
         entity = cls(ExtendedTags.fromtext(cls.TEMPLATE))
         entity.handle = handle
-        if attribs is not None:
-            entity.update(attribs)
+        if dxfattribs is not None:
+            entity.update(dxfattribs)
         return entity
 
     def dxftype(self):
@@ -44,6 +44,14 @@ class GenericWrapper:
             self.__setattr__(key, value)
         else:
             raise AttributeError(key)
+
+    def clonedxfattribs(self):
+        dxfattribs = {}
+        for key in self.DXFATTRIBS.keys():
+            value = getdxfattr(key)
+            if value is not None:
+                dxfattribs[key] = value
+        return dxfattribs
 
     def __getattr__(self, key):
         if key in self.DXFATTRIBS:
@@ -103,8 +111,8 @@ class GenericWrapper:
     def _settag(tags, code, value):
         tags.setfirst(code, casttagvalue(code, value))
 
-    def update(self, attribs):
-        for key, value in attribs.items():
+    def update(self, dxfattribs):
+        for key, value in dxfattribs.items():
             self._set_attrib(key, value)
 
 

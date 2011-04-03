@@ -88,10 +88,24 @@ Drawing Attributes
 
 .. attribute:: Drawing.blocks
 
-.. attribute:: Drawing.modelspace
+    Reference to the blocks section, see also :class:`BlocksSection`.
 
 Drawing Methods
 ---------------
+
+.. method:: Drawing.modelspace()
+
+    Get the modelspace layout, see also :class:`Layout`.
+
+.. method:: Drawing.layout(name)
+
+    Get the paperspace layout by `name`, see also :class:`Layout`.
+    (DXF version AC1009, supports only one paperspace layout, so `name` is
+    ignored)
+
+.. method:: Drawing.layoutnames()
+
+    Get a list of available paperspace layouts.
 
 .. method:: Drawing.save()
 
