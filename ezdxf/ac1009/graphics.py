@@ -6,12 +6,13 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..tags import DXFAttr
+from ..tags import DXFAttr, DXFStructureError
 from ..entity import GenericWrapper, ExtendedType
 from .. import const
 
 class GraphicEntity(GenericWrapper):
-    pass
+    def setbuilder(self, builder):
+        self._builder = builder # IGraphicBuilder
 
 class ColorMixin:
     def set_extcolor(self, color):
@@ -327,6 +328,64 @@ class AC1009Insert(GraphicEntity):
         'rowspacing': DXFAttr(45, None, None),
     })
 
+    def __iter__(self):
+        def get_entity(index):
+            try:
+                return self._builder._get_entity_at_index(index)
+            except IndexError:
+                raise DXFStructureError('expected following ATTRIB or SEQEND, reached end of layout instead.')
+
+        if self.attribsfollow == 0:
+            return
+        index = self._builder._get_index(self) + 1
+        while True:
+            entity = get_entity(index)
+            dxftype = entity.dxftype()
+            if dxftype == 'ATTRIB':
+                yield entity
+                index += 1
+            elif dxftype == 'SEQEND':
+                return
+            else:
+                raise DXFStructureError('expected following ATTRIB or SEQEND, got instead %s.' % dxftype)
+
+    def get_attrib(self, tag):
+        for attrib in self:
+            if tag == attrib.tag:
+                return attrib
+        return None
+
+    def add_attrib(self, tag, text, insert, attribs={}):
+        attribs['tag'] = tag
+        attribs['text'] = text
+        attribs['insert'] = insert
+        attrib_entity = self._builder._build_entity('ATTRIB', attribs)
+        self._append_attrib_entity(attrib_entity)
+
+    def _append_attrib_entity(self, entity):
+        def find_seqend(pos):
+            while True:
+                try:
+                    entity = self._builder._get_entity_at_index(pos)
+                except IndexError:
+                    return -1
+                dxftype = entity.dxftype()
+                if dxftype == 'ATTRIB':
+                    pos += 1
+                elif dxftype == 'SEQEND':
+                    return pos
+                else:
+                    return -1
+
+        entities = [entity]
+        position = self._builder._get_index(self) + 1
+        seqend_position = find_seqend(position)
+        if seqend_position < 0:
+            entities.append(self._builder._build_entity('SEQEND', {}))
+            seqend_position = position
+        self.attribsfollow = 1
+        self._builder._insert_entities(seqend_position, entities)
+
 class AC1009SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
     DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
@@ -489,9 +548,6 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
         'smoothtype': DXFAttr(75, None, None),
     })
 
-    def setbuilder(self, builder):
-        self._builder = builder # IGraphicBuilder
-
     def get_vertex_flags(self):
         return const.VERTEX_FLAGS[self.getmode()]
 
@@ -522,12 +578,12 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
 
     def __iter__(self):
         """ Iterate over all vertices. """
-        index = self._builder._get_position(self) + 1
-        entity = self._builder._get_entity(index)
+        index = self._builder._get_index(self) + 1
+        entity = self._builder._get_entity_at_index(index)
         while entity.dxftype() != 'SEQEND':
             yield entity
             index += 1
-            entity = self._builder._get_entity(index)
+            entity = self._builder._get_entity_at_index(index)
 
     def __getitem__(self, pos):
         return list(iter(self)).__getitem__(pos)
@@ -573,10 +629,10 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
             raise IndexError(repr((pos, count)))
 
     def _get_index_range(self):
-        first_vertex_index = self._builder._get_position(self) + 1
+        first_vertex_index = self._builder._get_index(self) + 1
         last_vertex_index = first_vertex_index
         while True:
-            entity = self._builder._get_entity(last_vertex_index)
+            entity = self._builder._get_entity_at_index(last_vertex_index)
             if entity.dxftype() == 'SEQEND':
                 return (first_vertex_index, last_vertex_index-1)
             last_vertex_index += 1
@@ -592,8 +648,8 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
 
     def _get_vertex_at_trusted_position(self, pos):
         # performs not index check - for meshes and faces
-        index = self._builder._get_position(self) + 1 + pos
-        return self._builder._get_entity(index)
+        index = self._builder._get_index(self) + 1 + pos
+        return self._builder._get_entity_at_index(index)
 
 class AC1009Polyface(AC1009Polyline):
     @staticmethod

@@ -75,6 +75,29 @@ class TestBlock(SetupDrawing):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         self.assertEqual('BLOCK', ref.name)
         self.assertEqual((0., 0.), ref.insert)
+        self.assertEqual(0, ref.attribsfollow)
+
+    def test_add_new_attribs_to_blockref(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        self.assertEqual(0, ref.attribsfollow)
+        ref.add_attrib('TEST', 'text', (0, 0))
+        self.assertEqual(1, ref.attribsfollow)
+        attrib = ref.get_attrib('TEST')
+        self.assertEqual('text', attrib.text)
+
+    def test_add_to_attribs_to_blockref(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.add_attrib('TEST1', 'text1', (0, 0))
+        ref.add_attrib('TEST2', 'text2', (0, 0))
+        attribs = [attrib.tag for attrib in ref]
+        self.assertEqual(['TEST1', 'TEST2'], attribs)
+
+    def test_has_seqend(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.add_attrib('TEST1', 'text1', (0, 0))
+        ref.add_attrib('TEST2', 'text2', (0, 0))
+        entity = self.layout._get_entity_at_index(-1)
+        self.assertEqual('SEQEND', entity.dxftype())
 
 if __name__=='__main__':
     unittest.main()

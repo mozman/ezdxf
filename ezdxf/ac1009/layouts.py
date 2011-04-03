@@ -55,7 +55,12 @@ class AC1009Layout(AC1009GraphicBuilder, BuilderConnector):
 
     def _iter_all_entities(self):
         for handle in self._entityspace:
-            yield self._dxffactory.wrap_handle(handle)
+            yield self._get_entity_by_handle(handle)
+
+    def _get_entity_by_handle(self, handle):
+        entity = self._dxffactory.wrap_handle(handle)
+        entity.setbuilder(self)
+        return entity
 
     def _set_paperspace(self, entity):
         # part of IBuilderConnector
@@ -89,10 +94,20 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
         block = self._dxffactory.wrap_handle(self._head)
         return block.name
 
+    def add_attdef(self, tag, insert, attribs={}):
+        attribs['tag'] = tag
+        attribs['insert'] = insert
+        return self._create('ATTDEF', attribs)
+
     # end of public interface
 
     def _set_paperspace(self, entity):
         pass
+
+    def _get_entity_by_handle(self, handle):
+        entity = self._dxffactory.wrap_handle(handle)
+        entity.setbuilder(self)
+        return entity
 
     def set_head(self, handle):
         self._head = handle
