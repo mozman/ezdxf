@@ -22,7 +22,7 @@ class DXFFactory:
     def wrap_handle(self, handle):
         return Entity(handle)
 
-    def create_db_entry(self, name, attribs):
+    def create_db_entry(self, name, dxfattribs):
         return Entity(name)
 
 class Host(BuilderConnector):

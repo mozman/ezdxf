@@ -25,7 +25,7 @@ document.
    Get the :class:`Block` definition by `name`, returns `default` if no block
    `name` exists.
 
-.. method:: BlocksSection.new(name, basepoint=(0, 0), attribs={})
+.. method:: BlocksSection.new(name, basepoint=(0, 0), dxfattribs={})
 
    Create and add a new :class:`Block`, `name` is the block-name, `basepoint`
    is the insertion point of the block.
@@ -65,7 +65,7 @@ color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
    Get the appended :class:`Attrib` object with dxfattr tag == `tag`. Returns
    `None` if no :class:`Attrib` with dxfattr tag == `tag` exists.
 
-.. method:: Insert.add_attrib(tag, text, insert, attribs={})
+.. method:: Insert.add_attdxfattribsrib(tag, text, insert, attribs={})
 
    Append an :class:`Attrib` to the block reference.
 

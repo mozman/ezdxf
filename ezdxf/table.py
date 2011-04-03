@@ -175,8 +175,8 @@ class Table:
 
 class ViewportTable(Table):
     ## TODO: Viewport-Table can have multiple entries with same name
-    def create(self, name, attribs=None):
-        if attribs is None:
-            attribs = {}
-        attribs['name'] = name
-        return self.new_entry(attribs)
+    def create(self, name, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['name'] = name
+        return self.new_entry(dxfattribs)
