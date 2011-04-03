@@ -9,10 +9,7 @@
 from .. import const
 
 class BuilderConnector:
-    """ A mixin for classes like: Layout, EntitySection.
-
-    implements: IGraphicBuilder
-    ---------------------------
+    """ Link between GraphicBuilder and Layout/BlockLayout.
 
     requires: IBuilderConnector
     ---------------------------
@@ -43,8 +40,8 @@ class BuilderConnector:
     def _remove_entities(self, index, count=1):
         self._entityspace[index:index+count] = []
 
-class AC1009GraphicBuilder:
-    """ A mixin for classes like Layout, Block.
+class AC1009GraphicBuilder(BuilderConnector):
+    """ A mixin for: Layout, BlockLayout.
 
     required interface: IGraphicBuilder
     -----------------------------------
@@ -91,7 +88,7 @@ class AC1009GraphicBuilder:
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
         blockref = self._create('INSERT', dxfattribs)
-        blockref.setbuilder(self)
+        blockref.set_builder(self)
         return blockref
 
     def add_autoblockref(self, name, insert, values, dxfattribs={}):
@@ -114,8 +111,6 @@ class AC1009GraphicBuilder:
                 blockref.add_attrib(tag, text, insert, dxfattribs)
 
         autoblock = self._dxffactory.blocks.new_anonymous_block()
-        autoblock.setbuilder(self)
-
         blockref = autoblock.add_blockref(name, insert, dxfattribs)
         blockdef = self._dxffactory.blocks[name]
         autofill(blockref, blockdef)
@@ -131,7 +126,6 @@ class AC1009GraphicBuilder:
     def add_polyline2D(self, points, dxfattribs={}):
         closed = dxfattribs.pop('closed', False)
         polyline = self._create('POLYLINE', dxfattribs)
-        polyline.setbuilder(self)
         polyline.close(closed)
         dxfattribs = {'flags': polyline.get_vertex_flags()}
         for point in points:
@@ -163,7 +157,6 @@ class AC1009GraphicBuilder:
         mclose = dxfattribs.pop('mclose', False)
         nclose = dxfattribs.pop('nclose', False)
         polymesh = self._create('POLYLINE', dxfattribs)
-        polymesh.setbuilder(self)
         vtxflags = { 'flags': polymesh.get_vertex_flags() }
         append_null_points(msize * nsize, vtxflags)
         self.add_seqend()
@@ -175,7 +168,6 @@ class AC1009GraphicBuilder:
         mclose = dxfattribs.pop('mclose', False)
         nclose = dxfattribs.pop('nclose', False)
         polyface = self._create('POLYLINE', dxfattribs)
-        polyface.setbuilder(self)
         self.add_seqend()
         polyface.close(mclose, nclose)
         return polyface.cast()
@@ -198,4 +190,5 @@ class AC1009GraphicBuilder:
     def _create(self, type_, dxfattribs):
         entity = self._build_entity(type_, dxfattribs)
         self._append_entity(entity)
+        entity.set_builder(self)
         return entity

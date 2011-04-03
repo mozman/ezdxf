@@ -6,7 +6,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from .gbuilder import AC1009GraphicBuilder, BuilderConnector
+from .gbuilder import AC1009GraphicBuilder
 from ..entityspace import EntitySpace
 
 class AC1009Layouts:
@@ -25,7 +25,7 @@ class AC1009Layouts:
     def names(self):
         return []
 
-class AC1009Layout(AC1009GraphicBuilder, BuilderConnector):
+class AC1009Layout(AC1009GraphicBuilder):
     """ Layout representation
 
     provides: IBuilderConnector
@@ -59,14 +59,13 @@ class AC1009Layout(AC1009GraphicBuilder, BuilderConnector):
 
     def _get_entity_by_handle(self, handle):
         entity = self._dxffactory.wrap_handle(handle)
-        entity.setbuilder(self)
+        entity.set_builder(self)
         return entity
 
     def _set_paperspace(self, entity):
-        # part of IBuilderConnector
         entity.paperspace = self._paperspace
 
-class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
+class AC1009BlockLayout(AC1009GraphicBuilder):
     """ BlockLayout has the same factory-function as Layout, but is managed
     in the BlocksSection() class. It represents a DXF Block definition.
 
@@ -77,11 +76,11 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
     implements: IBuilderConnector
 
     """
-    def __init__(self, entitydb, dxffactory):
+    def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
         self._entityspace = EntitySpace(entitydb)
         self._dxffactory = dxffactory
-        self._head = None
-        self._tail = None
+        self._block_handle = block_handle
+        self._endblk_handle = endblk_handle
 
     # start of public interface
 
@@ -101,15 +100,17 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
             return False
 
     @property
+    def block(self):
+        return self._dxffactory.wrap_handle(self._block_handle)
+
+    @property
     def name(self):
-        block = self._dxffactory.wrap_handle(self._head)
-        return block.name
+        return self.block.name
 
     def add_attdef(self, tag, insert, dxfattribs={}):
         dxfattribs['tag'] = tag
         dxfattribs['insert'] = insert
         return self._create('ATTDEF', dxfattribs)
-
 
     # end of public interface
 
@@ -118,14 +119,8 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
 
     def _get_entity_by_handle(self, handle):
         entity = self._dxffactory.wrap_handle(handle)
-        entity.setbuilder(self)
+        entity.set_builder(self)
         return entity
-
-    def set_head(self, handle):
-        self._head = handle
-
-    def set_tail(self, handle):
-        self._tail = handle
 
     def add_entity(self, entity):
         self._entityspace.add(entity)
@@ -135,11 +130,11 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
             wrapper = self._dxffactory.wrap_handle(handle)
             wrapper.tags.write(stream)
 
-        write_tags(self._head)
+        write_tags(self._block_handle)
         self._entityspace.write(stream)
-        write_tags(self._tail)
+        write_tags(self._endblk_handle)
 
     def attdefs(self):
         for entity in self:
-            if entiy.dxftype() == 'ATTDEF':
+            if entity.dxftype() == 'ATTDEF':
                 yield entity

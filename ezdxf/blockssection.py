@@ -25,10 +25,10 @@ class BlocksSection:
             return self._entitydb.add_tags(tags)
 
         def build_block_layout(entities):
-            block = self._dxffactory.new_block_layout()
-            block.set_tail(add_tags(entities.pop()))
+            tail_handle = add_tags(entities.pop())
             iterentities = iter(entities)
-            block.set_head(add_tags(next(iterentities)))
+            head_handle = add_tags(next(iterentities))
+            block = self._dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in iterentities:
                 block.add_entity(entity)
             return block
@@ -86,9 +86,7 @@ class BlocksSection:
         dxfattribs['basepoint'] = basepoint
         head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
-        newblock = self._dxffactory.new_block_layout()
-        newblock.set_head(head.handle)
-        newblock.set_tail(tail.handle)
+        newblock = self._dxffactory.new_block_layout(head.handle, tail.handle)
         self._append_block_layout(newblock)
         return newblock
 
@@ -107,7 +105,7 @@ class BlocksSection:
             D = *D### anonymous dimensions
             A = *A### anonymous groups
         """
-        name = self._entitydb.handles.next
+        name = self._entitydb.handles.next()
         return "*%s%s" % (typechar, name)
 
     # end of public interface

@@ -12,7 +12,7 @@ from ..entity import GenericWrapper, ExtendedType
 from .. import const
 
 class GraphicEntity(GenericWrapper):
-    def setbuilder(self, builder):
+    def set_builder(self, builder):
         self._builder = builder # IGraphicBuilder
 
 class ColorMixin:
@@ -656,7 +656,7 @@ class AC1009Polyface(AC1009Polyline):
     @staticmethod
     def convert(polyline):
         face = AC1009Polyface(polyline.tags)
-        face.setbuilder(polyline._builder)
+        face.set_builder(polyline._builder)
         return face
 
     def append_face(self, face, dxfattribs={}):
@@ -710,7 +710,7 @@ class AC1009Polymesh(AC1009Polyline):
     @staticmethod
     def convert(polyline):
         mesh = AC1009Polymesh(polyline.tags)
-        mesh.setbuilder(polyline._builder)
+        mesh.set_builder(polyline._builder)
         return mesh
 
     def set_mesh_vertex(self, pos, point, dxfattribs={}):
