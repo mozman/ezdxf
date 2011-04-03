@@ -133,10 +133,7 @@ class AC1009Factory:
         return factory(value)
 
     def new_entity(self, type_, handle, dxfattribs):
-        """ Create a new entity.
-
-        :returns: wrapper class
-        """
+        """ Create a new entity. """
         try:
             class_ = self.ENTITY_WRAPPERS[type_]
             return class_.new(handle, dxfattribs, self)
@@ -144,7 +141,6 @@ class AC1009Factory:
             raise ValueError('Unsupported entity type: %s' % type_)
 
     def wrap_entity(self, tags):
-        """ :returns: wrapper class """
         type_ = tags[0].value
         wrapper = self.ENTITY_WRAPPERS.get(type_, GenericWrapper)
         return wrapper(tags)
@@ -154,10 +150,7 @@ class AC1009Factory:
         return self.wrap_entity(tags)
 
     def create_db_entry(self, type_, dxfattribs):
-        """ Create new entity and add to drawing-database.
-
-        :returns: wrapper class
-        """
+        """ Create new entity and add to drawing-database. """
         handle = self.handles.next()
         dbentry = self.new_entity(type_, handle, dxfattribs)
         self.entitydb[handle] = dbentry.tags
@@ -166,5 +159,5 @@ class AC1009Factory:
     def get_layouts(self):
         return AC1009Layouts(self.drawing)
 
-    def new_block_layout(self):
-        return AC1009BlockLayout(self.entitydb, self)
+    def new_block_layout(self, block_handle, endblk_handle):
+        return AC1009BlockLayout(self.entitydb, self, block_handle, endblk_handle)

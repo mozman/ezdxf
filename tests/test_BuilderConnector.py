@@ -15,7 +15,7 @@ class Entity:
     def __init__(self, handle):
         self.handle = handle
 
-    def setbuilder(self, builder):
+    def set_builder(self, builder):
         pass
 
 class DXFFactory:
@@ -35,7 +35,7 @@ class Host(BuilderConnector):
 
     def _get_entity_by_handle(self, handle):
         entity = self._dxffactory.wrap_handle(handle)
-        entity.setbuilder(self)
+        entity.set_builder(self)
         return entity
 
 class TestBuilderConnector(unittest.TestCase):

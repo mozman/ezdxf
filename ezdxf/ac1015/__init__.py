@@ -40,5 +40,5 @@ class AC1015Factory(AC1009Factory):
     def get_layouts(self):
         return AC1015Layouts(self.drawing)
 
-    def new_block_layout(self):
-        return AC1015BlockLayout(self.entitydb, self)
+    def new_block_layout(self, block_handle, endblk_handle):
+        return AC1015BlockLayout(self.entitydb, self, block_handle, endblk_handle)

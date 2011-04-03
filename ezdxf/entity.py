@@ -48,7 +48,7 @@ class GenericWrapper:
     def clonedxfattribs(self):
         dxfattribs = {}
         for key in self.DXFATTRIBS.keys():
-            value = getdxfattr(key)
+            value = self.getdxfattr(key)
             if value is not None:
                 dxfattribs[key] = value
         return dxfattribs
