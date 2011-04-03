@@ -41,13 +41,13 @@ class Table:
 
     # start public interface
 
-    def create(self, name, attribs=None):
+    def create(self, name, dxfattribs=None):
         if self.__contains__(name):
             raise ValueError('%s %s already exists!' % (self._dxfname, name))
-        if attribs is None:
-            attribs = {}
-        attribs['name'] = name
-        return self.new_entry(attribs)
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['name'] = name
+        return self.new_entry(dxfattribs)
 
     def get(self, name):
         return self.get_entry(name)
@@ -104,15 +104,15 @@ class Table:
         except ValueError:
             return False
 
-    def new_entry(self, attribs):
+    def new_entry(self, dxfattribs):
         """ Create new table-entry of type 'self._dxfname', and add new entry
         to table.
 
-        Does not check if an entry attribs['name'] already exists!
+        Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
         handle = self.handles.next()
-        entry = self.dxffactory.new_entity(self._dxfname, handle, attribs)
+        entry = self.dxffactory.new_entity(self._dxfname, handle, dxfattribs)
         self._add_entry(entry)
         return entry
 

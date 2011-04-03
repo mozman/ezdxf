@@ -122,12 +122,12 @@ class AC1009Linetype(GenericWrapper):
         'items': DXFAttr( 73, None, None),
     }
     @classmethod
-    def new(cls, handle, attribs=None, dxffactory=None):
-        if attribs is not None:
-            pattern = attribs.pop('pattern', [0.0])
+    def new(cls, handle, dxfattribs=None, dxffactory=None):
+        if dxfattribs is not None:
+            pattern = dxfattribs.pop('pattern', [0.0])
         else:
             pattern = [0.0]
-        entity = super(AC1009Linetype, cls).new(handle, attribs, dxffactory)
+        entity = super(AC1009Linetype, cls).new(handle, dxfattribs, dxffactory)
         entity._setup_pattern(pattern)
         return entity
 

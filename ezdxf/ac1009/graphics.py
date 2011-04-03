@@ -5,6 +5,7 @@
 # Created: 25.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from copy import deepcopy
 
 from ..tags import DXFAttr, DXFStructureError
 from ..entity import GenericWrapper, ExtendedType
@@ -36,7 +37,7 @@ class QuadrilateralMixin:
         return self.__setattr__(VERTEXNAMES[num], value)
 
 def make_AC1009_attribs(additional={}):
-    attribs = {
+    dxfattribs = {
         'handle': DXFAttr(5, None, None),
         'layer': DXFAttr(8, None, None), # layername as string, default is '0'
         'linetype': DXFAttr(6, None, None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
@@ -44,8 +45,8 @@ def make_AC1009_attribs(additional={}):
         'paperspace': DXFAttr(67, None, None), # 0 .. modelspace, 1 .. paperspace, default is 0
         'extrusion': DXFAttr(210, None, 'Point3D'), # never used !?
     }
-    attribs.update(additional)
-    return attribs
+    dxfattribs.update(additional)
+    return dxfattribs
 
 _LINE_TPL = """  0
 LINE
@@ -355,11 +356,11 @@ class AC1009Insert(GraphicEntity):
                 return attrib
         return None
 
-    def add_attrib(self, tag, text, insert, attribs={}):
-        attribs['tag'] = tag
-        attribs['text'] = text
-        attribs['insert'] = insert
-        attrib_entity = self._builder._build_entity('ATTRIB', attribs)
+    def add_attrib(self, tag, text, insert, dxfattribs={}):
+        dxfattribs['tag'] = tag
+        dxfattribs['text'] = text
+        dxfattribs['insert'] = insert
+        attrib_entity = self._builder._build_entity('ATTRIB', dxfattribs)
         self._append_attrib_entity(attrib_entity)
 
     def _append_attrib_entity(self, entity):
@@ -592,26 +593,26 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
     def points(self):
         return [vertex.location for vertex in self]
 
-    def append_vertices(self, points, attribs={}):
+    def append_vertices(self, points, dxfattribs={}):
         if len(points) > 0:
             first_vertex_index, last_vertex_index = self._get_index_range()
-            self._insert_vertices(last_vertex_index+1, points, attribs)
+            self._insert_vertices(last_vertex_index+1, points, dxfattribs)
 
-    def insert_vertices(self, pos, points, attribs={}):
+    def insert_vertices(self, pos, points, dxfattribs={}):
         if len(points) > 0:
             first_vertex_index, last_vertex_index = self._get_index_range()
-            self._insert_vertices(first_vertex_index+pos, points, attribs)
+            self._insert_vertices(first_vertex_index+pos, points, dxfattribs)
 
-    def _insert_vertices(self, index, points, attribs):
-        vertices = self._points_to_vertices(points, attribs)
+    def _insert_vertices(self, index, points, dxfattribs):
+        vertices = self._points_to_vertices(points, dxfattribs)
         self._builder._insert_entities(index, vertices)
 
-    def _points_to_vertices(self, points, attribs):
-        attribs['flags'] =  attribs.get('flags', 0) | self.get_vertex_flags()
+    def _points_to_vertices(self, points, dxfattribs):
+        dxfattribs['flags'] =  dxfattribs.get('flags', 0) | self.get_vertex_flags()
         vertices = []
         for point in points:
-            attribs['location'] = point
-            vertices.append(self._builder._build_entity('VERTEX', attribs))
+            dxfattribs['location'] = point
+            vertices.append(self._builder._build_entity('VERTEX', dxfattribs))
         return vertices
 
     def delete_vertices(self, pos, count=1):
@@ -658,15 +659,15 @@ class AC1009Polyface(AC1009Polyline):
         face.setbuilder(polyline._builder)
         return face
 
-    def append_face(self, face, attribs={}):
+    def append_face(self, face, dxfattribs={}):
         """ face is a list/tuple of points """
         def get_index_vertex(indices):
-            attribs = { 'flags': const.VTX_3D_POLYFACE_MESH_VERTEX }
+            dxfattribs = { 'flags': const.VTX_3D_POLYFACE_MESH_VERTEX }
             for x, index in enumerate(indices):
-                attribs[VERTEXNAMES[x]] = index
-            return self._builder._build_entity('VERTEX', attribs)
+                dxfattribs[VERTEXNAMES[x]] = index
+            return self._builder._build_entity('VERTEX', dxfattribs)
 
-        vertices = self._points_to_vertices(face, attribs)
+        vertices = self._points_to_vertices(face, dxfattribs)
         firstindex, lastindex = self._get_index_range()
         pos = lastindex - firstindex + 2
         indices = [ pos + x for x in range(len(face))]
@@ -712,10 +713,10 @@ class AC1009Polymesh(AC1009Polyline):
         mesh.setbuilder(polyline._builder)
         return mesh
 
-    def set_mesh_vertex(self, pos, point, attribs={}):
-        attribs['location'] = point
+    def set_mesh_vertex(self, pos, point, dxfattribs={}):
+        dxfattribs['location'] = point
         vertex = self.get_mesh_vertex(pos)
-        vertex.update(attribs)
+        vertex.update(dxfattribs)
 
     def get_mesh_vertex(self, pos):
         mcount = self.mcount

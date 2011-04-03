@@ -79,12 +79,12 @@ class BlocksSection:
         except KeyError:
             return default
 
-    def new(self, name, basepoint=(0, 0), attribs={}):
+    def new(self, name, basepoint=(0, 0), dxfattribs={}):
         """ Create a new named block. """
-        attribs['name'] = name
-        attribs['name2'] = name
-        attribs['basepoint'] = basepoint
-        head = self._dxffactory.create_db_entry('BLOCK', attribs)
+        dxfattribs['name'] = name
+        dxfattribs['name2'] = name
+        dxfattribs['basepoint'] = basepoint
+        head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
         newblock = self._dxffactory.new_block_layout()
         newblock.set_head(head.handle)

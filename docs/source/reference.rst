@@ -67,6 +67,14 @@ Tables
 
    tables
 
+Layouts
+-------
+
+.. toctree::
+   :maxdepth: 2
+
+   layouts
+
 Entities
 --------
 

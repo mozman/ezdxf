@@ -46,7 +46,7 @@ class TestNewLayer(unittest.TestCase):
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
-        self.ltype = AC1009Linetype.new('FFFF', attribs={
+        self.ltype = AC1009Linetype.new('FFFF', dxfattribs={
             'name':'TEST',
             'description': 'TESTDESC',
             'pattern': [0.2, 0.1, -0.1]
@@ -69,7 +69,7 @@ class TestNewLinetype(unittest.TestCase):
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
-        self.style = AC1009Style.new('FFFF', attribs={
+        self.style = AC1009Style.new('FFFF', dxfattribs={
             'name':'TEST',
             'font': 'NOFONT.ttf',
             'width': 2.0,
@@ -95,7 +95,7 @@ class TestNewStyle(unittest.TestCase):
 
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
-        self.appid = AC1009AppID.new('FFFF', attribs={
+        self.appid = AC1009AppID.new('FFFF', dxfattribs={
             'name':'EZDXF',
         })
 
@@ -104,7 +104,7 @@ class TestNewAppID(unittest.TestCase):
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
-        self.ucs = AC1009UCS.new('FFFF', attribs={
+        self.ucs = AC1009UCS.new('FFFF', dxfattribs={
             'name': 'UCS+90',
             'origin': (1.0, 1.0, 1.0),
             'xaxis': (0.0, 1.0, 0.0),
@@ -125,7 +125,7 @@ class TestNewUCS(unittest.TestCase):
 
 class TestViewport(unittest.TestCase):
     def setUp(self):
-        self.vport = AC1009Viewport.new('FFFF', attribs={
+        self.vport = AC1009Viewport.new('FFFF', dxfattribs={
             'name':'VP1',
         })
 
@@ -134,7 +134,7 @@ class TestViewport(unittest.TestCase):
 
 class TestView(unittest.TestCase):
     def setUp(self):
-        self.view = AC1009View.new('FFFF', attribs={
+        self.view = AC1009View.new('FFFF', dxfattribs={
         'name': 'VIEW1',
         'flags': 0,
         'height': 1.0,
@@ -154,7 +154,7 @@ class TestView(unittest.TestCase):
 
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
-        self.dimstyle = AC1009DimStyle.new('FFFF', attribs={
+        self.dimstyle = AC1009DimStyle.new('FFFF', dxfattribs={
             'name':'DIMSTYLE1',
         })
 

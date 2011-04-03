@@ -10,7 +10,7 @@ from ..tags import DXFAttr
 from ..ac1009.graphics import GraphicEntity, ColorMixin
 
 def make_AC1015_attribs(additional={}):
-    attribs = {
+    dxfattribs = {
         'handle': DXFAttr(5, None, None),
         'block_record': DXFAttr(330, None, None), # Soft-pointer ID/handle to owner BLOCK_RECORD object
         'paperspace': DXFAttr(67, 'AcDbEntity', None), # 0 .. modelspace, 1 .. paperspace, default is 0
@@ -20,8 +20,8 @@ def make_AC1015_attribs(additional={}):
         'invisible': DXFAttr(60, 'AcDbEntity', None), # invisible .. 1, visible .. 0, default is 0
         'color': DXFAttr(62, 'AcDbEntity', None),# dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
     }
-    attribs.update(additional)
-    return attribs
+    dxfattribs.update(additional)
+    return dxfattribs
 
 _LINETEMPLATE = """  0
 LINE

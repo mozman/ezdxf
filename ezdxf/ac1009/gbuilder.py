@@ -22,8 +22,8 @@ class BuilderConnector:
     self._dxffactory
 
     """
-    def _build_entity(self, type_, attribs):
-        entity = self._dxffactory.create_db_entry(type_, attribs)
+    def _build_entity(self, type_, dxfattribs):
+        entity = self._dxffactory.create_db_entry(type_, dxfattribs)
         self._set_paperspace(entity)
         return entity
 
@@ -48,7 +48,7 @@ class AC1009GraphicBuilder:
 
     required interface: IGraphicBuilder
     -----------------------------------
-    def _build_entity(type_, attribs)
+    def _build_entity(type_, dxfattribs)
     def _append_entity(entity)
     def _get_index(entity)
     def _get_entity_at_index(index)
@@ -56,85 +56,113 @@ class AC1009GraphicBuilder:
     def _remove_entities(index, count=1)
 
     """
-    def add_line(self, start, end, attribs={}):
-        attribs['start'] = start
-        attribs['end'] = end
-        return self._create('LINE', attribs)
+    def add_line(self, start, end, dxfattribs={}):
+        dxfattribs['start'] = start
+        dxfattribs['end'] = end
+        return self._create('LINE', dxfattribs)
 
-    def add_circle(self, center, radius, attribs={}):
-        attribs['center'] = center
-        attribs['radius'] = radius
-        return self._create('CIRCLE', attribs)
+    def add_circle(self, center, radius, dxfattribs={}):
+        dxfattribs['center'] = center
+        dxfattribs['radius'] = radius
+        return self._create('CIRCLE', dxfattribs)
 
-    def add_arc(self, center, radius, startangle, endangle, attribs={}):
-        attribs['center'] = center
-        attribs['radius'] = radius
-        attribs['startangle'] = startangle
-        attribs['endangle'] = endangle
-        return self._create('ARC', attribs)
+    def add_arc(self, center, radius, startangle, endangle, dxfattribs={}):
+        dxfattribs['center'] = center
+        dxfattribs['radius'] = radius
+        dxfattribs['startangle'] = startangle
+        dxfattribs['endangle'] = endangle
+        return self._create('ARC', dxfattribs)
 
-    def add_solid(self, points, attribs={}):
-        return self._add_quadrilateral('SOLID', points, attribs={})
+    def add_solid(self, points, dxfattribs={}):
+        return self._add_quadrilateral('SOLID', points, dxfattribs={})
 
-    def add_trace(self, points, attribs={}):
-        return self._add_quadrilateral('TRACE', points, attribs={})
+    def add_trace(self, points, dxfattribs={}):
+        return self._add_quadrilateral('TRACE', points, dxfattribs={})
 
-    def add_3Dface(self, points, attribs={}):
-        return self._add_quadrilateral('3DFACE', points, attribs={})
+    def add_3Dface(self, points, dxfattribs={}):
+        return self._add_quadrilateral('3DFACE', points, dxfattribs={})
 
-    def add_text(self, text, style='STANDARD', attribs={}):
-        attribs['text'] = text
-        attribs['style'] = style
-        return self._create('TEXT', attribs)
+    def add_text(self, text, style='STANDARD', dxfattribs={}):
+        dxfattribs['text'] = text
+        dxfattribs['style'] = style
+        return self._create('TEXT', dxfattribs)
 
-    def add_blockref(self, name, insert, attribs={}):
-        attribs['name'] = name
-        attribs['insert'] = insert
-        blockref = self._create('INSERT', attribs)
+    def add_blockref(self, name, insert, dxfattribs={}):
+        dxfattribs['name'] = name
+        dxfattribs['insert'] = insert
+        blockref = self._create('INSERT', dxfattribs)
         blockref.setbuilder(self)
         return blockref
 
-    def add_attrib(self, tag, text, insert, attribs={}):
-        attribs['tag'] = tag
-        attribs['text'] = text
-        attribs['insert'] = insert
-        return self._create('ATTRIB', attribs)
+    def add_autoblockref(self, name, insert, values, dxfattribs={}):
+        def get_dxfattribs(attdef):
+            dxfattribs = attdef.clonedxfattribs()
+            dxfattribs.pop('prompt', None)
+            dxfattribs.pop('handle', None)
+            return dxfattribs
 
-    def add_polyline2D(self, points, attribs={}):
-        closed = attribs.pop('closed', False)
-        polyline = self._create('POLYLINE', attribs)
+        def unpack(dxfattribs):
+            tag = dxfattribs.pop('tag')
+            text = values.get(tag, "")
+            insert = dxfattribs.pop('insert')
+            return (tag, text, insert)
+
+        def autofill(blockref, blockdef):
+            for attdef in blockdef.attdefs():
+                dxfattribs = get_dxfattribs(attdef)
+                tag, text, insert = unpack(dxfattribs)
+                blockref.add_attrib(tag, text, insert, dxfattribs)
+
+        autoblock = self._dxffactory.blocks.new_anonymous_block()
+        autoblock.setbuilder(self)
+
+        blockref = autoblock.add_blockref(name, insert, dxfattribs)
+        blockdef = self._dxffactory.blocks[name]
+        autofill(blockref, blockdef)
+        self.add_blockref(autoblock.name, insert=(0, 0))
+        return autoblock
+
+    def add_attrib(self, tag, text, insert, dxfattribs={}):
+        dxfattribs['tag'] = tag
+        dxfattribs['text'] = text
+        dxfattribs['insert'] = insert
+        return self._create('ATTRIB', dxfattribs)
+
+    def add_polyline2D(self, points, dxfattribs={}):
+        closed = dxfattribs.pop('closed', False)
+        polyline = self._create('POLYLINE', dxfattribs)
         polyline.setbuilder(self)
         polyline.close(closed)
-        attribs = {'flags': polyline.get_vertex_flags()}
+        dxfattribs = {'flags': polyline.get_vertex_flags()}
         for point in points:
-            self.add_vertex(point, attribs)
+            self.add_vertex(point, dxfattribs)
         self.add_seqend()
         return polyline
 
-    def add_polyline3D(self, points, attribs={}):
-        attribs['flags'] = attribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
-        polyline = self.add_polyline2D(points, attribs)
+    def add_polyline3D(self, points, dxfattribs={}):
+        dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
+        polyline = self.add_polyline2D(points, dxfattribs)
         return polyline
 
-    def add_vertex(self, location, attribs={}):
-        attribs['location'] = location
-        return self._create('VERTEX', attribs)
+    def add_vertex(self, location, dxfattribs={}):
+        dxfattribs['location'] = location
+        return self._create('VERTEX', dxfattribs)
 
     def add_seqend(self):
         return self._create('SEQEND', {})
 
-    def add_polymesh(self, size=(3, 3), attribs={}):
+    def add_polymesh(self, size=(3, 3), dxfattribs={}):
         def append_null_points(count, vtxflags):
             for x in range(count):
                 self.add_vertex((0, 0, 0), vtxflags)
-        attribs['flags'] = attribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
+        dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
         msize = max(size[0], 2)
         nsize = max(size[1], 2)
-        attribs['mcount'] = msize
-        attribs['ncount'] = nsize
-        mclose = attribs.pop('mclose', False)
-        nclose = attribs.pop('nclose', False)
-        polymesh = self._create('POLYLINE', attribs)
+        dxfattribs['mcount'] = msize
+        dxfattribs['ncount'] = nsize
+        mclose = dxfattribs.pop('mclose', False)
+        nclose = dxfattribs.pop('nclose', False)
+        polymesh = self._create('POLYLINE', dxfattribs)
         polymesh.setbuilder(self)
         vtxflags = { 'flags': polymesh.get_vertex_flags() }
         append_null_points(msize * nsize, vtxflags)
@@ -142,18 +170,18 @@ class AC1009GraphicBuilder:
         polymesh.close(mclose, nclose)
         return polymesh.cast()
 
-    def add_polyface(self, attribs={}):
-        attribs['flags'] = attribs.get('flags', 0) | const.POLYLINE_POLYFACE
-        mclose = attribs.pop('mclose', False)
-        nclose = attribs.pop('nclose', False)
-        polyface = self._create('POLYLINE', attribs)
+    def add_polyface(self, dxfattribs={}):
+        dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
+        mclose = dxfattribs.pop('mclose', False)
+        nclose = dxfattribs.pop('nclose', False)
+        polyface = self._create('POLYLINE', dxfattribs)
         polyface.setbuilder(self)
         self.add_seqend()
         polyface.close(mclose, nclose)
         return polyface.cast()
 
-    def _add_quadrilateral(self, type_, points, attribs={}):
-        entity = self._create(type_, attribs)
+    def _add_quadrilateral(self, type_, points, dxfattribs={}):
+        entity = self._create(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
             entity[x] = point
         return entity
@@ -167,7 +195,7 @@ class AC1009GraphicBuilder:
         if len(points) == 3:
             yield point # again
 
-    def _create(self, type_, attribs):
-        entity = self._build_entity(type_, attribs)
+    def _create(self, type_, dxfattribs):
+        entity = self._build_entity(type_, dxfattribs)
         self._append_entity(entity)
         return entity

@@ -89,15 +89,27 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
         for handle in self._entityspace:
             yield self._dxffactory.wrap_handle(handle)
 
+    def __contains__(self, entity):
+        try:
+            handle = entity.handle
+        except AttributeError:
+            handle = entity
+        try:
+            index = self._entityspace.index(handle)
+            return True
+        except IndexError:
+            return False
+
     @property
     def name(self):
         block = self._dxffactory.wrap_handle(self._head)
         return block.name
 
-    def add_attdef(self, tag, insert, attribs={}):
-        attribs['tag'] = tag
-        attribs['insert'] = insert
-        return self._create('ATTDEF', attribs)
+    def add_attdef(self, tag, insert, dxfattribs={}):
+        dxfattribs['tag'] = tag
+        dxfattribs['insert'] = insert
+        return self._create('ATTDEF', dxfattribs)
+
 
     # end of public interface
 
@@ -127,3 +139,7 @@ class AC1009BlockLayout(AC1009GraphicBuilder, BuilderConnector):
         self._entityspace.write(stream)
         write_tags(self._tail)
 
+    def attdefs(self):
+        for entity in self:
+            if entiy.dxftype() == 'ATTDEF':
+                yield entity

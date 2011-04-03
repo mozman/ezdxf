@@ -64,7 +64,6 @@ the section markers and table headers present:
   EOF          (End of file)
 
 """
-
 from ..tags import Tags
 
 from .headervars import VARMAP
@@ -133,14 +132,14 @@ class AC1009Factory:
         factory = self.HEADERVARS[key]
         return factory(value)
 
-    def new_entity(self, type_, handle, attribs):
+    def new_entity(self, type_, handle, dxfattribs):
         """ Create a new entity.
 
         :returns: wrapper class
         """
         try:
             class_ = self.ENTITY_WRAPPERS[type_]
-            return class_.new(handle, attribs, self)
+            return class_.new(handle, dxfattribs, self)
         except KeyError:
             raise ValueError('Unsupported entity type: %s' % type_)
 
@@ -154,13 +153,13 @@ class AC1009Factory:
         tags = self.entitydb[handle]
         return self.wrap_entity(tags)
 
-    def create_db_entry(self, type_, attribs):
+    def create_db_entry(self, type_, dxfattribs):
         """ Create new entity and add to drawing-database.
 
         :returns: wrapper class
         """
         handle = self.handles.next()
-        dbentry = self.new_entity(type_, handle, attribs)
+        dbentry = self.new_entity(type_, handle, dxfattribs)
         self.entitydb[handle] = dbentry.tags
         return dbentry
 
