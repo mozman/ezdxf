@@ -19,6 +19,7 @@ class BlocksSection:
         self._entitydb = drawing.entitydb
         self._dxffactory = drawing.dxffactory
         self._build(tags)
+        self._anonymous_block_counter = 0
 
     def _build(self, tags):
         def add_tags(tags):
@@ -105,8 +106,11 @@ class BlocksSection:
             D = *D### anonymous dimensions
             A = *A### anonymous groups
         """
-        name = self._entitydb.handles.next()
-        return "*%s%s" % (typechar, name)
+        while True:
+            self._anonymous_block_counter += 1
+            blockname = "*%s%d" % (typechar, self._anonymous_block_counter)
+            if not self.__contains__(blockname):
+                return blockname
 
     # end of public interface
 
