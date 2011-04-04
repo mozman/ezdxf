@@ -9,6 +9,7 @@
 from ..tags import DXFAttr, DXFStructureError
 from ..entity import GenericWrapper, ExtendedType
 from .. import const
+from ..const import VERTEXNAMES
 from .optfacebuilder import OptimizingFaceBuilder
 
 class GraphicEntity(GenericWrapper):
@@ -28,7 +29,6 @@ class ColorMixin:
     def get_colorname(self):
         return 'Black'
 
-VERTEXNAMES = ('vtx0', 'vtx1', 'vtx2', 'vtx3')
 class QuadrilateralMixin:
     def __getitem__(self, num):
         return self.__getattr__(VERTEXNAMES[num])
@@ -668,23 +668,29 @@ class AC1009Polyface(AC1009Polyline):
         self.append_faces([face], dxfattribs)
 
     def append_faces(self, faces, dxfattribs={}):
+        def facevertex():
+            vertex = self._builder._build_entity('VERTEX', dxfattribs)
+            vertex.flags = const.VTX_3D_POLYFACE_MESH_VERTEX
+            return vertex
+
         existing_faces = list(self.faces())
         for face in faces:
-            vertices = self._points_to_vertices(face, dxfattribs)
+            vertices = self._points_to_vertices(face, {})
+            vertices.append(facevertex())
             existing_faces.append(vertices)
         self._generate(existing_faces)
 
     def _generate(self, faces):
         def remove_all_vertices():
-            startindex, endindex = self._get_index_range
+            startindex, endindex = self._get_index_range()
             if startindex <= endindex:
                 self._builder._remove_entities(startindex, (endindex - startindex) + 1)
 
         def insert_new_vertices(vertices):
-            index = self._builder._get_position(self) + 1
+            index = self._builder._get_index(self) + 1
             self._builder._insert_entities(index, vertices)
 
-        facebuilder = OptimizingFaceBuilder(faces, self._builder)
+        facebuilder = OptimizingFaceBuilder(faces)
         remove_all_vertices()
         insert_new_vertices(facebuilder.get_vertices())
         self.update_count(facebuilder.nvertices, facebuilder.nfaces)
@@ -706,21 +712,20 @@ class AC1009Polyface(AC1009Polyline):
                 return False
 
         def getface(vertex):
-            indices = []
+            face = []
             for vtx in VERTEXNAMES:
                 index = vertex.getdxfattr(vtx, 0)
                 if index != 0:
-                    indices.append(abs(index)-1)
+                    index = abs(index) - 1
+                    face.append(vertices[index])
                 else:
                     break
-
-            face = [vertices[index] for index in indices]
             face.append(vertex)
             return face
 
         vertices = list(iter(self))
         for vertex in vertices:
-            if self._isface(vertex):
+            if isface(vertex):
                 yield getface(vertex)
 
 class AC1009Polymesh(AC1009Polyline):

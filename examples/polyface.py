@@ -66,7 +66,7 @@ def build_faces(layout):
 
 dwg = ezdxf.new('AC1009') # DXF R12
 layout = dwg.modelspace()
-build_faces(layout)
+build_all_cubes(layout)
 
 filename='polyface.dxf'
 dwg.saveas(filename)
