@@ -125,12 +125,14 @@ class TestPolyface(unittest.TestCase):
     def test_add_two_face_indices(self):
         face = self.layout.add_polyface()
         face.append_face([(0,0), (1,1), (2,2), (3,3)])
+        # second face has same vertices as the first face
         face.append_face([(0,0), (1,1), (2,2)])
-        facevertex = face[8]
-        self.assertEqual(6, facevertex.vtx0)
-        self.assertEqual(7, facevertex.vtx1)
-        self.assertEqual(8, facevertex.vtx2)
-        self.assertEqual(9, len(face))
+        facevertex = face[5] # second face
+        self.assertEqual(1, facevertex.vtx0)
+        self.assertEqual(2, facevertex.vtx1)
+        self.assertEqual(3, facevertex.vtx2)
+        self.assertEqual(4, face.mcount) # vertices count
+        self.assertEqual(2, face.ncount) # faces count
 
     def test_faces(self):
         face = self.layout.add_polyface()
@@ -139,7 +141,40 @@ class TestPolyface(unittest.TestCase):
         result = list(face.faces())
         self.assertEqual(2, len(result))
         points1 = [vertex.location for vertex in result[0]]
-        self.assertEqual( [(0,0), (1,1), (2,2), (3,3)], points1 )
+        # the last vertex is the face-vertex and is always (0,0,0)
+        # the face-vertex contains indices to the face building vertices
+        self.assertEqual( [(0,0), (1,1), (2,2), (3,3), (0,0,0)], points1 )
+
+    def test_optimized_cube(self):
+        face = self.layout.add_polyface()
+        # a cube consist of 6 faces and 24 vertices
+        # duplicated vertices should be removed
+        face.append_faces(cube_faces())
+        self.assertEqual(8, face.mcount) # vertices count
+        self.assertEqual(6, face.ncount) # faces count
+
+def cube_faces():
+    # cube corner points
+    p1 = (0,0,0)
+    p2 = (0,0,1)
+    p3 = (0,1,0)
+    p4 = (0,1,1)
+    p5 = (1,0,0)
+    p6 = (1,0,1)
+    p7 = (1,1,0)
+    p8 = (1,1,1)
+
+    # define the 6 cube faces
+    # look into -x direction
+    # Every add_face adds 4 vertices 6x4 = 24 vertices
+    return [
+        [p1, p5, p7, p3],
+        [p1, p5, p6, p2],
+        [p5, p7, p8, p6],
+        [p7, p8, p4, p3],
+        [p1, p3, p4, p2],
+        [p2, p6, p8, p4],
+    ]
 
 if __name__=='__main__':
     unittest.main()

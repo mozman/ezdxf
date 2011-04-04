@@ -41,6 +41,7 @@ POLYMESH_BEZIER_SURFACE = 8
 
 #Entity: Vertex
 # 70 flags
+VERTEXNAMES = ('vtx0', 'vtx1', 'vtx2', 'vtx3')
 VTX_EXTRA_VERTEX_CREATED = 1 ## Extra vertex created by curve-fitting
 VTX_CURVE_FIT_TANGENT = 2    ## Curve-fit tangent defined for this vertex.
 ## A curve-fit tangent direction of 0 may be omitted from the DXF output, but is
