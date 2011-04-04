@@ -49,9 +49,24 @@ def build_all_cubes(layout):
         for y in range(10):
             build_cube(layout, basepoint=(x,y, random()), length=random())
 
+def build_faces(layout):
+    pface = layout.add_polyface()
+    p1 = (0,0,0)
+    p2 = (0,1,0)
+    p3 = (1,1,0)
+    p4 = (1,0,0)
+
+    p5 = (0,0,1)
+    p6 = (0,1,1)
+    p7 = (1,1,1)
+    p8 = (1,0,1)
+
+    pface.append_face([p1, p2, p3, p4]) # base
+    pface.append_face([p5, p6, p7, p8]) # top
+
 dwg = ezdxf.new('AC1009') # DXF R12
 layout = dwg.modelspace()
-build_all_cubes(layout)
+build_faces(layout)
 
 filename='polyface.dxf'
 dwg.saveas(filename)

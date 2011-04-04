@@ -5,11 +5,11 @@
 # Created: 25.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
-from copy import deepcopy
 
 from ..tags import DXFAttr, DXFStructureError
 from ..entity import GenericWrapper, ExtendedType
 from .. import const
+from .optfacebuilder import OptimizingFaceBuilder
 
 class GraphicEntity(GenericWrapper):
     def set_builder(self, builder):
@@ -653,6 +653,11 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
         return self._builder._get_entity_at_index(index)
 
 class AC1009Polyface(AC1009Polyline):
+    """ Order of vertices and faces IS important (ACAD2010)
+    1. vertices (describes the coordinates)
+    2. faces (describes the face forming vertices)
+
+    """
     @staticmethod
     def convert(polyline):
         face = AC1009Polyface(polyline.tags)
@@ -660,29 +665,38 @@ class AC1009Polyface(AC1009Polyline):
         return face
 
     def append_face(self, face, dxfattribs={}):
-        """ face is a list/tuple of points """
-        def get_index_vertex(indices):
-            dxfattribs = { 'flags': const.VTX_3D_POLYFACE_MESH_VERTEX }
-            for x, index in enumerate(indices):
-                dxfattribs[VERTEXNAMES[x]] = index
-            return self._builder._build_entity('VERTEX', dxfattribs)
+        self.append_faces([face], dxfattribs)
 
-        vertices = self._points_to_vertices(face, dxfattribs)
-        firstindex, lastindex = self._get_index_range()
-        pos = lastindex - firstindex + 2
-        indices = [ pos + x for x in range(len(face))]
-        vertices.append(get_index_vertex(indices))
-        self._builder._insert_entities(lastindex+1, vertices)
-        self.update_count(len(face))
+    def append_faces(self, faces, dxfattribs={}):
+        existing_faces = list(self.faces())
+        for face in faces:
+            vertices = self._points_to_vertices(face, dxfattribs)
+            existing_faces.append(vertices)
+        self._generate(existing_faces)
 
-    def update_count(self, count):
-        nvertices = self.getdxfattr('mcount', 0)
-        nfaces = self.getdxfattr('ncount', 0)
-        self.mcount = nvertices + count
-        self.ncount = nfaces + 1
+    def _generate(self, faces):
+        def remove_all_vertices():
+            startindex, endindex = self._get_index_range
+            if startindex <= endindex:
+                self._builder._remove_entities(startindex, (endindex - startindex) + 1)
+
+        def insert_new_vertices(vertices):
+            index = self._builder._get_position(self) + 1
+            self._builder._insert_entities(index, vertices)
+
+        facebuilder = OptimizingFaceBuilder(faces, self._builder)
+        remove_all_vertices()
+        insert_new_vertices(facebuilder.get_vertices())
+        self.update_count(facebuilder.nvertices, facebuilder.nfaces)
+
+    def update_count(self, nvertices, nfaces):
+        self.mcount = nvertices
+        self.ncount = nfaces
 
     def faces(self):
-        """ Iterate over all faces, a face is a tuple of vertices. """
+        """ Iterate over all faces, a face is a tuple of vertices.
+        result: [vertex, vertex, ..., face-vertex]
+        """
         def isface(vertex):
             flags = vertex.flags
             if flags & const.VTX_3D_POLYFACE_MESH_VERTEX > 0 and \
@@ -699,11 +713,14 @@ class AC1009Polyface(AC1009Polyline):
                     indices.append(abs(index)-1)
                 else:
                     break
-            return tuple( (vertices[index] for index in indices) )
+
+            face = [vertices[index] for index in indices]
+            face.append(vertex)
+            return face
 
         vertices = list(iter(self))
         for vertex in vertices:
-            if isface(vertex):
+            if self._isface(vertex):
                 yield getface(vertex)
 
 class AC1009Polymesh(AC1009Polyline):
