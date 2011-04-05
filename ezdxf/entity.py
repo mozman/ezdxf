@@ -14,8 +14,25 @@ class GenericWrapper:
     DXFATTRIBS = {
         'handle': DXFAttr(5, None, None)
     }
+    class DXFNamespace:
+        __slots__ = ('wrapper', )
+        def __init__(self, wrapper):
+            self.wrapper = wrapper
+        def get(self, key, default=ValueError):
+            return self.wrapper.getdxfattr(key, default)
+        def set(self, key, value):
+            self.wrapper.setdxfattr(key, value)
+        def __getattr__(self, key):
+            return self.wrapper.getdxfattr(key)
+        def __setattr__(self, key, value):
+            if key in self.__slots__:
+                super(GenericWrapper.DXFNamespace, self).__setattr__(key, value)
+            else:
+                self.wrapper.setdxfattr(key, value)
+
     def __init__(self, tags):
         self.tags = tags
+        self.dxf = GenericWrapper.DXFNamespace(self)
 
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
@@ -30,27 +47,32 @@ class GenericWrapper:
     def dxftype(self):
         return self.tags[0].value
 
-    def getdxfattr(self, key, default=None):
+    def getdxfattr(self, key, default=ValueError):
         if key in self.DXFATTRIBS:
             try:
-                return self.__getattr__(key)
+                code = self.DXFATTRIBS[key]
+                return self._get_attrib(code)
             except ValueError:
-                return default
+                if default is ValueError:
+                    raise
+                else:
+                    return default
         else:
             raise AttributeError(key)
 
     def setdxfattr(self, key, value):
         if key in self.DXFATTRIBS:
-            self.__setattr__(key, value)
+            self._set_attrib(key, value)
         else:
             raise AttributeError(key)
 
     def clonedxfattribs(self):
         dxfattribs = {}
         for key in self.DXFATTRIBS.keys():
-            value = self.getdxfattr(key)
-            if value is not None:
-                dxfattribs[key] = value
+            try:
+                dxfattribs[key] = self.getdxfattr(key)
+            except ValueError:
+                pass
         return dxfattribs
 
     def __getattr__(self, key):
