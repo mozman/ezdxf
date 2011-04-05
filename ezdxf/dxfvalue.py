@@ -8,7 +8,7 @@
 
 from .tags import TAG_STRING_FORMAT
 
-class DXFValue:
+class HeaderVar:
     def __init__(self, tag):
         self.tag = tag
 
