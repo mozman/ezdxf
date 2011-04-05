@@ -8,8 +8,7 @@
 
 from collections import OrderedDict
 
-from .dxfvalue import DXFValue
-from .tags import TagGroups
+from .tags import TagGroups, TAG_STRING_FORMAT
 
 class HeaderSection:
     name = 'header'
@@ -34,7 +33,7 @@ class HeaderSection:
                 value = tuple(group[1:])
             else:
                 value = group[1]
-            self.hdrvars[name] =DXFValue(value)
+            self.hdrvars[name] =HeaderVar(value)
 
     def write(self, stream):
         def _write(name, value):
@@ -61,7 +60,35 @@ class HeaderSection:
 
     def __setitem__(self, key, value):
         tags = self._headervar_factory(key, value)
-        self.hdrvars[key] = DXFValue(tags)
+        self.hdrvars[key] = HeaderVar(tags)
 
     def __delitem__(self, key):
         del self.hdrvars[key]
+
+class HeaderVar:
+    def __init__(self, tag):
+        self.tag = tag
+
+    @property
+    def code(self):
+        return self.tag[0]
+
+    @property
+    def value(self):
+        return self.tag[1]
+
+    @property
+    def ispoint(self):
+        return isinstance(self.tag[0], tuple)
+
+    def getpoint(self):
+        if self.ispoint:
+            return tuple( [tag[1] for tag in self.tag] )
+        else:
+            raise ValueError
+
+    def __str__(self):
+        if self.ispoint:
+            return "".join([TAG_STRING_FORMAT % tag for tag in self.tag])
+        else:
+            return TAG_STRING_FORMAT % self.tag

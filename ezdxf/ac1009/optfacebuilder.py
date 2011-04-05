@@ -9,9 +9,8 @@
 from ..const import VERTEXNAMES
 
 class OptimizingFaceBuilder:
-    precision = 6
-
-    def __init__(self, faces):
+    def __init__(self, faces, precision=6):
+        self.precision = precision
         self.faces = []
         self.vertices = []
         self.indexmap = {}
@@ -35,7 +34,9 @@ class OptimizingFaceBuilder:
             facevertex = face.pop()
             for vertex, name in zip(face, VERTEXNAMES):
                 index = self.add(vertex)
-                facevertex.setdxfattr(name, index+1)
+                # preserve sign of old index value
+                sign = -1 if facevertex.getdxfattr(name, 0) < 0 else +1
+                facevertex.setdxfattr(name, (index+1) * sign)
             self.faces.append(facevertex)
 
     def add(self, vertex):
