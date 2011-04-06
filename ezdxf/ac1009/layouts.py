@@ -40,13 +40,13 @@ class AC1009Layout(AC1009GraphicBuilder):
 
     def __iter__(self):
         for entity in self._iter_all_entities():
-            if entity.getdxfattr('paperspace', 0) == self._paperspace:
+            if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
                 yield entity
 
     def __contains__(self, entity):
         if isinstance(entity, str): # handle
             entity = self._dxffactory.wrap_handle(entity)
-        if entity.getdxfattr('paperspace', 0) == self._paperspace:
+        if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
             return True
         else:
             return False

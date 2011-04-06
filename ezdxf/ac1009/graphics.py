@@ -31,10 +31,10 @@ class ColorMixin:
 
 class QuadrilateralMixin:
     def __getitem__(self, num):
-        return self.getdxfattr(VERTEXNAMES[num])
+        return self.get_dxf_attrib(VERTEXNAMES[num])
 
     def __setitem__(self, num, value):
-        return self.setdxfattr(VERTEXNAMES[num], value)
+        return self.set_dxf_attrib(VERTEXNAMES[num], value)
 
 def make_AC1009_attribs(additional={}):
     dxfattribs = {
@@ -715,7 +715,7 @@ class AC1009Polyface(AC1009Polyline):
         def getface(vertex):
             face = []
             for vtx in VERTEXNAMES:
-                index = vertex.getdxfattr(vtx, 0)
+                index = vertex.get_dxf_attrib(vtx, 0)
                 if index != 0:
                     index = abs(index) - 1
                     face.append(vertices[index])
@@ -739,7 +739,7 @@ class AC1009Polymesh(AC1009Polyline):
     def set_mesh_vertex(self, pos, point, dxfattribs={}):
         dxfattribs['location'] = point
         vertex = self.get_mesh_vertex(pos)
-        vertex.update(dxfattribs)
+        vertex.update_dxf_attribs(dxfattribs)
 
     def get_mesh_vertex(self, pos):
         mcount = self.dxf.mcount
