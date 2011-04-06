@@ -52,7 +52,7 @@ class AC1015Layer(AC1009Layer):
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
         layer = super(AC1015Layer, cls).new(handle, dxfattribs)
-        layer.plotstylename= dxffactory.rootdict['ACAD_PLOTSTYLENAME']
+        layer.dxf.plotstylename= dxffactory.rootdict['ACAD_PLOTSTYLENAME']
         return layer
 
 _STYLETEMPLATE = """  0

@@ -29,6 +29,8 @@ class GenericWrapper:
                 super(GenericWrapper.DXFNamespace, self).__setattr__(key, value)
             else:
                 self.wrapper.setdxfattr(key, value)
+        def __contains__(self, key):
+            return key in self.wrapper.DXFATTRIBS
 
     def __init__(self, tags):
         self.tags = tags
@@ -39,7 +41,7 @@ class GenericWrapper:
         if cls.TEMPLATE == "":
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
         entity = cls(ExtendedTags.fromtext(cls.TEMPLATE))
-        entity.handle = handle
+        entity.dxf.handle = handle
         if dxfattribs is not None:
             entity.update(dxfattribs)
         return entity
@@ -75,13 +77,6 @@ class GenericWrapper:
                 pass
         return dxfattribs
 
-    def __getattr__(self, key):
-        if key in self.DXFATTRIBS:
-            code = self.DXFATTRIBS[key]
-            return self._get_attrib(code)
-        else:
-            raise AttributeError(key)
-
     def _get_attrib(self, dxfattr):
         if dxfattr.subclass is not None:
             return self._get_subclass_value(dxfattr)
@@ -101,12 +96,6 @@ class GenericWrapper:
     def _get_extended_type(self, code, xtype):
         tags = ExtendedType(self.tags)
         return tags.get_value(code, xtype)
-
-    def __setattr__(self, key, value):
-        if key in self.DXFATTRIBS:
-            self._set_attrib(key, value)
-        else:
-            super(GenericWrapper, self).__setattr__(key, value)
 
     def _set_attrib(self, key, value):
         dxfattr = self.DXFATTRIBS[key]

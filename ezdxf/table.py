@@ -125,7 +125,7 @@ class Table:
                 handle = self.handles.next()
             tags = entry
         else:
-            handle = entry.handle
+            handle = entry.dxf.handle
             tags = entry.tags
         self.entitydb[handle] = tags
         self._table_entries.append(handle)
@@ -133,7 +133,7 @@ class Table:
     def get_entry(self, name):
         """ Get table-entry by name as WrapperClass(). """
         for entry in iter(self):
-            if entry.name == name:
+            if entry.dxf.name == name:
                 return entry
         raise ValueError(name)
 
@@ -144,7 +144,7 @@ class Table:
     def remove_entry(self, name):
         """ Remove table-entry from table and entitydb by name. """
         entry = self.get_entry(name)
-        handle = entry.handle
+        handle = entry.dxf.handle
         self._table_entries.remove(handle)
         del self.entitydb[handle]
 

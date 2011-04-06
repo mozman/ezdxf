@@ -63,7 +63,7 @@ class AC1009Layout(AC1009GraphicBuilder):
         return entity
 
     def _set_paperspace(self, entity):
-        entity.paperspace = self._paperspace
+        entity.dxf.paperspace = self._paperspace
 
 class AC1009BlockLayout(AC1009GraphicBuilder):
     """ BlockLayout has the same factory-function as Layout, but is managed
@@ -105,7 +105,7 @@ class AC1009BlockLayout(AC1009GraphicBuilder):
 
     @property
     def name(self):
-        return self.block.name
+        return self.block.dxf.name
 
     def add_attdef(self, tag, insert, dxfattribs={}):
         dxfattribs['tag'] = tag

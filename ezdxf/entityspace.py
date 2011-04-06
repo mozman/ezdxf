@@ -27,7 +27,7 @@ class EntitySpace(list):
                 handle = self._entitydb.handles.next()
             self._entitydb[handle] = entity
         else:
-            handle = entity.handle
+            handle = entity.dxf.handle
         self.append(handle)
 
     def write(self, stream):

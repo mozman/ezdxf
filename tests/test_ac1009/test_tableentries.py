@@ -22,27 +22,27 @@ class TestNewLayer(unittest.TestCase):
         self.assertEqual(6, len(self.layer.tags))
 
     def test_get_handle(self):
-        self.assertEqual('FFFF', self.layer.handle)
+        self.assertEqual('FFFF', self.layer.dxf.handle)
 
     def test_get_name(self):
-        self.assertEqual('LAYERNAME', self.layer.name)
+        self.assertEqual('LAYERNAME', self.layer.dxf.name)
 
     def test_get_flags(self):
-        self.assertEqual(0, self.layer.flags)
+        self.assertEqual(0, self.layer.dxf.flags)
 
     def test_get_color(self):
-        self.assertEqual(7, self.layer.color)
+        self.assertEqual(7, self.layer.dxf.color)
 
     def test_get_linetype(self):
-        self.assertEqual('CONTINUOUS', self.layer.linetype)
+        self.assertEqual('CONTINUOUS', self.layer.dxf.linetype)
 
     def test_set_name(self):
-        self.layer.name = 'MOZMAN'
-        self.assertEqual('MOZMAN', self.layer.name)
+        self.layer.dxf.name = 'MOZMAN'
+        self.assertEqual('MOZMAN', self.layer.dxf.name)
 
     def test_set_color(self):
-        self.layer.color = '1'
-        self.assertEqual(1, self.layer.color)
+        self.layer.dxf.color = '1'
+        self.assertEqual(1, self.layer.dxf.color)
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
@@ -53,19 +53,19 @@ class TestNewLinetype(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('TEST', self.ltype.name)
+        self.assertEqual('TEST', self.ltype.dxf.name)
 
     def test_description(self):
-        self.assertEqual('TESTDESC', self.ltype.description)
+        self.assertEqual('TESTDESC', self.ltype.dxf.description)
 
     def test_pattern_items_count(self):
         def count_items():
             return len(self.ltype.tags.findall(49))
-        self.assertEqual(2, self.ltype.items)
-        self.assertEqual(self.ltype.items, count_items())
+        self.assertEqual(2, self.ltype.dxf.items)
+        self.assertEqual(self.ltype.dxf.items, count_items())
 
     def test_pattern_length(self):
-        self.assertEqual(0.2, self.ltype.length)
+        self.assertEqual(0.2, self.ltype.dxf.length)
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
@@ -76,22 +76,22 @@ class TestNewStyle(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('TEST', self.style.name)
+        self.assertEqual('TEST', self.style.dxf.name)
 
     def test_font(self):
-        self.assertEqual('NOFONT.ttf', self.style.font)
+        self.assertEqual('NOFONT.ttf', self.style.dxf.font)
 
     def test_width(self):
-        self.assertEqual(2.0, self.style.width)
+        self.assertEqual(2.0, self.style.dxf.width)
 
     def test_height(self):
-        self.assertEqual(0.0, self.style.height)
+        self.assertEqual(0.0, self.style.dxf.height)
 
     def test_oblique(self):
-        self.assertEqual(0.0, self.style.oblique)
+        self.assertEqual(0.0, self.style.dxf.oblique)
 
     def test_bigfont(self):
-        self.assertEqual('', self.style.bigfont)
+        self.assertEqual('', self.style.dxf.bigfont)
 
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
@@ -100,7 +100,7 @@ class TestNewAppID(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('EZDXF', self.appid.name)
+        self.assertEqual('EZDXF', self.appid.dxf.name)
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
@@ -112,16 +112,16 @@ class TestNewUCS(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('UCS+90', self.ucs.name)
+        self.assertEqual('UCS+90', self.ucs.dxf.name)
 
     def test_origin(self):
-        self.assertEqual((1.0, 1.0, 1.0), self.ucs.origin)
+        self.assertEqual((1.0, 1.0, 1.0), self.ucs.dxf.origin)
 
     def test_xaxis(self):
-        self.assertEqual((0.0, 1.0, 0.0), self.ucs.xaxis)
+        self.assertEqual((0.0, 1.0, 0.0), self.ucs.dxf.xaxis)
 
     def test_yaxis(self):
-        self.assertEqual((-1.0, 0.0, 0.0), self.ucs.yaxis)
+        self.assertEqual((-1.0, 0.0, 0.0), self.ucs.dxf.yaxis)
 
 class TestViewport(unittest.TestCase):
     def setUp(self):
@@ -130,7 +130,7 @@ class TestViewport(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('VP1', self.vport.name)
+        self.assertEqual('VP1', self.vport.dxf.name)
 
 class TestView(unittest.TestCase):
     def setUp(self):
@@ -150,7 +150,7 @@ class TestView(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('VIEW1', self.view.name)
+        self.assertEqual('VIEW1', self.view.dxf.name)
 
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
@@ -159,7 +159,7 @@ class TestDimstyle(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('DIMSTYLE1', self.dimstyle.name)
+        self.assertEqual('DIMSTYLE1', self.dimstyle.dxf.name)
 
     def test_handle_code(self):
         self.assertEqual('FFFF', self.dimstyle.tags.getvalue(105))
