@@ -65,13 +65,13 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
 
     def __iter__(self):
         for entity in self._iter_all_entities():
-            if entity.getdxfattr('block_record') == self._block_record:
+            if entity.get_dxf_attrib('block_record') == self._block_record:
                 yield entity
 
     def __contains__(self, entity):
         if isinstance(entity, str): # handle
             entity = self._dxffactory.wrap_handle(entity)
-        if entity.getdxfattr('block_record') == self._block_record:
+        if entity.get_dxf_attrib('block_record') == self._block_record:
             return True
         else:
             return False

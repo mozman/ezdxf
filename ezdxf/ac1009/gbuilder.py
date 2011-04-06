@@ -93,7 +93,7 @@ class AC1009GraphicBuilder(BuilderConnector):
 
     def add_autoblockref(self, name, insert, values, dxfattribs={}):
         def get_dxfattribs(attdef):
-            dxfattribs = attdef.clonedxfattribs()
+            dxfattribs = attdef.clone_dxf_attribs()
             dxfattribs.pop('prompt', None)
             dxfattribs.pop('handle', None)
             return dxfattribs

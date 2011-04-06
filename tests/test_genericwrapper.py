@@ -26,12 +26,12 @@ class TestGenericWrapper(unittest.TestCase):
     def test_getdxfattr_default(self):
         tags = Tags.fromtext("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        self.assertEqual(17, point.dxf.get('flags', 17))
+        self.assertEqual(17, point.get_dxf_attrib('flags', 17))
 
     def test_getdxfattr_exist(self):
         tags = Tags.fromtext("70\n9\n10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        self.assertEqual(9, point.dxf.get('flags', 17))
+        self.assertEqual(9, point.get_dxf_attrib('flags', 17))
 
     def test_value_error(self):
         tags = Tags.fromtext("10\n1.0\n20\n2.0\n30\n3.0\n")

@@ -35,8 +35,8 @@ class OptimizingFaceBuilder:
             for vertex, name in zip(face, VERTEXNAMES):
                 index = self.add(vertex)
                 # preserve sign of old index value
-                sign = -1 if facevertex.getdxfattr(name, 0) < 0 else +1
-                facevertex.setdxfattr(name, (index+1) * sign)
+                sign = -1 if facevertex.get_dxf_attrib(name, 0) < 0 else +1
+                facevertex.set_dxf_attrib(name, (index+1) * sign)
             self.faces.append(facevertex)
 
     def add(self, vertex):

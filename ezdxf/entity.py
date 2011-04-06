@@ -9,32 +9,54 @@
 from .tags import casttagvalue, DXFTag, DXFStructureError
 from .tags import ExtendedTags, DXFAttr
 
+class DXFNamespace:
+    """ Provides the dxf namespace for GenericWrapper.
+
+    """
+    __slots__ = ('wrapper', )
+    def __init__(self, wrapper):
+        self.wrapper = wrapper
+
+    def get(self, key, default=ValueError):
+        """
+        GenericWrapper.dxf.get('DXF_ATTRIBUTE_NAME') - raises ValueError, if not exists
+        GenericWrapper.dxf.get('DXF_ATTRIBUTE_NAME', defaultvalue)
+
+        """
+        return self.wrapper.get_dxf_attrib(key, default)
+
+    def set(self, key, value):
+        """ GenericWrapper.dxf.DXF_ATTRIBUTE_NAME = value """
+        self.wrapper.set_dxf_attrib(key, value)
+
+    def __getattr__(self, key):
+        """ GenericWrapper.dxf.DXF_ATTRIBUTE_NAME """
+        return self.wrapper.get_dxf_attrib(key)
+
+    def __setattr__(self, key, value):
+        """ GenericWrapper.dxf.set('DXF_ATTRIBUTE_NAME', value) """
+        if key in self.__slots__:
+            super(DXFNamespace, self).__setattr__(key, value)
+        else:
+            self.wrapper.set_dxf_attrib(key, value)
+
+    def clone(self):
+        """ GenericWrapper.dxf.clone(): Clone existing dxf attribs as dict. """
+        return self.wrapper.clone_dxf_attribs()
+
+    def update(self, attribs):
+        """ GenericWrapper.dxf.update(dxfattribs): Update dxf attribs from dict. """
+        return self.wrapper.update_dxf_attribs(attribs)
+
 class GenericWrapper:
     TEMPLATE = ""
     DXFATTRIBS = {
         'handle': DXFAttr(5, None, None)
     }
-    class DXFNamespace:
-        __slots__ = ('wrapper', )
-        def __init__(self, wrapper):
-            self.wrapper = wrapper
-        def get(self, key, default=ValueError):
-            return self.wrapper.getdxfattr(key, default)
-        def set(self, key, value):
-            self.wrapper.setdxfattr(key, value)
-        def __getattr__(self, key):
-            return self.wrapper.getdxfattr(key)
-        def __setattr__(self, key, value):
-            if key in self.__slots__:
-                super(GenericWrapper.DXFNamespace, self).__setattr__(key, value)
-            else:
-                self.wrapper.setdxfattr(key, value)
-        def __contains__(self, key):
-            return key in self.wrapper.DXFATTRIBS
 
     def __init__(self, tags):
         self.tags = tags
-        self.dxf = GenericWrapper.DXFNamespace(self)
+        self.dxf = DXFNamespace(self)
 
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
@@ -43,41 +65,45 @@ class GenericWrapper:
         entity = cls(ExtendedTags.fromtext(cls.TEMPLATE))
         entity.dxf.handle = handle
         if dxfattribs is not None:
-            entity.update(dxfattribs)
+            entity.update_dxf_attribs(dxfattribs)
         return entity
 
     def dxftype(self):
         return self.tags[0].value
 
-    def getdxfattr(self, key, default=ValueError):
+    def get_dxf_attrib(self, key, default=ValueError):
         if key in self.DXFATTRIBS:
             try:
                 code = self.DXFATTRIBS[key]
-                return self._get_attrib(code)
+                return self._get_dxf_attrib(code)
             except ValueError:
                 if default is ValueError:
-                    raise
+                    raise ValueError("DXFAttrib '%s' does not exist." % key)
                 else:
                     return default
         else:
             raise AttributeError(key)
 
-    def setdxfattr(self, key, value):
+    def set_dxf_attrib(self, key, value):
         if key in self.DXFATTRIBS:
-            self._set_attrib(key, value)
+            self._set_dxf_attrib(key, value)
         else:
             raise AttributeError(key)
 
-    def clonedxfattribs(self):
+    def clone_dxf_attribs(self):
         dxfattribs = {}
         for key in self.DXFATTRIBS.keys():
             try:
-                dxfattribs[key] = self.getdxfattr(key)
+                dxfattribs[key] = self.get_dxf_attrib(key)
             except ValueError:
                 pass
         return dxfattribs
 
-    def _get_attrib(self, dxfattr):
+    def update_dxf_attribs(self, dxfattribs):
+        for key, value in dxfattribs.items():
+            self._set_dxf_attrib(key, value)
+
+    def _get_dxf_attrib(self, dxfattr):
         if dxfattr.subclass is not None:
             return self._get_subclass_value(dxfattr)
         elif dxfattr.xtype is not None:
@@ -97,7 +123,7 @@ class GenericWrapper:
         tags = ExtendedType(self.tags)
         return tags.get_value(code, xtype)
 
-    def _set_attrib(self, key, value):
+    def _set_dxf_attrib(self, key, value):
         dxfattr = self.DXFATTRIBS[key]
         if dxfattr.subclass is not None:
             self._set_subclass_value(dxfattr, value)
@@ -121,10 +147,6 @@ class GenericWrapper:
     @staticmethod
     def _settag(tags, code, value):
         tags.setfirst(code, casttagvalue(code, value))
-
-    def update(self, dxfattribs):
-        for key, value in dxfattribs.items():
-            self._set_attrib(key, value)
 
 
 class ExtendedType:
