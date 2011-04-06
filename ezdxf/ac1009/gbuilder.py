@@ -111,10 +111,10 @@ class AC1009GraphicBuilder(BuilderConnector):
                 blockref.add_attrib(tag, text, insert, dxfattribs)
 
         autoblock = self._dxffactory.blocks.new_anonymous_block()
-        blockref = autoblock.add_blockref(name, insert, dxfattribs)
+        blockref = autoblock.add_blockref(name, (0, 0))
         blockdef = self._dxffactory.blocks[name]
         autofill(blockref, blockdef)
-        return self.add_blockref(autoblock.name, insert=(0, 0))
+        return self.add_blockref(autoblock.name, insert, dxfattribs)
 
     def add_attrib(self, tag, text, insert, dxfattribs={}):
         dxfattribs['tag'] = tag
