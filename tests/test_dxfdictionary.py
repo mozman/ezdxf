@@ -21,10 +21,10 @@ class TestDXFDict(unittest.TestCase):
         self.assertEqual(self.dxfdict['ACAD_PLOTSTYLENAME'], 'E')
 
     def test_parent(self):
-        self.assertEqual(self.dxfdict.parent, '0')
+        self.assertEqual(self.dxfdict.dxf.parent, '0')
 
     def test_handle(self):
-        self.assertEqual(self.dxfdict.handle, 'C')
+        self.assertEqual(self.dxfdict.dxf.handle, 'C')
 
     def test_get(self):
         self.assertEqual(self.dxfdict.get('ACAD_MOZMAN', 'XXX'), 'XXX')

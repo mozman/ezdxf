@@ -23,21 +23,21 @@ class TestPolyline(unittest.TestCase):
 
     def test_create_polyline2D(self):
         polyline = self.layout.add_polyline2D( [(0, 0), (1, 1)] )
-        self.assertEqual((0., 0.), polyline[0].location)
-        self.assertEqual((1., 1.), polyline[1].location)
+        self.assertEqual((0., 0.), polyline[0].dxf.location)
+        self.assertEqual((1., 1.), polyline[1].dxf.location)
         self.assertEqual('polyline2d', polyline.getmode())
 
     def test_create_polyline3D(self):
         polyline = self.layout.add_polyline3D( [(1, 2, 3), (4, 5, 6)] )
-        self.assertEqual((1., 2., 3.), polyline[0].location)
-        self.assertEqual((4., 5., 6.), polyline[1].location)
-        self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].flags)
+        self.assertEqual((1., 2., 3.), polyline[0].dxf.location)
+        self.assertEqual((4., 5., 6.), polyline[1].dxf.location)
+        self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
         self.assertEqual('polyline3d', polyline.getmode())
 
     def test_set_vertex(self):
         polyline = self.layout.add_polyline2D( [(0, 0), (1, 1), (2, 2), (3, 3)] )
-        polyline[2].location = (7, 7)
-        self.assertEqual((7., 7.), polyline[2].location)
+        polyline[2].dxf.location = (7, 7)
+        self.assertEqual((7., 7.), polyline[2].dxf.location)
 
     def test_points(self):
         points = [(0, 0), (1, 1), (2, 2), (3, 3)]
@@ -52,26 +52,26 @@ class TestPolyline(unittest.TestCase):
     def test_append_vertices(self):
         polyline = self.layout.add_polyline2D( [(0, 0), (1, 1)] )
         polyline.append_vertices([(7, 7), (8, 8)])
-        self.assertEqual((7., 7.), polyline[2].location)
+        self.assertEqual((7., 7.), polyline[2].dxf.location)
         self.assertEqual(4, len(polyline))
 
     def test_insert_vertices(self):
         polyline = self.layout.add_polyline2D( [(0, 0), (1, 1)] )
         polyline.insert_vertices(0, [(7, 7), (8, 8)])
-        self.assertEqual((7, 7), polyline[0].location)
-        self.assertEqual((1, 1), polyline[3].location)
+        self.assertEqual((7, 7), polyline[0].dxf.location)
+        self.assertEqual((1, 1), polyline[3].dxf.location)
         self.assertEqual(4, len(polyline))
 
     def test_delete_one_vertex(self):
         polyline = self.layout.add_polyline2D( [(0, 0), (1, 1), (2, 2), (3, 3)] )
         polyline.delete_vertices(0)
-        self.assertEqual((1, 1), polyline[0].location)
+        self.assertEqual((1, 1), polyline[0].dxf.location)
         self.assertEqual(3, len(polyline))
 
     def test_delete_two_vertices(self):
         polyline = self.layout.add_polyline2D( [(0, 0), (1, 1), (2, 2), (3, 3)] )
         polyline.delete_vertices(pos=0, count=2)
-        self.assertEqual((2, 2), polyline[0].location)
+        self.assertEqual((2, 2), polyline[0].dxf.location)
         self.assertEqual(2, len(polyline))
 
 class TestPolymesh(unittest.TestCase):
@@ -86,7 +86,7 @@ class TestPolymesh(unittest.TestCase):
     def test_set_vertex(self):
         mesh = self.layout.add_polymesh( (4, 4) )
         mesh.set_mesh_vertex( (1, 1), (1,2,3))
-        self.assertEqual((1,2,3), mesh.get_mesh_vertex( (1, 1) ).location)
+        self.assertEqual((1,2,3), mesh.get_mesh_vertex( (1, 1) ).dxf.location)
 
     def test_error_nindex(self):
         mesh = self.layout.add_polymesh( (4, 4) )
@@ -117,10 +117,10 @@ class TestPolyface(unittest.TestCase):
         face = self.layout.add_polyface()
         face.append_face([(0,0), (1,1), (2,2), (3,3)])
         facevertex = face[4]
-        self.assertEqual(1, facevertex.vtx0)
-        self.assertEqual(2, facevertex.vtx1)
-        self.assertEqual(3, facevertex.vtx2)
-        self.assertEqual(4, facevertex.vtx3)
+        self.assertEqual(1, facevertex.dxf.vtx0)
+        self.assertEqual(2, facevertex.dxf.vtx1)
+        self.assertEqual(3, facevertex.dxf.vtx2)
+        self.assertEqual(4, facevertex.dxf.vtx3)
 
     def test_add_two_face_indices(self):
         face = self.layout.add_polyface()
@@ -128,11 +128,11 @@ class TestPolyface(unittest.TestCase):
         # second face has same vertices as the first face
         face.append_face([(0,0), (1,1), (2,2)])
         facevertex = face[5] # second face
-        self.assertEqual(1, facevertex.vtx0)
-        self.assertEqual(2, facevertex.vtx1)
-        self.assertEqual(3, facevertex.vtx2)
-        self.assertEqual(4, face.mcount) # vertices count
-        self.assertEqual(2, face.ncount) # faces count
+        self.assertEqual(1, facevertex.dxf.vtx0)
+        self.assertEqual(2, facevertex.dxf.vtx1)
+        self.assertEqual(3, facevertex.dxf.vtx2)
+        self.assertEqual(4, face.dxf.mcount) # vertices count
+        self.assertEqual(2, face.dxf.ncount) # faces count
 
     def test_faces(self):
         face = self.layout.add_polyface()
@@ -140,7 +140,7 @@ class TestPolyface(unittest.TestCase):
         face.append_face([(0,0), (1,1), (2,2)])
         result = list(face.faces())
         self.assertEqual(2, len(result))
-        points1 = [vertex.location for vertex in result[0]]
+        points1 = [vertex.dxf.location for vertex in result[0]]
         # the last vertex is the face-vertex and is always (0,0,0)
         # the face-vertex contains indices to the face building vertices
         self.assertEqual( [(0,0), (1,1), (2,2), (3,3), (0,0,0)], points1 )
@@ -150,8 +150,8 @@ class TestPolyface(unittest.TestCase):
         # a cube consist of 6 faces and 24 vertices
         # duplicated vertices should be removed
         face.append_faces(cube_faces())
-        self.assertEqual(8, face.mcount) # vertices count
-        self.assertEqual(6, face.ncount) # faces count
+        self.assertEqual(8, face.dxf.mcount) # vertices count
+        self.assertEqual(6, face.dxf.ncount) # faces count
 
 def cube_faces():
     # cube corner points

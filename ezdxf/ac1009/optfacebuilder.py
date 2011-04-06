@@ -43,7 +43,7 @@ class OptimizingFaceBuilder:
         def key(point):
             return tuple( (round(coord, self.precision) for coord in point) )
 
-        key = key(vertex.location)
+        key = key(vertex.dxf.location)
         try:
             return self.indexmap[key]
         except KeyError:

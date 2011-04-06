@@ -31,10 +31,10 @@ class ColorMixin:
 
 class QuadrilateralMixin:
     def __getitem__(self, num):
-        return self.__getattr__(VERTEXNAMES[num])
+        return self.getdxfattr(VERTEXNAMES[num])
 
     def __setitem__(self, num, value):
-        return self.__setattr__(VERTEXNAMES[num], value)
+        return self.setdxfattr(VERTEXNAMES[num], value)
 
 def make_AC1009_attribs(additional={}):
     dxfattribs = {
@@ -336,7 +336,7 @@ class AC1009Insert(GraphicEntity):
             except IndexError:
                 raise DXFStructureError('expected following ATTRIB or SEQEND, reached end of layout instead.')
 
-        if self.attribsfollow == 0:
+        if self.dxf.attribsfollow == 0:
             return
         index = self._builder._get_index(self) + 1
         while True:
@@ -352,7 +352,7 @@ class AC1009Insert(GraphicEntity):
 
     def get_attrib(self, tag):
         for attrib in self:
-            if tag == attrib.tag:
+            if tag == attrib.dxf.tag:
                 return attrib
         return None
 
@@ -384,12 +384,13 @@ class AC1009Insert(GraphicEntity):
         if seqend_position < 0:
             entities.append(self._builder._build_entity('SEQEND', {}))
             seqend_position = position
-        self.attribsfollow = 1
+        self.dxf.attribsfollow = 1
         self._builder._insert_entities(seqend_position, entities)
 
 class AC1009SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
-    DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
+    DXFATTRIBS = { 'handle': DXFAttr(5, None, None),
+                   'paperspace': DXFAttr(67, None, None),}
 
 _ATTDEF_TPL = """  0
 ATTDEF
@@ -553,7 +554,7 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
         return const.VERTEX_FLAGS[self.getmode()]
 
     def getmode(self):
-        flags = self.flags
+        flags = self.dxf.flags
         if flags & const.POLYLINE_3D_POLYLINE > 0:
             return 'polyline3d'
         elif flags & const.POLYLINE_3D_POLYMESH > 0:
@@ -591,7 +592,7 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
 
     @property
     def points(self):
-        return [vertex.location for vertex in self]
+        return [vertex.dxf.location for vertex in self]
 
     def append_vertices(self, points, dxfattribs={}):
         if len(points) > 0:
@@ -670,7 +671,7 @@ class AC1009Polyface(AC1009Polyline):
     def append_faces(self, faces, dxfattribs={}):
         def facevertex():
             vertex = self._builder._build_entity('VERTEX', dxfattribs)
-            vertex.flags = const.VTX_3D_POLYFACE_MESH_VERTEX
+            vertex.dxf.flags = const.VTX_3D_POLYFACE_MESH_VERTEX
             return vertex
 
         existing_faces = list(self.faces())
@@ -696,15 +697,15 @@ class AC1009Polyface(AC1009Polyline):
         self.update_count(facebuilder.nvertices, facebuilder.nfaces)
 
     def update_count(self, nvertices, nfaces):
-        self.mcount = nvertices
-        self.ncount = nfaces
+        self.dxf.mcount = nvertices
+        self.dxf.ncount = nfaces
 
     def faces(self):
         """ Iterate over all faces, a face is a tuple of vertices.
         result: [vertex, vertex, ..., face-vertex]
         """
         def isface(vertex):
-            flags = vertex.flags
+            flags = vertex.dxf.flags
             if flags & const.VTX_3D_POLYFACE_MESH_VERTEX > 0 and \
                flags & const.VTX_3D_POLYGON_MESH_VERTEX == 0:
                 return True
@@ -741,8 +742,8 @@ class AC1009Polymesh(AC1009Polyline):
         vertex.update(dxfattribs)
 
     def get_mesh_vertex(self, pos):
-        mcount = self.mcount
-        ncount = self.ncount
+        mcount = self.dxf.mcount
+        ncount = self.dxf.ncount
         m, n = pos
         if 0 <= m < mcount and 0 <= n < ncount:
             pos = m * ncount + n

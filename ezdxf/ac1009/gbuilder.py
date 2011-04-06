@@ -28,13 +28,13 @@ class BuilderConnector:
         return self._get_entity_by_handle(self._entityspace[index])
 
     def _append_entity(self, entity):
-        self._entityspace.append(entity.handle)
+        self._entityspace.append(entity.dxf.handle)
 
     def _get_index(self, entity):
-        return self._entityspace.index(entity.handle)
+        return self._entityspace.index(entity.dxf.handle)
 
     def _insert_entities(self, index, entities):
-        handles = [entity.handle for entity in entities]
+        handles = [entity.dxf.handle for entity in entities]
         self._entityspace[index:index] = handles
 
     def _remove_entities(self, index, count=1):

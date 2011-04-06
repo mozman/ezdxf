@@ -87,7 +87,7 @@ class BlocksSection:
         dxfattribs['basepoint'] = basepoint
         head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
-        newblock = self._dxffactory.new_block_layout(head.handle, tail.handle)
+        newblock = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
         self._append_block_layout(newblock)
         return newblock
 

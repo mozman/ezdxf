@@ -57,7 +57,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
     def __init__(self, drawing, layout_handle):
         self._layout_handle = layout_handle
         self._dxffactory = drawing.dxffactory
-        self._block_record = self.dxflayout.block_record
+        self._block_record = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
         self._entityspace = drawing.sections.entities.get_entityspace()
 
@@ -84,7 +84,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
 
     @property
     def name(self):
-        return self.dxflayout.name
+        return self.dxflayout.dxf.name
 
     @property
     def taborder(self):
@@ -92,8 +92,8 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
 
     def _set_paperspace(self, entity):
         # part of IBuilderConnector
-        entity.paperspace = self._paperspace
-        entity.block_record = self._block_record
+        entity.dxf.paperspace = self._paperspace
+        entity.dxf.block_record = self._block_record
 
 class AC1015BlockLayout(AC1009BlockLayout, AC1015GraphicsBuilder):
     pass

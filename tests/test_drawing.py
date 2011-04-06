@@ -25,7 +25,7 @@ class TestNewDrawingAC1009(unittest.TestCase):
 
     def test_get_layer(self):
         layer = self.dwg.layers.get('0')
-        self.assertEqual('0', layer.name)
+        self.assertEqual('0', layer.dxf.name)
 
     def test_error_getting_not_existing_layer(self):
         with self.assertRaises(ValueError):
@@ -33,7 +33,7 @@ class TestNewDrawingAC1009(unittest.TestCase):
 
     def test_create_layer(self):
         layer = self.dwg.layers.create('TEST_NEW_LAYER')
-        self.assertEqual('TEST_NEW_LAYER', layer.name)
+        self.assertEqual('TEST_NEW_LAYER', layer.dxf.name)
 
     def test_error_adding_existing_layer(self):
         with self.assertRaises(ValueError):

@@ -23,13 +23,13 @@ class TestNewLayer(unittest.TestCase):
         self.layer = AC1015Layer.new('FFFF', dxffactory=DXFFactory())
 
     def test_get_handle(self):
-        self.assertEqual('FFFF', self.layer.handle)
+        self.assertEqual('FFFF', self.layer.dxf.handle)
 
     def test_get_name(self):
-        self.assertEqual('LayerName', self.layer.name)
+        self.assertEqual('LayerName', self.layer.dxf.name)
 
     def test_default_plotstylename(self):
-        self.assertEqual('AFAF', self.layer.plotstylename)
+        self.assertEqual('AFAF', self.layer.dxf.plotstylename)
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
@@ -40,17 +40,17 @@ class TestNewLinetype(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('TEST', self.ltype.name)
+        self.assertEqual('TEST', self.ltype.dxf.name)
 
     def test_description(self):
-        self.assertEqual('TESTDESC', self.ltype.description)
+        self.assertEqual('TESTDESC', self.ltype.dxf.description)
 
     def test_pattern_items_count(self):
         def count_items():
             subclass = self.ltype.tags.subclass['AcDbLinetypeTableRecord']
             return len(subclass.findall(49))
-        self.assertEqual(2, self.ltype.items)
-        self.assertEqual(self.ltype.items, count_items())
+        self.assertEqual(2, self.ltype.dxf.items)
+        self.assertEqual(self.ltype.dxf.items, count_items())
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
@@ -61,7 +61,7 @@ class TestNewStyle(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('TEST', self.style.name)
+        self.assertEqual('TEST', self.style.dxf.name)
 
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
@@ -70,7 +70,7 @@ class TestNewAppID(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('EZDXF', self.appid.name)
+        self.assertEqual('EZDXF', self.appid.dxf.name)
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
@@ -82,10 +82,10 @@ class TestNewUCS(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('UCS+90', self.ucs.name)
+        self.assertEqual('UCS+90', self.ucs.dxf.name)
 
     def test_origin(self):
-        self.assertEqual((1.0, 1.0, 1.0), self.ucs.origin)
+        self.assertEqual((1.0, 1.0, 1.0), self.ucs.dxf.origin)
 
 class TestViewport(unittest.TestCase):
     def setUp(self):
@@ -94,7 +94,7 @@ class TestViewport(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('VP1', self.vport.name)
+        self.assertEqual('VP1', self.vport.dxf.name)
 
 class TestView(unittest.TestCase):
     def setUp(self):
@@ -114,7 +114,7 @@ class TestView(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('VIEW1', self.view.name)
+        self.assertEqual('VIEW1', self.view.dxf.name)
 
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
@@ -123,7 +123,7 @@ class TestDimstyle(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('DIMSTYLE1', self.dimstyle.name)
+        self.assertEqual('DIMSTYLE1', self.dimstyle.dxf.name)
 
     def test_handle_code(self):
         self.assertEqual('FFFF', self.dimstyle.tags.getvalue(105))
@@ -135,7 +135,7 @@ class TestBlockRecord(unittest.TestCase):
         })
 
     def test_name(self):
-        self.assertEqual('BLOCKREC1', self.blockrec.name)
+        self.assertEqual('BLOCKREC1', self.blockrec.dxf.name)
 
 
 if __name__=='__main__':

@@ -18,8 +18,8 @@ class TestLine(unittest.TestCase):
 
     def test_create_line(self):
         line = self.entityspace.add_line((0, 0), (1, 1))
-        self.assertEqual((0.,0.), line.start)
-        self.assertEqual((1.,1.), line.end)
+        self.assertEqual((0.,0.), line.dxf.start)
+        self.assertEqual((1.,1.), line.dxf.end)
 
 if __name__=='__main__':
     unittest.main()

@@ -257,7 +257,7 @@ class TestR12Table(unittest.TestCase):
 
     def test_get_table_entry(self):
         entry = self.table.get_entry('ACAD')
-        self.assertEqual('ACAD', entry.name)
+        self.assertEqual('ACAD', entry.dxf.name)
 
 
 class TestR2010Table(unittest.TestCase):
@@ -277,7 +277,7 @@ class TestR2010Table(unittest.TestCase):
 
     def test_get_table_entry(self):
         entry = self.table.get_entry('ACAD')
-        self.assertEqual('ACAD', entry.name)
+        self.assertEqual('ACAD', entry.dxf.name)
 
 if __name__=='__main__':
     unittest.main()
