@@ -1,0 +1,13 @@
+syntax: glob
+build/*
+dist/*
+docs/_build/*
+bigtestfiles/*
+.coverage
+*.err
+*.orig
+*.bak
+*.pyc
+*.*~
+*.wpr
+MANIFEST
