@@ -294,8 +294,6 @@ INSERT
 0
   8
 0
- 66
-0
   2
 BLOCKNAME
  10
@@ -313,6 +311,9 @@ BLOCKNAME
  50
 0.0
 """
+# IMPORTANT: Bug in AutoCAD 2010
+# attribsfollow = 0, for NO attribsfollow does not work with ACAD 2010
+# if no attribs attached to the INSERT entity, omit attribsfollow tag
 class AC1009Insert(GraphicEntity):
     TEMPLATE = _INSERT_TPL
     DXFATTRIBS = make_AC1009_attribs({
