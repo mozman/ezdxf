@@ -21,11 +21,11 @@ Supported DXF Version
 ======= ========================
 Version introduced with AutoCAD
 ======= ========================
-R12     AutoCAD V12
-R2000   AutoCAD V2000
-R2004   AutoCAD V2004
-R2007   AutoCAD V2007
-R2010   AutoCAD V2010
+AC1009  AutoCAD V12
+AC1015  AutoCAD V2000
+AC1018  AutoCAD V2004
+AC1020  AutoCAD V2007
+AC1024  AutoCAD V2010
 ======= ========================
 
 a simple example::
@@ -50,7 +50,7 @@ Documentation
 
 http://packages.python.org/ezdxf/
 
-Good Luck! Feedback is greatly appreciated.
+Feedback is greatly appreciated.
 
 Manfred
 
