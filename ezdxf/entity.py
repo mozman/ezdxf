@@ -26,7 +26,7 @@ class DXFNamespace:
         return self.wrapper.get_dxf_attrib(key, default)
 
     def set(self, key, value):
-        """ GenericWrapper.dxf.DXF_ATTRIBUTE_NAME = value """
+        """ GenericWrapper.dxf.set('DXF_ATTRIBUTE_NAME', value) """
         self.wrapper.set_dxf_attrib(key, value)
 
     def __getattr__(self, key):
@@ -34,7 +34,7 @@ class DXFNamespace:
         return self.wrapper.get_dxf_attrib(key)
 
     def __setattr__(self, key, value):
-        """ GenericWrapper.dxf.set('DXF_ATTRIBUTE_NAME', value) """
+        """ GenericWrapper.dxf.DXF_ATTRIBUTE_NAME = value """
         if key in self.__slots__:
             super(DXFNamespace, self).__setattr__(key, value)
         else:
