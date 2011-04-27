@@ -289,7 +289,15 @@ class ExtendedTags(Tags):
                         data.append(tag)
             except StopIteration:
                 pass
-            self.subclass[name] = data
+            # until now, I found just one special case:
+            # TEXT contains the SubClassMarker 'AcDbText' two times
+            # so I just append the additional tags to the existing
+            # subclass, causes error on appending new tags!!!, this should be
+            # handled in the Text() class.
+            if name in self.subclass:
+                self.subclass[name].extend(data)
+            else:
+                self.subclass[name] = data
             return None
 
         def collect_appdata(starttag):

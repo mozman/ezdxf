@@ -188,15 +188,18 @@ class AC1009Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
         'vtx3' : DXFAttr(13, None, 'Point2D/3D'),
     })
 
-_SOLID_TPL = _TRACE_TPL.replace('TRACE', 'SOLID')
-
 class AC1009Solid(AC1009Trace):
-    TEMPLATE = _SOLID_TPL
-
-_3DFACE_TPL = _TRACE_TPL.replace('TRACE', '3DFACE')
+    TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
 
 class AC10093DFace(AC1009Trace):
-    TEMPLATE = _3DFACE_TPL
+    TEMPLATE = _TRACE_TPL.replace('TRACE', '3DFACE')
+    DXFATTRIBS = make_AC1009_attribs({
+        'vtx0' : DXFAttr(10, None, 'Point2D/3D'),
+        'vtx1' : DXFAttr(11, None, 'Point2D/3D'),
+        'vtx2' : DXFAttr(12, None, 'Point2D/3D'),
+        'vtx3' : DXFAttr(13, None, 'Point2D/3D'),
+        'invisible_edge': DXFAttr(70, None, None),
+    })
 
 _TEXT_TPL = """  0
 TEXT

@@ -9,20 +9,16 @@
 import sys
 import unittest
 
-from ezdxf.testtools import DrawingProxy
-from ezdxf.entityspace import EntitySpace
-
-from ezdxf.ac1009.layouts import AC1009Layout
+import ezdxf
 
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
-        self.entityspace = EntitySpace(self.dwg.entitydb)
-        self.layout = AC1009Layout(self.entityspace, self.dwg.dxffactory, 0)
+        self.dwg = ezdxf.new('AC1009')
+        self.layout = self.dwg.modelspace()
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
-        paperspace = AC1009Layout(self.entityspace, self.dwg.dxffactory, 1)
+        paperspace = self.dwg.layout('Name it like you want, there is only one paperspace at AC1009')
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.dxf.paperspace)
 
@@ -75,11 +71,9 @@ class TestBlock(SetupDrawing):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         self.assertEqual('BLOCK', ref.dxf.name)
         self.assertEqual((0., 0.), ref.dxf.insert)
-        self.assertEqual(0, ref.dxf.attribsfollow)
 
     def test_add_new_attribs_to_blockref(self):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
-        self.assertEqual(0, ref.dxf.attribsfollow)
         ref.add_attrib('TEST', 'text', (0, 0))
         self.assertEqual(1, ref.dxf.attribsfollow)
         attrib = ref.get_attrib('TEST')
