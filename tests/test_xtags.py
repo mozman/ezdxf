@@ -194,5 +194,47 @@ TEXT-XDATA3
 1070
 3
 """
+
+SPECIALCASE_TEXT = """  0
+TEXT
+  5
+8C9
+330
+6D
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+4.304757059922736
+ 20
+1.824977382542784
+ 30
+0.0
+ 40
+0.125
+  1
+Title:
+ 41
+0.85
+  7
+ARIALNARROW
+100
+AcDbText
+ 73
+2
+"""
+class Test2xSubclass(unittest.TestCase):
+    def setUp(self):
+        self.tags = ExtendedTags.fromtext(SPECIALCASE_TEXT)
+
+    def test_read_tags(self):
+        subclass = self.tags.subclass['AcDbText']
+        self.assertEqual((100, 'AcDbText'), subclass[-2])
+        self.assertEqual((73, 2), subclass[-1])
+        self.assertEqual(10, len(subclass))
+
 if __name__=='__main__':
     unittest.main()

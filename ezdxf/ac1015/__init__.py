@@ -12,7 +12,8 @@ from ..ac1009 import AC1009Factory
 from .tableentries import AC1015Layer, AC1015Style, AC1015BlockRecord, AC1015Linetype
 from .tableentries import AC1015AppID, AC1015DimStyle, AC1015UCS, AC1015View, AC1015Viewport
 from .layouts import AC1015Layouts, AC1015BlockLayout
-from .graphics import AC1015Line
+from .graphics import AC1015Line, AC1015Circle, AC1015Point, AC1015Arc, AC1015Trace
+from .graphics import AC1015Solid, AC10153DFace, AC1015Text
 
 UPDATE_ENTITY_WRAPPERS = {
     'LAYER': AC1015Layer,
@@ -25,6 +26,13 @@ UPDATE_ENTITY_WRAPPERS = {
     'APPID': AC1015AppID,
     'BLOCK_RECORD': AC1015BlockRecord,
     'LINE': AC1015Line,
+    'POINT': AC1015Point,
+    'CIRCLE': AC1015Circle,
+    'ARC': AC1015Arc,
+    'TRACE': AC1015Trace,
+    'SOLID': AC1015Solid,
+    '3DFACE': AC10153DFace,
+    'TEXT': AC1015Text,
 }
 
 class AC1015Factory(AC1009Factory):

@@ -88,7 +88,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
 
     @property
     def taborder(self):
-        return self.dxflayout.taborder
+        return self.dxflayout.dxf.taborder
 
     def _set_paperspace(self, entity):
         # part of IBuilderConnector
