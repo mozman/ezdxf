@@ -169,7 +169,7 @@ class Table:
     def _update_meta_data(self):
         count = len(self)
         if self._drawing.dxfversion > 'AC1009':
-            self._table_header.subclass['AcDbSymbolTable'].update(70, count)
+            self._table_header.subclass.get('AcDbSymbolTable').update(70, count)
         else:
             self._table_header.update(70, count)
 

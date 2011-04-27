@@ -34,7 +34,7 @@ class TestCalendarDate(unittest.TestCase):
         self.assertEqual(calendardate(2451544.91568288), datetime(1999, 12, 31, 21, 58, 35))
 
     def test_2011_03_21(self):
-        self.assertAlmostEqual(calendardate(2455642.75) , datetime(2011, 3, 21, 18, 0, 0))
+        self.assertEqual(calendardate(2455642.75) , datetime(2011, 3, 21, 18, 0, 0))
 
 if __name__=='__main__':
     unittest.main()

@@ -7,14 +7,18 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from .tags import TagGroups, DXFAttr
-from .entity import GenericWrapper
+from .tags import TagGroups
+from .dxfattr import DXFAttr, DXFAttributes, SubclassDef
+from .entity import GenericSubclassWrapper
 
-class DXFDictionary(GenericWrapper):
-    DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'parent': DXFAttr(330, None, None),
-    }
+class DXFDictionary(GenericSubclassWrapper):
+    DXFATTRIBS = DXFAttributes(
+        SubclassDef(None, {
+            'handle': DXFAttr(5, None),
+            'parent': DXFAttr(330, None),
+            }),
+        SubclassDef('AcDbDictionary', {}),
+    )
 
     def __init__(self, tags):
         super(DXFDictionary, self).__init__(tags)
@@ -22,7 +26,8 @@ class DXFDictionary(GenericWrapper):
         self._setup()
 
     def _setup(self):
-        for group in TagGroups(self.tags.subclass['AcDbDictionary'], splitcode=3):
+        acdict = self.tags.subclass.get('AcDbDictionary')
+        for group in TagGroups(acdict, splitcode=3):
             name = group[0].value
             handle = group[1].value
             self._values[name] = handle
@@ -39,34 +44,37 @@ class DXFDictionary(GenericWrapper):
     def get(self, key, default=None):
         return self._values.get(key, default)
 
-class DXFLayout(GenericWrapper):
-    DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'parent': DXFAttr(330, None, None),
-        'name': DXFAttr(1, 'AcDbLayout', None), # layout name
-        'flags': DXFAttr(70, 'AcDbLayout', None),
-        'taborder': DXFAttr(71, 'AcDbLayout', None),
-        'limmin': DXFAttr(10, 'AcDbLayout', 'Point2D'), # minimum limits
-        'limmax': DXFAttr(11, 'AcDbLayout', 'Point2D'), # maximum limits
-        'insertbase': DXFAttr(12, 'AcDbLayout', 'Point3D'), #Insertion base point for this layout
-        'extmin': DXFAttr(14, 'AcDbLayout', 'Point3D'), # Minimum extents for this layout
-        'extmax': DXFAttr(15, 'AcDbLayout', 'Point3D'), # Maximum extents for this layout
-        'elevation': DXFAttr(146, 'AcDbLayout', None),
-        'ucsorigin': DXFAttr(13, 'AcDbLayout', 'Point3D'),
-        'ucsxaxis': DXFAttr(16, 'AcDbLayout', 'Point3D'),
-        'ucsyaxis': DXFAttr(17, 'AcDbLayout', 'Point3D'),
-        'ucstype': DXFAttr(76, 'AcDbLayout', None),
-        # Orthographic type of UCS 0 = UCS is not orthographic;
-        # 1 = Top; 2 = Bottom; 3 = Front; 4 = Back; 5 = Left; 6 = Right
-        'block_record': DXFAttr(330, 'AcDbLayout', None),
-        'viewport': DXFAttr(331, 'AcDbLayout', None),
-        # ID/handle to the viewport that was last active in this
-        # layout when the layout was current
-        'ucs': DXFAttr(345,  'AcDbLayout', None),
-        #ID/handle of AcDbUCSTableRecord if UCS is a named
-        # UCS. If not present, then UCS is unnamed
-        'baseucs': DXFAttr(345,  'AcDbLayout', None),
-        #ID/handle of AcDbUCSTableRecord of base UCS if UCS is
-        # orthographic (76 code is non-zero). If not present and
-        # 76 code is non-zero, then base UCS is taken to be WORLD
-    }
+class DXFLayout(GenericSubclassWrapper):
+    DXFATTRIBS = DXFAttributes(
+        SubclassDef(None, {
+            'handle': DXFAttr(5, None),
+            'parent': DXFAttr(330, None),
+            }),
+        SubclassDef('AcDbLayout', {
+            'name': DXFAttr(1, None), # layout name
+            'flags': DXFAttr(70, None),
+            'taborder': DXFAttr(71, None),
+            'limmin': DXFAttr(10, 'Point2D'), # minimum limits
+            'limmax': DXFAttr(11, 'Point2D'), # maximum limits
+            'insertbase': DXFAttr(12, 'Point3D'), #Insertion base point for this layout
+            'extmin': DXFAttr(14, 'Point3D'), # Minimum extents for this layout
+            'extmax': DXFAttr(15, 'Point3D'), # Maximum extents for this layout
+            'elevation': DXFAttr(146, None),
+            'ucsorigin': DXFAttr(13, 'Point3D'),
+            'ucsxaxis': DXFAttr(16, 'Point3D'),
+            'ucsyaxis': DXFAttr(17, 'Point3D'),
+            'ucstype': DXFAttr(76, None),
+            # Orthographic type of UCS 0 = UCS is not orthographic;
+            # 1 = Top; 2 = Bottom; 3 = Front; 4 = Back; 5 = Left; 6 = Right
+            'block_record': DXFAttr(330, None),
+            'viewport': DXFAttr(331, None),
+            # ID/handle to the viewport that was last active in this
+            # layout when the layout was current
+            'ucs': DXFAttr(345, None),
+            #ID/handle of AcDbUCSTableRecord if UCS is a named
+            # UCS. If not present, then UCS is unnamed
+            'baseucs': DXFAttr(345, None),
+            #ID/handle of AcDbUCSTableRecord of base UCS if UCS is
+            # orthographic (76 code is non-zero). If not present and
+            # 76 code is non-zero, then base UCS is taken to be WORLD
+        }))

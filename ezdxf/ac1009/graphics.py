@@ -6,7 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..tags import DXFAttr, DXFStructureError
+from ..tags import DXFStructureError
+from ..dxfattr import DXFAttr
 from ..entity import GenericWrapper, ExtendedType
 from .. import const
 from ..const import VERTEXNAMES
@@ -38,12 +39,12 @@ class QuadrilateralMixin:
 
 def make_AC1009_attribs(additional={}):
     dxfattribs = {
-        'handle': DXFAttr(5, None, None),
-        'layer': DXFAttr(8, None, None), # layername as string, default is '0'
-        'linetype': DXFAttr(6, None, None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
-        'color': DXFAttr(62, None, None), # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
-        'paperspace': DXFAttr(67, None, None), # 0 .. modelspace, 1 .. paperspace, default is 0
-        'extrusion': DXFAttr(210, None, 'Point3D'), # never used !?
+        'handle': DXFAttr(5, None),
+        'layer': DXFAttr(8, None), # layername as string, default is '0'
+        'linetype': DXFAttr(6, None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
+        'color': DXFAttr(62, None), # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
+        'paperspace': DXFAttr(67, None), # 0 .. modelspace, 1 .. paperspace, default is 0
+        'extrusion': DXFAttr(210, 'Point3D'), # never used !?
     }
     dxfattribs.update(additional)
     return dxfattribs
@@ -71,8 +72,8 @@ LINE
 class AC1009Line(GraphicEntity, ColorMixin):
     TEMPLATE = _LINE_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'start': DXFAttr(10, None, 'Point2D/3D'),
-        'end': DXFAttr(11, None, 'Point2D/3D'),
+        'start': DXFAttr(10, 'Point2D/3D'),
+        'end': DXFAttr(11, 'Point2D/3D'),
     })
 
 _POINT_TPL = """  0
@@ -92,7 +93,7 @@ POINT
 class AC1009Point(GraphicEntity, ColorMixin):
     TEMPLATE = _POINT_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'point': DXFAttr(10, None, 'Point2D/3D'),
+        'point': DXFAttr(10, 'Point2D/3D'),
     })
 
 _CIRCLE_TPL = """  0
@@ -114,8 +115,8 @@ CIRCLE
 class AC1009Circle(GraphicEntity, ColorMixin):
     TEMPLATE = _CIRCLE_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'center': DXFAttr(10, None, 'Point2D/3D'),
-        'radius': DXFAttr(40, None, None),
+        'center': DXFAttr(10, 'Point2D/3D'),
+        'radius': DXFAttr(40, None),
     })
 
 _ARC_TPL = """  0
@@ -141,10 +142,10 @@ ARC
 class AC1009Arc(GraphicEntity, ColorMixin):
     TEMPLATE = _ARC_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'center': DXFAttr(10, None, 'Point2D/3D'),
-        'radius': DXFAttr(40, None, None),
-        'startangle': DXFAttr(50, None, None),
-        'endangle': DXFAttr(51, None, None),
+        'center': DXFAttr(10, 'Point2D/3D'),
+        'radius': DXFAttr(40, None),
+        'startangle': DXFAttr(50, None),
+        'endangle': DXFAttr(51, None),
     })
 
 _TRACE_TPL = """  0
@@ -182,10 +183,10 @@ TRACE
 class AC1009Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _TRACE_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'vtx0' : DXFAttr(10, None, 'Point2D/3D'),
-        'vtx1' : DXFAttr(11, None, 'Point2D/3D'),
-        'vtx2' : DXFAttr(12, None, 'Point2D/3D'),
-        'vtx3' : DXFAttr(13, None, 'Point2D/3D'),
+        'vtx0' : DXFAttr(10, 'Point2D/3D'),
+        'vtx1' : DXFAttr(11, 'Point2D/3D'),
+        'vtx2' : DXFAttr(12, 'Point2D/3D'),
+        'vtx3' : DXFAttr(13, 'Point2D/3D'),
     })
 
 class AC1009Solid(AC1009Trace):
@@ -194,11 +195,11 @@ class AC1009Solid(AC1009Trace):
 class AC10093DFace(AC1009Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', '3DFACE')
     DXFATTRIBS = make_AC1009_attribs({
-        'vtx0' : DXFAttr(10, None, 'Point2D/3D'),
-        'vtx1' : DXFAttr(11, None, 'Point2D/3D'),
-        'vtx2' : DXFAttr(12, None, 'Point2D/3D'),
-        'vtx3' : DXFAttr(13, None, 'Point2D/3D'),
-        'invisible_edge': DXFAttr(70, None, None),
+        'vtx0' : DXFAttr(10, 'Point2D/3D'),
+        'vtx1' : DXFAttr(11, 'Point2D/3D'),
+        'vtx2' : DXFAttr(12, 'Point2D/3D'),
+        'vtx3' : DXFAttr(13, 'Point2D/3D'),
+        'invisible_edge': DXFAttr(70, None),
     })
 
 _TEXT_TPL = """  0
@@ -242,17 +243,17 @@ STANDARD
 class AC1009Text(GraphicEntity, ColorMixin):
     TEMPLATE = _TEXT_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'insert': DXFAttr(10, None, 'Point2D/3D'),
-        'height': DXFAttr(40, None, None),
-        'text': DXFAttr(1, None, None),
-        'rotation': DXFAttr(50, None, None), # in degrees (circle = 360deg)
-        'oblique': DXFAttr(51, None, None), # in degrees, vertical = 0deg
-        'style': DXFAttr(7, None, None), # text style
-        'width': DXFAttr(41, None, None), # width FACTOR!
-        'textgenerationflag': DXFAttr(71, None, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None, None), # horizontal justification
-        'valign': DXFAttr(73, None, None), # vertical justification
-        'alignpoint': DXFAttr(11, None, 'Point2D/3D'),
+        'insert': DXFAttr(10, 'Point2D/3D'),
+        'height': DXFAttr(40,  None),
+        'text': DXFAttr(1,  None),
+        'rotation': DXFAttr(50, None), # in degrees (circle = 360deg)
+        'oblique': DXFAttr(51, None), # in degrees, vertical = 0deg
+        'style': DXFAttr(7, None), # text style
+        'width': DXFAttr(41, None), # width FACTOR!
+        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None), # horizontal justification
+        'valign': DXFAttr(73,  None), # vertical justification
+        'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
 
 _BLOCK_TPL = """  0
@@ -279,17 +280,17 @@ BLOCKNAME
 class AC1009Block(GraphicEntity):
     TEMPLATE = _BLOCK_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'name': DXFAttr(2, None, None),
-        'name2': DXFAttr(3, None, None),
-        'flags': DXFAttr(70, None, None),
-        'basepoint': DXFAttr(10, None, 'Point2D/3D'),
-        'xrefpath': DXFAttr(1, None, None),
+        'name': DXFAttr(2, None),
+        'name2': DXFAttr(3, None),
+        'flags': DXFAttr(70, None),
+        'basepoint': DXFAttr(10, 'Point2D/3D'),
+        'xrefpath': DXFAttr(1, None),
     })
 
 
 class AC1009EndBlk(GraphicEntity):
     TEMPLATE = "  0\nENDBLK\n  5\n0\n"
-    DXFATTRIBS = { 'handle': DXFAttr(5, None, None) }
+    DXFATTRIBS = { 'handle': DXFAttr(5, None) }
 
 _INSERT_TPL = """  0
 INSERT
@@ -320,17 +321,17 @@ BLOCKNAME
 class AC1009Insert(GraphicEntity):
     TEMPLATE = _INSERT_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'attribsfollow': DXFAttr(66, None, None),
-        'name': DXFAttr(2, None, None),
-        'insert': DXFAttr(10, None, 'Point2D/3D'),
-        'xscale': DXFAttr(41, None, None),
-        'yscale': DXFAttr(42, None, None),
-        'zscale': DXFAttr(43, None, None),
-        'rotation': DXFAttr(50, None, None),
-        'colcount': DXFAttr(70, None, None),
-        'rowcount': DXFAttr(71, None, None),
-        'colspacing': DXFAttr(44, None, None),
-        'rowspacing': DXFAttr(45, None, None),
+        'attribsfollow': DXFAttr(66, None),
+        'name': DXFAttr(2, None),
+        'insert': DXFAttr(10, 'Point2D/3D'),
+        'xscale': DXFAttr(41, None),
+        'yscale': DXFAttr(42, None),
+        'zscale': DXFAttr(43, None),
+        'rotation': DXFAttr(50, None),
+        'colcount': DXFAttr(70, None),
+        'rowcount': DXFAttr(71, None),
+        'colspacing': DXFAttr(44, None),
+        'rowspacing': DXFAttr(45, None),
     })
 
     def __iter__(self):
@@ -393,8 +394,8 @@ class AC1009Insert(GraphicEntity):
 
 class AC1009SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
-    DXFATTRIBS = { 'handle': DXFAttr(5, None, None),
-                   'paperspace': DXFAttr(67, None, None),}
+    DXFATTRIBS = { 'handle': DXFAttr(5, None),
+                   'paperspace': DXFAttr(67, None),}
 
 _ATTDEF_TPL = """  0
 ATTDEF
@@ -444,21 +445,21 @@ STANDARD
 class AC1009Attdef(GraphicEntity):
     TEMPLATE = _ATTDEF_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'insert': DXFAttr(10, None, 'Point2D/3D'),
-        'height': DXFAttr(40, None, None),
-        'text': DXFAttr(1, None, None),
-        'prompt': DXFAttr(3, None, None),
-        'tag': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'fieldlength': DXFAttr(73, None, None),
-        'rotation': DXFAttr(50, None, None),
-        'oblique': DXFAttr(51, None, None),
-        'width': DXFAttr(41, None, None), # width factor
-        'style': DXFAttr(7, None, None),
-        'textgenerationflag': DXFAttr(71, None, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None, None), # horizontal justification
-        'valign': DXFAttr(74, None, None), # vertical justification
-        'alignpoint': DXFAttr(11, None, 'Point2D/3D'),
+        'insert': DXFAttr(10, 'Point2D/3D'),
+        'height': DXFAttr(40, None),
+        'text': DXFAttr(1, None),
+        'prompt': DXFAttr(3, None),
+        'tag': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'fieldlength': DXFAttr(73, None),
+        'rotation': DXFAttr(50, None),
+        'oblique': DXFAttr(51, None),
+        'width': DXFAttr(41, None), # width factor
+        'style': DXFAttr(7, None),
+        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None), # horizontal justification
+        'valign': DXFAttr(74, None), # vertical justification
+        'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
 
 _ATTRIB_TPL = """  0
@@ -507,20 +508,20 @@ STANDARD
 class AC1009Attrib(GraphicEntity):
     TEMPLATE = _ATTRIB_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'insert': DXFAttr(10, None, 'Point2D/3D'),
-        'height': DXFAttr(40, None, None),
-        'text': DXFAttr(1, None, None),
-        'tag': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'fieldlength': DXFAttr(73, None, None),
-        'rotation': DXFAttr(50, None, None),
-        'oblique': DXFAttr(51, None, None),
-        'width': DXFAttr(41, None, None), # width factor
-        'style': DXFAttr(7, None, None),
-        'textgenerationflag': DXFAttr(71, None, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None, None), # horizontal justification
-        'valign': DXFAttr(74, None, None), # vertical justification
-        'alignpoint': DXFAttr(11, None, 'Point2D/3D'),
+        'insert': DXFAttr(10, 'Point2D/3D'),
+        'height': DXFAttr(40, None),
+        'text': DXFAttr(1, None),
+        'tag': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'fieldlength': DXFAttr(73, None),
+        'rotation': DXFAttr(50, None),
+        'oblique': DXFAttr(51, None),
+        'width': DXFAttr(41, None), # width factor
+        'style': DXFAttr(7, None),
+        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None), # horizontal justification
+        'valign': DXFAttr(74, None), # vertical justification
+        'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
 
 _POLYLINE_TPL = """  0
@@ -543,15 +544,15 @@ POLYLINE
 class AC1009Polyline(GraphicEntity, ColorMixin):
     TEMPLATE = _POLYLINE_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'elevation': DXFAttr(10, None, 'Point2D/3D'),
-        'flags': DXFAttr(70, None, None),
-        'defaultstartwidth': DXFAttr(40, None, None),
-        'defaultendwidth': DXFAttr(41, None, None),
-        'mcount': DXFAttr(71, None, None),
-        'ncount': DXFAttr(72, None, None),
-        'msmoothdensity': DXFAttr(73, None, None),
-        'nsmoothdensity': DXFAttr(74, None, None),
-        'smoothtype': DXFAttr(75, None, None),
+        'elevation': DXFAttr(10, 'Point2D/3D'),
+        'flags': DXFAttr(70, None),
+        'defaultstartwidth': DXFAttr(40, None),
+        'defaultendwidth': DXFAttr(41, None),
+        'mcount': DXFAttr(71, None),
+        'ncount': DXFAttr(72, None),
+        'msmoothdensity': DXFAttr(73, None),
+        'nsmoothdensity': DXFAttr(74, None),
+        'smoothtype': DXFAttr(75, None),
     })
 
     def get_vertex_flags(self):
@@ -779,16 +780,16 @@ VERTEX
 class AC1009Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _VERTEX_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'location': DXFAttr(10, None, 'Point2D/3D'),
-        'startwidth': DXFAttr(40, None, None),
-        'endwidth': DXFAttr(41, None, None),
-        'bulge': DXFAttr(42, None, None),
-        'flags': DXFAttr(70, None, None),
-        'tangent': DXFAttr(50, None, None),
-        'vtx0': DXFAttr(71, None, None),
-        'vtx1': DXFAttr(72, None, None),
-        'vtx2': DXFAttr(73, None, None),
-        'vtx3': DXFAttr(74, None, None),
+        'location': DXFAttr(10, 'Point2D/3D'),
+        'startwidth': DXFAttr(40, None),
+        'endwidth': DXFAttr(41, None),
+        'bulge': DXFAttr(42, None),
+        'flags': DXFAttr(70, None),
+        'tangent': DXFAttr(50, None),
+        'vtx0': DXFAttr(71, None),
+        'vtx1': DXFAttr(72, None),
+        'vtx2': DXFAttr(73, None),
+        'vtx3': DXFAttr(74, None),
     })
 _VPORT_TPL = """  0
 VIEWPORT
@@ -824,14 +825,14 @@ MVIEW
 class AC1009Viewport(GraphicEntity):
     TEMPLATE = _VPORT_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'center': DXFAttr(10, None, 'Point2D/3D'),
+        'center': DXFAttr(10, 'Point2D/3D'),
         # center point of entity in paper space coordinates)
-        'width': DXFAttr(40, None, None),
+        'width': DXFAttr(40, None),
         # width in paper space units
-        'height': DXFAttr(41, None, None),
+        'height': DXFAttr(41, None),
         # height in paper space units
-        'status': DXFAttr(68, None, None),
-        'id': DXFAttr(69, None, None),
+        'status': DXFAttr(68, None),
+        'id': DXFAttr(69, None),
     })
 
 _DIMENSION_TPL = """  0
@@ -896,18 +897,18 @@ DIMSTYLE
 class AC1009Dimension(GraphicEntity):
     TEMPLATE = _DIMENSION_TPL
     DXFATTRIBS = make_AC1009_attribs({
-        'geometry': DXFAttr(2, None, None),
+        'geometry': DXFAttr(2, None),
         # name of pseudo-Block containing the current dimension  entity geometry
-        'dimstyle': DXFAttr(3, None, None),
-        'defpoint1': DXFAttr(10, None, 'Point2D/3D'),
-        'midpoint': DXFAttr(11, None, 'Point2D/3D'),
-        'translationvector': DXFAttr(12, None, 'Point3D'),
-        'dimtype': DXFAttr(70, None, None),
-        'usertext': DXFAttr(1, None, None),
-        'defpoint2': DXFAttr(13, None, 'Point2D/3D'),
-        'defpoint3': DXFAttr(14, None, 'Point2D/3D'),
-        'defpoint4': DXFAttr(15, None, 'Point2D/3D'),
-        'defpoint5': DXFAttr(16, None, 'Point2D/3D'),
-        'leaderlength': DXFAttr(40, None, None),
-        'angle': DXFAttr(50, None, None),
+        'dimstyle': DXFAttr(3, None),
+        'defpoint1': DXFAttr(10, 'Point2D/3D'),
+        'midpoint': DXFAttr(11, 'Point2D/3D'),
+        'translationvector': DXFAttr(12, 'Point3D'),
+        'dimtype': DXFAttr(70, None),
+        'usertext': DXFAttr(1, None),
+        'defpoint2': DXFAttr(13, 'Point2D/3D'),
+        'defpoint3': DXFAttr(14, 'Point2D/3D'),
+        'defpoint4': DXFAttr(15, 'Point2D/3D'),
+        'defpoint5': DXFAttr(16, 'Point2D/3D'),
+        'leaderlength': DXFAttr(40, None),
+        'angle': DXFAttr(50, None),
     })

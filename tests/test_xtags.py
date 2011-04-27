@@ -74,11 +74,11 @@ class TestExtendedTags(unittest.TestCase):
         self.assertEqual(2, len(self.xtags.subclass))
 
     def test_subclass_AcDbSymbolTableRecord(self):
-        subclass = self.xtags.subclass['AcDbSymbolTableRecord']
+        subclass = self.xtags.subclass.get('AcDbSymbolTableRecord')
         self.assertEqual(1, len(subclass))
 
     def test_subclass_AcDbLayerTableRecord(self):
-        subclass = self.xtags.subclass['AcDbLayerTableRecord']
+        subclass = self.xtags.subclass.get('AcDbLayerTableRecord')
         self.assertEqual(8, len(subclass))
 
 XTAGS1 = """  0
@@ -231,10 +231,10 @@ class Test2xSubclass(unittest.TestCase):
         self.tags = ExtendedTags.fromtext(SPECIALCASE_TEXT)
 
     def test_read_tags(self):
-        subclass = self.tags.subclass['AcDbText']
-        self.assertEqual((100, 'AcDbText'), subclass[-2])
-        self.assertEqual((73, 2), subclass[-1])
-        self.assertEqual(10, len(subclass))
+        subclass2 = self.tags.subclass.get('AcDbText', 1)
+        self.assertEqual((100, 'AcDbText'), subclass2[-2])
+        self.assertEqual((73, 2), subclass2[-1])
+        self.assertEqual(2, len(subclass2))
 
 if __name__=='__main__':
     unittest.main()
