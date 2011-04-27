@@ -47,7 +47,7 @@ class TestNewLinetype(unittest.TestCase):
 
     def test_pattern_items_count(self):
         def count_items():
-            subclass = self.ltype.tags.subclass['AcDbLinetypeTableRecord']
+            subclass = self.ltype.tags.subclass.get('AcDbLinetypeTableRecord')
             return len(subclass.findall(49))
         self.assertEqual(2, self.ltype.dxf.items)
         self.assertEqual(self.ltype.dxf.items, count_items())

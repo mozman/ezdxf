@@ -7,7 +7,8 @@
 # License: GPLv3
 
 from ..entity import GenericWrapper
-from ..tags import DXFTag, DXFAttr
+from ..tags import DXFTag
+from ..dxfattr import DXFAttr
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -26,11 +27,11 @@ CONTINUOUS
 class AC1009Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'color': DXFAttr(62,  None, None), # dxf color index, if < 0 layer is off
-        'linetype': DXFAttr(6, None, None),
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'color': DXFAttr(62,  None), # dxf color index, if < 0 layer is off
+        'linetype': DXFAttr(6, None),
     }
     LOCK = 0b00000100
     UNLOCK = 0b11111011
@@ -85,16 +86,16 @@ arial.ttf
 class AC1009Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'height': DXFAttr(40, None, None), # fixed height, 0 if not fixed
-        'width': DXFAttr(41, None, None), # width factor
-        'oblique': DXFAttr(50, None, None), # oblique angle in degree, 0 = vertical
-        'generation_flags': DXFAttr(71, None, None), # 2 = backward, 4 = mirrored in Y
-        'last_height': DXFAttr(42, None, None), # last height used
-        'font': DXFAttr(3, None, None), # primary font file name
-        'bigfont': DXFAttr(4, None, None), # big font name, blank if none
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'height': DXFAttr(40, None), # fixed height, 0 if not fixed
+        'width': DXFAttr(41, None), # width factor
+        'oblique': DXFAttr(50, None), # oblique angle in degree, 0 = vertical
+        'generation_flags': DXFAttr(71, None), # 2 = backward, 4 = mirrored in Y
+        'last_height': DXFAttr(42, None), # last height used
+        'font': DXFAttr(3, None), # primary font file name
+        'bigfont': DXFAttr(4, None), # big font name, blank if none
     }
 
 
@@ -115,11 +116,11 @@ LTYPEDESCRIPTION
 class AC1009Linetype(GenericWrapper):
     TEMPLATE = _LTYPETEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'description': DXFAttr(3, None, None),
-        'length': DXFAttr(40, None, None),
-        'items': DXFAttr( 73, None, None),
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'description': DXFAttr(3, None),
+        'length': DXFAttr(40, None),
+        'items': DXFAttr( 73, None),
     }
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
@@ -217,34 +218,34 @@ VPORTNAME
 class AC1009Viewport(GenericWrapper):
     TEMPLATE = _VPORTTEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'lower_left': DXFAttr(10, None, 'Point2D'),
-        'upper_right': DXFAttr(11, None, 'Point2D'),
-        'center_point': DXFAttr(12, None, 'Point2D'),
-        'snap_base': DXFAttr(13, None, 'Point2D'),
-        'snap_spacing': DXFAttr(14, None, 'Point2D'),
-        'grid_spacing': DXFAttr(15, None, 'Point2D'),
-        'direction_point': DXFAttr(16, None, 'Point3D'),
-        'target_point': DXFAttr(17, None, 'Point3D'),
-        'height': DXFAttr(40, None, None),
-        'aspect_ratio': DXFAttr(41, None, None),
-        'lens_length': DXFAttr(42, None, None),
-        'front_clipping': DXFAttr(43, None, None),
-        'back_clipping': DXFAttr(44, None, None),
-        'snap_rotation': DXFAttr(50, None, None),
-        'view_twist': DXFAttr(51, None, None),
-        'status': DXFAttr(68, None, None),
-        'id': DXFAttr(69, None, None),
-        'view_mode': DXFAttr(71, None, None),
-        'circle_zoom': DXFAttr(72, None, None),
-        'fast_zoom': DXFAttr(73, None, None),
-        'ucs_icon': DXFAttr(74, None, None),
-        'snap_on': DXFAttr(75, None, None),
-        'grid_on': DXFAttr(76, None, None),
-        'snap_style': DXFAttr(77, None, None),
-        'snap_isopair': DXFAttr(78, None, None),
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'lower_left': DXFAttr(10, 'Point2D'),
+        'upper_right': DXFAttr(11, 'Point2D'),
+        'center_point': DXFAttr(12, 'Point2D'),
+        'snap_base': DXFAttr(13, 'Point2D'),
+        'snap_spacing': DXFAttr(14, 'Point2D'),
+        'grid_spacing': DXFAttr(15, 'Point2D'),
+        'direction_point': DXFAttr(16, 'Point3D'),
+        'target_point': DXFAttr(17, 'Point3D'),
+        'height': DXFAttr(40, None),
+        'aspect_ratio': DXFAttr(41, None),
+        'lens_length': DXFAttr(42, None),
+        'front_clipping': DXFAttr(43, None),
+        'back_clipping': DXFAttr(44, None),
+        'snap_rotation': DXFAttr(50, None),
+        'view_twist': DXFAttr(51, None),
+        'status': DXFAttr(68, None),
+        'id': DXFAttr(69, None),
+        'view_mode': DXFAttr(71, None),
+        'circle_zoom': DXFAttr(72, None),
+        'fast_zoom': DXFAttr(73, None),
+        'ucs_icon': DXFAttr(74, None),
+        'snap_on': DXFAttr(75, None),
+        'grid_on': DXFAttr(76, None),
+        'snap_style': DXFAttr(77, None),
+        'snap_isopair': DXFAttr(78, None),
     }
 
 
@@ -279,12 +280,12 @@ UCSNAME
 class AC1009UCS(GenericWrapper):
     TEMPLATE = _UCSTEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'origin': DXFAttr(10, None, 'Point3D'),
-        'xaxis': DXFAttr(11, None, 'Point3D'),
-        'yaxis': DXFAttr(12, None, 'Point3D'),
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'origin': DXFAttr(10, 'Point3D'),
+        'xaxis': DXFAttr(11, 'Point3D'),
+        'yaxis': DXFAttr(12, 'Point3D'),
     }
 
 
@@ -301,9 +302,9 @@ APPNAME
 class AC1009AppID(GenericWrapper):
     TEMPLATE = _APPIDTEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
     }
 
 _VIEWTEMPLATE = """  0
@@ -349,19 +350,19 @@ VIEWNAME
 class AC1009View(GenericWrapper):
     TEMPLATE = _VIEWTEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(5, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'height': DXFAttr(40, None, None),
-        'width': DXFAttr(41, None, None),
-        'center_point': DXFAttr(10, None, 'Point2D'),
-        'direction_point': DXFAttr(11, None, 'Point3D'),
-        'target_point': DXFAttr(12, None, 'Point3D'),
-        'lens_length': DXFAttr(42, None, None),
-        'front_clipping': DXFAttr(43, None, None),
-        'back_clipping': DXFAttr(44, None, None),
-        'view_twist': DXFAttr(50, None, None),
-        'view_mode': DXFAttr(71, None, None),
+        'handle': DXFAttr(5, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'height': DXFAttr(40, None),
+        'width': DXFAttr(41, None),
+        'center_point': DXFAttr(10, 'Point2D'),
+        'direction_point': DXFAttr(11, 'Point3D'),
+        'target_point': DXFAttr(12, 'Point3D'),
+        'lens_length': DXFAttr(42, None),
+        'front_clipping': DXFAttr(43, None),
+        'back_clipping': DXFAttr(44, None),
+        'view_twist': DXFAttr(50, None),
+        'view_mode': DXFAttr(71, None),
     }
 
 _DIMSTYLETEMPLATE = """  0
@@ -455,46 +456,46 @@ DIMSTYLENAME
 class AC1009DimStyle(GenericWrapper):
     TEMPLATE = _DIMSTYLETEMPLATE
     DXFATTRIBS = {
-        'handle': DXFAttr(105, None, None),
-        'name': DXFAttr(2, None, None),
-        'flags': DXFAttr(70, None, None),
-        'dimpost': DXFAttr(3, None, None),
-        'dimapost': DXFAttr(4, None, None),
-        'dimblk': DXFAttr(5, None, None),
-        'dimblk1': DXFAttr(6, None, None),
-        'dimblk2': DXFAttr(7, None, None),
-        'dimscale': DXFAttr(40, None, None),
-        'dimasz': DXFAttr(41, None, None),
-        'dimexo': DXFAttr(42, None, None),
-        'dimdli': DXFAttr(43, None, None),
-        'dimexe': DXFAttr(44, None, None),
-        'dimrnd': DXFAttr(45, None, None),
-        'dimdle': DXFAttr(46, None, None),
-        'dimtp': DXFAttr(47, None, None),
-        'dimtm': DXFAttr(48, None, None),
-        'dimtxt': DXFAttr(140, None, None),
-        'dimcen': DXFAttr(141, None, None),
-        'dimtsz': DXFAttr(142, None, None),
-        'dimaltf': DXFAttr(143, None, None),
-        'dimlfac': DXFAttr(144, None, None),
-        'dimtvp': DXFAttr(145, None, None),
-        'dimtfac': DXFAttr(146, None, None),
-        'dimgap': DXFAttr(147, None, None),
-        'dimtol': DXFAttr(71, None, None),
-        'dimlim': DXFAttr(72, None, None),
-        'dimtih': DXFAttr(73, None, None),
-        'dimtoh': DXFAttr(74, None, None),
-        'dimse1': DXFAttr(75, None, None),
-        'dimse2': DXFAttr(76, None, None),
-        'dimtad': DXFAttr(77, None, None),
-        'dimzin': DXFAttr(78, None, None),
-        'dimalt': DXFAttr(170, None, None),
-        'dimaltd': DXFAttr(171, None, None),
-        'dimtofl': DXFAttr(172, None, None),
-        'dimsah': DXFAttr(173, None, None),
-        'dimtix': DXFAttr(174, None, None),
-        'dimsoxd': DXFAttr(175, None, None),
-        'dimclrd': DXFAttr(176, None, None),
-        'dimclre': DXFAttr(177, None, None),
-        'dimclrt': DXFAttr(178, None, None),
+        'handle': DXFAttr(105, None),
+        'name': DXFAttr(2, None),
+        'flags': DXFAttr(70, None),
+        'dimpost': DXFAttr(3, None),
+        'dimapost': DXFAttr(4, None),
+        'dimblk': DXFAttr(5, None),
+        'dimblk1': DXFAttr(6, None),
+        'dimblk2': DXFAttr(7, None),
+        'dimscale': DXFAttr(40, None),
+        'dimasz': DXFAttr(41, None),
+        'dimexo': DXFAttr(42, None),
+        'dimdli': DXFAttr(43, None),
+        'dimexe': DXFAttr(44, None),
+        'dimrnd': DXFAttr(45, None),
+        'dimdle': DXFAttr(46, None),
+        'dimtp': DXFAttr(47, None),
+        'dimtm': DXFAttr(48, None),
+        'dimtxt': DXFAttr(140, None),
+        'dimcen': DXFAttr(141, None),
+        'dimtsz': DXFAttr(142, None),
+        'dimaltf': DXFAttr(143, None),
+        'dimlfac': DXFAttr(144, None),
+        'dimtvp': DXFAttr(145, None),
+        'dimtfac': DXFAttr(146, None),
+        'dimgap': DXFAttr(147, None),
+        'dimtol': DXFAttr(71, None),
+        'dimlim': DXFAttr(72, None),
+        'dimtih': DXFAttr(73, None),
+        'dimtoh': DXFAttr(74, None),
+        'dimse1': DXFAttr(75, None),
+        'dimse2': DXFAttr(76, None),
+        'dimtad': DXFAttr(77, None),
+        'dimzin': DXFAttr(78, None),
+        'dimalt': DXFAttr(170, None),
+        'dimaltd': DXFAttr(171, None),
+        'dimtofl': DXFAttr(172, None),
+        'dimsah': DXFAttr(173, None),
+        'dimtix': DXFAttr(174, None),
+        'dimsoxd': DXFAttr(175, None),
+        'dimclrd': DXFAttr(176, None),
+        'dimclre': DXFAttr(177, None),
+        'dimclrt': DXFAttr(178, None),
     }

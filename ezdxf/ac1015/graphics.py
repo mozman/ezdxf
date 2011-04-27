@@ -7,19 +7,30 @@
 # License: GPLv3
 
 from ..tags import DXFAttr
-from ..ac1009.graphics import GraphicEntity, ColorMixin, QuadrilateralMixin
+from ..ac1009.graphics import ColorMixin, QuadrilateralMixin
+from ..entity import GenericSubclassWrapper
+
+from ..dxfattr import DXFAttributes, SubclassDef
+
+class GraphicEntity(GenericSubclassWrapper):
+    def set_builder(self, builder):
+        self._builder = builder # IGraphicBuilder
+
+none_subclass = SubclassDef(None, {
+        'handle': DXFAttr(5, None),
+        'block_record': DXFAttr(330, None), # Soft-pointer ID/handle to owner BLOCK_RECORD object
+})
+        
+entity_subclass = SubclassDef('AcDbEntity', {
+    'paperspace': DXFAttr(67, None), # 0 .. modelspace, 1 .. paperspace, default is 0
+    'layer': DXFAttr(8, None), # layername as string, default is '0'
+    'linetype': DXFAttr(6, None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
+    'ltscale': DXFAttr(48, None), # linetype scale, default is 1.0
+    'invisible': DXFAttr(60, None), # invisible .. 1, visible .. 0, default is 0
+    'color': DXFAttr(62, None),# dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
+})
 
 def make_AC1015_attribs(additional={}):
-    dxfattribs = {
-        'handle': DXFAttr(5, None, None),
-        'block_record': DXFAttr(330, None, None), # Soft-pointer ID/handle to owner BLOCK_RECORD object
-        'paperspace': DXFAttr(67, 'AcDbEntity', None), # 0 .. modelspace, 1 .. paperspace, default is 0
-        'layer': DXFAttr(8, 'AcDbEntity', None), # layername as string, default is '0'
-        'linetype': DXFAttr(6, 'AcDbEntity', None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
-        'ltscale': DXFAttr(48,'AcDbEntity', None), # linetype scale, default is 1.0
-        'invisible': DXFAttr(60, 'AcDbEntity', None), # invisible .. 1, visible .. 0, default is 0
-        'color': DXFAttr(62, 'AcDbEntity', None),# dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
-    }
     dxfattribs.update(additional)
     return dxfattribs
 
@@ -49,14 +60,16 @@ AcDbLine
 1.0
 """
 
+line_subclass = SubclassDef('AcDbLine', {
+        'start': DXFAttr(10, 'Point2D/3D'),
+        'end': DXFAttr(11, 'Point2D/3D'),
+        'thickness': DXFAttr(39, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+})
+
 class AC1015Line(GraphicEntity, ColorMixin):
     TEMPLATE = _LINETEMPLATE
-    DXFATTRIBS = make_AC1015_attribs({
-        'start': DXFAttr(10, 'AcDbLine', 'Point2D/3D'),
-        'end': DXFAttr(11, 'AcDbLine', 'Point2D/3D'),
-        'thickness': DXFAttr(39, 'AcDbLine', None),
-        'extrusion': DXFAttr(210, 'AcDbLine', 'Point3D'),
-    })
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, line_subclass)
 
 _POINT_TPL = """  0
 POINT
@@ -77,14 +90,15 @@ AcDbPoint
  30
 0.0
 """
+point_subclass = SubclassDef('AcDbPoint', {
+        'point': DXFAttr(10, 'Point2D/3D'),
+        'thickness': DXFAttr(39, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+})
 
 class AC1015Point(GraphicEntity, ColorMixin):
     TEMPLATE = _POINT_TPL
-    DXFATTRIBS = make_AC1015_attribs({
-        'point': DXFAttr(10, None, 'Point2D/3D'),
-        'thickness': DXFAttr(39, 'AcDbPoint', None),
-        'extrusion': DXFAttr(210, 'AcDbPoint', 'Point3D'),
-    })
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, point_subclass)
 
 _CIRCLE_TPL = """  0
 CIRCLE
@@ -107,15 +121,15 @@ AcDbCircle
  40
 1.0
 """
-
+circle_subclass = SubclassDef('AcDbCircle', {
+        'center': DXFAttr(10, 'Point2D/3D'),
+        'radius': DXFAttr(40, None),
+        'thickness': DXFAttr(39, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+})
 class AC1015Circle(GraphicEntity, ColorMixin):
     TEMPLATE = _CIRCLE_TPL
-    DXFATTRIBS = make_AC1015_attribs({
-        'center': DXFAttr(10, 'AcDbCircle', 'Point2D/3D'),
-        'radius': DXFAttr(40, 'AcDbCircle', None),
-        'thickness': DXFAttr(39, 'AcDbCircle', None),
-        'extrusion': DXFAttr(210, 'AcDbCircle', 'Point3D'),
-    })
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass)
 
 _ARC_TPL = """  0
 ARC
@@ -145,16 +159,22 @@ AcDbArc
 360
 """
 
+arc_subclass = (
+    SubclassDef('AcDbCircle', {
+        'center': DXFAttr(10, 'Point2D/3D'),
+        'radius': DXFAttr(40, None),
+        'thickness': DXFAttr(39, None),
+        }),
+    SubclassDef('AcDbArc', {
+        'startangle': DXFAttr(50, None),
+        'endangle': DXFAttr(51, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+        }),
+    )
+
 class AC1015Arc(GraphicEntity, ColorMixin):
     TEMPLATE = _ARC_TPL
-    DXFATTRIBS = make_AC1015_attribs({
-        'thickness': DXFAttr(39, 'AcDbCircle', None),
-        'center': DXFAttr(10, 'AcDbCircle', 'Point2D/3D'),
-        'radius': DXFAttr(40, 'AcDbCircle', None),
-        'startangle': DXFAttr(50, 'AcDbArc', None),
-        'endangle': DXFAttr(51, 'AcDbArc', None),
-        'extrusion': DXFAttr(210, 'AcDbArc', 'Point3D'),
-    })
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *arc_subclass)
 
 _TRACE_TPL = """  0
 TRACE
@@ -193,17 +213,17 @@ AcDbTrace
  33
 0.0
 """
-
+trace_subclass = SubclassDef('AcDbTrace', {
+        'vtx0' : DXFAttr(10,'Point2D/3D'),
+        'vtx1' : DXFAttr(11, 'Point2D/3D'),
+        'vtx2' : DXFAttr(12, 'Point2D/3D'),
+        'vtx3' : DXFAttr(13, 'Point2D/3D'),
+        'thickness': DXFAttr(39, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+    })
 class AC1015Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _TRACE_TPL
-    DXFATTRIBS = make_AC1015_attribs({
-        'vtx0' : DXFAttr(10, 'AcDbTrace', 'Point2D/3D'),
-        'vtx1' : DXFAttr(11, 'AcDbTrace', 'Point2D/3D'),
-        'vtx2' : DXFAttr(12, 'AcDbTrace', 'Point2D/3D'),
-        'vtx3' : DXFAttr(13, 'AcDbTrace', 'Point2D/3D'),
-        'thickness': DXFAttr(39, 'AcDbTrace', None),
-        'extrusion': DXFAttr(210, 'AcDbTrace', 'Point3D'),
-    })
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, trace_subclass)
 
 class AC1015Solid(AC1015Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
@@ -245,15 +265,17 @@ AcDbFace
  33
 0.0
 """
+face_subclass = SubclassDef('AcDbFace', {
+        'vtx0' : DXFAttr(10,'Point2D/3D'),
+        'vtx1' : DXFAttr(11, 'Point2D/3D'),
+        'vtx2' : DXFAttr(12, 'Point2D/3D'),
+        'vtx3' : DXFAttr(13, 'Point2D/3D'),
+        'invisible_edge': DXFAttr(70, None),
+    })
+
 class AC10153DFace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _3DFACE_TPL
-    DXFATTRIBS = make_AC1015_attribs({
-        'vtx0' : DXFAttr(10, 'AcDbFace', 'Point2D/3D'),
-        'vtx1' : DXFAttr(11, 'AcDbFace', 'Point2D/3D'),
-        'vtx2' : DXFAttr(12, 'AcDbFace', 'Point2D/3D'),
-        'vtx3' : DXFAttr(13, 'AcDbFace', 'Point2D/3D'),
-        'invisible_edge': DXFAttr(70, 'AcDbFace', None),
-    })
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, face_subclass)
 
 _TEXT_TPL = """  0
 TEXT
@@ -300,37 +322,26 @@ AcDbText
  73
 0
 """
+text_subclass = (
+    SubclassDef('AcDbText', {
+        'insert': DXFAttr(10, 'Point2D/3D'),
+        'height': DXFAttr(40, None),
+        'text': DXFAttr(1, None),
+        'rotation': DXFAttr(50, None), # in degrees (circle = 360deg)
+        'oblique': DXFAttr(51, None), # in degrees, vertical = 0deg
+        'style': DXFAttr(7, None), # text style
+        'width': DXFAttr(41, None), # width FACTOR!
+        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None), # horizontal justification
+        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'thickness': DXFAttr(39, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+        }), # Hey Autodesk, what are you doing???
+    SubclassDef('AcDbText', {
+        'valign': DXFAttr(73, None), # vertical justification
+        }),
+)
 
 class AC1015Text(GraphicEntity, ColorMixin):
     TEMPLATE = _TEXT_TPL
-    DXFATTRIBS = make_AC1015_attribs({
-        'insert': DXFAttr(10, 'AcDbText', 'Point2D/3D'),
-        'height': DXFAttr(40, 'AcDbText', None),
-        'text': DXFAttr(1, 'AcDbText', None),
-        'rotation': DXFAttr(50, 'AcDbText', None), # in degrees (circle = 360deg)
-        'oblique': DXFAttr(51, 'AcDbText', None), # in degrees, vertical = 0deg
-        'style': DXFAttr(7, 'AcDbText', None), # text style
-        'width': DXFAttr(41, 'AcDbText', None), # width FACTOR!
-        'textgenerationflag': DXFAttr(71, 'AcDbText', None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, 'AcDbText', None), # horizontal justification
-        'valign': DXFAttr(73, 'AcDbText', None), # vertical justification
-        'alignpoint': DXFAttr(11, 'AcDbText', 'Point2D/3D'),
-        'thickness': DXFAttr(39, 'AcDbText', None),
-        'extrusion': DXFAttr(210, 'AcDbText', 'Point3D'),
-    })
-
-    def _set_subclass_value(self, dxfattr, value):
-        len_before = len(self.tags.subclass['AcDbText'])
-        super(AC1015Text, self)._set_subclass_value(dxfattr, value)
-        if len(self.tags.subclass['AcDbText']) != len_before:
-            self._reorg_AcDbText_sublass(self.tags.subclass[subclassname])
-
-    def _reorg_AcDbText_sublass(self, tags):
-        def pop_special_tags():
-            collection = list()
-            if tag in tags[1:]:
-                if tag.code in (100, 73):
-                    collection += tag.pop(tag)
-            return collection
-        special_tags = pop_special_tags()
-        tags.extend(special_tags)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *test_subclass)

@@ -12,7 +12,6 @@ from io import StringIO
 from .codepage import toencoding
 from .const import acadrelease
 
-DXFAttr = namedtuple('DXFAttr', 'code subclass xtype')
 DXFTag = namedtuple('DXFTag', 'code value')
 NONETAG = DXFTag(999999, 'NONE')
 
@@ -256,13 +255,36 @@ APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
 XDATA_MARKER = 1001
 
+class SubClassContainer:
+    def __init__(self):
+        self._subclasses = list()
+        
+    def __getitem__(self, index):
+        return self._subclasses[index]
+    
+    def __len__(self):
+        return len(self._subclasses)
+    
+    def append(self, subclass):
+        self._subclasses.append(subclass)
+    
+    def get(self, name, pos=0):
+        getpos = 0
+        for subclass in self:
+            if subclass[0].value == name:
+                if getpos == pos :
+                    return subclass
+                else:
+                    getpos += 1
+        raise KeyError('No matching subclass: %s' % name)
+    
 class ExtendedTags(Tags):
     """ Manage AppData and XData in separated dicts. """
     __slots__ = ('xdata', 'appdata', 'subclass')
     def __init__(self, iterable=None):
         self.appdata = dict() # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.xdata = dict() # code >= 1000, keys are "APPNAME", values are Tags()
-        self.subclass = dict() # code == 100, keys are "subclassname", values are Tags()
+        self.subclass = SubClassContainer() # code == 100, keys are "subclassname", values are Tags()
         if iterable is not None:
             self.extend(iterable)
 
@@ -283,21 +305,13 @@ class ExtendedTags(Tags):
                         data.append(tag)
                         collect_appdata(tag)
                     elif tag.code in (SUBCLASS_MARKER, XDATA_MARKER):
-                        self.subclass[name] = data
+                        self.subclass.append(data)
                         return tag
                     else:
                         data.append(tag)
             except StopIteration:
                 pass
-            # until now, I found just one special case:
-            # TEXT contains the SubClassMarker 'AcDbText' two times
-            # so I just append the additional tags to the existing
-            # subclass, causes error on appending new tags!!!, this should be
-            # handled in the Text() class.
-            if name in self.subclass:
-                self.subclass[name].extend(data)
-            else:
-                self.subclass[name] = data
+            self.subclass.append(data)
             return None
 
         def collect_appdata(starttag):
@@ -358,14 +372,15 @@ class ExtendedTags(Tags):
         def isappdata(tag):
             return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
 
-        def itersubclass(subclassname):
-            for tag in self.subclass[subclassname]:
+        def itersubclass(subclass_position):
+            for tag in self.subclass[subclass_position]:
                 if isappdata(tag):
                     for subtag in self.appdata[tag.value]:
                         yield subtag
                 else:
                     yield tag
-
+                    
+        subclass_counter = 0
         for tag in self:
             if isappdata(tag):
                 for subtag in self.appdata[tag.value]:
@@ -374,8 +389,9 @@ class ExtendedTags(Tags):
                 for subtag in self.xdata[tag.value]:
                     yield subtag
             elif tag.code == SUBCLASS_MARKER:
-                for subtag in itersubclass(tag.value):
+                for subtag in itersubclass(subclass_counter):
                     yield subtag
+                subclass_counter += 1
             else:
                 yield tag
 
