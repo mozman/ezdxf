@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: create new drawings for all supported DXF versions and create new
@@ -7,6 +7,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
+import itests
 import ezdxf
 
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
