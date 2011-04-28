@@ -6,22 +6,22 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..tags import DXFAttr
+from ..dxfattr import DXFAttr
 from ..ac1009.graphics import ColorMixin, QuadrilateralMixin
-from ..entity import GenericSubclassWrapper
+from ..entity import GenericWrapper
 
-from ..dxfattr import DXFAttributes, SubclassDef
+from ..dxfattr import DXFAttributes, DefSubclass
 
-class GraphicEntity(GenericSubclassWrapper):
+class GraphicEntity(GenericWrapper):
     def set_builder(self, builder):
         self._builder = builder # IGraphicBuilder
 
-none_subclass = SubclassDef(None, {
+none_subclass = DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'block_record': DXFAttr(330, None), # Soft-pointer ID/handle to owner BLOCK_RECORD object
 })
-        
-entity_subclass = SubclassDef('AcDbEntity', {
+
+entity_subclass = DefSubclass('AcDbEntity', {
     'paperspace': DXFAttr(67, None), # 0 .. modelspace, 1 .. paperspace, default is 0
     'layer': DXFAttr(8, None), # layername as string, default is '0'
     'linetype': DXFAttr(6, None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
@@ -60,7 +60,7 @@ AcDbLine
 1.0
 """
 
-line_subclass = SubclassDef('AcDbLine', {
+line_subclass = DefSubclass('AcDbLine', {
         'start': DXFAttr(10, 'Point2D/3D'),
         'end': DXFAttr(11, 'Point2D/3D'),
         'thickness': DXFAttr(39, None),
@@ -90,7 +90,7 @@ AcDbPoint
  30
 0.0
 """
-point_subclass = SubclassDef('AcDbPoint', {
+point_subclass = DefSubclass('AcDbPoint', {
         'point': DXFAttr(10, 'Point2D/3D'),
         'thickness': DXFAttr(39, None),
         'extrusion': DXFAttr(210, 'Point3D'),
@@ -121,7 +121,7 @@ AcDbCircle
  40
 1.0
 """
-circle_subclass = SubclassDef('AcDbCircle', {
+circle_subclass = DefSubclass('AcDbCircle', {
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
         'thickness': DXFAttr(39, None),
@@ -160,12 +160,12 @@ AcDbArc
 """
 
 arc_subclass = (
-    SubclassDef('AcDbCircle', {
+    DefSubclass('AcDbCircle', {
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
         'thickness': DXFAttr(39, None),
         }),
-    SubclassDef('AcDbArc', {
+    DefSubclass('AcDbArc', {
         'startangle': DXFAttr(50, None),
         'endangle': DXFAttr(51, None),
         'extrusion': DXFAttr(210, 'Point3D'),
@@ -213,7 +213,7 @@ AcDbTrace
  33
 0.0
 """
-trace_subclass = SubclassDef('AcDbTrace', {
+trace_subclass = DefSubclass('AcDbTrace', {
         'vtx0' : DXFAttr(10,'Point2D/3D'),
         'vtx1' : DXFAttr(11, 'Point2D/3D'),
         'vtx2' : DXFAttr(12, 'Point2D/3D'),
@@ -265,7 +265,7 @@ AcDbFace
  33
 0.0
 """
-face_subclass = SubclassDef('AcDbFace', {
+face_subclass = DefSubclass('AcDbFace', {
         'vtx0' : DXFAttr(10,'Point2D/3D'),
         'vtx1' : DXFAttr(11, 'Point2D/3D'),
         'vtx2' : DXFAttr(12, 'Point2D/3D'),
@@ -323,7 +323,7 @@ AcDbText
 0
 """
 text_subclass = (
-    SubclassDef('AcDbText', {
+    DefSubclass('AcDbText', {
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40, None),
         'text': DXFAttr(1, None),
@@ -337,11 +337,11 @@ text_subclass = (
         'thickness': DXFAttr(39, None),
         'extrusion': DXFAttr(210, 'Point3D'),
         }), # Hey Autodesk, what are you doing???
-    SubclassDef('AcDbText', {
+    DefSubclass('AcDbText', {
         'valign': DXFAttr(73, None), # vertical justification
         }),
 )
 
 class AC1015Text(GraphicEntity, ColorMixin):
     TEMPLATE = _TEXT_TPL
-    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *test_subclass)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)

@@ -9,18 +9,18 @@
 import sys
 import unittest
 
-from ezdxf.testtools import Tags, DXFStructureError, DXFAttr
+from ezdxf.testtools import Tags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass
 
 from ezdxf.entity import GenericWrapper
 
 class PointAccessor(GenericWrapper):
-    DXFATTRIBS = {
-        'point': DXFAttr(10, None, 'Point3D'),
-        'flat': DXFAttr(11, None, 'Point2D'),
-        'xp': DXFAttr(12, None, 'Point3D'),
-        'flex': DXFAttr(13, None, 'Point2D/3D'),
-        'flags': DXFAttr(70, None, None),
-    }
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
+        'point': DXFAttr(10, 'Point3D'),
+        'flat': DXFAttr(11, 'Point2D'),
+        'xp': DXFAttr(12, 'Point3D'),
+        'flex': DXFAttr(13, 'Point2D/3D'),
+        'flags': DXFAttr(70, None),
+    }))
 
 class TestGenericWrapper(unittest.TestCase):
     def test_getdxfattr_default(self):

@@ -8,16 +8,16 @@
 # License: GPLv3
 
 from .tags import TagGroups
-from .dxfattr import DXFAttr, DXFAttributes, SubclassDef
-from .entity import GenericSubclassWrapper
+from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
+from .entity import GenericWrapper
 
-class DXFDictionary(GenericSubclassWrapper):
+class DXFDictionary(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
-        SubclassDef(None, {
+        DefSubclass(None, {
             'handle': DXFAttr(5, None),
             'parent': DXFAttr(330, None),
             }),
-        SubclassDef('AcDbDictionary', {}),
+        DefSubclass('AcDbDictionary', {}),
     )
 
     def __init__(self, tags):
@@ -44,13 +44,14 @@ class DXFDictionary(GenericSubclassWrapper):
     def get(self, key, default=None):
         return self._values.get(key, default)
 
-class DXFLayout(GenericSubclassWrapper):
+class DXFLayout(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
-        SubclassDef(None, {
+        DefSubclass(None, {
             'handle': DXFAttr(5, None),
             'parent': DXFAttr(330, None),
             }),
-        SubclassDef('AcDbLayout', {
+        DefSubclass('AcDbPlotSettings', {}),
+        DefSubclass('AcDbLayout', {
             'name': DXFAttr(1, None), # layout name
             'flags': DXFAttr(70, None),
             'taborder': DXFAttr(71, None),

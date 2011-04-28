@@ -126,7 +126,8 @@ class TestDimstyle(unittest.TestCase):
         self.assertEqual('DIMSTYLE1', self.dimstyle.dxf.name)
 
     def test_handle_code(self):
-        self.assertEqual('FFFF', self.dimstyle.tags.getvalue(105))
+        handle = self.dimstyle.tags.getvalue(105)
+        self.assertEqual('FFFF', handle)
 
 class TestBlockRecord(unittest.TestCase):
     def setUp(self):

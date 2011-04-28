@@ -7,7 +7,7 @@
 # License: GPLv3
 
 from ..tags import DXFStructureError
-from ..dxfattr import DXFAttr
+from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..entity import GenericWrapper, ExtendedType
 from .. import const
 from ..const import VERTEXNAMES
@@ -47,7 +47,7 @@ def make_AC1009_attribs(additional={}):
         'extrusion': DXFAttr(210, 'Point3D'), # never used !?
     }
     dxfattribs.update(additional)
-    return dxfattribs
+    return DXFAttributes(DefSubclass(None, dxfattribs))
 
 _LINE_TPL = """  0
 LINE
@@ -290,7 +290,7 @@ class AC1009Block(GraphicEntity):
 
 class AC1009EndBlk(GraphicEntity):
     TEMPLATE = "  0\nENDBLK\n  5\n0\n"
-    DXFATTRIBS = { 'handle': DXFAttr(5, None) }
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, { 'handle': DXFAttr(5, None) }))
 
 _INSERT_TPL = """  0
 INSERT
@@ -394,8 +394,8 @@ class AC1009Insert(GraphicEntity):
 
 class AC1009SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
-    DXFATTRIBS = { 'handle': DXFAttr(5, None),
-                   'paperspace': DXFAttr(67, None),}
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, { 'handle': DXFAttr(5, None),
+                   'paperspace': DXFAttr(67, None),}))
 
 _ATTDEF_TPL = """  0
 ATTDEF

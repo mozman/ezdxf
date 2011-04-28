@@ -102,7 +102,10 @@ class GenericWrapper:
             self._set_dxf_attrib(key, value)
 
     def _get_dxf_attrib(self, dxfattr):
-        if dxfattr.xtype is not None:
+        # no subclass is subclass index 0
+        if dxfattr.subclass > 0:
+            return self._get_subclass_value(dxfattr)
+        elif dxfattr.xtype is not None:
             return self._get_extended_type(dxfattr.code, dxfattr.xtype)
         else:
             return self.tags.getvalue(dxfattr.code)
@@ -113,7 +116,10 @@ class GenericWrapper:
 
     def _set_dxf_attrib(self, key, value):
         dxfattr = self.DXFATTRIBS[key]
-        if dxfattr.xtype is not None:
+        # no subclass is subclass index 0
+        if dxfattr.subclass > 0:
+            self._set_subclass_value(dxfattr, value)
+        elif dxfattr.xtype is not None:
             self._set_extended_type(dxfattr.code, dxfattr.xtype, value)
         else:
             self._settag(self.tags, dxfattr.code, value)
@@ -126,38 +132,18 @@ class GenericWrapper:
     def _settag(tags, code, value):
         tags.setfirst(code, casttagvalue(code, value))
 
-class GenericSubclassWrapper(GenericWrapper):
-    def _get_dxf_attrib(self, dxfattr):
-        # no subclass is subclass index 0
-        if dxfattr.subclass > 0:
-            return self._get_subclass_value(dxfattr)
-        elif dxfattr.xtype is not None:
-            return self._get_extended_type(dxfattr.code, dxfattr.xtype)
-        else:
-            return self.tags.getvalue(dxfattr.code)
-
-    def _set_dxf_attrib(self, key, value):
-        dxfattr = self.DXFATTRIBS[key]
-        # no subclass is subclass index 0
-        if dxfattr.subclass > 0:
-            self._set_subclass_value(dxfattr, value)
-        elif dxfattr.xtype is not None:
-            self._set_extended_type(dxfattr.code, dxfattr.xtype, value)
-        else:
-            self._settag(self.tags, dxfattr.code, value)
-
     def _get_subclass_value(self, dxfattr):
         # no subclass is subclass index 0
-        subclasstags = self.tags.subclass.get(dxfattr.subclass-1)
+        subclasstags = self.tags.subclass[dxfattr.subclass-1]
         if dxfattr.xtype is not None:
             tags = ExtendedType(subclasstags)
             return tags.get_value(dxfattr.code, dxfattr.xtype)
         else:
             return subclasstags.getvalue(dxfattr.code)
-        
+
     def _set_subclass_value(self, dxfattr, value):
         # no subclass is subclass index 0
-        subclasstags = self.tags.subclass.get(dxfattr.subclass-1)
+        subclasstags = self.tags.subclass[dxfattr.subclass-1]
         if dxfattr.xtype is not None:
             tags = ExtendedType(subclasstags)
             tags.set_value(dxfattr.code, dxfattr.xtype, value)

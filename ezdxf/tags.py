@@ -258,26 +258,26 @@ XDATA_MARKER = 1001
 class SubClassContainer:
     def __init__(self):
         self._subclasses = list()
-        
+
     def __getitem__(self, index):
         return self._subclasses[index]
-    
+
     def __len__(self):
         return len(self._subclasses)
-    
+
     def append(self, subclass):
         self._subclasses.append(subclass)
-    
+
     def get(self, name, pos=0):
         getpos = 0
         for subclass in self:
             if subclass[0].value == name:
-                if getpos == pos :
+                if getpos >= pos :
                     return subclass
                 else:
                     getpos += 1
         raise KeyError('No matching subclass: %s' % name)
-    
+
 class ExtendedTags(Tags):
     """ Manage AppData and XData in separated dicts. """
     __slots__ = ('xdata', 'appdata', 'subclass')
@@ -379,7 +379,7 @@ class ExtendedTags(Tags):
                         yield subtag
                 else:
                     yield tag
-                    
+
         subclass_counter = 0
         for tag in self:
             if isappdata(tag):
