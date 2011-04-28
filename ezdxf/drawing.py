@@ -114,8 +114,8 @@ class Drawing:
     @staticmethod
     def new(dxfversion='AC1009'):
         finder = TemplateFinder(options['templatedir'])
+        stream = finder.getstream(dxfversion)
         try:
-            stream = finder.getstream(dxfversion)
             dwg = Drawing.read(stream)
         finally:
             stream.close()
