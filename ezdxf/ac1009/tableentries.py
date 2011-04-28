@@ -8,7 +8,7 @@
 
 from ..entity import GenericWrapper
 from ..tags import DXFTag
-from ..dxfattr import DXFAttr
+from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -26,13 +26,13 @@ CONTINUOUS
 
 class AC1009Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
         'color': DXFAttr(62,  None), # dxf color index, if < 0 layer is off
         'linetype': DXFAttr(6, None),
-    }
+    }))
     LOCK = 0b00000100
     UNLOCK = 0b11111011
 
@@ -85,7 +85,7 @@ arial.ttf
 
 class AC1009Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
@@ -96,7 +96,7 @@ class AC1009Style(GenericWrapper):
         'last_height': DXFAttr(42, None), # last height used
         'font': DXFAttr(3, None), # primary font file name
         'bigfont': DXFAttr(4, None), # big font name, blank if none
-    }
+    }))
 
 
 _LTYPETEMPLATE = """  0
@@ -115,13 +115,14 @@ LTYPEDESCRIPTION
 
 class AC1009Linetype(GenericWrapper):
     TEMPLATE = _LTYPETEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'description': DXFAttr(3, None),
         'length': DXFAttr(40, None),
         'items': DXFAttr( 73, None),
-    }
+    }))
+
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
         if dxfattribs is not None:
@@ -217,7 +218,7 @@ VPORTNAME
 
 class AC1009Viewport(GenericWrapper):
     TEMPLATE = _VPORTTEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
@@ -246,7 +247,7 @@ class AC1009Viewport(GenericWrapper):
         'grid_on': DXFAttr(76, None),
         'snap_style': DXFAttr(77, None),
         'snap_isopair': DXFAttr(78, None),
-    }
+    }))
 
 
 _UCSTEMPLATE = """  0
@@ -279,14 +280,14 @@ UCSNAME
 
 class AC1009UCS(GenericWrapper):
     TEMPLATE = _UCSTEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
         'origin': DXFAttr(10, 'Point3D'),
         'xaxis': DXFAttr(11, 'Point3D'),
         'yaxis': DXFAttr(12, 'Point3D'),
-    }
+    }))
 
 
 _APPIDTEMPLATE = """  0
@@ -301,11 +302,11 @@ APPNAME
 
 class AC1009AppID(GenericWrapper):
     TEMPLATE = _APPIDTEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-    }
+    }))
 
 _VIEWTEMPLATE = """  0
 VIEW
@@ -349,7 +350,7 @@ VIEWNAME
 
 class AC1009View(GenericWrapper):
     TEMPLATE = _VIEWTEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
@@ -363,7 +364,7 @@ class AC1009View(GenericWrapper):
         'back_clipping': DXFAttr(44, None),
         'view_twist': DXFAttr(50, None),
         'view_mode': DXFAttr(71, None),
-    }
+    }))
 
 _DIMSTYLETEMPLATE = """  0
 DIMSTYLE
@@ -455,7 +456,7 @@ DIMSTYLENAME
 
 class AC1009DimStyle(GenericWrapper):
     TEMPLATE = _DIMSTYLETEMPLATE
-    DXFATTRIBS = {
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(105, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
@@ -498,4 +499,4 @@ class AC1009DimStyle(GenericWrapper):
         'dimclrd': DXFAttr(176, None),
         'dimclre': DXFAttr(177, None),
         'dimclrt': DXFAttr(178, None),
-    }
+    }))

@@ -8,35 +8,36 @@ from collections import namedtuple
 
 DXFAttr = namedtuple('DXFAttr', 'code xtype')
 DXFAttr3 = namedtuple('DXFAttr3', 'code xtype subclass')
-SubclassDef = namedtuple('SubclassDef', 'name attribs')
+DefSubclass = namedtuple('SubclassDef', 'name attribs')
 
 class DXFAttributes:
     def __init__(self, *subclassdefs):
-        def add(subclass):
-            for index, attrib in enumerate(subclass.attribs.items()):
-                self._attribs[attrib[0]] = (attrib[1], index)
-                
+        def add(subclass, index):
+            for name, dxfattrib in subclass.attribs.items():
+                self._attribs[name] = DXFAttr3(dxfattrib.code, dxfattrib.xtype, index)
+
         self._defs = subclassdefs
         self._attribs = {}
-        for subclass in self._defs:
-            add(subclass)
-            
+        for index, subclass in enumerate(self._defs):
+            add(subclass, index)
+
     def __getitem__(self, name):
-        attr, index = self._attribs[name]
-        return DXFAttr3(attr.code, attr.xtype, index)
-    
+        return self._attribs[name]
+
     def __contains__(self, name):
         return name in self._attribs
-    
+
+    def keys(self):
+        return self._attribs.keys()
+
     def subclasses(self):
         return iter(self._defs)
-    
+
     def subclass(self, pos):
         return self._defs[pos]
-    
+
     def index(self, name, start=0):
         for pos, subclass in enumerate(self._defs):
             if pos >= start and subclass.name == name:
                 return pos
         raise ValueError("subclass '%s' not found." % name)
-        
