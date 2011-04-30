@@ -7,7 +7,7 @@
 # License: GPLv3
 
 from .tags import casttagvalue, DXFTag, DXFStructureError
-from .tags import ExtendedTags
+from .classifiedtags import ClassifiedTags
 
 class DXFNamespace:
     """ Provides the dxf namespace for GenericWrapper.
@@ -60,14 +60,14 @@ class GenericWrapper:
     def new(cls, handle, dxfattribs=None, dxffactory=None):
         if cls.TEMPLATE == "":
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
-        entity = cls(ExtendedTags.fromtext(cls.TEMPLATE))
+        entity = cls(ClassifiedTags.fromtext(cls.TEMPLATE))
         entity.dxf.handle = handle
         if dxfattribs is not None:
             entity.update_dxf_attribs(dxfattribs)
         return entity
 
     def dxftype(self):
-        return self.tags[0].value
+        return self.tags.noclass[0].value
 
     def get_dxf_attrib(self, key, default=ValueError):
         if key in self.DXFATTRIBS:
@@ -103,12 +103,12 @@ class GenericWrapper:
 
     def _get_dxf_attrib(self, dxfattr):
         # no subclass is subclass index 0
-        if dxfattr.subclass > 0:
-            return self._get_subclass_value(dxfattr)
-        elif dxfattr.xtype is not None:
-            return self._get_extended_type(dxfattr.code, dxfattr.xtype)
+        subclasstags = self.tags.subclasses[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            tags = ExtendedType(subclasstags)
+            return tags.get_value(dxfattr.code, dxfattr.xtype)
         else:
-            return self.tags.getvalue(dxfattr.code)
+            return subclasstags.getvalue(dxfattr.code)
 
     def _get_extended_type(self, code, xtype):
         tags = ExtendedType(self.tags)
@@ -117,12 +117,12 @@ class GenericWrapper:
     def _set_dxf_attrib(self, key, value):
         dxfattr = self.DXFATTRIBS[key]
         # no subclass is subclass index 0
-        if dxfattr.subclass > 0:
-            self._set_subclass_value(dxfattr, value)
-        elif dxfattr.xtype is not None:
-            self._set_extended_type(dxfattr.code, dxfattr.xtype, value)
+        subclasstags = self.tags.subclasses[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            tags = ExtendedType(subclasstags)
+            tags.set_value(dxfattr.code, dxfattr.xtype, value)
         else:
-            self._settag(self.tags, dxfattr.code, value)
+            self._settag(subclasstags, dxfattr.code, value)
 
     def _set_extended_type(self, code, xtype, value):
         tags = ExtendedType(self.tags)
@@ -131,24 +131,6 @@ class GenericWrapper:
     @staticmethod
     def _settag(tags, code, value):
         tags.setfirst(code, casttagvalue(code, value))
-
-    def _get_subclass_value(self, dxfattr):
-        # no subclass is subclass index 0
-        subclasstags = self.tags.subclass[dxfattr.subclass-1]
-        if dxfattr.xtype is not None:
-            tags = ExtendedType(subclasstags)
-            return tags.get_value(dxfattr.code, dxfattr.xtype)
-        else:
-            return subclasstags.getvalue(dxfattr.code)
-
-    def _set_subclass_value(self, dxfattr, value):
-        # no subclass is subclass index 0
-        subclasstags = self.tags.subclass[dxfattr.subclass-1]
-        if dxfattr.xtype is not None:
-            tags = ExtendedType(subclasstags)
-            tags.set_value(dxfattr.code, dxfattr.xtype, value)
-        else:
-            self._settag(subclasstags, dxfattr.code, value)
 
 class ExtendedType:
     def __init__(self, tags):

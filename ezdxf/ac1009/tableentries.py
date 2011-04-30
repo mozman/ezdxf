@@ -134,9 +134,9 @@ class AC1009Linetype(GenericWrapper):
         return entity
 
     def _setup_pattern(self, pattern):
-        self.tags.append(DXFTag(73, len(pattern)-1))
-        self.tags.append(DXFTag(40, float(pattern[0])))
-        self.tags.extend( (DXFTag(49, float(p)) for p in pattern[1:]) )
+        self.tags.noclass.append(DXFTag(73, len(pattern)-1))
+        self.tags.noclass.append(DXFTag(40, float(pattern[0])))
+        self.tags.noclass.extend( (DXFTag(49, float(p)) for p in pattern[1:]) )
 
 
 _VPORTTEMPLATE = """  0

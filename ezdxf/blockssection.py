@@ -8,7 +8,8 @@
 
 from itertools import islice
 
-from .tags import TagGroups, Tags, ExtendedTags, DXFStructureError
+from .tags import TagGroups, Tags, DXFStructureError
+from .classifiedtags import ClassifiedTags
 from . import const
 
 class BlocksSection:
@@ -43,7 +44,7 @@ class BlocksSection:
 
         entities = []
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            entities.append(ExtendedTags(group))
+            entities.append(ClassifiedTags(group))
             if group[0].value == 'ENDBLK':
                 block_layout = build_block_layout(entities)
                 self._append_block_layout(block_layout)

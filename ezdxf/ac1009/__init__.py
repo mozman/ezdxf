@@ -141,8 +141,7 @@ class AC1009Factory:
             raise ValueError('Unsupported entity type: %s' % type_)
 
     def wrap_entity(self, tags):
-        type_ = tags[0].value
-        wrapper = self.ENTITY_WRAPPERS.get(type_, GenericWrapper)
+        wrapper = self.ENTITY_WRAPPERS.get(tags.get_type(), GenericWrapper)
         return wrapper(tags)
 
     def wrap_handle(self, handle):

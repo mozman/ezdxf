@@ -26,7 +26,7 @@ class DXFDictionary(GenericWrapper):
         self._setup()
 
     def _setup(self):
-        acdict = self.tags.subclass.get('AcDbDictionary')
+        acdict = self.tags.get_subclass('AcDbDictionary')
         for group in TagGroups(acdict, splitcode=3):
             name = group[0].value
             handle = group[1].value
