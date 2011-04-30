@@ -153,7 +153,7 @@ class Drawing:
         Write entitydb-handles into entits-tags.
         """
         def has_handle(entity):
-            for tag in entity:
+            for tag in entity.noclass:
                 if tag.code in (5, 105):
                     return True
             return False
@@ -161,9 +161,9 @@ class Drawing:
         def put_handles_into_entity_tags():
             for handle, entity in self.entitydb.items():
                 if not has_handle(entity):
-                    code = 5 if entity[0].value != 'DIMSTYLE' else 105 # legacy shit!!!
+                    code = 5 if entity.get_type() != 'DIMSTYLE' else 105 # legacy shit!!!
                     # handle should be the second tag
-                    entity.insert(1, DXFTag(code, handle))
+                    entity.noclass.insert(1, DXFTag(code, handle))
 
         if self._dxfversion != 'AC1009':
             return

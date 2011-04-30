@@ -9,7 +9,8 @@
 from .handle import HandleGenerator
 from .dxffactory import dxffactory
 from .tags import StringIterator
-from .tags import Tags, ExtendedTags, TagGroups, DXFStructureError
+from .tags import Tags, TagGroups, DXFStructureError
+from .classifiedtags import ClassifiedTags
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
 from .drawing import Drawing

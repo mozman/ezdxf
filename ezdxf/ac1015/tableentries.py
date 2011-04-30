@@ -131,7 +131,7 @@ class AC1015Linetype(AC1009Linetype):
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
     def _setup_pattern(self, pattern):
-        subclass = self.tags.subclass.get('AcDbLinetypeTableRecord')
+        subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
         subclass.append(DXFTag(73, len(pattern)-1))
         subclass.append(DXFTag(40, float(pattern[0])))
 

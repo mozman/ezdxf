@@ -1,52 +1,53 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
-# Purpose: test ExtendedTags
-# Created: 25.03.2011
+# Purpose: test classifiedtags
+# Created: 30.04.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
 import sys
 import unittest
-
 from io import StringIO
 
-from ezdxf.tags import Tags, ExtendedTags
+from ezdxf.tags import Tags
+from ezdxf.classifiedtags import ClassifiedTags
 
-class TestExtendedTags(unittest.TestCase):
+class TestClassifiedTags(unittest.TestCase):
     def setUp(self):
-        self.xtags = ExtendedTags.fromtext(XTAGS1)
+        self.xtags = ClassifiedTags.fromtext(XTAGS1)
 
     def test_init_appdata(self):
-        self.assertTrue('{ACAD_XDICTIONARY' in self.xtags.appdata)
+        self.assertIsNotNone(self.xtags.get_appdata('{ACAD_XDICTIONARY'))
 
     def test_init_with_tags(self):
         tags = Tags.fromtext(XTAGS1)
-        xtags = ExtendedTags(tags)
-        self.assertEqual(7, len(xtags))
+        xtags = ClassifiedTags(tags)
+        self.assertEqual(3, len(xtags.subclasses))
+        self.assertEqual(1, len(xtags.xdata))
 
     def test_init_xdata(self):
-        self.assertTrue('RAK' in self.xtags.xdata)
+        self.assertIsNotNone(self.xtags.get_xdata('RAK'))
 
     def test_appdata_content_count(self):
-        xdict = self.xtags.appdata['{ACAD_XDICTIONARY']
+        xdict = self.xtags.get_appdata('{ACAD_XDICTIONARY')
         self.assertEqual(3, len(xdict))
 
     def test_appdata_content(self):
-        xdict = self.xtags.appdata['{ACAD_XDICTIONARY']
+        xdict = self.xtags.get_appdata('{ACAD_XDICTIONARY')
         self.assertEqual(xdict.getvalue(360), "63D5")
 
     def test_tags_skips_appdata_content(self):
         with self.assertRaises(ValueError):
-            self.xtags.getvalue(360)
+            self.xtags.noclass.getvalue(360)
 
     def test_xdata_content_count(self):
-        rak = self.xtags.xdata['RAK']
+        rak = self.xtags.get_xdata('RAK')
         self.assertEqual(17, len(rak))
 
     def test_tags_skips_xdata_content(self):
         with self.assertRaises(ValueError):
-            self.xtags.getvalue(1000)
+            self.xtags.noclass.getvalue(1000)
 
     def test_copy(self):
         stream = StringIO()
@@ -55,30 +56,27 @@ class TestExtendedTags(unittest.TestCase):
         stream.close()
 
     def test_getitem_layer(self):
-        self.assertEqual(self.xtags[0], (0, 'LAYER'))
+        self.assertEqual(self.xtags.noclass[0], (0, 'LAYER'))
 
     def test_getitem_xdict(self):
-        self.assertEqual(self.xtags[2], (102, '{ACAD_XDICTIONARY'))
+        self.assertEqual(self.xtags.noclass[2], (102, 0))
 
     def test_getitem_parent(self):
-        self.assertEqual(self.xtags[3], (330, '18'))
+        self.assertEqual(self.xtags.noclass[3], (330, '18'))
 
     def test_get_last_item(self):
-        self.assertEqual(self.xtags[-1], (1001, 'RAK'))
+        self.assertEqual(self.xtags.noclass[-1], (330, '18'))
 
     def test_tagscount(self):
         """ apdata counts as one tag and xdata counts as one tag. """
-        self.assertEqual(7, len(self.xtags))
-
-    def test_subclass_count(self):
-        self.assertEqual(2, len(self.xtags.subclass))
+        self.assertEqual(4, len(self.xtags.noclass))
 
     def test_subclass_AcDbSymbolTableRecord(self):
-        subclass = self.xtags.subclass.get('AcDbSymbolTableRecord')
+        subclass = self.xtags.get_subclass('AcDbSymbolTableRecord')
         self.assertEqual(1, len(subclass))
 
     def test_subclass_AcDbLayerTableRecord(self):
-        subclass = self.xtags.subclass.get('AcDbLayerTableRecord')
+        subclass = self.xtags.get_subclass('AcDbLayerTableRecord')
         self.assertEqual(8, len(subclass))
 
 XTAGS1 = """  0
@@ -146,20 +144,19 @@ CONTINUOUS
 1000
 75-LÄNGENSCHNITT-2005}
 """
-
 class TestXDATA(unittest.TestCase):
     def setUp(self):
-        self.tags = ExtendedTags.fromtext(XTAGS2)
+        self.tags = ClassifiedTags.fromtext(XTAGS2)
 
     def test_xdata_count(self):
         self.assertEqual(3, len(self.tags.xdata))
 
     def test_tags_count(self):
         """ 3 xdata chunks and two 'normal' tag. """
-        self.assertEqual(5, len(self.tags))
+        self.assertEqual(2, len(self.tags.noclass))
 
     def test_xdata3_tags(self):
-        xdata = self.tags.xdata['XDATA3']
+        xdata = self.tags.get_xdata('XDATA3')
         self.assertEqual(xdata[0], (1001, 'XDATA3'))
         self.assertEqual(xdata[1], (1000, 'TEXT-XDATA3'))
         self.assertEqual(xdata[2], (1070, 2))
@@ -195,6 +192,16 @@ TEXT-XDATA3
 3
 """
 
+class Test2xSubclass(unittest.TestCase):
+    def setUp(self):
+        self.tags = ClassifiedTags.fromtext(SPECIALCASE_TEXT)
+
+    def test_read_tags(self):
+        subclass2 = self.tags.get_subclass('AcDbText', 1)
+        self.assertEqual((100, 'AcDbText'), subclass2[-2])
+        self.assertEqual((73, 2), subclass2[-1])
+        self.assertEqual(2, len(subclass2))
+
 SPECIALCASE_TEXT = """  0
 TEXT
   5
@@ -226,15 +233,6 @@ AcDbText
  73
 2
 """
-class Test2xSubclass(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.fromtext(SPECIALCASE_TEXT)
-
-    def test_read_tags(self):
-        subclass2 = self.tags.subclass.get('AcDbText', 1)
-        self.assertEqual((100, 'AcDbText'), subclass2[-2])
-        self.assertEqual((73, 2), subclass2[-1])
-        self.assertEqual(2, len(subclass2))
 
 if __name__=='__main__':
     unittest.main()

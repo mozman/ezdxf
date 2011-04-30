@@ -19,7 +19,7 @@ class TestNewLayer(unittest.TestCase):
         self.layer = AC1009Layer.new('FFFF')
 
     def test_new_layer(self):
-        self.assertEqual(6, len(self.layer.tags))
+        self.assertEqual(6, len(self.layer.tags.noclass))
 
     def test_get_handle(self):
         self.assertEqual('FFFF', self.layer.dxf.handle)
@@ -60,7 +60,7 @@ class TestNewLinetype(unittest.TestCase):
 
     def test_pattern_items_count(self):
         def count_items():
-            return len(self.ltype.tags.findall(49))
+            return len(self.ltype.tags.noclass.findall(49))
         self.assertEqual(2, self.ltype.dxf.items)
         self.assertEqual(self.ltype.dxf.items, count_items())
 
@@ -162,7 +162,7 @@ class TestDimstyle(unittest.TestCase):
         self.assertEqual('DIMSTYLE1', self.dimstyle.dxf.name)
 
     def test_handle_code(self):
-        self.assertEqual('FFFF', self.dimstyle.tags.getvalue(105))
+        self.assertEqual('FFFF', self.dimstyle.tags.noclass.getvalue(105))
 
 if __name__=='__main__':
     unittest.main()

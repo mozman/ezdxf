@@ -7,7 +7,8 @@
 # License: GPLv3
 
 from .defaultchunk import DefaultChunk
-from .tags import ExtendedTags, Tags, DXFTag, TagGroups
+from .tags import Tags, DXFTag, TagGroups
+from .classifiedtags import ClassifiedTags
 
 TABLENAMES = {
     'layer': 'layers',
@@ -76,9 +77,9 @@ class Table:
         assert groups.getname(0) == 'TABLE'
         assert groups.getname(-1) == 'ENDTAB'
 
-        self._table_header = ExtendedTags(groups[0][1:])
+        self._table_header = ClassifiedTags(groups[0][1:])
         for entrytags in groups[1:-1]:
-            self._add_entry(ExtendedTags(entrytags))
+            self._add_entry(ClassifiedTags(entrytags))
 
     @property
     def entitydb(self):
@@ -118,7 +119,7 @@ class Table:
 
     def _add_entry(self, entry):
         """ Add table-entry to table and entitydb. """
-        if isinstance(entry, Tags):
+        if hasattr(entry, 'gethandle'):
             try:
                 handle = entry.gethandle()
             except ValueError:
@@ -169,9 +170,10 @@ class Table:
     def _update_meta_data(self):
         count = len(self)
         if self._drawing.dxfversion > 'AC1009':
-            self._table_header.subclass.get('AcDbSymbolTable').update(70, count)
+            subclass = self._table_header.get_subclass('AcDbSymbolTable')
         else:
-            self._table_header.update(70, count)
+            subclass = self._table_header.noclass
+        subclass.update(70, count)
 
 class ViewportTable(Table):
     ## TODO: Viewport-Table can have multiple entries with same name

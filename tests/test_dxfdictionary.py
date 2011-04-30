@@ -9,13 +9,13 @@
 import sys
 import unittest
 
-from ezdxf.testtools import ExtendedTags
+from ezdxf.testtools import ClassifiedTags
 
 from ezdxf.dxfobjects import DXFDictionary
 
 class TestDXFDict(unittest.TestCase):
     def setUp(self):
-        self.dxfdict = DXFDictionary(ExtendedTags.fromtext(ROOTDICT))
+        self.dxfdict = DXFDictionary(ClassifiedTags.fromtext(ROOTDICT))
 
     def test_getitem(self):
         self.assertEqual(self.dxfdict['ACAD_PLOTSTYLENAME'], 'E')
