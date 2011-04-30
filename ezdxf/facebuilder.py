@@ -6,9 +6,9 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..const import VERTEXNAMES
+from .const import VERTEXNAMES
 
-class OptimizingFaceBuilder:
+class FaceBuilder:
     def __init__(self, faces, precision=6):
         self.precision = precision
         self.faces = []
