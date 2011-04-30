@@ -37,7 +37,7 @@ class QuadrilateralMixin:
     def __setitem__(self, num, value):
         return self.set_dxf_attrib(VERTEXNAMES[num], value)
 
-def make_AC1009_attribs(additional={}):
+def make_attribs(additional={}):
     dxfattribs = {
         'handle': DXFAttr(5, None),
         'layer': DXFAttr(8, None), # layername as string, default is '0'
@@ -69,9 +69,9 @@ LINE
 1.0
 """
 
-class AC1009Line(GraphicEntity, ColorMixin):
+class Line(GraphicEntity, ColorMixin):
     TEMPLATE = _LINE_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'start': DXFAttr(10, 'Point2D/3D'),
         'end': DXFAttr(11, 'Point2D/3D'),
     })
@@ -90,9 +90,9 @@ POINT
 0.0
 """
 
-class AC1009Point(GraphicEntity, ColorMixin):
+class Point(GraphicEntity, ColorMixin):
     TEMPLATE = _POINT_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'point': DXFAttr(10, 'Point2D/3D'),
     })
 
@@ -112,9 +112,9 @@ CIRCLE
 1.0
 """
 
-class AC1009Circle(GraphicEntity, ColorMixin):
+class Circle(GraphicEntity, ColorMixin):
     TEMPLATE = _CIRCLE_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
     })
@@ -139,9 +139,9 @@ ARC
 360
 """
 
-class AC1009Arc(GraphicEntity, ColorMixin):
+class Arc(GraphicEntity, ColorMixin):
     TEMPLATE = _ARC_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
         'startangle': DXFAttr(50, None),
@@ -180,21 +180,21 @@ TRACE
 0.0
 """
 
-class AC1009Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
+class Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _TRACE_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'vtx0' : DXFAttr(10, 'Point2D/3D'),
         'vtx1' : DXFAttr(11, 'Point2D/3D'),
         'vtx2' : DXFAttr(12, 'Point2D/3D'),
         'vtx3' : DXFAttr(13, 'Point2D/3D'),
     })
 
-class AC1009Solid(AC1009Trace):
+class Solid(Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
 
-class AC10093DFace(AC1009Trace):
+class Face(Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', '3DFACE')
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'vtx0' : DXFAttr(10, 'Point2D/3D'),
         'vtx1' : DXFAttr(11, 'Point2D/3D'),
         'vtx2' : DXFAttr(12, 'Point2D/3D'),
@@ -240,9 +240,9 @@ STANDARD
 0.0
 """
 
-class AC1009Text(GraphicEntity, ColorMixin):
+class Text(GraphicEntity, ColorMixin):
     TEMPLATE = _TEXT_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40,  None),
         'text': DXFAttr(1,  None),
@@ -277,9 +277,9 @@ BLOCKNAME
   1
 
 """
-class AC1009Block(GraphicEntity):
+class Block(GraphicEntity):
     TEMPLATE = _BLOCK_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'name': DXFAttr(2, None),
         'name2': DXFAttr(3, None),
         'flags': DXFAttr(70, None),
@@ -288,7 +288,7 @@ class AC1009Block(GraphicEntity):
     })
 
 
-class AC1009EndBlk(GraphicEntity):
+class EndBlk(GraphicEntity):
     TEMPLATE = "  0\nENDBLK\n  5\n0\n"
     DXFATTRIBS = DXFAttributes(DefSubclass(None, { 'handle': DXFAttr(5, None) }))
 
@@ -318,9 +318,9 @@ BLOCKNAME
 # IMPORTANT: Bug in AutoCAD 2010
 # attribsfollow = 0, for NO attribsfollow does not work with ACAD 2010
 # if no attribs attached to the INSERT entity, omit attribsfollow tag
-class AC1009Insert(GraphicEntity):
+class Insert(GraphicEntity):
     TEMPLATE = _INSERT_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'attribsfollow': DXFAttr(66, None),
         'name': DXFAttr(2, None),
         'insert': DXFAttr(10, 'Point2D/3D'),
@@ -392,7 +392,7 @@ class AC1009Insert(GraphicEntity):
         self.dxf.attribsfollow = 1
         self._builder._insert_entities(seqend_position, entities)
 
-class AC1009SeqEnd(GraphicEntity):
+class SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
     DXFATTRIBS = DXFAttributes(DefSubclass(None, { 'handle': DXFAttr(5, None),
                    'paperspace': DXFAttr(67, None),}))
@@ -442,9 +442,9 @@ STANDARD
  31
 0.0
 """
-class AC1009Attdef(GraphicEntity):
+class Attdef(GraphicEntity):
     TEMPLATE = _ATTDEF_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40, None),
         'text': DXFAttr(1, None),
@@ -505,9 +505,9 @@ STANDARD
  31
 0.0
 """
-class AC1009Attrib(GraphicEntity):
+class Attrib(GraphicEntity):
     TEMPLATE = _ATTRIB_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40, None),
         'text': DXFAttr(1, None),
@@ -541,9 +541,9 @@ POLYLINE
  30
 0.0
 """
-class AC1009Polyline(GraphicEntity, ColorMixin):
+class Polyline(GraphicEntity, ColorMixin):
     TEMPLATE = _POLYLINE_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'elevation': DXFAttr(10, 'Point2D/3D'),
         'flags': DXFAttr(70, None),
         'defaultstartwidth': DXFAttr(40, None),
@@ -570,9 +570,9 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
             return 'polyline2d'
 
     def mclose(self):
-        self.flags = self.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
+        self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
     def nclose(self):
-        self.flags = self.flags | const.POLYLINE_MESH_CLOSED_N_DIRECTION
+        self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_N_DIRECTION
 
     def close(self, mclose, nclose=False):
         if mclose:
@@ -647,9 +647,9 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
     def cast(self):
         mode = self.getmode()
         if mode == 'polyface':
-            return AC1009Polyface.convert(self)
+            return Polyface.convert(self)
         elif mode == 'polymesh':
-            return AC1009Polymesh.convert(self)
+            return Polymesh.convert(self)
         else:
             return self
 
@@ -658,7 +658,7 @@ class AC1009Polyline(GraphicEntity, ColorMixin):
         index = self._builder._get_index(self) + 1 + pos
         return self._builder._get_entity_at_index(index)
 
-class AC1009Polyface(AC1009Polyline):
+class Polyface(Polyline):
     """ Order of vertices and faces IS important (ACAD2010)
     1. vertices (describes the coordinates)
     2. faces (describes the face forming vertices)
@@ -666,7 +666,7 @@ class AC1009Polyface(AC1009Polyline):
     """
     @staticmethod
     def convert(polyline):
-        face = AC1009Polyface(polyline.tags)
+        face = Polyface(polyline.tags)
         face.set_builder(polyline._builder)
         return face
 
@@ -734,10 +734,10 @@ class AC1009Polyface(AC1009Polyline):
             if isface(vertex):
                 yield getface(vertex)
 
-class AC1009Polymesh(AC1009Polyline):
+class Polymesh(Polyline):
     @staticmethod
     def convert(polyline):
-        mesh = AC1009Polymesh(polyline.tags)
+        mesh = Polymesh(polyline.tags)
         mesh.set_builder(polyline._builder)
         return mesh
 
@@ -777,9 +777,9 @@ VERTEX
  70
 0
 """
-class AC1009Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
+class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _VERTEX_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, 'Point2D/3D'),
         'startwidth': DXFAttr(40, None),
         'endwidth': DXFAttr(41, None),
@@ -822,9 +822,9 @@ MVIEW
 1002
 {
 """
-class AC1009Viewport(GraphicEntity):
+class Viewport(GraphicEntity):
     TEMPLATE = _VPORT_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         # center point of entity in paper space coordinates)
         'width': DXFAttr(40, None),
@@ -894,9 +894,9 @@ DIMSTYLE
  50
 0.0
 """
-class AC1009Dimension(GraphicEntity):
+class Dimension(GraphicEntity):
     TEMPLATE = _DIMENSION_TPL
-    DXFATTRIBS = make_AC1009_attribs({
+    DXFATTRIBS = make_attribs({
         'geometry': DXFAttr(2, None),
         # name of pseudo-Block containing the current dimension  entity geometry
         'dimstyle': DXFAttr(3, None),

@@ -24,7 +24,7 @@ LAYERNAME
 CONTINUOUS
 """
 
-class AC1009Layer(GenericWrapper):
+class Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -83,7 +83,7 @@ arial.ttf
 
 """
 
-class AC1009Style(GenericWrapper):
+class Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -113,7 +113,7 @@ LTYPEDESCRIPTION
 65
 """
 
-class AC1009Linetype(GenericWrapper):
+class Linetype(GenericWrapper):
     TEMPLATE = _LTYPETEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -129,7 +129,7 @@ class AC1009Linetype(GenericWrapper):
             pattern = dxfattribs.pop('pattern', [0.0])
         else:
             pattern = [0.0]
-        entity = super(AC1009Linetype, cls).new(handle, dxfattribs, dxffactory)
+        entity = super(Linetype, cls).new(handle, dxfattribs, dxffactory)
         entity._setup_pattern(pattern)
         return entity
 
@@ -216,7 +216,7 @@ VPORTNAME
 """
 
 
-class AC1009Viewport(GenericWrapper):
+class Viewport(GenericWrapper):
     TEMPLATE = _VPORTTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -278,7 +278,7 @@ UCSNAME
 0.0
 """
 
-class AC1009UCS(GenericWrapper):
+class UCS(GenericWrapper):
     TEMPLATE = _UCSTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -300,7 +300,7 @@ APPNAME
 0
 """
 
-class AC1009AppID(GenericWrapper):
+class AppID(GenericWrapper):
     TEMPLATE = _APPIDTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -348,7 +348,7 @@ VIEWNAME
 0
 """
 
-class AC1009View(GenericWrapper):
+class View(GenericWrapper):
     TEMPLATE = _VIEWTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -454,7 +454,7 @@ DIMSTYLENAME
      0
 """
 
-class AC1009DimStyle(GenericWrapper):
+class DimStyle(GenericWrapper):
     TEMPLATE = _DIMSTYLETEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(105, None),

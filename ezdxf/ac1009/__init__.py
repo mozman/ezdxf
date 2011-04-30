@@ -67,13 +67,8 @@ the section markers and table headers present:
 from ..tags import Tags
 
 from .headervars import VARMAP
-from .tableentries import AC1009Layer, AC1009DimStyle, AC1009AppID, AC1009Style
-from .tableentries import AC1009Linetype, AC1009View, AC1009Viewport, AC1009UCS
-from .graphics import AC1009Line, AC1009Circle, AC1009Arc, AC1009Trace, AC1009Solid
-from .graphics import AC10093DFace, AC1009Text, AC1009Attrib, AC1009Attdef
-from .graphics import AC1009Insert, AC1009Block, AC1009EndBlk, AC1009Polyline
-from .graphics import AC1009Vertex, AC1009SeqEnd
-from .graphics import AC1009Polymesh, AC1009Polyface
+from . import tableentries
+from . import graphics
 
 from ..dxfobjects import DXFDictionary, DXFLayout
 from .layouts import AC1009Layouts, AC1009BlockLayout
@@ -81,33 +76,33 @@ from ..entity import GenericWrapper
 
 ENTITY_WRAPPERS =  {
     # tables entries
-    'LAYER': AC1009Layer,
-    'DIMSTYLE': AC1009DimStyle,
-    'LTYPE': AC1009Linetype,
-    'APPID': AC1009AppID,
-    'STYLE': AC1009Style,
-    'UCS': AC1009UCS,
-    'VIEW': AC1009View,
-    'VPORT': AC1009Viewport,
+    'LAYER': tableentries.Layer,
+    'DIMSTYLE': tableentries.DimStyle,
+    'LTYPE': tableentries.Linetype,
+    'APPID': tableentries.AppID,
+    'STYLE': tableentries.Style,
+    'UCS': tableentries.UCS,
+    'VIEW': tableentries.View,
+    'VPORT': tableentries.Viewport,
     # dxf objects
     'DICTIONARY': DXFDictionary,
     'LAYOUT': DXFLayout,
     # dxf entities
-    'LINE': AC1009Line,
-    'CIRCLE': AC1009Circle,
-    'ARC': AC1009Arc,
-    'TRACE': AC1009Trace,
-    'SOLID': AC1009Solid,
-    '3DFACE': AC10093DFace,
-    'TEXT': AC1009Text,
-    'ATTRIB': AC1009Attrib,
-    'ATTDEF': AC1009Attdef,
-    'INSERT': AC1009Insert,
-    'BLOCK': AC1009Block,
-    'ENDBLK': AC1009EndBlk,
-    'POLYLINE': AC1009Polyline,
-    'VERTEX': AC1009Vertex,
-    'SEQEND': AC1009SeqEnd,
+    'LINE': graphics.Line,
+    'CIRCLE': graphics.Circle,
+    'ARC': graphics.Arc,
+    'TRACE': graphics.Trace,
+    'SOLID': graphics.Solid,
+    '3DFACE': graphics.Face,
+    'TEXT': graphics.Text,
+    'ATTRIB': graphics.Attrib,
+    'ATTDEF': graphics.Attdef,
+    'INSERT': graphics.Insert,
+    'BLOCK': graphics.Block,
+    'ENDBLK': graphics.EndBlk,
+    'POLYLINE': graphics.Polyline,
+    'VERTEX': graphics.Vertex,
+    'SEQEND': graphics.SeqEnd,
 }
 
 class AC1009Factory:
