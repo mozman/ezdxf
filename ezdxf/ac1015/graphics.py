@@ -6,15 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-from ..dxfattr import DXFAttr
-from ..ac1009.graphics import ColorMixin, QuadrilateralMixin
-from ..entity import GenericWrapper
-
-from ..dxfattr import DXFAttributes, DefSubclass
-
-class GraphicEntity(GenericWrapper):
-    def set_builder(self, builder):
-        self._builder = builder # IGraphicBuilder
+from ..ac1009 import graphics as ac1009
+from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
 none_subclass = DefSubclass(None, {
         'handle': DXFAttr(5, None),
@@ -29,10 +22,6 @@ entity_subclass = DefSubclass('AcDbEntity', {
     'invisible': DXFAttr(60, None), # invisible .. 1, visible .. 0, default is 0
     'color': DXFAttr(62, None),# dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
 })
-
-def make_AC1015_attribs(additional={}):
-    dxfattribs.update(additional)
-    return dxfattribs
 
 _LINETEMPLATE = """  0
 LINE
@@ -67,7 +56,7 @@ line_subclass = DefSubclass('AcDbLine', {
         'extrusion': DXFAttr(210, 'Point3D'),
 })
 
-class AC1015Line(GraphicEntity, ColorMixin):
+class Line(ac1009.Line):
     TEMPLATE = _LINETEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, line_subclass)
 
@@ -96,7 +85,7 @@ point_subclass = DefSubclass('AcDbPoint', {
         'extrusion': DXFAttr(210, 'Point3D'),
 })
 
-class AC1015Point(GraphicEntity, ColorMixin):
+class Point(ac1009.Point):
     TEMPLATE = _POINT_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, point_subclass)
 
@@ -127,7 +116,7 @@ circle_subclass = DefSubclass('AcDbCircle', {
         'thickness': DXFAttr(39, None),
         'extrusion': DXFAttr(210, 'Point3D'),
 })
-class AC1015Circle(GraphicEntity, ColorMixin):
+class Circle(ac1009.Circle):
     TEMPLATE = _CIRCLE_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass)
 
@@ -172,7 +161,7 @@ arc_subclass = (
         }),
     )
 
-class AC1015Arc(GraphicEntity, ColorMixin):
+class Arc(ac1009.Arc):
     TEMPLATE = _ARC_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *arc_subclass)
 
@@ -221,11 +210,11 @@ trace_subclass = DefSubclass('AcDbTrace', {
         'thickness': DXFAttr(39, None),
         'extrusion': DXFAttr(210, 'Point3D'),
     })
-class AC1015Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
+class Trace(ac1009.Trace):
     TEMPLATE = _TRACE_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, trace_subclass)
 
-class AC1015Solid(AC1015Trace):
+class Solid(Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
 
 _3DFACE_TPL = """  0
@@ -273,7 +262,7 @@ face_subclass = DefSubclass('AcDbFace', {
         'invisible_edge': DXFAttr(70, None),
     })
 
-class AC10153DFace(GraphicEntity, ColorMixin, QuadrilateralMixin):
+class Face(ac1009.Face):
     TEMPLATE = _3DFACE_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, face_subclass)
 
@@ -342,6 +331,6 @@ text_subclass = (
         }),
 )
 
-class AC1015Text(GraphicEntity, ColorMixin):
+class Text(ac1009.Text):
     TEMPLATE = _TEXT_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)

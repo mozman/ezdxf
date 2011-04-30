@@ -11,12 +11,12 @@ import unittest
 
 from ezdxf.testtools import Tags
 
-from ezdxf.ac1009.tableentries import AC1009Layer, AC1009Linetype, AC1009Style, AC1009AppID, AC1009UCS
-from ezdxf.ac1009.tableentries import AC1009View, AC1009Viewport, AC1009DimStyle
+from ezdxf.ac1009.tableentries import Layer, Linetype, Style, AppID, UCS
+from ezdxf.ac1009.tableentries import View, Viewport, DimStyle
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
-        self.layer = AC1009Layer.new('FFFF')
+        self.layer = Layer.new('FFFF')
 
     def test_new_layer(self):
         self.assertEqual(6, len(self.layer.tags.noclass))
@@ -46,7 +46,7 @@ class TestNewLayer(unittest.TestCase):
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
-        self.ltype = AC1009Linetype.new('FFFF', dxfattribs={
+        self.ltype = Linetype.new('FFFF', dxfattribs={
             'name':'TEST',
             'description': 'TESTDESC',
             'pattern': [0.2, 0.1, -0.1]
@@ -69,7 +69,7 @@ class TestNewLinetype(unittest.TestCase):
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
-        self.style = AC1009Style.new('FFFF', dxfattribs={
+        self.style = Style.new('FFFF', dxfattribs={
             'name':'TEST',
             'font': 'NOFONT.ttf',
             'width': 2.0,
@@ -95,7 +95,7 @@ class TestNewStyle(unittest.TestCase):
 
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
-        self.appid = AC1009AppID.new('FFFF', dxfattribs={
+        self.appid = AppID.new('FFFF', dxfattribs={
             'name':'EZDXF',
         })
 
@@ -104,7 +104,7 @@ class TestNewAppID(unittest.TestCase):
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
-        self.ucs = AC1009UCS.new('FFFF', dxfattribs={
+        self.ucs = UCS.new('FFFF', dxfattribs={
             'name': 'UCS+90',
             'origin': (1.0, 1.0, 1.0),
             'xaxis': (0.0, 1.0, 0.0),
@@ -125,7 +125,7 @@ class TestNewUCS(unittest.TestCase):
 
 class TestViewport(unittest.TestCase):
     def setUp(self):
-        self.vport = AC1009Viewport.new('FFFF', dxfattribs={
+        self.vport = Viewport.new('FFFF', dxfattribs={
             'name':'VP1',
         })
 
@@ -134,7 +134,7 @@ class TestViewport(unittest.TestCase):
 
 class TestView(unittest.TestCase):
     def setUp(self):
-        self.view = AC1009View.new('FFFF', dxfattribs={
+        self.view = View.new('FFFF', dxfattribs={
         'name': 'VIEW1',
         'flags': 0,
         'height': 1.0,
@@ -154,7 +154,7 @@ class TestView(unittest.TestCase):
 
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
-        self.dimstyle = AC1009DimStyle.new('FFFF', dxfattribs={
+        self.dimstyle = DimStyle.new('FFFF', dxfattribs={
             'name':'DIMSTYLE1',
         })
 

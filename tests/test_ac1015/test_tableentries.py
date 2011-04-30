@@ -11,16 +11,16 @@ import unittest
 
 from ezdxf.testtools import Tags
 
-from ezdxf.ac1015.tableentries import AC1015Layer, AC1015Linetype, AC1015Style
-from ezdxf.ac1015.tableentries import AC1015AppID, AC1015BlockRecord, AC1015DimStyle
-from ezdxf.ac1015.tableentries import AC1015UCS, AC1015View, AC1015Viewport
+from ezdxf.ac1015.tableentries import Layer, Linetype, Style
+from ezdxf.ac1015.tableentries import AppID, BlockRecord, DimStyle
+from ezdxf.ac1015.tableentries import UCS, View, Viewport
 
 class DXFFactory:
     rootdict = { 'ACAD_PLOTSTYLENAME': 'AFAF' }
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
-        self.layer = AC1015Layer.new('FFFF', dxffactory=DXFFactory())
+        self.layer = Layer.new('FFFF', dxffactory=DXFFactory())
 
     def test_get_handle(self):
         self.assertEqual('FFFF', self.layer.dxf.handle)
@@ -33,7 +33,7 @@ class TestNewLayer(unittest.TestCase):
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
-        self.ltype = AC1015Linetype.new('FFFF', dxfattribs={
+        self.ltype = Linetype.new('FFFF', dxfattribs={
             'name':'TEST',
             'description': 'TESTDESC',
             'pattern': [0.2, 0.1, -0.1]
@@ -54,7 +54,7 @@ class TestNewLinetype(unittest.TestCase):
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
-        self.style = AC1015Style.new('FFFF', dxfattribs={
+        self.style = Style.new('FFFF', dxfattribs={
             'name':'TEST',
             'font': 'NOFONT.ttf',
             'width': 2.0,
@@ -65,7 +65,7 @@ class TestNewStyle(unittest.TestCase):
 
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
-        self.appid = AC1015AppID.new('FFFF', dxfattribs={
+        self.appid = AppID.new('FFFF', dxfattribs={
             'name':'EZDXF',
         })
 
@@ -74,7 +74,7 @@ class TestNewAppID(unittest.TestCase):
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
-        self.ucs = AC1015UCS.new('FFFF', dxfattribs={
+        self.ucs = UCS.new('FFFF', dxfattribs={
             'name': 'UCS+90',
             'origin': (1.0, 1.0, 1.0),
             'xaxis': (0.0, 1.0, 0.0),
@@ -89,7 +89,7 @@ class TestNewUCS(unittest.TestCase):
 
 class TestViewport(unittest.TestCase):
     def setUp(self):
-        self.vport = AC1015Viewport.new('FFFF', dxfattribs={
+        self.vport = Viewport.new('FFFF', dxfattribs={
             'name':'VP1',
         })
 
@@ -98,7 +98,7 @@ class TestViewport(unittest.TestCase):
 
 class TestView(unittest.TestCase):
     def setUp(self):
-        self.view = AC1015View.new('FFFF', dxfattribs={
+        self.view = View.new('FFFF', dxfattribs={
         'name': 'VIEW1',
         'flags': 0,
         'height': 1.0,
@@ -118,7 +118,7 @@ class TestView(unittest.TestCase):
 
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
-        self.dimstyle = AC1015DimStyle.new('FFFF', dxfattribs={
+        self.dimstyle = DimStyle.new('FFFF', dxfattribs={
             'name':'DIMSTYLE1',
         })
 
@@ -131,7 +131,7 @@ class TestDimstyle(unittest.TestCase):
 
 class TestBlockRecord(unittest.TestCase):
     def setUp(self):
-        self.blockrec = AC1015BlockRecord.new('FFFF', dxfattribs={
+        self.blockrec = BlockRecord.new('FFFF', dxfattribs={
             'name':'BLOCKREC1',
         })
 

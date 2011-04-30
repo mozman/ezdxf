@@ -9,30 +9,28 @@ from ..tags import Tags
 
 from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
-from .tableentries import AC1015Layer, AC1015Style, AC1015BlockRecord, AC1015Linetype
-from .tableentries import AC1015AppID, AC1015DimStyle, AC1015UCS, AC1015View, AC1015Viewport
+from . import tableentries
+from . import graphics
 from .layouts import AC1015Layouts, AC1015BlockLayout
-from .graphics import AC1015Line, AC1015Circle, AC1015Point, AC1015Arc, AC1015Trace
-from .graphics import AC1015Solid, AC10153DFace, AC1015Text
 
 UPDATE_ENTITY_WRAPPERS = {
-    'LAYER': AC1015Layer,
-    'STYLE': AC1015Style,
-    'LTYPE': AC1015Linetype,
-    'DIMSTYLE': AC1015DimStyle,
-    'VIEW': AC1015View,
-    'VPORT': AC1015Viewport,
-    'UCS': AC1015UCS,
-    'APPID': AC1015AppID,
-    'BLOCK_RECORD': AC1015BlockRecord,
-    'LINE': AC1015Line,
-    'POINT': AC1015Point,
-    'CIRCLE': AC1015Circle,
-    'ARC': AC1015Arc,
-    'TRACE': AC1015Trace,
-    'SOLID': AC1015Solid,
-    '3DFACE': AC10153DFace,
-    'TEXT': AC1015Text,
+    'LAYER': tableentries.Layer,
+    'STYLE': tableentries.Style,
+    'LTYPE': tableentries.Linetype,
+    'DIMSTYLE': tableentries.DimStyle,
+    'VIEW': tableentries.View,
+    'VPORT': tableentries.Viewport,
+    'UCS': tableentries.UCS,
+    'APPID': tableentries.AppID,
+    'BLOCK_RECORD': tableentries.BlockRecord,
+    'LINE': graphics.Line,
+    'POINT': graphics.Point,
+    'CIRCLE': graphics.Circle,
+    'ARC': graphics.Arc,
+    'TRACE': graphics.Trace,
+    'SOLID': graphics.Solid,
+    '3DFACE': graphics.Face,
+    'TEXT': graphics.Text,
 }
 
 class AC1015Factory(AC1009Factory):

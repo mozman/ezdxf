@@ -7,9 +7,7 @@
 # License: GPLv3
 
 from ..tags import casttagvalue, DXFTag
-from ..ac1009.tableentries import AC1009Layer, AC1009Style, AC1009Linetype
-from ..ac1009.tableentries import AC1009AppID, AC1009DimStyle, AC1009UCS
-from ..ac1009.tableentries import AC1009View, AC1009Viewport
+from ..ac1009 import tableentries as ac1009
 from ..entity import GenericWrapper
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
@@ -50,13 +48,13 @@ layer_subclass = DefSubclass('AcDbLayerTableRecord', {
         'plotstylename': DXFAttr(390, None), # handle to PlotStyleName object
 })
 
-class AC1015Layer(AC1009Layer):
+class Layer(ac1009.Layer):
     TEMPLATE = _LAYERTEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, layer_subclass)
 
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
-        layer = super(AC1015Layer, cls).new(handle, dxfattribs)
+        layer = super(Layer, cls).new(handle, dxfattribs)
         layer.dxf.plotstylename = dxffactory.rootdict['ACAD_PLOTSTYLENAME']
         return layer
 
@@ -99,7 +97,7 @@ style_subclass = DefSubclass('AcDbTextStyleTableRecord', {
         'bigfont': DXFAttr(4, None), # big font name, blank if none
 })
 
-class AC1015Style(AC1009Style):
+class Style(ac1009.Style):
     TEMPLATE = _STYLETEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, style_subclass)
 
@@ -126,7 +124,7 @@ linetype_subclass = DefSubclass('AcDbLinetypeTableRecord', {
         'length': DXFAttr(40, None),
         'items': DXFAttr( 73, None),
 })
-class AC1015Linetype(AC1009Linetype):
+class Linetype(ac1009.Linetype):
     TEMPLATE = _LTYPETEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
@@ -157,7 +155,7 @@ appid_subclass = DefSubclass('AcDbRegAppTableRecord', {
         'flags': DXFAttr(70, None),
 })
 
-class AC1015AppID(AC1009AppID):
+class AppID(ac1009.AppID):
     TEMPLATE = _APPIDTEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, appid_subclass)
 
@@ -296,7 +294,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord',{
         'dimclre': DXFAttr(177, None),
         'dimclrt': DXFAttr(178, None),
 })
-class AC1015DimStyle(AC1009DimStyle):
+class DimStyle(ac1009.DimStyle):
     TEMPLATE = _DIMSTYLETEMPLATE
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
 
@@ -339,7 +337,7 @@ ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
         'yaxis': DXFAttr(12, 'Point3D'),
 })
 
-class AC1015UCS(AC1009UCS):
+class UCS(ac1009.UCS):
     TEMPLATE = _UCSTEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, ucs_subclass)
 
@@ -401,7 +399,7 @@ view_subclass = DefSubclass('AcDbViewTableRecord', {
         'view_mode': DXFAttr(71, None),
     })
 
-class AC1015View(AC1009View):
+class View(ac1009.View):
     TEMPLATE = _VIEWTEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, view_subclass)
 
@@ -513,7 +511,7 @@ vport_subclass = DefSubclass('AcDbViewportTableRecord', {
         'snap_style': DXFAttr(77, None),
         'snap_isopair': DXFAttr(78, None),
     })
-class AC1015Viewport(AC1009Viewport):
+class Viewport(ac1009.Viewport):
     TEMPLATE = _VPORTTEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
 
@@ -538,7 +536,7 @@ blockrec_subclass = DefSubclass('AcDbBlockTableRecord', {
         'layout': DXFAttr(340, None),
     })
 
-class AC1015BlockRecord(GenericWrapper):
+class BlockRecord(GenericWrapper):
     """ Internal Object - use at your own risk!
 
     Required fields:
