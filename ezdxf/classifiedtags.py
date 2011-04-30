@@ -22,13 +22,13 @@ class ClassifiedTags:
         self.subclasses = list() # code == 100, keys are "subclassname", values are Tags()
         self.xdata = list() # code >= 1000, keys are "APPNAME", values are Tags()
         if iterable is not None:
-            self.extend(iterable)
+            self._setup(iterable)
 
     @property
     def noclass(self):
         return self.subclasses[0]
 
-    def extend(self, iterable):
+    def _setup(self, iterable):
         tagstream = iter(iterable)
 
         def isappdata(tag):
