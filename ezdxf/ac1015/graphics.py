@@ -6,6 +6,31 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
+# Support for new AC1015 entities planned for the future:
+# - MText
+# - RText
+# - Spline
+# - ArcAlignedText
+# - Hatch
+# - Image
+# - Viewport
+# - Dimension
+# - Tolerance
+# - Leader
+# - Wipeout ???
+# - MLine ???
+# - Shape ??? (not new but unnecessary ;-)
+# 
+# Unsupported DXF BLOBS: (existing entities will be preserved)
+# - Body
+# - Region
+# - 3DSolid
+#
+# Unsupported AutoCAD/Windows entities: (existing entities will be preserved)
+# - ACAD_PROXY_ENTITY
+# - OLEFRAME
+# - OLE2FRAME
+
 from ..ac1009 import graphics as ac1009
 from ..tags import DXFTag
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
@@ -851,3 +876,80 @@ DefSubclass('AcDbAttribute', {
 class Attrib(ac1009.Attrib):
     TEMPLATE = _ATTRIB_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attrib_subclass)
+_ELLIPSE_TPL ="""  0
+ELLIPSE
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbEllipse
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+0.0
+ 31
+0.0
+ 40
+1.0
+ 41
+0.0
+ 42
+6.283185307179586
+"""
+
+ellipse_subclass = DefSubclass('AcDbEllipse', {
+        'center': DXFAttr(10, 'Point2D/3D'),
+        'majoraxis': DXFAttr(11, 'Point2D/3D'), # relative to the center
+        'extrusion': DXFAttr(210, 'Point3D'),
+        'ratio': DXFAttr(40, None),
+        'startparam': DXFAttr(41, None), # this value is 0.0 for a full ellipse
+        'endparam': DXFAttr(42, None), # this value is 2*pi for a full ellipse
+    })
+
+class Ellipse(ac1009.GraphicEntity, ac1009.ColorMixin):
+    TEMPLATE = _ELLIPSE_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ellipse_subclass)
+_RAY_TPL = """ 0
+RAY
+  5
+0
+330
+0
+100
+AcDbEntiy
+  8
+0
+100
+AcDbRay
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+0.0
+ 31
+0.0
+"""
+ray_subclass = DefSubclass('AcDbRay', {
+    'start': DXFAttr(10, 'Point3D'),
+    'unitvector': DXFAttr(11, 'Point3D'),
+    })
+
+class Ray(ac1009.GraphicEntity, ac1009.ColorMixin):
+    TEMPLATE = _RAY_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ray_subclass)

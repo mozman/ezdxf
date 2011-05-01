@@ -3,8 +3,9 @@
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: dxf factory for R2000/AC1015
 # Created: 12.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+
 from ..tags import Tags
 
 from .headervars import VARMAP
@@ -40,6 +41,9 @@ UPDATE_ENTITY_WRAPPERS = {
     'INSERT': graphics.Insert,
     'ATTDEF': graphics.Attdef,
     'ATTRIB': graphics.Attrib,
+    'ELLIPSE': graphics.Ellipse,
+    'RAY': graphics.Ray,
+    'XLINE': graphics.Ray,
 }
 
 class AC1015Factory(AC1009Factory):
@@ -57,3 +61,4 @@ class AC1015Factory(AC1009Factory):
 
     def new_block_layout(self, block_handle, endblk_handle):
         return AC1015BlockLayout(self.entitydb, self, block_handle, endblk_handle)
+    
