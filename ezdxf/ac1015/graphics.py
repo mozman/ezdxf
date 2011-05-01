@@ -314,7 +314,7 @@ AcDbText
  73
 0
 """
-text_subclass = (
+text_subclass =  (
     DefSubclass('AcDbText', {
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40, None),
@@ -328,11 +328,9 @@ text_subclass = (
         'alignpoint': DXFAttr(11, 'Point2D/3D'),
         'thickness': DXFAttr(39, None),
         'extrusion': DXFAttr(210, 'Point3D'),
-        }), # Hey Autodesk, what are you doing???
-    DefSubclass('AcDbText', {
-        'valign': DXFAttr(73, None), # vertical justification
         }),
-)
+    DefSubclass('AcDbText', { 'valign': DXFAttr(73, None) }))
+
 
 class Text(ac1009.Text):
     TEMPLATE = _TEXT_TPL
@@ -517,7 +515,7 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
 })
 
 LWPOINTCODES = (10, 20, 40, 41, 42)
-class LWPolyline(ac1009.Polyline):
+class LWPolyline(ac1009.GraphicEntity):
     TEMPLATE = _LWPOLYLINE_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
     
@@ -553,7 +551,7 @@ class LWPolyline(ac1009.Polyline):
         self.dxf.count = count
         
     def __iter__(self):
-        subclass = self.tags.subclasses[2]
+        subclass = self.tags.subclasses[2] # subclass AcDbPolyline
         point = []
         for tag in subclass:
             if tag.code in LWPOINTCODES:
@@ -578,4 +576,278 @@ class LWPolyline(ac1009.Polyline):
                 return point
         raise IndexError(index)
 
-            
+_BLOCK_TPL = """  0
+BLOCK
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+BLOCKNAME
+  3
+BLOCKNAME
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  1
+
+"""
+block_subclass = (
+    DefSubclass('AcDbEntity', { 'layer': DXFAttr(8, None) }),
+    DefSubclass('AcDbBlockBegin', {
+        'name': DXFAttr(2, None),
+        'name2': DXFAttr(3, None),
+        'description': DXFAttr(4, None),
+        'flags': DXFAttr(70, None),
+        'basepoint': DXFAttr(10, 'Point2D/3D'),
+        'xrefpath': DXFAttr(1, None),
+        })
+    )
+
+class Block(ac1009.GraphicEntity):
+    TEMPLATE = _BLOCK_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, *block_subclass)
+
+_ENDBLOCK_TPL = """  0
+ENDBLK
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+"""
+endblock_subclass = (
+    DefSubclass('AcDbEntity', { 'layer': DXFAttr(8, None) }),
+    DefSubclass('AcDbBlockEnd', {}),
+    )
+
+class EndBlk(ac1009.GraphicEntity):
+    TEMPLATE = _ENDBLOCK_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, *endblock_subclass)
+
+_INSERT_TPL = """  0
+INSERT
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockReference
+  2
+BLOCKNAME
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 41
+1.0
+ 42
+1.0
+ 43
+1.0
+ 50
+0.0
+"""
+
+insert_subclass = DefSubclass('AcDbBlockReference', {
+        'attribsfollow': DXFAttr(66, None),
+        'name': DXFAttr(2, None),
+        'insert': DXFAttr(10, 'Point2D/3D'),
+        'xscale': DXFAttr(41, None),
+        'yscale': DXFAttr(42, None),
+        'zscale': DXFAttr(43, None),
+        'rotation': DXFAttr(50, None),
+        'colcount': DXFAttr(70, None),
+        'rowcount': DXFAttr(71, None),
+        'colspacing': DXFAttr(44, None),
+        'rowspacing': DXFAttr(45, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+    })
+class Insert(ac1009.Insert):
+    TEMPLATE = _INSERT_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, insert_subclass)
+    
+_ATTDEF_TPL = """  0
+ATTDEF
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  1
+DEFAULTTEXT
+100
+AcDbAttributeDefinition
+ 50
+0.0
+ 51
+0.0
+ 41
+1.0
+  7
+STANDARD
+ 71
+0
+ 72
+0
+ 11
+0.0
+ 21
+0.0
+ 31
+0.0
+100
+AcDbAttributeDefinition
+  3
+PROMPTTEXT
+  2
+TAG
+ 70
+0
+ 73
+0
+ 74
+0
+"""
+
+attdef_subclass = (
+DefSubclass('AcDbText', {
+    'insert': DXFAttr(10, 'Point2D/3D'),
+    'thickness': DXFAttr(39, None),
+    'height': DXFAttr(40, None),
+    'text': DXFAttr(1, None),
+}),
+DefSubclass('AcDbAttributeDefinition', {
+    'rotation': DXFAttr(50, None),
+    'width': DXFAttr(41, None),
+    'oblique': DXFAttr(51, None),
+    'style': DXFAttr(7, None),
+    'textgenerationflag': DXFAttr(71, None),
+    'halign': DXFAttr(72, None),
+    'alignpoint': DXFAttr(11, 'Point2D/3D'),
+    'extrusion': DXFAttr(210, 'Point3D'),
+}),
+DefSubclass('AcDbAttributeDefinition', {
+    'prompt': DXFAttr(3, None),
+    'tag': DXFAttr(2, None),
+    'flags': DXFAttr(70, None),
+    'fieldlength': DXFAttr(73, None),
+    'valign': DXFAttr(74, None),
+}))
+
+class Attdef(ac1009.Attdef):
+    TEMPLATE = _ATTDEF_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attdef_subclass)
+    
+_ATTRIB_TPL = """  0
+ATTRIB
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  1
+DEFAULTTEXT
+100
+AcDbAttribute
+  2
+TAG
+ 70
+0
+ 50
+0.0
+ 51
+0.0
+ 41
+1.0
+  7
+STANDARD
+ 71
+0
+ 72
+0
+ 73
+0
+ 74
+0
+ 11
+0.0
+ 21
+0.0
+ 31
+0.0
+"""
+attrib_subclass = (
+DefSubclass('AcDbText', {
+    'insert': DXFAttr(10, 'Point2D/3D'),
+    'thickness': DXFAttr(39, None),
+    'height': DXFAttr(40, None),
+    'text': DXFAttr(1, None),
+}),
+DefSubclass('AcDbAttribute', {
+    'tag': DXFAttr(2, None),
+    'flags': DXFAttr(70, None),
+    'fieldlength': DXFAttr(73, None),
+    'rotation': DXFAttr(50, None),
+    'width': DXFAttr(41, None),
+    'oblique': DXFAttr(51, None),
+    'style': DXFAttr(7, None),
+    'textgenerationflag': DXFAttr(71, None),
+    'halign': DXFAttr(72, None),
+    'valign': DXFAttr(74, None),
+    'alignpoint': DXFAttr(11, 'Point2D/3D'),
+    'extrusion': DXFAttr(210, 'Point3D'),
+
+}))
+
+class Attrib(ac1009.Attrib):
+    TEMPLATE = _ATTRIB_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attrib_subclass)

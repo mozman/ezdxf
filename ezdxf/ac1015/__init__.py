@@ -35,6 +35,11 @@ UPDATE_ENTITY_WRAPPERS = {
     'VERTEX': graphics.Vertex,
     'SEQEND': graphics.SeqEnd,
     'LWPOLYLINE': graphics.LWPolyline,
+    'BLOCK': graphics.Block,
+    'ENDBLK': graphics.EndBlk,
+    'INSERT': graphics.Insert,
+    'ATTDEF': graphics.Attdef,
+    'ATTRIB': graphics.Attrib,
 }
 
 class AC1015Factory(AC1009Factory):
