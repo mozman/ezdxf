@@ -99,7 +99,7 @@ class ClassifiedTags:
     def __iter__(self):
         for subclass in self.subclasses:
             for tag in subclass:
-                if tag.code == APP_DATA_MARKER:
+                if tag.code == APP_DATA_MARKER and isinstance(tag.value, int):
                     for subtag in self.appdata[tag.value]:
                         yield subtag
                 else:

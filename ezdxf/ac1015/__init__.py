@@ -31,6 +31,9 @@ UPDATE_ENTITY_WRAPPERS = {
     'SOLID': graphics.Solid,
     '3DFACE': graphics.Face,
     'TEXT': graphics.Text,
+    'POLYLINE': graphics.Polyline,
+    'VERTEX': graphics.Vertex,
+    'SEQEND': graphics.SeqEnd,
 }
 
 class AC1015Factory(AC1009Factory):

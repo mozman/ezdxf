@@ -22,54 +22,54 @@ class TestPolyline(unittest.TestCase):
         self.layout = AC1009Layout(self.entityspace, self.dwg.dxffactory, 0)
 
     def test_create_polyline2D(self):
-        polyline = self.layout.add_polyline2D( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
         self.assertEqual((0., 0.), polyline[0].dxf.location)
         self.assertEqual((1., 1.), polyline[1].dxf.location)
         self.assertEqual('polyline2d', polyline.getmode())
 
     def test_create_polyline3D(self):
-        polyline = self.layout.add_polyline3D( [(1, 2, 3), (4, 5, 6)] )
+        polyline = self.layout.add_polyline3d( [(1, 2, 3), (4, 5, 6)] )
         self.assertEqual((1., 2., 3.), polyline[0].dxf.location)
         self.assertEqual((4., 5., 6.), polyline[1].dxf.location)
         self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
         self.assertEqual('polyline3d', polyline.getmode())
 
     def test_set_vertex(self):
-        polyline = self.layout.add_polyline2D( [(0, 0), (1, 1), (2, 2), (3, 3)] )
+        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1), (2, 2), (3, 3)] )
         polyline[2].dxf.location = (7, 7)
         self.assertEqual((7., 7.), polyline[2].dxf.location)
 
     def test_points(self):
         points = [(0, 0), (1, 1), (2, 2), (3, 3)]
-        polyline = self.layout.add_polyline2D(points)
+        polyline = self.layout.add_polyline2d(points)
         self.assertEqual(points, polyline.points)
 
     def test_point_slicing(self):
         points = [(0, 0), (1, 1), (2, 2), (3, 3)]
-        polyline = self.layout.add_polyline2D(points)
+        polyline = self.layout.add_polyline2d(points)
         self.assertEqual([(1, 1), (2, 2)], polyline.points[1:3])
 
     def test_append_vertices(self):
-        polyline = self.layout.add_polyline2D( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
         polyline.append_vertices([(7, 7), (8, 8)])
         self.assertEqual((7., 7.), polyline[2].dxf.location)
         self.assertEqual(4, len(polyline))
 
     def test_insert_vertices(self):
-        polyline = self.layout.add_polyline2D( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
         polyline.insert_vertices(0, [(7, 7), (8, 8)])
         self.assertEqual((7, 7), polyline[0].dxf.location)
         self.assertEqual((1, 1), polyline[3].dxf.location)
         self.assertEqual(4, len(polyline))
 
     def test_delete_one_vertex(self):
-        polyline = self.layout.add_polyline2D( [(0, 0), (1, 1), (2, 2), (3, 3)] )
+        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1), (2, 2), (3, 3)] )
         polyline.delete_vertices(0)
         self.assertEqual((1, 1), polyline[0].dxf.location)
         self.assertEqual(3, len(polyline))
 
     def test_delete_two_vertices(self):
-        polyline = self.layout.add_polyline2D( [(0, 0), (1, 1), (2, 2), (3, 3)] )
+        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1), (2, 2), (3, 3)] )
         polyline.delete_vertices(pos=0, count=2)
         self.assertEqual((2, 2), polyline[0].dxf.location)
         self.assertEqual(2, len(polyline))

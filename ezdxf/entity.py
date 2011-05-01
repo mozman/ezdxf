@@ -64,7 +64,11 @@ class GenericWrapper:
         entity.dxf.handle = handle
         if dxfattribs is not None:
             entity.update_dxf_attribs(dxfattribs)
+        entity.post_new_hook()
         return entity
+
+    def post_new_hook(self):
+        pass
 
     def dxftype(self):
         return self.tags.noclass[0].value
