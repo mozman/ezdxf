@@ -708,6 +708,7 @@ class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
         'vtx2': DXFAttr(73, None),
         'vtx3': DXFAttr(74, None),
     })
+    
 _VPORT_TPL = """  0
 VIEWPORT
   5
