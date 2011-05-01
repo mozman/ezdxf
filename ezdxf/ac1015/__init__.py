@@ -34,6 +34,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'POLYLINE': graphics.Polyline,
     'VERTEX': graphics.Vertex,
     'SEQEND': graphics.SeqEnd,
+    'LWPOLYLINE': graphics.LWPolyline,
 }
 
 class AC1015Factory(AC1009Factory):

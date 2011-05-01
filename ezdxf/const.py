@@ -76,3 +76,6 @@ BLK_XREF_OVERLAY = 8             # This block is an xref overlay
 BLK_EXTERNAL = 16                # This block is externally dependent
 BLK_RESOLVED = 32                # This is a resolved external reference, or dependent of an external reference (ignored on input)
 BLK_REFERENCED = 64              # This definition is a referenced external reference (ignored on input)
+
+LWPOLYLINE_CLOSED = 1
+LWPOLYLINE_PLINEGEN = 128

@@ -7,4 +7,10 @@
 # License: GPLv3
 
 class AC1015GraphicsBuilder:
-    pass
+    def add_lwpolyline(self, points, dxfattribs={}):
+        closed = dxfattribs.pop('closed', False)
+        lwpolyline = self._create('LWPOLYLINE', dxfattribs)
+        lwpolyline.close(closed)
+        lwpolyline._setup_points(points)
+        return lwpolyline
+        
