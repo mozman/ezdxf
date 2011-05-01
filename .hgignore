@@ -3,6 +3,8 @@ build/*
 dist/*
 docs/_build/*
 bigtestfiles/*
+examples/*.dxf
+integration_tests/*.dxf
 .coverage
 *.err
 *.orig
