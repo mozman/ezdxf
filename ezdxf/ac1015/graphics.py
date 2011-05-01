@@ -363,7 +363,7 @@ AcDb2dPolyline
 """
 
 polyline_subclass = DefSubclass('AcDb2dPolyline', {
-        'elevation': DXFAttr(10, 'Point2D/3D'),
+        'elevation': DXFAttr(10, 'Point3D'),
         'flags': DXFAttr(70, None),
         'defaultstartwidth': DXFAttr(40, None),
         'defaultendwidth': DXFAttr(41, None),
@@ -487,3 +487,95 @@ class Vertex(ac1009.Vertex):
 class SeqEnd(ac1009.SeqEnd):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n"
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
+    
+_LWPOLYLINE_TPL = """  0
+LWPOLYLINE
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbPolyline
+ 90
+0
+ 70
+0
+ 43
+0
+"""
+
+lwpolyline_subclass = DefSubclass('AcDbPolyline', {
+        'elevation': DXFAttr(38, None),
+        'flags': DXFAttr(70, None),
+        'constwidth': DXFAttr(43, None),
+        'count': DXFAttr(90, None),
+        'extrusion': DXFAttr(210, 'Point3D'),
+})
+
+LWPOINTCODES = (10, 20, 40, 41, 42)
+class LWPolyline(ac1009.Polyline):
+    TEMPLATE = _LWPOLYLINE_TPL
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
+    
+    def __len__(self):
+        return self.dxf.count
+        
+    def close(self, status=True):
+        flagsnow = self.dxf.flags
+        if status :
+            self.dxf.flags = flagsnow | const.LWPOLYLINE_CLOSED
+        else:
+            self.dxf.flags = flagsnow & (~const.LWPOLYLINE_CLOSED)
+    
+    def _setup_points(self, points):
+        if self.dxf.count > 0:
+            raise ValueError('not callable for an existing LWPolylines')
+        subclass = self.tags.subclasses[2]
+        count = 0
+        
+        def append_point(point):
+            subclass.append(DXFTag(10, point[0]))
+            subclass.append(DXFTag(20, point[1]))
+            try:
+                subclass.append(DXFTag(40, point[2]))
+                subclass.append(DXFTag(41, point[3]))
+                subclass.append(DXFTag(42, point[4]))
+            except IndexError:
+                pass
+            
+        for point in points:
+            append_point(point)
+            count += 1
+        self.dxf.count = count
+        
+    def __iter__(self):
+        subclass = self.tags.subclasses[2]
+        point = []
+        for tag in subclass:
+            if tag.code in LWPOINTCODES:
+                if tag.code == 10:
+                    if point:
+                        yield tuple(point)
+                        point = []
+                point.append(tag)
+        if point:
+            yield tuple(point)
+            
+    @property        
+    def points(self):
+        for point in self:
+            yield (point[0].value, point[1].value)
+            
+    def __getitem__(self, index):
+        if index < 0:
+            index += self.dxf.count
+        for x, point in enumerate(self.points):
+            if x == index:
+                return point
+        raise IndexError(index)
+
+            
