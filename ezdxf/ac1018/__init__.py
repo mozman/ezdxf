@@ -6,6 +6,9 @@
 # Copyright (C) , Manfred Moitzi
 # License: GPLv3
 
+# Support for new AC1018 entities planned for the future:
+# - no new entities intruduced
+
 from .headervars import VARMAP
 from ..ac1015 import AC1015Factory
 
