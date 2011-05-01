@@ -7,6 +7,7 @@
 # License: GPLv3
 
 from ..ac1009 import graphics as ac1009
+from ..tags import DXFTag
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
@@ -336,7 +337,7 @@ text_subclass = (
 class Text(ac1009.Text):
     TEMPLATE = _TEXT_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)
-    
+
 _POLYLINE_TPL = """  0
 POLYLINE
   5
@@ -378,23 +379,23 @@ polyline_subclass = DefSubclass('AcDb2dPolyline', {
 class Polyline(ac1009.Polyline):
     TEMPLATE = _POLYLINE_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, polyline_subclass)
-    def __init__(self, tags):
-        super(Polyline, self).__init__(tags)
+
+    def post_new_hook(self):
         self.update_subclass_specifier()
-        
+
     def update_subclass_specifier(self):
         def set_subclass(subclassname):
-            # For dxf attribute access not the name of the subclass is important, but 
+            # For dxf attribute access not the name of the subclass is important, but
             # the order of the subcasses 1st, 2nd, 3rd and so on.
             # The 3rd subclass is the AcDb3dPolyline or AcDb2dPolyline subclass
             subclass = self.tags.subclasses[2]
-            subclass[0] = DXFAttr(100, subclassname)
-            
+            subclass[0] = DXFTag(100, subclassname)
+
         if self.getmode() == 'polyline2d':
             set_subclass('AcDb2dPolyline')
         else:
             set_subclass('AcDb3dPolyline')
-            
+
     def cast(self):
         mode = self.getmode()
         if mode == 'polyface':
@@ -403,14 +404,14 @@ class Polyline(ac1009.Polyline):
             return Polymesh.convert(self)
         else:
             return self
-            
+
 class Polyface(Polyline, PolyfaceMixin):
     @staticmethod
     def convert(polyline):
         face = Polyface(polyline.tags)
         face.set_builder(polyline._builder)
         return face
-        
+
 class Polymesh(Polyline, PolymeshMixin):
     @staticmethod
     def convert(polyline):
@@ -463,26 +464,26 @@ vertex_subclass = (
     })
 )
 
-VTX3D = const.VTX_3D_POLYFACE_MESH_VERTEX | const.VTX_3D_POLYGON_MESH_VERTEX | const.VTX_3D_POLYLINE_VERTEX
+
 
 class Vertex(ac1009.Vertex):
+    VTX3D = const.VTX_3D_POLYFACE_MESH_VERTEX | const.VTX_3D_POLYGON_MESH_VERTEX | const.VTX_3D_POLYLINE_VERTEX
     TEMPLATE = _VERTEX_TPL
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 
-    def __init__(self, tags):
-        super(Vertex, self).__init__(tags)
+    def post_new_hook(self):
         self.update_subclass_specifier()
-        
+
     def update_subclass_specifier(self):
         def set_subclass(subclassname):
             subclass = self.tags.subclasses[3]
-            subclass[0] = DXFAttr(100, subclassname)
-            
-        if self.dxf.flags & VTX3D != 0:
+            subclass[0] = DXFTag(100, subclassname)
+
+        if self.dxf.flags & Vertex.VTX3D != 0:
             set_subclass('AcDb3dPolylineVertex')
         else:
             set_subclass('AcDb2dVertex')
-            
+
 class SeqEnd(ac1009.SeqEnd):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n"
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)

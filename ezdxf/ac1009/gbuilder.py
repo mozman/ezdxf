@@ -122,7 +122,7 @@ class AC1009GraphicBuilder(BuilderConnector):
         dxfattribs['insert'] = insert
         return self._create('ATTRIB', dxfattribs)
 
-    def add_polyline2D(self, points, dxfattribs={}):
+    def add_polyline2d(self, points, dxfattribs={}):
         closed = dxfattribs.pop('closed', False)
         polyline = self._create('POLYLINE', dxfattribs)
         polyline.close(closed)
@@ -132,9 +132,9 @@ class AC1009GraphicBuilder(BuilderConnector):
         self.add_seqend()
         return polyline
 
-    def add_polyline3D(self, points, dxfattribs={}):
+    def add_polyline3d(self, points, dxfattribs={}):
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
-        polyline = self.add_polyline2D(points, dxfattribs)
+        polyline = self.add_polyline2d(points, dxfattribs)
         return polyline
 
     def add_vertex(self, location, dxfattribs={}):
