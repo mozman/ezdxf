@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 import os
+import io
 
 from .tags import dxfinfo
 
@@ -37,5 +38,5 @@ class TemplateFinder:
 
     def getstream(self, dxfversion):
         filename = self.filepath(dxfversion)
-        return open(self.filepath(dxfversion), encoding='cp1252')
+        return io.open(self.filepath(dxfversion), encoding='cp1252')
 

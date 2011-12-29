@@ -5,12 +5,11 @@
 # Created: 30.04.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
-
 from __future__ import unicode_literals
 
 import unittest
-from io import StringIO
 
+from ezdxf.six import StringIO
 from ezdxf.tags import Tags
 from ezdxf.classifiedtags import ClassifiedTags
 

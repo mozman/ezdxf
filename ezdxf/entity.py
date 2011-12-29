@@ -10,7 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .tags import casttagvalue, DXFTag, DXFStructureError
 from .classifiedtags import ClassifiedTags
 
-class DXFNamespace:
+class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
 
     """
@@ -49,7 +49,7 @@ class DXFNamespace:
         """ GenericWrapper.dxf.update(dxfattribs): Update dxf attribs from dict. """
         return self.wrapper.update_dxf_attribs(attribs)
 
-class GenericWrapper:
+class GenericWrapper(object):
     TEMPLATE = ""
     DXFATTRIBS = {}
 

@@ -106,7 +106,7 @@ ENTITY_WRAPPERS =  {
     'SEQEND': graphics.SeqEnd,
 }
 
-class AC1009Factory:
+class AC1009Factory(object):
     HEADERVARS = dict(VARMAP)
     def __init__(self):
         self.ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)

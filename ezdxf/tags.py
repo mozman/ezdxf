@@ -11,7 +11,10 @@ from collections import namedtuple, Counter
 
 from .codepage import toencoding
 from .const import acadrelease
-from .six import StringIO
+from . import six
+
+if six.PY3:
+    unicode = str
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONETAG = DXFTag(999999, 'NONE')
@@ -19,7 +22,7 @@ NONETAG = DXFTag(999999, 'NONE')
 class DXFStructureError(Exception):
     pass
 
-class TagIterator:
+class TagIterator(object):
     def __init__(self, textfile):
         self.textfile = textfile
         self.lineno = 0
@@ -48,6 +51,8 @@ class TagIterator:
             return undo_tag()
         else:
             return next_tag()
+    # for Python 2.7
+    next = __next__
 
     def readline(self):
         self.lineno += 1
@@ -62,12 +67,12 @@ class TagIterator:
 
 class StringIterator(TagIterator):
     def __init__(self, dxfcontent):
-        super(StringIterator, self).__init__(StringIO(dxfcontent))
+        super(StringIterator, self).__init__(six.StringIO(dxfcontent))
 
 def text2tags(text):
     return Tags(StringIterator(text))
 
-class DXFInfo:
+class DXFInfo(object):
     def __init__(self):
         self.release = 'R12'
         self.version = 'AC1009'
@@ -114,35 +119,35 @@ class TagCaster:
         return table
 
     def cast(self, tag):
-        typecaster = self._cast.get(tag[0], str)
+        typecaster = self._cast.get(tag[0], unicode)
         return DXFTag(tag[0], typecaster(tag[1]))
 
     def castvalue(self, code, value):
-        typecaster = self._cast.get(code, str)
+        typecaster = self._cast.get(code, unicode)
         return typecaster(value)
 
 TYPES = [
-    (str, range(0, 10)),
+    (unicode, range(0, 10)),
     (float, range(10, 60)),
     (int, range(60, 100)),
-    (str, range(100, 106)),
+    (unicode, range(100, 106)),
     (float, range(110, 150)),
     (int, range(170, 180)),
     (float, range(210, 240)),
     (int, range(270, 290)),
     (int, range(290, 300)), # bool 1=True 0=False
-    (str, range(300, 370)),
+    (unicode, range(300, 370)),
     (int, range(370, 390)),
-    (str, range(390, 400)),
+    (unicode, range(390, 400)),
     (int, range(400, 410)),
-    (str, range(410, 420)),
+    (unicode, range(410, 420)),
     (int, range(420, 430)),
-    (str, range(430, 440)),
+    (unicode, range(430, 440)),
     (int, range(440, 460)),
     (float, range(460, 470)),
-    (str, range(470, 480)),
-    (str, range(480, 482)),
-    (str, range(999, 1010)),
+    (unicode, range(470, 480)),
+    (unicode, range(480, 482)),
+    (unicode, range(999, 1010)),
     (float, range(1010, 1060)),
     (int, range(1060, 1072)),
 ]
