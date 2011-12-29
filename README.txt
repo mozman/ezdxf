@@ -32,16 +32,20 @@ a simple example::
 
     import ezdxf
     drawing = ezdxf.new('test.dxf', version='R2010')
-    dxf = drawing.get_dxfengine()
-    drawing.add(dxf.line((0, 0), (10, 0), color=7))
-    drawing.add_layer('TEXTLAYER', color=2)
-    drawing.add(dxf.text('Test', insert=(0, 0.2), layer='TEXTLAYER')
+    modelspace = drawing.modelspace()
+    modelspace.add_line((0, 0), (10, 0), color=7)
+    drawing.layers.create('TEXTLAYER', color=2)
+    modelspace.add_text('Test', insert=(0, 0.2), layer='TEXTLAYER')
     drawing.save()
 
 Installation
 ============
 
-from source::
+Install with pip::
+
+    pip install ezdxf
+
+or from source::
 
     python setup.py install
 
@@ -49,6 +53,8 @@ Documentation
 =============
 
 http://packages.python.org/ezdxf/
+
+http://ezdxf.readthedocs.org/
 
 Feedback is greatly appreciated.
 

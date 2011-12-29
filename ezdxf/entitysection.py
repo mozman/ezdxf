@@ -14,7 +14,7 @@ from .classifiedtags import ClassifiedTags
 from .entityspace import EntitySpace
 from .dxfobjects import DXFDictionary
 
-class EntitySection:
+class EntitySection(object):
     name = 'entities'
     def __init__(self, tags, drawing):
         self._entityspace = EntitySpace(drawing.entitydb)

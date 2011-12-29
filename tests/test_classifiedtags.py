@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.six import StringIO
+from io import StringIO
 from ezdxf.tags import Tags
 from ezdxf.classifiedtags import ClassifiedTags
 

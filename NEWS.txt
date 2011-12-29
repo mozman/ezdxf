@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.2.0 - ...
+
+  * added support for Python 2.7 and PyPy 1.7
+
 Version 0.1.0 - 14 March 2010
 
   * Alpha status

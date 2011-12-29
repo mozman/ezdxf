@@ -5,11 +5,20 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
-
-version = (0, 1, 0)
+version = (0, 2, 0)
 VERSION = "%d.%d.%d"  % version
 __version__ = VERSION
+__author__ = "mozman <mozman@gmx.at>"
+
+# Python2/3 support should be done here
+import sys
+if sys.version_info[0] == 3:
+    # for Python 3
+    tostr = str
+else:
+    # for Python 2
+    tostr = unicode
+# end of Python2/3 support
 
 from .options import options
 # example: ezdxf.options['templatedir'] = 'c:\templates'

@@ -8,13 +8,11 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from collections import namedtuple, Counter
+from io import StringIO
 
 from .codepage import toencoding
 from .const import acadrelease
-from . import six
-
-if six.PY3:
-    unicode = str
+from . import tostr
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONETAG = DXFTag(999999, 'NONE')
@@ -67,7 +65,7 @@ class TagIterator(object):
 
 class StringIterator(TagIterator):
     def __init__(self, dxfcontent):
-        super(StringIterator, self).__init__(six.StringIO(dxfcontent))
+        super(StringIterator, self).__init__(StringIO(dxfcontent))
 
 def text2tags(text):
     return Tags(StringIterator(text))
@@ -119,35 +117,35 @@ class TagCaster:
         return table
 
     def cast(self, tag):
-        typecaster = self._cast.get(tag[0], unicode)
+        typecaster = self._cast.get(tag[0], tostr)
         return DXFTag(tag[0], typecaster(tag[1]))
 
     def castvalue(self, code, value):
-        typecaster = self._cast.get(code, unicode)
+        typecaster = self._cast.get(code, tostr)
         return typecaster(value)
 
 TYPES = [
-    (unicode, range(0, 10)),
+    (tostr, range(0, 10)),
     (float, range(10, 60)),
     (int, range(60, 100)),
-    (unicode, range(100, 106)),
+    (tostr, range(100, 106)),
     (float, range(110, 150)),
     (int, range(170, 180)),
     (float, range(210, 240)),
     (int, range(270, 290)),
     (int, range(290, 300)), # bool 1=True 0=False
-    (unicode, range(300, 370)),
+    (tostr, range(300, 370)),
     (int, range(370, 390)),
-    (unicode, range(390, 400)),
+    (tostr, range(390, 400)),
     (int, range(400, 410)),
-    (unicode, range(410, 420)),
+    (tostr, range(410, 420)),
     (int, range(420, 430)),
-    (unicode, range(430, 440)),
+    (tostr, range(430, 440)),
     (int, range(440, 460)),
     (float, range(460, 470)),
-    (unicode, range(470, 480)),
-    (unicode, range(480, 482)),
-    (unicode, range(999, 1010)),
+    (tostr, range(470, 480)),
+    (tostr, range(480, 482)),
+    (tostr, range(999, 1010)),
     (float, range(1010, 1060)),
     (int, range(1060, 1072)),
 ]
