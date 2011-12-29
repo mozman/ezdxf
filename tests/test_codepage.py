@@ -6,7 +6,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
 
-import sys
+from __future__ import unicode_literals
+
 import unittest
 
 from ezdxf.codepage import toencoding, tocodepage

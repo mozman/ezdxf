@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman --<mozman@gmx.at>
 # Purpose: graphic mixins
 # Created: 2011-04-30
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from . import const
 from .facebuilder import FaceBuilder

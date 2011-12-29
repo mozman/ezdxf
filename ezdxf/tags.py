@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: tagreader
 # Created: 10.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from collections import namedtuple, Counter
-from io import StringIO
 
 from .codepage import toencoding
 from .const import acadrelease
+from .six import StringIO
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONETAG = DXFTag(999999, 'NONE')

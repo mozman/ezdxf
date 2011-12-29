@@ -5,8 +5,8 @@
 # Created: 13.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
 
-import sys
 import unittest
 from io import StringIO
 

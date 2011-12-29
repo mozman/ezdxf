@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: dxf objects wrapper, dxf-objects arn non-graphical entities
 # all dxf objects resides in the OBJECTS SECTION
 # Created: 22.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from .tags import TagGroups
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass

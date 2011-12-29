@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman --<mozman@gmx.at>
 # Purpose: dxfattr
 # Created: 2011-04-27
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from collections import namedtuple
 

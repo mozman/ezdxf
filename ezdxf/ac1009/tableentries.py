@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: ac1009 tableentries
 # Created: 16.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from ..entity import GenericWrapper
 from ..tags import DXFTag

@@ -5,12 +5,11 @@
 # Created: 22.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
 
-import sys
 import unittest
 
 from ezdxf.testtools import ClassifiedTags
-
 from ezdxf.dxfobjects import DXFDictionary
 
 class TestDXFDict(unittest.TestCase):
