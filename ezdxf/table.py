@@ -33,7 +33,7 @@ class GenericTable(DefaultChunk):
     def name(self):
         return tablename(self.tags[1].value)
 
-class Table:
+class Table(object):
     def __init__(self, tags, drawing):
         self._dxfname = tags[1].value
         self._drawing = drawing

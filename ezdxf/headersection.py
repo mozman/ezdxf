@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 from .tags import TagGroups, TAG_STRING_FORMAT
 
-class HeaderSection:
+class HeaderSection(object):
     name = 'header'
     def __init__(self, tags):
         self.hdrvars = OrderedDict()

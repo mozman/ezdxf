@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import TAG_STRING_FORMAT, Tags
 
-class DefaultChunk:
+class DefaultChunk(object):
     def __init__(self, tags, drawing):
         assert isinstance(tags, Tags)
         self.tags = tags

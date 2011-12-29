@@ -14,7 +14,7 @@ from .classifiedtags import ClassifiedTags
 from . import const
 
 
-class BlocksSection:
+class BlocksSection(object):
     name = 'blocks'
     def __init__(self, tags, drawing):
         ## TODO: _blocks could be a dict()

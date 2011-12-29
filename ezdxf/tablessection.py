@@ -12,7 +12,7 @@ from collections import OrderedDict
 from .defaultchunk import iterchunks
 from .table import GenericTable, Table, ViewportTable
 
-class TablesSection:
+class TablesSection(object):
     name = 'tables'
     def __init__(self, tags, drawing):
         self._drawing = drawing

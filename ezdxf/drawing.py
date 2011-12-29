@@ -19,7 +19,7 @@ from .codepage import tocodepage, toencoding
 from .sections import Sections
 from .juliandate import juliandate
 
-class Drawing:
+class Drawing(object):
     def __init__(self, tagreader):
         """ Create a new drawing. """
         def get_rootdict():
