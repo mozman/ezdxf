@@ -12,7 +12,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .gbuilder import AC1015GraphicsBuilder
 from ..ac1009.layouts import AC1009Layout, AC1009BlockLayout
 
-class AC1015Layouts:
+class AC1015Layouts(object):
     def __init__(self, drawing):
         self._layouts = {}
         self._layout_table = None

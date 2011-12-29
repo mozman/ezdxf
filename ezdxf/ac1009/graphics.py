@@ -18,7 +18,7 @@ class GraphicEntity(GenericWrapper):
     def set_builder(self, builder):
         self._builder = builder # IGraphicBuilder
 
-class ColorMixin:
+class ColorMixin(object):
     def set_extcolor(self, color):
         """ Set color by color-name or rgb-tuple, for DXF R12 the nearest
         default DXF color index will be determined.
@@ -31,7 +31,7 @@ class ColorMixin:
     def get_colorname(self):
         return 'Black'
 
-class QuadrilateralMixin:
+class QuadrilateralMixin(object):
     def __getitem__(self, num):
         return self.get_dxf_attrib(VERTEXNAMES[num])
 

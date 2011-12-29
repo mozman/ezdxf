@@ -557,7 +557,7 @@ class LWPolyline(ac1009.GraphicEntity):
     
     def _setup_points(self, points):
         if self.dxf.count > 0:
-            raise ValueError('not callable for an existing LWPolylines')
+            raise ValueError('only callable for new LWPolylines')
         subclass = self.tags.subclasses[2]
         count = 0
         

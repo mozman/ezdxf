@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .. import const
 
-class BuilderConnector:
+class BuilderConnector(object):
     """ Link between GraphicBuilder and Layout/BlockLayout.
 
     requires: IBuilderConnector

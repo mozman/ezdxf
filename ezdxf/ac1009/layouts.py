@@ -10,7 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .gbuilder import AC1009GraphicBuilder
 from ..entityspace import EntitySpace
 
-class AC1009Layouts:
+class AC1009Layouts(object):
     def __init__(self, drawing):
         entityspace = drawing.sections.entities.get_entityspace()
         self._modelspace = AC1009Layout(entityspace, drawing.dxffactory, 0)
