@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from ..tags import DXFStructureError
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass

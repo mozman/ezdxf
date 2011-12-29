@@ -3,8 +3,8 @@
 # Author:  mozman --<mozman@gmx.at>
 # Purpose: test LWPolyline 
 # Created: 2011-05-01
+from __future__ import unicode_literals
 
-import sys
 import unittest
 
 import ezdxf

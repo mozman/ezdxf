@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: dxf factory for R2000/AC1015
 # Created: 12.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from ..tags import Tags
 

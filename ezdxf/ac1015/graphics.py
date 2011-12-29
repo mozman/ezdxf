@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: AC1015 graphics entities
 # Created: 25.03.2011
 # Copyright (C) 2011, Manfred Moitzi
@@ -30,6 +29,8 @@
 # - ACAD_PROXY_ENTITY
 # - OLEFRAME
 # - OLE2FRAME
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
 from ..ac1009 import graphics as ac1009
 from ..tags import DXFTag

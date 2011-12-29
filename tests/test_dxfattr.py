@@ -3,8 +3,8 @@
 # Author:  mozman --<mozman@gmx.at>
 # Purpose: test dxfattr
 # Created: 2011-04-28
+from __future__ import unicode_literals
 
-import sys
 import unittest
 
 from ezdxf.entity import GenericWrapper

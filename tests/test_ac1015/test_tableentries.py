@@ -5,11 +5,9 @@
 # Created: 16.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: GPLv3
+from __future__ import unicode_literals
 
-import sys
 import unittest
-
-from ezdxf.testtools import Tags
 
 from ezdxf.ac1015.tableentries import Layer, Linetype, Style
 from ezdxf.ac1015.tableentries import AppID, BlockRecord, DimStyle
