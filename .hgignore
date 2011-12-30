@@ -2,6 +2,7 @@ syntax: glob
 build/*
 dist/*
 docs/_build/*
+.tox/*
 bigtestfiles/*
 examples/*.dxf
 integration_tests/*.dxf
