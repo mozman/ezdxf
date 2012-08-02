@@ -29,7 +29,7 @@ dwg.layers.create('FLAGS')
 flag = dwg.blocks.new(name='FLAG')
 
 # add dxf entities to the block (the flag)
-# use basepoint = (x, y) define an other basepoint than (0, 0)
+# use basepoint = (x, y) to define an other basepoint than (0, 0)
 flag.add_polyline2D(flag_symbol)
 flag.add_circle((0, 0), .4, dxfattribs={'color': 2})
 
