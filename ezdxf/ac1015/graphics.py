@@ -737,8 +737,6 @@ AcDbText
 1.0
   1
 DEFAULTTEXT
-100
-AcDbAttributeDefinition
  50
 0.0
  51
@@ -777,8 +775,6 @@ DefSubclass('AcDbText', {
     'thickness': DXFAttr(39, None),
     'height': DXFAttr(40, None),
     'text': DXFAttr(1, None),
-}),
-DefSubclass('AcDbAttributeDefinition', {
     'rotation': DXFAttr(50, None),
     'width': DXFAttr(41, None),
     'oblique': DXFAttr(51, None),

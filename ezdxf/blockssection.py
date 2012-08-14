@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
 
-from .tags import TagGroups, Tags, DXFStructureError
+from .tags import TagGroups
 from .classifiedtags import ClassifiedTags
 from . import const
 
