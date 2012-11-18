@@ -20,7 +20,7 @@ class TestTemplateFinder(unittest.TestCase):
     def test_filepath(self):
         finder = TemplateFinder()
         result = finder.filepath('AC1009')
-        filename = os.path.join('ezdxf', 'ezdxf', 'templates', 'AC1009.dxf')
+        filename = os.path.join('ezdxf', 'templates', 'AC1009.dxf')
         self.assertTrue(result.endswith(filename))
         
     def test_set_templatepath(self):
