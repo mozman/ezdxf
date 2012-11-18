@@ -2,3 +2,9 @@ include NEWS.txt README.txt LICENSE.txt
 recursive-include examples *.py *.bat *.sh
 recursive-include tests *.py
 recursive-include tests/data *
+recursive-include ezdxf/ac1009 *.py
+recursive-include ezdxf/ac1015 *.py
+recursive-include ezdxf/ac1018 *.py
+recursive-include ezdxf/ac1021 *.py
+recursive-include ezdxf/ac1024 *.py
+recursive-include ezdxf/templates *.dxf
