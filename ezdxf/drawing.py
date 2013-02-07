@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
+import io
 
 from . import database
 from .handle import HandleGenerator
@@ -138,12 +139,14 @@ class Drawing(object):
         self.save()
 
     def save(self):
-        # TODO: Pythen 2.7 support
-        # - all write methods using uncode strings
-        # - call write() with a StringIO() object
-        # -
-        with open(self.filename, 'wt', encoding=self.encoding) as fp:
+        # TODO: Python 2.7 support - test it !!!
+        buffer = io.FileIO(self.filename, mode='w')
+        fp = io.TextIOWrapper(buffer, encoding=self.encoding)
+        try:
             self.write(fp)
+        finally:
+            fp.close()
+            buffer.close()
 
     def write(self, stream):
         self._update_metadata()
