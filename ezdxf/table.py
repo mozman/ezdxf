@@ -151,7 +151,7 @@ class Table(object):
         del self.entitydb[handle]
 
     def write(self, stream):
-        """ Write DXF represention to stream, stream opened with mode='wt'. """
+        """ Write DXF representation to stream, stream opened with mode='wt'. """
         def prologue():
             stream.write('  0\nTABLE\n')
             self._update_meta_data()

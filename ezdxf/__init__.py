@@ -21,10 +21,12 @@ else:
     PY3 = False
     tostr = unicode
 # end of Python2/3 support
+import io
 
 from .options import options
 # example: ezdxf.options['templatedir'] = 'c:\templates'
 from .tags import dxfinfo
+
 
 def read(stream):
     from .drawing import Drawing
@@ -37,9 +39,14 @@ def readfile(filename):
         return info.encoding
 
     from .drawing import Drawing
-    # TODO: Python 2.7 support
-    with open(filename, encoding=get_encoding()) as fp:
+    # TODO: Python 2.7 support - test it!!!!
+    buffer = io.FileIO(filename)
+    fp = io.TextIOWrapper(buffer, encoding=get_encoding())
+    try:
         dwg = Drawing.read(fp)
+    finally:
+        fp.close()
+        buffer.close()
     dwg.filename = filename
     return dwg
 
