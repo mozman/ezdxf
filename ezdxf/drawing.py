@@ -8,9 +8,9 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
-import io
 
 from . import database
+from . import open_encoded_text_file
 from .handle import HandleGenerator
 from .tags import TagIterator, dxfinfo, DXFTag
 from .dxffactory import dxffactory
@@ -139,14 +139,8 @@ class Drawing(object):
         self.save()
 
     def save(self):
-        # TODO: Python 2.7 support - test it !!!
-        buffer = io.FileIO(self.filename, mode='w')
-        fp = io.TextIOWrapper(buffer, encoding=self.encoding)
-        try:
-            self.write(fp)
-        finally:
-            fp.close()
-            buffer.close()
+        fp = open_encoded_text_file(self.filename, mode='w', encoding=self.encoding)
+        self.write(fp)
 
     def write(self, stream):
         self._update_metadata()
