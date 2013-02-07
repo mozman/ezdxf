@@ -139,8 +139,8 @@ class Drawing(object):
         self.save()
 
     def save(self):
-        fp = open_encoded_text_file(self.filename, mode='w', encoding=self.encoding)
-        self.write(fp)
+        with open_encoded_text_file(self.filename, mode='w', encoding=self.encoding) as fp:
+            self.write(fp)
 
     def write(self, stream):
         self._update_metadata()

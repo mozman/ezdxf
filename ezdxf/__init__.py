@@ -49,8 +49,8 @@ def readfile(filename):
         return info.encoding
 
     from .drawing import Drawing
-    fp = open_encoded_text_file(filename, encoding=get_encoding())
-    dwg = Drawing.read(fp)
+    with open_encoded_text_file(filename, encoding=get_encoding()) as fp:
+        dwg = Drawing.read(fp)
     dwg.filename = filename
     return dwg
 
