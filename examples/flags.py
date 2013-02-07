@@ -4,7 +4,7 @@
 # Purpose: 'flag' example
 # Created: 04.11.2010
 # Copyright (C) 2010, 2011 Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 import sys
 import os

@@ -4,7 +4,7 @@
 # Purpose: examples for dxfwrite usage, see also tests for examples
 # Created: 09.02.2010
 # Copyright (C) 2010, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 import sys
 import os

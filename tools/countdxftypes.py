@@ -4,7 +4,7 @@
 # Purpose: count dxftypes
 # Created: 28.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 from operator import itemgetter as _itemgetter
 
 import sys

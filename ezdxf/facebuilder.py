@@ -3,7 +3,7 @@
 # Purpose: optimizing face builder
 # Created: 04.04.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 

@@ -3,7 +3,7 @@
 # Purpose: dxf factory for R12/AC1009
 # Created: 11.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 """
 File Sections
 =============

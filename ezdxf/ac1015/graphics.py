@@ -3,7 +3,7 @@
 # Purpose: AC1015 graphics entities
 # Created: 25.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 # Support for new AC1015 entities planned for the future:
 # - MText

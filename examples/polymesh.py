@@ -4,7 +4,7 @@
 # Purpose: example for polymesh usage
 # Created: 31.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 import sys
 import os

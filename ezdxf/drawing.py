@@ -3,7 +3,7 @@
 # Purpose: drawing module
 # Created: 11.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -138,6 +138,10 @@ class Drawing(object):
         self.save()
 
     def save(self):
+        # TODO: Pythen 2.7 support
+        # - all write methods using uncode strings
+        # - call write() with a StringIO() object
+        # -
         with open(self.filename, 'wt', encoding=self.encoding) as fp:
             self.write(fp)
 
