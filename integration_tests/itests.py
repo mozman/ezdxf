@@ -4,7 +4,7 @@
 # Purpose: itest.py
 # Created: 28.04.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 import sys
 import os

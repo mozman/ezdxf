@@ -4,7 +4,7 @@
 # Purpose: test entity section
 # Created: 15.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 from __future__ import unicode_literals
 
 import unittest

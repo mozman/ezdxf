@@ -5,7 +5,7 @@
 # table entries - check if AutoCAD accepts the new created data structures.
 # Created: 20.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 import itests
 import ezdxf

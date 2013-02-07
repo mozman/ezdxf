@@ -3,7 +3,7 @@
 # Purpose: AC1009 layout manager
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 # The ModelSpace is a special Layout called 'Model'
 from __future__ import unicode_literals

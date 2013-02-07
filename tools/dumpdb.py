@@ -4,7 +4,7 @@
 # Purpose: dump entity database
 # Created: 14.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 import sys
 import os

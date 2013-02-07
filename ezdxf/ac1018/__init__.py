@@ -3,7 +3,7 @@
 # Purpose: dxf factory for R2004/AC1018
 # Created: 12.03.2011
 # Copyright (C) , Manfred Moitzi
-# License: GPLv3
+# License: MIT License
 
 # Support for new AC1018 entities planned for the future:
 # - no new entities intruduced
