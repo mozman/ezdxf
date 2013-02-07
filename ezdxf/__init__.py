@@ -13,24 +13,34 @@ __author__ = "mozman <mozman@gmx.at>"
 # Python2/3 support should be done here
 import sys
 if sys.version_info[0] > 2:
-    PY3 = True
     # for Python 3
     tostr = str
 else:
     # for Python 2
-    PY3 = False
     tostr = unicode
 # end of Python2/3 support
+
 import io
+from contextlib import contextmanager
 
 from .options import options
 # example: ezdxf.options['templatedir'] = 'c:\templates'
 from .tags import dxfinfo
 
+@contextmanager # TODO: test it!!!
+def open_encoded_text_file(filename, mode='r', encoding='cp1252'):
+    buffer = io.FileIO(filename, mode)
+    fp = io.TextIOWrapper(buffer, encoding=encoding)
+    try:
+        yield fp
+    finally:
+        fp.close()
+        buffer.close()
 
 def read(stream):
     from .drawing import Drawing
     return Drawing.read(stream)
+
 
 def readfile(filename):
     def get_encoding():
@@ -39,14 +49,8 @@ def readfile(filename):
         return info.encoding
 
     from .drawing import Drawing
-    # TODO: Python 2.7 support - test it!!!!
-    buffer = io.FileIO(filename)
-    fp = io.TextIOWrapper(buffer, encoding=get_encoding())
-    try:
-        dwg = Drawing.read(fp)
-    finally:
-        fp.close()
-        buffer.close()
+    fp = open_encoded_text_file(filename, encoding=get_encoding())
+    dwg = Drawing.read(fp)
     dwg.filename = filename
     return dwg
 
