@@ -22,6 +22,7 @@ VARMAP = {
 """
 TABLEEPILOGUE = "}\n"
 
+
 def write_table(filename, headersection):
     def write_var(key, value):
         if value.ispoint:
@@ -41,6 +42,7 @@ def write_table(filename, headersection):
             write_var(key, value)
         fp.write(TABLEEPILOGUE)
 
+
 def export_header_table(dwg):
     print("writing HEADER table for DXF Version {0.dxfversion}".format(dwg))
     filename = os.path.join('..', 'ezdxf', dwg.dxfversion.lower(), 'headervars.py')
@@ -52,5 +54,5 @@ def main():
         dwg = ezdxf.new(version)
         export_header_table(dwg)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

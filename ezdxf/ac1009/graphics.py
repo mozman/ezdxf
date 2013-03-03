@@ -28,7 +28,7 @@ class ColorMixin(object):
         pass
 
     def get_rgbcolor(self):
-        return (0, 0, 0)
+        return 0, 0, 0
 
     def get_colorname(self):
         return 'Black'
@@ -41,7 +41,8 @@ class QuadrilateralMixin(object):
     def __setitem__(self, num, value):
         return self.set_dxf_attrib(VERTEXNAMES[num], value)
 
-def make_attribs(additional={}):
+
+def make_attribs(additional=None):
     dxfattribs = {
         'handle': DXFAttr(5, None),
         'layer': DXFAttr(8, None),  # layername as string, default is '0'
@@ -50,7 +51,8 @@ def make_attribs(additional={}):
         'paperspace': DXFAttr(67, None),  # 0 .. modelspace, 1 .. paperspace, default is 0
         'extrusion': DXFAttr(210, 'Point3D'),  # never used !?
     }
-    dxfattribs.update(additional)
+    if additional is not None:
+        dxfattribs.update(additional)
     return DXFAttributes(DefSubclass(None, dxfattribs))
 
 _LINE_TPL = """  0
@@ -377,7 +379,9 @@ class Insert(GraphicEntity):
                 return attrib
         return None
 
-    def add_attrib(self, tag, text, insert, dxfattribs={}):
+    def add_attrib(self, tag, text, insert, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
@@ -625,12 +629,16 @@ class Polyline(GraphicEntity, ColorMixin):
     def points(self):
         return [vertex.dxf.location for vertex in self]
 
-    def append_vertices(self, points, dxfattribs={}):
+    def append_vertices(self, points, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         if len(points) > 0:
             first_vertex_index, last_vertex_index = self._get_index_range()
             self._insert_vertices(last_vertex_index + 1, points, dxfattribs)
 
-    def insert_vertices(self, pos, points, dxfattribs={}):
+    def insert_vertices(self, pos, points, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         if len(points) > 0:
             first_vertex_index, last_vertex_index = self._get_index_range()
             self._insert_vertices(first_vertex_index + pos, points, dxfattribs)
@@ -667,7 +675,7 @@ class Polyline(GraphicEntity, ColorMixin):
         while True:
             entity = self._builder._get_entity_at_index(last_vertex_index)
             if entity.dxftype() == 'SEQEND':
-                return (first_vertex_index, last_vertex_index-1)
+                return first_vertex_index, last_vertex_index - 1
             last_vertex_index += 1
 
     def cast(self):

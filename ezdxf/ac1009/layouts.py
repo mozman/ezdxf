@@ -98,7 +98,7 @@ class AC1009BlockLayout(AC1009GraphicBuilder):
         except AttributeError:
             handle = entity
         try:
-            index = self._entityspace.index(handle)
+            self._entityspace.index(handle)
             return True
         except IndexError:
             return False
@@ -111,7 +111,9 @@ class AC1009BlockLayout(AC1009GraphicBuilder):
     def name(self):
         return self.block.dxf.name
 
-    def add_attdef(self, tag, insert, dxfattribs={}):
+    def add_attdef(self, tag, insert, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         dxfattribs['tag'] = tag
         dxfattribs['insert'] = insert
         return self._create('ATTDEF', dxfattribs)
