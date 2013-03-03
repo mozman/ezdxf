@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ..tags import DXFStructureError
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..entity import GenericWrapper, ExtendedType
+from ..entity import GenericWrapper, DXFExtendedPointType
 from .. import const
 from ..const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin

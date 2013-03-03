@@ -52,6 +52,7 @@ class DXFNamespace(object):
         return self.wrapper.update_dxf_attribs(attribs)
 
 
+# noinspection PyUnresolvedReferences
 class GenericWrapper(object):
     TEMPLATE = ""
     DXFATTRIBS = {}
@@ -111,15 +112,15 @@ class GenericWrapper(object):
 
     def _get_dxf_attrib(self, dxfattr):
         # no subclass is subclass index 0
-        subclasstags = self.tags.subclasses[dxfattr.subclass]
+        subclass_tags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:
-            tags = ExtendedType(subclasstags)
+            tags = DXFExtendedPointType(subclass_tags)
             return tags.get_value(dxfattr.code, dxfattr.xtype)
         else:
-            return subclasstags.getvalue(dxfattr.code)
+            return subclass_tags.getvalue(dxfattr.code)
 
     def _get_extended_type(self, code, xtype):
-        tags = ExtendedType(self.tags)
+        tags = DXFExtendedPointType(self.tags)
         return tags.get_value(code, xtype)
 
     def _set_dxf_attrib(self, key, value):
@@ -127,21 +128,21 @@ class GenericWrapper(object):
         # no subclass is subclass index 0
         subclasstags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:
-            tags = ExtendedType(subclasstags)
+            tags = DXFExtendedPointType(subclasstags)
             tags.set_value(dxfattr.code, dxfattr.xtype, value)
         else:
-            self._settag(subclasstags, dxfattr.code, value)
+            self._set_tag(subclasstags, dxfattr.code, value)
 
     def _set_extended_type(self, code, xtype, value):
-        tags = ExtendedType(self.tags)
+        tags = DXFExtendedPointType(self.tags)
         return tags.set_value(code, xtype, value)
 
     @staticmethod
-    def _settag(tags, code, value):
+    def _set_tag(tags, code, value):
         tags.setfirst(code, cast_tag_value(code, value))
 
 
-class ExtendedType(object):
+class DXFExtendedPointType(object):
     def __init__(self, tags):
         self.tags = tags
 
@@ -196,14 +197,14 @@ class ExtendedType(object):
             raise TypeError('Unknown extended type: %s' % xtype)
 
     def _set_point(self, code, value):
-        def settag(index, tag):
+        def set_tag(index, tag):
             if self.tags[index].code == tag.code:
                 self.tags[index] = tag
             else:
                 raise DXFStructureError('DXF coordinate error')
         index = self._point_index(code)
         for x, coord in enumerate(value):
-            settag(index + x, DXFTag(code + x * 10, float(coord)))
+            set_tag(index + x, DXFTag(code + x * 10, float(coord)))
 
     def _set_flexible_point(self, code, value):
         def append_axis():
@@ -214,14 +215,14 @@ class ExtendedType(object):
             index = self._point_index(code)
             self.tags.pop(index + 2)
 
-        newaxis = len(value)
-        if newaxis not in (2, 3):
+        new_axis = len(value)
+        if new_axis not in (2, 3):
             raise ValueError("2D or 3D point required (tuple).")
-        oldaxis = self._count_axis(code)
-        if oldaxis > 1:
-            if newaxis == 2 and oldaxis == 3:
+        old_axis = self._count_axis(code)
+        if old_axis > 1:
+            if new_axis == 2 and old_axis == 3:
                 remove_axis()
-            elif newaxis == 3 and oldaxis == 2:
+            elif new_axis == 3 and old_axis == 2:
                 append_axis()
         else:
             raise DXFStructureError("Invalid axis count of point.")

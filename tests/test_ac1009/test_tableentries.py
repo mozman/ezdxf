@@ -12,6 +12,7 @@ import unittest
 from ezdxf.ac1009.tableentries import Layer, Linetype, Style, AppID, UCS
 from ezdxf.ac1009.tableentries import View, Viewport, DimStyle
 
+
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
         self.layer = Layer.new('FFFF')
@@ -41,6 +42,31 @@ class TestNewLayer(unittest.TestCase):
     def test_set_color(self):
         self.layer.dxf.color = '1'
         self.assertEqual(1, self.layer.dxf.color)
+
+    def test_set_color_2(self):
+        self.layer.set_color(-1)
+        self.assertEqual(1, self.layer.get_color())
+
+    def test_set_color_for_off_layer(self):
+        self.layer.set_color(7)
+        self.layer.off()
+        self.assertEqual(7, self.layer.get_color())
+        self.assertEqual(-7, self.layer.dxf.color)
+
+    def test_is_locked(self):
+        self.layer.lock()
+        self.assertTrue(self.layer.is_locked())
+
+    def test_is_not_locked(self):
+        self.assertFalse(self.layer.is_locked())
+
+    def test_is_on(self):
+        self.assertTrue(self.layer.is_on())
+
+    def test_is_off(self):
+        self.layer.dxf.color = -100
+        self.assertTrue(self.layer.is_off())
+
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
