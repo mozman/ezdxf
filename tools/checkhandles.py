@@ -14,6 +14,7 @@ FORMAT = 'ACAD release: {0.release}\n'\
          'DXF Version: {0.version}\n'\
          '$HANDSEED: {0.handseed}'
 
+
 def printhandles(handles, info):
     print(FORMAT.format(info))
     print("%d handles found." % len(handles))
@@ -21,6 +22,7 @@ def printhandles(handles, info):
     print('min handle: %X' % sortedhandles[0])
     print('max handle: %X' % sortedhandles[-1])
     printduplicates(sortedhandles)
+
 
 def printduplicates(handles):
     count = 0
@@ -31,6 +33,7 @@ def printduplicates(handles):
             count += 1
     if count > 1:
         print('found %d duplicate handles' % count)
+
 
 def checkhandles(stream):
     info = dxfinfo(stream)
@@ -47,10 +50,11 @@ def checkhandles(stream):
                 handles.append(handle)
     printhandles(handles, info)
 
+
 def main(dxffilename):
     with open(dxffilename) as fp:
         checkhandles(fp)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main(sys.argv[1])

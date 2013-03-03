@@ -12,6 +12,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .gbuilder import AC1015GraphicsBuilder
 from ..ac1009.layouts import AC1009Layout, AC1009BlockLayout
 
+
 class AC1015Layouts(object):
     def __init__(self, drawing):
         self._layouts = {}
@@ -44,7 +45,7 @@ class AC1015Layouts(object):
     def names_in_taborder(self):
         names = []
         for name, layout in self._layouts.items():
-            names.append( (layout.taborder, name) )
+            names.append((layout.taborder, name))
         return [name for order, name in sorted(names)]
 
 
@@ -70,7 +71,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
                 yield entity
 
     def __contains__(self, entity):
-        if isinstance(entity, str): # handle
+        if isinstance(entity, str):  # handle
             entity = self._dxffactory.wrap_handle(entity)
         if entity.get_dxf_attrib('block_record') == self._block_record:
             return True
@@ -95,6 +96,7 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
         # part of IBuilderConnector
         entity.dxf.paperspace = self._paperspace
         entity.dxf.block_record = self._block_record
+
 
 class AC1015BlockLayout(AC1009BlockLayout, AC1015GraphicsBuilder):
     pass

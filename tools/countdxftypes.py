@@ -12,11 +12,14 @@ import ezdxf
 
 from collections import Counter
 
+
 def count_elements(db):
     counter = Counter()
     for tags in db.values():
         counter[tags[0].value] += 1
     return counter
+
+
 def print_result(counter):
     sum_ = 0
 
@@ -25,6 +28,7 @@ def print_result(counter):
         print("{1:6d}x DXFType: {0}".format(key, count))
     print("Overall sum: {0}".format(sum_))
 
+
 def main(filename):
     print('reading file ...')
     dwg = ezdxf.readfile(filename)
@@ -32,5 +36,5 @@ def main(filename):
     result = count_elements(dwg.entitydb)
     print_result(result)
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main(sys.argv[1])

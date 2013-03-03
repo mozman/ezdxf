@@ -10,5 +10,6 @@ __author__ = "mozman <mozman@gmx.at>"
 from .headervars import VARMAP
 from ..ac1021 import AC1021Factory
 
+
 class AC1024Factory(AC1021Factory):
     HEADERVARS = dict(VARMAP)

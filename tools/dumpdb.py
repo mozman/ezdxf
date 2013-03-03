@@ -10,6 +10,7 @@ import sys
 import os
 import ezdxf
 
+
 def main(filename):
     ezdxf.options['DEBUG'] = True
     drawing = ezdxf.readfile(filename)
@@ -23,5 +24,5 @@ def main(filename):
     with open(dbcollisions, 'wt') as stream:
         drawing.entitydb.dumpcollisions(stream)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main(sys.argv[1])

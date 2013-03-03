@@ -9,10 +9,11 @@ __author__ = "mozman <mozman@gmx.at>"
 
 
 class AC1015GraphicsBuilder(object):
-    def add_lwpolyline(self, points, dxfattribs={}):
+    def add_lwpolyline(self, points, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         closed = dxfattribs.pop('closed', False)
         lwpolyline = self._create('LWPOLYLINE', dxfattribs)
         lwpolyline.close(closed)
         lwpolyline._setup_points(points)
         return lwpolyline
-

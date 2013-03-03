@@ -10,10 +10,12 @@ import sys
 
 import ezdxf
 
+
 def main(filename):
     dwg = ezdxf.readfile(filename)
     with open('objects.txt', 'wt') as outstream:
         dumpobjects(outstream, dwg.entitydb, dwg.sections.objects)
+
 
 def dumpobjects(stream, database, objects):
     def printobj(tags):
@@ -21,10 +23,10 @@ def dumpobjects(stream, database, objects):
         handle = tags.gethandle()
         stream.write("handle: %6s name: %s\n" % (handle, name))
 
-    handles = ( (int(handle, 16), handle) for handle in objects.iterhandles() )
+    handles = ((int(handle, 16), handle) for handle in objects.iterhandles())
     for key, handle in sorted(handles):
         tags = database[handle]
         printobj(tags)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main(sys.argv[1])
