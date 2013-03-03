@@ -12,26 +12,27 @@ import unittest
 import ezdxf
 from ezdxf.const import VTX_3D_POLYLINE_VERTEX
 
+
 class TestPolyline(unittest.TestCase):
     def setUp(self):
         self.dwg = ezdxf.new('AC1015')
         self.layout = self.dwg.modelspace()
 
     def test_create_polyline2D(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         self.assertEqual((0., 0.), polyline[0].dxf.location)
         self.assertEqual((1., 1.), polyline[1].dxf.location)
         self.assertEqual('polyline2d', polyline.getmode())
 
     def test_create_polyline3D(self):
-        polyline = self.layout.add_polyline3d( [(1, 2, 3), (4, 5, 6)] )
+        polyline = self.layout.add_polyline3d([(1, 2, 3), (4, 5, 6)])
         self.assertEqual((1., 2., 3.), polyline[0].dxf.location)
         self.assertEqual((4., 5., 6.), polyline[1].dxf.location)
         self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
         self.assertEqual('polyline3d', polyline.getmode())
 
     def test_set_vertex(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1), (2, 2), (3, 3)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
         polyline[2].dxf.location = (7, 7)
         self.assertEqual((7., 7.), polyline[2].dxf.location)
 
@@ -46,29 +47,30 @@ class TestPolyline(unittest.TestCase):
         self.assertEqual([(1, 1), (2, 2)], polyline.points[1:3])
 
     def test_append_vertices(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         polyline.append_vertices([(7, 7), (8, 8)])
         self.assertEqual((7., 7.), polyline[2].dxf.location)
         self.assertEqual(4, len(polyline))
 
     def test_insert_vertices(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         polyline.insert_vertices(0, [(7, 7), (8, 8)])
         self.assertEqual((7, 7), polyline[0].dxf.location)
         self.assertEqual((1, 1), polyline[3].dxf.location)
         self.assertEqual(4, len(polyline))
 
     def test_delete_one_vertex(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1), (2, 2), (3, 3)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
         polyline.delete_vertices(0)
         self.assertEqual((1, 1), polyline[0].dxf.location)
         self.assertEqual(3, len(polyline))
 
     def test_delete_two_vertices(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1), (2, 2), (3, 3)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
         polyline.delete_vertices(pos=0, count=2)
         self.assertEqual((2, 2), polyline[0].dxf.location)
         self.assertEqual(2, len(polyline))
+
 
 class TestPolymesh(unittest.TestCase):
     def setUp(self):
@@ -76,22 +78,23 @@ class TestPolymesh(unittest.TestCase):
         self.layout = self.dwg.modelspace()
 
     def test_create_mesh(self):
-        mesh = self.layout.add_polymesh( (4, 4) )
+        mesh = self.layout.add_polymesh((4, 4))
 
     def test_set_vertex(self):
-        mesh = self.layout.add_polymesh( (4, 4) )
-        mesh.set_mesh_vertex( (1, 1), (1,2,3))
-        self.assertEqual((1,2,3), mesh.get_mesh_vertex( (1, 1) ).dxf.location)
+        mesh = self.layout.add_polymesh((4, 4))
+        mesh.set_mesh_vertex((1, 1), (1, 2, 3))
+        self.assertEqual((1, 2, 3), mesh.get_mesh_vertex((1, 1)).dxf.location)
 
     def test_error_nindex(self):
-        mesh = self.layout.add_polymesh( (4, 4) )
+        mesh = self.layout.add_polymesh((4, 4))
         with self.assertRaises(IndexError):
-            mesh.get_mesh_vertex( (0, 4) )
+            mesh.get_mesh_vertex((0, 4))
 
     def test_error_mindex(self):
-        mesh = self.layout.add_polymesh( (4, 4) )
+        mesh = self.layout.add_polymesh((4, 4))
         with self.assertRaises(IndexError):
-            mesh.get_mesh_vertex( (4, 0) )
+            mesh.get_mesh_vertex((4, 0))
+
 
 class TestPolyface(unittest.TestCase):
     def setUp(self):
@@ -104,12 +107,12 @@ class TestPolyface(unittest.TestCase):
 
     def test_add_face(self):
         face = self.layout.add_polyface()
-        face.append_face([(0,0), (1,1), (2,2), (3,3)])
-        self.assertEqual([(0,0), (1,1), (2,2), (3,3), (0,0,0)], face.points)
+        face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
+        self.assertEqual([(0, 0), (1, 1), (2, 2), (3, 3), (0, 0, 0)], face.points)
 
     def test_face_indices(self):
         face = self.layout.add_polyface()
-        face.append_face([(0,0), (1,1), (2,2), (3,3)])
+        face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
         facevertex = face[4]
         self.assertEqual(1, facevertex.dxf.vtx0)
         self.assertEqual(2, facevertex.dxf.vtx1)
@@ -118,9 +121,9 @@ class TestPolyface(unittest.TestCase):
 
     def test_add_two_face_indices(self):
         face = self.layout.add_polyface()
-        face.append_face([(0,0), (1,1), (2,2), (3,3)])
+        face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
         # second face has same vertices as the first face
-        face.append_face([(0,0), (1,1), (2,2)])
+        face.append_face([(0, 0), (1, 1), (2, 2)])
         facevertex = face[5] # second face
         self.assertEqual(1, facevertex.dxf.vtx0)
         self.assertEqual(2, facevertex.dxf.vtx1)
@@ -130,14 +133,14 @@ class TestPolyface(unittest.TestCase):
 
     def test_faces(self):
         face = self.layout.add_polyface()
-        face.append_face([(0,0), (1,1), (2,2), (3,3)])
-        face.append_face([(0,0), (1,1), (2,2)])
+        face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
+        face.append_face([(0, 0), (1, 1), (2, 2)])
         result = list(face.faces())
         self.assertEqual(2, len(result))
         points1 = [vertex.dxf.location for vertex in result[0]]
         # the last vertex is the face-vertex and is always (0,0,0)
         # the face-vertex contains indices to the face building vertices
-        self.assertEqual( [(0,0), (1,1), (2,2), (3,3), (0,0,0)], points1 )
+        self.assertEqual([(0, 0), (1, 1), (2, 2), (3, 3), (0, 0, 0)], points1)
 
     def test_optimized_cube(self):
         face = self.layout.add_polyface()
@@ -147,16 +150,17 @@ class TestPolyface(unittest.TestCase):
         self.assertEqual(8, face.dxf.mcount) # vertices count
         self.assertEqual(6, face.dxf.ncount) # faces count
 
+
 def cube_faces():
     # cube corner points
-    p1 = (0,0,0)
-    p2 = (0,0,1)
-    p3 = (0,1,0)
-    p4 = (0,1,1)
-    p5 = (1,0,0)
-    p6 = (1,0,1)
-    p7 = (1,1,0)
-    p8 = (1,1,1)
+    p1 = (0, 0, 0)
+    p2 = (0, 0, 1)
+    p3 = (0, 1, 0)
+    p4 = (0, 1, 1)
+    p5 = (1, 0, 0)
+    p6 = (1, 0, 1)
+    p7 = (1, 1, 0)
+    p8 = (1, 1, 1)
 
     # define the 6 cube faces
     # look into -x direction
@@ -170,22 +174,24 @@ def cube_faces():
         [p2, p6, p8, p4],
     ]
 
+
 class TestInternals(unittest.TestCase):
     def setUp(self):
         self.dwg = ezdxf.new('AC1015')
         self.layout = self.dwg.modelspace()
 
     def test_polyline2d(self):
-        polyline = self.layout.add_polyline2d( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         self.assertEqual(polyline.tags.subclasses[2][0], (100, 'AcDb2dPolyline'))
         vertex = polyline[0]
         self.assertEqual(vertex.tags.subclasses[3][0], (100, 'AcDb2dVertex'))
 
     def test_polyline3d(self):
-        polyline = self.layout.add_polyline3d( [(0, 0), (1, 1)] )
+        polyline = self.layout.add_polyline3d([(0, 0), (1, 1)])
         self.assertEqual(polyline.tags.subclasses[2][0], (100, 'AcDb3dPolyline'))
         vertex = polyline[0]
         self.assertEqual(vertex.tags.subclasses[3][0], (100, 'AcDb3dPolylineVertex'))
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

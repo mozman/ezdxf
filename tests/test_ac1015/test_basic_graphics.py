@@ -11,26 +11,27 @@ import unittest
 
 import ezdxf
 
+
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
         self.dwg = ezdxf.new('AC1015')
         self.layout = self.dwg.modelspace()
 
-class TestBasicEntities(SetupDrawing):
 
+class TestBasicEntities(SetupDrawing):
     def test_create_line(self):
         line = self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual((0.,0.), line.dxf.start)
-        self.assertEqual((1.,1.), line.dxf.end)
+        self.assertEqual((0., 0.), line.dxf.start)
+        self.assertEqual((1., 1.), line.dxf.end)
 
     def test_create_circle(self):
         circle = self.layout.add_circle((3, 3), 5)
-        self.assertEqual((3.,3.), circle.dxf.center)
+        self.assertEqual((3., 3.), circle.dxf.center)
         self.assertEqual(5., circle.dxf.radius)
 
     def test_create_arc(self):
         arc = self.layout.add_arc((3, 3), 5, 30, 60)
-        self.assertEqual((3.,3.), arc.dxf.center)
+        self.assertEqual((3., 3.), arc.dxf.center)
         self.assertEqual(5., arc.dxf.radius)
         self.assertEqual(30., arc.dxf.startangle)
         self.assertEqual(60., arc.dxf.endangle)
@@ -60,5 +61,6 @@ class TestBasicEntities(SetupDrawing):
         text = self.layout.add_text('text')
         self.assertEqual('text', text.dxf.text)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

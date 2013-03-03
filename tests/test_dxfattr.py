@@ -37,13 +37,14 @@ AcDbLine
 1.0
 """
 
+
 class AttributeChecker(GenericWrapper):
     TEMPLATE = XTEMPLATE
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
             'block_record': DXFAttr(330, None),
-            }),
+        }),
         DefSubclass('AcDbEntity', {
             'paperspace': DXFAttr(67, None),
             'layer': DXFAttr(8, None),
@@ -51,13 +52,14 @@ class AttributeChecker(GenericWrapper):
             'ltscale': DXFAttr(48, None),
             'invisible': DXFAttr(60, None),
             'color': DXFAttr(62, None),
-            }),
+        }),
         DefSubclass('AcDbLine', {
             'start': DXFAttr(10, 'Point2D/3D'),
             'end': DXFAttr(11, 'Point2D/3D'),
             'thickness': DXFAttr(39, None),
             'extrusion': DXFAttr(210, 'Point3D'),
         }))
+
 
 class TestDXFAttributes(unittest.TestCase):
     def setUp(self):
@@ -66,6 +68,7 @@ class TestDXFAttributes(unittest.TestCase):
     def test_init(self):
         count = len(list(self.dxfattribs.subclasses()))
         self.assertEqual(3, count)
+
 
 class TestAttributeAccess(unittest.TestCase):
     def setUp(self):
@@ -95,5 +98,6 @@ class TestAttributeAccess(unittest.TestCase):
     def test_get_from_AcDbLine_subclass(self):
         self.assertEqual((0, 0, 0), self.entity.dxf.start)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

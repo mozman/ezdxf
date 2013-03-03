@@ -15,6 +15,7 @@ from ezdxf.testtools import DrawingProxy, normlines, Tags
 
 from ezdxf.blockssection import BlocksSection
 
+
 class TestBlocksSection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -46,6 +47,7 @@ class TestBlocksSection(unittest.TestCase):
         newblock = self.section.new('TEST')
         block = self.section['TEST']
         self.assertEqual('TEST', block.name)
+
 
 EMPTYSEC = """  0
 SECTION
@@ -293,5 +295,5 @@ ENDBLK
 ENDSEC
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

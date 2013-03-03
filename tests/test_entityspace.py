@@ -12,6 +12,7 @@ import unittest
 from ezdxf.testtools import DrawingProxy, TagGroups
 from ezdxf.entityspace import EntitySpace
 
+
 class TestEntitySpace(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -21,6 +22,7 @@ class TestEntitySpace(unittest.TestCase):
         for group in TagGroups.fromtext(TESTENTITIES):
             self.space.add(group)
         self.assertEqual(4, len(self.space))
+
 
 TESTENTITIES = """  0
 POLYLINE
@@ -88,5 +90,5 @@ BYBLOCK
      0
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

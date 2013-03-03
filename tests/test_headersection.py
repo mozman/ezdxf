@@ -12,6 +12,7 @@ import unittest
 from ezdxf.testtools import DrawingProxy, Tags
 from ezdxf.headersection import HeaderSection
 
+
 class TestHeaderSection(unittest.TestCase):
     def setUp(self):
         tags = Tags.fromtext(TESTHEADER)
@@ -69,6 +70,7 @@ class TestHeaderSection(unittest.TestCase):
         del self.header['$ACADVER']
         self.assertTrue('$ACADVER' not in self.header)
 
+
 TESTHEADER = """  0
 SECTION
   2
@@ -105,5 +107,5 @@ $EXTMAX
 ENDSEC
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

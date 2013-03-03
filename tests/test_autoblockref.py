@@ -12,6 +12,7 @@ import unittest
 
 import ezdxf
 
+
 class TestAutoBlockref(unittest.TestCase):
     def setUp(self):
         self.dwg = ezdxf.new()
@@ -35,5 +36,5 @@ class TestAutoBlockref(unittest.TestCase):
         self.assertEqual('SEQEND', entities[3].dxftype())
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

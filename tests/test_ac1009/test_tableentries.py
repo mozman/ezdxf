@@ -71,7 +71,7 @@ class TestNewLayer(unittest.TestCase):
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
         self.ltype = Linetype.new('FFFF', dxfattribs={
-            'name':'TEST',
+            'name': 'TEST',
             'description': 'TESTDESC',
             'pattern': [0.2, 0.1, -0.1]
         })
@@ -85,16 +85,18 @@ class TestNewLinetype(unittest.TestCase):
     def test_pattern_items_count(self):
         def count_items():
             return len(self.ltype.tags.noclass.findall(49))
+
         self.assertEqual(2, self.ltype.dxf.items)
         self.assertEqual(self.ltype.dxf.items, count_items())
 
     def test_pattern_length(self):
         self.assertEqual(0.2, self.ltype.dxf.length)
 
+
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
         self.style = Style.new('FFFF', dxfattribs={
-            'name':'TEST',
+            'name': 'TEST',
             'font': 'NOFONT.ttf',
             'width': 2.0,
         })
@@ -117,14 +119,16 @@ class TestNewStyle(unittest.TestCase):
     def test_bigfont(self):
         self.assertEqual('', self.style.dxf.bigfont)
 
+
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
         self.appid = AppID.new('FFFF', dxfattribs={
-            'name':'EZDXF',
+            'name': 'EZDXF',
         })
 
     def test_name(self):
         self.assertEqual('EZDXF', self.appid.dxf.name)
+
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
@@ -147,39 +151,42 @@ class TestNewUCS(unittest.TestCase):
     def test_yaxis(self):
         self.assertEqual((-1.0, 0.0, 0.0), self.ucs.dxf.yaxis)
 
+
 class TestViewport(unittest.TestCase):
     def setUp(self):
         self.vport = Viewport.new('FFFF', dxfattribs={
-            'name':'VP1',
+            'name': 'VP1',
         })
 
     def test_name(self):
         self.assertEqual('VP1', self.vport.dxf.name)
 
+
 class TestView(unittest.TestCase):
     def setUp(self):
         self.view = View.new('FFFF', dxfattribs={
-        'name': 'VIEW1',
-        'flags': 0,
-        'height': 1.0,
-        'width': 1.0,
-        'center_point': (0, 0),
-        'direction_point': (0, 0, 0),
-        'target_point': (0, 0, 0),
-        'lens_length': 1.0,
-        'front_clipping': 0.0,
-        'back_clipping': 0.0,
-        'view_twist': 0.0,
-        'view_mode': 0,
+            'name': 'VIEW1',
+            'flags': 0,
+            'height': 1.0,
+            'width': 1.0,
+            'center_point': (0, 0),
+            'direction_point': (0, 0, 0),
+            'target_point': (0, 0, 0),
+            'lens_length': 1.0,
+            'front_clipping': 0.0,
+            'back_clipping': 0.0,
+            'view_twist': 0.0,
+            'view_mode': 0,
         })
 
     def test_name(self):
         self.assertEqual('VIEW1', self.view.dxf.name)
 
+
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
         self.dimstyle = DimStyle.new('FFFF', dxfattribs={
-            'name':'DIMSTYLE1',
+            'name': 'DIMSTYLE1',
         })
 
     def test_name(self):
@@ -188,5 +195,6 @@ class TestDimstyle(unittest.TestCase):
     def test_handle_code(self):
         self.assertEqual('FFFF', self.dimstyle.tags.noclass.getvalue(105))
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

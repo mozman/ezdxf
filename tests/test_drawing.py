@@ -13,10 +13,12 @@ from ezdxf.tags import StringIterator
 
 from ezdxf.drawing import Drawing
 
+
 class TestDrawing(unittest.TestCase):
     def test_dxfversion(self):
         dwg = Drawing(StringIterator(TEST_HEADER))
         self.assertEqual('AC1009', dwg.dxfversion)
+
 
 class TestNewDrawingAC1009(unittest.TestCase):
     def setUp(self):
@@ -142,5 +144,5 @@ ENDSEC
 EOF
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

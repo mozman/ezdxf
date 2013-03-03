@@ -13,8 +13,10 @@ from ezdxf.ac1015.tableentries import Layer, Linetype, Style
 from ezdxf.ac1015.tableentries import AppID, BlockRecord, DimStyle
 from ezdxf.ac1015.tableentries import UCS, View, Viewport
 
+
 class DXFFactory:
-    rootdict = { 'ACAD_PLOTSTYLENAME': 'AFAF' }
+    rootdict = {'ACAD_PLOTSTYLENAME': 'AFAF'}
+
 
 class TestNewLayer(unittest.TestCase):
     def setUp(self):
@@ -29,10 +31,11 @@ class TestNewLayer(unittest.TestCase):
     def test_default_plotstylename(self):
         self.assertEqual('AFAF', self.layer.dxf.plotstylename)
 
+
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):
         self.ltype = Linetype.new('FFFF', dxfattribs={
-            'name':'TEST',
+            'name': 'TEST',
             'description': 'TESTDESC',
             'pattern': [0.2, 0.1, -0.1]
         })
@@ -47,13 +50,15 @@ class TestNewLinetype(unittest.TestCase):
         def count_items():
             subclass = self.ltype.tags.get_subclass('AcDbLinetypeTableRecord')
             return len(subclass.findall(49))
+
         self.assertEqual(2, self.ltype.dxf.items)
         self.assertEqual(self.ltype.dxf.items, count_items())
+
 
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
         self.style = Style.new('FFFF', dxfattribs={
-            'name':'TEST',
+            'name': 'TEST',
             'font': 'NOFONT.ttf',
             'width': 2.0,
         })
@@ -61,14 +66,16 @@ class TestNewStyle(unittest.TestCase):
     def test_name(self):
         self.assertEqual('TEST', self.style.dxf.name)
 
+
 class TestNewAppID(unittest.TestCase):
     def setUp(self):
         self.appid = AppID.new('FFFF', dxfattribs={
-            'name':'EZDXF',
+            'name': 'EZDXF',
         })
 
     def test_name(self):
         self.assertEqual('EZDXF', self.appid.dxf.name)
+
 
 class TestNewUCS(unittest.TestCase):
     def setUp(self):
@@ -85,39 +92,42 @@ class TestNewUCS(unittest.TestCase):
     def test_origin(self):
         self.assertEqual((1.0, 1.0, 1.0), self.ucs.dxf.origin)
 
+
 class TestViewport(unittest.TestCase):
     def setUp(self):
         self.vport = Viewport.new('FFFF', dxfattribs={
-            'name':'VP1',
+            'name': 'VP1',
         })
 
     def test_name(self):
         self.assertEqual('VP1', self.vport.dxf.name)
 
+
 class TestView(unittest.TestCase):
     def setUp(self):
         self.view = View.new('FFFF', dxfattribs={
-        'name': 'VIEW1',
-        'flags': 0,
-        'height': 1.0,
-        'width': 1.0,
-        'center_point': (0, 0),
-        'direction_point': (0, 0, 0),
-        'target_point': (0, 0, 0),
-        'lens_length': 1.0,
-        'front_clipping': 0.0,
-        'back_clipping': 0.0,
-        'view_twist': 0.0,
-        'view_mode': 0,
+            'name': 'VIEW1',
+            'flags': 0,
+            'height': 1.0,
+            'width': 1.0,
+            'center_point': (0, 0),
+            'direction_point': (0, 0, 0),
+            'target_point': (0, 0, 0),
+            'lens_length': 1.0,
+            'front_clipping': 0.0,
+            'back_clipping': 0.0,
+            'view_twist': 0.0,
+            'view_mode': 0,
         })
 
     def test_name(self):
         self.assertEqual('VIEW1', self.view.dxf.name)
 
+
 class TestDimstyle(unittest.TestCase):
     def setUp(self):
         self.dimstyle = DimStyle.new('FFFF', dxfattribs={
-            'name':'DIMSTYLE1',
+            'name': 'DIMSTYLE1',
         })
 
     def test_name(self):
@@ -127,15 +137,16 @@ class TestDimstyle(unittest.TestCase):
         handle = self.dimstyle.tags.noclass.getvalue(105)
         self.assertEqual('FFFF', handle)
 
+
 class TestBlockRecord(unittest.TestCase):
     def setUp(self):
         self.blockrec = BlockRecord.new('FFFF', dxfattribs={
-            'name':'BLOCKREC1',
+            'name': 'BLOCKREC1',
         })
 
     def test_name(self):
         self.assertEqual('BLOCKREC1', self.blockrec.dxf.name)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

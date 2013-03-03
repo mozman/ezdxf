@@ -12,6 +12,7 @@ import ezdxf
 
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
 
+
 def add_table_entries(dwg):
     dwg.layers.create('MOZMAN-LAYER')
     dwg.styles.create('MOZMAN-STY')
@@ -22,14 +23,16 @@ def add_table_entries(dwg):
     dwg.ucs.create('MOZMAN-UCS')
     dwg.appids.create('MOZMANAPP')
 
+
 def make_drawing(version):
     dwg = ezdxf.new(version)
     add_table_entries(dwg)
     dwg.saveas('table_entries_%s.dxf' % version)
 
+
 def main():
     for version in VERSIONS:
         make_drawing(version)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

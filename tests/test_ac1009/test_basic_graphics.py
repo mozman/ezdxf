@@ -11,10 +11,12 @@ import unittest
 
 import ezdxf
 
+
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
         self.dwg = ezdxf.new('AC1009')
         self.layout = self.dwg.modelspace()
+
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
@@ -22,20 +24,21 @@ class TestPaperSpace(SetupDrawing):
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.dxf.paperspace)
 
+
 class TestSimpleGraphics(SetupDrawing):
     def test_create_line(self):
         line = self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual((0.,0.), line.dxf.start)
-        self.assertEqual((1.,1.), line.dxf.end)
+        self.assertEqual((0., 0.), line.dxf.start)
+        self.assertEqual((1., 1.), line.dxf.end)
 
     def test_create_circle(self):
         circle = self.layout.add_circle((3, 3), 5)
-        self.assertEqual((3.,3.), circle.dxf.center)
+        self.assertEqual((3., 3.), circle.dxf.center)
         self.assertEqual(5., circle.dxf.radius)
 
     def test_create_arc(self):
         arc = self.layout.add_arc((3, 3), 5, 30, 60)
-        self.assertEqual((3.,3.), arc.dxf.center)
+        self.assertEqual((3., 3.), arc.dxf.center)
         self.assertEqual(5., arc.dxf.radius)
         self.assertEqual(30., arc.dxf.startangle)
         self.assertEqual(60., arc.dxf.endangle)
@@ -61,10 +64,12 @@ class TestSimpleGraphics(SetupDrawing):
         self.assertEqual((1, 1), trace.dxf.vtx2)
         self.assertEqual((0, 1), trace[3])
 
+
 class TestText(SetupDrawing):
     def test_create_text(self):
         text = self.layout.add_text('text')
         self.assertEqual('text', text.dxf.text)
+
 
 class TestBlock(SetupDrawing):
     def test_create_blockref(self):
@@ -93,5 +98,5 @@ class TestBlock(SetupDrawing):
         entity = self.layout._get_entity_at_index(-1)
         self.assertEqual('SEQEND', entity.dxftype())
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

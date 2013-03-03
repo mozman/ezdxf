@@ -20,6 +20,7 @@ if ezdxfdir not in sys.path:
     print("Adding '%s' to python path." % ezdxfdir)
     sys.path.insert(0, ezdxfdir)
 
+
 def print_available_tests():
     print("available tests:")
     for filename in glob.glob(os.path.join(os.path.dirname(__file__), '*.py')):
@@ -27,5 +28,5 @@ def print_available_tests():
             print(os.path.basename(filename))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     print_available_tests()
