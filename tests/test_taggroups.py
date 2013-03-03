@@ -14,21 +14,21 @@ from ezdxf.tags import TagGroups
 
 class TestTagGroups(unittest.TestCase):
     def setUp(self):
-        self.groups = TagGroups.fromtext(TESTTAGS)
+        self.groups = TagGroups.from_text(TESTTAGS)
 
     def test_init(self):
         self.assertEqual(36, len(self.groups))
 
     def test_first_group(self):
-        self.assertEqual('SECTION', self.groups.getname(0))
+        self.assertEqual('SECTION', self.groups.get_name(0))
         self.assertEqual(2, len(self.groups[0]))
 
     def test_second_group(self):
-        self.assertEqual('TABLE', self.groups.getname(1))
+        self.assertEqual('TABLE', self.groups.get_name(1))
         self.assertEqual(3, len(self.groups[1]))
 
     def test_last_group(self):
-        self.assertEqual('ENDTAB', self.groups.getname(-1))
+        self.assertEqual('ENDTAB', self.groups.get_name(-1))
         self.assertEqual(1, len(self.groups[-1]))
 
 

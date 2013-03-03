@@ -8,7 +8,7 @@
 
 import sys
 
-from ezdxf.tags import TagIterator, dxfinfo
+from ezdxf.tags import TagIterator, dxf_info
 
 FORMAT = 'ACAD release: {0.release}\n'\
          'DXF Version: {0.version}\n'\
@@ -36,7 +36,7 @@ def printduplicates(handles):
 
 
 def checkhandles(stream):
-    info = dxfinfo(stream)
+    info = dxf_info(stream)
     stream.seek(0)
     handles = []
     iterator = TagIterator(stream)

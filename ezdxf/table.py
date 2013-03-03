@@ -78,8 +78,8 @@ class Table(object):
 
     def _build_table_entries(self, tags):
         groups = TagGroups(tags)
-        assert groups.getname(0) == 'TABLE'
-        assert groups.getname(-1) == 'ENDTAB'
+        assert groups.get_name(0) == 'TABLE'
+        assert groups.get_name(-1) == 'ENDTAB'
 
         self._table_header = ClassifiedTags(groups[0][1:])
         for entrytags in groups[1:-1]:
@@ -123,9 +123,9 @@ class Table(object):
 
     def _add_entry(self, entry):
         """ Add table-entry to table and entitydb. """
-        if hasattr(entry, 'gethandle'):
+        if hasattr(entry, 'get_handle'):
             try:
-                handle = entry.gethandle()
+                handle = entry.get_handle()
             except ValueError:
                 handle = self.handles.next()
             tags = entry

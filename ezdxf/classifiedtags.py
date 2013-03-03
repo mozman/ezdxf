@@ -141,8 +141,8 @@ class ClassifiedTags:
     def get_type(self):
         return self.noclass[0].value
 
-    def gethandle(self):
-        return self.noclass.gethandle()
+    def get_handle(self):
+        return self.noclass.get_handle()
 
     @staticmethod
     def fromtext(text):

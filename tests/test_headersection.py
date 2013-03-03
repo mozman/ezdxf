@@ -15,7 +15,7 @@ from ezdxf.headersection import HeaderSection
 
 class TestHeaderSection(unittest.TestCase):
     def setUp(self):
-        tags = Tags.fromtext(TESTHEADER)
+        tags = Tags.from_text(TESTHEADER)
         dwg = DrawingProxy('AC1009')
         self.header = HeaderSection(tags)
         self.header.set_headervar_factory(dwg.dxffactory.headervar_factory)

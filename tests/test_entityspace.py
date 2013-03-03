@@ -19,7 +19,7 @@ class TestEntitySpace(unittest.TestCase):
         self.space = EntitySpace(self.dwg.entitydb)
 
     def test_add(self):
-        for group in TagGroups.fromtext(TESTENTITIES):
+        for group in TagGroups.from_text(TESTENTITIES):
             self.space.add(group)
         self.assertEqual(4, len(self.space))
 

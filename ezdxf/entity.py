@@ -117,7 +117,7 @@ class GenericWrapper(object):
             tags = DXFExtendedPointType(subclass_tags)
             return tags.get_value(dxfattr.code, dxfattr.xtype)
         else:
-            return subclass_tags.getvalue(dxfattr.code)
+            return subclass_tags.get_value(dxfattr.code)
 
     def _get_extended_type(self, code, xtype):
         tags = DXFExtendedPointType(self.tags)
@@ -139,7 +139,7 @@ class GenericWrapper(object):
 
     @staticmethod
     def _set_tag(tags, code, value):
-        tags.setfirst(code, cast_tag_value(code, value))
+        tags.set_first(code, cast_tag_value(code, value))
 
 
 class DXFExtendedPointType(object):
@@ -170,7 +170,7 @@ class DXFExtendedPointType(object):
         )
 
     def _point_index(self, code):
-        return self.tags.tagindex(code)
+        return self.tags.tag_index(code)
 
     def _get_flexible_point(self, code):
         point = self._get_point(code)

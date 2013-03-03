@@ -12,7 +12,7 @@ import io
 
 from . import database
 from .handle import HandleGenerator
-from .tags import TagIterator, dxfinfo, DXFTag
+from .tags import TagIterator, dxf_info, DXFTag
 from .dxffactory import dxffactory
 from .templates import TemplateFinder
 from .options import options

@@ -11,7 +11,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.tags import StringIterator, Tags
-from ezdxf.tags import dxfinfo, strtag
+from ezdxf.tags import dxf_info, strtag
 
 TEST_TAGREADER = """  0
 SECTION
@@ -117,7 +117,7 @@ class TestTagReader(unittest.TestCase):
 
 class TestGetDXFInfo(unittest.TestCase):
     def test_dxfinfo(self):
-        info = dxfinfo(StringIO(TEST_TAGREADER))
+        info = dxf_info(StringIO(TEST_TAGREADER))
         self.assertEqual(info.release, 'R2004')
         self.assertEqual(info.encoding, 'cp1252')
 
@@ -154,7 +154,7 @@ class HandlesMock:
 
 class TestTags(unittest.TestCase):
     def setUp(self):
-        self.tags = Tags.fromtext(TEST_TAGREADER)
+        self.tags = Tags.from_text(TEST_TAGREADER)
 
     def test_from_text(self):
         self.assertEqual(8, len(self.tags))
@@ -175,36 +175,36 @@ class TestTags(unittest.TestCase):
             self.tags.update(999, 'DOESNOTEXIST')
 
     def test_setfirst(self):
-        self.tags.setfirst(999, 'NEWTAG')
+        self.tags.set_first(999, 'NEWTAG')
         self.assertEqual('NEWTAG', self.tags[-1].value)
 
-    def test_gethandle_5(self):
-        tags = Tags.fromtext(TESTHANDLE5)
-        self.assertEqual('F5', tags.gethandle())
+    def test_get_handle_5(self):
+        tags = Tags.from_text(TESTHANDLE5)
+        self.assertEqual('F5', tags.get_handle())
 
-    def test_gethandle_105(self):
-        tags = Tags.fromtext(TESTHANDLE105)
-        self.assertEqual('F105', tags.gethandle())
+    def test_get_handle_105(self):
+        tags = Tags.from_text(TESTHANDLE105)
+        self.assertEqual('F105', tags.get_handle())
 
-    def test_gethandle_create_new(self):
+    def test_get_handle_create_new(self):
         with self.assertRaises(ValueError):
-            self.tags.gethandle()
+            self.tags.get_handle()
 
     def test_findall(self):
-        tags = Tags.fromtext(TESTFINDALL)
-        self.assertEqual(3, len(tags.findall(0)))
+        tags = Tags.from_text(TESTFINDALL)
+        self.assertEqual(3, len(tags.find_all(0)))
 
     def test_tagindex(self):
-        tags = Tags.fromtext(TESTFINDALL)
-        index = tags.tagindex(0)
+        tags = Tags.from_text(TESTFINDALL)
+        index = tags.tag_index(0)
         self.assertEqual(0, index)
-        index = tags.tagindex(0, index + 1)
+        index = tags.tag_index(0, index + 1)
         self.assertEqual(1, index)
 
     def test_findfirst_value_error(self):
-        tags = Tags.fromtext(TESTFINDALL)
+        tags = Tags.from_text(TESTFINDALL)
         with self.assertRaises(ValueError):
-            tags.tagindex(1)
+            tags.tag_index(1)
 
 
 DUPLICATETAGS = """  0

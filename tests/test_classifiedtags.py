@@ -22,7 +22,7 @@ class TestClassifiedTags(unittest.TestCase):
         self.assertIsNotNone(self.xtags.get_appdata('{ACAD_XDICTIONARY'))
 
     def test_init_with_tags(self):
-        tags = Tags.fromtext(XTAGS1)
+        tags = Tags.from_text(XTAGS1)
         xtags = ClassifiedTags(tags)
         self.assertEqual(3, len(xtags.subclasses))
         self.assertEqual(1, len(xtags.xdata))
@@ -36,11 +36,11 @@ class TestClassifiedTags(unittest.TestCase):
 
     def test_appdata_content(self):
         xdict = self.xtags.get_appdata('{ACAD_XDICTIONARY')
-        self.assertEqual(xdict.getvalue(360), "63D5")
+        self.assertEqual(xdict.get_value(360), "63D5")
 
     def test_tags_skips_appdata_content(self):
         with self.assertRaises(ValueError):
-            self.xtags.noclass.getvalue(360)
+            self.xtags.noclass.get_value(360)
 
     def test_xdata_content_count(self):
         rak = self.xtags.get_xdata('RAK')
@@ -48,7 +48,7 @@ class TestClassifiedTags(unittest.TestCase):
 
     def test_tags_skips_xdata_content(self):
         with self.assertRaises(ValueError):
-            self.xtags.noclass.getvalue(1000)
+            self.xtags.noclass.get_value(1000)
 
     def test_copy(self):
         stream = StringIO()
