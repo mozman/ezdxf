@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Purpose: tagreader
+# Purpose: tag reader
 # Created: 10.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from collections import namedtuple, Counter
+from collections import namedtuple
 from io import StringIO
 
 from .codepage import toencoding
@@ -15,17 +15,20 @@ from .const import acadrelease
 from . import tostr
 
 DXFTag = namedtuple('DXFTag', 'code value')
-NONETAG = DXFTag(999999, 'NONE')
+NONE_TAG = DXFTag(999999, 'NONE')
+TAG_STRING_FORMAT = '%3d\n%s\n'
+
 
 class DXFStructureError(Exception):
     pass
+
 
 class TagIterator(object):
     def __init__(self, textfile):
         self.textfile = textfile
         self.lineno = 0
         self.undo = False
-        self.lasttag = NONETAG
+        self.lasttag = NONE_TAG
 
     def __iter__(self):
         return self
@@ -61,14 +64,17 @@ class TagIterator(object):
             self.undo = True
             self.lineno -= 2
         else:
-            raise(ValueError('No tag to undo'))
+            raise ValueError('No tag to undo')
+
 
 class StringIterator(TagIterator):
     def __init__(self, dxfcontent):
         super(StringIterator, self).__init__(StringIO(dxfcontent))
 
+
 def text2tags(text):
     return Tags(StringIterator(text))
+
 
 class DXFInfo(object):
     def __init__(self):
@@ -87,6 +93,7 @@ class DXFInfo(object):
     def HANDSEED(self, value):
         self.handseed = value
 
+
 def dxfinfo(stream):
     info = DXFInfo()
     tag = (999999, '')
@@ -101,9 +108,10 @@ def dxfinfo(stream):
             method(next(tagreader).value)
     return info
 
-TAG_STRING_FORMAT = '%3d\n%s\n'
+
 def strtag(tag):
     return TAG_STRING_FORMAT % tag
+
 
 class TagCaster:
     def __init__(self):
@@ -133,7 +141,7 @@ TYPES = [
     (int, range(170, 180)),
     (float, range(210, 240)),
     (int, range(270, 290)),
-    (int, range(290, 300)), # bool 1=True 0=False
+    (int, range(290, 300)),  # bool 1=True 0=False
     (tostr, range(300, 370)),
     (int, range(370, 390)),
     (tostr, range(390, 400)),
@@ -154,6 +162,7 @@ _TagCaster = TagCaster()
 tagcast = _TagCaster.cast
 casttagvalue = _TagCaster.castvalue
 
+
 class Tags(list):
     """ DXFTag() chunk as flat list. """
     def write(self, stream):
@@ -171,7 +180,7 @@ class Tags(list):
             if tag.code in (5, 105):
                 handle = tag.value
                 break
-        int(handle, 16) # check for valid handle
+        int(handle, 16)  # check for valid handle
         return handle
 
     def findall(self, code):
@@ -182,9 +191,9 @@ class Tags(list):
         """ Return first index of DXFTag(code, ...). """
         if end is None:
             end = len(self)
-        for index in range(start, end):
-            if self[index].code == code:
-                return index
+        for index, tag in enumerate(self[start:end]):
+            if tag.code == code:
+                return start + index
         raise ValueError(code)
 
     def update(self, code, value):
@@ -200,14 +209,10 @@ class Tags(list):
         try:
             self.update(code, value)
         except ValueError:
-            self.append( DXFTag(code, value) )
+            self.append(DXFTag(code, value))
 
     def getvalue(self, code):
         index = self.tagindex(code)
-        return self[index].value
-
-    def getlastvalue(self, code):
-        index = self.lastindex(code)
         return self[index].value
 
     @staticmethod
@@ -217,11 +222,12 @@ class Tags(list):
     def get_type(self):
         return self.__getitem__(0).value
 
+
 class TagGroups(list):
     """
-    Group of tags starting with a SplitTag and ending before the next SplitTag.
+    Group of tags starts with a SplitTag and ends before the next SplitTag.
 
-    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode=0.
+    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
 
     """
     def __init__(self, tags, splitcode=0):
@@ -257,4 +263,3 @@ class TagGroups(list):
     @staticmethod
     def fromtext(text, splitcode=0):
         return TagGroups(Tags.fromtext(text), splitcode)
-

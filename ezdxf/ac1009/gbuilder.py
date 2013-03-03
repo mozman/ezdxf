@@ -41,6 +41,7 @@ class BuilderConnector(object):
     def _remove_entities(self, index, count=1):
         self._entityspace[index:index+count] = []
 
+
 class AC1009GraphicBuilder(BuilderConnector):
     """ A mixin for: Layout, BlockLayout.
 

@@ -12,6 +12,7 @@ import io
 
 from .tags import dxfinfo
 
+
 class TemplateFinder:
     def __init__(self, template_dir=None):
         self._template_dir = self._get_template_dir(template_dir)

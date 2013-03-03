@@ -6,7 +6,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 version = (0, 2, 0)
-VERSION = "%d.%d.%d"  % version
+VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -23,19 +23,9 @@ else:
 import io
 from contextlib import contextmanager
 
-from .options import options
-# example: ezdxf.options['templatedir'] = 'c:\templates'
+from .options import options  # example: ezdxf.options['templatedir'] = 'c:\templates'
 from .tags import dxfinfo
 
-@contextmanager # TODO: test it!!!
-def open_encoded_text_file(filename, mode='r', encoding='cp1252'):
-    buffer = io.FileIO(filename, mode)
-    fp = io.TextIOWrapper(buffer, encoding=encoding)
-    try:
-        yield fp
-    finally:
-        fp.close()
-        buffer.close()
 
 def read(stream):
     from .drawing import Drawing
@@ -49,10 +39,12 @@ def readfile(filename):
         return info.encoding
 
     from .drawing import Drawing
-    with open_encoded_text_file(filename, encoding=get_encoding()) as fp:
+    # noinspection PyArgumentList
+    with io.open(filename, mode='rt', encoding=get_encoding()) as fp:
         dwg = Drawing.read(fp)
     dwg.filename = filename
     return dwg
+
 
 def new(dxfversion='AC1009'):
     from .drawing import Drawing

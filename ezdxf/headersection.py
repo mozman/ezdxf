@@ -9,10 +9,13 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
+from . import tostr
 from .tags import TagGroups, TAG_STRING_FORMAT
+
 
 class HeaderSection(object):
     name = 'header'
+
     def __init__(self, tags):
         self.hdrvars = OrderedDict()
         self._build(tags)
@@ -34,12 +37,12 @@ class HeaderSection(object):
                 value = tuple(group[1:])
             else:
                 value = group[1]
-            self.hdrvars[name] =HeaderVar(value)
+            self.hdrvars[name] = HeaderVar(value)
 
     def write(self, stream):
         def _write(name, value):
             stream.write("  9\n%s\n" % name)
-            stream.write(str(value))
+            stream.write(tostr(value))
 
         stream.write("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
@@ -65,6 +68,7 @@ class HeaderSection(object):
 
     def __delitem__(self, key):
         del self.hdrvars[key]
+
 
 class HeaderVar:
     def __init__(self, tag):

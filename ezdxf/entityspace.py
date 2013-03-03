@@ -7,7 +7,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags
 
 class EntitySpace(list):
     """

@@ -10,11 +10,13 @@ __author__ = "mozman <mozman@gmx.at>"
 from .tags import casttagvalue, DXFTag, DXFStructureError
 from .classifiedtags import ClassifiedTags
 
+
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
 
     """
     __slots__ = ('wrapper', )
+
     def __init__(self, wrapper):
         self.wrapper = wrapper
 
@@ -48,6 +50,7 @@ class DXFNamespace(object):
     def update(self, attribs):
         """ GenericWrapper.dxf.update(dxfattribs): Update dxf attribs from dict. """
         return self.wrapper.update_dxf_attribs(attribs)
+
 
 class GenericWrapper(object):
     TEMPLATE = ""
@@ -137,7 +140,8 @@ class GenericWrapper(object):
     def _settag(tags, code, value):
         tags.setfirst(code, casttagvalue(code, value))
 
-class ExtendedType:
+
+class ExtendedType(object):
     def __init__(self, tags):
         self.tags = tags
 
@@ -160,8 +164,8 @@ class ExtendedType:
     def _get_point(self, code):
         index = self._point_index(code)
         return tuple(
-            ( tag.value for x, tag in enumerate(self.tags[index:index+3])
-              if tag.code == code + x*10 )
+            (tag.value for x, tag in enumerate(self.tags[index:index + 3])
+             if tag.code == code + x * 10)
         )
 
     def _point_index(self, code):
@@ -199,16 +203,16 @@ class ExtendedType:
                 raise DXFStructureError('DXF coordinate error')
         index = self._point_index(code)
         for x, coord in enumerate(value):
-            settag(index + x, DXFTag(code + x*10, float(coord)))
+            settag(index + x, DXFTag(code + x * 10, float(coord)))
 
     def _set_flexible_point(self, code, value):
         def append_axis():
             index = self._point_index(code)
-            self.tags.insert(index+2, DXFTag(code+20, 0.0))
+            self.tags.insert(index + 2, DXFTag(code + 20, 0.0))
 
         def remove_axis():
             index = self._point_index(code)
-            self.tags.pop(index+2)
+            self.tags.pop(index + 2)
 
         newaxis = len(value)
         if newaxis not in (2, 3):

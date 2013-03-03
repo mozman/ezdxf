@@ -8,9 +8,9 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
+import io
 
 from . import database
-from . import open_encoded_text_file
 from .handle import HandleGenerator
 from .tags import TagIterator, dxfinfo, DXFTag
 from .dxffactory import dxffactory
@@ -20,6 +20,7 @@ from .codepage import tocodepage, toencoding
 from .sections import Sections
 from .juliandate import juliandate
 
+
 class Drawing(object):
     def __init__(self, tagreader):
         """ Create a new drawing. """
@@ -27,9 +28,9 @@ class Drawing(object):
             roothandle = self.sections.objects.roothandle()
             return self.dxffactory.wrap_entity(self.entitydb[roothandle])
 
-        self._dxfversion = 'AC1009' # readonly
-        self.encoding = 'cp1252' # read/write
-        self.filename = None # read/write
+        self._dxfversion = 'AC1009'  # readonly
+        self.encoding = 'cp1252'  # read/write
+        self.filename = None  # read/write
         self.entitydb = database.factory(debug=options.get('DEBUG', False))
         self.sections = Sections(tagreader, self)
 
@@ -139,7 +140,8 @@ class Drawing(object):
         self.save()
 
     def save(self):
-        with open_encoded_text_file(self.filename, mode='w', encoding=self.encoding) as fp:
+        # noinspection PyArgumentList
+        with io.open(self.filename, mode='wt', encoding=self.encoding) as fp:
             self.write(fp)
 
     def write(self, stream):
@@ -153,7 +155,7 @@ class Drawing(object):
     def _enable_handles(self):
         """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.
 
-        Write entitydb-handles into entits-tags.
+        Write entitydb-handles into entity-tags.
         """
         def has_handle(entity):
             for tag in entity.noclass:
@@ -164,7 +166,7 @@ class Drawing(object):
         def put_handles_into_entity_tags():
             for handle, entity in self.entitydb.items():
                 if not has_handle(entity):
-                    code = 5 if entity.get_type() != 'DIMSTYLE' else 105 # legacy shit!!!
+                    code = 5 if entity.get_type() != 'DIMSTYLE' else 105  # legacy shit!!!
                     # handle should be the second tag
                     entity.noclass.insert(1, DXFTag(code, handle))
 
