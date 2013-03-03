@@ -68,8 +68,8 @@ class TagIterator(object):
 
 
 class StringIterator(TagIterator):
-    def __init__(self, dxfcontent):
-        super(StringIterator, self).__init__(StringIO(dxfcontent))
+    def __init__(self, string):
+        super(StringIterator, self).__init__(StringIO(string))
 
 
 def text2tags(text):
@@ -94,7 +94,7 @@ class DXFInfo(object):
         self.handseed = value
 
 
-def dxfinfo(stream):
+def dxf_info(stream):
     info = DXFInfo()
     tag = (999999, '')
     tagreader = TagIterator(stream)
@@ -105,6 +105,7 @@ def dxfinfo(stream):
         name = tag.value[1:]
         method = getattr(info, name, None)
         if method is not None:
+            # noinspection PyCallingNonCallable
             method(next(tagreader).value)
     return info
 
@@ -165,7 +166,7 @@ class Tags(list):
         for tag in self:
             stream.write(strtag(tag))
 
-    def gethandle(self):
+    def get_handle(self):
         """ Search handle of a DXFTag() chunk. Raises ValueError if handle
         not exists.
 
@@ -179,11 +180,11 @@ class Tags(list):
         int(handle, 16)  # check for valid handle
         return handle
 
-    def findall(self, code):
+    def find_all(self, code):
         """ Returns a list of DXFTag(code, ...). """
         return [tag for tag in self if tag.code == code]
 
-    def tagindex(self, code, start=0, end=None):
+    def tag_index(self, code, start=0, end=None):
         """ Return first index of DXFTag(code, ...). """
         if end is None:
             end = len(self)
@@ -194,10 +195,10 @@ class Tags(list):
 
     def update(self, code, value):
         """ Update first existing tag, raises ValueError if tag not exists. """
-        index = self.tagindex(code)
+        index = self.tag_index(code)
         self[index] = DXFTag(code, value)
 
-    def setfirst(self, code, value):
+    def set_first(self, code, value):
         """ Update first existing DXFTag(code, ...) or append a new
         DXFTag(code, value).
 
@@ -205,14 +206,15 @@ class Tags(list):
         try:
             self.update(code, value)
         except ValueError:
+            # noinspection PyTypeChecker
             self.append(DXFTag(code, value))
 
-    def getvalue(self, code):
-        index = self.tagindex(code)
+    def get_value(self, code):
+        index = self.tag_index(code)
         return self[index].value
 
     @staticmethod
-    def fromtext(text):
+    def from_text(text):
         return Tags(StringIterator(text))
 
     def get_type(self):
@@ -229,33 +231,33 @@ class TagGroups(list):
     def __init__(self, tags, splitcode=0):
         super(TagGroups, self).__init__()
         self.splitcode = splitcode
-        self._buildgroups(tags)
+        self._build_groups(tags)
 
-    def _buildgroups(self, tags):
-        def pushgroup():
+    def _build_groups(self, tags):
+        def push_group():
             if len(group) > 0:
                 self.append(group)
 
-        def starttag(itags):
+        def start_tag(itags):
             tag = next(itags)
             while tag.code != self.splitcode:
                 tag = next(itags)
             return tag
 
-        itags = iter(tags)
-        group = Tags([starttag(itags)])
+        tag_iterator = iter(tags)
+        group = Tags([start_tag(tag_iterator)])
 
-        for tag in itags:
+        for tag in tag_iterator:
             if tag.code == self.splitcode:
-                pushgroup()
+                push_group()
                 group = Tags([tag])
             else:
                 group.append(tag)
-        pushgroup()
+        push_group()
 
-    def getname(self, index):
+    def get_name(self, index):
         return self[index][0].value
 
     @staticmethod
-    def fromtext(text, splitcode=0):
-        return TagGroups(Tags.fromtext(text), splitcode)
+    def from_text(text, splitcode=0):
+        return TagGroups(Tags.from_text(text), splitcode)

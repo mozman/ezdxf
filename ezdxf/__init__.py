@@ -24,7 +24,7 @@ import io
 from contextlib import contextmanager
 
 from .options import options  # example: ezdxf.options['templatedir'] = 'c:\templates'
-from .tags import dxfinfo
+from .tags import dxf_info
 
 
 def read(stream):
@@ -35,7 +35,7 @@ def read(stream):
 def readfile(filename):
     def get_encoding():
         with open(filename) as fp:
-            info = dxfinfo(fp)
+            info = dxf_info(fp)
         return info.encoding
 
     from .drawing import Drawing

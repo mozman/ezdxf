@@ -22,7 +22,7 @@ class SimpleDB(dict):
 
     def add_tags(self, tags):
         try:
-            handle = tags.gethandle()
+            handle = tags.get_handle()
         except ValueError:
             handle = self.handles.next()
         self.__setitem__(handle, tags)
@@ -84,7 +84,7 @@ class EntityDB:
 
     def add_tags(self, tags):
         try:
-            handle = tags.gethandle()
+            handle = tags.get_handle()
         except ValueError:
             handle = self.handles.next()
         self.__setitem__(handle, tags)
@@ -93,6 +93,7 @@ class EntityDB:
 
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
+
     def __init__(self):
         self._database = OrderedDict()
         self._collisions = {}

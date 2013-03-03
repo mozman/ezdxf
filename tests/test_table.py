@@ -244,7 +244,7 @@ ENDTAB
 class TestR12Table(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.table = Table(Tags.fromtext(AC1009TABLE), self.dwg)
+        self.table = Table(Tags.from_text(AC1009TABLE), self.dwg)
 
     def test_table_setup(self):
         self.assertEqual(10, len(self.table))
@@ -264,7 +264,7 @@ class TestR12Table(unittest.TestCase):
 class TestR2010Table(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1024')
-        self.table = Table(Tags.fromtext(AC1024TABLE), self.dwg)
+        self.table = Table(Tags.from_text(AC1024TABLE), self.dwg)
 
     def test_table_setup(self):
         self.assertEqual(10, len(self.table))

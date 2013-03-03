@@ -18,7 +18,7 @@ from ezdxf.entitysection import ClassesSection
 class TestClassesSection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.section = ClassesSection(Tags.fromtext(TESTCLASSES), self.dwg)
+        self.section = ClassesSection(Tags.from_text(TESTCLASSES), self.dwg)
 
     def test_write(self):
         stream = StringIO()
@@ -28,7 +28,7 @@ class TestClassesSection(unittest.TestCase):
         self.assertEqual(normlines(TESTCLASSES), normlines(result))
 
     def test_empty_section(self):
-        section = ClassesSection(Tags.fromtext(EMPTYSEC), self.dwg)
+        section = ClassesSection(Tags.from_text(EMPTYSEC), self.dwg)
         stream = StringIO()
         section.write(stream)
         result = stream.getvalue()

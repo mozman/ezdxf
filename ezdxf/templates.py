@@ -10,7 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 import os
 import io
 
-from .tags import dxfinfo
+from .tags import dxf_info
 
 
 class TemplateFinder:

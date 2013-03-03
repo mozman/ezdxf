@@ -19,7 +19,7 @@ from ezdxf.blockssection import BlocksSection
 class TestBlocksSection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.section = BlocksSection(Tags.fromtext(TESTBLOCKS), self.dwg)
+        self.section = BlocksSection(Tags.from_text(TESTBLOCKS), self.dwg)
 
     def test_write(self):
         stream = StringIO()
@@ -29,7 +29,7 @@ class TestBlocksSection(unittest.TestCase):
         self.assertEqual(normlines(TESTBLOCKS), normlines(result))
 
     def test_empty_section(self):
-        section = BlocksSection(Tags.fromtext(EMPTYSEC), self.dwg)
+        section = BlocksSection(Tags.from_text(EMPTYSEC), self.dwg)
         stream = StringIO()
         section.write(stream)
         result = stream.getvalue()

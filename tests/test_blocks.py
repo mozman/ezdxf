@@ -18,7 +18,7 @@ from ezdxf.blockssection import BlocksSection
 class TestBlocksSection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.blocks = BlocksSection(Tags.fromtext(EMPTYSEC), self.dwg)
+        self.blocks = BlocksSection(Tags.from_text(EMPTYSEC), self.dwg)
 
     def test_create_block(self):
         block = self.blocks.new('TEST')

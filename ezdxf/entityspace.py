@@ -20,9 +20,9 @@ class EntitySpace(list):
         self._entitydb = entitydb
 
     def add(self, entity):
-        if hasattr(entity, 'gethandle'):
+        if hasattr(entity, 'get_handle'):
             try:
-                handle = entity.gethandle()
+                handle = entity.get_handle()
             except ValueError:
                 handle = self._entitydb.handles.next()
             self._entitydb[handle] = entity

@@ -49,7 +49,7 @@ class TestNewLinetype(unittest.TestCase):
     def test_pattern_items_count(self):
         def count_items():
             subclass = self.ltype.tags.get_subclass('AcDbLinetypeTableRecord')
-            return len(subclass.findall(49))
+            return len(subclass.find_all(49))
 
         self.assertEqual(2, self.ltype.dxf.items)
         self.assertEqual(self.ltype.dxf.items, count_items())
@@ -134,7 +134,7 @@ class TestDimstyle(unittest.TestCase):
         self.assertEqual('DIMSTYLE1', self.dimstyle.dxf.name)
 
     def test_handle_code(self):
-        handle = self.dimstyle.tags.noclass.getvalue(105)
+        handle = self.dimstyle.tags.noclass.get_value(105)
         self.assertEqual('FFFF', handle)
 
 
