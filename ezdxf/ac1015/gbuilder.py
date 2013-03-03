@@ -7,6 +7,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+
 class AC1015GraphicsBuilder(object):
     def add_lwpolyline(self, points, dxfattribs={}):
         closed = dxfattribs.pop('closed', False)
@@ -14,4 +15,4 @@ class AC1015GraphicsBuilder(object):
         lwpolyline.close(closed)
         lwpolyline._setup_points(points)
         return lwpolyline
-        
+

@@ -14,8 +14,10 @@ from .classifiedtags import ClassifiedTags
 from .entityspace import EntitySpace
 from .dxfobjects import DXFDictionary
 
+
 class EntitySection(object):
     name = 'entities'
+
     def __init__(self, tags, drawing):
         self._entityspace = EntitySpace(drawing.entitydb)
         self._dxffactory = drawing.dxffactory
@@ -45,7 +47,7 @@ class EntitySection(object):
         assert tags[1] == (2, self.name.upper())
         assert tags[-1] == (0, 'ENDSEC')
 
-        if len(tags) == 3: # empty entities section
+        if len(tags) == 3:  # empty entities section
             return
 
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
@@ -56,10 +58,13 @@ class EntitySection(object):
         self._entityspace.write(stream)
         stream.write("  0\nENDSEC\n")
 
+
 class ObjectsSection(EntitySection):
     name = 'objects'
+
     def roothandle(self):
         return self._entityspace[0]
+
 
 class ClassesSection(EntitySection):
     name = 'classes'

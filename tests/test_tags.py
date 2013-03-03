@@ -48,6 +48,7 @@ ENDSEC
 
 """
 
+
 class TestTagReader(unittest.TestCase):
     def setUp(self):
         self.reader = StringIterator(TEST_TAGREADER)
@@ -105,13 +106,14 @@ class TestTagReader(unittest.TestCase):
         self.assertEqual((0, 'ENDSEC'), tags[-1])
 
     def test_strtag_int(self):
-        self.assertEqual('  1\n1\n', strtag( (1,1) ))
+        self.assertEqual('  1\n1\n', strtag( (1, 1) ))
 
     def test_strtag_float(self):
         self.assertEqual(' 10\n3.1415\n', strtag( (10, 3.1415) ))
 
     def test_strtag_str(self):
         self.assertEqual('  0\nSECTION\n', strtag( (0, 'SECTION') ))
+
 
 class TestGetDXFInfo(unittest.TestCase):
     def test_dxfinfo(self):
@@ -139,12 +141,15 @@ TEST1
 TEST2
 """
 
+
 class HandlesMock:
     calls = 0
+
     @property
     def next(self):
-        self.calls = self.calls + 1
+        self.calls += 1
         return 'FF'
+
 
 class TestTags(unittest.TestCase):
     def setUp(self):
@@ -192,7 +197,7 @@ class TestTags(unittest.TestCase):
         tags = Tags.fromtext(TESTFINDALL)
         index = tags.tagindex(0)
         self.assertEqual(0, index)
-        index = tags.tagindex(0, index+1)
+        index = tags.tagindex(0, index + 1)
         self.assertEqual(1, index)
 
     def test_findfirst_value_error(self):
@@ -207,7 +212,3 @@ LAST
   1
 TEST2
 """
-
-
-if __name__=='__main__':
-    unittest.main()

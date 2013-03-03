@@ -75,7 +75,7 @@ from ..dxfobjects import DXFDictionary, DXFLayout
 from .layouts import AC1009Layouts, AC1009BlockLayout
 from ..entity import GenericWrapper
 
-ENTITY_WRAPPERS =  {
+ENTITY_WRAPPERS = {
     # tables entries
     'LAYER': tableentries.Layer,
     'DIMSTYLE': tableentries.DimStyle,
@@ -106,8 +106,10 @@ ENTITY_WRAPPERS =  {
     'SEQEND': graphics.SeqEnd,
 }
 
+
 class AC1009Factory(object):
     HEADERVARS = dict(VARMAP)
+
     def __init__(self):
         self.ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)
         self.drawing = None

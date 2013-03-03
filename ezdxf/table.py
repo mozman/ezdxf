@@ -23,15 +23,18 @@ TABLENAMES = {
     'block_record': 'block_records',
 }
 
+
 def tablename(dxfname):
     """ Translate DXF-table-name to attribute-name. ('LAYER' -> 'layers') """
     name = dxfname.lower()
-    return TABLENAMES.get(name, name+'s')
+    return TABLENAMES.get(name, name + 's')
+
 
 class GenericTable(DefaultChunk):
     @property
     def name(self):
         return tablename(self.tags[1].value)
+
 
 class Table(object):
     def __init__(self, tags, drawing):
@@ -175,6 +178,7 @@ class Table(object):
         else:
             subclass = self._table_header.noclass
         subclass.update(70, count)
+
 
 class ViewportTable(Table):
     ## TODO: Viewport-Table can have multiple entries with same name

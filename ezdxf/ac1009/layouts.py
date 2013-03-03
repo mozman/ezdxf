@@ -10,6 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .gbuilder import AC1009GraphicBuilder
 from ..entityspace import EntitySpace
 
+
 class AC1009Layouts(object):
     def __init__(self, drawing):
         entityspace = drawing.sections.entities.get_entityspace()
@@ -26,6 +27,7 @@ class AC1009Layouts(object):
     def names(self):
         return []
 
+
 class AC1009Layout(AC1009GraphicBuilder):
     """ Layout representation
 
@@ -33,7 +35,7 @@ class AC1009Layout(AC1009GraphicBuilder):
     provides: IGraphicBuilder
     """
     def __init__(self, entityspace, dxffactory, paperspace=0):
-        self._entityspace = entityspace # where all the entities go ...
+        self._entityspace = entityspace  # where all the entities go ...
         self._dxffactory = dxffactory
         self._paperspace = paperspace
 
@@ -45,7 +47,7 @@ class AC1009Layout(AC1009GraphicBuilder):
                 yield entity
 
     def __contains__(self, entity):
-        if isinstance(entity, str): # handle
+        if isinstance(entity, str):  # handle
             entity = self._dxffactory.wrap_handle(entity)
         if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
             return True
@@ -65,6 +67,7 @@ class AC1009Layout(AC1009GraphicBuilder):
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
+
 
 class AC1009BlockLayout(AC1009GraphicBuilder):
     """ BlockLayout has the same factory-function as Layout, but is managed

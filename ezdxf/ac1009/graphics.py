@@ -14,9 +14,11 @@ from .. import const
 from ..const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin
 
+
 class GraphicEntity(GenericWrapper):
     def set_builder(self, builder):
-        self._builder = builder # IGraphicBuilder
+        self._builder = builder  # IGraphicBuilder
+
 
 class ColorMixin(object):
     def set_extcolor(self, color):
@@ -31,6 +33,7 @@ class ColorMixin(object):
     def get_colorname(self):
         return 'Black'
 
+
 class QuadrilateralMixin(object):
     def __getitem__(self, num):
         return self.get_dxf_attrib(VERTEXNAMES[num])
@@ -41,11 +44,11 @@ class QuadrilateralMixin(object):
 def make_attribs(additional={}):
     dxfattribs = {
         'handle': DXFAttr(5, None),
-        'layer': DXFAttr(8, None), # layername as string, default is '0'
-        'linetype': DXFAttr(6, None), # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
-        'color': DXFAttr(62, None), # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
-        'paperspace': DXFAttr(67, None), # 0 .. modelspace, 1 .. paperspace, default is 0
-        'extrusion': DXFAttr(210, 'Point3D'), # never used !?
+        'layer': DXFAttr(8, None),  # layername as string, default is '0'
+        'linetype': DXFAttr(6, None),  # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
+        'color': DXFAttr(62, None),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
+        'paperspace': DXFAttr(67, None),  # 0 .. modelspace, 1 .. paperspace, default is 0
+        'extrusion': DXFAttr(210, 'Point3D'),  # never used !?
     }
     dxfattribs.update(additional)
     return DXFAttributes(DefSubclass(None, dxfattribs))
@@ -70,6 +73,7 @@ LINE
 1.0
 """
 
+
 class Line(GraphicEntity, ColorMixin):
     TEMPLATE = _LINE_TPL
     DXFATTRIBS = make_attribs({
@@ -90,6 +94,7 @@ POINT
  30
 0.0
 """
+
 
 class Point(GraphicEntity, ColorMixin):
     TEMPLATE = _POINT_TPL
@@ -112,6 +117,7 @@ CIRCLE
  40
 1.0
 """
+
 
 class Circle(GraphicEntity, ColorMixin):
     TEMPLATE = _CIRCLE_TPL
@@ -139,6 +145,7 @@ ARC
  51
 360
 """
+
 
 class Arc(GraphicEntity, ColorMixin):
     TEMPLATE = _ARC_TPL
@@ -181,25 +188,28 @@ TRACE
 0.0
 """
 
+
 class Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _TRACE_TPL
     DXFATTRIBS = make_attribs({
-        'vtx0' : DXFAttr(10, 'Point2D/3D'),
-        'vtx1' : DXFAttr(11, 'Point2D/3D'),
-        'vtx2' : DXFAttr(12, 'Point2D/3D'),
-        'vtx3' : DXFAttr(13, 'Point2D/3D'),
+        'vtx0': DXFAttr(10, 'Point2D/3D'),
+        'vtx1': DXFAttr(11, 'Point2D/3D'),
+        'vtx2': DXFAttr(12, 'Point2D/3D'),
+        'vtx3': DXFAttr(13, 'Point2D/3D'),
     })
+
 
 class Solid(Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
 
+
 class Face(Trace):
     TEMPLATE = _TRACE_TPL.replace('TRACE', '3DFACE')
     DXFATTRIBS = make_attribs({
-        'vtx0' : DXFAttr(10, 'Point2D/3D'),
-        'vtx1' : DXFAttr(11, 'Point2D/3D'),
-        'vtx2' : DXFAttr(12, 'Point2D/3D'),
-        'vtx3' : DXFAttr(13, 'Point2D/3D'),
+        'vtx0': DXFAttr(10, 'Point2D/3D'),
+        'vtx1': DXFAttr(11, 'Point2D/3D'),
+        'vtx2': DXFAttr(12, 'Point2D/3D'),
+        'vtx3': DXFAttr(13, 'Point2D/3D'),
         'invisible_edge': DXFAttr(70, None),
     })
 
@@ -241,19 +251,20 @@ STANDARD
 0.0
 """
 
+
 class Text(GraphicEntity, ColorMixin):
     TEMPLATE = _TEXT_TPL
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40,  None),
         'text': DXFAttr(1,  None),
-        'rotation': DXFAttr(50, None), # in degrees (circle = 360deg)
-        'oblique': DXFAttr(51, None), # in degrees, vertical = 0deg
-        'style': DXFAttr(7, None), # text style
-        'width': DXFAttr(41, None), # width FACTOR!
-        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None), # horizontal justification
-        'valign': DXFAttr(73,  None), # vertical justification
+        'rotation': DXFAttr(50, None),  # in degrees (circle = 360deg)
+        'oblique': DXFAttr(51, None),  # in degrees, vertical = 0deg
+        'style': DXFAttr(7, None),  # text style
+        'width': DXFAttr(41, None),  # width FACTOR!
+        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None),  # horizontal justification
+        'valign': DXFAttr(73,  None),  # vertical justification
         'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
 
@@ -278,6 +289,8 @@ BLOCKNAME
   1
 
 """
+
+
 class Block(GraphicEntity):
     TEMPLATE = _BLOCK_TPL
     DXFATTRIBS = make_attribs({
@@ -291,7 +304,7 @@ class Block(GraphicEntity):
 
 class EndBlk(GraphicEntity):
     TEMPLATE = "  0\nENDBLK\n  5\n0\n"
-    DXFATTRIBS = DXFAttributes(DefSubclass(None, { 'handle': DXFAttr(5, None) }))
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {'handle': DXFAttr(5, None)}))
 
 _INSERT_TPL = """  0
 INSERT
@@ -319,6 +332,8 @@ BLOCKNAME
 # IMPORTANT: Bug in AutoCAD 2010
 # attribsfollow = 0, for NO attribsfollow does not work with ACAD 2010
 # if no attribs attached to the INSERT entity, omit attribsfollow tag
+
+
 class Insert(GraphicEntity):
     TEMPLATE = _INSERT_TPL
     DXFATTRIBS = make_attribs({
@@ -393,10 +408,13 @@ class Insert(GraphicEntity):
         self.dxf.attribsfollow = 1
         self._builder._insert_entities(seqend_position, entities)
 
+
 class SeqEnd(GraphicEntity):
     TEMPLATE = "  0\nSEQEND\n  5\n0\n"
-    DXFATTRIBS = DXFAttributes(DefSubclass(None, { 'handle': DXFAttr(5, None),
-                   'paperspace': DXFAttr(67, None),}))
+    DXFATTRIBS = DXFAttributes(DefSubclass(None, {
+        'handle': DXFAttr(5, None),
+        'paperspace': DXFAttr(67, None),
+    }))
 
 _ATTDEF_TPL = """  0
 ATTDEF
@@ -443,6 +461,8 @@ STANDARD
  31
 0.0
 """
+
+
 class Attdef(GraphicEntity):
     TEMPLATE = _ATTDEF_TPL
     DXFATTRIBS = make_attribs({
@@ -455,11 +475,11 @@ class Attdef(GraphicEntity):
         'fieldlength': DXFAttr(73, None),
         'rotation': DXFAttr(50, None),
         'oblique': DXFAttr(51, None),
-        'width': DXFAttr(41, None), # width factor
+        'width': DXFAttr(41, None),  # width factor
         'style': DXFAttr(7, None),
-        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None), # horizontal justification
-        'valign': DXFAttr(74, None), # vertical justification
+        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None),  # horizontal justification
+        'valign': DXFAttr(74, None),  # vertical justification
         'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
 
@@ -506,6 +526,8 @@ STANDARD
  31
 0.0
 """
+
+
 class Attrib(GraphicEntity):
     TEMPLATE = _ATTRIB_TPL
     DXFATTRIBS = make_attribs({
@@ -517,11 +539,11 @@ class Attrib(GraphicEntity):
         'fieldlength': DXFAttr(73, None),
         'rotation': DXFAttr(50, None),
         'oblique': DXFAttr(51, None),
-        'width': DXFAttr(41, None), # width factor
+        'width': DXFAttr(41, None),  # width factor
         'style': DXFAttr(7, None),
-        'textgenerationflag': DXFAttr(71, None), # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None), # horizontal justification
-        'valign': DXFAttr(74, None), # vertical justification
+        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, None),  # horizontal justification
+        'valign': DXFAttr(74, None),  # vertical justification
         'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
 
@@ -542,6 +564,8 @@ POLYLINE
  30
 0.0
 """
+
+
 class Polyline(GraphicEntity, ColorMixin):
     TEMPLATE = _POLYLINE_TPL
     DXFATTRIBS = make_attribs({
@@ -572,6 +596,7 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def mclose(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
+
     def nclose(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_N_DIRECTION
 
@@ -603,19 +628,19 @@ class Polyline(GraphicEntity, ColorMixin):
     def append_vertices(self, points, dxfattribs={}):
         if len(points) > 0:
             first_vertex_index, last_vertex_index = self._get_index_range()
-            self._insert_vertices(last_vertex_index+1, points, dxfattribs)
+            self._insert_vertices(last_vertex_index + 1, points, dxfattribs)
 
     def insert_vertices(self, pos, points, dxfattribs={}):
         if len(points) > 0:
             first_vertex_index, last_vertex_index = self._get_index_range()
-            self._insert_vertices(first_vertex_index+pos, points, dxfattribs)
+            self._insert_vertices(first_vertex_index + pos, points, dxfattribs)
 
     def _insert_vertices(self, index, points, dxfattribs):
         vertices = self._points_to_vertices(points, dxfattribs)
         self._builder._insert_entities(index, vertices)
 
     def _points_to_vertices(self, points, dxfattribs):
-        dxfattribs['flags'] =  dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
         vertices = []
         for point in points:
             dxfattribs['location'] = point
@@ -630,8 +655,8 @@ class Polyline(GraphicEntity, ColorMixin):
         first_vertex_index, last_vertex_index = self._get_index_range()
         length = last_vertex_index - first_vertex_index + 1
         if pos < 0:
-            pos = length + pos
-        if 0 <= pos and pos+count-1 < length:
+            pos += length
+        if 0 <= pos and (pos + count - 1) < length:
             return first_vertex_index + pos
         else:
             raise IndexError(repr((pos, count)))
@@ -658,6 +683,7 @@ class Polyline(GraphicEntity, ColorMixin):
         # performs not index check - for meshes and faces
         index = self._builder._get_index(self) + 1 + pos
         return self._builder._get_entity_at_index(index)
+
 
 class Polyface(Polyline, PolyfaceMixin):
     @staticmethod
@@ -695,6 +721,8 @@ VERTEX
  70
 0
 """
+
+
 class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = _VERTEX_TPL
     DXFATTRIBS = make_attribs({
@@ -741,6 +769,8 @@ MVIEW
 1002
 {
 """
+
+
 class Viewport(GraphicEntity):
     TEMPLATE = _VPORT_TPL
     DXFATTRIBS = make_attribs({
@@ -813,6 +843,8 @@ DIMSTYLE
  50
 0.0
 """
+
+
 class Dimension(GraphicEntity):
     TEMPLATE = _DIMENSION_TPL
     DXFATTRIBS = make_attribs({

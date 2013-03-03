@@ -9,10 +9,12 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
+
 def factory(debug=False):
     return DebugDB() if debug else EntityDB()
 
 from .handle import HandleGenerator
+
 
 class SimpleDB(dict):
     def __init__(self):
@@ -25,6 +27,7 @@ class SimpleDB(dict):
             handle = self.handles.next()
         self.__setitem__(handle, tags)
         return handle
+
 
 class EntityDB:
     """ A simple key/value database a.k.a. dict(), but can be replaced other
@@ -86,6 +89,7 @@ class EntityDB:
             handle = self.handles.next()
         self.__setitem__(handle, tags)
         return handle
+
 
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
