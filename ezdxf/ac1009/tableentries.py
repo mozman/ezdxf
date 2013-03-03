@@ -25,39 +25,47 @@ LAYERNAME
 CONTINUOUS
 """
 
+
+# noinspection PyAugmentAssignment,PyUnresolvedReferences
 class Layer(GenericWrapper):
     TEMPLATE = _LAYERTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-        'color': DXFAttr(62,  None), # dxf color index, if < 0 layer is off
+        'color': DXFAttr(62,  None),  # dxf color index, if < 0 layer is off
         'linetype': DXFAttr(6, None),
     }))
     LOCK = 0b00000100
     UNLOCK = 0b11111011
 
     def is_locked(self):
-        return self.flags & Layer.LOCK > 0
+        return self.dxf.flags & Layer.LOCK > 0
+
     def lock(self):
-        self.flags = self.flags | Layer.LOCK
+        self.dxf.flags = self.dxf.flags | Layer.LOCK
+
     def unlock(self):
-        self.flags = self.flags & Layer.UNLOCK
+        self.dxf.flags = self.dxf.flags & Layer.UNLOCK
 
     def is_off(self):
-        return self.color < 0
+        return self.dxf.color < 0
+
     def is_on(self):
         return not self.is_off()
+
     def on(self):
-        self.color = abs(self.color)
+        self.dxf.color = abs(self.dxf.color)
+
     def off(self):
-        self.color = -(abs(self.color))
+        self.dxf.color = -abs(self.dxf.color)
 
     def get_color(self):
-        return abs(self.color)
+        return abs(self.dxf.color)
+
     def set_color(self, color):
-        sign = -1 if self.color < 0 else 1
-        self.color = color * sign
+        color = abs(color) if self.is_on() else -abs(color)
+        self.dxf.color = color
 
 
 _STYLETEMPLATE = """  0
@@ -84,21 +92,21 @@ arial.ttf
 
 """
 
+
 class Style(GenericWrapper):
     TEMPLATE = _STYLETEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'name': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-        'height': DXFAttr(40, None), # fixed height, 0 if not fixed
-        'width': DXFAttr(41, None), # width factor
-        'oblique': DXFAttr(50, None), # oblique angle in degree, 0 = vertical
-        'generation_flags': DXFAttr(71, None), # 2 = backward, 4 = mirrored in Y
-        'last_height': DXFAttr(42, None), # last height used
-        'font': DXFAttr(3, None), # primary font file name
-        'bigfont': DXFAttr(4, None), # big font name, blank if none
+        'height': DXFAttr(40, None),  # fixed height, 0 if not fixed
+        'width': DXFAttr(41, None),  # width factor
+        'oblique': DXFAttr(50, None),  # oblique angle in degree, 0 = vertical
+        'generation_flags': DXFAttr(71, None),  # 2 = backward, 4 = mirrored in Y
+        'last_height': DXFAttr(42, None),  # last height used
+        'font': DXFAttr(3, None),  # primary font file name
+        'bigfont': DXFAttr(4, None),  # big font name, blank if none
     }))
-
 
 _LTYPETEMPLATE = """  0
 LTYPE
@@ -114,6 +122,7 @@ LTYPEDESCRIPTION
 65
 """
 
+
 class Linetype(GenericWrapper):
     TEMPLATE = _LTYPETEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
@@ -121,7 +130,7 @@ class Linetype(GenericWrapper):
         'name': DXFAttr(2, None),
         'description': DXFAttr(3, None),
         'length': DXFAttr(40, None),
-        'items': DXFAttr( 73, None),
+        'items': DXFAttr(73, None),
     }))
 
     @classmethod
@@ -135,9 +144,9 @@ class Linetype(GenericWrapper):
         return entity
 
     def _setup_pattern(self, pattern):
-        self.tags.noclass.append(DXFTag(73, len(pattern)-1))
+        self.tags.noclass.append(DXFTag(73, len(pattern) - 1))
         self.tags.noclass.append(DXFTag(40, float(pattern[0])))
-        self.tags.noclass.extend( (DXFTag(49, float(p)) for p in pattern[1:]) )
+        self.tags.noclass.extend((DXFTag(49, float(p)) for p in pattern[1:]))
 
 
 _VPORTTEMPLATE = """  0
@@ -279,6 +288,7 @@ UCSNAME
 0.0
 """
 
+
 class UCS(GenericWrapper):
     TEMPLATE = _UCSTEMPLATE
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
@@ -300,6 +310,7 @@ APPNAME
  70
 0
 """
+
 
 class AppID(GenericWrapper):
     TEMPLATE = _APPIDTEMPLATE
@@ -348,6 +359,7 @@ VIEWNAME
  71
 0
 """
+
 
 class View(GenericWrapper):
     TEMPLATE = _VIEWTEMPLATE
@@ -454,6 +466,7 @@ DIMSTYLENAME
 178
      0
 """
+
 
 class DimStyle(GenericWrapper):
     TEMPLATE = _DIMSTYLETEMPLATE
