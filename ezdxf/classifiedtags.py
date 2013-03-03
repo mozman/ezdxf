@@ -15,13 +15,15 @@ XDATA_MARKER = 1001
 
 NoneTag = DXFTag(None, None)
 
+
 class ClassifiedTags:
     """ Manage Subclasses, AppData and Extended Data """
     __slots__ = ('subclasses', 'appdata', 'xdata')
+
     def __init__(self, iterable=None):
-        self.appdata = list() # code == 102, keys are "{<arbitrary name>", values are Tags()
-        self.subclasses = list() # code == 100, keys are "subclassname", values are Tags()
-        self.xdata = list() # code >= 1000, keys are "APPNAME", values are Tags()
+        self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
+        self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
+        self.xdata = list()  # code >= 1000, keys are "APPNAME", values are Tags()
         if iterable is not None:
             self._setup(iterable)
 
@@ -88,7 +90,7 @@ class ClassifiedTags:
             self.xdata.append(data)
             return NoneTag
 
-        tag = collect_subclass(None) # preceding tags without a subclass
+        tag = collect_subclass(None)  # preceding tags without a subclass
         while tag.code == SUBCLASS_MARKER:
             tag = collect_subclass(tag)
         while tag.code == XDATA_MARKER:
@@ -114,7 +116,7 @@ class ClassifiedTags:
         getpos = 0
         for subclass in self.subclasses:
             if subclass[0].value == name:
-                if getpos >= pos :
+                if getpos >= pos:
                     return subclass
                 else:
                     getpos += 1

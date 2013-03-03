@@ -12,12 +12,13 @@ from .tags import TagGroups
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .entity import GenericWrapper
 
+
 class DXFDictionary(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
             'parent': DXFAttr(330, None),
-            }),
+        }),
         DefSubclass('AcDbDictionary', {}),
     )
 
@@ -45,22 +46,23 @@ class DXFDictionary(GenericWrapper):
     def get(self, key, default=None):
         return self._values.get(key, default)
 
+
 class DXFLayout(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
             'parent': DXFAttr(330, None),
-            }),
+        }),
         DefSubclass('AcDbPlotSettings', {}),
         DefSubclass('AcDbLayout', {
-            'name': DXFAttr(1, None), # layout name
+            'name': DXFAttr(1, None),  # layout name
             'flags': DXFAttr(70, None),
             'taborder': DXFAttr(71, None),
-            'limmin': DXFAttr(10, 'Point2D'), # minimum limits
-            'limmax': DXFAttr(11, 'Point2D'), # maximum limits
-            'insertbase': DXFAttr(12, 'Point3D'), #Insertion base point for this layout
-            'extmin': DXFAttr(14, 'Point3D'), # Minimum extents for this layout
-            'extmax': DXFAttr(15, 'Point3D'), # Maximum extents for this layout
+            'limmin': DXFAttr(10, 'Point2D'),  # minimum limits
+            'limmax': DXFAttr(11, 'Point2D'),  # maximum limits
+            'insertbase': DXFAttr(12, 'Point3D'),  # Insertion base point for this layout
+            'extmin': DXFAttr(14, 'Point3D'),  # Minimum extents for this layout
+            'extmax': DXFAttr(15, 'Point3D'),  # Maximum extents for this layout
             'elevation': DXFAttr(146, None),
             'ucsorigin': DXFAttr(13, 'Point3D'),
             'ucsxaxis': DXFAttr(16, 'Point3D'),

@@ -9,6 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import TAG_STRING_FORMAT, Tags
 
+
 class DefaultChunk(object):
     def __init__(self, tags, drawing):
         assert isinstance(tags, Tags)
@@ -25,6 +26,7 @@ class DefaultChunk(object):
 
     def write(self, stream):
         self.tags.write(stream)
+
 
 def iterchunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
     while True:

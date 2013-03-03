@@ -12,8 +12,10 @@ from collections import OrderedDict
 from .defaultchunk import iterchunks
 from .table import GenericTable, Table, ViewportTable
 
+
 class TablesSection(object):
     name = 'tables'
+
     def __init__(self, tags, drawing):
         self._drawing = drawing
         self._tables = OrderedDict()
@@ -28,7 +30,7 @@ class TablesSection(object):
                 next(tags)
             return tags
 
-        itertags = skiptags(iter(tags), 2) # (0, 'SECTION'), (2, 'TABLES')
+        itertags = skiptags(iter(tags), 2)  # (0, 'SECTION'), (2, 'TABLES')
         for table in iterchunks(itertags, stoptag='ENDSEC', endofchunk='ENDTAB'):
             table_class = get_table_class(name(table))
             new_table = table_class(table, self._drawing)
@@ -57,6 +59,7 @@ TABLESMAP = {
     'APPID': Table,
     'BLOCK_RECORD': Table,
 }
+
 
 def get_table_class(name):
     return TABLESMAP.get(name, GenericTable)

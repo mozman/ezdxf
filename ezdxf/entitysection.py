@@ -50,7 +50,7 @@ class EntitySection(object):
         if len(tags) == 3:  # empty entities section
             return
 
-        for group in TagGroups(islice(tags, 2, len(tags)-1)):
+        for group in TagGroups(islice(tags, 2, len(tags) - 1)):
             self._entityspace.add(ClassifiedTags(group))
 
     def write(self, stream):

@@ -38,6 +38,4 @@ class TemplateFinder:
         return "%s.dxf" % dxfversion
 
     def getstream(self, dxfversion):
-        filename = self.filepath(dxfversion)
         return io.open(self.filepath(dxfversion), encoding='cp1252')
-

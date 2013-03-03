@@ -16,6 +16,7 @@ from .tablessection import TablesSection
 from .blockssection import BlocksSection
 from .entitysection import EntitySection, ClassesSection, ObjectsSection
 
+
 class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = OrderedDict()
@@ -58,6 +59,7 @@ SECTIONMAP = {
     'ENTITIES': EntitySection,
     'OBJECTS': ObjectsSection,
 }
+
 
 def get_section_class(name):
     return SECTIONMAP.get(name, DefaultChunk)

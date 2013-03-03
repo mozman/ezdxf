@@ -16,6 +16,7 @@ from . import const
 
 class BlocksSection(object):
     name = 'blocks'
+
     def __init__(self, tags, drawing):
         ## TODO: _blocks could be a dict()
         self._blocks = list()
@@ -41,11 +42,11 @@ class BlocksSection(object):
         assert tags[1] == (2, 'BLOCKS')
         assert tags[-1] == (0, 'ENDSEC')
 
-        if len(tags) == 3: # empty block section
+        if len(tags) == 3:  # empty block section
             return
 
         entities = []
-        for group in TagGroups(islice(tags, 2, len(tags)-1)):
+        for group in TagGroups(islice(tags, 2, len(tags) - 1)):
             entities.append(ClassifiedTags(group))
             if group[0].value == 'ENDBLK':
                 block_layout = build_block_layout(entities)
@@ -96,7 +97,7 @@ class BlocksSection(object):
 
     def new_anonymous_block(self, typechar='U', basepoint=(0, 0)):
         blockname = self.anonymous_blockname(typechar)
-        block = self.new(blockname, basepoint, { 'flags': const.BLK_ANONYMOUS })
+        block = self.new(blockname, basepoint, {'flags': const.BLK_ANONYMOUS})
         return block
 
     def anonymous_blockname(self, typechar):

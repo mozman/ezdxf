@@ -99,12 +99,12 @@ class Table(object):
 
     def _iter_table_entries_as_tags(self):
         """ Iterate over table-entries as Tags(). """
-        return ( self.entitydb[handle] for handle in self._table_entries )
+        return (self.entitydb[handle] for handle in self._table_entries)
 
     def entry_exists(self, name):
         """ Check if an table-entry 'name' exists. """
         try:
-            entry = self.get_entry(name)
+            self.get_entry(name)
             return True
         except ValueError:
             return False

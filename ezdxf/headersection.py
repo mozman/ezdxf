@@ -88,7 +88,7 @@ class HeaderVar:
 
     def getpoint(self):
         if self.ispoint:
-            return tuple( [tag[1] for tag in self.tag] )
+            return tuple([tag[1] for tag in self.tag])
         else:
             raise ValueError
 
