@@ -7,7 +7,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..tags import casttagvalue, DXFTag
+from ..tags import DXFTag
 from ..ac1009 import tableentries as ac1009
 from ..entity import GenericWrapper
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
@@ -36,18 +36,19 @@ Continuous
 # Pointer/handle to PlotStyleName
 # uses tag(390, ...) from the '0' layer
 
-none_subclass = DefSubclass(None, {'handle': DXFAttr(5, None)} )
+none_subclass = DefSubclass(None, {'handle': DXFAttr(5, None)})
 symbol_subclass = DefSubclass('AcDbSymbolTableRecord', {})
 
 layer_subclass = DefSubclass('AcDbLayerTableRecord', {
-        'name': DXFAttr(2, None), # layer name
-        'flags': DXFAttr(70, None),
-        'color': DXFAttr(62, None), # dxf color index
-        'linetype': DXFAttr(6, None), # linetype name
-        'plot': DXFAttr(290, None), # dont plot this layer if 0 else 1
-        'lineweight': DXFAttr(370, None), # enum value???
-        'plotstylename': DXFAttr(390, None), # handle to PlotStyleName object
+    'name': DXFAttr(2, None),  # layer name
+    'flags': DXFAttr(70, None),
+    'color': DXFAttr(62, None),  # dxf color index
+    'linetype': DXFAttr(6, None),  # linetype name
+    'plot': DXFAttr(290, None),  # don't plot this layer if 0 else 1
+    'lineweight': DXFAttr(370, None),  # enum value???
+    'plotstylename': DXFAttr(390, None),  # handle to PlotStyleName object
 })
+
 
 class Layer(ac1009.Layer):
     TEMPLATE = _LAYERTEMPLATE
@@ -87,16 +88,17 @@ arial.ttf
 
 """
 style_subclass = DefSubclass('AcDbTextStyleTableRecord', {
-        'name': DXFAttr(2, None),
-        'flags': DXFAttr(70, None),
-        'height': DXFAttr(40, None), # fixed height, 0 if not fixed
-        'width': DXFAttr(41, None), # width factor
-        'oblique': DXFAttr(50, None), # oblique angle in degree, 0 = vertical
-        'generation_flags': DXFAttr(71, None), # 2 = backward, 4 = mirrored in Y
-        'last_height': DXFAttr(42, None), # last height used
-        'font': DXFAttr(3, None), # primary font file name
-        'bigfont': DXFAttr(4, None), # big font name, blank if none
+    'name': DXFAttr(2, None),
+    'flags': DXFAttr(70, None),
+    'height': DXFAttr(40, None),  # fixed height, 0 if not fixed
+    'width': DXFAttr(41, None),  # width factor
+    'oblique': DXFAttr(50, None),  # oblique angle in degree, 0 = vertical
+    'generation_flags': DXFAttr(71, None),  # 2 = backward, 4 = mirrored in Y
+    'last_height': DXFAttr(42, None),  # last height used
+    'font': DXFAttr(3, None),  # primary font file name
+    'bigfont': DXFAttr(4, None),  # big font name, blank if none
 })
+
 
 class Style(ac1009.Style):
     TEMPLATE = _STYLETEMPLATE
@@ -120,18 +122,20 @@ LTYPEDESCRIPTION
 65
 """
 linetype_subclass = DefSubclass('AcDbLinetypeTableRecord', {
-        'name': DXFAttr(2,  None),
-        'description': DXFAttr(3, None),
-        'length': DXFAttr(40, None),
-        'items': DXFAttr( 73, None),
+    'name': DXFAttr(2,  None),
+    'description': DXFAttr(3, None),
+    'length': DXFAttr(40, None),
+    'items': DXFAttr(73, None),
 })
+
+
 class Linetype(ac1009.Linetype):
     TEMPLATE = _LTYPETEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
     def _setup_pattern(self, pattern):
         subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
-        subclass.append(DXFTag(73, len(pattern)-1))
+        subclass.append(DXFTag(73, len(pattern) - 1))
         subclass.append(DXFTag(40, float(pattern[0])))
 
         for element in pattern[1:]:
@@ -152,9 +156,10 @@ APPIDNAME
 0
 """
 appid_subclass = DefSubclass('AcDbRegAppTableRecord', {
-        'name': DXFAttr(2, None),
-        'flags': DXFAttr(70, None),
+    'name': DXFAttr(2, None),
+    'flags': DXFAttr(70, None),
 })
+
 
 class AppID(ac1009.AppID):
     TEMPLATE = _APPIDTEMPLATE
@@ -251,50 +256,52 @@ STANDARD
 178
      0
 """
-handle105_subclass = DefSubclass(None, {'handle': DXFAttr(105, None)} )
-dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord',{
-        'name': DXFAttr(2,  None),
-        'flags': DXFAttr(70, None),
-        'dimpost': DXFAttr(3, None),
-        'dimapost': DXFAttr(4, None),
-        'dimblk': DXFAttr(5, None),
-        'dimblk1': DXFAttr(6, None),
-        'dimblk2': DXFAttr(7, None),
-        'dimscale': DXFAttr(40, None),
-        'dimasz': DXFAttr(41, None),
-        'dimexo': DXFAttr(42, None),
-        'dimdli': DXFAttr(43, None),
-        'dimexe': DXFAttr(44, None),
-        'dimrnd': DXFAttr(45, None),
-        'dimdle': DXFAttr(46, None),
-        'dimtp': DXFAttr(47, None),
-        'dimtm': DXFAttr(48, None),
-        'dimtxt': DXFAttr(140, None),
-        'dimcen': DXFAttr(141, None),
-        'dimtsz': DXFAttr(142, None),
-        'dimaltf': DXFAttr(143, None),
-        'dimlfac': DXFAttr(144, None),
-        'dimtvp': DXFAttr(145, None),
-        'dimtfac': DXFAttr(146, None),
-        'dimgap': DXFAttr(147, None),
-        'dimtol': DXFAttr(71, None),
-        'dimlim': DXFAttr(72, None),
-        'dimtih': DXFAttr(73, None),
-        'dimtoh': DXFAttr(74, None),
-        'dimse1': DXFAttr(75, None),
-        'dimse2': DXFAttr(76, None),
-        'dimtad': DXFAttr(77, None),
-        'dimzin': DXFAttr(78, None),
-        'dimalt': DXFAttr(170, None),
-        'dimaltd': DXFAttr(171, None),
-        'dimtofl': DXFAttr(172, None),
-        'dimsah': DXFAttr(173, None),
-        'dimtix': DXFAttr(174, None),
-        'dimsoxd': DXFAttr(175, None),
-        'dimclrd': DXFAttr(176, None),
-        'dimclre': DXFAttr(177, None),
-        'dimclrt': DXFAttr(178, None),
+handle105_subclass = DefSubclass(None, {'handle': DXFAttr(105, None)})
+dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
+    'name': DXFAttr(2,  None),
+    'flags': DXFAttr(70, None),
+    'dimpost': DXFAttr(3, None),
+    'dimapost': DXFAttr(4, None),
+    'dimblk': DXFAttr(5, None),
+    'dimblk1': DXFAttr(6, None),
+    'dimblk2': DXFAttr(7, None),
+    'dimscale': DXFAttr(40, None),
+    'dimasz': DXFAttr(41, None),
+    'dimexo': DXFAttr(42, None),
+    'dimdli': DXFAttr(43, None),
+    'dimexe': DXFAttr(44, None),
+    'dimrnd': DXFAttr(45, None),
+    'dimdle': DXFAttr(46, None),
+    'dimtp': DXFAttr(47, None),
+    'dimtm': DXFAttr(48, None),
+    'dimtxt': DXFAttr(140, None),
+    'dimcen': DXFAttr(141, None),
+    'dimtsz': DXFAttr(142, None),
+    'dimaltf': DXFAttr(143, None),
+    'dimlfac': DXFAttr(144, None),
+    'dimtvp': DXFAttr(145, None),
+    'dimtfac': DXFAttr(146, None),
+    'dimgap': DXFAttr(147, None),
+    'dimtol': DXFAttr(71, None),
+    'dimlim': DXFAttr(72, None),
+    'dimtih': DXFAttr(73, None),
+    'dimtoh': DXFAttr(74, None),
+    'dimse1': DXFAttr(75, None),
+    'dimse2': DXFAttr(76, None),
+    'dimtad': DXFAttr(77, None),
+    'dimzin': DXFAttr(78, None),
+    'dimalt': DXFAttr(170, None),
+    'dimaltd': DXFAttr(171, None),
+    'dimtofl': DXFAttr(172, None),
+    'dimsah': DXFAttr(173, None),
+    'dimtix': DXFAttr(174, None),
+    'dimsoxd': DXFAttr(175, None),
+    'dimclrd': DXFAttr(176, None),
+    'dimclre': DXFAttr(177, None),
+    'dimclrt': DXFAttr(178, None),
 })
+
+
 class DimStyle(ac1009.DimStyle):
     TEMPLATE = _DIMSTYLETEMPLATE
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
@@ -331,12 +338,13 @@ UCSNAME
 0.0
 """
 ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
-        'name': DXFAttr(2, None),
-        'flags': DXFAttr(70, None),
-        'origin': DXFAttr(10, 'Point3D'),
-        'xaxis': DXFAttr(11, 'Point3D'),
-        'yaxis': DXFAttr(12, 'Point3D'),
+    'name': DXFAttr(2, None),
+    'flags': DXFAttr(70, None),
+    'origin': DXFAttr(10, 'Point3D'),
+    'xaxis': DXFAttr(11, 'Point3D'),
+    'yaxis': DXFAttr(12, 'Point3D'),
 })
+
 
 class UCS(ac1009.UCS):
     TEMPLATE = _UCSTEMPLATE
@@ -386,19 +394,20 @@ VIEWNAME
 0
 """
 view_subclass = DefSubclass('AcDbViewTableRecord', {
-        'name': DXFAttr(2, None),
-        'flags': DXFAttr(70, None),
-        'height': DXFAttr(40, None),
-        'width': DXFAttr(41, None),
-        'center_point': DXFAttr(10, 'Point2D'),
-        'direction_point': DXFAttr(11, 'Point3D'),
-        'target_point': DXFAttr(12, 'Point3D'),
-        'lens_length': DXFAttr(42, None),
-        'front_clipping': DXFAttr(43, None),
-        'back_clipping': DXFAttr(44, None),
-        'view_twist': DXFAttr(50, None),
-        'view_mode': DXFAttr(71, None),
-    })
+    'name': DXFAttr(2, None),
+    'flags': DXFAttr(70, None),
+    'height': DXFAttr(40, None),
+    'width': DXFAttr(41, None),
+    'center_point': DXFAttr(10, 'Point2D'),
+    'direction_point': DXFAttr(11, 'Point3D'),
+    'target_point': DXFAttr(12, 'Point3D'),
+    'lens_length': DXFAttr(42, None),
+    'front_clipping': DXFAttr(43, None),
+    'back_clipping': DXFAttr(44, None),
+    'view_twist': DXFAttr(50, None),
+    'view_mode': DXFAttr(71, None),
+})
+
 
 class View(ac1009.View):
     TEMPLATE = _VIEWTEMPLATE
@@ -484,34 +493,36 @@ VPORTNAME
 0
 """
 vport_subclass = DefSubclass('AcDbViewportTableRecord', {
-        'name': DXFAttr(2,  None),
-        'flags': DXFAttr(70,  None),
-        'lower_left': DXFAttr(10, 'Point2D'),
-        'upper_right': DXFAttr(11, 'Point2D'),
-        'center_point': DXFAttr(12, 'Point2D'),
-        'snap_base': DXFAttr(13, 'Point2D'),
-        'snap_spacing': DXFAttr(14, 'Point2D'),
-        'grid_spacing': DXFAttr(15, 'Point2D'),
-        'direction_point': DXFAttr(16, 'Point3D'),
-        'target_point': DXFAttr(17, 'Point3D'),
-        'height': DXFAttr(40, None),
-        'aspect_ratio': DXFAttr(41, None),
-        'lens_length': DXFAttr(42, None),
-        'front_clipping': DXFAttr(43, None),
-        'back_clipping': DXFAttr(44, None),
-        'snap_rotation': DXFAttr(50, None),
-        'view_twist': DXFAttr(51, None),
-        'status': DXFAttr(68, None),
-        'id': DXFAttr(69, None),
-        'view_mode': DXFAttr(71, None),
-        'circle_zoom': DXFAttr(72, None),
-        'fast_zoom': DXFAttr(73, None),
-        'ucs_icon': DXFAttr(74, None),
-        'snap_on': DXFAttr(75, None),
-        'grid_on': DXFAttr(76, None),
-        'snap_style': DXFAttr(77, None),
-        'snap_isopair': DXFAttr(78, None),
-    })
+    'name': DXFAttr(2,  None),
+    'flags': DXFAttr(70,  None),
+    'lower_left': DXFAttr(10, 'Point2D'),
+    'upper_right': DXFAttr(11, 'Point2D'),
+    'center_point': DXFAttr(12, 'Point2D'),
+    'snap_base': DXFAttr(13, 'Point2D'),
+    'snap_spacing': DXFAttr(14, 'Point2D'),
+    'grid_spacing': DXFAttr(15, 'Point2D'),
+    'direction_point': DXFAttr(16, 'Point3D'),
+    'target_point': DXFAttr(17, 'Point3D'),
+    'height': DXFAttr(40, None),
+    'aspect_ratio': DXFAttr(41, None),
+    'lens_length': DXFAttr(42, None),
+    'front_clipping': DXFAttr(43, None),
+    'back_clipping': DXFAttr(44, None),
+    'snap_rotation': DXFAttr(50, None),
+    'view_twist': DXFAttr(51, None),
+    'status': DXFAttr(68, None),
+    'id': DXFAttr(69, None),
+    'view_mode': DXFAttr(71, None),
+    'circle_zoom': DXFAttr(72, None),
+    'fast_zoom': DXFAttr(73, None),
+    'ucs_icon': DXFAttr(74, None),
+    'snap_on': DXFAttr(75, None),
+    'grid_on': DXFAttr(76, None),
+    'snap_style': DXFAttr(77, None),
+    'snap_isopair': DXFAttr(78, None),
+})
+
+
 class Viewport(ac1009.Viewport):
     TEMPLATE = _VPORTTEMPLATE
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
@@ -532,10 +543,11 @@ BLOCK_RECORD_NAME
 0
 """
 blockrec_subclass = DefSubclass('AcDbBlockTableRecord', {
-        'owner': DXFAttr(330, None),
-        'name': DXFAttr(2, None),
-        'layout': DXFAttr(340, None),
-    })
+    'owner': DXFAttr(330, None),
+    'name': DXFAttr(2, None),
+    'layout': DXFAttr(340, None),
+})
+
 
 class BlockRecord(GenericWrapper):
     """ Internal Object - use at your own risk!

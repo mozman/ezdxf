@@ -45,7 +45,7 @@ class TagIterator(object):
                 value = self.readline().rstrip('\n')
             except:
                 raise StopIteration()
-            self.lasttag = tagcast( (code, value) )
+            self.lasttag = cast_tag((code, value))
             return self.lasttag
 
         if self.undo:
@@ -113,26 +113,7 @@ def strtag(tag):
     return TAG_STRING_FORMAT % tag
 
 
-class TagCaster:
-    def __init__(self):
-        self._cast = self._build()
-
-    def _build(self):
-        table = {}
-        for caster, codes in TYPES:
-            for code in codes:
-                table[code] = caster
-        return table
-
-    def cast(self, tag):
-        typecaster = self._cast.get(tag[0], tostr)
-        return DXFTag(tag[0], typecaster(tag[1]))
-
-    def castvalue(self, code, value):
-        typecaster = self._cast.get(code, tostr)
-        return typecaster(value)
-
-TYPES = [
+TYPE_DEFINITION = [
     (tostr, range(0, 10)),
     (float, range(10, 60)),
     (int, range(60, 100)),
@@ -158,9 +139,24 @@ TYPES = [
     (int, range(1060, 1072)),
 ]
 
-_TagCaster = TagCaster()
-tagcast = _TagCaster.cast
-casttagvalue = _TagCaster.castvalue
+
+def _build_type_table(types):
+    table = {}
+    for caster, codes in types:
+        for code in codes:
+            table[code] = caster
+    return table
+
+TYPE_TABLE = _build_type_table(TYPE_DEFINITION)
+
+
+def cast_tag(tag, types=TYPE_TABLE):
+    caster = types.get(tag[0], tostr)
+    return DXFTag(tag[0], caster(tag[1]))
+
+
+def cast_tag_value(code, value, types=TYPE_TABLE):
+    return types.get(code, tostr)(value)
 
 
 class Tags(list):
@@ -185,7 +181,7 @@ class Tags(list):
 
     def findall(self, code):
         """ Returns a list of DXFTag(code, ...). """
-        return [ tag for tag in self if tag.code == code ]
+        return [tag for tag in self if tag.code == code]
 
     def tagindex(self, code, start=0, end=None):
         """ Return first index of DXFTag(code, ...). """
