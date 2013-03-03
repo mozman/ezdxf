@@ -17,6 +17,7 @@ from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .drawing import Drawing
 from .database import SimpleDB
 
+
 class DrawingProxy:
     """ a lightweight drawing proxy for testing
 
@@ -33,6 +34,7 @@ class DrawingProxy:
 
     def __does_not_exist_in_Drawing(self):
         """ ATTENTION: private attributes will not be checked in TestDrawingProxy! """
+
 
 def normlines(text):
     lines = text.split('\n')

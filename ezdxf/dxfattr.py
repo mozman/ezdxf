@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Purpose: dxfattr
-# Created: 2011-04-27
+# Copyright (C) 2011, Manfred Moitzi
+# License: MIT License
+
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 

@@ -111,7 +111,7 @@ class DebugDB(EntityDB):
 
     def printtags(self, tags):
         def tostring(tags):
-            return " ".join( (self.TAGFMT % tag for tag in tags) )
+            return " ".join((self.TAGFMT % tag for tag in tags))
 
         if self._verbose:
             self.println(str(tags))
@@ -119,7 +119,7 @@ class DebugDB(EntityDB):
             self.println(tostring(tags))
 
     def println(self, text=""):
-        self._stream.write(text+'\n')
+        self._stream.write(text + '\n')
 
     def dumpcollisions(self, stream, verbose=True):
         def dump_entry(handle):
@@ -148,4 +148,3 @@ class DebugDB(EntityDB):
         self.println("Database contains %d entries." % len(self))
         for handle in self:
             dump_entry(handle)
-

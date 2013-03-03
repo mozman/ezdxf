@@ -33,6 +33,3 @@ class EntitySpace(list):
     def write(self, stream):
         for handle in self:
             self._entitydb[handle].write(stream)
-
-
-

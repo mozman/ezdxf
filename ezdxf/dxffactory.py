@@ -23,6 +23,7 @@ factories = {
     'AC1024': AC1024Factory,
 }
 
+
 def dxffactory(dxfversion, drawing=None):
     factory_class = factories.get(dxfversion, default_factory)
     factory = factory_class()

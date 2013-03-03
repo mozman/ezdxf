@@ -10,8 +10,10 @@ __author__ = "mozman <mozman@gmx.at>"
 from math import floor
 from datetime import datetime
 
+
 def frac(number):
     return number - floor(number)
+
 
 class JulianDate:
     def __init__(self, date):
@@ -25,8 +27,9 @@ class JulianDate:
     def julian_date(self):
         y = self.date.year + (float(self.date.month) - 2.85) / 12.
         A = floor(367. * y) - 1.75 * floor(y) + self.date.day
-        B  = floor(A) - 0.75 * floor(y / 100.)
+        B = floor(A) - 0.75 * floor(y / 100.)
         return floor(B) + 1721115.
+
 
 class CalendarDate:
     def __init__(self, juliandate):
@@ -39,20 +42,21 @@ class CalendarDate:
         Z = floor(self.jdate)
 
         if Z < 2299161:
-            A = Z # julian calender
+            A = Z  # julian calender
         else:
-            g = floor((Z - 1867216.25) / 36524.25) # gregorian calendar
+            g = floor((Z - 1867216.25) / 36524.25)  # gregorian calendar
             A = Z + 1. + g - floor(g / 4.)
 
         B = A + 1524.
-        C = floor((B-122.1) / 365.25)
+        C = floor((B - 122.1) / 365.25)
         D = floor(365.25 * C)
-        E = floor((B-D) / 30.6001)
+        E = floor((B - D) / 30.6001)
 
         day = B - D - floor(30.6001 * E)
         month = E - 1 if E < 14 else E - 13
         year = C - 4716 if month > 2 else C - 4715
-        return (int(year), int(month), int(day))
+        return int(year), int(month), int(day)
+
 
 def frac2time(jdate):
     seconds = int(frac(jdate) * 86400.)
@@ -60,10 +64,12 @@ def frac2time(jdate):
     seconds = seconds % 3600
     minute = int(seconds / 60)
     second = seconds % 60
-    return (hour, minute, second)
+    return hour, minute, second
+
 
 def juliandate(date):
     return JulianDate(date).result
+
 
 def calendardate(juliandate):
     return CalendarDate(juliandate).result
