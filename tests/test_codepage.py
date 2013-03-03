@@ -12,6 +12,7 @@ import unittest
 
 from ezdxf.codepage import toencoding, tocodepage
 
+
 class TestToEncoding(unittest.TestCase):
     def test_ansi_1250(self):
         self.assertEqual('cp1250', toencoding('ansi_1250'))
@@ -26,5 +27,5 @@ class TestToEncoding(unittest.TestCase):
         self.assertEqual('ANSI_936', tocodepage('hz'))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

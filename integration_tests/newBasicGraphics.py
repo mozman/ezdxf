@@ -12,9 +12,11 @@ import ezdxf
 
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
 
+
 def add_line_entities(entityspace, offset):
     for color in range(1, 256):
         line = entityspace.add_line((offset+0, color), (offset+50, color), {'color': color})
+
 
 def make_drawing(version):
     dwg = ezdxf.new(version)
@@ -22,9 +24,10 @@ def make_drawing(version):
     add_line_entities(dwg.layout(), 70)
     dwg.saveas('basic_graphics_%s.dxf' % version)
 
+
 def main():
     for version in VERSIONS:
         make_drawing(version)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

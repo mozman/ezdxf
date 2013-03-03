@@ -14,6 +14,7 @@ from ezdxf.testtools import DrawingProxy, Tags, normlines
 
 from ezdxf.entitysection import ObjectsSection
 
+
 class TestObjectsSection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -33,6 +34,7 @@ class TestObjectsSection(unittest.TestCase):
         result = stream.getvalue()
         stream.close()
         self.assertEqual(EMPTYSEC, result)
+
 
 EMPTYSEC = """  0
 SECTION
@@ -184,5 +186,5 @@ ASDK_XREC_ANNOTATION_SCALE_INFO
 ENDSEC
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

@@ -11,6 +11,7 @@ import unittest
 
 from ezdxf.tags import TagGroups
 
+
 class TestTagGroups(unittest.TestCase):
     def setUp(self):
         self.groups = TagGroups.fromtext(TESTTAGS)
@@ -29,6 +30,7 @@ class TestTagGroups(unittest.TestCase):
     def test_last_group(self):
         self.assertEqual('ENDTAB', self.groups.getname(-1))
         self.assertEqual(1, len(self.groups[-1]))
+
 
 TESTTAGS = """  0
 SECTION
@@ -371,5 +373,5 @@ ACAD_PSEXT
   0
 ENDTAB
 """
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

@@ -12,6 +12,7 @@ import unittest
 
 from ezdxf.database import EntityDB
 
+
 class testEntityDB(unittest.TestCase):
     def setUp(self):
         self.db = EntityDB()
@@ -30,5 +31,5 @@ class testEntityDB(unittest.TestCase):
             self.db[0]
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

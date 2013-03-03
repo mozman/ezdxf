@@ -12,11 +12,14 @@ import ezdxf
 
 VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
 
+
 def add_polyline2d_entities(entityspace, points):
     entityspace.add_polyline2d(points)
 
+
 def add_polyline3d_entities(entityspace, points):
     entityspace.add_polyline3d(points)
+
 
 def make_drawing(version):
     dwg = ezdxf.new(version)
@@ -26,9 +29,10 @@ def make_drawing(version):
     add_polyline3d_entities(dwg.modelspace(), points3d)
     dwg.saveas('polylines_%s.dxf' % version)
 
+
 def main():
     for version in VERSIONS:
         make_drawing(version)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

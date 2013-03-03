@@ -13,6 +13,7 @@ from io import StringIO
 from ezdxf.tags import Tags
 from ezdxf.classifiedtags import ClassifiedTags
 
+
 class TestClassifiedTags(unittest.TestCase):
     def setUp(self):
         self.xtags = ClassifiedTags.fromtext(XTAGS1)
@@ -79,6 +80,7 @@ class TestClassifiedTags(unittest.TestCase):
         subclass = self.xtags.get_subclass('AcDbLayerTableRecord')
         self.assertEqual(8, len(subclass))
 
+
 XTAGS1 = """  0
 LAYER
   5
@@ -144,6 +146,8 @@ CONTINUOUS
 1000
 75-LÄNGENSCHNITT-2005}
 """
+
+
 class TestXDATA(unittest.TestCase):
     def setUp(self):
         self.tags = ClassifiedTags.fromtext(XTAGS2)
@@ -161,6 +165,7 @@ class TestXDATA(unittest.TestCase):
         self.assertEqual(xdata[1], (1000, 'TEXT-XDATA3'))
         self.assertEqual(xdata[2], (1070, 2))
         self.assertEqual(xdata[3], (1070, 3))
+
 
 XTAGS2 = """  0
 LAYER
@@ -192,6 +197,7 @@ TEXT-XDATA3
 3
 """
 
+
 class Test2xSubclass(unittest.TestCase):
     def setUp(self):
         self.tags = ClassifiedTags.fromtext(SPECIALCASE_TEXT)
@@ -201,6 +207,7 @@ class Test2xSubclass(unittest.TestCase):
         self.assertEqual((100, 'AcDbText'), subclass2[-2])
         self.assertEqual((73, 2), subclass2[-1])
         self.assertEqual(2, len(subclass2))
+
 
 SPECIALCASE_TEXT = """  0
 TEXT
@@ -234,5 +241,5 @@ AcDbText
 2
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

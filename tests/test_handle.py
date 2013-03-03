@@ -11,6 +11,7 @@ import unittest
 
 from ezdxf.handle import HandleGenerator
 
+
 class TestHandleGenerator(unittest.TestCase):
     def test_next(self):
         handles = HandleGenerator('100')
@@ -26,5 +27,6 @@ class TestHandleGenerator(unittest.TestCase):
         handles.reset('300')
         self.assertEqual('300', handles.seed)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

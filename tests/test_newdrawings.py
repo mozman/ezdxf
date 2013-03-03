@@ -11,6 +11,7 @@ import unittest
 
 import ezdxf
 
+
 class TestNewDrawings(unittest.TestCase):
     def test_new_AC1009(self):
         dwg = ezdxf.new('AC1009')
@@ -32,5 +33,6 @@ class TestNewDrawings(unittest.TestCase):
         dwg = ezdxf.new('AC1024')
         self.assertEqual('AC1024', dwg.dxfversion)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

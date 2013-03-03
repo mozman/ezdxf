@@ -240,6 +240,7 @@ ACAD_PSEXT
 ENDTAB
 """
 
+
 class TestR12Table(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -279,5 +280,6 @@ class TestR2010Table(unittest.TestCase):
         entry = self.table.get_entry('ACAD')
         self.assertEqual('ACAD', entry.dxf.name)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

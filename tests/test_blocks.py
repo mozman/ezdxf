@@ -14,6 +14,7 @@ from ezdxf.testtools import DrawingProxy, Tags
 
 from ezdxf.blockssection import BlocksSection
 
+
 class TestBlocksSection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -23,6 +24,7 @@ class TestBlocksSection(unittest.TestCase):
         block = self.blocks.new('TEST')
         self.assertTrue(block in self.blocks)
 
+
 EMPTYSEC = """  0
 SECTION
   2
@@ -31,5 +33,5 @@ BLOCKS
 ENDSEC
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

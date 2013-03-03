@@ -14,6 +14,7 @@ from ezdxf.testtools import DrawingProxy, normlines, Tags
 
 from ezdxf.entitysection import EntitySection
 
+
 class TestEntitySection(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -33,6 +34,7 @@ class TestEntitySection(unittest.TestCase):
         result = stream.getvalue()
         stream.close()
         self.assertEqual(EMPTYSEC, result)
+
 
 EMPTYSEC = """  0
 SECTION
@@ -238,5 +240,5 @@ MVIEW
 ENDSEC
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

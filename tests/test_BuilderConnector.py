@@ -12,9 +12,11 @@ import unittest
 
 from ezdxf.ac1009.gbuilder import BuilderConnector
 
+
 class DXFNamespace:
     def __init__(self, handle):
         self.handle = handle
+
 
 class Entity:
     def __init__(self, handle):
@@ -23,12 +25,14 @@ class Entity:
     def set_builder(self, builder):
         pass
 
+
 class DXFFactory:
     def wrap_handle(self, handle):
         return Entity(handle)
 
     def create_db_entry(self, name, dxfattribs):
         return Entity(name)
+
 
 class Host(BuilderConnector):
     def __init__(self, iterable):
@@ -42,6 +46,7 @@ class Host(BuilderConnector):
         entity = self._dxffactory.wrap_handle(handle)
         entity.set_builder(self)
         return entity
+
 
 class TestBuilderConnector(unittest.TestCase):
     def setUp(self):
@@ -94,5 +99,6 @@ class TestBuilderConnector(unittest.TestCase):
         self.assertEqual('TEST', entity.dxf.handle)
         self.assertTrue(self.host.paperspace)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

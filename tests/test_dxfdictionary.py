@@ -12,6 +12,7 @@ import unittest
 from ezdxf.testtools import ClassifiedTags
 from ezdxf.dxfobjects import DXFDictionary
 
+
 class TestDXFDict(unittest.TestCase):
     def setUp(self):
         self.dxfdict = DXFDictionary(ClassifiedTags.fromtext(ROOTDICT))
@@ -97,5 +98,5 @@ DWGPROPS
 410
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

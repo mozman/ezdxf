@@ -13,7 +13,6 @@ from ezdxf.tags import cast_tag
 
 
 class TestTypeCaster(unittest.TestCase):
-
     def test_cast_string(self):
         result = cast_tag((1, 'STRING'))
         self.assertEqual((1, 'STRING'), result)
@@ -33,6 +32,7 @@ class TestTypeCaster(unittest.TestCase):
     def test_cast_bool_False(self):
         result = cast_tag((290, '0'))
         self.assertEqual((290, 0), result)
+
 
 if __name__ == '__main__':
     unittest.main()

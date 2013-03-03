@@ -12,6 +12,7 @@ import unittest
 from ezdxf.testtools import DrawingProxy, normlines, StringIterator
 from ezdxf.sections import Sections
 
+
 class TestSections(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -36,6 +37,7 @@ class TestSections(unittest.TestCase):
     def test_ignore_struct_error(self):
         sections = Sections(StringIterator(TEST_NO_EOF), self.dwg)
         self.assertIsNotNone(self.sections.header)
+
 
 TEST_HEADER = """  0
 SECTION
@@ -75,5 +77,5 @@ $DWGCODEPAGE
 ANSI_1252
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

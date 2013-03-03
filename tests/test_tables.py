@@ -14,6 +14,7 @@ from ezdxf.testtools import DrawingProxy, normlines, Tags
 
 from ezdxf.tablessection import TablesSection
 
+
 class TestTables(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
@@ -137,5 +138,5 @@ ENDTAB
 ENDSEC
 """
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

@@ -106,13 +106,13 @@ class TestTagReader(unittest.TestCase):
         self.assertEqual((0, 'ENDSEC'), tags[-1])
 
     def test_strtag_int(self):
-        self.assertEqual('  1\n1\n', strtag( (1, 1) ))
+        self.assertEqual('  1\n1\n', strtag((1, 1)))
 
     def test_strtag_float(self):
-        self.assertEqual(' 10\n3.1415\n', strtag( (10, 3.1415) ))
+        self.assertEqual(' 10\n3.1415\n', strtag((10, 3.1415)))
 
     def test_strtag_str(self):
-        self.assertEqual('  0\nSECTION\n', strtag( (0, 'SECTION') ))
+        self.assertEqual('  0\nSECTION\n', strtag((0, 'SECTION')))
 
 
 class TestGetDXFInfo(unittest.TestCase):
@@ -120,6 +120,7 @@ class TestGetDXFInfo(unittest.TestCase):
         info = dxfinfo(StringIO(TEST_TAGREADER))
         self.assertEqual(info.release, 'R2004')
         self.assertEqual(info.encoding, 'cp1252')
+
 
 TESTHANDLE5 = """ 0
 TEST
@@ -204,6 +205,7 @@ class TestTags(unittest.TestCase):
         tags = Tags.fromtext(TESTFINDALL)
         with self.assertRaises(ValueError):
             tags.tagindex(1)
+
 
 DUPLICATETAGS = """  0
 FIRST
