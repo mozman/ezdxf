@@ -7,13 +7,16 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import DXFTag, tagcast
+from .tags import DXFTag, cast_tag
+
 
 def SingleValue(value, code=1):
-    return tagcast( (code, value) )
+    return cast_tag((code, value))
+
 
 def Point2D(value):
-    return (DXFTag(10, value[0]), DXFTag(20, value[1]))
+    return DXFTag(10, value[0]), DXFTag(20, value[1])
+
 
 def Point3D(value):
-    return (DXFTag(10, value[0]), DXFTag(20, value[1]), DXFTag(30, value[2]))
+    return DXFTag(10, value[0]), DXFTag(20, value[1]), DXFTag(30, value[2])

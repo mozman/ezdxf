@@ -7,7 +7,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import casttagvalue, DXFTag, DXFStructureError
+from .tags import cast_tag_value, DXFTag, DXFStructureError
 from .classifiedtags import ClassifiedTags
 
 
@@ -138,7 +138,7 @@ class GenericWrapper(object):
 
     @staticmethod
     def _settag(tags, code, value):
-        tags.setfirst(code, casttagvalue(code, value))
+        tags.setfirst(code, cast_tag_value(code, value))
 
 
 class ExtendedType(object):
