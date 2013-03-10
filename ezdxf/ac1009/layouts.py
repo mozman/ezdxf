@@ -11,13 +11,13 @@ from .creator import EntityCreator
 from ..entityspace import EntitySpace
 
 
-class AC1009Layouts(object):
+class DXF12Layouts(object):
     # Layout container
 
     def __init__(self, drawing):
         entityspace = drawing.sections.entities.get_entityspace()
-        self._modelspace = AC1009Layout(entityspace, drawing.dxffactory, 0)
-        self._paperspace = AC1009Layout(entityspace, drawing.dxffactory, 1)
+        self._modelspace = DXF12Layout(entityspace, drawing.dxffactory, 0)
+        self._paperspace = DXF12Layout(entityspace, drawing.dxffactory, 1)
 
     def modelspace(self):
         return self._modelspace
@@ -30,17 +30,19 @@ class AC1009Layouts(object):
         return []
 
 
-class Layout(EntityCreator):
-    # Base class for Layout() and BlockLayout()
+class BaseLayout(EntityCreator):
+    # Base class for DXF12Layout() and DXF12BlockLayout()
     def __init__(self, dxffactory, entityspace):
-        self._dxffactory = dxffactory
+        super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
 
     def _set_paperspace(self, entity):
-        raise NotImplementedError("Abstract method call.")
+        pass
 
-    def _get_entity_by_handle(self, entity):
-        raise NotImplementedError("Abstract method call.")
+    def _get_entity_by_handle(self, handle):
+        entity = self._dxffactory.wrap_handle(handle)
+        entity.set_builder(self)
+        return entity
 
     def _build_entity(self, type_, dxfattribs):
         entity = self._dxffactory.create_db_entry(type_, dxfattribs)
@@ -63,12 +65,18 @@ class Layout(EntityCreator):
     def _remove_entities(self, index, count=1):
         self._entityspace[index:index + count] = []
 
+    def _create(self, type_, dxfattribs):
+        entity = self._build_entity(type_, dxfattribs)
+        self._append_entity(entity)
+        entity.set_builder(self)
+        return entity
 
-class AC1009Layout(Layout):
+
+class DXF12Layout(BaseLayout):
     """ Layout representation """
 
     def __init__(self, entityspace, dxffactory, paperspace=0):
-        super(AC1009Layout, self).__init__(dxffactory, entityspace)
+        super(DXF12Layout, self).__init__(dxffactory, entityspace)
         self._paperspace = paperspace
 
     # start of public interface
@@ -92,16 +100,11 @@ class AC1009Layout(Layout):
         for handle in self._entityspace:
             yield self._get_entity_by_handle(handle)
 
-    def _get_entity_by_handle(self, handle):
-        entity = self._dxffactory.wrap_handle(handle)
-        entity.set_builder(self)
-        return entity
-
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
 
 
-class AC1009BlockLayout(Layout):
+class DXF12BlockLayout(BaseLayout):
     """ BlockLayout has the same factory-function as Layout, but is managed
     in the BlocksSection() class. It represents a DXF Block definition.
 
@@ -110,7 +113,7 @@ class AC1009BlockLayout(Layout):
     _entityspace is the block content
     """
     def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
-        super(AC1009BlockLayout, self).__init__(dxffactory, EntitySpace(entitydb))
+        super(DXF12BlockLayout, self).__init__(dxffactory, EntitySpace(entitydb))
         self._block_handle = block_handle
         self._endblk_handle = endblk_handle
 
@@ -147,14 +150,6 @@ class AC1009BlockLayout(Layout):
         return self._create('ATTDEF', dxfattribs)
 
     # end of public interface
-
-    def _set_paperspace(self, entity):
-        pass
-
-    def _get_entity_by_handle(self, handle):
-        entity = self._dxffactory.wrap_handle(handle)
-        entity.set_builder(self)
-        return entity
 
     def add_entity(self, entity):
         self._entityspace.add(entity)
