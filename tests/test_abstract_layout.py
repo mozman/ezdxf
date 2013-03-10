@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.ac1009.layouts import Layout
+from ezdxf.ac1009.layouts import BaseLayout
 
 class DXFNamespace:
     def __init__(self, handle):
@@ -33,7 +33,7 @@ class DXFFactory:
         return Entity(name)
 
 
-class Host(Layout):
+class Host(BaseLayout):
     def __init__(self, iterable):
         self._entityspace = list(iterable)
         self._dxffactory = DXFFactory()

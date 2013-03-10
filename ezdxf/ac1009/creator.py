@@ -11,18 +11,14 @@ from .. import const
 
 
 class EntityCreator(object):
-    """ A mixin class for: Layout, BlockLayout.
-
-    required methods:
-    -----------------
-    def _build_entity(type_, dxfattribs)
-    def _append_entity(entity)
-    def _get_index(entity)
-    def _get_entity_at_index(index)
-    def _insert_entities(index, entities)
-    def _remove_entities(index, count=1)
-
+    """ Abstract base class for Layout()
     """
+    def __init__(self, dxffactory):
+        self._dxffactory = dxffactory
+
+    def _create(self, type_, dxfattribs):
+        raise NotImplementedError("Abstract method call.")
+
     def add_line(self, start, end, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
@@ -155,7 +151,9 @@ class EntityCreator(object):
         polymesh.close(mclose, nclose)
         return polymesh.cast()
 
-    def add_polyface(self, dxfattribs={}):
+    def add_polyface(self, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
         mclose = dxfattribs.pop('mclose', False)
         nclose = dxfattribs.pop('nclose', False)
@@ -180,9 +178,3 @@ class EntityCreator(object):
             yield point
         if len(points) == 3:
             yield point  # again
-
-    def _create(self, type_, dxfattribs):
-        entity = self._build_entity(type_, dxfattribs)
-        self._append_entity(entity)
-        entity.set_builder(self)
-        return entity

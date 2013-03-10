@@ -72,7 +72,7 @@ from . import tableentries
 from . import graphics
 
 from ..dxfobjects import DXFDictionary, DXFLayout
-from .layouts import AC1009Layouts, AC1009BlockLayout
+from .layouts import DXF12Layouts, DXF12BlockLayout
 from ..entity import GenericWrapper
 
 ENTITY_WRAPPERS = {
@@ -154,7 +154,7 @@ class AC1009Factory(object):
         return dbentry
 
     def get_layouts(self):
-        return AC1009Layouts(self.drawing)
+        return DXF12Layouts(self.drawing)
 
     def new_block_layout(self, block_handle, endblk_handle):
-        return AC1009BlockLayout(self.entitydb, self, block_handle, endblk_handle)
+        return DXF12BlockLayout(self.entitydb, self, block_handle, endblk_handle)

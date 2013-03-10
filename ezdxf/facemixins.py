@@ -9,7 +9,7 @@ from . import const
 from .facebuilder import FaceBuilder
 
 
-class PolymeshMixin:
+class PolymeshMixin(object):
     def set_mesh_vertex(self, pos, point, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
@@ -28,7 +28,7 @@ class PolymeshMixin:
             raise IndexError(repr(pos))
 
 
-class PolyfaceMixin:
+class PolyfaceMixin(object):
     """ Order of vertices and faces IS important (ACAD2010)
     1. vertices (describes the coordinates)
     2. faces (describes the face forming vertices)

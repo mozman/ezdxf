@@ -12,7 +12,7 @@ import unittest
 from ezdxf.testtools import DrawingProxy
 from ezdxf.entityspace import EntitySpace
 
-from ezdxf.ac1009.layouts import AC1009Layout
+from ezdxf.ac1009.layouts import DXF12Layout
 from ezdxf.const import VTX_3D_POLYLINE_VERTEX
 
 
@@ -20,7 +20,7 @@ class TestPolyline(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
         self.entityspace = EntitySpace(self.dwg.entitydb)
-        self.layout = AC1009Layout(self.entityspace, self.dwg.dxffactory, 0)
+        self.layout = DXF12Layout(self.entityspace, self.dwg.dxffactory, 0)
 
     def test_create_polyline2D(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
@@ -80,7 +80,7 @@ class TestPolymesh(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
         self.entityspace = EntitySpace(self.dwg.entitydb)
-        self.layout = AC1009Layout(self.entityspace, self.dwg.dxffactory, 0)
+        self.layout = DXF12Layout(self.entityspace, self.dwg.dxffactory, 0)
 
     def test_create_mesh(self):
         mesh = self.layout.add_polymesh((4, 4))
@@ -105,7 +105,7 @@ class TestPolyface(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
         self.entityspace = EntitySpace(self.dwg.entitydb)
-        self.layout = AC1009Layout(self.entityspace, self.dwg.dxffactory, 0)
+        self.layout = DXF12Layout(self.entityspace, self.dwg.dxffactory, 0)
 
     def test_create_face(self):
         face = self.layout.add_polyface()

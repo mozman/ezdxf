@@ -17,7 +17,7 @@ from ..facemixins import PolyfaceMixin, PolymeshMixin
 
 class GraphicEntity(GenericWrapper):
     def set_builder(self, builder):
-        self._builder = builder  # IGraphicBuilder
+        self._builder = builder
 
 
 class ColorMixin(object):

@@ -10,10 +10,10 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .creator import EntityCreator
-from ..ac1009.layouts import AC1009Layout, AC1009BlockLayout
+from ..ac1009.layouts import DXF12Layout, DXF12BlockLayout
 
 
-class AC1015Layouts(object):
+class Layouts(object):
     def __init__(self, drawing):
         self._layouts = {}
         self._layout_table = None
@@ -24,7 +24,7 @@ class AC1015Layouts(object):
         layout_table_handle = drawing.rootdict['ACAD_LAYOUT']
         self._layout_table = dxffactory.wrap_handle(layout_table_handle)
         for name, handle in self._layout_table.items():
-            self._layouts[name] = AC1015Layout(drawing, handle)
+            self._layouts[name] = Layout(drawing, handle)
 
     def __contains__(self, name):
         return name in self._layouts
@@ -49,14 +49,14 @@ class AC1015Layouts(object):
         return [name for order, name in sorted(names)]
 
 
-class AC1015Layout(AC1009Layout, EntityCreator):
+class Layout(DXF12Layout, EntityCreator):
     """ Layout representation
 
     """
     def __init__(self, drawing, layout_handle):
         entity_space = drawing.sections.entities.get_entityspace()
         dxf_factory = drawing.dxffactory
-        super(AC1015Layout, self).__init__(entity_space, dxf_factory, 0)
+        super(Layout, self).__init__(entity_space, dxf_factory, 0)
         self._layout_handle = layout_handle
         self._block_record = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
@@ -91,10 +91,9 @@ class AC1015Layout(AC1009Layout, EntityCreator):
         return self.dxflayout.dxf.taborder
 
     def _set_paperspace(self, entity):
-        # part of IBuilderConnector
         entity.dxf.paperspace = self._paperspace
         entity.dxf.block_record = self._block_record
 
 
-class AC1015BlockLayout(AC1009BlockLayout, EntityCreator):
+class BlockLayout(DXF12BlockLayout, EntityCreator):
     pass
