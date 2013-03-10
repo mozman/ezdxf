@@ -16,7 +16,7 @@ from ezdxf.classifiedtags import ClassifiedTags
 
 class TestClassifiedTags(unittest.TestCase):
     def setUp(self):
-        self.xtags = ClassifiedTags.fromtext(XTAGS1)
+        self.xtags = ClassifiedTags.from_text(XTAGS1)
 
     def test_init_appdata(self):
         self.assertIsNotNone(self.xtags.get_appdata('{ACAD_XDICTIONARY'))
@@ -150,7 +150,7 @@ CONTINUOUS
 
 class TestXDATA(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.fromtext(XTAGS2)
+        self.tags = ClassifiedTags.from_text(XTAGS2)
 
     def test_xdata_count(self):
         self.assertEqual(3, len(self.tags.xdata))
@@ -200,7 +200,7 @@ TEXT-XDATA3
 
 class Test2xSubclass(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.fromtext(SPECIALCASE_TEXT)
+        self.tags = ClassifiedTags.from_text(SPECIALCASE_TEXT)
 
     def test_read_tags(self):
         subclass2 = self.tags.get_subclass('AcDbText', 1)

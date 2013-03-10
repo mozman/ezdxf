@@ -10,8 +10,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.ac1009.gbuilder import BuilderConnector
-
+from ezdxf.ac1009.layouts import Layout
 
 class DXFNamespace:
     def __init__(self, handle):
@@ -34,7 +33,7 @@ class DXFFactory:
         return Entity(name)
 
 
-class Host(BuilderConnector):
+class Host(Layout):
     def __init__(self, iterable):
         self._entityspace = list(iterable)
         self._dxffactory = DXFFactory()
@@ -48,7 +47,7 @@ class Host(BuilderConnector):
         return entity
 
 
-class TestBuilderConnector(unittest.TestCase):
+class TestAbstractLayout(unittest.TestCase):
     def setUp(self):
         self.host = Host(range(10))
 

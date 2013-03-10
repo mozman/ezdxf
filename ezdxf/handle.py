@@ -9,21 +9,14 @@ __author__ = "mozman <mozman@gmx.at>"
 
 
 class HandleGenerator:
-    def __init__(self, startvalue='1'):
-        self._handle = int(startvalue, 16)
+    def __init__(self, start_value='1'):
+        self._handle = int(start_value, 16)
+    reset = __init__
 
-    @property
-    def seed(self):
-        return _hexstr(self._handle)
+    def __str__(self):
+        return "%X" % self._handle
 
     def next(self):
-        next_handle = self.seed
+        next_handle = self.__str__()
         self._handle += 1
         return next_handle
-
-    def reset(self, startvalue):
-        self._handle = int(startvalue, 16)
-
-
-def _hexstr(number):
-    return "%X" % number

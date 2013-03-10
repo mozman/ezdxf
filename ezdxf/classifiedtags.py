@@ -145,5 +145,5 @@ class ClassifiedTags:
         return self.noclass.get_handle()
 
     @staticmethod
-    def fromtext(text):
+    def from_text(text):
         return ClassifiedTags(StringIterator(text))

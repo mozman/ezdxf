@@ -72,7 +72,7 @@ class TestDXFAttributes(unittest.TestCase):
 
 class TestAttributeAccess(unittest.TestCase):
     def setUp(self):
-        self.entity = AttributeChecker(ClassifiedTags.fromtext(XTEMPLATE))
+        self.entity = AttributeChecker(ClassifiedTags.from_text(XTEMPLATE))
 
     def test_get_from_none_subclass(self):
         self.assertEqual('0', self.entity.dxf.handle)

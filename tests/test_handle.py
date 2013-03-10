@@ -20,12 +20,12 @@ class TestHandleGenerator(unittest.TestCase):
     def test_seed(self):
         handles = HandleGenerator('200')
         handles.next()
-        self.assertEqual('201', handles.seed)
+        self.assertEqual('201', str(handles))
 
     def test_reset(self):
         handles = HandleGenerator('200')
         handles.reset('300')
-        self.assertEqual('300', handles.seed)
+        self.assertEqual('300', str(handles))
 
 
 if __name__ == '__main__':

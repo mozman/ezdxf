@@ -29,7 +29,7 @@ class SimpleDB(dict):
         return handle
 
 
-class EntityDB:
+class EntityDB(object):
     """ A simple key/value database a.k.a. dict(), but can be replaced other
     classes that implements all of the methods of `EntityDB`. The entities
     have no order.
