@@ -7,11 +7,13 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .gbuilder import AC1009GraphicBuilder
+from .creator import EntityCreator
 from ..entityspace import EntitySpace
 
 
 class AC1009Layouts(object):
+    # Layout container
+
     def __init__(self, drawing):
         entityspace = drawing.sections.entities.get_entityspace()
         self._modelspace = AC1009Layout(entityspace, drawing.dxffactory, 0)
@@ -28,15 +30,45 @@ class AC1009Layouts(object):
         return []
 
 
-class AC1009Layout(AC1009GraphicBuilder):
-    """ Layout representation
-
-    provides: IBuilderConnector
-    provides: IGraphicBuilder
-    """
-    def __init__(self, entityspace, dxffactory, paperspace=0):
-        self._entityspace = entityspace  # where all the entities go ...
+class Layout(EntityCreator):
+    # Base class for Layout() and BlockLayout()
+    def __init__(self, dxffactory, entityspace):
         self._dxffactory = dxffactory
+        self._entityspace = entityspace
+
+    def _set_paperspace(self, entity):
+        raise NotImplementedError("Abstract method call.")
+
+    def _get_entity_by_handle(self, entity):
+        raise NotImplementedError("Abstract method call.")
+
+    def _build_entity(self, type_, dxfattribs):
+        entity = self._dxffactory.create_db_entry(type_, dxfattribs)
+        self._set_paperspace(entity)
+        return entity
+
+    def _get_entity_at_index(self, index):
+        return self._get_entity_by_handle(self._entityspace[index])
+
+    def _append_entity(self, entity):
+        self._entityspace.append(entity.dxf.handle)
+
+    def _get_index(self, entity):
+        return self._entityspace.index(entity.dxf.handle)
+
+    def _insert_entities(self, index, entities):
+        handles = [entity.dxf.handle for entity in entities]
+        self._entityspace[index:index] = handles
+
+    def _remove_entities(self, index, count=1):
+        self._entityspace[index:index + count] = []
+
+
+class AC1009Layout(Layout):
+    """ Layout representation """
+
+    def __init__(self, entityspace, dxffactory, paperspace=0):
+        super(AC1009Layout, self).__init__(dxffactory, entityspace)
         self._paperspace = paperspace
 
     # start of public interface
@@ -69,20 +101,16 @@ class AC1009Layout(AC1009GraphicBuilder):
         entity.dxf.paperspace = self._paperspace
 
 
-class AC1009BlockLayout(AC1009GraphicBuilder):
+class AC1009BlockLayout(Layout):
     """ BlockLayout has the same factory-function as Layout, but is managed
     in the BlocksSection() class. It represents a DXF Block definition.
 
-    _head db handle to BLOCK entiy
-    _tail db handle to ENDBLK entiy
+    _block_handle: db handle to BLOCK entiy
+    _endblk_handle: db handle to ENDBLK entiy
     _entityspace is the block content
-
-    implements: IBuilderConnector
-
     """
     def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
-        self._entityspace = EntitySpace(entitydb)
-        self._dxffactory = dxffactory
+        super(AC1009BlockLayout, self).__init__(dxffactory, EntitySpace(entitydb))
         self._block_handle = block_handle
         self._endblk_handle = endblk_handle
 

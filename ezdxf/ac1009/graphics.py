@@ -332,7 +332,7 @@ BLOCKNAME
 0.0
 """
 # IMPORTANT: Bug in AutoCAD 2010
-# attribsfollow = 0, for NO attribsfollow does not work with ACAD 2010
+# attribsfollow = 0, for NO attribsfollow, does not work with ACAD 2010
 # if no attribs attached to the INSERT entity, omit attribsfollow tag
 
 

@@ -48,7 +48,7 @@ class Drawing(object):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
         self._dxfversion = header['$ACADVER']
-        seed = header.get('$HANDSEED', self._handles.seed)
+        seed = header.get('$HANDSEED', str(self._handles))
         self._handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Purpose: AC1015 graphic builder
-# Created: 27.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 10.03.2013
+# Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 
-class AC1015GraphicsBuilder(object):
+class EntityCreator(object):
     def add_lwpolyline(self, points, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}

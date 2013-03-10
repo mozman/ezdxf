@@ -84,8 +84,10 @@ class BlocksSection(object):
         except KeyError:
             return default
 
-    def new(self, name, basepoint=(0, 0), dxfattribs={}):
+    def new(self, name, basepoint=(0, 0), dxfattribs=None):
         """ Create a new named block. """
+        if dxfattribs is None:
+            dxfattribs = {}
         dxfattribs['name'] = name
         dxfattribs['name2'] = name
         dxfattribs['basepoint'] = basepoint

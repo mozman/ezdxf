@@ -15,7 +15,7 @@ from ezdxf.dxfobjects import DXFDictionary
 
 class TestDXFDict(unittest.TestCase):
     def setUp(self):
-        self.dxfdict = DXFDictionary(ClassifiedTags.fromtext(ROOTDICT))
+        self.dxfdict = DXFDictionary(ClassifiedTags.from_text(ROOTDICT))
 
     def test_getitem(self):
         self.assertEqual(self.dxfdict['ACAD_PLOTSTYLENAME'], 'E')

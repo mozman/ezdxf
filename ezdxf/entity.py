@@ -59,13 +59,13 @@ class GenericWrapper(object):
 
     def __init__(self, tags):
         self.tags = tags
-        self.dxf = DXFNamespace(self)
+        self.dxf = DXFNamespace(self)  # all DXF attributes are accessible by the dxf attribute, like entity.dxf.handle
 
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
         if cls.TEMPLATE == "":
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
-        entity = cls(ClassifiedTags.fromtext(cls.TEMPLATE))
+        entity = cls(ClassifiedTags.from_text(cls.TEMPLATE))
         entity.dxf.handle = handle
         if dxfattribs is not None:
             entity.update_dxf_attribs(dxfattribs)

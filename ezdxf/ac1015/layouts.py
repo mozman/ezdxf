@@ -9,7 +9,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .gbuilder import AC1015GraphicsBuilder
+from .creator import EntityCreator
 from ..ac1009.layouts import AC1009Layout, AC1009BlockLayout
 
 
@@ -49,19 +49,17 @@ class AC1015Layouts(object):
         return [name for order, name in sorted(names)]
 
 
-class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
+class AC1015Layout(AC1009Layout, EntityCreator):
     """ Layout representation
-
-    provides: IBuilderConnector
-    provides: IGraphicBuilder
 
     """
     def __init__(self, drawing, layout_handle):
+        entity_space = drawing.sections.entities.get_entityspace()
+        dxf_factory = drawing.dxffactory
+        super(AC1015Layout, self).__init__(entity_space, dxf_factory, 0)
         self._layout_handle = layout_handle
-        self._dxffactory = drawing.dxffactory
         self._block_record = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
-        self._entityspace = drawing.sections.entities.get_entityspace()
 
     # start of public interface
 
@@ -98,5 +96,5 @@ class AC1015Layout(AC1009Layout, AC1015GraphicsBuilder):
         entity.dxf.block_record = self._block_record
 
 
-class AC1015BlockLayout(AC1009BlockLayout, AC1015GraphicsBuilder):
+class AC1015BlockLayout(AC1009BlockLayout, EntityCreator):
     pass

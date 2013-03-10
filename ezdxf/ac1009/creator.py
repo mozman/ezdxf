@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #coding:utf-8
-# Purpose: AC1009 graphic builder
-# Created: 27.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Purpose: AC1009 creation interface
+# Created: 10.03.2013
+# Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
@@ -10,44 +10,11 @@ __author__ = "mozman <mozman@gmx.at>"
 from .. import const
 
 
-class BuilderConnector(object):
-    """ Link between GraphicBuilder and Layout/BlockLayout.
+class EntityCreator(object):
+    """ A mixin class for: Layout, BlockLayout.
 
-    requires: IBuilderConnector
-    ---------------------------
-    def _set_paperspace(entity)
-    def _get_entity_by_handle(handle) -- set connection to Layout or BlockLayout
-    self._entityspace (a list of handles)
-    self._dxffactory
-
-    """
-    def _build_entity(self, type_, dxfattribs):
-        entity = self._dxffactory.create_db_entry(type_, dxfattribs)
-        self._set_paperspace(entity)
-        return entity
-
-    def _get_entity_at_index(self, index):
-        return self._get_entity_by_handle(self._entityspace[index])
-
-    def _append_entity(self, entity):
-        self._entityspace.append(entity.dxf.handle)
-
-    def _get_index(self, entity):
-        return self._entityspace.index(entity.dxf.handle)
-
-    def _insert_entities(self, index, entities):
-        handles = [entity.dxf.handle for entity in entities]
-        self._entityspace[index:index] = handles
-
-    def _remove_entities(self, index, count=1):
-        self._entityspace[index:index+count] = []
-
-
-class AC1009GraphicBuilder(BuilderConnector):
-    """ A mixin for: Layout, BlockLayout.
-
-    required interface: IGraphicBuilder
-    -----------------------------------
+    required methods:
+    -----------------
     def _build_entity(type_, dxfattribs)
     def _append_entity(entity)
     def _get_index(entity)
