@@ -688,7 +688,7 @@ class Polyline(GraphicEntity, ColorMixin):
             return self
 
     def _get_vertex_at_trusted_position(self, pos):
-        # performs not index check - for meshes and faces
+        # does no index check - for meshes and faces
         index = self._builder._get_index(self) + 1 + pos
         return self._builder._get_entity_at_index(index)
 
