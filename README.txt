@@ -31,12 +31,12 @@ AC1024  AutoCAD V2010
 a simple example::
 
     import ezdxf
-    drawing = ezdxf.new('test.dxf', version='AC1024')
+    drawing = ezdxf.new(dxfversion='AC1024')
     modelspace = drawing.modelspace()
     modelspace.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
     drawing.layers.create('TEXTLAYER', dxfattribs={'color': 2})
     modelspace.add_text('Test', dxfattribs={'insert': (0, 0.2), 'layer': 'TEXTLAYER'})
-    drawing.save()
+    drawing.saveas('test.dxf')
 
 Installation
 ============

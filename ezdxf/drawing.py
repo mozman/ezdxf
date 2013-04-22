@@ -150,7 +150,7 @@ class Drawing(object):
 
     def _update_metadata(self):
         self.header['$TDUPDATE'] = juliandate(datetime.now())
-        self.header['$HANDSEED'] = self._handles.seed
+        self.header['$HANDSEED'] = str(self._handles)
 
     def _enable_handles(self):
         """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.

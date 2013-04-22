@@ -10,12 +10,12 @@ __author__ = "mozman <mozman@gmx.at>"
 from .const import VERTEXNAMES
 
 
-class FaceBuilder:
+class FaceBuilder(object):
     def __init__(self, faces, precision=6):
         self.precision = precision
         self.faces = []
         self.vertices = []
-        self.indexmap = {}
+        self.index_mapping = {}
         self.build(faces)
 
     @property
@@ -33,23 +33,23 @@ class FaceBuilder:
 
     def build(self, faces):
         for face in faces:
-            facevertex = face.pop()
+            face_vertex = face.pop()
             for vertex, name in zip(face, VERTEXNAMES):
                 index = self.add(vertex)
                 # preserve sign of old index value
-                sign = -1 if facevertex.get_dxf_attrib(name, 0) < 0 else +1
-                facevertex.set_dxf_attrib(name, (index + 1) * sign)
-            self.faces.append(facevertex)
+                sign = -1 if face_vertex.get_dxf_attrib(name, 0) < 0 else +1
+                face_vertex.set_dxf_attrib(name, (index + 1) * sign)
+            self.faces.append(face_vertex)
 
     def add(self, vertex):
         def key(point):
             return tuple((round(coord, self.precision) for coord in point))
 
-        key = key(vertex.dxf.location)
+        location = key(vertex.dxf.location)
         try:
-            return self.indexmap[key]
+            return self.index_mapping[location]
         except KeyError:
             index = len(self.vertices)
-            self.indexmap[key] = index
+            self.index_mapping[location] = index
             self.vertices.append(vertex)
             return index
