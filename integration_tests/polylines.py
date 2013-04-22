@@ -7,10 +7,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 
-import itests
 import ezdxf
-
-VERSIONS = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']
+from ezdxf.const import versions_supported_by_new
 
 
 def add_polyline2d_entities(entityspace, points):
@@ -31,7 +29,7 @@ def make_drawing(version):
 
 
 def main():
-    for version in VERSIONS:
+    for version in versions_supported_by_new:
         make_drawing(version)
 
 if __name__ == '__main__':
