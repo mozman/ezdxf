@@ -22,7 +22,7 @@ sample_coords = [get_random_point() for x in range(50)]
 flag_symbol = [(0,0), (0, 5), (4, 3), (0, 3)]
 
 
-dwg = ezdxf.new()
+dwg = ezdxf.new('ac1009')
 dwg.layers.create('FLAGS')
 
 # first create a block
@@ -30,7 +30,7 @@ flag = dwg.blocks.new(name='FLAG')
 
 # add dxf entities to the block (the flag)
 # use basepoint = (x, y) to define an other basepoint than (0, 0)
-flag.add_polyline2D(flag_symbol)
+flag.add_polyline2d(flag_symbol)
 flag.add_circle((0, 0), .4, dxfattribs={'color': 2})
 
 # define some attributes
