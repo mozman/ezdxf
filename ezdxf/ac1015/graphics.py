@@ -838,12 +838,6 @@ AcDbText
 1.0
   1
 DEFAULTTEXT
-100
-AcDbAttribute
-  2
-TAG
- 70
-0
  50
 0.0
  51
@@ -852,6 +846,12 @@ TAG
 1.0
   7
 STANDARD
+100
+AcDbAttribute
+  2
+TAG
+ 70
+0
  71
 0
  72
@@ -873,15 +873,15 @@ attrib_subclass = (
         'thickness': DXFAttr(39, None),
         'height': DXFAttr(40, None),
         'text': DXFAttr(1, None),
+        'rotation': DXFAttr(50, None), #  error in DXF description, because placed in 'AcDbAttribute'
+        'width': DXFAttr(41, None), #  error in DXF description, because placed in 'AcDbAttribute'
+        'oblique': DXFAttr(51, None), #  error in DXF description, because placed in 'AcDbAttribute'
+        'style': DXFAttr(7, None), #  error in DXF description, because placed in 'AcDbAttribute'
     }),
     DefSubclass('AcDbAttribute', {
         'tag': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
         'fieldlength': DXFAttr(73, None),
-        'rotation': DXFAttr(50, None),
-        'width': DXFAttr(41, None),
-        'oblique': DXFAttr(51, None),
-        'style': DXFAttr(7, None),
         'textgenerationflag': DXFAttr(71, None),
         'halign': DXFAttr(72, None),
         'valign': DXFAttr(74, None),

@@ -93,10 +93,10 @@ class BlocksSection(object):
         dxfattribs['basepoint'] = basepoint
         head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
-        newblock = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
-        self._dxffactory.create_block_entry_in_block_records_table(newblock)
-        self._append_block_layout(newblock)
-        return newblock
+        block_layout = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
+        self._dxffactory.create_block_entry_in_block_records_table(block_layout)
+        self._append_block_layout(block_layout)
+        return block_layout
 
     def new_anonymous_block(self, typechar='U', basepoint=(0, 0)):
         blockname = self.anonymous_blockname(typechar)

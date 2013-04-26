@@ -22,7 +22,7 @@ sample_coords = [get_random_point() for x in range(50)]
 flag_symbol = [(0,0), (0, 5), (4, 3), (0, 3)]
 
 
-dwg = ezdxf.new('ac1009')
+dwg = ezdxf.new('ac1024')
 dwg.layers.create('FLAGS')
 
 # first create a block
