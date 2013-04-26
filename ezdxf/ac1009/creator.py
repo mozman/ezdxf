@@ -78,7 +78,7 @@ class EntityCreator(object):
             tag = dxfattribs.pop('tag')
             text = values.get(tag, "")
             insert = dxfattribs.pop('insert')
-            return (tag, text, insert)
+            return tag, text, insert
 
         def autofill(blockref, blockdef):
             for attdef in blockdef.attdefs():

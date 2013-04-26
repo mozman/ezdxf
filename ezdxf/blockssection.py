@@ -94,6 +94,7 @@ class BlocksSection(object):
         head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
         newblock = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
+        self._dxffactory.create_block_entry_in_block_records_table(newblock)
         self._append_block_layout(newblock)
         return newblock
 

@@ -156,5 +156,9 @@ class AC1009Factory(object):
     def get_layouts(self):
         return DXF12Layouts(self.drawing)
 
+    def create_block_entry_in_block_records_table(self, block_layout):
+        # required for DXFVERSION > ac1009: Entry in the BLOCK_RECORDS section
+        pass
+
     def new_block_layout(self, block_handle, endblk_handle):
         return DXF12BlockLayout(self.entitydb, self, block_handle, endblk_handle)
