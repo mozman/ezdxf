@@ -32,6 +32,9 @@ class DXF12Layouts(object):
 
 class BaseLayout(EntityCreator):
     # Base class for DXF12Layout() and DXF12BlockLayout()
+    # This class should also work with GenericWrappers() as entities (a.k.a. unknown DXF entities), this means there are
+    # no DXF attribs defined and attrib access like entity.dxf.handle is not possible.
+
     def __init__(self, dxffactory, entityspace):
         super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
@@ -53,13 +56,13 @@ class BaseLayout(EntityCreator):
         return self._get_entity_by_handle(self._entityspace[index])
 
     def _append_entity(self, entity):
-        self._entityspace.append(entity.dxf.handle)
+        self._entityspace.append(entity.handle())
 
     def _get_index(self, entity):
-        return self._entityspace.index(entity.dxf.handle)
+        return self._entityspace.index(entity.handle())
 
     def _insert_entities(self, index, entities):
-        handles = [entity.dxf.handle for entity in entities]
+        handles = [entity.handle() for entity in entities]
         self._entityspace[index:index] = handles
 
     def _remove_entities(self, index, count=1):
@@ -67,9 +70,12 @@ class BaseLayout(EntityCreator):
 
     def _create(self, type_, dxfattribs):
         entity = self._build_entity(type_, dxfattribs)
+        self.add_entity(entity)
+        return entity
+
+    def add_entity(self, entity):
         self._append_entity(entity)
         entity.set_builder(self)
-        return entity
 
 
 class DXF12Layout(BaseLayout):

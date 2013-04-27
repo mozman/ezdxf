@@ -49,6 +49,8 @@ UPDATE_ENTITY_WRAPPERS = {
 
 class AC1015Factory(AC1009Factory):
     HEADERVARS = dict(VARMAP)
+    DEFAULT_WRAPPER = graphics.DefaultWrapper
+
     def __init__(self):
         super(AC1015Factory, self).__init__()
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)

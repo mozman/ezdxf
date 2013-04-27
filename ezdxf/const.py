@@ -15,6 +15,7 @@ acadrelease = {
     'AC1018': 'R2004',
     'AC1021': 'R2007',
     'AC1024': 'R2010',
+    'AC1027': 'R2013',
 }
 
 versions_supported_by_new = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024']

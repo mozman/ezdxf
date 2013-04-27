@@ -6,7 +6,7 @@
 # License: MIT License
 
 # Support for new AC1018 entities planned for the future:
-# - no new entities intruduced
+# - no new entities introduced
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
