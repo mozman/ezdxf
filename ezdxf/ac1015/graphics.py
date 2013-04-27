@@ -52,8 +52,8 @@ entity_subclass = DefSubclass('AcDbEntity', {
     'color': DXFAttr(62, None),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
 })
 
-class DefaultWrapper(ac1009.DefaultWrapper):
-    """ Default entity wrapper, allows access to following dxf attributes:
+class GraphicEntity(ac1009.GraphicEntity):
+    """ Default graphic entity wrapper, allows access to following dxf attributes:
      - handle
      - block_record
      - layer
@@ -63,7 +63,7 @@ class DefaultWrapper(ac1009.DefaultWrapper):
      - ltscale
      - invisible
 
-     Wrapper for all unsupported entities.
+     Wrapper for all unsupported graphic entities.
     """
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
 
