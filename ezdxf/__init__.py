@@ -48,4 +48,4 @@ def readfile(filename):
 
 def new(dxfversion='AC1009'):
     from .drawing import Drawing
-    return Drawing.new(dxfversion)
+    return Drawing.new(dxfversion.upper())

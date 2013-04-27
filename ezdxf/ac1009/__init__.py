@@ -109,6 +109,7 @@ ENTITY_WRAPPERS = {
 
 class AC1009Factory(object):
     HEADERVARS = dict(VARMAP)
+    DEFAULT_WRAPPER = graphics.DefaultWrapper
 
     def __init__(self):
         self.ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)
@@ -139,7 +140,7 @@ class AC1009Factory(object):
             raise ValueError('Unsupported entity type: %s' % type_)
 
     def wrap_entity(self, tags):
-        wrapper = self.ENTITY_WRAPPERS.get(tags.get_type(), GenericWrapper)
+        wrapper = self.ENTITY_WRAPPERS.get(tags.get_type(), self.DEFAULT_WRAPPER)
         return wrapper(tags)
 
     def wrap_handle(self, handle):
