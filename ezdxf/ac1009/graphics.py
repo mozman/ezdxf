@@ -15,10 +15,6 @@ from ..const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin
 
 
-class GraphicEntity(GenericWrapper):
-    def set_builder(self, builder):
-        self._builder = builder
-
 class ColorMixin(object):
     def set_extcolor(self, color):
         """ Set color by color-name or rgb-tuple, for DXF R12 the nearest
@@ -54,8 +50,8 @@ def make_attribs(additional=None):
         dxfattribs.update(additional)
     return DXFAttributes(DefSubclass(None, dxfattribs))
 
-class DefaultWrapper(GraphicEntity):
-    """ Default entity wrapper, allows access to following dxf attributes:
+class GraphicEntity(GenericWrapper):
+    """ Default graphic entity wrapper, allows access to following dxf attributes:
 
      - handle
      - layer
@@ -64,9 +60,13 @@ class DefaultWrapper(GraphicEntity):
      - paperspace
      - extrusion
 
-     Wrapper for all unsupported entities.
+     Wrapper for all unsupported graphic entities.
     """
     DXFATTRIBS = make_attribs()
+
+    def set_builder(self, builder):
+        self._builder = builder
+
 
 _LINE_TPL = """  0
 LINE
