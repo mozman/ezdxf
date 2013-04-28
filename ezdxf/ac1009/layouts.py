@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: AC1009 layout manager
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
+
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -12,8 +11,8 @@ from ..entityspace import EntitySpace
 
 
 class DXF12Layouts(object):
-    # Layout container
-
+    """ The Layout container.
+    """
     def __init__(self, drawing):
         entityspace = drawing.sections.entities.get_entityspace()
         self._modelspace = DXF12Layout(entityspace, drawing.dxffactory, 0)
@@ -31,10 +30,10 @@ class DXF12Layouts(object):
 
 
 class BaseLayout(EntityCreator):
-    # Base class for DXF12Layout() and DXF12BlockLayout()
-    # This class should also work with GenericWrappers() as entities (a.k.a. unknown DXF entities), this means there are
-    # no DXF attribs defined and attrib access like entity.dxf.handle is not possible.
+    """ Base class for DXF12Layout() and DXF12BlockLayout()
 
+    Entities are wrapped into class GraphicEntity() or inherited.
+    """
     def __init__(self, dxffactory, entityspace):
         super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
@@ -43,43 +42,62 @@ class BaseLayout(EntityCreator):
         pass
 
     def _get_entity_by_handle(self, handle):
+        """ Get entity by handle as GraphicEntity() or inherited.
+        """
         entity = self._dxffactory.wrap_handle(handle)
         entity.set_builder(self)
         return entity
 
     def _build_entity(self, type_, dxfattribs):
+        """ Create entity in drawing database, returns a wrapper class inherited from GraphicEntity().
+        """
         entity = self._dxffactory.create_db_entry(type_, dxfattribs)
         self._set_paperspace(entity)
         return entity
 
     def _get_entity_at_index(self, index):
+        """ Get entity at position index as GraphicEntity() or inherited.
+        """
         return self._get_entity_by_handle(self._entityspace[index])
 
     def _append_entity(self, entity):
+        """ Append entity to entity space.
+        """
         self._entityspace.append(entity.handle())
 
     def _get_index(self, entity):
+        """ Get position/index of entity in entity space.
+        """
         return self._entityspace.index(entity.handle())
 
     def _insert_entities(self, index, entities):
+        """ Insert entities to entity space.
+        """
         handles = [entity.handle() for entity in entities]
         self._entityspace[index:index] = handles
 
     def _remove_entities(self, index, count=1):
+        """ Remove entities from entity space.
+        """
         self._entityspace[index:index + count] = []
 
     def _create(self, type_, dxfattribs):
+        """ Create entity in drawing database and add entity to the entity space.
+        """
         entity = self._build_entity(type_, dxfattribs)
         self.add_entity(entity)
         return entity
 
     def add_entity(self, entity):
+        """ Add entity to entity space.
+        """
         self._append_entity(entity)
         entity.set_builder(self)
 
 
 class DXF12Layout(BaseLayout):
-    """ Layout representation """
+    """ Layout representation
+    """
 
     def __init__(self, entityspace, dxffactory, paperspace=0):
         super(DXF12Layout, self).__init__(dxffactory, entityspace)
@@ -88,21 +106,25 @@ class DXF12Layout(BaseLayout):
     # start of public interface
 
     def __iter__(self):
+        """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
+        """
         for entity in self._iter_all_entities():
             if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
                 yield entity
 
     def __contains__(self, entity):
-        if isinstance(entity, str):  # handle
+        """ Returns True if layout contains entity else False. entity can be an entity handle as string or a wrapped
+        dxf entity.
+        """
+        if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self._dxffactory.wrap_handle(entity)
-        if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
-            return True
-        else:
-            return False
+        return True if entity.get_dxf_attrib('paperspace', 0) == self._paperspace else False
 
     # end of public interface
 
     def _iter_all_entities(self):
+        """ Iterate over all graphic entities, contained in the drawing entity space.
+        """
         for handle in self._entityspace:
             yield self._get_entity_by_handle(handle)
 
@@ -126,12 +148,17 @@ class DXF12BlockLayout(BaseLayout):
     # start of public interface
 
     def __iter__(self):
+        """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
+        """
         for handle in self._entityspace:
             yield self._dxffactory.wrap_handle(handle)
 
     def __contains__(self, entity):
+        """ Returns True if block contains entity else False. entity can be an entity handle as string or a wrapped
+        dxf entity.
+        """
         try:
-            handle = entity.handle
+            handle = entity.get_handle()
         except AttributeError:
             handle = entity
         try:
@@ -149,6 +176,8 @@ class DXF12BlockLayout(BaseLayout):
         return self.block.dxf.name
 
     def add_attdef(self, tag, insert, dxfattribs=None):
+        """ Create an ATTDEF entity in the drawing database and add it to the block entity space.
+        """
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['tag'] = tag
@@ -158,6 +187,8 @@ class DXF12BlockLayout(BaseLayout):
     # end of public interface
 
     def add_entity(self, entity):
+        """ Add entity to the block entity space.
+        """
         self._entityspace.add(entity)
 
     def write(self, stream):
@@ -170,6 +201,8 @@ class DXF12BlockLayout(BaseLayout):
         write_tags(self._endblk_handle)
 
     def attdefs(self):
-        for entity in self:
-            if entity.dxftype() == 'ATTDEF':
-                yield entity
+        """ Iterate over all ATTDEF entities.
+        """
+        return (entity for entity in self if entity.dxftype() == 'ATTDEF')
+
+

@@ -1,4 +1,3 @@
-# encoding: utf-8
 # Purpose: Import data from another DXF drawing
 # Created: 27.04.13
 # Copyright (C) 2013, Manfred Moitzi
@@ -27,29 +26,26 @@ class Importer(object):
         # But this can not be granted by default. You can operate with that by __init__(s, t, strict_mode=False).
         return False
 
-    def import_entities(self, query=""):
+    def import_entities(self, query="*"):
         modelspace = self.target.modelspace()
         new_handle = self.target._handles.next
-        for entity in modelspace:  # entity is GenericWrapper() or inherited
+        for entity in modelspace:  # entity is GraphicEntity() or inherited
             handle = new_handle()
-            entity.tags.noclass.update(5, handle)  # new handle is always required
+            entity.dxf.handle = handle  # new handle is always required
             self.target.entitydb[handle] = entity.tags  # add tag list to entity database
             modelspace.add_entity(entity)  # add entity to modelspace
 
     def import_blocks(self, query="*", conflict="discard"):
-        """
+        """ Import block definitions.
 
-        :param query: list or string of block names to import, "*" for all
+        :param str query: name of blocks to import, "*" for all
         :param str conflict: discard|replace|rename
-        :raise:
         """
         raise NotImplementedError()
 
     def import_tables(self, query="*", conflict="discard"):
-        """
+        """ Import table entries.
 
-        :param query: list or string of tables to import, "*" for all
-        :param str conflict: discard|replace|rename
-        :raise:
+        :param str conflict: discard|replace
         """
         raise NotImplementedError()

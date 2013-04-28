@@ -21,8 +21,8 @@ class TestEntityQuery_AC1009(unittest.TestCase):
     def test_select_all(self):
         modelspace = self.dwg.modelspace()
         result = EntityQuery(modelspace, '*')
-        # VIEWPORT, LINE, POLYLINE, 4xVERTEX, SEQEND
-        self.assertEqual(len(result.entities), 7)#, self.VERSION)
+        # 1xLINE, 1xPOLYLINE, 4xVERTEX, 1xSEQEND
+        self.assertEqual(len(result.entities), 7)
 
 class TestEntityQuery_AC1015(TestEntityQuery_AC1009):
     VERSION = 'AC1015'
