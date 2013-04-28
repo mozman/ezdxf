@@ -24,6 +24,11 @@ class TestPaperSpace(SetupDrawing):
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.dxf.paperspace)
 
+    def test_iter_layout(self):
+        self.layout.add_line((0, 0), (1, 1))
+        self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual(2, len(list(self.layout)))
+
 
 class TestSimpleGraphics(SetupDrawing):
     def test_create_line(self):

@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: AC1009 layout manager
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 
 # The ModelSpace is a special Layout called 'Model'
+
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -51,7 +50,6 @@ class Layouts(object):
 
 class Layout(DXF12Layout, EntityCreator):
     """ Layout representation
-
     """
     def __init__(self, drawing, layout_handle):
         entity_space = drawing.sections.entities.get_entityspace()
@@ -64,17 +62,16 @@ class Layout(DXF12Layout, EntityCreator):
     # start of public interface
 
     def __iter__(self):
+        """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
+        """
         for entity in self._iter_all_entities():
             if entity.get_dxf_attrib('block_record') == self._block_record:
                 yield entity
 
     def __contains__(self, entity):
-        if isinstance(entity, str):  # handle
+        if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self._dxffactory.wrap_handle(entity)
-        if entity.get_dxf_attrib('block_record') == self._block_record:
-            return True
-        else:
-            return False
+        return True if entity.get_dxf_attrib('block_record') == self._block_record else False
 
     # end of public interface
 

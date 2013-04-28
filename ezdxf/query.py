@@ -3,6 +3,9 @@
 # Created: 27.04.13
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
+# Python2/3 support should be done here
+
+from .queryparser import EntityQueryParser
 
 class EntityQuery(object):
     # Important: order of entities has to be preserved (POLYLINE, VERTEX, ..., SEQEND)

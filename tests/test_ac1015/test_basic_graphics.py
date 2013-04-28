@@ -19,6 +19,11 @@ class SetupDrawing(unittest.TestCase):
 
 
 class TestBasicEntities(SetupDrawing):
+    def test_iter_layout(self):
+        self.layout.add_line((0, 0), (1, 1))
+        self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual(2, len(list(self.layout)))
+
     def test_create_line(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual((0., 0.), line.dxf.start)

@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: entity space
 # Created: 13.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
+
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -11,10 +10,8 @@ __author__ = "mozman <mozman@gmx.at>"
 class EntitySpace(list):
     """
     An EntitySpace is a collection of drawing entities.
-    The ENTITY section is such an entity-space, but also blocks, the
-    modelspace and paperspaces (which are also blocks).
-    The EntitySpace stores only handles to the entity-database.
-
+    The ENTITY section is such an entity space, but also blocks.
+    The EntitySpace stores only handles to the drawing entity database.
     """
     def __init__(self, entitydb):
         self._entitydb = entitydb
