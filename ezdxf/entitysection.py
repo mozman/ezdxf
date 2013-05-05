@@ -13,7 +13,7 @@ from .tags import TagGroups, DXFStructureError
 from .classifiedtags import ClassifiedTags
 from .entityspace import EntitySpace
 from .dxfobjects import DXFDictionary
-
+from .query import EntityQuery
 
 class EntitySection(object):
     name = 'entities'
@@ -39,6 +39,9 @@ class EntitySection(object):
         if isinstance(index, int):
             raise ValueError('Integer index required')
         return self._entityspace[index]
+
+    def query(self, query='*'):
+        return EntityQuery(iter(self), query)
 
     # end of public interface
 

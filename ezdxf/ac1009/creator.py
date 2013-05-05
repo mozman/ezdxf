@@ -51,10 +51,11 @@ class EntityCreator(object):
     def add_3Dface(self, points, dxfattribs=None):
         return self._add_quadrilateral('3DFACE', points, dxfattribs)
 
-    def add_text(self, text, style='STANDARD', dxfattribs=None):
+    def add_text(self, text, insert=(0, 0), style='STANDARD', dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['text'] = text
+        dxfattribs['insert'] = insert
         dxfattribs['style'] = style
         return self._create('TEXT', dxfattribs)
 

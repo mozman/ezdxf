@@ -10,10 +10,17 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
+import ezdxf
 from ezdxf.testtools import DrawingProxy, normlines, Tags
-
 from ezdxf.entitysection import EntitySection
 
+def make_test_drawing(version):
+    dwg = ezdxf.new(version)
+    modelspace = dwg.modelspace()
+    modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_line'})
+    modelspace.add_text("TEST", insert=(0, 0), dxfattribs={'layer': 'lay_line'})
+    modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_polyline'})
+    return dwg
 
 class TestEntitySection(unittest.TestCase):
     def setUp(self):
@@ -34,6 +41,41 @@ class TestEntitySection(unittest.TestCase):
         result = stream.getvalue()
         stream.close()
         self.assertEqual(EMPTYSEC, result)
+
+class TestEntityQueryAC1009(unittest.TestCase):
+    dwg = make_test_drawing('AC1009')
+    def test_query_all_entities(self):
+        # independent from layout (modelspace or paperspace)
+        entities = self.dwg.entities.query('*')
+        self.assertEqual(10, len(entities))
+
+    def test_query_polyline(self):
+        entities = self.dwg.entities.query('POLYLINE')
+        self.assertEqual(1, len(entities))
+
+    def test_query_line_and_polyline(self):
+        entities = self.dwg.entities.query('POLYLINE LINE')
+        self.assertEqual(2, len(entities))
+
+    def test_query_vertices(self):
+        # vertices of polylines are separated entities, but there is no link to the associated polyline.
+        entities = self.dwg.entities.query('VERTEX')
+        self.assertEqual(4, len(entities))
+
+    def test_query_layer_line(self):
+        entities = self.dwg.entities.query('*[layer=="lay_line"]')
+        self.assertEqual(2, len(entities))
+
+    def test_query_layer_polyline(self):
+        entities = self.dwg.entities.query('*[layer=="lay_polyline"]')
+        self.assertEqual(1, len(entities))
+
+    def test_query_layer_by_regex(self):
+        entities = self.dwg.entities.query('*[layer=="lay_.*"]')
+        self.assertEqual(3, len(entities))
+
+class TestEntityQueryAC1018(TestEntityQueryAC1009):
+    dwg = make_test_drawing('AC1018')
 
 
 EMPTYSEC = """  0
@@ -239,6 +281,7 @@ MVIEW
   0
 ENDSEC
 """
+
 
 if __name__ == '__main__':
     unittest.main()

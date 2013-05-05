@@ -10,7 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 codepages = {
     '874': 'cp874',  # Thai,
     '932': 'cp932',  # Japanese
-    '936': 'hz',  # SimpChinese
+    '936': 'gbk',  # UnifiedChinese
     '949': 'cp949',  # Korean
     '950': 'cp950',  # TradChinese
     '1250': 'cp1250',  # CentralEurope

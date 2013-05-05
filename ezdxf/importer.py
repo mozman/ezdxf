@@ -16,7 +16,7 @@ class Importer(object):
             return True
         # The basic DXF structure has been changed with version AC1012 (AutoCAD R13)
         # It is not possible to copy from R12 to a newer version and
-        # it is not possible to copy from R13 or newer versions to R12.
+        # it is not possible to copy from R13 or a newer version to R12.
         if self.source.dxfversion == 'AC1009' or self.target.dxfversion == 'AC1009':
             return False
         # It is always possible to copy from older to newer versions (except R12).
