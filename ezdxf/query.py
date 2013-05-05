@@ -15,6 +15,9 @@ class EntityQuery(object):
         match = entity_matcher(query)
         self.entities = [entity for entity in entities if match(entity)]
 
+    def __len__(self):
+        return len(self.entities)
+
     def __iter__(self):
         return iter(self.entities)
 

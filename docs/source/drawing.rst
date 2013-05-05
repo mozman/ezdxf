@@ -25,7 +25,7 @@ Drawing Attributes
     ============ =================
     ``'cp874'``  Thai
     ``'cp932'``  Japanese
-    ``'hz'``     SimpChinese
+    ``'gbk'``    UnifiedChinese
     ``'cp949'``  Korean
     ``'cp950'``  TradChinese
     ``'cp1250'`` CentralEurope

@@ -24,7 +24,7 @@ class TestToEncoding(unittest.TestCase):
         self.assertEqual('ANSI_1252', tocodepage('cp1252'))
 
     def test_tocodepage_936(self):
-        self.assertEqual('ANSI_936', tocodepage('hz'))
+        self.assertEqual('ANSI_936', tocodepage('gbk'))
 
 
 if __name__ == '__main__':
