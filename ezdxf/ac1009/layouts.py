@@ -93,6 +93,7 @@ class BaseLayout(EntityCreator):
         """
         self._append_entity(entity)
         entity.set_builder(self)
+        self._set_paperspace(entity)
 
     # noinspection PyTypeChecker
     def query(self, query='*'):

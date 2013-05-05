@@ -50,11 +50,21 @@ class BlocksSection(object):
             entities.append(ClassifiedTags(group))
             if group[0].value == 'ENDBLK':
                 block_layout = build_block_layout(entities)
-                self._append_block_layout(block_layout)
+                self.append_block_layout(block_layout)
                 entities = []
 
-    def _append_block_layout(self, block_layout):
+    def append_block_layout(self, block_layout):
         self._blocks.append(block_layout)
+
+    def replace_or_append_block_layout(self, block_layout):
+        """ Replace existing block layout or append new block layout.
+        """
+        new_layout_name = block_layout.name
+        for index, layout in enumerate(self._blocks):
+            if layout.name == new_layout_name:
+                self._blocks[index] = block_layout
+                return
+        self.append_block_layout(block_layout)
 
     # start of public interface
 
@@ -95,7 +105,7 @@ class BlocksSection(object):
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
         block_layout = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
         self._dxffactory.create_block_entry_in_block_records_table(block_layout)
-        self._append_block_layout(block_layout)
+        self.append_block_layout(block_layout)
         return block_layout
 
     def new_anonymous_block(self, typechar='U', basepoint=(0, 0)):

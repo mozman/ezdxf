@@ -13,11 +13,11 @@ else: # for Python 2
 
 # Entity Query Parser
 # -------------------
-# EntityQueryParser := ('*' | EntityName+) AttributeQuerys?
-# AttributeQuerys := "[" AttributeQuery+ "]"
+# EntityQueryParser := ("*" | EntityName+) AttributeQuerys?
+# AttributeQuerys := "[" AttributeQuery ("&" + AttributeQuery)* "]"
 # AttributeQuery := AttributeName Relation AttributeValue
 # AttributeName := alphanums
-# Relation := "==" | "!=" | "^" | "$" | "?"
+# Relation := "==" | "!="
 # AttributeValue := dblQuotedString | number
 #
 # examples:
@@ -27,6 +27,7 @@ else: # for Python 2
 sign = oneOf('+ -')
 LBRK = Suppress('[')
 RBRK = Suppress(']')
+AND = Suppress('&')
 
 integer_constant = Word(nums)
 fractional_constant = Combine(Optional(integer_constant) + '.' + integer_constant) \
@@ -41,6 +42,6 @@ AttribName = Word(alphanums)
 Relation = oneOf(['==', '!='])
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
-AttribQuerys = OneOrMore(AttribQuery).setResultsName('Attributes')
+AttribQuerys =(AttribQuery + ZeroOrMore( AND + AttribQuery)).setResultsName('Attributes')
 EntityNames = Group(Literal('*') | OneOrMore(EntityName)).setResultsName('EntityNames')
 EntityQueryParser = EntityNames + Optional(LBRK + AttribQuerys + RBRK)

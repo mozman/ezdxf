@@ -6,7 +6,7 @@ import unittest
 
 import ezdxf
 
-from ezdxf.query import EntityQuery
+from ezdxf.query import EntityQuery, name_query
 
 def make_test_drawing(version):
     dwg = ezdxf.new(version)
@@ -52,6 +52,29 @@ class TestEntityQuery_AC1009(unittest.TestCase):
 
 class TestEntityQuery_AC1015(TestEntityQuery_AC1009):
     VERSION = 'AC1015'
+
+class TestNameQuery(unittest.TestCase):
+    def test_all_names(self):
+        names = "ONE TWO THREE"
+        result = " ".join(name_query(names.split(), '*'))
+        self.assertEqual(names, result)
+
+    def test_match_one_string(self):
+        names = "ONE TWO THREE"
+        result = list(name_query(names.split(), 'ONE'))
+        self.assertEqual("ONE", result[0])
+
+    def test_match_full_string(self):
+        names = "ONEONE TWO THREE"
+        result = list(name_query(names.split(), 'ONE'))
+        self.assertFalse(result)
+
+    def test_match_more_strings(self):
+        names = "ONE_1 ONE_2 THREE"
+        result = list(name_query(names.split(), 'ONE_.*'))
+        self.assertEqual("ONE_1", result[0])
+        self.assertEqual("ONE_2", result[1])
+        self.assertEqual(2, len(result))
 
 if __name__ == '__main__':
     unittest.main()

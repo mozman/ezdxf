@@ -100,3 +100,19 @@ def unique_entities(entities):
         if handle not in handles:
             handles.add(handle)
             yield entity
+
+def name_query(names, query="*"):
+    def build_regexp_matcher():
+        def get_match_func():
+            # always match until end of string
+            matcher = re.compile(query + '$')
+            def match(name):
+                return matcher.match(name) is not None
+            return match
+        if query == "*":
+            return lambda n: True
+        else:
+            return get_match_func()
+    match = build_regexp_matcher()
+    return (name for name in names if match(name))
+
