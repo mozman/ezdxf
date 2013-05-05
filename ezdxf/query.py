@@ -16,22 +16,33 @@ class EntityQuery(object):
         self.entities = [entity for entity in entities if match(entity)]
 
     def __len__(self):
+        """ Count of result entities.
+        """
         return len(self.entities)
 
     def __iter__(self):
+        """ Iterate over all entities matching the init-query, returns a GraphicEntity() class or inherited.
+        """
         return iter(self.entities)
 
-    def extend(self, entities, query='*'):
-        match = entity_matcher(query)
-        self.entities.extend(entity for entity in entities if match(entity))
-        self.entities = list(unique_entities(entities))
+    def extend(self, entities, query='*', unique=True):
+        """ Extent query result by entities matching query.
+        """
+        self.entities.extend(EntityQuery(entities, query))
+        if unique:
+            self.entities = list(unique_entities(self.entities))
+        return self
 
     def remove(self, query='*'):
-        match = entity_matcher(query)
-        self.entities = [entity for entity in self.entities if not match(entity)]
+        """ Remove entities matching this additional query from previous query result.
+        """
+        self.entities = self.filter(query).entities
 
     def filter(self, query='*'):
+        """ Returns a new query result with all entities matching previous query AND this additional query.
+        """
         return EntityQuery(self.entities, query)
+
 
 def entity_matcher(query):
     query_args = EntityQueryParser.parseString(query, parseAll=True)
@@ -43,29 +54,23 @@ def entity_matcher(query):
 
 def build_entity_name_matcher(names):
     entity_names = set(names)
-    def match_one_name(entity):
-        if entity.dxftype() in entity_names:
-            return True
-        else:
-            return False
-
     if names[0] == '*':
-        return lambda x: True
+        return lambda e: True
     else:
-        return match_one_name
+        return lambda e: e.dxftype() in entity_names
 
 def build_entity_attributes_matcher(attribs):
     def build_compare(relation, value):
-        relation_operator = operator.eq if relation == '==' else operator.ne
+        compare_operator = operator.eq if relation == '==' else operator.ne
         def build_regexp_compare():
             # always match until end of string
             regexp = re.compile(value + '$')
             def compare(v):
-                return relation_operator(regexp.match(v) is not None, True)
+                return compare_operator(regexp.match(v) is not None, True)
             return compare
 
         if isinstance(value, (int, float)): # just compare values
-            return lambda v: relation_operator(v, value)
+            return lambda v: compare_operator(v, value)
         else: # for strings use regular expressions
             return build_regexp_compare()
 
@@ -79,12 +84,16 @@ def build_entity_attributes_matcher(attribs):
                 return compare(entity.get_dxf_attrib(name))
             except AttributeError:  # entity does not support this attribute
                 return False
-            except ValueError: # entity support this attribute, but has no value for it
+            except ValueError: # entity supports this attribute, but has no value for it
                 return False
         return all(match(name, compare) for name, compare in attributes)
     return match_all_attributes
 
 def unique_entities(entities):
+    """ Yield all unique entities, order of all entities will be preserved, because of these entities:
+    POLYLINE, VERTEX, ..., VERTEX, SEQEND.
+    INSERT, ATTRIB, ..., ATTRIB, SEQEND.
+    """
     handles = set()
     for entity in entities:
         handle = entity.handle()

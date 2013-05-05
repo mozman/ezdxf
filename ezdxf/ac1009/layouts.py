@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .creator import EntityCreator
 from ..entityspace import EntitySpace
-
+from ..query import EntityQuery
 
 class DXF12Layouts(object):
     """ The Layout container.
@@ -93,6 +93,10 @@ class BaseLayout(EntityCreator):
         """
         self._append_entity(entity)
         entity.set_builder(self)
+
+    # noinspection PyTypeChecker
+    def query(self, query='*'):
+        return EntityQuery(iter(self), query)
 
 
 class DXF12Layout(BaseLayout):
