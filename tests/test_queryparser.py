@@ -58,7 +58,7 @@ class TestEntityQueryParserWithAttributes(unittest.TestCase):
         self.assertEqual('0', value)
 
     def test_second_attribute(self):
-        result = EntityQueryParser.parseString('LINE[layer=="0" color!=7]', parseAll=True)
+        result = EntityQueryParser.parseString('LINE[layer=="0" & color!=7]', parseAll=True)
         name, relation, value = result.Attributes[1]
         self.assertEqual('color', name)
         self.assertEqual('!=', relation)

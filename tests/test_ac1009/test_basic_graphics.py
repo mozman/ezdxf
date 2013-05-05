@@ -29,6 +29,10 @@ class TestPaperSpace(SetupDrawing):
         self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(2, len(list(self.layout)))
 
+    def test_query_entities(self):
+        self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
+        self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
+        self.assertEqual(2, len(self.layout.query('*[layer=="lay_.*"]')))
 
 class TestSimpleGraphics(SetupDrawing):
     def test_create_line(self):
