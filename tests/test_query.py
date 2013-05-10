@@ -40,7 +40,7 @@ class TestEntityQuery_AC1009(unittest.TestCase):
 
     def test_match_regex(self):
         modelspace = self.dwg.modelspace()
-        result = EntityQuery(modelspace, '*[layer=="lay_.*"]')
+        result = EntityQuery(modelspace, '*[layer ? "lay_.*"]')
         self.assertEqual(3, len(result))
 
     def test_match_whole_string(self):

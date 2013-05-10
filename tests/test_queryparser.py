@@ -44,25 +44,59 @@ class TestEntityQueryParserWithAttributes(unittest.TestCase):
         self.assertEqual("LINE", result.EntityNames[0])
         self.assertEqual(1, len(result.Attributes))
         name, relation, value = result.Attributes[0]
-        self.assertEqual('layer', name)
-        self.assertEqual('==', relation)
-        self.assertEqual('0', value)
+        self.assertEqual(('layer', '==', '0'), (name, relation, value))
 
     def test_star_with_one_attribute(self):
         result = EntityQueryParser.parseString('*[layer=="0"]', parseAll=True)
         self.assertEqual("*", result.EntityNames[0])
         self.assertEqual(1, len(result.Attributes))
         name, relation, value = result.Attributes[0]
-        self.assertEqual('layer', name)
-        self.assertEqual('==', relation)
-        self.assertEqual('0', value)
+        self.assertEqual(('layer', '==', '0'), (name, relation, value))
 
     def test_second_attribute(self):
         result = EntityQueryParser.parseString('LINE[layer=="0" & color!=7]', parseAll=True)
         name, relation, value = result.Attributes[1]
-        self.assertEqual('color', name)
-        self.assertEqual('!=', relation)
-        self.assertEqual(7, value)
+        self.assertEqual(('color', '!=', 7), (name, relation, value))
+
+    def test_relation_lt(self):
+        result = EntityQueryParser.parseString('*[layer<"0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '<', '0'), (name, relation, value))
+
+    def test_relation_le(self):
+        result = EntityQueryParser.parseString('*[layer<="0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '<=', '0'), (name, relation, value))
+
+    def test_relation_eq(self):
+        result = EntityQueryParser.parseString('*[layer=="0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '==', '0'), (name, relation, value))
+
+    def test_relation_ne(self):
+        result = EntityQueryParser.parseString('*[layer!="0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '!=', '0'), (name, relation, value))
+
+    def test_relation_ge(self):
+        result = EntityQueryParser.parseString('*[layer>="0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '>=', '0'), (name, relation, value))
+
+    def test_relation_gt(self):
+        result = EntityQueryParser.parseString('*[layer>="0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '>=', '0'), (name, relation, value))
+
+    def test_regex_match(self):
+        result = EntityQueryParser.parseString('*[layer?"0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '?', '0'), (name, relation, value))
+
+    def test_not_regex_match(self):
+        result = EntityQueryParser.parseString('*[layer!?"0"]', parseAll=True)
+        name, relation, value = result.Attributes[0]
+        self.assertEqual(('layer', '!?', '0'), (name, relation, value))
 
 if __name__ == '__main__':
     unittest.main()
