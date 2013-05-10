@@ -11,9 +11,9 @@ from ezdxf.query import EntityQuery, name_query
 def make_test_drawing(version):
     dwg = ezdxf.new(version)
     modelspace = dwg.modelspace()
-    modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines'})
-    modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines'})
-    modelspace.add_text("TEST", insert=(0, 0), dxfattribs={'layer': 'lay_text'})
+    modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
+    modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
+    modelspace.add_text("TEST", insert=(0, 0), dxfattribs={'layer': 'lay_text', 'color': 6})
     return dwg
 
 class TestEntityQuery_AC1009(unittest.TestCase):
@@ -49,6 +49,35 @@ class TestEntityQuery_AC1009(unittest.TestCase):
         modelspace = self.dwg.modelspace()
         result = EntityQuery(modelspace, '*[layer=="lay"]')
         self.assertEqual(0, len(result))
+
+    def test_not_supported_attribute(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[mozman!="TEST"]')
+        self.assertEqual(0, len(result))
+
+    def test_bool_select(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[layer=="lay_lines" & color==7]')
+        # 1xLINE
+        self.assertEqual(1, len(result))
+
+    def test_bool_select_2(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[layer=="lay_lines" & color==7 | color==6]')
+        # 1xLINE(layer=="lay_lines" & color==7) 1xPOLYLINE(color==6) 1xTEXT(color==6)
+        self.assertEqual(3, len(result))
+
+    def test_bool_select_3(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[layer=="lay_lines" & (color==7 | color==6)]')
+        # 1xLINE(layer=="lay_lines" & color==7) 1xPOLYLINE(layer=="lay_lines" & color==6)
+        self.assertEqual(2, len(result))
+
+    def test_bool_select_4(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[(layer=="lay_lines" | layer=="lay_text") & !color==7]')
+        # 1xPOLYLINE(layer=="lay_lines" & color==6) 1xTEXT(layer=="lay_text" & color==6)
+        self.assertEqual(2, len(result))
 
 class TestEntityQuery_AC1015(TestEntityQuery_AC1009):
     VERSION = 'AC1015'

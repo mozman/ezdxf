@@ -42,8 +42,15 @@ string_ = dblQuotedString.addParseAction(lambda t: t[0][1:-1])
 EntityName = Word(alphanums)
 AttribName = Word(alphanums)
 Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
+
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
-AttribQuerys =(AttribQuery + ZeroOrMore( AND + AttribQuery)).setResultsName('Attributes')
-EntityNames = Group(Literal('*') | OneOrMore(EntityName)).setResultsName('EntityNames')
-EntityQueryParser = EntityNames + Optional(LBRK + AttribQuerys + RBRK)
+EntityNames = Group(Literal('*') | OneOrMore(EntityName)).setResultsName('EntityQuery')
+
+InfixBoolQuery = infixNotation(AttribQuery,(
+    ('!', 1, opAssoc.RIGHT),
+    ('&', 2, opAssoc.LEFT),
+    ('|', 2, opAssoc.LEFT),
+)).setResultsName('AttribQuery')
+
+EntityQueryParser = EntityNames + Optional(LBRK + InfixBoolQuery + RBRK)
