@@ -71,7 +71,7 @@ class TestEntityQueryAC1009(unittest.TestCase):
         self.assertEqual(1, len(entities))
 
     def test_query_layer_by_regex(self):
-        entities = self.dwg.entities.query('*[layer=="lay_.*"]')
+        entities = self.dwg.entities.query('*[layer ? "lay_.*"]')
         self.assertEqual(3, len(entities))
 
 class TestEntityQueryAC1018(TestEntityQueryAC1009):

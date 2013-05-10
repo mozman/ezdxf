@@ -11,13 +11,15 @@ if sys.version_info.major > 2: # for Python 3
 else: # for Python 2
     from .pyparsing157 import *
 
+#TODO: boolean operation parser, see pyparsing example: simpleBool.py
+
 # Entity Query Parser
 # -------------------
 # EntityQueryParser := ("*" | EntityName+) AttributeQuerys?
 # AttributeQuerys := "[" AttributeQuery ("&" + AttributeQuery)* "]"
 # AttributeQuery := AttributeName Relation AttributeValue
 # AttributeName := alphanums
-# Relation := "==" | "!="
+# Relation := "==" | "!=" | "<" | "<=" | ">" | ">=" | "?" | "!?"
 # AttributeValue := dblQuotedString | number
 #
 # examples:
@@ -39,7 +41,7 @@ string_ = dblQuotedString.addParseAction(lambda t: t[0][1:-1])
 
 EntityName = Word(alphanums)
 AttribName = Word(alphanums)
-Relation = oneOf(['==', '!='])
+Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
 AttribQuerys =(AttribQuery + ZeroOrMore( AND + AttribQuery)).setResultsName('Attributes')

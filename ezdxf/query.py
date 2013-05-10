@@ -3,7 +3,6 @@
 # Created: 27.04.13
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
-# Python2/3 support should be done here
 
 import re
 import operator
@@ -43,6 +42,18 @@ class EntityQuery(object):
         """
         return EntityQuery(self.entities, query)
 
+#TODO: boolean operation parser, see pyparsing example: simpleBool.py
+
+CMP_OPERATOR = {
+    '==': operator.eq,
+    '!=': operator.ne,
+    '<': operator.lt,
+    '<=': operator.le,
+    '>': operator.gt,
+    '>=': operator.ge,
+    '?': lambda e, regex: regex.match(e) is not None,
+    '!?': lambda e, regex: regex.match(e) is None,
+}
 
 def entity_matcher(query):
     query_args = EntityQueryParser.parseString(query, parseAll=True)
@@ -61,18 +72,9 @@ def build_entity_name_matcher(names):
 
 def build_entity_attributes_matcher(attribs):
     def build_compare(relation, value):
-        compare_operator = operator.eq if relation == '==' else operator.ne
-        def build_regexp_compare():
-            # always match until end of string
-            regexp = re.compile(value + '$')
-            def compare(v):
-                return compare_operator(regexp.match(v) is not None, True)
-            return compare
-
-        if isinstance(value, (int, float)): # just compare values
-            return lambda v: compare_operator(v, value)
-        else: # for strings use regular expressions
-            return build_regexp_compare()
+        if '?' in relation :
+            value =  re.compile(value + '$')
+        return lambda v: CMP_OPERATOR[relation](v, value)
 
     if not len(attribs):
         return lambda x: True
