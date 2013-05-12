@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: dxf engine for R2010/AC1024
 # Created: 12.03.2011
 # Copyright (C), Manfred Moitzi

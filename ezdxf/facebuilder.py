@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: optimizing face builder
 # Created: 04.04.2011
 # Copyright (C) 2011, Manfred Moitzi

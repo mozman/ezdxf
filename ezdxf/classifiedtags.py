@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Purpose: classifiedtags
+# Purpose: classified tags
 # Created: 30.04.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License

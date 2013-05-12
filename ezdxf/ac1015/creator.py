@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: AC1015 graphic builder
 # Created: 10.03.2013
 # Copyright (C) 2013, Manfred Moitzi

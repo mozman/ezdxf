@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Purpose: dxf objects wrapper, dxf-objects arn non-graphical entities
+# Purpose: dxf objects wrapper, dxf-objects are non-graphical entities
 # all dxf objects resides in the OBJECTS SECTION
 # Created: 22.03.2011
 # Copyright (C) 2011, Manfred Moitzi
-# License: MIT License
+# License: MIT-License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 

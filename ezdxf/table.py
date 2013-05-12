@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: tables contained in tables sections
 # Created: 13.03.2011
 # Copyright (C) , Manfred Moitzi

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: template file management
 # Created: 11.03.2011
 # Copyright (C) 2011, Manfred Moitzi

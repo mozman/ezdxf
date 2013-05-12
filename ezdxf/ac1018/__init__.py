@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: dxf factory for R2004/AC1018
 # Created: 12.03.2011
 # Copyright (C) , Manfred Moitzi
