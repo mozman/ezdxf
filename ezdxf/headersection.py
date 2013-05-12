@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
-from . import tostr
+from .c23 import ustr
 from .tags import TagGroups, TAG_STRING_FORMAT
 
 
@@ -42,7 +42,7 @@ class HeaderSection(object):
     def write(self, stream):
         def _write(name, value):
             stream.write("  9\n%s\n" % name)
-            stream.write(tostr(value))
+            stream.write(ustr(value))
 
         stream.write("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
