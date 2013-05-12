@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: constant values
 # Created: 10.03.2011
 # Copyright (C) 2011, Manfred Moitzi

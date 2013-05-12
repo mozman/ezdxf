@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Purpose: juliandate
+# Purpose: julian date
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License

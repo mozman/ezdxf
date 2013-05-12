@@ -1,4 +1,3 @@
-# encoding: utf-8
 # Purpose: Query language and manipulation object for DXF entities
 # Created: 27.04.13
 # Copyright (C) 2013, Manfred Moitzi

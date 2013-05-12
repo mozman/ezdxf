@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: header variables factory
 # Created: 20.11.2010
 # Copyright (C) 2010, Manfred Moitzi

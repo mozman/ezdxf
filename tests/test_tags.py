@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-#coding:utf-8
+# encoding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: test tagreader
 # Created: 10.03.2011
@@ -9,8 +8,8 @@ from __future__ import unicode_literals
 
 import unittest
 from io import StringIO
-from c23 import ustr
 
+from ezdxf.c23 import ustr
 from ezdxf.tags import StringIterator, Tags
 from ezdxf.tags import dxf_info, strtag
 from ezdxf.tags import tag_type

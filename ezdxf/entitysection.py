@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: entity section
 # Created: 13.03.2011
 # Copyright (C) 2011, Manfred Moitzi

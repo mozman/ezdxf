@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# encoding: utf-8
 # Created: 28.04.13
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT-License
