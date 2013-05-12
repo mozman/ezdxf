@@ -12,7 +12,7 @@ from io import StringIO
 
 from .codepage import toencoding
 from .const import acadrelease
-from . import tostr
+from .c23 import ustr
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONE_TAG = DXFTag(999999, 'NONE')
@@ -95,7 +95,6 @@ class DXFInfo(object):
     def HANDSEED(self, value):
         self.handseed = value
 
-
 def dxf_info(stream):
     info = DXFInfo()
     tag = (999999, '')
@@ -111,37 +110,8 @@ def dxf_info(stream):
             method(next(tagreader).value)
     return info
 
-
 def strtag(tag):
     return TAG_STRING_FORMAT % tag
-
-
-TYPE_DEFINITION = [
-    (tostr, range(0, 10)),
-    (float, range(10, 60)),
-    (int, range(60, 100)),
-    (tostr, range(100, 106)),
-    (float, range(110, 150)),
-    (int, range(170, 180)),
-    (float, range(210, 240)),
-    (int, range(270, 290)),
-    (int, range(290, 300)),  # bool 1=True 0=False
-    (tostr, range(300, 370)),
-    (int, range(370, 390)),
-    (tostr, range(390, 400)),
-    (int, range(400, 410)),
-    (tostr, range(410, 420)),
-    (int, range(420, 430)),
-    (tostr, range(430, 440)),
-    (int, range(440, 460)),
-    (float, range(460, 470)),
-    (tostr, range(470, 480)),
-    (tostr, range(480, 482)),
-    (tostr, range(999, 1010)),
-    (float, range(1010, 1060)),
-    (int, range(1060, 1072)),
-]
-
 
 def _build_type_table(types):
     table = {}
@@ -150,17 +120,44 @@ def _build_type_table(types):
             table[code] = caster
     return table
 
-TYPE_TABLE = _build_type_table(TYPE_DEFINITION)
-
+TYPE_TABLE = _build_type_table([
+    (ustr, range(0, 10)),
+    (float, range(10, 60)),
+    (int, range(60, 100)),
+    (ustr, range(100, 106)),
+    (float, range(110, 150)),
+    (int, range(170, 180)),
+    (float, range(210, 240)),
+    (int, range(270, 290)),
+    (int, range(290, 300)),  # bool 1=True 0=False
+    (ustr, range(300, 370)),
+    (int, range(370, 390)),
+    (ustr, range(390, 400)),
+    (int, range(400, 410)),
+    (ustr, range(410, 420)),
+    (int, range(420, 430)),
+    (ustr, range(430, 440)),
+    (int, range(440, 460)),
+    (float, range(460, 470)),
+    (ustr, range(470, 480)),
+    (ustr, range(480, 482)),
+    (ustr, range(999, 1010)),
+    (float, range(1010, 1060)),
+    (int, range(1060, 1072)),
+])
 
 def cast_tag(tag, types=TYPE_TABLE):
-    caster = types.get(tag[0], tostr)
+    caster = types.get(tag[0], ustr)
     return DXFTag(tag[0], caster(tag[1]))
 
-
 def cast_tag_value(code, value, types=TYPE_TABLE):
-    return types.get(code, tostr)(value)
+    return types.get(code, ustr)(value)
 
+def tag_type(code):
+    try:
+        return TYPE_TABLE[code]
+    except KeyError:
+        raise ValueError("Invalid tag code: {}".format(code))
 
 class Tags(list):
     """ DXFTag() chunk as flat list. """

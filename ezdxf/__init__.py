@@ -10,25 +10,11 @@ VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <mozman@gmx.at>"
 
-# Python2/3 support should be done here
-import sys
-if sys.version_info.major > 2:
-    # for Python 3
-    tostr = str
-    basestring = str
-    from . import pyparsing200 as pyparsing
-else:
-    # for Python 2
-    from . import pyparsing157 as pyparsing
-    tostr = unicode
-# end of Python2/3 support
-
 import io
 from contextlib import contextmanager
 
 from .options import options  # example: ezdxf.options['templatedir'] = 'c:\templates'
 from .tags import dxf_info
-
 
 def read(stream):
     from .drawing import Drawing

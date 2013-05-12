@@ -6,27 +6,82 @@
 
 import re
 import operator
-import sys
+
+from .c23 import isstring, Sequence
 
 from .queryparser import EntityQueryParser
 
-class EntityQuery(object):
+class EntityQuery(Sequence):
+    """EntityQuery is a result container, which is filled with dxf entities matching the query string.
+    It is possible to add entities to the container (extend), remove entities from the container and
+    to filter the container.
+	
+	Query String
+	============
+	
+    QueryString := EntityQuery ("[" AttribQuery "]")*
+	
+	The query string is the combination of two queries, first the required entity query and second the
+	optional attribute query, enclosed in square brackets.
+	
+	Entity Query
+	------------
+	
+	The entity query is a whitespace separated list of DXF entity names or the special name "*".
+	Where "*" means all DXF entities, all other DXF names have to be uppercase.
+	
+	Attribute Query
+	---------------
+	
+	The attribute query is a boolean expression, supported operators are:
+	  - not: !term is true, if term is false
+	  - and: term & term is true, if both terms are true
+	  - or: term | term is true, if one term is true
+	  - and arbitrary nested round brackets
+	
+	Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
+	value is a integer, float or double quoted string, valid comparators are:
+	  - "==" equal "value"
+	  - "!=" not equal "value"
+	  - "<" lower than "value"
+	  - "<=" lower or equal than "value"
+	  - ">" greater than "value"
+	  - ">=" greater or equal than "value"
+	  - "?" match regular expression "value"
+	  - "!?" does not match regular expression "value"
+
+    Query Result
+    ------------
+
+    The EntityQuery() class based on the abstract Sequence() class, contains all DXF entities of the source collection,
+    which matches one name of the entity query AND the whole attribute query.
+    If a DXF entity does not have or support a required attribute, the corresponding attribute search term is false.
+    example: 'LINE[text ? ".*"]' is always empty, because the LINE entity has no text attribute.
+
+    examples:
+        'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
+        '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
+    """
+
     def __init__(self, entities, query='*'):
+        """Setup container with entities matching the initial query.
+		
+		:param entities: sequence of wrapped DXF entities (at least GraphicEntity class)
+		:param query: query string, see class documentation
+		"""
         match = entity_matcher(query)
         self.entities = [entity for entity in entities if match(entity)]
 
     def __len__(self):
-        """ Count of result entities.
+        """Count of result entities.
         """
         return len(self.entities)
 
-    def __iter__(self):
-        """ Iterate over all entities matching the init-query, returns a GraphicEntity() class or inherited.
-        """
-        return iter(self.entities)
+    def __getitem__(self, item):
+        return self.entities.__getitem__(item)
 
     def extend(self, entities, query='*', unique=True):
-        """ Extent query result by entities matching query.
+        """Extent the query container by entities matching a additional query.
         """
         self.entities.extend(EntityQuery(entities, query))
         if unique:
@@ -34,12 +89,12 @@ class EntityQuery(object):
         return self
 
     def remove(self, query='*'):
-        """ Remove entities matching this additional query from previous query result.
+        """Remove all entities from result container matching this additional query.
         """
         self.entities = self.filter(query).entities
 
     def filter(self, query='*'):
-        """ Returns a new query result with all entities matching previous query AND this additional query.
+        """Returns a new result container with all entities matching this additional query.
         """
         return EntityQuery(self.entities, query)
 
@@ -53,7 +108,7 @@ def entity_matcher(query):
     return matcher
 
 def build_entity_name_matcher(names):
-    entity_names = set(names)
+    entity_names = frozenset(names)
     if names[0] == '*':
         return lambda e: True
     else:
@@ -106,15 +161,15 @@ class BoolExpression:
         if isinstance(self.tokens, Relation):  # expression is just one relation, no bool operations
             return self.tokens.evaluate(entity)
 
-        values = []  # as stack
-        operators = []  # as queue
+        values = []  # first in, first out
+        operators = []  # first in, first out
         for token in self.tokens:
             if hasattr(token, 'evaluate'):
                 values.append(token.evaluate(entity))
             else:  # bool operator
                 operators.append(token)
-        values.reverse()  # revert stack -> so pop() and append() operates at the beginning of the list
-        for op in operators:  # as queue -> empty list from start to end
+        values.reverse()  # revert values -> pop() == pop(0) & append(value) == insert(0, value)
+        for op in operators:  # as queue -> first in, first out
             if op == '!':
                 value = not values.pop()
             else:
@@ -122,27 +177,24 @@ class BoolExpression:
             values.append(value)
         return values.pop()
 
-if sys.version_info.major > 2:
-    basestring = str
-
-def _build_tokens(tokens):
+def _compile_tokens(tokens):
     def is_relation(tokens):
         return len(tokens) == 3 and tokens[1] in Relation.VALID_CMP_OPERATORS
 
-    if isinstance(tokens, basestring):  # bool operator as string
+    if isstring(tokens):  # bool operator as string
         return tokens
 
     tokens = tuple(tokens)
     if is_relation(tokens):
         return Relation(tokens)
     else:
-        return BoolExpression([_build_tokens(token) for token in tokens])
+        return BoolExpression([_compile_tokens(token) for token in tokens])
 
-def build_entity_attributes_matcher(parsed_tokens):
-    if not len(parsed_tokens):
+def build_entity_attributes_matcher(tokens):
+    if not len(tokens):
         return lambda x: True
 
-    expr = BoolExpression(_build_tokens(parsed_tokens))
+    expr = BoolExpression(_compile_tokens(tokens))
     def match_bool_expr(entity):
         return expr.evaluate(entity)
     return match_bool_expr
@@ -161,15 +213,11 @@ def unique_entities(entities):
 
 def name_query(names, query="*"):
     def build_regexp_matcher():
-        def get_match_func():
-            # always match until end of string
-            matcher = re.compile(query + '$')
-            def match(name):
-                return matcher.match(name) is not None
-            return match
         if query == "*":
             return lambda n: True
         else:
-            return get_match_func()
+            # always match until end of string
+            matcher = re.compile(query + '$')
+            return lambda n: matcher.match(n) is not None
     match = build_regexp_matcher()
     return (name for name in names if match(name))

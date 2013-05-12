@@ -9,9 +9,11 @@ from __future__ import unicode_literals
 
 import unittest
 from io import StringIO
+from c23 import ustr
 
 from ezdxf.tags import StringIterator, Tags
 from ezdxf.tags import dxf_info, strtag
+from ezdxf.tags import tag_type
 
 TEST_TAGREADER = """  0
 SECTION
@@ -214,3 +216,17 @@ LAST
   1
 TEST2
 """
+
+class TestTagType(unittest.TestCase):
+    def test_int(self):
+        self.assertEqual(int, tag_type(60))
+
+    def test_float(self):
+        self.assertEqual(float, tag_type(10))
+
+    def test_str(self):
+        self.assertEqual(ustr, tag_type(0))
+
+    def test_value_error(self):
+        with self.assertRaises(ValueError):
+            tag_type(3000)
