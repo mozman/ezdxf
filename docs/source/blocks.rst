@@ -8,7 +8,7 @@ document.
 
 .. method:: BlocksSection.__iter__()
 
-   Iterate over all block definitions.
+   Iterate over all block definitions, yielding :class:`BlockLayout` objects.
 
 .. method:: BlocksSection.__contains__(entity)
 
@@ -62,10 +62,10 @@ color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
 
 .. method:: Insert.get_attrib(tag)
 
-   Get the appended :class:`Attrib` object with dxfattr tag == `tag`. Returns
-   `None` if no :class:`Attrib` with dxfattr tag == `tag` exists.
+   Get the appended :class:`Attrib` object with :code:`dxfattr tag == tag`, returns
+   :code:`None` if not found.
 
-.. method:: Insert.add_attdxfattribsrib(tag, text, insert, attribs={})
+.. method:: Insert.add_attrib(tag, text, insert, attribs={})
 
    Append an :class:`Attrib` to the block reference.
 
