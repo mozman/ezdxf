@@ -48,47 +48,78 @@ Drawing Attributes
 
     DXF entity creation factory, see also :class:`DXFFactory` (read only).
 
+.. attribute:: Drawing.sections
+
+    Collection of all existing sections of a DXF drawing.
+
 .. attribute:: Drawing.header
+
+    Shortcut for :attr:`Drawing.sections.header`
 
     Reference to the :class:`HeaderSection` of the drawing, where
     you can change the drawing settings.
 
+.. attribute:: Drawing.entities
+
+    Shortcut for :attr:`Drawing.sections.entities`
+
+    Reference to the :class:`EntitySection` of the drawing, where all
+    graphical entities are stored, independently from modelspace or layout.
+
+.. attribute:: Drawing.blocks
+
+    Shortcut for :attr:`Drawing.sections.blocks`
+
+    Reference to the blocks section, see also :class:`BlocksSection`.
+
 .. attribute:: Drawing.layers
+
+    Shortcut for :attr:`Drawing.sections.tables.layers`
 
     Reference to the layers table, where you can create, get and
     remove layers, see also :class:`Table` and :class:`Layer`
 
 .. attribute:: Drawing.styles
 
+    Shortcut for :attr:`Drawing.sections.tables.styles`
+
     Reference to the styles table, see also :class:`Style`.
 
 .. attribute:: Drawing.dimstyles
+
+    Shortcut for :attr:`Drawing.sections.tables.dimstyles`
 
     Reference to the dimstyles table, see also :class:`DimStyle`.
 
 .. attribute:: Drawing.linetypes
 
+    Shortcut for :attr:`Drawing.sections.tables.linetypes`
+
     Reference to the linetypes table, see also :class:`Linetype`.
 
 .. attribute:: Drawing.views
+
+    Shortcut for :attr:`Drawing.sections.tables.views`
 
     Reference to the views table, see also :class:`View`.
 
 .. attribute:: Drawing.viewports
 
+    Shortcut for :attr:`Drawing.sections.tables.viewports`
+
     Reference to the viewports table, see also :class:`Viewport`.
 
 .. attribute:: Drawing.ucs
+
+    Shortcut for :attr:`Drawing.sections.tables.ucs`
 
     Reference to the ucs table, see also :class:`UCS`.
 
 .. attribute:: Drawing.appids
 
+    Shortcut for :attr:`Drawing.sections.tables.appids`
+
     Reference to the appids table, see also :class:`AppID`.
-
-.. attribute:: Drawing.blocks
-
-    Reference to the blocks section, see also :class:`BlocksSection`.
 
 Drawing Methods
 ---------------
@@ -121,7 +152,3 @@ Drawing Methods
 
     Write drawing to a text stream, opened with `encoding` = :attr:`Drawing.encoding`
     and and `mode` = ``'wt'``.
-
-.. method:: Drawing.writebytes(stream)
-
-    not implemented yet.

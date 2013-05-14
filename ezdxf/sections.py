@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
-from .tags import TAG_STRING_FORMAT, DXFTag
 
 from .defaultchunk import DefaultChunk, iterchunks
 from .headersection import HeaderSection
@@ -19,6 +18,9 @@ class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = OrderedDict()
         self._setup_sections(tagreader, drawing)
+
+    def __iter__(self):
+        return self._sections.values()
 
     def _setup_sections(self, tagreader, drawing):
         def name(section):

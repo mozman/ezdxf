@@ -28,6 +28,7 @@ def new(dxfversion='AC1009'):
     - 'AC1018': AutoCAD 2004
     - 'AC1021': AutoCAD 2007
     - 'AC1024': AutoCAD 2010
+    - 'AC1027': AutoCAD 2013
 
     """
     from .drawing import Drawing
