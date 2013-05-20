@@ -19,6 +19,9 @@ class TablesSection(object):
         self._tables = OrderedDict()
         self._setup_tables(tags)
 
+    def __iter__(self):
+        return iter(self._tables.values())
+
     def _setup_tables(self, tags):
         def name(table):
             return table[1].value

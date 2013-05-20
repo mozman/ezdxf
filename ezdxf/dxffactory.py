@@ -19,6 +19,7 @@ factories = {
     'AC1018': AC1018Factory,
     'AC1021': AC1021Factory,
     'AC1024': AC1024Factory,
+    'AC1027': AC1024Factory,
 }
 
 

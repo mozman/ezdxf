@@ -11,7 +11,7 @@ drawing, you can not save the drawing as DXF R2000 file, but you can open or
 create new DXF drawings for every supported DXF version. If you need a DXF
 converter search for the free program *DWG TrueView* from Autodesk.
 You can open/save every DXF file without loosing any content, but not every
-content is supported by this package. Unknown tags in the DXF files were simple
+content is supported by this package. Unknown tags in the DXF file will be
 ignored but preserved for saving. With this behavior it should be possible to
 open also newer DXF versions without problems.
 
@@ -26,6 +26,7 @@ AC1015  AutoCAD V2000
 AC1018  AutoCAD V2004
 AC1020  AutoCAD V2007
 AC1024  AutoCAD V2010
+AC1027  AutoCAD V2013 (soon)
 ======= ========================
 
 a simple example::
@@ -52,7 +53,7 @@ or from source::
 Documentation
 =============
 
-http://packages.python.org/ezdxf/
+http://pythonhosted.org/ezdxf
 
 http://ezdxf.readthedocs.org/
 
