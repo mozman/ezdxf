@@ -67,8 +67,7 @@ def readfile_as_asc(filename):
 
 # noinspection PyArgumentList
 def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
-    from .drawing import Drawing
     with io.open(filename, encoding=encoding, errors=errors) as fp:
-        dwg = Drawing.read(fp)
+        dwg = read(fp)
     dwg.filename = filename
     return dwg
