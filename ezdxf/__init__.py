@@ -16,6 +16,7 @@ import io
 
 from .options import options  # example: ezdxf.options['templatedir'] = 'c:\templates'
 from .tags import dxf_info
+from .tags import TagIterator
 
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
@@ -59,16 +60,15 @@ def readfile_as_asc(filename):
     """Read DXF drawing from file *filename*, expects an ascii code-page encoding.
     """
     def get_encoding():
-        with open(filename) as fp:
+        with io.open(filename) as fp:
             info = dxf_info(fp)
         return info.encoding
-
     return _read_encoded_file(filename, encoding=get_encoding())
 
 # noinspection PyArgumentList
 def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
     from .drawing import Drawing
     with io.open(filename, encoding=encoding, errors=errors) as fp:
-        dwg = Drawing(fp)
+        dwg = Drawing.read(fp)
     dwg.filename = filename
     return dwg

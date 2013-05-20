@@ -20,7 +20,7 @@ class Sections(object):
         self._setup_sections(tagreader, drawing)
 
     def __iter__(self):
-        return self._sections.values()
+        return iter(self._sections.values())
 
     def _setup_sections(self, tagreader, drawing):
         def name(section):

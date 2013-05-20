@@ -25,7 +25,6 @@ class Drawing(object):
         def get_rootdict():
             roothandle = self.sections.objects.roothandle()
             return self.dxffactory.wrap_entity(self.entitydb[roothandle])
-
         self._dxfversion = 'AC1009'  # readonly
         self.encoding = 'cp1252'  # read/write
         self.filename = None  # read/write
