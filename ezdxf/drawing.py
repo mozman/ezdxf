@@ -148,6 +148,7 @@ class Drawing(object):
     def _update_metadata(self):
         self.header['$TDUPDATE'] = juliandate(datetime.now())
         self.header['$HANDSEED'] = str(self._handles)
+        self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
 
     def _enable_handles(self):
         """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.
@@ -163,7 +164,7 @@ class Drawing(object):
         def put_handles_into_entity_tags():
             for handle, entity in self.entitydb.items():
                 if not has_handle(entity):
-                    code = 5 if entity.get_type() != 'DIMSTYLE' else 105  # legacy shit!!!
+                    code = 5 if entity.dxftype() != 'DIMSTYLE' else 105  # legacy shit!!!
                     # handle should be the second tag
                     entity.noclass.insert(1, DXFTag(code, handle))
 

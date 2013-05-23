@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import TAG_STRING_FORMAT, Tags
+from .tags import Tags
 
 
 class DefaultChunk(object):

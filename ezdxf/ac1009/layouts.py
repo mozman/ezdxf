@@ -177,6 +177,10 @@ class DXF12BlockLayout(BaseLayout):
         return self._dxffactory.wrap_handle(self._block_handle)
 
     @property
+    def endblk(self):
+        return self._dxffactory.wrap_handle(self._endblk_handle)
+
+    @property
     def name(self):
         return self.block.dxf.name
 

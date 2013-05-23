@@ -14,7 +14,7 @@ XDATA_MARKER = 1001
 NoneTag = DXFTag(None, None)
 
 
-class ClassifiedTags:
+class ClassifiedTags(object):
     """ Manage Subclasses, AppData and Extended Data """
     __slots__ = ('subclasses', 'appdata', 'xdata')
 
@@ -136,7 +136,7 @@ class ClassifiedTags:
         for tag in self:
             stream.write(strtag(tag))
 
-    def get_type(self):
+    def dxftype(self):
         return self.noclass[0].value
 
     def get_handle(self):
