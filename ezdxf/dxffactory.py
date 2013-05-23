@@ -10,6 +10,7 @@ from .ac1015 import AC1015Factory
 from .ac1018 import AC1018Factory
 from .ac1021 import AC1021Factory
 from .ac1024 import AC1024Factory
+from .ac1027 import AC1027Factory
 
 default_factory = AC1009Factory
 
@@ -19,7 +20,7 @@ factories = {
     'AC1018': AC1018Factory,
     'AC1021': AC1021Factory,
     'AC1024': AC1024Factory,
-    'AC1027': AC1024Factory,
+    'AC1027': AC1027Factory,
 }
 
 

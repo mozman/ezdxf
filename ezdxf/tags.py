@@ -124,6 +124,7 @@ TYPE_TABLE = _build_type_table([
     (int, range(60, 100)),
     (ustr, range(100, 106)),
     (float, range(110, 150)),
+    (int, range(160, 170)),
     (int, range(170, 180)),
     (float, range(210, 240)),
     (int, range(270, 290)),

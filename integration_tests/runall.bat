@@ -9,7 +9,7 @@ SET PYTHONPATH=%CD%
 CD integration_tests
 
 IF %ver% == pypy (
-    SET cmd=call pypy.bat
+    SET cmd=pypy
 ) ELSE (
     SET cmd=py -%ver%
 )

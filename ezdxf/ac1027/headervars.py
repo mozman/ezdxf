@@ -197,6 +197,7 @@ VARMAP = {
     '$QTEXTMODE': partial(SingleValue, code=70),
     '$REALWORLDSCALE': partial(SingleValue, code=290),
     '$REGENMODE': partial(SingleValue, code=70),
+    '$REQUIREDVERSIONS': partial(SingleValue, code=160),
     '$SHADEDGE': partial(SingleValue, code=70),
     '$SHADEDIF': partial(SingleValue, code=70),
     '$SHADOWPLANELOCATION': partial(SingleValue, code=40),
