@@ -12,7 +12,7 @@ from ezdxf import readfile
 from ezdxf.tags import tag_type
 from ezdxf.c23 import escape, ustr
 
-FILE_DEPENDENCIES = ("dxf2html.js", "dxf2html.css")
+FILE_DEPENDENCIES = ("dxf2html.css", "dxf2html.js")
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -35,19 +35,20 @@ HANDLE_DEFINITIONS = frozenset(_HANDLE_CODES)
 
 # Handle links
 _HANDLE_POINTERS = list(range(330, 370))
-_HANDLE_POINTERS.extend((480, 481))
+_HANDLE_POINTERS.extend((480, 481, 1005))
 HANDLE_LINKS = frozenset(_HANDLE_POINTERS)
 
 # Tag groups
-APP_DATA_MARKER = 102
+GENERAL_MARKER = 0
 SUBCLASS_MARKER = 100
-XDATA_MARKER = 1001
-TAG_GROUP_MARKER = (APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER)
+APP_DATA_MARKER = 102
+EXT_DATA_MARKER = 1001
+GROUP_MARKERS = (GENERAL_MARKER,SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER)
+MARKER_TEMPLATE = '<div class="tag-group-marker">{tag}</div>'
 
-TAG_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{code} {type}</span> <span class="tag-value">{value}</span></div>'
-TAG_TEMPLATE_HANDLE_DEF = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code} {type}</span> <span class="tag-value">{value}</span></div>'
+TAG_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
+TAG_TEMPLATE_HANDLE_DEF = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
 TAG_TEMPLATE_HANDLE_LINK = '<div class="dxf-tag"><span class="tag-code">{code} {type}</span> <a class="tag-value" href="#{value}">{value}</a></div>'
-HDRVAR_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{name} {type}</span> = <span class="tag-value">{value}</span></div>'
 ENTITY_TEMPLATE = '<div class="dxf-entity"><h3>{name}</h3>\n{tags}\n</div>'
 
 
@@ -85,7 +86,7 @@ def section_template(section):
 TAG_TYPES = {
     int: '<int>',
     float: '<float>',
-    ustr: '<string>',
+    ustr: '<str>',
 }
 
 def tag_type_str(code):
@@ -107,21 +108,24 @@ def hdrvars2html(hdrvars):
 
 
     varstrings = [
-        HDRVAR_TEMPLATE.format(name=name, value=escape(var2str(value)), type=escape(vartype(value)))
+        TAG_TEMPLATE.format(code=name, value=escape(var2str(value)), type=escape(vartype(value)))
         for name, value in hdrvars.items()
     ]
     return '<div id="dxf-header" class="dxf-header">\n{}\n</div>'.format("\n".join(varstrings))
 
 def tags2html(tags):
     def tag2html(tag):
-
         tpl = TAG_TEMPLATE
         if tag.code in HANDLE_DEFINITIONS: # is handle definition
             tpl = TAG_TEMPLATE_HANDLE_DEF
         elif tag.code in HANDLE_LINKS: # is handle link
             tpl = TAG_TEMPLATE_HANDLE_LINK
         return tpl.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(tag_type_str(tag.code)))
-    tag_strings = (tag2html(tag) for tag in tags)
+
+    def group_marker(tag, tag_html):
+        return tag_html if tag.code not in GROUP_MARKERS else MARKER_TEMPLATE.format(tag=tag_html)
+
+    tag_strings = (group_marker(tag, tag2html(tag)) for tag in tags)
     return '<div class="dxf-tags">\n{}\n</div>'.format('\n'.join(tag_strings))
 
 def entities2html(entities):
