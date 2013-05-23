@@ -1,0 +1,80 @@
+body {
+    font-family: Arial, sans-serif;
+
+}
+
+.dxf-file {
+    width: 1000px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* DXF sections
+*/
+
+.dxf-sections {
+}
+
+.dxf-section {
+    background-color: lightblue;
+    padding: 5px;
+}
+
+/* DXF header
+*/
+
+.dxf-header {
+    background-color: lightgray;
+    margin: 5px;
+    padding: 5px;
+}
+
+
+/* DXF entities
+*/
+.dxf-entitities {
+}
+
+.dxf-entity {
+    background-color: grey;
+    margin: 5px;
+    padding: 5px;
+}
+
+.dxf-tables {
+}
+
+.dxf-blocks {
+}
+
+.dxf-block {
+    background-color: darkcyan;
+    margin: 5px;
+}
+
+/* DXF tags and header vars
+*/
+.dxf-tags {
+    background-color: lightgrey;
+    padding: 5px;
+}
+
+.dxf-tag {
+    font-family: Consolas, monospace;
+    font-size: medium;
+}
+
+.tag-code {
+    color: darkblue;
+}
+
+.var-type {
+    color: darkblue;
+}
+
+.tag-value {
+}
+
+.tag-group-marker {
+    font-weight: bold;
+}

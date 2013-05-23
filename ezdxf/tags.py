@@ -144,18 +144,22 @@ TYPE_TABLE = _build_type_table([
     (int, range(1060, 1072)),
 ])
 
+
 def cast_tag(tag, types=TYPE_TABLE):
     caster = types.get(tag[0], ustr)
     return DXFTag(tag[0], caster(tag[1]))
 
+
 def cast_tag_value(code, value, types=TYPE_TABLE):
     return types.get(code, ustr)(value)
+
 
 def tag_type(code):
     try:
         return TYPE_TABLE[code]
     except KeyError:
         raise ValueError("Invalid tag code: {}".format(code))
+
 
 class Tags(list):
     """ DXFTag() chunk as flat list. """
@@ -216,7 +220,6 @@ class Tags(list):
     @staticmethod
     def from_text(text):
         return Tags(StringIterator(text))
-
 
 
 class TagGroups(list):
