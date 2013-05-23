@@ -65,6 +65,7 @@ VARMAP = {
     '$DIMTVP': partial(SingleValue, code=40),
     '$DIMTXT': partial(SingleValue, code=40),
     '$DIMZIN': partial(SingleValue, code=70),
+    '$DWGCODEPAGE': partial(SingleValue, code=3),
     '$DRAGMODE': partial(SingleValue, code=70),
     '$ELEVATION': partial(SingleValue, code=40),
     '$EXTMAX': Point3D,
