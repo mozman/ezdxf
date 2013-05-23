@@ -8,9 +8,6 @@ __author__ = "mozman <mozman@gmx.at>"
 import os
 import io
 
-from .tags import dxf_info
-
-
 class TemplateFinder:
     def __init__(self, template_dir=None):
         self._template_dir = self._get_template_dir(template_dir)

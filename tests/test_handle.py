@@ -17,6 +17,10 @@ class TestHandleGenerator(unittest.TestCase):
         handles = HandleGenerator('100')
         self.assertEqual('100', handles.next())
 
+    def test_next_function(self):
+        handles = HandleGenerator('100')
+        self.assertEqual('100', next(handles))
+
     def test_seed(self):
         handles = HandleGenerator('200')
         handles.next()

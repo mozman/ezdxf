@@ -177,6 +177,9 @@ class Tags(list):
         int(handle, 16)  # check for valid handle
         return handle
 
+    def dxftype(self):
+        return self.__getitem__(0).value
+
     def find_all(self, code):
         """ Returns a list of DXFTag(code, ...). """
         return [tag for tag in self if tag.code == code]
@@ -214,8 +217,6 @@ class Tags(list):
     def from_text(text):
         return Tags(StringIterator(text))
 
-    def get_type(self):
-        return self.__getitem__(0).value
 
 
 class TagGroups(list):

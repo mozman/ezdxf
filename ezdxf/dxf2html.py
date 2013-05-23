@@ -28,9 +28,28 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 </body>
 """
+# Handle definitions
+_HANDLE_CODES = [5, 105]
+_HANDLE_CODES.extend(range(320, 330))
+HANDLE_DEFINITIONS = frozenset(_HANDLE_CODES)
+
+# Handle links
+_HANDLE_POINTERS = list(range(330, 370))
+_HANDLE_POINTERS.extend((480, 481))
+HANDLE_LINKS = frozenset(_HANDLE_POINTERS)
+
+# Tag groups
+APP_DATA_MARKER = 102
+SUBCLASS_MARKER = 100
+XDATA_MARKER = 1001
+TAG_GROUP_MARKER = (APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER)
+
 TAG_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{code} {type}</span> <span class="tag-value">{value}</span></div>'
+TAG_TEMPLATE_HANDLE_DEF = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code} {type}</span> <span class="tag-value">{value}</span></div>'
+TAG_TEMPLATE_HANDLE_LINK = '<div class="dxf-tag"><span class="tag-code">{code} {type}</span> <a class="tag-value" href="#{value}">{value}</a></div>'
 HDRVAR_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{name} {type}</span> = <span class="tag-value">{value}</span></div>'
 ENTITY_TEMPLATE = '<div class="dxf-entity"><h3>{name}</h3>\n{tags}\n</div>'
+
 
 def drawing2html(dwg):
     """ Creates a structured HTML view of the DXF tags - not a CAD drawing!
@@ -50,17 +69,17 @@ def sections2html(drawing):
 
 def section2html(section):
     if section.name == 'header':
-        return section_info(section).format(hdrvars2html(section.hdrvars))
+        return section_template(section).format(hdrvars2html(section.hdrvars))
     elif section.name in ('classes', 'objects', 'entities'):
-        return section_info(section).format(entities2html(iter(section)))
+        return section_template(section).format(entities2html(iter(section)))
     elif section.name == 'tables':
-        return section_info(section).format(tables2html(iter(section)))
+        return section_template(section).format(tables2html(iter(section)))
     elif section.name == 'blocks':
-        return section_info(section).format(blocks2html(iter(section)))
+        return section_template(section).format(blocks2html(iter(section)))
     else:
-        return section_info(section).format(tags2html(section.tags))
+        return section_template(section).format(tags2html(section.tags))
 
-def section_info(section):
+def section_template(section):
     return '<div class="dxf-section"><h2>SECTION: {}</h2>\n{{}}\n</div>\n'.format(section.name)
 
 TAG_TYPES = {
@@ -95,7 +114,13 @@ def hdrvars2html(hdrvars):
 
 def tags2html(tags):
     def tag2html(tag):
-        return TAG_TEMPLATE.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(tag_type_str(tag.code)))
+
+        tpl = TAG_TEMPLATE
+        if tag.code in HANDLE_DEFINITIONS: # is handle definition
+            tpl = TAG_TEMPLATE_HANDLE_DEF
+        elif tag.code in HANDLE_LINKS: # is handle link
+            tpl = TAG_TEMPLATE_HANDLE_LINK
+        return tpl.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(tag_type_str(tag.code)))
     tag_strings = (tag2html(tag) for tag in tags)
     return '<div class="dxf-tags">\n{}\n</div>'.format('\n'.join(tag_strings))
 
@@ -110,7 +135,15 @@ def tables2html(tables):
     return '<div id="dxf-tables" class="dxf-tables">CONTENT: tables</div>'
 
 def blocks2html(blocks):
-    return '<div id="dxf-blocks" class="dxf-blocks">CONTENT: blocks</div>'
+    block_strings = (block2html(block) for block in blocks)
+    return '<div id="dxf-blocks" class="dxf-blocks">\n{}\n</div>'.format('\n'.join(block_strings))
+
+def block2html(block_layout):
+    block_html = entity2html(block_layout.block)
+    entities_html = entities2html(iter(block_layout))
+    endblk_html = entity2html(block_layout.endblk)
+    return '<div class="dxf-block">\n<h2>{name}</h2>\n{block}\n{entities}\n{endblk}\n</div>'.format(
+        name=block_layout.name, block=block_html, entities=entities_html ,endblk=endblk_html)
 
 def copy_dependencies_to(dst_path):
     src_path = os.path.dirname(__file__)
@@ -125,5 +158,3 @@ if __name__ == "__main__":
     html_filename = os.path.splitext(dwg.filename)[0] + '.html'
     with open(html_filename, mode='wt') as fp:
         fp.write(drawing2html(dwg))
-
-
