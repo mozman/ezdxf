@@ -65,23 +65,28 @@ def drawing2html(dwg):
     return HTML_TEMPLATE.format(name=get_name(), body=sections2html(dwg))
 
 def sections2html(drawing):
-    sections = [section2html(section) for section in drawing.sections]
+    sections = [section2html(section, index+1) for index, section in enumerate(drawing.sections)]
     return '<div class="dxf-sections">\n{}\n</div>'.format("\n".join(sections))
 
-def section2html(section):
+def section2html(section, index):
     if section.name == 'header':
-        return section_template(section).format(hdrvars2html(section.hdrvars))
+        return section_template(section, index).format(hdrvars2html(section.hdrvars))
     elif section.name in ('classes', 'objects', 'entities'):
-        return section_template(section).format(entities2html(iter(section)))
+        return section_template(section, index).format(entities2html(iter(section)))
     elif section.name == 'tables':
-        return section_template(section).format(tables2html(iter(section)))
+        return section_template(section, index).format(tables2html(iter(section)))
     elif section.name == 'blocks':
-        return section_template(section).format(blocks2html(iter(section)))
+        return section_template(section, index).format(blocks2html(iter(section)))
     else:
-        return section_template(section).format(tags2html(section.tags))
+        return section_template(section, index).format(tags2html(section.tags))
 
-def section_template(section):
-    return '<div class="dxf-section"><h2>SECTION: {}</h2>\n{{}}\n</div>\n'.format(section.name)
+SECTION_ID = "section_{}"
+def section_template(section, index):
+    def nav_ids():
+        return SECTION_ID.format(index-1), SECTION_ID.format(index), SECTION_ID.format(index+1)
+    prev_id, this_id, next_id = nav_ids()
+    return '<div id="{this_id}" class="dxf-section"><h2>SECTION: {name}</h2>\n<div><a href="#{prev_id}">previous</a> <a href="#{next_id}">next</a></div>\n{{}}\n</div>\n'.format(
+        name=section.name.upper(), this_id=this_id, prev_id=prev_id, next_id=next_id)
 
 TAG_TYPES = {
     int: '<int>',
@@ -130,13 +135,19 @@ def tags2html(tags):
 
 def entities2html(entities):
     entity_strings = (entity2html(entity) for entity in entities)
-    return '<div id="dxf-entities" class="dxf-entities">\n{}\n</div>'.format("\n".join(entity_strings))
+    return '<div class="dxf-entities">\n{}\n</div>'.format("\n".join(entity_strings))
 
 def entity2html(entity):
     return ENTITY_TEMPLATE.format(name=entity.dxftype(), tags=tags2html(entity.tags))
 
 def tables2html(tables):
-    return '<div id="dxf-tables" class="dxf-tables">CONTENT: tables</div>'
+    tables_html_strings = [table2html(table) for table in tables]
+    return '<div id="dxf-tables" class="dxf-tables">{}</div>'.format('\n'.join(tables_html_strings))
+
+def table2html(table):
+    header = ENTITY_TEMPLATE.format(name="TABLE HEADER", tags=tags2html(table._table_header))
+    entries = entities2html(table)
+    return '<div class="dxf-block">\n<h2>{name}</h2>\n{header}\n{entries}\n</div>'.format(name=table.name.upper(), header=header, entries=entries)
 
 def blocks2html(blocks):
     block_strings = (block2html(block) for block in blocks)
