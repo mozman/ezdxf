@@ -6,17 +6,21 @@ body {
 }
 
 #toc {
-
 }
 
 #dxf-file {
-
 }
 
 /* DXF sections
 */
 
 .dxf-sections {
+}
+
+.dxf-section-name{
+    font-size: xx-large;
+    font-weight: bold;
+    padding: 5px;
 }
 
 .dxf-section {
@@ -35,24 +39,36 @@ body {
 
 /* DXF entities
 */
-.dxf-entitities {
+.dxf-entities {
+}
+
+.dxf-entity-name{
+    font-size: large;
+    font-weight: bold;
+    padding: 5px;
 }
 
 .dxf-entity {
     background-color: grey;
-    margin: 5px;
-    padding: 5px;
+    margin: 5px 0 5px 5px;
 }
 
+.dxf-blocks,
 .dxf-tables {
 }
 
-.dxf-blocks {
+.dxf-block-name,
+.dxf-table-name {
+    font-size: x-large;
+    font-weight: bold;
+    padding: 5px;
 }
 
-.dxf-block {
+.dxf-block,
+.dxf-table{
     background-color: cadetblue;
-    margin: 5px;
+    margin: 5px 5px 0 5px;
+    padding: 5px 0 0 5px;
 }
 
 /* DXF tags and header vars
@@ -67,10 +83,7 @@ body {
     font-size: medium;
 }
 
-.tag-code {
-    color: darkblue;
-}
-
+.tag-code,
 .var-type {
     color: darkblue;
 }

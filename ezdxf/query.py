@@ -90,9 +90,10 @@ class EntityQuery(Sequence):
     def remove(self, query='*'):
         """Remove all entities from result container matching this additional query.
         """
-        self.entities = self.filter(query).entities
+        handles_of_entities_to_remove = frozenset(entity.dxf.handle for entity in self.query(query))
+        self.entities = [entity for entity in self.entities if entity.dxf.handle not in handles_of_entities_to_remove]
 
-    def filter(self, query='*'):
+    def query(self, query='*'):
         """Returns a new result container with all entities matching this additional query.
         """
         return EntityQuery(self.entities, query)

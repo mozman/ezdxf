@@ -53,7 +53,7 @@ MARKER_TEMPLATE = '<div class="tag-group-marker">{tag}</div>'
 TAG_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
 TAG_TEMPLATE_HANDLE_DEF = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
 TAG_TEMPLATE_HANDLE_LINK = '<div class="dxf-tag"><span class="tag-code">{code} {type}</span> <a class="tag-value" href="#{value}">{value}</a></div>'
-ENTITY_TEMPLATE = '<div class="dxf-entity"><h3>{name}</h3>\n{tags}\n</div>'
+ENTITY_TEMPLATE = '<div class="dxf-entity"><div class="dxf-entity-name">{name}</div>\n{tags}\n</div>'
 TOC_ENTRY_TPL = '<li><a href="#{link}" >{name}</a></li>'
 TOC_TPL = '<h2>Table of Contents</h2>\n<ul>\n{}\n</ul>'
 
@@ -103,7 +103,7 @@ def create_section_html_template(name, index):
     def nav_ids():
         return SECTION_ID.format(index-1), SECTION_ID.format(index), SECTION_ID.format(index+1)
     prev_id, this_id, next_id = nav_ids()
-    return '<div id="{this_id}" class="dxf-section"><h2>SECTION: {name}</h2>\n<div><a href="#{prev_id}">previous</a> ' \
+    return '<div id="{this_id}" class="dxf-section"><div class="dxf-section-name">SECTION: {name}</div>\n<div><a href="#{prev_id}">previous</a> ' \
            '<a href="#{next_id}">next</a></div>\n{{}}\n</div>\n'.format(
         name=name.upper(),
         this_id=this_id,
@@ -174,7 +174,7 @@ def create_table_navigation(table_section):
 def table2html(table, navigation=''):
     header = ENTITY_TEMPLATE.format(name="TABLE HEADER", tags=tags2html(table._table_header))
     entries = entities2html(table)
-    return '<div class="dxf-block">\n<h2>{name}</h2>\n{nav}\n{header}\n{entries}\n</div>'.format(
+    return '<div class="dxf-table">\n<div class="dxf-table-name">{name}</div>\n{nav}\n{header}\n{entries}\n</div>'.format(
         name=table.name.upper(),
         nav= navigation,
         header=header,
@@ -188,8 +188,8 @@ def block2html(block_layout):
     block_html = entity2html(block_layout.block)
     entities_html = entities2html(iter(block_layout))
     endblk_html = entity2html(block_layout.endblk)
-    return '<div class="dxf-block">\n<h2>{name}</h2>\n{block}\n{entities}\n{endblk}\n</div>'.format(
-        name=block_layout.name, block=block_html, entities=entities_html ,endblk=endblk_html)
+    return '<div class="dxf-block">\n<div class="dxf-block-name">{name}</div>\n{block}\n{entities}\n{endblk}\n</div>'.format(
+        name=block_layout.name, block=block_html, entities=entities_html, endblk=endblk_html)
 
 def copy_html_dependencies_to(dst_path):
     src_path = os.path.dirname(__file__)
