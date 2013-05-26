@@ -12,7 +12,7 @@ from ezdxf import readfile
 from ezdxf.tags import tag_type
 from ezdxf.c23 import escape, ustr
 
-FILE_DEPENDENCIES = ("dxf2html.css", "dxf2html.js")
+HTML_FILE_DEPENDENCIES = ("dxf2html.css", "dxf2html.js")
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -23,8 +23,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <title>{name}.dxf</title>
 </head>
 <body>
-<div id="dxf-file" class="dxf-file"><h1>DXF-FILE: {name}.dxf</h1>
-{body}
+<h1>DXF-FILE: {name}.dxf</h1>
+<div id="toc">
+{toc}
+<div>
+<div id="dxf-file">
+{dxf_file}
 </div>
 </body>
 """
@@ -50,9 +54,10 @@ TAG_TEMPLATE = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span 
 TAG_TEMPLATE_HANDLE_DEF = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
 TAG_TEMPLATE_HANDLE_LINK = '<div class="dxf-tag"><span class="tag-code">{code} {type}</span> <a class="tag-value" href="#{value}">{value}</a></div>'
 ENTITY_TEMPLATE = '<div class="dxf-entity"><h3>{name}</h3>\n{tags}\n</div>'
+TOC_ENTRY_TPL = '<li><a href="#{link}" >{name}</a></li>'
+TOC_TPL = '<h2>Table of Contents</h2>\n<ul>\n{}\n</ul>'
 
-
-def drawing2html(dwg):
+def dxf2html(dwg):
     """ Creates a structured HTML view of the DXF tags - not a CAD drawing!
     """
     def get_name():
@@ -61,32 +66,49 @@ def drawing2html(dwg):
         else:
             filename = os.path.basename(dwg.filename)
             return os.path.splitext(filename)[0]
+    dxf_file = sections2html(dwg)
+    toc = sections_toc_as_html(dwg)
+    return HTML_TEMPLATE.format(name=get_name(), dxf_file=dxf_file, toc=toc)
 
-    return HTML_TEMPLATE.format(name=get_name(), body=sections2html(dwg))
+def sections2html(dwg):
+    sections_html = []
+    for index, section in enumerate(dwg.sections):
+        section_template = create_section_html_template(section.name, index)
+        sections_html.append(section2html(section, section_template))
+    return '<div class="dxf-sections">\n{}\n</div>'.format("\n".join(sections_html))
 
-def sections2html(drawing):
-    sections = [section2html(section, index+1) for index, section in enumerate(drawing.sections)]
-    return '<div class="dxf-sections">\n{}\n</div>'.format("\n".join(sections))
+def sections_toc_as_html(dwg):
+    toc_entries = []
+    for index, section in enumerate(dwg.sections):
+        toc_entries.append(TOC_ENTRY_TPL.format(
+            name=section.name.upper(),
+            link=SECTION_ID.format(index)
+        ))
+    return TOC_TPL.format('\n'.join(toc_entries))
 
-def section2html(section, index):
+def section2html(section, section_template):
     if section.name == 'header':
-        return section_template(section, index).format(hdrvars2html(section.hdrvars))
+        return section_template.format(hdrvars2html(section.hdrvars))
     elif section.name in ('classes', 'objects', 'entities'):
-        return section_template(section, index).format(entities2html(iter(section)))
+        return section_template.format(entities2html(iter(section)))
     elif section.name == 'tables':
-        return section_template(section, index).format(tables2html(iter(section)))
+        return section_template.format(tables2html(section))  # no iterator
     elif section.name == 'blocks':
-        return section_template(section, index).format(blocks2html(iter(section)))
+        return section_template.format(blocks2html(iter(section)))
     else:
-        return section_template(section, index).format(tags2html(section.tags))
+        return section_template.format(tags2html(section.tags))
 
 SECTION_ID = "section_{}"
-def section_template(section, index):
+def create_section_html_template(name, index):
     def nav_ids():
         return SECTION_ID.format(index-1), SECTION_ID.format(index), SECTION_ID.format(index+1)
     prev_id, this_id, next_id = nav_ids()
-    return '<div id="{this_id}" class="dxf-section"><h2>SECTION: {name}</h2>\n<div><a href="#{prev_id}">previous</a> <a href="#{next_id}">next</a></div>\n{{}}\n</div>\n'.format(
-        name=section.name.upper(), this_id=this_id, prev_id=prev_id, next_id=next_id)
+    return '<div id="{this_id}" class="dxf-section"><h2>SECTION: {name}</h2>\n<div><a href="#{prev_id}">previous</a> ' \
+           '<a href="#{next_id}">next</a></div>\n{{}}\n</div>\n'.format(
+        name=name.upper(),
+        this_id=this_id,
+        prev_id=prev_id,
+        next_id=next_id)
 
 TAG_TYPES = {
     int: '<int>',
@@ -141,13 +163,22 @@ def entity2html(entity):
     return ENTITY_TEMPLATE.format(name=entity.dxftype(), tags=tags2html(entity.tags))
 
 def tables2html(tables):
-    tables_html_strings = [table2html(table) for table in tables]
+    navigation = create_table_navigation(tables)
+    tables_html_strings = [table2html(table, navigation) for table in tables]
     return '<div id="dxf-tables" class="dxf-tables">{}</div>'.format('\n'.join(tables_html_strings))
 
-def table2html(table):
+#TODO: table navigation bar
+def create_table_navigation(table_section):
+    return ''
+
+def table2html(table, navigation=''):
     header = ENTITY_TEMPLATE.format(name="TABLE HEADER", tags=tags2html(table._table_header))
     entries = entities2html(table)
-    return '<div class="dxf-block">\n<h2>{name}</h2>\n{header}\n{entries}\n</div>'.format(name=table.name.upper(), header=header, entries=entries)
+    return '<div class="dxf-block">\n<h2>{name}</h2>\n{nav}\n{header}\n{entries}\n</div>'.format(
+        name=table.name.upper(),
+        nav= navigation,
+        header=header,
+        entries=entries)
 
 def blocks2html(blocks):
     block_strings = (block2html(block) for block in blocks)
@@ -160,16 +191,16 @@ def block2html(block_layout):
     return '<div class="dxf-block">\n<h2>{name}</h2>\n{block}\n{entities}\n{endblk}\n</div>'.format(
         name=block_layout.name, block=block_html, entities=entities_html ,endblk=endblk_html)
 
-def copy_dependencies_to(dst_path):
+def copy_html_dependencies_to(dst_path):
     src_path = os.path.dirname(__file__)
-    for filename in FILE_DEPENDENCIES:
+    for filename in HTML_FILE_DEPENDENCIES:
         src = os.path.join(src_path, filename)
         dst = os.path.join(dst_path, filename)
         shutil.copy(src, dst)
 
 if __name__ == "__main__":
     dwg = readfile(sys.argv[1])
-    copy_dependencies_to(os.path.dirname(dwg.filename))
+    copy_html_dependencies_to(os.path.dirname(dwg.filename))
     html_filename = os.path.splitext(dwg.filename)[0] + '.html'
     with open(html_filename, mode='wt') as fp:
-        fp.write(drawing2html(dwg))
+        fp.write(dxf2html(dwg))

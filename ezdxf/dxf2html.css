@@ -1,12 +1,16 @@
 body {
     font-family: Arial, sans-serif;
-
-}
-
-.dxf-file {
     width: 1000px;
     margin-right: auto;
     margin-left: auto;
+}
+
+#toc {
+
+}
+
+#dxf-file {
+
 }
 
 /* DXF sections
@@ -16,7 +20,7 @@ body {
 }
 
 .dxf-section {
-    background-color: lightblue;
+    background-color: orange;
     padding: 5px;
 }
 
@@ -28,7 +32,6 @@ body {
     margin: 5px;
     padding: 5px;
 }
-
 
 /* DXF entities
 */
@@ -48,7 +51,7 @@ body {
 }
 
 .dxf-block {
-    background-color: darkcyan;
+    background-color: cadetblue;
     margin: 5px;
 }
 
