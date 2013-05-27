@@ -146,26 +146,26 @@ function initTooltips(){
     ];
     var startIndex, endIndex, text;
     for (var i=0; i<data.length; i++){
-        var row = data[i]
+        var row = data[i];
         startIndex = row[0];
         endIndex = row[1];
         text = row[2];
         for(var j=startIndex; j<=endIndex; j++){
-            TOOLTIPS[j] = text
+            TOOLTIPS[j] = text;
         }
     }
 }
 
 function getCode(node){
-    return parseInt(node.firstChild.textContent)
+    return parseInt(node.firstChild.textContent);
 }
 
 function setDXFTagTooltips() {
-    var tags = document.getElementsByClassName("dxf-tag")
-    var tag, code
+    var tags = document.getElementsByClassName("dxf-tag");
+    var tag, code;
     for (var i = 0; i < tags.length; i++) {
-        tag = tags[i]
-        code = getCode(tag)
-        tag.title = TOOLTIPS[code]
+        tag = tags[i];
+        code = getCode(tag);
+        tag.title = TOOLTIPS[code];
     }
 }
