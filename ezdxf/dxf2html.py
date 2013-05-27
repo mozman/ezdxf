@@ -145,12 +145,18 @@ def hdrvars2html(hdrvars):
 
 def tags2html(tags):
     def tag2html(tag):
+        def trim_str(vstr):
+            if len(vstr) > 90:
+                vstr = vstr[:75] + " ... " + vstr[-10:]
+            return vstr
+
         tpl = TAG_TEMPLATE
         if tag.code in HANDLE_DEFINITIONS: # is handle definition
             tpl = TAG_TEMPLATE_HANDLE_DEF
         elif tag.code in HANDLE_LINKS: # is handle link
             tpl = TAG_TEMPLATE_HANDLE_LINK
-        return tpl.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(tag_type_str(tag.code)))
+        vstr = trim_str(ustr(tag.value))
+        return tpl.format(code=tag.code, value=escape(vstr), type=escape(tag_type_str(tag.code)))
 
     def group_marker(tag, tag_html):
         return tag_html if tag.code not in GROUP_MARKERS else MARKER_TEMPLATE.format(tag=tag_html)
