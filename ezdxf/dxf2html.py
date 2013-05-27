@@ -12,6 +12,7 @@ import io
 from ezdxf import readfile
 from ezdxf.tags import tag_type
 from ezdxf.c23 import escape, ustr
+from ezdxf.reflinks import get_reference_link
 
 # Handle definitions
 _HANDLE_CODES = [5, 105]
@@ -34,13 +35,19 @@ MARKER_TEMPLATE = '<div class="tag-group-marker">{tag}</div>'
 HEADER_VAR_TEMPLATE = '<div class="hdr-var" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
 TAG_TEMPLATE = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
 TAG_TEMPLATE_HANDLE_DEF = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span> <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
-TAG_TEMPLATE_HANDLE_LINK = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span> <a class="tag-value" href="#{value}">{value}</a></div>'
+TAG_TEMPLATE_HANDLE_LINK = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span> <a class="tag-link" href="#{value}">{value}</a></div>'
 
 ENTITY_TEMPLATE = '<div class="dxf-entity"><div class="dxf-entity-name">{name}</div>\n{tags}\n</div>'
 
 TOC_TPL = '<div class="button-bar">{buttons}</div>\n'
 
 BUTTON_TPL = '<a href="#{target}">{name}</a>'
+
+def build_ref_link_button(section, name):
+    link = get_reference_link(name, section)
+
+    return '<a class="dxf-ref-link" href={target} target="_blank" ' \
+           'title="Link to DXF-Reference by Autodesk.">{name}</a>'.format(target=link, name=name)
 
 def dxf2html(dwg):
     """ Creates a structured HTML view of the DXF tags - not a CAD drawing!
@@ -79,8 +86,12 @@ def sections_toc_as_html(dwg):
 def section2html(section, section_template):
     if section.name == 'header':
         return section_template.format(hdrvars2html(section.hdrvars))
-    elif section.name in ('classes', 'objects', 'entities'):
+    elif section.name == 'entities':
+        return section_template.format(entities2html(iter(section), section='ENTITIES'))
+    elif section.name == 'classes':
         return section_template.format(entities2html(iter(section)))
+    elif section.name == 'objects':
+        return section_template.format(objects2html(section))
     elif section.name == 'tables':
         return section_template.format(tables2html(section))  # no iterator
     elif section.name == 'blocks':
@@ -95,9 +106,9 @@ def create_section_html_template(name, index):
     prev_id, this_id, next_id = nav_ids()
     prev_button = BUTTON_TPL.format(target=prev_id, name='previous')
     next_button = BUTTON_TPL.format(target=next_id, name='next')
-    return '<div id="{this_id}" class="dxf-section"><div class="dxf-section-name">SECTION: {name}</div>\n'\
+    return '<div id="{this_id}" class="dxf-section"><div class="dxf-section-name">SECTION: {ref_link}</div>\n'\
            '<div class="button-bar">{prev} {next}</div>\n{{}}\n</div>\n'.format(
-        name=name.upper(),
+        ref_link= build_ref_link_button('SECTIONS', name.upper()),
         this_id=this_id,
         prev=prev_button,
         next=next_button)
@@ -147,12 +158,20 @@ def tags2html(tags):
     tag_strings = (group_marker(tag, tag2html(tag)) for tag in tags)
     return '<div class="dxf-tags">\n{}\n</div>'.format('\n'.join(tag_strings))
 
-def entities2html(entities):
-    entity_strings = (entity2html(entity) for entity in entities)
+def entities2html(entities, section=None):
+    entity_strings = (entity2html(entity, section) for entity in entities)
     return '<div class="dxf-entities">\n{}\n</div>'.format("\n".join(entity_strings))
 
-def entity2html(entity):
-    return ENTITY_TEMPLATE.format(name=entity.dxftype(), tags=tags2html(entity.tags))
+def objects2html(section):
+    entity_strings = (entity2html(entity, section='OBJECTS') for entity in iter(section))
+    return '<div class="dxf-entities">\n{}\n</div>'.format("\n".join(entity_strings))
+
+def entity2html(entity, section=None):
+    if section:
+        name = build_ref_link_button(section, entity.dxftype())
+    else:
+        name = entity.dxftype()
+    return ENTITY_TEMPLATE.format(name=name, tags=tags2html(entity.tags))
 
 def tables2html(tables):
     navigation = create_table_navigation(tables)
@@ -170,8 +189,10 @@ def create_table_navigation(table_section):
 def table2html(table, navigation=''):
     header = ENTITY_TEMPLATE.format(name="TABLE HEADER", tags=tags2html(table._table_header))
     entries = entities2html(table)
-    return '<div id="{name}-table" class="dxf-table">\n<div class="dxf-table-name">{name}</div>\n{nav}\n{header}\n{entries}\n</div>'.format(
-        name=table.name.upper(),
+    table_name = table.name.upper()
+    return '<div id="{name}-table" class="dxf-table">\n<div class="dxf-table-name">{ref_link}</div>\n{nav}\n{header}\n{entries}\n</div>'.format(
+        name=table_name,
+        ref_link=build_ref_link_button('TABLES', table_name),
         nav= navigation,
         header=header,
         entries=entries)
@@ -181,9 +202,9 @@ def blocks2html(blocks):
     return '<div id="dxf-blocks" class="dxf-blocks">\n{}\n</div>'.format('\n'.join(block_strings))
 
 def block2html(block_layout):
-    block_html = entity2html(block_layout.block)
-    entities_html = entities2html(iter(block_layout))
-    endblk_html = entity2html(block_layout.endblk)
+    block_html = entity2html(block_layout.block, section='BLOCKS')
+    entities_html = entities2html(iter(block_layout), section='ENTITIES')
+    endblk_html = entity2html(block_layout.endblk, section='BLOCKS')
     return '<div class="dxf-block">\n<div class="dxf-block-name">{name}</div>\n{block}\n{entities}\n{endblk}\n</div>'.format(
         name=block_layout.name, block=block_html, entities=entities_html, endblk=endblk_html)
 

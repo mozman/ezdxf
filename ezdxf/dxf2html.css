@@ -1,6 +1,6 @@
 /* content of dxf2html.css */
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
     width: 1000px;
     margin-right: auto;
     margin-left: auto;
@@ -30,6 +30,24 @@ body {
     color: orange;
 }
 
+/* DXF reference link
+*/
+a.dxf-ref-link {
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a.dxf-ref-link:link,
+a.dxf-ref-link:visited,
+a.dxf-ref-link:active,
+a.dxf-ref-link:focus
+{
+    color: black;
+}
+
+a.dxf-ref-link:hover {
+    color: red;
+}
 
 #toc {
     margin: 5px;
@@ -115,7 +133,7 @@ body {
 
 .dxf-tag,
 .hdr-var {
-    font-family: Consolas, monospace;
+    font-family: "Lucida Console", Monaco, monospace;
     font-size: medium;
 }
 
@@ -125,6 +143,21 @@ body {
 }
 
 .tag-value {
+}
+
+.tag-link {
+    font-weight: bold;
+    text-decoration: none;
+}
+.tag-link:link,
+.tag-link:visited,
+.tag-link:active,
+.tag-link:focus
+{
+    color: darkred;
+}
+.tag-link:hover {
+    color: orange;
 }
 
 .tag-group-marker {

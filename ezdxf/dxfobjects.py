@@ -26,7 +26,12 @@ class DXFDictionary(GenericWrapper):
         self._setup()
 
     def _setup(self):
+        def has_data(acdict):
+            return any(tag.code == 3 for tag in acdict)
+
         acdict = self.tags.get_subclass('AcDbDictionary')
+        if not has_data(acdict):
+            return
         for group in TagGroups(acdict, splitcode=3):
             name = group[0].value
             handle = group[1].value
