@@ -1,3 +1,4 @@
+/* content of dxf2html.css */
 body {
     font-family: Arial, sans-serif;
     width: 1000px;
@@ -5,7 +6,41 @@ body {
     margin-left: auto;
 }
 
+.button-bar {
+    padding: 5px;
+}
+
+.button-bar a{
+    background-color: darkblue;
+    color: white;
+    font-weight: bold;
+    padding: 5px;
+    text-decoration: none;
+}
+
+.button-bar a:link,
+.button-bar a:visited,
+.button-bar a:active,
+.button-bar a:focus
+{
+    color: white;
+}
+
+.button-bar a:hover {
+    color: orange;
+}
+
+
 #toc {
+    margin: 5px;
+}
+
+#dxf-filename {
+    color: darkblue;
+    background-color: white;
+    font-size: xx-large;
+    font-weight: bold;
+    padding: 5px;
 }
 
 #dxf-file {
@@ -78,7 +113,8 @@ body {
     padding: 5px;
 }
 
-.dxf-tag {
+.dxf-tag,
+.hdr-var {
     font-family: Consolas, monospace;
     font-size: medium;
 }
