@@ -7,31 +7,34 @@ body {
 }
 
 .button-bar {
+    font-weight: bold;
     padding: 5px;
+    color: darkblue;
 }
 
-.button-bar a{
+a.link-button {
     background-color: darkblue;
     color: white;
     font-weight: bold;
-    padding: 5px;
+    padding: 0 10px 0 10px;
     text-decoration: none;
 }
 
-.button-bar a:link,
-.button-bar a:visited,
-.button-bar a:active,
-.button-bar a:focus
+a.link-button:link,
+a.link-button:visited,
+a.link-button:active,
+a.link-button:focus
 {
     color: white;
 }
 
-.button-bar a:hover {
+a.link-button:hover {
     color: orange;
 }
 
-/* DXF reference link
+/* section, table and entity names as link to the DXF reference
 */
+
 a.dxf-ref-link {
     font-weight: bold;
     text-decoration: none;
@@ -49,7 +52,7 @@ a.dxf-ref-link:hover {
     color: red;
 }
 
-#toc {
+#section-links {
     margin: 5px;
 }
 
@@ -145,6 +148,8 @@ a.dxf-ref-link:hover {
 .tag-value {
 }
 
+/* DXF handles and pointers as links
+*/
 .tag-link {
     font-weight: bold;
     text-decoration: none;
