@@ -57,12 +57,27 @@ http://pythonhosted.org/ezdxf
 
 http://ezdxf.readthedocs.org/
 
+The source code of ezdxf can be found on bitbucket.org at:
+
+http://bitbucket.org/mozman/ezdxf
+
+Feedback
+========
+
+Issue Tracker at:
+
+https://bitbucket.org/mozman/ezdxf/issues
+
+Feeback, Q&A, Discussions at Google Groups:
+
+https://groups.google.com/d/forum/python-ezdxf
+
+Mailing List:
+
+python-ezdxf@googlegroups.com
+
 Feedback is greatly appreciated.
 
 Manfred
 
 mozman@gmx.at
-
-ezdxf can be found on bitbucket.org at:
-
-http://bitbucket.org/mozman/ezdxf

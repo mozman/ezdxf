@@ -34,6 +34,7 @@ EXT_DATA_MARKER = 1001
 GROUP_MARKERS = (GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER)
 
 # HTML templates
+# Section
 ALL_SECTIONS_TPL = '<div class="dxf-sections">\n{content}\n</div>'
 COMMON_SECTION_TPL = '<div id="{this_id}" class="dxf-section">' \
                      '<div class="dxf-section-name">SECTION: {ref_link}</div>\n' \
@@ -42,16 +43,20 @@ COMMON_SECTION_TPL = '<div id="{this_id}" class="dxf-section">' \
 HEADER_SECTION_TPL = '<div id="dxf-header" class="dxf-header">\n{content}\n</div>'
 TABLES_SECTION_TPL = '<div id="dxf-tables" class="dxf-tables">{content}</div>'
 BLOCKS_SECTION_TPL = '<div id="dxf-blocks" class="dxf-blocks">\n{content}\n</div>'
+
+# Section content
 HEADER_VAR_TPL = '<div class="hdr-var" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
                  ' <span class="tag-value">{value}</span></div>'
 TABLE_TPL = '<div id="{name}-table" class="dxf-table">\n' \
             '<div class="dxf-table-name">{ref_link}</div>\n{nav}\n{header}\n{entries}\n</div>'
 ENTITIES_TPL = '<div class="dxf-entities">\n{}\n</div>'
+
+# DXF Entities
 ENTITY_TPL = '<div class="dxf-entity"><div class="dxf-entity-name">{name}</div>\n{tags}\n</div>'
 BLOCK_TPL = '<div class="dxf-block">\n<div class="dxf-block-name">{name}</div>\n{block}\n{entities}\n{endblk}\n</div>'
 TAG_LIST_TPL = '<div class="dxf-tags">\n{content}\n</div>'
 
-# Basic tags
+# Basic Tags
 TAG_TPL = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
           ' <span class="tag-value">{value}</span></div>'
 TAG_HANDLE_DEF_TPL = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span>'\

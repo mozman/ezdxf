@@ -6,10 +6,11 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import TagGroups
+from .tags import DXFTag
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .entity import GenericWrapper
 
+ENTRY_NAME_CODE = 3
 
 class DXFDictionary(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
@@ -17,38 +18,68 @@ class DXFDictionary(GenericWrapper):
             'handle': DXFAttr(5, None),
             'parent': DXFAttr(330, None),
         }),
-        DefSubclass('AcDbDictionary', {}),
+        DefSubclass('AcDbDictionary', {
+            'hard_owned': DXFAttr(280, None),
+            'cloning': DXFAttr(281, None),
+        }),
     )
 
     def __init__(self, tags):
         super(DXFDictionary, self).__init__(tags)
-        self._values = {}
-        self._setup()
-
-    def _setup(self):
-        def has_data(acdict):
-            return any(tag.code == 3 for tag in acdict)
-
-        acdict = self.tags.get_subclass('AcDbDictionary')
-        if not has_data(acdict):
-            return
-        for group in TagGroups(acdict, splitcode=3):
-            name = group[0].value
-            handle = group[1].value
-            self._values[name] = handle
 
     def keys(self):
-        return self._values.keys()
+        return (item[0] for item in self.items())
 
     def items(self):
-        return self._values.items()
+        content_tags = self._get_content_tags()
+        for index, tag in enumerate(content_tags):
+            if tag.code == ENTRY_NAME_CODE:
+                yield tag.value, content_tags[index + 1].value
 
     def __getitem__(self, key):
-        return self._values[key]
+        return self.get(key)
 
-    def get(self, key, default=None):
-        return self._values.get(key, default)
+    def __setitem__(self, key, value):
+        return self.add(key, value)
 
+    def __contains__(self, key):
+        return False if self._get_item_index(key) is None else True
+
+    def __len__(self):
+        return self.count()
+
+    def count(self):
+        return sum(1 for tag in self._get_content_tags() if tag.code == ENTRY_NAME_CODE)
+
+    def get(self, key, default=KeyError):
+        index = self._get_item_index(key)
+        if index is None:
+            if default is KeyError:
+                raise KeyError("Item key=='{}' not found.".format(key))
+            else:
+                return default
+        else:
+            content_tags = self._get_content_tags()
+            return content_tags[index + 1].value
+
+    def add(self, key, value, code=350):
+        index = self._get_item_index(key)
+        value_tag = DXFTag(code, value)
+        content_tags = self._get_content_tags()
+        if index is None:  # create new entry
+            content_tags.append(DXFTag(ENTRY_NAME_CODE, key))
+            content_tags.append(value_tag)
+        else:  # always replace existing values, until I understand the 281-tag (name mangling)
+            content_tags[index + 1] = value_tag
+
+    def _get_item_index(self, key):
+        for index, tag in enumerate(self._get_content_tags()):
+            if tag.code == ENTRY_NAME_CODE and tag.value == key:
+                return index
+        return None
+
+    def _get_content_tags(self):
+        return self.tags.get_subclass('AcDbDictionary')
 
 class DXFLayout(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
