@@ -28,34 +28,57 @@ class DXFDictionary(GenericWrapper):
         super(DXFDictionary, self).__init__(tags)
 
     def keys(self):
+        """Generator for the dictionary's keys.
+        """
         return (item[0] for item in self.items())
 
     def items(self):
+        """Generator for the dictionary's items (``(key, value)`` pairs).
+        """
         content_tags = self._get_content_tags()
         for index, tag in enumerate(content_tags):
             if tag.code == ENTRY_NAME_CODE:
                 yield tag.value, content_tags[index + 1].value
 
     def __getitem__(self, key):
+        """Return the value for *key* if *key* is in the dictionary, else raises a :class:`KeyError()`.
+        """
         return self.get(key)
 
     def __setitem__(self, key, value):
+        """Add item *(key, value)* to dictionary.
+        """
         return self.add(key, value)
 
+    def __delitem__(self, key):
+        """Remove element *key* from the dictionary. *KeyError* if *key* is not contained in the
+        dictionary.
+        """
+        return self.remove(key)
+
     def __contains__(self, key):
+        """Return *True* if the dictionary has a key *key*, else *False*.
+        """
         return False if self._get_item_index(key) is None else True
 
     def __len__(self):
+        """Return the number of items in the dictionary.
+        """
         return self.count()
 
     def count(self):
+        """Return the number of items in the dictionary.
+        """
         return sum(1 for tag in self._get_content_tags() if tag.code == ENTRY_NAME_CODE)
 
     def get(self, key, default=KeyError):
+        """Return the value for *key* if *key* is in the dictionary, else *default*. If *default* is not given, it
+        defaults to :class:`KeyError()`, so that this method raises a *KeyError*.
+        """
         index = self._get_item_index(key)
         if index is None:
             if default is KeyError:
-                raise KeyError("Item key=='{}' not found.".format(key))
+                raise KeyError("KeyError: '{}'".format(key))
             else:
                 return default
         else:
@@ -63,6 +86,9 @@ class DXFDictionary(GenericWrapper):
             return content_tags[index + 1].value
 
     def add(self, key, value, code=350):
+        """Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
+        data and defaults to ``350`` (soft-owner handle).
+        """
         index = self._get_item_index(key)
         value_tag = DXFTag(code, value)
         content_tags = self._get_content_tags()
@@ -71,6 +97,26 @@ class DXFDictionary(GenericWrapper):
             content_tags.append(value_tag)
         else:  # always replace existing values, until I understand the 281-tag (name mangling)
             content_tags[index + 1] = value_tag
+
+    def remove(self, key):
+        """Remove element *key* from the dictionary. Raises *KeyError* if *key* is not contained in the
+        dictionary.
+        """
+        index = self._get_item_index(key)
+        if index is None:
+            raise KeyError("KeyError: '{}'".format(key))
+        else:
+            self._discard(index)
+
+    def discard(self, key):
+        """Remove *key* from the dictionary if it is present.
+        """
+        self._discard(self._get_item_index(key))
+
+    def _discard(self, index):
+        if index:
+            tags = self._get_content_tags()
+            del tags[index:index + 1]
 
     def _get_item_index(self, key):
         for index, tag in enumerate(self._get_content_tags()):
