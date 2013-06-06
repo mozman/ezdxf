@@ -46,6 +46,33 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
     def test_not_contains(self):
         self.assertFalse('MOZMAN' in self.dxfdict)
 
+    def test_delete_existing_key(self):
+        del self.dxfdict['ACAD_PLOTSTYLENAME']
+        self.assertFalse('ACAD_PLOTSTYLENAME' in self.dxfdict)
+        self.assertEqual(13, len(self.dxfdict))
+
+    def test_delete_not_existing_key(self):
+        with self.assertRaises(KeyError):
+            del self.dxfdict['MOZMAN']
+
+    def test_remove_existing_key(self):
+        self.dxfdict.remove('ACAD_PLOTSTYLENAME')
+        self.assertFalse('ACAD_PLOTSTYLENAME' in self.dxfdict)
+        self.assertEqual(13, len(self.dxfdict))
+
+    def test_remove_not_existing_key(self):
+        with self.assertRaises(KeyError):
+            self.dxfdict.remove('MOZMAN')
+
+    def test_discard_existing_key(self):
+        self.dxfdict.discard('ACAD_PLOTSTYLENAME')
+        self.assertFalse('ACAD_PLOTSTYLENAME' in self.dxfdict)
+        self.assertEqual(13, len(self.dxfdict))
+
+    def test_discard_not_existing_key(self):
+        self.dxfdict.discard('MOZMAN')
+        self.assertEqual(14, len(self.dxfdict))
+
 class TestEmptyDXFDict(unittest.TestCase):
     def setUp(self):
         self.dxfdict = DXFDictionary(ClassifiedTags.from_text(EMPTY_DICT))
