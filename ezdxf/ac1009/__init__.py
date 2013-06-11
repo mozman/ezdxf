@@ -63,15 +63,13 @@ the section markers and table headers present:
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..tags import Tags
-
 from .headervars import VARMAP
 from . import tableentries
 from . import graphics
 
-from ..dxfobjects import DXFDictionary, DXFLayout
+from .. import dxfobjects
 from .layouts import DXF12Layouts, DXF12BlockLayout
-from ..entity import GenericWrapper
+
 
 ENTITY_WRAPPERS = {
     # tables entries
@@ -84,8 +82,10 @@ ENTITY_WRAPPERS = {
     'VIEW': tableentries.View,
     'VPORT': tableentries.Viewport,
     # dxf objects
-    'DICTIONARY': DXFDictionary,
-    'LAYOUT': DXFLayout,
+    'DICTIONARY': dxfobjects.DXFDictionary,
+    'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
+    'LAYOUT': dxfobjects.DXFLayout,
+    'XRECORD': dxfobjects.XRecord,
     # dxf entities
     'LINE': graphics.Line,
     'CIRCLE': graphics.Circle,

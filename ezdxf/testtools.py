@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .handle import HandleGenerator
 from .dxffactory import dxffactory
 from .tags import StringIterator
-from .tags import Tags, TagGroups, DXFStructureError
+from .tags import Tags, TagGroups, DXFStructureError, DXFTag
 from .classifiedtags import ClassifiedTags
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
