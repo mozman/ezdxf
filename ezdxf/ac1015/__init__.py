@@ -5,8 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..tags import Tags
-
 from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
 from . import tableentries

@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import DXFTag
+from .tags import DXFTag, Tags
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .entity import GenericWrapper
 
@@ -188,3 +188,55 @@ class DXFLayout(GenericWrapper):
             # orthographic (76 code is non-zero). If not present and
             # 76 code is non-zero, then base UCS is taken to be WORLD
         }))
+
+class XRecord(GenericWrapper):
+    DXFATTRIBS = DXFAttributes(
+        DefSubclass(None, {
+            'handle': DXFAttr(5, None),
+            'parent': DXFAttr(330, None),
+        }),
+        DefSubclass('AcDbXrecord', {
+            'cloning': DXFAttr(280, None),
+        }),
+    )
+
+    def __init__(self, tags):
+        super(XRecord, self).__init__(tags)
+
+    @property
+    def content_tags(self):
+        return self.tags.get_subclass('AcDbXrecord')
+
+    @staticmethod
+    def _adjust_index(index):
+        return index if  index < 0 else index + 2
+
+    def __len__(self):
+        # ignore first tags = (100, 'AcDbXrecord'), (280, ...)
+        return len(self.content_tags) - 2
+
+    def __getitem__(self, index):
+        """Returns DXF tag at position *index*.
+        """
+        # skip first tags = (100, 'AcDbXrecord'), (280, ...)
+        return self.content_tags[XRecord._adjust_index(index)]
+
+    def __setitem__(self, index, dxftag):
+        """Replace DXF tag at position *index* with *dxftag*.
+        """
+        # skip first tags = (100, 'AcDbXrecord'), (280, ...)
+        self.content_tags[XRecord._adjust_index(index)] = dxftag
+
+    def __iter__(self):
+        """Iterate over data, yielding DXF tags as named tuple *(code, value)*.
+        """
+        tags = iter(self.content_tags)
+        next(tags)  # skip (100, 'AcDbXrecord')
+        next(tags)  # skip (280, ...)
+        return tags
+
+    def append(self, dxftag):
+        """Append *dxftag* at the end of the tag list.
+        """
+        self.content_tags.append(dxftag)
+
