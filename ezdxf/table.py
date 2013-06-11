@@ -39,7 +39,7 @@ class Table(object):
         self._dxfname = tags[1].value
         self._drawing = drawing
         self._table_entries = list()
-        self._table_header = None
+        self._table_header = None  # handle = _table_header.get_handle()
         self._build_table_entries(tags)
 
     # start public interface
