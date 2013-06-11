@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.testtools import ClassifiedTags
-from ezdxf.dxfobjects import DXFDictionary
+from ezdxf.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
 
 class TestNoneEmptyDXFDict(unittest.TestCase):
@@ -98,6 +98,23 @@ class TestEmptyDXFDict(unittest.TestCase):
         self.assertEqual(1, len(self.dxfdict))
         self.assertEqual("HANDLE2", self.dxfdict['TEST'])
 
+class TestDXFDictWithDefault(unittest.TestCase):
+    def setUp(self):
+        self.dxfdict = DXFDictionaryWithDefault(ClassifiedTags.from_text(DEFAULT_DICT))
+
+    def test_get_existing_value(self):
+        self.assertEqual('F', self.dxfdict['Normal'])
+
+    def test_get_not_existing_value(self):
+        self.assertEqual('F', self.dxfdict['Mozman'])
+
+    def test_get_default_value(self):
+        self.assertEqual('F', self.dxfdict.dxf.default)
+
+    def test_set_default_value(self):
+        self.dxfdict.dxf.default = "MOZMAN"
+        self.assertEqual('MOZMAN', self.dxfdict['Mozman'])
+
 
 ROOTDICT = """  0
 DICTIONARY
@@ -177,6 +194,32 @@ C
 AcDbDictionary
 281
      1
+"""
+
+DEFAULT_DICT = """  0
+ACDBDICTIONARYWDFLT
+  5
+E
+102
+{ACAD_REACTORS
+330
+C
+102
+}
+330
+C
+100
+AcDbDictionary
+281
+     1
+  3
+Normal
+350
+F
+100
+AcDbDictionaryWithDefault
+340
+F
 """
 
 if __name__ == '__main__':

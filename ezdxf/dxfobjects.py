@@ -127,6 +127,32 @@ class DXFDictionary(GenericWrapper):
     def _get_content_tags(self):
         return self.tags.get_subclass('AcDbDictionary')
 
+
+class DXFDictionaryWithDefault(DXFDictionary):
+    DXFATTRIBS = DXFAttributes(
+        DefSubclass(None, {
+            'handle': DXFAttr(5, None),
+            'parent': DXFAttr(330, None),
+        }),
+        DefSubclass('AcDbDictionary', {
+            'hard_owned': DXFAttr(280, None),
+            'cloning': DXFAttr(281, None),
+        }),
+        DefSubclass('AcDbDictionaryWithDefault', {
+            'default': DXFAttr(340, None),
+        }),
+    )
+
+    def __init__(self, tags):
+        super(DXFDictionaryWithDefault, self).__init__(tags)
+
+    def get(self, key, default=KeyError):
+        """Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
+        value. Parameter *default* is always ignored!
+        """
+        return super(DXFDictionaryWithDefault, self).get(key, default=self.dxf.default)
+
+
 class DXFLayout(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
