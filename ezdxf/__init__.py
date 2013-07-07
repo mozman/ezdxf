@@ -17,6 +17,7 @@ import io
 from .options import options  # example: ezdxf.options['templatedir'] = 'c:\templates'
 from .tags import dxf_info
 from .tags import TagIterator
+from .importer import Importer
 
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
