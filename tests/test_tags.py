@@ -175,7 +175,7 @@ class TestTags(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.tags.update(999, 'DOESNOTEXIST')
 
-    def test_setfirst(self):
+    def test_set_first(self):
         self.tags.set_first(999, 'NEWTAG')
         self.assertEqual('NEWTAG', self.tags[-1].value)
 
@@ -191,21 +191,46 @@ class TestTags(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.tags.get_handle()
 
-    def test_findall(self):
+    def test_find_all(self):
         tags = Tags.from_text(TESTFINDALL)
         self.assertEqual(3, len(tags.find_all(0)))
 
-    def test_tagindex(self):
+    def test_tag_index(self):
         tags = Tags.from_text(TESTFINDALL)
         index = tags.tag_index(0)
         self.assertEqual(0, index)
         index = tags.tag_index(0, index + 1)
         self.assertEqual(1, index)
 
-    def test_findfirst_value_error(self):
+    def test_find_first_value_error(self):
         tags = Tags.from_text(TESTFINDALL)
         with self.assertRaises(ValueError):
             tags.tag_index(1)
+
+    def test_clone_is_equal(self):
+        clone = self.tags.clone()
+        self.assertTrue(self.tags is not clone)
+        self.assertEqual(self.tags, clone)
+
+    def test_clone_is_independent(self):
+        clone = self.tags.clone()
+        clone.pop()
+        self.assertNotEqual(self.tags, clone)
+
+    def test_replace_handle_5(self):
+        tags = Tags.from_text(TESTHANDLE5)
+        tags.replace_handle('AA')
+        self.assertEqual('AA', tags.get_handle())
+
+    def test_replace_handle_105(self):
+        tags = Tags.from_text(TESTHANDLE105)
+        tags.replace_handle('AA')
+        self.assertEqual('AA', tags.get_handle())
+
+    def test_replace_no_handle_without_error(self):
+        self.tags.replace_handle('AA')
+        with self.assertRaises(ValueError):
+            self.tags.get_handle() # handle still doesn't exist
 
 
 DUPLICATETAGS = """  0

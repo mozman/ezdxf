@@ -25,9 +25,25 @@ class ClassifiedTags(object):
         if iterable is not None:
             self._setup(iterable)
 
+    def __copy__(self):
+        def copy(tag_lists):
+            return [tags.clone() for tags in tag_lists]
+
+        clone = self.__class__()
+        clone.appdata = copy(self.appdata)
+        clone.subclasses = copy(self.subclasses)
+        clone.xdata = copy(self.xdata)
+        return clone
+
+    def clone(self):
+        return self.__copy__()
+
     @property
     def noclass(self):
         return self.subclasses[0]
+
+    def replace_handle(self, handle):
+        self.noclass.replace_handle(handle)
 
     def _setup(self, iterable):
         tagstream = iter(iterable)
