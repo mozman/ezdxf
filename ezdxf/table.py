@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .defaultchunk import DefaultChunk
-from .tags import Tags, DXFTag, TagGroups
+from .tags import TagGroups
 from .classifiedtags import ClassifiedTags
 
 TABLENAMES = {

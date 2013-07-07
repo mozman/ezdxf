@@ -9,8 +9,7 @@ from datetime import datetime
 import io
 
 from . import database
-from .handle import HandleGenerator
-from .tags import TagIterator, dxf_info, DXFTag
+from .tags import TagIterator, DXFTag
 from .dxffactory import dxffactory
 from .templates import TemplateFinder
 from .options import options

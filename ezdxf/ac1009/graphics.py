@@ -352,6 +352,7 @@ class Insert(GraphicEntity):
     DXFATTRIBS = make_attribs({
         'attribsfollow': DXFAttr(66, None),
         'name': DXFAttr(2, None),
+        'name2': DXFAttr(3, None),
         'insert': DXFAttr(10, 'Point2D/3D'),
         'xscale': DXFAttr(41, None),
         'yscale': DXFAttr(42, None),

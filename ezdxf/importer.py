@@ -45,7 +45,7 @@ class Importer(object):
             self.target.entitydb[handle] = new_entry_tags  # add tag list to entity database
             new_entity = self.target.dxffactory.wrap_entity(new_entry_tags)
             target_modelspace.add_entity(new_entity)  # add entity to modelspace
-            if new_entity.dxftype == "INSERT":
+            if new_entity.dxftype() == "INSERT":
                 self.resolve_block_ref(new_entity)
 
     def resolve_block_ref(self, block_ref):
@@ -57,9 +57,10 @@ class Importer(object):
     def import_blocks(self, query="*", conflict="discard"):
         """ Import block definitions.
 
-        :param str query: name of blocks to import, "*" for all
+        :param str query: names of blocks to import, "*" for all
         :param str conflict: discard|replace|rename
         """
+        # TODO: import associated block_references, if necessary
         def rename(block):
             counter = 1
             old_name = block.name
@@ -69,7 +70,6 @@ class Importer(object):
                     counter += 1
                 else:
                     block.name = new_name
-                    block.name2 = new_name
                     break
             existing_block_names.add(new_name)
             self._renamed_blocks[old_name] = new_name
@@ -86,11 +86,14 @@ class Importer(object):
             tail_handle = copy_entity(source_block_layout._endblk_handle)
             target_block_layout = self.target.dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in source_block_layout:
-                target_handle = copy_entity(entity.handle)
-                target_block_layout.add_entity(self.target.entitydb[target_handle])
+                target_handle = copy_entity(entity.handle())
+                new_entity = self.target.dxffactory.wrap_handle(target_handle)
+                target_block_layout.add_entity(new_entity)
+                if new_entity.dxftype() == 'INSERT':  # maybe a reference to a renamed block
+                    resolve_block_references.append(new_entity)
             return target_block_layout
 
-
+        resolve_block_references = []
         existing_block_names = set(block.name for block in self.target.blocks)
         import_block_names = frozenset(name_query((block.name for block in self.source.blocks), query))
         for block in self.source.blocks:  # blocks are a list, access by blocks[name] is slow
@@ -113,6 +116,10 @@ class Importer(object):
                 else:
                     raise ValueError("'{}' is an invalid value for parameter conflict.".format(conflict))
 
+        # update renamed block names
+        for block_ref in resolve_block_references:
+            self.resolve_block_ref(block_ref)
+
     def import_tables(self, query="*", conflict="discard"):
         """ Import table entries.
 
@@ -125,17 +132,21 @@ class Importer(object):
     def import_table(self, name, query="*", conflict="discard"):
         """ Import specific entries from a table.
 
+        :param str name: valid table names are 'layers', 'linetypes', 'appids', 'dimstyles',
+                         'styles', 'ucs', 'views', 'viewports' and 'block_records'
+                         as defined in ezdxf.table.TABLENAMES
+
         :param str conflict: discard|replace
         """
         if conflict not in ('replace', 'discard'):
             raise ValueError("Unknown value '{}' for parameter 'conflict'.".format(conflict))
         
         try:
-            source_table = self.source.tables[name]
+            source_table = self.source.sections.tables[name]
         except KeyError:
             raise ValueError("Source drawing has no table '{}'.".format(name))
         try:
-            target_table = self.target.tables[name]
+            target_table = self.target.sections.tables[name]
         except KeyError:
             raise ValueError("Table '{}' does not exists in the target drawing. "
                              "Table creation in the target drawing not implemented yet!".format[name])
