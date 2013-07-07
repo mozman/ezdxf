@@ -39,12 +39,14 @@ class Importer(object):
         target_modelspace = self.target.modelspace()
         new_handle = self.target._handles.next
         for entity in import_entities:  # entity is GraphicEntity() or inherited
-            if entity.dxftype == "INSERT":
-                self.resolve_block_ref(entity)
+            new_entry_tags = entity.tags.clone()  # create a new tag list
             handle = new_handle()
-            entity.dxf.handle = handle  # new handle is always required
-            self.target.entitydb[handle] = entity.tags  # add tag list to entity database
-            target_modelspace.add_entity(entity)  # add entity to modelspace
+            new_entry_tags.replace_handle(handle)
+            self.target.entitydb[handle] = new_entry_tags  # add tag list to entity database
+            new_entity = self.target.dxffactory.wrap_entity(new_entry_tags)
+            target_modelspace.add_entity(new_entity)  # add entity to modelspace
+            if new_entity.dxftype == "INSERT":
+                self.resolve_block_ref(new_entity)
 
     def resolve_block_ref(self, block_ref):
         old_block_name = block_ref.dxf.name
@@ -70,30 +72,28 @@ class Importer(object):
                     block.name2 = new_name
                     break
             existing_block_names.add(new_name)
-            self._renamed_blocks[old_name: new_name]
-
-        def wrap(handle):
-            return self.source.dxffactory.wrap_handle(handle)
+            self._renamed_blocks[old_name] = new_name
 
         def new_block_layout(source_block_layout):
-            def move_entity(entity):
-                entity.handle = new_handle()
-                self.target.entitydb[entity.handle] = entity.tags
-                return entity
+            def copy_entity(source_handle):
+                new_tags = self.source.entitydb[source_handle].clone()
+                target_handle = self.target._handles.next()
+                new_tags.replace_handle(target_handle)
+                self.target.entitydb[target_handle] = new_tags
+                return target_handle
 
-            head = move_entity(wrap(source_block_layout._block_handle))
-            tail = move_entity(wrap(source_block_layout._endblk_handle))
-            target_block_layout = self.target.dxffactory.new_block_layout(head.handle, tail.handle)
+            head_handle = copy_entity(source_block_layout._block_handle)
+            tail_handle = copy_entity(source_block_layout._endblk_handle)
+            target_block_layout = self.target.dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in source_block_layout:
-                move_entity(entity)
-                target_block_layout.add_entity(entity)
+                target_handle = copy_entity(entity.handle)
+                target_block_layout.add_entity(self.target.entitydb[target_handle])
             return target_block_layout
 
 
-        new_handle = self.target._handles.next
         existing_block_names = set(block.name for block in self.target.blocks)
         import_block_names = frozenset(name_query((block.name for block in self.source.blocks), query))
-        for block in self.source.blocks:
+        for block in self.source.blocks:  # blocks are a list, access by blocks[name] is slow
             block_name = block.name
             if block_name not in import_block_names:
                 continue
@@ -118,11 +118,36 @@ class Importer(object):
 
         :param str conflict: discard|replace
         """
-        raise NotImplementedError()
+        table_names = [table.name for table in self.source.sections.tables]
+        for table_name in name_query(table_names, query):
+            self.import_table(table_name, query="*", conflict=conflict)
 
     def import_table(self, name, query="*", conflict="discard"):
         """ Import specific entries from a table.
 
         :param str conflict: discard|replace
         """
-        raise NotImplementedError()
+        if conflict not in ('replace', 'discard'):
+            raise ValueError("Unknown value '{}' for parameter 'conflict'.".format(conflict))
+        
+        try:
+            source_table = self.source.tables[name]
+        except KeyError:
+            raise ValueError("Source drawing has no table '{}'.".format(name))
+        try:
+            target_table = self.target.tables[name]
+        except KeyError:
+            raise ValueError("Table '{}' does not exists in the target drawing. "
+                             "Table creation in the target drawing not implemented yet!".format[name])
+        new_handle = self.target._handles.next
+        source_entry_names = (entry.dxf.name for entry in source_table)
+        for entry_name in name_query(source_entry_names, query):
+            table_entry = source_table.get(entry_name)
+            if table_entry.dxf.name in target_table:
+                if conflict == 'discard':
+                    continue
+                else: # replace existing entry
+                    target_table.remove(table_entry.dxf.name)
+            new_entry_tags = table_entry.tags.clone()
+            new_entry_tags.replace_handle(new_handle())
+            target_table._add_entry(new_entry_tags)

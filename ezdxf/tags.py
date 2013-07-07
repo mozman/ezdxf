@@ -182,6 +182,18 @@ class Tags(list):
         int(handle, 16)  # check for valid handle
         return handle
 
+    def replace_handle(self, new_handle):
+        """Replace existing handle of a DXFTag() chunk.
+        """
+        index = 0
+        tag_count = len(self)
+        while index < tag_count:
+            tag = self[index]
+            if tag.code in (5, 105):
+                self[index] = DXFTag(tag.code, new_handle)
+                return
+            index += 1
+
     def dxftype(self):
         return self.__getitem__(0).value
 
@@ -222,6 +234,11 @@ class Tags(list):
     def from_text(text):
         return Tags(StringIterator(text))
 
+    def __copy__(self):
+        return self.__class__(self[:])
+
+    def clone(self):
+        return self.__copy__()
 
 class TagGroups(list):
     """

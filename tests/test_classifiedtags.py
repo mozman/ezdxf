@@ -80,6 +80,18 @@ class TestClassifiedTags(unittest.TestCase):
         subclass = self.xtags.get_subclass('AcDbLayerTableRecord')
         self.assertEqual(8, len(subclass))
 
+    def test_clone_is_equal(self):
+        clone = self.xtags.clone()
+        self.assertTrue(self.xtags is not clone)
+        self.assertTrue(self.xtags.appdata is not clone.appdata)
+        self.assertTrue(self.xtags.subclasses is not clone.subclasses)
+        self.assertTrue(self.xtags.xdata is not clone.xdata)
+        self.assertEqual(list(self.xtags), list(clone))
+
+    def test_replace_handle(self):
+        self.xtags.replace_handle('AA')
+        self.assertEqual('AA', self.xtags.get_handle())
+
 
 XTAGS1 = """  0
 LAYER
