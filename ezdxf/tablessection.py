@@ -43,6 +43,10 @@ class TablesSection(object):
         except KeyError:
             raise AttributeError(key)
 
+    def __getitem__(self, key):
+        return self._tables[key]
+
+
     def write(self, stream):
         stream.write('  0\nSECTION\n  2\nTABLES\n')
         for table in self._tables.values():
