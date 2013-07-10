@@ -3,6 +3,7 @@ build/*
 dist/*
 docs/_build/*
 .tox/*
+.idea/*
 bigtestfiles/*
 examples/*.dxf
 integration_tests/*.dxf
