@@ -25,8 +25,9 @@ class Importer(object):
         # It is always possible to copy from older to newer versions (except R12).
         if self.target.dxfversion > self.source.dxfversion:
             return True
-        # It is possible to copy from newer to older versions, if the entity is defined for both versions.
-        # But this can not be granted by default. You can operate with that by __init__(s, t, strict_mode=False).
+        # It is possible to copy an entity from a newer to an older versions, if the entity is defined for both versions
+        # (like LINE, CIRCLE, ...), but this can not be granted by default. Enable this feature by
+        # Importer(s, t, strict_mode=False).
         return False
 
     def import_all(self, table_conflict="discard", block_conflict="discard"):
