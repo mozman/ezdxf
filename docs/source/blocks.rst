@@ -56,6 +56,10 @@ linetype    linetype as string, special names ``'BYLAYER'``, ``'BYBLOCK'``,
 color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
 =========== =================================================================
 
+.. attribute:: Insert.dxf
+
+   DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
+
 .. method:: Insert.__iter__()
 
    Iterate over appended :class:`Attrib` objects.
@@ -74,7 +78,15 @@ Attribs
 
 .. class:: Attdef
 
+.. attribute:: Attdef.dxf
+
+   DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
+
 .. class:: Attrib
+
+.. attribute:: Attrib.dxf
+
+   DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
 
 
 
