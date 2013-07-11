@@ -8,8 +8,8 @@ Import data from another DXF Drawing
     - can import line-, text-, dimension-styles and layer-definitions
     - can import block-definitions
     - can import entities from model-space
-    - **can't** import Layouts
-    - **can't** import entities from Layouts
+    - **can't** import layouts
+    - **can't** import entities from layouts
 
 **Compatible Drawings**
 
@@ -59,6 +59,7 @@ Import line-, text-, dimension-styles and layer-definitions from other DXF drawi
     Import table entries from a specific table, the query string specifies the entries to import, ``*`` means all table
     entries.
 
+    :param str query: is a :ref:`name query string`
     :param str conflict: ``discard`` | ``replace``
 
     - ``discard``: already existing entries will be preserved
@@ -73,6 +74,7 @@ Import block-definitions from other DXF drawings.
 
     Import block definitions, the query string specifies the blocks to import, ``*`` means all blocks.
 
+    :param str query: is a :ref:`name query string`
     :param str conflict: ``discard`` | ``replace`` | ``rename``
 
     - ``discard``: already existing blocks will be preserved
@@ -90,6 +92,8 @@ Import entities from model-space of other DXF drawings.
     Import DXF entities from source model-space to the target model-space, select DXF types to import by the query string,
     ``*`` means all DXF types. If called *after* the :func:`~Importer.import_blocks` method, references to renamed blocks will
     be resolved.
+
+    :param str query: is an :ref:`entity query string`
 
 Additional Methods
 ------------------
