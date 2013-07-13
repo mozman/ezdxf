@@ -36,7 +36,11 @@ Continuous
 # Pointer/handle to PlotStyleName
 # uses tag(390, ...) from the '0' layer
 
-none_subclass = DefSubclass(None, {'handle': DXFAttr(5, None)})
+none_subclass = DefSubclass(None, {
+    'handle': DXFAttr(5, None),
+    'owner': DXFAttr(330, None),
+})
+
 symbol_subclass = DefSubclass('AcDbSymbolTableRecord', {})
 
 layer_subclass = DefSubclass('AcDbLayerTableRecord', {
@@ -256,7 +260,11 @@ STANDARD
 178
      0
 """
-handle105_subclass = DefSubclass(None, {'handle': DXFAttr(105, None)})
+handle105_subclass = DefSubclass(None, {
+    'handle': DXFAttr(105, None),
+    'owner': DXFAttr(330, None),
+})
+
 dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'name': DXFAttr(2,  None),
     'flags': DXFAttr(70, None),
@@ -543,7 +551,6 @@ BLOCK_RECORD_NAME
 0
 """
 blockrec_subclass = DefSubclass('AcDbBlockTableRecord', {
-    'owner': DXFAttr(330, None),
     'name': DXFAttr(2, None),
     'layout': DXFAttr(340, None),
 })

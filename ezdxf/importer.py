@@ -61,8 +61,21 @@ class Importer(object):
         :param str query: names of blocks to import, "*" for all
         :param str conflict: discard|replace|rename
         """
-        # TODO: import associated block_references, if necessary
+        def import_block_record(block_layout):
+            block = block_layout.block
+            end_block = block_layout.endblk
+            block_record_handle = block.dxf.owner
+            if block_record_handle != '0':
+                block_record_handle = self.import_tags(block_record_handle)
+                self.target.sections.tables.block_records._append_entry_handle(block_record_handle)
+                block_record = self.target.dxffactory.wrap_handle(block_record_handle)
+                block.dxf.owner = block_record_handle
+                end_block.dxf.owner = block_record_handle
+                block_layout._block_record = block_record_handle
+                _cleanup_block_record(block_record)
+
         def rename(block):
+            # Todo: rename associated block_record
             counter = 1
             old_name = block.name
             while True:
@@ -72,13 +85,26 @@ class Importer(object):
                 else:
                     block.name = new_name
                     break
+            rename_block_record(block, new_name)
             existing_block_names.add(new_name)
             self._renamed_blocks[old_name] = new_name
 
+        def rename_block_record(block_layout, new_name):
+            if self.target.dxfversion == 'AC1009':
+                return # no block records
+            block_record_handle = block_layout.block.dxf.owner
+            if block_record_handle != '0':
+                block_record = self.target.dxffactory.wrap_handle(block_record_handle)
+                block_record.dxf.name = new_name
+
         def new_block_layout(source_block_layout):
+            has_block_record = self.target.dxfversion > 'AC1009'
+
             head_handle = self.import_tags(source_block_layout._block_handle)
             tail_handle = self.import_tags(source_block_layout._endblk_handle)
             target_block_layout = self.target.dxffactory.new_block_layout(head_handle, tail_handle)
+            if has_block_record:
+                import_block_record(target_block_layout)
             for entity in source_block_layout:
                 target_handle = self.import_tags(entity.handle())
                 new_entity = self.target.dxffactory.wrap_handle(target_handle)
@@ -95,6 +121,7 @@ class Importer(object):
             if block_name not in import_block_names:
                 continue
             if block_name not in existing_block_names:
+
                 target_block_layout = new_block_layout(block)
                 self.target.blocks.append_block_layout(target_block_layout)
             else: # we have a name conflict
@@ -168,3 +195,21 @@ class Importer(object):
             self.target.entitydb[target_handle] = new_tags
             self._handle_translation_table[source_handle] = target_handle
         return target_handle
+
+def _cleanup_block_record(block_record):
+    def remove_tags(tags, code):
+        del_tags = [tag for tag in tags if tag.code == code]
+        for tag in del_tags:
+            tags.remove(tag)
+
+    if hasattr(block_record.tags, 'get_appdata'):
+        try: # BLKREFS are invalid handles to source drawing entities
+            block_refs = block_record.tags.get_appdata("{BLKREFS")
+        except ValueError: # has no block references
+            pass
+        else:
+            remove_tags(block_refs, 331)
+        # strip preview image and save space
+        subclass = block_record.tags.get_subclass('AcDbBlockTableRecord')
+        remove_tags(subclass, 310)
+    return

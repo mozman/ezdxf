@@ -56,7 +56,7 @@ class Layout(DXF12Layout, EntityCreator):
         dxf_factory = drawing.dxffactory
         super(Layout, self).__init__(entity_space, dxf_factory, 0)
         self._layout_handle = layout_handle
-        self._block_record = self.dxflayout.dxf.block_record
+        self._block_record = self.dxflayout.dxf.owner
         self._paperspace = 0 if self.name == 'Model' else 1
 
     # start of public interface
@@ -93,4 +93,14 @@ class Layout(DXF12Layout, EntityCreator):
 
 
 class BlockLayout(DXF12BlockLayout, EntityCreator):
-    pass
+    def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
+        super(BlockLayout, self).__init__(entitydb, dxffactory, block_handle, endblk_handle)
+        self._block_record = self.block.dxf.owner
+
+    def add_entity(self, entity):
+        """ Add entity to the block entity space.
+        """
+        #if hasattr(entity, 'subclasses'):
+        #    entity = self._dxffactory.wrap_entity(entity)
+        #entity.dxf.owner = self._block_record
+        self._entityspace.add(entity)

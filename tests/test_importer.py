@@ -3,9 +3,14 @@
 # License: GPLv3
 
 import unittest
+import os
 
 import ezdxf
 from ezdxf.importer import Importer
+
+def save_source_dwg(dwg, filename):
+    if not os.path.exists(filename):
+        dwg.saveas(filename)
 
 def create_source_drawing(version):
     dwg = ezdxf.new(version)
@@ -20,6 +25,7 @@ def create_source_drawing(version):
     build_block(dwg, "ConflictBlock")
     block = build_block(dwg, "RefToConflictBlock")
     block.add_blockref('ConflictBlock', insert=(0,0))
+    #save_source_dwg(dwg, 'ImportSource-' + version + '.dxf')
     return dwg
 
 def create_target_drawing(version):
@@ -69,7 +75,7 @@ class TestCompatibilityCheck(unittest.TestCase):
         self.assertFalse(importer.is_compatible())
 
 class TestImportModelspace_AC1009(unittest.TestCase):
-    VERSION = "AC1009"
+    VERSION = "AC1015"
     def setUp(self):
         self.source = create_source_drawing(self.VERSION)
         self.target = create_target_drawing(self.VERSION)
@@ -135,7 +141,6 @@ class TestImportModelspace_AC1009(unittest.TestCase):
 
 class TestImportModelspace_AC1015(TestImportModelspace_AC1009):
     VERSION = "AC1015"
-
 
 if __name__ == '__main__':
     unittest.main()
