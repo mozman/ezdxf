@@ -61,10 +61,8 @@ class AC1015Factory(AC1009Factory):
 
     def create_block_entry_in_block_records_table(self, block_layout):
         # required for  DXFVERSION > ac1009: Entry in the BLOCK_RECORDS section
-        self.block_records.create(block_layout.name)
-
-        # the following line works, but is not necessary, even in AutoCAD
-        # block_layout.block.dxf.block_record = block_record.dxf.handle
+        block_record = self.block_records.create(block_layout.name)
+        block_layout.set_block_record_handle(block_record.dxf.handle)
 
     def get_layouts(self):
         return Layouts(self.drawing)
