@@ -38,7 +38,7 @@ from ..facemixins import PolyfaceMixin, PolymeshMixin
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5, None),
-    'block_record': DXFAttr(330, None),  # Soft-pointer ID/handle to owner BLOCK_RECORD object
+    'owner': DXFAttr(330, None),  # Soft-pointer ID/handle to owner BLOCK_RECORD object
 })
 
 entity_subclass = DefSubclass('AcDbEntity', {
@@ -729,7 +729,6 @@ BLOCKNAME
 insert_subclass = DefSubclass('AcDbBlockReference', {
     'attribsfollow': DXFAttr(66, None),
     'name': DXFAttr(2, None),
-    'name2': DXFAttr(3, None),
     'insert': DXFAttr(10, 'Point2D/3D'),
     'xscale': DXFAttr(41, None),
     'yscale': DXFAttr(42, None),

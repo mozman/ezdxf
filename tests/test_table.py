@@ -257,7 +257,7 @@ class TestR12Table(unittest.TestCase):
         self.assertEqual(normlines(AC1009TABLE), normlines(result))
 
     def test_get_table_entry(self):
-        entry = self.table.get_entry('ACAD')
+        entry = self.table.get('ACAD')
         self.assertEqual('ACAD', entry.dxf.name)
 
 
@@ -277,7 +277,7 @@ class TestR2010Table(unittest.TestCase):
         self.assertEqual(normlines(AC1024TABLE), normlines(result))
 
     def test_get_table_entry(self):
-        entry = self.table.get_entry('ACAD')
+        entry = self.table.get('ACAD')
         self.assertEqual('ACAD', entry.dxf.name)
 
 

@@ -10,6 +10,7 @@ class Importer(object):
         self.source = source # type of: ezdxf.Drawing
         self.target = target # type of: ezdxf.Drawing
         self._renamed_blocks = {}
+        self._handle_translation_table = {}
         if strict_mode and not self.is_compatible():
             raise TypeError("DXF drawings are not compatible. Source version {}; Target version {}".format(
                 source.dxfversion, target.dxfversion))
@@ -53,7 +54,6 @@ class Importer(object):
         old_block_name = block_ref.dxf.name
         new_block_name = self._renamed_blocks.get(old_block_name, old_block_name)
         block_ref.dxf.name = new_block_name
-        block_ref.dxf.name2 = new_block_name
 
     def import_blocks(self, query="*", conflict="discard"):
         """ Import block definitions.
@@ -76,18 +76,11 @@ class Importer(object):
             self._renamed_blocks[old_name] = new_name
 
         def new_block_layout(source_block_layout):
-            def copy_entity(source_handle):
-                new_tags = self.source.entitydb[source_handle].clone()
-                target_handle = self.target._handles.next()
-                new_tags.replace_handle(target_handle)
-                self.target.entitydb[target_handle] = new_tags
-                return target_handle
-
-            head_handle = copy_entity(source_block_layout._block_handle)
-            tail_handle = copy_entity(source_block_layout._endblk_handle)
+            head_handle = self.import_tags(source_block_layout._block_handle)
+            tail_handle = self.import_tags(source_block_layout._endblk_handle)
             target_block_layout = self.target.dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in source_block_layout:
-                target_handle = copy_entity(entity.handle())
+                target_handle = self.import_tags(entity.handle())
                 new_entity = self.target.dxffactory.wrap_handle(target_handle)
                 target_block_layout.add_entity(new_entity)
                 if new_entity.dxftype() == 'INSERT':  # maybe a reference to a renamed block
@@ -151,7 +144,6 @@ class Importer(object):
         except KeyError:
             raise ValueError("Table '{}' does not exists in the target drawing. "
                              "Table creation in the target drawing not implemented yet!".format[name])
-        new_handle = self.target._handles.next
         source_entry_names = (entry.dxf.name for entry in source_table)
         for entry_name in name_query(source_entry_names, query):
             table_entry = source_table.get(entry_name)
@@ -160,6 +152,19 @@ class Importer(object):
                     continue
                 else: # replace existing entry
                     target_table.remove(table_entry.dxf.name)
-            new_entry_tags = table_entry.tags.clone()
-            new_entry_tags.replace_handle(new_handle())
-            target_table._add_entry(new_entry_tags)
+            new_handle = self.import_tags(table_entry.dxf.handle)
+            target_table._append_entry_handle(new_handle)
+
+    def import_tags(self, source_handle):
+        """Clone tags from source drawing, give it a new valid handle for the target drawing
+        and insert tags into the entity database of the target drawing. Returns the target handle.
+        Avoids duplicate imports of the same database entity.
+        """
+        target_handle = self._handle_translation_table.get(source_handle, None)
+        if target_handle is None:
+            new_tags = self.source.entitydb[source_handle].clone()
+            target_handle = self.target._handles.next()
+            new_tags.replace_handle(target_handle)
+            self.target.entitydb[target_handle] = new_tags
+            self._handle_translation_table[source_handle] = target_handle
+        return target_handle

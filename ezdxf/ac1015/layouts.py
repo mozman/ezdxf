@@ -65,13 +65,13 @@ class Layout(DXF12Layout, EntityCreator):
         """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
         """
         for entity in self._iter_all_entities():
-            if entity.get_dxf_attrib('block_record') == self._block_record:
+            if entity.get_dxf_attrib('owner') == self._block_record:
                 yield entity
 
     def __contains__(self, entity):
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self._dxffactory.wrap_handle(entity)
-        return True if entity.get_dxf_attrib('block_record') == self._block_record else False
+        return True if entity.get_dxf_attrib('owner') == self._block_record else False
 
     # end of public interface
 
@@ -89,7 +89,7 @@ class Layout(DXF12Layout, EntityCreator):
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
-        entity.dxf.block_record = self._block_record
+        entity.dxf.owner = self._block_record
 
 
 class BlockLayout(DXF12BlockLayout, EntityCreator):

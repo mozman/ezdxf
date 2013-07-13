@@ -38,14 +38,28 @@ class Table(object):
     def __init__(self, tags, drawing):
         self._dxfname = tags[1].value
         self._drawing = drawing
-        self._table_entries = list()
-        self._table_header = None  # handle = _table_header.get_handle()
+        self._table_entries = []
+        self._table_header = None
         self._build_table_entries(tags)
 
     # start public interface
 
+    @property
+    def name(self):
+        return tablename(self._dxfname)
+
+    def has_entry(self, name):
+        """ Check if an table-entry 'name' exists. """
+        try:
+            self.get(name)
+            return True
+        except ValueError:
+            return False
+
+    __contains__ = has_entry
+
     def create(self, name, dxfattribs=None):
-        if self.__contains__(name):
+        if self.has_entry(name):
             raise ValueError('%s %s already exists!' % (self._dxfname, name))
         if dxfattribs is None:
             dxfattribs = {}
@@ -53,13 +67,18 @@ class Table(object):
         return self.new_entry(dxfattribs)
 
     def get(self, name):
-        return self.get_entry(name)
+        """ Get table-entry by name as WrapperClass(). """
+        for entry in iter(self):
+            if entry.dxf.name == name:
+                return entry
+        raise ValueError(name)
 
     def remove(self, name):
-        self.remove_entry(name)
-
-    def __contains__(self, name):
-        return self.entry_exists(name)
+        """ Remove table-entry from table and entitydb by name. """
+        entry = self.get(name)
+        handle = entry.dxf.handle
+        self._table_entries.remove(handle)
+        del self.entitydb[handle]
 
     def __len__(self):
         return len(self._table_entries)
@@ -69,10 +88,6 @@ class Table(object):
             yield self.get_table_entry_wrapper(handle)
 
     # end public interface
-
-    @property
-    def name(self):
-        return tablename(self._dxfname)
 
     def _build_table_entries(self, tags):
         groups = TagGroups(tags)
@@ -89,7 +104,7 @@ class Table(object):
 
     @property
     def handles(self):
-        return self.entitydb.handles
+        return self._drawing.entitydb.handles
 
     @property
     def dxffactory(self):
@@ -99,13 +114,6 @@ class Table(object):
         """ Iterate over table-entries as Tags(). """
         return (self.entitydb[handle] for handle in self._table_entries)
 
-    def entry_exists(self, name):
-        """ Check if an table-entry 'name' exists. """
-        try:
-            self.get_entry(name)
-            return True
-        except ValueError:
-            return False
 
     def new_entry(self, dxfattribs):
         """ Create new table-entry of type 'self._dxfname', and add new entry
@@ -131,25 +139,15 @@ class Table(object):
             handle = entry.dxf.handle
             tags = entry.tags
         self.entitydb[handle] = tags
-        self._table_entries.append(handle)
+        self._append_entry_handle(handle)
 
-    def get_entry(self, name):
-        """ Get table-entry by name as WrapperClass(). """
-        for entry in iter(self):
-            if entry.dxf.name == name:
-                return entry
-        raise ValueError(name)
+    def _append_entry_handle(self, handle):
+        if not handle in self._table_entries:
+            self._table_entries.append(handle)
 
     def get_table_entry_wrapper(self, handle):
         tags = self.entitydb[handle]
         return self.dxffactory.wrap_entity(tags)
-
-    def remove_entry(self, name):
-        """ Remove table-entry from table and entitydb by name. """
-        entry = self.get_entry(name)
-        handle = entry.dxf.handle
-        self._table_entries.remove(handle)
-        del self.entitydb[handle]
 
     def write(self, stream):
         """ Write DXF representation to stream, stream opened with mode='wt'. """
@@ -179,7 +177,7 @@ class Table(object):
 
 
 class ViewportTable(Table):
-    ## TODO: Viewport-Table can have multiple entries with same name
+    # Viewport-Table can have multiple entries with same name
     def create(self, name, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
