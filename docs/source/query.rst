@@ -81,6 +81,7 @@ EntityQuery Class
    :param entities: sequence of wrapped DXF entities (at least :class:`GraphicEntity` class)
    :param str query: `entity query string`_
 
+
 .. method:: EntityQuery.extend(entities, query='*', unique=True)
 
    Extent the query container by entities matching a additional query.

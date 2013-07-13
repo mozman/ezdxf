@@ -45,6 +45,8 @@ def read(stream):
 def readfile(filename):
     """Read DXF drawing from file *filename*.
     """
+    if not is_dxf_file(filename):
+        raise ValueError("File '{}' is not a DXF file.".format(filename))
     try: # is it ascii code-page encoded?
         return readfile_as_asc(filename)
     except UnicodeDecodeError: # try unicode and ignore errors
@@ -72,3 +74,18 @@ def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
         dwg = read(fp)
     dwg.filename = filename
     return dwg
+
+# noinspection PyArgumentList
+def is_dxf_file(filename):
+    with io.open(filename, errors='ignore') as fp:
+        get_line = lambda: fp.readline().strip()
+        if get_line() != '0':
+            return False
+        if get_line() != 'SECTION':
+            return False
+        if get_line() != '2':
+            return False
+        if get_line() != 'HEADER':
+            return False
+    return True
+

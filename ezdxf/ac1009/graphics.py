@@ -14,16 +14,19 @@ from ..facemixins import PolyfaceMixin, PolymeshMixin
 
 
 class ColorMixin(object):
-    def set_extcolor(self, color):
+    def set_ext_color(self, color):
         """ Set color by color-name or rgb-tuple, for DXF R12 the nearest
         default DXF color index will be determined.
         """
-        pass
+        # TODO: implement ColorMixin.set_ext_color()
+        raise NotImplementedError('set_ext_color()')
 
-    def get_rgbcolor(self):
+    def get_rgb_color(self):
+        # TODO: implement ColorMixin.get_rgb_color()
         return 0, 0, 0
 
-    def get_colorname(self):
+    def get_color_name(self):
+        # TODO: implement ColorMixin.get_color_name()
         return 'Black'
 
 
@@ -352,7 +355,6 @@ class Insert(GraphicEntity):
     DXFATTRIBS = make_attribs({
         'attribsfollow': DXFAttr(66, None),
         'name': DXFAttr(2, None),
-        'name2': DXFAttr(3, None),
         'insert': DXFAttr(10, 'Point2D/3D'),
         'xscale': DXFAttr(41, None),
         'yscale': DXFAttr(42, None),
