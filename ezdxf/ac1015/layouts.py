@@ -93,14 +93,19 @@ class Layout(DXF12Layout, EntityCreator):
 
 
 class BlockLayout(DXF12BlockLayout, EntityCreator):
-    def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
-        super(BlockLayout, self).__init__(entitydb, dxffactory, block_handle, endblk_handle)
-        self._block_record = self.block.dxf.owner
-
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
-        #if hasattr(entity, 'subclasses'):
-        #    entity = self._dxffactory.wrap_entity(entity)
-        #entity.dxf.owner = self._block_record
+        if hasattr(entity, 'subclasses'):
+            wrapper = self._dxffactory.wrap_entity(entity)
+        else:
+            wrapper = entity
+        wrapper.dxf.owner = self.get_block_record_handle()
         self._entityspace.add(entity)
+
+    def get_block_record_handle(self):
+        return self.block.dxf.owner
+
+    def set_block_record_handle(self, block_record_handle):
+        self.block.dxf.owner = block_record_handle
+        self.endblk.dxf.owner = block_record_handle
