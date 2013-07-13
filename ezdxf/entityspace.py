@@ -22,9 +22,12 @@ class EntitySpace(list):
                 handle = entity.get_handle()
             except ValueError:
                 handle = self._entitydb.handles.next()
-            self._entitydb[handle] = entity
+            tags = entity
         else:
             handle = entity.dxf.handle
+            tags = entity.tags
+        # always add entity to database
+        self._entitydb[handle] = tags
         self.append(handle)
 
     def write(self, stream):

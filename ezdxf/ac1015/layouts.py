@@ -10,9 +10,10 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .creator import EntityCreator
 from ..ac1009.layouts import DXF12Layout, DXF12BlockLayout
-
+from ..classifiedtags import ClassifiedTags
 
 class Layouts(object):
+    #TODO: user defined new layouts
     def __init__(self, drawing):
         self._layouts = {}
         self._layout_table = None
@@ -22,6 +23,8 @@ class Layouts(object):
         dxffactory = drawing.dxffactory
         layout_table_handle = drawing.rootdict['ACAD_LAYOUT']
         self._layout_table = dxffactory.wrap_handle(layout_table_handle)
+        # name ... layout name
+        # handle ...  handle to DXF object Layout
         for name, handle in self._layout_table.items():
             self._layouts[name] = Layout(drawing, handle)
 
@@ -56,7 +59,7 @@ class Layout(DXF12Layout, EntityCreator):
         dxf_factory = drawing.dxffactory
         super(Layout, self).__init__(entity_space, dxf_factory, 0)
         self._layout_handle = layout_handle
-        self._block_record = self.dxflayout.dxf.owner
+        self._block_record = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
 
     # start of public interface
@@ -96,11 +99,10 @@ class BlockLayout(DXF12BlockLayout, EntityCreator):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
-        if hasattr(entity, 'subclasses'):
-            wrapper = self._dxffactory.wrap_entity(entity)
-        else:
-            wrapper = entity
-        wrapper.dxf.owner = self.get_block_record_handle()
+        # entity can be ClassifiedTags() or a Wrapper() class
+        if isinstance(entity, ClassifiedTags):
+            entity = self._dxffactory.wrap_entity(entity)
+        entity.dxf.owner = self.get_block_record_handle()
         self._entityspace.add(entity)
 
     def get_block_record_handle(self):

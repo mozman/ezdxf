@@ -6,7 +6,6 @@ docs/_build/*
 .idea/*
 bigtestfiles/*
 examples/*.dxf
-integration_tests/*.dxf
 .coverage
 *.err
 *.orig
