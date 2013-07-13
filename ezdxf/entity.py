@@ -80,6 +80,9 @@ class GenericWrapper(object):
     def handle(self):
         return self.tags.get_handle()
 
+    def has_dxf_attrib(self, key):
+        return key in self.DXFATTRIBS
+
     def get_dxf_attrib(self, key, default=ValueError):
         if key in self.DXFATTRIBS:
             try:

@@ -11,7 +11,7 @@ def main():
     source_dwg = ezdxf.readfile('CustomBlocks.dxf')
     target_dwg = ezdxf.new(source_dwg.dxfversion)
     importer = ezdxf.Importer(source_dwg, target_dwg)
-    #importer.import_blocks(query='CustomBlock1')
+    importer.import_blocks(query='CustomBlock1')
     importer.import_modelspace_entities()
     target_dwg.saveas("CustomBlocks_Import.dxf")
 

@@ -157,7 +157,7 @@ class DXFLayout(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
-            'parent': DXFAttr(330, None),
+            'owner': DXFAttr(330, None),
         }),
         DefSubclass('AcDbPlotSettings', {}),
         DefSubclass('AcDbLayout', {
@@ -176,7 +176,6 @@ class DXFLayout(GenericWrapper):
             'ucstype': DXFAttr(76, None),
             # Orthographic type of UCS 0 = UCS is not orthographic;
             # 1 = Top; 2 = Bottom; 3 = Front; 4 = Back; 5 = Left; 6 = Right
-            'block_record': DXFAttr(330, None),
             'viewport': DXFAttr(331, None),
             # ID/handle to the viewport that was last active in this
             # layout when the layout was current
@@ -193,7 +192,7 @@ class XRecord(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
-            'parent': DXFAttr(330, None),
+            'owner': DXFAttr(330, None),
         }),
         DefSubclass('AcDbXrecord', {
             'cloning': DXFAttr(280, None),

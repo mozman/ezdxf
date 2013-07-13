@@ -16,7 +16,7 @@ class TestXRecord(unittest.TestCase):
         self.assertEqual('43A', self.xrecord.dxf.handle)
 
     def test_parent_handle(self):
-        self.assertEqual('28C', self.xrecord.dxf.parent)
+        self.assertEqual('28C', self.xrecord.dxf.owner)
 
     def test_cloning_parameter(self):
         self.assertEqual(1, self.xrecord.dxf.cloning)

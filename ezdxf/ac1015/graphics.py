@@ -53,7 +53,7 @@ entity_subclass = DefSubclass('AcDbEntity', {
 class GraphicEntity(ac1009.GraphicEntity):
     """ Default graphic entity wrapper, allows access to following dxf attributes:
      - handle
-     - block_record
+     - owner handle
      - layer
      - linetype
      - color

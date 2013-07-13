@@ -153,6 +153,7 @@ class Table(object):
         """ Write DXF representation to stream, stream opened with mode='wt'. """
         def prologue():
             stream.write('  0\nTABLE\n')
+            self._update_owner_handles()
             self._update_meta_data()
             self._table_header.write(stream)
 
@@ -166,6 +167,15 @@ class Table(object):
         prologue()
         content()
         epilogue()
+
+    def _update_owner_handles(self):
+        if self._drawing.dxfversion == 'AC1009':
+            return # no owner handles
+        owner_handle = self._table_header.get_handle()
+        for entry in iter(self):
+            if not entry.has_dxf_attrib('owner'):
+                raise AttributeError(repr(entry))
+            entry.dxf.owner = owner_handle
 
     def _update_meta_data(self):
         count = len(self)
