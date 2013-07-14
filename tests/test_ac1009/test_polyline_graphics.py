@@ -26,14 +26,14 @@ class TestPolyline(unittest.TestCase):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         self.assertEqual((0., 0.), polyline[0].dxf.location)
         self.assertEqual((1., 1.), polyline[1].dxf.location)
-        self.assertEqual('polyline2d', polyline.getmode())
+        self.assertEqual('polyline2d', polyline.get_mode())
 
     def test_create_polyline3D(self):
         polyline = self.layout.add_polyline3d([(1, 2, 3), (4, 5, 6)])
         self.assertEqual((1., 2., 3.), polyline[0].dxf.location)
         self.assertEqual((4., 5., 6.), polyline[1].dxf.location)
         self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
-        self.assertEqual('polyline3d', polyline.getmode())
+        self.assertEqual('polyline3d', polyline.get_mode())
 
     def test_set_vertex(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
@@ -43,12 +43,12 @@ class TestPolyline(unittest.TestCase):
     def test_points(self):
         points = [(0, 0), (1, 1), (2, 2), (3, 3)]
         polyline = self.layout.add_polyline2d(points)
-        self.assertEqual(points, polyline.points)
+        self.assertEqual(points, polyline.points())
 
     def test_point_slicing(self):
         points = [(0, 0), (1, 1), (2, 2), (3, 3)]
         polyline = self.layout.add_polyline2d(points)
-        self.assertEqual([(1, 1), (2, 2)], polyline.points[1:3])
+        self.assertEqual([(1, 1), (2, 2)], polyline.points()[1:3])
 
     def test_append_vertices(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
@@ -114,7 +114,7 @@ class TestPolyface(unittest.TestCase):
     def test_add_face(self):
         face = self.layout.add_polyface()
         face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
-        self.assertEqual([(0, 0), (1, 1), (2, 2), (3, 3), (0, 0, 0)], face.points)
+        self.assertEqual([(0, 0), (1, 1), (2, 2), (3, 3), (0, 0, 0)], face.points())
 
     def test_face_indices(self):
         face = self.layout.add_polyface()

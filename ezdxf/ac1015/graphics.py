@@ -438,13 +438,13 @@ class Polyline(ac1009.Polyline):
             subclass = self.tags.subclasses[2]
             subclass[0] = DXFTag(100, subclassname)
 
-        if self.getmode() == 'polyline2d':
+        if self.get_mode() == 'polyline2d':
             set_subclass('AcDb2dPolyline')
         else:
             set_subclass('AcDb3dPolyline')
 
     def cast(self):
-        mode = self.getmode()
+        mode = self.get_mode()
         if mode == 'polyface':
             return Polyface.convert(self)
         elif mode == 'polymesh':
