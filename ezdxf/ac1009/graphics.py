@@ -636,9 +636,9 @@ class Polyline(GraphicEntity, ColorMixin):
     })
 
     def get_vertex_flags(self):
-        return const.VERTEX_FLAGS[self.getmode()]
+        return const.VERTEX_FLAGS[self.get_mode()]
 
-    def getmode(self):
+    def get_mode(self):
         flags = self.dxf.flags
         if flags & const.POLYLINE_3D_POLYLINE > 0:
             return 'polyline3d'
@@ -674,11 +674,13 @@ class Polyline(GraphicEntity, ColorMixin):
             entity = self._builder._get_entity_at_index(index)
 
     def __getitem__(self, pos):
-        return list(iter(self)).__getitem__(pos)
+        return self.vertices()[pos]
 
-    @property
     def points(self):
         return [vertex.dxf.location for vertex in self]
+
+    def vertices(self):
+        return list(self)
 
     def append_vertices(self, points, dxfattribs=None):
         if dxfattribs is None:
@@ -730,7 +732,7 @@ class Polyline(GraphicEntity, ColorMixin):
             last_vertex_index += 1
 
     def cast(self):
-        mode = self.getmode()
+        mode = self.get_mode()
         if mode == 'polyface':
             return Polyface.convert(self)
         elif mode == 'polymesh':
