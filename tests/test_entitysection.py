@@ -18,7 +18,7 @@ def make_test_drawing(version):
     dwg = ezdxf.new(version)
     modelspace = dwg.modelspace()
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_line'})
-    modelspace.add_text("TEST", insert=(0, 0), dxfattribs={'layer': 'lay_line'})
+    modelspace.add_text("TEST", dxfattribs={'layer': 'lay_line'})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_polyline'})
     return dwg
 

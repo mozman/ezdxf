@@ -31,6 +31,9 @@ class Layouts(object):
     def __contains__(self, name):
         return name in self._layouts
 
+    def __iter__(self):
+        return iter(self._layouts.values())
+
     def modelspace(self):
         return self.get('Model')
 
@@ -59,7 +62,7 @@ class Layout(DXF12Layout, EntityCreator):
         dxf_factory = drawing.dxffactory
         super(Layout, self).__init__(entity_space, dxf_factory, 0)
         self._layout_handle = layout_handle
-        self._block_record = self.dxflayout.dxf.block_record
+        self._block_record_handle = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
 
     # start of public interface
@@ -68,13 +71,13 @@ class Layout(DXF12Layout, EntityCreator):
         """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
         """
         for entity in self._iter_all_entities():
-            if entity.get_dxf_attrib('owner') == self._block_record:
+            if entity.get_dxf_attrib('owner') == self._block_record_handle:
                 yield entity
 
     def __contains__(self, entity):
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self._dxffactory.wrap_handle(entity)
-        return True if entity.get_dxf_attrib('owner') == self._block_record else False
+        return True if entity.get_dxf_attrib('owner') == self._block_record_handle else False
 
     # end of public interface
 
@@ -92,7 +95,7 @@ class Layout(DXF12Layout, EntityCreator):
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
-        entity.dxf.owner = self._block_record
+        entity.dxf.owner = self._block_record_handle
 
 
 class BlockLayout(DXF12BlockLayout, EntityCreator):

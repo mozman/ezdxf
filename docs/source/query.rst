@@ -5,7 +5,7 @@ Name Query String
 
 A name query string is just a standard regular expression see: http://docs.python.org/3/library/re.html
 
-The name query string will be terminated by ``'$'`` automatically.
+A ``'$'`` will be appended to the query string.
 
 .. _entity query string:
 
@@ -59,7 +59,7 @@ If a DXF entity does not have or support a required attribute, the corresponding
 
 examples::
 
-    'LINE[text ? ".*"]` is always empty, because the LINE entity has no text attribute.
+    'LINE[text ? ".*"]' is always empty, because the LINE entity has no text attribute.
 
     'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
     '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7

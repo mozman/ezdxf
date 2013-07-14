@@ -79,6 +79,27 @@ class TestText(SetupDrawing):
         text = self.layout.add_text('text')
         self.assertEqual('text', text.dxf.text)
 
+    def test_set_alignment(self):
+        text = self.layout.add_text('text')
+        text.set_pos((2, 2), align="TOP_CENTER")
+        self.assertEqual(1, text.dxf.halign)
+        self.assertEqual(3, text.dxf.valign)
+        self.assertEqual((2, 2), text.dxf.alignpoint)
+
+    def test_set_fit_alignment(self):
+        text = self.layout.add_text('text')
+        text.set_pos((2, 2), (4, 2), align="FIT")
+        self.assertEqual(5, text.dxf.halign)
+        self.assertEqual(0, text.dxf.valign)
+        self.assertEqual((2, 2), text.dxf.insert)
+        self.assertEqual((4, 2), text.dxf.alignpoint)
+
+    def test_get_alignment(self):
+        text = self.layout.add_text('text')
+        text.dxf.halign = 1
+        text.dxf.valign = 3
+        self.assertEqual('TOP_CENTER', text.get_align())
+
 
 class TestBlock(SetupDrawing):
     def test_create_blockref(self):

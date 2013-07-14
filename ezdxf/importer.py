@@ -5,6 +5,7 @@
 
 from .query import name_query
 
+
 class Importer(object):
     def __init__(self, source, target, strict_mode=True):
         self.source = source # type of: ezdxf.Drawing
@@ -61,10 +62,10 @@ class Importer(object):
         :param str query: names of blocks to import, "*" for all
         :param str conflict: discard|replace|rename
         """
-        has_block_record = self.target.dxfversion > 'AC1009'
+        has_block_records = self.target.dxfversion > 'AC1009'
 
         def import_block_record(block_layout):
-            if not has_block_record:
+            if not has_block_records:
                 return
             block_record_handle = block_layout.get_block_record_handle()
             if block_record_handle != '0':
@@ -89,45 +90,52 @@ class Importer(object):
             self._renamed_blocks[old_name] = new_name
 
         def rename_block_record(block_layout):
-            if not has_block_record:
+            if not has_block_records:
                 return
-            block_record_handle = block_layout.block.dxf.owner
+            block_record_handle = block_layout.get_block_record_handle()
             if block_record_handle != '0':
                 block_record = self.target.dxffactory.wrap_handle(block_record_handle)
                 block_record.dxf.name = block_layout.name
 
-        def new_block_layout(source_block_layout):
+        def import_block_layout(source_block_layout):
             head_handle = self.import_tags(source_block_layout._block_handle)
             tail_handle = self.import_tags(source_block_layout._endblk_handle)
             target_block_layout = self.target.dxffactory.new_block_layout(head_handle, tail_handle)
             import_block_record(target_block_layout)
+            import_block_entities(source_block_layout, target_block_layout)
+            return target_block_layout
+
+        def import_block_entities(source_block_layout, target_block_layout):
             for entity in source_block_layout:
                 target_handle = self.import_tags(entity.handle())
                 new_entity = self.target.dxffactory.wrap_handle(target_handle)
                 target_block_layout.add_entity(new_entity)
                 if new_entity.dxftype() == 'INSERT':  # maybe a reference to a renamed block
                     resolve_block_references.append(new_entity)
-            return target_block_layout
 
         resolve_block_references = []
         existing_block_names = set(block.name for block in self.target.blocks)
-        import_block_names = frozenset(name_query((block.name for block in self.source.blocks), query))
-        for block in self.source.blocks:  # blocks are a list, access by blocks[name] is slow
+        # Do not import blocks associated to layouts and model space
+        layout_block_names = frozenset(_get_layout_block_names(self.source))
+        block_names_without_layouts = frozenset(block.name for block in self.source.blocks) - layout_block_names
+        import_block_names = frozenset(name_query(block_names_without_layouts, query))
+
+        for block in self.source.blocks:  # blocks is a list, access by blocks[name] is slow
             block_name = block.name
             if block_name not in import_block_names:
                 continue
             if block_name not in existing_block_names:
-                target_block_layout = new_block_layout(block)
+                target_block_layout = import_block_layout(block)
                 self.target.blocks.append_block_layout(target_block_layout)
             else: # we have a name conflict
                 if conflict == 'discard':
                     continue
                 elif conflict == 'rename':
-                    target_block_layout = new_block_layout(block)
+                    target_block_layout = import_block_layout(block)
                     rename(target_block_layout)
                     self.target.blocks.append_block_layout(target_block_layout)
                 elif conflict == 'replace':
-                    target_block_layout = new_block_layout(block)
+                    target_block_layout = import_block_layout(block)
                     self.target.blocks.replace_or_append_block_layout(target_block_layout)
                 else:
                     raise ValueError("'{}' is an invalid value for parameter conflict.".format(conflict))
@@ -141,7 +149,7 @@ class Importer(object):
 
         :param str conflict: discard|replace
         """
-        table_names = [table.name for table in self.source.sections.tables]
+        table_names = [table.name for table in self.source.sections.tables if table.name != 'block_records']
         for table_name in name_query(table_names, query):
             self.import_table(table_name, query="*", conflict=conflict)
 
@@ -149,14 +157,15 @@ class Importer(object):
         """ Import specific entries from a table.
 
         :param str name: valid table names are 'layers', 'linetypes', 'appids', 'dimstyles',
-                         'styles', 'ucs', 'views', 'viewports' and 'block_records'
+                         'styles', 'ucs', 'views', 'viewports' except 'block_records'
                          as defined in ezdxf.table.TABLENAMES
 
         :param str conflict: discard|replace
         """
         if conflict not in ('replace', 'discard'):
             raise ValueError("Unknown value '{}' for parameter 'conflict'.".format(conflict))
-        
+        if name == 'block_records':
+            raise ValueError("Can not import whole block_records table, block_records will be imported as required.")
         try:
             source_table = self.source.sections.tables[name]
         except KeyError:
@@ -208,3 +217,12 @@ def _cleanup_block_record(block_record):
         subclass = block_record.tags.get_subclass('AcDbBlockTableRecord')
         remove_tags(subclass, 310)
     return
+
+def _get_layout_block_names(dwg):
+    def get_block_record_name(layout):
+        block_record = dwg.dxffactory.wrap_handle(layout._block_record_handle)
+        return block_record.dxf.name
+
+    if dwg.dxfversion == 'AC1009':
+        return '$MODEL_SPACE', '$PAPER_SPACE'
+    return (get_block_record_name(layout) for layout in dwg.layouts)

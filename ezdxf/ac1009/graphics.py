@@ -283,6 +283,43 @@ class Text(GraphicEntity, ColorMixin):
         'valign': DXFAttr(73,  None),  # vertical justification
         'alignpoint': DXFAttr(11, 'Point2D/3D'),
     })
+    def set_pos(self, p1, p2=None, align=None):
+        if align is None:
+            align = self.get_align()
+        align = align.upper()
+        self.set_align(align)
+        self.set_dxf_attrib('insert', p1)
+        if align in ('ALIGNED', 'FIT'):
+            if p2 is None:
+                raise ValueError("Alignment '{}' requires a second alignment point.".format(align))
+        else:
+            p2 = p1
+        self.set_dxf_attrib('alignpoint', p2)
+        return self
+
+    def get_pos(self):
+        p1 = self.dxf.insert
+        p2 = self.dxf.alignpoint
+        align = self.get_align()
+        if align == 'LEFT':
+            return align, p1, None
+        if align in ('FIT', 'ALIGN'):
+            return align, p1, p2
+        return align, p2, None
+
+    def set_align(self, align='LEFT'):
+        align = align.upper()
+        halign, valign = const.TEXT_ALIGN_FLAGS[align]
+        self.set_dxf_attrib('halign', halign)
+        self.set_dxf_attrib('valign', valign)
+        return self
+
+    def get_align(self):
+        halign = self.get_dxf_attrib('halign')
+        valign = self.get_dxf_attrib('valign')
+        if halign > 2:
+            valign = 0
+        return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
 
 _BLOCK_TPL = """  0
 BLOCK
