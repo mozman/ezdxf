@@ -274,7 +274,12 @@ def load_resource(filename):
     return resource
 
 if __name__ == "__main__":
-    dwg = readfile(sys.argv[1])
+    filename = sys.argv[1]
+    try:
+        dwg = readfile(filename)
+    except IOError:
+        print("Unable to read DXF file '{}', or invalid DXF file.".format(filename))
+        sys.exit()
     html_filename = os.path.splitext(dwg.filename)[0] + '.html'
     try:
         with io.open(html_filename, mode='wt', encoding='utf-8') as fp:

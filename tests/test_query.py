@@ -13,7 +13,7 @@ def make_test_drawing(version):
     modelspace = dwg.modelspace()
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
-    modelspace.add_text("TEST", insert=(0, 0), dxfattribs={'layer': 'lay_text', 'color': 6})
+    modelspace.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})
     return dwg
 
 class TestEntityQuery_AC1009(unittest.TestCase):

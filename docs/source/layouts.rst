@@ -55,10 +55,9 @@ Create new drawing entities
 
    Add a :class:`3DFace` element, `points` is list of 3 or 4 2D/3D points.
 
-.. method:: Layout.add_text(text, style='STANDARD', dxfattribs={})
+.. method:: Layout.add_text(text, dxfattribs={})
 
-   Add a :class:`Text` element, `text` is a string, `style` is a
-   textstyle, see also :class:`Style`.
+   Add a :class:`Text` element, `text` is a string, see also :class:`Style`.
 
 .. method:: Layout.add_blockref(name, insert, dxfattribs={})
 
