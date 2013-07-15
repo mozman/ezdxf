@@ -32,6 +32,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ..ac1009 import graphics as ac1009
 from ..tags import DXFTag
+from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
@@ -100,7 +101,7 @@ line_subclass = DefSubclass('AcDbLine', {
 
 
 class Line(ac1009.Line):
-    TEMPLATE = _LINETEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_LINETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, line_subclass)
 
 _POINT_TPL = """  0
@@ -130,7 +131,7 @@ point_subclass = DefSubclass('AcDbPoint', {
 
 
 class Point(ac1009.Point):
-    TEMPLATE = _POINT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_POINT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, point_subclass)
 
 _CIRCLE_TPL = """  0
@@ -163,7 +164,7 @@ circle_subclass = DefSubclass('AcDbCircle', {
 
 
 class Circle(ac1009.Circle):
-    TEMPLATE = _CIRCLE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass)
 
 _ARC_TPL = """  0
@@ -209,7 +210,7 @@ arc_subclass = (
 
 
 class Arc(ac1009.Arc):
-    TEMPLATE = _ARC_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ARC_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *arc_subclass)
 
 _TRACE_TPL = """  0
@@ -260,12 +261,12 @@ trace_subclass = DefSubclass('AcDbTrace', {
 
 
 class Trace(ac1009.Trace):
-    TEMPLATE = _TRACE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, trace_subclass)
 
 
 class Solid(Trace):
-    TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
+    TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL.replace('TRACE', 'SOLID'))
 
 _3DFACE_TPL = """  0
 3DFACE
@@ -314,7 +315,7 @@ face_subclass = DefSubclass('AcDbFace', {
 
 
 class Face(ac1009.Face):
-    TEMPLATE = _3DFACE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_3DFACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, face_subclass)
 
 _TEXT_TPL = """  0
@@ -381,7 +382,7 @@ text_subclass = (
 
 
 class Text(ac1009.Text):
-    TEMPLATE = _TEXT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)
 
 _POLYLINE_TPL = """  0
@@ -424,7 +425,7 @@ polyline_subclass = DefSubclass('AcDb2dPolyline', {
 
 
 class Polyline(ac1009.Polyline):
-    TEMPLATE = _POLYLINE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, polyline_subclass)
 
     def post_new_hook(self):
@@ -516,7 +517,7 @@ vertex_subclass = (
 
 class Vertex(ac1009.Vertex):
     VTX3D = const.VTX_3D_POLYFACE_MESH_VERTEX | const.VTX_3D_POLYGON_MESH_VERTEX | const.VTX_3D_POLYLINE_VERTEX
-    TEMPLATE = _VERTEX_TPL
+    TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 
     def post_new_hook(self):
@@ -534,7 +535,7 @@ class Vertex(ac1009.Vertex):
 
 
 class SeqEnd(ac1009.SeqEnd):
-    TEMPLATE = "  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n"
+    TEMPLATE = ClassifiedTags.from_text("  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n")
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
     
 _LWPOLYLINE_TPL = """  0
@@ -569,7 +570,7 @@ LWPOINTCODES = (10, 20, 40, 41, 42)
 
 
 class LWPolyline(ac1009.GraphicEntity):
-    TEMPLATE = _LWPOLYLINE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_LWPOLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
     
     def __len__(self):
@@ -670,7 +671,7 @@ block_subclass = (
 
 
 class Block(ac1009.GraphicEntity):
-    TEMPLATE = _BLOCK_TPL
+    TEMPLATE = ClassifiedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *block_subclass)
 
 _ENDBLOCK_TPL = """  0
@@ -693,7 +694,7 @@ endblock_subclass = (
 
 
 class EndBlk(ac1009.GraphicEntity):
-    TEMPLATE = _ENDBLOCK_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ENDBLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *endblock_subclass)
 
 _INSERT_TPL = """  0
@@ -743,7 +744,7 @@ insert_subclass = DefSubclass('AcDbBlockReference', {
 
 
 class Insert(ac1009.Insert):
-    TEMPLATE = _INSERT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, insert_subclass)
     
 _ATTDEF_TPL = """  0
@@ -826,7 +827,7 @@ attdef_subclass = (
 
 
 class Attdef(ac1009.Attdef):
-    TEMPLATE = _ATTDEF_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attdef_subclass)
     
 _ATTRIB_TPL = """  0
@@ -905,7 +906,7 @@ attrib_subclass = (
 
 
 class Attrib(ac1009.Attrib):
-    TEMPLATE = _ATTRIB_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attrib_subclass)
 _ELLIPSE_TPL = """  0
 ELLIPSE
@@ -950,7 +951,7 @@ ellipse_subclass = DefSubclass('AcDbEllipse', {
 
 
 class Ellipse(ac1009.GraphicEntity, ac1009.ColorMixin):
-    TEMPLATE = _ELLIPSE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ELLIPSE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ellipse_subclass)
 _RAY_TPL = """ 0
 RAY
@@ -984,5 +985,5 @@ ray_subclass = DefSubclass('AcDbRay', {
 
 
 class Ray(ac1009.GraphicEntity, ac1009.ColorMixin):
-    TEMPLATE = _RAY_TPL
+    TEMPLATE = ClassifiedTags.from_text(_RAY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ray_subclass)

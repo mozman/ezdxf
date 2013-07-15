@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ..tags import DXFStructureError
+from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..entity import GenericWrapper, DXFExtendedPointType
 from .. import const
@@ -91,7 +92,7 @@ LINE
 
 
 class Line(GraphicEntity, ColorMixin):
-    TEMPLATE = _LINE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_LINE_TPL)
     DXFATTRIBS = make_attribs({
         'start': DXFAttr(10, 'Point2D/3D'),
         'end': DXFAttr(11, 'Point2D/3D'),
@@ -113,7 +114,7 @@ POINT
 
 
 class Point(GraphicEntity, ColorMixin):
-    TEMPLATE = _POINT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_POINT_TPL)
     DXFATTRIBS = make_attribs({
         'point': DXFAttr(10, 'Point2D/3D'),
     })
@@ -136,7 +137,7 @@ CIRCLE
 
 
 class Circle(GraphicEntity, ColorMixin):
-    TEMPLATE = _CIRCLE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
@@ -164,7 +165,7 @@ ARC
 
 
 class Arc(GraphicEntity, ColorMixin):
-    TEMPLATE = _ARC_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ARC_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
@@ -206,7 +207,7 @@ TRACE
 
 
 class Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
-    TEMPLATE = _TRACE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = make_attribs({
         'vtx0': DXFAttr(10, 'Point2D/3D'),
         'vtx1': DXFAttr(11, 'Point2D/3D'),
@@ -216,11 +217,11 @@ class Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
 
 
 class Solid(Trace):
-    TEMPLATE = _TRACE_TPL.replace('TRACE', 'SOLID')
+    TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL.replace('TRACE', 'SOLID'))
 
 
 class Face(Trace):
-    TEMPLATE = _TRACE_TPL.replace('TRACE', '3DFACE')
+    TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL.replace('TRACE', '3DFACE'))
     DXFATTRIBS = make_attribs({
         'vtx0': DXFAttr(10, 'Point2D/3D'),
         'vtx1': DXFAttr(11, 'Point2D/3D'),
@@ -269,7 +270,7 @@ STANDARD
 
 
 class Text(GraphicEntity, ColorMixin):
-    TEMPLATE = _TEXT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40,  None),
@@ -345,7 +346,7 @@ BLOCKNAME
 
 
 class Block(GraphicEntity):
-    TEMPLATE = _BLOCK_TPL
+    TEMPLATE = ClassifiedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = make_attribs({
         'name': DXFAttr(2, None),
         'name2': DXFAttr(3, None),
@@ -356,7 +357,7 @@ class Block(GraphicEntity):
 
 
 class EndBlk(GraphicEntity):
-    TEMPLATE = "  0\nENDBLK\n  5\n0\n"
+    TEMPLATE = ClassifiedTags.from_text("  0\nENDBLK\n  5\n0\n")
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {'handle': DXFAttr(5, None)}))
 
 _INSERT_TPL = """  0
@@ -388,7 +389,7 @@ BLOCKNAME
 
 
 class Insert(GraphicEntity):
-    TEMPLATE = _INSERT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = make_attribs({
         'attribsfollow': DXFAttr(66, None),
         'name': DXFAttr(2, None),
@@ -465,7 +466,7 @@ class Insert(GraphicEntity):
 
 
 class SeqEnd(GraphicEntity):
-    TEMPLATE = "  0\nSEQEND\n  5\n0\n"
+    TEMPLATE = ClassifiedTags.from_text("  0\nSEQEND\n  5\n0\n")
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5, None),
         'paperspace': DXFAttr(67, None),
@@ -519,7 +520,7 @@ STANDARD
 
 
 class Attdef(GraphicEntity):
-    TEMPLATE = _ATTDEF_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40, None),
@@ -584,7 +585,7 @@ STANDARD
 
 
 class Attrib(GraphicEntity):
-    TEMPLATE = _ATTRIB_TPL
+    TEMPLATE = ClassifiedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
         'height': DXFAttr(40, None),
@@ -622,7 +623,7 @@ POLYLINE
 
 
 class Polyline(GraphicEntity, ColorMixin):
-    TEMPLATE = _POLYLINE_TPL
+    TEMPLATE = ClassifiedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = make_attribs({
         'elevation': DXFAttr(10, 'Point2D/3D'),
         'flags': DXFAttr(70, None),
@@ -785,7 +786,7 @@ VERTEX
 
 
 class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
-    TEMPLATE = _VERTEX_TPL
+    TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, 'Point2D/3D'),
         'startwidth': DXFAttr(40, None),
@@ -833,7 +834,7 @@ MVIEW
 
 
 class Viewport(GraphicEntity):
-    TEMPLATE = _VPORT_TPL
+    TEMPLATE = ClassifiedTags.from_text(_VPORT_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         # center point of entity in paper space coordinates)
@@ -907,7 +908,7 @@ DIMSTYLE
 
 
 class Dimension(GraphicEntity):
-    TEMPLATE = _DIMENSION_TPL
+    TEMPLATE = ClassifiedTags.from_text(_DIMENSION_TPL)
     DXFATTRIBS = make_attribs({
         'geometry': DXFAttr(2, None),
         # name of pseudo-Block containing the current dimension  entity geometry
