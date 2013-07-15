@@ -106,7 +106,7 @@ class BlockLayout(DXF12BlockLayout, EntityCreator):
         if isinstance(entity, ClassifiedTags):
             entity = self._dxffactory.wrap_entity(entity)
         entity.dxf.owner = self.get_block_record_handle()
-        self._entityspace.add(entity)
+        self._entityspace.append(entity.dxf.handle)
 
     def get_block_record_handle(self):
         return self.block.dxf.owner

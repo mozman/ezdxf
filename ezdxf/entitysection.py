@@ -52,7 +52,8 @@ class EntitySection(object):
             return
 
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
-            self._entityspace.add(ClassifiedTags(group))
+            ctags = ClassifiedTags(group)
+            self._entityspace.add_tags_to_entitydb_and_append_handle(ctags)
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

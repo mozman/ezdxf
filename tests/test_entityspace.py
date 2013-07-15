@@ -20,7 +20,7 @@ class TestEntitySpace(unittest.TestCase):
 
     def test_add(self):
         for group in TagGroups.from_text(TESTENTITIES):
-            self.space.add(group)
+            self.space.add_tags_to_entitydb_and_append_handle(group)
         self.assertEqual(4, len(self.space))
 
 

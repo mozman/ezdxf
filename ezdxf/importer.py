@@ -216,7 +216,6 @@ def _cleanup_block_record(block_record):
         # strip preview image and save space
         subclass = block_record.tags.get_subclass('AcDbBlockTableRecord')
         remove_tags(subclass, 310)
-    return
 
 def _get_layout_block_names(dwg):
     def get_block_record_name(layout):
