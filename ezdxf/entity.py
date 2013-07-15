@@ -14,41 +14,24 @@ class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
 
     """
-    __slots__ = ('wrapper', )
+    __slots__ = ('_setter', '_getter')
 
     def __init__(self, wrapper):
-        self.wrapper = wrapper
-
-    def get(self, key, default=ValueError):
-        """
-        GenericWrapper.dxf.get('DXF_ATTRIBUTE_NAME') - raises ValueError, if not exists
-        GenericWrapper.dxf.get('DXF_ATTRIBUTE_NAME', defaultvalue)
-
-        """
-        return self.wrapper.get_dxf_attrib(key, default)
-
-    def set(self, key, value):
-        """ GenericWrapper.dxf.set('DXF_ATTRIBUTE_NAME', value) """
-        self.wrapper.set_dxf_attrib(key, value)
+        self._getter = wrapper.get_dxf_attrib
+        self._setter = wrapper.set_dxf_attrib
 
     def __getattr__(self, key):
-        """ GenericWrapper.dxf.DXF_ATTRIBUTE_NAME """
-        return self.wrapper.get_dxf_attrib(key)
+        """GenericWrapper.dxf.DXF_ATTRIBUTE_NAME
+        """
+        return self._getter(key)
 
     def __setattr__(self, key, value):
-        """ GenericWrapper.dxf.DXF_ATTRIBUTE_NAME = value """
+        """GenericWrapper.dxf.DXF_ATTRIBUTE_NAME = value
+        """
         if key in self.__slots__:
             super(DXFNamespace, self).__setattr__(key, value)
         else:
-            self.wrapper.set_dxf_attrib(key, value)
-
-    def clone(self):
-        """ GenericWrapper.dxf.clone(): Clone existing dxf attribs as dict. """
-        return self.wrapper.clone_dxf_attribs()
-
-    def update(self, attribs):
-        """ GenericWrapper.dxf.update(dxfattribs): Update dxf attribs from dict. """
-        return self.wrapper.update_dxf_attribs(attribs)
+            self._setter(key, value)
 
 
 # noinspection PyUnresolvedReferences

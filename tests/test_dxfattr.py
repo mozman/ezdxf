@@ -88,9 +88,6 @@ class TestAttributeAccess(unittest.TestCase):
         self.entity.dxf.layer = 'LAYER'
         self.assertEqual('LAYER', self.entity.dxf.layer)
 
-    def test_get_new_from_AcDbEntity_subclass(self):
-        self.assertEqual(7, self.entity.dxf.get('color', 7))
-
     def test_set_new_to_AcDbEntity_subclass(self):
         self.entity.dxf.color = 7
         self.assertEqual(7, self.entity.dxf.color)
