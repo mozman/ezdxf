@@ -33,7 +33,8 @@ class BlocksSection(object):
             head_handle = add_tags(next(iterentities))
             block = self._dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in iterentities:
-                block.add_entity(entity)
+                handle = add_tags(entity)
+                block.add_handle(handle)
             return block
 
         assert tags[0] == (0, 'SECTION')

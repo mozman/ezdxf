@@ -16,17 +16,11 @@ class EntitySpace(list):
     def __init__(self, entitydb):
         self._entitydb = entitydb
 
-    def add(self, entity):
-        if hasattr(entity, 'get_handle'):
-            try:
-                handle = entity.get_handle()
-            except ValueError:
-                handle = self._entitydb.handles.next()
-            tags = entity
-        else:
-            handle = entity.dxf.handle
-            tags = entity.tags
-        # always add entity to database
+    def add_tags_to_entitydb_and_append_handle(self, tags):
+        try:
+            handle = tags.get_handle()
+        except ValueError:
+            handle = self._entitydb.handles.next()
         self._entitydb[handle] = tags
         self.append(handle)
 

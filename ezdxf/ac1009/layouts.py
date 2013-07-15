@@ -204,7 +204,12 @@ class DXF12BlockLayout(BaseLayout):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
-        self._entityspace.add(entity)
+        self._entityspace.append(entity.dxf.handle)
+
+    def add_handle(self, handle):
+        """ Add entity by handle to the block entity space.
+        """
+        self._entityspace.append(handle)
 
     def write(self, stream):
         def write_tags(handle):
