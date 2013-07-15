@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ..tags import DXFTag
+from ..classifiedtags import ClassifiedTags
 from ..ac1009 import tableentries as ac1009
 from ..entity import GenericWrapper
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
@@ -55,7 +56,7 @@ layer_subclass = DefSubclass('AcDbLayerTableRecord', {
 
 
 class Layer(ac1009.Layer):
-    TEMPLATE = _LAYERTEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_LAYERTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, layer_subclass)
 
     @classmethod
@@ -105,7 +106,7 @@ style_subclass = DefSubclass('AcDbTextStyleTableRecord', {
 
 
 class Style(ac1009.Style):
-    TEMPLATE = _STYLETEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_STYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, style_subclass)
 
 _LTYPETEMPLATE = """  0
@@ -134,7 +135,7 @@ linetype_subclass = DefSubclass('AcDbLinetypeTableRecord', {
 
 
 class Linetype(ac1009.Linetype):
-    TEMPLATE = _LTYPETEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
     def _setup_pattern(self, pattern):
@@ -166,7 +167,7 @@ appid_subclass = DefSubclass('AcDbRegAppTableRecord', {
 
 
 class AppID(ac1009.AppID):
-    TEMPLATE = _APPIDTEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, appid_subclass)
 
 _DIMSTYLETEMPLATE = """  0
@@ -311,7 +312,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
 
 
 class DimStyle(ac1009.DimStyle):
-    TEMPLATE = _DIMSTYLETEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
 
 _UCSTEMPLATE = """  0
@@ -355,7 +356,7 @@ ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
 
 
 class UCS(ac1009.UCS):
-    TEMPLATE = _UCSTEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, ucs_subclass)
 
 _VIEWTEMPLATE = """  0
@@ -418,7 +419,7 @@ view_subclass = DefSubclass('AcDbViewTableRecord', {
 
 
 class View(ac1009.View):
-    TEMPLATE = _VIEWTEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, view_subclass)
 
 _VPORTTEMPLATE = """  0
@@ -532,7 +533,7 @@ vport_subclass = DefSubclass('AcDbViewportTableRecord', {
 
 
 class Viewport(ac1009.Viewport):
-    TEMPLATE = _VPORTTEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
 
 _BLOCKRECORDTEMPLATE = """  0
@@ -563,5 +564,5 @@ class BlockRecord(GenericWrapper):
     owner: Soft-pointer ID/handle to owner object
     layout: Hard-pointer ID/handle to associated LAYOUT object
     """
-    TEMPLATE = _BLOCKRECORDTEMPLATE
+    TEMPLATE = ClassifiedTags.from_text(_BLOCKRECORDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, blockrec_subclass)

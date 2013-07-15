@@ -12,31 +12,28 @@ from .classifiedtags import ClassifiedTags
 
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
-
     """
     __slots__ = ('_setter', '_getter')
 
     def __init__(self, wrapper):
-        self._getter = wrapper.get_dxf_attrib
-        self._setter = wrapper.set_dxf_attrib
+        # because overwritten __setattr__ does not set _getter and _setter
+        super(DXFNamespace, self).__setattr__('_getter', wrapper.get_dxf_attrib)
+        super(DXFNamespace, self).__setattr__('_setter', wrapper.set_dxf_attrib)
 
-    def __getattr__(self, key):
-        """GenericWrapper.dxf.DXF_ATTRIBUTE_NAME
+    def __getattr__(self, attrib):
+        """Returns value of DXF attribute *attrib*. usage: value = GenericWrapper.dxf.attrib
         """
-        return self._getter(key)
+        return self._getter(attrib)
 
-    def __setattr__(self, key, value):
-        """GenericWrapper.dxf.DXF_ATTRIBUTE_NAME = value
+    def __setattr__(self, attrib, value):
+        """Set DXF attribute *attrib* to *value.  usage: GenericWrapper.dxf.attrib = value
         """
-        if key in self.__slots__:
-            super(DXFNamespace, self).__setattr__(key, value)
-        else:
-            self._setter(key, value)
+        self._setter(attrib, value)
 
 
 # noinspection PyUnresolvedReferences
 class GenericWrapper(object):
-    TEMPLATE = ""
+    TEMPLATE = None
     DXFATTRIBS = {}
 
     def __init__(self, tags):
@@ -45,9 +42,9 @@ class GenericWrapper(object):
 
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
-        if cls.TEMPLATE == "":
+        if cls.TEMPLATE is None:
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
-        entity = cls(ClassifiedTags.from_text(cls.TEMPLATE))
+        entity = cls(cls.TEMPLATE.clone())
         entity.dxf.handle = handle
         if dxfattribs is not None:
             entity.update_dxf_attribs(dxfattribs)
@@ -67,23 +64,29 @@ class GenericWrapper(object):
         return key in self.DXFATTRIBS
 
     def get_dxf_attrib(self, key, default=ValueError):
-        if key in self.DXFATTRIBS:
-            try:
-                dxfattr = self.DXFATTRIBS[key]
-                return self._get_dxf_attrib(dxfattr)
-            except ValueError:
-                if default is ValueError:
-                    raise ValueError("DXFAttrib '%s' does not exist." % key)
-                else:
-                    return default
-        else:
+        try:
+            dxfattr = self.DXFATTRIBS[key]
+            return self._get_dxf_attrib(dxfattr)
+        except KeyError:
             raise AttributeError(key)
+        except ValueError:
+            if default is ValueError:
+                raise ValueError("DXFAttrib '%s' does not exist." % key)
+            else:
+                return default
 
     def set_dxf_attrib(self, key, value):
-        if key in self.DXFATTRIBS:
-            self._set_dxf_attrib(key, value)
-        else:
+        try:
+            dxfattr = self.DXFATTRIBS[key]
+        except KeyError:
             raise AttributeError(key)
+        # no subclass is subclass index 0
+        subclasstags = self.tags.subclasses[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            tags = DXFExtendedPointType(subclasstags)
+            tags.set_value(dxfattr.code, dxfattr.xtype, value)
+        else:
+            self._set_tag(subclasstags, dxfattr.code, value)
 
     def clone_dxf_attribs(self):
         dxfattribs = {}
@@ -96,7 +99,7 @@ class GenericWrapper(object):
 
     def update_dxf_attribs(self, dxfattribs):
         for key, value in dxfattribs.items():
-            self._set_dxf_attrib(key, value)
+            self.set_dxf_attrib(key, value)
 
     def _get_dxf_attrib(self, dxfattr):
         # no subclass is subclass index 0
@@ -110,16 +113,6 @@ class GenericWrapper(object):
     def _get_extended_type(self, code, xtype):
         tags = DXFExtendedPointType(self.tags)
         return tags.get_value(code, xtype)
-
-    def _set_dxf_attrib(self, key, value):
-        dxfattr = self.DXFATTRIBS[key]
-        # no subclass is subclass index 0
-        subclasstags = self.tags.subclasses[dxfattr.subclass]
-        if dxfattr.xtype is not None:
-            tags = DXFExtendedPointType(subclasstags)
-            tags.set_value(dxfattr.code, dxfattr.xtype, value)
-        else:
-            self._set_tag(subclasstags, dxfattr.code, value)
 
     def _set_extended_type(self, code, xtype, value):
         tags = DXFExtendedPointType(self.tags)
