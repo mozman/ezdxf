@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .creator import GraphicsFactory
+from .graphicsfactory import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
 
@@ -38,50 +38,25 @@ class BaseLayout(GraphicsFactory):
         super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
 
-    def _create(self, type_, dxfattribs):
+    def build_and_add_entity(self, type_, dxfattribs):
         """ Create entity in drawing database and add entity to the entity space.
+
+        :param str type_: DXF type string, like 'LINE', 'CIRCLE' or 'LWPOLYLINE'
+        :param dict dxfattribs: DXF attributes for the new entity
         """
-        entity = self._build_entity(type_, dxfattribs)
+        entity = self.build_entity(type_, dxfattribs)
         self.add_entity(entity)
         return entity
 
-    def _build_entity(self, type_, dxfattribs):
+    def build_entity(self, type_, dxfattribs):
         """ Create entity in drawing database, returns a wrapper class inherited from GraphicEntity().
+
+        :param str type_: DXF type string, like 'LINE', 'CIRCLE' or 'LWPOLYLINE'
+        :param dict dxfattribs: DXF attributes for the new entity
         """
         entity = self._dxffactory.create_db_entry(type_, dxfattribs)
         self._set_paperspace(entity)
         return entity
-
-    def _set_paperspace(self, entity):
-        pass
-
-    def _get_entity_by_handle(self, handle):
-        """ Get entity by handle as GraphicEntity() or inherited.
-        """
-        entity = self._dxffactory.wrap_handle(handle)
-        entity.set_layout(self)
-        return entity
-
-    def _get_entity_at_index(self, index):
-        """ Get entity at position index as GraphicEntity() or inherited.
-        """
-        return self._get_entity_by_handle(self._entityspace[index])
-
-    def _get_index(self, entity):
-        """ Get position/index of entity in entity space.
-        """
-        return self._entityspace.index(entity.dxf.handle)
-
-    def _insert_entities(self, index, entities):
-        """ Insert entities to entity space.
-        """
-        handles = [entity.dxf.handle for entity in entities]
-        self._entityspace[index:index] = handles
-
-    def _remove_entities(self, index, count=1):
-        """ Remove entities from entity space.
-        """
-        self._entityspace[index:index + count] = []
 
     def add_entity(self, entity):
         """ Add entity to entity space.
@@ -89,6 +64,37 @@ class BaseLayout(GraphicsFactory):
         self._entityspace.append(entity.dxf.handle)
         entity.set_layout(self)
         self._set_paperspace(entity)
+
+    def _set_paperspace(self, entity):
+        pass
+
+    def get_entity_by_handle(self, handle):
+        """ Get entity by handle as GraphicEntity() or inherited.
+        """
+        entity = self._dxffactory.wrap_handle(handle)
+        entity.set_layout(self)
+        return entity
+
+    def get_entity_at_index(self, index):
+        """ Get entity at position index as GraphicEntity() or inherited.
+        """
+        return self.get_entity_by_handle(self._entityspace[index])
+
+    def get_index_of_entity(self, entity):
+        """ Get position/index of entity in entity space.
+        """
+        return self._entityspace.index(entity.dxf.handle)
+
+    def insert_entities(self, index, entities):
+        """ Insert entities to entity space.
+        """
+        handles = [entity.dxf.handle for entity in entities]
+        self._entityspace[index:index] = handles
+
+    def remove_entities(self, index, count=1):
+        """ Remove entities from entity space.
+        """
+        self._entityspace[index:index + count] = []
 
     # noinspection PyTypeChecker
     def query(self, query='*'):
@@ -128,7 +134,7 @@ class DXF12Layout(BaseLayout):
         """Iterate over all entities in the drawing entity space as wrapped entities.
         """
         for handle in self._entityspace:
-            yield self._get_entity_by_handle(handle)
+            yield self.get_entity_by_handle(handle)
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
@@ -192,7 +198,7 @@ class DXF12BlockLayout(BaseLayout):
             dxfattribs = {}
         dxfattribs['tag'] = tag
         dxfattribs['insert'] = insert
-        return self._create('ATTDEF', dxfattribs)
+        return self.build_and_add_entity('ATTDEF', dxfattribs)
 
     # end of public interface
 

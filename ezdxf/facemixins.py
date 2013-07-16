@@ -39,7 +39,7 @@ class PolyfaceMixin(object):
 
     def append_faces(self, faces, dxfattribs=None):
         def facevertex():
-            vertex = self.layout._build_entity('VERTEX', dxfattribs)
+            vertex = self.layout.build_entity('VERTEX', dxfattribs)
             vertex.dxf.flags = const.VTX_3D_POLYFACE_MESH_VERTEX
             return vertex
 
@@ -54,11 +54,11 @@ class PolyfaceMixin(object):
         def remove_all_vertices():
             startindex, endindex = self._get_index_range()
             if startindex <= endindex:
-                self.layout._remove_entities(startindex, (endindex - startindex) + 1)
+                self.layout.remove_entities(startindex, (endindex - startindex) + 1)
 
         def insert_new_vertices(vertices):
-            index = self.layout._get_index(self) + 1
-            self.layout._insert_entities(index, vertices)
+            index = self.layout.get_index_of_entity(self) + 1
+            self.layout.insert_entities(index, vertices)
 
         facebuilder = FaceBuilder(faces)
         remove_all_vertices()
