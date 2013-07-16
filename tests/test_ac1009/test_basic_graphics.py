@@ -125,7 +125,7 @@ class TestBlock(SetupDrawing):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         ref.add_attrib('TEST1', 'text1', (0, 0))
         ref.add_attrib('TEST2', 'text2', (0, 0))
-        entity = self.layout._get_entity_at_index(-1)
+        entity = self.layout.get_entity_at_index(-1)
         self.assertEqual('SEQEND', entity.dxftype())
 
 if __name__ == '__main__':

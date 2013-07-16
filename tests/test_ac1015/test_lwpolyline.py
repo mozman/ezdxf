@@ -18,7 +18,7 @@ class TestLWPolyline(unittest.TestCase):
     def test_new_line(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
-        self.assertEqual(points, list(line.points))
+        self.assertEqual(points, list(line.points()))
         self.assertEqual(3, len(line))
 
     def test_getitem_first(self):
