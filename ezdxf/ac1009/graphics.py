@@ -66,8 +66,8 @@ class GraphicEntity(GenericWrapper):
     """
     DXFATTRIBS = make_attribs()
 
-    def set_builder(self, builder):
-        self._builder = builder
+    def set_layout(self, layout):
+        self.layout = layout
 
 
 _LINE_TPL = """  0
@@ -407,13 +407,13 @@ class Insert(GraphicEntity):
     def __iter__(self):
         def get_entity(index):
             try:
-                return self._builder._get_entity_at_index(index)
+                return self.layout._get_entity_at_index(index)
             except IndexError:
                 raise DXFStructureError('expected following ATTRIB or SEQEND, reached end of layout instead.')
 
         if self.dxf.attribsfollow == 0:
             return
-        index = self._builder._get_index(self) + 1
+        index = self.layout._get_index(self) + 1
         while True:
             entity = get_entity(index)
             dxftype = entity.dxftype()
@@ -437,14 +437,14 @@ class Insert(GraphicEntity):
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
-        attrib_entity = self._builder._build_entity('ATTRIB', dxfattribs)
+        attrib_entity = self.layout._build_entity('ATTRIB', dxfattribs)
         self._append_attrib_entity(attrib_entity)
 
     def _append_attrib_entity(self, entity):
         def find_seqend(pos):
             while True:
                 try:
-                    entity = self._builder._get_entity_at_index(pos)
+                    entity = self.layout._get_entity_at_index(pos)
                 except IndexError:
                     return -1
                 dxftype = entity.dxftype()
@@ -456,13 +456,13 @@ class Insert(GraphicEntity):
                     return -1
 
         entities = [entity]
-        position = self._builder._get_index(self) + 1
+        position = self.layout._get_index(self) + 1
         seqend_position = find_seqend(position)
         if seqend_position < 0:
-            entities.append(self._builder._build_entity('SEQEND', {}))
+            entities.append(self.layout._build_entity('SEQEND', {}))
             seqend_position = position
         self.dxf.attribsfollow = 1
-        self._builder._insert_entities(seqend_position, entities)
+        self.layout._insert_entities(seqend_position, entities)
 
 
 class SeqEnd(GraphicEntity):
@@ -667,12 +667,12 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def __iter__(self):
         """ Iterate over all vertices. """
-        index = self._builder._get_index(self) + 1
-        entity = self._builder._get_entity_at_index(index)
+        index = self.layout._get_index(self) + 1
+        entity = self.layout._get_entity_at_index(index)
         while entity.dxftype() != 'SEQEND':
             yield entity
             index += 1
-            entity = self._builder._get_entity_at_index(index)
+            entity = self.layout._get_entity_at_index(index)
 
     def __getitem__(self, pos):
         return self.vertices()[pos]
@@ -699,19 +699,19 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def _insert_vertices(self, index, points, dxfattribs):
         vertices = self._points_to_vertices(points, dxfattribs)
-        self._builder._insert_entities(index, vertices)
+        self.layout._insert_entities(index, vertices)
 
     def _points_to_vertices(self, points, dxfattribs):
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
         vertices = []
         for point in points:
             dxfattribs['location'] = point
-            vertices.append(self._builder._build_entity('VERTEX', dxfattribs))
+            vertices.append(self.layout._build_entity('VERTEX', dxfattribs))
         return vertices
 
     def delete_vertices(self, pos, count=1):
         index = self._pos_to_index_with_range_check(pos, count)
-        self._builder._remove_entities(index, count)
+        self.layout._remove_entities(index, count)
 
     def _pos_to_index_with_range_check(self, pos, count=1):
         first_vertex_index, last_vertex_index = self._get_index_range()
@@ -724,10 +724,10 @@ class Polyline(GraphicEntity, ColorMixin):
             raise IndexError(repr((pos, count)))
 
     def _get_index_range(self):
-        first_vertex_index = self._builder._get_index(self) + 1
+        first_vertex_index = self.layout._get_index(self) + 1
         last_vertex_index = first_vertex_index
         while True:
-            entity = self._builder._get_entity_at_index(last_vertex_index)
+            entity = self.layout._get_entity_at_index(last_vertex_index)
             if entity.dxftype() == 'SEQEND':
                 return first_vertex_index, last_vertex_index - 1
             last_vertex_index += 1
@@ -743,15 +743,15 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def _get_vertex_at_trusted_position(self, pos):
         # does no index check - for meshes and faces
-        index = self._builder._get_index(self) + 1 + pos
-        return self._builder._get_entity_at_index(index)
+        index = self.layout._get_index(self) + 1 + pos
+        return self.layout._get_entity_at_index(index)
 
 
 class Polyface(Polyline, PolyfaceMixin):
     @staticmethod
     def convert(polyline):
         face = Polyface(polyline.tags)
-        face.set_builder(polyline._builder)
+        face.set_layout(polyline.layout)
         return face
 
         
@@ -759,7 +759,7 @@ class Polymesh(Polyline, PolymeshMixin):
     @staticmethod
     def convert(polyline):
         mesh = Polymesh(polyline.tags)
-        mesh.set_builder(polyline._builder)
+        mesh.set_layout(polyline.layout)
         return mesh
 
 _VERTEX_TPL = """ 0

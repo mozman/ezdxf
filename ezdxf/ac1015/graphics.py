@@ -458,7 +458,7 @@ class Polyface(Polyline, PolyfaceMixin):
     @staticmethod
     def convert(polyline):
         face = Polyface(polyline.tags)
-        face.set_builder(polyline._builder)
+        face.set_layout(polyline.layout)
         return face
 
 
@@ -466,7 +466,7 @@ class Polymesh(Polyline, PolymeshMixin):
     @staticmethod
     def convert(polyline):
         mesh = Polymesh(polyline.tags)
-        mesh.set_builder(polyline._builder)
+        mesh.set_layout(polyline.layout)
         return mesh
 
 _VERTEX_TPL = """ 0
