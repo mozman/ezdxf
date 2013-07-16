@@ -21,7 +21,7 @@ class DXF12Layouts(object):
     def modelspace(self):
         return self._modelspace
 
-    def get(self, name):
+    def get(self, name=""):
         # AC1009 supports only one paperspace/layout
         return self._paperspace
 
@@ -38,6 +38,20 @@ class BaseLayout(EntityCreator):
         super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
 
+    def _create(self, type_, dxfattribs):
+        """ Create entity in drawing database and add entity to the entity space.
+        """
+        entity = self._build_entity(type_, dxfattribs)
+        self.add_entity(entity)
+        return entity
+
+    def _build_entity(self, type_, dxfattribs):
+        """ Create entity in drawing database, returns a wrapper class inherited from GraphicEntity().
+        """
+        entity = self._dxffactory.create_db_entry(type_, dxfattribs)
+        self._set_paperspace(entity)
+        return entity
+
     def _set_paperspace(self, entity):
         pass
 
@@ -48,22 +62,10 @@ class BaseLayout(EntityCreator):
         entity.set_builder(self)
         return entity
 
-    def _build_entity(self, type_, dxfattribs):
-        """ Create entity in drawing database, returns a wrapper class inherited from GraphicEntity().
-        """
-        entity = self._dxffactory.create_db_entry(type_, dxfattribs)
-        self._set_paperspace(entity)
-        return entity
-
     def _get_entity_at_index(self, index):
         """ Get entity at position index as GraphicEntity() or inherited.
         """
         return self._get_entity_by_handle(self._entityspace[index])
-
-    def _append_entity(self, entity):
-        """ Append entity to entity space.
-        """
-        self._entityspace.append(entity.dxf.handle)
 
     def _get_index(self, entity):
         """ Get position/index of entity in entity space.
@@ -81,17 +83,10 @@ class BaseLayout(EntityCreator):
         """
         self._entityspace[index:index + count] = []
 
-    def _create(self, type_, dxfattribs):
-        """ Create entity in drawing database and add entity to the entity space.
-        """
-        entity = self._build_entity(type_, dxfattribs)
-        self.add_entity(entity)
-        return entity
-
     def add_entity(self, entity):
         """ Add entity to entity space.
         """
-        self._append_entity(entity)
+        self._entityspace.append(entity.dxf.handle)
         entity.set_builder(self)
         self._set_paperspace(entity)
 
@@ -162,15 +157,13 @@ class DXF12BlockLayout(BaseLayout):
         """ Returns True if block contains entity else False. entity can be an entity handle as string or a wrapped
         dxf entity.
         """
-        try:
+        if hasattr('get_handle', entity):
             handle = entity.get_handle()
-        except AttributeError:
+        elif hasattr('dxf', entity): # it's a wrapped entity
+            handle = entity.dxf.handle
+        else:
             handle = entity
-        try:
-            self._entityspace.index(handle)
-            return True
-        except IndexError:
-            return False
+        return handle in self._entityspace
 
     @property
     def block(self):
