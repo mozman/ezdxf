@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .. import const
 
 
-class EntityCreator(object):
+class GraphicsFactory(object):
     """ Abstract base class for Layout()
     """
     def __init__(self, dxffactory):
@@ -62,7 +62,7 @@ class EntityCreator(object):
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
         blockref = self._create('INSERT', dxfattribs)
-        blockref.set_builder(self)
+        blockref.set_layout(self)
         return blockref
 
     def add_autoblockref(self, name, insert, values, dxfattribs=None):

@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .creator import EntityCreator
+from .creator import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
 
@@ -29,7 +29,7 @@ class DXF12Layouts(object):
         return []
 
 
-class BaseLayout(EntityCreator):
+class BaseLayout(GraphicsFactory):
     """ Base class for DXF12Layout() and DXF12BlockLayout()
 
     Entities are wrapped into class GraphicEntity() or inherited.
@@ -59,7 +59,7 @@ class BaseLayout(EntityCreator):
         """ Get entity by handle as GraphicEntity() or inherited.
         """
         entity = self._dxffactory.wrap_handle(handle)
-        entity.set_builder(self)
+        entity.set_layout(self)
         return entity
 
     def _get_entity_at_index(self, index):
@@ -87,7 +87,7 @@ class BaseLayout(EntityCreator):
         """ Add entity to entity space.
         """
         self._entityspace.append(entity.dxf.handle)
-        entity.set_builder(self)
+        entity.set_layout(self)
         self._set_paperspace(entity)
 
     # noinspection PyTypeChecker
@@ -109,6 +109,7 @@ class DXF12Layout(BaseLayout):
         """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
         """
         for entity in self._iter_all_entities():
+            # entity.dxf.paperspace could be unset -> raises ValueError
             if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
                 yield entity
 
@@ -118,12 +119,13 @@ class DXF12Layout(BaseLayout):
         """
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self._dxffactory.wrap_handle(entity)
+        # entity.dxf.paperspace could be unset -> raises ValueError
         return True if entity.get_dxf_attrib('paperspace', 0) == self._paperspace else False
 
     # end of public interface
 
     def _iter_all_entities(self):
-        """ Iterate over all graphic entities, contained in the drawing entity space.
+        """Iterate over all entities in the drawing entity space as wrapped entities.
         """
         for handle in self._entityspace:
             yield self._get_entity_by_handle(handle)
@@ -136,8 +138,8 @@ class DXF12BlockLayout(BaseLayout):
     """ BlockLayout has the same factory-function as Layout, but is managed
     in the BlocksSection() class. It represents a DXF Block definition.
 
-    _block_handle: db handle to BLOCK entiy
-    _endblk_handle: db handle to ENDBLK entiy
+    _block_handle: db handle to BLOCK entity
+    _endblk_handle: db handle to ENDBLK entity
     _entityspace is the block content
     """
     def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
@@ -154,8 +156,8 @@ class DXF12BlockLayout(BaseLayout):
             yield self._dxffactory.wrap_handle(handle)
 
     def __contains__(self, entity):
-        """ Returns True if block contains entity else False. entity can be an entity handle as string or a wrapped
-        dxf entity.
+        """ Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
+        ClassifiedTags() or a wrapped entity.
         """
         if hasattr('get_handle', entity):
             handle = entity.get_handle()
