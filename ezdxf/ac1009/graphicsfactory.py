@@ -14,7 +14,7 @@ class GraphicsFactory(object):
     def __init__(self, dxffactory):
         self._dxffactory = dxffactory
 
-    def _create(self, type_, dxfattribs):
+    def build_and_add_entity(self, type_, dxfattribs):
         raise NotImplementedError("Abstract method call.")
 
     def add_line(self, start, end, dxfattribs=None):
@@ -22,14 +22,14 @@ class GraphicsFactory(object):
             dxfattribs = {}
         dxfattribs['start'] = start
         dxfattribs['end'] = end
-        return self._create('LINE', dxfattribs)
+        return self.build_and_add_entity('LINE', dxfattribs)
 
     def add_circle(self, center, radius, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
-        return self._create('CIRCLE', dxfattribs)
+        return self.build_and_add_entity('CIRCLE', dxfattribs)
 
     def add_arc(self, center, radius, startangle, endangle, dxfattribs=None):
         if dxfattribs is None:
@@ -38,7 +38,7 @@ class GraphicsFactory(object):
         dxfattribs['radius'] = radius
         dxfattribs['startangle'] = startangle
         dxfattribs['endangle'] = endangle
-        return self._create('ARC', dxfattribs)
+        return self.build_and_add_entity('ARC', dxfattribs)
 
     def add_solid(self, points, dxfattribs=None):
         return self._add_quadrilateral('SOLID', points, dxfattribs)
@@ -54,14 +54,14 @@ class GraphicsFactory(object):
             dxfattribs = {}
         dxfattribs['text'] = text
         dxfattribs.setdefault('insert', (0, 0))
-        return self._create('TEXT', dxfattribs)
+        return self.build_and_add_entity('TEXT', dxfattribs)
 
     def add_blockref(self, name, insert, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
-        blockref = self._create('INSERT', dxfattribs)
+        blockref = self.build_and_add_entity('INSERT', dxfattribs)
         blockref.set_layout(self)
         return blockref
 
@@ -98,13 +98,13 @@ class GraphicsFactory(object):
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
-        return self._create('ATTRIB', dxfattribs)
+        return self.build_and_add_entity('ATTRIB', dxfattribs)
 
     def add_polyline2d(self, points, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         closed = dxfattribs.pop('closed', False)
-        polyline = self._create('POLYLINE', dxfattribs)
+        polyline = self.build_and_add_entity('POLYLINE', dxfattribs)
         polyline.close(closed)
         dxfattribs = {'flags': polyline.get_vertex_flags()}
         for point in points:
@@ -123,10 +123,10 @@ class GraphicsFactory(object):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['location'] = location
-        return self._create('VERTEX', dxfattribs)
+        return self.build_and_add_entity('VERTEX', dxfattribs)
 
     def add_seqend(self):
-        return self._create('SEQEND', {})
+        return self.build_and_add_entity('SEQEND', {})
 
     def add_polymesh(self, size=(3, 3), dxfattribs=None):
         def append_null_points(count, vtxflags):
@@ -142,7 +142,7 @@ class GraphicsFactory(object):
         dxfattribs['ncount'] = nsize
         mclose = dxfattribs.pop('mclose', False)
         nclose = dxfattribs.pop('nclose', False)
-        polymesh = self._create('POLYLINE', dxfattribs)
+        polymesh = self.build_and_add_entity('POLYLINE', dxfattribs)
         vtxflags = { 'flags': polymesh.get_vertex_flags() }
         append_null_points(msize * nsize, vtxflags)
         self.add_seqend()
@@ -155,7 +155,7 @@ class GraphicsFactory(object):
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
         mclose = dxfattribs.pop('mclose', False)
         nclose = dxfattribs.pop('nclose', False)
-        polyface = self._create('POLYLINE', dxfattribs)
+        polyface = self.build_and_add_entity('POLYLINE', dxfattribs)
         self.add_seqend()
         polyface.close(mclose, nclose)
         return polyface.cast()
@@ -163,7 +163,7 @@ class GraphicsFactory(object):
     def _add_quadrilateral(self, type_, points, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
-        entity = self._create(type_, dxfattribs)
+        entity = self.build_and_add_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
             entity[x] = point
         return entity

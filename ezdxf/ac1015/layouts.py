@@ -8,7 +8,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .creator import EntityCreator
+from .graphicsfactory import GraphicsFactoryAC1015
 from ..ac1009.layouts import DXF12Layout, DXF12BlockLayout
 from ..classifiedtags import ClassifiedTags
 
@@ -54,7 +54,7 @@ class Layouts(object):
         return [name for order, name in sorted(names)]
 
 
-class Layout(DXF12Layout, EntityCreator):
+class Layout(DXF12Layout, GraphicsFactoryAC1015):
     """ Layout representation
     """
     def __init__(self, drawing, layout_handle):
@@ -98,7 +98,7 @@ class Layout(DXF12Layout, EntityCreator):
         entity.dxf.owner = self._block_record_handle
 
 
-class BlockLayout(DXF12BlockLayout, EntityCreator):
+class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
