@@ -12,12 +12,14 @@ import unittest
 
 from ezdxf.ac1009.layouts import BaseLayout
 
+class DXFNameSpace:
+    def __init__(self, handle):
+        self.handle = handle
+
 class Entity:
     def __init__(self, handle):
+        self.dxf = DXFNameSpace(handle)
         self._handle = handle
-
-    def handle(self):
-        return self._handle
 
     def set_builder(self, builder):
         pass
@@ -89,11 +91,11 @@ class TestAbstractLayout(unittest.TestCase):
 
     def test_get_entity(self):
         entity = self.host._get_entity_at_index(7)
-        self.assertEqual(7, entity.handle())
+        self.assertEqual(7, entity.dxf.handle)
 
     def test_build_entity(self):
         entity = self.host._build_entity('TEST', {})
-        self.assertEqual('TEST', entity.handle())
+        self.assertEqual('TEST', entity.dxf.handle)
         self.assertTrue(self.host.paperspace)
 
 

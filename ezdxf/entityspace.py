@@ -16,13 +16,17 @@ class EntitySpace(list):
     def __init__(self, entitydb):
         self._entitydb = entitydb
 
-    def add_tags_to_entitydb_and_append_handle(self, tags):
+    def store_tags(self, tags):
+        handle = self.link_tags(tags)
+        self._entitydb[handle] = tags
+
+    def link_tags(self, tags):
         try:
             handle = tags.get_handle()
         except ValueError:
             handle = self._entitydb.handles.next()
-        self._entitydb[handle] = tags
         self.append(handle)
+        return handle
 
     def write(self, stream):
         for handle in self:
