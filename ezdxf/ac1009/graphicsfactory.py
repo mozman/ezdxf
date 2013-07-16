@@ -116,8 +116,7 @@ class GraphicsFactory(object):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
-        polyline = self.add_polyline2d(points, dxfattribs)
-        return polyline
+        return self.add_polyline2d(points, dxfattribs)
 
     def add_vertex(self, location, dxfattribs=None):
         if dxfattribs is None:

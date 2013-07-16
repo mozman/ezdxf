@@ -616,16 +616,14 @@ class LWPolyline(ac1009.GraphicEntity):
                 point.append(tag)
         if point:
             yield tuple(point)
-            
-    @property        
+
     def points(self):
-        for point in self:
-            yield (point[0].value, point[1].value)
-            
+        return ((point[0].value, point[1].value) for point in self)
+
     def __getitem__(self, index):
         if index < 0:
             index += self.dxf.count
-        for x, point in enumerate(self.points):
+        for x, point in enumerate(self.points()):
             if x == index:
                 return point
         raise IndexError(index)

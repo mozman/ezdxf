@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from ..tags import DXFStructureError
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..entity import GenericWrapper, DXFExtendedPointType
+from ..entity import GenericWrapper
 from .. import const
 from ..const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin
@@ -678,7 +678,7 @@ class Polyline(GraphicEntity, ColorMixin):
         return self.vertices()[pos]
 
     def points(self):
-        return [vertex.dxf.location for vertex in self]
+        return (vertex.dxf.location for vertex in self)
 
     def vertices(self):
         return list(self)
