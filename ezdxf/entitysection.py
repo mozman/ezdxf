@@ -7,10 +7,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
 
-from .tags import TagGroups, DXFStructureError
+from .tags import TagGroups
 from .classifiedtags import ClassifiedTags
 from .entityspace import EntitySpace
-from .dxfobjects import DXFDictionary
 from .query import EntityQuery
 
 class EntitySection(object):
@@ -52,8 +51,7 @@ class EntitySection(object):
             return
 
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
-            ctags = ClassifiedTags(group)
-            self._entityspace.add_tags_to_entitydb_and_append_handle(ctags)
+            self._entityspace.store_tags(ClassifiedTags(group))
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

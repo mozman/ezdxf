@@ -63,17 +63,17 @@ class BaseLayout(EntityCreator):
     def _append_entity(self, entity):
         """ Append entity to entity space.
         """
-        self._entityspace.append(entity.handle())
+        self._entityspace.append(entity.dxf.handle)
 
     def _get_index(self, entity):
         """ Get position/index of entity in entity space.
         """
-        return self._entityspace.index(entity.handle())
+        return self._entityspace.index(entity.dxf.handle)
 
     def _insert_entities(self, index, entities):
         """ Insert entities to entity space.
         """
-        handles = [entity.handle() for entity in entities]
+        handles = [entity.dxf.handle for entity in entities]
         self._entityspace[index:index] = handles
 
     def _remove_entities(self, index, count=1):

@@ -107,7 +107,7 @@ class Importer(object):
 
         def import_block_entities(source_block_layout, target_block_layout):
             for entity in source_block_layout:
-                target_handle = self.import_tags(entity.handle())
+                target_handle = self.import_tags(entity.dxf.handle)
                 new_entity = self.target.dxffactory.wrap_handle(target_handle)
                 target_block_layout.add_entity(new_entity)
                 if new_entity.dxftype() == 'INSERT':  # maybe a reference to a renamed block
