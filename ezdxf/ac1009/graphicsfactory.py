@@ -31,13 +31,13 @@ class GraphicsFactory(object):
         dxfattribs['radius'] = radius
         return self.build_and_add_entity('CIRCLE', dxfattribs)
 
-    def add_arc(self, center, radius, startangle, endangle, dxfattribs=None):
+    def add_arc(self, center, radius, start_angle, end_angle, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
-        dxfattribs['startangle'] = startangle
-        dxfattribs['endangle'] = endangle
+        dxfattribs['start_angle'] = start_angle
+        dxfattribs['end_angle'] = end_angle
         return self.build_and_add_entity('ARC', dxfattribs)
 
     def add_solid(self, points, dxfattribs=None):
@@ -65,7 +65,7 @@ class GraphicsFactory(object):
         blockref.set_layout(self)
         return blockref
 
-    def add_autoblockref(self, name, insert, values, dxfattribs=None):
+    def add_auto_blockref(self, name, insert, values, dxfattribs=None):
         def get_dxfattribs(attdef):
             dxfattribs = attdef.clone_dxf_attribs()
             dxfattribs.pop('prompt', None)
@@ -135,28 +135,28 @@ class GraphicsFactory(object):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
-        msize = max(size[0], 2)
-        nsize = max(size[1], 2)
-        dxfattribs['mcount'] = msize
-        dxfattribs['ncount'] = nsize
-        mclose = dxfattribs.pop('mclose', False)
-        nclose = dxfattribs.pop('nclose', False)
+        m_size = max(size[0], 2)
+        n_size = max(size[1], 2)
+        dxfattribs['m_count'] = m_size
+        dxfattribs['n_count'] = n_size
+        m_close = dxfattribs.pop('m_close', False)
+        n_close = dxfattribs.pop('n_close', False)
         polymesh = self.build_and_add_entity('POLYLINE', dxfattribs)
         vtxflags = { 'flags': polymesh.get_vertex_flags() }
-        append_null_points(msize * nsize, vtxflags)
+        append_null_points(m_size * n_size, vtxflags)
         self.add_seqend()
-        polymesh.close(mclose, nclose)
+        polymesh.close(m_close, n_close)
         return polymesh.cast()
 
     def add_polyface(self, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
-        mclose = dxfattribs.pop('mclose', False)
-        nclose = dxfattribs.pop('nclose', False)
+        m_close = dxfattribs.pop('m_close', False)
+        n_close = dxfattribs.pop('n_close', False)
         polyface = self.build_and_add_entity('POLYLINE', dxfattribs)
         self.add_seqend()
-        polyface.close(mclose, nclose)
+        polyface.close(m_close, n_close)
         return polyface.cast()
 
     def _add_quadrilateral(self, type_, points, dxfattribs=None):

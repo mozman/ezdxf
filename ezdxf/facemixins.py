@@ -18,11 +18,11 @@ class PolymeshMixin(object):
         vertex.update_dxf_attribs(dxfattribs)
 
     def get_mesh_vertex(self, pos):
-        mcount = self.dxf.mcount
-        ncount = self.dxf.ncount
+        m_count = self.dxf.m_count
+        n_count = self.dxf.n_count
         m, n = pos
-        if 0 <= m < mcount and 0 <= n < ncount:
-            pos = m * ncount + n
+        if 0 <= m < m_count and 0 <= n < n_count:
+            pos = m * n_count + n
             return self._get_vertex_at_trusted_position(pos)
         else:
             raise IndexError(repr(pos))
@@ -66,8 +66,8 @@ class PolyfaceMixin(object):
         self.update_count(facebuilder.nvertices, facebuilder.nfaces)
 
     def update_count(self, nvertices, nfaces):
-        self.dxf.mcount = nvertices
-        self.dxf.ncount = nfaces
+        self.dxf.m_count = nvertices
+        self.dxf.n_count = nfaces
 
     def faces(self):
         """ Iterate over all faces, a face is a tuple of vertices.

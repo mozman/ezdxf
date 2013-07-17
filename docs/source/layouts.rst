@@ -38,10 +38,10 @@ Create new drawing entities
    Add a :class:`Circle` element, `center` is 2D/3D point, `radius` in drawing
    units.
 
-.. method:: Layout.add_arc(center, radius, startangle, endangle, dxfattribs={})
+.. method:: Layout.add_arc(center, radius, start_angle, end_angle, dxfattribs={})
 
    Add an :class:`Arc` element, `center` is 2D/3D point, `radius` in drawing
-   units, `startangle` and `endangle` in degrees.
+   units, `start_angle` and `end_angle` in degrees.
 
 .. method:: Layout.add_solid(points, dxfattribs={})
 
@@ -64,7 +64,7 @@ Create new drawing entities
    Add an :class:`Insert` element, `name` is the block name, `insert` is a
    2D/3D point.
 
-.. method:: Layout.add_autoblockref(name, insert, values, dxfattribs={})
+.. method:: Layout.add_auto_blockref(name, insert, values, dxfattribs={})
 
    Add an :class:`Insert` element, `name` is the block name, `insert` is a
    2D/3D point. Add :class:`Attdef`, defined in the block definition,

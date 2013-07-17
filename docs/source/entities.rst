@@ -19,6 +19,18 @@ Common Base Class
 
    (read only) Get the entity handle. (feature for experts)
 
+.. attribute:: layout
+
+   (read only) Get the associated layout.
+
+.. attribute:: drawing
+
+   (read only) Get the associated drawing.
+
+.. attribute:: dxffactory
+
+   (read only) Get the associated DXF factory. (feature for experts)
+
 .. method:: get_dxf_attrib(key, default=ValueError)
 
    Get DXF attribute *key*, returns *default* if key doesn't exist, or raise :class:`ValueError` if *default* is
@@ -127,21 +139,21 @@ radius      R12     radius of circle (float)
 =========== ======= ===========
 
 Arc
-===
+====
 
 .. class:: Arc
 
    An arc at location *center* and *radius* from *startangle* to *endangle*, *dxftype* is ``ARC``.
    Create arcs in layouts and blocks by factory function :meth:`~Layout.add_arc`.
 
-=========== ======= ===========
-DXFAttr     Version Description
-=========== ======= ===========
-center      R12     center point of arc (2D/3D Point)
-radius      R12     radius of arc (float)
-startangle  R12     start angle in degrees (float)
-endangle    R12     end angle in degrees (float)
-=========== ======= ===========
+============ ======= ===========
+DXFAttr      Version Description
+============ ======= ===========
+center       R12     center point of arc (2D/3D Point)
+radius       R12     radius of arc (float)
+start_angle  R12     start angle in degrees (float)
+end_angle    R12     end angle in degrees (float)
+============ ======= ===========
 
 Text
 ====
@@ -154,26 +166,26 @@ Text
     also DWG are not reliable for exchanging exact styling, they are just reliable for exchanging exact geometry.
     Create text in layouts and blocks by factory function :meth:`~Layout.add_text`.
 
-=================== ======= ===========
-DXFAttr             Version Description
-=================== ======= ===========
-text                R12     the content text itself (str)
-insert              R12     first alignment point of text (2D/3D Point), relevant for the adjustments ``LEFT``,
-                            ``ALIGN`` and ``FIT``.
-alignpoint          R12     second alignment point of text (2D/3D Point), if the justification is anything other than
-                            ``LEFT``, the second alignment point specify also the first alignment
-                            point: (or just the second alignment point for ``ALIGN`` and ``FIT``)
-height              R12     text height in drawing units (float), default is 1
-rotation            R12     text rotation in degrees (float), default is 0
-oblique             R12     text oblique angle (float), default is 0
-style               R12     text style name (str), default is ``STANDARD``
-width               R12     width scale factor (float), default is 1
-halign              R12     horizontal alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`
-valign              R12     vertical alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`
-textgenerationflag  R12     text generation flags (int)
-                             - 2 = text is backward (mirrored in X)
-                             - 4 = text is upside down (mirrored in Y)
-=================== ======= ===========
+===================== ======= ===========
+DXFAttr               Version Description
+===================== ======= ===========
+text                  R12     the content text itself (str)
+insert                R12     first alignment point of text (2D/3D Point), relevant for the adjustments ``LEFT``,
+                              ``ALIGN`` and ``FIT``.
+align_point           R12     second alignment point of text (2D/3D Point), if the justification is anything other than
+                              ``LEFT``, the second alignment point specify also the first alignment
+                              point: (or just the second alignment point for ``ALIGN`` and ``FIT``)
+height                R12     text height in drawing units (float), default is 1
+rotation              R12     text rotation in degrees (float), default is 0
+oblique               R12     text oblique angle (float), default is 0
+style                 R12     text style name (str), default is ``STANDARD``
+width                 R12     width scale factor (float), default is 1
+halign                R12     horizontal alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`
+valign                R12     vertical alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`
+text_generation_flag  R12     text generation flags (int)
+                               - 2 = text is backward (mirrored in X)
+                               - 4 = text is upside down (mirrored in Y)
+===================== ======= ===========
 
 .. method:: Text.set_pos(p1, p2=None, align=None)
 
@@ -232,19 +244,19 @@ Polyline
 
     Create 3D polylines in layouts and blocks by factory function :meth:`~Layout.add_polyline3D`.
 
-=================== ======= ===========
-DXFAttr             Version Description
-=================== ======= ===========
-elevation           R12     elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (2D/3D Point)
-flags               R12     polyline flags (int), see table below
-defaultstartwidth   R12     default line start width (float), default is 0
-defaultendwidth     R12     default line end width (float), default is 0
-mcount              R12     polymesh M vertex count (int)
-ncount              R12     polymesh N vertex count (int)
-msmoothdensity      R12     smooth surface M density (int), default is 0
-nsmoothdensity      R12     smooth surface N density (int), default is 0
-smoothtype          R12     Curves and smooth surface type (int), default is 0, see table below
-=================== ======= ===========
+===================== ======= ===========
+DXFAttr               Version Description
+===================== ======= ===========
+elevation             R12     elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (2D/3D Point)
+flags                 R12     polyline flags (int), see table below
+default_start_width   R12     default line start width (float), default is 0
+default_end_width     R12     default line end width (float), default is 0
+m_count               R12     polymesh M vertex count (int)
+n_count               R12     polymesh N vertex count (int)
+m_smooth_density      R12     smooth surface M density (int), default is 0
+n_smooth_density      R12     smooth surface N density (int), default is 0
+smooth_type           R12     Curves and smooth surface type (int), default is 0, see table below
+===================== ======= ===========
 
 
 ================================== ===== ====================================
@@ -279,15 +291,15 @@ POLYMESH_BEZIER_SURFACE  8      Bezier surface
 
    Returns a string: ``polyline2d``, ``polyline3d``, ``polymesh`` or ``polyface``
 
-.. method:: Polyline.mclose()
+.. method:: Polyline.m_close()
 
    Close mesh in M direction (also closes polylines).
 
-.. method:: Polyline.nclose()
+.. method:: Polyline.n_close()
 
    Close mesh in N direction.
 
-.. method:: Polyline.close(mclose, nclose=False)
+.. method:: Polyline.close(m_close, n_close=False)
 
    Close mesh in M (if *mclose* is *True*) and/or N (if *nclose* is *True*) direction.
 
@@ -306,11 +318,7 @@ POLYMESH_BEZIER_SURFACE  8      Bezier surface
 
 .. method:: Polyline.points()
 
-   Returns the polyline points as list of tuple, not as :class:`Vertex`.
-
-.. method:: Polyline.vertices()
-
-   Returns the polyline vertices as list of :class:`Vertex`.
+   Generator of polyline points as tuple, not as :class:`Vertex`.
 
 .. method:: Polyline.append_vertices(points, dxfattribs=None)
 
@@ -345,8 +353,8 @@ Vertex
 DXFAttr             Version Description
 =================== ======= ===========
 location            R12     vertex location (2D/3D Point)
-startwidth          R12     line segment start width (float), default is 0
-endwidth            R12     line segment end width (float), default is 0
+start_width         R12     line segment start width (float), default is 0
+end_width           R12     line segment end width (float), default is 0
 bulge               R12     Bulge (float), default is 0. The bulge is the tangent of one fourth the included angle for an arc segment, made negative if the arc goes clockwise from the start point to the endpoint. A bulge of 0 indicates a straight segment, and a bulge of 1 is a semicircle.
 flags               R12     vertex flags (int), see table below.
 tangent             R12     curve fit tangent direction (float)

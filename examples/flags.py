@@ -6,8 +6,6 @@
 # Copyright (C) 2010, 2011 Manfred Moitzi
 # License: MIT License
 
-import sys
-import os
 import random
 
 import ezdxf
@@ -15,7 +13,7 @@ import ezdxf
 def get_random_point():
     x = random.randint(-100, 100)
     y = random.randint(-100, 100)
-    return (x, y)
+    return x, y
 
 sample_coords = [get_random_point() for x in range(50)]
 
@@ -29,7 +27,7 @@ dwg.layers.create('FLAGS')
 flag = dwg.blocks.new(name='FLAG')
 
 # add dxf entities to the block (the flag)
-# use basepoint = (x, y) to define an other basepoint than (0, 0)
+# use base_point = (x, y) to define an other base_point than (0, 0)
 flag.add_polyline2d(flag_symbol)
 flag.add_circle((0, 0), .4, dxfattribs={'color': 2})
 
@@ -45,7 +43,7 @@ for number, point in enumerate(sample_coords):
         'YPOS': "y = %.3f" % point[1]
     }
     randomscale = 0.5 + random.random() * 2.0
-    modelspace.add_autoblockref('FLAG', point, values, dxfattribs={
+    modelspace.add_auto_blockref('FLAG', point, values, dxfattribs={
         'xscale': randomscale,
         'yscale': randomscale,
         'layer': 'FLAGS',
