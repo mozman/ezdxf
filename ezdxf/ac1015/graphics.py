@@ -202,8 +202,8 @@ arc_subclass = (
         'thickness': DXFAttr(39, None),
     }),
     DefSubclass('AcDbArc', {
-        'startangle': DXFAttr(50, None),
-        'endangle': DXFAttr(51, None),
+        'start_angle': DXFAttr(50, None),
+        'end_angle': DXFAttr(51, None),
         'extrusion': DXFAttr(210, 'Point3D'),
     }),
 )
@@ -372,9 +372,9 @@ text_subclass = (
         'oblique': DXFAttr(51, None),  # in degrees, vertical = 0deg
         'style': DXFAttr(7, None),  # text style
         'width': DXFAttr(41, None),  # width FACTOR!
-        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'text_generation_flag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, None),  # horizontal justification
-        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'align_point': DXFAttr(11, 'Point2D/3D'),
         'thickness': DXFAttr(39, None),
         'extrusion': DXFAttr(210, 'Point3D'),
     }),
@@ -412,13 +412,13 @@ AcDb2dPolyline
 polyline_subclass = DefSubclass('AcDb2dPolyline', {
     'elevation': DXFAttr(10, 'Point3D'),
     'flags': DXFAttr(70, None),
-    'defaultstartwidth': DXFAttr(40, None),
-    'defaultendwidth': DXFAttr(41, None),
-    'mcount': DXFAttr(71, None),
-    'ncount': DXFAttr(72, None),
-    'msmoothdensity': DXFAttr(73, None),
-    'nsmoothdensity': DXFAttr(74, None),
-    'smoothtype': DXFAttr(75, None),
+    'default_start_width': DXFAttr(40, None),
+    'default_end_width': DXFAttr(41, None),
+    'm_count': DXFAttr(71, None),
+    'n_count': DXFAttr(72, None),
+    'm_smooth_density': DXFAttr(73, None),
+    'n_smooth_density': DXFAttr(74, None),
+    'smooth_type': DXFAttr(75, None),
     'thickness': DXFAttr(39, None),
     'extrusion': DXFAttr(210, 'Point3D'),
 })
@@ -502,8 +502,8 @@ vertex_subclass = (
     DefSubclass('AcDbVertex', {}),  # subclasses[2]
     DefSubclass('AcDb2dVertex', {  # subclasses[3]
         'location': DXFAttr(10, 'Point2D/3D'),
-        'startwidth': DXFAttr(40, None),
-        'endwidth': DXFAttr(41, None),
+        'start_width': DXFAttr(40, None),
+        'end_width': DXFAttr(41, None),
         'bulge': DXFAttr(42, None),
         'flags': DXFAttr(70, None),
         'tangent': DXFAttr(50, None),
@@ -662,8 +662,8 @@ block_subclass = (
         'name2': DXFAttr(3, None),
         'description': DXFAttr(4, None),
         'flags': DXFAttr(70, None),
-        'basepoint': DXFAttr(10, 'Point2D/3D'),
-        'xrefpath': DXFAttr(1, None),
+        'base_point': DXFAttr(10, 'Point2D/3D'),
+        'xref_path': DXFAttr(1, None),
     })
 )
 
@@ -726,17 +726,17 @@ BLOCKNAME
 """
 
 insert_subclass = DefSubclass('AcDbBlockReference', {
-    'attribsfollow': DXFAttr(66, None),
+    'attribs_follow': DXFAttr(66, None),
     'name': DXFAttr(2, None),
     'insert': DXFAttr(10, 'Point2D/3D'),
     'xscale': DXFAttr(41, None),
     'yscale': DXFAttr(42, None),
     'zscale': DXFAttr(43, None),
     'rotation': DXFAttr(50, None),
-    'colcount': DXFAttr(70, None),
-    'rowcount': DXFAttr(71, None),
-    'colspacing': DXFAttr(44, None),
-    'rowspacing': DXFAttr(45, None),
+    'column_count': DXFAttr(70, None),
+    'row_count': DXFAttr(71, None),
+    'column_spacing': DXFAttr(44, None),
+    'row_spacing': DXFAttr(45, None),
     'extrusion': DXFAttr(210, 'Point3D'),
 })
 
@@ -809,16 +809,16 @@ attdef_subclass = (
         'width': DXFAttr(41, None),
         'oblique': DXFAttr(51, None),
         'style': DXFAttr(7, None),
-        'textgenerationflag': DXFAttr(71, None),
+        'text_generation_flag': DXFAttr(71, None),
         'halign': DXFAttr(72, None),
-        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'align_point': DXFAttr(11, 'Point2D/3D'),
         'extrusion': DXFAttr(210, 'Point3D'),
     }),
     DefSubclass('AcDbAttributeDefinition', {
         'prompt': DXFAttr(3, None),
         'tag': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-        'fieldlength': DXFAttr(73, None),
+        'field_length': DXFAttr(73, None),
         'valign': DXFAttr(74, None),
     })
 )
@@ -893,11 +893,11 @@ attrib_subclass = (
     DefSubclass('AcDbAttribute', {
         'tag': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-        'fieldlength': DXFAttr(73, None),
-        'textgenerationflag': DXFAttr(71, None),
+        'field_length': DXFAttr(73, None),
+        'text_generation_flag': DXFAttr(71, None),
         'halign': DXFAttr(72, None),
         'valign': DXFAttr(74, None),
-        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'align_point': DXFAttr(11, 'Point2D/3D'),
         'extrusion': DXFAttr(210, 'Point3D'),
     })
 )

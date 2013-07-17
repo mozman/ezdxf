@@ -34,7 +34,7 @@ def insert_block(layout):
         'YPOS': "y = %.3f" % point[1]
     }
     scale = 1.75
-    layout.add_autoblockref('FLAG', point, values, dxfattribs={
+    layout.add_auto_blockref('FLAG', point, values, dxfattribs={
         'xscale': scale,
         'yscale': scale,
         'layer': 'FLAGS',

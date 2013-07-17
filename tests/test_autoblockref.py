@@ -23,7 +23,7 @@ class TestAutoBlockref(unittest.TestCase):
 
     def test_create_auto_attribs(self):
         values = {'TAG1': 'text1', 'TAG2': 'text2'}
-        blockref = self.modelspace.add_autoblockref('TEST', (0, 0), values)
+        blockref = self.modelspace.add_auto_blockref('TEST', (0, 0), values)
         autoblock = self.dwg.blocks[blockref.dxf.name]
         entities = list(autoblock)
         self.assertEqual('INSERT', entities[0].dxftype())

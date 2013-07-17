@@ -17,6 +17,18 @@ class SetupDrawing(unittest.TestCase):
         self.dwg = ezdxf.new('AC1009')
         self.layout = self.dwg.modelspace()
 
+class TestGraphicsEntity(SetupDrawing):
+    def test_layout_property(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual(self.layout, line.layout)
+
+    def test_drawing_property(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual(self.dwg, line.drawing)
+
+    def test_dxffactory_property(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual(self.dwg.dxffactory, line.dxffactory)
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
@@ -49,8 +61,8 @@ class TestSimpleGraphics(SetupDrawing):
         arc = self.layout.add_arc((3, 3), 5, 30, 60)
         self.assertEqual((3., 3.), arc.dxf.center)
         self.assertEqual(5., arc.dxf.radius)
-        self.assertEqual(30., arc.dxf.startangle)
-        self.assertEqual(60., arc.dxf.endangle)
+        self.assertEqual(30., arc.dxf.start_angle)
+        self.assertEqual(60., arc.dxf.end_angle)
 
     def test_create_trace(self):
         trace = self.layout.add_trace([(0, 0), (1, 0), (1, 1), (0, 1)])
@@ -84,7 +96,7 @@ class TestText(SetupDrawing):
         text.set_pos((2, 2), align="TOP_CENTER")
         self.assertEqual(1, text.dxf.halign)
         self.assertEqual(3, text.dxf.valign)
-        self.assertEqual((2, 2), text.dxf.alignpoint)
+        self.assertEqual((2, 2), text.dxf.align_point)
 
     def test_set_fit_alignment(self):
         text = self.layout.add_text('text')
@@ -92,7 +104,7 @@ class TestText(SetupDrawing):
         self.assertEqual(5, text.dxf.halign)
         self.assertEqual(0, text.dxf.valign)
         self.assertEqual((2, 2), text.dxf.insert)
-        self.assertEqual((4, 2), text.dxf.alignpoint)
+        self.assertEqual((4, 2), text.dxf.align_point)
 
     def test_get_alignment(self):
         text = self.layout.add_text('text')
@@ -110,7 +122,7 @@ class TestBlock(SetupDrawing):
     def test_add_new_attribs_to_blockref(self):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         ref.add_attrib('TEST', 'text', (0, 0))
-        self.assertEqual(1, ref.dxf.attribsfollow)
+        self.assertEqual(1, ref.dxf.attribs_follow)
         attrib = ref.get_attrib('TEST')
         self.assertEqual('text', attrib.dxf.text)
 

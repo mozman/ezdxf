@@ -15,15 +15,15 @@ MSIZE = 20
 HEIGHT = 3.
 
 def build_mesh(polymesh):
-    msize = polymesh.mcount
-    nsize = polymesh.ncount
-    mdelta = math.pi / msize
-    ndelta = math.pi / nsize
+    m_size = polymesh.dxf.m_count
+    n_size = polymesh.dxf.n_count
+    m_delta = math.pi / m_size
+    n_delta = math.pi / n_size
 
-    for x in range(msize):
-        sinx = math.sin(float(x)*mdelta)
-        for y in range(nsize):
-            cosy = math.cos(float(y)*ndelta)
+    for x in range(m_size):
+        sinx = math.sin(float(x)*m_delta)
+        for y in range(n_size):
+            cosy = math.cos(float(y)*n_delta)
             z = sinx * cosy * HEIGHT
             # set the m,n vertex to 3d point x,y,z
             polymesh.set_mesh_vertex(pos=(x, y), point=(x, y, z))

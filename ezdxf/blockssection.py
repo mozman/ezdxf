@@ -93,13 +93,13 @@ class BlocksSection(object):
         except KeyError:
             return default
 
-    def new(self, name, basepoint=(0, 0), dxfattribs=None):
+    def new(self, name, base_point=(0, 0), dxfattribs=None):
         """ Create a new named block. """
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['name'] = name
         dxfattribs['name2'] = name
-        dxfattribs['basepoint'] = basepoint
+        dxfattribs['base_point'] = base_point
         head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
         block_layout = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
@@ -107,12 +107,12 @@ class BlocksSection(object):
         self.append_block_layout(block_layout)
         return block_layout
 
-    def new_anonymous_block(self, typechar='U', basepoint=(0, 0)):
-        blockname = self.anonymous_blockname(typechar)
-        block = self.new(blockname, basepoint, {'flags': const.BLK_ANONYMOUS})
+    def new_anonymous_block(self, type_char='U', base_point=(0, 0)):
+        blockname = self.anonymous_blockname(type_char)
+        block = self.new(blockname, base_point, {'flags': const.BLK_ANONYMOUS})
         return block
 
-    def anonymous_blockname(self, typechar):
+    def anonymous_blockname(self, type_char):
         """ Create name for an anonymous block.
 
         typechar
@@ -124,7 +124,7 @@ class BlocksSection(object):
         """
         while True:
             self._anonymous_block_counter += 1
-            blockname = "*%s%d" % (typechar, self._anonymous_block_counter)
+            blockname = "*%s%d" % (type_char, self._anonymous_block_counter)
             if not self.__contains__(blockname):
                 return blockname
 

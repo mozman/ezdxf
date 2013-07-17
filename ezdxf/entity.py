@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import cast_tag_value, DXFTag, DXFStructureError
-from .classifiedtags import ClassifiedTags
 
 
 class DXFNamespace(object):
@@ -16,7 +15,7 @@ class DXFNamespace(object):
     __slots__ = ('_setter', '_getter')
 
     def __init__(self, wrapper):
-        # because overwritten __setattr__ does not set _getter and _setter
+        # DXFNamespace.__setattr__ can not set _getter and _setter
         super(DXFNamespace, self).__setattr__('_getter', wrapper.get_dxf_attrib)
         super(DXFNamespace, self).__setattr__('_setter', wrapper.set_dxf_attrib)
 

@@ -69,6 +69,13 @@ class GraphicEntity(GenericWrapper):
     def set_layout(self, layout):
         self.layout = layout
 
+    @property
+    def dxffactory(self):
+        return self.layout._dxffactory
+
+    @property
+    def drawing(self):
+        return self.layout._dxffactory.drawing
 
 _LINE_TPL = """  0
 LINE
@@ -169,8 +176,8 @@ class Arc(GraphicEntity, ColorMixin):
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, 'Point2D/3D'),
         'radius': DXFAttr(40, None),
-        'startangle': DXFAttr(50, None),
-        'endangle': DXFAttr(51, None),
+        'start_angle': DXFAttr(50, None),
+        'end_angle': DXFAttr(51, None),
     })
 
 _TRACE_TPL = """  0
@@ -279,10 +286,10 @@ class Text(GraphicEntity, ColorMixin):
         'oblique': DXFAttr(51, None),  # in degrees, vertical = 0deg
         'style': DXFAttr(7, None),  # text style
         'width': DXFAttr(41, None),  # width FACTOR!
-        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'text_generation_flag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, None),  # horizontal justification
         'valign': DXFAttr(73,  None),  # vertical justification
-        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'align_point': DXFAttr(11, 'Point2D/3D'),
     })
     def set_pos(self, p1, p2=None, align=None):
         if align is None:
@@ -295,7 +302,7 @@ class Text(GraphicEntity, ColorMixin):
                 raise ValueError("Alignment '{}' requires a second alignment point.".format(align))
         else:
             p2 = p1
-        self.set_dxf_attrib('alignpoint', p2)
+        self.set_dxf_attrib('align_point', p2)
         return self
 
     def get_pos(self):
@@ -351,8 +358,8 @@ class Block(GraphicEntity):
         'name': DXFAttr(2, None),
         'name2': DXFAttr(3, None),
         'flags': DXFAttr(70, None),
-        'basepoint': DXFAttr(10, 'Point2D/3D'),
-        'xrefpath': DXFAttr(1, None),
+        'base_point': DXFAttr(10, 'Point2D/3D'),
+        'xref_path': DXFAttr(1, None),
     })
 
 
@@ -391,17 +398,17 @@ BLOCKNAME
 class Insert(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = make_attribs({
-        'attribsfollow': DXFAttr(66, None),
+        'attribs_follow': DXFAttr(66, None),
         'name': DXFAttr(2, None),
         'insert': DXFAttr(10, 'Point2D/3D'),
         'xscale': DXFAttr(41, None),
         'yscale': DXFAttr(42, None),
         'zscale': DXFAttr(43, None),
         'rotation': DXFAttr(50, None),
-        'colcount': DXFAttr(70, None),
-        'rowcount': DXFAttr(71, None),
-        'colspacing': DXFAttr(44, None),
-        'rowspacing': DXFAttr(45, None),
+        'column_count': DXFAttr(70, None),
+        'row_count': DXFAttr(71, None),
+        'column_spacing': DXFAttr(44, None),
+        'row_spacing': DXFAttr(45, None),
     })
 
     def __iter__(self):
@@ -411,7 +418,7 @@ class Insert(GraphicEntity):
             except IndexError:
                 raise DXFStructureError('expected following ATTRIB or SEQEND, reached end of layout instead.')
 
-        if self.dxf.attribsfollow == 0:
+        if self.dxf.attribs_follow == 0:
             return
         index = self.layout.get_index_of_entity(self) + 1
         while True:
@@ -461,7 +468,7 @@ class Insert(GraphicEntity):
         if seqend_position < 0:
             entities.append(self.layout.build_entity('SEQEND', {}))
             seqend_position = position
-        self.dxf.attribsfollow = 1
+        self.dxf.attribs_follow = 1
         self.layout.insert_entities(seqend_position, entities)
 
 
@@ -528,15 +535,15 @@ class Attdef(GraphicEntity):
         'prompt': DXFAttr(3, None),
         'tag': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-        'fieldlength': DXFAttr(73, None),
+        'field_length': DXFAttr(73, None),
         'rotation': DXFAttr(50, None),
         'oblique': DXFAttr(51, None),
         'width': DXFAttr(41, None),  # width factor
         'style': DXFAttr(7, None),
-        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'text_generation_flag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, None),  # horizontal justification
         'valign': DXFAttr(74, None),  # vertical justification
-        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'align_point': DXFAttr(11, 'Point2D/3D'),
     })
 
 _ATTRIB_TPL = """  0
@@ -592,15 +599,15 @@ class Attrib(GraphicEntity):
         'text': DXFAttr(1, None),
         'tag': DXFAttr(2, None),
         'flags': DXFAttr(70, None),
-        'fieldlength': DXFAttr(73, None),
+        'field_length': DXFAttr(73, None),
         'rotation': DXFAttr(50, None),
         'oblique': DXFAttr(51, None),
         'width': DXFAttr(41, None),  # width factor
         'style': DXFAttr(7, None),
-        'textgenerationflag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'text_generation_flag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, None),  # horizontal justification
         'valign': DXFAttr(74, None),  # vertical justification
-        'alignpoint': DXFAttr(11, 'Point2D/3D'),
+        'align_point': DXFAttr(11, 'Point2D/3D'),
     })
 
 _POLYLINE_TPL = """  0
@@ -627,13 +634,13 @@ class Polyline(GraphicEntity, ColorMixin):
     DXFATTRIBS = make_attribs({
         'elevation': DXFAttr(10, 'Point2D/3D'),
         'flags': DXFAttr(70, None),
-        'defaultstartwidth': DXFAttr(40, None),
-        'defaultendwidth': DXFAttr(41, None),
-        'mcount': DXFAttr(71, None),
-        'ncount': DXFAttr(72, None),
-        'msmoothdensity': DXFAttr(73, None),
-        'nsmoothdensity': DXFAttr(74, None),
-        'smoothtype': DXFAttr(75, None),
+        'default_start_width': DXFAttr(40, None),
+        'default_end_width': DXFAttr(41, None),
+        'm_count': DXFAttr(71, None),
+        'n_count': DXFAttr(72, None),
+        'm_smooth_density': DXFAttr(73, None),
+        'n_smooth_density': DXFAttr(74, None),
+        'smooth_type': DXFAttr(75, None),
     })
 
     def get_vertex_flags(self):
@@ -650,17 +657,17 @@ class Polyline(GraphicEntity, ColorMixin):
         else:
             return 'polyline2d'
 
-    def mclose(self):
+    def m_close(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
 
-    def nclose(self):
+    def n_close(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_N_DIRECTION
 
-    def close(self, mclose, nclose=False):
-        if mclose:
-            self.mclose()
-        if nclose:
-            self.nclose()
+    def close(self, m_close, n_close=False):
+        if m_close:
+            self.m_close()
+        if n_close:
+            self.n_close()
 
     def __len__(self):
         return len(list(iter(self)))
@@ -675,13 +682,10 @@ class Polyline(GraphicEntity, ColorMixin):
             entity = self.layout.get_entity_at_index(index)
 
     def __getitem__(self, pos):
-        return self.vertices()[pos]
+        return list(self)[pos]
 
     def points(self):
         return (vertex.dxf.location for vertex in self)
-
-    def vertices(self):
-        return list(self)
 
     def append_vertices(self, points, dxfattribs=None):
         if dxfattribs is None:
@@ -789,8 +793,8 @@ class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, 'Point2D/3D'),
-        'startwidth': DXFAttr(40, None),
-        'endwidth': DXFAttr(41, None),
+        'start_width': DXFAttr(40, None),
+        'end_width': DXFAttr(41, None),
         'bulge': DXFAttr(42, None),
         'flags': DXFAttr(70, None),
         'tangent': DXFAttr(50, None),

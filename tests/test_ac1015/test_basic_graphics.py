@@ -38,8 +38,8 @@ class TestBasicEntities(SetupDrawing):
         arc = self.layout.add_arc((3, 3), 5, 30, 60)
         self.assertEqual((3., 3.), arc.dxf.center)
         self.assertEqual(5., arc.dxf.radius)
-        self.assertEqual(30., arc.dxf.startangle)
-        self.assertEqual(60., arc.dxf.endangle)
+        self.assertEqual(30., arc.dxf.start_angle)
+        self.assertEqual(60., arc.dxf.end_angle)
 
     def test_create_trace(self):
         trace = self.layout.add_trace([(0, 0), (1, 0), (1, 1), (0, 1)])
@@ -76,7 +76,7 @@ class TestText(SetupDrawing):
         text.set_pos((2, 2), align="TOP_CENTER")
         self.assertEqual(1, text.dxf.halign)
         self.assertEqual(3, text.dxf.valign)
-        self.assertEqual((2, 2), text.dxf.alignpoint)
+        self.assertEqual((2, 2), text.dxf.align_point)
 
     def test_set_fit_alignment(self):
         text = self.layout.add_text('text')
@@ -84,7 +84,7 @@ class TestText(SetupDrawing):
         self.assertEqual(5, text.dxf.halign)
         self.assertEqual(0, text.dxf.valign)
         self.assertEqual((2, 2), text.dxf.insert)
-        self.assertEqual((4, 2), text.dxf.alignpoint)
+        self.assertEqual((4, 2), text.dxf.align_point)
 
     def test_get_alignment(self):
         text = self.layout.add_text('text')

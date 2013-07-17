@@ -25,15 +25,15 @@ document.
    Get the :class:`Block` definition by `name`, returns `default` if no block
    `name` exists.
 
-.. method:: BlocksSection.new(name, basepoint=(0, 0), dxfattribs={})
+.. method:: BlocksSection.new(name, base_point=(0, 0), dxfattribs={})
 
-   Create and add a new :class:`Block`, `name` is the block-name, `basepoint`
+   Create and add a new :class:`Block`, `name` is the block-name, `base_point`
    is the insertion point of the block.
 
-.. method:: BlocksSection.new_anonymous_block(typechar='U', basepoint=(0, 0))
+.. method:: BlocksSection.new_anonymous_block(type_char='U', base_point=(0, 0))
 
-   Create and add a new anonymous :class:`Block`, `typechar` is the block-type,
-   `basepoint` is the insertion point of the block.
+   Create and add a new anonymous :class:`Block`, `type_char` is the block-type,
+   `base_point` is the insertion point of the block.
 
 Block Definition
 ================
