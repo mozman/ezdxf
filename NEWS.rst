@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.3.0 - 14-07-2013
+Version 0.3.0 - 20-07-2013
 
   * Alpha status
   * Supported Python versions: CPython 2.7, 3.3 and PyPy 2.0

@@ -11,16 +11,7 @@ Create a New Drawing
     package-directory. The location of the `templatedir` can be changed in
     the package options.
 
-=========== ========================
-DXF         AutoCAD Version
-=========== ========================
-AC1009      AutoCAD R12
-AC1015      AutoCAD R2000
-AC1018      AutoCAD R2004
-AC1021      AutoCAD R2007
-AC1024      AutoCAD R2010
-AC1027      AutoCAD R2013
-=========== ========================
+.. include:: dxfversion.inc
 
 Open an Existing Drawing
 ------------------------
