@@ -14,12 +14,12 @@ Create a New Drawing
 =========== ========================
 DXF         AutoCAD Version
 =========== ========================
-AC1009      AutoCAD V12
-AC1015      AutoCAD V2000
-AC1018      AutoCAD V2004
-AC1021      AutoCAD V2007
-AC1024      AutoCAD V2010
-AC1027      AutoCAD V2013
+AC1009      AutoCAD R12
+AC1015      AutoCAD R2000
+AC1018      AutoCAD R2004
+AC1021      AutoCAD R2007
+AC1024      AutoCAD R2010
+AC1027      AutoCAD R2013
 =========== ========================
 
 Open an Existing Drawing

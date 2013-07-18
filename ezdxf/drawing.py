@@ -100,7 +100,7 @@ class Drawing(object):
     def layout(self, name=None):
         return self.layouts.get(name)
 
-    def layoutnames(self):
+    def layout_names(self):
         return list(self.layouts.names())
 
     @property
