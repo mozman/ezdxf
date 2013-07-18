@@ -41,7 +41,7 @@ Drawing Attributes
 
 .. attribute:: Drawing.filename
 
-    Contains the drawing filename, if the drawing was opend with the
+    Contains the drawing filename, if the drawing was opened with the
     :func:`readfile` function else set to `None`. (read/write)
 
 .. attribute:: Drawing.dxffactory
@@ -126,17 +126,17 @@ Drawing Methods
 
 .. method:: Drawing.modelspace()
 
-    Get the modelspace layout, see also :class:`Layout`.
+    Get the model-space layout, see also :class:`Layout`.
 
 .. method:: Drawing.layout(name)
 
-    Get the paperspace layout by `name`, see also :class:`Layout`.
-    (DXF version AC1009, supports only one paperspace layout, so `name` is
+    Get the paper-space layout by `name`, see also :class:`Layout`.
+    (DXF version AC1009, supports only one paper-space layout, so `name` is
     ignored)
 
-.. method:: Drawing.layoutnames()
+.. method:: Drawing.layout_names()
 
-    Get a list of available paperspace layouts.
+    Get a list of available paper-space layouts.
 
 .. method:: Drawing.save()
 
