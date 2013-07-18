@@ -31,6 +31,9 @@ Contents
    reference
    howto
 
+.. include:: ../../NEWS.rst
+   :end-before: Version 0.1.0
+
 Indices and tables
 ------------------
 
