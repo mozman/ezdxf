@@ -37,6 +37,9 @@ class TablesSection(object):
             new_table = table_class(table, self._drawing)
             self._tables[new_table.name] = new_table
 
+    def __contains__(self, item):
+        return item in self._tables
+
     def __getattr__(self, key):
         try:
             return self._tables[key]

@@ -18,7 +18,8 @@ class EntitySection(object):
     def __init__(self, tags, drawing):
         self._entityspace = EntitySpace(drawing.entitydb)
         self._dxffactory = drawing.dxffactory
-        self._build(tags)
+        if tags is not None:
+            self._build(tags)
 
     def get_entityspace(self):
         return self._entityspace
