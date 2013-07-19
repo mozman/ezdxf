@@ -1,8 +1,8 @@
 Drawing Management
 ==================
 
-Create a New Drawing
---------------------
+Create New Drawings
+-------------------
 
 .. function:: new(dxfversion='AC1009')
 
@@ -13,8 +13,8 @@ Create a New Drawing
 
 .. include:: dxfversion.inc
 
-Open an Existing Drawing
-------------------------
+Open Drawings
+-------------
 
 You can open DXF drawings from disk or from a text-stream. (byte-stream usage
 is not implemented yet).
@@ -41,8 +41,8 @@ is not implemented yet).
     Read DXF drawing from file *filename*, expects an ASCII code-page encoding.
     Raises :class:`UnicodeDecodeError` for invalid character encodings.
 
-Save the Drawing
-----------------
+Save Drawings
+-------------
 
 Save the drawing to the file-system by :meth:`Drawing.save` or :meth:`Drawing.saveas`.
 Write the drawing to a text-stream with :meth:`Drawing.write`, the text-stream requires

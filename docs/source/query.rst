@@ -17,7 +17,7 @@ Entity Query String
     QueryString := EntityQuery ("[" AttribQuery "]")*
 
 The query string is the combination of two queries, first the required entity query and second the
-optional attribute query, enclosed in square brackets.
+*optional* attribute query, enclosed in square brackets.
 
 Entity Query
 ------------
@@ -28,7 +28,7 @@ Where ``'*'`` means all DXF entities, all other DXF names have to be uppercase.
 Attribute Query
 ---------------
 
-The attribute query is a boolean expression, supported operators are:
+The *optional* attribute query is a boolean expression, supported operators are:
 
   - not (!): !term is true, if term is false
   - and (&): term & term is true, if both terms are true

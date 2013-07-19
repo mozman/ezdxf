@@ -35,6 +35,7 @@ document.
    Create and add a new anonymous :class:`Block`, `type_char` is the block-type,
    `base_point` is the insertion point of the block.
 
+
 Block Definition
 ================
 
@@ -47,14 +48,14 @@ Block Reference
 
 .. class:: Insert
 
-=========== =================================================================
+=========== ======
 DXFAttr     Description
-=========== =================================================================
-layer       layername as string, default is ``'0'``
-linetype    linetype as string, special names ``'BYLAYER'``, ``'BYBLOCK'``,
-            default is ``'BYLAYER'``
+=========== ======
+layer       layer name as string, default is ``0``
+linetype    linetype as string, special names ``BYLAYER``, ``BYBLOCK``,
+            default is ``BYLAYER``
 color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
-=========== =================================================================
+=========== ======
 
 .. attribute:: Insert.dxf
 
@@ -66,7 +67,7 @@ color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
 
 .. method:: Insert.get_attrib(tag)
 
-   Get the appended :class:`Attrib` object with :code:`dxfattr tag == tag`, returns
+   Get the appended :class:`Attrib` object with :code:`object.dxf.tag == tag`, returns
    :code:`None` if not found.
 
 .. method:: Insert.add_attrib(tag, text, insert, attribs={})
