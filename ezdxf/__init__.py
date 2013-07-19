@@ -78,5 +78,6 @@ def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
 # noinspection PyArgumentList
 def is_dxf_file(filename):
     with io.open(filename, errors='ignore') as fp:
-        return tuple(fp.readline().strip() for _ in range(4)) == ('0', 'SECTION', '2', 'HEADER')
+        reader = TagIterator(fp)
+        return tuple(next(reader) for _ in range(2)) == ((0, 'SECTION'), (2, 'HEADER'))
 

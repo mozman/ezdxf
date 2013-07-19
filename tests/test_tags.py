@@ -49,6 +49,28 @@ ENDSEC
 
 """
 
+TEST_TAGREADER_COMMENTS = """999
+Comment0
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+999
+Comment1
+  1
+AC1018
+  9
+$DWGCODEPAGE
+  3
+ANSI_1252
+  0
+ENDSEC
+  0
+EOF
+"""
+
 
 class TestTagReader(unittest.TestCase):
     def setUp(self):
@@ -232,6 +254,10 @@ class TestTags(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.tags.get_handle() # handle still doesn't exist
 
+    def test_skip_comments(self):
+        tags1 = list(StringIterator(TEST_TAGREADER))
+        tags2 = list(StringIterator(TEST_TAGREADER_COMMENTS))
+        self.assertEqual(tags1, tags2)
 
 DUPLICATETAGS = """  0
 FIRST
