@@ -68,7 +68,7 @@ and you can also write the drawing to file-system or to a text-stream.
 
    dwgmanagement
    drawing
-   sections
+   header_section
 
 Tables
 ------
