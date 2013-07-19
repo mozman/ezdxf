@@ -46,7 +46,7 @@ Embedded DXF Information of 3rd Party Applications
 
 The DXF format allows third-party applications to embed application-specific information.
 *ezdxf* manages DXF data in a structure-preserving form, but for the price of large memory requirement.
-Because of this processing of DXF information of third-party applications is possible and will retained
+Because of this, processing of DXF information of third-party applications is possible and will retained
 on rewriting.
 
 License

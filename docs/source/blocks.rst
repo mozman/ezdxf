@@ -83,12 +83,14 @@ Attribs
 
    DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
 
+TODO DXFAttr for the Attdef class
+
 .. class:: Attrib
 
 .. attribute:: Attrib.dxf
 
    DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
 
-
+TODO DXFAttr for the Attrib class
 
 

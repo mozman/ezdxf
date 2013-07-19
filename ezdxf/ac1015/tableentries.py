@@ -50,8 +50,8 @@ layer_subclass = DefSubclass('AcDbLayerTableRecord', {
     'color': DXFAttr(62, None),  # dxf color index
     'linetype': DXFAttr(6, None),  # linetype name
     'plot': DXFAttr(290, None),  # don't plot this layer if 0 else 1
-    'lineweight': DXFAttr(370, None),  # enum value???
-    'plotstylename': DXFAttr(390, None),  # handle to PlotStyleName object
+    'line_weight': DXFAttr(370, None),  # enum value???
+    'plot_style_name': DXFAttr(390, None),  # handle to PlotStyleName object
 })
 
 
@@ -62,7 +62,7 @@ class Layer(ac1009.Layer):
     @classmethod
     def new(cls, handle, dxfattribs=None, dxffactory=None):
         layer = super(Layer, cls).new(handle, dxfattribs)
-        layer.dxf.plotstylename = dxffactory.rootdict['ACAD_PLOTSTYLENAME']
+        layer.dxf.plot_style_name = dxffactory.rootdict['ACAD_PLOTSTYLENAME']
         return layer
 
 _STYLETEMPLATE = """  0
