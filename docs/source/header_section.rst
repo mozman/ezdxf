@@ -1,8 +1,9 @@
-Drawing Settings
-================
+Drawing Header Section
+======================
 
 The drawing settings are stored in the header section, which is accessible by
-the :attr:`~Drawing.header` attribute. See online documentation from Autodesk for available `header variables`_.
+the :attr:`~Drawing.header` attribute. See the online documentation from Autodesk for available `header variables`_.
+the :attr:`~Drawing.header` attribute. See the online documentation from Autodesk for available `header variables`_.
 
 .. class:: HeaderSection
 

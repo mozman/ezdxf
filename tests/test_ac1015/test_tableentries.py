@@ -29,7 +29,7 @@ class TestNewLayer(unittest.TestCase):
         self.assertEqual('LayerName', self.layer.dxf.name)
 
     def test_default_plotstylename(self):
-        self.assertEqual('AFAF', self.layer.dxf.plotstylename)
+        self.assertEqual('AFAF', self.layer.dxf.plot_style_name)
 
     def test_is_layer_will_be_plotted_by_default(self):
         self.assertEqual(True, self.layer.dxf.plot)

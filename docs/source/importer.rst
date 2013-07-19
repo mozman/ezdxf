@@ -27,8 +27,8 @@ The basic DXF structure has been changed with version AC1012 (AutoCAD R13):
 
 .. method:: Importer.__init__(source, target, strict_mode=True)
 
-    :param source: source drawing of type ezdxf.Drawing()
-    :param target: target drawing of type ezdxf.Drawing()
+    :param source: source drawing of type :class:`Drawing`
+    :param target: target drawing of type :class:`Drawing`
     :param bool strict_mode: import is only possible, if the drawings are compatible.
 
 Now you can import DXF tables, like layer definitions and dimension style definitions or block definitions from the

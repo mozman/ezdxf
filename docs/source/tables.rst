@@ -32,7 +32,7 @@ or `dimstyles`.
 
 .. method:: Table.__contains__(name)
 
-    `True` if table contains a table-entry named `name`.
+    `True` if table contains a table-entry `name`.
 
 .. method:: Table.__iter__()
 
@@ -53,15 +53,18 @@ Layer
    The DXF attributes namespace, access DXF attributes by this attribute, like :code:`object.dxf.linetype = 'DASHED'`.
    Just the *dxf* attribute is read only, the DXF attributes are read- and writeable. (read only)
 
-=========== ===========
-DXFAttr     Description
-=========== ===========
-handle      DXF handle (feature for experts)
-name        layer name (str)
-flags       layer flags (feature for experts)
-color       layer color, but use :meth:`Layer.get_color`, because color is negative for layer status *off* (int)
-linetype    name of line type (str)
-=========== ===========
+===============  ======= ===========
+DXFAttr          Version Description
+===============  ======= ===========
+handle           R12     DXF handle (feature for experts)
+name             R12     layer name (str)
+flags            R12     layer flags (feature for experts)
+color            R12     layer color, but use :meth:`Layer.get_color`, because color is negative for layer status *off* (int)
+linetype         R12     name of line type (str)
+plot             R13     plot flag (int), ``1`` for plot layer (default value), ``0`` for don't plot layer
+line_weight      R13     line weight enum value (int)
+plot_style_name  R13     handle to PlotStyleName (feature for experts)
+===============  ======= ===========
 
 .. method:: Layer.is_locked()
 
@@ -98,10 +101,11 @@ Style
 
 .. class:: Style
 
+   Defines a text style, can be used by entities: :class:`Text`, :class:`Attrib` and :class:`Attdef`
+
 .. attribute:: Style.dxf
 
-   The DXF attributes namespace, access DXF attributes by this attribute, like :code:`object.dxf.name = 'MyStyle'`.
-   Just the *dxf* attribute is read only, the DXF attributes are read- and writeable. (read only)
+   The DXF attributes namespace.
 
 ====================== ===========
 DXFAttr                Description
@@ -125,17 +129,95 @@ Linetype
 
 .. class:: Linetype
 
+   Defines a linetype.
+
+.. attribute:: Linetype.dxf
+
+   The DXF attributes namespace.
+
+=========== ===========
+DXFAttr     Description
+=========== ===========
+name        linetype name (str)
+description linetype description (str)
+length      total pattern length in drawing units (float)
+items       number of linetype elements (int)
+=========== ===========
+
+DimStyle
+--------
+
+.. class:: DimStyle
+
+   Defines a dimension style.
+
+.. attribute:: DimStyle.dxf
+
+   The DXF attributes namespace.
+
+TODO DXFAttr for DimStyle class
+
 Viewport
 --------
 
 .. class:: Viewport
+
+   Defines a viewport to the model space.
+
+.. attribute:: Viewport.dxf
+
+   The DXF attributes namespace.
+
+TODO DXFAttr for the Viewport class
 
 View
 ----
 
 .. class:: View
 
-DimStyle
---------
+   Defines a view.
 
-.. class:: DimStyle
+.. attribute:: View.dxf
+
+   The DXF attributes namespace.
+
+TODO DXFAttr for the View class
+
+AppID
+-----
+
+.. class:: AppID
+
+   Defines an AppID.
+
+.. attribute:: AppID.dxf
+
+   The DXF attributes namespace.
+
+TODO DXFAttr for the AppID class
+
+UCS
+----
+
+.. class:: UCS
+
+   Defines an user coordinate system (UCS).
+
+.. attribute:: UCS.dxf
+
+   The DXF attributes namespace.
+
+TODO DXFAttr for the UCS class
+
+BlockRecord
+-----------
+
+.. class:: BlockRecord
+
+   Defines a BlockRecord, exist just in DXF version R13 and later.
+
+.. attribute:: BlockRecord.dxf
+
+   The DXF attributes namespace.
+
+TODO DXFAttr for the BlockRecord class

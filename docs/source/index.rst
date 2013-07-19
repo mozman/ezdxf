@@ -13,7 +13,7 @@ Quick-Info
 
 - *ezdxf* is a Python package to read and write DXF drawings
 - intended audience: Developer, *not* End Users
-- requires Python 2.7 or later, runs on CPython and pypy maybe on IronPython and Jython
+- requires Python 2.7 or later, runs on CPython and pypy, maybe on IronPython and Jython
 - OS independent
 - no additional libraries required
 - MIT-License
