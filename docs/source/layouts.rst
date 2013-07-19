@@ -9,7 +9,7 @@ layout objects:
   this layouts can contain basic drawing entities, and viewports to the
   modelspace.
 
-- BlockLayout works on an associated :class:`Block`, and Blocks are
+- BlockLayout works on an associated :class:`Block`, Blocks are
   collections of drawing entities for reusing by block references.
 
 .. class:: Layout
@@ -24,6 +24,11 @@ Access existing drawing entities
 .. method:: Layout.__contains__(entity)
 
    Test if the layout contains the drawing element `entity`.
+
+.. method:: Layout.query(query='*')
+
+   Get included DXF entities matching the :ref:`entity query string` *query*.
+   Returns a sequence of type :class:`EntityQuery`.
 
 Create new drawing entities
 ---------------------------
@@ -115,9 +120,17 @@ BlockLayout
 
 .. attribute:: BlockLayout.name
 
-   The name of the associated block element.
+   The name of the associated block element. (read/write)
 
-.. method:: BlockLayout.add_attdef(tag, insert, dxfattribs={})
+.. attribute:: BlockLayout.block
+
+   Get the associated DXF *BLOCK* entity.
+
+.. method:: BlockLayout.add_attdef(tag, insert, dxfattribs=None)
 
    Add an :class:`Attdef` element, `tag` is the attribute-tag, `insert` is the
    2D/3D insertion point of the Attribute.
+
+.. method:: BlockLayout.attdefs()
+
+   Iterator for included :class:`Attdef` entities.
