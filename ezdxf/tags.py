@@ -38,13 +38,16 @@ class TagIterator(object):
             return self.lasttag
 
         def next_tag():
-            try:
-                code = int(self.readline())
-                value = self.readline().rstrip('\n')
-            except UnicodeDecodeError:
-                raise # because UnicodeDecodeError() is a subclass of ValueError()
-            except (EOFError, ValueError):
-                raise StopIteration()
+            code = 999
+            while code == 999: # skip comments
+                try:
+                    code = int(self.readline())
+                    value = self.readline().rstrip('\n')
+                except UnicodeDecodeError:
+                    raise # because UnicodeDecodeError() is a subclass of ValueError()
+                except (EOFError, ValueError):
+                    raise StopIteration()
+
             self.lasttag = cast_tag((code, value))
             return self.lasttag
 

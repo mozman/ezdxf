@@ -12,7 +12,8 @@ import unittest
 from ezdxf.tags import StringIterator
 
 from ezdxf.drawing import Drawing
-
+from ezdxf.templates import TemplateFinder
+from ezdxf import is_dxf_file
 
 class TestDrawing(unittest.TestCase):
     def test_dxfversion(self):
@@ -58,6 +59,12 @@ class TestNewDrawingAC1009(unittest.TestCase):
 class TestNewDrawingAC1015(TestNewDrawingAC1009):
     def setUp(self):
         self.dwg = Drawing.new('AC1015')
+
+class TestIsDXFFile(unittest.TestCase):
+
+    def test_template(self):
+        template_file = TemplateFinder().filepath('AC1009')
+        self.assertTrue(is_dxf_file(template_file))
 
 
 TEST_HEADER = """  0
