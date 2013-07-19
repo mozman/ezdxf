@@ -34,9 +34,19 @@ class Sections(object):
                 new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
                 bootstrap = False
             else:
-                section_class = get_section_class(name(section))
+                section_name = name(section)
+                if section_name == 'ENTITIES': # BLOCKS SECTION should exist
+                    self._create_required_sections(drawing)
+                section_class = get_section_class(section_name)
                 new_section = section_class(section, drawing)
             self._sections[new_section.name] = new_section
+
+    def _create_required_sections(self, drawing):
+        if 'blocks' not in self:
+            self._sections['blocks'] = BlocksSection(tags=None, drawing=drawing)
+
+    def __contains__(self, item):
+        return item in self._sections
 
     def __getattr__(self, key):
         try:

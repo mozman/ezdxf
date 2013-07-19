@@ -20,7 +20,8 @@ class BlocksSection(object):
         self._blocks = list()
         self._entitydb = drawing.entitydb
         self._dxffactory = drawing.dxffactory
-        self._build(tags)
+        if tags is not None:
+            self._build(tags)
         self._anonymous_block_counter = 0
 
     def _build(self, tags):
