@@ -19,7 +19,8 @@ def read(fname):
     except IOError:
         return "File '%s' not found.\n" % fname
 
-setup(name='ezdxf',
+setup(
+    name='ezdxf',
     version=VERSION,
     description='A Python package to create/manipulate DXF drawings.',
     author=AUTHOR_NAME,
@@ -45,4 +46,4 @@ setup(name='ezdxf',
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     ]
-     )
+)
