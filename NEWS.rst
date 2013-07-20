@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.3.0 - 20-07-2013
+Version 0.3.0 - 2013-07-20
 
   * Alpha status
   * Supported Python versions: CPython 2.7, 3.3 and PyPy 2.0
@@ -10,7 +10,7 @@ Version 0.3.0 - 20-07-2013
   * Entity Query language
   * Import data from other DXF files
 
-Version 0.1.0 - 14-03-2010
+Version 0.1.0 - 2010-03-14
 
   * Alpha status
   * Initial release

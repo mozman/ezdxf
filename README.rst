@@ -6,28 +6,21 @@ Abstract
 --------
 
 A Python package to create and modify DXF drawings, independent from the DXF
-version. Important: ezdxf is not a converting tool, so if you open a DXF R12
-drawing, you can not save the drawing as DXF R2000 file, but you can open or
-create new DXF drawings for every supported DXF version. If you need a DXF
-converter search for the free program *DWG TrueView* from Autodesk.
-You can open/save every DXF file without loosing any content, but not every
-content is supported by this package. Unknown tags in the DXF file will be
-ignored but preserved for saving. With this behavior it should be possible to
-open also DXF drawings that contains data from 3rd party applications.
+version. You can open/save every DXF file without loosing any content (except comments),
+Unknown tags in the DXF file will be ignored but preserved for saving. With this behavior
+it is possible to open also DXF drawings that contains data from 3rd party applications.
 
-Supported DXF Version
----------------------
+Quick-Info
+----------
 
-======= ========================
-Version introduced with AutoCAD
-======= ========================
-AC1009  AutoCAD V12
-AC1015  AutoCAD V2000
-AC1018  AutoCAD V2004
-AC1020  AutoCAD V2007
-AC1024  AutoCAD V2010
-AC1027  AutoCAD V2013
-======= ========================
+- *ezdxf* is a Python package to read and write DXF drawings
+- intended audience: Developer
+- requires Python 2.7 or later, runs on CPython and pypy, maybe on IronPython and Jython
+- OS independent
+- no additional libraries required
+- MIT-License
+- supported DXF versions: R12, R2000, R2004, R2007, R2010 and R2013
+- preserves third-party DXF content
 
 a simple example::
 
@@ -68,7 +61,7 @@ Issue Tracker at:
 
 https://bitbucket.org/mozman/ezdxf/issues
 
-Feeback, Q&A, Discussions at Google Groups:
+Feedback, Q&A, Discussions at Google Groups:
 
 https://groups.google.com/d/forum/python-ezdxf
 
