@@ -126,17 +126,17 @@ class Importer(object):
                 continue
             if block_name not in existing_block_names:
                 target_block_layout = import_block_layout(block)
-                self.target.blocks.append_block_layout(target_block_layout)
+                self.target.blocks.add(target_block_layout)
             else: # we have a name conflict
                 if conflict == 'discard':
                     continue
                 elif conflict == 'rename':
                     target_block_layout = import_block_layout(block)
                     rename(target_block_layout)
-                    self.target.blocks.append_block_layout(target_block_layout)
+                    self.target.blocks.add(target_block_layout)
                 elif conflict == 'replace':
                     target_block_layout = import_block_layout(block)
-                    self.target.blocks.replace_or_append_block_layout(target_block_layout)
+                    self.target.blocks.add(target_block_layout)
                 else:
                     raise ValueError("'{}' is an invalid value for parameter conflict.".format(conflict))
 

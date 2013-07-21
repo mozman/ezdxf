@@ -15,8 +15,9 @@ class BlocksSection(object):
     name = 'blocks'
 
     def __init__(self, tags, drawing):
-        ## TODO: _blocks could be a dict()
-        self._blocks = list()
+        # Mapping of BlockLayouts, key is BlockLayout.name, for dict() order of blocks is random,
+        # if turns out later, that blocks order is important: use an OrderedDict().
+        self._block_layouts = dict()
         self._entitydb = drawing.entitydb
         self._dxffactory = drawing.dxffactory
         if tags is not None:
@@ -49,44 +50,28 @@ class BlocksSection(object):
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
             entities.append(ClassifiedTags(group))
             if group[0].value == 'ENDBLK':
-                block_layout = build_block_layout(entities)
-                self.append_block_layout(block_layout)
+                self.add(build_block_layout(entities))
                 entities = []
 
-    def append_block_layout(self, block_layout):
-        self._blocks.append(block_layout)
-
-    def replace_or_append_block_layout(self, block_layout):
-        """ Replace existing block layout or append new block layout.
+    def add(self, block_layout):
+        """ Add or replace a BlockLayout() object.
         """
-        new_layout_name = block_layout.name
-        for index, layout in enumerate(self._blocks):
-            if layout.name == new_layout_name:
-                self._blocks[index] = block_layout
-                return
-        self.append_block_layout(block_layout)
+        self._block_layouts[block_layout.name] = block_layout
 
     # start of public interface
 
     def __iter__(self):
-        return iter(self._blocks)
+        return iter(self._block_layouts.values())
 
     def __contains__(self, entity):
         try:
             name = entity.name
         except AttributeError:
             name = entity
-        try:
-            self.__getitem__(name)
-            return True
-        except KeyError:
-            return False
+        return name in self._block_layouts
 
     def __getitem__(self, name):
-        for block in self:
-            if name == block.name:
-                return block
-        raise KeyError(name)
+        return self._block_layouts[name]
 
     def get(self, name, default=None):
         try:
@@ -105,7 +90,7 @@ class BlocksSection(object):
         tail = self._dxffactory.create_db_entry('ENDBLK', {})
         block_layout = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
         self._dxffactory.create_block_entry_in_block_records_table(block_layout)
-        self.append_block_layout(block_layout)
+        self.add(block_layout)
         return block_layout
 
     def new_anonymous_block(self, type_char='U', base_point=(0, 0)):
@@ -133,6 +118,6 @@ class BlocksSection(object):
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\nBLOCKS\n")
-        for block in self._blocks:
+        for block in self._block_layouts.values():
             block.write(stream)
         stream.write("  0\nENDSEC\n")
