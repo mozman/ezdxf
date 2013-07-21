@@ -26,7 +26,7 @@ class TestBlocksSection(unittest.TestCase):
         self.section.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.assertEqual(normlines(TESTBLOCKS), normlines(result))
+        self.assertEqual(sorted(normlines(TESTBLOCKS)), sorted(normlines(result)))
 
     def test_empty_section(self):
         section = BlocksSection(Tags.from_text(EMPTYSEC), self.dwg)

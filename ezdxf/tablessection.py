@@ -77,6 +77,7 @@ TABLESMAP = {
     'BLOCK_RECORD': Table,
 }
 
+# The order of the tables may change, but the LTYPE table always precedes the LAYER table.
 TABLE_ORDER = ('viewports', 'linetypes', 'layers', 'styles', 'views', 'ucs', 'appids', 'dimstyles', 'block_records')
 
 def get_table_class(name):
