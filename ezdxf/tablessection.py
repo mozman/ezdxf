@@ -7,8 +7,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
-from .defaultchunk import iterchunks
+from .defaultchunk import iter_chunks
 from .table import GenericTable, Table, ViewportTable
+from .tags import DXFStructureError
 
 
 class TablesSection(object):
@@ -31,8 +32,13 @@ class TablesSection(object):
                 next(tags)
             return tags
 
+        if tags[0] != (0, 'SECTION') or \
+            tags[1] != (2, 'TABLES') or \
+            tags[-1] != (0, 'ENDSEC'):
+            raise DXFStructureError("Critical structure error in TABLES section.")
+
         itertags = skiptags(iter(tags), 2)  # (0, 'SECTION'), (2, 'TABLES')
-        for table in iterchunks(itertags, stoptag='ENDSEC', endofchunk='ENDTAB'):
+        for table in iter_chunks(itertags, stoptag='ENDSEC', endofchunk='ENDTAB'):
             table_class = get_table_class(name(table))
             new_table = table_class(table, self._drawing)
             self._tables[new_table.name] = new_table

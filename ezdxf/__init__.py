@@ -14,8 +14,8 @@ if sys.version_info[:2] < (2, 7):
 
 import io
 
-from .options import options  # example: ezdxf.options['templatedir'] = 'c:\templates'
-from .tags import dxf_info
+from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
+from .tags import dxf_info, DXFStructureError
 from .tags import TagIterator
 from .importer import Importer
 
@@ -70,6 +70,8 @@ def readfile_as_asc(filename):
 
 # noinspection PyArgumentList
 def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
+    if options.debug:
+        options.logger.debug("reading DXF file: '{}', encoding='{}', errors='{}'".format(filename, encoding, errors))
     with io.open(filename, encoding=encoding, errors=errors) as fp:
         dwg = read(fp)
     dwg.filename = filename

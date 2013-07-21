@@ -7,10 +7,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
 
-from .tags import TagGroups
+from .tags import TagGroups, DXFStructureError
 from .classifiedtags import ClassifiedTags
 from . import const
-
 
 class BlocksSection(object):
     name = 'blocks'
@@ -30,17 +29,18 @@ class BlocksSection(object):
 
         def build_block_layout(entities):
             tail_handle = add_tags(entities.pop())
-            iterentities = iter(entities)
-            head_handle = add_tags(next(iterentities))
+            entities_iterator = iter(entities)
+            head_handle = add_tags(next(entities_iterator))
             block = self._dxffactory.new_block_layout(head_handle, tail_handle)
-            for entity in iterentities:
+            for entity in entities_iterator:
                 handle = add_tags(entity)
                 block.add_handle(handle)
             return block
 
-        assert tags[0] == (0, 'SECTION')
-        assert tags[1] == (2, 'BLOCKS')
-        assert tags[-1] == (0, 'ENDSEC')
+        if tags[0] != (0, 'SECTION') or \
+            tags[1] != (2, 'BLOCKS') or \
+            tags[-1] != (0, 'ENDSEC'):
+            raise DXFStructureError("Critical structure error in BLOCKS section.")
 
         if len(tags) == 3:  # empty block section
             return

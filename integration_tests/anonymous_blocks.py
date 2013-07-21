@@ -7,6 +7,9 @@
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
 
+import logging
+logging.basicConfig(level='DEBUG')
+
 import ezdxf
 from ezdxf.const import versions_supported_by_new
 

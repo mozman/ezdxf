@@ -10,7 +10,6 @@
 import ezdxf
 from ezdxf.const import versions_supported_by_new
 
-
 def create_block(dwg):
     # first create a block
     flag = dwg.blocks.new(name='FLAG')

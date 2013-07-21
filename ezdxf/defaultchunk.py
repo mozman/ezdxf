@@ -26,7 +26,7 @@ class DefaultChunk(object):
         self.tags.write(stream)
 
 
-def iterchunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
+def iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
     while True:
         tag = next(tagreader)
         if tag == (0, stoptag):

@@ -27,7 +27,7 @@ class Drawing(object):
         self._dxfversion = 'AC1009'  # readonly
         self.encoding = 'cp1252'  # read/write
         self.filename = None  # read/write
-        self.entitydb = database.factory(debug=options.get('DEBUG', False))
+        self.entitydb = database.factory(debug=options.debug)
         self.sections = Sections(tagreader, self)
 
         if self._dxfversion > 'AC1009':
@@ -113,7 +113,7 @@ class Drawing(object):
 
     @staticmethod
     def new(dxfversion='AC1009'):
-        finder = TemplateFinder(options['templatedir'])
+        finder = TemplateFinder(options.template_dir)
         stream = finder.getstream(dxfversion)
         try:
             dwg = Drawing.read(stream)
