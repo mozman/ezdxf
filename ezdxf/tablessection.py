@@ -5,19 +5,17 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from collections import OrderedDict
-
 from .defaultchunk import iter_chunks
 from .table import GenericTable, Table, ViewportTable
 from .tags import DXFStructureError
-
+from .options import options
 
 class TablesSection(object):
     name = 'tables'
 
     def __init__(self, tags, drawing):
         self._drawing = drawing
-        self._tables = OrderedDict()
+        self._tables = {}
         self._setup_tables(tags)
 
     def __iter__(self):
@@ -27,7 +25,7 @@ class TablesSection(object):
         def name(table):
             return table[1].value
 
-        def skiptags(tags, count):
+        def skip_tags(tags, count):
             for i in range(count):
                 next(tags)
             return tags
@@ -37,8 +35,8 @@ class TablesSection(object):
             tags[-1] != (0, 'ENDSEC'):
             raise DXFStructureError("Critical structure error in TABLES section.")
 
-        itertags = skiptags(iter(tags), 2)  # (0, 'SECTION'), (2, 'TABLES')
-        for table in iter_chunks(itertags, stoptag='ENDSEC', endofchunk='ENDTAB'):
+        tags_iterator = skip_tags(iter(tags), 2)  # (0, 'SECTION'), (2, 'TABLES')
+        for table in iter_chunks(tags_iterator, stoptag='ENDSEC', endofchunk='ENDTAB'):
             table_class = get_table_class(name(table))
             new_table = table_class(table, self._drawing)
             self._tables[new_table.name] = new_table
@@ -58,8 +56,13 @@ class TablesSection(object):
 
     def write(self, stream):
         stream.write('  0\nSECTION\n  2\nTABLES\n')
-        for table in self._tables.values():
-            table.write(stream)
+        for table_name in TABLE_ORDER:
+            table = self._tables.get(table_name)
+            if table is None:
+                options.logger.debug('{} table does not exist.'.format(table_name.upper()))
+            else:
+                options.logger.debug('writing table: {}'.format(table_name.upper()))
+                table.write(stream)
         stream.write('  0\nENDSEC\n')
 
 TABLESMAP = {
@@ -74,6 +77,7 @@ TABLESMAP = {
     'BLOCK_RECORD': Table,
 }
 
+TABLE_ORDER = ('viewports', 'linetypes', 'layers', 'styles', 'views', 'ucs', 'appids', 'dimstyles', 'block_records')
 
 def get_table_class(name):
     return TABLESMAP.get(name, GenericTable)
