@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .defaultchunk import DefaultChunk
-from .tags import TagGroups
+from .tags import TagGroups, DXFStructureError
 from .classifiedtags import ClassifiedTags
 
 TABLENAMES = {
@@ -91,8 +91,9 @@ class Table(object):
 
     def _build_table_entries(self, tags):
         groups = TagGroups(tags)
-        assert groups.get_name(0) == 'TABLE'
-        assert groups.get_name(-1) == 'ENDTAB'
+        if groups.get_name(0) != 'TABLE' or \
+            groups.get_name(-1) != 'ENDTAB':
+            raise DXFStructureError("Critical structure error in TABLES section.")
 
         self._table_header = ClassifiedTags(groups[0][1:])
         for entrytags in groups[1:-1]:
