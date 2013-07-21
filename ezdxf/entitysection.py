@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
 
-from .tags import TagGroups
+from .tags import TagGroups, DXFStructureError
 from .classifiedtags import ClassifiedTags
 from .entityspace import EntitySpace
 from .query import EntityQuery
@@ -44,9 +44,10 @@ class EntitySection(object):
     # end of public interface
 
     def _build(self, tags):
-        assert tags[0] == (0, 'SECTION')
-        assert tags[1] == (2, self.name.upper())
-        assert tags[-1] == (0, 'ENDSEC')
+        if tags[0] != (0, 'SECTION') or \
+            tags[1] != (2, self.name.upper()) or \
+            tags[-1] != (0, 'ENDSEC'):
+            raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
         if len(tags) == 3:  # empty entities section
             return

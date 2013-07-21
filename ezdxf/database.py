@@ -93,6 +93,7 @@ class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
 
     def __init__(self):
+        super(DebugDB, self).__init__()
         self._database = OrderedDict()
         self._collisions = {}
         self._stream = None

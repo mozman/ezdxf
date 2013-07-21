@@ -19,7 +19,8 @@ ezdxf is NOT
 ------------
 
 - a DXF converter: *ezdxf* can not convert between different DXF versions, if you are looking for an appropriate
-  program, use *DWG TrueView* from `Autodesk`_
+  program, use *DWG TrueView* from `Autodesk`_, but the latest version can only convert to the DWG format, for
+  converting between DXF versions you need at least AutoCAD LT.
 - a CAD-Format converter: *ezdxf* can not convert DXF files to **ANY** other format, like SVG, PDF or DWG
 - a DXF renderer: see above
 
