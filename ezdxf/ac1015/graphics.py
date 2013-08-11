@@ -30,6 +30,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+from contextlib import contextmanager
+
 from ..ac1009 import graphics as ac1009
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
@@ -985,3 +987,233 @@ ray_subclass = DefSubclass('AcDbRay', {
 class Ray(ac1009.GraphicEntity, ac1009.ColorMixin):
     TEMPLATE = ClassifiedTags.from_text(_RAY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ray_subclass)
+
+_MTEXT_TPL = """ 0
+MTEXT
+ 5
+0
+330
+0
+100
+AcDbEntiy
+  8
+0
+100
+AcDbMText
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+ 41
+1.0
+ 71
+1
+ 71
+1
+  1
+
+  7
+STANDARD
+ 50
+0.0
+"""
+
+mtext_subclass = DefSubclass('AcDbMText', {
+    'insert': DXFAttr(10, 'Point3D'),
+    'height': DXFAttr(40, None),  # nominal (initial) text height
+    'rect_width': DXFAttr(41, None),  # reference rectangle width
+    'attachment_point': DXFAttr(71, None),
+    # 1 = Top left; 2 = Top center; 3 = Top right
+    # 4 = Middle left; 5 = Middle center; 6 = Middle right
+    # 7 = Bottom left; 8 = Bottom center; 9 = Bottom right
+    'write_direction': DXFAttr(72, None),
+    # 1 = Left to right
+    # 3 = Top to bottom
+    # 5 = By style (the flow direction is inherited from the associated text style)
+    'style': DXFAttr(7, None),  # text style name, 'STANDARD' if not provided
+    'extrusion': DXFAttr(210, 'Point3D'),
+    'text_direction': DXFAttr(11, 'Point3D'), # x-axis direction vector (in WCS)
+    # If *rotation* and *text_direction* are present, *text-direction* wins
+    'width': DXFAttr(43, None),  # Horizontal width of the characters that make up the mtext entity.
+    # This value will always be equal to or less than the value of *rect_width*, (read-only, ignored if supplied)
+    'rect_height': DXFAttr(43, None),  # vertical height of the mtext entity (read-only, ignored if supplied)
+    'rotation': DXFAttr(50, None),  # in radians (circle=2*PI)
+    'line_spacing_style': DXFAttr(73, None),  # line spacing style (optional):
+    # 1 = At least (taller characters will override)
+    # 2 = Exact (taller characters will not override)
+    'line_spacing_factor': DXFAttr(44, None),  # line spacing factor (optional):
+    # Percentage of default (3-on-5) line spacing to be applied. Valid values
+    # range from 0.25 to 4.00
+})
+
+class MText(ac1009.GraphicEntity):
+    TEMPLATE = ClassifiedTags.from_text(_MTEXT_TPL)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
+    def set_pos(self, pos, align=None):
+        if align is None:
+            align = self.get_align()
+        align = align.upper()
+        self.set_align(align)
+        self.set_dxf_attrib('insert', pos)
+        return self
+
+    def get_pos(self):
+        p1 = self.dxf.insert
+        align = self.get_align()
+        return align, p1
+
+    def set_align(self, align='TOP_LEFT'):
+        align = align.upper()
+        attachment_point = const.MTEXT_ALIGN_FLAGS[align]
+        self.set_dxf_attrib('attachment_point', attachment_point)
+        return self
+
+    def get_align(self):
+        attachment_point = self.get_dxf_attrib('attachment_point', default=1)
+        return const.MTEXT_ALIGNMENT_BY_FLAGS.get(attachment_point, 'TOP_LEFT')
+
+    def set_write_direction(self, direction='LEFT_TO_RIGHT'):
+        direction = direction.upper()
+        flag = const.MTEXT_WRITE_DIRECTION_FLAGS[direction]
+        self.set_dxf_attrib('write_direction', flag)
+
+    def get_write_direction(self):
+        flag = self.get_dxf_attrib('write_direction', default=const.MTEXT_LEFT_TO_RIGHT)
+        return const.MTEXT_WRITE_DIRECTION_BY_FLAGS[flag]
+
+    def get_text(self):
+        tags = self.tags.get_subclass('AcDbMText')
+        tail = ""
+        parts = []
+        for tag in tags:
+            if tag.code == 1:
+                tail = tag.value
+            if tag.code == 3:
+                parts.append(tag.value)
+        parts.append(tail)
+        return "".join(parts)
+
+    def set_text(self, text):
+        tags = self.tags.get_subclass('AcDbMText')
+        tags.remove_tags(codes=(1, 3))
+        str_chunks = split_string_in_chunks(text)
+        if len(str_chunks) == 0:
+            str_chunks.append("")
+        while len(str_chunks) > 1:
+            tags.append(DXFTag(3, str_chunks.pop(0)))
+        tags.append(DXFTag(1, str_chunks[0]))
+
+    @contextmanager
+    def buffer(self):
+        buffer = MTextBuffer(self.get_text())
+        yield buffer
+        self.set_text(buffer.get_text())
+
+##################################################
+# MTEXT inline codes
+# \L	Start underline
+# \l	Stop underline
+# \O	Start overstrike
+# \o	Stop overstrike
+# \K	Start strike-through
+# \k	Stop strike-through
+# \P	New paragraph (new line)
+# \pxi	Control codes for bullets, numbered paragraphs and columns
+# \X	Paragraph wrap on the dimension line (only in dimensions)
+# \Q	Slanting (obliquing) text by angle - e.g. \Q30;
+# \H	Text height - e.g. \H3x;
+# \W	Text width - e.g. \W0.8x;
+# \F	Font selection
+#
+#     e.g. \Fgdt;o - GDT-tolerance
+#     e.g. \Fkroeger|b0|i0|c238|p10 - font Kroeger, non-bold, non-italic, codepage 238, pitch 10
+#
+# \S	Stacking, fractions
+#
+#     e.g. \SA^B:
+#     A
+#     B
+#     e.g. \SX/Y:
+#     X
+#     -
+#     Y
+#     e.g. \S1#4:
+#     1/4
+#
+# \A	Alignment
+#
+#     \A0; = bottom
+#     \A1; = center
+#     \A2; = top
+#
+# \C	Color change
+#
+#     \C1; = red
+#     \C2; = yellow
+#     \C3; = green
+#     \C4; = cyan
+#     \C5; = blue
+#     \C6; = magenta
+#     \C7; = white
+#
+# \T	Tracking, char.spacing - e.g. \T2;
+# \~	Non-wrapping space, hard space
+# {}	Braces - define the text area influenced by the code
+# \	Escape character - e.g. \\ = "\", \{ = "{"
+#
+# Codes and braces can be nested up to 8 levels deep
+
+class MTextBuffer(object):
+    UNDERLINE_START = '\\L;'
+    UNDERLINE_STOP = '\\l;'
+    UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
+    OVERSTRIKE_START = '\\O;'
+    OVERSTRIKE_STOP = '\\o;'
+    OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
+    STRIKE_START = '\\K;'
+    STRIKE_STOP = '\\k;'
+    STRIKE = STRIKE_START + '%s' + STRIKE_STOP
+    NEW_LINE = '\\P;'
+    GROUP_START = '{'
+    GROUP_STOP = '}'
+    GROUP = GROUP_START + '%s' + GROUP_STOP
+    NBSP = '\\~' # none breaking space
+
+    def __init__(self, text):
+        self.text = text
+
+    def set(self, text):
+        self.text = text
+
+    def __iadd__(self, text):
+        self.text += text
+        return self
+    append = __iadd__
+
+    def get_text(self):
+        return self.text
+
+    def set_font(self, name, bold=False, italic=False, codepage=1252, pitch=0):
+        bold_flag = 1 if bold else 0
+        italic_flag = 1 if italic else 0
+        s = "\\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
+        self.append(s)
+
+
+def split_string_in_chunks(s, size=250):
+    chunks = []
+    pos = 0
+    while True:
+        chunk = s[pos:pos+size]
+        chunk_len = len(chunk)
+        if chunk_len:
+            chunks.append(chunk)
+            if chunk_len < size:
+                return chunks
+            pos += size
+        else:
+            return chunks

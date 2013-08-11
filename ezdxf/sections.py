@@ -52,6 +52,12 @@ class Sections(object):
         except KeyError:
             raise AttributeError(key)
 
+    def get(self, name):
+        return self._sections.get(name, None)
+
+    def names(self):
+        return list(self._sections.keys())
+
     def write(self, stream):
         def write_eof():
             stream.write('  0\nEOF\n')

@@ -14,7 +14,7 @@ from ezdxf import readfile
 from ezdxf.tags import tag_type
 from ezdxf.c23 import escape, ustr
 from ezdxf.reflinks import get_reference_link
-
+from ezdxf.sections import KNOWN_SECTIONS
 # Handle definitions
 
 _HANDLE_CODES = [5, 105]
@@ -97,23 +97,33 @@ def dxf2html(dwg):
         section_links=sections_link_bar(dwg),
     )
 
+def section_names_in_write_order(dwg):
+    write_order = list(KNOWN_SECTIONS)
+    write_order.extend(frozenset(dwg.sections.names()) - frozenset(KNOWN_SECTIONS))
+    return write_order
+
+
 def sections2html(dwg):
     """Creates a <div> container of all DXF sections.
     """
     sections_html = []
-    for index, section in enumerate(dwg.sections):
-        section_template = create_section_html_template(section.name, index)
-        sections_html.append(section2html(section, section_template))
+    for index, section_name in enumerate(section_names_in_write_order(dwg)):
+        section = dwg.sections.get(section_name)
+        if section is not None:
+            section_template = create_section_html_template(section.name, index)
+            sections_html.append(section2html(section, section_template))
     return ALL_SECTIONS_TPL.format(content="\n".join(sections_html))
 
 def sections_link_bar(dwg):
     """Creates a <div> container as link bar to all DXF sections.
     """
     section_links = []
-    for index, section in enumerate(dwg.sections):
-        section_links.append(BUTTON_TPL.format(
-            name=section.name.upper(),
-            target=SECTION_ID.format(index)
+    for index, section_name in enumerate(section_names_in_write_order(dwg)):
+        section = dwg.sections.get(section_name)
+        if section is not None:
+            section_links.append(BUTTON_TPL.format(
+                name=section.name.upper(),
+                target=SECTION_ID.format(index)
         ))
     return SECTION_LINKS_TPL.format(buttons=' \n'.join(section_links))
 

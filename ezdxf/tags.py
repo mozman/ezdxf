@@ -243,6 +243,11 @@ class Tags(list):
     def clone(self):
         return self.__copy__()
 
+    def remove_tags(self, codes):
+        delete_tags = [tag for tag in self if tag.code in codes]
+        for tag in delete_tags:
+            self.remove(tag)
+
 class TagGroups(list):
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
@@ -283,3 +288,6 @@ class TagGroups(list):
     @staticmethod
     def from_text(text, splitcode=0):
         return TagGroups(Tags.from_text(text), splitcode)
+
+def strip_tags(tags, codes):
+    return Tags((tag for tag in tags if tag.code not in codes))
