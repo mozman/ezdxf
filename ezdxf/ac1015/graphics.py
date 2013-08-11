@@ -960,7 +960,7 @@ RAY
 330
 0
 100
-AcDbEntiy
+AcDbEntity
   8
 0
 100
@@ -995,16 +995,12 @@ MTEXT
 330
 0
 100
-AcDbEntiy
+AcDbEntity
   8
 0
 100
 AcDbMText
- 10
-0.0
- 20
-0.0
- 30
+ 50
 0.0
  40
 1.0
@@ -1012,14 +1008,12 @@ AcDbMText
 1.0
  71
 1
- 71
+ 72
+5
+ 73
 1
   1
 
-  7
-STANDARD
- 50
-0.0
 """
 
 mtext_subclass = DefSubclass('AcDbMText', {
@@ -1037,11 +1031,11 @@ mtext_subclass = DefSubclass('AcDbMText', {
     'style': DXFAttr(7, None),  # text style name, 'STANDARD' if not provided
     'extrusion': DXFAttr(210, 'Point3D'),
     'text_direction': DXFAttr(11, 'Point3D'), # x-axis direction vector (in WCS)
-    # If *rotation* and *text_direction* are present, *text-direction* wins
+    # If *rotation* and *text_direction* are present, *text_direction* wins
     'width': DXFAttr(43, None),  # Horizontal width of the characters that make up the mtext entity.
     # This value will always be equal to or less than the value of *rect_width*, (read-only, ignored if supplied)
     'rect_height': DXFAttr(43, None),  # vertical height of the mtext entity (read-only, ignored if supplied)
-    'rotation': DXFAttr(50, None),  # in radians (circle=2*PI)
+    'rotation': DXFAttr(50, None),  # in degrees (circle=360 deg) -  error in DXF description says radians
     'line_spacing_style': DXFAttr(73, None),  # line spacing style (optional):
     # 1 = At least (taller characters will override)
     # 2 = Exact (taller characters will not override)
