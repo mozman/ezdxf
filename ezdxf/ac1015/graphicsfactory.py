@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-
 class GraphicsFactoryAC1015(object):
     def add_lwpolyline(self, points, dxfattribs=None):
         if dxfattribs is None:
@@ -15,3 +14,10 @@ class GraphicsFactoryAC1015(object):
         lwpolyline.close(closed)
         lwpolyline._setup_points(points)
         return lwpolyline
+
+    def add_mtext(self, text, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        mtext = self.build_and_add_entity('MTEXT', dxfattribs)
+        mtext.set_text(text)
+        return mtext

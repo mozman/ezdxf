@@ -259,6 +259,10 @@ class TestTags(unittest.TestCase):
         tags2 = list(StringIterator(TEST_TAGREADER_COMMENTS))
         self.assertEqual(tags1, tags2)
 
+    def test_remove_tags(self):
+        self.tags.remove_tags(codes=(0, ))
+        self.assertEqual(5, len(self.tags))
+
 DUPLICATETAGS = """  0
 FIRST
   0

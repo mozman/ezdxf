@@ -3,7 +3,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-version = (0, 3, 0)
+version = (0, 4, 0)
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <mozman@gmx.at>"

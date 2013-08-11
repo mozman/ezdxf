@@ -1,5 +1,5 @@
-Import data from another DXF Drawing
-====================================
+Import data from other DXF drawings
+===================================
 
 .. class:: Importer
 

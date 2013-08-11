@@ -29,6 +29,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'SOLID': graphics.Solid,
     '3DFACE': graphics.Face,
     'TEXT': graphics.Text,
+    'MTEXT': graphics.MText,
     'POLYLINE': graphics.Polyline,
     'VERTEX': graphics.Vertex,
     'SEQEND': graphics.SeqEnd,

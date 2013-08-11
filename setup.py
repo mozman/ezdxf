@@ -15,13 +15,14 @@ AUTHOR_EMAIL = 'mozman@gmx.at'
 
 def read(fname):
     try:
-        return open(os.path.join(os.path.dirname(__file__), fname)).read()
+        with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+            f.read()
     except IOError:
         return "File '%s' not found.\n" % fname
 
 setup(
     name='ezdxf',
-    version=VERSION,
+    version=VERSION + 'b1',
     description='A Python package to create/manipulate DXF drawings.',
     author=AUTHOR_NAME,
     url='http://bitbucket.org/mozman/ezdxf',
