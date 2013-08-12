@@ -24,6 +24,16 @@ class PointAccessor(GenericWrapper):
 
 
 class TestGenericWrapper(unittest.TestCase):
+    def test_supports_dxfattrib(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertTrue(point.supports_dxf_attrib('xp'))
+
+    def test_supports_dxfattrib(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertFalse(point.supports_dxf_attrib('mozman'))
+
     def test_getdxfattr_default(self):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
@@ -33,6 +43,16 @@ class TestGenericWrapper(unittest.TestCase):
         tags = ClassifiedTags.from_text("70\n9\n10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         self.assertEqual(9, point.get_dxf_attrib('flags', 17))
+
+    def test_dxfattr_exists(self):
+        tags = ClassifiedTags.from_text("70\n9\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertTrue(point.dxf_attrib_exists('flags'))
+
+    def test_dxfattr_doesnt_exist(self):
+        tags = ClassifiedTags.from_text("70\n9\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertFalse(point.dxf_attrib_exists('xp'))
 
     def test_value_error(self):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
@@ -46,6 +66,62 @@ class TestGenericWrapper(unittest.TestCase):
         with self.assertRaises(AttributeError):
             point.dxf.xflag
 
+    def test_set_and_get_dxfattrib(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        point.dxf.flags = 7
+        self.assertEqual(7, point.dxf.flags)
+
+    def test_delete_simple_dxfattrib(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertEqual(7, point.dxf.flags)
+        del point.dxf.flags
+        self.assertFalse(point.dxf_attrib_exists('flags'))
+
+    def test_delete_xtype_dxfattrib(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertEqual((1.0, 2.0, 3.0), point.dxf.point)
+        del point.dxf.point
+        self.assertFalse(point.dxf_attrib_exists('point'))
+        # low level check
+        point_tags = [tag for tag in point.tags.noclass if tag.code in (10, 20, 30)]
+        self.assertEqual(0, len(point_tags))
+
+    def test_delete_not_supported_dxfattrib(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        with self.assertRaises(AttributeError):
+            del point.dxf.mozman
+
+    def test_set_not_existing_3D_point(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertFalse(point.dxf_attrib_exists('xp'))
+        point.dxf.xp = (7, 8, 9)
+        self.assertEqual((7, 8, 9), point.dxf.xp)
+
+    def test_set_not_existing_3D_point_with_wrong_axis_count(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertFalse(point.dxf_attrib_exists('xp'))
+        with self.assertRaises(ValueError):
+            point.dxf.xp = (7, 8)
+
+    def test_set_not_existing_flex_point_as_3D(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertFalse(point.dxf_attrib_exists('flex'))
+        point.dxf.flex = (7, 8, 9)
+        self.assertEqual((7, 8, 9), point.dxf.flex)
+
+    def test_set_not_existing_flex_point_as_2D(self):
+        tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertFalse(point.dxf_attrib_exists('flex'))
+        point.dxf.flex = (7, 8)
+        self.assertEqual((7, 8), point.dxf.flex)
 
 class TestPoint3D(unittest.TestCase):
     def test_get_3d_point(self):

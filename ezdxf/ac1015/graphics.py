@@ -31,6 +31,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
+import math
 
 from ..ac1009 import graphics as ac1009
 from ..tags import DXFTag
@@ -1047,37 +1048,6 @@ mtext_subclass = DefSubclass('AcDbMText', {
 class MText(ac1009.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_MTEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
-    def set_pos(self, pos, align=None):
-        if align is None:
-            align = self.get_align()
-        align = align.upper()
-        self.set_align(align)
-        self.set_dxf_attrib('insert', pos)
-        return self
-
-    def get_pos(self):
-        p1 = self.dxf.insert
-        align = self.get_align()
-        return align, p1
-
-    def set_align(self, align='TOP_LEFT'):
-        align = align.upper()
-        attachment_point = const.MTEXT_ALIGN_FLAGS[align]
-        self.set_dxf_attrib('attachment_point', attachment_point)
-        return self
-
-    def get_align(self):
-        attachment_point = self.get_dxf_attrib('attachment_point', default=1)
-        return const.MTEXT_ALIGNMENT_BY_FLAGS.get(attachment_point, 'TOP_LEFT')
-
-    def set_write_direction(self, direction='LEFT_TO_RIGHT'):
-        direction = direction.upper()
-        flag = const.MTEXT_WRITE_DIRECTION_FLAGS[direction]
-        self.set_dxf_attrib('write_direction', flag)
-
-    def get_write_direction(self):
-        flag = self.get_dxf_attrib('write_direction', default=const.MTEXT_LEFT_TO_RIGHT)
-        return const.MTEXT_WRITE_DIRECTION_BY_FLAGS[flag]
 
     def get_text(self):
         tags = self.tags.get_subclass('AcDbMText')
@@ -1100,6 +1070,22 @@ class MText(ac1009.GraphicEntity):
         while len(str_chunks) > 1:
             tags.append(DXFTag(3, str_chunks.pop(0)))
         tags.append(DXFTag(1, str_chunks[0]))
+
+    def get_rotation(self):
+        try:
+            vector = self.dxf.text_direction
+        except ValueError:
+            rotation = self.get_dxf_attrib('rotation', 0.0)
+        else:
+            radians = math.atan2(vector[1], vector[0]) # ignores z-axis
+            rotation = math.degrees(radians)
+        return rotation
+
+    def set_rotation(self, angle):
+        tags = self.tags.get_subclass('AcDbMText')
+        tags.remove_tags(codes=(11, 21, 31)) # *text_direction* has higher priority than *rotation*, therefore delete it
+        self.dxf.rotation = angle
+
 
     @contextmanager
     def buffer(self):

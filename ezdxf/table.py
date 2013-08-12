@@ -174,7 +174,7 @@ class Table(object):
             return # no owner handles
         owner_handle = self._table_header.get_handle()
         for entry in iter(self):
-            if not entry.has_dxf_attrib('owner'):
+            if not entry.supports_dxf_attrib('owner'):
                 raise AttributeError(repr(entry))
             entry.dxf.owner = owner_handle
 

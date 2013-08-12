@@ -263,6 +263,12 @@ class TestTags(unittest.TestCase):
         self.tags.remove_tags(codes=(0, ))
         self.assertEqual(5, len(self.tags))
 
+    def test_has_tag(self):
+        self.assertTrue(self.tags.has_tag(2))
+
+    def test_has_not_tag(self):
+        self.assertFalse(self.tags.has_tag(7))
+
 DUPLICATETAGS = """  0
 FIRST
   0
