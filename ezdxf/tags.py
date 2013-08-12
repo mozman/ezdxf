@@ -213,6 +213,12 @@ class Tags(list):
                 return start + index
         raise ValueError(code)
 
+    def has_tag(self, code):
+        for tag in self:
+            if tag.code == code:
+                return True
+        return  False
+
     def update(self, code, value):
         """ Update first existing tag, raises ValueError if tag not exists. """
         index = self.tag_index(code)

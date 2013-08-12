@@ -12,12 +12,13 @@ from .tags import cast_tag_value, DXFTag, DXFStructureError
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
     """
-    __slots__ = ('_setter', '_getter')
+    __slots__ = ('_setter', '_getter', '_deleter')
 
     def __init__(self, wrapper):
         # DXFNamespace.__setattr__ can not set _getter and _setter
         super(DXFNamespace, self).__setattr__('_getter', wrapper.get_dxf_attrib)
         super(DXFNamespace, self).__setattr__('_setter', wrapper.set_dxf_attrib)
+        super(DXFNamespace, self).__setattr__('_deleter', wrapper.del_dxf_attrib)
 
     def __getattr__(self, attrib):
         """Returns value of DXF attribute *attrib*. usage: value = GenericWrapper.dxf.attrib
@@ -28,6 +29,11 @@ class DXFNamespace(object):
         """Set DXF attribute *attrib* to *value.  usage: GenericWrapper.dxf.attrib = value
         """
         self._setter(attrib, value)
+
+    def __delattr__(self, attrib):
+        """Remove DXF attribute *attrib*.  usage: del GenericWrapper.dxf.attrib
+        """
+        self._deleter(attrib)
 
 
 # noinspection PyUnresolvedReferences
@@ -56,15 +62,29 @@ class GenericWrapper(object):
     def dxftype(self):
         return self.tags.noclass[0].value
 
-    def has_dxf_attrib(self, key):
+    def supports_dxf_attrib(self, key):
+        """ Returns True if DXF attrib *key* is supported by this entity else False. Does not grant that attrib
+        *key* really exists.
+        """
         return key in self.DXFATTRIBS
+
+    def dxf_attrib_exists(self, key):
+        """ Returns True if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.
+        """
+        try:
+            self.get_dxf_attrib(key, default=ValueError)
+        except ValueError:
+            return False
+        else:
+            return True
 
     def get_dxf_attrib(self, key, default=ValueError):
         try:
             dxfattr = self.DXFATTRIBS[key]
-            return self._get_dxf_attrib(dxfattr)
         except KeyError:
             raise AttributeError(key)
+        try:
+            return self._get_dxf_attrib(dxfattr)
         except ValueError:
             if default is ValueError:
                 raise ValueError("DXFAttrib '%s' does not exist." % key)
@@ -83,6 +103,14 @@ class GenericWrapper(object):
             tags.set_value(dxfattr.code, dxfattr.xtype, value)
         else:
             self._set_tag(subclasstags, dxfattr.code, value)
+
+    def del_dxf_attrib(self, key):
+        try:
+            dxfattr = self.DXFATTRIBS[key]
+        except KeyError:
+            raise AttributeError(key)
+        else:
+            self._del_dxf_attrib(dxfattr)
 
     def clone_dxf_attribs(self):
         dxfattribs = {}
@@ -118,6 +146,15 @@ class GenericWrapper(object):
     def _set_tag(tags, code, value):
         tags.set_first(code, cast_tag_value(code, value))
 
+    def _del_dxf_attrib(self, dxfattr):
+        def point_codes(base_code):
+            return base_code, base_code + 10, base_code + 20
+
+        subclass_tags = self.tags.subclasses[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            subclass_tags.remove_tags(codes=point_codes(dxfattr.code))
+        else:
+            subclass_tags.remove_tags(codes=(dxfattr.code,))
 
 class DXFExtendedPointType(object):
     def __init__(self, tags):
@@ -156,12 +193,22 @@ class DXFExtendedPointType(object):
         else:
             raise DXFStructureError('Invalid axis count for code: %d' % code)
 
+    def has_point(self, code):
+        return self.tags.has_tag(code)
+
+    def create_point(self, code, axis):
+        for i in range(axis):
+            self.tags.append(DXFTag(code + i * 10, 0.0))
+
     def set_value(self, code, xtype, value):
         def set_point(code, axis):
             if len(value) != axis:
                 raise ValueError('%d axis required' % axis)
-            if self._count_axis(code) != axis:
-                raise DXFStructureError('Invalid axis count for code: %d' % code)
+            if not self.has_point(code):
+                self.create_point(code, axis)
+            else:
+                if self._count_axis(code) != axis:
+                    raise DXFStructureError('Invalid axis count for code: %d' % code)
             self._set_point(code, value)
 
         if xtype == 'Point2D':
@@ -195,14 +242,18 @@ class DXFExtendedPointType(object):
         new_axis = len(value)
         if new_axis not in (2, 3):
             raise ValueError("2D or 3D point required (tuple).")
-        old_axis = self._count_axis(code)
-        if old_axis > 1:
-            if new_axis == 2 and old_axis == 3:
-                remove_axis()
-            elif new_axis == 3 and old_axis == 2:
-                append_axis()
+
+        if not self.has_point(code):
+            self.create_point(code, new_axis)
         else:
-            raise DXFStructureError("Invalid axis count of point.")
+            old_axis = self._count_axis(code)
+            if old_axis > 1:
+                if new_axis == 2 and old_axis == 3:
+                    remove_axis()
+                elif new_axis == 3 and old_axis == 2:
+                    append_axis()
+            else:
+                raise DXFStructureError("Invalid axis count of point.")
         self._set_point(code, value)
 
     def _count_axis(self, code):

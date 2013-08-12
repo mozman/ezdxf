@@ -41,6 +41,19 @@ class TestMText(unittest.TestCase):
                 last_text_chunk = tag.value
         self.assertEqual(last_text_chunk, "a new mtext")
 
+    def test_get_rotation(self):
+        mtext = self.layout.add_mtext('TEST')
+        mtext.dxf.text_direction = (1, 1, 0) # 45 deg
+        mtext.dxf.rotation = 30
+        self.assertEqual(45, mtext.get_rotation())
+
+    def test_set_rotation(self):
+        mtext = self.layout.add_mtext('TEST')
+        mtext.dxf.text_direction = (1, 1, 0) # 45 deg
+        mtext.set_rotation(30)
+        self.assertEqual(30, mtext.get_rotation())
+        self.assertFalse(mtext.dxf_attrib_exists('text_direction'), msg="dxfattrib 'text_direction' should be deleted!")
+
     def test_buffer(self):
         text = "0123456789" * 27
         text2 = "abcdefghij" * 27
