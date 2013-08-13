@@ -10,6 +10,7 @@ import unittest
 
 import ezdxf
 from ezdxf.ac1015.graphics import split_string_in_chunks, MTextBuffer
+from ezdxf import const
 
 class TestMText(unittest.TestCase):
     def setUp(self):
@@ -59,8 +60,14 @@ class TestMText(unittest.TestCase):
         text2 = "abcdefghij" * 27
         mtext = self.layout.add_mtext(text)
         with mtext.buffer() as b:
-            b.set(text2)
+            b.text = text2
         self.assertEqual(text2, mtext.get_text())
+
+    def test_set_location(self):
+        mtext = self.layout.add_mtext("TEST").set_location((3, 4), rotation=15, attachment_point=const.MTEXT_MIDDLE_CENTER)
+        self.assertEqual(const.MTEXT_MIDDLE_CENTER, mtext.dxf.attachment_point)
+        self.assertEqual(15, mtext.dxf.rotation)
+        self.assertEqual((3, 4, 0), mtext.dxf.insert)
 
 
 TESTSTR = "0123456789"
@@ -93,13 +100,13 @@ class TestSplitStringInChunks(unittest.TestCase):
 class TextMTextBuffer(unittest.TestCase):
     def test_new_buffer(self):
         b = MTextBuffer("abc")
-        self.assertEqual("abc", b.get_text())
+        self.assertEqual("abc", b.text)
 
     def test_append_text(self):
         b = MTextBuffer("abc")
         b += "def" + b.NEW_LINE
 
-        self.assertEqual("abcdef\\P;", b.get_text())
+        self.assertEqual("abcdef\\P;", b.text)
 
 if __name__ == '__main__':
     unittest.main()

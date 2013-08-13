@@ -39,6 +39,7 @@ from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
+from ..tools import safe_3D_point
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5, None),
@@ -563,8 +564,9 @@ AcDbPolyline
 
 lwpolyline_subclass = DefSubclass('AcDbPolyline', {
     'elevation': DXFAttr(38, None),
+    'thickness': DXFAttr(39, None),
     'flags': DXFAttr(70, None),
-    'constwidth': DXFAttr(43, None),
+    'const_width': DXFAttr(43, None),
     'count': DXFAttr(90, None),
     'extrusion': DXFAttr(210, 'Point3D'),
 })
@@ -575,42 +577,29 @@ LWPOINTCODES = (10, 20, 40, 41, 42)
 class LWPolyline(ac1009.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_LWPOLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
-    
-    def __len__(self):
-        return self.dxf.count
-        
-    def close(self, status=True):
+
+    @property
+    def AcDbPolyline(self):
+        return self.tags.subclasses[2]
+
+    @property
+    def closed(self):
+        return bool(self.dxf.flags & const.LWPOLYLINE_CLOSED)
+
+    @closed.setter
+    def closed(self, status):
         flagsnow = self.dxf.flags
         if status:
             self.dxf.flags = flagsnow | const.LWPOLYLINE_CLOSED
         else:
             self.dxf.flags = flagsnow & (~const.LWPOLYLINE_CLOSED)
-    
-    def _setup_points(self, points):
-        if self.dxf.count > 0:
-            raise ValueError('only callable for new LWPolylines')
-        subclass = self.tags.subclasses[2]
-        count = 0
-        
-        def append_point(point):
-            subclass.append(DXFTag(10, point[0]))
-            subclass.append(DXFTag(20, point[1]))
-            try:
-                subclass.append(DXFTag(40, point[2]))
-                subclass.append(DXFTag(41, point[3]))
-                subclass.append(DXFTag(42, point[4]))
-            except IndexError:
-                pass
-            
-        for point in points:
-            append_point(point)
-            count += 1
-        self.dxf.count = count
-        
+
+    def __len__(self):
+        return self.dxf.count
+
     def __iter__(self):
-        subclass = self.tags.subclasses[2]  # subclass AcDbPolyline
         point = []
-        for tag in subclass:
+        for tag in self.AcDbPolyline:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
                     if point:
@@ -620,13 +609,42 @@ class LWPolyline(ac1009.GraphicEntity):
         if point:
             yield tuple(point)
 
-    def points(self):
+    def append_points(self, points):
+        tags = self.AcDbPolyline
+
+        def append_point(point):
+            tags.append(DXFTag(10, point[0]))
+            tags.append(DXFTag(20, point[1]))
+            try:
+                tags.append(DXFTag(40, point[2]))
+                tags.append(DXFTag(41, point[3]))
+                tags.append(DXFTag(42, point[4]))
+            except IndexError:
+                pass
+            
+        for point in points:
+            append_point(point)
+
+        self._update_count()
+
+    def _update_count(self):
+        self.dxf.count = len(self.AcDbPolyline.find_all(10))
+
+    def get_points(self):
         return ((point[0].value, point[1].value) for point in self)
+
+    def set_points(self, points):
+        self.discard_points()
+        self.append_points(points)
+
+    def discard_points(self):
+        self.AcDbPolyline.remove_tags(codes=LWPOINTCODES)
+        self.dxf.count = 0
 
     def __getitem__(self, index):
         if index < 0:
             index += self.dxf.count
-        for x, point in enumerate(self.points()):
+        for x, point in enumerate(self.get_points()):
             if x == index:
                 return point
         raise IndexError(index)
@@ -1019,13 +1037,13 @@ AcDbMText
 
 mtext_subclass = DefSubclass('AcDbMText', {
     'insert': DXFAttr(10, 'Point3D'),
-    'height': DXFAttr(40, None),  # nominal (initial) text height
-    'rect_width': DXFAttr(41, None),  # reference rectangle width
+    'char_height': DXFAttr(40, None),  # nominal (initial) text height
+    'width': DXFAttr(41, None),  # reference column width
     'attachment_point': DXFAttr(71, None),
     # 1 = Top left; 2 = Top center; 3 = Top right
     # 4 = Middle left; 5 = Middle center; 6 = Middle right
     # 7 = Bottom left; 8 = Bottom center; 9 = Bottom right
-    'write_direction': DXFAttr(72, None),
+    'flow_direction': DXFAttr(72, None),
     # 1 = Left to right
     # 3 = Top to bottom
     # 5 = By style (the flow direction is inherited from the associated text style)
@@ -1033,10 +1051,10 @@ mtext_subclass = DefSubclass('AcDbMText', {
     'extrusion': DXFAttr(210, 'Point3D'),
     'text_direction': DXFAttr(11, 'Point3D'), # x-axis direction vector (in WCS)
     # If *rotation* and *text_direction* are present, *text_direction* wins
-    'width': DXFAttr(43, None),  # Horizontal width of the characters that make up the mtext entity.
-    # This value will always be equal to or less than the value of *rect_width*, (read-only, ignored if supplied)
+    'rect_width': DXFAttr(42, None),  # Horizontal width of the characters that make up the mtext entity.
+    # This value will always be equal to or less than the value of *width*, (read-only, ignored if supplied)
     'rect_height': DXFAttr(43, None),  # vertical height of the mtext entity (read-only, ignored if supplied)
-    'rotation': DXFAttr(50, None),  # in degrees (circle=360 deg) -  error in DXF description says radians
+    'rotation': DXFAttr(50, None),  # in degrees (circle=360 deg) -  error in DXF reference, which says radians
     'line_spacing_style': DXFAttr(73, None),  # line spacing style (optional):
     # 1 = At least (taller characters will override)
     # 2 = Exact (taller characters will not override)
@@ -1045,7 +1063,7 @@ mtext_subclass = DefSubclass('AcDbMText', {
     # range from 0.25 to 4.00
 })
 
-class MText(ac1009.GraphicEntity):
+class MText(ac1009.GraphicEntity):  # MTEXT will be extended in DXF version AC1021 (ACAD 2007)
     TEMPLATE = ClassifiedTags.from_text(_MTEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
 
@@ -1064,12 +1082,13 @@ class MText(ac1009.GraphicEntity):
     def set_text(self, text):
         tags = self.tags.get_subclass('AcDbMText')
         tags.remove_tags(codes=(1, 3))
-        str_chunks = split_string_in_chunks(text)
+        str_chunks = split_string_in_chunks(text, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
         while len(str_chunks) > 1:
             tags.append(DXFTag(3, str_chunks.pop(0)))
         tags.append(DXFTag(1, str_chunks[0]))
+        return self
 
     def get_rotation(self):
         try:
@@ -1082,16 +1101,23 @@ class MText(ac1009.GraphicEntity):
         return rotation
 
     def set_rotation(self, angle):
-        tags = self.tags.get_subclass('AcDbMText')
-        tags.remove_tags(codes=(11, 21, 31)) # *text_direction* has higher priority than *rotation*, therefore delete it
+        del self.dxf.text_direction # *text_direction* has higher priority than *rotation*, therefore delete it
         self.dxf.rotation = angle
+        return self
 
+    def set_location(self, insert, rotation=None, attachment_point=None):
+        self.dxf.insert = safe_3D_point(insert)
+        if rotation is not None:
+            self.set_rotation(rotation)
+        if attachment_point is not None:
+            self.dxf.attachment_point = attachment_point
+        return self
 
     @contextmanager
     def buffer(self):
         buffer = MTextBuffer(self.get_text())
         yield buffer
-        self.set_text(buffer.get_text())
+        self.set_text(buffer.text)
 
 ##################################################
 # MTEXT inline codes
@@ -1166,16 +1192,10 @@ class MTextBuffer(object):
     def __init__(self, text):
         self.text = text
 
-    def set(self, text):
-        self.text = text
-
     def __iadd__(self, text):
         self.text += text
         return self
     append = __iadd__
-
-    def get_text(self):
-        return self.text
 
     def set_font(self, name, bold=False, italic=False, codepage=1252, pitch=0):
         bold_flag = 1 if bold else 0

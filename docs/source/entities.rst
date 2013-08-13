@@ -247,7 +247,7 @@ Polyline
 ===================== ======= ===========
 DXFAttr               Version Description
 ===================== ======= ===========
-elevation             R12     elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (2D/3D Point)
+elevation             R12     elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (3D Point)
 flags                 R12     polyline flags (int), see table below
 default_start_width   R12     default line start width (float), default is 0
 default_end_width     R12     default line end width (float), default is 0
@@ -258,9 +258,10 @@ n_smooth_density      R12     smooth surface N density (int), default is 0
 smooth_type           R12     Curves and smooth surface type (int), default is 0, see table below
 ===================== ======= ===========
 
+Polyline constants for *flags* defined in :mod:`ezdxf.const`:
 
 ================================== ===== ====================================
-polyline.dxf.flags                 Value Description
+Polyline.dxf.flags                 Value Description
 ================================== ===== ====================================
 POLYLINE_CLOSED                    1     This is a closed Polyline (or a
                                          polygon mesh closed in the M
@@ -278,8 +279,10 @@ POLYLINE_GENERATE_LINETYPE_PATTERN 128   The linetype pattern is generated
                                          this Polyline
 ================================== ===== ====================================
 
+Polymesh constants for *smooth_type* defined in :mod:`ezdxf.const`:
+
 ======================== =====  =============================
-poyline.dxf.smoothtype   Value  Description
+Polyline.dxf.smooth_type Value  Description
 ======================== =====  =============================
 POLYMESH_NO_SMOOTH       0      no smooth surface fitted
 POLYMESH_QUADRIC_BSPLINE 5      quadratic B-spline surface
@@ -364,8 +367,10 @@ vtx3                R12     index of 3rd vertex, if used as face (feature for ex
 vtx4                R12     index of 4th vertex, if used as face (feature for experts)
 =================== ======= ===========
 
+Vertex constants for *flags* defined in :mod:`ezdxf.const`:
+
 ============================== ======= ===========
-vertex.dxf.flags               Value   Description
+Vertex.dxf.flags               Value   Description
 ============================== ======= ===========
 VTX_EXTRA_VERTEX_CREATED       1       Extra vertex created by curve-fitting
 VTX_CURVE_FIT_TANGENT          2       curve-fit tangent defined for this vertex. A curve-fit tangent direction of 0 may be omitted from the DXF output, but is significant if this bit is set.
@@ -493,3 +498,151 @@ invisible_edge R12     invisible edge flag (int, default = 0)
 
                        Combine values by adding them, e.g. 1+4 = first and third edge is invisible.
 ============== ======= ===========
+
+LWPolyline
+==========
+
+.. class:: LWPolyline
+
+   Introduced in AutoCAD R13 (DXF version AC1012)
+
+   A lightweight polyline is defined as a single graphic entity. The :class:`LWPolyline` differs from the old-style
+   polyline, which is defined as a group of subentities. :class:`LWPolyline` display faster (in AutoCAD) and consume
+   less disk space and RAM. Create :class:`LWPolyline` in layouts and blocks by factory function
+   :meth:`~Layout.add_lwpolyline`.
+
+===================== ======= ===========
+DXFAttr               Version Description
+===================== ======= ===========
+elevation             R13     z-axis value in WCS is the polyline elevation (float), default is 0
+flags                 R13     polyline flags (int), see table below
+const_width           R13     constant line width (float), default is 0
+count                 R13     number of vertices
+===================== ======= ===========
+
+LWPolyline constants for *flags* defined in :mod:`ezdxf.const`:
+
+============================== ======= ===========
+LWPolyline.dxf.flags           Value   Description
+============================== ======= ===========
+LWPOLYLINE_CLOSED              1       polyline is closed
+LWPOLYLINE_PLINEGEN            128     ???
+============================== ======= ===========
+
+.. attribute:: LWPolyline.closed
+
+   ``True`` if polyline is closed else ``False``.  A closed polyline has a connection from the last vertex
+   to the first vertex. (read/write)
+
+.. method:: LWPolyline.get_points()
+
+   Returns all polyline vertices as list of 2-tuple (x, y).
+
+.. method:: LWPolyline.set_points(points)
+
+   Remove all points and append new `points`.
+
+.. method:: LWPolyline.append_points(points)
+
+   Append additional *points*.
+
+.. method:: LWPolyline.discard_points()
+
+   Remove all points.
+
+.. method:: LWPolyline.__getitem__(index)
+
+   Get vertex at position *index* as 2-tuple (x, y). Actual implementation is very slow!
+
+MText
+=====
+
+.. class:: MText
+
+   Introduced in AutoCAD R13 (DXF version AC1012), extended in AutoCAD 2007 (DXF version AC1021)
+
+   Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
+   words or characters within the MText. Create :class:`MText` in layouts and blocks by factory function
+   :meth:`~Layout.add_mtext`.
+
+===================== ======= ===========
+DXFAttr               Version Description
+===================== ======= ===========
+insert                R13     Insertion point (3D Point)
+char_height           R13     initial text height (float), default is 1.0
+width                 R13     reference rectangle width (float)
+attachment_point      R13     attachment point (int), see table below
+flow_direction        R13     text flow direction (int), see table below
+style                 R13     text style (string), default is ``STANDARD``
+text_direction        R13     x-axis direction vector in WCS (3D Point), default is (1, 0, 0), if *rotation* and *text_direction* are present, *text_direction* wins
+rotation              R13     text rotation in degrees (float), default is 0
+line_spacing_style    R13     line spacing style (int), see table below
+line_spacing_factor   R13     percentage of default (3-on-5) line spacing to be applied. Valid values range from 0.25 to 4.00 (float)
+===================== ======= ===========
+
+MText constants for *attachment_point* defined in :mod:`ezdxf.const`:
+
+============================== ======= ===========
+MText.dxf.attachment_point     Value   Description
+============================== ======= ===========
+MTEXT_TOP_LEFT                 1       top left
+MTEXT_TOP_CENTER               2       top center
+MTEXT_TOP_RIGHT                3       top right
+MTEXT_MIDDLE_LEFT              4       middle left
+MTEXT_MIDDLE_CENTER            5       middle center
+MTEXT_MIDDLE_RIGHT             6       middle right
+MTEXT_BOTTOM_LEFT              7       bottom left
+MTEXT_BOTTOM_CENTER            8       bottom center
+MTEXT_BOTTOM_RIGHT             9       bottom right
+============================== ======= ===========
+
+MText constants for *flow_direction* defined in :mod:`ezdxf.const`:
+
+============================== ======= ===========
+MText.dxf.flow_direction       Value   Description
+============================== ======= ===========
+MTEXT_LEFT_TO_RIGHT            1       left to right
+MTEXT_TOP_TO_BOTTOM            3       top to bottom
+MTEXT_BY_STYLE                 5       by style (the flow direction is inherited from the associated text style)
+============================== ======= ===========
+
+MText constants for *line_spacing_style* defined in :mod:`ezdxf.const`:
+
+============================== ======= ===========
+MText.dxf.line_spacing_style   Value   Description
+============================== ======= ===========
+MTEXT_AT_LEAST                 1       taller characters will override
+MTEXT_EXACT                    2       taller characters will not override
+============================== ======= ===========
+
+.. method:: MText.get_text()
+
+   Returns content of :class:`MText` as string.
+
+.. method:: MText.set_text(text)
+
+   Set *text* as :class:`MText` content.
+
+.. method:: MText.set_location(insert, rotation=None, attachment_point=None)
+
+   Set DXF attributes *insert*, *rotation* and *attachment_point*, ``None`` for *rotation* or *attachment_point*
+   preserves the existing value.
+
+.. method:: MText.get_rotation()
+
+   Get text rotation in degrees, independent if it is defined by *rotation* or *text_direction*
+
+.. method:: MText.set_rotation(angle)
+
+   Set DXF attribute *rotation* to *angle* (in degrees) and deletes *text_direction* if present.
+
+.. method:: MText.buffer()
+
+   Context manager for :class:`MText` content::
+
+        with mtext.buffer() as b:
+            b += "append some text" + b.NEW_LINE
+
+            # or replace whole text
+            b.text = "Replacement for the existing text."
+
