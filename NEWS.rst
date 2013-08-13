@@ -6,7 +6,8 @@ Version 0.4.0 - End of 2013
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3 and pypy 2.1/pypy3 2.1-beta
-  * new supported DXF entities: MText
+  * experimental support for open drawings of DXF version AC1012(R13) and AC1014(R14)
+  * new supported DXF entities: LWPolyline, MText
 
 Version 0.3.0 - 2013-07-20
 

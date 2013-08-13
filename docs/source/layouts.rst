@@ -97,6 +97,17 @@ Create new drawing entities
 
    Add a :class:`Polyface` element.
 
+.. method:: Layout.add_lwpolyline(points, dxfattribs=None)
+
+   Add a 2D polyline, `points` is a list of 2D points. A :class:`LWPolyline` is defined as a single graphic entity and
+   consume less disk space and memory. (requires DXF version AC1012 or newer)
+
+.. method:: Layout.add_mtext(text, dxfattribs=None)
+
+   Add a :class:`MText` element, which is a multiline text element with automatic text wrapping at boundaries.
+   The `char_height` is the initial character height in drawing units, `width` is the width of the text boundary
+   in drawing units. (requires DXF version AC1012 or newer)
+
 Modelspace
 ==========
 

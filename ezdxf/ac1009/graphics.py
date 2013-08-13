@@ -46,7 +46,7 @@ def make_attribs(additional=None):
         'linetype': DXFAttr(6, None),  # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
         'color': DXFAttr(62, None),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
         'paperspace': DXFAttr(67, None),  # 0 .. modelspace, 1 .. paperspace, default is 0
-        'extrusion': DXFAttr(210, 'Point3D'),  # never used !?
+        'extrusion': DXFAttr(210, 'Point3D'),  # Z-axis of OCS (Object-Coordinate-System)
     }
     if additional is not None:
         dxfattribs.update(additional)

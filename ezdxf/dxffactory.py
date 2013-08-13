@@ -15,12 +15,14 @@ from .ac1027 import AC1027Factory
 default_factory = AC1009Factory
 
 factories = {
-    'AC1009': default_factory,
-    'AC1015': AC1015Factory,
-    'AC1018': AC1018Factory,
-    'AC1021': AC1021Factory,
-    'AC1024': AC1024Factory,
-    'AC1027': AC1027Factory,
+    'AC1009': default_factory,  # R11/12
+    'AC1012': AC1015Factory,  # R13 - experimental
+    'AC1014': AC1015Factory,  # R14 - experimental
+    'AC1015': AC1015Factory,  # R2000
+    'AC1018': AC1018Factory,  # R2004
+    'AC1021': AC1021Factory,  # R2007
+    'AC1024': AC1024Factory,  # R2010
+    'AC1027': AC1027Factory,  # R2013
 }
 
 

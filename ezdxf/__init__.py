@@ -38,6 +38,17 @@ def new(dxfversion='AC1009'):
 
 def read(stream):
     """Read DXF drawing from a *stream*, which only needs a readline() method.
+
+    read() can open drawings of following DXF versions:
+    - 'AC1009': AutoCAD R12 (DXF12)
+    - 'AC1012': AutoCAD R13 (experimental)
+    - 'AC1014': AutoCAD R14 (experimental)
+    - 'AC1015': AutoCAD 2000
+    - 'AC1018': AutoCAD 2004
+    - 'AC1021': AutoCAD 2007
+    - 'AC1024': AutoCAD 2010
+    - 'AC1027': AutoCAD 2013
+
     """
     from .drawing import Drawing
     return Drawing.read(stream)

@@ -11,8 +11,8 @@ class GraphicsFactoryAC1015(object):
             dxfattribs = {}
         closed = dxfattribs.pop('closed', False)
         lwpolyline = self.build_and_add_entity('LWPOLYLINE', dxfattribs)
-        lwpolyline.close(closed)
-        lwpolyline._setup_points(points)
+        lwpolyline.set_points(points)
+        lwpolyline.closed = closed
         return lwpolyline
 
     def add_mtext(self, text, dxfattribs=None):
