@@ -128,7 +128,7 @@ AcDbPoint
 0.0
 """
 point_subclass = DefSubclass('AcDbPoint', {
-    'point': DXFAttr(10, 'Point2D/3D'),
+    'location': DXFAttr(10, 'Point2D/3D'),
     'thickness': DXFAttr(39, None),
     'extrusion': DXFAttr(210, 'Point3D'),
 })
@@ -1185,8 +1185,8 @@ class MTextBuffer(object):
     STRIKE = STRIKE_START + '%s' + STRIKE_STOP
     NEW_LINE = '\\P;'
     GROUP_START = '{'
-    GROUP_STOP = '}'
-    GROUP = GROUP_START + '%s' + GROUP_STOP
+    GROUP_END = '}'
+    GROUP = GROUP_START + '%s' + GROUP_END
     NBSP = '\\~' # none breaking space
 
     def __init__(self, text):
@@ -1203,6 +1203,8 @@ class MTextBuffer(object):
         s = "\\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
         self.append(s)
 
+    def set_color(self, color_name):
+        self.append("\\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
 
 def split_string_in_chunks(s, size=250):
     chunks = []

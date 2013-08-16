@@ -1,4 +1,7 @@
 Tutorials
 =========
 
-... coming soon
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/mtext

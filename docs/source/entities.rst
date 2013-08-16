@@ -115,12 +115,12 @@ Point
 .. class:: Point(GraphicEntity)
 
    A point at location *point*, *dxftype* is ``POINT``.
-   No factory function for creating points until someone need it.
+   Create points in layouts and blocks by factory function :meth:`~Layout.add_point`.
 
 =========== ======= ===========
 DXFAttr     Version Description
 =========== ======= ===========
-point       R12     location of the point (2D/3D Point)
+location    R12     location of the point (2D/3D Point)
 =========== ======= ===========
 
 Circle
@@ -536,7 +536,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.get_points()
 
-   Returns all polyline vertices as list of 2-tuple (x, y).
+   Returns all polyline points as list of 2-tuple (x, y).
 
 .. method:: LWPolyline.set_points(points)
 
@@ -552,7 +552,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.__getitem__(index)
 
-   Get vertex at position *index* as 2-tuple (x, y). Actual implementation is very slow!
+   Get point at position *index* as 2-tuple (x, y). Actual implementation is very slow!
 
 MText
 =====
@@ -564,6 +564,10 @@ MText
    Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
    words or characters within the MText. Create :class:`MText` in layouts and blocks by factory function
    :meth:`~Layout.add_mtext`.
+
+.. seealso::
+
+    :ref:`tut_mtext`
 
 ===================== ======= ===========
 DXFAttr               Version Description
@@ -582,19 +586,19 @@ line_spacing_factor   R13     percentage of default (3-on-5) line spacing to be 
 
 MText constants for *attachment_point* defined in :mod:`ezdxf.const`:
 
-============================== ======= ===========
-MText.dxf.attachment_point     Value   Description
-============================== ======= ===========
-MTEXT_TOP_LEFT                 1       top left
-MTEXT_TOP_CENTER               2       top center
-MTEXT_TOP_RIGHT                3       top right
-MTEXT_MIDDLE_LEFT              4       middle left
-MTEXT_MIDDLE_CENTER            5       middle center
-MTEXT_MIDDLE_RIGHT             6       middle right
-MTEXT_BOTTOM_LEFT              7       bottom left
-MTEXT_BOTTOM_CENTER            8       bottom center
-MTEXT_BOTTOM_RIGHT             9       bottom right
-============================== ======= ===========
+============================== =======
+MText.dxf.attachment_point     Value
+============================== =======
+MTEXT_TOP_LEFT                 1
+MTEXT_TOP_CENTER               2
+MTEXT_TOP_RIGHT                3
+MTEXT_MIDDLE_LEFT              4
+MTEXT_MIDDLE_CENTER            5
+MTEXT_MIDDLE_RIGHT             6
+MTEXT_BOTTOM_LEFT              7
+MTEXT_BOTTOM_CENTER            8
+MTEXT_BOTTOM_RIGHT             9
+============================== =======
 
 MText constants for *flow_direction* defined in :mod:`ezdxf.const`:
 
@@ -646,3 +650,52 @@ MTEXT_EXACT                    2       taller characters will not override
             # or replace whole text
             b.text = "Replacement for the existing text."
 
+
+.. class:: MTextBuffer
+
+   Temporary object to manage the :class:`MText` content. Create context object by :meth:`MText.buffer`.
+
+.. seealso::
+
+    :ref:`tut_mtext`
+
+.. attribute:: MTextBuffer.text
+
+   Represents the :class:`MText` content, treat it like a normal string. (read/write)
+
+.. method:: MTextBuffer.__iadd__(text)
+
+   Append *text* to the :attr:`MTextBuffer.text` attribute.
+
+.. method:: MTextBuffer.append(text)
+
+   Synonym for :meth:`MTextBuffer.__iadd__`.
+
+.. method:: MTextBuffer.set_font(name, bold=False, italic=False, codepage=1252, pitch=0)
+
+   Change actual font inline.
+
+.. method:: MTextBuffer.set_color(color_name)
+
+   Set text color to 'red', 'yellow', 'green', 'cyan', 'blue', 'magenta' or 'white'.
+
+**Convenient constants defined in MTextBuffer:**
+
+=================== ===========
+Constant            Description
+=================== ===========
+UNDERLINE_START     start underline text (:code:`b += b.UNDERLINE_START`)
+UNDERLINE_STOP      stop underline text (:code:`b += b.UNDERLINE_STOP`)
+UNDERLINE           underline text (:code:`b += b.UNDERLINE % "Text"`)
+OVERSTRIKE_START    start overstrike
+OVERSTRIKE_STOP     stop overstrike
+OVERSTRIKE          overstrike text
+STRIKE_START        start strike trough
+STRIKE_STOP         stop strike trough
+STRIKE              strike trough text
+GROUP_START         start of group
+GROUP_END           end of group
+GROUP               group text
+NEW_LINE            start in new line (:code:`b += "Text" + b.NEW_LINE`)
+NBSP                none breaking space (:code:`b += "Python" + b.NBSP + "3.4"`)
+=================== ===========

@@ -17,6 +17,12 @@ class GraphicsFactory(object):
     def build_and_add_entity(self, type_, dxfattribs):
         raise NotImplementedError("Abstract method call.")
 
+    def add_point(self, location, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['location'] = location
+        return self.build_and_add_entity('POINT', dxfattribs)
+
     def add_line(self, start, end, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
