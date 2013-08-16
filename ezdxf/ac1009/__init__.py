@@ -88,6 +88,7 @@ ENTITY_WRAPPERS = {
     'XRECORD': dxfobjects.XRecord,
     # dxf entities
     'LINE': graphics.Line,
+    'POINT': graphics.Point,
     'CIRCLE': graphics.Circle,
     'ARC': graphics.Arc,
     'TRACE': graphics.Trace,

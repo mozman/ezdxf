@@ -125,3 +125,13 @@ MTEXT_BY_STYLE = 5
 
 MTEXT_AT_LEAST = 1
 MTEXT_EXACT = 2
+
+MTEXT_COLOR_INDEX = {
+    'red': 1,
+    'yellow': 2,
+    'green': 3,
+    'cyan': 4,
+    'blue': 5,
+    'magenta': 6,
+    'white': 7,
+}

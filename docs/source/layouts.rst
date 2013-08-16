@@ -31,6 +31,10 @@ Access existing drawing entities
 Create new drawing entities
 ---------------------------
 
+.. method:: Layout.add_point(location, dxfattribs=None)
+
+   Add a :class:`Point` element at `location`.
+
 .. method:: Layout.add_line(start, end, dxfattribs=None)
 
    Add a :class:`Line` element, starting at 2D/3D point `start` and ending at

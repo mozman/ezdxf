@@ -123,7 +123,7 @@ POINT
 class Point(GraphicEntity, ColorMixin):
     TEMPLATE = ClassifiedTags.from_text(_POINT_TPL)
     DXFATTRIBS = make_attribs({
-        'point': DXFAttr(10, 'Point2D/3D'),
+        'location': DXFAttr(10, 'Point2D/3D'),
     })
 
 _CIRCLE_TPL = """  0

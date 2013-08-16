@@ -52,6 +52,10 @@ class TestSimpleGraphics(SetupDrawing):
         self.assertEqual((0., 0.), line.dxf.start)
         self.assertEqual((1., 1.), line.dxf.end)
 
+    def test_create_point(self):
+        line = self.layout.add_point((1, 2))
+        self.assertEqual((1, 2), line.dxf.location)
+
     def test_create_circle(self):
         circle = self.layout.add_circle((3, 3), 5)
         self.assertEqual((3., 3.), circle.dxf.center)
