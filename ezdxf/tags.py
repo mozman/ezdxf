@@ -9,16 +9,12 @@ from collections import namedtuple
 from io import StringIO
 
 from .codepage import toencoding
-from .const import acadrelease
+from .const import acadrelease, DXFStructureError
 from .c23 import ustr
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONE_TAG = DXFTag(999999, 'NONE')
 TAG_STRING_FORMAT = '%3d\n%s\n'
-
-
-class DXFStructureError(Exception):
-    pass
 
 
 class TagIterator(object):
