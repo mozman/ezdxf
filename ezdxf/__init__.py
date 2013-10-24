@@ -15,9 +15,10 @@ if sys.version_info[:2] < (2, 7):
 import io
 
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
-from .tags import dxf_info, DXFStructureError
+from .tags import dxf_info
 from .tags import TagIterator
 from .importer import Importer
+from .const import DXFStructureError, DXFVersionError
 
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
@@ -41,8 +42,6 @@ def read(stream):
 
     read() can open drawings of following DXF versions:
     - 'AC1009': AutoCAD R12 (DXF12)
-    - 'AC1012': AutoCAD R13 (experimental)
-    - 'AC1014': AutoCAD R14 (experimental)
     - 'AC1015': AutoCAD 2000
     - 'AC1018': AutoCAD 2004
     - 'AC1021': AutoCAD 2007

@@ -11,13 +11,12 @@ from .ac1018 import AC1018Factory
 from .ac1021 import AC1021Factory
 from .ac1024 import AC1024Factory
 from .ac1027 import AC1027Factory
+from .const import acadrelease, DXFVersionError
 
 default_factory = AC1009Factory
 
 factories = {
-    'AC1009': default_factory,  # R11/12
-    'AC1012': AC1015Factory,  # R13 - experimental
-    'AC1014': AC1015Factory,  # R14 - experimental
+    'AC1009': AC1009Factory,  # R11/12
     'AC1015': AC1015Factory,  # R2000
     'AC1018': AC1018Factory,  # R2004
     'AC1021': AC1021Factory,  # R2007
@@ -27,7 +26,11 @@ factories = {
 
 
 def dxffactory(dxfversion, drawing=None):
-    factory_class = factories.get(dxfversion, default_factory)
+    try:
+        factory_class = factories[dxfversion]
+    except KeyError:
+        acad_version = acadrelease.get(dxfversion, "unknown")
+        raise DXFVersionError("DXF Version {} (AutoCAD Release: {}) not supported.".format(dxfversion, acad_version))
     factory = factory_class()
     factory.drawing = drawing
     return factory

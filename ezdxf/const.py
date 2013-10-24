@@ -22,6 +22,12 @@ dxfversion = {
     acad: dxf for dxf, acad in acadrelease.items()
 }
 
+class DXFStructureError(Exception):
+    pass
+
+class DXFVersionError(DXFStructureError):
+    pass
+
 # Entity: Polyline, Polymesh
 # 70 flags
 POLYLINE_CLOSED = 1
