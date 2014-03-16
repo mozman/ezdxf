@@ -44,6 +44,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'XLINE': graphics.Ray,
 }
 
+
 class AC1015Factory(AC1009Factory):
     HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.GraphicEntity
@@ -71,4 +72,3 @@ class AC1015Factory(AC1009Factory):
     def new_block_layout(self, block_handle, endblk_handle):
         # Warning: Do not call create_block_entry_in_block_records_table() from this point, this will not work!
         return BlockLayout(self.entitydb, self, block_handle, endblk_handle)
-    

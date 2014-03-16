@@ -101,7 +101,7 @@ class Style(GenericWrapper):
         'height': DXFAttr(40, None),  # fixed height, 0 if not fixed
         'width': DXFAttr(41, None),  # width factor
         'oblique': DXFAttr(50, None),  # oblique angle in degree, 0 = vertical
-        'text_generation_flags': DXFAttr(71, None),  # 2 = backward, 4 = mirrored in Y
+        'generation_flags': DXFAttr(71, None),  # 2 = backward, 4 = mirrored in Y
         'last_height': DXFAttr(42, None),  # last height used
         'font': DXFAttr(3, None),  # primary font file name
         'bigfont': DXFAttr(4, None),  # big font name, blank if none

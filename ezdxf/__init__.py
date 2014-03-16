@@ -3,7 +3,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-version = (0, 4, 0)
+
+version = (0, 4, 0)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <mozman@gmx.at>"
@@ -37,6 +38,7 @@ def new(dxfversion='AC1009'):
     from .drawing import Drawing
     return Drawing.new(dxfversion.upper())
 
+
 def read(stream):
     """Read DXF drawing from a *stream*, which only needs a readline() method.
 
@@ -51,6 +53,7 @@ def read(stream):
     """
     from .drawing import Drawing
     return Drawing.read(stream)
+
 
 def readfile(filename):
     """Read DXF drawing from file *filename*.
