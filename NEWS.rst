@@ -2,11 +2,13 @@
 News
 ====
 
-Version 0.4.0 - End of 2013
+Version 0.4.0 - 2014-03-16
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3 and pypy 2.1/pypy3 2.1-beta
   * new supported DXF entities: LWPolyline, MText
+  * pyparsing as external dependency
+  * BUGFIX: install error with pip
 
 Version 0.3.0 - 2013-07-20
 

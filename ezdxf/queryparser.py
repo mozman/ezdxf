@@ -40,11 +40,7 @@ examples:
     '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
 """
 
-from . import c23
-if c23.PY3: # for Python 3
-    from .pyparsing200 import *
-else: # for Python 2
-    from .pyparsing157 import *
+from pyparsing import *
 
 LBRK = Suppress('[')
 RBRK = Suppress(']')

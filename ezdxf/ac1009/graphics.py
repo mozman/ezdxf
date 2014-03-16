@@ -52,6 +52,7 @@ def make_attribs(additional=None):
         dxfattribs.update(additional)
     return DXFAttributes(DefSubclass(None, dxfattribs))
 
+
 class GraphicEntity(GenericWrapper):
     """ Default graphic entity wrapper, allows access to following dxf attributes:
 
