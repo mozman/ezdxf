@@ -906,10 +906,10 @@ attrib_subclass = (
         'thickness': DXFAttr(39, None),
         'height': DXFAttr(40, None),
         'text': DXFAttr(1, None),
-        'rotation': DXFAttr(50, None), #  error in DXF description, because placed in 'AcDbAttribute'
-        'width': DXFAttr(41, None), #  error in DXF description, because placed in 'AcDbAttribute'
-        'oblique': DXFAttr(51, None), #  error in DXF description, because placed in 'AcDbAttribute'
-        'style': DXFAttr(7, None), #  error in DXF description, because placed in 'AcDbAttribute'
+        'rotation': DXFAttr(50, None),  #  error in DXF description, because placed in 'AcDbAttribute'
+        'width': DXFAttr(41, None),  #  error in DXF description, because placed in 'AcDbAttribute'
+        'oblique': DXFAttr(51, None),  #  error in DXF description, because placed in 'AcDbAttribute'
+        'style': DXFAttr(7, None),  #  error in DXF description, because placed in 'AcDbAttribute'
     }),
     DefSubclass('AcDbAttribute', {
         'tag': DXFAttr(2, None),
