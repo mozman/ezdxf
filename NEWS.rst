@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.4.1 - 2014-..-..
+
+  * Beta status
+  * added convenience methods place() and grid() to the Insert entity
+
 Version 0.4.0 - 2014-03-16
 
   * Beta status

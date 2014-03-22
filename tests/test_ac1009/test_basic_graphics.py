@@ -17,6 +17,7 @@ class SetupDrawing(unittest.TestCase):
         self.dwg = ezdxf.new('AC1009')
         self.layout = self.dwg.modelspace()
 
+
 class TestGraphicsEntity(SetupDrawing):
     def test_layout_property(self):
         line = self.layout.add_line((0, 0), (1, 1))
@@ -29,6 +30,7 @@ class TestGraphicsEntity(SetupDrawing):
     def test_dxffactory_property(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.dwg.dxffactory, line.dxffactory)
+
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
@@ -45,6 +47,7 @@ class TestPaperSpace(SetupDrawing):
         self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
         self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
         self.assertEqual(2, len(self.layout.query('*[layer ? "lay_.*"]')))
+
 
 class TestSimpleGraphics(SetupDrawing):
     def test_create_line(self):
@@ -143,6 +146,23 @@ class TestBlock(SetupDrawing):
         ref.add_attrib('TEST2', 'text2', (0, 0))
         entity = self.layout.get_entity_at_index(-1)
         self.assertEqual('SEQEND', entity.dxftype())
+
+    def test_insert_place(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.place(insert=(1, 2), scale=(0.5, 0.4, 0.3), rotation=37.0)
+        self.assertEqual((1, 2), ref.dxf.insert)
+        self.assertEqual(0.5, ref.dxf.xscale)
+        self.assertEqual(0.4, ref.dxf.yscale)
+        self.assertEqual(0.3, ref.dxf.zscale)
+        self.assertEqual(37.0, ref.dxf.rotation)
+
+    def test_insert_grid(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.grid(size=(2, 3), spacing=(5, 10))
+        self.assertEqual(2, ref.dxf.row_count)
+        self.assertEqual(3, ref.dxf.column_count)
+        self.assertEqual(5, ref.dxf.row_spacing)
+        self.assertEqual(10, ref.dxf.column_spacing)
 
 if __name__ == '__main__':
     unittest.main()

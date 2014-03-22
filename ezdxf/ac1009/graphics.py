@@ -292,6 +292,7 @@ class Text(GraphicEntity, ColorMixin):
         'valign': DXFAttr(73,  None),  # vertical justification
         'align_point': DXFAttr(11, 'Point2D/3D'),
     })
+
     def set_pos(self, p1, p2=None, align=None):
         if align is None:
             align = self.get_align()
@@ -433,6 +434,31 @@ class Insert(GraphicEntity):
             else:
                 raise DXFStructureError('expected following ATTRIB or SEQEND, got instead %s.' % dxftype)
 
+    def place(self, insert=None, scale=None, rotation=None):
+        if insert is not None:
+            self.dxf.insert = insert
+        if scale is not None:
+            if len(scale) != 3:
+                raise ValueError("Parameter scale has to be a 3-tuple.")
+            x, y, z = scale
+            self.dxf.xscale = x
+            self.dxf.yscale = y
+            self.dxf.zscale = z
+        if rotation is not None:
+            self.dxf.rotation = rotation
+        return self
+
+    def grid(self, size=(1, 1), spacing=(1, 1)):
+        if len(size) != 2:
+            raise ValueError("Parameter size has to be a (row_count, column_count)-tuple.")
+        if len(spacing) != 2:
+            raise ValueError("Parameter spacing has to be a (row_spacing, column_spacing)-tuple.")
+        self.dxf.row_count = size[0]
+        self.dxf.column_count = size[1]
+        self.dxf.row_spacing = spacing[0]
+        self.dxf.column_spacing = spacing[1]
+        return self
+
     def get_attrib(self, tag):
         for attrib in self:
             if tag == attrib.dxf.tag:
@@ -527,7 +553,7 @@ STANDARD
 """
 
 
-class Attdef(GraphicEntity):
+class Attdef(Text):
     TEMPLATE = ClassifiedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
@@ -592,7 +618,7 @@ STANDARD
 """
 
 
-class Attrib(GraphicEntity):
+class Attrib(Text):
     TEMPLATE = ClassifiedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, 'Point2D/3D'),
