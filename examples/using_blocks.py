@@ -10,6 +10,7 @@ import sys
 
 import ezdxf
 
+
 def main():
     dwg = ezdxf.new('AC1009')
 
@@ -24,5 +25,5 @@ def main():
     dwg.saveas('using_blocks.dxf')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

@@ -10,44 +10,45 @@ from .c23 import isstring, Sequence
 
 from .queryparser import EntityQueryParser
 
+
 class EntityQuery(Sequence):
     """EntityQuery is a result container, which is filled with dxf entities matching the query string.
     It is possible to add entities to the container (extend), remove entities from the container and
     to filter the container.
-	
-	Query String
-	============
-	
+
+    Query String
+    ============
+
     QueryString := EntityQuery ("[" AttribQuery "]")*
-	
-	The query string is the combination of two queries, first the required entity query and second the
-	optional attribute query, enclosed in square brackets.
-	
-	Entity Query
-	------------
-	
-	The entity query is a whitespace separated list of DXF entity names or the special name "*".
-	Where "*" means all DXF entities, all other DXF names have to be uppercase.
-	
-	Attribute Query
-	---------------
-	
-	The attribute query is a boolean expression, supported operators are:
-	  - not: !term is true, if term is false
-	  - and: term & term is true, if both terms are true
-	  - or: term | term is true, if one term is true
-	  - and arbitrary nested round brackets
-	
-	Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
-	value is a integer, float or double quoted string, valid comparators are:
-	  - "==" equal "value"
-	  - "!=" not equal "value"
-	  - "<" lower than "value"
-	  - "<=" lower or equal than "value"
-	  - ">" greater than "value"
-	  - ">=" greater or equal than "value"
-	  - "?" match regular expression "value"
-	  - "!?" does not match regular expression "value"
+
+    The query string is the combination of two queries, first the required entity query and second the
+    optional attribute query, enclosed in square brackets.
+
+    Entity Query
+    ------------
+
+    The entity query is a whitespace separated list of DXF entity names or the special name "*".
+    Where "*" means all DXF entities, all other DXF names have to be uppercase.
+
+    Attribute Query
+    ---------------
+
+    The attribute query is a boolean expression, supported operators are:
+      - not: !term is true, if term is false
+      - and: term & term is true, if both terms are true
+      - or: term | term is true, if one term is true
+      - and arbitrary nested round brackets
+
+    Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
+    value is a integer, float or double quoted string, valid comparators are:
+      - "==" equal "value"
+      - "!=" not equal "value"
+      - "<" lower than "value"
+      - "<=" lower or equal than "value"
+      - ">" greater than "value"
+      - ">=" greater or equal than "value"
+      - "?" match regular expression "value"
+      - "!?" does not match regular expression "value"
 
     Query Result
     ------------
@@ -64,10 +65,10 @@ class EntityQuery(Sequence):
 
     def __init__(self, entities, query='*'):
         """Setup container with entities matching the initial query.
-		
-		:param entities: sequence of wrapped DXF entities (at least GraphicEntity class)
-		:param query: query string, see class documentation
-		"""
+
+        :param entities: sequence of wrapped DXF entities (at least GraphicEntity class)
+        :param query: query string, see class documentation
+        """
         match = entity_matcher(query)
         self.entities = [entity for entity in entities if match(entity)]
 
@@ -101,11 +102,14 @@ class EntityQuery(Sequence):
 
 def entity_matcher(query):
     query_args = EntityQueryParser.parseString(query, parseAll=True)
-    entity_matcher = build_entity_name_matcher(query_args.EntityQuery)
+    entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
     attrib_matcher = build_entity_attributes_matcher(query_args.AttribQuery)
+
     def matcher(entity):
-        return entity_matcher(entity) and attrib_matcher(entity)
+        return entity_matcher_(entity) and attrib_matcher(entity)
+
     return matcher
+
 
 def build_entity_name_matcher(names):
     entity_names = frozenset(names)
@@ -133,7 +137,7 @@ class Relation:
         self.dxf_attrib = name
         self.compare = Relation.CMP_OPERATORS[op]
         if '?' in op:
-            self.value = re.compile(value + '$') # always match whole pattern
+            self.value = re.compile(value + '$')  # always match whole pattern
         else:
             self.value = value
 
@@ -151,6 +155,7 @@ class BoolExpression:
         '&': operator.and_,
         '|': operator.or_,
     }
+
     def __init__(self, tokens):
         self.tokens = tokens
 
@@ -177,6 +182,7 @@ class BoolExpression:
             values.append(value)
         return values.pop()
 
+
 def _compile_tokens(tokens):
     def is_relation(tokens):
         return len(tokens) == 3 and tokens[1] in Relation.VALID_CMP_OPERATORS
@@ -190,14 +196,18 @@ def _compile_tokens(tokens):
     else:
         return BoolExpression([_compile_tokens(token) for token in tokens])
 
+
 def build_entity_attributes_matcher(tokens):
     if not len(tokens):
         return lambda x: True
 
     expr = BoolExpression(_compile_tokens(tokens))
+
     def match_bool_expr(entity):
         return expr.evaluate(entity)
+
     return match_bool_expr
+
 
 def unique_entities(entities):
     """ Yield all unique entities, order of all entities will be preserved, because of these entities:
@@ -211,6 +221,7 @@ def unique_entities(entities):
             handles.add(handle)
             yield entity
 
+
 def name_query(names, query="*"):
     def build_regexp_matcher():
         if query == "*":
@@ -219,5 +230,12 @@ def name_query(names, query="*"):
             # always match until end of string
             matcher = re.compile(query + '$')
             return lambda n: matcher.match(n) is not None
+
     match = build_regexp_matcher()
     return (name for name in names if match(name))
+
+
+def new_query(entities=None):
+    if entities is None:
+        entities = []
+    return EntityQuery(entities)

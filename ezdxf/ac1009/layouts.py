@@ -10,6 +10,7 @@ from .graphicsfactory import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
 
+
 class DXF12Layouts(object):
     """ The Layout container.
     """
@@ -159,7 +160,7 @@ class DXF12BlockLayout(BaseLayout):
         """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
         """
         for handle in self._entityspace:
-            yield self._dxffactory.wrap_handle(handle)
+            yield self.get_entity_by_handle(handle)
 
     def __contains__(self, entity):
         """ Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),

@@ -12,7 +12,7 @@ document.
 
 .. method:: BlocksSection.__contains__(entity)
 
-   Test if BlockssSection contains the block definition `entity`, `entity`
+   Test if :class:`BlocksSection` contains the block definition `entity`, `entity`
    can be a block name as `str` or the :class:`Block` definition itself.
 
 .. method:: BlocksSection.__getitem__(name)
@@ -25,7 +25,7 @@ document.
    Get the :class:`Block` definition by `name`, returns `default` if no block
    `name` exists.
 
-.. method:: BlocksSection.new(name, base_point=(0, 0), dxfattribs={})
+.. method:: BlocksSection.new(name, base_point=(0, 0), dxfattribs=None)
 
    Create and add a new :class:`Block`, `name` is the block-name, `base_point`
    is the insertion point of the block.
@@ -35,6 +35,15 @@ document.
    Create and add a new anonymous :class:`Block`, `type_char` is the block-type,
    `base_point` is the insertion point of the block.
 
+========= ==========
+type_char Anonymous Block Type
+========= ==========
+U         \*U### anonymous blocks
+E         \*E### anonymous non-uniformly scaled blocks
+X         \*X### anonymous hatches
+D         \*D### anonymous dimensions
+A         \*A### anonymous groups
+========= ==========
 
 Block Definition
 ================
@@ -75,7 +84,7 @@ column_spacing R12     distance between two insert points in column direction (f
 .. method:: Insert.place(insert=None, scale=None, rotation=None)
 
    Place block reference as point `insert` with scaling and rotation. `scale` has to be a (x, y, z)-tuple and `rotation`
-   a rotation angle in degrees.
+   a rotation angle in degrees. Parameters which are *None* will not be altered.
 
 .. method:: Insert.grid(size=(1, 1), spacing=(1, 1))
 

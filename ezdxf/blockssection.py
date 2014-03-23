@@ -11,6 +11,7 @@ from .tags import TagGroups, DXFStructureError
 from .classifiedtags import ClassifiedTags
 from . import const
 
+
 class BlocksSection(object):
     name = 'blocks'
 
@@ -101,7 +102,7 @@ class BlocksSection(object):
     def anonymous_blockname(self, type_char):
         """ Create name for an anonymous block.
 
-        typechar
+        type_char
             U = *U### anonymous blocks
             E = *E### anonymous non-uniformly scaled blocks
             X = *X### anonymous hatches
