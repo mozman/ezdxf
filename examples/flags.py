@@ -10,6 +10,7 @@ import random
 
 import ezdxf
 
+
 def get_random_point():
     x = random.randint(-100, 100)
     y = random.randint(-100, 100)
@@ -17,7 +18,7 @@ def get_random_point():
 
 sample_coords = [get_random_point() for x in range(50)]
 
-flag_symbol = [(0,0), (0, 5), (4, 3), (0, 3)]
+flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
 
 
 dwg = ezdxf.new('ac1024')
@@ -32,9 +33,9 @@ flag.add_polyline2d(flag_symbol)
 flag.add_circle((0, 0), .4, dxfattribs={'color': 2})
 
 # define some attributes
-flag.add_attdef('NAME', (0.5, -0.5), {'height':0.5, 'color':3})
-flag.add_attdef('XPOS', (0.5, -1.0), {'height':0.25, 'color':4})
-flag.add_attdef('YPOS', (0.5, -1.5), {'height':0.25, 'color':4})
+flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
+flag.add_attdef('XPOS', (0.5, -1.0), {'height': 0.25, 'color': 4})
+flag.add_attdef('YPOS', (0.5, -1.5), {'height': 0.25, 'color': 4})
 modelspace = dwg.modelspace()
 for number, point in enumerate(sample_coords):
     values = {
@@ -47,7 +48,7 @@ for number, point in enumerate(sample_coords):
         'xscale': randomscale,
         'yscale': randomscale,
         'layer': 'FLAGS',
-        'rotation':-15
+        'rotation': -15
     })
 
 filename = 'flags.dxf'

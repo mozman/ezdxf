@@ -17,7 +17,7 @@ Quick-Info
 - intended audience: Developer
 - requires Python 2.7 or later, runs on CPython and pypy, maybe on IronPython and Jython
 - OS independent
-- no additional libraries required
+- additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
 - MIT-License
 - supported DXF versions: R12, R2000, R2004, R2007, R2010 and R2013
 - preserves third-party DXF content

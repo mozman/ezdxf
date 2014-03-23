@@ -1,3 +1,5 @@
+.. _layout:
+
 Layout
 ======
 
@@ -112,6 +114,8 @@ Create new drawing entities
    The `char_height` is the initial character height in drawing units, `width` is the width of the text boundary
    in drawing units. (requires DXF version AC1012 or newer)
 
+.. _model space:
+
 Modelspace
 ==========
 
@@ -119,12 +123,16 @@ Modelspace
 
    At this time the :class:`Modelspace` class is the :class:`Layout` class.
 
+.. _paper space:
+
 Paperspace
 ==========
 
 .. class:: Paperspace
 
    At this time the :class:`Paperspace` class is the :class:`Layout` class.
+
+.. _block layout:
 
 BlockLayout
 ===========

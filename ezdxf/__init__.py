@@ -21,6 +21,7 @@ from .tags import TagIterator
 from .importer import Importer
 from .const import DXFStructureError, DXFVersionError
 
+
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
 
