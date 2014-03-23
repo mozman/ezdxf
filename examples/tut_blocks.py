@@ -64,21 +64,19 @@ for number, point in enumerate(placing_points):
 
 # Save the drawing.
 dwg.saveas("auto_blockref_tutorial.dxf")
-# Collect all block references starting with 'U*'
 
+# Collect all anonymous block references starting with '*U'
 anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
 
 # Collect real references to 'FLAG'
 flag_refs = []
 for block_ref in anonymous_block_refs:
+    # Get the block layout of the anonymous block
     block = dwg.blocks.get(block_ref.dxf.name)
+    # Find all block references to 'FLAG' in the anonymous block
     flag_refs.extend(block.query('INSERT[name=="FLAG"]'))
 
-# Collect all flag names.
-flag_numbers = []
-for flag in flag_refs:
-    flag_number = flag.get_attrib('NAME')
-    if flag_number is not None:
-        flag_numbers.append(flag_number.dxf.text)
+# Evaluation example: collect all flag names.
+flag_numbers = [flag.get_attrib_text('NAME') for flag in flag_refs if flag.has_attrib('NAME')]
 
 print(flag_numbers)

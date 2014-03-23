@@ -122,7 +122,7 @@ See the howto: :ref:`howto get attribs`
 Evaluate wrapped block references
 ---------------------------------
 
-As mentioned above evaluation of in anonymous blocks wrapped block references is complex::
+As mentioned above evaluation of block references wrapped into anonymous blocks is complex::
 
     # Collect all anonymous block references starting with '*U'
     anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
@@ -131,16 +131,12 @@ As mentioned above evaluation of in anonymous blocks wrapped block references is
     flag_refs = []
     for block_ref in anonymous_block_refs:
         # Get the block layout of the anonymous block
-        block = dwg.blocks.get(block_ref.name)
+        block = dwg.blocks.get(block_ref.dxf.name)
         # Find all block references to 'FLAG' in the anonymous block
         flag_refs.extend(block.query('INSERT[name=="FLAG"]'))
 
     # Evaluation example: collect all flag names.
-    flag_numbers = []
-    for flag in flag_refs:
-        flag_number = flag.get_attrib('NAME')
-        if flag_number is not None:
-            flag_numbers.append(flag_number.dxf.text)
+    flag_numbers = [flag.get_attrib_text('NAME') for flag in flag_refs if flag.has_attrib('NAME')]
 
     print(flag_numbers)
 

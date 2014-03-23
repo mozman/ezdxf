@@ -465,6 +465,15 @@ class Insert(GraphicEntity):
                 return attrib
         return None
 
+    def get_attrib_text(self, tag, default=None):
+        attrib = self.get_attrib(tag)
+        if attrib is None:
+            return default
+        return attrib.dxf.text
+
+    def has_attrib(self, tag):
+        return self.get_attrib(tag) is not None
+
     def add_attrib(self, tag, text, insert, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}

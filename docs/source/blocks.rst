@@ -100,6 +100,10 @@ column_spacing R12     distance between two insert points in column direction (f
    Get the appended :class:`Attrib` object with :code:`object.dxf.tag == tag`, returns
    :code:`None` if not found.
 
+.. method:: Insert.get_attrib_text(tag, default=None)
+
+   Get content text for attrib `tag` as string or return `default` if no attrib `tag` exists.
+
 .. method:: Insert.add_attrib(tag, text, insert, attribs={})
 
    Append an :class:`Attrib` to the block reference.
