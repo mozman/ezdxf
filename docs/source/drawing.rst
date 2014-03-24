@@ -127,17 +127,17 @@ Drawing Methods
 
 .. method:: Drawing.modelspace()
 
-    Get the model-space layout, see also :class:`Layout`.
+    Get the model space layout, see also :class:`Layout`.
 
 .. method:: Drawing.layout(name)
 
-    Get the paper-space layout by `name`, see also :class:`Layout`.
-    (DXF version AC1009, supports only one paper-space layout, so `name` is
+    Get a paper space layout by `name`, see also :class:`Layout`.
+    (DXF version AC1009, supports only one paper space layout, so `name` is
     ignored)
 
 .. method:: Drawing.layout_names()
 
-    Get a list of available paper-space layouts.
+    Get a list of available paper space layouts.
 
 .. method:: Drawing.save()
 
