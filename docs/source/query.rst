@@ -7,6 +7,8 @@ A name query string is just a standard regular expression see: http://docs.pytho
 
 A ``'$'`` will be appended to the query string.
 
+For general usage of the query features see the tutorial: :ref:`tut_getting_data`
+
 .. _entity query string:
 
 Entity Query String

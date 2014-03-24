@@ -6,8 +6,8 @@ Layout
 A Layout represents and manages drawing entities, there are three different
 layout objects:
 
-- Modelspace is the common working space, containing basic drawing entities.
-- Paperspaces are arrangements of objects for printing and plotting,
+- Model space is the common working space, containing basic drawing entities.
+- Paper spaces are arrangements of objects for printing and plotting,
   this layouts contains basic drawing entities and viewports to the model-space.
 - BlockLayout works on an associated :class:`Block`, Blocks are
   collections of drawing entities for reusing by block references.
@@ -116,8 +116,8 @@ Create new drawing entities
 
 .. _model space:
 
-Modelspace
-==========
+Model Space
+===========
 
 .. class:: Modelspace
 
@@ -125,8 +125,8 @@ Modelspace
 
 .. _paper space:
 
-Paperspace
-==========
+Paper Space
+===========
 
 .. class:: Paperspace
 
