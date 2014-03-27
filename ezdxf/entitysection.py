@@ -12,6 +12,7 @@ from .classifiedtags import ClassifiedTags
 from .entityspace import EntitySpace
 from .query import EntityQuery
 
+
 class EntitySection(object):
     name = 'entities'
 

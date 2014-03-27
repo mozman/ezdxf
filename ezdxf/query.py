@@ -27,12 +27,14 @@ class EntityQuery(Sequence):
     Entity Query
     ------------
 
-    The entity query is a whitespace separated list of DXF entity names or the special name "*".
-    Where "*" means all DXF entities, all other DXF names have to be uppercase.
+    The entity query is a whitespace separated list of DXF entity names or the special name ``*``.
+    Where ``*`` means all DXF entities, all other DXF names have to be uppercase.
 
     Attribute Query
     ---------------
 
+    The attribute query is used to select DXF entities by its DXF attributes. The attribute query is an addition to the
+    entity query and matches only if the entity already match the entity query.
     The attribute query is a boolean expression, supported operators are:
       - not: !term is true, if term is false
       - and: term & term is true, if both terms are true
@@ -235,7 +237,7 @@ def name_query(names, query="*"):
     return (name for name in names if match(name))
 
 
-def new_query(entities=None):
+def new(entities=None, query='*'):
     if entities is None:
         entities = []
-    return EntityQuery(entities)
+    return EntityQuery(entities, query)

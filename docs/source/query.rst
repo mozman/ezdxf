@@ -95,3 +95,13 @@ EntityQuery Class
 .. method:: EntityQuery.query(query='*')
 
    Returns a new result container with all entities matching this additional query.
+
+
+The new() Function
+------------------
+
+.. method:: ezdxf.query.new(entities, query='*')
+
+   Start a new query based on a sequence `entities`. The sequence `entities` has to provide the Python iterator
+   protocol and has to yield at least subclasses of :class:`GenericWrapper` or better :class:`GraphicEntity`.
+   Returns an object of type :class:`EntityQuery`.

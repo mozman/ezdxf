@@ -156,6 +156,7 @@ class GenericWrapper(object):
         else:
             subclass_tags.remove_tags(codes=(dxfattr.code,))
 
+
 class DXFExtendedPointType(object):
     def __init__(self, tags):
         self.tags = tags

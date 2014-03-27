@@ -8,6 +8,7 @@ import ezdxf
 
 from ezdxf.query import EntityQuery, name_query
 
+
 def make_test_drawing(version):
     dwg = ezdxf.new(version)
     modelspace = dwg.modelspace()
@@ -16,15 +17,29 @@ def make_test_drawing(version):
     modelspace.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})
     return dwg
 
+
 class TestEntityQuery_AC1009(unittest.TestCase):
     VERSION = 'AC1009'
     dwg = make_test_drawing(VERSION)
+
     def test_select_all(self):
         modelspace = self.dwg.modelspace()
         result = EntityQuery(modelspace, '*')
         # 1xLINE, 1xPOLYLINE, 4xVERTEX, 1xSEQEND
         self.assertEqual(8, len(result.entities))
         self.assertEqual(8, len(result))
+
+    def test_new_query_select_all(self):
+        modelspace = self.dwg.modelspace()
+        result = ezdxf.query.new(modelspace, '*')
+        # 1xLINE, 1xPOLYLINE, 4xVERTEX, 1xSEQEND
+        self.assertEqual(8, len(result.entities))
+        self.assertEqual(8, len(result))
+
+    def test_new_empty_query(self):
+        result = ezdxf.query.new()
+        self.assertEqual(0, len(result.entities))
+        self.assertEqual(0, len(result))
 
     def test_select_line(self):
         modelspace = self.dwg.modelspace()
@@ -79,8 +94,10 @@ class TestEntityQuery_AC1009(unittest.TestCase):
         # 1xPOLYLINE(layer=="lay_lines" & color==6) 1xTEXT(layer=="lay_text" & color==6)
         self.assertEqual(2, len(result))
 
+
 class TestEntityQuery_AC1015(TestEntityQuery_AC1009):
     VERSION = 'AC1015'
+
 
 class TestNameQuery(unittest.TestCase):
     def test_all_names(self):
