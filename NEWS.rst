@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.4.2 - 2014-04-02
+
+  * BUGFIX: added missing DXF template files, again
+
 Version 0.4.1 - 2014-04-02
 
   * Beta status

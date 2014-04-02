@@ -7,7 +7,7 @@
 import os
 from setuptools import setup
 
-VERSION = "0.4.1"  # also update VERSION in __init__.py
+VERSION = "0.4.2"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'mozman@gmx.at'
 
@@ -28,7 +28,7 @@ setup(
     download_url='http://bitbucket.org/mozman/ezdxf/downloads',
     author_email=AUTHOR_EMAIL,
     packages=['ezdxf', 'ezdxf.ac1009', 'ezdxf.ac1015', 'ezdxf.ac1018', 'ezdxf.ac1021', 'ezdxf.ac1024', 'ezdxf.ac1027'],
-    package_data={'ezdxf': ['ezdxf/templates/*.dxf']},
+    package_data={'ezdxf': ['templates/*.dxf']},
     provides=['ezdxf'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
