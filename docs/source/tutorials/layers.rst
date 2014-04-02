@@ -82,7 +82,7 @@ The layers object supports some standard Python protocols::
 Deleting a Layer
 ----------------
 
-You ca delete a layer definition::
+You can delete a layer definition::
 
     dwg.layers.delete('MyLines')
 
