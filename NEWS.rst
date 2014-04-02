@@ -2,11 +2,13 @@
 News
 ====
 
-Version 0.4.1 - 2014-..-..
+Version 0.4.1 - 2014-04-02
 
   * Beta status
   * added convenience methods place(), grid(), get_attrib_text() and has_attrib() to the Insert entity
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.1
+  * BUGFIX: added missing DXF template files
+  * BUGFIX: Iteration over drawing.entities yields full functional entities
 
 Version 0.4.0 - 2014-03-16
 
