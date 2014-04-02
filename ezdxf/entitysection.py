@@ -49,9 +49,7 @@ class EntitySection(object):
     # end of public interface
 
     def _build(self, tags):
-        if tags[0] != (0, 'SECTION') or \
-            tags[1] != (2, self.name.upper()) or \
-            tags[-1] != (0, 'ENDSEC'):
+        if tags[0] != (0, 'SECTION') or tags[1] != (2, self.name.upper()) or tags[-1] != (0, 'ENDSEC'):
             raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
         if len(tags) == 3:  # empty entities section
@@ -66,12 +64,16 @@ class EntitySection(object):
         stream.write("  0\nENDSEC\n")
 
 
-class ObjectsSection(EntitySection):
+class ClassesSection(EntitySection):
+    name = 'classes'
+
+    def __iter__(self):  # no layout setting required/possible
+        for handle in self._entityspace:
+            yield self._dxffactory.wrap_handle(handle)
+
+
+class ObjectsSection(ClassesSection):
     name = 'objects'
 
     def roothandle(self):
         return self._entityspace[0]
-
-
-class ClassesSection(EntitySection):
-    name = 'classes'
