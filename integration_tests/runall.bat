@@ -1,6 +1,6 @@
 @ECHO OFF
 SET ver=%1
-IF "%ver%" == "" SET ver=3.3
+IF "%ver%" == "" SET ver=3.4
 
 ECHO ---------------------------------------------------
 ECHO Integration tests for Python version: %ver%
