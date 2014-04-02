@@ -12,6 +12,7 @@ from .graphicsfactory import GraphicsFactoryAC1015
 from ..ac1009.layouts import DXF12Layout, DXF12BlockLayout
 from ..classifiedtags import ClassifiedTags
 
+
 class Layouts(object):
     #TODO: user defined new layouts
     def __init__(self, drawing):
@@ -96,6 +97,10 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
         entity.dxf.owner = self._block_record_handle
+
+    @property
+    def owner_id(self):
+        return self._block_record_handle
 
 
 class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):

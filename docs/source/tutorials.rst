@@ -6,6 +6,7 @@ Tutorials
 
    tutorials/getting_data
    tutorials/simple_drawings
+   tutorials/layers
    tutorials/blocks
    tutorials/text
    tutorials/mtext

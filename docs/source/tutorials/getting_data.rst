@@ -81,7 +81,6 @@ layouts::
     for e in dwg.entities:
         print("DXF Entity: %s\n" % e.dxftype())
 
-
 Retrieve Entities by Query Language
 -----------------------------------
 
@@ -118,14 +117,18 @@ All together as one query::
 
     lines = modelspace.query('LINE[layer=="construction"]')
 
-
 The ENTITIES section also supports the `query()` method::
 
     all_lines_and_circles_at_the_construction_layer = dwg.entities.query('LINE CIRCLE[layer=="construction"]')
-
 
 Get all model space entities at layer ``construction``, but no entities with the `linestyle` ``DASHED``::
 
     not_dashed_entities = modelspace.query('*[layer=="construction" and linestyle!="DASHED"]')
 
+Default Layer Settings
+----------------------
+
+.. seealso::
+
+    :ref:`tut_layers` and class :class:`Layer`
 

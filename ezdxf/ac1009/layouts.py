@@ -168,7 +168,7 @@ class DXF12BlockLayout(BaseLayout):
         """
         if hasattr('get_handle', entity):
             handle = entity.get_handle()
-        elif hasattr('dxf', entity): # it's a wrapped entity
+        elif hasattr('dxf', entity):  # it's a wrapped entity
             handle = entity.dxf.handle
         else:
             handle = entity

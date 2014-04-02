@@ -31,8 +31,12 @@ class EntitySection(object):
         return len(self._entityspace)
 
     def __iter__(self):
+        dwg = self._dxffactory.drawing
+        set_layout = dwg.get_layout_setter()
         for handle in self._entityspace:
-            yield self._dxffactory.wrap_handle(handle)
+            entity = self._dxffactory.wrap_handle(handle)
+            set_layout(entity)
+            yield entity
 
     def __getitem__(self, index):
         if isinstance(index, int):

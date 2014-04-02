@@ -8,6 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 import os
 import io
 
+
 class TemplateFinder:
     def __init__(self, template_dir=None):
         self._template_dir = self._get_template_dir(template_dir)

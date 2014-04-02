@@ -22,8 +22,10 @@ dxfversion = {
     acad: dxf for dxf, acad in acadrelease.items()
 }
 
+
 class DXFStructureError(Exception):
     pass
+
 
 class DXFVersionError(DXFStructureError):
     pass
@@ -96,26 +98,26 @@ LWPOLYLINE_CLOSED = 1
 LWPOLYLINE_PLINEGEN = 128
 
 TEXT_ALIGN_FLAGS = {
-    'LEFT' : (0, 0),
-    'CENTER' : (1, 0),
-    'RIGHT' : (2, 0),
-    'ALIGNED' : (3, 0),
-    'MIDDLE' : (4, 0),
-    'FIT' : (5, 0),
-    'BOTTOM_LEFT' : (0, 1),
-    'BOTTOM_CENTER' : (1, 1),
-    'BOTTOM_RIGHT' : (2, 1),
-    'MIDDLE_LEFT' : (0, 2),
-    'MIDDLE_CENTER' : (1, 2),
-    'MIDDLE_RIGHT' : (2, 2),
-    'TOP_LEFT' : (0, 3),
-    'TOP_CENTER' : (1, 3),
-    'TOP_RIGHT' : (2, 3),
+    'LEFT': (0, 0),
+    'CENTER': (1, 0),
+    'RIGHT': (2, 0),
+    'ALIGNED': (3, 0),
+    'MIDDLE': (4, 0),
+    'FIT': (5, 0),
+    'BOTTOM_LEFT': (0, 1),
+    'BOTTOM_CENTER': (1, 1),
+    'BOTTOM_RIGHT': (2, 1),
+    'MIDDLE_LEFT': (0, 2),
+    'MIDDLE_CENTER': (1, 2),
+    'MIDDLE_RIGHT': (2, 2),
+    'TOP_LEFT': (0, 3),
+    'TOP_CENTER': (1, 3),
+    'TOP_RIGHT': (2, 3),
 }
-TEXT_ALIGNMENT_BY_FLAGS = dict( (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items() )
+TEXT_ALIGNMENT_BY_FLAGS = dict((flags, name) for name, flags in TEXT_ALIGN_FLAGS.items())
 
 
-MTEXT_TOP_LEFT =  1
+MTEXT_TOP_LEFT = 1
 MTEXT_TOP_CENTER = 2
 MTEXT_TOP_RIGHT = 3
 MTEXT_MIDDLE_LEFT = 4
