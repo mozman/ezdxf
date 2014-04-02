@@ -21,7 +21,7 @@ Version 0.3.0 - 2013-07-20
   * Alpha status
   * Supported Python versions: CPython 2.7, 3.3 and pypy 2.0
   * License changed to MIT License
-  * Entity Query language
+  * Entity Query Language
   * Import data from other DXF files
 
 Version 0.1.0 - 2010-03-14

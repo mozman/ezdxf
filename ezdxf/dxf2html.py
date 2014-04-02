@@ -73,11 +73,13 @@ REF_LINK_TPL = '<a class="dxf-ref-link" href={target} target="_blank" ' \
 BUTTON_BAR_TPL = '<div class="button-bar">{content}</div>'
 BUTTON_TPL = '<a class="link-button" href="#{target}">{name}</a>'
 
+
 def build_ref_link_button(name):
     """Create a link-button for element *name* to the DXF reference.
     """
     link = get_reference_link(name)
     return REF_LINK_TPL.format(target=link, name=name)
+
 
 def dxf2html(dwg):
     """Creates a structured HTML view of the DXF tags - not a CAD drawing!
@@ -97,6 +99,7 @@ def dxf2html(dwg):
         section_links=sections_link_bar(dwg),
     )
 
+
 def section_names_in_write_order(dwg):
     write_order = list(KNOWN_SECTIONS)
     write_order.extend(frozenset(dwg.sections.names()) - frozenset(KNOWN_SECTIONS))
@@ -114,6 +117,7 @@ def sections2html(dwg):
             sections_html.append(section2html(section, section_template))
     return ALL_SECTIONS_TPL.format(content="\n".join(sections_html))
 
+
 def sections_link_bar(dwg):
     """Creates a <div> container as link bar to all DXF sections.
     """
@@ -126,6 +130,7 @@ def sections_link_bar(dwg):
                 target=SECTION_ID.format(index)
         ))
     return SECTION_LINKS_TPL.format(buttons=' \n'.join(section_links))
+
 
 def section2html(section, section_template):
     """Creates a <div> container of a specific DXF sections.
@@ -166,8 +171,10 @@ TAG_TYPES = {
     ustr: '<str>',
 }
 
+
 def tag_type_str(code):
     return TAG_TYPES[tag_type(code)]
+
 
 def hdrvars2html(hdrvars):
     """DXF header section as <div> container.
@@ -190,6 +197,7 @@ def hdrvars2html(hdrvars):
         for name, value in hdrvars.items()
     ]
     return HEADER_SECTION_TPL.format(content="\n".join(varstrings))
+
 
 def tags2html(tags):
     """DXF tag list as <div> container.
@@ -214,11 +222,13 @@ def tags2html(tags):
     tag_strings = (group_marker(tag, tag2html(tag)) for tag in tags)
     return TAG_LIST_TPL.format(content='\n'.join(tag_strings))
 
+
 def entities2html(entities, create_ref_links=False):
     """DXF entities as <div> container.
     """
     entity_strings = (entity2html(entity, create_ref_links) for entity in entities)
     return ENTITIES_TPL.format("\n".join(entity_strings))
+
 
 def entity2html(entity, create_ref_links=False):
     """DXF entity as <div> container.
@@ -229,12 +239,14 @@ def entity2html(entity, create_ref_links=False):
         name = entity.dxftype()
     return ENTITY_TPL.format(name=name, tags=tags2html(entity.tags))
 
+
 def tables2html(tables):
     """DXF tables section as <div> container.
     """
     navigation = create_table_navigation(tables)
     tables_html_strings = [table2html(table, navigation) for table in tables]
     return TABLES_SECTION_TPL.format(content='\n'.join(tables_html_strings))
+
 
 def create_table_navigation(table_section):
     """Create a button bar with links to all DXF tables as <div> container.
@@ -246,6 +258,7 @@ def create_table_navigation(table_section):
         buttons.append(BUTTON_TPL.format(name=name, target=link))
     return BUTTON_BAR_TPL.format(content="\n".join(buttons))
 
+
 def table2html(table, navigation=''):
     """DXF table as <div> container.
     """
@@ -255,11 +268,13 @@ def table2html(table, navigation=''):
     return TABLE_TPL.format(name=table_name, ref_link=build_ref_link_button(table_name), nav= navigation, header=header,
         entries=entries)
 
+
 def blocks2html(blocks):
     """DXF blocks section as <div> container.
     """
     block_strings = (block2html(block) for block in blocks)
     return BLOCKS_SECTION_TPL.format(content='\n'.join(block_strings))
+
 
 def block2html(block_layout):
     """DXF block entity as <div> container.
@@ -268,6 +283,7 @@ def block2html(block_layout):
     entities_html = entities2html(iter(block_layout), create_ref_links=True)
     endblk_html = entity2html(block_layout.endblk, create_ref_links=True)
     return BLOCK_TPL.format(name=block_layout.name, block=block_html, entities=entities_html, endblk=endblk_html)
+
 
 def load_resource(filename):
     """Load external resource files.

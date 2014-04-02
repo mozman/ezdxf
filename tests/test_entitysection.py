@@ -14,6 +14,7 @@ import ezdxf
 from ezdxf.testtools import DrawingProxy, normlines, Tags
 from ezdxf.entitysection import EntitySection
 
+
 def make_test_drawing(version):
     dwg = ezdxf.new(version)
     modelspace = dwg.modelspace()
@@ -21,6 +22,7 @@ def make_test_drawing(version):
     modelspace.add_text("TEST", dxfattribs={'layer': 'lay_line'})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_polyline'})
     return dwg
+
 
 class TestEntitySection(unittest.TestCase):
     def setUp(self):
@@ -42,8 +44,26 @@ class TestEntitySection(unittest.TestCase):
         stream.close()
         self.assertEqual(EMPTYSEC, result)
 
+    def test_iteration_with_layout_DXF12(self):
+        dwg = ezdxf.new('AC1009')
+        m = dwg.modelspace()
+        m.add_line((0, 0), (1, 1))
+        entity = next(iter(dwg.entities))
+        self.assertTrue(hasattr(entity, 'layout'))
+        self.assertIsNotNone(entity.layout)
+
+    def test_iteration_with_layout_DXF2000(self):
+        dwg = ezdxf.new('AC1015')
+        m = dwg.modelspace()
+        m.add_line((0, 0), (1, 1))
+        entity = next(iter(dwg.entities))
+        self.assertTrue(hasattr(entity, 'layout'))
+        self.assertIsNotNone(entity.layout)
+
+
 class TestEntityQueryAC1009(unittest.TestCase):
     dwg = make_test_drawing('AC1009')
+
     def test_query_all_entities(self):
         # independent from layout (modelspace or paperspace)
         entities = self.dwg.entities.query('*')
@@ -73,6 +93,7 @@ class TestEntityQueryAC1009(unittest.TestCase):
     def test_query_layer_by_regex(self):
         entities = self.dwg.entities.query('*[layer ? "lay_.*"]')
         self.assertEqual(3, len(entities))
+
 
 class TestEntityQueryAC1018(TestEntityQueryAC1009):
     dwg = make_test_drawing('AC1018')
