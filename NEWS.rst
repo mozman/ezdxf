@@ -2,25 +2,20 @@
 News
 ====
 
+Version 0.4.3 - 2014-04-..
+
+  * Beta status
+  * BUGFIX: Drawing.get_layout_setter() - did not work with entities without DXF attribute 'paperspace'
+
 Version 0.4.2 - 2014-04-02
 
-  * BUGFIX: added missing DXF template files, again
-
-Version 0.4.1 - 2014-04-02
-
   * Beta status
-  * added convenience methods place(), grid(), get_attrib_text() and has_attrib() to the Insert entity
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.1
-  * BUGFIX: added missing DXF template files
-  * BUGFIX: Iteration over drawing.entities yields full functional entities
-
-Version 0.4.0 - 2014-03-16
-
-  * Beta status
-  * Supported Python versions: CPython 2.7, 3.3 and pypy 2.1/pypy3 2.1-beta
   * new supported DXF entities: LWPolyline, MText
   * pyparsing as external dependency
-  * BUGFIX: install error with pip
+  * added convenience methods place(), grid(), get_attrib_text() and has_attrib() to the Insert entity
+  * BUGFIX: iteration over drawing.entities yields full functional entities (correct layout attribute)
+  * BUGFIX: install error with pip and missing DXF template files of versions 0.4.0 & 0.4.1
 
 Version 0.3.0 - 2013-07-20
 

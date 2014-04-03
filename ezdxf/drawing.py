@@ -113,7 +113,7 @@ class Drawing(object):
 
     def get_layout_setter(self):
         def ac1009_layout_setter(entity):
-            layout = paper_space if entity.dxf.paperspace else model_space
+            layout = paper_space if entity.get_dxf_attrib('paperspace', 0) else model_space
             entity.set_layout(layout)
 
         def ac1015_layout_setter(entity):
