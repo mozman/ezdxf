@@ -88,7 +88,8 @@ class TestPolymesh(unittest.TestCase):
     def test_set_vertex(self):
         mesh = self.layout.add_polymesh((4, 4))
         mesh.set_mesh_vertex((1, 1), (1, 2, 3))
-        self.assertEqual((1, 2, 3), mesh.get_mesh_vertex((1, 1)).dxf.location)
+        result = mesh.get_mesh_vertex((1, 1)).dxf.location
+        self.assertEqual((1, 2, 3), result)
 
     def test_error_nindex(self):
         mesh = self.layout.add_polymesh((4, 4))

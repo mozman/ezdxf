@@ -19,6 +19,8 @@ from .juliandate import juliandate
 
 
 class Drawing(object):
+    """ The Central Data Object
+    """
     def __init__(self, tagreader):
         """ Create a new drawing. """
         def get_rootdict():
@@ -49,7 +51,7 @@ class Drawing(object):
         self._handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
-        self.dxffactory = dxffactory(self.dxfversion, self)
+        self.dxffactory = dxffactory(self)
 
     @property
     def header(self):

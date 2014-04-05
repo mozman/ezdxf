@@ -110,9 +110,9 @@ class AC1009Factory(object):
     HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.GraphicEntity
 
-    def __init__(self):
+    def __init__(self, drawing):
         self.ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)
-        self.drawing = None
+        self.drawing = drawing
 
     @property
     def entitydb(self):
