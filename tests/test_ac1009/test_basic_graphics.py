@@ -23,7 +23,7 @@ class TestGraphicsEntity(SetupDrawing):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.layout, line.layout)
 
-    def test_drawing_property(self):
+    def test_drawing_attribute(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.dwg, line.drawing)
 
@@ -31,22 +31,37 @@ class TestGraphicsEntity(SetupDrawing):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.dwg.dxffactory, line.dxffactory)
 
+    def test_layout_attribute(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual(self.layout, line.layout)
+
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
         paperspace = self.dwg.layout('Name it like you want, there is only one paperspace at AC1009')
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.dxf.paperspace)
+        self.assertEqual(paperspace, line.layout)
 
     def test_iter_layout(self):
         self.layout.add_line((0, 0), (1, 1))
         self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual(2, len(list(self.layout)))
+        entities = list(self.layout)
+        self.assertEqual(2, len(entities))
+        # Are all necessary attribute set?
+        e = entities[0]
+        self.assertEqual(self.dwg, e.drawing)
+        self.assertEqual(self.layout, e.layout)
 
     def test_query_entities(self):
         self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
         self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
-        self.assertEqual(2, len(self.layout.query('*[layer ? "lay_.*"]')))
+        entities = self.layout.query('*[layer ? "lay_.*"]')
+        self.assertEqual(2, len(entities))
+        # Are all necessary attribute set?
+        e = entities[0]
+        self.assertEqual(self.dwg, e.drawing)
+        self.assertEqual(self.layout, e.layout)
 
     def test_model_space_get_layout_for_entity(self):
         line = self.layout.add_line((0, 0), (1, 1))
