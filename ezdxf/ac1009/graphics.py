@@ -75,7 +75,7 @@ class GraphicEntity(GenericWrapper):
         return self.layout._dxffactory
 
     @property
-    def drawing(self):
+    def drawing_(self):
         return self.layout._dxffactory.drawing
 
 _LINE_TPL = """  0

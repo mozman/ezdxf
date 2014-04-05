@@ -66,6 +66,11 @@ class TestGenericWrapper(unittest.TestCase):
         with self.assertRaises(AttributeError):
             point.dxf.xflag
 
+    def test_valid_dxf_attrib_names(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        self.assertEqual(['flags', 'flat', 'flex', 'point', 'xp'], sorted(point.valid_dxf_attrib_names()))
+
     def test_set_and_get_dxfattrib(self):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)

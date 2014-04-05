@@ -134,7 +134,7 @@ class AC1009Factory(object):
         """ Create a new entity. """
         try:
             class_ = self.ENTITY_WRAPPERS[type_]
-            return class_.new(handle, dxfattribs, self)
+            return class_.new(handle, dxfattribs, self.drawing)
         except KeyError:
             raise ValueError('Unsupported entity type: %s' % type_)
 
