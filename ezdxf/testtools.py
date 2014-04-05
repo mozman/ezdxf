@@ -25,7 +25,7 @@ class DrawingProxy:
     def __init__(self, version):
         self.dxfversion = version
         self.entitydb = SimpleDB()
-        self.dxffactory = dxffactory(self.dxfversion, self)
+        self.dxffactory = dxffactory(self)
 
     def _bootstraphook(self, header):
         pass

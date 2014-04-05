@@ -148,7 +148,7 @@ class GraphicsFactory(object):
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
         polymesh = self.build_and_add_entity('POLYLINE', dxfattribs)
-        vtxflags = { 'flags': polymesh.get_vertex_flags() }
+        vtxflags = {'flags': polymesh.get_vertex_flags()}
         append_null_points(m_size * n_size, vtxflags)
         self.add_seqend()
         polymesh.close(m_close, n_close)

@@ -25,14 +25,14 @@ factories = {
 }
 
 
-def dxffactory(dxfversion, drawing=None):
+def dxffactory(drawing):
+    dxfversion = drawing.dxfversion
     try:
         factory_class = factories[dxfversion]
     except KeyError:
         acad_version = acadrelease.get(dxfversion, "unknown")
         raise DXFVersionError("DXF Version {} (AutoCAD Release: {}) not supported.".format(dxfversion, acad_version))
-    factory = factory_class()
-    factory.drawing = drawing
-    return factory
+    return factory_class(drawing)
+
 
 

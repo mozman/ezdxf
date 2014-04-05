@@ -68,15 +68,13 @@ class GraphicEntity(GenericWrapper):
     DXFATTRIBS = make_attribs()
 
     def set_layout(self, layout):
+        # required because for DXF12 block entities has no pointer to the associated block layout (owner_id)
         self.layout = layout
 
     @property
     def dxffactory(self):
-        return self.layout._dxffactory
+        return self.drawing.dxffactory
 
-    @property
-    def drawing_(self):
-        return self.layout._dxffactory.drawing
 
 _LINE_TPL = """  0
 LINE
@@ -414,21 +412,14 @@ class Insert(GraphicEntity):
     })
 
     def __iter__(self):
-        def get_entity(index):
-            try:
-                return self.layout.get_entity_at_index(index)
-            except IndexError:
-                raise DXFStructureError('expected following ATTRIB or SEQEND, reached end of layout instead.')
-
         if self.dxf.attribs_follow == 0:
             return
-        index = self.layout.get_index_of_entity(self) + 1
+        cursor = self.layout.get_cursor(self)
         while True:
-            entity = get_entity(index)
+            entity = cursor.next_entity()
             dxftype = entity.dxftype()
             if dxftype == 'ATTRIB':
                 yield entity
-                index += 1
             elif dxftype == 'SEQEND':
                 return
             else:
@@ -710,12 +701,11 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def __iter__(self):
         """ Iterate over all vertices. """
-        index = self.layout.get_index_of_entity(self) + 1
-        entity = self.layout.get_entity_at_index(index)
+        cursor = self.layout.get_cursor(self)
+        entity = cursor.next_entity()
         while entity.dxftype() != 'SEQEND':
             yield entity
-            index += 1
-            entity = self.layout.get_entity_at_index(index)
+            entity = cursor.next_entity()
 
     def __getitem__(self, pos):
         return list(self)[pos]
@@ -764,13 +754,12 @@ class Polyline(GraphicEntity, ColorMixin):
             raise IndexError(repr((pos, count)))
 
     def _get_index_range(self):
-        first_vertex_index = self.layout.get_index_of_entity(self) + 1
-        last_vertex_index = first_vertex_index
+        cursor = self.layout.get_cursor(self)
+        first_vertex_index = cursor.pos + 1
         while True:
-            entity = self.layout.get_entity_at_index(last_vertex_index)
+            entity = cursor.next_entity()
             if entity.dxftype() == 'SEQEND':
-                return first_vertex_index, last_vertex_index - 1
-            last_vertex_index += 1
+                return first_vertex_index, cursor.pos - 1
 
     def cast(self):
         mode = self.get_mode()
@@ -783,8 +772,9 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def _get_vertex_at_trusted_position(self, pos):
         # does no index check - for meshes and faces
-        index = self.layout.get_index_of_entity(self) + 1 + pos
-        return self.layout.get_entity_at_index(index)
+        cursor = self.layout.get_cursor(self)
+        cursor.skip(pos + 1)
+        return cursor.entity()
 
 
 class Polyface(Polyline, PolyfaceMixin):

@@ -100,9 +100,34 @@ class BaseLayout(GraphicsFactory):
         """
         self._entityspace[index:index + count] = []
 
+    def get_cursor(self, entity=None):
+        cursor = LayoutCursor(self)
+        if entity is not None:
+            cursor.goto_entity(entity)
+        return cursor
+
     # noinspection PyTypeChecker
     def query(self, query='*'):
         return EntityQuery(iter(self), query)
+
+
+class LayoutCursor(object):
+    def __init__(self, layout):
+        self.layout = layout
+        self.pos = 0
+
+    def entity(self):
+        return self.layout.get_entity_at_index(self.pos)
+
+    def next_entity(self):
+        self.pos += 1
+        return self.entity()
+
+    def goto_entity(self, entity):
+        self.pos = self.layout.get_index_of_entity(entity)
+
+    def skip(self, distance=1):
+        self.pos += distance
 
 
 class DXF12Layout(BaseLayout):
@@ -210,6 +235,7 @@ class DXF12BlockLayout(BaseLayout):
         """ Add entity to the block entity space.
         """
         self._entityspace.append(entity.dxf.handle)
+        entity.set_layout(self)
 
     def add_handle(self, handle):
         """ Add entity by handle to the block entity space.
