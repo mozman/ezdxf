@@ -79,18 +79,19 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
         """
         for entity in self._iter_all_entities():
             if entity.get_dxf_attrib('owner') == self._block_record_handle:
+                entity.set_layout(self)
                 yield entity
 
     def __contains__(self, entity):
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
-            entity = self._dxffactory.wrap_handle(entity)
+            entity = self.get_entity_by_handle(entity)
         return True if entity.get_dxf_attrib('owner') == self._block_record_handle else False
 
     # end of public interface
 
     @property
     def dxflayout(self):
-        return self._dxffactory.wrap_handle(self._layout_handle)
+        return self.get_entity_by_handle(self._layout_handle)
 
     @property
     def name(self):

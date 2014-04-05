@@ -75,7 +75,12 @@ class BaseLayout(GraphicsFactory):
     def get_entity_by_handle(self, handle):
         """ Get entity by handle as GraphicEntity() or inherited.
         """
-        entity = self._dxffactory.wrap_handle(handle)
+        return self._dxffactory.wrap_handle(handle)
+
+    def get_entity_by_handle_with_layout(self, handle):
+        """ Get entity by handle as GraphicEntity() or inherited.
+        """
+        entity = self.get_entity_by_handle(handle)
         entity.set_layout(self)
         return entity
 
@@ -146,6 +151,7 @@ class DXF12Layout(BaseLayout):
         for entity in self._iter_all_entities():
             # entity.dxf.paperspace could be unset -> raises ValueError
             if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
+                entity.set_layout(self)
                 yield entity
 
     def __contains__(self, entity):
@@ -153,7 +159,7 @@ class DXF12Layout(BaseLayout):
         dxf entity.
         """
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
-            entity = self._dxffactory.wrap_handle(entity)
+            entity = self.get_entity_by_handle(entity)
         # entity.dxf.paperspace could be unset -> raises ValueError
         return True if entity.get_dxf_attrib('paperspace', 0) == self._paperspace else False
 
@@ -188,7 +194,7 @@ class DXF12BlockLayout(BaseLayout):
         """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
         """
         for handle in self._entityspace:
-            yield self.get_entity_by_handle(handle)
+            yield self.get_entity_by_handle_with_layout(handle)
 
     def __contains__(self, entity):
         """ Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
@@ -204,11 +210,11 @@ class DXF12BlockLayout(BaseLayout):
 
     @property
     def block(self):
-        return self._dxffactory.wrap_handle(self._block_handle)
+        return self.get_entity_by_handle_with_layout(self._block_handle)
 
     @property
     def endblk(self):
-        return self._dxffactory.wrap_handle(self._endblk_handle)
+        return self.get_entity_by_handle_with_layout(self._endblk_handle)
 
     @property
     def name(self):
@@ -234,7 +240,7 @@ class DXF12BlockLayout(BaseLayout):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
-        self._entityspace.append(entity.dxf.handle)
+        self.add_handle(entity.dxf.handle)
         entity.set_layout(self)
 
     def add_handle(self, handle):
@@ -244,8 +250,8 @@ class DXF12BlockLayout(BaseLayout):
 
     def write(self, stream):
         def write_tags(handle):
-            wrapper = self._dxffactory.wrap_handle(handle)
-            wrapper.tags.write(stream)
+            tags = self._entityspace.get_tags_by_handle(handle)
+            tags.write(stream)
 
         write_tags(self._block_handle)
         self._entityspace.write(stream)

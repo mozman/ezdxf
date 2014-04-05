@@ -48,6 +48,16 @@ class TestBlocksSection(unittest.TestCase):
         block = self.section['TEST']
         self.assertEqual('TEST', block.name)
 
+    def test_iter_blocks(self):
+        blocks = list(self.section)
+        self.assertEqual(4, len(blocks))
+
+    def test_block_content_entity_drawing_attribute(self):
+        archtick = self.section['_ARCHTICK']
+        entities = list(archtick)
+        self.assertEqual(4, len(entities))
+        e = entities[0]
+        self.assertEqual(self.dwg, e.drawing)
 
 EMPTYSEC = """  0
 SECTION

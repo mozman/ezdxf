@@ -72,7 +72,7 @@ class EntitySection(object):
             # This works only for entities in the ENTITIES section, not for ENTITIES in the blocks section
             # It is not possible to check if an Entity is located in modelspace/paperspace or in a block,
             # because DXF12 has no *owner* attribute.
-            layout = paper_space if entity.get_dxf_attrib('paperspace', 0) else model_space
+            layout = paper_space if entity.get_dxf_attrib('paperspace', 0) == 1 else model_space
             entity.set_layout(layout)
 
         def ac1015_layout_setter(entity):

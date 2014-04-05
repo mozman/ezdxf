@@ -8,8 +8,8 @@ from .query import name_query
 
 class Importer(object):
     def __init__(self, source, target, strict_mode=True):
-        self.source = source # type of: ezdxf.Drawing
-        self.target = target # type of: ezdxf.Drawing
+        self.source = source  # type of: ezdxf.Drawing
+        self.target = target  # type of: ezdxf.Drawing
         self._renamed_blocks = {}
         self._handle_translation_table = {}
         if strict_mode and not self.is_compatible():
@@ -127,7 +127,7 @@ class Importer(object):
             if block_name not in existing_block_names:
                 target_block_layout = import_block_layout(block)
                 self.target.blocks.add(target_block_layout)
-            else: # we have a name conflict
+            else:  # we have a name conflict
                 if conflict == 'discard':
                     continue
                 elif conflict == 'rename':
@@ -174,14 +174,14 @@ class Importer(object):
             target_table = self.target.sections.tables[name]
         except KeyError:
             raise ValueError("Table '{}' does not exists in the target drawing. "
-                             "Table creation in the target drawing not implemented yet!".format[name])
+                             "Table creation in the target drawing not implemented yet!".format(name))
         source_entry_names = (entry.dxf.name for entry in source_table)
         for entry_name in name_query(source_entry_names, query):
             table_entry = source_table.get(entry_name)
             if table_entry.dxf.name in target_table:
                 if conflict == 'discard':
                     continue
-                else: # replace existing entry
+                else:  # replace existing entry
                     target_table.remove(table_entry.dxf.name)
             new_handle = self.import_tags(table_entry.dxf.handle)
             target_table._append_entry_handle(new_handle)
@@ -200,6 +200,7 @@ class Importer(object):
             self._handle_translation_table[source_handle] = target_handle
         return target_handle
 
+
 def _cleanup_block_record(block_record):
     def remove_tags(tags, code):
         del_tags = [tag for tag in tags if tag.code == code]
@@ -207,15 +208,16 @@ def _cleanup_block_record(block_record):
             tags.remove(tag)
 
     if hasattr(block_record.tags, 'get_appdata'):
-        try: # BLKREFS are invalid handles to INSERT entities in the source drawing
+        try:  # BLKREFS are invalid handles to INSERT entities in the source drawing
             block_refs = block_record.tags.get_appdata("{BLKREFS")
-        except ValueError: # has no block references
+        except ValueError:  # has no block references
             pass
         else:
             remove_tags(block_refs, 331)
         # strip preview image and save space
         subclass = block_record.tags.get_subclass('AcDbBlockTableRecord')
         remove_tags(subclass, 310)
+
 
 def _get_layout_block_names(dwg):
     def get_block_record_name(layout):

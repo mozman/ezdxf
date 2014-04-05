@@ -48,17 +48,17 @@ class TestEntitySection(unittest.TestCase):
         dwg = ezdxf.new('AC1009')
         m = dwg.modelspace()
         m.add_line((0, 0), (1, 1))
-        entity = next(iter(dwg.entities))
-        self.assertTrue(hasattr(entity, 'layout'))
-        self.assertIsNotNone(entity.layout)
+        entity = list(dwg.entities)[-1]
+        self.assertEqual(m, entity.layout)
+        self.assertEqual(dwg, entity.drawing)  # check drawing attribute
 
     def test_iteration_with_layout_DXF2000(self):
         dwg = ezdxf.new('AC1015')
         m = dwg.modelspace()
         m.add_line((0, 0), (1, 1))
-        entity = next(iter(dwg.entities))
-        self.assertTrue(hasattr(entity, 'layout'))
-        self.assertIsNotNone(entity.layout)
+        entity = list(dwg.entities)[-1]
+        self.assertEqual(m, entity.layout)
+        self.assertEqual(dwg, entity.drawing)  # check drawing attribute
 
 
 class TestEntityQueryAC1009(unittest.TestCase):

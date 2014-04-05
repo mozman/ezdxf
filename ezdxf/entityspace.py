@@ -15,6 +15,9 @@ class EntitySpace(list):
     def __init__(self, entitydb):
         self._entitydb = entitydb
 
+    def get_tags_by_handle(self, handle):
+        return self._entitydb[handle]
+
     def store_tags(self, tags):
         try:
             handle = tags.get_handle()
