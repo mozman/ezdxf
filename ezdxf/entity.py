@@ -41,16 +41,18 @@ class GenericWrapper(object):
     TEMPLATE = None
     DXFATTRIBS = {}
 
-    def __init__(self, tags):
+    def __init__(self, tags, drawing=None):
         self.tags = tags
         self.dxf = DXFNamespace(self)  # all DXF attributes are accessible by the dxf attribute, like entity.dxf.handle
+        self.drawing = drawing
 
     @classmethod
-    def new(cls, handle, dxfattribs=None, dxffactory=None):
+    def new(cls, handle, dxfattribs=None, drawing=None):
         if cls.TEMPLATE is None:
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
         entity = cls(cls.TEMPLATE.clone())
         entity.dxf.handle = handle
+        entity.drawing = drawing
         if dxfattribs is not None:
             entity.update_dxf_attribs(dxfattribs)
         entity.post_new_hook()
@@ -67,6 +69,11 @@ class GenericWrapper(object):
         *key* really exists.
         """
         return key in self.DXFATTRIBS
+
+    def valid_dxf_attrib_names(self):
+        """ Returns a list of supported DXF attribute names.
+        """
+        return list(self.DXFATTRIBS.keys())
 
     def dxf_attrib_exists(self, key):
         """ Returns True if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.

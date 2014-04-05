@@ -55,6 +55,7 @@ entity_subclass = DefSubclass('AcDbEntity', {
     'color': DXFAttr(62, None),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
 })
 
+
 class GraphicEntity(ac1009.GraphicEntity):
     """ Default graphic entity wrapper, allows access to following dxf attributes:
      - handle

@@ -16,7 +16,8 @@ from ..classifiedtags import ClassifiedTags
 class Layouts(object):
     #TODO: user defined new layouts
     def __init__(self, drawing):
-        self._layouts = {}
+        self._layouts_by_name = {}
+        self._layouts_by_owner_id = {}
         self._layout_table = None
         self._setup(drawing)
 
@@ -27,32 +28,37 @@ class Layouts(object):
         # name ... layout name
         # handle ...  handle to DXF object Layout
         for name, handle in self._layout_table.items():
-            self._layouts[name] = Layout(drawing, handle)
+            layout = Layout(drawing, handle)
+            self._layouts_by_name[name] = layout
+            self._layouts_by_owner_id[layout.owner_id] = layout
 
     def __contains__(self, name):
-        return name in self._layouts
+        return name in self._layouts_by_name
 
     def __iter__(self):
-        return iter(self._layouts.values())
+        return iter(self._layouts_by_name.values())
 
     def modelspace(self):
         return self.get('Model')
 
     def names(self):
-        return self._layouts.keys()
+        return self._layouts_by_name.keys()
 
     def get(self, name):
         if name is None:
             first_layout_name = self.names_in_taborder()[1]
-            return self._layouts[first_layout_name]
+            return self._layouts_by_name[first_layout_name]
         else:
-            return self._layouts[name]
+            return self._layouts_by_name[name]
 
     def names_in_taborder(self):
         names = []
-        for name, layout in self._layouts.items():
+        for name, layout in self._layouts_by_name.items():
             names.append((layout.taborder, name))
         return [name for order, name in sorted(names)]
+
+    def get_layout_for_entity(self, entity):
+        return self._layouts_by_owner_id[entity.dxf.owner]
 
 
 class Layout(DXF12Layout, GraphicsFactoryAC1015):

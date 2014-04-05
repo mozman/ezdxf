@@ -29,6 +29,9 @@ class DXF12Layouts(object):
     def names(self):
         return []
 
+    def get_layout_for_entity(self, entity):
+        return self._paperspace if entity.get_dxf_attrib('paperspace', 0) else self._modelspace
+
 
 class BaseLayout(GraphicsFactory):
     """ Base class for DXF12Layout() and DXF12BlockLayout()

@@ -5,49 +5,65 @@ Common Base Class
 
    Common base class for all graphic entities.
 
-.. attribute:: dxf
+.. attribute:: GraphicEntity.dxf
 
    (read only) The DXF attributes namespace, access DXF attributes by this attribute, like
    :code:`object.dxf.layer = 'MyLayer'`. Just the *dxf* attribute is read only, the DXF attributes are read- and
    writeable.
 
-.. attribute:: dxftype
+.. attribute:: GraphicEntity.dxftype
 
    (read only) Get the DXF type string, like ``LINE`` for the line entity.
 
-.. attribute:: handle
+.. attribute:: GraphicEntity.handle
 
    (read only) Get the entity handle. (feature for experts)
 
-.. attribute:: layout
+.. attribute:: GraphicEntity.layout
 
    (read only) Get the associated layout.
 
-.. attribute:: drawing
+.. attribute:: GraphicEntity.drawing
 
    (read only) Get the associated drawing.
 
-.. attribute:: dxffactory
+.. attribute:: GraphicEntity.dxffactory
 
    (read only) Get the associated DXF factory. (feature for experts)
 
-.. method:: get_dxf_attrib(key, default=ValueError)
+.. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
-   Get DXF attribute *key*, returns *default* if key doesn't exist, or raise :class:`ValueError` if *default* is
+   Get DXF attribute `key`, returns `default` if key doesn't exist, or raise :class:`ValueError` if `default` is
    :class:`ValueError`::
 
         layer = entity.get_dxf_attrib("layer")
         # same as
         layer = entity.dxf.layer
 
-.. method:: set_dxf_attrib(key, value)
+.. method:: GraphicEntity.set_dxf_attrib(key, value)
 
-   Set DXF attribute *key* to *value*::
+   Set DXF attribute `key` to `value`::
 
        entity.set_dxf_attrib("layer", "MyLayer")
        # same as
        entity.dxf.layer = "MyLayer"
 
+.. method:: GraphicEntity.del_dxf_attrib(key)
+
+   Delete/remove DXF attribute `key`. Raises `AttributeError` if `key` isn't supported.
+
+.. method:: GraphicEntity.dxf_attrib_exists(key)
+
+   Returns `True` if DXF attrib `key` really exists else `False`. Raises `AttributeError` if `key` isn't supported
+
+.. method:: GraphicEntity.supported_dxf_attrib(key)
+
+   Returns `True` if DXF attrib `key` is supported by this entity else `False`. Does not grant that attrib
+   `key` really exists.
+
+.. method:: GraphicEntity.valid_dxf_attrib_names(key)
+
+   Returns a list of supported DXF attribute names.
 
 .. _Common DXF attributes for DXF R12:
 

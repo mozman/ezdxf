@@ -48,6 +48,17 @@ class TestPaperSpace(SetupDrawing):
         self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
         self.assertEqual(2, len(self.layout.query('*[layer ? "lay_.*"]')))
 
+    def test_model_space_get_layout_for_entity(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        layout = self.dwg.layouts.get_layout_for_entity(line)
+        self.assertEqual(self.layout, layout)
+
+    def test_paper_space_get_layout_for_entity(self):
+        paper_space = self.dwg.layout()
+        line = paper_space.add_line((0, 0), (1, 1))
+        layout = self.dwg.layouts.get_layout_for_entity(line)
+        self.assertEqual(paper_space, layout)
+
 
 class TestSimpleGraphics(SetupDrawing):
     def test_create_line(self):

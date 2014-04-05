@@ -24,13 +24,14 @@ class Drawing(object):
         def get_rootdict():
             roothandle = self.sections.objects.roothandle()
             return self.dxffactory.wrap_entity(self.entitydb[roothandle])
-        self._dxfversion = 'AC1009'  # readonly
+        self.dxffactory = None  # readonly
+        self.dxfversion = 'AC1009'  # readonly
         self.encoding = 'cp1252'  # read/write
         self.filename = None  # read/write
         self.entitydb = database.factory(debug=options.debug)
         self.sections = Sections(tagreader, self)
 
-        if self._dxfversion > 'AC1009':
+        if self.dxfversion > 'AC1009':
             self.rootdict = get_rootdict()
         else:
             self._enable_handles()
@@ -43,16 +44,12 @@ class Drawing(object):
     def _bootstraphook(self, header):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
-        self._dxfversion = header['$ACADVER']
+        self.dxfversion = header['$ACADVER']
         seed = header.get('$HANDSEED', str(self._handles))
         self._handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
-        self.dxffactory = dxffactory(self._dxfversion, self)
-
-    @property
-    def dxfversion(self):
-        return self._dxfversion
+        self.dxffactory = dxffactory(self.dxfversion, self)
 
     @property
     def header(self):
@@ -111,7 +108,7 @@ class Drawing(object):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
         return toencoding(codepage)
 
-    def get_layout_setter(self):
+    def get_layout_setter(self):  # TODO remove if GenericWrapper.layout is implemented as property
         def ac1009_layout_setter(entity):
             layout = paper_space if entity.get_dxf_attrib('paperspace', 0) else model_space
             entity.set_layout(layout)
@@ -185,7 +182,7 @@ class Drawing(object):
                     # handle should be the second tag
                     entity.noclass.insert(1, DXFTag(code, handle))
 
-        if self._dxfversion != 'AC1009':
+        if self.dxfversion != 'AC1009':
             return
         put_handles_into_entity_tags()
         self.header['$HANDLING'] = 1

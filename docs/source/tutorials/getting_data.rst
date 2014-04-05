@@ -31,8 +31,8 @@ There are three different layout types:
 A DXF drawing consist of exact one model space and at least of one paper space. The DXF12 standard has only one unnamed
 paper space the later DXF standards can have more than one paper space and each paper space has a name.
 
-Iterate DXF Entities of a Layout
---------------------------------
+Iterate over DXF Entities of a Layout
+-------------------------------------
 
 Iterate over all construction elements in the model space::
 
@@ -59,6 +59,14 @@ See common DXF attributes:
 - :ref:`Common DXF attributes for DXF R12`
 - :ref:`Common DXF attributes for DXF R13 or later`
 
+If a DXF attribute is not set (a valid DXF attribute has no value), a `ValueError` will be raised. To avoid this use
+the :meth:`GraphicEntity.get_dxf_attrib` method with a default value::
+
+    p = e.get_dxf_attrib('paperspace', 0)  # if 'paperspace' is left off, the entity defaults to model space
+
+An unsupported DXF attribute raises an `AttributeError`.
+
+
 Getting a Paper Space
 ---------------------
 
@@ -71,8 +79,8 @@ The DXF12 standard provides only one paper space, therefore the paper space name
 `dwg.layout('layout0')` is ignored or can be left off. For the later standards you get a list of the names of the
 available layouts by :meth:`Drawing.layout_names`.
 
-Iterate all DXF Entities at Once
---------------------------------
+Iterate Over All DXF Entities at Once
+-------------------------------------
 
 Because the DXF entities of the model space and the entities of all paper spaces are stored in the ENTITIES section of
 the DXF drawing, you can also iterate over all drawing elements at once, except the entities placed in the block
