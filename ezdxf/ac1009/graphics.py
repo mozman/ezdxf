@@ -475,26 +475,27 @@ class Insert(GraphicEntity):
         self._append_attrib_entity(attrib_entity)
 
     def _append_attrib_entity(self, entity):
-        def find_seqend(pos):
+        def find_seqend(cursor):
             while True:
                 try:
-                    entity = self.layout.get_entity_at_index(pos)
+                    entity = cursor.next_entity()
                 except IndexError:
                     return -1
                 dxftype = entity.dxftype()
                 if dxftype == 'ATTRIB':
-                    pos += 1
+                    pass
                 elif dxftype == 'SEQEND':
-                    return pos
+                    return cursor.pos
                 else:
                     return -1
 
         entities = [entity]
-        position = self.layout.get_index_of_entity(self) + 1
-        seqend_position = find_seqend(position)
+        cursor = self.layout.get_cursor(self)
+        insert_position = cursor.pos
+        seqend_position = find_seqend(cursor)
         if seqend_position < 0:
             entities.append(self.layout.build_entity('SEQEND', {}))
-            seqend_position = position
+            seqend_position = insert_position + 1
         self.dxf.attribs_follow = 1
         self.layout.insert_entities(seqend_position, entities)
 

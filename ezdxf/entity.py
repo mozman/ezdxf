@@ -50,9 +50,8 @@ class GenericWrapper(object):
     def new(cls, handle, dxfattribs=None, drawing=None):
         if cls.TEMPLATE is None:
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
-        entity = cls(cls.TEMPLATE.clone())
+        entity = cls(cls.TEMPLATE.clone(), drawing)
         entity.dxf.handle = handle
-        entity.drawing = drawing
         if dxfattribs is not None:
             entity.update_dxf_attribs(dxfattribs)
         entity.post_new_hook()

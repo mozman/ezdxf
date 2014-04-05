@@ -18,9 +18,13 @@ class EntitySection(object):
 
     def __init__(self, tags, drawing):
         self._entityspace = EntitySpace(drawing.entitydb)
-        self._dxffactory = drawing.dxffactory
+        self.drawing = drawing
         if tags is not None:
             self._build(tags)
+
+    @property
+    def dxffactory(self):
+        return self.drawing.dxffactory
 
     def get_entityspace(self):
         return self._entityspace
@@ -31,10 +35,10 @@ class EntitySection(object):
         return len(self._entityspace)
 
     def __iter__(self):
-        dwg = self._dxffactory.drawing
-        set_layout = dwg.get_layout_setter()
+        set_layout = self.get_layout_setter()
+        dxffactory = self.dxffactory
         for handle in self._entityspace:
-            entity = self._dxffactory.wrap_handle(handle)
+            entity = dxffactory.wrap_handle(handle)
             set_layout(entity)
             yield entity
 
@@ -63,13 +67,35 @@ class EntitySection(object):
         self._entityspace.write(stream)
         stream.write("  0\nENDSEC\n")
 
+    def get_layout_setter(self):
+        def ac1009_layout_setter(entity):
+            # This works only for entities in the ENTITIES section, not for ENTITIES in the blocks section
+            # It is not possible to check if an Entity is located in modelspace/paperspace or in a block,
+            # because DXF12 has no *owner* attribute.
+            layout = paper_space if entity.get_dxf_attrib('paperspace', 0) else model_space
+            entity.set_layout(layout)
+
+        def ac1015_layout_setter(entity):
+            # This works for all ENTITIES, where ever they are located (model space, paper space or block).
+            owner = entity.dxf.owner
+            layout = layouts.get(owner, None)
+            entity.set_layout(layout)
+
+        if self.drawing.dxfversion == 'AC1009':
+            paper_space = self.drawing.layout()
+            model_space = self.drawing.modelspace()
+            return ac1009_layout_setter
+        else:
+            layouts = {layout.owner_id: layout for layout in self.drawing.layouts}
+            return ac1015_layout_setter
+
 
 class ClassesSection(EntitySection):
     name = 'classes'
 
     def __iter__(self):  # no layout setting required/possible
         for handle in self._entityspace:
-            yield self._dxffactory.wrap_handle(handle)
+            yield self.dxffactory.wrap_handle(handle)
 
 
 class ObjectsSection(ClassesSection):

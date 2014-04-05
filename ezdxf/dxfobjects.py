@@ -12,6 +12,7 @@ from .entity import GenericWrapper
 
 ENTRY_NAME_CODE = 3
 
+
 class DXFDictionary(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
@@ -23,9 +24,6 @@ class DXFDictionary(GenericWrapper):
             'cloning': DXFAttr(281, None),
         }),
     )
-
-    def __init__(self, tags):
-        super(DXFDictionary, self).__init__(tags)
 
     def keys(self):
         """Generator for the dictionary's keys.
@@ -143,9 +141,6 @@ class DXFDictionaryWithDefault(DXFDictionary):
         }),
     )
 
-    def __init__(self, tags):
-        super(DXFDictionaryWithDefault, self).__init__(tags)
-
     def get(self, key, default=KeyError):
         """Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
         value. Parameter *default* is always ignored!
@@ -189,6 +184,7 @@ class DXFLayout(GenericWrapper):
             # 76 code is non-zero, then base UCS is taken to be WORLD
         }))
 
+
 class XRecord(GenericWrapper):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
@@ -199,9 +195,6 @@ class XRecord(GenericWrapper):
             'cloning': DXFAttr(280, None),
         }),
     )
-
-    def __init__(self, tags):
-        super(XRecord, self).__init__(tags)
 
     @property
     def content_tags(self):

@@ -140,7 +140,7 @@ class AC1009Factory(object):
 
     def wrap_entity(self, tags):
         wrapper = self.ENTITY_WRAPPERS.get(tags.dxftype(), self.DEFAULT_WRAPPER)
-        return wrapper(tags)
+        return wrapper(tags, self.drawing)
 
     def wrap_handle(self, handle):
         tags = self.entitydb[handle]
