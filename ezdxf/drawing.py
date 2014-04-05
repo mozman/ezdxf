@@ -110,24 +110,6 @@ class Drawing(object):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
         return toencoding(codepage)
 
-    def get_layout_setter(self):  # TODO remove if GenericWrapper.layout is implemented as property
-        def ac1009_layout_setter(entity):
-            layout = paper_space if entity.get_dxf_attrib('paperspace', 0) else model_space
-            entity.set_layout(layout)
-
-        def ac1015_layout_setter(entity):
-            owner = entity.dxf.owner
-            layout = layouts.get(owner, None)
-            entity.set_layout(layout)
-
-        if self.dxfversion == 'AC1009':
-            paper_space = self.layout()
-            model_space = self.modelspace()
-            return ac1009_layout_setter
-        else:
-            layouts = {layout.owner_id: layout for layout in self.layouts}
-            return ac1015_layout_setter
-
     @staticmethod
     def new(dxfversion='AC1009'):
         finder = TemplateFinder(options.template_dir)

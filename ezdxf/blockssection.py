@@ -19,21 +19,28 @@ class BlocksSection(object):
         # Mapping of BlockLayouts, key is BlockLayout.name, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().
         self._block_layouts = dict()
-        self._entitydb = drawing.entitydb
-        self._dxffactory = drawing.dxffactory
+        self.drawing = drawing
         if tags is not None:
             self._build(tags)
         self._anonymous_block_counter = 0
 
+    @property
+    def entitydb(self):
+        return self.drawing.entitydb
+
+    @property
+    def dxffactory(self):
+        return self.drawing.dxffactory
+
     def _build(self, tags):
         def add_tags(tags):
-            return self._entitydb.add_tags(tags)
+            return self.entitydb.add_tags(tags)
 
         def build_block_layout(entities):
             tail_handle = add_tags(entities.pop())
             entities_iterator = iter(entities)
             head_handle = add_tags(next(entities_iterator))
-            block = self._dxffactory.new_block_layout(head_handle, tail_handle)
+            block = self.dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in entities_iterator:
                 handle = add_tags(entity)
                 block.add_handle(handle)
@@ -87,10 +94,10 @@ class BlocksSection(object):
         dxfattribs['name'] = name
         dxfattribs['name2'] = name
         dxfattribs['base_point'] = base_point
-        head = self._dxffactory.create_db_entry('BLOCK', dxfattribs)
-        tail = self._dxffactory.create_db_entry('ENDBLK', {})
-        block_layout = self._dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
-        self._dxffactory.create_block_entry_in_block_records_table(block_layout)
+        head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)
+        tail = self.dxffactory.create_db_entry('ENDBLK', {})
+        block_layout = self.dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
+        self.dxffactory.create_block_entry_in_block_records_table(block_layout)
         self.add(block_layout)
         return block_layout
 

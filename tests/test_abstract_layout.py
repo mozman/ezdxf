@@ -12,9 +12,11 @@ import unittest
 
 from ezdxf.ac1009.layouts import BaseLayout
 
+
 class DXFNameSpace:
     def __init__(self, handle):
         self.handle = handle
+
 
 class Entity:
     def __init__(self, handle):

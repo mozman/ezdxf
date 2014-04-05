@@ -18,7 +18,7 @@ class EntitySpace(list):
     def store_tags(self, tags):
         try:
             handle = tags.get_handle()
-        except ValueError: # no handle tag available
+        except ValueError:  # no handle tag available
             # handle is not stored in tags!!!
             handle = self._entitydb.handles.next()
         self.append(handle)
