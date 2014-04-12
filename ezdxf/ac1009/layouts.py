@@ -30,7 +30,8 @@ class DXF12Layouts(object):
         return []
 
     def get_layout_for_entity(self, entity):
-        return self._paperspace if entity.get_dxf_attrib('paperspace', 0) else self._modelspace
+        # paperspace attribute defaults to 0 if not present
+        return self._paperspace if entity.dxf.paperspace else self._modelspace
 
 
 class BaseLayout(GraphicsFactory):
@@ -149,8 +150,7 @@ class DXF12Layout(BaseLayout):
         """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
         """
         for entity in self._iter_all_entities():
-            # entity.dxf.paperspace could be unset -> raises ValueError
-            if entity.get_dxf_attrib('paperspace', 0) == self._paperspace:
+            if entity.dxf.paperspace == self._paperspace:
                 entity.set_layout(self)
                 yield entity
 
@@ -160,8 +160,7 @@ class DXF12Layout(BaseLayout):
         """
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self.get_entity_by_handle(entity)
-        # entity.dxf.paperspace could be unset -> raises ValueError
-        return True if entity.get_dxf_attrib('paperspace', 0) == self._paperspace else False
+        return entity.dxf.paperspace == self._paperspace
 
     # end of public interface
 
