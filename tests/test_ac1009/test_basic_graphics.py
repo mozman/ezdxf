@@ -75,6 +75,15 @@ class TestPaperSpace(SetupDrawing):
         self.assertEqual(paper_space, layout)
 
 
+class TestGraphicsDefaultSettings(SetupDrawing):
+    def test_default_settings(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertEqual('0', line.dxf.layer)
+        self.assertEqual(256, line.dxf.color)
+        self.assertEqual('BYLAYER', line.dxf.linetype)
+        self.assertEqual((0.0, 0.0, 1.0), line.dxf.extrusion)
+
+
 class TestSimpleGraphics(SetupDrawing):
     def test_create_line(self):
         line = self.layout.add_line((0, 0), (1, 1))
@@ -112,11 +121,11 @@ class TestSimpleGraphics(SetupDrawing):
         self.assertEqual((1, 1), trace[3])
 
     def test_create_3dface(self):
-        trace = self.layout.add_3Dface([(0, 0), (1, 0), (1, 1), (0, 1)])
-        self.assertEqual((0, 0), trace.dxf.vtx0)
-        self.assertEqual((1, 0), trace[1])
-        self.assertEqual((1, 1), trace.dxf.vtx2)
-        self.assertEqual((0, 1), trace[3])
+        trace = self.layout.add_3Dface([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        self.assertEqual((0, 0, 0), trace.dxf.vtx0)
+        self.assertEqual((1, 0, 0), trace[1])
+        self.assertEqual((1, 1, 0), trace.dxf.vtx2)
+        self.assertEqual((0, 1, 0), trace[3])
 
 
 class TestText(SetupDrawing):

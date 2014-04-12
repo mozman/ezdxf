@@ -46,7 +46,7 @@ def make_attribs(additional=None):
         'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
         'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
         'paperspace': DXFAttr(67, default=0),  # 0 .. modelspace, 1 .. paperspace
-        'extrusion': DXFAttr(210, xtype='Point3D'),  # Z-axis of OCS (Object-Coordinate-System)
+        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),  # Z-axis of OCS (Object-Coordinate-System)
     }
     if additional is not None:
         dxfattribs.update(additional)
@@ -229,10 +229,10 @@ class Solid(Trace):
 class Face(Trace):
     TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL.replace('TRACE', '3DFACE'))
     DXFATTRIBS = make_attribs({
-        'vtx0': DXFAttr(10, xtype='Point2D/3D'),
-        'vtx1': DXFAttr(11, xtype='Point2D/3D'),
-        'vtx2': DXFAttr(12, xtype='Point2D/3D'),
-        'vtx3': DXFAttr(13, xtype='Point2D/3D'),
+        'vtx0': DXFAttr(10, xtype='Point3D'),
+        'vtx1': DXFAttr(11, xtype='Point3D'),
+        'vtx2': DXFAttr(12, xtype='Point3D'),
+        'vtx3': DXFAttr(13, xtype='Point3D'),
         'invisible_edge': DXFAttr(70, default=0),
     })
 
