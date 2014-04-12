@@ -42,17 +42,17 @@ from ..facemixins import PolyfaceMixin, PolymeshMixin
 from ..tools import safe_3D_point
 
 none_subclass = DefSubclass(None, {
-    'handle': DXFAttr(5, None),
-    'owner': DXFAttr(330, None),  # Soft-pointer ID/handle to owner BLOCK_RECORD object
+    'handle': DXFAttr(5),
+    'owner': DXFAttr(330),  # Soft-pointer ID/handle to owner BLOCK_RECORD object
 })
 
 entity_subclass = DefSubclass('AcDbEntity', {
-    'paperspace': DXFAttr(67, None),  # 0 .. modelspace, 1 .. paperspace, default is 0
-    'layer': DXFAttr(8, None),  # layername as string, default is '0'
-    'linetype': DXFAttr(6, None),  # linetype as string, special names BYLAYER/BYBLOCK, default is BYLAYER
-    'ltscale': DXFAttr(48, None),  # linetype scale, default is 1.0
-    'invisible': DXFAttr(60, None),  # invisible .. 1, visible .. 0, default is 0
-    'color': DXFAttr(62, None),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER, default is 256
+    'paperspace': DXFAttr(67, default=0),  # 0 .. modelspace, 1 .. paperspace
+    'layer': DXFAttr(8, default='0'),  # layername as string
+    'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
+    'ltscale': DXFAttr(48, default=1.0),  # linetype scale
+    'invisible': DXFAttr(60, default=0),  # invisible .. 1, visible .. 0
+    'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
 })
 
 

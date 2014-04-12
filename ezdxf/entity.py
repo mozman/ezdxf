@@ -64,7 +64,7 @@ class GenericWrapper(object):
         return self.tags.noclass[0].value
 
     def supports_dxf_attrib(self, key):
-        """ Returns True if DXF attrib *key* is supported by this entity else False. Does not grant that attrib
+        """ Returns *True* if DXF attrib *key* is supported by this entity else False. Does not grant that attrib
         *key* really exists.
         """
         return key in self.DXFATTRIBS
@@ -75,7 +75,7 @@ class GenericWrapper(object):
         return list(self.DXFATTRIBS.keys())
 
     def dxf_attrib_exists(self, key):
-        """ Returns True if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.
+        """ Returns *True* if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.
         """
         try:
             self.get_dxf_attrib(key, default=ValueError)
@@ -84,24 +84,38 @@ class GenericWrapper(object):
         else:
             return True
 
-    def get_dxf_attrib(self, key, default=ValueError):
+    def _get_dxfattr_definition(self, key):
         try:
-            dxfattr = self.DXFATTRIBS[key]
+            return self.DXFATTRIBS[key]
         except KeyError:
             raise AttributeError(key)
+
+    def get_dxf_attrib(self, key, default=ValueError):
+        dxfattr = self._get_dxfattr_definition(key)
         try:
             return self._get_dxf_attrib(dxfattr)
         except ValueError:
             if default is ValueError:
-                raise ValueError("DXFAttrib '%s' does not exist." % key)
+                result = self.get_dxf_default_value(key)
+                if result is not None:
+                    return result
+                else:
+                    raise ValueError("DXFAttrib '%s' does not exist." % key)
             else:
                 return default
 
+    def get_dxf_default_value(self, key):
+        """ Returns the default value as defined in the DXF standard.
+        """
+        return self._get_dxfattr_definition(key).default
+
+    def has_dxf_default_value(self, key):
+        """ Returns *True* if the DXF attribute *key* has a DXF standard default value.
+        """
+        return self._get_dxfattr_definition(key).default is not None
+
     def set_dxf_attrib(self, key, value):
-        try:
-            dxfattr = self.DXFATTRIBS[key]
-        except KeyError:
-            raise AttributeError(key)
+        dxfattr = self._get_dxfattr_definition(key)
         # no subclass is subclass index 0
         subclasstags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:
@@ -111,12 +125,8 @@ class GenericWrapper(object):
             self._set_tag(subclasstags, dxfattr.code, value)
 
     def del_dxf_attrib(self, key):
-        try:
-            dxfattr = self.DXFATTRIBS[key]
-        except KeyError:
-            raise AttributeError(key)
-        else:
-            self._del_dxf_attrib(dxfattr)
+        dxfattr = self._get_dxfattr_definition(key)
+        self._del_dxf_attrib(dxfattr)
 
     def clone_dxf_attribs(self):
         dxfattribs = {}

@@ -6,9 +6,14 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import namedtuple
 
-DXFAttr = namedtuple('DXFAttr', 'code xtype')
-DXFAttr3 = namedtuple('DXFAttr3', 'code xtype subclass')
+_DXFAttr = namedtuple('DXFAttr', 'code xtype default')
+DXFAttr3 = namedtuple('DXFAttr3', 'code xtype subclass default')
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
+
+
+def DXFAttr(code, xtype=None, default=None):
+    return _DXFAttr(code, xtype, default)
+
 
 class DXFAttributes:
     def __init__(self, *subclassdefs):
@@ -24,7 +29,7 @@ class DXFAttributes:
         
     def _add_subclass_attribs(self, subclass, subclass_index):
         for name, dxfattrib in subclass.attribs.items():
-            self._attribs[name] = DXFAttr3(dxfattrib.code, dxfattrib.xtype, subclass_index)
+            self._attribs[name] = DXFAttr3(dxfattrib.code, dxfattrib.xtype, subclass_index, dxfattrib.default)
 
     def __getitem__(self, name):
         return self._attribs[name]
@@ -37,4 +42,3 @@ class DXFAttributes:
     
     def subclasses(self):
         return iter(self._subclasses)
-    

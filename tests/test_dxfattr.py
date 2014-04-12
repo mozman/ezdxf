@@ -42,21 +42,21 @@ class AttributeChecker(GenericWrapper):
     TEMPLATE = XTEMPLATE
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
-            'handle': DXFAttr(5, None),
-            'block_record': DXFAttr(330, None),
+            'handle': DXFAttr(5),
+            'block_record': DXFAttr(330),
         }),
         DefSubclass('AcDbEntity', {
-            'paperspace': DXFAttr(67, None),
-            'layer': DXFAttr(8, None),
-            'linetype': DXFAttr(6, None),
-            'ltscale': DXFAttr(48, None),
-            'invisible': DXFAttr(60, None),
-            'color': DXFAttr(62, None),
+            'paperspace': DXFAttr(67, default=0),
+            'layer': DXFAttr(8, default='0'),
+            'linetype': DXFAttr(6, default='BYLAYER'),
+            'ltscale': DXFAttr(48, default=1.0),
+            'invisible': DXFAttr(60, default=0),
+            'color': DXFAttr(62, default=256),
         }),
         DefSubclass('AcDbLine', {
             'start': DXFAttr(10, 'Point2D/3D'),
             'end': DXFAttr(11, 'Point2D/3D'),
-            'thickness': DXFAttr(39, None),
+            'thickness': DXFAttr(39),
             'extrusion': DXFAttr(210, 'Point3D'),
         }))
 
@@ -95,6 +95,8 @@ class TestAttributeAccess(unittest.TestCase):
     def test_get_from_AcDbLine_subclass(self):
         self.assertEqual((0, 0, 0), self.entity.dxf.start)
 
+    def test_get_default_values(self):
+        self.assertEqual(256, self.entity.get_dxf_default_value('color'))
 
 if __name__ == '__main__':
     unittest.main()
