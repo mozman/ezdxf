@@ -36,3 +36,9 @@ class GraphicsFactoryAC1015(object):
         dxfattribs['start'] = start
         dxfattribs['unit_vector'] = unit_vector
         return self.build_and_add_entity('XLINE', dxfattribs)
+
+    def add_spline(self, degree=3, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['degree'] = degree
+        return self.build_and_add_entity('SPLINE', dxfattribs)

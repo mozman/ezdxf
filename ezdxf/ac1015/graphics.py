@@ -1277,3 +1277,131 @@ class Shape(ac1009.GraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, shape_subclass)
 
 
+_SPLINE_TPL = """  0
+SPLINE
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbSpline
+ 70
+0
+ 71
+3
+ 72
+0
+ 73
+0
+ 74
+0
+"""
+spline_subclass = DefSubclass('AcDbSpline', {
+    'flag': DXFAttr(70, default=0),
+    'degree': DXFAttr(71),
+    'n_knots': DXFAttr(72),
+    'n_control_points': DXFAttr(73),
+    'n_fit_points': DXFAttr(74),
+    'knot_tolerance': DXFAttr(42, default=1e-10),
+    'control_point_tolerance': DXFAttr(43, default=1e-10),
+    'fit_tolerance': DXFAttr(44, default=1e-10),
+    'start_tangent': DXFAttr(12, xtype='Point3D'),
+    'end_tangent': DXFAttr(13, xtype='Point3D'),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+})
+
+
+class Spline(ac1009.GraphicEntity):
+    TEMPLATE = ClassifiedTags.from_text(_SPLINE_TPL)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
+    WEIGHT_CODE = 41
+
+    @property
+    def AcDbSpline(self):
+        return self.tags.subclasses[2]
+
+    def get_knot_values(self):
+        return [tag.value for tag in self.AcDbSpline.find_all(code=40)]
+
+    def set_knot_values(self, knot_values):
+        self._set_values(knot_values, code=40)
+        self.dxf.n_knots = len(knot_values)
+
+    def _set_values(self, values, code):
+        tags = self.AcDbSpline
+        tags.remove_tags(codes=(code, ))
+        tags.extend([DXFTag(code, value) for value in values])
+
+    @contextmanager
+    def knot_values(self):
+        values = self.get_knot_values()
+        yield values
+        self.set_knot_values(values)
+
+    def get_weights(self):
+        return [tag.value for tag in self.AcDbSpline.find_all(code=41)]
+
+    def set_weights(self, weights):
+        self._set_values(weights, code=41)
+
+    @contextmanager
+    def weights(self):
+        values = self.get_weights()
+        yield values
+        self.set_weights(values)
+
+    def get_control_points(self):
+        tags = [tag for tag in self.AcDbSpline if tag.code in (10, 20, 30)]
+        return self._get_points(tags, end_code=30)
+
+    def _get_points(self, tags, end_code):
+        point = []
+        points = []
+        for tag in tags:
+            point.append(tag.value)
+            if tag.code == end_code:
+                points.append(tuple(point))
+                point.clear()
+        return points
+
+    def set_control_points(self, points):
+        self.AcDbSpline.remove_tags(codes=(10, 20, 30))
+        self._append_points(points, code=10)
+        self.dxf.n_control_points = len(points)
+
+    def _append_points(self, points, code):
+        x_code = code
+        y_code = code + 10
+        z_code = code + 20
+        ptags = []
+        for point in points:
+            x, y, z = point
+            ptags.extend( (DXFTag(x_code, x), DXFTag(y_code, y), DXFTag(z_code, z)) )
+        self.AcDbSpline.extend(ptags)
+
+    @contextmanager
+    def control_points(self):
+        values = self.get_control_points()
+        yield values
+        self.set_control_points(values)
+
+    def get_fit_points(self):
+        tags = [tag for tag in self.AcDbSpline if tag.code in (11, 21, 31)]
+        return self._get_points(tags, end_code=31)
+
+    def set_fit_points(self, points):
+        self.AcDbSpline.remove_tags(codes=(11, 21, 31))
+        self._append_points(points, code=11)
+        self.dxf.n_fit_points = len(points)
+
+    @contextmanager
+    def fit_points(self):
+        values = self.get_fit_points()
+        yield values
+        self.set_fit_points(values)
+
+
