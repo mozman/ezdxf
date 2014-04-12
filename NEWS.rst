@@ -2,10 +2,13 @@
 News
 ====
 
-Version 0.4.3 - 2014-04-..
+Version 0.5.0 - 2014-04-..
 
   * Beta status
-  * BUGFIX: Drawing.get_layout_setter() - did not work with entities without DXF attribute 'paperspace'
+  * BUGFIX: Drawing.get_layout_setter() - did not work with entities without DXF attribute *paperspace*
+  * added default values to DXF attributes as defined in the DXF standard, this allows to check optional DXF attributes
+    (with defined default values) to be used without check of presence, like *entity.dxf.paperspace*.
+  * entity 3DFACE requires 3D coordinates (created by add_3Dface())
 
 Version 0.4.2 - 2014-04-02
 

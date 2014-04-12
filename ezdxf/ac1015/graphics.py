@@ -98,10 +98,10 @@ AcDbLine
 """
 
 line_subclass = DefSubclass('AcDbLine', {
-    'start': DXFAttr(10, 'Point2D/3D'),
-    'end': DXFAttr(11, 'Point2D/3D'),
-    'thickness': DXFAttr(39, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'start': DXFAttr(10, xtype='Point2D/3D'),
+    'end': DXFAttr(11, xtype='Point2D/3D'),
+    'thickness': DXFAttr(39, default=0),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -131,7 +131,7 @@ AcDbPoint
 point_subclass = DefSubclass('AcDbPoint', {
     'location': DXFAttr(10, 'Point2D/3D'),
     'thickness': DXFAttr(39, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -161,10 +161,10 @@ AcDbCircle
 1.0
 """
 circle_subclass = DefSubclass('AcDbCircle', {
-    'center': DXFAttr(10, 'Point2D/3D'),
-    'radius': DXFAttr(40, None),
-    'thickness': DXFAttr(39, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'center': DXFAttr(10, xtype='Point2D/3D'),
+    'radius': DXFAttr(40),
+    'thickness': DXFAttr(39, default=0.0),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -202,14 +202,14 @@ AcDbArc
 
 arc_subclass = (
     DefSubclass('AcDbCircle', {
-        'center': DXFAttr(10, 'Point2D/3D'),
-        'radius': DXFAttr(40, None),
-        'thickness': DXFAttr(39, None),
+        'center': DXFAttr(10, xtype='Point2D/3D'),
+        'radius': DXFAttr(40),
+        'thickness': DXFAttr(39, default=0.0),
     }),
     DefSubclass('AcDbArc', {
-        'start_angle': DXFAttr(50, None),
-        'end_angle': DXFAttr(51, None),
-        'extrusion': DXFAttr(210, 'Point3D'),
+        'start_angle': DXFAttr(50),
+        'end_angle': DXFAttr(51),
+        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
     }),
 )
 
@@ -256,12 +256,12 @@ AcDbTrace
 0.0
 """
 trace_subclass = DefSubclass('AcDbTrace', {
-    'vtx0': DXFAttr(10, 'Point2D/3D'),
-    'vtx1': DXFAttr(11, 'Point2D/3D'),
-    'vtx2': DXFAttr(12, 'Point2D/3D'),
-    'vtx3': DXFAttr(13, 'Point2D/3D'),
-    'thickness': DXFAttr(39, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'vtx0': DXFAttr(10, xtype='Point2D/3D'),
+    'vtx1': DXFAttr(11, xtype='Point2D/3D'),
+    'vtx2': DXFAttr(12, xtype='Point2D/3D'),
+    'vtx3': DXFAttr(13, xtype='Point2D/3D'),
+    'thickness': DXFAttr(39, default=0.0),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -311,11 +311,11 @@ AcDbFace
 0.0
 """
 face_subclass = DefSubclass('AcDbFace', {
-    'vtx0': DXFAttr(10, 'Point2D/3D'),
-    'vtx1': DXFAttr(11, 'Point2D/3D'),
-    'vtx2': DXFAttr(12, 'Point2D/3D'),
-    'vtx3': DXFAttr(13, 'Point2D/3D'),
-    'invisible_edge': DXFAttr(70, None),
+    'vtx0': DXFAttr(10, xtype='Point3D'),
+    'vtx1': DXFAttr(11, xtype='Point3D'),
+    'vtx2': DXFAttr(12, xtype='Point3D'),
+    'vtx3': DXFAttr(13, xtype='Point3D'),
+    'invisible_edge': DXFAttr(70, default=0),
 })
 
 
@@ -370,20 +370,20 @@ AcDbText
 """
 text_subclass = (
     DefSubclass('AcDbText', {
-        'insert': DXFAttr(10, 'Point2D/3D'),
-        'height': DXFAttr(40, None),
-        'text': DXFAttr(1, None),
-        'rotation': DXFAttr(50, None),  # in degrees (circle = 360deg)
-        'oblique': DXFAttr(51, None),  # in degrees, vertical = 0deg
-        'style': DXFAttr(7, None),  # text style
-        'width': DXFAttr(41, None),  # width FACTOR!
-        'text_generation_flag': DXFAttr(71, None),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
-        'halign': DXFAttr(72, None),  # horizontal justification
-        'align_point': DXFAttr(11, 'Point2D/3D'),
-        'thickness': DXFAttr(39, None),
-        'extrusion': DXFAttr(210, 'Point3D'),
+        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'height': DXFAttr(40),
+        'text': DXFAttr(1),
+        'rotation': DXFAttr(50, default=0.0),  # in degrees (circle = 360deg)
+        'oblique': DXFAttr(51, default=0.0),  # in degrees, vertical = 0deg
+        'style': DXFAttr(7, default='STANDARD'),  # text style
+        'width': DXFAttr(41, default=1.0),  # width FACTOR!
+        'text_generation_flag': DXFAttr(71, default=0),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
+        'halign': DXFAttr(72, default=0),  # horizontal justification
+        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'thickness': DXFAttr(39, default=0.0),
+        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
     }),
-    DefSubclass('AcDbText', {'valign': DXFAttr(73, None)}))
+    DefSubclass('AcDbText', {'valign': DXFAttr(73, default=0)}))
 
 
 class Text(ac1009.Text):
@@ -415,17 +415,17 @@ AcDb2dPolyline
 """
 
 polyline_subclass = DefSubclass('AcDb2dPolyline', {
-    'elevation': DXFAttr(10, 'Point3D'),
-    'flags': DXFAttr(70, None),
-    'default_start_width': DXFAttr(40, None),
-    'default_end_width': DXFAttr(41, None),
-    'm_count': DXFAttr(71, None),
-    'n_count': DXFAttr(72, None),
-    'm_smooth_density': DXFAttr(73, None),
-    'n_smooth_density': DXFAttr(74, None),
-    'smooth_type': DXFAttr(75, None),
-    'thickness': DXFAttr(39, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'elevation': DXFAttr(10, xtype='Point3D'),
+    'flags': DXFAttr(70, default=0),
+    'default_start_width': DXFAttr(40, default=0.0),
+    'default_end_width': DXFAttr(41, default=0.0),
+    'm_count': DXFAttr(71, default=0),
+    'n_count': DXFAttr(72, default=0),
+    'm_smooth_density': DXFAttr(73, default=0),
+    'n_smooth_density': DXFAttr(74, default=0),
+    'smooth_type': DXFAttr(75, default=0),
+    'thickness': DXFAttr(39, default=0.0),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -506,16 +506,16 @@ AcDb2dVertex
 vertex_subclass = (
     DefSubclass('AcDbVertex', {}),  # subclasses[2]
     DefSubclass('AcDb2dVertex', {  # subclasses[3]
-        'location': DXFAttr(10, 'Point2D/3D'),
-        'start_width': DXFAttr(40, None),
-        'end_width': DXFAttr(41, None),
-        'bulge': DXFAttr(42, None),
-        'flags': DXFAttr(70, None),
-        'tangent': DXFAttr(50, None),
-        'vtx0': DXFAttr(71, None),
-        'vtx1': DXFAttr(72, None),
-        'vtx2': DXFAttr(73, None),
-        'vtx3': DXFAttr(74, None),
+        'location': DXFAttr(10, xtype='Point2D/3D'),
+        'start_width': DXFAttr(40, default=0.0),
+        'end_width': DXFAttr(41, default=0.0),
+        'bulge': DXFAttr(42, default=0),
+        'flags': DXFAttr(70),
+        'tangent': DXFAttr(50),
+        'vtx0': DXFAttr(71),
+        'vtx1': DXFAttr(72),
+        'vtx2': DXFAttr(73),
+        'vtx3': DXFAttr(74),
     })
 )
 
@@ -564,12 +564,12 @@ AcDbPolyline
 """
 
 lwpolyline_subclass = DefSubclass('AcDbPolyline', {
-    'elevation': DXFAttr(38, None),
-    'thickness': DXFAttr(39, None),
-    'flags': DXFAttr(70, None),
-    'const_width': DXFAttr(43, None),
-    'count': DXFAttr(90, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'elevation': DXFAttr(38, default=0.0),
+    'thickness': DXFAttr(39, default=0.0),
+    'flags': DXFAttr(70, default=0),
+    'const_width': DXFAttr(43, default=0.0),
+    'count': DXFAttr(90),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 LWPOINTCODES = (10, 20, 40, 41, 42)
@@ -603,23 +603,23 @@ class LWPolyline(ac1009.GraphicEntity):
         for tag in self.AcDbPolyline:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
-                    if point:
+                    if len(point):
                         yield tuple(point)
                         point = []
                 point.append(tag)
-        if point:
+        if len(point):
             yield tuple(point)
 
     def append_points(self, points):
         tags = self.AcDbPolyline
 
         def append_point(point):
-            tags.append(DXFTag(10, point[0]))
-            tags.append(DXFTag(20, point[1]))
+            tags.append(DXFTag(10, point[0]))  # x value
+            tags.append(DXFTag(20, point[1]))  # y value
             try:
-                tags.append(DXFTag(40, point[2]))
-                tags.append(DXFTag(41, point[3]))
-                tags.append(DXFTag(42, point[4]))
+                tags.append(DXFTag(40, point[2]))  # start width, default=0
+                tags.append(DXFTag(41, point[3]))  # end width, default=0
+                tags.append(DXFTag(42, point[4]))  # bulge, default=0
             except IndexError:
                 pass
             
@@ -678,14 +678,14 @@ BLOCKNAME
 
 """
 block_subclass = (
-    DefSubclass('AcDbEntity', {'layer': DXFAttr(8, None)}),
+    DefSubclass('AcDbEntity', {'layer': DXFAttr(8, default='0')}),
     DefSubclass('AcDbBlockBegin', {
-        'name': DXFAttr(2, None),
-        'name2': DXFAttr(3, None),
-        'description': DXFAttr(4, None),
-        'flags': DXFAttr(70, None),
-        'base_point': DXFAttr(10, 'Point2D/3D'),
-        'xref_path': DXFAttr(1, None),
+        'name': DXFAttr(2),
+        'name2': DXFAttr(3),
+        'description': DXFAttr(4),
+        'flags': DXFAttr(70),
+        'base_point': DXFAttr(10, xtype='Point2D/3D'),
+        'xref_path': DXFAttr(1, default=""),
     })
 )
 
@@ -708,7 +708,7 @@ AcDbEntity
 AcDbBlockEnd
 """
 endblock_subclass = (
-    DefSubclass('AcDbEntity', {'layer': DXFAttr(8, None)}),
+    DefSubclass('AcDbEntity', {'layer': DXFAttr(8, default='0')}),
     DefSubclass('AcDbBlockEnd', {}),
 )
 
@@ -748,18 +748,18 @@ BLOCKNAME
 """
 
 insert_subclass = DefSubclass('AcDbBlockReference', {
-    'attribs_follow': DXFAttr(66, None),
-    'name': DXFAttr(2, None),
-    'insert': DXFAttr(10, 'Point2D/3D'),
-    'xscale': DXFAttr(41, None),
-    'yscale': DXFAttr(42, None),
-    'zscale': DXFAttr(43, None),
-    'rotation': DXFAttr(50, None),
-    'column_count': DXFAttr(70, None),
-    'row_count': DXFAttr(71, None),
-    'column_spacing': DXFAttr(44, None),
-    'row_spacing': DXFAttr(45, None),
-    'extrusion': DXFAttr(210, 'Point3D'),
+    'attribs_follow': DXFAttr(66, default=0),
+    'name': DXFAttr(2),
+    'insert': DXFAttr(10, xtype='Point2D/3D'),
+    'xscale': DXFAttr(41, default=1.0),
+    'yscale': DXFAttr(42, default=1.0),
+    'zscale': DXFAttr(43, default=1.0),
+    'rotation': DXFAttr(50, default=0.0),
+    'column_count': DXFAttr(70, default=1),
+    'row_count': DXFAttr(71, default=1),
+    'column_spacing': DXFAttr(44, default=0.0),
+    'row_spacing': DXFAttr(45, default=0.0),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -823,25 +823,25 @@ TAG
 
 attdef_subclass = (
     DefSubclass('AcDbText', {
-        'insert': DXFAttr(10, 'Point2D/3D'),
-        'thickness': DXFAttr(39, None),
-        'height': DXFAttr(40, None),
-        'text': DXFAttr(1, None),
-        'rotation': DXFAttr(50, None),
-        'width': DXFAttr(41, None),
-        'oblique': DXFAttr(51, None),
-        'style': DXFAttr(7, None),
-        'text_generation_flag': DXFAttr(71, None),
-        'halign': DXFAttr(72, None),
-        'align_point': DXFAttr(11, 'Point2D/3D'),
-        'extrusion': DXFAttr(210, 'Point3D'),
+        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'thickness': DXFAttr(39, default=0.0),
+        'height': DXFAttr(40),
+        'text': DXFAttr(1),
+        'rotation': DXFAttr(50, default=0.0),
+        'width': DXFAttr(41, default=1.0),
+        'oblique': DXFAttr(51, default=0.0),
+        'style': DXFAttr(7, default='STANDARD'),
+        'text_generation_flag': DXFAttr(71, default=0),
+        'halign': DXFAttr(72, default=0),
+        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
     }),
     DefSubclass('AcDbAttributeDefinition', {
-        'prompt': DXFAttr(3, None),
-        'tag': DXFAttr(2, None),
-        'flags': DXFAttr(70, None),
-        'field_length': DXFAttr(73, None),
-        'valign': DXFAttr(74, None),
+        'prompt': DXFAttr(3),
+        'tag': DXFAttr(2),
+        'flags': DXFAttr(70),
+        'field_length': DXFAttr(73, default=0),
+        'valign': DXFAttr(74, default=0),
     })
 )
 
@@ -903,24 +903,24 @@ TAG
 """
 attrib_subclass = (
     DefSubclass('AcDbText', {
-        'insert': DXFAttr(10, 'Point2D/3D'),
-        'thickness': DXFAttr(39, None),
-        'height': DXFAttr(40, None),
-        'text': DXFAttr(1, None),
-        'rotation': DXFAttr(50, None),  #  error in DXF description, because placed in 'AcDbAttribute'
-        'width': DXFAttr(41, None),  #  error in DXF description, because placed in 'AcDbAttribute'
-        'oblique': DXFAttr(51, None),  #  error in DXF description, because placed in 'AcDbAttribute'
-        'style': DXFAttr(7, None),  #  error in DXF description, because placed in 'AcDbAttribute'
+        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'thickness': DXFAttr(39, default=0.0),
+        'height': DXFAttr(40),
+        'text': DXFAttr(1),
+        'rotation': DXFAttr(50, default=0.0),  # error in DXF description, because placed in 'AcDbAttribute'
+        'width': DXFAttr(41, default=1.0),  # error in DXF description, because placed in 'AcDbAttribute'
+        'oblique': DXFAttr(51, default=0.0),  # error in DXF description, because placed in 'AcDbAttribute'
+        'style': DXFAttr(7, default='STANDARD'),  # error in DXF description, because placed in 'AcDbAttribute'
     }),
     DefSubclass('AcDbAttribute', {
-        'tag': DXFAttr(2, None),
-        'flags': DXFAttr(70, None),
-        'field_length': DXFAttr(73, None),
-        'text_generation_flag': DXFAttr(71, None),
-        'halign': DXFAttr(72, None),
-        'valign': DXFAttr(74, None),
-        'align_point': DXFAttr(11, 'Point2D/3D'),
-        'extrusion': DXFAttr(210, 'Point3D'),
+        'tag': DXFAttr(2),
+        'flags': DXFAttr(70),
+        'field_length': DXFAttr(73, default=0),
+        'text_generation_flag': DXFAttr(71, default=0),
+        'halign': DXFAttr(72, default=0),
+        'valign': DXFAttr(74, default=0),
+        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
     })
 )
 
@@ -961,12 +961,12 @@ AcDbEllipse
 """
 
 ellipse_subclass = DefSubclass('AcDbEllipse', {
-    'center': DXFAttr(10, 'Point2D/3D'),
-    'majoraxis': DXFAttr(11, 'Point2D/3D'),  # relative to the center
-    'extrusion': DXFAttr(210, 'Point3D'),
-    'ratio': DXFAttr(40, None),
-    'startparam': DXFAttr(41, None),  # this value is 0.0 for a full ellipse
-    'endparam': DXFAttr(42, None),  # this value is 2*pi for a full ellipse
+    'center': DXFAttr(10, xtype='Point2D/3D'),
+    'major_axis': DXFAttr(11, xtype='Point2D/3D'),  # relative to the center
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'ratio': DXFAttr(40),
+    'start_param': DXFAttr(41),  # this value is 0.0 for a full ellipse
+    'end_param': DXFAttr(42),  # this value is 2*pi for a full ellipse
 })
 
 
@@ -999,8 +999,8 @@ AcDbRay
 0.0
 """
 ray_subclass = DefSubclass('AcDbRay', {
-    'start': DXFAttr(10, 'Point3D'),
-    'unitvector': DXFAttr(11, 'Point3D'),
+    'start': DXFAttr(10, xtype='Point3D'),
+    'unit_vector': DXFAttr(11, xtype='Point3D'),
 })
 
 
@@ -1037,32 +1037,33 @@ AcDbMText
 """
 
 mtext_subclass = DefSubclass('AcDbMText', {
-    'insert': DXFAttr(10, 'Point3D'),
-    'char_height': DXFAttr(40, None),  # nominal (initial) text height
-    'width': DXFAttr(41, None),  # reference column width
-    'attachment_point': DXFAttr(71, None),
+    'insert': DXFAttr(10, xtype='Point3D'),
+    'char_height': DXFAttr(40),  # nominal (initial) text height
+    'width': DXFAttr(41),  # reference column width
+    'attachment_point': DXFAttr(71),
     # 1 = Top left; 2 = Top center; 3 = Top right
     # 4 = Middle left; 5 = Middle center; 6 = Middle right
     # 7 = Bottom left; 8 = Bottom center; 9 = Bottom right
-    'flow_direction': DXFAttr(72, None),
+    'flow_direction': DXFAttr(72),
     # 1 = Left to right
     # 3 = Top to bottom
     # 5 = By style (the flow direction is inherited from the associated text style)
-    'style': DXFAttr(7, None),  # text style name, 'STANDARD' if not provided
-    'extrusion': DXFAttr(210, 'Point3D'),
-    'text_direction': DXFAttr(11, 'Point3D'), # x-axis direction vector (in WCS)
+    'style': DXFAttr(7, default='STANDARD'),  # text style name
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'text_direction': DXFAttr(11, xtype='Point3D'),  # x-axis direction vector (in WCS)
     # If *rotation* and *text_direction* are present, *text_direction* wins
-    'rect_width': DXFAttr(42, None),  # Horizontal width of the characters that make up the mtext entity.
+    'rect_width': DXFAttr(42),  # Horizontal width of the characters that make up the mtext entity.
     # This value will always be equal to or less than the value of *width*, (read-only, ignored if supplied)
-    'rect_height': DXFAttr(43, None),  # vertical height of the mtext entity (read-only, ignored if supplied)
-    'rotation': DXFAttr(50, None),  # in degrees (circle=360 deg) -  error in DXF reference, which says radians
-    'line_spacing_style': DXFAttr(73, None),  # line spacing style (optional):
+    'rect_height': DXFAttr(43),  # vertical height of the mtext entity (read-only, ignored if supplied)
+    'rotation': DXFAttr(50, default=0.0),  # in degrees (circle=360 deg) -  error in DXF reference, which says radians
+    'line_spacing_style': DXFAttr(73),  # line spacing style (optional):
     # 1 = At least (taller characters will override)
     # 2 = Exact (taller characters will not override)
-    'line_spacing_factor': DXFAttr(44, None),  # line spacing factor (optional):
+    'line_spacing_factor': DXFAttr(44),  # line spacing factor (optional):
     # Percentage of default (3-on-5) line spacing to be applied. Valid values
     # range from 0.25 to 4.00
 })
+
 
 class MText(ac1009.GraphicEntity):  # MTEXT will be extended in DXF version AC1021 (ACAD 2007)
     TEMPLATE = ClassifiedTags.from_text(_MTEXT_TPL)
@@ -1102,7 +1103,7 @@ class MText(ac1009.GraphicEntity):  # MTEXT will be extended in DXF version AC10
         return rotation
 
     def set_rotation(self, angle):
-        del self.dxf.text_direction # *text_direction* has higher priority than *rotation*, therefore delete it
+        del self.dxf.text_direction  # *text_direction* has higher priority than *rotation*, therefore delete it
         self.dxf.rotation = angle
         return self
 
@@ -1174,6 +1175,7 @@ class MText(ac1009.GraphicEntity):  # MTEXT will be extended in DXF version AC10
 #
 # Codes and braces can be nested up to 8 levels deep
 
+
 class MTextBuffer(object):
     UNDERLINE_START = '\\L;'
     UNDERLINE_STOP = '\\l;'
@@ -1206,6 +1208,7 @@ class MTextBuffer(object):
 
     def set_color(self, color_name):
         self.append("\\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
+
 
 def split_string_in_chunks(s, size=250):
     chunks = []
