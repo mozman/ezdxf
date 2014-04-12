@@ -43,6 +43,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'RAY': graphics.Ray,
     'XLINE': graphics.XLine,
     'SHAPE': graphics.Shape,
+    'SPLINE': graphics.Spline,
 }
 
 

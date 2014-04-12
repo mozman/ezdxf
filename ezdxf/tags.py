@@ -213,7 +213,7 @@ class Tags(list):
         for tag in self:
             if tag.code == code:
                 return True
-        return  False
+        return False
 
     def update(self, code, value):
         """ Update first existing tag, raises ValueError if tag not exists. """
@@ -249,6 +249,7 @@ class Tags(list):
         delete_tags = [tag for tag in self if tag.code in codes]
         for tag in delete_tags:
             self.remove(tag)
+
 
 class TagGroups(list):
     """
@@ -290,6 +291,7 @@ class TagGroups(list):
     @staticmethod
     def from_text(text, splitcode=0):
         return TagGroups(Tags.from_text(text), splitcode)
+
 
 def strip_tags(tags, codes):
     return Tags((tag for tag in tags if tag.code not in codes))
