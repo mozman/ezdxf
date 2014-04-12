@@ -76,13 +76,12 @@ Access DXF attributes by the *dxf* attribute of an entity, like :code:`object.dx
 DXFAttr     Description
 =========== ===========
 handle      DXF handle (feature for experts)
-layer       layer name as string, default is ``0``
-linetype    linetype as string, special names ``BYLAYER``, ``BYBLOCK``,
-            default is ``BYLAYER``
-color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
+layer       layer name as string; default=``0``
+linetype    linetype as string, special names ``BYLAYER``, ``BYBLOCK``; default=``BYLAYER``
+color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER; default=256
 paperspace  0 for entity resides in model-space, 1 for paper-space, this attribute is set automatically by adding an
-            entity to a layout (feature for experts)
-extrusion   extrusion direction as 3D point
+            entity to a layout (feature for experts); default=0
+extrusion   extrusion direction as 3D point; default=(0, 0, 1)
 =========== ===========
 
 .. _Common DXF attributes for DXF R13 or later:
@@ -97,16 +96,15 @@ DXFAttr       Description
 ============= ===========
 handle        DXF handle (feature for experts)
 owner         handle to owner, it's a BLOCK_RECORD entry (feature for experts)
-layer         layer name as string, default is ``0``
-linetype      linetype as string, special names ``BYLAYER``, ``BYBLOCK``,
-              default is ``BYLAYER``
-color         dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER, default is 256
-ltscale       line type scale as float, defaults to 1.0
-invisible     1 for invisible, 0 for visible
+layer         layer name as string; default=``0``
+linetype      linetype as string, special names ``BYLAYER``, ``BYBLOCK``; default=``BYLAYER``
+color         dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER; default= 256
+ltscale       line type scale as float; defaults=1.0
+invisible     1 for invisible, 0 for visible; default=0
 paperspace    0 for entity resides in model-space, 1 for paper-space, this attribute is set automatically by adding an
-              entity to a layout (feature for experts)
-extrusion     extrusion direction as 3D point
-thickness     entity thickness as float
+              entity to a layout (feature for experts); default=0
+extrusion     extrusion direction as 3D point; default=(0, 0, 1)
+thickness     entity thickness as float; default=0
 ============= ===========
 
 
@@ -191,13 +189,13 @@ insert                R12     first alignment point of text (2D/3D Point), relev
 align_point           R12     second alignment point of text (2D/3D Point), if the justification is anything other than
                               ``LEFT``, the second alignment point specify also the first alignment
                               point: (or just the second alignment point for ``ALIGN`` and ``FIT``)
-height                R12     text height in drawing units (float), default is 1
-rotation              R12     text rotation in degrees (float), default is 0
-oblique               R12     text oblique angle (float), default is 0
-style                 R12     text style name (str), default is ``STANDARD``
-width                 R12     width scale factor (float), default is 1
-halign                R12     horizontal alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`
-valign                R12     vertical alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`
+height                R12     text height in drawing units (float); default=1
+rotation              R12     text rotation in degrees (float); default=0
+oblique               R12     text oblique angle (float); default=0
+style                 R12     text style name (str); default=``STANDARD``
+width                 R12     width scale factor (float); default=1
+halign                R12     horizontal alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`; default=0
+valign                R12     vertical alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`; default=0
 text_generation_flag  R12     text generation flags (int)
                                - 2 = text is backward (mirrored in X)
                                - 4 = text is upside down (mirrored in Y)
@@ -265,13 +263,13 @@ DXFAttr               Version Description
 ===================== ======= ===========
 elevation             R12     elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (3D Point)
 flags                 R12     polyline flags (int), see table below
-default_start_width   R12     default line start width (float), default is 0
-default_end_width     R12     default line end width (float), default is 0
-m_count               R12     polymesh M vertex count (int)
-n_count               R12     polymesh N vertex count (int)
-m_smooth_density      R12     smooth surface M density (int), default is 0
-n_smooth_density      R12     smooth surface N density (int), default is 0
-smooth_type           R12     Curves and smooth surface type (int), default is 0, see table below
+default_start_width   R12     default line start width (float); default=0
+default_end_width     R12     default line end width (float); default=0
+m_count               R12     polymesh M vertex count (int); default=1
+n_count               R12     polymesh N vertex count (int); default=1
+m_smooth_density      R12     smooth surface M density (int); default=0
+n_smooth_density      R12     smooth surface N density (int); default=0
+smooth_type           R12     Curves and smooth surface type (int); default=0, see table below
 ===================== ======= ===========
 
 Polyline constants for *flags* defined in :mod:`ezdxf.const`:
@@ -372,9 +370,9 @@ Vertex
 DXFAttr             Version Description
 =================== ======= ===========
 location            R12     vertex location (2D/3D Point)
-start_width         R12     line segment start width (float), default is 0
-end_width           R12     line segment end width (float), default is 0
-bulge               R12     Bulge (float), default is 0. The bulge is the tangent of one fourth the included angle for an arc segment, made negative if the arc goes clockwise from the start point to the endpoint. A bulge of 0 indicates a straight segment, and a bulge of 1 is a semicircle.
+start_width         R12     line segment start width (float); default=0
+end_width           R12     line segment end width (float); default=0
+bulge               R12     Bulge (float); default=0. The bulge is the tangent of one fourth the included angle for an arc segment, made negative if the arc goes clockwise from the start point to the endpoint. A bulge of 0 indicates a straight segment, and a bulge of 1 is a semicircle.
 flags               R12     vertex flags (int), see table below.
 tangent             R12     curve fit tangent direction (float)
 vtx1                R12     index of 1st vertex, if used as face (feature for experts)
@@ -501,11 +499,11 @@ vtx3        R12     location of the 4. point (2D/3D Point)
 ============== ======= ===========
 DXFAttr        Version Description
 ============== ======= ===========
-vtx0           R12     location of the 1. point (2D/3D Point)
-vtx1           R12     location of the 2. point (2D/3D Point)
-vtx2           R12     location of the 3. point (2D/3D Point)
-vtx3           R12     location of the 4. point (2D/3D Point)
-invisible_edge R12     invisible edge flag (int, default = 0)
+vtx0           R12     location of the 1. point (3D Point)
+vtx1           R12     location of the 2. point (3D Point)
+vtx2           R12     location of the 3. point (3D Point)
+vtx3           R12     location of the 4. point (3D Point)
+invisible_edge R12     invisible edge flag (int, default=0)
 
                        - 1 = first edge is invisible
                        - 2 = second edge is invisible
@@ -530,9 +528,9 @@ LWPolyline
 ===================== ======= ===========
 DXFAttr               Version Description
 ===================== ======= ===========
-elevation             R13     z-axis value in WCS is the polyline elevation (float), default is 0
+elevation             R13     z-axis value in WCS is the polyline elevation (float), default=0
 flags                 R13     polyline flags (int), see table below
-const_width           R13     constant line width (float), default is 0
+const_width           R13     constant line width (float), default=0
 count                 R13     number of vertices
 ===================== ======= ===========
 
@@ -589,13 +587,13 @@ MText
 DXFAttr               Version Description
 ===================== ======= ===========
 insert                R13     Insertion point (3D Point)
-char_height           R13     initial text height (float), default is 1.0
+char_height           R13     initial text height (float); default=1.0
 width                 R13     reference rectangle width (float)
 attachment_point      R13     attachment point (int), see table below
 flow_direction        R13     text flow direction (int), see table below
-style                 R13     text style (string), default is ``STANDARD``
-text_direction        R13     x-axis direction vector in WCS (3D Point), default is (1, 0, 0), if *rotation* and *text_direction* are present, *text_direction* wins
-rotation              R13     text rotation in degrees (float), default is 0
+style                 R13     text style (string); default=``STANDARD``
+text_direction        R13     x-axis direction vector in WCS (3D Point); default=(1, 0, 0); if *rotation* and *text_direction* are present, *text_direction* wins
+rotation              R13     text rotation in degrees (float); default=0
 line_spacing_style    R13     line spacing style (int), see table below
 line_spacing_factor   R13     percentage of default (3-on-5) line spacing to be applied. Valid values range from 0.25 to 4.00 (float)
 ===================== ======= ===========
@@ -715,3 +713,53 @@ GROUP               group text
 NEW_LINE            start in new line (:code:`b += "Text" + b.NEW_LINE`)
 NBSP                none breaking space (:code:`b += "Python" + b.NBSP + "3.4"`)
 =================== ===========
+
+Shape
+=====
+
+.. class:: Shape
+
+   Shapes are objects that you use like blocks. Shapes are stored in external shape files (\*.SHX). You can specify the
+   scale and rotation for each shape reference as you add it. You can not create shapes with *ezdxf*, you can just insert
+   shape references.
+
+   Create a :class:`Shape` reference in layouts and blocks by factory function :meth:`~Layout.add_shape`.
+
+=========== ======= ===========
+DXFAttr     Version Description
+=========== ======= ===========
+insert      R12     insertion point as (2D/3D Point)
+name        R12     shape name
+size        R12     shape size
+rotation    R12     rotation angle in degrees; default=0
+xscale      R12     relative X scale factor; default=1
+oblique     R12     oblique angle; default=0
+=========== ======= ===========
+
+Ray
+===
+
+.. class:: Ray
+
+   A :class:`Ray` starts at a point and continues to infinity.
+
+=========== ======= ===========
+DXFAttr     Version Description
+=========== ======= ===========
+start       R13     start point as (3D Point)
+unit_vector R13     unit direction vector as (3D Point)
+=========== ======= ===========
+
+XLine
+=====
+
+.. class:: XLine
+
+   A line that extents to infinity in both directions, used as construction line.
+
+=========== ======= ===========
+DXFAttr     Version Description
+=========== ======= ===========
+start       R13     location point of line as (3D Point)
+unit_vector R13     unit direction vector as (3D Point)
+=========== ======= ===========

@@ -103,6 +103,7 @@ ENTITY_WRAPPERS = {
     'POLYLINE': graphics.Polyline,
     'VERTEX': graphics.Vertex,
     'SEQEND': graphics.SeqEnd,
+    'SHAPE': graphics.Shape,
 }
 
 
