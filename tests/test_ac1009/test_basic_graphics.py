@@ -199,5 +199,16 @@ class TestBlock(SetupDrawing):
         self.assertEqual(5, ref.dxf.row_spacing)
         self.assertEqual(10, ref.dxf.column_spacing)
 
+
+class TestShape(SetupDrawing):
+    def test_create_shape(self):
+        shape = self.layout.add_shape("TestShape", (1, 2), 3.0)
+        self.assertEqual("TestShape", shape.dxf.name)
+        self.assertEqual((1.0, 2.0), shape.dxf.insert)
+        self.assertEqual(3.0, shape.dxf.size)
+        self.assertEqual(0.0, shape.dxf.rotation)
+        self.assertEqual(1.0, shape.dxf.xscale)
+        self.assertEqual(0.0, shape.dxf.oblique)
+
 if __name__ == '__main__':
     unittest.main()

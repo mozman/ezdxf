@@ -22,3 +22,17 @@ class GraphicsFactoryAC1015(object):
         mtext = self.build_and_add_entity('MTEXT', dxfattribs)
         mtext.set_text(text)
         return mtext
+
+    def add_ray(self, start, unit_vector, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['start'] = start
+        dxfattribs['unit_vector'] = unit_vector
+        return self.build_and_add_entity('RAY', dxfattribs)
+
+    def add_xline(self, start, unit_vector, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['start'] = start
+        dxfattribs['unit_vector'] = unit_vector
+        return self.build_and_add_entity('XLINE', dxfattribs)

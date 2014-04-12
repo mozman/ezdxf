@@ -105,5 +105,30 @@ class TestText(SetupDrawing):
         self.assertEqual('TOP_CENTER', text.get_align())
 
 
+class TestShape(SetupDrawing):
+    def test_create_shape(self):
+        shape = self.layout.add_shape("TestShape", (1, 2), 3.0)
+        self.assertEqual("TestShape", shape.dxf.name)
+        self.assertEqual((1.0, 2.0), shape.dxf.insert)
+        self.assertEqual(3.0, shape.dxf.size)
+        self.assertEqual(0.0, shape.dxf.rotation)
+        self.assertEqual(1.0, shape.dxf.xscale)
+        self.assertEqual(0.0, shape.dxf.oblique)
+
+
+class TestRay(SetupDrawing):
+    def test_create_ray(self):
+        ray = self.layout.add_ray((1, 2, 0), (1, 0, 0))
+        self.assertEqual((1, 2, 0), ray.dxf.start)
+        self.assertEqual((1, 0, 0), ray.dxf.unit_vector)
+
+
+class TestXLine(SetupDrawing):
+    def test_create_ray(self):
+        xline = self.layout.add_xline((1, 2, 0), (1, 0, 0))
+        self.assertEqual((1, 2, 0), xline.dxf.start)
+        self.assertEqual((1, 0, 0), xline.dxf.unit_vector)
+
+
 if __name__ == '__main__':
     unittest.main()

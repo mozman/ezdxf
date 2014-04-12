@@ -1008,6 +1008,11 @@ class Ray(ac1009.GraphicEntity, ac1009.ColorMixin):
     TEMPLATE = ClassifiedTags.from_text(_RAY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ray_subclass)
 
+
+class XLine(Ray):
+    TEMPLATE = ClassifiedTags.from_text(_RAY_TPL.replace('RAY', 'XLINE'))
+
+
 _MTEXT_TPL = """ 0
 MTEXT
  5
@@ -1223,3 +1228,52 @@ def split_string_in_chunks(s, size=250):
             pos += size
         else:
             return chunks
+
+_SHAPE_TPL = """  0
+SHAPE
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbShape
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  2
+NAME
+ 50
+0.0
+ 41
+1.0
+ 51
+0.0
+"""
+
+shape_subclass = DefSubclass('AcDbShape', {
+    'thickness': DXFAttr(39, default=0.0),
+    'insert': DXFAttr(10, xtype='Point2D/3D'),
+    'size': DXFAttr(40),
+    'name': DXFAttr(2),
+    'rotation': DXFAttr(50, default=0.0),
+    'xscale': DXFAttr(41, default=1.0),
+    'oblique': DXFAttr(51, default=0.0),
+    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+})
+
+
+# SHAPE is not tested with real world DXF drawings!
+class Shape(ac1009.GraphicEntity):
+    TEMPLATE = ClassifiedTags.from_text(_SHAPE_TPL)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, shape_subclass)
+
+

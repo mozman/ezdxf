@@ -114,6 +114,18 @@ Create new drawing entities
    The `char_height` is the initial character height in drawing units, `width` is the width of the text boundary
    in drawing units. (requires DXF version AC1012 or newer)
 
+.. method:: Layout.add_shape(name, insert=(0, 0, 0), size=1.0, dxfattribs=None)
+
+   Add a :class:`Shape` reference to a external stored shape.
+
+.. method:: Layout.add_ray(start, unit_vector, dxfattribs=None)
+
+   Add a :class:`Ray` that starts at a point and continues to infinity (construction line).
+
+.. method:: Layout.add_xline(start, unit_vector, dxfattribs=None)
+
+   Add an infinity :class:`XLine` (construction line).
+
 .. _model space:
 
 Model Space

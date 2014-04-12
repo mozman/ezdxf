@@ -181,3 +181,11 @@ class GraphicsFactory(object):
             yield point
         if len(points) == 3:
             yield point  # again
+
+    def add_shape(self, name, insert=(0, 0), size=1.0, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['name'] = name
+        dxfattribs['insert'] = insert
+        dxfattribs['size'] = size
+        return self.build_and_add_entity('SHAPE', dxfattribs)

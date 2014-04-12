@@ -41,7 +41,8 @@ UPDATE_ENTITY_WRAPPERS = {
     'ATTRIB': graphics.Attrib,
     'ELLIPSE': graphics.Ellipse,
     'RAY': graphics.Ray,
-    'XLINE': graphics.Ray,
+    'XLINE': graphics.XLine,
+    'SHAPE': graphics.Shape,
 }
 
 
