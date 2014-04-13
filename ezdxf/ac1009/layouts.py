@@ -43,6 +43,10 @@ class BaseLayout(GraphicsFactory):
         super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
 
+    @property
+    def entitydb(self):
+        return self._dxffactory.entitydb
+
     def build_and_add_entity(self, type_, dxfattribs):
         """ Create entity in drawing database and add entity to the entity space.
 
@@ -69,6 +73,15 @@ class BaseLayout(GraphicsFactory):
         self._entityspace.append(entity.dxf.handle)
         entity.set_layout(self)
         self._set_paperspace(entity)
+
+    def delete_entity(self, entity, database=True):
+        """ Delete entity from entity space and if *database* is *True* also from the entity database.
+        """
+        handle = entity.dxf.handle
+        self._entityspace.remove(handle)
+        if database:
+            del self.entitydb[handle]
+        entity.dxf.paperspace = -1  # set invalid paper space
 
     def _set_paperspace(self, entity):
         pass
