@@ -128,9 +128,9 @@ Create new entities
    Add an infinity :class:`XLine` (construction line).
    (requires DXF version AC1012 or newer)
 
-.. method:: Layout.add_spline(points=None, degree=3, dxfattribs=None)
+.. method:: Layout.add_spline(fit_points=None, dxfattribs=None)
 
-   Add a :class:`Spline`, `points` has to be a list (container or generator) of (x, y, z) tuples.
+   Add a :class:`Spline`, `fit_points` has to be a list (container or generator) of (x, y, z) tuples.
    (requires DXF version AC1012 or newer)
 
 Delete entities

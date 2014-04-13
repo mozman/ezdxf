@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.5.0 - 2014-04-..
+Version 0.5.0 - 2014-04-13
 
   * Beta status
   * BUGFIX: Drawing.get_layout_setter() - did not work with entities without DXF attribute *paperspace*
@@ -12,6 +12,7 @@ Version 0.5.0 - 2014-04-..
   * NEW: delete entities from layout/drawing
   * CHANGE: entity 3DFACE requires 3D coordinates (created by add_3Dface())
   * CHANGE: LWPolyline all methods return points as (x, y, [start_width, [end_width, [bulge]]]) tuples
+  * updated docs
 
 Version 0.4.2 - 2014-04-02
 
