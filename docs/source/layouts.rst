@@ -121,14 +121,17 @@ Create new entities
 .. method:: Layout.add_ray(start, unit_vector, dxfattribs=None)
 
    Add a :class:`Ray` that starts at a point and continues to infinity (construction line).
+   (requires DXF version AC1012 or newer)
 
 .. method:: Layout.add_xline(start, unit_vector, dxfattribs=None)
 
    Add an infinity :class:`XLine` (construction line).
+   (requires DXF version AC1012 or newer)
 
-.. method:: Layout.add_spline(degree=3, dxfattribs=None)
+.. method:: Layout.add_spline(points=None, degree=3, dxfattribs=None)
 
-   Add a :class:`Spline`.
+   Add a :class:`Spline`, `points` has to be a list (container or generator) of (x, y, z) tuples.
+   (requires DXF version AC1012 or newer)
 
 Delete entities
 ---------------

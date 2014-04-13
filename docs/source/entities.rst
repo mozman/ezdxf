@@ -550,11 +550,11 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.get_points()
 
-   Returns all polyline points as list of 2-tuple (x, y).
+   Returns all polyline points as list of tuples (x, y, [start_width, [end_width, [bulge]]]).
 
 .. method:: LWPolyline.set_points(points)
 
-   Remove all points and append new *points*.
+   Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
 
 .. method:: LWPolyline.points()
 
@@ -562,7 +562,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.append_points(points)
 
-   Append additional *points*.
+   Append additional *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
 
 .. method:: LWPolyline.discard_points()
 
@@ -570,7 +570,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.__getitem__(index)
 
-   Get point at position *index* as 2-tuple (x, y). Actual implementation is very slow!
+   Get point at position *index* as (x, y, [start_width, [end_width, [bulge]]]) tuple. Actual implementation is very slow!
 
 MText
 =====
@@ -745,6 +745,8 @@ Ray
 
 .. class:: Ray
 
+   Introduced in AutoCAD R13 (DXF version AC1012)
+
    A :class:`Ray` starts at a point and continues to infinity.
 
 =========== ======= ===========
@@ -758,6 +760,8 @@ XLine
 =====
 
 .. class:: XLine
+
+   Introduced in AutoCAD R13 (DXF version AC1012)
 
    A line that extents to infinity in both directions, used as construction line.
 
@@ -773,16 +777,25 @@ Spline
 
 .. class:: Spline
 
-   Spline curve, all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
+   Introduced in AutoCAD R13 (DXF version AC1012)
 
-   The spline curve is defined by a set of `control points`, the spline curve passes all these control points.
-   The `fit points` defines a polygon which influences the form of the curve, the first fit point should be identical
-   with the first control point and the last fit point should be identical the last control point.
+   A spline curve, all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
+
+   The spline curve is defined by a set of `fit points`, the spline curve passes all these fit points.
+   The `control points` defines a polygon which influences the form of the curve, the first control point should be
+   identical with the first fit point and the last control point should be identical the last fit point.
 
    Don't ask me about the meaning of `knot values` or `weights` and how they influence the spline curve, I don't know
    it, ask your math teacher or the internet. I think the `knot values` can be ignored, they will be calculated by the
-   CAD program that processes the DXF file and the weights determines the influence 'strength' of the `fit points`, in
-   normal case the weights are all `1` and can be left off.
+   CAD program that processes the DXF file and the weights determines the influence 'strength' of the `control points`,
+   in normal case the weights are all `1` and can be left off.
+
+   To create a :class:`Spline` curve you just need a bunch of `fit points`, `control point`, `knot_values` and `weights`
+   are optional (tested with AutoCAD 2010). If you add additional data, be sure that you know what you do.
+
+   For more information about spline mathematic go to `Wikipedia`_.
+
+.. _Wikipedia: https://en.wikipedia.org/wiki/Spline_%28mathematics%29
 
 ======================= ======= ===========
 DXFAttr                 Version Description
@@ -801,15 +814,15 @@ end_tangent             R13     ene tangent vector as (3D Point)
 
 Spline constants for *flags* defined in :mod:`ezdxf.const`:
 
-=================== ===========
-Spline.dxf.flags    Description
-=================== ===========
-CLOSED_SPLINE       1
+=================== ======= ===========
+Spline.dxf.flags    Value   Description
+=================== ======= ===========
+CLOSED_SPLINE       1       Spline is closed
 PERIODIC_SPLINE     2
 RATIONAL_SPLINE     4
 PLANAR_SPLINE       8
-LINEAR_SPLINE       16 (planar bit is also set)
-=================== ===========
+LINEAR_SPLINE       16      planar bit is also set
+=================== ======= ===========
 
 .. seealso::
 
@@ -826,7 +839,7 @@ LINEAR_SPLINE       16 (planar bit is also set)
 
 .. method:: Spline.set_control_points(points)
 
-   Set control points, `points` is a list of `3D points` ((x, y, z)-tuples).
+   Set control points, `points` is a list (container or generator) of (x, y, z) tuples.
 
 .. method:: Spline.control_points()
 
@@ -838,7 +851,7 @@ LINEAR_SPLINE       16 (planar bit is also set)
 
 .. method:: Spline.set_fit_points(points)
 
-   Set fit points, `points` is a list of `3D points` ((x, y, z)-tuples).
+   Set fit points, `points` is a list (container or generator) of (x, y, z) tuples.
 
 .. method:: Spline.fit_points()
 
@@ -850,7 +863,7 @@ LINEAR_SPLINE       16 (planar bit is also set)
 
 .. method:: Spline.set_knot_values(values)
 
-   Set knot values, `values` is a list of `floats`.
+   Set knot values, `values` is a list (container or generator) of `floats`.
 
 .. method:: Spline.knot_values()
 
@@ -862,16 +875,17 @@ LINEAR_SPLINE       16 (planar bit is also set)
 
 .. method:: Spline.set_weights(values)
 
-   Set weights, `values` is a list of `floats`.
+   Set weights, `values` is a list (container or generator) of `floats`.
 
 .. method:: Spline.weights()
 
    Context manager for `weights`.
 
-Control points, fit points, knot values and weights can be manipulated as lists by using the context managers::
+Fit points, control points, knot values and weights can be manipulated as lists by using context managers::
 
-    with spline.control_points() as cp:
-        # cp is a standard python list: add, change or delete items as you want
+    with spline.fit_points() as fp:
+        # fp is a standard python list: add, change or delete items as you want
         # items have to be (x, y, z)-tuples
-        cp.append((200, 300, 0))  # append a control point
-        # on exit the context manger call spline.set_control_points(cp) automatically
+        fp.append((200, 300, 0))  # append a fit point
+        # on exit the context manager calls spline.set_fit_points(cp) automatically
+

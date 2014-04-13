@@ -11,6 +11,7 @@ Version 0.5.0 - 2014-04-..
   * NEW: DXF entities Shape, Ray, XLine, Spline
   * NEW: delete entities from layout/drawing
   * CHANGE: entity 3DFACE requires 3D coordinates (created by add_3Dface())
+  * CHANGE: LWPolyline all methods return points as (x, y, [start_width, [end_width, [bulge]]]) tuples
 
 Version 0.4.2 - 2014-04-02
 
