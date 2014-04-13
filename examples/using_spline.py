@@ -9,16 +9,15 @@
 import ezdxf
 
 
-def new_spline():
+def clone_spline():
     dwg = ezdxf.readfile("Spline_R2000.dxf")
-
     msp = dwg.modelspace()
     spline = msp.query('SPLINE')[0]  # take first spline
-
+    # delete the existing spline from model space and drawing database
     msp.delete_entity(spline)
-    new_spline = msp.add_spline()
-    new_spline.set_fit_points(spline.get_fit_points())
-    dwg.saveas("new_Spline.dxf")
+    # add a new spline
+    msp.add_spline(spline.get_fit_points())
+    dwg.saveas("clone_Spline.dxf")
 
 
 def fit_spline():
@@ -43,7 +42,6 @@ def fit_spline_with_control_points():
 
 def add_points_to_spline():
     dwg = ezdxf.readfile("Spline_R2000.dxf")
-
     msp = dwg.modelspace()
     spline = msp.query('SPLINE')[0]  # take first spline
     with spline.fit_points() as fp:

@@ -44,6 +44,13 @@ class TestLWPolyline(unittest.TestCase):
         line.append_points([(4, 4), (5, 5)])
         self.assertEqual((4, 4), line[-2])
 
+    def test_context_manager(self):
+        points = [(1, 1), (2, 2), (3, 3)]
+        line = self.layout.add_lwpolyline(points)
+        with line.points() as p:
+            p.extend([(4, 4), (5, 5)])
+        self.assertEqual((4, 4), line[-2])
+
     def test_discard_points(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points, {'closed': True})
@@ -52,6 +59,15 @@ class TestLWPolyline(unittest.TestCase):
         self.assertEqual(0, len(line), "Polyline count should be 0.")
         self.assertFalse(list(line.get_points()), "Polyline should not have any points.")
         self.assertTrue(line.closed, "Polyline should be closed")
+
+    def test_delete_const_width(self):
+        points = [(1, 1), (2, 2), (3, 3)]
+        line = self.layout.add_lwpolyline(points)
+        line.dxf.const_width = 0.1
+        self.assertEqual(0.1, line.dxf.const_width)
+        del line.dxf.const_width
+        self.assertFalse(line.AcDbPolyline.has_tag(43))
+
 
 if __name__ == '__main__':
     unittest.main()

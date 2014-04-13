@@ -559,8 +559,6 @@ AcDbPolyline
 0
  70
 0
- 43
-0
 """
 
 lwpolyline_subclass = DefSubclass('AcDbPolyline', {
@@ -653,7 +651,7 @@ class LWPolyline(ac1009.GraphicEntity):
 
     @contextmanager
     def points(self):
-        points = self.get_points()
+        points = list(self.get_points())
         yield points
         self.set_points(points)
 

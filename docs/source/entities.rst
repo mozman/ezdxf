@@ -521,9 +521,14 @@ LWPolyline
    Introduced in AutoCAD R13 (DXF version AC1012)
 
    A lightweight polyline is defined as a single graphic entity. The :class:`LWPolyline` differs from the old-style
-   polyline, which is defined as a group of subentities. :class:`LWPolyline` display faster (in AutoCAD) and consume
-   less disk space and RAM. Create :class:`LWPolyline` in layouts and blocks by factory function
-   :meth:`~Layout.add_lwpolyline`.
+   :class:`Polyline`, which is defined as a group of subentities. :class:`LWPolyline` display faster (in AutoCAD) and
+   consume less disk space and RAM. Create :class:`LWPolyline` in layouts and blocks by factory function
+   :meth:`~Layout.add_lwpolyline`. LWPolylines are planar elements, therefore all coordinates have no value for the
+   z axis.
+
+.. seealso::
+
+    :ref:`tut_lwpolyline`
 
 ===================== ======= ===========
 DXFAttr               Version Description
@@ -567,6 +572,10 @@ LWPOLYLINE_PLINEGEN            128     ???
 .. method:: LWPolyline.discard_points()
 
    Remove all points.
+
+.. method:: LWPolyline.__len__()
+
+   Number of polyline vertices.
 
 .. method:: LWPolyline.__getitem__(index)
 

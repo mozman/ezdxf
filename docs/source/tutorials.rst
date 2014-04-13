@@ -8,6 +8,8 @@ Tutorials
    tutorials/simple_drawings
    tutorials/layers
    tutorials/blocks
+   tutorials/lwpolyline
    tutorials/text
    tutorials/mtext
    tutorials/spline
+
