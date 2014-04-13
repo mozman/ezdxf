@@ -18,7 +18,7 @@ class SetupDrawing(unittest.TestCase):
         self.layout = self.dwg.modelspace()
 
 
-class TestGraphicsEntity(SetupDrawing):
+class TestModelSpace(SetupDrawing):
     def test_layout_property(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.layout, line.layout)
@@ -34,6 +34,17 @@ class TestGraphicsEntity(SetupDrawing):
     def test_layout_attribute(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.layout, line.layout)
+
+    def test_delete_entity(self):
+        for _ in range(5):
+            self.layout.add_line((0, 0), (1, 1))
+        lines = self.layout.query('LINE')
+        self.assertEqual(5, len(lines))
+        line3 = lines[2]
+        self.layout.delete_entity(line3)
+        self.assertTrue(line3.dxf.paperspace < 0, "Paper space attribute has to be invalid (<0).")
+        self.assertFalse(line3 in self.layout)
+        self.assertFalse(line3.dxf.handle in self.dwg.entitydb)
 
 
 class TestPaperSpace(SetupDrawing):

@@ -10,3 +10,4 @@ Tutorials
    tutorials/blocks
    tutorials/text
    tutorials/mtext
+   tutorials/spline

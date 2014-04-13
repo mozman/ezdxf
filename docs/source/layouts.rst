@@ -14,8 +14,8 @@ layout objects:
 
 .. class:: Layout
 
-Access existing drawing entities
---------------------------------
+Access existing entities
+------------------------
 
 .. method:: Layout.__iter__()
 
@@ -30,8 +30,8 @@ Access existing drawing entities
    Get included DXF entities matching the :ref:`entity query string` *query*.
    Returns a sequence of type :class:`EntityQuery`.
 
-Create new drawing entities
----------------------------
+Create new entities
+-------------------
 
 .. method:: Layout.add_point(location, dxfattribs=None)
 
@@ -125,6 +125,17 @@ Create new drawing entities
 .. method:: Layout.add_xline(start, unit_vector, dxfattribs=None)
 
    Add an infinity :class:`XLine` (construction line).
+
+.. method:: Layout.add_spline(degree=3, dxfattribs=None)
+
+   Add a :class:`Spline`.
+
+Delete entities
+---------------
+
+.. method:: Layout.delete_entity(entity)
+
+   Delete `entity` from layout and drawing database.
 
 .. _model space:
 

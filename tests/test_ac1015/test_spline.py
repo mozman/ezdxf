@@ -48,11 +48,27 @@ class TestSpline(unittest.TestCase):
         self.assertEqual(7, spline.dxf.n_knots)
         self.assertEqual(values, spline.get_knot_values())
 
+    def test_knots_ctx_manager(self):
+        spline = self.layout.add_spline()
+        values = [1, 2, 3, 4, 5, 6, 7]
+        spline.set_knot_values(values)
+        with spline.knot_values() as kv:
+            kv.extend([8, 9])
+        self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], spline.get_knot_values())
+
     def test_weights(self):
         spline = self.layout.add_spline()
         weights = [1, 2, 3, 4, 5, 6, 7]
         spline.set_weights(weights)
         self.assertEqual(weights, spline.get_weights())
+
+    def test_weights_ctx_manager(self):
+        spline = self.layout.add_spline()
+        values = [1, 2, 3, 4, 5, 6, 7]
+        spline.set_weights(values)
+        with spline.weights() as weights:
+            weights.extend([8, 9])
+        self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], spline.get_weights())
 
     def test_control_points(self):
         spline = self.layout.add_spline()

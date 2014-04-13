@@ -205,7 +205,7 @@ text_generation_flag  R12     text generation flags (int)
 
    :param tuple p1: first alignment point
    :param tuple p2: second alignment point, required for ``ALIGNED`` and ``FIT`` else ignored
-   :param str align: new alignment, *None* for preserve existing alignment.
+   :param str align: new alignment, ``None`` for preserve existing alignment.
 
    Set text alignment, valid positions are:
 
@@ -554,7 +554,11 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.set_points(points)
 
-   Remove all points and append new `points`.
+   Remove all points and append new *points*.
+
+.. method:: LWPolyline.points()
+
+   Context manager for polyline points. Returns a list of tuples (x, y, [start_width, [end_width, [bulge]]])
 
 .. method:: LWPolyline.append_points(points)
 
@@ -691,7 +695,7 @@ MTEXT_EXACT                    2       taller characters will not override
 
 .. method:: MTextBuffer.set_color(color_name)
 
-   Set text color to 'red', 'yellow', 'green', 'cyan', 'blue', 'magenta' or 'white'.
+   Set text color to ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or ``white``.
 
 **Convenient constants defined in MTextBuffer:**
 
@@ -763,3 +767,111 @@ DXFAttr     Version Description
 start       R13     location point of line as (3D Point)
 unit_vector R13     unit direction vector as (3D Point)
 =========== ======= ===========
+
+Spline
+======
+
+.. class:: Spline
+
+   Spline curve, all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
+
+   The spline curve is defined by a set of `control points`, the spline curve passes all these control points.
+   The `fit points` defines a polygon which influences the form of the curve, the first fit point should be identical
+   with the first control point and the last fit point should be identical the last control point.
+
+   Don't ask me about the meaning of `knot values` or `weights` and how they influence the spline curve, I don't know
+   it, ask your math teacher or the internet. I think the `knot values` can be ignored, they will be calculated by the
+   CAD program that processes the DXF file and the weights determines the influence 'strength' of the `fit points`, in
+   normal case the weights are all `1` and can be left off.
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+degree                  R13     degree of the spline curve (int)
+flags                   R13     bit coded option flags (see table below)
+n_knots                 R13     count of knot values (int), automatically set by *ezdxf*, treat it as read only
+n_fit_points            R13     count of fit points (int), automatically set by *ezdxf*, treat it as read only
+n_control_points        R13     count of control points (int), automatically set by *ezdxf*, treat it as read only
+knot_tolerance          R13     knot tolerance (float); default=1e-10
+fit_tolerance           R13     fit tolerance (float); default=1e-10
+control_point_tolerance R13     control point tolerance (float); default=1e-10
+start_tangent           R13     start tangent vector as (3D Point)
+end_tangent             R13     ene tangent vector as (3D Point)
+======================= ======= ===========
+
+Spline constants for *flags* defined in :mod:`ezdxf.const`:
+
+=================== ===========
+Spline.dxf.flags    Description
+=================== ===========
+CLOSED_SPLINE       1
+PERIODIC_SPLINE     2
+RATIONAL_SPLINE     4
+PLANAR_SPLINE       8
+LINEAR_SPLINE       16 (planar bit is also set)
+=================== ===========
+
+.. seealso::
+
+    :ref:`tut_spline`
+
+.. attribute:: Spline.closed
+
+   ``True`` if spline is closed else ``False``.  A closed spline has a connection from the last control point
+   to the first control point. (read/write)
+
+.. method:: Spline.get_control_points()
+
+   Returns the control points as `list` of `3D points`.
+
+.. method:: Spline.set_control_points(points)
+
+   Set control points, `points` is a list of `3D points` ((x, y, z)-tuples).
+
+.. method:: Spline.control_points()
+
+   Context manager for `control points`.
+
+.. method:: Spline.get_fit_points()
+
+   Returns the fit points as `list` of `3D points`.
+
+.. method:: Spline.set_fit_points(points)
+
+   Set fit points, `points` is a list of `3D points` ((x, y, z)-tuples).
+
+.. method:: Spline.fit_points()
+
+   Context manager for `fit points`.
+
+.. method:: Spline.get_knot_values()
+
+   Returns the knot values as `list` of `floats`.
+
+.. method:: Spline.set_knot_values(values)
+
+   Set knot values, `values` is a list of `floats`.
+
+.. method:: Spline.knot_values()
+
+   Context manager for `knot values`.
+
+.. method:: Spline.get_weights()
+
+   Returns the weight values as `list` of `floats`.
+
+.. method:: Spline.set_weights(values)
+
+   Set weights, `values` is a list of `floats`.
+
+.. method:: Spline.weights()
+
+   Context manager for `weights`.
+
+Control points, fit points, knot values and weights can be manipulated as lists by using the context managers::
+
+    with spline.control_points() as cp:
+        # cp is a standard python list: add, change or delete items as you want
+        # items have to be (x, y, z)-tuples
+        cp.append((200, 300, 0))  # append a control point
+        # on exit the context manger call spline.set_control_points(cp) automatically

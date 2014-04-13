@@ -634,9 +634,18 @@ class LWPolyline(ac1009.GraphicEntity):
     def get_points(self):
         return ((point[0].value, point[1].value) for point in self)
 
+    def get_points_attr(self):
+        return (tuple(tag.value for tag in point) for point in self)
+
     def set_points(self, points):
         self.discard_points()
         self.append_points(points)
+
+    @contextmanager
+    def points(self):
+        points = self.get_points_attr()
+        yield points
+        self.set_points(points)
 
     def discard_points(self):
         self.AcDbPolyline.remove_tags(codes=LWPOINTCODES)
@@ -1301,7 +1310,7 @@ AcDbSpline
 0
 """
 spline_subclass = DefSubclass('AcDbSpline', {
-    'flag': DXFAttr(70, default=0),
+    'flags': DXFAttr(70, default=0),
     'degree': DXFAttr(71),
     'n_knots': DXFAttr(72),
     'n_control_points': DXFAttr(73),
@@ -1324,6 +1333,18 @@ class Spline(ac1009.GraphicEntity):
     def AcDbSpline(self):
         return self.tags.subclasses[2]
 
+    @property
+    def closed(self):
+        return bool(self.dxf.flags & const.CLOSED_SPLINE)
+
+    @closed.setter
+    def closed(self, status):
+        flagsnow = self.dxf.flags
+        if status:
+            self.dxf.flags = flagsnow | const.CLOSED_SPLINE
+        else:
+            self.dxf.flags = flagsnow & (~const.CLOSED_SPLINE)
+
     def get_knot_values(self):
         return [tag.value for tag in self.AcDbSpline.find_all(code=40)]
 
@@ -1345,8 +1366,8 @@ class Spline(ac1009.GraphicEntity):
     def get_weights(self):
         return [tag.value for tag in self.AcDbSpline.find_all(code=41)]
 
-    def set_weights(self, weights):
-        self._set_values(weights, code=41)
+    def set_weights(self, values):
+        self._set_values(values, code=41)
 
     @contextmanager
     def weights(self):
