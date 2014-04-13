@@ -599,27 +599,35 @@ class LWPolyline(ac1009.GraphicEntity):
         return self.dxf.count
 
     def __iter__(self):
+        """ Yielding tuples of DXFTag.
+        """
         point = []
         for tag in self.AcDbPolyline:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
                     if len(point):
                         yield tuple(point)
-                        point = []
+                        point.clear()
                 point.append(tag)
         if len(point):
             yield tuple(point)
 
     def append_points(self, points):
+        """ Append new *points* to polyline, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
+        tuples.
+        """
         tags = self.AcDbPolyline
 
         def append_point(point):
+            def add_tag_if_not_zero(code, value):
+                if value != 0.0:
+                    tags.append(DXFTag(code, value))
             tags.append(DXFTag(10, point[0]))  # x value
             tags.append(DXFTag(20, point[1]))  # y value
             try:
-                tags.append(DXFTag(40, point[2]))  # start width, default=0
-                tags.append(DXFTag(41, point[3]))  # end width, default=0
-                tags.append(DXFTag(42, point[4]))  # bulge, default=0
+                add_tag_if_not_zero(40, point[2])  # start width, default=0
+                add_tag_if_not_zero(41, point[3])  # end width, default=0
+                add_tag_if_not_zero(42, point[4])  # bulge, default=0
             except IndexError:
                 pass
             
@@ -632,18 +640,20 @@ class LWPolyline(ac1009.GraphicEntity):
         self.dxf.count = len(self.AcDbPolyline.find_all(10))
 
     def get_points(self):
-        return ((point[0].value, point[1].value) for point in self)
-
-    def get_points_attr(self):
+        """  Returns all polyline points as list of tuples (x, y, [start_width, [end_width, [bulge]]]).
+        """
         return (tuple(tag.value for tag in point) for point in self)
 
     def set_points(self, points):
+        """ Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
+        tuples.
+        """
         self.discard_points()
         self.append_points(points)
 
     @contextmanager
     def points(self):
-        points = self.get_points_attr()
+        points = self.get_points()
         yield points
         self.set_points(points)
 
@@ -652,6 +662,8 @@ class LWPolyline(ac1009.GraphicEntity):
         self.dxf.count = 0
 
     def __getitem__(self, index):
+        """ Returns polyline point at *index* as (x, y, [start_width, [end_width, [bulge]]]) tuple.
+        """
         if index < 0:
             index += self.dxf.count
         for x, point in enumerate(self.get_points()):
@@ -1327,7 +1339,6 @@ spline_subclass = DefSubclass('AcDbSpline', {
 class Spline(ac1009.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_SPLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
-    WEIGHT_CODE = 41
 
     @property
     def AcDbSpline(self):
@@ -1391,18 +1402,21 @@ class Spline(ac1009.GraphicEntity):
 
     def set_control_points(self, points):
         self.AcDbSpline.remove_tags(codes=(10, 20, 30))
-        self._append_points(points, code=10)
-        self.dxf.n_control_points = len(points)
+        count = self._append_points(points, code=10)
+        self.dxf.n_control_points = count
 
     def _append_points(self, points, code):
+        count = 0
         x_code = code
         y_code = code + 10
         z_code = code + 20
         ptags = []
         for point in points:
+            count += 1
             x, y, z = point
             ptags.extend( (DXFTag(x_code, x), DXFTag(y_code, y), DXFTag(z_code, z)) )
         self.AcDbSpline.extend(ptags)
+        return count
 
     @contextmanager
     def control_points(self):
@@ -1416,8 +1430,8 @@ class Spline(ac1009.GraphicEntity):
 
     def set_fit_points(self, points):
         self.AcDbSpline.remove_tags(codes=(11, 21, 31))
-        self._append_points(points, code=11)
-        self.dxf.n_fit_points = len(points)
+        count = self._append_points(points, code=11)
+        self.dxf.n_fit_points = count
 
     @contextmanager
     def fit_points(self):
