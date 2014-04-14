@@ -605,7 +605,7 @@ class LWPolyline(ac1009.GraphicEntity):
                 if tag.code == 10:
                     if len(point):
                         yield tuple(point)
-                        point.clear()
+                        del point[:]
                 point.append(tag)
         if len(point):
             yield tuple(point)
@@ -1395,7 +1395,7 @@ class Spline(ac1009.GraphicEntity):
             point.append(tag.value)
             if tag.code == end_code:
                 points.append(tuple(point))
-                point.clear()
+                del point[:]
         return points
 
     def set_control_points(self, points):
