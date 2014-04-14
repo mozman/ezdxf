@@ -2,6 +2,13 @@
 News
 ====
 
+Version 0.5.1 - 2014
+
+  * Beta status
+  * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
+  * BUGFIX: restore Python 2 compatibility (has no list.clear() method); test launcher did not run tests in subfolders,
+    because of missing __init__.py files
+
 Version 0.5.0 - 2014-04-13
 
   * Beta status
@@ -19,7 +26,7 @@ Version 0.4.2 - 2014-04-02
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.1
   * NEW: DXF entities LWPolyline, MText
-  * NEW: convenience methods place(), grid(), get_attrib_text() and has_attrib() to the Insert entity
+  * NEW: convenience methods place(), grid(), get_attrib_text() and has_attrib() for the Insert entity
   * CHANGE: pyparsing as external dependency
   * BUGFIX: iteration over drawing.entities yields full functional entities (correct layout attribute)
   * BUGFIX: install error with pip and missing DXF template files of versions 0.4.0 & 0.4.1
