@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.5.1 - 2014
+Version 0.5.1 - 2014-04-14
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
