@@ -122,6 +122,12 @@ class BlocksSection(object):
             if not self.__contains__(blockname):
                 return blockname
 
+    def delete_block(self, name):
+        pass  # TODO implement delete block (also delete block_record in AC1015 and later)
+
+    def delete_all_blocks(self):
+        pass  # TODO implement delete all blocks (and block records) except $model_space and $paper_space
+
     # end of public interface
 
     def write(self, stream):

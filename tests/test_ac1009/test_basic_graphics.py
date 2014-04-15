@@ -69,11 +69,11 @@ class TestModelSpace(SetupDrawing):
             paperspace.add_line((0, 0), (1, 1))
 
         self.assertEqual(5, len(list(modelspace)))
-        self.assertEqual(7, len(list(paperspace)))  # templates including 2 viewport entities - will be deleted in the future
+        self.assertEqual(5, len(list(paperspace)))
 
         modelspace.delete_all_entities()
         self.assertEqual(0, len(list(modelspace)))
-        self.assertEqual(7, len(list(paperspace)))
+        self.assertEqual(5, len(list(paperspace)))
 
 
 class TestPaperSpace(SetupDrawing):

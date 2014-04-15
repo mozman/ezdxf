@@ -65,7 +65,7 @@ class TestEntitySection(unittest.TestCase):
         m = dwg.modelspace()
         for _ in range(5):
             m.add_line((0, 0), (1, 1))
-        self.assertEqual(7, len(dwg.entities))  # template contains 2 viewport entities - will be removed in the future
+        self.assertEqual(5, len(dwg.entities))
 
         dwg.entities.delete_all_entities()
         self.assertEqual(0, len(dwg.entities))
@@ -77,7 +77,7 @@ class TestEntityQueryAC1009(unittest.TestCase):
     def test_query_all_entities(self):
         # independent from layout (modelspace or paperspace)
         entities = self.dwg.entities.query('*')
-        self.assertEqual(10, len(entities))
+        self.assertEqual(8, len(entities))
 
     def test_query_polyline(self):
         entities = self.dwg.entities.query('POLYLINE')

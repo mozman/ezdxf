@@ -9,7 +9,7 @@ AC1021
   9
 $ACADMAINTVER
  70
-    50
+50
   9
 $DWGCODEPAGE
   3
@@ -29,19 +29,19 @@ $INSBASE
   9
 $EXTMIN
  10
-1.000000000000000E+20
+1e+20
  20
-1.000000000000000E+20
+1e+20
  30
-1.000000000000000E+20
+1e+20
   9
 $EXTMAX
  10
--1.000000000000000E+20
+-1e+20
  20
--1.000000000000000E+20
+-1e+20
  30
--1.000000000000000E+20
+-1e+20
   9
 $LIMMIN
  10
@@ -57,23 +57,23 @@ $LIMMAX
   9
 $ORTHOMODE
  70
-     0
+0
   9
 $REGENMODE
  70
-     1
+1
   9
 $FILLMODE
  70
-     1
+1
   9
 $QTEXTMODE
  70
-     0
+0
   9
 $MIRRTEXT
  70
-     0
+0
   9
 $LTSCALE
  40
@@ -81,7 +81,7 @@ $LTSCALE
   9
 $ATTMODE
  70
-     1
+1
   9
 $TEXTSIZE
  40
@@ -105,7 +105,7 @@ ByLayer
   9
 $CECOLOR
  62
-   256
+256
   9
 $CELTSCALE
  40
@@ -113,7 +113,7 @@ $CELTSCALE
   9
 $DISPSILH
  70
-     0
+0
   9
 $DIMSCALE
  40
@@ -165,35 +165,35 @@ $DIMTSZ
   9
 $DIMTOL
  70
-     0
+0
   9
 $DIMLIM
  70
-     0
+0
   9
 $DIMTIH
  70
-     0
+0
   9
 $DIMTOH
  70
-     0
+0
   9
 $DIMSE1
  70
-     0
+0
   9
 $DIMSE2
  70
-     0
+0
   9
 $DIMTAD
  70
-     1
+1
   9
 $DIMZIN
  70
-     3
+3
   9
 $DIMBLK
   1
@@ -201,11 +201,11 @@ $DIMBLK
   9
 $DIMASO
  70
-     1
+1
   9
 $DIMSHO
  70
-     1
+1
   9
 $DIMPOST
   1
@@ -217,11 +217,11 @@ $DIMAPOST
   9
 $DIMALT
  70
-     0
+0
   9
 $DIMALTD
  70
-     2
+2
   9
 $DIMALTF
  40
@@ -233,7 +233,7 @@ $DIMLFAC
   9
 $DIMTOFL
  70
-     0
+0
   9
 $DIMTVP
  40
@@ -241,15 +241,15 @@ $DIMTVP
   9
 $DIMTIX
  70
-     0
+0
   9
 $DIMSOXD
  70
-     0
+0
   9
 $DIMSAH
  70
-     0
+0
   9
 $DIMBLK1
   1
@@ -265,15 +265,15 @@ Civil-Metric
   9
 $DIMCLRD
  70
-     0
+0
   9
 $DIMCLRE
  70
-     0
+0
   9
 $DIMCLRT
  70
-     0
+0
   9
 $DIMTFAC
  40
@@ -285,51 +285,51 @@ $DIMGAP
   9
 $DIMJUST
  70
-     0
+0
   9
 $DIMSD1
  70
-     0
+0
   9
 $DIMSD2
  70
-     0
+0
   9
 $DIMTOLJ
  70
-     1
+1
   9
 $DIMTZIN
  70
-     0
+0
   9
 $DIMALTZ
  70
-     0
+0
   9
 $DIMALTTZ
  70
-     0
+0
   9
 $DIMUPT
  70
-     0
+0
   9
 $DIMDEC
  70
-     2
+2
   9
 $DIMTDEC
  70
-     2
+2
   9
 $DIMALTU
  70
-     2
+2
   9
 $DIMALTTD
  70
-     2
+2
   9
 $DIMTXSTY
   7
@@ -337,11 +337,11 @@ Standard
   9
 $DIMAUNIT
  70
-     0
+0
   9
 $DIMADEC
  70
-     2
+2
   9
 $DIMALTRND
  40
@@ -349,19 +349,19 @@ $DIMALTRND
   9
 $DIMAZIN
  70
-     2
+2
   9
 $DIMDSEP
  70
-    46
+46
   9
 $DIMATFIT
  70
-     3
+3
   9
 $DIMFRAC
  70
-     1
+1
   9
 $DIMLDRBLK
   1
@@ -369,19 +369,19 @@ $DIMLDRBLK
   9
 $DIMLUNIT
  70
-     2
+2
   9
 $DIMLWD
  70
-    -2
+-2
   9
 $DIMLWE
  70
-    -2
+-2
   9
 $DIMTMOVE
  70
-     0
+0
   9
 $DIMFXL
  40
@@ -389,7 +389,7 @@ $DIMFXL
   9
 $DIMFXLON
  70
-     0
+0
   9
 $DIMJOGANG
  40
@@ -397,15 +397,15 @@ $DIMJOGANG
   9
 $DIMTFILL
  70
-     0
+0
   9
 $DIMTFILLCLR
  70
-     0
+0
   9
 $DIMARCSYM
  70
-     0
+0
   9
 $DIMLTYPE
   6
@@ -421,11 +421,11 @@ $DIMLTEX2
   9
 $LUNITS
  70
-     2
+2
   9
 $LUPREC
  70
-     4
+4
   9
 $SKETCHINC
  40
@@ -437,11 +437,11 @@ $FILLETRAD
   9
 $AUNITS
  70
-     4
+4
   9
 $AUPREC
  70
-     5
+5
   9
 $MENU
   1
@@ -461,7 +461,7 @@ $THICKNESS
   9
 $LIMCHECK
  70
-     0
+0
   9
 $CHAMFERA
  40
@@ -481,15 +481,15 @@ $CHAMFERD
   9
 $SKPOLY
  70
-     0
+0
   9
 $TDCREATE
  40
-2455631.346534630
+2455631.34653463
   9
 $TDUPDATE
  40
-2455631.348025544
+2456763.7336805556
   9
 $TDINDWG
  40
@@ -501,7 +501,7 @@ $TDUSRTIMER
   9
 $USRTIMER
  70
-     1
+1
   9
 $ANGBASE
  50
@@ -509,11 +509,11 @@ $ANGBASE
   9
 $ANGDIR
  70
-     0
+0
   9
 $PDMODE
  70
-     0
+0
   9
 $PDSIZE
  40
@@ -525,39 +525,39 @@ $PLINEWID
   9
 $SPLFRAME
  70
-     0
+0
   9
 $SPLINETYPE
  70
-     6
+6
   9
 $SPLINESEGS
  70
-     8
+8
   9
 $HANDSEED
   5
-498
+4A6
   9
 $SURFTAB1
  70
-     6
+6
   9
 $SURFTAB2
  70
-     6
+6
   9
 $SURFTYPE
  70
-     6
+6
   9
 $SURFU
  70
-     6
+6
   9
 $SURFV
  70
-     6
+6
   9
 $UCSBASE
   2
@@ -597,7 +597,7 @@ $UCSORTHOREF
   9
 $UCSORTHOVIEW
  70
-     0
+0
   9
 $UCSORGTOP
  10
@@ -685,7 +685,7 @@ $PUCSORTHOREF
   9
 $PUCSORTHOVIEW
  70
-     0
+0
   9
 $PUCSORGTOP
  10
@@ -737,23 +737,23 @@ $PUCSORGBACK
   9
 $USERI1
  70
-     0
+0
   9
 $USERI2
  70
-     0
+0
   9
 $USERI3
  70
-     0
+0
   9
 $USERI4
  70
-     0
+0
   9
 $USERI5
  70
-     0
+0
   9
 $USERR1
  40
@@ -777,23 +777,23 @@ $USERR5
   9
 $WORLDVIEW
  70
-     1
+1
   9
 $SHADEDGE
  70
-     3
+3
   9
 $SHADEDIF
  70
-    70
+70
   9
 $TILEMODE
  70
-     1
+1
   9
 $MAXACTVP
  70
-    64
+64
   9
 $PINSBASE
  10
@@ -805,7 +805,7 @@ $PINSBASE
   9
 $PLIMCHECK
  70
-     0
+0
   9
 $PEXTMIN
  10
@@ -833,27 +833,27 @@ $PLIMMAX
  10
 10.29945794052965
  20
-8.271899373512569
+8.27189937351257
   9
 $UNITMODE
  70
-     0
+0
   9
 $VISRETAIN
  70
-     1
+1
   9
 $PLINEGEN
  70
-     0
+0
   9
 $PSLTSCALE
  70
-     1
+1
   9
 $TREEDEPTH
  70
-  3020
+3020
   9
 $CMLSTYLE
   2
@@ -861,7 +861,7 @@ Standard
   9
 $CMLJUST
  70
-     0
+0
   9
 $CMLSCALE
  40
@@ -869,31 +869,31 @@ $CMLSCALE
   9
 $PROXYGRAPHICS
  70
-     1
+1
   9
 $MEASUREMENT
  70
-     1
+1
   9
 $CELWEIGHT
 370
-    -1
+-1
   9
 $ENDCAPS
 280
-     0
+0
   9
 $JOINSTYLE
 280
-     0
+0
   9
 $LWDISPLAY
 290
-     0
+0
   9
 $INSUNITS
  70
-     4
+4
   9
 $HYPERLINKBASE
   1
@@ -905,15 +905,15 @@ $STYLESHEET
   9
 $XEDIT
 290
-     1
+1
   9
 $CEPSNTYPE
 380
-     0
+0
   9
 $PSTYLEMODE
 290
-     1
+1
   9
 $FINGERPRINTGUID
   2
@@ -925,7 +925,7 @@ $VERSIONGUID
   9
 $EXTNAMES
 290
-     1
+1
   9
 $PSVPSCALE
  40
@@ -933,47 +933,47 @@ $PSVPSCALE
   9
 $OLESTARTUP
 290
-     0
+0
   9
 $SORTENTS
 280
-   127
+127
   9
 $INDEXCTL
 280
-     0
+0
   9
 $HIDETEXT
 280
-     1
+1
   9
 $XCLIPFRAME
 290
-     0
+0
   9
 $HALOGAP
 280
-     0
+0
   9
 $OBSCOLOR
  70
-   257
+257
   9
 $OBSLTYPE
 280
-     0
+0
   9
 $INTERSECTIONDISPLAY
 280
-     0
+0
   9
 $INTERSECTIONCOLOR
  70
-   257
+257
   9
 $DIMASSOC
 280
-     2
+2
   9
 $PROJECTNAME
   1
@@ -981,7 +981,7 @@ $PROJECTNAME
   9
 $CAMERADISPLAY
 290
-     0
+0
   9
 $LENSLENGTH
  40
@@ -1029,11 +1029,11 @@ $LOFTMAG2
   9
 $LOFTPARAM
  70
-     7
+7
   9
 $LOFTNORMALS
 280
-     1
+1
   9
 $LATITUDE
  40
@@ -1049,15 +1049,15 @@ $NORTHDIRECTION
   9
 $TIMEZONE
  70
- -8000
+-8000
   9
 $LIGHTGLYPHDISPLAY
 280
-     1
+1
   9
 $TILEMODELIGHTSYNCH
 280
-     1
+1
   9
 $CMATERIAL
 347
@@ -1065,27 +1065,27 @@ $CMATERIAL
   9
 $SOLIDHIST
 280
-     1
+1
   9
 $SHOWHIST
 280
-     1
+1
   9
 $DWFFRAME
 280
-     2
+2
   9
 $DGNFRAME
 280
-     0
+0
   9
 $REALWORLDSCALE
 290
-     1
+1
   9
 $INTERFERECOLOR
  62
-     1
+1
   9
 $INTERFEREOBJVS
 345
@@ -1097,7 +1097,7 @@ A0
   9
 $CSHADOW
 280
-     0
+0
   9
 $SHADOWPLANELOCATION
  40
@@ -1117,13 +1117,13 @@ AcDbDictionaryWithDefault
   3
 ObjectDBX Classes
  90
-        0
+0
  91
-        1
+1
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1133,13 +1133,13 @@ AcDbDictionaryVar
   3
 ObjectDBX Classes
  90
-        0
+0
  91
-       13
+13
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1149,13 +1149,13 @@ AcDbTableStyle
   3
 ObjectDBX Classes
  90
-     4095
+4095
  91
-        1
+1
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1165,13 +1165,13 @@ AcDbMaterial
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        3
+3
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1181,13 +1181,13 @@ AcDbVisualStyle
   3
 ObjectDBX Classes
  90
-     4095
+4095
  91
-       19
+19
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1197,13 +1197,13 @@ AcDbScale
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-       17
+17
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1213,13 +1213,13 @@ AcDbMLeaderStyle
   3
 ACDB_MLEADERSTYLE_CLASS
  90
-     4095
+4095
  91
-        3
+3
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1229,13 +1229,13 @@ AcDbCellStyleMap
   3
 ObjectDBX Classes
  90
-     1152
+1152
  91
-        4
+4
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1245,13 +1245,13 @@ ExAcXREFPanelObject
   3
 EXAC_ESW
  90
-     1025
+1025
  91
-        0
+0
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1261,13 +1261,13 @@ AcDbImpNonPersistentObjectsCollection
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        0
+0
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1277,13 +1277,13 @@ AcDbLayerIndex
   3
 ObjectDBX Classes
  90
-        0
+0
  91
-        0
+0
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1293,13 +1293,13 @@ AcDbSpatialIndex
   3
 ObjectDBX Classes
  90
-        0
+0
  91
-        0
+0
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1309,13 +1309,13 @@ AcDbIdBuffer
   3
 ObjectDBX Classes
  90
-        0
+0
  91
-        0
+0
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1325,13 +1325,13 @@ AcDbDimAssoc
   3
 "AcDbDimAssoc|Product Desc:     AcDim ARX App For Dimension|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com"
  90
-        0
+0
  91
-        0
+0
 280
-     0
+0
 281
-     0
+0
   0
 ENDSEC
   0
@@ -1349,7 +1349,7 @@ VPORT
 100
 AcDbSymbolTable
  70
-     1
+1
   0
 VPORT
   5
@@ -1363,7 +1363,7 @@ AcDbViewportTableRecord
   2
 *Active
  70
-     0
+0
  10
 0.0
  20
@@ -1415,25 +1415,25 @@ AcDbViewportTableRecord
  51
 0.0
  71
-     0
+0
  72
-  1000
+1000
  73
-     1
+1
  74
-     3
+3
  75
-     0
+0
  76
-     0
+0
  77
-     0
+0
  78
-     0
+0
 281
-     0
+0
  65
-     1
+1
 110
 0.0
 120
@@ -1453,27 +1453,27 @@ AcDbViewportTableRecord
 132
 0.0
  79
-     0
+0
 146
 0.0
 348
 9F
  60
-     2
+2
  61
-     5
+5
 292
-     1
+1
 282
-     1
+1
 141
 0.0
 142
 0.0
  63
-   250
+250
 421
-  3355443
+3355443
   0
 ENDTAB
   0
@@ -1487,7 +1487,7 @@ LTYPE
 100
 AcDbSymbolTable
  70
-     5
+7
   0
 LTYPE
   5
@@ -1501,13 +1501,13 @@ AcDbLinetypeTableRecord
   2
 ByBlock
  70
-     0
+0
   3
 
  72
-    65
+65
  73
-     0
+0
  40
 0.0
   0
@@ -1523,13 +1523,13 @@ AcDbLinetypeTableRecord
   2
 ByLayer
  70
-     0
+0
   3
 
  72
-    65
+65
  73
-     0
+0
  40
 0.0
   0
@@ -1545,13 +1545,13 @@ AcDbLinetypeTableRecord
   2
 Continuous
  70
-     0
+0
   3
 Solid line
  72
-    65
+65
  73
-     0
+0
  40
 0.0
   0
@@ -1567,31 +1567,31 @@ AcDbLinetypeTableRecord
   2
 CENTER
  70
-     0
+0
   3
 Center ____ _ ____ _ ____ _ ____ _ ____ _ ____
  72
-    65
+65
  73
-     4
+4
  40
 2.0
  49
 1.25
  74
-     0
+0
  49
 -0.25
  74
-     0
+0
  49
 0.25
  74
-     0
+0
  49
 -0.25
  74
-     0
+0
   0
 LTYPE
   5
@@ -1605,23 +1605,23 @@ AcDbLinetypeTableRecord
   2
 DASHED
  70
-     0
+0
   3
 Dashed __ __ __ __ __ __ __ __ __ __ __ __ __ _
  72
-    65
+65
  73
-     2
+2
  40
 0.75
  49
 0.5
  74
-     0
+0
  49
 -0.25
  74
-     0
+0
   0
 LTYPE
   5
@@ -1635,39 +1635,39 @@ AcDbLinetypeTableRecord
   2
 PHANTOM
  70
-     0
+0
   3
 Phantom ______  __  __  ______  __  __  ______
  72
-    65
+65
  73
-     6
+6
  40
 2.5
  49
 1.25
  74
-     0
+0
  49
 -0.25
  74
-     0
+0
  49
 0.25
  74
-     0
+0
  49
 -0.25
  74
-     0
+0
  49
 0.25
  74
-     0
+0
  49
 -0.25
  74
-     0
+0
   0
 LTYPE
   5
@@ -1681,23 +1681,23 @@ AcDbLinetypeTableRecord
   2
 HIDDEN
  70
-     0
+0
   3
 Hidden __ __ __ __ __ __ __ __ __ __ __ __ __ __
  72
-    65
+65
  73
-     2
+2
  40
-9.524999999999998
+9.524999999999999
  49
 6.349999999999999
  74
-     0
+0
  49
 -3.174999999999999
  74
-     0
+0
   0
 ENDTAB
   0
@@ -1717,7 +1717,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-     3
+3
   0
 LAYER
   5
@@ -1737,13 +1737,13 @@ AcDbLayerTableRecord
   2
 0
  70
-     0
+0
  62
-     7
+7
   6
 Continuous
 370
-    -3
+-3
 390
 F
 347
@@ -1761,15 +1761,15 @@ AcDbLayerTableRecord
   2
 View Port
  70
-     0
+0
  62
-     7
+7
   6
 Continuous
 290
-     0
+0
 370
-    -3
+-3
 390
 F
 347
@@ -1793,15 +1793,15 @@ AcDbLayerTableRecord
   2
 Defpoints
  70
-     0
+0
  62
-     7
+7
   6
 Continuous
 290
-     0
+0
 370
-    -3
+-3
 390
 F
 347
@@ -1819,7 +1819,7 @@ STYLE
 100
 AcDbSymbolTable
  70
-     5
+3
   0
 STYLE
   5
@@ -1833,7 +1833,7 @@ AcDbTextStyleTableRecord
   2
 Standard
  70
-     0
+0
  40
 0.0
  41
@@ -1841,7 +1841,7 @@ Standard
  50
 0.0
  71
-     0
+0
  42
 0.2
   3
@@ -1853,7 +1853,7 @@ ACAD
 1000
 Arial
 1071
-       34
+34
   0
 STYLE
   5
@@ -1867,7 +1867,7 @@ AcDbTextStyleTableRecord
   2
 Annotative
  70
-     0
+0
  40
 0.0
  41
@@ -1875,7 +1875,7 @@ Annotative
  50
 0.0
  71
-     0
+0
  42
 0.2
   3
@@ -1889,9 +1889,9 @@ AnnotativeData
 1002
 {
 1070
-     1
+1
 1070
-     1
+1
 1002
 }
 1001
@@ -1899,7 +1899,7 @@ ACAD
 1000
 Arial
 1071
-       34
+34
   0
 STYLE
   5
@@ -1913,7 +1913,7 @@ AcDbTextStyleTableRecord
   2
 Notes
  70
-     0
+0
  40
 3.0
  41
@@ -1921,7 +1921,7 @@ Notes
  50
 0.0
  71
-     0
+0
  42
 0.2
   3
@@ -1935,99 +1935,21 @@ AnnotativeData
 1002
 {
 1070
-     1
+1
 1070
-     1
+1
 1002
 }
 1001
 AcadAnnoPO
 1070
-     1
+1
 1001
 ACAD
 1000
 Arial
 1071
-       34
-  0
-STYLE
-  5
-179
-330
-3
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
-Titles
- 70
-     0
- 40
-6.0
- 41
-1.0
- 50
-0.0
- 71
-     0
- 42
-0.2
-  3
-arial.ttf
-  4
-
-1001
-AcadAnnotative
-1000
-AnnotativeData
-1002
-{
-1070
-     1
-1070
-     1
-1002
-}
-1001
-AcadAnnoPO
-1070
-     1
-1001
-ACAD
-1000
-Arial
-1071
-       34
-  0
-STYLE
-  5
-1AF
-330
-3
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
-
- 70
-     1
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-     0
- 42
-0.2
-  3
-ltypeshp.shx
-  4
-
+34
   0
 ENDTAB
   0
@@ -2041,7 +1963,7 @@ VIEW
 100
 AcDbSymbolTable
  70
-     0
+0
   0
 ENDTAB
   0
@@ -2055,7 +1977,7 @@ UCS
 100
 AcDbSymbolTable
  70
-     0
+0
   0
 ENDTAB
   0
@@ -2069,7 +1991,7 @@ APPID
 100
 AcDbSymbolTable
  70
-    10
+10
   0
 APPID
   5
@@ -2083,7 +2005,7 @@ AcDbRegAppTableRecord
   2
 ACAD
  70
-     0
+0
   0
 APPID
   5
@@ -2097,7 +2019,7 @@ AcDbRegAppTableRecord
   2
 AcadAnnoPO
  70
-     0
+0
   0
 APPID
   5
@@ -2111,7 +2033,7 @@ AcDbRegAppTableRecord
   2
 AcadAnnotative
  70
-     0
+0
   0
 APPID
   5
@@ -2125,7 +2047,7 @@ AcDbRegAppTableRecord
   2
 ACAD_DSTYLE_DIMJAG
  70
-     0
+0
   0
 APPID
   5
@@ -2139,7 +2061,7 @@ AcDbRegAppTableRecord
   2
 ACAD_DSTYLE_DIMTALN
  70
-     0
+0
   0
 APPID
   5
@@ -2153,7 +2075,7 @@ AcDbRegAppTableRecord
   2
 ACAD_MLEADERVER
  70
-     0
+0
   0
 APPID
   5
@@ -2167,7 +2089,7 @@ AcDbRegAppTableRecord
   2
 AcAecLayerStandard
  70
-     0
+0
   0
 APPID
   5
@@ -2181,7 +2103,7 @@ AcDbRegAppTableRecord
   2
 ACAD_EXEMPT_FROM_CAD_STANDARDS
  70
-     0
+0
   0
 APPID
   5
@@ -2195,7 +2117,7 @@ AcDbRegAppTableRecord
   2
 ACAD_DSTYLE_DIMBREAK
  70
-     0
+0
   0
 APPID
   5
@@ -2209,7 +2131,7 @@ AcDbRegAppTableRecord
   2
 ACAD_PSEXT
  70
-     0
+0
   0
 ENDTAB
   0
@@ -2223,11 +2145,11 @@ A
 100
 AcDbSymbolTable
  70
-     3
+3
 100
 AcDbDimStyleTable
  71
-     3
+3
 340
 242
 340
@@ -2247,7 +2169,7 @@ AcDbDimStyleTableRecord
   2
 Standard
  70
-     0
+0
  41
 3.0
  42
@@ -2267,21 +2189,21 @@ Standard
 1001
 ACAD_DSTYLE_DIMJAG
 1070
-   388
+388
 1040
 38.0
 1001
 ACAD_DSTYLE_DIMBREAK
 1070
-   391
+391
 1040
 90.0
 1001
 ACAD_DSTYLE_DIMTALN
 1070
-   392
+392
 1070
-     0
+0
   0
 DIMSTYLE
 105
@@ -2295,7 +2217,7 @@ AcDbDimStyleTableRecord
   2
 Annotative
  70
-     0
+0
  40
 0.0
  41
@@ -2321,29 +2243,29 @@ AnnotativeData
 1002
 {
 1070
-     1
+1
 1070
-     1
+1
 1002
 }
 1001
 ACAD_DSTYLE_DIMJAG
 1070
-   388
+388
 1040
 38.0
 1001
 ACAD_DSTYLE_DIMBREAK
 1070
-   391
+391
 1040
 90.0
 1001
 ACAD_DSTYLE_DIMTALN
 1070
-   392
+392
 1070
-     0
+0
   0
 DIMSTYLE
 105
@@ -2357,7 +2279,7 @@ AcDbDimStyleTableRecord
   2
 Civil-Metric
  70
-     0
+0
  41
 3.0
  42
@@ -2367,15 +2289,15 @@ Civil-Metric
  44
 3.0
  73
-     0
+0
  74
-     0
+0
  77
-     1
+1
  78
-     3
+3
  79
-     2
+2
 140
 3.0
 141
@@ -2383,33 +2305,33 @@ Civil-Metric
 147
 2.0
 179
-     2
+2
 271
-     2
+2
 272
-     2
+2
 276
-     1
+1
 340
 11
 1001
 ACAD_DSTYLE_DIMBREAK
 1070
-   391
+391
 1040
 3.0
 1001
 ACAD_DSTYLE_DIMJAG
 1070
-   388
+388
 1040
 38.0
 1001
 ACAD_DSTYLE_DIMTALN
 1070
-   392
+392
 1070
-     0
+0
   0
 ENDTAB
   0
@@ -2423,7 +2345,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-     2
+4
   0
 BLOCK_RECORD
   5
@@ -2445,11 +2367,11 @@ AcDbBlockTableRecord
 340
 22
  70
-     0
+0
 280
-     1
+1
 281
-     0
+0
   0
 BLOCK_RECORD
   5
@@ -2465,11 +2387,11 @@ AcDbBlockTableRecord
 340
 59
  70
-     0
+0
 280
-     1
+1
 281
-     0
+0
   0
 BLOCK_RECORD
   5
@@ -2485,11 +2407,11 @@ _ArchTick
 340
 0
  70
-     0
+0
 280
-     1
+1
 281
-     0
+0
   0
 BLOCK_RECORD
   5
@@ -2505,11 +2427,11 @@ _Open30
 340
 0
  70
-     0
+0
 280
-     1
+1
 281
-     0
+0
   0
 ENDTAB
   0
@@ -2518,154 +2440,6 @@ ENDSEC
 SECTION
   2
 BLOCKS
-  0
-BLOCK
-  5
-20
-330
-1F
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-*Model_Space
- 70
-     0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-*Model_Space
-  1
-
-  0
-ENDBLK
-  5
-21
-330
-1F
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-5A
-330
-58
-100
-AcDbEntity
- 67
-     1
-  8
-0
-100
-AcDbBlockBegin
-  2
-*Paper_Space
- 70
-     0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-*Paper_Space
-  1
-
-  0
-ENDBLK
-  5
-5B
-330
-58
-100
-AcDbEntity
- 67
-     1
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-23A
-330
-238
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-_ArchTick
- 70
-     0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-_ArchTick
-  1
-
-  0
-LWPOLYLINE
-  5
-239
-330
-238
-100
-AcDbEntity
-  8
-0
-  6
-ByBlock
- 62
-     0
-100
-AcDbPolyline
- 90
-        2
- 70
-     0
- 43
-0.15
- 10
--0.5
- 20
--0.5
- 10
-0.5
- 20
-0.5
-  0
-ENDBLK
-  5
-23B
-330
-238
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
   0
 BLOCK
   5
@@ -2681,7 +2455,7 @@ AcDbBlockBegin
   2
 _Open30
  70
-     0
+0
  10
 0.0
  20
@@ -2705,9 +2479,9 @@ AcDbEntity
   6
 ByBlock
  62
-     0
+0
 370
-    -2
+-2
 100
 AcDbLine
  10
@@ -2735,9 +2509,9 @@ AcDbEntity
   6
 ByBlock
  62
-     0
+0
 370
-    -2
+-2
 100
 AcDbLine
  10
@@ -2765,9 +2539,9 @@ AcDbEntity
   6
 ByBlock
  62
-     0
+0
 370
-    -2
+-2
 100
 AcDbLine
  10
@@ -2795,263 +2569,159 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
+BLOCK
+  5
+5A
+330
+58
+100
+AcDbEntity
+ 67
+1
+  8
+0
+100
+AcDbBlockBegin
+  2
+*Paper_Space
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+*Paper_Space
+  1
+
+  0
+ENDBLK
+  5
+5B
+330
+58
+100
+AcDbEntity
+ 67
+1
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+20
+330
+1F
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+*Model_Space
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+*Model_Space
+  1
+
+  0
+ENDBLK
+  5
+21
+330
+1F
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+23A
+330
+238
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+_ArchTick
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+_ArchTick
+  1
+
+  0
+LWPOLYLINE
+  5
+239
+330
+238
+100
+AcDbEntity
+  8
+0
+  6
+ByBlock
+ 62
+0
+100
+AcDbPolyline
+ 90
+2
+ 70
+0
+ 43
+0.15
+ 10
+-0.5
+ 20
+-0.5
+ 10
+0.5
+ 20
+0.5
+  0
+ENDBLK
+  5
+23B
+330
+238
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
 ENDSEC
   0
 SECTION
   2
 ENTITIES
-  0
-VIEWPORT
-  5
-28B
-102
-{ACAD_XDICTIONARY
-360
-28C
-102
-}
-330
-58
-100
-AcDbEntity
- 67
-     1
-  8
-0
-100
-AcDbViewport
- 10
-4.799458060677595
- 20
-4.021899493660514
- 30
-0.0
- 40
-17.88061277576319
- 41
-8.992999745766949
- 68
-     1
- 69
-     1
- 12
-4.799458060677595
- 22
-4.021899493660514
- 13
-0.0
- 23
-0.0
- 14
-0.5
- 24
-0.5
- 15
-0.5
- 25
-0.5
- 16
-0.0
- 26
-0.0
- 36
-1.0
- 17
-0.0
- 27
-0.0
- 37
-0.0
- 42
-50.0
- 43
-0.0
- 44
-0.0
- 45
-8.992999745766949
- 50
-0.0
- 51
-0.0
- 72
-  1000
- 90
-   819232
-  1
-
-281
-     0
- 71
-     1
- 74
-     0
-110
-0.0
-120
-0.0
-130
-0.0
-111
-1.0
-121
-0.0
-131
-0.0
-112
-0.0
-122
-1.0
-132
-0.0
- 79
-     0
-146
-0.0
-170
-     0
- 61
-     5
-348
-9F
-292
-     1
-282
-     1
-141
-0.0
-142
-0.0
- 63
-   250
-421
-  3355443
-  0
-VIEWPORT
-  5
-290
-102
-{ACAD_XDICTIONARY
-360
-291
-102
-}
-330
-58
-100
-AcDbEntity
- 67
-     1
-  8
-View Port
-100
-AcDbViewport
- 10
-4.828866575662197
- 20
-3.999999761581421
- 30
-0.0
- 40
-8.399999618530275
- 41
-6.399999618530274
- 68
-     2
- 69
-     2
- 12
-6.0
- 22
-4.5
- 13
-0.0
- 23
-0.0
- 14
-0.5
- 24
-0.5
- 15
-0.5
- 25
-0.5
- 16
-0.0
- 26
-0.0
- 36
-1.0
- 17
-0.0
- 27
-0.0
- 37
-0.0
- 42
-50.0
- 43
-0.0
- 44
-0.0
- 45
-6.399999618530274
- 50
-0.0
- 51
-0.0
- 72
-  1000
- 90
-   557152
-  1
-
-281
-     0
- 71
-     1
- 74
-     0
-110
-0.0
-120
-0.0
-130
-0.0
-111
-1.0
-121
-0.0
-131
-0.0
-112
-0.0
-122
-1.0
-132
-0.0
- 79
-     0
-146
-0.0
-170
-     0
- 61
-     5
-348
-9F
-292
-     1
-282
-     1
-141
-0.0
-142
-0.0
- 63
-   250
-421
-  3355443
   0
 ENDSEC
   0
@@ -3067,7 +2737,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 ACAD_COLOR
 350
@@ -3129,9 +2799,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_LAYERSTATES
 360
@@ -3145,9 +2815,9 @@ E6
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   0
 DICTIONARY
   5
@@ -3157,9 +2827,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   0
 DICTIONARY
   5
@@ -3169,9 +2839,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ASDK_XREC_ANNOTATION_SCALE_INFO
 360
@@ -3185,9 +2855,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ASDK_XREC_ANNOTATION_SCALE_INFO
 360
@@ -3207,7 +2877,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   0
 DICTIONARY
   5
@@ -3223,7 +2893,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   0
 DICTIONARY
   5
@@ -3239,7 +2909,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 Layout1
 350
@@ -3263,7 +2933,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 ByBlock
 350
@@ -3291,7 +2961,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 Annotative
 350
@@ -3319,7 +2989,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 Standard
 350
@@ -3339,7 +3009,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   0
 ACDBDICTIONARYWDFLT
   5
@@ -3355,7 +3025,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 Normal
 350
@@ -3379,7 +3049,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 A0
 350
@@ -3463,7 +3133,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 Standard
 350
@@ -3483,7 +3153,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 2dWireframe
 350
@@ -3575,9 +3245,9 @@ C
 100
 AcDbXrecord
 280
-     1
+1
  90
-        1
+1
 330
 87
   0
@@ -3595,7 +3265,7 @@ C
 100
 AcDbDictionary
 281
-     1
+1
   3
 ANNOALLVISIBLE
 350
@@ -3663,7 +3333,7 @@ DICTIONARY
 100
 AcDbDictionary
 281
-     1
+1
   0
 XRECORD
   5
@@ -3679,9 +3349,9 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
  90
-        1
+1
 340
 B7
   0
@@ -3699,9 +3369,9 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
  90
-        1
+1
 340
 B7
   0
@@ -3761,25 +3431,25 @@ ANSI_A_(8.50_x_11.00_Inches)
 143
 1.0
  70
-   688
+688
  72
-     0
+0
  73
-     1
+1
  74
-     5
+5
   7
 acad.ctb
  75
-    16
+16
 147
 1.0
  76
-     0
+0
  77
-     2
+2
  78
-   300
+300
 148
 0.0
 149
@@ -3789,9 +3459,9 @@ AcDbLayout
   1
 Layout1
  70
-     1
+1
  71
-     1
+1
  10
 -0.7005418191744587
  20
@@ -3799,7 +3469,7 @@ Layout1
  11
 10.29945794052965
  21
-8.271899373512569
+8.27189937351257
  12
 0.0
  22
@@ -3839,7 +3509,7 @@ Layout1
  37
 0.0
  76
-     0
+0
 330
 58
 331
@@ -3855,7 +3525,7 @@ File
 1000
 
 1070
-     0
+0
   0
 LAYOUT
   5
@@ -3907,25 +3577,25 @@ ANSI_A_(8.50_x_11.00_Inches)
 143
 14.5331733075991
  70
- 11952
+11952
  72
-     0
+0
  73
-     1
+1
  74
-     0
+0
   7
 
  75
-     0
+0
 147
 0.068808097091715
  76
-     0
+0
  77
-     2
+2
  78
-   300
+300
 148
 114.9814160680965
 149
@@ -3935,9 +3605,9 @@ AcDbLayout
   1
 Model
  70
-     1
+1
  71
-     0
+0
  10
 0.0
  20
@@ -3985,7 +3655,7 @@ Model
  37
 0.0
  76
-     0
+0
 330
 1F
 331
@@ -4001,7 +3671,7 @@ File
 1000
 
 1070
-     0
+0
   0
 MATERIAL
   5
@@ -4019,7 +3689,7 @@ AcDbMaterial
   1
 ByBlock
  94
-       63
+63
   0
 MATERIAL
   5
@@ -4037,7 +3707,7 @@ AcDbMaterial
   1
 ByLayer
  94
-       63
+63
   0
 MATERIAL
   5
@@ -4189,21 +3859,21 @@ Global
 144
 1.0
  94
-       63
+63
 1001
 ACAD
 1070
-    -1
+-1
 1070
-     3
+3
 1070
-     0
+0
 1000
 
 1071
-        0
+0
 1070
-     0
+0
   0
 MLEADERSTYLE
   5
@@ -4219,31 +3889,31 @@ D7
 100
 AcDbMLeaderStyle
 170
-     2
+2
 171
-     1
+1
 172
-     0
+0
  90
-        2
+2
  40
 0.0
  41
 0.0
 173
-     1
+1
  91
 -1056964608
 340
 14
  92
-       -2
+-2
 290
-     1
+1
  42
 2.0
 291
-     1
+1
  43
 9.0
   3
@@ -4255,21 +3925,21 @@ Standard
 342
 11
 174
-     1
+1
 178
-     1
+1
 175
-     1
+1
 176
-     0
+0
  93
 -1056964608
  45
 4.0
 292
-     0
+0
 297
-     0
+0
  46
 0.18
  94
@@ -4281,25 +3951,25 @@ Standard
 140
 1.0
 293
-     1
+1
 141
 0.0
 294
-     1
+1
 177
-     0
+0
 142
 1.0
 295
-     0
+0
 296
-     1
+1
 143
 3.0
 1001
 ACAD_MLEADERVER
 1070
-     2
+2
   0
 MLEADERSTYLE
   5
@@ -4315,31 +3985,31 @@ D7
 100
 AcDbMLeaderStyle
 170
-     2
+2
 171
-     1
+1
 172
-     0
+0
  90
-        2
+2
  40
 0.0
  41
 0.0
 173
-     1
+1
  91
 -1056964608
 340
 14
  92
-       -2
+-2
 290
-     1
+1
  42
 2.0
 291
-     1
+1
  43
 7.0
   3
@@ -4351,21 +4021,21 @@ Standard
 342
 178
 174
-     1
+1
 178
-     1
+1
 175
-     1
+1
 176
-     0
+0
  93
 -1056964608
  45
 3.0
 292
-     0
+0
 297
-     1
+1
  46
 0.18
  94
@@ -4377,25 +4047,25 @@ Standard
 140
 1.0
 293
-     1
+1
 141
 0.0
 294
-     1
+1
 177
-     0
+0
 142
 1.0
 295
-     0
+0
 296
-     1
+1
 143
 3.0
 1001
 ACAD_MLEADERVER
 1070
-     2
+2
   0
 MLEADERSTYLE
   5
@@ -4411,31 +4081,31 @@ D7
 100
 AcDbMLeaderStyle
 170
-     2
+2
 171
-     1
+1
 172
-     0
+0
  90
-        2
+2
  40
 0.0
  41
 0.0
 173
-     1
+1
  91
 -1056964608
 340
 14
  92
-       -2
+-2
 290
-     1
+1
  42
 2.0
 291
-     1
+1
  43
 9.0
   3
@@ -4447,21 +4117,21 @@ Standard
 342
 11
 174
-     1
+1
 178
-     1
+1
 175
-     1
+1
 176
-     0
+0
  93
 -1056964608
  45
 4.0
 292
-     0
+0
 297
-     0
+0
  46
 0.18
  94
@@ -4473,25 +4143,25 @@ Standard
 140
 1.0
 293
-     1
+1
 141
 0.0
 294
-     1
+1
 177
-     0
+0
 142
 1.0
 295
-     0
+0
 296
-     0
+0
 143
 3.0
 1001
 ACAD_MLEADERVER
 1070
-     2
+2
   0
 MLINESTYLE
   5
@@ -4509,27 +4179,27 @@ AcDbMlineStyle
   2
 STANDARD
  70
-     0
+0
   3
 
  62
-   256
+256
  51
 90.0
  52
 90.0
  71
-     2
+2
  49
 0.5
  62
-   256
+256
   6
 BYLAYER
  49
 -0.5
  62
-   256
+256
   6
 BYLAYER
   0
@@ -4559,7 +4229,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:1
 140
@@ -4567,7 +4237,7 @@ AcDbScale
 141
 1.0
 290
-     1
+1
   0
 SCALE
   5
@@ -4583,7 +4253,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:2
 140
@@ -4591,7 +4261,7 @@ AcDbScale
 141
 2.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4607,7 +4277,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:4
 140
@@ -4615,7 +4285,7 @@ AcDbScale
 141
 4.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4631,7 +4301,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:5
 140
@@ -4639,7 +4309,7 @@ AcDbScale
 141
 5.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4655,7 +4325,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:8
 140
@@ -4663,7 +4333,7 @@ AcDbScale
 141
 8.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4679,7 +4349,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:10
 140
@@ -4687,7 +4357,7 @@ AcDbScale
 141
 10.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4703,7 +4373,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:16
 140
@@ -4711,7 +4381,7 @@ AcDbScale
 141
 16.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4727,7 +4397,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:20
 140
@@ -4735,7 +4405,7 @@ AcDbScale
 141
 20.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4751,7 +4421,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:30
 140
@@ -4759,7 +4429,7 @@ AcDbScale
 141
 30.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4775,7 +4445,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:40
 140
@@ -4783,7 +4453,7 @@ AcDbScale
 141
 40.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4799,7 +4469,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:50
 140
@@ -4807,7 +4477,7 @@ AcDbScale
 141
 50.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4823,7 +4493,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 1:100
 140
@@ -4831,7 +4501,7 @@ AcDbScale
 141
 100.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4847,7 +4517,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 2:1
 140
@@ -4855,7 +4525,7 @@ AcDbScale
 141
 1.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4871,7 +4541,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 4:1
 140
@@ -4879,7 +4549,7 @@ AcDbScale
 141
 1.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4895,7 +4565,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 8:1
 140
@@ -4903,7 +4573,7 @@ AcDbScale
 141
 1.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4919,7 +4589,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 10:1
 140
@@ -4927,7 +4597,7 @@ AcDbScale
 141
 1.0
 290
-     0
+0
   0
 SCALE
   5
@@ -4943,7 +4613,7 @@ B6
 100
 AcDbScale
  70
-     0
+0
 300
 100:1
 140
@@ -4951,7 +4621,7 @@ AcDbScale
 141
 1.0
 290
-     0
+0
   0
 TABLESTYLE
   5
@@ -4975,179 +4645,179 @@ AcDbTableStyle
   3
 Standard
  70
-     0
+0
  71
-     0
+0
  40
 0.06
  41
 0.06
 280
-     0
+0
 281
-     0
+0
   7
 Standard
 140
 0.18
 170
-     2
+2
  62
-     0
+0
  63
-     7
+7
 283
-     0
+0
  90
-      512
+512
  91
-        0
+0
   1
 
 274
-    -2
+-2
 284
-     1
+1
  64
-     0
+0
 275
-    -2
+-2
 285
-     1
+1
  65
-     0
+0
 276
-    -2
+-2
 286
-     1
+1
  66
-     0
+0
 277
-    -2
+-2
 287
-     1
+1
  67
-     0
+0
 278
-    -2
+-2
 288
-     1
+1
  68
-     0
+0
 279
-    -2
+-2
 289
-     1
+1
  69
-     0
+0
   7
 Standard
 140
 0.25
 170
-     5
+5
  62
-     0
+0
  63
-     7
+7
 283
-     0
+0
  90
-      512
+512
  91
-        0
+0
   1
 
 274
-    -2
+-2
 284
-     1
+1
  64
-     0
+0
 275
-    -2
+-2
 285
-     1
+1
  65
-     0
+0
 276
-    -2
+-2
 286
-     1
+1
  66
-     0
+0
 277
-    -2
+-2
 287
-     1
+1
  67
-     0
+0
 278
-    -2
+-2
 288
-     1
+1
  68
-     0
+0
 279
-    -2
+-2
 289
-     1
+1
  69
-     0
+0
   7
 Standard
 140
 0.18
 170
-     5
+5
  62
-     0
+0
  63
-     7
+7
 283
-     0
+0
  90
-      512
+512
  91
-        0
+0
   1
 
 274
-    -2
+-2
 284
-     1
+1
  64
-     0
+0
 275
-    -2
+-2
 285
-     1
+1
  65
-     0
+0
 276
-    -2
+-2
 286
-     1
+1
  66
-     0
+0
 277
-    -2
+-2
 287
-     1
+1
  67
-     0
+0
 278
-    -2
+-2
 288
-     1
+1
  68
-     0
+0
 279
-    -2
+-2
 289
-     1
+1
  69
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5171,71 +4841,71 @@ AcDbVisualStyle
   2
 2dWireframe
  70
-     4
+4
  71
-     0
+0
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        0
+0
  66
-   257
+257
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     0
+0
  45
 0.0
 1001
@@ -5243,7 +4913,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5267,71 +4937,71 @@ AcDbVisualStyle
   2
 3D Hidden
  70
-     6
+6
  71
-     1
+1
  72
-     2
+2
  73
-     2
+2
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     2
+2
  91
-        2
+2
  64
-     7
+7
  65
-   257
+257
  75
-     2
+2
 175
-     1
+1
  42
 40.0
  92
-        0
+0
  66
-   257
+257
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     3
+3
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     0
+0
  45
 0.0
 1001
@@ -5339,7 +5009,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5363,71 +5033,71 @@ AcDbVisualStyle
   2
 3dWireframe
  70
-     5
+5
  71
-     0
+0
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        0
+0
  66
-   257
+257
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     0
+0
  45
 0.0
 1001
@@ -5435,7 +5105,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5459,71 +5129,71 @@ AcDbVisualStyle
   2
 Basic
  70
-     7
+7
  71
-     1
+1
  72
-     0
+0
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     0
+0
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -5531,7 +5201,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5555,71 +5225,71 @@ AcDbVisualStyle
   2
 Brighten
  70
-    12
+12
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 50.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -5627,7 +5297,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5651,73 +5321,73 @@ AcDbVisualStyle
   2
 ColorChange
  70
-    16
+16
  71
-     2
+2
  72
-     2
+2
  73
-     3
+3
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     8
+8
 421
-  8421504
+8421504
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     8
+8
 424
-  8421504
+8421504
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -5725,7 +5395,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5749,71 +5419,71 @@ AcDbVisualStyle
   2
 Conceptual
  70
-     9
+9
  71
-     3
+3
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     2
+2
  91
-        2
+2
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 40.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     3
+3
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     0
+0
  45
 0.0
 1001
@@ -5821,7 +5491,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5845,71 +5515,71 @@ AcDbVisualStyle
   2
 Dim
  70
-    11
+11
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 -50.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -5917,7 +5587,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -5941,71 +5611,71 @@ AcDbVisualStyle
   2
 EdgeColorOff
  70
-    22
+22
  71
-     2
+2
  72
-     2
+2
  73
-     0
+0
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6013,7 +5683,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6037,71 +5707,71 @@ AcDbVisualStyle
   2
 Facepattern
  70
-    15
+15
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6109,7 +5779,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6133,71 +5803,71 @@ AcDbVisualStyle
   2
 Flat
  70
-     0
+0
  71
-     2
+2
  72
-     1
+1
  73
-     1
+1
  90
-        2
+2
  40
 -0.6
  41
 30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     0
+0
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6205,7 +5875,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6229,71 +5899,71 @@ AcDbVisualStyle
   2
 FlatWithEdges
  70
-     1
+1
  71
-     2
+2
  72
-     1
+1
  73
-     1
+1
  90
-        2
+2
  40
 -0.6
  41
 30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        0
+0
  66
-   257
+257
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6301,7 +5971,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6325,71 +5995,71 @@ AcDbVisualStyle
   2
 Gouraud
  70
-     2
+2
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        2
+2
  40
 -0.6
  41
 30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     0
+0
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        0
+0
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6397,7 +6067,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6421,71 +6091,71 @@ AcDbVisualStyle
   2
 GouraudWithEdges
  70
-     3
+3
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        2
+2
  40
 -0.6
  41
 30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        0
+0
  66
-   257
+257
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6493,7 +6163,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6517,71 +6187,71 @@ AcDbVisualStyle
   2
 JitterOff
  70
-    20
+20
  71
-     2
+2
  72
-     2
+2
  73
-     0
+0
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-       10
+10
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6589,7 +6259,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6613,71 +6283,71 @@ AcDbVisualStyle
   2
 Linepattern
  70
-    14
+14
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     7
+7
 175
-     7
+7
  42
 1.0
  92
-        8
+8
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6685,7 +6355,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6709,71 +6379,71 @@ AcDbVisualStyle
   2
 OverhangOff
  70
-    21
+21
  71
-     2
+2
  72
-     2
+2
  73
-     0
+0
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        9
+9
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6781,7 +6451,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6805,73 +6475,73 @@ AcDbVisualStyle
   2
 Realistic
  70
-     8
+8
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        0
+0
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-        8
+8
  66
-     8
+8
 424
-  7895160
+7895160
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-       13
+13
  44
 0.0
 173
-     0
+0
 291
-     0
+0
  45
 0.0
 1001
@@ -6879,7 +6549,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 VISUALSTYLE
   5
@@ -6903,71 +6573,71 @@ AcDbVisualStyle
   2
 Thicken
  70
-    13
+13
  71
-     2
+2
  72
-     2
+2
  73
-     1
+1
  90
-        0
+0
  40
 -0.6
  41
 -30.0
  62
-     5
+5
  63
-     7
+7
 421
- 16777215
+16777215
  74
-     1
+1
  91
-        4
+4
  64
-     7
+7
  65
-   257
+257
  75
-     1
+1
 175
-     1
+1
  42
 1.0
  92
-       12
+12
  66
-     7
+7
  43
 1.0
  76
-     1
+1
  77
-     6
+6
  78
-     2
+2
  67
-     7
+7
  79
-     5
+5
 170
-     0
+0
 171
-     0
+0
 290
-     0
+0
 174
-     0
+0
  93
-        1
+1
  44
 0.0
 173
-     0
+0
 291
-     1
+1
  45
 0.0
 1001
@@ -6975,7 +6645,7 @@ ACAD
 1000
 AcDbSavedByObjectVersion
 1070
-     0
+0
   0
 DICTIONARYVAR
   5
@@ -6991,7 +6661,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 0
   0
@@ -7009,7 +6679,7 @@ F0
 100
 DictionaryVariables
 280
-     0
+0
   1
 1:1
   0
@@ -7027,7 +6697,7 @@ EF
 100
 DictionaryVariables
 280
-     0
+0
   1
 Civil-Metric
   0
@@ -7045,7 +6715,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 STANDARD
   0
@@ -7063,7 +6733,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 2
   0
@@ -7081,7 +6751,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 1
   0
@@ -7099,7 +6769,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 0
   0
@@ -7117,7 +6787,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 0
   0
@@ -7135,7 +6805,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 0
   0
@@ -7153,7 +6823,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 1
   0
@@ -7171,7 +6841,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 1
   0
@@ -7189,7 +6859,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 127
   0
@@ -7207,7 +6877,7 @@ DICTIONARYVAR
 100
 DictionaryVariables
 280
-     0
+0
   1
 0
   0
@@ -7219,9 +6889,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ADSK_XREC_LAYOUTTHUMBNAIL
 360
@@ -7235,9 +6905,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 BUMPTILE
 360
@@ -7263,9 +6933,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_ROUNDTRIP_2008_TABLESTYLE_CELLSTYLEMAP
 360
@@ -7279,9 +6949,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7295,9 +6965,9 @@ A1
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7311,9 +6981,9 @@ A0
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7327,9 +6997,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7343,9 +7013,9 @@ A5
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7359,9 +7029,9 @@ A9
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7375,9 +7045,9 @@ A2
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7391,9 +7061,9 @@ A4
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7407,9 +7077,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7423,9 +7093,9 @@ A8
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7439,9 +7109,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7455,9 +7125,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7471,9 +7141,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7487,9 +7157,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7503,9 +7173,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7519,9 +7189,9 @@ A7
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7535,9 +7205,9 @@ DICTIONARY
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7551,9 +7221,9 @@ A3
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7567,9 +7237,9 @@ A6
 100
 AcDbDictionary
 280
-     1
+1
 281
-     1
+1
   3
 ACAD_XREC_ROUNDTRIP
 360
@@ -7589,7 +7259,7 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 310
 2800000000010000C6000000010008000000000000C6000000000000000000000001000000000000FFFFFF0000000000FFFFFF000000000000000000000000000000000000000000000000000000000000000000330000006600000099000000CC000000FF00000000330000333300006633000099330000CC330000FF3300
 310
@@ -8421,11 +8091,11 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 270
-     1
+1
 271
-     1
+1
   0
 XRECORD
   5
@@ -8441,11 +8111,11 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 270
-     1
+1
 271
-     1
+1
   0
 XRECORD
   5
@@ -8461,11 +8131,11 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 270
-     1
+1
 271
-     1
+1
   0
 XRECORD
   5
@@ -8481,11 +8151,11 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 270
-     1
+1
 271
-     1
+1
   0
 CELLSTYLEMAP
   5
@@ -8501,35 +8171,35 @@ CELLSTYLEMAP
 100
 AcDbCellStyleMap
  90
-        3
+3
 300
 CELLSTYLE
   1
 TABLEFORMAT_BEGIN
  90
-        5
+5
 170
-     1
+1
  91
-        0
+0
  92
-    32768
+32768
  62
-   257
+257
  93
-        1
+1
 300
 CONTENTFORMAT
   1
 CONTENTFORMAT_BEGIN
  90
-        0
+0
  91
-        0
+0
  92
-      512
+512
  93
-        0
+0
 300
 
  40
@@ -8537,9 +8207,9 @@ CONTENTFORMAT_BEGIN
 140
 1.0
  94
-        5
+5
  62
-     0
+0
 340
 11
 144
@@ -8547,7 +8217,7 @@ CONTENTFORMAT_BEGIN
 309
 CONTENTFORMAT_END
 171
-     1
+1
 301
 MARGIN
   1
@@ -8567,135 +8237,135 @@ CELLMARGIN_BEGIN
 309
 CELLMARGIN_END
  94
-        6
+6
  95
-        1
+1
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        2
+2
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        4
+4
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        8
+8
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-       16
+16
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-       32
+32
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
@@ -8705,9 +8375,9 @@ TABLEFORMAT_END
   1
 CELLSTYLE_BEGIN
  90
-        1
+1
  91
-        1
+1
 300
 _TITLE
 309
@@ -8717,29 +8387,29 @@ CELLSTYLE
   1
 TABLEFORMAT_BEGIN
  90
-        5
+5
 170
-     1
+1
  91
-        0
+0
  92
-        0
+0
  62
-   257
+257
  93
-        1
+1
 300
 CONTENTFORMAT
   1
 CONTENTFORMAT_BEGIN
  90
-        0
+0
  91
-        0
+0
  92
-      512
+512
  93
-        0
+0
 300
 
  40
@@ -8747,9 +8417,9 @@ CONTENTFORMAT_BEGIN
 140
 1.0
  94
-        5
+5
  62
-     0
+0
 340
 11
 144
@@ -8757,7 +8427,7 @@ CONTENTFORMAT_BEGIN
 309
 CONTENTFORMAT_END
 171
-     1
+1
 301
 MARGIN
   1
@@ -8777,135 +8447,135 @@ CELLMARGIN_BEGIN
 309
 CELLMARGIN_END
  94
-        6
+6
  95
-        1
+1
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        2
+2
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        4
+4
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        8
+8
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-       16
+16
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-       32
+32
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
@@ -8915,9 +8585,9 @@ TABLEFORMAT_END
   1
 CELLSTYLE_BEGIN
  90
-        2
+2
  91
-        1
+1
 300
 _HEADER
 309
@@ -8927,29 +8597,29 @@ CELLSTYLE
   1
 TABLEFORMAT_BEGIN
  90
-        5
+5
 170
-     1
+1
  91
-        0
+0
  92
-        0
+0
  62
-   257
+257
  93
-        1
+1
 300
 CONTENTFORMAT
   1
 CONTENTFORMAT_BEGIN
  90
-        0
+0
  91
-        0
+0
  92
-      512
+512
  93
-        0
+0
 300
 
  40
@@ -8957,9 +8627,9 @@ CONTENTFORMAT_BEGIN
 140
 1.0
  94
-        2
+2
  62
-     0
+0
 340
 11
 144
@@ -8967,7 +8637,7 @@ CONTENTFORMAT_BEGIN
 309
 CONTENTFORMAT_END
 171
-     1
+1
 301
 MARGIN
   1
@@ -8987,135 +8657,135 @@ CELLMARGIN_BEGIN
 309
 CELLMARGIN_END
  94
-        6
+6
  95
-        1
+1
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        2
+2
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        4
+4
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-        8
+8
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-       16
+16
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
 GRIDFORMAT_END
  95
-       32
+32
 302
 GRIDFORMAT
   1
 GRIDFORMAT_BEGIN
  90
-        0
+0
  91
-        1
+1
  62
-     0
+0
  92
-       -2
+-2
 340
 0
  93
-        0
+0
  40
 0.045
 309
@@ -9125,9 +8795,9 @@ TABLEFORMAT_END
   1
 CELLSTYLE_BEGIN
  90
-        3
+3
  91
-        2
+2
 300
 _DATA
 309
@@ -9147,119 +8817,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -9275,119 +8945,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -9403,119 +9073,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -9531,119 +9201,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -9659,119 +9329,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -9787,119 +9457,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -9915,119 +9585,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10043,119 +9713,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10171,119 +9841,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     0
+0
 102
 RTVSPropertyOp1
  70
-     0
+0
 102
 RTVSPropertyOp2
  70
-     0
+0
 102
 RTVSPropertyOp3
  70
-     0
+0
 102
 RTVSPropertyOp4
  70
-     0
+0
 102
 RTVSPropertyOp5
  70
-     0
+0
 102
 RTVSPropertyOp6
  70
-     0
+0
 102
 RTVSPropertyOp7
  70
-     0
+0
 102
 RTVSPropertyOp8
  70
-     0
+0
 102
 RTVSPropertyOp9
  70
-     0
+0
 102
 RTVSPropertyOp10
  70
-     0
+0
 102
 RTVSPropertyOp11
  70
-     0
+0
 102
 RTVSPropertyOp12
  70
-     0
+0
 102
 RTVSPropertyOp13
  70
-     0
+0
 102
 RTVSPropertyOp14
  70
-     2
+2
 102
 RTVSPropertyOp15
  70
-     0
+0
 102
 RTVSPropertyOp16
  70
-     0
+0
 102
 RTVSPropertyOp17
  70
-     0
+0
 102
 RTVSPropertyOp18
  70
-     0
+0
 102
 RTVSPropertyOp19
  70
-     0
+0
 102
 RTVSPropertyOp20
  70
-     0
+0
 102
 RTVSPropertyOp21
  70
-     0
+0
 102
 RTVSPropertyOp22
  70
-     0
+0
 102
 RTVSPropertyOp23
  70
-     0
+0
 102
 RTVSPropertyOp24
  70
-     0
+0
 102
 RTVSPropertyOp25
  70
-     0
+0
 102
 RTVSPropertyOp26
  70
-     0
+0
 102
 RTVSPropertyOp27
  70
-     0
+0
   0
 XRECORD
   5
@@ -10299,119 +9969,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10427,119 +10097,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10555,119 +10225,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10683,119 +10353,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10811,119 +10481,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -10939,119 +10609,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     0
+0
 102
 RTVSPropertyOp1
  70
-     0
+0
 102
 RTVSPropertyOp2
  70
-     0
+0
 102
 RTVSPropertyOp3
  70
-     0
+0
 102
 RTVSPropertyOp4
  70
-     0
+0
 102
 RTVSPropertyOp5
  70
-     0
+0
 102
 RTVSPropertyOp6
  70
-     0
+0
 102
 RTVSPropertyOp7
  70
-     0
+0
 102
 RTVSPropertyOp8
  70
-     0
+0
 102
 RTVSPropertyOp9
  70
-     0
+0
 102
 RTVSPropertyOp10
  70
-     0
+0
 102
 RTVSPropertyOp11
  70
-     0
+0
 102
 RTVSPropertyOp12
  70
-     0
+0
 102
 RTVSPropertyOp13
  70
-     0
+0
 102
 RTVSPropertyOp14
  70
-     2
+2
 102
 RTVSPropertyOp15
  70
-     0
+0
 102
 RTVSPropertyOp16
  70
-     0
+0
 102
 RTVSPropertyOp17
  70
-     0
+0
 102
 RTVSPropertyOp18
  70
-     0
+0
 102
 RTVSPropertyOp19
  70
-     0
+0
 102
 RTVSPropertyOp20
  70
-     0
+0
 102
 RTVSPropertyOp21
  70
-     0
+0
 102
 RTVSPropertyOp22
  70
-     0
+0
 102
 RTVSPropertyOp23
  70
-     0
+0
 102
 RTVSPropertyOp24
  70
-     0
+0
 102
 RTVSPropertyOp25
  70
-     0
+0
 102
 RTVSPropertyOp26
  70
-     0
+0
 102
 RTVSPropertyOp27
  70
-     0
+0
   0
 XRECORD
   5
@@ -11067,119 +10737,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -11195,119 +10865,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     0
+0
 102
 RTVSPropertyOp1
  70
-     0
+0
 102
 RTVSPropertyOp2
  70
-     0
+0
 102
 RTVSPropertyOp3
  70
-     0
+0
 102
 RTVSPropertyOp4
  70
-     0
+0
 102
 RTVSPropertyOp5
  70
-     0
+0
 102
 RTVSPropertyOp6
  70
-     0
+0
 102
 RTVSPropertyOp7
  70
-     0
+0
 102
 RTVSPropertyOp8
  70
-     0
+0
 102
 RTVSPropertyOp9
  70
-     0
+0
 102
 RTVSPropertyOp10
  70
-     0
+0
 102
 RTVSPropertyOp11
  70
-     0
+0
 102
 RTVSPropertyOp12
  70
-     0
+0
 102
 RTVSPropertyOp13
  70
-     0
+0
 102
 RTVSPropertyOp14
  70
-     2
+2
 102
 RTVSPropertyOp15
  70
-     0
+0
 102
 RTVSPropertyOp16
  70
-     0
+0
 102
 RTVSPropertyOp17
  70
-     0
+0
 102
 RTVSPropertyOp18
  70
-     0
+0
 102
 RTVSPropertyOp19
  70
-     0
+0
 102
 RTVSPropertyOp20
  70
-     0
+0
 102
 RTVSPropertyOp21
  70
-     0
+0
 102
 RTVSPropertyOp22
  70
-     0
+0
 102
 RTVSPropertyOp23
  70
-     0
+0
 102
 RTVSPropertyOp24
  70
-     0
+0
 102
 RTVSPropertyOp25
  70
-     0
+0
 102
 RTVSPropertyOp26
  70
-     0
+0
 102
 RTVSPropertyOp27
  70
-     0
+0
   0
 XRECORD
   5
@@ -11323,119 +10993,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 XRECORD
   5
@@ -11451,119 +11121,119 @@ XRECORD
 100
 AcDbXrecord
 280
-     1
+1
 102
 RTVSPropertyOp0
  70
-     1
+1
 102
 RTVSPropertyOp1
  70
-     1
+1
 102
 RTVSPropertyOp2
  70
-     1
+1
 102
 RTVSPropertyOp3
  70
-     1
+1
 102
 RTVSPropertyOp4
  70
-     1
+1
 102
 RTVSPropertyOp5
  70
-     1
+1
 102
 RTVSPropertyOp6
  70
-     1
+1
 102
 RTVSPropertyOp7
  70
-     1
+1
 102
 RTVSPropertyOp8
  70
-     1
+1
 102
 RTVSPropertyOp9
  70
-     1
+1
 102
 RTVSPropertyOp10
  70
-     1
+1
 102
 RTVSPropertyOp11
  70
-     1
+1
 102
 RTVSPropertyOp12
  70
-     1
+1
 102
 RTVSPropertyOp13
  70
-     1
+1
 102
 RTVSPropertyOp14
  70
-     1
+1
 102
 RTVSPropertyOp15
  70
-     1
+1
 102
 RTVSPropertyOp16
  70
-     1
+1
 102
 RTVSPropertyOp17
  70
-     1
+1
 102
 RTVSPropertyOp18
  70
-     1
+1
 102
 RTVSPropertyOp19
  70
-     1
+1
 102
 RTVSPropertyOp20
  70
-     1
+1
 102
 RTVSPropertyOp21
  70
-     1
+1
 102
 RTVSPropertyOp22
  70
-     1
+1
 102
 RTVSPropertyOp23
  70
-     1
+1
 102
 RTVSPropertyOp24
  70
-     1
+1
 102
 RTVSPropertyOp25
  70
-     1
+1
 102
 RTVSPropertyOp26
  70
-     1
+1
 102
 RTVSPropertyOp27
  70
-     1
+1
   0
 ENDSEC
   0
