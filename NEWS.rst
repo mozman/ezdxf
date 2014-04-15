@@ -2,6 +2,14 @@
 News
 ====
 
+Version 0.5.2 - 2014
+
+  * Beta status
+  * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
+  * NEW: delete all entities from layout/block/drawing
+  * NEW: delete all entities from entities section
+  * cleanup DXF template files
+
 Version 0.5.1 - 2014-04-14
 
   * Beta status
@@ -16,7 +24,7 @@ Version 0.5.0 - 2014-04-13
   * NEW: default values for DXF attributes as defined in the DXF standard, this allows usage of optional DXF attributes
     (with defined default values) without check of presence, like *entity.dxf.paperspace*.
   * NEW: DXF entities Shape, Ray, XLine, Spline
-  * NEW: delete entities from layout/drawing
+  * NEW: delete entities from layout/block/drawing
   * CHANGE: entity 3DFACE requires 3D coordinates (created by add_3Dface())
   * CHANGE: LWPolyline all methods return points as (x, y, [start_width, [end_width, [bulge]]]) tuples
   * updated docs

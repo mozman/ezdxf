@@ -140,6 +140,10 @@ Delete entities
 
    Delete `entity` from layout and drawing database.
 
+.. method:: Layout.delete_all_entities()
+
+   Delete all `entities` from layout and drawing database.
+
 .. _model space:
 
 Model Space

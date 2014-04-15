@@ -58,6 +58,13 @@ class GenericWrapper(object):
         return entity
 
     def post_new_hook(self):
+        """ Called after entity creation.
+        """
+        pass
+
+    def pre_delete_hook(self):
+        """ Called before an entity will be deleted from database.
+        """
         pass
 
     def dxftype(self):
