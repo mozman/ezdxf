@@ -109,7 +109,23 @@ class TestGraphicsDefaultSettings(SetupDrawing):
         self.assertEqual((0.0, 0.0, 1.0), line.dxf.extrusion)
 
 
+class TestGenericWrapper2(SetupDrawing):
+    def test_clone_dxf_attribs(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        attribs = line.clone_dxf_attribs()
+        self.assertFalse('extrusion' in attribs, "Don't clone unset attribs with default values.")
+
+    def test_dxf_attrib_exists(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertFalse(line.dxf_attrib_exists('extrusion'), "Ignore unset attribs with default values.")
+
+
 class TestSimpleGraphics(SetupDrawing):
+    def test_clone_dxf_attribs(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        attribs = line.clone_dxf_attribs()
+        self.assertFalse('extrusion' in attribs, "Don't clone unset attribs with default values.")
+
     def test_create_line(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual((0., 0.), line.dxf.start)
