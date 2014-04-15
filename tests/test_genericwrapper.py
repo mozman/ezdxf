@@ -128,6 +128,7 @@ class TestGenericWrapper(unittest.TestCase):
         point.dxf.flex = (7, 8)
         self.assertEqual((7, 8), point.dxf.flex)
 
+
 class TestPoint3D(unittest.TestCase):
     def test_get_3d_point(self):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")

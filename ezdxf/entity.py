@@ -79,12 +79,8 @@ class GenericWrapper(object):
     def dxf_attrib_exists(self, key):
         """ Returns *True* if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.
         """
-        try:
-            self.get_dxf_attrib(key, default=ValueError)
-        except ValueError:
-            return False
-        else:
-            return True
+        # attributes with default values don't raise an exception!
+        return self.get_dxf_attrib(key, default=None) is not None
 
     def _get_dxfattr_definition(self, key):
         try:
@@ -131,12 +127,13 @@ class GenericWrapper(object):
         self._del_dxf_attrib(dxfattr)
 
     def clone_dxf_attribs(self):
+        """ Clones defined and existing DXF attributes as dict.
+        """
         dxfattribs = {}
         for key in self.DXFATTRIBS.keys():
-            try:
-                dxfattribs[key] = self.get_dxf_attrib(key)
-            except ValueError:
-                pass
+            value = self.get_dxf_attrib(key, default=None)
+            if value is not None:
+                dxfattribs[key] = value
         return dxfattribs
 
     def update_dxf_attribs(self, dxfattribs):
