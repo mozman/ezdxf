@@ -500,9 +500,20 @@ class Insert(GraphicEntity):
         self.layout.insert_entities(seqend_position, entities)
 
     def destroy(self):
-        # TODO: delete following ATTRIB & SEQEND entities
         if not hasattr(self, 'layout') or self.layout is None:
+            return  # created without layout attribute
+        if self.dxf.attribs_follow == 0:  # no following ATTRIB entities
             return
+
+        following_entities = []
+        cursor = self.layout.get_cursor(self)
+        while True:
+            entity = cursor.next_entity()
+            following_entities.append(entity)  # collect entities, because deleting irritates layout cursor
+            if entity.dxftype() == 'SEQEND':
+                break
+        for entity in following_entities:
+            self.layout.delete_entity(entity)
 
 
 class SeqEnd(GraphicEntity):
@@ -783,9 +794,17 @@ class Polyline(GraphicEntity, ColorMixin):
         return cursor.entity()
 
     def destroy(self):
-        # TODO: delete following VERTEX & SEQEND entities
         if not hasattr(self, 'layout') or self.layout is None:
-            return  # created without layout attribute set
+            return  # created without layout attribute
+        following_entities = []
+        cursor = self.layout.get_cursor(self)
+        while True:
+            entity = cursor.next_entity()
+            following_entities.append(entity)  # collect entities, because deleting irritates layout cursor
+            if entity.dxftype() == 'SEQEND':
+                break
+        for entity in following_entities:
+            self.layout.delete_entity(entity)
 
 
 class Polyface(Polyline, PolyfaceMixin):
