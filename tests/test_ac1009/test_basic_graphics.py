@@ -46,6 +46,21 @@ class TestModelSpace(SetupDrawing):
         self.assertFalse(line3 in self.layout)
         self.assertFalse(line3.dxf.handle in self.dwg.entitydb)
 
+    def test_delete_polyline(self):
+        pline = self.layout.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
+        self.assertEqual(5, len(list(self.layout)))  # 1x POLYLINE + 3x VERTEX + 1x SEQEND
+        self.layout.delete_entity(pline)
+        self.assertEqual(0, len(list(self.layout)))
+
+    def test_delete_blockref_with_attribs(self):
+        blockref = self.layout.add_blockref("TESTBLOCK", (0, 0))
+        blockref.add_attrib('TAG1', "Text1", (0, 1))
+        blockref.add_attrib('TAG2', "Text2", (0, 2))
+        blockref.add_attrib('TAG3', "Text3", (0, 3))
+        self.assertEqual(5, len(list(self.layout)))  # 1x INSERT + 3x ATTRIB + 1x SEQEND
+        self.layout.delete_entity(blockref)
+        self.assertEqual(0, len(list(self.layout)))
+
     def test_delete_all_entities(self):
         paperspace = self.dwg.layout()
         modelspace = self.dwg.modelspace()

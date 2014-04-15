@@ -6,6 +6,9 @@ Version 0.5.2 - 2014
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
+  * BUGFIX: ATTRIB definition error for AC1015 and later (error in DXF specs)
+  * BUGFIX: entity.dxf_attrib_exists() returned True for unset attribs with defined DXF default values
+  * BUGFIX: layout.delete_entity() didn't delete following data entities for INSERT (ATTRIB) & POLYLINE (VERTEX)
   * NEW: delete all entities from layout/block/entities section
   * cleanup DXF template files
 
