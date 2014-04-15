@@ -499,6 +499,11 @@ class Insert(GraphicEntity):
         self.dxf.attribs_follow = 1
         self.layout.insert_entities(seqend_position, entities)
 
+    def destroy(self):
+        # TODO: delete following ATTRIB & SEQEND entities
+        if not hasattr(self, 'layout') or self.layout is None:
+            return
+
 
 class SeqEnd(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text("  0\nSEQEND\n  5\n0\n")
@@ -776,6 +781,11 @@ class Polyline(GraphicEntity, ColorMixin):
         cursor = self.layout.get_cursor(self)
         cursor.skip(pos + 1)
         return cursor.entity()
+
+    def destroy(self):
+        # TODO: delete following VERTEX & SEQEND entities
+        if not hasattr(self, 'layout') or self.layout is None:
+            return  # created without layout attribute set
 
 
 class Polyface(Polyline, PolyfaceMixin):

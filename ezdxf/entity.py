@@ -62,11 +62,6 @@ class GenericWrapper(object):
         """
         pass
 
-    def pre_delete_hook(self):
-        """ Called before an entity will be deleted from database.
-        """
-        pass
-
     def dxftype(self):
         return self.tags.noclass[0].value
 
@@ -178,6 +173,9 @@ class GenericWrapper(object):
             subclass_tags.remove_tags(codes=point_codes(dxfattr.code))
         else:
             subclass_tags.remove_tags(codes=(dxfattr.code,))
+
+    def destroy(self):
+        pass
 
 
 class DXFExtendedPointType(object):

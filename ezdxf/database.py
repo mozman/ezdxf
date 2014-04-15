@@ -89,7 +89,7 @@ class EntityDB(object):
         return handle
 
     def delete_entity(self, entity):
-        entity.pre_delete_hook()
+        entity.destroy()
         del self._database[entity.dxf.handle]
 
 
