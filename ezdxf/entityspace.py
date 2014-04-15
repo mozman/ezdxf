@@ -30,3 +30,6 @@ class EntitySpace(list):
     def write(self, stream):
         for handle in self:
             self._entitydb[handle].write(stream)
+
+    def delete_entity(self, entity):
+        self.remove(entity.dxf.handle)

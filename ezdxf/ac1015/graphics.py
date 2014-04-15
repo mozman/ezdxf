@@ -930,6 +930,7 @@ attrib_subclass = (
         'width': DXFAttr(41, default=1.0),  # error in DXF description, because placed in 'AcDbAttribute'
         'oblique': DXFAttr(51, default=0.0),  # error in DXF description, because placed in 'AcDbAttribute'
         'style': DXFAttr(7, default='STANDARD'),  # error in DXF description, because placed in 'AcDbAttribute'
+        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),  # error in DXF description, because placed in 'AcDbAttribute'
     }),
     DefSubclass('AcDbAttribute', {
         'tag': DXFAttr(2),
@@ -939,7 +940,6 @@ attrib_subclass = (
         'halign': DXFAttr(72, default=0),
         'valign': DXFAttr(74, default=0),
         'align_point': DXFAttr(11, xtype='Point2D/3D'),
-        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
     })
 )
 

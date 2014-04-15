@@ -10,20 +10,22 @@
 import ezdxf
 from ezdxf.const import versions_supported_by_new
 
+
 def create_block(dwg):
     # first create a block
     flag = dwg.blocks.new(name='FLAG')
 
     # add dxf entities to the block (the flag)
     # use basepoint = (x, y) to define an other basepoint than (0, 0)
-    flag_symbol = [(0,0), (0, 5), (4, 3), (0, 3)]
+    flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
     flag.add_polyline2d(flag_symbol)
     flag.add_circle((0, 0), .4, dxfattribs={'color': 2})
 
     # define some attributes
-    flag.add_attdef('NAME', (0.5, -0.5), {'height':0.5, 'color':3})
-    flag.add_attdef('XPOS', (0.5, -1.0), {'height':0.25, 'color':4})
-    flag.add_attdef('YPOS', (0.5, -1.5), {'height':0.25, 'color':4})
+    flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
+    flag.add_attdef('XPOS', (0.5, -1.0), {'height': 0.25, 'color': 4})
+    flag.add_attdef('YPOS', (0.5, -1.5), {'height': 0.25, 'color': 4})
+
 
 def insert_block(layout):
     point = (10, 12)
@@ -37,8 +39,9 @@ def insert_block(layout):
         'xscale': scale,
         'yscale': scale,
         'layer': 'FLAGS',
-        'rotation':-15
+        'rotation': -15
     })
+
 
 def make_drawing(version):
     dwg = ezdxf.new(version)
