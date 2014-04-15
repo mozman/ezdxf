@@ -80,8 +80,14 @@ class BaseLayout(GraphicsFactory):
         handle = entity.dxf.handle
         self._entityspace.remove(handle)
         if database:
-            del self.entitydb[handle]
+            self.entitydb.delete_entity(entity)
         entity.dxf.paperspace = -1  # set invalid paper space
+
+    def delete_all_entities(self, database=True):
+        """ Delete all entities from entity space and if *database* is *True* also from the entity database.
+        """
+        for entity in list(self):  # delete modifies the base data structure of the iterator
+            self.delete_entity(entity, database)
 
     def _set_paperspace(self, entity):
         pass

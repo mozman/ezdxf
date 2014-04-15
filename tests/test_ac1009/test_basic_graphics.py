@@ -37,7 +37,7 @@ class TestModelSpace(SetupDrawing):
 
     def test_delete_entity(self):
         for _ in range(5):
-            self.layout.add_line((0, 0), (1, 1))
+            self.layout.add_line((0, 0), (10, 0))
         lines = self.layout.query('LINE')
         self.assertEqual(5, len(lines))
         line3 = lines[2]
@@ -45,6 +45,20 @@ class TestModelSpace(SetupDrawing):
         self.assertTrue(line3.dxf.paperspace < 0, "Paper space attribute has to be invalid (<0).")
         self.assertFalse(line3 in self.layout)
         self.assertFalse(line3.dxf.handle in self.dwg.entitydb)
+
+    def test_delete_all_entities(self):
+        paperspace = self.dwg.layout()
+        modelspace = self.dwg.modelspace()
+        for _ in range(5):
+            modelspace.add_line((0, 0), (1, 1))
+            paperspace.add_line((0, 0), (1, 1))
+
+        self.assertEqual(5, len(list(modelspace)))
+        self.assertEqual(7, len(list(paperspace)))  # templates including 2 viewport entities - will be deleted in the future
+
+        modelspace.delete_all_entities()
+        self.assertEqual(0, len(list(modelspace)))
+        self.assertEqual(7, len(list(paperspace)))
 
 
 class TestPaperSpace(SetupDrawing):

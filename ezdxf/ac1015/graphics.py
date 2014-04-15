@@ -1436,5 +1436,3 @@ class Spline(ac1009.GraphicEntity):
         values = self.get_fit_points()
         yield values
         self.set_fit_points(values)
-
-

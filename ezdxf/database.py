@@ -88,6 +88,10 @@ class EntityDB(object):
         self.__setitem__(handle, tags)
         return handle
 
+    def delete_entity(self, entity):
+        entity.pre_delete_hook()
+        del self._database[entity.dxf.handle]
+
 
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"

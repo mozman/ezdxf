@@ -89,6 +89,13 @@ class EntitySection(object):
             layouts = {layout.owner_id: layout for layout in self.drawing.layouts}
             return ac1015_layout_setter
 
+    def delete_all_entities(self):
+        """ Delete all entities. """
+        db = self.drawing.entitydb
+        for entity in list(self):  # delete modifies the base data structure of the iterator
+            db.delete_entity(entity)
+        del self._entityspace[:]  # clear entity space
+
 
 class ClassesSection(EntitySection):
     name = 'classes'

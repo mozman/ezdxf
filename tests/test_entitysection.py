@@ -60,6 +60,16 @@ class TestEntitySection(unittest.TestCase):
         self.assertEqual(m, entity.layout)
         self.assertEqual(dwg, entity.drawing)  # check drawing attribute
 
+    def test_delete_all_entities_DXF12(self):
+        dwg = ezdxf.new('AC1009')
+        m = dwg.modelspace()
+        for _ in range(5):
+            m.add_line((0, 0), (1, 1))
+        self.assertEqual(7, len(dwg.entities))  # template contains 2 viewport entities - will be removed in the future
+
+        dwg.entities.delete_all_entities()
+        self.assertEqual(0, len(dwg.entities))
+
 
 class TestEntityQueryAC1009(unittest.TestCase):
     dwg = make_test_drawing('AC1009')
