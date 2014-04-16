@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..entity import GenericWrapper
+from ..dxfentity import DXFEntity
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
@@ -26,7 +26,7 @@ CONTINUOUS
 
 
 # noinspection PyAugmentAssignment,PyUnresolvedReferences
-class Layer(GenericWrapper):
+class Layer(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_LAYERTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -92,7 +92,7 @@ arial.ttf
 """
 
 
-class Style(GenericWrapper):
+class Style(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_STYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -122,7 +122,7 @@ LTYPEDESCRIPTION
 """
 
 
-class Linetype(GenericWrapper):
+class Linetype(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -225,7 +225,7 @@ VPORTNAME
 """
 
 
-class Viewport(GenericWrapper):
+class Viewport(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -288,7 +288,7 @@ UCSNAME
 """
 
 
-class UCS(GenericWrapper):
+class UCS(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -311,7 +311,7 @@ APPNAME
 """
 
 
-class AppID(GenericWrapper):
+class AppID(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -360,7 +360,7 @@ VIEWNAME
 """
 
 
-class View(GenericWrapper):
+class View(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -467,7 +467,7 @@ DIMSTYLENAME
 """
 
 
-class DimStyle(GenericWrapper):
+class DimStyle(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(105),

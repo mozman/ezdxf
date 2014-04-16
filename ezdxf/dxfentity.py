@@ -37,7 +37,7 @@ class DXFNamespace(object):
 
 
 # noinspection PyUnresolvedReferences
-class GenericWrapper(object):
+class DXFEntity(object):
     TEMPLATE = None
     DXFATTRIBS = {}
 
@@ -45,6 +45,10 @@ class GenericWrapper(object):
         self.tags = tags
         self.dxf = DXFNamespace(self)  # all DXF attributes are accessible by the dxf attribute, like entity.dxf.handle
         self.drawing = drawing
+
+    @property
+    def dxffactory(self):
+        return self.drawing.dxffactory
 
     @classmethod
     def new(cls, handle, dxfattribs=None, drawing=None):

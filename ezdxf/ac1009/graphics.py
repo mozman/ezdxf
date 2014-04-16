@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from ..tags import DXFStructureError
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..entity import GenericWrapper
+from ..dxfentity import DXFEntity
 from .. import const
 from ..const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin
@@ -53,7 +53,7 @@ def make_attribs(additional=None):
     return DXFAttributes(DefSubclass(None, dxfattribs))
 
 
-class GraphicEntity(GenericWrapper):
+class GraphicEntity(DXFEntity):
     """ Default graphic entity wrapper, allows access to following dxf attributes:
 
      - handle
@@ -70,10 +70,6 @@ class GraphicEntity(GenericWrapper):
     def set_layout(self, layout):
         # required because for DXF12 block entities has no pointer to the associated block layout (owner_id)
         self.layout = layout
-
-    @property
-    def dxffactory(self):
-        return self.drawing.dxffactory
 
 
 _LINE_TPL = """  0
@@ -471,6 +467,7 @@ class Insert(GraphicEntity):
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
+        #
         attrib_entity = self.layout.build_entity('ATTRIB', dxfattribs)
         self._append_attrib_entity(attrib_entity)
 
