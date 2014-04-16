@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
 from ..ac1009 import tableentries as ac1009
-from ..entity import GenericWrapper
+from ..dxfentity import DXFEntity
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
 _LAYERTEMPLATE = """  0
@@ -557,7 +557,7 @@ blockrec_subclass = DefSubclass('AcDbBlockTableRecord', {
 })
 
 
-class BlockRecord(GenericWrapper):
+class BlockRecord(DXFEntity):
     """ Internal Object - use at your own risk!
 
     Required fields:

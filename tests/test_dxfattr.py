@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.entity import GenericWrapper
+from ezdxf.dxfentity import DXFEntity
 from ezdxf.classifiedtags import ClassifiedTags
 from ezdxf.dxfattr import DXFAttr, DefSubclass, DXFAttributes
 
@@ -38,7 +38,7 @@ AcDbLine
 """
 
 
-class AttributeChecker(GenericWrapper):
+class AttributeChecker(DXFEntity):
     TEMPLATE = XTEMPLATE
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {

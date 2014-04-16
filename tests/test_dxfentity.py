@@ -10,10 +10,10 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.testtools import ClassifiedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.entity import GenericWrapper
+from ezdxf.dxfentity import DXFEntity
 
 
-class PointAccessor(GenericWrapper):
+class PointAccessor(DXFEntity):
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'point': DXFAttr(10, 'Point3D'),
         'flat': DXFAttr(11, 'Point2D'),

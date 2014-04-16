@@ -8,12 +8,12 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import DXFTag, Tags
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from .entity import GenericWrapper
+from .dxfentity import DXFEntity
 
 ENTRY_NAME_CODE = 3
 
 
-class DXFDictionary(GenericWrapper):
+class DXFDictionary(DXFEntity):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
@@ -148,7 +148,7 @@ class DXFDictionaryWithDefault(DXFDictionary):
         return super(DXFDictionaryWithDefault, self).get(key, default=self.dxf.default)
 
 
-class DXFLayout(GenericWrapper):
+class DXFLayout(DXFEntity):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
@@ -185,7 +185,7 @@ class DXFLayout(GenericWrapper):
         }))
 
 
-class XRecord(GenericWrapper):
+class XRecord(DXFEntity):
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'handle': DXFAttr(5, None),
