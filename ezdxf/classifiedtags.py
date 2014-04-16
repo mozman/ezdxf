@@ -16,12 +16,13 @@ NoneTag = DXFTag(None, None)
 
 class ClassifiedTags(object):
     """ Manage Subclasses, AppData and Extended Data """
-    __slots__ = ('subclasses', 'appdata', 'xdata')
+    __slots__ = ('subclasses', 'appdata', 'xdata', 'link')
 
     def __init__(self, iterable=None):
         self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
         self.xdata = list()  # code >= 1000, keys are "APPNAME", values are Tags()
+        self.link = None  # link to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
         if iterable is not None:
             self._setup(iterable)
 
@@ -33,6 +34,7 @@ class ClassifiedTags(object):
         clone.appdata = copy(self.appdata)
         clone.subclasses = copy(self.subclasses)
         clone.xdata = copy(self.xdata)
+        clone.link = self.link
         return clone
 
     def clone(self):

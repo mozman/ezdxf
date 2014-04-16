@@ -61,6 +61,7 @@ class EntitySection(object):
 
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
             self._entityspace.store_tags(ClassifiedTags(group))
+        self._entityspace.build_link_structure(self.dxffactory.wrap_handle)
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

@@ -48,7 +48,7 @@ class TestModelSpace(SetupDrawing):
 
     def test_delete_polyline(self):
         pline = self.layout.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
-        self.assertEqual(5, len(list(self.layout)))  # 1x POLYLINE + 3x VERTEX + 1x SEQEND
+        self.assertEqual(1, len(list(self.layout)))  # 1x POLYLINE rest is linked to the POLYLINE entity
         self.layout.delete_entity(pline)
         self.assertEqual(0, len(list(self.layout)))
 
@@ -57,7 +57,7 @@ class TestModelSpace(SetupDrawing):
         blockref.add_attrib('TAG1', "Text1", (0, 1))
         blockref.add_attrib('TAG2', "Text2", (0, 2))
         blockref.add_attrib('TAG3', "Text3", (0, 3))
-        self.assertEqual(5, len(list(self.layout)))  # 1x INSERT + 3x ATTRIB + 1x SEQEND
+        self.assertEqual(1, len(list(self.layout)))  # 1x INSERT, rest is linked to the INSERT entity
         self.layout.delete_entity(blockref)
         self.assertEqual(0, len(list(self.layout)))
 
@@ -228,15 +228,16 @@ class TestBlock(SetupDrawing):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         ref.add_attrib('TEST1', 'text1', (0, 0))
         ref.add_attrib('TEST2', 'text2', (0, 0))
-        attribs = [attrib.dxf.tag for attrib in ref]
+        attribs = [attrib.dxf.tag for attrib in ref.attribs()]
         self.assertEqual(['TEST1', 'TEST2'], attribs)
 
     def test_has_seqend(self):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         ref.add_attrib('TEST1', 'text1', (0, 0))
         ref.add_attrib('TEST2', 'text2', (0, 0))
-        entity = self.layout.get_entity_at_index(-1)
-        self.assertEqual('SEQEND', entity.dxftype())
+        entity = ref.get_attrib('TEST2')
+        seqend = self.layout.entitydb[entity.tags.link]
+        self.assertEqual('SEQEND', seqend.dxftype())
 
     def test_insert_place(self):
         ref = self.layout.add_blockref('BLOCK', (0, 0))

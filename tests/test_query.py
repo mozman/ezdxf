@@ -15,6 +15,8 @@ def make_test_drawing(version):
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
     modelspace.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})
+    # just 3 entities: LINE, TEXT, POLYLINE - VERTEX & SEQEND now linked to the POLYLINE entity, and do not appear
+    # in any entity space
     return dwg
 
 
@@ -25,16 +27,16 @@ class TestEntityQuery_AC1009(unittest.TestCase):
     def test_select_all(self):
         modelspace = self.dwg.modelspace()
         result = EntityQuery(modelspace, '*')
-        # 1xLINE, 1xPOLYLINE, 4xVERTEX, 1xSEQEND
-        self.assertEqual(8, len(result.entities))
-        self.assertEqual(8, len(result))
+        # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT
+        self.assertEqual(3, len(result.entities))
+        self.assertEqual(3, len(result))
 
     def test_new_query_select_all(self):
         modelspace = self.dwg.modelspace()
         result = ezdxf.query.new(modelspace, '*')
-        # 1xLINE, 1xPOLYLINE, 4xVERTEX, 1xSEQEND
-        self.assertEqual(8, len(result.entities))
-        self.assertEqual(8, len(result))
+        # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT
+        self.assertEqual(3, len(result.entities))
+        self.assertEqual(3, len(result))
 
     def test_new_empty_query(self):
         result = ezdxf.query.new()

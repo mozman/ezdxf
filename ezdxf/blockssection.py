@@ -44,6 +44,7 @@ class BlocksSection(object):
             for entity in entities_iterator:
                 handle = add_tags(entity)
                 block.add_handle(handle)
+            block.build_link_structure()
             return block
 
         if tags[0] != (0, 'SECTION') or \

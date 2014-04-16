@@ -74,3 +74,8 @@ class AC1015Factory(AC1009Factory):
     def new_block_layout(self, block_handle, endblk_handle):
         # Warning: Do not call create_block_entry_in_block_records_table() from this point, this will not work!
         return BlockLayout(self.entitydb, self, block_handle, endblk_handle)
+
+    def copy_layout(self, source_entity, target_entity):
+        # Place target_entity in same layout as source_entity
+        target_entity.dxf.paperspace = source_entity.dxf.paperspace
+        target_entity.dxf.owner = source_entity.dxf.owner
