@@ -26,7 +26,9 @@ class TestBlocksSection(unittest.TestCase):
         self.section.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.assertEqual(sorted(normlines(TESTBLOCKS)), sorted(normlines(result)))
+        t1 = sorted(normlines(TESTBLOCKS))
+        t2 = sorted(normlines(result))
+        self.assertEqual(t1, t2)
 
     def test_empty_section(self):
         section = BlocksSection(Tags.from_text(EMPTYSEC), self.dwg)
@@ -55,7 +57,7 @@ class TestBlocksSection(unittest.TestCase):
     def test_block_content_entity_drawing_attribute(self):
         archtick = self.section['_ARCHTICK']
         entities = list(archtick)
-        self.assertEqual(4, len(entities))
+        self.assertEqual(1, len(entities))  # VERTEX & SEQEND doesn't count
         e = entities[0]
         self.assertEqual(self.dwg, e.drawing)
 

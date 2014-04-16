@@ -391,7 +391,7 @@ BLOCKNAME
 # if no attribs attached to the INSERT entity, omit attribsfollow tag
 
 
-class Insert(GraphicEntity):
+class Insert_To_Delete(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = make_attribs({
         'attribs_follow': DXFAttr(66, default=0),
@@ -407,7 +407,7 @@ class Insert(GraphicEntity):
         'row_spacing': DXFAttr(45, default=0.0),
     })
 
-    def __iter__(self):
+    def attribs(self):
         if self.dxf.attribs_follow == 0:
             return
         cursor = self.layout.get_cursor(self)
@@ -447,7 +447,7 @@ class Insert(GraphicEntity):
         return self
 
     def get_attrib(self, tag):
-        for attrib in self:
+        for attrib in self.attribs():
             if tag == attrib.dxf.tag:
                 return attrib
         return None
@@ -511,6 +511,115 @@ class Insert(GraphicEntity):
                 break
         for entity in following_entities:
             self.layout.delete_entity(entity)
+
+
+class Insert(GraphicEntity):
+    TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
+    DXFATTRIBS = make_attribs({
+        'attribs_follow': DXFAttr(66, default=0),
+        'name': DXFAttr(2),
+        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'xscale': DXFAttr(41, default=1.0),
+        'yscale': DXFAttr(42, default=1.0),
+        'zscale': DXFAttr(43, default=1.0),
+        'rotation': DXFAttr(50, default=0.0),
+        'column_count': DXFAttr(70, default=1),
+        'row_count': DXFAttr(71, default=1),
+        'column_spacing': DXFAttr(44, default=0.0),
+        'row_spacing': DXFAttr(45, default=0.0),
+    })
+
+    # TODO: build link structure for INSERT
+    def attribs(self):
+        """ Iterate over all appended ATTRIB entities, yields DXFEntity() or inherited.
+        """
+        if self.dxf.attribs_follow == 0:
+            return
+        dxffactory = self.dxffactory
+        handle = self.tags.link
+        while handle is not None:
+            entity = dxffactory.wrap_handle(handle)
+            next_entity = entity.tags.link
+            if next_entity is None:  # found SeqEnd
+                return
+            else:
+                yield entity
+                handle = next_entity
+
+    def place(self, insert=None, scale=None, rotation=None):
+        if insert is not None:
+            self.dxf.insert = insert
+        if scale is not None:
+            if len(scale) != 3:
+                raise ValueError("Parameter scale has to be a 3-tuple.")
+            x, y, z = scale
+            self.dxf.xscale = x
+            self.dxf.yscale = y
+            self.dxf.zscale = z
+        if rotation is not None:
+            self.dxf.rotation = rotation
+        return self
+
+    def grid(self, size=(1, 1), spacing=(1, 1)):
+        if len(size) != 2:
+            raise ValueError("Parameter size has to be a (row_count, column_count)-tuple.")
+        if len(spacing) != 2:
+            raise ValueError("Parameter spacing has to be a (row_spacing, column_spacing)-tuple.")
+        self.dxf.row_count = size[0]
+        self.dxf.column_count = size[1]
+        self.dxf.row_spacing = spacing[0]
+        self.dxf.column_spacing = spacing[1]
+        return self
+
+    def get_attrib(self, tag):
+        for attrib in self.attribs():
+            if tag == attrib.dxf.tag:
+                return attrib
+        return None
+
+    def get_attrib_text(self, tag, default=None):
+        attrib = self.get_attrib(tag)
+        if attrib is None:
+            return default
+        return attrib.dxf.text
+
+    def has_attrib(self, tag):
+        return self.get_attrib(tag) is not None
+
+    def add_attrib(self, tag, text, insert, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['tag'] = tag
+        dxfattribs['text'] = text
+        dxfattribs['insert'] = insert
+        attrib_entity = self._new_entity('ATTRIB', dxfattribs)
+        self._append_attrib_entity(attrib_entity)
+
+    def _append_attrib_entity(self, entity):
+        if self.dxf.attribs_follow == 0:
+            prev = self
+            seqend = self._new_entity('SEQEND', {})
+        else:
+            attribs = list(self.attribs())
+            prev = attribs[-1]
+            seqend = self.dxffactory.wrap_handle(prev.tags.link)
+
+        prev.tags.link = entity.dxf.handle
+        entity.tags.link = seqend.dxf.handle
+        self.dxf.attribs_follow = 1
+
+    def destroy(self):
+        db = self.entitydb
+        handle = self.tags.link
+        while handle is not None:
+            tags = db[handle]
+            db.delete_handle(handle)
+            handle = tags.link
+            tags.link = None
+
+        #cleanup
+        self.tags.link = None
+        self.dxf.attribs_follow = 0
 
 
 class SeqEnd(GraphicEntity):
@@ -684,6 +793,10 @@ class Polyline(GraphicEntity, ColorMixin):
         'smooth_type': DXFAttr(75, default=0),
     })
 
+    def post_new_hook(self):
+        seqend = self._new_entity('SEQEND', {})
+        self.tags.link = seqend.dxf.handle
+
     def get_vertex_flags(self):
         return const.VERTEX_FLAGS[self.get_mode()]
 
@@ -711,69 +824,109 @@ class Polyline(GraphicEntity, ColorMixin):
             self.n_close()
 
     def __len__(self):
-        return len(list(iter(self)))
-
-    def __iter__(self):
-        """ Iterate over all vertices. """
-        cursor = self.layout.get_cursor(self)
-        entity = cursor.next_entity()
-        while entity.dxftype() != 'SEQEND':
-            yield entity
-            entity = cursor.next_entity()
+        count = 0
+        db = self.entitydb
+        tags = db[self.tags.link]
+        while tags.link is not None:
+            count += 1
+            tags = db[tags.link]
+        return count
 
     def __getitem__(self, pos):
-        return list(self)[pos]
+        count = 0
+        db = self.entitydb
+        tags = db[self.tags.link]
+        while tags.link is not None:
+            if count == pos:
+                return self.dxffactory.wrap_entity(tags)
+            count += 1
+            tags = db[tags.link]
+        raise IndexError("vertex index out of range")
+
+    def vertices(self):
+        wrapper = self.dxffactory.wrap_handle
+        handle = self.tags.link
+        while handle is not None:
+            entity = wrapper(handle)
+            handle = entity.tags.link
+            if entity.dxftype() == 'VERTEX':
+                yield entity
 
     def points(self):
-        return (vertex.dxf.location for vertex in self)
+        return (vertex.dxf.location for vertex in self.vertices())
 
     def append_vertices(self, points, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         if len(points) > 0:
-            first_vertex_index, last_vertex_index = self._get_index_range()
-            self._insert_vertices(last_vertex_index + 1, points, dxfattribs)
+            last_vertex = self._get_last_vertex()
+            for new_vertex in self._points_to_vertices(points, dxfattribs):
+                self._insert_after(last_vertex, new_vertex)
+                last_vertex = new_vertex
+
+    @staticmethod
+    def _insert_after(prev_vertex, new_vertex):
+        succ = prev_vertex.tags.link
+        prev_vertex.tags.link = new_vertex.dxf.handle
+        new_vertex.tags.link = succ
+
+    def _get_last_vertex(self):
+        db = self.entitydb
+        tags = self.tags
+        handle = self.dxf.handle
+        while tags.link is not None:  # while not SEQEND
+            prev_handle = handle
+            handle = tags.link
+            tags = db[handle]
+        return self.dxffactory.wrap_handle(prev_handle)
 
     def insert_vertices(self, pos, points, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
-        if len(points) > 0:
-            first_vertex_index, last_vertex_index = self._get_index_range()
-            self._insert_vertices(first_vertex_index + pos, points, dxfattribs)
+        if pos > 0:
+            insert_vertex = self.__getitem__(pos - 1)
+        else:
+            insert_vertex = self
+        for new_vertex in self._points_to_vertices(points, dxfattribs):
+            self._insert_after(insert_vertex, new_vertex)
+            insert_vertex = new_vertex
 
-    def _insert_vertices(self, index, points, dxfattribs):
-        vertices = self._points_to_vertices(points, dxfattribs)
-        self.layout.insert_entities(index, vertices)
+    def _append_vertices(self, vertices):
+        last_vertex = self._get_last_vertex()
+        for vertex in vertices:
+            self._insert_after(last_vertex, vertex)
+            last_vertex = vertex
 
     def _points_to_vertices(self, points, dxfattribs):
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
         vertices = []
         for point in points:
             dxfattribs['location'] = point
-            vertices.append(self.layout.build_entity('VERTEX', dxfattribs))
+            vertices.append(self._new_entity('VERTEX', dxfattribs))
         return vertices
 
     def delete_vertices(self, pos, count=1):
-        index = self._pos_to_index_with_range_check(pos, count)
-        self.layout.remove_entities(index, count)
+        db = self.entitydb
+        prev_vertex = self.__getitem__(pos-1).tags if pos > 0 else self.tags
+        vertex = db[prev_vertex.link]
+        while vertex.dxftype() == 'VERTEX':
+            db.delete_handle(prev_vertex.link)  # remove from database
+            prev_vertex.link = vertex.link  # remove vertex from list
+            count -= 1
+            if count == 0:
+                return
+            vertex = db[prev_vertex.link]
+        raise ValueError("invalid count")
 
-    def _pos_to_index_with_range_check(self, pos, count=1):
-        first_vertex_index, last_vertex_index = self._get_index_range()
-        length = last_vertex_index - first_vertex_index + 1
-        if pos < 0:
-            pos += length
-        if 0 <= pos and (pos + count - 1) < length:
-            return first_vertex_index + pos
-        else:
-            raise IndexError(repr((pos, count)))
-
-    def _get_index_range(self):
-        cursor = self.layout.get_cursor(self)
-        first_vertex_index = cursor.pos + 1
-        while True:
-            entity = cursor.next_entity()
-            if entity.dxftype() == 'SEQEND':
-                return first_vertex_index, cursor.pos - 1
+    def _remove_all_vertices(self):
+        db = self.entitydb
+        handle = self.tags.link
+        tags = db[handle]
+        while tags.dxftype() == 'VERTEX':
+            db.delete_handle(handle)
+            handle = tags.link
+            tags = db[handle]
+        self.tags.link = tags.get_handle()  # link POLYLINE -> SEQEND
 
     def cast(self):
         mode = self.get_mode()
@@ -784,30 +937,20 @@ class Polyline(GraphicEntity, ColorMixin):
         else:
             return self
 
-    def _get_vertex_at_trusted_position(self, pos):
-        # does no index check - for meshes and faces
-        cursor = self.layout.get_cursor(self)
-        cursor.skip(pos + 1)
-        return cursor.entity()
-
     def destroy(self):
-        if not hasattr(self, 'layout') or self.layout is None:
-            return  # created without layout attribute
-        following_entities = []
-        cursor = self.layout.get_cursor(self)
-        while True:
-            entity = cursor.next_entity()
-            following_entities.append(entity)  # collect entities, because deleting irritates layout cursor
-            if entity.dxftype() == 'SEQEND':
-                break
-        for entity in following_entities:
-            self.layout.delete_entity(entity)
+        db = self.entitydb
+        handle = self.tags.link
+        while handle is not None:
+            tags = db[handle]
+            db.delete_handle(handle)
+            handle = tags.link
+        self.tags.link = None
 
 
 class Polyface(Polyline, PolyfaceMixin):
     @staticmethod
     def convert(polyline):
-        face = Polyface(polyline.tags)
+        face = Polyface(polyline.tags, polyline.drawing)
         face.set_layout(polyline.layout)
         return face
 
@@ -815,7 +958,7 @@ class Polyface(Polyline, PolyfaceMixin):
 class Polymesh(Polyline, PolymeshMixin):
     @staticmethod
     def convert(polyline):
-        mesh = Polymesh(polyline.tags)
+        mesh = Polymesh(polyline.tags, polyline.drawing)
         mesh.set_layout(polyline.layout)
         return mesh
 

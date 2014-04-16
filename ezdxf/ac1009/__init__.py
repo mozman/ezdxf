@@ -163,3 +163,8 @@ class AC1009Factory(object):
 
     def new_block_layout(self, block_handle, endblk_handle):
         return DXF12BlockLayout(self.entitydb, self, block_handle, endblk_handle)
+
+    def copy_layout(self, source_entity, target_entity):
+        # Place target_entity in same layout as source_entity
+        target_entity.dxf.paperspace = source_entity.dxf.paperspace
+

@@ -112,10 +112,7 @@ class GraphicsFactory(object):
         closed = dxfattribs.pop('closed', False)
         polyline = self.build_and_add_entity('POLYLINE', dxfattribs)
         polyline.close(closed)
-        dxfattribs = {'flags': polyline.get_vertex_flags()}
-        for point in points:
-            self.add_vertex(point, dxfattribs)
-        self.add_seqend()
+        polyline.append_vertices(points)
         return polyline
 
     def add_polyline3d(self, points, dxfattribs=None):
@@ -124,20 +121,7 @@ class GraphicsFactory(object):
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
         return self.add_polyline2d(points, dxfattribs)
 
-    def add_vertex(self, location, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
-        dxfattribs['location'] = location
-        return self.build_and_add_entity('VERTEX', dxfattribs)
-
-    def add_seqend(self):
-        return self.build_and_add_entity('SEQEND', {})
-
     def add_polymesh(self, size=(3, 3), dxfattribs=None):
-        def append_null_points(count, vtxflags):
-            for x in range(count):
-                self.add_vertex((0, 0, 0), vtxflags)
-
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
@@ -148,9 +132,9 @@ class GraphicsFactory(object):
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
         polymesh = self.build_and_add_entity('POLYLINE', dxfattribs)
-        vtxflags = {'flags': polymesh.get_vertex_flags()}
-        append_null_points(m_size * n_size, vtxflags)
-        self.add_seqend()
+
+        points = [(0, 0, 0)] * (m_size * n_size)
+        polymesh.append_vertices(points)  # init mesh vertices
         polymesh.close(m_close, n_close)
         return polymesh.cast()
 
@@ -161,7 +145,6 @@ class GraphicsFactory(object):
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
         polyface = self.build_and_add_entity('POLYLINE', dxfattribs)
-        self.add_seqend()
         polyface.close(m_close, n_close)
         return polyface.cast()
 

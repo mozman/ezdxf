@@ -21,6 +21,8 @@ def make_test_drawing(version):
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_line'})
     modelspace.add_text("TEST", dxfattribs={'layer': 'lay_line'})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_polyline'})
+    # just 3 entities: LINE, TEXT, POLYLINE - VERTEX & SEQEND now linked to the POLYLINE entity, and do not appear
+    # in any entity space
     return dwg
 
 
@@ -77,7 +79,7 @@ class TestEntityQueryAC1009(unittest.TestCase):
     def test_query_all_entities(self):
         # independent from layout (modelspace or paperspace)
         entities = self.dwg.entities.query('*')
-        self.assertEqual(8, len(entities))
+        self.assertEqual(3, len(entities))
 
     def test_query_polyline(self):
         entities = self.dwg.entities.query('POLYLINE')
@@ -88,9 +90,9 @@ class TestEntityQueryAC1009(unittest.TestCase):
         self.assertEqual(2, len(entities))
 
     def test_query_vertices(self):
-        # vertices of polylines are separated entities, but there is no link to the associated polyline.
-        entities = self.dwg.entities.query('VERTEX')
-        self.assertEqual(4, len(entities))
+        # VERTEX entnties are no more in any entity space, they are lined to the POLYLINE entity
+        entities = self.dwg.entities.query('VERTEX') #
+        self.assertEqual(0, len(entities))
 
     def test_query_layer_line(self):
         entities = self.dwg.entities.query('*[layer=="lay_line"]')

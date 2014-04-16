@@ -14,19 +14,6 @@ def factory(debug=False):
 from .handle import HandleGenerator
 
 
-class SimpleDB(dict):
-    def __init__(self):
-        self.handles = HandleGenerator()
-
-    def add_tags(self, tags):
-        try:
-            handle = tags.get_handle()
-        except ValueError:
-            handle = self.handles.next()
-        self.__setitem__(handle, tags)
-        return handle
-
-
 class EntityDB(object):
     """ A simple key/value database a.k.a. dict(), but can be replaced other
     classes that implements all of the methods of `EntityDB`. The entities
@@ -90,7 +77,10 @@ class EntityDB(object):
 
     def delete_entity(self, entity):
         entity.destroy()
-        del self._database[entity.dxf.handle]
+        self.delete_handle(entity.dxf.handle)
+
+    def delete_handle(self, handle):
+        del self._database[handle]
 
 
 class DebugDB(EntityDB):

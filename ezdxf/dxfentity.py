@@ -50,6 +50,10 @@ class DXFEntity(object):
     def dxffactory(self):
         return self.drawing.dxffactory
 
+    @property
+    def entitydb(self):
+        return self.drawing.entitydb
+
     @classmethod
     def new(cls, handle, dxfattribs=None, drawing=None):
         if cls.TEMPLATE is None:
@@ -65,6 +69,15 @@ class DXFEntity(object):
         """ Called after entity creation.
         """
         pass
+
+    def _new_entity(self, type_, dxfattribs):
+        """ Create new entity with same layout settings as *self*.
+
+        Used by INSERT & POLYLINE to create appended DXF entities, don't use it to create new standalone entities.
+        """
+        entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        self.dxffactory.copy_layout(self, entity)
+        return entity
 
     def dxftype(self):
         return self.tags.noclass[0].value

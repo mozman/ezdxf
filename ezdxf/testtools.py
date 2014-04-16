@@ -13,7 +13,7 @@ from .classifiedtags import ClassifiedTags
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
 from .drawing import Drawing
-from .database import SimpleDB
+from .database import EntityDB
 
 
 class DrawingProxy:
@@ -24,7 +24,7 @@ class DrawingProxy:
     """
     def __init__(self, version):
         self.dxfversion = version
-        self.entitydb = SimpleDB()
+        self.entitydb = EntityDB()
         self.dxffactory = dxffactory(self)
 
     def _bootstraphook(self, header):

@@ -23,7 +23,7 @@ class PolymeshMixin(object):
         m, n = pos
         if 0 <= m < m_count and 0 <= n < n_count:
             pos = m * n_count + n
-            return self._get_vertex_at_trusted_position(pos)
+            return self.__getitem__(pos)
         else:
             raise IndexError(repr(pos))
 
@@ -39,7 +39,7 @@ class PolyfaceMixin(object):
 
     def append_faces(self, faces, dxfattribs=None):
         def facevertex():
-            vertex = self.layout.build_entity('VERTEX', dxfattribs)
+            vertex = self._new_entity('VERTEX', dxfattribs)
             vertex.dxf.flags = const.VTX_3D_POLYFACE_MESH_VERTEX
             return vertex
 
@@ -51,18 +51,9 @@ class PolyfaceMixin(object):
         self._generate(existing_faces)
 
     def _generate(self, faces):
-        def remove_all_vertices():
-            startindex, endindex = self._get_index_range()
-            if startindex <= endindex:
-                self.layout.remove_entities(startindex, (endindex - startindex) + 1)
-
-        def insert_new_vertices(vertices):
-            index = self.layout.get_index_of_entity(self) + 1
-            self.layout.insert_entities(index, vertices)
-
         facebuilder = FaceBuilder(faces)
-        remove_all_vertices()
-        insert_new_vertices(facebuilder.get_vertices())
+        self._remove_all_vertices()
+        self._append_vertices(facebuilder.get_vertices())
         self.update_count(facebuilder.nvertices, facebuilder.nfaces)
 
     def update_count(self, nvertices, nfaces):
@@ -93,7 +84,7 @@ class PolyfaceMixin(object):
             face.append(vertex)
             return face
 
-        vertices = list(iter(self))
+        vertices = list(self.vertices())
         for vertex in vertices:
             if is_face(vertex):
                 yield get_face(vertex)

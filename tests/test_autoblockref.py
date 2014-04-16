@@ -26,14 +26,16 @@ class TestAutoBlockref(unittest.TestCase):
         blockref = self.modelspace.add_auto_blockref('TEST', (0, 0), values)
         autoblock = self.dwg.blocks[blockref.dxf.name]
         entities = list(autoblock)
-        self.assertEqual('INSERT', entities[0].dxftype())
-        self.assertEqual('ATTRIB', entities[1].dxftype())
-        self.assertEqual('TAG1', entities[1].dxf.tag)
-        self.assertEqual('text1', entities[1].dxf.text)
-        self.assertEqual('ATTRIB', entities[2].dxftype())
-        self.assertEqual('TAG2', entities[2].dxf.tag)
-        self.assertEqual('text2', entities[2].dxf.text)
-        self.assertEqual('SEQEND', entities[3].dxftype())
+        insert = entities[0]
+        self.assertEqual('INSERT', insert.dxftype())
+        attribs = list(insert.attribs())
+        attrib1, attrib2 = attribs
+        self.assertEqual('ATTRIB', attrib1.dxftype())
+        self.assertEqual('TAG1', attrib1.dxf.tag)
+        self.assertEqual('text1', attrib1.dxf.text)
+        self.assertEqual('ATTRIB', attrib2.dxftype())
+        self.assertEqual('TAG2', attrib2.dxf.tag)
+        self.assertEqual('text2', attrib2.dxf.text)
 
 
 if __name__ == '__main__':
