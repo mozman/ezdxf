@@ -52,8 +52,10 @@ class PolyfaceMixin(object):
 
     def _generate(self, faces):
         facebuilder = FaceBuilder(faces)
-        self._remove_all_vertices()
+        self._unlink_all_vertices()  # but don't remove it from database
         self._append_vertices(facebuilder.get_vertices())
+
+
         self.update_count(facebuilder.nvertices, facebuilder.nfaces)
 
     def update_count(self, nvertices, nfaces):
