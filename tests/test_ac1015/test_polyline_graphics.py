@@ -128,8 +128,8 @@ class TestPolyface(unittest.TestCase):
         self.assertEqual(1, facevertex.dxf.vtx0)
         self.assertEqual(2, facevertex.dxf.vtx1)
         self.assertEqual(3, facevertex.dxf.vtx2)
-        self.assertEqual(4, face.dxf.m_count) # vertices count
-        self.assertEqual(2, face.dxf.n_count) # faces count
+        self.assertEqual(4, face.dxf.m_count)  # vertices count
+        self.assertEqual(2, face.dxf.n_count)  # faces count
 
     def test_faces(self):
         face = self.layout.add_polyface()

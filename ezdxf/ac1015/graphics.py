@@ -463,17 +463,13 @@ class Polyline(ac1009.Polyline):
 class Polyface(Polyline, PolyfaceMixin):
     @staticmethod
     def convert(polyline):
-        face = Polyface(polyline.tags, polyline.drawing)
-        face.set_layout(polyline.layout)
-        return face
+        return Polyface(polyline.tags, polyline.drawing)
 
 
 class Polymesh(Polyline, PolymeshMixin):
     @staticmethod
     def convert(polyline):
-        mesh = Polymesh(polyline.tags, polyline.drawing)
-        mesh.set_layout(polyline.layout)
-        return mesh
+        return Polymesh(polyline.tags, polyline.drawing)
 
 _VERTEX_TPL = """ 0
 VERTEX
