@@ -918,15 +918,10 @@ class Polyline(GraphicEntity, ColorMixin):
             vertex = db[prev_vertex.link]
         raise ValueError("invalid count")
 
-    def _remove_all_vertices(self):
-        db = self.entitydb
-        handle = self.tags.link
-        tags = db[handle]
-        while tags.dxftype() == 'VERTEX':
-            db.delete_handle(handle)
-            handle = tags.link
-            tags = db[handle]
-        self.tags.link = tags.get_handle()  # link POLYLINE -> SEQEND
+    def _unlink_all_vertices(self):
+        # but don't delete it from database
+        last_vertex = self._get_last_vertex()
+        self.tags.link = last_vertex.tags.link  # link POLYLINE -> SEQEND
 
     def cast(self):
         mode = self.get_mode()
