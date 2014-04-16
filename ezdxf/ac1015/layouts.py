@@ -79,7 +79,6 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
         """
         for entity in self._iter_all_entities():
             if entity.get_dxf_attrib('owner') == self._block_record_handle:
-                entity.set_layout(self)
                 yield entity
 
     def __contains__(self, entity):

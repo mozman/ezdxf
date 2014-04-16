@@ -68,7 +68,6 @@ class GraphicsFactory(object):
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
         blockref = self.build_and_add_entity('INSERT', dxfattribs)
-        blockref.set_layout(self)
         return blockref
 
     def add_auto_blockref(self, name, insert, values, dxfattribs=None):

@@ -71,7 +71,6 @@ class BaseLayout(GraphicsFactory):
         """ Add entity to entity space.
         """
         self._entityspace.append(entity.dxf.handle)
-        entity.set_layout(self)
         self._set_paperspace(entity)
 
     def delete_entity(self, entity):
@@ -94,13 +93,6 @@ class BaseLayout(GraphicsFactory):
         """ Get entity by handle as GraphicEntity() or inherited.
         """
         return self._dxffactory.wrap_handle(handle)
-
-    def get_entity_by_handle_with_layout(self, handle):
-        """ Get entity by handle as GraphicEntity() or inherited.
-        """
-        entity = self.get_entity_by_handle(handle)
-        entity.set_layout(self)
-        return entity
 
     def get_entity_at_index(self, index):
         """ Get entity at position index as GraphicEntity() or inherited.
@@ -168,7 +160,6 @@ class DXF12Layout(BaseLayout):
         """
         for entity in self._iter_all_entities():
             if entity.dxf.paperspace == self._paperspace:
-                entity.set_layout(self)
                 yield entity
 
     def __contains__(self, entity):
@@ -210,7 +201,7 @@ class DXF12BlockLayout(BaseLayout):
         """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
         """
         for handle in self._entityspace:
-            yield self.get_entity_by_handle_with_layout(handle)
+            yield self.get_entity_by_handle(handle)
 
     def __contains__(self, entity):
         """ Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
@@ -226,11 +217,11 @@ class DXF12BlockLayout(BaseLayout):
 
     @property
     def block(self):
-        return self.get_entity_by_handle_with_layout(self._block_handle)
+        return self.get_entity_by_handle(self._block_handle)
 
     @property
     def endblk(self):
-        return self.get_entity_by_handle_with_layout(self._endblk_handle)
+        return self.get_entity_by_handle(self._endblk_handle)
 
     @property
     def name(self):
@@ -257,7 +248,6 @@ class DXF12BlockLayout(BaseLayout):
         """ Add entity to the block entity space.
         """
         self.add_handle(entity.dxf.handle)
-        entity.set_layout(self)
 
     def add_handle(self, handle):
         """ Add entity by handle to the block entity space.

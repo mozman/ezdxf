@@ -19,10 +19,6 @@ class SetupDrawing(unittest.TestCase):
 
 
 class TestModelSpace(SetupDrawing):
-    def test_layout_property(self):
-        line = self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual(self.layout, line.layout)
-
     def test_drawing_attribute(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.dwg, line.drawing)
@@ -30,10 +26,6 @@ class TestModelSpace(SetupDrawing):
     def test_dxffactory_property(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual(self.dwg.dxffactory, line.dxffactory)
-
-    def test_layout_attribute(self):
-        line = self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual(self.layout, line.layout)
 
     def test_delete_entity(self):
         for _ in range(5):
@@ -81,7 +73,6 @@ class TestPaperSpace(SetupDrawing):
         paperspace = self.dwg.layout('Name it like you want, there is only one paperspace at AC1009')
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.dxf.paperspace)
-        self.assertEqual(paperspace, line.layout)
 
     def test_iter_layout(self):
         self.layout.add_line((0, 0), (1, 1))
@@ -91,7 +82,6 @@ class TestPaperSpace(SetupDrawing):
         # Are all necessary attribute set?
         e = entities[0]
         self.assertEqual(self.dwg, e.drawing)
-        self.assertEqual(self.layout, e.layout)
 
     def test_query_entities(self):
         self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
@@ -101,7 +91,6 @@ class TestPaperSpace(SetupDrawing):
         # Are all necessary attribute set?
         e = entities[0]
         self.assertEqual(self.dwg, e.drawing)
-        self.assertEqual(self.layout, e.layout)
 
     def test_model_space_get_layout_for_entity(self):
         line = self.layout.add_line((0, 0), (1, 1))

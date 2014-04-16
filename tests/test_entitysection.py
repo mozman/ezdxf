@@ -51,7 +51,6 @@ class TestEntitySection(unittest.TestCase):
         m = dwg.modelspace()
         m.add_line((0, 0), (1, 1))
         entity = list(dwg.entities)[-1]
-        self.assertEqual(m, entity.layout)
         self.assertEqual(dwg, entity.drawing)  # check drawing attribute
 
     def test_iteration_with_layout_DXF2000(self):
@@ -59,7 +58,6 @@ class TestEntitySection(unittest.TestCase):
         m = dwg.modelspace()
         m.add_line((0, 0), (1, 1))
         entity = list(dwg.entities)[-1]
-        self.assertEqual(m, entity.layout)
         self.assertEqual(dwg, entity.drawing)  # check drawing attribute
 
     def test_delete_all_entities_DXF12(self):

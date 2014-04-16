@@ -35,11 +35,9 @@ class EntitySection(object):
         return len(self._entityspace)
 
     def __iter__(self):
-        set_layout = self.get_layout_setter()
         dxffactory = self.dxffactory
         for handle in self._entityspace:
             entity = dxffactory.wrap_handle(handle)
-            set_layout(entity)
             yield entity
 
     def __getitem__(self, index):
@@ -67,28 +65,6 @@ class EntitySection(object):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
         self._entityspace.write(stream)
         stream.write("  0\nENDSEC\n")
-
-    def get_layout_setter(self):
-        def ac1009_layout_setter(entity):
-            # This works only for entities in the ENTITIES section, not for ENTITIES in the blocks section
-            # It is not possible to check if an entity is located in modelspace/paperspace or in a block,
-            # because DXF12 has no *owner* attribute.
-            layout = paper_space if entity.dxf.paperspace == 1 else model_space
-            entity.set_layout(layout)
-
-        def ac1015_layout_setter(entity):
-            # This works for all ENTITIES, where ever they are located (model space, paper space or block).
-            owner = entity.dxf.owner
-            layout = layouts.get(owner, None)
-            entity.set_layout(layout)
-
-        if self.drawing.dxfversion == 'AC1009':
-            paper_space = self.drawing.layout()
-            model_space = self.drawing.modelspace()
-            return ac1009_layout_setter
-        else:
-            layouts = {layout.owner_id: layout for layout in self.drawing.layouts}
-            return ac1015_layout_setter
 
     def delete_all_entities(self):
         """ Delete all entities. """
