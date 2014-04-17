@@ -524,7 +524,6 @@ class Insert(GraphicEntity):
         'row_spacing': DXFAttr(45, default=0.0),
     })
 
-    # TODO: build link structure for INSERT
     def attribs(self):
         """ Iterate over all appended ATTRIB entities, yields DXFEntity() or inherited.
         """
