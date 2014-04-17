@@ -191,14 +191,38 @@ class Importer(object):
         and insert tags into the entity database of the target drawing. Returns the target handle.
         Avoids duplicate imports of the same database entity.
         """
-        target_handle = self._handle_translation_table.get(source_handle, None)
-        if target_handle is None:
-            new_tags = self.source.entitydb[source_handle].clone()
-            target_handle = self.target._handles.next()
+        source_db = self.source.entitydb
+        target_db = self.target.entitydb
+        next_target_handle = self.target._handles.next
+
+        def clone_tags(source_handle):
+            new_tags = source_db[source_handle].clone()
+            target_handle = next_target_handle()
             new_tags.replace_handle(target_handle)
-            self.target.entitydb[target_handle] = new_tags
+            target_db[target_handle] = new_tags
             self._handle_translation_table[source_handle] = target_handle
-        return target_handle
+            return target_handle, new_tags
+
+        # TODO: check linked tags handling
+        main_target_handle = self._handle_translation_table.get(source_handle, None)
+        prev_tags = None
+
+        if main_target_handle is None:
+            while True:
+                target_handle, new_tags = clone_tags(source_handle)
+                if main_target_handle is None:  # just the first tag list is relevant
+                    main_target_handle = target_handle
+
+                if prev_tags is not None:
+                    prev_tags.link = target_handle
+
+                if new_tags.link is None:
+                    break
+                else:  # clone linked tags
+                    source_handle = new_tags.link
+                    prev_tags = new_tags
+
+        return main_target_handle
 
 
 def _cleanup_block_record(block_record):

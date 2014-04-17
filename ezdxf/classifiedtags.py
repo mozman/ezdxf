@@ -34,7 +34,7 @@ class ClassifiedTags(object):
         clone.appdata = copy(self.appdata)
         clone.subclasses = copy(self.subclasses)
         clone.xdata = copy(self.xdata)
-        clone.link = self.link
+        clone.link = self.link  # important for dxf importer!
         return clone
 
     def clone(self):
