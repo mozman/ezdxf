@@ -7,6 +7,7 @@
 
 import ezdxf
 
+
 def main():
     source_dwg = ezdxf.readfile('CustomBlocks.dxf')
     target_dwg = ezdxf.new(source_dwg.dxfversion)

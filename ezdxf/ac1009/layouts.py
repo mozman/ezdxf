@@ -75,6 +75,12 @@ class BaseLayout(GraphicsFactory):
         self._set_paperspace(entity)
         return entity
 
+    def add_entity(self, entity):
+        """ Add entity to entity space but not to the drawing database.
+        """
+        self._entityspace.append(entity.dxf.handle)
+        self._set_paperspace(entity)
+
     def delete_entity(self, entity):
         """ Delete entity from entity space and drawing database.
         """
@@ -83,8 +89,12 @@ class BaseLayout(GraphicsFactory):
         entity.dxf.paperspace = -1  # set invalid paper space
 
     def delete_all_entities(self):
-        """ Delete all entities from entity space and from drawing database.
+        """ Delete all entities of this layout from entity space and from drawing database.
+
+        Deletes only entities from this layout. Important because ALL layout entities are stored in just one entity
+        space.
         """
+        # noinspection PyTypeChecker
         for entity in list(self):  # temp list, because delete modifies the base data structure of the iterator
             self.delete_entity(entity)
 
@@ -95,12 +105,6 @@ class BaseLayout(GraphicsFactory):
         """ Get entity by handle as GraphicEntity() or inherited.
         """
         return self._dxffactory.wrap_handle(handle)
-
-    def add_entity(self, entity):
-        """ Add entity to entity space but not to the drawing database.
-        """
-        self._entityspace.append(entity.dxf.handle)
-        self._set_paperspace(entity)
 
     # noinspection PyTypeChecker
     def query(self, query='*'):

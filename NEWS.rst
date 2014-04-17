@@ -7,6 +7,8 @@ Version 0.6.0 - 2014
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.2.1
   * Refactoring of internal structures
+  * CHANGE: appended entities like VERTEX for POLYLINE and ATTRIB for INSERT are linked to the main entity and do
+    not appear in layouts, model space or blocks (modelspace.query('VERTEX') is always an emtpy list).
 
 Version 0.5.2 - 2014-04-15
 

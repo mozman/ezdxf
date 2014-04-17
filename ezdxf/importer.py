@@ -203,7 +203,6 @@ class Importer(object):
             self._handle_translation_table[source_handle] = target_handle
             return target_handle, new_tags
 
-        # TODO: check linked tags handling
         main_target_handle = self._handle_translation_table.get(source_handle, None)
         prev_tags = None
 
