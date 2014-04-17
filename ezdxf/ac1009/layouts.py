@@ -43,9 +43,16 @@ class BaseLayout(GraphicsFactory):
         super(BaseLayout, self).__init__(dxffactory)
         self._entityspace = entityspace
 
+    def __len__(self):
+        return len(self._entityspace)
+
     @property
     def entitydb(self):
         return self._dxffactory.entitydb
+
+    @property
+    def drawing(self):
+        return self._dxffactory.drawing
 
     def build_and_add_entity(self, type_, dxfattribs):
         """ Create entity in drawing database and add entity to the entity space.
@@ -59,6 +66,7 @@ class BaseLayout(GraphicsFactory):
 
     def build_entity(self, type_, dxfattribs):
         """ Create entity in drawing database, returns a wrapper class inherited from GraphicEntity().
+        Adds entity to the drawing database.
 
         :param str type_: DXF type string, like 'LINE', 'CIRCLE' or 'LWPOLYLINE'
         :param dict dxfattribs: DXF attributes for the new entity
@@ -66,12 +74,6 @@ class BaseLayout(GraphicsFactory):
         entity = self._dxffactory.create_db_entry(type_, dxfattribs)
         self._set_paperspace(entity)
         return entity
-
-    def add_entity(self, entity):
-        """ Add entity to entity space.
-        """
-        self._entityspace.append(entity.dxf.handle)
-        self._set_paperspace(entity)
 
     def delete_entity(self, entity):
         """ Delete entity from entity space and drawing database.
@@ -81,7 +83,7 @@ class BaseLayout(GraphicsFactory):
         entity.dxf.paperspace = -1  # set invalid paper space
 
     def delete_all_entities(self):
-        """ Delete all entities from entity space.
+        """ Delete all entities from entity space and from drawing database.
         """
         for entity in list(self):  # temp list, because delete modifies the base data structure of the iterator
             self.delete_entity(entity)
@@ -94,55 +96,15 @@ class BaseLayout(GraphicsFactory):
         """
         return self._dxffactory.wrap_handle(handle)
 
-    def get_entity_at_index(self, index):
-        """ Get entity at position index as GraphicEntity() or inherited.
+    def add_entity(self, entity):
+        """ Add entity to entity space but not to the drawing database.
         """
-        return self.get_entity_by_handle(self._entityspace[index])
-
-    def get_index_of_entity(self, entity):
-        """ Get position/index of entity in entity space.
-        """
-        return self._entityspace.index(entity.dxf.handle)
-
-    def insert_entities(self, index, entities):
-        """ Insert entities to entity space.
-        """
-        handles = [entity.dxf.handle for entity in entities]
-        self._entityspace[index:index] = handles
-
-    def remove_entities(self, index, count=1):
-        """ Remove entities from entity space.
-        """
-        self._entityspace[index:index + count] = []
-
-    def get_cursor(self, entity=None):
-        cursor = LayoutCursor(self)
-        if entity is not None:
-            cursor.goto_entity(entity)
-        return cursor
+        self._entityspace.append(entity.dxf.handle)
+        self._set_paperspace(entity)
 
     # noinspection PyTypeChecker
     def query(self, query='*'):
         return EntityQuery(iter(self), query)
-
-
-class LayoutCursor(object):
-    def __init__(self, layout):
-        self.layout = layout
-        self.pos = 0
-
-    def entity(self):
-        return self.layout.get_entity_at_index(self.pos)
-
-    def next_entity(self):
-        self.pos += 1
-        return self.entity()
-
-    def goto_entity(self, entity):
-        self.pos = self.layout.get_index_of_entity(entity)
-
-    def skip(self, distance=1):
-        self.pos += distance
 
 
 class DXF12Layout(BaseLayout):
