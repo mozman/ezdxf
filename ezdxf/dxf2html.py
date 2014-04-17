@@ -80,6 +80,8 @@ def build_ref_link_button(name):
     link = get_reference_link(name)
     return REF_LINK_TPL.format(target=link, name=name)
 
+GLOBAL_DB = None
+
 
 def dxf2html(dwg):
     """Creates a structured HTML view of the DXF tags - not a CAD drawing!
@@ -90,6 +92,10 @@ def dxf2html(dwg):
         else:
             filename = os.path.basename(dwg.filename)
             return os.path.splitext(filename)[0]
+
+    global GLOBAL_DB
+    GLOBAL_DB = dwg.entitydb
+
     template = load_resource('dxf2html.html')
     return template.format(
         name=get_name(),
@@ -151,6 +157,8 @@ def section2html(section, section_template):
         return section_template.format(content=tags2html(section.tags))
 
 SECTION_ID = "section_{}"
+
+
 def create_section_html_template(name, index):
     """Creates a section template with buttons to the previous and next section.
     """
@@ -199,6 +207,15 @@ def hdrvars2html(hdrvars):
     return HEADER_SECTION_TPL.format(content="\n".join(varstrings))
 
 
+def expand_linked_tags(tags, db):
+    while True:
+        for tag in tags:
+            yield tag
+        if tags.link is None:
+            return
+        tags = db[tags.link]
+
+
 def tags2html(tags):
     """DXF tag list as <div> container.
     """
@@ -219,7 +236,8 @@ def tags2html(tags):
     def group_marker(tag, tag_html):
         return tag_html if tag.code not in GROUP_MARKERS else MARKER_TPL.format(tag=tag_html)
 
-    tag_strings = (group_marker(tag, tag2html(tag)) for tag in tags)
+    expanded_tags = expand_linked_tags(tags, GLOBAL_DB)
+    tag_strings = (group_marker(tag, tag2html(tag)) for tag in expanded_tags)
     return TAG_LIST_TPL.format(content='\n'.join(tag_strings))
 
 
