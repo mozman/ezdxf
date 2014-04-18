@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from itertools import islice
 
 from .tags import TagGroups, DXFStructureError
-from .classifiedtags import ClassifiedTags
+from .classifiedtags import ClassifiedTags, get_tags_linker
 from . import const
 
 
@@ -37,14 +37,15 @@ class BlocksSection(object):
             return self.entitydb.add_tags(tags)
 
         def build_block_layout(entities):
+            linked_tags = get_tags_linker(self.dxffactory.wrap_entity)
             tail_handle = add_tags(entities.pop())
             entities_iterator = iter(entities)
             head_handle = add_tags(next(entities_iterator))
             block = self.dxffactory.new_block_layout(head_handle, tail_handle)
             for entity in entities_iterator:
                 handle = add_tags(entity)
-                block.add_handle(handle)
-            block.build_link_structure()
+                if not linked_tags(entity):  # also creates the link structure as side effect
+                    block.add_handle(handle)
             return block
 
         if tags[0] != (0, 'SECTION') or \

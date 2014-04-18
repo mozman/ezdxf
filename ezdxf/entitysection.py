@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from itertools import islice
 
 from .tags import TagGroups, DXFStructureError
-from .classifiedtags import ClassifiedTags
+from .classifiedtags import ClassifiedTags, get_tags_linker
 from .entityspace import EntitySpace
 from .query import EntityQuery
 
@@ -25,6 +25,10 @@ class EntitySection(object):
     @property
     def dxffactory(self):
         return self.drawing.dxffactory
+
+    @property
+    def entitydb(self):
+        return self.drawing.entitydb
 
     def get_entityspace(self):
         return self._entityspace
@@ -57,9 +61,15 @@ class EntitySection(object):
         if len(tags) == 3:  # empty entities section
             return
 
+        linked_tags = get_tags_linker(self.dxffactory.wrap_entity)
+        store_tags = self._entityspace.store_tags
+        entitydb = self.entitydb
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
-            self._entityspace.store_tags(ClassifiedTags(group))
-        self._entityspace.build_link_structure(self.dxffactory.wrap_handle)
+            tags = ClassifiedTags(group)
+            if linked_tags(tags):  # also creates the link structure as side effect
+                entitydb.add_tags(tags)  # add just to database
+            else:
+                store_tags(tags)  # add to entity space and database
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

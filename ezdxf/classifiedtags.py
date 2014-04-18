@@ -163,3 +163,42 @@ class ClassifiedTags(object):
     @staticmethod
     def from_text(text):
         return ClassifiedTags(StringIterator(text))
+
+LINKED_ENTITIES = {
+    'INSERT': 'ATTRIB',
+    'POLYLINE': 'VERTEX'
+}
+
+
+class LinkerStorage(object):
+    def __init__(self):
+        self.prev = None
+        self.expected = ""
+
+
+def get_tags_linker(wrapper):
+    def tags_linker(tags):
+        dxftype = tags.dxftype()
+        linked_tags = False
+        if storage.prev is not None:
+            linked_tags = True
+            if dxftype == 'SEQEND':
+                storage.prev.link = tags.get_handle()
+                storage.prev = None
+
+            elif dxftype == storage.expected:
+                storage.prev.link = tags.get_handle()
+                storage.prev = tags
+            else:
+                raise DXFStructureError("expected DXF entity %s or SEQEND" % dxftype)
+        elif dxftype in ('INSERT', 'POLYLINE'):
+            #TODO: not covered by tests, INSERT by read_file()
+            if dxftype == 'INSERT' and wrapper(tags).dxf.attribs_follow == 0:
+                pass
+            else:
+                storage.prev = tags
+                storage.expected = LINKED_ENTITIES[dxftype]
+        return linked_tags
+
+    storage = LinkerStorage()
+    return tags_linker

@@ -234,7 +234,4 @@ class DXF12BlockLayout(BaseLayout):
         """
         return (entity for entity in self if entity.dxftype() == 'ATTDEF')
 
-    def build_link_structure(self):
-        self._entityspace.build_link_structure(self._dxffactory.wrap_handle)
-
 
