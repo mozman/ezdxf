@@ -70,6 +70,17 @@ class TestHeaderSection(unittest.TestCase):
         del self.header['$ACADVER']
         self.assertTrue('$ACADVER' not in self.header)
 
+    def test_str_point(self):
+        insbase_str = str(self.header.hdrvars['$INSBASE'])
+        self.assertEqual(INSBASE, insbase_str)
+
+INSBASE = """ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+"""
 
 TESTHEADER = """  0
 SECTION

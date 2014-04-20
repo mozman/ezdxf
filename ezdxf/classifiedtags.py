@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags, StringIterator, DXFStructureError, DXFTag, strtag
+from .tags import Tags, StringIterator, DXFStructureError, DXFTag, write_tags
 
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
@@ -151,8 +151,7 @@ class ClassifiedTags(object):
         raise ValueError("Application defined group '%s' does not exist." % name)
 
     def write(self, stream):
-        for tag in self:
-            stream.write(strtag(tag))
+        write_tags(stream, self)
 
     def dxftype(self):
         return self.noclass[0].value
