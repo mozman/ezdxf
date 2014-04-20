@@ -21,17 +21,17 @@ class DXFNamespace(object):
         super(DXFNamespace, self).__setattr__('_deleter', wrapper.del_dxf_attrib)
 
     def __getattr__(self, attrib):
-        """Returns value of DXF attribute *attrib*. usage: value = GenericWrapper.dxf.attrib
+        """Returns value of DXF attribute *attrib*. usage: value = DXFEntity.dxf.attrib
         """
         return self._getter(attrib)
 
     def __setattr__(self, attrib, value):
-        """Set DXF attribute *attrib* to *value.  usage: GenericWrapper.dxf.attrib = value
+        """Set DXF attribute *attrib* to *value.  usage: DXFEntity.dxf.attrib = value
         """
         self._setter(attrib, value)
 
     def __delattr__(self, attrib):
-        """Remove DXF attribute *attrib*.  usage: del GenericWrapper.dxf.attrib
+        """Remove DXF attribute *attrib*.  usage: del DXFEntity.dxf.attrib
         """
         self._deleter(attrib)
 

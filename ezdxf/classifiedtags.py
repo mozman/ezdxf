@@ -170,35 +170,42 @@ LINKED_ENTITIES = {
 }
 
 
-class LinkerStorage(object):
-    def __init__(self):
-        self.prev = None
-        self.expected = ""
-
-
 def get_tags_linker(wrapper):
+    class PersitentVars(object):  # Python 2.7 has no nonlocal statement
+        def __init__(self):
+            self.prev = None
+            self.expected = ""
+
     def tags_linker(tags):
         dxftype = tags.dxftype()
-        linked_tags = False
-        if storage.prev is not None:
-            linked_tags = True
+        are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
+        if vars.prev is not None:
+            are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
             if dxftype == 'SEQEND':
-                storage.prev.link = tags.get_handle()
-                storage.prev = None
-
-            elif dxftype == storage.expected:
-                storage.prev.link = tags.get_handle()
-                storage.prev = tags
+                vars.prev.link = tags.get_handle()
+                vars.prev = None
+            # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
+            elif dxftype == vars.expected:
+                vars.prev.link = tags.get_handle()
+                vars.prev = tags
             else:
                 raise DXFStructureError("expected DXF entity %s or SEQEND" % dxftype)
-        elif dxftype in ('INSERT', 'POLYLINE'):
-            #TODO: not covered by tests, INSERT by read_file()
+        elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
+            # TODO: not covered by tests, INSERT by read_file()
             if dxftype == 'INSERT' and wrapper(tags).dxf.attribs_follow == 0:
+                # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
+                #   INSERT with no ATTRIBS, attribs_follow == 0
+                #   ATTRIB as stand alone entity
+                #   INSERT with ATTRIBS, attribs_follow == 1
+                #   ATTRIB as connected entity
+                #   SEQEND
+                #
+                # Therefor a ATTRIB following an INSERT doesn't mean that these entities are connected.
                 pass
             else:
-                storage.prev = tags
-                storage.expected = LINKED_ENTITIES[dxftype]
-        return linked_tags
+                vars.prev = tags
+                vars.expected = LINKED_ENTITIES[dxftype]
+        return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
 
-    storage = LinkerStorage()
+    vars = PersitentVars()
     return tags_linker
