@@ -33,10 +33,7 @@ class HeaderSection(object):
         groups = TagGroups(tags[2:-1], splitcode=9)
         for group in groups:
             name = group[0].value
-            if len(group) > 2:
-                value = tuple(group[1:])
-            else:
-                value = group[1]
+            value = group[1]
             self.hdrvars[name] = HeaderVar(value)
 
     def write(self, stream):
@@ -50,11 +47,7 @@ class HeaderSection(object):
         stream.write("  0\nENDSEC\n")
 
     def __getitem__(self, key):
-        var = self.hdrvars[key]
-        if var.ispoint:
-            return var.getpoint()
-        else:
-            return var.value
+        return self.hdrvars[key].value
 
     def get(self, key, default=None):
         if key in self.hdrvars:
@@ -84,16 +77,15 @@ class HeaderVar:
 
     @property
     def ispoint(self):
-        return isinstance(self.tag[0], tuple)
-
-    def getpoint(self):
-        if self.ispoint:
-            return tuple([tag[1] for tag in self.tag])
-        else:
-            raise ValueError
+        return self.code == 10
 
     def __str__(self):
         if self.ispoint:
-            return "".join([TAG_STRING_FORMAT % tag for tag in self.tag])
+            code, value = self.tag
+            s = []
+            for coord in value:
+                s.append(TAG_STRING_FORMAT % (code, coord))
+                code += 10
+            return "".join(s)
         else:
             return TAG_STRING_FORMAT % self.tag

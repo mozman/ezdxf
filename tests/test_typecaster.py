@@ -18,8 +18,8 @@ class TestTypeCaster(unittest.TestCase):
         self.assertEqual((1, 'STRING'), result)
 
     def test_cast_float(self):
-        result = cast_tag((10, '3.1415'))
-        self.assertEqual((10, 3.1415), result)
+        result = cast_tag((10, ('1', '2', '3')))
+        self.assertEqual((10, (1, 2, 3)), result)
 
     def test_cast_int(self):
         result = cast_tag((60, '4711'))

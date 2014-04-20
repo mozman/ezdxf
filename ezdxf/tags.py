@@ -22,7 +22,8 @@ class TagIterator(object):
         self.textfile = textfile
         self.lineno = 0
         self.undo = False
-        self.lasttag = NONE_TAG
+        self.last_tag = NONE_TAG
+        self.undo_coord = None
 
     def __iter__(self):
         return self
@@ -30,22 +31,47 @@ class TagIterator(object):
     def __next__(self):
         def undo_tag():
             self.undo = False
-            self.lineno += 2
-            return self.lasttag
+            tag = self.last_tag
+            if is_point_code(tag.code):
+                self.lineno += 2 * len(tag.value)
+            else:
+                self.lineno += 2
+            return tag
+
+        def read_next_tag():
+            try:
+                code = int(self.readline())
+                value = self.readline().rstrip('\n')
+            except UnicodeDecodeError:
+                raise  # because UnicodeDecodeError() is a subclass of ValueError()
+            except (EOFError, ValueError):
+                raise StopIteration()
+            return code, value
 
         def next_tag():
             code = 999
-            while code == 999: # skip comments
-                try:
-                    code = int(self.readline())
-                    value = self.readline().rstrip('\n')
-                except UnicodeDecodeError:
-                    raise # because UnicodeDecodeError() is a subclass of ValueError()
-                except (EOFError, ValueError):
-                    raise StopIteration()
+            while code == 999:  # skip comments
+                if self.undo_coord is not None:
+                    code, value = self.undo_coord
+                    self.lineno += 2
+                    self.undo_coord = None
+                else:
+                    code, value = read_next_tag()
 
-            self.lasttag = cast_tag((code, value))
-            return self.lasttag
+                if is_point_code(code):  # 2D or 3D point
+                    code2, value2 = read_next_tag()  # 2. coordinate is always necessary
+                    if code2 != code + 10:
+                        raise DXFStructureError("invalid 2D/3D point at line %d" % self.lineno)
+                    code3, value3 = read_next_tag()
+                    if code3 != code + 20:  # not a Z coordinate -> 2D point
+                        self.undo_coord = (code3, value3)
+                        self.lineno -= 2
+                        value = (value, value2)
+                    else:  # is a 3D point
+                        value = (value, value2, value3)
+
+            self.last_tag = cast_tag((code, value))
+            return self.last_tag
 
         if self.undo:
             return undo_tag()
@@ -92,6 +118,7 @@ class DXFInfo(object):
     def HANDSEED(self, value):
         self.handseed = value
 
+
 def dxf_info(stream):
     info = DXFInfo()
     tag = (999999, '')
@@ -107,8 +134,10 @@ def dxf_info(stream):
             method(next(tagreader).value)
     return info
 
+
 def strtag(tag):
     return TAG_STRING_FORMAT % tag
+
 
 def _build_type_table(types):
     table = {}
@@ -117,15 +146,31 @@ def _build_type_table(types):
             table[code] = caster
     return table
 
+
+def point_tuple(value):
+    return tuple(float(f) for f in value)
+
+
+def is_point_code(code):
+    return (10 <= code <= 19) or code == 210 or (110 <= code <= 112) or (1010 <= code <= 1019)
+
+
+def is_point_tag(tag):
+    return is_point_code(tag[0])
+
+
 TYPE_TABLE = _build_type_table([
     (ustr, range(0, 10)),
-    (float, range(10, 60)),
+    (point_tuple, range(10, 20)),  # 2d or 3d points
+    (float, range(20, 60)),  # code 20-39 belongs to 2d/3d points and should not appear alone
     (int, range(60, 100)),
     (ustr, range(100, 106)),
-    (float, range(110, 150)),
+    (point_tuple, range(110, 113)),  # 110, 111, 112 - UCS definition
+    (float, range(113, 150)),  # 113-139 belongs to UCS definition and should not appear alone
     (int, range(160, 170)),
     (int, range(170, 180)),
-    (float, range(210, 240)),
+    (point_tuple, range(210, 210)),  # extrusion direction
+    (float, range(211, 240)),  # code 220, 230 belongs to extrusion direction and should not appear alone
     (int, range(270, 290)),
     (int, range(290, 300)),  # bool 1=True 0=False
     (ustr, range(300, 370)),
@@ -140,7 +185,8 @@ TYPE_TABLE = _build_type_table([
     (ustr, range(470, 480)),
     (ustr, range(480, 482)),
     (ustr, range(999, 1010)),
-    (float, range(1010, 1060)),
+    (point_tuple, range(1010, 1020)),
+    (float, range(1020, 1060)),  # code 1020-1039 belongs to 2d/3d points and should not appear alone
     (int, range(1060, 1072)),
 ])
 
@@ -161,11 +207,21 @@ def tag_type(code):
         raise ValueError("Invalid tag code: {}".format(code))
 
 
+def write_tags(stream, tags):
+    for tag in tags:
+        code = tag.code
+        if is_point_code(code):
+            for coord in tag.value:
+                stream.write(strtag(DXFTag(code, coord)))
+                code += 10
+        else:
+            stream.write(strtag(tag))
+
+
 class Tags(list):
     """ DXFTag() chunk as flat list. """
     def write(self, stream):
-        for tag in self:
-            stream.write(strtag(tag))
+        write_tags(stream, self)
 
     def get_handle(self):
         """ Search handle of a DXFTag() chunk. Raises ValueError if handle
@@ -240,7 +296,10 @@ class Tags(list):
         return Tags(StringIterator(text))
 
     def __copy__(self):
-        return self.__class__(self[:])
+        def copy_tag(tag):
+            return DXFTag(tag.code, tag.value[:]) if is_point_code(tag.code) else DXFTag(tag.code, tag.value)
+
+        return self.__class__(copy_tag(tag) for tag in self)
 
     def clone(self):
         return self.__copy__()

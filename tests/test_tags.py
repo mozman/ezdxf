@@ -12,7 +12,7 @@ from io import StringIO
 from ezdxf.c23 import ustr
 from ezdxf.tags import StringIterator, Tags
 from ezdxf.tags import dxf_info, strtag
-from ezdxf.tags import tag_type
+from ezdxf.tags import tag_type, point_tuple
 
 TEST_TAGREADER = """  0
 SECTION
@@ -69,6 +69,32 @@ ANSI_1252
 ENDSEC
   0
 EOF
+"""
+
+POINT_TAGS = """  9
+$EXTMIN
+ 10
+100
+ 20
+200
+ 30
+300
+"""
+
+POINT_2D_TAGS = """ 10
+100
+ 20
+200
+  9
+check mark 1
+ 10
+100
+ 20
+200
+ 30
+300
+  9
+check mark 2
 """
 
 
@@ -136,6 +162,24 @@ class TestTagReader(unittest.TestCase):
 
     def test_strtag_str(self):
         self.assertEqual('  0\nSECTION\n', strtag((0, 'SECTION')))
+
+    def test_one_point_reader(self):
+        tags = list(StringIterator(POINT_TAGS))
+        point_tag = tags[1]
+        self.assertEqual((100, 200, 300), point_tag.value)
+
+    def test_read_2D_points(self):
+        stri = StringIterator(POINT_2D_TAGS)
+        tags = list(stri)
+        self.assertEqual(15, stri.lineno)  # 14 lines
+        tag = tags[0]  # 2D point
+        self.assertEqual((100, 200), tag.value)
+        tag = tags[1]  # check mark
+        self.assertEqual('check mark 1', tag.value)
+        tag = tags[2]  # 3D point
+        self.assertEqual((100, 200, 300), tag.value)
+        tag = tags[3]  # check mark
+        self.assertEqual('check mark 2', tag.value)
 
 
 class TestGetDXFInfo(unittest.TestCase):
@@ -277,12 +321,13 @@ LAST
 TEST2
 """
 
+
 class TestTagType(unittest.TestCase):
     def test_int(self):
         self.assertEqual(int, tag_type(60))
 
     def test_float(self):
-        self.assertEqual(float, tag_type(10))
+        self.assertEqual(point_tuple, tag_type(10))
 
     def test_str(self):
         self.assertEqual(ustr, tag_type(0))
@@ -290,3 +335,9 @@ class TestTagType(unittest.TestCase):
     def test_value_error(self):
         with self.assertRaises(ValueError):
             tag_type(3000)
+
+    def test_point_tuple_2d(self):
+        self.assertEqual((1, 2), point_tuple(('1', '2')))
+
+    def test_point_tuple_3d(self):
+        self.assertEqual((1, 2, 3), point_tuple(('1', '2', '3')))

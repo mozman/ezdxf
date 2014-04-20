@@ -13,8 +13,8 @@ def SingleValue(value, code=1):
 
 
 def Point2D(value):
-    return DXFTag(10, value[0]), DXFTag(20, value[1])
+    return DXFTag(10, (value[0], value[1]))
 
 
 def Point3D(value):
-    return DXFTag(10, value[0]), DXFTag(20, value[1]), DXFTag(30, value[2])
+    return DXFTag(10, (value[0], value[1], value[2]))

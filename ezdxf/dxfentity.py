@@ -197,100 +197,65 @@ class DXFExtendedPointType(object):
         self.tags = tags
 
     def get_value(self, code, xtype):
-        if xtype == 'Point2D':
-            return self._get_fix_point(code, axis=2)
-        elif xtype == 'Point3D':
-            return self._get_fix_point(code, axis=3)
+        if xtype == 'Point3D':
+            value = self._get_point(code)
+            if len(value) == 2:
+                raise DXFStructureError("expected 3D point but found 2D point")
+            return value
+        elif xtype == 'Point2D':
+            value = self._get_point(code)
+            if len(value) == 3:
+                raise DXFStructureError("expected 2D point but found 3D point")
+            return value
         elif xtype == 'Point2D/3D':
-            return self._get_flexible_point(code)
+            return self._get_point(code)
         else:
             raise TypeError('Unknown extended type: %s' % xtype)
 
-    def _get_fix_point(self, code, axis):
-        point = self._get_point(code)
-        if len(point) != axis:
-            raise DXFStructureError('Invalid axis count for code: %d' % code)
-        return point
-
     def _get_point(self, code):
         index = self._point_index(code)
-        return tuple(
-            (tag.value for x, tag in enumerate(self.tags[index:index + 3])
-             if tag.code == code + x * 10)
-        )
+        return self.tags[index].value
 
     def _point_index(self, code):
         return self.tags.tag_index(code)
 
-    def _get_flexible_point(self, code):
-        point = self._get_point(code)
-        if len(point) in (2, 3):
-            return point
-        else:
-            raise DXFStructureError('Invalid axis count for code: %d' % code)
-
     def has_point(self, code):
         return self.tags.has_tag(code)
 
-    def create_point(self, code, axis):
-        for i in range(axis):
-            self.tags.append(DXFTag(code + i * 10, 0.0))
+    def _append_point(self, code, value):
+        self.tags.append(DXFTag(code, value))
 
     def set_value(self, code, xtype, value):
         def set_point(code, axis):
             if len(value) != axis:
                 raise ValueError('%d axis required' % axis)
+
             if not self.has_point(code):
-                self.create_point(code, axis)
+                self._append_point(code, value)
             else:
-                if self._count_axis(code) != axis:
-                    raise DXFStructureError('Invalid axis count for code: %d' % code)
-            self._set_point(code, value)
+                self._set_point(code, value)
+
+        def set_flexible_point(code):
+            if not len(value) in (2, 3):
+                raise ValueError('2 or 3 axis required')
+
+            if not self.has_point(code):
+                self.tags.append(DXFTag(code, value))
+            else:
+                self._set_point(code, value)
 
         if xtype == 'Point2D':
             set_point(code, axis=2)
         elif xtype == 'Point3D':
             set_point(code, axis=3)
         elif xtype == 'Point2D/3D':
-            self._set_flexible_point(code, value)
+            set_flexible_point(code)
         else:
             raise TypeError('Unknown extended type: %s' % xtype)
 
     def _set_point(self, code, value):
-        def set_tag(index, tag):
-            if self.tags[index].code == tag.code:
-                self.tags[index] = tag
-            else:
-                raise DXFStructureError('DXF coordinate error')
         index = self._point_index(code)
-        for x, coord in enumerate(value):
-            set_tag(index + x, DXFTag(code + x * 10, float(coord)))
-
-    def _set_flexible_point(self, code, value):
-        def append_axis():
-            index = self._point_index(code)
-            self.tags.insert(index + 2, DXFTag(code + 20, 0.0))
-
-        def remove_axis():
-            index = self._point_index(code)
-            self.tags.pop(index + 2)
-
-        new_axis = len(value)
-        if new_axis not in (2, 3):
-            raise ValueError("2D or 3D point required (tuple).")
-
-        if not self.has_point(code):
-            self.create_point(code, new_axis)
-        else:
-            old_axis = self._count_axis(code)
-            if old_axis > 1:
-                if new_axis == 2 and old_axis == 3:
-                    remove_axis()
-                elif new_axis == 3 and old_axis == 2:
-                    append_axis()
-            else:
-                raise DXFStructureError("Invalid axis count of point.")
-        self._set_point(code, value)
+        self.tags[index] = DXFTag(code, value)
 
     def _count_axis(self, code):
         return len(self._get_point(code))

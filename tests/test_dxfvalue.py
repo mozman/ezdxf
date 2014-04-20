@@ -30,19 +30,19 @@ class TestDXFValue(unittest.TestCase):
         self.assertFalse(var.ispoint)
 
     def test_ispoint(self):
-        var = HeaderVar(((10, 1), (20, 1)))
+        var = HeaderVar(((10, (1, 1))))
         self.assertTrue(var.ispoint)
 
     def test_getpoint_2coords(self):
-        var = HeaderVar(((10, 1), (20, 1)))
-        self.assertEqual((1, 1), var.getpoint())
+        var = HeaderVar(((10, (1, 1))))
+        self.assertEqual((1, 1), var.value)
 
     def test_getpoint_3coords(self):
-        var = HeaderVar(((10, 1), (20, 2), (30, 3)))
-        self.assertEqual((1, 2, 3), var.getpoint())
+        var = HeaderVar(((10, (1, 2, 3))))
+        self.assertEqual((1, 2, 3), var.value)
 
     def test_point_str(self):
-        var = HeaderVar(((10, 1), (20, 2), (30, 3)))
+        var = HeaderVar(((10, (1, 2, 3))))
         self.assertEqual(" 10\n1\n 20\n2\n 30\n3\n", str(var))
 
 
