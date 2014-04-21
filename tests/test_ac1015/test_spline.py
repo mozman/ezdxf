@@ -11,11 +11,12 @@ import unittest
 
 import ezdxf
 
+DWG = ezdxf.new('AC1015')
+
 
 class TestSpline(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_default_settings(self):
         spline = self.layout.add_spline()

@@ -12,11 +12,12 @@ import unittest
 import ezdxf
 from ezdxf.const import VTX_3D_POLYLINE_VERTEX
 
+DWG = ezdxf.new('AC1015')
+
 
 class TestPolyline(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_create_polyline2D(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
@@ -74,8 +75,7 @@ class TestPolyline(unittest.TestCase):
 
 class TestPolymesh(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_create_mesh(self):
         mesh = self.layout.add_polymesh((4, 4))
@@ -98,8 +98,7 @@ class TestPolymesh(unittest.TestCase):
 
 class TestPolyface(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_create_face(self):
         face = self.layout.add_polyface()
@@ -177,8 +176,7 @@ def cube_faces():
 
 class TestInternals(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_polyline2d(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])

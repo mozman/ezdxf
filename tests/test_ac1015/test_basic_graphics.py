@@ -11,11 +11,12 @@ import unittest
 
 import ezdxf
 
+DWG = ezdxf.new('AC1015')
+
 
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
 
 class TestGraphicsDefaultSettings(SetupDrawing):
@@ -31,9 +32,10 @@ class TestGraphicsDefaultSettings(SetupDrawing):
 
 class TestBasicEntities(SetupDrawing):
     def test_iter_layout(self):
+        entity_count = len(list(self.layout))
         self.layout.add_line((0, 0), (1, 1))
         self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual(2, len(list(self.layout)))
+        self.assertEqual(entity_count+2, len(list(self.layout)))
 
     def test_create_line(self):
         line = self.layout.add_line((0, 0), (1, 1))

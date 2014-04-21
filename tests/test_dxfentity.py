@@ -136,7 +136,7 @@ class TestPoint3D(unittest.TestCase):
         self.assertEqual((1., 2., 3.), point.dxf.point)
 
     def test_error_get_2d_point_for_required_3d_point(self):
-        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n  0\nEOF\n")  # EOF avoids read ahead error
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n  0\n")
         point = PointAccessor(tags)
         with self.assertRaises(DXFStructureError):
             point.dxf.point
@@ -173,13 +173,13 @@ class TestPoint2D(unittest.TestCase):
     def test_set_2d_point(self):
         point = PointAccessor(ClassifiedTags.from_text("11\n1.0\n21\n2.0\n40\n3.0\n"))
         point.dxf.flat = (4, 5)
-        self.assertEqual(2, len(point.tags.noclass)) # points represented by just one tag since v0.6 (code, (x, y[, z]))
+        self.assertEqual(2, len(point.tags.noclass))  # points represented by just one tag since v0.6 (code, (x, y[, z]))
         self.assertEqual((4., 5.), point.dxf.flat)
 
 
 class TestFlexPoint(unittest.TestCase):
     def test_get_2d_point(self):
-        tags = ClassifiedTags.from_text("13\n1.0\n23\n2.0\n  0\nEOF\n")  # EOF avoids read ahead error
+        tags = ClassifiedTags.from_text("13\n1.0\n23\n2.0\n")
         point = PointAccessor(tags)
         self.assertEqual((1., 2.), point.dxf.flex)
 
@@ -189,10 +189,10 @@ class TestFlexPoint(unittest.TestCase):
         self.assertEqual((1., 2., 3.), point.dxf.flex)
 
     def test_set_2d_point(self):
-        tags = ClassifiedTags.from_text("13\n1.0\n23\n2.0\n  0\nEOF\n")  # EOF avoids read ahead error
+        tags = ClassifiedTags.from_text("13\n1.0\n23\n2.0\n") # points represented by just one tag since v0.6 (code, (x, y[, z]))
         point = PointAccessor(tags)
         point.dxf.flex = (3., 4.)
-        self.assertEqual(2, len(tags.noclass))
+        self.assertEqual(1, len(tags.noclass))
         self.assertEqual((3., 4.), point.dxf.flex)
 
     def test_set_3d_point(self):

@@ -19,10 +19,6 @@ Common Base Class
 
    (read only) Get the entity handle. (feature for experts)
 
-.. attribute:: GraphicEntity.layout
-
-   (read only) Get the associated layout.
-
 .. attribute:: GraphicEntity.drawing
 
    (read only) Get the associated drawing.
@@ -33,8 +29,9 @@ Common Base Class
 
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
-   Get DXF attribute `key`, returns `default` if key doesn't exist, or raise :class:`ValueError` if `default` is
-   :class:`ValueError`::
+   Get DXF attribute `key`, returns `default` if key doesn't exist, or raise
+   :class:`ValueError` if `default` is :class:`ValueError` and no DXF default
+   value is defined::
 
         layer = entity.get_dxf_attrib("layer")
         # same as

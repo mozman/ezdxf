@@ -12,10 +12,12 @@ import ezdxf
 from ezdxf.ac1015.graphics import split_string_in_chunks, MTextBuffer
 from ezdxf import const
 
+DWG = ezdxf.new('AC1015')
+
+
 class TestMText(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_new_short_mtext(self):
         mtext = self.layout.add_mtext("a new mtext")

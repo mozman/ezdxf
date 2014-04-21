@@ -8,12 +8,14 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
+from ezdxf import testtools
+
+DWG = ezdxf.new('AC1015')
 
 
-class TestLWPolyline(unittest.TestCase):
+class TestNewLWPolyline(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1015')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
     def test_new_line(self):
         points = [(1, 1), (2, 2), (3, 3)]
@@ -68,6 +70,53 @@ class TestLWPolyline(unittest.TestCase):
         del line.dxf.const_width
         self.assertFalse(line.AcDbPolyline.has_tag(43))
 
+
+class TestReadLWPolyline(unittest.TestCase):
+    def setUp(self):
+        tags = testtools.ClassifiedTags.from_text(LWPOLYLINE1)
+        self.lwpolyline = DWG.dxffactory.wrap_entity(tags)
+
+    def test_handle(self):
+        self.assertEqual('239', self.lwpolyline.dxf.handle)
+
+    def test_count(self):
+        self.assertEqual(2, self.lwpolyline.dxf.count)
+        self.lwpolyline.append_points([(10, 12), (13, 13)])
+        self.assertEqual(4, len(list(self.lwpolyline)))
+        self.assertEqual(4, self.lwpolyline.dxf.count)
+
+
+LWPOLYLINE1 = """  0
+LWPOLYLINE
+  5
+239
+330
+238
+100
+AcDbEntity
+  8
+0
+  6
+ByBlock
+ 62
+0
+100
+AcDbPolyline
+ 90
+2
+ 70
+0
+ 43
+0.15
+ 10
+-0.5
+ 20
+-0.5
+ 10
+0.5
+ 20
+0.5
+"""
 
 if __name__ == '__main__':
     unittest.main()

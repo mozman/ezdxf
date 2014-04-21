@@ -111,7 +111,7 @@ class DXFEntity(object):
             return self._get_dxf_attrib(dxfattr)
         except ValueError:
             if default is ValueError:
-                result = self.get_dxf_default_value(key)
+                result = dxfattr.default  # default value defined by DXF specs
                 if result is not None:
                     return result
                 else:
@@ -124,6 +124,14 @@ class DXFEntity(object):
         """
         return self._get_dxfattr_definition(key).default
 
+    def _get_dxf_attrib(self, dxfattr):
+        # no subclass is subclass index 0
+        subclass_tags = self.tags.subclasses[dxfattr.subclass]
+        if dxfattr.xtype is not None:
+            return self._get_extented_type(subclass_tags, dxfattr.code, dxfattr.xtype)
+        else:
+            return subclass_tags.get_value(dxfattr.code)
+
     def has_dxf_default_value(self, key):
         """ Returns *True* if the DXF attribute *key* has a DXF standard default value.
         """
@@ -134,10 +142,9 @@ class DXFEntity(object):
         # no subclass is subclass index 0
         subclasstags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:
-            tags = DXFExtendedPointType(subclasstags)
-            tags.set_value(dxfattr.code, dxfattr.xtype, value)
+            self._set_extended_type(subclasstags, dxfattr.code, dxfattr.xtype, value)
         else:
-            self._set_tag(subclasstags, dxfattr.code, value)
+            subclasstags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
 
     def del_dxf_attrib(self, key):
         dxfattr = self._get_dxfattr_definition(key)
@@ -157,26 +164,52 @@ class DXFEntity(object):
         for key, value in dxfattribs.items():
             self.set_dxf_attrib(key, value)
 
-    def _get_dxf_attrib(self, dxfattr):
-        # no subclass is subclass index 0
-        subclass_tags = self.tags.subclasses[dxfattr.subclass]
-        if dxfattr.xtype is not None:
-            tags = DXFExtendedPointType(subclass_tags)
-            return tags.get_value(dxfattr.code, dxfattr.xtype)
+    @staticmethod
+    def _get_extented_type(tags, code, xtype):
+        def get_point():
+            index = tags.tag_index(code)
+            return tags[index].value
+
+        if xtype == 'Point3D':
+            value = get_point()
+            if len(value) == 2:
+                raise DXFStructureError("expected 3D point but found 2D point")
+            return value
+        elif xtype == 'Point2D':
+            value = get_point()
+            if len(value) == 3:
+                raise DXFStructureError("expected 2D point but found 3D point")
+            return value
+        elif xtype == 'Point2D/3D':
+            return get_point()
         else:
-            return subclass_tags.get_value(dxfattr.code)
-
-    def _get_extended_type(self, code, xtype):
-        tags = DXFExtendedPointType(self.tags)
-        return tags.get_value(code, xtype)
-
-    def _set_extended_type(self, code, xtype, value):
-        tags = DXFExtendedPointType(self.tags)
-        return tags.set_value(code, xtype, value)
+            raise TypeError('Unknown extended type: %s' % xtype)
 
     @staticmethod
-    def _set_tag(tags, code, value):
-        tags.set_first(code, cast_tag_value(code, value))
+    def _set_extended_type(tags, code, xtype, value):
+        value = cast_tag_value(code, value)
+
+        def set_point():
+            if tags.has_tag(code):  # replace existing tag
+                index = tags.tag_index(code)
+                tags[index] = DXFTag(code, value)
+            else:  # append new tag
+                tags.append(DXFTag(code, value))
+
+        if xtype == 'Point2D':
+            if len(value) != 2:
+                raise ValueError('2 axis required')
+            set_point()
+        elif xtype == 'Point3D':
+            if len(value) != 3:
+                raise ValueError('3 axis required')
+            set_point()
+        elif xtype == 'Point2D/3D':
+            if not len(value) in (2, 3):
+                raise ValueError('2 or 3 axis required')
+            set_point()
+        else:
+            raise TypeError('Unknown extended type: %s' % xtype)
 
     def _del_dxf_attrib(self, dxfattr):
         def point_codes(base_code):
@@ -190,72 +223,3 @@ class DXFEntity(object):
 
     def destroy(self):
         pass
-
-
-class DXFExtendedPointType(object):
-    def __init__(self, tags):
-        self.tags = tags
-
-    def get_value(self, code, xtype):
-        if xtype == 'Point3D':
-            value = self._get_point(code)
-            if len(value) == 2:
-                raise DXFStructureError("expected 3D point but found 2D point")
-            return value
-        elif xtype == 'Point2D':
-            value = self._get_point(code)
-            if len(value) == 3:
-                raise DXFStructureError("expected 2D point but found 3D point")
-            return value
-        elif xtype == 'Point2D/3D':
-            return self._get_point(code)
-        else:
-            raise TypeError('Unknown extended type: %s' % xtype)
-
-    def _get_point(self, code):
-        index = self._point_index(code)
-        return self.tags[index].value
-
-    def _point_index(self, code):
-        return self.tags.tag_index(code)
-
-    def has_point(self, code):
-        return self.tags.has_tag(code)
-
-    def _append_point(self, code, value):
-        self.tags.append(DXFTag(code, value))
-
-    def set_value(self, code, xtype, value):
-        def set_point(code, axis):
-            if len(value) != axis:
-                raise ValueError('%d axis required' % axis)
-
-            if not self.has_point(code):
-                self._append_point(code, value)
-            else:
-                self._set_point(code, value)
-
-        def set_flexible_point(code):
-            if not len(value) in (2, 3):
-                raise ValueError('2 or 3 axis required')
-
-            if not self.has_point(code):
-                self.tags.append(DXFTag(code, value))
-            else:
-                self._set_point(code, value)
-
-        if xtype == 'Point2D':
-            set_point(code, axis=2)
-        elif xtype == 'Point3D':
-            set_point(code, axis=3)
-        elif xtype == 'Point2D/3D':
-            set_flexible_point(code)
-        else:
-            raise TypeError('Unknown extended type: %s' % xtype)
-
-    def _set_point(self, code, value):
-        index = self._point_index(code)
-        self.tags[index] = DXFTag(code, value)
-
-    def _count_axis(self, code):
-        return len(self._get_point(code))

@@ -8,9 +8,11 @@ import os
 import ezdxf
 from ezdxf.importer import Importer
 
+
 def save_source_dwg(dwg, filename):
     if not os.path.exists(filename):
         dwg.saveas(filename)
+
 
 def create_source_drawing(version):
     dwg = ezdxf.new(version)
@@ -28,6 +30,7 @@ def create_source_drawing(version):
     #save_source_dwg(dwg, 'ImportSource-' + version + '.dxf')
     return dwg
 
+
 def create_target_drawing(version):
     dwg = ezdxf.new(version)
     dwg.layers.create('TestConflict', dxfattribs={'color': 19})
@@ -35,11 +38,13 @@ def create_target_drawing(version):
     conflict_block.add_circle((1, 1), radius=7)
     return dwg
 
+
 def build_block(dwg, name):
     block = dwg.blocks.new(name=name)
     block.add_line((0, 0), (10, 0))
     block.add_circle((0, 0), radius=5)
     return block
+
 
 class TestCompatibilityCheck(unittest.TestCase):
     ac1009 = ezdxf.new('AC1009')
@@ -74,10 +79,17 @@ class TestCompatibilityCheck(unittest.TestCase):
         importer = Importer(self.ac1024, self.ac1015, strict_mode=False)
         self.assertFalse(importer.is_compatible())
 
+SRC_DWG = {
+    "AC1009": create_source_drawing("AC1009"),
+    "AC1015": create_source_drawing("AC1015"),
+}
+
+
 class TestImportModelspace_AC1009(unittest.TestCase):
-    VERSION = "AC1015"
+    VERSION = "AC1009"
+
     def setUp(self):
-        self.source = create_source_drawing(self.VERSION)
+        self.source = SRC_DWG[self.VERSION]
         self.target = create_target_drawing(self.VERSION)
         self.importer = Importer(self.source, self.target)
 
@@ -138,6 +150,7 @@ class TestImportModelspace_AC1009(unittest.TestCase):
         block_entities = list(block)
         block_ref_to_conflict_block = block_entities[2]
         self.assertEqual('ConflictBlock_1', block_ref_to_conflict_block.dxf.name)
+
 
 class TestImportModelspace_AC1015(TestImportModelspace_AC1009):
     VERSION = "AC1015"
