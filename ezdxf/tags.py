@@ -24,6 +24,7 @@ class TagIterator(object):
         self.undo = False
         self.last_tag = NONE_TAG
         self.undo_coord = None
+        self.eof = False
 
     def __iter__(self):
         return self
@@ -59,19 +60,32 @@ class TagIterator(object):
                     code, value = read_next_tag()
 
                 if is_point_code(code):  # 2D or 3D point
-                    code2, value2 = read_next_tag()  # 2. coordinate is always necessary
+                    try:
+                        code2, value2 = read_next_tag()  # 2. coordinate is always necessary
+                    except StopIteration:
+                        code2 = 0  # -> DXF structure error in following if-statement
+
                     if code2 != code + 10:
                         raise DXFStructureError("invalid 2D/3D point at line %d" % self.lineno)
-                    code3, value3 = read_next_tag()
-                    if code3 != code + 20:  # not a Z coordinate -> 2D point
-                        self.undo_coord = (code3, value3)
-                        self.lineno -= 2
+
+                    try:
+                        code3, value3 = read_next_tag()
+                    except StopIteration:  # 2D point at end of file
+                        self.eof = True  # store reaching end of file
                         value = (value, value2)
-                    else:  # is a 3D point
-                        value = (value, value2, value3)
+                    else:
+                        if code3 != code + 20:  # not a Z coordinate -> 2D point
+                            self.undo_coord = (code3, value3)
+                            self.lineno -= 2
+                            value = (value, value2)
+                        else:  # is a 3D point
+                            value = (value, value2, value3)
 
             self.last_tag = cast_tag((code, value))
             return self.last_tag
+
+        if self.eof:  # stored end of file
+            raise StopIteration()
 
         if self.undo:
             return undo_tag()

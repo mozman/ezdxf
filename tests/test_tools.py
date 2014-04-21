@@ -26,6 +26,7 @@ class TestDrawingProxy(unittest.TestCase):
 
 from ezdxf.tools import safe_3D_point
 
+
 class TestSafe3DPoint(unittest.TestCase):
     def test_3D_point(self):
         self.assertEqual((1, 2, 3), safe_3D_point((1, 2, 3)))

@@ -33,6 +33,13 @@ class TestTypeCaster(unittest.TestCase):
         result = cast_tag((290, '0'))
         self.assertEqual((290, 0), result)
 
+    def test_cast_2d_point(self):
+        result = cast_tag((10, ('1', '2')))
+        self.assertEqual((10, (1, 2)), result)
+
+    def test_cast_3d_point(self):
+        result = cast_tag((10, ('1', '2', '3')))
+        self.assertEqual((10, (1, 2, 3)), result)
 
 if __name__ == '__main__':
     unittest.main()

@@ -88,8 +88,8 @@ class TestEntityQueryAC1009(unittest.TestCase):
         self.assertEqual(2, len(entities))
 
     def test_query_vertices(self):
-        # VERTEX entnties are no more in any entity space, they are lined to the POLYLINE entity
-        entities = self.dwg.entities.query('VERTEX') #
+        # VERTEX entities are no more in any entity space, they are lined to the POLYLINE entity
+        entities = self.dwg.entities.query('VERTEX')
         self.assertEqual(0, len(entities))
 
     def test_query_layer_line(self):

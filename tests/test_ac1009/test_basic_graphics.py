@@ -11,96 +11,112 @@ import unittest
 
 import ezdxf
 
+DWG = ezdxf.new('AC1009')
+
+
+def new_drawing():
+    dwg = ezdxf.new('AC1009')
+    msp = dwg.modelspace()
+    return dwg, msp
+
 
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
-        self.dwg = ezdxf.new('AC1009')
-        self.layout = self.dwg.modelspace()
+        self.layout = DWG.modelspace()
 
 
 class TestModelSpace(SetupDrawing):
     def test_drawing_attribute(self):
         line = self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual(self.dwg, line.drawing)
+        self.assertEqual(DWG, line.drawing)
 
     def test_dxffactory_property(self):
         line = self.layout.add_line((0, 0), (1, 1))
-        self.assertEqual(self.dwg.dxffactory, line.dxffactory)
+        self.assertEqual(DWG.dxffactory, line.dxffactory)
 
     def test_delete_entity(self):
+        dwg, layout = new_drawing()
         for _ in range(5):
-            self.layout.add_line((0, 0), (10, 0))
-        lines = self.layout.query('LINE')
+            layout.add_line((0, 0), (10, 0))
+        lines = layout.query('LINE')
         self.assertEqual(5, len(lines))
         line3 = lines[2]
-        self.layout.delete_entity(line3)
+        layout.delete_entity(line3)
         self.assertTrue(line3.dxf.paperspace < 0, "Paper space attribute has to be invalid (<0).")
-        self.assertFalse(line3 in self.layout)
-        self.assertFalse(line3.dxf.handle in self.dwg.entitydb)
+        self.assertFalse(line3 in layout)
+        self.assertFalse(line3.dxf.handle in dwg.entitydb)
 
     def test_delete_polyline(self):
+        entity_count = len(list(self.layout))
         pline = self.layout.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
-        self.assertEqual(1, len(list(self.layout)))  # 1x POLYLINE rest is linked to the POLYLINE entity
+        self.assertEqual(entity_count+1, len(list(self.layout)))  # 1x POLYLINE rest is linked to the POLYLINE entity
         self.layout.delete_entity(pline)
-        self.assertEqual(0, len(list(self.layout)))
+        self.assertEqual(entity_count, len(list(self.layout)))
 
     def test_delete_blockref_with_attribs(self):
+        entity_count = len(list(self.layout))
         blockref = self.layout.add_blockref("TESTBLOCK", (0, 0))
         blockref.add_attrib('TAG1', "Text1", (0, 1))
         blockref.add_attrib('TAG2', "Text2", (0, 2))
         blockref.add_attrib('TAG3', "Text3", (0, 3))
-        self.assertEqual(1, len(list(self.layout)))  # 1x INSERT, rest is linked to the INSERT entity
+        self.assertEqual(entity_count+1, len(list(self.layout)))  # 1x INSERT, rest is linked to the INSERT entity
         self.layout.delete_entity(blockref)
-        self.assertEqual(0, len(list(self.layout)))
+        self.assertEqual(entity_count, len(list(self.layout)))
 
     def test_delete_all_entities(self):
-        paperspace = self.dwg.layout()
-        modelspace = self.dwg.modelspace()
+        entity_count = len(self.layout)  # all entities in entity space
+        paperspace = DWG.layout()
+        paper_space_count = len(list(paperspace))
+        modelspace = DWG.modelspace()
         for _ in range(5):
             modelspace.add_line((0, 0), (1, 1))
             paperspace.add_line((0, 0), (1, 1))
 
-        self.assertEqual(5, len(list(modelspace)))
-        self.assertEqual(5, len(list(paperspace)))
+        self.assertEqual(entity_count + 10, len(self.layout))
 
         modelspace.delete_all_entities()
         self.assertEqual(0, len(list(modelspace)))
-        self.assertEqual(5, len(list(paperspace)))
+        self.assertEqual(paper_space_count + 5, len(list(paperspace)))
 
 
 class TestPaperSpace(SetupDrawing):
     def test_paper_space(self):
-        paperspace = self.dwg.layout('Name it like you want, there is only one paperspace at AC1009')
+        paperspace = DWG.layout('Name it like you want, there is only one paperspace at AC1009')
         line = paperspace.add_line((0, 0), (1, 1))
         self.assertEqual(1, line.dxf.paperspace)
 
     def test_iter_layout(self):
-        self.layout.add_line((0, 0), (1, 1))
-        self.layout.add_line((0, 0), (1, 1))
-        entities = list(self.layout)
+        paper_space = DWG.layout()
+        paper_space.delete_all_entities()
+        paper_space.add_line((0, 0), (1, 1))
+        paper_space.add_line((0, 0), (1, 1))
+        entities = list(paper_space)
         self.assertEqual(2, len(entities))
         # Are all necessary attribute set?
         e = entities[0]
-        self.assertEqual(self.dwg, e.drawing)
+        self.assertEqual(DWG, e.drawing)
 
     def test_query_entities(self):
-        self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
-        self.layout.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
-        entities = self.layout.query('*[layer ? "lay_.*"]')
+        paper_space = DWG.layout()
+        paper_space.delete_all_entities()
+        paper_space.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
+        paper_space.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
+        entities = paper_space.query('*[layer ? "lay_.*"]')
         self.assertEqual(2, len(entities))
         # Are all necessary attribute set?
         e = entities[0]
-        self.assertEqual(self.dwg, e.drawing)
+        self.assertEqual(DWG, e.drawing)
 
     def test_model_space_get_layout_for_entity(self):
-        line = self.layout.add_line((0, 0), (1, 1))
-        layout = self.dwg.layouts.get_layout_for_entity(line)
-        self.assertEqual(self.layout, layout)
+        model_space = DWG.modelspace()
+        line = model_space.add_line((0, 0), (1, 1))
+        layout = DWG.layouts.get_layout_for_entity(line)
+        self.assertEqual(model_space, layout)
 
     def test_paper_space_get_layout_for_entity(self):
-        paper_space = self.dwg.layout()
+        paper_space = DWG.layout()
         line = paper_space.add_line((0, 0), (1, 1))
-        layout = self.dwg.layouts.get_layout_for_entity(line)
+        layout = DWG.layouts.get_layout_for_entity(line)
         self.assertEqual(paper_space, layout)
 
 
@@ -113,7 +129,7 @@ class TestGraphicsDefaultSettings(SetupDrawing):
         self.assertEqual((0.0, 0.0, 1.0), line.dxf.extrusion)
 
 
-class TestGenericWrapper2(SetupDrawing):
+class TestDXFEntity(SetupDrawing):
     def test_clone_dxf_attribs(self):
         line = self.layout.add_line((0, 0), (1, 1))
         attribs = line.clone_dxf_attribs()

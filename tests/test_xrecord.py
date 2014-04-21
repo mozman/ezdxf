@@ -8,6 +8,7 @@ import unittest
 from ezdxf.testtools import ClassifiedTags, DXFTag
 from ezdxf.dxfobjects import XRecord
 
+
 class TestXRecord(unittest.TestCase):
     def setUp(self):
         self.xrecord = XRecord(ClassifiedTags.from_text(XRECORD1))
@@ -44,6 +45,7 @@ class TestXRecord(unittest.TestCase):
     def test_append_data(self):
         self.xrecord.append(DXFTag(103, 'MOZMAN'))
         self.assertEqual(DXFTag(103, 'MOZMAN'), self.xrecord[-1])
+
 
 XRECORD1 = """  0
 XRECORD

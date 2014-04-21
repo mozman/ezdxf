@@ -9,6 +9,9 @@ Version 0.6.0 - 2014
   * Refactoring of internal structures
   * CHANGE: appended entities like VERTEX for POLYLINE and ATTRIB for INSERT are linked to the main entity and do
     not appear in layouts, model space or blocks (modelspace.query('VERTEX') is always an emtpy list).
+  * CHANGE: refactoring of the internal 2D/3D point representation with the effect of reduced memory footprint and
+    getting/setting points should be a little bit faster
+  * faster unittests
 
 Version 0.5.2 - 2014-04-15
 

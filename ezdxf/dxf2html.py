@@ -11,7 +11,7 @@ import os
 import io
 
 from ezdxf import readfile
-from ezdxf.tags import tag_type
+from ezdxf.tags import tag_type, point_tuple, is_point_code
 from ezdxf.c23 import escape, ustr
 from ezdxf.reflinks import get_reference_link
 from ezdxf.sections import KNOWN_SECTIONS
@@ -177,6 +177,7 @@ TAG_TYPES = {
     int: '<int>',
     float: '<float>',
     ustr: '<str>',
+    point_tuple: '<point>'
 }
 
 
@@ -187,22 +188,16 @@ def tag_type_str(code):
 def hdrvars2html(hdrvars):
     """DXF header section as <div> container.
     """
-    def var2str(hdrvar):
-        if hdrvar.ispoint:
-            return  ustr(hdrvar.getpoint())
-        else:
-            return ustr(hdrvar.value)
-
     def vartype(hdrvar):
-        if hdrvar.ispoint:
-            dim = len(hdrvar.getpoint()) - 2
+        if is_point_code(hdrvar.code):
+            dim = len(hdrvar.value) - 2
             return ("<point 2D>", "<point 3D>")[dim]
         else:
             return tag_type_str(hdrvar.code)
 
     varstrings = [
-        HEADER_VAR_TPL.format(code=name, value=escape(var2str(value)), type=escape(vartype(value)))
-        for name, value in hdrvars.items()
+        HEADER_VAR_TPL.format(code=name, value=escape(ustr(hdrvar.value)), type=escape(vartype(hdrvar)))
+        for name, hdrvar in hdrvars.items()
     ]
     return HEADER_SECTION_TPL.format(content="\n".join(varstrings))
 
@@ -226,9 +221,9 @@ def tags2html(tags):
             return vstr
 
         tpl = TAG_TPL
-        if tag.code in HANDLE_DEFINITIONS: # is handle definition
+        if tag.code in HANDLE_DEFINITIONS:  # is handle definition
             tpl = TAG_HANDLE_DEF_TPL
-        elif tag.code in HANDLE_LINKS: # is handle link
+        elif tag.code in HANDLE_LINKS:  # is handle link
             tpl = TAG_HANDLE_LINK_TPL
         vstr = trim_str(ustr(tag.value))
         return tpl.format(code=tag.code, value=escape(vstr), type=escape(tag_type_str(tag.code)))

@@ -618,7 +618,7 @@ class LWPolyline(ac1009.GraphicEntity):
             def add_tag_if_not_zero(code, value):
                 if value != 0.0:
                     tags.append(DXFTag(code, value))
-            tags.append(DXFTag(10, (point[0], point[1])))  # x value
+            tags.append(DXFTag(10, (point[0], point[1])))  # x, y values
             try:
                 add_tag_if_not_zero(40, point[2])  # start width, default=0
                 add_tag_if_not_zero(41, point[3])  # end width, default=0

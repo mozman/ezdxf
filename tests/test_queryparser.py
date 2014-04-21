@@ -6,6 +6,7 @@ import unittest
 
 from ezdxf.queryparser import EntityQueryParser, ParseException, InfixBoolQuery
 
+
 class TestEntityQueryParserWithoutAttributes(unittest.TestCase):
     def test_without_wildcards(self):
         result = EntityQueryParser.parseString("LINE", parseAll=True)
@@ -33,6 +34,7 @@ class TestEntityQueryParserWithoutAttributes(unittest.TestCase):
     def test_wrong_star_wildcard_3(self):
         with self.assertRaises(ParseException):
             EntityQueryParser.parseString("LINE *[]", parseAll=True)
+
 
 class TestEntityQueryParserWithAttributes(unittest.TestCase):
     def test_empty_attribute_list_not_allowed(self):
