@@ -27,6 +27,39 @@ class PolymeshMixin(object):
         else:
             raise IndexError(repr(pos))
 
+    def get_mesh_cache(self):
+        return MeshVertexCache(self)
+
+
+class MeshVertexCache(object):
+    """ Cache mesh vertices in a dict, keys are (row, col) tuples.
+
+    - set vertex location: cache[row, col] = (x, y, z)
+    - get vertex location: x, y, z = cache[row, col]
+    """
+    def __init__(self, mesh):
+        self._vertices = self._setup(mesh, mesh.dxf.m_count, mesh.dxf.n_count)
+
+    def _setup(self, mesh, m_count, n_count):
+        cache = {}
+        vertices = iter(mesh.vertices())
+        for m in range(m_count):
+            for n in range(n_count):
+                cache[(m, n)] = next(vertices)
+        return cache
+
+    def __getitem__(self, pos):
+        try:
+            return self._vertices[pos].dxf.location
+        except KeyError:
+            raise IndexError(repr(pos))
+
+    def __setitem__(self, pos, location):
+        try:
+            self._vertices[pos].dxf.location = location
+        except KeyError:
+            raise IndexError(repr(pos))
+
 
 class PolyfaceMixin(object):
     """ Order of vertices and faces IS important (ACAD2010)

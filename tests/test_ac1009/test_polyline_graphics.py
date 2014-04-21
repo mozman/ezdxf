@@ -96,6 +96,16 @@ class TestPolymesh(unittest.TestCase):
         with self.assertRaises(IndexError):
             mesh.get_mesh_vertex((4, 0))
 
+    def test_mesh_cache(self):
+        pos = (2, 1)
+        mesh = self.layout.add_polymesh((4, 4))
+        cache = mesh.get_mesh_cache()
+        cache[pos] = (1, 2, 3)
+        vertex = mesh.get_mesh_vertex(pos)
+        self.assertEqual(vertex.dxf.location, cache[pos])
+        with self.assertRaises(IndexError):
+            cache[4, 0]
+
 
 class TestPolyface(unittest.TestCase):
     def setUp(self):
