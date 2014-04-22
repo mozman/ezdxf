@@ -245,6 +245,18 @@ class TestTags(unittest.TestCase):
         self.tags.set_first(999, 'NEWTAG')
         self.assertEqual('NEWTAG', self.tags[-1].value)
 
+    def test_find_first(self):
+        value = self.tags.find_first(9)
+        self.assertEqual('$ACADVER', value)
+
+    def test_find_first_default(self):
+        value = self.tags.find_first(1234, default=999)
+        self.assertEqual(999, value)
+
+    def test_find_first_error(self):
+        with self.assertRaises(ValueError):
+            self.tags.find_first(1234)
+
     def test_get_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)
         self.assertEqual('F5', tags.get_handle())

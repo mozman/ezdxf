@@ -34,7 +34,7 @@ from contextlib import contextmanager
 import math
 
 from ..ac1009 import graphics as ac1009
-from ..tags import DXFTag
+from ..tags import DXFTag, Tags
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
@@ -517,6 +517,10 @@ vertex_subclass = (
 )
 
 
+# VERTEX_DUMMY = Tags((DXFTag(100, 'AcDbVertex'), ))
+DUMMY_TAGS = Tags()
+
+
 class Vertex(ac1009.Vertex):
     VTX3D = const.VTX_3D_POLYFACE_MESH_VERTEX | const.VTX_3D_POLYGON_MESH_VERTEX | const.VTX_3D_POLYLINE_VERTEX
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
@@ -534,6 +538,13 @@ class Vertex(ac1009.Vertex):
             set_subclass('AcDb3dPolylineVertex')
         else:
             set_subclass('AcDb2dVertex')
+
+    @staticmethod
+    def fix_tags(tags):
+        """ If subclass[2] is not 'AcDbVertex', insert 'AcDbVertex' class
+        """
+        if tags.sublasses[2][0].value != 'AcDbVertex':
+            tags.subclasses.insert(2, DUMMY_TAGS)
 
 
 class SeqEnd(ac1009.SeqEnd):
