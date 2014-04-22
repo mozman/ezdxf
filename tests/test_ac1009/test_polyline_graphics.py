@@ -23,14 +23,14 @@ class TestPolyline(unittest.TestCase):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         self.assertEqual((0., 0.), polyline[0].dxf.location)
         self.assertEqual((1., 1.), polyline[1].dxf.location)
-        self.assertEqual('polyline2d', polyline.get_mode())
+        self.assertEqual('AcDb2dPolyline', polyline.get_mode())
 
     def test_create_polyline3D(self):
         polyline = self.layout.add_polyline3d([(1, 2, 3), (4, 5, 6)])
         self.assertEqual((1., 2., 3.), polyline[0].dxf.location)
         self.assertEqual((4., 5., 6.), polyline[1].dxf.location)
         self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
-        self.assertEqual('polyline3d', polyline.get_mode())
+        self.assertEqual('AcDb3dPolyline', polyline.get_mode())
 
     def test_set_vertex(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])

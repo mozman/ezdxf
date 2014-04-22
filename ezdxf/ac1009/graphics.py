@@ -675,13 +675,13 @@ class Polyline(GraphicEntity, ColorMixin):
     def get_mode(self):
         flags = self.dxf.flags
         if flags & const.POLYLINE_3D_POLYLINE > 0:
-            return 'polyline3d'
+            return 'AcDb3dPolyline'
         elif flags & const.POLYLINE_3D_POLYMESH > 0:
-            return 'polymesh'
+            return 'AcDbPolygonMesh'
         elif flags & const.POLYLINE_POLYFACE > 0:
-            return 'polyface'
+            return 'AcDbPolyFaceMesh'
         else:
-            return 'polyline2d'
+            return 'AcDb2dPolyline'
 
     def m_close(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
@@ -797,9 +797,9 @@ class Polyline(GraphicEntity, ColorMixin):
 
     def cast(self):
         mode = self.get_mode()
-        if mode == 'polyface':
+        if mode == 'AcDbPolyFaceMesh':
             return Polyface.convert(self)
-        elif mode == 'polymesh':
+        elif mode == 'AcDbPolygonMesh':
             return Polymesh.convert(self)
         else:
             return self

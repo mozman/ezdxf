@@ -64,16 +64,16 @@ VTX_3D_POLYGON_MESH_VERTEX = 64
 VTX_3D_POLYFACE_MESH_VERTEX = 128
 
 VERTEX_FLAGS = {
-    'polyline2d': 0,
-    'polyline3d': VTX_3D_POLYLINE_VERTEX,
-    'polymesh': VTX_3D_POLYGON_MESH_VERTEX,
-    'polyface': VTX_3D_POLYGON_MESH_VERTEX | VTX_3D_POLYFACE_MESH_VERTEX,
+    'AcDb2dPolyline': 0,
+    'AcDb3dPolyline': VTX_3D_POLYLINE_VERTEX,
+    'AcDbPolygonMesh': VTX_3D_POLYGON_MESH_VERTEX,
+    'AcDbPolyFaceMesh': VTX_3D_POLYGON_MESH_VERTEX | VTX_3D_POLYFACE_MESH_VERTEX,
 }
 POLYLINE_FLAGS = {
-    'polyline2d': 0,
-    'polyline3d': POLYLINE_3D_POLYLINE,
-    'polymesh': POLYLINE_3D_POLYMESH,
-    'polyface': POLYLINE_POLYFACE,
+    'AcDb2dPolyline': 0,
+    'AcDb3dPolyline': POLYLINE_3D_POLYLINE,
+    'AcDbPolygonMesh': POLYLINE_3D_POLYMESH,
+    'AcDbPolyFaceMesh': POLYLINE_POLYFACE,
 }
 
 # block-type flags (bit coded values, may be combined):

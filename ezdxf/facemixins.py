@@ -72,10 +72,11 @@ class PolyfaceMixin(object):
 
     def append_faces(self, faces, dxfattribs=None):
         def facevertex():
-            vertex = self._new_entity('VERTEX', dxfattribs)
-            vertex.dxf.flags = const.VTX_3D_POLYFACE_MESH_VERTEX
-            return vertex
+            dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
+            return self._new_entity('VERTEX', dxfattribs)
 
+        if dxfattribs is None:
+            dxfattribs = {}
         existing_faces = list(self.faces())
         for face in faces:
             vertices = self._points_to_vertices(face, {})
@@ -87,8 +88,6 @@ class PolyfaceMixin(object):
         facebuilder = FaceBuilder(faces)
         self._unlink_all_vertices()  # but don't remove it from database
         self._append_vertices(facebuilder.get_vertices())
-
-
         self.update_count(facebuilder.nvertices, facebuilder.nfaces)
 
     def update_count(self, nvertices, nfaces):

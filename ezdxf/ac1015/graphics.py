@@ -438,35 +438,51 @@ class Polyline(ac1009.Polyline):
         self.update_subclass_specifier()
 
     def update_subclass_specifier(self):
-        def set_subclass(subclassname):
-            # For dxf attribute access not the name of the subclass is important, but
-            # the order of the subcasses 1st, 2nd, 3rd and so on.
-            # The 3rd subclass is the AcDb3dPolyline or AcDb2dPolyline subclass
-            subclass = self.tags.subclasses[2]
-            subclass[0] = DXFTag(100, subclassname)
-
-        if self.get_mode() == 'polyline2d':
-            set_subclass('AcDb2dPolyline')
-        else:
-            set_subclass('AcDb3dPolyline')
+        # For dxf attribute access not the name of the subclass is important, but
+        # the order of the subcasses 1st, 2nd, 3rd and so on.
+        # The 3rd subclass is the AcDb3dPolyline or AcDb2dPolyline subclass
+        subclass = self.tags.subclasses[2]
+        subclass[0] = DXFTag(100, self.get_mode())
 
     def cast(self):
         mode = self.get_mode()
-        if mode == 'polyface':
+        if mode == 'AcDbPolyFaceMesh':
             return Polyface.convert(self)
-        elif mode == 'polymesh':
+        elif mode == 'AcDbPolygonMesh':
             return Polymesh.convert(self)
         else:
             return self
 
 
 class Polyface(Polyline, PolyfaceMixin):
+    """ PolyFace structure:
+    POLYLINE
+      AcDbEntity
+      AcDbPolyFaceMesh
+    VERTEX - Vertex
+      AcDbEntity
+      AcDbVertex
+      AcDbPolyFaceMeshVertex
+    VERTEX - Face
+      AcDbEntity
+      AcDbFaceRecord
+    SEQEND
+    """
     @staticmethod
     def convert(polyline):
         return Polyface(polyline.tags, polyline.drawing)
 
 
 class Polymesh(Polyline, PolymeshMixin):
+    """ PolyMesh structure:
+    POLYLINE
+      AcDbEntity
+      AcDbPolygonMesh
+    VERTEX
+      AcDbEntity
+      AcDbVertex
+      AcDbPolygonMeshVertex
+    """
     @staticmethod
     def convert(polyline):
         return Polymesh(polyline.tags, polyline.drawing)
@@ -517,12 +533,11 @@ vertex_subclass = (
 )
 
 
-# VERTEX_DUMMY = Tags((DXFTag(100, 'AcDbVertex'), ))
-DUMMY_TAGS = Tags()
+EMPTY_VERTEX_SUBCLASS = Tags()
 
 
 class Vertex(ac1009.Vertex):
-    VTX3D = const.VTX_3D_POLYFACE_MESH_VERTEX | const.VTX_3D_POLYGON_MESH_VERTEX | const.VTX_3D_POLYLINE_VERTEX
+    FACE_FLAGS = const.VTX_3D_POLYGON_MESH_VERTEX + const.VTX_3D_POLYFACE_MESH_VERTEX
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 
@@ -533,18 +548,25 @@ class Vertex(ac1009.Vertex):
         def set_subclass(subclassname):
             subclass = self.tags.subclasses[3]
             subclass[0] = DXFTag(100, subclassname)
-
-        if self.dxf.flags & Vertex.VTX3D != 0:
+        flags = self.dxf.flags
+        if flags & const.VTX_3D_POLYLINE_VERTEX:
             set_subclass('AcDb3dPolylineVertex')
+        elif (flags & Vertex.FACE_FLAGS) == const.VTX_3D_POLYFACE_MESH_VERTEX:
+            set_subclass('AcDbFaceRecord')
+            self.tags.subclasses[2] = EMPTY_VERTEX_SUBCLASS  # clear subclass AcDbVertex
+        elif flags & Vertex.FACE_FLAGS == Vertex.FACE_FLAGS:
+            set_subclass('AcDbPolyFaceMeshVertex')
+        elif flags & const.VTX_3D_POLYGON_MESH_VERTEX:
+            set_subclass('AcDbPolygonMeshVertex')
         else:
             set_subclass('AcDb2dVertex')
 
     @staticmethod
     def fix_tags(tags):
-        """ If subclass[2] is not 'AcDbVertex', insert 'AcDbVertex' class
+        """ If subclass[2] is not 'AcDbVertex', insert empty subclass
         """
-        if tags.sublasses[2][0].value != 'AcDbVertex':
-            tags.subclasses.insert(2, DUMMY_TAGS)
+        if tags.subclasses[2][0].value != 'AcDbVertex':
+            tags.subclasses.insert(2, EMPTY_VERTEX_SUBCLASS)
 
 
 class SeqEnd(ac1009.SeqEnd):
