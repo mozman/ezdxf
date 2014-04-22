@@ -64,8 +64,11 @@ class EntitySection(object):
         linked_tags = get_tags_linker(self.dxffactory.wrap_entity)
         store_tags = self._entityspace.store_tags
         entitydb = self.entitydb
+        fix_tags = self.dxffactory.fix_tags
+
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
             tags = ClassifiedTags(group)
+            fix_tags(tags)  # post read tags fixer for VERTEX!
             if linked_tags(tags):  # also creates the link structure as side effect
                 entitydb.add_tags(tags)  # add just to database
             else:

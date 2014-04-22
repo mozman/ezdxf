@@ -167,3 +167,6 @@ class AC1009Factory(object):
     def copy_layout(self, source_entity, target_entity):
         # Place target_entity in same layout as source_entity
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
+
+    def fix_tags(self, tags):
+        pass

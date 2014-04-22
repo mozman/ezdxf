@@ -266,12 +266,25 @@ class Tags(list):
     def dxftype(self):
         return self.__getitem__(0).value
 
+    def find_first(self, code, default=ValueError):
+        """ Returns value of first DXFTag(code, ...) or default if default != ValueError, else raises ValueError.
+        """
+        for tag in self:
+            if tag.code == code:
+                return tag.value
+        if default == ValueError:
+            raise ValueError(code)
+        else:
+            return default
+
     def find_all(self, code):
-        """ Returns a list of DXFTag(code, ...). """
+        """ Returns a list of DXFTag(code, ...).
+        """
         return [tag for tag in self if tag.code == code]
 
     def tag_index(self, code, start=0, end=None):
-        """ Return first index of DXFTag(code, ...). """
+        """ Return first index of DXFTag(code, ...).
+        """
         if end is None:
             end = len(self)
         for index, tag in enumerate(self[start:end]):
@@ -286,7 +299,8 @@ class Tags(list):
         return False
 
     def update(self, code, value):
-        """ Update first existing tag, raises ValueError if tag not exists. """
+        """ Update first existing tag, raises ValueError if tag not exists.
+        """
         index = self.tag_index(code)
         self[index] = DXFTag(code, value)
 

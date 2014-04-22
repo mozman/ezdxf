@@ -42,6 +42,7 @@ class BlocksSection(object):
             entities_iterator = iter(entities)
             head_handle = add_tags(next(entities_iterator))
             block = self.dxffactory.new_block_layout(head_handle, tail_handle)
+
             for entity in entities_iterator:
                 handle = add_tags(entity)
                 if not linked_tags(entity):  # also creates the link structure as side effect
@@ -57,8 +58,11 @@ class BlocksSection(object):
             return
 
         entities = []
+        fix_tags = self.dxffactory.fix_tags
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
-            entities.append(ClassifiedTags(group))
+            tags = ClassifiedTags(group)
+            fix_tags(tags)  # post read tags fixer for VERTEX!
+            entities.append(tags)
             if group[0].value == 'ENDBLK':
                 self.add(build_block_layout(entities))
                 entities = []
