@@ -215,11 +215,27 @@ class Test2xSubclass(unittest.TestCase):
         self.tags = ClassifiedTags.from_text(SPECIALCASE_TEXT)
 
     def test_read_tags(self):
-        subclass2 = self.tags.get_subclass('AcDbText', 1)
-        self.assertEqual((100, 'AcDbText'), subclass2[-2])
-        self.assertEqual((73, 2), subclass2[-1])
-        self.assertEqual(2, len(subclass2))
+        subclass2 = self.tags.get_subclass('AcDbText')
+        self.assertEqual((100, 'AcDbText'), subclass2[0])
 
+    def test_read_tags_2(self):
+        subclass2 = self.tags.get_subclass('AcDbText')
+        self.assertEqual((100, 'AcDbText'), subclass2[0])
+        self.assertEqual((1, 'Title:'), subclass2[3])
+
+    def test_read_tags_3(self):
+        subclass2 = self.tags.get_subclass('AcDbText', 3)
+        self.assertEqual((100, 'AcDbText'), subclass2[0])
+        self.assertEqual((73, 2), subclass2[1])
+
+    def test_key_error(self):
+        with self.assertRaises(KeyError):
+            self.tags.get_subclass('AcDbText', pos=4)
+
+    def test_skip_empty_subclass(self):
+        self.tags.subclasses[1] = Tags()
+        subclass2 = self.tags.get_subclass('AcDbText')
+        self.assertEqual((100, 'AcDbText'), subclass2[0])
 
 SPECIALCASE_TEXT = """  0
 TEXT

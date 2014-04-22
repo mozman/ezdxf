@@ -11,6 +11,8 @@ import unittest
 
 import ezdxf
 from ezdxf.const import VTX_3D_POLYLINE_VERTEX
+from ezdxf.testtools import DrawingProxy, Tags
+from ezdxf.entitysection import EntitySection
 
 DWG = ezdxf.new('AC1015')
 
@@ -23,14 +25,14 @@ class TestPolyline(unittest.TestCase):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
         self.assertEqual((0., 0.), polyline[0].dxf.location)
         self.assertEqual((1., 1.), polyline[1].dxf.location)
-        self.assertEqual('polyline2d', polyline.get_mode())
+        self.assertEqual('AcDb2dPolyline', polyline.get_mode())
 
     def test_create_polyline3D(self):
         polyline = self.layout.add_polyline3d([(1, 2, 3), (4, 5, 6)])
         self.assertEqual((1., 2., 3.), polyline[0].dxf.location)
         self.assertEqual((4., 5., 6.), polyline[1].dxf.location)
         self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
-        self.assertEqual('polyline3d', polyline.get_mode())
+        self.assertEqual('AcDb3dPolyline', polyline.get_mode())
 
     def test_set_vertex(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
@@ -85,12 +87,12 @@ class TestPolymesh(unittest.TestCase):
         mesh.set_mesh_vertex((1, 1), (1, 2, 3))
         self.assertEqual((1, 2, 3), mesh.get_mesh_vertex((1, 1)).dxf.location)
 
-    def test_error_nindex(self):
+    def test_error_n_index(self):
         mesh = self.layout.add_polymesh((4, 4))
         with self.assertRaises(IndexError):
             mesh.get_mesh_vertex((0, 4))
 
-    def test_error_mindex(self):
+    def test_error_m_index(self):
         mesh = self.layout.add_polymesh((4, 4))
         with self.assertRaises(IndexError):
             mesh.get_mesh_vertex((4, 0))
@@ -180,16 +182,446 @@ class TestInternals(unittest.TestCase):
 
     def test_polyline2d(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1)])
-        self.assertEqual(polyline.tags.subclasses[2][0], (100, 'AcDb2dPolyline'))
+        self.assertEqual('AcDb2dPolyline', polyline.tags.subclasses[2][0].value)
         vertex = polyline[0]
-        self.assertEqual(vertex.tags.subclasses[3][0], (100, 'AcDb2dVertex'))
+        self.assertEqual('AcDbVertex', vertex.tags.subclasses[2][0].value)
+        self.assertEqual('AcDb2dVertex', vertex.tags.subclasses[3][0].value)
 
     def test_polyline3d(self):
         polyline = self.layout.add_polyline3d([(0, 0), (1, 1)])
-        self.assertEqual(polyline.tags.subclasses[2][0], (100, 'AcDb3dPolyline'))
+        self.assertEqual('AcDb3dPolyline', polyline.tags.subclasses[2][0].value)
         vertex = polyline[0]
-        self.assertEqual(vertex.tags.subclasses[3][0], (100, 'AcDb3dPolylineVertex'))
+        self.assertEqual('AcDbVertex', vertex.tags.subclasses[2][0].value)
+        self.assertEqual('AcDb3dPolylineVertex', vertex.tags.subclasses[3][0].value)
 
+    def test_polymesh(self):
+        mesh = self.layout.add_polymesh((4, 4))
+        vertex = mesh[0]
+        self.assertEqual('AcDbVertex', vertex.tags.subclasses[2][0].value)
+        self.assertEqual('AcDbPolygonMeshVertex', vertex.tags.subclasses[3][0].value)
+
+    def test_polyface(self):
+        face = self.layout.add_polyface()
+        face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
+        vertex = face[0]
+        self.assertEqual('AcDbVertex', vertex.tags.subclasses[2][0].value)
+        self.assertEqual('AcDbPolyFaceMeshVertex', vertex.tags.subclasses[3][0].value)
+
+        vertex = face[4]
+        self.assertFalse(len(vertex.tags.subclasses[2]))
+        self.assertEqual('AcDbFaceRecord', vertex.tags.subclasses[3][0].value)
+
+
+class TestNewStylePolyface(unittest.TestCase):
+
+    def setUp(self):
+        self.dwg = DrawingProxy('AC1018')
+        self.section = EntitySection(Tags.from_text(NEW_STYLE_POLYFACE), self.dwg)
+
+    def test_face_count(self):
+        polyface = list(self.section)[0]
+        faces = list(polyface.faces())
+        self.assertEqual(6, len(faces))
+
+NEW_STYLE_POLYFACE = """  0
+SECTION
+  2
+ENTITIES
+  0
+POLYLINE
+  5
+9A
+330
+6B
+100
+AcDbEntity
+  8
+0
+100
+AcDbPolyFaceMesh
+ 66
+     1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+    64
+ 71
+     8
+ 72
+     6
+  0
+VERTEX
+  5
+9B
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.0
+ 20
+0.0
+ 30
+0.802929163112954
+ 70
+   192
+  0
+VERTEX
+  5
+9C
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.4434395109072581
+ 20
+0.0
+ 30
+0.802929163112954
+ 70
+   192
+  0
+VERTEX
+  5
+9D
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.4434395109072581
+ 20
+0.4434395109072581
+ 30
+0.802929163112954
+ 70
+   192
+  0
+VERTEX
+  5
+9E
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.0
+ 20
+0.4434395109072581
+ 30
+0.802929163112954
+ 70
+   192
+  0
+VERTEX
+  5
+9F
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.4434395109072581
+ 20
+0.0
+ 30
+1.246368674020211
+ 70
+   192
+  0
+VERTEX
+  5
+A0
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.0
+ 20
+0.0
+ 30
+1.246368674020211
+ 70
+   192
+  0
+VERTEX
+  5
+A1
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.4434395109072581
+ 20
+0.4434395109072581
+ 30
+1.246368674020211
+ 70
+   192
+  0
+VERTEX
+  5
+A2
+330
+9A
+100
+AcDbEntity
+  8
+0
+100
+AcDbVertex
+100
+AcDbPolyFaceMeshVertex
+ 10
+0.0
+ 20
+0.4434395109072581
+ 30
+1.246368674020211
+ 70
+   192
+  0
+VERTEX
+  5
+A3
+330
+9A
+100
+AcDbEntity
+  8
+0
+ 62
+     1
+100
+AcDbFaceRecord
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+   128
+ 71
+     1
+ 72
+     2
+ 73
+     3
+ 74
+     4
+  0
+VERTEX
+  5
+A4
+330
+9A
+100
+AcDbEntity
+  8
+0
+ 62
+     2
+100
+AcDbFaceRecord
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+   128
+ 71
+     1
+ 72
+     2
+ 73
+     5
+ 74
+     6
+  0
+VERTEX
+  5
+A5
+330
+9A
+100
+AcDbEntity
+  8
+0
+ 62
+     3
+100
+AcDbFaceRecord
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+   128
+ 71
+     2
+ 72
+     3
+ 73
+     7
+ 74
+     5
+  0
+VERTEX
+  5
+A6
+330
+9A
+100
+AcDbEntity
+  8
+0
+ 62
+     4
+100
+AcDbFaceRecord
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+   128
+ 71
+     3
+ 72
+     7
+ 73
+     8
+ 74
+     4
+  0
+VERTEX
+  5
+A7
+330
+9A
+100
+AcDbEntity
+  8
+0
+ 62
+     5
+100
+AcDbFaceRecord
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+   128
+ 71
+     1
+ 72
+     4
+ 73
+     8
+ 74
+     6
+  0
+VERTEX
+  5
+A8
+330
+9A
+100
+AcDbEntity
+  8
+0
+ 62
+     6
+100
+AcDbFaceRecord
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+   128
+ 71
+     6
+ 72
+     5
+ 73
+     7
+ 74
+     8
+  0
+SEQEND
+  5
+A9
+330
+9A
+100
+AcDbEntity
+  8
+0
+  0
+ENDSEC
+"""
 
 if __name__ == '__main__':
     unittest.main()
