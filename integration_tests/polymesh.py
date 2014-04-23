@@ -34,7 +34,7 @@ def make_drawing(filename, dxfversion='AC1009'):
     polymesh = layout.add_polymesh(size=(MSIZE, MSIZE))
     build_mesh(polymesh)
     dwg.saveas(filename)
-    print("drawing '%s' created.\n" % filename)
+
 
 if __name__ == '__main__':
     make_drawing('polymesh_AC1009.dxf', 'AC1009')
