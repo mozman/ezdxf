@@ -65,26 +65,25 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
     """ Layout representation
     """
     def __init__(self, drawing, layout_handle):
-        entity_space = drawing.sections.entities.get_entityspace()
-        dxf_factory = drawing.dxffactory
-        super(Layout, self).__init__(entity_space, dxf_factory, 0)
+        def _get_layout_key():
+            dxflayout = drawing.dxffactory.wrap_handle(layout_handle)
+            return dxflayout.dxf.block_record
+
+        layout_key = _get_layout_key()  # == block_record handle
+        entitities_section = drawing.sections.entities
+        layout_space = entitities_section.get_layout_space(layout_key)
+        dxffactory = drawing.dxffactory
+        super(Layout, self).__init__(layout_space, dxffactory, 0)
         self._layout_handle = layout_handle
         self._block_record_handle = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
 
     # start of public interface
 
-    def __iter__(self):
-        """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
-        """
-        for entity in self._iter_all_entities():
-            if entity.get_dxf_attrib('owner') == self._block_record_handle:
-                yield entity
-
     def __contains__(self, entity):
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self.get_entity_by_handle(entity)
-        return True if entity.get_dxf_attrib('owner') == self._block_record_handle else False
+        return True if entity.dxf.owner == self._block_record_handle else False
 
     # end of public interface
 
@@ -117,7 +116,7 @@ class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):
         if isinstance(entity, ClassifiedTags):
             entity = self._dxffactory.wrap_entity(entity)
         entity.dxf.owner = self.get_block_record_handle()
-        self._entityspace.append(entity.dxf.handle)
+        self._entity_space.append(entity.dxf.handle)
 
     def get_block_record_handle(self):
         return self.block.dxf.owner

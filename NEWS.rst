@@ -9,12 +9,14 @@ Version 0.6.0 - 2014
   * Refactoring of internal structures
   * CHANGE: appended entities like VERTEX for POLYLINE and ATTRIB for INSERT are linked to the main entity and do
     not appear in layouts, model space or blocks (modelspace.query('VERTEX') is always an emtpy list).
-  * CHANGE: refactoring of the internal 2D/3D point representation with the effect of reduced memory footprint and
-    getting/setting points should be a little bit faster
+  * CHANGE: refactoring of the internal 2D/3D point representation for reduced memory footprint
   * faster unittests
   * BUGFIX: opens minimalistic DXF12 files
-  * BUGFIX: support for VERTEX & POLYLINE newer subclass names: AcDbPolyFaceMesh, AcDbPolygonMesh, AcDbFaceRecord, ...
+  * BUGFIX: support for POLYLINE new (but undocumented) subclass names: AcDbPolyFaceMesh, AcDbPolygonMesh
+  * BUGFIX: support for VERTEX new (but undocumented) subclass names: AcDbFaceRecord, AcDbPolyFaceMeshVertex,
+    AcDbPolygonMeshVertex, AcDb3dPolylineVertex
   * CHANGE: Polyline.get_mode() returns new names: AcDb2dPolyline, AcDb3dPolyline, AcDbPolyFaceMesh, AcDbPolygonMesh
+  * CHANGE: separated layout spaces - each layout has its own entity space
 
 Version 0.5.2 - 2014-04-15
 

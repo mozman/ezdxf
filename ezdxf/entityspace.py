@@ -36,7 +36,12 @@ class EntitySpace(list):
                 handle = tags.link
 
     def delete_entity(self, entity):
+        # do not delete database objects - entity space just manage handles
         self.remove(entity.dxf.handle)
+
+    def delete_all_entities(self):
+        # do not delete database objects - entity space just manage handles
+        del self[:]
 
 
 class LayoutSpaces(object):
@@ -57,6 +62,9 @@ class LayoutSpaces(object):
         """ Get layout entity space by *key*.
         """
         return self._layout_spaces[key]
+
+    def __len__(self):
+        return sum(len(entity_space) for entity_space in self._layout_spaces.values())
 
     def handles(self):
         """ Iterate over all handles in all entity spaces.
@@ -87,7 +95,7 @@ class LayoutSpaces(object):
         for entity_space in self:
             entity_space.write(stream)
 
-    def del_entity(self, entity):
+    def delete_entity(self, entity):
         """ Delete *entity* from associated layout entity space.
         Type of *entity* has to be DXFEntity() or inherited.
         """
@@ -99,7 +107,18 @@ class LayoutSpaces(object):
         else:
             entity_space.delete_entity(entity)
 
-    def del_entity_space(self, key):
+    def delete_entity_space(self, key):
         """ Delete layout entity space *key*.
         """
+        entity_space = self._layout_spaces[key]
+        entity_space.delete_all_entities()
         del self._layout_spaces[key]
+
+    def delete_all_entities(self):
+        """ Delete layout entity space *key*.
+        """
+        for entity_space in self._layout_spaces.values():
+            entity_space.delete_all_entities()
+
+        for key in list(self._layout_spaces.keys()):
+            del self._layout_spaces[key]
