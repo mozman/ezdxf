@@ -12,6 +12,9 @@ Version 0.6.0 - 2014
   * CHANGE: refactoring of the internal 2D/3D point representation with the effect of reduced memory footprint and
     getting/setting points should be a little bit faster
   * faster unittests
+  * BUGFIX: opens minimalistic DXF12 files
+  * BUGFIX: support for VERTEX & POLYLINE newer subclass names: AcDbPolyFaceMesh, AcDbPolygonMesh, AcDbFaceRecord, ...
+  * CHANGE: Polyline.get_mode() returns new names: AcDb2dPolyline, AcDb3dPolyline, AcDbPolyFaceMesh, AcDbPolygonMesh
 
 Version 0.5.2 - 2014-04-15
 

@@ -8,13 +8,36 @@ __author__ = "mozman <mozman@gmx.at>"
 from collections import OrderedDict
 
 from .c23 import ustr
-from .tags import TagGroups, TAG_STRING_FORMAT
+from .tags import TagGroups, TAG_STRING_FORMAT, Tags, DXFStructureError
+
+MIN_HEADER_TEXT = """  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  9
+$DWGCODEPAGE
+  3
+ANSI_1252
+  9
+$HANDSEED
+  5
+FF
+  0
+ENDSEC
+"""
 
 
 class HeaderSection(object):
+    MIN_HEADER_TAGS = Tags.from_text(MIN_HEADER_TEXT)
     name = 'header'
 
-    def __init__(self, tags):
+    def __init__(self, tags=None):
+        if tags is None:
+            tags = self.MIN_HEADER_TAGS
         self.hdrvars = OrderedDict()
         self._build(tags)
 
@@ -25,9 +48,11 @@ class HeaderSection(object):
         return key in self.hdrvars
 
     def _build(self, tags):
-        assert tags[0] == (0, 'SECTION')
-        assert tags[1] == (2, 'HEADER')
-        assert tags[-1] == (0, 'ENDSEC')
+        if tags[0] != (0, 'SECTION') or \
+           tags[1] != (2, 'HEADER') or \
+           tags[-1] != (0, 'ENDSEC'):
+           raise DXFStructureError("Critical structure error in HEADER section.")
+
         if len(tags) == 3:  # DXF file with empty header section
             return
         groups = TagGroups(tags[2:-1], splitcode=9)

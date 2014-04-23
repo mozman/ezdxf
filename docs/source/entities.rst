@@ -303,7 +303,7 @@ POLYMESH_BEZIER_SURFACE  8      Bezier surface
 
 .. method:: Polyline.get_mode()
 
-   Returns a string: ``polyline2d``, ``polyline3d``, ``polymesh`` or ``polyface``
+   Returns a string: ``AcDb2dPolyline``, ``AcDb3dPolyline``, ``AcDbPolygonMesh`` or ``AcDbPolyFaceMesh``
 
 .. method:: Polyline.m_close()
 
@@ -399,7 +399,7 @@ Polymesh
 
    A polymesh is a grid of mcount x ncount vertices and every vertex has its own xyz-coordinates.
    The :class:`Polymesh` is an extended :class:`Polyline` class, dxftype is also ``POLYLINE`` but
-   :meth:`~Polyline.get_mode` returns ``polymesh``.
+   :meth:`~Polyline.get_mode` returns ``AcDbPolygonMesh``.
    Create polymeshes in layouts and blocks by factory function :meth:`~Layout.add_polymesh`.
 
 .. method:: Polymesh.get_mesh_vertex(pos)
@@ -423,7 +423,7 @@ Polyface
 
    A polyface consist of multiple location independent 3D areas called faces.
    The :class:`Polyface` is an extended :class:`Polyline` class, dxftype is also ``POLYLINE`` but
-   :meth:`~Polyline.get_mode` returns ``polyface``.
+   :meth:`~Polyline.get_mode` returns ``AcDbPolyFaceMesh``.
    Create polyfaces in layouts and blocks by factory function :meth:`~Layout.add_polyface`.
 
 .. method:: Polyface.append_face(face, dxfattribs=None)

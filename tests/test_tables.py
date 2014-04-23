@@ -135,6 +135,14 @@ APPID
   0
 ENDTAB
   0
+TABLE
+  2
+DIMSTYLE
+ 70
+     0
+  0
+ENDTAB
+  0
 ENDSEC
 """
 

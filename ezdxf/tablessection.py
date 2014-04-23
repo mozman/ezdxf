@@ -7,8 +7,27 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .defaultchunk import iter_chunks
 from .table import GenericTable, Table, ViewportTable
-from .tags import DXFStructureError
+from .tags import DXFStructureError, Tags
 from .options import options
+
+MIN_TABLE_SECTION = """  0
+SECTION
+  2
+TABLES
+  0
+ENDSEC
+"""
+
+MIN_TABLE = """  0
+TABLE
+  2
+DUMMY
+ 70
+0
+  0
+ENDTAB
+"""
+
 
 class TablesSection(object):
     name = 'tables'
@@ -16,6 +35,8 @@ class TablesSection(object):
     def __init__(self, tags, drawing):
         self._drawing = drawing
         self._tables = {}
+        if tags is None:
+            tags = Tags.from_text(MIN_TABLE_SECTION)
         self._setup_tables(tags)
 
     def __iter__(self):
@@ -36,10 +57,33 @@ class TablesSection(object):
             raise DXFStructureError("Critical structure error in TABLES section.")
 
         tags_iterator = skip_tags(iter(tags), 2)  # (0, 'SECTION'), (2, 'TABLES')
-        for table in iter_chunks(tags_iterator, stoptag='ENDSEC', endofchunk='ENDTAB'):
-            table_class = get_table_class(name(table))
-            new_table = table_class(table, self._drawing)
+        for table_tags in iter_chunks(tags_iterator, stoptag='ENDSEC', endofchunk='ENDTAB'):
+            self._new_table(name(table_tags), table_tags)
+
+            #table_class = get_table_class(name(table))
+            #new_table = table_class(table, self._drawing)
+            #self._tables[new_table.name] = new_table
+
+        self._create_required_tables()
+
+    def _new_table(self, name, tags):
+            table_class = get_table_class(name)
+            new_table = table_class(tags, self._drawing)
             self._tables[new_table.name] = new_table
+
+    def _create_required_tables(self):
+        def setup_table(name):
+            tags = Tags.from_text(MIN_TABLE.replace('DUMMY', name))
+            self._new_table(name, tags)
+
+        if 'layers' not in self._tables:
+            setup_table('LAYER')
+        if 'linetypes' not in self._tables:
+            setup_table('LTYPE')
+        if 'styles' not in self._tables:
+            setup_table('STYLE')
+        if 'dimstyles' not in self._tables:
+            setup_table('DIMSTYLE')
 
     def __contains__(self, item):
         return item in self._tables
@@ -52,7 +96,6 @@ class TablesSection(object):
 
     def __getitem__(self, key):
         return self._tables[key]
-
 
     def write(self, stream):
         stream.write('  0\nSECTION\n  2\nTABLES\n')
@@ -79,6 +122,7 @@ TABLESMAP = {
 
 # The order of the tables may change, but the LTYPE table always precedes the LAYER table.
 TABLE_ORDER = ('viewports', 'linetypes', 'layers', 'styles', 'views', 'ucs', 'appids', 'dimstyles', 'block_records')
+
 
 def get_table_class(name):
     return TABLESMAP.get(name, GenericTable)

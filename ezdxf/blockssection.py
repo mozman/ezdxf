@@ -24,6 +24,9 @@ class BlocksSection(object):
             self._build(tags)
         self._anonymous_block_counter = 0
 
+    def __len__(self):
+        return len(self._block_layouts)
+
     @property
     def entitydb(self):
         return self.drawing.entitydb
