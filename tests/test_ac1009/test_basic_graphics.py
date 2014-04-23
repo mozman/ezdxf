@@ -64,19 +64,20 @@ class TestModelSpace(SetupDrawing):
         self.assertEqual(entity_count, len(list(self.layout)))
 
     def test_delete_all_entities(self):
-        entity_count = len(self.layout)  # all entities in entity space
-        paperspace = DWG.layout()
-        paper_space_count = len(list(paperspace))
-        modelspace = DWG.modelspace()
+        paper_space = DWG.layout()
+        paper_space_count = len(paper_space)
+        model_space = DWG.modelspace()
+        model_space_count = len(model_space)
         for _ in range(5):
-            modelspace.add_line((0, 0), (1, 1))
-            paperspace.add_line((0, 0), (1, 1))
+            model_space.add_line((0, 0), (1, 1))
+            paper_space.add_line((0, 0), (1, 1))
 
-        self.assertEqual(entity_count + 10, len(self.layout))
+        self.assertEqual(model_space_count + 5, len(model_space))
+        self.assertEqual(paper_space_count + 5, len(paper_space))
 
-        modelspace.delete_all_entities()
-        self.assertEqual(0, len(list(modelspace)))
-        self.assertEqual(paper_space_count + 5, len(list(paperspace)))
+        model_space.delete_all_entities()
+        self.assertEqual(0, len(model_space))
+        self.assertEqual(paper_space_count + 5, len(paper_space))
 
 
 class TestPaperSpace(SetupDrawing):

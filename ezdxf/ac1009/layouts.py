@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .graphicsfactory import GraphicsFactory
-from ..entityspace import EntitySpace
+from ..entityspace import EntitySpace, LayoutSpaces
 from ..query import EntityQuery
 
 
@@ -15,9 +15,11 @@ class DXF12Layouts(object):
     """ The Layout container.
     """
     def __init__(self, drawing):
-        entityspace = drawing.sections.entities.get_entityspace()
-        self._modelspace = DXF12Layout(entityspace, drawing.dxffactory, 0)
-        self._paperspace = DXF12Layout(entityspace, drawing.dxffactory, 1)
+        entities = drawing.sections.entities
+        model_space = entities.get_layout_space(0)
+        self._modelspace = DXF12Layout(model_space, drawing.dxffactory, 0)
+        paper_space = entities.get_layout_space(1)
+        self._paperspace = DXF12Layout(paper_space, drawing.dxffactory, 1)
 
     def modelspace(self):
         return self._modelspace
@@ -39,12 +41,12 @@ class BaseLayout(GraphicsFactory):
 
     Entities are wrapped into class GraphicEntity() or inherited.
     """
-    def __init__(self, dxffactory, entityspace):
+    def __init__(self, dxffactory, entity_space):
         super(BaseLayout, self).__init__(dxffactory)
-        self._entityspace = entityspace
+        self._entity_space = entity_space
 
     def __len__(self):
-        return len(self._entityspace)
+        return len(self._entity_space)
 
     @property
     def entitydb(self):
@@ -78,14 +80,14 @@ class BaseLayout(GraphicsFactory):
     def add_entity(self, entity):
         """ Add entity to entity space but not to the drawing database.
         """
-        self._entityspace.append(entity.dxf.handle)
+        self._entity_space.append(entity.dxf.handle)
         self._set_paperspace(entity)
 
     def delete_entity(self, entity):
         """ Delete entity from entity space and drawing database.
         """
         self.entitydb.delete_entity(entity)  # 1. database
-        self._entityspace.delete_entity(entity)  # 2. entity space
+        self._entity_space.delete_entity(entity)  # 2. entity space
         entity.dxf.paperspace = -1  # set invalid paper space
 
     def delete_all_entities(self):
@@ -124,9 +126,9 @@ class DXF12Layout(BaseLayout):
     def __iter__(self):
         """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
         """
-        for entity in self._iter_all_entities():
-            if entity.dxf.paperspace == self._paperspace:
-                yield entity
+        # since 0.6.0 - self._entity_space stores just the handles of this layout!
+        for handle in self._entity_space:
+            yield self.get_entity_by_handle(handle)
 
     def __contains__(self, entity):
         """ Returns True if layout contains entity else False. entity can be an entity handle as string or a wrapped
@@ -137,12 +139,6 @@ class DXF12Layout(BaseLayout):
         return entity.dxf.paperspace == self._paperspace
 
     # end of public interface
-
-    def _iter_all_entities(self):
-        """Iterate over all entities in the drawing entity space as wrapped entities.
-        """
-        for handle in self._entityspace:
-            yield self.get_entity_by_handle(handle)
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
@@ -166,7 +162,7 @@ class DXF12BlockLayout(BaseLayout):
     def __iter__(self):
         """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
         """
-        for handle in self._entityspace:
+        for handle in self._entity_space:
             yield self.get_entity_by_handle(handle)
 
     def __contains__(self, entity):
@@ -179,7 +175,7 @@ class DXF12BlockLayout(BaseLayout):
             handle = entity.dxf.handle
         else:
             handle = entity
-        return handle in self._entityspace
+        return handle in self._entity_space
 
     @property
     def block(self):
@@ -218,15 +214,15 @@ class DXF12BlockLayout(BaseLayout):
     def add_handle(self, handle):
         """ Add entity by handle to the block entity space.
         """
-        self._entityspace.append(handle)
+        self._entity_space.append(handle)
 
     def write(self, stream):
         def write_tags(handle):
-            tags = self._entityspace.get_tags_by_handle(handle)
+            tags = self._entity_space.get_tags_by_handle(handle)
             tags.write(stream)
 
         write_tags(self._block_handle)
-        self._entityspace.write(stream)
+        self._entity_space.write(stream)
         write_tags(self._endblk_handle)
 
     def attdefs(self):
