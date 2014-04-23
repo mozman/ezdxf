@@ -75,6 +75,47 @@ class TestIsDXFFile(unittest.TestCase):
         self.assertTrue(is_dxf_file(template_file))
 
 
+class TestMinimalisticDXF12Drawing(unittest.TestCase):
+    def setUp(self):
+        self.dwg = Drawing(StringIterator(MINIMALISTIC_DXF12))
+
+    def test_header_section(self):
+        self.assertTrue(hasattr(self.dwg, 'header'))
+        self.assertTrue(self.dwg.header['$ACADVER'], 'AC1009')
+        self.assertTrue(self.dwg.header['$DWGCODEPAGE'], 'ANSI_1252')
+
+    def test_layers_table(self):
+        self.assertTrue(hasattr(self.dwg, 'layers'))
+        self.assertEqual(len(self.dwg.layers), 0)
+
+    def test_styles_table(self):
+        self.assertTrue(hasattr(self.dwg, 'styles'))
+        self.assertEqual(len(self.dwg.styles), 0)
+
+    def test_linetypes_table(self):
+        self.assertTrue(hasattr(self.dwg, 'linetypes'))
+        self.assertEqual(len(self.dwg.linetypes), 0)
+
+    def test_blocks_section(self):
+        self.assertTrue(hasattr(self.dwg, 'blocks'))
+        self.assertEqual(len(self.dwg.blocks), 0)
+
+    def test_entity_section(self):
+        self.assertTrue(hasattr(self.dwg, 'entities'))
+        self.assertEqual(len(self.dwg.entities), 0)
+
+
+
+MINIMALISTIC_DXF12 = """  0
+SECTION
+  2
+ENTITIES
+  0
+ENDSEC
+  0
+EOF
+"""
+
 TEST_HEADER = """  0
 SECTION
   2

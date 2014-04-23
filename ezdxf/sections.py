@@ -12,7 +12,6 @@ from .blockssection import BlocksSection
 from .entitysection import EntitySection, ClassesSection, ObjectsSection
 from .options import options
 
-
 class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = {}
@@ -28,20 +27,28 @@ class Sections(object):
         bootstrap = True
         for section in iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
             if bootstrap:
-                new_section = HeaderSection(section)
+                if section[1] != (2, 'HEADER'):
+                    new_section = HeaderSection(None)
+                else:
+                    new_section = HeaderSection(section)
+                    section = None  # this tags are done
                 drawing._bootstraphook(new_section)
                 new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
                 bootstrap = False
-            else:
+                self._sections[new_section.name] = new_section
+
+            if section is not None:
                 section_class = get_section_class(name(section))
                 new_section = section_class(section, drawing)
-            self._sections[new_section.name] = new_section
+                self._sections[new_section.name] = new_section
 
         self._create_required_sections(drawing)
 
     def _create_required_sections(self, drawing):
         if 'blocks' not in self:
             self._sections['blocks'] = BlocksSection(tags=None, drawing=drawing)
+        if 'tables' not in self:
+            self._sections['tables'] = TablesSection(tags=None, drawing=drawing)
 
     def __contains__(self, item):
         return item in self._sections
@@ -88,6 +95,7 @@ SECTION_MAP = {
 }
 
 KNOWN_SECTIONS = ('header', 'classes', 'tables', 'blocks', 'entities', 'objects', 'thumbnailimage', 'acdsdata')
+
 
 def get_section_class(name):
     return SECTION_MAP.get(name, DefaultChunk)
