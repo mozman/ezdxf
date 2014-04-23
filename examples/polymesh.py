@@ -6,13 +6,12 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 
-import sys
-import os
 import math
 
 import ezdxf
 MSIZE = 20
 HEIGHT = 3.
+
 
 def build_mesh(polymesh):
     m_size = polymesh.dxf.m_count
@@ -28,11 +27,15 @@ def build_mesh(polymesh):
             # set the m,n vertex to 3d point x,y,z
             polymesh.set_mesh_vertex(pos=(x, y), point=(x, y, z))
 
-dwg = ezdxf.new('AC1009') # DXF R12
-layout = dwg.modelspace()
-polymesh = layout.add_polymesh(size=(MSIZE, MSIZE))
-build_mesh(polymesh)
 
-filename='polymesh.dxf'
-dwg.saveas(filename)
-print("drawing '%s' created.\n" % filename)
+def make_drawing(filename, dxfversion='AC1009'):
+    dwg = ezdxf.new(dxfversion)
+    layout = dwg.modelspace()
+    polymesh = layout.add_polymesh(size=(MSIZE, MSIZE))
+    build_mesh(polymesh)
+    dwg.saveas(filename)
+    print("drawing '%s' created.\n" % filename)
+
+if __name__ == '__main__':
+    make_drawing('polymesh_AC1009.dxf', 'AC1009')
+    make_drawing('polymesh_AC1015.dxf', 'AC1015')
