@@ -33,7 +33,7 @@ def print_stats(filename):
     print("PolygonMeshes {}".format(polymesh_count))
 
 if __name__ == '__main__':
-    #print_stats(r'D:\Source\ezdxf-dev\examples\polyface_AC1015.dxf')
-    #print_stats(r'D:\Source\ezdxf-dev\examples\polymesh_AC1015.dxf')
+    #print_stats(r'D:\Source\ezdxf-dev\integration_tests\polyface_AC1015.dxf')
+    #print_stats(r'D:\Source\ezdxf-dev\integration_tests\polymesh_AC1015.dxf')
     print_stats(r'D:\Source\dxftest\fanuc-430-arm.dxf')
     print_stats(r'D:\Source\dxftest\cnc machine.dxf')
