@@ -9,7 +9,7 @@
 __author__ = 'manfred'
 
 import ezdxf
-
+import time
 
 def count_meshes(entities):
     polyface_count = 0
@@ -24,7 +24,10 @@ def count_meshes(entities):
 
 def print_stats(filename):
     print('opening DXF file: {}'.format(filename))
+    start_time = time.time()
     dwg = ezdxf.readfile(filename)
+    end_time = time.time()
+    print('time for reading: {:.1f} seconds'.format(end_time - start_time))
     print("DXF version: {}".format(dwg.dxfversion))
     print("Database contains {} entities.".format(len(dwg.entitydb)))
     polylines = dwg.entities.query('POLYLINE')
