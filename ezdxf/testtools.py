@@ -16,6 +16,10 @@ from .drawing import Drawing
 from .database import EntityDB
 
 
+class ModelSpace:
+    layout_key = None
+
+
 class DrawingProxy:
     """ a lightweight drawing proxy for testing
 
@@ -26,6 +30,9 @@ class DrawingProxy:
         self.dxfversion = version
         self.entitydb = EntityDB()
         self.dxffactory = dxffactory(self)
+
+    def modelspace(self):
+        return ModelSpace()
 
     def _bootstraphook(self, header):
         pass

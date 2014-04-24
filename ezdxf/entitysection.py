@@ -112,4 +112,8 @@ class EntitySection(AbstractSection):
 
     # end of public interface
 
-
+    def write(self, stream):
+        stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        modelspace = self.drawing.modelspace()
+        self._entity_space.write(stream, first_key=modelspace.layout_key)
+        stream.write("  0\nENDSEC\n")

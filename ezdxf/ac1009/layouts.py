@@ -143,6 +143,10 @@ class DXF12Layout(BaseLayout):
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
 
+    @property
+    def layout_key(self):
+        return self._paperspace
+
 
 class DXF12BlockLayout(BaseLayout):
     """ BlockLayout has the same factory-function as Layout, but is managed
