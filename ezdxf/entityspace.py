@@ -89,10 +89,18 @@ class LayoutSpaces(object):
         entity_space = self.get_entity_space(self._get_key(tags))
         entity_space.store_tags(tags)
 
-    def write(self, stream):
+    def write(self, stream, first_key=None):
         """ Write all entity spaces to *stream*.
+
+        If *first_key* is not *None*, entity space *first_key* will be written first.
         """
-        for entity_space in self:
+        keys = set(self._layout_spaces.keys())
+        if first_key is not None:
+            keys.remove(first_key)
+            keys = [first_key] + list(keys)
+
+        for key in keys:
+            entity_space = self[key]
             entity_space.write(stream)
 
     def delete_entity(self, entity):
@@ -115,10 +123,8 @@ class LayoutSpaces(object):
         del self._layout_spaces[key]
 
     def delete_all_entities(self):
-        """ Delete layout entity space *key*.
+        """ Delete all entities from all layout entity spaces.
         """
+        # Do not delete the entity space objects itself, just remove all entities from all entity spaces.
         for entity_space in self._layout_spaces.values():
             entity_space.delete_all_entities()
-
-        for key in list(self._layout_spaces.keys()):
-            del self._layout_spaces[key]

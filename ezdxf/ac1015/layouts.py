@@ -30,7 +30,7 @@ class Layouts(object):
         for name, handle in self._layout_table.items():
             layout = Layout(drawing, handle)
             self._layouts_by_name[name] = layout
-            self._layouts_by_owner_id[layout.owner_id] = layout
+            self._layouts_by_owner_id[layout.layout_key] = layout
 
     def __contains__(self, name):
         return name in self._layouts_by_name
@@ -83,9 +83,13 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
     def __contains__(self, entity):
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self.get_entity_by_handle(entity)
-        return True if entity.dxf.owner == self._block_record_handle else False
+        return True if entity.dxf.owner == self.layout_key else False
 
     # end of public interface
+
+    @property
+    def layout_key(self):
+        return self._block_record_handle
 
     @property
     def dxflayout(self):
@@ -101,11 +105,7 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
-        entity.dxf.owner = self._block_record_handle
-
-    @property
-    def owner_id(self):
-        return self._block_record_handle
+        entity.dxf.owner = self.layout_key
 
 
 class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):
