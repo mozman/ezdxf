@@ -71,17 +71,18 @@ class PolyfaceMixin(object):
         self.append_faces([face], dxfattribs)
 
     def append_faces(self, faces, dxfattribs=None):
-        def facevertex():
+        def face_record():
             dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
             return self._new_entity('VERTEX', dxfattribs)
 
         if dxfattribs is None:
             dxfattribs = {}
+
         existing_faces = list(self.faces())
         for face in faces:
-            vertices = self._points_to_vertices(face, {})
-            vertices.append(facevertex())
-            existing_faces.append(vertices)
+            face_vertices = self._points_to_vertices(face, {})
+            face_vertices.append(face_record())
+            existing_faces.append(face_vertices)
         self._generate(existing_faces)
 
     def _generate(self, faces):
@@ -96,29 +97,55 @@ class PolyfaceMixin(object):
 
     def faces(self):
         """ Iterate over all faces, a face is a tuple of vertices.
-        result: [vertex, vertex, ..., face-vertex]
+        result: [vertex, vertex, ..., face_record]
         """
-        def is_face(vertex):
-            flags = vertex.dxf.flags
-            if flags & const.VTX_3D_POLYFACE_MESH_VERTEX > 0 and \
-               flags & const.VTX_3D_POLYGON_MESH_VERTEX == 0:
-                return True
-            else:
-                return False
+        faces = self.indexed_faces()[1]  # just need the faces generator
+        for face in faces:
+            face_vertices = list(face)
+            face_vertices.append(face.face_record)
+            yield face_vertices
 
-        def get_face(vertex):
-            face = []
-            for vtx in const.VERTEXNAMES:
-                index = vertex.get_dxf_attrib(vtx, 0)
-                if index != 0:
-                    index = abs(index) - 1
-                    face.append(vertices[index])
-                else:
-                    break
-            face.append(vertex)
-            return face
+    def indexed_faces(self):
+        """ Returns a list of all vertices and a generator of Face() objects.
+        """
+        VTX_FLAGS = const.VTX_3D_POLYFACE_MESH_VERTEX + const.VTX_3D_POLYGON_MESH_VERTEX
 
-        vertices = list(self.vertices())
-        for vertex in vertices:
-            if is_face(vertex):
-                yield get_face(vertex)
+        def is_vertex(flags):
+            return flags & VTX_FLAGS == VTX_FLAGS
+
+        vertices = []
+        face_records = []
+        for vertex in self.vertices():
+            (vertices if is_vertex(vertex.dxf.flags) else face_records).append(vertex)
+
+        faces = (Face(face_record, vertices) for face_record in face_records)
+        return vertices, faces
+
+
+class Face(object):
+    def __init__(self, face_record, vertices):
+        self.vertices = vertices
+        self.face_record = face_record
+        self.indices = self._indices()
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, pos):
+        return self.vertices[self.indices[pos]]
+
+    def __iter__(self):
+        return (self.vertices[index] for index in self.indices)
+
+    def points(self):
+        return (vertex.dxf.location for vertex in self)
+
+    def _raw_indices(self):
+        return (self.face_record.get_dxf_attrib(name, 0) for name in const.VERTEXNAMES)
+
+    def _indices(self):
+        return tuple(abs(index)-1 for index in self._raw_indices() if index != 0)
+
+    def is_edge_visible(self, pos):
+        name = const.VERTEXNAMES[pos]
+        return self.face_record.get_dxf_attrib(name) > 0
