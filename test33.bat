@@ -1,1 +1,0 @@
-@py -3.3 -m unittest discover -s tests

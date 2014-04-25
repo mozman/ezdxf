@@ -301,6 +301,23 @@ POLYMESH_CUBIC_BSPLINE   6      cubic B-spline surface
 POLYMESH_BEZIER_SURFACE  8      Bezier surface
 ======================== =====  =============================
 
+.. attribute:: Polyline.is_2d_polyline
+
+   *True* if polyline is a 2D polyline.
+
+
+.. attribute:: Polyline.is_3d_polyline
+
+   *True* if polyline is a 3D polyline.
+
+.. attribute:: Polyline.is_polygon_mesh
+
+   *True* if polyline is a polygon mesh, see :class:`Polymesh`
+
+.. attribute:: Polyline.is_poly_face_mesh
+
+   *True* if polyline is a poly face mesh, see :class:`Polyface`
+
 .. method:: Polyline.get_mode()
 
    Returns a string: ``AcDb2dPolyline``, ``AcDb3dPolyline``, ``AcDbPolygonMesh`` or ``AcDbPolyFaceMesh``
@@ -430,17 +447,17 @@ Polymesh
    - set vertex location: :code:`cache[row, col] = (x, y, z)`
    - get vertex location: :code:`x, y, z = cache[row, col]`
 
-.. attribute:: MeshVertexCache.vertices (read only)
+.. attribute:: MeshVertexCache.vertices
 
    Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
 
-.. method:: MeshVertexCache.__getitem__(self, pos):
+.. method:: MeshVertexCache.__getitem__(pos)
 
    Returns the location of :class:`Vertex` at position *pos* as (x, y, z)-tuple
 
    :param tuple pos: 0-based (row, col)-tuple
 
-.. method:: MeshVertexCache.__setitem__(self, pos, location):
+.. method:: MeshVertexCache.__setitem__(pos, location)
 
    Set the location of :class:`Vertex` at position *pos* to *location*.
 
@@ -497,40 +514,40 @@ Polyface
 
    Represents a single face of the :class:`Polyface` entity.
 
-.. attribute:: Face.vertices (read only)
+.. attribute:: Face.vertices
 
-   List of all :class:`Polyface` vertices (without face_records).
+   List of all :class:`Polyface` vertices (without face_records). (read only attribute)
 
-.. attribute:: Face.face_record (read only)
+.. attribute:: Face.face_record
 
    The face forming vertex of type ``AcDbFaceRecord``, contains the indices to the face building vertices. Indices of
    the DXF structure are 1-based and a negative index indicates the beginning of an invisible edge.
-   :attr:`Face.face_record.dxf.color` determines the color of the face.
+   :attr:`Face.face_record.dxf.color` determines the color of the face. (read only attribute)
 
-.. attribute:: Face.indices (read only)
+.. attribute:: Face.indices
 
    Indices to the face forming vertices as tuple. This indices are 0-base and are used to get vertices from the
-   list :attr:`Face.vertices`.
+   list :attr:`Face.vertices`. (read only attribute)
 
 .. method:: Face.__iter__()
 
    Iterate over all face vertices as :class:`Vertex` objects.
 
-.. method:: Face.__len__(self):
+.. method:: Face.__len__()
 
    Returns count of face vertices (without face_record).
 
-.. method:: Face.__getitem__(self, pos):
+.. method:: Face.__getitem__(pos)
 
    Returns :class:`Vertex` at position *pos*.
 
    :param int pos: vertex position 0-based
 
-.. method:: Face.points(self):
+.. method:: Face.points()
 
    Iterate over all face vertex locations as (x, y, z)-tuples.
 
-.. method:: Face.is_edge_visible(self, pos):
+.. method:: Face.is_edge_visible(pos)
 
    Returns *True* if edge starting at vertex *pos* is visible else *False*.
 

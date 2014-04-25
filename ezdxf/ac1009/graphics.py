@@ -651,6 +651,7 @@ POLYLINE
 
 
 class Polyline(GraphicEntity, ColorMixin):
+    ANY3D = const.POLYLINE_3D_POLYLINE + const.POLYLINE_3D_POLYMESH + const.POLYLINE_POLYFACE
     TEMPLATE = ClassifiedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = make_attribs({
         'elevation': DXFAttr(10, xtype='Point2D/3D'),
@@ -672,15 +673,30 @@ class Polyline(GraphicEntity, ColorMixin):
         return const.VERTEX_FLAGS[self.get_mode()]
 
     def get_mode(self):
-        flags = self.dxf.flags
-        if flags & const.POLYLINE_3D_POLYLINE > 0:
+        if self.is_3d_polyline:
             return 'AcDb3dPolyline'
-        elif flags & const.POLYLINE_3D_POLYMESH > 0:
+        elif self.is_polygon_mesh:
             return 'AcDbPolygonMesh'
-        elif flags & const.POLYLINE_POLYFACE > 0:
+        elif self.is_poly_face_mesh:
             return 'AcDbPolyFaceMesh'
         else:
             return 'AcDb2dPolyline'
+
+    @property
+    def is_2d_polyline(self):
+        return self.dxf.flags & Polyline.ANY3D == 0
+
+    @property
+    def is_3d_polyline(self):
+        return self.dxf.flags & const.POLYLINE_3D_POLYLINE
+
+    @property
+    def is_polygon_mesh(self):
+        return self.dxf.flags & const.POLYLINE_3D_POLYMESH
+
+    @property
+    def is_poly_face_mesh(self):
+        return self.dxf.flags & const.POLYLINE_POLYFACE
 
     def m_close(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
