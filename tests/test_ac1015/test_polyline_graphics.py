@@ -97,6 +97,16 @@ class TestPolymesh(unittest.TestCase):
         with self.assertRaises(IndexError):
             mesh.get_mesh_vertex((4, 0))
 
+    def test_mesh_cache(self):
+        pos = (2, 1)
+        mesh = self.layout.add_polymesh((4, 4))
+        cache = mesh.get_mesh_cache()
+        cache[pos] = (1, 2, 3)
+        vertex = mesh.get_mesh_vertex(pos)
+        self.assertEqual(vertex.dxf.location, cache[pos])
+        with self.assertRaises(IndexError):
+            cache[4, 0]
+
 
 class TestPolyface(unittest.TestCase):
     def setUp(self):
@@ -114,21 +124,21 @@ class TestPolyface(unittest.TestCase):
     def test_face_indices(self):
         face = self.layout.add_polyface()
         face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
-        facevertex = face[4]
-        self.assertEqual(1, facevertex.dxf.vtx0)
-        self.assertEqual(2, facevertex.dxf.vtx1)
-        self.assertEqual(3, facevertex.dxf.vtx2)
-        self.assertEqual(4, facevertex.dxf.vtx3)
+        face_record = face[4]
+        self.assertEqual(1, face_record.dxf.vtx0)
+        self.assertEqual(2, face_record.dxf.vtx1)
+        self.assertEqual(3, face_record.dxf.vtx2)
+        self.assertEqual(4, face_record.dxf.vtx3)
 
     def test_add_two_face_indices(self):
         face = self.layout.add_polyface()
         face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
         # second face has same vertices as the first face
         face.append_face([(0, 0), (1, 1), (2, 2)])
-        facevertex = face[5]  # second face
-        self.assertEqual(1, facevertex.dxf.vtx0)
-        self.assertEqual(2, facevertex.dxf.vtx1)
-        self.assertEqual(3, facevertex.dxf.vtx2)
+        face_record = face[5]  # second face
+        self.assertEqual(1, face_record.dxf.vtx0)
+        self.assertEqual(2, face_record.dxf.vtx1)
+        self.assertEqual(3, face_record.dxf.vtx2)
         self.assertEqual(4, face.dxf.m_count)  # vertices count
         self.assertEqual(2, face.dxf.n_count)  # faces count
 
@@ -139,8 +149,8 @@ class TestPolyface(unittest.TestCase):
         result = list(face.faces())
         self.assertEqual(2, len(result))
         points1 = [vertex.dxf.location for vertex in result[0]]
-        # the last vertex is the face-vertex and is always (0,0,0)
-        # the face-vertex contains indices to the face building vertices
+        # the last vertex is the face_record and is always (0,0,0)
+        # the face_record contains indices to the face building vertices
         self.assertEqual([(0, 0), (1, 1), (2, 2), (3, 3), (0, 0, 0)], points1)
 
     def test_optimized_cube(self):
@@ -148,8 +158,8 @@ class TestPolyface(unittest.TestCase):
         # a cube consist of 6 faces and 24 vertices
         # duplicated vertices should be removed
         face.append_faces(cube_faces())
-        self.assertEqual(8, face.dxf.m_count) # vertices count
-        self.assertEqual(6, face.dxf.n_count) # faces count
+        self.assertEqual(8, face.dxf.m_count)  # vertices count
+        self.assertEqual(6, face.dxf.n_count)  # faces count
 
 
 def cube_faces():

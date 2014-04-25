@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..tags import DXFStructureError
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
@@ -732,7 +731,7 @@ class Polyline(GraphicEntity, ColorMixin):
             dxfattribs = {}
         if len(points) > 0:
             last_vertex = self._get_last_vertex()
-            for new_vertex in self._points_to_vertices(points, dxfattribs):
+            for new_vertex in self._points_to_dxf_vertices(points, dxfattribs):
                 self._insert_after(last_vertex, new_vertex)
                 last_vertex = new_vertex
 
@@ -753,23 +752,37 @@ class Polyline(GraphicEntity, ColorMixin):
         return self.dxffactory.wrap_handle(prev_handle)
 
     def insert_vertices(self, pos, points, dxfattribs=None):
+        """ Insert *points* at position *pos*.
+
+        :param points: list of (x, y, z)-tuples
+        :param dxfattribs: dict of DXF attributes
+        """
         if dxfattribs is None:
             dxfattribs = {}
         if pos > 0:
             insert_vertex = self.__getitem__(pos - 1)
         else:
             insert_vertex = self
-        for new_vertex in self._points_to_vertices(points, dxfattribs):
+        for new_vertex in self._points_to_dxf_vertices(points, dxfattribs):
             self._insert_after(insert_vertex, new_vertex)
             insert_vertex = new_vertex
 
     def _append_vertices(self, vertices):
+        """ Append DXF Vertex() objects.
+
+        :param vertices: list of DXF Vertex() objects
+        """
         last_vertex = self._get_last_vertex()
         for vertex in vertices:
             self._insert_after(last_vertex, vertex)
             last_vertex = vertex
 
-    def _points_to_vertices(self, points, dxfattribs):
+    def _points_to_dxf_vertices(self, points, dxfattribs):
+        """ Converts point (x,y, z)-tuples into DXF Vertex() objects.
+
+        :param points: list of (x, y,z)-tuples
+        :param dxfattribs: dict of DXF attributes
+        """
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
         vertices = []
         for point in points:
