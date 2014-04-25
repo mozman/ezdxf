@@ -12,4 +12,5 @@ Tutorials
    tutorials/text
    tutorials/mtext
    tutorials/spline
+   tutorials/polyface
 

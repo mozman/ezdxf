@@ -100,7 +100,7 @@ class TestPolymesh(unittest.TestCase):
     def test_mesh_cache(self):
         pos = (2, 1)
         mesh = self.layout.add_polymesh((4, 4))
-        cache = mesh.get_mesh_cache()
+        cache = mesh.get_mesh_vertex_cache()
         cache[pos] = (1, 2, 3)
         vertex = mesh.get_mesh_vertex(pos)
         self.assertEqual(vertex.dxf.location, cache[pos])
