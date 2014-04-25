@@ -16,21 +16,28 @@ from ..classifiedtags import ClassifiedTags
 class Layouts(object):
     #TODO: user defined new layouts
     def __init__(self, drawing):
+        self.drawing = drawing
         self._layouts_by_name = {}
         self._layouts_by_owner_id = {}
         self._layout_table = None
-        self._setup(drawing)
+        self._setup()
 
-    def _setup(self, drawing):
-        dxffactory = drawing.dxffactory
-        layout_table_handle = drawing.rootdict['ACAD_LAYOUT']
-        self._layout_table = dxffactory.wrap_handle(layout_table_handle)
+    @property
+    def dxffactory(self):
+        return self.drawing.dxffactory
+
+    def _setup(self):
+        layout_table_handle = self.drawing.rootdict['ACAD_LAYOUT']
+        self._layout_table = self.dxffactory.wrap_handle(layout_table_handle)
         # name ... layout name
         # handle ...  handle to DXF object Layout
         for name, handle in self._layout_table.items():
-            layout = Layout(drawing, handle)
-            self._layouts_by_name[name] = layout
-            self._layouts_by_owner_id[layout.layout_key] = layout
+            layout = Layout(self.drawing, handle)
+            self._add_layout(name, layout)
+
+    def _add_layout(self, name, layout):
+        self._layouts_by_name[name] = layout
+        self._layouts_by_owner_id[layout.layout_key] = layout
 
     def __contains__(self, name):
         return name in self._layouts_by_name
@@ -59,6 +66,47 @@ class Layouts(object):
 
     def get_layout_for_entity(self, entity):
         return self._layouts_by_owner_id[entity.dxf.owner]
+
+    def create(self, name, dxfattribs=None):
+        """ Create a new Layout.
+        """
+        if dxfattribs is None:
+            dxfattribs = {}
+
+        if name in self._layouts_by_name:
+            raise ValueError("Layout '{}' already exists".format(name))
+
+        def create_db_entry():
+            dxfattribs['name'] = name
+            dxfattribs['owner'] = self._layout_table.dxf.handle
+            dxfattribs.setdefault('taborder', len(self._layouts_by_name) + 1)
+            dxfattribs['block_record'] = block_record_handle
+            return self.dxffactory.create_db_entry('LAYOUT', dxfattribs)
+
+        def set_block_record_layout():
+            block_record = self.dxffactory.wrap_handle(block_record_handle)
+            block_record.dxf.layout = layout_handle
+
+        def create_dxf_layout_entity():
+            dxf_entity = create_db_entry()
+            layout_handle = dxf_entity.dxf.handle
+            # the DXF layout entity resides in the objects section
+            self.drawing.sections.objects.add_handle(layout_handle)
+            return layout_handle
+
+        block_record_handle = self.drawing.blocks.new_paper_space_block()
+        layout_handle = create_dxf_layout_entity()
+        set_block_record_layout()
+        layout = Layout(self.drawing, layout_handle)
+        # set DXF layout management table
+        self._layout_table[name] = layout_handle
+        self._add_layout(name, layout)
+        return layout
+
+    def delete(self, name):
+        """ Delete Layout and all entities on it.
+        """
+        pass
 
 
 class Layout(DXF12Layout, GraphicsFactoryAC1015):

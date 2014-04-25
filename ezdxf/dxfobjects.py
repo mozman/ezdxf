@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import DXFTag, Tags
+from .classifiedtags import ClassifiedTags
 from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .dxfentity import DXFEntity
 
@@ -147,42 +148,185 @@ class DXFDictionaryWithDefault(DXFDictionary):
         """
         return super(DXFDictionaryWithDefault, self).get(key, default=self.dxf.default)
 
+_LAYOUT_TPL = """  0
+LAYOUT
+  5
+0
+102
+{ACAD_REACTORS
+330
+0
+102
+}
+330
+1A
+100
+AcDbPlotSettings
+  1
+
+  2
+DWFx ePlot (XPS Compatible).pc3
+  4
+ANSI_A_(8.50_x_11.00_Inches)
+  6
+
+ 40
+5.79374980927
+ 41
+17.7937507629
+ 42
+5.79374694824
+ 43
+17.793762207
+ 44
+215.899993896
+ 45
+279.399993896
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+ 49
+0.0
+140
+0.0
+141
+0.0
+142
+1.0
+143
+1.0
+ 70
+688
+ 72
+0
+ 73
+1
+ 74
+5
+  7
+acad.ctb
+ 75
+16
+147
+1.0
+ 76
+0
+ 77
+2
+ 78
+300
+148
+0.0
+149
+0.0
+100
+AcDbLayout
+  1
+Layoutname
+ 70
+1
+ 71
+1
+ 10
+0.0
+ 20
+0.0
+ 11
+10.0
+ 21
+10.0
+ 12
+0.0
+ 22
+0.0
+ 32
+0.0
+ 14
+0.0
+ 24
+0.0
+ 34
+0.0
+ 15
+10.0
+ 25
+10.0
+ 35
+0.0
+146
+0.0
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 16
+1.0
+ 26
+0.0
+ 36
+0.0
+ 17
+0.0
+ 27
+1.0
+ 37
+0.0
+ 76
+1
+330
+0
+"""
+
 
 class DXFLayout(DXFEntity):
+    TEMPLATE = ClassifiedTags.from_text(_LAYOUT_TPL)
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
-            'handle': DXFAttr(5, None),
-            'owner': DXFAttr(330, None),
+            'handle': DXFAttr(5,),
+            'owner': DXFAttr(330,),
         }),
         DefSubclass('AcDbPlotSettings', {}),
         DefSubclass('AcDbLayout', {
-            'name': DXFAttr(1, None),  # layout name
-            'flags': DXFAttr(70, None),
-            'taborder': DXFAttr(71, None),
+            'name': DXFAttr(1),  # layout name
+            'flags': DXFAttr(70),
+            'taborder': DXFAttr(71),
             'limmin': DXFAttr(10, 'Point2D'),  # minimum limits
             'limmax': DXFAttr(11, 'Point2D'),  # maximum limits
-            'insertbase': DXFAttr(12, 'Point3D'),  # Insertion base point for this layout
+            'insert_base': DXFAttr(12, 'Point3D'),  # Insertion base point for this layout
             'extmin': DXFAttr(14, 'Point3D'),  # Minimum extents for this layout
             'extmax': DXFAttr(15, 'Point3D'),  # Maximum extents for this layout
-            'elevation': DXFAttr(146, None),
-            'ucsorigin': DXFAttr(13, 'Point3D'),
-            'ucsxaxis': DXFAttr(16, 'Point3D'),
-            'ucsyaxis': DXFAttr(17, 'Point3D'),
-            'ucstype': DXFAttr(76, None),
+            'elevation': DXFAttr(146),
+            'ucs_origin': DXFAttr(13, 'Point3D'),
+            'ucs_xaxis': DXFAttr(16, 'Point3D'),
+            'ucs_yaxis': DXFAttr(17, 'Point3D'),
+            'ucs_type': DXFAttr(76),
             # Orthographic type of UCS 0 = UCS is not orthographic;
             # 1 = Top; 2 = Bottom; 3 = Front; 4 = Back; 5 = Left; 6 = Right
-            'block_record': DXFAttr(330, None),
-            'viewport': DXFAttr(331, None),
+            'block_record': DXFAttr(330),
+            'viewport': DXFAttr(331),
             # ID/handle to the viewport that was last active in this
             # layout when the layout was current
-            'ucs': DXFAttr(345, None),
+            'ucs': DXFAttr(345),
             #ID/handle of AcDbUCSTableRecord if UCS is a named
             # UCS. If not present, then UCS is unnamed
-            'baseucs': DXFAttr(345, None),
+            'base_ucs': DXFAttr(346),
             #ID/handle of AcDbUCSTableRecord of base UCS if UCS is
             # orthographic (76 code is non-zero). If not present and
             # 76 code is non-zero, then base UCS is taken to be WORLD
         }))
+
+    def post_new_hook(self):
+        try:
+            acad_reactors = self.tags.get_appdata('{ACAD_REACTORS')
+        except ValueError:
+            pass
+        else:
+            acad_reactors.set_first(330, self.dxf.owner)
 
 
 class XRecord(DXFEntity):
@@ -202,7 +346,7 @@ class XRecord(DXFEntity):
 
     @staticmethod
     def _adjust_index(index):
-        return index if  index < 0 else index + 2
+        return index if index < 0 else index + 2
 
     def __len__(self):
         # ignore first tags = (100, 'AcDbXrecord'), (280, ...)
@@ -232,4 +376,3 @@ class XRecord(DXFEntity):
         """Append *dxftag* at the end of the tag list.
         """
         self.content_tags.append(dxftag)
-

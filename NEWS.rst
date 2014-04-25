@@ -2,6 +2,13 @@
 News
 ====
 
+Version 0.6.1 - 2014
+
+  * Beta status
+  * Supported Python versions: CPython 2.7, 3.4 and pypy 2.2.1
+  * NEW: create new layouts
+  * NEW: delete layouts
+
 Version 0.6.0 - 2014-04-25
 
   * Beta status
