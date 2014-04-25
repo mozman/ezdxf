@@ -537,7 +537,6 @@ EMPTY_VERTEX_SUBCLASS = Tags()
 
 
 class Vertex(ac1009.Vertex):
-    FACE_FLAGS = const.VTX_3D_POLYGON_MESH_VERTEX + const.VTX_3D_POLYFACE_MESH_VERTEX
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 
@@ -548,15 +547,15 @@ class Vertex(ac1009.Vertex):
         def set_subclass(subclassname):
             subclass = self.tags.subclasses[3]
             subclass[0] = DXFTag(100, subclassname)
-        flags = self.dxf.flags
-        if flags & const.VTX_3D_POLYLINE_VERTEX:
+
+        if self.is_3d_polyline_vertex:  # flags & const.VTX_3D_POLYLINE_VERTEX
             set_subclass('AcDb3dPolylineVertex')
-        elif (flags & Vertex.FACE_FLAGS) == const.VTX_3D_POLYFACE_MESH_VERTEX:
+        elif self.is_face_record:  # (flags & Vertex.FACE_FLAGS) == const.VTX_3D_POLYFACE_MESH_VERTEX:
             set_subclass('AcDbFaceRecord')
             self.tags.subclasses[2] = EMPTY_VERTEX_SUBCLASS  # clear subclass AcDbVertex
-        elif flags & Vertex.FACE_FLAGS == Vertex.FACE_FLAGS:
+        elif self.is_poly_face_mesh_vertex:  # flags & Vertex.FACE_FLAGS == Vertex.FACE_FLAGS:
             set_subclass('AcDbPolyFaceMeshVertex')
-        elif flags & const.VTX_3D_POLYGON_MESH_VERTEX:
+        elif self.is_polygon_mesh_vertex:  # flags & const.VTX_3D_POLYGON_MESH_VERTEX:
             set_subclass('AcDbPolygonMeshVertex')
         else:
             set_subclass('AcDb2dVertex')

@@ -200,8 +200,8 @@ text_generation_flag  R12     text generation flags (int)
 
 .. method:: Text.set_pos(p1, p2=None, align=None)
 
-   :param tuple p1: first alignment point
-   :param tuple p2: second alignment point, required for ``ALIGNED`` and ``FIT`` else ignored
+   :param p1: first alignment point as (x, y[, z])-tuple
+   :param p2: second alignment point as (x, y[, z])-tuple, required for ``ALIGNED`` and ``FIT`` else ignored
    :param str align: new alignment, ``None`` for preserve existing alignment.
 
    Set text alignment, valid positions are:
@@ -319,41 +319,41 @@ POLYMESH_BEZIER_SURFACE  8      Bezier surface
 
 .. method:: Polyline.__len__()
 
-   Returns the count of vertices. Used by builtin :func:`len`.
-
-.. method:: Polyline.__iter__()
-
-   Iterate over all vertices as :class:`Vertex`.
+   Returns count of vertices.
 
 .. method:: Polyline.__getitem__(pos)
 
-   Get vertex at position *pos*. Used as polyline[pos] operator. Very slow!!!. It is better to operate on a temporary
-   list of vertices (:meth:`~Polyline.vertices`).
+   Get :class:`Vertex` object at position *pos*. Very slow!!!. Vertices are organized as linked list, so it is
+   faster to work with a temporary list of vertices: :code:`list(polyline.vertices())`.
+
+.. method:: Polyline.vertices()
+
+   Iterate over all polyline vertices as :class:`Vertex` objects. (replaces :meth:`Polyline.__iter__`)
 
 .. method:: Polyline.points()
 
-   Generator of polyline points as tuple, not as :class:`Vertex`.
+   Iterate over all polyline points as (x, y[, z])-tuples, not as :class:`Vertex` objects.
 
 .. method:: Polyline.append_vertices(points, dxfattribs=None)
 
    Append points as :class:`Vertex` objects.
 
-   :param iterable points: iterable polyline points, every point is a tuple.
-   :param dict dxfattribs: dxf attributes for the :class:`Vertex`
+   :param points: iterable polyline points, every point is a (x, y[, z])-tuple.
+   :param dxfattribs: dict of DXF attributes for the :class:`Vertex`
 
 .. method:: Polyline.insert_vertices(pos, points, dxfattribs=None)
 
    Insert points as :class:`Vertex` objects at position *pos*.
 
-   :param int pos: insert position 0-indexed
+   :param int pos: 0-baesd insert position
    :param iterable points: iterable polyline points, every point is a tuple.
-   :param dict dxfattribs: dxf attributes for the :class:`Vertex`
+   :param dxfattribs: dict of DXF attributes for the :class:`Vertex`
 
 .. method:: Polyline.delete_vertices(pos, count=1)
 
    Delete *count* vertices at position *pos*.
 
-   :param int pos: insert position 0-indexed
+   :param int pos: 0-based insert position
    :param int count: count of vertices to delete
 
 Vertex
@@ -406,15 +406,46 @@ Polymesh
 
    Get mesh vertex at position *pos* as :class:`Vertex`.
 
-   :param tuple pos: (m, n) tuple
+   :param pos: 0-based (row, col)-tuple
 
 .. method:: Polymesh.set_mesh_vertex(pos, point, dxfattribs=None)
 
    Set mesh vertex at position *pos* to location *point* and update the dxf attributes of the :class:`Vertex`.
 
-   :param tuple pos: (m, n) tuple
-   :param tuple point: vertex coordinates as (x, y, z) tuple
-   :param dict dxfattribs: dxf attributes for the :class:`Vertex`
+   :param pos: 0-based (row, col)-tuple
+   :param point: vertex coordinates as (x, y, z)-tuple
+   :param dxfattribs: dict of DXF attributes for the :class:`Vertex`
+
+.. method:: Polymesh.get_mesh_vertex_cache()
+
+   Get a :class:`MeshVertexCache` object for this Polymesh. The caching object provides fast access to the location
+   attributes of the mesh vertices.
+
+
+
+.. class:: MeshVertexCache
+
+   Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
+
+   - set vertex location: :code:`cache[row, col] = (x, y, z)`
+   - get vertex location: :code:`x, y, z = cache[row, col]`
+
+.. attribute:: MeshVertexCache.vertices (read only)
+
+   Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
+
+.. method:: MeshVertexCache.__getitem__(self, pos):
+
+   Returns the location of :class:`Vertex` at position *pos* as (x, y, z)-tuple
+
+   :param tuple pos: 0-based (row, col)-tuple
+
+.. method:: MeshVertexCache.__setitem__(self, pos, location):
+
+   Set the location of :class:`Vertex` at position *pos* to *location*.
+
+   :param pos: 0-based (row, col)-tuple
+   :param location: (x, y, z)-tuple
 
 Polyface
 ========
@@ -428,21 +459,82 @@ Polyface
 
 .. method:: Polyface.append_face(face, dxfattribs=None)
 
-   Append one *face*, *dxfattribs* is used for all vertices generated.
+   Append one *face*, *dxfattribs* is used for all vertices generated. Appending single faces is very inefficient, if
+   possible use :meth:`~Polyface.append_faces` to add a list of new faces.
 
-   :param tuple face: a tuple of 3 or 4 3D points, a 3D point is a (x, y, z)-tuple
-   :param dict dxfattribs: dxf attributes for the :class:`Vertex`
+   :param face: a tuple of 3 or 4 3D points, a 3D point is a (x, y, z)-tuple
+   :param dxfattribs: dict of DXF attributes for the :class:`Vertex`
 
 .. method:: Polyface.append_faces(faces, dxfattribs=None)
 
    Append a list of *faces*, *dxfattribs* is used for all vertices generated.
 
    :param tuple faces: a list of faces, a face is a tuple of 3 or 4 3D points, a 3D point is a (x, y, z)-tuple
-   :param dict dxfattribs: dxf attributes for the :class:`Vertex`
+   :param dxfattribs: dict of DXF attributes for the :class:`Vertex`
 
 .. method:: Polyface.faces()
 
-   Iterate over all faces, a face is a tuple of vertices; yielding (vtx1, vtx2, vtx3[, vtx4])-tuple
+   Iterate over all faces, a face is a tuple of :class:`Vertex` objects; yields (vtx1, vtx2, vtx3[, vtx4], face_record)-tuples
+
+.. method:: Polyface.indexed_faces()
+
+   Returns a list of all vertices and a generator of :class:`Face()` objects as tuple::
+
+   vertices, faces = polyface.indexed_faces()
+
+.. method:: Polyface.optimize(precision=6)
+
+   Rebuilds :class:`Polyface` with vertex optimization. Merges vertices with nearly same vertex locations.
+   Polyfaces created by *ezdxf* are optimized automatically.
+
+   :param int precision: decimal precision for determining identical vertex locations
+
+.. seealso::
+
+    :ref:`tut_polyface`
+
+.. class:: Face
+
+   Represents a single face of the :class:`Polyface` entity.
+
+.. attribute:: Face.vertices (read only)
+
+   List of all :class:`Polyface` vertices (without face_records).
+
+.. attribute:: Face.face_record (read only)
+
+   The face forming vertex of type ``AcDbFaceRecord``, contains the indices to the face building vertices. Indices of
+   the DXF structure are 1-based and a negative index indicates the beginning of an invisible edge.
+   :attr:`Face.face_record.dxf.color` determines the color of the face.
+
+.. attribute:: Face.indices (read only)
+
+   Indices to the face forming vertices as tuple. This indices are 0-base and are used to get vertices from the
+   list :attr:`Face.vertices`.
+
+.. method:: Face.__iter__()
+
+   Iterate over all face vertices as :class:`Vertex` objects.
+
+.. method:: Face.__len__(self):
+
+   Returns count of face vertices (without face_record).
+
+.. method:: Face.__getitem__(self, pos):
+
+   Returns :class:`Vertex` at position *pos*.
+
+   :param int pos: vertex position 0-based
+
+.. method:: Face.points(self):
+
+   Iterate over all face vertex locations as (x, y, z)-tuples.
+
+.. method:: Face.is_edge_visible(self, pos):
+
+   Returns *True* if edge starting at vertex *pos* is visible else *False*.
+
+   :param int pos: vertex position 0-based
 
 Solid
 =====

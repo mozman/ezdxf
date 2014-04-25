@@ -864,6 +864,8 @@ VERTEX
 
 
 class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
+    FACE_FLAGS = const.VTX_3D_POLYGON_MESH_VERTEX + const.VTX_3D_POLYFACE_MESH_VERTEX
+    VTX3D = const.VTX_3D_POLYLINE_VERTEX + const.VTX_3D_POLYGON_MESH_VERTEX + const.VTX_3D_POLYFACE_MESH_VERTEX
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, xtype='Point2D/3D'),
@@ -877,7 +879,27 @@ class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
         'vtx2': DXFAttr(73),
         'vtx3': DXFAttr(74),
     })
-    
+
+    @property
+    def is_2d_polyline_vertex(self):
+        return self.dxf.flags & Vertex.VTX3D == 0
+
+    @property
+    def is_3d_polyline_vertex(self):
+        return self.dxf.flags & const.VTX_3D_POLYLINE_VERTEX
+
+    @property
+    def is_polygon_mesh_vertex(self):
+        return self.dxf.flags & const.VTX_3D_POLYGON_MESH_VERTEX
+
+    @property
+    def is_poly_face_mesh_vertex(self):
+        return self.dxf.flags & Vertex.FACE_FLAGS == Vertex.FACE_FLAGS
+
+    @property
+    def is_face_record(self):
+        return (self.dxf.flags & Vertex.FACE_FLAGS) == const.VTX_3D_POLYFACE_MESH_VERTEX
+
 _VPORT_TPL = """  0
 VIEWPORT
   5
