@@ -6,7 +6,8 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from . import const
-from .facebuilder import FaceBuilder
+from .polyfacebuilder import PolyfaceBuilder
+from itertools import chain
 
 
 class PolymeshMixin(object):
@@ -68,28 +69,52 @@ class PolyfaceMixin(object):
 
     """
     def append_face(self, face, dxfattribs=None):
+        """ Appends a single *face*. Appending single faces is very inefficient, try collecting single faces and use
+        *Polyface.append_faces()*
+
+        :param face: list of (x, y, z)-tuples
+        :param dxfattribs: dict of DXF attributes
+        """
         self.append_faces([face], dxfattribs)
 
     def append_faces(self, faces, dxfattribs=None):
-        def face_record():
+        """ Append multiple *faces*. *faces* is a list of single faces and a single face is a list of (x, y, z)-tuples.
+
+        :param faces: list of (list of (x, y, z)-tuples)
+        :param dxfattribs: dict of DXF attributes
+        """
+        def new_face_record():
             dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
             return self._new_entity('VERTEX', dxfattribs)
 
         if dxfattribs is None:
             dxfattribs = {}
 
-        existing_faces = list(self.faces())
+        existing_vertices, existing_faces = self.indexed_faces()
+        # existing_faces is a generator, can't append new data
+        new_faces = []
         for face in faces:
-            face_vertices = self._points_to_vertices(face, {})
-            face_vertices.append(face_record())
-            existing_faces.append(face_vertices)
-        self._generate(existing_faces)
+            # convert face point coordinates to DXF Vertex() objects.
+            face_mesh_vertices = self._points_to_dxf_vertices(face, {})
+            # index of first new vertex
+            index = len(existing_vertices)
+            existing_vertices.extend(face_mesh_vertices)
+            # create a new face_record with all indices set to 0
+            face_record = Face(new_face_record(), existing_vertices)
+            # set correct indices
+            face_record.indices = tuple(range(index, index+len(face_mesh_vertices)))
+            new_faces.append(face_record)
+        self._generate(chain(existing_faces, new_faces))
 
     def _generate(self, faces):
-        facebuilder = FaceBuilder(faces)
+        """ Build a valid Polyface() structure out of *faces*.
+
+        :param faces: list of Face() objects.
+        """
+        polyface_builder = PolyfaceBuilder(faces)
         self._unlink_all_vertices()  # but don't remove it from database
-        self._append_vertices(facebuilder.get_vertices())
-        self.update_count(facebuilder.nvertices, facebuilder.nfaces)
+        self._append_vertices(polyface_builder.get_vertices())
+        self.update_count(polyface_builder.nvertices, polyface_builder.nfaces)
 
     def update_count(self, nvertices, nfaces):
         self.dxf.m_count = nvertices
@@ -97,7 +122,7 @@ class PolyfaceMixin(object):
 
     def faces(self):
         """ Iterate over all faces, a face is a tuple of vertices.
-        result: [vertex, vertex, ..., face_record]
+        result is a list: vertex, vertex, vertex, [vertex,] face_record
         """
         faces = self.indexed_faces()[1]  # just need the faces generator
         for face in faces:
@@ -123,6 +148,23 @@ class PolyfaceMixin(object):
 
 
 class Face(object):
+    """ Represents a single face of a polyface structure.
+
+    .. attribute: Face.vertices
+
+        List of all polyface vertices.
+
+    .. attribute: Face.face_record
+
+        Face building vertex of type ``AcDbFaceRecord``, contains the indices to the face building vertices. Indices of
+        the DXF structure are 1-based and a negative index indicates the beginning of an invisible vertex.
+        Face.face_record.dxf.color determines the color of the face.
+
+    .. attribute: Face.indices
+
+        Indices to the face building vertices as tuple. This indices are 0-base and are used to get vertices from the
+        list *Face.vertices*.
+    """
     def __init__(self, face_record, vertices):
         self.vertices = vertices
         self.face_record = face_record

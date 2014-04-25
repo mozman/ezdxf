@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .const import VERTEXNAMES
 
 
-class FaceBuilder(object):
+class PolyfaceBuilder(object):
     def __init__(self, faces, precision=6):
         self.precision = precision
         self.faces = []
@@ -31,13 +31,13 @@ class FaceBuilder(object):
 
     def build(self, faces):
         for face in faces:
-            face_vertex = face.pop()
+            face_record = face.face_record
             for vertex, name in zip(face, VERTEXNAMES):
                 index = self.add(vertex)
                 # preserve sign of old index value
-                sign = -1 if face_vertex.get_dxf_attrib(name, 0) < 0 else +1
-                face_vertex.set_dxf_attrib(name, (index + 1) * sign)
-            self.faces.append(face_vertex)
+                sign = -1 if face_record.get_dxf_attrib(name, 0) < 0 else +1
+                face_record.set_dxf_attrib(name, (index + 1) * sign)
+            self.faces.append(face_record)
 
     def add(self, vertex):
         def key(point):
