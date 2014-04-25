@@ -32,7 +32,7 @@ Contents
    howto
 
 .. include:: ../../NEWS.rst
-   :end-before: Version 0.1.0
+   :end-before: Version 0.3.0
 
 Indices and tables
 ------------------
