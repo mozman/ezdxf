@@ -91,6 +91,9 @@ class ObjectsSection(ClassesSection):
     def roothandle(self):
         return self._entity_space[0]
 
+    def add_handle(self, handle):
+        self._entity_space.add_handle(handle)
+
 
 class EntitySection(AbstractSection):
     name = 'entities'

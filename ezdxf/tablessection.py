@@ -60,10 +60,6 @@ class TablesSection(object):
         for table_tags in iter_chunks(tags_iterator, stoptag='ENDSEC', endofchunk='ENDTAB'):
             self._new_table(name(table_tags), table_tags)
 
-            #table_class = get_table_class(name(table))
-            #new_table = table_class(table, self._drawing)
-            #self._tables[new_table.name] = new_table
-
         self._create_required_tables()
 
     def _new_table(self, name, tags):

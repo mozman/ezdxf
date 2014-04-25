@@ -115,7 +115,6 @@ class Table(object):
         """ Iterate over table-entries as Tags(). """
         return (self.entitydb[handle] for handle in self._table_entries)
 
-
     def new_entry(self, dxfattribs):
         """ Create new table-entry of type 'self._dxfname', and add new entry
         to table.

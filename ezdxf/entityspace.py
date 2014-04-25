@@ -43,6 +43,9 @@ class EntitySpace(list):
         # do not delete database objects - entity space just manage handles
         del self[:]
 
+    def add_handle(self, handle):
+        self.append(handle)
+
 
 class LayoutSpaces(object):
     def __init__(self, entitydb, dxfversion):

@@ -144,3 +144,15 @@ class BlocksSection(object):
         for block in self._block_layouts.values():
             block.write(stream)
         stream.write("  0\nENDSEC\n")
+
+    def new_paper_space_block(self):
+
+        def block_name():
+            return "*Paper_Space%d" % count
+
+        count = 1
+        while block_name() in self._block_layouts:
+            count += 1
+
+        block_layout = self.new(block_name())
+        return block_layout.get_block_record_handle()
