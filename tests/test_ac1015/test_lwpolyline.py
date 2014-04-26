@@ -20,19 +20,19 @@ class TestNewLWPolyline(unittest.TestCase):
     def test_new_line(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
-        self.assertEqual(points, list(line.get_points()))
+        self.assertEqual(points, list(line.rstrip_points()))
         self.assertEqual(3, len(line))
         self.assertFalse(line.closed, "Polyline should be open by default.")
 
     def test_getitem_first(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
-        self.assertEqual((1, 1), line[0])
+        self.assertEqual((1, 1, 0, 0, 0), line[0])
 
     def test_getitem_last(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
-        self.assertEqual((3, 3), line[-1])
+        self.assertEqual((3, 3, 0, 0, 0), line[-1])
 
     def test_getitem_error(self):
         points = [(1, 1), (2, 2), (3, 3)]
@@ -44,14 +44,14 @@ class TestNewLWPolyline(unittest.TestCase):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
         line.append_points([(4, 4), (5, 5)])
-        self.assertEqual((4, 4), line[-2])
+        self.assertEqual((4, 4, 0, 0, 0), line[-2])
 
     def test_context_manager(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
         with line.points() as p:
             p.extend([(4, 4), (5, 5)])
-        self.assertEqual((4, 4), line[-2])
+        self.assertEqual((4, 4, 0, 0, 0), line[-2])
 
     def test_discard_points(self):
         points = [(1, 1), (2, 2), (3, 3)]

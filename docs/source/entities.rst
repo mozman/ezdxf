@@ -661,19 +661,31 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.get_points()
 
-   Returns all polyline points as list of tuples (x, y, [start_width, [end_width, [bulge]]]).
+   Returns all polyline points as list of tuples (x, y, start_width, end_width, bulge).
+
+   start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
+
+.. method:: LWPolyline.rstrip_points()
+
+   Generates points without appending zeros: yields (x1, y1), (x2, y2) instead of (x1, y1, 0, 0, 0), (x2, y2, 0, 0, 0).
 
 .. method:: LWPolyline.set_points(points)
 
    Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
+   Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
 .. method:: LWPolyline.points()
 
-   Context manager for polyline points. Returns a list of tuples (x, y, [start_width, [end_width, [bulge]]])
+   Context manager for polyline points. Returns a list of tuples (x, y, start_width, end_width, bulge)
+
+   start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present). Setting/Appending
+   points accepts (x, y, [start_width, [end_width, [bulge]]]) tuples. Set start_width, end_width to 0 to be ignored
+   (x, y, 0, 0, bulge).
 
 .. method:: LWPolyline.append_points(points)
 
    Append additional *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
+   Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
 .. method:: LWPolyline.discard_points()
 
@@ -685,7 +697,8 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. method:: LWPolyline.__getitem__(index)
 
-   Get point at position *index* as (x, y, [start_width, [end_width, [bulge]]]) tuple. Actual implementation is very slow!
+   Get point at position *index* as (x, y, start_width, end_width, bulge) tuple. Actual implementation is very slow!
+   start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
 
 MText
 =====
