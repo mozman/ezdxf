@@ -665,7 +665,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 
    start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
 
-.. method:: LWPolyline.rstrip_points()
+.. method:: LWPolyline.get_rstrip_points()
 
    Generates points without appending zeros: yields (x1, y1), (x2, y2) instead of (x1, y1, 0, 0, 0), (x2, y2, 0, 0, 0).
 
@@ -681,6 +681,10 @@ LWPOLYLINE_PLINEGEN            128     ???
    start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present). Setting/Appending
    points accepts (x, y, [start_width, [end_width, [bulge]]]) tuples. Set start_width, end_width to 0 to be ignored
    (x, y, 0, 0, bulge).
+
+.. method:: LWPolyline.rstrip_points()
+
+   Context manager for polyline points without appending zeros.
 
 .. method:: LWPolyline.append_points(points)
 

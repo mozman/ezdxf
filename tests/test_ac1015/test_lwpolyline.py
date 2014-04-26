@@ -20,7 +20,7 @@ class TestNewLWPolyline(unittest.TestCase):
     def test_new_line(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
-        self.assertEqual(points, list(line.rstrip_points()))
+        self.assertEqual(points, list(line.get_rstrip_points()))
         self.assertEqual(3, len(line))
         self.assertFalse(line.closed, "Polyline should be open by default.")
 
