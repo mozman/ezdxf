@@ -165,23 +165,23 @@ AcDbPlotSettings
   1
 
   2
-DWFx ePlot (XPS Compatible).pc3
+Adobe PDF
   4
-ANSI_A_(8.50_x_11.00_Inches)
+A4
   6
 
  40
-5.79374980927
+3.174999952316284
  41
-17.7937507629
+3.174999952316284
  42
-5.79374694824
+3.175003051757812
  43
-17.793762207
+3.17498779296875
  44
-215.899993896
+209.9098358154297
  45
-279.399993896
+297.0318298339844
  46
 0.0
  47
@@ -207,7 +207,7 @@ ANSI_A_(8.50_x_11.00_Inches)
  74
 5
   7
-acad.ctb
+
  75
 16
 147
@@ -231,13 +231,13 @@ Layoutname
  71
 1
  10
-0.0
+-3.17498779296875
  20
-0.0
+-3.174999952316284
  11
-10.0
+293.8568420410156
  21
-10.0
+206.7348358631134
  12
 0.0
  22
@@ -245,15 +245,15 @@ Layoutname
  32
 0.0
  14
-0.0
+29.06818420886992
  24
-0.0
+20.35598328113557
  34
 0.0
  15
-10.0
+261.6136578798294
  25
-10.0
+183.20384953022
  35
 0.0
 146
@@ -312,7 +312,7 @@ class DXFLayout(DXFEntity):
             # ID/handle to the viewport that was last active in this
             # layout when the layout was current
             'ucs': DXFAttr(345),
-            #ID/handle of AcDbUCSTableRecord if UCS is a named
+            # ID/handle of AcDbUCSTableRecord if UCS is a named
             # UCS. If not present, then UCS is unnamed
             'base_ucs': DXFAttr(346),
             #ID/handle of AcDbUCSTableRecord of base UCS if UCS is

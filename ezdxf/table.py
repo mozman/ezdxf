@@ -77,8 +77,7 @@ class Table(object):
         """ Remove table-entry from table and entitydb by name. """
         entry = self.get(name)
         handle = entry.dxf.handle
-        self._table_entries.remove(handle)
-        del self.entitydb[handle]
+        self.remove_handle(handle)
 
     def __len__(self):
         return len(self._table_entries)
@@ -184,6 +183,11 @@ class Table(object):
         else:
             subclass = self._table_header.noclass
         subclass.update(70, count)
+
+    def remove_handle(self, handle):
+        """ Remove table-entry from table and entitydb by handle. """
+        self._table_entries.remove(handle)
+        del self.entitydb[handle]
 
 
 class ViewportTable(Table):

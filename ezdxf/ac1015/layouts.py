@@ -14,12 +14,10 @@ from ..classifiedtags import ClassifiedTags
 
 
 class Layouts(object):
-    #TODO: user defined new layouts
     def __init__(self, drawing):
         self.drawing = drawing
-        self._layouts_by_name = {}
-        self._layouts_by_owner_id = {}
-        self._dxf_layout_management_table = None
+        self._layouts = {}  # stores Layout() objects
+        self._dxf_layout_management_table = None  # stores DXF layout handles key=layout_name; value=layout_handle
         self._setup()
 
     @property
@@ -33,39 +31,39 @@ class Layouts(object):
         # handle ...  handle to DXF object Layout
         for name, handle in self._dxf_layout_management_table.items():
             layout = Layout(self.drawing, handle)
-            self._add_layout(name, layout)
-
-    def _add_layout(self, name, layout):
-        self._layouts_by_name[name] = layout
-        self._layouts_by_owner_id[layout.layout_key] = layout
+            self._layouts[name] = layout
 
     def __contains__(self, name):
-        return name in self._layouts_by_name
+        return name in self._layouts
 
     def __iter__(self):
-        return iter(self._layouts_by_name.values())
+        return iter(self._layouts.values())
 
     def modelspace(self):
         return self.get('Model')
 
     def names(self):
-        return self._layouts_by_name.keys()
+        return self._layouts.keys()
 
     def get(self, name):
         if name is None:
             first_layout_name = self.names_in_taborder()[1]
-            return self._layouts_by_name[first_layout_name]
+            return self._layouts[first_layout_name]
         else:
-            return self._layouts_by_name[name]
+            return self._layouts[name]
 
     def names_in_taborder(self):
         names = []
-        for name, layout in self._layouts_by_name.items():
+        for name, layout in self._layouts.items():
             names.append((layout.taborder, name))
         return [name for order, name in sorted(names)]
 
     def get_layout_for_entity(self, entity):
-        return self._layouts_by_owner_id[entity.dxf.owner]
+        owner_handle = entity.dxf.owner
+        for layout in self._layouts.values():
+            if owner_handle == layout.layout_key:
+                return layout
+        raise KeyError("Layout with key '{}' does not exist.".format(owner_handle))
 
     def create(self, name, dxfattribs=None):
         """ Create a new Layout.
@@ -73,30 +71,24 @@ class Layouts(object):
         if dxfattribs is None:
             dxfattribs = {}
 
-        if name in self._layouts_by_name:
+        if name in self._layouts:
             raise ValueError("Layout '{}' already exists".format(name))
 
-        def create_db_entry():
+        def create_dxf_layout_entity():
             dxfattribs['name'] = name
             dxfattribs['owner'] = self._dxf_layout_management_table.dxf.handle
-            dxfattribs.setdefault('taborder', len(self._layouts_by_name) + 1)
+            dxfattribs.setdefault('taborder', len(self._layouts) + 1)
             dxfattribs['block_record'] = block_record_handle
-            return self.dxffactory.create_db_entry('LAYOUT', dxfattribs)
+            entity = self.drawing.objects.create_new_dxf_entity('LAYOUT', dxfattribs)
+            return entity.dxf.handle
 
         def set_block_record_layout():
             block_record = self.dxffactory.wrap_handle(block_record_handle)
             block_record.dxf.layout = layout_handle
 
-        def create_dxf_layout_entity():
-            dxf_entity = create_db_entry()
-            dxf_handle = dxf_entity.dxf.handle
-            # the DXF layout entity resides in the objects section
-            self.drawing.sections.objects.add_handle(dxf_handle)
-            return dxf_handle
-
         def add_layout_to_management_tables():
             self._dxf_layout_management_table[name] = layout_handle
-            self._add_layout(name, layout)
+            self._layouts[name] = layout
 
         block_record_handle = self.drawing.blocks.new_paper_space_block()
         layout_handle = create_dxf_layout_entity()
@@ -106,49 +98,29 @@ class Layouts(object):
         return layout
 
     def delete(self, name):
-        """ Delete layout *name* and all entities on it. Raises *KeyError* id layout *name* not exists.
+        """ Delete layout *name* and all entities on it. Raises *KeyError* if layout *name* not exists.
         Raises *ValueError* for deleting model space.
         """
         if name == 'Model':
             raise ValueError("can not delete model space layout")
 
-        def delete_block():
-            pass
-
-        def delete_block_record():
-            pass
-
-        def delete_layout_entity():
-            pass
-
-        def remove_from_layout_managent_tables():
-            pass
-
-        layout = self._layouts_by_name[name]
-        layout.delete_all_entities()
-        layout_handle = layout.dxflayout.dxf.handle
-        block_record_handle = layout.layout_key
-        delete_block()
-        delete_block_record()
-        delete_layout_entity()
-        remove_from_layout_managent_tables()
+        layout = self._layouts[name]
+        self._dxf_layout_management_table.remove(layout.name)
+        del self._layouts[layout.name]
+        layout.destroy()
 
 
 class Layout(DXF12Layout, GraphicsFactoryAC1015):
     """ Layout representation
     """
     def __init__(self, drawing, layout_handle):
-        def _get_layout_key():
-            dxflayout = drawing.dxffactory.wrap_handle(layout_handle)
-            return dxflayout.dxf.block_record
-
-        layout_key = _get_layout_key()  # == block_record handle
-        entitities_section = drawing.sections.entities
-        layout_space = entitities_section.get_layout_space(layout_key)
         dxffactory = drawing.dxffactory
+        self.dxf_layout = dxffactory.wrap_handle(layout_handle)
+        self._block_record_handle = self.dxf_layout.dxf.block_record
+        entitities_section = drawing.sections.entities
+        layout_space = entitities_section.get_layout_space(self.layout_key)
         super(Layout, self).__init__(layout_space, dxffactory, 0)
         self._layout_handle = layout_handle
-        self._block_record_handle = self.dxflayout.dxf.block_record
         self._paperspace = 0 if self.name == 'Model' else 1
 
     # start of public interface
@@ -158,6 +130,10 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
             entity = self.get_entity_by_handle(entity)
         return True if entity.dxf.owner == self.layout_key else False
 
+    @property
+    def dxf(self):
+        return self.dxf_layout.dxf
+
     # end of public interface
 
     @property
@@ -165,20 +141,30 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
         return self._block_record_handle
 
     @property
-    def dxflayout(self):
-        return self.get_entity_by_handle(self._layout_handle)
-
-    @property
     def name(self):
-        return self.dxflayout.dxf.name
+        return self.dxf_layout.dxf.name
 
     @property
     def taborder(self):
-        return self.dxflayout.dxf.taborder
+        return self.dxf_layout.dxf.taborder
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
         entity.dxf.owner = self.layout_key
+
+    def destroy(self):
+        def delete_layout_definition_block():
+            for block in self.drawing.blocks:
+                if block.get_block_record_handle() == self.layout_key:
+                    break
+            else:
+                return
+            self.drawing.blocks.delete_block(block.name)
+
+        self.delete_all_entities()
+        delete_layout_definition_block()
+        self.drawing.objects.remove_handle(self._layout_handle)
+        self.drawing.entitydb.delete_handle(self._layout_handle)
 
 
 class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):
@@ -197,3 +183,7 @@ class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):
     def set_block_record_handle(self, block_record_handle):
         self.block.dxf.owner = block_record_handle
         self.endblk.dxf.owner = block_record_handle
+
+    def destroy(self):
+        self.drawing.sections.tables.block_records.remove_handle(self.get_block_record_handle())
+        super(BlockLayout, self).destroy()

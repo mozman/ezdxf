@@ -139,6 +139,16 @@ Drawing Methods
 
     Get a list of available paper space layouts.
 
+.. method:: Drawing.create_layout(name, dxfattribs=None)
+
+    Create a new paper space layout *name*. Returns a :class:`Layout` object.
+    Available only for DXF version AC1015 or newer, AC1009 supports only one paper space.
+
+.. method:: Drawing.delete_layout(name)
+
+    Delete paper space layout *name* and all its entities. Available only for DXF version AC1015
+    or newer, AC1009 supports only one paper space and you can't delete it.
+
 .. method:: Drawing.save()
 
     Write drawing to file-system by using the :attr:`~Drawing.filename` attribute

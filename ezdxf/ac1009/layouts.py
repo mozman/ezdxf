@@ -234,4 +234,14 @@ class DXF12BlockLayout(BaseLayout):
         """
         return (entity for entity in self if entity.dxftype() == 'ATTDEF')
 
+    def delete_all_entities(self):
+        # 1. delete from database
+        for handle in self._entity_space:
+            del self.entitydb[handle]
+        # 2. delete from entity space
+        self._entity_space.delete_all_entities()
 
+    def destroy(self):
+        self.delete_all_entities()
+        del self.entitydb[self._block_handle]
+        del self.entitydb[self._endblk_handle]
