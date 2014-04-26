@@ -9,8 +9,9 @@ Version 0.6.1 - 2014
   * NEW: create new layouts
   * NEW: delete layouts
   * CHANGE: LWPolyline returns always 5-tuples (x, y, start_width, end_width, bulge). start_width, end_width and bulge
-    is 0 if not present (0 is the DXF default value if not present). Added LWPolyline.rstrip_points() -> generates
-    points without appending zeros.
+    is 0 if not present.
+  * NEW: LWPolyline.get_rstrip_points() -> generates points without appending zeros.
+  * NEW: LWPolyline.rstrip_points() -> context manager for points without appending zeros.
 
 Version 0.6.0 - 2014-04-25
 

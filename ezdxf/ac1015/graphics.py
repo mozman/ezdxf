@@ -649,7 +649,7 @@ class LWPolyline(ac1009.GraphicEntity):
         if point is not None:
             yield get_vertex()  # last point
 
-    def rstrip_points(self):
+    def get_rstrip_points(self):
         last0 = 4
         for point in self:
             while point[last0] == 0:
@@ -695,6 +695,12 @@ class LWPolyline(ac1009.GraphicEntity):
     @contextmanager
     def points(self):
         points = list(self)
+        yield points
+        self.set_points(points)
+
+    @contextmanager
+    def rstrip_points(self):
+        points = list(self.get_rstrip_points())
         yield points
         self.set_points(points)
 
