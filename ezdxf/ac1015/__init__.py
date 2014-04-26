@@ -9,9 +9,16 @@ from .headervars import VARMAP
 from ..ac1009 import AC1009Factory
 from . import tableentries
 from . import graphics
+from .. import dxfobjects
 from .layouts import Layouts, BlockLayout
 
 UPDATE_ENTITY_WRAPPERS = {
+    # DXF Objects
+    'DICTIONARY': dxfobjects.DXFDictionary,
+    'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
+    'LAYOUT': dxfobjects.DXFLayout,
+    'XRECORD': dxfobjects.XRecord,
+    # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
     'LTYPE': tableentries.Linetype,
@@ -21,6 +28,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'UCS': tableentries.UCS,
     'APPID': tableentries.AppID,
     'BLOCK_RECORD': tableentries.BlockRecord,
+    # DXF Entities
     'LINE': graphics.Line,
     'POINT': graphics.Point,
     'CIRCLE': graphics.Circle,

@@ -132,10 +132,21 @@ class BlocksSection(object):
                 return blockname
 
     def delete_block(self, name):
-        pass  # TODO implement delete block (also delete block_record in AC1015 and later)
+        block_layout = self[name]
+        block_layout.destroy()
+        del self._block_layouts[name]
 
     def delete_all_blocks(self):
-        pass  # TODO implement delete all blocks (and block records) except $model_space and $paper_space
+        # do not delete blocks defined for layouts
+        if self.drawing.dxfversion != 'AC1009':
+            layout_keys = set(layout.layout_key for layout in self.drawing.layouts)
+            for block in list(self):
+                if block.get_block_record_handle() not in layout_keys:
+                    self.delete_block(block.name)
+        else:
+            for block_name in list(self._block_layouts.keys()):
+                if block_name not in ('$MODEL_SPACE', '$PAPER_SPACE'):
+                    self.delete_block(block_name)
 
     # end of public interface
 

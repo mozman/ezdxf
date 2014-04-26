@@ -67,7 +67,6 @@ from .headervars import VARMAP
 from . import tableentries
 from . import graphics
 
-from .. import dxfobjects
 from .layouts import DXF12Layouts, DXF12BlockLayout
 
 
@@ -81,11 +80,6 @@ ENTITY_WRAPPERS = {
     'UCS': tableentries.UCS,
     'VIEW': tableentries.View,
     'VPORT': tableentries.Viewport,
-    # dxf objects
-    'DICTIONARY': dxfobjects.DXFDictionary,
-    'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
-    'LAYOUT': dxfobjects.DXFLayout,
-    'XRECORD': dxfobjects.XRecord,
     # dxf entities
     'LINE': graphics.Line,
     'POINT': graphics.Point,

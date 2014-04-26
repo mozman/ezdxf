@@ -102,9 +102,31 @@ class Drawing(object):
     def layout_names(self):
         return list(self.layouts.names())
 
+    def delete_layout(self, name):
+        if self.dxfversion != 'AC1009':
+            if name not in self.layouts:
+                raise ValueError("Layout '{}' does not exist.".format(name))
+            else:
+                self.layouts.delete(name)
+        else:
+            raise Warning('Not supported for DXF version AC1009.')
+
+    def create_layout(self, name, dxfattribs=None):
+        if self.dxfversion != 'AC1009':
+            if name in self.layouts:
+                raise ValueError("Layout '{}' already exists.".format(name))
+            else:
+                return self.layouts.create(name, dxfattribs)
+        else:
+            raise Warning('Not supported for DXF version AC1009.')
+
     @property
     def entities(self):
         return self.sections.entities
+
+    @property
+    def objects(self):
+        return self.sections.objects
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')

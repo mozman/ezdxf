@@ -35,6 +35,12 @@ document.
    Create and add a new anonymous :class:`Block`, `type_char` is the block-type,
    `base_point` is the insertion point of the block.
 
+.. method:: BlockSection.delete_block(name):
+
+   Delete block *name*. Raises *KeyError* if block not exists.
+
+.. method:: BlockSection.delete_all_blocks():
+
 ========= ==========
 type_char Anonymous Block Type
 ========= ==========
