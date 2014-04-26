@@ -30,6 +30,12 @@ Append points to a polyline::
 
     dwg.saveas("lwpolyline2.dxf")
 
+Getting points always returns a 5-tuple (x, y, start_width, ent_width, bulge), start_width, end_width and bulge is 0
+if not present (0 is the DXF default value if not present)::
+
+    first_point = line[0]
+    x, y, start_width, end_width, bulge = first_point
+
 Use context manager to edit polyline::
 
     dwg = ezdxf.readfile("lwpolyline2.dxf")
@@ -37,7 +43,11 @@ Use context manager to edit polyline::
 
     line = msp.query('LWPOLYLINE')[0]  # take first LWPolyline
 
-    with line.points() as points:  # points is a python standard list
+    with line.points() as points:
+        # points is a standard python list
+        # existing points are 5-tuples, but new points can be set as (x, y, [start_width, [end_width, [bulge]]]) tuple
+        # set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
+
         del points[-2:]  # delete last 2 points
         points.extend([(4, 7), (0, 7)])  # adding 2 other points
         # the same as one command
@@ -52,6 +62,7 @@ Each line segment can have a different start/end width, if omitted start/end wid
     msp = dwg.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
+    # set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
     points = [(0, 0, .1, .15), (3, 0, .2, .25), (6, 3, .3, .35), (6, 6)]
     msp.add_lwpolyline(points)
@@ -70,6 +81,7 @@ LWPolyline can also have curved elements, they are defined by the `bulge` value:
     msp = dwg.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
+    # set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
     points = [(0, 0, 0, .05), (3, 0, .1, .2, -.5), (6, 0, .1, .05), (9, 0)]
     msp.add_lwpolyline(points)

@@ -19,7 +19,7 @@ class Layouts(object):
         self.drawing = drawing
         self._layouts_by_name = {}
         self._layouts_by_owner_id = {}
-        self._layout_table = None
+        self._dxf_layout_management_table = None
         self._setup()
 
     @property
@@ -28,10 +28,10 @@ class Layouts(object):
 
     def _setup(self):
         layout_table_handle = self.drawing.rootdict['ACAD_LAYOUT']
-        self._layout_table = self.dxffactory.wrap_handle(layout_table_handle)
+        self._dxf_layout_management_table = self.dxffactory.wrap_handle(layout_table_handle)
         # name ... layout name
         # handle ...  handle to DXF object Layout
-        for name, handle in self._layout_table.items():
+        for name, handle in self._dxf_layout_management_table.items():
             layout = Layout(self.drawing, handle)
             self._add_layout(name, layout)
 
@@ -78,7 +78,7 @@ class Layouts(object):
 
         def create_db_entry():
             dxfattribs['name'] = name
-            dxfattribs['owner'] = self._layout_table.dxf.handle
+            dxfattribs['owner'] = self._dxf_layout_management_table.dxf.handle
             dxfattribs.setdefault('taborder', len(self._layouts_by_name) + 1)
             dxfattribs['block_record'] = block_record_handle
             return self.dxffactory.create_db_entry('LAYOUT', dxfattribs)
@@ -89,24 +89,49 @@ class Layouts(object):
 
         def create_dxf_layout_entity():
             dxf_entity = create_db_entry()
-            layout_handle = dxf_entity.dxf.handle
+            dxf_handle = dxf_entity.dxf.handle
             # the DXF layout entity resides in the objects section
-            self.drawing.sections.objects.add_handle(layout_handle)
-            return layout_handle
+            self.drawing.sections.objects.add_handle(dxf_handle)
+            return dxf_handle
+
+        def add_layout_to_management_tables():
+            self._dxf_layout_management_table[name] = layout_handle
+            self._add_layout(name, layout)
 
         block_record_handle = self.drawing.blocks.new_paper_space_block()
         layout_handle = create_dxf_layout_entity()
         set_block_record_layout()
         layout = Layout(self.drawing, layout_handle)
-        # set DXF layout management table
-        self._layout_table[name] = layout_handle
-        self._add_layout(name, layout)
+        add_layout_to_management_tables()
         return layout
 
     def delete(self, name):
-        """ Delete Layout and all entities on it.
+        """ Delete layout *name* and all entities on it. Raises *KeyError* id layout *name* not exists.
+        Raises *ValueError* for deleting model space.
         """
-        pass
+        if name == 'Model':
+            raise ValueError("can not delete model space layout")
+
+        def delete_block():
+            pass
+
+        def delete_block_record():
+            pass
+
+        def delete_layout_entity():
+            pass
+
+        def remove_from_layout_managent_tables():
+            pass
+
+        layout = self._layouts_by_name[name]
+        layout.delete_all_entities()
+        layout_handle = layout.dxflayout.dxf.handle
+        block_record_handle = layout.layout_key
+        delete_block()
+        delete_block_record()
+        delete_layout_entity()
+        remove_from_layout_managent_tables()
 
 
 class Layout(DXF12Layout, GraphicsFactoryAC1015):

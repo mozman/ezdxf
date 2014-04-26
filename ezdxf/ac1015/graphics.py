@@ -626,27 +626,44 @@ class LWPolyline(ac1009.GraphicEntity):
         return self.dxf.count
 
     def __iter__(self):
-        """ Yielding tuples of DXFTag.
+        """ Yielding tuples of (x, y, start_width, end_width, bulge), start_width, end_width and bulge is 0 if not
+        present.
         """
+        def get_vertex():
+            point.append(attribs.get(40, 0))
+            point.append(attribs.get(41, 0))
+            point.append(attribs.get(42, 0))
+            return tuple(point)
+
         point = None
+        attribs = {}
         for tag in self.AcDbPolyline:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
                     if point is not None:
-                        yield tuple(point)
+                        yield get_vertex()
                     point = list(tag.value)
+                    attribs = {}
                 else:
-                    point.append(tag.value)
+                    attribs[tag.code] = tag.value
         if point is not None:
-            yield tuple(point)  # last point
+            yield get_vertex()  # last point
+
+    def rstrip_points(self):
+        last0 = 4
+        for point in self:
+            while point[last0] == 0:
+                last0 -= 1
+            yield tuple(point[:last0+1])
 
     def append_points(self, points):
         """ Append new *points* to polyline, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
-        tuples.
+        tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
         """
         tags = self.AcDbPolyline
 
         def append_point(point):
+
             def add_tag_if_not_zero(code, value):
                 if value != 0.0:
                     tags.append(DXFTag(code, value))
@@ -670,7 +687,7 @@ class LWPolyline(ac1009.GraphicEntity):
 
     def set_points(self, points):
         """ Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
-        tuples.
+        tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
         """
         self.discard_points()
         self.append_points(points)
@@ -686,7 +703,8 @@ class LWPolyline(ac1009.GraphicEntity):
         self.dxf.count = 0
 
     def __getitem__(self, index):
-        """ Returns polyline point at *index* as (x, y, [start_width, [end_width, [bulge]]]) tuple.
+        """ Returns polyline point at *index* as (x, y, start_width, end_width, bulge) tuple, start_width, end_width and
+        bulge is 0 if not present.
         """
         if index < 0:
             index += self.dxf.count
