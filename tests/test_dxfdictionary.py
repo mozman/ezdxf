@@ -27,8 +27,8 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.dxfdict['MOZMAN']
 
-    def test_parent(self):
-        self.assertEqual(self.dxfdict.dxf.parent, '0')
+    def test_owner(self):
+        self.assertEqual(self.dxfdict.dxf.owner, '0')
 
     def test_handle(self):
         self.assertEqual(self.dxfdict.dxf.handle, 'C')
