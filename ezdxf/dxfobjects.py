@@ -248,7 +248,7 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
 })
 
 
-class PlotSettings(DXFEntity):
+class DXFPlotSettings(DXFEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, plot_settings_subclass)
 
 
@@ -394,7 +394,7 @@ class DXFLayout(DXFEntity):
         plot_settings_subclass,
         DefSubclass('AcDbLayout', {
             'name': DXFAttr(1),  # layout name
-            'flags': DXFAttr(70),
+            'layout_flags': DXFAttr(70),
             'taborder': DXFAttr(71),
             'limmin': DXFAttr(10, 'Point2D'),  # minimum limits
             'limmax': DXFAttr(11, 'Point2D'),  # maximum limits
@@ -434,7 +434,7 @@ class XRecord(DXFEntity):
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbXrecord', {
-            'cloning': DXFAttr(280, None),
+            'cloning': DXFAttr(280),
         }),
     )
 
@@ -474,3 +474,15 @@ class XRecord(DXFEntity):
         """Append *dxftag* at the end of the tag list.
         """
         self.content_tags.append(dxftag)
+
+
+class DXFDataTable(DXFEntity):
+    DXFATTRIBS = DXFAttributes(
+        none_subclass,
+        DefSubclass('AcDbDataTable', {
+            'version': DXFAttr(70),
+            'columns': DXFAttr(90),
+            'rows': DXFAttr(91),
+            'tabel_name': DXFAttr(1),
+        }),
+    )

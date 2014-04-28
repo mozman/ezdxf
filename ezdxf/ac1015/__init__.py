@@ -16,8 +16,10 @@ UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects
     'DICTIONARY': dxfobjects.DXFDictionary,
     'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
+    'PLOTSETTINGS': dxfobjects.DXFPlotSettings,
     'LAYOUT': dxfobjects.DXFLayout,
     'XRECORD': dxfobjects.XRecord,
+    'DATATABLE': dxfobjects.DXFDataTable,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
