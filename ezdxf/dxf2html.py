@@ -53,7 +53,7 @@ TABLE_TPL = '<div id="{name}-table" class="dxf-table">\n' \
 ENTITIES_TPL = '<div class="dxf-entities">\n{}\n</div>'
 
 # DXF Entities
-ENTITY_TPL = '<div class="dxf-entity"><div class="dxf-entity-name">{name}</div>\n{tags}\n</div>'
+ENTITY_TPL = '<div class="dxf-entity"><div class="dxf-entity-name">{name}</div>\n{references} {tags}\n</div>'
 BLOCK_TPL = '<div class="dxf-block">\n<div class="dxf-block-name">{name}</div>\n{block}\n{entities}\n{endblk}\n</div>'
 TAG_LIST_TPL = '<div class="dxf-tags">\n{content}\n</div>'
 
@@ -62,8 +62,12 @@ TAG_TPL = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span clas
           ' <span class="tag-value">{value}</span></div>'
 TAG_HANDLE_DEF_TPL = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span>'\
                      ' <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
-TAG_HANDLE_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
-                      ' <a class="tag-link" href="#{value}">{value}</a></div>'
+TAG_VALID_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
+                     ' <a class="tag-link" href="#{value}">{value}</a></div>'
+
+TAG_INVALID_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span>'\
+                       ' <a class="tag-link" href="#{value}">{value}  [does not exist]</a></div>'
+
 MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
 
 # Links
@@ -89,7 +93,10 @@ TAG_TYPES = {
 
 
 def tag_type_str(code):
-    return TAG_TYPES[tag_type(code)]
+    if 309 < code < 320:
+        return '<bin>'
+    else:
+        return TAG_TYPES[tag_type(code)]
 
 
 class DXF2HtmlConverter(object):
@@ -97,6 +104,7 @@ class DXF2HtmlConverter(object):
         self.drawing = drawing
         self.entitydb = drawing.entitydb
         self.section_names_in_write_order = self._section_names_in_write_order()
+        self.existing_pointers = self.collect_all_pointers()
 
     def _section_names_in_write_order(self):
         sections = self.drawing.sections
@@ -159,8 +167,6 @@ class DXF2HtmlConverter(object):
         """
         section_links = []
         for section_name in self.section_names_in_write_order:
-            #section = self.drawing.sections.get(section_name)
-            #if section is not None:
             section_links.append(BUTTON_TPL.format(
                 name=section_name.upper(),
                 target=section_name
@@ -173,11 +179,13 @@ class DXF2HtmlConverter(object):
         if section.name == 'header':
             return section_template.format(content=self.hdrvars2html(section.hdrvars))
         elif section.name == 'entities':
-            return section_template.format(content=self.entities2html(iter(section), create_ref_links=True))
+            return section_template.format(content=self.entities2html(iter(section), create_ref_links=True,
+                                                                      show_ref_status=True))
         elif section.name == 'classes':
             return section_template.format(content=self.entities2html(iter(section), create_ref_links=False))
         elif section.name == 'objects':
-            return section_template.format(content=self.entities2html(iter(section), create_ref_links=True))
+            return section_template.format(content=self.entities2html(iter(section), create_ref_links=True,
+                                                                      show_ref_status=True))
         elif section.name == 'tables':
             return section_template.format(content=self.tables2html(section))  # no iterator!
         elif section.name == 'blocks':
@@ -202,20 +210,32 @@ class DXF2HtmlConverter(object):
         ]
         return HEADER_SECTION_TPL.format(content="\n".join(varstrings))
 
-    def entities2html(self, entities, create_ref_links=False):
+    def entities2html(self, entities, create_ref_links=False, show_ref_status=False):
         """DXF entities as <div> container.
         """
-        entity_strings = (self.entity2html(entity, create_ref_links) for entity in entities)
+        entity_strings = (self.entity2html(entity, create_ref_links, show_ref_status) for entity in entities)
         return ENTITIES_TPL.format("\n".join(entity_strings))
 
-    def entity2html(self, entity, create_ref_links=False):
+    def entity2html(self, entity, create_ref_links=False, show_ref_status=False):
         """DXF entity as <div> container.
         """
+        tags = entity.tags
+        name = entity.dxftype()
         if create_ref_links:  # use entity name as link to the DXF reference
-            name = build_ref_link_button(entity.dxftype())
-        else:
-            name = entity.dxftype()
-        return ENTITY_TPL.format(name=name, tags=self.tags2html(entity.tags))
+            name = build_ref_link_button(name)
+        refs = ""
+        if show_ref_status:
+            handle = tags.get_handle()
+            if handle not in self.existing_pointers:
+                refs = '<div class="ref-no">[unreferenced]</div>'
+            else:
+                refs = self.pointers2html(self.existing_pointers[handle])
+        return ENTITY_TPL.format(name=name, tags=self.tags2html(tags), references=refs)
+
+    def pointers2html(self, pointers):
+        pointers_str = ", ".join(('<a class="tag-link" href="#{value}">{value}</a>'.format(value=ptr)for ptr in
+                                  sorted(pointers, key=lambda x: int(x, 16))))
+        return '<div class="ref-yes"> referenced by: {pointers}</div>'.format(pointers=pointers_str)
 
     def tags2html(self, tags):
         """DXF tag list as <div> container.
@@ -230,9 +250,16 @@ class DXF2HtmlConverter(object):
             if tag.code in HANDLE_DEFINITIONS:  # is handle definition
                 tpl = TAG_HANDLE_DEF_TPL
             elif tag.code in HANDLE_LINKS:  # is handle link
-                tpl = TAG_HANDLE_LINK_TPL
+                if tag.value in self.entitydb:
+                    tpl = TAG_VALID_LINK_TPL
+                else:
+                    tpl = TAG_INVALID_LINK_TPL
             vstr = trim_str(ustr(tag.value))
-            return tpl.format(code=tag.code, value=escape(vstr), type=escape(tag_type_str(tag.code)))
+            type_str = tag_type_str(tag.code)
+            if type_str == '<bin>':
+                type_str = '<binary encoded data>'
+                vstr = ""
+            return tpl.format(code=tag.code, value=escape(vstr), type=escape(type_str))
 
         def group_marker(tag, tag_html):
             return tag_html if tag.code not in GROUP_MARKERS else MARKER_TPL.format(tag=tag_html)
@@ -262,7 +289,7 @@ class DXF2HtmlConverter(object):
     def table2html(self, table, navigation=''):
         """DXF table as <div> container.
         """
-        header = ENTITY_TPL.format(name="TABLE HEADER", tags=self.tags2html(table._table_header))
+        header = ENTITY_TPL.format(name="TABLE HEADER", tags=self.tags2html(table._table_header), references="")
         entries = self.entities2html(table)
         table_name = table.name.upper()
         return TABLE_TPL.format(name=table_name, ref_link=build_ref_link_button(table_name), nav=navigation,
@@ -275,6 +302,21 @@ class DXF2HtmlConverter(object):
             if not hasattr(tags, 'link') or tags.link is None:
                 return
             tags = self.entitydb[tags.link]
+
+    def collect_all_pointers(self):
+        existing_pointers = {}
+        for tags in self.entitydb.values():
+            if tags.dxftype() == 'CLASS':  # classes have no handle
+                handle = "<class-section>"
+            else:
+                handle = tags.get_handle()
+
+            for tag in self.expand_linked_tags(tags):
+                if tag.code in _HANDLE_POINTERS:
+                    pointers = existing_pointers.setdefault(tag.value, set())
+                    pointers.add(handle)
+
+        return existing_pointers
 
     def blocks2html(self, blocks):
         """DXF blocks section as <div> container.

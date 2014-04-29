@@ -95,6 +95,7 @@ class Table(object):
             raise DXFStructureError("Critical structure error in TABLES section.")
 
         self._table_header = ClassifiedTags(groups[0][1:])
+        self.entitydb[self._table_header.get_handle()] = self._table_header
         for entrytags in groups[1:-1]:
             self._add_entry(ClassifiedTags(entrytags))
 
