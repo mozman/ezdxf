@@ -61,18 +61,25 @@ def readfile(filename):
     """
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
-    try: # is it ascii code-page encoded?
+    try:  # is it ascii code-page encoded?
         return readfile_as_asc(filename)
-    except UnicodeDecodeError: # try unicode and ignore errors
+    except UnicodeDecodeError:  # try unicode and ignore errors
         return readfile_as_utf8(filename, errors='ignore')
 
-#TODO: write integration test for reading 'utf-8' encoded files
+
+# TODO: implement readzip()
+def readzip(zipfile, filename=None):
+    """ Reads the DXF file *filename* from *zipfile* or the first DXF file in *zipfile* if *filename* is *None*.
+    """
+    raise NotImplemented("readzip() is coming soon...")
+
+
 def readfile_as_utf8(filename, errors='strict'):
     """Read DXF drawing from file *filename*, expects an 'utf-8' encoding.
     """
     return _read_encoded_file(filename, encoding='utf-8', errors=errors)
 
-#TODO: write integration test for reading 'ascii-code-page' encoded files
+
 def readfile_as_asc(filename):
     """Read DXF drawing from file *filename*, expects an ascii code-page encoding.
     """
@@ -82,6 +89,7 @@ def readfile_as_asc(filename):
         return info.encoding
     return _read_encoded_file(filename, encoding=get_encoding())
 
+
 # noinspection PyArgumentList
 def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
     if options.debug:
@@ -90,6 +98,7 @@ def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
         dwg = read(fp)
     dwg.filename = filename
     return dwg
+
 
 # noinspection PyArgumentList
 def is_dxf_file(filename):

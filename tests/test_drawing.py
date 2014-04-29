@@ -12,7 +12,7 @@ import unittest
 from ezdxf.tags import StringIterator
 
 from ezdxf.drawing import Drawing
-from ezdxf.templates import TemplateFinder
+from ezdxf.templatefinder import TemplateFinder
 from ezdxf import is_dxf_file
 
 

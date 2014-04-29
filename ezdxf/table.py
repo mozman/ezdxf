@@ -95,9 +95,14 @@ class Table(object):
             raise DXFStructureError("Critical structure error in TABLES section.")
 
         self._table_header = ClassifiedTags(groups[0][1:])
-        self.entitydb[self._table_header.get_handle()] = self._table_header
-        for entrytags in groups[1:-1]:
-            self._add_entry(ClassifiedTags(entrytags))
+
+        # AC1009 table headers have no handles, but putting it into the entitydb, will give it a handle and corrupt
+        # the DXF format.
+        #if self._drawing.dxfversion != 'AC1009':
+        self.entitydb.add_tags(self._table_header)
+
+        for tags in groups[1:-1]:
+            self._add_entry(ClassifiedTags(tags))
 
     @property
     def entitydb(self):

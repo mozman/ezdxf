@@ -183,7 +183,7 @@ TYPE_TABLE = _build_type_table([
     (float, range(113, 150)),  # 113-139 belongs to UCS definition and should not appear alone
     (int, range(160, 170)),
     (int, range(170, 180)),
-    (point_tuple, range(210, 210)),  # extrusion direction
+    (point_tuple, range(210, 211)),  # extrusion direction
     (float, range(211, 240)),  # code 220, 230 belongs to extrusion direction and should not appear alone
     (int, range(270, 290)),
     (int, range(290, 300)),  # bool 1=True 0=False
