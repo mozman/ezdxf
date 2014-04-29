@@ -11,7 +11,7 @@ import io
 from . import database
 from .tags import TagIterator, DXFTag
 from .dxffactory import dxffactory
-from .templates import TemplateFinder
+from .templatefinder import TemplateFinder
 from .options import options
 from .codepage import tocodepage, toencoding
 from .sections import Sections
@@ -175,18 +175,18 @@ class Drawing(object):
 
         Write entitydb-handles into entity-tags.
         """
-        def has_handle(entity):
-            for tag in entity.noclass:
-                if tag.code in (5, 105):
+        def has_handle(tags, handle_code):
+            for tag in tags.noclass:
+                if tag.code == handle_code:
                     return True
             return False
 
         def put_handles_into_entity_tags():
-            for handle, entity in self.entitydb.items():
-                if not has_handle(entity):
-                    code = 5 if entity.dxftype() != 'DIMSTYLE' else 105  # legacy shit!!!
-                    # handle should be the second tag
-                    entity.noclass.insert(1, DXFTag(code, handle))
+            for handle, tags in self.entitydb.items():
+                is_not_dimstyle = tags.noclass[0] != (0, 'DIMSTYLE')
+                handle_code = 5 if is_not_dimstyle else 105  # legacy shit!!!
+                if not has_handle(tags, handle_code):
+                    tags.noclass.insert(1, DXFTag(handle_code, handle))  # handle should be the 2. tag
 
         if self.dxfversion != 'AC1009':
             return

@@ -12,6 +12,7 @@ from .blockssection import BlocksSection
 from .entitysection import EntitySection, ClassesSection, ObjectsSection
 from .options import options
 
+
 class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = {}

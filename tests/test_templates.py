@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import os
 import unittest
 
-from ezdxf.templates import TemplateFinder
+from ezdxf.templatefinder import TemplateFinder
 
 
 class TestTemplateFinder(unittest.TestCase):
