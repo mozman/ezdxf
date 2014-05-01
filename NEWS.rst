@@ -9,12 +9,14 @@ Version 0.6.1 - 2014
   * NEW: create new layouts - Drawing.create_layout(name, dxfattribs=None)
   * NEW: delete layouts - Drawing.delete_layout(name)
   * NEW: delete blocks - Drawing.blocks.delete_block(name)
+  * NEW: compressed tags for less memory usage of binary encoded data, proprietary data and unused
+    sections (THUMBNAILIMAGE), but you can uncompress it - if you need this data.
   * CHANGE: LWPolyline returns always 5-tuples (x, y, start_width, end_width, bulge). start_width, end_width and bulge
     is 0 if not present.
   * NEW: LWPolyline.get_rstrip_points() -> generates points without appending zeros.
   * NEW: LWPolyline.rstrip_points() -> context manager for points without appending zeros.
   * BUGFIX: fixed handle creation bug for DXF12 files without handles, a code 5/105 issue
-  * improved dxf2html; creates a more readable HTML file; start it: python -m ezdxf.dxf2html filename.dxf
+  * improved dxf2html; creates a more readable HTML file; usage: python -m ezdxf.dxf2html filename.dxf
 
 Version 0.6.0 - 2014-04-25
 

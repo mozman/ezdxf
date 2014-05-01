@@ -17,10 +17,14 @@ if PY3:
     escape = functools.partial(html.escape, quote=True)
     basestring = str
     ustr = str
+    unicode2bytes = lambda s: bytes(s, encoding='utf-8')
+
 else:
     import cgi
     escape = functools.partial(cgi.escape, quote=True)
     ustr = unicode
+    unicode2bytes = lambda s: s.encode('utf-8')
+
 
 def isstring(s):
     return isinstance(s, basestring)

@@ -130,3 +130,6 @@ class EntitySection(AbstractSection):
         modelspace = self.drawing.modelspace()
         self._entity_space.write(stream, first_key=modelspace.layout_key)
         stream.write("  0\nENDSEC\n")
+
+    def repair_model_space(self, model_space_layout_key):
+        self._entity_space.repair_model_space(model_space_layout_key)
