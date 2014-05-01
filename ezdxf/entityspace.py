@@ -48,13 +48,16 @@ class EntitySpace(list):
 
 
 class LayoutSpaces(object):
+    MODEL_SPACE_KEY = 0
+
     def __init__(self, entitydb, dxfversion):
         self._layout_spaces = {}
         self._entitydb = entitydb
+        self._dxfversion = dxfversion
         if dxfversion == 'AC1009':
             self._get_key = lambda t: t.noclass.find_first(67, default=0)  # paper space value
         else:
-            self._get_key = lambda t: t.noclass.find_first(330)  # owner tag, required
+            self._get_key = lambda t: t.noclass.find_first(330, default=0)  # if no owner tag, set 0 and repair later
 
     def __iter__(self):
         """ Iterate over all layout entity spaces.
@@ -76,6 +79,25 @@ class LayoutSpaces(object):
             for handle in entity_space:
                 yield handle
 
+    def repair_model_space(self, new_model_space_key):
+        def add_owner_tags(entity_space):
+            for handle in entity_space:
+                tags = entity_space.get_tags_by_handle(handle)
+                tags.noclass.set_first(330, new_model_space_key)
+        if self._dxfversion == 'AC1009':
+            return
+        if 0 not in self._layout_spaces:  # no temporary model space exists
+            return
+        if new_model_space_key in self._layout_spaces:
+            #  entity space for model space exist
+            model_space = self._layout_spaces[new_model_space_key]
+            model_space.extend(self._layout_spaces[0])
+        else:
+            self._layout_spaces[new_model_space_key] = self._layout_spaces[0]
+        add_owner_tags(self._layout_spaces[0])  # just for entities with no owner tags
+        del self._layout_spaces[0]
+
+
     def get_entity_space(self, key):
         """ Get entity space by *key* or create new entity space.
         """
@@ -89,7 +111,12 @@ class LayoutSpaces(object):
     def store_tags(self, tags):
         """ Store *tags* in associated layout entity space.
         """
-        entity_space = self.get_entity_space(self._get_key(tags))
+        try:
+            layout_key = self._get_key(tags)
+        except ValueError:
+            # store entities without owner temporary to key 0
+            layout_key = LayoutSpaces.MODEL_SPACE_KEY
+        entity_space = self.get_entity_space(layout_key)
         entity_space.store_tags(tags)
 
     def write(self, stream, first_key=None):

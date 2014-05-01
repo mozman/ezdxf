@@ -8,7 +8,8 @@ __author__ = "mozman <mozman@gmx.at>"
 from collections import OrderedDict
 
 from .c23 import ustr
-from .tags import TagGroups, TAG_STRING_FORMAT, Tags, DXFStructureError
+from .dxftag import strtag
+from .tags import TagGroups, Tags, DXFStructureError
 
 MIN_HEADER_TEXT = """  0
 SECTION
@@ -109,8 +110,8 @@ class HeaderVar:
             code, value = self.tag
             s = []
             for coord in value:
-                s.append(TAG_STRING_FORMAT % (code, coord))
+                s.append(strtag((code, coord)))
                 code += 10
             return "".join(s)
         else:
-            return TAG_STRING_FORMAT % self.tag
+            return strtag(self.tag)

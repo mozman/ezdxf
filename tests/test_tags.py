@@ -10,9 +10,8 @@ import unittest
 from io import StringIO
 
 from ezdxf.c23 import ustr
-from ezdxf.tags import StringIterator, Tags
-from ezdxf.tags import dxf_info, strtag
-from ezdxf.tags import tag_type, point_tuple
+from ezdxf.tags import StringIterator, Tags, dxf_info
+from ezdxf.dxftag import tag_type, point_tuple, strtag
 
 TEST_TAGREADER = """  0
 SECTION
@@ -95,6 +94,10 @@ check mark 1
 300
   9
 check mark 2
+"""
+
+FLOAT_FOR_INT_TAGS = """  71
+1.0
 """
 
 
@@ -180,6 +183,10 @@ class TestTagReader(unittest.TestCase):
         self.assertEqual((100, 200, 300), tag.value)
         tag = tags[3]  # check mark
         self.assertEqual('check mark 2', tag.value)
+
+    def test_float_to_int(self):
+        tags = Tags.from_text(FLOAT_FOR_INT_TAGS)
+        self.assertEqual(int, type(tags[0].value))
 
 
 class TestGetDXFInfo(unittest.TestCase):

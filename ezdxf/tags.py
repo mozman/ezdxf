@@ -5,16 +5,20 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from collections import namedtuple
 from io import StringIO
 
 from .codepage import toencoding
 from .const import acadrelease, DXFStructureError
-from .c23 import ustr
+from .dxftag import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
+from .compressedstring import CompressedString
 
-DXFTag = namedtuple('DXFTag', 'code value')
-NONE_TAG = DXFTag(999999, 'NONE')
-TAG_STRING_FORMAT = '%3d\n%s\n'
+
+def write_tags(stream, tags):
+    for tag in tags:
+        if isinstance(tag, CompressedTags):
+            tag.write(stream)
+        else:
+            stream.write(strtag2(tag))
 
 
 class TagIterator(object):
@@ -25,6 +29,8 @@ class TagIterator(object):
         self.last_tag = NONE_TAG
         self.undo_coord = None
         self.eof = False
+        self.active_entity = None
+        self.active_subclass = None
 
     def __iter__(self):
         return self
@@ -47,7 +53,35 @@ class TagIterator(object):
                 raise  # because UnicodeDecodeError() is a subclass of ValueError()
             except (EOFError, ValueError):
                 raise StopIteration()
+            if code == 0:
+                self.active_entity = value
+                self.active_subclass = None
+            elif code == 100:
+                self.active_subclass = value
             return code, value
+
+        def read_point(code_x, value_x):
+            try:
+                code_y, value_y = read_next_tag()  # 2. coordinate is always necessary
+            except StopIteration:
+                code_y = 0  # -> DXF structure error in following if-statement
+
+            if code_y != code_x + 10:
+                raise DXFStructureError("invalid 2D/3D point at line %d" % self.lineno)
+
+            try:
+                code_z, value_z = read_next_tag()
+            except StopIteration:  # 2D point at end of file
+                self.eof = True  # store reaching end of file
+                value = (value_x, value_y)
+            else:
+                if code_z != code_x + 20:  # not a Z coordinate -> 2D point
+                    self.undo_coord = (code_z, value_z)
+                    self.lineno -= 2
+                    value = (value_x, value_y)
+                else:  # is a 3D point
+                    value = (value_x, value_y, value_z)
+            return value
 
         def next_tag():
             code = 999
@@ -60,26 +94,7 @@ class TagIterator(object):
                     code, value = read_next_tag()
 
                 if is_point_code(code):  # 2D or 3D point
-                    try:
-                        code2, value2 = read_next_tag()  # 2. coordinate is always necessary
-                    except StopIteration:
-                        code2 = 0  # -> DXF structure error in following if-statement
-
-                    if code2 != code + 10:
-                        raise DXFStructureError("invalid 2D/3D point at line %d" % self.lineno)
-
-                    try:
-                        code3, value3 = read_next_tag()
-                    except StopIteration:  # 2D point at end of file
-                        self.eof = True  # store reaching end of file
-                        value = (value, value2)
-                    else:
-                        if code3 != code + 20:  # not a Z coordinate -> 2D point
-                            self.undo_coord = (code3, value3)
-                            self.lineno -= 2
-                            value = (value, value2)
-                        else:  # is a 3D point
-                            value = (value, value2, value3)
+                    value = read_point(code, value)
 
             self.last_tag = cast_tag((code, value))
             return self.last_tag
@@ -147,89 +162,6 @@ def dxf_info(stream):
             # noinspection PyCallingNonCallable
             method(next(tagreader).value)
     return info
-
-
-def strtag(tag):
-    return TAG_STRING_FORMAT % tag
-
-
-def _build_type_table(types):
-    table = {}
-    for caster, codes in types:
-        for code in codes:
-            table[code] = caster
-    return table
-
-
-def point_tuple(value):
-    return tuple(float(f) for f in value)
-
-
-def is_point_code(code):
-    return (10 <= code <= 19) or code == 210 or (110 <= code <= 112) or (1010 <= code <= 1019)
-
-
-def is_point_tag(tag):
-    return is_point_code(tag[0])
-
-
-TYPE_TABLE = _build_type_table([
-    (ustr, range(0, 10)),
-    (point_tuple, range(10, 20)),  # 2d or 3d points
-    (float, range(20, 60)),  # code 20-39 belongs to 2d/3d points and should not appear alone
-    (int, range(60, 100)),
-    (ustr, range(100, 106)),
-    (point_tuple, range(110, 113)),  # 110, 111, 112 - UCS definition
-    (float, range(113, 150)),  # 113-139 belongs to UCS definition and should not appear alone
-    (int, range(160, 170)),
-    (int, range(170, 180)),
-    (point_tuple, range(210, 211)),  # extrusion direction
-    (float, range(211, 240)),  # code 220, 230 belongs to extrusion direction and should not appear alone
-    (int, range(270, 290)),
-    (int, range(290, 300)),  # bool 1=True 0=False
-    (ustr, range(300, 370)),
-    (int, range(370, 390)),
-    (ustr, range(390, 400)),
-    (int, range(400, 410)),
-    (ustr, range(410, 420)),
-    (int, range(420, 430)),
-    (ustr, range(430, 440)),
-    (int, range(440, 460)),
-    (float, range(460, 470)),
-    (ustr, range(470, 480)),
-    (ustr, range(480, 482)),
-    (ustr, range(999, 1010)),
-    (point_tuple, range(1010, 1020)),
-    (float, range(1020, 1060)),  # code 1020-1039 belongs to 2d/3d points and should not appear alone
-    (int, range(1060, 1072)),
-])
-
-
-def cast_tag(tag, types=TYPE_TABLE):
-    caster = types.get(tag[0], ustr)
-    return DXFTag(tag[0], caster(tag[1]))
-
-
-def cast_tag_value(code, value, types=TYPE_TABLE):
-    return types.get(code, ustr)(value)
-
-
-def tag_type(code):
-    try:
-        return TYPE_TABLE[code]
-    except KeyError:
-        raise ValueError("Invalid tag code: {}".format(code))
-
-
-def write_tags(stream, tags):
-    for tag in tags:
-        code = tag.code
-        if is_point_code(code):
-            for coord in tag.value:
-                stream.write(strtag(DXFTag(code, coord)))
-                code += 10
-        else:
-            stream.write(strtag(tag))
 
 
 class Tags(list):
@@ -382,3 +314,25 @@ class TagGroups(list):
 
 def strip_tags(tags, codes):
     return Tags((tag for tag in tags if tag.code not in codes))
+
+
+class CompressedTags(object):
+    """ Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
+    """
+    def __init__(self, code, tags):
+        self.code = code
+        self.value = CompressedString("".join(strtag2(tag) for tag in tags))
+
+    def __getitem__(self, item):
+        if item == 0:
+            return self.code
+        elif item == 1:
+            return self.value
+        else:
+            raise IndexError
+
+    def decompress(self):
+        return Tags.from_text(self.value.decompress())
+
+    def write(self, stream):
+        stream.write(self.value.decompress())

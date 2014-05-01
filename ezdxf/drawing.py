@@ -32,12 +32,14 @@ class Drawing(object):
         self.filename = None  # read/write
         self.entitydb = database.factory(debug=options.debug)
         self.sections = Sections(tagreader, self)
-
         if self.dxfversion > 'AC1009':
             self.rootdict = get_rootdict()
         else:
             self._enable_handles()
         self.layouts = self.dxffactory.get_layouts()
+        if self.dxfversion > 'AC1009':
+            model_space_layout_key = self.modelspace().layout_key
+            self.entities.repair_model_space(model_space_layout_key)
 
     @property
     def _handles(self):
