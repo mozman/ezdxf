@@ -37,9 +37,10 @@ class Drawing(object):
         else:
             self._enable_handles()
         self.layouts = self.dxffactory.get_layouts()
+
         if self.dxfversion > 'AC1009':
-            model_space_layout_key = self.modelspace().layout_key
-            self.entities.repair_model_space(model_space_layout_key)
+            # for ProE, which writes entities without owner tags (330)
+            self.entities.repair_model_space(self.modelspace().layout_key)
 
     @property
     def _handles(self):

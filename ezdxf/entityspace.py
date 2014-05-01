@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+from .const import DXFStructureError
 
 class EntitySpace(list):
     """An EntitySpace is a collection of drawing entities.
@@ -48,8 +49,6 @@ class EntitySpace(list):
 
 
 class LayoutSpaces(object):
-    MODEL_SPACE_KEY = 0
-
     def __init__(self, entitydb, dxfversion):
         self._layout_spaces = {}
         self._entitydb = entitydb
@@ -80,23 +79,30 @@ class LayoutSpaces(object):
                 yield handle
 
     def repair_model_space(self, new_model_space_key):
-        def add_owner_tags(entity_space):
+        def update_entity_tags(entity_space):
             for handle in entity_space:
                 tags = entity_space.get_tags_by_handle(handle)
                 tags.noclass.set_first(330, new_model_space_key)
+
+                # if paper space is set to 1 -> set 0 for model space
+                try:
+                    entity_tags = tags.get_subclass("AcDbEntity")
+                except KeyError:
+                    raise DXFStructureError("Entity has no subclass 'AcDbEntity'.")
+
+                if entity_tags.find_first(67, default=0) != 0:
+                    entity_tags.set_first(67, 0)
+
         if self._dxfversion == 'AC1009':
             return
         if 0 not in self._layout_spaces:  # no temporary model space exists
             return
-        if new_model_space_key in self._layout_spaces:
-            #  entity space for model space exist
-            model_space = self._layout_spaces[new_model_space_key]
-            model_space.extend(self._layout_spaces[0])
-        else:
-            self._layout_spaces[new_model_space_key] = self._layout_spaces[0]
-        add_owner_tags(self._layout_spaces[0])  # just for entities with no owner tags
-        del self._layout_spaces[0]
 
+        temp_model_space = self._layout_spaces[0]
+        model_space = self.get_entity_space(new_model_space_key)
+        model_space.extend(temp_model_space)
+        update_entity_tags(temp_model_space)  # just for entities in the temporary model space
+        del self._layout_spaces[0]  # just delete the temporary model space, not the entities itself
 
     def get_entity_space(self, key):
         """ Get entity space by *key* or create new entity space.
@@ -111,12 +117,10 @@ class LayoutSpaces(object):
     def store_tags(self, tags):
         """ Store *tags* in associated layout entity space.
         """
-        try:
-            layout_key = self._get_key(tags)
-        except ValueError:
-            # store entities without owner temporary to key 0
-            layout_key = LayoutSpaces.MODEL_SPACE_KEY
-        entity_space = self.get_entity_space(layout_key)
+        # AC1018: if entities have no owner tag (330) (thanks to ProE), store this entities in a temporary model space
+        # with layout_key = 0;
+        # this will be resolved later in LayoutSpaces.repair_model_space()
+        entity_space = self.get_entity_space(self._get_key(tags))
         entity_space.store_tags(tags)
 
     def write(self, stream, first_key=None):
