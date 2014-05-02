@@ -12,6 +12,8 @@ import os
 FILE_1 = r"D:\Source\dxftest\ChineseChars_cp936_R2004.dxf"
 FILE_2 = r'D:\Source\dxftest\ChineseChars_utf8_R2004.dxf'
 FILE_3 = r"D:\Source\dxftest\ChineseChars_cp936_R2004.zip"
+FILE_4 = r"D:\Source\dxftest\ProE_AC1018.dxf"
+
 
 def run_if_file_exists(func):
     def wrapper(filepath):
@@ -23,14 +25,14 @@ def run_if_file_exists(func):
 
 
 @run_if_file_exists
-def open_chinese_chars(filename):
+def read_plain_file(filename):
     print("Open DXF file: '{}'".format(filename))
     dwg = ezdxf.readfile(filename)
     print_stats(dwg)
 
 
 @run_if_file_exists
-def open_chinese_chars_from_zip(filename):
+def read_from_zip(filename):
     print("Open DXF file from ZIP archive: '{}'".format(filename))
     dwg = ezdxf.readzip(filename)
     print_stats(dwg)
@@ -41,7 +43,11 @@ def print_stats(dwg):
     print("Version: {}".format(dwg.dxfversion))
     print("encoding: {}".format(dwg.encoding))
 
-
-open_chinese_chars(FILE_1)
-open_chinese_chars(FILE_2)
-open_chinese_chars_from_zip(FILE_3)
+# chinese chars 'cp936'
+read_plain_file(FILE_1)
+# chinese chars 'cp936' encoded as utf-8 file ??? (not a real world example)
+read_plain_file(FILE_2)
+# chinese chars 'cp936' from zip file
+read_from_zip(FILE_3)
+# crappy ProE file
+read_plain_file(FILE_4)
