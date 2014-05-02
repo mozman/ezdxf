@@ -4,9 +4,7 @@
 # License: MIT License
 
 # Support for new AC1015 entities planned for the future:
-# - MText
 # - RText
-# - Spline
 # - ArcAlignedText
 # - Hatch
 # - Image
@@ -16,17 +14,16 @@
 # - Leader
 # - Wipeout ???
 # - MLine ???
-# - Shape ??? (not new but unnecessary ;-)
-# 
-# Unsupported DXF BLOBS: (existing entities will be preserved)
 # - Body
 # - Region
 # - 3DSolid
+# - Surface
+# - Mesh
 #
 # Unsupported AutoCAD/Windows entities: (existing entities will be preserved)
-# - ACAD_PROXY_ENTITY
-# - OLEFRAME
-# - OLE2FRAME
+# - ACAD_PROXY_ENTITY (compressed data)
+# - OLEFRAME (compressed data)
+# - OLE2FRAME (compressed data)
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -35,11 +32,13 @@ import math
 
 from ..ac1009 import graphics as ac1009
 from ..tags import DXFTag, Tags
+from ..dxftag import convert_tags_to_text_lines, convert_text_lines_to_tags
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
 from ..tools import safe_3D_point
+from .. import crypt
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -1346,6 +1345,7 @@ class Shape(ac1009.GraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, shape_subclass)
 
 
+
 _SPLINE_TPL = """  0
 SPLINE
   5
@@ -1382,7 +1382,6 @@ spline_subclass = DefSubclass('AcDbSpline', {
     'end_tangent': DXFAttr(13, xtype='Point3D'),
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
-
 
 class Spline(ac1009.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_SPLINE_TPL)
@@ -1470,3 +1469,81 @@ class Spline(ac1009.GraphicEntity):
         values = self.get_fit_points()
         yield values
         self.set_fit_points(values)
+
+
+_BODY_TPL = """  0
+BODY
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbModelerGeometry
+ 70
+1
+"""
+
+modeler_geometry_subclass = DefSubclass('AcDbModelerGeometry', {
+    'version': DXFAttr(70, default=1),
+})
+
+
+class Body(ac1009.GraphicEntity):
+    TEMPLATE = ClassifiedTags.from_text(_BODY_TPL)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass)
+
+    def get_acis(self):
+        modeler_geometry = self.tags.subclasses[2]
+        text_lines = convert_tags_to_text_lines(tag for tag in modeler_geometry if tag.code in (1, 3))
+        return crypt.decode(text_lines)
+
+    def set_acis(self, text_lines):
+        modeler_geometry = self.tags.subclasses[2]
+        # remove existing text
+        modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code in (1, 3))
+        modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(text_lines)))
+
+    @contextmanager
+    def acis(self):
+        textlines = self.get_acis()
+        yield textlines
+        self.set_acis(textlines)
+
+
+class Region(Body):
+    TEMPLATE = ClassifiedTags.from_text(_BODY_TPL.replace('BODY', 'REGION'))
+
+
+_3DSOLID_TPL = """  0
+3DSOLID
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbModelerGeometry
+ 70
+1
+AcDb3dSolid
+350
+0
+"""
+
+
+class Solid3d(Body):
+    TEMPLATE = ClassifiedTags.from_text(_3DSOLID_TPL)
+    DXFATTRIBS = DXFAttributes(
+        none_subclass,
+        entity_subclass,
+        modeler_geometry_subclass,
+        DefSubclass('AcDb3dSolid', {'history': DXFAttr(350, default=0)})
+    )
+
