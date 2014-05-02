@@ -9,8 +9,7 @@ Version 0.6.1 - 2014
   * NEW: create new layouts - Drawing.create_layout(name, dxfattribs=None)
   * NEW: delete layouts - Drawing.delete_layout(name)
   * NEW: delete blocks - Drawing.blocks.delete_block(name)
-  * NEW: (todo) compressed tags for less memory usage of binary encoded data, proprietary data and unused
-    sections (THUMBNAILIMAGE)
+  * NEW: (todo) compressed tags for less memory usage of binary encoded data and unused sections (THUMBNAILIMAGE)
   * NEW: (todo) read DXF files from zip archives.
   * CHANGE: LWPolyline returns always 5-tuples (x, y, start_width, end_width, bulge). start_width, end_width and bulge
     is 0 if not present.

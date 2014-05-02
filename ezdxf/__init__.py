@@ -20,7 +20,7 @@ from .tags import dxf_info
 from .tags import TagIterator
 from .importer import Importer
 from .const import DXFStructureError, DXFVersionError
-
+from .zipmanager import ctxZipReader
 
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
@@ -71,7 +71,10 @@ def readfile(filename):
 def readzip(zipfile, filename=None):
     """ Reads the DXF file *filename* from *zipfile* or the first DXF file in *zipfile* if *filename* is *None*.
     """
-    raise NotImplemented("readzip() is coming soon...")
+    with ctxZipReader(zipfile, filename) as zipstream:
+        dwg = read(zipstream)
+        dwg.filename = zipstream.dxf_file_name
+    return dwg
 
 
 def readfile_as_utf8(filename, errors='strict'):
