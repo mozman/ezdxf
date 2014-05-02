@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 
 __author__ = "mozman <mozman@gmx.at>"
 
-import sys
 import zipfile
 from contextlib import contextmanager
 

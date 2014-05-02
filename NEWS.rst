@@ -2,15 +2,14 @@
 News
 ====
 
-Version 0.6.1 - 2014
+Version 0.6.1 - 2014-05-02
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.4 and pypy 2.2.1
   * NEW: create new layouts - Drawing.create_layout(name, dxfattribs=None)
   * NEW: delete layouts - Drawing.delete_layout(name)
   * NEW: delete blocks - Drawing.blocks.delete_block(name)
-  * NEW: (todo) compressed tags for less memory usage of binary encoded data and unused sections (THUMBNAILIMAGE)
-  * NEW: (todo) read DXF files from zip archives.
+  * NEW: read DXF files from zip archives. (its slow).
   * CHANGE: LWPolyline returns always 5-tuples (x, y, start_width, end_width, bulge). start_width, end_width and bulge
     is 0 if not present.
   * NEW: LWPolyline.get_rstrip_points() -> generates points without appending zeros.
