@@ -36,7 +36,7 @@ def decode(text_lines):
             else:
                 s += chr(c ^ 0x5F)
         return ''.join(s)
-    return [_decode(line) for line in text_lines]
+    return (_decode(line) for line in text_lines)
 
 _encode_table = {
     ' ': ' ',  # 0x20
@@ -59,4 +59,4 @@ def encode(text_lines):
             else:
                 s += chr(ord(c) ^ 0x5F)
         return ''.join(s)
-    return [_encode(line) for line in text_lines]
+    return (_encode(line) for line in text_lines)
