@@ -27,8 +27,8 @@ class TestBody(unittest.TestCase):
         body = self.layout.add_body()
         with body.acis_data() as data:
             data.extend(TEST_DATA.splitlines())
-
-        self.assertEqual(TEST_DATA, "\n".join(body.get_acis_data()))
+        data = list(body.get_acis_data())
+        self.assertEqual(TEST_DATA, "\n".join(data))
 
 
 class TestRegion(unittest.TestCase):

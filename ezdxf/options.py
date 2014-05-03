@@ -10,6 +10,7 @@ logging.basicConfig()
 
 LOGGER_NAME = 'ezdxf'
 
+
 class Options(object):
     def __init__(self):
         self.template_dir = None

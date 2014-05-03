@@ -31,7 +31,7 @@ from contextlib import contextmanager
 import math
 
 from ..ac1009 import graphics as ac1009
-from ..tags import DXFTag, Tags
+from ..tags import DXFTag, Tags, CompressedTags
 from ..dxftag import convert_tags_to_text_lines, convert_text_lines_to_tags
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
@@ -1383,6 +1383,7 @@ spline_subclass = DefSubclass('AcDbSpline', {
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
+
 class Spline(ac1009.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_SPLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
@@ -1504,7 +1505,7 @@ class Body(ac1009.GraphicEntity):
     def set_acis_data(self, text_lines):
         modeler_geometry = self.tags.subclasses[2]
         # remove existing text
-        modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code in (1, 3))
+        modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code not in (1, 3))
         modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(text_lines)))
 
     @contextmanager
@@ -1512,6 +1513,49 @@ class Body(ac1009.GraphicEntity):
         textlines = list(self.get_acis_data())
         yield textlines
         self.set_acis_data(textlines)
+
+####################################################################
+# Working example for compressed tags (NOT used yet)
+# It is important to compress tags after reading from file:
+# add to TAGS_MODIFIER = {..., 'BODY': compress_modeler_geometry}
+
+
+def compress_modeler_geometry(tags):
+    try:
+        modeler_geometry = tags.get_subclass('AcDbModelerGeometry')
+    except KeyError:
+        return
+    else:
+        geometry_tags = convert_tags_to_text_lines(tag for tag in modeler_geometry if tag.code in (1, 3))
+        if len(geometry_tags):
+            _replace_modeler_geometry(modeler_geometry, geometry_tags)
+
+
+def _replace_modeler_geometry(modeler_geometry, geometry_tags):
+    modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code not in (1, 3))
+    geometry_tags = list(geometry_tags)
+    if len(geometry_tags):
+        compressed_tags = CompressedTags(const.COMPRESSED_TAGS, geometry_tags)
+        modeler_geometry.append(compressed_tags)
+
+
+class CompressedBody(Body):
+    def get_acis_data(self):
+        modeler_geometry = self.tags.subclasses[2]
+        compressed_tag = modeler_geometry.get_first_tag(const.COMPRESSED_TAGS, None)
+        if compressed_tag is not None:
+            text_lines = convert_tags_to_text_lines(compressed_tag.decompress())
+            return crypt.decode(text_lines)
+        else:
+            return []
+
+    def set_acis_data(self, text_lines):
+        modeler_geometry = self.tags.subclasses[2]
+        geometry_tags = convert_text_lines_to_tags(crypt.encode(text_lines))
+        _replace_modeler_geometry(modeler_geometry, geometry_tags)
+
+# Example for compressed tags
+####################################################################
 
 
 class Region(Body):

@@ -43,9 +43,9 @@ class AbstractSection(object):
         linked_tags = get_tags_linker()
         store_tags = self._entity_space.store_tags
         entitydb = self.entitydb
-        fix_tags = self.dxffactory.fix_tags
+        fix_tags = self.dxffactory.modify_tags
 
-        for group in TagGroups(islice(tags, 2, len(tags) - 1)):
+        for group in TagGroups(islice(tags, 2, len(tags)-1)):
             tags = ClassifiedTags(group)
             fix_tags(tags)  # post read tags fixer for VERTEX!
             if linked_tags(tags):  # also creates the link structure as side effect
