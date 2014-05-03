@@ -7,6 +7,8 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
+from .binarydata import compress_binary_data
+
 
 def factory(debug=False):
     return DebugDB() if debug else EntityDB()
@@ -87,6 +89,10 @@ class EntityDB(object):
 
     def delete_handle(self, handle):
         del self._database[handle]
+
+    def compress_binary_data(self):
+        for tags in self.values():
+            compress_binary_data(tags)
 
 
 class DebugDB(EntityDB):
