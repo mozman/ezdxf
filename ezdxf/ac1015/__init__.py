@@ -54,6 +54,9 @@ UPDATE_ENTITY_WRAPPERS = {
     'XLINE': graphics.XLine,
     'SHAPE': graphics.Shape,
     'SPLINE': graphics.Spline,
+    'BODY': graphics.Body,
+    'REGION': graphics.Region,
+    '3DSOLID': graphics.Solid3d,
 }
 
 

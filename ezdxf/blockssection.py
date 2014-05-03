@@ -40,7 +40,7 @@ class BlocksSection(object):
             return self.entitydb.add_tags(tags)
 
         def build_block_layout(entities):
-            linked_tags = get_tags_linker(self.dxffactory.wrap_entity)
+            linked_tags = get_tags_linker()
             tail_handle = add_tags(entities.pop())
             entities_iterator = iter(entities)
             head_handle = add_tags(next(entities_iterator))

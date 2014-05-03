@@ -1496,22 +1496,22 @@ class Body(ac1009.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_BODY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass)
 
-    def get_acis(self):
+    def get_acis_data(self):
         modeler_geometry = self.tags.subclasses[2]
         text_lines = convert_tags_to_text_lines(tag for tag in modeler_geometry if tag.code in (1, 3))
         return crypt.decode(text_lines)
 
-    def set_acis(self, text_lines):
+    def set_acis_data(self, text_lines):
         modeler_geometry = self.tags.subclasses[2]
         # remove existing text
         modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code in (1, 3))
         modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(text_lines)))
 
     @contextmanager
-    def acis(self):
-        textlines = self.get_acis()
+    def acis_data(self):
+        textlines = list(self.get_acis_data())
         yield textlines
-        self.set_acis(textlines)
+        self.set_acis_data(textlines)
 
 
 class Region(Body):
@@ -1532,6 +1532,7 @@ AcDbEntity
 AcDbModelerGeometry
  70
 1
+100
 AcDb3dSolid
 350
 0

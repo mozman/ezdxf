@@ -67,7 +67,6 @@ def readfile(filename):
         return readfile_as_utf8(filename, errors='ignore')
 
 
-# TODO: implement readzip()
 def readzip(zipfile, filename=None):
     """ Reads the DXF file *filename* from *zipfile* or the first DXF file in *zipfile* if *filename* is *None*.
     """

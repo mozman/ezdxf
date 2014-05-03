@@ -167,13 +167,21 @@ LINKED_ENTITIES = {
 }
 
 
-def get_tags_linker(wrapper):
+def get_tags_linker():
     class PersitentVars(object):  # Python 2.7 has no nonlocal statement
         def __init__(self):
             self.prev = None
             self.expected = ""
 
     def tags_linker(tags):
+        def attribs_follow():
+            try:
+                ref_tags = tags.get_subclass('AcDbBlockReference')
+            except KeyError:
+                return False
+            else:
+                return bool(ref_tags.find_first(66, 0))
+
         dxftype = tags.dxftype()
         are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
         if vars.prev is not None:
@@ -189,7 +197,7 @@ def get_tags_linker(wrapper):
                 raise DXFStructureError("expected DXF entity %s or SEQEND" % dxftype)
         elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
             # TODO: not covered by tests, INSERT by read_file()
-            if dxftype == 'INSERT' and wrapper(tags).dxf.attribs_follow == 0:
+            if dxftype == 'INSERT' and not attribs_follow():
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
                 #   INSERT with no ATTRIBS, attribs_follow == 0
                 #   ATTRIB as stand alone entity

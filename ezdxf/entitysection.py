@@ -40,7 +40,7 @@ class AbstractSection(object):
         if len(tags) == 3:  # empty entities section
             return
 
-        linked_tags = get_tags_linker(self.dxffactory.wrap_entity)
+        linked_tags = get_tags_linker()
         store_tags = self._entity_space.store_tags
         entitydb = self.entitydb
         fix_tags = self.dxffactory.fix_tags
