@@ -6,6 +6,8 @@ Version 0.6.2 - 2014-05-..
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.4 and pypy 2.2.1
+  * NEW: set ezdxf.options.compress_default_chunks = True - to compresses unnecessary Sections (like THUMBNAILIMAGE) in
+    memory with zlib
 
 Version 0.6.1 - 2014-05-02
 

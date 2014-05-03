@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .defaultchunk import DefaultChunk, iter_chunks
+from .defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
 from .headersection import HeaderSection
 from .tablessection import TablesSection
 from .blockssection import BlocksSection
@@ -104,4 +104,5 @@ KNOWN_SECTIONS = ('header', 'classes', 'tables', 'blocks', 'entities', 'objects'
 
 
 def get_section_class(name):
-    return SECTION_MAP.get(name, DefaultChunk)
+    default_class = CompressedDefaultChunk if options.compress_default_chunks else DefaultChunk
+    return SECTION_MAP.get(name, default_class)

@@ -16,6 +16,7 @@ class Options(object):
         self.template_dir = None
         self.logger = logging.getLogger(LOGGER_NAME)
         self.debug = False  # important to set after setup of self.logger
+        self.compress_default_chunks = False  # compress tags of unknown chunks of tgas like unknown sections
 
     @property
     def debug(self):
