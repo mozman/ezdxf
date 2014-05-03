@@ -11,7 +11,7 @@ import os
 import io
 
 from ezdxf import readfile
-from ezdxf.dxftag import tag_type, point_tuple, is_point_code
+from ezdxf.dxftag import tag_type, point_tuple, is_point_code, internal_type
 from ezdxf.c23 import escape, ustr
 from ezdxf.reflinks import get_reference_link
 from ezdxf.sections import KNOWN_SECTIONS
@@ -88,7 +88,8 @@ TAG_TYPES = {
     int: '<int>',
     float: '<float>',
     ustr: '<str>',
-    point_tuple: '<point>'
+    point_tuple: '<point>',
+    internal_type: '<internal>',
 }
 
 

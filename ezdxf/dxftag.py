@@ -25,7 +25,11 @@ def _build_type_table(types):
             table[code] = caster
     return table
 
+def internal_type(value):
+    return value
+
 TYPE_TABLE = _build_type_table([
+    (internal_type, (-10, )),  # spacial tags for internal use
     (ustr, range(0, 10)),
     (point_tuple, range(10, 20)),  # 2d or 3d points
     (float, range(20, 60)),  # code 20-39 belongs to 2d/3d points and should not appear alone

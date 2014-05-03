@@ -5,12 +5,12 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags
+from .tags import Tags, CompressedTags
+from .const import COMPRESSED_TAGS
 
 
 class DefaultChunk(object):
     def __init__(self, tags, drawing):
-        assert isinstance(tags, Tags)
         self.tags = tags
         self._drawing = drawing
 
@@ -24,6 +24,16 @@ class DefaultChunk(object):
 
     def write(self, stream):
         self.tags.write(stream)
+
+
+class CompressedDefaultChunk(DefaultChunk):
+    def __init__(self, tags, drawing):
+        compressed_tags = CompressedTags(COMPRESSED_TAGS, tags)
+        super(CompressedDefaultChunk, self).__init__(Tags((tags[0], tags[1], compressed_tags)), drawing)
+        self._compressed_tags = compressed_tags
+
+    def write(self, stream):
+        self._compressed_tags.write(stream)
 
 
 def iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
