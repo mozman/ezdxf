@@ -42,6 +42,9 @@ class Drawing(object):
             # for ProE, which writes entities without owner tags (330)
             self.entities.repair_model_space(self.modelspace().layout_key)
 
+        if options.compress_binary_data and self.dxfversion > 'AC1009':
+            self.entitydb.compress_binary_data()
+
     @property
     def _handles(self):
         return self.entitydb.handles
