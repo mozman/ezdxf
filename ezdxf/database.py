@@ -40,6 +40,12 @@ class EntityDB(object):
     def __getitem__(self, handle):
         return self._database[handle]
 
+    def get(self, handle, default=None):
+        try:
+            return self.__getitem__(handle)
+        except KeyError:
+            return default
+
     def __setitem__(self, handle, entity):
         self._database[handle] = entity
 

@@ -131,6 +131,21 @@ class Drawing(object):
     def objects(self):
         return self.sections.objects
 
+    def get_dxf_entity(self, handle):
+        """ Get entity by *handle* from entity database.
+
+        Low level access to DXF entities database. Raises *KeyError* if handle don't exists.
+        Returns DXFEntity() or inherited.
+
+        If you just need the raw DXF tags use::
+
+            tags = Drawing.entitydb[handle]  # raises KeyError, if handle don't exist
+            tags = Drawing.entitydb.get(handle)  # returns a default value, if handle don't exist (None by default)
+
+        type of tags: ClassifiedTags()
+        """
+        return self.dxffactory.wrap_handle(handle)
+
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
         return toencoding(codepage)

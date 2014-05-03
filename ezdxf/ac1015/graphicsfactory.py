@@ -44,3 +44,24 @@ class GraphicsFactoryAC1015(object):
         if fit_points is not None:
             spline.set_fit_points(fit_points)
         return spline
+
+    def add_body(self, acis_data=None, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        return self._add_acis_entiy('BODY', acis_data, dxfattribs)
+
+    def add_region(self, acis_data=None, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        return self._add_acis_entiy('REGION', acis_data, dxfattribs)
+
+    def add_3dsolid(self, acis_data=None, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
+
+    def _add_acis_entiy(self, name, acis_data, dxfattribs):
+        entity = self.build_and_add_entity(name, dxfattribs)
+        if acis_data is not None:
+            entity.set_acis_data(acis_data)
+        return entity
