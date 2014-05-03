@@ -5,6 +5,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 
+import sys
 import unittest
 from io import StringIO
 
@@ -93,9 +94,9 @@ AcDbOle2Frame
   3
 Microsoft Office Excel-Arbeitsblatt
  10
-1757.922898669198
+1757.922
  20
-1740.495291655801
+1740.495
  30
 0.0
  11
@@ -259,15 +260,15 @@ AcDbOle2Frame
   3
 Microsoft Office Excel-Arbeitsblatt
  10
-1757.922898669198
+1757.922
  20
-1740.495291655801
+1740.495
  30
 0.0
  11
-1821.671954614981
+1821.671
  21
-1688.014230748349
+1688.014
  31
 0.0
  71
