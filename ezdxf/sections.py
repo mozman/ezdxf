@@ -22,7 +22,7 @@ class Sections(object):
         return iter(self._sections.values())
 
     def _setup_sections(self, tagreader, drawing):
-        def name(section):
+        def section_name(section):
             return section[1].value
 
         bootstrap = True
@@ -39,7 +39,7 @@ class Sections(object):
                 self._sections[new_section.name] = new_section
 
             if section is not None:
-                section_class = get_section_class(name(section))
+                section_class = get_section_class(section_name(section))
                 new_section = section_class(section, drawing)
                 self._sections[new_section.name] = new_section
 
@@ -86,6 +86,11 @@ class Sections(object):
 
         options.logger.debug("sections written: {}".format(written_sections))
         write_eof()
+
+    def delete_section(self, name):
+        """ Delete a complete section, please delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA'.
+        """
+        del self._sections[name.lower()]
 
 SECTION_MAP = {
     'CLASSES': ClassesSection,

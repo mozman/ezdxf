@@ -30,6 +30,13 @@ class DXFStructureError(Exception):
 class DXFVersionError(DXFStructureError):
     pass
 
+# Special tag codes for internal prupose
+# -1 to -5 id reserved by AutoCAD for internal use, but this tags will never be saved to file.
+# Same approach here, the following tags have to be converted/transformed into normal tags before
+# saved to file.
+COMPRESSED_TAGS = -10
+
+
 # Entity: Polyline, Polymesh
 # 70 flags
 POLYLINE_CLOSED = 1

@@ -67,7 +67,7 @@ class AC1015Factory(AC1009Factory):
     def __init__(self, drawing):
         super(AC1015Factory, self).__init__(drawing)
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
-        self.TAGS_FIXER = {'VERTEX': graphics.Vertex.fix_tags}
+        self.TAGS_MODIFIER = {'VERTEX': graphics.Vertex.fix_tags}
 
     @property
     def rootdict(self):
@@ -94,7 +94,7 @@ class AC1015Factory(AC1009Factory):
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
         target_entity.dxf.owner = source_entity.dxf.owner
 
-    def fix_tags(self, tags):
-        fixer = self.TAGS_FIXER.get(tags.dxftype(), None)
-        if fixer is not None:
-            fixer(tags)
+    def modify_tags(self, tags):
+        modifier = self.TAGS_MODIFIER.get(tags.dxftype(), None)
+        if modifier is not None:
+            modifier(tags)

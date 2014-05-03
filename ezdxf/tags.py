@@ -204,7 +204,18 @@ class Tags(list):
         for tag in self:
             if tag.code == code:
                 return tag.value
-        if default == ValueError:
+        if default is ValueError:
+            raise ValueError(code)
+        else:
+            return default
+
+    def get_first_tag(self, code, default=ValueError):
+        """ Returns first DXFTag(code, ...) or default if default != ValueError, else raises ValueError.
+        """
+        for tag in self:
+            if tag.code == code:
+                return tag
+        if default is ValueError:
             raise ValueError(code)
         else:
             return default
