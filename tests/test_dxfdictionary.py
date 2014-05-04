@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.testtools import ClassifiedTags
-from ezdxf.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
+from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
 
 class TestNoneEmptyDXFDict(unittest.TestCase):

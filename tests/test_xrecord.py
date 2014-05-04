@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.testtools import ClassifiedTags, DXFTag
-from ezdxf.dxfobjects import XRecord
+from ezdxf.modern.dxfobjects import XRecord
 
 
 class TestXRecord(unittest.TestCase):

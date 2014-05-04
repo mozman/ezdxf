@@ -15,7 +15,7 @@ def dxffactory(drawing):
     if dxfversion in unsupported_dxf_versions:
         acad_version = acadrelease.get(dxfversion, "unknown")
         raise DXFVersionError("DXF Version {} (AutoCAD Release: {}) not supported.".format(dxfversion, acad_version))
-    factory_class = LegacyDXFFactory if dxfversion == 'AC1009' else ModernDXFFactory
+    factory_class = LegacyDXFFactory if dxfversion <= 'AC1009' else ModernDXFFactory
     return factory_class(drawing)
 
 

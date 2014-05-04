@@ -3,13 +3,15 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+
 __author__ = "mozman <mozman@gmx.at>"
 
 from .headervars import VARMAP
 from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
-from .. import dxfobjects
+from . import dxfobjects
 from .layouts import Layouts, BlockLayout
 
 UPDATE_ENTITY_WRAPPERS = {
@@ -70,7 +72,10 @@ class ModernDXFFactory(LegacyDXFFactory):
     def __init__(self, drawing):
         super(ModernDXFFactory, self).__init__(drawing)
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
-        self.dxfversion = drawing.dxfversion  # this factory class manages more than one DXF version
+
+    @property
+    def dxfversion(self):
+        return self.drawing.dxfversion
 
     @property
     def rootdict(self):
