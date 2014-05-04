@@ -438,7 +438,7 @@ class Polyline(legacy.Polyline):
 
     def update_subclass_specifier(self):
         # For dxf attribute access not the name of the subclass is important, but
-        # the order of the subcasses 1st, 2nd, 3rd and so on.
+        # the order of the subclasses 1st, 2nd, 3rd and so on.
         # The 3rd subclass is the AcDb3dPolyline or AcDb2dPolyline subclass
         subclass = self.tags.subclasses[2]
         subclass[0] = DXFTag(100, self.get_mode())
