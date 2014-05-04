@@ -25,8 +25,10 @@ def _build_type_table(types):
             table[code] = caster
     return table
 
+
 def internal_type(value):
     return value
+
 
 TYPE_TABLE = _build_type_table([
     (internal_type, (-10, )),  # spacial tags for internal use

@@ -13,4 +13,5 @@ Tutorials
    tutorials/mtext
    tutorials/spline
    tutorials/polyface
+   tutorials/mesh
 

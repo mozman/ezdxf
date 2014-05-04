@@ -137,7 +137,7 @@ location    R12     location of the point (2D/3D Point)
 Circle
 ======
 
-.. class:: Circle
+.. class:: Circle(GraphicEntity)
 
    A circle at location *center* and *radius*, *dxftype* is ``CIRCLE``.
    Create circles in layouts and blocks by factory function :meth:`~Layout.add_circle`.
@@ -152,7 +152,7 @@ radius      R12     radius of circle (float)
 Arc
 ===
 
-.. class:: Arc
+.. class:: Arc(GraphicEntity)
 
    An arc at location *center* and *radius* from *startangle* to *endangle*, *dxftype* is ``ARC``.
    Create arcs in layouts and blocks by factory function :meth:`~Layout.add_arc`.
@@ -169,7 +169,7 @@ endangle    R12     end angle in degrees (float)
 Text
 ====
 
-.. class:: Text
+.. class:: Text(GraphicEntity)
 
     A simple one line text, dxftype is ``TEXT``. Text height is in drawing units and defaults to 1, but it depends on
     the rendering software what you really get. Width is a scaling factor, but it is not defined what is scaled (I
@@ -245,7 +245,7 @@ text_generation_flag  R12     text generation flags (int)
 Polyline
 ========
 
-.. class:: Polyline
+.. class:: Polyline(GraphicEntity)
 
     The *POLYLINE* entity is very complex, it's use to build 2D/3D polylines, 3D meshes and 3D polyfaces. For every type
     exists a different wrapper class but they all have the same dxftype of ``POLYLINE``. Detect the polyline type by
@@ -376,7 +376,7 @@ POLYMESH_BEZIER_SURFACE  8      Bezier surface
 Vertex
 ======
 
-.. class:: Vertex
+.. class:: Vertex(GraphicEntity)
 
    A vertex represents a polyline/mesh point, dxftype is ``VERTEX``, you don't have to create vertices by yourself.
 
@@ -556,7 +556,7 @@ Polyface
 Solid
 =====
 
-.. class:: Solid
+.. class:: Solid(GraphicEntity)
 
    A solid filled triangle or quadrilateral, *dxftype* is ``SOLID``. Access corner points by name
    (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
@@ -574,7 +574,7 @@ vtx3        R12     location of the 4. point (2D/3D Point)
 Trace
 =====
 
-.. class:: Trace
+.. class:: Trace(GraphicEntity)
 
    A Trace is solid filled triangle or quadrilateral, *dxftype* is ``TRACE``. Access corner points by name
    (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`). I don't know the difference
@@ -593,7 +593,7 @@ vtx3        R12     location of the 4. point (2D/3D Point)
 3DFace
 ======
 
-.. class:: 3DFace
+.. class:: 3DFace(GraphicEntity)
 
    (This is not a valid Python name, but it works, because all classes
    described here, do not exist in this simple form.)
@@ -622,7 +622,7 @@ invisible_edge R12     invisible edge flag (int, default=0)
 LWPolyline
 ==========
 
-.. class:: LWPolyline
+.. class:: LWPolyline(GraphicEntity)
 
    Introduced in AutoCAD R13 (DXF version AC1012)
 
@@ -707,7 +707,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 MText
 =====
 
-.. class:: MText
+.. class:: MText(GraphicEntity)
 
    Introduced in AutoCAD R13 (DXF version AC1012), extended in AutoCAD 2007 (DXF version AC1021)
 
@@ -853,7 +853,7 @@ NBSP                none breaking space (:code:`b += "Python" + b.NBSP + "3.4"`)
 Shape
 =====
 
-.. class:: Shape
+.. class:: Shape(GraphicEntity)
 
    Shapes are objects that you use like blocks. Shapes are stored in external shape files (\*.SHX). You can specify the
    scale and rotation for each shape reference as you add it. You can not create shapes with *ezdxf*, you can just insert
@@ -875,7 +875,7 @@ oblique     R12     oblique angle; default=0
 Ray
 ===
 
-.. class:: Ray
+.. class:: Ray(GraphicEntity)
 
    Introduced in AutoCAD R13 (DXF version AC1012)
 
@@ -891,7 +891,7 @@ unit_vector R13     unit direction vector as (3D Point)
 XLine
 =====
 
-.. class:: XLine
+.. class:: XLine(GraphicEntity)
 
    Introduced in AutoCAD R13 (DXF version AC1012)
 
@@ -907,7 +907,7 @@ unit_vector R13     unit direction vector as (3D Point)
 Spline
 ======
 
-.. class:: Spline
+.. class:: Spline(GraphicEntity)
 
    Introduced in AutoCAD R13 (DXF version AC1012)
 
@@ -1027,7 +1027,7 @@ Fit points, control points, knot values and weights can be manipulated as lists 
 Body
 ====
 
-.. class:: Body
+.. class:: Body(GraphicEntity)
 
     Introduced in AutoCAD R13 (DXF version AC1012)
 
@@ -1104,5 +1104,66 @@ DXFAttr                 Version Description
 ======================= ======= ===========
 history                  R13    handle to history object, see: :ref:`low_level_access_to_dxf_entities`
 ======================= ======= ===========
+
+Mesh
+====
+
+.. class:: Mesh(GraphicEntity)
+
+    Introduced in AutoCAD R13 (DXF version AC1012)
+
+    3D mesh entity similar to the :class:`Polyface` entity.
+
+.. method:: 3DSolid.open()
+
+    Context manager returns :class:`MeshData`
+
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+version                 R13     int
+blend_crease            R13     0 = off, 1 = on
+subdivision_levels      R13     int >= 1
+======================= ======= ===========
+
+.. class:: MeshData
+
+.. attribute:: MeshData.vertices
+
+    A standard Python list with (x, y, z)-tuples (read/write)
+
+.. attribute:: MeshData.faces
+
+    A standard Python list with (v1, v2, v3,...)-tuples (read/write)
+
+    Each face consist of a list of vertex indices (= index in :attr:`MeshData.vertices`).
+
+.. attribute:: MeshData.edges
+
+    A standard Python list with (v1, v2)-tuples (read/write)
+
+    Each edge consist of exact two vertex indices (= index in :attr:`MeshData.vertices`).
+
+.. attribute:: MeshData.edge_crease_values
+
+    A standard Python list of float values, one value for each edge. (read/write)
+
+.. method:: MeshData.add_face(vertices)
+
+    Add a face by coordinates, vertices is a list of (x, y, z)-tuples.
+
+.. method:: MeshData.add_edge(vertices)
+
+    Add an edge by coordinates, vertices is a list of two (x, y, z)-tuples.
+
+.. method:: MeshData.optimize(precision=6)
+
+    Tries to reduce vertex count by merging near vertices. *precision* defines the decimal places for coordinate
+    be equal to merge two vertices.
+
+.. seealso::
+
+    :ref:`tut_mesh`
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling

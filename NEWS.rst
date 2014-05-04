@@ -5,12 +5,12 @@ News
 Version 0.6.2 - 2014-05-09
 
   * Beta status
-  * Supported Python versions: CPython 2.7, 3.4 and pypy 2.2.1
   * NEW: set ``ezdxf.options.compress_default_chunks = True`` to compress unnecessary Sections (like THUMBNAILIMAGE) in
     memory with zlib
   * NEW: Drawing.compress_binary_data() - compresses binary data (mostly code 310) in memory with zlib or set
     ``ezdxf.options.compress_binary_data = True`` to compress binary data of every drawing you open.
-  * CHANGE: refactored internal structure - just two DXF factories:
+  * NEW: Support for MESH entity
+  * CHANGE: refactored internal structure - only two DXF factories remaining:
 
     - LegacyDXFFactory() for AC1009 (DXF12) drawings
     - ModernDXFFactory() for newer DXF versions except DXF13/14.
@@ -18,7 +18,6 @@ Version 0.6.2 - 2014-05-09
 Version 0.6.1 - 2014-05-02
 
   * Beta status
-  * Supported Python versions: CPython 2.7, 3.4 and pypy 2.2.1
   * NEW: create new layouts - Drawing.create_layout(name, dxfattribs=None)
   * NEW: delete layouts - Drawing.delete_layout(name)
   * NEW: delete blocks - Drawing.blocks.delete_block(name)
@@ -71,7 +70,7 @@ Version 0.5.0 - 2014-04-13
   * BUGFIX: Drawing.get_layout_setter() - did not work with entities without DXF attribute *paperspace*
   * NEW: default values for DXF attributes as defined in the DXF standard, this allows usage of optional DXF attributes
     (with defined default values) without check of presence, like *entity.dxf.paperspace*.
-  * NEW: DXF entities Shape, Ray, XLine, Spline
+  * NEW: DXF entities SHAPE, RAY, XLINE, SPLINE
   * NEW: delete entities from layout/block
   * CHANGE: entity 3DFACE requires 3D coordinates (created by add_3Dface())
   * CHANGE: LWPolyline all methods return points as (x, y, [start_width, [end_width, [bulge]]]) tuples
@@ -81,7 +80,7 @@ Version 0.4.2 - 2014-04-02
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.3, 3.4 and pypy 2.1
-  * NEW: DXF entities LWPolyline, MText
+  * NEW: DXF entities LWPOLYLINE, MTEXT
   * NEW: convenience methods place(), grid(), get_attrib_text() and has_attrib() for the Insert entity
   * CHANGE: pyparsing as external dependency
   * BUGFIX: iteration over drawing.entities yields full functional entities (correct layout attribute)
