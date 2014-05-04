@@ -497,7 +497,7 @@ Polyface
 
    Returns a list of all vertices and a generator of :class:`Face()` objects as tuple::
 
-   vertices, faces = polyface.indexed_faces()
+        vertices, faces = polyface.indexed_faces()
 
 .. method:: Polyface.optimize(precision=6)
 
@@ -925,6 +925,8 @@ Spline
    To create a :class:`Spline` curve you just need a bunch of `fit points`, `control point`, `knot_values` and `weights`
    are optional (tested with AutoCAD 2010). If you add additional data, be sure that you know what you do.
 
+   Create :class:`Spline` in layouts and blocks by factory function :meth:`~Layout.add_spline`.
+
    For more information about spline mathematic go to `Wikipedia`_.
 
 .. _Wikipedia: https://en.wikipedia.org/wiki/Spline_%28mathematics%29
@@ -1021,3 +1023,86 @@ Fit points, control points, knot values and weights can be manipulated as lists 
         fp.append((200, 300, 0))  # append a fit point
         # on exit the context manager calls spline.set_fit_points(cp) automatically
 
+
+Body
+====
+
+.. class:: Body
+
+    Introduced in AutoCAD R13 (DXF version AC1012)
+
+    A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+    Create :class:`Body` objects in layouts and blocks by factory function :meth:`~Layout.add_body`.
+    *ezdxf* will never interpret ACIS source code, don't ask me for this feature.
+
+.. method:: Body.get_acis_data()
+
+    Get the ACIS source code as a list of strings.
+
+.. method:: Body.set_acis_data(test_lines)
+
+    Set the ACIS source code as a list of strings **without** line endings.
+
+.. method:: Body.acis_data()
+
+    Context manager for  ACIS text lines::
+
+        with body_entity.acis_data as data:
+            # data is a standard Python list
+            # remove, append and modify ACIS source code
+            data[:] = ['line 1', 'line 2', 'line 3']  # replaces the whole ACIS content (with invalid data)
+
+
+Region
+======
+
+.. class:: Region(Body)
+
+    Introduced in AutoCAD R13 (DXF version AC1012)
+
+    An object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+    Create :class:`Region` objects in layouts and blocks by factory function
+    :meth:`~Layout.add_region`.
+
+.. method:: Region.get_acis_data()
+
+    Get the ACIS source code as a list of strings.
+
+.. method:: Region.set_acis_data(test_lines)
+
+    Set the ACIS source code as a list of strings **without** line endings.
+
+.. method:: Region.acis_data()
+
+    Context manager for  ACIS text lines.
+
+3DSolid
+=======
+
+.. class:: 3DSolid(Body)
+
+    Introduced in AutoCAD R13 (DXF version AC1012)
+
+    A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+    Create :class:`3DSolid` objects in layouts and blocks by factory function
+    :meth:`~Layout.add_3dsolid`.
+
+.. method:: 3DSolid.get_acis_data()
+
+    Get the ACIS source code as a list of strings.
+
+.. method:: 3DSolid.set_acis_data(test_lines)
+
+    Set the ACIS source code as a list of strings **without** line endings.
+
+.. method:: 3DSolid.acis_data()
+
+    Context manager for  ACIS text lines.
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+history                  R13    handle to history object, see: :ref:`low_level_access_to_dxf_entities`
+======================= ======= ===========
+
+.. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling

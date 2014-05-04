@@ -121,6 +121,9 @@ Drawing Attributes
 
     Reference to the appids table, see also :class:`AppID`.
 
+.. attribute:: Drawing.is_binary_data_compressed
+
+   Indicates if binary data is compressed in memory. see: :meth:`Drawing.compress_binary_data`
 
 Drawing Methods
 ---------------
@@ -163,3 +166,27 @@ Drawing Methods
 
     Write drawing to a text stream, opened with `encoding` = :attr:`Drawing.encoding`
     and and `mode` = ``'wt'``.
+
+.. method:: Drawing.compress_binary_data()
+
+    If you don't need access to binary data of DXF entities, you can compress them in memory for a lower
+    memory footprint, you can set :code:`ezdxf.options.compress_binray_data = True` to compress binary data
+    for every drawing you open, but data compression cost time, so this option isn't active by default.
+
+.. _low_level_access_to_dxf_entities:
+
+Low Level Access to DXF entities
+--------------------------------
+
+.. method:: Drawing.get_dxf_entity(handle)
+
+    Get entity by *handle* from entity database. Low level access to DXF entities database.
+    Raises *KeyError* if *handle* doesn't exist. Returns :class:`DXFEntity` or inherited.
+
+If you just need the raw DXF tags use::
+
+    tags = Drawing.entitydb[handle]  # raises KeyError, if handle don't exist
+    tags = Drawing.entitydb.get(handle)  # returns a default value, if handle don't exist (None by default)
+
+type of tags: :class:`ClassifiedTags`
+

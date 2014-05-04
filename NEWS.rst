@@ -2,13 +2,14 @@
 News
 ====
 
-Version 0.6.2 - 2014-05-..
+Version 0.6.2 - 2014-05-09
 
   * Beta status
   * Supported Python versions: CPython 2.7, 3.4 and pypy 2.2.1
-  * NEW: set ezdxf.options.compress_default_chunks = True - to compress unnecessary Sections (like THUMBNAILIMAGE) in
+  * NEW: set ``ezdxf.options.compress_default_chunks = True`` to compress unnecessary Sections (like THUMBNAILIMAGE) in
     memory with zlib
-  * NEW: set ezdxf.options.compress_binary_data = True - to compress binary data (mostly code 310) in memory with zlib
+  * NEW: Drawing.compress_binary_data() - compresses binary data (mostly code 310) in memory with zlib or set
+    ``ezdxf.options.compress_binary_data = True`` to compress binary data of every drawing you open.
 
 Version 0.6.1 - 2014-05-02
 

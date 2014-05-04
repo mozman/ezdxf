@@ -133,6 +133,21 @@ Create new entities
    Add a :class:`Spline`, `fit_points` has to be a list (container or generator) of (x, y, z) tuples.
    (requires DXF version AC1012 or newer)
 
+.. method:: Layout.add_body(acis_data="", dxfattribs=None)
+
+   Add a :class:`Body` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
+   endings. (requires DXF version AC1012 or newer)
+
+.. method:: Layout.add_region(acis_data="", dxfattribs=None)
+
+   Add a :class:`Region` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
+   endings. (requires DXF version AC1012 or newer)
+
+.. method:: Layout.add_3dsolid(acis_data="", dxfattribs=None)
+
+   Add a :class:`3DSolid` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
+   endings. (requires DXF version AC1012 or newer)
+
 Delete entities
 ---------------
 

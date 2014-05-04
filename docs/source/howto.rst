@@ -7,7 +7,7 @@ General preconditions::
     dwg = ezdxf.readfile("your_dxf_file.dxf")
     modelspace = dwg.modelspace()
 
-.. _howto get attribs:
+.. _howto_get_attribs:
 
 Get/Set block reference attributes
 ----------------------------------
@@ -29,3 +29,36 @@ Get attribute by tag::
     diameter = entity.get_attrib('diameter')
     if diameter is not None:
         diameter.dxf.text = "17mm"
+
+.. _howto_reduce_memory_footprint:
+
+Reduce Memory Footprint
+-----------------------
+
+- compress binary data by :meth:`Drawing.compress_binary_data`
+- compress useless sections like `THUMBNAILIMAGE` by setting :code:`ezdxf.options.compress_default_chunks = True`,
+  *before* opening the DXF file.
+
+.. warning:: Data compression costs time: *memory usage* vs *run time*
+
+.. _howto_create_more_readable_dxf_files:
+
+Create More Readable DXF Files (dxf2html)
+-----------------------------------------
+
+DXF files are plain text files, you can open this files with every text editor which handles bigger files.
+But it is not really easy to get quick the information you want.
+
+Create a more readable HTML file::
+
+    # on Windows
+    py -3 -m ezdxf.dxf2html your_dxf_file.dxf
+
+    # on Linux/Mac
+    python3 -m ezdxf.dxf2html your_dxf_file.dxf
+
+This produces a HTML file *your_dxf_file.html* with a nicer layout than a plain DXF file and DXF handles as links
+between DXF entities, this simplifies the navigation between the DXF entities.
+
+.. important:: This does not render the graphical content of the DXF file to a HTML canvas element.
+
