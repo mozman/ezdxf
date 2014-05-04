@@ -23,9 +23,11 @@ class Drawing(object):
     """
     def __init__(self, tagreader):
         """ Create a new drawing. """
+
         def get_rootdict():
             roothandle = self.sections.objects.roothandle()
             return self.dxffactory.wrap_entity(self.entitydb[roothandle])
+        self._is_binary_data_compressed = False
         self.dxffactory = None  # readonly
         self.dxfversion = 'AC1009'  # readonly
         self.encoding = 'cp1252'  # read/write
@@ -42,8 +44,13 @@ class Drawing(object):
             # for ProE, which writes entities without owner tags (330)
             self.entities.repair_model_space(self.modelspace().layout_key)
 
-        if options.compress_binary_data and self.dxfversion > 'AC1009':
+        if options.compress_binary_data:
+            self.compress_binary_data()
+
+    def compress_binary_data(self):
+        if self.dxfversion > 'AC1009' and not self.is_binary_data_compressed:
             self.entitydb.compress_binary_data()
+            self._is_binary_data_compressed = True
 
     @property
     def _handles(self):
@@ -58,6 +65,10 @@ class Drawing(object):
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
         self.dxffactory = dxffactory(self)
+
+    @property
+    def is_binary_data_compressed(self):
+        return self._is_binary_data_compressed
 
     @property
     def header(self):

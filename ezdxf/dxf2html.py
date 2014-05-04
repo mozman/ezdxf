@@ -10,11 +10,13 @@ import sys
 import os
 import io
 
-from ezdxf import readfile
+from ezdxf import readfile, options
 from ezdxf.dxftag import tag_type, point_tuple, is_point_code, internal_type
 from ezdxf.c23 import escape, ustr
 from ezdxf.reflinks import get_reference_link
 from ezdxf.sections import KNOWN_SECTIONS
+from ezdxf.tags import CompressedTags
+
 # Handle definitions
 
 _HANDLE_CODES = [5, 105]
@@ -257,8 +259,12 @@ class DXF2HtmlConverter(object):
             vstr = trim_str(ustr(tag.value))
             type_str = tag_type_str(tag.code)
             if type_str == '<bin>':
-                type_str = '<binary encoded data>'
+                if isinstance(tag, CompressedTags):
+                    type_str = '<multiple binary encoded data tags compressed to one tag>'
+                else:
+                    type_str = '<binary encoded data>'
                 vstr = ""
+
             return tpl.format(code=tag.code, value=escape(vstr), type=escape(type_str))
 
         def group_marker(tag, tag_html):
@@ -354,6 +360,7 @@ def load_resource(filename):
     return resource
 
 if __name__ == "__main__":
+    options.compress_binary_data = True
     filename = sys.argv[1]
     try:
         dwg = readfile(filename)

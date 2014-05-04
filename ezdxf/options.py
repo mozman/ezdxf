@@ -13,6 +13,7 @@ LOGGER_NAME = 'ezdxf'
 
 class Options(object):
     def __init__(self):
+        self._debug = False
         self.template_dir = None
         self.logger = logging.getLogger(LOGGER_NAME)
         self.debug = False  # important to set after setup of self.logger

@@ -1503,10 +1503,14 @@ class Body(ac1009.GraphicEntity):
         return crypt.decode(text_lines)
 
     def set_acis_data(self, text_lines):
+        def cleanup(lines):
+            for line in lines:
+                yield line.rstrip().replace('\n', '')
+
         modeler_geometry = self.tags.subclasses[2]
         # remove existing text
         modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code not in (1, 3))
-        modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(text_lines)))
+        modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(cleanup(text_lines))))
 
     @contextmanager
     def acis_data(self):
