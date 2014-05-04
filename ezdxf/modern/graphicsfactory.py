@@ -65,3 +65,8 @@ class ModernGraphicsFactory(object):
         if acis_data is not None:
             entity.set_acis_data(acis_data)
         return entity
+
+    def add_mesh(self, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        return self.build_and_add_entity('MESH', dxfattribs)

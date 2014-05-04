@@ -59,6 +59,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'BODY': graphics.Body,
     'REGION': graphics.Region,
     '3DSOLID': graphics.Solid3d,
+    'MESH': graphics.Mesh,
 }
 
 
