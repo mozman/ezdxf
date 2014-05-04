@@ -1,4 +1,4 @@
-# Purpose: dxf factory for R12/AC1009
+# Purpose: legacy dxf factory for R12/AC1009
 # Created: 11.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
@@ -101,7 +101,7 @@ ENTITY_WRAPPERS = {
 }
 
 
-class AC1009Factory(object):
+class LegacyDXFFactory(object):
     HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.GraphicEntity
 

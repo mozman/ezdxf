@@ -8,8 +8,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .graphicsfactory import GraphicsFactoryAC1015
-from ..ac1009.layouts import DXF12Layout, DXF12BlockLayout
+from .graphicsfactory import ModernGraphicsFactory
+from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..classifiedtags import ClassifiedTags
 
 
@@ -110,7 +110,7 @@ class Layouts(object):
         layout.destroy()
 
 
-class Layout(DXF12Layout, GraphicsFactoryAC1015):
+class Layout(DXF12Layout, ModernGraphicsFactory):
     """ Layout representation
     """
     def __init__(self, drawing, layout_handle):
@@ -167,7 +167,7 @@ class Layout(DXF12Layout, GraphicsFactoryAC1015):
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
 
-class BlockLayout(DXF12BlockLayout, GraphicsFactoryAC1015):
+class BlockLayout(DXF12BlockLayout, ModernGraphicsFactory):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """

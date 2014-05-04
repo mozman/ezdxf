@@ -9,8 +9,10 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.testtools import ClassifiedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.testtools import ClassifiedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass, DrawingProxy
 from ezdxf.dxfentity import DXFEntity
+
+DWG = DrawingProxy('AC1009')
 
 
 class PointAccessor(DXFEntity):
@@ -19,8 +21,12 @@ class PointAccessor(DXFEntity):
         'flat': DXFAttr(11, 'Point2D'),
         'xp': DXFAttr(12, 'Point3D'),
         'flex': DXFAttr(13, 'Point2D/3D'),
-        'flags': DXFAttr(70, None),
+        'flags': DXFAttr(70),
+        'just_AC1015': DXFAttr(71, default=777, dxfversion='AC1015'),
     }))
+
+    def __init__(self, tags):
+        super(PointAccessor, self).__init__(tags, drawing=DWG)
 
 
 class TestDXFEntity(unittest.TestCase):
@@ -33,11 +39,21 @@ class TestDXFEntity(unittest.TestCase):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         self.assertFalse(point.supports_dxf_attrib('mozman'))
+        self.assertFalse(point.supports_dxf_attrib('just_AC1015'))
 
     def test_getdxfattr_default(self):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         self.assertEqual(17, point.get_dxf_attrib('flags', 17))
+
+    def test_getdxfattr_no_DXF_default_value_at_wrong_dxf_version(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        # just_AC1015 has a DXF default value, but the drawing has an insufficient DXF version
+        with self.assertRaises(ValueError):
+            point.get_dxf_attrib('just_AC1015')
+        # except the USER defined default value
+        self.assertEqual(17, point.get_dxf_attrib('just_AC1015', 17))
 
     def test_getdxfattr_exist(self):
         tags = ClassifiedTags.from_text("70\n9\n10\n1.0\n20\n2.0\n30\n3.0\n")
@@ -69,6 +85,7 @@ class TestDXFEntity(unittest.TestCase):
     def test_valid_dxf_attrib_names(self):
         tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
+        # just_AC1015 - is not valid for AC1009
         self.assertEqual(['flags', 'flat', 'flex', 'point', 'xp'], sorted(point.valid_dxf_attrib_names()))
 
     def test_set_and_get_dxfattrib(self):
@@ -76,6 +93,17 @@ class TestDXFEntity(unittest.TestCase):
         point = PointAccessor(tags)
         point.dxf.flags = 7
         self.assertEqual(7, point.dxf.flags)
+
+    def test_set_dxfattrib_for_wrong_dxfversion_error(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        with self.assertRaises(AttributeError):
+            point.dxf.just_AC1015 = 7
+
+    def test_get_dxfattrib_for_wrong_dxfversion_without_error(self):
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n71\n999\n")
+        point = PointAccessor(tags)
+        self.assertEqual(999, point.dxf.just_AC1015, "If false tags are there, don't care")
 
     def test_delete_simple_dxfattrib(self):
         tags = ClassifiedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")

@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-from ezdxf.ac1015.graphics import split_string_in_chunks, MTextBuffer
+from ezdxf.modern.graphics import split_string_in_chunks, MTextBuffer
 from ezdxf import const
 
 DWG = ezdxf.new('AC1015')
