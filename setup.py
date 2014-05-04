@@ -27,7 +27,7 @@ setup(
     url='http://bitbucket.org/mozman/ezdxf',
     download_url='http://bitbucket.org/mozman/ezdxf/downloads',
     author_email=AUTHOR_EMAIL,
-    packages=['ezdxf', 'ezdxf.ac1009', 'ezdxf.ac1015', 'ezdxf.ac1018', 'ezdxf.ac1021', 'ezdxf.ac1024', 'ezdxf.ac1027'],
+    packages=['ezdxf', 'ezdxf.legacy', 'ezdxf.modern'],
     package_data={'ezdxf': ['templates/*.dxf']},
     provides=['ezdxf'],
     install_requires=['pyparsing>=2.0.1'],

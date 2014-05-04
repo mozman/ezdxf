@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 
-class GraphicsFactoryAC1015(object):
+class ModernGraphicsFactory(object):
     def add_lwpolyline(self, points, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}

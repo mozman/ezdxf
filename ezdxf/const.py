@@ -22,6 +22,8 @@ dxfversion = {
     acad: dxf for dxf, acad in acadrelease.items()
 }
 
+unsupported_dxf_versions = ('AC1012', 'AC1014')  # modern tags structure but not modern enough
+
 
 class DXFStructureError(Exception):
     pass

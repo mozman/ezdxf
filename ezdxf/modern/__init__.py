@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .headervars import VARMAP
-from ..ac1009 import AC1009Factory
+from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
 from .. import dxfobjects
@@ -60,14 +60,17 @@ UPDATE_ENTITY_WRAPPERS = {
 }
 
 
-class AC1015Factory(AC1009Factory):
+class ModernDXFFactory(LegacyDXFFactory):
+    """ DXf factory for DXF version AC1015 and later. (changed 04.05.2014)
+    """
     HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.GraphicEntity
+    TAGS_MODIFIER = {'VERTEX': graphics.Vertex.fix_tags}
 
     def __init__(self, drawing):
-        super(AC1015Factory, self).__init__(drawing)
+        super(ModernDXFFactory, self).__init__(drawing)
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
-        self.TAGS_MODIFIER = {'VERTEX': graphics.Vertex.fix_tags}
+        self.dxfversion = drawing.dxfversion  # this factory class manages more than one DXF version
 
     @property
     def rootdict(self):

@@ -87,12 +87,19 @@ class DXFEntity(object):
         """ Returns *True* if DXF attrib *key* is supported by this entity else False. Does not grant that attrib
         *key* really exists.
         """
-        return key in self.DXFATTRIBS
+        dxfattr = self.DXFATTRIBS.get(key, None)
+        if dxfattr is None:
+            return False
+        if dxfattr.dxfversion is None:
+            return True
+        return self.drawing.dxfversion >= dxfattr.dxfversion
 
     def valid_dxf_attrib_names(self):
         """ Returns a list of supported DXF attribute names.
         """
-        return list(self.DXFATTRIBS.keys())
+        is_dxfversion = self.drawing.dxfversion
+        return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or
+                                                                  (attrib.dxfversion <= is_dxfversion)]
 
     def dxf_attrib_exists(self, key):
         """ Returns *True* if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.
@@ -108,10 +115,13 @@ class DXFEntity(object):
 
     def get_dxf_attrib(self, key, default=ValueError):
         dxfattr = self._get_dxfattr_definition(key)
-        try:
+        try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
             return self._get_dxf_attrib(dxfattr)
         except ValueError:
             if default is ValueError:
+                # no DXF default values if DXF version is incorrect
+                if dxfattr.dxfversion is not None and self.drawing.dxfversion < dxfattr.dxfversion:
+                    raise ValueError("DXFAttrib '%s' does not exist. (insufficient DXF version)" % key)
                 result = dxfattr.default  # default value defined by DXF specs
                 if result is not None:
                     return result
@@ -140,6 +150,10 @@ class DXFEntity(object):
 
     def set_dxf_attrib(self, key, value):
         dxfattr = self._get_dxfattr_definition(key)
+        if dxfattr.dxfversion is not None:
+            if self.drawing.dxfversion < dxfattr.dxfversion:
+                raise AttributeError("Attribute '{}' not valid for DXF version '{}' at least '{}' is needed.".format(
+                    key, self.drawing.dxfversion, dxfattr.dxfversion))
         # no subclass is subclass index 0
         subclasstags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:

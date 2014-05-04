@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
-from ..ac1009 import tableentries as ac1009
+from ..legacy import tableentries as legacy
 from ..dxfentity import DXFEntity
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
@@ -55,7 +55,7 @@ layer_subclass = DefSubclass('AcDbLayerTableRecord', {
 })
 
 
-class Layer(ac1009.Layer):
+class Layer(legacy.Layer):
     TEMPLATE = ClassifiedTags.from_text(_LAYERTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, layer_subclass)
 
@@ -105,7 +105,7 @@ style_subclass = DefSubclass('AcDbTextStyleTableRecord', {
 })
 
 
-class Style(ac1009.Style):
+class Style(legacy.Style):
     TEMPLATE = ClassifiedTags.from_text(_STYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, style_subclass)
 
@@ -134,7 +134,7 @@ linetype_subclass = DefSubclass('AcDbLinetypeTableRecord', {
 })
 
 
-class Linetype(ac1009.Linetype):
+class Linetype(legacy.Linetype):
     TEMPLATE = ClassifiedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
@@ -166,7 +166,7 @@ appid_subclass = DefSubclass('AcDbRegAppTableRecord', {
 })
 
 
-class AppID(ac1009.AppID):
+class AppID(legacy.AppID):
     TEMPLATE = ClassifiedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, appid_subclass)
 
@@ -311,7 +311,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
 })
 
 
-class DimStyle(ac1009.DimStyle):
+class DimStyle(legacy.DimStyle):
     TEMPLATE = ClassifiedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
 
@@ -355,7 +355,7 @@ ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
 })
 
 
-class UCS(ac1009.UCS):
+class UCS(legacy.UCS):
     TEMPLATE = ClassifiedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, ucs_subclass)
 
@@ -418,7 +418,7 @@ view_subclass = DefSubclass('AcDbViewTableRecord', {
 })
 
 
-class View(ac1009.View):
+class View(legacy.View):
     TEMPLATE = ClassifiedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, view_subclass)
 
@@ -532,7 +532,7 @@ vport_subclass = DefSubclass('AcDbViewportTableRecord', {
 })
 
 
-class Viewport(ac1009.Viewport):
+class Viewport(legacy.Viewport):
     TEMPLATE = ClassifiedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
 

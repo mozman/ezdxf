@@ -10,6 +10,10 @@ Version 0.6.2 - 2014-05-09
     memory with zlib
   * NEW: Drawing.compress_binary_data() - compresses binary data (mostly code 310) in memory with zlib or set
     ``ezdxf.options.compress_binary_data = True`` to compress binary data of every drawing you open.
+  * CHANGE: refactored internal structure - just two DXF factories:
+
+    - LegacyDXFFactory() for AC1009 (DXF12) drawings
+    - ModernDXFFactory() for newer DXF versions except DXF13/14.
 
 Version 0.6.1 - 2014-05-02
 
