@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-from ezdxf.modern.graphics import split_string_in_chunks, MTextBuffer
+from ezdxf.modern.graphics import split_string_in_chunks, MTextData
 from ezdxf import const
 
 DWG = ezdxf.new('AC1015')
@@ -61,8 +61,8 @@ class TestMText(unittest.TestCase):
         text = "0123456789" * 27
         text2 = "abcdefghij" * 27
         mtext = self.layout.add_mtext(text)
-        with mtext.buffer() as b:
-            b.text = text2
+        with mtext.edit_data() as data:
+            data.text = text2
         self.assertEqual(text2, mtext.get_text())
 
     def test_set_location(self):
@@ -101,11 +101,11 @@ class TestSplitStringInChunks(unittest.TestCase):
 
 class TextMTextBuffer(unittest.TestCase):
     def test_new_buffer(self):
-        b = MTextBuffer("abc")
+        b = MTextData("abc")
         self.assertEqual("abc", b.text)
 
     def test_append_text(self):
-        b = MTextBuffer("abc")
+        b = MTextData("abc")
         b += "def" + b.NEW_LINE
 
         self.assertEqual("abcdef\\P;", b.text)

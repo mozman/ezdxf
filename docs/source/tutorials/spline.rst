@@ -26,15 +26,15 @@ Add a fit point to a spline::
     spline = msp.query('SPLINE')[0]  # take the first spline
 
     # use the context manager
-    with spline.fit_points() as fp: # fp is a standard python list
-        fp.append((2250, 2500, 0))
+    with spline.edit_data() as data: # data contains standard python lists
+        data.fit_points.append((2250, 2500, 0))
 
-        points = fp[:-1]  # pitfall: this creates a new list without a connection to the spline object
+        points = data.fit_points[:-1]  # pitfall: this creates a new list without a connection to the spline object
         points.append((3000, 3000, 0))  # has no effect for the spline object
 
-        fp[:] = points # replace points of fp, this way it works
+        data.fit_points = points # replace points of fp, this way it works
 
-    # the context manager calls automatically spline.set_fit_points(fp)
+    # the context manager calls automatically spline.set_fit_points(data.fit_points)
 
     dwg.saveas("extended_Spline.dxf")
 
@@ -49,13 +49,13 @@ Solve problems of incorrect values after editing an AutoCAD generated file::
 
     msp = dwg.modelspace()
     spline = msp.query('SPLINE')[0]  # take the first spline
-    with spline.fit_points() as fp:  # context manger
-        fp.append((2250, 2500, 0))  # fp is a standard python list
+    with spline.edit_data() as data:  # context manger
+        data.fit_points.append((2250, 2500, 0))  # data.fit_points is a standard python list
 
-    # As far as I tested this works without complaints from AutoCAD, but for the case of problems
-    spline.set_knot_values([])  # delete knot values, this shouldn't modify the geometry of the spline
-    spline.set_weights([])  # delete weights, this could modify the geometry of the spline
-    spline.set_control_points([])  # delete control points, this could modify the geometry of the spline
+        # As far as I tested this works without complaints from AutoCAD, but for the case of problems
+        data.knot_values = []  # delete knot values, this shouldn't modify the geometry of the spline
+        data.weights = []  # delete weights, this could modify the geometry of the spline
+        data.control_points = []  # delete control points, this could modify the geometry of the spline
 
     dwg.saveas("modified_Spline.dxf")
 

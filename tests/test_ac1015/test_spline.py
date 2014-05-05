@@ -53,8 +53,8 @@ class TestSpline(unittest.TestCase):
         spline = self.layout.add_spline()
         values = [1, 2, 3, 4, 5, 6, 7]
         spline.set_knot_values(values)
-        with spline.knot_values() as kv:
-            kv.extend([8, 9])
+        with spline.edit_data() as data:
+            data.knot_values.extend([8, 9])
         self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], spline.get_knot_values())
 
     def test_weights(self):
@@ -67,8 +67,8 @@ class TestSpline(unittest.TestCase):
         spline = self.layout.add_spline()
         values = [1, 2, 3, 4, 5, 6, 7]
         spline.set_weights(values)
-        with spline.weights() as weights:
-            weights.extend([8, 9])
+        with spline.edit_data() as data:
+            data.weights.extend([8, 9])
         self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9], spline.get_weights())
 
     def test_control_points(self):

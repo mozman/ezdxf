@@ -9,7 +9,11 @@ Version 0.6.2 - 2014-05-09
     memory with zlib
   * NEW: Drawing.compress_binary_data() - compresses binary data (mostly code 310) in memory with zlib or set
     ``ezdxf.options.compress_binary_data = True`` to compress binary data of every drawing you open.
-  * NEW: Support for MESH entity
+  * NEW: support for MESH entity
+  * NEW: support for BODY, 3DSOLID and REGION entity, you get the ACIS data
+  * CHANGE: Spline() - removed context managers fit_points(), control_points(), knot_values() and weights() and added a
+    general context_manager edit_data(), similar to Mesh.edit_data() - unified API
+  * CHANGE: MText.buffer() -> MText.edit_data() - unified API (MText.buffer() still exist as alias)
   * CHANGE: refactored internal structure - only two DXF factories remaining:
 
     - LegacyDXFFactory() for AC1009 (DXF12) drawings

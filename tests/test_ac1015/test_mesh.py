@@ -35,7 +35,7 @@ class TestMeshFromText(unittest.TestCase):
         self.assertEqual(3, self.mesh.dxf.subdivision_levels)
 
     def test_mesh_geometric_data(self):
-        with self.mesh.open() as mesh_data:
+        with self.mesh.edit_data() as mesh_data:
             self.assertEqual(56, len(mesh_data.vertices))
             self.assertEqual(54, len(mesh_data.faces))
             self.assertEqual(108, len(mesh_data.edges))

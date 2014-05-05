@@ -40,6 +40,7 @@ from ..facemixins import PolyfaceMixin, PolymeshMixin
 from ..tools import safe_3D_point
 from .. import crypt
 from ..const import DXFStructureError
+import warnings
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -1190,10 +1191,12 @@ class MText(legacy.GraphicEntity):  # MTEXT will be extended in DXF version AC10
         return self
 
     @contextmanager
-    def buffer(self):
-        buffer = MTextBuffer(self.get_text())
+    def edit_data(self):
+        buffer = MTextData(self.get_text())
         yield buffer
         self.set_text(buffer.text)
+
+    buffer = edit_data  # alias
 
 ##################################################
 # MTEXT inline codes
@@ -1250,7 +1253,7 @@ class MText(legacy.GraphicEntity):  # MTEXT will be extended in DXF version AC10
 # Codes and braces can be nested up to 8 levels deep
 
 
-class MTextBuffer(object):
+class MTextData(object):
     UNDERLINE_START = '\\L;'
     UNDERLINE_STOP = '\\l;'
     UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
@@ -1264,7 +1267,7 @@ class MTextBuffer(object):
     GROUP_START = '{'
     GROUP_END = '}'
     GROUP = GROUP_START + '%s' + GROUP_END
-    NBSP = '\\~' # none breaking space
+    NBSP = '\\~'  # none breaking space
 
     def __init__(self, text):
         self.text = text
@@ -1419,9 +1422,7 @@ class Spline(legacy.GraphicEntity):
 
     @contextmanager
     def knot_values(self):
-        values = self.get_knot_values()
-        yield values
-        self.set_knot_values(values)
+        raise RuntimeError("Spline.knot_values() is deprecated, use Spline.edit_data()")
 
     def get_weights(self):
         return [tag.value for tag in self.AcDbSpline.find_all(code=41)]
@@ -1431,9 +1432,7 @@ class Spline(legacy.GraphicEntity):
 
     @contextmanager
     def weights(self):
-        values = self.get_weights()
-        yield values
-        self.set_weights(values)
+        raise RuntimeError("Spline.weights() is deprecated, use Spline.edit_data()")
 
     def get_control_points(self):
         return [tag.value for tag in self.AcDbSpline if tag.code == 10]
@@ -1454,9 +1453,7 @@ class Spline(legacy.GraphicEntity):
 
     @contextmanager
     def control_points(self):
-        values = self.get_control_points()
-        yield values
-        self.set_control_points(values)
+        raise RuntimeError("Spline.control_points() is deprecated, use Spline.edit_data()")
 
     def get_fit_points(self):
         return [tag.value for tag in self.AcDbSpline if tag.code == 11]
@@ -1468,10 +1465,24 @@ class Spline(legacy.GraphicEntity):
 
     @contextmanager
     def fit_points(self):
-        values = self.get_fit_points()
-        yield values
-        self.set_fit_points(values)
+        raise RuntimeError("Spline.fit_points() is deprecated, use Spline.edit_data()")
 
+    @contextmanager
+    def edit_data(self):
+        data = SplineData(self)
+        yield data
+        self.set_fit_points(data.fit_points)
+        self.set_control_points(data.control_points)
+        self.set_knot_values(data.knot_values)
+        self.set_weights(data.weights)
+
+
+class SplineData(object):
+    def __init__(self, spline):
+        self.fit_points = spline.get_fit_points()
+        self.control_points = spline.get_control_points()
+        self.knot_values = spline.get_knot_values()
+        self.weights = spline.get_weights()
 
 _BODY_TPL = """  0
 BODY
@@ -1514,53 +1525,21 @@ class Body(legacy.GraphicEntity):
         modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(cleanup(text_lines))))
 
     @contextmanager
-    def acis_data(self):
-        textlines = list(self.get_acis_data())
-        yield textlines
-        self.set_acis_data(textlines)
-
-####################################################################
-# Working example for compressed tags (NOT used yet)
-# It is important to compress tags after reading from file:
-# add to TAGS_MODIFIER = {..., 'BODY': compress_modeler_geometry}
+    def edit_data(self):
+        data = ModelerGeometryData(self)
+        yield data
+        self.set_acis_data(data.text_lines)
 
 
-def compress_modeler_geometry(tags):
-    try:
-        modeler_geometry = tags.get_subclass('AcDbModelerGeometry')
-    except KeyError:
-        return
-    else:
-        geometry_tags = convert_tags_to_text_lines(tag for tag in modeler_geometry if tag.code in (1, 3))
-        if len(geometry_tags):
-            _replace_modeler_geometry(modeler_geometry, geometry_tags)
+class ModelerGeometryData:
+    def __init__(self, body):
+        self.text_lines = list(body.get_acis_data())
 
+    def __str__(self):
+        return "\n".join(self.text_lines)
 
-def _replace_modeler_geometry(modeler_geometry, geometry_tags):
-    modeler_geometry[:] = (tag for tag in modeler_geometry if tag.code not in (1, 3))
-    geometry_tags = list(geometry_tags)
-    if len(geometry_tags):
-        compressed_tags = CompressedTags(const.COMPRESSED_TAGS, geometry_tags)
-        modeler_geometry.append(compressed_tags)
-
-
-class CompressedBody(Body):
-    def get_acis_data(self):
-        modeler_geometry = self.tags.subclasses[2]
-        compressed_tag = modeler_geometry.get_first_tag(const.COMPRESSED_TAGS, None)
-        if compressed_tag is not None:
-            text_lines = convert_tags_to_text_lines(compressed_tag.decompress())
-            return crypt.decode(text_lines)
-        else:
-            return []
-
-    def set_acis_data(self, text_lines):
-        modeler_geometry = self.tags.subclasses[2]
-        geometry_tags = convert_text_lines_to_tags(crypt.encode(text_lines))
-        _replace_modeler_geometry(modeler_geometry, geometry_tags)
-
-# Example for compressed tags
-####################################################################
+    def set_text(self, text, sep='\n'):
+        self.text_lines = text.split(sep)
 
 
 class Region(Body):
@@ -1706,7 +1685,7 @@ class Mesh(legacy.GraphicEntity):
         tags.extend(DXFTag(140, value) for value in values)
 
     @contextmanager
-    def open(self):
+    def edit_data(self):
         data = self.get_data()
         yield data
         self.set_data(data)

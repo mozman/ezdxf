@@ -34,7 +34,7 @@ Create a simple mesh::
     msp = dwg.modelspace()
     mesh = msp.add_mesh()
     mesh.dxf.subdivision_levels = 1  # do not subdivide cube
-    with mesh.open() as mesh_data:
+    with mesh.edit_data() as mesh_data:
         mesh_data.vertices = cube_vertices
         mesh_data.faces = cube_faces
 
