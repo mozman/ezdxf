@@ -25,8 +25,8 @@ class TestBody(unittest.TestCase):
 
     def test_acis_data_context_manager(self):
         body = self.layout.add_body()
-        with body.acis_data() as data:
-            data.extend(TEST_DATA.splitlines())
+        with body.edit_data() as data:
+            data.text_lines.extend(TEST_DATA.splitlines())
         data = list(body.get_acis_data())
         self.assertEqual(TEST_DATA, "\n".join(data))
 

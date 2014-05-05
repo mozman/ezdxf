@@ -790,46 +790,45 @@ MTEXT_EXACT                    2       taller characters will not override
 
    Set DXF attribute *rotation* to *angle* (in degrees) and deletes *text_direction* if present.
 
-.. method:: MText.buffer()
+.. method:: MText.edit_data()
 
    Context manager for :class:`MText` content::
 
-        with mtext.buffer() as b:
-            b += "append some text" + b.NEW_LINE
+        with mtext.edit_data() as data:
+            data += "append some text" + data.NEW_LINE
 
             # or replace whole text
-            b.text = "Replacement for the existing text."
+            data.text = "Replacement for the existing text."
 
+.. class:: MTextData
 
-.. class:: MTextBuffer
-
-   Temporary object to manage the :class:`MText` content. Create context object by :meth:`MText.buffer`.
+   Temporary object to manage the :class:`MText` content. Create context object by :meth:`MText.edit_data`.
 
 .. seealso::
 
     :ref:`tut_mtext`
 
-.. attribute:: MTextBuffer.text
+.. attribute:: MTextData.text
 
    Represents the :class:`MText` content, treat it like a normal string. (read/write)
 
-.. method:: MTextBuffer.__iadd__(text)
+.. method:: MTextData.__iadd__(text)
 
-   Append *text* to the :attr:`MTextBuffer.text` attribute.
+   Append *text* to the :attr:`MTextData.text` attribute.
 
-.. method:: MTextBuffer.append(text)
+.. method:: MTextData.append(text)
 
-   Synonym for :meth:`MTextBuffer.__iadd__`.
+   Synonym for :meth:`MTextData.__iadd__`.
 
-.. method:: MTextBuffer.set_font(name, bold=False, italic=False, codepage=1252, pitch=0)
+.. method:: MTextData.set_font(name, bold=False, italic=False, codepage=1252, pitch=0)
 
    Change actual font inline.
 
-.. method:: MTextBuffer.set_color(color_name)
+.. method:: MTextData.set_color(color_name)
 
    Set text color to ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or ``white``.
 
-**Convenient constants defined in MTextBuffer:**
+**Convenient constants defined in MTextData:**
 
 =================== ===========
 Constant            Description
@@ -975,10 +974,6 @@ LINEAR_SPLINE       16      planar bit is also set
 
    Set control points, `points` is a list (container or generator) of (x, y, z) tuples.
 
-.. method:: Spline.control_points()
-
-   Context manager for `control points`.
-
 .. method:: Spline.get_fit_points()
 
    Returns the fit points as `list` of `3D points`.
@@ -986,10 +981,6 @@ LINEAR_SPLINE       16      planar bit is also set
 .. method:: Spline.set_fit_points(points)
 
    Set fit points, `points` is a list (container or generator) of (x, y, z) tuples.
-
-.. method:: Spline.fit_points()
-
-   Context manager for `fit points`.
 
 .. method:: Spline.get_knot_values()
 
@@ -999,10 +990,6 @@ LINEAR_SPLINE       16      planar bit is also set
 
    Set knot values, `values` is a list (container or generator) of `floats`.
 
-.. method:: Spline.knot_values()
-
-   Context manager for `knot values`.
-
 .. method:: Spline.get_weights()
 
    Returns the weight values as `list` of `floats`.
@@ -1011,18 +998,37 @@ LINEAR_SPLINE       16      planar bit is also set
 
    Set weights, `values` is a list (container or generator) of `floats`.
 
-.. method:: Spline.weights()
+.. method:: Spline.edit_data()
 
-   Context manager for `weights`.
+   Context manager for all spline data, returns :class:`SplineData`.
 
-Fit points, control points, knot values and weights can be manipulated as lists by using context managers::
+Fit points, control points, knot values and weights can be manipulated as lists by using the general context manager
+:class:`Spline.edit_data`::
 
-    with spline.fit_points() as fp:
-        # fp is a standard python list: add, change or delete items as you want
-        # items have to be (x, y, z)-tuples
-        fp.append((200, 300, 0))  # append a fit point
-        # on exit the context manager calls spline.set_fit_points(cp) automatically
+    with spline.edit_data() as spline_data:
+        # spline_data contains standard python lists: add, change or delete items as you want
+        # fit_points and control_points have to be (x, y, z)-tuples
+        # knot_values and weights have to be numbers
+        spline_data.fit_points.append((200, 300, 0))  # append a fit point
+        # on exit the context manager calls all spline set methods automatically
 
+.. class:: SplineData
+
+.. attribute:: SplineData.fit_points
+
+    Standard Python list of :class:`Spline` fit points as (x, y, z)-tuples.
+
+.. attribute:: SplineData.control_points
+
+    Standard Python list of :class:`Spline` control points as (x, y, z)-tuples.
+
+.. attribute:: SplineData.knot_values
+
+    Standard Python list of :class:`Spline` knot values as floats.
+
+.. attribute:: SplineData.weights
+
+    Standard Python list of :class:`Spline` weights as floats.
 
 Body
 ====
@@ -1043,15 +1049,25 @@ Body
 
     Set the ACIS source code as a list of strings **without** line endings.
 
-.. method:: Body.acis_data()
+.. method:: Body.edit_data()
 
-    Context manager for  ACIS text lines::
+    Context manager for  ACIS text lines, returns :class:`ModelerGeometryData`::
 
-        with body_entity.acis_data as data:
-            # data is a standard Python list
+        with body_entity.edit_data as data:
+            # data.text_lines is a standard Python list
             # remove, append and modify ACIS source code
-            data[:] = ['line 1', 'line 2', 'line 3']  # replaces the whole ACIS content (with invalid data)
+            data.text_lines = ['line 1', 'line 2', 'line 3']  # replaces the whole ACIS content (with invalid data)
 
+
+.. class:: ModelerGeometryData:
+
+.. attribute:: ModelerGeometryData.text_lines
+
+    ACIS date als list of strings
+
+.. method:: ModelerGeometryData.__str__()
+
+    Return concatenated :attr:`~ModelerGeometryData.text_lines` as one string, lines are separated by ``\n``.
 
 Region
 ======
@@ -1072,9 +1088,9 @@ Region
 
     Set the ACIS source code as a list of strings **without** line endings.
 
-.. method:: Region.acis_data()
+.. method:: Region.edit_data()
 
-    Context manager for  ACIS text lines.
+    Context manager for  ACIS text lines, returns :class:`ModelerGeometryData`.
 
 3DSolid
 =======
@@ -1095,9 +1111,9 @@ Region
 
     Set the ACIS source code as a list of strings **without** line endings.
 
-.. method:: 3DSolid.acis_data()
+.. method:: 3DSolid.edit_data()
 
-    Context manager for  ACIS text lines.
+    Context manager for  ACIS text lines, returns :class:`ModelerGeometryData`.
 
 ======================= ======= ===========
 DXFAttr                 Version Description
@@ -1114,9 +1130,9 @@ Mesh
 
     3D mesh entity similar to the :class:`Polyface` entity.
 
-.. method:: 3DSolid.open()
+.. method:: 3DSolid.edit_data()
 
-    Context manager returns :class:`MeshData`
+    Context manager various mesh data, returns :class:`MeshData`.
 
 
 ======================= ======= ===========
