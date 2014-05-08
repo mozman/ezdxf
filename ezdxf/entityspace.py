@@ -8,6 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .const import DXFStructureError
 
+
 class EntitySpace(list):
     """An EntitySpace is a collection of drawing entities.
     The ENTITY section is such an entity space, but also blocks.
@@ -27,6 +28,7 @@ class EntitySpace(list):
             handle = self._entitydb.handles.next()
         self.append(handle)
         self._entitydb[handle] = tags
+        return handle
 
     def write(self, stream):
         for handle in self:

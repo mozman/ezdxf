@@ -29,8 +29,6 @@ class TagIterator(object):
         self.last_tag = NONE_TAG
         self.undo_coord = None
         self.eof = False
-        self.active_entity = None
-        self.active_subclass = None
 
     def __iter__(self):
         return self
@@ -53,11 +51,6 @@ class TagIterator(object):
                 raise  # because UnicodeDecodeError() is a subclass of ValueError()
             except (EOFError, ValueError):
                 raise StopIteration()
-            if code == 0:
-                self.active_entity = value
-                self.active_subclass = None
-            elif code == 100:
-                self.active_subclass = value
             return code, value
 
         def read_point(code_x, value_x):

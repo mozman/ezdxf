@@ -5,12 +5,11 @@
 # License: MIT License
 from __future__ import unicode_literals
 
-import sys
 import unittest
 from io import StringIO
 
 from ezdxf.classifiedtags import ClassifiedTags
-from ezdxf.binarydata import compress_binary_data, CompressedTags
+from ezdxf.binarydata import compress_binary_data, CompressedTags, binary_encoded_data_to_bytes
 
 
 class TestCompressBinaryData(unittest.TestCase):
@@ -76,6 +75,13 @@ class TestCompressBinaryData(unittest.TestCase):
         bin_four_lines = [line.strip() for line in BIN_FOUR.splitlines()]
         self.assertEqual(bin_four_lines, result_lines)
 
+    def test_binary_encoded_data_to_bytes_1(self):
+        result = binary_encoded_data_to_bytes(['FFFF'])
+        self.assertEqual(b"\xff\xff", result)
+
+    def test_binary_encoded_data_to_bytes_2(self):
+        result = binary_encoded_data_to_bytes(['F0F0', '1A1C'])
+        self.assertEqual(b"\xF0\xF0\x1A\x1C", result)
 
 BIN_ONE_SHORT = """  0
 OLE2FRAME

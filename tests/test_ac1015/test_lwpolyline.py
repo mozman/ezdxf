@@ -70,6 +70,12 @@ class TestNewLWPolyline(unittest.TestCase):
         del line.dxf.const_width
         self.assertFalse(line.AcDbPolyline.has_tag(43))
 
+    def test_rstrip_points(self):
+        points = [(0, 0), (2, 2), (3, 3)]
+        line = self.layout.add_lwpolyline(points)
+        rpoints = list(line.get_rstrip_points())
+        self.assertEqual(rpoints[0], (0, 0))
+
 
 class TestReadLWPolyline(unittest.TestCase):
     def setUp(self):

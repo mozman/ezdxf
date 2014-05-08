@@ -653,7 +653,7 @@ class LWPolyline(legacy.GraphicEntity):
     def get_rstrip_points(self):
         last0 = 4
         for point in self:
-            while point[last0] == 0:
+            while point[last0] == 0 and last0 > 1:
                 last0 -= 1
             yield tuple(point[:last0+1])
 

@@ -6,7 +6,9 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+from .c23 import PY3
 from .tags import CompressedTags
+from array import array
 
 BINARY_DATA_CODES = frozenset(range(310, 320))
 ENTITIES_WITH_PROXY_GRAPHIC = frozenset(['MESH', 'BODY', 'REGION', '3DSOLID', 'SURFACE', 'PLANESURFACE', 'HELIX',
@@ -67,6 +69,9 @@ def _execute_compress_tasks(tags, tasks):
     tags[:] = (tag for tag in tags if tag is not None)  # remove delete tags
 
 
-
-
+def binary_encoded_data_to_bytes(data):
+    byte_array = array('B' if PY3 else b'B')
+    for text in data:
+        byte_array.extend(int(text[index:index+2], 16) for index in range(0, len(text), 2))
+    return byte_array.tostring()
 

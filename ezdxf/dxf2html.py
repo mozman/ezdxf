@@ -20,11 +20,10 @@ from ezdxf.tags import CompressedTags
 # Handle definitions
 
 _HANDLE_CODES = [5, 105]
-_HANDLE_CODES.extend(range(320, 330))
 HANDLE_DEFINITIONS = frozenset(_HANDLE_CODES)
 
 # Handle links
-_HANDLE_POINTERS = list(range(330, 370))
+_HANDLE_POINTERS = list(range(320, 370))
 _HANDLE_POINTERS.extend(range(390, 400))
 _HANDLE_POINTERS.extend((480, 481, 1005))
 HANDLE_LINKS = frozenset(_HANDLE_POINTERS)
