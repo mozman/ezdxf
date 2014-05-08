@@ -106,5 +106,4 @@ def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
 def is_dxf_file(filename):
     with io.open(filename, errors='ignore') as fp:
         reader = TagIterator(fp)
-        return tuple(next(reader) for _ in range(2)) == ((0, 'SECTION'), (2, 'HEADER'))
-
+        return next(reader) == (0, 'SECTION')

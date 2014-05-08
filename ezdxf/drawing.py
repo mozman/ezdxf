@@ -59,7 +59,7 @@ class Drawing(object):
     def _bootstraphook(self, header):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
-        self.dxfversion = header['$ACADVER']
+        self.dxfversion = header.get('$ACADVER', 'AC1009')
         seed = header.get('$HANDSEED', str(self._handles))
         self._handles.reset(seed)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')

@@ -48,10 +48,9 @@ class AbstractSection(object):
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
             tags = ClassifiedTags(group)
             fix_tags(tags)  # post read tags fixer for VERTEX!
-            if linked_tags(tags):  # also creates the link structure as side effect
-                entitydb.add_tags(tags)  # add just to database
-            else:
-                store_tags(tags)  # add to entity space and database
+            handle = entitydb.add_tags(tags)
+            if not linked_tags(tags, handle):  # also creates the link structure as side effect
+                store_tags(tags)  # add to entity space
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

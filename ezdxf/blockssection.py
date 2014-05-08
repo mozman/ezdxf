@@ -48,7 +48,7 @@ class BlocksSection(object):
 
             for entity in entities_iterator:
                 handle = add_tags(entity)
-                if not linked_tags(entity):  # also creates the link structure as side effect
+                if not linked_tags(entity, handle):  # also creates the link structure as side effect
                     block.add_handle(handle)
             return block
 

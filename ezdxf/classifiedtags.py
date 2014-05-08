@@ -173,7 +173,9 @@ def get_tags_linker():
             self.prev = None
             self.expected = ""
 
-    def tags_linker(tags):
+    def tags_linker(tags, handle):
+        # Parameter handle is necessary, because DXF12 did not require a handle, therefor the
+        # handle isn't stored in tags and tags.get_handle() fails with an ValueError
         def attribs_follow():
             try:
                 ref_tags = tags.get_subclass('AcDbBlockReference')
@@ -187,11 +189,11 @@ def get_tags_linker():
         if vars.prev is not None:
             are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
             if dxftype == 'SEQEND':
-                vars.prev.link = tags.get_handle()
+                vars.prev.link = handle
                 vars.prev = None
             # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
             elif dxftype == vars.expected:
-                vars.prev.link = tags.get_handle()
+                vars.prev.link = handle
                 vars.prev = tags
             else:
                 raise DXFStructureError("expected DXF entity %s or SEQEND" % dxftype)
