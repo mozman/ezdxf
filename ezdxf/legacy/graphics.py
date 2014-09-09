@@ -297,7 +297,7 @@ class Text(GraphicEntity, ColorMixin):
 
     def get_pos(self):
         p1 = self.dxf.insert
-        p2 = self.dxf.alignpoint
+        p2 = self.dxf.align_point
         align = self.get_align()
         if align == 'LEFT':
             return align, p1, None

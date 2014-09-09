@@ -6,8 +6,8 @@ ECHO Running Python 3.4 tests
 CALL test34.bat
 ECHO Running pypy tests
 CALL testpypy.bat
-REM ECHO Running pypy3 tests
-REM CALL testpypy3.bat
+ECHO Running pypy3 tests
+CALL testpypy3.bat
 
 CD integration_tests
 CALL runall.bat 2
