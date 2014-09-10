@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.6.3 -
+Version 0.6.3 - 2014-09-10
 
   * Beta status
   * BUGFIX: Text.get_pos() - dxf attribute error "alignpoint"
