@@ -106,6 +106,22 @@ class TestText(SetupDrawing):
         text.dxf.valign = 3
         self.assertEqual('TOP_CENTER', text.get_align())
 
+    def test_get_pos_TOP_CENTER(self):
+        text = self.layout.add_text('text')
+        text.set_pos((2, 2), align="TOP_CENTER")
+        align, p1, p2 = text.get_pos()
+        self.assertEqual("TOP_CENTER", align)
+        self.assertEqual(p1, (2, 2))
+        self.assertIsNone(p2)
+
+    def test_get_pos_LEFT(self):
+        text = self.layout.add_text('text')
+        text.set_pos((2, 2))
+        align, p1, p2 = text.get_pos()
+        self.assertEqual("LEFT", align)
+        self.assertEqual(p1, (2, 2))
+        self.assertIsNone(p2)
+
 
 class TestShape(SetupDrawing):
     def test_create_shape(self):
