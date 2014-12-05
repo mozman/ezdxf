@@ -298,7 +298,7 @@ class Text(GraphicEntity, ColorMixin):
 
     def get_pos(self):
         p1 = self.dxf.insert
-        p2 = self.dxf.alignpoint
+        p2 = self.get_dxf_attrib('align_point', (0., 0., 0.))
         align = self.get_align()
         if align == 'LEFT':
             return align, p1, None
@@ -314,8 +314,8 @@ class Text(GraphicEntity, ColorMixin):
         return self
 
     def get_align(self):
-        halign = self.get_dxf_attrib('halign')
-        valign = self.get_dxf_attrib('valign')
+        halign = self.get_dxf_attrib('halign', 0)
+        valign = self.get_dxf_attrib('valign', 0)
         if halign > 2:
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
