@@ -44,6 +44,7 @@ def make_attribs(additional=None):
         'layer': DXFAttr(8, default='0'),  # layername as string
         'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
         'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
+        'thickness': DXFAttr(39, default=0),  # thickness of 2D elements
         'paperspace': DXFAttr(67, default=0),  # 0 .. modelspace, 1 .. paperspace
         'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),  # Z-axis of OCS (Object-Coordinate-System)
     }

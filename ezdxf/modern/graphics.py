@@ -40,7 +40,7 @@ from ..facemixins import PolyfaceMixin, PolymeshMixin
 from ..tools import safe_3D_point
 from .. import crypt
 from ..const import DXFStructureError
-import warnings
+
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -201,23 +201,15 @@ AcDbArc
 360
 """
 
-arc_subclass = (
-    DefSubclass('AcDbCircle', {
-        'center': DXFAttr(10, xtype='Point2D/3D'),
-        'radius': DXFAttr(40),
-        'thickness': DXFAttr(39, default=0.0),
-    }),
-    DefSubclass('AcDbArc', {
-        'start_angle': DXFAttr(50),
-        'end_angle': DXFAttr(51),
-        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
-    }),
-)
+arc_subclass = DefSubclass('AcDbArc', {
+    'start_angle': DXFAttr(50),
+    'end_angle': DXFAttr(51),
+})
 
 
 class Arc(legacy.Arc):
     TEMPLATE = ClassifiedTags.from_text(_ARC_TPL)
-    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *arc_subclass)
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass, arc_subclass)
 
 _TRACE_TPL = """  0
 TRACE

@@ -84,6 +84,7 @@ class GraphicsFactory(object):
             return tag, text, insert
 
         def autofill(blockref, blockdef):
+            # ATTRIBs are placed relative to the base point
             for attdef in blockdef.attdefs():
                 dxfattribs = get_dxfattribs(attdef)
                 tag, text, insert = unpack(dxfattribs)

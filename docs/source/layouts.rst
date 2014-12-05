@@ -79,6 +79,8 @@ Create new entities
    2D/3D point. Add :class:`Attdef`, defined in the block definition,
    automatically as :class:`Attrib` to the block reference, and set text of
    :class:`Attrib`. `values` is a dict with key=tag, value=text values.
+   The :class:`Attrib` elements are placed relative to the insert point =
+   block base point.
 
 .. method:: Layout.add_attrib(tag, text, insert, dxfattribs=None)
 
