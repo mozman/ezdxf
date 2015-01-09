@@ -87,11 +87,11 @@ Create new entities
    Add an :class:`Attrib` element, `tag` is the attrib-tag, `text` is the
    attrib content.
 
-.. method:: Layout.add_polyline2D(points, dxfattribs=None)
+.. method:: Layout.add_polyline2d(points, dxfattribs=None)
 
    Add a :class:`Polyline` element, `points` is list of 2D points.
 
-.. method:: Layout.add_polyline3D(points, dxfattribs=None)
+.. method:: Layout.add_polyline3d(points, dxfattribs=None)
 
    Add a :class:`Polyline` element, `points` is list of 3D points.
 
