@@ -32,6 +32,37 @@ ENDSEC
 """
 
 
+class CustomVars():
+    def __init__(self):
+        self.properties = list()
+
+    def append(self, tag, value):
+        # custom properties always stored as strings
+        self.properties.append((tag, ustr(value)))
+
+    def get(self, tag, default=None):
+            for item in self.properties:
+                if item[0] == tag:
+                    return item[1]
+            else:
+                return default
+
+    def has_tag(self, tag):
+        return self.get(tag) is not None
+
+    def delete(self, tag):
+            for item in self.properties:
+                if item[0] == tag:
+                    self.properties.remove(item)
+                    return
+            raise ValueError("Tag '%s' does not exist" % tag)
+
+    def write(self, stream):
+        for item in self.properties:
+            stream.write("  9\n$CUSTOMPROPERTYTAG\n  1\n%s\n" % item[0])
+            stream.write("  9\n$CUSTOMPROPERTY\n  1\n%s\n" % item[1])
+
+
 class HeaderSection(object):
     MIN_HEADER_TAGS = Tags.from_text(MIN_HEADER_TEXT)
     name = 'header'
@@ -40,6 +71,7 @@ class HeaderSection(object):
         if tags is None:
             tags = self.MIN_HEADER_TAGS
         self.hdrvars = OrderedDict()
+        self.customvars = CustomVars()
         self._build(tags)
 
     def set_headervar_factory(self, factory):
@@ -57,10 +89,23 @@ class HeaderSection(object):
         if len(tags) == 3:  # DXF file with empty header section
             return
         groups = TagGroups(tags[2:-1], splitcode=9)
+        custom_tag = None
+        custom_tag_value = None
         for group in groups:
             name = group[0].value
             value = group[1]
-            self.hdrvars[name] = HeaderVar(value)
+            if name == '$CUSTOMPROPERTYTAG':
+                custom_tag = value.value
+            elif name == '$CUSTOMPROPERTY':
+                custom_tag_value = value.value
+            else:
+                self.hdrvars[name] = HeaderVar(value)
+
+            # Set custom Property
+            if custom_tag is not None and custom_tag_value is not None:
+                self.customvars.append(custom_tag, custom_tag_value)
+                custom_tag = None
+                custom_tag_value = None
 
     def write(self, stream):
         def _write(name, value):
@@ -70,6 +115,8 @@ class HeaderSection(object):
         stream.write("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
             _write(name, value)
+
+        self.customvars.write(stream)
         stream.write("  0\nENDSEC\n")
 
     def __getitem__(self, key):
