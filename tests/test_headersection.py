@@ -74,6 +74,23 @@ class TestHeaderSection(unittest.TestCase):
         insbase_str = str(self.header.hdrvars['$INSBASE'])
         self.assertEqual(INSBASE, insbase_str)
 
+
+class TestCustomProperties(unittest.TestCase):
+    def setUp(self):
+        tags = Tags.from_text(TESTCUSTOMPROPERTIES)
+        dwg = DrawingProxy('AC1009')
+        self.header = HeaderSection(tags)
+        self.header.set_headervar_factory(dwg.dxffactory.headervar_factory)
+
+    def test_custom_properties_exist(self):
+        self.assertTrue(self.header.customvars.has_tag("Custom Property 1"))
+
+    def test_get_custom_property(self):
+        self.assertEqual("Custom Value 1", self.header.customvars.get("Custom Property 1"))
+
+    def test_get_custom_property_2(self):
+        self.assertEqual("Custom Value 2", self.header.customvars.get("Custom Property 2"))
+
 INSBASE = """ 10
 0.0
  20
@@ -114,6 +131,34 @@ $EXTMAX
 -1.0000000000000000E+020
  30
 -1.0000000000000000E+020
+  0
+ENDSEC
+"""
+
+TESTCUSTOMPROPERTIES = """  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  9
+$CUSTOMPROPERTYTAG
+  1
+Custom Property 1
+  9
+$CUSTOMPROPERTY
+  1
+Custom Value 1
+  9
+$CUSTOMPROPERTYTAG
+  1
+Custom Property 2
+  9
+$CUSTOMPROPERTY
+  1
+Custom Value 2
   0
 ENDSEC
 """

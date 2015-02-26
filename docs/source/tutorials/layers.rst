@@ -22,13 +22,13 @@ Create a new layer definition::
     import ezdxf
 
     dwg = ezdxf.new()
-    dwg.layers.create(name='MyLines', linetype='DASHED', color=7)
+    dwg.layers.create(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
 
 The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
 by using ``BYLAYER`` as linetype string ans `256` as color, both values are default values for new entities so you can
 left off this assignments::
 
-    dwg.add_line((0, 0), (10, 0), layer='Lines')
+    dwg.add_line((0, 0), (10, 0), dxfattribs={'layer': 'Lines'})
 
 The new created line will be drawn with color `7` and linetype ``DASHED``.
 
