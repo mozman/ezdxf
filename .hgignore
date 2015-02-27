@@ -1,0 +1,16 @@
+syntax: glob
+build/*
+dist/*
+docs/_build/*
+.tox/*
+.idea/*
+bigtestfiles/*
+examples/*.dxf
+.coverage
+*.err
+*.orig
+*.bak
+*.pyc
+*.*~
+*.wpr
+MANIFEST
