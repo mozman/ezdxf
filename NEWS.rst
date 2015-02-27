@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.6.5 - ...
+
+  * BUGFIX: custom properties in header section written after $LASTSAVEDBY tag - only this way AutoCAD accepts custom tags
+
 Version 0.6.4 - 2015-02-27
 
   * NEW: Support for custom properties in the header section - Drawing.header.custom_vars - but so far AutoCAD ignores
