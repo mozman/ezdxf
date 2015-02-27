@@ -83,13 +83,18 @@ class TestCustomProperties(unittest.TestCase):
         self.header.set_headervar_factory(dwg.dxffactory.headervar_factory)
 
     def test_custom_properties_exist(self):
-        self.assertTrue(self.header.customvars.has_tag("Custom Property 1"))
+        self.assertTrue(self.header.custom_vars.has_tag("Custom Property 1"))
 
     def test_get_custom_property(self):
-        self.assertEqual("Custom Value 1", self.header.customvars.get("Custom Property 1"))
+        self.assertEqual("Custom Value 1", self.header.custom_vars.get("Custom Property 1"))
 
     def test_get_custom_property_2(self):
-        self.assertEqual("Custom Value 2", self.header.customvars.get("Custom Property 2"))
+        self.assertEqual("Custom Value 2", self.header.custom_vars.get("Custom Property 2"))
+
+    def test_add_custom_property(self):
+        self.header.custom_vars.append("Custom Property 3", "Custom Value 3")
+        self.assertEqual(3, len(self.header.custom_vars))
+        self.assertEqual("Custom Value 3", self.header.custom_vars.get("Custom Property 3"))
 
 INSBASE = """ 10
 0.0
