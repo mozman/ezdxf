@@ -2,8 +2,10 @@
 News
 ====
 
-Version 0.6.4 - ...
+Version 0.6.4 - 2015-02-27
 
+  * NEW: Support for custom properties in the header section - Drawing.header.custom_vars - but so far AutoCAD ignores
+    new created custom properties by ezdxf- I don't know why.
   * BUGFIX: wrong DXF subclass for Arc.extrusion (error in DXF Standard)
   * BUGFIX: added missing support files for dxf2html
 

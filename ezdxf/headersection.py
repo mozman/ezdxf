@@ -33,34 +33,53 @@ ENDSEC
 
 
 class CustomVars():
+    """ Custom Properties are stored as string tuples ('CustomTag', 'CustomValue') in a list object.
+
+    Multiple occurrence of the same 'CustomTag' is allowed, but not well supported by the interface.
+    """
     def __init__(self):
         self.properties = list()
+
+    def __len__(self):
+        return len(self.properties)
+
+    def __iter__(self):
+        return iter(self.properties)
+
+    def clear(self):
+        """ Remove all custom properties.
+        """
+        self.properties.clear()
 
     def append(self, tag, value):
         # custom properties always stored as strings
         self.properties.append((tag, ustr(value)))
 
     def get(self, tag, default=None):
-            for item in self.properties:
-                if item[0] == tag:
-                    return item[1]
-            else:
-                return default
+        """ Get value of first occurrence of 'tag'.
+        """
+        for key, value in self.properties:
+            if key == tag:
+                return value
+        else:
+            return default
 
     def has_tag(self, tag):
         return self.get(tag) is not None
 
-    def delete(self, tag):
-            for item in self.properties:
-                if item[0] == tag:
-                    self.properties.remove(item)
-                    return
-            raise ValueError("Tag '%s' does not exist" % tag)
+    def remove(self, tag):
+        """ Remove first occurrence of 'tag'.
+        """
+        for item in self.properties:
+            if item[0] == tag:
+                self.properties.remove(item)
+                return
+        raise ValueError("Tag '%s' does not exist" % tag)
 
     def write(self, stream):
-        for item in self.properties:
-            stream.write("  9\n$CUSTOMPROPERTYTAG\n  1\n%s\n" % item[0])
-            stream.write("  9\n$CUSTOMPROPERTY\n  1\n%s\n" % item[1])
+        for tag, value in self.properties:
+            stream.write("  9\n$CUSTOMPROPERTYTAG\n  1\n%s\n" % tag)
+            stream.write("  9\n$CUSTOMPROPERTY\n  1\n%s\n" % value)
 
 
 class HeaderSection(object):
@@ -71,7 +90,7 @@ class HeaderSection(object):
         if tags is None:
             tags = self.MIN_HEADER_TAGS
         self.hdrvars = OrderedDict()
-        self.customvars = CustomVars()
+        self.custom_vars = CustomVars()
         self._build(tags)
 
     def set_headervar_factory(self, factory):
@@ -103,7 +122,7 @@ class HeaderSection(object):
 
             # Set custom Property
             if custom_tag is not None and custom_tag_value is not None:
-                self.customvars.append(custom_tag, custom_tag_value)
+                self.custom_vars.append(custom_tag, custom_tag_value)
                 custom_tag = None
                 custom_tag_value = None
 
@@ -116,7 +135,7 @@ class HeaderSection(object):
         for name, value in self.hdrvars.items():
             _write(name, value)
 
-        self.customvars.write(stream)
+        self.custom_vars.write(stream)
         stream.write("  0\nENDSEC\n")
 
     def __getitem__(self, key):
