@@ -10,7 +10,7 @@ import ezdxf
 
 
 def custom_header_vars():
-    dwg = ezdxf.new('AC1027')
+    dwg = ezdxf.new('AC1015')
     msp = dwg.modelspace()
 
     points = [(0, 0), (3, 0), (6, 3), (6, 6)]

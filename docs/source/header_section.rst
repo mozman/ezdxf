@@ -22,8 +22,9 @@ the :attr:`~Drawing.header` attribute. See the online documentation from Autodes
 
 .. class:: CustomVars
 
-   Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG/$CUSTOMPROPERTY values, but so far AutoCAD doesn't
-   show this values - I don't know why.
+   Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG/$CUSTOMPROPERTY values. Custom properties are just
+   supported at DXF version AC1018 (AutoCAD 2004) or newer. With ezdxf you can create custom properties on older
+   DXF versions, but AutoCAD will not show this properties.
 
 .. attribute:: CustomVars.properties
 
