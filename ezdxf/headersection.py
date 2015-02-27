@@ -134,8 +134,9 @@ class HeaderSection(object):
         stream.write("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
             _write(name, value)
+            if name == "$LASTSAVEDBY":  ## ugly hack
+                self.custom_vars.write(stream)
 
-        self.custom_vars.write(stream)
         stream.write("  0\nENDSEC\n")
 
     def __getitem__(self, key):
