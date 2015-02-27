@@ -108,23 +108,21 @@ class HeaderSection(object):
         if len(tags) == 3:  # DXF file with empty header section
             return
         groups = TagGroups(tags[2:-1], splitcode=9)
-        custom_tag = None
-        custom_tag_value = None
+        custom_property_stack = []  # collect $CUSTOMPROPERTY/TAG
         for group in groups:
             name = group[0].value
             value = group[1]
-            if name == '$CUSTOMPROPERTYTAG':
-                custom_tag = value.value
-            elif name == '$CUSTOMPROPERTY':
-                custom_tag_value = value.value
+            if name in ('$CUSTOMPROPERTYTAG', '$CUSTOMPROPERTY'):
+                custom_property_stack.append(value.value)
             else:
                 self.hdrvars[name] = HeaderVar(value)
 
-            # Set custom Property
-            if custom_tag is not None and custom_tag_value is not None:
-                self.custom_vars.append(custom_tag, custom_tag_value)
-                custom_tag = None
-                custom_tag_value = None
+        custom_property_stack.reverse()
+        while len(custom_property_stack):
+            try:
+                self.custom_vars.append(tag=custom_property_stack.pop(), value=custom_property_stack.pop())
+            except IndexError:
+                break
 
     def write(self, stream):
         def _write(name, value):
@@ -134,7 +132,7 @@ class HeaderSection(object):
         stream.write("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
             _write(name, value)
-            if name == "$LASTSAVEDBY":  ## ugly hack
+            if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
                 self.custom_vars.write(stream)
 
         stream.write("  0\nENDSEC\n")
