@@ -148,6 +148,14 @@ a.dxf-ref-link:hover {
 .tag-value {
 }
 
+.cu-tag {
+    color: darkblue;
+}
+
+.cu-tag-value {
+    color: darkgreen;
+}
+
 /* DXF handles and pointers as links
 */
 .tag-link {
