@@ -82,8 +82,13 @@ class TestCustomProperties(unittest.TestCase):
         self.header = HeaderSection(tags)
         self.header.set_headervar_factory(dwg.dxffactory.headervar_factory)
 
-    def test_custom_properties_exist(self):
+    def test_custom_properties_exists(self):
         self.assertTrue(self.header.custom_vars.has_tag("Custom Property 1"))
+
+    def test_order_of_occurrence(self):
+        properties = self.header.custom_vars.properties
+        self.assertEqual(("Custom Property 1", "Custom Value 1"), properties[0])
+        self.assertEqual(("Custom Property 2", "Custom Value 2"), properties[1])
 
     def test_get_custom_property(self):
         self.assertEqual("Custom Value 1", self.header.custom_vars.get("Custom Property 1"))
@@ -95,6 +100,23 @@ class TestCustomProperties(unittest.TestCase):
         self.header.custom_vars.append("Custom Property 3", "Custom Value 3")
         self.assertEqual(3, len(self.header.custom_vars))
         self.assertEqual("Custom Value 3", self.header.custom_vars.get("Custom Property 3"))
+
+    def test_remove_custom_property(self):
+        self.header.custom_vars.remove("Custom Property 1")
+        self.assertEqual(1, len(self.header.custom_vars))
+
+    def test_remove_not_existing_property(self):
+        with self.assertRaises(ValueError):
+            self.header.custom_vars.remove("Does not Exist")
+
+    def test_replace_custom_property(self):
+        self.header.custom_vars.replace("Custom Property 1", "new value")
+        self.assertEqual("new value", self.header.custom_vars.get("Custom Property 1"))
+
+    def test_replace_not_existing_property(self):
+        with self.assertRaises(ValueError):
+            self.header.custom_vars.replace("Does not Exist", "new value")
+
 
 INSBASE = """ 10
 0.0
