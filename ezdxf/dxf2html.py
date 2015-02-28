@@ -49,6 +49,10 @@ BLOCKS_SECTION_TPL = '<div id="dxf-blocks" class="dxf-blocks">\n{content}\n</div
 # Section content
 HEADER_VAR_TPL = '<div class="hdr-var" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
                  ' <span class="tag-value">{value}</span></div>'
+
+CUSTOM_VAR_TPL = '<div class="hdr-var" >Custom Property: <span class="cu-tag">{tag}</span> ::' \
+                 ' <span class="cu-tag-value">{value}</span></div>'
+
 TABLE_TPL = '<div id="{name}-table" class="dxf-table">\n' \
             '<div class="dxf-table-name">{ref_link}</div>\n{nav}\n{header}\n{entries}\n</div>'
 ENTITIES_TPL = '<div class="dxf-entities">\n{}\n</div>'
@@ -179,7 +183,7 @@ class DXF2HtmlConverter(object):
         """Creates a <div> container of a specific DXF sections.
         """
         if section.name == 'header':
-            return section_template.format(content=self.hdrvars2html(section.hdrvars))
+            return section_template.format(content=self.hdrvars2html(section.hdrvars, section.custom_vars))
         elif section.name == 'entities':
             return section_template.format(content=self.entities2html(iter(section), create_ref_links=True))
         elif section.name == 'classes':
@@ -195,7 +199,7 @@ class DXF2HtmlConverter(object):
             return section_template.format(content=self.tags2html(section.tags))
 
     @staticmethod
-    def hdrvars2html(hdrvars):
+    def hdrvars2html(hdrvars, custom_vars):
         """DXF header section as <div> container.
         """
         def vartype(hdrvar):
@@ -209,6 +213,13 @@ class DXF2HtmlConverter(object):
             HEADER_VAR_TPL.format(code=name, value=escape(ustr(hdrvar.value)), type=escape(vartype(hdrvar)))
             for name, hdrvar in hdrvars.items()
         ]
+
+        custom_property_strings = [
+            CUSTOM_VAR_TPL.format(tag=escape(ustr(tag)), value=escape(ustr(value)))
+            for tag, value in custom_vars
+        ]
+        varstrings.extend(custom_property_strings)
+
         return HEADER_SECTION_TPL.format(content="\n".join(varstrings))
 
     def entities2html(self, entities, create_ref_links=False, show_ref_status=False):
