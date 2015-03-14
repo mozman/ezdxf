@@ -56,8 +56,15 @@ the :attr:`~Drawing.header` attribute. See the online documentation from Autodes
 
    Add custom property as ``(tag, value)`` tuple.
 
-.. method:: CustomVars.remove(tag)
+.. method:: CustomVars.replace(tag, value)
 
-   Removes the the first custom property ``tag``.
+   Replaces the value of the first custom property `tag` by a new `value`. Raises
+   ``ValueError`` if `tag`  does not exist.
+
+.. method:: CustomVars.remove(tag, all=False)
+
+   Removes the first occurrence of custom property ``tag``, removes all occurrences if `all` is ``True``. Raises
+   ``ValueError`` if `tag`  does not exist.
+
 
 .. _header variables: http://docs.autodesk.com/ACD/2014/ENU/files/GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A.htm
