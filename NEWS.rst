@@ -5,6 +5,7 @@ News
 Version 0.6.6 - ...
 
   * NEW: extended the custom vars interface
+  * NEW: dxf2html.py - added support for custom properties in the header section
 
 Version 0.6.5 - 2015-02-27
 
