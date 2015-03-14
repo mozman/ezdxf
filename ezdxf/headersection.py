@@ -67,13 +67,29 @@ class CustomVars():
     def has_tag(self, tag):
         return self.get(tag) is not None
 
-    def remove(self, tag):
-        """ Remove first occurrence of 'tag'.
+    def remove(self, tag, all=False):
+        """ Remove first occurrence of 'tag', removes all occurrences if param all is True.
         """
+        found_tag = False
         for item in self.properties:
             if item[0] == tag:
                 self.properties.remove(item)
+                found_tag = True
+                if not all:
+                    return
+        if not found_tag:
+            raise ValueError("Tag '%s' does not exist" % tag)
+
+    def replace(self, tag, value):
+        """ Replaces the value of the first custom property `tag` by a new `value`.
+        """
+        properties = self.properties
+        for index in range(len(properties)):
+            name = properties[index][0]
+            if name == tag:
+                properties[index] = (name, value)
                 return
+
         raise ValueError("Tag '%s' does not exist" % tag)
 
     def write(self, stream):
