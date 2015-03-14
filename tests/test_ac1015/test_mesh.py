@@ -50,7 +50,7 @@ class TestNewMesh(unittest.TestCase):
         mesh = self.msp.add_mesh()
         self.assertEqual(2, mesh.dxf.version)
         self.assertEqual(0, mesh.dxf.blend_crease)
-        self.assertEqual(1, mesh.dxf.subdivision_levels)
+        self.assertEqual(0, mesh.dxf.subdivision_levels)
 
 
 MESH = """  0

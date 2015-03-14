@@ -564,7 +564,7 @@ class Vertex(legacy.Vertex):
 class SeqEnd(legacy.SeqEnd):
     TEMPLATE = ClassifiedTags.from_text("  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n")
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
-    
+
 _LWPOLYLINE_TPL = """  0
 LWPOLYLINE
   5
@@ -667,7 +667,7 @@ class LWPolyline(legacy.GraphicEntity):
                 add_tag_if_not_zero(42, point[4])  # bulge, default=0
             except IndexError:
                 pass
-            
+
         for point in points:
             append_point(point)
 
@@ -828,7 +828,7 @@ insert_subclass = DefSubclass('AcDbBlockReference', {
 class Insert(legacy.Insert):
     TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, insert_subclass)
-    
+
 _ATTDEF_TPL = """  0
 ATTDEF
   5
@@ -911,7 +911,7 @@ attdef_subclass = (
 class Attdef(legacy.Attdef):
     TEMPLATE = ClassifiedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attdef_subclass)
-    
+
 _ATTRIB_TPL = """  0
 ATTRIB
   5
@@ -1585,7 +1585,7 @@ AcDbSubDMesh
  72
 0
  91
-1
+0
  92
 0
  93
@@ -1599,7 +1599,7 @@ AcDbSubDMesh
 mesh_subclass = DefSubclass('AcDbSubDMesh', {
     'version': DXFAttr(71),
     'blend_crease': DXFAttr(72),  # 0 = off, 1 = on
-    'subdivision_levels': DXFAttr(91),  # int >= 1
+    'subdivision_levels': DXFAttr(91),  # int >= 0
 })
 
 
