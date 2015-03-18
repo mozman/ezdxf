@@ -105,7 +105,7 @@ class EntityQuery(Sequence):
 def entity_matcher(query):
     query_args = EntityQueryParser.parseString(query, parseAll=True)
     entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
-    attrib_matcher = build_entity_attributes_matcher(query_args.AttribQuery)
+    attrib_matcher = build_entity_attributes_matcher(query_args.AttribQuery, query_args.AttribQueryOptions)
 
     def matcher(entity):
         return entity_matcher_(entity) and attrib_matcher(entity)
@@ -134,22 +134,30 @@ class Relation:
     }
     VALID_CMP_OPERATORS = frozenset(CMP_OPERATORS.keys())
 
-    def __init__(self, relation):
+    def __init__(self, relation, ignore_case):
         name, op, value = relation
         self.dxf_attrib = name
         self.compare = Relation.CMP_OPERATORS[op]
+        self.convert_case = to_lower if ignore_case else lambda x: x
+
+        re_flags = re.IGNORECASE if ignore_case else 0
         if '?' in op:
-            self.value = re.compile(value + '$')  # always match whole pattern
+            self.value = re.compile(value + '$', flags=re_flags)  # always match whole pattern
         else:
-            self.value = value
+            self.value = self.convert_case(value)
 
     def evaluate(self, entity):
         try:
-            return self.compare(entity.get_dxf_attrib(self.dxf_attrib), self.value)
+            value = self.convert_case(entity.get_dxf_attrib(self.dxf_attrib))
+            return self.compare(value, self.value)
         except AttributeError:  # entity does not support this attribute
             return False
         except ValueError:  # entity supports this attribute, but has no value for it
             return False
+
+
+def to_lower(value):
+    return value.lower() if hasattr(value, 'lower') else value
 
 
 class BoolExpression:
@@ -185,7 +193,7 @@ class BoolExpression:
         return values.pop()
 
 
-def _compile_tokens(tokens):
+def _compile_tokens(tokens, ignore_case):
     def is_relation(tokens):
         return len(tokens) == 3 and tokens[1] in Relation.VALID_CMP_OPERATORS
 
@@ -194,16 +202,16 @@ def _compile_tokens(tokens):
 
     tokens = tuple(tokens)
     if is_relation(tokens):
-        return Relation(tokens)
+        return Relation(tokens, ignore_case)
     else:
-        return BoolExpression([_compile_tokens(token) for token in tokens])
+        return BoolExpression([_compile_tokens(token, ignore_case) for token in tokens])
 
 
-def build_entity_attributes_matcher(tokens):
+def build_entity_attributes_matcher(tokens, options):
     if not len(tokens):
         return lambda x: True
-
-    expr = BoolExpression(_compile_tokens(tokens))
+    ignore_case = 'i' == options  # at this time just one option is supported
+    expr = BoolExpression(_compile_tokens(tokens, ignore_case))
 
     def match_bool_expr(entity):
         return expr.evaluate(entity)
