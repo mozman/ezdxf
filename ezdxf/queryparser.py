@@ -4,10 +4,10 @@
 """
 EntityQueryParser implemented with the pyparsing module created by Paul T. McGuire.
 
-QueryString := EntityQuery ("[" AttribQuery "]")*
+QueryString := EntityQuery ("[" AttribQuery "]" "i"?)*
 
 The QueryString consist of two queries, first the required entity query and the second optional attribute query,
-enclosed in square brackets.
+enclosed in square brackets an optional appended "i" indicates ignore case for string queries.
 
 1. EntityQuery (required)
 
@@ -38,6 +38,7 @@ Values can be integers, floats or strings, strings have to be double quoted ("I 
 examples:
     'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
     '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
+    'LINE[layer=="construction"]i' => all lines on layer named 'construction' by case insensitivity, "CoNsTrUcTiOn" is valid
 """
 
 from pyparsing import *
@@ -53,14 +54,16 @@ EntityName = Word(alphanums)
 AttribName = Word(alphanums)
 Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
 
+AttribQueryOptions = Literal('i').setResultsName('AttribQueryOptions')
+
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
 EntityNames = Group(Literal('*') | OneOrMore(EntityName)).setResultsName('EntityQuery')
 
-InfixBoolQuery = infixNotation(AttribQuery,(
+InfixBoolQuery = infixNotation(AttribQuery, (
     ('!', 1, opAssoc.RIGHT),
     ('&', 2, opAssoc.LEFT),
     ('|', 2, opAssoc.LEFT),
 )).setResultsName('AttribQuery')
 
-EntityQueryParser = EntityNames + Optional(LBRK + InfixBoolQuery + RBRK)
+EntityQueryParser = EntityNames + Optional(LBRK + InfixBoolQuery + RBRK + Optional(AttribQueryOptions))

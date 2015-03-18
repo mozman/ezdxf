@@ -84,6 +84,11 @@ class TestEntityQueryParserWithAttributes(unittest.TestCase):
         result = EntityQueryParser.parseString('*[layer!?"0"]', parseAll=True)
         self.assertEqual(('layer', '!?', '0'), tuple(result.AttribQuery))
 
+    def test_appended_ignore_case_option(self):
+        result = EntityQueryParser.parseString('*[layer=="IgnoreCase"]i', parseAll=True)
+        self.assertEqual("i", result.AttribQueryOptions)
+
+
 class TestInfixBoolQuery(unittest.TestCase):
     def test_not_operation(self):
         result = InfixBoolQuery.parseString('!a!=1', parseAll=True)
