@@ -96,6 +96,23 @@ class TestEntityQuery_AC1009(unittest.TestCase):
         # 1xPOLYLINE(layer=="lay_lines" & color==6) 1xTEXT(layer=="lay_text" & color==6)
         self.assertEqual(2, len(result))
 
+    def test_ignore_case(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[layer=="LAY_lines"]i')
+        # 1xLINE 1xPOLYLINE
+        self.assertEqual(2, len(result))
+
+    def test_ignore_case_for_num_values(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[color==6]i')
+        # 1xPOLYLINE 1xTEXT
+        self.assertEqual(2, len(result))
+
+    def test_ignore_case_match_regex(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*[layer ? "LaY_.*"]i')
+        self.assertEqual(3, len(result))
+
 
 class TestEntityQuery_AC1015(TestEntityQuery_AC1009):
     VERSION = 'AC1015'

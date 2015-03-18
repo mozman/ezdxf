@@ -16,10 +16,11 @@ Entity Query String
 
 ::
 
-    QueryString := EntityQuery ("[" AttribQuery "]")*
+    QueryString := EntityQuery ("[" AttribQuery "]" "i"?)*
 
 The query string is the combination of two queries, first the required entity query and second the
-*optional* attribute query, enclosed in square brackets.
+*optional* attribute query, enclosed in square brackets, append ``'i'`` after the closing square bracket
+to ignore case for strings.
 
 Entity Query
 ------------
@@ -36,6 +37,7 @@ The *optional* attribute query is a boolean expression, supported operators are:
   - and (&): term & term is true, if both terms are true
   - or (|): term | term is true, if one term is true
   - and arbitrary nested round brackets
+  - append (i) after the closing square bracket to ignore case for strings
 
 Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
 value is a integer, float or double quoted string, valid comparators are:
@@ -65,6 +67,7 @@ examples::
 
     'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
     '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
+    '*[layer=="construction"]i' => (ignore case) all entities with layer == "construction" | "Construction" | "ConStruction" ...
 
 EntityQuery Class
 =================
