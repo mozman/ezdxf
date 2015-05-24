@@ -12,6 +12,7 @@ from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
 from . import solid3d
+from . import mesh
 from . import dxfobjects
 from .layouts import Layouts, BlockLayout
 
@@ -60,7 +61,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'BODY': solid3d.Body,
     'REGION': solid3d.Region,
     '3DSOLID': solid3d.Solid3d,
-    'MESH': graphics.Mesh,
+    'MESH': mesh.Mesh,
 }
 
 
