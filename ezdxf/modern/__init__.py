@@ -14,6 +14,8 @@ from . import graphics
 from . import solid3d
 from .mesh import Mesh
 from .spline import Spline
+from .mtext import MText
+
 from . import dxfobjects
 from .layouts import Layouts, BlockLayout
 
@@ -44,7 +46,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'SOLID': graphics.Solid,
     '3DFACE': graphics.Face,
     'TEXT': graphics.Text,
-    'MTEXT': graphics.MText,
+    'MTEXT': MText,
     'POLYLINE': graphics.Polyline,
     'VERTEX': graphics.Vertex,
     'SEQEND': graphics.SeqEnd,
