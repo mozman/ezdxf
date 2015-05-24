@@ -12,7 +12,8 @@ from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
 from . import solid3d
-from . import mesh
+from .mesh import Mesh
+from .spline import Spline
 from . import dxfobjects
 from .layouts import Layouts, BlockLayout
 
@@ -57,11 +58,11 @@ UPDATE_ENTITY_WRAPPERS = {
     'RAY': graphics.Ray,
     'XLINE': graphics.XLine,
     'SHAPE': graphics.Shape,
-    'SPLINE': graphics.Spline,
+    'SPLINE': Spline,
     'BODY': solid3d.Body,
     'REGION': solid3d.Region,
     '3DSOLID': solid3d.Solid3d,
-    'MESH': mesh.Mesh,
+    'MESH': Mesh,
 }
 
 
