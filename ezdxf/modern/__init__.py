@@ -11,6 +11,7 @@ from .headervars import VARMAP
 from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
+from . import solid3d
 from . import dxfobjects
 from .layouts import Layouts, BlockLayout
 
@@ -56,9 +57,9 @@ UPDATE_ENTITY_WRAPPERS = {
     'XLINE': graphics.XLine,
     'SHAPE': graphics.Shape,
     'SPLINE': graphics.Spline,
-    'BODY': graphics.Body,
-    'REGION': graphics.Region,
-    '3DSOLID': graphics.Solid3d,
+    'BODY': solid3d.Body,
+    'REGION': solid3d.Region,
+    '3DSOLID': solid3d.Solid3d,
     'MESH': graphics.Mesh,
 }
 
