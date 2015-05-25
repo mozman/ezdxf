@@ -273,6 +273,25 @@ class Tags(list):
         for tag in delete_tags:
             self.remove(tag)
 
+    def collect(self, codes, start=0, end=None):
+        """Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not
+        in codes ends the process.
+
+        Returns the collected tags in a collection of type Tag().
+        """
+        codes = frozenset(codes)
+        collected_tags = Tags()
+        if end is None:
+            end = len(self)
+        index = start
+        while index < end:
+            tag = self[index]
+            if tag.code in codes:
+                index += 1
+                collected_tags.append(tag)
+            else:
+                break
+        return collected_tags
 
 class TagGroups(list):
     """
