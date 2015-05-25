@@ -388,29 +388,29 @@ class TestTagsCollect(unittest.TestCase):
         self.tags = Tags.from_text(COLLECT_1)
 
     def test_with_start_param(self):
-        collected_tags = self.tags.collect([1, 2, 3], start=1)
+        collected_tags = self.tags.collect_consecutive_tags([1, 2, 3], start=1)
         self.assertEqual(3, len(collected_tags))
         self.assertEqual("THREE", collected_tags[2].value)
 
     def test_with_end_param(self):
-        collected_tags = self.tags.collect([0, 1, 2, 3], end=3)
+        collected_tags = self.tags.collect_consecutive_tags([0, 1, 2, 3], end=3)
         self.assertEqual(3, len(collected_tags))
         self.assertEqual("TWO", collected_tags[2].value)
 
     def test_with_start_and_end_param(self):
-        collected_tags = self.tags.collect([1, 2, 3], start=6, end=9)
+        collected_tags = self.tags.collect_consecutive_tags([1, 2, 3], start=6, end=9)
         self.assertEqual(3, len(collected_tags))
         self.assertEqual("THREE", collected_tags[2].value)
 
     def test_none_existing_codes(self):
-        collected_tags = self.tags.collect([7, 8, 9])
+        collected_tags = self.tags.collect_consecutive_tags([7, 8, 9])
         self.assertEqual(0, len(collected_tags))
 
     def test_all_codes(self):
-        collected_tags = self.tags.collect([0, 1, 2, 3, 4])
+        collected_tags = self.tags.collect_consecutive_tags([0, 1, 2, 3, 4])
         self.assertEqual(10, len(collected_tags))
 
     def test_emtpy_tags(self):
         tags = Tags()
-        collected_tags = tags.collect([0, 1, 2, 3, 4])
+        collected_tags = tags.collect_consecutive_tags([0, 1, 2, 3, 4])
         self.assertEqual(0, len(collected_tags))

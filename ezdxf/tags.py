@@ -273,7 +273,7 @@ class Tags(list):
         for tag in delete_tags:
             self.remove(tag)
 
-    def collect(self, codes, start=0, end=None):
+    def collect_consecutive_tags(self, codes, start=0, end=None):
         """Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not
         in codes ends the process.
 

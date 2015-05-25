@@ -1,4 +1,4 @@
-# Purpose: support for the AcDb1015 MTEXT entity
+# Purpose: support for the Ac1015 MTEXT entity
 # Created: 24.05.2015
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
