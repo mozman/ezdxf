@@ -155,24 +155,28 @@ class BoundaryPathData(object):
         except ValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Number of boundary paths (loops)' (code=91).")
 
-        self.end_index = self.start_index + 1
+        self.end_index = self.start_index + 1  # + 1 for Tag(91, Number of boundary paths)
         if n_paths == 0:  # created by ezdxf from template without path data
             return paths
 
         all_path_tags = tags.collect_consecutive_tags(PATH_CODES, start=self.start_index+1)
-        self.end_index = self.start_index + len(all_path_tags) + 1  # stored for Hatch._set_boundary_path_data()
-        # ... + 1 for Tag(91, Number of boundary paths)
+        self.end_index = self.start_index + len(all_path_tags) + 1  # + 1 for Tag(91, Number of boundary paths)
+        # end_index: stored for Hatch._set_boundary_path_data()
         grouped_path_tags = TagGroups(all_path_tags, splitcode=92)
         for path_tags in grouped_path_tags:
             path_type = path_tags[0]
             is_polyline_path = bool(path_type.value and 2)
-            paths.append(PolylinePath(path_tags) if is_polyline_path else EdgePath(path_tags))
+            path = PolylinePath.from_tags(tags) if is_polyline_path else EdgePath.from_tags(tags)
+            paths.append(path)
         return paths
 
     def clear(self):
         self.paths = []
 
-    def append_polyline_path(self, path_vertices):
+    def add_polyline_path(self, path_vertices):
+        pass
+
+    def add_edge_path(self):
         pass
 
     def dxftags(self):
@@ -182,17 +186,20 @@ class BoundaryPathData(object):
         return tags
 
 class PolylinePath(object):
-    def __init__(self, tags):
-        self._path_type = 2
+    PATH_TYPE = 'PolylinePath'
+
+    def __init__(self):
+        self.path_type_flags = 2
         self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
         self.trailing_tags = []
-        self._setup_path(tags[1:])
 
-    @property
-    def path_type(self):
-        return 'PolylinePath'
+    @staticmethod
+    def from_tags(tags):
+        polyline_path = PolylinePath()
+        polyline_path._setup_path(tags)
+        return polyline_path
 
     def _setup_path(self, tags):
         for tag in tags:
@@ -202,12 +209,12 @@ class PolylinePath(object):
             elif code == 42:
                 x, y, bulge = self.vertices[-1]
                 self.vertices[-1] = (x, y, value)  # replace existing bulge value
-            elif code == 92:
-                self._path_type = value
             elif code == 72:
                 self.has_bulge = value
             elif code == 73:
                 self.is_closed = value
+            elif code == 72:
+                self.path_type_flags = value
             elif code == 93:  # number of polyline vertices
                 pass  # ignore this value
             else:  # Ac1027 known tags: 97, 330
@@ -221,7 +228,7 @@ class PolylinePath(object):
                 vtags.append(DXFTag(42, float(bulge)))
                 self.has_bulge = 1
 
-        tags = [DXFTag(92, int(self._path_type)),
+        tags = [DXFTag(92, int(self.path_type_flags)),
                 DXFTag(72, int(self.has_bulge)),
                 DXFTag(73, int(self.is_closed)),
                 DXFTag(93, len(self.vertices)),
@@ -231,28 +238,189 @@ class PolylinePath(object):
         return tags
 
 class EdgePath(object):
-    def __init__(self, tags):
-        self._path_type = 0
+    PATH_TYPE = 'EdgePath'
 
-    @property
-    def path_type(self):
-        return 'EdgePath'
+    def __init__(self):
+        self.path_type_flags = 0
+        self.edges = []
+
+    @staticmethod
+    def from_tags(tags):
+        edge_path = EdgePath()
+        edge_path._setup_path(tags)
+        return edge_path
+
+    def _setup_path(self, tags):
+        edge_groups = TagGroups(tags, splitcode=72)
+        for edge_tags in edge_groups:
+            self.edges.append(self._setup_edge(edge_tags))
+
+    def _setup_edge(self, tags):
+        edge_type = tags[0].value
+        if 0 < edge_type < 5:
+            return EDGE_CLASSES[edge_type].from_tags(tags[1:])
+        else:
+            raise DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
+
+    def add_line(self, start, end):
+        line = LineEdge()
+        line.start = start
+        line.end = end
+        self.edges.append(line)
+        return line
+
+    def add_arc(self, center, radius=1., start_angle=0., end_angle=360., is_counter_clockwise=0):
+        arc = ArcEdge()
+        arc.center = center
+        arc.radius = radius
+        arc.start_angle = start_angle
+        arc.end_angle = end_angle
+        arc.is_counter_clockwise = is_counter_clockwise
+        self.edges.append(arc)
+        return arc
+
+    def add_ellipse(self, center, major_axis_vector=(1., 0.), minor_axis_length=1.,
+                    start_angle=0., end_angle=360., is_counter_clockwise=0):
+        ellipse = EllipseEdge()
+        ellipse.center = center
+        ellipse.major_axis_vector = major_axis_vector
+        ellipse.minor_axis_length = minor_axis_length
+        ellipse.start_angle = start_angle
+        ellipse.end_angle = end_angle
+        ellipse.is_counter_clockwise = is_counter_clockwise
+        self.edges.append(ellipse)
+        return ellipse
 
     def dxftags(self):
-        return []
+        tags = [DXFTag(92, int(self.path_type_flags)), DXFTag(93, len(self.edges))]
+        for edge in self.edges:
+            tags.extend(edge.dxftags())
+        return tags
 
 class LineEdge(object):
-    pass
+    EDGE_TYPE = "LineEdge"
+    # more struct than object
+
+    def __init__(self):
+        self.start = (0, 0)
+        self.end = (0, 0)
+
+    @staticmethod
+    def from_tags(tags):
+        edge = LineEdge()
+        for tag in tags:
+            code, value = tag
+            if code == 10:
+                edge.start = value
+            elif code == 11:
+                edge.end = value
+        return edge
+
+    def dxftags(self):
+        return [DXFTag(72, 1),  # edge type
+                DXFTag(10, self.start),
+                DXFTag(11, self.end)
+                ]
+
 
 class ArcEdge(object):
-    pass
+    EDGE_TYPE = "ArcEdge"
+    # more struct than object
+
+    def __init__(self):
+        self.center = (0., 0.)
+        self.radius = 1.
+        self.start_angle = 0.
+        self.end_angle = 360.
+        self.is_counter_clockwise = 0
+
+    @staticmethod
+    def from_tags(tags):
+        edge = ArcEdge()
+        for tag in tags:
+            code, value = tag
+            if code == 10:
+                edge.center = value
+            elif code == 40:
+                edge.radius = value
+            elif code == 50:
+                edge.start_angle = value
+            elif code == 51:
+                edge.end_angle = value
+            elif code == 73:
+                edge.is_counter_clockwise = value
+        return edge
+
+    def dxftags(self):
+        return [DXFTag(72, 2),  # edge type
+                DXFTag(10, self.center),
+                DXFTag(40, self.radius),
+                DXFTag(50, self.start_angle),
+                DXFTag(51, self.end_angle),
+                DXFTag(73, self.is_counter_clockwise)
+                ]
 
 class EllipseEdge(object):
-    pass
+    EDGE_TYPE = "EllipseEdge"
+    # more struct than object
 
+    def __init__(self):
+        self.center = (0., 0.)
+        self.major_axis_vector = (1., 0.)  # Endpoint of major axis relative to center point (in OCS)
+        self.minor_axis_length = 1.
+        self.start_angle = 0.
+        self.end_angle = 360.
+        self.is_counter_clockwise = 0
+
+    @staticmethod
+    def from_tags(tags):
+        edge = EllipseEdge()
+        for tag in tags:
+            code, value = tag
+            if code == 10:
+                edge.center = value
+            elif code == 41:
+                edge.major_axis_vector = value
+            elif code == 40:
+                edge.minor_axis_length = value
+            elif code == 50:
+                edge.start_angle = value
+            elif code == 51:
+                edge.end_angle = value
+            elif code == 73:
+                edge.is_counter_clockwise = value
+        return edge
+
+    def dxftags(self):
+        return [DXFTag(72, 3),  # edge type
+                DXFTag(10, self.center),
+                DXFTag(11, self.major_axis_vector),
+                DXFTag(40, self.minor_axis_length),
+                DXFTag(50, self.start_angle),
+                DXFTag(51, self.end_angle),
+                DXFTag(73, self.is_counter_clockwise)
+                ]
+
+# TODO: implement SplineEdge
 class SplineEdge(object):
-    pass
+    EDGE_TYPE = "SplineEdge"
 
+    def __init__(self):
+        self.tags = []  # for now just store tags
+
+    @staticmethod
+    def from_tags(tags):
+        edge = SplineEdge()
+        edge.tags = tags
+        return edge
+
+    def dxftags(self):
+        tags = [DXFTag(72, 4)]  # edge type
+        tags.extend(self.tags)
+        return tags
+
+
+EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
 class PatternData(object):
     def __init__(self, hatch):
