@@ -52,12 +52,6 @@ SOLID
      1
  76
      1
-52
-0.0
-41
-1.0
-77
-     0
  47
 0.0442352806926743
  98
@@ -74,6 +68,7 @@ hatch_subclass = DefSubclass('AcDbHatch', {
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
     'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
     'solid_fill': DXFAttr(70, default=1),  # pattern fill = 0
+    'associative': DXFAttr(71, default=0),  # associative flag = 0
     'hatch_style': DXFAttr(75, default=1),  # 0=normal; 1=outer; 2=ignore
     'pattern_type': DXFAttr(76, default=1),  # 0=user; 1=predefined; 2=custom???
     'pattern_angle': DXFAttr(52, default=0.0),  # degrees (360deg = circle)
@@ -102,6 +97,27 @@ class Hatch(legacy.GraphicEntity):
         start_index = boundary_path_data.start_index
         end_index = boundary_path_data.end_index
         self.AcDbHatch[start_index: end_index] = boundary_path_data.dxftags()
+
+    def set_solid_fill(self, color=7, style=1):
+        self.dxf.solid_fill = 1
+        self.dxf.color = color
+        self.dxf.hatch_style = style
+        self.dxf.pattern_name = 'SOLID'
+        self.dxf.pattern_type = 1
+        hatch_tags = self.tags.get_subclass('AcDbHatch')
+        hatch_tags.remove_tags((52, 41, 77))
+        # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
+        # hatch with SOLID fill.
+
+    def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1):
+        self.dxf.solid_fill = 0
+        self.dxf.pattern_name = name
+        self.dxf.color = color
+        self.dxf.hatch_style = style
+        self.dxf.pattern_type = pattern_type
+        self.dxf.pattern_angle = angle
+        self.dxf.pattern_scale = scale
+        self.dxf.pattern_double = double
 
     @contextmanager
     def edit_pattern(self):
@@ -146,8 +162,23 @@ class BoundaryPathData(object):
         self.start_index = 0
         self.end_index = 0
         self.paths = self._setup_paths(hatch.AcDbHatch)
+        self.source_boundary_objects = []
 
     def _setup_paths(self, tags):
+        def pop_source_boundary_objects_tags(all_path_tags):
+            source_boundary_object_tags = []
+            while len(all_path_tags):
+                if all_path_tags[-1].code in (97, 333):
+                    last_tag = all_path_tags.pop()
+                    if last_tag.code == 330:
+                        source_boundary_object_tags.append(last_tag)
+                    else:  # code == 97
+                        # does not contain the length tag!
+                        source_boundary_object_tags.reverse()
+                        return source_boundary_object_tags
+                else:
+                    return []  # no source boundary objects found - entity is not valid for AutoCAD
+
         paths = []
         try:
             self.start_index = tags.tag_index(91)  # code 91=Number of boundary paths (loops)
@@ -162,38 +193,48 @@ class BoundaryPathData(object):
         all_path_tags = tags.collect_consecutive_tags(PATH_CODES, start=self.start_index+1)
         self.end_index = self.start_index + len(all_path_tags) + 1  # + 1 for Tag(91, Number of boundary paths)
         # end_index: stored for Hatch._set_boundary_path_data()
+        self.source_boundary_objects = pop_source_boundary_objects_tags(all_path_tags)
         grouped_path_tags = TagGroups(all_path_tags, splitcode=92)
         for path_tags in grouped_path_tags:
-            path_type = path_tags[0]
-            is_polyline_path = bool(path_type.value and 2)
-            path = PolylinePath.from_tags(tags) if is_polyline_path else EdgePath.from_tags(tags)
+            path_type_flags = path_tags[0].value
+            is_polyline_path = bool(path_type_flags and 2)
+            path = PolylinePath.from_tags(path_tags) if is_polyline_path else EdgePath.from_tags(path_tags)
+            path.path_type_flags = path_type_flags
             paths.append(path)
         return paths
 
     def clear(self):
         self.paths = []
 
-    def add_polyline_path(self, path_vertices):
-        pass
+    def add_polyline_path(self, path_vertices, is_closed=1):
+        new_path = PolylinePath()
+        new_path.set_vertices(path_vertices, is_closed)
+        self.paths.append(new_path)
+        return new_path
 
     def add_edge_path(self):
         pass
 
     def dxftags(self):
+        def build_source_boundary_object_tags():
+            source_boundary_object_tags = [DXFTag(97, len(self.source_boundary_objects))]
+            source_boundary_object_tags.extend(self.source_boundary_objects)
+            return source_boundary_object_tags
+
         tags = [DXFTag(91, len(self.paths))]
         for path in self.paths:
             tags.extend(path.dxftags())
+        tags.extend(build_source_boundary_object_tags())
         return tags
 
 class PolylinePath(object):
     PATH_TYPE = 'PolylinePath'
 
     def __init__(self):
-        self.path_type_flags = 2
+        self.path_type_flags = 7
         self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
-        self.trailing_tags = []
 
     @staticmethod
     def from_tags(tags):
@@ -217,8 +258,24 @@ class PolylinePath(object):
                 self.path_type_flags = value
             elif code == 93:  # number of polyline vertices
                 pass  # ignore this value
-            else:  # Ac1027 known tags: 97, 330
-                self.trailing_tags.append(tag)
+
+    def set_vertices(self, vertices, is_closed=1):
+        new_vertices = []
+        has_bulge = 0
+        for vertex in vertices:
+            if len(vertex) == 2:
+                x, y = vertex
+                bulge = 0
+            elif len(vertex) == 3:
+                x, y, bulge = vertex
+            else:
+                raise ValueError("Invalid vertex format, expected (x, y) or (x, y, bulge)")
+            new_vertices.append((x, y, bulge))
+            if bulge != 0:
+                has_bulge = 1
+        self.vertices = new_vertices
+        self.has_bulge = has_bulge
+        self.is_closed = is_closed
 
     def dxftags(self):
         vtags = []
@@ -234,7 +291,6 @@ class PolylinePath(object):
                 DXFTag(93, len(self.vertices)),
                 ]
         tags.extend(vtags)
-        tags.extend(self.trailing_tags)
         return tags
 
 class EdgePath(object):
