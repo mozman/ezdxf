@@ -70,3 +70,12 @@ class ModernGraphicsFactory(object):
         if dxfattribs is None:
             dxfattribs = {}
         return self.build_and_add_entity('MESH', dxfattribs)
+
+    def add_hatch(self, color=7, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['solid_fill'] = 1
+        dxfattribs['color'] = color
+        dxfattribs['pattern_name'] = 'SOLID'
+        return self.build_and_add_entity('HATCH', dxfattribs)
+

@@ -15,6 +15,7 @@ from . import solid3d
 from .mesh import Mesh
 from .spline import Spline
 from .mtext import MText
+from .hatch import Hatch
 
 from . import dxfobjects
 from .layouts import Layouts, BlockLayout
@@ -65,6 +66,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'REGION': solid3d.Region,
     '3DSOLID': solid3d.Solid3d,
     'MESH': Mesh,
+    'HATCH': Hatch,
 }
 
 
