@@ -162,23 +162,8 @@ class BoundaryPathData(object):
         self.start_index = 0
         self.end_index = 0
         self.paths = self._setup_paths(hatch.AcDbHatch)
-        self.source_boundary_objects = []
 
     def _setup_paths(self, tags):
-        def pop_source_boundary_objects_tags(all_path_tags):
-            source_boundary_object_tags = []
-            while len(all_path_tags):
-                if all_path_tags[-1].code in (97, 333):
-                    last_tag = all_path_tags.pop()
-                    if last_tag.code == 330:
-                        source_boundary_object_tags.append(last_tag)
-                    else:  # code == 97
-                        # does not contain the length tag!
-                        source_boundary_object_tags.reverse()
-                        return source_boundary_object_tags
-                else:
-                    return []  # no source boundary objects found - entity is not valid for AutoCAD
-
         paths = []
         try:
             self.start_index = tags.tag_index(91)  # code 91=Number of boundary paths (loops)
@@ -193,7 +178,6 @@ class BoundaryPathData(object):
         all_path_tags = tags.collect_consecutive_tags(PATH_CODES, start=self.start_index+1)
         self.end_index = self.start_index + len(all_path_tags) + 1  # + 1 for Tag(91, Number of boundary paths)
         # end_index: stored for Hatch._set_boundary_path_data()
-        self.source_boundary_objects = pop_source_boundary_objects_tags(all_path_tags)
         grouped_path_tags = TagGroups(all_path_tags, splitcode=92)
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
@@ -216,16 +200,30 @@ class BoundaryPathData(object):
         pass
 
     def dxftags(self):
-        def build_source_boundary_object_tags():
-            source_boundary_object_tags = [DXFTag(97, len(self.source_boundary_objects))]
-            source_boundary_object_tags.extend(self.source_boundary_objects)
-            return source_boundary_object_tags
-
         tags = [DXFTag(91, len(self.paths))]
         for path in self.paths:
             tags.extend(path.dxftags())
-        tags.extend(build_source_boundary_object_tags())
         return tags
+
+
+def pop_source_boundary_objects_tags(all_path_tags):
+    source_boundary_object_tags = []
+    while len(all_path_tags):
+        if all_path_tags[-1].code in (97, 333):
+            last_tag = all_path_tags.pop()
+            if last_tag.code == 330:
+                source_boundary_object_tags.append(last_tag)
+            else:  # code == 97
+                # result list does not contain the length tag!
+                source_boundary_object_tags.reverse()
+                return source_boundary_object_tags
+        else:
+            return []  # no source boundary objects found - entity is not valid for AutoCAD
+
+def build_source_boundary_object_tags(source_boundary_objects):
+    source_boundary_object_tags = [DXFTag(97, len(source_boundary_objects))]
+    source_boundary_object_tags.extend(source_boundary_objects)
+    return source_boundary_object_tags
 
 class PolylinePath(object):
     PATH_TYPE = 'PolylinePath'
@@ -235,6 +233,7 @@ class PolylinePath(object):
         self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
+        self.source_boundary_objects = []
 
     @staticmethod
     def from_tags(tags):
@@ -243,6 +242,7 @@ class PolylinePath(object):
         return polyline_path
 
     def _setup_path(self, tags):
+        self.source_boundary_objects = pop_source_boundary_objects_tags(tags)
         for tag in tags:
             code, value = tag
             if code == 10:
@@ -291,6 +291,7 @@ class PolylinePath(object):
                 DXFTag(93, len(self.vertices)),
                 ]
         tags.extend(vtags)
+        tags.extend(build_source_boundary_object_tags(self.source_boundary_objects))
         return tags
 
 class EdgePath(object):
@@ -299,6 +300,7 @@ class EdgePath(object):
     def __init__(self):
         self.path_type_flags = 0
         self.edges = []
+        self.source_boundary_objects = []
 
     @staticmethod
     def from_tags(tags):
@@ -307,6 +309,7 @@ class EdgePath(object):
         return edge_path
 
     def _setup_path(self, tags):
+        self.source_boundary_objects = pop_source_boundary_objects_tags(tags)
         edge_groups = TagGroups(tags, splitcode=72)
         for edge_tags in edge_groups:
             self.edges.append(self._setup_edge(edge_tags))
@@ -351,6 +354,7 @@ class EdgePath(object):
         tags = [DXFTag(92, int(self.path_type_flags)), DXFTag(93, len(self.edges))]
         for edge in self.edges:
             tags.extend(edge.dxftags())
+        tags.extend(build_source_boundary_object_tags(self.source_boundary_objects))
         return tags
 
 class LineEdge(object):
