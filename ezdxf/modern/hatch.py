@@ -181,7 +181,7 @@ class BoundaryPathData(object):
         grouped_path_tags = TagGroups(all_path_tags, splitcode=92)
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
-            is_polyline_path = bool(path_type_flags and 2)
+            is_polyline_path = bool(path_type_flags & 2)
             path = PolylinePath.from_tags(path_tags) if is_polyline_path else EdgePath.from_tags(path_tags)
             path.path_type_flags = path_type_flags
             paths.append(path)
@@ -197,7 +197,9 @@ class BoundaryPathData(object):
         return new_path
 
     def add_edge_path(self):
-        pass
+        new_path = EdgePath()
+        self.paths.append(new_path)
+        return new_path
 
     def dxftags(self):
         tags = [DXFTag(91, len(self.paths))]
@@ -229,7 +231,7 @@ class PolylinePath(object):
     PATH_TYPE = 'PolylinePath'
 
     def __init__(self):
-        self.path_type_flags = 7
+        self.path_type_flags = 7  # External (1) & Polyline (2) & Derived (4) (why?, I don't know)
         self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
@@ -298,7 +300,7 @@ class EdgePath(object):
     PATH_TYPE = 'EdgePath'
 
     def __init__(self):
-        self.path_type_flags = 0
+        self.path_type_flags = 5  # External (1) & Derived (4) (why?, I don't know)
         self.edges = []
         self.source_boundary_objects = []
 
@@ -334,7 +336,7 @@ class EdgePath(object):
         arc.radius = radius
         arc.start_angle = start_angle
         arc.end_angle = end_angle
-        arc.is_counter_clockwise = is_counter_clockwise
+        arc.is_counter_clockwise = 1 if bool(is_counter_clockwise) else 0
         self.edges.append(arc)
         return arc
 
@@ -439,7 +441,7 @@ class EllipseEdge(object):
             code, value = tag
             if code == 10:
                 edge.center = value
-            elif code == 41:
+            elif code == 11:
                 edge.major_axis_vector = value
             elif code == 40:
                 edge.minor_axis_length = value
