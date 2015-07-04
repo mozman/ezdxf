@@ -10,57 +10,61 @@ import ezdxf
 
 
 def create_solid_polyline_hatch():
-    dwg = ezdxf.new("Ac1024")
-    msp = dwg.modelspace()
+    dwg = ezdxf.new("Ac1024")  # create a new DXF drawing (AutoCAD 2010)
+    msp = dwg.modelspace()  # we are working in model space
     hatch = msp.add_hatch(color=2)  # by default a SOLID fill
-    with hatch.edit_boundary() as editor:
+    with hatch.edit_boundary() as editor:  # get boundary editor as context object
         editor.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
-    dwg.saveas("hatch_solid_polyline.dxf")
+    dwg.saveas("hatch_solid_polyline.dxf")  # save DXF drawing
 
 def create_pattern_fill_polyline_hatch():
-    dwg = ezdxf.new("Ac1024")
-    msp = dwg.modelspace()
+    dwg = ezdxf.new("Ac1024")  # create a new DXF drawing (AutoCAD 2010)
+    msp = dwg.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
     hatch.set_pattern_fill('ANSI31', color=2, scale=0.01)
-    with hatch.edit_boundary() as editor:
+    with hatch.edit_boundary() as editor:  # get boundary editor as context object
         editor.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
-    dwg.saveas("hatch_pattern_fill_polyline.dxf")
+    dwg.saveas("hatch_pattern_fill_polyline.dxf")  # save DXF drawing
 
 def using_hatch_style():
     def place_square_1(hatch, x, y):
         def shift(point):
             return x+point[0], y+point[1]
 
-        with hatch.edit_boundary() as editor:
-            editor.add_polyline_path(map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))
-            editor.add_polyline_path(map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]))
-            editor.add_polyline_path(map(shift, [(4, 4), (6, 4), (6, 6), (4, 6)]))
+        with hatch.edit_boundary() as editor:  # get boundary editor as context object
+            editor.add_polyline_path(map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))  # 1. path
+            editor.add_polyline_path(map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]))  # 2. path
+            editor.add_polyline_path(map(shift, [(4, 4), (6, 4), (6, 6), (4, 6)]))  # 3. path
 
     def place_square_2(hatch, x, y):
         def shift(point):
             return x+point[0], y+point[1]
 
-        with hatch.edit_boundary() as editor:
-            editor.add_polyline_path(map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))
-            editor.add_polyline_path(map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]))
-            editor.add_polyline_path(map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]))
+        with hatch.edit_boundary() as editor:  # get boundary editor as context object
+            editor.add_polyline_path(map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))  # 1. path
+            editor.add_polyline_path(map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]))  # 2. path
+            editor.add_polyline_path(map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]))  # 3. path
 
-    dwg = ezdxf.new("Ac1024")
-    msp = dwg.modelspace()
+    dwg = ezdxf.new("Ac1024")  # create a new DXF drawing (AutoCAD 2010)
+    msp = dwg.modelspace()  # we are working in model space
+    # first create DXF hatch entities
     hatch_style_0 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 0})
     hatch_style_1 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 1})
     hatch_style_2 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 2})
+    # then insert path elements to define the hatch boundaries
     place_square_1(hatch_style_0, 0, 0)
     place_square_1(hatch_style_1, 10, 0)
     place_square_1(hatch_style_2, 20, 0)
 
+    # first create DXF hatch entities
     hatch_style_0b = msp.add_hatch(color=7, dxfattribs={'hatch_style': 0})
     hatch_style_1b = msp.add_hatch(color=7, dxfattribs={'hatch_style': 1})
     hatch_style_2b = msp.add_hatch(color=7, dxfattribs={'hatch_style': 2})
+    # then insert path elements to define the hatch boundaries
     place_square_2(hatch_style_0b, 0, 10)
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
-    dwg.saveas("hatch_styles_examples.dxf")
+    dwg.saveas("hatch_styles_examples.dxf")  # save DXF drawing
 
 def using_hatch_style_with_edge_path():
     def add_edge_path(path_editor, vertices):
@@ -76,37 +80,40 @@ def using_hatch_style_with_edge_path():
         def shift(point):
             return x+point[0], y+point[1]
 
-        with hatch.edit_boundary() as editor:
-            add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))
-            add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))
-            add_edge_path(editor, map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]))
-            add_edge_path(editor, map(shift, [(4, 4), (6, 4), (6, 6), (4, 6)]))
+        with hatch.edit_boundary() as editor:  # get boundary editor as context object
+            add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))  # 1. path
+            add_edge_path(editor, map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]))  # 2. path
+            add_edge_path(editor, map(shift, [(4, 4), (6, 4), (6, 6), (4, 6)]))  # 3. path
 
     def place_square_2(hatch, x, y):
         def shift(point):
             return x+point[0], y+point[1]
 
-        with hatch.edit_boundary() as editor:
-            add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))
-            add_edge_path(editor, map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]))
-            add_edge_path(editor, map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]))
+        with hatch.edit_boundary() as editor:  # get boundary editor as context object
+            add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (0, 8)]))  # 1. path
+            add_edge_path(editor, map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]))  # 2. path
+            add_edge_path(editor, map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]))  # 3. path
 
-    dwg = ezdxf.new("Ac1024")
-    msp = dwg.modelspace()
+    dwg = ezdxf.new("Ac1024")  # create a new DXF drawing (AutoCAD 2010)
+    msp = dwg.modelspace()  # we are working in model space
+    # first create DXF hatch entities
     hatch_style_0 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 0})
     hatch_style_1 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 1})
     hatch_style_2 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 2})
+    # then insert path elements to define the hatch boundaries
     place_square_1(hatch_style_0, 0, 0)
     place_square_1(hatch_style_1, 10, 0)
     place_square_1(hatch_style_2, 20, 0)
 
+    # first create DXF hatch entities
     hatch_style_0b = msp.add_hatch(color=7, dxfattribs={'hatch_style': 0})
     hatch_style_1b = msp.add_hatch(color=7, dxfattribs={'hatch_style': 1})
     hatch_style_2b = msp.add_hatch(color=7, dxfattribs={'hatch_style': 2})
+    # then insert path elements to define the hatch boundaries
     place_square_2(hatch_style_0b, 0, 10)
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
-    dwg.saveas("hatch_styles_examples_with_edge_path.dxf")
+    dwg.saveas("hatch_styles_examples_with_edge_path.dxf")  # save DXF drawing
 
 create_solid_polyline_hatch()
 create_pattern_fill_polyline_hatch()

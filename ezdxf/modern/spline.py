@@ -8,8 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
 
-from .graphics import none_subclass, entity_subclass
-from ..legacy import graphics as legacy
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
@@ -53,7 +52,7 @@ spline_subclass = DefSubclass('AcDbSpline', {
 })
 
 
-class Spline(legacy.GraphicEntity):
+class Spline(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_SPLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
 

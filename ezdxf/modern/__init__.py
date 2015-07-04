@@ -74,7 +74,7 @@ class ModernDXFFactory(LegacyDXFFactory):
     """ DXf factory for DXF version AC1015 and later. (changed 04.05.2014)
     """
     HEADERVARS = dict(VARMAP)
-    DEFAULT_WRAPPER = graphics.GraphicEntity
+    DEFAULT_WRAPPER = graphics.ModernGraphicEntity
     TAGS_MODIFIER = {'VERTEX': graphics.Vertex.fix_tags}
 
     def __init__(self, drawing):

@@ -32,7 +32,7 @@ from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
-
+from ..truecolor import int2rgb, rgb2int
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -46,10 +46,39 @@ entity_subclass = DefSubclass('AcDbEntity', {
     'ltscale': DXFAttr(48, default=1.0),  # linetype scale
     'invisible': DXFAttr(60, default=0),  # invisible .. 1, visible .. 0
     'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
+    'true_color': DXFAttr(420, dxfversion='AC1018'),  # true color as 0x00RRGGBB 24-bit value
+    'color_name': DXFAttr(430, dxfversion='AC1018'),  # color name as string
+    'transparency': DXFAttr(440, dxfversion='AC1018'),  # transparency value 0x020000TT 0 = fully transparent / 255 = opaque
+    'shadow_mode': DXFAttr(284, dxfversion='AC1021'),  # shadow_mode
+    # 0 = Casts and receives shadows
+    # 1 = Casts shadows
+    # 2 = Receives shadows
+    # 3 = Ignores shadows
+
 })
 
+# noinspection PyUnresolvedReferences
+class ModernGraphicEntityExtension(object):
+    # TODO: test DXFEntity.rgb property
+    @property
+    def rgb(self):
+        return int2rgb(self.get_dxf_attrib('true_color'))
 
-class GraphicEntity(legacy.GraphicEntity):
+    @rgb.setter  # line.rgb = (12, 34, 56)
+    def rgb(self, rgb):
+        self.set_dxf_attrib('true_color', rgb2int(rgb))
+
+    # TODO: test DXFEntity.transparency property
+    @property
+    def transparency(self):
+        return 1. - float(self.get_dxf_attrib('transparency') & 0xFF) / 255.
+
+    @transparency.setter  # line.transparency = 0.50
+    def transparency(self, transparency):
+        # 0.0 = opaque & 1.0 if 100% transparent
+        self.set_dxf_attrib('transparency', int((1. - float(transparency)) * 255) | 0x02000000)
+
+class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
     """ Default graphic entity wrapper, allows access to following dxf attributes:
      - handle
      - owner handle
@@ -59,10 +88,15 @@ class GraphicEntity(legacy.GraphicEntity):
      - paperspace
      - ltscale
      - invisible
+     - true_color (as int)
+     - color_name
+     - transparency
+     - shadow_mode
 
      Wrapper for all unsupported graphic entities.
     """
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
+
 
 _LINETEMPLATE = """  0
 LINE
@@ -98,7 +132,7 @@ line_subclass = DefSubclass('AcDbLine', {
 })
 
 
-class Line(legacy.Line):
+class Line(legacy.Line, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_LINETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, line_subclass)
 
@@ -128,7 +162,7 @@ point_subclass = DefSubclass('AcDbPoint', {
 })
 
 
-class Point(legacy.Point):
+class Point(legacy.Point, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_POINT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, point_subclass)
 
@@ -161,7 +195,7 @@ circle_subclass = DefSubclass('AcDbCircle', {
 })
 
 
-class Circle(legacy.Circle):
+class Circle(legacy.Circle, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass)
 
@@ -199,7 +233,7 @@ arc_subclass = DefSubclass('AcDbArc', {
 })
 
 
-class Arc(legacy.Arc):
+class Arc(legacy.Arc, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_ARC_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass, arc_subclass)
 
@@ -250,7 +284,7 @@ trace_subclass = DefSubclass('AcDbTrace', {
 })
 
 
-class Trace(legacy.Trace):
+class Trace(legacy.Trace, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, trace_subclass)
 
@@ -304,7 +338,7 @@ face_subclass = DefSubclass('AcDbFace', {
 })
 
 
-class Face(legacy.Face):
+class Face(legacy.Face, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_3DFACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, face_subclass)
 
@@ -371,7 +405,7 @@ text_subclass = (
     DefSubclass('AcDbText', {'valign': DXFAttr(73, default=0)}))
 
 
-class Text(legacy.Text):
+class Text(legacy.Text, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)
 
@@ -414,7 +448,7 @@ polyline_subclass = DefSubclass('AcDb2dPolyline', {
 })
 
 
-class Polyline(legacy.Polyline):
+class Polyline(legacy.Polyline, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, polyline_subclass)
 
@@ -521,7 +555,7 @@ vertex_subclass = (
 EMPTY_VERTEX_SUBCLASS = Tags()
 
 
-class Vertex(legacy.Vertex):
+class Vertex(legacy.Vertex, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 
@@ -587,7 +621,7 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
 LWPOINTCODES = (10, 20, 40, 41, 42)
 
 
-class LWPolyline(legacy.GraphicEntity):
+class LWPolyline(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_LWPOLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
 
@@ -744,7 +778,7 @@ block_subclass = (
 )
 
 
-class Block(legacy.GraphicEntity):
+class Block(legacy.GraphicEntity, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *block_subclass)
 
@@ -767,7 +801,7 @@ endblock_subclass = (
 )
 
 
-class EndBlk(legacy.GraphicEntity):
+class EndBlk(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_ENDBLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *endblock_subclass)
 
@@ -817,7 +851,7 @@ insert_subclass = DefSubclass('AcDbBlockReference', {
 })
 
 
-class Insert(legacy.Insert):
+class Insert(legacy.Insert, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, insert_subclass)
 
@@ -900,7 +934,7 @@ attdef_subclass = (
 )
 
 
-class Attdef(legacy.Attdef):
+class Attdef(legacy.Attdef, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attdef_subclass)
 
@@ -979,7 +1013,7 @@ attrib_subclass = (
 )
 
 
-class Attrib(legacy.Attrib):
+class Attrib(legacy.Attrib, ModernGraphicEntityExtension):
     TEMPLATE = ClassifiedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attrib_subclass)
 _ELLIPSE_TPL = """  0
@@ -1024,7 +1058,7 @@ ellipse_subclass = DefSubclass('AcDbEllipse', {
 })
 
 
-class Ellipse(legacy.GraphicEntity, legacy.ColorMixin):
+class Ellipse(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_ELLIPSE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ellipse_subclass)
 _RAY_TPL = """ 0
@@ -1058,7 +1092,7 @@ ray_subclass = DefSubclass('AcDbRay', {
 })
 
 
-class Ray(legacy.GraphicEntity, legacy.ColorMixin):
+class Ray(legacy.GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_RAY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ray_subclass)
 
@@ -1110,6 +1144,6 @@ shape_subclass = DefSubclass('AcDbShape', {
 
 
 # SHAPE is not tested with real world DXF drawings!
-class Shape(legacy.GraphicEntity):
+class Shape(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_SHAPE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, shape_subclass)

@@ -4,7 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 
-version = (0, 6, 6)  # also update VERSION in setup.py
+version = (0, 7, 0)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <mozman@gmx.at>"
@@ -37,7 +37,7 @@ def new(dxfversion='AC1009'):
 
     """
     from .drawing import Drawing
-    return Drawing.new(dxfversion.upper())
+    return Drawing.new(dxfversion)
 
 
 def read(stream):
