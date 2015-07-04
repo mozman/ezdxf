@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
-# Purpose: using splines
+# Purpose: using lwpolyline
 # Created: 13.04.2014
 # Copyright (C) , Manfred Moitzi
 # License: MIT License
