@@ -56,6 +56,11 @@ entity_subclass = DefSubclass('AcDbEntity', {
     # 3 = Ignores shadows
 
 })
+def float2transparency(value):
+    return int((1. - float(value)) * 255) | 0x02000000
+
+def transparency2float(value):
+    return 1. - float(int(value) & 0xFF) / 255.
 
 # noinspection PyUnresolvedReferences
 class ModernGraphicEntityExtension(object):
@@ -71,12 +76,12 @@ class ModernGraphicEntityExtension(object):
     # TODO: test DXFEntity.transparency property
     @property
     def transparency(self):
-        return 1. - float(self.get_dxf_attrib('transparency') & 0xFF) / 255.
+        return transparency2float(self.get_dxf_attrib('transparency'))
 
     @transparency.setter  # line.transparency = 0.50
     def transparency(self, transparency):
         # 0.0 = opaque & 1.0 if 100% transparent
-        self.set_dxf_attrib('transparency', int((1. - float(transparency)) * 255) | 0x02000000)
+        self.set_dxf_attrib('transparency', float2transparency(transparency))
 
 class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
     """ Default graphic entity wrapper, allows access to following dxf attributes:
