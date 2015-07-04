@@ -9,8 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from contextlib import contextmanager
 import math
 
-from .graphics import none_subclass, entity_subclass
-from ..legacy import graphics as legacy
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
@@ -74,7 +73,7 @@ mtext_subclass = DefSubclass('AcDbMText', {
 })
 
 
-class MText(legacy.GraphicEntity):  # MTEXT will be extended in DXF version AC1021 (ACAD 2007)
+class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC1021 (ACAD 2007)
     TEMPLATE = ClassifiedTags.from_text(_MTEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
 

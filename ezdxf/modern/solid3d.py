@@ -8,8 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
 
-from .graphics import none_subclass, entity_subclass
-from ..legacy import graphics as legacy
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxftag import convert_tags_to_text_lines, convert_text_lines_to_tags
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
@@ -36,7 +35,7 @@ modeler_geometry_subclass = DefSubclass('AcDbModelerGeometry', {
 })
 
 
-class Body(legacy.GraphicEntity):
+class Body(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_BODY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass)
 
@@ -62,7 +61,7 @@ class Body(legacy.GraphicEntity):
         self.set_acis_data(data.text_lines)
 
 
-class ModelerGeometryData:
+class ModelerGeometryData(object):
     def __init__(self, body):
         self.text_lines = list(body.get_acis_data())
 

@@ -2,9 +2,12 @@
 News
 ====
 
-Version 0.6.6 - ...
+Version 0.7.0 - 2015-...
 
-  * NEW: extended the custom vars interface
+  * NEW: support for DXF entity HATCH (solid fill and pattern fill)
+  * NEW: support for new common DXF attributes in AC1018 (AutoCAD 2004): true_color, color_name, transparency
+  * NEW: support for new common DXF attributes in AC1021 (AutoCAD 2007): shadow_mode
+  * NEW: extended custom vars interface
   * NEW: dxf2html.py - added support for custom properties in the header section
   * NEW: query() supports case insensitive attribute queries by appending an 'i' to the query string, e.g. '*[layer=="construction"]i'
 

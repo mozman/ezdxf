@@ -17,6 +17,7 @@ acadrelease = {
 }
 
 versions_supported_by_new = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024', 'AC1027']
+LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
 dxfversion = {
     acad: dxf for dxf, acad in acadrelease.items()

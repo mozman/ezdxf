@@ -8,8 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
 
-from .graphics import none_subclass, entity_subclass
-from ..legacy import graphics as legacy
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..tags import DXFTag, DXFStructureError, TagGroups
 from ..classifiedtags import ClassifiedTags
@@ -78,7 +77,7 @@ hatch_subclass = DefSubclass('AcDbHatch', {
 })
 
 
-class Hatch(legacy.GraphicEntity):
+class Hatch(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_HATCH_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, hatch_subclass)
 

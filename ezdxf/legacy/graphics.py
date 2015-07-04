@@ -12,24 +12,6 @@ from .. import const
 from ..const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin
 
-
-class ColorMixin(object):
-    def set_ext_color(self, color):
-        """ Set color by color-name or rgb-tuple, for DXF R12 the nearest
-        default DXF color index will be determined.
-        """
-        # TODO: implement ColorMixin.set_ext_color()
-        raise NotImplementedError('set_ext_color()')
-
-    def get_rgb_color(self):
-        # TODO: implement ColorMixin.get_rgb_color()
-        return 0, 0, 0
-
-    def get_color_name(self):
-        # TODO: implement ColorMixin.get_color_name()
-        return 'Black'
-
-
 class QuadrilateralMixin(object):
     def __getitem__(self, num):
         return self.get_dxf_attrib(VERTEXNAMES[num])
@@ -88,7 +70,7 @@ LINE
 """
 
 
-class Line(GraphicEntity, ColorMixin):
+class Line(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_LINE_TPL)
     DXFATTRIBS = make_attribs({
         'start': DXFAttr(10, xtype='Point2D/3D'),
@@ -110,7 +92,7 @@ POINT
 """
 
 
-class Point(GraphicEntity, ColorMixin):
+class Point(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_POINT_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, xtype='Point2D/3D'),
@@ -133,7 +115,7 @@ CIRCLE
 """
 
 
-class Circle(GraphicEntity, ColorMixin):
+class Circle(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, xtype='Point2D/3D'),
@@ -161,7 +143,7 @@ ARC
 """
 
 
-class Arc(GraphicEntity, ColorMixin):
+class Arc(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_ARC_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, xtype='Point2D/3D'),
@@ -203,7 +185,7 @@ TRACE
 """
 
 
-class Trace(GraphicEntity, ColorMixin, QuadrilateralMixin):
+class Trace(GraphicEntity, QuadrilateralMixin):
     TEMPLATE = ClassifiedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = make_attribs({
         'vtx0': DXFAttr(10, xtype='Point2D/3D'),
@@ -266,7 +248,7 @@ STANDARD
 """
 
 
-class Text(GraphicEntity, ColorMixin):
+class Text(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, xtype='Point2D/3D'),
@@ -651,7 +633,7 @@ POLYLINE
 """
 
 
-class Polyline(GraphicEntity, ColorMixin):
+class Polyline(GraphicEntity):
     ANY3D = const.POLYLINE_3D_POLYLINE + const.POLYLINE_3D_POLYMESH + const.POLYLINE_POLYFACE
     TEMPLATE = ClassifiedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = make_attribs({
@@ -880,7 +862,7 @@ VERTEX
 """
 
 
-class Vertex(GraphicEntity, ColorMixin, QuadrilateralMixin):
+class Vertex(GraphicEntity, QuadrilateralMixin):
     FACE_FLAGS = const.VTX_3D_POLYGON_MESH_VERTEX + const.VTX_3D_POLYFACE_MESH_VERTEX
     VTX3D = const.VTX_3D_POLYLINE_VERTEX + const.VTX_3D_POLYGON_MESH_VERTEX + const.VTX_3D_POLYFACE_MESH_VERTEX
     TEMPLATE = ClassifiedTags.from_text(_VERTEX_TPL)
@@ -1068,7 +1050,7 @@ NAME
 
 
 # SHAPE is not tested with real world DXF drawings!
-class Shape(GraphicEntity, ColorMixin):
+class Shape(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_SHAPE_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, xtype='Point2D/3D'),

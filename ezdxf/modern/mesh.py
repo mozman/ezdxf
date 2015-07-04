@@ -8,8 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
 
-from .graphics import none_subclass, entity_subclass
-from ..legacy import graphics as legacy
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..tags import DXFTag
 from ..classifiedtags import ClassifiedTags
@@ -50,7 +49,7 @@ mesh_subclass = DefSubclass('AcDbSubDMesh', {
 })
 
 
-class Mesh(legacy.GraphicEntity):
+class Mesh(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_MESH_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mesh_subclass)
 

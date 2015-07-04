@@ -9,7 +9,6 @@ __author__ = "mozman <mozman@gmx.at>"
 from .dxftag import cast_tag_value, DXFTag
 from .const import DXFStructureError
 
-
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
     """
@@ -90,14 +89,14 @@ class DXFEntity(object):
         dxfattr = self.DXFATTRIBS.get(key, None)
         if dxfattr is None:
             return False
-        if dxfattr.dxfversion is None:
+        if dxfattr.dxfversion is None or self.drawing is None:
             return True
         return self.drawing.dxfversion >= dxfattr.dxfversion
 
     def valid_dxf_attrib_names(self):
         """ Returns a list of supported DXF attribute names.
         """
-        is_dxfversion = self.drawing.dxfversion
+        is_dxfversion = None if self.drawing is None else self.drawing.dxfversion
         return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or
                                                                   (attrib.dxfversion <= is_dxfversion)]
 
@@ -120,8 +119,11 @@ class DXFEntity(object):
         except ValueError:
             if default is ValueError:
                 # no DXF default values if DXF version is incorrect
-                if dxfattr.dxfversion is not None and self.drawing.dxfversion < dxfattr.dxfversion:
-                    raise ValueError("DXFAttrib '%s' does not exist. (insufficient DXF version)" % key)
+                if dxfattr.dxfversion is not None and \
+                        self.drawing is not None and \
+                        self.drawing.dxfversion < dxfattr.dxfversion:
+                    msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
+                    raise ValueError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
                 result = dxfattr.default  # default value defined by DXF specs
                 if result is not None:
                     return result
@@ -150,10 +152,10 @@ class DXFEntity(object):
 
     def set_dxf_attrib(self, key, value):
         dxfattr = self._get_dxfattr_definition(key)
-        if dxfattr.dxfversion is not None:
+        if dxfattr.dxfversion is not None and self.drawing is not None:
             if self.drawing.dxfversion < dxfattr.dxfversion:
-                raise AttributeError("Attribute '{}' not valid for DXF version '{}' at least '{}' is needed.".format(
-                    key, self.drawing.dxfversion, dxfattr.dxfversion))
+                msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
+                raise AttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
         # no subclass is subclass index 0
         subclasstags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:

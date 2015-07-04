@@ -11,15 +11,17 @@ import unittest
 
 import ezdxf
 
-DWG = ezdxf.new('AC1015')
+DWG_AC1015 = ezdxf.new('AC1015')
+DWG_AC1018 = ezdxf.new('AC1018')
+DWG_AC1021 = ezdxf.new('AC1021')
 
 
 class SetupDrawing(unittest.TestCase):
     def setUp(self):
-        self.layout = DWG.modelspace()
+        self.layout = DWG_AC1015.modelspace()
 
 
-class TestGraphicsDefaultSettings(SetupDrawing):
+class TestAC1015GraphicsDefaultSettings(SetupDrawing):
     def test_default_settings(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertEqual('0', line.dxf.layer)
@@ -28,7 +30,57 @@ class TestGraphicsDefaultSettings(SetupDrawing):
         self.assertEqual(1.0, line.dxf.ltscale)
         self.assertEqual(0, line.dxf.invisible)
         self.assertEqual((0.0, 0.0, 1.0), line.dxf.extrusion)
+        with self.assertRaises(ValueError):  # requires AC1018
+            value = line.dxf.true_color
+        with self.assertRaises(ValueError):  # requires AC1018
+            value = line.dxf.color_name
+        with self.assertRaises(ValueError):  # requires AC1018
+            value = line.dxf.transparency
+        with self.assertRaises(ValueError):  # requires AC1021
+            value = line.dxf.shadow_mode
 
+
+class TestAC1018GraphicsDefaultSettings(unittest.TestCase):
+    def setUp(self):
+        self.layout = DWG_AC1018.modelspace()
+
+    def test_default_settings(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertFalse(line.dxf_attrib_exists('true_color'))  # no default true color
+        self.assertFalse(line.dxf_attrib_exists('color_name'))  # no default color name
+        self.assertFalse(line.dxf_attrib_exists('transparency'))  # no default transparency
+        with self.assertRaises(ValueError):  # requires AC1021
+            value = line.dxf.shadow_mode
+
+    def test_true_color(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        line.dxf.true_color = 0x0F0F0F
+        self.assertEqual(0x0F0F0F, line.dxf.true_color)
+        self.assertEqual((0x0F, 0x0F, 0x0F), line.rgb)  # shortcut for modern graphic entities
+        line.rgb = (255, 255, 255)  # shortcut for modern graphic entities
+        self.assertEqual(0xFFFFFF, line.dxf.true_color)
+
+    def test_color_name(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        line.dxf.color_name = "Rot"
+        self.assertEqual("Rot", line.dxf.color_name)
+
+    def test_transparency(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        line.dxf.transparency = 0x020000FF  # 0xFF = opaque; 0x00 = 100% transparent
+        self.assertEqual(0x020000FF, line.dxf.transparency)
+        # recommend usage: helper property ModernGraphicEntity.transparency
+        self.assertEqual(0., line.transparency)  # 0. =  opaque; 1. = 100% transparent
+        line.transparency = 1.0
+        self.assertEqual(0x02000000, line.dxf.transparency)
+
+class TestAC1021GraphicsDefaultSettings(unittest.TestCase):
+    def setUp(self):
+        self.layout = DWG_AC1018.modelspace()
+
+    def test_default_settings(self):
+        line = self.layout.add_line((0, 0), (1, 1))
+        self.assertFalse(line.dxf_attrib_exists('shadow_mode'))  # no default shadow_mode
 
 class TestBasicEntities(SetupDrawing):
     def test_iter_layout(self):
