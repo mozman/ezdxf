@@ -106,7 +106,7 @@ class Hatch(ModernGraphicEntity):
         hatch_tags = self.tags.get_subclass('AcDbHatch')
         hatch_tags.remove_tags((52, 41, 77))
         # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
-        # hatch with SOLID fill.
+        # hatches with SOLID fill.
 
     def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1):
         self.dxf.solid_fill = 0
@@ -120,12 +120,24 @@ class Hatch(ModernGraphicEntity):
 
     @contextmanager
     def edit_pattern(self):
+        if self.dxf.solid_fill:
+            raise ValueError('Solid fill HATCH, no pattern data to edit.')
         pattern_data = PatternData(self)
         yield pattern_data
         self._set_pattern_data(pattern_data)
 
-    def _set_pattern_data(self, pattern_data):
-        pass
+    def _set_pattern_data(self, new_pattern_data):
+        start_index = new_pattern_data.existing_pattern_start_index
+        end_index = new_pattern_data.existing_pattern_end_index
+        pattern_tags = new_pattern_data.dxftags()
+        if start_index == 0:  # no existing pattern data
+            try:
+                start_index = self.AcDbHatch.tag_index(77) + 1  # hatch pattern double flag, used as insertion point
+                end_index = start_index
+            except ValueError:
+                raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern double flag' (code=77).")
+        # replace existing pattern data
+        self.AcDbHatch[start_index: end_index] = pattern_tags
 
     def get_seed_points(self):
         hatch_tags = self.AcDbHatch
@@ -541,9 +553,70 @@ class SplineEdge(object):
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
+PATTERN_DEFINITION_LINE_CODES = (53, 43, 44, 45, 46, 79, 49)
 class PatternData(object):
     def __init__(self, hatch):
-        pass
+        self.existing_pattern_start_index = 0
+        self.existing_pattern_end_index = 0
+        self.lines = self._setup_pattern_lines(hatch.AcDbHatch)
+
+    def _setup_pattern_lines(self, tags):
+        try:
+            self.existing_pattern_start_index = tags.tag_index(78)  # code 78=Number of patter definition lines
+        except ValueError:  # no pattern definition lines found
+            self.existing_pattern_start_index = 0
+            self.existing_pattern_end_index = 0
+            return []
+
+        all_pattern_tags = tags.collect_consecutive_tags(PATTERN_DEFINITION_LINE_CODES, start=self.existing_pattern_start_index+1)
+        self.existing_pattern_end_index = self.existing_pattern_start_index + len(all_pattern_tags) + 1  # + 1 for Tag(78, Number of boundary paths)
+        # existing_pattern_end_index: stored for Hatch._set_pattern_data()
+        grouped_line_tags = TagGroups(all_pattern_tags, splitcode=53)
+        return [PatternDefinitionLine.from_tags(line_tags) for line_tags in grouped_line_tags]
 
     def clear(self):
-        pass
+        self.lines = []
+
+    def add_line(self, angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
+        if dash_length_items is None:
+            raise ValueError("Parameter 'dash_length_items' must not be None.")
+        self.lines.append(PatternDefinitionLine(angle, base_point, offset, dash_length_items))
+
+    def dxftags(self):
+        if len(self.lines):
+            tags = [DXFTag(78, len(self.lines))]
+            for line in self.lines:
+                tags.extend(line.dxftags())
+        else:
+            tags = []
+        return tags
+
+class PatternDefinitionLine(object):
+    def __init__(self,  angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
+        self.angle = angle  # as always in degrees (circle = 360 deg)
+        self.base_point = base_point
+        self.offset = offset
+        self.dash_length_items = [] if dash_length_items is None else dash_length_items
+
+    @staticmethod
+    def from_tags(tags):
+        p = {53: 0, 43: 0, 44: 0, 45: 0, 46: 0}
+        dash_length_items = []
+        for tag in tags:
+            code, value = tag
+            if code == 49:
+                dash_length_items.append(value)
+            else:
+                p[code] = value
+        return PatternDefinitionLine(p[53], (p[43], p[44]), (p[45], p[46]), dash_length_items)
+
+    def dxftags(self):
+        tags = [DXFTag(53, self.angle),
+                DXFTag(43, self.base_point[0]),
+                DXFTag(44, self.base_point[1]),
+                DXFTag(45, self.offset[0]),
+                DXFTag(46, self.offset[1]),
+                DXFTag(79, len(self.dash_length_items))
+                ]
+        tags.extend(DXFTag(49, item) for item in self.dash_length_items)
+        return tags
