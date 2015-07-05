@@ -93,10 +93,10 @@ class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
      - paperspace
      - ltscale
      - invisible
-     - true_color (as int)
-     - color_name
-     - transparency
-     - shadow_mode
+     - true_color (as int), requires DXF Version AC1018 (AutoCAD R2004)
+     - color_name, requires DXF Version AC1018 (AutoCAD R2004)
+     - transparency, requires DXF Version AC1018 (AutoCAD R2004)
+     - shadow_mode, requires DXF Version AC1021 (AutoCAD R2007)
 
      Wrapper for all unsupported graphic entities.
     """
