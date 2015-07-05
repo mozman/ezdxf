@@ -265,10 +265,9 @@ class TestEdgeHatchWithSpline(unittest.TestCase):
         # create the spline
         with self.hatch.edit_boundary() as editor:
             path = editor.paths[0]
-            spline = path.add_spline(3, 1, 1)
+            spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], 3, 1, 1)
             # the following values do not represent a mathematically valid spline
             spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
-            spline.fit_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
             spline.knot_values = [1, 2, 3, 4, 5, 6]
             spline.weights = [4, 3, 2, 1]
             spline.start_tangent = (10, 1)
