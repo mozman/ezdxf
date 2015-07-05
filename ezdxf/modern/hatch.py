@@ -351,8 +351,10 @@ class EdgePath(object):
         self.edges.append(ellipse)
         return ellipse
 
-    def add_spline(self, degree=3, rational=0, periodic=0):
+    def add_spline(self, fit_points=None, degree=3, rational=0, periodic=0):
         spline = SplineEdge()
+        if fit_points is not None:
+            spline.fit_points = fit_points
         spline.degree = degree
         spline.rational = int(rational)
         spline.periodic = int(periodic)
@@ -519,15 +521,18 @@ class SplineEdge(object):
                 DXFTag(96, len(self.control_points)),  # number of control points
                 ]
         # build knot values list
+        # knot values have to be present and valid, otherwise AutoCAD crashes
         tags.extend([DXFTag(40, float(value)) for value in self.knot_values])
 
         # build control points
+        # control points have to be present and valid, otherwise AutoCAD crashes
         tags.extend([DXFTag(10, (float(value[0]), float(value[1]))) for value in self.control_points])
 
-        # build weights list
+        # build weights list, optional
         tags.extend([DXFTag(42, float(value)) for value in self.weights])
 
-        # build fit data
+        # build fit points
+        # fit points have to be present and valid, otherwise AutoCAD crashes
         tags.append(DXFTag(97, len(self.fit_points)))
         tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
         tags.append(DXFTag(12, (float(self.start_tangent[0]), float(self.start_tangent[1]))))
