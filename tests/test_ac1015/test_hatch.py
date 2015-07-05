@@ -237,6 +237,58 @@ class TestEdgeHatchWithSpline(unittest.TestCase):
         tags = ClassifiedTags.from_text(EDGE_HATCH_WITH_SPLINE)
         self.hatch = Hatch(tags)
 
+    def test_get_params(self):
+        with self.hatch.edit_boundary() as editor:
+            path = editor.paths[0]
+            spline = None
+            for edge in path.edges:
+                if edge.EDGE_TYPE == "SplineEdge":
+                    spline = edge
+                    break
+            self.assertIsNotNone(spline, "Spline edge not found.")
+            self.assertEqual(3, spline.degree)
+            self.assertEqual(0, spline.rational)
+            self.assertEqual(0, spline.periodic)
+            self.assertEqual((0, 0), spline.start_tangent)
+            self.assertEqual((0, 0), spline.end_tangent)
+            self.assertEqual(10, len(spline.knot_values))
+            self.assertEqual(11.86874452602773, spline.knot_values[-1])
+            self.assertEqual(6, len(spline.control_points))
+            self.assertEqual((0, 10), spline.control_points[0], "Unexpected start control point.")
+            self.assertEqual((0, 0), spline.control_points[-1], "Unexpected end control point.")
+            self.assertEqual(0, len(spline.weights))
+            self.assertEqual(4, len(spline.fit_points))
+            self.assertEqual((0, 10), spline.fit_points[0], "Unexpected start fit point.")
+            self.assertEqual((0, 0), spline.fit_points[-1], "Unexpected end fit point.")
+
+    def test_create_spline_edge(self):
+        # create the spline
+        with self.hatch.edit_boundary() as editor:
+            path = editor.paths[0]
+            spline = path.add_spline(3, 1, 1)
+            # the following values do not represent a mathematically valid spline
+            spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
+            spline.fit_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
+            spline.knot_values = [1, 2, 3, 4, 5, 6]
+            spline.weights = [4, 3, 2, 1]
+            spline.start_tangent = (10, 1)
+            spline.end_tangent = (2, 20)
+
+        # test the spline
+        with self.hatch.edit_boundary() as editor:
+            path = editor.paths[0]
+            spline = path.edges[-1]
+            self.assertEqual(3, spline.degree)
+            self.assertEqual(1, spline.rational)
+            self.assertEqual(1, spline.periodic)
+            self.assertEqual((10, 1), spline.start_tangent)
+            self.assertEqual((2, 20), spline.end_tangent)
+            self.assertEqual([(1, 1), (2, 2), (3, 3), (4, 4)], spline.control_points)
+            self.assertEqual([(1, 1), (2, 2), (3, 3), (4, 4)], spline.fit_points)
+            self.assertEqual([1, 2, 3, 4, 5, 6], spline.knot_values)
+            self.assertEqual([4, 3, 2, 1], spline.weights)
+
+
 PATH_HATCH = """  0
 HATCH
   5

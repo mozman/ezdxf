@@ -8,7 +8,7 @@ Common Base Class
 .. attribute:: GraphicEntity.dxf
 
    (read only) The DXF attributes namespace, access DXF attributes by this attribute, like
-   :code:`object.dxf.layer = 'MyLayer'`. Just the *dxf* attribute is read only, the DXF attributes are read- and
+   :code:`entity.dxf.layer = 'MyLayer'`. Just the *dxf* attribute is read only, the DXF attributes are read- and
    writeable.
 
 .. attribute:: GraphicEntity.dxftype
@@ -26,6 +26,20 @@ Common Base Class
 .. attribute:: GraphicEntity.dxffactory
 
    (read only) Get the associated DXF factory. (feature for experts)
+
+.. attribute:: GraphicEntity.rgb
+
+   (read/write) Get/Set true color as RGB-Tuple. This attribute does not exist in DXF AC1009 (R12) entities, the
+   attribute exists in DXF AC1015 entities but does not work (raises :class:`ValueError`), requires at least DXF Version
+   AC1018 (AutoCAD R2004). usage: :code:`entity.rgb = (30, 40, 50)`;
+
+.. attribute:: GraphicEntity.transparency
+
+   (read/write) Get/Set transparency value as float. This attribute does not exist in DXF AC1009 (R12) entities, the
+   attribute exists in DXF AC1015 entities but does not work (raises :class:`ValueError`), requires at least DXF Version
+   AC1018 (AutoCAD R2004). Value range `0.0` to `1.0` where `0.0` means entity is opaque and `1.0` means entity is 100%
+   transparent (invisible). This is the recommend method to get/set transparency values, when ever posssible do not use
+   the DXF low level attribute :attr:`entity.dxf.transparency`
 
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
@@ -73,8 +87,8 @@ Access DXF attributes by the *dxf* attribute of an entity, like :code:`object.dx
 DXFAttr     Description
 =========== ===========
 handle      DXF handle (feature for experts)
-layer       layer name as string; default=``0``
-linetype    linetype as string, special names ``BYLAYER``, ``BYBLOCK``; default=``BYLAYER``
+layer       layer name as string; default=0
+linetype    linetype as string, special names BYLAYER, BYBLOCK; default=BYLAYER
 color       dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER; default=256
 paperspace  0 for entity resides in model-space, 1 for paper-space, this attribute is set automatically by adding an
             entity to a layout (feature for experts); default=0
@@ -93,15 +107,21 @@ DXFAttr       Description
 ============= ===========
 handle        DXF handle (feature for experts)
 owner         handle to owner, it's a BLOCK_RECORD entry (feature for experts)
-layer         layer name as string; default=``0``
-linetype      linetype as string, special names ``BYLAYER``, ``BYBLOCK``; default=``BYLAYER``
+layer         layer name as string; default = 0
+linetype      linetype as string, special names BYLAYER, BYBLOCK; default=BYLAYER
 color         dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER; default= 256
-ltscale       line type scale as float; defaults=1.0
+ltscale       line type scale as float; default=1.0
 invisible     1 for invisible, 0 for visible; default=0
 paperspace    0 for entity resides in model-space, 1 for paper-space, this attribute is set automatically by adding an
               entity to a layout (feature for experts); default=0
 extrusion     extrusion direction as 3D point; default=(0, 0, 1)
 thickness     entity thickness as float; default=0
+true_color    true color value as int 0x00RRGGBB, requires DXF Version AC1018 (AutoCAD R2004)
+color_name    color name as string, requires DXF Version AC1018 (AutoCAD R2004)
+transparency  transparency value as int, 0x020000TT 0x00 = 100% transparent / 0xFF = opaque, requires DXF Version AC1018
+              (AutoCAD R2004)
+shadow_mode   as int; 0 = Casts and receives shadows, 1 = Casts shadows, 2 = Receives shadows, 3 = Ignores shadows;
+              requires DXF Version AC1021 (AutoCAD R2007)
 ============= ===========
 
 

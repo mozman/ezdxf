@@ -351,6 +351,14 @@ class EdgePath(object):
         self.edges.append(ellipse)
         return ellipse
 
+    def add_spline(self, degree=3, rational=0, periodic=0):
+        spline = SplineEdge()
+        spline.degree = degree
+        spline.rational = int(rational)
+        spline.periodic = int(periodic)
+        self.edges.append(spline)
+        return spline
+
     def dxftags(self):
         tags = [DXFTag(92, int(self.path_type_flags)), DXFTag(93, len(self.edges))]
         for edge in self.edges:
@@ -462,24 +470,69 @@ class EllipseEdge(object):
                 DXFTag(73, self.is_counter_clockwise)
                 ]
 
-# TODO: implement SplineEdge
 class SplineEdge(object):
     EDGE_TYPE = "SplineEdge"
 
     def __init__(self):
         self.tags = []  # for now just store tags
+        self.degree = 3  # code = 94
+        self.rational = 0  # code = 73
+        self.periodic = 0  # code = 74
+        self.knot_values = []
+        self.control_points = []
+        self.fit_points = []
+        self.weights = []
+        self.start_tangent = (0, 0)
+        self.end_tangent = (0, 0)
 
     @staticmethod
     def from_tags(tags):
         edge = SplineEdge()
-        edge.tags = tags
+        for tag in tags:
+            code, value = tag
+            if code == 94:
+                edge.degree = value
+            elif code == 73:
+                edge.rational = value
+            elif code == 74:
+                edge.periodic = value
+            elif code == 40:
+                edge.knot_values.append(value)
+            elif code == 42:
+                edge.weights.append(value)
+            elif code == 10:
+                edge.control_points.append(value)
+            elif code == 11:
+                edge.fit_points.append(value)
+            elif code == 12:
+                edge.start_tangent = value
+            elif code == 13:
+                edge.end_tangent = value
         return edge
 
     def dxftags(self):
-        tags = [DXFTag(72, 4)]  # edge type
-        tags.extend(self.tags)
-        return tags
+        tags = [DXFTag(72, 4),   # edge type
+                DXFTag(94, int(self.degree)),
+                DXFTag(73, int(self.rational)),
+                DXFTag(74, int(self.periodic)),
+                DXFTag(95, len(self.knot_values)),  # number of knots
+                DXFTag(96, len(self.control_points)),  # number of control points
+                ]
+        # build knot values list
+        tags.extend([DXFTag(40, float(value)) for value in self.knot_values])
 
+        # build control points
+        tags.extend([DXFTag(10, (float(value[0]), float(value[1]))) for value in self.control_points])
+
+        # build weights list
+        tags.extend([DXFTag(42, float(value)) for value in self.weights])
+
+        # build fit data
+        tags.append(DXFTag(97, len(self.fit_points)))
+        tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
+        tags.append(DXFTag(12, (float(self.start_tangent[0]), float(self.start_tangent[1]))))
+        tags.append(DXFTag(13, (float(self.end_tangent[0]), float(self.end_tangent[1]))))
+        return tags
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
