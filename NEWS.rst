@@ -10,6 +10,7 @@ Version 0.7.0 - 2015-...
   * NEW: extended custom vars interface
   * NEW: dxf2html.py - added support for custom properties in the header section
   * NEW: query() supports case insensitive attribute queries by appending an 'i' to the query string, e.g. '*[layer=="construction"]i'
+  * BUGFIX: query parser couldn't handle attribute names with '_'
 
 Version 0.6.5 - 2015-02-27
 

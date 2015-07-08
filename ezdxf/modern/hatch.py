@@ -610,6 +610,9 @@ class PatternData(object):
             tags = []
         return tags
 
+    def __str__(self):
+        return "[" + ",".join(str(line) for line in self.lines) + "]"
+
 class PatternDefinitionLine(object):
     def __init__(self,  angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
         self.angle = angle  # as always in degrees (circle = 360 deg)
@@ -641,3 +644,7 @@ class PatternDefinitionLine(object):
                 ]
         tags.extend(DXFTag(49, item) for item in self.dash_length_items)
         return tags
+
+    def __str__(self):
+        # return "[{}, {}, {}, {}]".format(self.angle, self.base_point, self.offset, self.dash_length_items)
+        return "[{0.angle}, {0.base_point}, {0.offset}, {0.dash_length_items}]".format(self)
