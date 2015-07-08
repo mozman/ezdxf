@@ -98,15 +98,18 @@ class Hatch(ModernGraphicEntity):
         self.AcDbHatch[start_index: end_index] = boundary_path_data.dxftags()
 
     def set_solid_fill(self, color=7, style=1):
-        self.dxf.solid_fill = 1
+        if self.dxf.solid_fill == 0:
+            with self.edit_pattern() as e:  # delete existing pattern definition
+                e.clear()
+            self.dxf.solid_fill = 1
+            self.AcDbHatch.remove_tags((52, 41, 77))
+            # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
+            # hatches with SOLID fill.
+
         self.dxf.color = color
         self.dxf.hatch_style = style
         self.dxf.pattern_name = 'SOLID'
         self.dxf.pattern_type = 1
-        hatch_tags = self.tags.get_subclass('AcDbHatch')
-        hatch_tags.remove_tags((52, 41, 77))
-        # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
-        # hatches with SOLID fill.
 
     def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1, definition=None):
         self.dxf.solid_fill = 0
@@ -114,9 +117,16 @@ class Hatch(ModernGraphicEntity):
         self.dxf.color = color
         self.dxf.hatch_style = style
         self.dxf.pattern_type = pattern_type
-        self.dxf.pattern_angle = angle
-        self.dxf.pattern_scale = scale
-        self.dxf.pattern_double = double
+
+        # safe version of adding pattern fill specific DXF tags:
+        self.AcDbHatch.remove_tags((52, 41, 77))  # remove pattern angle, pattern scale & pattern double flag if exists
+        try:
+            index = self.AcDbHatch.tag_index(76)  # find position of pattern type (76)
+        except ValueError:
+            raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern type' (code=76).")
+        # insert pattern angle, pattern scale & pattern double flag behind pattern type
+        self.AcDbHatch[index:index] = [DXFTag(52, angle), DXFTag(41, scale), DXFTag(77, double)]
+        # place pattern definition right behind pattern double flag (77)
         if definition is not None:
             self.set_pattern_definition(definition)
 
@@ -572,7 +582,7 @@ class SplineEdge(object):
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
-PATTERN_DEFINITION_LINE_CODES = (53, 43, 44, 45, 46, 79, 49)
+PATTERN_DEFINITION_LINE_CODES = frozenset((53, 43, 44, 45, 46, 79, 49))
 class PatternData(object):
     def __init__(self, hatch):
         self.existing_pattern_start_index = 0
@@ -646,5 +656,4 @@ class PatternDefinitionLine(object):
         return tags
 
     def __str__(self):
-        # return "[{}, {}, {}, {}]".format(self.angle, self.base_point, self.offset, self.dash_length_items)
         return "[{0.angle}, {0.base_point}, {0.offset}, {0.dash_length_items}]".format(self)
