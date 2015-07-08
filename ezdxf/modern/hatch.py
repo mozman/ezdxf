@@ -108,7 +108,7 @@ class Hatch(ModernGraphicEntity):
         # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
         # hatches with SOLID fill.
 
-    def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1):
+    def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1, definition=None):
         self.dxf.solid_fill = 0
         self.dxf.pattern_name = name
         self.dxf.color = color
@@ -117,6 +117,8 @@ class Hatch(ModernGraphicEntity):
         self.dxf.pattern_angle = angle
         self.dxf.pattern_scale = scale
         self.dxf.pattern_double = double
+        if definition is not None:
+            self.set_pattern_definition(definition)
 
     @contextmanager
     def edit_pattern(self):
@@ -138,6 +140,23 @@ class Hatch(ModernGraphicEntity):
                 raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern double flag' (code=77).")
         # replace existing pattern data
         self.AcDbHatch[start_index: end_index] = pattern_tags
+
+    def set_pattern_definition(self, lines):
+        """
+        Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
+        base_point, offset, dash_length_items]
+
+        - angle: line angle in degrees
+        - base-point: 2-tuple (x, y)
+        - offset: 2-tuple (dx, dy)
+        - dash_length_items: list of dash items (item > 0 is a line, item < 0 is a gap and item == 0.0 is a point)
+
+        :param lines: list of definition lines
+        :return:
+        """
+        pattern_lines = [PatternDefinitionLine(line[0], line[1], line[2], line[3]) for line in lines]
+        with self.edit_pattern() as pattern_editor:
+            pattern_editor.lines = pattern_lines
 
     def get_seed_points(self):
         hatch_tags = self.AcDbHatch
@@ -597,6 +616,8 @@ class PatternDefinitionLine(object):
         self.base_point = base_point
         self.offset = offset
         self.dash_length_items = [] if dash_length_items is None else dash_length_items
+        # dash_length_items = [item0, item1, ...]
+        # item > 0 is line, < 0 is gap, 0.0 = dot;
 
     @staticmethod
     def from_tags(tags):

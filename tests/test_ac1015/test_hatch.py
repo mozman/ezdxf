@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
+import ezdxf
 from ezdxf.modern.hatch import Hatch, _HATCH_TPL
 from ezdxf.classifiedtags import ClassifiedTags, DXFTag
 
@@ -287,6 +288,54 @@ class TestEdgeHatchWithSpline(unittest.TestCase):
             self.assertEqual([1, 2, 3, 4, 5, 6], spline.knot_values)
             self.assertEqual([4, 3, 2, 1], spline.weights)
 
+class TestHatchPatternRead(unittest.TestCase):
+    def setUp(self):
+        tags = ClassifiedTags.from_text(HATCH_PATTERN)
+        self.hatch = Hatch(tags)
+
+    def test_edit_pattern(self):
+        with self.hatch.edit_pattern() as pattern_editor:
+            self.assertEqual(2, len(pattern_editor.lines))
+
+            line0 = pattern_editor.lines[0]
+            self.assertEqual(45, line0.angle)
+            self.assertEqual((0, 0), line0.base_point)
+            self.assertEqual((-0.1767766952966369, 0.1767766952966369), line0.offset)
+            self.assertEqual(0, len(line0.dash_length_items))
+
+            line1 = pattern_editor.lines[1]
+            self.assertEqual(45, line1.angle)
+            self.assertEqual((0.176776695, 0), line1.base_point)
+            self.assertEqual((-0.1767766952966369, 0.1767766952966369), line1.offset)
+            self.assertEqual(2, len(line1.dash_length_items))
+            self.assertEqual([0.125, -0.0625], line1.dash_length_items)
+
+class TestHatchPatternCreate(unittest.TestCase):
+    def setUp(self):
+        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        self.hatch = Hatch(tags)
+
+    def test_create_new_hatch(self):
+        pattern = [
+            [45, (0, 0), (0, 1), []],  # 1. Line: continuous
+            [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
+        ]
+        self.hatch.set_pattern_fill("MOZMAN", definition=pattern)
+
+        self.assertEqual("MOZMAN", self.hatch.dxf.pattern_name)
+        with self.hatch.edit_pattern() as p:
+            line0 = p.lines[0]
+            self.assertEqual(45, line0.angle)
+            self.assertEqual((0, 0), line0.base_point)
+            self.assertEqual((0, 1), line0.offset)
+            self.assertEqual(0, len(line0.dash_length_items))
+
+            line1 = p.lines[1]
+            self.assertEqual(45, line1.angle)
+            self.assertEqual((0, 0.5), line1.base_point)
+            self.assertEqual((0, 1), line1.offset)
+            self.assertEqual(2, len(line1.dash_length_items))
+            self.assertEqual([0.2, -0.1], line1.dash_length_items)
 
 PATH_HATCH = """  0
 HATCH
@@ -810,6 +859,130 @@ SOLID
  16776960
 470
 LINEAR
+1001
+GradientColor1ACI
+1070
+     5
+1001
+GradientColor2ACI
+1070
+     2
+1001
+ACAD
+1010
+0.0
+1020
+0.0
+1030
+0.0
+"""
+
+HATCH_PATTERN = """0
+HATCH
+  5
+1EA
+330
+1F
+100
+AcDbEntity
+  8
+0
+100
+AcDbHatch
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+210
+0.0
+220
+0.0
+230
+1.0
+  2
+ANSI33
+ 70
+     0
+ 71
+     0
+ 91
+        1
+ 92
+        7
+ 72
+     0
+ 73
+     1
+ 93
+        4
+ 10
+10.0
+ 20
+10.0
+ 10
+0.0
+ 20
+10.0
+ 10
+0.0
+ 20
+0.0
+ 10
+10.0
+ 20
+0.0
+ 97
+        0
+ 75
+     1
+ 76
+     1
+ 52
+0.0
+ 41
+1.0
+ 77
+     0
+ 78
+     2
+ 53
+45.0
+ 43
+0.0
+ 44
+0.0
+ 45
+-0.1767766952966369
+ 46
+0.1767766952966369
+ 79
+     0
+ 53
+45.0
+ 43
+0.176776695
+ 44
+0.0
+ 45
+-0.1767766952966369
+ 46
+0.1767766952966369
+ 79
+     2
+ 49
+0.125
+ 49
+-0.0625
+ 47
+0.0180224512632811
+ 98
+        1
+ 10
+3.5
+ 20
+6.0
 1001
 GradientColor1ACI
 1070
