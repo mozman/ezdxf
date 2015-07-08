@@ -51,7 +51,7 @@ number.addParseAction(lambda t: float(t[0]))
 string_ = dblQuotedString.addParseAction(lambda t: t[0][1:-1])
 
 EntityName = Word(alphanums)
-AttribName = Word(alphanums)
+AttribName = Word(alphanums+'_')
 Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
 
 AttribValue = string_ | number
