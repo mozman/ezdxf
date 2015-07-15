@@ -160,6 +160,15 @@ class Drawing(object):
         """
         return self.dxffactory.wrap_handle(handle)
 
+    def get_dxf_groups(self):
+        if self.dxfversion != 'AC1009':
+            group_dict_handle = self.rootdict['ACAD_GROUP']
+            group_dict = self.get_dxf_entity(group_dict_handle)
+            for name, handle in group_dict.items():
+                yield name, self.get_dxf_entity(handle)
+        else:
+            raise Warning('Not supported for DXF version AC1009.')
+
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
         return toencoding(codepage)
