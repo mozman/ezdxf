@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
-# Purpose: using true color and transparency
-# Created: 04.07.2015
+# Purpose: using DXF groups
+# Created: 15.07.2015
 # Copyright (C) , Manfred Moitzi
 # License: MIT License
 
