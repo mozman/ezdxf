@@ -24,7 +24,7 @@ from .zipmanager import ctxZipReader
 from .rgb import int2rgb, rgb2int
 from .modern.graphics import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
 
-from .std import ANSI_PATTERN
+from .std import PATTERN
 
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
