@@ -28,6 +28,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'LAYOUT': dxfobjects.DXFLayout,
     'XRECORD': dxfobjects.XRecord,
     'DATATABLE': dxfobjects.DXFDataTable,
+    'GROUP': dxfobjects.DXFGroup,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

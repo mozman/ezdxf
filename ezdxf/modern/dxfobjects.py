@@ -486,3 +486,27 @@ class DXFDataTable(DXFEntity):
             'tabel_name': DXFAttr(1),
         }),
     )
+
+
+class DXFGroup(DXFEntity):
+    DXFATTRIBS = DXFAttributes(
+        none_subclass,
+        DefSubclass('AcDbGroup', {
+            'description': DXFAttr(300),
+            'unnamed': DXFAttr(70),
+            'selectable': DXFAttr(71),
+        }),
+    )
+
+    def __iter__(self):
+        """ Yields all DXF entities of this group ad wrapped DXFEntity objects.
+        """
+        handle2entity = self.drawing.get_dxf_entity
+        for handle in self.handles():
+            yield handle2entity(handle)
+
+    def handles(self):
+        # subclass[1]: 2nd subclass 'AcDbGroup'
+        return (tag.value for tag in self.tags.subclasses[1] if tag.code == 340)
+
+
