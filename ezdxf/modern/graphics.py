@@ -32,7 +32,7 @@ from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
-from ..truecolor import int2rgb, rgb2int
+from ..rgb import int2rgb, rgb2int
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
