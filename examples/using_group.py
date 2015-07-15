@@ -13,11 +13,9 @@ def reading_groups():
     dwg = ezdxf.readfile('group.dxf')
     # GROUP resides in the OBJECTS section
     all_groups = dwg.objects.query("GROUP")
-    count = 1
     for group in all_groups:
-        print("GROUP: {}\n".format(count))
+        print("GROUP: {}\n".format(group.get_name()))
         for entity in group:
             print("  Entity: {}".format(entity.dxftype()))
-        count += 1
 
 reading_groups()

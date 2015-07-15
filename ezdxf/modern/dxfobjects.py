@@ -28,6 +28,10 @@ class DXFDictionary(DXFEntity):
         }),
     )
 
+    @property
+    def AcDbDictinary(self):
+        return self.tags.subclasses[1]
+
     def keys(self):
         """Generator for the dictionary's keys.
         """
@@ -36,10 +40,11 @@ class DXFDictionary(DXFEntity):
     def items(self):
         """Generator for the dictionary's items (``(key, value)`` pairs).
         """
-        content_tags = self._get_content_tags()
-        for index, tag in enumerate(content_tags):
-            if tag.code == ENTRY_NAME_CODE:
-                yield tag.value, content_tags[index + 1].value
+        for code, value in self.AcDbDictinary:
+            if code == 3:  # Entry name
+                key = value
+            elif code == 350:  # handle to entry object
+                yield key, value
 
     def __getitem__(self, key):
         """Return the value for *key* if *key* is in the dictionary, else raises a :class:`KeyError()`.
@@ -70,7 +75,7 @@ class DXFDictionary(DXFEntity):
     def count(self):
         """Return the number of items in the dictionary.
         """
-        return sum(1 for tag in self._get_content_tags() if tag.code == ENTRY_NAME_CODE)
+        return sum(1 for tag in self.AcDbDictinary if tag.code == ENTRY_NAME_CODE)
 
     def get(self, key, default=KeyError):
         """Return the value for *key* if *key* is in the dictionary, else *default*. If *default* is not given, it
@@ -83,8 +88,7 @@ class DXFDictionary(DXFEntity):
             else:
                 return default
         else:
-            content_tags = self._get_content_tags()
-            return content_tags[index + 1].value
+            return self.AcDbDictinary[index + 1].value
 
     def add(self, key, value, code=350):
         """Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
@@ -92,7 +96,7 @@ class DXFDictionary(DXFEntity):
         """
         index = self._get_item_index(key)
         value_tag = DXFTag(code, value)
-        content_tags = self._get_content_tags()
+        content_tags = self.AcDbDictinary
         if index is None:  # create new entry
             content_tags.append(DXFTag(ENTRY_NAME_CODE, key))
             content_tags.append(value_tag)
@@ -116,17 +120,13 @@ class DXFDictionary(DXFEntity):
 
     def _discard(self, index):
         if index:
-            tags = self._get_content_tags()
-            del tags[index:index + 1]
+            del self.AcDbDictinary[index:index+1]
 
     def _get_item_index(self, key):
-        for index, tag in enumerate(self._get_content_tags()):
+        for index, tag in enumerate(self.AcDbDictinary):
             if tag.code == ENTRY_NAME_CODE and tag.value == key:
                 return index
         return None
-
-    def _get_content_tags(self):
-        return self.tags.get_subclass('AcDbDictionary')
 
 
 class DXFDictionaryWithDefault(DXFDictionary):
@@ -499,7 +499,7 @@ class DXFGroup(DXFEntity):
     )
 
     def __iter__(self):
-        """ Yields all DXF entities of this group ad wrapped DXFEntity objects.
+        """ Yields all DXF entities of this group as wrapped DXFEntity (LINE, CIRCLE, ...) objects.
         """
         handle2entity = self.drawing.get_dxf_entity
         for handle in self.handles():
@@ -509,4 +509,11 @@ class DXFGroup(DXFEntity):
         # subclass[1]: 2nd subclass 'AcDbGroup'
         return (tag.value for tag in self.tags.subclasses[1] if tag.code == 340)
 
+    def get_name(self):
+        owner_dict = self.drawing.get_dxf_entity(self.dxf.owner)
+        my_handle = self.dxf.handle
+        for name, handle in owner_dict.items():
+            if handle == my_handle:
+                return name
+        return None
 
