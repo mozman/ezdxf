@@ -9,6 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .dxftag import cast_tag_value, DXFTag
 from .const import DXFStructureError
 
+
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
     """

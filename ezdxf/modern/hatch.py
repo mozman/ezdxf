@@ -409,6 +409,7 @@ class EdgePath(object):
         tags.extend(build_source_boundary_object_tags(self.source_boundary_objects))
         return tags
 
+
 class LineEdge(object):
     EDGE_TYPE = "LineEdge"
     # more struct than object
@@ -472,6 +473,7 @@ class ArcEdge(object):
                 DXFTag(73, self.is_counter_clockwise)
                 ]
 
+
 class EllipseEdge(object):
     EDGE_TYPE = "EllipseEdge"
     # more struct than object
@@ -512,6 +514,7 @@ class EllipseEdge(object):
                 DXFTag(51, self.end_angle),
                 DXFTag(73, self.is_counter_clockwise)
                 ]
+
 
 class SplineEdge(object):
     EDGE_TYPE = "SplineEdge"
@@ -622,6 +625,7 @@ class PatternData(object):
 
     def __str__(self):
         return "[" + ",".join(str(line) for line in self.lines) + "]"
+
 
 class PatternDefinitionLine(object):
     def __init__(self,  angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
