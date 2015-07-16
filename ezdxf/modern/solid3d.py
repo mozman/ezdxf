@@ -12,7 +12,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxftag import convert_tags_to_text_lines, convert_text_lines_to_tags
 from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from .. import crypt
+from ..tools import crypt
 
 _BODY_TPL = """  0
 BODY

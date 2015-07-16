@@ -13,9 +13,9 @@ from .tags import TagIterator, DXFTag
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
-from .codepage import tocodepage, toencoding
+from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
-from .juliandate import juliandate
+from .tools.juliandate import juliandate
 
 
 class Drawing(object):

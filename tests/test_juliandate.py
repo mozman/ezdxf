@@ -8,9 +8,9 @@
 from __future__ import unicode_literals
 
 import unittest
-
 from datetime import datetime
-from ezdxf.juliandate import juliandate, calendardate
+
+from ezdxf.tools.juliandate import juliandate, calendardate
 
 
 class TestJulianDate(unittest.TestCase):
