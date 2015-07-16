@@ -2,7 +2,8 @@
 # Created: 03.07.2015 taken from my dxfgrabber package
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-__author__ = 'mozman'
+__author__ = "mozman <mozman@gmx.at>"
+
 
 def int2rgb(value):
     return (
@@ -11,9 +12,11 @@ def int2rgb(value):
         value & 0xFF,  # blue
     )
 
+
 def rgb2int(rgb):
     r, g, b = rgb
     return ((int(r) & 0xff) << 16) | ((int(g) & 0xff) << 8) | (int(b) & 0xff)
+
 
 def aci2rgb(index):
         if index < 1:
