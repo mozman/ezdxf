@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.tools.test import DrawingProxy, StringIterator
-from ezdxf.sections import Sections
+from ezdxf.sections.sections import Sections
 
 
 class TestSections(unittest.TestCase):

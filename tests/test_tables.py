@@ -11,7 +11,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, normlines, Tags
-from ezdxf.tablessection import TablesSection
+from ezdxf.sections.tables import TablesSection
 
 
 class TestTables(unittest.TestCase):

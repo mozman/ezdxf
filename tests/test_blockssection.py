@@ -13,7 +13,7 @@ from io import StringIO
 
 import ezdxf
 from ezdxf.tools.test import DrawingProxy, normlines, Tags
-from ezdxf.blockssection import BlocksSection
+from ezdxf.sections.blocks import BlocksSection
 
 
 class TestBlocksSectionAC1009(unittest.TestCase):

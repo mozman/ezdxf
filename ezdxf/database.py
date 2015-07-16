@@ -8,12 +8,11 @@ __author__ = "mozman <mozman@gmx.at>"
 from collections import OrderedDict
 
 from .tools.binarydata import compress_binary_data
+from .tools.handle import HandleGenerator
 
 
 def factory(debug=False):
     return DebugDB() if debug else EntityDB()
-
-from .tools.handle import HandleGenerator
 
 
 class EntityDB(object):

@@ -5,9 +5,10 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+from itertools import chain
+
 from . import const
 from .polyfacebuilder import PolyfaceBuilder
-from itertools import chain
 
 
 class PolymeshMixin(object):
