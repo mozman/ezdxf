@@ -72,6 +72,12 @@ Drawing Attributes
 
     Reference to the blocks section, see also :class:`BlocksSection`.
 
+.. attribute:: Drawing.groups
+
+    requires DXF version R13 or later
+
+    Table (dict) of all groups used in this drawing, see also :class:`DXFGroupTable`.
+
 .. attribute:: Drawing.layers
 
     Shortcut for :attr:`Drawing.sections.tables.layers`
