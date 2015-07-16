@@ -8,9 +8,9 @@ __author__ = "mozman <mozman@gmx.at>"
 from io import StringIO
 
 from .const import acadrelease, DXFStructureError
+from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
-from ezdxf.lldxf.types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 
 
 def write_tags(stream, tags):

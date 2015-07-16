@@ -30,6 +30,7 @@ setup(
     packages=['ezdxf',
               'ezdxf.legacy',
               'ezdxf.modern',
+              'ezdxf.lldxf',
               'ezdxf.pp',
               'ezdxf.sections',
               'ezdxf.templates',
