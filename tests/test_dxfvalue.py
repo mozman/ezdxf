@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.headersection import HeaderVar
+from ezdxf.sections.header import HeaderVar
 
 
 class TestDXFValue(unittest.TestCase):

@@ -7,9 +7,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
-from .tools.c23 import ustr
-from .dxftag import strtag
-from .tags import TagGroups, Tags, DXFStructureError
+from ..tools.c23 import ustr
+from ..dxftag import strtag
+from ..tags import TagGroups, Tags, DXFStructureError
 
 MIN_HEADER_TEXT = """  0
 SECTION

@@ -9,7 +9,7 @@ import unittest
 
 from ezdxf.tools.test import DrawingProxy
 from ezdxf.tags import Tags
-from ezdxf.acdsdata import AcDsDataSection
+from ezdxf.sections.acdsdata import AcDsDataSection
 
 DWG = DrawingProxy('AC1027')
 

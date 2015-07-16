@@ -11,7 +11,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, normlines, Tags
-from ezdxf.table import Table
+from ezdxf.sections.table import Table
 
 AC1009TABLE = """  0
 TABLE
