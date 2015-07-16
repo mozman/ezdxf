@@ -9,7 +9,9 @@ __author__ = "mozman <mozman@gmx.at>"
 from .header import HeaderSection
 from .tables import TablesSection
 from .blocks import BlocksSection
-from .entities import EntitySection, ClassesSection, ObjectsSection
+from .classes import ClassesSection
+from .objects import ObjectsSection
+from .entities import EntitySection
 from ..options import options
 from ..lldxf.defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
 
