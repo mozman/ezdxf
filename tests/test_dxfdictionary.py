@@ -73,6 +73,12 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
         self.dxfdict.discard('MOZMAN')
         self.assertEqual(14, len(self.dxfdict))
 
+    def test_clear(self):
+        self.assertEqual(14, len(self.dxfdict))
+        self.dxfdict.clear()
+        self.assertEqual(0, len(self.dxfdict))
+
+
 class TestEmptyDXFDict(unittest.TestCase):
     def setUp(self):
         self.dxfdict = DXFDictionary(ClassifiedTags.from_text(EMPTY_DICT))
@@ -97,6 +103,12 @@ class TestEmptyDXFDict(unittest.TestCase):
         self.dxfdict['TEST'] = "HANDLE2"
         self.assertEqual(1, len(self.dxfdict))
         self.assertEqual("HANDLE2", self.dxfdict['TEST'])
+
+    def test_clear(self):
+        self.assertEqual(0, len(self.dxfdict))
+        self.dxfdict.clear()
+        self.assertEqual(0, len(self.dxfdict))
+
 
 class TestDXFDictWithDefault(unittest.TestCase):
     def setUp(self):
