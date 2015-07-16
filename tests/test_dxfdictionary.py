@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.testtools import ClassifiedTags
+from ezdxf.tools.test import ClassifiedTags
 from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
 

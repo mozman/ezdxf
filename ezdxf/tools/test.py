@@ -5,15 +5,15 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .handle import HandleGenerator
-from .dxffactory import dxffactory
-from .tags import StringIterator
-from .tags import Tags, TagGroups, DXFStructureError, DXFTag
-from .classifiedtags import ClassifiedTags
-from .dxfattr import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.handle import HandleGenerator
+from ezdxf.dxffactory import dxffactory
+from ezdxf.tags import StringIterator
+from ezdxf.tags import Tags, TagGroups, DXFStructureError, DXFTag
+from ezdxf.classifiedtags import ClassifiedTags
+from ezdxf.dxfattr import DXFAttr, DXFAttributes, DefSubclass
 
-from .drawing import Drawing
-from .database import EntityDB
+from ezdxf.drawing import Drawing
+from ezdxf.database import EntityDB
 
 
 class ModelSpace:

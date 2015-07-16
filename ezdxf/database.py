@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
-from .binarydata import compress_binary_data
+from ezdxf.tools.binarydata import compress_binary_data
 
 
 def factory(debug=False):

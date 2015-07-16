@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.testtools import ClassifiedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass, DrawingProxy
+from ezdxf.tools.test import ClassifiedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass, DrawingProxy
 from ezdxf.dxfentity import DXFEntity
 
 DWG = DrawingProxy('AC1009')
