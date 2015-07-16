@@ -7,13 +7,13 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
-from ezdxf.tools.binarydata import compress_binary_data
+from .tools.binarydata import compress_binary_data
 
 
 def factory(debug=False):
     return DebugDB() if debug else EntityDB()
 
-from .handle import HandleGenerator
+from .tools.handle import HandleGenerator
 
 
 class EntityDB(object):
