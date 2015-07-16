@@ -11,7 +11,7 @@ import zipfile
 from contextlib import contextmanager
 
 from ezdxf.tools.c23 import ustr
-from .tags import dxf_info
+from ezdxf.tags import dxf_info
 
 if sys.version_info[:2] < (3, 4):
     ZIP_OPEN_FILE_MODE = 'rU'

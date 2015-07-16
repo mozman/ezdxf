@@ -32,7 +32,9 @@ from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from .. import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
-from ..rgb import int2rgb, rgb2int
+from ..tools.rgb import int2rgb, rgb2int
+from ..tools import float2transparency, transparency2float
+
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -56,11 +58,7 @@ entity_subclass = DefSubclass('AcDbEntity', {
     # 3 = Ignores shadows
 
 })
-def float2transparency(value):
-    return int((1. - float(value)) * 255) | 0x02000000
 
-def transparency2float(value):
-    return 1. - float(int(value) & 0xFF) / 255.
 
 # noinspection PyUnresolvedReferences
 class ModernGraphicEntityExtension(object):
@@ -82,6 +80,7 @@ class ModernGraphicEntityExtension(object):
     def transparency(self, transparency):
         # 0.0 = opaque & 1.0 if 100% transparent
         self.set_dxf_attrib('transparency', float2transparency(transparency))
+
 
 class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
     """ Default graphic entity wrapper, allows access to following dxf attributes:

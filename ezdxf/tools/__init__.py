@@ -67,3 +67,11 @@ def knot_values_by_control_points(control_points, degree):
         x.append(numerator/maxc * float(n-degree+2))
     x.extend([n-degree+2] * (degree-1))
     return x
+
+
+def float2transparency(value):
+    return int((1. - float(value)) * 255) | 0x02000000
+
+
+def transparency2float(value):
+    return 1. - float(int(value) & 0xFF) / 255.

@@ -18,11 +18,11 @@ import io
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .tags import dxf_info
 from .tags import TagIterator
-from .importer import Importer
+from .tools.importer import Importer
 from .const import DXFStructureError, DXFVersionError
-from .zipmanager import ctxZipReader
-from .rgb import int2rgb, rgb2int
-from .modern.graphics import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
+from .tools.zipmanager import ctxZipReader
+from .tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
+from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 
 

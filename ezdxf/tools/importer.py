@@ -3,7 +3,7 @@
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
 
-from .query import name_query
+from ezdxf.query import name_query
 
 
 class Importer(object):
