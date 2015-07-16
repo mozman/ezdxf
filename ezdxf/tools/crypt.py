@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tools.c23 import PY3
+from .c23 import PY3
 
 
 _decode_table = {

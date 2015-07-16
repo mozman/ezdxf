@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from io import StringIO
 
-from .codepage import toencoding
+from .tools.codepage import toencoding
 from .const import acadrelease, DXFStructureError
 from .dxftag import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from .compressedstring import CompressedString

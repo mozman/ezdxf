@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.crypt import decode, encode
+from ezdxf.tools.crypt import decode, encode
 
 
 class TestDecoder(unittest.TestCase):
