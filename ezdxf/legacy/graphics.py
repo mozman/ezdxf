@@ -10,7 +10,7 @@ from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf import const
 from ..lldxf.const import VERTEXNAMES
 from ..dxfentity import DXFEntity
-from ..facemixins import PolyfaceMixin, PolymeshMixin
+from .facemixins import PolyfaceMixin, PolymeshMixin
 
 
 class QuadrilateralMixin(object):

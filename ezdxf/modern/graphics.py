@@ -31,7 +31,7 @@ from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.classifiedtags import ClassifiedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf import const
-from ..facemixins import PolyfaceMixin, PolymeshMixin
+from ..legacy.facemixins import PolyfaceMixin, PolymeshMixin
 from ..tools.rgb import int2rgb, rgb2int
 from ..tools import float2transparency, transparency2float
 

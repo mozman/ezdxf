@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import chain
 
-from .lldxf import const
+from ..lldxf import const
 from .polyfacebuilder import PolyfaceBuilder
 
 
