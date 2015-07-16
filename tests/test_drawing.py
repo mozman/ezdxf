@@ -12,7 +12,7 @@ import unittest
 from ezdxf.tags import StringIterator
 
 from ezdxf.drawing import Drawing
-from ezdxf.templatefinder import TemplateFinder
+from ezdxf.templates import TemplateLoader
 from ezdxf import is_dxf_file
 
 
@@ -71,7 +71,7 @@ class TestNewDrawingAC1015(TestNewDrawingAC1009):
 
 class TestIsDXFFile(unittest.TestCase):
     def test_template(self):
-        template_file = TemplateFinder().filepath('AC1009')
+        template_file = TemplateLoader().filepath('AC1009')
         self.assertTrue(is_dxf_file(template_file))
 
 

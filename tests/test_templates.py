@@ -10,27 +10,27 @@ from __future__ import unicode_literals
 import os
 import unittest
 
-from ezdxf.templatefinder import TemplateFinder
+from ezdxf.templates import TemplateLoader
 
 
-class TestTemplateFinder(unittest.TestCase):
+class TestTemplateLoader(unittest.TestCase):
     def test_filename(self):
-        finder = TemplateFinder()
+        finder = TemplateLoader()
         self.assertEqual('ABC.dxf', finder.filename('ABC'))
 
     def test_filepath(self):
-        finder = TemplateFinder()
+        finder = TemplateLoader()
         result = finder.filepath('AC1009')
         filename = os.path.join('ezdxf', 'templates', 'AC1009.dxf')
         self.assertTrue(result.endswith(filename))
 
     def test_set_templatepath(self):
-        finder = TemplateFinder('templates')
+        finder = TemplateLoader('templates')
         result = finder.filepath('AC1009')
         self.assertEqual(os.path.join('templates', 'AC1009.dxf'), result)
 
     def test_set_templatedir(self):
-        finder = TemplateFinder('templates')
+        finder = TemplateLoader('templates')
         finder.templatedir = 'templates2'
         self.assertEqual('templates2', finder.templatedir)
 

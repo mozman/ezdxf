@@ -1,6 +1,6 @@
-# Purpose: template file management
-# Created: 11.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Purpose: DXF drawing templates
+# Created: 16.07.2015
+# Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
@@ -9,7 +9,7 @@ import os
 import io
 
 
-class TemplateFinder:
+class TemplateLoader(object):
     def __init__(self, template_dir=None):
         self._template_dir = self._get_template_dir(template_dir)
 
@@ -23,8 +23,7 @@ class TemplateFinder:
 
     def _get_template_dir(self, template_dir):
         if template_dir is None:
-            mydir = os.path.dirname(__file__)
-            template_dir = os.path.join(mydir, 'templates')
+            template_dir = os.path.dirname(__file__)
         return template_dir
 
     def filepath(self, dxfversion):

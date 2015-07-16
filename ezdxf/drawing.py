@@ -11,7 +11,7 @@ import io
 from . import database
 from .tags import TagIterator, DXFTag
 from .dxffactory import dxffactory
-from .templatefinder import TemplateFinder
+from .templates import TemplateLoader
 from .options import options
 from .codepage import tocodepage, toencoding
 from .sections import Sections
@@ -175,7 +175,7 @@ class Drawing(object):
 
     @staticmethod
     def new(dxfversion='AC1009'):
-        finder = TemplateFinder(options.template_dir)
+        finder = TemplateLoader(options.template_dir)
         stream = finder.getstream(dxfversion.upper())
         try:
             dwg = Drawing.read(stream)
