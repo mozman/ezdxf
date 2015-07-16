@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..defaultchunk import iter_chunks
+from ezdxf.lldxf.defaultchunk import iter_chunks
 from .table import GenericTable, Table, ViewportTable
 from ..lldxf.tags import DXFStructureError, Tags
 from ..options import options

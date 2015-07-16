@@ -7,9 +7,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ..lldxf.classifiedtags import ClassifiedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..dxfentity import DXFEntity
 from ..lldxf import const
 from ..lldxf.const import VERTEXNAMES
+from ..dxfentity import DXFEntity
 from ..facemixins import PolyfaceMixin, PolymeshMixin
 
 

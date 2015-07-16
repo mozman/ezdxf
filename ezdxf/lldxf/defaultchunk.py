@@ -5,8 +5,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .lldxf.tags import Tags, CompressedTags
-from .lldxf.const import COMPRESSED_TAGS
+from .tags import Tags, CompressedTags
+from .const import COMPRESSED_TAGS
 
 
 class DefaultChunk(object):

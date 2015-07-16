@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..defaultchunk import DefaultChunk
+from ezdxf.lldxf.defaultchunk import DefaultChunk
 from ..lldxf.tags import TagGroups, DXFStructureError
 from ..lldxf.classifiedtags import ClassifiedTags
 
