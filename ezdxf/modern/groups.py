@@ -13,7 +13,7 @@ from ..classifiedtags import ClassifiedTags
 from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
 from .dxfobjects import none_subclass
-from ..c23 import isstring
+from ..tools.c23 import isstring
 
 _GROUP_TPL = """  0
 GROUP

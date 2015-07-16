@@ -10,7 +10,7 @@ import sys
 import zipfile
 from contextlib import contextmanager
 
-from .c23 import ustr
+from ezdxf.tools.c23 import ustr
 from .tags import dxf_info
 
 if sys.version_info[:2] < (3, 4):

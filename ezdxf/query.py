@@ -6,8 +6,7 @@
 import re
 import operator
 
-from .c23 import isstring, Sequence
-
+from .tools.c23 import isstring, Sequence
 from .queryparser import EntityQueryParser
 
 
