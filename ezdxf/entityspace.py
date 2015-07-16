@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .const import DXFStructureError
+from .lldxf.const import DXFStructureError
 
 
 class EntitySpace(list):

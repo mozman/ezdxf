@@ -10,7 +10,7 @@ import unittest
 
 import ezdxf
 from ezdxf.modern.mtext import split_string_in_chunks, MTextData
-from ezdxf import const
+from ezdxf.lldxf import const
 
 DWG = ezdxf.new('AC1015')
 

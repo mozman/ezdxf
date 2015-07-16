@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.tools.test import DrawingProxy
-from ezdxf.tags import Tags
+from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.acdsdata import AcDsDataSection
 
 DWG = DrawingProxy('AC1027')

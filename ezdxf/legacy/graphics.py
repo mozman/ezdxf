@@ -5,12 +5,13 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..classifiedtags import ClassifiedTags
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
-from .. import const
-from ..const import VERTEXNAMES
+from ..lldxf import const
+from ..lldxf.const import VERTEXNAMES
 from ..facemixins import PolyfaceMixin, PolymeshMixin
+
 
 class QuadrilateralMixin(object):
     def __getitem__(self, num):

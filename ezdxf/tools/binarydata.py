@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .c23 import PY3
-from ..tags import CompressedTags
+from ..lldxf.tags import CompressedTags
 from array import array
 
 BINARY_DATA_CODES = frozenset(range(310, 320))

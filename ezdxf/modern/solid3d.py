@@ -9,9 +9,9 @@ __author__ = "mozman <mozman@gmx.at>"
 from contextlib import contextmanager
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..dxftag import convert_tags_to_text_lines, convert_text_lines_to_tags
-from ..classifiedtags import ClassifiedTags
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.types import convert_tags_to_text_lines, convert_text_lines_to_tags
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..tools import crypt
 
 _BODY_TPL = """  0

@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .const import VERTEXNAMES
+from .lldxf.const import VERTEXNAMES
 
 
 class PolyfaceBuilder(object):

@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ..defaultchunk import iter_chunks
 from .table import GenericTable, Table, ViewportTable
-from ..tags import DXFStructureError, Tags
+from ..lldxf.tags import DXFStructureError, Tags
 from ..options import options
 
 MIN_TABLE_SECTION = """  0

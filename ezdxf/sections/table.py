@@ -6,8 +6,8 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ..defaultchunk import DefaultChunk
-from ..tags import TagGroups, DXFStructureError
-from ..classifiedtags import ClassifiedTags
+from ..lldxf.tags import TagGroups, DXFStructureError
+from ..lldxf.classifiedtags import ClassifiedTags
 
 TABLENAMES = {
     'layer': 'layers',

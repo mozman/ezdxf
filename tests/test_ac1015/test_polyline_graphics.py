@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-from ezdxf.const import VTX_3D_POLYLINE_VERTEX
+from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
 from ezdxf.tools.test import DrawingProxy, Tags
 from ezdxf.sections.entities import EntitySection
 

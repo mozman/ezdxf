@@ -8,7 +8,7 @@
 # License: MIT License
 
 import ezdxf
-from ezdxf.const import versions_supported_by_new
+from ezdxf.lldxf.const import versions_supported_by_new
 
 
 def create_block(dwg):

@@ -8,8 +8,8 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.dxfentity import DXFEntity
-from ezdxf.classifiedtags import ClassifiedTags
-from ezdxf.dxfattr import DXFAttr, DefSubclass, DXFAttributes
+from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.attributes import DXFAttr, DefSubclass, DXFAttributes
 
 XTEMPLATE = """  0
 LINE

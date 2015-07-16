@@ -8,7 +8,7 @@
 
 import sys
 
-from ezdxf.tags import TagIterator, dxf_info
+from ezdxf.lldxf.tags import TagIterator, dxf_info
 
 FORMAT = 'ACAD release: {0.release}\n'\
          'DXF Version: {0.version}\n'\

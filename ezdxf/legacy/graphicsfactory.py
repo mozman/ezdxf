@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .. import const
+from ..lldxf import const
 
 
 class GraphicsFactory(object):

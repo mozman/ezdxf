@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tags import TagGroups
+from ezdxf.lldxf.tags import TagGroups
 
 
 class TestTagGroups(unittest.TestCase):
