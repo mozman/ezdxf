@@ -10,7 +10,7 @@ import ezdxf
 
 
 dwg = ezdxf.readfile('group.dxf')
-for name, group in dwg.get_dxf_groups():
+for name, group in dwg.groups:
     print("GROUP: {}\n".format(name))
     for entity in group:
         print("  Entity: {}".format(entity.dxftype()))

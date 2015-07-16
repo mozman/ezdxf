@@ -9,6 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .headervars import VARMAP
 from ..legacy import LegacyDXFFactory
+from ..const import DXFStructureError
 from . import tableentries
 from . import graphics
 from . import solid3d
@@ -115,3 +116,15 @@ class ModernDXFFactory(LegacyDXFFactory):
         modifier = self.TAGS_MODIFIER.get(tags.dxftype(), None)
         if modifier is not None:
             modifier(tags)
+
+    def get_groups(self):
+        if self.dxfversion != 'AC1009':
+            try:
+                group_table_handle = self.rootdict['ACAD_GROUP']
+            except KeyError:
+                raise DXFStructureError("No group table found.")
+                # TODO:  create group table
+            group_table = self.wrap_handle(group_table_handle)
+            return dxfobjects.DXFGroupTable(group_table)
+        else:
+            raise Warning('Not supported for DXF version AC1009.')

@@ -34,8 +34,10 @@ class Drawing(object):
         self.filename = None  # read/write
         self.entitydb = database.factory(debug=options.debug)
         self.sections = Sections(tagreader, self)
+        self._groups = None
         if self.dxfversion > 'AC1009':
             self.rootdict = get_rootdict()
+            self._groups = self.dxffactory.get_groups()
         else:
             self._enable_handles()
         self.layouts = self.dxffactory.get_layouts()
@@ -110,6 +112,13 @@ class Drawing(object):
     def blocks(self):
         return self.sections.blocks
 
+    @property
+    def groups(self):
+        if self._groups is not None:
+            return self._groups
+        else:
+            raise Warning('Not supported for DXF version AC1009.')
+
     def modelspace(self):
         return self.layouts.modelspace()
 
@@ -159,15 +168,6 @@ class Drawing(object):
         type of tags: ClassifiedTags()
         """
         return self.dxffactory.wrap_handle(handle)
-
-    def get_dxf_groups(self):
-        if self.dxfversion != 'AC1009':
-            group_dict_handle = self.rootdict['ACAD_GROUP']
-            group_dict = self.get_dxf_entity(group_dict_handle)
-            for name, handle in group_dict.items():
-                yield name, self.get_dxf_entity(handle)
-        else:
-            raise Warning('Not supported for DXF version AC1009.')
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
