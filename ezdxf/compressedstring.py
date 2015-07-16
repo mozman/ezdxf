@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 
-from .c23 import unicode2bytes
+from .tools.c23 import unicode2bytes
 import zlib
 
 

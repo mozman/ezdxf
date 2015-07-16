@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from collections import namedtuple
-from .c23 import ustr
+from .tools.c23 import ustr
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONE_TAG = DXFTag(999999, 'NONE')

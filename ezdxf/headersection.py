@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from collections import OrderedDict
 
-from .c23 import ustr
+from .tools.c23 import ustr
 from .dxftag import strtag
 from .tags import TagGroups, Tags, DXFStructureError
 
