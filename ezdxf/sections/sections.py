@@ -5,12 +5,13 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
+
 from .header import HeaderSection
 from .tables import TablesSection
 from .blocks import BlocksSection
 from .entities import EntitySection, ClassesSection, ObjectsSection
 from ..options import options
+from ..defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
 
 
 class Sections(object):

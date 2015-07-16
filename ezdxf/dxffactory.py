@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .legacy import LegacyDXFFactory
 from .modern import ModernDXFFactory
-from .const import acadrelease, DXFVersionError, unsupported_dxf_versions
+from .lldxf.const import acadrelease, DXFVersionError, unsupported_dxf_versions
 
 
 def dxffactory(drawing):

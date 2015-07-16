@@ -78,7 +78,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
-from ..tags import TagGroups, DXFStructureError, write_tags, Tags
+from ..lldxf.tags import TagGroups, DXFStructureError, write_tags, Tags
 
 
 class AcDsDataSection(object):

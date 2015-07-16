@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 
 import unittest
-from ezdxf.dxftag import convert_tags_to_text_lines, convert_text_lines_to_tags, DXFTag
+from ezdxf.lldxf.types import convert_tags_to_text_lines, convert_text_lines_to_tags, DXFTag
 
 
 class TestTextChunkConverter(unittest.TestCase):

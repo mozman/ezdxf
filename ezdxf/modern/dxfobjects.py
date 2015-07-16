@@ -6,9 +6,9 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..tags import DXFTag
-from ..classifiedtags import ClassifiedTags
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.tags import DXFTag
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
 
 

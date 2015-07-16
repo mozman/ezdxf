@@ -11,7 +11,7 @@ import unittest
 
 import ezdxf
 from ezdxf.modern.mesh import Mesh
-from ezdxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.classifiedtags import ClassifiedTags
 
 DWG = ezdxf.new('AC1015')
 

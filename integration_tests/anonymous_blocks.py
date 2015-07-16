@@ -11,7 +11,7 @@ import logging
 logging.basicConfig(level='DEBUG')
 
 import ezdxf
-from ezdxf.const import versions_supported_by_new
+from ezdxf.lldxf.const import versions_supported_by_new
 
 
 def make_drawing(version):

@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .headervars import VARMAP
 from ..legacy import LegacyDXFFactory
-from ..const import DXFStructureError
+from ..lldxf.const import DXFStructureError
 from . import tableentries
 from . import graphics
 from . import solid3d

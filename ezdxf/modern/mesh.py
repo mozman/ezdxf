@@ -9,10 +9,10 @@ __author__ = "mozman <mozman@gmx.at>"
 from contextlib import contextmanager
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..tags import DXFTag
-from ..classifiedtags import ClassifiedTags
-from ..const import DXFStructureError
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.tags import DXFTag
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.const import DXFStructureError
 
 _MESH_TPL = """  0
 MESH

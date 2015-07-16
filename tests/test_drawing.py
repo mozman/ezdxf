@@ -9,8 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tags import StringIterator
-
+from ezdxf.lldxf.tags import StringIterator
 from ezdxf.drawing import Drawing
 from ezdxf.templates import TemplateLoader
 from ezdxf import is_dxf_file

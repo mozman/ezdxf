@@ -10,7 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .graphicsfactory import ModernGraphicsFactory
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
-from ..classifiedtags import ClassifiedTags
+from ..lldxf.classifiedtags import ClassifiedTags
 
 
 class Layouts(object):

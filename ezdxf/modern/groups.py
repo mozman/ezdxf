@@ -8,11 +8,11 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
 
-from ..tags import DXFTag
-from ..classifiedtags import ClassifiedTags
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..dxfentity import DXFEntity
 from .dxfobjects import none_subclass
+from ..lldxf.tags import DXFTag
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..dxfentity import DXFEntity
 from ..tools.c23 import isstring
 
 _GROUP_TPL = """  0

@@ -8,10 +8,10 @@
 from __future__ import unicode_literals
 
 import unittest
-
 from io import StringIO
-from ezdxf.tags import Tags
-from ezdxf.classifiedtags import ClassifiedTags
+
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.classifiedtags import ClassifiedTags
 
 
 class TestClassifiedTags(unittest.TestCase):

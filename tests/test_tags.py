@@ -10,8 +10,8 @@ import unittest
 from io import StringIO
 
 from ezdxf.tools.c23 import ustr
-from ezdxf.tags import StringIterator, Tags, dxf_info
-from ezdxf.dxftag import tag_type, point_tuple, strtag
+from ezdxf.lldxf.tags import StringIterator, Tags, dxf_info
+from ezdxf.lldxf.types import tag_type, point_tuple, strtag
 
 TEST_TAGREADER = """  0
 SECTION

@@ -10,10 +10,10 @@ from contextlib import contextmanager
 import math
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..tags import DXFTag
-from ..classifiedtags import ClassifiedTags
-from .. import const
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.tags import DXFTag
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf import const
 from ..tools import safe_3D_point
 
 _MTEXT_TPL = """ 0

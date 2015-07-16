@@ -27,10 +27,10 @@ __author__ = "mozman <mozman@gmx.at>"
 from contextlib import contextmanager
 
 from ..legacy import graphics as legacy
-from ..tags import DXFTag, Tags
-from ..classifiedtags import ClassifiedTags
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from .. import const
+from ..lldxf.tags import DXFTag, Tags
+from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf import const
 from ..facemixins import PolyfaceMixin, PolymeshMixin
 from ..tools.rgb import int2rgb, rgb2int
 from ..tools import float2transparency, transparency2float

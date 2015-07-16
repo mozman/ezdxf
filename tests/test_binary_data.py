@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.classifiedtags import ClassifiedTags
 from ezdxf.tools.binarydata import compress_binary_data, CompressedTags, binary_encoded_data_to_bytes
 
 

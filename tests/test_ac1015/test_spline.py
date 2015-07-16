@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.modern.spline import Spline, _SPLINE_TPL
-from ezdxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.classifiedtags import ClassifiedTags
 
 class TestSpline(unittest.TestCase):
     def setUp(self):

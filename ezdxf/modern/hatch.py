@@ -9,9 +9,9 @@ __author__ = "mozman <mozman@gmx.at>"
 from contextlib import contextmanager
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..dxfattr import DXFAttr, DXFAttributes, DefSubclass
-from ..tags import DXFTag, DXFStructureError, TagGroups
-from ..classifiedtags import ClassifiedTags
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups
+from ..lldxf.classifiedtags import ClassifiedTags
 
 _HATCH_TPL = """  0
 HATCH

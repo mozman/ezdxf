@@ -9,9 +9,8 @@ from __future__ import unicode_literals
 
 import unittest
 
-import ezdxf
 from ezdxf.modern.hatch import Hatch, _HATCH_TPL
-from ezdxf.classifiedtags import ClassifiedTags, DXFTag
+from ezdxf.lldxf.classifiedtags import ClassifiedTags, DXFTag
 
 class TestHatch(unittest.TestCase):
     def setUp(self):

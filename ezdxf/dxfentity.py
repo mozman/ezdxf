@@ -6,8 +6,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .dxftag import cast_tag_value, DXFTag
-from .const import DXFStructureError
+from .lldxf.types import cast_tag_value, DXFTag
+from .lldxf.const import DXFStructureError
 
 
 class DXFNamespace(object):

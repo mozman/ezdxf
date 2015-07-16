@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tags import cast_tag
+from ezdxf.lldxf.tags import cast_tag
 
 
 class TestTypeCaster(unittest.TestCase):
