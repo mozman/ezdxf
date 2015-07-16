@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from functools import partial
-from ..tools.hdrvars import SingleValue, Point2D, Point3D
+from ..lldxf.hdrvars import SingleValue, Point2D, Point3D
 
 VARMAP = {
     '$ACADVER': partial(SingleValue, code=1),
