@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ezdxf.handle import HandleGenerator
+from ezdxf.tools.handle import HandleGenerator
 from ezdxf.dxffactory import dxffactory
 from ezdxf.tags import StringIterator
 from ezdxf.tags import Tags, TagGroups, DXFStructureError, DXFTag

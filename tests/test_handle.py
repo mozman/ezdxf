@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.handle import HandleGenerator
+from ezdxf.tools.handle import HandleGenerator
 
 
 class TestHandleGenerator(unittest.TestCase):
