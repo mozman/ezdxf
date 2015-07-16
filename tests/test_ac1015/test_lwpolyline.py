@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-from ezdxf import testtools
+from ezdxf.tools import test
 
 DWG = ezdxf.new('AC1015')
 
@@ -79,7 +79,7 @@ class TestNewLWPolyline(unittest.TestCase):
 
 class TestReadLWPolyline(unittest.TestCase):
     def setUp(self):
-        tags = testtools.ClassifiedTags.from_text(LWPOLYLINE1)
+        tags = test.ClassifiedTags.from_text(LWPOLYLINE1)
         self.lwpolyline = DWG.dxffactory.wrap_entity(tags)
 
     def test_handle(self):

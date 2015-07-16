@@ -10,8 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-
-from ezdxf.testtools import DrawingProxy
+from ezdxf.tools.test import DrawingProxy
 
 def getattributes(obj):
     return ( attr for attr in dir(obj) if not attr.startswith('_DrawingProxy__') )

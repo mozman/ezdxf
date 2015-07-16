@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.testtools import ClassifiedTags, DXFTag
+from ezdxf.tools.test import ClassifiedTags, DXFTag
 from ezdxf.modern.dxfobjects import XRecord
 
 

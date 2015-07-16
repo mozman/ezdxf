@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.testtools import DrawingProxy, Tags
+from ezdxf.tools.test import DrawingProxy, Tags
 from ezdxf.headersection import HeaderSection
 
 

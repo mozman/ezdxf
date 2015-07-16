@@ -9,7 +9,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.classifiedtags import ClassifiedTags
-from ezdxf.binarydata import compress_binary_data, CompressedTags, binary_encoded_data_to_bytes
+from ezdxf.tools.binarydata import compress_binary_data, CompressedTags, binary_encoded_data_to_bytes
 
 
 class TestCompressBinaryData(unittest.TestCase):

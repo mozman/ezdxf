@@ -10,7 +10,7 @@ from io import StringIO
 from .tools.codepage import toencoding
 from .const import acadrelease, DXFStructureError
 from .dxftag import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
-from .compressedstring import CompressedString
+from .tools.compressedstring import CompressedString
 
 
 def write_tags(stream, tags):
