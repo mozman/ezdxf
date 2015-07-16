@@ -6,7 +6,7 @@ import unittest
 import os
 
 import ezdxf
-from ezdxf.importer import Importer
+from ezdxf.tools.importer import Importer
 
 
 def save_source_dwg(dwg, filename):

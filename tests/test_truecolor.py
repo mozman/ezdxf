@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 import unittest
-from ezdxf.rgb import int2rgb, rgb2int, aci2rgb
+from ezdxf.tools.rgb import int2rgb, rgb2int, aci2rgb
 
 
 class TestTrueColor(unittest.TestCase):
