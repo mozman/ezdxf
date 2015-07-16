@@ -5,8 +5,8 @@
 print("""
 Available modules to run:
 
-ezdxf.dxf2html FILENAME
-  ... convert DXF tag structure of FILENAME into a HTML structure
+ezdxf.pp FILENAME
+  ... pretty print DXF tag structure of FILENAME as HTML file
 """)
 
 

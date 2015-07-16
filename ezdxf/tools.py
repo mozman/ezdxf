@@ -6,6 +6,7 @@
 
 from .c23 import isstring
 
+
 def safe_3D_point(coords):
     """Returns a 3-tuple for sure. Raises *ValueError* for axis count != (2, 3).
     """
@@ -17,6 +18,7 @@ def safe_3D_point(coords):
     if len(coords) == 2:
         return coords[0], coords[1], 0.
     raise ValueError("Invalid axis count: {}".format(len(coords)))
+
 
 def knot_values(n_control_points, degree):
     """
@@ -33,6 +35,7 @@ def knot_values(n_control_points, degree):
             x.append(x[i-1])
     return x
 
+
 def knot_values_uniform(n_control_points, degree):
     """
     :param n_control_points: count of control point
@@ -43,6 +46,7 @@ def knot_values_uniform(n_control_points, degree):
     for i in range(2, nplusc+1):
         x.append(float(i-1))
     return x
+
 
 def knot_values_by_control_points(control_points, degree):
     # defpoints has to be a 1 based array
