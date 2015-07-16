@@ -514,6 +514,7 @@ AcDbGroup
 """
 GROUP_ITEM_CODE = 340
 
+
 class DXFGroup(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_GROUP_TPL)
     DXFATTRIBS = DXFAttributes(
@@ -539,6 +540,10 @@ class DXFGroup(DXFEntity):
     def __len__(self):
         return sum(1 for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
+    def __contains__(self, item):
+        handle = item if isstring(item) else item.dxf.handle
+        return handle in set(self.handles())
+
     def handles(self):
         return (tag.value for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
@@ -557,6 +562,17 @@ class DXFGroup(DXFEntity):
         self.set_data(data)
 
     def set_data(self, data):
+        def all_same_layout():
+            """ Check if all entities in data are on the same layout.
+            """
+            handles = {}
+            for entity in data:
+                handles[entity.dxf.owner] = 1
+            return sum(handles.values()) < 2  # 0 for no entities; 1 for all entities on the same layout
+
+        if not all_same_layout():
+            raise ValueError("All entities have to be on the same layout (model space, paper space or block).")
+
         self.clear()
         self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, entity.dxf.handle) for entity in data)
 
@@ -578,13 +594,14 @@ class DXFGroupTable(object):
     def __len__(self):
         return len(self.dxfgroups)
 
-    def __contains__(self, key):
-        return key in self.dxfgroups
+    def __contains__(self, name):
+        return name in self.dxfgroups
 
     def next_name(self):
-        name = self._next_name()
-        while name in self.dxfgroups:
+        name_exists = True
+        while name_exists:
             name = self._next_name()
+            name_exists = name in self.dxfgroups
         return name
 
     def _next_name(self):
@@ -604,7 +621,8 @@ class DXFGroupTable(object):
             'unnamed': unnamed,
             'selectable': selectable,
         })
-        self.dxfgroups[name] = group.dxf.handle  #
+        self.dxfgroups[name] = group.dxf.handle
+        group.dxf.owner = self.dxfgroups.dxf.handle  # group table is owner of group
         return group
 
     def get(self, name):

@@ -63,10 +63,15 @@ class TestDXFGroup(unittest.TestCase):
         # or in a block
         msp = self.dwg.modelspace()
         with group.edit_data() as e:  # e is a standard Python list of DXF entities
-            e.append(msp.add_line((0, 0), (3, 0)))
+            line = msp.add_line((0, 0), (3, 0))
+            e.append(line)
             e.append(msp.add_circle((0, 0), radius=2))
 
         self.assertEqual(2, len(group))
+        self.assertTrue(line in group)
+
+        ungrouped_line = msp.add_line((0, 1), (3, 1))
+        self.assertFalse(ungrouped_line in group)
 
         group.clear()
         self.assertEqual(0, len(group))

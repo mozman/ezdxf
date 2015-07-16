@@ -102,6 +102,14 @@ Blocks
 
    blocks
 
+Groups
+------
+
+.. toctree::
+   :maxdepth: 2
+
+   groups
+
 Importer
 --------
 
