@@ -19,6 +19,7 @@ from .mtext import MText
 from .hatch import Hatch
 
 from . import dxfobjects
+from .groups import DXFGroup, DXFGroupTable
 from .layouts import Layouts, BlockLayout
 
 UPDATE_ENTITY_WRAPPERS = {
@@ -29,7 +30,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'LAYOUT': dxfobjects.DXFLayout,
     'XRECORD': dxfobjects.XRecord,
     'DATATABLE': dxfobjects.DXFDataTable,
-    'GROUP': dxfobjects.DXFGroup,
+    'GROUP': DXFGroup,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -125,6 +126,6 @@ class ModernDXFFactory(LegacyDXFFactory):
                 raise DXFStructureError("No group table found.")
                 # TODO:  create group table
             group_table = self.wrap_handle(group_table_handle)
-            return dxfobjects.DXFGroupTable(group_table)
+            return DXFGroupTable(group_table)
         else:
             raise Warning('Not supported for DXF version AC1009.')

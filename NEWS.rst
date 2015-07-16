@@ -15,7 +15,7 @@ Version 0.7.0 - 2015-...
 
 Version 0.6.5 - 2015-02-27
 
-  * BUGFIX: custom propcd .. erties in header section written after $LASTSAVEDBY tag - the only way AutoCAD accepts custom tags
+  * BUGFIX: custom properties in header section written after $LASTSAVEDBY tag - the only way AutoCAD accepts custom tags
 
 Version 0.6.4 - 2015-02-27
 
