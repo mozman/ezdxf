@@ -12,6 +12,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups
 from ..lldxf.classifiedtags import ClassifiedTags
+from ..tools.pattern import PATTERN  # acad standard pattern definitions
 
 _HATCH_TPL = """  0
 HATCH
@@ -127,6 +128,9 @@ class Hatch(ModernGraphicEntity):
         # insert pattern angle, pattern scale & pattern double flag behind pattern type
         self.AcDbHatch[index:index] = [DXFTag(52, angle), DXFTag(41, scale), DXFTag(77, double)]
         # place pattern definition right behind pattern double flag (77)
+        if definition is None:
+            # try to get pattern definition from acad standard pattern
+            definition = PATTERN.get(name, None)
         if definition is not None:
             self.set_pattern_definition(definition)
 
