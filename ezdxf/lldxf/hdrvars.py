@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ezdxf.lldxf.tags import DXFTag, cast_tag
+from .tags import DXFTag, cast_tag
 
 
 def SingleValue(value, code=1):

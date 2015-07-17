@@ -173,6 +173,12 @@ Drawing Methods
     Write drawing to a text stream, opened with `encoding` = :attr:`Drawing.encoding`
     and and `mode` = ``'wt'``.
 
+.. method:: Drawing.cleanup(groups=True)
+
+    Cleanup drawing. Call it before saving the drawing but only if necessary, the process could take a while.
+
+    :param groups: removes deleted and invalid entities from groups
+
 .. method:: Drawing.compress_binary_data()
 
     If you don't need access to binary data of DXF entities, you can compress them in memory for a lower
@@ -191,8 +197,8 @@ Low Level Access to DXF entities
 
 If you just need the raw DXF tags use::
 
-    tags = Drawing.entitydb[handle]  # raises KeyError, if handle don't exist
-    tags = Drawing.entitydb.get(handle)  # returns a default value, if handle don't exist (None by default)
+    tags = Drawing.entitydb[handle]  # raises KeyError, if handle does not exist
+    tags = Drawing.entitydb.get(handle)  # returns a default value, if handle does not exist (None by default)
 
 type of tags: :class:`ClassifiedTags`
 
