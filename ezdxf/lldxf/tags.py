@@ -293,6 +293,7 @@ class Tags(list):
                 break
         return collected_tags
 
+
 class TagGroups(list):
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
