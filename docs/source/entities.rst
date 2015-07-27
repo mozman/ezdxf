@@ -1203,3 +1203,221 @@ subdivision_levels      R13     int >= 1
     :ref:`tut_mesh`
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
+
+Hatch
+=====
+
+.. class:: Hatch
+
+    Introduced in AutoCAD R13 (DXF version AC1012)
+
+    Fills an enclosed area or selected objects with a hatch pattern, solid fill, or gradient fill.
+
+.. method:: Hatch.edit_boundary()
+
+.. method:: Hatch.edit_pattern()
+
+.. method:: Hatch.set_pattern_definition(lines)
+
+.. method:: Hatch.set_solid_fill(color=7, style=1)
+
+.. method:: Hatch.set_pattern_fill(name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1, definition=None)
+
+.. method:: Hatch.get_seed_points()
+
+.. method:: Hatch.set_seed_points(points)
+
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+pattern_name            R13     pattern name as string
+solid_fill              R13     solid fill = 1, pattern fill = 0 (better use: :meth:`Hatch.set_solid_fill`, :meth:`Hatch.set_pattern_fill`)
+associative             R13     1 for associative hatch else 0, associations not handled by ezdxf, you have to
+                                set the handles to the associated DXF entities by yourself.
+hatch_style             R13     0 = normal; 1 = outer; 2 = ignore (search for AutoCAD help for more information)
+pattern_type            R13     0 = user; 1 = predefined; 2 = custom; (???)
+pattern_angle           R13     pattern angle in degrees (360 deg = circle)
+pattern_scale           R13     as float
+pattern_double          R13     1 = double else 0
+n_seed_points           R13     count of seed points (better user: :meth:`Hatch.get_seed_points`)
+======================= ======= ===========
+
+.. seealso::
+
+    :ref:`tut_hatch`
+
+Hatch Boundary Helper Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. class:: BoundaryPathData
+
+.. class:: PolylinePath
+
+.. class:: EdgePath
+
+.. attribute:: EdgePath.edges
+
+    List of boundary edges of type :class:`LineEdge`, :class:`ArcEdge`, :class:`EllipseEdge` of :class:`SplineEdge`
+
+.. attribute:: EdgePath.source_boundary_objects
+
+    Fir associative hatches, list of handles to the associated DXF entities.
+
+.. method:: EdgePath.clear()
+
+    Delete all edges.
+
+.. method:: EdgePath.add_line(start, end)
+
+.. method:: EdgePath.add_arc(center, radius=1., start_angle=0., end_angle=360., is_counter_clockwise=0)
+
+.. method:: EdgePath.add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., is_counter_clockwise=0)
+
+.. method:: EdgePath.add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0)
+
+.. class:: LineEdge
+
+    Straight boundary edge.
+
+.. attribute:: LineEdge.start
+
+    Start point as (x, y) tuple.
+
+.. attribute:: LineEdge.end
+
+    End point as (x, y) tuple.
+
+.. class:: ArcEdge
+
+    Arc as boundary edge.
+
+.. attribute:: ArcEdge.center
+
+     Center point of arc as (x, y) tuple.
+
+.. attribute:: ArcEdge.radius
+
+     Arc radius as float.
+
+.. attribute:: ArcEdge.start_angle
+
+     Arc start angle in degrees (360 deg = circle)
+
+.. attribute:: ArcEdge.end_angle
+
+     Arc end angle in degrees (360 deg = circle)
+
+.. attribute:: ArcEdge.is_counter_clockwise
+
+     1 for counter clockwise arc else 0.
+
+.. class:: EllipseEdge
+
+.. attribute:: EllipseEdge.major_axis_vector
+
+    Ellipse major axis vector as (x, y) tuple.
+
+.. attribute:: EllipseEdge.minor_axis_length
+
+    Ellipse minor axis length as float.
+
+.. attribute:: EllipseEdge.radius
+
+     Ellipse radius as float.
+
+.. attribute:: EllipseEdge.start_angle
+
+     Ellipse start angle in degrees (360 deg = circle)
+
+.. attribute:: EllipseEdge.end_angle
+
+     Ellipse end angle in degrees (360 deg = circle)
+
+.. attribute:: EllipseEdge.is_counter_clockwise
+
+     1 for counter clockwise ellipse else 0.
+
+.. class:: SplineEdge
+
+.. attribute:: SplineEdge.degree
+
+     Spline degree as int.
+
+.. attribute:: SplineEdge.rational
+
+     1 for rational spline else 0.
+
+.. attribute:: SplineEdge.periodic
+
+     1 for periodic spline else 0.
+
+.. attribute:: SplineEdge.knot_values
+
+     List of knot values as floats
+
+.. attribute:: SplineEdge.control_points
+
+     List of control points as (x, y) tuples.
+
+.. attribute:: SplineEdge.fit_points
+
+     List of fit points as (x, y) tuples.
+
+.. attribute:: SplineEdge.weights
+
+     List of weights (of control points) as floats
+
+.. attribute:: SplineEdge.start_tangent
+
+     Spline start tangent (vector)  as (x, y) tuple
+
+.. attribute:: SplineEdge.end_tangent
+
+     Spline end tangent (vector)  as (x, y) tuple
+
+Hatch Pattern Definition Helper Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. class:: PatternData
+
+.. attribute:: PatternData.lines
+
+    List of pattern definition lines (read/write). see :class:`PatternDefinitionLine`
+
+.. method:: PatternData.new_line(angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None)
+
+    Create a new pattern definition line, but does not add the line to the :attr:`PatternData.lines` attribute.
+
+.. method:: PatternData.add_line(angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None)
+
+    Create a new pattern definition line and add the line to the :attr:`PatternData.lines` attribute.
+
+.. method:: PatternData.clear()
+
+    Delete all pattern definition lines.
+
+.. class:: PatternDefinitionLine
+
+    Represents a pattern definition line, use factory function :meth:`PatternData.new_line` to create new pattern
+    definition lines.
+
+.. attribute:: PatternDefinitionLine.angle
+
+    Line angle in degrees (circle = 360 deg)
+
+.. attribute:: PatternDefinitionLine.base_point
+
+    Base point as (x, y) tuple.
+
+.. attribute:: PatternDefinitionLine..offset
+
+    Offset as (x, y) tuple.
+
+.. attribute:: PatternDefinitionLine.dash_length_items
+
+    List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot)
+
+.. seealso::
+
+    :ref:`tut_hatch_pattern`
