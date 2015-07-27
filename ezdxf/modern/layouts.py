@@ -171,7 +171,7 @@ class BlockLayout(DXF12BlockLayout, ModernGraphicsFactory):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
-        # entity can be ClassifiedTags() or a Wrapper() class
+        # entity can be ClassifiedTags() or a GraphicEntity() or inherited wrapper class
         if isinstance(entity, ClassifiedTags):
             entity = self._dxffactory.wrap_entity(entity)
         entity.dxf.owner = self.get_block_record_handle()

@@ -562,7 +562,7 @@ class BlockRecord(DXFEntity):
 
     Required fields:
     owner: Soft-pointer ID/handle to owner object
-    layout: Hard-pointer ID/handle to associated LAYOUT object
+    layout: Hard-pointer ID/handle to associated LAYOUT object - is '0' if block definition
     """
     TEMPLATE = ClassifiedTags.from_text(_BLOCKRECORDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, blockrec_subclass)

@@ -104,13 +104,15 @@ class DXFGroup(DXFEntity):
     def remove_invalid_handles(self):
         """ Remove invalid handles from group.
 
-        Invalid handles: deleted entities, entities in a block layout (but not implemented yet)
+        Invalid handles: deleted entities, entities in a block layout
         """
         def handle_not_in_block_definition(handle):
-            # TODO: implement handle_not_in_block_definition()
-            return True
+            wrap = self.dxffactory.wrap_handle  # shortcut
+            # owner block_record.layout is 0 if entity is in a block definition
+            owner_handle = wrap(handle).dxf.owner
+            return wrap(owner_handle).dxf.layout != 0
 
-        db = self.entitydb
+        db = self.entitydb  # faster local var
         valid_handles = [handle for handle in self.handles() if handle in db]
         self.clear()
 

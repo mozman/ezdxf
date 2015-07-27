@@ -126,11 +126,12 @@ class Hatch(ModernGraphicEntity):
         except ValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern type' (code=76).")
         # insert pattern angle, pattern scale & pattern double flag behind pattern type
+        index += 1  # insert after tag 76
         self.AcDbHatch[index:index] = [DXFTag(52, angle), DXFTag(41, scale), DXFTag(77, double)]
         # place pattern definition right behind pattern double flag (77)
         if definition is None:
-            # try to get pattern definition from acad standard pattern
-            definition = PATTERN.get(name, None)
+            # try to get pattern definition from acad standard pattern, defaults to 'ANSI31'
+            definition = PATTERN.get(name, PATTERN['ANSI31'])
         if definition is not None:
             self.set_pattern_definition(definition)
 
@@ -266,10 +267,12 @@ def pop_source_boundary_objects_tags(all_path_tags):
         else:
             return []  # no source boundary objects found - entity is not valid for AutoCAD
 
+
 def build_source_boundary_object_tags(source_boundary_objects):
     source_boundary_object_tags = [DXFTag(97, len(source_boundary_objects))]
     source_boundary_object_tags.extend(source_boundary_objects)
     return source_boundary_object_tags
+
 
 class PolylinePath(object):
     PATH_TYPE = 'PolylinePath'
@@ -340,6 +343,7 @@ class PolylinePath(object):
         tags.extend(build_source_boundary_object_tags(self.source_boundary_objects))
         return tags
 
+
 class EdgePath(object):
     PATH_TYPE = 'EdgePath'
 
@@ -396,15 +400,24 @@ class EdgePath(object):
         self.edges.append(ellipse)
         return ellipse
 
-    def add_spline(self, fit_points=None, degree=3, rational=0, periodic=0):
+    def add_spline(self, fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0):
         spline = SplineEdge()
         if fit_points is not None:
-            spline.fit_points = fit_points
+            spline.fit_points = list(fit_points)
+        if control_points is not None:
+            spline.control_points = list(control_points)
+        if knot_values is not None:
+            spline.knot_values = list(knot_values)
+        if weights is not None:
+            spline.weights = list(weights)
         spline.degree = degree
         spline.rational = int(rational)
         spline.periodic = int(periodic)
         self.edges.append(spline)
         return spline
+
+    def clear(self):
+        self.edges = []
 
     def dxftags(self):
         tags = [DXFTag(92, int(self.path_type_flags)), DXFTag(93, len(self.edges))]
@@ -614,9 +627,13 @@ class PatternData(object):
         self.lines = []
 
     def add_line(self, angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
+        self.lines.append(self.new_line(angle, base_point, offset, dash_length_items))
+
+    @staticmethod
+    def new_line(angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
         if dash_length_items is None:
             raise ValueError("Parameter 'dash_length_items' must not be None.")
-        self.lines.append(PatternDefinitionLine(angle, base_point, offset, dash_length_items))
+        return PatternDefinitionLine(angle, base_point, offset, dash_length_items)
 
     def dxftags(self):
         if len(self.lines):
