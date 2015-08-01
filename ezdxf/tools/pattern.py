@@ -3,7 +3,7 @@
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
 
-# pattern type: predefined
+# pattern type: predefined (1)
 PATTERN = {
     'ANSI31': [[45.0, (0.0, 0.0), (-0.0883883476483184, 0.0883883476483185), []]],
     'ANSI32': [[45.0, (0.0, 0.0), (-0.2651650429449553, 0.2651650429449553), []],
