@@ -79,7 +79,9 @@ hatch_subclass = DefSubclass('AcDbHatch', {
     'n_seed_points': DXFAttr(98),  # number of seed points
 })
 
-GRADIENT_TAGS = frozenset([450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63])
+GRADIENT_CODES = frozenset([450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63])
+PATH_CODES = frozenset([10, 11, 12, 13, 40, 42, 50, 51, 42, 72, 73, 74, 92, 93, 94, 95, 96, 97, 330])
+PATTERN_DEFINITION_LINE_CODES = frozenset((53, 43, 44, 45, 46, 79, 49))
 
 
 class Hatch(ModernGraphicEntity):
@@ -89,6 +91,18 @@ class Hatch(ModernGraphicEntity):
     @property
     def AcDbHatch(self):
         return self.tags.subclasses[2]
+
+    @property
+    def is_solid_fill(self):
+        return bool(self.dxf.solid_fill)
+
+    @property
+    def is_pattern_fill(self):
+        return not bool(self.dxf.solid_fill)
+
+    @property
+    def has_gradient_data(self):
+        return bool(self.AcDbHatch.find_first(450, 0))
 
     @contextmanager
     def edit_boundary(self):
@@ -103,13 +117,10 @@ class Hatch(ModernGraphicEntity):
         self.AcDbHatch[start_index: end_index] = boundary_path_data.dxftags()
 
     def set_solid_fill(self, color=7, style=1, rgb=None):
-        if self.dxf.solid_fill == 0:
-            with self.edit_pattern() as e:  # delete existing pattern definition
-                e.clear()
+        self._remove_gradient_data()
+        if self.is_pattern_fill:
+            self._remove_pattern_data()
             self.dxf.solid_fill = 1
-            self.AcDbHatch.remove_tags((52, 41, 77))
-            # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
-            # hatches with SOLID fill.
 
         self.dxf.color = color  # if a rgb value is present, the color value is ignored by AutoCAD
         self.dxf.hatch_style = style
@@ -118,9 +129,13 @@ class Hatch(ModernGraphicEntity):
         if rgb is not None:  # if a rgb value is present, the color value is ignored by AutoCAD
             self.rgb = rgb  # rgb should be a (r, g, b) tuple
 
-    @property
-    def is_gradient(self):
-        return bool(self.AcDbHatch.find_first(450, 0))
+    def _remove_pattern_data(self):
+        if self.is_pattern_fill:
+            with self.edit_pattern() as e:  # delete existing pattern definition
+                e.clear()
+            self.AcDbHatch.remove_tags((52, 41, 77))
+            # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
+            # hatches with SOLID fill.
 
     def set_gradient(self, color1=(0, 0, 0), color2=(255, 255, 255), rotation=0., centered=0., tint=0., name='LINEAR'):
         gradient_data = GradientData()
@@ -133,28 +148,30 @@ class Hatch(ModernGraphicEntity):
         self._set_gradient(gradient_data)
 
     def get_gradient_data(self):
-        if not self.is_gradient:
+        if not self.has_gradient_data:
             raise ValueError('HATCH has no gradient data.')
         return GradientData.from_tags(self.AcDbHatch)
 
     def _set_gradient(self, gradient_data):
-        self.set_solid_fill(7)  # gradients only work as solid fill and also removes invalid pattern fill attributes
-        self._remove_gradient_data()  # cleanup
+        self._remove_pattern_data()
+        self._remove_gradient_data()
+        self.dxf.solid_fill = 1
+        self.dxf.pattern_name = 'SOLID'
         self.AcDbHatch.extend(gradient_data.dxftags())
 
     def _remove_gradient_data(self):
-        if self.AcDbHatch.has_tag(450):
-            self.AcDbHatch.remove_tags(GRADIENT_TAGS)
+        self.AcDbHatch.remove_tags(GRADIENT_CODES)
 
     @contextmanager
     def edit_gradient(self):
-        if not self.dxf.solid_fill:
+        if not self.has_gradient_data:
             raise ValueError('Pattern fill HATCH has no gradient data.')
         gradient_data = GradientData.from_tags(self.AcDbHatch)
         yield gradient_data
         self._set_gradient(gradient_data)
 
     def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1, definition=None):
+        self._remove_gradient_data()
         self.dxf.solid_fill = 0
         self.dxf.pattern_name = name
         self.dxf.color = color
@@ -164,23 +181,21 @@ class Hatch(ModernGraphicEntity):
         # safe version of adding pattern fill specific DXF tags:
         self.AcDbHatch.remove_tags((52, 41, 77))  # remove pattern angle, pattern scale & pattern double flag if exists
         try:
-            index = self.AcDbHatch.tag_index(76)  # find position of pattern type (76)
+            index = self.AcDbHatch.tag_index(76) + 1  # find position of pattern type (76); + 1: insert after tag 76
         except ValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern type' (code=76).")
         # insert pattern angle, pattern scale & pattern double flag behind pattern type
-        index += 1  # insert after tag 76
         self.AcDbHatch[index:index] = [DXFTag(52, angle), DXFTag(41, scale), DXFTag(77, double)]
         # place pattern definition right behind pattern double flag (77)
         if definition is None:
-            # try to get pattern definition from acad standard pattern, defaults to 'ANSI31'
+            # get pattern definition from acad standard pattern, default is 'ANSI31'
             definition = PATTERN.get(name, PATTERN['ANSI31'])
-        if definition is not None:
-            self.set_pattern_definition(definition)
+        self.set_pattern_definition(definition)
 
     @contextmanager
     def edit_pattern(self):
-        if self.dxf.solid_fill:
-            raise ValueError('Solid fill HATCH, no pattern data to edit.')
+        if self.is_solid_fill:
+            raise ValueError('Solid fill HATCH has no pattern data.')
         pattern_data = PatternData(self)
         yield pattern_data
         self._set_pattern_data(pattern_data)
@@ -243,7 +258,7 @@ class Hatch(ModernGraphicEntity):
         # replace existing seed points
         hatch_tags[first_seed_point_index: first_seed_point_index+len(existing_seed_points)] = new_seed_points
 
-PATH_CODES = frozenset([10, 11, 12, 13, 40, 42, 50, 51, 42, 72, 73, 74, 92, 93, 94, 95, 96, 97, 330])
+
 class BoundaryPathData(object):
     def __init__(self, hatch):
         self.start_index = 0
@@ -336,11 +351,11 @@ class PolylinePath(object):
         self.source_boundary_objects = pop_source_boundary_objects_tags(tags)
         for tag in tags:
             code, value = tag
-            if code == 10:
+            if code == 10:  # vertex coordinates
                 self.vertices.append((value[0], value[1], 0.0))  # (x, y, bulge); bulge default = 0.0
-            elif code == 42:
-                x, y, bulge = self.vertices[-1]
-                self.vertices[-1] = (x, y, value)  # replace existing bulge value
+            elif code == 42:  # bulge value
+                x, y, bulge = self.vertices.pop()  # last value
+                self.vertices.append((x, y, value))  # last coordinates with new bulge value
             elif code == 72:
                 self.has_bulge = value
             elif code == 73:
@@ -644,7 +659,7 @@ class SplineEdge(object):
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
-PATTERN_DEFINITION_LINE_CODES = frozenset((53, 43, 44, 45, 46, 79, 49))
+
 class PatternData(object):
     def __init__(self, hatch):
         self.existing_pattern_start_index = 0
@@ -739,10 +754,10 @@ class GradientData(object):
     def from_tags(tags):
         gdata = GradientData()
         try:
-            index = tags.tag_index(450)  # required tag if hatch should be a gradient
+            index = tags.tag_index(450)  # required tag if hatch has gradient data
         except ValueError:
-            raise DXFStructureError("HATCH: Missing required DXF tag for gradient hatch (code=450).")
-        # if tags[index].value == 0 hatch is a solid
+            raise DXFStructureError("HATCH: Missing required DXF tag for gradient data (code=450).")
+        # if tags[index].value == 0 hatch is a solid ????
         first_color_value = True
         for code, value in tags[index:]:
             if code == 460:
@@ -763,19 +778,20 @@ class GradientData(object):
         return gdata
 
     def dxftags(self):
-        tags = [DXFTag(450, 1),  # gradient
-                DXFTag(451, 0),  # reserved for the future
-                DXFTag(452, 0),  # one (1) or two (0) color gradient (just for AutoCAD)
-                DXFTag(453, 2),  # number of colors
-                DXFTag(460, (self.rotation / 180.) * math.pi),  # rotation angle is stored as radians
-                DXFTag(461, self.centered),  # see DXF standard
-                DXFTag(462, self.tint),  # see DXF standard
-                DXFTag(463, 0.0),  # first value, see DXF standard
-                # code == 63 "color as ACI" can be left off
-                DXFTag(421, rgb2int(self.color1)),  # first color
-                DXFTag(463, 1.0),  # second value, see DXF standard
-                # code == 63 "color as ACI" can be left off
-                DXFTag(421, rgb2int(self.color2)),  # second color
-                DXFTag(470, self.name),
+        return [
+            DXFTag(450, 1),  # gradient
+            DXFTag(451, 0),  # reserved for the future
+            DXFTag(452, 0),  # one (1) or two (0) color gradient (just for the AutoCAD HATCH dialog)
+            DXFTag(453, 2),  # number of colors
+            DXFTag(460, (self.rotation / 180.) * math.pi),  # rotation angle in radians
+            DXFTag(461, self.centered),  # see DXF standard
+            DXFTag(462, self.tint),  # see DXF standard
+            DXFTag(463, 0),  # first value, see DXF standard
+            # code == 63 "color as ACI" can be left off
+            DXFTag(421, rgb2int(self.color1)),  # first color
+            DXFTag(463, 1),  # second value, see DXF standard
+            # code == 63 "color as ACI" can be left off
+            DXFTag(421, rgb2int(self.color2)),  # second color
+            DXFTag(470, self.name),
         ]
-        return tags
+
