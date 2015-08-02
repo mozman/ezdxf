@@ -13,6 +13,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups
 from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
 from ..tools.rgb import rgb2int, int2rgb
 
@@ -71,8 +72,8 @@ hatch_subclass = DefSubclass('AcDbHatch', {
     'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
     'solid_fill': DXFAttr(70, default=1),  # pattern fill = 0
     'associative': DXFAttr(71, default=0),  # associative flag = 0
-    'hatch_style': DXFAttr(75, default=1),  # 0=normal; 1=outer; 2=ignore
-    'pattern_type': DXFAttr(76, default=1),  # 0=user; 1=predefined; 2=custom???
+    'hatch_style': DXFAttr(75, default=const.HATCH_STYLE_OUTERMOST),  # 0=normal; 1=outer; 2=ignore
+    'pattern_type': DXFAttr(76, default=const.HATCH_TYPE_PREDEFINED),  # 0=user; 1=predefined; 2=custom???
     'pattern_angle': DXFAttr(52, default=0.0),  # degrees (360deg = circle)
     'pattern_scale': DXFAttr(41, default=1.0),
     'pattern_double': DXFAttr(77, default=0),  # 0=not double; 1= double
@@ -93,11 +94,11 @@ class Hatch(ModernGraphicEntity):
         return self.tags.subclasses[2]
 
     @property
-    def is_solid_fill(self):
+    def has_solid_fill(self):
         return bool(self.dxf.solid_fill)
 
     @property
-    def is_pattern_fill(self):
+    def has_pattern_fill(self):
         return not bool(self.dxf.solid_fill)
 
     @property
@@ -118,45 +119,54 @@ class Hatch(ModernGraphicEntity):
 
     def set_solid_fill(self, color=7, style=1, rgb=None):
         self._remove_gradient_data()
-        if self.is_pattern_fill:
+        if self.has_pattern_fill:
             self._remove_pattern_data()
             self.dxf.solid_fill = 1
 
         self.dxf.color = color  # if a rgb value is present, the color value is ignored by AutoCAD
         self.dxf.hatch_style = style
         self.dxf.pattern_name = 'SOLID'
-        self.dxf.pattern_type = 1
+        self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
         if rgb is not None:  # if a rgb value is present, the color value is ignored by AutoCAD
             self.rgb = rgb  # rgb should be a (r, g, b) tuple
 
     def _remove_pattern_data(self):
-        if self.is_pattern_fill:
+        if self.has_pattern_fill:
             with self.edit_pattern() as e:  # delete existing pattern definition
                 e.clear()
             self.AcDbHatch.remove_tags((52, 41, 77))
             # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
             # hatches with SOLID fill.
 
-    def set_gradient(self, color1=(0, 0, 0), color2=(255, 255, 255), rotation=0., centered=0., tint=0., name='LINEAR'):
+    def set_gradient(self, color1=(0, 0, 0), color2=(255, 255, 255), rotation=0., centered=0., one_color=0, tint=0.,
+                     name='LINEAR'):
+        if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
+            raise ValueError("Gradient support requires at least DXF version AC1018, this drawing is:%s" % self.drawing.dxfversion)
         gradient_data = GradientData()
         gradient_data.color1 = color1
         gradient_data.color2 = color2
+        gradient_data.one_color = one_color
         gradient_data.rotation = rotation
         gradient_data.centered = centered
         gradient_data.tint = tint
         gradient_data.name = name
         self._set_gradient(gradient_data)
 
-    def get_gradient_data(self):
+    def get_gradient(self):
         if not self.has_gradient_data:
             raise ValueError('HATCH has no gradient data.')
         return GradientData.from_tags(self.AcDbHatch)
 
     def _set_gradient(self, gradient_data):
+        gradient_data.name = gradient_data.name.upper()
+        if gradient_data.name not in const.GRADIENT_TYPES:
+            raise ValueError('Invalid gradient type name: %s' % gradient_data.name)
+
         self._remove_pattern_data()
         self._remove_gradient_data()
         self.dxf.solid_fill = 1
         self.dxf.pattern_name = 'SOLID'
+        self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
         self.AcDbHatch.extend(gradient_data.dxftags())
 
     def _remove_gradient_data(self):
@@ -165,7 +175,7 @@ class Hatch(ModernGraphicEntity):
     @contextmanager
     def edit_gradient(self):
         if not self.has_gradient_data:
-            raise ValueError('Pattern fill HATCH has no gradient data.')
+            raise ValueError('HATCH has no gradient data.')
         gradient_data = GradientData.from_tags(self.AcDbHatch)
         yield gradient_data
         self._set_gradient(gradient_data)
@@ -194,7 +204,7 @@ class Hatch(ModernGraphicEntity):
 
     @contextmanager
     def edit_pattern(self):
-        if self.is_solid_fill:
+        if self.has_solid_fill:
             raise ValueError('Solid fill HATCH has no pattern data.')
         pattern_data = PatternData(self)
         yield pattern_data
@@ -224,7 +234,6 @@ class Hatch(ModernGraphicEntity):
         - dash_length_items: list of dash items (item > 0 is a line, item < 0 is a gap and item == 0.0 is a point)
 
         :param lines: list of definition lines
-        :return:
         """
         pattern_lines = [PatternDefinitionLine(line[0], line[1], line[2], line[3]) for line in lines]
         with self.edit_pattern() as pattern_editor:
@@ -335,7 +344,9 @@ class PolylinePath(object):
     PATH_TYPE = 'PolylinePath'
 
     def __init__(self):
-        self.path_type_flags = 7  # External (1) & Polyline (2) & Derived (4) (why?, I don't know)
+        self.path_type_flags = const.BOUNDARY_PATH_EXTERNAL + \
+                               const.BOUNDARY_PATH_POLYLINE + \
+                               const.BOUNDARY_PATH_DERIVED  # required, why?, I don't know
         self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
@@ -383,6 +394,12 @@ class PolylinePath(object):
         self.has_bulge = has_bulge
         self.is_closed = is_closed
 
+    def clear(self):
+        self.vertices = []
+        self.has_bulge = False
+        self.is_closed = False
+        self.source_boundary_objects = []
+
     def dxftags(self):
         vtags = []
         for x, y, bulge in self.vertices:
@@ -405,7 +422,9 @@ class EdgePath(object):
     PATH_TYPE = 'EdgePath'
 
     def __init__(self):
-        self.path_type_flags = 5  # External (1) & Derived (4) (why?, I don't know)
+        self.path_type_flags = const.BOUNDARY_PATH_EXTERNAL + \
+                               const.BOUNDARY_PATH_DERIVED  # required, why?, I don't know
+
         self.edges = []
         self.source_boundary_objects = []
 
@@ -594,7 +613,6 @@ class SplineEdge(object):
     EDGE_TYPE = "SplineEdge"
 
     def __init__(self):
-        self.tags = []  # for now just store tags
         self.degree = 3  # code = 94
         self.rational = 0  # code = 73
         self.periodic = 0  # code = 74
@@ -640,7 +658,10 @@ class SplineEdge(object):
                 ]
         # build knot values list
         # knot values have to be present and valid, otherwise AutoCAD crashes
-        tags.extend([DXFTag(40, float(value)) for value in self.knot_values])
+        if len(self.knot_values):
+            tags.extend([DXFTag(40, float(value)) for value in self.knot_values])
+        else:
+            raise ValueError("SplineEdge: missing required knot values")
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
@@ -651,8 +672,11 @@ class SplineEdge(object):
 
         # build fit points
         # fit points have to be present and valid, otherwise AutoCAD crashes
-        tags.append(DXFTag(97, len(self.fit_points)))
-        tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
+        if len(self.fit_points) > 2:
+            tags.append(DXFTag(97, len(self.fit_points)))
+            tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
+        else:
+            raise ValueError("SplineEdge: require at least 3 fit points.")
         tags.append(DXFTag(12, (float(self.start_tangent[0]), float(self.start_tangent[1]))))
         tags.append(DXFTag(13, (float(self.end_tangent[0]), float(self.end_tangent[1]))))
         return tags
@@ -745,6 +769,7 @@ class GradientData(object):
     def __init__(self):
         self.color1 = (0, 0, 0)
         self.color2 = (255, 255, 255)
+        self.one_color = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
         self.rotation = 0.  # use grad NOT radians here, because there should be ONE system for all angles
         self.centered = 0.
         self.tint = 0.0
@@ -764,6 +789,8 @@ class GradientData(object):
                 gdata.rotation = (value / math.pi) * 180.  # radians to grad
             elif code == 461:
                 gdata.centered = value
+            elif code == 452:
+                gdata.one_color = value
             elif code == 462:
                 gdata.tint = value
             elif code == 470:
@@ -781,7 +808,7 @@ class GradientData(object):
         return [
             DXFTag(450, 1),  # gradient
             DXFTag(451, 0),  # reserved for the future
-            DXFTag(452, 0),  # one (1) or two (0) color gradient (just for the AutoCAD HATCH dialog)
+            DXFTag(452, self.one_color),  # one (1) or two (0) color gradient
             DXFTag(453, 2),  # number of colors
             DXFTag(460, (self.rotation / 180.) * math.pi),  # rotation angle in radians
             DXFTag(461, self.centered),  # see DXF standard

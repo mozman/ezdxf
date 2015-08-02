@@ -37,14 +37,14 @@ Common Base Class
 
    (read/write) Get/Set transparency value as float. This attribute does not exist in DXF AC1009 (R12) entities, the
    attribute exists in DXF AC1015 entities but does not work (raises :class:`ValueError`), requires at least DXF Version
-   AC1018 (AutoCAD R2004). Value range `0.0` to `1.0` where `0.0` means entity is opaque and `1.0` means entity is 100%
-   transparent (invisible). This is the recommend method to get/set transparency values, when ever posssible do not use
+   AC1018 (AutoCAD R2004). Value range 0.0 to 1.0 where 0.0 means entity is opaque and 1.0 means entity is 100%
+   transparent (invisible). This is the recommend method to get/set transparency values, when ever possible do not use
    the DXF low level attribute :attr:`entity.dxf.transparency`
 
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
-   Get DXF attribute `key`, returns `default` if key doesn't exist, or raise
-   :class:`ValueError` if `default` is :class:`ValueError` and no DXF default
+   Get DXF attribute *key*, returns *default* if key doesn't exist, or raise
+   :class:`ValueError` if *default* is :class:`ValueError` and no DXF default
    value is defined::
 
         layer = entity.get_dxf_attrib("layer")
@@ -53,7 +53,7 @@ Common Base Class
 
 .. method:: GraphicEntity.set_dxf_attrib(key, value)
 
-   Set DXF attribute `key` to `value`::
+   Set DXF attribute *key* to *value*::
 
        entity.set_dxf_attrib("layer", "MyLayer")
        # same as
@@ -61,16 +61,16 @@ Common Base Class
 
 .. method:: GraphicEntity.del_dxf_attrib(key)
 
-   Delete/remove DXF attribute `key`. Raises `AttributeError` if `key` isn't supported.
+   Delete/remove DXF attribute *key*. Raises :class:`AttributeError` if *key* isn't supported.
 
 .. method:: GraphicEntity.dxf_attrib_exists(key)
 
-   Returns `True` if DXF attrib `key` really exists else `False`. Raises `AttributeError` if `key` isn't supported
+   Returns *True* if DXF attrib *key* really exists else *False*. Raises :class:`AttributeError` if *key* isn't supported
 
 .. method:: GraphicEntity.supported_dxf_attrib(key)
 
-   Returns `True` if DXF attrib `key` is supported by this entity else `False`. Does not grant that attrib
-   `key` really exists.
+   Returns *True* if DXF attrib *key* is supported by this entity else *False*. Does not grant that attrib
+   *key* really exists.
 
 .. method:: GraphicEntity.valid_dxf_attrib_names(key)
 
@@ -644,7 +644,7 @@ LWPolyline
 
 .. class:: LWPolyline(GraphicEntity)
 
-   Introduced in AutoCAD R13 (DXF version AC1012)
+   Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``LWPOLYLINE``.
 
    A lightweight polyline is defined as a single graphic entity. The :class:`LWPolyline` differs from the old-style
    :class:`Polyline`, which is defined as a group of subentities. :class:`LWPolyline` display faster (in AutoCAD) and
@@ -676,7 +676,7 @@ LWPOLYLINE_PLINEGEN            128     ???
 
 .. attribute:: LWPolyline.closed
 
-   ``True`` if polyline is closed else ``False``.  A closed polyline has a connection from the last vertex
+   *True* if polyline is closed else *False*.  A closed polyline has a connection from the last vertex
    to the first vertex. (read/write)
 
 .. method:: LWPolyline.get_points()
@@ -729,7 +729,7 @@ MText
 
 .. class:: MText(GraphicEntity)
 
-   Introduced in AutoCAD R13 (DXF version AC1012), extended in AutoCAD 2007 (DXF version AC1021)
+   Introduced in AutoCAD R13 (DXF version AC1012), extended in AutoCAD 2007 (DXF version AC1021), *dxftype* is ``MTEXT``.
 
    Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
    words or characters within the MText. Create :class:`MText` in layouts and blocks by factory function
@@ -747,7 +747,7 @@ char_height           R13     initial text height (float); default=1.0
 width                 R13     reference rectangle width (float)
 attachment_point      R13     attachment point (int), see table below
 flow_direction        R13     text flow direction (int), see table below
-style                 R13     text style (string); default=``STANDARD``
+style                 R13     text style (string); default='STANDARD'
 text_direction        R13     x-axis direction vector in WCS (3D Point); default=(1, 0, 0); if *rotation* and *text_direction* are present, *text_direction* wins
 rotation              R13     text rotation in degrees (float); default=0
 line_spacing_style    R13     line spacing style (int), see table below
@@ -799,7 +799,7 @@ MTEXT_EXACT                    2       taller characters will not override
 
 .. method:: MText.set_location(insert, rotation=None, attachment_point=None)
 
-   Set DXF attributes *insert*, *rotation* and *attachment_point*, ``None`` for *rotation* or *attachment_point*
+   Set DXF attributes *insert*, *rotation* and *attachment_point*, *None* for *rotation* or *attachment_point*
    preserves the existing value.
 
 .. method:: MText.get_rotation()
@@ -874,9 +874,9 @@ Shape
 
 .. class:: Shape(GraphicEntity)
 
-   Shapes are objects that you use like blocks. Shapes are stored in external shape files (\*.SHX). You can specify the
-   scale and rotation for each shape reference as you add it. You can not create shapes with *ezdxf*, you can just insert
-   shape references.
+   Shapes (*dxftype* is ``SHAPE``) are objects that you use like blocks. Shapes are stored in external shape files
+   (\*.SHX). You can specify the scale and rotation for each shape reference as you add it. You can not create shapes
+   with *ezdxf*, you can just insert shape references.
 
    Create a :class:`Shape` reference in layouts and blocks by factory function :meth:`~Layout.add_shape`.
 
@@ -896,9 +896,10 @@ Ray
 
 .. class:: Ray(GraphicEntity)
 
-   Introduced in AutoCAD R13 (DXF version AC1012)
+   Introduced in AutoCAD R13 (DXF version AC1012), *dxfversion* is ``RAY``.
 
-   A :class:`Ray` starts at a point and continues to infinity.
+   A :class:`Ray` starts at a point and continues to infinity. Create :class:`Ray` in layouts and blocks by factory
+   function :meth:`~Layout.add_ray`.
 
 =========== ======= ===========
 DXFAttr     Version Description
@@ -912,9 +913,10 @@ XLine
 
 .. class:: XLine(GraphicEntity)
 
-   Introduced in AutoCAD R13 (DXF version AC1012)
+   Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``XLINE``.
 
-   A line that extents to infinity in both directions, used as construction line.
+   A line that extents to infinity in both directions, used as construction line. Create :class:`XLine` in layouts and
+   blocks by factory function :meth:`~Layout.add_xline`.
 
 =========== ======= ===========
 DXFAttr     Version Description
@@ -928,25 +930,25 @@ Spline
 
 .. class:: Spline(GraphicEntity)
 
-   Introduced in AutoCAD R13 (DXF version AC1012)
+   Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``SPLINE``.
 
    A spline curve, all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
 
-   The spline curve is defined by a set of `fit points`, the spline curve passes all these fit points.
-   The `control points` defines a polygon which influences the form of the curve, the first control point should be
+   The spline curve is defined by a set of *fit points*, the spline curve passes all these fit points.
+   The *control points* defines a polygon which influences the form of the curve, the first control point should be
    identical with the first fit point and the last control point should be identical the last fit point.
 
-   Don't ask me about the meaning of `knot values` or `weights` and how they influence the spline curve, I don't know
-   it, ask your math teacher or the internet. I think the `knot values` can be ignored, they will be calculated by the
-   CAD program that processes the DXF file and the weights determines the influence 'strength' of the `control points`,
-   in normal case the weights are all `1` and can be left off.
+   Don't ask me about the meaning of *knot values* or *weights* and how they influence the spline curve, I don't know
+   it, ask your math teacher or the internet. I think the *knot values* can be ignored, they will be calculated by the
+   CAD program that processes the DXF file and the weights determines the influence 'strength' of the *control points*,
+   in normal case the weights are all 1 and can be left off.
 
-   To create a :class:`Spline` curve you just need a bunch of `fit points`, `control point`, `knot_values` and `weights`
+   To create a :class:`Spline` curve you just need a bunch of *fit points*, *control point*, *knot_values* and *weights*
    are optional (tested with AutoCAD 2010). If you add additional data, be sure that you know what you do.
 
    Create :class:`Spline` in layouts and blocks by factory function :meth:`~Layout.add_spline`.
 
-   For more information about spline mathematic go to `Wikipedia`_.
+   For more information about spline mathematics go to `Wikipedia`_.
 
 .. _Wikipedia: https://en.wikipedia.org/wiki/Spline_%28mathematics%29
 
@@ -983,47 +985,47 @@ LINEAR_SPLINE       16      planar bit is also set
 
 .. attribute:: Spline.closed
 
-   ``True`` if spline is closed else ``False``.  A closed spline has a connection from the last control point
+   *True* if spline is closed else *False*.  A closed spline has a connection from the last control point
    to the first control point. (read/write)
 
 .. method:: Spline.get_control_points()
 
-   Returns the control points as `list` of `3D points`.
+   Returns the control points as list of (x, y, z) tuples.
 
 .. method:: Spline.set_control_points(points)
 
-   Set control points, `points` is a list (container or generator) of (x, y, z) tuples.
+   Set control points, *points* is a list (container or generator) of (x, y, z) tuples.
 
 .. method:: Spline.get_fit_points()
 
-   Returns the fit points as `list` of `3D points`.
+   Returns the fit points as list of (x, y, z) tuples.
 
 .. method:: Spline.set_fit_points(points)
 
-   Set fit points, `points` is a list (container or generator) of (x, y, z) tuples.
+   Set fit points, *points* is a list (container or generator) of (x, y, z) tuples.
 
 .. method:: Spline.get_knot_values()
 
-   Returns the knot values as `list` of `floats`.
+   Returns the knot values as list of *floats*.
 
 .. method:: Spline.set_knot_values(values)
 
-   Set knot values, `values` is a list (container or generator) of `floats`.
+   Set knot values, *values* is a list (container or generator) of *floats*.
 
 .. method:: Spline.get_weights()
 
-   Returns the weight values as `list` of `floats`.
+   Returns the weight values as list of *floats*.
 
 .. method:: Spline.set_weights(values)
 
-   Set weights, `values` is a list (container or generator) of `floats`.
+   Set weights, *values* is a list (container or generator) of *floats*.
 
 .. method:: Spline.edit_data()
 
    Context manager for all spline data, returns :class:`SplineData`.
 
 Fit points, control points, knot values and weights can be manipulated as lists by using the general context manager
-:class:`Spline.edit_data`::
+:meth:`Spline.edit_data`::
 
     with spline.edit_data() as spline_data:
         # spline_data contains standard python lists: add, change or delete items as you want
@@ -1036,26 +1038,26 @@ Fit points, control points, knot values and weights can be manipulated as lists 
 
 .. attribute:: SplineData.fit_points
 
-    Standard Python list of :class:`Spline` fit points as (x, y, z)-tuples.
+    Standard Python list of :class:`Spline` fit points as (x, y, z)-tuples. (read/write)
 
 .. attribute:: SplineData.control_points
 
-    Standard Python list of :class:`Spline` control points as (x, y, z)-tuples.
+    Standard Python list of :class:`Spline` control points as (x, y, z)-tuples. (read/write)
 
 .. attribute:: SplineData.knot_values
 
-    Standard Python list of :class:`Spline` knot values as floats.
+    Standard Python list of :class:`Spline` knot values as floats. (read/write)
 
 .. attribute:: SplineData.weights
 
-    Standard Python list of :class:`Spline` weights as floats.
+    Standard Python list of :class:`Spline` weights as floats. (read/write)
 
 Body
 ====
 
 .. class:: Body(GraphicEntity)
 
-    Introduced in AutoCAD R13 (DXF version AC1012)
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``BODY``.
 
     A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
     Create :class:`Body` objects in layouts and blocks by factory function :meth:`~Layout.add_body`.
@@ -1083,7 +1085,7 @@ Body
 
 .. attribute:: ModelerGeometryData.text_lines
 
-    ACIS date als list of strings
+    ACIS date as list of strings. (read/write)
 
 .. method:: ModelerGeometryData.__str__()
 
@@ -1094,7 +1096,7 @@ Region
 
 .. class:: Region(Body)
 
-    Introduced in AutoCAD R13 (DXF version AC1012)
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``REGION``.
 
     An object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
     Create :class:`Region` objects in layouts and blocks by factory function
@@ -1117,7 +1119,7 @@ Region
 
 .. class:: 3DSolid(Body)
 
-    Introduced in AutoCAD R13 (DXF version AC1012)
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``3DSOLID``.
 
     A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
     Create :class:`3DSolid` objects in layouts and blocks by factory function
@@ -1146,9 +1148,10 @@ Mesh
 
 .. class:: Mesh(GraphicEntity)
 
-    Introduced in AutoCAD R13 (DXF version AC1012)
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``MESH``.
 
-    3D mesh entity similar to the :class:`Polyface` entity.
+    3D mesh entity similar to the :class:`Polyface` entity. Create :class:`Mesh` in layouts and
+    blocks by factory function :meth:`~Layout.add_mesh`.
 
 .. method:: 3DSolid.edit_data()
 
@@ -1167,17 +1170,17 @@ subdivision_levels      R13     int >= 1
 
 .. attribute:: MeshData.vertices
 
-    A standard Python list with (x, y, z)-tuples (read/write)
+    A standard Python list with (x, y, z) tuples (read/write)
 
 .. attribute:: MeshData.faces
 
-    A standard Python list with (v1, v2, v3,...)-tuples (read/write)
+    A standard Python list with (v1, v2, v3,...) tuples (read/write)
 
     Each face consist of a list of vertex indices (= index in :attr:`MeshData.vertices`).
 
 .. attribute:: MeshData.edges
 
-    A standard Python list with (v1, v2)-tuples (read/write)
+    A standard Python list with (v1, v2) tuples (read/write)
 
     Each edge consist of exact two vertex indices (= index in :attr:`MeshData.vertices`).
 
@@ -1187,11 +1190,11 @@ subdivision_levels      R13     int >= 1
 
 .. method:: MeshData.add_face(vertices)
 
-    Add a face by coordinates, vertices is a list of (x, y, z)-tuples.
+    Add a face by coordinates, vertices is a list of (x, y, z) tuples.
 
 .. method:: MeshData.add_edge(vertices)
 
-    Add an edge by coordinates, vertices is a list of two (x, y, z)-tuples.
+    Add an edge by coordinates, vertices is a list of two (x, y, z) tuples.
 
 .. method:: MeshData.optimize(precision=6)
 
@@ -1209,24 +1212,104 @@ Hatch
 
 .. class:: Hatch
 
-    Introduced in AutoCAD R13 (DXF version AC1012)
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``HATCH``.
 
-    Fills an enclosed area or selected objects with a hatch pattern, solid fill, or gradient fill.
+    Fills an enclosed area defined by one or more boundary paths with a hatch pattern, solid fill, or gradient fill.
+    Create :class:`Hatch` in layouts and blocks by factory function :meth:`~Layout.add_hatch`.
+
+.. attribute:: Hatch.has_solid_fill
+
+    *True* if hatch has a solid fill else *False*. (read only)
+
+.. attribute:: Hatch.has_pattern_fill
+
+    *True* if hatch has a pattern fill else *False*. (read only)
+
+.. attribute:: Hatch.has_gradient_fill
+
+    *True* if hatch has a gradient fill else *False*. A hatch with gradient fill has also a solid fill. (read only)
 
 .. method:: Hatch.edit_boundary()
 
+    Context manager to edit hatch boundary data, yields a :class:`BoundaryPathData` object.
+
 .. method:: Hatch.edit_pattern()
+
+    Context manager to edit hatch pattern data, yields a :class:`PatternData` object.
 
 .. method:: Hatch.set_pattern_definition(lines)
 
-.. method:: Hatch.set_solid_fill(color=7, style=1)
+    Setup hatch patten definition by a list of definition lines and a definition line is a 4-tuple [angle, base_point,
+    offset, dash_length_items]
+
+    - *angle*: line angle in degrees
+    - *base-point*: (x, y) tuple
+    - *offset*: (dx, dy) tuple, added to base point for next line and so on
+    - *dash_length_items*: list of dash items (item > 0 is a line, item < 0 is a gap and item == 0.0 is a point)
+
+    :param list lines: list of definition lines
+
+.. method:: Hatch.set_solid_fill(color=7, style=1, rgb=None)
+
+    Set :class:`Hatch` to solid fill mode and removes all gradient and pattern fill related data.
+
+    :param int color: ACI (AutoCAD Color Index) in range 0 to 256, (0 = BYBLOCK; 256 = BYLAYER)
+    :param int style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+    :param tuple rgb: true color value as (r, g, b) tuple - has higher priority than *color*. True color support requires at least DXF version AC1015.
+
+.. method:: Hatch.set_gradient(color1=(0, 0, 0), color2=(255, 255, 255), rotation=0., centered=0., one_color=0, tint=0., name='LINEAR')
+
+    Set :class:`Hatch` to gradient fill mode and removes all pattern fill related data. Gradient support requires at
+    least DXF version AC1018. A gradient filled hatch is also a solid filled hatch.
+
+    :param tuple color1: (r, g, b) tuple for first color, rgb values as int in range 0..255
+    :param tuple color2: (r, g, b) tuple for second color, rgb values as int in range 0..255
+    :param float rotation: rotation in degrees (360 deg = circle)
+    :param int centered: determines whether the gradient is centered or not
+    :param int one_color: 1 for gradient from *color1* to tinted *color1*
+    :param float tint: determines the tinted target *color1* for a one color gradient. (valid range 0.0 to 1.0)
+    :param str name: name of gradient type, default 'LINEAR'
+
+    Valid gradient type names are:
+
+    - ``LINEAR``
+    - ``CYLINDER``
+    - ``INVCYLINDER``
+    - ``SPHERICAL``
+    - ``INVSPHERICAL``
+    - ``HEMISPHERICAL``
+    - ``INVHEMISPHERICAL``
+    - ``CURVED``
+    - ``INVCURVED``
+
+.. method:: Hatch.get_gradient()
+
+    Get gradient data, returns a :class:`GradientData` object.
+
+.. method:: Hatch.edit_gradient()
+
+    Context manager to edit hatch gradient data, yields a :class:`GradientData` object.
 
 .. method:: Hatch.set_pattern_fill(name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1, definition=None)
 
+    Set :class:`Hatch` to pattern fill mode. Removes all gradient related data.
+
+    :param int color: AutoCAD Color Index in range 0 to 256, (0 = BYBLOCK; 256 = BYLAYER)
+    :param float angle: angle of pattern fill in degrees (360 deg = circle)
+    :param float scale: pattern scaling
+    :param int double: double flag
+    :param int style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+    :param int pattern_type: pattern type (0 = user-defined; 1 = predefined; 2 = custom) ???
+    :param list definition: list of definition lines and a definition line is a 4-tuple [angle, base_point,
+        offset, dash_length_items], see :meth:`Hatch.set_pattern_definition`
+
 .. method:: Hatch.get_seed_points()
+
+    Get seed points as list of (x, y) points, I don't know why there can be more than one seed point.
 
 .. method:: Hatch.set_seed_points(points)
 
+    Set seed points, *points* is a list of (x, y) tuples, I don't know why there can be more than one seed point.
 
 ======================= ======= ===========
 DXFAttr                 Version Description
@@ -1247,14 +1330,68 @@ n_seed_points           R13     count of seed points (better user: :meth:`Hatch.
 
     :ref:`tut_hatch`
 
+
+
 Hatch Boundary Helper Classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: BoundaryPathData
 
+    Defines the borders of the hatch, a hatch can consist of more than one path.
+
+.. attribute:: BoundaryPathData.paths
+
+    List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
+
+.. method:: BoundaryPathData.add_polyline_path(path_vertices, is_closed=1)
+
+    Create and add a new :class:`PolylinePath` object.
+
+    :param list path_vertices: list of polyline vertices as (x, y) or (x, y, bulge) tuples.
+    :param int is_closed: 1 for a closed polyline else 0
+
+.. method:: BoundaryPathData.add_edge_path()
+
+    Create and add a new :class:`EdgePath` object.
+
+.. method:: BoundaryPathData.clear()
+
+    Remove all boundary paths.
+
+
+
 .. class:: PolylinePath
 
+    A polyline as hatch boundary path.
+
+.. attribute:: PolylinePath.is_closed
+
+    *True* if polyline path is closed else *False*.
+
+.. attribute:: PolylinePath.vertices
+
+    List of path vertices as (x, y, bulge) tuples. (read/write)
+
+.. attribute:: PolylinePath.source_boundary_objects
+
+    List of handles of the associated DXF entities for associative hatches. There is no support for associative hatches
+    by ezdxf you have to do it all by yourself. (read/write)
+
+.. method:: PolylinePath.set_vertices(vertices, is_closed=1)
+
+    Set new vertices for the polyline path, a vertex has to be a (x, y) or a (x, y, bulge) tuple.
+
+.. method:: PolylinePath.clear()
+
+    Removes all vertices and all links to associated DXF objects (:attr:`PolylinePath.source_boundary_objects`).
+
+
+
 .. class:: EdgePath
+
+    Boundary path build by edges. There are four different edge types: :class:`LineEdge`, :class:`ArcEdge`,
+    :class:`EllipseEdge` of :class:`SplineEdge`. Make sure there are no gaps between edges. AutoCAD in this regard is
+    very picky. *ezdxf* performs no checks on gaps between the edges.
 
 .. attribute:: EdgePath.edges
 
@@ -1262,7 +1399,7 @@ Hatch Boundary Helper Classes
 
 .. attribute:: EdgePath.source_boundary_objects
 
-    Fir associative hatches, list of handles to the associated DXF entities.
+    Required for associative hatches, list of handles to the associated DXF entities.
 
 .. method:: EdgePath.clear()
 
@@ -1270,11 +1407,50 @@ Hatch Boundary Helper Classes
 
 .. method:: EdgePath.add_line(start, end)
 
+    Add a :class:`LineEdge` from *start* to *end*.
+
+    :param tuple start: start point of line, (x, y) tuple
+    :param tuple end: end point of line, (x, y) tuple
+
 .. method:: EdgePath.add_arc(center, radius=1., start_angle=0., end_angle=360., is_counter_clockwise=0)
+
+    Add an :class:`ArcEdge`.
+
+    :param tuple center: center point of arc, (x, y) tuple
+    :param float radius: radius of circle
+    :param float start_angle: start angle of arc in degrees
+    :param float end_angle: end angle of arc in degrees
+    :param int is_counter_clockwise: 1 for yes 0 for no
 
 .. method:: EdgePath.add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., is_counter_clockwise=0)
 
+    Add an :class:`EllipseEdge`.
+
+    :param tuple center: center point of ellipse, (x, y) tuple
+    :param tuple major_axis_vector: vector of major axis as (x, y) tuple
+    :param float minor_axis_length: length of minor axis
+    :param float start_angle: start angle of ellipse in degrees
+    :param float end_angle: end angle of ellipse in degrees
+    :param int is_counter_clockwise: 1 for yes 0 for no
+
 .. method:: EdgePath.add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0)
+
+    Add a :class:`SplineEdge`.
+
+    :param list fit_points: points through which the spline must go, at least 3 fit points are required. list of (x, y) tuples
+    :param list control_points: affects the shape of the spline, mandatory amd AutoCAD crashes on invalid data. list of (x, y) tuples
+    :param list knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats; *ezdxf* provides two
+        tool functions to calculate valid knot values: :code:`ezdxf.tools.knot_values(n_control_points, degree)` and
+        :code:`ezdxf.tools.knot_values_uniform(n_control_points, degree)`
+    :param list weights: weight of control point, not mandatory, list of floats.
+    :param int degree: degree of spline
+    :param int rational: 1 for rational spline, 0 for none rational spline
+    :param int periodic: 1 for periodic spline, 0 for none periodic spline
+
+.. warning::
+
+    Unlike for the spline entity AutoCAD does not calculate the necessary *knot_values* for the spline edge itself.
+    On the contrary, if the *knot_values* in the spline edge are missing or invalid  AutoCAD **crashes**.
 
 .. class:: LineEdge
 
@@ -1282,11 +1458,11 @@ Hatch Boundary Helper Classes
 
 .. attribute:: LineEdge.start
 
-    Start point as (x, y) tuple.
+    Start point as (x, y) tuple. (read/write)
 
 .. attribute:: LineEdge.end
 
-    End point as (x, y) tuple.
+    End point as (x, y) tuple. (read/write)
 
 .. class:: ArcEdge
 
@@ -1294,87 +1470,91 @@ Hatch Boundary Helper Classes
 
 .. attribute:: ArcEdge.center
 
-     Center point of arc as (x, y) tuple.
+     Center point of arc as (x, y) tuple. (read/write)
 
 .. attribute:: ArcEdge.radius
 
-     Arc radius as float.
+     Arc radius as float. (read/write)
 
 .. attribute:: ArcEdge.start_angle
 
-     Arc start angle in degrees (360 deg = circle)
+     Arc start angle in degrees (360 deg = circle). (read/write)
 
 .. attribute:: ArcEdge.end_angle
 
-     Arc end angle in degrees (360 deg = circle)
+     Arc end angle in degrees (360 deg = circle). (read/write)
 
 .. attribute:: ArcEdge.is_counter_clockwise
 
-     1 for counter clockwise arc else 0.
+     1 for counter clockwise arc else 0. (read/write)
 
 .. class:: EllipseEdge
 
+    Elliptic arc as boundary edge.
+
 .. attribute:: EllipseEdge.major_axis_vector
 
-    Ellipse major axis vector as (x, y) tuple.
+    Ellipse major axis vector as (x, y) tuple. (read/write)
 
 .. attribute:: EllipseEdge.minor_axis_length
 
-    Ellipse minor axis length as float.
+    Ellipse minor axis length as float. (read/write)
 
 .. attribute:: EllipseEdge.radius
 
-     Ellipse radius as float.
+     Ellipse radius as float. (read/write)
 
 .. attribute:: EllipseEdge.start_angle
 
-     Ellipse start angle in degrees (360 deg = circle)
+     Ellipse start angle in degrees (360 deg = circle). (read/write)
 
 .. attribute:: EllipseEdge.end_angle
 
-     Ellipse end angle in degrees (360 deg = circle)
+     Ellipse end angle in degrees (360 deg = circle). (read/write)
 
 .. attribute:: EllipseEdge.is_counter_clockwise
 
-     1 for counter clockwise ellipse else 0.
+     1 for counter clockwise ellipse else 0. (read/write)
 
 .. class:: SplineEdge
 
+    Spline as boundary edge.
+
 .. attribute:: SplineEdge.degree
 
-     Spline degree as int.
+     Spline degree as int. (read/write)
 
 .. attribute:: SplineEdge.rational
 
-     1 for rational spline else 0.
+     1 for rational spline else 0. (read/write)
 
 .. attribute:: SplineEdge.periodic
 
-     1 for periodic spline else 0.
+     1 for periodic spline else 0. (read/write)
 
 .. attribute:: SplineEdge.knot_values
 
-     List of knot values as floats
+     List of knot values as floats. (read/write)
 
 .. attribute:: SplineEdge.control_points
 
-     List of control points as (x, y) tuples.
+     List of control points as (x, y) tuples. (read/write)
 
 .. attribute:: SplineEdge.fit_points
 
-     List of fit points as (x, y) tuples.
+     List of fit points as (x, y) tuples. (read/write)
 
 .. attribute:: SplineEdge.weights
 
-     List of weights (of control points) as floats
+     List of weights (of control points) as floats. (read/write)
 
 .. attribute:: SplineEdge.start_tangent
 
-     Spline start tangent (vector)  as (x, y) tuple
+     Spline start tangent (vector)  as (x, y) tuple. (read/write)
 
 .. attribute:: SplineEdge.end_tangent
 
-     Spline end tangent (vector)  as (x, y) tuple
+     Spline end tangent (vector)  as (x, y) tuple. (read/write)
 
 Hatch Pattern Definition Helper Classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1404,19 +1584,50 @@ Hatch Pattern Definition Helper Classes
 
 .. attribute:: PatternDefinitionLine.angle
 
-    Line angle in degrees (circle = 360 deg)
+    Line angle in degrees (circle = 360 deg). (read/write)
 
 .. attribute:: PatternDefinitionLine.base_point
 
-    Base point as (x, y) tuple.
+    Base point as (x, y) tuple. (read/write)
 
 .. attribute:: PatternDefinitionLine..offset
 
-    Offset as (x, y) tuple.
+    Offset as (x, y) tuple. (read/write)
 
 .. attribute:: PatternDefinitionLine.dash_length_items
 
-    List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot)
+    List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot). (read/write)
+
+Hatch Gradient Fill Helper Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. class:: GradientData
+
+.. attribute:: GradientData.color1
+
+    First rgb color as (r, g, b) tuple, rgb values in range 0 to 255. (read/write)
+
+.. attribute:: GradientData.color2
+
+    Second rgb color as (r, g, b) tuple, rgb values in range 0 to 255. (read/write)
+
+.. attribute:: GradientData.one_color
+
+    If :attr:`~GradientData.one_color` is 1 - the hatch is filled with a smooth transition between
+    :attr:`~GradientData.color1` and a specified :attr:`~GradientData.tint` of :attr:`~GradientData.color1`. (read/write)
+
+.. attribute:: GradientData.rotation
+
+    Gradient rotation in degrees (circle = 360 deg). (read/write)
+
+.. attribute:: GradientData.centered
+
+    Specifies a symmetrical gradient configuration. If this option is not selected, the gradient fill is shifted up and
+    to the left, creating the illusion of a light source to the left of the object. (read/write)
+
+.. attribute:: GradientData.tint
+
+    Specifies the tint (color1 mixed with white) of a color to be used for a gradient fill of one color. (read/write)
 
 .. seealso::
 
