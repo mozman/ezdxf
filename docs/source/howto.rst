@@ -43,19 +43,19 @@ Reduce Memory Footprint
 
 .. _howto_create_more_readable_dxf_files:
 
-Create More Readable DXF Files (dxf2html)
------------------------------------------
+Create More Readable DXF Files (DXF Pretty Printer)
+---------------------------------------------------
 
 DXF files are plain text files, you can open this files with every text editor which handles bigger files.
 But it is not really easy to get quick the information you want.
 
-Create a more readable HTML file::
+Create a more readable HTML file (DXF Pretty Printer)::
 
     # on Windows
-    py -3 -m ezdxf.dxf2html your_dxf_file.dxf
+    py -3 -m ezdxf.pp your_dxf_file.dxf
 
     # on Linux/Mac
-    python3 -m ezdxf.dxf2html your_dxf_file.dxf
+    python3 -m ezdxf.pp your_dxf_file.dxf
 
 This produces a HTML file *your_dxf_file.html* with a nicer layout than a plain DXF file and DXF handles as links
 between DXF entities, this simplifies the navigation between the DXF entities.

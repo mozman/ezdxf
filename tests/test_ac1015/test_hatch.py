@@ -30,9 +30,9 @@ class TestHatch(unittest.TestCase):
 
     def test_default_hatch_settings(self):
         hatch = self.hatch
-        self.assertTrue(self.hatch.is_solid_fill)
+        self.assertTrue(self.hatch.has_solid_fill)
         self.assertFalse(self.hatch.has_gradient_data)
-        self.assertFalse(self.hatch.is_pattern_fill)
+        self.assertFalse(self.hatch.has_pattern_fill)
 
         self.assertEqual(1, hatch.dxf.solid_fill)
         self.assertEqual(1, hatch.dxf.hatch_style)
@@ -299,9 +299,9 @@ class TestHatchPatternRead(unittest.TestCase):
         self.hatch = Hatch(tags)
 
     def test_is_pattern_hatch(self):
-        self.assertFalse(self.hatch.is_solid_fill)
+        self.assertFalse(self.hatch.has_solid_fill)
         self.assertFalse(self.hatch.has_gradient_data)
-        self.assertTrue(self.hatch.is_pattern_fill)
+        self.assertTrue(self.hatch.has_pattern_fill)
 
     def test_edit_pattern(self):
         with self.hatch.edit_pattern() as pattern_editor:
@@ -332,9 +332,9 @@ class TestHatchPatternCreate(unittest.TestCase):
             [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
         ]
         self.hatch.set_pattern_fill("MOZMAN", definition=pattern)
-        self.assertFalse(self.hatch.is_solid_fill)
+        self.assertFalse(self.hatch.has_solid_fill)
         self.assertFalse(self.hatch.has_gradient_data)
-        self.assertTrue(self.hatch.is_pattern_fill)
+        self.assertTrue(self.hatch.has_pattern_fill)
 
         self.assertEqual("MOZMAN", self.hatch.dxf.pattern_name)
         with self.hatch.edit_pattern() as p:
@@ -361,10 +361,10 @@ class TestGradientHatch(unittest.TestCase):
         hatch = self.hatch
         hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
         self.assertTrue(hatch.has_gradient_data)
-        self.assertTrue(hatch.is_solid_fill)
-        self.assertFalse(hatch.is_pattern_fill)
+        self.assertTrue(hatch.has_solid_fill)
+        self.assertFalse(hatch.has_pattern_fill)
 
-        gdata = hatch.get_gradient_data()
+        gdata = hatch.get_gradient()
         self.assertEqual((10, 10, 10), gdata.color1)
         self.assertEqual((250, 250, 250), gdata.color2)
         self.assertEqual(180, int(gdata.rotation))
@@ -388,8 +388,8 @@ class TestGradientHatch(unittest.TestCase):
 
         hatch.set_solid_fill(color=4)  # remove gradient data
         self.assertFalse(hatch.has_gradient_data, "gradient data not removed")
-        self.assertFalse(hatch.is_pattern_fill)
-        self.assertTrue(hatch.is_solid_fill)
+        self.assertFalse(hatch.has_pattern_fill)
+        self.assertTrue(hatch.has_solid_fill)
 
     def test_remove_gradient_low_level_dxf_tags(self):
         hatch = self.hatch

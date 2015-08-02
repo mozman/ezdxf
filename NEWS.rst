@@ -4,7 +4,7 @@ News
 
 Version 0.7.0 - 2015-...
 
-  * NEW: support for DXF entity HATCH (solid fill and pattern fill)
+  * NEW: support for DXF entity HATCH (solid fill, gradient fill and pattern fill)
   * NEW: support for DXF entity GROUP
   * NEW: support for new common DXF attributes in AC1018 (AutoCAD 2004): true_color, color_name, transparency
   * NEW: support for new common DXF attributes in AC1021 (AutoCAD 2007): shadow_mode
