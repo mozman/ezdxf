@@ -11,7 +11,7 @@ from contextlib import contextmanager
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups
+from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups, Tags
 from ..lldxf.classifiedtags import ClassifiedTags
 from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
@@ -55,8 +55,6 @@ SOLID
      1
  76
      1
- 47
-0.0442352806926743
  98
      1
  10
@@ -64,6 +62,8 @@ SOLID
  20
 0.0
 """
+
+# removed tag (code=47, 0.0442352806926743) from Template: pixel size - caused problems in AutoCAD
 
 # default is a solid fil hatch
 hatch_subclass = DefSubclass('AcDbHatch', {
@@ -104,6 +104,38 @@ class Hatch(ModernGraphicEntity):
     @property
     def has_gradient_data(self):
         return bool(self.AcDbHatch.find_first(450, 0))
+
+    @property
+    def bgcolor(self):
+        try:
+            xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
+        except ValueError:
+            return None
+        color = xdata_bgcolor.find_first(1071, 0)
+        return int2rgb(color)
+
+    @bgcolor.setter
+    def bgcolor(self, rgb):
+        color_value = rgb2int(rgb) | -0b111110000000000000000000000000  # it's magic
+        try:
+            xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
+        except ValueError:  # no xdata for background color found
+            self.tags.xdata.append(Tags([
+                DXFTag(1001, 'HATCHBACKGROUNDCOLOR'),
+                DXFTag(1071, color_value),
+            ]))
+        else:
+            xdata_bgcolor.set_first(1071, color_value)
+
+
+    @bgcolor.deleter
+    def bgcolor(self):
+        try:
+            xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
+        except ValueError:  # background color does not exist
+            return
+        else:
+            self.tags.xdata.remove(xdata_bgcolor)
 
     @contextmanager
     def edit_boundary(self):
@@ -301,14 +333,16 @@ class BoundaryPathData(object):
     def clear(self):
         self.paths = []
 
-    def add_polyline_path(self, path_vertices, is_closed=1):
+    def add_polyline_path(self, path_vertices, is_closed=1, flags=1):
         new_path = PolylinePath()
         new_path.set_vertices(path_vertices, is_closed)
+        new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
         self.paths.append(new_path)
         return new_path
 
-    def add_edge_path(self):
+    def add_edge_path(self, flags=1):
         new_path = EdgePath()
+        new_path.path_type_flags = flags
         self.paths.append(new_path)
         return new_path
 
@@ -344,9 +378,7 @@ class PolylinePath(object):
     PATH_TYPE = 'PolylinePath'
 
     def __init__(self):
-        self.path_type_flags = const.BOUNDARY_PATH_EXTERNAL + \
-                               const.BOUNDARY_PATH_POLYLINE + \
-                               const.BOUNDARY_PATH_DERIVED  # required, why?, I don't know
+        self.path_type_flags = const.BOUNDARY_PATH_POLYLINE
         self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
@@ -371,7 +403,7 @@ class PolylinePath(object):
                 self.has_bulge = value
             elif code == 73:
                 self.is_closed = value
-            elif code == 72:
+            elif code == 92:
                 self.path_type_flags = value
             elif code == 93:  # number of polyline vertices
                 pass  # ignore this value
@@ -422,9 +454,7 @@ class EdgePath(object):
     PATH_TYPE = 'EdgePath'
 
     def __init__(self):
-        self.path_type_flags = const.BOUNDARY_PATH_EXTERNAL + \
-                               const.BOUNDARY_PATH_DERIVED  # required, why?, I don't know
-
+        self.path_type_flags = const.BOUNDARY_PATH_DEFAULT
         self.edges = []
         self.source_boundary_objects = []
 

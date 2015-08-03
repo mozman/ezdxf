@@ -402,6 +402,34 @@ class TestGradientHatch(unittest.TestCase):
             self.assertFalse(tags.has_tag(code), "not removed tag: %d" % code)
 
 
+class TestHatchBackgroudColor(unittest.TestCase):
+    def setUp(self):
+        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        self.hatch = Hatch(tags)
+
+    def test_bgcolor_not_exists(self):
+        self.assertIsNone(self.hatch.bgcolor)
+
+    def test_set_new_bgcolor(self):
+        self.hatch.bgcolor = (10, 20, 30)
+        self.assertEqual((10, 20, 30), self.hatch.bgcolor)
+
+    def test_change_bgcolor(self):
+        self.hatch.bgcolor = (10, 20, 30)
+        self.assertEqual((10, 20, 30), self.hatch.bgcolor)
+        self.hatch.bgcolor = (30, 20, 10)
+        self.assertEqual((30, 20, 10), self.hatch.bgcolor)
+
+    def test_delete_bgcolor(self):
+        self.hatch.bgcolor = (10, 20, 30)
+        self.assertEqual((10, 20, 30), self.hatch.bgcolor)
+        del self.hatch.bgcolor
+        self.assertIsNone(self.hatch.bgcolor)
+
+    def test_delete_not_existing_bgcolor(self):
+        del self.hatch.bgcolor
+        self.assertIsNone(self.hatch.bgcolor)
+
 PATH_HATCH = """  0
 HATCH
   5

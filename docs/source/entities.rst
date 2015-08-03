@@ -1229,6 +1229,16 @@ Hatch
 
     *True* if hatch has a gradient fill else *False*. A hatch with gradient fill has also a solid fill. (read only)
 
+.. attribute:: Hatch.bgcolor
+
+    Property background color as (r, g, b) tuple, rgb values in range 0..255 (read/write/del)
+
+    usage::
+
+        color = hatch.bgcolor  # get background color as (r, g, b) tuple
+        hatch.bgcolor = (10, 20, 30)  # set background color
+        del hatch.bgcolor  # delete background color
+
 .. method:: Hatch.edit_boundary()
 
     Context manager to edit hatch boundary data, yields a :class:`BoundaryPathData` object.
@@ -1343,16 +1353,19 @@ Hatch Boundary Helper Classes
 
     List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
 
-.. method:: BoundaryPathData.add_polyline_path(path_vertices, is_closed=1)
+.. method:: BoundaryPathData.add_polyline_path(path_vertices, is_closed=1, flags=1)
 
     Create and add a new :class:`PolylinePath` object.
 
     :param list path_vertices: list of polyline vertices as (x, y) or (x, y, bulge) tuples.
     :param int is_closed: 1 for a closed polyline else 0
+    :param int flags: external(1) or outermost(16) or default (0)
 
-.. method:: BoundaryPathData.add_edge_path()
+.. method:: BoundaryPathData.add_edge_path(flags=1)
 
     Create and add a new :class:`EdgePath` object.
+
+    :param int flags: external(1) or outermost(16) or default (0)
 
 .. method:: BoundaryPathData.clear()
 
@@ -1363,6 +1376,20 @@ Hatch Boundary Helper Classes
 .. class:: PolylinePath
 
     A polyline as hatch boundary path.
+
+.. attribute:: PolylinePath.path_type_flags
+
+    external(1) or outermost(16) or default (0) - polyline(2) will be set by *ezdxf*
+
+    My interpretation of the :attr:`path_type_flags`, see also :ref:`tut_hatch`:
+
+    * external - path is part of the hatch outer border
+    * outermost - path is completely inside of one or more external paths
+    * default - path is completely inside of one or more outermost paths
+
+    If there are troubles with AutoCAD, maybe the hatch entity contains the pixel size tag (47) - delete it
+    :code:`hatch.AcDbHatch.remove_tags([47])` and maybe the problem is solved. *ezdxf* does not use the pixel size tag,
+    but it can occur in DXF files created by other applications.
 
 .. attribute:: PolylinePath.is_closed
 
@@ -1392,6 +1419,10 @@ Hatch Boundary Helper Classes
     Boundary path build by edges. There are four different edge types: :class:`LineEdge`, :class:`ArcEdge`,
     :class:`EllipseEdge` of :class:`SplineEdge`. Make sure there are no gaps between edges. AutoCAD in this regard is
     very picky. *ezdxf* performs no checks on gaps between the edges.
+
+.. attribute:: EdgePath.path_type_flags
+
+    external(1) or outermost(16) or default (0), see :attr:`PolylinePath.path_type_flags`
 
 .. attribute:: EdgePath.edges
 

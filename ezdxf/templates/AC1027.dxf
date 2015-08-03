@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2456763.7336805556
+2457238.697615741
   9
 $TDUUPDATE
  40
@@ -553,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-4C3
+4E4
   9
 $SURFTAB1
  70
@@ -2049,7 +2049,7 @@ APPID
 100
 AcDbSymbolTable
  70
-11
+12
   0
 APPID
   5
@@ -2202,6 +2202,20 @@ AcDbSymbolTableRecord
 AcDbRegAppTableRecord
   2
 ACAD_NAV_VCDISPLAY
+ 70
+0
+  0
+APPID
+  5
+4E3
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbRegAppTableRecord
+  2
+HATCHBACKGROUNDCOLOR
  70
 0
   0
@@ -2515,6 +2529,154 @@ BLOCKS
   0
 BLOCK
   5
+23A
+330
+238
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+_ArchTick
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+_ArchTick
+  1
+
+  0
+LWPOLYLINE
+  5
+239
+330
+238
+100
+AcDbEntity
+  8
+0
+  6
+ByBlock
+ 62
+0
+100
+AcDbPolyline
+ 90
+2
+ 70
+0
+ 43
+0.15
+ 10
+-0.5
+ 20
+-0.5
+ 10
+0.5
+ 20
+0.5
+  0
+ENDBLK
+  5
+23B
+330
+238
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+5A
+330
+58
+100
+AcDbEntity
+ 67
+1
+  8
+0
+100
+AcDbBlockBegin
+  2
+*Paper_Space
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+*Paper_Space
+  1
+
+  0
+ENDBLK
+  5
+5B
+330
+58
+100
+AcDbEntity
+ 67
+1
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+20
+330
+1F
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+*Model_Space
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+*Model_Space
+  1
+
+  0
+ENDBLK
+  5
+21
+330
+1F
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
 240
 330
 23C
@@ -2634,154 +2796,6 @@ ENDBLK
 241
 330
 23C
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-5A
-330
-58
-100
-AcDbEntity
- 67
-1
-  8
-0
-100
-AcDbBlockBegin
-  2
-*Paper_Space
- 70
-0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-*Paper_Space
-  1
-
-  0
-ENDBLK
-  5
-5B
-330
-58
-100
-AcDbEntity
- 67
-1
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-20
-330
-1F
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-*Model_Space
- 70
-0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-*Model_Space
-  1
-
-  0
-ENDBLK
-  5
-21
-330
-1F
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-23A
-330
-238
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-_ArchTick
- 70
-0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-_ArchTick
-  1
-
-  0
-LWPOLYLINE
-  5
-239
-330
-238
-100
-AcDbEntity
-  8
-0
-  6
-ByBlock
- 62
-0
-100
-AcDbPolyline
- 90
-2
- 70
-0
- 43
-0.15
- 10
--0.5
- 20
--0.5
- 10
-0.5
- 20
-0.5
-  0
-ENDBLK
-  5
-23B
-330
-238
 100
 AcDbEntity
   8
