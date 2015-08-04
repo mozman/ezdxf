@@ -127,7 +127,6 @@ class Hatch(ModernGraphicEntity):
         else:
             xdata_bgcolor.set_first(1071, color_value)
 
-
     @bgcolor.deleter
     def bgcolor(self):
         try:

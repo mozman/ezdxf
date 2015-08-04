@@ -402,7 +402,7 @@ class TestGradientHatch(unittest.TestCase):
             self.assertFalse(tags.has_tag(code), "not removed tag: %d" % code)
 
 
-class TestHatchBackgroudColor(unittest.TestCase):
+class TestHatchBackgroundColor(unittest.TestCase):
     def setUp(self):
         tags = ClassifiedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
