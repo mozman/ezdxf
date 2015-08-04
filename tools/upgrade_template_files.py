@@ -5,7 +5,7 @@ import ezdxf
 
 def add_appids(dwg):
     if "HATCHBACKGROUNDCOLOR" not in dwg.appids:
-        dwg.appids.new_entry({'name': "HATCHBACKGROUNDCOLOR", 'flags': 0})
+        dwg.appids.create("HATCHBACKGROUNDCOLOR", {'flags': 0})
 
 
 PATH = r"C:\Users\manfred\Desktop\inbox\{}.dxf"

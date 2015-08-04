@@ -203,6 +203,7 @@ class Drawing(object):
             self.write(fp)
 
     def write(self, stream):
+        self._create_appids()
         self._update_metadata()
         self.sections.write(stream)
 
@@ -219,6 +220,14 @@ class Drawing(object):
         self.header['$TDUPDATE'] = juliandate(datetime.now())
         self.header['$HANDSEED'] = str(self._handles)
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
+
+    def _create_appids(self):
+        def create_appid_if_not_exist(name, flags=0):
+            if name not in self.appids:
+                self.appids.create(name, {'flags': flags})
+
+        if self.dxfversion > 'AC1009':
+            create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
     def _enable_handles(self):
         """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.

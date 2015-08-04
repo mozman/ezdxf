@@ -147,7 +147,7 @@ class Table(object):
         self._append_entry_handle(handle)
 
     def _append_entry_handle(self, handle):
-        if not handle in self._table_entries:
+        if handle not in self._table_entries:
             self._table_entries.append(handle)
 
     def get_table_entry_wrapper(self, handle):
@@ -175,7 +175,7 @@ class Table(object):
 
     def _update_owner_handles(self):
         if self._drawing.dxfversion == 'AC1009':
-            return # no owner handles
+            return  # no owner handles
         owner_handle = self._table_header.get_handle()
         for entry in iter(self):
             if not entry.supports_dxf_attrib('owner'):
