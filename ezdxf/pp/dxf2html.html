@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- template file for dxf2html.py, just plain "str".format() substitution, no fancy template-engine -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>{name}.dxf</title>
+<style>
+{css}
+</style>
+<script>
+{javascript}
+</script>
+</head>
+<body onload="setUp()">
+<div id="general-links" class="button-bar">
+    USEFUL LINKS:
+    <a class="link-button" target="_blank" href="http://docs.autodesk.com/ACD/2014/ENU/files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm">DXF Reference</a>
+    <a class="link-button" target="_blank" href="http://www.autodesk.com/">Autodesk®</a>
+    <a class="link-button" target="_blank" href="http://usa.autodesk.com/adsk/servlet/pc/index?id=6703438&siteID=123112"
+       title="Free DXF/DWG Viewer from Autodesk®.&#13;DWG TrueView is built on the same viewing engine as AutoCAD®.">DWG TrueView</a>
+    <a class="link-button" target="_blank" href="http://autodesk.blogs.com/between_the_lines/autocad-release-history.html">AutoCAD® Release History</a>
+</div>
+<div id="dxf-filename">DXF-FILE: {name}.dxf</div>
+<div id="section-links">
+{section_links}
+</div>
+<div id="dxf-file">
+{dxf_file}
+</div>
+</body>
+
