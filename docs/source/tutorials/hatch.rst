@@ -3,13 +3,34 @@
 Tutorial for Hatch
 ==================
 
-Create a simple solid hatch::
+Create hatches with one boundary path
+-------------------------------------
 
-    import ezdxf
+The simplest form of a hatch has one polyline path with only straight lines as boundary path:
 
-    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
+.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_polyline_path.py
 
-    #TODO
+But like all polyline entities the polyline path can also have bulge values:
 
-    dwg.saveas("solid_hatch.dxf")
+.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_polyline_path_with_bulge.py
 
+The most flexible way to define a boundary path is the edge path. An edge path consist of a number of edges and
+each edge can be one of the following elements:
+
+    - line :meth:`EdgePath.add_line`
+    - arc :meth:`EdgePath.add_arc`
+    - ellipse :meth:`EdgePath.add_ellipse`
+    - spline :meth:`EdgePath.add_spline`
+
+Create a solid hatch with an edge path as boundary path:
+
+.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_edge_path.py
+
+Create hatches with multiple boundary paths (islands)
+-----------------------------------------------------
+
+Create hatches with with pattern fill
+-------------------------------------
+
+Create hatches with gradient fill
+---------------------------------
