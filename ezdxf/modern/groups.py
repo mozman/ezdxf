@@ -34,6 +34,7 @@ GROUP_ITEM_CODE = 340
 
 
 class DXFGroup(DXFEntity):
+    # groups are not allowed in block definitions
     TEMPLATE = ClassifiedTags.from_text(_GROUP_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
@@ -53,7 +54,11 @@ class DXFGroup(DXFEntity):
         """
         wrap = self.dxffactory.wrap_handle
         for handle in self.handles():
-            yield wrap(handle)
+            try:
+                entity = wrap(handle)
+                yield entity
+            except KeyError:  # handle not in entity database, maybe entity were deleted
+                pass
 
     def __len__(self):
         return sum(1 for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
@@ -66,9 +71,9 @@ class DXFGroup(DXFEntity):
         return (tag.value for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
     def get_name(self):
-        owner_dict = self.dxffactory.wrap_handle(self.dxf.owner)
+        group_table = self.dxffactory.wrap_handle(self.dxf.owner)  # returns DXFDictionary() and not DXFGroupTable()!!!
         my_handle = self.dxf.handle
-        for name, handle in owner_dict.items():
+        for name, handle in group_table.items():
             if handle == my_handle:
                 return name
         return None
@@ -79,23 +84,48 @@ class DXFGroup(DXFEntity):
         yield data
         self.set_data(data)
 
-    def set_data(self, data):
-        def all_same_layout():
-            """ Check if all entities in data are on the same layout.
-            """
-            handles = {}
-            for entity in data:
-                handles[entity.dxf.owner] = 1
-            return sum(handles.values()) < 2  # 0 for no entities; 1 for all entities on the same layout
-
-        if not all_same_layout():
-            raise ValueError("All entities have to be on the same layout (model space, paper space or block).")
-
+    def set_data(self, entities):
+        entities = list(entities)  # for generators
+        if not all_entities_on_same_layout(entities):
+            raise ValueError("All entities have to be on the same layout (model space or any paper layout but not block).")
+        # TODO: check if entities not in block definitions
         self.clear()
-        self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, entity.dxf.handle) for entity in data)
+        self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, entity.dxf.handle) for entity in entities)
+
+    def extend(self, entities):
+        with self.edit_data() as e:
+            e.extend(entities)
 
     def clear(self):
+        """ Remove all entity references, does not delete any drawing entities referenced by this group.
+        """
         self.AcDbGroup.remove_tags((GROUP_ITEM_CODE,))
+
+    def remove_invalid_handles(self):
+        """ Remove invalid handles from group.
+
+        Invalid handles: deleted entities, entities in a block layout
+        """
+        def handle_not_in_block_definition(handle):
+            wrap = self.dxffactory.wrap_handle  # shortcut
+            # owner block_record.layout is 0 if entity is in a block definition
+            owner_handle = wrap(handle).dxf.owner
+            return wrap(owner_handle).dxf.layout != 0
+
+        db = self.entitydb  # faster local var
+        valid_handles = [handle for handle in self.handles() if handle in db]
+        self.clear()
+
+        # If one entity is in a block layout remove all entities, because they have to be on the same layout
+        if len(valid_handles) and handle_not_in_block_definition(valid_handles[0]):
+            self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, handle) for handle in valid_handles)
+
+
+def all_entities_on_same_layout(entities):
+    """ Check if all entities are on the same layout (model space or any paper layout but not block).
+    """
+    owners = set(entity.dxf.owner for entity in entities)
+    return len(owners) < 2  # 0 for no entities; 1 for all entities on the same layout
 
 
 class DXFGroupTable(object):
@@ -114,6 +144,10 @@ class DXFGroupTable(object):
 
     def __contains__(self, name):
         return name in self.dxfgroups
+
+    def groups(self):
+        for name, group in self:
+            yield group
 
     def next_name(self):
         name_exists = True
@@ -150,6 +184,8 @@ class DXFGroupTable(object):
         raise KeyError("KeyError: '{}'".format(name))
 
     def delete(self, group):
+        """Delete group. Does not delete any drawing entities referenced by this group.
+        """
         if isstring(group):  # delete group by name
             name = group
             group_handle = self.dxfgroups[name]
@@ -168,7 +204,22 @@ class DXFGroupTable(object):
         self.objects_section.entitydb.delete_handle(handle)  # remove from drawing database
 
     def clear(self):
-        for name, group in self:  # destroy dxf entities
+        """Delete all groups. Does not delete any drawing entities referenced by this groups.
+        """
+        for name, group in self:  # destroy dxf group entities
             self._destroy_dxf_group_entity(group.dxf.handle)
-        self.dxfgroups.clear()  # delete all references
+        self.dxfgroups.clear()  # delete all group references
 
+    def cleanup(self):
+        """Removes invalid handles in all groups and removes empty groups.
+        """
+        empty_groups = []
+        for name, group in self:
+            group.remove_invalid_handles()
+            if not len(group):  # remove empty group
+                # do not delete groups while iterating over groups!
+                empty_groups.append(name)
+
+        # now delete emtpy groups
+        for name in empty_groups:
+            self.delete(name)

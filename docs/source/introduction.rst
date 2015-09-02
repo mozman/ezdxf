@@ -18,19 +18,22 @@ the future gradually.
 ezdxf is NOT
 ------------
 
-- a DXF converter: *ezdxf* can not convert between different DXF versions, if you are looking for an appropriate
-  program, use *DWG TrueView* from `Autodesk`_, but the latest version can only convert to the DWG format, for
-  converting between DXF versions you need at least AutoCAD LT.
-- a CAD-Format converter: *ezdxf* can not convert DXF files to **ANY** other format, like SVG, PDF or DWG
-- a DXF renderer: see above
+- *ezdxf* is not a DXF converter: *ezdxf* can not convert between different DXF versions, if you are looking for an
+  appropriate program, use *DWG TrueView* from `Autodesk`_, but the latest version can only convert to the DWG format,
+  for converting between DXF versions you need at least AutoCAD LT.
+- *ezdxf* is not a CAD file format converter: *ezdxf* can not convert DXF files to **ANY** other format, like SVG, PDF
+  or DWG
+- *ezdxf* is not a DXF renderer (see above)
+- *ezdxf* is not a CAD kernel, *ezdxf* does not provide any functionality for construction work, it is just an interface
+  to the DXF file format.
 
 Supported Python Versions
 -------------------------
 
 *ezdxf* requires at least Python 2.7 and it's Python 3 compatible. I run unit tests with CPython 2.7, the latest stable
 CPython 3 version and the latest stable release of pypy during development. *ezdxf* is written in pure Python
-and requires no additional libraries beside the Python Standard Library, hence it should run with IronPython and
-Jython also.
+and requires only *pyparser* as additional library beside the Python Standard Library, hence it should run with
+IronPython and Jython also.
 
 Supported Operating Systems
 ---------------------------

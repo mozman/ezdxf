@@ -150,6 +150,11 @@ Create new entities
    Add a :class:`3DSolid` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
    endings. (requires DXF version AC1012 or newer)
 
+.. method:: Layout.add_hatch(color=7, dxfattribs=None)
+
+   Add a :class:`Hatch` entity, *color* as ACI (AutoCAD Color Index), default is 7 (black/white).
+   (requires DXF version AC1012 or newer)
+
 Delete entities
 ---------------
 
