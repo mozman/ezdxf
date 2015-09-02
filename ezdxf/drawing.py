@@ -206,6 +206,15 @@ class Drawing(object):
         self._update_metadata()
         self.sections.write(stream)
 
+    def cleanup(self, groups=True):
+        """
+        Cleanup drawing. Call it before saving the drawing but only if necessary, the process could take a while.
+
+        :param groups: removes deleted and invalid entities from groups
+        """
+        if groups and self.groups is not None:
+            self.groups.cleanup()
+
     def _update_metadata(self):
         self.header['$TDUPDATE'] = juliandate(datetime.now())
         self.header['$HANDSEED'] = str(self._handles)

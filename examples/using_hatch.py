@@ -9,6 +9,7 @@
 import ezdxf
 from ezdxf.tools import knot_values_by_control_points
 
+
 def create_solid_polyline_hatch():
     dwg = ezdxf.new("Ac1024")  # create a new DXF drawing (AutoCAD 2010)
     msp = dwg.modelspace()  # we are working in model space
@@ -17,14 +18,16 @@ def create_solid_polyline_hatch():
         editor.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
     dwg.saveas("hatch_solid_polyline.dxf")  # save DXF drawing
 
+
 def create_pattern_fill_polyline_hatch():
     dwg = ezdxf.new("Ac1024")  # create a new DXF drawing (AutoCAD 2010)
     msp = dwg.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
-    hatch.set_pattern_fill('ANSI31', color=2, scale=0.01)
+    hatch.set_pattern_fill('ANSI33', color=7, scale=0.01)
     with hatch.edit_boundary() as editor:  # get boundary editor as context object
         editor.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
     dwg.saveas("hatch_pattern_fill_polyline.dxf")  # save DXF drawing
+
 
 def using_hatch_style():
     def place_square_1(hatch, x, y):
@@ -65,6 +68,7 @@ def using_hatch_style():
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
     dwg.saveas("hatch_styles_examples.dxf")  # save DXF drawing
+
 
 def using_hatch_style_with_edge_path():
     def add_edge_path(path_editor, vertices):

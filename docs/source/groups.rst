@@ -1,10 +1,12 @@
 Group
 =====
 
-A group is just a bunch of DXF entities tied together. All entities of a group has to be on the same layout (model
-space, paper space or block). Groups can be named or unnamed, but in reality an unnamed groups has just a special name
-like ``'*Annnn'``. The name of a group has to be unique in the drawing. Groups are organized in the main group table,
+A group is just a bunch of DXF entities tied together. All entities of a group has to be on the same layout (model space
+or any paper layout but not block). Groups can be named or unnamed, but in reality an unnamed groups has just a special
+name like ``'*Annnn'``. The name of a group has to be unique in the drawing. Groups are organized in the main group table,
 which is an :attr:`Drawing.groups` of the class :class:`Drawing`.
+
+Group entities have to be in model space or any paper layout but not in a block definition!
 
 .. class:: DXFGroup
 
@@ -20,7 +22,7 @@ selectable              R13     1 for selectable, 0 for not selectable group (in
 
 .. method:: DXFGroup.__iter__()
 
-   Iterate over all DXF entities in this group as instances of :class:`GraphicEntity` and inherited (LINE, CIRCLE, ...).
+   Iterate over all DXF entities in this group as instances of :class:`GraphicEntity` or inherited (LINE, CIRCLE, ...).
 
 .. method:: DXFGroup.__len__()
 
@@ -49,9 +51,23 @@ selectable              R13     1 for selectable, 0 for not selectable group (in
        # remove last entity from a group
        data.pop()
 
+.. method:: DXFGroup.set_data(entities)
+
+   Set `entities` as new group content, entities should be iterable and yields instances of :class:`GraphicEntity` or
+   inherited (LINE, CIRCLE, ...).
+
+.. method:: DXFGroup.extend(entities)
+
+   Append `entities` to group content, entities should be iterable and yields instances of :class:`GraphicEntity` or
+   inherited (LINE, CIRCLE, ...).
+
 .. method:: DXFGroup.clear()
 
-   Remove all entities from a group.
+   Remove all entities from group.
+
+.. method:: DXFGroup.remove_invalid_handles()
+
+   Remove invalid handles from group. Invalid handles: deleted entities, entities in a block layout (but not implemented yet)
 
 
 GroupTable
@@ -65,6 +81,10 @@ There only exists one group table in each drawing, which is accessible by the at
 
    Iterate over all existing groups as `(name, group)` tuples. `name` is the name of the group as `string` and `group`
    is an object of type :class:`DXFGroup`.
+
+.. method:: DXFGroupTable.groups()
+
+   Generator over all existing groups, yields just objects of type :class:`DXFGroup`.
 
 .. method:: DXFGroupTable.__len__()
 
@@ -92,3 +112,7 @@ There only exists one group table in each drawing, which is accessible by the at
 .. method:: DXFGroupTable.clear()
 
    Delete all groups.
+
+.. method:: DXFGroupTable.cleanup()
+
+   Removes invalid handles in all groups and empty groups.

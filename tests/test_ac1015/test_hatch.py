@@ -12,6 +12,7 @@ import unittest
 from ezdxf.modern.hatch import Hatch, _HATCH_TPL
 from ezdxf.lldxf.classifiedtags import ClassifiedTags, DXFTag
 
+
 class TestHatch(unittest.TestCase):
     def setUp(self):
         tags = ClassifiedTags.from_text(_HATCH_TPL)
@@ -29,6 +30,10 @@ class TestHatch(unittest.TestCase):
 
     def test_default_hatch_settings(self):
         hatch = self.hatch
+        self.assertTrue(self.hatch.has_solid_fill)
+        self.assertFalse(self.hatch.has_gradient_data)
+        self.assertFalse(self.hatch.has_pattern_fill)
+
         self.assertEqual(1, hatch.dxf.solid_fill)
         self.assertEqual(1, hatch.dxf.hatch_style)
         self.assertEqual(1, hatch.dxf.pattern_type)
@@ -64,6 +69,7 @@ class TestHatch(unittest.TestCase):
         self.assertEqual((10, (1.0, 1.0)), tags[index+1])
         self.assertEqual((10, (2.0, 2.0)), tags[index+2])
         self.assertEqual((999, 'MARKER'), tags[-1])  # marker still there?
+
 
 class TestBoundaryPathData(unittest.TestCase):
     def setUp(self):
@@ -102,9 +108,6 @@ class TestCreateBoundaryPathData(unittest.TestCase):
             self.assertEqual((1, 0, 0), path.vertices[3], "invalid last vertex")
             self.assertTrue(path.is_closed)
 
-    def test_add_edge_path(self):  # TODO
-        pass
-
 
 class TestPolylinePath(unittest.TestCase):
     def setUp(self):
@@ -128,6 +131,7 @@ class TestPolylinePath(unittest.TestCase):
             # vertex format: x, y, bulge_value
             self.assertEqual((10, 10, 0), path.vertices[0], "invalid first vertex")
             self.assertEqual((10, 0, 0), path.vertices[3], "invalid last vertex")
+
 
 class TestEdgeHatch(unittest.TestCase):
     def setUp(self):
@@ -232,6 +236,7 @@ class TestEdgeHatch(unittest.TestCase):
             self.assertEqual((10, 0), edge.start)
             self.assertEqual((0, 0), edge.end)
 
+
 class TestEdgeHatchWithSpline(unittest.TestCase):
     def setUp(self):
         tags = ClassifiedTags.from_text(EDGE_HATCH_WITH_SPLINE)
@@ -265,7 +270,7 @@ class TestEdgeHatchWithSpline(unittest.TestCase):
         # create the spline
         with self.hatch.edit_boundary() as editor:
             path = editor.paths[0]
-            spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], 3, 1, 1)
+            spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
             # the following values do not represent a mathematically valid spline
             spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
             spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -287,10 +292,16 @@ class TestEdgeHatchWithSpline(unittest.TestCase):
             self.assertEqual([1, 2, 3, 4, 5, 6], spline.knot_values)
             self.assertEqual([4, 3, 2, 1], spline.weights)
 
+
 class TestHatchPatternRead(unittest.TestCase):
     def setUp(self):
         tags = ClassifiedTags.from_text(HATCH_PATTERN)
         self.hatch = Hatch(tags)
+
+    def test_is_pattern_hatch(self):
+        self.assertFalse(self.hatch.has_solid_fill)
+        self.assertFalse(self.hatch.has_gradient_data)
+        self.assertTrue(self.hatch.has_pattern_fill)
 
     def test_edit_pattern(self):
         with self.hatch.edit_pattern() as pattern_editor:
@@ -309,17 +320,21 @@ class TestHatchPatternRead(unittest.TestCase):
             self.assertEqual(2, len(line1.dash_length_items))
             self.assertEqual([0.125, -0.0625], line1.dash_length_items)
 
+
 class TestHatchPatternCreate(unittest.TestCase):
     def setUp(self):
         tags = ClassifiedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
 
-    def test_create_new_hatch(self):
+    def test_create_new_pattern_hatch(self):
         pattern = [
             [45, (0, 0), (0, 1), []],  # 1. Line: continuous
             [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
         ]
         self.hatch.set_pattern_fill("MOZMAN", definition=pattern)
+        self.assertFalse(self.hatch.has_solid_fill)
+        self.assertFalse(self.hatch.has_gradient_data)
+        self.assertTrue(self.hatch.has_pattern_fill)
 
         self.assertEqual("MOZMAN", self.hatch.dxf.pattern_name)
         with self.hatch.edit_pattern() as p:
@@ -335,6 +350,57 @@ class TestHatchPatternCreate(unittest.TestCase):
             self.assertEqual((0, 1), line1.offset)
             self.assertEqual(2, len(line1.dash_length_items))
             self.assertEqual([0.2, -0.1], line1.dash_length_items)
+
+
+class TestGradientHatch(unittest.TestCase):
+    def setUp(self):
+        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        self.hatch = Hatch(tags)
+
+    def test_create_gradient(self):
+        hatch = self.hatch
+        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+        self.assertTrue(hatch.has_gradient_data)
+        self.assertTrue(hatch.has_solid_fill)
+        self.assertFalse(hatch.has_pattern_fill)
+
+        gdata = hatch.get_gradient()
+        self.assertEqual((10, 10, 10), gdata.color1)
+        self.assertEqual((250, 250, 250), gdata.color2)
+        self.assertEqual(180, int(gdata.rotation))
+        self.assertEqual(0, gdata.centered)
+        self.assertEqual(0, gdata.tint)
+        self.assertEqual('LINEAR', gdata.name)
+
+    def test_create_gradient_low_level_dxf_tags(self):
+        hatch = self.hatch
+        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+        tags = hatch.AcDbHatch
+        for code in [450, 451, 452, 453, 460, 461, 462, 470]:
+            self.assertTrue(tags.has_tag(code), "missing required tag: %d" % code)
+        self.assertEqual(2, len(tags.find_all(463)))
+        self.assertEqual(2, len(tags.find_all(421)))
+
+    def test_remove_gradient_data(self):
+        hatch = self.hatch
+        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+        self.assertTrue(hatch.has_gradient_data)
+
+        hatch.set_solid_fill(color=4)  # remove gradient data
+        self.assertFalse(hatch.has_gradient_data, "gradient data not removed")
+        self.assertFalse(hatch.has_pattern_fill)
+        self.assertTrue(hatch.has_solid_fill)
+
+    def test_remove_gradient_low_level_dxf_tags(self):
+        hatch = self.hatch
+        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+        self.assertTrue(hatch.has_gradient_data)
+
+        hatch.set_solid_fill(color=4)  # remove gradient data
+        tags = hatch.AcDbHatch
+        for code in [450, 451, 452, 453, 460, 461, 462, 463, 421, 470]:
+            self.assertFalse(tags.has_tag(code), "not removed tag: %d" % code)
+
 
 PATH_HATCH = """  0
 HATCH

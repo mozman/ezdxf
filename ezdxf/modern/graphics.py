@@ -62,7 +62,6 @@ entity_subclass = DefSubclass('AcDbEntity', {
 
 # noinspection PyUnresolvedReferences
 class ModernGraphicEntityExtension(object):
-    # TODO: test DXFEntity.rgb property
     @property
     def rgb(self):
         return int2rgb(self.get_dxf_attrib('true_color'))
@@ -71,7 +70,6 @@ class ModernGraphicEntityExtension(object):
     def rgb(self, rgb):
         self.set_dxf_attrib('true_color', rgb2int(rgb))
 
-    # TODO: test DXFEntity.transparency property
     @property
     def transparency(self):
         return transparency2float(self.get_dxf_attrib('transparency'))

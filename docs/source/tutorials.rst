@@ -14,4 +14,6 @@ Tutorials
    tutorials/spline
    tutorials/polyface
    tutorials/mesh
+   tutorials/hatch
+   tutorials/hatch_pattern
 

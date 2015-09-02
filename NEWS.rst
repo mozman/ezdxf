@@ -4,15 +4,16 @@ News
 
 Version 0.7.0 - 2015-...
 
-  * NEW: support for DXF entity HATCH (solid fill and pattern fill)
+  * NEW: support for DXF entity HATCH (solid fill, gradient fill and pattern fill)
   * NEW: support for DXF entity GROUP
   * NEW: support for new common DXF attributes in AC1018 (AutoCAD 2004): true_color, color_name, transparency
   * NEW: support for new common DXF attributes in AC1021 (AutoCAD 2007): shadow_mode
   * NEW: extended custom vars interface
-  * NEW: dxf2html.py - added support for custom properties in the header section
+  * NEW: dxf2html - added support for custom properties in the header section
   * NEW: query() supports case insensitive attribute queries by appending an 'i' to the query string, e.g. '*[layer=="construction"]i'
-  * BUGFIX: query parser couldn't handle attribute names with '_'
-  * CHANGE: renamed dxf2html to pp (pretty printer), run it with py -m ezdxf.pp yourfile.dxf
+  * NEW: Drawing.cleanup() - call before saving the drawing but only if necessary, the process could take a while.
+  * BUGFIX: query parser couldn't handle attribute names containing '_'
+  * CHANGE: renamed dxf2html to pp (pretty printer), usage: py -m ezdxf.pp yourfile.dxf (generates yourfile.html in the same folder)
   * CHANGE: cleanup file structure
 
 Version 0.6.5 - 2015-02-27
