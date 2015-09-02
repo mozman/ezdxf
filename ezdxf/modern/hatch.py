@@ -378,7 +378,6 @@ class PolylinePath(object):
 
     def __init__(self):
         self.path_type_flags = const.BOUNDARY_PATH_POLYLINE
-        self.has_bulge = 0
         self.is_closed = 0
         self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
         self.source_boundary_objects = []
@@ -399,7 +398,7 @@ class PolylinePath(object):
                 x, y, bulge = self.vertices.pop()  # last value
                 self.vertices.append((x, y, value))  # last coordinates with new bulge value
             elif code == 72:
-                self.has_bulge = value
+                pass  # ignore this value
             elif code == 73:
                 self.is_closed = value
             elif code == 92:
@@ -419,28 +418,31 @@ class PolylinePath(object):
             else:
                 raise ValueError("Invalid vertex format, expected (x, y) or (x, y, bulge)")
             new_vertices.append((x, y, bulge))
-            if bulge != 0:
-                has_bulge = 1
         self.vertices = new_vertices
-        self.has_bulge = has_bulge
         self.is_closed = is_closed
 
     def clear(self):
         self.vertices = []
-        self.has_bulge = False
-        self.is_closed = False
+        self.is_closed = 0
         self.source_boundary_objects = []
 
+    def has_bulge(self):
+        for x, y, bulge in self.vertices:
+            if bulge != 0:
+                return 1
+        return 0
+
     def dxftags(self):
+        has_bulge = self.has_bulge()
+
         vtags = []
         for x, y, bulge in self.vertices:
             vtags.append(DXFTag(10, (float(x), float(y))))
-            if bulge != 0:
+            if has_bulge:
                 vtags.append(DXFTag(42, float(bulge)))
-                self.has_bulge = 1
 
         tags = [DXFTag(92, int(self.path_type_flags)),
-                DXFTag(72, int(self.has_bulge)),
+                DXFTag(72, int(has_bulge)),
                 DXFTag(73, int(self.is_closed)),
                 DXFTag(93, len(self.vertices)),
                 ]

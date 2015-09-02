@@ -119,7 +119,7 @@ class TestPolylinePath(unittest.TestCase):
             path = editor.paths[0]  # test first boundary path
             self.assertEqual('PolylinePath', path.PATH_TYPE, "invalid path type")
             self.assertEqual(4, len(path.vertices))
-            self.assertFalse(path.has_bulge)
+            self.assertFalse(path.has_bulge())
             self.assertTrue(path.is_closed)
             self.assertEqual(7, path.path_type_flags, "unexpected path type flags")
 
