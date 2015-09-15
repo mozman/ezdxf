@@ -37,8 +37,7 @@ class ClassifiedTags(object):
         clone.link = self.link  # important for dxf importer!
         return clone
 
-    def clone(self):
-        return self.__copy__()
+    clone = __copy__
 
     @property
     def noclass(self):
@@ -157,9 +156,9 @@ class ClassifiedTags(object):
     def get_handle(self):
         return self.noclass.get_handle()
 
-    @staticmethod
-    def from_text(text):
-        return ClassifiedTags(StringIterator(text))
+    @classmethod
+    def from_text(cls, text):
+        return cls(StringIterator(text))
 
 LINKED_ENTITIES = {
     'INSERT': 'ATTRIB',

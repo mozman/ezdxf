@@ -255,18 +255,14 @@ class Tags(list):
         index = self.tag_index(code)
         return self[index].value
 
-    @staticmethod
-    def from_text(text):
-        return Tags(StringIterator(text))
+    @classmethod
+    def from_text(cls, text):
+        return cls(StringIterator(text))
 
     def __copy__(self):
-        def copy_tag(tag):
-            return DXFTag(tag.code, tag.value[:]) if is_point_code(tag.code) else DXFTag(tag.code, tag.value)
+        return self.__class__(DXFTag(*tag) for tag in self)
 
-        return self.__class__(copy_tag(tag) for tag in self)
-
-    def clone(self):
-        return self.__copy__()
+    clone = __copy__
 
     def remove_tags(self, codes):
         delete_tags = [tag for tag in self if tag.code in codes]
@@ -331,9 +327,9 @@ class TagGroups(list):
     def get_name(self, index):
         return self[index][0].value
 
-    @staticmethod
-    def from_text(text, splitcode=0):
-        return TagGroups(Tags.from_text(text), splitcode)
+    @classmethod
+    def from_text(cls, text, splitcode=0):
+        return cls(Tags.from_text(text), splitcode)
 
 
 def strip_tags(tags, codes):
