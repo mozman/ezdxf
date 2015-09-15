@@ -297,6 +297,9 @@ class TagGroups(list):
     A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
 
     """
+    # tested a smarter alternative version (Rev# 376) by simon klemenc, but it isn't faster and it has a bigger memory
+    # footprint because it can not work with iterators/generators as input. Tested with 63 real world DXF files, and
+    # some of them were really big files.
     def __init__(self, tags, splitcode=0):
         super(TagGroups, self).__init__()
         self.splitcode = splitcode
