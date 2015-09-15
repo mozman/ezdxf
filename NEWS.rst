@@ -4,6 +4,7 @@ News
 
 Version 0.7.0 - 2015-...
 
+  * Supported Python versions: CPython 2.7, 3.4, pypy 2.6.1 and pypy3 2.4.0
   * NEW: support for DXF entity HATCH (solid fill, gradient fill and pattern fill), pattern fill with background color supported
   * NEW: support for DXF entity GROUP
   * NEW: support for new common DXF attributes in AC1018 (AutoCAD 2004): true_color, color_name, transparency
@@ -15,6 +16,7 @@ Version 0.7.0 - 2015-...
   * BUGFIX: query parser couldn't handle attribute names containing '_'
   * CHANGE: renamed dxf2html to pp (pretty printer), usage: py -m ezdxf.pp yourfile.dxf (generates yourfile.html in the same folder)
   * CHANGE: cleanup file structure
+
 
 Version 0.6.5 - 2015-02-27
 
