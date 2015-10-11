@@ -182,8 +182,8 @@ DXFAttr     Version Description
 =========== ======= ===========
 center      R12     center point of arc (2D/3D Point)
 radius      R12     radius of arc (float)
-startangle  R12     start angle in degrees (float)
-endangle    R12     end angle in degrees (float)
+start_angle R12     start angle in degrees (float)
+end_angle   R12     end angle in degrees (float)
 =========== ======= ===========
 
 Text

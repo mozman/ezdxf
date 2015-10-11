@@ -12,6 +12,7 @@ import unittest
 from ezdxf.modern.spline import Spline, _SPLINE_TPL
 from ezdxf.lldxf.classifiedtags import ClassifiedTags
 
+
 class TestSpline(unittest.TestCase):
     def setUp(self):
         self.spline = Spline(ClassifiedTags.from_text(_SPLINE_TPL))
