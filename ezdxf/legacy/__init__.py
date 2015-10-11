@@ -66,6 +66,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .headervars import VARMAP
 from . import tableentries
 from . import graphics
+from .viewport import Viewport
 
 from .layouts import DXF12Layouts, DXF12BlockLayout
 
@@ -98,6 +99,7 @@ ENTITY_WRAPPERS = {
     'VERTEX': graphics.Vertex,
     'SEQEND': graphics.SeqEnd,
     'SHAPE': graphics.Shape,
+    'VIEWPORT': Viewport,
 }
 
 
