@@ -44,7 +44,7 @@ def create_3d_modelspace_content(modelspace):
     build_cos_sin_mesh(mesh)
 
 
-def create_viewports(paperspace):
+def create_viewports(paperspace, dxfversion):
     # Define viewports in paper space:
     # center_point, size=(width, height) defines the viewport in paper space.
     # view_center_point and view_height defines the area in model space
@@ -87,17 +87,21 @@ def create_viewports(paperspace):
     }).set_pos((16, 14), 'CENTER')
 
     vp = paperspace.add_viewport(center=(16, 10), size=(4, 4), view_center_point=(0, 0), view_height=30)
-    # only DXF R12 (AC1009): view_target_point and view_direction_vector (as many other viewport attributes) are not
-    # usual DXF attributes, they are stored as extended DXF tags and therefore need a special treatment
-    with vp.edit_data() as vp_data:
-        vp_data.view_target_point = (40, 40, 0)
-        # view_direction_vector determines the view direction,
-        # and it just a VECTOR, the view direction is the location
-        # of view_direction_vector to (0, 0, 0)
-        vp_data.view_direction_vector = (-1, -1, 1)
-        # now we have a view plane (viewport) with its origin (0, 0) in
-        # the view target point and view_center_point shifts
-        # the center of the viewport
+    if dxfversion == 'AC1009':
+        # only DXF R12 (AC1009): view_target_point and view_direction_vector (as many other viewport attributes) are not
+        # usual DXF attributes, they are stored as extended DXF tags and therefore need a special treatment
+        with vp.edit_data() as vp_data:
+            vp_data.view_target_point = (40, 40, 0)
+            # view_direction_vector determines the view direction,
+            # and it just a VECTOR, the view direction is the location
+            # of view_direction_vector to (0, 0, 0)
+            vp_data.view_direction_vector = (-1, -1, 1)
+            # now we have a view plane (viewport) with its origin (0, 0) in
+            # the view target point and view_center_point shifts
+            # the center of the viewport
+    else:  # starting at DXF version AC1015 (R2000) all viewport attributes are usual DXF attributes.
+        vp.dxf.view_target_point = (40, 40, 0)
+        vp.dxf.view_direction_vector = (-1, -1, 1)
 
     paperspace.add_text("Viewport to 3D Mesh", dxfattribs={
         'height': 0.18,
@@ -119,7 +123,7 @@ def main():
         create_3d_modelspace_content(dwg.modelspace())
         # IMPORTANT: DXF R12 supports only one paper space aka layout, every layout name returns the same layout
         layout = dwg.layout('Layout1')  # default layout
-        create_viewports(layout)
+        create_viewports(layout, dxfversion)
 
         try:
             dwg.saveas(filename)
@@ -127,7 +131,8 @@ def main():
             print("Can't write: '%s'" % filename)
 
     make('AC1009', 'viewports_in_paperspace_R12.dxf')
-    #make('AC1015', 'viewports_in_paperspace_R2000.dxf')
+    make('AC1015', 'viewports_in_paperspace_R2000.dxf')
+    make('AC1021', 'viewports_in_paperspace_R2007.dxf')
 
 if __name__ == '__main__':
     main()

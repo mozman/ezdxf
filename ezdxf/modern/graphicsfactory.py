@@ -79,3 +79,18 @@ class ModernGraphicsFactory(object):
         dxfattribs['pattern_name'] = 'SOLID'
         return self.build_and_add_entity('HATCH', dxfattribs)
 
+    def add_viewport(self, center, size, view_center_point, view_height, layer='VIEWPORTS'):
+        width, height = size
+        dxfattribs = {
+            'center': center,
+            'width': width,
+            'height': height,
+            'status': 1,  # by default highest priority (stack order)
+            'layer': layer,  # use separated layer to turn off for plotting
+            'view_center_point': view_center_point,
+            'view_height': view_height,
+        }
+        viewport = self.build_and_add_entity('VIEWPORT', dxfattribs)
+        viewport.dxf.id = viewport.get_next_viewport_id()
+        # add here required DXF tags for AC1018 and AC1021
+        return viewport

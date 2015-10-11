@@ -17,6 +17,7 @@ from .mesh import Mesh
 from .spline import Spline
 from .mtext import MText
 from .hatch import Hatch
+from .viewport import Viewport
 
 from . import dxfobjects
 from .groups import DXFGroup, DXFGroupTable
@@ -70,6 +71,7 @@ UPDATE_ENTITY_WRAPPERS = {
     '3DSOLID': solid3d.Solid3d,
     'MESH': Mesh,
     'HATCH': Hatch,
+    'VIEWPORT': Viewport,
 }
 
 
