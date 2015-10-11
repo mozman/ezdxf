@@ -110,7 +110,7 @@ class Layouts(object):
         layout.destroy()
 
 
-class Layout(DXF12Layout, ModernGraphicsFactory):
+class Layout(ModernGraphicsFactory, DXF12Layout):
     """ Layout representation
     """
     def __init__(self, drawing, layout_handle):
@@ -167,7 +167,7 @@ class Layout(DXF12Layout, ModernGraphicsFactory):
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
 
-class BlockLayout(DXF12BlockLayout, ModernGraphicsFactory):
+class BlockLayout(ModernGraphicsFactory, DXF12BlockLayout):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
