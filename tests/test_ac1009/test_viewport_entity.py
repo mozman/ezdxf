@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.legacy.graphics import Viewport, _VPORT_TPL
+from ezdxf.legacy.viewport import Viewport, _VPORT_TPL
 from ezdxf.lldxf.classifiedtags import ClassifiedTags
 
 
