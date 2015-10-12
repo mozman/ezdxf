@@ -10,6 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.tags import DXFTag
 
 
 _VIEWPORT_TPL = """  0
@@ -116,6 +117,7 @@ AcDbViewport
 0.0
 """
 
+
 viewport_subclass = DefSubclass('AcDbViewport', {
     'center': DXFAttr(10, xtype='Point2D/3D'),
     'width': DXFAttr(40),
@@ -161,10 +163,10 @@ viewport_subclass = DefSubclass('AcDbViewport', {
     'ambient_light_color_2': DXFAttr(421, dxfversion='AC1021'),  # as True Color
     'ambient_light_color_3': DXFAttr(431, dxfversion='AC1021'),  # as True Color
     'sun_handle': DXFAttr(361, dxfversion='AC1021'),
-    'ref_vp_object_1': DXFAttr(335, dxfversion='AC1021'),
-    'ref_vp_object_2': DXFAttr(343, dxfversion='AC1021'),
-    'ref_vp_object_3': DXFAttr(344, dxfversion='AC1021'),
-    'ref_vp_object_4': DXFAttr(91, dxfversion='AC1021'),
+    'ref_vp_object_1': DXFAttr(335, dxfversion='AC1021'),  # unknown meaning, don't ask mozman
+    'ref_vp_object_2': DXFAttr(343, dxfversion='AC1021'),  # unknown meaning, don't ask mozman
+    'ref_vp_object_3': DXFAttr(344, dxfversion='AC1021'),  # unknown meaning, don't ask mozman
+    'ref_vp_object_4': DXFAttr(91, dxfversion='AC1021'),  # unknown meaning, don't ask mozman
 })
 
 
@@ -176,7 +178,31 @@ class Viewport(ModernGraphicEntity):
     # paper space. For the following viewports it seems only important, that
     # the id is greater than 1.
 
+    @property
+    def AcDbViewport(self):
+        return self.tags.sublasses[2]
+
     def get_next_viewport_id(self):
         current_id = Viewport.viewport_id
         Viewport.viewport_id += 1
         return current_id
+
+    def get_frozen_layer_handles(self):
+        return (tag.value for tag in self.AcDbViewport if tag.code == 331)
+
+    def get_frozen_layer_entities(self):
+        if self.drawing is None:
+            raise AttributeError("'drawing' attribute is None, can not build DXF entities.")
+        wrapper = self.dxffactory.wrap_handle
+        return (wrapper(handle) for handle in self.get_frozen_layer_handles())
+
+    def set_frozen_layers(self, layer_handles):
+        self.AcDbViewport.remove_tags([331])  # remove existing frozen layer tags
+        frozen_layer_tags = [DXFTag(331, handle) for handle in layer_handles]
+        try:  # insert frozen layer tags in front of the flags-tag
+            # try to create order like in the DXF standard, because order is sometimes important
+            insert_pos = self.AcDbViewport.tag_index(90)
+            self.AcDbViewport[insert_pos:insert_pos] = frozen_layer_tags
+        except ValueError:  # flags-tag not found, just append frozen layer tags
+            self.AcDbViewport.extend(frozen_layer_tags)
+

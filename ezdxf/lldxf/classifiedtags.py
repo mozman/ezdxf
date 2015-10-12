@@ -197,7 +197,6 @@ def get_tags_linker():
             else:
                 raise DXFStructureError("expected DXF entity %s or SEQEND" % dxftype)
         elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
-            # TODO: not covered by tests, INSERT by read_file()
             if dxftype == 'INSERT' and not attribs_follow():
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
                 #   INSERT with no ATTRIBS, attribs_follow == 0
