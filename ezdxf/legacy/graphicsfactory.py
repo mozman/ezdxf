@@ -173,18 +173,21 @@ class GraphicsFactory(object):
         dxfattribs['size'] = size
         return self.build_and_add_entity('SHAPE', dxfattribs)
 
-    def add_viewport(self, center, size, view_center_point, view_height, layer='VIEWPORTS'):
+    def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
         width, height = size
-        dxfattribs = {
+        attribs = {
             'center': center,
             'width': width,
             'height': height,
             'status': 1,  # by default highest priority (stack order)
-            'layer': layer,  # use separated layer to turn off for plotting
+            'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
         }
+        attribs.update(dxfattribs)
         # DXF R12 (AC1009): view_center_point and view_height (as many other viewport attributes) are not usual
         # DXF attributes, they are stored as extended DXF tags.
-        viewport = self.build_and_add_entity('VIEWPORT', dxfattribs)
+        viewport = self.build_and_add_entity('VIEWPORT', attribs)
         viewport.dxf.id = viewport.get_next_viewport_id()
         with viewport.edit_data() as vp_data:
             vp_data.view_center_point = view_center_point

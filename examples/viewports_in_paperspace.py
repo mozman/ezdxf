@@ -46,7 +46,7 @@ def create_3d_modelspace_content(modelspace):
 
 def create_viewports(paperspace, dxfversion):
     # Define viewports in paper space:
-    # center_point, size=(width, height) defines the viewport in paper space.
+    # center, size=(width, height) defines the viewport in paper space.
     # view_center_point and view_height defines the area in model space
     # which is displayed in the viewport.
     paperspace.add_viewport(center=(2.5, 2.5), size=(5, 5), view_center_point=(7.5, 7.5), view_height=10)
@@ -57,7 +57,6 @@ def create_viewports(paperspace, dxfversion):
         'color': 1,
     })
 
-    # adding to Drawing.paperspace works also
     paperspace.add_viewport(center=(8.5, 2.5), size=(5, 5), view_center_point=(10, 5), view_height=25)
     paperspace.add_text("View of Circle Scale=1:5", dxfattribs={
         'insert': (6, 5.2),
@@ -84,7 +83,7 @@ def create_viewports(paperspace, dxfversion):
     paperspace.add_text("Scale=1:50", dxfattribs={
         'height': 0.18,
         'color': 1,
-    }).set_pos((16, 14), 'CENTER')
+    }).set_pos((16, 14), align='CENTER')
 
     vp = paperspace.add_viewport(center=(16, 10), size=(4, 4), view_center_point=(0, 0), view_height=30)
     if dxfversion == 'AC1009':
@@ -106,7 +105,7 @@ def create_viewports(paperspace, dxfversion):
     paperspace.add_text("Viewport to 3D Mesh", dxfattribs={
         'height': 0.18,
         'color': 1
-    }).set_pos((16, 12.5), 'CENTER')
+    }).set_pos((16, 12.5), align='CENTER')
 
 
 def main():

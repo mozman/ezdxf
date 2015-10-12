@@ -187,3 +187,34 @@ GRADIENT_TYPES = frozenset([
     'CURVED',
     'INVCURVED'
 ])
+
+
+# Viewport Status Flags (VSF) group code=90
+VSF_PERSPECTIVE_MODE = 0x1  # enabled if set
+VSF_FRONT_CLIPPING = 0x2  # enabled if set
+VSF_BACK_CLIPPING = 0x4  # enabled if set
+VSF_USC_FOLLOW = 0x8  # enabled if set
+VSF_FRONT_CLIPPING_NOT_AT_EYE = 0x10  # enabled if set
+VSF_UCS_ICON_VISIBILITY = 0x20  # enabled if set
+VSF_UCS_ICON_AT_ORIGIN = 0x40  # enabled if set
+VSF_FAST_ZOOM = 0x80  # enabled if set
+VSF_SNAP_MODE = 0x100  # enabled if set
+VSF_GRID_MODE = 0x200  # enabled if set
+VSF_ISOMETRIC_SNAP_STYLE = 0x400  # enabled if set
+VSF_HIDE_PLOT_MODE = 0x800  # enabled if set
+VSF_KISOPAIR_TOP = 0x1000  # If set and kIsoPairRight is not set, then isopair top is enabled. If both kIsoPairTop and kIsoPairRight are set, then isopair left is enabled
+VSF_KISOPAIR_RIGHT = 0x2000  # If set and kIsoPairTop is not set, then isopair right is enabled
+VSF_VIEWPORT_ZOOM_LOCKING = 0x4000  # enabled if set
+VSF_CURRENTLY_ALWAYS_ENABLED = 0x8000  # always set without a meaning :)
+VSF_NON_RECTANGULAR_CLIPPING = 0x10000  # enabled if set
+VSF_TURN_VIEWPORT_OFF = 0x20000
+
+# Viewport Render Mode (VRM) group code=281
+VRM_2D_OPTIMIZED = 0
+VRM_WIREFRAME = 1
+VRM_HIDDEN_LINE = 2
+VRM_FLAT_SHADED = 3
+VRM_GOURAUD_SHADED = 4
+VRM_FLAT_SHADED_WITH_WIREFRAME = 5
+VRM_GOURAUD_SHADED_WITH_WIREFRAME = 6
+
