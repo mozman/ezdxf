@@ -5,6 +5,7 @@
 # License: MIT License
 """Creates a structured HTML view of the DXF tags - not a CAD drawing!
 """
+from __future__ import unicode_literals
 
 import os
 import io
