@@ -2,12 +2,15 @@
 News
 ====
 
-Version 0.7.0 - 2015-...
+IMPORTANT: ezdxf doesn't handle layouts correct, you can create new layouts, but you can not place any DXF entities on this
+layouts. My advice: ignore layouts and just use the model space. (2015-11-26)
+
+Version 0.7.0 - 2015-11-26
 
   * Supported Python versions: CPython 2.7, 3.4, pypy 2.6.1 and pypy3 2.4.0
   * NEW: support for DXF entity HATCH (solid fill, gradient fill and pattern fill), pattern fill with background color supported
   * NEW: support for DXF entity GROUP
-  * NEW: support for DXF entity VIEWPORT
+  * NEW: VIEWPORT entity, but creating new viewports does not work as expected - just for reading purpose.
   * NEW: support for new common DXF attributes in AC1018 (AutoCAD 2004): true_color, color_name, transparency
   * NEW: support for new common DXF attributes in AC1021 (AutoCAD 2007): shadow_mode
   * NEW: extended custom vars interface
@@ -17,7 +20,6 @@ Version 0.7.0 - 2015-...
   * BUGFIX: query parser couldn't handle attribute names containing '_'
   * CHANGE: renamed dxf2html to pp (pretty printer), usage: py -m ezdxf.pp yourfile.dxf (generates yourfile.html in the same folder)
   * CHANGE: cleanup file structure
-
 
 Version 0.6.5 - 2015-02-27
 

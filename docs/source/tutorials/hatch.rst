@@ -29,8 +29,14 @@ Create a solid hatch with an edge path as boundary path:
 Create hatches with multiple boundary paths (islands)
 -----------------------------------------------------
 
+TODO
+
 Create hatches with with pattern fill
 -------------------------------------
 
+TODO
+
 Create hatches with gradient fill
 ---------------------------------
+
+TODO
