@@ -16,10 +16,6 @@ from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
 from ezdxf.lldxf.tags import CompressedTags
 
-
-
-
-
 # Handle definitions
 
 _HANDLE_CODES = [5, 105]
@@ -111,9 +107,13 @@ def tag_type_str(code):
 class DXF2HtmlConverter(object):
     def __init__(self, drawing):
         self.drawing = drawing
+        self.drawing.layouts.link_layout_entities_to_blocks()
         self.entitydb = drawing.entitydb
         self.section_names_in_write_order = self._section_names_in_write_order()
         self.existing_pointers = self.collect_all_pointers()
+
+    def remove_inactive_layouts_from_entity_section(self):
+        pass
 
     def _section_names_in_write_order(self):
         sections = self.drawing.sections
@@ -182,13 +182,24 @@ class DXF2HtmlConverter(object):
             ))
         return SECTION_LINKS_TPL.format(buttons=' \n'.join(section_links))
 
+    def get_entities(self):
+        wrap = self.drawing.dxffactory.wrap_handle
+        layout_keys = [self.drawing.modelspace().layout_key]
+        paperspace_key = self.drawing.get_active_layout_key()
+        if paperspace_key is not None:
+            layout_keys.append(paperspace_key)
+        for key in layout_keys:
+            entity_space = self.drawing.entities._entity_space[key]
+            for handle in entity_space:
+                yield wrap(handle)
+
     def section2html(self, section, section_template):
         """Creates a <div> container of a specific DXF sections.
         """
         if section.name == 'header':
             return section_template.format(content=self.hdrvars2html(section.hdrvars, section.custom_vars))
         elif section.name == 'entities':
-            return section_template.format(content=self.entities2html(iter(section), create_ref_links=True))
+            return section_template.format(content=self.entities2html(self.get_entities(), create_ref_links=True))
         elif section.name == 'classes':
             return section_template.format(content=self.entities2html(iter(section), create_ref_links=False))
         elif section.name == 'objects':

@@ -116,6 +116,9 @@ class LayoutSpaces(object):
             self._layout_spaces[key] = entity_space
         return entity_space
 
+    def replace_entity_space(self, key, entity_space):
+        self._layout_spaces[key] = entity_space
+
     def store_tags(self, tags):
         """ Store *tags* in associated layout entity space.
         """
@@ -125,15 +128,13 @@ class LayoutSpaces(object):
         entity_space = self.get_entity_space(self._get_key(tags))
         entity_space.store_tags(tags)
 
-    def write(self, stream, first_key=None):
+    def write(self, stream, keys=None):
         """ Write all entity spaces to *stream*.
 
-        If *first_key* is not *None*, entity space *first_key* will be written first.
+        If *keys* is not *None*, write only entity space defined in *keys*.
         """
-        keys = set(self._layout_spaces.keys())
-        if first_key is not None:
-            keys.remove(first_key)
-            keys = [first_key] + list(keys)
+        if keys is None:
+            keys = set(self._layout_spaces.keys())
 
         for key in keys:
             entity_space = self[key]

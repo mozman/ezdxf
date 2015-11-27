@@ -9,7 +9,7 @@ from datetime import datetime
 import io
 
 from . import database
-from .lldxf.tags import TagIterator, DXFTag
+from .lldxf.tags import TagIterator, DXFTag, DXFStructureError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -45,6 +45,7 @@ class Drawing(object):
         if self.dxfversion > 'AC1009':
             # for ProE, which writes entities without owner tags (330)
             self.entities.repair_model_space(self.modelspace().layout_key)
+            self.layouts.move_entities_from_blocks_into_layout_entity_space()
 
         if options.compress_binary_data:
             self.compress_binary_data()
@@ -105,6 +106,10 @@ class Drawing(object):
         return self.sections.tables.views
 
     @property
+    def block_records(self):
+        return self.sections.tables.block_records
+
+    @property
     def viewports(self):
         return self.sections.tables.viewports
 
@@ -145,6 +150,16 @@ class Drawing(object):
                 return self.layouts.create(name, dxfattribs)
         else:
             raise Warning('Not supported for DXF version AC1009.')
+
+    def get_active_layout_key(self):
+        if self.dxfversion > 'AC1009':
+            try:
+                active_layout_block_record = self.block_records.get('*Paper_Space')
+                return active_layout_block_record.dxf.handle
+            except ValueError:
+                return None
+        else:
+            return self.layout().layout_key
 
     @property
     def entities(self):

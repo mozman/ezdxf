@@ -11,6 +11,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .graphicsfactory import ModernGraphicsFactory
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.classifiedtags import ClassifiedTags
+from ..entityspace import EntitySpace
 
 
 class Layouts(object):
@@ -32,6 +33,47 @@ class Layouts(object):
         for name, handle in self._dxf_layout_management_table.items():
             layout = Layout(self.drawing, handle)
             self._layouts[name] = layout
+
+    def move_entities_from_blocks_into_layout_entity_space(self):
+        wrap = self.drawing.dxffactory.wrap_handle
+        blocks = self.drawing.blocks
+        layout_spaces = self.drawing.entities.get_entity_space()
+        entitydb = self.drawing.entitydb
+
+        for layout in self:
+            layout_key = layout.layout_key
+            block_record = wrap(layout_key)
+            block_record_name = block_record.dxf.name
+            if block_record_name not in ('*Model_Space', '*Paper_Space'):
+                block = blocks.get(block_record_name)
+                # copy block entity space to layout entity space
+                layout_spaces.replace_entity_space(layout_key, block.get_entity_space())
+                # replace block entity space with an empty entity space
+                block.set_entity_space(EntitySpace(entitydb))
+
+    def link_layout_entities_to_blocks(self):
+        wrap = self.drawing.dxffactory.wrap_handle
+        blocks = self.drawing.blocks
+        entities_section = self.drawing.entities
+
+        for layout in self:
+            layout_key = layout.layout_key
+            block_record = wrap(layout_key)
+            block_record_name = block_record.dxf.name
+            if block_record_name not in ('*Model_Space', '*Paper_Space'):
+                block = blocks.get(block_record_name)
+                # link layout space into block
+                block.set_entity_space(entities_section.get_layout_space(layout_key))
+
+    def unlink_layout_entities_from_blocks(self):
+        wrap = self.drawing.dxffactory.wrap_handle
+        blocks = self.drawing.blocks
+        entitydb = self.drawing.entitydb
+        for layout in self:
+            block_record = wrap(layout.layout_key)
+            block = blocks.get(block_record.dxf.name)
+            # unlink layout space into block
+            block.set_entity_space = EntitySpace(entitydb)
 
     def __contains__(self, name):
         return name in self._layouts
@@ -108,6 +150,7 @@ class Layouts(object):
         self._dxf_layout_management_table.remove(layout.name)
         del self._layouts[layout.name]
         layout.destroy()
+        # TODO: if active layout is deleted, set another layout as active
 
 
 class Layout(ModernGraphicsFactory, DXF12Layout):
@@ -183,6 +226,12 @@ class BlockLayout(ModernGraphicsFactory, DXF12BlockLayout):
     def set_block_record_handle(self, block_record_handle):
         self.block.dxf.owner = block_record_handle
         self.endblk.dxf.owner = block_record_handle
+
+    def get_entity_space(self):
+        return self._entity_space
+
+    def set_entity_space(self, entity_space):
+        self._entity_space = entity_space
 
     def destroy(self):
         self.drawing.sections.tables.block_records.remove_handle(self.get_block_record_handle())

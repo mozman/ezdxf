@@ -151,10 +151,14 @@ class BlocksSection(object):
     # end of public interface
 
     def write(self, stream):
+        if self.drawing.dxfversion > 'AC1009':
+            self.drawing.layouts.link_layout_entities_to_blocks()
         stream.write("  0\nSECTION\n  2\nBLOCKS\n")
         for block in self._block_layouts.values():
             block.write(stream)
         stream.write("  0\nENDSEC\n")
+        if self.drawing.dxfversion > 'AC1009':
+            self.drawing.layouts.unlink_layout_entities_from_blocks()
 
     def new_paper_space_block(self):
 

@@ -31,8 +31,12 @@ class EntitySection(AbstractSection):
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        modelspace = self.drawing.modelspace()
-        self._entity_space.write(stream, first_key=modelspace.layout_key)
+        # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
+        layout_keys = [self.drawing.modelspace().layout_key]
+        paperspace_key = self.drawing.get_active_layout_key()
+        if paperspace_key is not None:
+            layout_keys.append(paperspace_key)
+        self._entity_space.write(stream, layout_keys)
         stream.write("  0\nENDSEC\n")
 
     def repair_model_space(self, model_space_layout_key):
