@@ -138,7 +138,7 @@ class TestBlocksSectionAC1015(unittest.TestCase):
         self.dwg.blocks.delete_all_blocks()
         blocks = list(self.dwg.blocks)
 
-        # assure not deleting layout blocks
+        # assure also deleting layout blocks
         self.assertEqual(2, len(blocks))
 
         block_names = [block.name for block in blocks]

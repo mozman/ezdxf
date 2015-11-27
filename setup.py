@@ -7,7 +7,7 @@
 import os
 from setuptools import setup
 
-VERSION = "0.7.0"  # also update VERSION in __init__.py
+VERSION = "0.7.1"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'mozman@gmx.at'
 
