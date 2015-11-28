@@ -11,7 +11,10 @@ __author__ = "mozman <mozman@gmx.at>"
 from .graphicsfactory import ModernGraphicsFactory
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.classifiedtags import ClassifiedTags
-from ..entityspace import EntitySpace
+
+
+PAPER_SPACE = '*Paper_Space'
+TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
 
 
 class Layouts(object):
@@ -34,37 +37,14 @@ class Layouts(object):
             layout = Layout(self.drawing, handle)
             self._layouts[name] = layout
 
-    def move_entities_from_blocks_into_layout_entity_space(self):
-        layout_spaces = self.drawing.entities.get_entity_space()
-        entitydb = self.drawing.entitydb
-        for layout in self:
-            if not layout.is_active():
-                block = layout.block
-                # copy block entity space to layout entity space
-                layout_spaces.set_entity_space(layout.layout_key, block.get_entity_space())
-                # replace block entity space with an empty entity space
-                block.set_entity_space(EntitySpace(entitydb))
-
-    def link_block_entities_into_layouts(self):  # not used yet
+    def link_block_entities_into_layouts(self):
+        # layout entity spaces are always linked to the block definition
         layout_spaces = self.drawing.entities.get_entity_space()
         for layout in self:
             if not layout.is_active():
                 # copy block entity space to layout entity space
                 layout_spaces.set_entity_space(layout.layout_key, layout.block.get_entity_space())
                 # now the block entity space and layout entity space references the same EntitySpace() object
-
-    def link_layout_entities_to_blocks(self):
-        entities_section = self.drawing.entities
-        for layout in self:
-            if not layout.is_active():
-                # link layout space into block
-                layout.block.set_entity_space(entities_section.get_layout_space(layout.layout_key))
-
-    def unlink_layout_entities_from_blocks(self):
-        entitydb = self.drawing.entitydb
-        for layout in self:
-            # unlink layout entity space from block entity space
-            layout.block.set_entity_space(EntitySpace(entitydb))
 
     def __contains__(self, name):
         return name in self._layouts
@@ -92,11 +72,13 @@ class Layouts(object):
         return [name for order, name in sorted(names)]
 
     def get_layout_for_entity(self, entity):
-        owner_handle = entity.dxf.owner
+        return self.get_layout_by_key(entity.dxf.owner)
+
+    def get_layout_by_key(self, layout_key):
         for layout in self._layouts.values():
-            if owner_handle == layout.layout_key:
+            if layout_key == layout.layout_key:
                 return layout
-        raise KeyError("Layout with key '{}' does not exist.".format(owner_handle))
+        raise KeyError("Layout with key '{}' does not exist.".format(layout_key))
 
     def create(self, name, dxfattribs=None):
         """ Create a new Layout.
@@ -115,20 +97,39 @@ class Layouts(object):
             entity = self.drawing.objects.create_new_dxf_entity('LAYOUT', dxfattribs)
             return entity.dxf.handle
 
-        def set_block_record_layout():
-            block_record = self.dxffactory.wrap_handle(block_record_handle)
-            block_record.dxf.layout = layout_handle
-
         def add_layout_to_management_tables():
             self._dxf_layout_management_table[name] = layout_handle
             self._layouts[name] = layout
 
-        block_record_handle = self.drawing.blocks.new_paper_space_block()
+        block_layout = self.drawing.blocks.new_layout_block()
+        block_record_handle = block_layout.block_record_handle
+        block_record = block_layout.block_record
+        block = block_layout.block
         layout_handle = create_dxf_layout_entity()
-        set_block_record_layout()
+        block_record.dxf.layout = layout_handle
+
+        # set block entity space as layout entity space
+        self.drawing.entities.set_layout_space(layout_handle, block_layout.get_entity_space())
+
         layout = Layout(self.drawing, layout_handle)
         add_layout_to_management_tables()
         return layout
+
+    def set_active_layout(self, name):
+        if name == 'Model':  # reserved layout name
+            raise ValueError("Can not set model space as active layout")
+        new_active_layout = self.get(name)  # raises KeyError if no layout 'name' exists
+        old_active_layout_key = self.drawing.get_active_layout_key()
+        if old_active_layout_key == new_active_layout.layout_key:
+            return  # layout 'name' is already the active layout
+
+        blocks = self.drawing.blocks
+        new_active_paper_space_name = new_active_layout.block_record_name
+
+        blocks.rename_block(PAPER_SPACE, TMP_PAPER_SPACE_NAME)
+        blocks.rename_block(new_active_paper_space_name, PAPER_SPACE)
+        blocks.rename_block(TMP_PAPER_SPACE_NAME, new_active_paper_space_name)
+        # Layout spaces stored by layout key, no exchange necessary
 
     def delete(self, name):
         """ Delete layout *name* and all entities on it. Raises *KeyError* if layout *name* not exists.
@@ -138,14 +139,50 @@ class Layouts(object):
             raise ValueError("can not delete model space layout")
 
         layout = self._layouts[name]
+        if layout.layout_key == self.drawing.get_active_layout_key():  # name is the active layout
+            for layout_name in self.names():
+                if layout_name not in (name, 'Model'):  # set any other layout as active layout
+                    self.set_active_layout(layout_name)
+                    break
         self._dxf_layout_management_table.remove(layout.name)
         del self._layouts[layout.name]
         layout.destroy()
-        # TODO: if active layout is deleted, set another layout as active
 
 
 class Layout(ModernGraphicsFactory, DXF12Layout):
     """ Layout representation
+
+    Every layout consist of a LAYOUT entity in the OBJECTS section, an associated BLOCK in the BLOCKS section and a
+    BLOCK_RECORD_TABLE entry.
+
+    layout_key: handle of the BLOCK_RECORD, every layout entity has this handle as owner attribute (entity.dxf.owner)
+
+    There are 3 different layout types:
+
+    1. Model Space - not deletable, all entities of this layout are stored in the DXF file in the ENTITIES section, the
+    associated '*Model_Space' block is empty, block name '*Model_Space' is mandatory, the layout name is 'Model' and it
+    is mandatory.
+
+    2. Active Layout - all entities of this layout are stored in the DXF file also in the ENTITIES section, the
+    associated '*Paper_Space' block is empty, block name '*Paper_Space' is mandatory and also marks the active
+    layout, the layout name can be an arbitrary string.
+
+    3. Inactive Layout - all entities of this layouts are stored in the DXF file in the associated BLOCK
+    called '*Paper_SpaceN', where N is an arbitrary number, I don't know if the block name schema '*Paper_SpaceN' is
+    mandatory, the layout name can be an arbitrary string.
+
+    There is no different handling for active layouts and inactive layouts in ezdxf, this differentiation is just
+    for AutoCAD important and it is not described in the DXF standard.
+
+    Internal Structure:
+
+    For EVERY layout exists a BlockLayout() object in the blocks section and an EntitySpace() object in the entities
+    sections. the block layout entity section and the layout entity section are the SAME object.
+    See Layouts.create() line after comment 'set block entity space as layout entity space'.
+
+    ALL layouts entity spaces (also Model Space) are managed in a LayoutSpaces() object in the EntitySection() object.
+    Which allows full access to all entities on all layouts at every time.
+
     """
     def __init__(self, drawing, layout_handle):
         dxffactory = drawing.dxffactory
@@ -202,16 +239,8 @@ class Layout(ModernGraphicsFactory, DXF12Layout):
         entity.dxf.owner = self.layout_key
 
     def destroy(self):
-        def delete_layout_definition_block():
-            for block in self.drawing.blocks:
-                if block.get_block_record_handle() == self.layout_key:
-                    break
-            else:
-                return
-            self.drawing.blocks.delete_block(block.name)
-
         self.delete_all_entities()
-        delete_layout_definition_block()
+        self.drawing.blocks.delete_block(self.block.name)
         self.drawing.objects.remove_handle(self._layout_handle)
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
@@ -223,15 +252,20 @@ class BlockLayout(ModernGraphicsFactory, DXF12BlockLayout):
         # entity can be ClassifiedTags() or a GraphicEntity() or inherited wrapper class
         if isinstance(entity, ClassifiedTags):
             entity = self._dxffactory.wrap_entity(entity)
-        entity.dxf.owner = self.get_block_record_handle()
+        entity.dxf.owner = self.block_record_handle
         self._entity_space.append(entity.dxf.handle)
 
-    def get_block_record_handle(self):
+    @property
+    def block_record_handle(self):
         return self.block.dxf.owner
 
     def set_block_record_handle(self, block_record_handle):
         self.block.dxf.owner = block_record_handle
         self.endblk.dxf.owner = block_record_handle
+
+    @property
+    def block_record(self):
+        return self.drawing.dxffactory.wrap_handle(self.block_record_handle)
 
     def get_entity_space(self):
         return self._entity_space
@@ -240,5 +274,5 @@ class BlockLayout(ModernGraphicsFactory, DXF12BlockLayout):
         self._entity_space = entity_space
 
     def destroy(self):
-        self.drawing.sections.tables.block_records.remove_handle(self.get_block_record_handle())
+        self.drawing.sections.tables.block_records.remove_handle(self.block_record_handle)
         super(BlockLayout, self).destroy()

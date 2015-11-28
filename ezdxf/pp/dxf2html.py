@@ -107,7 +107,6 @@ def tag_type_str(code):
 class DXF2HtmlConverter(object):
     def __init__(self, drawing):
         self.drawing = drawing
-        self.drawing.layouts.link_layout_entities_to_blocks()
         self.entitydb = drawing.entitydb
         self.section_names_in_write_order = self._section_names_in_write_order()
         self.existing_pointers = self.collect_all_pointers()

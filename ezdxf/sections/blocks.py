@@ -131,6 +131,19 @@ class BlocksSection(object):
             if not self.__contains__(blockname):
                 return blockname
 
+    def rename_block(self, old_name, new_name):
+        """ Renames the block and the associated block record.
+        """
+        block_layout = self.get(old_name)
+        block_layout.name = new_name
+
+        if self.drawing.dxfversion > 'AC1009':
+            block_record = self.drawing.block_records.get(old_name)
+            block_record.dxf.name = new_name
+
+        del self._block_layouts[old_name]  # just remove old dict entry
+        self.add(block_layout)  # add new dict entry
+
     def delete_block(self, name):
         block_layout = self[name]
         block_layout.destroy()
@@ -141,7 +154,7 @@ class BlocksSection(object):
         if self.drawing.dxfversion != 'AC1009':
             layout_keys = set(layout.layout_key for layout in self.drawing.layouts)
             for block in list(self):
-                if block.get_block_record_handle() not in layout_keys:
+                if block.block_record_handle not in layout_keys:
                     self.delete_block(block.name)
         else:
             for block_name in list(self._block_layouts.keys()):
@@ -151,23 +164,19 @@ class BlocksSection(object):
     # end of public interface
 
     def write(self, stream):
-        if self.drawing.dxfversion > 'AC1009':
-            self.drawing.layouts.link_layout_entities_to_blocks()
         stream.write("  0\nSECTION\n  2\nBLOCKS\n")
         for block in self._block_layouts.values():
             block.write(stream)
         stream.write("  0\nENDSEC\n")
-        if self.drawing.dxfversion > 'AC1009':
-            self.drawing.layouts.unlink_layout_entities_from_blocks()
 
-    def new_paper_space_block(self):
+    def new_layout_block(self):
 
-        def block_name():
-            return "*Paper_Space%d" % count
+        def block_name(_count):
+            return "*Paper_Space%d" % _count
 
-        count = 1
-        while block_name() in self._block_layouts:
+        count = 0
+        while block_name(count) in self._block_layouts:
             count += 1
 
-        block_layout = self.new(block_name())
-        return block_layout.get_block_record_handle()
+        block_layout = self.new(block_name(count))
+        return block_layout

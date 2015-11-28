@@ -19,6 +19,9 @@ class EntitySection(AbstractSection):
     def get_layout_space(self, key):
         return self._entity_space.get_entity_space(key)
 
+    def set_layout_space(self, key, entity_space):
+        return self._entity_space.set_entity_space(key, entity_space)
+
     # start of public interface
 
     def __iter__(self):

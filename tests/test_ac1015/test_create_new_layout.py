@@ -33,7 +33,7 @@ def block_record_for_layout_exist(layout):
 
 def block_for_layout_exist(layout):
     for block in DWG.blocks:
-        if block.get_block_record_handle() == layout.layout_key:
+        if block.block_record_handle == layout.layout_key:
             return True
     return False
 
@@ -53,8 +53,8 @@ class TestCreateLayout(unittest.TestCase):
             DWG.create_layout('Model')
 
 
-class TestDeleteLayout(unittest.TestCase):
-    def test_create_new_layout(self):
+class TestLayoutMangement(unittest.TestCase):
+    def test_create_and_delete_new_layout(self):
         new_layout = DWG.create_layout('mozman_layout_2')
         self.assertEqual('mozman_layout_2', new_layout.name)
         self.assertTrue(is_layout_in_object_section(new_layout))
@@ -69,3 +69,9 @@ class TestDeleteLayout(unittest.TestCase):
         self.assertFalse(block_record_for_layout_exist(new_layout))
         self.assertFalse(block_for_layout_exist(new_layout))
         self.assertFalse(new_layout.dxf.handle in DWG.entitydb)
+
+    def test_set_active_layout(self):
+        new_layout = DWG.create_layout('mozman_layout_3')
+        DWG.layouts.set_active_layout('mozman_layout_3')
+        self.assertEqual('*Paper_Space', new_layout.block_record_name)
+        self.assertEqual(new_layout.layout_key, DWG.get_active_layout_key())

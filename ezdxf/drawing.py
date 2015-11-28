@@ -45,7 +45,7 @@ class Drawing(object):
         if self.dxfversion > 'AC1009':
             # for ProE, which writes entities without owner tags (330)
             self.entities.repair_model_space(self.modelspace().layout_key)
-            self.layouts.move_entities_from_blocks_into_layout_entity_space()
+            self.layouts.link_block_entities_into_layouts()
 
         if options.compress_binary_data:
             self.compress_binary_data()

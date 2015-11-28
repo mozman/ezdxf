@@ -67,7 +67,7 @@ class Importer(object):
         def import_block_record(block_layout):
             if not has_block_records:
                 return
-            block_record_handle = block_layout.get_block_record_handle()
+            block_record_handle = block_layout.block_record_handle
             if block_record_handle != '0':
                 block_record_handle = self.import_tags(block_record_handle)
                 self.target.sections.tables.block_records._append_entry_handle(block_record_handle)
@@ -92,7 +92,7 @@ class Importer(object):
         def rename_block_record(block_layout):
             if not has_block_records:
                 return
-            block_record_handle = block_layout.get_block_record_handle()
+            block_record_handle = block_layout.block_record_handle
             if block_record_handle != '0':
                 block_record = self.target.dxffactory.wrap_handle(block_record_handle)
                 block_record.dxf.name = block_layout.name

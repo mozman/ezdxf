@@ -48,6 +48,13 @@ class BaseLayout(GraphicsFactory):
     def __len__(self):
         return len(self._entity_space)
 
+    def __iter__(self):
+        """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
+        """
+        wrap = self._dxffactory.wrap_handle
+        for handle in self._entity_space:
+            yield wrap(handle)
+
     @property
     def entitydb(self):
         return self._dxffactory.entitydb
@@ -123,13 +130,6 @@ class DXF12Layout(BaseLayout):
 
     # start of public interface
 
-    def __iter__(self):
-        """ Iterate over all layout entities, yielding class GraphicEntity() or inherited.
-        """
-        # since 0.6.0 - self._entity_space stores just the handles of this layout!
-        for handle in self._entity_space:
-            yield self.get_entity_by_handle(handle)
-
     def __contains__(self, entity):
         """ Returns True if layout contains entity else False. entity can be an entity handle as string or a wrapped
         dxf entity.
@@ -162,12 +162,6 @@ class DXF12BlockLayout(BaseLayout):
         self._endblk_handle = endblk_handle
 
     # start of public interface
-
-    def __iter__(self):
-        """ Iterate over all block entities, yielding class GraphicEntity() or inherited.
-        """
-        for handle in self._entity_space:
-            yield self.get_entity_by_handle(handle)
 
     def __contains__(self, entity):
         """ Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
