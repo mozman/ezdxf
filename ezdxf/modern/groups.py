@@ -88,7 +88,6 @@ class DXFGroup(DXFEntity):
         entities = list(entities)  # for generators
         if not all_entities_on_same_layout(entities):
             raise ValueError("All entities have to be on the same layout (model space or any paper layout but not block).")
-        # TODO: check if entities not in block definitions
         self.clear()
         self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, entity.dxf.handle) for entity in entities)
 

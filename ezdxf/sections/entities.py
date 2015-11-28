@@ -22,20 +22,16 @@ class EntitySection(AbstractSection):
     # start of public interface
 
     def __iter__(self):
-        dxffactory = self.dxffactory
+        wrap = self.dxffactory.wrap_handle
         for handle in self._entity_space.handles():
-            entity = dxffactory.wrap_handle(handle)
-            yield entity
+            yield wrap(handle)
 
     # end of public interface
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
         # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
-        layout_keys = [self.drawing.modelspace().layout_key]
-        paperspace_key = self.drawing.get_active_layout_key()
-        if paperspace_key is not None:
-            layout_keys.append(paperspace_key)
+        layout_keys = self.drawing.get_active_entity_space_layout_keys()
         self._entity_space.write(stream, layout_keys)
         stream.write("  0\nENDSEC\n")
 

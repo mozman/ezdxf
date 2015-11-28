@@ -28,9 +28,9 @@ class Drawing(object):
             roothandle = self.sections.objects.roothandle()
             return self.dxffactory.wrap_entity(self.entitydb[roothandle])
         self._is_binary_data_compressed = False
-        self.dxffactory = None  # readonly
-        self.dxfversion = 'AC1009'  # readonly
-        self.encoding = 'cp1252'  # read/write
+        self.dxffactory = None  # readonly - set by _bootstraphook()
+        self.dxfversion = 'AC1009'  # readonly - set by _bootstraphook()
+        self.encoding = 'cp1252'  # read/write - set by _bootstraphook()
         self.filename = None  # read/write
         self.entitydb = database.factory(debug=options.debug)
         self.sections = Sections(tagreader, self)
@@ -154,12 +154,19 @@ class Drawing(object):
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':
             try:
-                active_layout_block_record = self.block_records.get('*Paper_Space')
+                active_layout_block_record = self.block_records.get('*Paper_Space')  # fixed name for the active layout
                 return active_layout_block_record.dxf.handle
             except ValueError:
                 return None
         else:
-            return self.layout().layout_key
+            return self.layout().layout_key  # AC1009 supports just one layout and this is the active one
+
+    def get_active_entity_space_layout_keys(self):
+        layout_keys = [self.modelspace().layout_key]
+        active_layout_key = self.get_active_layout_key()
+        if active_layout_key is not None:
+            layout_keys.append(active_layout_key)
+        return layout_keys
 
     @property
     def entities(self):

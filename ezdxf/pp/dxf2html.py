@@ -112,9 +112,6 @@ class DXF2HtmlConverter(object):
         self.section_names_in_write_order = self._section_names_in_write_order()
         self.existing_pointers = self.collect_all_pointers()
 
-    def remove_inactive_layouts_from_entity_section(self):
-        pass
-
     def _section_names_in_write_order(self):
         sections = self.drawing.sections
         write_order = list(name for name in KNOWN_SECTIONS if name in sections)
@@ -184,13 +181,9 @@ class DXF2HtmlConverter(object):
 
     def get_entities(self):
         wrap = self.drawing.dxffactory.wrap_handle
-        layout_keys = [self.drawing.modelspace().layout_key]
-        paperspace_key = self.drawing.get_active_layout_key()
-        if paperspace_key is not None:
-            layout_keys.append(paperspace_key)
+        layout_keys = self.drawing.get_active_entity_space_layout_keys()
         for key in layout_keys:
-            entity_space = self.drawing.entities._entity_space[key]
-            for handle in entity_space:
+            for handle in self.drawing.entities.get_layout_space(key):
                 yield wrap(handle)
 
     def section2html(self, section, section_template):

@@ -121,7 +121,7 @@ class ModernDXFFactory(LegacyDXFFactory):
             modifier(tags)
 
     def get_groups(self):
-        if self.dxfversion != 'AC1009':
+        if self.dxfversion > 'AC1009':
             try:
                 group_table_handle = self.rootdict['ACAD_GROUP']
             except KeyError:

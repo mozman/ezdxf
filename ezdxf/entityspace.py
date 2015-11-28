@@ -113,10 +113,10 @@ class LayoutSpaces(object):
             entity_space = self._layout_spaces[key]
         except KeyError:  # create new entity space
             entity_space = EntitySpace(self._entitydb)
-            self._layout_spaces[key] = entity_space
+            self.set_entity_space(key, entity_space)
         return entity_space
 
-    def replace_entity_space(self, key, entity_space):
+    def set_entity_space(self, key, entity_space):
         self._layout_spaces[key] = entity_space
 
     def store_tags(self, tags):
@@ -131,14 +131,14 @@ class LayoutSpaces(object):
     def write(self, stream, keys=None):
         """ Write all entity spaces to *stream*.
 
-        If *keys* is not *None*, write only entity space defined in *keys*.
+        If *keys* is not *None*, write only entity spaces defined in *keys*.
         """
+        layout_spaces = self._layout_spaces
         if keys is None:
-            keys = set(self._layout_spaces.keys())
+            keys = set(layout_spaces.keys())
 
         for key in keys:
-            entity_space = self[key]
-            entity_space.write(stream)
+            layout_spaces[key].write(stream)
 
     def delete_entity(self, entity):
         """ Delete *entity* from associated layout entity space.
