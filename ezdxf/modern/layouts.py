@@ -35,45 +35,36 @@ class Layouts(object):
             self._layouts[name] = layout
 
     def move_entities_from_blocks_into_layout_entity_space(self):
-        wrap = self.drawing.dxffactory.wrap_handle
-        blocks = self.drawing.blocks
         layout_spaces = self.drawing.entities.get_entity_space()
         entitydb = self.drawing.entitydb
-
         for layout in self:
-            layout_key = layout.layout_key
-            block_record = wrap(layout_key)
-            block_record_name = block_record.dxf.name
-            if block_record_name not in ('*Model_Space', '*Paper_Space'):
-                block = blocks.get(block_record_name)
+            if not layout.is_active():
+                block = layout.block
                 # copy block entity space to layout entity space
-                layout_spaces.replace_entity_space(layout_key, block.get_entity_space())
+                layout_spaces.set_entity_space(layout.layout_key, block.get_entity_space())
                 # replace block entity space with an empty entity space
                 block.set_entity_space(EntitySpace(entitydb))
 
-    def link_layout_entities_to_blocks(self):
-        wrap = self.drawing.dxffactory.wrap_handle
-        blocks = self.drawing.blocks
-        entities_section = self.drawing.entities
-
+    def link_block_entities_into_layouts(self):  # not used yet
+        layout_spaces = self.drawing.entities.get_entity_space()
         for layout in self:
-            layout_key = layout.layout_key
-            block_record = wrap(layout_key)
-            block_record_name = block_record.dxf.name
-            if block_record_name not in ('*Model_Space', '*Paper_Space'):
-                block = blocks.get(block_record_name)
+            if not layout.is_active():
+                # copy block entity space to layout entity space
+                layout_spaces.set_entity_space(layout.layout_key, layout.block.get_entity_space())
+                # now the block entity space and layout entity space references the same EntitySpace() object
+
+    def link_layout_entities_to_blocks(self):
+        entities_section = self.drawing.entities
+        for layout in self:
+            if not layout.is_active():
                 # link layout space into block
-                block.set_entity_space(entities_section.get_layout_space(layout_key))
+                layout.block.set_entity_space(entities_section.get_layout_space(layout.layout_key))
 
     def unlink_layout_entities_from_blocks(self):
-        wrap = self.drawing.dxffactory.wrap_handle
-        blocks = self.drawing.blocks
         entitydb = self.drawing.entitydb
         for layout in self:
-            block_record = wrap(layout.layout_key)
-            block = blocks.get(block_record.dxf.name)
-            # unlink layout space into block
-            block.set_entity_space = EntitySpace(entitydb)
+            # unlink layout entity space from block entity space
+            layout.block.set_entity_space(EntitySpace(entitydb))
 
     def __contains__(self, name):
         return name in self._layouts
@@ -184,12 +175,27 @@ class Layout(ModernGraphicsFactory, DXF12Layout):
         return self._block_record_handle
 
     @property
+    def block_record(self):
+        return self.drawing.dxffactory.wrap_handle(self._block_record_handle)
+
+    @property
+    def block_record_name(self):
+        return self.block_record.dxf.name
+
+    @property
+    def block(self):
+        return self.drawing.blocks.get(self.block_record_name)
+
+    @property
     def name(self):
         return self.dxf_layout.dxf.name
 
     @property
     def taborder(self):
         return self.dxf_layout.dxf.taborder
+
+    def is_active(self):
+        return self.block_record_name in ('*Model_Space', '*Paper_Space')
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
