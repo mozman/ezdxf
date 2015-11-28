@@ -35,6 +35,10 @@ document.
    Create and add a new anonymous :class:`Block`, `type_char` is the block-type,
    `base_point` is the insertion point of the block.
 
+.. method:: BlocksSection.rename_block(old_name, new_name)
+
+   Rename block 'old_name' in 'new_name'.
+
 .. method:: BlockSection.delete_block(name):
 
    Delete block *name*. Raises *KeyError* if block not exists.

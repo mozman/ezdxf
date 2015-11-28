@@ -17,7 +17,7 @@ from ezdxf.database import EntityDB
 
 
 class ModelSpace:
-    layout_key = None
+    layout_key = 'FFFF'
 
 
 class DrawingProxy:
@@ -39,7 +39,6 @@ class DrawingProxy:
 
     def __does_not_exist_in_Drawing(self):
         """ ATTENTION: private attributes will not be checked in TestDrawingProxy! """
-
 
 def normlines(text):
     lines = text.split('\n')

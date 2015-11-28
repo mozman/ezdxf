@@ -31,23 +31,6 @@ class TestEntitySection(unittest.TestCase):
         self.dwg = DrawingProxy('AC1009')
         self.section = EntitySection(Tags.from_text(TESTENTITIES), self.dwg)
 
-    @unittest.skip('writing entity section not testable by DrawingProxy()')
-    def test_write(self):
-        stream = StringIO()
-        self.section.write(stream)
-        result = stream.getvalue()
-        stream.close()
-        self.assertEqual(normlines(TESTENTITIES), normlines(result))
-
-    @unittest.skip('writing entity section not testable by DrawingProxy()')
-    def test_empty_section(self):
-        section = EntitySection(Tags.from_text(EMPTYSEC), self.dwg)
-        stream = StringIO()
-        section.write(stream)
-        result = stream.getvalue()
-        stream.close()
-        self.assertEqual(EMPTYSEC, result)
-
     def test_iteration_with_layout_DXF12(self):
         dwg = ezdxf.new('AC1009')
         m = dwg.modelspace()

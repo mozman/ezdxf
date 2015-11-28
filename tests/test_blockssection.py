@@ -19,11 +19,11 @@ from ezdxf.sections.blocks import BlocksSection
 class TestBlocksSectionAC1009(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.section = BlocksSection(Tags.from_text(TESTBLOCKS), self.dwg)
+        self.blocks = BlocksSection(Tags.from_text(TESTBLOCKS), self.dwg)
 
     def test_write(self):
         stream = StringIO()
-        self.section.write(stream)
+        self.blocks.write(stream)
         result = stream.getvalue()
         stream.close()
         t1 = sorted(normlines(TESTBLOCKS))
@@ -39,34 +39,34 @@ class TestBlocksSectionAC1009(unittest.TestCase):
         self.assertEqual(EMPTYSEC, result)
 
     def test_create_block(self):
-        block = self.section.new('TEST')
-        self.assertTrue(block in self.section)
+        block = self.blocks.new('TEST')
+        self.assertTrue(block in self.blocks)
 
     def test_not_in_blocks_section(self):
-        self.assertFalse('TEST' in self.section)
+        self.assertFalse('TEST' in self.blocks)
 
     def test_getitem(self):
-        newblock = self.section.new('TEST')
-        block = self.section['TEST']
+        newblock = self.blocks.new('TEST')
+        block = self.blocks['TEST']
         self.assertEqual('TEST', block.name)
 
     def test_iter_blocks(self):
-        blocks = list(self.section)
+        blocks = list(self.blocks)
         self.assertEqual(4, len(blocks))
 
     def test_block_content_entity_drawing_attribute(self):
-        archtick = self.section['_ARCHTICK']
+        archtick = self.blocks['_ARCHTICK']
         entities = list(archtick)
         self.assertEqual(1, len(entities))  # VERTEX & SEQEND doesn't count
         e = entities[0]
         self.assertEqual(self.dwg, e.drawing)
 
     def test_delete_block(self):
-        archtick = self.section['_ARCHTICK']
+        archtick = self.blocks['_ARCHTICK']
         entities = list(archtick)
         archtick_name = archtick.name
-        self.section.delete_block(archtick_name)
-        self.assertTrue(archtick_name not in self.section)
+        self.blocks.delete_block(archtick_name)
+        self.assertTrue(archtick_name not in self.blocks)
         db = self.dwg.entitydb
         self.assertTrue(archtick._block_handle not in db)
         self.assertTrue(archtick._endblk_handle not in db)
@@ -74,13 +74,20 @@ class TestBlocksSectionAC1009(unittest.TestCase):
             self.assertTrue(entity.dxf.handle not in db)
 
     def test_delete_all_blocks(self):
-        self.section.delete_all_blocks()
-        blocks = list(self.section)
+        self.blocks.delete_all_blocks()
+        blocks = list(self.blocks)
         # assure not deleting layout blocks
         self.assertEqual(2, len(blocks))
         block_names = [block.name for block in blocks]
         block_names.sort()
         self.assertEqual(['$MODEL_SPACE', '$PAPER_SPACE'], block_names)
+
+    def test_rename_block(self):
+        block = self.blocks.new('RENAME_ME')
+        self.assertTrue(block in self.blocks)
+
+        self.blocks.rename_block('RENAME_ME', 'NEW_NAME')
+        self.assertTrue('NEW_NAME' in self.blocks)
 
 
 class TestBlocksSectionAC1015(unittest.TestCase):
@@ -100,7 +107,7 @@ class TestBlocksSectionAC1015(unittest.TestCase):
     def test_dxf_block_structure(self):
         self.assertTrue('TestBlock' in self.dwg.blocks)
         block = self.dwg.blocks['TestBlock']
-        block_record_handle = block.get_block_record_handle()
+        block_record_handle = block.block_record_handle
 
         # exists an associated block record entry?
         block_record = self.dwg.sections.tables.block_records.get(block.name)
@@ -111,7 +118,7 @@ class TestBlocksSectionAC1015(unittest.TestCase):
         block = self.dwg.blocks['TestBlock']
         block_name = block.name
         entities = list(block)
-        block_record_handle = block.get_block_record_handle()
+        block_record_handle = block.block_record_handle
 
         block_count = len(self.dwg.blocks)
         self.dwg.blocks.delete_block(block_name)
@@ -144,6 +151,13 @@ class TestBlocksSectionAC1015(unittest.TestCase):
         block_names = [block.name for block in blocks]
         block_names.sort()
         self.assertEqual(['*Model_Space', '*Paper_Space'], block_names)
+
+    def test_rename_block(self):
+        block = self.dwg.blocks.new('RENAME_ME')
+        self.assertTrue(block in self.dwg.blocks)
+
+        self.dwg.blocks.rename_block('RENAME_ME', 'NEW_NAME')
+        self.assertTrue('NEW_NAME' in self.dwg.blocks)
 
 
 EMPTYSEC = """  0
