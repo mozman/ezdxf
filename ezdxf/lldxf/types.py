@@ -116,7 +116,10 @@ def convert_tags_to_text_lines(line_tags):
     yield strings
     """
     line_tags = iter(line_tags)
-    line = next(line_tags).value  # raises StopIteration
+    try:
+        line = next(line_tags).value  # raises StopIteration
+    except StopIteration:
+        return
     while True:
         try:
             tag = next(line_tags)
