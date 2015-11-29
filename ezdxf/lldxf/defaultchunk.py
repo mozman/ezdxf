@@ -37,12 +37,15 @@ class CompressedDefaultChunk(DefaultChunk):
 
 
 def iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
-    while True:
-        tag = next(tagreader)
-        if tag == (0, stoptag):
-            return
-        tags = Tags([tag])
-        while tag != (0, endofchunk):
+    try:
+        while True:
             tag = next(tagreader)
-            tags.append(tag)
-        yield tags
+            if tag == (0, stoptag):
+                return
+            tags = Tags([tag])
+            while tag != (0, endofchunk):
+                tag = next(tagreader)
+                tags.append(tag)
+            yield tags
+    except StopIteration:
+        return
