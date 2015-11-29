@@ -247,6 +247,6 @@ def _get_layout_block_names(dwg):
         block_record = dwg.dxffactory.wrap_handle(layout._block_record_handle)
         return block_record.dxf.name
 
-    if dwg.dxfversion == 'AC1009':
+    if dwg.dxfversion <= 'AC1009':
         return '$MODEL_SPACE', '$PAPER_SPACE'
     return (get_block_record_name(layout) for layout in dwg.layouts)

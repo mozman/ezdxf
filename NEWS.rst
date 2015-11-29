@@ -2,10 +2,10 @@
 News
 ====
 
-IMPORTANT: ezdxf doesn't handle entities on layouts correct, you can create new layouts, but you can not place any DXF
-entities on this layouts. (2015-11-27)
-
 Version 0.7.1 - 2015-11-..
+
+  * NEW: read legacy DXF versions older than AC1009 (DXF R12) and saves it as DXF version AC1009.
+  * BUGFIX: creating entities on layouts works
 
 Version 0.7.0 - 2015-11-26
 
