@@ -55,7 +55,7 @@ class LayoutSpaces(object):
         self._layout_spaces = {}
         self._entitydb = entitydb
         self._dxfversion = dxfversion
-        if dxfversion == 'AC1009':
+        if dxfversion <= 'AC1009':
             self._get_key = lambda t: t.noclass.find_first(67, default=0)  # paper space value
         else:
             self._get_key = lambda t: t.noclass.find_first(330, default=0)  # if no owner tag, set 0 and repair later
@@ -95,7 +95,7 @@ class LayoutSpaces(object):
                 if entity_tags.find_first(67, default=0) != 0:
                     entity_tags.set_first(67, 0)
 
-        if self._dxfversion == 'AC1009':
+        if self._dxfversion <= 'AC1009':
             return
         if 0 not in self._layout_spaces:  # no temporary model space exists
             return

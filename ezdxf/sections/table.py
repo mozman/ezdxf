@@ -174,7 +174,7 @@ class Table(object):
         epilogue()
 
     def _update_owner_handles(self):
-        if self._drawing.dxfversion == 'AC1009':
+        if self._drawing.dxfversion <= 'AC1009':
             return  # no owner handles
         owner_handle = self._table_header.get_handle()
         for entry in iter(self):

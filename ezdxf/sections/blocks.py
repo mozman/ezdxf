@@ -151,7 +151,7 @@ class BlocksSection(object):
 
     def delete_all_blocks(self):
         # do not delete blocks defined for layouts
-        if self.drawing.dxfversion != 'AC1009':
+        if self.drawing.dxfversion > 'AC1009':
             layout_keys = set(layout.layout_key for layout in self.drawing.layouts)
             for block in list(self):
                 if block.block_record_handle not in layout_keys:

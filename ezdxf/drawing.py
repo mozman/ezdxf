@@ -9,7 +9,8 @@ from datetime import datetime
 import io
 
 from . import database
-from .lldxf.tags import TagIterator, DXFTag, DXFStructureError
+from .lldxf.tags import TagIterator, DXFTag
+from .lldxf.const import DXFVersionError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -39,6 +40,8 @@ class Drawing(object):
             self.rootdict = get_rootdict()
             self._groups = self.dxffactory.get_groups()
         else:
+            if self.dxfversion < 'AC1009':  # legacy DXF version
+                self._upgrade_to_ac1009()  # convert to DXF format AC1009 (DXF R12)
             self._enable_handles()
         self.layouts = self.dxffactory.get_layouts()
 
@@ -134,7 +137,7 @@ class Drawing(object):
         return list(self.layouts.names())
 
     def delete_layout(self, name):
-        if self.dxfversion != 'AC1009':
+        if self.dxfversion > 'AC1009':
             if name not in self.layouts:
                 raise ValueError("Layout '{}' does not exist.".format(name))
             else:
@@ -143,7 +146,7 @@ class Drawing(object):
             raise Warning('Not supported for DXF version AC1009.')
 
     def create_layout(self, name, dxfattribs=None):
-        if self.dxfversion != 'AC1009':
+        if self.dxfversion > 'AC1009':
             if name in self.layouts:
                 raise ValueError("Layout '{}' already exists.".format(name))
             else:
@@ -269,7 +272,12 @@ class Drawing(object):
                 if not has_handle(tags, handle_code):
                     tags.noclass.insert(1, DXFTag(handle_code, handle))  # handle should be the 2. tag
 
-        if self.dxfversion != 'AC1009':
+        if self.dxfversion > 'AC1009':
             return
         put_handles_into_entity_tags()
         self.header['$HANDLING'] = 1
+
+    def _upgrade_to_ac1009(self):
+        self.dxfversion = 'AC1009'
+        self.header['$ACADVER'] = 'AC1009'
+        # as far I know, nothing else to do
