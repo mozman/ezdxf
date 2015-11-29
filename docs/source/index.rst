@@ -17,7 +17,7 @@ Quick-Info
 - OS independent
 - additional packages required: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
 - MIT-License
-- supported DXF versions: R12, R2000, R2004, R2007, R2010 and R2013
+- supported DXF versions: R12, R2000, R2004, R2007, R2010 and R2013, reads also older versions but saves it as R12
 - preserves third-party DXF content
 
 Contents

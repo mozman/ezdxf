@@ -45,6 +45,8 @@ Supported DXF Versions
 
 .. include:: dxfversion.inc
 
+*ezdxf* reads also older versions but saves it as R12.
+
 Embedded DXF Information of 3rd Party Applications
 --------------------------------------------------
 

@@ -73,5 +73,8 @@ def binary_encoded_data_to_bytes(data):
     byte_array = array('B' if PY3 else b'B')
     for text in data:
         byte_array.extend(int(text[index:index+2], 16) for index in range(0, len(text), 2))
-    return byte_array.tostring()
+    if PY3:
+        return byte_array.tobytes()
+    else:
+        return byte_array.tostring()
 
