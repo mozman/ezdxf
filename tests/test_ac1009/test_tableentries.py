@@ -67,6 +67,21 @@ class TestNewLayer(unittest.TestCase):
         self.layer.dxf.color = -100
         self.assertTrue(self.layer.is_off())
 
+    def test_is_frozen(self):
+        self.assertFalse(self.layer.is_frozen())
+
+    def test_freeze(self):
+        self.layer.freeze()
+        self.assertTrue(self.layer.is_frozen())
+        self.assertEqual(1, self.layer.dxf.flags)
+
+    def test_thaw(self):
+        self.layer.dxf.flags = 1
+        self.assertTrue(self.layer.is_frozen())
+        self.layer.thaw()
+        self.assertFalse(self.layer.is_frozen())
+        self.assertEqual(0, self.layer.dxf.flags)
+
 
 class TestNewLinetype(unittest.TestCase):
     def setUp(self):

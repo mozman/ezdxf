@@ -66,6 +66,12 @@ line_weight      R13     line weight enum value (int)
 plot_style_name  R13     handle to PlotStyleName (feature for experts)
 ===============  ======= ===========
 
+.. method:: Layer.is_frozen()
+
+.. method:: Layer.freeze()
+
+.. method:: Layer.thaw()
+
 .. method:: Layer.is_locked()
 
 .. method:: Layer.lock()

@@ -35,8 +35,19 @@ class Layer(DXFEntity):
         'color': DXFAttr(62),  # dxf color index, if < 0 layer is off
         'linetype': DXFAttr(6),
     }))
+    FROZEN = 0b00000001
+    THAW = 0b11111110
     LOCK = 0b00000100
     UNLOCK = 0b11111011
+
+    def is_frozen(self):
+        return self.dxf.flags & Layer.FROZEN > 0
+
+    def freeze(self):
+        self.dxf.flags = self.dxf.flags | Layer.FROZEN
+
+    def thaw(self):
+        self.dxf.flags = self.dxf.flags & Layer.THAW
 
     def is_locked(self):
         return self.dxf.flags & Layer.LOCK > 0
