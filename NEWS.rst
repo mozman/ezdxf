@@ -6,6 +6,7 @@ Version 0.7.1 - 2015-11-..
 
   * Supported/Tested Python versions: CPython (2.7, 3.4, 3.5) pypy 4.0.1 and pypy3 2.4.0
   * NEW: read legacy DXF versions older than AC1009 (DXF R12) and saves it as DXF version AC1009.
+  * NEW: added methods is_frozen(), freeze(), thaw() to class Layer()
   * BUGFIX: creating entities on layouts works
 
 Version 0.7.0 - 2015-11-26
