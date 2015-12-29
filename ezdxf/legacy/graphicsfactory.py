@@ -98,7 +98,7 @@ class GraphicsFactory(object):
         autofill(blockref, blockdef)
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 
-    def add_attrib(self, tag, text, insert, dxfattribs=None):
+    def add_attrib(self, tag, text, insert=(0, 0), dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['tag'] = tag

@@ -444,7 +444,7 @@ class Insert(GraphicEntity):
     def has_attrib(self, tag):
         return self.get_attrib(tag) is not None
 
-    def add_attrib(self, tag, text, insert, dxfattribs=None):
+    def add_attrib(self, tag, text, insert=(0, 0), dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['tag'] = tag
@@ -452,6 +452,7 @@ class Insert(GraphicEntity):
         dxfattribs['insert'] = insert
         attrib_entity = self._new_entity('ATTRIB', dxfattribs)
         self._append_attrib_entity(attrib_entity)
+        return attrib_entity
 
     def _append_attrib_entity(self, entity):
         if self.dxf.attribs_follow == 0:
