@@ -970,6 +970,8 @@ DEFAULTTEXT
 1.0
   7
 STANDARD
+ 72
+0
 100
 AcDbAttribute
   2
@@ -977,8 +979,6 @@ TAG
  70
 0
  71
-0
- 72
 0
  73
 0
@@ -1002,13 +1002,13 @@ attrib_subclass = (
         'oblique': DXFAttr(51, default=0.0),  # error in DXF description, because placed in 'AcDbAttribute'
         'style': DXFAttr(7, default='STANDARD'),  # error in DXF description, because placed in 'AcDbAttribute'
         'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),  # error in DXF description, because placed in 'AcDbAttribute'
+        'halign': DXFAttr(72, default=0),
     }),
     DefSubclass('AcDbAttribute', {
         'tag': DXFAttr(2),
         'flags': DXFAttr(70),
         'field_length': DXFAttr(73, default=0),
         'text_generation_flag': DXFAttr(71, default=0),
-        'halign': DXFAttr(72, default=0),
         'valign': DXFAttr(74, default=0),
         'align_point': DXFAttr(11, xtype='Point2D/3D'),
     })
