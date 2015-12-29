@@ -118,9 +118,13 @@ column_spacing R12     distance between two insert points in column direction (f
 
    Get content text for attrib `tag` as string or return `default` if no attrib `tag` exists.
 
-.. method:: Insert.add_attrib(tag, text, insert, attribs={})
+.. method:: Insert.add_attrib(tag, text, insert=(0, 0), attribs={})
 
-   Append an :class:`Attrib` to the block reference.
+   Append an :class:`Attrib` to the block reference. Returns an :class:``Attrib`` object.
+
+Example for appending an attribute to an INSERT entity with non standard alignment::
+
+    insert_entity.add_attrib("TAG", "example text").set_pos((3, 7), align='MIDDLE_CENTER')
 
 Attribs
 =======
