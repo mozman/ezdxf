@@ -47,10 +47,17 @@ Create new entities
    Add a :class:`Circle` element, `center` is 2D/3D point, `radius` in drawing
    units.
 
+.. method:: Layout.add_ellipse(center, major_axis=(1, 0, 0), ratio=1, start_param=0, end_param=6.283185307, dxfattribs=None)
+
+   Add an :class:`Ellipse` element, `center` is 2D/3D point, `major_axis` as vector, `ratio` is the ratio of minor axis
+   to major axis, `start_param` and `end_param` defines start and end point of the ellipse, a full ellipse goes from 0
+   to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction.
+
 .. method:: Layout.add_arc(center, radius, start_angle, end_angle, dxfattribs=None)
 
    Add an :class:`Arc` element, `center` is 2D/3D point, `radius` in drawing
-   units, `start_angle` and `end_angle` in degrees.
+   units, `start_angle` and `end_angle` in degrees. The arc goes from start_angle to end_angle in *counter clockwise*
+   direction.
 
 .. method:: Layout.add_solid(points, dxfattribs=None)
 

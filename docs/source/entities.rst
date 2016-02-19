@@ -169,6 +169,27 @@ center      R12     center point of circle (2D/3D Point)
 radius      R12     radius of circle (float)
 =========== ======= ===========
 
+Ellipse
+=======
+
+.. class:: Ellipse(GraphicEntity)
+
+   Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``ELLIPSE``.
+
+   An ellipse with center point at location *center* and a major axis *major_axis* as vector. *ratio* is the ratio of
+   minor axis to major axis. *start_param* and *end_param* defines start and end point of the ellipse, a full ellipse
+   goes from 0 to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction.
+
+=========== ======= ===========
+DXFAttr     Version Description
+=========== ======= ===========
+center      R13     center point of circle (2D/3D Point)
+major_axis  R13     Endpoint of major axis, relative to the center (tuple of float)
+ratio       R13     Ratio of minor axis to major axis (float)
+start_param R13     Start parameter (this value is 0.0 for a full ellipse) (float)
+end_param   R13     End parameter (this value is 2*pi for a full ellipse) (float)
+=========== ======= ===========
+
 Arc
 ===
 
