@@ -1184,7 +1184,7 @@ DXFAttr                 Version Description
 ======================= ======= ===========
 version                 R13     int
 blend_crease            R13     0 = off, 1 = on
-subdivision_levels      R13     int >= 1
+subdivision_levels      R13     int >= 0, 0 = no smoothing
 ======================= ======= ===========
 
 .. class:: MeshData

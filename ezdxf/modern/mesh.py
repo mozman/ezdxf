@@ -45,7 +45,7 @@ AcDbSubDMesh
 mesh_subclass = DefSubclass('AcDbSubDMesh', {
     'version': DXFAttr(71),
     'blend_crease': DXFAttr(72),  # 0 = off, 1 = on
-    'subdivision_levels': DXFAttr(91),  # int >= 0
+    'subdivision_levels': DXFAttr(91),  # int >= 0, 0 is no smoothing
 })
 
 
