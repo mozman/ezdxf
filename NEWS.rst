@@ -10,6 +10,7 @@ Version 0.7.1 - 2016-..-..
   * NEW: full support for DXF entity ELLIPSE (added add_ellipse() method)
   * BUGFIX: creating entities on layouts works
   * BUGFIX: entity ATTRIB - fixed halign attribute definition
+  * CHANGE: POLYLINE (POLYFACE, POLYMESH) - on layer change also change layer of associated VERTEX entities
 
 Version 0.7.0 - 2015-11-26
 

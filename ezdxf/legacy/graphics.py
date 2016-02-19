@@ -657,6 +657,15 @@ class Polyline(GraphicEntity):
         seqend = self._new_entity('SEQEND', {})
         self.tags.link = seqend.dxf.handle
 
+    def set_dxf_attrib(self,  key, value):
+        super(Polyline, self).set_dxf_attrib(key, value)
+        if key == 'layer':  # if layer of POLYLINE changed, also change layer of VERTEX entities
+            self._set_vertices_layer(value)
+
+    def _set_vertices_layer(self, layer_name):
+        for vertex in self.vertices():
+            vertex.dxf.layer = layer_name
+
     def get_vertex_flags(self):
         return const.VERTEX_FLAGS[self.get_mode()]
 
@@ -788,6 +797,7 @@ class Polyline(GraphicEntity):
         :param dxfattribs: dict of DXF attributes
         """
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        dxfattribs['layer'] = self.get_dxf_attrib('layer', '0')  # all vertices on the same layer as the POLYLINE entity
         vertices = []
         for point in points:
             dxfattribs['location'] = point

@@ -32,6 +32,21 @@ class TestPolyline(unittest.TestCase):
         self.assertEqual(VTX_3D_POLYLINE_VERTEX, polyline[0].dxf.flags)
         self.assertEqual('AcDb3dPolyline', polyline.get_mode())
 
+    def test_vertex_layer(self):
+        attribs = {'layer': 'polyline_layer'}
+        polyline = self.layout.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
+        for vertex in polyline.vertices():
+            self.assertEqual('polyline_layer', vertex.dxf.layer,
+                             "VERTEX entity not on the same layer as the POLYLINE entity.")
+
+    def test_change_polyline_layer(self):
+        attribs = {'layer': 'polyline_layer'}
+        polyline = self.layout.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
+        polyline.dxf.layer = "changed_layer"
+        for vertex in polyline.vertices():
+            self.assertEqual('changed_layer', vertex.dxf.layer,
+                             "VERTEX entity not on the same layer as the POLYLINE entity.")
+
     def test_set_vertex(self):
         polyline = self.layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
         polyline[2].dxf.location = (7, 7)
