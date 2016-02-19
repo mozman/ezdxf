@@ -7,6 +7,7 @@ Version 0.7.1 - 2016-..-..
   * Supported/Tested Python versions: CPython (2.7, 3.4, 3.5) pypy 4.0.1 and pypy3 2.4.0
   * NEW: read legacy DXF versions older than AC1009 (DXF R12) and saves it as DXF version AC1009.
   * NEW: added methods is_frozen(), freeze(), thaw() to class Layer()
+  * NEW: full support for DXF entity ELLIPSE (added add_ellipse() method)
   * BUGFIX: creating entities on layouts works
   * BUGFIX: entity ATTRIB - fixed halign attribute definition
 

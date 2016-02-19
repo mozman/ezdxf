@@ -16,6 +16,16 @@ class ModernGraphicsFactory(object):
         lwpolyline.closed = closed
         return lwpolyline
 
+    def add_ellipse(self, center, major_axis=(1, 0, 0), ratio=1, start_param=0, end_param=6.283185307, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['center'] = center
+        dxfattribs['major_axis'] = major_axis
+        dxfattribs['ratio'] = ratio
+        dxfattribs['start_param'] = start_param
+        dxfattribs['end_param'] = end_param
+        return self.build_and_add_entity('ELLIPSE', dxfattribs)
+
     def add_mtext(self, text, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
