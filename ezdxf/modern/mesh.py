@@ -216,11 +216,63 @@ class MeshData(object):
         self.edges = mesh.get_edges()
         self.edge_crease_values = mesh.get_edge_crease_values()
 
-    def add_face(self, vertices):  # todo
-        pass
+    def add_face(self, vertices):
+        return self.add_entity(vertices, self.faces)
 
-    def add_edge(self, vertices):  # todo
-        pass
+    def add_edge(self, vertices):
+        if len(vertices) != 2:
+            raise ValueError("Parameter vertices has to be a list/tuple of 2 vertices [(x1, y1, z1), (x2, y2, z2)].")
+        return self.add_entity(vertices, self.edges)
 
-    def optimize(self):  # todo
-        pass
+    def add_entity(self, vertices, entity_list):
+        indices = [self.add_vertex(vertex) for vertex in vertices]
+        entity_list.append(indices)
+        return indices
+
+    def add_vertex(self, vertex):
+        if len(vertex) != 3:
+            raise ValueError('Parameter vertex has to be a 3-tuple (x, y, z).')
+        index = len(self.vertices)
+        self.vertices.append(vertex)
+        return index
+
+    def optimize(self, precision=6):
+        def remove_doublette_vertices():
+            def prepare_vertices():
+                for index, vertex in enumerate(self.vertices):
+                    x, y, z = vertex
+                    yield round(x, precision), round(y, precision), round(z, precision), index
+
+            sorted_vertex_list = list(sorted(prepare_vertices()))
+            original_vertices = self.vertices
+            self.vertices = []
+            index_map = {}
+            cmp_vertex = (None, None, None)
+            index = 0
+            while len(sorted_vertex_list):
+                vertex_entry = sorted_vertex_list.pop()
+                original_index = vertex_entry[3]
+                vertex = original_vertices[original_index]
+                index_map[original_index] = index
+                if vertex != cmp_vertex:  # this is not a doublette
+                    self.vertices.append(vertex)
+                    index = len(self.vertices) - 1
+                    cmp_vertex = vertex
+            return index_map
+
+        def remap_faces(index_map):
+            self.faces = remap_indices(self.faces, index_map)
+
+        def remap_edges(index_map):
+            self.edges = remap_indices(self.edges, index_map)
+
+        def remap_indices(entity_list, index_map):
+            mapped_indices = []
+            for entity in entity_list:
+                index_list = [index_map[index] for index in entity]
+                mapped_indices.append(tuple(index_list))
+            return mapped_indices
+
+        index_map = remove_doublette_vertices()
+        remap_faces(index_map)
+        remap_edges(index_map)

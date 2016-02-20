@@ -1,7 +1,5 @@
 import ezdxf
 
-dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
-
 # 8 corner vertices
 cube_vertices = [
     (0, 0, 0),
@@ -36,6 +34,7 @@ polygon5_face = [
     [0, 1, 2, 3, 4]
 ]
 
+dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
 msp = dwg.modelspace()
 mesh = msp.add_mesh()
 with mesh.edit_data() as mesh_data:
@@ -47,5 +46,4 @@ with mesh5.edit_data() as mesh_data:
     mesh_data.vertices = polygon5_vertices
     mesh_data.faces = polygon5_face
 
-dwg.saveas("cube_mesh.dxf")
-
+dwg.saveas("cube_mesh_1.dxf")
