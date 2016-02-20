@@ -169,6 +169,24 @@ center      R12     center point of circle (2D/3D Point)
 radius      R12     radius of circle (float)
 =========== ======= ===========
 
+Arc
+===
+
+.. class:: Arc(GraphicEntity)
+
+   An arc at location *center* and *radius* from *start_angle* to *end_angle*, *dxftype* is ``ARC``. The arc goes from
+   *start_angle* to *end_angle* in *counter clockwise* direction. Create arcs in layouts and blocks by factory function
+   :meth:`~Layout.add_arc`.
+
+=========== ======= ===========
+DXFAttr     Version Description
+=========== ======= ===========
+center      R12     center point of arc (2D/3D Point)
+radius      R12     radius of arc (float)
+start_angle R12     start angle in degrees (float)
+end_angle   R12     end angle in degrees (float)
+=========== ======= ===========
+
 Ellipse
 =======
 
@@ -178,7 +196,8 @@ Ellipse
 
    An ellipse with center point at location *center* and a major axis *major_axis* as vector. *ratio* is the ratio of
    minor axis to major axis. *start_param* and *end_param* defines start and end point of the ellipse, a full ellipse
-   goes from 0 to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction.
+   goes from 0 to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction. Create ellipses in
+   layouts and blocks by factory function :meth:`~Layout.add_ellipse`.
 
 =========== ======= ===========
 DXFAttr     Version Description
@@ -188,23 +207,6 @@ major_axis  R13     Endpoint of major axis, relative to the center (tuple of flo
 ratio       R13     Ratio of minor axis to major axis (float)
 start_param R13     Start parameter (this value is 0.0 for a full ellipse) (float)
 end_param   R13     End parameter (this value is 2*pi for a full ellipse) (float)
-=========== ======= ===========
-
-Arc
-===
-
-.. class:: Arc(GraphicEntity)
-
-   An arc at location *center* and *radius* from *startangle* to *endangle*, *dxftype* is ``ARC``.
-   Create arcs in layouts and blocks by factory function :meth:`~Layout.add_arc`.
-
-=========== ======= ===========
-DXFAttr     Version Description
-=========== ======= ===========
-center      R12     center point of arc (2D/3D Point)
-radius      R12     radius of arc (float)
-start_angle R12     start angle in degrees (float)
-end_angle   R12     end angle in degrees (float)
 =========== ======= ===========
 
 Text
