@@ -52,6 +52,60 @@ class TestNewMesh(unittest.TestCase):
         self.assertEqual(0, mesh.dxf.blend_crease)
         self.assertEqual(0, mesh.dxf.subdivision_levels)
 
+    def test_add_faces(self):
+        mesh = self.msp.add_mesh()
+        with mesh.edit_data() as mesh_data:
+            mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+            self.assertEqual(4, len(mesh_data.vertices))
+            self.assertEqual(1, len(mesh_data.faces))
+            self.assertEqual([0, 1, 2, 3], mesh_data.faces[0])
+
+    def test_add_edges(self):
+        mesh = self.msp.add_mesh()
+        with mesh.edit_data() as mesh_data:
+            mesh_data.add_edge([(0, 0, 0), (1, 0, 0)])
+            self.assertEqual(2, len(mesh_data.vertices))
+            self.assertEqual(1, len(mesh_data.edges))
+            self.assertEqual([0, 1], mesh_data.edges[0])
+
+    def test_vertex_format(self):
+        mesh = self.msp.add_mesh()
+        with mesh.edit_data() as mesh_data:
+            with self.assertRaises(ValueError):
+                mesh_data.add_vertex((0, 0))  # only (x, y, z) vertices allowed
+
+    def test_optimize(self):
+        vertices = [
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (1, 0, 1),
+            (1, 1, 1),
+            (0, 1, 1),
+        ]
+
+        # 6 cube faces
+        cube_faces = [
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [0, 1, 5, 4],
+            [1, 2, 6, 5],
+            [3, 2, 6, 7],
+            [0, 3, 7, 4]
+        ]
+        mesh = self.msp.add_mesh()
+        with mesh.edit_data() as mesh_data:
+            for face in cube_faces:
+                mesh_data.add_face([vertices[index] for index in face])
+            self.assertEqual(24, len(mesh_data.vertices))
+            self.assertEqual(6, len(mesh_data.faces))
+            mesh_data.optimize()
+            self.assertEqual(8, len(mesh_data.vertices), "Doublettes not removed")
+            self.assertEqual(6, len(mesh_data.faces))
+            self.assertEqual(0, len(mesh_data.edges))
+
 
 MESH = """  0
 MESH

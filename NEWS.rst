@@ -2,12 +2,13 @@
 News
 ====
 
-Version 0.7.1 - 2016-..-..
+Version 0.7.1 - 2016-02-21
 
-  * Supported/Tested Python versions: CPython (2.7, 3.4, 3.5) pypy 4.0.1 and pypy3 2.4.0
+  * Supported/Tested Python versions: CPython 2.7, 3.4, 3.5, pypy 4.0.1 and pypy3 2.4.0
   * NEW: read legacy DXF versions older than AC1009 (DXF R12) and saves it as DXF version AC1009.
   * NEW: added methods is_frozen(), freeze(), thaw() to class Layer()
   * NEW: full support for DXF entity ELLIPSE (added add_ellipse() method)
+  * NEW: MESH data editor - implemented add_face(vertices), add_edge(vertices), optimize(precision=6) methods
   * BUGFIX: creating entities on layouts works
   * BUGFIX: entity ATTRIB - fixed halign attribute definition
   * CHANGE: POLYLINE (POLYFACE, POLYMESH) - on layer change also change layer of associated VERTEX entities
@@ -22,7 +23,7 @@ Version 0.7.0 - 2015-11-26
   * NEW: support for new common DXF attributes in AC1021 (AutoCAD 2007): shadow_mode
   * NEW: extended custom vars interface
   * NEW: dxf2html - added support for custom properties in the header section
-  * NEW: query() supports case insensitive attribute queries by appending an 'i' to the query string, e.g. '*[layer=="construction"]i'
+  * NEW: query() supports case insensitive attribute queries by appending an 'i' to the query string, e.g. '\*[layer=="construction"]i'
   * NEW: Drawing.cleanup() - call before saving the drawing but only if necessary, the process could take a while.
   * BUGFIX: query parser couldn't handle attribute names containing '_'
   * CHANGE: renamed dxf2html to pp (pretty printer), usage: py -m ezdxf.pp yourfile.dxf (generates yourfile.html in the same folder)

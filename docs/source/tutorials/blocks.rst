@@ -117,7 +117,7 @@ Using attribute definitions (:class:`Attdef`)::
 Get/Set Attributes of Existing Block References
 -----------------------------------------------
 
-See the howto: :ref:`howto get attribs`
+See the howto: :ref:`howto_get_attribs`
 
 Evaluate wrapped block references
 ---------------------------------
