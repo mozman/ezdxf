@@ -7,7 +7,6 @@ Create a cube mesh by direct access to base data structures::
 
     import ezdxf
 
-    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
 
     # 8 corner vertices
     cube_vertices = [
@@ -31,9 +30,10 @@ Create a cube mesh by direct access to base data structures::
         [0, 3, 7, 4]
     ]
 
+    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
     msp = dwg.modelspace()
     mesh = msp.add_mesh()
-    mesh.dxf.subdivision_levels = 0  # do not subdivide cube
+    mesh.dxf.subdivision_levels = 0  # do not subdivide cube, 0 is the default value
     with mesh.edit_data() as mesh_data:
         mesh_data.vertices = cube_vertices
         mesh_data.faces = cube_faces
@@ -44,7 +44,6 @@ Create a cube mesh by method calls::
 
     import ezdxf
 
-    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
 
     # 8 corner vertices
     p = [
@@ -58,6 +57,7 @@ Create a cube mesh by method calls::
         (0, 1, 1),
     ]
 
+    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
     msp = dwg.modelspace()
     mesh = msp.add_mesh()
 
@@ -68,6 +68,6 @@ Create a cube mesh by method calls::
         mesh_data.add_face([p[1], p[2], p[6], p[5]])
         mesh_data.add_face([p[3], p[2], p[6], p[7]])
         mesh_data.add_face([p[0], p[3], p[7], p[4]])
-        mesh_data.optimize()
+        mesh_data.optimize()  # optional, minimizes vertex count
 
     dwg.saveas("cube_mesh_2.dxf")
