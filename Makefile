@@ -27,3 +27,6 @@ all:
 	$(MAKE) test_python_2
 	$(MAKE) test_python_3
 	$(MAKE) test_pypy
+
+sdist:
+	py setup.py sdist --formats=zip,gztar upload
