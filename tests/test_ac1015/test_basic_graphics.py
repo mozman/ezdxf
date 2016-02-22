@@ -38,6 +38,11 @@ class TestAC1015GraphicsDefaultSettings(SetupDrawing):
             value = line.dxf.transparency
         with self.assertRaises(ValueError):  # requires AC1021
             value = line.dxf.shadow_mode
+        with self.assertRaises(ValueError):  # not defined value
+            value = line.dxf.lineweight
+
+        line.dxf.lineweight = 17  # set line weight
+        self.assertEqual(17, line.dxf.lineweight)  # get line weight
 
 
 class TestAC1018GraphicsDefaultSettings(unittest.TestCase):
@@ -74,6 +79,7 @@ class TestAC1018GraphicsDefaultSettings(unittest.TestCase):
         line.transparency = 1.0
         self.assertEqual(0x02000000, line.dxf.transparency)
 
+
 class TestAC1021GraphicsDefaultSettings(unittest.TestCase):
     def setUp(self):
         self.layout = DWG_AC1018.modelspace()
@@ -81,6 +87,7 @@ class TestAC1021GraphicsDefaultSettings(unittest.TestCase):
     def test_default_settings(self):
         line = self.layout.add_line((0, 0), (1, 1))
         self.assertFalse(line.dxf_attrib_exists('shadow_mode'))  # no default shadow_mode
+
 
 class TestBasicEntities(SetupDrawing):
     def test_iter_layout(self):

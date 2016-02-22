@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.7.2 - 2016-..-..
+
+  * NEW: added support for common DXF attribute line weight
+
 Version 0.7.1 - 2016-02-21
 
   * Supported/Tested Python versions: CPython 2.7, 3.4, 3.5, pypy 4.0.1 and pypy3 2.4.0

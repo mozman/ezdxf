@@ -110,6 +110,7 @@ owner         handle to owner, it's a BLOCK_RECORD entry (feature for experts)
 layer         layer name as string; default = 0
 linetype      linetype as string, special names BYLAYER, BYBLOCK; default=BYLAYER
 color         dxf color index, 0 ... BYBLOCK, 256 ... BYLAYER; default= 256
+lineweight    lineweight enum value. Stored and moved around as a 16-bit integer.
 ltscale       line type scale as float; default=1.0
 invisible     1 for invisible, 0 for visible; default=0
 paperspace    0 for entity resides in model-space, 1 for paper-space, this attribute is set automatically by adding an
