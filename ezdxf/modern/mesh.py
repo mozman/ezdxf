@@ -247,17 +247,19 @@ class MeshData(object):
             original_vertices = self.vertices
             self.vertices = []
             index_map = {}
-            cmp_vertex = (None, None, None)
+            cmp_vertex = None
             index = 0
             while len(sorted_vertex_list):
                 vertex_entry = sorted_vertex_list.pop()
                 original_index = vertex_entry[3]
                 vertex = original_vertices[original_index]
-                index_map[original_index] = index
                 if vertex != cmp_vertex:  # this is not a doublette
+                    index = len(self.vertices)
                     self.vertices.append(vertex)
-                    index = len(self.vertices) - 1
+                    index_map[original_index] = index
                     cmp_vertex = vertex
+                else:  # it is a doublette
+                    index_map[original_index] = index
             return index_map
 
         def remap_faces(index_map):
