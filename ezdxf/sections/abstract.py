@@ -63,6 +63,9 @@ class AbstractSection(object):
         self._entity_space.add_handle(dxf_entity.dxf.handle)
         return dxf_entity
 
+    def add_handle(self, handle):
+        self._entity_space.add_handle(handle)
+
     def remove_handle(self, handle):
         self._entity_space.remove(handle)
 

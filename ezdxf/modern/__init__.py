@@ -124,10 +124,10 @@ class ModernDXFFactory(LegacyDXFFactory):
         if self.dxfversion > 'AC1009':
             try:
                 group_table_handle = self.rootdict['ACAD_GROUP']
-            except KeyError:
-                raise DXFStructureError("No group table found.")
-                # TODO:  create group table
-            group_table = self.wrap_handle(group_table_handle)
+            except KeyError:  # create group new table
+                group_table = self.rootdict.add_new_dict('ACAD_GROUP')
+            else:
+                group_table = self.wrap_handle(group_table_handle)
             return DXFGroupTable(group_table)
         else:
             raise Warning('Not supported for DXF version AC1009.')

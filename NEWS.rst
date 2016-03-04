@@ -6,6 +6,7 @@ Version 0.7.2 - 2016-..-..
 
   * NEW: added support for common DXF attribute line weight
   * BUGFIX: MeshData.optimize() - corrected wrong vertex optimization
+  * BUGFIX: can open DXF files without existing layout management table
 
 Version 0.7.1 - 2016-02-21
 

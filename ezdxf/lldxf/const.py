@@ -26,11 +26,15 @@ dxfversion = {
 unsupported_dxf_versions = ('AC1012', 'AC1014')  # modern tags structure but not modern enough
 
 
-class DXFStructureError(Exception):
+class DXFError(Exception):
     pass
 
 
-class DXFVersionError(DXFStructureError):
+class DXFStructureError(DXFError):
+    pass
+
+
+class DXFVersionError(DXFError):
     pass
 
 # Special tag codes for internal prupose
