@@ -38,6 +38,7 @@ class Drawing(object):
         self._groups = None
         if self.dxfversion > 'AC1009':
             self.rootdict = get_rootdict()
+            self._setup_required_drawing_management_structures()
             self._groups = self.dxffactory.get_groups()
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version
@@ -71,6 +72,27 @@ class Drawing(object):
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
         self.dxffactory = dxffactory(self)
+
+    def _setup_required_drawing_management_structures(self):
+        rootdict = self.rootdict
+        if 'ACAD_LAYOUT' not in rootdict:  # create layout management table
+            layout_dict = rootdict.add_new_dict('ACAD_LAYOUT')
+            self._setup_model_space(layout_dict)
+
+    def _setup_model_space(self, layout_dict):
+        # This is just necessary for not existing DXF drawings without properly setup management structures.
+        try:
+            model_space_block_record = self.block_records.get('*Model_Space')
+        except KeyError:
+            raise NotImplementedError("Model space block record setup not implemented, send an email to "
+                                      "<mozman@gmx.at> with your DXF file.")
+
+        from .modern.layouts import create_model_space_layout
+        layout = create_model_space_layout(self.objects, model_space_block_record.dxf.handle)
+        layout_handle = layout.dxf.handle
+        layout.dxf.owner = layout_dict.dxf.handle  # set layout management table as owner of the layout
+        layout_dict['Model'] = layout_handle  # insert layout into the layout management table
+        model_space_block_record.dxf.layout = layout_handle  # link model space block record to layout
 
     @property
     def is_binary_data_compressed(self):

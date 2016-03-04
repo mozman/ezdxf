@@ -20,7 +20,21 @@ none_subclass = DefSubclass(None, {
 })
 
 
+_DICT_TPL = """  0
+DICTIONARY
+  5
+0
+330
+0
+100
+AcDbDictionary
+281
+1
+"""
+
+
 class DXFDictionary(DXFEntity):
+    TEMPLATE = ClassifiedTags.from_text(_DICT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbDictionary', {
@@ -135,6 +149,19 @@ class DXFDictionary(DXFEntity):
         except ValueError:  # no entries found
             return
         del self.AcDbDictinary[start_index:]
+
+    def add_new_dict(self, key, dxfattribs=None):
+        """Create a new sub dictionary.
+
+        :param key: Name of the sub dictionary
+        :param dxfattribs: additional DXF attributes as dict
+        """
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['owner'] = self.dxf.handle
+        dxfdict = self.drawing.objects.create_new_dxf_entity('DICTIONARY', dxfattribs=dxfattribs)
+        self.add(key, dxfdict.dxf.handle)
+        return dxfdict
 
 
 class DXFDictionaryWithDefault(DXFDictionary):

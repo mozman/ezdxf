@@ -276,3 +276,143 @@ class BlockLayout(ModernGraphicsFactory, DXF12BlockLayout):
     def destroy(self):
         self.drawing.sections.tables.block_records.remove_handle(self.block_record_handle)
         super(BlockLayout, self).destroy()
+
+_MODEL_SPACE_LAYOUT_TPL = """  0
+LAYOUT
+  5
+0
+330
+0
+100
+AcDbPlotSettings
+  1
+
+  2
+DWFx ePlot (XPS Compatible).pc3
+  4
+ANSI_A_(8.50_x_11.00_Inches)
+  6
+
+ 40
+5.793749809265136
+ 41
+17.79375076293945
+ 42
+5.793746948242187
+ 43
+17.79376220703125
+ 44
+215.8999938964844
+ 45
+279.3999938964844
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+ 49
+0.0
+140
+0.0
+141
+0.0
+142
+1.0
+143
+14.5331733075991
+ 70
+11952
+ 72
+0
+ 73
+1
+ 74
+0
+  7
+
+ 75
+0
+147
+0.068808097091715
+148
+114.9814160680965
+149
+300.291024640228
+100
+AcDbLayout
+  1
+Model
+ 70
+1
+ 71
+0
+ 10
+0.0
+ 20
+0.0
+ 11
+12.0
+ 21
+9.0
+ 12
+0.0
+ 22
+0.0
+ 32
+0.0
+ 14
+0.0
+ 24
+0.0
+ 34
+0.0
+ 15
+0.0
+ 25
+0.0
+ 35
+0.0
+146
+0.0
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 16
+1.0
+ 26
+0.0
+ 36
+0.0
+ 17
+0.0
+ 27
+1.0
+ 37
+0.0
+ 76
+0
+330
+0
+"""
+
+
+def create_model_space_layout(object_section, block_record_handle):
+    # Problem: ezdxf was not designed to handle the absence of model space layout
+
+    dwg = object_section.drawing
+    entitydb = dwg.entitydb
+
+    tags = ClassifiedTags.from_text(_MODEL_SPACE_LAYOUT_TPL)
+    layout_handle = entitydb.handles.next()  # create new unique handle
+    tags.replace_handle(layout_handle)  # set entity handle
+
+    entitydb.add_tags(tags)  # add layout entity to entity database
+    object_section.add_handle(layout_handle)  # add layout entity to objects section
+
+    acdblayout = tags.get_subclass('AcDbLayout')
+    acdblayout.set_first(330, block_record_handle)  # link to block record
+    return Layout(dwg, layout_handle)
