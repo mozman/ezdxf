@@ -38,6 +38,8 @@ class Drawing(object):
         self._groups = None
         if self.dxfversion > 'AC1009':
             self.rootdict = get_rootdict()
+            if self.dxfversion in ('AC1012', 'AC1014'):  # releases R13 and R14
+                repair.upgrade_to_ac1015(self)
             self._setup_required_drawing_management_structures()
             self._groups = self.dxffactory.get_groups()
         else:

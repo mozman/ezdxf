@@ -135,7 +135,7 @@ class DXFDictionary(DXFEntity):
 
     def _discard(self, index):
         if index:
-            del self.AcDbDictinary[index:index+1]
+            del self.AcDbDictinary[index:index+2]  # remove key and value
 
     def _get_item_index(self, key):
         for index, tag in enumerate(self.AcDbDictinary):
