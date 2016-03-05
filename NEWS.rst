@@ -2,8 +2,9 @@
 News
 ====
 
-Version 0.7.2 - 2016-..-..
+Version 0.7.2 - 2016-03-05
 
+  * NEW: reads DXF R13/R14 and saves content as R2000 (AC1015) - experimental feature, because of the lack of test data
   * NEW: added support for common DXF attribute line weight
   * NEW: POLYLINE, POLYMESH - added properties is_closed, is_m_closed, is_n_closed
   * BUGFIX: MeshData.optimize() - corrected wrong vertex optimization

@@ -4,10 +4,11 @@
 # License: MIT License
 
 # Welcome to the place, where it gets dirty and ugly!
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
 
-from ..modern.layouts import Layout
 from .classifiedtags import ClassifiedTags
-from .tags import DXFTag
+from .tags import DXFTag, Tags
 
 
 def setup_model_space(dwg):
@@ -56,20 +57,72 @@ def create_layout_tags(dwg, block_record_handle, owner, tag_string):
     entitydb.add_tags(tags)  # add layout entity to entity database
     object_section.add_handle(layout_handle)  # add layout entity to objects section
 
-    tags.noclass.set_first(330, owner)  # setup owner tag
-    try:  # setup reactors
-        acad_reactors = tags.get_appdata('{ACAD_REACTORS')
-    except ValueError:
-        pass
-    else:
-        acad_reactors.set_first(330, owner)
-
+    tags.noclass.set_first(330, owner)  # set owner tag
     acdblayout = tags.get_subclass('AcDbLayout')
     acdblayout.set_first(330, block_record_handle)  # link to block record
     return layout_handle
 
 
+def upgrade_to_ac1015(dwg):
+    """Upgrade DXF versions AC1012 and AC1014 to AC1015.
+    """
+    def rename_standard_blocks():
+        rename_block('*MODEL_SPACE', '*Model_Space')
+        rename_block('*PAPER_SPACE', '*Paper_Space')
+
+    def rename_block(old_name, new_name):
+        if old_name in dwg.blocks:
+            dwg.blocks.rename_block(old_name, new_name)
+
+    def create_plot_style_name():
+        raise NotImplementedError("creating 'ACAD_PLOTSTYLENAME' not implemented, send an email to "
+                                  "<mozman@gmx.at> with your DXF file.")
+
+    def set_plot_style_name_in_layers(plot_style_name_handle):
+        for layer in dwg.layers:
+            layer.dxf.plot_style_name = plot_style_name_handle
+
+    def upgrade_dim_style_table():
+        dim_styles = dwg.dimstyles
+        header = dim_styles._table_header
+        dim_style_table = Tags([
+            DXFTag(100, 'AcDbDimStyleTable'),
+            DXFTag(71, len(dim_styles))
+        ])
+        for entry in dim_styles:
+            dim_style_table.append(DXFTag(340, entry.dxf.handle))
+        header.subclasses.append(dim_style_table)
+
+    def upgrade_layer_table():
+        rootdict = dwg.rootdict
+        if 'ACAD_LAYOUT' in rootdict:
+            rootdict.remove('ACAD_LAYOUT')  # delete existing layout table - ezdxf creates a new one AC1015 compatible
+        if 'ACAD_PLOTSTYLENAME' in rootdict:
+            plot_style_name_handle = rootdict['ACAD_PLOTSTYLENAME']
+        else:
+            plot_style_name_handle = create_plot_style_name()
+
+        set_plot_style_name_in_layers(plot_style_name_handle)
+
+    def upgrade_objects():
+        upgrade_acdbplaceholder(dwg.objects.query('ACDBPLACEHOLDER'))
+
+    def upgrade_acdbplaceholder(entities):
+        for entity in entities:
+            entity.tags.subclasses = entity.tags.subclasses[0:1]  # remove subclass AcDbPlaceHolder
+
+    rename_standard_blocks()
+    upgrade_layer_table()
+    upgrade_dim_style_table()
+    upgrade_objects()
+
+    dwg.dxfversion = 'AC1015'
+    dwg.header['$ACADVER'] = 'AC1015'
+
+
 def upgrade_to_ac1009(dwg):
+    """Upgrade DXF versions prior to AC1009 (R12) to AC1009.
+    """
     dwg.dxfversion = 'AC1009'
     dwg.header['$ACADVER'] = 'AC1009'
     # as far I know, nothing else to do
@@ -224,12 +277,6 @@ _PAPER_SPACE_LAYOUT_TPL = """  0
 LAYOUT
   5
 DEAD
-102
-{ACAD_REACTORS
-330
-DEAD
-102
-}
 330
 DEAD
 100
