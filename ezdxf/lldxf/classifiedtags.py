@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import Tags, StringIterator, DXFStructureError, DXFTag, write_tags
+from ..tools.c23 import isstring
 
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
@@ -19,6 +20,9 @@ class ClassifiedTags(object):
     __slots__ = ('subclasses', 'appdata', 'xdata', 'link')
 
     def __init__(self, iterable=None):
+        if isstring(iterable):
+            raise ValueError("use ClassifiedTags.from_text() to create tags from a string.")
+
         self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
         self.xdata = list()  # code >= 1000, keys are "APPNAME", values are Tags()

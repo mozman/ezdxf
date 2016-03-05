@@ -93,6 +93,12 @@ class EntityDB(object):
         for tags in self.values():
             compress_binary_data(tags)
 
+    def get_unique_handle(self):
+        while True:
+            handle = self.handles.next()
+            if handle not in self._database:  # you can not trust $HANDSEED value
+                return handle
+
 
 class DebugDB(EntityDB):
     TAGFMT = "(%d, %s)"
