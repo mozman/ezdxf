@@ -21,9 +21,10 @@ from .lldxf.tags import TagIterator
 from .tools.importer import Importer
 from .lldxf.const import DXFStructureError, DXFVersionError
 from .tools.zipmanager import ctxZipReader
-from .tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
+from .tools import transparency2float, float2transparency  #  convert transparency integer values to floats 0..1
 from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
+from .lldxf import const  #  restore module structure ezdxf.const
 
 
 def new(dxfversion='AC1009'):
