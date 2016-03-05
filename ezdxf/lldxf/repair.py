@@ -86,6 +86,13 @@ def upgrade_to_ac1015(dwg):
 
         set_plot_style_name_in_layers(plot_style_name_handle)
 
+        try:  # do not plot DEFPOINTS layer or AutoCAD is yelling
+            defpoints_layer = dwg.layers.get('DEFPOINTS')
+        except ValueError:
+            pass
+        else:
+            defpoints_layer.dxf.plot = 0
+
     def create_plot_style_name():
         placeholder = dwg.dxffactory.create_db_entry('ACDBPLACEHOLDER', dxfattribs={})
         placeholder_handle = placeholder.dxf.handle
