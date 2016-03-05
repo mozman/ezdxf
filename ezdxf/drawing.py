@@ -17,7 +17,7 @@ from .options import options
 from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
 from .tools.juliandate import juliandate
-
+from .lldxf import repair
 
 class Drawing(object):
     """ The Central Data Object
@@ -42,8 +42,8 @@ class Drawing(object):
             self._groups = self.dxffactory.get_groups()
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version
-                self._upgrade_to_ac1009()  # convert to DXF format AC1009 (DXF R12)
-            self._enable_handles()
+                repair.upgrade_to_ac1009(self)  # convert to DXF format AC1009 (DXF R12)
+            repair.enable_handles(self)
         self.layouts = self.dxffactory.get_layouts()
 
         if self.dxfversion > 'AC1009':
@@ -76,23 +76,9 @@ class Drawing(object):
     def _setup_required_drawing_management_structures(self):
         rootdict = self.rootdict
         if 'ACAD_LAYOUT' not in rootdict:  # create layout management table
-            layout_dict = rootdict.add_new_dict('ACAD_LAYOUT')
-            self._setup_model_space(layout_dict)
-
-    def _setup_model_space(self, layout_dict):
-        # This is just necessary for not existing DXF drawings without properly setup management structures.
-        try:
-            model_space_block_record = self.block_records.get('*Model_Space')
-        except KeyError:
-            raise NotImplementedError("Model space block record setup not implemented, send an email to "
-                                      "<mozman@gmx.at> with your DXF file.")
-
-        from .modern.layouts import create_model_space_layout
-        layout = create_model_space_layout(self.objects, model_space_block_record.dxf.handle)
-        layout_handle = layout.dxf.handle
-        layout.dxf.owner = layout_dict.dxf.handle  # set layout management table as owner of the layout
-        layout_dict['Model'] = layout_handle  # insert layout into the layout management table
-        model_space_block_record.dxf.layout = layout_handle  # link model space block record to layout
+            rootdict.add_new_dict('ACAD_LAYOUT')
+            repair.setup_model_space(self)  # setup layout entity and link to proper block and block_record entities
+            repair.setup_paper_space(self)  # setup layout entity and link to proper block and block_record entities
 
     @property
     def is_binary_data_compressed(self):
@@ -276,30 +262,3 @@ class Drawing(object):
         if self.dxfversion > 'AC1009':
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
-    def _enable_handles(self):
-        """ Enable 'handles' for DXF R12 to be consistent with later DXF versions.
-
-        Write entitydb-handles into entity-tags.
-        """
-        def has_handle(tags, handle_code):
-            for tag in tags.noclass:
-                if tag.code == handle_code:
-                    return True
-            return False
-
-        def put_handles_into_entity_tags():
-            for handle, tags in self.entitydb.items():
-                is_not_dimstyle = tags.noclass[0] != (0, 'DIMSTYLE')
-                handle_code = 5 if is_not_dimstyle else 105  # legacy shit!!!
-                if not has_handle(tags, handle_code):
-                    tags.noclass.insert(1, DXFTag(handle_code, handle))  # handle should be the 2. tag
-
-        if self.dxfversion > 'AC1009':
-            return
-        put_handles_into_entity_tags()
-        self.header['$HANDLING'] = 1
-
-    def _upgrade_to_ac1009(self):
-        self.dxfversion = 'AC1009'
-        self.header['$ACADVER'] = 'AC1009'
-        # as far I know, nothing else to do
