@@ -362,6 +362,18 @@ POLYMESH_BEZIER_SURFACE  8      Bezier surface
 
    *True* if polyline is a poly face mesh, see :class:`Polyface`
 
+.. attribute:: Polyline.is_closed
+
+   *True* if polyline is closed.
+
+.. attribute:: Polyline.is_m_closed
+
+   *True* if polyline (as polymesh) is closed in m direction.
+
+.. attribute:: Polyline.is_n_closed
+
+   *True* if polyline (as polymesh) is closed in n direction.
+
 .. method:: Polyline.get_mode()
 
    Returns a string: ``AcDb2dPolyline``, ``AcDb3dPolyline``, ``AcDbPolygonMesh`` or ``AcDbPolyFaceMesh``

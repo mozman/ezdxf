@@ -5,6 +5,7 @@ News
 Version 0.7.2 - 2016-..-..
 
   * NEW: added support for common DXF attribute line weight
+  * NEW: POLYLINE, POLYMESH - added properties is_closed, is_m_closed, is_n_closed
   * BUGFIX: MeshData.optimize() - corrected wrong vertex optimization
   * BUGFIX: can open DXF files without existing layout management table
   * BUGFIX: restore module structure ezdxf.const

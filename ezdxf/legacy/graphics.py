@@ -685,15 +685,27 @@ class Polyline(GraphicEntity):
 
     @property
     def is_3d_polyline(self):
-        return self.dxf.flags & const.POLYLINE_3D_POLYLINE
+        return bool(self.dxf.flags & const.POLYLINE_3D_POLYLINE)
 
     @property
     def is_polygon_mesh(self):
-        return self.dxf.flags & const.POLYLINE_3D_POLYMESH
+        return bool(self.dxf.flags & const.POLYLINE_3D_POLYMESH)
 
     @property
     def is_poly_face_mesh(self):
-        return self.dxf.flags & const.POLYLINE_POLYFACE
+        return bool(self.dxf.flags & const.POLYLINE_POLYFACE)
+
+    @property
+    def is_closed(self):
+        return bool(self.dxf.flags & const.POLYLINE_CLOSED)
+
+    @property
+    def is_m_closed(self):
+        return bool(self.dxf.flags & const.POLYLINE_MESH_CLOSED_M_DIRECTION)
+
+    @property
+    def is_n_closed(self):
+        return bool(self.dxf.flags & const.POLYLINE_MESH_CLOSED_N_DIRECTION)
 
     def m_close(self):
         self.dxf.flags = self.dxf.flags | const.POLYLINE_MESH_CLOSED_M_DIRECTION
