@@ -2,6 +2,12 @@
 News
 ====
 
+Version 0.7.3 - 2016-..
+  * NEW: improved DXF R13/R14 compatibility
+  * BUGFIX: create CLASSES section only for DXF versions newer than R12 (AC1009)
+  * TEST: converted a bunch of R8 (AC1003) files to R12 (AC1009), AutoCAD didn't complain
+  * TEST: converted a bunch of R13 (AC1012) files to R2000 (AC1015), AutoCAD ...
+
 Version 0.7.2 - 2016-03-05
 
   * NEW: reads DXF R13/R14 and saves content as R2000 (AC1015) - experimental feature, because of the lack of test data

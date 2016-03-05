@@ -53,8 +53,9 @@ class Sections(object):
             self._sections['blocks'] = BlocksSection(tags=None, drawing=drawing)
         if 'tables' not in self:
             self._sections['tables'] = TablesSection(tags=None, drawing=drawing)
-        if 'classes' not in self:
-            self._sections['classes'] = ClassesSection(tags=None, drawing=drawing)
+        if drawing.dxfversion > 'AC1009':  # required sections for DXF versions newer than R12 (AC1009)
+            if 'classes' not in self:
+                self._sections['classes'] = ClassesSection(tags=None, drawing=drawing)
 
     def __contains__(self, item):
         return item in self._sections

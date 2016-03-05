@@ -163,8 +163,25 @@ class DXFDictionary(DXFEntity):
         self.add(key, dxfdict.dxf.handle)
         return dxfdict
 
+_DICT_WITH_DEFAULT_TPL = """  0
+ACDBDICTIONARYWDFLT
+  5
+0
+330
+0
+100
+AcDbDictionary
+281
+1
+100
+AcDbDictionaryWithDefault
+340
+0
+"""
+
 
 class DXFDictionaryWithDefault(DXFDictionary):
+    TEMPLATE = ClassifiedTags.from_text(_DICT_WITH_DEFAULT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbDictionary', {
@@ -521,4 +538,17 @@ class DXFDataTable(DXFEntity):
             'tabel_name': DXFAttr(1),
         }),
     )
+
+_PLACEHOLDER_TPL = """  0
+ACDBPLACEHOLDER
+  5
+0
+330
+0
+"""
+
+
+class ACDBPlaceHolder(DXFEntity):
+    TEMPLATE = ClassifiedTags.from_text(_PLACEHOLDER_TPL)
+    DXFATTRIBS = DXFAttributes(none_subclass, )
 

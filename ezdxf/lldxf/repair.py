@@ -74,9 +74,36 @@ def upgrade_to_ac1015(dwg):
         if old_name in dwg.blocks:
             dwg.blocks.rename_block(old_name, new_name)
 
+    def upgrade_layout_table():
+        if 'ACAD_LAYOUT' in dwg.rootdict:
+            dwg.rootdict.remove('ACAD_LAYOUT')  # delete existing layout table - ezdxf creates a new one AC1015 compatible
+
+    def upgrade_layer_table():
+        if 'ACAD_PLOTSTYLENAME' in dwg.rootdict:
+            plot_style_name_handle = dwg.rootdict['ACAD_PLOTSTYLENAME']
+        else:
+            plot_style_name_handle = create_plot_style_name()
+
+        set_plot_style_name_in_layers(plot_style_name_handle)
+
     def create_plot_style_name():
-        raise NotImplementedError("creating 'ACAD_PLOTSTYLENAME' not implemented, send an email to "
-                                  "<mozman@gmx.at> with your DXF file.")
+        placeholder = dwg.dxffactory.create_db_entry('ACDBPLACEHOLDER', dxfattribs={})
+        placeholder_handle = placeholder.dxf.handle
+
+        plot_style_name_dict = dwg.dxffactory.create_db_entry('ACDBDICTIONARYWDFLT', dxfattribs={
+            'owner': dwg.rootdict.dxf.handle,
+            'default': placeholder_handle
+        })
+        plot_style_name_dict_handle = plot_style_name_dict.dxf.handle
+        plot_style_name_dict['Normal'] = placeholder_handle
+        placeholder.dxf.owner = plot_style_name_dict_handle  # link to owner
+
+        # add entities to the objects section
+        dwg.objects.add_handle(plot_style_name_dict_handle)
+        dwg.objects.add_handle(placeholder_handle)
+
+        dwg.rootdict['ACAD_PLOTSTYLENAME'] = plot_style_name_dict_handle
+        return plot_style_name_dict_handle
 
     def set_plot_style_name_in_layers(plot_style_name_handle):
         for layer in dwg.layers:
@@ -93,17 +120,6 @@ def upgrade_to_ac1015(dwg):
             dim_style_table.append(DXFTag(340, entry.dxf.handle))
         header.subclasses.append(dim_style_table)
 
-    def upgrade_layer_table():
-        rootdict = dwg.rootdict
-        if 'ACAD_LAYOUT' in rootdict:
-            rootdict.remove('ACAD_LAYOUT')  # delete existing layout table - ezdxf creates a new one AC1015 compatible
-        if 'ACAD_PLOTSTYLENAME' in rootdict:
-            plot_style_name_handle = rootdict['ACAD_PLOTSTYLENAME']
-        else:
-            plot_style_name_handle = create_plot_style_name()
-
-        set_plot_style_name_in_layers(plot_style_name_handle)
-
     def upgrade_objects():
         upgrade_acdbplaceholder(dwg.objects.query('ACDBPLACEHOLDER'))
 
@@ -112,6 +128,7 @@ def upgrade_to_ac1015(dwg):
             entity.tags.subclasses = entity.tags.subclasses[0:1]  # remove subclass AcDbPlaceHolder
 
     rename_standard_blocks()
+    upgrade_layout_table()
     upgrade_layer_table()
     upgrade_dim_style_table()
     upgrade_objects()
