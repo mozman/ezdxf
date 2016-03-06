@@ -2,11 +2,14 @@
 News
 ====
 
-Version 0.7.3 - 2016-..
+Version 0.7.3 - 2016-03-06
+
+  * Quick bugfix release, because ezdxf 0.7.2 can damage DXF R12 files when saving!!!
   * NEW: improved DXF R13/R14 compatibility
   * BUGFIX: create CLASSES section only for DXF versions newer than R12 (AC1009)
   * TEST: converted a bunch of R8 (AC1003) files to R12 (AC1009), AutoCAD didn't complain
   * TEST: converted a bunch of R13 (AC1012) files to R2000 (AC1015), AutoCAD didn't complain
+  * TEST: converted a bunch of R14 (AC1014) files to R2000 (AC1015), AutoCAD didn't complain
 
 Version 0.7.2 - 2016-03-05
 
