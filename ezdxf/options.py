@@ -23,6 +23,7 @@ class Options(object):
 
         # compress binary data tags 310-319, collects multiple succeeding binary tags as one compressed tag
         self.compress_binary_data = False
+        self.store_comments = True
 
     @property
     def debug(self):
