@@ -5,7 +5,10 @@ News
 Version 0.7.4 - 2016-03-..
 
   * NEW: preserve leading file comments (tag code 999)
-  * NEW: add comment when saving "last saved by ezdxf x.y.z on YYYY-MM-DD hh-mm-ss"
+  * NEW: add saving comment "last saved by ezdxf x.y.z on YYYY-MM-DD hh-mm-ss"
+  * NEW: add DXF upgrade comment when saving "DXF version upgrade from ACxxxx to ACyyyy by ezdxf x.y.z on YYYY-MM-DD hh-mm-ss"
+  * NEW: options.store_comments = True by default; set to False to not store comments in DXF file when saving
+  * NEW: integrated acadctb.py module from my dxfwrite package into ezdxf; no docs so far
 
 Version 0.7.3 - 2016-03-06
 

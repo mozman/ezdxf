@@ -243,7 +243,8 @@ class Drawing(object):
     def write(self, stream):
         self._create_appids()
         self._update_metadata()
-        self.write_leading_comments(stream)
+        if options.store_comments:
+            self.write_leading_comments(stream)
         self.sections.write(stream)
 
     def write_leading_comments(self, stream):
