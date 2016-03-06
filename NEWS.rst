@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.7.4 - 2016-03-..
+
+  * NEW: preserve leading file comments (tag code 999)
+  * NEW: add comment when saving "last saved by ezdxf x.y.z on YYYY-MM-DD hh-mm-ss"
+
 Version 0.7.3 - 2016-03-06
 
   * Quick bugfix release, because ezdxf 0.7.2 can damage DXF R12 files when saving!!!

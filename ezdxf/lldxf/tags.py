@@ -12,6 +12,8 @@ from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
 
+COMMENT_CODE = 999
+
 
 def write_tags(stream, tags):
     for tag in tags:
@@ -29,6 +31,7 @@ class TagIterator(object):
         self.last_tag = NONE_TAG
         self.undo_coord = None
         self.eof = False
+        self.comments = []
 
     def __iter__(self):
         return self
@@ -77,14 +80,17 @@ class TagIterator(object):
             return value
 
         def next_tag():
-            code = 999
-            while code == 999:  # skip comments
+            code = COMMENT_CODE
+            while code == COMMENT_CODE:  # skip comments
                 if self.undo_coord is not None:
                     code, value = self.undo_coord
                     self.lineno += 2
                     self.undo_coord = None
                 else:
                     code, value = read_next_tag()
+                    if code == COMMENT_CODE:  # save comments
+                        self.comments.append(value)
+                        continue
 
                 if is_point_code(code):  # 2D or 3D point
                     value = read_point(code, value)
@@ -112,6 +118,9 @@ class TagIterator(object):
             self.lineno -= 2
         else:
             raise ValueError('No tag to undo')
+
+    def get_comments(self):
+        return self.comments[:]  # copy of list
 
 
 class StringIterator(TagIterator):
