@@ -36,7 +36,8 @@ class Sections(object):
                 else:
                     new_section = HeaderSection(section)
                     section = None  # this tags are done
-                drawing._bootstraphook(new_section)
+                comments = tagreader.get_comments()  # get all comments until now
+                drawing._bootstraphook(new_section, comments)
                 new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
                 bootstrap = False
                 self._sections[new_section.name] = new_section

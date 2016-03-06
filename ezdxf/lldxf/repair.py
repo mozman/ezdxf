@@ -7,6 +7,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+from datetime import datetime
+
 from .classifiedtags import ClassifiedTags
 from .tags import DXFTag, Tags
 
@@ -140,6 +142,7 @@ def upgrade_to_ac1015(dwg):
     upgrade_dim_style_table()
     upgrade_objects()
 
+    add_upgrade_comment(dwg, dwg.dxfversion, 'AC1015 (R2000)')
     dwg.dxfversion = 'AC1015'
     dwg.header['$ACADVER'] = 'AC1015'
 
@@ -147,8 +150,23 @@ def upgrade_to_ac1015(dwg):
 def upgrade_to_ac1009(dwg):
     """Upgrade DXF versions prior to AC1009 (R12) to AC1009.
     """
+    add_upgrade_comment(dwg, dwg.dxfversion, 'AC1009 (R12)')
     dwg.dxfversion = 'AC1009'
     dwg.header['$ACADVER'] = 'AC1009'
+
+    # as far I know, nothing else to do
+
+
+def add_upgrade_comment(dwg, from_version, to_version):
+    """Upgrade DXF versions prior to AC1009 (R12) to AC1009.
+    """
+    from .. import VERSION
+    dwg.dxfversion = 'AC1009'
+    dwg.comments.append("DXF version upgrade from {f} to {t} by ezdxf {v} on {dt}".format(
+        f=from_version,
+        t=to_version,
+        v=VERSION,
+        dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
     # as far I know, nothing else to do
 
 

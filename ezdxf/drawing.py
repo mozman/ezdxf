@@ -9,7 +9,7 @@ from datetime import datetime
 import io
 
 from . import database
-from .lldxf.tags import TagIterator, DXFTag
+from .lldxf.tags import TagIterator, DXFTag, write_tags
 from .lldxf.const import DXFVersionError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
@@ -18,6 +18,7 @@ from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
+
 
 class Drawing(object):
     """ The Central Data Object
@@ -29,6 +30,7 @@ class Drawing(object):
             roothandle = self.sections.objects.roothandle()
             return self.dxffactory.wrap_entity(self.entitydb[roothandle])
         self._is_binary_data_compressed = False
+        self.comments = []  # list of comment strings - saved as (999, comment) tags on top of file
         self.dxffactory = None  # readonly - set by _bootstraphook()
         self.dxfversion = 'AC1009'  # readonly - set by _bootstraphook()
         self.encoding = 'cp1252'  # read/write - set by _bootstraphook()
@@ -65,9 +67,10 @@ class Drawing(object):
     def _handles(self):
         return self.entitydb.handles
 
-    def _bootstraphook(self, header):
+    def _bootstraphook(self, header, comments):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
+        self.comments = comments  # preserve leading file comments
         self.dxfversion = header.get('$ACADVER', 'AC1009')
         seed = header.get('$HANDSEED', str(self._handles))
         self._handles.reset(seed)
@@ -240,7 +243,12 @@ class Drawing(object):
     def write(self, stream):
         self._create_appids()
         self._update_metadata()
+        self.write_leading_comments(stream)
         self.sections.write(stream)
+
+    def write_leading_comments(self, stream):
+        comment_tags = (DXFTag(999, comment) for comment in self.comments)
+        write_tags(stream, comment_tags)
 
     def cleanup(self, groups=True):
         """
@@ -252,9 +260,17 @@ class Drawing(object):
             self.groups.cleanup()
 
     def _update_metadata(self):
-        self.header['$TDUPDATE'] = juliandate(datetime.now())
+        now = datetime.now()
+        self.header['$TDUPDATE'] = juliandate(now)
         self.header['$HANDSEED'] = str(self._handles)
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
+        self._update_comments(now)
+
+    def _update_comments(self, now):
+        from . import VERSION
+        # remove existing ezdxf comments
+        self.comments = [comment for comment in self.comments if not comment.startswith('last saved by ezdxf')]
+        self.comments.append("last saved by ezdxf {} on {}".format(VERSION, now.strftime("%Y-%m-%d %H:%M:%S")))
 
     def _create_appids(self):
         def create_appid_if_not_exist(name, flags=0):
