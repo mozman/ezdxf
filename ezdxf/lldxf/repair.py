@@ -11,6 +11,7 @@ from datetime import datetime
 
 from .classifiedtags import ClassifiedTags
 from .tags import DXFTag, Tags
+from .const import DXFInternalEzdxfError
 
 
 def setup_model_space(dwg):
@@ -25,6 +26,8 @@ def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
     # This is just necessary for not existing DXF drawings without properly setup management structures.
     # Layout structure is not setup in this runtime phase
     layout_dict = dwg.dxffactory.wrap_handle(dwg.rootdict['ACAD_LAYOUT'])
+    if layout_name in layout_dict:
+        return
     try:
         block_record = dwg.block_records.get(block_name)
     except KeyError:
@@ -78,13 +81,16 @@ def upgrade_to_ac1015(dwg):
 
     def upgrade_layout_table():
         if 'ACAD_LAYOUT' in dwg.rootdict:
-            dwg.rootdict.remove('ACAD_LAYOUT')  # delete existing layout table - ezdxf creates a new one AC1015 compatible
+            setup_model_space(dwg)  # setup layout entity and link to proper block and block_record entities
+            setup_paper_space(dwg)  # setup layout entity and link to proper block and block_record entities
+        else:
+            raise DXFInternalEzdxfError("Table ACAD_LAYOUT should already exist in root dict.")
 
     def upgrade_layer_table():
         if 'ACAD_PLOTSTYLENAME' in dwg.rootdict:
             plot_style_name_handle = dwg.rootdict['ACAD_PLOTSTYLENAME']
         else:
-            plot_style_name_handle = create_plot_style_name()
+            raise DXFInternalEzdxfError("Table ACAD_PLOTSTYLENAME should already exist in root dict.")
 
         set_plot_style_name_in_layers(plot_style_name_handle)
 
@@ -94,25 +100,6 @@ def upgrade_to_ac1015(dwg):
             pass
         else:
             defpoints_layer.dxf.plot = 0
-
-    def create_plot_style_name():
-        placeholder = dwg.dxffactory.create_db_entry('ACDBPLACEHOLDER', dxfattribs={})
-        placeholder_handle = placeholder.dxf.handle
-
-        plot_style_name_dict = dwg.dxffactory.create_db_entry('ACDBDICTIONARYWDFLT', dxfattribs={
-            'owner': dwg.rootdict.dxf.handle,
-            'default': placeholder_handle
-        })
-        plot_style_name_dict_handle = plot_style_name_dict.dxf.handle
-        plot_style_name_dict['Normal'] = placeholder_handle
-        placeholder.dxf.owner = plot_style_name_dict_handle  # link to owner
-
-        # add entities to the objects section
-        dwg.objects.add_handle(plot_style_name_dict_handle)
-        dwg.objects.add_handle(placeholder_handle)
-
-        dwg.rootdict['ACAD_PLOTSTYLENAME'] = plot_style_name_dict_handle
-        return plot_style_name_dict_handle
 
     def set_plot_style_name_in_layers(plot_style_name_handle):
         for layer in dwg.layers:
@@ -136,6 +123,7 @@ def upgrade_to_ac1015(dwg):
         for entity in entities:
             entity.tags.subclasses = entity.tags.subclasses[0:1]  # remove subclass AcDbPlaceHolder
 
+    # calling order is important!
     rename_standard_blocks()
     upgrade_layout_table()
     upgrade_layer_table()
@@ -153,7 +141,6 @@ def upgrade_to_ac1009(dwg):
     add_upgrade_comment(dwg, dwg.dxfversion, 'AC1009 (R12)')
     dwg.dxfversion = 'AC1009'
     dwg.header['$ACADVER'] = 'AC1009'
-
     # as far I know, nothing else to do
 
 
@@ -167,7 +154,6 @@ def add_upgrade_comment(dwg, from_version, to_version):
         t=to_version,
         v=VERSION,
         dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-    # as far I know, nothing else to do
 
 
 def enable_handles(dwg):

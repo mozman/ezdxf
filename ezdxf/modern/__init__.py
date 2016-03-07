@@ -20,7 +20,7 @@ from .hatch import Hatch
 from .viewport import Viewport
 
 from . import dxfobjects
-from .groups import DXFGroup, DXFGroupTable
+from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
 
 UPDATE_ENTITY_WRAPPERS = {
@@ -120,15 +120,3 @@ class ModernDXFFactory(LegacyDXFFactory):
         modifier = self.TAGS_MODIFIER.get(tags.dxftype(), None)
         if modifier is not None:
             modifier(tags)
-
-    def get_groups(self):
-        if self.dxfversion > 'AC1009':
-            try:
-                group_table_handle = self.rootdict['ACAD_GROUP']
-            except KeyError:  # create group new table
-                group_table = self.rootdict.add_new_dict('ACAD_GROUP')
-            else:
-                group_table = self.wrap_handle(group_table_handle)
-            return DXFGroupTable(group_table)
-        else:
-            raise Warning('Not supported for DXF version AC1009.')
