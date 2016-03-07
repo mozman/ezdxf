@@ -4,9 +4,11 @@ News
 
 Version 0.7.4 - 2016-03-..
 
+  * NEW: support for DXF entity IMAGE (work in progress)
   * NEW: preserve leading file comments (tag code 999)
   * NEW: writes saving and upgrading comments when saving DXF files; avoid this behavior by setting options.store_comments = False
   * NEW: integrated acadctb.py module from my dxfwrite package to read/write AutoCAD .ctb config files; no docs so far
+  * Cleanup DXF template files AC1009 - AC1027, less garbage in memory
 
 Version 0.7.3 - 2016-03-06
 

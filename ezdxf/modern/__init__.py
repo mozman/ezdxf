@@ -18,6 +18,8 @@ from .spline import Spline
 from .mtext import MText
 from .hatch import Hatch
 from .viewport import Viewport
+from .image import Image
+from .image import ImageDef, ImageDefReactor
 
 from . import dxfobjects
 from .groups import DXFGroup
@@ -33,6 +35,8 @@ UPDATE_ENTITY_WRAPPERS = {
     'DATATABLE': dxfobjects.DXFDataTable,
     'GROUP': DXFGroup,
     'ACDBPLACEHOLDER': dxfobjects.ACDBPlaceHolder,
+    'IMAGEDEF': ImageDef,
+    'IMAGEDEF_REACTOR': ImageDefReactor,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -73,6 +77,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'MESH': Mesh,
     'HATCH': Hatch,
     'VIEWPORT': Viewport,
+    'IMAGE': Image,
 }
 
 
