@@ -16,7 +16,7 @@ from ezdxf.sections.objects import ObjectsSection
 
 class TestObjectsSection(unittest.TestCase):
     def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
+        self.dwg = DrawingProxy('AC1015')
         self.section = ObjectsSection(Tags.from_text(TESTOBJECTS), self.dwg)
 
     def test_write(self):

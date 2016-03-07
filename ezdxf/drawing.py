@@ -26,9 +26,6 @@ class Drawing(object):
     def __init__(self, tagreader):
         """ Create a new drawing. """
 
-        def get_rootdict():
-            roothandle = self.sections.objects.roothandle()
-            return self.dxffactory.wrap_entity(self.entitydb[roothandle])
         self._is_binary_data_compressed = False
         self.comments = []  # list of comment strings - saved as (999, comment) tags on top of file
         self.dxffactory = None  # readonly - set by _bootstraphook()
@@ -39,11 +36,14 @@ class Drawing(object):
         self.sections = Sections(tagreader, self)
         self._groups = None
         if self.dxfversion > 'AC1009':
-            self.rootdict = get_rootdict()
+            self.rootdict = self.objects.rootdict()
+            self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
             if self.dxfversion in ('AC1012', 'AC1014'):  # releases R13 and R14
                 repair.upgrade_to_ac1015(self)
-            self._setup_required_drawing_management_structures()
-            self._groups = self.dxffactory.get_groups()
+            # some applications don't setup properly the 'Model' and 'Layout1' layouts
+            repair.setup_model_space(self)
+            repair.setup_paper_space(self)
+            self._groups = self.objects.groups()
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # convert to DXF format AC1009 (DXF R12)
@@ -77,13 +77,6 @@ class Drawing(object):
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
         self.dxffactory = dxffactory(self)
-
-    def _setup_required_drawing_management_structures(self):
-        rootdict = self.rootdict
-        if 'ACAD_LAYOUT' not in rootdict:  # create layout management table
-            rootdict.add_new_dict('ACAD_LAYOUT')
-            repair.setup_model_space(self)  # setup layout entity and link to proper block and block_record entities
-            repair.setup_paper_space(self)  # setup layout entity and link to proper block and block_record entities
 
     @property
     def is_binary_data_compressed(self):
