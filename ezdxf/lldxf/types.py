@@ -11,7 +11,7 @@ from collections import namedtuple
 from ..tools.c23 import ustr
 
 DXFTag = namedtuple('DXFTag', 'code value')
-NONE_TAG = DXFTag(999999, 'NONE')
+NONE_TAG = DXFTag(None, None)
 TAG_STRING_FORMAT = '%3d\n%s\n'
 
 

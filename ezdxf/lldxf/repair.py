@@ -2,8 +2,10 @@
 # Created: 05.03.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
+# --------------------------------------------------- #
+# Welcome to the place, where it gets dirty and ugly! #
+# --------------------------------------------------- #
 
-# Welcome to the place, where it gets dirty and ugly!
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -23,8 +25,8 @@ def setup_paper_space(dwg):
 
 
 def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
-    # This is just necessary for not existing DXF drawings without properly setup management structures.
-    # Layout structure is not setup in this runtime phase
+    # This is just necessary for existing DXF drawings without properly setup management structures.
+    # Layout structure is not initialized in this runtime phase
     layout_dict = dwg.dxffactory.wrap_handle(dwg.rootdict['ACAD_LAYOUT'])
     if layout_name in layout_dict:
         return
@@ -50,7 +52,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
 
 def create_layout_tags(dwg, block_record_handle, owner, tag_string):
     # Problem: ezdxf was not designed to handle the absence of model/paper space LAYOUT entities
-    # Layout structure is not setup in this runtime phase
+    # Layout structure is not initialized in this runtime phase
 
     object_section = dwg.objects
     entitydb = dwg.entitydb
