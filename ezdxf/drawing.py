@@ -10,7 +10,6 @@ import io
 
 from . import database
 from .lldxf.tags import TagIterator, DXFTag, write_tags
-from .lldxf.const import DXFVersionError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -46,7 +45,7 @@ class Drawing(object):
             self._groups = self.objects.groups()
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version
-                repair.upgrade_to_ac1009(self)  # convert to DXF format AC1009 (DXF R12)
+                repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
             repair.enable_handles(self)
         self.layouts = self.dxffactory.get_layouts()
 
@@ -59,7 +58,7 @@ class Drawing(object):
             self.compress_binary_data()
 
     def compress_binary_data(self):
-        if self.dxfversion > 'AC1009' and not self.is_binary_data_compressed:
+        if self.dxfversion > 'AC1009' and not self._is_binary_data_compressed:
             self.entitydb.compress_binary_data()
             self._is_binary_data_compressed = True
 
