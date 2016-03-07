@@ -303,17 +303,11 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
 class DXFPlotSettings(DXFEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, plot_settings_subclass)
 
-
+# removed reactors 5 .. 102 330 102 .. 330
 _LAYOUT_TPL = """  0
 LAYOUT
   5
 0
-102
-{ACAD_REACTORS
-330
-0
-102
-}
 330
 1A
 100
@@ -472,14 +466,6 @@ class DXFLayout(DXFEntity):
             # orthographic (76 code is non-zero). If not present and
             # 76 code is non-zero, then base UCS is taken to be WORLD
         }))
-
-    def post_new_hook(self):
-        try:
-            acad_reactors = self.tags.get_appdata('{ACAD_REACTORS')
-        except ValueError:
-            pass
-        else:
-            acad_reactors.set_first(330, self.dxf.owner)
 
 
 class XRecord(DXFEntity):

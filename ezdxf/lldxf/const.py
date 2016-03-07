@@ -24,7 +24,7 @@ dxfversion = {
 }
 
 
-class DXFError(Exception):
+class DXFError(Exception):  # root exception
     pass
 
 
