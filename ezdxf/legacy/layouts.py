@@ -193,7 +193,7 @@ class DXF12BlockLayout(BaseLayout):
         block.dxf.name = new_name
         block.dxf.name2 = new_name
 
-    def add_attdef(self, tag, insert, dxfattribs=None):
+    def add_attdef(self, tag, insert=(0, 0), dxfattribs=None):
         """ Create an ATTDEF entity in the drawing database and add it to the block entity space.
         """
         if dxfattribs is None:
