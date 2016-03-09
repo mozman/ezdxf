@@ -11,9 +11,21 @@ Create New Drawings
     Create a new drawing from a template-drawing. The template-drawings are
     located in a template directory, which resides by default in the *ezdxf*
     package subfolder `templates`. The location of the template directory can be changed by
-    the global option :attr:`ezdxf.options.template_dir`.
+    the global option :attr:`ezdxf.options.template_dir`. *dxfversion* can be either ``'AC1009'``
+    the official DXF version name or ``'R12'`` the AutoCAD release name. You can only create new drawings
+    for the following DXF versions:
 
-.. include:: dxfversion.inc
+======= ========================
+Version AutoCAD Release
+======= ========================
+AC1009  AutoCAD R12
+AC1015  AutoCAD R2000
+AC1018  AutoCAD R2004
+AC1021  AutoCAD R2007
+AC1024  AutoCAD R2010
+AC1027  AutoCAD R2013
+======= ========================
+
 
 Open Drawings
 -------------
@@ -80,6 +92,10 @@ Global Options
 
     This option is very useful if the *ezdxf* package resides in a zip archive.
 
-.. attribute:: ezdxf.options.debug
+.. attribute:: ezdxf.options.store_comments
 
-    Activate debug mode.
+   - preserves the existing comments at the top of the file
+   - adds a comment when upgrading the DXF version
+   - adds a *'last saved by ezdxf ...'* comment
+
+   Default setting is *True*.

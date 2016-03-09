@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-acadrelease = {
+acad_release = {
     'AC1009': 'R12',
     'AC1012': 'R13',
     'AC1014': 'R14',
@@ -19,8 +19,8 @@ acadrelease = {
 versions_supported_by_new = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024', 'AC1027']
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
-dxfversion = {
-    acad: dxf for dxf, acad in acadrelease.items()
+acad_release_to_dxf_version = {
+    acad: dxf for dxf, acad in acad_release.items()
 }
 
 

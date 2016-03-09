@@ -97,10 +97,7 @@ class TablesSection(object):
         stream.write('  0\nSECTION\n  2\nTABLES\n')
         for table_name in TABLE_ORDER:
             table = self._tables.get(table_name)
-            if table is None:
-                options.logger.debug('{} table does not exist.'.format(table_name.upper()))
-            else:
-                options.logger.debug('writing table: {}'.format(table_name.upper()))
+            if table is not None:
                 table.write(stream)
         stream.write('  0\nENDSEC\n')
 

@@ -82,7 +82,6 @@ class Sections(object):
         unknown_sections = frozenset(self._sections.keys()) - frozenset(KNOWN_SECTIONS)
         if unknown_sections:
             write_order.extend(unknown_sections)
-            options.logger.warning("Drawing contains unknown sections: {}".format(unknown_sections))
 
         written_sections = []
         for section_name in KNOWN_SECTIONS:
@@ -91,7 +90,6 @@ class Sections(object):
                 section.write(stream)
                 written_sections.append(section.name)
 
-        options.logger.debug("sections written: {}".format(written_sections))
         write_eof()
 
     def delete_section(self, name):

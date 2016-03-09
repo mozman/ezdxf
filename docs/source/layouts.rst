@@ -206,10 +206,12 @@ BlockLayout
 
    Get the associated DXF *BLOCK* entity.
 
-.. method:: BlockLayout.add_attdef(tag, insert, dxfattribs=None)
+.. method:: BlockLayout.add_attdef(tag, insert=(0, 0), dxfattribs=None)
 
    Add an :class:`Attdef` element, `tag` is the attribute-tag, `insert` is the
-   2D/3D insertion point of the Attribute.
+   2D/3D insertion point of the Attribute. Set position and alignment by the idiom::
+
+   myblock.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
 
 .. method:: BlockLayout.attdefs()
 
