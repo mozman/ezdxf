@@ -993,8 +993,8 @@ class Dimension(GraphicEntity):
     DXFATTRIBS = make_attribs({
         'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry
         'dimstyle': DXFAttr(3),
-        'defpoint1': DXFAttr(10, xtype='Point2D/3D'),
-        'midpoint': DXFAttr(11, xtype='Point2D/3D'),
+        'defpoint': DXFAttr(10, xtype='Point2D/3D'),
+        'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),
         'translation_vector': DXFAttr(12, 'Point3D'),
         'dimtype': DXFAttr(70),
         'user_text': DXFAttr(1),
@@ -1006,7 +1006,7 @@ class Dimension(GraphicEntity):
         'angle': DXFAttr(50),
         'horizontal_direction': DXFAttr(51),
         'oblique_angle': DXFAttr(52),
-        'rotation_angle': DXFAttr(53),
+        'dim_text_rotation': DXFAttr(53),
     })
 
 _SHAPE_TPL = """  0
