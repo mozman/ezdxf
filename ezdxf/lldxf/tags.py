@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from io import StringIO
 
-from .const import acadrelease, DXFStructureError
+from .const import acad_release, DXFStructureError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
@@ -144,7 +144,7 @@ class DXFInfo(object):
 
     def ACADVER(self, value):
         self.version = value
-        self.release = acadrelease.get(value, 'R12')
+        self.release = acad_release.get(value, 'R12')
 
     def HANDSEED(self, value):
         self.handseed = value

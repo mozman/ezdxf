@@ -11,8 +11,8 @@ from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator
 
 
-def factory(debug=False):
-    return DebugDB() if debug else EntityDB()
+def factory():
+    return EntityDB()
 
 
 class EntityDB(object):
@@ -99,63 +99,3 @@ class EntityDB(object):
             if handle not in self._database:  # you can not trust $HANDSEED value
                 return handle
 
-
-class DebugDB(EntityDB):
-    TAGFMT = "(%d, %s)"
-
-    def __init__(self):
-        super(DebugDB, self).__init__()
-        self._database = OrderedDict()
-        self._collisions = {}
-        self._stream = None
-        self._verbose = True
-
-    def __setitem__(self, handle, entity):
-        if handle in self:
-            collisions = self._collisions.setdefault(handle, [])
-            collisions.append(self[handle])
-        super(DebugDB, self).__setitem__(handle, entity)
-
-    def _setparams(self, stream, verbose):
-        self._stream = stream
-        self._verbose = verbose
-
-    def printtags(self, tags):
-        def tostring(tags):
-            return " ".join((self.TAGFMT % tag for tag in tags))
-
-        if self._verbose:
-            self.println(str(tags))
-        else:
-            self.println(tostring(tags))
-
-    def println(self, text=""):
-        self._stream.write(text + '\n')
-
-    def dumpcollisions(self, stream, verbose=True):
-        def dump_entry(handle):
-            self.println()
-            self.println("Handle: %s" % handle)
-            collisions = self._collisions[handle]
-            dump_collision(collisions)
-
-        def dump_collision(collisions):
-            self.println("Count: %d" % len(collisions))
-            for tags in collisions:
-                self.printtags(tags)
-
-        self._setparams(stream, verbose)
-        self.println("Database contains %d collisions." % len(self._collisions))
-        for handle in self._collisions:
-            dump_entry(handle)
-
-    def dumpcontent(self, stream, verbose=True):
-        def dump_entry(handle):
-            self.println()
-            self.println("Handle: %s" % handle)
-            self.printtags(self[handle])
-
-        self._setparams(stream, verbose)
-        self.println("Database contains %d entries." % len(self))
-        for handle in self:
-            dump_entry(handle)

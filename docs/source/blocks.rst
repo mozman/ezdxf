@@ -149,8 +149,8 @@ rotation              R12     text rotation in degrees (float), default is 0
 oblique               R12     text oblique angle (float), default is 0
 style                 R12     text style name (str), default is ``STANDARD``
 width                 R12     width scale factor (float), default is 1
-halign                R12     horizontal alignment flag (int), use :meth:`Attdef.set_pos` and :meth:`Attdef.get_align`
-valign                R12     vertical alignment flag (int), use :meth:`Attdef.set_pos` and :meth:`Attdef.get_align`
+halign                R12     horizontal alignment flag (int), use :meth:`Attdef.set_pos` and :meth:`Attdef.set_align`
+valign                R12     vertical alignment flag (int), use :meth:`Attdef.set_pos` and :meth:`Attdef.set_align`
 text_generation_flag  R12     text generation flags (int)
                                - 2 = text is backward (mirrored in X)
                                - 4 = text is upside down (mirrored in Y)
@@ -165,6 +165,10 @@ field_length          R12     just relevant to CAD programs for validating user 
 .. method:: Attdef.get_pos()
 
    see method :meth:`Text.get_pos`.
+
+.. method:: Attdef.set_pos(p1, p2=None, align=None)
+
+   see method :meth:`Text.set_pos`.
 
 .. method:: Attdef.get_align()
 
@@ -194,8 +198,8 @@ rotation              R12     text rotation in degrees (float), default is 0
 oblique               R12     text oblique angle (float), default is 0
 style                 R12     text style name (str), default is ``STANDARD``
 width                 R12     width scale factor (float), default is 1
-halign                R12     horizontal alignment flag (int), use :meth:`Attrib.set_pos` and :meth:`Attrib.get_align`
-valign                R12     vertical alignment flag (int), use :meth:`Attrib.set_pos` and :meth:`Attrib.get_align`
+halign                R12     horizontal alignment flag (int), use :meth:`Attrib.set_pos` and :meth:`Attrib.set_align`
+valign                R12     vertical alignment flag (int), use :meth:`Attrib.set_pos` and :meth:`Attrib.set_align`
 text_generation_flag  R12     text generation flags (int)
                                - 2 = text is backward (mirrored in X)
                                - 4 = text is upside down (mirrored in Y)
@@ -208,6 +212,10 @@ text_generation_flag  R12     text generation flags (int)
 .. method:: Attrib.get_pos()
 
    see method :meth:`Text.get_pos`.
+
+.. method:: Attrib.set_pos(p1, p2=None, align=None)
+
+   see method :meth:`Text.set_pos`.
 
 .. method:: Attrib.get_align()
 

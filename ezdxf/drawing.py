@@ -10,6 +10,7 @@ import io
 
 from . import database
 from .lldxf.tags import TagIterator, DXFTag, write_tags
+from .lldxf.const import DXFVersionError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -31,7 +32,7 @@ class Drawing(object):
         self.dxfversion = 'AC1009'  # readonly - set by _bootstraphook()
         self.encoding = 'cp1252'  # read/write - set by _bootstraphook()
         self.filename = None  # read/write
-        self.entitydb = database.factory(debug=options.debug)
+        self.entitydb = database.factory()
         self.sections = Sections(tagreader, self)
         self._groups = None
         if self.dxfversion > 'AC1009':
@@ -205,6 +206,12 @@ class Drawing(object):
 
     @staticmethod
     def new(dxfversion='AC1009'):
+        from .lldxf.const import versions_supported_by_new, acad_release_to_dxf_version
+
+        dxfversion = dxfversion.upper()
+        dxfversion = acad_release_to_dxf_version.get(dxfversion, dxfversion)  # translates 'R12' -> 'AC1009'
+        if dxfversion not in versions_supported_by_new:
+            raise DXFVersionError("Can not create DXF drawings, unsupported DXF version '{}'.".format(dxfversion))
         finder = TemplateLoader(options.template_dir)
         stream = finder.getstream(dxfversion.upper())
         try:
