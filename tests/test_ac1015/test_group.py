@@ -20,7 +20,7 @@ class TestDXFGroups(unittest.TestCase):
         self.assertEqual(0, len(self.groups))
 
     def test_create_new_group(self):
-        g = self.groups.add('MyGroup', description="The group description.")
+        g = self.groups.new('MyGroup', description="The group description.")
         self.assertEqual('GROUP', g.dxftype())
         self.assertTrue('MyGroup' in self.groups)
         self.assertEqual(0, g.dxf.unnamed, "Named group has wrong unnamed attribute.")
@@ -31,7 +31,7 @@ class TestDXFGroups(unittest.TestCase):
         self.assertEqual(0, len(self.groups))
 
     def test_create_unnamed_group(self):
-        g = self.groups.add()
+        g = self.groups.new()
         self.assertEqual('GROUP', g.dxftype())
         self.assertTrue('*A1' in self.groups)
         self.assertEqual(1, g.dxf.unnamed, "Unnamed group has wrong unnamed attribute.")
@@ -42,12 +42,12 @@ class TestDXFGroups(unittest.TestCase):
         self.assertEqual(0, len(self.groups))
 
     def test_delete_group_by_entity(self):
-        g = self.groups.add('MyGroup')
+        g = self.groups.new('MyGroup')
         self.groups.delete(g)
         self.assertEqual(0, len(self.groups))
 
     def test_delete_group_by_name(self):
-        self.groups.add('MyGroup')
+        self.groups.new('MyGroup')
         self.groups.delete('MyGroup')
         self.assertEqual(0, len(self.groups))
 
@@ -58,7 +58,7 @@ class TestDXFGroup(unittest.TestCase):
         self.groups = self.dwg.groups
 
     def test_add_entities(self):
-        group = self.groups.add()
+        group = self.groups.new()
         # the group itself is not an entity space, DXF entities has to be placed in model space, paper space
         # or in a block
         msp = self.dwg.modelspace()

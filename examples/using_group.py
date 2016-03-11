@@ -13,7 +13,7 @@ def create_group():
     dwg = ezdxf.new('Ac1015')
     msp = dwg.modelspace()
     # create a new unnamed group, in reality they have a name like '*Annnn' and group names have to be unique
-    group = dwg.groups.add()
+    group = dwg.groups.new()
     # group management is implemented as context manager, returning a standard Python list
     with group.edit_data() as g:
         # the group itself is not an entity space, DXF entities has to be placed in model space, paper space
