@@ -159,7 +159,7 @@ class DXFGroupTable(object):
         self._next_unnamed_number += 1
         return "*A{}".format(self._next_unnamed_number)
 
-    def add(self, name=None, description="", selectable=1):
+    def new(self, name=None, description="", selectable=1):
         if name in self.dxfgroups:
             raise ValueError("Group '{}' already exists. Group name has to be unique.".format(name))
         unnamed = 0
