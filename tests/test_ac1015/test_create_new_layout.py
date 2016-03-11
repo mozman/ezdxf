@@ -40,7 +40,7 @@ def block_for_layout_exist(layout):
 
 class TestCreateLayout(unittest.TestCase):
     def test_create_new_layout(self):
-        DWG.create_layout('mozman_layout')
+        DWG.new_layout('mozman_layout')
         new_layout = DWG.layouts.get('mozman_layout')
         self.assertEqual('mozman_layout', new_layout.name)
         self.assertTrue(is_layout_in_object_section(new_layout))
@@ -50,12 +50,12 @@ class TestCreateLayout(unittest.TestCase):
 
     def test_error_creating_layout_with_existing_name(self):
         with self.assertRaises(ValueError):
-            DWG.create_layout('Model')
+            DWG.new_layout('Model')
 
 
 class TestLayoutMangement(unittest.TestCase):
     def test_create_and_delete_new_layout(self):
-        new_layout = DWG.create_layout('mozman_layout_2')
+        new_layout = DWG.new_layout('mozman_layout_2')
         self.assertEqual('mozman_layout_2', new_layout.name)
         self.assertTrue(is_layout_in_object_section(new_layout))
         self.assertTrue(is_layout_in_dxf_layout_management_table(new_layout))
@@ -71,7 +71,7 @@ class TestLayoutMangement(unittest.TestCase):
         self.assertFalse(new_layout.dxf.handle in DWG.entitydb)
 
     def test_set_active_layout(self):
-        new_layout = DWG.create_layout('mozman_layout_3')
+        new_layout = DWG.new_layout('mozman_layout_3')
         DWG.layouts.set_active_layout('mozman_layout_3')
         self.assertEqual('*Paper_Space', new_layout.block_record_name)
         self.assertEqual(new_layout.layout_key, DWG.get_active_layout_key())

@@ -3,8 +3,8 @@ import ezdxf
 dwg = ezdxf.new('AC1027')
 msp = dwg.modelspace()
 
-dwg.create_layout("layoutA")
-dwg.create_layout("layoutB")
+dwg.new_layout("layoutA")
+dwg.new_layout("layoutB")
 
 layoutA = dwg.layout("layoutA")
 layoutA.add_viewport(center=(2.5, 2.5), size=(5, 5), view_center_point=(0, 1), view_height=0.5)

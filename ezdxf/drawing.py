@@ -7,6 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
 import io
+import warnings
 
 from . import database
 from .lldxf.tags import TagIterator, DXFTag, write_tags
@@ -151,7 +152,11 @@ class Drawing(object):
         else:
             raise Warning('Not supported for DXF version AC1009.')
 
-    def create_layout(self, name, dxfattribs=None):
+    def _create__layout(self, name, dxfattribs=None):  # TODO remove deprecated interface
+        warnings.warn("Drawing.create_layout() is deprecated use Drawing.new_layout() instead.", DeprecationWarning)
+        self.new_layout(name, dxfattribs)
+
+    def new_layout(self, name, dxfattribs=None):
         if self.dxfversion > 'AC1009':
             if name in self.layouts:
                 raise ValueError("Layout '{}' already exists.".format(name))
