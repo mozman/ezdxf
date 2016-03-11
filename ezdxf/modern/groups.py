@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+import warnings
 from contextlib import contextmanager
 
 from .dxfobjects import none_subclass
@@ -158,6 +159,10 @@ class DXFGroupTable(object):
     def _next_name(self):
         self._next_unnamed_number += 1
         return "*A{}".format(self._next_unnamed_number)
+
+    def add(self, name=None, description="", selectable=1):  # TODO remove deprecated interface
+        warnings.warn("DXFGroupTable.add() is deprecated use DXFGroupTable.new() instead.", DeprecationWarning)
+        self.new(name, description, selectable)
 
     def new(self, name=None, description="", selectable=1):
         if name in self.dxfgroups:
