@@ -12,14 +12,14 @@ from ezdxf.lldxf.const import versions_supported_by_new
 
 
 def add_table_entries(dwg):
-    dwg.layers.create('MOZMAN-LAYER')
-    dwg.styles.create('MOZMAN-STY')
-    dwg.linetypes.create('MOZMAN-LTY', {'pattern': [1.0, .5, -.5]})
-    dwg.dimstyles.create('MOZMAN-DIMSTY')
-    dwg.views.create('MOZMAN-VIEW')
-    dwg.viewports.create('MOZMAN-VPORT')
-    dwg.ucs.create('MOZMAN-UCS')
-    dwg.appids.create('MOZMANAPP')
+    dwg.layers.new('MOZMAN-LAYER')
+    dwg.styles.new('MOZMAN-STY')
+    dwg.linetypes.new('MOZMAN-LTY', {'pattern': [1.0, .5, -.5]})
+    dwg.dimstyles.new('MOZMAN-DIMSTY')
+    dwg.views.new('MOZMAN-VIEW')
+    dwg.viewports.new('MOZMAN-VPORT')
+    dwg.ucs.new('MOZMAN-UCS')
+    dwg.appids.new('MOZMANAPP')
 
 
 def make_drawing(version):

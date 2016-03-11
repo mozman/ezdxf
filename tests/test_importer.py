@@ -16,8 +16,8 @@ def save_source_dwg(dwg, filename):
 
 def create_source_drawing(version):
     dwg = ezdxf.new(version)
-    dwg.layers.create('Test', dxfattribs={'color': 17})
-    dwg.layers.create('TestConflict', dxfattribs={'color': 18})
+    dwg.layers.new('Test', dxfattribs={'color': 17})
+    dwg.layers.new('TestConflict', dxfattribs={'color': 18})
     msp = dwg.modelspace()
     msp.add_line((0, 0), (10, 0))
     msp.add_circle((0, 0), radius=5)
@@ -33,7 +33,7 @@ def create_source_drawing(version):
 
 def create_target_drawing(version):
     dwg = ezdxf.new(version)
-    dwg.layers.create('TestConflict', dxfattribs={'color': 19})
+    dwg.layers.new('TestConflict', dxfattribs={'color': 19})
     conflict_block = build_block(dwg, "ConflictBlock")
     conflict_block.add_circle((1, 1), radius=7)
     return dwg
