@@ -22,7 +22,7 @@ flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
 
 
 dwg = ezdxf.new('ac1024')
-dwg.layers.create('FLAGS')
+dwg.layers.new('FLAGS')
 
 # first create a block
 flag = dwg.blocks.new(name='FLAG')

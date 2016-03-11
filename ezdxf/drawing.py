@@ -275,7 +275,7 @@ class Drawing(object):
     def _create_appids(self):
         def create_appid_if_not_exist(name, flags=0):
             if name not in self.appids:
-                self.appids.create(name, {'flags': flags})
+                self.appids.new(name, {'flags': flags})
 
         if self.dxfversion > 'AC1009':
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)

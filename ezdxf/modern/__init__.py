@@ -106,7 +106,7 @@ class ModernDXFFactory(LegacyDXFFactory):
 
     def create_block_entry_in_block_records_table(self, block_layout):
         # required for  DXFVERSION > ac1009: Entry in the BLOCK_RECORDS section
-        block_record = self.block_records.create(block_layout.name)
+        block_record = self.block_records.new(block_layout.name)
         block_layout.set_block_record_handle(block_record.dxf.handle)
 
     def get_layouts(self):

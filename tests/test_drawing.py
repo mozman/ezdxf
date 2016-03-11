@@ -37,12 +37,12 @@ class TestNewDrawingAC1009(unittest.TestCase):
             layer = self.dwg.layers.get('TEST_NOT_EXISTING_LAYER')
 
     def test_create_layer(self):
-        layer = self.dwg.layers.create('TEST_NEW_LAYER')
+        layer = self.dwg.layers.new('TEST_NEW_LAYER')
         self.assertEqual('TEST_NEW_LAYER', layer.dxf.name)
 
     def test_error_adding_existing_layer(self):
         with self.assertRaises(ValueError):
-            layer = self.dwg.layers.create('0')
+            layer = self.dwg.layers.new('0')
 
     def test_has_layer(self):
         self.assertTrue('0' in self.dwg.layers)
@@ -51,7 +51,7 @@ class TestNewDrawingAC1009(unittest.TestCase):
         self.assertFalse('TEST_LAYER_NOT_EXISTS' in self.dwg.layers)
 
     def test_removing_layer(self):
-        self.dwg.layers.create('TEST_NEW_LAYER_2')
+        self.dwg.layers.new('TEST_NEW_LAYER_2')
         self.assertTrue('TEST_NEW_LAYER_2' in self.dwg.layers)
         self.dwg.layers.remove('TEST_NEW_LAYER_2')
         self.assertFalse('TEST_NEW_LAYER_2' in self.dwg.layers)

@@ -58,7 +58,7 @@ class Table(object):
 
     __contains__ = has_entry
 
-    def create(self, name, dxfattribs=None):
+    def new(self, name, dxfattribs=None):
         if self.has_entry(name):
             raise ValueError('%s %s already exists!' % (self._dxfname, name))
         if dxfattribs is None:
@@ -198,7 +198,7 @@ class Table(object):
 
 class ViewportTable(Table):
     # Viewport-Table can have multiple entries with same name
-    def create(self, name, dxfattribs=None):
+    def new(self, name, dxfattribs=None):
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['name'] = name

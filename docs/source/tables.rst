@@ -3,7 +3,7 @@ Table Class
 
 .. class:: Table
 
-.. method:: Table.create(name, dxfattribs=None)
+.. method:: Table.new(name, dxfattribs=None)
 
     :param str name: name of the new table-entry
     :param dict dxfattribs: optional table-parameters, these parameters are described at the table-entry-classes below.
@@ -11,7 +11,7 @@ Table Class
 
 Table entry creation is for all tables the same procedure::
 
-    drawing.tablename.create(name, dxfattribs)
+    drawing.tablename.new(name, dxfattribs)
 
 Where `tablename` can be: `layers`, `styles`, `linetypes`, `views`, `viewports`
 or `dimstyles`.

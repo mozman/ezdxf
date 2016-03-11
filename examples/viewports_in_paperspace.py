@@ -112,7 +112,7 @@ def main():
     def make(dxfversion, filename):
         dwg = ezdxf.new(dxfversion)
         if 'VIEWPORTS' not in dwg.layers:
-            vp_layer = dwg.layers.create('VIEWPORTS')
+            vp_layer = dwg.layers.new('VIEWPORTS')
         else:
             vp_layer = dwg.layers.get('VIEWPORTS')
         # switch viewport layer off to hide the viewport border lines
