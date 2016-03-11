@@ -156,7 +156,7 @@ class Drawing(object):
             if name in self.layouts:
                 raise ValueError("Layout '{}' already exists.".format(name))
             else:
-                return self.layouts.create(name, dxfattribs)
+                return self.layouts.new(name, dxfattribs)
         else:
             raise Warning('Not supported for DXF version AC1009.')
 

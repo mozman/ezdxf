@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+import warnings
 from ezdxf.lldxf.defaultchunk import DefaultChunk
 from ..lldxf.tags import TagGroups, DXFStructureError
 from ..lldxf.classifiedtags import ClassifiedTags
@@ -57,6 +58,10 @@ class Table(object):
             return False
 
     __contains__ = has_entry
+
+    def create(self, name, dxfattribs=None):  # TODO remove deprecated interface
+        warnings.warn("Table.create() is deprecated use Table.new() instead.", DeprecationWarning)
+        self.new(name, dxfattribs)
 
     def new(self, name, dxfattribs=None):
         if self.has_entry(name):

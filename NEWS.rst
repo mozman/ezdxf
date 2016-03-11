@@ -9,9 +9,10 @@ Version 0.7.4 - 2016-03-..
   * NEW: writes saving and upgrading comments when saving DXF files; avoid this behavior by setting options.store_comments = False
   * NEW: ezdxf.new() accepts the AutoCAD release name as DXF version string e.g. ezdxf.new('R12') or R2000, R2004, R2007, ...
   * NEW: integrated acadctb.py module from my dxfwrite package to read/write AutoCAD .ctb config files; no docs so far
-  * CHANGE: renamed Drawing.groups.add() to new() for consistent name schema for adding new items to tables
-  * CHANGE: renamed Drawing.<tablename>.create() to new() for consistent name schema for adding new items to tables
-    (this applies to tables: layers, styles, dimstyles, appids, views, viewports, ucs, block_records)
+  * CHANGE: renamed Drawing.groups.add() to new() for consistent name schema for adding new items to tables (public interface)
+  * CHANGE: renamed Drawing.<tablename>.create() to new() for consistent name schema for adding new items to tables,
+    this applies to tables: layers, styles, dimstyles, appids, views, viewports, ucs, block_records. (public interface)
+  * CHANGE: renamed Layouts.create() to new() for consistent name schema for adding new items to tables (internal interface)
   * REMOVED: logging and debugging options
   * BUGFIX: fixed attribute definition for align_point in DXF entity ATTRIB (AC1015 and newer)
   * Cleanup DXF template files AC1009 - AC1027, less garbage in memory

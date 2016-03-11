@@ -7,6 +7,7 @@
 
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
+import warnings
 
 from .graphicsfactory import ModernGraphicsFactory
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
@@ -80,7 +81,11 @@ class Layouts(object):
                 return layout
         raise KeyError("Layout with key '{}' does not exist.".format(layout_key))
 
-    def create(self, name, dxfattribs=None):
+    def create(self, name, dxfattribs=None):  # TODO remove deprecated interface
+        warnings.warn("Layouts.create() is deprecated use Layout.new() instead.", DeprecationWarning)
+        self.new(name, dxfattribs)
+
+    def new(self, name, dxfattribs=None):
         """ Create a new Layout.
         """
         if dxfattribs is None:
