@@ -656,7 +656,7 @@ vtx3        R12     location of the 4. point (2D/3D Point)
 
    A 3DFace is real 3D solid filled triangle or quadrilateral, *dxftype* is ``3DFACE``. Access corner points by name
    (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
-   Create 3DFaces in layouts and blocks by factory function :meth:`~Layout.add_3Dface`.
+   Create 3DFaces in layouts and blocks by factory function :meth:`~Layout.add_3dface`.
 
 ============== ======= ===========
 DXFAttr        Version Description

@@ -67,7 +67,7 @@ Create new entities
 
    Add a :class:`Trace` element, `points` is list of 3 or 4 2D/3D points.
 
-.. method:: Layout.add_3Dface(points, dxfattribs=None)
+.. method:: Layout.add_3dface(points, dxfattribs=None)
 
    Add a :class:`3DFace` element, `points` is list of 3 or 4 2D/3D points.
 

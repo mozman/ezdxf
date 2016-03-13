@@ -9,7 +9,7 @@ from .lldxf import const
 
 
 class GraphicsFactory(object):
-    """ Abstract base class for Layout()
+    """ Abstract base class for BaseLayout()
     """
     def __init__(self, dxffactory):
         self._dxffactory = dxffactory
@@ -56,7 +56,7 @@ class GraphicsFactory(object):
     def add_trace(self, points, dxfattribs=None):
         return self._add_quadrilateral('TRACE', points, dxfattribs)
 
-    def add_3Dface(self, points, dxfattribs=None):
+    def add_3dface(self, points, dxfattribs=None):
         return self._add_quadrilateral('3DFACE', points, dxfattribs)
 
     def add_text(self, text, dxfattribs=None):
@@ -329,7 +329,7 @@ class GraphicsFactory(object):
 
     def add_mesh(self, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('HATCH requires DXF version AC1015 (R2000) or later, '
+            raise const.DXFVersionError('MESH requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
         if dxfattribs is None:
             dxfattribs = {}
