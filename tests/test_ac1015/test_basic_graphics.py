@@ -128,7 +128,7 @@ class TestBasicEntities(SetupDrawing):
         self.assertEqual((1, 1), trace[3])
 
     def test_create_3dface(self):
-        trace = self.layout.add_3Dface([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        trace = self.layout.add_3dface([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
         self.assertEqual((0, 0, 0), trace.dxf.vtx0)
         self.assertEqual((1, 0, 0), trace[1])
         self.assertEqual((1, 1, 0), trace.dxf.vtx2)

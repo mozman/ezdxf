@@ -12,8 +12,9 @@ CALL testpypy.bat
 ECHO Running pypy3 tests
 CALL testpypy3.bat
 
+ECHO Running integration tests
 CD integration_tests
-CALL runall.bat 2
-CALL runall.bat 3
-CALL runall.bat pypy
+py run.py 2.7
+py run.py 3.5
+py run.py pypy
 CD ..

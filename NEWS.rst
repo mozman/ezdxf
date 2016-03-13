@@ -14,6 +14,7 @@ Version 0.7.4 - 2016-03-..
     this applies to all tables: layers, styles, dimstyles, appids, views, viewports, ucs, block_records. (public interface)
   * CHANGE: renamed Layouts.create() to new() for consistent name schema for adding new items to tables (internal interface)
   * CHANGE: renamed Drawing.create_layout() to new_layout() for consistent name schema for adding new items (public interface)
+  * CHANGE: renamed factory method <layout>.3Dface() to 3dface()
   * REMOVED: logging and debugging options
   * BUGFIX: fixed attribute definition for align_point in DXF entity ATTRIB (AC1015 and newer)
   * Cleanup DXF template files AC1009 - AC1027, less garbage in memory
