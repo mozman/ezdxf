@@ -162,6 +162,13 @@ Create new entities
    Add a :class:`Hatch` entity, *color* as ACI (AutoCAD Color Index), default is 7 (black/white).
    (requires DXF version AC1012 or newer)
 
+.. method:: Layout.add_image(insert, size_in_units, image_def, rotation=0, dxfattribs=None)
+
+   Add an :class:`Image` entity, *insert* is the insertion point as (x, y [,z]) tuple, *size_in_units* is the image
+   size as (x, y) tuple in drawing units, *image_def* is the required :class:`ImageDef`, *rotation* is the rotation
+   angle around the z-axis in degrees. Create :class:`ImageDef` by the :class:`Drawing` factory function
+   :meth:`~Drawing.add_image_def`, see :ref:`tut_image`. (requires DXF version AC1012 or newer)
+
 Delete entities
 ---------------
 

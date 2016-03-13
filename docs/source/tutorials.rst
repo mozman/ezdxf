@@ -16,4 +16,5 @@ Tutorials
    tutorials/mesh
    tutorials/hatch
    tutorials/hatch_pattern
+   tutorials/image
 
