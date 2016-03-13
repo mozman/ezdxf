@@ -2,6 +2,8 @@
 News
 ====
 
+Version 0.7.5 - 2016-..
+
 Version 0.7.4 - 2016-03-13
 
   * NEW: support for DXF entity IMAGE (work in progress)
