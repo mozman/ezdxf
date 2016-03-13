@@ -54,15 +54,16 @@ class TestImageFromText(unittest.TestCase):
         self.assertEqual('DEAD', self.image.dxf.image_def_reactor)
         self.assertEqual(1, self.image.dxf.clipping_boundary_type)
         self.assertEqual(2, self.image.dxf.count_boundary_points)
+        self.assertEqual([(0, 0), self.image.dxf.image_size], self.image.get_boundary_path())
 
     def test_get_boundary_path(self):
         self.assertEqual([(0, 0), (640, 360)], self.image.get_boundary_path())
 
-    def test_delete_boundary_path(self):
-        self.image.delete_boundary_path()
-        self.assertEqual(0, self.image.dxf.count_boundary_points)
+    def test_reset_boundary_path(self):
+        self.image.reset_boundary_path()
+        self.assertEqual(2, self.image.dxf.count_boundary_points)
         self.assertEqual(3, self.image.dxf.flags)
-        self.assertEqual([], self.image.get_boundary_path())
+        self.assertEqual([(0, 0), self.image.dxf.image_size], self.image.get_boundary_path())
 
     def test_set_boundary_path(self):
         self.image.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
@@ -105,7 +106,11 @@ class TestCreateNewImage(unittest.TestCase):
         self.assertEqual(image_def.dxf.handle, image.dxf.image_def)
         self.assertEqual(3, image.dxf.flags)
         self.assertEqual(0, image.dxf.clipping)
-        self.assertEqual(0, image.dxf.count_boundary_points)
+        self.assertEqual(2, image.dxf.count_boundary_points)
+        self.assertEqual([(0, 0), image.dxf.image_size], image.get_boundary_path())
+
+        image_def2 = image.get_image_def()
+        self.assertEqual(image_def.dxf.handle, image_def2.dxf.handle)
 
 
 IMAGE_DEF = """  0

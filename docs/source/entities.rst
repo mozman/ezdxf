@@ -1179,6 +1179,89 @@ DXFAttr                 Version Description
 history                  R13    handle to history object, see: :ref:`low_level_access_to_dxf_entities`
 ======================= ======= ===========
 
+Image
+=====
+
+.. class:: Image(GraphicEntity)
+
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``IMAGE``.
+
+    Add a raster image to the DXF file, the file itself is not embedded into the DXF file, it is alwas a separated file.
+    The IMAGE entity is like a block reference, you can use it multiple times to add the image on different location
+    with differnt scalings and rotations. But therefore you need a also a IMAGEDEF entity, see :class:`ImageDef`.
+    Create :class:`Image` in layouts and blocks by factory function :meth:`~Layout.add_image`. ezdxf creates only
+    images in the XY-plan. You can place images in the 3D space too, but then you have to set the *u_pixel* and
+    the *v_pixel* vectors by yourself.
+
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+insert                  R13     Insertion point, lower left corner of the image
+u_pixel                 R13     U-vector of a single pixel (points along the visual bottom of the image, starting at the insertion point) (x, y, z) tuple
+v_pixel                 R13     V-vector of a single pixel (points along the visual left side of the image, starting at the insertion point) (x, y, z) tuple
+image_size              R13     Image size in pixels
+image_def               R13     Handle to the image definition entity, see :class:`ImageDef`
+flags                   R13     see table below
+clipping                R13     Clipping state: 0 = Off; 1 = On
+brightness              R13     Brightness value (0-100; default = 50)
+contrast                R13     Contrast value (0-100; default = 50)
+fade                    R13     Fade value (0-100; default = 0)
+clipping_boundary_type  R13     Clipping boundary type. 1 = Rectangular; 2 = Polygonal
+count_boundary_points   R13     Number of clip boundary vertices
+======================= ======= ===========
+
+
+=========================== ======= ===========
+Image.dxf.flags             Value   Description
+=========================== ======= ===========
+IMAGE_SHOW                  1       Show image
+IMAGE_SHOW_WHEN_NOT_ALIGNED 2       Show image when not aligned with screen
+IMAGE_USE_CLIPPING_BOUNDARY 4       Use clipping boundary
+IMAGE_TRANSPARENCY_IS_ON    8       Transparency is on
+=========================== ======= ===========
+
+
+.. method:: Image.get_boundary()
+
+    Returns a list of vertices as pixel coordinates, lower left corner is (0, 0) and upper right corner is (ImageSizeX,
+    ImageSizeY), independent from the absolute location of the image in WCS.
+
+.. method:: Image.reset_boundary()
+
+    Reset boundary path to the default rectangle [(0, 0), (ImageSizeX, ImageSizeY)].
+
+.. method:: Image.set_boundary(vertices)
+
+    Set boundary path to vertices. 2 points describe a rectangle (lower left and upper right corner), more than 2 points
+    is a polygon as clipping path. Sets clipping state to 1 and also sets the IMAGE_USE_CLIPPING_BOUNDARY flag.
+
+.. method:: Image.get_image_def()
+
+    returns the associated IMAGEDEF entity. see :class:`ImageDef`.
+
+
+ImageDef
+========
+
+.. class:: ImageDef(GraphicEntity)
+
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``IMAGEDEF``.
+
+    :class:`ImageDef` defines an image, which can be placed by the :class:`Image` entity. Create :class:`ImageDef` by
+    the :class:`Drawing` factory function :meth:`~Drawing.add_image_def`.
+
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+filename                R13     Relative (to the DXF file) or absolute path to the image file as string
+image_size              R13     Image size in pixel as (x, y) tuple
+pixel_size              R13     Default size of one pixel in AutoCAD units (x, y) tuple
+loaded                  R13     Default = 1
+resolution_units        R13     Resolution units. 0 = No units; 2 = Centimeters; 5 = Inch, default is 0
+======================= ======= ===========
+
 Mesh
 ====
 
@@ -1189,10 +1272,13 @@ Mesh
     3D mesh entity similar to the :class:`Polyface` entity. Create :class:`Mesh` in layouts and
     blocks by factory function :meth:`~Layout.add_mesh`.
 
-.. method:: 3DSolid.edit_data()
+.. method:: Mesh.edit_data()
 
     Context manager various mesh data, returns :class:`MeshData`.
 
+.. seealso::
+
+    :ref:`tut_image`
 
 ======================= ======= ===========
 DXFAttr                 Version Description

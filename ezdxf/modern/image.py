@@ -66,7 +66,7 @@ AcDbRasterImage
  71
   1
  91
-  0
+  2
 """
 
 image_subclass = DefSubclass('AcDbRasterImage', {
@@ -87,6 +87,7 @@ image_subclass = DefSubclass('AcDbRasterImage', {
     'image_def_reactor': DXFAttr(360),  # Hard reference to image def reactor object, not required by AutoCAD
     'clipping_boundary_type': DXFAttr(71, default=1),  # Clipping boundary type. 1 = Rectangular; 2 = Polygonal
     'count_boundary_points': DXFAttr(91),  # Number of clip boundary vertices that follow
+    # boundary path coordinates are pixel coordinates NOT drawing units
 })
 
 
@@ -94,28 +95,34 @@ class Image(ModernGraphicEntity):
     TEMPLATE = ClassifiedTags.from_text(_IMAGE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, image_subclass)
 
-    @property
-    def AcDbRasterImage(self):
-        return self.tags.subclasses[2]
+    def post_new_hook(self):
+        self.reset_boundary_path()
 
     def set_boundary_path(self, vertices):
-        self.delete_boundary_path()
-        tags = [DXFTag(14, value) for value in vertices]
-        self.tags.subclasses[2].extend(tags)
-        self.dxf.flags |= 4
-        self.dxf.count_boundary_points = len(tags)
-        self.dxf.clipping_boundary_type = 1 if len(tags) < 3 else 2
+        vertices = list(vertices)
+        self._set_path_tags(vertices)
+        self.dxf.flags |= 4  # use clipping boundary
+        self.dxf.clipping_boundary_type = 1 if len(vertices) < 3 else 2
 
-    def delete_boundary_path(self):
-        subclass = self.tags.subclasses[2]
-        self.tags.subclasses[2] = Tags(tag for tag in subclass if tag.code != 14)
-        self.dxf.count_boundary_points = 0
-        self.dxf.flags &= (1 + 2 + 8)
+    def _set_path_tags(self, vertices):
+        boundary = [DXFTag(14, value) for value in vertices]
+        subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 14)
+        subclasstags.extend(boundary)
+        self.tags.subclasses[2] = subclasstags
+        self.dxf.count_boundary_points = len(vertices)
+
+    def reset_boundary_path(self):
+        self._set_path_tags([(0., 0.), self.dxf.image_size])
+        self.dxf.flags &= (1 + 2 + 8)  # do not use boundary
         self.dxf.clipping = 0
 
     def get_boundary_path(self):
         image_subclass = self.tags.subclasses[2]
         return [tag.value for tag in image_subclass if tag.code == 14]
+
+    def get_image_def(self):
+        return self.dxffactory.wrap_handle(self.dxf.image_def)
+
 
 _IMAGE_DEF_TPL = """  0
 IMAGEDEF
@@ -148,7 +155,7 @@ image_def_subclass = DefSubclass('AcDbRasterImageDef', {
     'filename': DXFAttr(1),  # File name of image
     'image_size': DXFAttr(10, xtype='Point2D'),  # image size in pixels
     'pixel_size': DXFAttr(11, xtype='Point2D'),  # Default size of one pixel in AutoCAD units
-    'loaded': DXFAttr(280, default=1),  # Default size of one pixel in AutoCAD units
+    'loaded': DXFAttr(280, default=1),
     'resolution_units': DXFAttr(281, default=0),  # Resolution units. 0 = No units; 2 = Centimeters; 5 = Inch
 })
 
