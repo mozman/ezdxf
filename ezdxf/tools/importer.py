@@ -12,6 +12,7 @@ class Importer(object):
         self.target = target  # type of: ezdxf.Drawing
         self._renamed_blocks = {}
         self._handle_translation_table = {}
+        self._requires_data_from_objects_section = []
         if strict_mode and not self.is_compatible():
             raise TypeError("DXF drawings are not compatible. Source version {}; Target version {}".format(
                 source.dxfversion, target.dxfversion))
@@ -36,6 +37,7 @@ class Importer(object):
         self.import_tables(conflict=table_conflict)
         self.import_blocks(conflict=block_conflict)
         self.import_modelspace_entities()
+        self.import_required_data_from_objects_section()
 
     def import_modelspace_entities(self, query="*"):
         import_entities = self.source.modelspace().query(query)
@@ -48,8 +50,14 @@ class Importer(object):
             self.target.entitydb[handle] = new_entry_tags  # add tag list to entity database
             new_entity = self.target.dxffactory.wrap_entity(new_entry_tags)
             target_modelspace.add_entity(new_entity)  # add entity to modelspace
-            if new_entity.dxftype() == "INSERT":
-                self.resolve_block_ref(new_entity)
+            self.entity_post_processing(new_entity)
+
+    def entity_post_processing(self, dxf_entity):
+            dxftype = dxf_entity.dxftype()
+            if dxftype == "INSERT":
+                self.resolve_block_ref(dxf_entity)
+            elif dxftype == 'IMAGE':
+                self._requires_data_from_objects_section.append(dxf_entity)
 
     def resolve_block_ref(self, block_ref):
         old_block_name = block_ref.dxf.name
@@ -110,8 +118,11 @@ class Importer(object):
                 target_handle = self.import_tags(entity.dxf.handle)
                 new_entity = self.target.dxffactory.wrap_handle(target_handle)
                 target_block_layout.add_entity(new_entity)
-                if new_entity.dxftype() == 'INSERT':  # maybe a reference to a renamed block
+                dxftype = new_entity.dxftype()
+                if dxftype == 'INSERT':  # maybe a reference to a renamed block
                     resolve_block_references.append(new_entity)
+                elif dxftype == 'IMAGE':
+                    self._requires_data_from_objects_section.append(new_entity)
 
         resolve_block_references = []
         existing_block_names = set(block.name for block in self.target.blocks)
@@ -222,6 +233,11 @@ class Importer(object):
                     prev_tags = new_tags
 
         return main_target_handle
+
+    def import_required_data_from_objects_section(self):  # TODO
+        for entity in self._requires_data_from_objects_section:
+            # for IMAGE import IMAGE_DEF
+            pass
 
 
 def _cleanup_block_record(block_record):

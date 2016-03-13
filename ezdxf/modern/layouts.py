@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 import warnings
 
-from .graphicsfactory import ModernGraphicsFactory
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.classifiedtags import ClassifiedTags
 
@@ -154,7 +153,7 @@ class Layouts(object):
         layout.destroy()
 
 
-class Layout(ModernGraphicsFactory, DXF12Layout):
+class Layout(DXF12Layout):
     """ Layout representation
 
     Every layout consist of a LAYOUT entity in the OBJECTS section, an associated BLOCK in the BLOCKS section and a
@@ -250,7 +249,7 @@ class Layout(ModernGraphicsFactory, DXF12Layout):
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
 
-class BlockLayout(ModernGraphicsFactory, DXF12BlockLayout):
+class BlockLayout(DXF12BlockLayout):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """

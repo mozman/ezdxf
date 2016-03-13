@@ -93,10 +93,6 @@ class ModernDXFFactory(LegacyDXFFactory):
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
 
     @property
-    def dxfversion(self):
-        return self.drawing.dxfversion
-
-    @property
     def rootdict(self):
         return self.drawing.rootdict
 
