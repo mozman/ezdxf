@@ -5,8 +5,10 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .lldxf import const
+import math
 
+from .lldxf import const
+from .tools import safe_3D_point
 
 class GraphicsFactory(object):
     """ Abstract base class for BaseLayout()
@@ -334,3 +336,31 @@ class GraphicsFactory(object):
         if dxfattribs is None:
             dxfattribs = {}
         return self.build_and_add_entity('MESH', dxfattribs)
+
+    def add_image(self, insert, size_in_units, image_def, rotation=0., dxfattribs=None):
+        def to_vector(units_per_pixel, angle_in_rad):
+            x = math.cos(angle_in_rad) * units_per_pixel
+            y = math.sin(angle_in_rad) * units_per_pixel
+            return round(x, 6), round(y, 6), 0  # supports only images in the xy-plane
+
+        if self.dxfversion < 'AC1015':
+            raise const.DXFVersionError('IMAGE requires DXF version AC1015 (R2000) or later, '
+                                        'actual DXF version is {}.'.format(self.dxfversion))
+        if dxfattribs is None:
+            dxfattribs = {}
+        x_pixels, y_pixels = image_def.dxf.image_size
+        x_units, y_units = size_in_units
+        x_units_per_pixel = x_units / x_pixels
+        y_units_per_pixel = y_units / y_pixels
+        x_angle_rad = math.radians(rotation)
+        y_angle_rad = x_angle_rad + (math.pi / 2.)
+
+        dxfattribs['insert'] = safe_3D_point(insert)
+        dxfattribs['u_pixel'] = to_vector(x_units_per_pixel, x_angle_rad)
+        dxfattribs['v_pixel'] = to_vector(y_units_per_pixel, y_angle_rad)
+        dxfattribs['image_def'] = image_def.dxf.handle
+        dxfattribs['image_size'] = image_def.dxf.image_size
+
+        return self.build_and_add_entity('IMAGE', dxfattribs)
+
+

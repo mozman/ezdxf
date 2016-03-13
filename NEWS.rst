@@ -17,7 +17,7 @@ Version 0.7.4 - 2016-03-..
   * CHANGE: renamed factory method <layout>.3Dface() to 3dface()
   * REMOVED: logging and debugging options
   * BUGFIX: fixed attribute definition for align_point in DXF entity ATTRIB (AC1015 and newer)
-  * Cleanup DXF template files AC1009 - AC1027, less garbage in memory
+  * Cleanup DXF template files AC1015 - AC1027, file size goes down from >60kb to ~20kb
 
 Version 0.7.3 - 2016-03-06
 

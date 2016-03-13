@@ -64,6 +64,26 @@ class ObjectsSection(ClassesSection):
             group_table = self.dxffactory.wrap_handle(group_table_handle)
         return DXFGroupTable(group_table)
 
+    def add_image_def(self, key, filename, size_in_pixel):
+        rootdict = self.rootdict()
+        try:
+            image_dict_handle = rootdict['ACAD_IMAGE_DICT']
+            image_dict = self.dxffactory.wrap_entity(image_dict_handle)
+        except KeyError:  # create IMAGE_DICT
+            image_dict = rootdict.add_new_dict('ACAD_IMAGE_DICT')
+            # add a IMAGEDEF class definition to classes section????
+        if key in image_dict:
+            raise KeyError("Key '{}' already exists.". format(key))
+
+        image_def = self.create_new_dxf_entity('IMAGEDEF', dxfattribs={
+            'owner': image_dict.dxf.handle,
+            'filename': filename,
+            'image_size': size_in_pixel,
+        })
+        image_dict[key] = image_def.dxf.handle
+        return image_def
+
+
 _OBJECT_TABLE_NAMES = [
     "ACAD_COLOR",
     "ACAD_GROUP",

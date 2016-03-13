@@ -205,6 +205,10 @@ class Drawing(object):
         """
         return self.dxffactory.wrap_handle(handle)
 
+    def add_image_def(self, key, filename, size_in_pixel):
+        # raises KeyError if an entry 'key' already exists
+        return self.objects.add_image_def(key, filename, size_in_pixel)
+
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
         return toencoding(codepage)
