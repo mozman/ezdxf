@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .graphicsfactory import GraphicsFactory
+from ..graphicsfactory import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
 

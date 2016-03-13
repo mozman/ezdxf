@@ -123,6 +123,11 @@ class LegacyDXFFactory(object):
     def blocks(self):
         return self.drawing.blocks
 
+    @property
+    def dxfversion(self):
+        return self.drawing.dxfversion
+
+
     def headervar_factory(self, key, value):
         factory = self.HEADERVARS[key]
         return factory(value)
