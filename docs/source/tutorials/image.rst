@@ -24,4 +24,4 @@ Insert a raster image into a DXF drawing, the raster image is NOT embedded into 
     image_defs = dwg.objects.query('IMAGEDEF')  # get all image defs in drawing
 
     dwg.saveas("dxf_with_cat.dxf")
-    
+

@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.7.4 - 2016-03-..
+Version 0.7.4 - 2016-03-13
 
   * NEW: support for DXF entity IMAGE (work in progress)
   * NEW: preserve leading file comments (tag code 999)
