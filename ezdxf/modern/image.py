@@ -6,17 +6,14 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from contextlib import contextmanager
-import math
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
 
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag
+from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.classifiedtags import ClassifiedTags
 from ..lldxf import const
-from ..tools import safe_3D_point
 
 _IMAGE_TPL = """ 0
 IMAGE
@@ -57,7 +54,7 @@ AcDbRasterImage
 340
 0
  70
-     7
+     3
 280
      0
 281
@@ -69,34 +66,26 @@ AcDbRasterImage
  71
   1
  91
-  2
- 14
-0.0
- 24
-0.0
- 14
-640.0
- 24
-480.0
+  0
 """
 
 image_subclass = DefSubclass('AcDbRasterImage', {
     'insert': DXFAttr(10, xtype='Point3D'),
     'u_pixel': DXFAttr(11, xtype='Point3D'),  # U-vector of a single pixel (points along the visual bottom of the image, starting at the insertion point)
     'v_pixel': DXFAttr(12, xtype='Point3D'),  # V-vector of a single pixel (points along the visual left side of the image, starting at the insertion point)
-    'size': DXFAttr(13, xtype='Point2D'),  # Image size in pixels
+    'image_size': DXFAttr(13, xtype='Point2D'),  # Image size in pixels
     'image_def': DXFAttr(340),  # Hard reference to image def object
-    'flags': DXFAttr(70),  # Image display properties:
+    'flags': DXFAttr(70, default=3),  # Image display properties:
     # 1 = Show image
     # 2 = Show image when not aligned with screen
     # 4 = Use clipping boundary
     # 8 = Transparency is on
     'clipping': DXFAttr(280, default=0),  # Clipping state: 0 = Off; 1 = On
-    'brigthness': DXFAttr(281, default=50),  # Brightness value (0-100; default = 50)
+    'brightness': DXFAttr(281, default=50),  # Brightness value (0-100; default = 50)
     'contrast': DXFAttr(282, default=50),  # Contrast value (0-100; default = 50)
     'fade': DXFAttr(283, default=0),  # Fade value (0-100; default = 0)
     'image_def_reactor': DXFAttr(360),  # Hard reference to image def reactor object, not required by AutoCAD
-    'clipping_boundary_type': DXFAttr(360, default=1),  # Clipping boundary type. 1 = Rectangular; 2 = Polygonal
+    'clipping_boundary_type': DXFAttr(71, default=1),  # Clipping boundary type. 1 = Rectangular; 2 = Polygonal
     'count_boundary_points': DXFAttr(91),  # Number of clip boundary vertices that follow
 })
 
@@ -110,10 +99,23 @@ class Image(ModernGraphicEntity):
         return self.tags.subclasses[2]
 
     def set_boundary_path(self, vertices):
-        pass
+        self.delete_boundary_path()
+        tags = [DXFTag(14, value) for value in vertices]
+        self.tags.subclasses[2].extend(tags)
+        self.dxf.flags |= 4
+        self.dxf.count_boundary_points = len(tags)
+        self.dxf.clipping_boundary_type = 1 if len(tags) < 3 else 2
+
+    def delete_boundary_path(self):
+        subclass = self.tags.subclasses[2]
+        self.tags.subclasses[2] = Tags(tag for tag in subclass if tag.code != 14)
+        self.dxf.count_boundary_points = 0
+        self.dxf.flags &= (1 + 2 + 8)
+        self.dxf.clipping = 0
 
     def get_boundary_path(self):
-        return []
+        image_subclass = self.tags.subclasses[2]
+        return [tag.value for tag in image_subclass if tag.code == 14]
 
 _IMAGE_DEF_TPL = """  0
 IMAGEDEF
@@ -132,9 +134,9 @@ path/filename.jpg
  20
 480
  11
-0.0002042483660131
+0.01
  21
-0.0002042483660131
+0.01
 280
   1
 281
@@ -142,6 +144,7 @@ path/filename.jpg
 """
 
 image_def_subclass = DefSubclass('AcDbRasterImageDef', {
+    'class_version': DXFAttr(90),  # class version
     'filename': DXFAttr(1),  # File name of image
     'image_size': DXFAttr(10, xtype='Point2D'),  # image size in pixels
     'pixel_size': DXFAttr(11, xtype='Point2D'),  # Default size of one pixel in AutoCAD units
