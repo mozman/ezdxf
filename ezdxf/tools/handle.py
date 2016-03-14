@@ -20,3 +20,7 @@ class HandleGenerator(object):
         return next_handle
     __next__ = next
 
+
+class ImageKeyGenerator(HandleGenerator):
+    def __str__(self):
+        return "Image%05d" % self._handle

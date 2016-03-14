@@ -158,12 +158,12 @@ Drawing Methods
     Delete paper space layout *name* and all its entities. Available only for DXF version AC1015
     or newer, AC1009 supports only one paper space and you can't delete it.
 
-.. method:: Drawing.add_image_def(key, filename, size_in_pixel)
+.. method:: Drawing.add_image_def(filename, size_in_pixel)
 
-    Add an :class:`ImageDef` entity to the drawing (objects section). `key` is a unique key as string, `filename` is the
-    image file name as relative or absolute path and `size_in_pixel` is the image size in pixel as (x, y) tuple.
-    To avoid dependencies to external packages, ezdxf can not determine the image size by itself. Returns a
-    :class:`ImageDef` entity which is needed to create an image reference, see :ref:`tut_image`.
+    Add an :class:`ImageDef` entity to the drawing (objects section). `filename` is the image file name as relative or
+    absolute path and `size_in_pixel` is the image size in pixel as (x, y) tuple. To avoid dependencies to external
+    packages, ezdxf can not determine the image size by itself. Returns a :class:`ImageDef` entity which is needed to
+    create an image reference, see :ref:`tut_image`.
 
 .. method:: Drawing.save()
 

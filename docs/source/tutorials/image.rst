@@ -9,7 +9,7 @@ Insert a raster image into a DXF drawing, the raster image is NOT embedded into 
 
 
     dwg = ezdxf.new('AC1015')  # image requires the DXF R2000 format or newer
-    my_image_def = dwg.add_image_def(key='mycat', filename='mycat.jpg', size_in_pixel=(640, 360))
+    my_image_def = dwg.add_image_def(filename='mycat.jpg', size_in_pixel=(640, 360))
     # The IMAGEDEF entity is like a block definition, it just defines the image
 
     msp = dwg.modelspace()

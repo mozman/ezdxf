@@ -4,6 +4,8 @@ News
 
 Version 0.7.5 - 2016-..
 
+  * CHANGE: removed key argument from Drawing.add_image_def(), key is noe auto-generated
+
 Version 0.7.4 - 2016-03-13
 
   * NEW: support for DXF entity IMAGE (work in progress)
@@ -16,7 +18,7 @@ Version 0.7.4 - 2016-03-13
     this applies to all tables: layers, styles, dimstyles, appids, views, viewports, ucs, block_records. (public interface)
   * CHANGE: renamed Layouts.create() to new() for consistent name schema for adding new items to tables (internal interface)
   * CHANGE: renamed Drawing.create_layout() to new_layout() for consistent name schema for adding new items (public interface)
-  * CHANGE: renamed factory method <layout>.3Dface() to 3dface()
+  * CHANGE: renamed factory method <layout>.add_3Dface() to add_3dface()
   * REMOVED: logging and debugging options
   * BUGFIX: fixed attribute definition for align_point in DXF entity ATTRIB (AC1015 and newer)
   * Cleanup DXF template files AC1015 - AC1027, file size goes down from >60kb to ~20kb
