@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
+import ezdxf
 from ezdxf.tools.test import ClassifiedTags
 from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
@@ -108,6 +109,18 @@ class TestEmptyDXFDict(unittest.TestCase):
         self.assertEqual(0, len(self.dxfdict))
         self.dxfdict.clear()
         self.assertEqual(0, len(self.dxfdict))
+
+
+class TestDXFDictSubDictCreation(unittest.TestCase):
+    def setUp(self):  # this tests require a proper setup DXF drawing
+        self.dwg = ezdxf.new('AC1015')
+
+    def test_add_sub_dict(self):
+        rootdict = self.dwg.rootdict
+        self.assertFalse('MOZMAN_TEST' in rootdict)
+        new_dict = rootdict.get_required_dict('MOZMAN_TEST')
+        self.assertEqual('DICTIONARY', new_dict.dxftype())
+        self.assertTrue('MOZMAN_TEST' in rootdict)
 
 
 class TestDXFDictWithDefault(unittest.TestCase):

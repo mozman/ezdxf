@@ -17,6 +17,7 @@ class ObjectsSection(ClassesSection):
     def roothandle(self):
         return self._entity_space[0]
 
+    @property
     def rootdict(self):
         if len(self):
             return self.dxffactory.wrap_entity(self.entitydb[self.roothandle])
@@ -30,7 +31,7 @@ class ObjectsSection(ClassesSection):
             raise DXFStructureError("Can not create root dictionary in none empty objects section.")
 
         # root directory has no owner
-        return self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': 0})
+        return self.add_dictionary(owner='0')
 
     def setup_objects_management_tables(self, rootdict):
         def setup_plot_style_name_table():
@@ -56,22 +57,17 @@ class ObjectsSection(ClassesSection):
                 rootdict.add_new_dict(name)
 
     def groups(self):
-        try:
-            group_table_handle = self.rootdict()['ACAD_GROUP']
-        except KeyError:
-            raise DXFInternalEzdxfError("Table ACAD_GROUP should already exist in root dict.")
-        else:
-            group_table = self.dxffactory.wrap_handle(group_table_handle)
+        group_table = self.rootdict.get_required_dict('ACAD_GROUP')
         return DXFGroupTable(group_table)
 
+    def add_dictionary(self, owner='0', dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['owner'] = owner
+        return self.create_new_dxf_entity('DICTIONARY', dxfattribs=dxfattribs)
+
     def add_image_def(self, filename, size_in_pixel):
-        rootdict = self.rootdict()
-        try:
-            image_dict_handle = rootdict['ACAD_IMAGE_DICT']
-            image_dict = self.dxffactory.wrap_entity(image_dict_handle)
-        except KeyError:  # create IMAGE_DICT
-            image_dict = rootdict.add_new_dict('ACAD_IMAGE_DICT')
-            # add a IMAGEDEF class definition to classes section????
+        image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
 
         # auto-generated image key
         key = self.dxffactory.next_image_key(lambda k: k not in image_dict)

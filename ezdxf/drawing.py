@@ -37,7 +37,7 @@ class Drawing(object):
         self.sections = Sections(tagreader, self)
         self._groups = None
         if self.dxfversion > 'AC1009':
-            self.rootdict = self.objects.rootdict()
+            self.rootdict = self.objects.rootdict
             self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
             if self.dxfversion in ('AC1012', 'AC1014'):  # releases R13 and R14
                 repair.upgrade_to_ac1015(self)
