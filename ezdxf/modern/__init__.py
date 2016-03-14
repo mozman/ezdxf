@@ -24,6 +24,7 @@ from .image import ImageDef, ImageDefReactor
 from . import dxfobjects
 from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
+from ..tools.handle import ImageKeyGenerator
 
 UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects
@@ -91,6 +92,7 @@ class ModernDXFFactory(LegacyDXFFactory):
     def __init__(self, drawing):
         super(ModernDXFFactory, self).__init__(drawing)
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
+        self.image_key_generator = ImageKeyGenerator()
 
     @property
     def rootdict(self):
@@ -121,3 +123,9 @@ class ModernDXFFactory(LegacyDXFFactory):
         modifier = self.TAGS_MODIFIER.get(tags.dxftype(), None)
         if modifier is not None:
             modifier(tags)
+
+    def next_image_key(self, checkfunc=lambda k: True):
+        while True:
+            key = self.image_key_generator.next()
+            if checkfunc(key):
+                return key
