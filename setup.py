@@ -12,10 +12,16 @@ AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'mozman@gmx.at'
 
 
-def read(fname):
+def read_until(fname, condition="UNIQUE_END_MARKER"):
     try:
         with open(os.path.join(os.path.dirname(__file__), fname)) as f:
-            return f.read()
+            lines = f.readlines()
+        last_index = -1
+        for index, line in enumerate(lines):
+            if line.startswith(condition):
+                last_index = index
+                break
+        return "".join(lines[:last_index])
     except IOError:
         return "File '%s' not found.\n" % fname
 
@@ -43,7 +49,7 @@ setup(
     provides=['ezdxf'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
-    long_description=read('README.rst')+read('NEWS.rst'),
+    long_description=read_until('README.rst')+read_until('NEWS.rst', 'Version 0.6.5'),
     platforms="OS Independent",
     license="MIT License",
     classifiers=[
