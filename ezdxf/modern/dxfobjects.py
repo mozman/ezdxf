@@ -158,10 +158,18 @@ class DXFDictionary(DXFEntity):
         """
         if dxfattribs is None:
             dxfattribs = {}
-        dxfattribs['owner'] = self.dxf.handle
-        dxfdict = self.drawing.objects.create_new_dxf_entity('DICTIONARY', dxfattribs=dxfattribs)
-        self.add(key, dxfdict.dxf.handle)
-        return dxfdict
+        dxf_dict = self.drawing.objects.add_dictionary(owner=self.dxf.handle, dxfattribs=dxfattribs)
+        self.add(key, dxf_dict.dxf.handle)
+        return dxf_dict
+
+    def get_required_dict(self, key):
+        try:
+            dict_handle = self.get(key)
+        except KeyError:
+            dxf_dict = self.add_new_dict(key)
+        else:
+            dxf_dict = self.dxffactory.wrap_handle(dict_handle)
+        return dxf_dict
 
 _DICT_WITH_DEFAULT_TPL = """  0
 ACDBDICTIONARYWDFLT
