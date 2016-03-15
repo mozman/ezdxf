@@ -55,6 +55,7 @@ class DXFDictionary(DXFEntity):
     def items(self):
         """Generator for the dictionary's items (``(key, value)`` pairs).
         """
+        key = ""
         for code, value in self.AcDbDictinary:
             if code == ENTRY_NAME_CODE:  # Entry name
                 key = value
@@ -150,15 +151,12 @@ class DXFDictionary(DXFEntity):
             return
         del self.AcDbDictinary[start_index:]
 
-    def add_new_dict(self, key, dxfattribs=None):
+    def add_new_dict(self, key):
         """Create a new sub dictionary.
 
         :param key: Name of the sub dictionary
-        :param dxfattribs: additional DXF attributes as dict
         """
-        if dxfattribs is None:
-            dxfattribs = {}
-        dxf_dict = self.drawing.objects.add_dictionary(owner=self.dxf.handle, dxfattribs=dxfattribs)
+        dxf_dict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)
         self.add(key, dxf_dict.dxf.handle)
         return dxf_dict
 
