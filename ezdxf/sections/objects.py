@@ -35,17 +35,13 @@ class ObjectsSection(ClassesSection):
 
     def setup_objects_management_tables(self, rootdict):
         def setup_plot_style_name_table():
-            placeholder = self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={})
+            placeholder = self.add_placeholder()
             placeholder_handle = placeholder.dxf.handle
-
-            plot_style_name_dict = self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
-                'owner': rootdict.dxf.handle,
-                'default': placeholder_handle
-            })
+            plot_style_name_dict = self.add_dictionary_with_default(owner=rootdict.dxf.handle,
+                                                                    default=placeholder_handle)
             plot_style_name_dict_handle = plot_style_name_dict.dxf.handle
             plot_style_name_dict['Normal'] = placeholder_handle
             placeholder.dxf.owner = plot_style_name_dict_handle  # link to owner
-
             rootdict['ACAD_PLOTSTYLENAME'] = plot_style_name_dict_handle
 
         for name in _OBJECT_TABLE_NAMES:
@@ -60,11 +56,14 @@ class ObjectsSection(ClassesSection):
         group_table = self.rootdict.get_required_dict('ACAD_GROUP')
         return DXFGroupTable(group_table)
 
-    def add_dictionary(self, owner='0', dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
-        dxfattribs['owner'] = owner
-        return self.create_new_dxf_entity('DICTIONARY', dxfattribs=dxfattribs)
+    def add_dictionary(self, owner='0'):
+        return self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
+
+    def add_dictionary_with_default(self, owner='0', default=""):
+        return self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
+            'owner': owner,
+            'default': default,
+        })
 
     def add_image_def(self, filename, size_in_pixel):
         image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
@@ -79,6 +78,11 @@ class ObjectsSection(ClassesSection):
         })
         image_dict[key] = image_def.dxf.handle
         return image_def
+
+    def add_placeholder(self, owner='0'):
+        return self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={
+            'owner': owner
+        })
 
 
 _OBJECT_TABLE_NAMES = [

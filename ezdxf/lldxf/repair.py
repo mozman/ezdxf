@@ -89,11 +89,10 @@ def upgrade_to_ac1015(dwg):
             raise DXFInternalEzdxfError("Table ACAD_LAYOUT should already exist in root dict.")
 
     def upgrade_layer_table():
-        if 'ACAD_PLOTSTYLENAME' in dwg.rootdict:
-            plot_style_name_handle = dwg.rootdict['ACAD_PLOTSTYLENAME']
-        else:
+        try:
+            plot_style_name_handle = dwg.rootdict.get('ACAD_PLOTSTYLENAME')  # DXFDictionaryWithDefault
+        except KeyError:
             raise DXFInternalEzdxfError("Table ACAD_PLOTSTYLENAME should already exist in root dict.")
-
         set_plot_style_name_in_layers(plot_style_name_handle)
 
         try:  # do not plot DEFPOINTS layer or AutoCAD is yelling
