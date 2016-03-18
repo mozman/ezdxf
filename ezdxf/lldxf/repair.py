@@ -34,19 +34,25 @@ def setup_paper_space(dwg):
 def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
     # This is just necessary for existing DXF drawings without properly setup management structures.
     # Layout structure is not initialized in this runtime phase
+    def get_block_record_by_alt_names(names):
+        for name in names:
+            try:
+                brecord = dwg.block_records.get(name)
+            except ValueError:
+                pass
+            else:
+                return brecord
+        raise KeyError
+
     layout_dict = dwg.rootdict.get_required_dict('ACAD_LAYOUT')
     if layout_name in layout_dict:
         return
     try:
-        block_record = dwg.block_records.get(block_name)
-    except KeyError:  # try block name in upper case *MODEL_SPACE
-        block_name = block_name.upper()
-        try:
-            block_record = dwg.block_records.get(block_name)
-        except KeyError:
-            raise NotImplementedError("'%s' block record setup not implemented, send an email to "
-                                      "<mozman@gmx.at> with your DXF file." % block_name)
-
+        block_record = get_block_record_by_alt_names((block_name, block_name.upper()))
+    except KeyError:
+        raise NotImplementedError("'%s' block record setup not implemented, send an email to "
+                                  "<mozman@gmx.at> with your DXF file." % block_name)
+    block_name = block_record.dxf.name  # can be *Model_Space or *MODEL_SPACE
     block_record_handle = block_record.dxf.handle
 
     try:
@@ -85,14 +91,6 @@ def create_layout_tags(dwg, block_record_handle, owner, tag_string):
 def upgrade_to_ac1015(dwg):
     """Upgrade DXF versions AC1012 and AC1014 to AC1015.
     """
-    def rename_standard_blocks():
-        rename_block('*MODEL_SPACE', '*Model_Space')
-        rename_block('*PAPER_SPACE', '*Paper_Space')
-
-    def rename_block(old_name, new_name):
-        if old_name in dwg.blocks:
-            dwg.blocks.rename_block(old_name, new_name)
-
     def upgrade_layout_table():
         if 'ACAD_LAYOUT' in dwg.rootdict:
             setup_model_space(dwg)  # setup layout entity and link to proper block and block_record entities
@@ -137,7 +135,6 @@ def upgrade_to_ac1015(dwg):
             entity.tags.subclasses = entity.tags.subclasses[0:1]  # remove subclass AcDbPlaceHolder
 
     # calling order is important!
-    rename_standard_blocks()
     upgrade_layout_table()
     upgrade_layer_table()
     upgrade_dim_style_table()
