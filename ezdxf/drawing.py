@@ -42,8 +42,7 @@ class Drawing(object):
             if self.dxfversion in ('AC1012', 'AC1014'):  # releases R13 and R14
                 repair.upgrade_to_ac1015(self)
             # some applications don't setup properly the 'Model' and 'Layout1' layouts
-            repair.setup_model_space(self)
-            repair.setup_paper_space(self)
+            repair.setup_layouts(self)
             self._groups = self.objects.groups()
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version

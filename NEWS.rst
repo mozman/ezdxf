@@ -4,6 +4,7 @@ News
 
 Version 0.7.5 - 2016-..
 
+  * BUGFIX: fixed broken layout setup repair routine
   * CHANGE: removed key argument from Drawing.add_image_def(), key is now auto-generated
 
 Version 0.7.4 - 2016-03-13

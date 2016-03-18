@@ -35,13 +35,14 @@ class ObjectsSection(ClassesSection):
 
     def setup_objects_management_tables(self, rootdict):
         def setup_plot_style_name_table():
-            placeholder = self.add_placeholder()
-            placeholder_handle = placeholder.dxf.handle
-            plot_style_name_dict = self.add_dictionary_with_default(owner=rootdict.dxf.handle,
-                                                                    default=placeholder_handle)
+            plot_style_name_dict = self.add_dictionary_with_default(owner=rootdict.dxf.handle)
             plot_style_name_dict_handle = plot_style_name_dict.dxf.handle
+
+            placeholder = self.add_placeholder(owner=plot_style_name_dict_handle)
+            placeholder_handle = placeholder.dxf.handle
+
+            plot_style_name_dict.dxf.default = placeholder_handle
             plot_style_name_dict['Normal'] = placeholder_handle
-            placeholder.dxf.owner = plot_style_name_dict_handle  # link to owner
             rootdict['ACAD_PLOTSTYLENAME'] = plot_style_name_dict_handle
 
         for name in _OBJECT_TABLE_NAMES:
@@ -59,7 +60,7 @@ class ObjectsSection(ClassesSection):
     def add_dictionary(self, owner='0'):
         return self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
 
-    def add_dictionary_with_default(self, owner='0', default=""):
+    def add_dictionary_with_default(self, owner='0', default="0"):
         return self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
             'owner': owner,
             'default': default,
