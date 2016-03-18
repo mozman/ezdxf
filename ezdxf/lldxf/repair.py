@@ -16,6 +16,13 @@ from .tags import DXFTag, Tags
 from .const import DXFInternalEzdxfError
 
 
+def setup_layouts(dwg):
+    layout_dict = dwg.rootdict.get_required_dict('ACAD_LAYOUT')
+    if 'Model' not in layout_dict:  # do it only if model space is not defined
+        setup_model_space(dwg)
+        setup_paper_space(dwg)
+
+
 def setup_model_space(dwg):
     setup_layout_space(dwg, 'Model', '*Model_Space', _MODEL_SPACE_LAYOUT_TPL)
 
@@ -27,14 +34,19 @@ def setup_paper_space(dwg):
 def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
     # This is just necessary for existing DXF drawings without properly setup management structures.
     # Layout structure is not initialized in this runtime phase
-    layout_dict = dwg.dxffactory.wrap_handle(dwg.rootdict['ACAD_LAYOUT'])
+    layout_dict = dwg.rootdict.get_required_dict('ACAD_LAYOUT')
     if layout_name in layout_dict:
         return
     try:
         block_record = dwg.block_records.get(block_name)
-    except KeyError:
-        raise NotImplementedError("'%s' block record setup not implemented, send an email to "
-                                  "<mozman@gmx.at> with your DXF file." % block_name)
+    except KeyError:  # try block name in upper case *MODEL_SPACE
+        block_name = block_name.upper()
+        try:
+            block_record = dwg.block_records.get(block_name)
+        except KeyError:
+            raise NotImplementedError("'%s' block record setup not implemented, send an email to "
+                                      "<mozman@gmx.at> with your DXF file." % block_name)
+
     block_record_handle = block_record.dxf.handle
 
     try:
