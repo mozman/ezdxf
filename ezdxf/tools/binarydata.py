@@ -20,6 +20,9 @@ SUBCLASSES_WITH_BINARY_DATA = frozenset(['AcDbProxyEntity', 'AcDbProxyObject', '
 def compress_binary_data(tags):
     dxftype = tags.dxftype()
     for subclass in tags.subclasses[1:]:
+        if not subclass:  # empty subclass AcDbVertex
+            continue  # todo: why is subclass AcDbVertex empty, should contain DXFTag(100, 'AcDbVertex')
+            # but it works, output DXF contains all necessary subclasses
         name = subclass[0].value
         if name == 'AcDbEntity' and dxftype in ENTITIES_WITH_PROXY_GRAPHIC:
             # 310: proxy entity graphics data

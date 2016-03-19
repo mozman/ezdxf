@@ -31,7 +31,7 @@ def setup_paper_space(dwg):
     setup_layout_space(dwg, 'Layout1', '*Paper_Space', _PAPER_SPACE_LAYOUT_TPL)
 
 
-def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
+def setup_layout_space(dwg, layout_name, block_name, tag_string):
     # This is just necessary for existing DXF drawings without properly setup management structures.
     # Layout structure is not initialized in this runtime phase
     def get_block_record_by_alt_names(names):
@@ -63,7 +63,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_strimg):
     else:
         block.set_block_record_handle(block_record_handle)   # grant valid linking
 
-    layout_handle = create_layout_tags(dwg, block_record_handle, owner=layout_dict.dxf.handle, tag_string=tag_strimg)
+    layout_handle = create_layout_tags(dwg, block_record_handle, owner=layout_dict.dxf.handle, tag_string=tag_string)
     layout_dict[layout_name] = layout_handle  # insert layout into the layout management table
     block_record.dxf.layout = layout_handle  # link model space block record to layout
 
