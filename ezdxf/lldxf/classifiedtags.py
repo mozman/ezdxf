@@ -60,6 +60,8 @@ class ClassifiedTags(object):
             """ a subclass can contain appdata, but not xdata, ends with
             SUBCLASSMARKER or XDATACODE.
             """
+            if starttag and starttag.value == 'AcDbVertex':
+                pass
             data = Tags() if starttag is None else Tags([starttag])
             try:
                 while True:

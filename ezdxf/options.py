@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+
 class Options(object):
     def __init__(self):
         self.template_dir = None
