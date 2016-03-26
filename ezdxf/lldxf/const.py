@@ -40,6 +40,13 @@ class DXFInternalEzdxfError(DXFError):
     pass
 
 
+class DXFEncodingError(DXFError):
+    pass
+
+
+class DXFDecodingError(DXFError):
+    pass
+
 # Special tag codes for internal purpose
 # -1 to -5 id reserved by AutoCAD for internal use, but this tags will never be saved to file.
 # Same approach here, the following tags have to be converted/transformed into normal tags before

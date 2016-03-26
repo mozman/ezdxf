@@ -19,7 +19,7 @@ if PY3:
     ustr = str
     unicode2bytes = lambda s: bytes(s, encoding='utf-8')
 
-else:
+else: # Python 2.7
     import cgi
     escape = functools.partial(cgi.escape, quote=True)
     ustr = unicode
