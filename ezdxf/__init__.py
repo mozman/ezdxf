@@ -44,6 +44,11 @@ def new(dxfversion='AC1009'):
     from .drawing import Drawing
     return Drawing.new(dxfversion)
 
+# TODO: read DXF stream as binary data and decode each line individually
+# some string tags seems to be written with the encoding settings of the DXF header,
+# some other strings (layer name) seems to be encoded as unicode strings.
+# And this may differ for older and newer DXF versions.
+
 
 def read(stream):
     """Read DXF drawing from a *stream*, which only needs a readline() method.
