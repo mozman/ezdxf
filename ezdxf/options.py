@@ -19,8 +19,5 @@ class Options(object):
         # preserves comments at the top of the DXF file and adds ezdxf comments on saving
         self.store_comments = True
 
-        # ignore input data stream decoding errors, but this maybe breaks text and entity names
-        self.ignore_decode_errors = False
-
 # Global Options
 options = Options()

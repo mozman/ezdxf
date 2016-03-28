@@ -32,6 +32,10 @@ class DXFStructureError(DXFError):
     pass
 
 
+class DXFStreamError(DXFError):
+    pass
+
+
 class DXFVersionError(DXFError):
     pass
 

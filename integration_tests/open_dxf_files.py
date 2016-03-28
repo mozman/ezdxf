@@ -10,7 +10,6 @@ import ezdxf
 import os
 
 FILE_1 = r"D:\Source\dxftest\ChineseChars_cp936_R2004.dxf"
-FILE_2 = r'D:\Source\dxftest\ChineseChars_utf8_R2004.dxf'
 FILE_3 = r"D:\Source\dxftest\ChineseChars_cp936_R2004.zip"
 FILE_4 = r"D:\Source\dxftest\ProE_AC1018.dxf"
 
@@ -45,8 +44,6 @@ def print_stats(dwg):
 
 # chinese chars 'cp936'
 read_plain_file(FILE_1)
-# chinese chars 'cp936' encoded as utf-8 file ??? (not a real world example)
-read_plain_file(FILE_2)
 # chinese chars 'cp936' from zip file
 read_from_zip(FILE_3)
 # crappy ProE file

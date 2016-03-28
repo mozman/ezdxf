@@ -218,7 +218,7 @@ BlockLayout
    Add an :class:`Attdef` element, `tag` is the attribute-tag, `insert` is the
    2D/3D insertion point of the Attribute. Set position and alignment by the idiom::
 
-   myblock.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
+      myblock.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
 
 .. method:: BlockLayout.attdefs()
 

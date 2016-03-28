@@ -237,13 +237,19 @@ class Drawing(object):
         tagreader = TagIterator(stream)
         return Drawing(tagreader)
 
-    def saveas(self, filename):
+    def saveas(self, filename, encoding='auto'):
         self.filename = filename
-        self.save()
+        self.save(encoding=encoding)
 
-    def save(self):
+    def save(self, encoding='auto'):
         # noinspection PyArgumentList
-        with io.open(self.filename, mode='wt', encoding=self.encoding) as fp:
+        # DXF R12, R2000, R2004 - ASCII encoding
+        # DXF R2007 and newer - UTF8 encoding
+        if encoding == 'auto':
+            enc = 'utf-8' if self.dxfversion >= 'AC1018' else self.encoding
+        else:
+            enc = encoding
+        with io.open(self.filename, mode='wt', encoding=enc) as fp:
             self.write(fp)
 
     def write(self, stream):
