@@ -15,12 +15,15 @@ if sys.version_info[:2] < (2, 7):
 
 import io
 
-from .lldxf import encoding
+import codecs
+from .lldxf.encoding import dxfbackslashreplace
+codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
+
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .lldxf.tags import dxf_info
 from .lldxf.tags import TagIterator
 from .tools.importer import Importer
-from .lldxf.const import DXFStructureError, DXFVersionError, DXFStreamError
+from .lldxf.const import DXFStructureError, DXFVersionError
 from .tools.zipmanager import ctxZipReader
 from .tools import transparency2float, float2transparency  #  convert transparency integer values to floats 0..1
 from .tools.rgb import int2rgb, rgb2int
@@ -45,25 +48,20 @@ def new(dxfversion='AC1009'):
     from .drawing import Drawing
     return Drawing.new(dxfversion)
 
-# TODO: read DXF stream as binary data and decode each line individually
-# some string tags seems to be written with the encoding settings of the DXF header,
-# some other strings (layer name) seems to be encoded as unicode strings.
-# And this may differ for older and newer DXF versions.
-
 
 def read(stream):
-    """Read DXF drawing from a binary *stream*, which only needs a readline() method.
+    """Read DXF drawing from a text *stream*, which only needs a readline() method.
 
     read() can open drawings of following DXF versions:
-    - pre 'AC1009' DXF versions will be read as 'AC1009'
-    - 'AC1009': AutoCAD R12 (DXF12)
-    - 'AC1012': AutoCAD R12 converted to AC1015
-    - 'AC1014': AutoCAD R14 converted to AC1015
-    - 'AC1015': AutoCAD 2000
-    - 'AC1018': AutoCAD 2004
-    - 'AC1021': AutoCAD 2007
-    - 'AC1024': AutoCAD 2010
-    - 'AC1027': AutoCAD 2013
+    - pre 'AC1009' DXF versions will be upgraded to 'AC1009', requires encoding set by header var $DWGCODEPAGE
+    - 'AC1009': AutoCAD R12 (DXF12), requires encoding set by header var $DWGCODEPAGE
+    - 'AC1012': AutoCAD R12 upgraded to AC1015, requires encoding set by header var $DWGCODEPAGE
+    - 'AC1014': AutoCAD R14 upgraded to AC1015, requires encoding set by header var $DWGCODEPAGE
+    - 'AC1015': AutoCAD 2000, requires encoding set by header var $DWGCODEPAGE
+    - 'AC1018': AutoCAD 2004, requires encoding set by header var $DWGCODEPAGE
+    - 'AC1021': AutoCAD 2007, requires encoding='utf-8'
+    - 'AC1024': AutoCAD 2010, requires encoding='utf-8'
+    - 'AC1027': AutoCAD 2013, requires encoding='utf-8'
 
     """
     from .drawing import Drawing
@@ -79,7 +77,7 @@ def readfile(filename):
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         info = dxf_info(fp)
 
-    if info.version >= 'AC1021':  # R2007 or newer always encoded as utf-8
+    if info.version >= 'AC1021':  # R2007 or newer always encoded as UTF-8
         enc = 'utf-8'
     else:
         enc = info.encoding

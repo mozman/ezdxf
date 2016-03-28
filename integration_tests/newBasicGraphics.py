@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: create new drawings for all supported DXF versions and create new
@@ -15,7 +14,7 @@ def add_line_entities(entityspace, offset):
     for color in range(1, 256):
         entityspace.add_line((offset+0, color), (offset+50, color), {
             'color': color,
-            'layer': 'Träger'
+            'layer': u'Träger'
         })
 
 
