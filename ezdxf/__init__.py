@@ -15,11 +15,12 @@ if sys.version_info[:2] < (2, 7):
 
 import io
 
+from .lldxf import encoding
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .lldxf.tags import dxf_info
 from .lldxf.tags import TagIterator
 from .tools.importer import Importer
-from .lldxf.const import DXFStructureError, DXFVersionError
+from .lldxf.const import DXFStructureError, DXFVersionError, DXFStreamError
 from .tools.zipmanager import ctxZipReader
 from .tools import transparency2float, float2transparency  #  convert transparency integer values to floats 0..1
 from .tools.rgb import int2rgb, rgb2int
@@ -51,7 +52,7 @@ def new(dxfversion='AC1009'):
 
 
 def read(stream):
-    """Read DXF drawing from a *stream*, which only needs a readline() method.
+    """Read DXF drawing from a binary *stream*, which only needs a readline() method.
 
     read() can open drawings of following DXF versions:
     - pre 'AC1009' DXF versions will be read as 'AC1009'
@@ -74,10 +75,22 @@ def readfile(filename):
     """
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
-    try:  # is it ascii code-page encoded?
-        return readfile_as_asc(filename)
-    except UnicodeDecodeError:  # try unicode and ignore errors
-        return readfile_as_utf8(filename, errors='ignore')
+
+    fp = io.open(filename, mode='rt', encoding='utf-8', errors='ignore')
+    info = dxf_info(fp)
+    fp.close()
+
+    if info.version >= 'AC1021':  # R2007 or newer always encoded as utf-8
+        enc = 'utf-8'
+    else:
+        enc = info.encoding
+
+    fp = io.open(filename, mode='rt', encoding=enc, errors='dxfreplace')
+    dwg = read(fp)
+    fp.close()
+
+    dwg.filename = filename
+    return dwg
 
 
 def readzip(zipfile, filename=None):
@@ -89,31 +102,6 @@ def readzip(zipfile, filename=None):
     return dwg
 
 
-def readfile_as_utf8(filename, errors='strict'):
-    """Read DXF drawing from file *filename*, expects an 'utf-8' encoding.
-    """
-    return _read_encoded_file(filename, encoding='utf-8', errors=errors)
-
-
-def readfile_as_asc(filename):
-    """Read DXF drawing from file *filename*, expects an ascii code-page encoding.
-    """
-    def get_encoding():
-        with io.open(filename) as fp:
-            info = dxf_info(fp)
-        return info.encoding
-    return _read_encoded_file(filename, encoding=get_encoding())
-
-
-# noinspection PyArgumentList
-def _read_encoded_file(filename, encoding='utf-8', errors='strict'):
-    with io.open(filename, encoding=encoding, errors=errors) as fp:
-        dwg = read(fp)
-    dwg.filename = filename
-    return dwg
-
-
-# noinspection PyArgumentList
 def is_dxf_file(filename):
     with io.open(filename, errors='ignore') as fp:
         reader = TagIterator(fp)

@@ -9,6 +9,7 @@ from io import StringIO
 
 from .const import acad_release, DXFStructureError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
+from .encoding import decode
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
 
@@ -150,7 +151,7 @@ class DXFInfo(object):
         self.handseed = value
 
 
-def dxf_info(stream):
+def dxf_info(stream):  # expect stream opened in binary mode
     info = DXFInfo()
     tag = (999999, '')
     tagreader = TagIterator(stream)

@@ -18,7 +18,9 @@ Drawing Attributes
 .. attribute:: Drawing.encoding
 
     DXF drawing text encoding, the default encoding for new drawings is
-    ``'cp1252'``. (read/write)
+    ``'cp1252'``. Starting with DXF version R2007 (AC1021) DXF files are written
+    as UTF-8 encoded text files, regardless of the attribute :attr:`Drawing.encoding` (read/write)
+    see also: :ref:`dxf file encoding`
 
     ============ =================
     supported    encodings
@@ -165,20 +167,30 @@ Drawing Methods
     packages, ezdxf can not determine the image size by itself. Returns a :class:`ImageDef` entity which is needed to
     create an image reference, see :ref:`tut_image`.
 
-.. method:: Drawing.save()
+    :param filename: image file name
+    :param size_in_pixel: image size in pixel as (x, y) tuple
+
+.. method:: Drawing.save(encoding='auto')
 
     Write drawing to file-system by using the :attr:`~Drawing.filename` attribute
-    as filename.
+    as filename. Overwrite file encoding by argument *encoding*, handle with care, but this option allows you to create
+    DXF files for applications that handles file encoding different than AutoCAD.
 
-.. method:: Drawing.saveas(filename)
+    :param encoding: overwrite file encoding
+
+.. method:: Drawing.saveas(filename, encoding='auto')
 
     Write drawing to file-system by setting the :attr:`~Drawing.filename`
-    attribute to `filename`.
+    attribute to `filename`. For argument *encoding* see: :meth:`~Drawing.save`.
+
+    :param filename: file name
+    :param encoding: overwrite file encoding
 
 .. method:: Drawing.write(stream)
 
-    Write drawing to a text stream, opened with `encoding` = :attr:`Drawing.encoding`
-    and and `mode` = ``'wt'``.
+    Write drawing to a text stream. For DXF version R2004 (AC1018) and prior opened stream with
+    `encoding=` :attr:`Drawing.encoding` and `mode='wt'`. For DXF version R2007 (AC1021) and later use
+    `encoding='utf-8'`.
 
 .. method:: Drawing.cleanup(groups=True)
 

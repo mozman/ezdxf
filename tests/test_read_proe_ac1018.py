@@ -16,7 +16,7 @@ def test_file_not_exists():
 @unittest.skipIf(test_file_not_exists(), "Skip reading ProE AC1018: test file '{}' not available.".format(FILE))
 class TestReadProE_AC1018(unittest.TestCase):
     def test_open_proe_ac1018(self):
-        dwg = ezdxf.readfile("D:\Source\dxftest\ProE_AC1018.dxf")
+        dwg = ezdxf.readfile(FILE)
         modelspace = dwg.modelspace()
 
         # are there entities in model space

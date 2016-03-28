@@ -42,18 +42,9 @@ is not implemented yet).
 .. function:: read(stream)
 
     Read DXF drawing from a text-stream, returns a :class:`Drawing` object.
-    Open mode has to be ``'rt'`` and the correct encoding has to be set at the
-    open function (in Python 2.7 use :func:`io.open`), at least the stream requires
-    a :meth:`readline` method.
-
-.. function:: readfile_as_utf8(filename, errors='strict')
-
-    This Read DXF drawing from file *filename*, expects an *utf-8* encoding.
-
-.. function:: readfile_as_asc(filename)
-
-    Read DXF drawing from file *filename*, expects an ASCII code-page encoding.
-    Raises :class:`UnicodeDecodeError` for invalid character encodings.
+    Open the stream in text mode (`mode='rt'`) and the correct encoding has to be set at the
+    open function (in Python 2.7 use :func:`io.open`), the stream requires at least a :meth:`readline` method.
+    Since DXF version R2007 (AC1021) file encoding is always 'utf-8'.
 
 Save Drawings
 -------------

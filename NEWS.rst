@@ -5,6 +5,7 @@ News
 Version 0.7.5 - 2016-..
 
   * BUGFIX: fixed broken layout setup in repair routine
+  * BUGFIX: support for utf-8 encoding on saving, DXF R2007 and newer is saved with UTF-8 encoding
   * CHANGE: removed key argument from Drawing.add_image_def(), key is now auto-generated
 
 Version 0.7.4 - 2016-03-13
