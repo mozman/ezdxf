@@ -5,8 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from collections import OrderedDict
-
 from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator
 
