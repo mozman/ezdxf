@@ -76,18 +76,16 @@ def readfile(filename):
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
-    fp = io.open(filename, mode='rt', encoding='utf-8', errors='ignore')
-    info = dxf_info(fp)
-    fp.close()
+    with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
+        info = dxf_info(fp)
 
     if info.version >= 'AC1021':  # R2007 or newer always encoded as utf-8
         enc = 'utf-8'
     else:
         enc = info.encoding
 
-    fp = io.open(filename, mode='rt', encoding=enc, errors='dxfreplace')
-    dwg = read(fp)
-    fp.close()
+    with io.open(filename, mode='rt', encoding=enc, errors='dxfreplace') as fp:
+        dwg = read(fp)
 
     dwg.filename = filename
     return dwg

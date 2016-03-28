@@ -10,9 +10,13 @@
 import ezdxf
 from ezdxf.lldxf.const import versions_supported_by_new
 
+
 def add_line_entities(entityspace, offset):
     for color in range(1, 256):
-        line = entityspace.add_line((offset+0, color), (offset+50, color), {'color': color})
+        entityspace.add_line((offset+0, color), (offset+50, color), {
+            'color': color,
+            'layer': 'Träger'
+        })
 
 
 def make_drawing(version):
