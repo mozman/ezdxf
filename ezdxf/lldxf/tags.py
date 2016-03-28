@@ -9,7 +9,6 @@ from io import StringIO
 
 from .const import acad_release, DXFStructureError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
-from .encoding import decode
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
 
@@ -51,8 +50,8 @@ class TagIterator(object):
             try:
                 code = int(self.readline())
                 value = self.readline().rstrip('\n')
-            except UnicodeDecodeError:
-                raise  # because UnicodeDecodeError() is a subclass of ValueError()
+#            except UnicodeDecodeError:  # no more unicode decode errors?
+#                raise  # because UnicodeDecodeError() is a subclass of ValueError()
             except (EOFError, ValueError):
                 raise StopIteration()
             return code, value

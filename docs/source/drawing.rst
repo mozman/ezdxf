@@ -176,7 +176,7 @@ Drawing Methods
     as filename. Overwrite file encoding by argument *encoding*, handle with care, but this option allows you to create
     DXF files for applications that handles file encoding different than AutoCAD.
 
-    :param encoding: overwrite file encoding
+    :param encoding: override file encoding
 
 .. method:: Drawing.saveas(filename, encoding='auto')
 
@@ -184,7 +184,7 @@ Drawing Methods
     attribute to `filename`. For argument *encoding* see: :meth:`~Drawing.save`.
 
     :param filename: file name
-    :param encoding: overwrite file encoding
+    :param encoding: override file encoding
 
 .. method:: Drawing.write(stream)
 
