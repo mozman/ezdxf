@@ -77,12 +77,12 @@ def readfile(filename):
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         info = dxf_info(fp)
 
-    if info.version >= 'AC1021':  # R2007 or newer always encoded as UTF-8
+    if info.version >= 'AC1021':  # R2007 files or newer are always encoded as UTF-8
         enc = 'utf-8'
     else:
         enc = info.encoding
 
-    with io.open(filename, mode='rt', encoding=enc, errors='dxfreplace') as fp:
+    with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
         dwg = read(fp)
 
     dwg.filename = filename
