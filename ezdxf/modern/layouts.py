@@ -101,22 +101,22 @@ class Layouts(object):
             entity = self.drawing.objects.create_new_dxf_entity('LAYOUT', dxfattribs)
             return entity.dxf.handle
 
-        def add_layout_to_management_tables():
-            self._dxf_layout_management_table[name] = layout_handle
-            self._layouts[name] = layout
-
         block_layout = self.drawing.blocks.new_layout_block()
         block_record_handle = block_layout.block_record_handle
         block_record = block_layout.block_record
-        block = block_layout.block
         layout_handle = create_dxf_layout_entity()
         block_record.dxf.layout = layout_handle
 
         # set block entity space as layout entity space
         self.drawing.entities.set_layout_space(layout_handle, block_layout.get_entity_space())
 
+        # create valid layout entity
         layout = Layout(self.drawing, layout_handle)
-        add_layout_to_management_tables()
+
+        # add layout to management tables
+        self._dxf_layout_management_table[name] = layout_handle
+        self._layouts[name] = layout
+
         return layout
 
     def set_active_layout(self, name):

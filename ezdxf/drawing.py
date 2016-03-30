@@ -242,14 +242,14 @@ class Drawing(object):
         self.save(encoding=encoding)
 
     def save(self, encoding='auto'):
-        # noinspection PyArgumentList
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
         if encoding == 'auto':
-            enc = 'utf-8' if self.dxfversion >= 'AC1018' else self.encoding
+            enc = 'utf-8' if self.dxfversion >= 'AC1021' else self.encoding
         else:  # override default encoding, for applications that handles encoding different than AutoCAD
             enc = encoding
-        with io.open(self.filename, mode='wt', encoding=enc) as fp:
+        # in ASCII mode unknown, characters will be escaped as \U+nnnn unicode characters.
+        with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
             self.write(fp)
 
     def write(self, stream):
