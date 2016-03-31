@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-codepages = {
+codepage_to_encoding = {
     '874': 'cp874',  # Thai,
     '932': 'cp932',  # Japanese
     '936': 'gbk',  # UnifiedChinese
@@ -22,16 +22,22 @@ codepages = {
     '1258': 'cp1258',  # Vietnam
 }
 
+encoding_to_codepage = {
+    codec: ansi for ansi, codec in codepage_to_encoding.items()
+    }
+
+
+def is_supported_encoding(encoding='cp1252'):
+    return encoding in encoding_to_codepage
+
 
 def toencoding(dxfcodepage):
-    for codepage, encoding in codepages.items():
+    for codepage, encoding in codepage_to_encoding.items():
         if dxfcodepage.endswith(codepage):
             return encoding
     return 'cp1252'
 
 
 def tocodepage(encoding):
-    for codepage, enc in codepages.items():
-        if enc == encoding:
-            return 'ANSI_' + codepage
-    return 'ANSI_1252'
+    return 'ANSI_' + encoding_to_codepage.get(encoding, '1252')
+

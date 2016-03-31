@@ -23,6 +23,7 @@ from .options import options  # example: ezdxf.options.template_dir = 'c:\templa
 from .lldxf.tags import dxf_info
 from .lldxf.tags import TagIterator
 from .tools.importer import Importer
+from .tools.codepage import is_supported_encoding
 from .lldxf.const import DXFStructureError, DXFVersionError
 from .tools.zipmanager import ctxZipReader
 from .tools import transparency2float, float2transparency  #  convert transparency integer values to floats 0..1
@@ -68,7 +69,7 @@ def read(stream):
     return Drawing.read(stream)
 
 
-def readfile(filename):
+def readfile(filename, encoding='auto'):
     """Read DXF drawing from file *filename*.
     """
     if not is_dxf_file(filename):
@@ -77,7 +78,9 @@ def readfile(filename):
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         info = dxf_info(fp)
 
-    if info.version >= 'AC1021':  # R2007 files or newer are always encoded as UTF-8
+    if encoding != 'auto':  # override encoding detection and $DWGCODEPAGE
+        enc = encoding
+    elif info.version >= 'AC1021':  # R2007 files or newer are always encoded as UTF-8
         enc = 'utf-8'
     else:
         enc = info.encoding
@@ -86,6 +89,8 @@ def readfile(filename):
         dwg = read(fp)
 
     dwg.filename = filename
+    if encoding != 'auto' and is_supported_encoding(encoding):
+        dwg.encoding = encoding
     return dwg
 
 
