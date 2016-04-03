@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.7.6 - ...
+
+  * ...
+  
 Version 0.7.5 - 2016-04-03
 
   * NEW: Drawing.acad_release property - AutoCAD release number for the drawing DXF version like 'R12' or 'R2000'
