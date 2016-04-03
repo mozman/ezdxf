@@ -1239,6 +1239,38 @@ ISM
 281
      1
   0
+CLASS
+  1
+PDFDEFINITION
+  2
+AcDbPdfDefinition
+  3
+ObjectDBX Classes
+ 90
+     1153
+ 91
+        1
+280
+     0
+281
+     0
+  0
+CLASS
+  1
+PDFUNDERLAY
+  2
+AcDbPdfReference
+  3
+ObjectDBX Classes
+ 90
+     4095
+ 91
+        1
+280
+     0
+281
+     1
+  0
 ENDSEC
   0
 SECTION
