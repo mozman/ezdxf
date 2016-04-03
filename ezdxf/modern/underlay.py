@@ -41,6 +41,8 @@ AcDbUnderlayReference
 1.0
  43
 1.0
+ 50
+0.0
 280
 2
 281
@@ -171,7 +173,7 @@ noname
 
 underlay_def_subclass = DefSubclass('AcDbUnderlayDefinition', {
     'filename': DXFAttr(1),  # File name of underlay
-    'name': DXFAttr(2),  # underlay name
+    'name': DXFAttr(2),  # underlay name - pdf=page nmber to display; dgn=default; dwf=????
 })
 
 

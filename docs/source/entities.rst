@@ -1186,9 +1186,9 @@ Image
 
     Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``IMAGE``.
 
-    Add a raster image to the DXF file, the file itself is not embedded into the DXF file, it is alwas a separated file.
-    The IMAGE entity is like a block reference, you can use it multiple times to add the image on different location
-    with differnt scalings and rotations. But therefore you need a also a IMAGEDEF entity, see :class:`ImageDef`.
+    Add a raster image to the DXF file, the file itself is not embedded into the DXF file, it is always a separated file.
+    The IMAGE entity is like a block reference, you can use it multiple times to add the image on different locations
+    with different scales and rotations. But therefore you need a also a IMAGEDEF entity, see :class:`ImageDef`.
     Create :class:`Image` in layouts and blocks by factory function :meth:`~Layout.add_image`. ezdxf creates only
     images in the XY-plan. You can place images in the 3D space too, but then you have to set the *u_pixel* and
     the *v_pixel* vectors by yourself.
@@ -1270,14 +1270,13 @@ Underlay
 
     Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``PDFUNDERLAY``, ``DWFUNDERLAY`` or ``DGNUNDERLAY``.
 
-    Add a raster image to the DXF file, the file itself is not embedded into the DXF file, it is alwas a separated file.
-    The IMAGE entity is like a block reference, you can use it multiple times to add the image on different location
-    with differnt scalings and rotations. But therefore you need a also a IMAGEDEF entity, see :class:`ImageDef`.
-    Create :class:`Image` in layouts and blocks by factory function :meth:`~Layout.add_image`. ezdxf creates only
-    images in the XY-plan. You can place images in the 3D space too, but then you have to set the *u_pixel* and
-    the *v_pixel* vectors by yourself.
-
-    Clipping coordinates are 2D OCS/ECS coordinates and in drawing units but without scaling.
+    Add an underlay file to the DXF file, the file itself is not embedded into the DXF file, it is always a separated file.
+    The (PDF)UNDERLAY entity is like a block reference, you can use it multiple times to add the underlay on different
+    locations with different scales and rotations. But therefore you need a also a (PDF)DEFINITION entity, see
+    :class:`UnderlayDefinition`.
+    Create :class:`Underlay` in layouts and blocks by factory function :meth:`~Layout.add_underlay`. The DXF standard
+    supports three different fileformats: PDF, DWF (DWFx) and DGN. An Underlay can be clipped by a rectangle or a
+    polygon path. The clipping coordinates are 2D OCS/ECS coordinates and in drawing units but without scaling.
 
 
 ======================= ======= ===========
@@ -1342,7 +1341,7 @@ UNDERLAY_ADJUST_FOR_BACKGROUND 8       Adjust for background
 
 .. method:: Underlay.get_underlay_def()
 
-    returns the associated UNDERLAYDEFINITION entity. see :class:`UnderlayDefinition`.
+    returns the associated (PDF)DEFINITION entity. see :class:`UnderlayDefinition`.
 
 
 UnderlayDefinition
@@ -1361,7 +1360,7 @@ UnderlayDefinition
 DXFAttr                 Version Description
 ======================= ======= ===========
 filename                R13     Relative (to the DXF file) or absolute path to the image file as string
-name                    R13     internal underlay name
+name                    R13     defines what to display - pdf: page number; dgn: 'default'; dwf: ???
 ======================= ======= ===========
 
 
