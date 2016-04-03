@@ -6,7 +6,8 @@ Version 0.7.5 - 2016-..
 
   * BUGFIX: fixed broken layout setup in repair routine
   * BUGFIX: support for utf-8 encoding on saving, DXF R2007 and newer is saved with UTF-8 encoding
-  * CHANGE: removed key argument from Drawing.add_image_def(), key is now auto-generated
+  * CHANGE: Drawing.add_image_def(filename, size_in_pixel, key=None), key=None for auto-generated internal image key (name)
+  * NEW: Drawing.acad_release property - AutoCAD release number for the drawing DXF version like 'R12' or 'R2000'
 
 Version 0.7.4 - 2016-03-13
 

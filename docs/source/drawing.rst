@@ -15,6 +15,11 @@ Drawing Attributes
     contains the DXF version as string like ``'AC1009'``, set by the
     :func:`new` or the :func:`readfile` function. (read only)
 
+.. attribute:: Drawing.acad_version
+
+    contains the AutoCAD release number string like ``'R12'`` or ``'R2000'`` that introduced the DXF version
+    of this drawing. (read only)
+
 .. attribute:: Drawing.encoding
 
     DXF drawing text encoding, the default encoding for new drawings is
@@ -160,15 +165,16 @@ Drawing Methods
     Delete paper space layout *name* and all its entities. Available only for DXF version AC1015
     or newer, AC1009 supports only one paper space and you can't delete it.
 
-.. method:: Drawing.add_image_def(filename, size_in_pixel)
+.. method:: Drawing.add_image_def(filename, size_in_pixel, key=None)
 
     Add an :class:`ImageDef` entity to the drawing (objects section). `filename` is the image file name as relative or
     absolute path and `size_in_pixel` is the image size in pixel as (x, y) tuple. To avoid dependencies to external
     packages, ezdxf can not determine the image size by itself. Returns a :class:`ImageDef` entity which is needed to
-    create an image reference, see :ref:`tut_image`.
+    create an image reference, see :ref:`tut_image`. `key` is the internal image name, if None it is auto-generated.
 
     :param filename: image file name
     :param size_in_pixel: image size in pixel as (x, y) tuple
+    :param key: image name for internal use, None for an auto-generated image name
 
 .. method:: Drawing.save(encoding='auto')
 

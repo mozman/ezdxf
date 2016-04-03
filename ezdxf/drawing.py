@@ -11,7 +11,7 @@ import warnings
 
 from . import database
 from .lldxf.tags import TagIterator, DXFTag, write_tags
-from .lldxf.const import DXFVersionError
+from .lldxf.const import DXFVersionError, acad_release
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -62,6 +62,10 @@ class Drawing(object):
         if self.dxfversion > 'AC1009' and not self._is_binary_data_compressed:
             self.entitydb.compress_binary_data()
             self._is_binary_data_compressed = True
+
+    @property
+    def acad_release(self):
+        return acad_release.get(self.dxfversion, "unknown")
 
     @property
     def _handles(self):
@@ -204,8 +208,8 @@ class Drawing(object):
         """
         return self.dxffactory.wrap_handle(handle)
 
-    def add_image_def(self, filename, size_in_pixel):
-        return self.objects.add_image_def(filename, size_in_pixel)
+    def add_image_def(self, filename, size_in_pixel, key='auto'):
+        return self.objects.add_image_def(filename, size_in_pixel, key)
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
