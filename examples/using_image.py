@@ -6,9 +6,9 @@ my_image_def = dwg.add_image_def(filename='mycat.jpg', size_in_pixel=(640, 360))
 
 msp = dwg.modelspace()
 # add first image, image is like a block reference (INSERT)
-msp.add_image(insert=(2, 1), size_in_units=(6.4, 3.6), image_def=my_image_def, rotation=0)
+msp.add_image(image_def=my_image_def, insert=(2, 1), size_in_units=(6.4, 3.6), rotation=0)
 # add first image
-msp.add_image(insert=(4, 5), size_in_units=(3.2, 1.8), image_def=my_image_def, rotation=30)
+msp.add_image(image_def=my_image_def, insert=(4, 5), size_in_units=(3.2, 1.8), rotation=30)
 
 # get existing image definitions
 image_defs = dwg.objects.query('IMAGEDEF')  # get all image defs in drawing

@@ -337,7 +337,7 @@ class GraphicsFactory(object):
             dxfattribs = {}
         return self.build_and_add_entity('MESH', dxfattribs)
 
-    def add_image(self, insert, size_in_units, image_def, rotation=0., dxfattribs=None):
+    def add_image(self, image_def, insert, size_in_units, rotation=0., dxfattribs=None):
         def to_vector(units_per_pixel, angle_in_rad):
             x = math.cos(angle_in_rad) * units_per_pixel
             y = math.sin(angle_in_rad) * units_per_pixel
@@ -363,4 +363,16 @@ class GraphicsFactory(object):
 
         return self.build_and_add_entity('IMAGE', dxfattribs)
 
+    def add_underlay(self, underlay_def, insert=(0, 0, 0), scale=(1, 1, 1), rotation=0., dxfattribs=None):
+        if self.dxfversion < 'AC1015':
+            raise const.DXFVersionError('UNDERLAY requires DXF version AC1015 (R2000) or later, '
+                                        'actual DXF version is {}.'.format(self.dxfversion))
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['insert'] = insert
+        dxfattribs['underlay_def'] = underlay_def.dxf.handle
+        dxfattribs['rotation'] = rotation
 
+        underlay = self.build_and_add_entity(underlay_def.entity_name, dxfattribs)
+        underlay.scale = scale
+        return underlay

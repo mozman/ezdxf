@@ -115,13 +115,13 @@ Create new entities
 .. method:: Layout.add_lwpolyline(points, dxfattribs=None)
 
    Add a 2D polyline, `points` is a list of 2D points. A :class:`LWPolyline` is defined as a single graphic entity and
-   consume less disk space and memory. (requires DXF version AC1012 or newer)
+   consume less disk space and memory. (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_mtext(text, dxfattribs=None)
 
    Add a :class:`MText` element, which is a multiline text element with automatic text wrapping at boundaries.
    The `char_height` is the initial character height in drawing units, `width` is the width of the text boundary
-   in drawing units. (requires DXF version AC1012 or newer)
+   in drawing units. (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_shape(name, insert=(0, 0, 0), size=1.0, dxfattribs=None)
 
@@ -130,44 +130,51 @@ Create new entities
 .. method:: Layout.add_ray(start, unit_vector, dxfattribs=None)
 
    Add a :class:`Ray` that starts at a point and continues to infinity (construction line).
-   (requires DXF version AC1012 or newer)
+   (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_xline(start, unit_vector, dxfattribs=None)
 
    Add an infinity :class:`XLine` (construction line).
-   (requires DXF version AC1012 or newer)
+   (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_spline(fit_points=None, dxfattribs=None)
 
    Add a :class:`Spline`, `fit_points` has to be a list (container or generator) of (x, y, z) tuples.
-   (requires DXF version AC1012 or newer)
+   (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_body(acis_data="", dxfattribs=None)
 
    Add a :class:`Body` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
-   endings. (requires DXF version AC1012 or newer)
+   endings. (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_region(acis_data="", dxfattribs=None)
 
    Add a :class:`Region` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
-   endings. (requires DXF version AC1012 or newer)
+   endings. (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_3dsolid(acis_data="", dxfattribs=None)
 
    Add a :class:`3DSolid` entity, `acis_data` has to be a list (container or generator) of text lines **without** line
-   endings. (requires DXF version AC1012 or newer)
+   endings. (requires DXF version AC1015 or newer)
 
 .. method:: Layout.add_hatch(color=7, dxfattribs=None)
 
    Add a :class:`Hatch` entity, *color* as ACI (AutoCAD Color Index), default is 7 (black/white).
-   (requires DXF version AC1012 or newer)
+   (requires DXF version AC1015 or newer)
 
-.. method:: Layout.add_image(insert, size_in_units, image_def, rotation=0, dxfattribs=None)
+.. method:: Layout.add_image(image_def, insert, size_in_units, rotation=0, dxfattribs=None)
 
    Add an :class:`Image` entity, *insert* is the insertion point as (x, y [,z]) tuple, *size_in_units* is the image
    size as (x, y) tuple in drawing units, *image_def* is the required :class:`ImageDef`, *rotation* is the rotation
    angle around the z-axis in degrees. Create :class:`ImageDef` by the :class:`Drawing` factory function
-   :meth:`~Drawing.add_image_def`, see :ref:`tut_image`. (requires DXF version AC1012 or newer)
+   :meth:`~Drawing.add_image_def`, see :ref:`tut_image`. (requires DXF version AC1015 or newer)
+
+.. method:: Layout.add_underlay(underlay_def, insert=(0, 0, 0), scale=(1, 1, 1), rotation=0, dxfattribs=None)
+
+   Add an :class:`Underlay` entity, *insert* is the insertion point as (x, y [,z]) tuple, *scale* is the underlay
+   scaling factor as (x, y, z) tuple, *underlay_def* is the required :class:`UnderlayDefinition`, *rotation* is the
+   rotation angle around the z-axis in degrees. Create :class:`UnderlayDef` by the :class:`Drawing` factory function
+   :meth:`~Drawing.add_underlay_def`, see :ref:`tut_underlay`. (requires DXF version AC1015 or newer)
 
 Delete entities
 ---------------

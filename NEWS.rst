@@ -4,10 +4,12 @@ News
 
 Version 0.7.5 - 2016-..
 
+  * NEW: Drawing.acad_release property - AutoCAD release number for the drawing DXF version like 'R12' or 'R2000'
+  * NEW: support for PDFUNDERLAY, DWFUNDERLAY and DGNUNDERLAY entities
   * BUGFIX: fixed broken layout setup in repair routine
   * BUGFIX: support for utf-8 encoding on saving, DXF R2007 and newer is saved with UTF-8 encoding
-  * CHANGE: Drawing.add_image_def(filename, size_in_pixel, key=None), key=None for auto-generated internal image key (name)
-  * NEW: Drawing.acad_release property - AutoCAD release number for the drawing DXF version like 'R12' or 'R2000'
+  * CHANGE: Drawing.add_image_def(filename, size_in_pixel, name=None), renamed key to name and set name=None for auto-generated internal image name
+  * CHANGE: argument order of Layout.add_image(image_def, insert, size_in_units, rotation=0., dxfattribs=None)
 
 Version 0.7.4 - 2016-03-13
 

@@ -20,11 +20,14 @@ from .hatch import Hatch
 from .viewport import Viewport
 from .image import Image
 from .image import ImageDef, ImageDefReactor
+from .underlay import PdfDefinition, PdfUnderlay
+from .underlay import DwfDefinition, DwfUnderlay
+from .underlay import DgnDefinition, DgnUnderlay
 
 from . import dxfobjects
 from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
-from ..tools.handle import ImageKeyGenerator
+from ..tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 
 UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects
@@ -38,6 +41,9 @@ UPDATE_ENTITY_WRAPPERS = {
     'ACDBPLACEHOLDER': dxfobjects.ACDBPlaceHolder,
     'IMAGEDEF': ImageDef,
     'IMAGEDEF_REACTOR': ImageDefReactor,
+    'PDFDEFINITION': PdfDefinition,
+    'DWFDEFINITION': DwfDefinition,
+    'DGNDEFINITION': DgnDefinition,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -79,6 +85,9 @@ UPDATE_ENTITY_WRAPPERS = {
     'HATCH': Hatch,
     'VIEWPORT': Viewport,
     'IMAGE': Image,
+    'PDFUNDERLAY': PdfUnderlay,
+    'DWFUNDERLAY': DwfUnderlay,
+    'DGNUNDERLAY': DgnUnderlay,
 }
 
 
@@ -93,6 +102,7 @@ class ModernDXFFactory(LegacyDXFFactory):
         super(ModernDXFFactory, self).__init__(drawing)
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
         self.image_key_generator = ImageKeyGenerator()
+        self.underlay_key_generator = UnderlayKeyGenerator()
 
     @property
     def rootdict(self):
@@ -127,5 +137,11 @@ class ModernDXFFactory(LegacyDXFFactory):
     def next_image_key(self, checkfunc=lambda k: True):
         while True:
             key = self.image_key_generator.next()
+            if checkfunc(key):
+                return key
+
+    def next_underlay_key(self, checkfunc=lambda k: True):
+        while True:
+            key = self.underlay_key_generator.next()
             if checkfunc(key):
                 return key
