@@ -24,3 +24,8 @@ class HandleGenerator(object):
 class ImageKeyGenerator(HandleGenerator):
     def __str__(self):
         return "Image%05d" % self._handle
+
+
+class UnderlayKeyGenerator(HandleGenerator):
+    def __str__(self):
+        return "Underlay%05d" % self._handle

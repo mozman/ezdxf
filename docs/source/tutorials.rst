@@ -17,4 +17,5 @@ Tutorials
    tutorials/hatch
    tutorials/hatch_pattern
    tutorials/image
+   tutorials/underlay
 

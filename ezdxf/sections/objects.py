@@ -66,25 +66,45 @@ class ObjectsSection(ClassesSection):
             'default': default,
         })
 
-    def add_image_def(self, filename, size_in_pixel, key=None):
+    def add_image_def(self, filename, size_in_pixel, name=None):
         image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
 
         # auto-generated image key
-        if key is None:
-            key = self.dxffactory.next_image_key(lambda k: k not in image_dict)
+        if name is None:
+            name = self.dxffactory.next_image_key(lambda k: k not in image_dict)
 
         image_def = self.create_new_dxf_entity('IMAGEDEF', dxfattribs={
             'owner': image_dict.dxf.handle,
             'filename': filename,
             'image_size': size_in_pixel,
         })
-        image_dict[key] = image_def.dxf.handle
+        image_dict[name] = image_def.dxf.handle
         return image_def
 
-    def add_placeholder(self, owner='0'):
-        return self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={
-            'owner': owner
+    def add_underlay_def(self, filename, format='pdf', name=None):
+        fmt = format.upper()
+        if fmt in ('PDF', 'DWF', 'DGN'):
+            underlay_dict_name = 'ACAD_{}DEFINITIONS'.format(fmt)
+            underlay_def_entity = "{}DEFINITION".format(fmt)
+        else:
+            raise ValueError("Unsupported file format: '{}'".format(fmt))
+        underlay_dict = self.rootdict.get_required_dict(underlay_dict_name)
+        # auto-generated underlay key
+        if name is None:
+            name = self.dxffactory.next_underlay_key(lambda k: k not in underlay_dict)
+
+        underlay_def = self.create_new_dxf_entity(underlay_def_entity, dxfattribs={
+            'owner': underlay_dict.dxf.handle,
+            'filename': filename,
+            'name': name,
         })
+        underlay_dict[name] = underlay_def.dxf.handle
+        return underlay_def
+
+    def add_placeholder(self, owner='0'):
+            return self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={
+                'owner': owner
+            })
 
 
 _OBJECT_TABLE_NAMES = [

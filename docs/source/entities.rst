@@ -1262,6 +1262,109 @@ loaded                  R13     Default = 1
 resolution_units        R13     Resolution units. 0 = No units; 2 = Centimeters; 5 = Inch, default is 0
 ======================= ======= ===========
 
+
+Underlay
+========
+
+.. class:: Underlay(GraphicEntity)
+
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``PDFUNDERLAY``, ``DWFUNDERLAY`` or ``DGNUNDERLAY``.
+
+    Add a raster image to the DXF file, the file itself is not embedded into the DXF file, it is alwas a separated file.
+    The IMAGE entity is like a block reference, you can use it multiple times to add the image on different location
+    with differnt scalings and rotations. But therefore you need a also a IMAGEDEF entity, see :class:`ImageDef`.
+    Create :class:`Image` in layouts and blocks by factory function :meth:`~Layout.add_image`. ezdxf creates only
+    images in the XY-plan. You can place images in the 3D space too, but then you have to set the *u_pixel* and
+    the *v_pixel* vectors by yourself.
+
+    Clipping coordinates are 2D OCS/ECS coordinates and in drawing units but without scaling.
+
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+insert                  R13     Insertion point, lower left corner of the image
+scale_x                 R13     scaling factor in x dircetion (float)
+scale_y                 R13     scaling factor in y dircetion (float)
+scale_z                 R13     scaling factor in z dircetion (float)
+rotation                R13     ccw rotation in degrees around the extrusion vector (float)
+extrusion               R13     extrusion vector (default=0, 0, 1)
+underlay_def            R13     Handle to the underlay definition entity, see :class:`UnderlayDefinition`
+flags                   R13     see table below
+contrast                R13     Contrast value (20-100; default = 100)
+fade                    R13     Fade value (0-80; default = 0)
+======================= ======= ===========
+
+
+============================== ======= ===========
+Underlay.dxf.flags             Value   Description
+============================== ======= ===========
+UNDERLAY_CLIPPING              1       clipping is on/off
+UNDERLAY_ON                    2       underlay is on/off
+UNDERLAY_MONOCHROME            4       Monochrome
+UNDERLAY_ADJUST_FOR_BACKGROUND 8       Adjust for background
+============================== ======= ===========
+
+.. attribute:: Underlay.clipping
+
+   True or False (read/write)
+
+.. attribute:: Underlay.on
+
+   True or False (read/write)
+
+.. attribute:: Underlay.monochrome
+
+   True or False (read/write)
+
+.. attribute:: Underlay.adjust_for_background
+
+   True or False (read/write)
+
+.. attribute:: Underlay.scale
+
+   Scaling (x, y, z) tuple (read/write)
+
+
+.. method:: Underlay.get_boundary()
+
+    Returns a list of vertices as pixel coordinates, just two values represent the lower left and the upper right
+    corners of the clipping rectangle, more vertices describe a clipping polygon.
+
+.. method:: Underlay.reset_boundary()
+
+    Removes the clipping path.
+
+.. method:: Underlay.set_boundary(vertices)
+
+    Set boundary path to vertices. 2 points describe a rectangle (lower left and upper right corner), more than 2 points
+    is a polygon as clipping path. Sets clipping state to 1.
+
+.. method:: Underlay.get_underlay_def()
+
+    returns the associated UNDERLAYDEFINITION entity. see :class:`UnderlayDefinition`.
+
+
+UnderlayDefinition
+==================
+
+.. class:: UnderlayDefinition(GraphicEntity)
+
+    Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ``PDFDEFINITION``, ``DWFDEFINITION`` and
+    ``DGNDEFINITION``.
+
+    :class:`UnderlayDefinition` defines an underlay, which can be placed by the :class:`Underlay` entity. Create
+    :class:`UnderlayDefinition` by the :class:`Drawing` factory function :meth:`~Drawing.add_underlay_def`.
+
+
+======================= ======= ===========
+DXFAttr                 Version Description
+======================= ======= ===========
+filename                R13     Relative (to the DXF file) or absolute path to the image file as string
+name                    R13     internal underlay name
+======================= ======= ===========
+
+
 Mesh
 ====
 

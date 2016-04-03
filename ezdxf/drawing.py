@@ -208,8 +208,28 @@ class Drawing(object):
         """
         return self.dxffactory.wrap_handle(handle)
 
-    def add_image_def(self, filename, size_in_pixel, key='auto'):
-        return self.objects.add_image_def(filename, size_in_pixel, key)
+    def add_image_def(self, filename, size_in_pixel, name='auto'):
+        """ Add an image definition to the objects section.
+
+        :param filename: image file name
+        :param size_in_pixel: image size in pixel as (x, y) tuple
+        :param name: image name for internal use, None for an auto-generated name
+        """
+        if self.dxfversion < 'AC1015':
+            raise DXFVersionError('The IMAGE entity needs at least DXF version AC1015 (R2000) or later.')
+        return self.objects.add_image_def(filename, size_in_pixel, name)
+
+    def add_underlay_def(self, filename, format='ext', name='auto'):
+        """ Add an underlay definition to the objects section.
+
+        :param format: file format as string pdf|dwf|dgn or ext=get format from filename extension
+        :param name: underlay name, None for an auto-generated name
+        """
+        if self.dxfversion < 'AC1015':
+            raise DXFVersionError('The UNDERLAY entity needs at least DXF version AC1015 (R2000) or later.')
+        if format == 'ext':
+            format=filename[-3:]
+        return self.objects.add_underlay_def(filename, format, name)
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')

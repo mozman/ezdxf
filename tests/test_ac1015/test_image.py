@@ -98,7 +98,7 @@ class TestCreateNewImage(unittest.TestCase):
     def test_new_image(self):
         msp = self.dwg.modelspace()
         image_def = self.dwg.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
-        image = msp.add_image(insert=(0, 0), size_in_units=(3.2, 1.8), image_def=image_def)
+        image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
         self.assertEqual((0, 0, 0), image.dxf.insert)
         self.assertEqual((0.005, 0, 0), image.dxf.u_pixel)
         self.assertEqual((0., 0.005, 0), image.dxf.v_pixel)
