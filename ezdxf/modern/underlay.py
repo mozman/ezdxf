@@ -133,7 +133,7 @@ class PdfUnderlay(ModernGraphicEntity):
 
     def _set_path_tags(self, vertices):
         boundary = [DXFTag(11, value) for value in vertices]
-        subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 11)
+        subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 11)  # filter out existing path tags
         subclasstags.extend(boundary)
         self.tags.subclasses[2] = subclasstags
 
@@ -143,7 +143,7 @@ class PdfUnderlay(ModernGraphicEntity):
 
     def get_boundary_path(self):
         underlay_subclass = self.tags.subclasses[2]
-        return [tag.value for tag in underlay_subclass if tag.code == 11]
+        return [tag.value for tag in underlay_subclass if tag.code == 11]  # fetch path tags
 
     def get_underlay_def(self):
         return self.dxffactory.wrap_handle(self.dxf.underlay_def)
@@ -168,17 +168,17 @@ AcDbUnderlayDefinition
   1
 noname.pdf
   2
-noname
+1
 """
 
 underlay_def_subclass = DefSubclass('AcDbUnderlayDefinition', {
     'filename': DXFAttr(1),  # File name of underlay
-    'name': DXFAttr(2),  # underlay name - pdf=page nmber to display; dgn=default; dwf=????
+    'name': DXFAttr(2),  # underlay name - pdf=page number to display; dgn=default; dwf=????
 })
 
 
 # (PDF|DWF|DGN)DEFINITION - requires entry in objects table ACAD_(PDF|DWF|DGN)DEFINITIONS,
-# ACAD_(PDF|DWF|DGN)DEFINITIONS exists not by default
+# ACAD_(PDF|DWF|DGN)DEFINITIONS do not exist by default
 class PdfDefinition(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_PDF_DEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, underlay_def_subclass)
