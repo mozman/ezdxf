@@ -1435,6 +1435,38 @@ ObjectDBX Classes
 281
      1
   0
+CLASS
+  1
+DWFDEFINITION
+  2
+AcDbDwfDefinition
+  3
+ObjectDBX Classes
+ 90
+     1153
+ 91
+        2
+280
+     0
+281
+     0
+  0
+CLASS
+  1
+DWFUNDERLAY
+  2
+AcDbDwfReference
+  3
+ObjectDBX Classes
+ 90
+     1153
+ 91
+        1
+280
+     0
+281
+     1
+  0
 ENDSEC
   0
 SECTION

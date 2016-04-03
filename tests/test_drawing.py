@@ -28,6 +28,12 @@ class TestNewDrawingAC1009(unittest.TestCase):
     def setUp(self):
         self.dwg = DWG12
 
+    def test_dxfversion(self):
+        self.assertEqual('AC1009', self.dwg.dxfversion)
+
+    def test_acad_release(self):
+        self.assertEqual('R12', self.dwg.acad_release)
+
     def test_get_layer(self):
         layer = self.dwg.layers.get('0')
         self.assertEqual('0', layer.dxf.name)
@@ -66,6 +72,12 @@ DWG2000 = Drawing.new('AC1015')
 class TestNewDrawingAC1015(TestNewDrawingAC1009):
     def setUp(self):
         self.dwg = DWG2000
+
+    def test_dxfversion(self):
+        self.assertEqual('AC1015', self.dwg.dxfversion)
+
+    def test_acad_release(self):
+        self.assertEqual('R2000', self.dwg.acad_release)
 
 
 class TestIsDXFFile(unittest.TestCase):

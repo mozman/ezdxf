@@ -66,11 +66,12 @@ class ObjectsSection(ClassesSection):
             'default': default,
         })
 
-    def add_image_def(self, filename, size_in_pixel):
+    def add_image_def(self, filename, size_in_pixel, key=None):
         image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
 
         # auto-generated image key
-        key = self.dxffactory.next_image_key(lambda k: k not in image_dict)
+        if key is None:
+            key = self.dxffactory.next_image_key(lambda k: k not in image_dict)
 
         image_def = self.create_new_dxf_entity('IMAGEDEF', dxfattribs={
             'owner': image_dict.dxf.handle,
