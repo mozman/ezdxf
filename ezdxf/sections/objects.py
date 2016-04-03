@@ -88,17 +88,25 @@ class ObjectsSection(ClassesSection):
             underlay_def_entity = "{}DEFINITION".format(fmt)
         else:
             raise ValueError("Unsupported file format: '{}'".format(fmt))
-        underlay_dict = self.rootdict.get_required_dict(underlay_dict_name)
-        # auto-generated underlay key
-        if name is None:
-            name = self.dxffactory.next_underlay_key(lambda k: k not in underlay_dict)
 
+        if name is None:
+            if fmt == 'PDF':
+                name = '1'  # Display first page by default
+            elif fmt == 'DGN':
+                name = 'default'
+            else:
+                name = 'Model'  # Display model space for DWF ???
+
+        underlay_dict = self.rootdict.get_required_dict(underlay_dict_name)
         underlay_def = self.create_new_dxf_entity(underlay_def_entity, dxfattribs={
             'owner': underlay_dict.dxf.handle,
             'filename': filename,
             'name': name,
         })
-        underlay_dict[name] = underlay_def.dxf.handle
+
+        # auto-generated underlay key
+        key = self.dxffactory.next_underlay_key(lambda k: k not in underlay_dict)
+        underlay_dict[key] = underlay_def.dxf.handle
         return underlay_def
 
     def add_placeholder(self, owner='0'):

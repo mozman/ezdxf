@@ -219,7 +219,7 @@ class Drawing(object):
             raise DXFVersionError('The IMAGE entity needs at least DXF version AC1015 (R2000) or later.')
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
-    def add_underlay_def(self, filename, format='ext', name='auto'):
+    def add_underlay_def(self, filename, format='ext', name=None):
         """ Add an underlay definition to the objects section.
 
         :param format: file format as string pdf|dwf|dgn or ext=get format from filename extension

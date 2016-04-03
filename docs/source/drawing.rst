@@ -181,12 +181,11 @@ Drawing Methods
 
     Add an :class:`UnderlayDef` entity to the drawing (objects section). `filename` is the underlay file name as
     relative or absolute path and format as string (pdf, dwf, dgn). Returns a :class:`UnderlayDef` entity which is
-    needed to create an underlay reference, see :ref:`tut_underlay`. `name` is the internal underlay name, if set to
-    None, name is auto-generated.
+    needed to create an underlay reference, see :ref:`tut_underlay`. `name` defines the page/sheet to display.
 
     :param filename: underlay file name
     :param format: file format (pdf, dwf or dgn) or ext=get format from filename extension
-    :param name: underlay name for internal use, None for an auto-generated name
+    :param name: pdf: page number to display; dgn: 'default'; dwf: ????
 
 .. method:: Drawing.save(encoding='auto')
 
