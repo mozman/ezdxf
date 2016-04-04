@@ -6,7 +6,6 @@ dwf_underlay_def = dwg.add_underlay_def(filename='underlay.dwf', name="Underlay_
 dgn_underlay_def = dwg.add_underlay_def(filename='underlay.dgn', name='default')  # name = 'default' just works
 
 # The (PDF)DEFINITION entity is like a block definition, it just defines the underlay
-dwg.header['$MEASUREMENT'] = 1
 msp = dwg.modelspace()
 # add first underlay
 msp.add_underlay(pdf_underlay_def, insert=(0, 0, 0), scale=1.)
