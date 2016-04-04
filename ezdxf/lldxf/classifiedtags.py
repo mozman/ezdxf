@@ -65,8 +65,8 @@ class ClassifiedTags(object):
                 while True:
                     tag = next(tagstream)
                     if isappdata(tag):
-                        appdatapos = len(self.appdata)
-                        data.append(DXFTag(tag.code, appdatapos))
+                        app_data_pos = len(self.appdata)
+                        data.append(DXFTag(tag.code, app_data_pos))
                         collect_appdata(tag)
                     elif tag.code in (SUBCLASS_MARKER, XDATA_MARKER):
                         self.subclasses.append(data)
@@ -145,11 +145,53 @@ class ClassifiedTags(object):
                 return xdata
         raise ValueError("No extended data for APPID '%s'" % appid)
 
+    def append_xdata(self, appid, tags=None):
+        """Append a new xdata block.
+
+        Assumes that no xdata block with the same appid already exists::
+
+            try:
+                xdata = tags.get_xdata('EZDXF')
+            except ValueError:
+                xdata = tags.append_xdata('EZDXF')
+        """
+        xtags = Tags([DXFTag(XDATA_MARKER, appid)])
+        if tags is not None:
+            xtags.extend(tags)
+        self.xdata.append(xtags)
+        return xtags
+
     def get_appdata(self, name):
         for appdata in self.appdata:
             if appdata[0].value == name:
                 return appdata
         raise ValueError("Application defined group '%s' does not exist." % name)
+
+    def append_appdata(self, appid, tags=None, subclass_name=None):
+        """Append a new app data block to subclass *subclass_name*.
+
+        Assumes that no app data block with the same appid already exists::
+
+            try:
+                appdata = tags.get_appdata('{ACAD_REACTORS')
+            except ValueError:
+                appdata = tags.append_appdata('{ACAD_REACTORS')
+        """
+        app_tags = Tags([
+            DXFTag(APP_DATA_MARKER, appid),
+            DXFTag(APP_DATA_MARKER, '}'),
+        ])
+        if tags is not None:
+            app_tags[1:1] = tags
+
+        if subclass_name is None:
+            subclass = self.noclass
+        else:
+            subclass = self.get_subclass(subclass_name, 1)  # raises KeyError, if not exists
+        app_data_pos = len(self.appdata)
+        subclass.append(DXFTag(APP_DATA_MARKER, app_data_pos))
+        self.appdata.append(app_tags)
+        return app_tags
 
     def write(self, stream):
         write_tags(stream, self)
@@ -163,6 +205,7 @@ class ClassifiedTags(object):
     @classmethod
     def from_text(cls, text):
         return cls(StringIterator(text))
+
 
 LINKED_ENTITIES = {
     'INSERT': 'ATTRIB',
