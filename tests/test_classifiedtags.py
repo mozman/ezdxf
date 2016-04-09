@@ -19,7 +19,7 @@ class TestClassifiedTags(unittest.TestCase):
         self.xtags = ClassifiedTags.from_text(XTAGS1)
 
     def test_init_appdata(self):
-        self.assertIsNotNone(self.xtags.get_appdata('{ACAD_XDICTIONARY'))
+        self.assertIsNotNone(self.xtags.get_app_data('{ACAD_XDICTIONARY'))
 
     def test_init_with_tags(self):
         tags = Tags.from_text(XTAGS1)
@@ -31,11 +31,11 @@ class TestClassifiedTags(unittest.TestCase):
         self.assertIsNotNone(self.xtags.get_xdata('RAK'))
 
     def test_appdata_content_count(self):
-        xdict = self.xtags.get_appdata('{ACAD_XDICTIONARY')
+        xdict = self.xtags.get_app_data('{ACAD_XDICTIONARY')
         self.assertEqual(3, len(xdict))
 
     def test_appdata_content(self):
-        xdict = self.xtags.get_appdata('{ACAD_XDICTIONARY')
+        xdict = self.xtags.get_app_data('{ACAD_XDICTIONARY')
         self.assertEqual(xdict.get_value(360), "63D5")
 
     def test_tags_skips_appdata_content(self):
@@ -299,25 +299,25 @@ class TestAppData(unittest.TestCase):
 
     def test_get_not_existing_reactor(self):
         with self.assertRaises(ValueError):
-            self.tags.get_appdata(ACAD_REACTORS)
+            self.tags.get_app_data(ACAD_REACTORS)
 
     def test_new_reactors(self):
-        self.tags.new_appdata(ACAD_REACTORS)
+        self.tags.new_app_data(ACAD_REACTORS)
         self.assertEqual((102, 0), self.tags.noclass[-1])  # code = 102, value = index in appdata list
 
     def test_append_not_existing_reactors(self):
-        self.tags.new_appdata(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
-        reactors = self.tags.get_appdata_content(ACAD_REACTORS)
+        self.tags.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+        reactors = self.tags.get_app_data_content(ACAD_REACTORS)
         self.assertEqual(1, len(reactors))
         self.assertEqual(DXFTag(330, 'DEAD'), reactors[0])
 
     def test_append_to_existing_reactors(self):
-        self.tags.new_appdata(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
-        reactors = self.tags.get_appdata_content(ACAD_REACTORS)
+        self.tags.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+        reactors = self.tags.get_app_data_content(ACAD_REACTORS)
         reactors.append(DXFTag(330, 'DEAD2'))
-        self.tags.set_appdata_content(ACAD_REACTORS, reactors)
+        self.tags.set_app_data_content(ACAD_REACTORS, reactors)
 
-        reactors = self.tags.get_appdata_content(ACAD_REACTORS)
+        reactors = self.tags.get_app_data_content(ACAD_REACTORS)
         self.assertEqual(DXFTag(330, 'DEAD'), reactors[0])
         self.assertEqual(DXFTag(330, 'DEAD2'), reactors[1])
 

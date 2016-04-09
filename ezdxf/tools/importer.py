@@ -246,9 +246,9 @@ def _cleanup_block_record(block_record):
         for tag in del_tags:
             tags.remove(tag)
 
-    if hasattr(block_record.tags, 'get_appdata'):
+    if hasattr(block_record.tags, 'get_app_data'):
         try:  # BLKREFS are invalid handles to INSERT entities in the source drawing
-            block_refs = block_record.tags.get_appdata("{BLKREFS")
+            block_refs = block_record.tags.get_app_data("{BLKREFS")
         except ValueError:  # has no block references
             pass
         else:
