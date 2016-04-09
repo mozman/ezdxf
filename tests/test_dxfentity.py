@@ -272,7 +272,7 @@ AcDbLine
 """
 
 
-class TextAppData(unittest.TestCase):
+class TestAppData(unittest.TestCase):
     def setUp(self):
         self.entity = DXFEntity(ClassifiedTags.from_text(LINE_DATA))
 
@@ -304,6 +304,41 @@ class TextAppData(unittest.TestCase):
     def test_not_existing_appid(self):
         with self.assertRaises(ValueError):
             self.entity.get_app_data("XYZ")
+
+
+class TestXData(unittest.TestCase):
+    def setUp(self):
+        self.entity = DXFEntity(ClassifiedTags.from_text(LINE_DATA))
+
+    def test_new_app_data(self):
+        self.assertFalse(self.entity.has_xdata('MOZMAN'))
+        self.entity.set_xdata('MOZMAN', xdata_tags=[DXFTag(1000, 'Extended Data String')])
+        self.assertTrue(self.entity.has_xdata('MOZMAN'))
+
+    def test_get_xdata(self):
+        self.entity.set_xdata('MOZMAN', xdata_tags=[DXFTag(1000, 'Extended Data String')])
+
+        xdata = self.entity.get_xdata('MOZMAN')
+        self.assertEqual(1, len(xdata))
+        self.assertEqual(DXFTag(1000, 'Extended Data String'), xdata[0])
+
+    def test_set_xdata(self):
+        self.entity.set_xdata('MOZMAN', xdata_tags=[DXFTag(1000, 'Extended Data String')])
+        xdata = self.entity.get_xdata('MOZMAN')
+        self.assertEqual(1, len(xdata))
+        self.assertEqual(DXFTag(1000, 'Extended Data String'), xdata[0])
+        xdata.append(DXFTag(1000, 'Extended Data String2'))
+        self.entity.set_xdata('MOZMAN', xdata)
+
+        xdata = self.entity.get_xdata('MOZMAN')
+        self.assertEqual(2, len(xdata))
+        self.assertEqual(DXFTag(1000, 'Extended Data String'), xdata[0])
+        self.assertEqual(DXFTag(1000, 'Extended Data String2'), xdata[1])
+
+    def test_not_existing_appid(self):
+        with self.assertRaises(ValueError):
+            self.entity.get_xdata("XYZ")
+
 
 if __name__ == '__main__':
     unittest.main()

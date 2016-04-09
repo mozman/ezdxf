@@ -246,7 +246,7 @@ class DXFEntity(object):
         return self.tags.has_app_data(appid)
 
     def get_app_data(self, appid):
-        return self.tags.get_app_data(appid)[1:-1]
+        return self.tags.get_app_data_content(appid)
 
     def set_app_data(self, appid, app_data_tags):
         tags = self.tags
@@ -255,3 +255,17 @@ class DXFEntity(object):
             appdata[1:-1] = app_data_tags
         else:
             tags.new_app_data(appid, app_data_tags)
+
+    def has_xdata(self, appid):
+        return self.tags.has_xdata(appid)
+
+    def get_xdata(self, appid):
+        return self.tags.get_xdata(appid)[1:]  # without app id tag
+
+    def set_xdata(self, appid, xdata_tags):
+        tags = self.tags
+        if tags.has_xdata(appid):
+            xdata = tags.get_xdata(appid)
+            xdata[1:] = xdata_tags
+        else:
+            tags.new_xdata(appid, xdata_tags)
