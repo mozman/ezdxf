@@ -175,44 +175,47 @@ class ClassifiedTags(object):
         self.xdata.append(xtags)
         return xtags
 
-    def appdata_index(self, appid):
+    def app_data_index(self, appid):
         for index, appdata in enumerate(self.appdata):
             if appdata[0].value == appid:
                 return index
         return None
 
-    def has_appdata(self, appid):
-        return self.appdata_index(appid) is not None
+    def has_app_data(self, appid):
+        return self.app_data_index(appid) is not None
 
-    def get_appdata(self, appid):
+    def get_app_data(self, appid):
         """Get app data including first and last marker tag."""
-        index = self.appdata_index(appid)
+        index = self.app_data_index(appid)
         if index is None:
             raise ValueError("Application defined group '%s' does not exist." % appid)
         else:
             return self.appdata[index]
 
-    def get_appdata_content(self, appid):
+    def get_app_data_content(self, appid):
         """Get app data without first and last marker tag."""
-        return self.get_appdata(appid)[1:-1]
+        return self.get_app_data(appid)[1:-1]
 
-    def set_appdata_content(self, appid, tags):
-        index = self.appdata_index(appid)
+    def set_app_data_content(self, appid, tags):
+        index = self.app_data_index(appid)
         if index is None:
             raise ValueError("Application defined group '%s' does not exist." % appid)
         else:
             self.appdata[index][1:-1] = tags
 
-    def new_appdata(self, appid, tags=None, subclass_name=None):
+    def new_app_data(self, appid, tags=None, subclass_name=None):
         """Append a new app data block to subclass *subclass_name*.
 
         Assumes that no app data block with the same appid already exists::
 
             try:
-                appdata = tags.get_appdata('{ACAD_REACTORS', tags)
+                app_data = tags.get_app_data('{ACAD_REACTORS', tags)
             except ValueError:
-                appdata = tags.new_appdata('{ACAD_REACTORS', tags)
+                app_data = tags.new_app_data('{ACAD_REACTORS', tags)
         """
+        if not appid.startswith('{'):
+            raise ValueError("App data id has to start with '{'.")
+
         app_tags = Tags([
             DXFTag(APP_DATA_MARKER, appid),
             DXFTag(APP_DATA_MARKER, '}'),
