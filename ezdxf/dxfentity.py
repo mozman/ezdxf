@@ -9,6 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .lldxf.types import cast_tag_value, DXFTag
 from .lldxf.const import DXFStructureError
 
+ACAD_REACTORS = '{ACAD_REACTORS'
 
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
@@ -249,12 +250,11 @@ class DXFEntity(object):
         return self.tags.get_app_data_content(appid)
 
     def set_app_data(self, appid, app_data_tags):
-        tags = self.tags
-        if tags.has_app_data(appid):
-            appdata = tags.get_app_data(appid)
+        if self.tags.has_app_data(appid):
+            appdata = self.tags.get_app_data(appid)
             appdata[1:-1] = app_data_tags
         else:
-            tags.new_app_data(appid, app_data_tags)
+            self.tags.new_app_data(appid, app_data_tags)
 
     def has_xdata(self, appid):
         return self.tags.has_xdata(appid)
@@ -263,9 +263,19 @@ class DXFEntity(object):
         return self.tags.get_xdata(appid)[1:]  # without app id tag
 
     def set_xdata(self, appid, xdata_tags):
-        tags = self.tags
-        if tags.has_xdata(appid):
-            xdata = tags.get_xdata(appid)
+        if self.tags.has_xdata(appid):
+            xdata = self.tags.get_xdata(appid)
             xdata[1:] = xdata_tags
         else:
-            tags.new_xdata(appid, xdata_tags)
+            self.tags.new_xdata(appid, xdata_tags)
+
+    def has_reactors(self):
+        return self.has_app_data(ACAD_REACTORS)
+
+    def get_reactors(self):
+        reactor_tags = self.get_app_data(ACAD_REACTORS)
+        return [tag.value for tag in reactor_tags]
+
+    def set_reactors(self, reactor_handles):
+        reactor_tags = [DXFTag(330, handle) for handle in reactor_handles]
+        self.set_app_data(ACAD_REACTORS, reactor_tags)
