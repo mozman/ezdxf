@@ -139,11 +139,21 @@ class ClassifiedTags(object):
             getpos += 1
         raise KeyError("Subclass '%s' does not exist." % name)
 
-    def get_xdata(self, appid):
-        for xdata in self.xdata:
+    def xdata_index(self, appid):
+        for index, xdata in enumerate(self.xdata):
             if xdata[0].value == appid:
-                return xdata
-        raise ValueError("No extended data for APPID '%s'" % appid)
+                return index
+        return None
+
+    def has_xdata(self, appid):
+        return self.xdata_index(appid) is not None
+
+    def get_xdata(self, appid):
+        index = self.xdata_index(appid)
+        if index is None:
+            raise ValueError("No extended data for APPID '%s'" % appid)
+        else:
+            return self.xdata[index]
 
     def set_xdata(self, appid, tags):
         xdata = self.get_xdata(appid)
@@ -165,23 +175,33 @@ class ClassifiedTags(object):
         self.xdata.append(xtags)
         return xtags
 
-    def get_appdata(self, name):
+    def appdata_index(self, appid):
+        for index, appdata in enumerate(self.appdata):
+            if appdata[0].value == appid:
+                return index
+        return None
+
+    def has_appdata(self, appid):
+        return self.appdata_index(appid) is not None
+
+    def get_appdata(self, appid):
         """Get app data including first and last marker tag."""
-        for appdata in self.appdata:
-            if appdata[0].value == name:
-                return appdata
-        raise ValueError("Application defined group '%s' does not exist." % name)
+        index = self.appdata_index(appid)
+        if index is None:
+            raise ValueError("Application defined group '%s' does not exist." % appid)
+        else:
+            return self.appdata[index]
 
-    def get_appdata_content(self, name):
+    def get_appdata_content(self, appid):
         """Get app data without first and last marker tag."""
-        return self.get_appdata(name)[1:-1]
+        return self.get_appdata(appid)[1:-1]
 
-    def set_appdata_content(self, name, tags):
-        for appdata in self.appdata:
-            if appdata[0].value == name:
-                appdata[1:-1] = tags
-                return
-        raise ValueError("Application defined group '%s' does not exist." % name)
+    def set_appdata_content(self, appid, tags):
+        index = self.appdata_index(appid)
+        if index is None:
+            raise ValueError("Application defined group '%s' does not exist." % appid)
+        else:
+            self.appdata[index][1:-1] = tags
 
     def new_appdata(self, appid, tags=None, subclass_name=None):
         """Append a new app data block to subclass *subclass_name*.
