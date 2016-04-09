@@ -340,5 +340,19 @@ class TestXData(unittest.TestCase):
             self.entity.get_xdata("XYZ")
 
 
+class TestReactors(unittest.TestCase):
+    def setUp(self):
+        self.entity = DXFEntity(ClassifiedTags.from_text(LINE_DATA))
+
+    def test_has_no_reactors(self):
+        self.assertFalse(self.entity.has_reactors())
+
+    def test_set_reactors(self):
+        self.entity.set_reactors(['A000', 'B000', 'C000'])
+        self.assertTrue(self.entity.has_reactors())
+        handles = self.entity.get_reactors()
+        self.assertEqual(['A000', 'B000', 'C000'], handles)
+
+        
 if __name__ == '__main__':
     unittest.main()
