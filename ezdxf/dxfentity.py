@@ -241,3 +241,17 @@ class DXFEntity(object):
 
     def destroy(self):
         pass
+
+    def has_app_data(self, appid):
+        return self.tags.has_appdata(appid)
+
+    def get_app_data(self, appid):
+        return self.tags.get_appdata(appid)[1:-1]
+
+    def set_app_data(self, appid, app_data_tags):
+        tags = self.tags
+        if tags.has_appdata(appid):
+            appdata = tags.get_appdata(appid)
+            appdata[1:-1] = app_data_tags
+        else:
+            tags.new_appdata(appid, app_data_tags)
