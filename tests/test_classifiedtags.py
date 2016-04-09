@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.classifiedtags import ClassifiedTags
 
 
@@ -237,6 +237,7 @@ class Test2xSubclass(unittest.TestCase):
         subclass2 = self.tags.get_subclass('AcDbText')
         self.assertEqual((100, 'AcDbText'), subclass2[0])
 
+
 SPECIALCASE_TEXT = """  0
 TEXT
   5
@@ -250,9 +251,9 @@ AcDbEntity
 100
 AcDbText
  10
-4.304757059922736
+4.30
  20
-1.824977382542784
+1.82
  30
 0.0
  40
@@ -267,6 +268,65 @@ ARIALNARROW
 AcDbText
  73
 2
+"""
+
+ACAD_REACTORS = '{ACAD_REACTORS'
+
+
+class TestAppData(unittest.TestCase):
+    def setUp(self):
+        self.tags = ClassifiedTags.from_text(NO_REACTORS)
+
+    def test_get_not_existing_reactor(self):
+        with self.assertRaises(ValueError):
+            self.tags.get_appdata(ACAD_REACTORS)
+
+    def test_new_reactors(self):
+        self.tags.new_appdata(ACAD_REACTORS)
+        self.assertEqual((102, 0), self.tags.noclass[-1])  # code = 102, value = index in appdata list
+
+    def test_append_not_existing_reactors(self):
+        self.tags.new_appdata(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+        reactors = self.tags.get_appdata_content(ACAD_REACTORS)
+        self.assertEqual(1, len(reactors))
+        self.assertEqual(DXFTag(330, 'DEAD'), reactors[0])
+
+    def test_append_to_existing_reactors(self):
+        self.tags.new_appdata(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+        reactors = self.tags.get_appdata_content(ACAD_REACTORS)
+        reactors.append(DXFTag(330, 'DEAD2'))
+        self.tags.set_appdata_content(ACAD_REACTORS, reactors)
+
+        reactors = self.tags.get_appdata_content(ACAD_REACTORS)
+        self.assertEqual(DXFTag(330, 'DEAD'), reactors[0])
+        self.assertEqual(DXFTag(330, 'DEAD2'), reactors[1])
+
+NO_REACTORS = """  0
+TEXT
+  5
+8C9
+330
+6D
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+4.30
+ 20
+1.82
+ 30
+0.0
+ 40
+0.125
+  1
+Title:
+ 41
+0.85
+  7
+ARIALNARROW
 """
 
 if __name__ == '__main__':

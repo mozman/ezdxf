@@ -145,7 +145,11 @@ class ClassifiedTags(object):
                 return xdata
         raise ValueError("No extended data for APPID '%s'" % appid)
 
-    def append_xdata(self, appid, tags=None):
+    def set_xdata(self, appid, tags):
+        xdata = self.get_xdata(appid)
+        xdata[1:] = tags
+
+    def new_xdata(self, appid, tags=None):
         """Append a new xdata block.
 
         Assumes that no xdata block with the same appid already exists::
@@ -153,7 +157,7 @@ class ClassifiedTags(object):
             try:
                 xdata = tags.get_xdata('EZDXF')
             except ValueError:
-                xdata = tags.append_xdata('EZDXF')
+                xdata = tags.new_xdata('EZDXF')
         """
         xtags = Tags([DXFTag(XDATA_MARKER, appid)])
         if tags is not None:
@@ -162,20 +166,32 @@ class ClassifiedTags(object):
         return xtags
 
     def get_appdata(self, name):
+        """Get app data including first and last marker tag."""
         for appdata in self.appdata:
             if appdata[0].value == name:
                 return appdata
         raise ValueError("Application defined group '%s' does not exist." % name)
 
-    def append_appdata(self, appid, tags=None, subclass_name=None):
+    def get_appdata_content(self, name):
+        """Get app data without first and last marker tag."""
+        return self.get_appdata(name)[1:-1]
+
+    def set_appdata_content(self, name, tags):
+        for appdata in self.appdata:
+            if appdata[0].value == name:
+                appdata[1:-1] = tags
+                return
+        raise ValueError("Application defined group '%s' does not exist." % name)
+
+    def new_appdata(self, appid, tags=None, subclass_name=None):
         """Append a new app data block to subclass *subclass_name*.
 
         Assumes that no app data block with the same appid already exists::
 
             try:
-                appdata = tags.get_appdata('{ACAD_REACTORS')
+                appdata = tags.get_appdata('{ACAD_REACTORS', tags)
             except ValueError:
-                appdata = tags.append_appdata('{ACAD_REACTORS')
+                appdata = tags.new_appdata('{ACAD_REACTORS', tags)
         """
         app_tags = Tags([
             DXFTag(APP_DATA_MARKER, appid),
