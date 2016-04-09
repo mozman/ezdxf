@@ -51,7 +51,7 @@ class TagIterator(object):
                 code = int(self.readline())
                 value = self.readline().rstrip('\n')
             except (EOFError, ValueError):
-                raise StopIteration()
+                raise StopIteration
             return code, value
 
         def read_point(code_x, value_x):
@@ -97,7 +97,7 @@ class TagIterator(object):
             return self.last_tag
 
         if self.eof:  # stored end of file
-            raise StopIteration()
+            raise StopIteration
 
         if self.undo:
             return undo_tag()
