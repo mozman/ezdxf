@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.tools.test import ClassifiedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass, DrawingProxy
-from ezdxf.dxfentity import DXFEntity
+from ezdxf.dxfentity import DXFEntity, DXFTag
 
 DWG = DrawingProxy('AC1009')
 
@@ -245,6 +245,65 @@ class TestFlexPoint(unittest.TestCase):
         with self.assertRaises(ValueError):
             point.dxf.flex = (3., )
 
+LINE_DATA = """  0
+LINE
+  5
+0
+330
+0
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+1.0
+ 31
+1.0
+"""
+
+
+class TextAppData(unittest.TestCase):
+    def setUp(self):
+        self.entity = DXFEntity(ClassifiedTags.from_text(LINE_DATA))
+
+    def test_new_app_data(self):
+        self.assertFalse(self.entity.has_app_data('{MOZMAN'))
+        self.entity.set_app_data('{MOZMAN', app_data_tags=[DXFTag(330, 'DEAD')])
+        self.assertTrue(self.entity.has_app_data('{MOZMAN'))
+
+    def test_get_app_data(self):
+        self.entity.set_app_data('{MOZMAN', app_data_tags=[DXFTag(330, 'DEAD')])
+
+        app_data = self.entity.get_app_data('{MOZMAN')
+        self.assertEqual(1, len(app_data))
+        self.assertEqual(DXFTag(330, 'DEAD'), app_data[0])
+
+    def test_set_app_data(self):
+        self.entity.set_app_data('{MOZMAN', app_data_tags=[DXFTag(330, 'DEAD')])
+        app_data = self.entity.get_app_data('{MOZMAN')
+        self.assertEqual(1, len(app_data))
+        self.assertEqual(DXFTag(330, 'DEAD'), app_data[0])
+        app_data.append(DXFTag(360, 'DEAD2'))
+        self.entity.set_app_data('{MOZMAN', app_data)
+
+        app_data = self.entity.get_app_data('{MOZMAN')
+        self.assertEqual(2, len(app_data))
+        self.assertEqual(DXFTag(330, 'DEAD'), app_data[0])
+        self.assertEqual(DXFTag(360, 'DEAD2'), app_data[1])
+
+    def test_not_existing_appid(self):
+        with self.assertRaises(ValueError):
+            self.entity.get_app_data("XYZ")
 
 if __name__ == '__main__':
     unittest.main()
