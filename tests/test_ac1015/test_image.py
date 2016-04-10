@@ -95,7 +95,7 @@ class TestCreateNewImage(unittest.TestCase):
         self.assertEqual(1, imagedef.dxf.loaded)
         self.assertEqual(0, imagedef.dxf.resolution_units)
 
-    def test_new_image(self):
+    def test_create_and_delete_image(self):
         msp = self.dwg.modelspace()
         image_def = self.dwg.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
         image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
@@ -116,7 +116,8 @@ class TestCreateNewImage(unittest.TestCase):
         reactor_handle = image.dxf.image_def_reactor
         self.assertTrue(reactor_handle in self.dwg.objects)
         reactor = self.dwg.get_dxf_entity(reactor_handle)
-        self.assertEqual(image.dxf.handle, reactor.dxf.image)
+        self.assertEqual(image.dxf.handle, reactor.dxf.owner, "IMAGE is not owner of IMAGEDEF_REACTOR")
+        self.assertEqual(image.dxf.handle, reactor.dxf.image, "IMAGEDEF_REACTOR does not point to IMAGE")
 
         self.assertTrue(reactor_handle in image_def2.get_reactors(), "Reactor handle not in IMAGE_DEF reactors.")
 

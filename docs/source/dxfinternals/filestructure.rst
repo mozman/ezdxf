@@ -42,4 +42,69 @@ of a DXF file is as follows:
 By using *ezdxf* you don't have to know much about this details, but
 interested users can look at the original `DXF Reference`_.
 
+Minimal DXF Content
+-------------------
+
+DXF R12
+=======
+
+The DXF format R12 (AC1009) and prior just requires an ENTITIES section::
+
+      0
+    SECTION
+      2
+    ENTITIES
+      0
+    ENDSEC
+      0
+    EOF
+
+DXF R13/14 and later
+====================
+
+DXF version R13/14 and later need much more DXF content than DXF version R12.
+
+Required sections: HEADER, CLASSES, TABLES, ENTITIES, OBJECTS
+
+The HEADER section requires two entries:
+
+- ``$ACADVER``
+- ``$HANDSEED``
+
+The CLASSES section can be empty, but some DXF entities requires class definitions to work in AutoCAD.
+
+The TABLES section requires following tables:
+
+- VPORT with at least an entry called ``'*ACTIVE'``
+- LTYPE with at least the following line types defined:
+
+  - ByBlock
+  - ByLayer
+  - Continuous
+
+- LAYER with at least an entry for layer ``'0'``
+- STYLE with at least an entry for style ``STANDARD``
+- VIEW can be empty
+- UCS can be empty
+- APPID with at least an entry for ``ACAD``
+- DIMSTYLE with at least an entry for style ``STANDARD``
+- BLOCK_RECORDS with two entries:
+
+  - ``*MODEL_SPACE``
+  - ``*PAPER_SPACE``
+
+The BLOCKS section requires two BLOCKS:
+
+- ``*MODEL_SPACE``
+- ``*PAPER_SPACE``
+
+The ENTITIES section can be empty.
+
+The OBJECTS section requires following entities:
+
+- DICTIONARY - the root dict
+  - one entry ``ACAD-GROUP``
+
+- DICTONARY ``ACAD-GROUP`` can be empty
+
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
