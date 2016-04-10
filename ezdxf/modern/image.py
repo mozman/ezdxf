@@ -129,12 +129,13 @@ class Image(ModernGraphicEntity):
         super(Image, self).destroy()
         # remove rectors
         image_def = self.get_image_def()
-        reactor_handle = self.dxf.image_def_reactor
+        reactor_handle = self.get_dxf_attrib('image_def_reactor', None)
+        if reactor_handle is None:
+            return
         image_def.remove_reactor_handle(reactor_handle)
         if self.drawing is not None:
             reactor = self.dxffactory.wrap_handle(reactor_handle)
             self.drawing.objects.delete_entity(reactor)
-
 
 
 _IMAGE_DEF_TPL = """  0

@@ -199,10 +199,6 @@ class PdfDefinition(DXFEntity):
     def post_new_hook(self):
         self.set_reactors([self.dxf.owner])
 
-    def destroy(self):
-        super(PdfDefinition, self).destroy()
-        # TODO delete by reactors referenced underlays
-
 
 class DwfDefinition(PdfDefinition):
     TEMPLATE = ClassifiedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DWF'))
