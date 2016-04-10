@@ -375,4 +375,5 @@ class GraphicsFactory(object):
 
         underlay = self.build_and_add_entity(underlay_def.entity_name, dxfattribs)
         underlay.scale = scale
+        underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay

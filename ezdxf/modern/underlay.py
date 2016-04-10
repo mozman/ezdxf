@@ -148,6 +148,11 @@ class PdfUnderlay(ModernGraphicEntity):
     def get_underlay_def(self):
         return self.dxffactory.wrap_handle(self.dxf.underlay_def)
 
+    def destroy(self):
+        super(PdfUnderlay, self).destroy()
+        underlay_def = self.get_underlay_def()
+        underlay_def.remove_reactor_handle(self.dxf.handle)
+
 
 class DwfUnderlay(PdfUnderlay):
     TEMPLATE = ClassifiedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DWF'))
@@ -156,11 +161,15 @@ class DwfUnderlay(PdfUnderlay):
 class DgnUnderlay(PdfUnderlay):
     TEMPLATE = ClassifiedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DGN'))
 
-
+# Using reactors in PdfDefinition for well defined UNDERLAYS
 _PDF_DEF_TPL = """  0
 PDFDEFINITION
   5
 0
+102
+{ACAD_REACTORS
+102
+}
 330
 0
 100
@@ -186,6 +195,13 @@ class PdfDefinition(DXFEntity):
     @property
     def entity_name(self):
         return self.dxftype()[:3] + "UNDERLAY"
+
+    def post_new_hook(self):
+        self.set_reactors([self.dxf.owner])
+
+    def destroy(self):
+        super(PdfDefinition, self).destroy()
+        # TODO delete by reactors referenced underlays
 
 
 class DwfDefinition(PdfDefinition):
