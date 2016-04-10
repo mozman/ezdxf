@@ -112,6 +112,20 @@ class TestCreateNewImage(unittest.TestCase):
         image_def2 = image.get_image_def()
         self.assertEqual(image_def.dxf.handle, image_def2.dxf.handle)
 
+        # does image def reactor exists
+        reactor_handle = image.dxf.image_def_reactor
+        self.assertTrue(reactor_handle in self.dwg.objects)
+        reactor = self.dwg.get_dxf_entity(reactor_handle)
+        self.assertEqual(image.dxf.handle, reactor.dxf.image)
+
+        self.assertTrue(reactor_handle in image_def2.get_reactors(), "Reactor handle not in IMAGE_DEF reactors.")
+
+        # delete image
+        msp.delete_entity(image)
+        self.assertFalse(reactor_handle in self.dwg.objects, "IMAGEDEF_REACTOR not deleted for objects section")
+        self.assertFalse(reactor_handle in self.dwg.entitydb, "IMAGEDEF_REACTOR not deleted for entity database")
+        self.assertFalse(reactor_handle in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors.")
+
 
 IMAGE_DEF = """  0
 IMAGEDEF

@@ -69,6 +69,10 @@ class AbstractSection(object):
     def remove_handle(self, handle):
         self._entity_space.remove(handle)
 
+    def delete_entity(self, entity):
+        self.remove_handle(entity.dxf.handle)
+        self.entitydb.delete_entity(entity)
+
     # start of public interface
 
     def __len__(self):
