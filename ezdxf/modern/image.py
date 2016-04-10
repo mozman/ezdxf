@@ -63,6 +63,8 @@ AcDbRasterImage
     50
 283
      0
+360
+0
  71
   1
  91
@@ -130,6 +132,10 @@ IMAGEDEF
 0
 330
 0
+102
+{ACAD_REACTORS
+102
+}
 100
 AcDbRasterImageDef
  90
@@ -181,6 +187,7 @@ AcDbRasterImageDefReactor
 
 
 # IMAGEDEF_REACTOR is not required by AutoCAD
+# owner -> IMAGE
 class ImageDefReactor(DXFEntity):
     TEMPLATE = ClassifiedTags.from_text(_IMAGE_DEF_REACTOR_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbRasterImageDef', {
