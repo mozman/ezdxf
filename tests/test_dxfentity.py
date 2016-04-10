@@ -353,6 +353,31 @@ class TestReactors(unittest.TestCase):
         handles = self.entity.get_reactors()
         self.assertEqual(['A000', 'B000', 'C000'], handles)
 
-        
+    def test_append_handle(self):
+        self.entity.set_reactors([])
+        self.assertEqual(0, len(self.entity.get_reactors()))
+        self.entity.append_reactor_handle('A000')
+        self.assertTrue('A000' in self.entity.get_reactors())
+        self.entity.append_reactor_handle('B000')
+        self.assertTrue('B000' in self.entity.get_reactors())
+        self.assertEqual(2, len(self.entity.get_reactors()))
+
+        self.entity.append_reactor_handle('B000')  # same handle again
+        self.assertTrue('B000' in self.entity.get_reactors())
+        self.assertEqual(2, len(self.entity.get_reactors()), 'handle entries should be unique')
+
+        self.entity.append_reactor_handle('FF')  # smallest handle, should be first handle in reactors
+        self.assertEqual('FF', self.entity.get_reactors()[0])
+
+        self.entity.append_reactor_handle('FFFF')  # biggest handle, should be last handle in reactors
+        self.assertEqual('FFFF', self.entity.get_reactors()[-1])
+
+    def test_remove_handle(self):
+        self.entity.set_reactors(['A000', 'B000', 'C000'])
+        self.entity.remove_reactor_handle('A000')
+        self.assertEqual(2, len(self.entity.get_reactors()), 'Handle not deleted')
+        self.entity.remove_reactor_handle('FFFF')  # ignore not existing handles
+        self.assertEqual(2, len(self.entity.get_reactors()))
+
 if __name__ == '__main__':
     unittest.main()

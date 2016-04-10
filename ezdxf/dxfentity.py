@@ -11,6 +11,7 @@ from .lldxf.const import DXFStructureError
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 
+
 class DXFNamespace(object):
     """ Provides the dxf namespace for GenericWrapper.
     """
@@ -279,3 +280,14 @@ class DXFEntity(object):
     def set_reactors(self, reactor_handles):
         reactor_tags = [DXFTag(330, handle) for handle in reactor_handles]
         self.set_app_data(ACAD_REACTORS, reactor_tags)
+
+    def append_reactor_handle(self, handle):
+        reactors = set(self.get_reactors())
+        reactors.add(handle)
+        self.set_reactors(sorted(reactors, key=lambda x: int(x, base=16)))
+
+    def remove_reactor_handle(self, handle):
+        reactors = set(self.get_reactors())
+        reactors.discard(handle)
+        self.set_reactors(reactors)
+
