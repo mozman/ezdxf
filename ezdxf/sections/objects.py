@@ -79,7 +79,14 @@ class ObjectsSection(ClassesSection):
             'image_size': size_in_pixel,
         })
         image_dict[name] = image_def.dxf.handle
+        image_def.set_reactors([image_def.dxf.owner])
         return image_def
+
+    def add_image_def_reactor(self, image_handle):
+        return self.create_new_dxf_entity('IMAGEDEF_REACTOR', dxfattribs={
+            'owner': image_handle,
+            'image': image_handle,
+        })
 
     def add_underlay_def(self, filename, format='pdf', name=None):
         fmt = format.upper()

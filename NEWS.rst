@@ -7,7 +7,9 @@ Version 0.7.6 - ...
   * NEW: Get/Set extended data on DXF entity level, add and retrieve your own data to DXF entities
   * NEW: Get/Set app data on DXF entity level (not important for high level users)
   * NEW: Get/Set/Append/Remove reactors on DXF entity level (not important for high level users)
-  * CHANGE: using reactors in PdfDefinition for well defined UNDERLAYS
+  * CHANGE: using reactors in PdfDefinition for well defined UNDERLAY entities
+  * CHANGE: using reactors and IMAGEDEF_REACTOR for well defined IMAGE entities
+  * BUGFIX: default name=None in add_image_def()
 
 Version 0.7.5 - 2016-04-03
 

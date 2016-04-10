@@ -208,7 +208,7 @@ class Drawing(object):
         """
         return self.dxffactory.wrap_handle(handle)
 
-    def add_image_def(self, filename, size_in_pixel, name='auto'):
+    def add_image_def(self, filename, size_in_pixel, name=None):
         """ Add an image definition to the objects section.
 
         :param filename: image file name

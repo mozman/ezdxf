@@ -361,7 +361,13 @@ class GraphicsFactory(object):
         dxfattribs['image_def'] = image_def.dxf.handle
         dxfattribs['image_size'] = image_def.dxf.image_size
 
-        return self.build_and_add_entity('IMAGE', dxfattribs)
+        image = self.build_and_add_entity('IMAGE', dxfattribs)
+        if self.drawing is not None:
+            image_def_reactor = self.drawing.objects.add_image_def_reactor(image.dxf.handle)
+            reactor_handle = image_def_reactor.dxf.handle
+            image.dxf.image_def_reactor = reactor_handle
+            image_def.append_reactor_handle(reactor_handle)
+        return image
 
     def add_underlay(self, underlay_def, insert=(0, 0, 0), scale=(1, 1, 1), rotation=0., dxfattribs=None):
         if self.dxfversion < 'AC1015':
