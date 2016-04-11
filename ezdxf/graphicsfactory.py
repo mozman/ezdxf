@@ -383,3 +383,25 @@ class GraphicsFactory(object):
         underlay.scale = scale
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
+
+    def add_rotated_dim(self):
+        pass
+
+    def add_aligned_dim(self):
+        pass
+
+    def add_angular_dim(self):
+        pass
+
+    def add_diameter_dim(self):
+        pass
+
+    def add_radial_dim(self):
+        pass
+
+    def add_angular_3p_dim(self):
+        pass
+
+    def add_ordinate_dim(self):
+        pass
+
