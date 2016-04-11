@@ -525,7 +525,7 @@ class DimStyle(DXFEntity):
         'dimclrt': DXFAttr(178),
     }))
 
-    def print(self):
+    def print_attribs(self):
         attribs = [
             'dimpost', 'dimapost', 'dimblk', 'dimblk1', 'dimblk2', 'dimscale', 'dimasz', 'dimexo', 'dimdli',
             'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac',

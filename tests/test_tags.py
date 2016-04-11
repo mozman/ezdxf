@@ -10,8 +10,9 @@ import unittest
 from io import StringIO
 
 from ezdxf.tools.c23 import ustr
-from ezdxf.lldxf.tags import StringIterator, Tags, dxf_info
-from ezdxf.lldxf.types import tag_type, point_tuple, strtag
+from ezdxf.lldxf.tagger import StringTagger, skip_comments
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.types import tag_type, point_tuple
 
 TEST_TAGREADER = """  0
 SECTION
@@ -29,23 +30,6 @@ ANSI_1252
 ENDSEC
   0
 EOF
-"""
-
-TEST_NO_EOF = """  0
-SECTION
-  2
-HEADER
-  9
-$ACADVER
-  1
-AC1018
-  9
-$DWGCODEPAGE
-  3
-ANSI_1252
-  0
-ENDSEC
-
 """
 
 TEST_TAGREADER_COMMENTS = """999
@@ -69,132 +53,6 @@ ENDSEC
   0
 EOF
 """
-
-POINT_TAGS = """  9
-$EXTMIN
- 10
-100
- 20
-200
- 30
-300
-"""
-
-POINT_2D_TAGS = """ 10
-100
- 20
-200
-  9
-check mark 1
- 10
-100
- 20
-200
- 30
-300
-  9
-check mark 2
-"""
-
-FLOAT_FOR_INT_TAGS = """  71
-1.0
-"""
-
-
-class TestTagReader(unittest.TestCase):
-    def setUp(self):
-        self.reader = StringIterator(TEST_TAGREADER)
-
-    def test_next(self):
-        self.assertEqual((0, 'SECTION'), next(self.reader))
-
-    def test_undo_last(self):
-        self.reader.__next__()
-        self.reader.undotag()
-        self.assertEqual((0, 'SECTION'), next(self.reader))
-
-    def test_error_on_multiple_undo_last(self):
-        next(self.reader)
-        self.reader.undotag()
-        with self.assertRaises(ValueError):
-            self.reader.undotag()
-
-    def test_error_undo_last_before_first_read(self):
-        with self.assertRaises(ValueError):
-            self.reader.undotag()
-
-    def test_lineno(self):
-        next(self.reader)
-        self.assertEqual(2, self.reader.lineno)
-
-    def test_lineno_with_undo(self):
-        next(self.reader)
-        self.reader.undotag()
-        self.assertEqual(0, self.reader.lineno)
-
-    def test_lineno_with_undo_next(self):
-        next(self.reader)
-        self.reader.undotag()
-        next(self.reader)
-        self.assertEqual(2, self.reader.lineno)
-
-    def test_to_list(self):
-        tags = list(self.reader)
-        self.assertEqual(8, len(tags))
-
-    def test_undo_eof(self):
-        for tag in self.reader:
-            if tag == (0, 'EOF'):
-                self.reader.undotag()
-                break
-        tag = next(self.reader)
-        self.assertEqual((0, 'EOF'), tag)
-        with self.assertRaises(StopIteration):
-            self.reader.__next__()
-
-    def test_no_eof(self):
-        tags = list(StringIterator(TEST_NO_EOF))
-        self.assertEqual(7, len(tags))
-        self.assertEqual((0, 'ENDSEC'), tags[-1])
-
-    def test_strtag_int(self):
-        self.assertEqual('  1\n1\n', strtag((1, 1)))
-
-    def test_strtag_float(self):
-        self.assertEqual(' 10\n3.1415\n', strtag((10, 3.1415)))
-
-    def test_strtag_str(self):
-        self.assertEqual('  0\nSECTION\n', strtag((0, 'SECTION')))
-
-    def test_one_point_reader(self):
-        tags = list(StringIterator(POINT_TAGS))
-        point_tag = tags[1]
-        self.assertEqual((100, 200, 300), point_tag.value)
-
-    def test_read_2D_points(self):
-        stri = StringIterator(POINT_2D_TAGS)
-        tags = list(stri)
-        self.assertEqual(15, stri.lineno)  # 14 lines
-        tag = tags[0]  # 2D point
-        self.assertEqual((100, 200), tag.value)
-        tag = tags[1]  # check mark
-        self.assertEqual('check mark 1', tag.value)
-        tag = tags[2]  # 3D point
-        self.assertEqual((100, 200, 300), tag.value)
-        tag = tags[3]  # check mark
-        self.assertEqual('check mark 2', tag.value)
-
-    def test_float_to_int(self):
-        tags = Tags.from_text(FLOAT_FOR_INT_TAGS)
-        self.assertEqual(int, type(tags[0].value))
-
-
-class TestGetDXFInfo(unittest.TestCase):
-    def test_dxfinfo(self):
-        info = dxf_info(StringIO(TEST_TAGREADER))
-        self.assertEqual(info.release, 'R2004')
-        self.assertEqual(info.encoding, 'cp1252')
-
 
 TESTHANDLE5 = """ 0
 TEST
@@ -318,8 +176,8 @@ class TestTags(unittest.TestCase):
             self.tags.get_handle() # handle still doesn't exist
 
     def test_skip_comments(self):
-        tags1 = list(StringIterator(TEST_TAGREADER))
-        tags2 = list(StringIterator(TEST_TAGREADER_COMMENTS))
+        tags1 = list(skip_comments(StringTagger(TEST_TAGREADER)))
+        tags2 = list(skip_comments(StringTagger(TEST_TAGREADER_COMMENTS)))
         self.assertEqual(tags1, tags2)
 
     def test_remove_tags(self):
@@ -382,6 +240,7 @@ THREE
   4
 FOUR
 """
+
 
 class TestTagsCollect(unittest.TestCase):
     def setUp(self):

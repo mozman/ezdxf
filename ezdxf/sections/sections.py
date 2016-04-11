@@ -14,6 +14,7 @@ from .objects import ObjectsSection
 from .entities import EntitySection
 from ..options import options
 from ..lldxf.defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
+from ..lldxf.tagger import skip_comments
 
 
 class Sections(object):
@@ -29,14 +30,14 @@ class Sections(object):
             return section[1].value
 
         bootstrap = True
-        for section in iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
+        comments = []
+        for section in iter_chunks(skip_comments(tagreader, comments), stoptag='EOF', endofchunk='ENDSEC'):
             if bootstrap:
                 if section[1] != (2, 'HEADER'):
                     new_section = HeaderSection(None)
                 else:
                     new_section = HeaderSection(section)
                     section = None  # this tags are done
-                comments = tagreader.get_comments()  # get all comments until now
                 drawing._bootstraphook(new_section, comments)
                 new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
                 bootstrap = False
