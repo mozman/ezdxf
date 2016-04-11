@@ -105,30 +105,29 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
     # at the origin of the UCS that is current when the dimension is created.
 })
 
-
-# bootstrap dimension entity
-class Dimension(ModernGraphicEntity):
-    def cast(self):  # create the REAL dimension entity
-        subclasses = self.tags.subclasses
-        dimtype = subclasses[3][0].value
-        if dimtype == 'AcDbAlignedDimension' and len(subclasses) > 4:
-            dimtype = 'AcDbRotatedDimension'
-        try:
-            DimClass = DimensionClasses[dimtype]
-        except KeyError:
-            raise const.DXFInternalEzdxfError("Unknown dimension type: '{}', "
-                                              "send a message to mozman@gmx.at".format(dimtype))
-        return DimClass(self.tags, self.drawing, dimtype)
+DimensionTypeNames = [
+    'AcDbRotatedDimension',  # 0
+    'AcDbAlignedDimension',  # 1
+    'AcDb3dPointAngularDimension',  # 2
+    'AcDbDiametricDimension',  # 3
+    'AcDbRadialDimension',   # 4
+    'AcDb3dPointAngularDimension',  # 5
+    'AcDbOrdinateDimension',  # 6
+]
 
 
 class AbstractDimension(ModernGraphicEntity):
-    def __init__(self, tags, drawing, dimtype):
-        super(self, AbstractDimension).__init__(tags, drawing)
-        self._dimtype = dimtype
+    @property
+    def dim_type(self):
+        return self.dxf & 7
 
     @property
-    def dimtype(self):
-        return self._dimtype
+    def dim_type_name(self):
+        return DimensionTypeNames[self.dim_type]
+
+    def cast(self):  # create the REAL dimension entity
+        DimClass = DimensionClasses[self.dim_type]
+        return DimClass(self.tags, self.drawing)
 
 
 class AlignedDimension(AbstractDimension):
@@ -155,12 +154,12 @@ class AngularDimension(AbstractDimension):
 class OrdinateDimension(AbstractDimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, ordinate_dimension_subclass)
 
-
-DimensionClasses = {
-    'AcDbAlignedDimension': AlignedDimension,
-    'AcDbRotatedDimension': RotatedDimension,
-    'AcDbRadialDimension': RadialDimension,
-    'AcDbDiametricDimension': DiametricDimension,
-    'AcDb3dPointAngularDimension': AngularDimension,
-    'AcDbOrdinateDimension': OrdinateDimension,
-}
+DimensionClasses = [
+    RotatedDimension,  # 0
+    AlignedDimension,  # 1
+    AngularDimension,  # 2
+    DiametricDimension,  # 3
+    RadialDimension,  # 4
+    AngularDimension,  # 5
+    OrdinateDimension,  # 6
+]

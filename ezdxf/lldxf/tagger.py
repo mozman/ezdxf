@@ -29,19 +29,20 @@ def string_tagger(s):
     while pos < count:
         x = next_tag()
         pos += 2
-        if is_point_code(x.code):
+        code = x.code
+        if is_point_code(code):
             y = next_tag()  # y coordinate is mandatory - string_tagger relies on well formed DXF strings
             pos += 2
             if pos < count:
                 z = next_tag()  # z coordinate just for 3d points
             else:  # if string s ends with a 2d point
                 z = DUMMY_TAG
-            if z.code == x.code + 20:
+            if z.code == code + 20:
                 pos += 2
-                point = (x.code, (x.value, y.value, z.value))
+                point = (float(x.value), float(y.value), float(z.value))
             else:
-                point = (x.code, (x.value, y.value))
-            yield cast_tag(point)
+                point = (float(x.value), float(y.value))
+            yield DXFTag(code, point)
         else:
             yield cast_tag(x)
 
@@ -59,11 +60,17 @@ def skip_comments(tagger, comments=None):
 def stream_tagger(stream):
     """ Generates DXFTag() from a stream. Does not skip comment tags 999.
     """
+    class Counter:
+        def __init__(self):
+            self.counter = 0
+
     undo_tag = None
+    line = Counter()  # writeable line counter for next_tag(), Python 2.7 does not support the nonlocal statement
 
     def next_tag():
         code = stream.readline()
         value = stream.readline()
+        line.counter += 2
         if code and value:  # StringIO(): empty strings indicates EOF
             return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
         else:  # StringIO(): missing '\n' indicates EOF
@@ -76,18 +83,29 @@ def stream_tagger(stream):
                 undo_tag = None
             else:
                 x = next_tag()
-            if is_point_code(x.code):
+            code = x.code
+            if is_point_code(code):
                 y = next_tag()  # y coordinate is mandatory
-                if y.code != x.code + 10:
-                    raise DXFStructureError("Missing required y coordinate.")
+                if y.code != code + 10:
+                    raise DXFStructureError("Missing required y coordinate near line: {}.".format(line.counter))
                 z = next_tag()  # z coordinate just for 3d points
-                if z.code == x.code + 20:
-                    point = (x.code, (x.value, y.value, z.value))
-                else:
-                    point = (x.code, (x.value, y.value))
-                    undo_tag = z
-                yield cast_tag(point)
+                try:
+                    if z.code == code + 20:
+                        point = (float(x.value), float(y.value), float(z.value))
+                    else:
+                        point = (float(x.value), float(y.value))
+                        undo_tag = z
+                except ValueError:
+                    raise DXFStructureError('Invalid floating point values near line: {}.'.format(line.counter))
+                yield DXFTag(code, point)
             else:  # just a single tag
-                yield cast_tag(x)
+                try:
+                    yield cast_tag(x)
+                except ValueError:
+                    raise DXFStructureError('Invalid tag (code={code}, value="{value}") near line: {line}.'.format(
+                        line=line.counter,
+                        code=x.code,
+                        value=x.value,
+                    ))
         except EOFError:
             return
