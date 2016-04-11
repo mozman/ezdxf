@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.lldxf.tagger import StringTagger, skip_comments, StreamTagger
+from ezdxf.lldxf.tagger import string_tagger, skip_comments, stream_tagger
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.types import strtag
 
@@ -70,34 +70,34 @@ $EXTMIN
 
 class TestTrustedStringTagger(unittest.TestCase):
     def test_string(self):
-        tags = list(StringTagger(TAGS1))
+        tags = list(string_tagger(TAGS1))
         self.assertEqual(9, len(tags))
         self.assertEqual(DXFTag(999, 'comment'), tags[0], 'should not skip comments.')
 
     def test_skip_comments(self):
         comments = []
-        tags = list(skip_comments(StringTagger(TAGS1), comments))
+        tags = list(skip_comments(string_tagger(TAGS1), comments))
         self.assertEqual(8, len(tags))
         self.assertEqual('comment', comments[0])
 
     def test_3d_coords(self):
-        tags = list(StringTagger(TAGS_3D_COORDS))
+        tags = list(string_tagger(TAGS_3D_COORDS))
         self.assertEqual(2, len(tags))
         self.assertEqual(DXFTag(10, (100, 200, 300)), tags[1])
 
     def test_2d_coords(self):
-        tags = list(StringTagger(TAGS_2D_COORDS))
+        tags = list(string_tagger(TAGS_2D_COORDS))
         self.assertEqual(2, len(tags))
         self.assertEqual(DXFTag(10, (100, 200)), tags[1])
 
     def test_multiple_2d_coords(self):
-        tags = list(StringTagger(TAGS_2D_COORDS2))
+        tags = list(string_tagger(TAGS_2D_COORDS2))
         self.assertEqual(3, len(tags))
         self.assertEqual(DXFTag(10, (100, 200)), tags[1])
         self.assertEqual(DXFTag(11, (1000, 2000)), tags[2])
 
     def test_no_line_break_at_eof(self):
-        tags = list(StringTagger(TAGS_NO_LINE_BREAK_AT_EOF))
+        tags = list(string_tagger(TAGS_NO_LINE_BREAK_AT_EOF))
         self.assertEqual(3, len(tags))
         self.assertEqual(DXFTag(10, (100, 200)), tags[1])
         self.assertEqual(DXFTag(11, (1000, 2000)), tags[2])
@@ -199,7 +199,7 @@ $EXTMIN
 
 class TestStreamReader(unittest.TestCase):
     def setUp(self):
-        self.reader = StreamTagger(StringIO(TEST_TAGREADER))
+        self.reader = stream_tagger(StringIO(TEST_TAGREADER))
 
     def test_next(self):
         self.assertEqual((0, 'SECTION'), next(self.reader))
@@ -209,7 +209,7 @@ class TestStreamReader(unittest.TestCase):
         self.assertEqual(8, len(tags))
 
     def test_no_eof(self):
-        tags = list(StringTagger(TEST_NO_EOF))
+        tags = list(string_tagger(TEST_NO_EOF))
         self.assertEqual(7, len(tags))
         self.assertEqual((0, 'ENDSEC'), tags[-1])
 
@@ -223,12 +223,12 @@ class TestStreamReader(unittest.TestCase):
         self.assertEqual('  0\nSECTION\n', strtag((0, 'SECTION')))
 
     def test_one_point_reader(self):
-        tags = list(StreamTagger(StringIO(POINT_TAGS)))
+        tags = list(stream_tagger(StringIO(POINT_TAGS)))
         point_tag = tags[1]
         self.assertEqual((100, 200, 300), point_tag.value)
 
     def test_read_2D_points(self):
-        stri = StringTagger(POINT_2D_TAGS)
+        stri = string_tagger(POINT_2D_TAGS)
         tags = list(stri)
         tag = tags[0]  # 2D point
         self.assertEqual((100, 200), tag.value)
@@ -240,11 +240,11 @@ class TestStreamReader(unittest.TestCase):
         self.assertEqual('check mark 2', tag.value)
 
     def test_float_to_int(self):
-        tags = list(StringTagger(FLOAT_FOR_INT_TAGS))
+        tags = list(string_tagger(FLOAT_FOR_INT_TAGS))
         self.assertEqual(int, type(tags[0].value))
 
     def test_error_tag(self):
-        tags = list(StreamTagger(StringIO(TAGS_WITH_ERROR)))
+        tags = list(stream_tagger(StringIO(TAGS_WITH_ERROR)))
         self.assertEqual(1, len(tags))
 
 

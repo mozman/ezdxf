@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.lldxf.tagger import StringTagger
+from ezdxf.lldxf.tagger import string_tagger
 from ezdxf.drawing import Drawing
 from ezdxf.templates import TemplateLoader
 from ezdxf import is_dxf_file
@@ -20,7 +20,7 @@ DWG12 = Drawing.new('AC1009')
 
 class TestDrawing(unittest.TestCase):
     def test_dxfversion(self):
-        dwg = Drawing(StringTagger(TEST_HEADER))
+        dwg = Drawing(string_tagger(TEST_HEADER))
         self.assertEqual('AC1009', dwg.dxfversion)
 
 
@@ -88,7 +88,7 @@ class TestIsDXFFile(unittest.TestCase):
 
 class TestMinimalisticDXF12Drawing(unittest.TestCase):
     def setUp(self):
-        self.dwg = Drawing(StringTagger(MINIMALISTIC_DXF12))
+        self.dwg = Drawing(string_tagger(MINIMALISTIC_DXF12))
 
     def test_header_section(self):
         self.assertTrue(hasattr(self.dwg, 'header'))

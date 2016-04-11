@@ -21,7 +21,7 @@ codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode en
 
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .lldxf.tags import dxf_info
-from .lldxf.tagger import StreamTagger, skip_comments
+from .lldxf.tagger import stream_tagger, skip_comments
 from .tools.importer import Importer
 from .tools.codepage import is_supported_encoding
 from .lldxf.const import DXFStructureError, DXFVersionError
@@ -105,5 +105,5 @@ def readzip(zipfile, filename=None):
 
 def is_dxf_file(filename):
     with io.open(filename, errors='ignore') as fp:
-        reader = skip_comments(StreamTagger(fp))
+        reader = skip_comments(stream_tagger(fp))
         return next(reader) == (0, 'SECTION')

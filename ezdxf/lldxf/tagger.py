@@ -11,7 +11,7 @@ from .const import DXFStructureError
 DUMMY_TAG = DXFTag(999, '')
 
 
-def StringTagger(s):
+def string_tagger(s):
     """ Generates DXFTag() from trusted source - relies on
     well formed and error free DXF format. Does not skip comment
     tags 999.
@@ -30,7 +30,7 @@ def StringTagger(s):
         x = next_tag()
         pos += 2
         if is_point_code(x.code):
-            y = next_tag()  # y coordinate is mandatory
+            y = next_tag()  # y coordinate is mandatory - string_tagger relies on well formed DXF strings
             pos += 2
             if pos < count:
                 z = next_tag()  # z coordinate just for 3d points
@@ -56,9 +56,8 @@ def skip_comments(tagger, comments=None):
             comments.append(tag.value)
 
 
-def StreamTagger(stream):
-    """ Generates DXFTag() from a stream. Does not skip comment 
-    tags 999.
+def stream_tagger(stream):
+    """ Generates DXFTag() from a stream. Does not skip comment tags 999.
     """
     undo_tag = None
 
@@ -66,7 +65,7 @@ def StreamTagger(stream):
         code = stream.readline()
         value = stream.readline()
         if code and value:  # StringIO(): empty strings indicates EOF
-            return DXFTag(int(code[:-1]), value[:-1])
+            return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
         else:  # StringIO(): missing '\n' indicates EOF
             raise EOFError()
 
@@ -78,9 +77,9 @@ def StreamTagger(stream):
             else:
                 x = next_tag()
             if is_point_code(x.code):
-                y = next_tag() # y coordinate is mandatory
+                y = next_tag()  # y coordinate is mandatory
                 if y.code != x.code + 10:
-                    raise DXFStructureError()
+                    raise DXFStructureError("Missing required y coordinate.")
                 z = next_tag()  # z coordinate just for 3d points
                 if z.code == x.code + 20:
                     point = (x.code, (x.value, y.value, z.value))
