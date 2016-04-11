@@ -164,7 +164,7 @@ class TestPoint3D(unittest.TestCase):
         self.assertEqual((1., 2., 3.), point.dxf.point)
 
     def test_error_get_2d_point_for_required_3d_point(self):
-        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n  0\n")
+        tags = ClassifiedTags.from_text("10\n1.0\n20\n2.0\n  0\nVALUE\n")
         point = PointAccessor(tags)
         with self.assertRaises(DXFStructureError):
             point.dxf.point

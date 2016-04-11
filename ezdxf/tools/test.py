@@ -7,7 +7,6 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.dxffactory import dxffactory
-from ezdxf.lldxf.tags import StringIterator
 from ezdxf.lldxf.tags import Tags, TagGroups, DXFStructureError, DXFTag
 from ezdxf.lldxf.classifiedtags import ClassifiedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass

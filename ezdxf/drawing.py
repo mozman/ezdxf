@@ -10,8 +10,9 @@ import io
 import warnings
 
 from . import database
-from .lldxf.tags import TagIterator, DXFTag, write_tags
+from .lldxf.tags import DXFTag, write_tags
 from .lldxf.const import DXFVersionError, acad_release
+from .lldxf.tagger import StreamTagger
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -258,7 +259,7 @@ class Drawing(object):
     @staticmethod
     def read(stream):
         """ Open an existing drawing. """
-        tagreader = TagIterator(stream)
+        tagreader = StreamTagger(stream)
         return Drawing(tagreader)
 
     def saveas(self, filename, encoding='auto'):

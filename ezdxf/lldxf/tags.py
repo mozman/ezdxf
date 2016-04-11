@@ -5,12 +5,11 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from io import StringIO
-
 from .const import acad_release, DXFStructureError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
+from .tagger import StringTagger, skip_comments, StreamTagger
 
 COMMENT_CODE = 999
 
@@ -23,111 +22,8 @@ def write_tags(stream, tags):
             stream.write(strtag2(tag))
 
 
-class TagIterator(object):
-    def __init__(self, textfile):
-        self.textfile = textfile
-        self.lineno = 0
-        self.undo = False
-        self.last_tag = NONE_TAG
-        self.undo_coord = None
-        self.eof = False
-        self.comments = []
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        def undo_tag():
-            self.undo = False
-            tag = self.last_tag
-            if is_point_code(tag.code):
-                self.lineno += 2 * len(tag.value)
-            else:
-                self.lineno += 2
-            return tag
-
-        def read_next_tag():
-            try:
-                code = int(self.readline())
-                value = self.readline().rstrip('\n')
-            except (EOFError, ValueError):
-                raise StopIteration
-            return code, value
-
-        def read_point(code_x, value_x):
-            try:
-                code_y, value_y = read_next_tag()  # 2. coordinate is always necessary
-            except StopIteration:
-                code_y = 0  # -> DXF structure error in following if-statement
-
-            if code_y != code_x + 10:
-                raise DXFStructureError("invalid 2D/3D point at line %d" % self.lineno)
-
-            try:
-                code_z, value_z = read_next_tag()
-            except StopIteration:  # 2D point at end of file
-                self.eof = True  # store reaching end of file
-                value = (value_x, value_y)
-            else:
-                if code_z != code_x + 20:  # not a Z coordinate -> 2D point
-                    self.undo_coord = (code_z, value_z)
-                    self.lineno -= 2
-                    value = (value_x, value_y)
-                else:  # is a 3D point
-                    value = (value_x, value_y, value_z)
-            return value
-
-        def next_tag():
-            code = COMMENT_CODE
-            while code == COMMENT_CODE:  # skip comments
-                if self.undo_coord is not None:
-                    code, value = self.undo_coord
-                    self.lineno += 2
-                    self.undo_coord = None
-                else:
-                    code, value = read_next_tag()
-                    if code == COMMENT_CODE:  # save comments
-                        self.comments.append(value)
-                        continue
-
-                if is_point_code(code):  # 2D or 3D point
-                    value = read_point(code, value)
-
-            self.last_tag = cast_tag((code, value))
-            return self.last_tag
-
-        if self.eof:  # stored end of file
-            raise StopIteration
-
-        if self.undo:
-            return undo_tag()
-        else:
-            return next_tag()
-    # for Python 2.7
-    next = __next__
-
-    def readline(self):
-        self.lineno += 1
-        return self.textfile.readline()
-
-    def undotag(self):
-        if not self.undo and self.lineno > 0:
-            self.undo = True
-            self.lineno -= 2
-        else:
-            raise ValueError('No tag to undo')
-
-    def get_comments(self):
-        return self.comments[:]  # copy of list
-
-
-class StringIterator(TagIterator):
-    def __init__(self, string):
-        super(StringIterator, self).__init__(StringIO(string))
-
-
 def text2tags(text):
-    return Tags(StringIterator(text))
+    return Tags.from_text(text)
 
 
 class DXFInfo(object):
@@ -148,10 +44,10 @@ class DXFInfo(object):
         self.handseed = value
 
 
-def dxf_info(stream):  # expect stream opened in binary mode
+def dxf_info(stream):
     info = DXFInfo()
     tag = (999999, '')
-    tagreader = TagIterator(stream)
+    tagreader = StreamTagger(stream)
     while tag != (0, 'ENDSEC'):
         tag = next(tagreader)
         if tag.code != 9:
@@ -264,7 +160,7 @@ class Tags(list):
 
     @classmethod
     def from_text(cls, text):
-        return cls(StringIterator(text))
+        return cls(skip_comments(StringTagger(text)))
 
     def __copy__(self):
         return self.__class__(DXFTag(*tag) for tag in self)

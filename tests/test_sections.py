@@ -9,14 +9,15 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tools.test import DrawingProxy, StringIterator
+from ezdxf.lldxf.tagger import StringTagger
+from ezdxf.tools.test import DrawingProxy
 from ezdxf.sections.sections import Sections
 
 
 class TestSections(unittest.TestCase):
     def setUp(self):
         self.dwg = DrawingProxy('AC1009')
-        self.sections = Sections(StringIterator(TEST_HEADER), self.dwg)
+        self.sections = Sections(StringTagger(TEST_HEADER), self.dwg)
 
     def test_constructor(self):
         header = self.sections.header
@@ -35,7 +36,7 @@ class TestSections(unittest.TestCase):
             self.sections.test
 
     def test_ignore_struct_error(self):
-        sections = Sections(StringIterator(TEST_NO_EOF), self.dwg)
+        sections = Sections(StringTagger(TEST_NO_EOF), self.dwg)
         self.assertIsNotNone(self.sections.header)
 
 

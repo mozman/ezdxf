@@ -5,9 +5,9 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags, StringIterator, DXFStructureError, DXFTag, write_tags
+from .tags import Tags, DXFStructureError, DXFTag, write_tags
 from ..tools.c23 import isstring
-
+from .tagger import StringTagger, skip_comments
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
 XDATA_MARKER = 1001
@@ -243,7 +243,7 @@ class ClassifiedTags(object):
 
     @classmethod
     def from_text(cls, text):
-        return cls(StringIterator(text))
+        return cls(skip_comments(StringTagger(text)))
 
 
 LINKED_ENTITIES = {
