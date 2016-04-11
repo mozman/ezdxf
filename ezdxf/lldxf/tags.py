@@ -9,7 +9,7 @@ from .const import acad_release, DXFStructureError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
-from .tagger import StringTagger, skip_comments, StreamTagger
+from .tagger import string_tagger, skip_comments, stream_tagger
 
 COMMENT_CODE = 999
 
@@ -47,7 +47,7 @@ class DXFInfo(object):
 def dxf_info(stream):
     info = DXFInfo()
     tag = (999999, '')
-    tagreader = StreamTagger(stream)
+    tagreader = stream_tagger(stream)
     while tag != (0, 'ENDSEC'):
         tag = next(tagreader)
         if tag.code != 9:
@@ -160,7 +160,7 @@ class Tags(list):
 
     @classmethod
     def from_text(cls, text):
-        return cls(skip_comments(StringTagger(text)))
+        return cls(skip_comments(string_tagger(text)))
 
     def __copy__(self):
         return self.__class__(DXFTag(*tag) for tag in self)
