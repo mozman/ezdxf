@@ -9,6 +9,20 @@ from contextlib import contextmanager
 
 PRECISION = 6
 
+TEXT_ALIGN_FLAGS = {
+    'LEFT': (0, 0),
+    'CENTER': (1, 0),
+    'RIGHT': (2, 0),
+    'BOTTOM_LEFT': (0, 1),
+    'BOTTOM_CENTER': (1, 1),
+    'BOTTOM_RIGHT': (2, 1),
+    'MIDDLE_LEFT': (0, 2),
+    'MIDDLE_CENTER': (1, 2),
+    'MIDDLE_RIGHT': (2, 2),
+    'TOP_LEFT': (0, 3),
+    'TOP_CENTER': (1, 3),
+    'TOP_RIGHT': (2, 3),
+}
 @contextmanager
 def fast_stream_writer(stream):
     writer = StreamWriter(stream)
@@ -99,6 +113,26 @@ class StreamWriter(object):
             dxf.append(dxftag(70, str(vflags)))
             dxf.append(coord(vertex))
         dxf.append("0\nSEQEND\n")
+        self.stream.write(''.join(dxf))
+
+    def add_text(self, text, insert=(0, 0), height=1., width=1., align="LEFT", rotation=0., oblique=0.,
+                 layer="0", color=None):
+        # text style is always STANDARD without a TABLES section
+        dxf = ["0\nTEXT\n"]
+        dxf.append(attribs(layer, color))
+        dxf.append(coord(insert, code=10))
+        dxf.append(dxftag(1, str(text)))
+        dxf.append(dxftag(40, str(round(height, PRECISION))))
+        if width != 1.:
+            dxf.append(dxftag(41, str(round(width, PRECISION))))
+        if rotation != 0.:
+            dxf.append(dxftag(50, str(round(rotation, PRECISION))))
+        if oblique != 0.:
+            dxf.append(dxftag(51, str(round(oblique, PRECISION))))
+        halign, valign = TEXT_ALIGN_FLAGS[align.upper()]
+        dxf.append(dxftag(72, str(halign)))
+        dxf.append(dxftag(73, str(valign)))
+        dxf.append(coord(insert, code=11))  # align point
         self.stream.write(''.join(dxf))
 
 

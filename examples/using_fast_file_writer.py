@@ -13,6 +13,7 @@ with ezdxf.fast_file_writer("quick_and_dirty_dxf_r12.dxf") as dxf:
     dxf.add_point((1.5, 1.5))
     dxf.add_polyline([(5, 5), (7, 3), (7, 6)])  # 2d polyline
     dxf.add_polyline([(4, 3, 2), (8, 5, 0), (2, 4, 9)])  # 3d polyline
+    dxf.add_text("test the text entity", align="MIDDLE_CENTER")
 
 with ezdxf.fast_file_writer("much_circles.dxf") as dxf:
     for i in range(CIRCLE_COUNT):
