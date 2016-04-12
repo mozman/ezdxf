@@ -48,7 +48,7 @@ Minimal DXF Content
 DXF R12
 =======
 
-The DXF format R12 (AC1009) and prior just requires an ENTITIES section::
+The DXF format R12 (AC1009) and prior requires just an ENTITIES section::
 
       0
     SECTION
@@ -78,11 +78,11 @@ The TABLES section requires following tables:
 - VPORT with at least an entry called ``'*ACTIVE'``
 - LTYPE with at least the following line types defined:
 
-  - ByBlock
-  - ByLayer
-  - Continuous
+  - ``ByBlock``
+  - ``ByLayer``
+  - ``Continuous``
 
-- LAYER with at least an entry for layer ``'0'``
+- LAYER with at least an entry for layer ``0``
 - STYLE with at least an entry for style ``STANDARD``
 - VIEW can be empty
 - UCS can be empty
