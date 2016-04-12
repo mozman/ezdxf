@@ -1,5 +1,5 @@
 # Purpose: fast & simple but restricted DXF R12 writer, with no in-memory drawing, and without dependencies to other
-# ezdxf modules. This DXF files contains no HEADER, TABLES or BLOCKS section only the ENTITIES section is present.
+# ezdxf modules. The created DXF file contains no HEADER, TABLES or BLOCKS section only the ENTITIES section is present.
 # Created: 14.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License

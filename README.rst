@@ -23,6 +23,8 @@ Quick-Info
 - support for DXF versions R13/R14 (AC1012/AC1014), will be upgraded to R2000 (AC1015)
 - support for older versions than R12, will be upgraded to R12 (AC1009)
 - preserves third-party DXF content
+- additional fast and simple DXF R12 file/stream writer, just the ENTITIES section with support for LINE, CIRCLE, ARC,
+  TEXT, POINT, SOLID, 3DFACE and POLYLINE.
 
 a simple example::
 
@@ -34,6 +36,22 @@ a simple example::
     # use set_pos() for proper TEXT alignment - the relations between halign, valign, insert and align_point are tricky.
     modelspace.add_text('Test', dxfattribs={'layer': 'TEXTLAYER'}).set_pos((0, 0.2), align='CENTER')
     drawing.saveas('test.dxf')
+
+example for the *fast_file_writer*, writes a simple DXF R12 file without in-memory structures::
+
+    from random import random
+    import ezdxf
+
+    MAX_X_COORD = 1000.0
+    MAX_Y_COORD = 1000.0
+    CIRCLE_COUNT = 100000
+
+    with ezdxf.fast_file_writer("much_circles.dxf") as dxf:
+        for i in range(CIRCLE_COUNT):
+            dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+
+The *fast_file_writer* supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
+present.
 
 Installation
 ============
