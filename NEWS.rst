@@ -5,7 +5,7 @@ News
 Version 0.7.6 - ...
 
   * NEW: Fast and simple DXF R12 file writer - no tables and blocks supported, just the ENTITIES section, supports only
-    LINE, CIRCLE, ARC, POINT, SOLID, 3DFACE and POLYLINE. The module can be used without ezdxf.
+    LINE, CIRCLE, ARC, POINT, SOLID, 3DFACE, TEXT and POLYLINE. The module can be used without ezdxf.
   * NEW: Get/Set extended data on DXF entity level, add and retrieve your own data to DXF entities
   * NEW: Get/Set app data on DXF entity level (not important for high level users)
   * NEW: Get/Set/Append/Remove reactors on DXF entity level (not important for high level users)
