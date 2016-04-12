@@ -1,4 +1,5 @@
-# Purpose: simple but restricted direct DXF R12 writer - no in-memory drawing - no dependencies to other ezdxf modules
+# Purpose: fast & simple but restricted DXF R12 writer, with no in-memory drawing, and without dependencies to other
+# ezdxf modules. This DXF files contains no HEADER, TABLES or BLOCKS section only the ENTITIES section is present.
 # Created: 14.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
@@ -7,7 +8,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from contextlib import contextmanager
 
-PRECISION = 6
+
+def rnd(x):  # adjust output precision of floats by changing 'ndigits'
+    return round(x, ndigits=6)
 
 TEXT_ALIGN_FLAGS = {
     'LEFT': (0, 0),
@@ -23,6 +26,8 @@ TEXT_ALIGN_FLAGS = {
     'TOP_CENTER': (1, 3),
     'TOP_RIGHT': (2, 3),
 }
+
+
 @contextmanager
 def fast_stream_writer(stream):
     writer = StreamWriter(stream)
@@ -48,70 +53,70 @@ class StreamWriter(object):
 
     def add_line(self, start, end, layer="0", color=None, linetype=None):
         dxf = ["0\nLINE\n"]
-        dxf.append(attribs(layer, color, linetype))
-        dxf.append(coord(start, code=10))
-        dxf.append(coord(end, code=11))
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_vertex(start, code=10))
+        dxf.append(dxf_vertex(end, code=11))
         self.stream.write(''.join(dxf))
 
     def add_circle(self, center, radius, layer="0", color=None, linetype=None):
         dxf = ["0\nCIRCLE\n"]
-        dxf.append(attribs(layer, color, linetype))
-        dxf.append(coord(center))
-        dxf.append(dxftag(40, str(round(radius, PRECISION))))
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_vertex(center))
+        dxf.append(dxf_tag(40, str(rnd(radius))))
         self.stream.write(''.join(dxf))
 
     def add_arc(self, center, radius, start=0, end=360, layer="0", color=None, linetype=None):
         dxf = ["0\nARC\n"]
-        dxf.append(attribs(layer, color, linetype))
-        dxf.append(coord(center))
-        dxf.append(dxftag(40, str(round(radius, PRECISION))))
-        dxf.append(dxftag(50, str(round(start, PRECISION))))
-        dxf.append(dxftag(51, str(round(end, PRECISION))))
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_vertex(center))
+        dxf.append(dxf_tag(40, str(rnd(radius))))
+        dxf.append(dxf_tag(50, str(rnd(start))))
+        dxf.append(dxf_tag(51, str(rnd(end))))
         self.stream.write(''.join(dxf))
 
     def add_point(self, location, layer="0", color=None, linetype=None):
         dxf = ["0\nPOINT\n"]
-        dxf.append(attribs(layer, color, linetype))
-        dxf.append(coord(location))
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_vertex(location))
         self.stream.write(''.join(dxf))
 
     def add_3dface(self, vertices, layer="0", color=None, linetype=None):
-        self._add_quadrilian('3DFACE', vertices, layer, color, linetype)
+        self._add_quadrilateral('3DFACE', vertices, layer, color, linetype)
 
     def add_solid(self, vertices, layer="0", color=None, linetype=None):
-        self._add_quadrilian('SOLID', vertices, layer, color, linetype)
+        self._add_quadrilateral('SOLID', vertices, layer, color, linetype)
 
-    def _add_quadrilian(self, dxftype, vertices, layer, color, linetype):
+    def _add_quadrilateral(self, dxftype, vertices, layer, color, linetype):
         dxf = ["0\n%s\n" % dxftype]
-        dxf.append(attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color, linetype))
         vertices = list(vertices)
         if len(vertices) < 3:
             raise ValueError("%s needs 3 ot 4 vertices." % dxftype)
         elif len(vertices) == 3:
             vertices.append(vertices[-1])  # double last vertex
-        dxf.extend(coord(vertex, code) for code, vertex in enumerate(vertices, start=10))
+        dxf.extend(dxf_vertex(vertex, code) for code, vertex in enumerate(vertices, start=10))
         self.stream.write(''.join(dxf))
 
     def add_polyline(self, vertices, layer="0", color=None, linetype=None):
         vertices = list(vertices)
         if len(vertices):
-            if len(vertices[0]) == 3:
+            if len(vertices[0]) == 3:  # 3d polyline
                 pflags = 8
                 vflags = 32
-            else:
+            else:    # 2d polyline
                 pflags = 0
                 vflags = 0
         else:
             return
         dxf = ["0\nPOLYLINE\n"]
-        dxf.append(attribs(layer, color, linetype))
-        dxf.append(dxftag(66, "1"))  # entities follow
-        dxf.append(dxftag(70, str(pflags)))
+        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_tag(66, "1"))  # entities follow
+        dxf.append(dxf_tag(70, str(pflags)))
         for vertex in vertices:
             dxf.append("0\nVERTEX\n")
-            dxf.append(attribs(layer))
-            dxf.append(dxftag(70, str(vflags)))
-            dxf.append(coord(vertex))
+            dxf.append(dxf_attribs(layer))
+            dxf.append(dxf_tag(70, str(vflags)))
+            dxf.append(dxf_vertex(vertex))
         dxf.append("0\nSEQEND\n")
         self.stream.write(''.join(dxf))
 
@@ -119,40 +124,42 @@ class StreamWriter(object):
                  layer="0", color=None):
         # text style is always STANDARD without a TABLES section
         dxf = ["0\nTEXT\n"]
-        dxf.append(attribs(layer, color))
-        dxf.append(coord(insert, code=10))
-        dxf.append(dxftag(1, str(text)))
-        dxf.append(dxftag(40, str(round(height, PRECISION))))
+        dxf.append(dxf_attribs(layer, color))
+        dxf.append(dxf_vertex(insert, code=10))
+        dxf.append(dxf_tag(1, str(text)))
+        dxf.append(dxf_tag(40, str(rnd(height))))
         if width != 1.:
-            dxf.append(dxftag(41, str(round(width, PRECISION))))
+            dxf.append(dxf_tag(41, str(rnd(width))))
         if rotation != 0.:
-            dxf.append(dxftag(50, str(round(rotation, PRECISION))))
+            dxf.append(dxf_tag(50, str(rnd(rotation))))
         if oblique != 0.:
-            dxf.append(dxftag(51, str(round(oblique, PRECISION))))
+            dxf.append(dxf_tag(51, str(rnd(oblique))))
         halign, valign = TEXT_ALIGN_FLAGS[align.upper()]
-        dxf.append(dxftag(72, str(halign)))
-        dxf.append(dxftag(73, str(valign)))
-        dxf.append(coord(insert, code=11))  # align point
+        dxf.append(dxf_tag(72, str(halign)))
+        dxf.append(dxf_tag(73, str(valign)))
+        dxf.append(dxf_vertex(insert, code=11))  # align point
         self.stream.write(''.join(dxf))
 
 
-def attribs(layer, color=None, linetype=None):
+def dxf_attribs(layer, color=None, linetype=None):
     dxf = ["8\n%s\n" % layer]  # layer is required
     if linetype is not None:
         dxf.append("6\n%s\n" % linetype)
     if color is not None:
-        dxf.append("62\n%d\n" % color)
+        if 0 <= int(color) < 257:
+            dxf.append("62\n%d\n" % color)
+        else:
+            raise ValueError("color has to be a number in the range from 0 to 256.")
     return "".join(dxf)
 
 
-def coord(vertex, code=10):
+def dxf_vertex(vertex, code=10):
     dxf = []
     for c in vertex:
-        c = round(c, PRECISION)
-        dxf.append("%d\n%s\n" % (code, str(c)))
+        dxf.append("%d\n%s\n" % (code, str(rnd(c))))
         code += 10
     return "".join(dxf)
 
 
-def dxftag(code, value):
+def dxf_tag(code, value):
     return "%d\n%s\n" % (code, value)
