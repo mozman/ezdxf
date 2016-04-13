@@ -18,3 +18,31 @@ with ezdxf.fast_file_writer("quick_and_dirty_dxf_r12.dxf") as dxf:
 with ezdxf.fast_file_writer("many_circles.dxf") as dxf:
     for i in range(CIRCLE_COUNT):
         dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+
+LINETYPES = [
+    'CONTINUOUS',
+    'CENTER',
+    'CENTERX2',
+    'CENTER2',
+    'DASHED',
+    'DASHEDX2',
+    'DASHED2',
+    'PHANTOM',
+    'PHANTOMX2',
+    'PHANTOM2',
+    'DASHDOT',
+    'DASHDOTX2',
+    'DASHDOT2',
+    'DOT',
+    'DOTX2',
+    'DOT2',
+    'DIVIDE',
+    'DIVIDEX2',
+    'DIVIDE2',
+]
+
+with ezdxf.fast_file_writer('fast_r12_linetypes.dxf', fixed_tables=True) as dxf:
+    for n, ltype in enumerate(LINETYPES):
+        dxf.add_line((0, n), (10, n), linetype=ltype)
+        dxf.add_text(ltype, (0, n+0.1), height=0.25, style='ISOCPEUR')
+
