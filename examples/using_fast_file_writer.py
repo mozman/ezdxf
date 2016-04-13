@@ -18,5 +18,3 @@ with ezdxf.fast_file_writer("quick_and_dirty_dxf_r12.dxf") as dxf:
 with ezdxf.fast_file_writer("many_circles.dxf") as dxf:
     for i in range(CIRCLE_COUNT):
         dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
-
-

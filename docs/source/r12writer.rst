@@ -1,6 +1,17 @@
 Introduction
 ------------
 
+The fast file/stream writer creates simple DXF R12 drawings with just an ENTITIES section. The HEADER, TABLES and BLOCKS
+sections are not present. Only LINE, CIRCLE, ARC, TEXT, POINT, SOLID, 3DFACE and POLYLINE entities are supported.
+
+The :class:`StreamWriter` writes the DXF entities as strings direct to the stream without creating an in-memory drawing,
+and therefore the processing is very fast.
+
+Because of the lack of a BLOCKS section, BLOCK/INSERT can not be used. Layers can be used, but this layers have a
+default setting *color=7 (white/black)* and *linetype='Continuous'*. Text style is always *'STANDARD'*. Only line type
+*'CONTINUOUS'* is supported, therefore :class:`StreamWriter` do not set any line type, which means *'ByLayer'*, and this
+layer line type can be modified in the CAD application later.
+
 Tutorial
 --------
 
@@ -54,18 +65,18 @@ Reference
     Writes the DXF tail. Call is not necessary when you use the context managers :func:`fast_file_writer` or
     :func:`fast_stream_writer`
 
-.. method:: StreamWriter.add_line(start, end, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_line(start, end, layer="0", color=None)
 
-.. method:: StreamWriter.add_circle(center, radius, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_circle(center, radius, layer="0", color=None)
 
-.. method:: StreamWriter.add_arc(center, radius, start=0, end=360, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_arc(center, radius, start=0, end=360, layer="0", color=None)
 
-.. method:: StreamWriter.add_point(location, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_point(location, layer="0", color=None)
 
-.. method:: StreamWriter.add_3dface(vertices, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_3dface(vertices, layer="0", color=None)
 
-.. method:: StreamWriter.add_solid(vertices, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_solid(vertices, layer="0", color=None)
 
-.. method:: StreamWriter.add_polyline(vertices, layer="0", color=None, linetype=None)
+.. method:: StreamWriter.add_polyline(vertices, layer="0", color=None)
 
 .. method:: StreamWriter.add_text(text, insert=(0, 0), height=1., width=1., align="LEFT", rotation=0., oblique=0., layer="0", color=None)
