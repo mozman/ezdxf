@@ -51,44 +51,44 @@ class StreamWriter(object):
     def close(self):
         self.stream.write("0\nENDSEC\n0\nEOF\n")  # write tail
 
-    def add_line(self, start, end, layer="0", color=None, linetype=None):
+    def add_line(self, start, end, layer="0", color=None):
         dxf = ["0\nLINE\n"]
-        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color))
         dxf.append(dxf_vertex(start, code=10))
         dxf.append(dxf_vertex(end, code=11))
         self.stream.write(''.join(dxf))
 
-    def add_circle(self, center, radius, layer="0", color=None, linetype=None):
+    def add_circle(self, center, radius, layer="0", color=None):
         dxf = ["0\nCIRCLE\n"]
-        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color))
         dxf.append(dxf_vertex(center))
         dxf.append(dxf_tag(40, str(rnd(radius))))
         self.stream.write(''.join(dxf))
 
-    def add_arc(self, center, radius, start=0, end=360, layer="0", color=None, linetype=None):
+    def add_arc(self, center, radius, start=0, end=360, layer="0", color=None):
         dxf = ["0\nARC\n"]
-        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color))
         dxf.append(dxf_vertex(center))
         dxf.append(dxf_tag(40, str(rnd(radius))))
         dxf.append(dxf_tag(50, str(rnd(start))))
         dxf.append(dxf_tag(51, str(rnd(end))))
         self.stream.write(''.join(dxf))
 
-    def add_point(self, location, layer="0", color=None, linetype=None):
+    def add_point(self, location, layer="0", color=None):
         dxf = ["0\nPOINT\n"]
-        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color))
         dxf.append(dxf_vertex(location))
         self.stream.write(''.join(dxf))
 
-    def add_3dface(self, vertices, layer="0", color=None, linetype=None):
-        self._add_quadrilateral('3DFACE', vertices, layer, color, linetype)
+    def add_3dface(self, vertices, layer="0", color=None):
+        self._add_quadrilateral('3DFACE', vertices, layer, color)
 
-    def add_solid(self, vertices, layer="0", color=None, linetype=None):
-        self._add_quadrilateral('SOLID', vertices, layer, color, linetype)
+    def add_solid(self, vertices, layer="0", color=None):
+        self._add_quadrilateral('SOLID', vertices, layer, color)
 
-    def _add_quadrilateral(self, dxftype, vertices, layer, color, linetype):
+    def _add_quadrilateral(self, dxftype, vertices, layer, color):
         dxf = ["0\n%s\n" % dxftype]
-        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color))
         vertices = list(vertices)
         if len(vertices) < 3:
             raise ValueError("%s needs 3 ot 4 vertices." % dxftype)
@@ -97,7 +97,7 @@ class StreamWriter(object):
         dxf.extend(dxf_vertex(vertex, code) for code, vertex in enumerate(vertices, start=10))
         self.stream.write(''.join(dxf))
 
-    def add_polyline(self, vertices, layer="0", color=None, linetype=None):
+    def add_polyline(self, vertices, layer="0", color=None):
         vertices = list(vertices)
         if len(vertices):
             if len(vertices[0]) == 3:  # 3d polyline
@@ -109,7 +109,7 @@ class StreamWriter(object):
         else:
             return
         dxf = ["0\nPOLYLINE\n"]
-        dxf.append(dxf_attribs(layer, color, linetype))
+        dxf.append(dxf_attribs(layer, color))
         dxf.append(dxf_tag(66, "1"))  # entities follow
         dxf.append(dxf_tag(70, str(pflags)))
         for vertex in vertices:
@@ -141,15 +141,13 @@ class StreamWriter(object):
         self.stream.write(''.join(dxf))
 
 
-def dxf_attribs(layer, color=None, linetype=None):
+def dxf_attribs(layer, color=None):
     dxf = ["8\n%s\n" % layer]  # layer is required
-    if linetype is not None:
-        dxf.append("6\n%s\n" % linetype)
     if color is not None:
         if 0 <= int(color) < 257:
             dxf.append("62\n%d\n" % color)
         else:
-            raise ValueError("color has to be a number in the range from 0 to 256.")
+            raise ValueError("color has to be an integer in the range from 0 to 256.")
     return "".join(dxf)
 
 
