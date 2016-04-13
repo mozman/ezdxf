@@ -82,13 +82,13 @@ class R12FastStreamWriter(object):
         dxf.append(dxf_vertex(location))
         self.stream.write(''.join(dxf))
 
-    def add_3dface(self, vertices, layer="0", color=None, linetype=None):
-        self._add_quadrilateral('3DFACE', vertices, layer, color, linetype)
+    def add_3dface(self, vertices, invisible=0, layer="0", color=None, linetype=None):
+        self._add_quadrilateral('3DFACE', vertices, invisible, layer, color, linetype)
 
     def add_solid(self, vertices, layer="0", color=None, linetype=None):
-        self._add_quadrilateral('SOLID', vertices, layer, color, linetype)
+        self._add_quadrilateral('SOLID', vertices, 0, layer, color, linetype)
 
-    def _add_quadrilateral(self, dxftype, vertices, layer, color, linetype):
+    def _add_quadrilateral(self, dxftype, vertices, flags, layer, color, linetype):
         dxf = ["0\n%s\n" % dxftype]
         dxf.append(dxf_attribs(layer, color, linetype))
         vertices = list(vertices)
@@ -97,6 +97,8 @@ class R12FastStreamWriter(object):
         elif len(vertices) == 3:
             vertices.append(vertices[-1])  # double last vertex
         dxf.extend(dxf_vertex(vertex, code) for code, vertex in enumerate(vertices, start=10))
+        if flags:
+            dxf.append(dxf_tag(70, str(flags)))
         self.stream.write(''.join(dxf))
 
     def add_polyline(self, vertices, layer="0", color=None, linetype=None):
@@ -721,94 +723,6 @@ arial.ttf
   0
 STYLE
   5
-44B
-  2
-ARIAL_BOLD
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-arialbd.ttf
-  4
-
-  0
-STYLE
-  5
-44C
-  2
-ARIAL_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-ariali.ttf
-  4
-
-  0
-STYLE
-  5
-44D
-  2
-ARIAL_BOLD_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-arialbi.ttf
-  4
-
-  0
-STYLE
-  5
-44E
-  2
-ARIAL_BLACK
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-ariblk.ttf
-  4
-
-  0
-STYLE
-  5
 44F
   2
 ARIAL_NARROW
@@ -826,72 +740,6 @@ ARIAL_NARROW
 1.0
   3
 arialn.ttf
-  4
-
-  0
-STYLE
-  5
-450
-  2
-ARIAL_NARROW_BOLD
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-arialnb.ttf
-  4
-
-  0
-STYLE
-  5
-451
-  2
-ARIAL_NARROW_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-arialni.ttf
-  4
-
-  0
-STYLE
-  5
-452
-  2
-ARIAL_NARROW_BOLD_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-arialnbi.ttf
   4
 
   0
@@ -919,28 +767,6 @@ isocpeur.ttf
   0
 STYLE
   5
-454
-  2
-ISOCPEUR_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-isocpeui.ttf
-  4
-
-  0
-STYLE
-  5
 455
   2
 TIMES
@@ -958,72 +784,6 @@ TIMES
 1.0
   3
 times.ttf
-  4
-
-  0
-STYLE
-  5
-456
-  2
-TIMES_BOLD
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-timesbd.ttf
-  4
-
-  0
-STYLE
-  5
-457
-  2
-TIMES_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-timesi.ttf
-  4
-
-  0
-STYLE
-  5
-458
-  2
-TIMES_BOLD_ITALIC
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-timesbi.ttf
   4
 
   0

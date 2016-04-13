@@ -31,7 +31,7 @@ from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
 
-from r12writer import r12_writer
+from .r12writer import r12_writer
 
 def new(dxfversion='AC1009'):
     """Create a new DXF drawing.
