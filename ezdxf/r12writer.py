@@ -28,19 +28,18 @@ TEXT_ALIGN_FLAGS = {
 }
 
 
-@contextmanager
-def fast_stream_writer(stream, fixed_table=False):
-    writer = R12FastStreamWriter(stream, fixed_table)
-    yield writer
-    writer.close()
-
 
 @contextmanager
-def fast_file_writer(filename, fixed_tables=False):
-    with open(filename, 'wt') as stream:
+def r12_writer(stream, fixed_tables=False):
+    if hasattr(stream, 'write'):
         writer = R12FastStreamWriter(stream, fixed_tables)
         yield writer
         writer.close()
+    else:
+        with open(stream, 'wt') as stream:
+            writer = R12FastStreamWriter(stream, fixed_tables)
+            yield writer
+            writer.close()
 
 
 class R12FastStreamWriter(object):
