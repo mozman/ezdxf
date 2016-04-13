@@ -2,16 +2,16 @@ Introduction
 ------------
 
 The fast file/stream writer creates simple DXF R12 drawings with just an ENTITIES section. The HEADER, TABLES and BLOCKS
-sections are not present except *FIXED-TABLES* are written. Only LINE, CIRCLE, ARC, TEXT, POINT, SOLID, 3DFACE and POLYLINE
-entities are supported. *FIXED-TABLES* is a predefined TABLES section, which is written if the init argument
-*fixed_tables* of :class:``R12FastStreamWriter`` is *True*.
+sections are not present except FIXED-TABLES are written. Only LINE, CIRCLE, ARC, TEXT, POINT, SOLID, 3DFACE and POLYLINE
+entities are supported. FIXED-TABLES is a predefined TABLES section, which will be written, if the init argument
+*fixed_tables* of :class:`R12FastStreamWriter` is *True*.
 
 
 The :class:`R12FastStreamWriter` writes the DXF entities as strings direct to the stream without creating an
 in-memory drawing and therefore the processing is very fast.
 
 Because of the lack of a BLOCKS section, BLOCK/INSERT can not be used. Layers can be used, but this layers have a
-default setting *color=7 (white/black)* and *linetype='Continuous'*. If writing the *FIXED-TABLES* some text styles and
+default setting *color=7 (white/black)* and *linetype='Continuous'*. If writing the FIXED-TABLES some text styles and
 line types are supported, else text style is always *'STANDARD'* and line type is always *'ByLayer'*
 
 If using FIXED-TABLES, following additional line types are supported:
@@ -62,7 +62,7 @@ A simple example with different DXF entities::
     from random import random
     import ezdxf
 
-    with ezdxf.fast_file_writer("quick_and_dirty_dxf_r12.dxf") as dxf:
+    with ezdxf.r12_writer("quick_and_dirty_dxf_r12.dxf") as dxf:
         dxf.add_line((0, 0), (17, 23))
         dxf.add_circle((0, 0), radius=2)
         dxf.add_arc((0, 0), radius=3, start=0, end=175)
@@ -81,20 +81,18 @@ A simple example of writing really many entities in a short time::
     MAX_Y_COORD = 1000.0
     CIRCLE_COUNT = 1000000
 
-    with ezdxf.fast_file_writer("many_circles.dxf") as dxf:
+    with ezdxf.r12_writer("many_circles.dxf") as dxf:
         for i in range(CIRCLE_COUNT):
             dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
 
 Reference
 ---------
 
-.. function:: fast_stream_writer(stream, fixed_tables=False)
+.. function:: r12_writer(stream, fixed_tables=False)
 
-    Context manager for writing DXF entities to a stream. *stream* can be any file like object with a *write* method.
+    Context manager for writing DXF entities to a stream/file. *stream* can be any file like object with a *write*
+    method or just a string for writing DXF entities to the file system.
 
-.. function:: fast_file_writer(filename, fixed_tables=False)
-
-    Context manager for writing DXF entities direct to the the file system.
 
 .. class:: R12FastStreamWriter
 
@@ -106,8 +104,7 @@ Reference
 
 .. method:: StreamWriter.close()
 
-    Writes the DXF tail. Call is not necessary when you use the context managers :func:`fast_file_writer` or
-    :func:`fast_stream_writer`
+    Writes the DXF tail. Call is not necessary when you use the context managers :func:`r12_writer`.
 
 .. method:: StreamWriter.add_line(start, end, layer="0", color=None, linetype=None)
 
