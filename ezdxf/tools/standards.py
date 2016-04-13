@@ -58,18 +58,7 @@ def styles():
     return [
         ('STANDARD', 'arial.ttf'),
         ('ARIAL', 'arial.ttf'),
-        ('ARIAL_BOLD', 'arialbd.ttf'),
-        ('ARIAL_ITALIC', 'ariali.ttf'),
-        ('ARIAL_BOLD_ITALIC', 'arialbi.ttf'),
-        ('ARIAL_BLACK', 'ariblk.ttf'),
         ('ARIAL_NARROW', 'arialn.ttf'),
-        ('ARIAL_NARROW_BOLD', 'arialnb.ttf'),
-        ('ARIAL_NARROW_ITALIC', 'arialni.ttf'),
-        ('ARIAL_NARROW_BOLD_ITALIC', 'arialnbi.ttf'),
         ('ISOCPEUR', 'isocpeur.ttf'),
-        ('ISOCPEUR_ITALIC', 'isocpeui.ttf'),
         ('TIMES', 'times.ttf'),
-        ('TIMES_BOLD', 'timesbd.ttf'),
-        ('TIMES_ITALIC', 'timesi.ttf'),
-        ('TIMES_BOLD_ITALIC', 'timesbi.ttf'),
     ]
