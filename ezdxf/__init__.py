@@ -80,7 +80,7 @@ def readfile(filename, encoding='auto'):
 
     if encoding != 'auto':  # override encoding detection and $DWGCODEPAGE
         enc = encoding
-    elif info.version >= 'AC1021':  # R2007 files or newer are always encoded as UTF-8
+    elif info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
         enc = 'utf-8'
     else:
         enc = info.encoding
