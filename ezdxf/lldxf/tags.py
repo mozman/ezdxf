@@ -75,8 +75,7 @@ class Tags(list):
     clone = __copy__
 
     def get_handle(self):
-        """ Search handle of a DXFTag() chunk. Raises ValueError if handle
-        not exists.
+        """Get DXF handle. Raises ValueError if handle not exists.
 
         :returns: handle as hex-string like 'FF'
         """
@@ -89,7 +88,7 @@ class Tags(list):
         return handle
 
     def replace_handle(self, new_handle):
-        """Replace existing handle of a DXFTag() chunk.
+        """Replace existing handle.
         """
         for index, tag in enumerate(self):
             if tag.code in (5, 105):
@@ -100,13 +99,10 @@ class Tags(list):
         return self[0].value
 
     def has_tag(self, code):
-        for tag in self:
-            if tag.code == code:
-                return True
-        return False
+        return any(True for tag in self if tag.code == code)
 
     def find_first(self, code, default=ValueError):
-        """ Returns value of first DXFTag(code, ...) or default if default != ValueError, else raises ValueError.
+        """Returns value of first DXFTag(code, value) or default if default != ValueError, else raises ValueError.
         """
         for tag in self:
             if tag.code == code:
@@ -117,7 +113,7 @@ class Tags(list):
             return default
 
     def get_first_tag(self, code, default=ValueError):
-        """ Returns first DXFTag(code, ...) or default if default != ValueError, else raises ValueError.
+        """Returns first DXFTag(code, value) or default if default != ValueError, else raises ValueError.
         """
         for tag in self:
             if tag.code == code:
@@ -128,12 +124,12 @@ class Tags(list):
             return default
 
     def find_all(self, code):
-        """ Returns a list of DXFTag(code, ...).
+        """Returns a list of DXFTag(code, value).
         """
         return [tag for tag in self if tag.code == code]
 
     def tag_index(self, code, start=0, end=None):
-        """ Return first index of DXFTag(code, ...).
+        """Return first index of DXFTag(code, value).
         """
         if end is None:
             end = len(self)
@@ -145,13 +141,13 @@ class Tags(list):
         raise ValueError(code)
 
     def update(self, code, value):
-        """ Update first existing tag, raises ValueError if tag not exists.
+        """Update first existing tag, raises ValueError if tag not exists.
         """
         index = self.tag_index(code)
         self[index] = DXFTag(code, value)
 
     def set_first(self, code, value):
-        """ Update first existing DXFTag(code, ...) or append a new
+        """Update first existing DXFTag(code, value) or append a new
         DXFTag(code, value).
 
         """
@@ -177,23 +173,17 @@ class Tags(list):
         while index < end:
             tag = self[index]
             if tag.code in codes:
-                index += 1
                 collected_tags.append(tag)
+                index += 1
             else:
                 break
         return collected_tags
 
 
 class TagGroups(list):
+    """Group of tags starts with a SplitTag and ends before the next SplitTag. A SplitTag is a tag with
+    code == splitcode, like (0, 'SECTION') for splitcode == 0.
     """
-    Group of tags starts with a SplitTag and ends before the next SplitTag.
-
-    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
-
-    """
-    # tested a smarter alternative version (Rev# 376) by simon klemenc, but it isn't faster and it has a bigger memory
-    # footprint because it can not work with iterators/generators as input. Tested with 63 real world DXF files, and
-    # some of them were really big files.
     def __init__(self, tags, splitcode=0):
         super(TagGroups, self).__init__()
         self.splitcode = splitcode
@@ -227,7 +217,7 @@ def strip_tags(tags, codes):
 
 
 class CompressedTags(object):
-    """ Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
+    """Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
     """
     def __init__(self, code, tags):
         self.code = code
