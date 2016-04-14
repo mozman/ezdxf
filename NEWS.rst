@@ -4,10 +4,8 @@ News
 
 Version 0.7.6 - ...
 
-  * NEW: Fast and simple DXF R12 file/stream writer.
-    No tables and blocks supported, just the ENTITIES section is present.
-    Supports only LINE, CIRCLE, ARC, TEXT, POINT, SOLID, 3DFACE and POLYLINE.
-    The module can be used without ezdxf.
+  * NEW: r12writer.py - a fast and simple DXF R12 file/stream writer. Supports only LINE, CIRCLE, ARC, TEXT, POINT,
+    SOLID, 3DFACE and POLYLINE. The module can be used without ezdxf.
   * NEW: Get/Set extended data on DXF entity level, add and retrieve your own data to DXF entities
   * NEW: Get/Set app data on DXF entity level (not important for high level users)
   * NEW: Get/Set/Append/Remove reactors on DXF entity level (not important for high level users)
