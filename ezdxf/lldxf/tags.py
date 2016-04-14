@@ -65,6 +65,15 @@ class Tags(list):
     def write(self, stream):
         write_tags(stream, self)
 
+    @classmethod
+    def from_text(cls, text):
+        return cls(skip_comments(string_tagger(text)))
+
+    def __copy__(self):
+        return self.__class__(DXFTag(*tag) for tag in self)
+
+    clone = __copy__
+
     def get_handle(self):
         """ Search handle of a DXFTag() chunk. Raises ValueError if handle
         not exists.
@@ -82,17 +91,19 @@ class Tags(list):
     def replace_handle(self, new_handle):
         """Replace existing handle of a DXFTag() chunk.
         """
-        index = 0
-        tag_count = len(self)
-        while index < tag_count:
-            tag = self[index]
+        for index, tag in enumerate(self):
             if tag.code in (5, 105):
                 self[index] = DXFTag(tag.code, new_handle)
                 return
-            index += 1
 
     def dxftype(self):
-        return self.__getitem__(0).value
+        return self[0].value
+
+    def has_tag(self, code):
+        for tag in self:
+            if tag.code == code:
+                return True
+        return False
 
     def find_first(self, code, default=ValueError):
         """ Returns value of first DXFTag(code, ...) or default if default != ValueError, else raises ValueError.
@@ -126,16 +137,12 @@ class Tags(list):
         """
         if end is None:
             end = len(self)
-        for index, tag in enumerate(self[start:end]):
-            if tag.code == code:
-                return start + index
+        index = start
+        while index < end:
+            if self[index].code == code:
+                return index
+            index += 1
         raise ValueError(code)
-
-    def has_tag(self, code):
-        for tag in self:
-            if tag.code == code:
-                return True
-        return False
 
     def update(self, code, value):
         """ Update first existing tag, raises ValueError if tag not exists.
@@ -151,26 +158,10 @@ class Tags(list):
         try:
             self.update(code, value)
         except ValueError:
-            # noinspection PyTypeChecker
             self.append(DXFTag(code, value))
 
-    def get_value(self, code):
-        index = self.tag_index(code)
-        return self[index].value
-
-    @classmethod
-    def from_text(cls, text):
-        return cls(skip_comments(string_tagger(text)))
-
-    def __copy__(self):
-        return self.__class__(DXFTag(*tag) for tag in self)
-
-    clone = __copy__
-
     def remove_tags(self, codes):
-        delete_tags = [tag for tag in self if tag.code in codes]
-        for tag in delete_tags:
-            self.remove(tag)
+        self[:] = [tag for tag in self if tag.code not in set(codes)]
 
     def collect_consecutive_tags(self, codes, start=0, end=None):
         """Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not
