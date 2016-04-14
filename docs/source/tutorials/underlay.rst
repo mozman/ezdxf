@@ -8,7 +8,7 @@ Insert a PDF, DWF, DWFx or DGN file as drawing underlay, the underlay file is NO
     import ezdxf
 
 
-    dwg = ezdxf.new('AC1015')  # underlay requires the DXF R2000 format or newer
+    dwg = ezdxf.new('AC1015')  # underlay requires the DXF R2000 format or later
     my_underlay_def = dwg.add_underlay_def(filename='my_underlay.pdf', name='1')
     # The (PDF)DEFINITION entity is like a block definition, it just defines the underlay
     # 'name' is misleading, because it defines the page/sheet to be displayed

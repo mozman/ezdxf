@@ -1,5 +1,7 @@
-Introduction
-------------
+.. _r12writer:
+
+Fast DXF R12 File/Stream Writer
+-------------------------------
 
 The fast file/stream writer creates simple DXF R12 drawings with just an ENTITIES section. The HEADER, TABLES and BLOCKS
 sections are not present except FIXED-TABLES are written. Only LINE, CIRCLE, ARC, TEXT, POINT, SOLID, 3DFACE and POLYLINE
