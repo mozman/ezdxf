@@ -29,6 +29,7 @@ Quick-Info
 a simple example::
 
     import ezdxf
+
     drawing = ezdxf.new(dxfversion='AC1024')  # or use the AutoCAD release name ezdxf.new(dxfversion='R2010')
     modelspace = drawing.modelspace()
     modelspace.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
@@ -37,20 +38,20 @@ a simple example::
     modelspace.add_text('Test', dxfattribs={'layer': 'TEXTLAYER'}).set_pos((0, 0.2), align='CENTER')
     drawing.saveas('test.dxf')
 
-example for the *r12_writer*, writes a simple DXF R12 file without in-memory structures::
+example for the *r12writer*, writes a simple DXF R12 file without in-memory structures::
 
     from random import random
-    import ezdxf
+    from ezdxf.r12writer import r12writer
 
     MAX_X_COORD = 1000.0
     MAX_Y_COORD = 1000.0
     CIRCLE_COUNT = 100000
 
-    with ezdxf.r12_writer("many_circles.dxf") as dxf:
+    with r12writer("many_circles.dxf") as dxf:
         for i in range(CIRCLE_COUNT):
             dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
 
-The *r12_writer* supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
+The *r12writer* supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
 present, except FIXED-TABLES are written, than some additional predefined text styles and line types are available.
 
 Installation

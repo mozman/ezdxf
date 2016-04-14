@@ -28,9 +28,8 @@ TEXT_ALIGN_FLAGS = {
 }
 
 
-
 @contextmanager
-def r12_writer(stream, fixed_tables=False):
+def r12writer(stream, fixed_tables=False):
     if hasattr(stream, 'write'):
         writer = R12FastStreamWriter(stream, fixed_tables)
         yield writer
@@ -48,7 +47,6 @@ class R12FastStreamWriter(object):
         if fixed_tables:
             stream.write(PREFACE)
         stream.write("0\nSECTION\n2\nENTITIES\n")  # write header
-
 
     def close(self):
         self.stream.write("0\nENDSEC\n0\nEOF\n")  # write tail
