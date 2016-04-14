@@ -146,7 +146,7 @@ class DXFEntity(object):
         if dxfattr.xtype is not None:
             return self._get_extented_type(subclass_tags, dxfattr.code, dxfattr.xtype)
         else:
-            return subclass_tags.get_value(dxfattr.code)
+            return subclass_tags.find_first(dxfattr.code)
 
     def has_dxf_default_value(self, key):
         """ Returns *True* if the DXF attribute *key* has a DXF standard default value.
