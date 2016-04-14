@@ -253,7 +253,7 @@ LINKED_ENTITIES = {
 
 
 def get_tags_linker():
-    class PersitentVars(object):  # Python 2.7 has no nonlocal statement
+    class PersistentVars(object):  # Python 2.7 has no nonlocal statement
         def __init__(self):
             self.prev = None
             self.expected = ""
@@ -287,6 +287,7 @@ def get_tags_linker():
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
                 #   INSERT with no ATTRIBS, attribs_follow == 0
                 #   ATTRIB as stand alone entity
+                #   ....
                 #   INSERT with ATTRIBS, attribs_follow == 1
                 #   ATTRIB as connected entity
                 #   SEQEND
@@ -298,5 +299,5 @@ def get_tags_linker():
                 vars.expected = LINKED_ENTITIES[dxftype]
         return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
 
-    vars = PersitentVars()
+    vars = PersistentVars()
     return tags_linker

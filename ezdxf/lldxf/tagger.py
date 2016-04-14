@@ -1,4 +1,4 @@
-# Purpose: trusted tag reader
+# Purpose: trusted string tag reader & stream tag reader
 # Created: 10.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
@@ -12,7 +12,7 @@ DUMMY_TAG = DXFTag(999, '')
 
 
 def string_tagger(s):
-    """ Generates DXFTag() from trusted source - relies on
+    """ Generates DXFTag() from trusted (internal) source - relies on
     well formed and error free DXF format. Does not skip comment
     tags 999.
     """
@@ -58,7 +58,7 @@ def skip_comments(tagger, comments=None):
 
 
 def stream_tagger(stream):
-    """ Generates DXFTag() from a stream. Does not skip comment tags 999.
+    """ Generates DXFTag() from a stream (untrusted external source). Does not skip comment tags 999.
     """
     class Counter:
         def __init__(self):

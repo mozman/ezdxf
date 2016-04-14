@@ -4,7 +4,7 @@ Low level DXF Handlers
 At the very base a DXF-file is an ASCII file containing loads of (group code, value) pairs, group code describes the
 type of the value (see TYPE_TABLE in types.py).
 
-The following specifies a line on layer 2 of index colour number 4 from (1,1,0) to (-1,-1,-1):
+The following specifies a line on layer 2 of index color number 4 from (1, 1, 0) to (-1, -1, -1):
 
 ```
 0

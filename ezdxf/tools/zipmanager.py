@@ -67,7 +67,7 @@ class ZipReader(object):
         # since DXF R2007 (AC1021) file encoding is always 'utf-8'
         self.encoding = info.encoding if info.version < 'AC1021' else 'utf-8'
 
-    # interface to TagReader()
+    # interface to stream_tagger()
     def readline(self):
         next_line = self.dxf_file.readline()
         return ustr(next_line, self.encoding)

@@ -209,26 +209,23 @@ class TagGroups(list):
         self._build_groups(tags)
 
     def _build_groups(self, tags):
-        def push_group():
-            if len(group) > 0:
-                self.append(group)
+        def push(_group):
+            if len(_group) > 0:
+                self.append(_group)
 
-        def start_tag(itags):
-            tag = next(itags)
-            while tag.code != self.splitcode:
-                tag = next(itags)
-            return tag
+        def append(tag):  # first do nothing
+            pass
 
-        tag_iterator = iter(tags)
-        group = Tags([start_tag(tag_iterator)])
-
-        for tag in tag_iterator:
+        group = None
+        for tag in tags:  # has to work with iterators/generators
             if tag.code == self.splitcode:
-                push_group()
+                if group is not None:
+                    push(group)
                 group = Tags([tag])
+                append = group.append  # redefine append: add tags to this group
             else:
-                group.append(tag)
-        push_group()
+                append(tag)
+        push(group)
 
     def get_name(self, index):
         return self[index][0].value
