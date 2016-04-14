@@ -206,26 +206,22 @@ class TagGroups(list):
     def __init__(self, tags, splitcode=0):
         super(TagGroups, self).__init__()
         self.splitcode = splitcode
-        self._build_groups(tags)
+        self._build_groups(tags, splitcode)
 
-    def _build_groups(self, tags):
-        def push(_group):
-            if len(_group) > 0:
-                self.append(_group)
-
-        def append(tag):  # first do nothing
+    def _build_groups(self, tags, splitcode):
+        def append(tag):  # first do nothing, skip tags in front of the first split tag
             pass
-
         group = None
         for tag in tags:  # has to work with iterators/generators
-            if tag.code == self.splitcode:
+            if tag.code == splitcode:
                 if group is not None:
-                    push(group)
+                    self.append(group)
                 group = Tags([tag])
                 append = group.append  # redefine append: add tags to this group
             else:
                 append(tag)
-        push(group)
+        if group is not None:
+            self.append(group)
 
     def get_name(self, index):
         return self[index][0].value

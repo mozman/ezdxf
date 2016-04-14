@@ -6,14 +6,14 @@ Drawing Management
 Create New Drawings
 -------------------
 
-.. function:: new(dxfversion='AC1009')
+.. function:: ezdxf.new(dxfversion='AC1009')
 
     Create a new drawing from a template-drawing. The template-drawings are
     located in a template directory, which resides by default in the *ezdxf*
     package subfolder `templates`. The location of the template directory can be changed by
     the global option :attr:`ezdxf.options.template_dir`. *dxfversion* can be either ``'AC1009'``
-    the official DXF version name or ``'R12'`` the AutoCAD release name. You can only create new drawings
-    for the following DXF versions:
+    the official DXF version name or ``'R12'`` the AutoCAD release name (release name works since ezdxf 0.7.4).
+    You can only create new drawings for the following DXF versions:
 
 ======= ========================
 Version AutoCAD Release
@@ -33,13 +33,15 @@ Open Drawings
 You can open DXF drawings from disk or from a text-stream. (byte-stream usage
 is not implemented yet).
 
-.. function:: readfile(filename)
+.. function:: ezdxf.readfile(filename, encoding='auto')
 
     This is the preferred method to open existing DXF files. Read the DXF
     drawing from the file-system with auto-detection of encoding. Decoding
-    errors will be ignored.
+    errors will be ignored. Override encoding detection by setting parameter
+    *encoding* to the estimated encoding. (use Python encoding names like in
+    the :func:`open` function).
 
-.. function:: read(stream)
+.. function:: ezdxf.read(stream)
 
     Read DXF drawing from a text-stream, returns a :class:`Drawing` object.
     Open the stream in text mode (`mode='rt'`) and the correct encoding has to be set at the
@@ -79,7 +81,7 @@ Global Options
     Directory where the :meth:`new` function looks for its template file (AC1009.dxf, AC1015.dxf, ...) , default is
     *None*, which means the package subfolder `templates`. But if you want to use your own templates set this option
     :code:`ezdxf.options.template_dir = "my_template_directory"`. But you don't really need this, just open your
-    template file with :meth:`readfile` and save the drawing as new file with the :meth:`Drawing.saveas` method.
+    template file with :meth:`ezdxf.readfile` and save the drawing as new file with the :meth:`Drawing.saveas` method.
 
     This option is very useful if the *ezdxf* package resides in a zip archive.
 

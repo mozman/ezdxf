@@ -21,7 +21,7 @@ Quick-Info
 - support for DXF versions R13/R14 (AC1012/AC1014), will be upgraded to R2000 (AC1015)
 - support for older versions than R12, will be upgraded to R12 (AC1009)
 - preserves third-party DXF content
-- additional fast and simple DXF R12 file/stream writer, just the ENTITIES section with support for  LINE, CIRCLE, ARC,
+- additional :ref:`r12writer`, just the ENTITIES section with support for  LINE, CIRCLE, ARC,
   TEXT, POINT, SOLID, 3DFACE and POLYLINE.
 
 Contents
