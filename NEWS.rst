@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.7.6 - ...
+Version 0.7.6 - 2016-04-16
 
   * NEW: r12writer.py - a fast and simple DXF R12 file/stream writer. Supports only LINE, CIRCLE, ARC, TEXT, POINT,
     SOLID, 3DFACE and POLYLINE. The module can be used without ezdxf.

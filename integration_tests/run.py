@@ -5,6 +5,7 @@ from subprocess import call
 
 
 os.environ['PYTHONPATH'] = os.path.abspath(os.path.pardir)  # set PYTHONPATH to developer version of ezdxf
+print("PYTHONPATH={}".format(os.environ['PYTHONPATH']))
 WINDOWS = sys.platform.startswith('win')
 
 if len(sys.argv) > 1:
