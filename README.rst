@@ -2,6 +2,21 @@
 ezdxf
 =====
 
+.. image:: https://img.shields.io/pypi/wheel/ezdxf.svg
+   :target: https://pypi.python.org/pypi/ezdxf/
+   :alt: Wheel Status
+
+.. image:: https://img.shields.io/pypi/dm/ezdxf.svg
+   :target: https://pypi.python.org/pypi/ezdxf/
+   :alt: Downloads
+
+.. image:: https://img.shields.io/pypi/v/ezdxf.svg
+   :target: https://pypi.python.org/pypi/ezdxf/
+   :alt: Latest Version
+
+.. image:: https://readthedocs.org/projects/pip/badge/
+   :target: https://ezdxf.readthedocs.org
+
 Abstract
 --------
 
