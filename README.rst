@@ -2,20 +2,25 @@
 ezdxf
 =====
 
+.. image:: https://readthedocs.org/projects/pip/badge/
+   :target: https://ezdxf.readthedocs.org
+   :alt: Read The Docs
+
+.. image:: https://img.shields.io/pypi/l/ezdxf.svg
+   :target: https://pypi.python.org/pypi/ezdxf/
+   :alt: License
+
+.. image:: https://img.shields.io/pypi/pyversions/ezdxf.svg
+   :target: https://pypi.python.org/pypi/ezdxf/
+   :alt: Python Versions
+
 .. image:: https://img.shields.io/pypi/wheel/ezdxf.svg
    :target: https://pypi.python.org/pypi/ezdxf/
    :alt: Wheel Status
 
-.. image:: https://img.shields.io/pypi/dm/ezdxf.svg
+.. image:: https://img.shields.io/pypi/status/ezdxf.svg
    :target: https://pypi.python.org/pypi/ezdxf/
-   :alt: Downloads
-
-.. image:: https://img.shields.io/pypi/v/ezdxf.svg
-   :target: https://pypi.python.org/pypi/ezdxf/
-   :alt: Latest Version
-
-.. image:: https://readthedocs.org/projects/pip/badge/
-   :target: https://ezdxf.readthedocs.org
+   :alt: Status
 
 Abstract
 --------
