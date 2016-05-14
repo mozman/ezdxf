@@ -55,3 +55,4 @@ def add_points_to_spline():
     dwg.saveas("Spline_with_added_points.dxf")
 
 fit_spline()
+

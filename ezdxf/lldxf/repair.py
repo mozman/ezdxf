@@ -189,6 +189,21 @@ def enable_handles(dwg):
     put_handles_into_entity_tags()
     dwg.header['$HANDLING'] = 1
 
+
+def repair_leica_disto_dxf12(dwg):
+    if dwg.dxfversion > 'AC1009':
+        return  # do not repair DXF R13 or later DXF versions
+    for entity in dwg.modelspace():
+        join_subclasses(entity.tags.subclasses)
+
+
+def join_subclasses(subclasses):
+    if len(subclasses) > 1:
+        noclass = subclasses[0]
+        for subclass in subclasses[1:]:
+            noclass.extend(subclass[1:])
+        del subclasses[1:]
+
 _MODEL_SPACE_LAYOUT_TPL = """  0
 LAYOUT
   5

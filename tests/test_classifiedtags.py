@@ -12,6 +12,7 @@ from io import StringIO
 
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.repair import join_subclasses
 
 
 class TestClassifiedTags(unittest.TestCase):
@@ -347,6 +348,51 @@ Title:
 0.85
   7
 ARIALNARROW
+"""
+
+
+class TestRepairLeicaDistoDXF12Files(unittest.TestCase):
+    def test_join_subclasses(self):
+        tags = ClassifiedTags.from_text(LEICA_DISTO_TAGS)
+        join_subclasses(tags.subclasses)
+        self.assertEqual(9, len(tags.noclass))
+        self.assertEqual(1, len(tags.subclasses))
+
+
+LEICA_DISTO_TAGS = """0
+LINE
+100
+AcDbEntity
+8
+LEICA_DISTO_3D
+62
+256
+6
+ByLayer
+5
+75
+100
+AcDbLine
+10
+0.819021
+20
+-0.633955
+30
+-0.273577
+11
+0.753216
+21
+-0.582009
+31
+-0.276937
+39
+0
+210
+0
+220
+0
+230
+1
 """
 
 if __name__ == '__main__':
