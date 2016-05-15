@@ -4,7 +4,7 @@ News
 
 Version 0.7.7 - ...
 
-  * NEW: repair function for Leica Disto DXF R12 files - ezdxf.lldxf.repair.repair_leica_disto_dxf12(dwg)
+  * NEW: repair function for Leica Disto DXF R12 files - ezdxf.lldxf.repair.repair_leica_disto_r12(dwg)
 
 Version 0.7.6 - 2016-04-16
 
