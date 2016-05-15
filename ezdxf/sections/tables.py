@@ -93,6 +93,9 @@ class TablesSection(object):
     def __getitem__(self, key):
         return self._tables[key]
 
+    def __delitem__(self, key):
+        del self._tables[key]
+
     def write(self, stream):
         stream.write('  0\nSECTION\n  2\nTABLES\n')
         for table_name in TABLE_ORDER:
