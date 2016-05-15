@@ -204,13 +204,21 @@ def repair_leica_disto_r12(dwg):
         return  # do not repair DXF R13 or later DXF versions
     for entity in dwg.modelspace():
         join_subclasses(entity.tags.subclasses)
+    if 'block_records' in dwg.sections.tables:
+        del dwg.sections.tables['block_records']
+
+    from .. import VERSION
+    dwg.comments.append("malformed DXF R12 file repaired by ezdxf {v}".format(v=VERSION))
 
 
 def join_subclasses(subclasses):
+    def remove_handles(tags):
+        return (tag for tag in tags if tag.code != 5)
+
     if len(subclasses) > 1:
         noclass = subclasses[0]
         for subclass in subclasses[1:]:
-            noclass.extend(subclass[1:])
+            noclass.extend(remove_handles(subclass[1:]))
         del subclasses[1:]
 
 

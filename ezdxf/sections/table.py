@@ -193,7 +193,7 @@ class Table(object):
             subclass = self._table_header.get_subclass('AcDbSymbolTable')
         else:
             subclass = self._table_header.noclass
-        subclass.update(70, count)
+        subclass.set_first(70, count)
 
     def remove_handle(self, handle):
         """ Remove table-entry from table and entitydb by handle. """
