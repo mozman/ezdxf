@@ -48,7 +48,10 @@ class Drawing(object):
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
+            if repair.is_leica_disto_r12(self):  # check for malformed DXF R12 files by Leica Disto Units
+                repair.repair_leica_disto_r12(self)
             repair.enable_handles(self)
+
         self.layouts = self.dxffactory.get_layouts()
 
         if self.dxfversion > 'AC1009':
