@@ -237,6 +237,9 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('ELLIPSE requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
+        if ratio > 1.:
+            raise ValueError("Parameter 'ratio' has to be <= 1.0")
+
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['center'] = center

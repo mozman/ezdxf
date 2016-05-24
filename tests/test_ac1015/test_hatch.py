@@ -153,8 +153,8 @@ class TestEdgeHatch(unittest.TestCase):
             edge = path.edges[0]
             self.assertEqual('EllipseEdge', edge.EDGE_TYPE, "invalid edge type for 1. edge")
             self.assertEqual((10, 5), edge.center)
-            self.assertEqual((3, 0), edge.major_axis_vector)
-            self.assertEqual(1./3., edge.minor_axis_length)
+            self.assertEqual((3, 0), edge.major_axis)
+            self.assertEqual(1./3., edge.ratio)
             self.assertEqual(270, edge.start_angle)
             self.assertEqual(450, edge.end_angle)  # this value was created by AutoCAD == 90 degree
             self.assertEqual(1, edge.is_counter_clockwise)
@@ -203,7 +203,7 @@ class TestEdgeHatch(unittest.TestCase):
             self.assertEqual('EdgePath', path.PATH_TYPE, "created wrong path type")
             path.add_line((0, 0), (10, 0))
             path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
-            path.add_ellipse((5, 10), major_axis_vector=(5, 0), minor_axis_length=0.2, start_angle=0, end_angle=180)
+            path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
             path.add_line((10, 0), (0, 0))
         # exit with statement and create DXF tags
 
@@ -225,8 +225,8 @@ class TestEdgeHatch(unittest.TestCase):
             edge = path.edges[2]
             self.assertEqual('EllipseEdge', edge.EDGE_TYPE, "invalid edge type for 3. edge")
             self.assertEqual((5, 10), edge.center)
-            self.assertEqual((5, 0), edge.major_axis_vector)
-            self.assertEqual(.2, edge.minor_axis_length)
+            self.assertEqual((5, 0), edge.major_axis)
+            self.assertEqual(.2, edge.ratio)
             self.assertEqual(0, edge.start_angle)
             self.assertEqual(180, edge.end_angle)
             self.assertFalse(edge.is_counter_clockwise)

@@ -1682,8 +1682,8 @@ Hatch Boundary Helper Classes
     Add an :class:`EllipseEdge`.
 
     :param tuple center: center point of ellipse, (x, y) tuple
-    :param tuple major_axis_vector: vector of major axis as (x, y) tuple
-    :param float minor_axis_length: length of minor axis
+    :param tuple major_axis: vector of major axis as (x, y) tuple
+    :param float ratio: ratio of minor axis to major axis as float
     :param float start_angle: start angle of ellipse in degrees
     :param float end_angle: end angle of ellipse in degrees
     :param int is_counter_clockwise: 1 for yes 0 for no

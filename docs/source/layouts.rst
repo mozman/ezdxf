@@ -114,7 +114,8 @@ Create new entities
 
 .. method:: Layout.add_lwpolyline(points, dxfattribs=None)
 
-   Add a 2D polyline, `points` is a list of 2D points. A :class:`LWPolyline` is defined as a single graphic entity and
+   Add a 2D polyline, `points` is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples. Set start_width,
+   end_width to 0 to be ignored (x, y, 0, 0, bulge). A :class:`LWPolyline` is defined as a single graphic entity and
    consume less disk space and memory. (requires DXF version AC1015 or later)
 
 .. method:: Layout.add_mtext(text, dxfattribs=None)

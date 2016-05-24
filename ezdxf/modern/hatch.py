@@ -495,12 +495,14 @@ class EdgePath(object):
         self.edges.append(arc)
         return arc
 
-    def add_ellipse(self, center, major_axis_vector=(1., 0.), minor_axis_length=1.,
+    def add_ellipse(self, center, major_axis=(1., 0.), ratio=1.,
                     start_angle=0., end_angle=360., is_counter_clockwise=0):
+        if ratio > 1.:
+            raise ValueError("Parameter 'ratio' has to be <= 1.0")
         ellipse = EllipseEdge()
         ellipse.center = center
-        ellipse.major_axis_vector = major_axis_vector
-        ellipse.minor_axis_length = minor_axis_length
+        ellipse.major_axis = major_axis
+        ellipse.ratio = ratio
         ellipse.start_angle = start_angle
         ellipse.end_angle = end_angle
         ellipse.is_counter_clockwise = is_counter_clockwise
@@ -604,8 +606,8 @@ class EllipseEdge(object):
 
     def __init__(self):
         self.center = (0., 0.)
-        self.major_axis_vector = (1., 0.)  # Endpoint of major axis relative to center point (in OCS)
-        self.minor_axis_length = 1.
+        self.major_axis = (1., 0.)  # Endpoint of major axis relative to center point (in OCS)
+        self.ratio = 1.
         self.start_angle = 0.
         self.end_angle = 360.
         self.is_counter_clockwise = 0
@@ -618,9 +620,9 @@ class EllipseEdge(object):
             if code == 10:
                 edge.center = value
             elif code == 11:
-                edge.major_axis_vector = value
+                edge.major_axis = value
             elif code == 40:
-                edge.minor_axis_length = value
+                edge.ratio = value
             elif code == 50:
                 edge.start_angle = value
             elif code == 51:
@@ -632,8 +634,8 @@ class EllipseEdge(object):
     def dxftags(self):
         return [DXFTag(72, 3),  # edge type
                 DXFTag(10, self.center),
-                DXFTag(11, self.major_axis_vector),
-                DXFTag(40, self.minor_axis_length),
+                DXFTag(11, self.major_axis),
+                DXFTag(40, self.ratio),
                 DXFTag(50, self.start_angle),
                 DXFTag(51, self.end_angle),
                 DXFTag(73, self.is_counter_clockwise)
