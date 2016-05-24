@@ -22,9 +22,9 @@ each edge can be one of the following elements:
     - ellipse :meth:`EdgePath.add_ellipse`
     - spline :meth:`EdgePath.add_spline`
 
-Create a solid hatch with an edge path as boundary path:
+Create a solid hatch with an edge path (ellipse) as boundary path:
 
-.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_edge_path.py
+.. literalinclude:: ../../../examples/tut/hatch/solid_hatch_ellipse.py
 
 Create hatches with multiple boundary paths (islands)
 -----------------------------------------------------
