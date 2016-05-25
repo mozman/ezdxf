@@ -101,7 +101,7 @@ column_spacing R12     distance between two insert points in column direction (f
    Place block references in a grid layout with grid size=(rows, columns)-tuple and
    spacing=(row_spacing, column_spacing)-tuple. `spacing` is the distance from insertion point to insertion point.
 
-.. method:: Insert.__iter__()
+.. method:: Insert.attribs()
 
    Iterate over appended :class:`Attrib` objects.
 
