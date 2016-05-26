@@ -9,9 +9,9 @@ ezdxf
 
 Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 
-.. image:: https://img.shields.io/pypi/dm/ezdxf.svg
-   :target: https://pypi.python.org/pypi/ezdxf/
-   :alt: Downloads
+.. image:: https://readthedocs.org/projects/pip/badge/
+   :target: https://ezdxf.readthedocs.io
+   :alt: Read The Docs
 
 .. image:: https://img.shields.io/pypi/l/ezdxf.svg
    :target: https://pypi.python.org/pypi/ezdxf/
@@ -33,9 +33,6 @@ Welcome! This is the documentation for ezdxf |version|, last updated |today|.
    :target: https://pypi.python.org/pypi/ezdxf/
    :alt: Status
 
-.. image:: https://readthedocs.org/projects/pip/badge/
-   :target: https://ezdxf.readthedocs.org
-   :alt: Read The Docs
 
 Quick-Info
 ----------

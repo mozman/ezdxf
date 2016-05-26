@@ -52,20 +52,24 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
     except KeyError:
         raise NotImplementedError("'%s' block record setup not implemented, send an email to "
                                   "<mozman@gmx.at> with your DXF file." % block_name)
-    block_name = block_record.dxf.name  # can be *Model_Space or *MODEL_SPACE
+    real_block_name = block_record.dxf.name  # can be *Model_Space or *MODEL_SPACE
     block_record_handle = block_record.dxf.handle
 
     try:
-        block = dwg.blocks.get(block_name)
+        block = dwg.blocks.get(real_block_name)
     except KeyError:
         raise NotImplementedError("'%s' block setup not implemented, send an email to "
-                                  "<mozman@gmx.at> with your DXF file." % block_name)
+                                  "<mozman@gmx.at> with your DXF file." % real_block_name)
     else:
         block.set_block_record_handle(block_record_handle)   # grant valid linking
 
     layout_handle = create_layout_tags(dwg, block_record_handle, owner=layout_dict.dxf.handle, tag_string=tag_string)
     layout_dict[layout_name] = layout_handle  # insert layout into the layout management table
     block_record.dxf.layout = layout_handle  # link model space block record to layout
+
+    # rename block to standard format (*Model_Space or *Paper_Space)
+    if real_block_name != block_name:
+        dwg.blocks.rename_block(real_block_name, block_name)
 
 
 def create_layout_tags(dwg, block_record_handle, owner, tag_string):
