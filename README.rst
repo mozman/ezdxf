@@ -3,7 +3,7 @@ ezdxf
 =====
 
 .. image:: https://readthedocs.org/projects/pip/badge/
-   :target: https://ezdxf.readthedocs.org
+   :target: https://ezdxf.readthedocs.io
    :alt: Read The Docs
 
 .. image:: https://img.shields.io/pypi/l/ezdxf.svg
@@ -90,7 +90,7 @@ Documentation
 
 http://pythonhosted.org/ezdxf
 
-http://ezdxf.readthedocs.org/
+http://ezdxf.readthedocs.io/
 
 The source code of ezdxf can be found on bitbucket.org at:
 

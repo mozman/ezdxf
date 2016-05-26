@@ -7,6 +7,7 @@ Version 0.7.7 - ...
   * NEW: repairs malformed Leica Disto DXF R12 files, ezdxf saves a valid DXF R12 file.
   * CHANGE: renamed parameters for EdgePath.add_ellipse() - major_axis_vector -> major_axis; minor_axis_length -> ratio
     to be consistent to the ELLIPSE entity
+  * improved DXF R13/R14 compatibility
 
 Version 0.7.6 - 2016-04-16
 
