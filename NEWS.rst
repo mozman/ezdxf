@@ -5,6 +5,8 @@ News
 Version 0.7.7 - ...
 
   * NEW: repairs malformed Leica Disto DXF R12 files, ezdxf saves a valid DXF R12 file.
+  * NEW: added Layout.unlink(entity) method: unlinks an entity from layout but does not delete entity from the drawing database.
+  * NEW: added Drawing.add_xref_def(filename, name) for adding external reference definitions
   * CHANGE: renamed parameters for EdgePath.add_ellipse() - major_axis_vector -> major_axis; minor_axis_length -> ratio
     to be consistent to the ELLIPSE entity
   * improved DXF R13/R14 compatibility

@@ -70,8 +70,9 @@ Drawing Attributes
 
     Shortcut for :attr:`Drawing.sections.entities`
 
-    Reference to the :class:`EntitySection` of the drawing, where all
-    graphical entities are stored, independently from modelspace or layout.
+    Reference to the :class:`EntitySection` of the drawing, where all graphical entities are stored, but only from
+    model space and the *active* layout (paper space). Just for your information: Entities of other layouts are stored
+    as blocks in the :class:`BlocksSection`.
 
 .. attribute:: Drawing.blocks
 
@@ -186,6 +187,15 @@ Drawing Methods
     :param filename: underlay file name
     :param format: file format (pdf, dwf or dgn) or ext=get format from filename extension
     :param name: pdf: page number to display; dgn: 'default'; dwf: ????
+
+.. method:: Drawing.add_xref_def(filename, name)
+
+    Add an external reference (xref) definition to the blocks section.
+
+    Add xref to a layout by :meth:`Layout.add_blockref`.
+
+    :param filename: external reference filename
+    :param name: block name for the xref
 
 .. method:: Drawing.save(encoding='auto')
 

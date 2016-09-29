@@ -11,7 +11,7 @@ import warnings
 
 from . import database
 from .lldxf.tags import DXFTag, write_tags
-from .lldxf.const import DXFVersionError, acad_release
+from .lldxf.const import DXFVersionError, acad_release, BLK_XREF
 from .lldxf.tagger import stream_tagger
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
@@ -234,6 +234,19 @@ class Drawing(object):
         if format == 'ext':
             format=filename[-3:]
         return self.objects.add_underlay_def(filename, format, name)
+
+    def add_xref_def(self, filename, name, flags=BLK_XREF):
+        """ Add an external reference (xref) definition to the blocks section.
+
+        Add xref to a layout by `layout.add_blockref(name, insert=(0, 0))`.
+
+        :param filename: external reference filename
+        :param name: name of the xref block
+        """
+        self.blocks.new(name=name, dxfattribs={
+            'flags': flags,
+            'xref_path': filename
+        })
 
     def _get_encoding(self):
         codepage = self.header.get('$DWGCODEPAGE', 'ANSI_1252')
