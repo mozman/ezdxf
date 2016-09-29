@@ -90,12 +90,17 @@ class BaseLayout(GraphicsFactory):
         self._entity_space.append(entity.dxf.handle)
         self._set_paperspace(entity)
 
+    def unlink_entity(self, entity):
+        """ Delete entity from entity space but not from the drawing database.
+        """
+        self._entity_space.delete_entity(entity)
+        entity.dxf.paperspace = -1  # set invalid paper space
+
     def delete_entity(self, entity):
         """ Delete entity from entity space and drawing database.
         """
-        self.entitydb.delete_entity(entity)  # 1. database
-        self._entity_space.delete_entity(entity)  # 2. entity space
-        entity.dxf.paperspace = -1  # set invalid paper space
+        self.entitydb.delete_entity(entity)  # 1. delete from drawing database
+        self.unlink_entity(entity)  # 2. unlink from entity space
 
     def delete_all_entities(self):
         """ Delete all entities of this layout from entity space and from drawing database.

@@ -23,7 +23,7 @@ Access existing entities
 
 .. method:: Layout.__contains__(entity)
 
-   Test if the layout contains the drawing element `entity`.
+   Test if the layout contains the drawing element `entity` (aka `in` operator).
 
 .. method:: Layout.query(query='*')
 
@@ -177,8 +177,19 @@ Create new entities
    rotation angle around the z-axis in degrees. Create :class:`UnderlayDef` by the :class:`Drawing` factory function
    :meth:`~Drawing.add_underlay_def`, see :ref:`tut_underlay`. (requires DXF version AC1015 or later)
 
+.. method:: Layout.add_entity(dxfentity)
+
+   Add an existing DXF entity to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity from
+   the previous owner layout.
+
+.. warning:: Moving DXF entities between layouts is not well tested and may break the DXF structure!
+
 Delete entities
 ---------------
+
+.. method:: Layout.unlink_entity(entity)
+
+   Unlink `entity` from layout but does not delete entity from the drawing database.
 
 .. method:: Layout.delete_entity(entity)
 
