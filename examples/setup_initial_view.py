@@ -17,7 +17,6 @@ def draw_raster(dwg):
     marker.add_line((0, -1), (0, 1), dxfattribs=attribs.copy())
     marker.add_circle((0, 0), .4, dxfattribs=attribs.copy())
 
-    # define some attributes
     marker.add_attdef('XPOS', (0.5, -1.0), dxfattribs={'height': 0.25, 'color': 4})
     marker.add_attdef('YPOS', (0.5, -1.5), dxfattribs={'height': 0.25, 'color': 4})
     modelspace = dwg.modelspace()
