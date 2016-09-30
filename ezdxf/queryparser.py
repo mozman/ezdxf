@@ -33,7 +33,7 @@ Supported comparators are:
   - '?': match a regular expression
   - '!?': does not match a regular expression
 
-Values can be integers, floats or strings, strings have to be double quoted ("I am a string").
+Values can be integers, floats or strings, strings have to be quoted ("I am a string" or 'I am a string').
 
 examples:
     'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
@@ -48,7 +48,7 @@ RBRK = Suppress(']')
 
 number = Regex(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 number.addParseAction(lambda t: float(t[0]))
-string_ = dblQuotedString.addParseAction(lambda t: t[0][1:-1])
+string_ = quotedString.addParseAction(lambda t: t[0][1:-1])
 
 EntityName = Word(alphanums)
 AttribName = Word(alphanums+'_')

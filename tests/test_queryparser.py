@@ -46,6 +46,16 @@ class TestEntityQueryParserWithAttributes(unittest.TestCase):
         self.assertEqual("LINE", result.EntityQuery[0])
         self.assertEqual(('layer', '==', '0'), tuple(result.AttribQuery))
 
+    def test_double_quoted_attributes(self):
+        result = EntityQueryParser.parseString('LINE[layer=="0"]', parseAll=True)
+        self.assertEqual("LINE", result.EntityQuery[0])
+        self.assertEqual(('layer', '==', '0'), tuple(result.AttribQuery))
+
+    def test_single_quoted_attributes(self):
+        result = EntityQueryParser.parseString("LINE[layer=='0']", parseAll=True)
+        self.assertEqual("LINE", result.EntityQuery[0])
+        self.assertEqual(('layer', '==', '0'), tuple(result.AttribQuery))
+
     def test_attribute_name_with_underscore(self):
         result = EntityQueryParser.parseString('HATCH[solid_fill==0]', parseAll=True)
         self.assertEqual("HATCH", result.EntityQuery[0])
