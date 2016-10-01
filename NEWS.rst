@@ -9,6 +9,7 @@ Version 0.7.7 - ...
   * NEW: added Drawing.add_xref_def(filename, name) for adding external reference definitions
   * CHANGE: renamed parameters for EdgePath.add_ellipse() - major_axis_vector -> major_axis; minor_axis_length -> ratio
     to be consistent to the ELLIPSE entity
+  * UPDATE: EntityQuery to support both 'single' and "double" quoted strings - Harrison Katz <harrison@neadwerx.com>
   * improved DXF R13/R14 compatibility
 
 Version 0.7.6 - 2016-04-16
