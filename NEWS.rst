@@ -11,6 +11,7 @@ Version 0.7.7 - ...
     to be consistent to the ELLIPSE entity
   * UPDATE: EntityQuery to support both 'single' and "double" quoted strings - Harrison Katz <harrison@neadwerx.com>
   * improved DXF R13/R14 compatibility
+  * testing "--close-branch" for removing unused but open branch
 
 Version 0.7.6 - 2016-04-16
 
