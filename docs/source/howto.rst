@@ -63,3 +63,24 @@ between DXF entities, this simplifies the navigation between the DXF entities.
 
 .. important:: This does not render the graphical content of the DXF file to a HTML canvas element.
 
+Adding New XDATA to Entity
+--------------------------
+
+Adding XDATA as list of tuples (group code, value)::
+
+    dwg.appids.new('YOUR_APP_NAME')  # IMPORTANT: create an APP ID entry
+
+    circle = modelspace.add_circle((10, 10), 100)
+    circle.tags.new_xdata('YOUR_APP_NAME',
+                     [
+                         (1000, 'your_web_link.org'),
+                         (1002, '{'),
+                         (1000, 'some text'),
+                         (1002, '{'),
+                         (1071, 1),
+                         (1002, '}'),
+                         (1002, '}')
+                     ])
+
+For group code meaning see DXF reference section `DXF Group Codes in Numerical Order Reference`, valid group codes are
+in the range 1000 - 1071.
