@@ -180,15 +180,20 @@ class TestXDATA(unittest.TestCase):
         self.assertEqual(xdata[3], (1070, 3))
 
     def test_new_data(self):
-        self.tags.new_xdata('NEWXDATA')
+        self.tags.new_xdata('NEWXDATA', [(1000, 'TEXT')])
         self.assertTrue(self.tags.has_xdata('NEWXDATA'))
 
-    def test_set_new_data(self):
-        self.tags.new_xdata('NEWXDATA', tags=[DXFTag(1000, "Extended Data String")])
-        self.assertTrue(self.tags.has_xdata('NEWXDATA'))
         xdata = self.tags.get_xdata('NEWXDATA')
-        self.assertEqual(DXFTag(1001, 'NEWXDATA'), xdata[0])
-        self.assertEqual(DXFTag(1000, "Extended Data String"), xdata[1])
+        self.assertEqual(xdata[0], (1001, 'NEWXDATA'))
+        self.assertEqual(xdata[1], (1000, 'TEXT'))
+
+    def test_set_new_data(self):
+        self.tags.new_xdata('NEWXDATA', tags=[(1000, "Extended Data String")])
+        self.assertTrue(self.tags.has_xdata('NEWXDATA'))
+
+        xdata = self.tags.get_xdata('NEWXDATA')
+        self.assertEqual((1001, 'NEWXDATA'), xdata[0])
+        self.assertEqual((1000, "Extended Data String"), xdata[1])
 
     def test_append_xdata(self):
         xdata = self.tags.get_xdata('MOZMAN')

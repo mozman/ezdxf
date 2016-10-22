@@ -157,7 +157,7 @@ class ClassifiedTags(object):
 
     def set_xdata(self, appid, tags):
         xdata = self.get_xdata(appid)
-        xdata[1:] = tags
+        xdata[1:] = (DXFTag(t[0], t[1]) for t in tags)
 
     def new_xdata(self, appid, tags=None):
         """Append a new xdata block.
@@ -171,7 +171,7 @@ class ClassifiedTags(object):
         """
         xtags = Tags([DXFTag(XDATA_MARKER, appid)])
         if tags is not None:
-            xtags.extend(tags)
+            xtags.extend(DXFTag(t[0], t[1]) for t in tags)
         self.xdata.append(xtags)
         return xtags
 
