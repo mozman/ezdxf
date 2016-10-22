@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.7.8 - ...
+
+  * ...
+
 Version 0.7.7 - 2016-10-22
 
   * NEW: repairs malformed Leica Disto DXF R12 files, ezdxf saves a valid DXF R12 file.
