@@ -103,9 +103,9 @@ The ENTITIES section can be empty.
 The OBJECTS section requires following entities:
 
 - DICTIONARY - the root dict
-  - one entry ``ACAD-GROUP``
+  - one entry ``ACAD_GROUP``
 
-- DICTONARY ``ACAD-GROUP`` can be empty
+- DICTONARY ``ACAD_GROUP`` can be empty
 
 Minimal DXF to download: https://bitbucket.org/mozman/ezdxf/downloads/Minimal_DXF_AC1021.dxf
 
