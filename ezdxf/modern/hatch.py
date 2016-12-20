@@ -705,11 +705,10 @@ class SplineEdge(object):
 
         # build fit points
         # fit points have to be present and valid, otherwise AutoCAD crashes
-        if len(self.fit_points) > 2:
-            tags.append(DXFTag(97, len(self.fit_points)))
-            tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
-        else:
-            raise ValueError("SplineEdge: require at least 3 fit points.")
+        # edit 2016-12-20: this is not true - there are cases with no fit points and without crashing AutoCAD
+        tags.append(DXFTag(97, len(self.fit_points)))
+        tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
+
         tags.append(DXFTag(12, (float(self.start_tangent[0]), float(self.start_tangent[1]))))
         tags.append(DXFTag(13, (float(self.end_tangent[0]), float(self.end_tangent[1]))))
         return tags

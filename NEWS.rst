@@ -4,7 +4,7 @@ News
 
 Version 0.7.8 - ...
 
-  * ...
+  * BUGFIX: HATCH accepts SplineEdges without defined fit points
 
 Version 0.7.7 - 2016-10-22
 
