@@ -94,14 +94,14 @@ http://ezdxf.readthedocs.io/
 
 The source code of ezdxf can be found on bitbucket.org at:
 
-http://bitbucket.org/mozman/ezdxf
+http://github.com/mozman/ezdxf.git
 
 Feedback
 ========
 
 Issue Tracker at:
 
-https://bitbucket.org/mozman/ezdxf/issues
+http://github.com/mozman/ezdxf/issues
 
 Feedback, Q&A, Discussions at Google Groups:
 

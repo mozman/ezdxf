@@ -2,9 +2,11 @@
 News
 ====
 
-Version 0.7.8 - ...
+Version 0.7.8 - 2017-01-22
 
   * BUGFIX: HATCH accepts SplineEdges without defined fit points
+  * BUGFIX: fixed universal line ending problem in ZipReader()
+  * Moved repository to GitHub: https://github.com/mozman/ezdxf.git
 
 Version 0.7.7 - 2016-10-22
 

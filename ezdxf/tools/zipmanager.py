@@ -6,19 +6,14 @@ from __future__ import unicode_literals
 
 __author__ = "mozman <mozman@gmx.at>"
 
-import sys
 import zipfile
 from contextlib import contextmanager
 
 from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.tags import dxf_info
 
-if sys.version_info[:2] < (3, 4):
-    ZIP_OPEN_FILE_MODE = 'rU'
-    HACK_ZIP_EXT_FILE = False
-else:
-    ZIP_OPEN_FILE_MODE = 'r'
-    HACK_ZIP_EXT_FILE = True  # if sys.version_info[:3] <= (3, 4, 0) else False  # if later versions fix this problem
+WIN_NEW_LINE = b'\r\n'
+NEW_LINE = b'\n'
 
 
 class ZipReader(object):
@@ -33,11 +28,7 @@ class ZipReader(object):
 
     def open(self, dxf_file_name=None):
         def open_dxf_file():
-            zip_ext_file = self.zip_archive.open(self.dxf_file_name, mode=ZIP_OPEN_FILE_MODE)
-            if HACK_ZIP_EXT_FILE:
-                # 'U' in mode deprecated, but ZipExtFile._universal is only set if 'U' is in mode ...
-                zip_ext_file._universal = True
-            return zip_ext_file
+            return self.zip_archive.open(self.dxf_file_name)  # open always in binary mode
 
         self.zip_archive = zipfile.ZipFile(self.zip_archive_name)
         self.dxf_file_name = dxf_file_name if dxf_file_name is not None else self.get_first_dxf_file_name()
@@ -69,7 +60,7 @@ class ZipReader(object):
 
     # interface to stream_tagger()
     def readline(self):
-        next_line = self.dxf_file.readline()
+        next_line = self.dxf_file.readline().replace(WIN_NEW_LINE, NEW_LINE)
         return ustr(next_line, self.encoding)
 
     def close(self):
