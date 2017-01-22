@@ -92,7 +92,7 @@ http://pythonhosted.org/ezdxf
 
 http://ezdxf.readthedocs.io/
 
-The source code of ezdxf can be found on bitbucket.org at:
+The source code of ezdxf can be found on GitHub.com at:
 
 http://github.com/mozman/ezdxf.git
 
