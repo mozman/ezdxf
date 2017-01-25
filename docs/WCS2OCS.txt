@@ -1,0 +1,80 @@
+I've got it . Smiley Happy
+For example:
+0
+CIRCLE
+5
+93
+100
+AcDbEntity
+8
+0
+100
+AcDbCircle
+10
+-2.895377203008716
+20
+22.18318099539349
+30
+54.07639973511205
+40
+4.513139999999999
+210
+0.1433730436417575
+220
+-0.2456260747668692
+230
+0.9587032918226155
+The center Point value (-2.895377203008716, 22.18318099539349, 4.07639973511205)is in OCS .
+The value in WCS is (-0.467296, -6.54411, 58.1523)
+When I know the circle center in WCS , and I want to write it in a *.dxf file, 
+I must know the value in OCS.
+
+First : Calculate the OCS .
+We know the x , y , z axis in WCS is:
+Wx (1,0,0) Wy (0,1,0) Wz (0,0,1)
+The origin of the OCS and WCS is the same .
+The z axis of OCS is the value of the "210 " "220" "230"
+We always call it N , Here we are looking for the arbitrary X and Y axes to go 
+with the normal N . They will be called Ax and Ay. N could also be called Az 
+(the Z axis of OCS) .
+
+N (0.1433730436417575,-0.2456260747668692,0.9587032918226155)
+
+We calculate Ax first .
+if ( |Nx| < (1/64) && |Ny| < (1/64) )
+    Ax = Wy x N (where "x" is the cross-product operator).
+else
+    Ax = Wz x N
+
+Scale Ax to unit length.
+I got Ax (0.86364, 0.50411,0).
+
+The method of getting the Ay vector is as follows:
+Ay = N x Ax. Scale Ay to unit length.
+I got Ay (-0.483867, 0.827974,0.28449422547).
+
+So, the OCS matrix is matrixO:
+Axi Ayi Ni
+Axj Ayj Nj
+Axk Ayk Nk
+
+The center Point value in WCS is
+matrix1 : [x0, y0, z0]
+
+The value in OCS is matrix1 x matrixO
+               Axi Ayi Ni
+[ x0 y0 z0 ] x Axj Ayj Nj = [ x y z ]
+               Axk Ayk Nk
+
+The result is the value in OCS, also is the value below "10" "20" "30" in the dxf files.
+
+In this example:
+x0 = -0.467296
+y0 = -6.54411
+z0 = 58.1523
+and
+x = -2.895377203008716
+y = 22.18318099539349
+z = 54.07639973511205
+
+So the key is got the OCS matrix.
