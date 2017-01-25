@@ -1,0 +1,7 @@
+build/*
+dist/*
+.idea/*
+ezdxf.egg-info/*
+docs/build/*
+integration_tests/*.dxf
+tools/plotstyles/*
