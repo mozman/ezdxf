@@ -63,7 +63,7 @@ Contents
    dxfinternals
 
 .. include:: ../../NEWS.rst
-   :end-before: Version 0.3.0
+   :end-before: Version 0.6.5
 
 Indices and tables
 ------------------
