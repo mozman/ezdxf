@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.7.9 - 2017-01-31
+
+  * BUGIX: lost data if model space and active layout are called *MODEL_SPACE and *PAPER_SPACE
+
 Version 0.7.8 - 2017-01-22
 
   * BUGFIX: HATCH accepts SplineEdges without defined fit points

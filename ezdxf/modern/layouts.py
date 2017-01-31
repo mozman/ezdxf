@@ -236,7 +236,7 @@ class Layout(DXF12Layout):
         return self.dxf_layout.dxf.taborder
 
     def is_active(self):
-        return self.block_record_name in ('*Model_Space', '*Paper_Space')
+        return self.block_record_name.upper() in ('*PAPER_SPACE', '*MODEL_SPACE')
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace

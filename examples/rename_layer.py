@@ -2,11 +2,6 @@ import ezdxf
 
 dwg = ezdxf.readfile(r'C:\Users\manfred\Desktop\now\ACAD_R2004.dxf')
 msp = dwg.modelspace()
-print(len(msp))
-
-dwg.saveas(r'C:\Users\manfred\Desktop\now\renamed_layer.dxf')
-
-exit(0)
 
 OLD_LAYER_NAME = 'TITEL_025'
 NEW_LAYER_NAME = 'MOZMAN'
