@@ -174,11 +174,13 @@ class Drawing(object):
 
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':
-            try:
-                active_layout_block_record = self.block_records.get('*Paper_Space')  # fixed name for the active layout
-                return active_layout_block_record.dxf.handle
-            except ValueError:
-                return None
+            for name in ('*Paper_Space', '*PAPER_SPACE'):
+                try:
+                    active_layout_block_record = self.block_records.get(name)
+                    return active_layout_block_record.dxf.handle
+                except ValueError:
+                    pass
+            return None
         else:
             return self.layout().layout_key  # AC1009 supports just one layout and this is the active one
 
