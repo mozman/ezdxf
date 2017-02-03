@@ -73,8 +73,11 @@ class EntityQuery(Sequence):
             entities: sequence of wrapped DXF entities (at least GraphicEntity class)
             query: query string, see class documentation
         """
-        match = entity_matcher(query)
-        self.entities = [entity for entity in entities if match(entity)]
+        if query == '*':
+            self.entities = list(entities)
+        else:
+            match = entity_matcher(query)
+            self.entities = [entity for entity in entities if match(entity)]
 
     def __len__(self):
         """
@@ -109,7 +112,7 @@ class EntityQuery(Sequence):
 
     def groupby(self, dxfattrib='', key=None):
         """
-        Returns a mapping of this result container, where entities are grouped by a dxfattrib or a key function.
+        Returns a dict of entity lists, where entities are grouped by a dxfattrib or a key function.
 
         Args:
             dxfattrib: grouping DXF attribute like 'layer'
@@ -117,7 +120,7 @@ class EntityQuery(Sequence):
             ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
 
         Returns:
-            GroupByResult
+            dict
         """
         return groupby(self.entities, dxfattrib, key)
 

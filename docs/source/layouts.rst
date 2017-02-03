@@ -32,7 +32,7 @@ Access existing entities
 
 .. method:: Layout.groupby(dxfattrib='', key=None)
 
-   Returns a mapping of entities in this layout, where entities are grouped by a dxfattrib or a key function.
+   Returns a dict of entity lists, where entities are grouped by a dxfattrib or a key function.
 
    :param str dxfattrib: grouping DXF attribute like 'layer'
    :param function key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or
