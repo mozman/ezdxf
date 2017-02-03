@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.7.10
+
+  * added groupby(dxfattrib='', key=None) function, supported by all layouts and the query result container: Returns a
+    mapping, where entities are grouped by a dxfattrib or a key function.
+
 Version 0.7.9 - 2017-01-31
 
   * BUGIX: lost data if model space and active layout are called *MODEL_SPACE and *PAPER_SPACE

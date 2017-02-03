@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from ..graphicsfactory import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
-
+from ..groupby import groupby
 
 class DXF12Layouts(object):
     """ The Layout container.
@@ -123,6 +123,9 @@ class BaseLayout(GraphicsFactory):
     # noinspection PyTypeChecker
     def query(self, query='*'):
         return EntityQuery(iter(self), query)
+
+    def groupby(self, dxfattrib="", key=None):
+        return groupby(iter(self), dxfattrib, key)
 
 
 class DXF12Layout(BaseLayout):

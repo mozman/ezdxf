@@ -99,6 +99,14 @@ EntityQuery Class
 
    Returns a new result container with all entities matching this additional query.
 
+.. method:: EntityQuery.groupby(dxfattrib='', key=None)
+
+   Returns a mapping of this result container, where entities are grouped by a dxfattrib or a key function.
+
+   :param str dxfattrib: grouping DXF attribute like 'layer'
+   :param function key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or
+       None for ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+
 
 The new() Function
 ------------------

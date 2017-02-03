@@ -8,6 +8,7 @@ import operator
 
 from .tools.c23 import isstring, Sequence
 from .queryparser import EntityQueryParser
+from .groupby import groupby
 
 
 class EntityQuery(Sequence):
@@ -65,16 +66,19 @@ class EntityQuery(Sequence):
     """
 
     def __init__(self, entities, query='*'):
-        """Setup container with entities matching the initial query.
+        """
+        Setup container with entities matching the initial query.
 
-        :param entities: sequence of wrapped DXF entities (at least GraphicEntity class)
-        :param query: query string, see class documentation
+        Args:
+            entities: sequence of wrapped DXF entities (at least GraphicEntity class)
+            query: query string, see class documentation
         """
         match = entity_matcher(query)
         self.entities = [entity for entity in entities if match(entity)]
 
     def __len__(self):
-        """Count of result entities.
+        """
+        Count of result entities.
         """
         return len(self.entities)
 
@@ -82,7 +86,8 @@ class EntityQuery(Sequence):
         return self.entities.__getitem__(item)
 
     def extend(self, entities, query='*', unique=True):
-        """Extent the query container by entities matching a additional query.
+        """
+        Extent the query container by entities matching a additional query.
         """
         self.entities.extend(EntityQuery(entities, query))
         if unique:
@@ -90,15 +95,31 @@ class EntityQuery(Sequence):
         return self
 
     def remove(self, query='*'):
-        """Remove all entities from result container matching this additional query.
+        """
+        Remove all entities from result container matching this additional query.
         """
         handles_of_entities_to_remove = frozenset(entity.dxf.handle for entity in self.query(query))
         self.entities = [entity for entity in self.entities if entity.dxf.handle not in handles_of_entities_to_remove]
 
     def query(self, query='*'):
-        """Returns a new result container with all entities matching this additional query.
+        """
+        Returns a new result container with all entities matching this additional query.
         """
         return EntityQuery(self.entities, query)
+
+    def groupby(self, dxfattrib='', key=None):
+        """
+        Returns a mapping of this result container, where entities are grouped by a dxfattrib or a key function.
+
+        Args:
+            dxfattrib: grouping DXF attribute like 'layer'
+            key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for
+            ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+
+        Returns:
+            GroupByResult
+        """
+        return groupby(self.entities, dxfattrib, key)
 
 
 def entity_matcher(query):
@@ -219,9 +240,8 @@ def build_entity_attributes_matcher(tokens, options):
 
 
 def unique_entities(entities):
-    """ Yield all unique entities, order of all entities will be preserved, because of these entities:
-    POLYLINE, VERTEX, ..., VERTEX, SEQEND.
-    INSERT, ATTRIB, ..., ATTRIB, SEQEND.
+    """
+    Yield all unique entities, order of all entities will be preserved.
     """
     handles = set()
     for entity in entities:

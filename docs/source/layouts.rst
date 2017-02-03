@@ -30,6 +30,14 @@ Access existing entities
    Get included DXF entities matching the :ref:`entity query string` *query*.
    Returns a sequence of type :class:`EntityQuery`.
 
+.. method:: Layout.groupby(dxfattrib='', key=None)
+
+   Returns a mapping of entities in this layout, where entities are grouped by a dxfattrib or a key function.
+
+   :param str dxfattrib: grouping DXF attribute like 'layer'
+   :param function key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or
+       None for ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+
 Create new entities
 -------------------
 

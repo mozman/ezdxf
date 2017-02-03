@@ -106,7 +106,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         except ValueError:
             rotation = self.get_dxf_attrib('rotation', 0.0)
         else:
-            radians = math.atan2(vector[1], vector[0]) # ignores z-axis
+            radians = math.atan2(vector[1], vector[0])  # ignores z-axis
             rotation = math.degrees(radians)
         return rotation
 
