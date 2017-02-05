@@ -112,6 +112,9 @@ class HeaderSection(object):
     def set_headervar_factory(self, factory):
         self._headervar_factory = factory
 
+    def __len__(self):
+        return len(self.hdrvars)
+
     def __contains__(self, key):
         return key in self.hdrvars
 
@@ -139,6 +142,9 @@ class HeaderSection(object):
                 self.custom_vars.append(tag=custom_property_stack.pop(), value=custom_property_stack.pop())
             except IndexError:
                 break
+
+    def varnames(self):
+        return self.hdrvars.keys()
 
     def write(self, stream):
         def _write(name, value):
