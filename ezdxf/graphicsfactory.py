@@ -10,6 +10,15 @@ import math
 from .lldxf import const
 from .tools import safe_3D_point
 
+
+def copy_attribs(dxfattribs=None):
+    if dxfattribs is None:
+        result = {}
+    else:
+        result = dict(dxfattribs)
+    return result
+
+
 class GraphicsFactory(object):
     """ Abstract base class for BaseLayout()
     """
@@ -24,28 +33,24 @@ class GraphicsFactory(object):
         raise NotImplementedError("Abstract method call.")
 
     def add_point(self, location, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['location'] = location
         return self.build_and_add_entity('POINT', dxfattribs)
 
     def add_line(self, start, end, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['end'] = end
         return self.build_and_add_entity('LINE', dxfattribs)
 
     def add_circle(self, center, radius, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
         return self.build_and_add_entity('CIRCLE', dxfattribs)
 
     def add_arc(self, center, radius, start_angle, end_angle, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
         dxfattribs['start_angle'] = start_angle
@@ -62,15 +67,13 @@ class GraphicsFactory(object):
         return self._add_quadrilateral('3DFACE', points, dxfattribs)
 
     def add_text(self, text, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['text'] = text
         dxfattribs.setdefault('insert', (0, 0))
         return self.build_and_add_entity('TEXT', dxfattribs)
 
     def add_blockref(self, name, insert, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
         blockref = self.build_and_add_entity('INSERT', dxfattribs)
@@ -96,8 +99,7 @@ class GraphicsFactory(object):
                 tag, text, insert = unpack(dxfattribs)
                 blockref.add_attrib(tag, text, insert, dxfattribs)
 
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         autoblock = self._dxffactory.blocks.new_anonymous_block()
         blockref = autoblock.add_blockref(name, (0, 0))
         blockdef = self._dxffactory.blocks[name]
@@ -105,16 +107,14 @@ class GraphicsFactory(object):
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 
     def add_attrib(self, tag, text, insert=(0, 0), dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
         return self.build_and_add_entity('ATTRIB', dxfattribs)
 
     def add_polyline2d(self, points, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         closed = dxfattribs.pop('closed', False)
         polyline = self.build_and_add_entity('POLYLINE', dxfattribs)
         polyline.close(closed)
@@ -122,14 +122,12 @@ class GraphicsFactory(object):
         return polyline
 
     def add_polyline3d(self, points, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
         return self.add_polyline2d(points, dxfattribs)
 
     def add_polymesh(self, size=(3, 3), dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
         m_size = max(size[0], 2)
         n_size = max(size[1], 2)
@@ -145,8 +143,7 @@ class GraphicsFactory(object):
         return polymesh.cast()
 
     def add_polyface(self, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
@@ -155,8 +152,7 @@ class GraphicsFactory(object):
         return polyface.cast()
 
     def _add_quadrilateral(self, type_, points, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         entity = self.build_and_add_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
             entity[x] = point
@@ -172,16 +168,14 @@ class GraphicsFactory(object):
             yield point  # again
 
     def add_shape(self, name, insert=(0, 0), size=1.0, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
         dxfattribs['size'] = size
         return self.build_and_add_entity('SHAPE', dxfattribs)
 
     def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         width, height = size
 
         def viewport_AC1009():
@@ -225,8 +219,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('LWPOLYLINE requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         closed = dxfattribs.pop('closed', False)
         lwpolyline = self.build_and_add_entity('LWPOLYLINE', dxfattribs)
         lwpolyline.set_points(points)
@@ -240,8 +233,7 @@ class GraphicsFactory(object):
         if ratio > 1.:
             raise ValueError("Parameter 'ratio' has to be <= 1.0")
 
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['major_axis'] = major_axis
         dxfattribs['ratio'] = ratio
@@ -253,8 +245,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('MTEXT requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         mtext = self.build_and_add_entity('MTEXT', dxfattribs)
         mtext.set_text(text)
         return mtext
@@ -263,8 +254,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('RAY requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['unit_vector'] = unit_vector
         return self.build_and_add_entity('RAY', dxfattribs)
@@ -273,8 +263,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('XLINE requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['unit_vector'] = unit_vector
         return self.build_and_add_entity('XLINE', dxfattribs)
@@ -283,8 +272,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('SPLINE requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         spline = self.build_and_add_entity('SPLINE', dxfattribs)
         if fit_points is not None:
             spline.set_fit_points(fit_points)
@@ -295,24 +283,21 @@ class GraphicsFactory(object):
             raise const.DXFVersionError('BODY requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
 
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('BODY', acis_data, dxfattribs)
 
     def add_region(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('REGION requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('REGION', acis_data, dxfattribs)
 
     def add_3dsolid(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('3DSOLID requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
 
     def _add_acis_entiy(self, name, acis_data, dxfattribs):
@@ -325,8 +310,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('HATCH requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['solid_fill'] = 1
         dxfattribs['color'] = color
         dxfattribs['pattern_name'] = 'SOLID'
@@ -336,8 +320,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('MESH requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         return self.build_and_add_entity('MESH', dxfattribs)
 
     def add_image(self, image_def, insert, size_in_units, rotation=0., dxfattribs=None):
@@ -349,8 +332,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('IMAGE requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         x_pixels, y_pixels = image_def.dxf.image_size
         x_units, y_units = size_in_units
         x_units_per_pixel = x_units / x_pixels
@@ -376,8 +358,7 @@ class GraphicsFactory(object):
         if self.dxfversion < 'AC1015':
             raise const.DXFVersionError('UNDERLAY requires DXF version AC1015 (R2000) or later, '
                                         'actual DXF version is {}.'.format(self.dxfversion))
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['insert'] = insert
         dxfattribs['underlay_def'] = underlay_def.dxf.handle
         dxfattribs['rotation'] = rotation

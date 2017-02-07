@@ -6,6 +6,8 @@ Version 0.7.10
 
   * added groupby(dxfattrib='', key=None) function, supported by all layouts and the query result container: Returns a
     dict, where entities are grouped by a dxfattrib or a key function.
+  * dxfattribs in factory functions like add_line(dxfattribs=...), now are copied internally and stay unchanged, so they
+    can be reused now multiple times without getting modified by ezdxf.
 
 Version 0.7.9 - 2017-01-31
 
