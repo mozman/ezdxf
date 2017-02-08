@@ -5,10 +5,12 @@
 # Created: 03.02.2017
 # Copyright (C) 2017, Manfred Moitzi
 # License: MIT License
-import ezdxf
+import os
+import sys
 from zipfile import ZipFile
 from functools import partial
-import os
+import ezdxf
+
 
 SOURCE_ZIP = 'rwrcmptest.zip'
 round_n = partial(round, ndigits=6)
@@ -162,7 +164,10 @@ def runtest():
 
 
 if __name__ == '__main__':
-    print('Check if ezdxf writes all drawing content to disk.')
-    runtest()
+    if sys.version_info < (3, 0, 0):
+        print('Read-Write-Read Check: just checking with Python 3, because of so many rounding errors in Python 2.')
+    else:
+        print('Check if ezdxf writes all drawing content to disk.')
+        runtest()
 
 
