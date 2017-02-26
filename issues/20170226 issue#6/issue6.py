@@ -5,24 +5,24 @@ source = 'issue6.dxf'
 target = 'issue6copy.dxf'
 
 src = ezdxf.readfile(source)
-dxf = ezdxf.new(src.dxfversion)
-lay = dxf.layers.get('0')
-lay.set_color(2)
-target_msp = dxf.modelspace()
 source_msp = src.modelspace()
 
+dxf = ezdxf.new(src.dxfversion)
+target_msp = dxf.modelspace()
+
 for e in source_msp.query('LWPOLYLINE'):
-    newPoints = []
+    # you have to copy start- and end width and the bulge values
+    def move_point(point):
+        x, y, start_width, end_width, bulge = point
+        return x+mx, y+my, start_width, end_width, bulge
+
     mx, my = move
     # get_points() returns  (x, y, start_width, end_width, bulge)
-    for p in e.get_points():
-        # you have to copy start- and end width and the bulge values
-        x, y, start_width, end_width, bulge = p
-        newPoints.append((x+mx, y+my, start_width, end_width, bulge))
-    poly = target_msp.add_lwpolyline(newPoints, dxfattribs={
+    target_msp.add_lwpolyline((move_point(p) for p in e.get_points()), dxfattribs={
         'layer': e.dxf.layer,
-        'flags': e.dxf.flags
+        'flags': e.dxf.flags,
+        'closed': e.closed,  # not a real DXF attribute, but it works ;)
     })
-    poly.closed = e.closed
+
 
 dxf.saveas(target)
