@@ -11,7 +11,7 @@ modelspace = dwg.modelspace()
 blockref = modelspace.query('INSERT')[0]
 # get the block definition
 block = dwg.blocks.get(blockref.dxf.name)
-# block behaves like any other layout objects (modelspace)
+# block behaves like any other layout object (modelspace)
 
 for num, line in enumerate(block.query('LWPOLYLINE'), start=1):
     print("\n{}. POLYLINE:".format(num))
