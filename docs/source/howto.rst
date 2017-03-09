@@ -84,3 +84,12 @@ Adding XDATA as list of tuples (group code, value)::
 
 For group code meaning see DXF reference section `DXF Group Codes in Numerical Order Reference`, valid group codes are
 in the range 1000 - 1071.
+
+A360 do not open ezdxf files
+----------------------------
+
+AutoDesk web service A360_ seems to more picky than the AutoCAD desktop applications, may be it helps to use the latest
+DXF version supported by ezdxf, which is ``AC1027`` in the year of writing this lines (2017).
+
+
+.. _A360: https://a360.autodesk.com/viewer/
