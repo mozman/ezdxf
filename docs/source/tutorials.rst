@@ -18,4 +18,6 @@ Tutorials
    tutorials/hatch_pattern
    tutorials/image
    tutorials/underlay
+   tutorials/linetypes
+
 
