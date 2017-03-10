@@ -1,3 +1,4 @@
+import sys
 import ezdxf
 from ezdxf.tools.standards import linetypes
 
@@ -59,5 +60,7 @@ for line in data['lines']:
     line_end = (line[0][1], line[1][1])
     msp.add_line(line_strt, line_end, dxfattribs={'linetype': line[2],
                                                   'layer': line[3]})
+
+ezdxf.audit(dwg)
 
 dwg.saveas('issue08.dxf')

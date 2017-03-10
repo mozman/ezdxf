@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .lldxf.types import cast_tag_value, DXFTag
-from .lldxf.const import DXFStructureError
+from .lldxf.const import DXFStructureError, DXFInternalEzdxfError
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 
@@ -142,7 +142,12 @@ class DXFEntity(object):
 
     def _get_dxf_attrib(self, dxfattr):
         # no subclass is subclass index 0
-        subclass_tags = self.tags.subclasses[dxfattr.subclass]
+        try:
+            subclass_tags = self.tags.subclasses[dxfattr.subclass]
+        except IndexError:
+            params = (self.dxftype(), self.tags.get_handle(), dxfattr.subclass)
+            raise DXFInternalEzdxfError('Subclass index error in {} handle={} subclass={}.'.format(*params))
+
         if dxfattr.xtype is not None:
             return self._get_extented_type(subclass_tags, dxfattr.code, dxfattr.xtype)
         else:
