@@ -20,6 +20,7 @@ from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
+from .audit import Audit
 
 
 class Drawing(object):
@@ -306,10 +307,23 @@ class Drawing(object):
         """
         Cleanup drawing. Call it before saving the drawing but only if necessary, the process could take a while.
 
-        :param groups: removes deleted and invalid entities from groups
+        Args:
+            groups (bool): removes deleted and invalid entities from groups
         """
         if groups and self.groups is not None:
             self.groups.cleanup()
+
+    def audit(self):
+        """
+        Audit drawing for DXF structure errors like undefined line types.
+
+        Returns:
+            Auditor() object
+
+        """
+        auditor = Audit(self)
+        auditor.run()
+        return auditor
 
     def _update_metadata(self):
         now = datetime.now()

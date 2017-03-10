@@ -30,7 +30,6 @@ from .tools import transparency2float, float2transparency  #  convert transparen
 from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
-from.audit import audit
 
 
 def new(dxfversion='AC1009'):

@@ -6,74 +6,71 @@
 audit(drawing, stream): check a DXF drawing for errors.
 """
 from __future__ import unicode_literals
-import sys
 __author__ = "mozman <mozman@gmx.at>"
 __all__ = ['audit']
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 
+MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
+UNDEFINED_LINETYPE = 2
 
-def audit(drawing, stream=None):
-    if stream is None:
-        stream = sys.stdout
-    auditor = Audit(drawing, stream)
-    auditor.run()
+
+class ErrorEntry(object):
+    def __init__(self, code, message='', dxf_entity=None, data=None):
+        self.code = code
+        self.dxf_entity = dxf_entity
+        self.message = message
+        self.data = data
 
 
 class Audit(object):
-    def __init__(self, drawing, stream):
+    def __init__(self, drawing):
         self.drawing = drawing
-        self.writer = stream
+        self.errors = []
 
-    @property
-    def entitydb(self):
-        return self.drawing.entitydb
+    def __len__(self):
+        return len(self.errors)
 
-    def all_drawing_entities(self):
-        for handle in self.entitydb.keys():
-            yield self.drawing.get_dxf_entity(handle)
+    def __bool__(self):
+        return self.__len__() > 0
 
-    def write(self, message):
-        self.writer.write(message)
+    def __iter__(self):
+        return iter(self.errors)
+
+    def write_error_messages(self, stream):
+        for error in self.errors:
+            stream.write(error.message)
 
     def run(self):
         dxfversion = self.drawing.dxfversion
-        release = self.drawing.acad_release
-        self.write('Start audit for DXF version {} release {}\n'.format(dxfversion, release))
         if dxfversion > 'AC1009':  # modern style DXF13 or later
             self.check_root_dict()
         self.check_linetypes()
 
+    def add_error(self, code, message='', dxf_entity=None, data=None):
+        error = ErrorEntry(code, message, dxf_entity, data)
+        self.errors.append(error)
+
+    def filter_errors(self, code):
+        return (error for error in self.errors if error.code == code)
+
     def check_root_dict(self):
-        error_count = 0
-        self.write('Checking root dict: ')
         root_dict = self.drawing.rootdict
         for name in REQUIRED_ROOT_DICT_ENTRIES:
             if name not in root_dict:
-                self.write('\n  missing entry: {}'.format(name))
-                error_count += 1
-        if error_count == 0:
-            self.write('ok\n')
-        else:
-            self.write('\n  {} errors found\n'.format(error_count))
+                self.add_error(
+                    code=MISSING_REQUIRED_ROOT_DICT_ENTRY,
+                    message='Missing root dict entry: {}'.format(name),
+                    dxf_entity=root_dict,
+                    data=name,
+                )
 
     def check_linetypes(self):
         """
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
-        self.write('Checking line types: ')
-        errors = self.check_used_linetypes()
-        if len(errors):
-            self.write('{} errors found\n'.format(len(errors)))
-            for msg in errors:
-                self.write(msg)
-        else:
-            self.write('ok\n')
-
-    def check_used_linetypes(self):
         linetypes = self.drawing.linetypes
         attrib = 'linetype'
-        error_messages = []
         # examine entities in the ENTITIES section
         # and all block layouts
         layouts = [self.drawing.entities]
@@ -83,10 +80,13 @@ class Audit(object):
                 if not entity.supports_dxf_attrib(attrib):
                     continue
                 linetype = entity.get_dxf_attrib(attrib, default=None)
-                if linetype is not None:
-                    if linetype not in linetypes:
-                        dxftype = entity.dxftype()
-                        handle = entity.dxf.handle
-                        msg = '  undefined linetype {} in entity: {} handle={}\n'.format(linetype, dxftype, handle)
-                        error_messages.append(msg)
-        return error_messages
+                if linetype is None:
+                    continue
+                if linetype not in linetypes:
+                    self.add_error(
+                        code=UNDEFINED_LINETYPE,
+                        message='Undefined linetype {}'.format(linetype),
+                        dxf_entity=entity,
+                        data=linetype,
+                    )
+
