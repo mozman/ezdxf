@@ -80,10 +80,6 @@ class Layouts(object):
                 return layout
         raise KeyError("Layout with key '{}' does not exist.".format(layout_key))
 
-    def create(self, name, dxfattribs=None):  # TODO remove deprecated interface
-        warnings.warn("Layouts.create() is deprecated use Layout.new() instead.", DeprecationWarning)
-        self.new(name, dxfattribs)
-
     def new(self, name, dxfattribs=None):
         """ Create a new Layout.
         """

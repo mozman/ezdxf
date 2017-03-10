@@ -2,12 +2,16 @@
 News
 ====
 
-Version 0.7.10
+Version 0.8.0
 
-  * added groupby(dxfattrib='', key=None) function, supported by all layouts and the query result container: Returns a
-    dict, where entities are grouped by a dxfattrib or a key function.
+  * added groupby(dxfattrib='', key=None) entity query function, it is supported by all layouts and the query result
+    container: Returns a dict, where entities are grouped by a dxfattrib or the result of a key function.
   * dxfattribs in factory functions like add_line(dxfattribs=...), now are copied internally and stay unchanged, so they
-    can be reused now multiple times without getting modified by ezdxf.
+    can be reused multiple times without getting modified by ezdxf.
+  * removed deprecated Drawing.create_layout() -> Drawing.new_layout()
+  * removed deprecated Layouts.create() -> Layout.new()
+  * removed deprecated Table.create() -> Table.new()
+  * removed deprecated DXFGroupTable.add() -> DXFGroupTable.new()
 
 Version 0.7.9 - 2017-01-31
 

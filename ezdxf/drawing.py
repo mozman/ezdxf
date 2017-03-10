@@ -159,10 +159,6 @@ class Drawing(object):
         else:
             raise Warning('Not supported for DXF version AC1009.')
 
-    def create__layout(self, name, dxfattribs=None):  # TODO remove deprecated interface
-        warnings.warn("Drawing.create_layout() is deprecated use Drawing.new_layout() instead.", DeprecationWarning)
-        self.new_layout(name, dxfattribs)
-
     def new_layout(self, name, dxfattribs=None):
         if self.dxfversion > 'AC1009':
             if name in self.layouts:

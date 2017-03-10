@@ -59,10 +59,6 @@ class Table(object):
 
     __contains__ = has_entry
 
-    def create(self, name, dxfattribs=None):  # TODO remove deprecated interface
-        warnings.warn("Table.create() is deprecated use Table.new() instead.", DeprecationWarning)
-        self.new(name, dxfattribs)
-
     def new(self, name, dxfattribs=None):
         if self.has_entry(name):
             raise ValueError('%s %s already exists!' % (self._dxfname, name))
