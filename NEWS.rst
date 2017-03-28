@@ -2,7 +2,9 @@
 News
 ====
 
-Version 0.8.0
+Version 0.8.1
+
+Version 0.8.0 - 2017-03-28
 
   * added groupby(dxfattrib='', key=None) entity query function, it is supported by all layouts and the query result
     container: Returns a dict, where entities are grouped by a dxfattrib or the result of a key function.
