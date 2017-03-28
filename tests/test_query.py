@@ -113,6 +113,13 @@ class TestEntityQuery_AC1009(unittest.TestCase):
         result = EntityQuery(modelspace, '*[layer ? "LaY_.*"]i')
         self.assertEqual(3, len(result))
 
+    def test_extend_query(self):
+        modelspace = self.dwg.modelspace()
+        result = EntityQuery(modelspace, '*')
+        length = len(result)
+        result.extend(result, unique=True)
+        self.assertEqual(length, len(result))
+
 
 class TestEntityQuery_AC1015(TestEntityQuery_AC1009):
     VERSION = 'AC1015'

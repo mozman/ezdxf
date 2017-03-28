@@ -13,6 +13,7 @@ Version 0.8.0
   * removed deprecated Layouts.create() -> Layout.new()
   * removed deprecated Table.create() -> Table.new()
   * removed deprecated DXFGroupTable.add() -> DXFGroupTable.new()
+  * BUFIX in EntityQuery.extend()
 
 Version 0.7.9 - 2017-01-31
 

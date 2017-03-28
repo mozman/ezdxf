@@ -248,7 +248,7 @@ def unique_entities(entities):
     """
     handles = set()
     for entity in entities:
-        handle = entity.handle()
+        handle = entity.dxf.handle
         if handle not in handles:
             handles.add(handle)
             yield entity
