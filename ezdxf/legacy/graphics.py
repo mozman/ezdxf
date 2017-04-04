@@ -429,20 +429,36 @@ class Insert(GraphicEntity):
         self.dxf.column_spacing = spacing[1]
         return self
 
-    def get_attrib(self, tag):
+    def get_attrib(self, tag, const=False):
+        """
+        Get attached ATTRIB entity.
+
+        Args:
+            tag (str): tag name
+            const (bool): search for const ATTDEF
+
+        Returns:
+            Attrib()/Attdef() object
+
+        """
         for attrib in self.attribs():
             if tag == attrib.dxf.tag:
                 return attrib
+        if const and self.drawing is not None:
+            block = self.drawing.blocks[self.dxf.name]  # raises KeyError() if not found
+            for attdef in block.get_const_attdefs():
+                if tag == attdef.dxf.tag:
+                    return attdef
         return None
 
-    def get_attrib_text(self, tag, default=None):
-        attrib = self.get_attrib(tag)
+    def get_attrib_text(self, tag, default=None, const=False):
+        attrib = self.get_attrib(tag, const)
         if attrib is None:
             return default
         return attrib.dxf.text
 
-    def has_attrib(self, tag):
-        return self.get_attrib(tag) is not None
+    def has_attrib(self, tag, const=False):
+        return self.get_attrib(tag, const) is not None
 
     def add_attrib(self, tag, text, insert=(0, 0), dxfattribs=None):
         if dxfattribs is None:

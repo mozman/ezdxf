@@ -247,3 +247,8 @@ class DXF12BlockLayout(BaseLayout):
         self.delete_all_entities()
         del self.entitydb[self._block_handle]
         del self.entitydb[self._endblk_handle]
+
+    def get_const_attdefs(self):
+        for attdef in self.attdefs():
+            if attdef.dxf.flags & 2:
+                yield attdef
