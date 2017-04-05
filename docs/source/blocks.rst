@@ -105,18 +105,20 @@ column_spacing R12     distance between two insert points in column direction (f
 
    Iterate over appended :class:`Attrib` objects.
 
-.. method:: Insert.has_attrib(tag)
+.. method:: Insert.has_attrib(tag, search_const=False)
 
-   Returns `True` if an attrib `tag` exists else `False`
+   Returns `True` if an attrib `tag` exists else `False`, for *search_const* doc see :meth:`Insert.get_attrib`.
 
-.. method:: Insert.get_attrib(tag)
+.. method:: Insert.get_attrib(tag, search_const=False)
 
    Get the appended :class:`Attrib` object with :code:`object.dxf.tag == tag`, returns
-   :code:`None` if not found.
+   :code:`None` if not found. Some applications may not attach :class:`Attrib`, which do represent constant values, set
+   *search_const=True* and you get at least the associated :class:`Attdef` entity.
 
-.. method:: Insert.get_attrib_text(tag, default=None)
+.. method:: Insert.get_attrib_text(tag, default=None, search_const=False)
 
-   Get content text for attrib `tag` as string or return `default` if no attrib `tag` exists.
+   Get content text for attrib `tag` as string or return `default` if no attrib `tag` exists, for *search_const* doc
+   see :meth:`Insert.get_attrib`.
 
 .. method:: Insert.add_attrib(tag, text, insert=(0, 0), attribs={})
 

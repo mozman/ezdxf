@@ -4,6 +4,8 @@ News
 
 Version 0.8.1
 
+  * added support for constant ATTRIB/ATTDEF to the INSERT (block reference) entity
+
 Version 0.8.0 - 2017-03-28
 
   * added groupby(dxfattrib='', key=None) entity query function, it is supported by all layouts and the query result
