@@ -164,6 +164,22 @@ field_length          R12     just relevant to CAD programs for validating user 
 
    DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
 
+.. attribute:: Attdef.is_invisibe
+
+   (read/write) Attribute is invisible (does not appear).
+
+.. attribute:: Attdef.is_const
+
+   (read/write) This is a constant attribute.
+
+.. attribute:: Attdef.is_verify
+
+   (read/write) Verification is required on input of this attribute. (CAD application feature)
+
+.. attribute:: Attdef.is_preset
+
+   (read/write) No prompt during insertion. (CAD application feature)
+
 .. method:: Attdef.get_pos()
 
    see method :meth:`Text.get_pos`.
@@ -210,6 +226,22 @@ text_generation_flag  R12     text generation flags (int)
 .. attribute:: Attrib.dxf
 
    DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
+
+.. attribute:: Attrib.is_invisibe
+
+   (read/write) Attribute is invisible (does not appear).
+
+.. attribute:: Attrib.is_const
+
+   (read/write) This is a constant attribute.
+
+.. attribute:: Attrib.is_verify
+
+   (read/write) Verification is required on input of this attribute. (CAD application feature)
+
+.. attribute:: Attrib.is_preset
+
+   (read/write) No prompt during insertion. (CAD application feature)
 
 .. method:: Attrib.get_pos()
 

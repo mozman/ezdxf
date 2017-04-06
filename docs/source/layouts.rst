@@ -250,3 +250,17 @@ BlockLayout
 .. method:: BlockLayout.attdefs()
 
    Iterator for included :class:`Attdef` entities.
+
+.. method:: BlockLayout.has_attdef(tag)
+
+   Returns `True` if an attdef `tag` exists else `False`.
+
+.. method:: BlockLayout.get_attdef(tag)
+
+   Get the attribute definition object :class:`Attdef` with :code:`object.dxf.tag == tag`, returns
+   :code:`None` if not found.
+
+.. method:: BlockLayout.get_attdef_text(tag, default=None)
+
+   Get content text for attdef `tag` as string or return `default` if no attdef `tag` exists.
+

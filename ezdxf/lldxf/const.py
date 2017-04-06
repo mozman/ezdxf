@@ -257,3 +257,8 @@ DIM_REF = 32
 DIM_ORDINATE_TYPE = 64
 DIM_USER_LOCATION_OVERRIDE = 128
 
+# ATTRIB & ATTDEF flags
+ATTRIB_INVISIBLE = 1  # Attribute is invisible (does not appear)
+ATTRIB_CONST = 2  # This is a constant attribute
+ATTRIB_VERIFY = 4  # Verification is required on input of this attribute
+ATTRIB_IS_PRESET = 8  # no prompt during insertion

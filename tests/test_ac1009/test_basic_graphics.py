@@ -239,6 +239,35 @@ class TestBlock(SetupDrawing):
         self.assertEqual('BLOCK', ref.dxf.name)
         self.assertEqual((0., 0.), ref.dxf.insert)
 
+    def test_attribs_getter_properties(self):
+        blockref = self.layout.add_blockref("TESTBLOCK", (0, 0))
+        attrib = blockref.add_attrib('TAG1', "Text1", (0, 1))
+
+        self.assertFalse(attrib.is_const)
+        self.assertFalse(attrib.is_invisible)
+        self.assertFalse(attrib.is_verify)
+        self.assertFalse(attrib.is_preset)
+
+    def test_attribs_setter_properties(self):
+        blockref = self.layout.add_blockref("TESTBLOCK", (0, 0))
+        attrib = blockref.add_attrib('TAG1', "Text1", (0, 1))
+
+        self.assertFalse(attrib.is_const)
+        attrib.is_const = True
+        self.assertTrue(attrib.is_const)
+
+        self.assertFalse(attrib.is_invisible)
+        attrib.is_invisible = True
+        self.assertTrue(attrib.is_invisible)
+
+        self.assertFalse(attrib.is_verify)
+        attrib.is_verify = True
+        self.assertTrue(attrib.is_verify)
+
+        self.assertFalse(attrib.is_preset)
+        attrib.is_preset = True
+        self.assertTrue(attrib.is_preset)
+
     def test_add_new_attribs_to_blockref(self):
         ref = self.layout.add_blockref('BLOCK', (0, 0))
         ref.add_attrib('TEST', 'text', (0, 0))

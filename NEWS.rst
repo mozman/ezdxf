@@ -2,9 +2,11 @@
 News
 ====
 
-Version 0.8.1
+Version 0.8.1 - 2017-04-06
 
-  * added support for constant ATTRIB/ATTDEF to the INSERT (block reference) entity
+  * NEW: added support for constant ATTRIB/ATTDEF to the INSERT (block reference) entity
+  * NEW: added ATTDEF management methods to BlockLayout (has_attdef, get_attdef, get_attdef_text)
+  * NEW: added (read/write) properties to ATTDEF/ATTRIB for setting flags (is_const, is_invisible, is_verify, is_preset)
 
 Version 0.8.0 - 2017-03-28
 

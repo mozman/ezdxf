@@ -37,6 +37,47 @@ class TestAutoBlockref(unittest.TestCase):
         self.assertEqual('TAG2', attrib2.dxf.tag)
         self.assertEqual('text2', attrib2.dxf.text)
 
+    def test_has_attdef(self):
+        self.assertTrue(self.block.has_attdef('TAG1'))
+        self.assertFalse(self.block.has_attdef('TAG_Z'))
+
+    def test_get_attdef(self):
+        attdef = self.block.get_attdef('TAG1')
+        self.assertEqual(attdef.dxf.tag, 'TAG1')
+        attdef = self.block.get_attdef('TAG1_Z')
+        self.assertIsNone(attdef)
+
+    def test_get_attdef_text(self):
+        self.block.add_attdef('TAGX', (0, 0), text='PRESET_TEXT')
+        text = self.block.get_attdef_text('TAGX')
+        self.assertEqual(text, 'PRESET_TEXT')
+
+    def test_attdef_getter_properties(self):
+        attrib = self.block.get_attdef('TAG1')
+
+        self.assertFalse(attrib.is_const)
+        self.assertFalse(attrib.is_invisible)
+        self.assertFalse(attrib.is_verify)
+        self.assertFalse(attrib.is_preset)
+
+    def test_attdef_setter_properties(self):
+        attrib = self.block.get_attdef('TAG1')
+
+        self.assertFalse(attrib.is_const)
+        attrib.is_const = True
+        self.assertTrue(attrib.is_const)
+
+        self.assertFalse(attrib.is_invisible)
+        attrib.is_invisible = True
+        self.assertTrue(attrib.is_invisible)
+
+        self.assertFalse(attrib.is_verify)
+        attrib.is_verify = True
+        self.assertTrue(attrib.is_verify)
+
+        self.assertFalse(attrib.is_preset)
+        attrib.is_preset = True
+        self.assertTrue(attrib.is_preset)
 
 if __name__ == '__main__':
     unittest.main()
