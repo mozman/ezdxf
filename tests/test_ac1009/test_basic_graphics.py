@@ -324,6 +324,79 @@ class TestBlock(SetupDrawing):
         attribs = list(ref.attribs())
         self.assertEqual(len(attribs), 1)
 
+    def test_delete_not_existing_attrib(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+
+        # deleting not existing ATTRIBS should raise an Exception
+        with self.assertRaises(KeyError):
+            ref.delete_attrib('TEST')
+
+    def test_delete_not_existing_attrib_no_exception(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+
+        # ignore=True, should ignore not existing ATTRIBS
+        ref.delete_attrib('TEST', ignore=True)
+        self.assertTrue(True)
+
+    def test_delete_last_attrib(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.add_attrib('TEST', 'Text')
+        self.assertTrue(ref.has_attrib('TEST'))
+
+        # delete last attrib
+        ref.delete_attrib('TEST')
+        self.assertEqual(len(list(ref.attribs())), 0)
+        self.assertEqual(ref.dxf.attribs_follow, 0)
+        self.assertIsNone(ref.tags.link)
+
+    def test_delete_one_of_many_attribs(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.add_attrib('TEST0', 'Text')
+        ref.add_attrib('TEST1', 'Text')
+        ref.add_attrib('TEST2', 'Text')
+        self.assertEqual(len(list(ref.attribs())), 3)
+        self.assertEqual(ref.dxf.attribs_follow, 1)
+
+        ref.delete_attrib('TEST1')
+        self.assertEqual(len(list(ref.attribs())), 2)
+        self.assertEqual(ref.dxf.attribs_follow, 1)
+
+        self.assertTrue(ref.has_attrib('TEST0'))
+        self.assertFalse(ref.has_attrib('TEST1'))
+        self.assertTrue(ref.has_attrib('TEST2'))
+
+    def test_delete_first_of_many_attribs(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        ref.add_attrib('TEST0', 'Text')
+        ref.add_attrib('TEST1', 'Text')
+        self.assertEqual(len(list(ref.attribs())), 2)
+        self.assertEqual(ref.dxf.attribs_follow, 1)
+
+        ref.delete_attrib('TEST0')
+        self.assertEqual(len(list(ref.attribs())), 1)
+        self.assertEqual(ref.dxf.attribs_follow, 1)
+
+        self.assertFalse(ref.has_attrib('TEST0'))
+        self.assertTrue(ref.has_attrib('TEST1'))
+
+    def test_delete_all_attribs(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        # deleting none existing attribs, is ok
+        ref.delete_all_attribs()
+        self.assertEqual(len(list(ref.attribs())), 0)
+        self.assertEqual(ref.dxf.attribs_follow, 0)
+
+        ref.add_attrib('TEST0', 'Text')
+        ref.add_attrib('TEST1', 'Text')
+        ref.add_attrib('TEST2', 'Text')
+        self.assertEqual(len(list(ref.attribs())), 3)
+        self.assertEqual(ref.dxf.attribs_follow, 1)
+
+        ref.delete_all_attribs()
+        self.assertEqual(len(list(ref.attribs())), 0)
+        self.assertEqual(ref.dxf.attribs_follow, 0)
+        self.assertIsNone(ref.tags.link)
+
 
 class TestShape(SetupDrawing):
     def test_create_shape(self):

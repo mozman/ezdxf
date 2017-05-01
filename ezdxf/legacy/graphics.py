@@ -542,24 +542,82 @@ class Insert(GraphicEntity):
         entity.tags.link = seqend.dxf.handle
         self.dxf.attribs_follow = 1
 
-    def destroy(self):
+    def delete_attrib(self, tag, ignore=False):
         """
-        Delete INSERT entity and attached ATTRIB entities from entity database.
+        Delete attached ATTRIB entity `tag`, raises a KeyError exception if `tag` does not exist, set `ignore` to True,
+        to ignore not existing ATTRIB entities.
+        
+        Args:
+            tag (str): ATTRIB name 
+            ignore (bool): False -> raise KeyError exception if `tag` does not exist 
 
-        Caution: this method is meant for internal usage.
+        """
+        if self.dxf.attribs_follow == 0:
+            if ignore:
+                return
+            else:
+                raise KeyError(tag)
 
+        dxffactory = self.dxffactory
+        handle = self.tags.link
+        prev = self
+        while handle is not None:
+            entity = dxffactory.wrap_handle(handle)
+            next_entity = entity.tags.link
+            if next_entity is None:  # found SeqEnd
+                break
+            else:
+                if entity.dxf.tag == tag:
+                    prev.tags.link = next_entity  # remove entity from linked list
+                    self.entitydb.delete_entity(entity)
+                    self._fix_attribs()
+                    return
+                prev = entity
+                handle = next_entity
+        if not ignore:
+            raise KeyError(tag)
+
+    def delete_all_attribs(self):
+        """
+        Delete all ATTRIB entities attached to the INSERT entity and the following SEQEND entity. Ignores the value
+        of dxf.attribs_follow.
+         
         """
         db = self.entitydb
         handle = self.tags.link
         while handle is not None:
-            tags = db[handle]
+            entity_tags = db[handle]
             db.delete_handle(handle)
-            handle = tags.link
-            tags.link = None
+            handle = entity_tags.link
+            entity_tags.link = None
 
-        #cleanup
         self.tags.link = None
         self.dxf.attribs_follow = 0
+
+    def _fix_attribs(self):
+        if self.dxf.attribs_follow == 0:
+            self.delete_all_attribs()
+        else:
+            handle = self.tags.link
+            if handle is None:
+                self.dxf.attribs.follow = 0
+                return
+            entity = self.dxffactory.wrap_handle(handle)
+            if entity.dxftype() == 'SEQEND':
+                # last attrib was deleted, only the SEQEND entity remains
+                self.entitydb.delete_entity(entity)
+                self.dxf.attribs_follow = 0
+                self.tags.link = None
+                return
+
+    def destroy(self):
+        """
+        Delete all attached ATTRIB entities from entity database.
+
+        Caution: this method is meant for internal usage.
+
+        """
+        self.delete_all_attribs()
 
 
 class SeqEnd(GraphicEntity):

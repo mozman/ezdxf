@@ -122,11 +122,20 @@ column_spacing R12     distance between two insert points in column direction (f
 
 .. method:: Insert.add_attrib(tag, text, insert=(0, 0), attribs={})
 
-   Append an :class:`Attrib` to the block reference. Returns an :class:``Attrib`` object.
+   Append an :class:`Attrib` to the block reference. Returns an :class:`Attrib` object.
 
-Example for appending an attribute to an INSERT entity with non standard alignment::
+Example for appending an attribute to an INSERT entity with none standard alignment::
 
     insert_entity.add_attrib("TAG", "example text").set_pos((3, 7), align='MIDDLE_CENTER')
+
+.. method:: Insert.delete_attrib(tag, ignore=False)
+
+   Delete an :class:`Attrib` from :class:`Insert`. If `ignore` is `False`, an `KeyError` exception is raised, if
+   :class:`Attrib` `tag` does not exist.
+
+.. method:: Insert.delete_all_attribs()
+
+   Delete all attached :class:`Attrib` entities.
 
 Attribs
 =======
