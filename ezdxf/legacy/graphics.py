@@ -529,7 +529,8 @@ class Insert(GraphicEntity):
         return attrib_entity
 
     def _append_attrib_entity(self, entity):
-        if self.dxf.attribs_follow == 0:
+        has_no_attribs_attached = self.tags.link is None
+        if has_no_attribs_attached or self.dxf.attribs_follow == 0:
             prev = self
             seqend = self._new_entity('SEQEND', {})
         else:

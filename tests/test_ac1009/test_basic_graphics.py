@@ -307,6 +307,23 @@ class TestBlock(SetupDrawing):
         self.assertEqual(5, ref.dxf.row_spacing)
         self.assertEqual(10, ref.dxf.column_spacing)
 
+    def test_attribs_follow_abuse(self):
+        ref = self.layout.add_blockref('BLOCK', (0, 0))
+        # set attribs follow without attaching an ATTRIB entity
+        ref.dxf.attribs_follow = 1
+
+        # query all attribs works?
+        attribs = list(ref.attribs())
+        self.assertEqual(len(attribs), 0)
+
+        # testing for attribs works?
+        self.assertFalse(ref.has_attrib('TEST'))
+
+        # adding new attribs works?
+        ref.add_attrib('TEST', 'Text')
+        attribs = list(ref.attribs())
+        self.assertEqual(len(attribs), 1)
+
 
 class TestShape(SetupDrawing):
     def test_create_shape(self):

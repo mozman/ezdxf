@@ -4,7 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 
-version = (0, 8, 1)  # also update VERSION in setup.py
+version = (0, 8, 2)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <mozman@gmx.at>"

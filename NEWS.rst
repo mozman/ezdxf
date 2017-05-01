@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.8.2 - 2017-05-01
+
+  * BUGFIX: setting attribs_follow=1 at INSERT entity before adding an attribute entity works
+
 Version 0.8.1 - 2017-04-06
 
   * NEW: added support for constant ATTRIB/ATTDEF to the INSERT (block reference) entity
