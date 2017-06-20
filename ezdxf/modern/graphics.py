@@ -664,7 +664,7 @@ class LWPolyline(ModernGraphicEntity):
                 if tag.code == 10:
                     if point is not None:
                         yield get_vertex()
-                    point = list(tag.value)
+                    point = list(tag.value[0:2])  # just use x, y coordinates, z is invalid but you never know!
                     attribs = {}
                 else:
                     attribs[tag.code] = tag.value

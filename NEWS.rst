@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.8.3 - ???
+
+  * Lwpolyline: suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)
+
 Version 0.8.2 - 2017-05-01
 
   * NEW: Insert.delete_attrib(tag) - delete ATTRIB entities from the INSERT entity
