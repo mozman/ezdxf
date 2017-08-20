@@ -89,7 +89,7 @@ EntityQuery Class
 
 .. method:: EntityQuery.extend(entities, query='*', unique=True)
 
-   Extent the query container by entities matching a additional query.
+   Extent the query container by entities matching an additional query.
 
 .. method:: EntityQuery.remove(query='*')
 

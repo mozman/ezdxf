@@ -39,8 +39,8 @@ ANSI_1258 cp1258 Vietnam
 DXF Version R2007 and later
 ---------------------------
 
-Starting with DXF version R2007 (AC1021) the drawing files are saved with UTF-8 encoding, the header variable
-*$DWGCODEPAGE* is still in use, but I don't know if the setting has any meaning.
+Starting with DXF version R2007 (AC1021) the drawing files are encoded by UTF-8, the header variable
+*$DWGCODEPAGE* is still in use, but I don't know, if the setting still has any meaning.
 
 Encoding characters in the unicode schema ``\U+nnnn`` is still functional.
 

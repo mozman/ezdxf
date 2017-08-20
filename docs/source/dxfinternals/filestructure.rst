@@ -11,11 +11,10 @@ of a DXF file is as follows:
    in this section of the DXF file. Each parameter has a variable
    name and an associated value.
 
-2. CLASSES - This section holds the information for application-defined
-   classes. This section was introduced with AC1015 and can usually be
-   ignored.
+2. CLASSES - holds the information for application defined classes. This section was introduced with AC1015 and can
+   usually be ignored.
 
-3. TABLES - This section contains definitions of named items.
+3. TABLES - contains definitions of named items.
 
    * Linetype table (LTYPE)
    * Layer table (LAYER)
@@ -26,16 +25,15 @@ of a DXF file is as follows:
    * Dimension Style table (DIMSTYLE)
    * Application Identification table (APPID)
 
-4. BLOCKS - This section contains Block Definition entities
-   describing the entities that make up each Block in the drawing.
+4. BLOCKS - contains all block definitions. A block definition defines the content of a block.
 
-5. ENTITIES - This section contains the drawing entities,
-   including any Block References.
+5. ENTITIES - contains the drawing entities of the model space and the active paper space layout. Entities of other
+   layouts are stored in the BLOCKS sections in special block definitions called `*Paper_Space_nnn`, nnn is an arbitrary
+   but unique number.
 
 6. OBJECTS - non-graphical objects
 
-7. THUMBNAILIMAGE - This section contains a preview image of the DXF
-   file, it is optional and can usually be ignored.
+7. THUMBNAILIMAGE - contains a preview image of the DXF file, it is optional and can usually be ignored.
 
 8. END OF FILE
 
@@ -48,7 +46,7 @@ Minimal DXF Content
 DXF R12
 =======
 
-The DXF format R12 (AC1009) and prior requires just an ENTITIES section::
+The DXF format R12 (AC1009) and prior requires just the ENTITIES section::
 
       0
     SECTION
@@ -62,7 +60,7 @@ The DXF format R12 (AC1009) and prior requires just an ENTITIES section::
 DXF R13/14 and later
 ====================
 
-DXF version R13/14 and later need much more DXF content than DXF version R12.
+DXF version R13/14 and later needs much more DXF content than DXF version R12.
 
 Required sections: HEADER, CLASSES, TABLES, ENTITIES, OBJECTS
 
