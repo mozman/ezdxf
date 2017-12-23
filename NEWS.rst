@@ -5,6 +5,7 @@ News
 Version 0.8.3 - ???
 
   * Lwpolyline: suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)
+  * setup creates a script 'dxfpp' - DXF Pretty Printer
 
 Version 0.8.2 - 2017-05-01
 

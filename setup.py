@@ -48,6 +48,11 @@ setup(
                             'pp/dxf2html.html',
                             'pp/dxf2html.js',
                             'pp/dxf2html.css']},
+    entry_points={
+        'console_scripts': [
+            'dxfpp = ezdxf.pp.__main__:main'
+        ]
+    },
     provides=['ezdxf'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],

@@ -26,10 +26,13 @@ of a DXF file is as follows:
    * Application Identification table (APPID)
 
 4. BLOCKS - contains all block definitions. A block definition defines the content of a block.
+   The block name `*Model_Space` or `*MODEL_SPACE` is reserved for the drawing model space and the block name
+   `*Paper_Space` or `*PAPER_SPACE` is reserved for the active paper space layout. Both block definitions are empty,
+   the content of the model space and the active paper space is stored in the ENTITIES section. The entities of other
+   layouts are stored in special block definitions called `*Paper_Spacennn`, nnn is an arbitrary but unique number.
 
 5. ENTITIES - contains the drawing entities of the model space and the active paper space layout. Entities of other
-   layouts are stored in the BLOCKS sections in special block definitions called `*Paper_Space_nnn`, nnn is an arbitrary
-   but unique number.
+   layouts are stored in the BLOCKS sections.
 
 6. OBJECTS - non-graphical objects
 

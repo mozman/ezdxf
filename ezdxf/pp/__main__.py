@@ -12,7 +12,8 @@ import io
 from .dxf2html import dxf2html
 from ezdxf import readfile, options
 
-if __name__ == "__main__":
+
+def main():
     options.compress_binary_data = True
     try:
         filename = sys.argv[1]
@@ -30,3 +31,7 @@ if __name__ == "__main__":
             fp.write(dxf2html(dwg))
     except IOError:
         print("IOError: can not write file '{}'.".format(html_filename))
+
+
+if __name__ == "__main__":
+    main()
