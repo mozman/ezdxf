@@ -2,6 +2,10 @@
 ezdxf
 =====
 
+.. image:: https://readthedocs.org/projects/pip/badge/
+   :target: https://dxfgrabber.readthedocs.io
+   :alt: Read The Docs
+
 Abstract
 --------
 
@@ -67,8 +71,6 @@ or from source::
 
 Documentation
 =============
-
-http://pythonhosted.org/ezdxf
 
 http://ezdxf.readthedocs.io/
 
