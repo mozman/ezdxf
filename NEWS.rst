@@ -5,7 +5,8 @@ News
 Version 0.8.3 - ???
 
   * Lwpolyline: suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)
-  * setup creates a script 'dxfpp' - DXF Pretty Printer
+  * setup creates a script called 'dxfpp' (DXF Pretty Printer) in the Python script folder
+  * basic support for DXF format AC1032 introduced by AutoCAD 2018
 
 Version 0.8.2 - 2017-05-01
 

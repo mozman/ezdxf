@@ -5,11 +5,11 @@ HEADER
   9
 $ACADVER
   1
-AC1021
+AC1032
   9
 $ACADMAINTVER
- 70
-50
+ 90
+9
   9
 $DWGCODEPAGE
   3
@@ -18,6 +18,10 @@ ANSI_1252
 $LASTSAVEDBY
   1
 unknown
+  9
+$REQUIREDVERSIONS
+160
+0
   9
 $INSBASE
  10
@@ -419,6 +423,10 @@ $DIMLTEX2
   6
 
   9
+$DIMTXTDIRECTION
+ 70
+0
+  9
 $LUNITS
  70
 2
@@ -487,17 +495,25 @@ $TDCREATE
  40
 2455631.34653463
   9
+$TDUCREATE
+ 40
+2455631.263201297
+  9
 $TDUPDATE
  40
 2457455.5701851854
   9
+$TDUUPDATE
+ 40
+2456436.431787477
+  9
 $TDINDWG
  40
-0.0
+0.0003490741
   9
 $TDUSRTIMER
  40
-0.0
+0.0003487153
   9
 $USRTIMER
  70
@@ -537,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-55D
+592
   9
 $SURFTAB1
  70
@@ -809,7 +825,7 @@ $PLIMCHECK
   9
 $PEXTMIN
  10
-0.62886676639706
+0.6288667663970601
  20
 0.7999999523162842
  30
@@ -819,7 +835,7 @@ $PEXTMAX
  10
 9.028866384927335
  20
-7.199999570846558
+7.199999570846557
  30
 0.0
   9
@@ -833,7 +849,7 @@ $PLIMMAX
  10
 10.29945794052965
  20
-8.27189937351257
+8.271899373512568
   9
 $UNITMODE
  70
@@ -948,7 +964,7 @@ $HIDETEXT
 1
   9
 $XCLIPFRAME
-290
+280
 0
   9
 $HALOGAP
@@ -1135,7 +1151,7 @@ ObjectDBX Classes
  90
 0
  91
-13
+15
 280
 0
 281
@@ -1183,7 +1199,7 @@ ObjectDBX Classes
  90
 4095
  91
-19
+26
 280
 0
 281
@@ -1231,7 +1247,7 @@ ObjectDBX Classes
  90
 1152
  91
-4
+2
 280
 0
 281
@@ -1328,6 +1344,38 @@ AcDbDimAssoc
 0
  91
 0
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBSECTIONVIEWSTYLE
+  2
+AcDbSectionViewStyle
+  3
+ObjectDBX Classes
+ 90
+1025
+ 91
+1
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBDETAILVIEWSTYLE
+  2
+AcDbDetailViewStyle
+  3
+ObjectDBX Classes
+ 90
+1025
+ 91
+1
 280
 0
 281
@@ -1517,7 +1565,7 @@ TABLE
   2
 LTYPE
   5
-5
+5F
 330
 0
 100
@@ -1529,7 +1577,7 @@ LTYPE
   5
 14
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1551,7 +1599,7 @@ LTYPE
   5
 15
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1573,7 +1621,7 @@ LTYPE
   5
 16
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1595,7 +1643,7 @@ LTYPE
   5
 1B1
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1633,7 +1681,7 @@ LTYPE
   5
 1B2
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1663,7 +1711,7 @@ LTYPE
   5
 1B3
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1709,7 +1757,7 @@ LTYPE
   5
 39E
 330
-5
+5F
 100
 AcDbSymbolTableRecord
 100
@@ -1772,6 +1820,8 @@ Continuous
 F
 347
 98
+348
+0
   0
 LAYER
   5
@@ -1798,6 +1848,8 @@ Continuous
 F
 347
 98
+348
+0
   0
 LAYER
   5
@@ -1824,6 +1876,8 @@ Continuous
 F
 347
 98
+348
+0
   0
 ENDTAB
   0
@@ -1963,7 +2017,7 @@ APPID
 100
 AcDbSymbolTable
  70
-11
+12
   0
 APPID
   5
@@ -2107,7 +2161,21 @@ ACAD_PSEXT
   0
 APPID
   5
-4C2
+4B0
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbRegAppTableRecord
+  2
+ACAD_NAV_VCDISPLAY
+ 70
+0
+  0
+APPID
+  5
+4E3
 330
 9
 100
@@ -2345,7 +2413,7 @@ AcDbBlockTableRecord
   2
 *Model_Space
 340
-507
+530
  70
 0
 280
@@ -2365,7 +2433,7 @@ AcDbBlockTableRecord
   2
 *Paper_Space
 340
-508
+531
  70
 0
 280
@@ -2721,51 +2789,51 @@ AcDbDictionary
   3
 ACAD_COLOR
 350
-4FB
+524
   3
 ACAD_GROUP
 350
-4FC
+525
   3
 ACAD_LAYOUT
 350
-4FD
+526
   3
 ACAD_MATERIAL
 350
-4FE
+527
   3
 ACAD_MLEADERSTYLE
 350
-4FF
+528
   3
 ACAD_MLINESTYLE
 350
-500
+529
   3
 ACAD_PLOTSETTINGS
 350
-501
+52A
   3
 ACAD_PLOTSTYLENAME
 350
-503
+52C
   3
 ACAD_SCALELIST
 350
-504
+52D
   3
 ACAD_TABLESTYLE
 350
-505
+52E
   3
 ACAD_VISUALSTYLE
 350
-506
+52F
   0
 DICTIONARY
   5
-4FB
+524
 330
 C
 100
@@ -2775,7 +2843,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-4FC
+525
 330
 C
 100
@@ -2785,7 +2853,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-4FD
+526
 330
 C
 100
@@ -2795,15 +2863,15 @@ AcDbDictionary
   3
 Model
 350
-507
+530
   3
 Layout1
 350
-508
+531
   0
 DICTIONARY
   5
-4FE
+527
 330
 C
 100
@@ -2813,7 +2881,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-4FF
+528
 330
 C
 100
@@ -2823,7 +2891,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-500
+529
 330
 C
 100
@@ -2833,7 +2901,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-501
+52A
 330
 C
 100
@@ -2843,13 +2911,13 @@ AcDbDictionary
   0
 ACDBPLACEHOLDER
   5
-502
+52B
 330
-503
+52C
   0
 ACDBDICTIONARYWDFLT
   5
-503
+52C
 330
 C
 100
@@ -2859,15 +2927,15 @@ AcDbDictionary
   3
 Normal
 350
-502
+52B
 100
 AcDbDictionaryWithDefault
 340
-502
+52B
   0
 DICTIONARY
   5
-504
+52D
 330
 C
 100
@@ -2877,7 +2945,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-505
+52E
 330
 C
 100
@@ -2887,7 +2955,7 @@ AcDbDictionary
   0
 DICTIONARY
   5
-506
+52F
 330
 C
 100
@@ -2897,9 +2965,9 @@ AcDbDictionary
   0
 LAYOUT
   5
-507
+530
 330
-4FD
+526
 100
 AcDbPlotSettings
   1
@@ -3017,9 +3085,9 @@ Model
   0
 LAYOUT
   5
-508
+531
 330
-4FD
+526
 100
 AcDbPlotSettings
   1

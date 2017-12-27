@@ -30,7 +30,7 @@ ezdxf is NOT
 Supported Python Versions
 -------------------------
 
-*ezdxf* requires at least Python 2.7 and it's Python 3 compatible. I run unit tests with CPython 2.7, the latest stable
+*ezdxf* requires at least Python 2.7 and it's Python 3 compatible. I run unit tests with the latest stable
 CPython 3 version and the latest stable release of pypy during development. *ezdxf* is written in pure Python
 and requires only *pyparser* as additional library beside the Python Standard Library, hence it should run with
 IronPython and Jython also.

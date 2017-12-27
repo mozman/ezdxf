@@ -14,9 +14,10 @@ acad_release = {
     'AC1021': 'R2007',
     'AC1024': 'R2010',
     'AC1027': 'R2013',
+    'AC1032': 'R2018',
 }
 
-versions_supported_by_new = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024', 'AC1027']
+versions_supported_by_new = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024', 'AC1027', 'AC1032']
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
 acad_release_to_dxf_version = {

@@ -9,4 +9,5 @@ AC1018  AutoCAD R2004
 AC1021  AutoCAD R2007
 AC1024  AutoCAD R2010
 AC1027  AutoCAD R2013
+AC1032  AutoCAD R2018
 ======= ========================
