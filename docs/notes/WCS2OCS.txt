@@ -24,6 +24,7 @@ AcDbCircle
 -0.2456260747668692
 230
 0.9587032918226155
+
 The center Point value (-2.895377203008716, 22.18318099539349, 4.07639973511205)is in OCS .
 The value in WCS is (-0.467296, -6.54411, 58.1523)
 When I know the circle center in WCS , and I want to write it in a *.dxf file, 

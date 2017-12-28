@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ezdxf'
-copyright = u'2017, Manfred Moitzi'
+copyright = u'2011-2018, Manfred Moitzi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

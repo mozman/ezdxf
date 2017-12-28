@@ -24,7 +24,7 @@ Version 0.8.0 - 2017-03-28
 
   * added groupby(dxfattrib='', key=None) entity query function, it is supported by all layouts and the query result
     container: Returns a dict, where entities are grouped by a dxfattrib or the result of a key function.
-  * added ezdxf.audit() for DXF error checking for drawing created by ezdxf - but not very capable yet
+  * added ezdxf.audit() for DXF error checking for drawings created by ezdxf - but not very capable yet
   * dxfattribs in factory functions like add_line(dxfattribs=...), now are copied internally and stay unchanged, so they
     can be reused multiple times without getting modified by ezdxf.
   * removed deprecated Drawing.create_layout() -> Drawing.new_layout()

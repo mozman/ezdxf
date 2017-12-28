@@ -1,0 +1,11 @@
+How to access the truecolor property via AutoLISP?
+--------------------------------------------------
+
+By Gopinath Taget
+http://adndevblog.typepad.com/autocad/2013/01/how-to-access-the-truecolor-property-via-autolisp.html
+
+True color property of an entity is stored under the DXF code of 420.  It is a 32-bit integer value. When used with True
+Color, the 32-bit integer represents a 24-bit color value. The high-order byte (8 bits) is 0, the low-order byte an
+unsigned char holds the Blue value (0-255), then comes the Green value, and the next-to-high order byte is the Red Value.
+Converting this integer value to hexadecimal yields the following bit mask: 0x00RRGGBB. For example, a true color with
+Red = 200, Green = 100 and Blue = 50 is 0x00C86432, and in DXF, in decimal, 13132850.
