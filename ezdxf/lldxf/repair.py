@@ -232,6 +232,7 @@ def is_leica_disto_r12(dwg):
         else:
             return False
 
+
 _MODEL_SPACE_LAYOUT_TPL = """  0
 LAYOUT
   5

@@ -118,6 +118,7 @@ class Style(DXFEntity):
         'bigfont': DXFAttr(4),  # big font name, blank if none
     }))
 
+
 _LTYPETEMPLATE = """  0
 LTYPE
   5
@@ -330,6 +331,7 @@ class AppID(DXFEntity):
         'flags': DXFAttr(70),
     }))
 
+
 _VIEWTEMPLATE = """  0
 VIEW
   5
@@ -388,6 +390,7 @@ class View(DXFEntity):
         'view_twist': DXFAttr(50),
         'view_mode': DXFAttr(71),
     }))
+
 
 _DIMSTYLETEMPLATE = """  0
 DIMSTYLE

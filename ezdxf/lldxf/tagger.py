@@ -86,11 +86,11 @@ def stream_tagger(stream):
             code = x.code
             if is_point_code(code):
                 y = next_tag()  # y coordinate is mandatory
-                if y.code != code + 10:
+                if y.code != code + 10:  # like 20 for base x-code 10
                     raise DXFStructureError("Missing required y coordinate near line: {}.".format(line.counter))
                 z = next_tag()  # z coordinate just for 3d points
                 try:
-                    if z.code == code + 20:
+                    if z.code == code + 20:  # it is a z-coordinate like (30, 0.0) for base x-code 10
                         point = (float(x.value), float(y.value), float(z.value))
                     else:
                         point = (float(x.value), float(y.value))

@@ -23,6 +23,7 @@ def dxfbackslashreplace(exc):
     else:
         raise TypeError("can't handle %s" % exc.__name__)
 
+
 PY3 = sys.version_info.major > 2
 if not PY3:
     bytes = lambda u, e: u.encode(e)
