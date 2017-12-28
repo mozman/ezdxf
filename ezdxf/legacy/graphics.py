@@ -5,13 +5,10 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from contextlib import contextmanager
-
 from ..lldxf.classifiedtags import ClassifiedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag, Tags
 from ..lldxf import const
-from ..lldxf.const import VERTEXNAMES, DXFStructureError
+from ..lldxf.const import VERTEXNAMES
 from ..dxfentity import DXFEntity
 from .facemixins import PolyfaceMixin, PolymeshMixin
 
@@ -53,6 +50,7 @@ class GraphicEntity(DXFEntity):
     """
     DXFATTRIBS = make_attribs()
 
+
 _LINE_TPL = """  0
 LINE
   5
@@ -81,6 +79,7 @@ class Line(GraphicEntity):
         'end': DXFAttr(11, xtype='Point2D/3D'),
     })
 
+
 _POINT_TPL = """  0
 POINT
   5
@@ -101,6 +100,7 @@ class Point(GraphicEntity):
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, xtype='Point2D/3D'),
     })
+
 
 _CIRCLE_TPL = """  0
 CIRCLE
@@ -125,6 +125,7 @@ class Circle(GraphicEntity):
         'center': DXFAttr(10, xtype='Point2D/3D'),
         'radius': DXFAttr(40),
     })
+
 
 _ARC_TPL = """  0
 ARC
@@ -155,6 +156,7 @@ class Arc(GraphicEntity):
         'start_angle': DXFAttr(50),
         'end_angle': DXFAttr(51),
     })
+
 
 _TRACE_TPL = """  0
 TRACE
@@ -212,6 +214,7 @@ class Face(Trace):
         'vtx3': DXFAttr(13, xtype='Point3D'),
         'invisible_edge': DXFAttr(70, default=0),
     })
+
 
 _TEXT_TPL = """  0
 TEXT
@@ -306,6 +309,7 @@ class Text(GraphicEntity):
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'LEFT')
 
+
 _BLOCK_TPL = """  0
 BLOCK
   5
@@ -343,6 +347,7 @@ class Block(GraphicEntity):
 class EndBlk(GraphicEntity):
     TEMPLATE = ClassifiedTags.from_text("  0\nENDBLK\n  5\n0\n")
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {'handle': DXFAttr(5)}))
+
 
 _INSERT_TPL = """  0
 INSERT
@@ -626,6 +631,7 @@ class SeqEnd(GraphicEntity):
         'handle': DXFAttr(5),
         'paperspace': DXFAttr(67, default=0),
     }))
+
 
 _ATTRIB_TPL = """  0
 ATTRIB
@@ -1071,6 +1077,7 @@ class Polymesh(Polyline, PolymeshMixin):
         mesh = Polymesh(polyline.tags, polyline.drawing)
         return mesh
 
+
 _VERTEX_TPL = """ 0
 VERTEX
   5
@@ -1213,6 +1220,7 @@ class Dimension(GraphicEntity):
         'oblique_angle': DXFAttr(52),
         'dim_text_rotation': DXFAttr(53),
     })
+
 
 _SHAPE_TPL = """  0
 SHAPE

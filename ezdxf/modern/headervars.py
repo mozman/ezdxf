@@ -10,7 +10,7 @@ from ..lldxf.hdrvars import SingleValue, Point2D, Point3D
 
 VARMAP = {
     '$3DDWFPREC': partial(SingleValue, code=40),
-    '$ACADMAINTVER': partial(SingleValue, code=70),
+    '$ACADMAINTVER': partial(SingleValue, code=70),  # AC1032 changed to code=90
     '$ACADVER': partial(SingleValue, code=1),
     '$ANGBASE': partial(SingleValue, code=50),
     '$ANGDIR': partial(SingleValue, code=70),
