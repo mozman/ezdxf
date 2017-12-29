@@ -106,6 +106,7 @@ class DXFDictionary(DXFEntity):
                 return default
         else:
             return self.AcDbDictinary[index + 1].value
+    get_handle = get  # synonym
 
     def get_entity(self, key):
         """Get object referenced by handle associated by *key* as wrapped entity, raises a *KeyError* if *key* not exists.
