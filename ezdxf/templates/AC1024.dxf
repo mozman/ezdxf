@@ -1,3 +1,5 @@
+999
+last saved by ezdxf 0.8.3 on 2017-12-29 08:11:23
   0
 SECTION
   2
@@ -493,7 +495,7 @@ $TDCREATE
   9
 $TDUPDATE
  40
-2457455.5701851854
+2458117.341238426
   9
 $TDINDWG
  40
@@ -541,7 +543,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-50B
+56B
   9
 $SURFTAB1
  70
@@ -1345,13 +1347,13 @@ AcDbRasterImageDef
   3
 ISM
  90
-        0
+0
  91
-        1
+1
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1361,13 +1363,13 @@ AcDbRasterVariables
   3
 ISM
  90
-        0
+0
  91
-        1
+1
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1377,13 +1379,13 @@ AcDbRasterImageDefReactor
   3
 ISM
  90
-        1
+1
  91
-        1
+1
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1393,13 +1395,13 @@ AcDbRasterImage
   3
 ISM
  90
-     2175
+2175
  91
-        1
+1
 280
-     0
+0
 281
-     1
+1
   0
 CLASS
   1
@@ -1409,13 +1411,13 @@ AcDbPdfDefinition
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        1
+1
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1425,13 +1427,13 @@ AcDbPdfReference
   3
 ObjectDBX Classes
  90
-     4095
+4095
  91
-        1
+1
 280
-     0
+0
 281
-     1
+1
   0
 CLASS
   1
@@ -1441,13 +1443,13 @@ AcDbDwfDefinition
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        2
+2
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1457,13 +1459,13 @@ AcDbDwfReference
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        1
+1
 280
-     0
+0
 281
-     1
+1
   0
 CLASS
   1
@@ -1473,13 +1475,13 @@ AcDbDgnDefinition
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        2
+2
 280
-     0
+0
 281
-     0
+0
   0
 CLASS
   1
@@ -1489,13 +1491,13 @@ AcDbDgnReference
   3
 ObjectDBX Classes
  90
-     1153
+1153
  91
-        1
+1
 280
-     0
+0
 281
-     1
+1
   0
 ENDSEC
   0
@@ -1773,9 +1775,7 @@ Continuous
 370
 -3
 390
-F
-347
-98
+4E8
   0
 LAYER
   5
@@ -1799,9 +1799,7 @@ Continuous
 370
 -3
 390
-F
-347
-98
+4E8
   0
 LAYER
   5
@@ -1825,9 +1823,7 @@ Continuous
 370
 -3
 390
-F
-347
-98
+4E8
   0
 ENDTAB
   0

@@ -37,6 +37,10 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
     def test_get(self):
         self.assertEqual(self.dxfdict.get('ACAD_MOZMAN', 'XXX'), 'XXX')
 
+    def test_get_entity(self):
+        # returns just the handle, because no associated drawing exists
+        self.assertEqual('E', self.dxfdict.get_entity('ACAD_PLOTSTYLENAME'))
+
     def test_get_with_keyerror(self):
         with self.assertRaises(KeyError):
             self.dxfdict.get('ACAD_MOZMAN')

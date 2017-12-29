@@ -52,6 +52,7 @@ layer_subclass = DefSubclass('AcDbLayerTableRecord', {
     'plot': DXFAttr(290),  # don't plot this layer if 0 else 1
     'line_weight': DXFAttr(370),  # enum value???
     'plot_style_name': DXFAttr(390),  # handle to PlotStyleName object
+    'material': DXFAttr(347),  # handle to Material object
 })
 
 

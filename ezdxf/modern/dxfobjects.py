@@ -94,8 +94,9 @@ class DXFDictionary(DXFEntity):
         return sum(1 for tag in self.AcDbDictinary if tag.code == ENTRY_NAME_CODE)
 
     def get(self, key, default=KeyError):
-        """Return the value for *key* if *key* is in the dictionary, else *default*. If *default* is not given, it
-        defaults to :class:`KeyError()`, so that this method raises a *KeyError*.
+        """
+        Return the value (handle) for *key* if *key* is in the dictionary, else *default*. If *default* is not given,
+        it defaults to :class:`KeyError()`, so that this method raises a *KeyError*.
         """
         index = self._get_item_index(key)
         if index is None:
@@ -105,6 +106,15 @@ class DXFDictionary(DXFEntity):
                 return default
         else:
             return self.AcDbDictinary[index + 1].value
+
+    def get_entity(self, key):
+        """Get object referenced by handle associated by *key* as wrapped entity, raises a *KeyError* if *key* not exists.
+        """
+        handle = self.get(key)
+        if self.drawing is not None:
+            return self.dxffactory.wrap_handle(handle)
+        else:
+            return handle
 
     def add(self, key, value, code=350):
         """Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
