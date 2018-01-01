@@ -16,15 +16,13 @@ def string_tagger(s):
     well formed and error free DXF format. Does not skip comment
     tags 999.
     """
+    def next_tag():
+        return DXFTag(int(lines[pos]), lines[pos+1])
 
     lines = s.split('\n')
     if s.endswith('\n'):  # split() creates an extra item, if s ends with '\n'
         lines.pop()
     pos = 0
-
-    def next_tag():
-        return DXFTag(int(lines[pos]), lines[pos+1])
-
     count = len(lines)
     while pos < count:
         x = next_tag()

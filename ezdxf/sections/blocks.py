@@ -6,10 +6,13 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
+import logging
 
 from ..lldxf.tags import TagGroups, DXFStructureError
 from ..lldxf.classifiedtags import ClassifiedTags, get_tags_linker
 from ..lldxf import const
+
+logger = logging.getLogger('ezdxf')
 
 
 class BlocksSection(object):
@@ -67,7 +70,10 @@ class BlocksSection(object):
             modify_tags(tags)  # post read tags fixer for VERTEX!
             entities.append(tags)
             if group[0].value == 'ENDBLK':
-                self.add(build_block_layout(entities))
+                block_layout = build_block_layout(entities)
+                if block_layout in self:
+                    logger.warning('Warning! Multiple block definitions with same name "{}", replacing previous definition'.format(block_layout.name))
+                self.add(block_layout)
                 entities = []
 
     def add(self, block_layout):
