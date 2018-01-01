@@ -91,7 +91,7 @@ def readfile(filename, encoding='auto', reorder_coords=False):
         enc = info.encoding
 
     with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
-        dwg = read(fp, reorder_coords)
+        dwg = read(fp, reorder_coords=reorder_coords)
 
     dwg.filename = filename
     if encoding != 'auto' and is_supported_encoding(encoding):

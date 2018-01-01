@@ -9,6 +9,7 @@ Version 0.8.3 - ???
   * basic support for DXF format AC1032 introduced by AutoCAD 2018
   * ezdxf use logging and writes all logs to a logger called 'ezdxf'. Logging setup is the domain of the application!
   * warns about multiple block definitions with the same name in a DXF file. (Error in DXF file)
+  * experimental parameter in ezdxf.read() and ezdxf.readfile(): reorder_coords, tries do fix coordinate order in LINE entities (10, 11, 20, 21)
 
 Version 0.8.2 - 2017-05-01
 

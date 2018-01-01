@@ -10,11 +10,14 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
+import logging
 
 from .classifiedtags import ClassifiedTags
 from .tags import DXFTag, Tags, cast_tag
 from .const import DXFInternalEzdxfError
 from .const import DXFStructureError
+
+logger = logging.getLogger('ezdxf')
 
 
 def setup_layouts(dwg):
@@ -236,13 +239,20 @@ def is_leica_disto_r12(dwg):
 
 class ReorderCoordsStream(object):
     """
-    Reorders coordinates in LINE entities: (10, 11, 20, 21) -> (10, 20, 11, 21)
+    Reorders coordinates in supported entities:
+
+    LINE (10, 11, 20, 21) -> (10, 20, 11, 21)
+
     """
     def __init__(self, stream):
         self.tagger = fix_coordinates(stream)
         self.value = None
 
     def readline(self):
+        """
+        Yield DXFTags() as strings with '\n' as line ending. One line for the group code and one line for the tag value
+        as input for stream_tagger().
+        """
         if self.value is None:
             code, value = next(self.tagger)
             self.value = value + '\n'
@@ -254,7 +264,9 @@ class ReorderCoordsStream(object):
 
 
 def simple_tagger(stream):
-    """ Generates DXFTag() from a stream (untrusted external source) and does not optimize coordinates. Does not skip comment tags 999.
+    """ Generates DXFTag() from a stream (untrusted external source) and does not optimize coordinates. Does not skip
+    comment tags 999. Yields DXFTag() but does no value casting, so tag.code is always an int and tag.value is always a
+    string.
     """
     def next_tag():
         code = stream.readline()
@@ -275,44 +287,51 @@ def fix_coordinates(stream):
     collector = None
     for tag in simple_tagger(stream):
         if tag.code == 0:
-            if collector is not None:  # stop collecting if inside of a LINE entity
-                for tag_ in fix_line_coordinate_order(collector):
+            if collector is not None:  # stop collecting if inside of an supported entity
+                entity = collector[0].value
+                for tag_ in COORDINATE_FIXING_TOOLBOX[entity](collector):
                     yield tag_  # no yield from in python 2.7
                 collector = None
 
-            if tag.value == 'LINE':
+            if tag.value in COORDINATE_FIXING_TOOLBOX:
                 collector = [tag]
-                tag = None  # do not yield collected tags
+                tag = None  # do not yield collected tag yet
         else:  # tag.code != 0
             if collector is not None:
                 collector.append(tag)
-                tag = None  # do not yield collected tags
+                tag = None  # do not yield collected tag yet
         if tag is not None:
             yield tag
+
+
+LINE_COORD_CODES = frozenset((10, 11, 20, 21, 30, 31))
 
 
 def fix_line_coordinate_order(tags):
     entity = tags[0].value
     if entity != 'LINE':
-        print('Can not fix unsupported entity "{}".'.format(entity))
+        logger.info('Got unsupported entity "{}".'.format(entity))
         return tags
 
-    coordinates = [tag for tag in tags if tag.code in (10, 11, 20, 21, 30, 31)]
+    # filter coordinate value tags
+    coordinates = [tag for tag in tags if tag.code in LINE_COORD_CODES]
     if len(coordinates) not in (4, 6):
-        print('Can not fix: expecting 4 or 6 coordinate values, got {}.'.format(len(coordinates)))
+        logger.error('Unexpected count of coordinate values, expecting 4 or 6 values, got {}.'.format(len(coordinates)))
         return tags
+    # get insertion position for ordered coordinates
     index = tags.index(coordinates[0])
     coordinates.sort()
-    fixed_tags = [tag for tag in tags if tag.code not in (10, 11, 20, 21, 30, 31)]  # remove existing coordinate tags
+    # remove existing coordinate tags
+    fixed_tags = [tag for tag in tags if tag.code not in LINE_COORD_CODES]
     if len(coordinates) == 4:
-        fixed_tags[index:index] = [  # insert coordinates in expected order
+        ordered_coords = [  # create expected coordinate order 2d
             coordinates[0],  # 10
             coordinates[2],  # 20
             coordinates[1],  # 11
             coordinates[3],  # 21
         ]
     else:
-        fixed_tags[index:index] = [  # insert coordinates in expected order
+        ordered_coords = [  # create expected coordinate order 3d
             coordinates[0],  # 10
             coordinates[2],  # 20
             coordinates[4],  # 30
@@ -320,7 +339,13 @@ def fix_line_coordinate_order(tags):
             coordinates[3],  # 21
             coordinates[5],  # 31
         ]
+    fixed_tags[index:index] = ordered_coords
     return fixed_tags
+
+
+COORDINATE_FIXING_TOOLBOX = {
+    'LINE': fix_line_coordinate_order,
+}
 
 
 _MODEL_SPACE_LAYOUT_TPL = """  0
