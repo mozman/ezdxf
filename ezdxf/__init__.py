@@ -30,6 +30,7 @@ from .tools import transparency2float, float2transparency  #  convert transparen
 from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
+from .lldxf.repair import ReorderCoordsStream
 
 
 def new(dxfversion='AC1009'):
@@ -44,13 +45,14 @@ def new(dxfversion='AC1009'):
     - 'AC1021': AutoCAD 2007
     - 'AC1024': AutoCAD 2010
     - 'AC1027': AutoCAD 2013
+    - 'AC1032': AutoCAD 2018
 
     """
     from .drawing import Drawing
     return Drawing.new(dxfversion)
 
 
-def read(stream):
+def read(stream, reorder_coords=False):
     """Read DXF drawing from a text *stream*, which only needs a readline() method.
 
     read() can open drawings of following DXF versions:
@@ -63,13 +65,16 @@ def read(stream):
     - 'AC1021': AutoCAD 2007, requires encoding='utf-8'
     - 'AC1024': AutoCAD 2010, requires encoding='utf-8'
     - 'AC1027': AutoCAD 2013, requires encoding='utf-8'
+    - 'AC1032': AutoCAD 2018, requires encoding='utf-8'
 
     """
     from .drawing import Drawing
+    if reorder_coords:
+        stream = ReorderCoordsStream(stream)
     return Drawing.read(stream)
 
 
-def readfile(filename, encoding='auto'):
+def readfile(filename, encoding='auto', reorder_coords=False):
     """Read DXF drawing from file *filename*.
     """
     if not is_dxf_file(filename):
@@ -86,7 +91,7 @@ def readfile(filename, encoding='auto'):
         enc = info.encoding
 
     with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
-        dwg = read(fp)
+        dwg = read(fp, reorder_coords)
 
     dwg.filename = filename
     if encoding != 'auto' and is_supported_encoding(encoding):

@@ -234,6 +234,25 @@ def is_leica_disto_r12(dwg):
             return False
 
 
+class ReorderCoordsStream(object):
+    """
+    Reorders coordinates in LINE entities: (10, 11, 20, 21) -> (10, 20, 11, 21)
+    """
+    def __init__(self, stream):
+        self.tagger = fix_coordinates(stream)
+        self.value = None
+
+    def readline(self):
+        if self.value is None:
+            code, value = next(self.tagger)
+            self.value = value + '\n'
+            return str(code) + '\n'
+        else:
+            value = self.value
+            self.value = None
+            return value
+
+
 def simple_tagger(stream):
     """ Generates DXFTag() from a stream (untrusted external source) and does not optimize coordinates. Does not skip comment tags 999.
     """
@@ -256,14 +275,14 @@ def fix_coordinates(stream):
     collector = None
     for tag in simple_tagger(stream):
         if tag.code == 0:
+            if collector is not None:  # stop collecting if inside of a LINE entity
+                for tag_ in fix_line_coordinate_order(collector):
+                    yield tag_  # no yield from in python 2.7
+                collector = None
+
             if tag.value == 'LINE':
                 collector = [tag]
                 tag = None  # do not yield collected tags
-            else:  # code == 0 but value != 'LINE'
-                if collector is not None:  # stop collecting if inside of a LINE entity
-                    for tag_ in fix_line_coordinate_order(collector):
-                        yield tag_  # no yield from in python 2.7
-                    collector = None
         else:  # tag.code != 0
             if collector is not None:
                 collector.append(tag)
