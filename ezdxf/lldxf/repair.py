@@ -12,8 +12,9 @@ __author__ = "mozman <mozman@gmx.at>"
 from datetime import datetime
 
 from .classifiedtags import ClassifiedTags
-from .tags import DXFTag, Tags
+from .tags import DXFTag, Tags, cast_tag
 from .const import DXFInternalEzdxfError
+from .const import DXFStructureError
 
 
 def setup_layouts(dwg):
@@ -231,6 +232,76 @@ def is_leica_disto_r12(dwg):
             return True
         else:
             return False
+
+
+def simple_tagger(stream):
+    """ Generates DXFTag() from a stream (untrusted external source) and does not optimize coordinates. Does not skip comment tags 999.
+    """
+    def next_tag():
+        code = stream.readline()
+        value = stream.readline()
+        if code and value:  # StringIO(): empty strings indicates EOF
+            return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
+        else:  # StringIO(): missing '\n' indicates EOF
+            raise EOFError()
+
+    try:
+        while True:
+            yield next_tag()
+    except EOFError:
+        return
+
+
+def fix_coordinates(stream):
+    collector = None
+    for tag in simple_tagger(stream):
+        if tag.code == 0:
+            if tag.value == 'LINE':
+                collector = [tag]
+                tag = None  # do not yield collected tags
+            else:  # code == 0 but value != 'LINE'
+                if collector is not None:  # stop collecting if inside of a LINE entity
+                    for tag_ in fix_line_coordinate_order(collector):
+                        yield tag_  # no yield from in python 2.7
+                    collector = None
+        else:  # tag.code != 0
+            if collector is not None:
+                collector.append(tag)
+                tag = None  # do not yield collected tags
+        if tag is not None:
+            yield tag
+
+
+def fix_line_coordinate_order(tags):
+    entity = tags[0].value
+    if entity != 'LINE':
+        print('Can not fix unsupported entity "{}".'.format(entity))
+        return tags
+
+    coordinates = [tag for tag in tags if tag.code in (10, 11, 20, 21, 30, 31)]
+    if len(coordinates) not in (4, 6):
+        print('Can not fix: expecting 4 or 6 coordinate values, got {}.'.format(len(coordinates)))
+        return tags
+    index = tags.index(coordinates[0])
+    coordinates.sort()
+    fixed_tags = [tag for tag in tags if tag.code not in (10, 11, 20, 21, 30, 31)]  # remove existing coordinate tags
+    if len(coordinates) == 4:
+        fixed_tags[index:index] = [  # insert coordinates in expected order
+            coordinates[0],  # 10
+            coordinates[2],  # 20
+            coordinates[1],  # 11
+            coordinates[3],  # 21
+        ]
+    else:
+        fixed_tags[index:index] = [  # insert coordinates in expected order
+            coordinates[0],  # 10
+            coordinates[2],  # 20
+            coordinates[4],  # 30
+            coordinates[1],  # 11
+            coordinates[3],  # 21
+            coordinates[5],  # 31
+        ]
+    return fixed_tags
 
 
 _MODEL_SPACE_LAYOUT_TPL = """  0
