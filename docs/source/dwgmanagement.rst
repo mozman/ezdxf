@@ -24,6 +24,7 @@ AC1018  AutoCAD R2004
 AC1021  AutoCAD R2007
 AC1024  AutoCAD R2010
 AC1027  AutoCAD R2013
+AC1032  AutoCAD R2018
 ======= ========================
 
 
@@ -33,7 +34,7 @@ Open Drawings
 You can open DXF drawings from disk or from a text-stream. (byte-stream usage
 is not implemented yet).
 
-.. function:: ezdxf.readfile(filename, encoding='auto')
+.. function:: ezdxf.readfile(filename, encoding='auto', legacy_mode=False)
 
     This is the preferred method to open existing DXF files. Read the DXF
     drawing from the file-system with auto-detection of encoding. Decoding
@@ -41,12 +42,23 @@ is not implemented yet).
     *encoding* to the estimated encoding. (use Python encoding names like in
     the :func:`open` function).
 
-.. function:: ezdxf.read(stream)
+    If parameter `legacy_mode` is `True`, ezdxf tries to reorder the coordinates of the LINE entity in DXF files from
+    CAD applications which wrote the coordinates in the order: x1, x2, y1, y2. Additional fixes may be added later. The
+    legacy mode has a speed penalty of around 5%.
+
+    .. hint::
+
+        Try option `legacy_mode=True` if error "Missing required y coordinate near line: ..." occurs.
+
+.. function:: ezdxf.read(stream, legacy_mode=False)
 
     Read DXF drawing from a text-stream, returns a :class:`Drawing` object.
     Open the stream in text mode (`mode='rt'`) and the correct encoding has to be set at the
     open function (in Python 2.7 use :func:`io.open`), the stream requires at least a :meth:`readline` method.
     Since DXF version R2007 (AC1021) file encoding is always 'utf-8'.
+
+    If parameter `legacy_mode` is `True`, ezdxf tries to reorder the coordinates of the LINE entity in DXF files from
+    CAD applications which wrote the coordinates in the order: x1, x2, y1, y2, see also :meth:`readfile` method.
 
 Save Drawings
 -------------

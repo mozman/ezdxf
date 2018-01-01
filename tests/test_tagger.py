@@ -2,9 +2,14 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.lldxf.tagger import string_tagger, skip_comments, stream_tagger
+from ezdxf.lldxf.tagger import string_tagger, skip_comments,low_level_tagger, tag_optimizer
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.types import strtag
+
+
+def optimizing_stream_tagger(stream):
+    return tag_optimizer(low_level_tagger(stream))
+
 
 TAGS1 = """999
 comment
@@ -199,7 +204,7 @@ $EXTMIN
 
 class TestStreamReader(unittest.TestCase):
     def setUp(self):
-        self.reader = stream_tagger(StringIO(TEST_TAGREADER))
+        self.reader = optimizing_stream_tagger(StringIO(TEST_TAGREADER))
 
     def test_next(self):
         self.assertEqual((0, 'SECTION'), next(self.reader))
@@ -223,7 +228,7 @@ class TestStreamReader(unittest.TestCase):
         self.assertEqual('  0\nSECTION\n', strtag((0, 'SECTION')))
 
     def test_one_point_reader(self):
-        tags = list(stream_tagger(StringIO(POINT_TAGS)))
+        tags = list(optimizing_stream_tagger(StringIO(POINT_TAGS)))
         point_tag = tags[1]
         self.assertEqual((100, 200, 300), point_tag.value)
 
@@ -244,7 +249,7 @@ class TestStreamReader(unittest.TestCase):
         self.assertEqual(int, type(tags[0].value))
 
     def test_error_tag(self):
-        tags = list(stream_tagger(StringIO(TAGS_WITH_ERROR)))
+        tags = list(optimizing_stream_tagger(StringIO(TAGS_WITH_ERROR)))
         self.assertEqual(1, len(tags))
 
 

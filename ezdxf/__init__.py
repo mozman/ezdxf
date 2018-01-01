@@ -21,7 +21,7 @@ codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode en
 
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .lldxf.tags import dxf_info
-from .lldxf.tagger import stream_tagger, skip_comments
+from .lldxf.tagger import low_level_tagger, skip_comments
 from .tools.importer import Importer
 from .tools.codepage import is_supported_encoding
 from .lldxf.const import DXFStructureError, DXFVersionError
@@ -30,7 +30,6 @@ from .tools import transparency2float, float2transparency  #  convert transparen
 from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
-from .lldxf.repair import ReorderCoordsStream
 
 
 def new(dxfversion='AC1009'):
@@ -52,7 +51,7 @@ def new(dxfversion='AC1009'):
     return Drawing.new(dxfversion)
 
 
-def read(stream, reorder_coords=False):
+def read(stream, legacy_mode=False):
     """Read DXF drawing from a text *stream*, which only needs a readline() method.
 
     read() can open drawings of following DXF versions:
@@ -67,14 +66,15 @@ def read(stream, reorder_coords=False):
     - 'AC1027': AutoCAD 2013, requires encoding='utf-8'
     - 'AC1032': AutoCAD 2018, requires encoding='utf-8'
 
+    Args:
+        stream: input stream, requires only stream.readline()
+        legacy_mode: True - adds an extra import layer to reorder coordinates; False - requires DXF file from modern CAD apps
     """
     from .drawing import Drawing
-    if reorder_coords:
-        stream = ReorderCoordsStream(stream)
-    return Drawing.read(stream)
+    return Drawing.read(stream, legacy_mode=legacy_mode)
 
 
-def readfile(filename, encoding='auto', reorder_coords=False):
+def readfile(filename, encoding='auto', legacy_mode=False):
     """Read DXF drawing from file *filename*.
     """
     if not is_dxf_file(filename):
@@ -91,7 +91,7 @@ def readfile(filename, encoding='auto', reorder_coords=False):
         enc = info.encoding
 
     with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
-        dwg = read(fp, reorder_coords=reorder_coords)
+        dwg = read(fp, legacy_mode=legacy_mode)
 
     dwg.filename = filename
     if encoding != 'auto' and is_supported_encoding(encoding):
@@ -110,5 +110,5 @@ def readzip(zipfile, filename=None):
 
 def is_dxf_file(filename):
     with io.open(filename, errors='ignore') as fp:
-        reader = skip_comments(stream_tagger(fp))
+        reader = skip_comments(low_level_tagger(fp))
         return next(reader) == (0, 'SECTION')

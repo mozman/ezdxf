@@ -55,8 +55,28 @@ def skip_comments(tagger, comments=None):
             comments.append(tag.value)
 
 
-def stream_tagger(stream):
-    """ Generates DXFTag() from a stream (untrusted external source). Does not skip comment tags 999.
+def low_level_tagger(stream):
+    """ Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
+    Does not skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
+    Works with file system streams and StringIO() streams.
+    """
+    def next_tag():
+        code = stream.readline()
+        value = stream.readline()
+        if code and value:  # StringIO(): empty strings indicates EOF
+            return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
+        else:  # StringIO(): missing '\n' indicates EOF
+            raise EOFError()
+
+    try:
+        while True:
+            yield next_tag()
+    except EOFError:
+        return
+
+
+def tag_optimizer(tagger):
+    """ Optimizes from low_level_tagger() imported tags. Does not skip comment tags 999.
     """
     class Counter:
         def __init__(self):
@@ -66,13 +86,8 @@ def stream_tagger(stream):
     line = Counter()  # writeable line counter for next_tag(), Python 2.7 does not support the nonlocal statement
 
     def next_tag():
-        code = stream.readline()
-        value = stream.readline()
         line.counter += 2
-        if code and value:  # StringIO(): empty strings indicates EOF
-            return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
-        else:  # StringIO(): missing '\n' indicates EOF
-            raise EOFError()
+        return next(tagger)
 
     while True:
         try:
@@ -105,5 +120,5 @@ def stream_tagger(stream):
                         code=x.code,
                         value=x.value,
                     ))
-        except EOFError:
+        except StopIteration:
             return

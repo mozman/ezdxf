@@ -12,7 +12,7 @@ import warnings
 from . import database
 from .lldxf.tags import DXFTag, write_tags
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF
-from .lldxf.tagger import stream_tagger
+from .lldxf.tagger import low_level_tagger, tag_optimizer
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -272,9 +272,12 @@ class Drawing(object):
         self.header['$TDCREATE'] = juliandate(datetime.now())
 
     @staticmethod
-    def read(stream):
+    def read(stream, legacy_mode=False):
         """ Open an existing drawing. """
-        tagreader = stream_tagger(stream)
+        tagger = low_level_tagger(stream)
+        if legacy_mode:
+            tagger = repair.tag_reorder_layer(tagger)
+        tagreader = tag_optimizer(tagger)
         return Drawing(tagreader)
 
     def saveas(self, filename, encoding='auto'):

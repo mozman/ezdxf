@@ -1,16 +1,21 @@
 import pytest
 
-from ezdxf.lldxf.repair import simple_tagger, fix_line_coordinate_order, fix_coordinates
+from ezdxf.lldxf.tagger import low_level_tagger
+from ezdxf.lldxf.repair import fix_line_coordinate_order, tag_reorder_layer
 from io import StringIO
 
 
-def test_simple_tagger():
-    tags = list(simple_tagger(StringIO(TEST_LINE1)))
+def string_reorder_tagger(s):
+    return tag_reorder_layer(low_level_tagger(StringIO(s)))
+
+
+def test_low_level_tagger():
+    tags = list(low_level_tagger(StringIO(TEST_LINE1)))
     assert len(tags) == 14
 
 
 def test_fix_line_coordinate_order():
-    tags = list(simple_tagger(StringIO(TEST_LINE1)))
+    tags = list(low_level_tagger(StringIO(TEST_LINE1)))
     ordered_tags = list(fix_line_coordinate_order(tags))
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-6] == (10, '1000.')
@@ -22,7 +27,7 @@ def test_fix_line_coordinate_order():
 
 
 def test_fix_2d_coordinates():
-    ordered_tags = list(fix_coordinates(StringIO(TEST_LINE1)))
+    ordered_tags = list(string_reorder_tagger(TEST_LINE1))
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-6] == (10, '1000.')
     assert ordered_tags[-5] == (20, '2000.')
@@ -34,7 +39,7 @@ def test_fix_2d_coordinates():
 
 def test_fix_invlaid_coordinates():
     # do not change invalid (missing) coordinates
-    ordered_tags = list(fix_coordinates(StringIO(TEST_INVALID_LINE)))
+    ordered_tags = list(string_reorder_tagger(TEST_INVALID_LINE))
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-5] == (10, '1000.')
     assert ordered_tags[-4] == (11, '1100.')
@@ -44,7 +49,7 @@ def test_fix_invlaid_coordinates():
 
 
 def test_fix_3d_coordinates():
-    ordered_tags = list(fix_coordinates(StringIO(TEST_3D_LINE)))
+    ordered_tags = list(string_reorder_tagger(TEST_3D_LINE))
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-8] == (10, '1000.')
     assert ordered_tags[-7] == (20, '2000.')
@@ -57,7 +62,7 @@ def test_fix_3d_coordinates():
 
 
 def test_fix_two_lines_coordinate_order():
-    ordered_tags = list(fix_coordinates(StringIO(TEST_TWO_LINES)))
+    ordered_tags = list(string_reorder_tagger(TEST_TWO_LINES))
     assert len(ordered_tags) == 27
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-6] == (10, '1000.')

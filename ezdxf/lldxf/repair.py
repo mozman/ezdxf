@@ -13,9 +13,8 @@ from datetime import datetime
 import logging
 
 from .classifiedtags import ClassifiedTags
-from .tags import DXFTag, Tags, cast_tag
+from .tags import DXFTag, Tags
 from .const import DXFInternalEzdxfError
-from .const import DXFStructureError
 
 logger = logging.getLogger('ezdxf')
 
@@ -237,55 +236,18 @@ def is_leica_disto_r12(dwg):
             return False
 
 
-class ReorderCoordsStream(object):
+def tag_reorder_layer(tagger):
     """
-    Reorders coordinates in supported entities:
+    Reorder coordinates of legacy DXF Entities, for now only LINE.
 
-    LINE (10, 11, 20, 21) -> (10, 20, 11, 21)
+    Args:
+        tagger: low level tagger
+
+    Yields: DXFTags()
 
     """
-    def __init__(self, stream):
-        self.tagger = fix_coordinates(stream)
-        self.value = None
-
-    def readline(self):
-        """
-        Yield DXFTags() as strings with '\n' as line ending. One line for the group code and one line for the tag value
-        as input for stream_tagger().
-        """
-        if self.value is None:
-            code, value = next(self.tagger)
-            self.value = value + '\n'
-            return str(code) + '\n'
-        else:
-            value = self.value
-            self.value = None
-            return value
-
-
-def simple_tagger(stream):
-    """ Generates DXFTag() from a stream (untrusted external source) and does not optimize coordinates. Does not skip
-    comment tags 999. Yields DXFTag() but does no value casting, so tag.code is always an int and tag.value is always a
-    string.
-    """
-    def next_tag():
-        code = stream.readline()
-        value = stream.readline()
-        if code and value:  # StringIO(): empty strings indicates EOF
-            return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
-        else:  # StringIO(): missing '\n' indicates EOF
-            raise EOFError()
-
-    try:
-        while True:
-            yield next_tag()
-    except EOFError:
-        return
-
-
-def fix_coordinates(stream):
     collector = None
-    for tag in simple_tagger(stream):
+    for tag in tagger:
         if tag.code == 0:
             if collector is not None:  # stop collecting if inside of an supported entity
                 entity = collector[0].value
@@ -308,11 +270,7 @@ LINE_COORD_CODES = frozenset((10, 11, 20, 21, 30, 31))
 
 
 def fix_line_coordinate_order(tags):
-    entity = tags[0].value
-    if entity != 'LINE':
-        logger.info('Got unsupported entity "{}".'.format(entity))
-        return tags
-
+    assert tags[0].value == 'LINE'
     # filter coordinate value tags
     coordinates = [tag for tag in tags if tag.code in LINE_COORD_CODES]
     if len(coordinates) not in (4, 6):
