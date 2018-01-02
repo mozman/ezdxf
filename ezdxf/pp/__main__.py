@@ -11,6 +11,7 @@ import io
 
 from .dxf2html import dxf2html
 from ezdxf import readfile, options
+from ezdxf.lldxf.const import DXFError
 
 
 def main():
@@ -21,10 +22,14 @@ def main():
         print("DXF pretty printer (pp) requires exact one filename of a DXF file.")
         sys.exit()
     try:
-        dwg = readfile(filename)
+        dwg = readfile(filename, legacy_mode=True)
     except IOError:
         print("Unable to read DXF file '{}', or invalid DXF file.".format(filename))
         sys.exit()
+    except DXFError as e:
+        print(str(e))
+        sys.exit()
+
     html_filename = os.path.splitext(dwg.filename)[0] + '.html'
     try:
         with io.open(html_filename, mode='wt', encoding='utf-8') as fp:

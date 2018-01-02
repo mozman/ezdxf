@@ -4,13 +4,13 @@ News
 
 Version 0.8.3 - ???
 
-  * Lwpolyline: suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)
-  * setup creates a script called 'dxfpp' (DXF Pretty Printer) in the Python script folder
-  * basic support for DXF format AC1032 introduced by AutoCAD 2018
-  * ezdxf use logging and writes all logs to a logger called 'ezdxf'. Logging setup is the domain of the application!
-  * warns about multiple block definitions with the same name in a DXF file. (Error in DXF file)
-  * experimental legacy_mode parameter in ezdxf.read() and ezdxf.readfile(): tries do fix coordinate order in LINE
-    entities (10, 11, 20, 21) by the cost of around 5% speed penalty
+  * CHANGE: Lwpolyline - suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)
+  * NEW: setup creates a script called 'dxfpp' (DXF Pretty Printer) in the Python script folder
+  * NEW: basic support for DXF format AC1032 introduced by AutoCAD 2018
+  * NEW: ezdxf use logging and writes all logs to a logger called 'ezdxf'. Logging setup is the domain of the application!
+  * NEW: warns about multiple block definitions with the same name in a DXF file. (Error in DXF file)
+  * NEW: legacy_mode parameter in ezdxf.read() and ezdxf.readfile(): tries do fix coordinate order in LINE
+    entities (10, 11, 20, 21) by the cost of around 5% overall speed penalty
 
 Version 0.8.2 - 2017-05-01
 

@@ -72,7 +72,7 @@ class BlocksSection(object):
             if group[0].value == 'ENDBLK':
                 block_layout = build_block_layout(entities)
                 if block_layout in self:
-                    logger.warning('Warning! Multiple block definitions with same name "{}", replacing previous definition'.format(block_layout.name))
+                    logger.warning('Warning! Multiple block definitions with name "{}", replacing previous definition'.format(block_layout.name))
                 self.add(block_layout)
                 entities = []
 

@@ -5,10 +5,6 @@ from itertools import chain
 
 DIR1 = r"D:\Source\dxftest\CADKitSamples\*.dxf"
 DIR2 = r"D:\Source\dxftest\*.dxf"
-all_files = chain(glob.glob(DIR1), glob.glob(DIR2))
-overall_time = 0
-ok = 0
-error = 0
 
 
 def run_stress_test(msg, legacy_mode=False):

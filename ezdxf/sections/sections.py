@@ -15,6 +15,7 @@ from .entities import EntitySection
 from ..options import options
 from ..lldxf.defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
 from ..lldxf.tagger import skip_comments
+from ..lldxf.const import DXFStructureError
 
 
 class Sections(object):
@@ -66,7 +67,7 @@ class Sections(object):
         try:
             return self._sections[key]
         except KeyError:
-            raise AttributeError(key)
+            raise DXFStructureError('{} section not found'.format(key.upper()))
 
     def get(self, name):
         return self._sections.get(name, None)

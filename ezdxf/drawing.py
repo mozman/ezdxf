@@ -11,7 +11,7 @@ import warnings
 
 from . import database
 from .lldxf.tags import DXFTag, write_tags
-from .lldxf.const import DXFVersionError, acad_release, BLK_XREF
+from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError
 from .lldxf.tagger import low_level_tagger, tag_optimizer
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
@@ -49,6 +49,7 @@ class Drawing(object):
         else:
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
+
             if repair.is_leica_disto_r12(self):  # check for malformed DXF R12 files by Leica Disto Units
                 repair.repair_leica_disto_r12(self)
             repair.enable_handles(self)
