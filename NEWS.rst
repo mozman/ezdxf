@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.8.3 - ???
+Version 0.8.3 - 2018-01-02
 
   * CHANGE: Lwpolyline - suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)
   * NEW: setup creates a script called 'dxfpp' (DXF Pretty Printer) in the Python script folder
