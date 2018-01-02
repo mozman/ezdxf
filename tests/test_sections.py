@@ -12,6 +12,7 @@ import unittest
 from ezdxf.lldxf.tagger import string_tagger
 from ezdxf.tools.test import DrawingProxy
 from ezdxf.sections.sections import Sections
+from ezdxf.lldxf.const import DXFStructureError
 
 
 class TestSections(unittest.TestCase):
@@ -28,11 +29,11 @@ class TestSections(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test_error_getitem(self):
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXFStructureError):
             self.sections.test
 
     def test_error_getattr(self):
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXFStructureError):
             self.sections.test
 
     def test_ignore_struct_error(self):

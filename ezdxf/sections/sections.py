@@ -67,6 +67,8 @@ class Sections(object):
         try:
             return self._sections[key]
         except KeyError:
+            # DXFStructureError because a requested section is not present, maybe a typo, but usual a hint for an
+            # invalid DXF file.
             raise DXFStructureError('{} section not found'.format(key.upper()))
 
     def get(self, name):
