@@ -37,7 +37,7 @@ def test_fix_2d_coordinates():
     assert ordered_tags[-1] == (0, 'EOF')
 
 
-def test_dont_fix_invlaid_coordinates():
+def test_dont_fix_invalid_coordinates():
     # do not change invalid (missing) coordinates
     ordered_tags = list(string_reorder_tagger(TEST_INVALID_LINE))
     assert ordered_tags[0] == (0, 'LINE')
