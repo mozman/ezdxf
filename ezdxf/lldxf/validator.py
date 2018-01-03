@@ -29,7 +29,7 @@ def structure_validator(tagreader, filter=False):
     is written as warning to the 'ezdxf' logger. Comments are ignored.
 
     Args:
-        tagreader: generator yielding DXFTag() entities
+        tagreader: generator yielding DXFTag() objects
         filter: if True remove tags outside sections
 
     Yields:
@@ -72,9 +72,10 @@ def structure_validator(tagreader, filter=False):
             if log_warning_for_outside_tags:
                 logger.warning('DXF Structure Warning: found tags outside a SECTION.')
                 # just 1 warning for all tags outside of a section
+                log_warning_for_outside_tags = False
+                # just 1 warning for removing tags outside of a section
                 if filter:
                     logger.warning('DXF Structure Warning: removing Tags outside of SECTIONS.')
-                log_warning_for_outside_tags = False
             if filter:  # do not yield outside section tags
                 continue
 

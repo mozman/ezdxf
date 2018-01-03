@@ -10,11 +10,12 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
+from functools import partial
 import logging
 
 from .classifiedtags import ClassifiedTags
 from .tags import DXFTag, Tags
-from .const import DXFInternalEzdxfError
+from .const import DXFInternalEzdxfError, DXFStructureError
 
 logger = logging.getLogger('ezdxf')
 
@@ -264,43 +265,52 @@ def tag_reorder_layer(tagger):
             yield tag
 
 
-LINE_COORD_CODES = frozenset((10, 11, 20, 21, 30, 31))
+def fix_coordinate_order(tags, codes=(10, 11)):
+    def extend_codes():
+        for code in codes:
+            yield code  # x tag
+            yield code + 10  # y tag
+            yield code + 20  # z tag
 
+    def get_coords(code):
+        # if x or y coordinate is missing, it is a DXFStructureError
+        # but here is not the place to validate the DXF structure
+        try:
+            yield coordinates[code]
+        except KeyError:
+            pass
+        try:
+            yield coordinates[code + 10]
+        except KeyError:
+            pass
+        try:
+            yield coordinates[code + 20]
+        except KeyError:
+            pass
 
-def fix_line_coordinate_order(tags):
-    assert tags[0].value == 'LINE'
-    # filter coordinate value tags
-    coordinates = [tag for tag in tags if tag.code in LINE_COORD_CODES]
-    if len(coordinates) not in (4, 6):
-        logger.error('Unexpected count of coordinate values, expecting 4 or 6 values, got {}.'.format(len(coordinates)))
-        return tags
-    # get insertion position for ordered coordinates
-    index = tags.index(coordinates[0])
-    coordinates.sort()
-    # remove existing coordinate tags
-    fixed_tags = [tag for tag in tags if tag.code not in LINE_COORD_CODES]
-    if len(coordinates) == 4:
-        ordered_coords = [  # create expected coordinate order 2d
-            coordinates[0],  # 10
-            coordinates[2],  # 20
-            coordinates[1],  # 11
-            coordinates[3],  # 21
-        ]
-    else:
-        ordered_coords = [  # create expected coordinate order 3d
-            coordinates[0],  # 10
-            coordinates[2],  # 20
-            coordinates[4],  # 30
-            coordinates[1],  # 11
-            coordinates[3],  # 21
-            coordinates[5],  # 31
-        ]
-    fixed_tags[index:index] = ordered_coords
-    return fixed_tags
+    coordinate_codes = frozenset(extend_codes())
+    coordinates = {}
+    remaining_tags = []
+    first_coord = None
+    for tag in tags:
+        # separate tags
+        if tag.code in coordinate_codes:
+            coordinates[tag.code] = tag
+            if first_coord is None:
+                first_coord = tag
+        else:
+            remaining_tags.append(tag)
+
+    insert_pos = tags.index(first_coord)
+    ordered_coords = []
+    for code in codes:
+        ordered_coords.extend(get_coords(code))
+    remaining_tags[insert_pos:insert_pos] = ordered_coords
+    return remaining_tags
 
 
 COORDINATE_FIXING_TOOLBOX = {
-    'LINE': fix_line_coordinate_order,
+    'LINE': partial(fix_coordinate_order, codes=(10, 11)),
 }
 
 

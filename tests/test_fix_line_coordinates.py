@@ -1,7 +1,7 @@
 import pytest
 
 from ezdxf.lldxf.tagger import low_level_tagger
-from ezdxf.lldxf.repair import fix_line_coordinate_order, tag_reorder_layer
+from ezdxf.lldxf.repair import fix_coordinate_order, tag_reorder_layer
 from io import StringIO
 
 
@@ -16,7 +16,7 @@ def test_low_level_tagger():
 
 def test_fix_line_coordinate_order():
     tags = list(low_level_tagger(StringIO(TEST_LINE1)))
-    ordered_tags = list(fix_line_coordinate_order(tags))
+    ordered_tags = list(fix_coordinate_order(tags, codes=(10, 11)))
     assert ordered_tags[0] == (0, 'LINE')
     assert ordered_tags[-6] == (10, '1000.')
     assert ordered_tags[-5] == (20, '2000.')
@@ -37,7 +37,7 @@ def test_fix_2d_coordinates():
     assert ordered_tags[-1] == (0, 'EOF')
 
 
-def test_fix_invlaid_coordinates():
+def test_dont_fix_invlaid_coordinates():
     # do not change invalid (missing) coordinates
     ordered_tags = list(string_reorder_tagger(TEST_INVALID_LINE))
     assert ordered_tags[0] == (0, 'LINE')
