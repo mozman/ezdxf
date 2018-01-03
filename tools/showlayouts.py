@@ -22,5 +22,6 @@ def main(filename):
     layouts = dwg.dxffactory.wrap_handle(rootdict['ACAD_LAYOUT'])
     print(list(layouts.keys()))
 
+
 if __name__ == '__main__':
     main(sys.argv[1])

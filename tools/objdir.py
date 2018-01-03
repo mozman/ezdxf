@@ -14,19 +14,13 @@ import ezdxf
 def main(filename):
     dwg = ezdxf.readfile(filename)
     with open('objects.txt', 'wt') as outstream:
-        dumpobjects(outstream, dwg.entitydb, dwg.sections.objects)
+        dumpobjects(outstream, dwg.sections.objects)
 
 
-def dumpobjects(stream, database, objects):
-    def printobj(tags):
-        name = tags[0].value
-        handle = tags.gethandle()
-        stream.write("handle: %6s name: %s\n" % (handle, name))
+def dumpobjects(stream, objects):
+    for entity in sorted(objects, key=lambda e: int(e.dxf.handle, 16)):
+        stream.write("handle: {:6s} name: {}\n".format(entity.dxf.handle, entity.dxftype()))
 
-    handles = ((int(handle, 16), handle) for handle in objects.iterhandles())
-    for key, handle in sorted(handles):
-        tags = database[handle]
-        printobj(tags)
 
 if __name__ == '__main__':
     main(sys.argv[1])

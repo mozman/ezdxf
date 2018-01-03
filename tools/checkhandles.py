@@ -8,7 +8,7 @@
 
 import sys
 
-from ezdxf.lldxf.tags import TagIterator, dxf_info
+from ezdxf.lldxf.tags import low_level_tagger, dxf_info
 
 FORMAT = 'ACAD release: {0.release}\n'\
          'DXF Version: {0.version}\n'\
@@ -39,7 +39,7 @@ def checkhandles(stream):
     info = dxf_info(stream)
     stream.seek(0)
     handles = []
-    iterator = TagIterator(stream)
+    iterator = low_level_tagger(stream)
     for tag in iterator:
         if tag.code in (5, 105):
             try:

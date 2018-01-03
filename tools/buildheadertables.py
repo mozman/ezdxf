@@ -16,7 +16,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from functools import partial
-from ..hdrvars import SingleValue, Point2D, Point3D
+from ..lldxf.hdrvars import SingleValue, Point2D, Point3D
 
 VARMAP = {
 """
@@ -26,7 +26,7 @@ TABLEEPILOGUE = "}\n"
 def write_table(filename, headersection):
     def write_var(key, value):
         if value.ispoint:
-            if len(value.getpoint()) == 2:
+            if len(value.value) == 2:
                 factory = "Point2D"
             else:
                 factory = "Point3D"
@@ -45,14 +45,14 @@ def write_table(filename, headersection):
 
 def export_header_table(dwg):
     print("writing HEADER table for DXF Version {0.dxfversion}".format(dwg))
-    filename = os.path.join('..', 'ezdxf', dwg.dxfversion.lower(), 'headervars.py')
+    filename = dwg.dxfversion+'_headervars.py'
     write_table(filename, dwg.header)
 
 
 def main():
-    for version in ('AC1027', ):
-        dwg = ezdxf.new(version)
-        export_header_table(dwg)
+    dwg = ezdxf.readfile(r'C:\Users\manfred\Desktop\Now\AC1032.dxf')
+    export_header_table(dwg)
+
 
 if __name__ == '__main__':
     main()

@@ -47,6 +47,9 @@ class ExtendedTags(object):
     def noclass(self):
         return self.subclasses[0]
 
+    def get_handle(self):
+        return self.noclass.get_handle()
+
     def replace_handle(self, handle):
         self.noclass.replace_handle(handle)
 

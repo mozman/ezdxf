@@ -32,7 +32,7 @@ ENDSEC
 """
 
 
-class CustomVars():
+class CustomVars(object):
     """ Custom Properties are stored as string tuples ('CustomTag', 'CustomValue') in a list object.
 
     Multiple occurrence of the same 'CustomTag' is allowed, but not well supported by the interface.
