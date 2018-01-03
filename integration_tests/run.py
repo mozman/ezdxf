@@ -1,11 +1,13 @@
 import sys
-import os
 import glob
 from subprocess import call
 
+# install ezdxf editable for pypy:
+# pypy -m pip install -e ezdxf.git
 
-os.environ['PYTHONPATH'] = os.path.abspath(os.path.pardir)  # set PYTHONPATH to developer version of ezdxf
-print("PYTHONPATH={}".format(os.environ['PYTHONPATH']))
+# install ezdxf editable for Python 3:
+# pip install -e ezdxf.git
+
 WINDOWS = sys.platform.startswith('win')
 
 if len(sys.argv) > 1:
