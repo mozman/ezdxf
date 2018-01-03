@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.dxfentity import DXFEntity
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DefSubclass, DXFAttributes
 
 XTEMPLATE = """  0
@@ -72,7 +72,7 @@ class TestDXFAttributes(unittest.TestCase):
 
 class TestAttributeAccess(unittest.TestCase):
     def setUp(self):
-        self.entity = AttributeChecker(ClassifiedTags.from_text(XTEMPLATE))
+        self.entity = AttributeChecker(ExtendedTags.from_text(XTEMPLATE))
 
     def test_get_from_none_subclass(self):
         self.assertEqual('0', self.entity.dxf.handle)

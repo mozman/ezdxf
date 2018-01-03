@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 
 _SPLINE_TPL = """  0
@@ -53,7 +53,7 @@ spline_subclass = DefSubclass('AcDbSpline', {
 
 
 class Spline(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_SPLINE_TPL)
+    TEMPLATE = ExtendedTags.from_text(_SPLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
 
     @property

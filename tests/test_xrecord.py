@@ -5,13 +5,13 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tools.test import ClassifiedTags, DXFTag
+from ezdxf.tools.test import ExtendedTags, DXFTag
 from ezdxf.modern.dxfobjects import XRecord
 
 
 class TestXRecord(unittest.TestCase):
     def setUp(self):
-        self.xrecord = XRecord(ClassifiedTags.from_text(XRECORD1))
+        self.xrecord = XRecord(ExtendedTags.from_text(XRECORD1))
 
     def test_handle(self):
         self.assertEqual('43A', self.xrecord.dxf.handle)

@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ..dxfentity import DXFEntity
 from ..lldxf.tags import DXFTag
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 
 _LAYERTEMPLATE = """  0
@@ -27,7 +27,7 @@ CONTINUOUS
 
 # noinspection PyAugmentAssignment,PyUnresolvedReferences
 class Layer(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_LAYERTEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_LAYERTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -104,7 +104,7 @@ arial.ttf
 
 
 class Style(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_STYLETEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_STYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -135,7 +135,7 @@ LTYPEDESCRIPTION
 
 
 class Linetype(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_LTYPETEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -238,7 +238,7 @@ VPORTNAME
 
 
 class Viewport(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_VPORTTEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -301,7 +301,7 @@ UCSNAME
 
 
 class UCS(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_UCSTEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -324,7 +324,7 @@ APPNAME
 
 
 class AppID(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_APPIDTEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -374,7 +374,7 @@ VIEWNAME
 
 
 class View(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_VIEWTEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
         'name': DXFAttr(2),
@@ -482,7 +482,7 @@ DIMSTYLENAME
 
 
 class DimStyle(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_DIMSTYLETEMPLATE)
+    TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(105),
         'name': DXFAttr(2),

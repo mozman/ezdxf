@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from contextlib import contextmanager
 
 from .graphics import make_attribs, GraphicEntity
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.const import DXFStructureError
@@ -105,7 +105,7 @@ MVIEW
 
 
 class Viewport(GraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_VPORT_TPL)
+    TEMPLATE = ExtendedTags.from_text(_VPORT_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, xtype='Point2D/3D'),  # center point of entity in paper space coordinates)
         'width': DXFAttr(40),  # width in paper space units

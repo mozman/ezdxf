@@ -12,7 +12,7 @@ from ..dxfentity import DXFEntity
 
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 
 _IMAGE_TPL = """ 0
@@ -94,7 +94,7 @@ image_subclass = DefSubclass('AcDbRasterImage', {
 
 
 class Image(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_IMAGE_TPL)
+    TEMPLATE = ExtendedTags.from_text(_IMAGE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, image_subclass)
 
     def post_new_hook(self):
@@ -180,7 +180,7 @@ image_def_subclass = DefSubclass('AcDbRasterImageDef', {
 
 # IMAGEDEF - requires entry in objects table ACAD_IMAGE_DICT, ACAD_IMAGE_DICT exists not by default
 class ImageDef(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_IMAGE_DEF_TPL)
+    TEMPLATE = ExtendedTags.from_text(_IMAGE_DEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, image_def_subclass)
 
 _IMAGE_DEF_REACTOR_TPL = """  0
@@ -201,7 +201,7 @@ AcDbRasterImageDefReactor
 # IMAGEDEF_REACTOR is not required by AutoCAD
 # owner -> IMAGE
 class ImageDefReactor(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_IMAGE_DEF_REACTOR_TPL)
+    TEMPLATE = ExtendedTags.from_text(_IMAGE_DEF_REACTOR_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbRasterImageDef', {
         'image': DXFAttr(330),  # handle to image
     }))

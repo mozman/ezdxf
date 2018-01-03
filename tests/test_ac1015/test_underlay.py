@@ -11,14 +11,14 @@ import unittest
 
 import ezdxf
 from ezdxf.modern.underlay import PdfDefinition, PdfUnderlay
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 
 DWG = ezdxf.new('AC1015')
 
 
 class TestUnderlayDefFromText(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(PDF_DEFINITION)
+        self.tags = ExtendedTags.from_text(PDF_DEFINITION)
         self.pdf_def = PdfDefinition(self.tags, DWG)
 
     def test_imagedef_properties(self):
@@ -32,7 +32,7 @@ class TestUnderlayDefFromText(unittest.TestCase):
 
 class TestUnderlayFromText(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(PDF_UNDERLAY)
+        self.tags = ExtendedTags.from_text(PDF_UNDERLAY)
         self.pdf = PdfUnderlay(self.tags, DWG)
 
     def test_image_properties(self):

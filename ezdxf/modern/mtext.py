@@ -12,7 +12,7 @@ import math
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..tools import safe_3D_point
 
@@ -74,7 +74,7 @@ mtext_subclass = DefSubclass('AcDbMText', {
 
 
 class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC1021 (ACAD 2007)
-    TEMPLATE = ClassifiedTags.from_text(_MTEXT_TPL)
+    TEMPLATE = ExtendedTags.from_text(_MTEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
 
     def get_text(self):

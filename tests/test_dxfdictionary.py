@@ -10,13 +10,13 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-from ezdxf.tools.test import ClassifiedTags
+from ezdxf.tools.test import ExtendedTags
 from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
 
 class TestNoneEmptyDXFDict(unittest.TestCase):
     def setUp(self):
-        self.dxfdict = DXFDictionary(ClassifiedTags.from_text(ROOTDICT))
+        self.dxfdict = DXFDictionary(ExtendedTags.from_text(ROOTDICT))
 
     def test_getitem(self):
         self.assertEqual(self.dxfdict['ACAD_PLOTSTYLENAME'], 'E')
@@ -86,7 +86,7 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
 
 class TestEmptyDXFDict(unittest.TestCase):
     def setUp(self):
-        self.dxfdict = DXFDictionary(ClassifiedTags.from_text(EMPTY_DICT))
+        self.dxfdict = DXFDictionary(ExtendedTags.from_text(EMPTY_DICT))
 
     def test_len(self):
         self.assertEqual(0, len(self.dxfdict))
@@ -129,7 +129,7 @@ class TestDXFDictSubDictCreation(unittest.TestCase):
 
 class TestDXFDictWithDefault(unittest.TestCase):
     def setUp(self):
-        self.dxfdict = DXFDictionaryWithDefault(ClassifiedTags.from_text(DEFAULT_DICT))
+        self.dxfdict = DXFDictionaryWithDefault(ExtendedTags.from_text(DEFAULT_DICT))
 
     def test_get_existing_value(self):
         self.assertEqual('F', self.dxfdict['Normal'])

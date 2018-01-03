@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ..lldxf.tags import DXFTag
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
 
@@ -34,7 +34,7 @@ AcDbDictionary
 
 
 class DXFDictionary(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_DICT_TPL)
+    TEMPLATE = ExtendedTags.from_text(_DICT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbDictionary', {
@@ -198,7 +198,7 @@ AcDbDictionaryWithDefault
 
 
 class DXFDictionaryWithDefault(DXFDictionary):
-    TEMPLATE = ClassifiedTags.from_text(_DICT_WITH_DEFAULT_TPL)
+    TEMPLATE = ExtendedTags.from_text(_DICT_WITH_DEFAULT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbDictionary', {
@@ -451,7 +451,7 @@ Layoutname
 
 
 class DXFLayout(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_LAYOUT_TPL)
+    TEMPLATE = ExtendedTags.from_text(_LAYOUT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         plot_settings_subclass,
@@ -552,6 +552,6 @@ ACDBPLACEHOLDER
 
 
 class ACDBPlaceHolder(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_PLACEHOLDER_TPL)
+    TEMPLATE = ExtendedTags.from_text(_PLACEHOLDER_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, )
 

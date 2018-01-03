@@ -12,7 +12,7 @@ from ..dxfentity import DXFEntity
 
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 
 _PDFUNDERLAY_TPL = """  0
@@ -71,7 +71,7 @@ underlay_subclass = DefSubclass('AcDbUnderlayReference', {
 
 
 class PdfUnderlay(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_PDFUNDERLAY_TPL)
+    TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, underlay_subclass)
 
     @property
@@ -155,11 +155,11 @@ class PdfUnderlay(ModernGraphicEntity):
 
 
 class DwfUnderlay(PdfUnderlay):
-    TEMPLATE = ClassifiedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DWF'))
+    TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DWF'))
 
 
 class DgnUnderlay(PdfUnderlay):
-    TEMPLATE = ClassifiedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DGN'))
+    TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DGN'))
 
 # Using reactors in PdfDefinition for well defined UNDERLAYS
 _PDF_DEF_TPL = """  0
@@ -189,7 +189,7 @@ underlay_def_subclass = DefSubclass('AcDbUnderlayDefinition', {
 # (PDF|DWF|DGN)DEFINITION - requires entry in objects table ACAD_(PDF|DWF|DGN)DEFINITIONS,
 # ACAD_(PDF|DWF|DGN)DEFINITIONS do not exist by default
 class PdfDefinition(DXFEntity):
-    TEMPLATE = ClassifiedTags.from_text(_PDF_DEF_TPL)
+    TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, underlay_def_subclass)
 
     @property
@@ -201,8 +201,8 @@ class PdfDefinition(DXFEntity):
 
 
 class DwfDefinition(PdfDefinition):
-    TEMPLATE = ClassifiedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DWF'))
+    TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DWF'))
 
 
 class DgnDefinition(PdfDefinition):
-    TEMPLATE = ClassifiedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DGN'))
+    TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DGN'))

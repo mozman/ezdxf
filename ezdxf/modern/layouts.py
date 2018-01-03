@@ -10,7 +10,7 @@ __author__ = "mozman <mozman@gmx.at>"
 import warnings
 
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 
 
 PAPER_SPACE = '*Paper_Space'
@@ -249,8 +249,8 @@ class BlockLayout(DXF12BlockLayout):
     def add_entity(self, entity):
         """ Add entity to the block entity space.
         """
-        # entity can be ClassifiedTags() or a GraphicEntity() or inherited wrapper class
-        if isinstance(entity, ClassifiedTags):
+        # entity can be ExtendedTags() or a GraphicEntity() or inherited wrapper class
+        if isinstance(entity, ExtendedTags):
             entity = self._dxffactory.wrap_entity(entity)
         entity.dxf.owner = self.block_record_handle
         self._entity_space.append(entity.dxf.handle)

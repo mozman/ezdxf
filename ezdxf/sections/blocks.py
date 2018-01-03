@@ -9,7 +9,7 @@ from itertools import islice
 import logging
 
 from ..lldxf.tags import TagGroups, DXFStructureError
-from ..lldxf.classifiedtags import ClassifiedTags, get_tags_linker
+from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..lldxf import const
 
 logger = logging.getLogger('ezdxf')
@@ -66,7 +66,7 @@ class BlocksSection(object):
         entities = []
         modify_tags = self.dxffactory.modify_tags
         for group in TagGroups(islice(tags, 2, len(tags) - 1)):
-            tags = ClassifiedTags(group)
+            tags = ExtendedTags(group)
             modify_tags(tags)  # post read tags fixer for VERTEX!
             entities.append(tags)
             if group[0].value == 'ENDBLK':

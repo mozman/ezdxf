@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from itertools import islice
 
 from ..lldxf.tags import TagGroups, DXFStructureError
-from ..lldxf.classifiedtags import ClassifiedTags, get_tags_linker
+from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..query import EntityQuery
 
 
@@ -45,7 +45,7 @@ class AbstractSection(object):
         fix_tags = self.dxffactory.modify_tags
 
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            tags = ClassifiedTags(group)
+            tags = ExtendedTags(group)
             fix_tags(tags)  # post read tags fixer for VERTEX!
             handle = entitydb.add_tags(tags)
             if not linked_tags(tags, handle):  # also creates the link structure as side effect

@@ -209,7 +209,7 @@ class Drawing(object):
             tags = Drawing.entitydb[handle]  # raises KeyError, if handle don't exist
             tags = Drawing.entitydb.get(handle)  # returns a default value, if handle don't exist (None by default)
 
-        type of tags: ClassifiedTags()
+        type of tags: ExtendedTags()
         """
         return self.dxffactory.wrap_handle(handle)
 

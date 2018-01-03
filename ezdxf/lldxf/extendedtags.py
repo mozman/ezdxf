@@ -15,13 +15,13 @@ XDATA_MARKER = 1001
 NoneTag = DXFTag(None, None)
 
 
-class ClassifiedTags(object):
+class ExtendedTags(object):
     """ Manage Subclasses, AppData and Extended Data """
     __slots__ = ('subclasses', 'appdata', 'xdata', 'link')
 
     def __init__(self, iterable=None):
         if isstring(iterable):
-            raise ValueError("use ClassifiedTags.from_text() to create tags from a string.")
+            raise ValueError("use ExtendedTags.from_text() to create tags from a string.")
 
         self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()

@@ -8,13 +8,13 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.tools.binarydata import compress_binary_data, CompressedTags, binary_encoded_data_to_bytes
 
 
 class TestCompressBinaryData(unittest.TestCase):
     def test_one_short_binary_chunk(self):
-        tags = ClassifiedTags.from_text(BIN_ONE_SHORT)
+        tags = ExtendedTags.from_text(BIN_ONE_SHORT)
         compress_binary_data(tags)
         ole2frame = tags.get_subclass('AcDbOle2Frame')
         compressed_tag = ole2frame[-1]  # last tag
@@ -23,7 +23,7 @@ class TestCompressBinaryData(unittest.TestCase):
         self.assertEqual(len(ole2frame), 10)
 
     def test_one_long_binary_chunk(self):
-        tags = ClassifiedTags.from_text(BIN_ONE_LONG)
+        tags = ExtendedTags.from_text(BIN_ONE_LONG)
         ole2frame = tags.get_subclass('AcDbOle2Frame')
         uncompressed_length = sum(len(tag.value) for tag in ole2frame if tag.code == 310)
         compress_binary_data(tags)
@@ -35,7 +35,7 @@ class TestCompressBinaryData(unittest.TestCase):
         self.assertTrue(uncompressed_length/compressed_length > 4)  # ratio > 1:4
 
     def test_two_short_binary_chunks(self):
-        tags = ClassifiedTags.from_text(BIN_TWO_SHORT)
+        tags = ExtendedTags.from_text(BIN_TWO_SHORT)
         compress_binary_data(tags)
         ole2frame = tags.get_subclass('AcDbOle2Frame')
         compressed_tag_310 = ole2frame[-2]
@@ -47,7 +47,7 @@ class TestCompressBinaryData(unittest.TestCase):
         self.assertEqual(len(ole2frame), 11)
 
     def test_four_binary_chunks(self):
-        tags = ClassifiedTags.from_text(BIN_FOUR)
+        tags = ExtendedTags.from_text(BIN_FOUR)
         compress_binary_data(tags)
         ole2frame = tags.get_subclass('AcDbOle2Frame')
         compressed_tag_310 = ole2frame[-4]
@@ -65,7 +65,7 @@ class TestCompressBinaryData(unittest.TestCase):
         self.assertEqual(len(ole2frame), 13)
 
     def test_write_four_binary_chunks(self):
-        tags = ClassifiedTags.from_text(BIN_FOUR)
+        tags = ExtendedTags.from_text(BIN_FOUR)
         compress_binary_data(tags)
         stream = StringIO()
         tags.write(stream)

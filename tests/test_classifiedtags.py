@@ -11,20 +11,20 @@ import unittest
 from io import StringIO
 
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.repair import join_subclasses
 
 
 class TestClassifiedTags(unittest.TestCase):
     def setUp(self):
-        self.xtags = ClassifiedTags.from_text(XTAGS1)
+        self.xtags = ExtendedTags.from_text(XTAGS1)
 
     def test_init_appdata(self):
         self.assertIsNotNone(self.xtags.get_app_data('{ACAD_XDICTIONARY'))
 
     def test_init_with_tags(self):
         tags = Tags.from_text(XTAGS1)
-        xtags = ClassifiedTags(tags)
+        xtags = ExtendedTags(tags)
         self.assertEqual(3, len(xtags.subclasses))
         self.assertEqual(1, len(xtags.xdata))
 
@@ -163,7 +163,7 @@ CONTINUOUS
 
 class TestXDATA(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(XTAGS2)
+        self.tags = ExtendedTags.from_text(XTAGS2)
 
     def test_xdata_count(self):
         self.assertEqual(3, len(self.tags.xdata))
@@ -238,7 +238,7 @@ TEXT-XDATA3
 
 class Test2xSubclass(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(SPECIALCASE_TEXT)
+        self.tags = ExtendedTags.from_text(SPECIALCASE_TEXT)
 
     def test_read_tags(self):
         subclass2 = self.tags.get_subclass('AcDbText')
@@ -301,7 +301,7 @@ ACAD_REACTORS = '{ACAD_REACTORS'
 
 class TestAppData(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(NO_REACTORS)
+        self.tags = ExtendedTags.from_text(NO_REACTORS)
 
     def test_get_not_existing_reactor(self):
         with self.assertRaises(ValueError):
@@ -358,7 +358,7 @@ ARIALNARROW
 
 class TestRepairLeicaDistoDXF12Files(unittest.TestCase):
     def test_join_subclasses(self):
-        tags = ClassifiedTags.from_text(LEICA_DISTO_TAGS)
+        tags = ExtendedTags.from_text(LEICA_DISTO_TAGS)
         join_subclasses(tags.subclasses)
         self.assertEqual(9, len(tags.noclass))
         self.assertEqual(1, len(tags.subclasses))

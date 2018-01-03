@@ -11,14 +11,14 @@ import unittest
 
 import ezdxf
 from ezdxf.modern.mesh import Mesh
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 
 DWG = ezdxf.new('AC1015')
 
 
 class TestMeshFromText(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(MESH)
+        self.tags = ExtendedTags.from_text(MESH)
         self.mesh = Mesh(self.tags, DWG)
 
     def test_mesh_properties(self):

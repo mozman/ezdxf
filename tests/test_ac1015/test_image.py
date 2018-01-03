@@ -11,14 +11,14 @@ import unittest
 
 import ezdxf
 from ezdxf.modern.image import ImageDef, Image
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 
 DWG = ezdxf.new('AC1015')
 
 
 class TestImageDefFromText(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(IMAGE_DEF)
+        self.tags = ExtendedTags.from_text(IMAGE_DEF)
         self.image_def = ImageDef(self.tags, DWG)
 
     def test_imagedef_properties(self):
@@ -35,7 +35,7 @@ class TestImageDefFromText(unittest.TestCase):
 
 class TestImageFromText(unittest.TestCase):
     def setUp(self):
-        self.tags = ClassifiedTags.from_text(IMAGE)
+        self.tags = ExtendedTags.from_text(IMAGE)
         self.image = Image(self.tags, DWG)
 
     def test_image_properties(self):

@@ -13,7 +13,7 @@ from datetime import datetime
 from functools import partial
 import logging
 
-from .classifiedtags import ClassifiedTags
+from .extendedtags import ExtendedTags
 from .tags import DXFTag, Tags
 from .const import DXFInternalEzdxfError, DXFStructureError
 
@@ -83,7 +83,7 @@ def create_layout_tags(dwg, block_record_handle, owner, tag_string):
     object_section = dwg.objects
     entitydb = dwg.entitydb
 
-    tags = ClassifiedTags.from_text(tag_string)
+    tags = ExtendedTags.from_text(tag_string)
     layout_handle = entitydb.get_unique_handle()  # create new unique handle
     tags.replace_handle(layout_handle)  # set entity handle
 

@@ -11,7 +11,7 @@ from contextlib import contextmanager
 
 from .dxfobjects import none_subclass
 from ..lldxf.tags import DXFTag
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
 from ..tools.c23 import isstring
@@ -36,7 +36,7 @@ GROUP_ITEM_CODE = 340
 
 class DXFGroup(DXFEntity):
     # groups are not allowed in block definitions
-    TEMPLATE = ClassifiedTags.from_text(_GROUP_TPL)
+    TEMPLATE = ExtendedTags.from_text(_GROUP_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbGroup', {

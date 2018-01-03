@@ -9,7 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.tags import DXFTag
 
 
@@ -171,7 +171,7 @@ viewport_subclass = DefSubclass('AcDbViewport', {
 
 
 class Viewport(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_VIEWPORT_TPL)
+    TEMPLATE = ExtendedTags.from_text(_VIEWPORT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, viewport_subclass)
     viewport_id = 2  # notes to id:
     # The id of the first viewport has to be 1, which is the definition of

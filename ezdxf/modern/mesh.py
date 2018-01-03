@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFStructureError
 
 _MESH_TPL = """  0
@@ -50,7 +50,7 @@ mesh_subclass = DefSubclass('AcDbSubDMesh', {
 
 
 class Mesh(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_MESH_TPL)
+    TEMPLATE = ExtendedTags.from_text(_MESH_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mesh_subclass)
 
     @property

@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups, Tags
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
 from ..tools.rgb import rgb2int, int2rgb
@@ -86,7 +86,7 @@ PATTERN_DEFINITION_LINE_CODES = frozenset((53, 43, 44, 45, 46, 79, 49))
 
 
 class Hatch(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_HATCH_TPL)
+    TEMPLATE = ExtendedTags.from_text(_HATCH_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, hatch_subclass)
 
     @property

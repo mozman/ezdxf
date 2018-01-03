@@ -10,12 +10,12 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.modern.hatch import Hatch, _HATCH_TPL
-from ezdxf.lldxf.classifiedtags import ClassifiedTags, DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 
 
 class TestHatch(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        tags = ExtendedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
 
     def test_default_settings(self):
@@ -73,7 +73,7 @@ class TestHatch(unittest.TestCase):
 
 class TestBoundaryPathData(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(PATH_HATCH)
+        tags = ExtendedTags.from_text(PATH_HATCH)
         self.hatch = Hatch(tags)
 
     def test_path_count(self):
@@ -88,7 +88,7 @@ class TestBoundaryPathData(unittest.TestCase):
 
 class TestCreateBoundaryPathData(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        tags = ExtendedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
 
     def test_add_polyline_path(self):
@@ -111,7 +111,7 @@ class TestCreateBoundaryPathData(unittest.TestCase):
 
 class TestPolylinePath(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(PATH_HATCH)
+        tags = ExtendedTags.from_text(PATH_HATCH)
         self.hatch = Hatch(tags)
 
     def testPolylinePathAttribs(self):
@@ -135,7 +135,7 @@ class TestPolylinePath(unittest.TestCase):
 
 class TestEdgeHatch(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(EDGE_HATCH)
+        tags = ExtendedTags.from_text(EDGE_HATCH)
         self.hatch = Hatch(tags)
 
     def test_path_count(self):
@@ -239,7 +239,7 @@ class TestEdgeHatch(unittest.TestCase):
 
 class TestEdgeHatchWithSpline(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(EDGE_HATCH_WITH_SPLINE)
+        tags = ExtendedTags.from_text(EDGE_HATCH_WITH_SPLINE)
         self.hatch = Hatch(tags)
 
     def test_get_params(self):
@@ -295,7 +295,7 @@ class TestEdgeHatchWithSpline(unittest.TestCase):
 
 class TestHatchPatternRead(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(HATCH_PATTERN)
+        tags = ExtendedTags.from_text(HATCH_PATTERN)
         self.hatch = Hatch(tags)
 
     def test_is_pattern_hatch(self):
@@ -323,7 +323,7 @@ class TestHatchPatternRead(unittest.TestCase):
 
 class TestHatchPatternCreate(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        tags = ExtendedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
 
     def test_create_new_pattern_hatch(self):
@@ -354,7 +354,7 @@ class TestHatchPatternCreate(unittest.TestCase):
 
 class TestGradientHatch(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        tags = ExtendedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
 
     def test_create_gradient(self):
@@ -404,7 +404,7 @@ class TestGradientHatch(unittest.TestCase):
 
 class TestHatchBackgroundColor(unittest.TestCase):
     def setUp(self):
-        tags = ClassifiedTags.from_text(_HATCH_TPL)
+        tags = ExtendedTags.from_text(_HATCH_TPL)
         self.hatch = Hatch(tags)
 
     def test_bgcolor_not_exists(self):

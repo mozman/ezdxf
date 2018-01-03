@@ -195,7 +195,7 @@ class DXF12BlockLayout(BaseLayout):
     def __contains__(self, entity):
         """
         Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
-        ClassifiedTags() or a wrapped entity.
+        ExtendedTags() or a wrapped entity.
 
         """
         if hasattr('get_handle', entity):

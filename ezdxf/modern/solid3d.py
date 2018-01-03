@@ -10,7 +10,7 @@ from contextlib import contextmanager
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.types import convert_tags_to_text_lines, convert_text_lines_to_tags
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..tools import crypt
 
@@ -36,7 +36,7 @@ modeler_geometry_subclass = DefSubclass('AcDbModelerGeometry', {
 
 
 class Body(ModernGraphicEntity):
-    TEMPLATE = ClassifiedTags.from_text(_BODY_TPL)
+    TEMPLATE = ExtendedTags.from_text(_BODY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass)
 
     def get_acis_data(self):
@@ -73,7 +73,7 @@ class ModelerGeometryData(object):
 
 
 class Region(Body):
-    TEMPLATE = ClassifiedTags.from_text(_BODY_TPL.replace('BODY', 'REGION'))
+    TEMPLATE = ExtendedTags.from_text(_BODY_TPL.replace('BODY', 'REGION'))
 
 
 _3DSOLID_TPL = """  0
@@ -98,7 +98,7 @@ AcDb3dSolid
 
 
 class Solid3d(Body):
-    TEMPLATE = ClassifiedTags.from_text(_3DSOLID_TPL)
+    TEMPLATE = ExtendedTags.from_text(_3DSOLID_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         entity_subclass,

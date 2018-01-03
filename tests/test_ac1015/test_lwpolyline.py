@@ -79,7 +79,7 @@ class TestNewLWPolyline(unittest.TestCase):
 
 class TestReadLWPolyline(unittest.TestCase):
     def setUp(self):
-        tags = test.ClassifiedTags.from_text(LWPOLYLINE1)
+        tags = test.ExtendedTags.from_text(LWPOLYLINE1)
         self.lwpolyline = DWG.dxffactory.wrap_entity(tags)
 
     def test_handle(self):

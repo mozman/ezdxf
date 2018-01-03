@@ -10,12 +10,12 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.modern.spline import Spline, _SPLINE_TPL
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
 class TestSpline(unittest.TestCase):
     def setUp(self):
-        self.spline = Spline(ClassifiedTags.from_text(_SPLINE_TPL))
+        self.spline = Spline(ExtendedTags.from_text(_SPLINE_TPL))
 
     def test_default_settings(self):
         spline = self.spline

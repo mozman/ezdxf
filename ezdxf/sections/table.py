@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 import warnings
 from ezdxf.lldxf.defaultchunk import DefaultChunk
 from ..lldxf.tags import TagGroups, DXFStructureError
-from ..lldxf.classifiedtags import ClassifiedTags
+from ..lldxf.extendedtags import ExtendedTags
 
 TABLENAMES = {
     'layer': 'layers',
@@ -95,7 +95,7 @@ class Table(object):
             groups.get_name(-1) != 'ENDTAB':
             raise DXFStructureError("Critical structure error in TABLES section.")
 
-        self._table_header = ClassifiedTags(groups[0][1:])
+        self._table_header = ExtendedTags(groups[0][1:])
 
         # AC1009 table headers have no handles, but putting it into the entitydb, will give it a handle and corrupt
         # the DXF format.
@@ -103,7 +103,7 @@ class Table(object):
         self.entitydb.add_tags(self._table_header)
 
         for tags in groups[1:-1]:
-            self._add_entry(ClassifiedTags(tags))
+            self._add_entry(ExtendedTags(tags))
 
     @property
     def entitydb(self):

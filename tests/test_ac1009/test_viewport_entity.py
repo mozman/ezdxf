@@ -10,12 +10,12 @@ from __future__ import unicode_literals
 import unittest
 
 from ezdxf.legacy.viewport import Viewport, _VPORT_TPL
-from ezdxf.lldxf.classifiedtags import ClassifiedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
 class TestNewViewportEntity(unittest.TestCase):
     def setUp(self):
-        self.viewport = Viewport(ClassifiedTags.from_text(_VPORT_TPL))
+        self.viewport = Viewport(ExtendedTags.from_text(_VPORT_TPL))
 
     def test_init_dxf_values(self):
         self.assertEqual((0, 0, 0), self.viewport.dxf.center)
