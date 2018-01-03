@@ -36,7 +36,7 @@ def setup_paper_space(dwg):
 
 def setup_layout_space(dwg, layout_name, block_name, tag_string):
     # This is just necessary for existing DXF drawings without properly setup management structures.
-    # Layout structure is not initialized in this runtime phase
+    # Layout structure is not initialized at this runtime phase
     def get_block_record_by_alt_names(names):
         for name in names:
             try:
@@ -77,7 +77,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
 
 def create_layout_tags(dwg, block_record_handle, owner, tag_string):
     # Problem: ezdxf was not designed to handle the absence of model/paper space LAYOUT entities
-    # Layout structure is not initialized in this runtime phase
+    # Layout structure is not initialized at this runtime phase
 
     object_section = dwg.objects
     entitydb = dwg.entitydb
@@ -162,8 +162,6 @@ def upgrade_to_ac1009(dwg):
 
 
 def add_upgrade_comment(dwg, from_version, to_version):
-    """Upgrade DXF versions prior to AC1009 (R12) to AC1009.
-    """
     from .. import VERSION
     dwg.dxfversion = 'AC1009'
     dwg.comments.append("DXF version upgrade from {f} to {t} by ezdxf {v} on {dt}".format(

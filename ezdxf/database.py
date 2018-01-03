@@ -14,7 +14,7 @@ def factory():
 
 
 class EntityDB(object):
-    """ A simple key/value database a.k.a. dict(), but can be replaced other
+    """ A simple key/value database a.k.a. dict(), but can be replaced by other
     classes that implements all of the methods of `EntityDB`. The entities
     have no order.
 
@@ -76,7 +76,7 @@ class EntityDB(object):
         try:
             handle = tags.get_handle()
         except ValueError:
-            handle = self.handles.next()
+            handle = self.get_unique_handle()
         self.__setitem__(handle, tags)
         return handle
 

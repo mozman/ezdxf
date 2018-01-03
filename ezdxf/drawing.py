@@ -47,6 +47,9 @@ class Drawing(object):
             repair.setup_layouts(self)
             self._groups = self.objects.groups()
         else:
+            if 'entities' not in self.sections:
+                raise DXFStructureError('Mandatory ENTITIES section not found.')
+
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
 
