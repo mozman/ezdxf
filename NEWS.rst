@@ -4,6 +4,8 @@ News
 
 Version 0.8.4 - ?
 
+  * NEW: DXF file structure validator at SECTION level, tags outside of sections will be removed
+
 Version 0.8.3 - 2018-01-02
 
   * CHANGE: Lwpolyline - suppress yielding z coordinates if they exists (z coordinates not defined in the DXF standard)

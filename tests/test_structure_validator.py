@@ -23,6 +23,13 @@ def test_valid_structure():
     assert len(tags) == 5
 
 
+def test_eof_without_lineending():
+    tags = list(structure_validator(string_tagger(
+        "  0\nSECTION\n  0\nENDSEC\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF"
+    )))
+    assert len(tags) == 5
+
+
 def test_missing_eof():
     with pytest.raises(DXFStructureError):
         list(structure_validator(string_tagger("999\ncomment")))

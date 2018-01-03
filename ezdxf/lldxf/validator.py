@@ -73,7 +73,7 @@ def structure_validator(tagreader, filter=False):
                 logger.warning('DXF Structure Warning: found tags outside a SECTION.')
                 # just 1 warning for all tags outside of a section
                 if filter:
-                    logger.info('Removing Tags outside of SECTIONS.')
+                    logger.warning('DXF Structure Warning: removing Tags outside of SECTIONS.')
                 log_warning_for_outside_tags = False
             if filter:  # do not yield outside section tags
                 continue

@@ -7,12 +7,10 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
 import io
-import warnings
 
 from . import database
 from .lldxf.tags import DXFTag, write_tags
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError
-from .lldxf.tagger import low_level_tagger, tag_optimizer
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -278,7 +276,10 @@ class Drawing(object):
     @staticmethod
     def read(stream, legacy_mode=False):
         """ Open an existing drawing. """
-        tagger = low_level_tagger(stream)
+        from .lldxf.tagger import low_level_tagger, tag_optimizer
+        from .lldxf.validator import structure_validator
+
+        tagger = structure_validator(low_level_tagger(stream), filter=True)
         if legacy_mode:
             tagger = repair.tag_reorder_layer(tagger)
         tagreader = tag_optimizer(tagger)

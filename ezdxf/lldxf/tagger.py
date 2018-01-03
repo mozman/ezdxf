@@ -64,8 +64,8 @@ def low_level_tagger(stream):
         code = stream.readline()
         value = stream.readline()
         if code and value:  # StringIO(): empty strings indicates EOF
-            return DXFTag(int(code[:-1]), value[:-1])  # without '\n'
-        else:  # StringIO(): missing '\n' indicates EOF
+            return DXFTag(int(code), value.rstrip('\n'))
+        else:
             raise EOFError()
 
     try:
