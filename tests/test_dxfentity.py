@@ -9,9 +9,9 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tools.test import ExtendedTags, DXFStructureError, DXFAttr, DXFAttributes, DefSubclass, DrawingProxy
+from ezdxf.tools.test import ExtendedTags, DXFAttr, DXFAttributes, DefSubclass, DrawingProxy
 from ezdxf.dxfentity import DXFEntity, DXFTag
-
+from ezdxf import DXFStructureError, DXFAttributeError, DXFValueError
 DWG = DrawingProxy('AC1009')
 
 
@@ -50,7 +50,7 @@ class TestDXFEntity(unittest.TestCase):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         # just_AC1015 has a DXF default value, but the drawing has an insufficient DXF version
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             point.get_dxf_attrib('just_AC1015')
         # except the USER defined default value
         self.assertEqual(17, point.get_dxf_attrib('just_AC1015', 17))
@@ -73,13 +73,13 @@ class TestDXFEntity(unittest.TestCase):
     def test_value_error(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             point.dxf.flags
 
     def test_attribute_error(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXFAttributeError):
             point.dxf.xflag
 
     def test_valid_dxf_attrib_names(self):
@@ -97,7 +97,7 @@ class TestDXFEntity(unittest.TestCase):
     def test_set_dxfattrib_for_wrong_dxfversion_error(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXFAttributeError):
             point.dxf.just_AC1015 = 7
 
     def test_get_dxfattrib_for_wrong_dxfversion_without_error(self):
@@ -125,7 +125,7 @@ class TestDXFEntity(unittest.TestCase):
     def test_delete_not_supported_dxfattrib(self):
         tags = ExtendedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXFAttributeError):
             del point.dxf.mozman
 
     def test_set_not_existing_3D_point(self):
@@ -139,7 +139,7 @@ class TestDXFEntity(unittest.TestCase):
         tags = ExtendedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         self.assertFalse(point.dxf_attrib_exists('xp'))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             point.dxf.xp = (7, 8)
 
     def test_set_not_existing_flex_point_as_3D(self):
@@ -184,7 +184,7 @@ class TestPoint3D(unittest.TestCase):
     def test_error(self):
         tags = ExtendedTags.from_text("12\n1.0\n22\n2.0\n32\n3.0\n")
         point = PointAccessor(tags)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             point.dxf.point
 
 
@@ -240,9 +240,9 @@ class TestFlexPoint(unittest.TestCase):
     def test_error_set_point_with_wrong_axis_count(self):
         tags = ExtendedTags.from_text("13\n1.0\n23\n2.0\n40\n0.0\n")
         point = PointAccessor(tags)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             point.dxf.flex = (3., 4., 5., 6.)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             point.dxf.flex = (3., )
 
 LINE_DATA = """  0
@@ -302,7 +302,7 @@ class TestAppData(unittest.TestCase):
         self.assertEqual(DXFTag(360, 'DEAD2'), app_data[1])
 
     def test_not_existing_appid(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.entity.get_app_data("XYZ")
 
 
@@ -336,7 +336,7 @@ class TestXData(unittest.TestCase):
         self.assertEqual(DXFTag(1000, 'Extended Data String2'), xdata[1])
 
     def test_not_existing_appid(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.entity.get_xdata("XYZ")
 
 
@@ -378,6 +378,7 @@ class TestReactors(unittest.TestCase):
         self.assertEqual(2, len(self.entity.get_reactors()), 'Handle not deleted')
         self.entity.remove_reactor_handle('FFFF')  # ignore not existing handles
         self.assertEqual(2, len(self.entity.get_reactors()))
+
 
 if __name__ == '__main__':
     unittest.main()

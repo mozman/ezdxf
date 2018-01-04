@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .lldxf.types import cast_tag_value, DXFTag
-from .lldxf.const import DXFStructureError, DXFInternalEzdxfError
+from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFValueError, DXFAttributeError
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 
@@ -113,25 +113,25 @@ class DXFEntity(object):
         try:
             return self.DXFATTRIBS[key]
         except KeyError:
-            raise AttributeError(key)
+            raise DXFAttributeError(key)
 
-    def get_dxf_attrib(self, key, default=ValueError):
+    def get_dxf_attrib(self, key, default=DXFValueError):
         dxfattr = self._get_dxfattr_definition(key)
         try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
             return self._get_dxf_attrib(dxfattr)
-        except ValueError:
-            if default is ValueError:
+        except DXFValueError:
+            if default is DXFValueError:
                 # no DXF default values if DXF version is incorrect
                 if dxfattr.dxfversion is not None and \
                         self.drawing is not None and \
                         self.drawing.dxfversion < dxfattr.dxfversion:
                     msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
-                    raise ValueError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
+                    raise DXFValueError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
                 result = dxfattr.default  # default value defined by DXF specs
                 if result is not None:
                     return result
                 else:
-                    raise ValueError("DXFAttrib '%s' does not exist." % key)
+                    raise DXFValueError("DXFAttrib '%s' does not exist." % key)
             else:
                 return default
 
@@ -144,7 +144,7 @@ class DXFEntity(object):
         # no subclass is subclass index 0
         try:
             subclass_tags = self.tags.subclasses[dxfattr.subclass]
-        except IndexError:
+        except IndexError:  # internal exception
             params = (self.dxftype(), self.tags.get_handle(), dxfattr.subclass)
             raise DXFInternalEzdxfError('Subclass index error in {} handle={} subclass={}.'.format(*params))
 
@@ -163,7 +163,7 @@ class DXFEntity(object):
         if dxfattr.dxfversion is not None and self.drawing is not None:
             if self.drawing.dxfversion < dxfattr.dxfversion:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
-                raise AttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
+                raise DXFAttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
         # no subclass is subclass index 0
         subclasstags = self.tags.subclasses[dxfattr.subclass]
         if dxfattr.xtype is not None:
@@ -205,12 +205,12 @@ class DXFEntity(object):
         vlen = len(value)
         if vlen == 3:
             if xtype == 'Point2D':
-                raise ValueError('2 axis required')
+                raise DXFValueError('2 axis required')
         elif vlen == 2:
             if xtype == 'Point3D':
-                raise ValueError('3 axis required')
+                raise DXFValueError('3 axis required')
         else:
-            raise ValueError('2 or 3 axis required')
+            raise DXFValueError('2 or 3 axis required')
         tags.set_first(code, value)
 
     def _del_dxf_attrib(self, dxfattr):
