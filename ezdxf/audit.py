@@ -90,3 +90,14 @@ class Audit(object):
                         data=linetype,
                     )
 
+    def check_dim_styles(self):  # TODO: implement dimension style checker
+        """
+        Check for usage of undefined dimension styles.
+        """
+        pass
+
+    def check_text_styles(self):  # TODO: implement text style checker
+        """
+        Check for usage of undefined text styles.
+        """
+        pass

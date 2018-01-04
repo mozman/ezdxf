@@ -7,12 +7,16 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+from ..legacy import graphics as legacy
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf import const
 
 
 dimension_subclass = DefSubclass('AcDbDimension', {
     'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry
+    'dimstyle': DXFAttr(3, default='STANDARD'),  # dimension style name
+    # The dimension style is stored in Drawing.sections.tables.dimstyles,
+    # shortcut Drawings.dimstyles property
     'defpoint': DXFAttr(10, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # definition point for all dimension types
     'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # middle point of dimension text
     'dimtype': DXFAttr(70),  # Dimension type:
@@ -109,26 +113,8 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
     # at the origin of the UCS that is current when the dimension is created.
 })
 
-DimensionTypeNames = [
-    'AcDbRotatedDimension',  # 0
-    'AcDbAlignedDimension',  # 1
-    'AcDb3dPointAngularDimension',  # 2
-    'AcDbDiametricDimension',  # 3
-    'AcDbRadialDimension',   # 4
-    'AcDb3dPointAngularDimension',  # 5
-    'AcDbOrdinateDimension',  # 6
-]
 
-
-class Dimension(ModernGraphicEntity):
-    @property
-    def dim_type(self):
-        return self.dxf & 7
-
-    @property
-    def dim_type_name(self):
-        return DimensionTypeNames[self.dim_type]
-
+class Dimension(legacy.Dimension, ModernGraphicEntity):
     def cast(self):  # create the REAL dimension entity
         DimClass = DimensionClasses[self.dim_type]
         return DimClass(self.tags, self.drawing)
@@ -157,6 +143,7 @@ class AngularDimension(Dimension):
 
 class OrdinateDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, ordinate_dimension_subclass)
+
 
 DimensionClasses = [
     RotatedDimension,  # 0

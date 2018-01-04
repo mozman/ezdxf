@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf import const
-from ..lldxf.const import VERTEXNAMES
+from ..lldxf.const import VERTEXNAMES, DXFInternalEzdxfError
 from ..dxfentity import DXFEntity
 from .facemixins import PolyfaceMixin, PolymeshMixin
 
@@ -1204,7 +1204,9 @@ class Dimension(GraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_DIMENSION_TPL)
     DXFATTRIBS = make_attribs({
         'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry
-        'dimstyle': DXFAttr(3),  # ???
+        'dimstyle': DXFAttr(3, default='STANDARD'),  # dimension style name
+        # The dimension style is stored in Drawing.sections.tables.dimstyles,
+        # shortcut Drawings.dimstyles property
         'defpoint': DXFAttr(10, xtype='Point2D/3D'),  # WCS, definition point for all dimension types
         'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # OCS, middle point of dimension text
         'translation_vector': DXFAttr(12, 'Point3D'),  # OCS, dimension block translation vector
@@ -1258,6 +1260,21 @@ class Dimension(GraphicEntity):
         # dimension text away from its default orientation (the direction
         # of the dimension line).
     })
+    @property
+    def dim_type(self):
+        return self.dxf.dimtype & 7
+
+    @property
+    def dim_type_name(self):
+        return const.DimensionTypeNames[self.dim_type]
+
+    def dim_style(self):
+        if self.drawing is not None:
+            dim_style_name = self.dxf.dimstyle
+            # raises ValueError if not exists, but all used dim styles should exists!
+            return self.drawing.dimstyles.get(dim_style_name)
+        else:
+            raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
 
 
 _SHAPE_TPL = """  0

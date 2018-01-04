@@ -5,10 +5,10 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-import warnings
 from ezdxf.lldxf.defaultchunk import DefaultChunk
 from ..lldxf.tags import TagGroups, DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags
+from ..lldxf.const import DXFTableEntryError
 
 TABLENAMES = {
     'layer': 'layers',
