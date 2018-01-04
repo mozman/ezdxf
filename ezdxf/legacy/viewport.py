@@ -11,7 +11,7 @@ from .graphics import make_attribs, GraphicEntity
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr
 from ..lldxf.tags import DXFTag, Tags
-from ..lldxf.const import DXFStructureError
+from ..lldxf.const import DXFStructureError, DXFValueError
 
 _VPORT_TPL = """  0
 VIEWPORT
@@ -128,7 +128,7 @@ class Viewport(GraphicEntity):
     def get_viewport_data(self):
         try:
             extended_dxf_data = self.tags.get_xdata('ACAD')
-        except ValueError:
+        except DXFValueError:
             DXFStructureError("Invalid viewport entity - missing data")
         else:
             return ViewportData.from_tags(extended_dxf_data)
@@ -253,7 +253,7 @@ class ViewportData(object):
             vp_data.snap_spacing = tags[24].value, tags[25].value
             vp_data.grid_spacing = tags[26].value, tags[27].value
             vp_data.hidden_plot = tags[28].value
-        except IndexError:
+        except IndexError:  # internal exception
             raise DXFStructureError("Invalid viewport entity - missing data")
         vp_data.frozen_layers = [frozen_layer_name.value for frozen_layer_name in tags[30:-2]]
         return vp_data

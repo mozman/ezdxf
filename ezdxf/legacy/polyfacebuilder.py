@@ -46,7 +46,7 @@ class PolyfaceBuilder(object):
         location = key(vertex.dxf.location)
         try:
             return self.index_mapping[location]
-        except KeyError:
+        except KeyError:  # internal exception
             index = len(self.vertices)
             self.index_mapping[location] = index
             self.vertices.append(vertex)

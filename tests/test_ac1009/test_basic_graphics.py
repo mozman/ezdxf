@@ -408,5 +408,6 @@ class TestShape(SetupDrawing):
         self.assertEqual(1.0, shape.dxf.xscale)
         self.assertEqual(0.0, shape.dxf.oblique)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -69,6 +69,7 @@ from . import graphics
 from .viewport import Viewport
 
 from .layouts import DXF12Layouts, DXF12BlockLayout
+from ..lldxf.const import DXFValueError
 
 
 ENTITY_WRAPPERS = {
@@ -128,7 +129,6 @@ class LegacyDXFFactory(object):
     def dxfversion(self):
         return self.drawing.dxfversion
 
-
     def headervar_factory(self, key, value):
         factory = self.HEADERVARS[key]
         return factory(value)
@@ -139,7 +139,7 @@ class LegacyDXFFactory(object):
             class_ = self.ENTITY_WRAPPERS[type_]
             return class_.new(handle, dxfattribs, self.drawing)
         except KeyError:
-            raise ValueError('Unsupported entity type: %s' % type_)
+            raise DXFValueError('Unsupported entity type: %s' % type_)
 
     def wrap_entity(self, tags):
         wrapper = self.ENTITY_WRAPPERS.get(tags.dxftype(), self.DEFAULT_WRAPPER)

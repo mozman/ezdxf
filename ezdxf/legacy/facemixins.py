@@ -37,7 +37,7 @@ class PolymeshMixin(object):
             pos = m * n_count + n
             return self.__getitem__(pos)
         else:
-            raise IndexError(repr(pos))
+            raise const.DXFIndexError(repr(pos))
 
     def get_mesh_vertex_cache(self):
         """ Get a MeshVertexCache() object for this Polymesh. The caching object provides fast access to the location
@@ -73,7 +73,7 @@ class MeshVertexCache(object):
         try:
             return self.vertices[pos].dxf.location
         except KeyError:
-            raise IndexError(repr(pos))
+            raise const.DXFIndexError(repr(pos))
 
     def __setitem__(self, pos, location):
         """ Get mesh vertex location as (x, y, z)-tuple.
@@ -81,7 +81,7 @@ class MeshVertexCache(object):
         try:
             self.vertices[pos].dxf.location = location
         except KeyError:
-            raise IndexError(repr(pos))
+            raise const.DXFIndexError(repr(pos))
 
 
 class PolyfaceMixin(object):

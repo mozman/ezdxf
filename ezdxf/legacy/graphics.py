@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf import const
-from ..lldxf.const import VERTEXNAMES, DXFInternalEzdxfError
+from ..lldxf.const import VERTEXNAMES, DXFInternalEzdxfError, DXFValueError, DXFKeyError, DXFIndexError
 from ..dxfentity import DXFEntity
 from .facemixins import PolyfaceMixin, PolymeshMixin
 
@@ -279,7 +279,7 @@ class Text(GraphicEntity):
         self.set_dxf_attrib('insert', p1)
         if align in ('ALIGNED', 'FIT'):
             if p2 is None:
-                raise ValueError("Alignment '{}' requires a second alignment point.".format(align))
+                raise DXFValueError("Alignment '{}' requires a second alignment point.".format(align))
         else:
             p2 = p1
         self.set_dxf_attrib('align_point', p2)
@@ -428,7 +428,7 @@ class Insert(GraphicEntity):
             self.dxf.insert = insert
         if scale is not None:
             if len(scale) != 3:
-                raise ValueError("Parameter scale has to be a 3-tuple.")
+                raise DXFValueError("Parameter scale has to be a 3-tuple.")
             x, y, z = scale
             self.dxf.xscale = x
             self.dxf.yscale = y
@@ -450,9 +450,9 @@ class Insert(GraphicEntity):
 
         """
         if len(size) != 2:
-            raise ValueError("Parameter size has to be a (row_count, column_count)-tuple.")
+            raise DXFValueError("Parameter size has to be a (row_count, column_count)-tuple.")
         if len(spacing) != 2:
-            raise ValueError("Parameter spacing has to be a (row_spacing, column_spacing)-tuple.")
+            raise DXFValueError("Parameter spacing has to be a (row_spacing, column_spacing)-tuple.")
         self.dxf.row_count = size[0]
         self.dxf.column_count = size[1]
         self.dxf.row_spacing = spacing[0]
@@ -561,7 +561,7 @@ class Insert(GraphicEntity):
             if ignore:
                 return
             else:
-                raise KeyError(tag)
+                raise DXFKeyError(tag)
 
         dxffactory = self.dxffactory
         handle = self.tags.link
@@ -580,7 +580,7 @@ class Insert(GraphicEntity):
                 prev = entity
                 handle = next_entity
         if not ignore:
-            raise KeyError(tag)
+            raise DXFKeyError(tag)
 
     def delete_all_attribs(self):
         """
@@ -948,7 +948,7 @@ class Polyline(GraphicEntity):
                 return self.dxffactory.wrap_entity(tags)
             count += 1
             tags = db[tags.link]
-        raise IndexError("vertex index out of range")
+        raise DXFIndexError("vertex index out of range")
 
     def vertices(self):
         wrapper = self.dxffactory.wrap_handle
@@ -1038,7 +1038,7 @@ class Polyline(GraphicEntity):
             if count == 0:
                 return
             vertex = db[prev_vertex.link]
-        raise ValueError("invalid count")
+        raise DXFValueError("invalid count")
 
     def _unlink_all_vertices(self):
         # but don't delete it from database

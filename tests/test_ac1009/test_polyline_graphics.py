@@ -11,6 +11,7 @@ import unittest
 
 import ezdxf
 from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
+from ezdxf import DXFIndexError
 
 DWG = ezdxf.new('AC1009')
 
@@ -103,12 +104,12 @@ class TestPolymesh(unittest.TestCase):
 
     def test_error_nindex(self):
         mesh = self.layout.add_polymesh((4, 4))
-        with self.assertRaises(IndexError):
+        with self.assertRaises(DXFIndexError):
             mesh.get_mesh_vertex((0, 4))
 
     def test_error_mindex(self):
         mesh = self.layout.add_polymesh((4, 4))
-        with self.assertRaises(IndexError):
+        with self.assertRaises(DXFIndexError):
             mesh.get_mesh_vertex((4, 0))
 
     def test_mesh_cache(self):
@@ -118,7 +119,7 @@ class TestPolymesh(unittest.TestCase):
         cache[pos] = (1, 2, 3)
         vertex = mesh.get_mesh_vertex(pos)
         self.assertEqual(vertex.dxf.location, cache[pos])
-        with self.assertRaises(IndexError):
+        with self.assertRaises(DXFIndexError):
             cache[4, 0]
 
 
