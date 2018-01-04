@@ -12,7 +12,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFStructureError
+from ..lldxf.const import DXFStructureError, DXFValueError
 
 _MESH_TPL = """  0
 MESH
@@ -63,7 +63,7 @@ class Mesh(ModernGraphicEntity):
     def set_data(self, data):
         try:
             pos92 = self.AcDbSubDMesh.tag_index(92)
-        except ValueError:
+        except DXFValueError:
             raise DXFStructureError("Tag 92 (vertex count) in MESH entity not found.")
         pending_tags = self._remove_existing_data(pos92)
         self._append_vertices(data.vertices)
@@ -79,7 +79,7 @@ class Mesh(ModernGraphicEntity):
         while True:
             try:
                 count_tag = tags.tag_index(code)
-            except ValueError:
+            except DXFValueError:
                 code -= 1
                 if code == 92:
                     raise DXFStructureError("No count tag 93, 94 or 95 in MESH entity found.")
@@ -132,7 +132,7 @@ class Mesh(ModernGraphicEntity):
         vertices = []
         try:
             pos = self.AcDbSubDMesh.tag_index(92)
-        except ValueError:
+        except DXFValueError:
             return vertices
         itags = iter(self.AcDbSubDMesh[pos+1:])
         while True:
@@ -150,7 +150,7 @@ class Mesh(ModernGraphicEntity):
         faces = []
         try:
             pos = self.AcDbSubDMesh.tag_index(93)
-        except ValueError:
+        except DXFValueError:
             return faces
         face = []
         itags = iter(self.AcDbSubDMesh[pos+1:])
@@ -175,7 +175,7 @@ class Mesh(ModernGraphicEntity):
         edges = []
         try:
             pos = self.AcDbSubDMesh.tag_index(94)
-        except ValueError:
+        except DXFValueError:
             return edges
         start_index = None
         for index in Mesh.get_raw_list(self.AcDbSubDMesh, pos+1, code=90):
@@ -189,7 +189,7 @@ class Mesh(ModernGraphicEntity):
     def get_edge_crease_values(self):
         try:
             pos = self.AcDbSubDMesh.tag_index(95)
-        except ValueError:
+        except DXFValueError:
             return []
         return Mesh.get_raw_list(self.AcDbSubDMesh, pos+1, code=140)
 
@@ -221,7 +221,7 @@ class MeshData(object):
 
     def add_edge(self, vertices):
         if len(vertices) != 2:
-            raise ValueError("Parameter vertices has to be a list/tuple of 2 vertices [(x1, y1, z1), (x2, y2, z2)].")
+            raise DXFValueError("Parameter vertices has to be a list/tuple of 2 vertices [(x1, y1, z1), (x2, y2, z2)].")
         return self.add_entity(vertices, self.edges)
 
     def add_entity(self, vertices, entity_list):
@@ -231,7 +231,7 @@ class MeshData(object):
 
     def add_vertex(self, vertex):
         if len(vertex) != 3:
-            raise ValueError('Parameter vertex has to be a 3-tuple (x, y, z).')
+            raise DXFValueError('Parameter vertex has to be a 3-tuple (x, y, z).')
         index = len(self.vertices)
         self.vertices.append(vertex)
         return index

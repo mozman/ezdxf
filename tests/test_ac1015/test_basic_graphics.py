@@ -30,15 +30,15 @@ class TestAC1015GraphicsDefaultSettings(SetupDrawing):
         self.assertEqual(1.0, line.dxf.ltscale)
         self.assertEqual(0, line.dxf.invisible)
         self.assertEqual((0.0, 0.0, 1.0), line.dxf.extrusion)
-        with self.assertRaises(ValueError):  # requires AC1018
+        with self.assertRaises(ezdxf.DXFValueError):  # requires AC1018
             value = line.dxf.true_color
-        with self.assertRaises(ValueError):  # requires AC1018
+        with self.assertRaises(ezdxf.DXFValueError):  # requires AC1018
             value = line.dxf.color_name
-        with self.assertRaises(ValueError):  # requires AC1018
+        with self.assertRaises(ezdxf.DXFValueError):  # requires AC1018
             value = line.dxf.transparency
-        with self.assertRaises(ValueError):  # requires AC1021
+        with self.assertRaises(ezdxf.DXFValueError):  # requires AC1021
             value = line.dxf.shadow_mode
-        with self.assertRaises(ValueError):  # not defined value
+        with self.assertRaises(ezdxf.DXFValueError):  # not defined value
             value = line.dxf.lineweight
 
         line.dxf.lineweight = 17  # set line weight
@@ -54,7 +54,7 @@ class TestAC1018GraphicsDefaultSettings(unittest.TestCase):
         self.assertFalse(line.dxf_attrib_exists('true_color'))  # no default true color
         self.assertFalse(line.dxf_attrib_exists('color_name'))  # no default color name
         self.assertFalse(line.dxf_attrib_exists('transparency'))  # no default transparency
-        with self.assertRaises(ValueError):  # requires AC1021
+        with self.assertRaises(ezdxf.DXFValueError):  # requires AC1021
             value = line.dxf.shadow_mode
 
     def test_true_color(self):

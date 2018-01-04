@@ -16,6 +16,7 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
 from ..tools.rgb import rgb2int, int2rgb
+from ..lldxf.const import DXFValueError, DXFVersionError
 
 _HATCH_TPL = """  0
 HATCH
@@ -119,7 +120,7 @@ class Hatch(ModernGraphicEntity):
         color_value = rgb2int(rgb) | -0b111110000000000000000000000000  # it's magic
         try:
             xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
-        except ValueError:  # no xdata for background color found
+        except DXFValueError:  # no xdata for background color found
             self.tags.xdata.append(Tags([
                 DXFTag(1001, 'HATCHBACKGROUNDCOLOR'),
                 DXFTag(1071, color_value),
@@ -131,7 +132,7 @@ class Hatch(ModernGraphicEntity):
     def bgcolor(self):
         try:
             xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
-        except ValueError:  # background color does not exist
+        except DXFValueError:  # background color does not exist
             return
         else:
             self.tags.xdata.remove(xdata_bgcolor)
@@ -172,7 +173,7 @@ class Hatch(ModernGraphicEntity):
     def set_gradient(self, color1=(0, 0, 0), color2=(255, 255, 255), rotation=0., centered=0., one_color=0, tint=0.,
                      name='LINEAR'):
         if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
-            raise ValueError("Gradient support requires at least DXF version AC1018, this drawing is:%s" % self.drawing.dxfversion)
+            raise DXFVersionError("Gradient support requires at least DXF version AC1018, this drawing is:%s" % self.drawing.dxfversion)
         gradient_data = GradientData()
         gradient_data.color1 = color1
         gradient_data.color2 = color2
@@ -185,13 +186,13 @@ class Hatch(ModernGraphicEntity):
 
     def get_gradient(self):
         if not self.has_gradient_data:
-            raise ValueError('HATCH has no gradient data.')
+            raise DXFValueError('HATCH has no gradient data.')
         return GradientData.from_tags(self.AcDbHatch)
 
     def _set_gradient(self, gradient_data):
         gradient_data.name = gradient_data.name.upper()
         if gradient_data.name not in const.GRADIENT_TYPES:
-            raise ValueError('Invalid gradient type name: %s' % gradient_data.name)
+            raise DXFValueError('Invalid gradient type name: %s' % gradient_data.name)
 
         self._remove_pattern_data()
         self._remove_gradient_data()
@@ -206,7 +207,7 @@ class Hatch(ModernGraphicEntity):
     @contextmanager
     def edit_gradient(self):
         if not self.has_gradient_data:
-            raise ValueError('HATCH has no gradient data.')
+            raise DXFValueError('HATCH has no gradient data.')
         gradient_data = GradientData.from_tags(self.AcDbHatch)
         yield gradient_data
         self._set_gradient(gradient_data)
@@ -223,7 +224,7 @@ class Hatch(ModernGraphicEntity):
         self.AcDbHatch.remove_tags((52, 41, 77))  # remove pattern angle, pattern scale & pattern double flag if exists
         try:
             index = self.AcDbHatch.tag_index(76) + 1  # find position of pattern type (76); + 1: insert after tag 76
-        except ValueError:
+        except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern type' (code=76).")
         # insert pattern angle, pattern scale & pattern double flag behind pattern type
         self.AcDbHatch[index:index] = [DXFTag(52, angle), DXFTag(41, scale), DXFTag(77, double)]
@@ -236,7 +237,7 @@ class Hatch(ModernGraphicEntity):
     @contextmanager
     def edit_pattern(self):
         if self.has_solid_fill:
-            raise ValueError('Solid fill HATCH has no pattern data.')
+            raise DXFValueError('Solid fill HATCH has no pattern data.')
         pattern_data = PatternData(self)
         yield pattern_data
         self._set_pattern_data(pattern_data)
@@ -249,7 +250,7 @@ class Hatch(ModernGraphicEntity):
             try:
                 start_index = self.AcDbHatch.tag_index(77) + 1  # hatch pattern double flag, used as insertion point
                 end_index = start_index
-            except ValueError:
+            except DXFValueError:
                 raise DXFStructureError("HATCH: Missing required DXF tag 'Hatch pattern double flag' (code=77).")
         # replace existing pattern data
         self.AcDbHatch[start_index: end_index] = pattern_tags
@@ -279,17 +280,17 @@ class Hatch(ModernGraphicEntity):
     def _get_seed_point_index(self, hatch_tags):
         try:
             seed_count_index = hatch_tags.tag_index(98)  # find index of 'Number of seed points'
-        except ValueError:
+        except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Number of seed points' (code=98).")
         try:
             first_seed_point_index = hatch_tags.tag_index(10, seed_count_index+1)
-        except ValueError:
+        except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tags 'seed point X value' (code=10).")
         return first_seed_point_index
 
     def set_seed_points(self, points):
         if len(points) < 1:
-            raise ValueError("Param points should be a collection of 2D points and requires at least one point.")
+            raise DXFValueError("Param points should be a collection of 2D points and requires at least one point.")
         hatch_tags = self.AcDbHatch
         first_seed_point_index = self._get_seed_point_index(hatch_tags)
         existing_seed_points = hatch_tags.collect_consecutive_tags([10], start=first_seed_point_index)  # don't rely on 'Number of seed points'
@@ -310,7 +311,7 @@ class BoundaryPathData(object):
         try:
             self.start_index = tags.tag_index(91)  # code 91=Number of boundary paths (loops)
             n_paths = tags[self.start_index].value
-        except ValueError:
+        except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Number of boundary paths (loops)' (code=91).")
 
         self.end_index = self.start_index + 1  # + 1 for Tag(91, Number of boundary paths)
@@ -416,7 +417,7 @@ class PolylinePath(object):
             elif len(vertex) == 3:
                 x, y, bulge = vertex
             else:
-                raise ValueError("Invalid vertex format, expected (x, y) or (x, y, bulge)")
+                raise DXFValueError("Invalid vertex format, expected (x, y) or (x, y, bulge)")
             new_vertices.append((x, y, bulge))
         self.vertices = new_vertices
         self.is_closed = is_closed
@@ -441,11 +442,12 @@ class PolylinePath(object):
             if has_bulge:
                 vtags.append(DXFTag(42, float(bulge)))
 
-        tags = [DXFTag(92, int(self.path_type_flags)),
-                DXFTag(72, int(has_bulge)),
-                DXFTag(73, int(self.is_closed)),
-                DXFTag(93, len(self.vertices)),
-                ]
+        tags = [
+            DXFTag(92, int(self.path_type_flags)),
+            DXFTag(72, int(has_bulge)),
+            DXFTag(73, int(self.is_closed)),
+            DXFTag(93, len(self.vertices)),
+        ]
         tags.extend(vtags)
         tags.extend(build_source_boundary_object_tags(self.source_boundary_objects))
         return tags
@@ -498,7 +500,7 @@ class EdgePath(object):
     def add_ellipse(self, center, major_axis=(1., 0.), ratio=1.,
                     start_angle=0., end_angle=360., is_counter_clockwise=0):
         if ratio > 1.:
-            raise ValueError("Parameter 'ratio' has to be <= 1.0")
+            raise DXFValueError("Parameter 'ratio' has to be <= 1.0")
         ellipse = EllipseEdge()
         ellipse.center = center
         ellipse.major_axis = major_axis
@@ -556,10 +558,11 @@ class LineEdge(object):
         return edge
 
     def dxftags(self):
-        return [DXFTag(72, 1),  # edge type
-                DXFTag(10, self.start),
-                DXFTag(11, self.end)
-                ]
+        return [
+            DXFTag(72, 1),  # edge type
+            DXFTag(10, self.start),
+            DXFTag(11, self.end),
+        ]
 
 
 class ArcEdge(object):
@@ -591,13 +594,14 @@ class ArcEdge(object):
         return edge
 
     def dxftags(self):
-        return [DXFTag(72, 2),  # edge type
-                DXFTag(10, self.center),
-                DXFTag(40, self.radius),
-                DXFTag(50, self.start_angle),
-                DXFTag(51, self.end_angle),
-                DXFTag(73, self.is_counter_clockwise)
-                ]
+        return [
+            DXFTag(72, 2),  # edge type
+            DXFTag(10, self.center),
+            DXFTag(40, self.radius),
+            DXFTag(50, self.start_angle),
+            DXFTag(51, self.end_angle),
+            DXFTag(73, self.is_counter_clockwise),
+        ]
 
 
 class EllipseEdge(object):
@@ -632,14 +636,15 @@ class EllipseEdge(object):
         return edge
 
     def dxftags(self):
-        return [DXFTag(72, 3),  # edge type
-                DXFTag(10, self.center),
-                DXFTag(11, self.major_axis),
-                DXFTag(40, self.ratio),
-                DXFTag(50, self.start_angle),
-                DXFTag(51, self.end_angle),
-                DXFTag(73, self.is_counter_clockwise)
-                ]
+        return [
+            DXFTag(72, 3),  # edge type
+            DXFTag(10, self.center),
+            DXFTag(11, self.major_axis),
+            DXFTag(40, self.ratio),
+            DXFTag(50, self.start_angle),
+            DXFTag(51, self.end_angle),
+            DXFTag(73, self.is_counter_clockwise)
+        ]
 
 
 class SplineEdge(object):
@@ -682,19 +687,20 @@ class SplineEdge(object):
         return edge
 
     def dxftags(self):
-        tags = [DXFTag(72, 4),   # edge type
-                DXFTag(94, int(self.degree)),
-                DXFTag(73, int(self.rational)),
-                DXFTag(74, int(self.periodic)),
-                DXFTag(95, len(self.knot_values)),  # number of knots
-                DXFTag(96, len(self.control_points)),  # number of control points
-                ]
+        tags = [
+            DXFTag(72, 4),   # edge type
+            DXFTag(94, int(self.degree)),
+            DXFTag(73, int(self.rational)),
+            DXFTag(74, int(self.periodic)),
+            DXFTag(95, len(self.knot_values)),  # number of knots
+            DXFTag(96, len(self.control_points)),  # number of control points
+        ]
         # build knot values list
         # knot values have to be present and valid, otherwise AutoCAD crashes
         if len(self.knot_values):
             tags.extend([DXFTag(40, float(value)) for value in self.knot_values])
         else:
-            raise ValueError("SplineEdge: missing required knot values")
+            raise DXFValueError("SplineEdge: missing required knot values")
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
@@ -713,6 +719,7 @@ class SplineEdge(object):
         tags.append(DXFTag(13, (float(self.end_tangent[0]), float(self.end_tangent[1]))))
         return tags
 
+
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
 
@@ -725,7 +732,7 @@ class PatternData(object):
     def _setup_pattern_lines(self, tags):
         try:
             self.existing_pattern_start_index = tags.tag_index(78)  # code 78=Number of patter definition lines
-        except ValueError:  # no pattern definition lines found
+        except DXFValueError:  # no pattern definition lines found
             self.existing_pattern_start_index = 0
             self.existing_pattern_end_index = 0
             return []
@@ -745,7 +752,7 @@ class PatternData(object):
     @staticmethod
     def new_line(angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
         if dash_length_items is None:
-            raise ValueError("Parameter 'dash_length_items' must not be None.")
+            raise DXFValueError("Parameter 'dash_length_items' must not be None.")
         return PatternDefinitionLine(angle, base_point, offset, dash_length_items)
 
     def dxftags(self):
@@ -783,13 +790,14 @@ class PatternDefinitionLine(object):
         return PatternDefinitionLine(p[53], (p[43], p[44]), (p[45], p[46]), dash_length_items)
 
     def dxftags(self):
-        tags = [DXFTag(53, self.angle),
-                DXFTag(43, self.base_point[0]),
-                DXFTag(44, self.base_point[1]),
-                DXFTag(45, self.offset[0]),
-                DXFTag(46, self.offset[1]),
-                DXFTag(79, len(self.dash_length_items))
-                ]
+        tags = [
+            DXFTag(53, self.angle),
+            DXFTag(43, self.base_point[0]),
+            DXFTag(44, self.base_point[1]),
+            DXFTag(45, self.offset[0]),
+            DXFTag(46, self.offset[1]),
+            DXFTag(79, len(self.dash_length_items)),
+        ]
         tags.extend(DXFTag(49, item) for item in self.dash_length_items)
         return tags
 
@@ -812,7 +820,7 @@ class GradientData(object):
         gdata = GradientData()
         try:
             index = tags.tag_index(450)  # required tag if hatch has gradient data
-        except ValueError:
+        except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag for gradient data (code=450).")
         # if tags[index].value == 0 hatch is a solid ????
         first_color_value = True

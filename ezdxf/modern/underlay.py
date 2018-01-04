@@ -161,6 +161,7 @@ class DwfUnderlay(PdfUnderlay):
 class DgnUnderlay(PdfUnderlay):
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DGN'))
 
+
 # Using reactors in PdfDefinition for well defined UNDERLAYS
 _PDF_DEF_TPL = """  0
 PDFDEFINITION

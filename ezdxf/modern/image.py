@@ -2,7 +2,6 @@
 # Created: 07.03.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
@@ -13,7 +12,7 @@ from ..dxfentity import DXFEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf import const
+
 
 _IMAGE_TPL = """ 0
 IMAGE
@@ -182,6 +181,7 @@ image_def_subclass = DefSubclass('AcDbRasterImageDef', {
 class ImageDef(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_IMAGE_DEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, image_def_subclass)
+
 
 _IMAGE_DEF_REACTOR_TPL = """  0
 IMAGEDEF_REACTOR

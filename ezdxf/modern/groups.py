@@ -6,7 +6,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-import warnings
 from contextlib import contextmanager
 
 from .dxfobjects import none_subclass
@@ -15,6 +14,7 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
 from ..tools.c23 import isstring
+from ..lldxf.const import DXFValueError, DXFKeyError
 
 _GROUP_TPL = """  0
 GROUP
@@ -58,7 +58,7 @@ class DXFGroup(DXFEntity):
             try:
                 entity = wrap(handle)
                 yield entity
-            except KeyError:  # handle not in entity database, maybe entity were deleted
+            except KeyError:  # handle not in entity database, maybe entity were deleted; internal exception
                 pass
 
     def __len__(self):
@@ -88,7 +88,7 @@ class DXFGroup(DXFEntity):
     def set_data(self, entities):
         entities = list(entities)  # for generators
         if not all_entities_on_same_layout(entities):
-            raise ValueError("All entities have to be on the same layout (model space or any paper layout but not block).")
+            raise DXFValueError("All entities have to be on the same layout (model space or any paper layout but not block).")
         self.clear()
         self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, entity.dxf.handle) for entity in entities)
 
@@ -162,7 +162,7 @@ class DXFGroupTable(object):
 
     def new(self, name=None, description="", selectable=1):
         if name in self.dxfgroups:
-            raise ValueError("Group '{}' already exists. Group name has to be unique.".format(name))
+            raise DXFValueError("Group '{}' already exists. Group name has to be unique.".format(name))
         unnamed = 0
         if name is None:
             name = self.next_name()
@@ -181,7 +181,7 @@ class DXFGroupTable(object):
         for group_name, group in self:
             if name == group_name:
                 return group
-        raise KeyError("KeyError: '{}'".format(name))
+        raise DXFKeyError("KeyError: '{}'".format(name))
 
     def delete(self, group):
         """Delete group. Does not delete any drawing entities referenced by this group.
@@ -196,7 +196,7 @@ class DXFGroupTable(object):
                 if group_handle == _group.dxf.handle:
                     del self.dxfgroups[name]
                     return
-            raise ValueError("Group not in group table registered.")
+            raise DXFValueError("Group not in group table registered.")
         self._destroy_dxf_group_entity(group_handle)
 
     def _destroy_dxf_group_entity(self, handle):

@@ -13,6 +13,8 @@ from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
+from ..lldxf.const import DXFValueError
+
 
 _SPLINE_TPL = """  0
 SPLINE
@@ -84,19 +86,11 @@ class Spline(ModernGraphicEntity):
         tags.remove_tags(codes=(code, ))
         tags.extend([DXFTag(code, value) for value in values])
 
-    @contextmanager
-    def knot_values(self):
-        raise RuntimeError("Spline.knot_values() is deprecated, use Spline.edit_data()")
-
     def get_weights(self):
         return [tag.value for tag in self.AcDbSpline.find_all(code=41)]
 
     def set_weights(self, values):
         self._set_values(values, code=41)
-
-    @contextmanager
-    def weights(self):
-        raise RuntimeError("Spline.weights() is deprecated, use Spline.edit_data()")
 
     def get_control_points(self):
         return [tag.value for tag in self.AcDbSpline if tag.code == 10]
@@ -110,14 +104,10 @@ class Spline(ModernGraphicEntity):
         tags = []
         for point in points:
             if len(point) != 3:
-                raise ValueError("require 3D points")
+                raise DXFValueError("3D points required.")
             tags.append(DXFTag(code, point))
         self.AcDbSpline.extend(tags)
         return len(tags)
-
-    @contextmanager
-    def control_points(self):
-        raise RuntimeError("Spline.control_points() is deprecated, use Spline.edit_data()")
 
     def get_fit_points(self):
         return [tag.value for tag in self.AcDbSpline if tag.code == 11]
@@ -126,10 +116,6 @@ class Spline(ModernGraphicEntity):
         self.AcDbSpline.remove_tags(codes=(11, ))
         count = self._append_points(points, code=11)
         self.dxf.n_fit_points = count
-
-    @contextmanager
-    def fit_points(self):
-        raise RuntimeError("Spline.fit_points() is deprecated, use Spline.edit_data()")
 
     @contextmanager
     def edit_data(self):

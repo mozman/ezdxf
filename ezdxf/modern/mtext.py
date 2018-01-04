@@ -15,6 +15,7 @@ from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..tools import safe_3D_point
+from ..lldxf.const import DXFValueError
 
 _MTEXT_TPL = """ 0
 MTEXT
@@ -103,7 +104,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
     def get_rotation(self):
         try:
             vector = self.dxf.text_direction
-        except ValueError:
+        except DXFValueError:
             rotation = self.get_dxf_attrib('rotation', 0.0)
         else:
             radians = math.atan2(vector[1], vector[0])  # ignores z-axis

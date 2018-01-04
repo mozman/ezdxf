@@ -139,6 +139,7 @@ class Line(legacy.Line, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_LINETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, line_subclass)
 
+
 _POINT_TPL = """  0
 POINT
   5
@@ -168,6 +169,7 @@ point_subclass = DefSubclass('AcDbPoint', {
 class Point(legacy.Point, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_POINT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, point_subclass)
+
 
 _CIRCLE_TPL = """  0
 CIRCLE
@@ -201,6 +203,7 @@ circle_subclass = DefSubclass('AcDbCircle', {
 class Circle(legacy.Circle, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass)
+
 
 _ARC_TPL = """  0
 ARC
@@ -239,6 +242,7 @@ arc_subclass = DefSubclass('AcDbArc', {
 class Arc(legacy.Arc, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_ARC_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass, arc_subclass)
+
 
 _TRACE_TPL = """  0
 TRACE
@@ -295,6 +299,7 @@ class Trace(legacy.Trace, ModernGraphicEntityExtension):
 class Solid(Trace):
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL.replace('TRACE', 'SOLID'))
 
+
 _3DFACE_TPL = """  0
 3DFACE
   5
@@ -344,6 +349,7 @@ face_subclass = DefSubclass('AcDbFace', {
 class Face(legacy.Face, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_3DFACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, face_subclass)
+
 
 _TEXT_TPL = """  0
 TEXT
@@ -411,6 +417,7 @@ text_subclass = (
 class Text(legacy.Text, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)
+
 
 _POLYLINE_TPL = """  0
 POLYLINE
@@ -509,6 +516,7 @@ class Polymesh(Polyline, PolymeshMixin):
     def convert(polyline):
         return Polymesh(polyline.tags, polyline.drawing)
 
+
 _VERTEX_TPL = """ 0
 VERTEX
   5
@@ -593,6 +601,7 @@ class Vertex(legacy.Vertex, ModernGraphicEntityExtension):
 class SeqEnd(legacy.SeqEnd):
     TEMPLATE = ExtendedTags.from_text("  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n")
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
+
 
 _LWPOLYLINE_TPL = """  0
 LWPOLYLINE
@@ -694,7 +703,7 @@ class LWPolyline(ModernGraphicEntity):
                 add_tag_if_not_zero(40, point[2])  # start width, default=0
                 add_tag_if_not_zero(41, point[3])  # end width, default=0
                 add_tag_if_not_zero(42, point[4])  # bulge, default=0
-            except IndexError:
+            except IndexError:  # internal exception
                 pass
 
         for point in points:
@@ -739,7 +748,8 @@ class LWPolyline(ModernGraphicEntity):
         for x, point in enumerate(self):
             if x == index:
                 return point
-        raise IndexError(index)
+        raise const.DXFIndexError(index)
+
 
 _BLOCK_TPL = """  0
 BLOCK
@@ -785,6 +795,7 @@ class Block(legacy.GraphicEntity, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *block_subclass)
 
+
 _ENDBLOCK_TPL = """  0
 ENDBLK
   5
@@ -807,6 +818,7 @@ endblock_subclass = (
 class EndBlk(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_ENDBLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *endblock_subclass)
+
 
 _INSERT_TPL = """  0
 INSERT
@@ -857,6 +869,7 @@ insert_subclass = DefSubclass('AcDbBlockReference', {
 class Insert(legacy.Insert, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, insert_subclass)
+
 
 _ATTDEF_TPL = """  0
 ATTDEF
@@ -941,6 +954,7 @@ class Attdef(legacy.Attdef, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attdef_subclass)
 
+
 _ATTRIB_TPL = """  0
 ATTRIB
   5
@@ -1019,6 +1033,8 @@ attrib_subclass = (
 class Attrib(legacy.Attrib, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attrib_subclass)
+
+
 _ELLIPSE_TPL = """  0
 ELLIPSE
   5
@@ -1064,6 +1080,8 @@ ellipse_subclass = DefSubclass('AcDbEllipse', {
 class Ellipse(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_ELLIPSE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ellipse_subclass)
+
+
 _RAY_TPL = """ 0
 RAY
   5

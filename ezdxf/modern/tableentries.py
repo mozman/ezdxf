@@ -66,6 +66,7 @@ class Layer(legacy.Layer):
         layer.dxf.plot_style_name = dxffactory.rootdict['ACAD_PLOTSTYLENAME']
         return layer
 
+
 _STYLETEMPLATE = """  0
 STYLE
   5
@@ -148,6 +149,7 @@ class Linetype(legacy.Linetype):
             subclass.append(DXFTag(49, float(element)))
             subclass.append(DXFTag(74, 0))
 
+
 _APPIDTEMPLATE = """  0
 APPID
   5
@@ -170,6 +172,7 @@ appid_subclass = DefSubclass('AcDbRegAppTableRecord', {
 class AppID(legacy.AppID):
     TEMPLATE = ExtendedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, appid_subclass)
+
 
 _DIMSTYLETEMPLATE = """  0
 DIMSTYLE
@@ -316,6 +319,7 @@ class DimStyle(legacy.DimStyle):
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
 
+
 _UCSTEMPLATE = """  0
 UCS
   5
@@ -359,6 +363,7 @@ ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
 class UCS(legacy.UCS):
     TEMPLATE = ExtendedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, ucs_subclass)
+
 
 _VIEWTEMPLATE = """  0
 VIEW
@@ -422,6 +427,7 @@ view_subclass = DefSubclass('AcDbViewTableRecord', {
 class View(legacy.View):
     TEMPLATE = ExtendedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, view_subclass)
+
 
 _VPORTTEMPLATE = """  0
 VPORT
@@ -536,6 +542,7 @@ vport_subclass = DefSubclass('AcDbViewportTableRecord', {
 class Viewport(legacy.Viewport):
     TEMPLATE = ExtendedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
+
 
 _BLOCKRECORDTEMPLATE = """  0
 BLOCK_RECORD

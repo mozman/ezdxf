@@ -25,7 +25,7 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
         self.assertEqual(14, len(self.dxfdict))
 
     def test_getitem_with_keyerror(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ezdxf.DXFKeyError):
             self.dxfdict['MOZMAN']
 
     def test_owner(self):
@@ -42,7 +42,7 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
         self.assertEqual('E', self.dxfdict.get_entity('ACAD_PLOTSTYLENAME'))
 
     def test_get_with_keyerror(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ezdxf.DXFKeyError):
             self.dxfdict.get('ACAD_MOZMAN')
 
     def test_contains(self):
@@ -57,7 +57,7 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
         self.assertEqual(13, len(self.dxfdict))
 
     def test_delete_not_existing_key(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ezdxf.DXFKeyError):
             del self.dxfdict['MOZMAN']
 
     def test_remove_existing_key(self):
@@ -66,7 +66,7 @@ class TestNoneEmptyDXFDict(unittest.TestCase):
         self.assertEqual(13, len(self.dxfdict))
 
     def test_remove_not_existing_key(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ezdxf.DXFKeyError):
             self.dxfdict.remove('MOZMAN')
 
     def test_discard_existing_key(self):

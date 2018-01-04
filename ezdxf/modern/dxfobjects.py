@@ -10,7 +10,7 @@ from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
-
+from ..lldxf.const import DXFKeyError, DXFValueError
 
 ENTRY_NAME_CODE = 3
 
@@ -93,15 +93,15 @@ class DXFDictionary(DXFEntity):
         """
         return sum(1 for tag in self.AcDbDictinary if tag.code == ENTRY_NAME_CODE)
 
-    def get(self, key, default=KeyError):
+    def get(self, key, default=DXFKeyError):
         """
         Return the value (handle) for *key* if *key* is in the dictionary, else *default*. If *default* is not given,
-        it defaults to :class:`KeyError()`, so that this method raises a *KeyError*.
+        it defaults to :class:`KeyError()`, so that this method raises a *DXFKeyError*.
         """
         index = self._get_item_index(key)
         if index is None:
-            if default is KeyError:
-                raise KeyError("KeyError: '{}'".format(key))
+            if default is DXFKeyError:
+                raise DXFKeyError("KeyError: '{}'".format(key))
             else:
                 return default
         else:
@@ -131,12 +131,12 @@ class DXFDictionary(DXFEntity):
             content_tags[index + 1] = value_tag
 
     def remove(self, key):
-        """Remove element *key* from the dictionary. Raises *KeyError* if *key* is not contained in the
+        """Remove element *key* from the dictionary. Raises *DXFKeyError* if *key* is not contained in the
         dictionary.
         """
         index = self._get_item_index(key)
         if index is None:
-            raise KeyError("KeyError: '{}'".format(key))
+            raise DXFKeyError("KeyError: '{}'".format(key))
         else:
             self._discard(index)
 
@@ -158,7 +158,7 @@ class DXFDictionary(DXFEntity):
     def clear(self):
         try:
             start_index = self.AcDbDictinary.tag_index(code=ENTRY_NAME_CODE)
-        except ValueError:  # no entries found
+        except DXFValueError:  # no entries found
             return
         del self.AcDbDictinary[start_index:]
 
@@ -174,7 +174,7 @@ class DXFDictionary(DXFEntity):
     def get_required_dict(self, key):
         try:
             dict_handle = self.get(key)
-        except KeyError:
+        except DXFKeyError:
             dxf_dict = self.add_new_dict(key)
         else:
             dxf_dict = self.dxffactory.wrap_handle(dict_handle)
@@ -210,7 +210,7 @@ class DXFDictionaryWithDefault(DXFDictionary):
         }),
     )
 
-    def get(self, key, default=KeyError):
+    def get(self, key, default=DXFKeyError):
         """Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
         value. Parameter *default* is always ignored!
         """

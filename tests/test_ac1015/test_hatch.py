@@ -430,6 +430,7 @@ class TestHatchBackgroundColor(unittest.TestCase):
         del self.hatch.bgcolor
         self.assertIsNone(self.hatch.bgcolor)
 
+
 PATH_HATCH = """  0
 HATCH
   5

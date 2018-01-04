@@ -9,7 +9,6 @@ __author__ = "mozman <mozman@gmx.at>"
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..legacy import graphics as legacy
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf import const
 
 
 dimension_subclass = DefSubclass('AcDbDimension', {

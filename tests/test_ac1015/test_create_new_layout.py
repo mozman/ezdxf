@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: test layout creation
 # Created: 25.04.2014
@@ -49,7 +48,7 @@ class TestCreateLayout(unittest.TestCase):
         self.assertTrue(block_for_layout_exist(new_layout))
 
     def test_error_creating_layout_with_existing_name(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ezdxf.DXFValueError):
             DWG.new_layout('Model')
 
 

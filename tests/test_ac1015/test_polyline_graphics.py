@@ -119,7 +119,7 @@ class TestPolymesh(unittest.TestCase):
         cache[pos] = (1, 2, 3)
         vertex = mesh.get_mesh_vertex(pos)
         self.assertEqual(vertex.dxf.location, cache[pos])
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ezdxf.DXFIndexError):
             cache[4, 0]
 
 
@@ -247,6 +247,7 @@ class TestNewStylePolyface(unittest.TestCase):
         polyface = list(self.section)[0]
         faces = list(polyface.faces())
         self.assertEqual(6, len(faces))
+
 
 NEW_STYLE_POLYFACE = """  0
 SECTION

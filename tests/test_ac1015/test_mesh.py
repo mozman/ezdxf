@@ -71,7 +71,7 @@ class TestNewMesh(unittest.TestCase):
     def test_vertex_format(self):
         mesh = self.msp.add_mesh()
         with mesh.edit_data() as mesh_data:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ezdxf.DXFValueError):
                 mesh_data.add_vertex((0, 0))  # only (x, y, z) vertices allowed
 
     def test_optimize(self):

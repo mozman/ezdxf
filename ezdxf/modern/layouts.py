@@ -2,16 +2,14 @@
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-
 # The ModelSpace is a special Layout called 'Model'
-
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
-import warnings
+
 
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.extendedtags import ExtendedTags
-
+from ..lldxf.const import DXFKeyError, DXFValueError
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
@@ -78,7 +76,7 @@ class Layouts(object):
         for layout in self._layouts.values():
             if layout_key == layout.layout_key:
                 return layout
-        raise KeyError("Layout with key '{}' does not exist.".format(layout_key))
+        raise DXFKeyError("Layout with key '{}' does not exist.".format(layout_key))
 
     def new(self, name, dxfattribs=None):
         """ Create a new Layout.
@@ -87,7 +85,7 @@ class Layouts(object):
             dxfattribs = {}
 
         if name in self._layouts:
-            raise ValueError("Layout '{}' already exists".format(name))
+            raise DXFValueError("Layout '{}' already exists".format(name))
 
         def create_dxf_layout_entity():
             dxfattribs['name'] = name
@@ -117,7 +115,7 @@ class Layouts(object):
 
     def set_active_layout(self, name):
         if name == 'Model':  # reserved layout name
-            raise ValueError("Can not set model space as active layout")
+            raise DXFValueError("Can not set model space as active layout")
         new_active_layout = self.get(name)  # raises KeyError if no layout 'name' exists
         old_active_layout_key = self.drawing.get_active_layout_key()
         if old_active_layout_key == new_active_layout.layout_key:
@@ -136,7 +134,7 @@ class Layouts(object):
         Raises *ValueError* for deleting model space.
         """
         if name == 'Model':
-            raise ValueError("can not delete model space layout")
+            raise DXFValueError("can not delete model space layout")
 
         layout = self._layouts[name]
         if layout.layout_key == self.drawing.get_active_layout_key():  # name is the active layout

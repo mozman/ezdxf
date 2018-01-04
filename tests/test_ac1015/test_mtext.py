@@ -99,6 +99,7 @@ class TestSplitStringInChunks(unittest.TestCase):
         self.assertEqual(TESTSTR*2, chunks[0])
         self.assertEqual(TESTSTR*2, chunks[1])
 
+
 class TextMTextBuffer(unittest.TestCase):
     def test_new_buffer(self):
         b = MTextData("abc")
@@ -109,6 +110,7 @@ class TextMTextBuffer(unittest.TestCase):
         b += "def" + b.NEW_LINE
 
         self.assertEqual("abcdef\\P;", b.text)
+
 
 if __name__ == '__main__':
     unittest.main()

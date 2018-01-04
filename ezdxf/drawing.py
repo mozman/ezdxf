@@ -7,10 +7,12 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from datetime import datetime
 import io
+import logging
+logger = logging.getLogger('ezdxf')
 
 from . import database
 from .lldxf.tags import DXFTag, write_tags
-from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError
+from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError, DXFValueError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -156,20 +158,20 @@ class Drawing(object):
     def delete_layout(self, name):
         if self.dxfversion > 'AC1009':
             if name not in self.layouts:
-                raise ValueError("Layout '{}' does not exist.".format(name))
+                raise DXFValueError("Layout '{}' does not exist.".format(name))
             else:
                 self.layouts.delete(name)
         else:
-            raise Warning('Not supported for DXF version AC1009.')
+            raise DXFVersionError('delete_layout() not supported for DXF version AC1009.')
 
     def new_layout(self, name, dxfattribs=None):
         if self.dxfversion > 'AC1009':
             if name in self.layouts:
-                raise ValueError("Layout '{}' already exists.".format(name))
+                raise DXFValueError("Layout '{}' already exists.".format(name))
             else:
                 return self.layouts.new(name, dxfattribs)
         else:
-            raise Warning('Not supported for DXF version AC1009.')
+            raise DXFVersionError('new_layout() not supported for DXF version AC1009.')
 
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':
@@ -177,7 +179,7 @@ class Drawing(object):
                 try:
                     active_layout_block_record = self.block_records.get(name)
                     return active_layout_block_record.dxf.handle
-                except ValueError:
+                except DXFValueError:
                     pass
             return None
         else:

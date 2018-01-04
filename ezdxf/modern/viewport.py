@@ -11,7 +11,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.tags import DXFTag
-
+from ..lldxf.const import DXFAttributeError, DXFValueError
 
 _VIEWPORT_TPL = """  0
 VIEWPORT
@@ -192,7 +192,7 @@ class Viewport(ModernGraphicEntity):
 
     def get_frozen_layer_entities(self):
         if self.drawing is None:
-            raise AttributeError("'drawing' attribute is None, can not build DXF entities.")
+            raise DXFAttributeError("'drawing' attribute is None, can not build DXF entities.")
         wrapper = self.dxffactory.wrap_handle
         return (wrapper(handle) for handle in self.get_frozen_layer_handles())
 
@@ -203,6 +203,6 @@ class Viewport(ModernGraphicEntity):
             # try to create order like in the DXF standard, because order is sometimes important
             insert_pos = self.AcDbViewport.tag_index(90)
             self.AcDbViewport[insert_pos:insert_pos] = frozen_layer_tags
-        except ValueError:  # flags-tag not found, just append frozen layer tags
+        except DXFValueError:  # flags-tag not found, just append frozen layer tags
             self.AcDbViewport.extend(frozen_layer_tags)
 

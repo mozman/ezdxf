@@ -7,6 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator
+from .lldxf.const import DXFKeyError
 
 
 def factory():

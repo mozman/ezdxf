@@ -37,7 +37,7 @@ class TestNewLWPolyline(unittest.TestCase):
     def test_getitem_error(self):
         points = [(1, 1), (2, 2), (3, 3)]
         line = self.layout.add_lwpolyline(points)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ezdxf.DXFIndexError):
             line[3]
 
     def test_append_points(self):
