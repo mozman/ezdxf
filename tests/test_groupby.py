@@ -58,6 +58,7 @@ def test_calling_convention():
     with pytest.raises(DXFValueError):  # if no query argument is set
         groupby([])
 
+
 if __name__ == '__main__':
     pytest.main([__file__])
 

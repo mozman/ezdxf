@@ -10,7 +10,7 @@ from collections import OrderedDict
 from ..tools.c23 import ustr
 from ..lldxf.types import strtag
 from ..lldxf.tags import TagGroups, Tags
-from ..lldxf.const import DXFStructureError, DXFValueError
+from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
 
 MIN_HEADER_TEXT = """  0
 SECTION
@@ -161,7 +161,10 @@ class HeaderSection(object):
         stream.write("  0\nENDSEC\n")
 
     def __getitem__(self, key):
-        return self.hdrvars[key].value
+        try:
+            return self.hdrvars[key].value
+        except KeyError:  # map exception
+            raise DXFKeyError(str(key))
 
     def get(self, key, default=None):
         if key in self.hdrvars:
@@ -170,11 +173,17 @@ class HeaderSection(object):
             return default
 
     def __setitem__(self, key, value):
-        tags = self._headervar_factory(key, value)
+        try:
+            tags = self._headervar_factory(key, value)
+        except (IndexError, ValueError):
+            raise DXFValueError(str(value))
         self.hdrvars[key] = HeaderVar(tags)
 
     def __delitem__(self, key):
-        del self.hdrvars[key]
+        try:
+            del self.hdrvars[key]
+        except KeyError:  # map exception
+            raise DXFKeyError(str(key))
 
 
 class HeaderVar:

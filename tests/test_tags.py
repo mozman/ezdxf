@@ -191,6 +191,7 @@ class TestTags(unittest.TestCase):
     def test_has_not_tag(self):
         self.assertFalse(self.tags.has_tag(7))
 
+
 DUPLICATETAGS = """  0
 FIRST
   0

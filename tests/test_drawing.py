@@ -13,6 +13,7 @@ from ezdxf.lldxf.tagger import string_tagger
 from ezdxf.drawing import Drawing
 from ezdxf.templates import TemplateLoader
 from ezdxf import is_dxf_file
+from ezdxf import DXFValueError
 
 
 DWG12 = Drawing.new('AC1009')
@@ -39,7 +40,7 @@ class TestNewDrawingAC1009(unittest.TestCase):
         self.assertEqual('0', layer.dxf.name)
 
     def test_error_getting_not_existing_layer(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             layer = self.dwg.layers.get('TEST_NOT_EXISTING_LAYER')
 
     def test_create_layer(self):
@@ -47,7 +48,7 @@ class TestNewDrawingAC1009(unittest.TestCase):
         self.assertEqual('TEST_NEW_LAYER', layer.dxf.name)
 
     def test_error_adding_existing_layer(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             layer = self.dwg.layers.new('0')
 
     def test_has_layer(self):
@@ -63,7 +64,7 @@ class TestNewDrawingAC1009(unittest.TestCase):
         self.assertFalse('TEST_NEW_LAYER_2' in self.dwg.layers)
 
     def test_error_removing_not_existing_layer(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.dwg.layers.remove('TEST_LAYER_NOT_EXISTS')
 
 DWG2000 = Drawing.new('AC1015')

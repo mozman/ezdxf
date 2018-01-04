@@ -44,5 +44,6 @@ class TestACADEncoding(unittest.TestCase):
     def test_ascii_encoding(self):
         self.assertEqual(b'123\\U+6539', u'123改'.encode('ascii', errors='dxfreplace'))
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -148,5 +148,6 @@ class TestNameQuery(unittest.TestCase):
         self.assertEqual("ONE_2", result[1])
         self.assertEqual(2, len(result))
 
+
 if __name__ == '__main__':
     unittest.main()

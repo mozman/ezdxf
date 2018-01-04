@@ -83,6 +83,7 @@ class TestCompressBinaryData(unittest.TestCase):
         result = binary_encoded_data_to_bytes(['F0F0', '1A1C'])
         self.assertEqual(b"\xF0\xF0\x1A\x1C", result)
 
+
 BIN_ONE_SHORT = """  0
 OLE2FRAME
   5

@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator
-from .lldxf.const import DXFKeyError
+from .lldxf.const import DXFValueError
 
 
 def factory():
@@ -43,7 +43,7 @@ class EntityDB(object):
     def get(self, handle, default=None):
         try:
             return self.__getitem__(handle)
-        except KeyError:
+        except KeyError:  # internal exception
             return default
 
     def __setitem__(self, handle, entity):
@@ -76,7 +76,7 @@ class EntityDB(object):
     def add_tags(self, tags):
         try:
             handle = tags.get_handle()
-        except ValueError:
+        except DXFValueError:
             handle = self.get_unique_handle()
         self.__setitem__(handle, tags)
         return handle

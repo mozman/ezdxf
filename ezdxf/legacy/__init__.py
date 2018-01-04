@@ -69,7 +69,7 @@ from . import graphics
 from .viewport import Viewport
 
 from .layouts import DXF12Layouts, DXF12BlockLayout
-from ..lldxf.const import DXFValueError
+from ..lldxf.const import DXFValueError, DXFKeyError
 
 
 ENTITY_WRAPPERS = {
@@ -130,8 +130,11 @@ class LegacyDXFFactory(object):
         return self.drawing.dxfversion
 
     def headervar_factory(self, key, value):
-        factory = self.HEADERVARS[key]
-        return factory(value)
+        if key in self.HEADERVARS:
+            factory = self.HEADERVARS[key]
+            return factory(value)
+        else:
+            raise DXFKeyError('Invalid header variable {}.'.format(key))
 
     def new_entity(self, type_, handle, dxfattribs):
         """ Create a new entity. """

@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .lldxf.const import DXFStructureError
+from .lldxf.const import DXFStructureError, DXFValueError
 
 
 class EntitySpace(list):
@@ -23,7 +23,7 @@ class EntitySpace(list):
     def store_tags(self, tags):
         try:
             handle = tags.get_handle()
-        except ValueError:  # no handle tag available
+        except DXFValueError:  # no handle tag available
             # handle is not stored in tags!!!
             handle = self._entitydb.handles.next()
         self.append(handle)
@@ -111,7 +111,7 @@ class LayoutSpaces(object):
         """
         try:
             entity_space = self._layout_spaces[key]
-        except KeyError:  # create new entity space
+        except KeyError:  # create new entity space; internal exception
             entity_space = EntitySpace(self._entitydb)
             self.set_entity_space(key, entity_space)
         return entity_space
@@ -147,7 +147,7 @@ class LayoutSpaces(object):
         key = self._get_key(entity.tags)
         try:
             entity_space = self._layout_spaces[key]
-        except KeyError:  # ignore
+        except KeyError:  # ignore; internal exception
             pass
         else:
             entity_space.delete_entity(entity)

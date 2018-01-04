@@ -79,5 +79,6 @@ class TestAutoBlockref(unittest.TestCase):
         attrib.is_preset = True
         self.assertTrue(attrib.is_preset)
 
+
 if __name__ == '__main__':
     unittest.main()

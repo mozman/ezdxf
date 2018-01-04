@@ -98,5 +98,6 @@ class TestAttributeAccess(unittest.TestCase):
     def test_get_default_values(self):
         self.assertEqual(256, self.entity.get_dxf_default_value('color'))
 
+
 if __name__ == '__main__':
     unittest.main()

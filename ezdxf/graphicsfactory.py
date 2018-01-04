@@ -9,6 +9,7 @@ import math
 
 from .lldxf import const
 from .tools import safe_3D_point
+from .lldxf.const import DXFValueError, DXFVersionError
 
 
 def copy_attribs(dxfattribs=None):
@@ -161,7 +162,7 @@ class GraphicsFactory(object):
     @staticmethod
     def _four_points(points):
         if len(points) not in (3, 4):
-            raise ValueError('3 or 4 points required.')
+            raise DXFValueError('3 or 4 points required.')
         for point in points:
             yield point
         if len(points) == 3:
@@ -217,8 +218,8 @@ class GraphicsFactory(object):
 
     def add_lwpolyline(self, points, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('LWPOLYLINE requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('LWPOLYLINE requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         closed = dxfattribs.pop('closed', False)
         lwpolyline = self.build_and_add_entity('LWPOLYLINE', dxfattribs)
@@ -228,10 +229,10 @@ class GraphicsFactory(object):
 
     def add_ellipse(self, center, major_axis=(1, 0, 0), ratio=1, start_param=0, end_param=6.283185307, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('ELLIPSE requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('ELLIPSE requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         if ratio > 1.:
-            raise ValueError("Parameter 'ratio' has to be <= 1.0")
+            raise DXFValueError("Parameter 'ratio' has to be <= 1.0")
 
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
@@ -243,8 +244,8 @@ class GraphicsFactory(object):
 
     def add_mtext(self, text, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('MTEXT requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('MTEXT requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         mtext = self.build_and_add_entity('MTEXT', dxfattribs)
         mtext.set_text(text)
@@ -252,8 +253,8 @@ class GraphicsFactory(object):
 
     def add_ray(self, start, unit_vector, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('RAY requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('RAY requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['unit_vector'] = unit_vector
@@ -261,8 +262,8 @@ class GraphicsFactory(object):
 
     def add_xline(self, start, unit_vector, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('XLINE requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('XLINE requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['unit_vector'] = unit_vector
@@ -270,8 +271,8 @@ class GraphicsFactory(object):
 
     def add_spline(self, fit_points=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('SPLINE requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('SPLINE requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         spline = self.build_and_add_entity('SPLINE', dxfattribs)
         if fit_points is not None:
@@ -280,23 +281,23 @@ class GraphicsFactory(object):
 
     def add_body(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('BODY requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('BODY requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
 
         dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('BODY', acis_data, dxfattribs)
 
     def add_region(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('REGION requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('REGION requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('REGION', acis_data, dxfattribs)
 
     def add_3dsolid(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('3DSOLID requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('3DSOLID requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
 
@@ -308,8 +309,8 @@ class GraphicsFactory(object):
 
     def add_hatch(self, color=7, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('HATCH requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('HATCH requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['solid_fill'] = 1
         dxfattribs['color'] = color
@@ -318,8 +319,8 @@ class GraphicsFactory(object):
 
     def add_mesh(self, dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('MESH requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('MESH requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         return self.build_and_add_entity('MESH', dxfattribs)
 
@@ -330,8 +331,8 @@ class GraphicsFactory(object):
             return round(x, 6), round(y, 6), 0  # supports only images in the xy-plane
 
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('IMAGE requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('IMAGE requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         x_pixels, y_pixels = image_def.dxf.image_size
         x_units, y_units = size_in_units
@@ -356,8 +357,8 @@ class GraphicsFactory(object):
 
     def add_underlay(self, underlay_def, insert=(0, 0, 0), scale=(1, 1, 1), rotation=0., dxfattribs=None):
         if self.dxfversion < 'AC1015':
-            raise const.DXFVersionError('UNDERLAY requires DXF version AC1015 (R2000) or later, '
-                                        'actual DXF version is {}.'.format(self.dxfversion))
+            raise DXFVersionError('UNDERLAY requires DXF version AC1015 (R2000) or later, '
+                                  'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['insert'] = insert
         dxfattribs['underlay_def'] = underlay_def.dxf.handle

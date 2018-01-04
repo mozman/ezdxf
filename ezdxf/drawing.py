@@ -144,7 +144,7 @@ class Drawing(object):
         if self._groups is not None:
             return self._groups
         else:
-            raise Warning('Not supported for DXF version AC1009.')
+            raise DXFVersionError('Groups not supported in DXF version AC1009.')
 
     def modelspace(self):
         return self.layouts.modelspace()

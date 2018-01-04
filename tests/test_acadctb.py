@@ -267,5 +267,6 @@ class TestFunctions(unittest.TestCase):
         self.assertFalse(get_bool('false'))
         self.assertRaises(ValueError, get_bool, 'falsch')
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -14,7 +14,6 @@ Version 0.8.4 - ?
     - DXFAttributeError(DXFError, AttributeError)
     - DXFIndexError(DXFError, IndexError)
     - DXFTableEntryError(DXFValueError)
-    - work in progress
 
 Version 0.8.3 - 2018-01-02
 

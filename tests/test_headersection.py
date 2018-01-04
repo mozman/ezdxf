@@ -11,6 +11,7 @@ import unittest
 
 from ezdxf.tools.test import DrawingProxy, Tags
 from ezdxf.sections.header import HeaderSection
+from ezdxf import DXFKeyError, DXFValueError
 
 
 class TestHeaderSection(unittest.TestCase):
@@ -29,7 +30,7 @@ class TestHeaderSection(unittest.TestCase):
         self.assertEqual((0., 0., 0.), result)
 
     def test_getitem_keyerror(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(DXFKeyError):
             var = self.header['$TEST']
 
     def test_get(self):
@@ -45,7 +46,7 @@ class TestHeaderSection(unittest.TestCase):
         self.assertEqual((1, 2, 3), self.header['$INSBASE'])
 
     def test_set_unknown_var(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(DXFKeyError):
             self.header['$TEST'] = 'test'
 
     def test_create_var(self):
@@ -57,7 +58,7 @@ class TestHeaderSection(unittest.TestCase):
         self.assertEqual((10, 20), self.header['$LIMMAX'])
 
     def test_create_var_wrong_args_3d(self):
-        with self.assertRaises(IndexError):
+        with self.assertRaises(DXFValueError):
             self.header['$PUCSORG'] = (10, 20)
 
     def test_contains(self):
