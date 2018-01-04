@@ -13,17 +13,20 @@ from ..lldxf import const
 
 dimension_subclass = DefSubclass('AcDbDimension', {
     'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry
-    'defpoint': DXFAttr(10, xtype='Point3D', default=(0.0, 0.0, 0.0)),
-    'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),
+    'defpoint': DXFAttr(10, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # definition point for all dimension types
+    'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # middle point of dimension text
     'dimtype': DXFAttr(70),  # Dimension type:
-    # Values 0–6 are integer values that represent the dimension type. Values
-    # 32, 64, and 128 are bit values, which are added to the integer values
+    # Values 0–6 are integer values that represent the dimension type.
+    # Values 32, 64, and 128 are bit values, which are added to the integer values
     # (value 32 is always set in R13 and later releases)
-    # 0 = Rotated, horizontal, or vertical; 1 = Aligned
-    # 2 = Angular; 3 = Diameter; 4 = Radius
-    # 5 = Angular 3 point; 6 = Ordinate
-    # 32 = Indicates that the block reference (group code 2) is referenced by
-    # this dimension only
+    # 0 = Rotated, horizontal, or vertical;
+    # 1 = Aligned
+    # 2 = Angular;
+    # 3 = Diameter;
+    # 4 = Radius
+    # 5 = Angular 3 point;
+    # 6 = Ordinate
+    # 32 = Indicates that the block reference (group code 2) is referenced by this dimension only
     # 64 = Ordinate type. This is a bit value (bit 7) used only with integer
     # value 6. If set, ordinate is X-type; if not set, ordinate is Y-type
     # 128 = This is a bit value (bit 8) added to the other group 70 values if
@@ -40,10 +43,11 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     # Percentage of default (3-on-5) line spacing to be applied. Valid values
     # range from 0.25 to 4.00
     'actual_measurement': DXFAttr(42),  # Actual measurement (optional; read-only value)
-    'user_text': DXFAttr(1),  # Dimension text explicitly entered by the user. Optional; default is the
-    # measurement. If null or “<>”, the dimension measurement is drawn as
-    # the text, if “ “ (one blank space), the text is suppressed. Anything else is
-    # drawn as the text
+    'user_text': DXFAttr(1),  # Dimension text explicitly entered by the user. Optional;
+    # default is the measurement.
+    # If null or “<>”, the dimension measurement is drawn as the text,
+    # if “ “ (one blank space), the text is suppressed.
+    # Anything else is drawn as the text.
     'dim_text_rotation': DXFAttr(53, default=0),  # The optional group code 53 is the rotation angle of the dimension
     # text away from its default orientation (the direction of the dimension line) (optional)
     'horizontal_direction': DXFAttr(51, default=0),  # All dimension types have an optional 51 group code, which
@@ -116,7 +120,7 @@ DimensionTypeNames = [
 ]
 
 
-class AbstractDimension(ModernGraphicEntity):
+class Dimension(ModernGraphicEntity):
     @property
     def dim_type(self):
         return self.dxf & 7
@@ -130,28 +134,28 @@ class AbstractDimension(ModernGraphicEntity):
         return DimClass(self.tags, self.drawing)
 
 
-class AlignedDimension(AbstractDimension):
+class AlignedDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, aligned_dimension_subclass)
 
 
-class RotatedDimension(AbstractDimension):
+class RotatedDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, aligned_dimension_subclass,
                                rotated_dimension_subclass)
 
 
-class RadialDimension(AbstractDimension):
+class RadialDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, radial_dimension_subclass)
 
 
-class DiametricDimension(AbstractDimension):
+class DiametricDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, diametric_dimension_subclass)
 
 
-class AngularDimension(AbstractDimension):
+class AngularDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, angular_dimension_subclass)
 
 
-class OrdinateDimension(AbstractDimension):
+class OrdinateDimension(Dimension):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, ordinate_dimension_subclass)
 
 DimensionClasses = [

@@ -23,6 +23,7 @@ from .image import ImageDef, ImageDefReactor
 from .underlay import PdfDefinition, PdfUnderlay
 from .underlay import DwfDefinition, DwfUnderlay
 from .underlay import DgnDefinition, DgnUnderlay
+from .dimension import Dimension
 
 from . import dxfobjects
 from .groups import DXFGroup
@@ -88,6 +89,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'PDFUNDERLAY': PdfUnderlay,
     'DWFUNDERLAY': DwfUnderlay,
     'DGNUNDERLAY': DgnUnderlay,
+    'DIMENSION': Dimension,
 }
 
 

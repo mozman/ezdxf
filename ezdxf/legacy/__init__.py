@@ -100,6 +100,7 @@ ENTITY_WRAPPERS = {
     'SEQEND': graphics.SeqEnd,
     'SHAPE': graphics.Shape,
     'VIEWPORT': Viewport,
+    'DIMENSION': graphics.Dimension,
 }
 
 

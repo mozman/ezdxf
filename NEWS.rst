@@ -5,6 +5,7 @@ News
 Version 0.8.4 - ?
 
   * NEW: DXF file structure validator at SECTION level, tags outside of sections will be removed
+  * NEW: Basic support for DIMENSION, dimensions can be read, modified and deleted
 
 Version 0.8.3 - 2018-01-02
 
