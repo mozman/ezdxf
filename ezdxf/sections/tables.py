@@ -7,8 +7,8 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import iter_chunks
 from .table import GenericTable, Table, ViewportTable
-from ..lldxf.tags import DXFStructureError, Tags
-from ..options import options
+from ..lldxf.tags import Tags
+from ..lldxf.const import DXFAttributeError, DXFStructureError
 
 MIN_TABLE_SECTION = """  0
 SECTION
@@ -88,7 +88,7 @@ class TablesSection(object):
         try:
             return self._tables[key]
         except KeyError:
-            raise AttributeError(key)
+            raise DXFAttributeError(key)
 
     def __getitem__(self, key):
         return self._tables[key]

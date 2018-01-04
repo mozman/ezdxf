@@ -41,5 +41,6 @@ class TestTypeCaster(unittest.TestCase):
         result = cast_tag((10, ('1', '2', '3')))
         self.assertEqual((10, (1, 2, 3)), result)
 
+
 if __name__ == '__main__':
     unittest.main()

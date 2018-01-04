@@ -6,19 +6,23 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .c23 import isstring
+from ..lldxf.const import DXFValueError, DXFTypeError
 
 
 def safe_3D_point(coords):
-    """Returns a 3-tuple for sure. Raises *ValueError* for axis count != (2, 3).
+    """Returns a 3-tuple for sure. Raises *DXFValueError* for axis count != (2, 3).
     """
     if isstring(coords):
-        raise TypeError("string")
-    coords = tuple(coords)
+        raise DXFTypeError("string")
+    try:
+        coords = tuple(coords)
+    except TypeError as e:
+        raise DXFTypeError(str(e))
     if len(coords) == 3:
         return coords
     if len(coords) == 2:
         return coords[0], coords[1], 0.
-    raise ValueError("Invalid axis count: {}".format(len(coords)))
+    raise DXFValueError("Invalid axis count: {}".format(len(coords)))
 
 
 def knot_values(n_control_points, degree):

@@ -9,6 +9,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from collections import namedtuple
 
 from ..tools.c23 import ustr
+from .const import DXFValueError
 
 DXFTag = namedtuple('DXFTag', 'code value')
 NONE_TAG = DXFTag(None, None)
@@ -76,11 +77,11 @@ def cast_tag(tag, types=TYPE_TABLE):
     caster = types.get(tag[0], ustr)
     try:
         return DXFTag(tag[0], caster(tag[1]))
-    except ValueError:
+    except ValueError:  # internal exception
         if caster is int:  # convert float to int
             return DXFTag(tag[0], int(float(tag[1])))
         else:
-            raise
+            raise DXFValueError('Casting error for tag({0[0]}, {0[1]}).'.format(tag))
 
 
 def cast_tag_value(code, value, types=TYPE_TABLE):
@@ -90,8 +91,8 @@ def cast_tag_value(code, value, types=TYPE_TABLE):
 def tag_type(code):
     try:
         return TYPE_TABLE[code]
-    except KeyError:
-        raise ValueError("Invalid tag code: {}".format(code))
+    except KeyError:  # internal exception
+        raise DXFValueError("Invalid tag code: {}".format(code))
 
 
 def strtag(tag):

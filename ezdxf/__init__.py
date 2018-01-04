@@ -18,18 +18,22 @@ import io
 import codecs
 from .lldxf.encoding import dxfbackslashreplace
 codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
-
-from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .lldxf.tags import dxf_info
 from .lldxf.tagger import low_level_tagger, skip_comments
-from .tools.importer import Importer
 from .tools.codepage import is_supported_encoding
-from .lldxf.const import DXFStructureError, DXFVersionError
 from .tools.zipmanager import ctxZipReader
-from .tools import transparency2float, float2transparency  #  convert transparency integer values to floats 0..1
+
+# unused name space imports
+from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
+from .tools.importer import Importer
+from .tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
 from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
+
+# exceptions
+from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError
+from .lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError
 
 
 def new(dxfversion='AC1009'):

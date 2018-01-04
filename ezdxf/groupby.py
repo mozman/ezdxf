@@ -3,6 +3,8 @@
 # Copyright (C) 2017, Manfred Moitzi
 # License: MIT License
 
+from .lldxf.const import DXFValueError, DXFAttributeError
+
 
 def groupby(entities, dxfattrib='', key=None):
     """
@@ -19,17 +21,17 @@ def groupby(entities, dxfattrib='', key=None):
         dict
     """
     if all((dxfattrib, key)):
-        raise ValueError('Specify a dxfattrib or a key function, but not both.')
+        raise DXFValueError('Specify a dxfattrib or a key function, but not both.')
     if dxfattrib != '':
         key = lambda entity: entity.get_dxf_attrib(dxfattrib, None)
     if key is None:
-        raise ValueError('no valid argument found, specify a dxfattrib or a key function, but not both.')
+        raise DXFValueError('no valid argument found, specify a dxfattrib or a key function, but not both.')
 
     result = dict()
     for dxf_entity in entities:
         try:
             group_key = key(dxf_entity)
-        except AttributeError:  # ignore DXF entities, which do not support all query attributes
+        except DXFAttributeError:  # ignore DXF entities, which do not support all query attributes
             continue
         if group_key is not None:
             group = result.setdefault(group_key, [])

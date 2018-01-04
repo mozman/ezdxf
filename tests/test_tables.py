@@ -12,7 +12,7 @@ from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, normlines, Tags
 from ezdxf.sections.tables import TablesSection
-
+from ezdxf import DXFAttributeError
 
 class TestTables(unittest.TestCase):
     def setUp(self):
@@ -26,7 +26,7 @@ class TestTables(unittest.TestCase):
         self.assertIsNotNone(self.tables.linetypes)
 
     def test_error_getattr(self):
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXFAttributeError):
             self.tables.test
 
     def test_write(self):

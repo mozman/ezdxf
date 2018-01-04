@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .const import acad_release, DXFStructureError
+from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
@@ -84,7 +84,10 @@ class Tags(list):
             if tag.code in (5, 105):
                 handle = tag.value
                 break
-        int(handle, 16)  # check for valid handle
+        try:
+            int(handle, 16)  # check for valid handle
+        except ValueError:
+            raise DXFValueError('Invlid handle value "{}".'.format(handle))
         return handle
 
     def replace_handle(self, new_handle):
@@ -101,25 +104,25 @@ class Tags(list):
     def has_tag(self, code):
         return any(True for tag in self if tag.code == code)
 
-    def find_first(self, code, default=ValueError):
-        """Returns value of first DXFTag(code, value) or default if default != ValueError, else raises ValueError.
+    def find_first(self, code, default=DXFValueError):
+        """Returns value of first DXFTag(code, value) or default if default != ValueError, else raises DXFValueError.
         """
         for tag in self:
             if tag.code == code:
                 return tag.value
-        if default is ValueError:
-            raise ValueError(code)
+        if default is DXFValueError:
+            raise DXFValueError(code)
         else:
             return default
 
-    def get_first_tag(self, code, default=ValueError):
-        """Returns first DXFTag(code, value) or default if default != ValueError, else raises ValueError.
+    def get_first_tag(self, code, default=DXFValueError):
+        """Returns first DXFTag(code, value) or default if default != ValueError, else raises DXFValueError.
         """
         for tag in self:
             if tag.code == code:
                 return tag
-        if default is ValueError:
-            raise ValueError(code)
+        if default is DXFValueError:
+            raise DXFValueError(code)
         else:
             return default
 
@@ -138,10 +141,10 @@ class Tags(list):
             if self[index].code == code:
                 return index
             index += 1
-        raise ValueError(code)
+        raise DXFValueError(code)
 
     def update(self, code, value):
-        """Update first existing tag, raises ValueError if tag not exists.
+        """Update first existing tag, raises DXFValueError if tag not exists.
         """
         index = self.tag_index(code)
         self[index] = DXFTag(code, value)
@@ -153,7 +156,7 @@ class Tags(list):
         """
         try:
             self.update(code, value)
-        except ValueError:
+        except DXFValueError:
             self.append(DXFTag(code, value))
 
     def remove_tags(self, codes):
@@ -229,7 +232,7 @@ class CompressedTags(object):
         elif item == 1:
             return self.value
         else:
-            raise IndexError
+            raise DXFIndexError
 
     def decompress(self):
         return Tags.from_text(self.value.decompress())

@@ -6,6 +6,16 @@ Version 0.8.4 - ?
 
   * NEW: DXF file structure validator at SECTION level, tags outside of sections will be removed
   * NEW: Basic support for DIMENSION, dimensions can be read, modified and deleted
+  * CHANGED: in the future ezdxf should only raise exceptions inherited from DXFError, previous exception classes still
+    work
+
+    - DXFValueError(DXFError, ValueError)
+    - DXFKeyError(DXFError, KeyError)
+    - DXFAttributeError(DXFError, AttributeError)
+    - DXFIndexError(DXFError, IndexError)
+    - DXFTableEntryError(DXFValueError)
+    - DXFQueryError(DXFValueError)
+    - work in progress
 
 Version 0.8.3 - 2018-01-02
 

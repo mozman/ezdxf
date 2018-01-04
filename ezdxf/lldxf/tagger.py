@@ -66,12 +66,12 @@ def low_level_tagger(stream):
         if code and value:  # StringIO(): empty strings indicates EOF
             return DXFTag(int(code), value.rstrip('\n'))
         else:
-            raise EOFError()
+            raise EOFError()  # internal exception
 
     try:
         while True:
             yield next_tag()
-    except EOFError:
+    except EOFError:  # internal exception
         return
 
 
@@ -108,13 +108,13 @@ def tag_optimizer(tagger):
                     else:
                         point = (float(x.value), float(y.value))
                         undo_tag = z
-                except ValueError:
+                except ValueError:  # internal exception
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line.counter))
                 yield DXFTag(code, point)
             else:  # just a single tag
                 try:
                     yield cast_tag(x)
-                except ValueError:
+                except ValueError:  # internal exception
                     raise DXFStructureError('Invalid tag (code={code}, value="{value}") near line: {line}.'.format(
                         line=line.counter,
                         code=x.code,

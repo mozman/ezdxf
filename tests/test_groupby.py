@@ -2,6 +2,7 @@ import pytest
 import ezdxf
 
 from ezdxf.groupby import groupby
+from ezdxf import DXFValueError
 
 
 def modelspace():
@@ -51,10 +52,10 @@ def test_groupby_result():
 
 
 def test_calling_convention():
-    with pytest.raises(ValueError):  # if both query arguments are set
+    with pytest.raises(DXFValueError):  # if both query arguments are set
         groupby([], dxfattrib='layer', key=lambda e: e.dxf.layer)
 
-    with pytest.raises(ValueError):  # if no query argument is set
+    with pytest.raises(DXFValueError):  # if no query argument is set
         groupby([])
 
 if __name__ == '__main__':

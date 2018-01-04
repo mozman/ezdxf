@@ -107,6 +107,8 @@ class EntityQuery(Sequence):
     def query(self, query='*'):
         """
         Returns a new result container with all entities matching this additional query.
+
+        raises: ParseException (pyparsing.py)
         """
         return EntityQuery(self.entities, query)
 

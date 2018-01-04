@@ -13,6 +13,7 @@ from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.tagger import string_tagger, skip_comments
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import tag_type, point_tuple
+from ezdxf.lldxf.const import DXFValueError
 
 TEST_TAGREADER = """  0
 SECTION
@@ -103,7 +104,7 @@ class TestTags(unittest.TestCase):
         self.assertEqual('XHEADER', self.tags[1].value)
 
     def test_update_error(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.tags.update(999, 'DOESNOTEXIST')
 
     def test_set_first(self):
@@ -119,7 +120,7 @@ class TestTags(unittest.TestCase):
         self.assertEqual(999, value)
 
     def test_find_first_error(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.tags.find_first(1234)
 
     def test_get_handle_5(self):
@@ -131,7 +132,7 @@ class TestTags(unittest.TestCase):
         self.assertEqual('F105', tags.get_handle())
 
     def test_get_handle_create_new(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.tags.get_handle()
 
     def test_find_all(self):
@@ -147,7 +148,7 @@ class TestTags(unittest.TestCase):
 
     def test_find_first_value_error(self):
         tags = Tags.from_text(TESTFINDALL)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             tags.tag_index(1)
 
     def test_clone_is_equal(self):
@@ -172,7 +173,7 @@ class TestTags(unittest.TestCase):
 
     def test_replace_no_handle_without_error(self):
         self.tags.replace_handle('AA')
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.tags.get_handle() # handle still doesn't exist
 
     def test_skip_comments(self):
@@ -210,7 +211,7 @@ class TestTagType(unittest.TestCase):
         self.assertEqual(ustr, tag_type(0))
 
     def test_value_error(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             tag_type(3000)
 
     def test_point_tuple_2d(self):

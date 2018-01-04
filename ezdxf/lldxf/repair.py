@@ -15,7 +15,7 @@ import logging
 
 from .extendedtags import ExtendedTags
 from .tags import DXFTag, Tags
-from .const import DXFInternalEzdxfError, DXFStructureError
+from .const import DXFInternalEzdxfError, DXFStructureError, DXFValueError, DXFKeyError
 
 logger = logging.getLogger('ezdxf')
 
@@ -42,18 +42,18 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
         for name in names:
             try:
                 brecord = dwg.block_records.get(name)
-            except ValueError:
+            except DXFValueError:
                 pass
             else:
                 return brecord
-        raise KeyError
+        raise DXFKeyError
 
     layout_dict = dwg.rootdict.get_required_dict('ACAD_LAYOUT')
     if layout_name in layout_dict:
         return
     try:
         block_record = get_block_record_by_alt_names((block_name, block_name.upper()))
-    except KeyError:
+    except DXFKeyError:
         raise NotImplementedError("'%s' block record setup not implemented, send an email to "
                                   "<mozman@gmx.at> with your DXF file." % block_name)
     real_block_name = block_record.dxf.name  # can be *Model_Space or *MODEL_SPACE
@@ -61,7 +61,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
 
     try:
         block = dwg.blocks.get(real_block_name)
-    except KeyError:
+    except DXFKeyError:
         raise NotImplementedError("'%s' block setup not implemented, send an email to "
                                   "<mozman@gmx.at> with your DXF file." % real_block_name)
     else:
@@ -109,13 +109,13 @@ def upgrade_to_ac1015(dwg):
     def upgrade_layer_table():
         try:
             plot_style_name_handle = dwg.rootdict.get('ACAD_PLOTSTYLENAME')  # DXFDictionaryWithDefault
-        except KeyError:
+        except DXFKeyError:
             raise DXFInternalEzdxfError("Table ACAD_PLOTSTYLENAME should already exist in root dict.")
         set_plot_style_name_in_layers(plot_style_name_handle)
 
         try:  # do not plot DEFPOINTS layer or AutoCAD is yelling
             defpoints_layer = dwg.layers.get('DEFPOINTS')
-        except ValueError:
+        except DXFValueError:
             pass
         else:
             defpoints_layer.dxf.plot = 0

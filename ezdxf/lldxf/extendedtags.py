@@ -5,7 +5,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags, DXFStructureError, DXFTag, write_tags
+from .tags import Tags,  DXFTag, write_tags
+from .const import DXFStructureError, DXFValueError, DXFKeyError
 from ..tools.c23 import isstring
 from .tagger import string_tagger, skip_comments
 APP_DATA_MARKER = 102
@@ -21,7 +22,7 @@ class ExtendedTags(object):
 
     def __init__(self, iterable=None):
         if isstring(iterable):
-            raise ValueError("use ExtendedTags.from_text() to create tags from a string.")
+            raise DXFValueError("use ExtendedTags.from_text() to create tags from a string.")
 
         self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
@@ -140,7 +141,7 @@ class ExtendedTags(object):
             if len(subclass) and subclass[0].value == name and getpos >= pos:
                 return subclass
             getpos += 1
-        raise KeyError("Subclass '%s' does not exist." % name)
+        raise DXFKeyError("Subclass '%s' does not exist." % name)
 
     def xdata_index(self, appid):
         for index, xdata in enumerate(self.xdata):
@@ -154,7 +155,7 @@ class ExtendedTags(object):
     def get_xdata(self, appid):
         index = self.xdata_index(appid)
         if index is None:
-            raise ValueError("No extended data for APPID '%s'" % appid)
+            raise DXFValueError("No extended data for APPID '%s'" % appid)
         else:
             return self.xdata[index]
 
@@ -191,7 +192,7 @@ class ExtendedTags(object):
         """Get app data including first and last marker tag."""
         index = self.app_data_index(appid)
         if index is None:
-            raise ValueError("Application defined group '%s' does not exist." % appid)
+            raise DXFValueError("Application defined group '%s' does not exist." % appid)
         else:
             return self.appdata[index]
 
@@ -202,7 +203,7 @@ class ExtendedTags(object):
     def set_app_data_content(self, appid, tags):
         index = self.app_data_index(appid)
         if index is None:
-            raise ValueError("Application defined group '%s' does not exist." % appid)
+            raise DXFValueError("Application defined group '%s' does not exist." % appid)
         else:
             self.appdata[index][1:-1] = tags
 
@@ -217,7 +218,7 @@ class ExtendedTags(object):
                 app_data = tags.new_app_data('{ACAD_REACTORS', tags)
         """
         if not appid.startswith('{'):
-            raise ValueError("App data id has to start with '{'.")
+            raise DXFValueError("App data id has to start with '{'.")
 
         app_tags = Tags([
             DXFTag(APP_DATA_MARKER, appid),
@@ -267,7 +268,7 @@ def get_tags_linker():
         def attribs_follow():
             try:
                 ref_tags = tags.get_subclass('AcDbBlockReference')
-            except KeyError:
+            except DXFKeyError:
                 return False
             else:
                 return bool(ref_tags.find_first(66, 0))

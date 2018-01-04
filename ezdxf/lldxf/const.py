@@ -45,7 +45,27 @@ class DXFInternalEzdxfError(DXFError):
     pass
 
 
-class DXFTableEntryError(DXFError):
+class DXFValueError(DXFError, ValueError):
+    pass
+
+
+class DXFKeyError(DXFError, KeyError):
+    pass
+
+
+class DXFAttributeError(DXFError, AttributeError):
+    pass
+
+
+class DXFIndexError(DXFError, IndexError):
+    pass
+
+
+class DXFTypeError(DXFError, TypeError):
+    pass
+
+
+class DXFTableEntryError(DXFValueError):
     pass
 
 

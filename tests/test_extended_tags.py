@@ -13,9 +13,10 @@ from io import StringIO
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.repair import join_subclasses
+from ezdxf import DXFKeyError, DXFValueError
 
 
-class TestClassifiedTags(unittest.TestCase):
+class TestExtendedTags(unittest.TestCase):
     def setUp(self):
         self.xtags = ExtendedTags.from_text(XTAGS1)
 
@@ -40,7 +41,7 @@ class TestClassifiedTags(unittest.TestCase):
         self.assertEqual(xdict.find_first(360), "63D5")
 
     def test_tags_skips_appdata_content(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.xtags.noclass.find_first(360)
 
     def test_xdata_content_count(self):
@@ -48,7 +49,7 @@ class TestClassifiedTags(unittest.TestCase):
         self.assertEqual(17, len(rak))
 
     def test_tags_skips_xdata_content(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.xtags.noclass.find_first(1000)
 
     def test_copy(self):
@@ -255,7 +256,7 @@ class Test2xSubclass(unittest.TestCase):
         self.assertEqual((73, 2), subclass2[1])
 
     def test_key_error(self):
-        with self.assertRaises(KeyError):
+        with self.assertRaises(DXFKeyError):
             self.tags.get_subclass('AcDbText', pos=4)
 
     def test_skip_empty_subclass(self):
@@ -304,7 +305,7 @@ class TestAppData(unittest.TestCase):
         self.tags = ExtendedTags.from_text(NO_REACTORS)
 
     def test_get_not_existing_reactor(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             self.tags.get_app_data(ACAD_REACTORS)
 
     def test_new_reactors(self):

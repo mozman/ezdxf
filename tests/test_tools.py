@@ -11,9 +11,12 @@ import unittest
 
 import ezdxf
 from ezdxf.tools.test import DrawingProxy
+from ezdxf import DXFValueError, DXFTypeError
+from ezdxf.tools import safe_3D_point
+
 
 def getattributes(obj):
-    return ( attr for attr in dir(obj) if not attr.startswith('_DrawingProxy__') )
+    return (attr for attr in dir(obj) if not attr.startswith('_DrawingProxy__'))
 
 
 class TestDrawingProxy(unittest.TestCase):
@@ -22,8 +25,6 @@ class TestDrawingProxy(unittest.TestCase):
         for attr in getattributes(DrawingProxy('AC1024')):
             if not hasattr(dwg, attr):
                 raise Exception("attribute '%s' of DrawingProxy() does not exist in Drawing() class" % attr)
-
-from ezdxf.tools import safe_3D_point
 
 
 class TestSafe3DPoint(unittest.TestCase):
@@ -34,19 +35,19 @@ class TestSafe3DPoint(unittest.TestCase):
         self.assertEqual((1, 2, 0), safe_3D_point((1, 2)))
 
     def test_1D_point(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DXFValueError):
             safe_3D_point((1, ))
 
     def test_with_int(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(DXFTypeError):
             safe_3D_point(1)
 
     def test_with_float(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(DXFTypeError):
             safe_3D_point(1.1)
 
     def test_with_str(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(DXFTypeError):
             safe_3D_point("abc")
 
 

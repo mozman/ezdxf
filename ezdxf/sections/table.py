@@ -54,14 +54,14 @@ class Table(object):
         try:
             self.get(name)
             return True
-        except ValueError:
+        except DXFTableEntryError:
             return False
 
     __contains__ = has_entry
 
     def new(self, name, dxfattribs=None):
         if self.has_entry(name):
-            raise ValueError('%s %s already exists!' % (self._dxfname, name))
+            raise DXFTableEntryError('%s %s already exists!' % (self._dxfname, name))
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['name'] = name
@@ -72,7 +72,7 @@ class Table(object):
         for entry in iter(self):
             if entry.dxf.name == name:
                 return entry
-        raise ValueError(name)
+        raise DXFTableEntryError(name)
 
     def remove(self, name):
         """ Remove table-entry from table and entitydb by name. """
