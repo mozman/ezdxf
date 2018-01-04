@@ -66,7 +66,7 @@ class Sections(object):
     def __getattr__(self, key):
         try:
             return self._sections[key]
-        except KeyError:
+        except KeyError:  # internal exception
             # DXFStructureError because a requested section is not present, maybe a typo, but usual a hint for an
             # invalid DXF file.
             raise DXFStructureError('{} section not found'.format(key.upper()))
@@ -100,6 +100,7 @@ class Sections(object):
         """ Delete a complete section, please delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA'.
         """
         del self._sections[name.lower()]
+
 
 SECTION_MAP = {
     'CLASSES': ClassesSection,

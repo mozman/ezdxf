@@ -78,7 +78,8 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
-from ..lldxf.tags import TagGroups, DXFStructureError, write_tags, Tags
+from ..lldxf.tags import TagGroups, write_tags, Tags
+from ..lldxf.const import DXFKeyError, DXFStructureError
 
 
 class AcDsDataSection(object):
@@ -165,12 +166,12 @@ class AcDsRecord(object):
     def has_section(self, name):
         return self.get_section(name, default=None) is not None
 
-    def get_section(self, name, default=KeyError):
+    def get_section(self, name, default=DXFKeyError):
         for section in self.sections:
             if section.name == name:
                 return section
-        if default is KeyError:
-            raise KeyError(name)
+        if default is DXFKeyError:
+            raise DXFKeyError(name)
         else:
             return default
 

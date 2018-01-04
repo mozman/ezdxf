@@ -8,7 +8,8 @@ __author__ = "mozman <mozman@gmx.at>"
 from itertools import islice
 import logging
 
-from ..lldxf.tags import TagGroups, DXFStructureError
+from ..lldxf.tags import TagGroups
+from ..lldxf.const import DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..lldxf import const
 
@@ -89,7 +90,7 @@ class BlocksSection(object):
     def __contains__(self, entity):
         try:
             name = entity.name
-        except AttributeError:
+        except AttributeError:  # internal exception
             name = entity
         return name in self._block_layouts
 
@@ -99,7 +100,7 @@ class BlocksSection(object):
     def get(self, name, default=None):
         try:
             return self.__getitem__(name)
-        except KeyError:
+        except KeyError:  # internal exception
             return default
 
     def new(self, name, base_point=(0, 0), dxfattribs=None):

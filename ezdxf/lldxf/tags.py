@@ -87,7 +87,7 @@ class Tags(list):
         try:
             int(handle, 16)  # check for valid handle
         except ValueError:
-            raise DXFValueError('Invlid handle value "{}".'.format(handle))
+            raise DXFValueError('Invalid handle value "{}".'.format(handle))
         return handle
 
     def replace_handle(self, new_handle):

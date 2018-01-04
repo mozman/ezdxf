@@ -87,7 +87,7 @@ class TablesSection(object):
     def __getattr__(self, key):
         try:
             return self._tables[key]
-        except KeyError:
+        except KeyError:  # internal exception
             raise DXFAttributeError(key)
 
     def __getitem__(self, key):
@@ -103,6 +103,7 @@ class TablesSection(object):
             if table is not None:
                 table.write(stream)
         stream.write('  0\nENDSEC\n')
+
 
 TABLESMAP = {
     'LAYER': Table,

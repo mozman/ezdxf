@@ -6,9 +6,9 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import DefaultChunk
-from ..lldxf.tags import TagGroups, DXFStructureError
+from ..lldxf.tags import TagGroups
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFTableEntryError
+from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFValueError, DXFAttributeError
 
 TABLENAMES = {
     'layer': 'layers',
@@ -96,10 +96,6 @@ class Table(object):
             raise DXFStructureError("Critical structure error in TABLES section.")
 
         self._table_header = ExtendedTags(groups[0][1:])
-
-        # AC1009 table headers have no handles, but putting it into the entitydb, will give it a handle and corrupt
-        # the DXF format.
-        #if self._drawing.dxfversion != 'AC1009':
         self.entitydb.add_tags(self._table_header)
 
         for tags in groups[1:-1]:
@@ -138,7 +134,7 @@ class Table(object):
         if hasattr(entry, 'get_handle'):
             try:
                 handle = entry.get_handle()
-            except ValueError:
+            except DXFValueError:
                 handle = self.handles.next()
             tags = entry
         else:
@@ -180,7 +176,7 @@ class Table(object):
         owner_handle = self._table_header.get_handle()
         for entry in iter(self):
             if not entry.supports_dxf_attrib('owner'):
-                raise AttributeError(repr(entry))
+                raise DXFAttributeError(repr(entry))
             entry.dxf.owner = owner_handle
 
     def _update_meta_data(self):

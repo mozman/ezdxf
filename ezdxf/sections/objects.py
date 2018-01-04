@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .classes import ClassesSection
-from ..lldxf.const import DXFStructureError, DXFInternalEzdxfError
+from ..lldxf.const import DXFStructureError, DXFValueError
 from ..modern.groups import DXFGroupTable
 
 
@@ -94,7 +94,7 @@ class ObjectsSection(ClassesSection):
             underlay_dict_name = 'ACAD_{}DEFINITIONS'.format(fmt)
             underlay_def_entity = "{}DEFINITION".format(fmt)
         else:
-            raise ValueError("Unsupported file format: '{}'".format(fmt))
+            raise DXFValueError("Unsupported file format: '{}'".format(fmt))
 
         if name is None:
             if fmt == 'PDF':

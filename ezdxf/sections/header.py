@@ -9,7 +9,8 @@ from collections import OrderedDict
 
 from ..tools.c23 import ustr
 from ..lldxf.types import strtag
-from ..lldxf.tags import TagGroups, Tags, DXFStructureError
+from ..lldxf.tags import TagGroups, Tags
+from ..lldxf.const import DXFStructureError, DXFValueError
 
 MIN_HEADER_TEXT = """  0
 SECTION
@@ -78,7 +79,7 @@ class CustomVars(object):
                 if not all:
                     return
         if not found_tag:
-            raise ValueError("Tag '%s' does not exist" % tag)
+            raise DXFValueError("Tag '%s' does not exist" % tag)
 
     def replace(self, tag, value):
         """ Replaces the value of the first custom property `tag` by a new `value`.
@@ -90,7 +91,7 @@ class CustomVars(object):
                 properties[index] = (name, value)
                 return
 
-        raise ValueError("Tag '%s' does not exist" % tag)
+        raise DXFValueError("Tag '%s' does not exist" % tag)
 
     def write(self, stream):
         for tag, value in self.properties:
@@ -122,7 +123,7 @@ class HeaderSection(object):
         if tags[0] != (0, 'SECTION') or \
            tags[1] != (2, 'HEADER') or \
            tags[-1] != (0, 'ENDSEC'):
-           raise DXFStructureError("Critical structure error in HEADER section.")
+            raise DXFStructureError("Critical structure error in HEADER section.")
 
         if len(tags) == 3:  # DXF file with empty header section
             return
@@ -140,7 +141,7 @@ class HeaderSection(object):
         while len(custom_property_stack):
             try:
                 self.custom_vars.append(tag=custom_property_stack.pop(), value=custom_property_stack.pop())
-            except IndexError:
+            except IndexError:  # internal exception
                 break
 
     def varnames(self):

@@ -10,6 +10,8 @@ import unittest
 from ezdxf.tools.test import DrawingProxy
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.acdsdata import AcDsDataSection
+from ezdxf import DXFKeyError
+
 
 DWG = DrawingProxy('AC1027')
 
@@ -28,13 +30,14 @@ class TestAcDsDataSection(unittest.TestCase):
         self.assertTrue(record.has_section('ASM_Data'))
         self.assertTrue(record.has_section('AcDbDs::ID'))
         self.assertFalse(record.has_section('mozman'))
-        with self.assertRaises(KeyError):
+        with self.assertRaises(DXFKeyError):
             asm_data = record['mozman']
 
         asm_data = record['ASM_Data']
         binary_data = (tag for tag in asm_data if tag.code == 310)
         length = sum(len(tag.value) for tag in binary_data) / 2
         self.assertEqual(asm_data[2].value, length)
+
 
 ACDSSECTION = Tags.from_text("""  0
 SECTION
