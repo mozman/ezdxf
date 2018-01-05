@@ -58,25 +58,40 @@ def skip_comments(tagger, comments=None):
 def low_level_tagger(stream):
     """ Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
     Does not skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
-    Works with file system streams and StringIO() streams.
+    Works with file system streams and StringIO() streams. Raises DXFStructureError() for invalid group codes.
     """
     def next_tag():
         code = stream.readline()
         value = stream.readline()
         if code and value:  # StringIO(): empty strings indicates EOF
-            return DXFTag(int(code), value.rstrip('\n'))
+            try:
+                code = int(code)
+            except ValueError:
+                raise DXFStructureError('Invalid group code "{}" at line {}.'.format(code, line))
+            else:
+                return DXFTag(code, value.rstrip('\n'))
         else:
             raise EOFError()  # internal exception
-
+    line = 1
     try:
         while True:
             yield next_tag()
+            line += 2
     except EOFError:  # internal exception
         return
 
 
 def tag_optimizer(tagger):
-    """ Optimizes from low_level_tagger() imported tags. Does not skip comment tags 999.
+    """ Optimizes tags imported by low_level_tagger(). Does not skip comment tags 999. Raises DXFStructureError() for
+    invalid float values and invalid coordinate values.
+
+    Expects DXF coordinates written in x, y[, z] order, this is not required by the DXF standard, but nearly all CAD
+    applications write DXF coordinates that (sane) way, there are older CAD applications (namely an older QCAD version)
+    that write LINE coordinates in x1, x2, y1, y2 order, which does not work with tag_optimizer(). For this cases use
+    tag_reorder_layer() from the repair module to reorder the LINE coordinates::
+
+        tag_optimizer(tag_reorder_layer(low_level_tagger(stream)))
+
     """
     class Counter:
         def __init__(self):

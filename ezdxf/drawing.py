@@ -298,7 +298,7 @@ class Drawing(object):
             enc = 'utf-8' if self.dxfversion >= 'AC1021' else self.encoding
         else:  # override default encoding, for applications that handles encoding different than AutoCAD
             enc = encoding
-        # in ASCII mode unknown, characters will be escaped as \U+nnnn unicode characters.
+        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
         with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
             self.write(fp)
 
