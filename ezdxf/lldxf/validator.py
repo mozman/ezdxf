@@ -3,8 +3,10 @@
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
 import logging
+import io
 
-from .const import DXFStructureError
+from .const import DXFStructureError, DXFError
+from .tagger import low_level_tagger, skip_comments
 
 logger = logging.getLogger('ezdxf')
 
@@ -84,3 +86,16 @@ def structure_validator(tagreader, filter=False):
     check_if_inside_section()
     if not found_eof:
         raise DXFStructureError(error_prefix+'EOF tag not found.')
+
+
+def is_dxf_file(filename):
+    with io.open(filename, errors='ignore') as fp:
+        return is_dxf_stream(fp)
+
+
+def is_dxf_stream(stream):
+    try:
+        reader = skip_comments(low_level_tagger(stream))
+        return next(reader) == (0, 'SECTION')
+    except DXFError:
+        return False

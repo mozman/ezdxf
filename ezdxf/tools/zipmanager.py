@@ -11,6 +11,7 @@ from contextlib import contextmanager
 
 from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.tags import dxf_info
+from ezdxf.lldxf.validator import is_dxf_stream
 
 WIN_NEW_LINE = b'\r\n'
 NEW_LINE = b'\n'
@@ -33,7 +34,9 @@ class ZipReader(object):
         self.zip_archive = zipfile.ZipFile(self.zip_archive_name)
         self.dxf_file_name = dxf_file_name if dxf_file_name is not None else self.get_first_dxf_file_name()
         self.dxf_file = open_dxf_file()
-        if not self.is_dxf_file():
+
+        # reading with standard encoding 'cp1252' - readline() fails if leading comments contain none ascii characters
+        if not is_dxf_stream(self):
             raise IOError("'{}' is not a DXF file.".format(self.dxf_file_name))
         self.dxf_file = open_dxf_file()  # restart
         self.get_dxf_encoding()
@@ -49,16 +52,12 @@ class ZipReader(object):
     def get_dxf_file_names(self):
         return [name for name in self.zip_archive.namelist() if name.lower().endswith('.dxf')]
 
-    def is_dxf_file(self):
-        # TODO: check for DXF file
-        return True
-
     def get_dxf_encoding(self):
         info = dxf_info(self)
         # since DXF R2007 (AC1021) file encoding is always 'utf-8'
         self.encoding = info.encoding if info.version < 'AC1021' else 'utf-8'
 
-    # interface to stream_tagger()
+    # interface to tagging layers
     def readline(self):
         next_line = self.dxf_file.readline().replace(WIN_NEW_LINE, NEW_LINE)
         return ustr(next_line, self.encoding)

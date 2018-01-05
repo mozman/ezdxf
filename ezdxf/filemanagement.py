@@ -8,8 +8,8 @@ import io
 from .drawing import Drawing
 from .tools.zipmanager import ctxZipReader
 from .lldxf.tags import dxf_info
+from .lldxf.validator import is_dxf_file
 from .tools.codepage import is_supported_encoding
-from .lldxf.tagger import low_level_tagger, skip_comments
 
 
 def new(dxfversion='AC1009'):
@@ -84,9 +84,3 @@ def readzip(zipfile, filename=None):
         dwg = read(zipstream)
         dwg.filename = zipstream.dxf_file_name
     return dwg
-
-
-def is_dxf_file(filename):
-    with io.open(filename, errors='ignore') as fp:
-        reader = skip_comments(low_level_tagger(fp))
-        return next(reader) == (0, 'SECTION')

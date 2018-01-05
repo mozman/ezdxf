@@ -25,7 +25,8 @@ from .tools import transparency2float, float2transparency  # convert transparenc
 from .tools.rgb import int2rgb, rgb2int
 from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
-from .filemanagement import new, read, readfile, readzip, is_dxf_file
+from .lldxf.validator import is_dxf_file, is_dxf_stream
+from .filemanagement import new, read, readfile, readzip
 
 # exceptions
 from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError
