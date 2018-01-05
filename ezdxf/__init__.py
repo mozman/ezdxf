@@ -18,7 +18,7 @@ from .lldxf.encoding import dxfbackslashreplace
 codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
 
 
-# unused name space imports
+# name space imports
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from .tools.importer import Importer
 from .tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
