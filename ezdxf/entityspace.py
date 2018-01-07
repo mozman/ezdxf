@@ -56,9 +56,9 @@ class LayoutSpaces(object):
         self._entitydb = entitydb
         self._dxfversion = dxfversion
         if dxfversion <= 'AC1009':
-            self._get_key = lambda t: t.noclass.find_first(67, default=0)  # paper space value
+            self._get_key = lambda t: t.noclass.get_first_value(67, default=0)  # paper space value
         else:
-            self._get_key = lambda t: t.noclass.find_first(330, default=0)  # if no owner tag, set 0 and repair later
+            self._get_key = lambda t: t.noclass.get_first_value(330, default=0)  # if no owner tag, set 0 and repair later
 
     def __iter__(self):
         """ Iterate over all layout entity spaces.
@@ -92,7 +92,7 @@ class LayoutSpaces(object):
                 except KeyError:
                     raise DXFStructureError("Entity has no subclass 'AcDbEntity'.")
 
-                if entity_tags.find_first(67, default=0) != 0:
+                if entity_tags.get_first_value(67, default=0) != 0:
                     entity_tags.set_first(67, 0)
 
         if self._dxfversion <= 'AC1009':

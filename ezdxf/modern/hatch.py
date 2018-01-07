@@ -104,7 +104,7 @@ class Hatch(ModernGraphicEntity):
 
     @property
     def has_gradient_data(self):
-        return bool(self.AcDbHatch.find_first(450, 0))
+        return bool(self.AcDbHatch.get_first_value(450, 0))
 
     @property
     def bgcolor(self):
@@ -112,7 +112,7 @@ class Hatch(ModernGraphicEntity):
             xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
         except ValueError:
             return None
-        color = xdata_bgcolor.find_first(1071, 0)
+        color = xdata_bgcolor.get_first_value(1071, 0)
         return int2rgb(color)
 
     @bgcolor.setter

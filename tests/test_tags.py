@@ -112,16 +112,16 @@ class TestTags(unittest.TestCase):
         self.assertEqual('NEWTAG', self.tags[-1].value)
 
     def test_find_first(self):
-        value = self.tags.find_first(9)
+        value = self.tags.get_first_value(9)
         self.assertEqual('$ACADVER', value)
 
     def test_find_first_default(self):
-        value = self.tags.find_first(1234, default=999)
+        value = self.tags.get_first_value(1234, default=999)
         self.assertEqual(999, value)
 
     def test_find_first_error(self):
         with self.assertRaises(DXFValueError):
-            self.tags.find_first(1234)
+            self.tags.get_first_value(1234)
 
     def test_get_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)

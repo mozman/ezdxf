@@ -118,7 +118,7 @@ class Tags(list):
         """
         return any(True for tag in self if tag.code == code)
 
-    def find_first(self, code, default=DXFValueError):
+    def get_first_value(self, code, default=DXFValueError):
         """
         Returns value of first DXFTag(code, value) or default if default != DXFValueError, else raises DXFValueError.
 

@@ -38,11 +38,11 @@ class TestExtendedTags(unittest.TestCase):
 
     def test_appdata_content(self):
         xdict = self.xtags.get_app_data('{ACAD_XDICTIONARY')
-        self.assertEqual(xdict.find_first(360), "63D5")
+        self.assertEqual(xdict.get_first_value(360), "63D5")
 
     def test_tags_skips_appdata_content(self):
         with self.assertRaises(DXFValueError):
-            self.xtags.noclass.find_first(360)
+            self.xtags.noclass.get_first_value(360)
 
     def test_xdata_content_count(self):
         rak = self.xtags.get_xdata('RAK')
@@ -50,7 +50,7 @@ class TestExtendedTags(unittest.TestCase):
 
     def test_tags_skips_xdata_content(self):
         with self.assertRaises(DXFValueError):
-            self.xtags.noclass.find_first(1000)
+            self.xtags.noclass.get_first_value(1000)
 
     def test_copy(self):
         stream = StringIO()

@@ -271,7 +271,7 @@ def get_tags_linker():
             except DXFKeyError:
                 return False
             else:
-                return bool(ref_tags.find_first(66, 0))
+                return bool(ref_tags.get_first_value(66, 0))
 
         dxftype = tags.dxftype()
         are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space

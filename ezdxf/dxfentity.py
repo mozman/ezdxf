@@ -151,7 +151,7 @@ class DXFEntity(object):
         if dxfattr.xtype is not None:
             return self._get_extented_type(subclass_tags, dxfattr.code, dxfattr.xtype)
         else:
-            return subclass_tags.find_first(dxfattr.code)
+            return subclass_tags.get_first_value(dxfattr.code)
 
     def has_dxf_default_value(self, key):
         """ Returns *True* if the DXF attribute *key* has a DXF standard default value.
@@ -191,7 +191,7 @@ class DXFEntity(object):
 
     @staticmethod
     def _get_extented_type(tags, code, xtype):
-        value = tags.find_first(code)
+        value = tags.get_first_value(code)
         if len(value) == 3:
             if xtype == 'Point2D':
                 raise DXFStructureError("expected 2D point but found 3D point")
