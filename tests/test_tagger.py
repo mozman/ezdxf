@@ -2,13 +2,13 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.lldxf.tagger import string_tagger, skip_comments,low_level_tagger, tag_optimizer
+from ezdxf.lldxf.tagger import string_tagger, skip_comments,low_level_tagger, tag_compiler
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.types import strtag
 
 
 def optimizing_stream_tagger(stream):
-    return tag_optimizer(low_level_tagger(stream))
+    return tag_compiler(low_level_tagger(stream))
 
 
 TAGS1 = """999

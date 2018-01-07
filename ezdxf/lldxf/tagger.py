@@ -81,16 +81,17 @@ def low_level_tagger(stream):
         return
 
 
-def tag_optimizer(tagger):
-    """ Optimizes tags imported by low_level_tagger(). Does not skip comment tags 999. Raises DXFStructureError() for
-    invalid float values and invalid coordinate values.
+def tag_compiler(tagger):
+    """ Compiles DXF tag values imported by low_level_tagger() into Python types.
+
+    Does not skip comment tags 999. Raises DXFStructureError() for invalid float values and invalid coordinate values.
 
     Expects DXF coordinates written in x, y[, z] order, this is not required by the DXF standard, but nearly all CAD
     applications write DXF coordinates that (sane) way, there are older CAD applications (namely an older QCAD version)
-    that write LINE coordinates in x1, x2, y1, y2 order, which does not work with tag_optimizer(). For this cases use
+    that write LINE coordinates in x1, x2, y1, y2 order, which does not work with tag_compiler(). For this cases use
     tag_reorder_layer() from the repair module to reorder the LINE coordinates::
 
-        tag_optimizer(tag_reorder_layer(low_level_tagger(stream)))
+        tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
 
     """
     class Counter:

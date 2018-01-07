@@ -2,8 +2,6 @@
 # Created: 10.03.2011
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 version = (0, 8, 4)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
@@ -16,7 +14,6 @@ if sys.version_info[:2] < (2, 7):
 import codecs
 from .lldxf.encoding import dxfbackslashreplace
 codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
-
 
 # name space imports
 from .options import options  # example: ezdxf.options.template_dir = 'c:\templates'
