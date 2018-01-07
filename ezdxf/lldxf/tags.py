@@ -61,7 +61,9 @@ def dxf_info(stream):
 
 
 class Tags(list):
-    """ DXFTag() chunk as flat list. """
+    """
+    DXFTag() chunk as flat list.
+    """
     def write(self, stream):
         write_tags(stream, self)
 
@@ -75,9 +77,11 @@ class Tags(list):
     clone = __copy__
 
     def get_handle(self):
-        """Get DXF handle. Raises ValueError if handle not exists.
+        """
+        Get DXF handle. Raises ValueError if handle not exists.
 
-        :returns: handle as hex-string like 'FF'
+        Returns:
+            handle as hex-string like 'FF'
         """
         handle = ''
         for tag in self:
@@ -91,7 +95,11 @@ class Tags(list):
         return handle
 
     def replace_handle(self, new_handle):
-        """Replace existing handle.
+        """
+        Replace existing handle.
+
+        Args:
+            new_handle: new handle as hex string
         """
         for index, tag in enumerate(self):
             if tag.code in (5, 105):
@@ -102,10 +110,21 @@ class Tags(list):
         return self[0].value
 
     def has_tag(self, code):
+        """
+        Returns True if a DXFTag() with group code == code is present else False.
+
+        Args:
+            code: group code as int
+        """
         return any(True for tag in self if tag.code == code)
 
     def find_first(self, code, default=DXFValueError):
-        """Returns value of first DXFTag(code, value) or default if default != ValueError, else raises DXFValueError.
+        """
+        Returns value of first DXFTag(code, value) or default if default != DXFValueError, else raises DXFValueError.
+
+        Args:
+            code: group code as int
+            default: return value for default case or raises DXFValueError
         """
         for tag in self:
             if tag.code == code:
@@ -116,7 +135,12 @@ class Tags(list):
             return default
 
     def get_first_tag(self, code, default=DXFValueError):
-        """Returns first DXFTag(code, value) or default if default != ValueError, else raises DXFValueError.
+        """
+        Returns first DXFTag(code, value) or default if default != ValueError, else raises DXFValueError.
+
+        Args:
+            code: group code as int
+            default: return value for default case or raises DXFValueError
         """
         for tag in self:
             if tag.code == code:
@@ -127,12 +151,22 @@ class Tags(list):
             return default
 
     def find_all(self, code):
-        """Returns a list of DXFTag(code, value).
+        """
+        Returns a list of DXFTag(code, value).
+
+        Args:
+            code: group code as int
         """
         return [tag for tag in self if tag.code == code]
 
     def tag_index(self, code, start=0, end=None):
-        """Return first index of DXFTag(code, value).
+        """
+        Return first index of DXFTag(code, value).
+
+        Args:
+            code: group code as int
+            start: start index as int
+            end: end index as int, if None end index = len(self)
         """
         if end is None:
             end = len(self)
@@ -144,15 +178,23 @@ class Tags(list):
         raise DXFValueError(code)
 
     def update(self, code, value):
-        """Update first existing tag, raises DXFValueError if tag not exists.
+        """
+        Update first existing tag, raises DXFValueError if tag not exists.
+
+        Args:
+            code: group code as int
+            value: tag value
         """
         index = self.tag_index(code)
         self[index] = DXFTag(code, value)
 
     def set_first(self, code, value):
-        """Update first existing DXFTag(code, value) or append a new
-        DXFTag(code, value).
+        """
+        Update first existing DXFTag(code, value) or append a new  DXFTag(code, value).
 
+        Args:
+            code: group code as int
+            value: tag value
         """
         try:
             self.update(code, value)
@@ -160,32 +202,61 @@ class Tags(list):
             self.append(DXFTag(code, value))
 
     def remove_tags(self, codes):
-        self[:] = [tag for tag in self if tag.code not in set(codes)]
+        """
+        Remove tags inplace with group codes specified in codes.
+
+        Args:
+            codes: iterable of group codes
+
+        Returns:
+            Tags() object
+        """
+        self[:] = [tag for tag in self if tag.code not in frozenset(codes)]
 
     def collect_consecutive_tags(self, codes, start=0, end=None):
-        """Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not
+        """
+        Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not
         in codes ends the process.
 
-        Returns the collected tags in a collection of type Tag().
+        Args:
+            codes: iterable of group codes
+            start: start index as int
+            end: end index as int, if None end index = len(self)
+
+        Returns:
+            collected tags as Tags().
         """
         codes = frozenset(codes)
-        collected_tags = Tags()
+        index = int(start)
         if end is None:
             end = len(self)
-        index = start
+        bag = self.__class__()
+
         while index < end:
             tag = self[index]
             if tag.code in codes:
-                collected_tags.append(tag)
+                bag.append(tag)
                 index += 1
             else:
                 break
-        return collected_tags
+        return bag
+
+    @classmethod
+    def strip(cls, tags, codes):
+        """
+        Strips all tags with group codes in codes from tags.
+
+        Args:
+            tags: iterable of DXFTags() objects
+            codes: iterable of group codes
+        """
+        return cls((tag for tag in tags if tag.code not in frozenset(codes)))
 
 
 class TagGroups(list):
-    """Group of tags starts with a SplitTag and ends before the next SplitTag. A SplitTag is a tag with
-    code == splitcode, like (0, 'SECTION') for splitcode == 0.
+    """
+    Group of tags starts with a SplitTag and ends before the next SplitTag. A SplitTag is a tag with code == splitcode,
+    like (0, 'SECTION') for splitcode == 0.
     """
     def __init__(self, tags, splitcode=0):
         super(TagGroups, self).__init__()
@@ -215,12 +286,9 @@ class TagGroups(list):
         return cls(Tags.from_text(text), splitcode)
 
 
-def strip_tags(tags, codes):
-    return Tags((tag for tag in tags if tag.code not in codes))
-
-
 class CompressedTags(object):
-    """Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
+    """
+    Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
     """
     def __init__(self, code, tags):
         self.code = code

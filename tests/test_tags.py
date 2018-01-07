@@ -185,6 +185,12 @@ class TestTags(unittest.TestCase):
         self.tags.remove_tags(codes=(0, ))
         self.assertEqual(5, len(self.tags))
 
+    def test_strip_tags(self):
+        self.tags.remove_tags(codes=(0, ))
+        result = Tags.strip(self.tags, codes=(0, ))
+        self.assertEqual(5, len(result))
+        self.assertTrue(isinstance(result, Tags))
+
     def test_has_tag(self):
         self.assertTrue(self.tags.has_tag(2))
 
