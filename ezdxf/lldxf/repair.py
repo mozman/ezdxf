@@ -291,17 +291,22 @@ def fix_coordinate_order(tags, codes=(10, 11)):
     coordinate_codes = frozenset(extend_codes())
     coordinates = {}
     remaining_tags = []
-    first_coord = None
+    insert_pos = None
     for tag in tags:
         # separate tags
         if tag.code in coordinate_codes:
             coordinates[tag.code] = tag
-            if first_coord is None:
-                first_coord = tag
+            if insert_pos is None:
+                insert_pos = tags.index(tag)
         else:
             remaining_tags.append(tag)
 
-    insert_pos = tags.index(first_coord)
+    if len(coordinates) == 0:
+        # no coordinates found, this is probably a DXFStructureError,
+        # but here is not the place to validate the DXF structure,
+        # just do nothing.
+        return tags
+
     ordered_coords = []
     for code in codes:
         ordered_coords.extend(get_coords(code))
