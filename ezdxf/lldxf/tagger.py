@@ -17,7 +17,9 @@ def internal_tag_compiler(s):
     well formed and error free DXF format. Does not skip comment
     tags 999.
     """
-    from .types import POINT_CODES
+    from .types import POINT_CODES, TYPE_TABLE, ustr
+    assert isinstance(s, ustr)
+
     lines = s.split('\n')
     if s.endswith('\n'):  # split() creates an extra item, if s ends with '\n'
         lines.pop()
@@ -42,8 +44,8 @@ def internal_tag_compiler(s):
             else:  # 2d point
                 point = (float(x.value), float(y.value))
             yield DXFTag(code, point)  # 2d/3d point
-        else:
-            yield cast_tag(x)  # single value tag: int, float or string
+        else:  # single value tag: int, float or string
+            yield DXFTag(code, TYPE_TABLE.get(code, ustr)(x.value))
 
 
 def skip_comments(tagger, comments=None):
