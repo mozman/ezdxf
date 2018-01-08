@@ -34,11 +34,9 @@ def internal_type(value):
 
 TYPE_TABLE = _build_type_table([
     (internal_type, (-10, )),  # spacial tags for internal use
-    (ustr, range(0, 10)),
     (point_tuple, range(10, 20)),  # 2d or 3d points
     (float, range(20, 60)),  # code 20-39 belongs to 2d/3d points and should not appear alone
     (int, range(60, 100)),
-    (ustr, range(100, 106)),
     (point_tuple, range(110, 113)),  # 110, 111, 112 - UCS definition
     (float, range(113, 150)),  # 113-139 belongs to UCS definition and should not appear alone
     (int, range(160, 170)),
@@ -47,18 +45,11 @@ TYPE_TABLE = _build_type_table([
     (float, range(211, 240)),  # code 220, 230 belongs to extrusion direction and should not appear alone
     (int, range(270, 290)),
     (int, range(290, 300)),  # bool 1=True 0=False
-    (ustr, range(300, 370)),
     (int, range(370, 390)),
-    (ustr, range(390, 400)),
     (int, range(400, 410)),
-    (ustr, range(410, 420)),
     (int, range(420, 430)),
-    (ustr, range(430, 440)),
     (int, range(440, 460)),
     (float, range(460, 470)),
-    (ustr, range(470, 480)),
-    (ustr, range(480, 482)),
-    (ustr, range(999, 1010)),
     (point_tuple, range(1010, 1020)),
     (float, range(1020, 1060)),  # code 1020-1039 belongs to 2d/3d points and should not appear alone
     (int, range(1060, 1072)),
@@ -80,9 +71,8 @@ def is_point_tag(tag):
 
 
 def cast_tag(tag, types=TYPE_TABLE):
-    caster = types.get(tag[0], ustr)
     try:
-        return DXFTag(tag[0], caster(tag[1]))
+        return DXFTag(tag[0], types.get(tag[0], ustr)(tag[1]))
     except ValueError:  # internal exception
         raise DXFValueError('Casting error for tag({0[0]}, {0[1]}).'.format(tag))
 
@@ -92,10 +82,7 @@ def cast_tag_value(code, value, types=TYPE_TABLE):
 
 
 def tag_type(code):
-    try:
-        return TYPE_TABLE[code]
-    except KeyError:  # internal exception
-        raise DXFValueError("Invalid tag code: {}".format(code))
+    return TYPE_TABLE.get(code, ustr)
 
 
 def strtag(tag):

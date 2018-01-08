@@ -217,15 +217,12 @@ class TestTagType(unittest.TestCase):
     def test_str(self):
         self.assertEqual(ustr, tag_type(0))
 
-    def test_value_error(self):
-        with self.assertRaises(DXFValueError):
-            tag_type(3000)
-
     def test_point_tuple_2d(self):
         self.assertEqual((1, 2), point_tuple(('1', '2')))
 
     def test_point_tuple_3d(self):
         self.assertEqual((1, 2, 3), point_tuple(('1', '2', '3')))
+
 
 COLLECT_1 = """  0
 ZERO
