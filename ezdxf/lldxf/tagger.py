@@ -62,25 +62,23 @@ def low_level_tagger(stream):
     Does not skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
     Works with file system streams and StringIO() streams. Raises DXFStructureError() for invalid group codes.
     """
-    def next_tag():
-        code = stream.readline()
-        value = stream.readline()
+    line = 1
+    while True:
+        try:
+            code = stream.readline()
+            value = stream.readline()  # if throws EOFError -> DXFStructureError, but should be handled in upper layers
+        except EOFError:
+            return
         if code and value:  # StringIO(): empty strings indicates EOF
             try:
                 code = int(code)
             except ValueError:
                 raise DXFStructureError('Invalid group code "{}" at line {}.'.format(code, line))
             else:
-                return DXFTag(code, value.rstrip('\n'))
+                yield DXFTag(code, value.rstrip('\n'))
+                line += 2
         else:
-            raise EOFError()  # internal exception
-    line = 1
-    try:
-        while True:
-            yield next_tag()
-            line += 2
-    except EOFError:  # internal exception
-        return
+            return
 
 
 def tag_compiler(tagger):

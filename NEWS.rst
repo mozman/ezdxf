@@ -15,7 +15,7 @@ Version 0.8.4 - ?
     - DXFIndexError(DXFError, IndexError)
     - DXFTableEntryError(DXFValueError)
 
-  * speedup tag readers around 5%
+  * speedup low level tag reader around 5%, and speedup tag compiler around 5%
 
 Version 0.8.3 - 2018-01-02
 
