@@ -176,5 +176,5 @@ class LegacyDXFFactory(object):
         # Place target_entity in same layout as source_entity
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
 
-    def modify_tags(self, tags):
+    def post_read_tags_fixer(self, tags):
         pass

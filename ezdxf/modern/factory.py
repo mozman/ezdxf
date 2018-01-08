@@ -95,7 +95,6 @@ class ModernDXFFactory(LegacyDXFFactory):
     """
     HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.ModernGraphicEntity
-    TAGS_MODIFIER = {'VERTEX': graphics.Vertex.fix_tags}
 
     def __init__(self, drawing):
         super(ModernDXFFactory, self).__init__(drawing)
@@ -112,7 +111,7 @@ class ModernDXFFactory(LegacyDXFFactory):
         return self.drawing.sections.tables.block_records
 
     def create_block_entry_in_block_records_table(self, block_layout):
-        # required for  DXFVERSION > ac1009: Entry in the BLOCK_RECORDS section
+        # required for DXFVERSION > ac1009: Entry in the BLOCK_RECORDS section
         block_record = self.block_records.new(block_layout.name)
         block_layout.set_block_record_handle(block_record.dxf.handle)
 
@@ -128,10 +127,9 @@ class ModernDXFFactory(LegacyDXFFactory):
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
         target_entity.dxf.owner = source_entity.dxf.owner
 
-    def modify_tags(self, tags):
-        modifier = self.TAGS_MODIFIER.get(tags.dxftype(), None)
-        if modifier is not None:
-            modifier(tags)
+    def post_read_tags_fixer(self, tags):
+        if tags.dxftype() == 'VERTEX':
+            graphics.Vertex.fix_tags(tags)
 
     def next_image_key(self, checkfunc=lambda k: True):
         while True:

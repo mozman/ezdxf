@@ -65,10 +65,10 @@ class BlocksSection(object):
             return
 
         entities = []
-        modify_tags = self.dxffactory.modify_tags
-        for group in TagGroups(islice(tags, 2, len(tags) - 1)):
+        post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
+        for group in TagGroups(islice(tags, 2, len(tags)-1)):
             tags = ExtendedTags(group)
-            modify_tags(tags)  # post read tags fixer for VERTEX!
+            post_read_tags_fixer(tags)  # for VERTEX!
             entities.append(tags)
             if group[0].value == 'ENDBLK':
                 block_layout = build_block_layout(entities)

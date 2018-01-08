@@ -42,11 +42,11 @@ class AbstractSection(object):
         linked_tags = get_tags_linker()
         store_tags = self._entity_space.store_tags
         entitydb = self.entitydb
-        fix_tags = self.dxffactory.modify_tags
+        post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
 
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
             tags = ExtendedTags(group)
-            fix_tags(tags)  # post read tags fixer for VERTEX!
+            post_read_tags_fixer(tags)  # for VERTEX!
             handle = entitydb.add_tags(tags)
             if not linked_tags(tags, handle):  # also creates the link structure as side effect
                 store_tags(tags)  # add to entity space
