@@ -27,7 +27,7 @@ AcDbEntity
 100
 AcDbRasterImage
  90
-0.0
+0
  10
 0
  20

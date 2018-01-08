@@ -84,10 +84,7 @@ def cast_tag(tag, types=TYPE_TABLE):
     try:
         return DXFTag(tag[0], caster(tag[1]))
     except ValueError:  # internal exception
-        if caster is int:  # convert float to int
-            return DXFTag(tag[0], int(float(tag[1])))
-        else:
-            raise DXFValueError('Casting error for tag({0[0]}, {0[1]}).'.format(tag))
+        raise DXFValueError('Casting error for tag({0[0]}, {0[1]}).'.format(tag))
 
 
 def cast_tag_value(code, value, types=TYPE_TABLE):

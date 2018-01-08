@@ -245,8 +245,9 @@ class TestStreamReader(unittest.TestCase):
         self.assertEqual('check mark 2', tag.value)
 
     def test_float_to_int(self):
-        tags = list(internal_tag_compiler(FLOAT_FOR_INT_TAGS))
-        self.assertEqual(int, type(tags[0].value))
+        with self.assertRaises(ValueError):
+            # Floats as int not allowed for internal tag compiler.
+            list(internal_tag_compiler(FLOAT_FOR_INT_TAGS))
 
     def test_error_tag(self):
         tags = list(optimizing_stream_tagger(StringIO(TAGS_WITH_ERROR)))

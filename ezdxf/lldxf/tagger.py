@@ -36,14 +36,14 @@ def internal_tag_compiler(s):
                 z = DXFTag(int(lines[pos]), lines[pos+1])
             else:  # if string s ends with a 2d point
                 z = DUMMY_TAG
-            if z.code == code + 20:
+            if z.code == code + 20:  # 3d point
                 pos += 2
                 point = (float(x.value), float(y.value), float(z.value))
-            else:
+            else:  # 2d point
                 point = (float(x.value), float(y.value))
-            yield DXFTag(code, point)
+            yield DXFTag(code, point)  # 2d/3d point
         else:
-            yield cast_tag(x)
+            yield cast_tag(x)  # single value tag: int, float or string
 
 
 def skip_comments(tagger, comments=None):
@@ -95,7 +95,10 @@ def tag_compiler(tagger):
         tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
 
     """
-    from .types import POINT_CODES
+    from .types import POINT_CODES, TYPE_TABLE, ustr
+
+    def error_msg(line, tag):
+        return 'Invalid tag (code={code}, value="{value}") near line: {line}.'.format(line=line, code=tag.code, value=tag.value)
 
     undo_tag = None
     line = 0
@@ -124,14 +127,18 @@ def tag_compiler(tagger):
                 except ValueError:  # internal exception
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line.counter))
                 yield DXFTag(code, point)
-            else:  # just a single tag
+            else:  # just a single tag; internal type casting, not types.cast_tag()
                 try:
-                    yield cast_tag(x)
+                    # fast path!
+                    yield DXFTag(code, TYPE_TABLE.get(code, ustr)(x.value))
                 except ValueError:  # internal exception
-                    raise DXFStructureError('Invalid tag (code={code}, value="{value}") near line: {line}.'.format(
-                        line=line,
-                        code=x.code,
-                        value=x.value,
-                    ))
+                    # slow path
+                    if TYPE_TABLE.get(code, ustr) is int:  # ProE stores int values as floats :((
+                        try:
+                            yield DXFTag(code, int(float(x.value)))
+                        except ValueError:
+                            raise DXFStructureError(error_msg(line, x))
+                    else:
+                        raise DXFStructureError(error_msg(line, x))
         except StopIteration:
             return
