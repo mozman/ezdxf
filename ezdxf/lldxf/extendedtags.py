@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .tags import Tags,  DXFTag, write_tags
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from ..tools.c23 import isstring
-from .tagger import string_tagger, skip_comments
+from .tagger import internal_tag_compiler, skip_comments
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
 XDATA_MARKER = 1001
@@ -247,7 +247,7 @@ class ExtendedTags(object):
 
     @classmethod
     def from_text(cls, text):
-        return cls(skip_comments(string_tagger(text)))
+        return cls(skip_comments(internal_tag_compiler(text)))
 
 
 LINKED_ENTITIES = {

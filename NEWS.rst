@@ -15,6 +15,8 @@ Version 0.8.4 - ?
     - DXFIndexError(DXFError, IndexError)
     - DXFTableEntryError(DXFValueError)
 
+  * speedup tag readers around 5%
+
 Version 0.8.3 - 2018-01-02
 
   * CHANGE: Lwpolyline - suppress yielding z coordinates if they exists (DXFStructureError: z coordinates are not defined in the DXF standard)

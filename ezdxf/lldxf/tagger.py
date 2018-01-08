@@ -5,34 +5,35 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .types import DXFTag, is_point_code, cast_tag
+from .types import DXFTag, cast_tag
 from .const import DXFStructureError
 
 DUMMY_TAG = DXFTag(999, '')
 
 
-def string_tagger(s):
-    """ Generates DXFTag() from trusted (internal) source - relies on
+def internal_tag_compiler(s):
+    """
+    Generates DXFTag() from trusted (internal) source - relies on
     well formed and error free DXF format. Does not skip comment
     tags 999.
     """
-    def next_tag():
-        return DXFTag(int(lines[pos]), lines[pos+1])
-
+    from .types import POINT_CODES
     lines = s.split('\n')
     if s.endswith('\n'):  # split() creates an extra item, if s ends with '\n'
         lines.pop()
     pos = 0
     count = len(lines)
     while pos < count:
-        x = next_tag()
+        x = DXFTag(int(lines[pos]), lines[pos+1])
         pos += 2
         code = x.code
-        if is_point_code(code):
-            y = next_tag()  # y coordinate is mandatory - string_tagger relies on well formed DXF strings
+        if code in POINT_CODES:
+            # next tag; y coordinate is mandatory - internal_tag_compiler relies on well formed DXF strings
+            y = DXFTag(int(lines[pos]), lines[pos+1])
             pos += 2
             if pos < count:
-                z = next_tag()  # z coordinate just for 3d points
+                # next tag; z coordinate just for 3d points
+                z = DXFTag(int(lines[pos]), lines[pos+1])
             else:  # if string s ends with a 2d point
                 z = DUMMY_TAG
             if z.code == code + 20:
@@ -56,7 +57,8 @@ def skip_comments(tagger, comments=None):
 
 
 def low_level_tagger(stream):
-    """ Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
+    """
+    Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
     Does not skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
     Works with file system streams and StringIO() streams. Raises DXFStructureError() for invalid group codes.
     """
@@ -82,7 +84,8 @@ def low_level_tagger(stream):
 
 
 def tag_compiler(tagger):
-    """ Compiles DXF tag values imported by low_level_tagger() into Python types.
+    """
+    Compiles DXF tag values imported by low_level_tagger() into Python types.
 
     Does not skip comment tags 999. Raises DXFStructureError() for invalid float values and invalid coordinate values.
 

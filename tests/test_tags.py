@@ -10,7 +10,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.tools.c23 import ustr
-from ezdxf.lldxf.tagger import string_tagger, skip_comments
+from ezdxf.lldxf.tagger import internal_tag_compiler, skip_comments
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import tag_type, point_tuple
 from ezdxf.lldxf.const import DXFValueError
@@ -177,8 +177,8 @@ class TestTags(unittest.TestCase):
             self.tags.get_handle() # handle still doesn't exist
 
     def test_skip_comments(self):
-        tags1 = list(skip_comments(string_tagger(TEST_TAGREADER)))
-        tags2 = list(skip_comments(string_tagger(TEST_TAGREADER_COMMENTS)))
+        tags1 = list(skip_comments(internal_tag_compiler(TEST_TAGREADER)))
+        tags2 = list(skip_comments(internal_tag_compiler(TEST_TAGREADER_COMMENTS)))
         self.assertEqual(tags1, tags2)
 
     def test_remove_tags(self):

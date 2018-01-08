@@ -9,7 +9,7 @@ from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
-from .tagger import string_tagger, skip_comments, low_level_tagger
+from .tagger import internal_tag_compiler, skip_comments, low_level_tagger
 
 COMMENT_CODE = 999
 
@@ -69,7 +69,7 @@ class Tags(list):
 
     @classmethod
     def from_text(cls, text):
-        return cls(skip_comments(string_tagger(text)))
+        return cls(skip_comments(internal_tag_compiler(text)))
 
     def __copy__(self):
         return self.__class__(DXFTag(*tag) for tag in self)
