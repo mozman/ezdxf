@@ -97,7 +97,7 @@ def tag_compiler(tagger):
     """
     from .types import POINT_CODES, TYPE_TABLE, ustr
 
-    def error_msg(line, tag):
+    def error_msg(tag):
         return 'Invalid tag (code={code}, value="{value}") near line: {line}.'.format(line=line, code=tag.code, value=tag.value)
 
     undo_tag = None
@@ -137,8 +137,8 @@ def tag_compiler(tagger):
                         try:
                             yield DXFTag(code, int(float(x.value)))
                         except ValueError:
-                            raise DXFStructureError(error_msg(line, x))
+                            raise DXFStructureError(error_msg(x))
                     else:
-                        raise DXFStructureError(error_msg(line, x))
+                        raise DXFStructureError(error_msg(x))
         except StopIteration:
             return
