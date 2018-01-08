@@ -94,30 +94,26 @@ def tag_compiler(tagger):
         tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
 
     """
-    class Counter:
-        def __init__(self):
-            self.counter = 0
+    from .types import POINT_CODES
 
     undo_tag = None
-    line = Counter()  # writeable line counter for next_tag(), Python 2.7 does not support the nonlocal statement
-
-    def next_tag():
-        line.counter += 2
-        return next(tagger)
-
+    line = 0
     while True:
         try:
             if undo_tag is not None:
                 x = undo_tag
                 undo_tag = None
             else:
-                x = next_tag()
+                x = next(tagger)
+                line += 2
             code = x.code
-            if is_point_code(code):
-                y = next_tag()  # y coordinate is mandatory
+            if code in POINT_CODES:
+                y = next(tagger)  # y coordinate is mandatory
+                line += 2
                 if y.code != code + 10:  # like 20 for base x-code 10
                     raise DXFStructureError("Missing required y coordinate near line: {}.".format(line.counter))
-                z = next_tag()  # z coordinate just for 3d points
+                z = next(tagger)  # z coordinate just for 3d points
+                line += 2
                 try:
                     if z.code == code + 20:  # it is a z-coordinate like (30, 0.0) for base x-code 10
                         point = (float(x.value), float(y.value), float(z.value))
@@ -132,7 +128,7 @@ def tag_compiler(tagger):
                     yield cast_tag(x)
                 except ValueError:  # internal exception
                     raise DXFStructureError('Invalid tag (code={code}, value="{value}") near line: {line}.'.format(
-                        line=line.counter,
+                        line=line,
                         code=x.code,
                         value=x.value,
                     ))

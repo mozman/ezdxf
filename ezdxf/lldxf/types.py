@@ -64,13 +64,19 @@ TYPE_TABLE = _build_type_table([
     (int, range(1060, 1072)),
 ])
 
+POINT_CODES = frozenset([
+    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    110, 111, 112, 210,
+    1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
+])
+
 
 def is_point_code(code):
-    return (10 <= code <= 19) or code == 210 or (110 <= code <= 112) or (1010 <= code <= 1019)
+    return code in POINT_CODES
 
 
 def is_point_tag(tag):
-    return is_point_code(tag[0])
+    return tag[0] in POINT_CODES
 
 
 def cast_tag(tag, types=TYPE_TABLE):
