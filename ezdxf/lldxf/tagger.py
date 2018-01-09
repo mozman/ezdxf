@@ -5,10 +5,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .types import DXFTag
+from .types import DXFTag, NONE_TAG
 from .const import DXFStructureError
-
-DUMMY_TAG = DXFTag(999, '')
 
 
 def internal_tag_compiler(s):
@@ -44,7 +42,7 @@ def internal_tag_compiler(s):
                 # next tag; z coordinate just for 3d points
                 z = DXFTag(int(lines[pos]), lines[pos+1])
             else:  # if string s ends with a 2d point
-                z = DUMMY_TAG
+                z = NONE_TAG
             if z.code == code + 20:  # 3d point
                 pos += 2
                 point = (float(x.value), float(y.value), float(z.value))

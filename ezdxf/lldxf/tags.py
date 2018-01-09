@@ -78,7 +78,7 @@ class Tags(list):
 
     def get_handle(self):
         """
-        Get DXF handle. Raises ValueError if handle not exists.
+        Get DXF handle. Raises DXFValueError if handle not exists.
 
         Returns:
             handle as hex-string like 'FF'
@@ -136,7 +136,7 @@ class Tags(list):
 
     def get_first_tag(self, code, default=DXFValueError):
         """
-        Returns first DXFTag(code, value) or default if default != ValueError, else raises DXFValueError.
+        Returns first DXFTag(code, value) or default if default != DXFValueError, else raises DXFValueError.
 
         Args:
             code: group code as int
@@ -190,7 +190,7 @@ class Tags(list):
 
     def set_first(self, code, value):
         """
-        Update first existing DXFTag(code, value) or append a new  DXFTag(code, value).
+        Update first existing DXFTag(code, value) or append a new DXFTag(code, value).
 
         Args:
             code: group code as int
