@@ -1,11 +1,11 @@
-# Purpose: trusted string tag reader & stream tag reader
+# Purpose: untrusted stream tag reader, tag compiler for trusted and untrusted sources
 # Created: 10.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .types import DXFTag, cast_tag
+from .types import DXFTag
 from .const import DXFStructureError
 
 DUMMY_TAG = DXFTag(999, '')
@@ -16,12 +16,19 @@ def internal_tag_compiler(s):
     Generates DXFTag() from trusted (internal) source - relies on
     well formed and error free DXF format. Does not skip comment
     tags 999.
+
+    Args:
+        s: DXF unicode string, lines separated by universal line endings '\n'
+
+    Yields: DXFTag()
     """
     from .types import POINT_CODES, TYPE_TABLE, ustr
     assert isinstance(s, ustr)
 
     lines = s.split('\n')
-    if s.endswith('\n'):  # split() creates an extra item, if s ends with '\n'
+    # split() creates an extra item, if s ends with '\n',
+    # but lines[-1] can be an empty string!!!
+    if s.endswith('\n'):
         lines.pop()
     pos = 0
     count = len(lines)
@@ -49,6 +56,15 @@ def internal_tag_compiler(s):
 
 
 def skip_comments(tagger, comments=None):
+    """
+    Remove comment tags (group code 999) from tag stream ant store these comments in a list.
+
+    Args:
+        tagger: DXF tag generator/iterator like low_level_tagger()
+        comments: list to collect removed comments
+
+    Yields: DXFTag()
+    """
     if comments is None:
         comments = []
     for tag in tagger:
@@ -62,7 +78,14 @@ def low_level_tagger(stream):
     """
     Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
     Does not skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
-    Works with file system streams and StringIO() streams. Raises DXFStructureError() for invalid group codes.
+    Works with file system streams and StringIO() streams, only required feature is the readline() method.
+
+    Args:
+        stream: text stream
+
+    Yields: DXFTag()
+
+    Raises: DXFStructureError() for invalid group codes.
     """
     line = 1
     while True:
@@ -96,6 +119,12 @@ def tag_compiler(tagger):
 
         tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
 
+    Args:
+        tagger: DXF tag generator/iterator like low_level_tagger() or skip_comments()
+
+    Yields: DXFTag()
+
+    Raises: DXFStructureError() for invalid dxf values and unexpected coordinate order.
     """
     from .types import POINT_CODES, TYPE_TABLE, ustr
 
