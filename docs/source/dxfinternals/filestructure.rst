@@ -89,43 +89,96 @@ Group Code        Meaning
 For explanation of all group codes see: `DXF Group Codes in Numerical Order Reference`_ provided by Autodesk
 
 A usual DXF file is organized in sections, starting with the DXF tag
-(0, 'SECTION') and ending with the DXF tag (0, 'ENDSEC').
+(0, 'SECTION') and ending with the DXF tag (0, 'ENDSEC'). The (0, 'EOF')
+tag signals the end of file.
 
-1. HEADER - General information about the drawing is found
-   in this section of the DXF file. Each parameter has a variable
-   name and an associated value.
 
-2. CLASSES - holds the information for application defined classes. This section was introduced with AC1015 and can
-   usually be ignored.
+1. **HEADER** - General information about the drawing is found in this section of the DXF file.
+   Each parameter has a variable name and an associated value.
 
-3. TABLES - contains definitions of named items.
+2. **CLASSES** - holds the information for application defined classes. (DXF13 and later)
+
+3. **TABLES** - contains definitions of named items.
 
    * Linetype table (LTYPE)
    * Layer table (LAYER)
    * Text Style table (STYLE)
-   * View table (VIEW)
-   * User Coordinate System table (UCS)
-   * Viewport configuration table (VPORT)
+   * View table (VIEW): (IMHO) layout of the CAD working space, only interesting for interactive CAD applications
+   * Viewport configuration table (VPORT): The VPORT table is unique in that it may contain several entries
+     with the same name (indicating a multiple-viewport configuration). The entries corresponding to the
+     active viewport configuration all have the name ``*ACTIVE``. The first such entry describes the current
+     viewport.
+
    * Dimension Style table (DIMSTYLE)
-   * Application Identification table (APPID)
+   * User Coordinate System table (UCS) (IMHO) only interesting for interactive CAD applications
+   * Application Identification table (APPID): Table of names for all applications registered with a drawing.
+   * Block Record table (BLOCK_RECORD) (DXF R13 and Later)
 
-4. BLOCKS - contains all block definitions. A block definition defines the content of a block.
-   The block name `*Model_Space` or `*MODEL_SPACE` is reserved for the drawing model space and the block name
-   `*Paper_Space` or `*PAPER_SPACE` is reserved for the active paper space layout. Both block definitions are empty,
+4. **BLOCKS** - contains all block definitions. A block definition defines the content of a block.
+   The block name ``*Model_Space`` or ``*MODEL_SPACE`` is reserved for the drawing model space and the block name
+   ``*Paper_Space`` or ``*PAPER_SPACE`` is reserved for the active paper space layout. Both block definitions are empty,
    the content of the model space and the active paper space is stored in the ENTITIES section. The entities of other
-   layouts are stored in special block definitions called `*Paper_Spacennn`, nnn is an arbitrary but unique number.
+   layouts are stored in special block definitions called ``*Paper_Spacennn``, nnn is an arbitrary but unique number.
 
-5. ENTITIES - contains the drawing entities of the model space and the active paper space layout. Entities of other
+5. **ENTITIES** - contains the drawing entities of the model space and the active paper space layout. Entities of other
    layouts are stored in the BLOCKS sections.
 
-6. OBJECTS - non-graphical objects
+6. **OBJECTS** - non-graphical objects (DXF R13 and later)
 
-7. THUMBNAILIMAGE - contains a preview image of the DXF file, it is optional and can usually be ignored.
+7. **THUMBNAILIMAGE** - contains a preview image of the DXF file, it is optional and can usually be ignored.
+   (DXF R13 and later)
 
-8. END OF FILE
+8. **END OF FILE**
 
-By using *ezdxf* you don't have to know much about this details, but
-interested users can look at the original `DXF Reference`_.
+For further information read the original `DXF Reference`_.
+
+Structure a usual DXF R12 file::
+
+  0            (Begin HEADER section)
+  SECTION
+  2
+  HEADER
+               <<<<Header variable items go here>>>>
+  0
+  ENDSEC       (End HEADER section)
+  0            (Begin TABLES section)
+  SECTION
+  2
+  TABLES
+  0
+  TABLE
+  2
+  VPORT
+  70           (viewport table maximum item count)
+               <<<<viewport table items go here>>>>
+  0
+  ENDTAB
+  0
+  TABLE
+  2
+  APPID, DIMSTYLE, LTYPE, LAYER, STYLE, UCS, VIEW, or VPORT
+  70           (Table maximum item count)
+               <<<<Table items go here>>>>
+  0
+  ENDTAB
+  0
+  ENDSEC       (End TABLES section)
+  0            (Begin BLOCKS section)
+  SECTION
+  2
+  BLOCKS
+               <<<<Block definition entities go here>>>>
+  0
+  ENDSEC       (End BLOCKS section)
+  0            (Begin ENTITIES section)
+  SECTION
+  2
+  ENTITIES
+               <<<<Drawing entities go here>>>>
+  0
+  ENDSEC       (End ENTITIES section)
+  0
+  EOF          (End of file)
 
 Minimal DXF Content
 -------------------
@@ -133,15 +186,15 @@ Minimal DXF Content
 DXF R12
 =======
 
-The DXF format R12 (AC1009) and prior requires just the ENTITIES section::
+Contrary to the previous chapter, the DXF R12 format (AC1009) and prior requires just the ENTITIES section::
 
-      0
+    0
     SECTION
-      2
+    2
     ENTITIES
-      0
+    0
     ENDSEC
-      0
+    0
     EOF
 
 DXF R13/14 and later

@@ -114,6 +114,9 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
 
 
 class Dimension(legacy.Dimension, ModernGraphicEntity):
+    TEMPLATE = None
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass)
+
     def cast(self):  # create the REAL dimension entity
         DimClass = DimensionClasses[self.dim_type]
         return DimClass(self.tags, self.drawing)

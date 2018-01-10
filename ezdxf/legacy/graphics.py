@@ -1260,6 +1260,7 @@ class Dimension(GraphicEntity):
         # dimension text away from its default orientation (the direction
         # of the dimension line).
     })
+
     @property
     def dim_type(self):
         return self.dxf.dimtype & 7
