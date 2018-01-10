@@ -1,5 +1,8 @@
-link_tpl = 'http://docs.autodesk.com/ACD/2014/ENU/files/{guid}.htm'
-main_index_guid = 'GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3' # main index
+# Autodesk DXF 2018 Reference
+link_tpl = 'http://help.autodesk.com/view/OARX/2018/ENU/?guid={guid}'
+# Autodesk DXF 2014 Reference
+# link_tpl = 'http://docs.autodesk.com/ACD/2014/ENU/files/{guid}.htm'
+main_index_guid = 'GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3'  # main index
 
 reference_guids = {
         "HEADER": "GUID-EA9CDD11-19D1-4EBC-9F56-979ACF679E3C",
@@ -98,6 +101,7 @@ reference_guids = {
         "WIPEOUTVARIABLES": "GUID-CD28B95F-483C-4080-82A6-420606F88356",
         "XRECORD": "GUID-24668FAF-AE03-41AE-AFA4-276C3692827F",
 }
+
 
 def get_reference_link(name):
     guid = reference_guids.get(name, main_index_guid)

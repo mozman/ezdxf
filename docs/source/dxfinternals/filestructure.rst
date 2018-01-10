@@ -126,9 +126,12 @@ tag signals the end of file.
 6. **OBJECTS** - non-graphical objects (DXF R13 and later)
 
 7. **THUMBNAILIMAGE** - contains a preview image of the DXF file, it is optional and can usually be ignored.
-   (DXF R13 and later)
+   (DXF R13 and later). Starting with DXF R2013 the THUMBNAILIMAGE section seems to be integrated into the
+   new ACDSDATA section.
 
-8. **END OF FILE**
+8. **ACDSDATA** (DXF R2013 and later) - no information in the DXF reference about this section
+
+9. **END OF FILE**
 
 For further information read the original `DXF Reference`_.
 
