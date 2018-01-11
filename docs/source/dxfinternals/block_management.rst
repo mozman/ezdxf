@@ -12,7 +12,7 @@ The owner tag is the link from the DXF entity to the associated layout.
 
 The owner tag is the handle of the block record entry of the layout.
 
-A layout consists of a BLOCK definition (e. g. *Model_Space) in the BLOCKS section
+A layout consists of a BLOCK definition (e. g. \*Model_Space) in the BLOCKS section
 and a LAYOUT entry in the OBJECTS section.
 
 Every BLOCK definition requires also a BLOCK_RECORD entry in the BLOCK_RECORDS

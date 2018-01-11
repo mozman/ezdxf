@@ -1,9 +1,7 @@
-.. _dxf file encoding:
+.. _DXF File Encoding:
 
 DXF File Encoding
 =================
-
-The following facts are not in the DXF Standard. But this facts are established by the AutoCAD application.
 
 DXF Version R2004 and prior
 ---------------------------
@@ -39,9 +37,13 @@ ANSI_1258 cp1258 Vietnam
 DXF Version R2007 and later
 ---------------------------
 
-Starting with DXF version R2007 (AC1021) the drawing files are encoded by UTF-8, the header variable
+Starting with DXF version R2007 (AC1021) the drawing file is encoded by UTF-8, the header variable
 *$DWGCODEPAGE* is still in use, but I don't know, if the setting still has any meaning.
 
 Encoding characters in the unicode schema ``\U+nnnn`` is still functional.
+
+.. seealso::
+
+    :ref:`String Value Encoding`
 
 .. _Unicode Table: http://unicode-table.com/en/

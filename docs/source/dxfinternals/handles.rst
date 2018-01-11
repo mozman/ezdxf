@@ -71,6 +71,8 @@ operations, arbitrary handles are ignored.
 In all environments, arbitrary handles can be exchanged for entity names of the current drawing by means of the handent
 functions. A common usage of arbitrary handles is to refer to objects in external DXF and DWG files.
 
+.. _About 1005 Group Codes:
+
 About 1005 Group Codes
 ----------------------
 

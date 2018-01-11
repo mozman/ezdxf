@@ -1,3 +1,5 @@
+.. _DataModel:
+
 Data Model
 ==========
 

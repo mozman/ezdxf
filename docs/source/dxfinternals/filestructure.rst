@@ -1,4 +1,4 @@
-.. _file structure:
+.. _File Structure:
 
 DXF File Structure
 ------------------

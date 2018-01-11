@@ -7,7 +7,7 @@ A Drawing Interchange File is simply an ASCII text file with a file
 type of .dxf and special formatted text. The basic file structure
 are DXF tags, a DXF tag consist of a DXF group code as an integer
 value on its own line and a the DXF value on the following line.
-In the ezdxf documentation DXF tags will be written as (group code, value).
+In the ezdxf documentation DXF tags will be written as :code:`(group code, value)`.
 
 Group codes are indicating the value type:
 
@@ -95,50 +95,74 @@ Group Code        Meaning
 999               Comments
 ================= =======
 
-Extended entity data:
-
-================= =======
-Group Code        Meaning
-================= =======
-1000              An ASCII string (up to 255 bytes long) in extended entity data
-1001              Registered application name (ASCII string up to 31 bytes long) for XDATA (fixed)
-1002              Extended entity data control string ("{" or "}") (fixed)
-1003              Extended entity data Layer name
-1004              Chunk of bytes (up to 127 bytes long) in extended entity data
-1005              Extended entity data database handle
-1010, 1020, 1030  Extended entity data X, Y, and Z coordinates
-1011, 1021, 1031  Extended entity data X, Y, and Z coordinates of 3D world space position
-1012, 1012, 1022  Extended entity data X, Y, and Z components of 3D world space displacement
-1013, 1023, 1033  Extended entity data X, Y, and Z components of 3D world space direction
-1040              Extended entity data Floating-point value
-1041              Extended entity data distance value
-1042              Extended entity data scale factor
-1070              Extended entity data 16-bit signed integer
-1071              Extended entity data 32-bit signed long
-================= =======
-
 For explanation of all group codes see: `DXF Group Codes in Numerical Order Reference`_ provided by Autodesk
 
-Storage of String Values
-------------------------
+Extended Data
+-------------
 
-String values stored in a DXF file can be expressed in plain ASCII, UTF-8, CIF (Common Interchange Format), and MIF
-(Maker Interchange Format) formats. The UTF-8 format is only supported in the DXF R2007 and later file formats.
-When the AutoCAD program writes a DXF file, the format in which string values are written is determined by the DXF file
-format chosen.
+Extended data (xdata) is created by AutoLISP or ObjectARX applications but any other application like ezdxf can also
+define xdata. If an entity contains extended data, it **follows** the entity's normal definition data.
 
-ezdxf internal converts all strings into unicode but does not encode or decode CIF/MIF.
+================= ===================================================================================
+Group Code        Description
+================= ===================================================================================
+1000              Strings in extended data can be up to 255 bytes long (with the 256th byte reserved
+                  for the null character)
+1001              (fixed) Registered application name (ASCII string up to 31 bytes long) for XDATA
+1002              (fixed) An extended data control string can be either “{”or “}”.
+                  These braces enable applications to organize their data by subdividing
+                  the data into lists. Lists can be nested.
+1003              Name of the layer associated with the extended data
+1004              Binary data is organized into variable-length chunks. The maximum length of each
+                  chunk is 127 bytes. In ASCII DXF files, binary data is represented as a string of
+                  hexadecimal digits, two per binary byte
+1005              Database Handle of entities in the drawing database, see also:
+                  :ref:`About 1005 Group Codes`
+1010, 1020, 1030  Three real values, in the order X, Y, Z. They can be used as a point or vector
+                  record.
+1011, 1021, 1031  Unlike a simple 3D point, the world space coordinates are moved, scaled, rotated,
+                  mirrored, and stretched along with the parent entity to which the extended data
+                  belongs.
+1012, 1012, 1022  Also a 3D point that is scaled, rotated, and mirrored along with the parent
+                  (but is not moved or stretched)
+1013, 1023, 1033  Also a 3D point that is scaled, rotated, and mirrored along with the parent
+                  (but is not moved or stretched)
+1040              A real value
+1041              Distance, a real value that is scaled along with the parent entity
+1042              Scale Factor, also a real value that is scaled along with the parent.
+                  The difference between a distance and a scale factor is application-defined
+1070              A 16-bit integer (signed or unsigned)
+1071              A 32-bit signed (long) integer
+================= ===================================================================================
 
-String values are written out in these formats by AutoCAD/ezdxf:
 
-- DXF R2007 and later: UTF-8
-- DXF R2004 and earlie: Plain ASCII and CIF encoded for codepage set in header var $DWGCODEPAGE
+The :code:`(1001, ...)` tag indicates the beginning of extended data. In contrast to normal entity data, with extended
+data the same group code can appear multiple times, and **order is important**.
 
-ezdxf registers an encoding codec `dxfbackslashreplace`, defined in ezdxf.lldxf.encoding
+Extended data is grouped by registered application name. Each registered application group begins with a
+:code:`(1001, APPID)` tag, with the application name as APPID string value. Registered application names correspond to
+APPID symbol table entries.
+
+An application can use as many APPID names as needed. APPID names are permanent, although they can be purged if they
+aren't currently used in the drawing. Each APPID name can have **no more than one data group** attached to each entity.
+Within an application group, the sequence of extended data groups and their meaning is defined by the application.
+
+.. _String Value Encoding:
+
+String Value Encoding
+---------------------
+
+String values stored in a DXF file is plain ASCII or UTF-8, AutoCAD also supports CIF (Common Interchange Format) and MIF
+(Maker Interchange Format) encoding. The UTF-8 format is only supported in DXF R2007 and later.
+
+ezdxf on import converts all strings into Python unicode strings without encoding or decoding CIF/MIF.
 
 String values containing Unicode characters are represented with control character sequences.
 
 For example, ``"TEST\U+7F3A\U+4E4F\U+89E3\U+91CA\U+6B63THIS\U+56FE"``
+
+To support the DXF unicode encoding ezdxf registers an encoding codec `dxfbackslashreplace`, defined in
+:func:`ezdxf.lldxf.encoding`.
 
 String values can be stored with these dxf group codes:
 
@@ -150,19 +174,74 @@ String values can be stored with these dxf group codes:
 - 470 - 479
 - 999 - 1003
 
-TODO: Multiline text tags (1, ..) (3, ...) (3, ...) as in MTEXT
+Multi Tag Text (MTEXT)
+----------------------
+
+If the text string is less than 250 characters, all characters appear in tag :code:`(1, ...)`. If the text string is
+greater than 250 characters, the string is divided into 250-character chunks, which appear in one or more
+:code:`(3, ...)` tags. If :code:`(3, ...)` tags are used, the last group is a :code:`(1, ...)` tag and has fewer than
+250 characters::
+
+    (3, "250 characters ....")
+    (3, "250 characters ....")
+    (1, "less than 250 characters")
+
+As far I know this is only supported by the :class:`MText` entity.
+
+.. seealso::
+
+    :ref:`DXF File Encoding`
+
+Tag Structure DXF R13 and later
+-------------------------------
+
+With the introduction of DXF R13 Autodesk added additional group codes and DXF tag structures to the DXF Standard.
 
 Subclass Markers
-----------------
+~~~~~~~~~~~~~~~~
 
-When filing a stream of group data, a single object may be composed of several filer members, one for each level of
-inheritance where filing is done. Since derived classes and levels of inheritance can evolve separately, the data of
-each class filer member must be segregated from other members. This is achieved using subclass markers.
+Subclass markers :code:`(100, Subclass Name)` divides DXF objects into several sections. Group codes can be reused
+in different sections. A subclass ends with the following subclass marker or at the beginning of xdata or the end of the
+object. See `Subclass Marker Example`_ in the DXF Reference.
 
-All class filer members are expected to precede their class-specific portion of instance data with a “subclass” marker —
-a 100 group code followed by a string with the actual name of the class. This does not affect the state needed to define
-the object's state, but it provides a means for the DXF file parsers to direct the group codes to the corresponding
-application software. See `Subclass Marker Example`_ in the DXF Reference.
+Extension Dictionary
+~~~~~~~~~~~~~~~~~~~~
+
+The extension dictionary is an optional sequence that stores the handle of a dictionary object that belongs to the
+current object, which in turn may contain entries. This facility allows attachment of arbitrary database objects to any
+database object. Any object or entity may have this section. The extension dictionary tag sequence::
+
+  (102, "{ACAD_XDICTIONARY")
+  (360, Hard-owner ID/handle to owner dictionary)
+  (102, "}")
+
+Persistent Reactors
+~~~~~~~~~~~~~~~~~~~
+
+Persistent reactors are an optional sequence that stores object handles of objects registering themselves as reactors on
+the current object. Any object or entity may have this section. The persistent reactors tag sequence::
+
+  (102, "{ACAD_REACTORS")
+  (330, Soft-pointer ID/handle to owner dictionary)
+  (330, Soft-pointer ID/handle to owner dictionary)
+  ...
+  (102, "}")
+
+Application-Defined Codes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Starting at DXF R13, DXF objects can contain application-defined codes outside of xdata. This application-defined
+codes can contain any tag except :code:`(0, ...)` and :code:`(102, ...)`. "{APPID" means the APPID string with an
+preceding "{". The application defined data tag sequence::
+
+    (102, "{APPID")
+    ...
+    (102, "}")
+
+
+All groups defined with a beginning :code:`(102, ...)` appear in the DXF reference before the first subclass marker,
+I don't know if these groups can appear after the first or any subclass marker. ezdxf accepts them at any position,
+and by default ezdxf adds new app data in front of the first subclass marker to the first tag section of an DXF object.
 
 
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
