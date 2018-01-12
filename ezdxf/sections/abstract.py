@@ -12,18 +12,18 @@ from ..lldxf.validator import entity_structure_validator
 from ..options import options
 
 
-def entities_tags(section_tags, entitydb, dxffactory):
+def xtags_into_entitydb(section_tags, entitydb, dxffactory):
     linked_tags = get_tags_linker()
     post_read_tags_fixer = dxffactory.post_read_tags_fixer
     check_tag_structure = options.check_entity_tag_structures
     for tag_group in group_tags(section_tags):
         if check_tag_structure:
             tag_group = entity_structure_validator(tag_group)
-        tags = ExtendedTags(tag_group)
-        post_read_tags_fixer(tags)  # for VERTEX!
-        handle = entitydb.add_tags(tags)
-        if not linked_tags(tags, handle):  # also creates the link structure as side effect
-            yield handle, tags
+        xtags = ExtendedTags(tag_group)
+        post_read_tags_fixer(xtags)  # for VERTEX!
+        handle = entitydb.add_tags(xtags)
+        if not linked_tags(xtags, handle):  # also creates the link structure as side effect
+            yield handle, xtags
 
 
 class AbstractSection(object):
@@ -53,8 +53,8 @@ class AbstractSection(object):
         if len(tags) == 3:  # empty entities section
             return
 
-        for handle, etags in entities_tags(tags[2:-1], self.entitydb, self.dxffactory):
-            self._entity_space.store_tags(etags)
+        for handle, xtags in xtags_into_entitydb(tags[2:-1], self.entitydb, self.dxffactory):
+            self._entity_space.store_tags(xtags)
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

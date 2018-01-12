@@ -7,13 +7,9 @@ __author__ = "mozman <mozman@gmx.at>"
 
 import logging
 
-from ..lldxf.tags import group_tags
 from ..lldxf.const import DXFStructureError
-from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..lldxf import const
-from ..lldxf.validator import entity_structure_validator
-from ..options import options
-from .abstract import entities_tags
+from .abstract import xtags_into_entitydb
 
 logger = logging.getLogger('ezdxf')
 
@@ -58,9 +54,9 @@ class BlocksSection(object):
             return
 
         handles = []
-        for handle, etags in entities_tags(tags[2:-1], self.entitydb, self.dxffactory):
+        for handle, xtags in xtags_into_entitydb(tags[2:-1], self.entitydb, self.dxffactory):
             handles.append(handle)
-            if etags.dxftype() == 'ENDBLK':
+            if xtags.dxftype() == 'ENDBLK':
                 block_layout = build_block_layout(handles)
                 if block_layout in self:
                     logger.warning('Warning! Multiple block definitions with name "{}", replacing previous definition'.format(block_layout.name))
