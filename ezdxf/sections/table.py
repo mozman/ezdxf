@@ -90,8 +90,11 @@ class Table(object):
     # end public interface
 
     def _build_table_entries(self, tags):
+        def entity_name(pos):
+            return groups[pos][0].value
+
         groups = list(group_tags(tags))
-        if groups[0][0].value != 'TABLE' or groups[-1][0].value != 'ENDTAB':
+        if entity_name(0) != 'TABLE' or entity_name(-1) != 'ENDTAB':
             raise DXFStructureError("Critical structure error in TABLES section.")
 
         self._table_header = ExtendedTags(groups[0][1:])

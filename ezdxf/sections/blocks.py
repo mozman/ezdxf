@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from itertools import islice
 import logging
 
 from ..lldxf.tags import group_tags
@@ -67,7 +66,7 @@ class BlocksSection(object):
         add_tags = self.entitydb.add_tags
         post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
         check_tag_structure = options.check_entity_tag_structures
-        for group in group_tags(islice(tags, 2, len(tags)-1)):
+        for group in group_tags(tags[2:-1]):
             if check_tag_structure:
                 tags = entity_structure_validator(group)
             else:

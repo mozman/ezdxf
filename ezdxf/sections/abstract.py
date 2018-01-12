@@ -5,13 +5,25 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from itertools import islice
-
 from ..lldxf.tags import group_tags, DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..query import EntityQuery
 from ..lldxf.validator import entity_structure_validator
 from ..options import options
+
+
+def entities_tags(section_tags, entitydb, dxffactory):
+    linked_tags = get_tags_linker()
+    post_read_tags_fixer = dxffactory.post_read_tags_fixer
+    check_tag_structure = options.check_entity_tag_structures
+    for tag_group in group_tags(section_tags):
+        if check_tag_structure:
+            tag_group = entity_structure_validator(tag_group)
+        tags = ExtendedTags(tag_group)
+        post_read_tags_fixer(tags)  # for VERTEX!
+        handle = entitydb.add_tags(tags)
+        if not linked_tags(tags, handle):  # also creates the link structure as side effect
+            yield tags  # add to entity space
 
 
 class AbstractSection(object):
@@ -41,19 +53,8 @@ class AbstractSection(object):
         if len(tags) == 3:  # empty entities section
             return
 
-        linked_tags = get_tags_linker()
-        store_tags = self._entity_space.store_tags
-        entitydb = self.entitydb
-        post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
-        check_tag_structure = options.check_entity_tag_structures
-        for group in group_tags(islice(tags, 2, len(tags)-1)):
-            if check_tag_structure:
-                group = entity_structure_validator(group)
-            tags = ExtendedTags(group)
-            post_read_tags_fixer(tags)  # for VERTEX!
-            handle = entitydb.add_tags(tags)
-            if not linked_tags(tags, handle):  # also creates the link structure as side effect
-                store_tags(tags)  # add to entity space
+        for etags in entities_tags(tags[2:-1], self.entitydb, self.dxffactory):
+            self._entity_space.store_tags(etags)  # add to entity space
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
