@@ -6,6 +6,7 @@ import logging
 import io
 
 from .const import DXFStructureError, DXFError, DXFValueError
+from .const import APP_DATA_MARKER, COMMENT_MARKER, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .tagger import low_level_tagger, skip_comments
 
 logger = logging.getLogger('ezdxf')
@@ -47,14 +48,14 @@ def structure_validator(tagger, filter=False):
     log_warning_for_outside_tags = True
 
     for tag in tagger:
-        if tag.code == 999:  # ignore comments, where ever they are
+        if tag.code == COMMENT_MARKER:  # ignore comments, where ever they are
             yield tag
             continue
 
         # SECTION, ENSEC and EOF tags can not be inside a section
         outside_tag_check = True
 
-        if tag.code == 0:
+        if tag.code == STRUCTURE_MARKER:
             value = tag.value
             if value == 'SECTION':
                 check_if_inside_section()
@@ -107,15 +108,78 @@ def header_validator(tagger):
     variable_name_tag = True
     for tag in tagger:
         if variable_name_tag:
-            if tag.code != 9:
+            if tag.code != HEADER_VAR_MARKER:
                 raise DXFStructureError('Invalid header variable tag ({0.code}, {0.value}).'.format(tag))
             if not tag.value.startswith('$'):
                 raise DXFValueError('Invalid header variable name "{}", missing leading "$".'.format(tag.value))
-            yield tag
             variable_name_tag = False
         else:
-            yield tag
             variable_name_tag = True
+        yield tag
+
+
+def entity_structure_validator(tagger):
+    """
+    Checks for valid DXF entity tag structure.
+
+    - APP DATA can not be nested and every opening tag (102, '{...') needs a closing tag (102, '}')
+    - XDATA has to be at the end of the entity and after XDATA starts only group code >= 1000 is allowed
+    - XDATA control strings (1002, '{') and (1002, '}') have to be balanced
+
+    Args:
+        tagger: generator/iterator yielding DXFTag()
+
+    Yields:
+        DXFTag()
+
+    Raises:
+        DXFStructureError() for invalid APP DATA and invalid XDATA structures.
+    """
+    app_data = False
+    xdata = False
+    xdata_list_level = 0
+    for tag in tagger:
+        if xdata:
+            if tag.code < 1000:
+                raise DXFStructureError('Invalid XDATA structure, only group code >=1000 allowed in XDATA section')
+            if tag.code == 1002:
+                value = tag.value
+                if value == '{':
+                    xdata_list_level += 1
+                elif value == '}':
+                    xdata_list_level -= 1
+                else:
+                    raise DXFStructureError('Invalid XDATA control string (1002, "{}").'.format(value))
+                if xdata_list_level < 0:  # more closing than opening tags
+                    raise DXFStructureError('Invalid XDATA structure, unbalanced list markers, missing  (1002, "{").')
+
+        if tag.code == APP_DATA_MARKER:
+            value = tag.value
+            if value.startswith('{'):
+                if app_data:  # already in app data mode
+                    raise DXFStructureError('Invalid APP DATA structure, APP DATA can not be nested.')
+                app_data = True
+            elif value == '}':
+                if not app_data:
+                    raise DXFStructureError('Invalid APP DATA structure, found (102, "}") tag without opening tag.')
+                app_data = False
+            else:
+                raise DXFStructureError('Invalid APP DATA structure tag (102, "{}").'.format(value))
+
+        if tag.code >= 1000 and xdata is False:
+            xdata = True
+            if app_data:
+                raise DXFStructureError('Invalid APP DATA structure, missing closing tag (102, "}").')
+        yield tag
+
+    if app_data:
+        raise DXFStructureError('Invalid APP DATA structure, missing closing tag (102, "}").')
+
+    if xdata:
+        if xdata_list_level < 0:
+            raise DXFStructureError('Invalid XDATA structure, unbalanced list markers, missing  (1002, "{").')
+        elif xdata_list_level > 0:
+            raise DXFStructureError('Invalid XDATA structure, unbalanced list markers, missing  (1002, "}").')
 
 
 def is_dxf_file(filename):

@@ -76,6 +76,14 @@ class DXFEncodingError(DXFError):
 class DXFDecodingError(DXFError):
     pass
 
+
+APP_DATA_MARKER = 102
+SUBCLASS_MARKER = 100
+XDATA_MARKER = 1001
+COMMENT_MARKER = 999
+STRUCTURE_MARKER = 0
+HEADER_VAR_MARKER = 9
+
 # Special tag codes for internal purpose
 # -1 to -5 id reserved by AutoCAD for internal use, but this tags will never be saved to file.
 # Same approach here, the following tags have to be converted/transformed into normal tags before

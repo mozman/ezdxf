@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError
+from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
@@ -50,7 +50,7 @@ def dxf_info(stream):
     tagreader = low_level_tagger(stream)
     while tag != (0, 'ENDSEC'):
         tag = next(tagreader)
-        if tag.code != 9:
+        if tag.code != HEADER_VAR_MARKER:
             continue
         name = tag.value[1:]
         method = getattr(info, name, None)
@@ -258,7 +258,7 @@ class TagGroups(list):
     Group of tags starts with a SplitTag and ends before the next SplitTag. A SplitTag is a tag with code == splitcode,
     like (0, 'SECTION') for splitcode == 0.
     """
-    def __init__(self, tags, splitcode=0):
+    def __init__(self, tags, splitcode=STRUCTURE_MARKER):
         super(TagGroups, self).__init__()
         self.splitcode = splitcode
         self._build_groups(tags, splitcode)
@@ -282,7 +282,7 @@ class TagGroups(list):
         return self[index][0].value
 
     @classmethod
-    def from_text(cls, text, splitcode=0):
+    def from_text(cls, text, splitcode=STRUCTURE_MARKER):
         return cls(Tags.from_text(text), splitcode)
 
 

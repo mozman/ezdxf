@@ -5,15 +5,11 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags,  DXFTag, write_tags
+from .tags import Tags,  DXFTag, write_tags, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
+from .const import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from ..tools.c23 import isstring
 from .tagger import internal_tag_compiler, skip_comments
-APP_DATA_MARKER = 102
-SUBCLASS_MARKER = 100
-XDATA_MARKER = 1001
-
-NoneTag = DXFTag(None, None)
 
 
 class ExtendedTags(object):
@@ -80,7 +76,7 @@ class ExtendedTags(object):
             except StopIteration:
                 pass
             self.subclasses.append(data)
-            return NoneTag
+            return NONE_TAG
 
         def collect_appdata(starttag):
             """ appdata, cannot contain xdata or subclasses """
@@ -89,15 +85,15 @@ class ExtendedTags(object):
                 try:
                     tag = next(tagstream)
                 except StopIteration:
-                    raise DXFStructureError("Missing closing DXFTag(102, '}') for appdata structure.")
+                    raise DXFStructureError("Missing closing (102, '}') tag for appdata structure.")
                 data.append(tag)
                 if tag.code == APP_DATA_MARKER:
                     break
             self.appdata.append(data)
 
         def collect_xdata(starttag):
-            """ xdata are always at the end of the entity and can not contain
-            appdata or subclasses
+            """
+            xdata is always at the end of the entity and can not contain appdata or subclasses
             """
             data = Tags([starttag])
             try:
@@ -111,7 +107,7 @@ class ExtendedTags(object):
             except StopIteration:
                 pass
             self.xdata.append(data)
-            return NoneTag
+            return NONE_TAG
 
         tag = collect_subclass(None)  # preceding tags without a subclass
         while tag.code == SUBCLASS_MARKER:
@@ -119,7 +115,7 @@ class ExtendedTags(object):
         while tag.code == XDATA_MARKER:
             tag = collect_xdata(tag)
 
-        if tag is not NoneTag:
+        if tag is not NONE_TAG:
             raise DXFStructureError("Unexpected tag '%r' at end of entity." % tag)
 
     def __iter__(self):
@@ -285,7 +281,7 @@ def get_tags_linker():
                 vars.prev.link = handle
                 vars.prev = tags
             else:
-                raise DXFStructureError("expected DXF entity %s or SEQEND" % dxftype)
+                raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
         elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
             if dxftype == 'INSERT' and not attribs_follow():
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
