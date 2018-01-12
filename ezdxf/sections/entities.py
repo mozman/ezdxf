@@ -38,5 +38,5 @@ class EntitySection(AbstractSection):
         self._entity_space.write(stream, layout_keys)
         stream.write("  0\nENDSEC\n")
 
-    def repair_model_space(self, model_space_layout_key):
-        self._entity_space.repair_model_space(model_space_layout_key)
+    def repair_owner_tags(self, model_space_layout_key, paper_space_key):
+        self._entity_space.repair_owner_tags(model_space_layout_key, paper_space_key)

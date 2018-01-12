@@ -47,9 +47,6 @@ class Drawing(object):
             repair.setup_layouts(self)
             self._groups = self.objects.groups()
         else:
-            if 'entities' not in self.sections:
-                raise DXFStructureError('Mandatory ENTITIES section not found.')
-
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
 
@@ -60,8 +57,10 @@ class Drawing(object):
         self.layouts = self.dxffactory.get_layouts()
 
         if self.dxfversion > 'AC1009':
-            # for ProE, which writes entities without owner tags (330)
-            self.entities.repair_model_space(self.modelspace().layout_key)
+            # because the owner tag is not mandatory: set owner tags (330) if not exists
+            model_space_key = self.modelspace().layout_key
+            paper_space_key = self.get_active_layout_key()
+            self.entities.repair_owner_tags(model_space_key, paper_space_key)
             self.layouts.link_block_entities_into_layouts()
 
         if options.compress_binary_data:

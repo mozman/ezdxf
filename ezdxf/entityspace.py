@@ -10,7 +10,8 @@ from .lldxf.const import DXFStructureError, DXFValueError
 
 
 class EntitySpace(list):
-    """An EntitySpace is a collection of drawing entities.
+    """
+    An EntitySpace is a collection of drawing entities.
     The ENTITY section is such an entity space, but also blocks.
     The EntitySpace stores only handles to the drawing entity database.
     """
@@ -80,30 +81,48 @@ class LayoutSpaces(object):
             for handle in entity_space:
                 yield handle
 
-    def repair_model_space(self, new_model_space_key):
+    def repair_owner_tags(self, new_model_space_key, new_paper_space_key):
         def update_entity_tags(entity_space):
             for handle in entity_space:
                 tags = entity_space.get_tags_by_handle(handle)
-                tags.noclass.set_first(330, new_model_space_key)
-
-                # if paper space is set to 1 -> set 0 for model space
                 try:
                     entity_tags = tags.get_subclass("AcDbEntity")
                 except KeyError:
                     raise DXFStructureError("Entity has no subclass 'AcDbEntity'.")
 
-                if entity_tags.get_first_value(67, default=0) != 0:
-                    entity_tags.set_first(67, 0)
+                if entity_tags.get_first_value(67, default=0) == 0:  # 67 = paper_space tag (fixed)
+                    key = new_model_space_key  # paper_space tag is 0 -> model space
+                else:
+                    key = new_paper_space_key  # paper_space tag is not 0 -> paper space
+
+                tags.noclass.set_first(330, key)
+
+        def distribute(entity_space):
+            for handle in entity_space:
+                tags = entity_space.get_tags_by_handle(handle)
+                owner = tags.noclass.get_first_value(330)
+                if owner == new_model_space_key:
+                    model_space.add_handle(handle)
+                elif owner == new_paper_space_key:
+                    paper_space.add_handle(handle)
+                else:
+                    raise DXFStructureError("Invalid owner handle {}".format(handle))
 
         if self._dxfversion <= 'AC1009':
             return
         if 0 not in self._layout_spaces:  # no temporary model space exists
             return
 
+        # All entities of model space and the active paper space are stored in the ENTITIES section.
+        # If (the not mandatory) owner tag is not present, the owner tag is temporarily set to '0'.
+        # The (not mandatory) paper_space tag decides where the entity goes: 1 -> paper space; 0 -> model space
         temp_model_space = self._layout_spaces[0]
         model_space = self.get_entity_space(new_model_space_key)
-        model_space.extend(temp_model_space)
+        paper_space = self.get_entity_space(new_paper_space_key)
+
         update_entity_tags(temp_model_space)  # just for entities in the temporary model space
+        distribute(temp_model_space)  # move entities from temp space into model or paper space
+
         del self._layout_spaces[0]  # just delete the temporary model space, not the entities itself
 
     def get_entity_space(self, key):
@@ -122,9 +141,9 @@ class LayoutSpaces(object):
     def store_tags(self, tags):
         """ Store *tags* in associated layout entity space.
         """
-        # AC1018: if entities have no owner tag (330) (thanks to ProE), store this entities in a temporary model space
-        # with layout_key = 0;
-        # this will be resolved later in LayoutSpaces.repair_model_space()
+        # AC1018: if entities have no owner tag (330) (thanks Autodesk for making the owner tag not mandatory), store
+        # this entities in a temporary model space with layout_key = 0
+        # this will be resolved later in LayoutSpaces.repair_owner_tags()
         entity_space = self.get_entity_space(self._get_key(tags))
         entity_space.store_tags(tags)
 

@@ -36,10 +36,6 @@ class TestSections(unittest.TestCase):
         with self.assertRaises(DXFStructureError):
             self.sections.test
 
-    def test_ignore_struct_error(self):
-        sections = Sections(internal_tag_compiler(TEST_NO_EOF), self.dwg)
-        self.assertIsNotNone(self.sections.header)
-
 
 TEST_HEADER = """  0
 SECTION
@@ -62,21 +58,13 @@ TABLES
   0
 ENDSEC
   0
-EOF
-"""
-
-TEST_NO_EOF = """  0
 SECTION
   2
-HEADER
-  9
-$ACADVER
-  1
-AC1018
-  9
-$DWGCODEPAGE
-  3
-ANSI_1252
+ENTITIES
+  0
+ENDSEC
+  0
+EOF
 """
 
 if __name__ == '__main__':

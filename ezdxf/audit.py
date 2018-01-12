@@ -49,6 +49,7 @@ class Audit(object):
         if dxfversion > 'AC1009':  # modern style DXF13 or later
             self.check_root_dict()
         self.check_linetypes()
+        self.check_layer_names()
 
     def add_error(self, code, message='', dxf_entity=None, data=None):
         error = ErrorEntry(code, message, dxf_entity, data)

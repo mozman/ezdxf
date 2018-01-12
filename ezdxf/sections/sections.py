@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-
 from .header import HeaderSection
 from .tables import TablesSection
 from .blocks import BlocksSection
@@ -22,34 +21,36 @@ class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = {}
         self._setup_sections(tagreader, drawing)
+        self._create_required_sections(drawing)
+        if 'entities' not in self._sections:
+            raise DXFStructureError('Mandatory ENTITIES section not found.')
 
     def __iter__(self):
         return iter(self._sections.values())
 
     def _setup_sections(self, tagreader, drawing):
-        def section_name(section):
-            return section[1].value
-
         bootstrap = True
         comments = []
-        for section in iter_chunks(skip_comments(tagreader, comments), stoptag='EOF', endofchunk='ENDSEC'):
+        for section_tags in iter_chunks(skip_comments(tagreader, comments), stoptag='EOF', endofchunk='ENDSEC'):
+            name_tag = section_tags[1]
+            if name_tag.code != 2:
+                raise DXFStructureError("Invalid first section tag: ({0.code}, {0.value})".format(name_tag))
+
             if bootstrap:
-                if section[1] != (2, 'HEADER'):
+                if name_tag != (2, 'HEADER'):
                     new_section = HeaderSection(None)
                 else:
-                    new_section = HeaderSection(section)
-                    section = None  # this tags are done
+                    new_section = HeaderSection(section_tags)
+                    section_tags = None  # this tags are done
                 drawing._bootstraphook(new_section, comments)
                 new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
                 bootstrap = False
                 self._sections[new_section.name] = new_section
 
-            if section is not None:
-                section_class = get_section_class(section_name(section))
-                new_section = section_class(section, drawing)
+            if section_tags is not None:
+                section_class = get_section_class(name_tag.value)
+                new_section = section_class(section_tags, drawing)
                 self._sections[new_section.name] = new_section
-
-        self._create_required_sections(drawing)
 
     def _create_required_sections(self, drawing):
         if 'blocks' not in self:
