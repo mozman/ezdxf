@@ -12,6 +12,8 @@ from ..lldxf.tags import TagGroups
 from ..lldxf.const import DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..lldxf import const
+from ..lldxf.validator import entity_structure_validator
+from ..options import options
 
 logger = logging.getLogger('ezdxf')
 
@@ -66,8 +68,13 @@ class BlocksSection(object):
 
         entities = []
         post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
+        check_tag_structure = options.check_entity_tag_structures
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            tags = ExtendedTags(group)
+            if check_tag_structure:
+                tags = entity_structure_validator(group)
+            else:
+                tags = group
+            tags = ExtendedTags(tags)
             post_read_tags_fixer(tags)  # for VERTEX!
             entities.append(tags)
             if group[0].value == 'ENDBLK':

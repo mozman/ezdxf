@@ -11,6 +11,7 @@ from ..lldxf.tags import TagGroups, DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..query import EntityQuery
 from ..lldxf.validator import entity_structure_validator
+from ..options import options
 
 
 class AbstractSection(object):
@@ -44,9 +45,11 @@ class AbstractSection(object):
         store_tags = self._entity_space.store_tags
         entitydb = self.entitydb
         post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
-
+        check_tag_structure = options.check_entity_tag_structures
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            tags = ExtendedTags(entity_structure_validator(group))
+            if check_tag_structure:
+                group = entity_structure_validator(group)
+            tags = ExtendedTags(group)
             post_read_tags_fixer(tags)  # for VERTEX!
             handle = entitydb.add_tags(tags)
             if not linked_tags(tags, handle):  # also creates the link structure as side effect
