@@ -10,6 +10,7 @@ from itertools import islice
 from ..lldxf.tags import TagGroups, DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..query import EntityQuery
+from ..lldxf.validator import entity_structure_validator
 
 
 class AbstractSection(object):
@@ -45,7 +46,7 @@ class AbstractSection(object):
         post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
 
         for group in TagGroups(islice(tags, 2, len(tags)-1)):
-            tags = ExtendedTags(group)
+            tags = ExtendedTags(entity_structure_validator(group))
             post_read_tags_fixer(tags)  # for VERTEX!
             handle = entitydb.add_tags(tags)
             if not linked_tags(tags, handle):  # also creates the link structure as side effect

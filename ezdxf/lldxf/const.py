@@ -33,6 +33,14 @@ class DXFStructureError(DXFError):
     pass
 
 
+class DXFAppDataError(DXFStructureError):
+    pass
+
+
+class DXFXDataError(DXFStructureError):
+    pass
+
+
 class DXFStreamError(DXFError):
     pass
 

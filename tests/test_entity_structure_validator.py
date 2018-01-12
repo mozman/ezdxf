@@ -2,7 +2,7 @@ import pytest
 
 from ezdxf.lldxf.validator import entity_structure_validator
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ezdxf import DXFStructureError
+from ezdxf import DXFAppDataError, DXFXDataError
 
 def test_valid_tags():
     tags = list(entity_structure_validator(internal_tag_compiler(VALID_ENTITY)))
@@ -26,7 +26,7 @@ STRING
 
 
 def test_invalid_app_data_without_closing_tag():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFAppDataError):
         list(entity_structure_validator(internal_tag_compiler(INVALID_APPDATA_NO_CLOSING_TAG)))
 
 
@@ -44,7 +44,7 @@ STRING
 
 
 def test_invalid_app_data_without_opening_tag():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFAppDataError):
         list(entity_structure_validator(internal_tag_compiler(INVALID_APPDATA_NO_OPENING_TAG)))
 
 
@@ -62,7 +62,7 @@ STRING
 
 
 def test_invalid_app_data_structure_tag():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFAppDataError):
         list(entity_structure_validator(internal_tag_compiler(INVALID_APPDATA_STRUCTURE_TAG)))
 
 
@@ -80,7 +80,7 @@ STRING
 
 
 def test_invalid_xdata():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFXDataError):
         list(entity_structure_validator(internal_tag_compiler(INVALID_XDATA_STRUCTURE_TAG)))
 
 
@@ -98,7 +98,7 @@ NO GROUP CODE < 1000 in XDATA SECTION
 
 
 def test_unbalanced_xdata_list_1():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFXDataError):
         list(entity_structure_validator(internal_tag_compiler(UNBALANCED_XDATA_LIST_1)))
 
 
@@ -120,7 +120,7 @@ STRING
 
 
 def test_unbalanced_xdata_list_2():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFXDataError):
         list(entity_structure_validator(internal_tag_compiler(UNBALANCED_XDATA_LIST_2)))
 
 
@@ -142,7 +142,7 @@ STRING
 
 
 def test_invalid_xdata_list_nesting():
-    with pytest.raises(DXFStructureError):
+    with pytest.raises(DXFXDataError):
         list(entity_structure_validator(internal_tag_compiler(INVALID_XDATA_LIST_NESTING)))
 
 

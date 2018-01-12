@@ -26,6 +26,6 @@ from .lldxf.validator import is_dxf_file, is_dxf_stream
 from .filemanagement import new, read, readfile, readzip
 
 # exceptions
-from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError
+from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
 from .lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError
 
