@@ -3,7 +3,6 @@ Drawing Header Section
 
 The drawing settings are stored in the header section, which is accessible by
 the :attr:`~Drawing.header` attribute. See the online documentation from Autodesk for available `header variables`_.
-the :attr:`~Drawing.header` attribute. See the online documentation from Autodesk for available `header variables`_.
 
 .. class:: HeaderSection
 
@@ -67,4 +66,4 @@ the :attr:`~Drawing.header` attribute. See the online documentation from Autodes
    ``ValueError`` if `tag`  does not exist.
 
 
-.. _header variables: http://docs.autodesk.com/ACD/2014/ENU/files/GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A.htm
+.. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A

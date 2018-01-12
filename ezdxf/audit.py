@@ -13,6 +13,9 @@ REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 
 MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
 UNDEFINED_LINETYPE = 2
+INVALID_LAYER_NAME = 3
+
+INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\',  '"', ':', ';', '?', '*', '|', '=', "'"])
 
 
 class ErrorEntry(object):
@@ -70,25 +73,38 @@ class Audit(object):
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
         linetypes = self.drawing.linetypes
-        attrib = 'linetype'
-        # examine entities in the ENTITIES section
-        # and all block layouts
-        layouts = [self.drawing.entities]
-        layouts.extend(self.drawing.blocks)
-        for layout in layouts:
-            for entity in layout:
-                if not entity.supports_dxf_attrib(attrib):
-                    continue
-                linetype = entity.get_dxf_attrib(attrib, default=None)
-                if linetype is None:
-                    continue
-                if linetype not in linetypes:
-                    self.add_error(
-                        code=UNDEFINED_LINETYPE,
-                        message='Undefined linetype {}'.format(linetype),
-                        dxf_entity=entity,
-                        data=linetype,
-                    )
+
+        def check_linetype_exists(name):
+            if name not in linetypes:
+                self.add_error(
+                    code=UNDEFINED_LINETYPE,
+                    message='Undefined linetype {}'.format(linetype),
+                    dxf_entity=self.drawing.get_dxf_entity(handle),
+                    data=linetype,
+                )
+
+        for handle, tags in self.drawing.entitydb.items():
+            linetype = tags.noclass.get_first_value(6, None)  # linetype has a fixed tag value
+            if linetype is not None:
+                check_linetype_exists(linetype)
+
+    def check_layer_names(self):
+        """
+        Check layer names for invalid characters: <>/\":;?*|='
+        """
+        def check_layer_name_is_valid(name):
+            if INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)):
+                self.add_error(
+                    code=INVALID_LAYER_NAME,
+                    message='Invalid layer name {}'.format(name),
+                    dxf_entity=self.drawing.get_dxf_entity(handle),
+                    data=name,
+                )
+
+        for handle, tags in self.drawing.entitydb.items():
+            layer_name = tags.noclass.get_first_value(8, None)  # layer has a fixed tag value
+            if layer_name is not None:
+                check_layer_name_is_valid(layer_name)
 
     def check_dim_styles(self):  # TODO: implement dimension style checker
         """

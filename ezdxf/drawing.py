@@ -43,7 +43,7 @@ class Drawing(object):
             self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
             if self.dxfversion in ('AC1012', 'AC1014'):  # releases R13 and R14
                 repair.upgrade_to_ac1015(self)
-            # some applications don't setup properly the 'Model' and paper space layouts
+            # some applications don't setup properly the model and paper space layouts
             repair.setup_layouts(self)
             self._groups = self.objects.groups()
         else:

@@ -182,9 +182,12 @@ greater than 250 characters, the string is divided into 250-character chunks, wh
 :code:`(3, ...)` tags. If :code:`(3, ...)` tags are used, the last group is a :code:`(1, ...)` tag and has fewer than
 250 characters::
 
-    (3, "250 characters ....")
-    (3, "250 characters ....")
-    (1, "less than 250 characters")
+    3
+    ... TwoHundredAndFifty Characters ....
+    3
+    ... TwoHundredAndFifty Characters ....
+    1
+    less than TwoHundredAndFifty Characters
 
 As far I know this is only supported by the :class:`MText` entity.
 
@@ -211,9 +214,12 @@ The extension dictionary is an optional sequence that stores the handle of a dic
 current object, which in turn may contain entries. This facility allows attachment of arbitrary database objects to any
 database object. Any object or entity may have this section. The extension dictionary tag sequence::
 
-  (102, "{ACAD_XDICTIONARY")
-  (360, Hard-owner ID/handle to owner dictionary)
-  (102, "}")
+  102
+  {ACAD_XDICTIONARY
+  360
+  Hard-owner ID/handle to owner dictionary
+  102
+  }
 
 Persistent Reactors
 ~~~~~~~~~~~~~~~~~~~
@@ -221,27 +227,36 @@ Persistent Reactors
 Persistent reactors are an optional sequence that stores object handles of objects registering themselves as reactors on
 the current object. Any object or entity may have this section. The persistent reactors tag sequence::
 
-  (102, "{ACAD_REACTORS")
-  (330, Soft-pointer ID/handle to owner dictionary)
-  (330, Soft-pointer ID/handle to owner dictionary)
+  102
+  {ACAD_REACTORS
+  330
+  first Soft-pointer ID/handle to owner dictionary
+  330
+  second Soft-pointer ID/handle to owner dictionary
   ...
-  (102, "}")
+  102
+  }
 
 Application-Defined Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Starting at DXF R13, DXF objects can contain application-defined codes outside of xdata. This application-defined
-codes can contain any tag except :code:`(0, ...)` and :code:`(102, ...)`. "{APPID" means the APPID string with an
+codes can contain any tag except :code:`(0, ...)` and :code:`(102, ...)`. "{YOURAPPID" means the APPID string with an
 preceding "{". The application defined data tag sequence::
 
-    (102, "{APPID")
+    102
+    {YOURAPPID
     ...
-    (102, "}")
+    102
+    }
 
 
 All groups defined with a beginning :code:`(102, ...)` appear in the DXF reference before the first subclass marker,
 I don't know if these groups can appear after the first or any subclass marker. ezdxf accepts them at any position,
 and by default ezdxf adds new app data in front of the first subclass marker to the first tag section of an DXF object.
+
+
+.. include:: reflinks.inc
 
 
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
