@@ -11,6 +11,8 @@ from ..tools.c23 import ustr
 from ..lldxf.types import strtag
 from ..lldxf.tags import TagGroups, Tags
 from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
+from ..lldxf.validator import header_validator
+
 
 MIN_HEADER_TEXT = """  0
 SECTION
@@ -127,7 +129,7 @@ class HeaderSection(object):
 
         if len(tags) == 3:  # DXF file with empty header section
             return
-        groups = TagGroups(tags[2:-1], splitcode=9)
+        groups = TagGroups(header_validator(tags[2:-1]), splitcode=9)
         custom_property_stack = []  # collect $CUSTOMPROPERTY/TAG
         for group in groups:
             name = group[0].value

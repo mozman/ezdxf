@@ -11,7 +11,54 @@ import unittest
 
 from ezdxf.tools.test import DrawingProxy, Tags
 from ezdxf.sections.header import HeaderSection
-from ezdxf import DXFKeyError, DXFValueError
+from ezdxf import DXFKeyError, DXFValueError, DXFStructureError
+from ezdxf.lldxf.validator import header_validator
+
+
+INVALID_HEADER_STRUCTURE = """   9
+$ACADVER
+  1
+AC1009
+  100
+$INSBASE
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+"""
+
+INVALID_HEADER_VAR_NAME = """   9
+$ACADVER
+  1
+AC1009
+  9
+INSBASE
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+"""
+
+
+class TestHeaderValidator(unittest.TestCase):
+    def test_valid_header(self):
+        tags = Tags.from_text(TESTHEADER)
+        result = list(header_validator(tags[2:-1]))
+        self.assertEqual(8, len(result))
+
+    def test_invalid_header_tructure(self):
+        tags = Tags.from_text(INVALID_HEADER_STRUCTURE)
+        with self. assertRaises(DXFStructureError):
+            list(header_validator(tags))
+
+    def test_invalid_header_var_name(self):
+        tags = Tags.from_text(INVALID_HEADER_VAR_NAME)
+        with self. assertRaises(DXFValueError):
+            list(header_validator(tags))
 
 
 class TestHeaderSection(unittest.TestCase):

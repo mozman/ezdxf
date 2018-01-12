@@ -5,13 +5,13 @@
 import logging
 import io
 
-from .const import DXFStructureError, DXFError
+from .const import DXFStructureError, DXFError, DXFValueError
 from .tagger import low_level_tagger, skip_comments
 
 logger = logging.getLogger('ezdxf')
 
 
-def structure_validator(tagreader, filter=False):
+def structure_validator(tagger, filter=False):
     """
     DXF structure validator.
 
@@ -31,7 +31,7 @@ def structure_validator(tagreader, filter=False):
     is written as warning to the 'ezdxf' logger. Comments are ignored.
 
     Args:
-        tagreader: generator yielding DXFTag() objects
+        tagger: generator/iterator yielding DXFTag()
         filter: if True remove tags outside sections
 
     Yields:
@@ -46,7 +46,7 @@ def structure_validator(tagreader, filter=False):
     inside_section = False
     log_warning_for_outside_tags = True
 
-    for tag in tagreader:
+    for tag in tagger:
         if tag.code == 999:  # ignore comments, where ever they are
             yield tag
             continue
@@ -86,6 +86,36 @@ def structure_validator(tagreader, filter=False):
     check_if_inside_section()
     if not found_eof:
         raise DXFStructureError(error_prefix+'EOF tag not found.')
+
+
+def header_validator(tagger):
+    """
+    Checks the tag structure of the content of the header section.
+
+    Do not feed (0, 'SECTION') (2, 'HEADER') and (0, 'ENDSEC') tags!
+
+    Args:
+        tagger: generator/iterator yielding DXFTag()
+
+    Yields:
+        DXFTag()
+
+    Raises:
+        DXFStructureError() -> invalid group codes
+        DXFValueError() -> invalid header variable name
+    """
+    variable_name_tag = True
+    for tag in tagger:
+        if variable_name_tag:
+            if tag.code != 9:
+                raise DXFStructureError('Invalid header variable tag ({0.code}, {0.value}).'.format(tag))
+            if not tag.value.startswith('$'):
+                raise DXFValueError('Invalid header variable name "{}", missing leading "$".'.format(tag.value))
+            yield tag
+            variable_name_tag = False
+        else:
+            yield tag
+            variable_name_tag = True
 
 
 def is_dxf_file(filename):
