@@ -9,8 +9,9 @@ from __future__ import unicode_literals
 
 import unittest
 
-from ezdxf.tools.test import DrawingProxy, TagGroups
+from ezdxf.tools.test import DrawingProxy
 from ezdxf.entityspace import EntitySpace
+from ezdxf.lldxf.tags import internal_tag_compiler, group_tags
 
 
 class TestEntitySpace(unittest.TestCase):
@@ -19,7 +20,7 @@ class TestEntitySpace(unittest.TestCase):
         self.space = EntitySpace(self.dwg.entitydb)
 
     def test_add(self):
-        for group in TagGroups.from_text(TESTENTITIES):
+        for group in group_tags(internal_tag_compiler(TESTENTITIES)):
             self.space.store_tags(group)
         self.assertEqual(4, len(self.space))
 

@@ -8,7 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from itertools import islice
 import logging
 
-from ..lldxf.tags import TagGroups
+from ..lldxf.tags import group_tags
 from ..lldxf.const import DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..lldxf import const
@@ -42,9 +42,6 @@ class BlocksSection(object):
         return self.drawing.dxffactory
 
     def _build(self, tags):
-        def add_tags(tags):
-            return self.entitydb.add_tags(tags)
-
         def build_block_layout(entities):
             linked_tags = get_tags_linker()
             tail_handle = add_tags(entities.pop())
@@ -67,9 +64,10 @@ class BlocksSection(object):
             return
 
         entities = []
+        add_tags = self.entitydb.add_tags
         post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
         check_tag_structure = options.check_entity_tag_structures
-        for group in TagGroups(islice(tags, 2, len(tags)-1)):
+        for group in group_tags(islice(tags, 2, len(tags)-1)):
             if check_tag_structure:
                 tags = entity_structure_validator(group)
             else:

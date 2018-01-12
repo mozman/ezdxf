@@ -11,7 +11,7 @@ from contextlib import contextmanager
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag, DXFStructureError, TagGroups, Tags
+from ..lldxf.tags import DXFTag, DXFStructureError, group_tags, Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
@@ -321,7 +321,7 @@ class BoundaryPathData(object):
         all_path_tags = tags.collect_consecutive_tags(PATH_CODES, start=self.start_index+1)
         self.end_index = self.start_index + len(all_path_tags) + 1  # + 1 for Tag(91, Number of boundary paths)
         # end_index: stored for Hatch._set_boundary_path_data()
-        grouped_path_tags = TagGroups(all_path_tags, splitcode=92)
+        grouped_path_tags = group_tags(all_path_tags, splitcode=92)
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
             is_polyline_path = bool(path_type_flags & 2)
@@ -469,7 +469,7 @@ class EdgePath(object):
 
     def _setup_path(self, tags):
         self.source_boundary_objects = pop_source_boundary_objects_tags(tags)
-        edge_groups = TagGroups(tags, splitcode=72)
+        edge_groups = group_tags(tags, splitcode=72)
         for edge_tags in edge_groups:
             self.edges.append(self._setup_edge(edge_tags))
 
@@ -740,7 +740,7 @@ class PatternData(object):
         all_pattern_tags = tags.collect_consecutive_tags(PATTERN_DEFINITION_LINE_CODES, start=self.existing_pattern_start_index+1)
         self.existing_pattern_end_index = self.existing_pattern_start_index + len(all_pattern_tags) + 1  # + 1 for Tag(78, Number of boundary paths)
         # existing_pattern_end_index: stored for Hatch._set_pattern_data()
-        grouped_line_tags = TagGroups(all_pattern_tags, splitcode=53)
+        grouped_line_tags = group_tags(all_pattern_tags, splitcode=53)
         return [PatternDefinitionLine.from_tags(line_tags) for line_tags in grouped_line_tags]
 
     def clear(self):

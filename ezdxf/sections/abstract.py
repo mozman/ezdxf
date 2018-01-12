@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
 
-from ..lldxf.tags import TagGroups, DXFStructureError
+from ..lldxf.tags import group_tags, DXFStructureError
 from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..query import EntityQuery
 from ..lldxf.validator import entity_structure_validator
@@ -46,7 +46,7 @@ class AbstractSection(object):
         entitydb = self.entitydb
         post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
         check_tag_structure = options.check_entity_tag_structures
-        for group in TagGroups(islice(tags, 2, len(tags)-1)):
+        for group in group_tags(islice(tags, 2, len(tags)-1)):
             if check_tag_structure:
                 group = entity_structure_validator(group)
             tags = ExtendedTags(group)

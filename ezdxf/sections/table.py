@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import DefaultChunk
-from ..lldxf.tags import TagGroups
+from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFValueError, DXFAttributeError
 
@@ -90,9 +90,8 @@ class Table(object):
     # end public interface
 
     def _build_table_entries(self, tags):
-        groups = TagGroups(tags)
-        if groups.get_name(0) != 'TABLE' or \
-            groups.get_name(-1) != 'ENDTAB':
+        groups = list(group_tags(tags))
+        if groups[0][0].value != 'TABLE' or groups[-1][0].value != 'ENDTAB':
             raise DXFStructureError("Critical structure error in TABLES section.")
 
         self._table_header = ExtendedTags(groups[0][1:])

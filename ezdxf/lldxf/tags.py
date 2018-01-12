@@ -252,38 +252,31 @@ class Tags(list):
         """
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
 
-
-class TagGroups(list):
+def group_tags(tags, splitcode=STRUCTURE_MARKER):
     """
-    Group of tags starts with a SplitTag and ends before the next SplitTag. A SplitTag is a tag with code == splitcode,
-    like (0, 'SECTION') for splitcode == 0.
+    Group of tags starts with a SplitTag and ends before the next SplitTag.
+    A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
+    Args:
+        tags: iterable of DXFTag()
+        splitcode int: group code of split tag
+
+    Yields:
+        list of DXFTag()
     """
-    def __init__(self, tags, splitcode=STRUCTURE_MARKER):
-        super(TagGroups, self).__init__()
-        self.splitcode = splitcode
-        self._build_groups(tags, splitcode)
+    def append(tag):  # first do nothing, skip tags in front of the first split tag
+        pass
 
-    def _build_groups(self, tags, splitcode):
-        def append(tag):  # first do nothing, skip tags in front of the first split tag
-            pass
-        group = None
-        for tag in tags:  # has to work with iterators/generators
-            if tag.code == splitcode:
-                if group is not None:
-                    self.append(group)
-                group = Tags([tag])
-                append = group.append  # redefine append: add tags to this group
-            else:
-                append(tag)
-        if group is not None:
-            self.append(group)
-
-    def get_name(self, index):
-        return self[index][0].value
-
-    @classmethod
-    def from_text(cls, text, splitcode=STRUCTURE_MARKER):
-        return cls(Tags.from_text(text), splitcode)
+    group = None
+    for tag in tags:  # has to work with iterators/generators
+        if tag.code == splitcode:
+            if group is not None:
+                yield group
+            group = Tags([tag])
+            append = group.append  # redefine append: add tags to this group
+        else:
+            append(tag)
+    if group is not None:
+        yield group
 
 
 class CompressedTags(object):
