@@ -81,7 +81,7 @@ class LayoutSpaces(object):
             for handle in entity_space:
                 yield handle
 
-    def repair_owner_tags(self, new_model_space_key, new_paper_space_key):
+    def repair_owner_tags(self, model_space_key, paper_space_key):
         def update_entity_tags(entity_space):
             for handle in entity_space:
                 tags = entity_space.get_tags_by_handle(handle)
@@ -91,9 +91,9 @@ class LayoutSpaces(object):
                     raise DXFStructureError("Entity has no subclass 'AcDbEntity'.")
 
                 if entity_tags.get_first_value(67, default=0) == 0:  # 67 = paper_space tag (fixed)
-                    key = new_model_space_key  # paper_space tag is 0 -> model space
+                    key = model_space_key  # paper_space tag is 0 -> model space
                 else:
-                    key = new_paper_space_key  # paper_space tag is not 0 -> paper space
+                    key = paper_space_key  # paper_space tag is not 0 -> paper space
 
                 tags.noclass.set_first(330, key)
 
@@ -101,9 +101,9 @@ class LayoutSpaces(object):
             for handle in entity_space:
                 tags = entity_space.get_tags_by_handle(handle)
                 owner = tags.noclass.get_first_value(330)
-                if owner == new_model_space_key:
+                if owner == model_space_key:
                     model_space.add_handle(handle)
-                elif owner == new_paper_space_key:
+                elif owner == paper_space_key:
                     paper_space.add_handle(handle)
                 else:
                     raise DXFStructureError("Invalid owner handle {}".format(handle))
@@ -117,8 +117,8 @@ class LayoutSpaces(object):
         # If (the not mandatory) owner tag is not present, the owner tag is temporarily set to '0'.
         # The (not mandatory) paper_space tag decides where the entity goes: 1 -> paper space; 0 -> model space
         temp_model_space = self._layout_spaces[0]
-        model_space = self.get_entity_space(new_model_space_key)
-        paper_space = self.get_entity_space(new_paper_space_key)
+        model_space = self.get_entity_space(model_space_key)
+        paper_space = self.get_entity_space(paper_space_key)
 
         update_entity_tags(temp_model_space)  # just for entities in the temporary model space
         distribute(temp_model_space)  # move entities from temp space into model or paper space
