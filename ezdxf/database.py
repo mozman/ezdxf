@@ -8,6 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator
 from .lldxf.const import DXFValueError
+from .lldxf.tags import DXFTag
 
 
 def factory():
@@ -76,8 +77,11 @@ class EntityDB(object):
     def add_tags(self, tags):
         try:
             handle = tags.get_handle()
-        except DXFValueError:
+        except DXFValueError:  # create new handle
             handle = self.get_unique_handle()
+            handle_code = 105 if tags.dxftype() == 'DIMSTYLE' else 5  # legacy shit!!!
+            tags.noclass.insert(1, DXFTag(handle_code, handle))  # handle should be the 2. tag
+
         self.__setitem__(handle, tags)
         return handle
 

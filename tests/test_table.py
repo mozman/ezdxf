@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, normlines, Tags
+from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, normlines
 from ezdxf.sections.table import Table
 
 AC1009TABLE = """  0
@@ -253,7 +253,9 @@ class TestR12Table(unittest.TestCase):
         self.table.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.assertEqual(normlines(AC1009TABLE), normlines(result))
+        t1 = list(compile_tags_without_handles(AC1009TABLE))
+        t2 = list(compile_tags_without_handles(result))
+        self.assertEqual(t1, t2)
 
     def test_get_table_entry(self):
         entry = self.table.get('ACAD')

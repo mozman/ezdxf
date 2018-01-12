@@ -52,7 +52,10 @@ class Drawing(object):
 
             if repair.is_leica_disto_r12(self):  # check for malformed DXF R12 files by Leica Disto Units
                 repair.repair_leica_disto_r12(self)
-            repair.enable_handles(self)
+
+            # ezdxf puts automatically handles into all entities added to the entities database
+            # enable handles
+            self.header['$HANDLING'] = 1
 
         self.layouts = self.dxffactory.get_layouts()
 

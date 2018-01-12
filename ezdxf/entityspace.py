@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .lldxf.const import DXFStructureError, DXFValueError
+from .lldxf.const import DXFStructureError
 
 
 class EntitySpace(list):
@@ -22,13 +22,8 @@ class EntitySpace(list):
         return self._entitydb[handle]
 
     def store_tags(self, tags):
-        try:
-            handle = tags.get_handle()
-        except DXFValueError:  # no handle tag available
-            # handle is not stored in tags!!!
-            handle = self._entitydb.handles.next()
+        handle = tags.get_handle()
         self.append(handle)
-        self._entitydb[handle] = tags
         return handle
 
     def write(self, stream):

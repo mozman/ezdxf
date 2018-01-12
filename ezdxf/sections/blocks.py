@@ -13,6 +13,7 @@ from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
 from ..lldxf import const
 from ..lldxf.validator import entity_structure_validator
 from ..options import options
+from .abstract import entities_tags
 
 logger = logging.getLogger('ezdxf')
 
@@ -41,45 +42,30 @@ class BlocksSection(object):
         return self.drawing.dxffactory
 
     def _build(self, tags):
-        def build_block_layout(entities):
-            linked_tags = get_tags_linker()
-            tail_handle = add_tags(entities.pop())
-            entities_iterator = iter(entities)
-            head_handle = add_tags(next(entities_iterator))
-            block = self.dxffactory.new_block_layout(head_handle, tail_handle)
-
-            for entity in entities_iterator:
-                handle = add_tags(entity)
-                if not linked_tags(entity, handle):  # also creates the link structure as side effect
-                    block.add_handle(handle)
+        def build_block_layout(handles):
+            block = self.dxffactory.new_block_layout(
+                block_handle=handles[0],
+                endblk_handle=handles[-1],
+            )
+            for handle in handles[1:-1]:
+                block.add_handle(handle)
             return block
 
-        if tags[0] != (0, 'SECTION') or \
-            tags[1] != (2, 'BLOCKS') or \
-            tags[-1] != (0, 'ENDSEC'):
+        if tags[0] != (0, 'SECTION') or tags[1] != (2, 'BLOCKS') or tags[-1] != (0, 'ENDSEC'):
             raise DXFStructureError("Critical structure error in BLOCKS section.")
 
         if len(tags) == 3:  # empty block section
             return
 
-        entities = []
-        add_tags = self.entitydb.add_tags
-        post_read_tags_fixer = self.dxffactory.post_read_tags_fixer
-        check_tag_structure = options.check_entity_tag_structures
-        for group in group_tags(tags[2:-1]):
-            if check_tag_structure:
-                tags = entity_structure_validator(group)
-            else:
-                tags = group
-            tags = ExtendedTags(tags)
-            post_read_tags_fixer(tags)  # for VERTEX!
-            entities.append(tags)
-            if group[0].value == 'ENDBLK':
-                block_layout = build_block_layout(entities)
+        handles = []
+        for handle, etags in entities_tags(tags[2:-1], self.entitydb, self.dxffactory):
+            handles.append(handle)
+            if etags.dxftype() == 'ENDBLK':
+                block_layout = build_block_layout(handles)
                 if block_layout in self:
                     logger.warning('Warning! Multiple block definitions with name "{}", replacing previous definition'.format(block_layout.name))
                 self.add(block_layout)
-                entities = []
+                handles = []
 
     def add(self, block_layout):
         """ Add or replace a BlockLayout() object.

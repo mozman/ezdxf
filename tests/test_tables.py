@@ -10,9 +10,10 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, normlines, Tags
+from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.tables import TablesSection
 from ezdxf import DXFAttributeError
+
 
 class TestTables(unittest.TestCase):
     def setUp(self):
@@ -34,7 +35,9 @@ class TestTables(unittest.TestCase):
         self.tables.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.assertEqual(normlines(TEST_TABLES), normlines(result))
+        t1 = list(compile_tags_without_handles(TEST_TABLES))
+        t2 = list(compile_tags_without_handles(result))
+        self.assertEqual(t1, t2)
 
 
 TEST_TABLES = """  0

@@ -12,7 +12,7 @@ import unittest
 from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import DrawingProxy, normlines, Tags
+from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.blocks import BlocksSection
 
 
@@ -26,8 +26,8 @@ class TestBlocksSectionAC1009(unittest.TestCase):
         self.blocks.write(stream)
         result = stream.getvalue()
         stream.close()
-        t1 = sorted(normlines(TESTBLOCKS))
-        t2 = sorted(normlines(result))
+        t1 = list(compile_tags_without_handles(TESTBLOCKS))
+        t2 = list(compile_tags_without_handles(result))
         self.assertEqual(t1, t2)
 
     def test_empty_section(self):

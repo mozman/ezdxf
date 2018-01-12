@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, normlines, Tags
+from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.classes import ClassesSection
 
 
@@ -24,7 +24,9 @@ class TestClassesSection(unittest.TestCase):
         self.section.write(stream)
         result = stream.getvalue()
         stream.close()
-        self.assertEqual(normlines(TESTCLASSES), normlines(result))
+        t1 = list(compile_tags_without_handles(TESTCLASSES))
+        t2 = list(compile_tags_without_handles(result))
+        self.assertEqual(t1, t2)
 
     def test_empty_section(self):
         section = ClassesSection(Tags.from_text(EMPTYSEC), self.dwg)

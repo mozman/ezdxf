@@ -23,7 +23,7 @@ def entities_tags(section_tags, entitydb, dxffactory):
         post_read_tags_fixer(tags)  # for VERTEX!
         handle = entitydb.add_tags(tags)
         if not linked_tags(tags, handle):  # also creates the link structure as side effect
-            yield tags  # add to entity space
+            yield handle, tags
 
 
 class AbstractSection(object):
@@ -53,8 +53,8 @@ class AbstractSection(object):
         if len(tags) == 3:  # empty entities section
             return
 
-        for etags in entities_tags(tags[2:-1], self.entitydb, self.dxffactory):
-            self._entity_space.store_tags(etags)  # add to entity space
+        for handle, etags in entities_tags(tags[2:-1], self.entitydb, self.dxffactory):
+            self._entity_space.store_tags(etags)
 
     def write(self, stream):
         stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())

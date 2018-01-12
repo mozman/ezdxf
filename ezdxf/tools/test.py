@@ -13,6 +13,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 
 from ezdxf.drawing import Drawing
 from ezdxf.database import EntityDB
+from ezdxf.lldxf.tagger import internal_tag_compiler
 
 
 class ModelSpace:
@@ -38,6 +39,11 @@ class DrawingProxy:
 
     def __does_not_exist_in_Drawing(self):
         """ ATTENTION: private attributes will not be checked in TestDrawingProxy! """
+
+
+def compile_tags_without_handles(text):
+    return (tag for tag in internal_tag_compiler(text) if tag.code not in (5, 105))
+
 
 def normlines(text):
     lines = text.split('\n')
