@@ -140,9 +140,6 @@ def compare_dwg(orig, copy):
     print('checking: {}'.format(orig.filename))
     print('comparing HEADER')
     compare_header_vars(orig.header, copy.header)
-    if 'classes' in orig.sections:
-        print('comparing CLASSES')
-        compare_entities(orig.sections.classes, copy.sections.classes)
     print('comparing TABLES')
     compare_tables(orig.sections.tables, copy.sections.tables)
     print('comparing BLOCKS')

@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import os
 import io
 
-from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type
+from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type, DXFValueError
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
@@ -328,10 +328,7 @@ class DXF2HtmlConverter(object):
     def collect_all_pointers(self):
         existing_pointers = {}
         for tags in self.entitydb.values():
-            if tags.dxftype() == 'CLASS':  # classes have no handle
-                handle = "<class-section>"
-            else:
-                handle = tags.get_handle()
+            handle = tags.get_handle()
 
             for tag in self.expand_linked_tags(tags):
                 if tag.code in _HANDLE_POINTERS:

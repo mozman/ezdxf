@@ -29,7 +29,8 @@ class TestClassesSection(unittest.TestCase):
         self.assertEqual(t1, t2)
 
     def test_empty_section(self):
-        section = ClassesSection(Tags.from_text(EMPTYSEC), self.dwg)
+        tags = list(Tags.from_text(EMPTYSEC))
+        section = ClassesSection(tags, self.dwg)
         stream = StringIO()
         section.write(stream)
         result = stream.getvalue()

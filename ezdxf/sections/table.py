@@ -133,16 +133,11 @@ class Table(object):
 
     def _add_entry(self, entry):
         """ Add table-entry to table and entitydb. """
-        if hasattr(entry, 'get_handle'):
-            try:
-                handle = entry.get_handle()
-            except DXFValueError:
-                handle = self.handles.next()
+        if isinstance(entry, ExtendedTags):
             tags = entry
         else:
-            handle = entry.dxf.handle
             tags = entry.tags
-        self.entitydb[handle] = tags
+        handle = self.entitydb.add_tags(tags)
         self._append_entry_handle(handle)
 
     def _append_entry_handle(self, handle):

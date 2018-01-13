@@ -94,3 +94,5 @@ class AbstractSection(object):
         self._entity_space.delete_all_entities()
 
     # end of public interface
+
+

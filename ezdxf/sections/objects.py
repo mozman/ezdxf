@@ -5,13 +5,22 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .classes import ClassesSection
+from .abstract import AbstractSection
 from ..lldxf.const import DXFStructureError, DXFValueError
 from ..modern.groups import DXFGroupTable
+from ..entityspace import EntitySpace
 
 
-class ObjectsSection(ClassesSection):
+class ObjectsSection(AbstractSection):
     name = 'objects'
+
+    def __init__(self, tags, drawing):
+        entity_space = EntitySpace(drawing.entitydb)
+        super(ObjectsSection, self).__init__(entity_space, tags, drawing)
+
+    def __iter__(self):
+        for handle in self._entity_space:
+            yield self.dxffactory.wrap_handle(handle)
 
     @property
     def roothandle(self):
