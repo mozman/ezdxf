@@ -272,6 +272,9 @@ def group_tags(tags, splitcode=STRUCTURE_MARKER):
 class CompressedTags(object):
     """
     Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
+
+    The compressed string stores points in external representation (10, x) (20, y) (30, z) and not in internal
+    representation (10, (x, y, z)).
     """
     def __init__(self, code, tags):
         self.code = code

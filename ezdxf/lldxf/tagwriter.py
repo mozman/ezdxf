@@ -7,7 +7,6 @@ __author__ = "mozman <mozman@gmx.at>"
 
 from .tags import CompressedTags
 from .types import strtag2, TAG_STRING_FORMAT
-from .tagger import internal_tag_compiler
 
 
 class TagWriter(object):
@@ -20,7 +19,7 @@ class TagWriter(object):
 
     def write_tag(self, tag):
         if isinstance(tag, CompressedTags):
-            self.write_tags(tag.decompress())
+            self.write_str(tag.tostring())
         else:
             self._stream.write(strtag2(tag))
 
@@ -28,5 +27,5 @@ class TagWriter(object):
         self._stream.write(TAG_STRING_FORMAT % (code, value))
 
     def write_str(self, s):
-        self.write_tags(internal_tag_compiler(s))
+        self._stream.write(s)
 

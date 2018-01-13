@@ -22,8 +22,8 @@ class DefaultChunk(object):
     def name(self):
         return self.tags[1].value.lower()
 
-    def write(self, stream):
-        self.tags.write(stream)
+    def write(self, tagwriter):
+        tagwriter.write_tags(self.tags)
 
 
 class CompressedDefaultChunk(DefaultChunk):
@@ -32,8 +32,8 @@ class CompressedDefaultChunk(DefaultChunk):
         super(CompressedDefaultChunk, self).__init__(Tags((tags[0], tags[1], compressed_tags)), drawing)
         self._compressed_tags = compressed_tags
 
-    def write(self, stream):
-        self._compressed_tags.write(stream)
+    def write(self, tagwriter):
+        tagwriter.write_str(self._compressed_tags.tostring())
 
 
 def iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
