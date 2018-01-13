@@ -44,7 +44,7 @@
 # A,.0001,-.2,[ZIG,ltypeshp.shx,x=-.2,s=.2],-.4,[ZIG,ltypeshp.shx,r=180,x=.2,s=.2],-.2
 
 from ..lldxf.const import DXFValueError
-from ..lldxf.tags import DXFTag
+from ..lldxf.tags import DXFTag, Tags
 
 
 def lin_compiler(definition):
@@ -58,62 +58,102 @@ def lin_compiler(definition):
     Returns:
         list of DXFTag()
     """
-    def tokenizer():
-        bag = []
-        for part in lin_parser(definition):
-            try:
-                value = float(part)
-                bag.append(value)
-                continue
-            except ValueError:
-                pass
-
-            if part.startswith('["'):
-                bag.append('[TEXT')
-                bag.append(part[2:-1])  # text ohne '["' und '"'
-            elif part.startswith('['):
-                bag.append('[SHAPE')
-                bag.append(part[1:])  # text ohne '['
-            else:
-                _part = part.rstrip(']')
-                subparts = _part.split('=')
-                if len(subparts) == 2:
-                    bag.append(subparts[0].lower())
-                    bag.append(float(subparts[1]))
-                else:
-                    bag.append(_part)
-            if part.endswith(']'):
-                bag.append(']')
-
     # 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25'
-    # ['A', .5, -.2, '[TEXT', 'GAS', 'STANDARD', 's', .1, 'u', 0.0, 'x', -.1, 'y', -.05, ']', -.25]
-    tokens = list(reversed(tokenizer()))
-    while tokens:
-        tag = tokens.pop()
-        if isinstance(tag, float):
-            yield DXFTag(999, tag)
-        elif tag == 'A':
+    # ['A', .5, -.2, ['TEXT', 'GAS', 'STANDARD', 's', .1, 'u', 0.0, 'x', -.1, 'y', -.05], -.25]
+    tags = []
+    for token in lin_parser(definition):
+        if token == 'A':
             continue
-        elif tag == '[TEXT':
-            while tag != ']':
-                tag = tokens.pop()
-        elif tag == '[SHAPE':
-            while tag != ']':
-                tag = tokens.pop()
+        elif isinstance(token, float):
+            tags.append(DXFTag(49, token))  # Dash, dot or space length (one entry per element)
+        elif isinstance(token, list):  # yield from
+            tags.append(compile_complex_defnition(token))
+    return tags
+
+
+CMD_CODES = {
+    's': 46,
+    'r': 50,  # r == u
+    'u': 50,
+    'x': 44,
+    'y': 45,
+}
+
+
+class Text:
+    def __init__(self, type_, text, font):
+        self.type = type_
+        self.text = text
+        self.font = font
+        self.tags = Tags()
+
+
+def compile_complex_defnition(tokens):
+    text = Text(tokens[0], tokens[1], tokens[2])
+    commands = list(reversed(tokens[3:]))
+    while len(commands):
+        cmd = commands.pop()
+        value = commands.pop()
+        if cmd in CMD_CODES:
+            text.tags.append(DXFTag(CMD_CODES[cmd], value))
+    return text
 
 
 def lin_parser(definition):
-    part = ''
+    bag = []
+    sublist = None
+    first = True
+    for token in lin_tokenizer(definition):
+        if token == 'A' and first:
+            bag.append(token)
+            first = False
+            continue
+
+        try:
+            value = float(token)  # only outside of TEXT or SHAPE definition
+            bag.append(value)
+            continue
+        except ValueError:
+            pass
+
+        if token.startswith('['):
+            if sublist is not None:
+                raise DXFValueError('Complex line type error. {}'.format(definition))
+            sublist = []
+            if token.startswith('["'):
+                sublist.append('TEXT')
+                sublist.append(token[2:-1])  # text ohne '["' und '"'
+            else:
+                sublist.append('SHAPE')
+                sublist.append(token[1:])  # text ohne '['
+        else:
+            _token = token.rstrip(']')
+            subtokens = _token.split('=')
+            if len(subtokens) == 2:
+                sublist.append(subtokens[0].lower())
+                sublist.append(float(subtokens[1]))
+            else:
+                sublist.append(_token)
+        if token.endswith(']'):
+            if sublist is None:
+                raise DXFValueError('Complex line type error. {}'.format(definition))
+            bag.append(sublist)
+            sublist = None
+    return bag
+
+
+def lin_tokenizer(definition):
+    token = ''
     escape = False
     for char in definition:
         if char == ',' and not escape:
-            yield part
-            part = ''
+            yield token.strip()
+            token = ''
             continue
-        part += char
+        token += char
         if char == '"':
             escape = not escape
     if escape:
         raise DXFValueError("Line type parsing error: '{}'".format(definition))
-    if part:
-        yield part
+    if token:
+        yield token.strip()
