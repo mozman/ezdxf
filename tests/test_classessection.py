@@ -12,7 +12,7 @@ from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.classes import ClassesSection
-
+from ezdxf.lldxf.tagwriter import TagWriter
 
 class TestClassesSection(unittest.TestCase):
     def setUp(self):
@@ -21,7 +21,7 @@ class TestClassesSection(unittest.TestCase):
 
     def test_write(self):
         stream = StringIO()
-        self.section.write(stream)
+        self.section.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         t1 = list(compile_tags_without_handles(TESTCLASSES))
@@ -32,7 +32,7 @@ class TestClassesSection(unittest.TestCase):
         tags = list(Tags.from_text(EMPTYSEC))
         section = ClassesSection(tags, self.dwg)
         stream = StringIO()
-        section.write(stream)
+        section.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         self.assertEqual(EMPTYSEC, result)

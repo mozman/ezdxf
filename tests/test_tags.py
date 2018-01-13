@@ -12,6 +12,7 @@ from io import StringIO
 from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.tagger import internal_tag_compiler, skip_comments
 from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.types import tag_type, point_tuple
 from ezdxf.lldxf.const import DXFValueError
 
@@ -94,7 +95,8 @@ class TestTags(unittest.TestCase):
 
     def test_write(self):
         stream = StringIO()
-        self.tags.write(stream)
+        tagwriter = TagWriter(stream)
+        tagwriter.write_tags(self.tags)
         result = stream.getvalue()
         stream.close()
         self.assertEqual(TEST_TAGREADER, result)

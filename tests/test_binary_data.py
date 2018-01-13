@@ -9,6 +9,7 @@ import unittest
 from io import StringIO
 
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.tools.binarydata import compress_binary_data, CompressedTags, binary_encoded_data_to_bytes
 
 
@@ -68,7 +69,8 @@ class TestCompressBinaryData(unittest.TestCase):
         tags = ExtendedTags.from_text(BIN_FOUR)
         compress_binary_data(tags)
         stream = StringIO()
-        tags.write(stream)
+        tagwriter = TagWriter(stream)
+        tagwriter.write_tags(tags)
         result = stream.getvalue()
         stream.close()
         result_lines = [line.strip() for line in result.splitlines()]

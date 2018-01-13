@@ -306,13 +306,13 @@ class DXF12BlockLayout(BaseLayout):
         """
         self._entity_space.append(handle)
 
-    def write(self, stream):
+    def write(self, tagwriter):
         def write_tags(handle):
             tags = self._entity_space.get_tags_by_handle(handle)
-            tags.write(stream)
+            tagwriter.write_tags(tags)
 
         write_tags(self._block_handle)
-        self._entity_space.write(stream)
+        self._entity_space.write(tagwriter)
         write_tags(self._endblk_handle)
 
     def delete_all_entities(self):

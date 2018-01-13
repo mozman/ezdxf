@@ -14,14 +14,6 @@ from .tagger import internal_tag_compiler, skip_comments, low_level_tagger
 COMMENT_CODE = 999
 
 
-def write_tags(stream, tags):
-    for tag in tags:
-        if isinstance(tag, CompressedTags):
-            tag.write(stream)
-        else:
-            stream.write(strtag2(tag))
-
-
 def text2tags(text):
     return Tags.from_text(text)
 
@@ -64,8 +56,6 @@ class Tags(list):
     """
     DXFTag() chunk as flat list.
     """
-    def write(self, stream):
-        write_tags(stream, self)
 
     @classmethod
     def from_text(cls, text):
@@ -295,8 +285,9 @@ class CompressedTags(object):
         else:
             raise DXFIndexError
 
-    def decompress(self):
-        return Tags.from_text(self.value.decompress())
+    def tostring(self):
+        return self.value.decompress()
 
-    def write(self, stream):
-        stream.write(self.value.decompress())
+    def decompress(self):
+        return internal_tag_compiler(self.tostring())
+

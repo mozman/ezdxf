@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 from . import database
-from .lldxf.tags import DXFTag, write_tags
+from .lldxf.tags import DXFTag
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError, DXFValueError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
@@ -305,15 +305,18 @@ class Drawing(object):
             self.write(fp)
 
     def write(self, stream):
+        from .lldxf.tagwriter import TagWriter
+        tagwriter = TagWriter(stream)
+
         self._create_appids()
         self._update_metadata()
         if options.store_comments:
-            self.write_leading_comments(stream)
-        self.sections.write(stream)
+            self.write_leading_comments(tagwriter)
+        self.sections.write(tagwriter)
 
-    def write_leading_comments(self, stream):
+    def write_leading_comments(self, tagwriter):
         comment_tags = (DXFTag(999, comment) for comment in self.comments)
-        write_tags(stream, comment_tags)
+        tagwriter.write_tags(comment_tags)
 
     def cleanup(self, groups=True):
         """

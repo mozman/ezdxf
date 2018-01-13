@@ -78,7 +78,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from itertools import islice
-from ..lldxf.tags import group_tags, write_tags, Tags
+from ..lldxf.tags import group_tags, Tags
 from ..lldxf.const import DXFKeyError, DXFStructureError
 
 
@@ -121,20 +121,20 @@ class AcDsDataSection(object):
             entity = cls(entity.tags)
         self.entities.append(entity)
 
-    def write(self, stream):
-        stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        write_tags(stream, self.section_info)
+    def write(self, tagwriter):
+        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        tagwriter.write_tags(self.section_info)
         for entity in self.entities:
-            entity.write(stream)
-        stream.write("  0\nENDSEC\n")
+            entity.write(tagwriter)
+        tagwriter.write_tag2(0, 'ENDSEC')
 
 
 class AcDsData(object):
     def __init__(self, tags):
         self.tags = tags
 
-    def write(self, stream):
-        write_tags(stream, self.tags)
+    def write(self, tagwriter):
+        tagwriter.write_tags(self.tags)
 
     def dxftype(self):
         return self.tags[0].value
@@ -178,13 +178,14 @@ class AcDsRecord(object):
     def __getitem__(self, name):
         return self.get_section(name)
 
-    def _write_header(self, stream):
-        write_tags(stream, Tags([self._dxftype, self.flags]))
+    def _write_header(self, tagwriter):
+        tagwriter.write_tags(Tags([self._dxftype, self.flags]))
 
-    def write(self, stream):
-        self._write_header(stream)
+    def write(self, tagwriter):
+        self._write_header(tagwriter)
         for section in self.sections:
-            write_tags(stream, section)
+            tagwriter.write_tags(section)
+
 
 ACDSDATA_TYPES = {
     'ACDSRECORD': AcDsRecord,

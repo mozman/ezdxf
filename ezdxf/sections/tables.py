@@ -96,13 +96,13 @@ class TablesSection(object):
     def __delitem__(self, key):
         del self._tables[key]
 
-    def write(self, stream):
-        stream.write('  0\nSECTION\n  2\nTABLES\n')
+    def write(self, tagwriter):
+        tagwriter.write_str('  0\nSECTION\n  2\nTABLES\n')
         for table_name in TABLE_ORDER:
             table = self._tables.get(table_name)
             if table is not None:
-                table.write(stream)
-        stream.write('  0\nENDSEC\n')
+                table.write(tagwriter)
+        tagwriter.write_tag2(0, 'ENDSEC')
 
 
 TABLESMAP = {

@@ -156,11 +156,11 @@ class BlocksSection(object):
 
     # end of public interface
 
-    def write(self, stream):
-        stream.write("  0\nSECTION\n  2\nBLOCKS\n")
+    def write(self, tagwriter):
+        tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
         for block in self._block_layouts.values():
-            block.write(stream)
-        stream.write("  0\nENDSEC\n")
+            block.write(tagwriter)
+        tagwriter.write_tag2(0, "ENDSEC")
 
     def new_layout_block(self):
 

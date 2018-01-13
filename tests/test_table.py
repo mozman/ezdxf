@@ -12,6 +12,7 @@ from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, normlines
 from ezdxf.sections.table import Table
+from ezdxf.lldxf.tagwriter import TagWriter
 
 AC1009TABLE = """  0
 TABLE
@@ -250,7 +251,7 @@ class TestR12Table(unittest.TestCase):
 
     def test_write(self):
         stream = StringIO()
-        self.table.write(stream)
+        self.table.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         t1 = list(compile_tags_without_handles(AC1009TABLE))
@@ -272,7 +273,7 @@ class TestR2010Table(unittest.TestCase):
 
     def test_write(self):
         stream = StringIO()
-        self.table.write(stream)
+        self.table.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         self.assertEqual(normlines(AC1024TABLE), normlines(result))

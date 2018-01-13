@@ -12,6 +12,7 @@ from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, Tags, normlines
 from ezdxf.sections.objects import ObjectsSection
+from ezdxf.lldxf.tagwriter import TagWriter
 
 
 class TestObjectsSection(unittest.TestCase):
@@ -21,7 +22,7 @@ class TestObjectsSection(unittest.TestCase):
 
     def test_write(self):
         stream = StringIO()
-        self.section.write(stream)
+        self.section.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         self.assertEqual(normlines(TESTOBJECTS), normlines(result))
@@ -29,7 +30,7 @@ class TestObjectsSection(unittest.TestCase):
     def test_empty_section(self):
         section = ObjectsSection(Tags.from_text(EMPTYSEC), self.dwg)
         stream = StringIO()
-        section.write(stream)
+        section.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         self.assertEqual(EMPTYSEC, result)

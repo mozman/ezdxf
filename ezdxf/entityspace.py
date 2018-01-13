@@ -26,12 +26,12 @@ class EntitySpace(list):
         self.append(handle)
         return handle
 
-    def write(self, stream):
+    def write(self, tagwriter):
         for handle in self:
             # write linked entities
             while handle is not None:
                 tags = self._entitydb[handle]
-                tags.write(stream)
+                tagwriter.write_tags(tags)
                 handle = tags.link
 
     def delete_entity(self, entity):
@@ -142,7 +142,7 @@ class LayoutSpaces(object):
         entity_space = self.get_entity_space(self._get_key(tags))
         entity_space.store_tags(tags)
 
-    def write(self, stream, keys=None):
+    def write(self, tagwriter, keys=None):
         """ Write all entity spaces to *stream*.
 
         If *keys* is not *None*, write only entity spaces defined in *keys*.
@@ -152,7 +152,7 @@ class LayoutSpaces(object):
             keys = set(layout_spaces.keys())
 
         for key in keys:
-            layout_spaces[key].write(stream)
+            layout_spaces[key].write(tagwriter)
 
     def delete_entity(self, entity):
         """ Delete *entity* from associated layout entity space.

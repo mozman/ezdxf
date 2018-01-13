@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .abstract import AbstractSection
-from ..lldxf.tags import write_tags
 from ..lldxf.extendedtags import ExtendedTags
 
 
@@ -20,9 +19,9 @@ class ClassEntitySpace(list):
         else:
             self.append(tags.tags)
 
-    def write(self, stream):
+    def write(self, tagwriter):
         for class_tags in self:
-            write_tags(stream, (tag for tag in class_tags if tag.code != 5))
+            tagwriter.write_tags((tag for tag in class_tags if tag.code != 5))
 
 
 class ClassesSection(AbstractSection):

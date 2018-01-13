@@ -56,10 +56,10 @@ class AbstractSection(object):
         for handle, xtags in xtags_into_entitydb(tags[2:-1], self.entitydb, self.dxffactory):
             self._entity_space.store_tags(xtags)
 
-    def write(self, stream):
-        stream.write("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        self._entity_space.write(stream)
-        stream.write("  0\nENDSEC\n")
+    def write(self, tagwriter):
+        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        self._entity_space.write(tagwriter)
+        tagwriter.write_tag2(0, "ENDSEC")
 
     def create_new_dxf_entity(self, _type, dxfattribs):
         """ Create new DXF entity add it to th entity database and add it to the entity space.

@@ -78,10 +78,7 @@ class Sections(object):
     def names(self):
         return list(self._sections.keys())
 
-    def write(self, stream):
-        def write_eof():
-            stream.write('  0\nEOF\n')
-
+    def write(self, tagwriter):
         write_order = list(KNOWN_SECTIONS)
 
         unknown_sections = frozenset(self._sections.keys()) - frozenset(KNOWN_SECTIONS)
@@ -92,10 +89,10 @@ class Sections(object):
         for section_name in KNOWN_SECTIONS:
             section = self._sections.get(section_name, None)
             if section is not None:
-                section.write(stream)
+                section.write(tagwriter)
                 written_sections.append(section.name)
 
-        write_eof()
+        tagwriter.write_tag2(0, 'EOF')
 
     def delete_section(self, name):
         """ Delete a complete section, please delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA'.

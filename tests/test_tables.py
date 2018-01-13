@@ -13,7 +13,7 @@ from io import StringIO
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.tables import TablesSection
 from ezdxf import DXFAttributeError
-
+from ezdxf.lldxf.tagwriter import TagWriter
 
 class TestTables(unittest.TestCase):
     def setUp(self):
@@ -32,7 +32,7 @@ class TestTables(unittest.TestCase):
 
     def test_write(self):
         stream = StringIO()
-        self.tables.write(stream)
+        self.tables.write(TagWriter(stream))
         result = stream.getvalue()
         stream.close()
         t1 = list(compile_tags_without_handles(TEST_TABLES))

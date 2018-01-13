@@ -14,7 +14,7 @@ from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.repair import join_subclasses
 from ezdxf import DXFKeyError, DXFValueError
-
+from ezdxf.lldxf.tagwriter import TagWriter
 
 class TestExtendedTags(unittest.TestCase):
     def setUp(self):
@@ -54,7 +54,8 @@ class TestExtendedTags(unittest.TestCase):
 
     def test_copy(self):
         stream = StringIO()
-        self.xtags.write(stream)
+        tagwriter = TagWriter(stream)
+        tagwriter.write_tags(self.xtags)
         self.assertEqual(XTAGS1, stream.getvalue())
         stream.close()
 

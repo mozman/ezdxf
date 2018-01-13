@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .tags import Tags,  DXFTag, write_tags, NONE_TAG
+from .tags import Tags,  DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .const import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from ..tools.c23 import isstring
@@ -231,9 +231,6 @@ class ExtendedTags(object):
         subclass.append(DXFTag(APP_DATA_MARKER, app_data_pos))
         self.appdata.append(app_tags)
         return app_tags
-
-    def write(self, stream):
-        write_tags(stream, self)
 
     def dxftype(self):
         return self.noclass[0].value

@@ -6,9 +6,9 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import DefaultChunk
-from ..lldxf.tags import group_tags
+from ..lldxf.tags import group_tags, DXFTag
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFValueError, DXFAttributeError
+from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError
 
 TABLENAMES = {
     'layer': 'layers',
@@ -148,20 +148,20 @@ class Table(object):
         tags = self.entitydb[handle]
         return self.dxffactory.wrap_entity(tags)
 
-    def write(self, stream):
+    def write(self, tagwriter):
         """ Write DXF representation to stream, stream opened with mode='wt'. """
         def prologue():
-            stream.write('  0\nTABLE\n')
+            tagwriter.write_tag2(0, 'TABLE')
             self._update_owner_handles()
             self._update_meta_data()
-            self._table_header.write(stream)
+            tagwriter.write_tags(self._table_header)
 
         def content():
             for tags in self._iter_table_entries_as_tags():
-                tags.write(stream)
+                tagwriter.write_tags(tags)
 
         def epilogue():
-            stream.write('  0\nENDTAB\n')
+            tagwriter.write_tag2(0, 'ENDTAB')
 
         prologue()
         content()

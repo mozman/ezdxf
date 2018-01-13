@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 from ..tools.c23 import ustr
 from ..lldxf.types import strtag
-from ..lldxf.tags import group_tags, Tags
+from ..lldxf.tags import group_tags, Tags, DXFTag
 from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
 from ..lldxf.validator import header_validator
 
@@ -95,10 +95,10 @@ class CustomVars(object):
 
         raise DXFValueError("Tag '%s' does not exist" % tag)
 
-    def write(self, stream):
+    def write(self, tagwriter):
         for tag, value in self.properties:
-            stream.write("  9\n$CUSTOMPROPERTYTAG\n  1\n%s\n" % tag)
-            stream.write("  9\n$CUSTOMPROPERTY\n  1\n%s\n" % value)
+            s = "  9\n$CUSTOMPROPERTYTAG\n  1\n{0}\n  9\n$CUSTOMPROPERTY\n  1\n{1}\n".format(tag, value)
+            tagwriter.write_str(s)
 
 
 class HeaderSection(object):
@@ -149,18 +149,17 @@ class HeaderSection(object):
     def varnames(self):
         return self.hdrvars.keys()
 
-    def write(self, stream):
+    def write(self, tagwriter):
         def _write(name, value):
-            stream.write("  9\n%s\n" % name)
-            stream.write(ustr(value))
+            tagwriter.write_tag2(9, name)
+            tagwriter.write_str(ustr(value))
 
-        stream.write("  0\nSECTION\n  2\nHEADER\n")
+        tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
             _write(name, value)
             if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
-                self.custom_vars.write(stream)
-
-        stream.write("  0\nENDSEC\n")
+                self.custom_vars.write(tagwriter)
+        tagwriter.write_tag2(0, "ENDSEC")
 
     def __getitem__(self, key):
         try:
