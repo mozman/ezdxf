@@ -77,7 +77,8 @@ class TestNewComplexTextLinetype(unittest.TestCase):
         self.assertEqual('Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--', self.ltype.dxf.description)
 
     def test_pattern_items_count(self):
-        self.assertEqual(4, self.ltype.dxf.items)
+        # only (49, ...) tags count
+        self.assertEqual(3, self.ltype.dxf.items)
 
 
 class TestNewStyle(unittest.TestCase):
