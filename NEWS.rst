@@ -4,6 +4,8 @@ News
 
 Version 0.8.4 - ?
 
+  * NEW: Support for complex line types with text or shapes (shapes only work if the .shx and the DXF file are in the
+    same directory)
   * NEW: DXF file structure validator at SECTION level, tags outside of sections will be removed
   * NEW: Basic read support for DIMENSION
   * CHANGED: improved exception management, in the future ezdxf should only raise exceptions inherited from DXFError for

@@ -360,4 +360,3 @@ class Drawing(object):
 
         if self.dxfversion > 'AC1009':
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
-

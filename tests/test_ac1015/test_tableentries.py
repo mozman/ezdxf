@@ -58,6 +58,28 @@ class TestNewLinetype(unittest.TestCase):
         self.assertEqual(self.ltype.dxf.items, count_items())
 
 
+class TestNewComplexTextLinetype(unittest.TestCase):
+    def setUp(self):
+        self.ltype = Linetype.new('FFFF', dxfattribs={
+            'name': 'GASLEITUNG',
+            'description': 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--',
+            # 'pattern': [0.0] can be left off, because [0.0] is default -> setup_complex_line_type()
+        })
+        self.ltype.setup_complex_line_type(
+            length=3.0,
+            definition='A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
+        )
+
+    def test_name(self):
+        self.assertEqual('GASLEITUNG', self.ltype.dxf.name)
+
+    def test_description(self):
+        self.assertEqual('Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--', self.ltype.dxf.description)
+
+    def test_pattern_items_count(self):
+        self.assertEqual(4, self.ltype.dxf.items)
+
+
 class TestNewStyle(unittest.TestCase):
     def setUp(self):
         self.style = Style.new('FFFF', dxfattribs={

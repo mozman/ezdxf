@@ -203,6 +203,18 @@ class Tags(list):
         """
         self[:] = [tag for tag in self if tag.code not in frozenset(codes)]
 
+    def remove_tags_except(self, codes):
+        """
+        Remove tags inplace except those with group codes specified in codes.
+
+        Args:
+            codes: iterable of group codes
+
+        Returns:
+            Tags() object
+        """
+        self[:] = [tag for tag in self if tag.code in frozenset(codes)]
+
     def collect_consecutive_tags(self, codes, start=0, end=None):
         """
         Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not

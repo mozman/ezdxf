@@ -10,6 +10,7 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..legacy import tableentries as legacy
 from ..dxfentity import DXFEntity
+from ezdxf.tools.complex_ltype import lin_compiler
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -148,6 +149,25 @@ class Linetype(legacy.Linetype):
         for element in pattern[1:]:
             subclass.append(DXFTag(49, float(element)))
             subclass.append(DXFTag(74, 0))
+
+    def setup_complex_line_type(self, length, definition, shapes_table=None):
+        pattern = lin_compiler(definition)
+        subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
+
+        subclass.remove_tags_except([2, 3, 70, 72, 100])
+        subclass.append(DXFTag(73, 0))  # temp length of 0
+        subclass.append(DXFTag(40, float(length)))
+        count = 0
+        for part in pattern:
+            if isinstance(part, DXFTag):
+                if subclass[-1].code == 49:  # useless 74 only after 49 :))
+                    subclass.append(DXFTag(74, 0))
+                subclass.append(part)
+                count += 1
+            else:  # TEXT or SHAPE
+                subclass.extend(part.complex_ltype_tags(self.drawing, shapes_table))
+        subclass.append(DXFTag(74, 0))  # useless 74 at the end :))
+        subclass.update(73, count)
 
 
 _APPIDTEMPLATE = """  0

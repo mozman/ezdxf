@@ -74,6 +74,14 @@ class Table(object):
                 return entry
         raise DXFTableEntryError(name)
 
+    def find(self, name):
+        """ Get table-entry by name as WrapperClass() but ignore case, return None if not found. """
+        lower_name = name.lower()
+        for entry in iter(self):
+            if entry.dxf.name.lower() == lower_name:
+                return entry
+        return None
+
     def remove(self, name):
         """ Remove table-entry from table and entitydb by name. """
         entry = self.get(name)

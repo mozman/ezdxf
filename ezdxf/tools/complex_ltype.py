@@ -71,6 +71,44 @@ def lin_compiler(definition):
     return tags
 
 
+class ComplexLineTypePart:
+    def __init__(self, type_, text, font):
+        self.type = type_
+        self.text = text
+        self.font = font
+        self.tags = Tags()
+
+    def complex_ltype_tags(self, drawing, shapes_table=None):
+        def get_font_handle():
+            font = drawing.styles.find(self.font)
+            if font is None:
+                font = drawing.styles.new(self.font)
+                if self.type == 'SHAPE':
+                    font.dxf.name = ''
+                    font.dxf.flags = 1  # shx shape
+                    font.dxf.font = self.font
+                    font.dxf.last_height = 2.5
+            return font.dxf.handle
+        if shapes_table is None:
+            shapes_table = dict()
+        if drawing is not None:
+            handle = get_font_handle()
+        else:
+            handle = 0
+        tags = []
+        if self.type == 'TEXT':
+            tags.append(DXFTag(74, 2))
+            tags.append(DXFTag(75, 0))
+        else:  # SHAPE
+            tags.append(DXFTag(74, 4))
+            tags.append(DXFTag(75, shapes_table.get(self.text, 0)))
+        tags.append(DXFTag(340, handle))
+        tags.extend(self.tags)
+        if self.type == 'TEXT':
+            tags.append(DXFTag(9, self.text))
+        return tags
+
+
 CMD_CODES = {
     's': 46,
     'r': 50,  # r == u
@@ -80,23 +118,20 @@ CMD_CODES = {
 }
 
 
-class Text:
-    def __init__(self, type_, text, font):
-        self.type = type_
-        self.text = text
-        self.font = font
-        self.tags = Tags()
-
-
 def compile_complex_defnition(tokens):
-    text = Text(tokens[0], tokens[1], tokens[2])
+    part = ComplexLineTypePart(tokens[0], tokens[1], tokens[2])
     commands = list(reversed(tokens[3:]))
+    params = {}
     while len(commands):
         cmd = commands.pop()
         value = commands.pop()
-        if cmd in CMD_CODES:
-            text.tags.append(DXFTag(CMD_CODES[cmd], value))
-    return text
+        code = CMD_CODES.get(cmd, 0)
+        params[code] = DXFTag(code, value)
+
+    for code in (46, 50, 44, 45):
+        tag = params.get(code, DXFTag(code, 0.))
+        part.tags.append(tag)
+    return part
 
 
 def lin_parser(definition):
