@@ -5,18 +5,6 @@ import pytest
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.lldxf.validator import structure_validator
 from ezdxf.lldxf.const import DXFStructureError
-import logging
-from io import StringIO
-
-logfile = StringIO()
-logging.basicConfig(stream=logfile)
-
-
-def reset_logfile():
-    logfile.seek(0)
-    logfile.truncate(0)
-    assert logfile.getvalue() == ''
-
 
 def test_valid_structure():
     tags = list(structure_validator(internal_tag_compiler(
@@ -61,31 +49,6 @@ def test_missing_section():
             "  0\nENDSEC\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF\n"
         )))
 
-
-def test_outside_tag():
-    reset_logfile()
-
-    tags = list(structure_validator(internal_tag_compiler("0\nTABLE\n  0\nSECTION\n  0\nENDSEC\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF\n")))
-    result = logfile.getvalue()
-    assert result.startswith('WARNING:ezdxf:DXF Structure Warning')
-    assert len(tags) == 6
-    reset_logfile()
-
-    tags = list(structure_validator(internal_tag_compiler("0\nSECTION\n  0\nENDSEC\n  0\nTABLE\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF\n")))
-    result = logfile.getvalue()
-    assert result.startswith('WARNING:ezdxf:DXF Structure Warning')
-    assert len(tags) == 6
-
-    reset_logfile()
-    # filter=True
-    tags = list(structure_validator(
-        internal_tag_compiler("0\nSECTION\n  0\nENDSEC\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF\n  0\nTABLE\n"),
-        filter=True,
-    ))
-    result = logfile.getvalue()
-    assert result.startswith('WARNING:ezdxf:DXF Structure Warning')
-    assert len(tags) == 5
-    assert tags[-1] == (0, 'EOF')
 
 
 if __name__ == '__main__':
