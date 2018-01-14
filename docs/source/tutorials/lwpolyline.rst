@@ -93,4 +93,4 @@ is always a circle, the diameter is relative to the vertex distance, `bulge` = 1
 distance, `bulge` = 0.5 means the diameter is the half of the vertex distance. `bulge` > 0 the curve is on the right
 side of the vertex connection line, `bulge` < 0 the curve is on the left side.
 
-.. image:: LWPolyline5.PNG
+.. image:: gfx/LWPolyline5.PNG

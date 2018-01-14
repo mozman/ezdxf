@@ -10,7 +10,7 @@ import ezdxf
 
 dwg = ezdxf.new('R2018')  # DXF R13 or later is required
 
-ltype_string = dwg.linetypes.new('GASLEITUNG2', dxfattribs={
+dwg.linetypes.new('GASLEITUNG2', dxfattribs={
     'description': 'Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--',
     'length': 1,  # required for complex line types
     # line type definition in acadlt.lin:
@@ -18,7 +18,7 @@ ltype_string = dwg.linetypes.new('GASLEITUNG2', dxfattribs={
 })
 
 # shapes only work if the ltypeshp.shx and the DXF file are in the same directory
-ltype_shape = dwg.linetypes.new('GRENZE2', dxfattribs={
+dwg.linetypes.new('GRENZE2', dxfattribs={
     'description': 'Grenze eckig ----[]-----[]----[]-----[]----[]--',
     'length': 1.45,  # required for complex line types
     # line type definition in acadlt.lin:
