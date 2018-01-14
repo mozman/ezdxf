@@ -3,7 +3,7 @@ ezdxf
 =====
 
 .. image:: https://readthedocs.org/projects/pip/badge/
-   :target: https://dxfgrabber.readthedocs.io
+   :target: https://ezdxf.readthedocs.io
    :alt: Read The Docs
 
 Abstract
