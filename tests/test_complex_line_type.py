@@ -22,9 +22,10 @@ def test_line_type_tokenizer_string_with_comma():
 
 
 def test_line_type_tokenizer_shapes():
-    ltype = 'A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1'
+    # A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1 replacing BOX by shape index 132
+    ltype = 'A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1'
     result = list(lin_tokenizer(ltype))
-    assert result == ['A', '.25', '-.1', '[BOX', 'ltypeshp.shx', 'x=-.1', 's=.1]', '-.1', '1']
+    assert result == ['A', '.25', '-.1', '[132', 'ltypeshp.shx', 'x=-.1', 's=.1]', '-.1', '1']
 
 
 def test_line_type_parser_just_numbers():
@@ -40,9 +41,10 @@ def test_line_type_parser_strings():
 
 
 def test_line_type_parser_shape():
-    ltype = 'A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1'
+    # A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1 replacing BOX by shape index 132
+    ltype = 'A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1'
     result = lin_parser(ltype)
-    assert result == ['A', .25, -.1, ['SHAPE', 'BOX', 'ltypeshp.shx', 'x', -.1, 's', .1], -.1, 1]
+    assert result == ['A', .25, -.1, ['SHAPE', 132, 'ltypeshp.shx', 'x', -.1, 's', .1], -.1, 1]
 
 
 def test_lin_compiler_floats():
@@ -58,7 +60,7 @@ def test_lin_compiler_strings():
     assert result[1] == (49, -.2)
     text = result[2]
     assert text.type == 'TEXT'
-    assert text.text == 'GAS'
+    assert text.value == 'GAS'
     assert text.font == 'STANDARD'
     assert text.tags[0] == (46, .1)
     assert text.tags[1] == (50, 0)
@@ -68,13 +70,14 @@ def test_lin_compiler_strings():
 
 
 def test_lin_compiler_shape():
-    ltype = 'A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1'
+    # A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1 replacing BOX by shape index 132
+    ltype = 'A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1'
     result = lin_compiler(ltype)
     assert result[0] == (49, .25)
     assert result[1] == (49, -.1)
     text = result[2]
     assert text.type == 'SHAPE'
-    assert text.text == 'BOX'
+    assert text.value == 132
     assert text.font == 'ltypeshp.shx'
     assert text.tags[0] == (46, .1)
     assert text.tags[1] == (50, 0.)
@@ -93,7 +96,7 @@ def test_tags_from_complex_text():
     tags = cx_part.complex_ltype_tags(None)
     assert tags[0] == (74, 2)
     assert tags[1] == (75, 0)
-    assert tags[2] == (340, 0)  # default handle with a drawing
+    assert tags[2] == (340, 0)     # default handle without a drawing
     assert tags[3] == (46, .1)     # s
     assert tags[4] == (50, 0)      # r
     assert tags[5] == (44, -0.1)   # x
@@ -102,14 +105,14 @@ def test_tags_from_complex_text():
 
 
 def test_tags_from_complex_shape():
-    ltype = 'A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1'
+    ltype = 'A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1'
     result = lin_compiler(ltype)
     cx_part = result[2]
     assert isinstance(cx_part, ComplexLineTypePart)
     assert cx_part.type == 'SHAPE'
-    tags = cx_part.complex_ltype_tags(None, shapes_table={'BOX': 17})
+    tags = cx_part.complex_ltype_tags(None)
     assert tags[0] == (74, 4)
-    assert tags[1] == (75, 17)   # as in the shapes table defined
+    assert tags[1] == (75, 132)  # shape index
     assert tags[2] == (340, 0)   # default handle with a drawing
     assert tags[3] == (46, .1)   # s
     assert tags[4] == (50, 0.)   # r

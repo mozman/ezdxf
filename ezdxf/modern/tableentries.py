@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
+from ..tools.c23 import isstring
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -141,31 +142,32 @@ class Linetype(legacy.Linetype):
     TEMPLATE = ExtendedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
-    def _setup_pattern(self, pattern):
+    def _setup_pattern(self, pattern, length):
+        complex_line_type = True if isstring(pattern) else False
+        if complex_line_type:  # a .lin like line type definition string
+            self._setup_complex_pattern(pattern, length)
+        else:
+            subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
+            subclass.append(DXFTag(73, len(pattern) - 1))
+            subclass.append(DXFTag(40, pattern[0]))
+            for element in pattern[1:]:
+                subclass.append(DXFTag(49, float(element)))
+                subclass.append(DXFTag(74, 0))
+
+    def _setup_complex_pattern(self, pattern, length):
+        tokens = lin_compiler(pattern)
         subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
-        subclass.append(DXFTag(73, len(pattern) - 1))
-        subclass.append(DXFTag(40, float(pattern[0])))
-
-        for element in pattern[1:]:
-            subclass.append(DXFTag(49, float(element)))
-            subclass.append(DXFTag(74, 0))
-
-    def setup_complex_line_type(self, length, definition, shapes_table=None):
-        pattern = lin_compiler(definition)
-        subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
-
-        subclass.remove_tags_except([2, 3, 70, 72, 100])
         subclass.append(DXFTag(73, 0))  # temp length of 0
-        subclass.append(DXFTag(40, float(length)))
+        subclass.append(DXFTag(40, length))
         count = 0
-        for part in pattern:
-            if isinstance(part, DXFTag):
+        for token in tokens:
+            if isinstance(token, DXFTag):
                 if subclass[-1].code == 49:  # useless 74 only after 49 :))
                     subclass.append(DXFTag(74, 0))
-                subclass.append(part)
+                subclass.append(token)
                 count += 1
             else:  # TEXT or SHAPE
-                subclass.extend(part.complex_ltype_tags(self.drawing, shapes_table))
+                subclass.extend(token.complex_ltype_tags(self.drawing))
         subclass.append(DXFTag(74, 0))  # useless 74 at the end :))
         subclass.update(73, count)
 

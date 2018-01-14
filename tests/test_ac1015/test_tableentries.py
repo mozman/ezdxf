@@ -63,12 +63,9 @@ class TestNewComplexTextLinetype(unittest.TestCase):
         self.ltype = Linetype.new('FFFF', dxfattribs={
             'name': 'GASLEITUNG',
             'description': 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--',
-            # 'pattern': [0.0] can be left off, because [0.0] is default -> setup_complex_line_type()
+            'length': 3.0,  # length is required for complex line types
+            'pattern': 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
         })
-        self.ltype.setup_complex_line_type(
-            length=3.0,
-            definition='A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
-        )
 
     def test_name(self):
         self.assertEqual('GASLEITUNG', self.ltype.dxf.name)

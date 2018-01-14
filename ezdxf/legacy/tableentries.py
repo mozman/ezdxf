@@ -148,13 +148,16 @@ class Linetype(DXFEntity):
     def new(cls, handle, dxfattribs=None, dxffactory=None):
         if dxfattribs is not None:
             pattern = dxfattribs.pop('pattern', [0.0])
+            length = dxfattribs.pop('length', 0.)
         else:
             pattern = [0.0]
+            length = 0.
         entity = super(Linetype, cls).new(handle, dxfattribs, dxffactory)
-        entity._setup_pattern(pattern)
+        entity._setup_pattern(pattern, length)
         return entity
 
-    def _setup_pattern(self, pattern):
+    def _setup_pattern(self, pattern, length):
+        # length parameter is required for complex line types
         self.tags.noclass.append(DXFTag(73, len(pattern) - 1))
         self.tags.noclass.append(DXFTag(40, float(pattern[0])))
         self.tags.noclass.extend((DXFTag(49, float(p)) for p in pattern[1:]))

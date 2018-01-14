@@ -72,13 +72,13 @@ def lin_compiler(definition):
 
 
 class ComplexLineTypePart:
-    def __init__(self, type_, text, font):
+    def __init__(self, type_, value, font='STANDARD'):
         self.type = type_
-        self.text = text
+        self.value = value
         self.font = font
         self.tags = Tags()
 
-    def complex_ltype_tags(self, drawing, shapes_table=None):
+    def complex_ltype_tags(self, drawing):
         def get_font_handle():
             font = drawing.styles.find(self.font)
             if font is None:
@@ -89,8 +89,6 @@ class ComplexLineTypePart:
                     font.dxf.font = self.font
                     font.dxf.last_height = 2.5
             return font.dxf.handle
-        if shapes_table is None:
-            shapes_table = dict()
         if drawing is not None:
             handle = get_font_handle()
         else:
@@ -101,11 +99,11 @@ class ComplexLineTypePart:
             tags.append(DXFTag(75, 0))
         else:  # SHAPE
             tags.append(DXFTag(74, 4))
-            tags.append(DXFTag(75, shapes_table.get(self.text, 0)))
+            tags.append(DXFTag(75, self.value))
         tags.append(DXFTag(340, handle))
         tags.extend(self.tags)
         if self.type == 'TEXT':
-            tags.append(DXFTag(9, self.text))
+            tags.append(DXFTag(9, self.value))
         return tags
 
 
@@ -160,7 +158,10 @@ def lin_parser(definition):
                 sublist.append(token[2:-1])  # text ohne '["' und '"'
             else:
                 sublist.append('SHAPE')
-                sublist.append(token[1:])  # text ohne '['
+                try:
+                    sublist.append(int(token[1:]))  # shape index! required
+                except ValueError:
+                    raise DXFValueError('Complex line type with shapes requires shape index not shape name!')
         else:
             _token = token.rstrip(']')
             subtokens = _token.split('=')
