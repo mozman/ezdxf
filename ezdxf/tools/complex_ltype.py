@@ -80,14 +80,12 @@ class ComplexLineTypePart:
 
     def complex_ltype_tags(self, drawing):
         def get_font_handle():
-            font = drawing.styles.find(self.font)
-            if font is None:
-                font = drawing.styles.new(self.font)
-                if self.type == 'SHAPE':
-                    font.dxf.name = ''
-                    font.dxf.flags = 1  # shx shape
-                    font.dxf.font = self.font
-                    font.dxf.last_height = 2.5
+            if self.type == 'SHAPE':
+                font = drawing.styles.get_shx(self.font)  # creates new shx or returns existing entry
+            else:
+                font = drawing.styles.find(self.font)  # case insensitive search for text style
+                if font is None:
+                    font = drawing.styles.new(self.font)
             return font.dxf.handle
         if drawing is not None:
             handle = get_font_handle()

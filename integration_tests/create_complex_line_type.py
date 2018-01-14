@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # Author:  mozman
-# Purpose: example for complex line types
-# Created: 13.01.2018
+# Purpose: test for complex line types
+# Created: 14.01.2018
 # Copyright (C) 2018 Manfred Moitzi
 # License: MIT License
 
 
 import ezdxf
-
-FILENAME = 'complex_linetype_example.dxf'
 
 dwg = ezdxf.new('R2018')  # DXF R13 or later is required
 
@@ -34,4 +32,5 @@ msp = dwg.modelspace()
 msp.add_line((0, 0), (100, 0), dxfattribs={'linetype': 'GASLEITUNG2'})
 msp.add_line((0, 50), (100, 50), dxfattribs={'linetype': 'GRENZE2'})
 
-dwg.saveas(FILENAME)
+dwg.saveas('complex_linetype.dxf')
+print("Complex line type test - DXF R2018")

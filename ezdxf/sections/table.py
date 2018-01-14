@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import DefaultChunk
-from ..lldxf.tags import group_tags, DXFTag
+from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError
 
@@ -196,6 +196,46 @@ class Table(object):
         """ Remove table-entry from table and entitydb by handle. """
         self._table_entries.remove(handle)
         del self.entitydb[handle]
+
+
+class StyleTable(Table):
+    def get_shx(self, shxname):
+        """
+        Get existing shx entry, or create a new entry.
+
+        Args:
+            shxname: shape file name like 'ltypeshp.lin'
+
+        """
+        shape_file = self.find_shx(shxname)
+        if shape_file is None:
+            dxfattribs = {
+                'font': shxname,
+                'flags': 1,
+                'name': '',  # shape file entry has no name
+                'last_height': 2.5,  # just if this is required by AutoCAD
+            }
+            return self.new_entry(dxfattribs)
+        else:
+            return shape_file
+
+    def find_shx(self, shxname):
+        """
+        Find .shx shape file table entry, by a case insensitive search.
+
+        A .shx shape file table entry has no name, so you have to search by the font attribute.
+
+        Args:
+            shxname: .shx shape file name
+
+        Returns:
+            table entry or None if not found
+        """
+        lower_name = shxname.lower()
+        for entry in iter(self):
+            if entry.dxf.font.lower() == lower_name:
+                return entry
+        return None
 
 
 class ViewportTable(Table):

@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import iter_chunks
-from .table import GenericTable, Table, ViewportTable
+from .table import GenericTable, Table, ViewportTable, StyleTable
 from ..lldxf.tags import Tags
 from ..lldxf.const import DXFAttributeError, DXFStructureError
 
@@ -108,7 +108,7 @@ class TablesSection(object):
 TABLESMAP = {
     'LAYER': Table,
     'LTYPE': Table,
-    'STYLE': Table,
+    'STYLE': StyleTable,
     'DIMSTYLE': Table,
     'VPORT': ViewportTable,
     'VIEW': Table,
