@@ -147,9 +147,11 @@ class Linetype(legacy.Linetype):
         if complex_line_type:  # a .lin like line type definition string
             self._setup_complex_pattern(pattern, length)
         else:
+            # pattern: [2.0, 1.25, -0.25, 0.25, -0.25] - 1. element is total pattern length
+            # pattern elements: >0 line, <0 gap, =0 point
             subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
             subclass.append(DXFTag(73, len(pattern) - 1))
-            subclass.append(DXFTag(40, pattern[0]))
+            subclass.append(DXFTag(40, float(pattern[0])))
             for element in pattern[1:]:
                 subclass.append(DXFTag(49, float(element)))
                 subclass.append(DXFTag(74, 0))

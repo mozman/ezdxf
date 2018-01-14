@@ -158,6 +158,8 @@ class Linetype(DXFEntity):
 
     def _setup_pattern(self, pattern, length):
         # length parameter is required for complex line types
+        # pattern: [2.0, 1.25, -0.25, 0.25, -0.25] - 1. element is total pattern length
+        # pattern elements: >0 line, <0 gap, =0 point
         self.tags.noclass.append(DXFTag(73, len(pattern) - 1))
         self.tags.noclass.append(DXFTag(40, float(pattern[0])))
         self.tags.noclass.extend((DXFTag(49, float(p)) for p in pattern[1:]))
