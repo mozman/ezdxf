@@ -21,7 +21,9 @@ def internal_tag_compiler(s):
     Yields: DXFTag()
     """
     from .types import POINT_CODES, TYPE_TABLE, ustr
-    assert isinstance(s, ustr)
+    from ..tools.c23 import isstring
+
+    assert isstring(s)
 
     lines = s.split('\n')
     # split() creates an extra item, if s ends with '\n',

@@ -2,6 +2,9 @@
 # Created: 03.01.2018
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
+from __future__ import unicode_literals
+__author__ = "mozman <mozman@gmx.at>"
+
 import logging
 import io
 
@@ -138,6 +141,8 @@ def entity_structure_validator(tags):
         DXFAppDataError() for invalid APP DATA
         DXFXDataError() for invalid XDATA
     """
+    assert isinstance(tags, list)
+
     if tags[0].value == 'XRECORD':  # does not work with XRECORD
         for tag in tags:  # return tags does not work in pypy, supporting Python 2 is more and more annoying
             yield tag

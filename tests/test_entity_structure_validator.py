@@ -1,11 +1,18 @@
+from __future__ import unicode_literals
+
 import pytest
 
 from ezdxf.lldxf.validator import entity_structure_validator
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf import DXFAppDataError, DXFXDataError
 
+
+def compile(s):
+    return list(internal_tag_compiler(s))
+
+
 def test_valid_tags():
-    tags = list(entity_structure_validator(internal_tag_compiler(VALID_ENTITY)))
+    tags = list(entity_structure_validator(compile(VALID_ENTITY)))
     assert len(tags) == 6
 
 
@@ -27,7 +34,7 @@ STRING
 
 def test_invalid_app_data_without_closing_tag():
     with pytest.raises(DXFAppDataError):
-        list(entity_structure_validator(internal_tag_compiler(INVALID_APPDATA_NO_CLOSING_TAG)))
+        list(entity_structure_validator(compile(INVALID_APPDATA_NO_CLOSING_TAG)))
 
 
 INVALID_APPDATA_NO_CLOSING_TAG = """0
@@ -45,7 +52,7 @@ STRING
 
 def test_invalid_app_data_without_opening_tag():
     with pytest.raises(DXFAppDataError):
-        list(entity_structure_validator(internal_tag_compiler(INVALID_APPDATA_NO_OPENING_TAG)))
+        list(entity_structure_validator(compile(INVALID_APPDATA_NO_OPENING_TAG)))
 
 
 INVALID_APPDATA_NO_OPENING_TAG = """0
@@ -63,7 +70,7 @@ STRING
 
 def test_invalid_app_data_structure_tag():
     with pytest.raises(DXFAppDataError):
-        list(entity_structure_validator(internal_tag_compiler(INVALID_APPDATA_STRUCTURE_TAG)))
+        list(entity_structure_validator(compile(INVALID_APPDATA_STRUCTURE_TAG)))
 
 
 INVALID_APPDATA_STRUCTURE_TAG = """0
@@ -81,7 +88,7 @@ STRING
 
 def test_invalid_xdata():
     with pytest.raises(DXFXDataError):
-        list(entity_structure_validator(internal_tag_compiler(INVALID_XDATA_STRUCTURE_TAG)))
+        list(entity_structure_validator(compile(INVALID_XDATA_STRUCTURE_TAG)))
 
 
 INVALID_XDATA_STRUCTURE_TAG = """0
@@ -99,7 +106,7 @@ NO GROUP CODE < 1000 in XDATA SECTION
 
 def test_unbalanced_xdata_list_1():
     with pytest.raises(DXFXDataError):
-        list(entity_structure_validator(internal_tag_compiler(UNBALANCED_XDATA_LIST_1)))
+        list(entity_structure_validator(compile(UNBALANCED_XDATA_LIST_1)))
 
 
 UNBALANCED_XDATA_LIST_1 = """0
@@ -121,7 +128,7 @@ STRING
 
 def test_unbalanced_xdata_list_2():
     with pytest.raises(DXFXDataError):
-        list(entity_structure_validator(internal_tag_compiler(UNBALANCED_XDATA_LIST_2)))
+        list(entity_structure_validator(compile(UNBALANCED_XDATA_LIST_2)))
 
 
 UNBALANCED_XDATA_LIST_2 = """0
@@ -143,7 +150,7 @@ STRING
 
 def test_invalid_xdata_list_nesting():
     with pytest.raises(DXFXDataError):
-        list(entity_structure_validator(internal_tag_compiler(INVALID_XDATA_LIST_NESTING)))
+        list(entity_structure_validator(compile(INVALID_XDATA_LIST_NESTING)))
 
 
 INVALID_XDATA_LIST_NESTING = """0

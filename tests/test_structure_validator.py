@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import pytest
 
 from ezdxf.lldxf.tagger import internal_tag_compiler
