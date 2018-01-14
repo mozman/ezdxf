@@ -2,6 +2,10 @@
 News
 ====
 
+version 0.8.5 - ?
+
+
+
 Version 0.8.4 - 2018-01-14
 
   * NEW: Support for complex line types with text or shapes
