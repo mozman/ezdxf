@@ -1,1 +1,1 @@
-@py -3.6 -m pytest tests
+@py -3.6 -m pytest -q tests
