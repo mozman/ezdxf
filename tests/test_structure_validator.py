@@ -6,6 +6,7 @@ from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.lldxf.validator import structure_validator
 from ezdxf.lldxf.const import DXFStructureError
 
+
 def test_valid_structure():
     tags = list(structure_validator(internal_tag_compiler(
         "  0\nSECTION\n  0\nENDSEC\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF\n"
@@ -48,7 +49,6 @@ def test_missing_section():
         list(structure_validator(internal_tag_compiler(
             "  0\nENDSEC\n  0\nSECTION\n  0\nENDSEC\n  0\nEOF\n"
         )))
-
 
 
 if __name__ == '__main__':
