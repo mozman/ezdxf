@@ -13,13 +13,13 @@ def viewport():
     return Viewport(ExtendedTags.from_text(_VPORT_TPL))
 
 
-def test_init_dxf_values(viewport):
+def test_vport_init_values(viewport):
     assert (0, 0, 0) == viewport.dxf.center
     assert 1.0 == viewport.dxf.height
     assert 1.0 == viewport.dxf.width
 
 
-def test_init_viewport_data(viewport):
+def test_vport_attribute_access(viewport):
     vp_data = viewport.get_viewport_data()
     assert (0, 0, 0) == vp_data.view_target_point
     assert (0, 0, 0) == vp_data.view_direction_vector
