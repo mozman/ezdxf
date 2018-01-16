@@ -1,50 +1,57 @@
-# encoding: utf-8
-# Copyright (C) 2013, Manfred Moitzi
+# Copyright (C) 2013- 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 
 from ezdxf.tools.test import ExtendedTags, DXFTag
 from ezdxf.modern.dxfobjects import XRecord
 
 
-class TestXRecord(unittest.TestCase):
-    def setUp(self):
-        self.xrecord = XRecord(ExtendedTags.from_text(XRECORD1))
+@pytest.fixture
+def xrecord():
+    return XRecord(ExtendedTags.from_text(XRECORD1))
 
-    def test_handle(self):
-        self.assertEqual('43A', self.xrecord.dxf.handle)
 
-    def test_parent_handle(self):
-        self.assertEqual('28C', self.xrecord.dxf.owner)
+def test_handle(xrecord):
+    assert '43A' == xrecord.dxf.handle
 
-    def test_cloning_parameter(self):
-        self.assertEqual(1, self.xrecord.dxf.cloning)
 
-    def test_get_data(self):
-        self.assertEqual(DXFTag(102, 'SHADEPLOT'), self.xrecord[0])
-        self.assertEqual(DXFTag(70, 0), self.xrecord[1])
+def test_parent_handle(xrecord):
+    assert '28C' == xrecord.dxf.owner
 
-    def test_last_data(self):
-        self.assertEqual(DXFTag(70, 0), self.xrecord[-1])
 
-    def test_iter_data(self):
-        tags = list(self.xrecord)
-        self.assertEqual(DXFTag(102, 'SHADEPLOT'), tags[0])
-        self.assertEqual(DXFTag(70, 0), tags[1])
+def test_cloning_parameter(xrecord):
+    assert 1 == xrecord.dxf.cloning
 
-    def test_len(self):
-        self.assertEqual(2, len(self.xrecord))
 
-    def test_set_data(self):
-        self.xrecord[0] = DXFTag(103, 'MOZMAN')
-        self.assertEqual(DXFTag(103, 'MOZMAN'), self.xrecord[0])
-        self.assertEqual(DXFTag(70, 0), self.xrecord[1])
+def test_get_data(xrecord):
+    assert DXFTag(102, 'SHADEPLOT') == xrecord[0]
+    assert DXFTag(70, 0) == xrecord[1]
 
-    def test_append_data(self):
-        self.xrecord.append(DXFTag(103, 'MOZMAN'))
-        self.assertEqual(DXFTag(103, 'MOZMAN'), self.xrecord[-1])
+
+def test_last_data(xrecord):
+    assert DXFTag(70, 0) == xrecord[-1]
+
+
+def test_iter_data(xrecord):
+    tags = list(xrecord)
+    assert DXFTag(102, 'SHADEPLOT') == tags[0]
+    assert DXFTag(70, 0) == tags[1]
+
+
+def test_len(xrecord):
+    assert 2 == len(xrecord)
+
+
+def test_set_data(xrecord):
+    xrecord[0] = DXFTag(103, 'MOZMAN')
+    assert DXFTag(103, 'MOZMAN') == xrecord[0]
+    assert DXFTag(70, 0) == xrecord[1]
+
+
+def test_append_data(xrecord):
+    xrecord.append(DXFTag(103, 'MOZMAN'))
+    assert DXFTag(103, 'MOZMAN') == xrecord[-1]
 
 
 XRECORD1 = """  0
@@ -69,5 +76,3 @@ SHADEPLOT
      0
 """
 
-if __name__ == '__main__':
-    unittest.main()

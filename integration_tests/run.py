@@ -1,6 +1,6 @@
 import sys
-import glob
 from subprocess import call
+from pathlib import Path
 
 # install ezdxf editable for pypy:
 # pypy -m pip install -e ezdxf.git
@@ -26,11 +26,13 @@ if WINDOWS:
 else:
     cmd = python_version  # call executable as 'python' (1. command line arg)
 
-for test_file in glob.glob('*.py'):
-    if test_file.endswith(__file__):
+for test_file in Path().glob('*.py'):
+    if test_file.name == __file__:  # do not run 'run.py'
+        continue
+    if test_file.name.startswith('test_'):  # executed by pytest
         continue
     if cmd == 'py':  # py.exe can run different Python versions
-        call([cmd, '-'+python_version, test_file])
+        call([cmd, '-'+python_version, str(test_file)])
     else:
-        call([cmd, test_file])
+        call([cmd, str(test_file)])
 

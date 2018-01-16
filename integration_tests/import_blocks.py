@@ -16,5 +16,6 @@ def main():
     importer.import_modelspace_entities()
     target_dwg.saveas("CustomBlocks_Import.dxf")
 
+
 if __name__ == '__main__':
     main()
