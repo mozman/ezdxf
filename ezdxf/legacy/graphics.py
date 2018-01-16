@@ -709,7 +709,7 @@ class Attrib(Text):
         """
         This is a constant attribute.
         """
-        return self.dxf.flags & const.ATTRIB_CONST
+        return bool(self.dxf.flags & const.ATTRIB_CONST)
 
     @is_const.setter
     def is_const(self, state):
@@ -723,7 +723,7 @@ class Attrib(Text):
         """
         Attribute is invisible (does not appear).
         """
-        return self.dxf.flags & const.ATTRIB_INVISIBLE
+        return bool(self.dxf.flags & const.ATTRIB_INVISIBLE)
 
     @is_invisible.setter
     def is_invisible(self, state):
@@ -737,7 +737,7 @@ class Attrib(Text):
         """
         Verification is required on input of this attribute. (CAD application feature)
         """
-        return self.dxf.flags & const.ATTRIB_VERIFY
+        return bool(self.dxf.flags & const.ATTRIB_VERIFY)
 
     @is_verify.setter
     def is_verify(self, state):
@@ -752,7 +752,7 @@ class Attrib(Text):
         """
         No prompt during insertion. (CAD application feature)
         """
-        return self.dxf.flags & const.ATTRIB_IS_PRESET
+        return bool(self.dxf.flags & const.ATTRIB_IS_PRESET)
 
     @is_preset.setter
     def is_preset(self, state):

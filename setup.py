@@ -54,6 +54,7 @@ setup(
         ]
     },
     provides=['ezdxf'],
+    tests_requires=['pytest'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
     long_description=read('README.rst')+read('NEWS.rst', until='Version 0.6.5'),
