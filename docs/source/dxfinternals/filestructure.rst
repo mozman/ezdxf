@@ -60,53 +60,55 @@ tag signals the end of file.
 
 For further information read the original `DXF Reference`_.
 
-Structure a usual DXF R12 file::
+Structure of a usual DXF R12 file:
 
-  0            (Begin HEADER section)
-  SECTION
-  2
-  HEADER
-               <<<<Header variable items go here>>>>
-  0
-  ENDSEC       (End HEADER section)
-  0            (Begin TABLES section)
-  SECTION
-  2
-  TABLES
-  0
-  TABLE
-  2
-  VPORT
-  70           (viewport table maximum item count)
-               <<<<viewport table items go here>>>>
-  0
-  ENDTAB
-  0
-  TABLE
-  2
-  APPID, DIMSTYLE, LTYPE, LAYER, STYLE, UCS, VIEW, or VPORT
-  70           (Table maximum item count)
-               <<<<Table items go here>>>>
-  0
-  ENDTAB
-  0
-  ENDSEC       (End TABLES section)
-  0            (Begin BLOCKS section)
-  SECTION
-  2
-  BLOCKS
-               <<<<Block definition entities go here>>>>
-  0
-  ENDSEC       (End BLOCKS section)
-  0            (Begin ENTITIES section)
-  SECTION
-  2
-  ENTITIES
-               <<<<Drawing entities go here>>>>
-  0
-  ENDSEC       (End ENTITIES section)
-  0
-  EOF          (End of file)
+.. code-block:: none
+
+    0           <<< Begin HEADER section)
+    SECTION
+    2
+    HEADER
+                <<< Header variable items go here
+    0           <<< End HEADER section
+    ENDSEC
+    0           <<< Begin TABLES section
+    SECTION
+    2
+    TABLES
+    0
+    TABLE
+    2
+    VPORT
+    70          <<< viewport table maximum item count
+                <<< viewport table items go here
+    0
+    ENDTAB
+    0
+    TABLE
+    2
+    APPID, DIMSTYLE, LTYPE, LAYER, STYLE, UCS, VIEW, or VPORT
+    70          <<< Table maximum item count
+                <<< Table items go here
+    0
+    ENDTAB
+    0           <<< End TABLES section
+    ENDSEC
+    0           <<< Begin BLOCKS section
+    SECTION
+    2
+    BLOCKS
+                <<< Block definition entities go here
+    0           <<< End BLOCKS section
+    ENDSEC
+    0           <<< Begin ENTITIES section
+    SECTION
+    2
+    ENTITIES
+                <<< Drawing entities go here
+    0           <<< End ENTITIES section
+    ENDSEC
+    0           <<< End of file
+    EOF
 
 Minimal DXF Content
 -------------------
@@ -114,7 +116,9 @@ Minimal DXF Content
 DXF R12
 =======
 
-Contrary to the previous chapter, the DXF R12 format (AC1009) and prior requires just the ENTITIES section::
+Contrary to the previous chapter, the DXF R12 format (AC1009) and prior requires just the ENTITIES section:
+
+.. code-block:: none
 
     0
     SECTION
