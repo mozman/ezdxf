@@ -74,6 +74,8 @@ TAG_INVALID_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span
 
 MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
 
+CONTROL_TPL = '<div class="tag-ctrl-marker">{tag}</div>'
+
 # Links
 SECTION_LINKS_TPL = '<div class="button-bar">SECTION-LINKS: {buttons}</div>\n'
 REF_LINK_TPL = '<a class="dxf-ref-link" href={target} target="_blank" ' \
@@ -82,11 +84,49 @@ BUTTON_BAR_TPL = '<div class="button-bar">{content}</div>'
 BUTTON_TPL = '<a class="link-button" href="#{target}">{name}</a>'
 
 
+def pp_raw_tags(tagger, filename):
+    def tag2html(tag):
+        def trim_str(vstr):
+            if len(vstr) > 90:
+                vstr = vstr[:75] + " ... " + vstr[-10:]
+            return vstr
+
+        tpl = TAG_TPL
+        vstr = trim_str(ustr(tag.value))
+        type_str = tag_type_str(tag.code)
+        if type_str == '<bin>':
+            if isinstance(tag, CompressedTags):
+                type_str = '<multiple binary encoded data tags compressed to one tag>'
+            else:
+                type_str = '<binary encoded data>'
+            vstr = ""
+        return tpl.format(code=tag.code, value=escape(vstr), type=escape(type_str))
+
+    def marker(tag, tag_html):
+        if tag.code == 0:
+            return CONTROL_TPL.format(tag=tag_html)
+        elif tag.code in GROUP_MARKERS:
+            return MARKER_TPL.format(tag=tag_html)
+        else:
+            return tag_html
+
+    def tags2html():
+        return '\n'.join(marker(tag, tag2html(tag)) for tag in tagger)
+
+    template = load_resource('rawdxf2html.html')
+    return template.format(
+        name=filename,
+        css=load_resource('dxf2html.css'),
+        dxf_file=tags2html(),
+    )
+
+
 def build_ref_link_button(name):
     """Create a link-button for element *name* to the DXF reference.
     """
     link = get_reference_link(name)
     return REF_LINK_TPL.format(target=link, name=name)
+
 
 TAG_TYPES = {
     int: '<int>',

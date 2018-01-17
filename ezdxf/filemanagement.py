@@ -54,6 +54,19 @@ def read(stream, legacy_mode=False):
     return Drawing.read(stream, legacy_mode=legacy_mode)
 
 
+def detect_encoding(filename, encoding='auto'):
+    with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
+        info = dxf_info(fp)
+
+    if encoding != 'auto':  # override encoding detection and $DWGCODEPAGE
+        enc = encoding
+    elif info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
+        enc = 'utf-8'
+    else:
+        enc = info.encoding
+    return enc
+
+
 def readfile(filename, encoding='auto', legacy_mode=False):
     """
     Read DXF drawing specified by *filename* from file system, and supports following DXF versions:
@@ -78,16 +91,7 @@ def readfile(filename, encoding='auto', legacy_mode=False):
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
-    with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
-        info = dxf_info(fp)
-
-    if encoding != 'auto':  # override encoding detection and $DWGCODEPAGE
-        enc = encoding
-    elif info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
-        enc = 'utf-8'
-    else:
-        enc = info.encoding
-
+    enc = detect_encoding(filename, encoding)
     with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
         dwg = read(fp, legacy_mode=legacy_mode)
 

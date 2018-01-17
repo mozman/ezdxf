@@ -177,6 +177,11 @@ a.dxf-ref-link:hover {
     font-weight: bold;
 }
 
+.tag-ctrl-marker {
+    color: red;
+    font-weight: bold;
+}
+
 .ref-yes{
     color: black;
     background-color: lightslategray;
