@@ -55,6 +55,16 @@ def read(stream, legacy_mode=False):
 
 
 def detect_encoding(filename, encoding='auto'):
+    """
+    Detect DXF file encoding.
+
+    Args:
+        filename: DXF filename
+        encoding: overwrite detected encoding if not 'auto'
+
+    Returns:
+        encoding as Python encoding string like 'utf-8'
+    """
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         info = dxf_info(fp)
 

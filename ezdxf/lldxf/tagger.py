@@ -146,7 +146,7 @@ def tag_compiler(tagger):
                 y = next(tagger)  # y coordinate is mandatory
                 line += 2
                 if y.code != code + 10:  # like 20 for base x-code 10
-                    raise DXFStructureError("Missing required y coordinate near line: {}.".format(line.counter))
+                    raise DXFStructureError("Missing required y coordinate near line: {}.".format(line))
                 z = next(tagger)  # z coordinate just for 3d points
                 line += 2
                 try:
@@ -156,7 +156,7 @@ def tag_compiler(tagger):
                         point = (float(x.value), float(y.value))
                         undo_tag = z
                 except ValueError:  # internal exception
-                    raise DXFStructureError('Invalid floating point values near line: {}.'.format(line.counter))
+                    raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
                 yield DXFTag(code, point)
             else:  # just a single tag; internal type casting, not types.cast_tag()
                 try:

@@ -77,7 +77,7 @@ MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
 CONTROL_TPL = '<div class="tag-ctrl-marker">{tag}</div>'
 
 # Links
-SECTION_LINKS_TPL = '<div class="button-bar">SECTION-LINKS: {buttons}</div>\n'
+SECTION_LINKS_TPL = '<div class="button-bar">{buttons}</div>\n'
 REF_LINK_TPL = '<a class="dxf-ref-link" href={target} target="_blank" ' \
                'title="Link to DXF-Reference provided by Autodesk®.">{name}</a>'
 BUTTON_BAR_TPL = '<div class="button-bar">{content}</div>'
@@ -136,9 +136,13 @@ TAG_TYPES = {
     internal_type: '<internal>',
 }
 
+CTRL_STRINGS = frozenset([0, GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
+
 
 def tag_type_str(code):
-    if 309 < code < 320:
+    if code in CTRL_STRINGS:
+        return '<ctrl>'
+    elif 309 < code < 320:
         return '<bin>'
     else:
         return TAG_TYPES[tag_type(code)]
