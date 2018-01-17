@@ -15,20 +15,19 @@ round_n = partial(round, ndigits=6)
 
 BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
 DATADIR = 'data'
-
-
-@pytest.fixture(params=['rwrcmptest.zip'])
-def source_zip_name(request):
-    filename = os.path.join(BASEDIR, DATADIR, request.param)
-    if not os.path.exists(filename):
-        pytest.skip('File {} not found.'.format(filename))
-    return filename
+ZIP_FILE_NAME = os.path.join(BASEDIR, DATADIR, 'rwrcmptest.zip')
+pytestmark = pytest.mark.skipif(not os.path.exists(ZIP_FILE_NAME), reason='Zipfile {} not found.'.format(ZIP_FILE_NAME))
 
 
 def get_filenames(zipname):
     with ZipFile(zipname, 'r') as archive:
         names = archive.namelist()
     return names
+
+
+@pytest.fixture(params=get_filenames(ZIP_FILE_NAME))
+def filename(request):
+    return request.param
 
 
 def copy_by_writing(dwg):
@@ -112,27 +111,19 @@ def compare_tables(orig, copy):
 
 
 def compare_dwg(orig, copy):
-    print('checking: {}'.format(orig.filename))
-    print('comparing HEADER')
     compare_header_vars(orig.header, copy.header)
-    print('comparing TABLES')
     compare_tables(orig.sections.tables, copy.sections.tables)
-    print('comparing BLOCKS')
     compare_blocks(orig.blocks, copy.blocks)
-    print('comparing ENTITIES')
     compare_entities(orig.entities, copy.entities)
     if 'objects' in orig.sections:
-        print('comparing OBJECTS')
         compare_entities(orig.objects, copy.objects)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 2.7 not supported, because of too much rounding errors.")
-def test_rwrc(source_zip_name):
-    dxfnames = get_filenames(source_zip_name)
-    for dxfname in dxfnames:
-        dwg1 = ezdxf.readzip(source_zip_name, dxfname)
-        dwg2 = copy_by_writing(dwg1)
-        compare_dwg(dwg1, dwg2)
+def test_rwrc(filename):
+    dwg1 = ezdxf.readzip(ZIP_FILE_NAME, filename)
+    dwg2 = copy_by_writing(dwg1)
+    compare_dwg(dwg1, dwg2)
 
 
 

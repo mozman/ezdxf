@@ -1,1 +1,1 @@
-@py integration_tests/stress_test.py %*
+@pytest -v integration_tests/stress.py
