@@ -1,6 +1,4 @@
-# Purpose: open DXF files with non standard encodings and from zip archives
-# Created: 02.05.2014, 2018 rewritten for pytest
-# Copyright (C) 2014-2018, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf

@@ -1,6 +1,4 @@
-# Purpose: open a DXF R13 file without plot style name structure setup
-# Created: 05.03.2016, 2018 rewritten for pytest
-# Copyright (C) 2016-2018, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
 import os
 import pytest

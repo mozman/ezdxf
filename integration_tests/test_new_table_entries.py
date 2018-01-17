@@ -1,7 +1,4 @@
-# Purpose: create new drawings for all supported DXF versions and create new
-# table entries - check if AutoCAD accepts the new created data structures.
-# Created: 20.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
 import pytest
 import os

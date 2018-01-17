@@ -1,7 +1,4 @@
-# Purpose: create new drawings for all supported DXF versions and create new
-# anonymous blocks  - check if AutoCAD accepts the new created data structures.
-# Created: 26.04.2013, 2018 rewritten for pytest
-# Copyright (C) 2013-2018, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 import pytest

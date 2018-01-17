@@ -1,6 +1,4 @@
-# Purpose: open DXF file with coordinate tags in unusual order
-# Created: 02.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
 import os
 import pytest

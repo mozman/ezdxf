@@ -1,6 +1,4 @@
-# Purpose: test writing r12writer - reading ezdxf
-# Created: 31.04.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 import pytest

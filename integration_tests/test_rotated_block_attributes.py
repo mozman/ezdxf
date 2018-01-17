@@ -1,14 +1,14 @@
-#!/usr/bin/env python3
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: create new drawings for all supported DXF versions and create new
-# rotated block references - check if AutoCAD accepts the new created data structures.
-# Created: 26.04.2013
-# Copyright (C) 2013, Manfred Moitzi
+# Copyright 2018, Manfred Moitzi
 # License: MIT License
-
+import os
+import pytest
 import ezdxf
 from ezdxf.lldxf.const import versions_supported_by_new
+
+
+@pytest.fixture(params=versions_supported_by_new)
+def drawing(request):
+    return ezdxf.new(request.param)
 
 
 def create_block(dwg):
@@ -43,16 +43,13 @@ def insert_block(layout):
     })
 
 
-def make_drawing(version):
-    dwg = ezdxf.new(version)
-    create_block(dwg)
-    insert_block(dwg.modelspace())
-    dwg.saveas('rotated_block_reference_%s.dxf' % version)
+def test_rotated_block(drawing, tmpdir):
+    create_block(drawing)
+    insert_block(drawing.modelspace())
 
-
-def main():
-    for version in versions_supported_by_new:
-        make_drawing(version)
-
-if __name__ == '__main__':
-    main()
+    filename = str(tmpdir.join('rotated_block_reference_%s.dxf' % drawing.dxfversion))
+    try:
+        drawing.saveas(filename)
+    except ezdxf.DXFError as e:
+        pytest.fail("DXFError: {0} for DXF version {1}".format(str(e), drawing.dxfversion))
+    assert os.path.exists(filename)

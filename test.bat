@@ -18,16 +18,3 @@ ECHO ********************************************************
 ECHO Running pypy2 integration tests with pytest
 ECHO ********************************************************
 CALL pypy.bat -m pytest integration_tests
-
-CD integration_tests
-ECHO ********************************************************
-ECHO Running additional Python 3.6 integration tests
-ECHO ********************************************************
-py run.py 3.6
-
-ECHO ********************************************************
-ECHO Running additional pypy2 integration tests
-ECHO ********************************************************
-py run.py pypy
-
-CD ..
