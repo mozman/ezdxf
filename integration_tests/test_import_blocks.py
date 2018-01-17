@@ -4,14 +4,15 @@ import os
 import pytest
 import ezdxf
 
+BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+DATADIR = 'data'
+
 
 @pytest.fixture(params=['custom_blocks.dxf'])
 def filename(request):
-    filename = request.param
+    filename = os.path.join(BASEDIR, DATADIR, request.param)
     if not os.path.exists(filename):
-        filename = os.path.join('integration_tests', filename)
-        if not os.path.exists(filename):
-            pytest.skip('File {} not found.'.format(filename))
+        pytest.skip('File {} not found.'.format(filename))
     return filename
 
 

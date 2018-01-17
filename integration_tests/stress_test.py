@@ -34,6 +34,7 @@ def run_stress_test(msg, legacy_mode=False):
     print('-'*79)
 
 
-# run_stress_test("Stress test for Legacy DXF reader:", legacy_mode=True)
-run_stress_test("Stress test for optimized DXF reader:", legacy_mode=False)
+if __name__ == '__main__':
+    # run_stress_test("Stress test for Legacy DXF reader:", legacy_mode=True)
+    run_stress_test("Stress test for optimized DXF reader:", legacy_mode=False)
 

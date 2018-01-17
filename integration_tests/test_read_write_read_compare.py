@@ -5,6 +5,7 @@
 # License: MIT License
 import os
 import sys
+import tempfile
 import pytest
 from zipfile import ZipFile
 from functools import partial
@@ -12,14 +13,15 @@ import ezdxf
 
 round_n = partial(round, ndigits=6)
 
+BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
+DATADIR = 'data'
+
 
 @pytest.fixture(params=['rwrcmptest.zip'])
 def source_zip_name(request):
-    filename = request.param
+    filename = os.path.join(BASEDIR, DATADIR, request.param)
     if not os.path.exists(filename):
-        filename = os.path.join('integration_tests', filename)
-        if not os.path.exists(filename):
-            pytest.skip('File {} not found.'.format(filename))
+        pytest.skip('File {} not found.'.format(filename))
     return filename
 
 
@@ -32,7 +34,7 @@ def get_filenames(zipname):
 def copy_by_writing(dwg):
     orig_name = dwg.filename
     name, ext = os.path.splitext(orig_name)
-    test_filename = name+'.test.dxf'
+    test_filename = os.path.join(tempfile.gettempdir(), name+'.test.dxf')
     dwg.saveas(test_filename)
     dwg_copy = ezdxf.readfile(test_filename)
     os.remove(test_filename)
