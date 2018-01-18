@@ -430,8 +430,8 @@ class PolylinePath(object):
     def has_bulge(self):
         for x, y, bulge in self.vertices:
             if bulge != 0:
-                return 1
-        return 0
+                return True
+        return False
 
     def dxftags(self):
         has_bulge = self.has_bulge()

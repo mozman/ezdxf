@@ -1,434 +1,416 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test hatch entity
-# Created: 25.05.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Created: 25.05.2015, 2018 rewritten for pytest
+# Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
+import pytest
 import unittest
 
 from ezdxf.modern.hatch import Hatch, _HATCH_TPL
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 
 
-class TestHatch(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(_HATCH_TPL)
-        self.hatch = Hatch(tags)
-
-    def test_default_settings(self):
-        hatch = self.hatch
-        self.assertEqual('0', hatch.dxf.layer)
-        self.assertEqual(1, hatch.dxf.color)
-        self.assertEqual('BYLAYER', hatch.dxf.linetype)
-        self.assertEqual(1.0, hatch.dxf.ltscale)
-        self.assertEqual(0, hatch.dxf.invisible)
-        self.assertEqual((0.0, 0.0, 1.0), hatch.dxf.extrusion)
-        self.assertEqual((0.0, 0.0, 0.0), hatch.dxf.elevation)
-
-    def test_default_hatch_settings(self):
-        hatch = self.hatch
-        self.assertTrue(self.hatch.has_solid_fill)
-        self.assertFalse(self.hatch.has_gradient_data)
-        self.assertFalse(self.hatch.has_pattern_fill)
-
-        self.assertEqual(1, hatch.dxf.solid_fill)
-        self.assertEqual(1, hatch.dxf.hatch_style)
-        self.assertEqual(1, hatch.dxf.pattern_type)
-        self.assertEqual(0.0, hatch.dxf.pattern_angle)
-        self.assertEqual(1.0, hatch.dxf.pattern_scale)
-        self.assertEqual(0, hatch.dxf.pattern_double)
-        self.assertEqual(1, hatch.dxf.n_seed_points)
-
-    def test_get_seed_points(self):
-        hatch = self.hatch
-        seed_points = hatch.get_seed_points()
-        self.assertEqual(1, len(seed_points))
-        self.assertEqual((0., 0.), seed_points[0])
-
-    def test_set_seed_points(self):
-        hatch = self.hatch
-        seed_points = [(1.0, 1.0), (2.0, 2.0)]
-        hatch.set_seed_points(seed_points)
-        self.assertEqual(2, hatch.dxf.n_seed_points)
-        new_seed_points = hatch.get_seed_points()
-        self.assertEqual(seed_points, new_seed_points)
-        # low level test
-        tags = hatch.AcDbHatch
-        index = tags.tag_index(98)  # pos of 'Number of seed points'
-        self.assertEqual((1.0, 1.0), tags[index+1].value)
-        self.assertEqual((2.0, 2.0), tags[index+2].value)
-
-    def test_set_seed_points_low_level(self):
-        tags = self.hatch.AcDbHatch
-        tags.append(DXFTag(999, 'MARKER'))  # add marker at the end
-        self.hatch.set_seed_points([(1.0, 1.0), (2.0, 2.0)])
-        index = tags.tag_index(98)  # pos of 'Number of seed points'
-        self.assertEqual((10, (1.0, 1.0)), tags[index+1])
-        self.assertEqual((10, (2.0, 2.0)), tags[index+2])
-        self.assertEqual((999, 'MARKER'), tags[-1])  # marker still there?
-
-
-class TestBoundaryPathData(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(PATH_HATCH)
-        self.hatch = Hatch(tags)
-
-    def test_path_count(self):
-        with self.hatch.edit_boundary() as editor:
-            self.assertEqual(1, len(editor.paths), "invalid boundary path count")
-
-    def test_remove_all_paths(self):
-        with self.hatch.edit_boundary() as editor:
-            editor.clear()
-            self.assertEqual(0, len(editor.paths), "invalid boundary path count")
-
-
-class TestCreateBoundaryPathData(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(_HATCH_TPL)
-        self.hatch = Hatch(tags)
-
-    def test_add_polyline_path(self):
-        with self.hatch.edit_boundary() as editor:
-            new_path = editor.add_polyline_path([(0, 0), (0, 1), (1, 1), (1, 0)])
-            self.assertEqual('PolylinePath', new_path.PATH_TYPE, "invalid path type")
-            self.assertEqual(4, len(new_path.vertices), "invalid vertex count")
-
-        # now check the created entity
-        with self.hatch.edit_boundary() as editor:
-            self.assertEqual(1, len(editor.paths))
-            path = editor.paths[0]
-            self.assertEqual('PolylinePath', path.PATH_TYPE, "invalid path type")
-            self.assertEqual(4, len(path.vertices), "invalid vertex count")
-            # vertex format: x, y, bulge_value
-            self.assertEqual((0, 0, 0), path.vertices[0], "invalid first vertex")
-            self.assertEqual((1, 0, 0), path.vertices[3], "invalid last vertex")
-            self.assertTrue(path.is_closed)
-
-
-class TestPolylinePath(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(PATH_HATCH)
-        self.hatch = Hatch(tags)
-
-    def testPolylinePathAttribs(self):
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]  # test first boundary path
-            self.assertEqual('PolylinePath', path.PATH_TYPE, "invalid path type")
-            self.assertEqual(4, len(path.vertices))
-            self.assertFalse(path.has_bulge())
-            self.assertTrue(path.is_closed)
-            self.assertEqual(7, path.path_type_flags, "unexpected path type flags")
-
-    def testPolylinePathVertices(self):
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]  # test first boundary path
-            self.assertEqual('PolylinePath', path.PATH_TYPE, "invalid path type")
-            self.assertEqual(4, len(path.vertices))
-            # vertex format: x, y, bulge_value
-            self.assertEqual((10, 10, 0), path.vertices[0], "invalid first vertex")
-            self.assertEqual((10, 0, 0), path.vertices[3], "invalid last vertex")
-
-
-class TestEdgeHatch(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(EDGE_HATCH)
-        self.hatch = Hatch(tags)
-
-    def test_path_count(self):
-        with self.hatch.edit_boundary() as editor:
-            self.assertEqual(1, len(editor.paths), "invalid boundary path count")
-
-    def test_path_type(self):
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]
-            self.assertEqual('EdgePath', path.PATH_TYPE, "invalid path type")
-
-    def test_path_edges(self):
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]
-            edge = path.edges[0]
-            self.assertEqual('EllipseEdge', edge.EDGE_TYPE, "invalid edge type for 1. edge")
-            self.assertEqual((10, 5), edge.center)
-            self.assertEqual((3, 0), edge.major_axis)
-            self.assertEqual(1./3., edge.ratio)
-            self.assertEqual(270, edge.start_angle)
-            self.assertEqual(450, edge.end_angle)  # this value was created by AutoCAD == 90 degree
-            self.assertEqual(1, edge.is_counter_clockwise)
-
-            edge = path.edges[1]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 2. edge")
-            self.assertEqual((10, 6), edge.start)
-            self.assertEqual((10, 10), edge.end)
-
-            edge = path.edges[2]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 3. edge")
-            self.assertEqual((10, 10), edge.start)
-            self.assertEqual((6, 10), edge.end)
-
-            edge = path.edges[3]
-            self.assertEqual('ArcEdge', edge.EDGE_TYPE, "invalid edge type for 4. edge")
-            self.assertEqual((5, 10), edge.center)
-            self.assertEqual(1, edge.radius)
-            self.assertEqual(360, edge.start_angle)  # this value was created by AutoCAD == 0 degree
-            self.assertEqual(540, edge.end_angle)  # this value was created by AutoCAD == 180 degree
-            self.assertEqual(0, edge.is_counter_clockwise)
-
-            edge = path.edges[4]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 5. edge")
-            self.assertEqual((4, 10), edge.start)
-            self.assertEqual((0, 10), edge.end)
-
-            edge = path.edges[5]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 6. edge")
-            self.assertEqual((0, 10), edge.start)
-            self.assertEqual((0, 0), edge.end)
-
-            edge = path.edges[6]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 7. edge")
-            self.assertEqual((0, 0), edge.start)
-            self.assertEqual((10, 0), edge.end)
-
-            edge = path.edges[7]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 8. edge")
-            self.assertEqual((10, 0), edge.start)
-            self.assertEqual((10, 4), edge.end)
-
-    def test_add_edge_path(self):
-        with self.hatch.edit_boundary() as editor:
-            path = editor.add_edge_path()
-            self.assertEqual('EdgePath', path.PATH_TYPE, "created wrong path type")
-            path.add_line((0, 0), (10, 0))
-            path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
-            path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
-            path.add_line((10, 0), (0, 0))
-        # exit with statement and create DXF tags
-
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[-1]
-            edge = path.edges[0]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 1. edge")
-            self.assertEqual((0, 0), edge.start)
-            self.assertEqual((10, 0), edge.end)
-
-            edge = path.edges[1]
-            self.assertEqual('ArcEdge', edge.EDGE_TYPE, "invalid edge type for 2. edge")
-            self.assertEqual((10, 5), edge.center)
-            self.assertEqual(5, edge.radius)
-            self.assertEqual(270, edge.start_angle)
-            self.assertEqual(450, edge.end_angle)
-            self.assertTrue(edge.is_counter_clockwise)
-
-            edge = path.edges[2]
-            self.assertEqual('EllipseEdge', edge.EDGE_TYPE, "invalid edge type for 3. edge")
-            self.assertEqual((5, 10), edge.center)
-            self.assertEqual((5, 0), edge.major_axis)
-            self.assertEqual(.2, edge.ratio)
-            self.assertEqual(0, edge.start_angle)
-            self.assertEqual(180, edge.end_angle)
-            self.assertFalse(edge.is_counter_clockwise)
-
-            edge = path.edges[3]
-            self.assertEqual('LineEdge', edge.EDGE_TYPE, "invalid edge type for 4. edge")
-            self.assertEqual((10, 0), edge.start)
-            self.assertEqual((0, 0), edge.end)
-
-
-class TestEdgeHatchWithSpline(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(EDGE_HATCH_WITH_SPLINE)
-        self.hatch = Hatch(tags)
-
-    def test_get_params(self):
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]
-            spline = None
-            for edge in path.edges:
-                if edge.EDGE_TYPE == "SplineEdge":
-                    spline = edge
-                    break
-            self.assertIsNotNone(spline, "Spline edge not found.")
-            self.assertEqual(3, spline.degree)
-            self.assertEqual(0, spline.rational)
-            self.assertEqual(0, spline.periodic)
-            self.assertEqual((0, 0), spline.start_tangent)
-            self.assertEqual((0, 0), spline.end_tangent)
-            self.assertEqual(10, len(spline.knot_values))
-            self.assertEqual(11.86874452602773, spline.knot_values[-1])
-            self.assertEqual(6, len(spline.control_points))
-            self.assertEqual((0, 10), spline.control_points[0], "Unexpected start control point.")
-            self.assertEqual((0, 0), spline.control_points[-1], "Unexpected end control point.")
-            self.assertEqual(0, len(spline.weights))
-            self.assertEqual(4, len(spline.fit_points))
-            self.assertEqual((0, 10), spline.fit_points[0], "Unexpected start fit point.")
-            self.assertEqual((0, 0), spline.fit_points[-1], "Unexpected end fit point.")
-
-    def test_create_spline_edge(self):
-        # create the spline
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]
-            spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
-            # the following values do not represent a mathematically valid spline
-            spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
-            spline.knot_values = [1, 2, 3, 4, 5, 6]
-            spline.weights = [4, 3, 2, 1]
-            spline.start_tangent = (10, 1)
-            spline.end_tangent = (2, 20)
-
-        # test the spline
-        with self.hatch.edit_boundary() as editor:
-            path = editor.paths[0]
-            spline = path.edges[-1]
-            self.assertEqual(3, spline.degree)
-            self.assertEqual(1, spline.rational)
-            self.assertEqual(1, spline.periodic)
-            self.assertEqual((10, 1), spline.start_tangent)
-            self.assertEqual((2, 20), spline.end_tangent)
-            self.assertEqual([(1, 1), (2, 2), (3, 3), (4, 4)], spline.control_points)
-            self.assertEqual([(1, 1), (2, 2), (3, 3), (4, 4)], spline.fit_points)
-            self.assertEqual([1, 2, 3, 4, 5, 6], spline.knot_values)
-            self.assertEqual([4, 3, 2, 1], spline.weights)
-
-
-class TestHatchPatternRead(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(HATCH_PATTERN)
-        self.hatch = Hatch(tags)
-
-    def test_is_pattern_hatch(self):
-        self.assertFalse(self.hatch.has_solid_fill)
-        self.assertFalse(self.hatch.has_gradient_data)
-        self.assertTrue(self.hatch.has_pattern_fill)
-
-    def test_edit_pattern(self):
-        with self.hatch.edit_pattern() as pattern_editor:
-            self.assertEqual(2, len(pattern_editor.lines))
-
-            line0 = pattern_editor.lines[0]
-            self.assertEqual(45, line0.angle)
-            self.assertEqual((0, 0), line0.base_point)
-            self.assertEqual((-0.1767766952966369, 0.1767766952966369), line0.offset)
-            self.assertEqual(0, len(line0.dash_length_items))
-
-            line1 = pattern_editor.lines[1]
-            self.assertEqual(45, line1.angle)
-            self.assertEqual((0.176776695, 0), line1.base_point)
-            self.assertEqual((-0.1767766952966369, 0.1767766952966369), line1.offset)
-            self.assertEqual(2, len(line1.dash_length_items))
-            self.assertEqual([0.125, -0.0625], line1.dash_length_items)
-
-
-class TestHatchPatternCreate(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(_HATCH_TPL)
-        self.hatch = Hatch(tags)
-
-    def test_create_new_pattern_hatch(self):
-        pattern = [
-            [45, (0, 0), (0, 1), []],  # 1. Line: continuous
-            [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
-        ]
-        self.hatch.set_pattern_fill("MOZMAN", definition=pattern)
-        self.assertFalse(self.hatch.has_solid_fill)
-        self.assertFalse(self.hatch.has_gradient_data)
-        self.assertTrue(self.hatch.has_pattern_fill)
-
-        self.assertEqual("MOZMAN", self.hatch.dxf.pattern_name)
-        with self.hatch.edit_pattern() as p:
-            line0 = p.lines[0]
-            self.assertEqual(45, line0.angle)
-            self.assertEqual((0, 0), line0.base_point)
-            self.assertEqual((0, 1), line0.offset)
-            self.assertEqual(0, len(line0.dash_length_items))
-
-            line1 = p.lines[1]
-            self.assertEqual(45, line1.angle)
-            self.assertEqual((0, 0.5), line1.base_point)
-            self.assertEqual((0, 1), line1.offset)
-            self.assertEqual(2, len(line1.dash_length_items))
-            self.assertEqual([0.2, -0.1], line1.dash_length_items)
-
-
-class TestGradientHatch(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(_HATCH_TPL)
-        self.hatch = Hatch(tags)
-
-    def test_create_gradient(self):
-        hatch = self.hatch
-        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
-        self.assertTrue(hatch.has_gradient_data)
-        self.assertTrue(hatch.has_solid_fill)
-        self.assertFalse(hatch.has_pattern_fill)
-
-        gdata = hatch.get_gradient()
-        self.assertEqual((10, 10, 10), gdata.color1)
-        self.assertEqual((250, 250, 250), gdata.color2)
-        self.assertEqual(180, int(gdata.rotation))
-        self.assertEqual(0, gdata.centered)
-        self.assertEqual(0, gdata.tint)
-        self.assertEqual('LINEAR', gdata.name)
-
-    def test_create_gradient_low_level_dxf_tags(self):
-        hatch = self.hatch
-        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
-        tags = hatch.AcDbHatch
-        for code in [450, 451, 452, 453, 460, 461, 462, 470]:
-            self.assertTrue(tags.has_tag(code), "missing required tag: %d" % code)
-        self.assertEqual(2, len(tags.find_all(463)))
-        self.assertEqual(2, len(tags.find_all(421)))
-
-    def test_remove_gradient_data(self):
-        hatch = self.hatch
-        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
-        self.assertTrue(hatch.has_gradient_data)
-
-        hatch.set_solid_fill(color=4)  # remove gradient data
-        self.assertFalse(hatch.has_gradient_data, "gradient data not removed")
-        self.assertFalse(hatch.has_pattern_fill)
-        self.assertTrue(hatch.has_solid_fill)
-
-    def test_remove_gradient_low_level_dxf_tags(self):
-        hatch = self.hatch
-        hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
-        self.assertTrue(hatch.has_gradient_data)
-
-        hatch.set_solid_fill(color=4)  # remove gradient data
-        tags = hatch.AcDbHatch
-        for code in [450, 451, 452, 453, 460, 461, 462, 463, 421, 470]:
-            self.assertFalse(tags.has_tag(code), "not removed tag: %d" % code)
-
-
-class TestHatchBackgroundColor(unittest.TestCase):
-    def setUp(self):
-        tags = ExtendedTags.from_text(_HATCH_TPL)
-        self.hatch = Hatch(tags)
-
-    def test_bgcolor_not_exists(self):
-        self.assertIsNone(self.hatch.bgcolor)
-
-    def test_set_new_bgcolor(self):
-        self.hatch.bgcolor = (10, 20, 30)
-        self.assertEqual((10, 20, 30), self.hatch.bgcolor)
-
-    def test_change_bgcolor(self):
-        self.hatch.bgcolor = (10, 20, 30)
-        self.assertEqual((10, 20, 30), self.hatch.bgcolor)
-        self.hatch.bgcolor = (30, 20, 10)
-        self.assertEqual((30, 20, 10), self.hatch.bgcolor)
-
-    def test_delete_bgcolor(self):
-        self.hatch.bgcolor = (10, 20, 30)
-        self.assertEqual((10, 20, 30), self.hatch.bgcolor)
-        del self.hatch.bgcolor
-        self.assertIsNone(self.hatch.bgcolor)
-
-    def test_delete_not_existing_bgcolor(self):
-        del self.hatch.bgcolor
-        self.assertIsNone(self.hatch.bgcolor)
+@pytest.fixture
+def hatch():
+    return Hatch(ExtendedTags.from_text(_HATCH_TPL))
+
+
+@pytest.fixture
+def path_hatch():
+    return Hatch(ExtendedTags.from_text(PATH_HATCH))
+
+
+@pytest.fixture
+def edge_hatch():
+    return Hatch(ExtendedTags.from_text(EDGE_HATCH))
+
+
+@pytest.fixture
+def spline_edge_hatch():
+    return Hatch(ExtendedTags.from_text(EDGE_HATCH_WITH_SPLINE))
+
+
+@pytest.fixture
+def hatch_pattern():
+    return Hatch(ExtendedTags.from_text(HATCH_PATTERN))
+
+
+def test_default_settings(hatch):
+    assert '0' == hatch.dxf.layer
+    assert 1 == hatch.dxf.color
+    assert 'BYLAYER' == hatch.dxf.linetype
+    assert 1.0 == hatch.dxf.ltscale
+    assert 0 == hatch.dxf.invisible
+    assert (0.0, 0.0, 1.0) == hatch.dxf.extrusion
+    assert (0.0, 0.0, 0.0) == hatch.dxf.elevation
+
+
+def test_default_hatch_settings(hatch):
+    assert hatch.has_solid_fill is True
+    assert hatch.has_gradient_data is False
+    assert hatch.has_pattern_fill is False
+
+    assert 1 == hatch.dxf.solid_fill
+    assert 1 == hatch.dxf.hatch_style
+    assert 1 == hatch.dxf.pattern_type
+    assert 0.0 == hatch.dxf.pattern_angle
+    assert 1.0 == hatch.dxf.pattern_scale
+    assert 0 == hatch.dxf.pattern_double
+    assert 1 == hatch.dxf.n_seed_points
+
+
+def test_get_seed_points(hatch):
+    seed_points = hatch.get_seed_points()
+    assert 1 == len(seed_points)
+    assert (0., 0.) == seed_points[0]
+
+
+def test_set_seed_points(hatch):
+    seed_points = [(1.0, 1.0), (2.0, 2.0)]
+    hatch.set_seed_points(seed_points)
+    assert 2 == hatch.dxf.n_seed_points
+
+    new_seed_points = hatch.get_seed_points()
+    assert seed_points == new_seed_points
+    # low level test
+    tags = hatch.AcDbHatch
+    index = tags.tag_index(98)  # pos of 'Number of seed points'
+    assert (1.0, 1.0) == tags[index+1].value
+    assert (2.0, 2.0) == tags[index+2].value
+
+
+def test_set_seed_points_low_level(hatch):
+    tags = hatch.AcDbHatch
+    tags.append(DXFTag(999, 'MARKER'))  # add marker at the end
+    hatch.set_seed_points([(1.0, 1.0), (2.0, 2.0)])
+    index = tags.tag_index(98)  # pos of 'Number of seed points'
+    assert (10, (1.0, 1.0)) == tags[index+1]
+    assert (10, (2.0, 2.0)) == tags[index+2]
+    assert (999, 'MARKER') == tags[-1]  # marker still there?
+
+
+def test_path_count(path_hatch):
+    with path_hatch.edit_boundary() as editor:
+        assert 1 == len(editor.paths), "invalid boundary path count"
+
+
+def test_remove_all_paths(path_hatch):
+    with path_hatch.edit_boundary() as editor:
+        editor.clear()
+        assert 0 == len(editor.paths), "invalid boundary path count"
+
+
+def test_add_polyline_path(hatch):
+    with hatch.edit_boundary() as editor:
+        new_path = editor.add_polyline_path([(0, 0), (0, 1), (1, 1), (1, 0)])
+        assert 'PolylinePath' == new_path.PATH_TYPE, "invalid path type"
+        assert 4 == len(new_path.vertices), "invalid vertex count"
+
+    # now check the created entity
+    with hatch.edit_boundary() as editor:
+        assert 1 == len(editor.paths)
+        path = editor.paths[0]
+        assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
+        assert 4 == len(path.vertices), "invalid vertex count"
+        # vertex format: x, y, bulge_value
+        assert (0, 0, 0) == path.vertices[0], "invalid first vertex"
+        assert (1, 0, 0) == path.vertices[3], "invalid last vertex"
+        assert path.is_closed == 1
+
+
+def test_PolylinePathAttribs(path_hatch):
+    with path_hatch.edit_boundary() as editor:
+        path = editor.paths[0]  # test first boundary path
+        assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
+        assert 4 == len(path.vertices)
+        assert path.has_bulge() is False
+        assert path.is_closed == 1
+        assert 7 == path.path_type_flags, "unexpected path type flags"
+
+
+def test_PolylinePathVertices(path_hatch):
+    with path_hatch.edit_boundary() as editor:
+        path = editor.paths[0]  # test first boundary path
+        assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
+        assert 4 == len(path.vertices)
+        # vertex format: x, y, bulge_value
+        assert (10, 10, 0) == path.vertices[0], "invalid first vertex"
+        assert (10, 0, 0) == path.vertices[3], "invalid last vertex"
+
+
+def test_edge_path_count(edge_hatch):
+    with edge_hatch.edit_boundary() as editor:
+        assert 1 == len(editor.paths), "invalid boundary path count"
+
+
+def test_edge_path_type(edge_hatch):
+    with edge_hatch.edit_boundary() as editor:
+        path = editor.paths[0]
+        assert 'EdgePath' == path.PATH_TYPE, "invalid path type"
+
+
+def test_edge_path_edges(edge_hatch):
+    with edge_hatch.edit_boundary() as editor:
+        path = editor.paths[0]
+        edge = path.edges[0]
+        assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 1. edge"
+        assert (10, 5) == edge.center
+        assert (3, 0) == edge.major_axis
+        assert 1./3. == edge.ratio
+        assert 270 == edge.start_angle
+        assert 450 == edge.end_angle  # this value was created by AutoCAD == 90 degree
+        assert 1 == edge.is_counter_clockwise
+
+        edge = path.edges[1]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 2. edge"
+        assert (10, 6) == edge.start
+        assert (10, 10) == edge.end
+
+        edge = path.edges[2]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 3. edge"
+        assert (10, 10) == edge.start
+        assert (6, 10) == edge.end
+
+        edge = path.edges[3]
+        assert 'ArcEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
+        assert (5, 10) == edge.center
+        assert 1 == edge.radius
+        assert 360 == edge.start_angle  # this value was created by AutoCAD == 0 degree
+        assert 540 == edge.end_angle  # this value was created by AutoCAD == 180 degree
+        assert 0 == edge.is_counter_clockwise
+
+        edge = path.edges[4]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 5. edge"
+        assert (4, 10) == edge.start
+        assert (0, 10) == edge.end
+
+        edge = path.edges[5]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 6. edge"
+        assert (0, 10) == edge.start
+        assert (0, 0) == edge.end
+
+        edge = path.edges[6]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 7. edge"
+        assert (0, 0) == edge.start
+        assert (10, 0) == edge.end
+
+        edge = path.edges[7]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 8. edge"
+        assert (10, 0) == edge.start
+        assert (10, 4) == edge.end
+
+
+def test_add_edge_path(edge_hatch):
+    with edge_hatch.edit_boundary() as editor:
+        path = editor.add_edge_path()
+        assert 'EdgePath' == path.PATH_TYPE, "created wrong path type"
+        path.add_line((0, 0), (10, 0))
+        path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, is_counter_clockwise=1)
+        path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180)
+        path.add_line((10, 0), (0, 0))
+    # exit with statement and create DXF tags
+
+    with edge_hatch.edit_boundary() as editor:
+        path = editor.paths[-1]
+        edge = path.edges[0]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 1. edge"
+        assert (0, 0) == edge.start
+        assert (10, 0) == edge.end
+
+        edge = path.edges[1]
+        assert 'ArcEdge' == edge.EDGE_TYPE, "invalid edge type for 2. edge"
+        assert (10, 5) == edge.center
+        assert 5 == edge.radius
+        assert 270 == edge.start_angle
+        assert 450 == edge.end_angle
+        assert edge.is_counter_clockwise == 1
+
+        edge = path.edges[2]
+        assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 3. edge"
+        assert (5, 10) == edge.center
+        assert (5, 0) == edge.major_axis
+        assert .2 == edge.ratio
+        assert 0 == edge.start_angle
+        assert 180 == edge.end_angle
+        assert edge.is_counter_clockwise == 0
+
+        edge = path.edges[3]
+        assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
+        assert (10, 0) == edge.start
+        assert (0, 0) == edge.end
+
+
+def test_spline_edge_hatch_get_params(spline_edge_hatch):
+    with spline_edge_hatch.edit_boundary() as editor:
+        path = editor.paths[0]
+        spline = None
+        for edge in path.edges:
+            if edge.EDGE_TYPE == "SplineEdge":
+                spline = edge
+                break
+        assert spline is not None, "Spline edge not found."
+        assert 3 == spline.degree
+        assert 0 == spline.rational
+        assert 0 == spline.periodic
+        assert (0, 0) == spline.start_tangent
+        assert (0, 0) == spline.end_tangent
+        assert 10 == len(spline.knot_values)
+        assert 11.86874452602773 == spline.knot_values[-1]
+        assert 6 == len(spline.control_points)
+        assert (0, 10) == spline.control_points[0], "Unexpected start control point."
+        assert (0, 0) == spline.control_points[-1], "Unexpected end control point."
+        assert 0 == len(spline.weights)
+        assert 4 == len(spline.fit_points)
+        assert (0, 10) == spline.fit_points[0], "Unexpected start fit point."
+        assert (0, 0) == spline.fit_points[-1], "Unexpected end fit point."
+
+
+def test_create_spline_edge(spline_edge_hatch):
+    # create the spline
+    with spline_edge_hatch.edit_boundary() as editor:
+        path = editor.paths[0]
+        spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, rational=1, periodic=1)
+        # the following values do not represent a mathematically valid spline
+        spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
+        spline.knot_values = [1, 2, 3, 4, 5, 6]
+        spline.weights = [4, 3, 2, 1]
+        spline.start_tangent = (10, 1)
+        spline.end_tangent = (2, 20)
+
+    # test the spline
+    with spline_edge_hatch.edit_boundary() as editor:
+        path = editor.paths[0]
+        spline = path.edges[-1]
+        assert 3 == spline.degree
+        assert 1 == spline.rational
+        assert 1 == spline.periodic
+        assert (10, 1) == spline.start_tangent
+        assert (2, 20) == spline.end_tangent
+        assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
+        assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.fit_points
+        assert [1, 2, 3, 4, 5, 6] == spline.knot_values
+        assert [4, 3, 2, 1] == spline.weights
+
+
+def test_is_pattern_hatch(hatch_pattern):
+    assert hatch_pattern.has_solid_fill is False
+    assert hatch_pattern.has_gradient_data is False
+    assert hatch_pattern.has_pattern_fill is True
+
+
+def test_edit_pattern(hatch_pattern):
+    with hatch_pattern.edit_pattern() as pattern_editor:
+        assert 2 == len(pattern_editor.lines)
+
+        line0 = pattern_editor.lines[0]
+        assert 45 == line0.angle
+        assert (0, 0) == line0.base_point
+        assert (-0.1767766952966369, 0.1767766952966369) == line0.offset
+        assert 0 == len(line0.dash_length_items)
+
+        line1 = pattern_editor.lines[1]
+        assert 45 == line1.angle
+        assert (0.176776695, 0) == line1.base_point
+        assert (-0.1767766952966369, 0.1767766952966369) == line1.offset
+        assert 2 == len(line1.dash_length_items)
+        assert [0.125, -0.0625] == line1.dash_length_items
+
+
+def test_create_new_pattern_hatch(hatch):
+    pattern = [
+        [45, (0, 0), (0, 1), []],  # 1. Line: continuous
+        [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
+    ]
+    hatch.set_pattern_fill("MOZMAN", definition=pattern)
+    assert hatch.has_solid_fill is False
+    assert hatch.has_gradient_data is False
+    assert hatch.has_pattern_fill is True
+
+    assert "MOZMAN" == hatch.dxf.pattern_name
+    with hatch.edit_pattern() as p:
+        line0 = p.lines[0]
+        assert 45 == line0.angle
+        assert (0, 0) == line0.base_point
+        assert (0, 1) == line0.offset
+        assert 0 == len(line0.dash_length_items)
+
+        line1 = p.lines[1]
+        assert 45 == line1.angle
+        assert (0, 0.5) == line1.base_point
+        assert (0, 1) == line1.offset
+        assert 2 == len(line1.dash_length_items)
+        assert [0.2, -0.1] == line1.dash_length_items
+
+
+def test_create_gradient(hatch):
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    assert hatch.has_gradient_data is True
+    assert hatch.has_solid_fill is True
+    assert hatch.has_pattern_fill is False
+
+    gdata = hatch.get_gradient()
+    assert (10, 10, 10) == gdata.color1
+    assert (250, 250, 250) == gdata.color2
+    assert 180 == int(gdata.rotation)
+    assert 0 == gdata.centered
+    assert 0 == gdata.tint
+    assert 'LINEAR' == gdata.name
+
+
+def test_create_gradient_low_level_dxf_tags(hatch):
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    tags = hatch.AcDbHatch
+    for code in [450, 451, 452, 453, 460, 461, 462, 470]:
+        assert tags.has_tag(code) is True, "missing required tag: %d" % code
+    assert 2 == len(tags.find_all(463))
+    assert 2 == len(tags.find_all(421))
+
+
+def test_remove_gradient_data(hatch):
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    assert hatch.has_gradient_data is True
+
+    hatch.set_solid_fill(color=4)  # remove gradient data
+    assert hatch.has_gradient_data is False, "gradient data not removed"
+    assert hatch.has_pattern_fill is False
+    assert hatch.has_solid_fill is True
+
+
+def test_remove_gradient_low_level_dxf_tags(hatch):
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    assert hatch.has_gradient_data is True
+
+    hatch.set_solid_fill(color=4)  # remove gradient data
+    tags = hatch.AcDbHatch
+    for code in [450, 451, 452, 453, 460, 461, 462, 463, 421, 470]:
+        assert tags.has_tag(code) is False, "not removed tag: %d" % code
+
+
+def test_bgcolor_not_exists(hatch):
+    assert hatch.bgcolor is None
+
+
+def test_set_new_bgcolor(hatch):
+    hatch.bgcolor = (10, 20, 30)
+    assert (10, 20, 30) == hatch.bgcolor
+
+
+def test_change_bgcolor(hatch):
+    hatch.bgcolor = (10, 20, 30)
+    assert (10, 20, 30) == hatch.bgcolor
+    hatch.bgcolor = (30, 20, 10)
+    assert (30, 20, 10) == hatch.bgcolor
+
+
+def test_delete_bgcolor(hatch):
+    hatch.bgcolor = (10, 20, 30)
+    assert (10, 20, 30) == hatch.bgcolor
+    del hatch.bgcolor
+    assert hatch.bgcolor is None
+
+
+def test_delete_not_existing_bgcolor(hatch):
+    del hatch.bgcolor
+    assert hatch.bgcolor is None
 
 
 PATH_HATCH = """  0
