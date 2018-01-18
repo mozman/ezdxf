@@ -10,11 +10,11 @@ from __future__ import unicode_literals
 import os
 import io
 
-from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type, DXFValueError
+from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
-from ezdxf.lldxf.tags import CompressedTags
+from ezdxf.lldxf.tags import CompressedTags, group_tags
 
 # Handle definitions
 
@@ -73,7 +73,6 @@ TAG_INVALID_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span
                        ' <a class="tag-link" href="#{value}">{value}  [does not exist]</a></div>'
 
 MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
-
 CONTROL_TPL = '<div class="tag-ctrl-marker">{tag}</div>'
 
 # Links
@@ -83,24 +82,13 @@ REF_LINK_TPL = '<a class="dxf-ref-link" href={target} target="_blank" ' \
 BUTTON_BAR_TPL = '<div class="button-bar">{content}</div>'
 BUTTON_TPL = '<a class="link-button" href="#{target}">{name}</a>'
 
+MAX_STR_LEN = 110
+
 
 def pp_raw_tags(tagger, filename):
     def tag2html(tag):
-        def trim_str(vstr):
-            if len(vstr) > 90:
-                vstr = vstr[:75] + " ... " + vstr[-10:]
-            return vstr
-
-        tpl = TAG_TPL
-        vstr = trim_str(ustr(tag.value))
         type_str = tag_type_str(tag.code)
-        if type_str == '<bin>':
-            if isinstance(tag, CompressedTags):
-                type_str = '<multiple binary encoded data tags compressed to one tag>'
-            else:
-                type_str = '<binary encoded data>'
-            vstr = ""
-        return tpl.format(code=tag.code, value=escape(vstr), type=escape(type_str))
+        return TAG_TPL.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(type_str))
 
     def marker(tag, tag_html):
         if tag.code == 0:
@@ -110,14 +98,21 @@ def pp_raw_tags(tagger, filename):
         else:
             return tag_html
 
-    def tags2html():
-        return '\n'.join(marker(tag, tag2html(tag)) for tag in tagger)
+    def tags2html(tags):
+        return '\n'.join(marker(tag, tag2html(tag)) for tag in tags)
+
+    def groups(tags):
+        for group in group_tags(tags, splitcode=0):
+            yield '<div class="dxf-control-structure">\n{content}\n</div>'.format(content=tags2html(group))
+
+    def dxf_control_structures(tags):
+        return '\n'.join(groups(tags))
 
     template = load_resource('rawdxf2html.html')
     return template.format(
         name=filename,
         css=load_resource('dxf2html.css'),
-        dxf_file=tags2html(),
+        dxf_file=dxf_control_structures(tagger),
     )
 
 
@@ -304,8 +299,8 @@ class DXF2HtmlConverter(object):
         """
         def tag2html(tag):
             def trim_str(vstr):
-                if len(vstr) > 90:
-                    vstr = vstr[:75] + " ... " + vstr[-10:]
+                if len(vstr) > MAX_STR_LEN:
+                    vstr = vstr[:(MAX_STR_LEN-15)] + " ... " + vstr[-10:]
                 return vstr
 
             tpl = TAG_TPL

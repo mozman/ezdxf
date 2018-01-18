@@ -84,6 +84,12 @@ a.dxf-ref-link:hover {
     padding: 5px;
 }
 
+.dxf-control-structure {
+    background-color: cornsilk;
+    margin: 5px 0px 5px 0px;
+    padding: 5px 5px 5px 5px;
+}
+
 /* DXF header
 */
 
