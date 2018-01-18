@@ -1,131 +1,131 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test image and imagedef entity
-# Created: 13.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Created: 13.03.2016, 2018 rewritten for pytest
+# Copyright (C) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 
 import ezdxf
 from ezdxf.modern.image import ImageDef, Image
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
-DWG = ezdxf.new('AC1015')
+
+@pytest.fixture(scope='module')
+def dwg():
+    return ezdxf.new('AC1015')
 
 
-class TestImageDefFromText(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(IMAGE_DEF)
-        self.image_def = ImageDef(self.tags, DWG)
-
-    def test_imagedef_properties(self):
-        self.assertEqual('IMAGEDEF', self.image_def.dxftype())
-
-    def test_imagedef_dxf_attribs(self):
-        self.assertEqual(0, self.image_def.dxf.class_version)
-        self.assertEqual('mycat.jpg', self.image_def.dxf.filename)
-        self.assertEqual((640., 360.), self.image_def.dxf.image_size)
-        self.assertEqual((.01, .01), self.image_def.dxf.pixel_size)
-        self.assertEqual(1, self.image_def.dxf.loaded)
-        self.assertEqual(0, self.image_def.dxf.resolution_units)
+@pytest.fixture(scope='module')
+def image_def(dwg):
+    tags = ExtendedTags.from_text(IMAGE_DEF)
+    return ImageDef(tags, dwg)
 
 
-class TestImageFromText(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(IMAGE)
-        self.image = Image(self.tags, DWG)
-
-    def test_image_properties(self):
-        self.assertEqual('IMAGE', self.image.dxftype())
-
-    def test_image_dxf_attribs(self):
-        self.assertEqual((0., 0., 0.), self.image.dxf.insert)
-        self.assertEqual((.01, 0., 0.), self.image.dxf.u_pixel)
-        self.assertEqual((0., .01, 0.), self.image.dxf.v_pixel)
-        self.assertEqual((640., 360.), self.image.dxf.image_size)
-        self.assertEqual(7, self.image.dxf.flags)
-        self.assertEqual(0, self.image.dxf.clipping)
-        self.assertEqual(50, self.image.dxf.brightness)
-        self.assertEqual(50, self.image.dxf.contrast)
-        self.assertEqual(0, self.image.dxf.fade)
-        self.assertEqual('DEAD', self.image.dxf.image_def_reactor)
-        self.assertEqual(1, self.image.dxf.clipping_boundary_type)
-        self.assertEqual(2, self.image.dxf.count_boundary_points)
-        self.assertEqual([(0, 0), self.image.dxf.image_size], self.image.get_boundary_path())
-
-    def test_get_boundary_path(self):
-        self.assertEqual([(0, 0), (640, 360)], self.image.get_boundary_path())
-
-    def test_reset_boundary_path(self):
-        self.image.reset_boundary_path()
-        self.assertEqual(2, self.image.dxf.count_boundary_points)
-        self.assertEqual(3, self.image.dxf.flags)
-        self.assertEqual([(0, 0), self.image.dxf.image_size], self.image.get_boundary_path())
-
-    def test_set_boundary_path(self):
-        self.image.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
-        self.assertEqual(3, self.image.dxf.count_boundary_points)
-        self.assertEqual(2, self.image.dxf.clipping_boundary_type)
-        self.assertEqual([(0, 0), (640, 180), (320, 360)], self.image.get_boundary_path())
+def test_imagedef_attribs(image_def):
+    assert 'IMAGEDEF' == image_def.dxftype()
+    assert 0 == image_def.dxf.class_version
+    assert 'mycat.jpg' == image_def.dxf.filename
+    assert (640., 360.) == image_def.dxf.image_size
+    assert (.01, .01) == image_def.dxf.pixel_size
+    assert 1 == image_def.dxf.loaded
+    assert 0 == image_def.dxf.resolution_units
 
 
-class TestCreateNewImage(unittest.TestCase):
-    def setUp(self):
-        # setting up a drawing is expensive - use as few test methods as possible
-        self.dwg = ezdxf.new('R2000')
+@pytest.fixture(scope='module')
+def image(dwg):
+    tags = ExtendedTags.from_text(IMAGE)
+    return Image(tags, dwg)
 
-    def test_new_image_def(self):
-        rootdict = self.dwg.rootdict
-        self.assertFalse('ACAD_IMAGE_DICT' in rootdict)
-        imagedef = self.dwg.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
 
-        # check internals image_def_owner -> ACAD_IMAGE_DICT
-        image_dict_handle = rootdict['ACAD_IMAGE_DICT']
-        image_dict = self.dwg.get_dxf_entity(image_dict_handle)
-        self.assertEqual(imagedef.dxf.owner, image_dict.dxf.handle)
+def test_image_dxf_attribs(image):
+    assert 'IMAGE' == image.dxftype()
+    assert (0., 0., 0.) == image.dxf.insert
+    assert (.01, 0., 0.) == image.dxf.u_pixel
+    assert (0., .01, 0.) == image.dxf.v_pixel
+    assert (640., 360.) == image.dxf.image_size
+    assert 7 == image.dxf.flags
+    assert 0 == image.dxf.clipping
+    assert 50 == image.dxf.brightness
+    assert 50 == image.dxf.contrast
+    assert 0 == image.dxf.fade
+    assert 'DEAD' == image.dxf.image_def_reactor
+    assert 1 == image.dxf.clipping_boundary_type
+    assert 2 == image.dxf.count_boundary_points
+    assert [(0, 0), image.dxf.image_size] == image.get_boundary_path()
 
-        self.assertEqual('mycat.jpg', imagedef.dxf.filename)
-        self.assertEqual((640., 360.), imagedef.dxf.image_size)
 
-        # rest are default values
-        self.assertEqual((.01, .01), imagedef.dxf.pixel_size)
-        self.assertEqual(1, imagedef.dxf.loaded)
-        self.assertEqual(0, imagedef.dxf.resolution_units)
+def test_get_boundary_path(image):
+    assert [(0, 0), (640, 360)] == image.get_boundary_path()
 
-    def test_create_and_delete_image(self):
-        msp = self.dwg.modelspace()
-        image_def = self.dwg.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
-        image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
-        self.assertEqual((0, 0, 0), image.dxf.insert)
-        self.assertEqual((0.005, 0, 0), image.dxf.u_pixel)
-        self.assertEqual((0., 0.005, 0), image.dxf.v_pixel)
-        self.assertEqual((640, 360), image.dxf.image_size)
-        self.assertEqual(image_def.dxf.handle, image.dxf.image_def)
-        self.assertEqual(3, image.dxf.flags)
-        self.assertEqual(0, image.dxf.clipping)
-        self.assertEqual(2, image.dxf.count_boundary_points)
-        self.assertEqual([(0, 0), image.dxf.image_size], image.get_boundary_path())
 
-        image_def2 = image.get_image_def()
-        self.assertEqual(image_def.dxf.handle, image_def2.dxf.handle)
+def test_reset_boundary_path(image):
+    image.reset_boundary_path()
+    assert 2 == image.dxf.count_boundary_points
+    assert 3 == image.dxf.flags
+    assert [(0, 0) == image.dxf.image_size], image.get_boundary_path()
 
-        # does image def reactor exists
-        reactor_handle = image.dxf.image_def_reactor
-        self.assertTrue(reactor_handle in self.dwg.objects)
-        reactor = self.dwg.get_dxf_entity(reactor_handle)
-        self.assertEqual(image.dxf.handle, reactor.dxf.owner, "IMAGE is not owner of IMAGEDEF_REACTOR")
-        self.assertEqual(image.dxf.handle, reactor.dxf.image, "IMAGEDEF_REACTOR does not point to IMAGE")
 
-        self.assertTrue(reactor_handle in image_def2.get_reactors(), "Reactor handle not in IMAGE_DEF reactors.")
+def test_set_boundary_path(image):
+    image.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
+    assert 3 == image.dxf.count_boundary_points
+    assert 2 == image.dxf.clipping_boundary_type
+    assert [(0, 0), (640, 180), (320, 360)], image.get_boundary_path()
 
-        # delete image
-        msp.delete_entity(image)
-        self.assertFalse(reactor_handle in self.dwg.objects, "IMAGEDEF_REACTOR not deleted for objects section")
-        self.assertFalse(reactor_handle in self.dwg.entitydb, "IMAGEDEF_REACTOR not deleted for entity database")
-        self.assertFalse(reactor_handle in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors.")
+
+@pytest.fixture
+def new_dwg():
+    return ezdxf.new('AC1015')
+
+
+def test_new_image_def(new_dwg):
+    rootdict = new_dwg.rootdict
+    assert 'ACAD_IMAGE_DICT' not in rootdict
+    imagedef = new_dwg.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
+
+    # check internals image_def_owner -> ACAD_IMAGE_DICT
+    image_dict_handle = rootdict['ACAD_IMAGE_DICT']
+    image_dict = new_dwg.get_dxf_entity(image_dict_handle)
+    assert imagedef.dxf.owner == image_dict.dxf.handle
+
+    assert 'mycat.jpg' == imagedef.dxf.filename
+    assert (640., 360.) == imagedef.dxf.image_size
+
+    # rest are default values
+    assert (.01, .01) == imagedef.dxf.pixel_size
+    assert 1 == imagedef.dxf.loaded
+    assert 0 == imagedef.dxf.resolution_units
+
+
+def test_create_and_delete_image(new_dwg):
+    msp = new_dwg.modelspace()
+    image_def = new_dwg.add_image_def('mycat.jpg', size_in_pixel=(640, 360))
+    image = msp.add_image(image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8))
+    assert (0, 0, 0) == image.dxf.insert
+    assert (0.005, 0, 0) == image.dxf.u_pixel
+    assert (0., 0.005, 0) == image.dxf.v_pixel
+    assert (640, 360) == image.dxf.image_size
+    assert image_def.dxf.handle == image.dxf.image_def
+    assert 3 == image.dxf.flags
+    assert 0 == image.dxf.clipping
+    assert 2 == image.dxf.count_boundary_points
+    assert [(0, 0), image.dxf.image_size] == image.get_boundary_path()
+
+    image_def2 = image.get_image_def()
+    assert image_def.dxf.handle, image_def2.dxf.handle
+
+    # does image def reactor exists
+    reactor_handle = image.dxf.image_def_reactor
+    assert reactor_handle in new_dwg.objects
+    reactor = new_dwg.get_dxf_entity(reactor_handle)
+    assert image.dxf.handle == reactor.dxf.owner, "IMAGE is not owner of IMAGEDEF_REACTOR"
+    assert image.dxf.handle == reactor.dxf.image, "IMAGEDEF_REACTOR does not point to IMAGE"
+
+    assert reactor_handle in image_def2.get_reactors(), "Reactor handle not in IMAGE_DEF reactors."
+
+    # delete image
+    msp.delete_entity(image)
+    assert reactor_handle not in new_dwg.objects, "IMAGEDEF_REACTOR not deleted for objects section"
+    assert reactor_handle not in new_dwg.entitydb, "IMAGEDEF_REACTOR not deleted for entity database"
+    assert reactor_handle not in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors."
 
 
 IMAGE_DEF = """  0

@@ -1,3 +1,5 @@
+# Copyright (C) 2018, Manfred Moitzi
+# License: MIT License
 import pytest
 
 from ezdxf.tools.complex_ltype import lin_tokenizer, lin_parser, lin_compiler, ComplexLineTypePart

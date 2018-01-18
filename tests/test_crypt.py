@@ -1,27 +1,18 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test decode/encode proprietary data
-# Created: 01.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Created: 01.05.2014, 2018 rewritten for pytest
+# Copyright (C) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
 from ezdxf.tools.crypt import decode, encode
 
 
-class TestDecoder(unittest.TestCase):
-    def test_decode(self):
-        for enc, dec in zip(decode(ENCODED_LINES), DECODED_LINES):
-            self.assertEqual(dec, enc)
+def test_decode():
+    for enc, dec in zip(decode(ENCODED_LINES), DECODED_LINES):
+        assert dec == enc
 
 
-class TestEncoder(unittest.TestCase):
-    def test_encode(self):
-        for enc, dec in zip(ENCODED_LINES, encode(DECODED_LINES)):
-            self.assertEqual(enc, dec)
+def test_encode():
+    for enc, dec in zip(ENCODED_LINES, encode(DECODED_LINES)):
+        assert enc == dec
 
 
 DECODED_LINES = """21200 115 2 26

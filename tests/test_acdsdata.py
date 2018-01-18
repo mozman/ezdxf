@@ -1,42 +1,41 @@
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test SECTION ACDSDATA
-# Created: 04.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Created: 04.05.2014, 2018 rewritten for pytest
+# Copyright (C) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+import pytest
 
-import unittest
-
-from ezdxf.tools.test import DrawingProxy
+import ezdxf
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.acdsdata import AcDsDataSection
 from ezdxf import DXFKeyError
 
 
-DWG = DrawingProxy('AC1027')
+@pytest.fixture(scope='module')
+def dwg():
+    return ezdxf.new('AC1027')
 
 
-class TestAcDsDataSection(unittest.TestCase):
-    def test_build(self):
-        section = AcDsDataSection(ACDSSECTION, DrawingProxy('AC1027'))
-        self.assertEqual('ACDSDATA', section.name.upper())
-        self.assertTrue(len(section.entities) > 0)
+def test_build(dwg):
+    section = AcDsDataSection(ACDSSECTION, dwg)
+    assert 'ACDSDATA' == section.name.upper()
+    assert len(section.entities) > 0
 
-    def test_acdsrecord(self):
-        section = AcDsDataSection(ACDSSECTION, DrawingProxy('AC1027'))
-        records = [entity for entity in section.entities if entity.dxftype() == 'ACDSRECORD']
-        self.assertTrue(len(records) > 0)
-        record = records[0]
-        self.assertTrue(record.has_section('ASM_Data'))
-        self.assertTrue(record.has_section('AcDbDs::ID'))
-        self.assertFalse(record.has_section('mozman'))
-        with self.assertRaises(DXFKeyError):
-            asm_data = record['mozman']
 
-        asm_data = record['ASM_Data']
-        binary_data = (tag for tag in asm_data if tag.code == 310)
-        length = sum(len(tag.value) for tag in binary_data) / 2
-        self.assertEqual(asm_data[2].value, length)
+def test_acdsrecord(dwg):
+    section = AcDsDataSection(ACDSSECTION, dwg)
+    records = [entity for entity in section.entities if entity.dxftype() == 'ACDSRECORD']
+    assert len(records) > 0
+    record = records[0]
+    assert record.has_section('ASM_Data') is True
+    assert record.has_section('AcDbDs::ID') is True
+    assert record.has_section('mozman') is False
+    with pytest.raises(DXFKeyError):
+        asm_data = record['mozman']
+
+    asm_data = record['ASM_Data']
+    binary_data = (tag for tag in asm_data if tag.code == 310)
+    length = sum(len(tag.value) for tag in binary_data) / 2
+    assert asm_data[2].value == length
 
 
 ACDSSECTION = Tags.from_text("""  0
@@ -265,6 +264,3 @@ FFFFFF0CFFFFFFFF0C070000000C040000000C05000000110D04666163650C0A00000004FFFFFFFF
 5F76740E036579650D066174747269620CFFFFFFFF04FFFFFFFF0CFFFFFFFF0C0A0000000C090000000C040000000C05000000110E03456E640E026F660E0341534D0D0464617461
 0
 ENDSEC""")
-
-if __name__ == '__main__':
-    unittest.main()

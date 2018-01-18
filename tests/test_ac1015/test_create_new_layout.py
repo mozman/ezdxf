@@ -42,7 +42,7 @@ def create_new_layout(dwg, name):
 
 def test_create_new_layout(dxf_ac1015):
     new_layout = create_new_layout(dxf_ac1015, 'mozman_layout')
-    assert 'mozman_layout' ==  new_layout.name
+    assert 'mozman_layout' == new_layout.name
     assert is_layout_in_object_section(new_layout, dxf_ac1015) is True
     assert is_layout_in_dxf_layout_management_table(new_layout, dxf_ac1015) is True
     assert block_record_for_layout_exist(new_layout, dxf_ac1015) is True

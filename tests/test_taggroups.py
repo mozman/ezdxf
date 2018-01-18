@@ -1,35 +1,33 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test taggroups
-# Created: 13.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 13.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
+import pytest
 from ezdxf.lldxf.tags import group_tags, internal_tag_compiler
 
 
-class TestTagGroups(unittest.TestCase):
-    def setUp(self):
-        self.groups = list(group_tags(internal_tag_compiler(TESTTAGS)))
+@pytest.fixture
+def groups():
+    return list(group_tags(internal_tag_compiler(TESTTAGS)))
 
-    def test_init(self):
-        self.assertEqual(36, len(self.groups))
 
-    def test_first_group(self):
-        self.assertEqual('SECTION', self.groups[0][0].value)
-        self.assertEqual(2, len(self.groups[0]))
+def test_init(groups):
+    assert 36 == len(groups)
 
-    def test_second_group(self):
-        self.assertEqual('TABLE', self.groups[1][0].value)
-        self.assertEqual(3, len(self.groups[1]))
 
-    def test_last_group(self):
-        self.assertEqual('ENDTAB', self.groups[-1][0].value)
-        self.assertEqual(1, len(self.groups[-1]))
+def test_first_group(groups):
+    assert 'SECTION' == groups[0][0].value
+    assert 2 == len(groups[0])
+
+
+def test_second_group(groups):
+    assert 'TABLE' == groups[1][0].value
+    assert 3 == len(groups[1])
+
+
+def test_last_group(groups):
+    assert 'ENDTAB' == groups[-1][0].value
+    assert 1 == len(groups[-1])
 
 
 TESTTAGS = """  0
@@ -373,5 +371,3 @@ ACAD_PSEXT
   0
 ENDTAB
 """
-if __name__ == '__main__':
-    unittest.main()

@@ -1,41 +1,43 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test entity section
-# Created: 15.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 15.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
-class TestClassesSection(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
-        self.section = ClassesSection(Tags.from_text(TESTCLASSES), self.dwg)
 
-    def test_write(self):
-        stream = StringIO()
-        self.section.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        t1 = list(compile_tags_without_handles(TESTCLASSES))
-        t2 = list(compile_tags_without_handles(result))
-        self.assertEqual(t1, t2)
+@pytest.fixture(scope='module')
+def dwg():
+    return DrawingProxy('AC1009')
 
-    def test_empty_section(self):
-        tags = list(Tags.from_text(EMPTYSEC))
-        section = ClassesSection(tags, self.dwg)
-        stream = StringIO()
-        section.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        self.assertEqual(EMPTYSEC, result)
+
+@pytest.fixture(scope='module')
+def section(dwg):
+    return ClassesSection(Tags.from_text(TESTCLASSES), dwg)
+
+
+def test_write(section):
+    stream = StringIO()
+    section.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    t1 = list(compile_tags_without_handles(TESTCLASSES))
+    t2 = list(compile_tags_without_handles(result))
+    assert t1 == t2
+
+
+def test_empty_section(dwg):
+    tags = list(Tags.from_text(EMPTYSEC))
+    section = ClassesSection(tags, dwg)
+    stream = StringIO()
+    section.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    assert EMPTYSEC == result
 
 
 EMPTYSEC = """  0

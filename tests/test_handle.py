@@ -1,36 +1,29 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test handle
-# Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 12.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
 from ezdxf.tools.handle import HandleGenerator
 
 
-class TestHandleGenerator(unittest.TestCase):
-    def test_next(self):
-        handles = HandleGenerator('100')
-        self.assertEqual('100', handles.next())
-
-    def test_next_function(self):
-        handles = HandleGenerator('100')
-        self.assertEqual('100', next(handles))
-
-    def test_seed(self):
-        handles = HandleGenerator('200')
-        handles.next()
-        self.assertEqual('201', str(handles))
-
-    def test_reset(self):
-        handles = HandleGenerator('200')
-        handles.reset('300')
-        self.assertEqual('300', str(handles))
+def test_next():
+    handles = HandleGenerator('100')
+    assert '100' == handles.next()
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_next_function():
+    handles = HandleGenerator('100')
+    assert '100' == next(handles)
+
+
+def test_seed():
+    handles = HandleGenerator('200')
+    handles.next()
+    assert '201' == str(handles)
+
+
+def test_reset():
+    handles = HandleGenerator('200')
+    handles.reset('300')
+    assert '300' == str(handles)
+
+

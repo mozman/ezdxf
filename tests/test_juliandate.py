@@ -1,42 +1,35 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test julian date
-# Created: 21.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 21.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 from datetime import datetime
 
 from ezdxf.tools.juliandate import juliandate, calendardate
 
 
-class TestJulianDate(unittest.TestCase):
+class TestJulianDate:
     def test_1582_10_15(self):
-        self.assertAlmostEqual(2299161., juliandate(datetime(1582, 10, 15)))
+        assert 2299161. == pytest.approx(juliandate(datetime(1582, 10, 15)))
 
     def test_1990_01_01(self):
-        self.assertAlmostEqual(2447893., juliandate(datetime(1990, 1, 1)))
+        assert 2447893. == pytest.approx(juliandate(datetime(1990, 1, 1)))
 
     def test_2000_01_01(self):
-        self.assertAlmostEqual(2451545., juliandate(datetime(2000, 1, 1)))
+        assert 2451545. == pytest.approx(juliandate(datetime(2000, 1, 1)))
 
     def test_2011_03_21(self):
-        self.assertAlmostEqual(2455642.75, juliandate(datetime(2011, 3, 21, 18, 0, 0)))
+        assert 2455642.75 == pytest.approx(juliandate(datetime(2011, 3, 21, 18, 0, 0)))
 
     def test_1999_12_31(self):
-        self.assertAlmostEqual(2451544.91568287, juliandate(datetime(1999, 12, 31, 21, 58, 35)))
+        assert 2451544.91568287 == pytest.approx(juliandate(datetime(1999, 12, 31, 21, 58, 35)))
 
 
-class TestCalendarDate(unittest.TestCase):
+class TestCalendarDate:
     def test_1999_12_31(self):
-        self.assertEqual(calendardate(2451544.91568288), datetime(1999, 12, 31, 21, 58, 35))
+        assert calendardate(2451544.91568288) == pytest.approx(datetime(1999, 12, 31, 21, 58, 35))
 
     def test_2011_03_21(self):
-        self.assertEqual(calendardate(2455642.75), datetime(2011, 3, 21, 18, 0, 0))
+        assert calendardate(2455642.75) == pytest.approx(datetime(2011, 3, 21, 18, 0, 0))
 
 
-if __name__ == '__main__':
-    unittest.main()

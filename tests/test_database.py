@@ -1,35 +1,29 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test database
-# Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 12.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 
 from ezdxf.database import EntityDB
 
 
-class testEntityDB(unittest.TestCase):
-    def setUp(self):
-        self.db = EntityDB()
-        self.db[0] = 'TEST'
-
-    def test_get_value(self):
-        self.assertEqual('TEST', self.db[0])
-
-    def test_set_value(self):
-        self.db[0] = 'XTEST'
-        self.assertEqual('XTEST', self.db[0])
-
-    def test_del_value(self):
-        del self.db[0]
-        with self.assertRaises(KeyError):
-            self.db[0]
+@pytest.fixture
+def db():
+    db = EntityDB()
+    db[0] = 'TEST'
+    return db
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_get_value(db):
+    assert 'TEST' == db[0]
+
+
+def test_set_value(db):
+    db[0] = 'XTEST'
+    assert 'XTEST' == db[0]
+
+
+def test_del_value(db):
+    del db[0]
+    with pytest.raises(KeyError):
+        db[0]

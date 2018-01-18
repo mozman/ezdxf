@@ -1,4 +1,5 @@
-import pytest
+# Copyright (C) 2014-2018, Manfred Moitzi
+# License: MIT License
 from ezdxf.graphicsfactory import copy_attribs
 
 
@@ -20,7 +21,3 @@ def test_none_empty_dict():
     # do not change original attribs
     result['height'] = 2.0
     assert dxfattribs['height'] == 1.0
-
-
-if __name__ == '__main__':
-    pytest.main([__file__])
