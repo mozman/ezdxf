@@ -14,7 +14,7 @@ from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_typ
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
-from ezdxf.lldxf.tags import CompressedTags, group_tags
+from ezdxf.lldxf.tags import CompressedTags
 
 # Handle definitions
 
@@ -32,7 +32,7 @@ GENERAL_MARKER = 0
 SUBCLASS_MARKER = 100
 APP_DATA_MARKER = 102
 EXT_DATA_MARKER = 1001
-GROUP_MARKERS = (GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER)
+GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
 
 # HTML templates
 # Section
@@ -85,37 +85,6 @@ BUTTON_TPL = '<a class="link-button" href="#{target}">{name}</a>'
 MAX_STR_LEN = 110
 
 
-def pp_raw_tags(tagger, filename):
-    def tag2html(tag):
-        type_str = tag_type_str(tag.code)
-        return TAG_TPL.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(type_str))
-
-    def marker(tag, tag_html):
-        if tag.code == 0:
-            return CONTROL_TPL.format(tag=tag_html)
-        elif tag.code in GROUP_MARKERS:
-            return MARKER_TPL.format(tag=tag_html)
-        else:
-            return tag_html
-
-    def tags2html(tags):
-        return '\n'.join(marker(tag, tag2html(tag)) for tag in tags)
-
-    def groups(tags):
-        for group in group_tags(tags, splitcode=0):
-            yield '<div class="dxf-control-structure">\n{content}\n</div>'.format(content=tags2html(group))
-
-    def dxf_control_structures(tags):
-        return '\n'.join(groups(tags))
-
-    template = load_resource('rawdxf2html.html')
-    return template.format(
-        name=filename,
-        css=load_resource('dxf2html.css'),
-        dxf_file=dxf_control_structures(tagger),
-    )
-
-
 def build_ref_link_button(name):
     """Create a link-button for element *name* to the DXF reference.
     """
@@ -131,11 +100,9 @@ TAG_TYPES = {
     internal_type: '<internal>',
 }
 
-CTRL_STRINGS = frozenset([0, GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
-
 
 def tag_type_str(code):
-    if code in CTRL_STRINGS:
+    if code in GROUP_MARKERS:
         return '<ctrl>'
     elif 309 < code < 320:
         return '<bin>'
@@ -166,11 +133,11 @@ class DXF2HtmlConverter(object):
                 filename = os.path.basename(self.drawing.filename)
                 return os.path.splitext(filename)[0]
 
-        template = load_resource('dxf2html.html')
+        template = load_resource('dxfpp.html')
         return template.format(
             name=get_name(),
-            css=load_resource('dxf2html.css'),
-            javascript=load_resource('dxf2html.js'),
+            css=load_resource('dxfpp.css'),
+            javascript=load_resource('dxfpp.js'),
             dxf_file=self.sections2html(),
             section_links=self.sections_link_bar(),
         )
@@ -391,7 +358,7 @@ class DXF2HtmlConverter(object):
         return BLOCK_TPL.format(name=block_layout.name, block=block_html, entities=entities_html, endblk=endblk_html)
 
 
-def dxf2html(drawing):
+def dxfpp(drawing):
     """Creates a structured HTML view of the DXF tags - not a CAD drawing!
     """
     return DXF2HtmlConverter(drawing).dxf2html()

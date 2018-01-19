@@ -10,7 +10,8 @@ import io
 import argparse
 from pathlib import Path
 
-from .dxf2html import dxf2html, pp_raw_tags
+from .dxfpp import dxfpp
+from .rawpp import rawpp
 from ezdxf import readfile, options
 from ezdxf.lldxf.const import DXFError, DXFStructureError
 from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler
@@ -32,7 +33,7 @@ def pretty_print(filename):
     html_filename = filename.parent / (filename.stem + '.html')
     try:
         with io.open(html_filename, mode='wt', encoding='utf-8') as fp:
-            fp.write(dxf2html(dwg))
+            fp.write(dxfpp(dwg))
     except IOError:
         print("IOError: can not write file '{}'.".format(html_filename))
     else:
@@ -58,7 +59,7 @@ def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
         html_filename = filename.parent / (filename.stem + '.html')
         try:
             with io.open(html_filename, mode='wt', encoding='utf-8') as html:
-                html.write(pp_raw_tags(tagger, str(filename)))
+                html.write(rawpp(tagger, str(filename)))
         except IOError:
             print("IOError: can not write file '{}'.".format(html_filename))
         except DXFStructureError as e:

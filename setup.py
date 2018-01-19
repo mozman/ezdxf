@@ -45,9 +45,12 @@ setup(
               'ezdxf.tools',
               ],
     package_data={'ezdxf': ['templates/*.dxf',
-                            'pp/dxf2html.html',
-                            'pp/dxf2html.js',
-                            'pp/dxf2html.css']},
+                            'pp/dxfpp.html',
+                            'pp/dxfpp.js',
+                            'pp/dxfpp.css',
+                            'pp/rawpp.css',
+                            'pp/rawpp.html',
+                            ]},
     entry_points={
         'console_scripts': [
             'dxfpp = ezdxf.pp.__main__:main'  # DXF Pretty Printer
