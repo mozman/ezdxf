@@ -12,7 +12,7 @@ from .dxfpp import tag_type_str, GROUP_MARKERS, load_resource
 TAG_TPL = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
           ' <span class="tag-value">{value}</span></div>'
 MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
-CONTROL_TPL = '<div class="tag-ctrl-marker">{tag}</div>'
+CONTROL_TPL = '<div class="tag-control-tag">{tag}</div>'
 
 
 def rawpp(tagger, filename):
@@ -33,7 +33,7 @@ def rawpp(tagger, filename):
 
     def groups(tags):
         for group in group_tags(tags, splitcode=0):
-            yield '<div class="dxf-control-structure">\n{content}\n</div>'.format(content=tags2html(group))
+            yield '<div class="dxf-tag-group">\n{content}\n</div>'.format(content=tags2html(group))
 
     def dxf_control_structures(tags):
         return '\n'.join(groups(tags))

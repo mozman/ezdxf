@@ -1,199 +1,53 @@
 /* content of dxf2html.css */
 body {
-    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    font-family: "Open Sans", sans-serif;
     width: 1100px;
     margin-right: auto;
     margin-left: auto;
-}
-
-.button-bar {
-    font-weight: bold;
-    padding: 5px;
-    color: darkblue;
-}
-
-a.link-button {
-    background-color: darkblue;
     color: white;
-    font-weight: bold;
-    padding: 0 10px 0 10px;
-    text-decoration: none;
-}
-
-a.link-button:link,
-a.link-button:visited,
-a.link-button:active,
-a.link-button:focus
-{
-    color: white;
-}
-
-a.link-button:hover {
-    color: orange;
-}
-
-/* section, table and entity names as link to the DXF reference
-*/
-
-a.dxf-ref-link {
-    font-weight: bold;
-    text-decoration: none;
-}
-
-a.dxf-ref-link:link,
-a.dxf-ref-link:visited,
-a.dxf-ref-link:active,
-a.dxf-ref-link:focus
-{
-    color: black;
-}
-
-a.dxf-ref-link:hover {
-    color: red;
-}
-
-#section-links {
-    margin: 5px;
+    background-color: lightgray;
 }
 
 #dxf-filename {
-    color: darkblue;
-    background-color: white;
+    color: #20324D;
     font-size: xx-large;
     font-weight: bold;
     padding: 5px;
 }
 
-#dxf-file {
-}
-
-/* DXF sections
-*/
-
-.dxf-sections {
-}
-
-.dxf-section-name{
-    font-size: xx-large;
-    font-weight: bold;
+/* Background */
+.dxf-bg {
+    background-color: #20324D;
     padding: 5px;
 }
 
-.dxf-section {
-    background-color: orange;
-    padding: 5px;
-}
-
-.dxf-control-structure {
-    background-color: cornsilk;
+.dxf-tag-group {
+    background-color: #3F5577;
     margin: 5px 0px 5px 0px;
     padding: 5px 5px 5px 5px;
 }
 
-/* DXF header
-*/
-
-.dxf-header {
-    background-color: lightgray;
-    margin: 5px;
-    padding: 5px;
+.tag-group-marker {
+    color: #A0BFDE;
+    /* font-weight: bold; */
 }
 
-/* DXF entities
-*/
-.dxf-entities {
-}
-
-.dxf-entity-name{
-    font-size: large;
+.tag-control-tag {
+    color: orange;
     font-weight: bold;
-    padding: 5px;
 }
 
-.dxf-entity {
-    background-color: grey;
-    margin: 5px 0 5px 5px;
-}
-
-.dxf-blocks,
-.dxf-tables {
-}
-
-.dxf-block-name,
-.dxf-table-name {
-    font-size: x-large;
-    font-weight: bold;
-    padding: 5px;
-}
-
-.dxf-block,
-.dxf-table{
-    background-color: cadetblue;
-    margin: 5px 5px 0 5px;
-    padding: 5px 0 0 5px;
-}
-
-/* DXF tags and header vars
-*/
-.dxf-tags {
-    background-color: lightgrey;
-    padding: 5px;
-}
-
-.dxf-tag,
-.hdr-var {
-    font-family: "Lucida Console", Monaco, monospace;
+.dxf-tag {
+    font-family: "Source Code Pro", monospace;
     font-size: medium;
 }
 
-.tag-code,
+.tag-code {
+}
+
 .var-type {
-    color: darkblue;
 }
 
 .tag-value {
 }
 
-.cu-tag {
-    color: darkblue;
-}
-
-.cu-tag-value {
-    color: darkgreen;
-}
-
-/* DXF handles and pointers as links
-*/
-.tag-link {
-    font-weight: bold;
-    text-decoration: none;
-}
-.tag-link:link,
-.tag-link:visited,
-.tag-link:active,
-.tag-link:focus
-{
-    color: darkred;
-}
-.tag-link:hover {
-    color: orange;
-}
-
-.tag-group-marker {
-    font-weight: bold;
-}
-
-.tag-ctrl-marker {
-    color: red;
-    font-weight: bold;
-}
-
-.ref-yes{
-    color: black;
-    background-color: lightslategray;
-}
-
-.ref-no {
-    background-color: lightslategray;
-    color: darkred;
-}
