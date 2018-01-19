@@ -65,15 +65,16 @@ def detect_encoding(filename, encoding='auto'):
     Returns:
         encoding as Python encoding string like 'utf-8'
     """
-    with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
-        info = dxf_info(fp)
+    if encoding == 'auto':
+        with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
+            info = dxf_info(fp)
 
-    if encoding != 'auto':  # override encoding detection and $DWGCODEPAGE
-        enc = encoding
-    elif info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
-        enc = 'utf-8'
+        if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
+            enc = 'utf-8'
+        else:
+            enc = info.encoding
     else:
-        enc = info.encoding
+        enc = encoding
     return enc
 
 

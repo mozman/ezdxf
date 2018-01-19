@@ -25,11 +25,11 @@ def pretty_print(filename):
     try:
         dwg = readfile(str(filename), legacy_mode=True)
     except IOError:
-        print("Unable to read DXF file '{}', or invalid DXF file.".format(filename))
-        sys.exit()
+        print("Unable to read DXF file '{}'.".format(filename))
+        sys.exit(1)
     except DXFError as e:
         print(str(e))
-        sys.exit()
+        sys.exit(2)
 
     html_filename = filename.parent / (filename.stem + '.html')
     try:
@@ -37,8 +37,6 @@ def pretty_print(filename):
             fp.write(dxfpp(dwg))
     except IOError:
         print("IOError: can not write file '{}'.".format(html_filename))
-    else:
-        print("dxfpp created '{}'".format(html_filename))
     return html_filename
 
 
@@ -46,11 +44,11 @@ def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
     try:
         encoding = detect_encoding(str(filename))
     except IOError:
-        print("Unable to read DXF file '{}', or invalid DXF file.".format(filename))
-        sys.exit()
+        print("Unable to read DXF file '{}'.".format(filename))
+        sys.exit(1)
     except DXFError as e:
         print(str(e))
-        sys.exit()
+        sys.exit(2)
 
     with io.open(filename, mode='rt', encoding=encoding, errors='ignore') as dxf:
         tagger = low_level_tagger(dxf)
@@ -66,8 +64,6 @@ def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
             print("IOError: can not write file '{}'.".format(html_filename))
         except DXFStructureError as e:
             print("DXFStructureError: {}".format(str(e)))
-        else:
-            print("dxfpp created '{}'".format(html_filename))
     return html_filename
 
 
@@ -115,6 +111,7 @@ def main():
         else:
             html_path = pretty_print(Path(filename))  # legacy mode is always used
 
+        print("dxfpp created '{}'".format(html_path))
         if args.open:
             webbrowser.open(html_path)
 

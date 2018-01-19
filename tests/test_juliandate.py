@@ -2,6 +2,7 @@
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+import sys
 import pytest
 from datetime import datetime
 
@@ -25,6 +26,7 @@ class TestJulianDate:
         assert 2451544.91568287 == pytest.approx(juliandate(datetime(1999, 12, 31, 21, 58, 35)))
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="usual pypy2 testing problem, I don't care.")
 class TestCalendarDate:
     def test_1999_12_31(self):
         assert calendardate(2451544.91568288) == pytest.approx(datetime(1999, 12, 31, 21, 58, 35))
