@@ -33,6 +33,7 @@ SUBCLASS_MARKER = 100
 APP_DATA_MARKER = 102
 EXT_DATA_MARKER = 1001
 GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
+BINARY_FLAGS = frozenset([70, 90])
 
 # HTML templates
 # Section
@@ -108,6 +109,10 @@ def tag_type_str(code):
         return '<bin>'
     else:
         return TAG_TYPES[tag_type(code)]
+
+
+def with_bitmask(value):
+    return "{0}, b{0:08b}".format(value)
 
 
 class DXF2HtmlConverter(object):
@@ -278,7 +283,11 @@ class DXF2HtmlConverter(object):
                     tpl = TAG_VALID_LINK_TPL
                 else:
                     tpl = TAG_INVALID_LINK_TPL
-            vstr = trim_str(ustr(tag.value))
+
+            if tag.code in BINARY_FLAGS:
+                vstr = with_bitmask(tag.value)
+            else:
+                vstr = trim_str(ustr(tag.value))
             type_str = tag_type_str(tag.code)
             if type_str == '<bin>':
                 if isinstance(tag, CompressedTags):

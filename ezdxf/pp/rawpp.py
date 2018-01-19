@@ -7,7 +7,7 @@
 from __future__ import unicode_literals
 from ezdxf.tools.c23 import escape, ustr
 from ezdxf.lldxf.tags import group_tags
-from .dxfpp import tag_type_str, GROUP_MARKERS, load_resource
+from .dxfpp import tag_type_str, GROUP_MARKERS, load_resource, BINARY_FLAGS, with_bitmask
 
 TAG_TPL = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
           ' <span class="tag-value">{value}</span></div>'
@@ -18,7 +18,11 @@ CONTROL_TPL = '<div class="tag-control-tag">{tag}</div>'
 def rawpp(tagger, filename):
     def tag2html(tag):
         type_str = tag_type_str(tag.code)
-        return TAG_TPL.format(code=tag.code, value=escape(ustr(tag.value)), type=escape(type_str))
+        if tag.code in BINARY_FLAGS:
+            vstr = with_bitmask(tag.value)
+        else:
+            vstr = ustr(tag.value)
+        return TAG_TPL.format(code=tag.code, value=escape(vstr), type=escape(type_str))
 
     def marker(tag, tag_html):
         if tag.code == 0:
