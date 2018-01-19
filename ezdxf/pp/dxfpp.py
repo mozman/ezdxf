@@ -34,6 +34,7 @@ APP_DATA_MARKER = 102
 EXT_DATA_MARKER = 1001
 GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
 BINARY_FLAGS = frozenset([70, 90])
+HEX_HANDLES = frozenset([*_HANDLE_CODES, *HANDLE_LINKS])
 
 # HTML templates
 # Section
@@ -66,12 +67,12 @@ TAG_LIST_TPL = '<div class="dxf-tags">\n{content}\n</div>'
 TAG_TPL = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
           ' <span class="tag-value">{value}</span></div>'
 TAG_HANDLE_DEF_TPL = '<div class="dxf-tag"><span id="{value}" class="tag-code">{code}</span>'\
-                     ' <span class="var-type">{type}</span> <span class="tag-value">{value}</span></div>'
+                     ' <span class="var-type">{type}</span> <span class="tag-value">#{value}</span></div>'
 TAG_VALID_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \
-                     ' <a class="tag-link" href="#{value}">{value}</a></div>'
+                     ' <a class="tag-link" href="#{value}">#{value}</a></div>'
 
 TAG_INVALID_LINK_TPL = '<div class="dxf-tag"><span class="tag-code">{code}</span> <span class="var-type">{type}</span>'\
-                       ' <a class="tag-link" href="#{value}">{value}  [does not exist]</a></div>'
+                       ' <a class="tag-link" href="#{value}">#{value}  [does not exist]</a></div>'
 
 MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
 CONTROL_TPL = '<div class="tag-ctrl-marker">{tag}</div>'
@@ -105,6 +106,8 @@ TAG_TYPES = {
 def tag_type_str(code):
     if code in GROUP_MARKERS:
         return '<ctrl>'
+    elif code in HEX_HANDLES:
+        return '<hex>'
     elif 309 < code < 320:
         return '<bin>'
     else:
@@ -288,6 +291,7 @@ class DXF2HtmlConverter(object):
                 vstr = with_bitmask(tag.value)
             else:
                 vstr = trim_str(ustr(tag.value))
+
             type_str = tag_type_str(tag.code)
             if type_str == '<bin>':
                 if isinstance(tag, CompressedTags):
