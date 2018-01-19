@@ -117,6 +117,9 @@ AcDbViewport
 0.0
 """
 
+# Every paper space layout contains as default VIEWPORT entity with the id=1.
+# VIEWPORT id has to be unique to the paper space, it is placed not to the whole
+# DXF drawing.
 
 viewport_subclass = DefSubclass('AcDbViewport', {
     'center': DXFAttr(10, xtype='Point2D/3D'),
