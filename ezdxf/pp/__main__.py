@@ -18,6 +18,7 @@ from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler
 from ezdxf.lldxf.validator import is_dxf_file
 from ezdxf.filemanagement import detect_encoding
 from ezdxf.lldxf.repair import tag_reorder_layer
+import webbrowser
 
 
 def pretty_print(filename):
@@ -38,6 +39,7 @@ def pretty_print(filename):
         print("IOError: can not write file '{}'.".format(html_filename))
     else:
         print("dxfpp created '{}'".format(html_filename))
+    return html_filename
 
 
 def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
@@ -66,6 +68,7 @@ def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
             print("DXFStructureError: {}".format(str(e)))
         else:
             print("dxfpp created '{}'".format(html_filename))
+    return html_filename
 
 
 def main():
@@ -75,6 +78,11 @@ def main():
         metavar='FILE',
         nargs='+',
         help='DXF files pretty print',
+    )
+    parser.add_argument(
+        '-o', '--open',
+        action='store_true',
+        help='open generated HTML file with the default web browser',
     )
     parser.add_argument(
         '-r', '--raw',
@@ -103,9 +111,12 @@ def main():
             continue
 
         if args.raw:
-            raw_pretty_print(Path(filename), args.nocompile, args.legacy)
+            html_path = raw_pretty_print(Path(filename), args.nocompile, args.legacy)
         else:
-            pretty_print(Path(filename))  # legacy mode is always used
+            html_path = pretty_print(Path(filename))  # legacy mode is always used
+
+        if args.open:
+            webbrowser.open(html_path)
 
 
 if __name__ == "__main__":
