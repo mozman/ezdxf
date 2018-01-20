@@ -1,110 +1,114 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test spline entity
-# Created: 04.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Created: 04.05.2014, 2018 rewritten for pytest
+# Copyright (C) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
+import pytest
 import ezdxf
 from ezdxf.modern.mesh import Mesh
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
-DWG = ezdxf.new('AC1015')
+
+@pytest.fixture(scope='module')
+def dwg():
+    return ezdxf.new('AC1015')
 
 
-class TestMeshFromText(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(MESH)
-        self.mesh = Mesh(self.tags, DWG)
-
-    def test_mesh_properties(self):
-        mesh = self.mesh
-        self.assertEqual('MESH', mesh.dxftype())
-        self.assertEqual(256, mesh.dxf.color)
-        self.assertEqual('0', mesh.dxf.layer)
-        self.assertEqual('BYLAYER', mesh.dxf.linetype)
-        self.assertFalse(mesh.dxf.paperspace)
-
-    def test_mesh_dxf_attribs(self):
-        self.assertEqual(2, self.mesh.dxf.version)
-        self.assertEqual(0, self.mesh.dxf.blend_crease)
-        self.assertEqual(3, self.mesh.dxf.subdivision_levels)
-
-    def test_mesh_geometric_data(self):
-        with self.mesh.edit_data() as mesh_data:
-            self.assertEqual(56, len(mesh_data.vertices))
-            self.assertEqual(54, len(mesh_data.faces))
-            self.assertEqual(108, len(mesh_data.edges))
-            self.assertEqual(108, len(mesh_data.edge_crease_values))
+@pytest.fixture(scope='module')
+def msp(dwg):
+    return dwg.modelspace()
 
 
-class TestNewMesh(unittest.TestCase):
-    def setUp(self):
-        self.msp = DWG.modelspace()
+@pytest.fixture
+def mesh(dwg):
+    tags = ExtendedTags.from_text(MESH)
+    return Mesh(tags, dwg)
 
-    def test_create_empty_mesh(self):
-        mesh = self.msp.add_mesh()
-        self.assertEqual(2, mesh.dxf.version)
-        self.assertEqual(0, mesh.dxf.blend_crease)
-        self.assertEqual(0, mesh.dxf.subdivision_levels)
 
-    def test_add_faces(self):
-        mesh = self.msp.add_mesh()
-        with mesh.edit_data() as mesh_data:
-            mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
-            self.assertEqual(4, len(mesh_data.vertices))
-            self.assertEqual(1, len(mesh_data.faces))
-            self.assertEqual([0, 1, 2, 3], mesh_data.faces[0])
+def test_mesh_properties(mesh):
+    assert 'MESH' == mesh.dxftype()
+    assert 256 == mesh.dxf.color
+    assert '0' == mesh.dxf.layer
+    assert 'BYLAYER' == mesh.dxf.linetype
+    assert mesh.dxf.paperspace == 0
 
-    def test_add_edges(self):
-        mesh = self.msp.add_mesh()
-        with mesh.edit_data() as mesh_data:
-            mesh_data.add_edge([(0, 0, 0), (1, 0, 0)])
-            self.assertEqual(2, len(mesh_data.vertices))
-            self.assertEqual(1, len(mesh_data.edges))
-            self.assertEqual([0, 1], mesh_data.edges[0])
 
-    def test_vertex_format(self):
-        mesh = self.msp.add_mesh()
-        with mesh.edit_data() as mesh_data:
-            with self.assertRaises(ezdxf.DXFValueError):
-                mesh_data.add_vertex((0, 0))  # only (x, y, z) vertices allowed
+def test_mesh_dxf_attribs(mesh):
+    assert 2 == mesh.dxf.version
+    assert 0 == mesh.dxf.blend_crease
+    assert 3 == mesh.dxf.subdivision_levels
 
-    def test_optimize(self):
-        vertices = [
-            (0, 0, 0),
-            (1, 0, 0),
-            (1, 1, 0),
-            (0, 1, 0),
-            (0, 0, 1),
-            (1, 0, 1),
-            (1, 1, 1),
-            (0, 1, 1),
-        ]
 
-        # 6 cube faces
-        cube_faces = [
-            [0, 1, 2, 3],
-            [4, 5, 6, 7],
-            [0, 1, 5, 4],
-            [1, 2, 6, 5],
-            [3, 2, 6, 7],
-            [0, 3, 7, 4]
-        ]
-        mesh = self.msp.add_mesh()
-        with mesh.edit_data() as mesh_data:
-            for face in cube_faces:
-                mesh_data.add_face([vertices[index] for index in face])
-            self.assertEqual(24, len(mesh_data.vertices))
-            self.assertEqual(6, len(mesh_data.faces))
-            mesh_data.optimize()
-            self.assertEqual(8, len(mesh_data.vertices), "Doublettes not removed")
-            self.assertEqual(6, len(mesh_data.faces))
-            self.assertEqual(0, len(mesh_data.edges))
+def test_mesh_geometric_data(mesh):
+    with mesh.edit_data() as mesh_data:
+        assert 56 == len(mesh_data.vertices)
+        assert 54 == len(mesh_data.faces)
+        assert 108 == len(mesh_data.edges)
+        assert 108 == len(mesh_data.edge_crease_values)
+
+
+def test_create_empty_mesh(msp):
+    mesh = msp.add_mesh()
+    assert 2 == mesh.dxf.version
+    assert 0 == mesh.dxf.blend_crease
+    assert 0 == mesh.dxf.subdivision_levels
+
+
+def test_add_faces(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        assert 4 == len(mesh_data.vertices)
+        assert 1 == len(mesh_data.faces)
+        assert [0, 1, 2, 3] == mesh_data.faces[0]
+
+
+def test_add_edges(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_edge([(0, 0, 0), (1, 0, 0)])
+        assert 2 == len(mesh_data.vertices)
+        assert 1 == len(mesh_data.edges)
+        assert [0, 1] == mesh_data.edges[0]
+
+
+def test_vertex_format(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        with pytest.raises(ezdxf.DXFValueError):
+            mesh_data.add_vertex((0, 0))  # only (x, y, z) vertices allowed
+
+
+def test_optimize(msp):
+    vertices = [
+        (0, 0, 0),
+        (1, 0, 0),
+        (1, 1, 0),
+        (0, 1, 0),
+        (0, 0, 1),
+        (1, 0, 1),
+        (1, 1, 1),
+        (0, 1, 1),
+    ]
+
+    # 6 cube faces
+    cube_faces = [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [0, 1, 5, 4],
+        [1, 2, 6, 5],
+        [3, 2, 6, 7],
+        [0, 3, 7, 4]
+    ]
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        for face in cube_faces:
+            mesh_data.add_face([vertices[index] for index in face])
+        assert 24 == len(mesh_data.vertices)
+        assert 6 == len(mesh_data.faces)
+        mesh_data.optimize()
+        assert 8 == len(mesh_data.vertices), "Doublettes not removed"
+        assert 6 == len(mesh_data.faces)
+        assert 0 == len(mesh_data.edges)
 
 
 MESH = """  0
