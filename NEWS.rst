@@ -4,7 +4,8 @@ News
 
 version 0.8.5 - ?
 
-
+   * CHANGED: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
+   * CHANGED: table entry (layer, linetype, style, dimstyle, ...) names are case insensitive 'TEST' == 'Test' (like AutoCAD)
 
 Version 0.8.4 - 2018-01-14
 

@@ -29,6 +29,14 @@ Further information:
     - Autodesk: `ENDBLK Entity`_
     - Autodesk: `INSERT Entity`_
 
+Block Names
+-----------
+
+Block names has to be unique and they are case insensitive ('Test' == 'TEST'). If there are two or more block
+definitions with the same name, AutoCAD (LT 2018) merges these blocks into a single block with unpredictable properties
+of all these blocks. In my test with two blocks, the final block has the name of the first block and the base-point of
+the second block, and contains all entities of both blocks.
+
 Block Definitions in DXF R12
 ----------------------------
 

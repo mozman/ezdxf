@@ -15,6 +15,11 @@ logger = logging.getLogger('ezdxf')
 
 
 class BlocksSection(object):
+    """
+    Manages BLOCK definitions in a dict(). Since v0.8.5 ezdxf uses a lower case key. 'Test' == 'TEST', to behave
+    like AutoCAD.
+
+    """
     name = 'blocks'
 
     def __init__(self, tags, drawing):
@@ -66,7 +71,8 @@ class BlocksSection(object):
     def add(self, block_layout):
         """ Add or replace a BlockLayout() object.
         """
-        self._block_layouts[block_layout.name] = block_layout
+        key = block_layout.name.lower()  # block key is lower case
+        self._block_layouts[key] = block_layout
 
     # start of public interface
 
@@ -78,10 +84,10 @@ class BlocksSection(object):
             name = entity.name
         except AttributeError:  # internal exception
             name = entity
-        return name in self._block_layouts
+        return name.lower() in self._block_layouts  # block key is lower case
 
     def __getitem__(self, name):
-        return self._block_layouts[name]
+        return self._block_layouts[name.lower()]  # block key is lower case
 
     def get(self, name, default=None):
         try:
@@ -127,17 +133,18 @@ class BlocksSection(object):
     def rename_block(self, old_name, new_name):
         """ Renames the block and the associated block record.
         """
-        block_layout = self.get(old_name)
+        block_layout = self.get(old_name)  # block key is lower case
         block_layout.name = new_name
 
         if self.drawing.dxfversion > 'AC1009':
             block_record = self.drawing.block_records.get(old_name)
             block_record.dxf.name = new_name
 
-        del self._block_layouts[old_name]  # just remove old dict entry
+        del self._block_layouts[old_name.lower()]  # just remove old dict entry
         self.add(block_layout)  # add new dict entry
 
     def delete_block(self, name):
+        name = name.lower()  # block key is lower case
         block_layout = self[name]
         block_layout.destroy()
         del self._block_layouts[name]
@@ -150,8 +157,8 @@ class BlocksSection(object):
                 if block.block_record_handle not in layout_keys:
                     self.delete_block(block.name)
         else:
-            for block_name in list(self._block_layouts.keys()):
-                if block_name not in ('$MODEL_SPACE', '$PAPER_SPACE'):
+            for block_name in list(self._block_layouts.keys()):  # block key is lower case
+                if block_name not in ('$model_space', '$paper_space'):
                     self.delete_block(block_name)
 
     # end of public interface
@@ -168,7 +175,7 @@ class BlocksSection(object):
             return "*Paper_Space%d" % _count
 
         count = 0
-        while block_name(count) in self._block_layouts:
+        while block_name(count) in self:
             count += 1
 
         block_layout = self.new(block_name(count))
