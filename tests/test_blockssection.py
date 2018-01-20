@@ -42,9 +42,23 @@ def test_empty_section(ac1009):
     assert EMPTYSEC == result
 
 
+def test_key(blocks):
+    assert blocks.key('Test') == 'test'
+    block = blocks.new('TEST')
+    assert blocks.key(block) == 'test'
+
+
 def test_create_block(blocks):
     block = blocks.new('TEST')
     assert block in blocks
+
+
+def test_overwrite_existing_block(blocks):
+    block = blocks.new('TEST')
+    assert block in blocks
+    old_len = len(blocks)
+    blocks.new('Test')  # block names are case insensitive
+    assert len(blocks) == old_len, 'should overwrite block "TEST"'
 
 
 def test_not_in_blocks_section(blocks):

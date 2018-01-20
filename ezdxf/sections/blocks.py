@@ -8,6 +8,7 @@ __author__ = "mozman <mozman@gmx.at>"
 import logging
 
 from ..lldxf.const import DXFStructureError
+from ..tools.c23 import isstring
 from ..lldxf import const
 from .abstract import xtags_into_entitydb
 
@@ -23,7 +24,7 @@ class BlocksSection(object):
     name = 'blocks'
 
     def __init__(self, tags, drawing):
-        # Mapping of BlockLayouts, key is BlockLayout.name, for dict() order of blocks is random,
+        # Mapping of BlockLayouts, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().
         self._block_layouts = dict()
         self.drawing = drawing
@@ -33,6 +34,12 @@ class BlocksSection(object):
 
     def __len__(self):
         return len(self._block_layouts)
+
+    @staticmethod
+    def key(entity):
+        if not isstring(entity):
+            entity = entity.name
+        return entity.lower()  # block key is lower case
 
     @property
     def entitydb(self):
@@ -71,8 +78,7 @@ class BlocksSection(object):
     def add(self, block_layout):
         """ Add or replace a BlockLayout() object.
         """
-        key = block_layout.name.lower()  # block key is lower case
-        self._block_layouts[key] = block_layout
+        self._block_layouts[self.key(block_layout.name)] = block_layout
 
     # start of public interface
 
@@ -80,14 +86,13 @@ class BlocksSection(object):
         return iter(self._block_layouts.values())
 
     def __contains__(self, entity):
-        try:
-            name = entity.name
-        except AttributeError:  # internal exception
-            name = entity
-        return name.lower() in self._block_layouts  # block key is lower case
+        return self.key(entity) in self._block_layouts
 
     def __getitem__(self, name):
-        return self._block_layouts[name.lower()]  # block key is lower case
+        return self._block_layouts[self.key(name)]
+
+    def __delitem__(self, name):
+        del self._block_layouts[self.key(name)]
 
     def get(self, name, default=None):
         try:
@@ -139,15 +144,13 @@ class BlocksSection(object):
         if self.drawing.dxfversion > 'AC1009':
             block_record = self.drawing.block_records.get(old_name)
             block_record.dxf.name = new_name
-
-        del self._block_layouts[old_name.lower()]  # just remove old dict entry
+        self.__delitem__(old_name)
         self.add(block_layout)  # add new dict entry
 
     def delete_block(self, name):
-        name = name.lower()  # block key is lower case
         block_layout = self[name]
         block_layout.destroy()
-        del self._block_layouts[name]
+        self.__delitem__(name)
 
     def delete_all_blocks(self):
         # do not delete blocks defined for layouts
@@ -157,7 +160,7 @@ class BlocksSection(object):
                 if block.block_record_handle not in layout_keys:
                     self.delete_block(block.name)
         else:
-            for block_name in list(self._block_layouts.keys()):  # block key is lower case
+            for block_name in list(self._block_layouts.keys()):
                 if block_name not in ('$model_space', '$paper_space'):
                     self.delete_block(block_name)
 
