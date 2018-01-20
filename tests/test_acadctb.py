@@ -1,12 +1,6 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Purpose: test dxfwrite.acadctb
 # Created: 24.03.2010
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
-
-__author__ = "mozman <mozman@gmx.at>"
-
 import unittest
 
 import os
@@ -266,7 +260,3 @@ class TestFunctions(unittest.TestCase):
         self.assertFalse(get_bool(False))
         self.assertFalse(get_bool('false'))
         self.assertRaises(ValueError, get_bool, 'falsch')
-
-
-if __name__ == '__main__':
-    unittest.main()

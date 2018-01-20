@@ -1,15 +1,7 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test BuilderConnector
-# Created: 28.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 28.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-
-import unittest
-
 from ezdxf.legacy.layouts import BaseLayout
 
 
@@ -49,15 +41,8 @@ class Host(BaseLayout):
         return entity
 
 
-class TestAbstractLayout(unittest.TestCase):
-    def setUp(self):
-        self.host = Host(range(10))
-
-    def test_build_entity(self):
-        entity = self.host.build_entity('TEST', {})
-        self.assertEqual('TEST', entity.dxf.handle)
-        self.assertTrue(self.host.paperspace)
-
-
-if __name__ == '__main__':
-    unittest.main()
+def test_build_entity():
+    host = Host(range(10))
+    entity = host.build_entity('TEST', {})
+    assert 'TEST' == entity.dxf.handle
+    assert host.paperspace == 1
