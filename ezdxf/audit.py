@@ -6,6 +6,8 @@
 audit(drawing, stream): check a DXF drawing for errors.
 """
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.types import is_pointer_code
 __author__ = "mozman <mozman@gmx.at>"
 __all__ = ['audit']
 
@@ -15,6 +17,7 @@ MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
 UNDEFINED_LINETYPE = 2
 INVALID_LAYER_NAME = 3
 DUPLICATE_TABLE_ENTRY_NAME = 4
+POINTER_TARGET_NOT_EXISTS = 5
 
 INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\',  '"', ':', ';', '?', '*', '|', '=', "'"])
 
@@ -25,6 +28,12 @@ class ErrorEntry(object):
         self.dxf_entity = dxf_entity
         self.message = message
         self.data = data
+
+
+def get_pointers(tags):
+    for tag in tags:
+        if is_pointer_code(tag.code):
+            yield tag.value
 
 
 class Audit(object):
@@ -49,8 +58,11 @@ class Audit(object):
         dxfversion = self.drawing.dxfversion
         if dxfversion > 'AC1009':  # modern style DXF13 or later
             self.check_root_dict()
-        self.check_linetypes()
-        self.check_layer_names()
+        self.check_pointer_target_exists()
+        self.check_table_entries()
+        self.check_linetypes_exists()
+        self.check_dim_styles_exists()
+        self.check_for_invalid_layer_names()
 
     def add_error(self, code, message='', dxf_entity=None, data=None):
         error = ErrorEntry(code, message, dxf_entity, data)
@@ -70,6 +82,25 @@ class Audit(object):
                     data=name,
                 )
 
+    def check_pointer_target_exists(self):
+        undefined_targets = set()
+        db = self.drawing.entitydb
+        for tags in db.values():
+            for target_pointer in get_pointers(tags):
+                if target_pointer not in db:
+                    if target_pointer == '0':  # default unset pointer
+                        continue
+                    if target_pointer in undefined_targets:  # every undefined point just one time
+                        continue
+                    entity = self.drawing.get_dxf_entity(tags.get_handle())
+                    self.add_error(
+                        code=POINTER_TARGET_NOT_EXISTS,
+                        message='Pointer target does not exist. DXF entity: {}'.format(entity.dxftype()),
+                        dxf_entity=entity,
+                        data=target_pointer,
+                    )
+                    undefined_targets.add(target_pointer)
+
     def check_table_entries(self):
         self.drawing.layers.audit(self)
         self.drawing.linetypes.audit(self)
@@ -80,7 +111,7 @@ class Audit(object):
         self.drawing.appids.audit(self)
         self.drawing.views.audit(self)
 
-    def check_linetypes(self):
+    def check_linetypes_exists(self):
         """
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
@@ -100,7 +131,13 @@ class Audit(object):
             if linetype is not None:
                 check_linetype_exists(linetype)
 
-    def check_layer_names(self):
+    def check_dim_styles_exists(self):  # TODO: implement dimension style checker
+        """
+        Check for usage of undefined dimension styles.
+        """
+        pass
+
+    def check_for_invalid_layer_names(self):
         """
         Check layer names for invalid characters: <>/\":;?*|='
         """
@@ -117,15 +154,3 @@ class Audit(object):
             layer_name = tags.noclass.get_first_value(8, None)  # layer has a fixed tag value
             if layer_name is not None:
                 check_layer_name_is_valid(layer_name)
-
-    def check_dim_styles(self):  # TODO: implement dimension style checker
-        """
-        Check for usage of undefined dimension styles.
-        """
-        pass
-
-    def check_text_styles(self):  # TODO: implement text style checker
-        """
-        Check for usage of undefined text styles.
-        """
-        pass

@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from collections import namedtuple
+from itertools import chain
 
 from ..tools.c23 import ustr
 from .const import DXFValueError
@@ -60,6 +61,20 @@ POINT_CODES = frozenset([
     110, 111, 112, 210,
     1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
 ])
+
+GENERAL_MARKER = 0
+SUBCLASS_MARKER = 100
+APP_DATA_MARKER = 102
+EXT_DATA_MARKER = 1001
+GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
+BINARY_FLAGS = frozenset([70, 90])
+HANDLE_CODES = frozenset([5, 105])
+POINTER_CODES = frozenset(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
+HEX_HANDLE_CODES = frozenset(chain(HANDLE_CODES, POINTER_CODES))
+
+
+def is_pointer_code(code):
+    return code in POINTER_CODES
 
 
 def is_point_code(code):

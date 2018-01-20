@@ -10,31 +10,14 @@ from __future__ import unicode_literals
 import os
 import io
 
-from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type
+from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type, is_pointer_code
+from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
 from ezdxf.lldxf.tags import CompressedTags
 
-# Handle definitions
-
-_HANDLE_CODES = [5, 105]
-HANDLE_DEFINITIONS = frozenset(_HANDLE_CODES)
-
-# Handle links
-_HANDLE_POINTERS = list(range(320, 370))
-_HANDLE_POINTERS.extend(range(390, 400))
-_HANDLE_POINTERS.extend((480, 481, 1005))
-HANDLE_LINKS = frozenset(_HANDLE_POINTERS)
-
 # Tag groups
-GENERAL_MARKER = 0
-SUBCLASS_MARKER = 100
-APP_DATA_MARKER = 102
-EXT_DATA_MARKER = 1001
-GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
-BINARY_FLAGS = frozenset([70, 90])
-HEX_HANDLES = frozenset([*_HANDLE_CODES, *HANDLE_LINKS])
 
 # HTML templates
 # Section
@@ -106,7 +89,7 @@ TAG_TYPES = {
 def tag_type_str(code):
     if code in GROUP_MARKERS:
         return '<ctrl>'
-    elif code in HEX_HANDLES:
+    elif code in HEX_HANDLE_CODES:
         return '<hex>'
     elif 309 < code < 320:
         return '<bin>'
@@ -279,9 +262,9 @@ class DXF2HtmlConverter(object):
                 return vstr
 
             tpl = TAG_TPL
-            if tag.code in HANDLE_DEFINITIONS:  # is handle definition
+            if tag.code in HANDLE_CODES:  # is handle definition
                 tpl = TAG_HANDLE_DEF_TPL
-            elif tag.code in HANDLE_LINKS:  # is handle link
+            elif is_pointer_code(tag.code):  # is handle link
                 if tag.value in self.entitydb:
                     tpl = TAG_VALID_LINK_TPL
                 else:
@@ -350,7 +333,7 @@ class DXF2HtmlConverter(object):
             handle = tags.get_handle()
 
             for tag in self.expand_linked_tags(tags):
-                if tag.code in _HANDLE_POINTERS:
+                if is_pointer_code(tag.code):
                     pointers = existing_pointers.setdefault(tag.value, set())
                     pointers.add(handle)
 
