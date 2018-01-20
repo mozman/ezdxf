@@ -1,18 +1,68 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test table
-# Created: 13.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 13.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, normlines
 from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagWriter
+
+
+@pytest.fixture
+def table_ac1009():
+    dwg = DrawingProxy('AC1009')
+    return Table(Tags.from_text(AC1009TABLE), dwg)
+
+
+def test_ac1009_table_setup(table_ac1009):
+    assert 10 == len(table_ac1009)
+
+
+def test_ac1009_write(table_ac1009):
+    stream = StringIO()
+    table_ac1009.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    t1 = list(compile_tags_without_handles(AC1009TABLE))
+    t2 = list(compile_tags_without_handles(result))
+    assert t1 == t2
+
+
+def test_ac1009_get_table_entry(table_ac1009):
+    entry = table_ac1009.get('ACAD')
+    assert 'ACAD' == entry.dxf.name
+
+
+def test_ac1009_entry_names_are_case_insensitive(table_ac1009):
+    entry = table_ac1009.get('acad')
+    assert 'ACAD' == entry.dxf.name
+
+
+
+@pytest.fixture
+def table_ac1024():
+    dwg = DrawingProxy('AC1024')
+    return Table(Tags.from_text(AC1024TABLE), dwg)
+
+
+def test_ac1024table_setup(table_ac1024):
+    assert 10 == len(table_ac1024)
+
+
+def test_ac1024_write(table_ac1024):
+    stream = StringIO()
+    table_ac1024.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    assert normlines(AC1024TABLE) == normlines(result)
+
+
+def test_ac1024_get_table_entry(table_ac1024):
+    entry = table_ac1024.get('ACAD')
+    assert 'ACAD' == entry.dxf.name
+
 
 AC1009TABLE = """  0
 TABLE
@@ -241,47 +291,3 @@ ENDTAB
 """
 
 
-class TestR12Table(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
-        self.table = Table(Tags.from_text(AC1009TABLE), self.dwg)
-
-    def test_table_setup(self):
-        self.assertEqual(10, len(self.table))
-
-    def test_write(self):
-        stream = StringIO()
-        self.table.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        t1 = list(compile_tags_without_handles(AC1009TABLE))
-        t2 = list(compile_tags_without_handles(result))
-        self.assertEqual(t1, t2)
-
-    def test_get_table_entry(self):
-        entry = self.table.get('ACAD')
-        self.assertEqual('ACAD', entry.dxf.name)
-
-
-class TestR2010Table(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1024')
-        self.table = Table(Tags.from_text(AC1024TABLE), self.dwg)
-
-    def test_table_setup(self):
-        self.assertEqual(10, len(self.table))
-
-    def test_write(self):
-        stream = StringIO()
-        self.table.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        self.assertEqual(normlines(AC1024TABLE), normlines(result))
-
-    def test_get_table_entry(self):
-        entry = self.table.get('ACAD')
-        self.assertEqual('ACAD', entry.dxf.name)
-
-
-if __name__ == '__main__':
-    unittest.main()

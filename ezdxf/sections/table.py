@@ -6,6 +6,9 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ezdxf.lldxf.defaultchunk import DefaultChunk
+from ezdxf.tools.c23 import isstring
+from ezdxf.audit import DUPLICATE_TABLE_ENTRY_NAME
+
 from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError
@@ -45,17 +48,20 @@ class Table(object):
 
     # start public interface
 
+    @staticmethod
+    def key(entity):
+        if not isstring(entity):
+            entity = entity.dxf.name
+        return entity.lower()  # table key is lower case
+
     @property
     def name(self):
         return tablename(self._dxfname)
 
     def has_entry(self, name):
         """ Check if an table-entry 'name' exists. """
-        try:
-            self.get(name)
-            return True
-        except DXFTableEntryError:
-            return False
+        key = self.key(name)
+        return any(self.key(entry) == key for entry in self)
 
     __contains__ = has_entry
 
@@ -69,18 +75,11 @@ class Table(object):
 
     def get(self, name):
         """ Get table-entry by name as WrapperClass(). """
+        key = self.key(name)
         for entry in iter(self):
-            if entry.dxf.name == name:
+            if self.key(entry) == key:
                 return entry
         raise DXFTableEntryError(name)
-
-    def find(self, name):
-        """ Get table-entry by name as WrapperClass() but ignore case, return None if not found. """
-        lower_name = name.lower()
-        for entry in iter(self):
-            if entry.dxf.name.lower() == lower_name:
-                return entry
-        return None
 
     def remove(self, name):
         """ Remove table-entry from table and entitydb by name. """
@@ -196,6 +195,23 @@ class Table(object):
         """ Remove table-entry from table and entitydb by handle. """
         self._table_entries.remove(handle)
         del self.entitydb[handle]
+
+    def audit(self, errors):
+        """
+        Checks for table entries with same key.
+        """
+        entries = sorted(self._table_entries, key=lambda e: self.key(e))
+        prev_key = None
+        for entry in entries:
+            key = self.key(entry)
+            if key == prev_key:
+                errors.add_error(
+                    code=DUPLICATE_TABLE_ENTRY_NAME,
+                    message="Duplicate table entry name '{1}' in table {0}".format(self.name, entry.dxf.name),
+                    dxf_entity=self,
+                    data=key,
+                )
+            prev_key = key
 
 
 class StyleTable(Table):

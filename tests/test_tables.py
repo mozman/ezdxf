@@ -1,43 +1,43 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test sections
-# Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 12.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 from io import StringIO
 
+import ezdxf
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
 from ezdxf.sections.tables import TablesSection
-from ezdxf import DXFAttributeError
 from ezdxf.lldxf.tagwriter import TagWriter
 
-class TestTables(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
-        self.tables = TablesSection(Tags.from_text(TEST_TABLES), self.dwg)
 
-    def test_constructor(self):
-        self.assertIsNotNone(self.tables.layers)
+@pytest.fixture
+def tables():
+    dwg = DrawingProxy('AC1009')
+    return TablesSection(Tags.from_text(TEST_TABLES), dwg)
 
-    def test_getattr(self):
-        self.assertIsNotNone(self.tables.linetypes)
 
-    def test_error_getattr(self):
-        with self.assertRaises(DXFAttributeError):
-            self.tables.test
+def test_constructor(tables):
+    assert tables.layers is not None
 
-    def test_write(self):
-        stream = StringIO()
-        self.tables.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        t1 = list(compile_tags_without_handles(TEST_TABLES))
-        t2 = list(compile_tags_without_handles(result))
-        self.assertEqual(t1, t2)
+
+def test_getattr(tables):
+    assert tables.linetypes is not None
+
+
+def test_error_getattr(tables):
+    with pytest.raises(ezdxf.DXFAttributeError):
+        tables.test
+
+
+def test_write(tables):
+    stream = StringIO()
+    tables.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    t1 = list(compile_tags_without_handles(TEST_TABLES))
+    t2 = list(compile_tags_without_handles(result))
+    assert t1 == t2
 
 
 TEST_TABLES = """  0
@@ -147,6 +147,3 @@ ENDTAB
   0
 ENDSEC
 """
-
-if __name__ == '__main__':
-    unittest.main()

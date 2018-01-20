@@ -4,11 +4,10 @@
 
 from __future__ import unicode_literals
 import pytest
-import unittest
 from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
+from ezdxf.tools.test import Tags, compile_tags_without_handles
 from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
@@ -449,6 +448,3 @@ ENDBLK
   0
 ENDSEC
 """
-
-if __name__ == '__main__':
-    unittest.main()

@@ -14,6 +14,7 @@ REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
 UNDEFINED_LINETYPE = 2
 INVALID_LAYER_NAME = 3
+DUPLICATE_TABLE_ENTRY_NAME = 4
 
 INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\',  '"', ':', ';', '?', '*', '|', '=', "'"])
 
@@ -68,6 +69,16 @@ class Audit(object):
                     dxf_entity=root_dict,
                     data=name,
                 )
+
+    def check_table_entries(self):
+        self.drawing.layers.audit(self)
+        self.drawing.linetypes.audit(self)
+        self.drawing.styles.audit(self)
+        self.drawing.dimstyles.audit(self)
+        self.drawing.block_records.audit(self)
+        self.drawing.ucs.audit(self)
+        self.drawing.appids.audit(self)
+        self.drawing.views.audit(self)
 
     def check_linetypes(self):
         """

@@ -43,7 +43,7 @@
 # *ZICKZACK,Zickzack /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 # A,.0001,-.2,[ZIG,ltypeshp.shx,x=-.2,s=.2],-.4,[ZIG,ltypeshp.shx,r=180,x=.2,s=.2],-.2
 
-from ..lldxf.const import DXFValueError
+from ..lldxf.const import DXFValueError, DXFTableEntryError
 from ..lldxf.tags import DXFTag, Tags
 
 
@@ -83,8 +83,9 @@ class ComplexLineTypePart:
             if self.type == 'SHAPE':
                 font = drawing.styles.get_shx(self.font)  # creates new shx or returns existing entry
             else:
-                font = drawing.styles.find(self.font)  # case insensitive search for text style
-                if font is None:
+                try:
+                    font = drawing.styles.get(self.font)  # case insensitive search for text style
+                except DXFTableEntryError:
                     font = drawing.styles.new(self.font)
             return font.dxf.handle
         if drawing is not None:
