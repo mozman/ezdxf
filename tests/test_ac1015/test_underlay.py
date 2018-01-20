@@ -1,114 +1,122 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test image and imagedef entity
-# Created: 13.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Created: 13.03.2016, 2018 rewritten for pytest
+# Copyright (C) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 
 import ezdxf
 from ezdxf.modern.underlay import PdfDefinition, PdfUnderlay
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
-DWG = ezdxf.new('AC1015')
+
+@pytest.fixture(scope='module')
+def dwg():
+    return ezdxf.new('AC1015')
 
 
-class TestUnderlayDefFromText(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(PDF_DEFINITION)
-        self.pdf_def = PdfDefinition(self.tags, DWG)
-
-    def test_imagedef_properties(self):
-        self.assertEqual('PDFDEFINITION', self.pdf_def.dxftype())
-        self.assertEqual('PDFUNDERLAY', self.pdf_def.entity_name)
-
-    def test_imagedef_dxf_attribs(self):
-        self.assertEqual('underlay.pdf', self.pdf_def.dxf.filename)
-        self.assertEqual('underlay_key', self.pdf_def.dxf.name)
+@pytest.fixture
+def pdf_def(dwg):
+    tags = ExtendedTags.from_text(PDF_DEFINITION)
+    return PdfDefinition(tags, dwg)
 
 
-class TestUnderlayFromText(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(PDF_UNDERLAY)
-        self.pdf = PdfUnderlay(self.tags, DWG)
-
-    def test_image_properties(self):
-        self.assertEqual('PDFUNDERLAY', self.pdf.dxftype())
-
-    def test_image_dxf_attribs(self):
-        self.assertEqual((0., 0., 0.), self.pdf.dxf.insert)
-        self.assertEqual(2.5, self.pdf.dxf.scale_x)
-        self.assertEqual(2.5, self.pdf.dxf.scale_y)
-        self.assertEqual(2.5, self.pdf.dxf.scale_z)
-        self.assertEqual((2.5, 2.5, 2.5), self.pdf.scale)
-        self.assertEqual(2, self.pdf.dxf.flags)
-        self.assertFalse(self.pdf.clipping)
-        self.assertTrue(self.pdf.on)
-        self.assertFalse(self.pdf.monochrome)
-        self.assertFalse(self.pdf.adjust_for_background)
-        self.assertEqual(100, self.pdf.dxf.contrast)
-        self.assertEqual(0, self.pdf.dxf.fade)
-        self.assertEqual('DEAD1', self.pdf.dxf.underlay_def)
-
-    def test_get_boundary_path(self):
-        self.assertEqual([], self.pdf.get_boundary_path())
-
-    def test_reset_boundary_path(self):
-        self.pdf.reset_boundary_path()
-        self.assertEqual([], self.pdf.get_boundary_path())
-        self.assertFalse(self.pdf.clipping)
-
-    def test_set_boundary_path(self):
-        self.pdf.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
-        self.assertTrue(self.pdf.clipping)
-        self.assertEqual([(0, 0), (640, 180), (320, 360)], self.pdf.get_boundary_path())
-
-    def test_set_scale(self):
-        self.pdf.scale = (1.2, 1.3, 1.4)
-        self.assertEqual((1.2, 1.3, 1.4), self.pdf.scale)
-
-        self.pdf.scale = 1.7
-        self.assertEqual((1.7, 1.7, 1.7), self.pdf.scale)
+def test_imagedef_properties(pdf_def):
+    assert 'PDFDEFINITION' == pdf_def.dxftype()
+    assert 'PDFUNDERLAY' == pdf_def.entity_name
 
 
-class TestCreateNewUnderlay(unittest.TestCase):
-    def setUp(self):
-        # setting up a drawing is expensive - use as few test methods as possible
-        self.dwg = ezdxf.new('R2000')
+def test_imagedef_dxf_attribs(pdf_def):
+    assert 'underlay.pdf' == pdf_def.dxf.filename
+    assert 'underlay_key' == pdf_def.dxf.name
 
-    def test_new_pdf_underlay_def(self):
-        rootdict = self.dwg.rootdict
-        self.assertFalse('ACAD_PDFDEFINITIONS' in rootdict)
-        underlay_def = self.dwg.add_underlay_def('underlay.pdf', format='pdf', name='u1')
 
-        # check internals pdf_def_owner -> ACAD_PDFDEFINITIONS
-        pdf_dict_handle = rootdict['ACAD_PDFDEFINITIONS']
-        pdf_dict = self.dwg.get_dxf_entity(pdf_dict_handle)
-        self.assertEqual(underlay_def.dxf.owner, pdf_dict.dxf.handle)
+@pytest.fixture
+def pdf(dwg):
+    tags = ExtendedTags.from_text(PDF_UNDERLAY)
+    return PdfUnderlay(tags, dwg)
 
-        self.assertEqual('underlay.pdf', underlay_def.dxf.filename)
-        self.assertEqual('u1', underlay_def.dxf.name)
 
-    def test_new_image(self):
-        msp = self.dwg.modelspace()
-        underlay_def = self.dwg.add_underlay_def('underlay.pdf')
-        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
-        self.assertEqual((0, 0, 0), underlay.dxf.insert)
-        self.assertEqual(2, underlay.dxf.scale_x)
-        self.assertEqual(2, underlay.dxf.scale_y)
-        self.assertEqual(2, underlay.dxf.scale_z)
-        self.assertEqual(underlay_def.dxf.handle, underlay.dxf.underlay_def)
-        self.assertFalse(underlay.clipping)
-        self.assertTrue(underlay.on)
-        self.assertFalse(underlay.monochrome)
-        self.assertFalse(underlay.adjust_for_background)
-        self.assertEqual(2, underlay.dxf.flags)
+def test_image_properties(pdf):
+    assert 'PDFUNDERLAY' == pdf.dxftype()
 
-        underlay_def2 = underlay.get_underlay_def()
-        self.assertEqual(underlay_def.dxf.handle, underlay_def2.dxf.handle)
+
+def test_image_dxf_attribs(pdf):
+    assert (0., 0., 0.) == pdf.dxf.insert
+    assert 2.5 == pdf.dxf.scale_x
+    assert 2.5 == pdf.dxf.scale_y
+    assert 2.5 == pdf.dxf.scale_z
+    assert (2.5, 2.5, 2.5) == pdf.scale
+    assert 2 == pdf.dxf.flags
+    assert pdf.clipping == 0
+    assert pdf.on == 1
+    assert pdf.monochrome == 0
+    assert pdf.adjust_for_background == 0
+    assert 100 == pdf.dxf.contrast
+    assert 0 == pdf.dxf.fade
+    assert 'DEAD1' == pdf.dxf.underlay_def
+
+
+def test_get_boundary_path(pdf):
+    assert [] == pdf.get_boundary_path()
+
+
+def test_reset_boundary_path(pdf):
+    pdf.reset_boundary_path()
+    assert [] == pdf.get_boundary_path()
+    assert pdf.clipping == False
+
+
+def test_set_boundary_path(pdf):
+    pdf.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
+    assert pdf.clipping == 1
+    assert [(0, 0), (640, 180), (320, 360)] == pdf.get_boundary_path()
+
+
+def test_set_scale(pdf):
+    pdf.scale = (1.2, 1.3, 1.4)
+    assert (1.2, 1.3, 1.4) == pdf.scale
+
+    pdf.scale = 1.7
+    assert (1.7, 1.7, 1.7) == pdf.scale
+
+
+@pytest.fixture
+def new_dwg():
+    # setting up a drawing is expensive - use as few test methods as possible
+    return ezdxf.new('R2000')
+
+
+def test_new_pdf_underlay_def(new_dwg):
+    rootdict = new_dwg.rootdict
+    assert 'ACAD_PDFDEFINITIONS' not in rootdict
+    underlay_def = new_dwg.add_underlay_def('underlay.pdf', format='pdf', name='u1')
+
+    # check internals pdf_def_owner -> ACAD_PDFDEFINITIONS
+    pdf_dict_handle = rootdict['ACAD_PDFDEFINITIONS']
+    pdf_dict = new_dwg.get_dxf_entity(pdf_dict_handle)
+    assert underlay_def.dxf.owner == pdf_dict.dxf.handle
+
+    assert 'underlay.pdf' == underlay_def.dxf.filename
+    assert 'u1' == underlay_def.dxf.name
+
+
+def test_new_image(new_dwg):
+    msp = new_dwg.modelspace()
+    underlay_def = new_dwg.add_underlay_def('underlay.pdf')
+    underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+    assert (0, 0, 0) == underlay.dxf.insert
+    assert 2 == underlay.dxf.scale_x
+    assert 2 == underlay.dxf.scale_y
+    assert 2 == underlay.dxf.scale_z
+    assert underlay_def.dxf.handle == underlay.dxf.underlay_def
+    assert underlay.clipping == 0
+    assert underlay.on == 1
+    assert underlay.monochrome == 0
+    assert underlay.adjust_for_background == 0
+    assert 2 == underlay.dxf.flags
+
+    underlay_def2 = underlay.get_underlay_def()
+    assert underlay_def.dxf.handle == underlay_def2.dxf.handle
 
 
 PDF_DEFINITION = """  0
