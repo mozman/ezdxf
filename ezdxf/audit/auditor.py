@@ -48,29 +48,39 @@ class Auditor(object):
     def __iter__(self):
         return iter(self.errors)
 
-    def print_report(self, stream=None):
+    def print_report(self, errors=None, stream=None):
         def entity_str(count, code, entity):
             if entity is not None:
-                return "{:4d}. Issue code [{}] in DXF entity {}, handle: #{}".format(count, code, entity.dxftype(), entity.dxf.handle)
+                return "{:4d}. Issue [{}] in DXF entity {}, handle: #{}".format(count, code, entity.dxftype(), entity.dxf.handle)
             else:
-                return "{:4d}. Issue code [{}]".format(count, code)
+                return "{:4d}. Issue [{}]".format(count, code)
+
+        if errors is None:
+            errors = self.errors
+        else:
+            errors = list(errors)  # generator?
 
         if stream is None:
             stream = sys.stdout
-        if len(self.errors) == 0:
+
+        if len(errors) == 0:
             stream.write('No issues found.\n\n')
         else:
-            stream.write('{} issues found.\n\n'.format(len(self.errors)))
-            for count, error in enumerate(self.errors):
+            stream.write('{} issues found.\n\n'.format(len(errors)))
+            for count, error in enumerate(errors):
                 stream.write(entity_str(count+1, error.code, error.entity) + '\n')
                 stream.write('   '+error.message+'\n\n')
+
+    @staticmethod
+    def filter_zero_pointers(errors):
+        for error in errors:
+            if error.code == Error.POINTER_TARGET_NOT_EXISTS and error.data == '0':
+                continue
+            yield error
 
     def add_error(self, code, message='', dxf_entity=None, data=None):
         error = ErrorEntry(code, message, dxf_entity, data)
         self.errors.append(error)
-
-    def filter_errors(self, code):
-        return (error for error in self.errors if error.code == code)
 
     def run(self):
         self.reset()
@@ -79,6 +89,7 @@ class Auditor(object):
             self.check_root_dict()
         self.check_table_entries()
         self.check_database_entities()
+        return self.errors
 
     def check_root_dict(self):
         root_dict = self.drawing.rootdict
@@ -174,7 +185,10 @@ class Auditor(object):
         if not entity.supports_dxf_attrib('color'):
             return
         color = entity.dxf.color
-        if color < 0 or color > 256:
+        # 0 == BYBLOCK
+        # 256 == BYLAYER
+        # 257 == BYOBJECT
+        if color < 0 or color > 257:
             self.add_error(
                 code=Error.INVALID_COLOR_INDEX,
                 message='Invalid color index: {}'.format(color),
@@ -192,12 +206,12 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_pointer_target_exists(self, entity, invalid_zero=False):
+    def check_pointer_target_exists(self, entity, zero_pointer_valid=False):
         assert isinstance(entity, DXFEntity)
         db = self.drawing.entitydb
         for target_pointer in get_pointers(entity.tags):
             if target_pointer not in db:
-                if target_pointer == '0' and not invalid_zero:  # default unset pointer
+                if target_pointer == '0' and zero_pointer_valid:  # default unset pointer
                     continue
                 if target_pointer in self.undefined_targets:  # every undefined point just one time
                     continue
@@ -205,5 +219,6 @@ class Auditor(object):
                     code=Error.POINTER_TARGET_NOT_EXISTS,
                     message='Pointer target does not exist: #{}'.format(target_pointer),
                     dxf_entity=entity,
+                    data=target_pointer,
                 )
                 self.undefined_targets.add(target_pointer)

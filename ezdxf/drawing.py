@@ -327,18 +327,16 @@ class Drawing(object):
         if groups and self.groups is not None:
             self.groups.cleanup()
 
-    def audit(self):
+    def auditor(self):
         """
-        Audit drawing for DXF structure errors like undefined line types.
+        Get auditor for this drawing.
 
         Returns:
             Auditor() object
 
         """
         from ezdxf.audit.auditor import Auditor
-        auditor = Auditor(self)
-        auditor.run()
-        return auditor
+        return Auditor(self)
 
     def _update_metadata(self):
         now = datetime.now()

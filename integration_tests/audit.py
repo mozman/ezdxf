@@ -1,3 +1,4 @@
+import pytest
 import sys
 import glob
 import ezdxf
@@ -6,6 +7,19 @@ from itertools import chain
 DIR1 = r"D:\Source\dxftest\CADKitSamples\*.dxf"
 DIR2 = r"D:\Source\dxftest\*.dxf"
 LEGACY_MODE = False
+
+
+
+@pytest.fixture(params=chain(glob.glob(DIR1), glob.glob(DIR2)))
+def filename(request):
+    return request.param
+
+
+def test_audit_all(filename):
+    dwg = ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
+    auditor = dwg.auditor()
+    result = list(auditor.filter_zero_pointers(auditor.run()))
+    assert len(result) == 0
 
 
 def run(start):
@@ -18,8 +32,8 @@ def run(start):
         count += 1
         print("processing: {}/{} file: {}".format(count+start, len(names)+start, filename))
         dwg = ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
-        auditor = dwg.audit()
-        auditor.print_report()
+        auditor = dwg.auditor()
+        auditor.print_report(auditor.filter_zero_pointers(auditor.run()))
 
 
 if __name__ == '__main__':

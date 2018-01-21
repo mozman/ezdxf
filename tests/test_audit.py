@@ -1,6 +1,6 @@
 import pytest
 import ezdxf
-from ezdxf.audit.auditor import Auditor, Error
+from ezdxf.audit import Auditor, Error
 
 
 @pytest.fixture(scope='module')
@@ -27,13 +27,13 @@ def test_target_pointer_not_exists(entity, auditor):
 
 def test_target_pointer_zero_valid(entity, auditor):
     entity.dxf.owner = '0'
-    auditor.check_pointer_target_exists(entity)
+    auditor.check_pointer_target_exists(entity, zero_pointer_valid=True)
     assert len(auditor) == 0, '0 should be a valid target pointer'
 
 
 def test_target_pointer_zero_invalid(entity, auditor):
     entity.dxf.owner = '0'
-    auditor.check_pointer_target_exists(entity, invalid_zero=True)
+    auditor.check_pointer_target_exists(entity, zero_pointer_valid=False)
     assert len(auditor) == 1, '0 should be a valid target pointer'
     assert auditor.errors[0].code == Error.POINTER_TARGET_NOT_EXISTS
 
@@ -45,7 +45,7 @@ def test_color_index(entity, auditor):
     assert auditor.errors[0].code == Error.INVALID_COLOR_INDEX
 
     auditor.reset()
-    entity.dxf.color = 257
+    entity.dxf.color = 258
     auditor.check_for_valid_color_index(entity)
     assert len(auditor) == 1
     assert auditor.errors[0].code == Error.INVALID_COLOR_INDEX

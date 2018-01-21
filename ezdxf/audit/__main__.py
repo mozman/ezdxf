@@ -1,6 +1,6 @@
-# Purpose: DXF Pretty Printer
-# Created: 16.07.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Purpose: audit runner
+# Created: 21.01.2018
+# Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
@@ -14,7 +14,7 @@ from ezdxf.lldxf.const import DXFError
 from ezdxf.lldxf.validator import is_dxf_file
 
 
-def audit(filename):
+def audit(filename, ignore_zero_pointers=False):
     try:
         dwg = readfile(filename, legacy_mode=True)
     except IOError:
@@ -24,11 +24,14 @@ def audit(filename):
         print(str(e))
         sys.exit(2)
 
-    auditor = dwg.audit()
-    auditor.print_report()
+    auditor = dwg.auditor()
+    errors = auditor.run()
+    if ignore_zero_pointers:
+        errors = auditor.filter_zero_pointers(errors)
+    auditor.print_report(errors)
 
 
-def print_msg(text):
+def processing_msg(text):
     print(text)
     print('-'*len(text))
 
@@ -42,6 +45,12 @@ def main():
         nargs='+',
         help='audit DXF files',
     )
+    parser.add_argument(
+        '-z', '--ignore_zero_pointers',
+        action='store_true',
+        help='ignore zero pointers',
+    )
+
     args = parser.parse_args(sys.argv[1:])
 
     options.compress_binary_data = True
@@ -57,8 +66,8 @@ def main():
             if not is_dxf_file(filename):
                 print("File '{}' is not a DXF file.".format(filename))
                 continue
-            print_msg('processing: {}'.format(filename))
-            audit(filename)
+            processing_msg(filename)
+            audit(filename, args.ignore_zero_pointers)
 
 
 if __name__ == "__main__":

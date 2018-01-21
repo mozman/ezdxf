@@ -102,7 +102,7 @@ class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
 
     def audit(self, auditor):
         super(ModernGraphicEntity, self).audit(auditor)
-        auditor.check_pointer_target_exists(self, invalid_zero=True)
+        auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
 
 
 _LINETEMPLATE = """  0
