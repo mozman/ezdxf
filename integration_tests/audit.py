@@ -9,7 +9,6 @@ DIR2 = r"D:\Source\dxftest\*.dxf"
 LEGACY_MODE = False
 
 
-
 @pytest.fixture(params=chain(glob.glob(DIR1), glob.glob(DIR2)))
 def filename(request):
     return request.param
@@ -33,7 +32,9 @@ def run(start):
         print("processing: {}/{} file: {}".format(count+start, len(names)+start, filename))
         dwg = ezdxf.readfile(filename, legacy_mode=LEGACY_MODE)
         auditor = dwg.auditor()
-        auditor.print_report(auditor.filter_zero_pointers(auditor.run()))
+        errors = list(auditor.filter_zero_pointers(auditor.run()))
+        if len(errors):
+            auditor.print_report(errors)
 
 
 if __name__ == '__main__':

@@ -51,7 +51,7 @@ class Auditor(object):
     def print_report(self, errors=None, stream=None):
         def entity_str(count, code, entity):
             if entity is not None:
-                return "{:4d}. Issue [{}] in DXF entity {}, handle: #{}".format(count, code, entity.dxftype(), entity.dxf.handle)
+                return "{:4d}. Issue [{}] in {} #{}".format(count, code, entity.dxftype(), entity.dxf.handle)
             else:
                 return "{:4d}. Issue [{}]".format(count, code)
 
