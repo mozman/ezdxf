@@ -33,11 +33,16 @@ AcDbDictionary
 """
 
 
-class DXFClass(DXFEntity):
+class DXFObject(DXFEntity):
+    def audit(self, auditor):
+        auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
+
+
+class DXFClass(DXFObject):
     pass
 
 
-class DXFDictionary(DXFEntity):
+class DXFDictionary(DXFObject):
     TEMPLATE = ExtendedTags.from_text(_DICT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
@@ -184,6 +189,13 @@ class DXFDictionary(DXFEntity):
             dxf_dict = self.dxffactory.wrap_handle(dict_handle)
         return dxf_dict
 
+    def audit(self, auditor):
+        if auditor.drawing.rootdict.tags is self.tags:  # if root dict, ignore owner tag because it is always #0
+            codes = (330, )
+        else:
+            codes = None
+        auditor.check_pointer_target_exists(self, ignore_codes=codes)
+
 
 _DICT_WITH_DEFAULT_TPL = """  0
 ACDBDICTIONARYWDFLT
@@ -322,7 +334,7 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
 })
 
 
-class DXFPlotSettings(DXFEntity):
+class DXFPlotSettings(DXFObject):
     DXFATTRIBS = DXFAttributes(none_subclass, plot_settings_subclass)
 
 
@@ -456,7 +468,7 @@ Layoutname
 """
 
 
-class DXFLayout(DXFEntity):
+class DXFLayout(DXFObject):
     TEMPLATE = ExtendedTags.from_text(_LAYOUT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
@@ -491,7 +503,7 @@ class DXFLayout(DXFEntity):
         }))
 
 
-class XRecord(DXFEntity):
+class XRecord(DXFObject):
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbXrecord', {
@@ -537,7 +549,7 @@ class XRecord(DXFEntity):
         self.content_tags.append(dxftag)
 
 
-class DXFDataTable(DXFEntity):
+class DXFDataTable(DXFObject):
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbDataTable', {

@@ -38,6 +38,12 @@ def test_target_pointer_zero_invalid(entity, auditor):
     assert auditor.errors[0].code == Error.POINTER_TARGET_NOT_EXISTS
 
 
+def test_target_pointer_ignore_codes(entity, auditor):
+    entity.dxf.owner = '0'
+    auditor.check_pointer_target_exists(entity, ignore_codes=(330, ))
+    assert len(auditor) == 0, '0 should be a valid target pointer'
+
+
 def test_color_index(entity, auditor):
     entity.dxf.color = -1
     auditor.check_for_valid_color_index(entity)

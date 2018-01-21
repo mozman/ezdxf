@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import sys
 from ezdxf.lldxf.types import is_pointer_code
 from ezdxf.lldxf.const import Error
-from ezdxf.lldxf.validator import is_valid_layer_name
+from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.dxfentity import DXFEntity
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
@@ -23,10 +23,10 @@ class ErrorEntry(object):
         self.data = data
 
 
-def get_pointers(tags):
+def target_pointers(tags):
     for tag in tags:
         if is_pointer_code(tag.code):
-            yield tag.value
+            yield tag
 
 
 class Auditor(object):
@@ -129,9 +129,9 @@ class Auditor(object):
         if not entity.supports_dxf_attrib('linetype'):
             return
         linetype = entity.dxf.linetype
-
-        if linetype.lower() in('bylayer', 'byblock'):  # no table entry required
+        if linetype.lower() in ('bylayer', 'byblock'):  # no table entry in linetypes required
             return
+
         if linetype not in self.drawing.linetypes:
             self.add_error(
                 code=Error.UNDEFINED_LINETYPE,
@@ -175,6 +175,8 @@ class Auditor(object):
             return
         name = entity.dxf.layer
         if not is_valid_layer_name(name):
+            if self.drawing.dxfversion > 'AC1009' and is_adsk_special_layer(name):
+                return
             self.add_error(
                 code=Error.INVALID_LAYER_NAME,
                 message='Invalid layer name: {}'.format(name),
@@ -206,19 +208,27 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_pointer_target_exists(self, entity, zero_pointer_valid=False):
+    def check_pointer_target_exists(self, entity, zero_pointer_valid=False, ignore_codes=None):
         assert isinstance(entity, DXFEntity)
+        if ignore_codes is None:
+            ignore_codes = set()
+        else:
+            ignore_codes = set(ignore_codes)
+
         db = self.drawing.entitydb
-        for target_pointer in get_pointers(entity.tags):
-            if target_pointer not in db:
-                if target_pointer == '0' and zero_pointer_valid:  # default unset pointer
+        for tag in target_pointers(entity.tags):
+            group_code, handle = tag
+            if group_code in ignore_codes:
+                continue
+            if handle not in db:
+                if handle == '0' and zero_pointer_valid:  # default unset pointer
                     continue
-                if target_pointer in self.undefined_targets:  # every undefined point just one time
+                if handle in self.undefined_targets:  # for every undefined pointer add just one error message
                     continue
                 self.add_error(
                     code=Error.POINTER_TARGET_NOT_EXISTS,
-                    message='Pointer target does not exist: #{}'.format(target_pointer),
+                    message='Pointer target does not exist: ({}, #{})'.format(group_code, handle),
                     dxf_entity=entity,
-                    data=target_pointer,
+                    data=tag,
                 )
-                self.undefined_targets.add(target_pointer)
+                self.undefined_targets.add(handle)
