@@ -74,7 +74,7 @@ class Auditor(object):
     @staticmethod
     def filter_zero_pointers(errors):
         for error in errors:
-            if error.code == Error.POINTER_TARGET_NOT_EXISTS and error.data == '0':
+            if error.code == Error.POINTER_TARGET_NOT_EXISTS and error.data.value == '0':
                 continue
             yield error
 
