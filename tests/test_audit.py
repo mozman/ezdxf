@@ -1,6 +1,6 @@
 import pytest
 import ezdxf
-from ezdxf.audit import Auditor, Error
+from ezdxf.audit.auditor import Auditor, Error
 
 
 @pytest.fixture(scope='module')

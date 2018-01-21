@@ -30,6 +30,7 @@ from ..tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects
     'DICTIONARY': dxfobjects.DXFDictionary,
+    'CLASS': dxfobjects.DXFClass,
     'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
     'PLOTSETTINGS': dxfobjects.DXFPlotSettings,
     'LAYOUT': dxfobjects.DXFLayout,

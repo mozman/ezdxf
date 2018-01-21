@@ -33,6 +33,10 @@ AcDbDictionary
 """
 
 
+class DXFClass(DXFEntity):
+    pass
+
+
 class DXFDictionary(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_DICT_TPL)
     DXFATTRIBS = DXFAttributes(

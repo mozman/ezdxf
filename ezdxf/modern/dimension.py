@@ -18,7 +18,7 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     # shortcut Drawings.dimstyles property
     'defpoint': DXFAttr(10, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # definition point for all dimension types
     'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # middle point of dimension text
-    'dimtype': DXFAttr(70),  # Dimension type:
+    'dimtype': DXFAttr(70, default=0),  # Dimension type:
     # Values 0–6 are integer values that represent the dimension type.
     # Values 32, 64, and 128 are bit values, which are added to the integer values
     # (value 32 is always set in R13 and later releases)

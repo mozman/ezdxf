@@ -20,7 +20,6 @@ from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
-from .audit import Auditor
 
 
 class Drawing(object):
@@ -336,6 +335,7 @@ class Drawing(object):
             Auditor() object
 
         """
+        from ezdxf.audit.auditor import Auditor
         auditor = Auditor(self)
         auditor.run()
         return auditor

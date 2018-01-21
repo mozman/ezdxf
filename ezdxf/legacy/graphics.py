@@ -1215,7 +1215,7 @@ class Dimension(GraphicEntity):
         'defpoint': DXFAttr(10, xtype='Point2D/3D'),  # WCS, definition point for all dimension types
         'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # OCS, middle point of dimension text
         'translation_vector': DXFAttr(12, 'Point3D'),  # OCS, dimension block translation vector
-        'dimtype': DXFAttr(70),  # Dimension type:
+        'dimtype': DXFAttr(70, default=0),  # Dimension type:
         # Values 0–6 are integer values that represent the dimension type.
         # Values 64 and 128 are bit values, which are added to the integer values
         # 0 = Rotated, horizontal, or vertical;
