@@ -180,6 +180,7 @@ class DXFDictionary(DXFEntity):
             dxf_dict = self.dxffactory.wrap_handle(dict_handle)
         return dxf_dict
 
+
 _DICT_WITH_DEFAULT_TPL = """  0
 ACDBDICTIONARYWDFLT
   5
@@ -319,6 +320,7 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
 
 class DXFPlotSettings(DXFEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, plot_settings_subclass)
+
 
 # removed reactors 5 .. 102 330 102 .. 330
 _LAYOUT_TPL = """  0
@@ -541,6 +543,7 @@ class DXFDataTable(DXFEntity):
             'tabel_name': DXFAttr(1),
         }),
     )
+
 
 _PLACEHOLDER_TPL = """  0
 ACDBPLACEHOLDER

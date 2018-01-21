@@ -132,6 +132,11 @@ def test_clone_dxf_attribs(modelspace):
     assert 'extrusion' not in attribs, "Don't clone unset attribs with default values."
 
 
+def test_invalid_layer_name(modelspace):
+    with pytest.raises(ezdxf.DXFInvalidLayerName):
+        modelspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'InvalidName*'})
+
+
 def test_create_line(modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
     assert line.dxf.start == (0., 0.)

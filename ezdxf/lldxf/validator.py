@@ -10,6 +10,7 @@ import io
 
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, COMMENT_MARKER, HEADER_VAR_MARKER, STRUCTURE_MARKER
+from .const import INVALID_LAYER_NAME_CHARACTERS
 from .tagger import low_level_tagger, skip_comments
 
 logger = logging.getLogger('ezdxf')
@@ -206,3 +207,7 @@ def is_dxf_stream(stream):
         return next(reader) == (0, 'SECTION')
     except DXFError:
         return False
+
+
+def is_valid_layer_name(name):
+    return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))

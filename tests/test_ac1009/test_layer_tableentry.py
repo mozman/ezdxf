@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import pytest
 
 from ezdxf.legacy.tableentries import Layer
+from ezdxf.lldxf.const import DXFInvalidLayerName
 
 
 @pytest.fixture
@@ -92,3 +93,8 @@ def test_thaw(layer):
     layer.thaw()
     assert layer.is_frozen() is False
     assert 0 == layer.dxf.flags
+
+
+def test_invald_layer_name():
+    with pytest.raises(DXFInvalidLayerName):
+        Layer.new('FFFF', dxfattribs={'name': 'Layer/'})

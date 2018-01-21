@@ -85,6 +85,10 @@ class DXFDecodingError(DXFError):
     pass
 
 
+class DXFInvalidLayerName(DXFValueError):
+    pass
+
+
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
 XDATA_MARKER = 1001
@@ -313,3 +317,14 @@ ATTRIB_INVISIBLE = 1  # Attribute is invisible (does not appear)
 ATTRIB_CONST = 2  # This is a constant attribute
 ATTRIB_VERIFY = 4  # Verification is required on input of this attribute
 ATTRIB_IS_PRESET = 8  # no prompt during insertion
+
+
+class Error:
+    MISSING_REQUIRED_ROOT_DICT_ENTRY = 1
+    UNDEFINED_LINETYPE = 2
+    INVALID_LAYER_NAME = 3
+    DUPLICATE_TABLE_ENTRY_NAME = 4
+    POINTER_TARGET_NOT_EXISTS = 5
+
+
+INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\',  '"', ':', ';', '?', '*', '|', '=', '`'])

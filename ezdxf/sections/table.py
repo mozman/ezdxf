@@ -3,15 +3,11 @@
 # Copyright (C) , Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
-
-from ezdxf.lldxf.defaultchunk import DefaultChunk
-from ezdxf.tools.c23 import isstring
-from ezdxf.audit import DUPLICATE_TABLE_ENTRY_NAME
-
+from ..tools.c23 import isstring
+from ..lldxf.defaultchunk import DefaultChunk
 from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError
+from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
 
 TABLENAMES = {
     'layer': 'layers',
@@ -196,7 +192,7 @@ class Table(object):
         self._table_entries.remove(handle)
         del self.entitydb[handle]
 
-    def audit(self, errors):
+    def audit(self, auditor):
         """
         Checks for table entries with same key.
         """
@@ -205,8 +201,8 @@ class Table(object):
         for entry in entries:
             key = self.key(entry)
             if key == prev_key:
-                errors.add_error(
-                    code=DUPLICATE_TABLE_ENTRY_NAME,
+                auditor.add_error(
+                    code=Error.DUPLICATE_TABLE_ENTRY_NAME,
                     message="Duplicate table entry name '{1}' in table {0}".format(self.name, entry.dxf.name),
                     dxf_entity=self,
                     data=key,

@@ -28,5 +28,5 @@ from .filemanagement import new, read, readfile, readzip
 # exceptions
 from .lldxf.const import DXFError  # base error exception
 from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
-from .lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError
+from .lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError, DXFInvalidLayerName
 

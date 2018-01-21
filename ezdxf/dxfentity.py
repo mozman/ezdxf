@@ -7,7 +7,9 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .lldxf.types import cast_tag_value, DXFTag
-from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFValueError, DXFAttributeError
+from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFValueError, DXFAttributeError, DXFInvalidLayerName
+from .lldxf.validator import is_valid_layer_name
+
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 
@@ -64,6 +66,10 @@ class DXFEntity(object):
         entity = cls(cls.TEMPLATE.clone(), drawing)
         entity.dxf.handle = handle
         if dxfattribs is not None:
+            if 'layer' in dxfattribs:
+                layer_name = dxfattribs['layer']
+                if not is_valid_layer_name(layer_name):
+                    raise DXFInvalidLayerName("Invalid layer name '{}'".format(layer_name))
             entity.update_dxf_attribs(dxfattribs)
         entity.post_new_hook()
         return entity
@@ -273,3 +279,11 @@ class DXFEntity(object):
         reactors.discard(handle)
         self.set_reactors(reactors)
 
+    def audit(self, auditor):
+        """
+        Audit entity for errors.
+
+        Args:
+            auditor: Audit() object
+        """
+        auditor.check_pointer_target_exists(self)

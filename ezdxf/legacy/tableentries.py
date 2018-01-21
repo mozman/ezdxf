@@ -9,6 +9,9 @@ from ..dxfentity import DXFEntity
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.validator import is_valid_layer_name
+from ..lldxf.const import DXFInvalidLayerName
+
 
 _LAYERTEMPLATE = """  0
 LAYER
@@ -39,6 +42,10 @@ class Layer(DXFEntity):
     THAW = 0b11111110
     LOCK = 0b00000100
     UNLOCK = 0b11111011
+
+    def post_new_hook(self):
+        if not is_valid_layer_name(self.dxf.name):
+            raise DXFInvalidLayerName("Invalid layer name '{}'".format(self.dxf.name))
 
     def is_frozen(self):
         return self.dxf.flags & Layer.FROZEN > 0
