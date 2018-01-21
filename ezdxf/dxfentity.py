@@ -286,4 +286,4 @@ class DXFEntity(object):
         Args:
             auditor: Audit() object
         """
-        auditor.check_pointer_target_exists(self)
+        pass

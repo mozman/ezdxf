@@ -24,7 +24,7 @@ class QuadrilateralMixin(object):
 def make_attribs(additional=None):
     dxfattribs = {
         'handle': DXFAttr(5),
-        'layer': DXFAttr(8, default='0'),  # layername as string
+        'layer': DXFAttr(8, default='0'),  # layer name as string, mandatory according to the DXF Reference
         'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
         'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
         'thickness': DXFAttr(39, default=0),  # thickness of 2D elements
@@ -49,6 +49,11 @@ class GraphicEntity(DXFEntity):
      Wrapper for all unsupported graphic entities.
     """
     DXFATTRIBS = make_attribs()
+
+    def audit(self, auditor):
+        auditor.check_for_valid_layer_name(self)
+        auditor.check_if_linetype_exists(self)
+        auditor.check_for_valid_color_index(self)
 
 
 _LINE_TPL = """  0

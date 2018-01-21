@@ -65,9 +65,6 @@ class Auditor(object):
             self.check_root_dict()
         self.check_table_entries()
         self.check_database_entities()
-        self.check_linetypes_exists()
-        self.check_dim_styles_exists()
-        self.check_for_invalid_layer_names()
 
     def check_root_dict(self):
         root_dict = self.drawing.rootdict
@@ -77,7 +74,6 @@ class Auditor(object):
                     code=Error.MISSING_REQUIRED_ROOT_DICT_ENTRY,
                     message='Missing root dict entry: {}'.format(name),
                     dxf_entity=root_dict,
-                    data=name,
                 )
 
     def check_table_entries(self):
@@ -95,51 +91,71 @@ class Auditor(object):
             entity = self.drawing.get_dxf_entity(handle)
             entity.audit(self)
 
-    def check_linetypes_exists(self):
+    def check_if_linetype_exists(self, entity):
         """
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
-        linetypes = self.drawing.linetypes
+        linetype = entity.dxf.linetype
+        if linetype not in self.drawing.linetypes:
+            self.add_error(
+                code=Error.UNDEFINED_LINETYPE,
+                message='Undefined linetype: {}'.format(linetype),
+                dxf_entity=entity,
+            )
 
-        def check_linetype_exists(name):
-            if name not in linetypes:
-                self.add_error(
-                    code=Error.UNDEFINED_LINETYPE,
-                    message='Undefined linetype {}'.format(linetype),
-                    dxf_entity=self.drawing.get_dxf_entity(handle),
-                    data=linetype,
-                )
+    def check_if_text_style_exists(self, entity):
+        """
+        Check for usage of undefined text styles.
+        """
+        style = entity.dxf.style
+        if style not in self.drawing.styles:
+            self.add_error(
+                code=Error.UNDEFINED_TEXT_STYLE,
+                message='Undefined dimstyle: {}'.format(style),
+                dxf_entity=entity,
+            )
 
-        for handle, tags in self.drawing.entitydb.items():
-            linetype = tags.noclass.get_first_value(6, None)  # linetype has a fixed tag value
-            if linetype is not None:
-                check_linetype_exists(linetype)
-
-    def check_dim_styles_exists(self):  # TODO: implement dimension style checker
+    def check_if_dimension_style_exists(self, entity):
         """
         Check for usage of undefined dimension styles.
         """
-        pass
+        dimstyle = entity.dxf.dimstyle
+        if dimstyle not in self.drawing.dimstyles:
+            self.add_error(
+                code=Error.UNDEFINED_DIMENSION_STYLE,
+                message='Undefined dimstyle: {}'.format(dimstyle),
+                dxf_entity=entity,
+            )
 
-    def check_for_invalid_layer_names(self):
+    def check_for_valid_layer_name(self, entity):
         """
         Check layer names for invalid characters: <>/\":;?*|='
-
-        It is not enough to check the layer table entries, because layer names can be used without a layer table entry.
         """
-        def check_layer_name_is_valid(name):
-            if not is_valid_layer_name(name):
-                self.add_error(
-                    code=Error.INVALID_LAYER_NAME,
-                    message='Invalid layer name {}'.format(name),
-                    dxf_entity=self.drawing.get_dxf_entity(handle),
-                    data=name,
-                )
+        name = entity.dxf.layer
+        if not is_valid_layer_name(name):
+            self.add_error(
+                code=Error.INVALID_LAYER_NAME,
+                message='Invalid layer name: {}'.format(name),
+                dxf_entity=entity,
+            )
 
-        for handle, tags in self.drawing.entitydb.items():
-            layer_name = tags.noclass.get_first_value(8, None)  # layer has a fixed tag value
-            if layer_name is not None:
-                check_layer_name_is_valid(layer_name)
+    def check_for_valid_color_index(self, entity):
+        color = entity.dxf.color
+        if color < 0 or color > 256:
+            self.add_error(
+                code=Error.INVALID_COLOR_INDEX,
+                message='Invalid color index: {}'.format(color),
+                dxf_entity=entity,
+            )
+
+    def check_for_existing_owner(self, entity):
+        owner_handle = entity.dxf.owner
+        if owner_handle not in self.drawing.entitydb:
+            self.add_error(
+                code=Error.INVALID_OWNER_HANDLE,
+                message='Invalid owner handle: #{}'.format(owner_handle),
+                dxf_entity=entity,
+            )
 
     def check_pointer_target_exists(self, entity, invalid_zero=False):
         assert isinstance(entity, DXFEntity)
@@ -152,8 +168,7 @@ class Auditor(object):
                     continue
                 self.add_error(
                     code=Error.POINTER_TARGET_NOT_EXISTS,
-                    message='Pointer target does not exist. DXF entity: {}'.format(entity.dxftype()),
+                    message='Pointer target does not exist: #{}'.format(target_pointer),
                     dxf_entity=entity,
-                    data=target_pointer,
                 )
                 self.undefined_targets.add(target_pointer)

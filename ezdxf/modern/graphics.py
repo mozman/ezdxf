@@ -100,6 +100,10 @@ class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
     """
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
 
+    def audit(self, auditor):
+        super(ModernGraphicEntity, self).audit(auditor)
+        auditor.check_pointer_target_exists(self, invalid_zero=True)
+
 
 _LINETEMPLATE = """  0
 LINE

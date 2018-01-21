@@ -4,16 +4,16 @@ News
 
 version 0.8.5 - ?
 
-   * CHANGED: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
-   * CHANGED: table entry (layer, linetype, style, dimstyle, ...) names are case insensitive 'TEST' == 'Test' (like AutoCAD)
-   * CHANGED: raises DXFInvalidLayerName() for invalid characters in layer names: ``<>/\":;?*|=\```
+   * CHANGE: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
+   * CHANGE: table entry (layer, linetype, style, dimstyle, ...) names are case insensitive 'TEST' == 'Test' (like AutoCAD)
+   * CHANGE: raises DXFInvalidLayerName() for invalid characters in layer names: <>/\":;?*|=`
 
 Version 0.8.4 - 2018-01-14
 
   * NEW: Support for complex line types with text or shapes
   * NEW: DXF file structure validator at SECTION level, tags outside of sections will be removed
   * NEW: Basic read support for DIMENSION
-  * CHANGED: improved exception management, in the future ezdxf should only raise exceptions inherited from DXFError for
+  * CHANGE: improved exception management, in the future ezdxf should only raise exceptions inherited from DXFError for
     DXF related errors, previous exception classes still work
 
     - DXFValueError(DXFError, ValueError)
