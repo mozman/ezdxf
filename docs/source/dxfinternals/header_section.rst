@@ -1,11 +1,11 @@
 .. _Header Section:
 
-Header Section
+HEADER Section
 ==============
 
 Documentation to ezdxf :class:`HeaderSection` class.
 
-In DXF R12 an prior the header section was optional, but since DXF R13 the header section is mandatory. The overall
+In DXF R12 an prior the HEADER section was optional, but since DXF R13 the HEADER section is mandatory. The overall
 structure is:
 
 .. code-block:: none

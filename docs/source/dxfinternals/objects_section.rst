@@ -1,6 +1,6 @@
 .. _Objects Section:
 
-Objects Section
+OBJECTS Section
 ===============
 
 TODO

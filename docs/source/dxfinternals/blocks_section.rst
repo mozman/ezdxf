@@ -1,6 +1,6 @@
 .. _Blocks Section:
 
-Blocks Section
+BLOCKS Section
 ==============
 
 TODO

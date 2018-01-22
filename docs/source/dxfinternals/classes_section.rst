@@ -1,6 +1,6 @@
 .. _Classes Section:
 
-Classes Section
+CLASSES Section
 ===============
 
 The CLASSES section contains CLASS definitions which are only important for Autodesk products, some DXF entities require

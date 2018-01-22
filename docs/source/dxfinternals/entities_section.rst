@@ -1,6 +1,6 @@
 .. _Entities Section:
 
-Entities Section
+ENTITIES Section
 ================
 
 TODO

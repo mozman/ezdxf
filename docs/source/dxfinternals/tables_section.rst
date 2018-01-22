@@ -1,6 +1,6 @@
 .. _Tables Section:
 
-Tables Section
+TABLES Section
 ==============
 
 .. toctree::
