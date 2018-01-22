@@ -9,8 +9,13 @@ Linetype Table
 --------------
 
 You have access to the line types table by the attribute :attr:`Drawing.linetypes`. The line type table itself is not
-stored in the drawing database, but the table entries are stored in drawing database, and can be accessed by its handle.
+stored in the entity database, but the table entries are stored in entity database, and can be accessed by its handle.
 
+
+.. seealso::
+
+    - DXF Reference: `TABLES Section`_
+    - DXF Reference: `LTYPE Entity`_
 
 LTYPE Table Tag Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,3 +230,8 @@ SHAPE Tag Structure
     1.0
     74
     0
+
+
+.. _LTYPE Entity: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F57A316C-94A2-416C-8280-191E34B182AC
+
+.. _TABLES Section: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A9FD9590-C97B-4E41-9F26-BD82C34A4F9F

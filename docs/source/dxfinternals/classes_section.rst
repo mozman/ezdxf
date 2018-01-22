@@ -8,7 +8,9 @@ a class definition or AutoCAD will not open the DXF file.
 
 The CLASSES sections was introduced with DXF AC1015 (AutoCAD Release R13).
 
-DXF Reference: `About the DXF CLASSES Section`_
+.. seealso::
+
+    DXF Reference: `About the DXF CLASSES Section`_
 
 The CLASSES section in DXF files holds the information for application-defined classes whose instances appear in
 the BLOCKS, ENTITIES, and OBJECTS sections of the database. It is assumed that a class definition is permanently
@@ -17,7 +19,9 @@ fixed in the class hierarchy. All fields are required.
 CLASS Entities
 --------------
 
-DXF Reference: `Group Codes for the CLASS entity`_
+.. seealso::
+
+    DXF Reference: `Group Codes for the CLASS entity`_
 
 CLASS entities have no handle and therefor ezdxf does not store the CLASS entity in the drawing entities database!
 

@@ -27,7 +27,7 @@ A header variable has a name defined by a :code:`(9, Name)` tag and following va
 
 .. seealso::
 
-    `Header Variables`_ reference by Autodesk
+    DXF Reference: `Header Variables`_
 
 
 .. _Header Variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A

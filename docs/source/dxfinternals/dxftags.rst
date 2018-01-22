@@ -180,7 +180,9 @@ Multi Tag Text (MTEXT)
 If the text string is less than 250 characters, all characters appear in tag :code:`(1, ...)`. If the text string is
 greater than 250 characters, the string is divided into 250-character chunks, which appear in one or more
 :code:`(3, ...)` tags. If :code:`(3, ...)` tags are used, the last group is a :code:`(1, ...)` tag and has fewer than
-250 characters::
+250 characters:
+
+.. code-block:: none
 
     3
     ... TwoHundredAndFifty Characters ....
@@ -194,6 +196,8 @@ As far I know this is only supported by the :class:`MText` entity.
 .. seealso::
 
     :ref:`DXF File Encoding`
+
+.. _Tag Structure DXF R13 and later:
 
 Tag Structure DXF R13 and later
 -------------------------------
@@ -225,7 +229,9 @@ Persistent Reactors
 ~~~~~~~~~~~~~~~~~~~
 
 Persistent reactors are an optional sequence that stores object handles of objects registering themselves as reactors on
-the current object. Any object or entity may have this section. The persistent reactors tag sequence::
+the current object. Any object or entity may have this section. The persistent reactors tag sequence:
+
+.. code-block:: none
 
   102
   {ACAD_REACTORS
@@ -242,7 +248,9 @@ Application-Defined Codes
 
 Starting at DXF R13, DXF objects can contain application-defined codes outside of xdata. This application-defined
 codes can contain any tag except :code:`(0, ...)` and :code:`(102, ...)`. "{YOURAPPID" means the APPID string with an
-preceding "{". The application defined data tag sequence::
+preceding "{". The application defined data tag sequence:
+
+.. code-block:: none
 
     102
     {YOURAPPID
