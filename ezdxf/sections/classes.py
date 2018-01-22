@@ -40,14 +40,17 @@ class ClassesSection(object):
             tagwriter.write_tags(dxfclass.tags)
         tagwriter.write_str("  0\nENDSEC\n")
 
-    def update_instance_counters(self, entities):
+    def update_instance_counters(self):
         if len(self.classes) == 0:
             return  # nothing to do
         if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
             return  # instance counter not supported
         counter = Counter()
-        for entity in entities:
+        for entity in self.drawing.entities:
             counter[entity.dxftype()] += 1
+        if 'objects' in self.drawing.sections:
+            for obj in self.drawing.objects:
+                counter[obj.dxftype()] += 1
 
         for dxfclass in self.classes:
             dxfclass.dxf.instance_count = counter[dxfclass.dxf.name]

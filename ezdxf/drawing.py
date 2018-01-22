@@ -340,7 +340,7 @@ class Drawing(object):
 
     def update_class_instance_counters(self):
         if 'classes' in self.sections:
-            self.sections.classes.update_instance_counters(self.entities)
+            self.sections.classes.update_instance_counters()
 
     def reset_class_instance_counters(self):
         if 'classes' in self.sections:
