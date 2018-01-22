@@ -47,6 +47,9 @@ class ExtendedTags(object):
     def get_handle(self):
         return self.noclass.get_handle()
 
+    def dxftype(self):
+        return self.noclass[0].value
+
     def replace_handle(self, handle):
         self.noclass.replace_handle(handle)
 
@@ -231,12 +234,6 @@ class ExtendedTags(object):
         subclass.append(DXFTag(APP_DATA_MARKER, app_data_pos))
         self.appdata.append(app_tags)
         return app_tags
-
-    def dxftype(self):
-        return self.noclass[0].value
-
-    def get_handle(self):
-        return self.noclass.get_handle()
 
     @classmethod
     def from_text(cls, text):

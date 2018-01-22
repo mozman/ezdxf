@@ -338,6 +338,14 @@ class Drawing(object):
         from ezdxf.audit.auditor import Auditor
         return Auditor(self)
 
+    def update_class_instance_counters(self):
+        if 'classes' in self.sections:
+            self.sections.classes.update_instance_counters(self.entities)
+
+    def reset_class_instance_counters(self):
+        if 'classes' in self.sections:
+            self.sections.classes.reset_instance_counters()
+
     def _update_metadata(self):
         now = datetime.now()
         self.header['$TDUPDATE'] = juliandate(now)

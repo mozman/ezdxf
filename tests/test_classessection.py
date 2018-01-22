@@ -5,19 +5,14 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
+from ezdxf.lldxf.tags import Tags, internal_tag_compiler
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
 
 @pytest.fixture(scope='module')
-def dwg():
-    return DrawingProxy('AC1009')
-
-
-@pytest.fixture(scope='module')
-def section(dwg):
-    return ClassesSection(Tags.from_text(TESTCLASSES), dwg)
+def section():
+    return ClassesSection(Tags.from_text(TESTCLASSES), None)
 
 
 def test_write(section):
@@ -25,14 +20,14 @@ def test_write(section):
     section.write(TagWriter(stream))
     result = stream.getvalue()
     stream.close()
-    t1 = list(compile_tags_without_handles(TESTCLASSES))
-    t2 = list(compile_tags_without_handles(result))
+    t1 = list(internal_tag_compiler(TESTCLASSES))
+    t2 = list(internal_tag_compiler(result))
     assert t1 == t2
 
 
-def test_empty_section(dwg):
+def test_empty_section():
     tags = list(Tags.from_text(EMPTYSEC))
-    section = ClassesSection(tags, dwg)
+    section = ClassesSection(tags, None)
     stream = StringIO()
     section.write(TagWriter(stream))
     result = stream.getvalue()
@@ -103,6 +98,3 @@ ObjectDBX Classes
   0
 ENDSEC
 """
-
-if __name__ == '__main__':
-    unittest.main()

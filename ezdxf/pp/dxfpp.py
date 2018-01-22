@@ -190,7 +190,8 @@ class DXF2HtmlConverter(object):
         elif section.name == 'entities':
             return section_template.format(content=self.entities2html(self.get_entities(), create_ref_links=True))
         elif section.name == 'classes':
-            return section_template.format(content=self.entities2html(iter(section), create_ref_links=False))
+            return section_template.format(content=self.entities2html(iter(section), create_ref_links=False,
+                                                                      show_ref_status=False))
         elif section.name == 'objects':
             return section_template.format(content=self.entities2html(iter(section), create_ref_links=True,
                                                                       show_ref_status=True))

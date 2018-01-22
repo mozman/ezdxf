@@ -20,6 +20,25 @@ none_subclass = DefSubclass(None, {
 })
 
 
+class DXFClass(DXFEntity):
+    DXFATTRIBS = DXFAttributes(
+        DefSubclass(None, {
+            'name': DXFAttr(1),
+            'cpp_class_name': DXFAttr(2),
+            'app_name': DXFAttr(3),
+            'flags': DXFAttr(90),
+            'instance_count': DXFAttr(91),
+            'was_a_proxy': DXFAttr(280),
+            'is_an_entity': DXFAttr(281),
+        }),
+    )
+
+
+class DXFObject(DXFEntity):
+    def audit(self, auditor):
+        auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
+
+
 _DICT_TPL = """  0
 DICTIONARY
   5
@@ -31,15 +50,6 @@ AcDbDictionary
 281
 1
 """
-
-
-class DXFObject(DXFEntity):
-    def audit(self, auditor):
-        auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
-
-
-class DXFClass(DXFObject):
-    pass
 
 
 class DXFDictionary(DXFObject):
