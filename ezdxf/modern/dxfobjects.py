@@ -27,7 +27,7 @@ class DXFClass(DXFEntity):
             'cpp_class_name': DXFAttr(2),
             'app_name': DXFAttr(3),
             'flags': DXFAttr(90),
-            'instance_count': DXFAttr(91),
+            'instance_count': DXFAttr(91, dxfversion='AC1018'),
             'was_a_proxy': DXFAttr(280),
             'is_an_entity': DXFAttr(281),
         }),

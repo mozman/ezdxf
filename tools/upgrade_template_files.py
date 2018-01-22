@@ -2,7 +2,7 @@ __author__ = 'manfred'
 
 import ezdxf
 
-PATH = r"C:\Users\manfred\Desktop\now\{}.dxf"
+PATH = r"C:\Users\manfred\Desktop\now\templates\{}.dxf"
 
 
 def add_appids(dwg):
@@ -27,8 +27,7 @@ def repair_layer_pointers(dwg):
 def main():
     for version in ("AC1015", "AC1018", "AC1021", "AC1024", "AC1027", "AC1032"):
         dwg = ezdxf.readfile(PATH.format(version))
-        add_appids(dwg)
-        repair_layer_pointers(dwg)
+        dwg.reset_class_instance_counters()
         dwg.save()
 
 

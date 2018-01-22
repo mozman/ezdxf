@@ -14,34 +14,37 @@ from ..modern.dxfobjects import DXFClass
 class ClassesSection(object):
     name = 'classes'
 
-    def __init__(self, tags, drawing):
-        self.classes = []  # DXFClasses are not stored in the drawing database!
+    def __init__(self, tags=None, drawing=None):
+        self.classes = []  # DXFClasses are not stored in the entities database!
+        self.drawing = drawing
         if tags is not None:
-            self._build(tags)
+            self._build(tags, drawing)
 
     def __iter__(self):
         return iter(self.classes)
 
-    def _build(self, tags):
-        if tags[0] != (0, 'SECTION') or tags[1] != (2, self.name.upper()) or tags[-1] != (0, 'ENDSEC'):
-            raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
+    def _build(self, tags, drawing):
+        if tags[0] != (0, 'SECTION') or tags[1] != (2, 'CLASSES') or tags[-1] != (0, 'ENDSEC'):
+            raise DXFStructureError("Critical structure error in CLASSES section.")
 
         if len(tags) == 3:  # empty entities section
             return
 
         for class_tags in group_tags(tags[2:-1]):
-            # DXFClasses are not stored in the drawing database!
-            self.classes.append(DXFClass(ExtendedTags(class_tags)))
+            # DXFClasses are not stored in the entities database!
+            self.classes.append(DXFClass(ExtendedTags(class_tags), drawing))
 
     def write(self, tagwriter):
-        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")
         for dxfclass in self.classes:
             tagwriter.write_tags(dxfclass.tags)
-        tagwriter.write_tag2(0, "ENDSEC")
+        tagwriter.write_str("  0\nENDSEC\n")
 
     def update_instance_counters(self, entities):
         if len(self.classes) == 0:
             return  # nothing to do
+        if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
+            return  # instance counter not supported
         counter = Counter()
         for entity in entities:
             counter[entity.dxftype()] += 1
@@ -50,5 +53,7 @@ class ClassesSection(object):
             dxfclass.dxf.instance_count = counter[dxfclass.dxf.name]
 
     def reset_instance_counters(self):
+        if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
+            return  # instance counter not supported
         for dxfclass in self.classes:
             dxfclass.dxf.instance_count = 0
