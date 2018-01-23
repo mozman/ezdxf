@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test classifiedtags
-# Created: 30.04.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 30.04.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 from io import StringIO
 
 from ezdxf.lldxf.tags import Tags, DXFTag
@@ -16,84 +11,108 @@ from ezdxf.lldxf.repair import join_subclasses
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.lldxf.tagwriter import TagWriter
 
-class TestExtendedTags(unittest.TestCase):
-    def setUp(self):
-        self.xtags = ExtendedTags.from_text(XTAGS1)
 
-    def test_init_appdata(self):
-        self.assertIsNotNone(self.xtags.get_app_data('{ACAD_XDICTIONARY'))
+@pytest.fixture
+def xtags1():
+    return ExtendedTags.from_text(XTAGS1)
 
-    def test_init_with_tags(self):
-        tags = Tags.from_text(XTAGS1)
-        xtags = ExtendedTags(tags)
-        self.assertEqual(3, len(xtags.subclasses))
-        self.assertEqual(1, len(xtags.xdata))
 
-    def test_init_xdata(self):
-        self.assertIsNotNone(self.xtags.get_xdata('RAK'))
+def test_init_appdata(xtags1):
+    assert xtags1.get_app_data('{ACAD_XDICTIONARY') is not None
 
-    def test_appdata_content_count(self):
-        xdict = self.xtags.get_app_data('{ACAD_XDICTIONARY')
-        self.assertEqual(3, len(xdict))
 
-    def test_appdata_content(self):
-        xdict = self.xtags.get_app_data('{ACAD_XDICTIONARY')
-        self.assertEqual(xdict.get_first_value(360), "63D5")
+def test_init_with_tags():
+    tags = Tags.from_text(XTAGS1)
+    xtags = ExtendedTags(tags)
+    assert 3 == len(xtags.subclasses)
+    assert 1 == len(xtags.xdata)
 
-    def test_tags_skips_appdata_content(self):
-        with self.assertRaises(DXFValueError):
-            self.xtags.noclass.get_first_value(360)
 
-    def test_xdata_content_count(self):
-        rak = self.xtags.get_xdata('RAK')
-        self.assertEqual(17, len(rak))
+def test_init_xdata(xtags1):
+    assert xtags1.get_xdata('RAK') is not None
 
-    def test_tags_skips_xdata_content(self):
-        with self.assertRaises(DXFValueError):
-            self.xtags.noclass.get_first_value(1000)
 
-    def test_copy(self):
-        stream = StringIO()
-        tagwriter = TagWriter(stream)
-        tagwriter.write_tags(self.xtags)
-        self.assertEqual(XTAGS1, stream.getvalue())
-        stream.close()
+def test_init_one_tag():
+    xtags = ExtendedTags([DXFTag(0, 'SECTION')])
+    assert xtags.noclass[0] == (0, 'SECTION')
 
-    def test_getitem_layer(self):
-        self.assertEqual(self.xtags.noclass[0], (0, 'LAYER'))
 
-    def test_getitem_xdict(self):
-        self.assertEqual(self.xtags.noclass[2], (102, 0))
+def test_appdata_content_count(xtags1):
+    xdict = xtags1.get_app_data('{ACAD_XDICTIONARY')
+    assert 3 == len(xdict)
 
-    def test_getitem_parent(self):
-        self.assertEqual(self.xtags.noclass[3], (330, '18'))
 
-    def test_get_last_item(self):
-        self.assertEqual(self.xtags.noclass[-1], (330, '18'))
+def test_appdata_content(xtags1):
+    xdict = xtags1.get_app_data('{ACAD_XDICTIONARY')
+    assert xdict.get_first_value(360) == "63D5"
 
-    def test_tagscount(self):
-        """ apdata counts as one tag and xdata counts as one tag. """
-        self.assertEqual(4, len(self.xtags.noclass))
 
-    def test_subclass_AcDbSymbolTableRecord(self):
-        subclass = self.xtags.get_subclass('AcDbSymbolTableRecord')
-        self.assertEqual(1, len(subclass))
+def test_tags_skips_appdata_content(xtags1):
+    with pytest.raises(DXFValueError):
+        xtags1.noclass.get_first_value(360)
 
-    def test_subclass_AcDbLayerTableRecord(self):
-        subclass = self.xtags.get_subclass('AcDbLayerTableRecord')
-        self.assertEqual(8, len(subclass))
 
-    def test_clone_is_equal(self):
-        clone = self.xtags.clone()
-        self.assertTrue(self.xtags is not clone)
-        self.assertTrue(self.xtags.appdata is not clone.appdata)
-        self.assertTrue(self.xtags.subclasses is not clone.subclasses)
-        self.assertTrue(self.xtags.xdata is not clone.xdata)
-        self.assertEqual(list(self.xtags), list(clone))
+def test_xdata_content_count(xtags1):
+    rak = xtags1.get_xdata('RAK')
+    assert 17 == len(rak)
 
-    def test_replace_handle(self):
-        self.xtags.replace_handle('AA')
-        self.assertEqual('AA', self.xtags.get_handle())
+
+def test_tags_skips_xdata_content(xtags1):
+    with pytest.raises(DXFValueError):
+        xtags1.noclass.get_first_value(1000)
+
+
+def test_copy(xtags1):
+    stream = StringIO()
+    tagwriter = TagWriter(stream)
+    tagwriter.write_tags(xtags1)
+    assert XTAGS1 == stream.getvalue()
+    stream.close()
+
+
+def test_getitem_layer(xtags1):
+    assert xtags1.noclass[0] == (0, 'LAYER')
+
+
+def test_getitem_xdict(xtags1):
+    assert xtags1.noclass[2] == (102, 0)
+
+
+def test_getitem_parent(xtags1):
+    assert xtags1.noclass[3] == (330, '18')
+
+
+def test_get_last_item(xtags1):
+    assert xtags1.noclass[-1] == (330, '18')
+
+
+def test_tagscount(xtags1):
+    """ apdata counts as one tag and xdata counts as one tag. """
+    assert 4 == len(xtags1.noclass)
+
+
+def test_subclass_AcDbSymbolTableRecord(xtags1):
+    subclass = xtags1.get_subclass('AcDbSymbolTableRecord')
+    assert 1 == len(subclass)
+
+
+def test_subclass_AcDbLayerTableRecord(xtags1):
+    subclass = xtags1.get_subclass('AcDbLayerTableRecord')
+    assert 8 == len(subclass)
+
+
+def test_clone_is_equal(xtags1):
+    clone = xtags1.clone()
+    assert xtags1 is not clone
+    assert xtags1.appdata is not clone.appdata
+    assert xtags1.subclasses is not clone.subclasses
+    assert xtags1.xdata is not clone.xdata
+    assert list(xtags1) == list(clone)
+
+
+def test_replace_handle(xtags1):
+    xtags1.replace_handle('AA')
+    assert 'AA' == xtags1.get_handle()
 
 
 XTAGS1 = """  0
@@ -163,49 +182,56 @@ CONTINUOUS
 """
 
 
-class TestXDATA(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(XTAGS2)
+@pytest.fixture
+def xtags2():
+    return ExtendedTags.from_text(XTAGS2)
 
-    def test_xdata_count(self):
-        self.assertEqual(3, len(self.tags.xdata))
 
-    def test_tags_count(self):
-        """ 3 xdata chunks and two 'normal' tag. """
-        self.assertEqual(2, len(self.tags.noclass))
+def test_xdata_count(xtags2):
+    assert 3 == len(xtags2.xdata)
 
-    def test_xdata3_tags(self):
-        xdata = self.tags.get_xdata('XDATA3')
-        self.assertEqual(xdata[0], (1001, 'XDATA3'))
-        self.assertEqual(xdata[1], (1000, 'TEXT-XDATA3'))
-        self.assertEqual(xdata[2], (1070, 2))
-        self.assertEqual(xdata[3], (1070, 3))
 
-    def test_new_data(self):
-        self.tags.new_xdata('NEWXDATA', [(1000, 'TEXT')])
-        self.assertTrue(self.tags.has_xdata('NEWXDATA'))
+def test_tags_count(xtags2):
+    """ 3 xdata chunks and two 'normal' tag. """
+    assert 2 == len(xtags2.noclass)
 
-        xdata = self.tags.get_xdata('NEWXDATA')
-        self.assertEqual(xdata[0], (1001, 'NEWXDATA'))
-        self.assertEqual(xdata[1], (1000, 'TEXT'))
 
-    def test_set_new_data(self):
-        self.tags.new_xdata('NEWXDATA', tags=[(1000, "Extended Data String")])
-        self.assertTrue(self.tags.has_xdata('NEWXDATA'))
+def test_xdata3_tags(xtags2):
+    xdata = xtags2.get_xdata('XDATA3')
+    assert xdata[0] == (1001, 'XDATA3')
+    assert xdata[1] == (1000, 'TEXT-XDATA3')
+    assert xdata[2] == (1070, 2)
+    assert xdata[3] == (1070, 3)
 
-        xdata = self.tags.get_xdata('NEWXDATA')
-        self.assertEqual((1001, 'NEWXDATA'), xdata[0])
-        self.assertEqual((1000, "Extended Data String"), xdata[1])
 
-    def test_append_xdata(self):
-        xdata = self.tags.get_xdata('MOZMAN')
-        self.assertEqual(4, len(xdata))
+def test_new_data(xtags2):
+    xtags2.new_xdata('NEWXDATA', [(1000, 'TEXT')])
+    assert xtags2.has_xdata('NEWXDATA') is True
 
-        xdata.append(DXFTag(1000, "Extended Data String"))
-        xdata = self.tags.get_xdata('MOZMAN')
-        self.assertEqual(5, len(xdata))
+    xdata = xtags2.get_xdata('NEWXDATA')
+    assert xdata[0] == (1001, 'NEWXDATA')
+    assert xdata[1] == (1000, 'TEXT')
 
-        self.assertEqual(DXFTag(1000, "Extended Data String"), xdata[4])
+
+def test_set_new_data(xtags2):
+    xtags2.new_xdata('NEWXDATA', tags=[(1000, "Extended Data String")])
+    assert xtags2.has_xdata('NEWXDATA') is True
+
+    xdata = xtags2.get_xdata('NEWXDATA')
+    assert (1001, 'NEWXDATA') == xdata[0]
+    assert (1000, "Extended Data String") == xdata[1]
+
+
+def test_append_xdata(xtags2):
+    xdata = xtags2.get_xdata('MOZMAN')
+    assert 4 == len(xdata)
+
+    xdata.append(DXFTag(1000, "Extended Data String"))
+    xdata = xtags2.get_xdata('MOZMAN')
+    assert 5 == len(xdata)
+
+    assert DXFTag(1000, "Extended Data String") == xdata[4]
+
 
 XTAGS2 = """  0
 LAYER
@@ -238,32 +264,37 @@ TEXT-XDATA3
 """
 
 
-class Test2xSubclass(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(SPECIALCASE_TEXT)
+@pytest.fixture
+def xtags3():
+    return ExtendedTags.from_text(SPECIALCASE_TEXT)
 
-    def test_read_tags(self):
-        subclass2 = self.tags.get_subclass('AcDbText')
-        self.assertEqual((100, 'AcDbText'), subclass2[0])
 
-    def test_read_tags_2(self):
-        subclass2 = self.tags.get_subclass('AcDbText')
-        self.assertEqual((100, 'AcDbText'), subclass2[0])
-        self.assertEqual((1, 'Title:'), subclass2[3])
+def test_read_tags(xtags3):
+    subclass2 = xtags3.get_subclass('AcDbText')
+    assert (100, 'AcDbText') == subclass2[0]
 
-    def test_read_tags_3(self):
-        subclass2 = self.tags.get_subclass('AcDbText', 3)
-        self.assertEqual((100, 'AcDbText'), subclass2[0])
-        self.assertEqual((73, 2), subclass2[1])
 
-    def test_key_error(self):
-        with self.assertRaises(DXFKeyError):
-            self.tags.get_subclass('AcDbText', pos=4)
+def test_read_tags_2(xtags3):
+    subclass2 = xtags3.get_subclass('AcDbText')
+    assert (100, 'AcDbText') == subclass2[0]
+    assert (1, 'Title:') == subclass2[3]
 
-    def test_skip_empty_subclass(self):
-        self.tags.subclasses[1] = Tags()
-        subclass2 = self.tags.get_subclass('AcDbText')
-        self.assertEqual((100, 'AcDbText'), subclass2[0])
+
+def test_read_tags_3(xtags3):
+    subclass2 = xtags3.get_subclass('AcDbText', 3)
+    assert (100, 'AcDbText') == subclass2[0]
+    assert (73, 2) == subclass2[1]
+
+
+def test_key_error(xtags3):
+    with pytest.raises(DXFKeyError):
+        xtags3.get_subclass('AcDbText', pos=4)
+
+
+def test_skip_empty_subclass(xtags3):
+    xtags3.subclasses[1] = Tags()
+    subclass2 = xtags3.get_subclass('AcDbText')
+    assert (100, 'AcDbText') == subclass2[0]
 
 
 SPECIALCASE_TEXT = """  0
@@ -301,33 +332,33 @@ AcDbText
 ACAD_REACTORS = '{ACAD_REACTORS'
 
 
-class TestAppData(unittest.TestCase):
-    def setUp(self):
-        self.tags = ExtendedTags.from_text(NO_REACTORS)
+@pytest.fixture
+def xtags4():
+    return ExtendedTags.from_text(NO_REACTORS)
 
-    def test_get_not_existing_reactor(self):
-        with self.assertRaises(DXFValueError):
-            self.tags.get_app_data(ACAD_REACTORS)
+def test_get_not_existing_reactor(xtags4):
+    with pytest.raises(DXFValueError):
+        xtags4.get_app_data(ACAD_REACTORS)
 
-    def test_new_reactors(self):
-        self.tags.new_app_data(ACAD_REACTORS)
-        self.assertEqual((102, 0), self.tags.noclass[-1])  # code = 102, value = index in appdata list
+def test_new_reactors(xtags4):
+    xtags4.new_app_data(ACAD_REACTORS)
+    assert (102, 0) == xtags4.noclass[-1]  # code = 102, value = index in appdata list
 
-    def test_append_not_existing_reactors(self):
-        self.tags.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
-        reactors = self.tags.get_app_data_content(ACAD_REACTORS)
-        self.assertEqual(1, len(reactors))
-        self.assertEqual(DXFTag(330, 'DEAD'), reactors[0])
+def test_append_not_existing_reactors(xtags4):
+    xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+    reactors = xtags4.get_app_data_content(ACAD_REACTORS)
+    assert 1 == len(reactors)
+    assert DXFTag(330, 'DEAD') == reactors[0]
 
-    def test_append_to_existing_reactors(self):
-        self.tags.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
-        reactors = self.tags.get_app_data_content(ACAD_REACTORS)
-        reactors.append(DXFTag(330, 'DEAD2'))
-        self.tags.set_app_data_content(ACAD_REACTORS, reactors)
+def test_append_to_existing_reactors(xtags4):
+    xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+    reactors = xtags4.get_app_data_content(ACAD_REACTORS)
+    reactors.append(DXFTag(330, 'DEAD2'))
+    xtags4.set_app_data_content(ACAD_REACTORS, reactors)
 
-        reactors = self.tags.get_app_data_content(ACAD_REACTORS)
-        self.assertEqual(DXFTag(330, 'DEAD'), reactors[0])
-        self.assertEqual(DXFTag(330, 'DEAD2'), reactors[1])
+    reactors = xtags4.get_app_data_content(ACAD_REACTORS)
+    assert DXFTag(330, 'DEAD') == reactors[0]
+    assert DXFTag(330, 'DEAD2') == reactors[1]
 
 NO_REACTORS = """  0
 TEXT
@@ -358,12 +389,11 @@ ARIALNARROW
 """
 
 
-class TestRepairLeicaDistoDXF12Files(unittest.TestCase):
-    def test_join_subclasses(self):
-        tags = ExtendedTags.from_text(LEICA_DISTO_TAGS)
-        join_subclasses(tags.subclasses)
-        self.assertEqual(9, len(tags.noclass))
-        self.assertEqual(1, len(tags.subclasses))
+def test_repair_leica_disto_files():
+    tags = ExtendedTags.from_text(LEICA_DISTO_TAGS)
+    join_subclasses(tags.subclasses)
+    assert 9 == len(tags.noclass)
+    assert 1 == len(tags.subclasses)
 
 
 LEICA_DISTO_TAGS = """0
@@ -401,6 +431,3 @@ AcDbLine
 230
 1
 """
-
-if __name__ == '__main__':
-    unittest.main()

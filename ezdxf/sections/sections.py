@@ -14,6 +14,55 @@ from .entities import EntitySection
 from ..options import options
 from ..lldxf.defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
 from ..lldxf.const import DXFStructureError
+from ..lldxf.tags import group_tags
+
+
+def loader(tagger):
+    """
+    Divide input tag stream from tagger into DXF entities. Each DXF entity starts with a DXF structure (0, ...) tag, and
+    ends before the next DXF structure tag.
+
+    Generated structure:
+
+    each entity is a Tags() object
+
+    [
+        [entity, entity, ...],  # 1. section
+        [entity, entity, ...],  # 2. section
+        [entity, entity, ...],  # 3. section
+        ...
+    ]
+
+    [
+        [(0, 'SECTION'), (2, 'HEADER'), .... ],
+        [(0, 'SECTION'), (2, 'CLASSES')], [(0, 'CLASS'), ...], [(0, 'CLASS'), ...]],
+        [(0, 'SECTION'), (2, 'TABLES')], [(0, 'TABLE'), (2, 'VPORT')], [(0, 'VPORT'), ...], ... , [(0, 'ENDTAB')]],
+        ...
+        [(0, 'SECTION'), (2, 'OBJECTS')], ...]
+    ]
+
+    Function expects a valid DXF structure, use ezdxf.lldxf.validator.structure_validator() to filter input.
+
+    Args:
+        tagger: generates DXFTag() entities from input data
+
+    Returns:
+        list if sections, each section is a list of DXF entity tag groups
+    """
+    sections = []
+    section = []
+    for entity in group_tags(tagger):
+        tag = entity[0]
+        if tag == (0, 'SECTION'):
+            section = [entity]
+        elif tag == (0, 'ENDSEC'):  # not collected
+            sections.append(section)
+            section = []  # collect tags outside of sections, but ignore it
+        elif tag == (0, 'EOF'):  # not collected
+            pass
+        else:
+            section.append(entity)
+    return sections
 
 
 class Sections(object):

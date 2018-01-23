@@ -11,10 +11,6 @@ from .lldxf.const import DXFValueError
 from .lldxf.tags import DXFTag
 
 
-def factory():
-    return EntityDB()
-
-
 class EntityDB(object):
     """ A simple key/value database a.k.a. dict(), but can be replaced by other
     classes that implements all of the methods of `EntityDB`. The entities

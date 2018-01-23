@@ -10,7 +10,7 @@ import io
 import logging
 logger = logging.getLogger('ezdxf')
 
-from . import database
+from .database import EntityDB
 from .lldxf.tags import DXFTag
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError, DXFValueError
 from .dxffactory import dxffactory
@@ -33,7 +33,7 @@ class Drawing(object):
         self.dxfversion = 'AC1009'  # readonly - set by _bootstraphook()
         self.encoding = 'cp1252'  # read/write - set by _bootstraphook()
         self.filename = None  # read/write
-        self.entitydb = database.factory()
+        self.entitydb = EntityDB()
         self.sections = Sections(tagreader, self)
         self._groups = None
         if self.dxfversion > 'AC1009':
