@@ -7,6 +7,8 @@ version 0.8.5 - ?
    * CHANGE: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
    * CHANGE: table entry (layer, linetype, style, dimstyle, ...) names are case insensitive 'TEST' == 'Test' (like AutoCAD)
    * CHANGE: raises DXFInvalidLayerName() for invalid characters in layer names: <>/\":;?*|=`
+   * CHANGE: audit process rewritten
+   * CHANGE: skip all comments, group code 999
 
 Version 0.8.4 - 2018-01-14
 

@@ -9,7 +9,7 @@ from .tags import Tags,  DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .const import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from ..tools.c23 import isstring
-from .tagger import internal_tag_compiler, skip_comments
+from .tagger import internal_tag_compiler
 
 
 class ExtendedTags(object):
@@ -237,7 +237,7 @@ class ExtendedTags(object):
 
     @classmethod
     def from_text(cls, text):
-        return cls(skip_comments(internal_tag_compiler(text)))
+        return cls(internal_tag_compiler(text))
 
 
 LINKED_ENTITIES = {

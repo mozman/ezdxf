@@ -29,7 +29,6 @@ class Drawing(object):
         """ Create a new drawing. """
 
         self._is_binary_data_compressed = False
-        self.comments = []  # list of comment strings - saved as (999, comment) tags on top of file
         self.dxffactory = None  # readonly - set by _bootstraphook()
         self.dxfversion = 'AC1009'  # readonly - set by _bootstraphook()
         self.encoding = 'cp1252'  # read/write - set by _bootstraphook()
@@ -81,10 +80,9 @@ class Drawing(object):
     def _handles(self):
         return self.entitydb.handles
 
-    def _bootstraphook(self, header, comments):
+    def _bootstraphook(self, header):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
-        self.comments = comments  # preserve leading file comments
         self.dxfversion = header.get('$ACADVER', 'AC1009')
         seed = header.get('$HANDSEED', str(self._handles))
         self._handles.reset(seed)
@@ -309,13 +307,7 @@ class Drawing(object):
 
         self._create_appids()
         self._update_metadata()
-        if options.store_comments:
-            self.write_leading_comments(tagwriter)
         self.sections.write(tagwriter)
-
-    def write_leading_comments(self, tagwriter):
-        comment_tags = (DXFTag(999, comment) for comment in self.comments)
-        tagwriter.write_tags(comment_tags)
 
     def cleanup(self, groups=True):
         """
@@ -351,13 +343,6 @@ class Drawing(object):
         self.header['$TDUPDATE'] = juliandate(now)
         self.header['$HANDSEED'] = str(self._handles)
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
-        self._update_comments(now)
-
-    def _update_comments(self, now):
-        from . import VERSION
-        # remove existing ezdxf comments
-        self.comments = [comment for comment in self.comments if not comment.startswith('last saved by ezdxf')]
-        self.comments.append("last saved by ezdxf {} on {}".format(VERSION, now.strftime("%Y-%m-%d %H:%M:%S")))
 
     def _create_appids(self):
         def create_appid_if_not_exist(name, flags=0):

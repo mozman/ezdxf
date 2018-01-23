@@ -55,25 +55,6 @@ def internal_tag_compiler(s):
             yield DXFTag(code, TYPE_TABLE.get(code, ustr)(x.value))
 
 
-def skip_comments(tagger, comments=None):
-    """
-    Remove comment tags (group code 999) from tag stream ant store these comments in a list.
-
-    Args:
-        tagger: DXF tag generator/iterator like low_level_tagger()
-        comments: list to collect removed comments
-
-    Yields: DXFTag()
-    """
-    if comments is None:
-        comments = []
-    for tag in tagger:
-        if tag.code != 999:
-            yield tag
-        else:
-            comments.append(tag.value)
-
-
 def low_level_tagger(stream):
     """
     Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
@@ -100,7 +81,8 @@ def low_level_tagger(stream):
             except ValueError:
                 raise DXFStructureError('Invalid group code "{}" at line {}.'.format(code, line))
             else:
-                yield DXFTag(code, value.rstrip('\n'))
+                if code != 999:  # skip comments
+                    yield DXFTag(code, value.rstrip('\n'))
                 line += 2
         else:
             return

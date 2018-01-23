@@ -11,7 +11,7 @@ import io
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, COMMENT_MARKER, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS
-from .tagger import low_level_tagger, skip_comments
+from .tagger import low_level_tagger
 
 logger = logging.getLogger('ezdxf')
 
@@ -203,7 +203,7 @@ def is_dxf_file(filename):
 
 def is_dxf_stream(stream):
     try:
-        reader = skip_comments(low_level_tagger(stream))
+        reader = low_level_tagger(stream)
         return next(reader) == (0, 'SECTION')
     except DXFError:
         return False

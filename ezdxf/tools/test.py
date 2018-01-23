@@ -34,7 +34,7 @@ class DrawingProxy:
     def modelspace(self):
         return ModelSpace()
 
-    def _bootstraphook(self, header, comments):
+    def _bootstraphook(self, header):
         pass
 
     def __does_not_exist_in_Drawing(self):

@@ -13,7 +13,6 @@ from .objects import ObjectsSection
 from .entities import EntitySection
 from ..options import options
 from ..lldxf.defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
-from ..lldxf.tagger import skip_comments
 from ..lldxf.const import DXFStructureError
 
 
@@ -30,8 +29,7 @@ class Sections(object):
 
     def _setup_sections(self, tagreader, drawing):
         bootstrap = True
-        comments = []
-        for section_tags in iter_chunks(skip_comments(tagreader, comments), stoptag='EOF', endofchunk='ENDSEC'):
+        for section_tags in iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
             name_tag = section_tags[1]
             if name_tag.code != 2:
                 raise DXFStructureError("Invalid first section tag: ({0.code}, {0.value})".format(name_tag))
@@ -42,7 +40,7 @@ class Sections(object):
                 else:
                     new_section = HeaderSection(section_tags)
                     section_tags = None  # this tags are done
-                drawing._bootstraphook(new_section, comments)
+                drawing._bootstraphook(new_section)
                 new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
                 bootstrap = False
                 self._sections[new_section.name] = new_section

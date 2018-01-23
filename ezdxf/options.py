@@ -16,9 +16,6 @@ class Options(object):
         # compress binary data tags 310-319, collects multiple succeeding binary tags as one compressed tag
         self.compress_binary_data = False
 
-        # preserves comments at the top of the DXF file and adds ezdxf comments on saving
-        self.store_comments = True
-
         # check app data and xdata tag structures, turn this option off for a little performance boost
         self.check_entity_tag_structures = True
 

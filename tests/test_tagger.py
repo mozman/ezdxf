@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.lldxf.tagger import internal_tag_compiler, skip_comments,low_level_tagger, tag_compiler, DXFStructureError
+from ezdxf.lldxf.tagger import internal_tag_compiler, low_level_tagger, tag_compiler, DXFStructureError
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.types import strtag
 
@@ -23,13 +23,6 @@ def test_int_not_skip_comments():
     tags = list(internal_tag_compiler(TAGS1))
     assert 9 == len(tags)
     assert DXFTag(999, 'comment') == tags[0]
-
-
-def test_int_skip_comments():
-    comments = []
-    tags = list(skip_comments(internal_tag_compiler(TAGS1), comments))
-    assert 8 == len(tags)
-    assert 'comment' == comments[0]
 
 
 def test_int_3d_coords():
