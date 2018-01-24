@@ -185,19 +185,19 @@ class DXF2HtmlConverter(object):
     def section2html(self, section, section_template):
         """Creates a <div> container of a specific DXF sections.
         """
-        if section.name == 'header':
+        if section.name == 'HEADER':
             return section_template.format(content=self.hdrvars2html(section.hdrvars, section.custom_vars))
-        elif section.name == 'entities':
+        elif section.name == 'ENTITIES':
             return section_template.format(content=self.entities2html(self.get_entities(), create_ref_links=True))
-        elif section.name == 'classes':
+        elif section.name == 'CLASSES':
             return section_template.format(content=self.entities2html(iter(section), create_ref_links=False,
                                                                       show_ref_status=False))
-        elif section.name == 'objects':
+        elif section.name == 'OBJECTS':
             return section_template.format(content=self.entities2html(iter(section), create_ref_links=True,
                                                                       show_ref_status=True))
-        elif section.name == 'tables':
+        elif section.name == 'TABLES':
             return section_template.format(content=self.tables2html(section))  # no iterator!
-        elif section.name == 'blocks':
+        elif section.name == 'BLOCKS':
             return section_template.format(content=self.blocks2html(iter(section)))
         else:
             return section_template.format(content=self.tags2html(section.tags))

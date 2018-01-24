@@ -4,7 +4,6 @@
 # License: MIT License
 from __future__ import unicode_literals
 from ..tools.c23 import isstring
-from ..lldxf.defaultchunk import DefaultChunk
 from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
@@ -28,19 +27,13 @@ def tablename(dxfname):
     return TABLENAMES.get(name, name + 'S')
 
 
-class GenericTable(DefaultChunk):
-    @property
-    def name(self):
-        return tablename(self.tags[1].value)
-
-
 class Table(object):
-    def __init__(self, tags, drawing):
-        self._dxfname = tags[1].value
+    def __init__(self, entities, drawing):
+        self._table_header = None
+        self._dxfname = None
         self._drawing = drawing
         self._table_entries = []
-        self._table_header = None
-        self._build_table_entries(tags)
+        self._build_table_entries(entities)
 
     # start public interface
 
@@ -92,19 +85,15 @@ class Table(object):
 
     # end public interface
 
-    def _build_table_entries(self, tags):
-        def entity_name(pos):
-            return groups[pos][0].value
-
-        groups = list(group_tags(tags))
-        if entity_name(0) != 'TABLE' or entity_name(-1) != 'ENDTAB':
+    def _build_table_entries(self, entities):
+        entities = iter(entities)
+        table_head = next(entities)
+        if table_head[0].value != 'TABLE':
             raise DXFStructureError("Critical structure error in TABLES section.")
-
-        self._table_header = ExtendedTags(groups[0][1:])
-        self.entitydb.add_tags(self._table_header)
-
-        for tags in groups[1:-1]:
-            self._add_entry(ExtendedTags(tags))
+        self._dxfname = table_head[1].value
+        self._table_header = ExtendedTags(table_head)  # do not store the table head in the entity database
+        for table_entry in entities:
+            self._add_entry(ExtendedTags(table_entry))
 
     @property
     def entitydb(self):
@@ -154,7 +143,6 @@ class Table(object):
     def write(self, tagwriter):
         """ Write DXF representation to stream, stream opened with mode='wt'. """
         def prologue():
-            tagwriter.write_tag2(0, 'TABLE')
             self._update_owner_handles()
             self._update_meta_data()
             tagwriter.write_tags(self._table_header)

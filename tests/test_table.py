@@ -6,6 +6,7 @@ import pytest
 from io import StringIO
 
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, normlines
+from ezdxf.lldxf.tags import group_tags
 from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagWriter
 
@@ -13,7 +14,10 @@ from ezdxf.lldxf.tagwriter import TagWriter
 @pytest.fixture
 def table_ac1009():
     dwg = DrawingProxy('AC1009')
-    return Table(Tags.from_text(AC1009TABLE), dwg)
+    tags = Tags.from_text(AC1009TABLE)
+    entities = list(group_tags(tags))
+    entities.pop()  # remove 'ENDTAB'
+    return Table(entities, dwg)
 
 
 def test_ac1009_table_setup(table_ac1009):
@@ -40,11 +44,13 @@ def test_ac1009_entry_names_are_case_insensitive(table_ac1009):
     assert 'ACAD' == entry.dxf.name
 
 
-
 @pytest.fixture
 def table_ac1024():
     dwg = DrawingProxy('AC1024')
-    return Table(Tags.from_text(AC1024TABLE), dwg)
+    tags = Tags.from_text(AC1024TABLE)
+    entities = list(group_tags(tags))
+    entities.pop()  # remove 'ENDTAB'
+    return Table(entities, dwg)
 
 
 def test_ac1024table_setup(table_ac1024):

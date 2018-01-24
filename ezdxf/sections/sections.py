@@ -117,6 +117,8 @@ class Sections(object):
         drawing._bootstraphook(header)
         header.set_headervar_factory(drawing.dxffactory.headervar_factory)
 
+        # required sections
+        self._sections['TABLES'] = _create_instance('TABLES', TablesSection)
         if drawing.dxfversion > 'AC1009':
             self._sections['CLASSES'] = _create_instance('CLASSES', ClassesSection)
 
@@ -132,7 +134,7 @@ class Sections(object):
         if 'BLOCKS' not in self:
             self._sections['BLOCKS'] = BlocksSection(tags=None, drawing=drawing)
         if 'TABLES' not in self:
-            self._sections['TABLES'] = TablesSection(tags=None, drawing=drawing)
+            self._sections['TABLES'] = TablesSection(entities=None, drawing=drawing)
         if drawing.dxfversion > 'AC1009':  # required sections for DXF versions newer than R12 (AC1009)
             if 'CLASSES' not in self:
                 self._sections['CLASSES'] = ClassesSection(entities=None, drawing=drawing)

@@ -7,14 +7,17 @@ from io import StringIO
 
 import ezdxf
 from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
+from ezdxf.sections.sections import loader
 from ezdxf.sections.tables import TablesSection
 from ezdxf.lldxf.tagwriter import TagWriter
+from ezdxf.drawing import Drawing
 
 
 @pytest.fixture
 def tables():
     dwg = DrawingProxy('AC1009')
-    return TablesSection(Tags.from_text(TEST_TABLES), dwg)
+    tables = loader(Tags.from_text(TEST_TABLES))['TABLES']
+    return TablesSection(tables, dwg)
 
 
 def test_constructor(tables):
@@ -42,6 +45,23 @@ def test_write(tables):
     t1 = list(compile_tags_without_handles(TEST_TABLES))
     t2 = list(compile_tags_without_handles(result))
     assert t1 == t2
+
+
+def test_min_r12_drawing():
+    tags = Tags.from_text(MINIMALISTIC_DXF12)
+    drawing = Drawing(tags)
+    assert len(drawing.linetypes) == 0
+
+
+MINIMALISTIC_DXF12 = """  0
+SECTION
+  2
+ENTITIES
+  0
+ENDSEC
+  0
+EOF
+"""
 
 
 TEST_TABLES = """  0
