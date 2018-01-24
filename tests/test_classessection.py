@@ -5,14 +5,17 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.lldxf.tags import Tags, internal_tag_compiler
+from ezdxf.lldxf.tags import Tags, internal_tag_compiler, group_tags
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
 
 @pytest.fixture(scope='module')
 def section():
-    return ClassesSection(Tags.from_text(TESTCLASSES), None)
+    tags = Tags.from_text(TESTCLASSES)
+    tags.pop()  # remove ENDSEC
+    entities = group_tags(tags)
+    return ClassesSection(entities, None)
 
 
 def test_write(section):
@@ -27,7 +30,8 @@ def test_write(section):
 
 def test_empty_section():
     tags = list(Tags.from_text(EMPTYSEC))
-    section = ClassesSection(tags, None)
+    tags.pop()  # remove ENDSEC
+    section = ClassesSection([tags], None)
     stream = StringIO()
     section.write(TagWriter(stream))
     result = stream.getvalue()
@@ -95,6 +99,6 @@ ObjectDBX Classes
      0
 281
      0
-  0
+0
 ENDSEC
 """

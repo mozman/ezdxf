@@ -99,6 +99,13 @@ class Sections(object):
         return name.upper()
 
     def _setup_sections(self, sections, drawing):
+        def _create_instance(name, cls):
+            entities = sections.get(name, None)
+            section = cls(entities, drawing=drawing)
+            if name in sections:
+                del sections[name]
+            return section
+
         # setup header section
         header_entities = sections.get('HEADER', None)
         if header_entities is not None:
@@ -109,6 +116,9 @@ class Sections(object):
         self._sections['HEADER'] = header
         drawing._bootstraphook(header)
         header.set_headervar_factory(drawing.dxffactory.headervar_factory)
+
+        if drawing.dxfversion > 'AC1009':
+            self._sections['CLASSES'] = _create_instance('CLASSES', ClassesSection)
 
         for section_entities in sections.values():
             section_head = section_entities[0]
@@ -125,7 +135,7 @@ class Sections(object):
             self._sections['TABLES'] = TablesSection(tags=None, drawing=drawing)
         if drawing.dxfversion > 'AC1009':  # required sections for DXF versions newer than R12 (AC1009)
             if 'CLASSES' not in self:
-                self._sections['CLASSES'] = ClassesSection(tags=None, drawing=drawing)
+                self._sections['CLASSES'] = ClassesSection(entities=None, drawing=drawing)
 
     def __contains__(self, item):
         return Sections.key(item) in self._sections

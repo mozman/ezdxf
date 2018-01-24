@@ -14,23 +14,22 @@ from ..modern.dxfobjects import DXFClass
 class ClassesSection(object):
     name = 'CLASSES'
 
-    def __init__(self, tags=None, drawing=None):
+    def __init__(self, entities=None, drawing=None):
         self.classes = []  # DXFClasses are not stored in the entities database!
         self.drawing = drawing
-        if tags is not None:
-            self._build(tags, drawing)
+        if entities is not None:
+            self._build(entities, drawing)
 
     def __iter__(self):
         return iter(self.classes)
 
-    def _build(self, tags, drawing):
-        if tags[0] != (0, 'SECTION') or tags[1] != (2, 'CLASSES') or tags[-1] != (0, 'ENDSEC'):
+    def _build(self, entities, drawing):
+        entities = iter(entities)
+        section_head = next(entities)
+        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'CLASSES'):
             raise DXFStructureError("Critical structure error in CLASSES section.")
 
-        if len(tags) == 3:  # empty entities section
-            return
-
-        for class_tags in group_tags(tags[2:-1]):
+        for class_tags in entities:
             # DXFClasses are not stored in the entities database!
             self.classes.append(DXFClass(ExtendedTags(class_tags), drawing))
 
