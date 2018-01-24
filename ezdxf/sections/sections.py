@@ -49,7 +49,7 @@ def loader(tagger):
 
     Returns:
         dict of sections, each section is a list of DXF structure entities as Tags() objects
-        
+
     """
     sections = {}
     section = []
@@ -71,10 +71,22 @@ def loader(tagger):
     return sections
 
 
+def section_as_tags_helper(dxf_structure_entities):
+    """
+    Just for refactoring ...
+    """
+    from ezdxf.lldxf.types import DXFTag
+    for entity in dxf_structure_entities:
+        for tag in entity:
+            yield tag
+    yield DXFTag(0, 'ENDSEC')
+
+
 class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = {}
-        self._setup_sections(tagreader, drawing)
+        sections = loader(tagreader)
+        self._setup_sections(sections, drawing)
         self._create_required_sections(drawing)
         if 'ENTITIES' not in self._sections:
             raise DXFStructureError('Mandatory ENTITIES section not found.')
@@ -86,34 +98,30 @@ class Sections(object):
     def key(name):
         return name.upper()
 
-    def _setup_sections(self, tagreader, drawing):
-        bootstrap = True
-        for section_tags in iter_chunks(tagreader, stoptag='EOF', endofchunk='ENDSEC'):
-            name_tag = section_tags[1]
-            if name_tag.code != 2:
-                raise DXFStructureError("Invalid first section tag: ({0.code}, {0.value})".format(name_tag))
+    def _setup_sections(self, sections, drawing):
+        # setup header section
+        header_entities = sections.get('HEADER', None)
+        if header_entities is not None:
+            header = HeaderSection(header_entities[0])  # all tags in the first DXF structure entity
+            del sections['HEADER']
+        else:
+            header = HeaderSection(None)
+        self._sections['HEADER'] = header
+        drawing._bootstraphook(header)
+        header.set_headervar_factory(drawing.dxffactory.headervar_factory)
 
-            if bootstrap:
-                if name_tag != (2, 'HEADER'):
-                    new_section = HeaderSection(None)
-                else:
-                    new_section = HeaderSection(section_tags)
-                    section_tags = None  # this tags are done
-                drawing._bootstraphook(new_section)
-                new_section.set_headervar_factory(drawing.dxffactory.headervar_factory)
-                bootstrap = False
-                self._sections[new_section.name] = new_section
-
-            if section_tags is not None:
-                section_class = get_section_class(name_tag.value)
-                new_section = section_class(section_tags, drawing)
-                key = Sections.key(new_section.name)
-                self._sections[key] = new_section
+        for section_entities in sections.values():
+            section_head = section_entities[0]
+            name = section_head[1].value
+            section_class = get_section_class(name)
+            new_section = section_class(list(section_as_tags_helper(section_entities)), drawing)
+            key = Sections.key(new_section.name)
+            self._sections[key] = new_section
 
     def _create_required_sections(self, drawing):
-        if 'blocks' not in self:
+        if 'BLOCKS' not in self:
             self._sections['BLOCKS'] = BlocksSection(tags=None, drawing=drawing)
-        if 'tables' not in self:
+        if 'TABLES' not in self:
             self._sections['TABLES'] = TablesSection(tags=None, drawing=drawing)
         if drawing.dxfversion > 'AC1009':  # required sections for DXF versions newer than R12 (AC1009)
             if 'CLASSES' not in self:

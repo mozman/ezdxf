@@ -30,8 +30,6 @@ ANSI_1252
 $HANDSEED
   5
 FF
-  0
-ENDSEC
 """
 
 
@@ -122,14 +120,15 @@ class HeaderSection(object):
         return key in self.hdrvars
 
     def _build(self, tags):
-        if tags[0] != (0, 'SECTION') or \
-           tags[1] != (2, 'HEADER') or \
-           tags[-1] != (0, 'ENDSEC'):
+        assert tags[-1] != (0, 'ENDSEC')
+        tags = iter(tags)
+        section_tag = next(tags)
+        name_tag = next(tags)
+
+        if section_tag != (0, 'SECTION') or name_tag != (2, 'HEADER'):
             raise DXFStructureError("Critical structure error in HEADER section.")
 
-        if len(tags) == 3:  # DXF file with empty header section
-            return
-        groups = group_tags(header_validator(tags[2:-1]), splitcode=9)
+        groups = group_tags(header_validator(tags), splitcode=9)
         custom_property_stack = []  # collect $CUSTOMPROPERTY/TAG
         for group in groups:
             name = group[0].value

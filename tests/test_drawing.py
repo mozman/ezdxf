@@ -1,14 +1,9 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: test drawing
-# Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 12.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
+import pytest
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.drawing import Drawing
 from ezdxf.templates import TemplateLoader
@@ -16,105 +11,116 @@ from ezdxf import is_dxf_file
 from ezdxf import DXFValueError
 
 
-DWG12 = Drawing.new('AC1009')
+def test_dxfversion_1():
+    dwg = Drawing(internal_tag_compiler(TEST_HEADER))
+    assert 'AC1009' == dwg.dxfversion
 
 
-class TestDrawing(unittest.TestCase):
-    def test_dxfversion(self):
-        dwg = Drawing(internal_tag_compiler(TEST_HEADER))
-        self.assertEqual('AC1009', dwg.dxfversion)
+@pytest.fixture(scope='module')
+def dwg_r12():
+    return Drawing.new('AC1009')
 
 
-class TestNewDrawingAC1009(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DWG12
-
-    def test_dxfversion(self):
-        self.assertEqual('AC1009', self.dwg.dxfversion)
-
-    def test_acad_release(self):
-        self.assertEqual('R12', self.dwg.acad_release)
-
-    def test_get_layer(self):
-        layer = self.dwg.layers.get('0')
-        self.assertEqual('0', layer.dxf.name)
-
-    def test_error_getting_not_existing_layer(self):
-        with self.assertRaises(DXFValueError):
-            layer = self.dwg.layers.get('TEST_NOT_EXISTING_LAYER')
-
-    def test_create_layer(self):
-        layer = self.dwg.layers.new('TEST_NEW_LAYER')
-        self.assertEqual('TEST_NEW_LAYER', layer.dxf.name)
-
-    def test_error_adding_existing_layer(self):
-        with self.assertRaises(DXFValueError):
-            layer = self.dwg.layers.new('0')
-
-    def test_has_layer(self):
-        self.assertTrue('0' in self.dwg.layers)
-
-    def test_has_not_layer(self):
-        self.assertFalse('TEST_LAYER_NOT_EXISTS' in self.dwg.layers)
-
-    def test_removing_layer(self):
-        self.dwg.layers.new('TEST_NEW_LAYER_2')
-        self.assertTrue('TEST_NEW_LAYER_2' in self.dwg.layers)
-        self.dwg.layers.remove('TEST_NEW_LAYER_2')
-        self.assertFalse('TEST_NEW_LAYER_2' in self.dwg.layers)
-
-    def test_error_removing_not_existing_layer(self):
-        with self.assertRaises(DXFValueError):
-            self.dwg.layers.remove('TEST_LAYER_NOT_EXISTS')
-
-DWG2000 = Drawing.new('AC1015')
+def test_dxfversion_2(dwg_r12):
+    assert 'AC1009' == dwg_r12.dxfversion
 
 
-class TestNewDrawingAC1015(TestNewDrawingAC1009):
-    def setUp(self):
-        self.dwg = DWG2000
-
-    def test_dxfversion(self):
-        self.assertEqual('AC1015', self.dwg.dxfversion)
-
-    def test_acad_release(self):
-        self.assertEqual('R2000', self.dwg.acad_release)
+def test_acad_release(dwg_r12):
+    assert 'R12' == dwg_r12.acad_release
 
 
-class TestIsDXFFile(unittest.TestCase):
-    def test_template(self):
-        template_file = TemplateLoader().filepath('AC1009')
-        self.assertTrue(is_dxf_file(template_file))
+def test_get_layer(dwg_r12):
+    layer = dwg_r12.layers.get('0')
+    assert '0' == layer.dxf.name
 
 
-class TestMinimalisticDXF12Drawing(unittest.TestCase):
-    def setUp(self):
-        self.dwg = Drawing(internal_tag_compiler(MINIMALISTIC_DXF12))
+def test_error_getting_not_existing_layer(dwg_r12):
+    with pytest.raises(DXFValueError):
+        layer = dwg_r12.layers.get('TEST_NOT_EXISTING_LAYER')
 
-    def test_header_section(self):
-        self.assertTrue(hasattr(self.dwg, 'header'))
-        self.assertTrue(self.dwg.header['$ACADVER'], 'AC1009')
-        self.assertTrue(self.dwg.header['$DWGCODEPAGE'], 'ANSI_1252')
 
-    def test_layers_table(self):
-        self.assertTrue(hasattr(self.dwg, 'layers'))
-        self.assertEqual(len(self.dwg.layers), 0)
+def test_create_layer(dwg_r12):
+    layer = dwg_r12.layers.new('TEST_NEW_LAYER')
+    assert 'TEST_NEW_LAYER' == layer.dxf.name
 
-    def test_styles_table(self):
-        self.assertTrue(hasattr(self.dwg, 'styles'))
-        self.assertEqual(len(self.dwg.styles), 0)
 
-    def test_linetypes_table(self):
-        self.assertTrue(hasattr(self.dwg, 'linetypes'))
-        self.assertEqual(len(self.dwg.linetypes), 0)
+def test_error_adding_existing_layer(dwg_r12):
+    with pytest.raises(DXFValueError):
+        layer = dwg_r12.layers.new('0')
 
-    def test_blocks_section(self):
-        self.assertTrue(hasattr(self.dwg, 'blocks'))
-        self.assertEqual(len(self.dwg.blocks), 0)
 
-    def test_entity_section(self):
-        self.assertTrue(hasattr(self.dwg, 'entities'))
-        self.assertEqual(len(self.dwg.entities), 0)
+def test_has_layer(dwg_r12):
+    assert '0' in dwg_r12.layers
+
+
+def test_has_not_layer(dwg_r12):
+    assert 'TEST_LAYER_NOT_EXISTS' not in dwg_r12.layers
+
+
+def test_removing_layer(dwg_r12):
+    dwg_r12.layers.new('TEST_NEW_LAYER_2')
+    assert 'TEST_NEW_LAYER_2' in dwg_r12.layers
+    dwg_r12.layers.remove('TEST_NEW_LAYER_2')
+    assert 'TEST_NEW_LAYER_2' not in dwg_r12.layers
+
+
+def test_error_removing_not_existing_layer(dwg_r12):
+    with pytest.raises(DXFValueError):
+        dwg_r12.layers.remove('TEST_LAYER_NOT_EXISTS')
+
+
+@pytest.fixture(scope='module')
+def dwg_r2000():
+    return Drawing.new('AC1015')
+
+
+def test_r2000_dxfversion(dwg_r2000):
+    assert 'AC1015' == dwg_r2000.dxfversion
+
+
+def test_r2000_acad_release(dwg_r2000):
+        assert 'R2000' == dwg_r2000.acad_release
+
+
+def test_template():
+    template_file = TemplateLoader().filepath('AC1009')
+    assert is_dxf_file(template_file) is True
+
+
+@pytest.fixture
+def min_r12():
+    return Drawing(internal_tag_compiler(MINIMALISTIC_DXF12))
+
+
+def test_min_r12_header_section(min_r12):
+    assert hasattr(min_r12, 'header')
+    assert min_r12.header['$ACADVER'] == 'AC1009'
+    assert min_r12.header['$DWGCODEPAGE'] == 'ANSI_1252'
+
+
+def test_min_r12_layers_table(min_r12):
+    assert hasattr(min_r12, 'layers')
+    assert len(min_r12.layers) == 0
+
+
+def test_min_r12_styles_table(min_r12):
+    assert hasattr(min_r12, 'styles')
+    assert len(min_r12.styles) == 0
+
+
+def test_min_r12_linetypes_table(min_r12):
+    assert hasattr(min_r12, 'linetypes')
+    assert len(min_r12.linetypes) == 0
+
+
+def test_min_r12_blocks_section(min_r12):
+    assert hasattr(min_r12, 'blocks')
+    assert len(min_r12.blocks) == 0
+
+
+def test_min_r12_entity_section(min_r12):
+    assert hasattr(min_r12, 'entities')
+    assert len(min_r12.entities) == 0
 
 
 
@@ -211,6 +217,3 @@ ENDSEC
   0
 EOF
 """
-
-if __name__ == '__main__':
-    unittest.main()
