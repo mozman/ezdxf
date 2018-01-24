@@ -4,7 +4,7 @@
 # License: MIT License
 """
 ACDSDATA entities have NO handles, therefor they can not be stored in the drawing entity database.
-every routine written until now (2014-05-05), expects entities with valid handle - fuck you autodesk
+every routine written until now (2014-05-05), expects entities with valid handle
 
 section structure (work in progress):
 0 <str> SECTION
@@ -83,14 +83,14 @@ from ..lldxf.const import DXFKeyError, DXFStructureError
 
 
 class AcDsDataSection(object):
-    name = 'acdsdata'
+    name = 'ACDSDATA'
 
-    def __init__(self, tags, drawing):
+    def __init__(self, entities, drawing):
         self.entities = []  # stores AcDsData objects
         self.section_info = []
         self.drawing = drawing
-        if tags is not None:
-            self._build(tags)
+        if entities is not None:
+            self._build(iter(entities))
 
     @property
     def dxffactory(self):
@@ -100,20 +100,14 @@ class AcDsDataSection(object):
     def entitydb(self):
         return self.drawing.entitydb
 
-    def _build(self, tags):
-        if tags[0] != (0, 'SECTION') or tags[1] != (2, self.name.upper()) or tags[-1] != (0, 'ENDSEC'):
-            raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
+    def _build(self, entities):
+        section_head = next(entities)
+        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'ACDSDATA'):
+            raise DXFStructureError("Critical structure error in ACDSDATA section.")
 
-        if len(tags) == 3:  # empty entities section
-            return
-
-        start_index = 2
-        while tags[start_index].code != 0:
-            self.section_info.append(tags[start_index])
-            start_index += 1
-
-        for group in group_tags(islice(tags, start_index, len(tags)-1)):
-            self._append_entity(AcDsData(Tags(group)))  # tags have no subclasses
+        self.section_info = section_head
+        for entity in entities:
+            self._append_entity(AcDsData(entity))  # tags have no subclasses
 
     def _append_entity(self, entity):
         cls = ACDSDATA_TYPES.get(entity.dxftype())
@@ -122,7 +116,7 @@ class AcDsDataSection(object):
         self.entities.append(entity)
 
     def write(self, tagwriter):
-        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        tagwriter.write_str("  0\nSECTION\n  2\nACDSDATA\n")
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:
             entity.write(tagwriter)

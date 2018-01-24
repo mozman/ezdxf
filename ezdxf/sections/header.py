@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 from ..tools.c23 import ustr
 from ..lldxf.types import strtag
-from ..lldxf.tags import group_tags, Tags, DXFTag
+from ..lldxf.tags import group_tags, Tags
 from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
 from ..lldxf.validator import header_validator
 

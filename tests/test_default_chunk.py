@@ -1,7 +1,5 @@
-import pytest
-
-from ezdxf.lldxf.defaultchunk import DefaultChunk, CompressedDefaultChunk
-from ezdxf.lldxf.tagger import internal_tag_compiler
+from ezdxf.sections.unsupported import UnsupportedSection
+from ezdxf.tools.test import entities
 
 
 def setup_stream():
@@ -12,18 +10,8 @@ def setup_stream():
     return stream, tagwriter
 
 
-def test_default_chunk():
-    tags = list(internal_tag_compiler(TEST_SECTION))
-    chunk = DefaultChunk(tags, None)
-    s, t = setup_stream()
-    chunk.write(t)
-    result = s.getvalue()
-    assert result == TEST_SECTION
-
-
-def test_compressed_default_chunk():
-    tags = list(internal_tag_compiler(TEST_SECTION))
-    chunk = CompressedDefaultChunk(tags, None)
+def test_unsupported_section():
+    chunk = UnsupportedSection(entities(TEST_SECTION), None)
     s, t = setup_stream()
     chunk.write(t)
     result = s.getvalue()
@@ -65,7 +53,4 @@ $EXTMAX
   0
 ENDSEC
 """
-
-if __name__ == '__main__':
-    pytest.main([__file__])
 

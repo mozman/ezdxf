@@ -8,6 +8,7 @@ import ezdxf
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.acdsdata import AcDsDataSection
 from ezdxf import DXFKeyError
+from ezdxf.tools.test import entities
 
 
 @pytest.fixture(scope='module')
@@ -16,13 +17,13 @@ def dwg():
 
 
 def test_build(dwg):
-    section = AcDsDataSection(ACDSSECTION, dwg)
+    section = AcDsDataSection(entities(ACDSSECTION), dwg)
     assert 'ACDSDATA' == section.name.upper()
     assert len(section.entities) > 0
 
 
 def test_acdsrecord(dwg):
-    section = AcDsDataSection(ACDSSECTION, dwg)
+    section = AcDsDataSection(entities(ACDSSECTION), dwg)
     records = [entity for entity in section.entities if entity.dxftype() == 'ACDSRECORD']
     assert len(records) > 0
     record = records[0]
@@ -38,7 +39,7 @@ def test_acdsrecord(dwg):
     assert asm_data[2].value == length
 
 
-ACDSSECTION = Tags.from_text("""  0
+ACDSSECTION = """  0
 SECTION
   2
 ACDSDATA
@@ -263,4 +264,4 @@ FFFFFF0CFFFFFFFF0C070000000C040000000C05000000110D04666163650C0A00000004FFFFFFFF
 310
 5F76740E036579650D066174747269620CFFFFFFFF04FFFFFFFF0CFFFFFFFF0C0A0000000C090000000C040000000C05000000110E03456E640E026F660E0341534D0D0464617461
 0
-ENDSEC""")
+ENDSEC"""

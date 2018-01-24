@@ -11,8 +11,7 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 from .database import EntityDB
-from .lldxf.tags import DXFTag
-from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFStructureError, DXFValueError
+from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFValueError
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options

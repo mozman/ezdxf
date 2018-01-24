@@ -9,6 +9,7 @@ version 0.8.5 - ?
    * CHANGE: raises DXFInvalidLayerName() for invalid characters in layer names: <>/\":;?*|=`
    * CHANGE: audit process rewritten
    * CHANGE: skip all comments, group code 999
+   * CHANGE: removed compression for unused sections (THUMBNAILSECTION, ACDSDATA)
 
 Version 0.8.4 - 2018-01-14
 

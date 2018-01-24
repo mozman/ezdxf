@@ -4,17 +4,18 @@
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
-
+import logging
 from .header import HeaderSection
 from .tables import TablesSection
 from .blocks import BlocksSection
 from .classes import ClassesSection
 from .objects import ObjectsSection
 from .entities import EntitySection
-from ..lldxf.defaultchunk import DefaultChunk
+from .unsupported import UnsupportedSection
 from ..lldxf.const import DXFStructureError
 from ..lldxf.tags import group_tags
 
+logger = logging.getLogger('ezdxf')
 KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
@@ -100,8 +101,6 @@ class Sections(object):
         def _create_instance(name, cls):
             entities = sections.get(name, None)
             section = cls(entities, drawing=drawing)
-            if name in sections:
-                del sections[name]
             return section
 
         # setup header section, header section is special!
@@ -120,13 +119,18 @@ class Sections(object):
         self._sections['BLOCKS'] = _create_instance('BLOCKS', BlocksSection)
         self._sections['ENTITIES'] = _create_instance('ENTITIES', EntitySection)
         if drawing.dxfversion > 'AC1009':
+            # required sections
             self._sections['CLASSES'] = _create_instance('CLASSES', ClassesSection)
             self._sections['OBJECTS'] = _create_instance('OBJECTS', ObjectsSection)
+            # sections just stored, if exists
+            if 'THUMBNAILIMAGE' in sections:
+                self._sections['THUMBNAILIMAGE'] = UnsupportedSection(sections['THUMBNAILIMAGE'], drawing)
+            if 'ACDSDATA' in sections:
+                self._sections['ACDSDATA'] = UnsupportedSection(sections['ACDSDATA'], drawing)
 
-        # unsupported, but stored sections
-        for section_entities in sections.values():
-            new_section = DefaultChunk(list(section_as_tags_helper(section_entities)), drawing)
-            self._sections[new_section.name] = new_section
+        for section_name in sections.keys():
+            if section_name not in KNOWN_SECTIONS:
+                logging.info('Found unknown SECTION: "{}", removed by ezdxf if saving.'.format(section_name))
 
     def __contains__(self, item):
         return Sections.key(item) in self._sections
@@ -165,6 +169,3 @@ class Sections(object):
         """ Delete a complete section, please delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA'.
         """
         del self._sections[Sections.key(name)]
-
-
-
