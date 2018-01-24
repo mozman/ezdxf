@@ -26,20 +26,21 @@ def loader(tagger):
 
     each entity is a Tags() object
 
-    [
-        [entity, entity, ...],  # 1. section
-        [entity, entity, ...],  # 2. section
-        [entity, entity, ...],  # 3. section
+    {
+        'HEADER': [entity, entity, ...],  # 1. section
+        'CLASSES': [entity, entity, ...],  # 2. section
+        'TABLES': [entity, entity, ...],  # 3. section
         ...
-    ]
+        'OBJECTS': [entity, entity, ...],
+    }
 
-    [
-        [(0, 'SECTION'), (2, 'HEADER'), .... ],
-        [(0, 'SECTION'), (2, 'CLASSES')], [(0, 'CLASS'), ...], [(0, 'CLASS'), ...]],
-        [(0, 'SECTION'), (2, 'TABLES')], [(0, 'TABLE'), (2, 'VPORT')], [(0, 'VPORT'), ...], ... , [(0, 'ENDTAB')]],
+    {
+        'HEADER': [(0, 'SECTION'), (2, 'HEADER'), .... ],
+        'CLASSES': [(0, 'SECTION'), (2, 'CLASSES')], [(0, 'CLASS'), ...], [(0, 'CLASS'), ...]],
+        'TABLES': [(0, 'SECTION'), (2, 'TABLES')], [(0, 'TABLE'), (2, 'VPORT')], [(0, 'VPORT'), ...], ... , [(0, 'ENDTAB')]],
         ...
-        [(0, 'SECTION'), (2, 'OBJECTS')], ...]
-    ]
+        'OBJECTS': [(0, 'SECTION'), (2, 'OBJECTS')], ...]
+    }
 
     Function expects a valid DXF structure, use ezdxf.lldxf.validator.structure_validator() to filter input.
 
@@ -49,14 +50,18 @@ def loader(tagger):
     Returns:
         list if sections, each section is a list of DXF entity tag groups
     """
-    sections = []
+    sections = {}
     section = []
     for entity in group_tags(tagger):
         tag = entity[0]
         if tag == (0, 'SECTION'):
             section = [entity]
         elif tag == (0, 'ENDSEC'):  # not collected
-            sections.append(section)
+            section_header = section[0]
+            if len(section_header) < 2 or section_header[1].code != 2:
+                raise DXFStructureError('DXFStructureError: missing required section name tag (2, name) at start of section.')
+            name_tag = section_header[1]
+            sections[name_tag.value] = section
             section = []  # collect tags outside of sections, but ignore it
         elif tag == (0, 'EOF'):  # not collected
             pass
