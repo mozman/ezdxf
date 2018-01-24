@@ -12,7 +12,7 @@ from ..entityspace import EntitySpace
 
 
 class ObjectsSection(AbstractSection):
-    name = 'objects'
+    name = 'OBJECTS'
 
     def __init__(self, tags, drawing):
         entity_space = EntitySpace(drawing.entitydb)

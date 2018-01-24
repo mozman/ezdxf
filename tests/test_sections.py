@@ -21,19 +21,24 @@ def test_constructor(sections):
     assert header is not None
 
 
-def test_getattr(sections):
+def test_getattr_lower_case(sections):
     result = sections.header
+    assert result is not None
+
+
+def test_getattr_upper_case(sections):
+    result = sections.HEADER
     assert result is not None
 
 
 def test_error_getitem(sections):
     with pytest.raises(DXFStructureError):
-        sections.test
+        sections.testx
 
 
 def test_error_getattr(sections):
     with pytest.raises(DXFStructureError):
-        sections.test
+        sections.testx
 
 
 def test_loader():

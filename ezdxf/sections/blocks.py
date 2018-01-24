@@ -21,7 +21,7 @@ class BlocksSection(object):
     like AutoCAD.
 
     """
-    name = 'blocks'
+    name = 'BLOCKS'
 
     def __init__(self, tags, drawing):
         # Mapping of BlockLayouts, for dict() order of blocks is random,

@@ -75,11 +75,15 @@ class Sections(object):
         self._sections = {}
         self._setup_sections(tagreader, drawing)
         self._create_required_sections(drawing)
-        if 'entities' not in self._sections:
+        if 'ENTITIES' not in self._sections:
             raise DXFStructureError('Mandatory ENTITIES section not found.')
 
     def __iter__(self):
         return iter(self._sections.values())
+
+    @staticmethod
+    def key(name):
+        return name.upper()
 
     def _setup_sections(self, tagreader, drawing):
         bootstrap = True
@@ -102,30 +106,31 @@ class Sections(object):
             if section_tags is not None:
                 section_class = get_section_class(name_tag.value)
                 new_section = section_class(section_tags, drawing)
-                self._sections[new_section.name] = new_section
+                key = Sections.key(new_section.name)
+                self._sections[key] = new_section
 
     def _create_required_sections(self, drawing):
         if 'blocks' not in self:
-            self._sections['blocks'] = BlocksSection(tags=None, drawing=drawing)
+            self._sections['BLOCKS'] = BlocksSection(tags=None, drawing=drawing)
         if 'tables' not in self:
-            self._sections['tables'] = TablesSection(tags=None, drawing=drawing)
+            self._sections['TABLES'] = TablesSection(tags=None, drawing=drawing)
         if drawing.dxfversion > 'AC1009':  # required sections for DXF versions newer than R12 (AC1009)
-            if 'classes' not in self:
-                self._sections['classes'] = ClassesSection(tags=None, drawing=drawing)
+            if 'CLASSES' not in self:
+                self._sections['CLASSES'] = ClassesSection(tags=None, drawing=drawing)
 
     def __contains__(self, item):
-        return item in self._sections
+        return Sections.key(item) in self._sections
 
     def __getattr__(self, key):
         try:
-            return self._sections[key]
+            return self._sections[Sections.key(key)]
         except KeyError:  # internal exception
             # DXFStructureError because a requested section is not present, maybe a typo, but usual a hint for an
             # invalid DXF file.
             raise DXFStructureError('{} section not found'.format(key.upper()))
 
     def get(self, name):
-        return self._sections.get(name, None)
+        return self._sections.get(Sections.key(name), None)
 
     def names(self):
         return list(self._sections.keys())
@@ -149,7 +154,7 @@ class Sections(object):
     def delete_section(self, name):
         """ Delete a complete section, please delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA'.
         """
-        del self._sections[name.lower()]
+        del self._sections[Sections.key(name)]
 
 
 SECTION_MAP = {
@@ -160,7 +165,7 @@ SECTION_MAP = {
     'OBJECTS': ObjectsSection,
 }
 
-KNOWN_SECTIONS = ('header', 'classes', 'tables', 'blocks', 'entities', 'objects', 'thumbnailimage', 'acdsdata')
+KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
 def get_section_class(name):

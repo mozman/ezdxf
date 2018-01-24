@@ -103,7 +103,7 @@ class CustomVars(object):
 
 class HeaderSection(object):
     MIN_HEADER_TAGS = Tags.from_text(MIN_HEADER_TEXT)
-    name = 'header'
+    name = 'HEADER'
 
     def __init__(self, tags=None):
         if tags is None:

@@ -30,7 +30,7 @@ ENDTAB
 
 
 class TablesSection(object):
-    name = 'tables'
+    name = 'TABLES'
 
     def __init__(self, tags, drawing):
         self._drawing = drawing

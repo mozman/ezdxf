@@ -20,7 +20,7 @@ class DefaultChunk(object):
 
     @property
     def name(self):
-        return self.tags[1].value.lower()
+        return self.tags[1].value
 
     def write(self, tagwriter):
         tagwriter.write_tags(self.tags)

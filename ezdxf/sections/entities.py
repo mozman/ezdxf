@@ -10,7 +10,7 @@ from .abstract import AbstractSection
 
 
 class EntitySection(AbstractSection):
-    name = 'entities'
+    name = 'ENTITIES'
 
     def __init__(self, tags, drawing):
         layout_spaces = LayoutSpaces(drawing.entitydb, drawing.dxfversion)

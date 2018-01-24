@@ -12,7 +12,7 @@ from ..modern.dxfobjects import DXFClass
 
 
 class ClassesSection(object):
-    name = 'classes'
+    name = 'CLASSES'
 
     def __init__(self, tags=None, drawing=None):
         self.classes = []  # DXFClasses are not stored in the entities database!
