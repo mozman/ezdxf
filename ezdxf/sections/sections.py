@@ -73,17 +73,6 @@ def loader(tagger):
     return sections
 
 
-def section_as_tags_helper(dxf_structure_entities):
-    """
-    Just for refactoring ...
-    """
-    from ezdxf.lldxf.types import DXFTag
-    for entity in dxf_structure_entities:
-        for tag in entity:
-            yield tag
-    yield DXFTag(0, 'ENDSEC')
-
-
 class Sections(object):
     def __init__(self, tagreader, drawing):
         self._sections = {}

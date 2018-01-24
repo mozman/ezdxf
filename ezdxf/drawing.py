@@ -8,8 +8,6 @@ __author__ = "mozman <mozman@gmx.at>"
 from datetime import datetime
 import io
 import logging
-logger = logging.getLogger('ezdxf')
-
 from .database import EntityDB
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFValueError
 from .dxffactory import dxffactory
@@ -19,6 +17,7 @@ from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
+logger = logging.getLogger('ezdxf')
 
 
 class Drawing(object):
@@ -142,7 +141,7 @@ class Drawing(object):
         if self._groups is not None:
             return self._groups
         else:
-            raise DXFVersionError('Groups not supported in DXF version AC1009.')
+            raise DXFVersionError('Groups not supported in DXF version R12.')
 
     def modelspace(self):
         return self.layouts.modelspace()
@@ -160,7 +159,7 @@ class Drawing(object):
             else:
                 self.layouts.delete(name)
         else:
-            raise DXFVersionError('delete_layout() not supported for DXF version AC1009.')
+            raise DXFVersionError('delete_layout() not supported for DXF version R12.')
 
     def new_layout(self, name, dxfattribs=None):
         if self.dxfversion > 'AC1009':
@@ -169,7 +168,7 @@ class Drawing(object):
             else:
                 return self.layouts.new(name, dxfattribs)
         else:
-            raise DXFVersionError('new_layout() not supported for DXF version AC1009.')
+            raise DXFVersionError('new_layout() not supported for DXF version R12.')
 
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':
@@ -221,7 +220,7 @@ class Drawing(object):
         :param name: image name for internal use, None for an auto-generated name
         """
         if self.dxfversion < 'AC1015':
-            raise DXFVersionError('The IMAGE entity needs at least DXF version AC1015 (R2000) or later.')
+            raise DXFVersionError('The IMAGE entity needs at least DXF version R2000 or later.')
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
     def add_underlay_def(self, filename, format='ext', name=None):
@@ -231,7 +230,7 @@ class Drawing(object):
         :param name: underlay name, None for an auto-generated name
         """
         if self.dxfversion < 'AC1015':
-            raise DXFVersionError('The UNDERLAY entity needs at least DXF version AC1015 (R2000) or later.')
+            raise DXFVersionError('The UNDERLAY entity needs at least DXF version R2000 or later.')
         if format == 'ext':
             format=filename[-3:]
         return self.objects.add_underlay_def(filename, format, name)
