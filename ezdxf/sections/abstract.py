@@ -12,14 +12,14 @@ from ..lldxf.validator import entity_structure_validator
 from ..options import options
 
 
-def xtags_into_entitydb(section_tags, entitydb, dxffactory):
+def xtags_into_entitydb(entities, entitydb, dxffactory):
     linked_tags = get_tags_linker()
     post_read_tags_fixer = dxffactory.post_read_tags_fixer
     check_tag_structure = options.check_entity_tag_structures
-    for tag_group in group_tags(section_tags):
+    for entity in entities:
         if check_tag_structure:
-            tag_group = entity_structure_validator(tag_group)
-        xtags = ExtendedTags(tag_group)
+            entity = entity_structure_validator(entity)
+        xtags = ExtendedTags(entity)
         post_read_tags_fixer(xtags)  # for VERTEX!
         handle = entitydb.add_tags(xtags)
         if not linked_tags(xtags, handle):  # also creates the link structure as side effect
@@ -29,11 +29,11 @@ def xtags_into_entitydb(section_tags, entitydb, dxffactory):
 class AbstractSection(object):
     name = 'abstract'
 
-    def __init__(self, entity_space, tags, drawing):
+    def __init__(self, entity_space, entities, drawing):
         self._entity_space = entity_space
         self.drawing = drawing
-        if tags is not None:
-            self._build(tags)
+        if entities is not None:
+            self._build(iter(entities))
 
     @property
     def dxffactory(self):
@@ -46,14 +46,13 @@ class AbstractSection(object):
     def get_entity_space(self):
         return self._entity_space
 
-    def _build(self, tags):
-        if tags[0] != (0, 'SECTION') or tags[1] != (2, self.name.upper()) or tags[-1] != (0, 'ENDSEC'):
+    def _build(self, entities):
+        section_head = next(entities)
+
+        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, self.name.upper()):
             raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
-        if len(tags) == 3:  # empty entities section
-            return
-
-        for handle, xtags in xtags_into_entitydb(tags[2:-1], self.entitydb, self.dxffactory):
+        for handle, xtags in xtags_into_entitydb(entities, self.entitydb, self.dxffactory):
             self._entity_space.store_tags(xtags)
 
     def write(self, tagwriter):

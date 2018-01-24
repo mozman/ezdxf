@@ -14,9 +14,9 @@ from ..entityspace import EntitySpace
 class ObjectsSection(AbstractSection):
     name = 'OBJECTS'
 
-    def __init__(self, tags, drawing):
+    def __init__(self, entities, drawing):
         entity_space = EntitySpace(drawing.entitydb)
-        super(ObjectsSection, self).__init__(entity_space, tags, drawing)
+        super(ObjectsSection, self).__init__(entity_space, entities, drawing)
 
     def __iter__(self):
         for handle in self._entity_space:

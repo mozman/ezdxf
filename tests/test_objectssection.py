@@ -6,34 +6,36 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, Tags, normlines
+from ezdxf.tools.test import DrawingProxy, Tags, normlines, entities
 from ezdxf.sections.objects import ObjectsSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
 
-class TestObjectsSection(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1015')
-        self.section = ObjectsSection(Tags.from_text(TESTOBJECTS), self.dwg)
+@pytest.fixture
+def section():
+    return ObjectsSection(entities(TESTOBJECTS), DrawingProxy('AC1015'))
 
-    def test_write(self):
-        stream = StringIO()
-        self.section.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        self.assertEqual(normlines(TESTOBJECTS), normlines(result))
 
-    def test_empty_section(self):
-        section = ObjectsSection(Tags.from_text(EMPTYSEC), self.dwg)
-        stream = StringIO()
-        section.write(TagWriter(stream))
-        result = stream.getvalue()
-        stream.close()
-        self.assertEqual(EMPTYSEC, result)
+def test_write(section):
+    stream = StringIO()
+    section.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    assert normlines(TESTOBJECTS) == normlines(result)
+
+
+def test_empty_section():
+    ent = entities(EMPTYSEC)
+    dwg = DrawingProxy('AC1015')
+    section = ObjectsSection(ent, dwg)
+    stream = StringIO()
+    section.write(TagWriter(stream))
+    result = stream.getvalue()
+    stream.close()
+    assert EMPTYSEC == result
 
 
 EMPTYSEC = """  0
@@ -185,6 +187,3 @@ ASDK_XREC_ANNOTATION_SCALE_INFO
   0
 ENDSEC
 """
-
-if __name__ == '__main__':
-    unittest.main()

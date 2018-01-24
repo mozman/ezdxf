@@ -8,14 +8,12 @@ from io import StringIO
 from ezdxf.lldxf.tags import Tags, internal_tag_compiler, group_tags
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
+from ezdxf.tools.test import entities
 
 
 @pytest.fixture(scope='module')
 def section():
-    tags = Tags.from_text(TESTCLASSES)
-    tags.pop()  # remove ENDSEC
-    entities = group_tags(tags)
-    return ClassesSection(entities, None)
+    return ClassesSection(entities(TESTCLASSES), None)
 
 
 def test_write(section):

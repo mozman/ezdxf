@@ -19,7 +19,7 @@ class TablesSection(object):
         if entities is None:
             section_head = [DXFTag(0, 'SECTION'), DXFTag(2, 'TABLES')]
             entities = [section_head]
-        self._setup_tables(entities)
+        self._setup_tables(iter(entities))
 
     def __iter__(self):
         return iter(self._tables.values())
@@ -29,7 +29,6 @@ class TablesSection(object):
         return name.upper()
 
     def _setup_tables(self, entities):
-        entities = iter(entities)
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'TABLES'):
             raise DXFStructureError("Critical structure error in TABLES section.")

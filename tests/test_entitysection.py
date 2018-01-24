@@ -1,21 +1,12 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test entity section
-# Created: 13.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Created: 13.03.2011, 2018 rewritten for pytest
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-from io import StringIO
-
+import pytest
 import ezdxf
-from ezdxf.tools.test import DrawingProxy, normlines, Tags
-from ezdxf.sections.entities import EntitySection
 
 
-def make_test_drawing(version):
+def drawing(version):
     dwg = ezdxf.new(version)
     modelspace = dwg.modelspace()
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_line'})
@@ -26,72 +17,73 @@ def make_test_drawing(version):
     return dwg
 
 
-class TestEntitySection(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
-        self.section = EntitySection(Tags.from_text(TESTENTITIES), self.dwg)
+def test_iteration_with_layout_DXF12():
+    dwg = ezdxf.new('AC1009')
+    m = dwg.modelspace()
+    m.add_line((0, 0), (1, 1))
+    entity = list(dwg.entities)[-1]
+    assert dwg == entity.drawing  # check drawing attribute
 
-    def test_iteration_with_layout_DXF12(self):
-        dwg = ezdxf.new('AC1009')
-        m = dwg.modelspace()
+
+def test_iteration_with_layout_DXF2000():
+    dwg = ezdxf.new('AC1015')
+    m = dwg.modelspace()
+    m.add_line((0, 0), (1, 1))
+    entity = list(dwg.entities)[-1]
+    assert dwg == entity.drawing  # check drawing attribute
+
+
+def test_delete_all_entities_DXF12():
+    dwg = ezdxf.new('AC1009')
+    m = dwg.modelspace()
+    for _ in range(5):
         m.add_line((0, 0), (1, 1))
-        entity = list(dwg.entities)[-1]
-        self.assertEqual(dwg, entity.drawing)  # check drawing attribute
+    assert 5 == len(dwg.entities)
 
-    def test_iteration_with_layout_DXF2000(self):
-        dwg = ezdxf.new('AC1015')
-        m = dwg.modelspace()
-        m.add_line((0, 0), (1, 1))
-        entity = list(dwg.entities)[-1]
-        self.assertEqual(dwg, entity.drawing)  # check drawing attribute
-
-    def test_delete_all_entities_DXF12(self):
-        dwg = ezdxf.new('AC1009')
-        m = dwg.modelspace()
-        for _ in range(5):
-            m.add_line((0, 0), (1, 1))
-        self.assertEqual(5, len(dwg.entities))
-
-        dwg.entities.delete_all_entities()
-        self.assertEqual(0, len(dwg.entities))
+    dwg.entities.delete_all_entities()
+    assert 0 == len(dwg.entities)
 
 
-class TestEntityQueryAC1009(unittest.TestCase):
-    dwg = make_test_drawing('AC1009')
-
-    def test_query_all_entities(self):
-        # independent from layout (modelspace or paperspace)
-        entities = self.dwg.entities.query('*')
-        self.assertEqual(3, len(entities))
-
-    def test_query_polyline(self):
-        entities = self.dwg.entities.query('POLYLINE')
-        self.assertEqual(1, len(entities))
-
-    def test_query_line_and_polyline(self):
-        entities = self.dwg.entities.query('POLYLINE LINE')
-        self.assertEqual(2, len(entities))
-
-    def test_query_vertices(self):
-        # VERTEX entities are no more in any entity space, they are lined to the POLYLINE entity
-        entities = self.dwg.entities.query('VERTEX')
-        self.assertEqual(0, len(entities))
-
-    def test_query_layer_line(self):
-        entities = self.dwg.entities.query('*[layer=="lay_line"]')
-        self.assertEqual(2, len(entities))
-
-    def test_query_layer_polyline(self):
-        entities = self.dwg.entities.query('*[layer=="lay_polyline"]')
-        self.assertEqual(1, len(entities))
-
-    def test_query_layer_by_regex(self):
-        entities = self.dwg.entities.query('*[layer ? "lay_.*"]')
-        self.assertEqual(3, len(entities))
+@pytest.fixture(scope='module', params=['AC1009', 'AC1018'])
+def dxf(request):
+    return drawing(request.param)
 
 
-class TestEntityQueryAC1018(TestEntityQueryAC1009):
-    dwg = make_test_drawing('AC1018')
+def test_query_all_entities(dxf):
+    # independent from layout (modelspace or paperspace)
+    entities = dxf.entities.query('*')
+    assert 3 == len(entities)
+
+
+def test_query_polyline(dxf):
+    entities = dxf.entities.query('POLYLINE')
+    assert 1 == len(entities)
+
+
+def test_query_line_and_polyline(dxf):
+    entities = dxf.entities.query('POLYLINE LINE')
+    assert 2 == len(entities)
+
+
+def test_query_vertices(dxf):
+    # VERTEX entities are no more in any entity space, they are lined to the POLYLINE entity
+    entities = dxf.entities.query('VERTEX')
+    assert 0 == len(entities)
+
+
+def test_query_layer_line(dxf):
+    entities = dxf.entities.query('*[layer=="lay_line"]')
+    assert 2 == len(entities)
+
+
+def test_query_layer_polyline(dxf):
+    entities = dxf.entities.query('*[layer=="lay_polyline"]')
+    assert 1 == len(entities)
+
+
+def test_query_layer_by_regex(dxf):
+    entities = dxf.entities.query('*[layer ? "lay_.*"]')
+    assert 3 == len(entities)
 
 
 EMPTYSEC = """  0
@@ -101,6 +93,7 @@ ENTITIES
   0
 ENDSEC
 """
+
 
 TESTENTITIES = """  0
 SECTION
@@ -297,7 +290,3 @@ MVIEW
   0
 ENDSEC
 """
-
-
-if __name__ == '__main__':
-    unittest.main()

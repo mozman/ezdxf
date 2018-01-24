@@ -33,7 +33,7 @@ class Table(object):
         self._dxfname = None
         self._drawing = drawing
         self._table_entries = []
-        self._build_table_entries(entities)
+        self._build_table_entries(iter(entities))
 
     # start public interface
 
@@ -86,7 +86,6 @@ class Table(object):
     # end public interface
 
     def _build_table_entries(self, entities):
-        entities = iter(entities)
         table_head = next(entities)
         if table_head[0].value != 'TABLE':
             raise DXFStructureError("Critical structure error in TABLES section.")

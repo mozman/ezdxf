@@ -7,7 +7,7 @@ import pytest
 from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import Tags, compile_tags_without_handles
+from ezdxf.tools.test import compile_tags_without_handles, entities
 from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
@@ -19,7 +19,7 @@ def ac1009():
 
 @pytest.fixture
 def blocks(ac1009):
-    return BlocksSection(Tags.from_text(TESTBLOCKS), ac1009)
+    return BlocksSection(entities(TESTBLOCKS), ac1009)
 
 
 def test_write(blocks):
@@ -33,7 +33,7 @@ def test_write(blocks):
 
 
 def test_empty_section(ac1009):
-    section = BlocksSection(Tags.from_text(EMPTYSEC), ac1009)
+    section = BlocksSection(entities(EMPTYSEC), ac1009)
     stream = StringIO()
     section.write(TagWriter(stream))
     result = stream.getvalue()

@@ -23,13 +23,13 @@ class BlocksSection(object):
     """
     name = 'BLOCKS'
 
-    def __init__(self, tags, drawing):
+    def __init__(self, entities, drawing):
         # Mapping of BlockLayouts, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().
         self._block_layouts = dict()
         self.drawing = drawing
-        if tags is not None:
-            self._build(tags)
+        if entities is not None:
+            self._build(iter(entities))
         self._anonymous_block_counter = 0
 
     def __len__(self):
@@ -49,7 +49,7 @@ class BlocksSection(object):
     def dxffactory(self):
         return self.drawing.dxffactory
 
-    def _build(self, tags):
+    def _build(self, entities):
         def build_block_layout(handles):
             block = self.dxffactory.new_block_layout(
                 block_handle=handles[0],
@@ -58,15 +58,12 @@ class BlocksSection(object):
             for handle in handles[1:-1]:
                 block.add_handle(handle)
             return block
-
-        if tags[0] != (0, 'SECTION') or tags[1] != (2, 'BLOCKS') or tags[-1] != (0, 'ENDSEC'):
+        section_head = next(entities)
+        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'BLOCKS'):
             raise DXFStructureError("Critical structure error in BLOCKS section.")
 
-        if len(tags) == 3:  # empty block section
-            return
-
         handles = []
-        for handle, xtags in xtags_into_entitydb(tags[2:-1], self.entitydb, self.dxffactory):
+        for handle, xtags in xtags_into_entitydb(entities, self.entitydb, self.dxffactory):
             handles.append(handle)
             if xtags.dxftype() == 'ENDBLK':
                 block_layout = build_block_layout(handles)

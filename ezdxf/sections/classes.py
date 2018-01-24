@@ -18,13 +18,12 @@ class ClassesSection(object):
         self.classes = []  # DXFClasses are not stored in the entities database!
         self.drawing = drawing
         if entities is not None:
-            self._build(entities, drawing)
+            self._build(iter(entities), drawing)
 
     def __iter__(self):
         return iter(self.classes)
 
     def _build(self, entities, drawing):
-        entities = iter(entities)
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'CLASSES'):
             raise DXFStructureError("Critical structure error in CLASSES section.")

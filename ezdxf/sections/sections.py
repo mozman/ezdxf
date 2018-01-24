@@ -11,10 +11,11 @@ from .blocks import BlocksSection
 from .classes import ClassesSection
 from .objects import ObjectsSection
 from .entities import EntitySection
-from ..options import options
-from ..lldxf.defaultchunk import DefaultChunk, iter_chunks, CompressedDefaultChunk
+from ..lldxf.defaultchunk import DefaultChunk
 from ..lldxf.const import DXFStructureError
 from ..lldxf.tags import group_tags
+
+KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
 def loader(tagger):
@@ -87,9 +88,6 @@ class Sections(object):
         self._sections = {}
         sections = loader(tagreader)
         self._setup_sections(sections, drawing)
-        self._create_required_sections(drawing)
-        if 'ENTITIES' not in self._sections:
-            raise DXFStructureError('Mandatory ENTITIES section not found.')
 
     def __iter__(self):
         return iter(self._sections.values())
@@ -106,7 +104,7 @@ class Sections(object):
                 del sections[name]
             return section
 
-        # setup header section
+        # setup header section, header section is special!
         header_entities = sections.get('HEADER', None)
         if header_entities is not None:
             header = HeaderSection(header_entities[0])  # all tags in the first DXF structure entity
@@ -119,25 +117,16 @@ class Sections(object):
 
         # required sections
         self._sections['TABLES'] = _create_instance('TABLES', TablesSection)
+        self._sections['BLOCKS'] = _create_instance('BLOCKS', BlocksSection)
+        self._sections['ENTITIES'] = _create_instance('ENTITIES', EntitySection)
         if drawing.dxfversion > 'AC1009':
             self._sections['CLASSES'] = _create_instance('CLASSES', ClassesSection)
+            self._sections['OBJECTS'] = _create_instance('OBJECTS', ObjectsSection)
 
+        # unsupported, but stored sections
         for section_entities in sections.values():
-            section_head = section_entities[0]
-            name = section_head[1].value
-            section_class = get_section_class(name)
-            new_section = section_class(list(section_as_tags_helper(section_entities)), drawing)
-            key = Sections.key(new_section.name)
-            self._sections[key] = new_section
-
-    def _create_required_sections(self, drawing):
-        if 'BLOCKS' not in self:
-            self._sections['BLOCKS'] = BlocksSection(tags=None, drawing=drawing)
-        if 'TABLES' not in self:
-            self._sections['TABLES'] = TablesSection(entities=None, drawing=drawing)
-        if drawing.dxfversion > 'AC1009':  # required sections for DXF versions newer than R12 (AC1009)
-            if 'CLASSES' not in self:
-                self._sections['CLASSES'] = ClassesSection(entities=None, drawing=drawing)
+            new_section = DefaultChunk(list(section_as_tags_helper(section_entities)), drawing)
+            self._sections[new_section.name] = new_section
 
     def __contains__(self, item):
         return Sections.key(item) in self._sections
@@ -178,17 +167,4 @@ class Sections(object):
         del self._sections[Sections.key(name)]
 
 
-SECTION_MAP = {
-    'CLASSES': ClassesSection,
-    'TABLES': TablesSection,
-    'BLOCKS': BlocksSection,
-    'ENTITIES': EntitySection,
-    'OBJECTS': ObjectsSection,
-}
 
-KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
-
-
-def get_section_class(name):
-    default_class = CompressedDefaultChunk if options.compress_default_chunks else DefaultChunk
-    return SECTION_MAP.get(name, default_class)

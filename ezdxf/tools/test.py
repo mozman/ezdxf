@@ -48,3 +48,12 @@ def compile_tags_without_handles(text):
 def normlines(text):
     lines = text.split('\n')
     return [line.strip() for line in lines]
+
+
+def entities(text):
+    from ezdxf.lldxf.tags import group_tags
+    tags = Tags.from_text(text)
+    entities = list(group_tags(tags))
+    if entities[-1][0] == (0, 'ENDSEC'):
+        entities.pop()
+    return entities

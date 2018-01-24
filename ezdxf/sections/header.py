@@ -108,7 +108,7 @@ class HeaderSection(object):
             tags = self.MIN_HEADER_TAGS
         self.hdrvars = OrderedDict()
         self.custom_vars = CustomVars()
-        self._build(tags)
+        self._build(iter(tags))
 
     def set_headervar_factory(self, factory):
         self._headervar_factory = factory
@@ -120,8 +120,6 @@ class HeaderSection(object):
         return key in self.hdrvars
 
     def _build(self, tags):
-        assert tags[-1] != (0, 'ENDSEC')
-        tags = iter(tags)
         section_tag = next(tags)
         name_tag = next(tags)
 
