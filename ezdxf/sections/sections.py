@@ -19,8 +19,8 @@ from ..lldxf.tags import group_tags
 
 def loader(tagger):
     """
-    Divide input tag stream from tagger into DXF entities. Each DXF entity starts with a DXF structure (0, ...) tag, and
-    ends before the next DXF structure tag.
+    Divide input tag stream from tagger into DXF structure entities. Each DXF structure entity starts with a DXF
+    structure (0, ...) tag, and ends before the next DXF structure tag.
 
     Generated structure:
 
@@ -42,13 +42,14 @@ def loader(tagger):
         'OBJECTS': [(0, 'SECTION'), (2, 'OBJECTS')], ...]
     }
 
-    Function expects a valid DXF structure, use ezdxf.lldxf.validator.structure_validator() to filter input.
+    loader() expects a valid DXF structure, use ezdxf.lldxf.validator.structure_validator() to filter input.
 
     Args:
         tagger: generates DXFTag() entities from input data
 
     Returns:
-        list if sections, each section is a list of DXF entity tag groups
+        dict of sections, each section is a list of DXF structure entities as Tags() objects
+        
     """
     sections = {}
     section = []
