@@ -10,22 +10,22 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
 
 TABLENAMES = {
-    'layer': 'layers',
-    'ltype': 'linetypes',
-    'appid': 'appids',
-    'dimstyle': 'dimstyles',
-    'style': 'styles',
-    'ucs': 'ucs',
-    'view': 'views',
-    'vport': 'viewports',
-    'block_record': 'block_records',
+    'LAYER': 'LAYERS',
+    'LTYPE': 'LINETYPES',
+    'APPID': 'APPIDS',
+    'DIMSTYLE': 'DIMSTYLES',
+    'STYLE': 'STYLES',
+    'UCS': 'UCS',
+    'VIEW': 'VIEWS',
+    'VPORT': 'VIEWPORTS',
+    'BLOCK_RECORD': 'BLOCK_RECORDS',
 }
 
 
 def tablename(dxfname):
-    """ Translate DXF-table-name to attribute-name. ('LAYER' -> 'layers') """
-    name = dxfname.lower()
-    return TABLENAMES.get(name, name + 's')
+    """ Translate DXF-table-name to attribute-name. ('LAYER' -> 'LAYERS') """
+    name = dxfname.upper()
+    return TABLENAMES.get(name, name + 'S')
 
 
 class GenericTable(DefaultChunk):

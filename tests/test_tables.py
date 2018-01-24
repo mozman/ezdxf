@@ -21,8 +21,12 @@ def test_constructor(tables):
     assert tables.layers is not None
 
 
-def test_getattr(tables):
+def test_getattr_lower_case(tables):
     assert tables.linetypes is not None
+
+
+def test_getattr_upper_case(tables):
+    assert tables.LINETYPES is not None
 
 
 def test_error_getattr(tables):

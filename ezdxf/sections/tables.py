@@ -42,6 +42,10 @@ class TablesSection(object):
     def __iter__(self):
         return iter(self._tables.values())
 
+    @staticmethod
+    def key(name):
+        return name.upper()
+
     def _setup_tables(self, tags):
         def name(table):
             return table[1].value
@@ -65,36 +69,37 @@ class TablesSection(object):
     def _new_table(self, name, tags):
             table_class = get_table_class(name)
             new_table = table_class(tags, self._drawing)
-            self._tables[new_table.name] = new_table
+            self._tables[self.key(new_table.name)] = new_table
 
     def _create_required_tables(self):
         def setup_table(name):
             tags = Tags.from_text(MIN_TABLE.replace('DUMMY', name))
             self._new_table(name, tags)
 
-        if 'layers' not in self._tables:
+        if 'LAYERS' not in self._tables:
             setup_table('LAYER')
-        if 'linetypes' not in self._tables:
+        if 'LINETYPES' not in self._tables:
             setup_table('LTYPE')
-        if 'styles' not in self._tables:
+        if 'STYLES' not in self._tables:
             setup_table('STYLE')
-        if 'dimstyles' not in self._tables:
+        if 'DIMSTYLES' not in self._tables:
             setup_table('DIMSTYLE')
 
     def __contains__(self, item):
-        return item in self._tables
+        return self.key(item) in self._tables
 
     def __getattr__(self, key):
+        key = self.key(key)
         try:
             return self._tables[key]
         except KeyError:  # internal exception
             raise DXFAttributeError(key)
 
     def __getitem__(self, key):
-        return self._tables[key]
+        return self._tables[self.key(key)]
 
     def __delitem__(self, key):
-        del self._tables[key]
+        del self._tables[self.key(key)]
 
     def write(self, tagwriter):
         tagwriter.write_str('  0\nSECTION\n  2\nTABLES\n')
@@ -118,7 +123,7 @@ TABLESMAP = {
 }
 
 # The order of the tables may change, but the LTYPE table always precedes the LAYER table.
-TABLE_ORDER = ('viewports', 'linetypes', 'layers', 'styles', 'views', 'ucs', 'appids', 'dimstyles', 'block_records')
+TABLE_ORDER = ('VIEWPORTS', 'LINETYPES', 'LAYERS', 'STYLES', 'VIEWS', 'UCS', 'APPIDS', 'DIMSTYLES', 'BLOCK_RECORDS')
 
 
 def get_table_class(name):
