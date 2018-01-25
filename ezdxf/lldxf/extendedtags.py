@@ -37,8 +37,10 @@ class ExtendedTags(object):
         clone.xdata = copy(self.xdata)
         clone.link = self.link  # important for dxf importer!
         return clone
-
     clone = __copy__
+
+    def __getitem__(self, index):
+        return self.noclass[0]
 
     @property
     def noclass(self):

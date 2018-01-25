@@ -37,6 +37,10 @@ def test_init_one_tag():
     assert xtags.noclass[0] == (0, 'SECTION')
 
 
+def test_getitem(xtags1):
+    assert xtags1[0] == xtags1.noclass[0]
+
+
 def test_appdata_content_count(xtags1):
     xdict = xtags1.get_app_data('{ACAD_XDICTIONARY')
     assert 3 == len(xdict)
