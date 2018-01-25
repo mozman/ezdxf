@@ -6,8 +6,7 @@ import pytest
 from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles
-from ezdxf.sections.sections import load_dxf_structure
+from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, load_section
 from ezdxf.sections.tables import TablesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.drawing import Drawing
@@ -16,7 +15,7 @@ from ezdxf.drawing import Drawing
 @pytest.fixture
 def tables():
     dwg = DrawingProxy('AC1009')
-    tables = load_dxf_structure(Tags.from_text(TEST_TABLES))['TABLES']
+    tables = load_section(TEST_TABLES, 'TABLES')
     return TablesSection(tables, dwg)
 
 

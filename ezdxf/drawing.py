@@ -10,11 +10,12 @@ import io
 import logging
 from .database import EntityDB
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFValueError
+from .lldxf.loader import load_dxf_structure
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
 from .tools.codepage import tocodepage, toencoding
-from .sections import Sections, load_dxf_structure
+from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
 logger = logging.getLogger('ezdxf')

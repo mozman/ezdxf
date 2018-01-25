@@ -3,4 +3,4 @@
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
 __author__ = "mozman <mozman@gmx.at>"
-from .sections import Sections, load_dxf_structure
+from .sections import Sections
