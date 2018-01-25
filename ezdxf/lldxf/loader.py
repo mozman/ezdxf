@@ -7,12 +7,10 @@ __author__ = "mozman <mozman@gmx.at>"
 import logging
 from ..lldxf.const import DXFStructureError
 from ..lldxf.tags import group_tags
-
 logger = logging.getLogger('ezdxf')
-KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
-def load_dxf_structure(tagger, eof_error=True):
+def load_dxf_structure(tagger, ignore_missing_eof=False):
     """
     Divide input tag stream from tagger into DXF structure entities. Each DXF structure entity starts with a DXF
     structure (0, ...) tag, and ends before the next DXF structure tag.
@@ -39,7 +37,7 @@ def load_dxf_structure(tagger, eof_error=True):
 
     Args:
         tagger: generates DXFTag() entities from input data
-        eof_error: raises DXFStructureError() if True and EOF tag is not present, set to False only for testing
+        ignore_missing_eof: raises DXFStructureError() if False and EOF tag is not present, set to True only in tests
 
     Returns:
         dict of sections, each section is a list of DXF structure entities as Tags() objects
@@ -83,6 +81,6 @@ def load_dxf_structure(tagger, eof_error=True):
             section.append(entity)
     if inside_section():
         raise DXFStructureError("DXFStructureError: missing ENDSEC tag.")
-    if not eof and eof_error:
+    if not eof and not ignore_missing_eof:
         raise DXFStructureError('DXFStructureError: missing EOF tag.')
     return sections

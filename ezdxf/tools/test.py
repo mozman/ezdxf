@@ -52,5 +52,5 @@ def normlines(text):
 
 def load_section(text, name):
     from ezdxf.lldxf.loader import load_dxf_structure
-    dxf = load_dxf_structure(internal_tag_compiler(text), eof_error=False)
+    dxf = load_dxf_structure(internal_tag_compiler(text), ignore_missing_eof=True)
     return dxf[name]
