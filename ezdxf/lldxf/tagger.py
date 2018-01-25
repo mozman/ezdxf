@@ -33,32 +33,33 @@ def internal_tag_compiler(s):
     pos = 0
     count = len(lines)
     while pos < count:
-        x = DXFTag(int(lines[pos]), lines[pos+1])
+        x_code = int(lines[pos])
+        x_value = lines[pos+1]
         pos += 2
-        code = x.code
-        if code in POINT_CODES:
+        if x_code in POINT_CODES:
             # next tag; y coordinate is mandatory - internal_tag_compiler relies on well formed DXF strings
-            y = DXFTag(int(lines[pos]), lines[pos+1])
+            y = lines[pos+1]
             pos += 2
             if pos < count:
                 # next tag; z coordinate just for 3d points
-                z = DXFTag(int(lines[pos]), lines[pos+1])
+                z_code = int(lines[pos])
+                z = lines[pos+1]
             else:  # if string s ends with a 2d point
-                z = NONE_TAG
-            if z.code == code + 20:  # 3d point
+                z_code = None
+            if z_code == x_code+20:  # 3d point
                 pos += 2
-                point = (float(x.value), float(y.value), float(z.value))
+                point = (float(x_value), float(y), float(z))
             else:  # 2d point
-                point = (float(x.value), float(y.value))
-            yield DXFTag(code, point)  # 2d/3d point
+                point = (float(x_value), float(y))
+            yield DXFTag(x_code, point)  # 2d/3d point
         else:  # single value tag: int, float or string
-            yield DXFTag(code, TYPE_TABLE.get(code, ustr)(x.value))
+            yield DXFTag(x_code, TYPE_TABLE.get(x_code, ustr)(x_value))
 
 
 def low_level_tagger(stream):
     """
     Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
-    Does not skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
+    Skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
     Works with file system streams and StringIO() streams, only required feature is the readline() method.
 
     Args:
@@ -92,7 +93,7 @@ def tag_compiler(tagger):
     """
     Compiles DXF tag values imported by low_level_tagger() into Python types.
 
-    Does not skip comment tags 999. Raises DXFStructureError() for invalid float values and invalid coordinate values.
+    Raises DXFStructureError() for invalid float values and invalid coordinate values.
 
     Expects DXF coordinates written in x, y[, z] order, this is not required by the DXF standard, but nearly all CAD
     applications write DXF coordinates that (sane) way, there are older CAD applications (namely an older QCAD version)
