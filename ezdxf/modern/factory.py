@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .headervars import VARMAP
 from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
@@ -94,7 +93,6 @@ UPDATE_ENTITY_WRAPPERS = {
 class ModernDXFFactory(LegacyDXFFactory):
     """ DXf factory for DXF version AC1015 and later. (changed 04.05.2014)
     """
-    HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.ModernGraphicEntity
 
     def __init__(self, drawing):

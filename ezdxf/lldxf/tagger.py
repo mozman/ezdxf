@@ -45,7 +45,7 @@ def internal_tag_compiler(s):
                 z_code = int(lines[pos])
                 z = lines[pos+1]
             else:  # if string s ends with a 2d point
-                z_code = None
+                z_code, z = None, 0.
             if z_code == x_code+20:  # 3d point
                 pos += 2
                 point = (float(x_value), float(y), float(z))

@@ -84,7 +84,6 @@ def header():
     tags.pop()  # remove 'ENDSEC'
     dwg = DrawingProxy('AC1009')
     header = HeaderSection(tags)
-    header.set_headervar_factory(dwg.dxffactory.headervar_factory)
     return header
 
 
@@ -162,7 +161,6 @@ def header_custom():
     tags.pop()  # remove 'ENDSEC'
     dwg = DrawingProxy('AC1009')
     header = HeaderSection(tags)
-    header.set_headervar_factory(dwg.dxffactory.headervar_factory)
     return header
 
 

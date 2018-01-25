@@ -13,6 +13,8 @@ from ..lldxf.tags import group_tags, Tags
 from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
 from ..lldxf.validator import header_validator
 
+from ..legacy.headervars import VARMAP as VARMAP_R12
+from ..modern.headervars import VARMAP as VARMAP_R13
 
 MIN_HEADER_TEXT = """  0
 SECTION
@@ -109,9 +111,21 @@ class HeaderSection(object):
         self.hdrvars = OrderedDict()
         self.custom_vars = CustomVars()
         self._build(iter(tags))
+        self._varmap = self._get_varmap()
 
-    def set_headervar_factory(self, factory):
-        self._headervar_factory = factory
+    def _get_varmap(self):
+        dxfversion = self.get('$ACADVER', 'AC1009')
+        if dxfversion > 'AC1009':
+            return dict(VARMAP_R13)
+        else:
+            return dict(VARMAP_R12)
+
+    def _headervar_factory(self, key, value):
+        if key in self._varmap:
+            factory = self._varmap[key]
+            return factory(value)
+        else:
+            raise DXFKeyError('Invalid header variable {}.'.format(key))
 
     def __len__(self):
         return len(self.hdrvars)

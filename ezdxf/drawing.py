@@ -104,7 +104,6 @@ class Drawing(object):
         self.encoding = toencoding(codepage)
         seed = header.get('$HANDSEED', str(self._handles))
         self._handles.reset(seed)
-        header.set_headervar_factory(self.dxffactory.headervar_factory)
 
     @property
     def is_binary_data_compressed(self):

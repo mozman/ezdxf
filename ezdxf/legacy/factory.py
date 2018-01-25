@@ -63,13 +63,12 @@ the section markers and table headers present:
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .headervars import VARMAP
 from . import tableentries
 from . import graphics
 from .viewport import Viewport
 
 from .layouts import DXF12Layouts, DXF12BlockLayout
-from ..lldxf.const import DXFValueError, DXFKeyError
+from ..lldxf.const import DXFValueError
 
 
 ENTITY_WRAPPERS = {
@@ -106,7 +105,6 @@ ENTITY_WRAPPERS = {
 
 
 class LegacyDXFFactory(object):
-    HEADERVARS = dict(VARMAP)
     DEFAULT_WRAPPER = graphics.GraphicEntity
 
     def __init__(self, drawing):
@@ -128,13 +126,6 @@ class LegacyDXFFactory(object):
     @property
     def dxfversion(self):
         return self.drawing.dxfversion
-
-    def headervar_factory(self, key, value):
-        if key in self.HEADERVARS:
-            factory = self.HEADERVARS[key]
-            return factory(value)
-        else:
-            raise DXFKeyError('Invalid header variable {}.'.format(key))
 
     def new_entity(self, type_, handle, dxfattribs):
         """ Create a new entity. """
