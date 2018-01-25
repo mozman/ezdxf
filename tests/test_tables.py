@@ -43,6 +43,7 @@ def test_write(tables):
     result = stream.getvalue()
     stream.close()
     t1 = list(compile_tags_without_handles(TEST_TABLES))
+    t1.pop()  # remove EOF tag
     t2 = list(compile_tags_without_handles(result))
     assert t1 == t2
 
@@ -170,4 +171,6 @@ DIMSTYLE
 ENDTAB
   0
 ENDSEC
+  0
+EOF
 """

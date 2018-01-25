@@ -282,9 +282,8 @@ class Drawing(object):
     def read(stream, legacy_mode=False):
         """ Open an existing drawing. """
         from .lldxf.tagger import low_level_tagger, tag_compiler
-        from .lldxf.validator import structure_validator
 
-        tagger = structure_validator(low_level_tagger(stream), filter=True)
+        tagger = low_level_tagger(stream)
         if legacy_mode:
             tagger = repair.tag_reorder_layer(tagger)
         tagreader = tag_compiler(tagger)
