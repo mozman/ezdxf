@@ -31,16 +31,23 @@ class Drawing(object):
         Args:
              tagger: generator or list of DXF tags as DXFTag() objects
         """
+        def get_header(sections):
+            from .sections.header import HeaderSection
+            header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
+            return HeaderSection(header_entities)
+
         self._is_binary_data_compressed = False
-        self.dxffactory = None  # readonly - set by bootstrap_hook()
-        self.dxfversion = 'AC1009'  # readonly - set by bootstrap_hook()
-        self.encoding = 'cp1252'  # read/write - set by bootstrap_hook()
-        self.filename = None  # read/write
-        self._groups = None
         self.entitydb = EntityDB()
         sections = load_dxf_structure(tagger)
+        header = get_header(sections)
+
+        # setting important DXF properties in bootstrap_hook()
+        self.bootstrap_hook(header)
+        self.filename = None  # read/write
+        self._groups = None
+
         fill_database(self.entitydb, sections)  # store all necessary entities into the drawing database
-        self.sections = Sections(sections, self)
+        self.sections = Sections(sections, self, header)  # pass header section to constructor!
 
         if self.dxfversion > 'AC1009':
             self.rootdict = self.objects.rootdict
@@ -90,11 +97,12 @@ class Drawing(object):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
         self.dxfversion = header.get('$ACADVER', 'AC1009')
-        seed = header.get('$HANDSEED', str(self._handles))
-        self._handles.reset(seed)
+        self.dxffactory = dxffactory(self)
         codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
         self.encoding = toencoding(codepage)
-        self.dxffactory = dxffactory(self)
+        seed = header.get('$HANDSEED', str(self._handles))
+        self._handles.reset(seed)
+        header.set_headervar_factory(self.dxffactory.headervar_factory)
 
     @property
     def is_binary_data_compressed(self):

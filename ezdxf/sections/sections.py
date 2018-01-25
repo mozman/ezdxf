@@ -19,9 +19,9 @@ KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS'
 
 
 class Sections(object):
-    def __init__(self, sections, drawing):
+    def __init__(self, sections, drawing, header=None):
         self._sections = {}
-        self._setup_sections(sections, drawing)
+        self._setup_sections(sections, drawing, header)
 
     def __iter__(self):
         return iter(self._sections.values())
@@ -30,7 +30,7 @@ class Sections(object):
     def key(name):
         return name.upper()
 
-    def _setup_sections(self, sections, drawing):
+    def _setup_sections(self, sections, drawing, header=None):
         def _create_instance(name, cls):
             entities = sections.get(name, None)
             section = cls(entities, drawing=drawing)
@@ -38,11 +38,13 @@ class Sections(object):
 
         # Header section setup is special!
         # In DXF R12 the HEADER section is not mandatory!
-        header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
-        header = HeaderSection(header_entities)
-        self._sections['HEADER'] = header
-        drawing.bootstrap_hook(header)
-        header.set_headervar_factory(drawing.dxffactory.headervar_factory)
+        if header is None:
+            header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
+            header = HeaderSection(header_entities)
+            self._sections['HEADER'] = header  # needed in bootstrap_hook()
+            drawing.bootstrap_hook(header)
+        else:
+            self._sections['HEADER'] = header
 
         # required sections
         self._sections['TABLES'] = _create_instance('TABLES', TablesSection)

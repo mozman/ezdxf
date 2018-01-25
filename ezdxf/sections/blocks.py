@@ -7,7 +7,7 @@ __author__ = "mozman <mozman@gmx.at>"
 
 import logging
 
-from ..lldxf.const import DXFStructureError
+from ..lldxf.const import DXFStructureError, DXFAttributeError
 from ..tools.c23 import isstring
 from ..lldxf import const
 from .abstract import link_and_fix_entities
@@ -68,7 +68,11 @@ class BlocksSection(object):
             handles.append(xtags.get_handle())
             if xtags.dxftype() == 'ENDBLK':
                 block_layout = build_block_layout(handles)
-                if block_layout in self:
+                try:
+                    name = block_layout.name
+                except DXFAttributeError:
+                    raise
+                if block_layout.name in self:
                     logger.warning('Warning! Multiple block definitions with name "{}", replacing previous definition'.format(block_layout.name))
                 self.add(block_layout)
                 handles = []
