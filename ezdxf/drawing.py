@@ -37,14 +37,16 @@ class Drawing(object):
             return HeaderSection(header_entities)
 
         self._is_binary_data_compressed = False
-        self.entitydb = EntityDB()
-        sections = load_dxf_structure(tagger)
-        header = get_header(sections)
-
-        # setting important DXF properties in bootstrap_hook()
-        self.bootstrap_hook(header)
+        self._groups = None  # read only
         self.filename = None  # read/write
-        self._groups = None
+        self.dxfversion = 'AC1009'  # read only
+        self.encoding = 'cp1252'  # read/write
+        self.dxffactory = None  # read only
+
+        sections = load_dxf_structure(tagger)  # load complete DXF entity structure
+        header = get_header(sections)  # build HEADER section
+        self.entitydb = EntityDB()
+        self.bootstrap_hook(header)  # setting important DXF properties
 
         fill_database(self.entitydb, sections)  # store all necessary entities into the drawing database
         self.sections = Sections(sections, self, header)  # pass header section to constructor!
