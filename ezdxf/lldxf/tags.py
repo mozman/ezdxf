@@ -73,16 +73,18 @@ class Tags(list):
         Returns:
             handle as hex-string like 'FF'
         """
-        handle = ''
-        for tag in self:
-            if tag.code in (5, 105):
-                handle = tag.value
-                break
         try:
-            int(handle, 16)  # check for valid handle
-        except ValueError:
-            raise DXFValueError('Invalid handle value "{}".'.format(handle))
-        return handle
+            code, handle = self[1]  # fast path  for most common cases
+        except IndexError:
+            raise DXFValueError('No handle found.')
+
+        if code == 5 or code == 105:
+            return handle
+
+        for code, handle in self:
+            if code in (5, 105):
+                return handle
+        raise DXFValueError('No handle found.')
 
     def replace_handle(self, new_handle):
         """
