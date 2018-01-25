@@ -92,7 +92,8 @@ class Table(object):
         self._dxfname = table_head[1].value
         self._table_header = ExtendedTags(table_head)  # do not store the table head in the entity database
         for table_entry in entities:
-            self._add_entry(ExtendedTags(table_entry))
+            self._append_entry_handle(table_entry.get_handle())
+
 
     @property
     def entitydb(self):

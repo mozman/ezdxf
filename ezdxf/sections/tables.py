@@ -6,7 +6,8 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from .table import Table, ViewportTable, StyleTable
-from ..lldxf.tags import Tags, DXFTag
+from ..lldxf.tags import DXFTag
+from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFAttributeError, DXFStructureError
 
 
@@ -36,6 +37,8 @@ class TablesSection(object):
         table_entities = []
         table_name = None
         for entity in entities:
+            if isinstance(entity, ExtendedTags):
+                entity = entity.noclass
             if entity[0] == (0, 'TABLE'):
                 table_entities = [entity]  # collect table head!
                 if len(entity) < 2 or entity[1].code != 2:

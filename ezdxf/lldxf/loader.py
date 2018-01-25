@@ -5,8 +5,12 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 import logging
-from ..lldxf.const import DXFStructureError
-from ..lldxf.tags import group_tags
+from .const import DXFStructureError
+from .tags import group_tags
+from .extendedtags import ExtendedTags
+from .validator import entity_structure_validator
+from .. import options
+
 logger = logging.getLogger('ezdxf')
 
 
@@ -84,3 +88,32 @@ def load_dxf_structure(tagger, ignore_missing_eof=False):
     if not eof and not ignore_missing_eof:
         raise DXFStructureError('DXFStructureError: missing EOF tag.')
     return sections
+
+
+DATABASE_EXCLUDE = frozenset(['SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'])
+
+
+def load_dxf_entities_into_database(database, dxf_entities):
+    check_tag_structure = options.check_entity_tag_structures
+    for entity in dxf_entities:
+        if len(entity) == 0:
+            raise DXFStructureError('Invalid empty DXF entity.')
+        code, dxftype = entity[0]
+        if code != 0:
+            raise DXFStructureError('Invalid first tag in DXF entity, group code={} .'.format(code))
+        if dxftype not in DATABASE_EXCLUDE:
+            if check_tag_structure:
+                entity = entity_structure_validator(entity)
+
+            entity = ExtendedTags(entity)
+            database.add_tags(entity)
+        yield entity
+
+
+def fill_database(database, sections):
+    for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
+        if name in sections:
+            section = sections[name]
+            # entities stored in the database are converted from Tags() to ExtendedTags()
+            for index, entity in enumerate(load_dxf_entities_into_database(database, section)):
+                section[index] = entity

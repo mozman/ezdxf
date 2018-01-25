@@ -5,8 +5,7 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, normlines
-from ezdxf.lldxf.tags import group_tags
+from ezdxf.tools.test import DrawingProxy, compile_tags_without_handles, load_section, internal_tag_compiler
 from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagWriter
 
@@ -14,10 +13,8 @@ from ezdxf.lldxf.tagwriter import TagWriter
 @pytest.fixture
 def table_ac1009():
     dwg = DrawingProxy('AC1009')
-    tags = Tags.from_text(AC1009TABLE)
-    entities = list(group_tags(tags))
-    entities.pop()  # remove 'ENDTAB'
-    return Table(entities, dwg)
+    entities = load_section(AC1009TABLE, 'TABLES', dwg.entitydb)
+    return Table(entities[1:-1], dwg)  # without SECTION tags and ENDTAB
 
 
 def test_ac1009_table_setup(table_ac1009):
@@ -29,7 +26,7 @@ def test_ac1009_write(table_ac1009):
     table_ac1009.write(TagWriter(stream))
     result = stream.getvalue()
     stream.close()
-    t1 = list(compile_tags_without_handles(AC1009TABLE))
+    t1 = list(compile_tags_without_handles(AC1009TABLE))[2:-1]   # without section tags
     t2 = list(compile_tags_without_handles(result))
     assert t1 == t2
 
@@ -47,10 +44,8 @@ def test_ac1009_entry_names_are_case_insensitive(table_ac1009):
 @pytest.fixture
 def table_ac1024():
     dwg = DrawingProxy('AC1024')
-    tags = Tags.from_text(AC1024TABLE)
-    entities = list(group_tags(tags))
-    entities.pop()  # remove 'ENDTAB'
-    return Table(entities, dwg)
+    entities = load_section(AC1024TABLE, 'TABLES', dwg.entitydb)
+    return Table(entities[1:-1], dwg)  # without SECTION tags and ENDTAB
 
 
 def test_ac1024table_setup(table_ac1024):
@@ -62,7 +57,9 @@ def test_ac1024_write(table_ac1024):
     table_ac1024.write(TagWriter(stream))
     result = stream.getvalue()
     stream.close()
-    assert normlines(AC1024TABLE) == normlines(result)
+    t1 = list(internal_tag_compiler(AC1024TABLE))[2:-1]  # without section tags
+    t2 = list(internal_tag_compiler(result))
+    assert t1 == t2
 
 
 def test_ac1024_get_table_entry(table_ac1024):
@@ -70,7 +67,11 @@ def test_ac1024_get_table_entry(table_ac1024):
     assert 'ACAD' == entry.dxf.name
 
 
-AC1009TABLE = """  0
+AC1009TABLE = """0
+SECTION
+2
+TABLES
+  0
 TABLE
   2
 APPID
@@ -138,9 +139,15 @@ ACAD_PSEXT
      0
   0
 ENDTAB
+  0
+ENDSEC
 """
 
 AC1024TABLE = """  0
+SECTION
+2
+TABLES
+0
 TABLE
   2
 APPID
@@ -294,6 +301,8 @@ ACAD_PSEXT
      0
   0
 ENDTAB
+  0
+ENDSEC
 """
 
 

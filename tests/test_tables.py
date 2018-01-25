@@ -15,7 +15,7 @@ from ezdxf.drawing import Drawing
 @pytest.fixture
 def tables():
     dwg = DrawingProxy('AC1009')
-    tables = load_section(TEST_TABLES, 'TABLES')
+    tables = load_section(TEST_TABLES, 'TABLES', dwg.entitydb)
     return TablesSection(tables, dwg)
 
 

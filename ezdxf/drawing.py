@@ -10,7 +10,7 @@ import io
 import logging
 from .database import EntityDB
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFValueError
-from .lldxf.loader import load_dxf_structure
+from .lldxf.loader import load_dxf_structure, fill_database
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
@@ -39,6 +39,7 @@ class Drawing(object):
         self._groups = None
         self.entitydb = EntityDB()
         sections = load_dxf_structure(tagger)
+        fill_database(self.entitydb, sections)  # store all necessary entities into the drawing database
         self.sections = Sections(sections, self)
 
         if self.dxfversion > 'AC1009':

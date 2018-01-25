@@ -10,7 +10,7 @@ import logging
 from ..lldxf.const import DXFStructureError
 from ..tools.c23 import isstring
 from ..lldxf import const
-from .abstract import xtags_into_entitydb
+from .abstract import link_and_fix_entities
 
 logger = logging.getLogger('ezdxf')
 
@@ -58,13 +58,14 @@ class BlocksSection(object):
             for handle in handles[1:-1]:
                 block.add_handle(handle)
             return block
+
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'BLOCKS'):
             raise DXFStructureError("Critical structure error in BLOCKS section.")
 
         handles = []
-        for handle, xtags in xtags_into_entitydb(entities, self.entitydb, self.dxffactory):
-            handles.append(handle)
+        for xtags in link_and_fix_entities(entities, self.dxffactory):
+            handles.append(xtags.get_handle())
             if xtags.dxftype() == 'ENDBLK':
                 block_layout = build_block_layout(handles)
                 if block_layout in self:

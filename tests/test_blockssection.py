@@ -19,7 +19,7 @@ def ac1009():
 
 @pytest.fixture
 def blocks(ac1009):
-    return BlocksSection(load_section(TESTBLOCKS, 'BLOCKS'), ac1009)
+    return BlocksSection(load_section(TESTBLOCKS, 'BLOCKS', ac1009.entitydb), ac1009)
 
 
 def test_write(blocks):

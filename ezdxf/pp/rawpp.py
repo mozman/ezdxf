@@ -25,6 +25,8 @@ def rawpp(tagger, filename):
             vstr = ustr(tag.value)
             if tag.code in HEX_HANDLE_CODES:
                 vstr = '#' + vstr
+        if len(vstr) > 110:
+            vstr = vstr[:107] + '...'
         return TAG_TPL.format(code=tag.code, value=escape(vstr), type=escape(type_str))
 
     def marker(tag, tag_html):

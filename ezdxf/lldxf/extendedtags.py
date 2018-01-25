@@ -246,15 +246,15 @@ LINKED_ENTITIES = {
 }
 
 
-def get_tags_linker():
+def get_xtags_linker():
     class PersistentVars(object):  # Python 2.7 has no nonlocal statement
         def __init__(self):
             self.prev = None
             self.expected = ""
 
-    def tags_linker(tags, handle):
-        # Parameter handle is necessary, because DXF12 did not require a handle, therefor the
-        # handle isn't stored in tags and tags.get_handle() fails with an ValueError
+    def xtags_linker(tags):
+        handle = tags.get_handle()
+
         def attribs_follow():
             try:
                 ref_tags = tags.get_subclass('AcDbBlockReference')
@@ -294,4 +294,4 @@ def get_tags_linker():
         return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
 
     vars = PersistentVars()
-    return tags_linker
+    return xtags_linker

@@ -5,25 +5,19 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from ..lldxf.tags import group_tags, DXFStructureError
-from ..lldxf.extendedtags import ExtendedTags, get_tags_linker
+from ..lldxf.tags import DXFStructureError
+from ..lldxf.extendedtags import ExtendedTags, get_xtags_linker
 from ..query import EntityQuery
-from ..lldxf.validator import entity_structure_validator
-from ..options import options
 
 
-def xtags_into_entitydb(entities, entitydb, dxffactory):
-    linked_tags = get_tags_linker()
+def link_and_fix_entities(entities, dxffactory):
+    linked_tags = get_xtags_linker()
     post_read_tags_fixer = dxffactory.post_read_tags_fixer
-    check_tag_structure = options.check_entity_tag_structures
     for entity in entities:
-        if check_tag_structure:
-            entity = entity_structure_validator(entity)
-        xtags = ExtendedTags(entity)
-        post_read_tags_fixer(xtags)  # for VERTEX!
-        handle = entitydb.add_tags(xtags)
-        if not linked_tags(xtags, handle):  # also creates the link structure as side effect
-            yield handle, xtags
+        assert isinstance(entity, ExtendedTags)
+        post_read_tags_fixer(entity)  # for VERTEX!
+        if not linked_tags(entity):  # also creates the link structure as side effect
+            yield entity
 
 
 class AbstractSection(object):
@@ -52,7 +46,7 @@ class AbstractSection(object):
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, self.name.upper()):
             raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
-        for handle, xtags in xtags_into_entitydb(entities, self.entitydb, self.dxffactory):
+        for xtags in link_and_fix_entities(entities, dxffactory=self.dxffactory):
             self._entity_space.store_tags(xtags)
 
     def write(self, tagwriter):

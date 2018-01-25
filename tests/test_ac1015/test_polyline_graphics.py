@@ -240,7 +240,7 @@ def test_internals_polyface(layout):
 
 
 def test_new_style_polyface_face_count(dwg):
-    section = EntitySection(load_section(NEW_STYLE_POLYFACE, 'ENTITIES'), dwg)
+    section = EntitySection(load_section(NEW_STYLE_POLYFACE, 'ENTITIES', dwg.entitydb), dwg)
     polyface = list(section)[0]
     faces = list(polyface.faces())
     assert 6 == len(faces)

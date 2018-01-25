@@ -16,7 +16,8 @@ from ezdxf.lldxf.tagwriter import TagWriter
 
 @pytest.fixture
 def section():
-    return ObjectsSection(load_section(TESTOBJECTS, 'OBJECTS'), DrawingProxy('AC1015'))
+    dwg = DrawingProxy('AC1015')
+    return ObjectsSection(load_section(TESTOBJECTS, 'OBJECTS', dwg.entitydb), dwg)
 
 
 def test_write(section):

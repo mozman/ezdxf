@@ -50,7 +50,9 @@ def normlines(text):
     return [line.strip() for line in lines]
 
 
-def load_section(text, name):
-    from ezdxf.lldxf.loader import load_dxf_structure
+def load_section(text, name, database=None):
+    from ezdxf.lldxf.loader import load_dxf_structure, fill_database
     dxf = load_dxf_structure(internal_tag_compiler(text), ignore_missing_eof=True)
+    if database is not None:
+        fill_database(database, dxf)
     return dxf[name]
