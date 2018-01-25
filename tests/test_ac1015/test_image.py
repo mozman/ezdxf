@@ -123,7 +123,7 @@ def test_create_and_delete_image(new_dwg):
 
     # delete image
     msp.delete_entity(image)
-    assert reactor_handle not in new_dwg.objects, "IMAGEDEF_REACTOR not deleted for objects section"
+    assert reactor_handle not in new_dwg.objects, "IMAGEDEF_REACTOR not deleted for objects load_section"
     assert reactor_handle not in new_dwg.entitydb, "IMAGEDEF_REACTOR not deleted for entity database"
     assert reactor_handle not in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors."
 

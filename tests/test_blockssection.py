@@ -7,7 +7,7 @@ import pytest
 from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import compile_tags_without_handles, entities
+from ezdxf.tools.test import compile_tags_without_handles, load_section
 from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
@@ -19,7 +19,7 @@ def ac1009():
 
 @pytest.fixture
 def blocks(ac1009):
-    return BlocksSection(entities(TESTBLOCKS), ac1009)
+    return BlocksSection(load_section(TESTBLOCKS, 'BLOCKS'), ac1009)
 
 
 def test_write(blocks):
@@ -33,9 +33,9 @@ def test_write(blocks):
 
 
 def test_empty_section(ac1009):
-    section = BlocksSection(entities(EMPTYSEC), ac1009)
+    blocks = BlocksSection(load_section(EMPTYSEC, 'BLOCKS'), ac1009)
     stream = StringIO()
-    section.write(TagWriter(stream))
+    blocks.write(TagWriter(stream))
     result = stream.getvalue()
     stream.close()
     assert EMPTYSEC == result
@@ -164,7 +164,7 @@ def test_ac1015_delete_block(ac1015_blocks, ac1015):
     block_count = len(ac1015_blocks)
     ac1015_blocks.delete_block(block_name)
 
-    # removed from blocks section?
+    # removed from blocks load_section?
     assert block_count-1 == len(ac1015_blocks)
     assert block_name not in ac1015_blocks
 

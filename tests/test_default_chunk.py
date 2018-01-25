@@ -1,5 +1,5 @@
 from ezdxf.sections.unsupported import UnsupportedSection
-from ezdxf.tools.test import entities
+from ezdxf.tools.test import load_section
 
 
 def setup_stream():
@@ -11,7 +11,7 @@ def setup_stream():
 
 
 def test_unsupported_section():
-    chunk = UnsupportedSection(entities(TEST_SECTION), None)
+    chunk = UnsupportedSection(load_section(TEST_SECTION, 'HEADER'), None)
     s, t = setup_stream()
     chunk.write(t)
     result = s.getvalue()

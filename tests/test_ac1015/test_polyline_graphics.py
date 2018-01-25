@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
-from ezdxf.tools.test import entities
+from ezdxf.tools.test import load_section
 from ezdxf.sections.entities import EntitySection
 
 
@@ -240,7 +240,7 @@ def test_internals_polyface(layout):
 
 
 def test_new_style_polyface_face_count(dwg):
-    section = EntitySection(entities(NEW_STYLE_POLYFACE), dwg)
+    section = EntitySection(load_section(NEW_STYLE_POLYFACE, 'ENTITIES'), dwg)
     polyface = list(section)[0]
     faces = list(polyface.faces())
     assert 6 == len(faces)

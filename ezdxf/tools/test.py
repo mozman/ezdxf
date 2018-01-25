@@ -34,7 +34,7 @@ class DrawingProxy:
     def modelspace(self):
         return ModelSpace()
 
-    def _bootstraphook(self, header):
+    def bootstrap_hook(self, header):
         pass
 
     def __does_not_exist_in_Drawing(self):
@@ -50,10 +50,7 @@ def normlines(text):
     return [line.strip() for line in lines]
 
 
-def entities(text):
-    from ezdxf.lldxf.tags import group_tags
-    tags = Tags.from_text(text)
-    entities = list(group_tags(tags))
-    if entities[-1][0] == (0, 'ENDSEC'):
-        entities.pop()
-    return entities
+def load_section(text, name):
+    from ezdxf.sections import load_dxf_structure
+    dxf = load_dxf_structure(internal_tag_compiler(text))
+    return dxf[name]

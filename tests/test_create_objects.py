@@ -4,8 +4,7 @@
 from __future__ import unicode_literals
 import pytest
 import ezdxf
-from ezdxf.lldxf.tags import Tags
-from ezdxf.tools.test import entities
+from ezdxf.tools.test import load_section
 from ezdxf.sections.objects import ObjectsSection
 
 
@@ -32,8 +31,8 @@ def dwg():
 
 @pytest.fixture
 def objects(dwg):
-    objects = ObjectsSection(entities(EMPTYSEC), dwg)
-    dwg.sections._sections['OBJECTS'] = objects   # reset objects section
+    objects = ObjectsSection(load_section(EMPTYSEC, 'OBJECTS'), dwg)
+    dwg.sections._sections['OBJECTS'] = objects   # reset objects load_section
     return objects
 
 

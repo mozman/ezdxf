@@ -5,10 +5,9 @@ from __future__ import unicode_literals
 import pytest
 
 import ezdxf
-from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.acdsdata import AcDsDataSection
 from ezdxf import DXFKeyError
-from ezdxf.tools.test import entities
+from ezdxf.tools.test import load_section
 
 
 @pytest.fixture(scope='module')
@@ -16,14 +15,18 @@ def dwg():
     return ezdxf.new('AC1027')
 
 
-def test_build(dwg):
-    section = AcDsDataSection(entities(ACDSSECTION), dwg)
+@pytest.fixture(scope='module')
+def section(dwg):
+    dxf = load_section(ACDSSECTION, 'ACDSDATA')
+    return AcDsDataSection(dxf, dwg)
+
+
+def test_build(section):
     assert 'ACDSDATA' == section.name.upper()
     assert len(section.entities) > 0
 
 
-def test_acdsrecord(dwg):
-    section = AcDsDataSection(entities(ACDSSECTION), dwg)
+def test_acdsrecord(section):
     records = [entity for entity in section.entities if entity.dxftype() == 'ACDSRECORD']
     assert len(records) > 0
     record = records[0]
@@ -264,4 +267,5 @@ FFFFFF0CFFFFFFFF0C070000000C040000000C05000000110D04666163650C0A00000004FFFFFFFF
 310
 5F76740E036579650D066174747269620CFFFFFFFF04FFFFFFFF0CFFFFFFFF0C0A0000000C090000000C040000000C05000000110E03456E640E026F660E0341534D0D0464617461
 0
-ENDSEC"""
+ENDSEC
+"""

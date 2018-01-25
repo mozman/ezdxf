@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
-# Purpose: test entity section
+# Purpose: test entity load_section
 # Created: 13.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
@@ -9,14 +9,14 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, Tags, normlines, entities
+from ezdxf.tools.test import DrawingProxy, normlines, load_section
 from ezdxf.sections.objects import ObjectsSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
 
 @pytest.fixture
 def section():
-    return ObjectsSection(entities(TESTOBJECTS), DrawingProxy('AC1015'))
+    return ObjectsSection(load_section(TESTOBJECTS, 'OBJECTS'), DrawingProxy('AC1015'))
 
 
 def test_write(section):
@@ -28,7 +28,7 @@ def test_write(section):
 
 
 def test_empty_section():
-    ent = entities(EMPTYSEC)
+    ent = load_section(EMPTYSEC, 'OBJECTS')
     dwg = DrawingProxy('AC1015')
     section = ObjectsSection(ent, dwg)
     stream = StringIO()

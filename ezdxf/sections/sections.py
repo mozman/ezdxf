@@ -19,7 +19,7 @@ logger = logging.getLogger('ezdxf')
 KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
-def loader(tagger):
+def load_dxf_structure(tagger):
     """
     Divide input tag stream from tagger into DXF structure entities. Each DXF structure entity starts with a DXF
     structure (0, ...) tag, and ends before the next DXF structure tag.
@@ -29,9 +29,9 @@ def loader(tagger):
     each entity is a Tags() object
 
     {
-        'HEADER': [entity, entity, ...],  # 1. section
-        'CLASSES': [entity, entity, ...],  # 2. section
-        'TABLES': [entity, entity, ...],  # 3. section
+        'HEADER': [entity, entity, ...],  # 1. load_section
+        'CLASSES': [entity, entity, ...],  # 2. load_section
+        'TABLES': [entity, entity, ...],  # 3. load_section
         ...
         'OBJECTS': [entity, entity, ...],
     }
@@ -44,13 +44,13 @@ def loader(tagger):
         'OBJECTS': [(0, 'SECTION'), (2, 'OBJECTS')], ...]
     }
 
-    loader() expects a valid DXF structure, use ezdxf.lldxf.validator.structure_validator() to filter input.
+    load_dxf_structure() expects a valid DXF structure, use ezdxf.lldxf.validator.structure_validator() to filter input.
 
     Args:
         tagger: generates DXFTag() entities from input data
 
     Returns:
-        dict of sections, each section is a list of DXF structure entities as Tags() objects
+        dict of sections, each load_section is a list of DXF structure entities as Tags() objects
 
     """
     sections = {}
@@ -62,7 +62,7 @@ def loader(tagger):
         elif tag == (0, 'ENDSEC'):  # not collected
             section_header = section[0]
             if len(section_header) < 2 or section_header[1].code != 2:
-                raise DXFStructureError('DXFStructureError: missing required section name tag (2, name) at start of section.')
+                raise DXFStructureError('DXFStructureError: missing required load_section name tag (2, name) at start of load_section.')
             name_tag = section_header[1]
             sections[name_tag.value] = section
             section = []  # collect tags outside of sections, but ignore it
@@ -74,9 +74,8 @@ def loader(tagger):
 
 
 class Sections(object):
-    def __init__(self, tagreader, drawing):
+    def __init__(self, sections, drawing):
         self._sections = {}
-        sections = loader(tagreader)
         self._setup_sections(sections, drawing)
 
     def __iter__(self):
@@ -92,15 +91,12 @@ class Sections(object):
             section = cls(entities, drawing=drawing)
             return section
 
-        # setup header section, header section is special!
-        header_entities = sections.get('HEADER', None)
-        if header_entities is not None:
-            header = HeaderSection(header_entities[0])  # all tags in the first DXF structure entity
-            del sections['HEADER']
-        else:
-            header = HeaderSection(None)
+        # Header section setup is special!
+        # In DXF R12 the HEADER section is not mandatory!
+        header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
+        header = HeaderSection(header_entities)
         self._sections['HEADER'] = header
-        drawing._bootstraphook(header)
+        drawing.bootstrap_hook(header)
         header.set_headervar_factory(drawing.dxffactory.headervar_factory)
 
         # required sections
@@ -119,7 +115,7 @@ class Sections(object):
 
         for section_name in sections.keys():
             if section_name not in KNOWN_SECTIONS:
-                logging.info('Found unknown SECTION: "{}", removed by ezdxf if saving.'.format(section_name))
+                logging.info('Found unknown SECTION: "{}", removed by ezdxf on saving!'.format(section_name))
 
     def __contains__(self, item):
         return Sections.key(item) in self._sections

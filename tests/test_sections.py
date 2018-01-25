@@ -6,14 +6,14 @@ import pytest
 
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.tools.test import DrawingProxy
-from ezdxf.sections.sections import Sections, loader
+from ezdxf.sections.sections import Sections, load_dxf_structure
 from ezdxf.lldxf.const import DXFStructureError
 
 
 @pytest.fixture
 def sections():
     dwg = DrawingProxy('AC1009')
-    return Sections(internal_tag_compiler(TEST_HEADER), dwg)
+    return Sections(load_dxf_structure(internal_tag_compiler(TEST_HEADER)), dwg)
 
 
 def test_constructor(sections):
@@ -42,10 +42,10 @@ def test_error_getattr(sections):
 
 
 def test_loader():
-    sections = loader(internal_tag_compiler(TEST_HEADER))
+    sections = load_dxf_structure(internal_tag_compiler(TEST_HEADER))
     assert len(sections) == 3
     header = sections['HEADER']
-    assert len(header) == 1  # header section has always only one entity
+    assert len(header) == 1  # header load_section has always only one entity
     header_entity = header[0]
     assert header_entity[0] == (0, 'SECTION')
     assert header_entity[1] == (2, 'HEADER')
@@ -67,10 +67,10 @@ def test_loader():
 
 def test_error_section():
     with pytest.raises(DXFStructureError):
-        loader(internal_tag_compiler(SECTION_INVALID_NAME_TAG))
+        load_dxf_structure(internal_tag_compiler(SECTION_INVALID_NAME_TAG))
 
     with pytest.raises(DXFStructureError):
-        loader(internal_tag_compiler(SECTION_NO_NAME_TAG))
+        load_dxf_structure(internal_tag_compiler(SECTION_NO_NAME_TAG))
 
 
 TEST_HEADER = """  0

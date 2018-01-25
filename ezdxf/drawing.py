@@ -14,7 +14,7 @@ from .dxffactory import dxffactory
 from .templates import TemplateLoader
 from .options import options
 from .tools.codepage import tocodepage, toencoding
-from .sections import Sections
+from .sections import Sections, load_dxf_structure
 from .tools.juliandate import juliandate
 from .lldxf import repair
 logger = logging.getLogger('ezdxf')
@@ -23,17 +23,23 @@ logger = logging.getLogger('ezdxf')
 class Drawing(object):
     """ The Central Data Object
     """
-    def __init__(self, tagreader):
-        """ Create a new drawing. """
+    def __init__(self, tagger):
+        """
+        Build a new DXF drawing from a steam of DXF tags.
 
+        Args:
+             tagger: generator or list of DXF tags as DXFTag() objects
+        """
         self._is_binary_data_compressed = False
-        self.dxffactory = None  # readonly - set by _bootstraphook()
-        self.dxfversion = 'AC1009'  # readonly - set by _bootstraphook()
-        self.encoding = 'cp1252'  # read/write - set by _bootstraphook()
+        self.dxffactory = None  # readonly - set by bootstrap_hook()
+        self.dxfversion = 'AC1009'  # readonly - set by bootstrap_hook()
+        self.encoding = 'cp1252'  # read/write - set by bootstrap_hook()
         self.filename = None  # read/write
-        self.entitydb = EntityDB()
-        self.sections = Sections(tagreader, self)
         self._groups = None
+        self.entitydb = EntityDB()
+        sections = load_dxf_structure(tagger)
+        self.sections = Sections(sections, self)
+
         if self.dxfversion > 'AC1009':
             self.rootdict = self.objects.rootdict
             self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
@@ -78,7 +84,7 @@ class Drawing(object):
     def _handles(self):
         return self.entitydb.handles
 
-    def _bootstraphook(self, header):
+    def bootstrap_hook(self, header):
         # called from HeaderSection() object to update important dxf properties
         # before processing sections, which depends from this properties.
         self.dxfversion = header.get('$ACADVER', 'AC1009')

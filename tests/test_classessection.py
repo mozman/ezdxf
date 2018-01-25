@@ -8,12 +8,12 @@ from io import StringIO
 from ezdxf.lldxf.tags import Tags, internal_tag_compiler, group_tags
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.tools.test import entities
+from ezdxf.tools.test import load_section
 
 
 @pytest.fixture(scope='module')
 def section():
-    return ClassesSection(entities(TESTCLASSES), None)
+    return ClassesSection(load_section(TESTCLASSES, 'CLASSES'), None)
 
 
 def test_write(section):
@@ -27,9 +27,8 @@ def test_write(section):
 
 
 def test_empty_section():
-    tags = list(Tags.from_text(EMPTYSEC))
-    tags.pop()  # remove ENDSEC
-    section = ClassesSection([tags], None)
+    tags = load_section(EMPTYSEC, 'CLASSES')
+    section = ClassesSection(tags, None)
     stream = StringIO()
     section.write(TagWriter(stream))
     result = stream.getvalue()
