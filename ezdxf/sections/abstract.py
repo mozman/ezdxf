@@ -6,18 +6,8 @@ from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
 from ..lldxf.tags import DXFStructureError
-from ..lldxf.extendedtags import ExtendedTags, get_xtags_linker
+from ..lldxf.extendedtags import get_xtags_linker
 from ..query import EntityQuery
-
-
-def link_and_fix_entities(entities, dxffactory):
-    linked_tags = get_xtags_linker()
-    post_read_tags_fixer = dxffactory.post_read_tags_fixer
-    for entity in entities:
-        assert isinstance(entity, ExtendedTags)
-        post_read_tags_fixer(entity)  # for VERTEX!
-        if not linked_tags(entity):  # also creates the link structure as side effect
-            yield entity
 
 
 class AbstractSection(object):
@@ -46,8 +36,10 @@ class AbstractSection(object):
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, self.name.upper()):
             raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
-        for xtags in link_and_fix_entities(entities, dxffactory=self.dxffactory):
-            self._entity_space.store_tags(xtags)
+        linked_tags = get_xtags_linker()
+        for entity in entities:
+            if not linked_tags(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
+                self._entity_space.store_tags(entity)
 
     def write(self, tagwriter):
         tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())

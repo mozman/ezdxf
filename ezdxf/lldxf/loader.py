@@ -110,10 +110,13 @@ def load_dxf_entities_into_database(database, dxf_entities):
         yield entity
 
 
-def fill_database(database, sections):
+def fill_database(database, sections, dxffactory=None):
+    post_read_tags_fixer = None if dxffactory is None else dxffactory.post_read_tags_fixer
     for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:
             section = sections[name]
             # entities stored in the database are converted from Tags() to ExtendedTags()
             for index, entity in enumerate(load_dxf_entities_into_database(database, section)):
+                if post_read_tags_fixer is not None and isinstance(entity, ExtendedTags):
+                    post_read_tags_fixer(entity)
                 section[index] = entity
