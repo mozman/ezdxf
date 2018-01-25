@@ -20,8 +20,8 @@ KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS'
 
 class Sections(object):
     def __init__(self, sections, drawing, header=None):
-        self._sections = {}
-        self._setup_sections(sections, drawing, header)
+        self._sections = {'HEADER': header if header is not None else HeaderSection(tags=None)}
+        self._setup_sections(sections, drawing)
 
     def __iter__(self):
         return iter(self._sections.values())
@@ -30,30 +30,15 @@ class Sections(object):
     def key(name):
         return name.upper()
 
-    def _setup_sections(self, sections, drawing, header=None):
-        def _create_instance(name, cls):
-            entities = sections.get(name, None)
-            section = cls(entities, drawing=drawing)
-            return section
-
-        # Header section setup is special!
-        # In DXF R12 the HEADER section is not mandatory!
-        if header is None:
-            header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
-            header = HeaderSection(header_entities)
-            self._sections['HEADER'] = header  # needed in bootstrap_hook()
-            drawing.bootstrap_hook(header)
-        else:
-            self._sections['HEADER'] = header
-
+    def _setup_sections(self, sections, drawing):
         # required sections
-        self._sections['TABLES'] = _create_instance('TABLES', TablesSection)
-        self._sections['BLOCKS'] = _create_instance('BLOCKS', BlocksSection)
-        self._sections['ENTITIES'] = _create_instance('ENTITIES', EntitySection)
+        self._sections['TABLES'] = TablesSection(sections.get('TABLES', None), drawing)
+        self._sections['BLOCKS'] = BlocksSection(sections.get('BLOCKS', None), drawing)
+        self._sections['ENTITIES'] = EntitySection(sections.get('ENTITIES', None), drawing)
         if drawing.dxfversion > 'AC1009':
             # required sections
-            self._sections['CLASSES'] = _create_instance('CLASSES', ClassesSection)
-            self._sections['OBJECTS'] = _create_instance('OBJECTS', ObjectsSection)
+            self._sections['CLASSES'] = ClassesSection(sections.get('CLASSES', None), drawing)
+            self._sections['OBJECTS'] = ObjectsSection(sections.get('OBJECTS', None), drawing)
             # sections just stored, if exists
             if 'THUMBNAILIMAGE' in sections:
                 self._sections['THUMBNAILIMAGE'] = UnsupportedSection(sections['THUMBNAILIMAGE'], drawing)

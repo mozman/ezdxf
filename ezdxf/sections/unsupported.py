@@ -22,4 +22,4 @@ class UnsupportedSection(object):
     def write(self, tagwriter):
         for entity in self.entities:
             tagwriter.write_tags(entity)
-        tagwriter.write_tag2(0, 'ENDSEC')
+        tagwriter.write_str('  0\nENDSEC\n')

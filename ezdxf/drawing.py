@@ -22,7 +22,8 @@ logger = logging.getLogger('ezdxf')
 
 
 class Drawing(object):
-    """ The Central Data Object
+    """
+    The Central Data Object
     """
     def __init__(self, tagger):
         """
@@ -39,17 +40,21 @@ class Drawing(object):
         self._is_binary_data_compressed = False
         self._groups = None  # read only
         self.filename = None  # read/write
-        self.dxfversion = 'AC1009'  # read only
-        self.encoding = 'cp1252'  # read/write
-        self.dxffactory = None  # read only
-
+        self.entitydb = EntityDB()  # read only
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
-        header = get_header(sections)  # build HEADER section
-        self.entitydb = EntityDB()
-        self.bootstrap_hook(header)  # setting important DXF properties
-
-        fill_database(self.entitydb, sections)  # store all necessary entities into the drawing database
-        self.sections = Sections(sections, self, header)  # pass header section to constructor!
+        # create section HEADER
+        header = get_header(sections)
+        self.dxfversion = header.get('$ACADVER', 'AC1009')  # read only
+        self.dxffactory = dxffactory(self)  # read only, requires self.dxfversion
+        self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # read/write
+        # get handle seed
+        seed = header.get('$HANDSEED', str(self.entitydb.handles))
+        # setup handles
+        self.entitydb.handles.reset(seed)
+        # store all necessary DXF entities in the drawing database
+        fill_database(self.entitydb, sections)
+        # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
+        self.sections = Sections(sections, drawing=self, header=header)
 
         if self.dxfversion > 'AC1009':
             self.rootdict = self.objects.rootdict
@@ -94,16 +99,6 @@ class Drawing(object):
     @property
     def _handles(self):
         return self.entitydb.handles
-
-    def bootstrap_hook(self, header):
-        # called from HeaderSection() object to update important dxf properties
-        # before processing sections, which depends from this properties.
-        self.dxfversion = header.get('$ACADVER', 'AC1009')
-        self.dxffactory = dxffactory(self)
-        codepage = header.get('$DWGCODEPAGE', 'ANSI_1252')
-        self.encoding = toencoding(codepage)
-        seed = header.get('$HANDSEED', str(self._handles))
-        self._handles.reset(seed)
 
     @property
     def is_binary_data_compressed(self):
@@ -355,7 +350,7 @@ class Drawing(object):
     def _update_metadata(self):
         now = datetime.now()
         self.header['$TDUPDATE'] = juliandate(now)
-        self.header['$HANDSEED'] = str(self._handles)
+        self.header['$HANDSEED'] = str(self.entitydb.handles)
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
 
     def _create_appids(self):

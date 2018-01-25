@@ -170,7 +170,7 @@ class HeaderSection(object):
             _write(name, value)
             if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
                 self.custom_vars.write(tagwriter)
-        tagwriter.write_tag2(0, "ENDSEC")
+        tagwriter.write_str("  0\nENDSEC\n")
 
     def __getitem__(self, key):
         try:

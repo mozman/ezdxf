@@ -34,9 +34,6 @@ class DrawingProxy:
     def modelspace(self):
         return ModelSpace()
 
-    def bootstrap_hook(self, header):
-        pass
-
     def __does_not_exist_in_Drawing(self):
         """ ATTENTION: private attributes will not be checked in TestDrawingProxy! """
 
