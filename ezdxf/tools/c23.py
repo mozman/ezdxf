@@ -14,7 +14,7 @@ else:
     from collections import Sequence
 
 
-def _no_cache(maxsize=0):  # no caching for Python 2.7
+def no_cache(maxsize=0):  # no caching for Python 2.7
     def _no_cache(func):
         def __no_cache(*args, **kwargs):
             return func(*args, **kwargs)
@@ -33,7 +33,7 @@ else:  # Python 2.7
     escape = functools.partial(cgi.escape, quote=True)
     ustr = unicode
     unicode2bytes = lambda s: s.encode('utf-8')
-    lru_cache = _no_cache
+    lru_cache = no_cache
 
 
 def isstring(s):
