@@ -64,20 +64,17 @@ class Drawing(object):
             # some applications don't setup properly the model and paper space layouts
             repair.setup_layouts(self)
             self._groups = self.objects.groups()
-        else:
+
+        if self.dxfversion <= 'AC1009':  # do cleanup work, before building layouts
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
-
-            if repair.is_leica_disto_r12(self):  # check for malformed DXF R12 files by Leica Disto Units
-                repair.repair_leica_disto_r12(self)
-
+            repair.cleanup_r12(self)
             # ezdxf puts automatically handles into all entities added to the entities database
-            # enable handles
-            self.header['$HANDLING'] = 1
+            self.header['$HANDLING'] = 1  # enable handles
 
         self.layouts = self.dxffactory.get_layouts()
 
-        if self.dxfversion > 'AC1009':
+        if self.dxfversion > 'AC1009':  # do cleanup work, after building layouts
             # because the owner tag is not mandatory: set owner tags (330) if not exists
             model_space_key = self.modelspace().layout_key
             paper_space_key = self.get_active_layout_key()
