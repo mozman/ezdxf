@@ -288,20 +288,20 @@ class Drawing(object):
 
         tagger = low_level_tagger(stream)
         if legacy_mode:
-            if dxfversion <= 'AC1009':
+            if dxfversion is not None and dxfversion <= 'AC1009':
                 tagger = repair.filter_subclass_marker(tagger)
             tagger = repair.tag_reorder_layer(tagger)
         tagreader = tag_compiler(tagger)
         return Drawing(tagreader)
 
-    def saveas(self, filename, encoding='auto'):
+    def saveas(self, filename, encoding=None):
         self.filename = filename
         self.save(encoding=encoding)
 
-    def save(self, encoding='auto'):
+    def save(self, encoding=None):
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
-        if encoding == 'auto':
+        if encoding is None:
             enc = 'utf-8' if self.dxfversion >= 'AC1021' else self.encoding
         else:  # override default encoding, for applications that handles encoding different than AutoCAD
             enc = encoding

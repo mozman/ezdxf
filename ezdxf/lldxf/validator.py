@@ -9,7 +9,7 @@ import logging
 import io
 
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
-from .const import APP_DATA_MARKER, COMMENT_MARKER, HEADER_VAR_MARKER, STRUCTURE_MARKER
+from .const import APP_DATA_MARKER, HEADER_VAR_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS
 from .tagger import low_level_tagger
 
