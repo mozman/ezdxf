@@ -23,7 +23,7 @@ def header_validator(tagger):
     Do not feed (0, 'SECTION') (2, 'HEADER') and (0, 'ENDSEC') tags!
 
     Args:
-        tagger: generator/iterator yielding DXFTag()
+        tagger: generator/iterator of low level tags or compiled tags
 
     Yields:
         DXFTag()

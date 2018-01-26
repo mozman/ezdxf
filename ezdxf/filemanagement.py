@@ -4,6 +4,7 @@
 # License: MIT License
 
 import io
+from .tools.c23 import lru_cache
 
 from .drawing import Drawing
 from .tools.zipmanager import ctxZipReader
@@ -56,6 +57,7 @@ def read(stream, legacy_mode=True, dxfversion=None):
     return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
 
 
+@lru_cache(maxsize=3)
 def dxf_file_info(filename):
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         return dxf_info(fp)

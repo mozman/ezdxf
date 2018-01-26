@@ -25,30 +25,36 @@ class DXFInfo(object):
         self.encoding = 'cp1252'
         self.handseed = '0'
 
-    def DWGCODEPAGE(self, value):
-        self.encoding = toencoding(value)
-
-    def ACADVER(self, value):
-        self.version = value
-        self.release = acad_release.get(value, 'R12')
-
-    def HANDSEED(self, value):
-        self.handseed = value
-
+    def set_header_var(self, name, value):
+        if name == '$ACADVER':
+            self.version = value
+            self.release = acad_release.get(value, 'R12')
+        elif name == '$DWGCODEPAGE':
+            self.encoding = toencoding(value)
+        elif name == '$HANDSEED':
+            self.handseed = value
+        else:
+            return 0
+        return 1
 
 def dxf_info(stream):
     info = DXFInfo()
-    tag = (999999, '')
-    tagreader = low_level_tagger(stream)
-    while tag != (0, 'ENDSEC'):
-        tag = next(tagreader)
+    tagger = low_level_tagger(stream)  # filters already comments
+    if next(tagger) != (0, 'SECTION'):  # maybe a DXF structure error, handled by later processing
+        return info
+    if next(tagger) != (2, 'HEADER'):  # no leading HEADER section like DXF R12 with only ENTITIES section
+        return info
+    tag = NONE_TAG
+    found = 0
+    while tag != (0, 'ENDSEC'):  # until end of HEADER section
+        tag = next(tagger)
         if tag.code != HEADER_VAR_MARKER:
             continue
-        name = tag.value[1:]
-        method = getattr(info, name, None)
-        if method is not None:
-            # noinspection PyCallingNonCallable
-            method(next(tagreader).value)
+        name = tag.value
+        value = next(tagger).value
+        found += info.set_header_var(name, value)
+        if found > 2:  # all expected values collected
+            break
     return info
 
 
