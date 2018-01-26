@@ -179,7 +179,7 @@ def cleanup_r12(dwg):
 
 def filter_subclass_marker(tagger):
     """
-    Filter subclass marker from DXF R12 files. (like from Leica Disto Units)
+    Filter subclass marker from malformed DXF R12 files. (like from Leica Disto Units)
 
     Subclass markers in R12 files, creates subclasses in ExtendedTags(), which does not work with the DXF R12 attribute
     definitions. Other unsupported tags are not problematic, they are just ignored.
