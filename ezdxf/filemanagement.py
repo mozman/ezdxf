@@ -32,7 +32,7 @@ def new(dxfversion='AC1009'):
     return Drawing.new(dxfversion)
 
 
-def read(stream, legacy_mode=False):
+def read(stream, legacy_mode=True, dxfversion=None):
     """
     Read DXF drawing from a text *stream*, which only needs a readline() method, and supports following DXF versions:
 
@@ -50,25 +50,30 @@ def read(stream, legacy_mode=False):
     Args:
         stream: input stream, requires only a readline() method.
         legacy_mode: True - adds an extra import layer to reorder coordinates; False - requires DXF file from modern CAD apps
+        dxfversion: DXF version, None = auto detect, just important for legacy mode - can't detect DXF version from none filesystem stream!
+
     """
-    return Drawing.read(stream, legacy_mode=legacy_mode)
+    return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
 
 
-def detect_encoding(filename, encoding='auto'):
+def dxf_file_info(filename):
+    with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
+        return dxf_info(fp)
+
+
+def detect_encoding(filename, encoding=None):
     """
     Detect DXF file encoding.
 
     Args:
         filename: DXF filename
-        encoding: overwrite detected encoding if not 'auto'
+        encoding: overwrite detected encoding if not None (None = auto detect)
 
     Returns:
         encoding as Python encoding string like 'utf-8'
     """
-    if encoding == 'auto':
-        with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
-            info = dxf_info(fp)
-
+    if encoding is None:
+        info = dxf_file_info(filename)
         if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
             enc = 'utf-8'
         else:
@@ -78,7 +83,7 @@ def detect_encoding(filename, encoding='auto'):
     return enc
 
 
-def readfile(filename, encoding='auto', legacy_mode=False):
+def readfile(filename, encoding=None, legacy_mode=False):
     """
     Read DXF drawing specified by *filename* from file system, and supports following DXF versions:
 
@@ -102,12 +107,13 @@ def readfile(filename, encoding='auto', legacy_mode=False):
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
+    info = dxf_file_info(filename)
     enc = detect_encoding(filename, encoding)
     with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
-        dwg = read(fp, legacy_mode=legacy_mode)
+        dwg = read(fp, legacy_mode=legacy_mode, dxfversion=info.version)
 
     dwg.filename = filename
-    if encoding != 'auto' and is_supported_encoding(encoding):
+    if encoding is not None and is_supported_encoding(encoding):
         dwg.encoding = encoding
     return dwg
 
@@ -133,6 +139,6 @@ def readzip(zipfile, filename=None):
         filename: filename of DXF file, or None to read the first DXF file from the zip archive.
     """
     with ctxZipReader(zipfile, filename) as zipstream:
-        dwg = read(zipstream)
+        dwg = read(zipstream, dxfversion=zipstream.dxfversion)
         dwg.filename = zipstream.dxf_file_name
     return dwg

@@ -26,6 +26,7 @@ class ZipReader(object):
         self.dxf_file_name = None
         self.dxf_file = None
         self.encoding = 'cp1252'
+        self.dxfversion = 'AC1009'
 
     def open(self, dxf_file_name=None):
         def open_dxf_file():
@@ -39,7 +40,7 @@ class ZipReader(object):
         if not is_dxf_stream(self):
             raise IOError("'{}' is not a DXF file.".format(self.dxf_file_name))
         self.dxf_file = open_dxf_file()  # restart
-        self.get_dxf_encoding()
+        self.get_dxf_info()
         self.dxf_file = open_dxf_file()  # restart
 
     def get_first_dxf_file_name(self):
@@ -52,10 +53,11 @@ class ZipReader(object):
     def get_dxf_file_names(self):
         return [name for name in self.zip_archive.namelist() if name.lower().endswith('.dxf')]
 
-    def get_dxf_encoding(self):
+    def get_dxf_info(self):
         info = dxf_info(self)
         # since DXF R2007 (AC1021) file encoding is always 'utf-8'
         self.encoding = info.encoding if info.version < 'AC1021' else 'utf-8'
+        self.dxfversion = info.version
 
     # interface to tagging layers
     def readline(self):

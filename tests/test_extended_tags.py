@@ -7,9 +7,9 @@ from io import StringIO
 
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.repair import join_subclasses
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.lldxf.tagwriter import TagWriter
+from ezdxf.lldxf.repair import filter_subclass_marker
 
 
 @pytest.fixture
@@ -394,8 +394,7 @@ ARIALNARROW
 
 
 def test_repair_leica_disto_files():
-    tags = ExtendedTags.from_text(LEICA_DISTO_TAGS)
-    join_subclasses(tags.subclasses)
+    tags = ExtendedTags(filter_subclass_marker(Tags.from_text(LEICA_DISTO_TAGS)))
     assert 9 == len(tags.noclass)
     assert 1 == len(tags.subclasses)
 

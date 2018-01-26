@@ -282,12 +282,14 @@ class Drawing(object):
         self.header['$TDCREATE'] = juliandate(datetime.now())
 
     @staticmethod
-    def read(stream, legacy_mode=False):
+    def read(stream, legacy_mode=False, dxfversion=None):
         """ Open an existing drawing. """
         from .lldxf.tagger import low_level_tagger, tag_compiler
 
         tagger = low_level_tagger(stream)
         if legacy_mode:
+            if dxfversion <= 'AC1009':
+                tagger = repair.filter_subclass_marker(tagger)
             tagger = repair.tag_reorder_layer(tagger)
         tagreader = tag_compiler(tagger)
         return Drawing(tagreader)
