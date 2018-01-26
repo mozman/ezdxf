@@ -127,6 +127,9 @@ As you can see in the chapter about :ref:`Layout Management Structures`, this co
 and paper space layouts, because these layouts are also BLOCKS, with the special difference, that entities of the model
 space and the `active` paper space are stored in the ENTITIES section.
 
+.. image:: gfx/block_definition.png
+    :align: center
+
 .. seealso::
 
     - :ref:`Tag Structure DXF R13 and later`
