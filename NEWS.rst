@@ -10,7 +10,7 @@ version 0.8.5 - ?
    * CHANGE: audit process rewritten
    * CHANGE: skip all comments, group code 999
    * CHANGE: removed compression for unused sections (THUMBNAILSECTION, ACDSDATA)
-   * added subclass marker filter for R12 files in LEGACY_MODE=True (required for malformed DXF files)
+   * added subclass marker filter for R12 and prior files in legacy_mode=True (required for malformed DXF files)
    * removed special check for Leica Disto Unit files (malformed DXF R12 file, see previous point)
 
 Version 0.8.4 - 2018-01-14
