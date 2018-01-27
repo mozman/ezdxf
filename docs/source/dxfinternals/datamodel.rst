@@ -48,8 +48,45 @@ today (DXF R13/R14 has no writing support by AutoCAD!).
 
     More information about the DXF :ref:`File Structure`
 
-DXF R13 and later Data Model
-----------------------------
+DXF R13+ Data Model
+-------------------
 
 It's getting complicated!
-TODO ;-)
+
+With the DXF R13 file format, handles are mandatory and they are really used for organizing the new data structures
+introduced with DXF R13.
+
+The first important new feature is the OBJECTS sections, which stores all the none graphical entities of the DXF drawing.
+None graphical entities from now on just called 'objects' to differentiate from graphical entities, which will just
+called 'entities'. The OBJECTS section follows commonly the ENTITIES section, but this is not mandatory. DXF R13
+introduces also several new DXF object which resides exclusive in the OBJECTS section, taken from the DXF R14 reference,
+because I have no access to the DXF R13 reference, the DXF R13 reference is a compiled .hlp file which can't be read on
+Windows 10, a drastic real world example why it is better to avoid closed (proprietary) data formats ;-):
+
+    - DICTIONARY: a general structural entity as a (key: value) store, exactly it is a (name: handle) container
+    - ACDBDICTIONARYWDFLT: a DICTIONARY with a default value
+    - DICTIONARYVAR: are used by AutoCAD to store named values in the database
+    - ACAD_PROXY_OBJECT
+    - GROUP: group graphical entities without the need of a BLOCK definition
+    - IDBUFFER: just a list of references to objects
+    - IMAGEDEF: IMAGE definition structure, required by the IMAGE entity
+    - IMAGEDEF_REACTOR: also required by the IMAGE entity
+    - LAYER_INDEX: container for LAYER names
+    - MLINESTYLE
+    - OBJECT_PTR
+    - RASTERVARIABLES
+    - SPATIAL_INDEX: is always written out empty to a DXF file. This object can be ignored.
+    - SPATIAL_FILTER
+    - SORTENTSTABLE: control for regeneration/redraw order of entities
+    - XRECORD: are used to store and manage arbitrary data. This object is similar in concept to XDATA but is not
+      limited by size or order. Not supported by R13c0 through R13c3.
+
+Still missing the LAYOUT object, which is mandatory in DXF R2000 to manage multiple paper space layouts. I don't know
+how DXF R13/R14 manages multiple layouts or if they even support it, but I don't care much about DXF R13/R14, because
+AutoCAD has no write support for this two formats anymore. ezdxf tries to upgrade this two DXF versions to DXF R2000
+with the advantage of only two different data models to support: DXF R12 and DXF R2000+
+
+New objects introduced by DXF R2000:
+
+    - LAYOUT: management object for model space and multiple paper space layouts
+    - ACDBPLACEHOLDER: surprise - just a place holder
