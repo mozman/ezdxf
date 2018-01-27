@@ -200,7 +200,7 @@ class DXF2HtmlConverter(object):
         elif section.name == 'BLOCKS':
             return section_template.format(content=self.blocks2html(iter(section)))
         else:
-            return section_template.format(content=self.tags2html(section.tags))
+            return section_template.format(content=self.tags2html(section.tags()))
 
     @staticmethod
     def hdrvars2html(hdrvars, custom_vars):

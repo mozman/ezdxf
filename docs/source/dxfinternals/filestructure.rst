@@ -3,11 +3,11 @@
 DXF File Structure
 ------------------
 
-A Drawing Interchange File is simply an ASCII text file with a file
-type of .dxf and special formatted text. The basic file structure
-are DXF tags, a DXF tag consist of a DXF group code as an integer
-value on its own line and a the DXF value on the following line.
-In the ezdxf documentation DXF tags will be written as (group code, value).
+A DXF File is simply an ASCII text file with a file type of .dxf and special formatted text. The basic file structure
+are DXF tags, a DXF tag consist of a DXF group code as an integer value on its own line and a the DXF value on the
+following line. In the ezdxf documentation DXF tags will be written as :code:`(group code, value)`. I know there exists
+a binary DXF format, but it seems that it is not often used and for reducing file size, zipping is much more efficient.
+ezdxf does not support binary encoded DXF files (yet?).
 
 .. seealso::
 
@@ -19,12 +19,12 @@ A usual DXF file is organized in sections, starting with the DXF tag
 tag signals the end of file.
 
 
-1. **HEADER** - General information about the drawing is found in this section of the DXF file.
-   Each parameter has a variable name and an associated value.
+1. **HEADER:** General information about the drawing is found in this section of the DXF file.
+   Each parameter has a variable name starting with '$' and an associated value. Has to be the first section.
 
-2. **CLASSES** - holds the information for application defined classes. (DXF13 and later)
+2. **CLASSES:** Holds the information for application defined classes. (DXF R13 and later)
 
-3. **TABLES** - contains definitions of named items.
+3. **TABLES:**: Contains several tables for style and property definitions.
 
    * Linetype table (LTYPE)
    * Layer table (LAYER)
@@ -32,7 +32,7 @@ tag signals the end of file.
    * View table (VIEW): (IMHO) layout of the CAD working space, only interesting for interactive CAD applications
    * Viewport configuration table (VPORT): The VPORT table is unique in that it may contain several entries
      with the same name (indicating a multiple-viewport configuration). The entries corresponding to the
-     active viewport configuration all have the name ``*ACTIVE``. The first such entry describes the current
+     active viewport configuration all have the name \*ACTIVE. The first such entry describes the current
      viewport.
 
    * Dimension Style table (DIMSTYLE)
@@ -40,21 +40,21 @@ tag signals the end of file.
    * Application Identification table (APPID): Table of names for all applications registered with a drawing.
    * Block Record table (BLOCK_RECORD) (DXF R13 and Later)
 
-4. **BLOCKS** - contains all block definitions. A block definition defines the content of a block.
-   The block name ``*Model_Space`` or ``*MODEL_SPACE`` is reserved for the drawing model space and the block name
-   ``*Paper_Space`` or ``*PAPER_SPACE`` is reserved for the active paper space layout. Both block definitions are empty,
-   the content of the model space and the active paper space is stored in the ENTITIES section. The entities of other
-   layouts are stored in special block definitions called ``*Paper_Spacennn``, nnn is an arbitrary but unique number.
+4. **BLOCKS:** Contains all block definitions. The block name \*Model_Space or \*MODEL_SPACE is reserved for the
+   drawing model space and the block name \*Paper_Space or \*PAPER_SPACE is reserved for the *active* paper space layout.
+   Both block definitions are empty, the content of the model space and the *active* paper space is stored in the
+   ENTITIES section. The entities of other layouts are stored in special block definitions called \*Paper_Spacennn,
+   nnn is an arbitrary but unique number.
 
-5. **ENTITIES** - contains the drawing entities of the model space and the active paper space layout. Entities of other
-   layouts are stored in the BLOCKS sections.
+5. **ENTITIES:** Contains all graphical entities of the model space and the *active* paper space layout. Entities of
+   other layouts are stored in the BLOCKS sections.
 
-6. **OBJECTS** - non-graphical objects (DXF R13 and later)
+6. **OBJECTS:** Contains all non-graphical objects of the drawing (DXF R13 and later)
 
-7. **THUMBNAILIMAGE** - contains a preview image of the DXF file, it is optional and can usually be ignored.
+7. **THUMBNAILIMAGE:** Contains a preview image of the DXF file, it is optional and can usually be ignored.
    (DXF R13 and later)
 
-8. **ACDSDATA** (DXF R2013 and later) - no information in the DXF reference about this section
+8. **ACDSDATA:** (DXF R2013 and later) No information in the DXF reference about this section
 
 9. **END OF FILE**
 
@@ -64,7 +64,7 @@ Structure of a usual DXF R12 file:
 
 .. code-block:: none
 
-    0           <<< Begin HEADER section)
+    0           <<< Begin HEADER section, has to be the first section
     SECTION
     2
     HEADER
@@ -87,7 +87,7 @@ Structure of a usual DXF R12 file:
     TABLE
     2
     APPID, DIMSTYLE, LTYPE, LAYER, STYLE, UCS, VIEW, or VPORT
-    70          <<< Table maximum item count
+    70          <<< Table maximum item count, a not reliable value and ignored by AutoCAD
                 <<< Table items go here
     0
     ENDTAB
@@ -107,7 +107,7 @@ Structure of a usual DXF R12 file:
                 <<< Drawing entities go here
     0           <<< End ENTITIES section
     ENDSEC
-    0           <<< End of file
+    0           <<< End of file marker (required)
     EOF
 
 Minimal DXF Content
@@ -129,53 +129,53 @@ Contrary to the previous chapter, the DXF R12 format (AC1009) and prior requires
     0
     EOF
 
-DXF R13/14 and later
-====================
+DXF R13/R14 and later
+=====================
 
-DXF version R13/14 and later needs much more DXF content than DXF version R12.
+DXF version R13/14 and later needs much more DXF content than DXF R12.
 
 Required sections: HEADER, CLASSES, TABLES, ENTITIES, OBJECTS
 
 The HEADER section requires two entries:
 
-- ``$ACADVER``
-- ``$HANDSEED``
+- $ACADVER
+- $HANDSEED
 
 The CLASSES section can be empty, but some DXF entities requires class definitions to work in AutoCAD.
 
 The TABLES section requires following tables:
 
-- VPORT with at least an entry called ``'*ACTIVE'``
+- VPORT with at least an entry called \*ACTIVE
 - LTYPE with at least the following line types defined:
 
-  - ``ByBlock``
-  - ``ByLayer``
-  - ``Continuous``
+  - BYBLOCK
+  - BYLAYER
+  - CONTINUOUS
 
-- LAYER with at least an entry for layer ``0``
-- STYLE with at least an entry for style ``STANDARD``
+- LAYER with at least an entry for layer '0'
+- STYLE with at least an entry for style STANDARD
 - VIEW can be empty
 - UCS can be empty
-- APPID with at least an entry for ``ACAD``
-- DIMSTYLE with at least an entry for style ``STANDARD``
+- APPID with at least an entry for ACAD
+- DIMSTYLE with at least an entry for style STANDARD
 - BLOCK_RECORDS with two entries:
 
-  - ``*MODEL_SPACE``
-  - ``*PAPER_SPACE``
+  - \*MODEL_SPACE
+  - \*PAPER_SPACE
 
 The BLOCKS section requires two BLOCKS:
 
-- ``*MODEL_SPACE``
-- ``*PAPER_SPACE``
+- \*MODEL_SPACE
+- \*PAPER_SPACE
 
 The ENTITIES section can be empty.
 
 The OBJECTS section requires following entities:
 
 - DICTIONARY - the root dict
-  - one entry ``ACAD_GROUP``
+  - one entry named ACAD_GROUP
 
-- DICTONARY ``ACAD_GROUP`` can be empty
+- DICTONARY ACAD_GROUP can be empty
 
 Minimal DXF to download: https://bitbucket.org/mozman/ezdxf/downloads/Minimal_DXF_AC1021.dxf
 

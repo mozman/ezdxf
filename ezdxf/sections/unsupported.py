@@ -23,3 +23,12 @@ class UnsupportedSection(object):
         for entity in self.entities:
             tagwriter.write_tags(entity)
         tagwriter.write_str('  0\nENDSEC\n')
+
+    def __iter__(self):
+        for entity in self.entities:
+            yield entity
+
+    def tags(self):
+        for entity in self.entities:
+            for tag in entity:
+                yield tag

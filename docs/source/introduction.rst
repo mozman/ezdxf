@@ -15,8 +15,8 @@ not.
 *ezdxf* is still in its infancy, therefore not all DXF features supported yet, but additional features will be added in
 the future gradually.
 
-ezdxf is NOT
-------------
+What ezdxf is NOT
+-----------------
 
 - *ezdxf* is not a DXF converter: *ezdxf* can not convert between different DXF versions, if you are looking for an
   appropriate program, use *DWG TrueView* from `Autodesk`_, but the latest version can only convert to the DWG format,
@@ -33,7 +33,8 @@ Supported Python Versions
 *ezdxf* requires at least Python 2.7 and it's Python 3 compatible. I run unit tests with the latest stable
 CPython 3 version and the latest stable release of pypy during development. *ezdxf* is written in pure Python
 and requires only *pyparser* as additional library beside the Python Standard Library, hence it should run with
-IronPython and Jython also.
+IronPython and Jython also. *pytest* is required to run the provided unit and integration tests. Data to run the
+stress and audit test can not be provided, because I don't have the publishing rights for this DXF files.
 
 Supported Operating Systems
 ---------------------------
@@ -45,7 +46,7 @@ Supported DXF Versions
 
 .. include:: dxfversion.inc
 
-*ezdxf* reads also older versions but saves it as R12.
+*ezdxf* reads also older DXF versions but saves it as DXF R12.
 
 Embedded DXF Information of 3rd Party Applications
 --------------------------------------------------
