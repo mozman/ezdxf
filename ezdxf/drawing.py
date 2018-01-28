@@ -70,7 +70,8 @@ class Drawing(object):
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
             repair.cleanup_r12(self)
             # ezdxf puts automatically handles into all entities added to the entities database
-            self.header['$HANDLING'] = 1  # enable handles
+            # new feature: write R12 without handles, if $HANDLING=0 is set by user
+            self.header['$HANDLING'] = 1  # write handles by default
 
         self.layouts = self.dxffactory.get_layouts()
 
@@ -311,10 +312,13 @@ class Drawing(object):
 
     def write(self, stream):
         from .lldxf.tagwriter import TagWriter
-        tagwriter = TagWriter(stream)
-
+        if self.dxfversion == 'AC1009':
+            handles = bool(self.header['$HANDLING'])
+        else:
+            handles = True
         self._create_appids()
         self._update_metadata()
+        tagwriter = TagWriter(stream, write_handles=handles)
         self.sections.write(tagwriter)
 
     def cleanup(self, groups=True):

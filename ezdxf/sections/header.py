@@ -165,8 +165,15 @@ class HeaderSection(object):
             tagwriter.write_tag2(9, name)
             tagwriter.write_str(ustr(value))
 
+        if self.get('$ACADVER', 'AC1009') == 'AC1009' and self.get('$HANDLING', 1) == 0:
+            write_handles = False
+        else:
+            write_handles = True
+
         tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
         for name, value in self.hdrvars.items():
+            if not write_handles and name == '$HANDSEED':
+                continue  # skip $HANDSEED
             _write(name, value)
             if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
                 self.custom_vars.write(tagwriter)

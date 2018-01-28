@@ -3,7 +3,7 @@ import pytest
 
 from io import StringIO
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.lldxf.tags import DXFTag
+from ezdxf.lldxf.tags import DXFTag, Tags
 
 
 def setup_stream():
@@ -47,6 +47,17 @@ def test_write_anything():
     assert result == '... writes just any nonsense ...'
 
 
-if __name__ == '__main__':
-    pytest.main([__file__])
+def test_dont_write_5_handles():
+    s, t = setup_stream()
+    t._write_handles = False
+    t.write_tags(Tags.from_text('  0\nLINE\n 5\nFF\n 62\n1\n'))
+    result = s.getvalue()
+    assert result == '  0\nLINE\n 62\n1\n'
 
+
+def test_dont_write_105_handles_but_keep_group_code_5():
+    s, t = setup_stream()
+    t._write_handles = False
+    t.write_tags(Tags.from_text("  0\nDIMSTYLE\n105\nFF\n  2\nSTANDARD\n 70\n0\n  3\n\n  4\n\n  5\n\n  6\n\n  7\n\n"))
+    result = s.getvalue()
+    assert result == "  0\nDIMSTYLE\n  2\nSTANDARD\n 70\n0\n  3\n\n  4\n\n  5\n\n  6\n\n  7\n\n"

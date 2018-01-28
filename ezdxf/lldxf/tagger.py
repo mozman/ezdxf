@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <mozman@gmx.at>"
 
-from .types import DXFTag, NONE_TAG
+from .types import DXFTag
 from .const import DXFStructureError
 
 

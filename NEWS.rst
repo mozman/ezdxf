@@ -10,6 +10,7 @@ version 0.8.5 - ?
    * CHANGE: audit process rewritten
    * CHANGE: skip all comments, group code 999
    * CHANGE: removed compression for unused sections (THUMBNAILSECTION, ACDSDATA)
+   * NEW: write DXF R12 files without handles: set dwg.header['$HANDLING']=0, default value is 1
    * added subclass marker filter for R12 and prior files in legacy_mode=True (required for malformed DXF files)
    * removed special check for Leica Disto Unit files (malformed DXF R12 file, see previous point)
 
