@@ -2,6 +2,10 @@
 News
 ====
 
+version 0.8.6 - ???
+
+   * XXX
+
 version 0.8.5 - 2018-01-28
 
    * CHANGE: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
