@@ -4,8 +4,6 @@
 # License: MIT License
 
 import io
-from .tools.c23 import lru_cache
-
 from .drawing import Drawing
 from .tools.zipmanager import ctxZipReader
 from .lldxf.tags import dxf_info
@@ -19,26 +17,29 @@ def new(dxfversion='AC1009'):
 
     new() can create drawings for following DXF versions:
 
-    - AC1009 or R12: AutoCAD R12 (DXF12)
-    - AC1015 or R2000: AutoCAD 2000
-    - AC1018 or R2004: AutoCAD 2004
-    - AC1021 or R2007: AutoCAD 2007
-    - AC1024 or R2010: AutoCAD 2010
-    - AC1027 or R2013: AutoCAD 2013
-    - AC1032 or R2018: AutoCAD 2018
+    - AC1009 or R12: AutoCAD R12 (DXF R12)
+    - AC1015 or R2000: AutoCAD 2000 (DXF R2000)
+    - AC1018 or R2004: AutoCAD 2004 (DXF R2004)
+    - AC1021 or R2007: AutoCAD 2007 (DXF R2007)
+    - AC1024 or R2010: AutoCAD 2010 (DXF R2010)
+    - AC1027 or R2013: AutoCAD 2013 (DXF R2013)
+    - AC1032 or R2018: AutoCAD 2018 (DXF R2018)
 
     Args:
         dxfversion: DXF version specifier, default is AC1009
+
     """
     return Drawing.new(dxfversion)
 
 
 def read(stream, legacy_mode=True, dxfversion=None):
     """
-    Read DXF drawing from a text *stream*, which only needs a readline() method, and supports following DXF versions:
+    Read DXF drawing from a text stream, which only needs a readline() method.
+
+    Supported DXF versions:
 
     - pre AC1009 DXF versions will be upgraded to AC1009, requires encoding set by header var $DWGCODEPAGE
-    - AC1009: AutoCAD R12 (DXF12), requires encoding set by header var $DWGCODEPAGE
+    - AC1009: AutoCAD R12 (DXF R12), requires encoding set by header var $DWGCODEPAGE
     - AC1012: AutoCAD R13 upgraded to AC1015, requires encoding set by header var $DWGCODEPAGE
     - AC1014: AutoCAD R14 upgraded to AC1015, requires encoding set by header var $DWGCODEPAGE
     - AC1015: AutoCAD 2000, requires encoding set by header var $DWGCODEPAGE
@@ -48,56 +49,52 @@ def read(stream, legacy_mode=True, dxfversion=None):
     - AC1027: AutoCAD 2013, requires encoding='utf-8'
     - AC1032: AutoCAD 2018, requires encoding='utf-8'
 
+    To detect the required encoding, use the helper function info=dxf_stream_info(stream)
+    and reopen the stream with the detected info.encoding.
+
     Args:
-        stream: input stream, requires only a readline() method.
+        stream: input text stream opened with correct encoding, requires only a readline() method.
         legacy_mode:  True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
-        dxfversion: DXF version, None = auto detect, just important for legacy mode - can't detect DXF version from none filesystem stream!
+        dxfversion: DXF version, None = auto detect, just important for legacy mode.
 
     """
     return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
 
 
-@lru_cache(maxsize=3)
 def dxf_file_info(filename):
     """
     Reads basic file information from DXF files: DXF version, encoding and handle seed.
 
-    If caching causes file reading problems: call dxf_file_info.cache_clear() before reading files, just Python 3+,
-    has no caching functionality under Python 2.
+    Returns:
+        DXF info object with attributes: version, release, handseed, encoding
 
     """
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
-        return dxf_info(fp)
+        return dxf_stream_info(fp)
 
 
-def detect_encoding(filename, encoding=None):
+def dxf_stream_info(stream):
     """
-    Detect DXF file encoding.
-
-    Args:
-        filename: DXF filename
-        encoding: overwrite detected encoding if not None (None = auto detect)
+    Reads basic DXF information from a text stream: DXF version, encoding and handle seed.
 
     Returns:
-        encoding as Python encoding string like 'utf-8'
+        DXF info object with attributes: version, release, handseed, encoding
+
     """
-    if encoding is None:
-        info = dxf_file_info(filename)
-        if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
-            enc = 'utf-8'
-        else:
-            enc = info.encoding
-    else:
-        enc = encoding
-    return enc
+    info = dxf_info(stream)
+    if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
+        info.encoding = 'utf-8'
+    return info
 
 
 def readfile(filename, encoding=None, legacy_mode=False):
     """
-    Read DXF drawing specified by *filename* from file system, and supports following DXF versions:
+    Read DXF drawing specified by *filename* from file system.
+
+    Supported DXF versions:
 
     - pre AC1009 DXF versions will be upgraded to AC1009
-    - AC1009: AutoCAD R12 (DXF12)
+    - AC1009: AutoCAD R12 (DXF R12)
     - AC1012: AutoCAD R13 upgraded to AC1015
     - AC1014: AutoCAD R14 upgraded to AC1015
     - AC1015: AutoCAD 2000
@@ -108,7 +105,7 @@ def readfile(filename, encoding=None, legacy_mode=False):
     - AC1032: AutoCAD 2018, fixates encoding='utf-8'
 
     Args:
-        filename: filename of DXF file.
+        filename: DXF filename
         encoding: use None for auto detect, or set a specific encoding like 'utf-8'
         legacy_mode: True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
 
@@ -117,8 +114,7 @@ def readfile(filename, encoding=None, legacy_mode=False):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
     info = dxf_file_info(filename)
-    enc = detect_encoding(filename, encoding)
-    with io.open(filename, mode='rt', encoding=enc, errors='ignore') as fp:
+    with io.open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
         dwg = read(fp, legacy_mode=legacy_mode, dxfversion=info.version)
 
     dwg.filename = filename
@@ -129,8 +125,10 @@ def readfile(filename, encoding=None, legacy_mode=False):
 
 def readzip(zipfile, filename=None):
     """
-    Read DXF drawing specified by *filename* from a zip archive, or if *filename* is None, the first DXF file in zip
-    archive. Supports following DXF versions:
+    Read DXF drawing specified by filename from a zip archive, or if filename is None the first DXF file in the zip
+    archive.
+
+    Supported DXF versions:
 
     - pre AC1009 DXF versions will be upgraded to AC1009
     - AC1009: AutoCAD R12 (DXF12)
@@ -146,6 +144,7 @@ def readzip(zipfile, filename=None):
     Args:
         zipfile: name of the zip archive
         filename: filename of DXF file, or None to read the first DXF file from the zip archive.
+        
     """
     with ctxZipReader(zipfile, filename) as zipstream:
         dwg = read(zipstream, dxfversion=zipstream.dxfversion)
