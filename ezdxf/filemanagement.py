@@ -144,7 +144,7 @@ def readzip(zipfile, filename=None):
     Args:
         zipfile: name of the zip archive
         filename: filename of DXF file, or None to read the first DXF file from the zip archive.
-        
+
     """
     with ctxZipReader(zipfile, filename) as zipstream:
         dwg = read(zipstream, dxfversion=zipstream.dxfversion)

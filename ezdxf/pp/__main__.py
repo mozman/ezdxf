@@ -16,7 +16,7 @@ from ezdxf import readfile, options
 from ezdxf.lldxf.const import DXFError, DXFStructureError
 from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler
 from ezdxf.lldxf.validator import is_dxf_file
-from ezdxf.filemanagement import detect_encoding
+from ezdxf.filemanagement import dxf_file_info
 from ezdxf.lldxf.repair import tag_reorder_layer
 import webbrowser
 
@@ -42,7 +42,7 @@ def pretty_print(filename):
 
 def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
     try:
-        encoding = detect_encoding(str(filename))
+        info = dxf_file_info(str(filename))
     except IOError:
         print("Unable to read DXF file '{}'.".format(filename))
         sys.exit(1)
@@ -50,7 +50,7 @@ def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
         print(str(e))
         sys.exit(2)
 
-    with io.open(filename, mode='rt', encoding=encoding, errors='ignore') as dxf:
+    with io.open(filename, mode='rt', encoding=info.encoding, errors='ignore') as dxf:
         tagger = low_level_tagger(dxf)
         if legacy_mode:
             tagger = tag_reorder_layer(tagger)
