@@ -17,18 +17,17 @@ it is possible to open also DXF drawings that contains data from 3rd party appli
 Quick-Info
 ----------
 
-- *ezdxf* is a Python package to read and write DXF drawings
-- intended audience: Developer
+- ezdxf is a Python package to create new DXF files and read/modify/write existing DXF files
+- the intended audience are developers
 - requires Python 2.7 or later, runs on CPython and pypy, maybe on IronPython and Jython
 - OS independent
 - additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
 - MIT-License
-- supported DXF versions read/new: R12, R2000, R2004, R2007, R2010, R2013 and R2018
-- support for DXF versions R13/R14 (AC1012/AC1014), will be upgraded to R2000 (AC1015)
-- support for older versions than R12, will be upgraded to R12 (AC1009)
+- read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
+- additional read support for DXF versions R13/R14 (upgraded to R2000)
+- additional read support for older DXF versions than R12 (upgraded to R12)
 - preserves third-party DXF content
-- additional fast and simple DXF R12 file/stream writer, just the ENTITIES section with support for LINE, CIRCLE, ARC,
-  TEXT, POINT, SOLID, 3DFACE and POLYLINE.
+- additional fast DXF R12 writer, that creates just an ENTITIES section with support for the basic DXF entities
 
 a simple example::
 
@@ -55,7 +54,7 @@ example for the *r12writer*, writes a simple DXF R12 file without in-memory stru
         for i in range(CIRCLE_COUNT):
             dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
 
-The *r12writer* supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
+The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
 present, except FIXED-TABLES are written, than some additional predefined text styles and line types are available.
 
 Installation
@@ -69,12 +68,17 @@ or from source::
 
     python setup.py install
 
+Website
+=======
+
+https://sites.google.com/view/ezdxf
+
 Documentation
 =============
 
 http://ezdxf.readthedocs.io/
 
-The source code of ezdxf can be found on GitHub.com at:
+The source code of ezdxf can be found at GitHub.com:
 
 http://github.com/mozman/ezdxf.git
 
@@ -85,7 +89,7 @@ Issue Tracker at:
 
 http://github.com/mozman/ezdxf/issues
 
-Feedback, Q&A, Discussions at Google Groups:
+Questions and Feedback at Google Groups:
 
 https://groups.google.com/d/forum/python-ezdxf
 

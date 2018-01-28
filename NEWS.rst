@@ -2,11 +2,11 @@
 News
 ====
 
-version 0.8.6 - ???
+Version 0.8.6 - ???
 
    * XXX
 
-version 0.8.5 - 2018-01-28
+Version 0.8.5 - 2018-01-28
 
    * CHANGE: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
    * CHANGE: table entry (layer, linetype, style, dimstyle, ...) names are case insensitive 'TEST' == 'Test' (like AutoCAD)
@@ -43,7 +43,7 @@ Version 0.8.3 - 2018-01-02
   * NEW: ezdxf use logging and writes all logs to a logger called 'ezdxf'. Logging setup is the domain of the application!
   * NEW: warns about multiple block definitions with the same name in a DXF file. (DXFStructureError)
   * NEW: legacy_mode parameter in ezdxf.read() and ezdxf.readfile(): tries do fix coordinate order in LINE
-    entities (10, 11, 20, 21) by the cost of around 5% overall speed penalty
+    entities (10, 11, 20, 21) by the cost of around 5% overall speed penalty at DXF file loading
 
 Version 0.8.2 - 2017-05-01
 

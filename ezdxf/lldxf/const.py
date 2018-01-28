@@ -41,10 +41,6 @@ class DXFXDataError(DXFStructureError):
     pass
 
 
-class DXFStreamError(DXFError):
-    pass
-
-
 class DXFVersionError(DXFError):
     pass
 

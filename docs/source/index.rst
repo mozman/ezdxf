@@ -13,18 +13,17 @@ Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 Quick-Info
 ----------
 
-- *ezdxf* is a Python package to read and write DXF drawings (interface to the DXF file format)
-- intended audience: Developer
+- *ezdxf* is a Python package to create new DXF files and read/modify/write existing DXF files
+- the intended audience are developers
 - requires Python 2.7 or later, runs on CPython and pypy, maybe on IronPython and Jython
 - OS independent
-- additional packages required: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
+- additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
 - MIT-License
-- supported DXF versions read/new: R12, R2000, R2004, R2007, R2010, R2013 and R2018
-- support for DXF versions R13/R14 (AC1012/AC1014), will be upgraded to R2000 (AC1015)
-- support for older versions than R12, will be upgraded to R12 (AC1009)
+- read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
+- additional read support for DXF versions R13/R14 (upgraded to R2000)
+- additional read support for older DXF versions than R12 (upgraded to R12)
 - preserves third-party DXF content
-- additional :ref:`r12writer`, just the ENTITIES section with support for  LINE, CIRCLE, ARC,
-  TEXT, POINT, SOLID, 3DFACE and POLYLINE.
+- additional fast :ref:`r12writer`, that creates just an ENTITIES section with support for the basic DXF entities
 
 Contents
 --------
