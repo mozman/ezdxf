@@ -50,7 +50,7 @@ def read(stream, legacy_mode=True, dxfversion=None):
 
     Args:
         stream: input stream, requires only a readline() method.
-        legacy_mode: True - adds an extra import layer to reorder coordinates; False - requires DXF file from modern CAD apps
+        legacy_mode:  True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
         dxfversion: DXF version, None = auto detect, just important for legacy mode - can't detect DXF version from none filesystem stream!
 
     """
@@ -59,6 +59,13 @@ def read(stream, legacy_mode=True, dxfversion=None):
 
 @lru_cache(maxsize=3)
 def dxf_file_info(filename):
+    """
+    Reads basic file information from DXF files: DXF version, encoding and handle seed.
+
+    If caching causes file reading problems: call dxf_file_info.cache_clear() before reading files, just Python 3+,
+    has no caching functionality under Python 2.
+
+    """
     with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         return dxf_info(fp)
 
@@ -102,8 +109,8 @@ def readfile(filename, encoding=None, legacy_mode=False):
 
     Args:
         filename: filename of DXF file.
-        encoding: use 'auto' for auto detect, or set a specific encoding like 'utf-8'
-        legacy_mode: True - adds an extra import layer to reorder coordinates; False - requires DXF file from modern CAD apps
+        encoding: use None for auto detect, or set a specific encoding like 'utf-8'
+        legacy_mode: True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
 
     """
     if not is_dxf_file(filename):
