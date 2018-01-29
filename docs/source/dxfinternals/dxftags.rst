@@ -159,7 +159,7 @@ ezdxf on import converts all strings into Python unicode strings without encodin
 
 String values containing Unicode characters are represented with control character sequences.
 
-For example, ``"TEST\U+7F3A\U+4E4F\U+89E3\U+91CA\U+6B63THIS\U+56FE"``
+For example, 'TEST\U+7F3A\U+4E4F\U+89E3\U+91CA\U+6B63THIS\U+56FE'
 
 To support the DXF unicode encoding ezdxf registers an encoding codec `dxfbackslashreplace`, defined in
 :func:`ezdxf.lldxf.encoding`.
@@ -191,7 +191,7 @@ greater than 250 characters, the string is divided into 250-character chunks, wh
     1
     less than TwoHundredAndFifty Characters
 
-As far I know this is only supported by the :class:`MText` entity.
+As far I know this is only supported by the MTEXT entity.
 
 .. seealso::
 
@@ -216,7 +216,11 @@ Extension Dictionary
 
 The extension dictionary is an optional sequence that stores the handle of a dictionary object that belongs to the
 current object, which in turn may contain entries. This facility allows attachment of arbitrary database objects to any
-database object. Any object or entity may have this section. The extension dictionary tag sequence::
+database object. Any object or entity may have this section.
+
+The extension dictionary tag sequence:
+
+.. code-block:: none
 
   102
   {ACAD_XDICTIONARY
@@ -229,7 +233,9 @@ Persistent Reactors
 ~~~~~~~~~~~~~~~~~~~
 
 Persistent reactors are an optional sequence that stores object handles of objects registering themselves as reactors on
-the current object. Any object or entity may have this section. The persistent reactors tag sequence:
+the current object. Any object or entity may have this section.
+
+The persistent reactors tag sequence:
 
 .. code-block:: none
 

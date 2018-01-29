@@ -3,9 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-=====
-ezdxf
-=====
+.. image:: gfx/ezdxf-logo-rtd.png
+   :align: center
 
 Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 
