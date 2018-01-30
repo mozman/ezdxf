@@ -10,7 +10,7 @@ Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 
 
 Quick-Info
-----------
+==========
 
 - *ezdxf* is a Python package to create new DXF files and read/modify/write existing DXF files
 - the intended audience are developers
@@ -24,8 +24,22 @@ Quick-Info
 - preserves third-party DXF content
 - additional fast :ref:`r12writer`, that creates just an ENTITIES section with support for the basic DXF entities
 
+GitHub
+------
+
+Website: https://mozman.github.io/ezdxf/
+
+Source Code: http://github.com/mozman/ezdxf.git
+
+Issue Tracker at GitHub: http://github.com/mozman/ezdxf/issues
+
+Questions and Feedback at Google Groups
+---------------------------------------
+
+https://groups.google.com/d/forum/python-ezdxf
+
 Contents
---------
+========
 
 .. toctree::
    :maxdepth: 2

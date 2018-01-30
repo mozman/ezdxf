@@ -2,9 +2,9 @@
 News
 ====
 
-Version 0.8.6 - ???
+Version 0.8.6 - dev
 
-   * XXX
+   * NEW: ezdxf website at github: https://mozman.github.io/ezdxf/
 
 Version 0.8.5 - 2018-01-28
 

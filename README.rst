@@ -71,7 +71,7 @@ or from source::
 Website
 =======
 
-https://sites.google.com/view/ezdxf
+https://mozman.github.io/ezdxf/
 
 Documentation
 =============
