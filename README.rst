@@ -93,12 +93,13 @@ Questions and Feedback at Google Groups:
 
 https://groups.google.com/d/forum/python-ezdxf
 
-Mailing List:
-
 python-ezdxf@googlegroups.com
 
 Feedback is greatly appreciated.
 
 Manfred
 
-mozman@gmx.at
+Contact
+=======
+
+ezdxf@mozman.at

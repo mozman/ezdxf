@@ -1,6 +1,6 @@
 import ezdxf
 
-dwg = ezdxf.new('AC1015')  # image requires the DXF 2000 or newer format
+dwg = ezdxf.new('R2004')  # image requires the DXF 2000 or newer format
 my_image_def = dwg.add_image_def(filename='mycat.jpg', size_in_pixel=(640, 360))
 # image definition is like a block definition
 

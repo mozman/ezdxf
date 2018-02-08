@@ -37,8 +37,6 @@ Reduce Memory Footprint
 -----------------------
 
 - compress binary data by :meth:`Drawing.compress_binary_data`
-- compress useless sections like `THUMBNAILIMAGE` by setting :code:`ezdxf.options.compress_default_chunks = True`,
-  *before* opening the DXF file.
 
 .. warning:: Data compression costs time: *memory usage* vs *run time*
 
@@ -60,6 +58,25 @@ Create a more readable HTML file (DXF Pretty Printer)::
 
 This produces a HTML file *your_dxf_file.html* with a nicer layout than a plain DXF file and DXF handles as links
 between DXF entities, this simplifies the navigation between the DXF entities.
+
+Since ezdxf `v0.8.3 <http://ezdxf.mozman.at/release-v0-8-3.html>`_, a script called *dxfpp* will be added to your Python
+script path:
+
+.. code-block:: none
+
+    usage: dxfpp [-h] [-o] [-r] [-x] [-l] FILE [FILE ...]
+
+    positional arguments:
+      FILE             DXF files pretty print
+
+    optional arguments:
+      -h, --help       show this help message and exit
+      -o, --open       open generated HTML file with the default web browser
+      -r, --raw        raw mode - just print tags, no DXF structure interpretation
+      -x, --nocompile  don't compile points coordinates into single tags (only in
+                       raw mode)
+      -l, --legacy     legacy mode - reorders DXF point coordinates
+
 
 .. important:: This does not render the graphical content of the DXF file to a HTML canvas element.
 
@@ -85,11 +102,27 @@ Adding XDATA as list of tuples (group code, value)::
 For group code meaning see DXF reference section `DXF Group Codes in Numerical Order Reference`, valid group codes are
 in the range 1000 - 1071.
 
-A360 do not open ezdxf files
-----------------------------
+A360 Viewer Problems
+--------------------
 
 AutoDesk web service A360_ seems to be more picky than the AutoCAD desktop applications, may be it helps to use the
-latest DXF version supported by ezdxf, which is ``AC1027`` in the year of writing this lines (2017).
+latest DXF version supported by ezdxf, which is DXF R2018 (AC1032)  in the year of writing this lines (2018).
 
+
+Show IMAGES/XREFS on Loading in AutoCAD
+---------------------------------------
+
+If you are adding XREFS and IMAGES with relative paths to existing drawings and they do not show up in AutoCAD
+immediately, change the HEADER variable :code:`$PROJECTNAME=''` to *(not really)* solve this problem.
+The ezdxf templates for DXF R2004 and later have :code:`$PROJECTNAME=''` as default value.
+
+Thanks to `David Booth <https://github.com/worlds6440>`_:
+
+    If the filename in the IMAGEDEF contains the full path (absolute in AutoCAD) then it shows on loading,
+    otherwise it won't display (reports as unreadable) until you manually reload using XREF manager.
+
+    A workaround (to show IMAGES on loading) appears to be to save the full file path in the DXF or save it as a DWG.
+
+So far - no solution for showing IMAGES with relative paths on loading.
 
 .. _A360: https://a360.autodesk.com/viewer/
