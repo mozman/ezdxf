@@ -1,7 +1,12 @@
 Table Class
 ===========
 
+Generic Table Class
+-------------------
+
 .. class:: Table
+
+    Table entry names are case insensitive: 'Test' == 'TEST'.
 
 .. method:: Table.new(name, dxfattribs=None)
 
@@ -15,6 +20,8 @@ Table entry creation is for all tables the same procedure::
 
 Where `tablename` can be: `layers`, `styles`, `linetypes`, `views`, `viewports`
 or `dimstyles`.
+
+
 
 .. method:: Table.get(name)
 
@@ -30,6 +37,10 @@ or `dimstyles`.
 
     Get count of table-entries.
 
+.. method:: Table.has_entry(name)
+
+    `True` if table contains a table-entry `name`.
+
 .. method:: Table.__contains__(name)
 
     `True` if table contains a table-entry `name`.
@@ -37,6 +48,41 @@ or `dimstyles`.
 .. method:: Table.__iter__()
 
     Iterate over all table.entries, yields table-entry-objects.
+
+Style Table Class
+-----------------
+
+.. class:: StyleTable(Table)
+
+.. method:: StyleTable.get_shx(name)
+
+    Get existing shx entry, or create a new entry.
+
+.. method:: StyleTable.find_shx(name)
+
+    Find .shx shape file table entry, by a case insensitive search. A .shx shape file table entry has no name, so you
+    have to search by the font attribute.
+
+Viewport Table Class
+--------------------
+
+.. class:: ViewportTable(Table)
+
+    The viewport table stores the model space viewport configurations. A viewport configuration is a tiled view of multiple
+    viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries with the same
+    name, because all viewport entries of a multi-viewport configuration are having the same name - the viewport
+    configuration name.
+
+    The name of the actual displayed viewport configuration is ``*ACTIVE``.
+
+.. method:: ViewportTable.get_multi_config(name)
+
+    Returns a list of :class:`Viewport` objects, of the multi-viewport configuration *name*.
+
+.. method:: ViewportTable.delete_multi_config(name):
+
+    Delete all :class:`Viewport` objects of the multi-viewport configuration *name*.
+
 
 Table Entry Classes
 ===================
@@ -167,18 +213,21 @@ DimStyle
 
 TODO DXFAttr for DimStyle class
 
-Viewport
---------
+VPort
+-----
+
+The viewport table stores the model space viewport configurations. So this entries just model space viewports, not paper
+space viewports, for paper space viewports see the :class:`Viewport` entity.
 
 .. seealso::
 
    DXF Internals: :ref:`VPORT Table`
 
-.. class:: Viewport
+.. class:: VPort
 
    Defines a viewport to the model space.
 
-.. attribute:: Viewport.dxf
+.. attribute:: VPort.dxf
 
    The DXF attributes namespace.
 

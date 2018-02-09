@@ -245,3 +245,13 @@ class ViewportTable(Table):
             dxfattribs = {}
         dxfattribs['name'] = name
         return self.new_entry(dxfattribs)
+
+    def get_multi_config(self, name):
+        key_func = self.key
+        search_key = key_func(name)
+        return [entry for entry in self if search_key == key_func(entry)]
+
+    def delete_multi_config(self, name):
+        for entry in self.get_multi_config(name):
+            self.remove_handle(entry.dxf.handle)
+

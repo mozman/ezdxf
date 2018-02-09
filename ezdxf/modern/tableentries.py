@@ -562,7 +562,7 @@ vport_subclass = DefSubclass('AcDbViewportTableRecord', {
 })
 
 
-class Viewport(legacy.Viewport):
+class VPort(legacy.VPort):
     TEMPLATE = ExtendedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
 

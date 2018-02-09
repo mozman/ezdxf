@@ -249,7 +249,7 @@ VPORTNAME
 """
 
 
-class Viewport(DXFEntity):
+class VPort(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),

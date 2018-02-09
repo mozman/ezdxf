@@ -3,12 +3,12 @@
 # License: MIT License
 from __future__ import unicode_literals
 import pytest
-from ezdxf.legacy.tableentries import Viewport
+from ezdxf.legacy.tableentries import VPort
 
 
 @pytest.fixture
 def vport():
-    return Viewport.new('FFFF', dxfattribs={
+    return VPort.new('FFFF', dxfattribs={
         'name': 'VP1',
     })
 

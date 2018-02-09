@@ -80,7 +80,7 @@ ENTITY_WRAPPERS = {
     'STYLE': tableentries.Style,
     'UCS': tableentries.UCS,
     'VIEW': tableentries.View,
-    'VPORT': tableentries.Viewport,
+    'VPORT': tableentries.VPort,
     # dxf entities
     'LINE': graphics.Line,
     'POINT': graphics.Point,

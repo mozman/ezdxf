@@ -48,7 +48,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'LTYPE': tableentries.Linetype,
     'DIMSTYLE': tableentries.DimStyle,
     'VIEW': tableentries.View,
-    'VPORT': tableentries.Viewport,
+    'VPORT': tableentries.VPort,
     'UCS': tableentries.UCS,
     'APPID': tableentries.AppID,
     'BLOCK_RECORD': tableentries.BlockRecord,

@@ -145,7 +145,7 @@ The CLASSES section can be empty, but some DXF entities requires class definitio
 
 The TABLES section requires following tables:
 
-- VPORT with at least an entry called \*ACTIVE
+- VPORT entry \*ACTIVE is noe required! Empty table is ok.
 - LTYPE with at least the following line types defined:
 
   - BYBLOCK

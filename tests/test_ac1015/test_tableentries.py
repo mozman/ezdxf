@@ -6,7 +6,7 @@ import pytest
 
 from ezdxf.modern.tableentries import Layer, Linetype, Style
 from ezdxf.modern.tableentries import AppID, BlockRecord, DimStyle
-from ezdxf.modern.tableentries import UCS, View, Viewport
+from ezdxf.modern.tableentries import UCS, View, VPort
 
 
 class DXFFactory:
@@ -118,7 +118,7 @@ def test_ucs_origin(ucs):
 
 
 def test_viewport_name():
-    vport = Viewport.new('FFFF', dxfattribs={
+    vport = VPort.new('FFFF', dxfattribs={
         'name': 'VP1',
     })
     assert 'VP1' == vport.dxf.name
