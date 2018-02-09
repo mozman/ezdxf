@@ -173,6 +173,14 @@ class DXF12Layout(BaseLayout):
     def layout_key(self):
         return self._paperspace
 
+    def viewports(self):
+        """
+        Get all VIEWPORT entities defined in the layout. Returns a list of Viewport() objects, sorted by id, the first
+        entity is always the paper space view with the id=1.
+        """
+        vports =  [entity for entity in self if entity.dxftype() == 'VIEWPORT']
+        vports.sort(key=lambda e: e.dxf.id)
+        return vports
 
 class DXF12BlockLayout(BaseLayout):
     """

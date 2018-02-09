@@ -25,7 +25,7 @@ DXF R13 and later supports multiple paper space layouts, the `active` layout is 
 additional `inactive` paper space layouts are named by the scheme ``*Paper_Spacennnn``, where the first inactive paper
 space is called ``*Paper_Space0``, the second ``*Paper_Space1`` and so on.
 A none consecutive numbering is tolerated by AutoCAD. The content of the inactive paper space layouts are stored
-as BLOCK content in the BLOCKS section. This names are just the DXF internal layout names, each layout has an
+as BLOCK content in the BLOCKS section. These names are just the DXF internal layout names, each layout has an
 additional layout name which is displayed to the user by the CAD application.
 
 A BLOCK definition and a BLOCK_RECORD is not enough for a proper layout setup, an LAYOUT entity in the OBJECTS section
@@ -69,7 +69,7 @@ Since DXF R2000 model space and paper space layouts require the DXF
 
     2       <<< name of system printer or plot configuration file
     none_device
-    4       <<< paper size (as name?)
+    4       <<< paper size (just a name?)
     Letter_(8.50_x_11.00_Inches)
     6       <<< plot view name
 
@@ -259,7 +259,7 @@ needs this values. And the most values
     0.5     <<<     x value
     25      <<<     group code for y value
     0.5     <<<     y value
-    16      <<< view direction vector (in WCS), defined by two points! (0, 0, 1) -> view target point(0, 0, 0)
+    16      <<< view direction vector from target (in WCS)
     0.0     <<<     x value
     26      <<<     group code for y value
     0.0     <<<     y value

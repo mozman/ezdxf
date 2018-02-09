@@ -133,6 +133,10 @@ bigfont                big font name, blank if none (str)
 Linetype
 --------
 
+.. seealso::
+
+   DXF Internals: :ref:`LTYPE Table`
+
 .. class:: Linetype
 
    Defines a linetype.
@@ -166,6 +170,10 @@ TODO DXFAttr for DimStyle class
 Viewport
 --------
 
+.. seealso::
+
+   DXF Internals: :ref:`VPORT Table`
+
 .. class:: Viewport
 
    Defines a viewport to the model space.
@@ -178,6 +186,15 @@ TODO DXFAttr for the Viewport class
 
 View
 ----
+
+The View table stores named views of the model or paper space layouts. This stored views makes parts of the
+drawing or some view points of the model in a CAD applications more accessible. This views have no influence to the
+drawing content or to the generated output by exporting PDFs or plotting on paper sheets, they are just for the
+convenience of CAD application users.
+
+.. seealso::
+
+    DXF Internals: :ref:`VIEW Table`
 
 .. class:: View
 

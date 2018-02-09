@@ -24,10 +24,18 @@ Quick-Info
 - preserves third-party DXF content
 - additional fast :ref:`r12writer`, that creates just an ENTITIES section with support for the basic DXF entities
 
-GitHub
-------
 
-Website: https://mozman.github.io/ezdxf/
+Website
+-------
+
+http://ezdxf.mozman.at/
+
+Documentation
+-------------
+
+Documentation of development version at http://ezdxf.mozman.at/docs
+
+Documentation of latest release at http://ezdxf.readthedocs.io/
 
 Source Code: http://github.com/mozman/ezdxf.git
 

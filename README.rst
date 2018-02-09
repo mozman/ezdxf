@@ -71,12 +71,14 @@ or from source::
 Website
 =======
 
-https://mozman.github.io/ezdxf/
+http://ezdxf.mozman.at/
 
 Documentation
 =============
 
-http://ezdxf.readthedocs.io/
+Documentation of development version at http://ezdxf.mozman.at/docs
+
+Documentation of latest release at http://ezdxf.readthedocs.io/
 
 The source code of ezdxf can be found at GitHub.com:
 

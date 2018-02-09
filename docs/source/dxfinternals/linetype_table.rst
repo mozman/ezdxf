@@ -1,12 +1,12 @@
-.. _Linetype Table:
+.. _LTYPE Table:
 
-Linetype Table
-==============
+LTYPE Table
+===========
 
-All tag structures for DXF R2000 and later.
+The `LTYPE`_ table stores all line type definitions of a DXF drawing. Every line type used in the drawing has to have a
+table entry, or the DXF drawing is invalid for AutoCAD.
 
-Linetype Table
---------------
+DXF R12 supports just simple line types, DXF R2000+ supports also complex line types with text or shapes included.
 
 You have access to the line types table by the attribute :attr:`Drawing.linetypes`. The line type table itself is not
 stored in the entity database, but the table entries are stored in entity database, and can be accessed by its handle.
@@ -15,10 +15,31 @@ stored in the entity database, but the table entries are stored in entity databa
 .. seealso::
 
     - DXF Reference: `TABLES Section`_
-    - DXF Reference: `LTYPE Entity`_
+    - DXF Reference: `LTYPE`_ Table
 
-LTYPE Table Tag Structure
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Table Structure DXF R12
+-----------------------
+
+.. code-block:: none
+
+    0           <<< start of table
+    TABLE
+    2           <<< set table type
+    LTYPE
+    70          <<< count of line types defined in this table, AutoCAD ignores this value
+    9
+    0           <<< 1. LTYPE table entry
+    LTYPE
+                <<< LTYPE data tags
+    0           <<< 2. LTYPE table entry
+    LTYPE
+                <<< LTYPE data tags and so on
+    0           <<< end of LTYPE table
+    ENDTAB
+
+
+Table Structure DXF R2000+
+--------------------------
 
 .. code-block:: none
 
@@ -55,8 +76,8 @@ ezdxf setup for line type 'CENTER'::
      })
 
 
-Simple Tag Structure
-~~~~~~~~~~~~~~~~~~~~
+Simple Line Type Tag Structure DXF R2000+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: none
 
@@ -232,6 +253,6 @@ SHAPE Tag Structure
     0
 
 
-.. _LTYPE Entity: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F57A316C-94A2-416C-8280-191E34B182AC
+.. _LTYPE: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F57A316C-94A2-416C-8280-191E34B182AC
 
 .. _TABLES Section: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A9FD9590-C97B-4E41-9F26-BD82C34A4F9F
