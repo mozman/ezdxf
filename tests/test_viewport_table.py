@@ -21,7 +21,7 @@ def test_create_vport_table(dxf):
     assert len(conf) == 2
 
     # check handles
-    handles = set([vp1.dxf.handle, vp2.dxf.handle])
+    handles = [vp1.dxf.handle, vp2.dxf.handle]
     assert conf[0].dxf.handle in handles
     assert conf[1].dxf.handle in handles
 

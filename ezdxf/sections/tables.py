@@ -72,6 +72,8 @@ class TablesSection(object):
             setup_table('STYLE')
         if 'DIMSTYLES' not in self._tables:
             setup_table('DIMSTYLE')
+        if 'VIEWPORTS' not in self._tables:
+            setup_table('VPORT')
 
     def __contains__(self, item):
         return self.key(item) in self._tables

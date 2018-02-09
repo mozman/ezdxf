@@ -71,6 +71,14 @@ TABLES
   0
 TABLE
   2
+VPORT
+ 70
+0
+  0
+ENDTAB
+  0
+TABLE
+  2
 LTYPE
  70
      1
