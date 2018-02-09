@@ -271,7 +271,7 @@ class Viewport(DXFEntity):
         'snap_rotation': DXFAttr(50),
         'view_twist': DXFAttr(51),
         'status': DXFAttr(68),
-        'id': DXFAttr(69),
+        # group code 69: 'id' is never saved in DXF, and DXF R13 and later has no group code 69
         'view_mode': DXFAttr(71),
         'circle_zoom': DXFAttr(72),
         'fast_zoom': DXFAttr(73),
