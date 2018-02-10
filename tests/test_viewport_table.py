@@ -17,7 +17,7 @@ def test_create_vport_table(dxf):
     assert len(dxf.viewports) == 2
 
     # get multi-viewport configuration as list
-    conf = dxf.viewports.get_multi_config('*Active')
+    conf = dxf.viewports.get_config('*Active')
     assert len(conf) == 2
 
     # check handles
@@ -25,15 +25,15 @@ def test_create_vport_table(dxf):
     assert conf[0].dxf.handle in handles
     assert conf[1].dxf.handle in handles
 
-    conf = dxf.viewports.get_multi_config('test')
+    conf = dxf.viewports.get_config('test')
     assert len(conf) == 0
 
     # delete: ignore not existing configurations
-    dxf.viewports.delete_multi_config('test')
+    dxf.viewports.delete_config('test')
     assert len(dxf.viewports) == 2
 
     # delete multi config
-    dxf.viewports.delete_multi_config('*active')
+    dxf.viewports.delete_config('*active')
     assert len(dxf.viewports) == 0
 
 

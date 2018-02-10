@@ -75,11 +75,11 @@ Viewport Table Class
 
     The name of the actual displayed viewport configuration is ``*ACTIVE``.
 
-.. method:: ViewportTable.get_multi_config(name)
+.. method:: ViewportTable.get_config(name)
 
     Returns a list of :class:`Viewport` objects, of the multi-viewport configuration *name*.
 
-.. method:: ViewportTable.delete_multi_config(name):
+.. method:: ViewportTable.delete_config(name):
 
     Delete all :class:`Viewport` objects of the multi-viewport configuration *name*.
 
