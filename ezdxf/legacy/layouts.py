@@ -169,6 +169,11 @@ class DXF12Layout(BaseLayout):
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
 
+    def paper_setup(self, size=(297, 210), margins=(0, 0, 0, 0), units='mm', landscape=True):
+        if self._paperspace == 0:
+            raise DXFTypeError("No paper setup for model space.")
+        raise NotImplementedError
+
     @property
     def layout_key(self):
         return self._paperspace

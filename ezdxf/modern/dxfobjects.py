@@ -277,7 +277,7 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
     'plot_window_x2': DXFAttr(140),
     'plot_window_y2': DXFAttr(141),
     'custom_print_scale_numerator': DXFAttr(142),  # Numerator of custom print scale: real world (paper) units
-    'custom_print_scale_denominator': DXFAttr(142),  # Denominator of custom print scale: drawing units
+    'custom_print_scale_denominator': DXFAttr(143),  # Denominator of custom print scale: drawing units
     'plot_layout_flags': DXFAttr(70),
         # 1 = Plot Viewport Borders
         # 2 = Show Plot Styles

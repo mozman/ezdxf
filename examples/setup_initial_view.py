@@ -31,7 +31,7 @@ def draw_raster(dwg):
             modelspace.add_auto_blockref('MARKER', (xcoord, ycoord), values)
 
 
-def set_active_viewport(dwg):
+def setup_active_viewport(dwg):
     # delete '*Active' viewport configuration
     dwg.viewports.delete_config('*ACTIVE')
     # the available display area in AutoCAD has the virtual lower-left corner (0, 0) and the virtual upper-right corner
@@ -56,9 +56,22 @@ def set_active_viewport(dwg):
     viewport.dxf.aspect_ratio = 2.0  # aspect ratio of viewport (x/y)
 
 
+def setup_paper_space_layout(dwg, name):
+    if name in dwg.layouts:
+        layout = dwg.layouts.get(name)
+    else:
+        layout = dwg.layouts.new(name)
+    layout.paper_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
+    layout.add_line((-0.5, 3.75), (10.5, 3.75))  # hor center line
+    layout.add_line((5., -0.5), (5., 8.0))  # hor center line
+    layout2 = dwg.layouts.new('mozman')
+    layout2.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm')
+
+
 if __name__ == '__main__':
     dwg = ezdxf.new('AC1015')
     draw_raster(dwg)
-    set_active_viewport(dwg)
+    setup_active_viewport(dwg)
+    setup_paper_space_layout(dwg, 'Layout1')
     dwg.saveas(FILENAME)
     print("drawing '%s' created.\n" % FILENAME)

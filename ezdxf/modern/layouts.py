@@ -9,7 +9,7 @@ __author__ = "mozman <me@mozman.at>"
 
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFKeyError, DXFValueError
+from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
@@ -202,6 +202,86 @@ class Layout(DXF12Layout):
     @property
     def dxf(self):
         return self.dxf_layout.dxf
+
+    def paper_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', landscape=True):
+        """
+        Setup plot settings and paper size and reset viewports.
+
+        Args:
+            size:
+            margins: (top, right, bottom, left) hint: clockwise
+            units: 'mm' or 'inch'
+            name: paper name as string, suffix '_(width_x_height_unit)' added automatically
+            landscape: True else portrait orientation
+
+        """
+        if self.name == 'Model':
+            raise DXFTypeError("No paper setup for model space.")
+        paper_width, paper_height = size
+        margin_top, margin_right, margin_bottom, margin_left = margins
+        units = units.lower()
+        if units.startswith('inch'):
+            units = 'Inches'
+            plot_paper_units = 0
+            unit_factor = 25.4  # inch to mm
+        elif units == 'mm':
+            units = 'MM'
+            plot_paper_units = 1
+            unit_factor = 1.0
+        else:
+            raise DXFValueError('Units have to be "mm" or "inch", not supported: "pixel".')
+
+        # Setup PLOTSETTINGS
+        dxf = self.dxf_layout.dxf
+        dxf.page_setup_name = ''
+        dxf.plot_configuration_file = "DWG to PDF.pc3"
+        dxf.paper_size = 'ezdxf_({:.2f}_x_{:.2f}_{})'.format(paper_width, paper_height, units)
+        dxf.left_margin = margin_left * unit_factor
+        dxf.bottom_margin = margin_bottom * unit_factor
+        dxf.right_margin = margin_right * unit_factor
+        dxf.top_margin = margin_top * unit_factor
+        dxf.paper_width = paper_width * unit_factor
+        dxf.paper_height = paper_height * unit_factor
+        dxf.plot_paper_units = plot_paper_units
+        dxf.plot_rotation = 0 if landscape else 1
+        dxf.plot_origin_x_offset = 0
+        dxf.plot_origin_y_offset = 0
+
+        # Setup Layout
+        dxf.limmin = (0, 0)  # paper space units
+        dxf.limmax = (paper_width, paper_height)
+        dxf.extmin = (0, 0, 0)  # paper space units
+        dxf.extmax = (paper_width, paper_height, 0)
+        self.reset_viewports()
+
+    def reset_viewports(self):
+        # remove existing viewports
+        def paper_units(value):
+            return value / scale_factor
+
+        for viewport in self.viewports():
+            self.delete_entity(viewport)
+
+        dxf = self.dxf_layout.dxf
+        if dxf.plot_paper_units == 0:  # inches
+            scale_factor = 25.4
+        else:  # mm
+            scale_factor = 1.0
+
+        # all paper parameters in mm!
+        # all viewport parameters in paper space units inch/mm
+        paper_width = paper_units(dxf.paper_width)
+        paper_height = paper_units(dxf.paper_height)
+        # add 'main' viewport
+        print_width = paper_width - paper_units(dxf.left_margin) - paper_units(dxf.right_margin)
+        print_height = paper_height - paper_units(dxf.top_margin) - paper_units(dxf.bottom_margin)
+
+        main_viewport = self.add_viewport(
+            center=(0, 0),  # no influence to 'main' viewport?
+            size=(paper_width, paper_height),  # I don't get it, just use paper size!
+            view_center_point=(int(print_width/2), int(print_height/2)),  # move this paper space location to the center of the viewport?
+            view_height=paper_height)  # view height in paper space units
+        main_viewport.dxf.id = 1  # set as main viewport
 
     # end of public interface
 
