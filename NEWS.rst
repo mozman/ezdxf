@@ -4,7 +4,8 @@ News
 
 Version 0.8.6 - dev
 
-   * NEW: ezdxf website at github: https://mozman.github.io/ezdxf/
+   * NEW: ezdxf website at github: https://ezdxf.mozman.at/
+   * CHANGE: create all missing tables of the TABLES sections for DXF R12
 
 Version 0.8.5 - 2018-01-28
 

@@ -4,7 +4,6 @@
 # License: MIT License
 from __future__ import unicode_literals
 from ..tools.c23 import isstring
-from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
 

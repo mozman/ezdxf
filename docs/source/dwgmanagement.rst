@@ -81,13 +81,6 @@ Global Options
     for every drawing you open, but data compression cost time, so this option isn't active by default.
     You can individually compress the binary data of a drawing with the method :meth:`Drawing.compress_binary_data`.
 
-.. attribute:: ezdxf.options.compress_default_chunks
-
-    There are at least two sections in DXF drawings which are very useless: `THUMBNAILIMAGE` and since AutoCAD 2013
-    (AC1027) `ACDSDATA`. They were managed by the simple :class:`DefaultChunk` class, which is just a bunch of dumb
-    tags, to save some memory you can compress these default chunks by setting the option
-    :code:`ezdxf.options.compress_default_chunks = True`.
-
 .. attribute:: ezdxf.options.templatedir
 
     Directory where the :meth:`new` function looks for its template file (AC1009.dxf, AC1015.dxf, ...) , default is
@@ -96,11 +89,3 @@ Global Options
     template file with :meth:`ezdxf.readfile` and save the drawing as new file with the :meth:`Drawing.saveas` method.
 
     This option is very useful if the *ezdxf* package resides in a zip archive.
-
-.. attribute:: ezdxf.options.store_comments
-
-   - preserves the existing comments at the top of the file
-   - adds a comment when upgrading the DXF version
-   - adds a *'last saved by ezdxf ...'* comment
-
-   Default setting is *True*.

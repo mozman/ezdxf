@@ -52,28 +52,61 @@ class TablesSection(object):
             else:  # collect table entries
                 table_entities.append(entity)
 
-        self._create_required_tables()
+        self._create_missing_tables()
 
     def _new_table(self, name, table_entities):
             table_class = TABLESMAP[name]
             new_table = table_class(table_entities, self._drawing)
             self._tables[self.key(new_table.name)] = new_table
 
-    def _create_required_tables(self):
-        def setup_table(name):
-            table_entities = [[DXFTag(0, 'TABLE'), DXFTag(2, name), DXFTag(70, 0)]]
-            self._new_table(name, table_entities)
+    def _setup_table(self, name):
+        """
+        Setup new empty table.
 
-        if 'LAYERS' not in self._tables:
-            setup_table('LAYER')
-        if 'LINETYPES' not in self._tables:
-            setup_table('LTYPE')
-        if 'STYLES' not in self._tables:
-            setup_table('STYLE')
-        if 'DIMSTYLES' not in self._tables:
-            setup_table('DIMSTYLE')
-        if 'VIEWPORTS' not in self._tables:
-            setup_table('VPORT')
+        Args:
+            name: real table name like 'VPORT' for viewports
+
+        """
+        name = self.key(name)
+        if self._drawing is not None:
+            dxfversion = self._drawing.dxfversion
+            handle = self._drawing.entitydb.get_unique_handle()
+        else:  # test environment without Drawing() object
+            dxfversion = 'AC1009'  # DXF R12
+            handle = '0'
+
+        if dxfversion <= 'AC1009':
+            table_entities = [[
+                DXFTag(0, 'TABLE'),
+                DXFTag(2, name),
+                DXFTag(70, 0)
+            ]]
+        else:
+            table_entities = [[
+                DXFTag(0, 'TABLE'),
+                DXFTag(2, name),
+                DXFTag(5, handle),
+                DXFTag(330, '0'),
+                DXFTag(100, 'AcDbSymbolTable'),
+                DXFTag(70, 0)
+            ]]
+        self._new_table(name, table_entities)
+
+    def _create_missing_tables(self):
+        if 'LAYERS' not in self:
+            self._setup_table('LAYER')
+        if 'LINETYPES' not in self:
+            self._setup_table('LTYPE')
+        if 'STYLES' not in self:
+            self._setup_table('STYLE')
+        if 'DIMSTYLES' not in self:
+            self._setup_table('DIMSTYLE')
+        if 'VIEWPORTS' not in self:
+            self._setup_table('VPORT')
+        if 'APPIDS' not in self:
+            self._setup_table('APPID')
+        if 'UCS' not in self:
+            self._setup_table('UCS')
 
     def __contains__(self, item):
         return self.key(item) in self._tables

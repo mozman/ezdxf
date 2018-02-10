@@ -10,7 +10,7 @@ from setuptools import setup
 
 VERSION = "0.8.6"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
-AUTHOR_EMAIL = 'mozman@gmx.at'
+AUTHOR_EMAIL = 'mozman@mozman.at'
 
 
 def read(fname, until=""):
@@ -32,8 +32,8 @@ setup(
     version=VERSION,
     description='A Python package to create/manipulate DXF drawings.',
     author=AUTHOR_NAME,
-    url='http://github.com/mozman/ezdxf.git',
-    download_url='http://github.com/mozman/ezdxf/releases',
+    url='http://ezdxf.mozman.at',
+    download_url='https://pypi.python.org/pypi/ezdxf/',
     author_email=AUTHOR_EMAIL,
     packages=['ezdxf',
               'ezdxf.legacy',
