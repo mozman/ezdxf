@@ -4,7 +4,7 @@
 # License: MIT License
 
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from .lldxf.types import cast_tag_value, DXFTag
 from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFValueError, DXFAttributeError, DXFInvalidLayerName

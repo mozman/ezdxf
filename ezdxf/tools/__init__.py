@@ -3,7 +3,7 @@
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from .c23 import isstring
 from ..lldxf.const import DXFValueError, DXFTypeError

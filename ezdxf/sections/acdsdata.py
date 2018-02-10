@@ -75,7 +75,7 @@ section structure (work in progress):
 0 <str> ENDSEC
 """
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from itertools import islice
 from ..lldxf.tags import group_tags, Tags

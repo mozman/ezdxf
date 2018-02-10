@@ -2,7 +2,7 @@
 # Created: 03.07.2015 taken from my dxfgrabber package
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 
 def int2rgb(value):

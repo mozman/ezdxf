@@ -3,7 +3,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator

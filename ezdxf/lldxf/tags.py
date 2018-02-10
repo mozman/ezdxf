@@ -3,7 +3,7 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag

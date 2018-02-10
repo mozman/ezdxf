@@ -4,7 +4,7 @@
 # License: MIT License
 # The ModelSpace is a special Layout called 'Model'
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout

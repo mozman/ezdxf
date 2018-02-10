@@ -22,7 +22,7 @@
 # - OLE2FRAME (compressed data)
 
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from contextlib import contextmanager
 

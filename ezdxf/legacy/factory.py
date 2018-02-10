@@ -61,7 +61,7 @@ the section markers and table headers present:
 
 """
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from . import tableentries
 from . import graphics

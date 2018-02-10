@@ -7,7 +7,7 @@
 # --------------------------------------------------- #
 
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from functools import partial
 import logging
@@ -53,7 +53,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
         block_record = get_block_record_by_alt_names((block_name, block_name.upper()))
     except DXFKeyError:
         raise NotImplementedError("'%s' block record setup not implemented, send an email to "
-                                  "<mozman@gmx.at> with your DXF file." % block_name)
+                                  "<ezdxf@mozman.at> with your DXF file." % block_name)
     real_block_name = block_record.dxf.name  # can be *Model_Space or *MODEL_SPACE
     block_record_handle = block_record.dxf.handle
 
@@ -61,7 +61,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
         block = dwg.blocks.get(real_block_name)
     except DXFKeyError:
         raise NotImplementedError("'%s' block setup not implemented, send an email to "
-                                  "<mozman@gmx.at> with your DXF file." % real_block_name)
+                                  "<ezdxf@mozman.at> with your DXF file." % real_block_name)
     else:
         block.set_block_record_handle(block_record_handle)   # grant valid linking
 

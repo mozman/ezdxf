@@ -7,7 +7,7 @@
 
 # IMPORTANT: use only standard 7-Bit ascii code
 
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 import sys
 

@@ -3,7 +3,7 @@
 # License: MIT License
 # Just one header var definition for all DXF version needed, because AutoCAD ignores unknown header vars
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from functools import partial
 from ..lldxf.hdrvars import SingleValue, Point2D, Point3D

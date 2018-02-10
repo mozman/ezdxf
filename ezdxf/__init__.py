@@ -5,7 +5,7 @@
 version = (0, 8, 6)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 import sys
 if sys.version_info[:2] < (2, 7):

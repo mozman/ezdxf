@@ -10,7 +10,7 @@ from setuptools import setup
 
 VERSION = "0.8.6"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
-AUTHOR_EMAIL = 'mozman@mozman.at'
+AUTHOR_EMAIL = 'me@mozman.at'
 
 
 def read(fname, until=""):

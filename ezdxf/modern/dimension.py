@@ -4,7 +4,7 @@
 # License: MIT License
 
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
+__author__ = "mozman <me@mozman.at>"
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..legacy import graphics as legacy
