@@ -34,7 +34,8 @@ class ObjectsSection(AbstractSection):
             return self.setup_rootdict()
 
     def setup_rootdict(self):
-        """Create a root dictionary. Has to be the first object in the objects section.
+        """
+        Create a root dictionary. Has to be the first object in the objects section.
         """
         if len(self):
             raise DXFStructureError("Can not create root dictionary in none empty objects section.")

@@ -67,12 +67,14 @@ class DXFDictionary(DXFObject):
         return self.tags.subclasses[1]
 
     def keys(self):
-        """Generator for the dictionary's keys.
+        """
+        Generator for the dictionary's keys.
         """
         return (item[0] for item in self.items())
 
     def items(self):
-        """Generator for the dictionary's items (``(key, value)`` pairs).
+        """
+        Generator for the dictionary's items (``(key, value)`` pairs).
         """
         key = ""
         for code, value in self.AcDbDictinary:
@@ -82,40 +84,46 @@ class DXFDictionary(DXFObject):
                 yield key, value
 
     def __getitem__(self, key):
-        """Return the value for *key* if *key* is in the dictionary, else raises a :class:`KeyError()`.
+        """
+        Return the value for *key* if *key* is in the dictionary, else raises a :class:`KeyError()`.
         """
         return self.get(key)
 
     def __setitem__(self, key, value):
-        """Add item *(key, value)* to dictionary.
+        """
+        Add item *(key, value)* to dictionary.
         """
         return self.add(key, value)
 
     def __delitem__(self, key):
-        """Remove element *key* from the dictionary. *KeyError* if *key* is not contained in the
+        """
+        Remove element *key* from the dictionary. *KeyError* if *key* is not contained in the
         dictionary.
         """
         return self.remove(key)
 
     def __contains__(self, key):
-        """Return *True* if the dictionary has a key *key*, else *False*.
+        """
+        Return *True* if the dictionary has a key *key*, else *False*.
         """
         return False if self._get_item_index(key) is None else True
 
     def __len__(self):
-        """Return the number of items in the dictionary.
+        """
+        Return the number of items in the dictionary.
         """
         return self.count()
 
     def count(self):
-        """Return the number of items in the dictionary.
+        """
+        Return the number of items in the dictionary.
         """
         return sum(1 for tag in self.AcDbDictinary if tag.code == ENTRY_NAME_CODE)
 
     def get(self, key, default=DXFKeyError):
         """
-        Return the value (handle) for *key* if *key* is in the dictionary, else *default*. If *default* is not given,
-        it defaults to :class:`KeyError()`, so that this method raises a *DXFKeyError*.
+        Return the value (handle) for *key* if *key* is in the dictionary, else *default*, raises a *DXFKeyError*
+        for *default*=DXFKeyError.
         """
         index = self._get_item_index(key)
         if index is None:
@@ -128,7 +136,8 @@ class DXFDictionary(DXFObject):
     get_handle = get  # synonym
 
     def get_entity(self, key):
-        """Get object referenced by handle associated by *key* as wrapped entity, raises a *KeyError* if *key* not exists.
+        """
+        Get object referenced by handle associated by *key* as wrapped entity, raises a *KeyError* if *key* not exists.
         """
         handle = self.get(key)
         if self.drawing is not None:
@@ -137,7 +146,8 @@ class DXFDictionary(DXFObject):
             return handle
 
     def add(self, key, value, code=350):
-        """Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
+        """
+        Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
         data and defaults to ``350`` (soft-owner handle).
         """
         index = self._get_item_index(key)
@@ -150,7 +160,8 @@ class DXFDictionary(DXFObject):
             content_tags[index + 1] = value_tag
 
     def remove(self, key):
-        """Remove element *key* from the dictionary. Raises *DXFKeyError* if *key* is not contained in the
+        """
+        Remove element *key* from the dictionary. Raises *DXFKeyError* if *key* is not contained in the
         dictionary.
         """
         index = self._get_item_index(key)
@@ -160,7 +171,8 @@ class DXFDictionary(DXFObject):
             self._discard(index)
 
     def discard(self, key):
-        """Remove *key* from the dictionary if it is present.
+        """
+        Remove *key* from the dictionary if it is present.
         """
         self._discard(self._get_item_index(key))
 
@@ -182,9 +194,11 @@ class DXFDictionary(DXFObject):
         del self.AcDbDictinary[start_index:]
 
     def add_new_dict(self, key):
-        """Create a new sub dictionary.
+        """
+        Create a new sub dictionary.
 
-        :param key: Name of the sub dictionary
+        Args:
+            key: name of the sub dictionary
         """
         dxf_dict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)
         self.add(key, dxf_dict.dxf.handle)
@@ -238,7 +252,8 @@ class DXFDictionaryWithDefault(DXFDictionary):
     )
 
     def get(self, key, default=DXFKeyError):
-        """Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
+        """
+        Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
         value. Parameter *default* is always ignored!
         """
         return super(DXFDictionaryWithDefault, self).get(key, default=self.dxf.default)
@@ -534,19 +549,22 @@ class XRecord(DXFObject):
         return len(self.content_tags) - 2
 
     def __getitem__(self, index):
-        """Returns DXF tag at position *index*.
+        """
+        Returns DXF tag at position *index*.
         """
         # skip first tags = (100, 'AcDbXrecord'), (280, ...)
         return self.content_tags[XRecord._adjust_index(index)]
 
     def __setitem__(self, index, dxftag):
-        """Replace DXF tag at position *index* with *dxftag*.
+        """
+        Replace DXF tag at position *index* with *dxftag*.
         """
         # skip first tags = (100, 'AcDbXrecord'), (280, ...)
         self.content_tags[XRecord._adjust_index(index)] = dxftag
 
     def __iter__(self):
-        """Iterate over data, yielding DXF tags as named tuple *(code, value)*.
+        """
+        Iterate over data, yielding DXF tags as named tuple *(code, value)*.
         """
         tags = iter(self.content_tags)
         next(tags)  # skip (100, 'AcDbXrecord')
@@ -554,7 +572,8 @@ class XRecord(DXFObject):
         return tags
 
     def append(self, dxftag):
-        """Append *dxftag* at the end of the tag list.
+        """
+        Append *dxftag* at the end of the tag list.
         """
         self.content_tags.append(dxftag)
 

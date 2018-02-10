@@ -22,7 +22,7 @@ Quick-Info
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
 - additional read support for older DXF versions than R12 (upgraded to R12)
 - preserves third-party DXF content
-- additional fast :ref:`r12writer`, that creates just an ENTITIES section with support for the basic DXF entities
+- additional :ref:`r12writer`, that creates just an ENTITIES section with support for the basic DXF entities
 
 
 Website
