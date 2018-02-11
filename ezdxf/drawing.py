@@ -74,14 +74,6 @@ class Drawing(object):
             self.header['$HANDLING'] = 1  # write handles by default
 
         self.layouts = self.dxffactory.get_layouts()
-
-        if self.dxfversion > 'AC1009':  # do cleanup work, after building layouts
-            # because the owner tag is not mandatory: set owner tags (330) if not exists
-            model_space_key = self.modelspace().layout_key
-            paper_space_key = self.get_active_layout_key()
-            self.entities.repair_owner_tags(model_space_key, paper_space_key)
-            self.layouts.link_block_entities_into_layouts()
-
         if options.compress_binary_data:
             self.compress_binary_data()
 

@@ -3,18 +3,17 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
 from itertools import chain
-from ..entityspace import LayoutSpaces, EntitySpace
+from ..entityspace import EntitySpace
 from .abstract import AbstractSection
 
 
-class SetupEntitySection(AbstractSection):
+class EntitySection(AbstractSection):
     name = 'ENTITIES'
 
     def __init__(self, tags, drawing):
-        super(SetupEntitySection, self).__init__(EntitySpace(drawing.entitydb), tags, drawing)
+        super(EntitySection, self).__init__(EntitySpace(drawing.entitydb), tags, drawing)
 
     def __iter__(self):
         layouts = self.drawing.layouts
@@ -56,40 +55,3 @@ class SetupEntitySection(AbstractSection):
         # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
         self.drawing.layouts.write_entities_section(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
-
-
-class EntitySection(AbstractSection):
-    name = 'ENTITIES'
-
-    def __init__(self, tags, drawing):
-        layout_spaces = LayoutSpaces(drawing.entitydb, drawing.dxfversion)
-        super(EntitySection, self).__init__(layout_spaces, tags, drawing)
-
-    def get_layout_space(self, key):
-        return self._entity_space.get_entity_space(key)
-
-    def set_layout_space(self, key, entity_space):
-        return self._entity_space.set_entity_space(key, entity_space)
-
-    # start of public interface
-
-    def __iter__(self):
-        wrap = self.dxffactory.wrap_handle
-        for handle in self._entity_space.handles():
-            yield wrap(handle)
-
-    def iter_layout_entities(self):
-        layouts = self.drawing.layouts
-        for entity in chain(layouts.modelspace(), layouts.active_layout()):
-            yield entity
-
-    # end of public interface
-
-    def write(self, tagwriter):
-        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
-        self.drawing.layouts.write_entities_section(tagwriter)
-        tagwriter.write_tag2(0, "ENDSEC")
-
-    def repair_owner_tags(self, model_space_layout_key, paper_space_key):
-        self._entity_space.repair_owner_tags(model_space_layout_key, paper_space_key)
