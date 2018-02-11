@@ -10,7 +10,7 @@ from .tables import TablesSection
 from .blocks import BlocksSection
 from .classes import ClassesSection
 from .objects import ObjectsSection
-from .entities import EntitySection
+from .entities import EntitySection, SetupEntitySection
 from .unsupported import UnsupportedSection
 from ..lldxf.const import DXFStructureError
 
@@ -34,7 +34,10 @@ class Sections(object):
         # required sections
         self._sections['TABLES'] = TablesSection(sections.get('TABLES', None), drawing)
         self._sections['BLOCKS'] = BlocksSection(sections.get('BLOCKS', None), drawing)
-        self._sections['ENTITIES'] = EntitySection(sections.get('ENTITIES', None), drawing)
+        if drawing.dxfversion > 'AC1009':
+            self._sections['ENTITIES'] = EntitySection(sections.get('ENTITIES', None), drawing)
+        else:
+            self._sections['ENTITIES'] = SetupEntitySection(sections.get('ENTITIES', None), drawing)
         if drawing.dxfversion > 'AC1009':
             # required sections
             self._sections['CLASSES'] = ClassesSection(sections.get('CLASSES', None), drawing)
