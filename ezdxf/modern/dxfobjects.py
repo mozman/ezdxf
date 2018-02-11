@@ -270,14 +270,14 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
     'top_margin': DXFAttr(43),  # in mm
     'paper_width': DXFAttr(44),  # in mm
     'paper_height': DXFAttr(45),  # in mm
-    'plot_origin_x_offset': DXFAttr(46),  # in mm
-    'plot_origin_y_offset': DXFAttr(47),  # in mm
-    'plot_window_x1': DXFAttr(48),
-    'plot_window_y1': DXFAttr(49),
-    'plot_window_x2': DXFAttr(140),
-    'plot_window_y2': DXFAttr(141),
-    'custom_print_scale_numerator': DXFAttr(142),  # Numerator of custom print scale: real world (paper) units
-    'custom_print_scale_denominator': DXFAttr(143),  # Denominator of custom print scale: drawing units
+    'plot_origin_x_offset': DXFAttr(46, default=0.),  # in mm
+    'plot_origin_y_offset': DXFAttr(47, default=0.),  # in mm
+    'plot_window_x1': DXFAttr(48, default=0.),
+    'plot_window_y1': DXFAttr(49, default=0.),
+    'plot_window_x2': DXFAttr(140, default=0.),
+    'plot_window_y2': DXFAttr(141, default=0.),
+    'scale_numerator': DXFAttr(142, default=1.),  # Numerator of custom print scale: real world (paper) units
+    'scale_denominator': DXFAttr(143, default=1.),  # Denominator of custom print scale: drawing units
     'plot_layout_flags': DXFAttr(70),
         # 1 = Plot Viewport Borders
         # 2 = Show Plot Styles

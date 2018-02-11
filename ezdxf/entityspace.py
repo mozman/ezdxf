@@ -142,15 +142,11 @@ class LayoutSpaces(object):
         entity_space = self.get_entity_space(self._get_key(tags))
         entity_space.store_tags(tags)
 
-    def write(self, tagwriter, keys=None):
-        """ Write all entity spaces to *stream*.
-
-        If *keys* is not *None*, write only entity spaces defined in *keys*.
+    def write(self, tagwriter, keys):
+        """
+        Write all entity spaces defined in *keys* to *tagwriter*.
         """
         layout_spaces = self._layout_spaces
-        if keys is None:
-            keys = set(layout_spaces.keys())
-
         for key in keys:
             layout_spaces[key].write(tagwriter)
 

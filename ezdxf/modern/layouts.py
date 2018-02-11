@@ -9,7 +9,7 @@ __author__ = "mozman <me@mozman.at>"
 
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError
+from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, SCALE_TO_INDEX, STD_SCALES
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
@@ -43,6 +43,9 @@ class Layouts(object):
                 # copy block entity space to layout entity space
                 layout_spaces.set_entity_space(layout.layout_key, layout.block.get_entity_space())
                 # now the block entity space and layout entity space references the same EntitySpace() object
+
+    def __len__(self):
+        return len(self._layouts)
 
     def __contains__(self, name):
         return name in self._layouts
@@ -203,7 +206,8 @@ class Layout(DXF12Layout):
     def dxf(self):
         return self.dxf_layout.dxf
 
-    def paper_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', landscape=True):
+    def paper_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', rotation=0, scale=16,
+                    name='ezdxf', device='DWG to PDF.pc3'):
         """
         Setup plot settings and paper size and reset viewports.
 
@@ -211,12 +215,24 @@ class Layout(DXF12Layout):
             size:
             margins: (top, right, bottom, left) hint: clockwise
             units: 'mm' or 'inch'
-            name: paper name as string, suffix '_(width_x_height_unit)' added automatically
-            landscape: True else portrait orientation
+            rotation: 0=no rotation, 1=90deg count-clockwise, 2=upside-down, 3=90deg clockwise
+            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
+            name: paper name prefix '{name}_({width}_x_{height}_{unit})'
+            device: device .pc3 configuration file or system printer name
 
         """
         if self.name == 'Model':
             raise DXFTypeError("No paper setup for model space.")
+        if int(rotation) not in (0, 1, 2, 3):
+            raise DXFValueError("valid rotation values: 0-3")
+        if isinstance(scale, tuple):
+            standard_scale = Layout._std_scale(scale)
+        elif isinstance(scale, int):
+            standard_scale = scale
+            scale = Layout._scale_tuple(standard_scale)
+        else:
+            raise DXFTypeError("scale has to be an int or a tuple(numerator, denominator)")
+
         paper_width, paper_height = size
         margin_top, margin_right, margin_bottom, margin_left = margins
         units = units.lower()
@@ -234,42 +250,50 @@ class Layout(DXF12Layout):
         # Setup PLOTSETTINGS
         dxf = self.dxf_layout.dxf
         dxf.page_setup_name = ''
-        dxf.plot_configuration_file = "DWG to PDF.pc3"
-        dxf.paper_size = 'ezdxf_({:.2f}_x_{:.2f}_{})'.format(paper_width, paper_height, units)
+        dxf.plot_configuration_file = device
+        dxf.paper_size = '{0}_({1:.2f}_x_{2:.2f}_{3})'.format(name, paper_width, paper_height, units)
         dxf.left_margin = margin_left * unit_factor
         dxf.bottom_margin = margin_bottom * unit_factor
         dxf.right_margin = margin_right * unit_factor
         dxf.top_margin = margin_top * unit_factor
         dxf.paper_width = paper_width * unit_factor
         dxf.paper_height = paper_height * unit_factor
+        dxf.scale_numerator = scale[0]
+        dxf.scale_denominator = scale[1]
         dxf.plot_paper_units = plot_paper_units
-        dxf.plot_rotation = 0 if landscape else 1
+        dxf.plot_rotation = rotation
         dxf.plot_origin_x_offset = 0
         dxf.plot_origin_y_offset = 0
+        dxf.standard_scale_type = standard_scale
 
         # Setup Layout
         dxf.limmin = (0, 0)  # paper space units
         dxf.limmax = (paper_width, paper_height)
-        dxf.extmin = (0, 0, 0)  # paper space units
-        dxf.extmax = (paper_width, paper_height, 0)
+        dxf.extmin = (+1e20, +1e20, +1e20)  # AutoCAD default
+        dxf.extmax = (-1e20, -1e20, -1e20)  # AutoCAD default
         self.reset_viewports()
 
     def reset_viewports(self):
         # remove existing viewports
         def paper_units(value):
-            return value / scale_factor
+            return value / unit_factor * scale_factor
 
         for viewport in self.viewports():
             self.delete_entity(viewport)
 
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inches
-            scale_factor = 25.4
+            unit_factor = 25.4
         else:  # mm
-            scale_factor = 1.0
+            unit_factor = 1.0
 
         # all paper parameters in mm!
-        # all viewport parameters in paper space units inch/mm
+        # all viewport parameters in paper space units inch/mm and by scale!
+        try:
+            scale_factor = dxf.scale_denominator / dxf.scale_numerator
+        except ZeroDivisionError:
+            scale_factor = 1.
+
         paper_width = paper_units(dxf.paper_width)
         paper_height = paper_units(dxf.paper_height)
         # add 'main' viewport
@@ -284,6 +308,15 @@ class Layout(DXF12Layout):
         main_viewport.dxf.id = 1  # set as main viewport
 
     # end of public interface
+
+    @staticmethod
+    def _std_scale(scale):
+        scale = float(scale[0]), float(scale[1])
+        return SCALE_TO_INDEX.get(scale, 16)
+
+    @staticmethod
+    def _scale_tuple(scale_index):
+        return STD_SCALES.get(scale_index, (1, 1))
 
     @property
     def layout_key(self):
