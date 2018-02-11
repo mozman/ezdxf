@@ -37,6 +37,10 @@ class DXF12Layouts(object):
         # paperspace attribute defaults to 0 if not present
         return self._paperspace if entity.dxf.paperspace else self._modelspace
 
+    def write_entities_section(self, tagwriter):
+        self._modelspace.write(tagwriter)
+        self._paperspace.write(tagwriter)
+
 
 class BaseLayout(GraphicsFactory):
     """
@@ -186,6 +190,9 @@ class DXF12Layout(BaseLayout):
         vports =  [entity for entity in self if entity.dxftype() == 'VIEWPORT']
         vports.sort(key=lambda e: e.dxf.id)
         return vports
+
+    def write(self, tagwriter):
+        self._entity_space.write(tagwriter)
 
 class DXF12BlockLayout(BaseLayout):
     """

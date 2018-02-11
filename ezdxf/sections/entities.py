@@ -34,8 +34,7 @@ class EntitySection(AbstractSection):
     def write(self, tagwriter):
         tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
         # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
-        layout_keys = self.drawing.get_active_entity_space_layout_keys()
-        self._entity_space.write(tagwriter, layout_keys)
+        self.drawing.layouts.write_entities_section(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
 
     def repair_owner_tags(self, model_space_layout_key, paper_space_key):

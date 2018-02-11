@@ -9,7 +9,7 @@ __author__ = "mozman <me@mozman.at>"
 
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, SCALE_TO_INDEX, STD_SCALES
+from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, SCALE_TO_INDEX, STD_SCALES, DXFInternalEzdxfError
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
@@ -148,6 +148,19 @@ class Layouts(object):
         self._dxf_layout_management_table.remove(layout.name)
         del self._layouts[layout.name]
         layout.destroy()
+
+    def active_layout(self):
+        for layout in self:
+            if layout.block_record_name.upper() == '*PAPER_SPACE':
+                return layout
+        raise DXFInternalEzdxfError('No active paper space found.')
+
+    def write_entities_section(self, tagwriter):
+        # DXF entities of the model space and the active paper space are stored in the ENTITIES section,
+        # all DXF entities of other paper space layouts are stored in the BLOCK definition of the paper space layout
+        # in the BLOCKS section.
+        self.modelspace().write(tagwriter)
+        self.active_layout().write(tagwriter)
 
 
 class Layout(DXF12Layout):
