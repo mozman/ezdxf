@@ -65,11 +65,23 @@ def setup_paper_space_layout(dwg, name):
     layout.add_line((5., -0.5), (5., 8.0))  # vert center line
     layout2 = dwg.layouts.new('mozman 1:1')
     layout2.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm')
+    layout2.add_viewport(
+        center=(100, 100),  # center of viewport in paper_space units
+        size=(50, 50),  # viewport size in paper_space units
+        view_center_point=(60, 40),  # model space point to show in center of viewport in WCS
+        view_height=20,  # how much model space area to show in viewport in drawing units
+    )
     layout2.add_line((0, 100), (200, 100))  # hor center line
     layout2.add_line((150, 0), (150, 150))  # vert center line
 
     layout3 = dwg.layouts.new('mozman 1:50')
     layout3.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 50))
+    layout3.add_viewport(
+        center=(5000, 5000),  # center of viewport in paper_space units, scale = 1:50
+        size=(5000, 2500),  # viewport size in paper_space units, scale = 1:50
+        view_center_point=(60, 40),  # model space point to show in center of viewport in WCS
+        view_height=20,  # how much model space area to show in viewport in drawing units
+    )
 
 
 if __name__ == '__main__':

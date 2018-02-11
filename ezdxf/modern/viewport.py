@@ -141,6 +141,30 @@ viewport_subclass = DefSubclass('AcDbViewport', {
     'view_twist_angle': DXFAttr(51, default=0),
     'circle_zoom': DXFAttr(72, default=100),
     'flags': DXFAttr(90, default=0),
+    # Viewport status bit-coded flags:
+    # 1 (0x1) = Enables perspective mode
+    # 2 (0x2) = Enables front clipping
+    # 4 (0x4) = Enables back clipping
+    # 8 (0x8) = Enables UCS follow
+    # 16 (0x10) = Enables front clip not at eye
+    # 32 (0x20) = Enables UCS icon visibility
+    # 64 (0x40) = Enables UCS icon at origin
+    # 128 (0x80) = Enables fast zoom
+    # 256 (0x100) = Enables snap mode
+    # 512 (0x200) = Enables grid mode
+    # 1024 (0x400) = Enables isometric snap style
+    # 2048 (0x800) = Enables hide plot mode
+    # 4096 (0x1000) = kIsoPairTop. If set and kIsoPairRight is not set, then isopair top is enabled. If both kIsoPairTop
+    #                 and kIsoPairRight are set, then isopair left is enabled
+    # 8192 (0x2000) = kIsoPairRight. If set and kIsoPairTop is not set, then isopair right is enabled
+    # 16384 (0x4000) = Enables viewport zoom locking
+    # 32768 (0x8000) = Currently always enabled
+    # 65536 (0x10000) = Enables non-rectangular clipping
+    # 131072 (0x20000) = Turns the viewport off
+    # 262144 (0x40000) = Enables the display of the grid beyond the drawing limits
+    # 524288 (0x80000) = Enable adaptive grid display
+    # 1048576 (0x100000) = Enables subdivision of the grid below the set grid spacing when the grid display is adaptive
+    # 2097152 (0x200000) = Enables grid follows workplane switching
     'clipping_boundary_handle': DXFAttr(340, default=0),
     'plot_style_name': DXFAttr(1),
     'render_mode': DXFAttr(281, default=0),
