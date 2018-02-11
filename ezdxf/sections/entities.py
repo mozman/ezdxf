@@ -10,6 +10,12 @@ from .abstract import AbstractSection
 
 
 class EntitySection(AbstractSection):
+    """
+    The new EntitySection() collects only at startup the entities in the ENTITIES section. By creating the Layouts()
+    object all entities form the EntitySection() moved into the Layout() objects, and the entity space of the
+    EntitySection() will be deleted by calling EntitySection.clear().
+
+    """
     name = 'ENTITIES'
 
     def __init__(self, tags, drawing):
@@ -23,6 +29,8 @@ class EntitySection(AbstractSection):
     def __len__(self):
         layouts = self.drawing.layouts
         return len(layouts.modelspace())+len(layouts.active_layout())
+
+    # none public interface
 
     def clear(self):
         del self._entity_space

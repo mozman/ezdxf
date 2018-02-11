@@ -176,11 +176,8 @@ class DXF2HtmlConverter(object):
         return SECTION_LINKS_TPL.format(buttons=' \n'.join(section_links))
 
     def get_entities(self):
-        wrap = self.drawing.dxffactory.wrap_handle
-        layout_keys = self.drawing.get_active_entity_space_layout_keys()
-        for key in layout_keys:
-            for handle in self.drawing.entities.get_layout_space(key):
-                yield wrap(handle)
+        for entity in self.drawing.entities:
+            yield entity
 
     def section2html(self, section, section_template):
         """Creates a <div> container of a specific DXF sections.
@@ -350,7 +347,10 @@ class DXF2HtmlConverter(object):
         """DXF block entity as <div> container.
         """
         block_html = self.entity2html(block_layout.block, create_ref_links=True)
-        entities_html = self.entities2html(iter(block_layout), create_ref_links=True)
+        if block_layout.name.upper() not in ('*MODEL_SPACE', '*PAPER_SPACE'):
+            entities_html = self.entities2html(iter(block_layout), create_ref_links=True)
+        else:
+            entities_html = ''
         endblk_html = self.entity2html(block_layout.endblk, create_ref_links=True)
         return BLOCK_TPL.format(name=block_layout.name, block=block_html, entities=entities_html, endblk=endblk_html)
 
