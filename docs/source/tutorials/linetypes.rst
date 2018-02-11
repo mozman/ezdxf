@@ -105,7 +105,7 @@ value > 0 is a line, a value < 0 is a gap, and a 0 ist a point, the ``[`` starts
 A following text in quotes defines a TEXT type, a following text without quotes defines a SHAPE type, in .lin files the
 shape type is a shape name, but ezdxf can not translate this name into the required shape file index, so *YOU* have to
 translate this name into the shape file index (e.g. saving the file with AutoCAD as DXF and searching for the line type
-definition, see also DXF Internals: :ref:`Linetype Table`).
+definition, see also DXF Internals: :ref:`LTYPE Table`).
 
 The second parameter is the text style for a TEXT type and the shape file name for the SHAPE type, the shape file has to
 be in the same directory as the DXF file. The following parameters in the scheme of ``S=1.0`` are:

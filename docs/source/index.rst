@@ -3,8 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: gfx/ezdxf-logo-rtd.png
+.. image:: gfx/ezdxf-logo-light-bg.svg
    :align: center
+   :width: 400px
 
 Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 
