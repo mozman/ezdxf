@@ -18,18 +18,11 @@ class DXF12Layouts(object):
     """
     def __init__(self, drawing):
         entities = drawing.sections.entities
-        if hasattr(entities, 'model_space_entities'):
-            model_space = entities.model_space_entities()
-        else:
-            model_space = entities.get_layout_space(0)
+        model_space = entities.model_space_entities()
         self._modelspace = DXF12Layout(model_space, drawing.dxffactory, 0)
-        if hasattr(entities, 'active_layout_entities'):
-            paper_space = entities.active_layout_entities()
-        else:
-            paper_space = entities.get_layout_space(1)
+        paper_space = entities.active_layout_entities()
         self._paperspace = DXF12Layout(paper_space, drawing.dxffactory, 1)
-        if hasattr(entities, 'clear'):
-            entities.clear()  # remove entites for entities section -> stored in layouts
+        entities.clear()  # remove entites for entities section -> stored in layouts
 
     def modelspace(self):
         return self._modelspace

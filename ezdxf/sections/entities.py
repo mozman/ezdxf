@@ -51,6 +51,12 @@ class SetupEntitySection(AbstractSection):
         layouts.modelspace().delete_all_entities()
         layouts.active_layout().delete_all_entities()
 
+    def write(self, tagwriter):
+        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
+        self.drawing.layouts.write_entities_section(tagwriter)
+        tagwriter.write_tag2(0, "ENDSEC")
+
 
 class EntitySection(AbstractSection):
     name = 'ENTITIES'
