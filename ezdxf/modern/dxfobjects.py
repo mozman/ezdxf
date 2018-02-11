@@ -522,7 +522,7 @@ class DXFLayout(DXFObject):
             # ID/handle of AcDbUCSTableRecord if UCS is a named
             # UCS. If not present, then UCS is unnamed
             'base_ucs': DXFAttr(346),
-            #ID/handle of AcDbUCSTableRecord of base UCS if UCS is
+            # ID/handle of AcDbUCSTableRecord of base UCS if UCS is
             # orthographic (76 code is non-zero). If not present and
             # 76 code is non-zero, then base UCS is taken to be WORLD
         }))

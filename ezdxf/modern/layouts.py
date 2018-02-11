@@ -13,15 +13,7 @@ from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, SCALE_TO_IND
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
-
-
-def move_entities_section_into_blocks(drawing):
-    blocks = drawing.blocks
-    model_space_block = blocks.get('*MODEL_SPACE')
-    model_space_block.set_entity_space(drawing.entities.model_space_entities())
-    active_layout_block = blocks.get('*PAPER_SPACE')
-    active_layout_block.set_entity_space(drawing.entities.active_layout_entities())
-    drawing.entities.clear()  # remove entities for entities section -> stored in layouts
+USE_STANDARD_SCALE = 16
 
 
 class Layouts(object):
@@ -29,8 +21,17 @@ class Layouts(object):
         self.drawing = drawing
         self._layouts = {}  # stores Layout() objects
         self._dxf_layout_management_table = None  # stores DXF layout handles key=layout_name; value=layout_handle
-        move_entities_section_into_blocks(drawing)
+        self._move_entities_section_into_blocks(drawing)
         self._setup()
+
+    @staticmethod
+    def _move_entities_section_into_blocks(drawing):
+        blocks = drawing.blocks
+        model_space_block = blocks.get('*MODEL_SPACE')
+        model_space_block.set_entity_space(drawing.entities.model_space_entities())
+        active_layout_block = blocks.get('*PAPER_SPACE')
+        active_layout_block.set_entity_space(drawing.entities.active_layout_entities())
+        drawing.entities.clear()  # remove entities for entities section -> stored in blocks
 
     @property
     def dxffactory(self):
@@ -128,7 +129,6 @@ class Layouts(object):
         blocks.rename_block(PAPER_SPACE, TMP_PAPER_SPACE_NAME)
         blocks.rename_block(new_active_paper_space_name, PAPER_SPACE)
         blocks.rename_block(TMP_PAPER_SPACE_NAME, new_active_paper_space_name)
-        # Layout spaces stored by layout key, no exchange necessary
 
     def delete(self, name):
         """ Delete layout *name* and all entities on it. Raises *KeyError* if layout *name* not exists.
@@ -159,12 +159,6 @@ class Layouts(object):
         # in the BLOCKS section.
         self.modelspace().write(tagwriter)
         self.active_layout().write(tagwriter)
-
-
-def get_layout_entity_space(drawing, layout):
-    block_record = drawing.dxffactory.wrap_handle(layout.dxf.block_record)
-    block = drawing.blocks.get(block_record.dxf.name)
-    return block.get_entity_space()
 
 
 class Layout(DXF12Layout):
@@ -207,11 +201,17 @@ class Layout(DXF12Layout):
         self.dxf_layout = dxffactory.wrap_handle(layout_handle)
         self._block_record_handle = self.dxf_layout.dxf.block_record
 
-        entity_space = get_layout_entity_space(drawing, self.dxf_layout)
+        entity_space = self._get_layout_entity_space(drawing, self.dxf_layout)
         super(Layout, self).__init__(entity_space, dxffactory, 0)
         self._layout_handle = layout_handle
         self._paperspace = 0 if self.name == 'Model' else 1
         self._repair_owner_tags()
+
+    @staticmethod
+    def _get_layout_entity_space(drawing, layout):
+        block_record = drawing.dxffactory.wrap_handle(layout.dxf.block_record)
+        block = drawing.blocks.get(block_record.dxf.name)
+        return block.get_entity_space()
 
     def _repair_owner_tags(self):
         layout_key = self.layout_key
@@ -248,13 +248,24 @@ class Layout(DXF12Layout):
             device: device .pc3 configuration file or system printer name
 
         """
+        def use_standard_scale(state):
+            flags = self.dxf_layout.dxf.plot_layout_flags
+            if state:
+                flags = flags | USE_STANDARD_SCALE
+            else:
+                flags = flags & ~USE_STANDARD_SCALE
+            self.dxf_layout.dxf.plot_layout_flags = flags
+
         if self.name == 'Model':
             raise DXFTypeError("No paper setup for model space.")
         if int(rotation) not in (0, 1, 2, 3):
             raise DXFValueError("valid rotation values: 0-3")
+
         if isinstance(scale, tuple):
-            standard_scale = Layout._std_scale(scale)
+            standard_scale = 16
+            use_standard_scale(False)
         elif isinstance(scale, int):
+            use_standard_scale(True)
             standard_scale = scale
             scale = Layout._scale_tuple(standard_scale)
         else:
@@ -281,6 +292,7 @@ class Layout(DXF12Layout):
         dxf.paper_size = '{0}_({1:.2f}_x_{2:.2f}_{3})'.format(name, paper_width, paper_height, units)
         dxf.left_margin = margin_left * unit_factor
         dxf.bottom_margin = margin_bottom * unit_factor
+
         dxf.right_margin = margin_right * unit_factor
         dxf.top_margin = margin_top * unit_factor
         dxf.paper_width = paper_width * unit_factor
@@ -315,24 +327,23 @@ class Layout(DXF12Layout):
             unit_factor = 1.0
 
         # all paper parameters in mm!
-        # all viewport parameters in paper space units inch/mm and by scale!
+        # all viewport parameters in paper space units inch/mm + scale factor!
         try:
             scale_factor = dxf.scale_denominator / dxf.scale_numerator
         except ZeroDivisionError:
             scale_factor = 1.
 
-        paper_width = paper_units(dxf.paper_width)
-        paper_height = paper_units(dxf.paper_height)
+        vp_width = paper_units(dxf.paper_width) * 1.2  # paper width + 20%
+        vp_height = paper_units(dxf.paper_height) * 1.2  # paper height + 20%
         # add 'main' viewport
-        print_width = paper_width - paper_units(dxf.left_margin) - paper_units(dxf.right_margin)
-        print_height = paper_height - paper_units(dxf.top_margin) - paper_units(dxf.bottom_margin)
-
         main_viewport = self.add_viewport(
-            center=(0, 0),  # no influence to 'main' viewport?
-            size=(paper_width, paper_height),  # I don't get it, just use paper size!
-            view_center_point=(int(print_width/2), int(print_height/2)),  # move this paper space location to the center of the viewport?
-            view_height=paper_height)  # view height in paper space units
+            center=(vp_width/2, vp_height/2),  # no influence to 'main' viewport?
+            size=(vp_width, vp_height),  # I don't get it, just use paper size!
+            view_center_point=(vp_width/2, vp_height/2),  # same as center
+            view_height=vp_height,   # view height in paper space units
+        )
         main_viewport.dxf.id = 1  # set as main viewport
+        dxf.viewport = main_viewport.dxf.handle
 
     # end of public interface
 

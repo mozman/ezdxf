@@ -36,21 +36,25 @@ class EntitySection(AbstractSection):
         del self._entity_space
 
     def _setup_entities(self):
+        # required for the drawing setup process
         wrap = self.dxffactory.wrap_handle
         for handle in self._entity_space:
             yield wrap(handle)
 
     def model_space_entities(self):
+        # required for the drawing setup process
         es = EntitySpace(self.entitydb)
         es.extend(self._filter_entities(paper_space=0))
         return es
 
     def active_layout_entities(self):
+        # required for the drawing setup process
         es = EntitySpace(self.entitydb)
         es.extend(self._filter_entities(paper_space=1))
         return es
 
     def _filter_entities(self, paper_space=0):
+        # required for the drawing setup process
         return (entity.dxf.handle for entity in self._setup_entities() if entity.get_dxf_attrib('paperspace', 0) == paper_space)
 
     def delete_all_entities(self):

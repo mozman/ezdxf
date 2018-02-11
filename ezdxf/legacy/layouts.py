@@ -195,6 +195,10 @@ class DXF12Layout(BaseLayout):
         vports.sort(key=lambda e: e.dxf.id)
         return vports
 
+    def renumber_viewports(self):
+        for num, viewport in enumerate(self.viewports(), start=1):
+            viewport.dxf.id = num
+
     def write(self, tagwriter):
         self._entity_space.write(tagwriter)
 
