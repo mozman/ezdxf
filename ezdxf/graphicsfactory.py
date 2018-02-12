@@ -175,45 +175,6 @@ class GraphicsFactory(object):
         dxfattribs['size'] = size
         return self.build_and_add_entity('SHAPE', dxfattribs)
 
-    def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
-        dxfattribs = copy_attribs(dxfattribs)
-        width, height = size
-
-        def viewport_AC1009():
-            attribs = {
-                'center': center,
-                'width': width,
-                'height': height,
-                'status': 1,  # by default highest priority (stack order)
-                'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
-            }
-            attribs.update(dxfattribs)
-            # DXF R12 (AC1009): view_center_point and view_height (as many other viewport attributes) are not usual
-            # DXF attributes, they are stored as extended DXF tags.
-            viewport = self.build_and_add_entity('VIEWPORT', attribs)
-            viewport.dxf.id = viewport.get_next_viewport_id()
-            with viewport.edit_data() as vp_data:
-                vp_data.view_center_point = view_center_point
-                vp_data.view_height = view_height
-            return viewport
-
-        def viewport_AC1015():
-            attribs = {
-                'center': center,
-                'width': width,
-                'height': height,
-                'status': 1,  # by default highest priority (stack order)
-                'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
-                'view_center_point': view_center_point,
-                'view_height': view_height,
-            }
-            attribs.update(dxfattribs)
-            viewport = self.build_and_add_entity('VIEWPORT', attribs)
-            viewport.dxf.id = viewport.get_next_viewport_id()
-            return viewport
-
-        return viewport_AC1009() if self.dxfversion <= 'AC1009'else viewport_AC1015()
-
 # new entities in DXF AC1015 (R2000)
 
     def add_lwpolyline(self, points, dxfattribs=None):

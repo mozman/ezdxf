@@ -351,8 +351,9 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
         # 5 = Custom
     'shade_plot_custom_dpi': DXFAttr(78),
     # Valid range: 100 to 32767, Only applied when the shade_plot_resolution level is set to 5 (Custom)
-    'scale_factor': DXFAttr(147),
-    # A floating point scale factor that represents the standard scale value specified in code 75
+    'unit_factor': DXFAttr(147),
+    # 147: factor for unit conversion (mm -> inches)
+    # 147: DXF Reference error 'A floating point scale factor that represents the standard scale value specified in code 75'
     'paper_image_origin_x': DXFAttr(148),
     'paper_image_origin_y': DXFAttr(149),
     'shade_plot_handle': DXFAttr(333),

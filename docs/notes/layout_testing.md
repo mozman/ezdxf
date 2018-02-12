@@ -1,17 +1,15 @@
-
-
 #LAYOUT: A4 M1_1
 ##PLOT SETTINGS:
 (1) page_setup_name: DWG To PDF.pc3  
 (2) plot_configuration_file: DWG To PDF.pc3  
-(4) paper_size: ISO_A4_(210.00_x_297.00_MM)  
+(4) paper_size: ISO_A4_(297.00_x_210.00_MM)  
 (6) plot_view_name:   
 (40) left_margin: 5.793749809265136  
 (41) bottom_margin: 17.79375076293945  
-(42) right_margin: 5.793746948242187  
-(43) top_margin: 17.79376220703125  
-(44) paper_width: 210.0  
-(45) paper_height: 297.0  
+(42) right_margin: 5.79376220703125  
+(43) top_margin: 17.79374694824219  
+(44) paper_width: 297.0  
+(45) paper_height: 210.0  
 (46) plot_origin_x_offset: 0.0  
 (47) plot_origin_y_offset: 0.0  
 (48) plot_window_x1: 0.0  
@@ -22,7 +20,7 @@
 (143) scale_denominator: 1.0  
 (70) plot_layout_flags: 688 b1010110000  
 (72) plot_paper_units: 1  
-(73) plot_rotation: 1  
+(73) plot_rotation: 0  
 (74) plot_type: 5  
 (7) current_style_sheet:   
 (75) standard_scale_type: 16  
@@ -34,17 +32,16 @@
 (7) layout_flags: A4 M1_1  
 (70) layout_flags: 1 b1  
 (71) taborder: 1  
-(10) limmin: (-17.79376220703125, -5.793749809265136)  
-(11) limmax: (279.2062377929688, 204.2062501907349)  
+(10) limmin: (-5.793749809265136, -17.79375076293945)  
+(11) limmax: (291.2062501907349, 192.2062492370605)  
 (12) insert_base: (0.0, 0.0, 0.0)  
-(14) extmin: (25.69999999999999, 19.5, 0.0)  
-(15) extmax: (231.3, 175.5, 0.0)  
+(14) extmin: (25.68037488762537, 19.49815134388854, -0.0015258207003583)  
+(15) extmax: (231.3135382334088, 175.5017218376691, 3.49246037e-08)  
 (146) elevation: 0.0  
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: A4 M1_1 offset
 ##PLOT SETTINGS:
@@ -89,8 +86,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: A4 M1_50
 ##PLOT SETTINGS:
@@ -127,7 +123,7 @@
 (70) layout_flags: 1 b1  
 (71) taborder: 3  
 (10) limmin: (-289.6874904632568, -889.6875381469727)  
-(11) limmax: (14560.31250953674, 9610.312461853027)  
+(11) limmax: (14560.31250953674, 9610.31246185303)  
 (12) insert_base: (0.0, 0.0, 0.0)  
 (14) extmin: (1e+20, 1e+20, 1e+20)  
 (15) extmax: (-1e+20, -1e+20, -1e+20)  
@@ -135,8 +131,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: A4 M1_50 offset
 ##PLOT SETTINGS:
@@ -181,8 +176,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: ANSI A M1_1
 ##PLOT SETTINGS:
@@ -219,7 +213,7 @@
 (70) layout_flags: 1 b1  
 (71) taborder: 2  
 (10) limmin: (-0.2281003861915408, -0.7005413686196637)  
-(11) limmax: (10.77189937351257, 7.799458391084446)  
+(11) limmax: (10.77189937351257, 7.799458391084445)  
 (12) insert_base: (0.0, 0.0, 0.0)  
 (14) extmin: (25.69999999999999, 19.5, 0.0)  
 (15) extmax: (231.3, 175.5, 0.0)  
@@ -227,8 +221,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: ANSI A M1_1 offset
 ##PLOT SETTINGS:
@@ -242,8 +235,8 @@
 (43) top_margin: 17.79374694824219  
 (44) paper_width: 279.3999938964844  
 (45) paper_height: 215.8999938964844  
-(46) plot_origin_x_offset: 76.19999999999999  
-(47) plot_origin_y_offset: 76.19999999999999  
+(46) plot_origin_x_offset: 76.19999999999997  
+(47) plot_origin_y_offset: 76.19999999999997  
 (48) plot_window_x1: 0.0  
 (49) plot_window_y1: 0.0  
 (140) plot_window_x2: 0.0  
@@ -264,8 +257,8 @@
 (7) layout_flags: ANSI A M1_1 offset  
 (70) layout_flags: 1 b1  
 (71) taborder: 6  
-(10) limmin: (-3.22810038619154, -3.700541368619663)  
-(11) limmax: (7.771899373512569, 4.799458391084447)  
+(10) limmin: (-3.228100386191539, -3.700541368619663)  
+(11) limmax: (7.771899373512568, 4.799458391084447)  
 (12) insert_base: (0.0, 0.0, 0.0)  
 (14) extmin: (25.69999999999999, 19.5, 0.0)  
 (15) extmax: (231.3, 175.5, 0.0)  
@@ -273,8 +266,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: ANSI A M1_50
 ##PLOT SETTINGS:
@@ -311,7 +303,7 @@
 (70) layout_flags: 1 b1  
 (71) taborder: 4  
 (10) limmin: (-11.40501930957704, -35.02706843098318)  
-(11) limmax: (538.5949686756284, 389.9729195542223)  
+(11) limmax: (538.5949686756283, 389.9729195542223)  
 (12) insert_base: (0.0, 0.0, 0.0)  
 (14) extmin: (1e+20, 1e+20, 1e+20)  
 (15) extmax: (-1e+20, -1e+20, -1e+20)  
@@ -319,8 +311,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: ANSI A M1_50 offset
 ##PLOT SETTINGS:
@@ -334,8 +325,8 @@
 (43) top_margin: 17.79374694824219  
 (44) paper_width: 279.3999938964844  
 (45) paper_height: 215.8999938964844  
-(46) plot_origin_x_offset: 76.19999999999999  
-(47) plot_origin_y_offset: 76.19999999999999  
+(46) plot_origin_x_offset: 76.19999999999997  
+(47) plot_origin_y_offset: 76.19999999999997  
 (48) plot_window_x1: 0.0  
 (49) plot_window_y1: 0.0  
 (140) plot_window_x2: 0.0  
@@ -365,8 +356,7 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
-
+(76) ucs_type: 0
 
 #LAYOUT: Model
 ##PLOT SETTINGS:
@@ -411,4 +401,5 @@
 (13) ucs_origin: (0.0, 0.0, 0.0)  
 (16) ucs_xaxis: (1.0, 0.0, 0.0)  
 (17) ucs_yaxis: (0.0, 1.0, 0.0)  
-(76) ucs_type: 0  
+(76) ucs_type: 0
+

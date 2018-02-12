@@ -69,13 +69,13 @@ Since DXF R2000 model space and paper space layouts require the DXF
 
     2       <<< name of system printer or plot configuration file
     none_device
-    4       <<< paper size (just a name?)
-    Letter_(8.50_x_11.00_Inches)
+    4       <<< paper size, part in braces should follow the schema (width_x_height_unit) unit is 'Inches' or 'MM'
+    Letter_(8.50_x_11.00_Inches)  # the part in front of the braces is ignored by AutoCAD
     6       <<< plot view name
 
-    40      <<< size of unprintable margin on left side of paper in millimeters
+    40      <<< size of unprintable margin on left side of paper in millimeters, defines also the plot origin-x
     6.35
-    41      <<< size of unprintable margin on bottom of paper in millimeters
+    41      <<< size of unprintable margin on bottom of paper in millimeters, defines also the plot origin-y
     6.35
     42      <<< size of unprintable margin on right side of paper in millimeters
     6.35
@@ -85,17 +85,17 @@ Since DXF R2000 model space and paper space layouts require the DXF
     215.90
     45      <<< plot paper size: physical paper height in millimeters
     279.40
-    46      <<< plot origin: X value of origin offset in millimeters
+    46      <<< X value of plot origin offset in millimeters, moves the plot origin-x
     0.0
-    47      <<< plot origin: Y value of origin offset in millimeters
+    47      <<< Y value of plot origin offset in millimeters, moves the plot origin-y
     0.0
     48      <<< plot window area: X value of lower-left window corner
     0.0
-    49      <<< plot window area: Y value of upper-right window corner
+    49      <<< plot window area: Y value of lower-left window corner
     0.0
-    140     <<< (same as 48???) plot window area: X value of lower-left window corner
+    140     <<< plot window area: X value of upper-right window corner
     0.0
-    141     <<< (same as 49???) plot window area: Y value of upper-right window corner
+    141     <<< plot window area: Y value of upper-right window corner
     0.0
     142     <<< numerator of custom print scale: real world (paper) units, 1.0 for scale 1:50
     1.0
@@ -103,18 +103,18 @@ Since DXF R2000 model space and paper space layouts require the DXF
     1.0
     70      <<< plot layout flags, bit-coded (... too many options)
     688     <<< b1010110000 = UseStandardScale(16)/PlotPlotStyle(32)/PrintLineweights(128)/DrawViewportsFirst(512)
-    72      <<< plot paper units (0/1/2 for inches/millimeters/pixels)
+    72      <<< plot paper units (0/1/2 for inches/millimeters/pixels), are pixels really supported?
     0
     73      <<< plot rotation (0/1/2/3 for 0deg/90deg counter-cw/upside-down/90deg cw)
     1       <<< 90deg clockwise
     74      <<< plot type 0-5 (... too many options)
     5       <<< 5 = layout information
-    7       <<< current style name
+    7       <<< current plot style name, e.g. 'acad.ctb' or 'acadlt.ctb'
 
     75      <<< standard scale type 0-31 (... too many options)
-    16      <<< 16 = 1:1
-    147     <<< a floating point scale factor that represents the standard scale value specified in code 75
-    1.0     <<< 1:1
+    16      <<< 16 = 1:1, also 16 if user scale type is used
+    147     <<< unit conversion factor
+    1.0     <<< for plot paper units in mm, else  0.03937... (1/25.4) for inches as plot paper units
     76      <<< shade plot mode (0/1/2/3 for as displayed/wireframe/hidden/rendered)
     0       <<< as displayed
     77      <<< shade plot resolution level 1-5 (... too many options)
@@ -134,26 +134,26 @@ Since DXF R2000 model space and paper space layouts require the DXF
     71      <<< Tab order ("Model" tab always appears as the first tab regardless of its tab order)
     1
     10      <<< minimum limits for this layout (defined by LIMMIN while this layout is current)
-    -0.25   <<<     x value
+    -0.25   <<<     x value, distance of the left paper margin from the plot origin-x, in plot paper units and by scale (e.g. x50 for 1:50)
     20      <<<     group code for y value
-    -0.25   <<<     y value
+    -0.25   <<<     y value, distance of the bottom paper margin from the plot origin-y, in plot paper units and by scale (e.g. x50 for 1:50)
     11      <<< maximum limits for this layout (defined by LIMMAX while this layout is current)
-    10.75   <<<     x value
+    10.75   <<<     x value, distance of the right paper margin from the plot origin-x, in plot paper units and by scale (e.g. x50 for 1:50)
     21      <<<     group code for y value
-    8.25    <<<     y value
+    8.25    <<<     y value, distance of the top paper margin from the plot origin-y, in plot paper units and by scale (e.g. x50 for 1:50)
     12      <<< insertion base point for this layout (defined by INSBASE while this layout is current)
     0.0     <<<     x value
     22      <<<     group code for y value
     0.0     <<<     y value
     32      <<<     group code for z value
     0.0     <<<     z value
-    14      <<< minimum extents for this layout (defined by EXTMIN while this layout is current)
+    14      <<< minimum extents for this layout (defined by EXTMIN while this layout is current), AutoCAD default is (1e20, 1e20, 1e20)
     1.05    <<<     x value
     24      <<<     group code for y value
     0.80    <<<     y value
     34      <<<     group code for z value
     0.0     <<<     z value
-    15      <<< maximum extents for this layout (defined by EXTMAX while this layout is current)
+    15      <<< maximum extents for this layout (defined by EXTMAX while this layout is current), AutoCAD default is (-1e20, -1e20, -1e20)
     9.45    <<<     x value
     25      <<<     group code for y value
     7.20    <<<     y value

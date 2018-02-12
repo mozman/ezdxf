@@ -30,7 +30,7 @@ def print_layout(layout):
     print("(74) plot_type: {}  ".format(dxf.plot_type))
     print("(7) current_style_sheet: {}  ".format(dxf.current_style_sheet))
     print("(75) standard_scale_type: {}  ".format(dxf.standard_scale_type))
-    print("(147) scale_factor: {}  ".format(dxf.scale_factor))
+    print("(147) unit_factor: {}  ".format(dxf.unit_factor))
     print("(148) paper_image_origin_x: {}  ".format(dxf.paper_image_origin_x))
     print("(149) paper_image_origin_y: {}  ".format(dxf.paper_image_origin_y))
     print("##LAYOUT SETTINGS:")

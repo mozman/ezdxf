@@ -325,6 +325,7 @@ class Layout(DXF12Layout):
         dxf.plot_origin_x_offset = 0
         dxf.plot_origin_y_offset = 0
         dxf.standard_scale_type = standard_scale
+        dxf.unit_factor = 1./unit_factor  # 1/1 for mm; 1/25.4 ... for inch
 
         # Setup Layout
         self.reset_paper_limits()
@@ -346,16 +347,19 @@ class Layout(DXF12Layout):
         else:  # mm
             unit_factor = 1.0
 
-        # all paper sizes in mm
-        paper_width = dxf.paper_width / unit_factor
-        paper_height = dxf.paper_height / unit_factor
+        # all paper sizes are stored in mm
+        paper_width = dxf.paper_width / unit_factor  # in plot paper units
+        paper_height = dxf.paper_height / unit_factor  # in plot paper units
         left_margin = dxf.left_margin / unit_factor
         bottom_margin = dxf.bottom_margin / unit_factor
+        x_offset = dxf.plot_origin_x_offset / unit_factor
+        y_offset = dxf.plot_origin_y_offset / unit_factor
         # plot origin is the lower left corner of the printable paper area
         # limits are the paper borders relative to the plot origin
-        # TODO: plot offset
-        dxf.limmin = (-left_margin, -bottom_margin)  # paper space units
-        dxf.limmax = (paper_width-left_margin, paper_height-bottom_margin)
+        shift_x = left_margin+x_offset
+        shift_y = bottom_margin+y_offset
+        dxf.limmin = (-shift_x, -shift_y)  # paper space units
+        dxf.limmax = (paper_width-shift_x, paper_height-shift_y)
 
     def reset_viewports(self):
         # remove existing viewports
@@ -470,6 +474,26 @@ class Layout(DXF12Layout):
         else:
             flags = flags & ~flag
         self.dxf_layout.dxf.plot_layout_flags = flags
+
+    def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        else:
+            dxfattribs = dict(dxfattribs)
+        width, height = size
+        attribs = {
+            'center': center,
+            'width': width,
+            'height': height,
+            'status': 1,  # by default highest priority (stack order)
+            'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
+            'view_center_point': view_center_point,
+            'view_height': view_height,
+        }
+        attribs.update(dxfattribs)
+        viewport = self.build_and_add_entity('VIEWPORT', attribs)
+        viewport.dxf.id = viewport.get_next_viewport_id()
+        return viewport
 
     # end of public interface
 
