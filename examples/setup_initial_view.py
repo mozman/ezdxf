@@ -61,9 +61,14 @@ def setup_paper_space_layout(dwg, name):
     else:
         layout = dwg.layouts.new(name)
     layout.paper_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
-    layout.add_line((-0.5, 3.75), (10.5, 3.75))  # hor center line
-    layout.add_line((5., -0.5), (5., 8.0))  # vert center line
-    layout2 = dwg.layouts.new('mozman 1_1')
+    (x1, y1), (x2, y2) = layout.get_paper_limits()
+    center_x = (x1+x2)/2
+    center_y = (y1+y2)/2
+    layout.add_line((x1, center_y), (x2, center_y))  # horizontal center line
+    layout.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    layout.add_circle((0, 0), radius=.1)  # plot origin
+
+    layout2 = dwg.layouts.new('ezdxf scale 1-1')
     layout2.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm')
     layout2.add_viewport(
         center=(100, 100),  # center of viewport in paper_space units
@@ -71,10 +76,15 @@ def setup_paper_space_layout(dwg, name):
         view_center_point=(60, 40),  # model space point to show in center of viewport in WCS
         view_height=20,  # how much model space area to show in viewport in drawing units
     )
-    layout2.add_line((0, 100), (200, 100))  # hor center line
-    layout2.add_line((150, 0), (150, 150))  # vert center line
 
-    layout3 = dwg.layouts.new('mozman 1_50')
+    (x1, y1), (x2, y2) = layout2.get_paper_limits()
+    center_x = (x1+x2)/2
+    center_y = (y1+y2)/2
+    layout2.add_line((x1, center_y), (x2, center_y))  # horizontal center line
+    layout2.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    layout2.add_circle((0, 0), radius=5)  # plot origin
+
+    layout3 = dwg.layouts.new('ezdxf scale 1-50')
     layout3.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 50))
     layout3.add_viewport(
         center=(5000, 5000),  # center of viewport in paper_space units, scale = 1:50
@@ -82,10 +92,20 @@ def setup_paper_space_layout(dwg, name):
         view_center_point=(60, 40),  # model space point to show in center of viewport in WCS
         view_height=20,  # how much model space area to show in viewport in drawing units
     )
+    layout3.add_circle((0, 0), radius=250)  # plot origin
+
+    layout4 = dwg.layouts.new('ezdxf scale 1-1 with offset')
+    layout4.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 1), offset=(50, 50))
+    (x1, y1), (x2, y2) = layout4.get_paper_limits()
+    center_x = (x1+x2)/2
+    center_y = (y1+y2)/2
+    layout4.add_line((x1, center_y), (x2, center_y))  # horizontal center line
+    layout4.add_line((center_x, y1), (center_x, y2))  # vertical center line
+    layout4.add_circle((0, 0), radius=5)  # plot origin
 
 
 if __name__ == '__main__':
-    dwg = ezdxf.new('AC1015')
+    dwg = ezdxf.new('R2000')
     draw_raster(dwg)
     setup_active_viewport(dwg)
     setup_paper_space_layout(dwg, 'Layout1')

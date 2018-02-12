@@ -191,15 +191,10 @@ class Layout(DXF12Layout):
 
     Internal Structure:
 
-    For EVERY layout exists a BlockLayout() object in the blocks section and an EntitySpace() object in the entities
-    sections. the block layout entity section and the layout entity section are the SAME object.
-    See Layouts.create() line after comment 'set block entity space as layout entity space'.
-
-    ALL layouts entity spaces (also Model Space) are managed in a LayoutSpaces() object in the EntitySection() object.
-    Which allows full access to all entities on all layouts at every time.
+    For EVERY layout exists a BlockLayout() object in the blocks section and a Layout() object in Layouts(). The entity
+    space of the BlockLayout() object and the entity space of the Layout() object are the SAME object.
 
     """
-
     class PlotLayoutFlags:
         PLOT_VIEWPORT_BORDERS = 1
         SHOW_PLOT_STYLES = 2
@@ -257,15 +252,16 @@ class Layout(DXF12Layout):
     def dxf(self):
         return self.dxf_layout.dxf
 
-    def paper_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', rotation=0, scale=16,
+    def paper_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16,
                     name='ezdxf', device='DWG to PDF.pc3'):
         """
-        Setup plot settings and paper size and reset viewports.
+        Setup plot settings and paper size and reset viewports. All parameters in given *units* (mm or inch).
 
         Args:
-            size:
+            size: paper size
             margins: (top, right, bottom, left) hint: clockwise
             units: 'mm' or 'inch'
+            offset: plot origin offset
             rotation: 0=no rotation, 1=90deg count-clockwise, 2=upside-down, 3=90deg clockwise
             scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
             name: paper name prefix '{name}_({width}_x_{height}_{unit})'
@@ -279,9 +275,7 @@ class Layout(DXF12Layout):
 
         if isinstance(scale, tuple):
             standard_scale = 16
-            self.use_standard_scale(False)
         elif isinstance(scale, int):
-            self.use_standard_scale(True)
             standard_scale = scale
             scale = STD_SCALES.get(standard_scale, (1, 1))
         else:
@@ -291,6 +285,7 @@ class Layout(DXF12Layout):
         if scale[1] == 0:
             raise DXFValueError("scale denominator can't be 0.")
 
+        self.use_standard_scale(False)  # works best, don't know why
         paper_width, paper_height = size
         margin_top, margin_right, margin_bottom, margin_left = margins
         units = units.lower()
@@ -313,7 +308,6 @@ class Layout(DXF12Layout):
         dxf.paper_size = '{0}_({1:.2f}_x_{2:.2f}_{3})'.format(name, paper_width, paper_height, units)
         dxf.left_margin = margin_left * unit_factor
         dxf.bottom_margin = margin_bottom * unit_factor
-
         dxf.right_margin = margin_right * unit_factor
         dxf.top_margin = margin_top * unit_factor
         dxf.paper_width = paper_width * unit_factor
@@ -322,8 +316,10 @@ class Layout(DXF12Layout):
         dxf.scale_denominator = scale[1]
         dxf.plot_paper_units = plot_paper_units
         dxf.plot_rotation = rotation
-        dxf.plot_origin_x_offset = 0
-        dxf.plot_origin_y_offset = 0
+
+        x_offset, y_offset = offset
+        dxf.plot_origin_x_offset = x_offset * unit_factor  # conversion to mm
+        dxf.plot_origin_y_offset = y_offset * unit_factor  # conversion to mm
         dxf.standard_scale_type = standard_scale
         dxf.unit_factor = 1./unit_factor  # 1/1 for mm; 1/25.4 ... for inch
 
@@ -361,14 +357,29 @@ class Layout(DXF12Layout):
         dxf.limmin = (-shift_x, -shift_y)  # paper space units
         dxf.limmax = (paper_width-shift_x, paper_height-shift_y)
 
-    def reset_viewports(self):
-        # remove existing viewports
-        def paper_units(value):
-            return value / unit_factor * scale_factor
+    def get_paper_limits(self):
+        """
+        Returns paper limits in plot paper units, relative to the plot origin, as tuple (lower-left-corner,
+        upper-right-corner).
 
+        plot origin = lower left corner of printable area + plot origin offset
+
+        """
+        return self.dxf.limmin, self.dxf.limmax
+
+    def reset_viewports(self):
+        """
+        Delete all existing viewports, and add a new main viewport.
+        """
+        # remove existing viewports
         for viewport in self.viewports():
             self.delete_entity(viewport)
+        self.add_new_main_viewport()
 
+    def add_new_main_viewport(self):
+        """
+        Add a new main viewport.
+        """
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inches
             unit_factor = 25.4
@@ -379,16 +390,35 @@ class Layout(DXF12Layout):
         # all viewport parameters in paper space units inch/mm + scale factor!
         scale_factor = dxf.scale_denominator / dxf.scale_numerator
 
-        vp_width = paper_units(dxf.paper_width) * 1.2  # paper width + 20%
-        vp_height = paper_units(dxf.paper_height) * 1.2  # paper height + 20%
-        # add 'main' viewport
+        def paper_units(value):
+            return value / unit_factor * scale_factor
+
+        paper_width = paper_units(dxf.paper_width)
+        paper_height = paper_units(dxf.paper_height)
+        # plot origin offset
+        x_offset = paper_units(dxf.plot_origin_x_offset)
+        y_offset = paper_units(dxf.plot_origin_y_offset)
+
+        # printing area
+        printable_width = paper_width - paper_units(dxf.left_margin) - paper_units(dxf.right_margin)
+        printable_height = paper_height - paper_units(dxf.bottom_margin) - paper_units(dxf.top_margin)
+
+        # AutoCAD viewport (window) size
+        vp_width = paper_width * 1.1
+        vp_height = paper_height * 1.1
+
+        # center of printing area
+        center = (printable_width / 2 - x_offset, printable_height / 2 - y_offset)
+
+        # create 'main' viewport
         main_viewport = self.add_viewport(
-            center=(vp_width/2, vp_height/2),  # no influence to 'main' viewport?
+            center=center,  # no influence to 'main' viewport?
             size=(vp_width, vp_height),  # I don't get it, just use paper size!
-            view_center_point=(vp_width/2, vp_height/2),  # same as center
+            view_center_point=center,  # same as center
             view_height=vp_height,   # view height in paper space units
         )
         main_viewport.dxf.id = 1  # set as main viewport
+        main_viewport.dxf.flags = 557088  # AutoCAD default value
         dxf.viewport = main_viewport.dxf.handle
 
     def set_plot_type(self, value=5):
@@ -423,8 +453,7 @@ class Layout(DXF12Layout):
         dxf.plot_window_y2 = y2
         self.set_plot_type(4)
 
-    # plot layout flags getter/setter
-
+    # plot layout flags setter
     def plot_viewport_borders(self, state=True):
         self.set_plot_flags(self.PlotLayoutFlags.PLOT_VIEWPORT_BORDERS, state)
 
