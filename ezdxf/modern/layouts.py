@@ -9,7 +9,8 @@ __author__ = "mozman <me@mozman.at>"
 from ..entityspace import EntitySpace
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, SCALE_TO_INDEX, STD_SCALES, DXFInternalEzdxfError
+from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, STD_SCALES, DXFInternalEzdxfError
+from ..lldxf.validator import is_valid_name
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
@@ -85,6 +86,9 @@ class Layouts(object):
     def new(self, name, dxfattribs=None):
         """ Create a new Layout.
         """
+        if not is_valid_name(name):
+            raise DXFValueError('name contains invalid characters')
+
         if dxfattribs is None:
             dxfattribs = {}
 
@@ -243,7 +247,7 @@ class Layout(DXF12Layout):
     def __contains__(self, entity):
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self.get_entity_by_handle(entity)
-        return True if entity.dxf.owner == self.layout_key else False
+        return entity.dxf.owner == self.layout_key
 
     @property
     def name(self):
@@ -302,6 +306,7 @@ class Layout(DXF12Layout):
             raise DXFValueError('Supported units: "mm" and "inch"')
 
         # Setup PLOTSETTINGS
+        # all paper sizes in mm
         dxf = self.dxf_layout.dxf
         dxf.page_setup_name = ''
         dxf.plot_configuration_file = device
@@ -322,11 +327,35 @@ class Layout(DXF12Layout):
         dxf.standard_scale_type = standard_scale
 
         # Setup Layout
-        dxf.limmin = (0, 0)  # paper space units
-        dxf.limmax = (paper_width, paper_height)
+        self.reset_paper_limits()
+        self.reset_extends()
+        self.reset_viewports()
+
+    def reset_extends(self):
+        dxf = self.dxf_layout.dxf
         dxf.extmin = (+1e20, +1e20, +1e20)  # AutoCAD default
         dxf.extmax = (-1e20, -1e20, -1e20)  # AutoCAD default
-        self.reset_viewports()
+
+    def reset_paper_limits(self):
+        """
+        Set paper limits to default values, all values in paper space units but without plot scale (?).
+        """
+        dxf = self.dxf_layout.dxf
+        if dxf.plot_paper_units == 0:  # inch
+            unit_factor = 25.4
+        else:  # mm
+            unit_factor = 1.0
+
+        # all paper sizes in mm
+        paper_width = dxf.paper_width / unit_factor
+        paper_height = dxf.paper_height / unit_factor
+        left_margin = dxf.left_margin / unit_factor
+        bottom_margin = dxf.bottom_margin / unit_factor
+        # plot origin is the lower left corner of the printable paper area
+        # limits are the paper borders relative to the plot origin
+        # TODO: plot offset
+        dxf.limmin = (-left_margin, -bottom_margin)  # paper space units
+        dxf.limmax = (paper_width-left_margin, paper_height-bottom_margin)
 
     def reset_viewports(self):
         # remove existing viewports

@@ -136,5 +136,8 @@ def is_valid_layer_name(name):
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
 
 
+is_valid_name = is_valid_layer_name
+
+
 def is_adsk_special_layer(name):
     return name.upper().startswith('*ADSK_')  # special Autodesk layers starts with invalid character *

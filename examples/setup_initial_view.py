@@ -63,7 +63,7 @@ def setup_paper_space_layout(dwg, name):
     layout.paper_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
     layout.add_line((-0.5, 3.75), (10.5, 3.75))  # hor center line
     layout.add_line((5., -0.5), (5., 8.0))  # vert center line
-    layout2 = dwg.layouts.new('mozman 1:1')
+    layout2 = dwg.layouts.new('mozman 1_1')
     layout2.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm')
     layout2.add_viewport(
         center=(100, 100),  # center of viewport in paper_space units
@@ -74,7 +74,7 @@ def setup_paper_space_layout(dwg, name):
     layout2.add_line((0, 100), (200, 100))  # hor center line
     layout2.add_line((150, 0), (150, 150))  # vert center line
 
-    layout3 = dwg.layouts.new('mozman 1:50')
+    layout3 = dwg.layouts.new('mozman 1_50')
     layout3.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 50))
     layout3.add_viewport(
         center=(5000, 5000),  # center of viewport in paper_space units, scale = 1:50

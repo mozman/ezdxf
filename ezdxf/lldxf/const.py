@@ -365,4 +365,3 @@ STD_SCALES = {
     32: (1000., 1.),
 }
 
-SCALE_TO_INDEX = dict((v, k) for k, v in STD_SCALES.items())

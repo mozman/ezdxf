@@ -15,6 +15,8 @@ def test_create_layout(dwg):
     assert 'ezdxf' in dwg.layouts
     assert len(layout) == 0, "New layout should contain no entities"
 
+    with pytest.raises(ezdxf.DXFValueError):
+        dwg.layouts.new('invalid characters: <>/\":;?*|=`')
     layout.paper_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"
 

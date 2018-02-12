@@ -507,7 +507,7 @@ class DXFLayout(DXFObject):
             'insert_base': DXFAttr(12, 'Point3D'),  # Insertion base point for this layout
             'extmin': DXFAttr(14, 'Point3D'),  # Minimum extents for this layout
             'extmax': DXFAttr(15, 'Point3D'),  # Maximum extents for this layout
-            'elevation': DXFAttr(146),
+            'elevation': DXFAttr(146, default=0.),
             'ucs_origin': DXFAttr(13, 'Point3D'),
             'ucs_xaxis': DXFAttr(16, 'Point3D'),
             'ucs_yaxis': DXFAttr(17, 'Point3D'),
