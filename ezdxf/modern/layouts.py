@@ -359,8 +359,8 @@ class Layout(DXF12Layout):
 
     def get_paper_limits(self):
         """
-        Returns paper limits in plot paper units, relative to the plot origin, as tuple (lower-left-corner,
-        upper-right-corner).
+        Returns paper limits in plot paper units, relative to the plot origin, as tuple ((x1, y1), (x2, y2)).
+        Lower left corner is (x1, y1), upper right corner is (x2, y2).
 
         plot origin = lower left corner of printable area + plot origin offset
 

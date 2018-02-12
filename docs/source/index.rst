@@ -29,12 +29,12 @@ Quick-Info
 Website
 -------
 
-http://ezdxf.mozman.at/
+https://ezdxf.mozman.at/
 
 Documentation
 -------------
 
-Documentation of development version at http://ezdxf.mozman.at/docs
+Documentation of development version at https://ezdxf.mozman.at/docs
 
 Documentation of latest release at http://ezdxf.readthedocs.io/
 

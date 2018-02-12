@@ -59,7 +59,7 @@ Create a more readable HTML file (DXF Pretty Printer)::
 This produces a HTML file *your_dxf_file.html* with a nicer layout than a plain DXF file and DXF handles as links
 between DXF entities, this simplifies the navigation between the DXF entities.
 
-Since ezdxf `v0.8.3 <http://ezdxf.mozman.at/release-v0-8-3.html>`_, a script called *dxfpp* will be added to your Python
+Since ezdxf `v0.8.3 <https://ezdxf.mozman.at/release-v0-8-3.html>`_, a script called *dxfpp* will be added to your Python
 script path:
 
 .. code-block:: none

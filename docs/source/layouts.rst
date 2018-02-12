@@ -14,6 +14,61 @@ layout objects:
 
 .. class:: Layout
 
+Paper Space Layout Setup
+------------------------
+
+.. method:: Layout.paper_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
+
+    Setup plot settings and paper size and reset viewports. All parameters in given *units* (mm or inch).
+    DXF R12 not supported yet.
+
+    :param size: paper size as (width, height) tuple
+    :param margins: (top, right, bottom, left) hint: clockwise
+    :param units: 'mm' or 'inch'
+    :param offset: plot origin offset as (x, y) tuple
+    :param rotation: 0=no rotation, 1=90deg count-clockwise, 2=upside-down, 3=90deg clockwise
+    :param scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
+    :param name: paper name prefix '{name}_({width}_x_{height}_{unit})'
+    :param device: device .pc3 configuration file or system printer name
+
+.. method:: Layout.reset_viewports()
+
+    Delete all existing viewports, and add a new main viewport. (in :meth:`~Layout.paper_setup` included)
+
+.. method:: Layout.reset_extends()
+
+    Reset paper space extends. (in :meth:`~Layout.paper_setup` included)
+
+.. method:: Layout.reset_paper_limits()
+
+    Reset paper space limits. (in :meth:`~Layout.paper_setup` included)
+
+.. method:: Layout.get_paper_limits()
+
+    Returns paper limits in plot paper units, relative to the plot origin, as tuple ((x1, y1), (x2, y2)).
+    Lower left corner is (x1, y1), upper right corner is (x2, y2).
+
+    The plot origin is lower left corner of printable area + plot origin offset.
+
+.. method:: Layout.set_plot_type(value=5)
+
+    Set plot type:
+
+    - 0 = last screen display
+    - 1 = drawing extents
+    - 2 = drawing limits
+    - 3 = view specific (defined by Layout.dxf.plot_view_name)
+    - 4 = window specific (defined by Layout.set_plot_window_limits())
+    - 5 = layout information (default)
+
+.. method:: Layout.set_plot_style(name='ezdxf.ctb', show=False)
+
+    Set current plot style e.g. "acad.ctb", and *show* impact of plot style also on screen.
+
+.. method:: Layout.set_plot_window(lower_left=(0, 0), upper_right=(0, 0))
+
+    Set plot window size in (scaled) paper space units, and relative to the plot origin.
+
 Access existing entities
 ------------------------
 

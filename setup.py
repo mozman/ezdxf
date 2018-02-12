@@ -32,7 +32,7 @@ setup(
     version=VERSION,
     description='A Python package to create/manipulate DXF drawings.',
     author=AUTHOR_NAME,
-    url='http://ezdxf.mozman.at',
+    url='https://ezdxf.mozman.at',
     download_url='https://pypi.python.org/pypi/ezdxf/',
     author_email=AUTHOR_EMAIL,
     packages=['ezdxf',
