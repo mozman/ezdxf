@@ -13,7 +13,6 @@ from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, SCALE_TO_IND
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
-USE_STANDARD_SCALE = 16
 
 
 class Layouts(object):
@@ -71,7 +70,7 @@ class Layouts(object):
     def names_in_taborder(self):
         names = []
         for name, layout in self._layouts.items():
-            names.append((layout.taborder, name))
+            names.append((layout.dxf.taborder, name))
         return [name for order, name in sorted(names)]
 
     def get_layout_for_entity(self, entity):
@@ -196,6 +195,23 @@ class Layout(DXF12Layout):
     Which allows full access to all entities on all layouts at every time.
 
     """
+
+    class PlotLayoutFlags:
+        PLOT_VIEWPORT_BORDERS = 1
+        SHOW_PLOT_STYLES = 2
+        PLOT_CENTERED = 4
+        PLOT_HIDDEN = 8
+        USE_STANDARD_SCALE = 16
+        PLOT_PLOTSTYLES = 32
+        SCALE_LINEWEIGHTS = 64
+        PRINT_LINEWEIGHTS = 128
+        DRAW_VIEWPORTS_FIRST = 512
+        MODEL_TYPE = 1024
+        UPDATE_PAPER = 2048
+        ZOOM_TO_PAPER_ON_UPDATE = 4096
+        INITIALIZING = 8192
+        PREV_PLOT_INIT = 16384
+
     def __init__(self, drawing, layout_handle):
         dxffactory = drawing.dxffactory
         self.dxf_layout = dxffactory.wrap_handle(layout_handle)
@@ -230,6 +246,10 @@ class Layout(DXF12Layout):
         return True if entity.dxf.owner == self.layout_key else False
 
     @property
+    def name(self):
+        return self.dxf_layout.dxf.name
+
+    @property
     def dxf(self):
         return self.dxf_layout.dxf
 
@@ -248,14 +268,6 @@ class Layout(DXF12Layout):
             device: device .pc3 configuration file or system printer name
 
         """
-        def use_standard_scale(state):
-            flags = self.dxf_layout.dxf.plot_layout_flags
-            if state:
-                flags = flags | USE_STANDARD_SCALE
-            else:
-                flags = flags & ~USE_STANDARD_SCALE
-            self.dxf_layout.dxf.plot_layout_flags = flags
-
         if self.name == 'Model':
             raise DXFTypeError("No paper setup for model space.")
         if int(rotation) not in (0, 1, 2, 3):
@@ -263,13 +275,17 @@ class Layout(DXF12Layout):
 
         if isinstance(scale, tuple):
             standard_scale = 16
-            use_standard_scale(False)
+            self.use_standard_scale(False)
         elif isinstance(scale, int):
-            use_standard_scale(True)
+            self.use_standard_scale(True)
             standard_scale = scale
-            scale = Layout._scale_tuple(standard_scale)
+            scale = STD_SCALES.get(standard_scale, (1, 1))
         else:
             raise DXFTypeError("scale has to be an int or a tuple(numerator, denominator)")
+        if scale[0] == 0:
+            raise DXFValueError("scale numerator can't be 0.")
+        if scale[1] == 0:
+            raise DXFValueError("scale denominator can't be 0.")
 
         paper_width, paper_height = size
         margin_top, margin_right, margin_bottom, margin_left = margins
@@ -283,7 +299,7 @@ class Layout(DXF12Layout):
             plot_paper_units = 1
             unit_factor = 1.0
         else:
-            raise DXFValueError('Units have to be "mm" or "inch", not supported: "pixel".')
+            raise DXFValueError('Supported units: "mm" and "inch"')
 
         # Setup PLOTSETTINGS
         dxf = self.dxf_layout.dxf
@@ -328,10 +344,7 @@ class Layout(DXF12Layout):
 
         # all paper parameters in mm!
         # all viewport parameters in paper space units inch/mm + scale factor!
-        try:
-            scale_factor = dxf.scale_denominator / dxf.scale_numerator
-        except ZeroDivisionError:
-            scale_factor = 1.
+        scale_factor = dxf.scale_denominator / dxf.scale_numerator
 
         vp_width = paper_units(dxf.paper_width) * 1.2  # paper width + 20%
         vp_height = paper_units(dxf.paper_height) * 1.2  # paper height + 20%
@@ -345,16 +358,91 @@ class Layout(DXF12Layout):
         main_viewport.dxf.id = 1  # set as main viewport
         dxf.viewport = main_viewport.dxf.handle
 
+    def set_plot_type(self, value=5):
+        """
+        Set plot type:
+
+            - LAST_SCREEN_DISPLAY = 0
+            - DRAWING_EXTENDS = 1
+            - DRAWING_LIMITS = 2
+            - VIEW_SPECIFIC = 3 (defined by Layout.dxf.plot_view_name)
+            - WINDOW_SPECIFIC = 4 (defined by Layout.set_plot_window_limits())
+            - LAYOUT_INFORMATION = 5 (default)
+        """
+        if 0 <= int(value) <= 5:
+            self.dxf.plot_type = value
+
+    def set_plot_style(self, name='ezdxf.ctb', show=False):
+        self.dxf_layout.dxf.current_style_sheet = name
+        self.use_plot_styles(True)
+        self.show_plot_styles(show)
+
+    def set_plot_window(self, lower_left=(0, 0), upper_right=(0, 0)):
+        """
+        Set plot window size in (scaled) paper space units.
+        """
+        x1, y1 = lower_left
+        x2, y2 = upper_right
+        dxf = self.dxf_layout.dxf
+        dxf.plot_window_x1 = x1
+        dxf.plot_window_y1 = y1
+        dxf.plot_window_x2 = x2
+        dxf.plot_window_y2 = y2
+        self.set_plot_type(4)
+
+    # plot layout flags getter/setter
+
+    def plot_viewport_borders(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PLOT_VIEWPORT_BORDERS, state)
+
+    def show_plot_styles(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.SHOW_PLOT_STYLES, state)
+
+    def plot_centered(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PLOT_CENTERED, state)
+
+    def plot_hidden(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PLOT_HIDDEN, state)
+
+    def use_standard_scale(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.USE_STANDARD_SCALE, state)
+
+    def use_plot_styles(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PLOT_PLOTSTYLES, state)
+
+    def scale_lineweights(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.SCALE_LINEWEIGHTS, state)
+
+    def print_lineweights(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PRINT_LINEWEIGHTS, state)
+
+    def draw_viewports_first(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PRINT_LINEWEIGHTS, state)
+
+    def model_type(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.MODEL_TYPE, state)
+
+    def update_paper(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.UPDATE_PAPER, state)
+
+    def zoom_to_paper_on_update(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.ZOOM_TO_PAPER_ON_UPDATE, state)
+
+    def plot_flags_initializing(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.INITIALIZING, state)
+
+    def prev_plot_init(self, state=True):
+        self.set_plot_flags(self.PlotLayoutFlags.PREV_PLOT_INIT, state)
+
+    def set_plot_flags(self, flag, state=True):
+        flags = self.dxf_layout.dxf.plot_layout_flags
+        if state:
+            flags = flags | flag
+        else:
+            flags = flags & ~flag
+        self.dxf_layout.dxf.plot_layout_flags = flags
+
     # end of public interface
-
-    @staticmethod
-    def _std_scale(scale):
-        scale = float(scale[0]), float(scale[1])
-        return SCALE_TO_INDEX.get(scale, 16)
-
-    @staticmethod
-    def _scale_tuple(scale_index):
-        return STD_SCALES.get(scale_index, (1, 1))
 
     @property
     def layout_key(self):
@@ -371,17 +459,6 @@ class Layout(DXF12Layout):
     @property
     def block(self):
         return self.drawing.blocks.get(self.block_record_name)
-
-    @property
-    def name(self):
-        return self.dxf_layout.dxf.name
-
-    @property
-    def taborder(self):
-        return self.dxf_layout.dxf.taborder
-
-    def is_active(self):
-        return self.block_record_name.upper() in ('*PAPER_SPACE', '*MODEL_SPACE')
 
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
