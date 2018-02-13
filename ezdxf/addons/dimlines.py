@@ -30,7 +30,6 @@ from abc import abstractmethod
 from ezdxf.tools.c23 import ustr
 from ezdxf.tools.vector import Vector, distance, lerp
 from .algebra import Ray2D
-from ezdxf.lldxf import const
 
 
 DIMENSIONS_MIN_DISTANCE = 0.05
@@ -172,17 +171,17 @@ class _DimStyles(object):
         # 8, 9 : 2.00mm
         # >=10 : 1.40mm
 
-        dimcolor = {'color': dimstyles.default.dimextlinecolor, 'layer': const.BYBLOCK}
-        color4 = {'color': 4, 'layer': const.BYBLOCK}
-        color7 = {'color': 7, 'layer': const.BYBLOCK}
+        dimcolor = {'color': dimstyles.default.dimextlinecolor, 'layer': 'BYBLOCK'}
+        color4 = {'color': 4, 'layer': 'BYBLOCK'}
+        color7 = {'color': 7, 'layer': 'BYBLOCK'}
 
         block = drawing.blocks.new('DIMTICK_ARCH')
         block.add_line(start=(0., +.5), end=(0., -.5), dxfattribs=dimcolor)
-        block.add_Line(start=(-.2, -.2), end=(.2, +.2), dxfattribs=color4)
+        block.add_line(start=(-.2, -.2), end=(.2, +.2), dxfattribs=color4)
 
         block = drawing.blocks.new('DIMTICK_DOT')
         block.add_line(start=(0., .5), end=(0., -.5), dxfattribs=dimcolor)
-        block.add_circle(radius=.1, dxfattribs=color4)
+        block.add_circle(center=(0, 0), radius=.1, dxfattribs=color4)
 
         block = drawing.blocks.new('DIMTICK_ARROW')
 
@@ -414,7 +413,7 @@ class LinearDimension(_DimensionBase):
 
         def add_tick(index, rotate=False):
             """ build the insert-entity for the tick block """
-            attribs['rotation'] = self.angle + (180. if rotate else 0.),
+            attribs['rotation'] = self.angle + (180. if rotate else 0.)
             layout.add_blockref(
                 insert=self._get_dimline_point(index),
                 name=self.prop('tick'),
@@ -633,8 +632,11 @@ class RadialDimension(_DimensionBase):
         start_point = self.center + (self.target_vector * (self.radius - self.length))
         layout.add_line(
             start=start_point, end=self.target,
-            layer=self.prop('layer'),
-            dxfattribs={'color': self.prop('dimlinecolor')},
+
+            dxfattribs={
+                'color': self.prop('dimlinecolor'),
+                'layer': self.prop('layer'),
+            },
         )
 
     def _draw_dimension_text(self, layout):

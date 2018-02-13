@@ -131,12 +131,12 @@ class Ray2D(object):
             elif ray2.is_vertical:
                 x = ray2._x
                 y = ray1.get_y(x)
-            else :
+            else:
                 # calc intersection with the 'straight-line-equation'
                 # based on y(x) = y0 + x*slope
                 x = (ray1._y0 - ray2._y0)/(ray2.slope - ray1.slope)
                 y = ray1.get_y(x)
-            return (x, y)
+            return x, y
         else:
             raise ParallelRaysError("no intersection, rays are parallel")
 
