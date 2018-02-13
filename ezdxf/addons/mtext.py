@@ -36,6 +36,14 @@ class MText(SubscriptAttributes):
         'TOP_LEFT',    'TOP_CENTER',    'TOP_RIGHT'
 
     """
+    MIRROR_X = const.MIRROR_X
+    MIRROR_Y = const.MIRROR_Y
+    TOP = const.TOP
+    MIDDLE = const.MIDDLE
+    BOTTOM = const.BOTTOM
+    LEFT = const.LEFT
+    CENTER = const.CENTER
+    RIGHT = const.RIGHT
     VALID_ALIGN = frozenset([
         'BOTTOM_LEFT',
         'BOTTOM_CENTER',

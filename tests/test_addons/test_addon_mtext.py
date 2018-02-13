@@ -7,7 +7,6 @@ __author__ = "mozman <me@mozman.at>"
 import pytest
 import ezdxf
 from ezdxf.addons import MText
-from ezdxf.lldxf import const
 
 
 @pytest.fixture(scope='module')
@@ -28,8 +27,8 @@ def test_horiz_top(dxf):
     assert lines[1].dxf.text == 'lineB'
     assert lines[0].dxf.align_point == (0, 0, 0)
     assert lines[1].dxf.align_point == (0, -1, 0)
-    assert lines[0].dxf.valign == const.TOP
-    assert lines[0].dxf.halign == const.LEFT
+    assert lines[0].dxf.valign == MText.TOP
+    assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_horiz_bottom(dxf):
@@ -45,8 +44,8 @@ def test_horiz_bottom(dxf):
     assert lines[1].dxf.text == 'lineB'
     assert lines[0].dxf.align_point == (0, 1, 0)
     assert lines[1].dxf.align_point == (0, 0, 0)
-    assert lines[0].dxf.valign == const.BOTTOM
-    assert lines[0].dxf.halign == const.LEFT
+    assert lines[0].dxf.valign == MText.BOTTOM
+    assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_horiz_middle(dxf):
@@ -62,8 +61,8 @@ def test_horiz_middle(dxf):
     assert lines[1].dxf.text == 'lineB'
     assert lines[0].dxf.align_point == (0, .5, 0)
     assert lines[1].dxf.align_point == (0, -.5, 0)
-    assert lines[0].dxf.valign == const.MIDDLE
-    assert lines[0].dxf.halign == const.LEFT
+    assert lines[0].dxf.valign == MText.MIDDLE
+    assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_45deg_top(dxf):
@@ -83,8 +82,8 @@ def test_45deg_top(dxf):
     assert lines[1].dxf.align_point == (0.707107, -0.707107, 0)
     assert lines[2].dxf.align_point == (1.414214, -1.414214, 0)
     assert lines[0].dxf.rotation == 45
-    assert lines[0].dxf.valign == const.TOP
-    assert lines[0].dxf.halign == const.LEFT
+    assert lines[0].dxf.valign == MText.TOP
+    assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_45deg_bottom(dxf):
@@ -104,8 +103,8 @@ def test_45deg_bottom(dxf):
     assert lines[1].dxf.align_point == (-0.707107, 0.707107, 0)
     assert lines[2].dxf.align_point == (0, 0, 0)
     assert lines[0].dxf.rotation == 45
-    assert lines[0].dxf.valign == const.BOTTOM
-    assert lines[0].dxf.halign == const.LEFT
+    assert lines[0].dxf.valign == MText.BOTTOM
+    assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_one_liner(dxf):
@@ -117,8 +116,8 @@ def test_one_liner(dxf):
     lines = list(layout)
     assert lines[0].dxftype() == 'TEXT'
     assert lines[0].dxf.align_point == (0, 0, 0)
-    assert lines[0].dxf.valign == const.TOP
-    assert lines[0].dxf.halign == const.LEFT
+    assert lines[0].dxf.valign == MText.TOP
+    assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_get_attribute_by_subscript():

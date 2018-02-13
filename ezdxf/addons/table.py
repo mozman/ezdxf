@@ -83,10 +83,6 @@ class Table(object):
 
         self._cells = {}  # data cells
         self.frames = []  # border frame objects
-        # visibility_map stores the visibility of the cells, created in _setup
-        self.visibility_map = None
-        # grid manages the border lines, created in _setup
-        self.grid = None
         # data contains the resulting dxf entities
         self.data = None
         self.empty_cell = Cell(self)  # represents all empty cells
@@ -240,15 +236,13 @@ class Table(object):
         if insert is not None:
             self.insert = insert
         visibility_map = VisibilityMap(self)
-        self.grid = Grid(self)
-        self.grid.render_lines(layout, visibility_map)
+        grid = Grid(self)
+        grid.render_lines(layout, visibility_map)
         for row, col, cell in self.iter_visible_cells(visibility_map):
-            self.grid.render_cell_background(layout, row, col, cell)
-            self.grid.render_cell_content(layout, row, col, cell)
+            grid.render_cell_background(layout, row, col, cell)
+            grid.render_cell_content(layout, row, col, cell)
 
         self.insert = _insert
-        self.visibility_map = None
-        self.grid = None
 
 
 class VisibilityMap(object):
@@ -348,8 +342,8 @@ class Style(dict):
             'rotation': 0.,
             # Letters are stacked top-to-bottom, but not rotated
             'stacked': False,
-            #
-            'align': 'TOP_CENTER',
+            # simple combined align parameter, like 'TOP_CENTER', see also MText.VALID_ALIGN
+            'align': 'TOP_CENTER',  # higher priority than 'haling' and 'valign'
             # horizontal alignment (const.LEFT, const.CENTER, const.RIGHT)
             'halign': const.CENTER,
             # vertical alignment (const.TOP, const.MIDDLE, const.BOTTOM)
