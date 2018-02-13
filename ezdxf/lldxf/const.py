@@ -98,6 +98,9 @@ HEADER_VAR_MARKER = 9
 # saved to file.
 COMPRESSED_TAGS = -10
 
+BYBLOCK = 0
+BYLAYER = 256
+BYOBJECT = 257
 
 # Entity: Polyline, Polymesh
 # 70 flags

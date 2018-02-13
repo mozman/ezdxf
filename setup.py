@@ -43,6 +43,7 @@ setup(
               'ezdxf.sections',
               'ezdxf.templates',
               'ezdxf.tools',
+              'ezdxf.addons',
               ],
     package_data={'ezdxf': ['templates/*.dxf',
                             'pp/dxfpp.html',

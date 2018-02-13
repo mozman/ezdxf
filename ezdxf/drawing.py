@@ -9,7 +9,7 @@ from datetime import datetime
 import io
 import logging
 from .database import EntityDB
-from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, DXFValueError
+from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
 from .lldxf.loader import load_dxf_structure, fill_database
 from .dxffactory import dxffactory
 from .templates import TemplateLoader
@@ -198,7 +198,8 @@ class Drawing(object):
         return self.sections.objects
 
     def get_dxf_entity(self, handle):
-        """ Get entity by *handle* from entity database.
+        """
+        Get entity by *handle* from entity database.
 
         Low level access to DXF entities database. Raises *KeyError* if handle don't exists.
         Returns DXFEntity() or inherited.
@@ -213,21 +214,27 @@ class Drawing(object):
         return self.dxffactory.wrap_handle(handle)
 
     def add_image_def(self, filename, size_in_pixel, name=None):
-        """ Add an image definition to the objects section.
+        """
+        Add an image definition to the objects section.
 
-        :param filename: image file name
-        :param size_in_pixel: image size in pixel as (x, y) tuple
-        :param name: image name for internal use, None for an auto-generated name
+        Args:
+            filename: image file name
+            size_in_pixel: image size in pixel as (x, y) tuple
+            name: image name for internal use, None for an auto-generated name
+
         """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('The IMAGE entity needs at least DXF version R2000 or later.')
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
     def add_underlay_def(self, filename, format='ext', name=None):
-        """ Add an underlay definition to the objects section.
+        """
+        Add an underlay definition to the objects section.
 
-        :param format: file format as string pdf|dwf|dgn or ext=get format from filename extension
-        :param name: underlay name, None for an auto-generated name
+        Args:
+            format: file format as string pdf|dwf|dgn or ext=get format from filename extension
+            name: underlay name, None for an auto-generated name
+
         """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('The UNDERLAY entity needs at least DXF version R2000 or later.')
@@ -235,13 +242,17 @@ class Drawing(object):
             format=filename[-3:]
         return self.objects.add_underlay_def(filename, format, name)
 
-    def add_xref_def(self, filename, name, flags=BLK_XREF):
-        """ Add an external reference (xref) definition to the blocks section.
+    def add_xref_def(self, filename, name, flags=BLK_XREF | BLK_EXTERNAL):
+        """
+        Add an external reference (xref) definition to the blocks section.
 
         Add xref to a layout by `layout.add_blockref(name, insert=(0, 0))`.
 
-        :param filename: external reference filename
-        :param name: name of the xref block
+        Args:
+            filename: external reference filename
+            name: name of the xref block
+            flags: block flags
+
         """
         self.blocks.new(name=name, dxfattribs={
             'flags': flags,
