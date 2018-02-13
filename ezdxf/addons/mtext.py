@@ -66,10 +66,8 @@ class MText(SubscriptAttributes):
         self.style = kwargs.get('style', 'STANDARD')
         self.oblique = kwargs.get('oblique', 0.0)  # in degree
         self.rotation = kwargs.get('rotation', 0.0)  # in degree
-        self.xscale = kwargs.get('xscale', 1.0)  # renamed to width in ezdxf
-        self.xscale = kwargs.get('width', self.xscale)
+        self.xscale = kwargs.get('xscale', 1.0)
         self.mirror = kwargs.get('mirror', 0)  # renamed to text_generation_flag in ezdxf
-        self.mirror = kwargs.get('text_generation_flag', self.mirror)
         self.layer = kwargs.get('layer', '0')
         self.color = kwargs.get('color', const.BYLAYER)
 

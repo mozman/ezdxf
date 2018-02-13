@@ -37,8 +37,6 @@ DEFAULT_CELL_TEXT_HEIGHT = 0.7
 DEFAULT_CELL_LINESPACING = 1.5
 DEFAULT_CELL_XSCALE = 1.0
 DEFAULT_CELL_YSCALE = 1.0
-DEFAULT_CELL_HALIGN = 'CENTER'
-DEFAULT_CELL_VALIGN = 'TOP'
 DEFAULT_CELL_TEXTCOLOR = const.BYLAYER
 DEFAULT_CELL_BG_COLOR = None
 DEFAULT_CELL_HMARGIN = 0.1
@@ -190,6 +188,16 @@ class Table(object):
         """
         style = deepcopy(self.get_cell_style('default'))
         style.update(kwargs)
+        if 'align' in kwargs:
+            align = kwargs.get('align')
+            halign, valign = const.TEXT_ALIGN_FLAGS.get(align)
+            style['halign'] = halign
+            style['valign'] = valign
+        else:
+            halign = kwargs.get('halign')
+            valign = kwargs.get('valign')
+            style['align'] = const.TEXT_ALIGNMENT_BY_FLAGS.get(halign, valign)
+
         self.styles[name] = style
         return style
 
@@ -224,16 +232,21 @@ class Table(object):
         """
         return ((row, col, self.get_cell(row, col)) for row, col in visibility_map)
 
-    def render(self, layout):
+    def render(self, layout, insert=None):
         """
         Render table to layout object.
         """
+        _insert = self.insert
+        if insert is not None:
+            self.insert = insert
         visibility_map = VisibilityMap(self)
         self.grid = Grid(self)
         self.grid.render_lines(layout, visibility_map)
         for row, col, cell in self.iter_visible_cells(visibility_map):
             self.grid.render_cell_background(layout, row, col, cell)
             self.grid.render_cell_content(layout, row, col, cell)
+
+        self.insert = _insert
         self.visibility_map = None
         self.grid = None
 
@@ -335,10 +348,12 @@ class Style(dict):
             'rotation': 0.,
             # Letters are stacked top-to-bottom, but not rotated
             'stacked': False,
+            #
+            'align': 'TOP_CENTER',
             # horizontal alignment (const.LEFT, const.CENTER, const.RIGHT)
-            'halign': DEFAULT_CELL_HALIGN,
+            'halign': const.CENTER,
             # vertical alignment (const.TOP, const.MIDDLE, const.BOTTOM)
-            'valign': DEFAULT_CELL_VALIGN,
+            'valign': const.TOP,
             # left and right margin in drawing units
             'hmargin': DEFAULT_CELL_HMARGIN,
             # top and bottom margin
@@ -805,7 +820,7 @@ class BlockCell(Cell):
 
         Args:
             table: assigned data table
-            block_name: block definition name
+            blockdef: block definition
             attribs: dict, with ATTRIB-Tags as keys
             style: style name as string
             span: tuple(spanrows, spancols), count of cells that cell covers
@@ -834,10 +849,10 @@ class BlockCell(Cell):
         xpos = (left, float(left + right) / 2., right)[halign]
         ypos = (bottom, float(bottom + top) / 2., top)[valign-1]
         layout.add_auto_blockref(
-            name=self.blockdef['name'],
+            name=self.blockdef.name,
             insert=(xpos, ypos),
             values=self.attribs,
-            dfxattribs={
+            dxfattribs={
                 'xscale': style['xscale'],
                 'yscale': style['yscale'],
                 'rotation': style['rotation'],
