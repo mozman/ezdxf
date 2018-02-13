@@ -1,23 +1,22 @@
 # Purpose: table, consisting of basic R12 entities
 # module belongs to package: dxfwrite (ezdxf)
-# Created: 18.03.2010, 2018 adopted for ezdxf
+# Created: 18.03.2010, 2018 adapted for ezdxf
 # Copyright (C) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 """
-Table object like a HTML-Table, buildup with DXF R12 entities.
+Table object like a HTML-Table, as composite pf basic DXF R12 entities.
 
-Cells can contain Multiline-Text or DXF-BLOCKs, or you can create your own
-cell-type by extending the CustomCell object.
+Cells can contain MText or BLOCK references, or you can create your own
+cell type by extending the CustomCell() class.
 Cells can span over columns and rows.
 Text cells can contain text with an arbitrary rotation angle, or letters can be
-stacked top-to-bottom.
+stacked from top to bottom.
 
-BlockCells contains block references (INSERT-entity) created from a block
+BlockCells contains block references (INSERT) created from a block
 definition (BLOCK), if the block definition contains attribute definitions
-(ATTDEF-entity), attribs created by Attdef.new_attrib() will be added to the
-block reference (ATTRIB-entity).
+(ATTDEF), attribs will be added to the block reference (ATTRIB).
 
 """
 

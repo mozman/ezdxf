@@ -5,3 +5,4 @@
 __author__ = "mozman <me@mozman.at>"
 from .table import Table, CustomCell
 from .mtext import MText
+from .curves import Ellipse, Bezier, Clothoid, Spline
