@@ -3,3 +3,5 @@
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 __author__ = "mozman <me@mozman.at>"
+from .table import Table, CustomCell
+from .mtext import MText
