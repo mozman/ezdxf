@@ -27,12 +27,7 @@ def rotate_2d(point, angle):
     return x, y
 
 
-# same as is_close
 def equals_almost(v1, v2, places=7):
-    """
-    compare two float values
-    places: significant decimal places
-    """
     return round(v1, places) == round(v2, places)
 
 
@@ -47,15 +42,18 @@ def normalize_angle(angle):
 def is_vertical_angle(angle, places=7):
     """ returns True for 1/2pi and 3/2pi """
     angle = normalize_angle(angle)
-    return (equals_almost(angle, HALF_PI, places) or
-            equals_almost(angle, THREE_PI_HALF, places))
+    return (equals_almost(angle, HALF_PI, places) or equals_almost(angle, THREE_PI_HALF, places))
 
 
 def get_angle(p1, p2):
     """
-    calc angle between the line p1-p2 and the x-axis
-    input: points as tuples
-    result: angle in radians
+    calc angle between the line (p1, p2) and x-axis
+    Args:
+        p1: start point as tuple
+        p2: end point as tuple
+
+    Returns: angle in radians
+
     """
     dx = p2[0] - p1[0]
     dy = p2[1] - p1[1]
@@ -64,14 +62,14 @@ def get_angle(p1, p2):
 
 def right_of_line(point, p1, p2):
     """
-    True if the point self is right of the line p1 -> p2
+    True if the point self is right of the line (p1, p2)
     """
     return not left_of_line(point, p1, p2)
 
 
 def left_of_line(point, p1, p2):
     """
-    True if the point self is left of the line p1 -> p2
+    True if the point self is left of the line (p1, p2)
     """
     # check if a and b are on the same vertical line
     if p1[0] == p2[0]:

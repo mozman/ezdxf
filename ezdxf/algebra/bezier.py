@@ -1,7 +1,6 @@
 # Purpose: 2d bezier curve
 # Created: 26.03.2010
 # License: MIT License
-__author__ = "mozman <me@mozman.at>"
 
 
 class CubicBezierCurve(object):
