@@ -252,8 +252,8 @@ class Layout(DXF12Layout):
     def dxf(self):
         return self.dxf_layout.dxf
 
-    def paper_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16,
-                    name='ezdxf', device='DWG to PDF.pc3'):
+    def page_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16,
+                   name='ezdxf', device='DWG to PDF.pc3'):
         """
         Setup plot settings and paper size and reset viewports. All parameters in given *units* (mm or inch).
 

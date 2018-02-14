@@ -7,9 +7,10 @@ Version 0.8.6 - dev
    * NEW: ezdxf project website: https://ezdxf.mozman.at/
    * CHANGE: create all missing tables of the TABLES sections for DXF R12
    * BUGFIX: entities on new layouts will be saved
-   * NEW: Layout.paper_setup() and correct 'main' viewport for DXF R2000+
-   * NEW: Table(), MText(), Ellipse(), Spline(), Bezier(), Clothoid() composite objects from dxfwrite available in the
-     ezdxf.addons subpackage, all addons support DXF R12
+   * NEW: Layout.page_setup() and correct 'main' viewport for DXF R2000+
+   * NEW: Table(), MText(), Ellipse(), Spline(), Bezier(), Clothoid(), LinearDimension(), RadialDimension(),
+     ArcDimension() and AngularDimension() composite objects from dxfwrite available in the ezdxf.addons subpackage,
+     all addons support DXF R12
 
 Version 0.8.5 - 2018-01-28
 

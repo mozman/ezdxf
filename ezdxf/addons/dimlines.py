@@ -28,7 +28,7 @@ from math import radians, degrees, pi
 from abc import abstractmethod
 
 from ezdxf.tools.c23 import ustr
-from ezdxf.tools.vector import Vector, distance, lerp
+from ezdxf.algebra.vector import Vector, distance, lerp
 from .algebra import Ray2D
 
 

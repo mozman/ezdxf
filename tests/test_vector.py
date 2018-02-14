@@ -1,9 +1,9 @@
+import sys
+import pytest
 import math
-from ezdxf.tools.vector import Vector
 
-
-def is_close(a, b):
-    return math.isclose(a, b, rel_tol=1e-5)
+from ezdxf.algebra.vector import Vector, is_close
+PY3 = sys.version_info.major > 2
 
 
 def test_init_no_params():
@@ -108,22 +108,30 @@ def test_xy():
 def test_is_null():
     v = Vector()
     assert v.is_null
+
+    v1 = Vector(23.56678, 56678.56778, 2.56677) * (1.0 / 14.5667)
+    v2 = Vector(23.56678, 56678.56778, 2.56677) / 14.5667
+    result = v2 - v1
+    assert Vector(0, 0, 0).is_null
+
+
+@pytest.mark.skipif(not PY3, reason="__bool__ not supported")
+def test_bool():
+    v = Vector()
     assert bool(v) is False
 
     v1 = Vector(23.56678, 56678.56778, 2.56677) * (1.0 / 14.5667)
     v2 = Vector(23.56678, 56678.56778, 2.56677) / 14.5667
     result = v2 - v1
     assert bool(result) is False
-
     # actual precision is abs_tol=1e-9
     assert not Vector(1e-8, 0, 0).is_null
-    assert Vector(0, 0, 0).is_null
 
 
 def test_magnitude():
     v = Vector(3, 4, 5)
-    assert is_close(abs(v), 7.0710678)
-    assert is_close(v.magnitude, 7.0710678)
+    assert is_close(abs(v), 7.0710678118654755)
+    assert is_close(v.magnitude, 7.0710678118654755)
 
 
 def test_magnitude_square():
@@ -249,10 +257,10 @@ def test_dot_product():
 
 
 def test_angle_deg():
-    assert math.isclose(Vector(0, 1).angle_deg, 90)
-    assert math.isclose(Vector(0, -1).angle_deg, -90)
-    assert math.isclose(Vector(1, 1).angle_deg, 45)
-    assert math.isclose(Vector(-1, 1).angle_deg, 135)
+    assert is_close(Vector(0, 1).angle_deg, 90)
+    assert is_close(Vector(0, -1).angle_deg, -90)
+    assert is_close(Vector(1, 1).angle_deg, 45)
+    assert is_close(Vector(-1, 1).angle_deg, 135)
 
 
 def test_angle_between():

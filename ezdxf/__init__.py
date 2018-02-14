@@ -29,4 +29,3 @@ from .filemanagement import new, read, readfile, readzip
 from .lldxf.const import DXFError  # base error exception
 from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
 from .lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError, DXFInvalidLayerName
-from .tools.vector import Vector

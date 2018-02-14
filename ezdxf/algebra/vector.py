@@ -2,9 +2,17 @@
 # Purpose: general purpose vector 2D/3D Vector and 2D/3D Point
 # License: MIT License
 import math
+import sys
 from functools import partial
 
-is_close = partial(math.isclose, abs_tol=1e-9)
+
+def is_close(v1, v2, places=7):
+    return round(v1, places) == round(v2, places)
+
+
+PY3 = sys.version_info.major > 2
+if PY3:
+    is_close = partial(math.isclose, abs_tol=1e-9)
 
 
 class Vector(object):
@@ -39,10 +47,6 @@ class Vector(object):
     @property
     def xy(self):
         return Vector(self._x, self._y)
-
-    @staticmethod
-    def is_vector(obj):
-        return isinstance(obj, Vector)
 
     @staticmethod
     def list(items):
@@ -84,11 +88,16 @@ class Vector(object):
             return 0., 0., 0.
         elif length == 1:
             data = args[0]
-            if Vector.is_vector(data):
+            if isinstance(data, Vector):
                 return data._x, data._y, data._z
             elif isinstance(data, (tuple, list)):
-                x, y, *z = data
-                return float(x), float(y), float(z[0]) if len(z) else 0.
+                x = data[0]
+                y = data[1]
+                if len(data) > 2:
+                    z = data[2]
+                else:
+                    z = 0.
+                return float(x), float(y), float(z)
         elif length == 2:
             x, y = args
             if isinstance(x, (float, int)):
@@ -328,7 +337,7 @@ class Vector(object):
         v2 = Vector(other).normalize()
         return math.acos(v1.dot(v2))
 
-    def rot_z_rad(self, angle: float):
+    def rot_z_rad(self, angle):
         """
         Rotate vector around z axis.
 
@@ -342,7 +351,7 @@ class Vector(object):
         v = Vector.from_rad_angle(v.angle_rad + angle, v.magnitude)
         return Vector(v.x, v.y, self.z)
 
-    def rot_z_deg(self, angle: float):
+    def rot_z_deg(self, angle):
         """
         Rotate vector around z axis.
 

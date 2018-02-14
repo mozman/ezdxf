@@ -4,7 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 import ezdxf
-from ezdxf.tools.vector import Vector
+from algebra.vector import Vector
 from ezdxf.addons import Bezier
 
 

@@ -60,7 +60,7 @@ def setup_paper_space_layout(dwg, name):
         layout = dwg.layouts.get(name)
     else:
         layout = dwg.layouts.new(name)
-    layout.paper_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
+    layout.page_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
     (x1, y1), (x2, y2) = layout.get_paper_limits()
     center_x = (x1+x2)/2
     center_y = (y1+y2)/2
@@ -69,7 +69,7 @@ def setup_paper_space_layout(dwg, name):
     layout.add_circle((0, 0), radius=.1)  # plot origin
 
     layout2 = dwg.layouts.new('ezdxf scale 1-1')
-    layout2.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm')
+    layout2.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm')
     layout2.add_viewport(
         center=(100, 100),  # center of viewport in paper_space units
         size=(50, 50),  # viewport size in paper_space units
@@ -85,7 +85,7 @@ def setup_paper_space_layout(dwg, name):
     layout2.add_circle((0, 0), radius=5)  # plot origin
 
     layout3 = dwg.layouts.new('ezdxf scale 1-50')
-    layout3.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 50))
+    layout3.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 50))
     layout3.add_viewport(
         center=(5000, 5000),  # center of viewport in paper_space units, scale = 1:50
         size=(5000, 2500),  # viewport size in paper_space units, scale = 1:50
@@ -95,7 +95,7 @@ def setup_paper_space_layout(dwg, name):
     layout3.add_circle((0, 0), radius=250)  # plot origin
 
     layout4 = dwg.layouts.new('ezdxf scale 1-1 with offset')
-    layout4.paper_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 1), offset=(50, 50))
+    layout4.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 1), offset=(50, 50))
     (x1, y1), (x2, y2) = layout4.get_paper_limits()
     center_x = (x1+x2)/2
     center_y = (y1+y2)/2

@@ -17,7 +17,7 @@ def test_create_layout(dwg):
 
     with pytest.raises(ezdxf.DXFValueError):
         dwg.layouts.new('invalid characters: <>/\":;?*|=`')
-    layout.paper_setup()  # default paper setup
+    layout.page_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"
 
 

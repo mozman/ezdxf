@@ -17,7 +17,7 @@ layout objects:
 Paper Space Layout Setup
 ------------------------
 
-.. method:: Layout.paper_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
+.. method:: Layout.page_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
 
     Setup plot settings and paper size and reset viewports. All parameters in given *units* (mm or inch).
     DXF R12 not supported yet.
@@ -33,15 +33,15 @@ Paper Space Layout Setup
 
 .. method:: Layout.reset_viewports()
 
-    Delete all existing viewports, and add a new main viewport. (in :meth:`~Layout.paper_setup` included)
+    Delete all existing viewports, and add a new main viewport. (in :meth:`~Layout.page_setup` included)
 
 .. method:: Layout.reset_extends()
 
-    Reset paper space extends. (in :meth:`~Layout.paper_setup` included)
+    Reset paper space extends. (in :meth:`~Layout.page_setup` included)
 
 .. method:: Layout.reset_paper_limits()
 
-    Reset paper space limits. (in :meth:`~Layout.paper_setup` included)
+    Reset paper space limits. (in :meth:`~Layout.page_setup` included)
 
 .. method:: Layout.get_paper_limits()
 
