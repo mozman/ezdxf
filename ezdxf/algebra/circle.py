@@ -6,7 +6,8 @@ __author__ = "mozman <me@mozman.at>"
 
 import math
 
-from ..algebra import Ray2D, equals_almost
+from .ray import Ray2D
+from .base import equals_almost
 
 HALF_PI = math.pi / 2.
 

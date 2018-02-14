@@ -29,7 +29,7 @@ from abc import abstractmethod
 
 from ezdxf.tools.c23 import ustr
 from ezdxf.algebra.vector import Vector, distance, lerp
-from .algebra import Ray2D
+from ezdxf.algebra.ray import Ray2D
 
 
 DIMENSIONS_MIN_DISTANCE = 0.05

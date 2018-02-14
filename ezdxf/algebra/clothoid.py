@@ -4,17 +4,16 @@
 # module belongs to package: dxfwrite.py
 # Created: 26.03.2010
 # License: MIT License
-
 __author__ = "mozman <mozman@gmx.at>"
-
+import math
 import sys
 if sys.version_info[0] > 2:
     xrange = range
 
-import math
 
 class Clothoid(object):
-    """This object represents a clothoid (a.k.a. Euler spiral) for parameter
+    """
+    This object represents a clothoid (a.k.a. Euler spiral) for parameter
     <paramA>. The curve always starts at the coordinate system origin = (0, 0).
     """
     def __init__(self, paramA=1.0):

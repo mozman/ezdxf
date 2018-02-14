@@ -1,6 +1,6 @@
 # Purpose: curve objects
-# Created: 26.03.2010
-# Copyright (C) 2010, Manfred Moitzi
+# Created: 26.03.2010, 2018 adapted for ezdxf
+# Copyright (C) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 from math import sin, cos, radians, fmod
@@ -8,9 +8,10 @@ from abc import abstractmethod
 
 
 from ezdxf.lldxf import const
-from .algebra import rotate_2d, equals_almost
-from .algebra import CubicSpline, CubicBezierCurve
-from .algebra import Clothoid as _ClothoidValues
+from ezdxf.algebra.base import rotate_2d, equals_almost
+from ezdxf.algebra.cspline import CubicSpline
+from ezdxf.algebra.bezier import CubicBezierCurve
+from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
 from .mixins import SubscriptAttributes
 
 __all__ = ['Ellipse', 'Bezier', 'Spline', 'Clothoid']

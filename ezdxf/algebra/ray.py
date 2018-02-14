@@ -17,12 +17,14 @@ y(x) = y0 + x * slope in a cartesian coordinate system
 __author__ = "mozman <mozman@gmx.at>"
 
 import math
-from ..algebra import equals_almost, normalize_angle, is_vertical_angle
+from .base import equals_almost, normalize_angle, is_vertical_angle
 
 __all__ = ['Ray2D', 'ParallelRaysError']
 
+
 class ParallelRaysError(ArithmeticError):
     pass
+
 
 HALF_PI = math.pi / 2.
 THREE_PI_HALF = 1.5 * math.pi
