@@ -1,9 +1,8 @@
-# Purpose: test bezier module
+
 # Created: 28.03.2010
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
 import unittest
-
 from ezdxf.algebra.bezier import CubicBezierCurve
 
 expected_points = [

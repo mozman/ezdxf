@@ -1,7 +1,6 @@
 import sys
 import pytest
 import math
-
 from ezdxf.algebra.vector import Vector, is_close
 PY3 = sys.version_info.major > 2
 
@@ -45,7 +44,7 @@ def test_init_three_params():
 def test_from_angle():
     angle = math.radians(50)
     length = 3.
-    assert Vector.from_rad_angle(angle, length) == (math.cos(angle)*length, math.sin(angle)*length, 0)
+    assert Vector.from_rad_angle(angle, length) == (math.cos(angle) * length, math.sin(angle) * length, 0)
 
 
 def test_vector_as_tuple():
@@ -267,10 +266,10 @@ def test_angle_between():
     v1 = Vector(0, 1)
     v2 = Vector(1, 1)
     angle = v1.angle_between(v2)
-    assert is_close(angle, math.pi/4)
+    assert is_close(angle, math.pi / 4)
     # reverse order, same result
     angle = v2.angle_between(v1)
-    assert is_close(angle, math.pi/4)
+    assert is_close(angle, math.pi / 4)
 
 
 def test_cross_product():
@@ -289,4 +288,3 @@ def test_lerp():
     assert v1.lerp(v2, .5) == (2.5, 2.5, 2.5)
     assert v1.lerp(v2, 0) == (1, 1, 1)
     assert v1.lerp(v2, 1) == (4, 4, 4)
-
