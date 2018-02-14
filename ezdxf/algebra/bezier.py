@@ -1,5 +1,4 @@
 # Purpose: 2d bezier curve
-# module belongs to package: dxfwrite (ezdxf)
 # Created: 26.03.2010
 # License: MIT License
 __author__ = "mozman <me@mozman.at>"

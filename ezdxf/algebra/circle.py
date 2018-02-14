@@ -1,7 +1,6 @@
 # Purpose: 2d circle calculations
-# module belongs to package dxfwrite
 # Created: 28.02.2010
-# License: GPL
+# License: MIT License
 __author__ = "mozman <me@mozman.at>"
 
 import math
@@ -55,7 +54,7 @@ class Circle(object):
         """
         x = self.center_point[0] + self.radius * math.cos(angle)
         y = self.center_point[1] + self.radius * math.sin(angle)
-        return (x, y)
+        return x, y
 
     def within(self, point):
         """ test if point is within circle
@@ -81,7 +80,7 @@ class Circle(object):
         result = list()
         if self.in_x_range(x):
             dx = self.center_point[0] - x
-            dy = (self.radius**2 - dx**2) ** 0.5 # pythagoras
+            dy = (self.radius**2 - dx**2) ** 0.5  # pythagoras
             result.append(self.center_point[1] + dy)
             result.append(self.center_point[1] - dy)
         return result

@@ -1,14 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: 2d clothoid
-# module belongs to package: dxfwrite.py
 # Created: 26.03.2010
 # License: MIT License
 __author__ = "mozman <mozman@gmx.at>"
 import math
-import sys
-if sys.version_info[0] > 2:
-    xrange = range
 
 
 class Clothoid(object):
@@ -17,9 +11,9 @@ class Clothoid(object):
     <paramA>. The curve always starts at the coordinate system origin = (0, 0).
     """
     def __init__(self, paramA=1.0):
-        self.A = paramA # Clothiod Parameter A
-        self.powersA = [paramA**power for power in xrange(19)]
-        self.coords = {} # coordinates cache
+        self.A = paramA  # Clothiod Parameter A
+        self.powersA = [paramA**power for power in range(19)]
+        self.coords = {}  # coordinates cache
 
     def get_radius(self, L):
         """Get radius of circle at distance <L>."""
@@ -55,7 +49,7 @@ class Clothoid(object):
         """
         delta_l = float(length) / float(segments)
         yield (0., 0.)
-        for index in xrange(1, segments+1):
+        for index in range(1, segments+1):
             yield self.get_xy(delta_l * index)
 
     def get_center(self, L):
@@ -65,4 +59,4 @@ class Clothoid(object):
         tau = self.get_tau(L)
         xm = x - r * math.sin(tau)
         ym = y + r * math.cos(tau)
-        return (xm, ym)
+        return xm, ym

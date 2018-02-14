@@ -2,17 +2,7 @@
 # Purpose: general purpose vector 2D/3D Vector and 2D/3D Point
 # License: MIT License
 import math
-import sys
-from functools import partial
-
-
-def is_close(v1, v2, places=7):
-    return round(v1, places) == round(v2, places)
-
-
-PY3 = sys.version_info.major > 2
-if PY3:
-    is_close = partial(math.isclose, abs_tol=1e-9)
+from .base import is_close
 
 
 class Vector(object):

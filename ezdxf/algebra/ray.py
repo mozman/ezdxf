@@ -1,25 +1,10 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Purpose: 2d ray - copied from algebra.Ray2D to remove dependency from the
-# algebra-package
-# module belongs to package: dxfwrite.py
 # Created: 13.03.2010
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
-
-""" Implements a 2D-ray class - same as algebra.Ray2D, but without the
-dependency from the algebra package.
-
-A ray is an infinite line and is defined by the equation
-y(x) = y0 + x * slope in a cartesian coordinate system
-"""
-
 __author__ = "mozman <mozman@gmx.at>"
 
 import math
 from .base import equals_almost, normalize_angle, is_vertical_angle
-
-__all__ = ['Ray2D', 'ParallelRaysError']
 
 
 class ParallelRaysError(ArithmeticError):
@@ -33,8 +18,10 @@ DOUBLE_PI = math.pi * 2.
 XCOORD = 0
 YCOORD = 1
 
+
 class Ray2D(object):
-    """defines an infinite ray (line with no end points)
+    """
+    Defines an infinite ray (line with no end points)
     treat it as IMMUTABLE - dont't change the status
     possible keyword args: slope, angle as float
     point1, point2 as 2d-tuples
@@ -54,14 +41,14 @@ class Ray2D(object):
     ray goes through point1 with the submitted angle
     vertical lines are possible
     if keyword argument slope is defined, angle will be ignored
-    """
 
+    """
     def __init__(self, point1, point2=None, **kwargs):
         self._vertical = False
         self.places = 7
         p1x = float(point1[XCOORD])
         p1y = float(point1[YCOORD])
-        if point2 is not None: # case A
+        if point2 is not None:  # case A
             # normalize point order to assure consist signs for slopes
             # +slope goes up and -slope goes down
             self._slope = 0
@@ -69,19 +56,19 @@ class Ray2D(object):
             p2x = float(point2[XCOORD])
             p2y = float(point2[YCOORD])
 
-            if p1x > p2x :
+            if p1x > p2x:
                 p1x, p2x = p2x, p1x
                 p1y, p2y = p2y, p1y
             dx = p2x - p1x
             dy = p2y - p1y
-            if dx == 0. : # line is vertical
+            if dx == 0.:  # line is vertical
                 self._x = p1x
                 self._set_angle(HALF_PI)
-            else :
+            else:
                 self._set_slope(dy/dx)
-        elif 'slope' in kwargs: # case B
+        elif 'slope' in kwargs:  # case B
             self._set_slope(float(kwargs['slope']))
-        elif 'angle' in kwargs: # case C
+        elif 'angle' in kwargs:  # case C
             self._set_angle(normalize_angle(float(kwargs['angle'])))
             if self.is_vertical:
                 self._x = p1x
@@ -94,7 +81,7 @@ class Ray2D(object):
         """ get slope of the ray """
         return self._slope
 
-    def _set_slope(self, slope): # private
+    def _set_slope(self, slope):
         self._slope = slope
         self._angle = normalize_angle(math.atan(slope))
 
@@ -102,7 +89,7 @@ class Ray2D(object):
     def angle(self):
         return self._angle
 
-    def _set_angle(self, angle): # private
+    def _set_angle(self, angle):
         self._angle = angle
         self._slope = math.tan(angle)
         self._vertical = is_vertical_angle(angle)
@@ -150,10 +137,9 @@ class Ray2D(object):
         """ returns True if ray goes through point, else False"""
         if self.is_vertical:
             return equals_almost(point[XCOORD], self._x, self.places)
-        else :
+        else:
             return equals_almost(point[YCOORD], self.get_y(point[XCOORD]),
                                  self.places)
-
 
     def get_y(self, x):
         """ get y by x, raises ArithmeticError for vertical lines"""
@@ -163,7 +149,7 @@ class Ray2D(object):
 
     def get_x(self, y):
         """ get x by y, raises ArithmeticError for horizontal lines"""
-        if self.is_vertical :
+        if self.is_vertical:
             return self._x
         else :
             if self.is_horizontal:

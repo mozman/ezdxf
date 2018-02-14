@@ -1,11 +1,7 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Purpose: 2d spline
-# module belongs to package: dxfwrite
 # Created: 26.03.2010
-# License: GPL
+# License: MIT License
 # Source: http://www-lehre.informatik.uni-osnabrueck.de/~cg/2000/skript/7_2_Splines.html
-
 __author__ = "mozman <mozman@gmx.at>"
 
 import math
@@ -34,7 +30,8 @@ class CubicSpline(object):
     def _create_array(self):
         return array('f', repeat(0.0, self.count))
 
-    def _get_t_array(self, points):
+    @staticmethod
+    def _get_t_array(points):
         t = array('f')
         t.append(0.0)
         for p1, p2 in zip(points[:-1], points[1:]):

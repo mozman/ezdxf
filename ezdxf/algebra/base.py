@@ -1,11 +1,23 @@
 # Created: 27.03.2010
+# License: MIT License
 __author__ = "mozman <me@mozman.at>"
 
 import math
+import sys
+from functools import partial
 
 HALF_PI = math.pi / 2.
 THREE_PI_HALF = 1.5 * math.pi
 DOUBLE_PI = math.pi * 2.
+
+
+def is_close(v1, v2, places=7):
+    return round(v1, places) == round(v2, places)
+
+
+PY3 = sys.version_info.major > 2
+if PY3:
+    is_close = partial(math.isclose, abs_tol=1e-9)
 
 
 def rotate_2d(point, angle):
@@ -15,6 +27,7 @@ def rotate_2d(point, angle):
     return x, y
 
 
+# same as is_close
 def equals_almost(v1, v2, places=7):
     """
     compare two float values
