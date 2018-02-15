@@ -92,6 +92,11 @@ class MeshBuilder(object):
     def get_edges(self):
         return self._edges
 
+    def transform(self, matrix):
+        mesh = self.__class__()
+        mesh.add_mesh(matrix.transform_vectors(self.get_faces()), faces=self.get_faces(), edges=self.get_edges())
+        return mesh
+
     def render(self, layout, dxfattribs=None, matrix=None):
         """
         Render mesh as MESH entity into layout.
@@ -109,6 +114,12 @@ class MeshBuilder(object):
                 data.vertices = self.get_vertices()
             data.edges = self.get_edges()
             data.faces = self.get_faces()
+
+    @classmethod
+    def from_mesh(cls, other):
+        mesh = cls()
+        mesh.add_mesh(vertices=other.get_vertices(), faces=other.get_faces(), edges=other.get_edges())
+        return mesh
 
 
 class MeshVertexMerger(MeshBuilder):
@@ -149,4 +160,5 @@ class MeshVertexMerger(MeshBuilder):
         return tuple(indices)
 
     def get_vertices(self):
-        return [key for value, key in sorted((v, k) for k, v in self.vertices.items())]
+        return [vertex for index, vertex in sorted((v, k) for k, v in self.vertices.items())]
+
