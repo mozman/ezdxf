@@ -5,6 +5,8 @@
 # License: MIT License
 
 import math
+from .mesh import Mesh, OptimizedMesh
+
 HEIGHT4 = 1. / math.sqrt(2.)  # pyramid4 height (* length)
 HEIGHT3 = math.sqrt(6.) / 3.  # pyramid3 height (* length)
 
@@ -65,11 +67,17 @@ class SierpinskyPyramid:
             raise ValueError("sides has to be 3 or 4.")
 
     def render(self, layout, merge=False, dxfattribs=None):
-        for vertices in self:  # iterate over all cubes
-            mesh = layout.add_mesh(dxfattribs=dxfattribs)
-            with mesh.edit_data() as data:
-                data.vertices = vertices
-                data.faces = self.faces()
+        faces = self.faces()  # all pyramid faces have the same vertex order
+        if merge:
+            mesh = OptimizedMesh()
+            for vertices in self:
+                mesh.add_mesh(vertices, faces)
+            mesh.render(layout, dxfattribs)
+        else:
+            for vertices in self:  # iterate over all pyramids
+                mesh = Mesh()
+                mesh.add_mesh(vertices, faces)
+                mesh.render(layout, dxfattribs)
 
 
 def sierpinsky_pyramid(location=(0., 0., 0.), length=1., level=1, sides=4):

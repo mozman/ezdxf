@@ -4,6 +4,8 @@
 # Created: 06.12.2016
 # License: MIT License
 
+from .mesh import Mesh, OptimizedMesh
+
 all_cubes_size_3_template = [
     (0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0),
     (0, 0, 1), (1, 0, 1), (2, 0, 1), (0, 1, 1), (1, 1, 1), (2, 1, 1), (0, 2, 1), (1, 2, 1), (2, 2, 1),
@@ -87,11 +89,17 @@ class MengerSponge:
         return cube_faces
 
     def render(self, layout, merge=False, dxfattribs=None):
-        for vertices in self:  # iterate over all cubes
-            mesh = layout.add_mesh(dxfattribs=dxfattribs)
-            with mesh.edit_data() as data:
-                data.vertices = vertices
-                data.faces = cube_faces
+        faces = self.faces()  # all cube faces have the same vertex order
+        if merge:
+            mesh = OptimizedMesh()
+            for vertices in self:
+                mesh.add_mesh(vertices, faces)
+            mesh.render(layout, dxfattribs)
+        else:
+            for vertices in self:  # iterate over all cubes
+                mesh = Mesh()
+                mesh.add_mesh(vertices, faces)
+                mesh.render(layout, dxfattribs)
 
 
 def _subdivide(location=(0., 0., 0.), length=1., kind=0):
