@@ -1,10 +1,6 @@
-#!/usr/bin/env python3
-# encoding: utf-8
-# Purpose: 
 # Created: 14.07.13
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
-
 import ezdxf
 
 
@@ -48,13 +44,14 @@ def create_dwg(filename):
         msp.add_text('TOP_CENTER', dxfattribs=attribs).set_pos((x+dx, y), align='TOP_CENTER')
         msp.add_text('TOP_RIGHT', dxfattribs=attribs).set_pos((x+width, y), align='TOP_RIGHT')
 
-    dwg = ezdxf.new(dxfversion='AC1018') # AutoCAD R2004
+    dwg = ezdxf.new(dxfversion='R2000')  # AutoCAD R2004
     msp = dwg.modelspace()
     add_justify_text("ALIGNED-TEXT", (15,0), (35, 5), 'ALIGNED')
     add_justify_text("FITTED-TEXT", (15,10), (35, 5), 'FIT')
     add_grid((0, 0), width=10, height=10)
 
     dwg.saveas(filename)
+
 
 if __name__ == '__main__':
     create_dwg("text_alignment.dxf")
