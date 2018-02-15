@@ -33,13 +33,17 @@ TEXT_ALIGN_FLAGS = {
 def r12writer(stream, fixed_tables=False):
     if hasattr(stream, 'write'):
         writer = R12FastStreamWriter(stream, fixed_tables)
-        yield writer
-        writer.close()
+        try:
+            yield writer
+        finally:
+            writer.close()
     else:
         with open(stream, 'wt') as stream:
             writer = R12FastStreamWriter(stream, fixed_tables)
-            yield writer
-            writer.close()
+            try:
+                yield writer
+            finally:
+                writer.close()
 
 
 class R12FastStreamWriter(object):

@@ -45,3 +45,16 @@ def test_read_r12(filename):
     msp = dwg.modelspace()
     circles = msp.query('CIRCLE')
     assert len(circles) == CIRCLE_COUNT
+
+
+def test_context_manager(filename):
+    with pytest.raises(ValueError):
+        with r12writer(filename) as dxf:
+            dxf.add_line((0, 0), (17, 23))
+            raise ValueError()
+
+    dwg = ezdxf.readfile(filename)
+    entities = list(dwg.modelspace())
+    assert len(entities) == 1
+    assert entities[0].dxftype() == 'LINE'
+
