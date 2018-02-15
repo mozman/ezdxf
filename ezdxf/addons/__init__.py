@@ -9,4 +9,4 @@ from .curves import Ellipse, Bezier, Clothoid, Spline
 from .dimlines import LinearDimension, AngularDimension, ArcDimension, RadialDimension, dimstyles
 from .menger_sponge import MengerSponge
 from .sierpinski_pyramid import SierpinskyPyramid
-from .mesh import Mesh, OptimizedMesh
+from .mesh import MeshBuilder, MeshVertexMerger

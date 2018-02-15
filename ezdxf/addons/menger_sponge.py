@@ -4,7 +4,7 @@
 # Created: 06.12.2016
 # License: MIT License
 
-from .mesh import Mesh, OptimizedMesh
+from .mesh import MeshBuilder, MeshVertexMerger
 
 all_cubes_size_3_template = [
     (0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0),
@@ -74,7 +74,7 @@ cube_faces = [
 ]
 
 
-class MengerSponge:
+class MengerSponge(object):
     def __init__(self, location=(0., 0., 0.), length=1., level=1, kind=0):
         self.cubes = _menger_sponge(location=location, length=length, level=level, kind=kind)
 
@@ -91,13 +91,13 @@ class MengerSponge:
     def render(self, layout, merge=False, dxfattribs=None):
         faces = self.faces()  # all cube faces have the same vertex order
         if merge:
-            mesh = OptimizedMesh()
+            mesh = MeshVertexMerger()
             for vertices in self:
                 mesh.add_mesh(vertices, faces)
             mesh.render(layout, dxfattribs)
-        else:
-            for vertices in self:  # iterate over all cubes
-                mesh = Mesh()
+        else:  # render each cube as individual MESH entity
+            for vertices in self:
+                mesh = MeshBuilder()
                 mesh.add_mesh(vertices, faces)
                 mesh.render(layout, dxfattribs)
 

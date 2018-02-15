@@ -5,7 +5,7 @@
 # License: MIT License
 
 import math
-from .mesh import Mesh, OptimizedMesh
+from .mesh import MeshBuilder, MeshVertexMerger
 
 HEIGHT4 = 1. / math.sqrt(2.)  # pyramid4 height (* length)
 HEIGHT3 = math.sqrt(6.) / 3.  # pyramid3 height (* length)
@@ -14,7 +14,7 @@ DY1_FACTOR = math.tan(math.pi/6.) / 2.  # inner circle radius
 DY2_FACTOR = 0.5 / math.cos(math.pi/6.)  # outer circle radius
 
 
-class SierpinskyPyramid:
+class SierpinskyPyramid(object):
     def __init__(self, location=(0., 0., 0.), length=1., level=1, sides=4):
         self.sides = sides
         self.pyramids = sierpinsky_pyramid(location=location, length=length, level=level, sides=sides)
@@ -69,13 +69,13 @@ class SierpinskyPyramid:
     def render(self, layout, merge=False, dxfattribs=None):
         faces = self.faces()  # all pyramid faces have the same vertex order
         if merge:
-            mesh = OptimizedMesh()
+            mesh = MeshVertexMerger()
             for vertices in self:
                 mesh.add_mesh(vertices, faces)
             mesh.render(layout, dxfattribs)
-        else:
-            for vertices in self:  # iterate over all pyramids
-                mesh = Mesh()
+        else:  # render each pyramid as individual MESH entity
+            for vertices in self:
+                mesh = MeshBuilder()
                 mesh.add_mesh(vertices, faces)
                 mesh.render(layout, dxfattribs)
 

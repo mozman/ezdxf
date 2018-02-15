@@ -5,7 +5,7 @@
 # License: MIT License
 
 
-class Mesh(object):
+class MeshBuilder(object):
     def __init__(self):
         self._vertices = []
         self._faces = []
@@ -51,9 +51,9 @@ class Mesh(object):
             data.faces = self.get_faces()
 
 
-class OptimizedMesh(Mesh):
+class MeshVertexMerger(MeshBuilder):
     def __init__(self, precision=6):
-        super(OptimizedMesh, self).__init__()
+        super(MeshVertexMerger, self).__init__()
         self.vertices = {}
         self.precision = precision
 
