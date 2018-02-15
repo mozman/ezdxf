@@ -1,10 +1,13 @@
+import math
 import ezdxf
 from ezdxf.addons import MengerSponge
+from ezdxf.algebra.matrix44 import Matrix44
 
 
 def write(filename, sponge, merge=False):
     dwg = ezdxf.new('R2000')
-    sponge.render(dwg.modelspace(), merge=merge)
+    transform = Matrix44.chain(Matrix44.z_rotate(math.radians(45)), Matrix44.translate(5, 3, 4))
+    sponge.render(dwg.modelspace(), merge=merge, matrix=transform)
     dwg.saveas(filename)
 
 

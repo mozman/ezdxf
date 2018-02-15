@@ -66,18 +66,18 @@ class SierpinskyPyramid(object):
         else:
             raise ValueError("sides has to be 3 or 4.")
 
-    def render(self, layout, merge=False, dxfattribs=None):
+    def render(self, layout, merge=False, dxfattribs=None, matrix=None):
         faces = self.faces()  # all pyramid faces have the same vertex order
         if merge:
             mesh = MeshVertexMerger()
             for vertices in self:
                 mesh.add_mesh(vertices, faces)
-            mesh.render(layout, dxfattribs)
+            mesh.render(layout, dxfattribs, matrix=matrix)
         else:  # render each pyramid as individual MESH entity
             for vertices in self:
                 mesh = MeshBuilder()
                 mesh.add_mesh(vertices, faces)
-                mesh.render(layout, dxfattribs)
+                mesh.render(layout, dxfattribs, matrix=matrix)
 
 
 def sierpinsky_pyramid(location=(0., 0., 0.), length=1., level=1, sides=4):

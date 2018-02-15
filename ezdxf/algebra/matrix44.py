@@ -1,20 +1,17 @@
-#!/usr/bin/env python
-#coding:utf-8
-#
 # original code from package: gameobjects
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-#
-# Adaptation for package geoalg, API is not compatible to gameobjects.Matrix44
+# Adaptation for package geoalg (ezdxf), API is not compatible to gameobjects.Matrix44
 # Author: mozman
 # Created: 19.04.2010
 # Purpose: 4x4 matrix math
-# module belongs to package geoalg
+# module belongs to package ezdxf
 # License: MIT License
 
 from math import sin, cos, tan
 from array import array
+
 
 class Matrix44(object):
     _identity = (
@@ -28,11 +25,14 @@ class Matrix44(object):
     def __init__(self, *args):
         """
         If no parameteres are given, the Matrix44 is initialised to identity.
+
         If 1 parameter is given it should be an iterable with the 16 components
         of the matrix.
+
         If 4 parameters are given they should be 4 sequences of up to 4 values.
-        Missing values in each row are padded out with values from the identity matix
+        Missing values in each row are padded out with values from the identity matrix
         (so you can use Vector3's or tuples of 3 values).
+
         """
         self.matrix = array('d', Matrix44._identity)
         nargs = len(args)
@@ -44,8 +44,7 @@ class Matrix44(object):
             for index, row in enumerate(args):
                 self.set_row(index, row)
         else:
-            raise ValueError("Invalid count of arguments (4 row vectors " \
-                             "or one list with 16 values).")
+            raise ValueError("Invalid count of arguments (4 row vectors or one list with 16 values).")
 
     def __repr__(self):
         def format_row(row):
@@ -64,7 +63,7 @@ class Matrix44(object):
     def get_col(self, col):
         """Returns a column as a tuple of 4 values."""
         m = self.matrix
-        return (m[col], m[col+4], m[col+8], m[col+12])
+        return m[col], m[col+4], m[col+8], m[col+12]
 
     def set_col(self, col, values):
         """Sets the values in a column."""
@@ -75,26 +74,19 @@ class Matrix44(object):
         m[col + 8] = float(c)
         m[col + 12] = float(d)
 
-    def get_numpy_matrix_string(self):
-        def format_row(row):
-            return " ".join([str(value) for value in row])
-        return "; ".join([format_row(row) for row in self.rows()])
-
-    def to_list(self):
-        """Converts the matrix in to a list of values, suitable for using
-        with glLoadMatrix*
-        """
-        return self.matrix[:]
-
     def set(self, row0, row1, row2, row3):
-        """Sets all four rows of the matrix."""
+        """
+        Sets all four rows of the matrix.
+        """
         for index, row in enumerate((row0, row1, row2, row3)):
             self.set_row(index, row)
 
     @classmethod
     def from_iter(cls, iterable):
-        """Creates a Matrix44 from an iterable of 16 values."""
-        matrix = cls.__new__(cls, object)
+        """
+        Creates a Matrix44 from an iterable of 16 values.
+        """
+        matrix = cls()
         matrix.matrix = array('d', iterable)
         if len(matrix.matrix) != 16:
             raise ValueError("Iterable must have 16 values")
@@ -106,14 +98,18 @@ class Matrix44(object):
 
     @classmethod
     def identity(cls):
-        """Creates and identity Matrix44."""
+        """
+        Creates and identity Matrix44.
+        """
         return Matrix44()
 
     @classmethod
     def scale(cls, scale_x, scale_y=None, scale_z=None):
-        """Creates a scale Matrix44.
-        If one parameter is given the scale is uniform, if three parameters are
-        give the scale is different (potentialy) on each x axis.
+        """
+        Creates a scale Matrix44.
+
+        If one parameter is given the scale is uniform, if three parameters are give the scale is different (potentialy)
+        on each x axis.
         """
         if scale_y is None:
             scale_y = scale_x
@@ -129,7 +125,9 @@ class Matrix44(object):
 
     @classmethod
     def translate(cls, x, y, z):
-        """Creates a translation Matrix44 to (x, y, z)."""
+        """
+        Creates a translation Matrix44 to (x, y, z).
+        """
         return cls.from_iter([
             1., 0., 0., 0.,
             0., 1., 0., 0.,
@@ -139,9 +137,11 @@ class Matrix44(object):
 
     @classmethod
     def x_rotate(cls, angle):
-        """Creates a Matrix44 that does a rotation about the x axis.
+        """
+        Creates a Matrix44 that does a rotation about the x axis.
 
         angle -- Angle of rotation (in radians)
+
         """
         cos_a = cos(angle)
         sin_a = sin(angle)
@@ -154,8 +154,11 @@ class Matrix44(object):
 
     @classmethod
     def y_rotate(cls, angle):
-        """Creates a Matrix44 that does a rotation about the y axis.
+        """
+        Creates a Matrix44 that does a rotation about the y axis.
+
         angle -- Angle of rotation (in radians)
+
         """
         cos_a = cos(angle)
         sin_a = sin(angle)
@@ -168,9 +171,11 @@ class Matrix44(object):
 
     @classmethod
     def z_rotate(cls, angle):
-        """Creates a Matrix44 that does a rotation about the z axis.
+        """
+        Creates a Matrix44 that does a rotation about the z axis.
 
         angle -- Angle of rotation (in radians)
+
         """
         cos_a = cos(angle)
         sin_a = sin(angle)
@@ -183,10 +188,12 @@ class Matrix44(object):
 
     @classmethod
     def axis_rotate(cls, axis, angle):
-        """Creates a Matrix44 that does a rotation about an axis.
+        """
+        Creates a Matrix44 that does a rotation about an axis.
 
         axis -- A vector of the axis
         angle -- Angle of rotation
+
         """
         c = cos(angle)
         s = sin(angle)
@@ -201,11 +208,13 @@ class Matrix44(object):
 
     @classmethod
     def xyz_rotate(cls, angle_x, angle_y, angle_z):
-        """Creates a Matrix44 that does a rotation about each axis.
+        """
+        Creates a Matrix44 that does a rotation about each axis.
 
         angle_x -- Angle of rotation, about x
         angle_y -- Angle of rotation, about y
         angle_z -- Angle of rotation, about z
+
         """
         cx = cos(angle_x)
         sx = sin(angle_x)
@@ -225,7 +234,8 @@ class Matrix44(object):
 
     @classmethod
     def perspective_projection(cls, left, right, top, bottom, near, far):
-        """Creates a Matrix44 that projects points in to 2d space.
+        """
+        Creates a Matrix44 that projects points in to 2d space.
 
         left -- Coordinate of left of screen
         right -- Coordination of right of screen
@@ -233,6 +243,7 @@ class Matrix44(object):
         bottom -- Coordination of the borrom of the screen
         near -- Coordination of the near clipping plane
         far -- Coordinate of the far clipping plane
+
         """
         return cls.from_iter([
             (2.*near)/(right-left), 0., 0., 0.,
@@ -241,15 +252,16 @@ class Matrix44(object):
             0., 0., -((2.*far*near)/(far-near)), 0.
         ])
 
-
     @classmethod
     def perspective_projection_fov(cls, fov, aspect, near, far):
-        """Creates a Matrix44 that projects points in to 2d space
+        """
+        Creates a Matrix44 that projects points in to 2d space
 
         fov -- The field of view (in radians)
         aspect -- The aspect ratio of the screen (width / height)
         near -- Coordinate of the near clipping plane
         far -- Coordinate of the far clipping plane
+
         """
         vrange = near*tan(fov/2.)
         left = -vrange*aspect
@@ -260,43 +272,58 @@ class Matrix44(object):
 
     @staticmethod
     def chain(*matrices):
-        """Compose a transformation matrix from <*matrices>."""
+        """
+        Compose a transformation matrix from <*matrices>.
+        """
         transformation = Matrix44()
         for matrix in matrices:
             transformation *= matrix
         return transformation
 
     def __hash__(self):
-        """Allows matrices to be used as keys in a dictionary."""
+        """
+        Allows matrices to be used as keys in a dictionary.
+        """
         return self.matrix.__hash__()
 
     def __setitem__(self, coord, value):
-        """Set element in the Matrix44.
+        """
+        Set element in the Matrix44.
+
         <coord> is a tuple of (row, column)
+
         """
         row, col = coord
         self.matrix[row * 4 + col] = float(value)
 
     def __getitem__(self, coord):
-        """Get element in the Matrix44.
+        """
+        Get element in the Matrix44.
+
         <coord> is a tuple of (row, column)
+
         """
         row, col = coord
         return self.matrix[row * 4 + col]
 
     def __iter__(self):
-        """Iterates over all 16 values in the Matrix44."""
+        """
+        Iterates over all 16 values in the Matrix44.
+        """
         return iter(self.matrix)
 
     def __mul__(self, other):
-        """Returns the result of multiplying this Matrix44 by another, called
-        by the * (multiply) operator."""
+        """
+        Returns the result of multiplying this Matrix44 by another, called by the * (multiply) operator.
+        """
         res_matrix = self.copy()
         res_matrix.__imul__(other)
         return res_matrix
 
     def __imul__(self, other):
-        """Multiplies this Matrix44 by another, called by the *= operator."""
+        """
+        Multiplies this Matrix44 by another, called by the *= operator.
+        """
         m1 = self.matrix
         m2 = other.matrix
         self.matrix = array('d', [
@@ -323,11 +350,12 @@ class Matrix44(object):
         return self
 
     def fast_mul(self, other):
-        """Multiplies this matrix by <other>.
+        """
+        Multiplies this matrix by <other>.
 
-        Assumes that both matrices have a right column of (0, 0, 0, 1). This is
-        true for matrices composed of rotations, translations and scales.
-        fast_mul is approximately 25% quicker than the *= operator.
+        Assumes that both matrices have a right column of (0, 0, 0, 1). This is true for matrices composed of rotations,
+        translations and scales. fast_mul is approximately 25% quicker than the *= operator.
+
         """
         m1 = self.matrix
         m2 = other.matrix
@@ -355,31 +383,50 @@ class Matrix44(object):
         return self
 
     def rows(self):
-        """Returns an iterator for the rows in the Matrix44."""
+        """
+        Returns an iterator for the rows in the Matrix44.
+        """
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
     def columns(self):
-        """Returns an iterator for the columns in the Matrix44."""
+        """
+        Returns an iterator for the columns in the Matrix44.
+        """
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
     def transform(self, vector):
-        """Transforms a Vector3 and returns the result as a tuple."""
+        """
+        Transforms a Vector3 and returns the result as a tuple.
+        """
         m = self.matrix
         x, y, z = vector
-        return ( x * m[0] + y * m[4] + z * m[8]  + m[12],
-                 x * m[1] + y * m[5] + z * m[9]  + m[13],
-                 x * m[2] + y * m[6] + z * m[10] + m[14] )
+        return (x * m[0] + y * m[4] + z * m[8] + m[12],
+                x * m[1] + y * m[5] + z * m[9] + m[13],
+                x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def multi_transform(self, vectors):
-        """Transform multiple vectors."""
-        return [self.transform(vec) for vec in vectors]
+    def transform_vectors(self, vectors):
+        """
+        Transform multiple vectors.
+        """
+        result = []
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
+        for vector in vectors:
+            x, y, z = vector
+            result.append((
+                x * m0 + y * m4 + z * m8 + m12,
+                x * m1 + y * m5 + z * m9 + m13,
+                x * m2 + y * m6 + z * m10 + m14
+            ))
+        return result
 
     def transpose(self):
-        """Swaps the rows for columns."""
+        """
+        Swaps the rows for columns.
+        """
         m00, m01, m02, m03, \
-           m10, m11, m12, m13, \
-           m20, m21, m22, m23, \
-           m30, m31, m32, m33 = self.matrix
+        m10, m11, m12, m13, \
+        m20, m21, m22, m23, \
+        m30, m31, m32, m33 = self.matrix
 
         self.matrix = array('d', [
             m00, m10, m20, m30,
@@ -389,8 +436,8 @@ class Matrix44(object):
         ])
 
     def get_transpose(self):
-        """Returns a Matrix44 that is a copy of this, but with rows and
-        columns swapped.
+        """
+        Returns a Matrix44 that is a copy of this, but with rows and columns swapped.
         """
         matrix = self.copy()
         matrix.transpose()
@@ -401,25 +448,26 @@ class Matrix44(object):
         e21, e22, e23, e24, \
         e31, e32, e33, e34, \
         e41, e42, e43, e44 = self.matrix
-        return e11*e22*e33*e44 - e11*e22*e34*e43 + e11*e23*e34*e42 - e11*e23*e32*e44 \
-             + e11*e24*e32*e43 - e11*e24*e33*e42 - e12*e23*e34*e41 + e12*e23*e31*e44 \
-             - e12*e24*e31*e43 + e12*e24*e33*e41 - e12*e21*e33*e44 + e12*e21*e34*e43 \
-             + e13*e24*e31*e42 - e13*e24*e32*e41 + e13*e21*e32*e44 - e13*e21*e34*e42 \
-             + e13*e22*e34*e41 - e13*e22*e31*e44 - e14*e21*e32*e43 + e14*e21*e33*e42 \
-             - e14*e22*e33*e41 + e14*e22*e31*e43 - e14*e23*e31*e42 + e14*e23*e32*e41
+        return e11 * e22 * e33 * e44 - e11 * e22 * e34 * e43 + e11 * e23 * e34 * e42 - e11 * e23 * e32 * e44 + \
+               e11 * e24 * e32 * e43 - e11 * e24 * e33 * e42 - e12 * e23 * e34 * e41 + e12 * e23 * e31 * e44 - \
+               e12 * e24 * e31 * e43 + e12 * e24 * e33 * e41 - e12 * e21 * e33 * e44 + e12 * e21 * e34 * e43 + \
+               e13 * e24 * e31 * e42 - e13 * e24 * e32 * e41 + e13 * e21 * e32 * e44 - e13 * e21 * e34 * e42 + \
+               e13 * e22 * e34 * e41 - e13 * e22 * e31 * e44 - e14 * e21 * e32 * e43 + e14 * e21 * e33 * e42 - \
+               e14 * e22 * e33 * e41 + e14 * e22 * e31 * e43 - e14 * e23 * e31 * e42 + e14 * e23 * e32 * e41
 
     def inverse(self):
-        """Calculates the inverse of the matrix.
+        """
+        Calculates the inverse of the matrix.
 
         Raises ZeroDivisionError if matrix has no inverse.
         """
         det = self.determinant()
-        f = 1./det # catch ZeroDivisionError by caller
+        f = 1./det  # catch ZeroDivisionError by caller
         m00, m01, m02, m03, \
         m10, m11, m12, m13, \
         m20, m21, m22, m23, \
         m30, m31, m32, m33 = self.matrix
-        self.matrix = array('d', ( \
+        self.matrix = array('d', (
             (m12*m23*m31 - m13*m22*m31 + m13*m21*m32 - m11*m23*m32 - m12*m21*m33 + m11*m22*m33)*f,
             (m03*m22*m31 - m02*m23*m31 - m03*m21*m32 + m01*m23*m32 + m02*m21*m33 - m01*m22*m33)*f,
             (m02*m13*m31 - m03*m12*m31 + m03*m11*m32 - m01*m13*m32 - m02*m11*m33 + m01*m12*m33)*f,

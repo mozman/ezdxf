@@ -218,7 +218,3 @@ class TestMatrix44(unittest.TestCase):
     def test_inverse_error(self):
         m = Matrix44([1] * 16)
         self.assertRaises(ZeroDivisionError, m.inverse)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -88,18 +88,18 @@ class MengerSponge(object):
     def faces():
         return cube_faces
 
-    def render(self, layout, merge=False, dxfattribs=None):
+    def render(self, layout, merge=False, dxfattribs=None, matrix=None):
         faces = self.faces()  # all cube faces have the same vertex order
         if merge:
             mesh = MeshVertexMerger()
             for vertices in self:
                 mesh.add_mesh(vertices, faces)
-            mesh.render(layout, dxfattribs)
+            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
         else:  # render each cube as individual MESH entity
             for vertices in self:
                 mesh = MeshBuilder()
                 mesh.add_mesh(vertices, faces)
-                mesh.render(layout, dxfattribs)
+                mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
 
 
 def _subdivide(location=(0., 0., 0.), length=1., kind=0):

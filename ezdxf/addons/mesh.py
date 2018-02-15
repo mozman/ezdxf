@@ -92,18 +92,21 @@ class MeshBuilder(object):
     def get_edges(self):
         return self._edges
 
-    def render(self, layout, dxfattribs=None):
+    def render(self, layout, dxfattribs=None, matrix=None):
         """
         Render mesh as MESH entity into layout.
 
         Args:
             layout: ezdxf Layout() object
             dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
-
+            matrix: transformation matrix, requires a .transform_vectors() method
         """
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
         with mesh.edit_data() as data:
-            data.vertices = self.get_vertices()
+            if matrix is not None:
+                data.vertices = matrix.transform_vectors(self.get_vertices())
+            else:
+                data.vertices = self.get_vertices()
             data.edges = self.get_edges()
             data.faces = self.get_faces()
 
