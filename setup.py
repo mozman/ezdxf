@@ -45,6 +45,7 @@ setup(
               'ezdxf.tools',
               'ezdxf.addons',
               'ezdxf.algebra',
+              'ezdxf.audit',
               ],
     package_data={'ezdxf': ['templates/*.dxf',
                             'pp/dxfpp.html',

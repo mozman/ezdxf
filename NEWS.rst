@@ -12,6 +12,7 @@ Version 0.8.6 - dev
      ArcDimension() and AngularDimension() composite objects from dxfwrite as addons, these addons support DXF R12
    * NEW: geometry builder as addons: MeshBuilder(), MeshVertexMerger(), MengerSponge(), SierpinskyPyramid(), these
      addons require DXF R2000+ (MESH entity)
+   * BUGFIX: fixed invalid implementation of context manager for r12writer
 
 Version 0.8.5 - 2018-01-28
 
