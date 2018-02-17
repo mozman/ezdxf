@@ -3,3 +3,5 @@ include requirements.txt
 recursive-include examples *.py *.bat *.sh
 recursive-include tests *.py
 recursive-include tests/data *
+recursive-include integration_tests *.py
+recursive-include integration_tests/data *
