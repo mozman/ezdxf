@@ -191,12 +191,12 @@ class TestMatrix44(unittest.TestCase):
         r = Matrix44.axis_rotate(angle=pi / 2, axis=(0., 0., 1.))
         points = ((23., 97., .5), (2., 7., 13.))
 
-        p1 = s.multi_transform(points)
-        p1 = t.multi_transform(p1)
-        p1 = r.multi_transform(p1)
+        p1 = s.transform_vectors(points)
+        p1 = t.transform_vectors(p1)
+        p1 = r.transform_vectors(p1)
 
         c = Matrix44.chain(s, t, r)
-        p2 = c.multi_transform(points)
+        p2 = c.transform_vectors(points)
         self.assertTrue(equal_vectors(p1, p2))
 
     def test_transform(self):
