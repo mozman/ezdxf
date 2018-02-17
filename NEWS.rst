@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.8.7 - dev
+
+   *
+
 Version 0.8.6 - 2018-02-17
 
    * NEW: ezdxf project website: https://ezdxf.mozman.at/
