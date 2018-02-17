@@ -166,7 +166,7 @@ class ViewportData(object):
         # view_target_point & view_direction_vector defines the view direction
         # only important for 3D model views
         self.view_target_point = (0., 0., 0.)
-        self.view_direction_vector = (0., 0., 0.)
+        self.view_direction_vector = (0., 0., 1.)
         self.view_twist_angle = 0.  # in radians!!!
         self.view_height = 1.  # height of model space area
         self.view_center_point = (0., 0.)  # point in model space, which is displayed in the viewport center.

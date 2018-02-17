@@ -6,7 +6,8 @@
 # License: MIT License
 
 import ezdxf
-FILENAME = r'C:\Users\manfred\Desktop\Now\setup_initial_view.dxf'
+# FILENAME = r'C:\Users\manfred\Desktop\Now\page_setup_R2000.dxf'
+FILENAME = 'page_setup_R2000.dxf'
 
 
 def draw_raster(dwg):
@@ -55,11 +56,13 @@ def setup_active_viewport(dwg):
     viewport.dxf.aspect_ratio = 2.0  # aspect ratio of viewport (x/y)
 
 
-def setup_paper_space_layout(dwg, name):
+def layout_page_setup(dwg):
+    name = 'Layout1'
     if name in dwg.layouts:
         layout = dwg.layouts.get(name)
     else:
         layout = dwg.layouts.new(name)
+
     layout.page_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
     (x1, y1), (x2, y2) = layout.get_paper_limits()
     center_x = (x1+x2)/2
@@ -108,6 +111,6 @@ if __name__ == '__main__':
     dwg = ezdxf.new('R2000')
     draw_raster(dwg)
     setup_active_viewport(dwg)
-    setup_paper_space_layout(dwg, 'Layout1')
+    layout_page_setup(dwg)
     dwg.saveas(FILENAME)
     print("drawing '%s' created.\n" % FILENAME)

@@ -10,7 +10,7 @@ from ..graphicsfactory import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
 from ..groupby import groupby
-
+from ..lldxf.const import STD_SCALES
 
 class DXF12Layouts(object):
     """
@@ -177,10 +177,96 @@ class DXF12Layout(BaseLayout):
     def _set_paperspace(self, entity):
         entity.dxf.paperspace = self._paperspace
 
-    def page_setup(self, size=(297, 210), margins=(0, 0, 0, 0), units='mm', rotation=0):
+    def page_setup(self, size=(297, 210), margins=(0, 0, 0, 0), units='mm', offset=(0, 0), rotation=0, scale=16):
         if self._paperspace == 0:
             raise DXFTypeError("No paper setup for model space.")
-        raise NotImplementedError
+
+        # remove existing viewports
+        for viewport in self.viewports():
+            self.delete_entity(viewport)
+
+        if int(rotation) not in (0, 1, 2, 3):
+            raise DXFValueError("valid rotation values: 0-3")
+
+        if isinstance(scale, int):
+            scale = STD_SCALES.get(scale, (1, 1))
+
+        if scale[0] == 0:
+            raise DXFValueError("scale numerator can't be 0.")
+        if scale[1] == 0:
+            raise DXFValueError("scale denominator can't be 0.")
+
+        scale_factor = scale[1] / scale[0]
+
+        # TODO: don't know how to set inch or mm mode in R12
+        units = units.lower()
+        if units.startswith('inch'):
+            units = 'Inches'
+            plot_paper_units = 0
+            unit_factor = 25.4  # inch to mm
+        elif units == 'mm':
+            units = 'MM'
+            plot_paper_units = 1
+            unit_factor = 1.0
+        else:
+            raise DXFValueError('Supported units: "mm" and "inch"')
+
+
+
+        # all viewport parameters are scaled paper space units
+        def paper_units(value):
+            return value  * scale_factor
+
+        # TODO: don't know how paper setup in DXF R12 works
+        paper_width, paper_height = size
+
+        # TODO: don't know how margins setup in DXF R12 works
+        margin_top, margin_right, margin_bottom, margin_left = margins
+
+        paper_width = paper_units(size[0])
+        paper_height = paper_units(size[1])
+
+
+        plimmin = self.drawing.header['$PLIMMIN'] = (0, 0)
+        plimmax = self.drawing.header['$PLIMMAX'] = (paper_width, paper_height)
+
+        # TODO: don't know how paper setup in DXF R12 works
+
+        pextmin = self.drawing.header['$PEXTMIN'] = (0, 0, 0)
+        pextmax = self.drawing.header['$PEXTMAX'] = (paper_width, paper_height, 0)
+
+        # printing area
+        printable_width = paper_width - paper_units(margin_left) - paper_units(margin_right)
+        printable_height = paper_height - paper_units(margin_bottom) - paper_units(margin_top)
+
+        # AutoCAD viewport (window) size
+        vp_width = paper_width * 1.1
+        vp_height = paper_height * 1.1
+
+        # center of printing area
+        center = (printable_width / 2, printable_height / 2)
+
+        # create 'main' viewport
+        main_viewport = self.add_viewport(
+            center=center,  # no influence to 'main' viewport?
+            size=(vp_width, vp_height),  # I don't get it, just use paper size!
+            view_center_point=center,  # same as center
+            view_height=vp_height,   # view height in paper space units
+        )
+        main_viewport.dxf.id = 1  # set as main viewport
+        main_viewport.dxf.status = 2  # AutoCAD default value
+        with main_viewport.edit_data() as vpdata:
+            vpdata.view_mode = 1000  # AutoDesk default
+
+
+    def get_paper_limits(self):
+        """
+        Returns paper limits in plot paper units
+        """
+        limmin = self.drawing.header.get('$PLIMMIN', (0, 0))
+        limmax = self.drawing.header.get('$PLIMMAX', (0, 0))
+        return limmin, limmax
+
 
     @property
     def layout_key(self):

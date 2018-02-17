@@ -2,12 +2,13 @@
 News
 ====
 
-Version 0.8.6 - dev
+Version 0.8.6 - 2018-02-17
 
    * NEW: ezdxf project website: https://ezdxf.mozman.at/
    * CHANGE: create all missing tables of the TABLES sections for DXF R12
    * BUGFIX: entities on new layouts will be saved
-   * NEW: Layout.page_setup() and correct 'main' viewport for DXF R2000+
+   * NEW: Layout.page_setup() and correct 'main' viewport for DXF R2000+; For DXF R12 page_setup() exists, but does not
+     provide useful results. Page setup for DXF R12 is still a mystery to me.
    * NEW: Table(), MText(), Ellipse(), Spline(), Bezier(), Clothoid(), LinearDimension(), RadialDimension(),
      ArcDimension() and AngularDimension() composite objects from dxfwrite as addons, these addons support DXF R12
    * NEW: geometry builder as addons: MeshBuilder(), MeshVertexMerger(), MengerSponge(), SierpinskyPyramid(), these
