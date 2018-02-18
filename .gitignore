@@ -3,6 +3,7 @@ dist/*
 .idea/*
 ezdxf.egg-info/*
 docs/build/*
-integration_tests/*.dxf
+examples/*.dxf
+examples/addons/*.dxf
 tools/plotstyles/*
 newctb.ctb

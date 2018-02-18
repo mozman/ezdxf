@@ -17,14 +17,28 @@ DY2_FACTOR = 0.5 / math.cos(math.pi/6.)  # outer circle radius
 class SierpinskyPyramid(object):
     def __init__(self, location=(0., 0., 0.), length=1., level=1, sides=4):
         self.sides = sides
-        self.pyramids = sierpinsky_pyramid(location=location, length=length, level=level, sides=sides)
+        self.pyramid_definitions = sierpinsky_pyramid(location=location, length=length, level=level, sides=sides)
 
     def vertices(self):
-        for location, length in self.pyramids:
+        """
+        Yields the pyramid vertices as list of (x, y, z) tuples.
+
+        """
+        for location, length in self.pyramid_definitions:
             yield self._calc_vertices(location, length)
     __iter__ = vertices
 
     def _calc_vertices(self, location, length):
+        """
+        Calculates the pyramid vertices.
+
+        Args:
+            location: location of the pyramid as center point of the base
+            length: pyramid side length
+
+        Returns: list of (x, y, z) tuples
+
+        """
         len2 = length / 2.
         x, y, z = location
         if self.sides == 4:
@@ -48,6 +62,10 @@ class SierpinskyPyramid(object):
             raise ValueError("sides has to be 3 or 4.")
 
     def faces(self):
+        """
+        Returns list of pyramid faces. All pyramid vertices have the same order, so one faces list fits them all.
+
+        """
         if self.sides == 4:
             return [
                 (0, 1, 2, 3),
@@ -67,17 +85,50 @@ class SierpinskyPyramid(object):
             raise ValueError("sides has to be 3 or 4.")
 
     def render(self, layout, merge=False, dxfattribs=None, matrix=None):
-        faces = self.faces()  # all pyramid faces have the same vertex order
+        """
+        Renders the sierpinsky pyramid into layout, set merge == *True* for rendering the whole sierpinsky pyramid into
+        one MESH entity, set merge to *False* for rendering the individual pyramids of the sierpinsky pyramid as MESH
+        entities.
+
+        Args:
+            layout: target layout (ezdxf)
+            merge: *True* for one MESH entity, *False* for individual MESH entities per pyramid
+            dxfattribs: DXF attributes for the MESH entities
+            matrix: apply transformation matrix at rendering
+
+        """
         if merge:
-            mesh = MeshVertexMerger()
-            for vertices in self:
-                mesh.add_mesh(vertices, faces)
-            mesh.render(layout, dxfattribs, matrix=matrix)
-        else:  # render each pyramid as individual MESH entity
-            for vertices in self:
-                mesh = MeshBuilder()
-                mesh.add_mesh(vertices, faces)
-                mesh.render(layout, dxfattribs, matrix=matrix)
+            mesh = self.mesh()
+            mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
+        else:
+            for pyramid in self.pyramids():
+                pyramid.render(layout, dxfattribs, matrix=matrix)
+
+    def pyramids(self):
+        """
+        Generates all pyramids of the sierpinsky pyramid as individual MashBuilder() objects.
+
+        Yields: MeshBuilder()
+
+        """
+        faces = self.faces()
+        for vertices in self:
+            mesh = MeshBuilder()
+            mesh.add_mesh(vertices, faces)
+            yield mesh
+
+    def mesh(self):
+        """
+        Returns geometry as one single MESH entity.
+
+        Returns: MeshVertexMerger()
+
+        """
+        faces = self.faces()
+        mesh = MeshVertexMerger()
+        for vertices in self:
+            mesh.add_mesh(vertices, faces)
+        return mesh
 
 
 def sierpinsky_pyramid(location=(0., 0., 0.), length=1., level=1, sides=4):

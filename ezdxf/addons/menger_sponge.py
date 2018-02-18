@@ -76,30 +76,70 @@ cube_faces = [
 
 class MengerSponge(object):
     def __init__(self, location=(0., 0., 0.), length=1., level=1, kind=0):
-        self.cubes = _menger_sponge(location=location, length=length, level=level, kind=kind)
+        self.cube_definitions = _menger_sponge(location=location, length=length, level=level, kind=kind)
 
     def vertices(self):
-        for location, length in self.cubes:
+        """
+        Yields the cube vertices as list of (x, y, z) tuples.
+
+        """
+        for location, length in self.cube_definitions:
             x, y, z = location
             yield [(x + xf * length, y + yf * length, z + zf * length) for xf, yf, zf in _cube_vertices]
     __iter__ = vertices
 
     @staticmethod
     def faces():
+        """
+        Returns list of cube faces. All cube vertices have the same order, so one faces list fits them all.
+
+        """
         return cube_faces
 
     def render(self, layout, merge=False, dxfattribs=None, matrix=None):
-        faces = self.faces()  # all cube faces have the same vertex order
+        """
+        Renders the menger sponge into layout, set merge == *True* for rendering the whole menger sponge into one MESH
+        entity, set merge to *False* for rendering the individual cubes of the menger sponge as MESH entities.
+
+        Args:
+            layout: target layout (ezdxf)
+            merge: *True* for one MESH entity, *False* for individual MESH entities per cube
+            dxfattribs: DXF attributes for the MESH entities
+            matrix: apply transformation matrix at rendering
+
+        """
         if merge:
-            mesh = MeshVertexMerger()
-            for vertices in self:
-                mesh.add_mesh(vertices, faces)
+            mesh = self.mesh()
             mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
-        else:  # render each cube as individual MESH entity
-            for vertices in self:
-                mesh = MeshBuilder()
-                mesh.add_mesh(vertices, faces)
-                mesh.render(layout, dxfattribs=dxfattribs, matrix=matrix)
+        else:
+            for cube in self.cubes():
+                cube.render(layout, dxfattribs, matrix=matrix)
+
+    def cubes(self):
+        """
+        Generates all cubes of the menger sponge as individual MashBuilder() objects.
+
+        Yields: MeshBuilder()
+
+        """
+        faces = self.faces()
+        for vertices in self:
+            mesh = MeshBuilder()
+            mesh.add_mesh(vertices, faces)
+            yield mesh
+
+    def mesh(self):
+        """
+        Returns geometry as one single MESH entity.
+
+        Returns: MeshVertexMerger()
+
+        """
+        faces = self.faces()
+        mesh = MeshVertexMerger()
+        for vertices in self:
+            mesh.add_mesh(vertices, faces)
+        return mesh
 
 
 def _subdivide(location=(0., 0., 0.), length=1., kind=0):
