@@ -113,7 +113,7 @@ class SierpinskyPyramid(object):
         faces = self.faces()
         for vertices in self:
             mesh = MeshBuilder()
-            mesh.add_mesh(vertices, faces)
+            mesh.add_mesh(vertices=vertices, faces=faces)
             yield mesh
 
     def mesh(self):
@@ -126,7 +126,7 @@ class SierpinskyPyramid(object):
         faces = self.faces()
         mesh = MeshVertexMerger()
         for vertices in self:
-            mesh.add_mesh(vertices, faces)
+            mesh.add_mesh(vertices=vertices, faces=faces)
         return mesh
 
 

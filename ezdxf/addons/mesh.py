@@ -9,18 +9,23 @@ class MeshBuilder(object):
     A simple Mesh builder. Stores a list of vertices, a list of edges where an edge is a list of indices into the
     vertices list, and a faces list where each face is a list of indices into the vertices list.
 
+    The render() method, renders the mesh into a DXF MESH entity. The MESH entity supports ngons in AutoCAD, ngons are
+    polygons with more than 4 vertices.
+
     Can only create new meshes.
 
     """
     def __init__(self):
-        self.vertices = []
-        self.faces = []
-        self.edges = []
+        self.vertices = []  # vertex storage, list of (x, y, z) tuples or Vector() objects
+        self.faces = []  # face storage, each face is a list/tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
+        self.edges = []  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
 
     def add_face(self, vertices):
         """
-        Add a face to the mesh. a face consist of at least 3 vertices. Each vertex is a (x, y, z) tuple and will be
-        added to the mesh and the resulting vertex indices will be added to the mesh faces list. The stored face is a
+        Add a face as vertices list to the mesh. A face requires at least 3 vertices, each vertex is a (x, y, z) tuple.
+        A face is stored as index list, which means, a face does not contain the vertex itself, but the indices of the
+        vertices in the vertex list.
+
         list [index v1, index v2, index v3, ...].
 
         Args:
@@ -52,15 +57,14 @@ class MeshBuilder(object):
         Args:
             vertices: list of vertices, vertex as (x, y, z) tuple
 
-        Returns:
-            A tuples of the vertex indices.
+        Returns: a tuple of vertex indices.
 
         """
         start_index = len(self.vertices)
         self.vertices.extend(vertices)
         return tuple(range(start_index, len(self.vertices)))
 
-    def add_mesh(self, vertices, faces=None, edges=None):
+    def add_mesh(self, vertices=None, faces=None, edges=None, mesh=None):
         """
         Add another mesh to this mesh.
 
@@ -68,8 +72,16 @@ class MeshBuilder(object):
             vertices: list of vertices, a vertex is a (x, y, z)
             faces: list of faces, a face is a list of vertex indices
             edges: list of edges, an edge is a list of vertex indices
+            mesh: another mesh entity, mesh overrides vertices, faces and edges
 
         """
+        if mesh is not None:
+            vertices = mesh.vertices
+            faces = mesh.faces
+            edges = mesh.edges
+
+        if vertices is None:
+            raise ValueError("Requires vertices or another mesh.")
         if faces is None:
             faces = []
         if edges is None:
@@ -93,12 +105,17 @@ class MeshBuilder(object):
 
         """
         mesh = self.__class__()
-        mesh.add_mesh(matrix.transform_vectors(self.vertices), faces=self.faces, edges=self.edges)
+        mesh.add_mesh(
+            vertices=matrix.transform_vectors(self.vertices),
+            faces=self.faces,
+            edges=self.edges,
+        )
         return mesh
 
     def translate(self, x=0, y=0, z=0):
         """
         Translate mesh inplace.
+        
         """
         if isinstance(x, (float, int)):
             t = Vector(x, y, z)
@@ -110,6 +127,7 @@ class MeshBuilder(object):
     def scale(self, sx=1, sy=1, sz=1):
         """
         Scale mesh inplace.
+
         """
         self.vertices = [Vector(v[0]*sx, v[1]*sy, v[2]*sz) for v in self.vertices]
         for index, vertex in enumerate(self.vertices):
@@ -123,6 +141,7 @@ class MeshBuilder(object):
             layout: ezdxf Layout() object
             dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
             matrix: transformation matrix, requires a .transform_vectors() method
+
         """
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
         with mesh.edit_data() as data:
@@ -136,7 +155,7 @@ class MeshBuilder(object):
     @classmethod
     def from_mesh(cls, other):
         mesh = cls()
-        mesh.add_mesh(vertices=other.vertices, faces=other.faces, edges=other.edges)
+        mesh.add_mesh(mesh=other)
         return mesh
 
 
