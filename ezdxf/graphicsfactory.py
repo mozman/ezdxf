@@ -231,6 +231,8 @@ class GraphicsFactory(object):
         return self.build_and_add_entity('XLINE', dxfattribs)
 
     def add_spline(self, fit_points=None, dxfattribs=None):
+        # by default, fit points coincide with the spline
+        # control vertices define a control frame
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('SPLINE requires DXF version AC1015 (R2000) or later, '
                                   'actual DXF version is {}.'.format(self.dxfversion))

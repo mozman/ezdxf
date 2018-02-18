@@ -10,6 +10,7 @@ from ezdxf.lldxf import const
 from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.base import rotate_2d, equals_almost
 from ezdxf.algebra.cspline import CubicSpline
+from ezdxf.algebra.spline import RBSpline, BSpline
 from ezdxf.algebra.bezier4p import Bezier4P
 from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
 from .mixins import SubscriptAttributes
@@ -80,6 +81,7 @@ class Bezier(_BaseCurve):
     and point (3) is end point + end vector. Each segment has its own approximation count.
 
     """
+
     class Segment(object):
         def __init__(self, start, end, start_tangent, end_tangent, segments):
             self.start = Vector(start)
@@ -175,6 +177,7 @@ class Spline(_BaseCurve):
     """
     Cubic 2d spline.
     """
+
     def __init__(self, points=None, segments=100, color=const.BYLAYER, layer='0',
                  linetype=None):
         if points is None:
@@ -186,8 +189,56 @@ class Spline(_BaseCurve):
         self.segments = int(segments)
 
     def render(self, layout):
+        """
+        Render a cubic Spline as 2d polyline. Definition points are fit points.
+
+        Args:
+            layout: ezdxf layout
+
+        """
         spline = CubicSpline(self.points)
         layout.add_polyline2d(
+            list(spline.approximate(self.segments)),
+            dxfattribs={
+                'layer': self.layer,
+                'color': self.color,
+                'linetype': self.linetype,
+            }
+        )
+    render_fit_points = render
+
+    def render_bspline(self, layout):
+        """
+        Render a BSpline as 3d polyline. Definition points are control points.
+
+        Args:
+            layout: ezdxf layout
+
+        """
+        spline = BSpline(self.points)
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)),
+            dxfattribs={
+                'layer': self.layer,
+                'color': self.color,
+                'linetype': self.linetype,
+            }
+        )
+
+    def render_rbspline(self, layout, weights=None):
+        """
+        Render a rational BSpline as 3d polyline.
+
+        Args:
+            layout: ezdxf layout
+            weights: list of weights, requires a weight value for each defpoint.
+
+        """
+        if weights is None:
+            weights = [1.] * len(self.points)
+
+        spline = RBSpline(self.points, weights)
+        layout.add_polyline3d(
             list(spline.approximate(self.segments)),
             dxfattribs={
                 'layer': self.layer,

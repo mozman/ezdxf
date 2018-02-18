@@ -88,9 +88,10 @@ class BSpline(object):
     def get_point(self, t):
         """ Get point at SplineCurve(t) as tuple (x, y, z)
 
-        :param float t: parameter in range [0, max_t]
-        """
+        Args:
+            t: parameter in range [0, max_t]
 
+        """
         max_t = self.get_max_t()
         if (max_t - t) < 5e-6:
             t = max_t
@@ -155,6 +156,7 @@ class DBSplineMixin(object):
 
         Args:
             t: parameter in range [0, max_t]
+
         """
         max_t = self.get_max_t()
         if (max_t - t) < 5e-6:

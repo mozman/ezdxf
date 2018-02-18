@@ -43,8 +43,8 @@ spline_subclass = DefSubclass('AcDbSpline', {
     'flags': DXFAttr(70, default=0),
     'degree': DXFAttr(71),
     'n_knots': DXFAttr(72),
-    'n_control_points': DXFAttr(73),
-    'n_fit_points': DXFAttr(74),
+    'n_control_points': DXFAttr(73),  # control vertices define a control frame
+    'n_fit_points': DXFAttr(74),  # by default, fit points coincide with the spline
     'knot_tolerance': DXFAttr(42, default=1e-10),
     'control_point_tolerance': DXFAttr(43, default=1e-10),
     'fit_tolerance': DXFAttr(44, default=1e-10),

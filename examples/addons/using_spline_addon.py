@@ -11,7 +11,9 @@ dwg = ezdxf.new('R12')
 msp = dwg.modelspace()
 
 spline_points = [(0.0, 0.0), (2., 2.), (3., 2.), (5., 0.)]
-Spline(spline_points, color=7).render(msp)
+Spline(spline_points, color=7).render_fit_points(msp)  # curve with definition points as fit points, but just 2d support
+Spline(spline_points, color=6).render_bspline(msp)  # 3d support, but not as fit points
+Spline(spline_points, color=5).render_rbspline(msp, weights=[1, 500, 500, 1])  # 3d support, but not as fit points
 
 for point in spline_points:
     msp.add_circle(radius=0.1, center=point, dxfattribs={'color': 1})
