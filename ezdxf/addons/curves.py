@@ -72,6 +72,9 @@ class Ellipse(_BaseCurve):
 
 
 class Bezier(_BaseCurve):
+    """
+    Bezier curve 2d/3d.
+    """
     class Segment(object):
         def __init__(self, start, end, start_tangent, end_tangent, segments):
             self.start = Vector(start)
@@ -139,38 +142,34 @@ class Bezier(_BaseCurve):
         else:
             raise ValueError('Two or more points needed!')
 
-    def render(self, layout):
-        all_points = []
+    def render(self, layout, force3d=False):
+        """
+        Render curve as DXF POLYLINE entity.
+
+        Args:
+            layout: ezdxf layout object
+            force3d: force 3d polyline rendering
+
+        """
+        points = []
         for segment in self._build_bezier_segments():
-            points = segment.approximate()
-            all_points.extend(points)
+            points.extend(segment.approximate())
 
-        layout.add_polyline2d(
-            all_points,
-            dxfattribs={
-                'layer': self.layer,
-                'color': self.color,
-                'linetype': self.linetype,
-            }
-        )
-
-    def render3d(self, layout):
-        all_points = []
-        for segment in self._build_bezier_segments():
-            points = segment.approximate()
-            all_points.extend(points)
-
-        layout.add_polyline3d(
-            all_points,
-            dxfattribs={
-                'layer': self.layer,
-                'color': self.color,
-                'linetype': self.linetype,
-            }
-        )
+        attribs = {
+            'layer': self.layer,
+            'color': self.color,
+            'linetype': self.linetype,
+        }
+        if force3d or any(p[2] for p in points):
+            layout.add_polyline3d(points, dxfattribs=attribs)
+        else:
+            layout.add_polyline2d(points, dxfattribs=attribs)
 
 
 class Spline(_BaseCurve):
+    """
+    Cubic 2d spline.
+    """
     def __init__(self, points=None, segments=100, color=const.BYLAYER, layer='0',
                  linetype=None):
         if points is None:

@@ -14,13 +14,18 @@ def _coords(points, index=0):
 
 
 class CubicSpline(object):
+    """
+    Cubic 2d spline.
+
+    """
     def __init__(self, points):
         self.breakpoints = points
         self.count = len(points)
         self.t = self._get_t_array(points)
 
     def approximate(self, segments):
-        """Approximate spline curve with  <segments> line-segments.
+        """
+        Approximate spline curve with  <segments> line-segments.
 
         Generates <segments>+1 2D points (float, float).
         """
