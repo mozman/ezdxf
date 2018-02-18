@@ -6,20 +6,17 @@ from __future__ import unicode_literals
 from math import sin, cos, radians, fmod
 from abc import abstractmethod
 
-
 from ezdxf.lldxf import const
+from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.base import rotate_2d, equals_almost
 from ezdxf.algebra.cspline import CubicSpline
-from ezdxf.algebra.bezier import CubicBezierCurve
+from ezdxf.algebra.bezier4p import Bezier4P
 from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
 from .mixins import SubscriptAttributes
 
-__all__ = ['Ellipse', 'Bezier', 'Spline', 'Clothoid']
-
 
 def vadd(vector1, vector2):
-    """ add vectors """
-    return vector1[0]+vector2[0], vector1[1]+vector2[1]
+    return vector1[0] + vector2[0], vector1[1] + vector2[1]
 
 
 class _BaseCurve(SubscriptAttributes):
@@ -58,7 +55,7 @@ class Ellipse(_BaseCurve):
                 angle += 360.
             return angle
 
-        zaxis = 0. if len(self.center)<3 else self.center[2]
+        zaxis = 0. if len(self.center) < 3 else self.center[2]
         points = []
         delta = (self.endangle - self.startangle) / self.segments
         for segment in range(self.segments):
@@ -77,19 +74,20 @@ class Ellipse(_BaseCurve):
 class Bezier(_BaseCurve):
     class Segment(object):
         def __init__(self, start, end, start_tangent, end_tangent, segments):
-            self.start = start
-            self.end = end
-            self.start_tangent = start_tangent # as 2d vector, from start point
-            self.end_tangent = end_tangent # as 2d vector, from end point
+            self.start = Vector(start)
+            self.end = Vector(end)
+            self.start_tangent = Vector(start_tangent)  # as vector, from start point
+            self.end_tangent = Vector(end_tangent)  # as vector, from end point
             self.segments = segments
 
         def approximate(self):
             control_points = [
                 self.start,
-                vadd(self.start, self.start_tangent),
-                vadd(self.end, self.end_tangent),
-                self.end]
-            bezier = CubicBezierCurve(control_points)
+                self.start + self.start_tangent,
+                self.end + self.end_tangent,
+                self.end,
+            ]
+            bezier = Bezier4P(control_points)
             return bezier.approximate(self.segments)
 
     def __init__(self, color=const.BYLAYER, layer='0', linetype=None):
@@ -103,27 +101,30 @@ class Bezier(_BaseCurve):
         Set start point and start tangent.
 
         Args:
-            point: 2D start point
-            tangent: start tangent as 2D vector, example: (5, 0) means a
+            point: start point
+            tangent: start tangent as vector, example: (5, 0, 0) means a
                      horizontal tangent with a length of 5 drawing units
         """
-        self.points.append( (point, None, tangent, None) )
+        self.points.append((point, None, tangent, None))
 
     def append(self, point, tangent1, tangent2=None, segments=20):
         """
         Append a control point with two control tangents.
 
         Args:
-            point: the control point as 2D point
-            tangent1: first control tangent as 2D vector *left* of point
-            tangent2: second control tangent as 2D vector *right* of point, if omitted tangent2 = -tangent1
-            int segments: count of line segments for polyline approximation, count of line segments from previous
+            point: the control point
+            tangent1: first control tangent as vector *left* of point
+            tangent2: second control tangent as vector *right* of point, if omitted tangent2 = -tangent1
+            segments: count of line segments for polyline approximation, count of line segments from previous
             control point to this point.
 
         """
+        tangent1 = Vector(tangent1)
         if tangent2 is None:
-            tangent2 = (-tangent1[0], -tangent1[1])
-        self.points.append( (point, tangent1, tangent2, int(segments)) )
+            tangent2 = -tangent1
+        else:
+            tangent2 = Vector(tangent2)
+        self.points.append((point, tangent1, tangent2, int(segments)))
 
     def _build_bezier_segments(self):
         if len(self.points) > 1:
@@ -145,6 +146,21 @@ class Bezier(_BaseCurve):
             all_points.extend(points)
 
         layout.add_polyline2d(
+            all_points,
+            dxfattribs={
+                'layer': self.layer,
+                'color': self.color,
+                'linetype': self.linetype,
+            }
+        )
+
+    def render3d(self, layout):
+        all_points = []
+        for segment in self._build_bezier_segments():
+            points = segment.approximate()
+            all_points.extend(points)
+
+        layout.add_polyline3d(
             all_points,
             dxfattribs={
                 'layer': self.layer,
@@ -215,4 +231,3 @@ class Clothoid(_BaseCurve):
                 'linetype': self.linetype,
             }
         )
-

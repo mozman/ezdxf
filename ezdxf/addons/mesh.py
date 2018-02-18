@@ -115,7 +115,7 @@ class MeshBuilder(object):
     def translate(self, x=0, y=0, z=0):
         """
         Translate mesh inplace.
-        
+
         """
         if isinstance(x, (float, int)):
             t = Vector(x, y, z)

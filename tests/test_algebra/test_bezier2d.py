@@ -2,7 +2,8 @@
 # Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.algebra.bezier import CubicBezierCurve
+from ezdxf.algebra.bezier4p import Bezier4P
+from ezdxf.algebra.base import equals_almost
 
 expected_points = [
     (0.0, 0.0),
@@ -30,26 +31,20 @@ expected_points = [
 
 def test_base_curve():
     test_points = [(0, 0), (1, 4), (4, 5), (6, 2)]
-    bezier = CubicBezierCurve(test_points)
+    bezier = Bezier4P(test_points)
     results = bezier.approximate(20)
     for expected, result in zip(expected_points, results):
-        assert expected[0] == result[0]
-        assert expected[1] == result[1]
-
-
-def test_init_three_points():
-    test_points = [(0, 0), (1, 4), (4, 5)]
-    pytest.raises(ValueError, CubicBezierCurve, test_points)
+        assert equals_almost(expected[0], result[0]) is True
+        assert equals_almost(expected[1], result[1]) is True
 
 
 def test_get_tangent():
-    bezier = CubicBezierCurve([(0, 0), (1, 4), (4, 5), (6, 2)])
-    tangent = bezier.get_tangent(0.5)
-    assert tangent[0] == 6.75
-    assert tangent[1] == 2.25
+    bezier = Bezier4P([(0, 0), (1, 4), (4, 5), (6, 2)])
+    tangent = bezier.get_tangent(.5)
+    assert tangent == (6.75, 2.25)
 
 
 def test_get_tangent_error():
-    bezier = CubicBezierCurve([(0, 0), (1, 4), (4, 5), (6, 2)])
+    bezier = Bezier4P([(0, 0), (1, 4), (4, 5), (6, 2)])
     pytest.raises(ValueError, bezier.get_tangent, 2.)
     pytest.raises(ValueError, bezier.get_tangent, -2.)

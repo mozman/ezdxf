@@ -1,81 +1,132 @@
 # Purpose: 2d bezier curve
 # Created: 26.03.2010
 # License: MIT License
+from ezdxf.algebra.vector import Vector
 
 
-class CubicBezierCurve(object):
+class Bezier(object):
     """
-    Implements the classic cubic bezier curve with 4 control points
+    Calculate the points of a Bezier curve.
+
+    Initialisation with 2D points is possible, but output ist always 3D (z-axis is 0)
     """
 
-    def __init__(self, control_points):
-        if len(control_points) == 4:
-            self._cpoints = [vector2d(vector) for vector in control_points]
-        else:
-            raise ValueError("Four control points required.")
-        self._points = {}
-        self._tangents = {}
+    def __init__(self, defpoints):
+        self._defpoints = [Vector(p) for p in defpoints]
 
-    def get_tangent(self, position):
-        self._check(position)
-        if position not in self._tangents:
-            self._tangents[position] = self._get_curve_tangent(position)
-        return self._tangents[position]
+    @property
+    def breakpoints(self):
+        return self._defpoints
 
-    def get_point(self, position):
-        self._check(position)
-        if position not in self._points:
-            self._points[position] = self._get_curve_point(position)
-        return self._points[position]
+    def approximate(self, segments=20):
+        step = 1.0 / float(segments)
+        for point_index in range(segments + 1):
+            yield self.get_point(point_index * step)
 
-    def approximate(self, segments):
-        delta_t = 1. / segments
-        yield self._cpoints[0]
-        for segment in range(1, segments):
-            yield self.get_point(delta_t*segment)
-        yield self._cpoints[3]
-
-    def _check(self, position):
-        if not(0 <= position <= 1.):
-            raise ValueError("position not in range [0 to 1]")
-
-    def _get_curve_point(self, t):
-        """ classic, clear and slow implementation
+    def get_point(self, t):
         """
-        b1, b2, b3, b4 = self._cpoints
-        one_minus_t = 1. - t
-        B = vmul_scalar(b1, one_minus_t**3)
-        B = vadd(B, vmul_scalar(b2, 3. * one_minus_t**2 * t))
-        B = vadd(B, vmul_scalar(b3, 3. * one_minus_t * t**2))
-        B = vadd(B, vmul_scalar(b4, t**3))
-        return B
+        Returns point at BezierCurve(t) as tuple (x, y, z)
 
-    def _get_curve_tangent(self, t):
+        Args:
+            t: parameter in range [0, 1]
+
         """
-        classic, clear and slow implementation
+        if t < 0. or t > 1.:
+            raise ValueError('parameter t in range [0, 1]')
+        if (1.0 - t) < 5e-6:
+            t = 1.0
+        point = [0., 0., 0.]
+        defpoints = self._defpoints
+        len_defpoints = len(defpoints)
 
-        Returns a vector T which defines the direction of the tangent.
-        example: slope of tangent = (y) T[1]/ (x) T[0]
-        position of tangent point is defined by the paramter t -> get_cuve_point_by_parameter()
+        for axis in (0, 1, 2):
+            for i in range(len_defpoints):
+                bsf = bernstein_basis(len_defpoints - 1, i, t)
+                point[axis] += bsf * defpoints[i][axis]
+        return Vector(point)
+
+
+class DBezier(Bezier):
+    """
+    Calculate the Points and Derivative of a Bezier curve.
+
+    """
+
+    def get_point(self, t):
         """
-        b1, b2, b3, b4 = self._cpoints
-        B = vmul_scalar(b1, -3. * (1. - t)**2)
-        B = vadd(B, vmul_scalar(b2, 3. * (1. - 4. * t + 3. * t**2)))
-        B = vadd(B, vmul_scalar(b3, 3. * t * (2. - 3. * t)))
-        B = vadd(B, vmul_scalar(b4, 3. * t**2))
-        return B
+        Returns (point, derivative1, derivative2) at BezierCurve(t)
+
+        Args:
+            t: parameter in range [0, 1]
+
+        returns: (point, derivative1, derivative2)
+            point -- Vector(x, y, z)
+            derivative1 -- Vector(x, y, z)
+            derivative2 -- Vector(x, y, z)
+
+        """
+        if t < 0. or t > 1.:
+            raise ValueError('parameter t in range [0, 1]')
+
+        if (1.0 - t) < 5e-6:
+            t = 1.0
+        defpoints = self._defpoints
+        npts = len(defpoints)
+        npts0 = npts - 1
+        point = [0., 0., 0.]
+        d1 = [0., 0., 0.]
+        d2 = [0., 0., 0.]
+        for axis in (0, 1, 2):
+            if t == 0.0:
+                d1[axis] = npts0 * (defpoints[1][axis] - defpoints[0][axis])
+                d2[axis] = npts0 * (npts0 - 1) * (defpoints[0][axis] - 2. * defpoints[1][axis] + defpoints[2][axis])
+            for i in range(len(defpoints)):
+                tempbasis = bernstein_basis(npts0, i, t)
+                point[axis] += tempbasis * defpoints[i][axis]
+                if 0.0 < t < 1.0:
+                    d1[axis] += ((i - npts0 * t) / (t * (1. - t))) * tempbasis * defpoints[i][axis]
+                    temp1 = (i - npts0 * t) ** 2
+                    temp2 = temp1 - npts0 * t ** 2 - i * (1. - 2. * t)
+                    d2[axis] += (temp2 / (t ** 2 * (1. - t) ** 2)) * tempbasis * defpoints[i][axis]
+                if t == 1.0:
+                    d1[axis] = npts0 * (defpoints[npts0][axis] - defpoints[npts0 - 1][axis])
+                    d2[axis] = npts0 * (npts0 - 1) * (defpoints[npts0][axis] - 2 * defpoints[npts0 - 1][axis] +
+                                                      defpoints[npts0 - 2][axis])
+        return Vector(point), Vector(d1), Vector(d2)
 
 
-def vadd(vector1, vector2):
-    """ add vectors """
-    return vector1[0]+vector2[0], vector1[1]+vector2[1]
+def bernstein_basis(n, i, t):
+    # handle the special cases to avoid domain problem with pow */
+    if t == 0.0 and i == 0:
+        ti = 1.0
+    else:
+        ti = pow(t, i)
+    if n == i and t == 1.0:
+        tni = 1.0
+    else:
+        tni = pow((1.0 - t), (n - i))
+    Ni = factorial(n) / (factorial(i) * factorial(n - i))
+    return Ni * ti * tni
 
 
-def vmul_scalar(vector, scalar):
-    """ mul vector with scalar """
-    return vector[0]*scalar, vector[1]*scalar
+class _Factorial(object):
+    _values = {0: 1.0}
+
+    def __init__(self, maxvalue=33):
+        value = 1.
+        for i in range(1, maxvalue):
+            value *= i
+            self._values[i] = value
+
+    def get(self, value):
+        value = int(value)
+        try:
+            return self._values[value]
+        except KeyError:
+            result = self.get(value - 1) * value
+            self._values[value] = result
+            return result
 
 
-def vector2d(vector):
-    """ return a 2d point """
-    return float(vector[0]), float(vector[1])
+_factorial = _Factorial()
+factorial = _factorial.get

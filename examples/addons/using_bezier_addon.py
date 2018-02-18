@@ -27,21 +27,21 @@ msp = dwg.modelspace()
 bezier = Bezier(color=4)
 
 # define start point
-bezier.start((2, 4), tangent=(0, 2))
-draw_control_point((2, 4), (0, 2))
+bezier.start((2, 4, 1), tangent=(0, 2, 0))
+draw_control_point((2, 4, 1), (0, 2, 0))
 
 # append first point
-bezier.append((6, 7), tangent1=(-2, 0), tangent2=(1, 2))
-draw_control_point((6, 7), (-2, 0), (1, 2))
+bezier.append((6, 7, -3), tangent1=(-2, 0, 0), tangent2=(1, 2, 0))
+draw_control_point((6, 7, -3), (-2, 0, 0), (1, 2, 0))
 
 # tangent2 = -tangent1 = (+2, 0)
-bezier.append((12, 5), tangent1=(-2, 0))
-draw_control_point((12, 5), (-2, 0), (2, 0))
+bezier.append((12, 5, 2), tangent1=(-2, 0, 0))
+draw_control_point((12, 5, 2), (-2, 0, 0), (2, 0, 0))
 
 # for last point tangent2 is meaningless
-bezier.append((16, 9), tangent1=(-0.5, -3))
-draw_control_point((16, 9), (-0.5, -3))
+bezier.append((16, 9, 20), tangent1=(-0.5, -3, 0))
+draw_control_point((16, 9, 20), (-0.5, -3, 0))
 
-bezier.render(msp)
+bezier.render3d(msp)
 dwg.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)
