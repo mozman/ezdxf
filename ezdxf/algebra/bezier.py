@@ -1,4 +1,4 @@
-# Purpose: 2d bezier curve
+# Purpose: general bezier curve
 # Created: 26.03.2010
 # License: MIT License
 from ezdxf.algebra.vector import Vector
@@ -6,7 +6,7 @@ from ezdxf.algebra.vector import Vector
 
 class Bezier(object):
     """
-    Calculate the points of a Bezier curve.
+    A general Bezier curve.
 
     Initialisation with 2D points is possible, but output ist always 3D (z-axis is 0)
     """
@@ -51,7 +51,6 @@ class DBezier(Bezier):
     Calculate the Points and Derivative of a Bezier curve.
 
     """
-
     def get_point(self, t):
         """
         Returns (point, derivative1, derivative2) at BezierCurve(t)
@@ -96,7 +95,7 @@ class DBezier(Bezier):
 
 
 def bernstein_basis(n, i, t):
-    # handle the special cases to avoid domain problem with pow */
+    # handle the special cases to avoid domain problem with pow
     if t == 0.0 and i == 0:
         ti = 1.0
     else:

@@ -73,7 +73,12 @@ class Ellipse(_BaseCurve):
 
 class Bezier(_BaseCurve):
     """
-    Bezier curve 2d/3d.
+    Bezier 2d/3d curve.
+
+    The Bezier() class is implemented with multiple segments, each segment is an optimized 4 point bezier curve, the
+    4 control points of the curve are: the start point (1) and the end point (4), point (2) is start point + start vector
+    and point (3) is end point + end vector. Each segment has its own approximation count.
+
     """
     class Segment(object):
         def __init__(self, start, end, start_tangent, end_tangent, segments):

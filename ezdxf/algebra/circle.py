@@ -12,12 +12,10 @@ HALF_PI = math.pi / 2.
 
 
 def distance(point1, point2):
-    """ calc distance between two 2d points """
     return math.hypot(point1[0] - point2[0], point1[1] - point2[1])
 
 
 def midpoint(point1, point2):
-    """ calc midpoint between point1 and point2 """
     return (point1[0] + point2[0]) * .5, (point1[1] + point2[1]) * .5
 
 
@@ -25,7 +23,7 @@ class Circle(object):
     def __init__(self, center_point, radius=1.0):
         self._center_point = center_point
         self._radius = float(radius)
-        assert(self.radius>0.)
+        assert (self.radius > 0.)
 
     @staticmethod
     def create_3P(p1, p2, p3):
@@ -65,12 +63,12 @@ class Circle(object):
     def in_x_range(self, x):
         mx = self.center_point[0]
         r = self.radius
-        return (mx-r) <= x <= (mx+r)
+        return (mx - r) <= x <= (mx + r)
 
     def in_y_range(self, y):
         my = self.center_point[1]
         r = self.radius
-        return (my-r) <= y <= (my+r)
+        return (my - r) <= y <= (my + r)
 
     def get_y(self, x):
         """ calculate the y-coordinate at the given x-coordinate
@@ -80,7 +78,7 @@ class Circle(object):
         result = list()
         if self.in_x_range(x):
             dx = self.center_point[0] - x
-            dy = (self.radius**2 - dx**2) ** 0.5  # pythagoras
+            dy = (self.radius ** 2 - dx ** 2) ** 0.5  # pythagoras
             result.append(self.center_point[1] + dy)
             result.append(self.center_point[1] - dy)
         return result
@@ -93,7 +91,7 @@ class Circle(object):
         result = list()
         if self.in_y_range(y):
             dy = self.center_point[1] - y
-            dx = (self.radius**2 - dy**2) ** 0.5 # pythagoras
+            dx = (self.radius ** 2 - dy ** 2) ** 0.5  # pythagoras
             result.append(self.center_point[0] + dx)
             result.append(self.center_point[0] - dx)
         return result
@@ -113,6 +111,7 @@ class Circle(object):
             0 points .. no intersection
             1 point .. ray is a tangent on the circle
             2 points .. ray intersects with the circle
+
         """
         def get_angle(point):
             dx = point[0] - self.center_point[0]
@@ -128,12 +127,12 @@ class Circle(object):
                 angle = normal_ray.angle
                 alpha = HALF_PI
             else:  # the exact direction of angle (all 4 quadrants Q1-Q4) is important:
-                   # normal_ray.angle is only at the center point correct
+                # normal_ray.angle is only at the center point correct
                 angle = get_angle(cross_point)
-                alpha = math.acos(distance(cross_point, self.center_point)/self.radius)
-            result.append(self.get_point(angle+alpha))
-            result.append(self.get_point(angle-alpha))
-        elif equals_almost(dist, self.radius, places): # ray is a tangent of circle
+                alpha = math.acos(distance(cross_point, self.center_point) / self.radius)
+            result.append(self.get_point(angle + alpha))
+            result.append(self.get_point(angle - alpha))
+        elif equals_almost(dist, self.radius, places):  # ray is a tangent of circle
             result.append(cross_point)
             # else no intersection
         return result
@@ -146,6 +145,7 @@ class Circle(object):
             0 points .. no intersection
             1 point .. circle touches the other_circle in one point
             2 points .. circle intersects with the other_circle
+
         """
         def get_angle_through_center_points():
             dx = other_circle.center_point[0] - self.center_point[0]
@@ -159,12 +159,13 @@ class Circle(object):
         min_dist = math.fabs(R1 - R2)
         result = list()
         if min_dist <= dist <= max_dist:
-            if equals_almost(dist, max_dist, places) or equals_almost(dist, min_dist, places):  # circles touches in one point
+            if equals_almost(dist, max_dist, places) or equals_almost(dist, min_dist,
+                                                                      places):  # circles touches in one point
                 angle = get_angle_through_center_points()
                 result.append(self.get_point(angle))
             else:  # circles intersect in two points
-                alpha = math.acos((R2**2 - R1**2 - dist**2) / (-2. * R1 * dist))  # 'Cosinus-Satz'
+                alpha = math.acos((R2 ** 2 - R1 ** 2 - dist ** 2) / (-2. * R1 * dist))  # 'Cosinus-Satz'
                 angle = get_angle_through_center_points()
-                result.append(self.get_point(angle+alpha))
-                result.append(self.get_point(angle-alpha))
+                result.append(self.get_point(angle + alpha))
+                result.append(self.get_point(angle - alpha))
         return result

@@ -1,7 +1,6 @@
 # Created: 13.03.2010
-# Copyright (C) 2010, Manfred Moitzi
+# Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
-__author__ = "mozman <mozman@gmx.at>"
 
 import math
 from .base import equals_almost, normalize_angle, is_vertical_angle
