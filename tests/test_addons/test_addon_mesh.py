@@ -4,7 +4,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 import pytest
-from ezdxf.addons import MeshVertexMerger
+import ezdxf
+from ezdxf.addons import MeshVertexMerger, SierpinskyPyramid
 
 
 def test_vertex_merger_indices():
@@ -30,4 +31,17 @@ def test_vertex_merger_index_of():
         merger.index((7, 8, 9))
 
 
+def test_mesh_builder():
+    dwg = ezdxf.new('R2000')
+    pyramid = SierpinskyPyramid(level=4, sides=3)
+    pyramid.render(dwg.modelspace(), merge=False)
+    meshes = dwg.modelspace().query('MESH')
+    assert len(meshes) == 256
 
+
+def test_vertex_merger():
+    dwg = ezdxf.new('R2000')
+    pyramid = SierpinskyPyramid(level=4, sides=3)
+    pyramid.render(dwg.modelspace(), merge=True)
+    meshes = dwg.modelspace().query('MESH')
+    assert len(meshes) == 1
