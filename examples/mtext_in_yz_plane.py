@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman
 # Purpose: 'mtext' example
 # Created: 18.02.2017
-# Copyright (C) 2017 Manfred Moitzi
+# Copyright (c) 2017 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.new('ac1015')

@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: block example
 # Created: 02.04.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011, Manfred Moitzi
 # License: MIT License
-
-import sys
-
+from __future__ import unicode_literals
 import ezdxf
 
 

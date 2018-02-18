@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: using hatch
 # Created: 21.06.2015
-# Copyright (C) , Manfred Moitzi
+# Copyright (c) 2015 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import ezdxf
 from ezdxf.tools import knot_values_by_control_points
 from ezdxf.lldxf import const
@@ -47,7 +44,7 @@ def create_pattern_fill_hatch_with_bgcolor():
 def using_hatch_style():
     def place_square_1(hatch, x, y):
         def shift(point):
-            return x+point[0], y+point[1]
+            return x + point[0], y + point[1]
 
         with hatch.edit_boundary() as editor:  # get boundary editor as context object
             # outer loop - flags = 1 (external) default value
@@ -59,7 +56,7 @@ def using_hatch_style():
 
     def place_square_2(hatch, x, y):
         def shift(point):
-            return x+point[0], y+point[1]
+            return x + point[0], y + point[1]
 
         with hatch.edit_boundary() as editor:  # get boundary editor as context object
             # outer loop - flags = 1 (external) default value
@@ -103,19 +100,21 @@ def using_hatch_style_with_edge_path():
 
     def place_square_1(hatch, x, y):
         def shift(point):
-            return x+point[0], y+point[1]
+            return x + point[0], y + point[1]
 
         with hatch.edit_boundary() as editor:  # get boundary editor as context object
             # outer loop - flags=1 (external) default value
             add_edge_path(editor, map(shift, [(0, 0), (12.5, 0), (12.5, 12.5), (0, 12.5)]))
             # first inner loop - flags=16 (outermost)
-            add_edge_path(editor, map(shift, [(2.5, 2.5), (10, 2.5), (10, 10), (2.5, 10)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+            add_edge_path(editor, map(shift, [(2.5, 2.5), (10, 2.5), (10, 10), (2.5, 10)]),
+                          flags=const.BOUNDARY_PATH_OUTERMOST)
             # any inner loop - flags=0 (default)
-            add_edge_path(editor, map(shift, [(5, 5), (7.5, 5), (7.5, 7.5), (5, 7.5)]), flags=const.BOUNDARY_PATH_DEFAULT)
+            add_edge_path(editor, map(shift, [(5, 5), (7.5, 5), (7.5, 7.5), (5, 7.5)]),
+                          flags=const.BOUNDARY_PATH_DEFAULT)
 
     def place_square_2(hatch, x, y):
         def shift(point):
-            return x+point[0], y+point[1]
+            return x + point[0], y + point[1]
 
         with hatch.edit_boundary() as editor:  # get boundary editor as context object
             add_edge_path(editor, map(shift, [(0, 0), (0, 8), (8, 8), (8, 0)]))  # 1. path

@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman
-# Purpose: ELLIPSE example
+# Purpose: CIRCLE example
 # Created: 10.04.2016
-# Copyright (C) 2016 Manfred Moitzi
+# Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.new('R12')

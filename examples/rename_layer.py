@@ -1,3 +1,6 @@
+# Copyright (c) 2018, Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.readfile(r'C:\Users\manfred\Desktop\now\ACAD_R2004.dxf')

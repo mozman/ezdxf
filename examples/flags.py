@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman
 # Purpose: 'flag' example
 # Created: 04.11.2010
-# Copyright (C) 2010, 2011 Manfred Moitzi
+# Copyright (c) 2010, 2011 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import random
-
 import ezdxf
 
 
@@ -16,7 +12,8 @@ def get_random_point():
     y = random.randint(-100, 100)
     return x, y
 
-sample_coords = [get_random_point() for x in range(50)]
+
+SAMPLE_COORDS = [get_random_point() for x in range(50)]
 
 flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
 
@@ -37,7 +34,7 @@ flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
 flag.add_attdef('XPOS', (0.5, -1.0), {'height': 0.25, 'color': 4})
 flag.add_attdef('YPOS', (0.5, -1.5), {'height': 0.25, 'color': 4})
 modelspace = dwg.modelspace()
-for number, point in enumerate(sample_coords):
+for number, point in enumerate(SAMPLE_COORDS):
     values = {
         'NAME': "P(%d)" % (number+1),
         'XPOS': "x = %.3f" % point[0],

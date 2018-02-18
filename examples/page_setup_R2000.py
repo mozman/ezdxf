@@ -1,11 +1,9 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman
 # Purpose: setup initial viewport for a DXF drawing
-# Copyright (C) 2016-2018 Manfred Moitzi
+# Copyright (c) 2016-2018 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import ezdxf
+
 # FILENAME = r'C:\Users\manfred\Desktop\Now\page_setup_R2000.dxf'
 FILENAME = 'page_setup_R2000.dxf'
 
@@ -65,8 +63,8 @@ def layout_page_setup(dwg):
 
     layout.page_setup(size=(11, 8.5), margins=(.5, .5, .5, .5), units='inch')
     (x1, y1), (x2, y2) = layout.get_paper_limits()
-    center_x = (x1+x2)/2
-    center_y = (y1+y2)/2
+    center_x = (x1 + x2) / 2
+    center_y = (y1 + y2) / 2
     layout.add_line((x1, center_y), (x2, center_y))  # horizontal center line
     layout.add_line((center_x, y1), (center_x, y2))  # vertical center line
     layout.add_circle((0, 0), radius=.1)  # plot origin
@@ -81,8 +79,8 @@ def layout_page_setup(dwg):
     )
 
     (x1, y1), (x2, y2) = layout2.get_paper_limits()
-    center_x = (x1+x2)/2
-    center_y = (y1+y2)/2
+    center_x = (x1 + x2) / 2
+    center_y = (y1 + y2) / 2
     layout2.add_line((x1, center_y), (x2, center_y))  # horizontal center line
     layout2.add_line((center_x, y1), (center_x, y2))  # vertical center line
     layout2.add_circle((0, 0), radius=5)  # plot origin
@@ -100,8 +98,8 @@ def layout_page_setup(dwg):
     layout4 = dwg.layouts.new('ezdxf scale 1-1 with offset')
     layout4.page_setup(size=(297, 210), margins=(10, 10, 10, 10), units='mm', scale=(1, 1), offset=(50, 50))
     (x1, y1), (x2, y2) = layout4.get_paper_limits()
-    center_x = (x1+x2)/2
-    center_y = (y1+y2)/2
+    center_x = (x1 + x2) / 2
+    center_y = (y1 + y2) / 2
     layout4.add_line((x1, center_y), (x2, center_y))  # horizontal center line
     layout4.add_line((center_x, y1), (center_x, y2))  # vertical center line
     layout4.add_circle((0, 0), radius=5)  # plot origin

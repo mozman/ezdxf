@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman
 # Purpose: open example files with big polyface models
 # Created: 23.04.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014, Manfred Moitzi
 # License: MIT License
-
-__author__ = 'mozman'
-
+from __future__ import unicode_literals
 import ezdxf
 import time
 

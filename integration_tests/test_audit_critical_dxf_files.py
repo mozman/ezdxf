@@ -1,4 +1,4 @@
-# Copyright 2018, Manfred Moitzi
+# Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 import pytest
 import os

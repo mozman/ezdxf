@@ -1,5 +1,6 @@
 # Copyright 2018, Manfred Moitzi
 # License: MIT License
+from __future__ import unicode_literals
 import pytest
 import ezdxf
 import os

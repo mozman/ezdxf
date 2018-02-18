@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman <mozman@gmx.at>
 # Purpose: example for using the groupby feature
 # Created: 03.02.2017
-# Copyright (C) Manfred Moitzi
+# Copyright (c) 2017 Manfred Moitzi
 # License: MIT License
+from __future__ import unicode_literals
 import os
 import glob
 import math
@@ -13,16 +11,17 @@ import ezdxf
 
 def outname(fname):
     name, ext = os.path.splitext(fname)
-    return name+'.txt'
+    return name + '.txt'
 
 
 def length(lines):
     def dist(s, e):
         dx = s[0] - e[0]
         dy = s[1] - e[1]
-        return math.sqrt(dx*dx + dy*dy)
+        return math.sqrt(dx * dx + dy * dy)
 
     return round(sum(dist(line.dxf.start, line.dxf.end) for line in lines))
+
 
 # real world application:
 # used by myself to collect masses for an effort estimation.

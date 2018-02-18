@@ -1,5 +1,4 @@
-# Created: 17.02.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"

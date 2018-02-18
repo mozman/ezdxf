@@ -1,3 +1,6 @@
+# Copyright (c) 2018 Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 import ezdxf
 
 # AutoCAD 2010 can not resolve XREFS in DXF R12 Format :-(,

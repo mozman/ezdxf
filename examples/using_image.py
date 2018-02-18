@@ -1,3 +1,6 @@
+# Copyright (c) 2016 Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.new('R2004')  # image requires the DXF 2000 or newer format

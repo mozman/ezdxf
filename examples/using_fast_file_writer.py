@@ -1,3 +1,6 @@
+# Copyright (c) 2018 Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 from random import random
 from ezdxf.r12writer import r12writer
 
@@ -17,7 +20,7 @@ with r12writer("quick_and_dirty_dxf_r12.dxf") as dxf:
 
 with r12writer("many_circles.dxf") as dxf:
     for i in range(CIRCLE_COUNT):
-        dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+        dxf.add_circle((MAX_X_COORD * random(), MAX_Y_COORD * random()), radius=2)
 
 LINETYPES = [
     'CONTINUOUS',
@@ -44,5 +47,4 @@ LINETYPES = [
 with r12writer('r12_linetypes.dxf', fixed_tables=True) as dxf:
     for n, ltype in enumerate(LINETYPES):
         dxf.add_line((0, n), (10, n), linetype=ltype)
-        dxf.add_text(ltype, (0, n+0.1), height=0.25, style='ARIAL')
-
+        dxf.add_text(ltype, (0, n + 0.1), height=0.25, style='ARIAL')

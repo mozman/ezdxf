@@ -1,5 +1,8 @@
+# Copyright (c) 2010-2018, Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 import ezdxf
-import random  # needed for random placing points
+import random
 
 
 def get_random_point():
@@ -7,6 +10,7 @@ def get_random_point():
     x = random.randint(-100, 100)
     y = random.randint(-100, 100)
     return x, y
+
 
 # Create a new drawing in the DXF format of AutoCAD 2010
 dwg = ezdxf.new('ac1024')
@@ -49,7 +53,7 @@ placing_points = [get_random_point() for _ in range(50)]
 for number, point in enumerate(placing_points):
     # values is a dict with the attribute tag as item-key and the attribute text content as item-value.
     values = {
-        'NAME': "P(%d)" % (number+1),
+        'NAME': "P(%d)" % (number + 1),
         'XPOS': "x = %.3f" % point[0],
         'YPOS': "y = %.3f" % point[1]
     }

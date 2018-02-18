@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: using DXF groups
 # Created: 15.07.2015
-# Copyright (C) , Manfred Moitzi
+# Copyright (c) 2015 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import ezdxf
 
 
@@ -29,6 +26,7 @@ def read_group():
         print("GROUP: {}\n".format(name))
         for entity in group:
             print("  ENTITY: {}".format(entity.dxftype()))
+
 
 create_group()
 read_group()

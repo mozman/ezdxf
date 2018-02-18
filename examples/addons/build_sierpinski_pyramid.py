@@ -1,3 +1,6 @@
+# Copyright (C) 2018 Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 import ezdxf
 from ezdxf.addons import SierpinskyPyramid
 

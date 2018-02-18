@@ -1,14 +1,9 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Purpose: try viewports in paperspace
+# Purpose: viewports in paperspace
 # Created: 11.10.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015, Manfred Moitzi
 # License: MIT License
-
-__author__ = "mozman <mozman@gmx.at>"
-
+from __future__ import unicode_literals
 import math
-
 import ezdxf
 
 MESH_SIZE = 20
@@ -26,7 +21,7 @@ def build_cos_sin_mesh(mesh):
             cosy = math.cos(float(y) * delta)
             z = sinx * cosy * height
             # set the m,n vertex to 3d point x,y,z
-            mesh.set_mesh_vertex((x, y),  (dx + x, dy + y, z))
+            mesh.set_mesh_vertex((x, y), (dx + x, dy + y, z))
 
 
 def create_2d_modelspace_content(layout):
@@ -122,6 +117,7 @@ def main():
         create_3d_modelspace_content(dwg.modelspace())
         # IMPORTANT: DXF R12 supports only one paper space aka layout, every layout name returns the same layout
         layout = dwg.layout('Layout1')  # default layout
+        layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units='inch')
         create_viewports(layout, dxfversion)
 
         try:
@@ -132,6 +128,7 @@ def main():
     make('AC1009', 'viewports_in_paperspace_R12.dxf')
     make('AC1015', 'viewports_in_paperspace_R2000.dxf')
     make('AC1021', 'viewports_in_paperspace_R2007.dxf')
+
 
 if __name__ == '__main__':
     main()

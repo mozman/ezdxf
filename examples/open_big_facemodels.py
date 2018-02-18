@@ -1,15 +1,11 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman
 # Purpose: open example files with big polyface models
 # Created: 23.04.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014, Manfred Moitzi
 # License: MIT License
-
-__author__ = 'manfred'
-
+from __future__ import unicode_literals
 import ezdxf
 import time
+
 
 def count_meshes(entities):
     polyface_count = 0
@@ -35,8 +31,9 @@ def print_stats(filename):
     print("PolyFaceMeshes: {}".format(polyface_count))
     print("PolygonMeshes {}".format(polymesh_count))
 
+
 if __name__ == '__main__':
-    #print_stats(r'D:\Source\ezdxf-dev\integration_tests\polyface_AC1015.dxf')
-    #print_stats(r'D:\Source\ezdxf-dev\integration_tests\polymesh_AC1015.dxf')
+    print_stats(r'D:\Source\ezdxf-dev\integration_tests\polyface_AC1015.dxf')
+    print_stats(r'D:\Source\ezdxf-dev\integration_tests\polymesh_AC1015.dxf')
     print_stats(r'D:\Source\dxftest\fanuc-430-arm.dxf')
     print_stats(r'D:\Source\dxftest\cnc machine.dxf')

@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
 # Purpose: using splines
 # Created: 13.04.2014
-# Copyright (C) , Manfred Moitzi
+# Copyright (c) , Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import ezdxf
 
 

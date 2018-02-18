@@ -1,3 +1,6 @@
+# Copyright (c) 2010-2018, Manfred Moitzi
+# License: MIT License
+from __future__ import unicode_literals
 import ezdxf
 from ezdxf.tools import standards
 
@@ -23,7 +26,7 @@ def main():
         name = ltype.dxf.name
         msp.add_line((0, n), (10, n), dxfattribs={'linetype': name})
         msp.add_text(name, dxfattribs={
-            'insert': (0, n+0.1),
+            'insert': (0, n + 0.1),
             'height': 0.25,
             'style': 'ARIAL'
         })

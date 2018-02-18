@@ -1,6 +1,6 @@
-# Purpose: examples for using Bezier() addon
+# Purpose: examples for using Bezier() add-ons
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (C) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 import ezdxf

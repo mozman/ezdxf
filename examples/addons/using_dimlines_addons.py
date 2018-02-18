@@ -1,9 +1,8 @@
-# Purpose: examples for using Dimension addons
+# Purpose: examples for using Dimension add-ons
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (C) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
 import ezdxf
 from ezdxf.addons import dimstyles, LinearDimension, AngularDimension
 from ezdxf.addons import ArcDimension, RadialDimension
