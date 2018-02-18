@@ -8,6 +8,7 @@ import ezdxf
 BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
 DATADIR = 'data'
 
+
 @pytest.fixture(params=['AC1003_LINE_Example.dxf'])
 def filename(request):
     filename = os.path.join(BASEDIR, DATADIR, request.param)
