@@ -1,9 +1,8 @@
-# Author:  mozman <me@mozman.at>
 # Purpose: sierpinski pyramid
-# module belongs to package ezdxf
 # Created: 07.12.2016
+# Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
-
+from __future__ import unicode_literals
 import math
 from .mesh import MeshBuilder, MeshVertexMerger
 

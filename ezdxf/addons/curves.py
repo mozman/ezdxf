@@ -1,6 +1,6 @@
 # Purpose: curve objects
 # Created: 26.03.2010, 2018 adapted for ezdxf
-# Copyright (C) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 from math import sin, cos, radians, fmod

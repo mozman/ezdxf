@@ -1,7 +1,6 @@
 # Purpose: dimension lines as composite entities build with basic dxf entities, but not the DIMENSION entity.
-# module belongs to package: dxfwrite (ezdxf)
 # Created: 10.03.2010, 2018 adapted for ezdxf
-# Copyright (C) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 """ 

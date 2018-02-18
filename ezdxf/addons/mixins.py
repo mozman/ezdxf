@@ -1,8 +1,5 @@
-# Purpose: provide class mixins
-# Created: 11.12.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011, Manfred Moitzi
 # License: MIT License
-__author__ = "mozman <me@mozman.at>"
 
 
 class SubscriptAttributes(object):

@@ -1,8 +1,7 @@
-
 # Created: 28.03.2010
-# Copyright (C) 2010, Manfred Moitzi
+# Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
-import unittest
+import pytest
 from ezdxf.algebra.bezier import CubicBezierCurve
 
 expected_points = [
@@ -29,26 +28,28 @@ expected_points = [
 ]
 
 
-class TestAlgebraCubicBezier(unittest.TestCase):
-    def test_base_curve(self):
-        test_points = [(0, 0), (1, 4), (4, 5), (6, 2)]
-        bezier = CubicBezierCurve(test_points)
-        results = bezier.approximate(20)
-        for expected, result in zip(expected_points, results):
-            self.assertAlmostEqual(expected[0], result[0])
-            self.assertAlmostEqual(expected[1], result[1])
+def test_base_curve():
+    test_points = [(0, 0), (1, 4), (4, 5), (6, 2)]
+    bezier = CubicBezierCurve(test_points)
+    results = bezier.approximate(20)
+    for expected, result in zip(expected_points, results):
+        assert expected[0] == result[0]
+        assert expected[1] == result[1]
 
-    def test_init_three_points(self):
-        test_points = [(0, 0), (1, 4), (4, 5)]
-        self.assertRaises(ValueError, CubicBezierCurve, test_points)
 
-    def test_get_tangent(self):
-        bezier = CubicBezierCurve([(0, 0), (1, 4), (4, 5), (6, 2)])
-        tangent = bezier.get_tangent(0.5)
-        self.assertAlmostEqual(tangent[0], 6.75)
-        self.assertAlmostEqual(tangent[1], 2.25)
+def test_init_three_points():
+    test_points = [(0, 0), (1, 4), (4, 5)]
+    pytest.raises(ValueError, CubicBezierCurve, test_points)
 
-    def test_get_tangent_error(self):
-        bezier = CubicBezierCurve([(0, 0), (1, 4), (4, 5), (6, 2)])
-        self.assertRaises(ValueError, bezier.get_tangent, 2.)
-        self.assertRaises(ValueError, bezier.get_tangent, -2.)
+
+def test_get_tangent():
+    bezier = CubicBezierCurve([(0, 0), (1, 4), (4, 5), (6, 2)])
+    tangent = bezier.get_tangent(0.5)
+    assert tangent[0] == 6.75
+    assert tangent[1] == 2.25
+
+
+def test_get_tangent_error():
+    bezier = CubicBezierCurve([(0, 0), (1, 4), (4, 5), (6, 2)])
+    pytest.raises(ValueError, bezier.get_tangent, 2.)
+    pytest.raises(ValueError, bezier.get_tangent, -2.)

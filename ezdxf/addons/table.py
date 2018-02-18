@@ -1,10 +1,8 @@
 # Purpose: table, consisting of basic R12 entities
-# module belongs to package: dxfwrite (ezdxf)
 # Created: 18.03.2010, 2018 adapted for ezdxf
-# Copyright (C) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 """
 Table object like a HTML-Table, as composite pf basic DXF R12 entities.
 

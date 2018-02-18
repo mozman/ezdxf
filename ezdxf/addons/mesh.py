@@ -1,7 +1,5 @@
-# Author:  mozman <me@mozman.at>
 # Purpose: simple mesh builders
-# module belongs to package ezdxf.addons
-# Created: 10.12.2016
+# Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from ezdxf.algebra.vector import Vector
 

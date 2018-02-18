@@ -20,6 +20,18 @@ if PY3:
     is_close = partial(math.isclose, abs_tol=1e-9)
 
 
+def is_close_points(p1, p2):
+    if len(p1) == 2:
+        p1 = p1[0], p1[1], 0.
+    if len(p2) == 2:
+        p2 = p2[0], p2[1], 0.
+
+    for v1, v2 in zip(p1, p2):
+        if not is_close(v1, v2):
+            return False
+    return True
+
+
 def rotate_2d(point, angle):
     """ rotate point around origin point about angle """
     x = point[0] * math.cos(angle) - point[1] * math.sin(angle)
@@ -42,7 +54,7 @@ def normalize_angle(angle):
 def is_vertical_angle(angle, places=7):
     """ returns True for 1/2pi and 3/2pi """
     angle = normalize_angle(angle)
-    return (equals_almost(angle, HALF_PI, places) or equals_almost(angle, THREE_PI_HALF, places))
+    return equals_almost(angle, HALF_PI, places) or equals_almost(angle, THREE_PI_HALF, places)
 
 
 def get_angle(p1, p2):
@@ -88,7 +100,7 @@ def left_of_line(point, p1, p2):
 
         # compute if point should be above or below the line
         should_be_above = p1[0] < p2[0]
-        if should_be_above :
+        if should_be_above:
             return point[1] > y
         else:
             return point[1] < y
