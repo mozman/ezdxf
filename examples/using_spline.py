@@ -14,7 +14,7 @@ def clone_spline():
     msp.delete_entity(spline)
     # add a new spline
     msp.add_spline(spline.get_fit_points())
-    dwg.saveas("clone_Spline.dxf")
+    dwg.saveas("Spline_R2000_clone_Spline.dxf")
 
 
 def fit_spline():
@@ -24,7 +24,7 @@ def fit_spline():
     spline = msp.add_spline(fit_points)
     spline.dxf.start_tangent = (1, 0, 0)
     spline.dxf.end_tangent = (0, 1, 0)
-    dwg.saveas("fit_spline.dxf")
+    dwg.saveas("Spline_R2000_fit_spline.dxf")
 
 
 def fit_spline_with_control_points():
@@ -34,23 +34,25 @@ def fit_spline_with_control_points():
     msp = dwg.modelspace()
     spline = msp.add_spline(fit_points)
     spline.set_control_points(control_points)
-    dwg.saveas("fit_spline_and_control_points.dxf")
+    dwg.saveas("Spline_R2000_fit_spline_and_control_points.dxf")
 
 
 def add_points_to_spline():
     dwg = ezdxf.readfile("Spline_R2000.dxf")
     msp = dwg.modelspace()
     spline = msp.query('SPLINE')[0]  # take first spline
-    with spline.fit_points() as fp:
-        fp.append((800, 150, 0))
+    with spline.edit_data() as data:
+        data.fit_points.append((800, 150, 0))
+        # As far I tested this works without complaints from AutoCAD, but for the case of problems
+        data.control_points = []  # delete control points, this could modify the geometry of the spline
+        data.knot_values = []  # delete knot values, this shouldn't modify the geometry of the spline
+        data.weights = []  # delete weights, this could modify the geometry of the spline
 
-    # As far I tested this works without complaints from AutoCAD, but for the case of problems
-    spline.set_knot_values([])  # delete knot values, this shouldn't modify the geometry of the spline
-    spline.set_weights([])  # delete weights, this could modify the geometry of the spline
-    spline.set_control_points([])  # delete control points, this could modify the geometry of the spline
-
-    dwg.saveas("Spline_with_added_points.dxf")
+    dwg.saveas("Spline_R2000_with_added_points.dxf")
 
 
 if __name__ == '__main__':
+    clone_spline()
     fit_spline()
+    fit_spline_with_control_points()
+    add_points_to_spline()

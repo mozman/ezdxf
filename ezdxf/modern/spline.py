@@ -2,7 +2,6 @@
 # Created: 24.05.2015
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
@@ -74,7 +73,7 @@ class Spline(ModernGraphicEntity):
         else:
             self.dxf.flags = flagsnow & (~const.CLOSED_SPLINE)
 
-    def get_knot_values(self):
+    def get_knot_values(self):  # group code 40
         return [tag.value for tag in self.AcDbSpline.find_all(code=40)]
 
     def set_knot_values(self, knot_values):
@@ -86,13 +85,13 @@ class Spline(ModernGraphicEntity):
         tags.remove_tags(codes=(code, ))
         tags.extend([DXFTag(code, value) for value in values])
 
-    def get_weights(self):
+    def get_weights(self):  # group code 41
         return [tag.value for tag in self.AcDbSpline.find_all(code=41)]
 
     def set_weights(self, values):
         self._set_values(values, code=41)
 
-    def get_control_points(self):
+    def get_control_points(self):  # group code 10
         return [tag.value for tag in self.AcDbSpline if tag.code == 10]
 
     def set_control_points(self, points):
@@ -109,7 +108,7 @@ class Spline(ModernGraphicEntity):
         self.AcDbSpline.extend(tags)
         return len(tags)
 
-    def get_fit_points(self):
+    def get_fit_points(self):  # group code 11
         return [tag.value for tag in self.AcDbSpline if tag.code == 11]
 
     def set_fit_points(self, points):

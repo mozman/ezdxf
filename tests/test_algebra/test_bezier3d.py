@@ -1,4 +1,4 @@
-# Copyright (c) 2010 Manfred Moitzi
+# Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 import pytest
 from ezdxf.algebra.base import equals_almost
@@ -13,7 +13,7 @@ def test_points_2d():
     bcurve = Bezier(DEFPOINTS2D)
     for index, epoint in enumerate(POINTS2D):
         epx, epy = epoint
-        rpx, rpy, rpz = bcurve.get_point(index * .1)
+        rpx, rpy, rpz = bcurve.point(index * .1)
         assert equals_almost(epx, rpx, places=3) is True
         assert equals_almost(epy, rpy, places=3) is True
 
@@ -22,7 +22,7 @@ def test_bezier4p_points_2d():
     bcurve = Bezier4P(DEFPOINTS2D)
     for index, epoint in enumerate(POINTS2D):
         epx, epy = epoint
-        rpx, rpy, rpz = bcurve.get_point(index * .1)
+        rpx, rpy, rpz = bcurve.point(index * .1)
         assert equals_almost(epx, rpx, places=3) is True
         assert equals_almost(epy, rpy, places=3) is True
 
@@ -31,7 +31,7 @@ def test_points_2d_2():
     dbcurve = DBezier(DEFPOINTS2D)
     for index, epoint in enumerate(POINTS2D):
         epx, epy = epoint
-        pnt, d1, d2 = dbcurve.get_point(index * .1)
+        pnt, d1, d2 = dbcurve.point(index * .1)
         assert equals_almost(epx, pnt[0], places=3)
         assert equals_almost(epy, pnt[1], places=3)
 
@@ -40,7 +40,7 @@ def test_tangents_2d():
     dbcurve = DBezier(DEFPOINTS2D)
     for index, epoint in enumerate(TANGENTS2D):
         etx, ety = epoint
-        pnt, d1, d2 = dbcurve.get_point(index * .1)
+        pnt, d1, d2 = dbcurve.point(index * .1)
         assert equals_almost(etx, d1[0], places=3)
         assert equals_almost(ety, d1[1], places=3)
 
@@ -49,7 +49,7 @@ def test_bezire4p_tangents_2d():
     dbcurve = Bezier4P(DEFPOINTS2D)
     for index, epoint in enumerate(TANGENTS2D):
         etx, ety = epoint
-        d1 = dbcurve.get_tangent(index * .1)
+        d1 = dbcurve.tangent(index * .1)
         assert equals_almost(etx, d1[0], places=3)
         assert equals_almost(ety, d1[1], places=3)
 

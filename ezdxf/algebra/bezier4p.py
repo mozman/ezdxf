@@ -1,5 +1,6 @@
 # Purpose: Bezier Curve optimized for 4 control points
 # Created: 26.03.2010
+# Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 
 
@@ -7,37 +8,52 @@ class Bezier4P(object):
     """
     Implements an optimized Cubic Bezier Curve with 4 control points.
 
-    Special behavior: 2D in -> 2D out and 3D in -> 3D out!
+    Special behavior: 2d in -> 2d out and 3d in -> 3d out!
 
     """
     def __init__(self, control_points):
         if len(control_points) == 4:
-            dim = max([len(p) for p in control_points])
-            if dim < 3:
-                self.math = D2D  # use 2d math module
-            else:
-                self.math = D3D  # use 3d math module
+            is3d = any(len(p) > 2 for p in control_points)
+            self.math = D3D if is3d else D2D
             self._cpoints = [self.math.tovector(vector) for vector in control_points]
         else:
             raise ValueError("Four control points required.")
 
     @property
-    def breakpoints(self):
+    def control_points(self):
         return self._cpoints
 
-    def get_tangent(self, position):
-        self._check(position)
-        return self._get_curve_tangent(position)
+    def tangent(self, t):
+        """
+        Calculate tangent at parameter t [0, 1].
 
-    def get_point(self, position):
-        self._check(position)
-        return self._get_curve_point(position)
+        Args:
+            t: curve position in the range [0, 1]
+
+        Returns: (x, y, z) tuple, a vector which defines the direction of the tangent.
+
+        """
+        self._check(t)
+        return self._get_curve_tangent(t)
+
+    def point(self, t):
+        """
+        Calculate curve point at parameter t [0, 1].
+
+        Args:
+            t: curve position in the range [0, 1]
+
+        Returns: (x, y, z) tuple
+
+        """
+        self._check(t)
+        return self._get_curve_point(t)
 
     def approximate(self, segments):
         delta_t = 1. / segments
         yield self._cpoints[0]
         for segment in range(1, segments):
-            yield self.get_point(delta_t*segment)
+            yield self.point(delta_t*segment)
         yield self._cpoints[3]
 
     def _check(self, position):
@@ -46,33 +62,34 @@ class Bezier4P(object):
 
     def _get_curve_point(self, t):
         """
-        Implementation optimized for 4 control points.
+        Calculate curve point at parameter t [0, 1].
+
+        Returns: (x, y, z) tuple
 
         """
         b1, b2, b3, b4 = self._cpoints
         one_minus_t = 1. - t
         m = self.math
-        B = m.vmul_scalar(b1, one_minus_t**3)
-        B = m.vadd(B, m.vmul_scalar(b2, 3. * one_minus_t**2 * t))
-        B = m.vadd(B, m.vmul_scalar(b3, 3. * one_minus_t * t**2))
-        B = m.vadd(B, m.vmul_scalar(b4, t**3))
-        return B
+        point = m.vmul_scalar(b1, one_minus_t**3)
+        point = m.vadd(point, m.vmul_scalar(b2, 3. * one_minus_t**2 * t))
+        point = m.vadd(point, m.vmul_scalar(b3, 3. * one_minus_t * t**2))
+        point = m.vadd(point, m.vmul_scalar(b4, t**3))
+        return tuple(point)
 
     def _get_curve_tangent(self, t):
         """
-        Implementation optimized for 4 control points.
+        Calculate tangent at parameter t [0, 1]. Implementation optimized for 4 control points.
 
-        Returns a vector T which defines the direction of the tangent.
-        example: slope of tangent = (y) T[1]/ (x) T[0]
-        position of tangent point is defined by the parameter t -> get_curve_point_by_parameter()
+        Returns: (x, y, z) tuple, a vector which defines the direction of the tangent.
+
         """
         b1, b2, b3, b4 = self._cpoints
         m = self.math
-        B = m.vmul_scalar(b1, -3. * (1. - t)**2)
-        B = m.vadd(B, m.vmul_scalar(b2, 3. * (1. - 4. * t + 3. * t**2)))
-        B = m.vadd(B, m.vmul_scalar(b3, 3. * t * (2. - 3. * t)))
-        B = m.vadd(B, m.vmul_scalar(b4, 3. * t**2))
-        return B
+        tangent = m.vmul_scalar(b1, -3. * (1. - t)**2)
+        tangent = m.vadd(tangent, m.vmul_scalar(b2, 3. * (1. - 4. * t + 3. * t**2)))
+        tangent = m.vadd(tangent, m.vmul_scalar(b3, 3. * t * (2. - 3. * t)))
+        tangent = m.vadd(tangent, m.vmul_scalar(b4, 3. * t**2))
+        return tuple(tangent)
 
     def approximated_length(self, segments=100):
         length = 0.
@@ -122,7 +139,11 @@ class D3D(object):
     @staticmethod
     def tovector(vector):
         """ Return a 3d point """
-        return float(vector[0]), float(vector[1]), float(vector[2])
+        try:
+            z = float(vector[2])
+        except IndexError:
+            z = 0.
+        return float(vector[0]), float(vector[1]), z
 
     @staticmethod
     def distance(point1, point2):

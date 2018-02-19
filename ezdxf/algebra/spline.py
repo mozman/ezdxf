@@ -231,6 +231,34 @@ class DBSplineU(DBSplineMixin, BSplineU):
         return nbasis
 
 
+"""
+
+Rational B-splines
+==================
+
+https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
+
+Rational B-splines have all of the properties of non-rational B-splines plus the following two useful features:
+They produce the correct results under projective transformations (while non-rational B-splines only produce the correct
+results under affine transformations).
+
+They can be used to represent lines, conics, non-rational B-splines; and, when generalised to patches, can represents
+planes, quadrics, and tori.
+
+The antonym of rational is non-rational. Non-rational B-splines are a special case of rational B-splines, just as
+uniform B-splines are a special case of non-uniform B-splines. Thus, non-uniform rational B-splines encompass almost
+every other possible 3D shape definition. Non-uniform rational B-spline is a bit of a mouthful and so it is generally
+abbreviated to NURBS.
+
+We have already learnt all about the the B-spline bit of NURBS and about the non-uniform bit. So now all we need to
+know is the meaning of the rational bit and we will fully(?) understand NURBS.
+
+Rational B-splines are defined simply by applying the B-spline equation (Equation 87) to homogeneous coordinates,
+rather than normal 3D coordinates.
+
+"""
+
+
 def weighting(nbasis, weights, npts):
     s = sum(nbasis[i] * weights[i] for i in range(1, npts + 1))
     if s == 0.0:
