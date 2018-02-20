@@ -1,60 +1,64 @@
 # Created: 06.01.2012
-# Copyright (c) 2012 Manfred Moitzi
+# Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
-import unittest
+import pytest
 from ezdxf.algebra.spline import BSpline, DBSpline
+from ezdxf.algebra.base import equals_almost
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
 
-class TestBSpline(unittest.TestCase):
-    def test_points(self):
-        curve = BSpline(DEFPOINTS)
-        points = list(curve.approximate(40))
+def test_bspine_points():
+    curve = BSpline(DEFPOINTS, order=3)
+    points = list(curve.approximate(40))
 
-        for rpoint, epoint in zip(points, iter_points(DBSPLINE, 0)):
-            epx, epy, epz = epoint
-            rpx, rpy, rpz = rpoint
-            self.assertAlmostEqual(epx, rpx)
-            self.assertAlmostEqual(epy, rpy)
-            self.assertAlmostEqual(epz, rpz)
+    for rpoint, epoint in zip(points, iter_points(DBSPLINE, 0)):
+        epx, epy, epz = epoint
+        rpx, rpy, rpz = rpoint
+        assert equals_almost(epx, rpx)
+        assert equals_almost(epy, rpy)
+        assert equals_almost(epz, rpz)
 
 
-class TestDBSpline(unittest.TestCase):
-    def setUp(self):
-        curve = DBSpline(DEFPOINTS)
-        self.result = list(curve.approximate(40))
-
-    def iter_data(self, n):
-        return zip(iter_points(self.result, n), iter_points(DBSPLINE, n))
-
-    def test_points(self):
-        for rpoint, epoint in self.iter_data(0):
-            epx, epy, epz = epoint
-            rpx, rpy, rpz = rpoint
-            self.assertAlmostEqual(epx, rpx)
-            self.assertAlmostEqual(epy, rpy)
-            self.assertAlmostEqual(epz, rpz)
-
-    def test_derivative_1(self):
-        for rpoint, epoint in self.iter_data(1):
-            epx, epy, epz = epoint
-            rpx, rpy, rpz = rpoint
-            self.assertAlmostEqual(epx, rpx)
-            self.assertAlmostEqual(epy, rpy)
-            self.assertAlmostEqual(epz, rpz)
-
-    def test_derivative_2(self):
-        for rpoint, epoint in self.iter_data(2):
-            epx, epy, epz = epoint
-            rpx, rpy, rpz = rpoint
-            self.assertAlmostEqual(epx, rpx)
-            self.assertAlmostEqual(epy, rpy)
-            self.assertAlmostEqual(epz, rpz)
+@pytest.fixture()
+def dbspline():
+    curve = DBSpline(DEFPOINTS, order=3)
+    return list(curve.approximate(40))
 
 
 def iter_points(values, n):
     return (data[n] for data in values)
+
+
+def iter_data(result, n):
+    return zip(iter_points(result, n), iter_points(DBSPLINE, n))
+
+
+def test_dbspline_points(dbspline):
+    for rpoint, epoint in iter_data(dbspline, 0):
+        epx, epy, epz = epoint
+        rpx, rpy, rpz = rpoint
+        assert equals_almost(epx, rpx)
+        assert equals_almost(epy, rpy)
+        assert equals_almost(epz, rpz)
+
+
+def test_dbspline_derivative_1(dbspline):
+    for rpoint, epoint in iter_data(dbspline, 1):
+        epx, epy, epz = epoint
+        rpx, rpy, rpz = rpoint
+        assert equals_almost(epx, rpx)
+        assert equals_almost(epy, rpy)
+        assert equals_almost(epz, rpz)
+
+
+def test_dbspline_derivative_2(dbspline):
+    for rpoint, epoint in iter_data(dbspline, 2):
+        epx, epy, epz = epoint
+        rpx, rpy, rpz = rpoint
+        assert equals_almost(epx, rpx)
+        assert equals_almost(epy, rpy)
+        assert equals_almost(epz, rpz)
 
 
 DBSPLINE = [
@@ -110,6 +114,3 @@ DBSPLINE = [
      [19.250000000000014, -18.499999999999993, 9.249999999999993], [10.0, -20.0, 10.0]],
     [[50.0, 0.0, 30.0], [20.0, -20.0, 10.0], [10.0, -20.0, 10.0]]
 ]
-
-if __name__ == "__main__":
-    unittest.main()
