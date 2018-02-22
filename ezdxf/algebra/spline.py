@@ -303,23 +303,22 @@ class BSpline(object):
 
     """
     def __init__(self, control_points, order=4, knots=None):
-        self._control_points = one_based_array(control_points, Vector)  # control points
+        self._control_points = [Vector(p) for p in control_points]
         self._cp_count = len(control_points)  # control points count
         self.order = order
-        self.nplusc = self._cp_count + self.order
+        self.nplusc = self._cp_count + self.order  # == n + p + 2
         if knots is None:
             self.knots = one_based_array(knot_open_uniform(self._cp_count, self.order))
         else:
-            req_knot_count = required_knot_values(self._cp_count, order)
-            if len(knots) != req_knot_count:
-                raise ValueError("Require {} knot values, got {}.".format(req_knot_count, len(knots)))
+            if len(knots) != self.nplusc:
+                raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
             self.knots = one_based_array(knots)
 
         self.max_t = max(self.knots)
 
     @property
     def control_points(self):
-        return self._control_points[1:]
+        return self._control_points
 
     @property
     def count(self):
@@ -346,16 +345,14 @@ class BSpline(object):
             t = self.max_t
 
         p = Vector()
-        for control_point, basis in zip(self._control_points[1:], self.basis(t)[1:]):
+        for control_point, basis in zip(self._control_points, self.basis(t)[1:]):
             p += control_point * basis
         return p
 
     def create_nbasis(self, t):
-        knots = self.knots
-        nbasis = [0.0]  # [0] is a dummy value, 1-based array
         # calculate the first order basis functions n[i][1]
-        nbasis.extend(1.0 if knots[i] <= t < knots[i + 1] else 0.0 for i in range(1, self.nplusc))
-        return nbasis
+        # for 1-base array, first value is a dummy value/ignored
+        return [1. if k1 <= t < k2 else 0. for k1, k2 in zip(self.knots, self.knots[1:])]
 
     def basis(self, t):
         knots = self.knots
@@ -363,11 +360,11 @@ class BSpline(object):
         # calculate the higher order basis functions
         for k in range(2, self.order + 1):
             for i in range(1, self.nplusc - k + 1):
-                d = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0.0 else 0.0
-                e = ((knots[i + k] - t) * nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0.0 else 0.0
+                d = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
+                e = ((knots[i+k] - t) * nbasis[i+1]) / (knots[i+k] - knots[i+1]) if nbasis[i+1] != 0. else 0.
                 nbasis[i] = d + e
         if t == knots[self.nplusc]:  # pick up last point
-            nbasis[self._cp_count] = 1.0
+            nbasis[self._cp_count] = 1.
         return nbasis
 
 
@@ -410,39 +407,36 @@ class DBSplineMixin(object):
         point = Vector()
         d1 = Vector()
         d2 = Vector()
-        for i in range(1, self._cp_count + 1):
-            control_point = self._control_points[i]
-            point += control_point * nbasis[i]
-            d1 += control_point * d1nbasis[i]
-            d2 += control_point * d2nbasis[i]
+        for i in range(self._cp_count):
+            control_point = self._control_points[i]  # 0-based array
+            point += control_point * nbasis[i+1]  # 1-based
+            d1 += control_point * d1nbasis[i+1]  # 1-based
+            d2 += control_point * d2nbasis[i+1]  # 1-based
         return point, d1, d2
 
     def dbasis(self, t):
         knots = self.knots
         nbasis = self.create_nbasis2(t)
-        d1nbasis = [0.0] * (self.nplusc + 1)  # [0] is a dummy value, 1-based array
+        d1nbasis = [0.] * (self.nplusc+1)  # [0] is a dummy value, 1-based array
         d2nbasis = d1nbasis[:]
 
-        for k in range(2, self.order + 1):
-            for i in range(1, self.nplusc - k + 1):
+        for k in range(2, self.order+1):
+            for i in range(1, self.nplusc-k+1):
                 # calculate basis functions
-                b1 = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0.0 else 0.0
-                b2 = ((knots[i + k] - t) * nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if nbasis[
-                                                                                                 i + 1] != 0.0 else 0.0
+                b1 = ((t - knots[i]) * nbasis[i]) / (knots[i+k-1] - knots[i]) if nbasis[i] != 0. else 0.
+                b2 = ((knots[i+k] - t) * nbasis[i+1]) / (knots[i+k] - knots[i+1]) if nbasis[i+1] != 0. else 0.
 
                 # calculate first derivative
-                f1 = nbasis[i] / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0.0 else 0.0
-                f2 = -nbasis[i + 1] / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0.0 else 0.0
-                f3 = ((t - knots[i]) * d1nbasis[i]) / (knots[i + k - 1] - knots[i]) if d1nbasis[i] != 0.0 else 0.0
-                f4 = ((knots[i + k] - t) * d1nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d1nbasis[
-                                                                                                   i + 1] != 0.0 else 0.0
+                f1 = nbasis[i] / (knots[i+k-1] - knots[i]) if nbasis[i] != 0. else 0.
+                f2 = -nbasis[i+1] / (knots[i+k] - knots[i+1]) if nbasis[i+1] != 0. else 0.
+                f3 = ((t - knots[i]) * d1nbasis[i]) / (knots[i+k-1] - knots[i]) if d1nbasis[i] != 0. else 0.
+                f4 = ((knots[i+k] - t) * d1nbasis[i+1]) / (knots[i+k] - knots[i+1]) if d1nbasis[i+1] != 0. else 0.
 
                 # calculate second derivative
-                s1 = (2 * d1nbasis[i]) / (knots[i + k - 1] - knots[i]) if d1nbasis[i] != 0.0 else 0.0
-                s2 = (-2 * d1nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d1nbasis[i + 1] != 0.0 else 0.0
-                s3 = ((t - knots[i]) * d2nbasis[i]) / (knots[i + k - 1] - knots[i]) if d2nbasis[i] != 0.0 else 0.0
-                s4 = ((knots[i + k] - t) * d2nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d2nbasis[
-                                                                                                   i + 1] != 0.0 else 0.0
+                s1 = (2 * d1nbasis[i]) / (knots[i+k-1] - knots[i]) if d1nbasis[i] != 0. else 0.
+                s2 = (-2 * d1nbasis[i+1]) / (knots[i+k] - knots[i+1]) if d1nbasis[i+1] != 0. else 0.
+                s3 = ((t - knots[i]) * d2nbasis[i]) / (knots[i+k-1] - knots[i]) if d2nbasis[i] != 0. else 0.
+                s4 = ((knots[i+k] - t) * d2nbasis[i+1]) / (knots[i+k] - knots[i+1]) if d2nbasis[i+1] != 0. else 0.
 
                 nbasis[i] = b1 + b2
                 d1nbasis[i] = f1 + f2 + f3 + f4
@@ -458,8 +452,8 @@ class DBSpline(DBSplineMixin, BSpline):
     """
     def create_nbasis2(self, t):
         nbasis = self.create_nbasis(t)
-        if t == self.knots[self.nplusc]:
-            nbasis[self._cp_count] = 1.0
+        if t == self.knots[self.nplusc]:  # nplusc = n + p + 2 = last knot value
+            nbasis[self._cp_count] = 1.
         return nbasis
 
 
@@ -471,9 +465,9 @@ class DBSplineU(DBSplineMixin, BSplineU):
     def create_nbasis2(self, t):
         npts = self._cp_count
         nbasis = self.create_nbasis(t)
-        if t == self.knots[npts + 1]:
-            nbasis[npts] = 1.0
-            nbasis[npts + 1] = 0.0
+        if t == self.knots[npts+1]:
+            nbasis[npts] = 1.
+            nbasis[npts+1] = 0.
         return nbasis
 
 
