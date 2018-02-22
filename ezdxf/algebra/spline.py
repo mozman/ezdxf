@@ -2,7 +2,6 @@
 # Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
 from .vector import Vector, distance
-
 """
 
 B-Splines
@@ -202,43 +201,98 @@ If there are no pressing reasons for doing otherwise, your B-spline should be de
 
 
 def one_based_array(values, decor=lambda x: x):
-    newlist = [0.0]
+    newlist = [0.]
     newlist.extend(decor(value) for value in values)
     return newlist
 
 
 def knot_open_uniform(n, order):
+    """
+    Returns a open uniform knot vector.
+
+    Args:
+        n: count of control points
+        order: spline order
+
+    Returns: list of floats (knot vector)
+
+    """
     nplusc = n + order
     nplus2 = n + 2
-    x = [0.0, 0.0]
-    for i in range(2, nplusc + 1):
+    knots = [0.]
+    for i in range(2, nplusc+1):
         if (i > order) and (i < nplus2):
-            x.append(x[i - 1] + 1.0)
+            knots.append(knots[-1] + 1.)
         else:
-            x.append(x[i - 1])
-    return x
+            knots.append(knots[-1])
+    return knots
 
 
 def knot_uniform(n, order):
-    nplusc = n + order
-    x = [0.0, 0.0]
-    x.extend(float(i) for i in range(1, nplusc))
-    return x
+    """
+    Returns a uniform knot vector.
+
+    Args:
+        n: count of control points
+        order: spline order
+
+    Returns: list of floats (knot vector)
+
+    """
+    return [float(knot_value) for knot_value in range(0, n + order)]
 
 
-def knot_closed(control_points, order):  # closed ???
-    # control_points is a 1 based array
+def knot_closed_old(control_points, order):  # closed ???
+    # 1-based
+    control_points = one_based_array(control_points)
     n = len(control_points) - 1
     spacing = list(distance(control_points[i - 1], control_points[i]) for i in range(2, n + 1))
-
     maxc = sum(spacing)
-    x = [0.0] * (order + 1)
+    knots = [0.] * (order + 1)
     for i in range(1, n - order + 2):
         csum = sum(spacing[:i])
         numerator = float(i) / float(n - order + 2) * spacing[i] + csum
-        x.append(numerator / maxc * float(n - order + 2))
-    x.extend([n - order + 2] * (order - 1))
-    return x
+        knots.append(numerator / maxc * float(n - order + 2))
+    knots.extend([n - order + 2] * (order - 1))
+    return knots[1:]
+
+
+def knot_closed(control_points, order):  # closed ???
+    """
+    Returns a knot vector.
+
+    Args:
+        control_points: control points as (x, y[, z]) tuples
+        order: spline order
+
+    Returns: list of floats (knot vector)
+
+    """
+    n = len(control_points)
+    spacing = [distance(p1, p2) for p1, p2 in zip(control_points[:-1], control_points[1:])]
+    norder2 = float(n-order+2)
+    denominator = sum(spacing) / norder2
+    knots = [0.] * order
+    for i in range(1, int(norder2)):
+        numerator = float(i) / norder2 * spacing[i] + sum(spacing[:i])
+        knots.append(numerator / denominator)
+    knots.extend([norder2] * (order-1))
+    return knots
+
+
+def required_knot_values(count, order):
+    # just to show the connections
+    # count = count of control points = n + 1
+    # k = order of spline = degree + 1
+    # 2 <= k <= n + 1
+    # p = degree
+    # order = p + 1
+    k = order
+    n = count - 1
+    p = k - 1
+    assert 2 <= k <= (n + 1)
+    # n + p + 2 = count + order
+    return n + p + 2
 
 
 class BSpline(object):
@@ -248,16 +302,19 @@ class BSpline(object):
     Accepts 2d points as definition points, but output ist always 3d (z-axis is 0).
 
     """
-
     def __init__(self, control_points, order=4, knots=None):
         self._control_points = one_based_array(control_points, Vector)  # control points
         self._cp_count = len(control_points)  # control points count
         self.order = order
         self.nplusc = self._cp_count + self.order
         if knots is None:
-            self.knots = knot_open_uniform(self._cp_count, self.order)
+            self.knots = one_based_array(knot_open_uniform(self._cp_count, self.order))
         else:
-            self.knots = knots
+            req_knot_count = required_knot_values(self._cp_count, order)
+            if len(knots) != req_knot_count:
+                raise ValueError("Require {} knot values, got {}.".format(req_knot_count, len(knots)))
+            self.knots = one_based_array(knots)
+
         self.max_t = max(self.knots)
 
     @property
@@ -346,21 +403,19 @@ class DBSplineMixin(object):
             t: parameter in range [0, max_t]
 
         """
-        max_t = self.max_t
-        if (max_t - t) < 5e-6:
-            t = max_t
+        if (self.max_t - t) < 5e-6:
+            t = self.max_t
 
         nbasis, d1nbasis, d2nbasis = self.dbasis(t)
-        point = [0.0, 0.0, 0.0]
-        d1 = [0.0, 0.0, 0.0]
-        d2 = [0.0, 0.0, 0.0]
-        for axis in (0, 1, 2):
-            for i in range(1, self._cp_count + 1):
-                control_point = self._control_points[i][axis]
-                point[axis] += nbasis[i] * control_point
-                d1[axis] += d1nbasis[i] * control_point
-                d2[axis] += d2nbasis[i] * control_point
-        return tuple(point), tuple(d1), tuple(d2)
+        point = Vector()
+        d1 = Vector()
+        d2 = Vector()
+        for i in range(1, self._cp_count + 1):
+            control_point = self._control_points[i]
+            point += control_point * nbasis[i]
+            d1 += control_point * d1nbasis[i]
+            d2 += control_point * d2nbasis[i]
+        return point, d1, d2
 
     def dbasis(self, t):
         knots = self.knots
@@ -401,7 +456,6 @@ class DBSpline(DBSplineMixin, BSpline):
     Calculate the Points and Derivative of a B-Spline curve.
 
     """
-
     def create_nbasis2(self, t):
         nbasis = self.create_nbasis(t)
         if t == self.knots[self.nplusc]:
@@ -414,7 +468,6 @@ class DBSplineU(DBSplineMixin, BSplineU):
     Calculate the Points and Derivative of a B-SplineU curve.
 
     """
-
     def create_nbasis2(self, t):
         npts = self._cp_count
         nbasis = self.create_nbasis(t)
@@ -466,7 +519,6 @@ class RBSpline(BSpline):
     Calculate the points of a rational B-Spline curve, using an uniform open knot vector.
 
     """
-
     def __init__(self, control_points, weights, order=3):
         if len(control_points) != len(weights):
             raise ValueError("Item count of 'control_points and 'weights' is different.")
@@ -483,7 +535,6 @@ class RBSplineU(BSplineU):
     Calculate the points of a rational B-Spline curve, using an uniform open knot vector.
 
     """
-
     def __init__(self, control_points, weights, order=3):
         super(RBSplineU, self).__init__(control_points, order)
         self.weights = one_based_array(weights, float)
