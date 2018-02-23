@@ -107,6 +107,24 @@ class DXFEntity(object):
         return entity
     copy = __copy__
 
+    def linked_entities(self):
+        link = self.tags.link
+        wrap = self.dxffactory.wrap_handle
+        while link is not None:
+            entity = wrap(link)
+            yield entity
+            link = entity.tags.link
+
+    def copy_to_layout(self, layout):
+        new_entity = self.copy()
+        layout.add_entity(new_entity)
+        return new_entity
+
+    def move_to_layout(self, layout):
+        actual_layout = self.drawing.layouts.get_layout_for_entity(self)
+        actual_layout.unlink_entity(self)
+        layout.add_entity(self)
+
     def dxftype(self):
         return self.tags.noclass[0].value
 

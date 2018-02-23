@@ -51,6 +51,14 @@ Common Base Class
 
    This is not a deep copy in the meaning of Python, because handle, link and owner is changed.
 
+.. method:: GraphicEntity.copy_to_layout(layout)
+
+   Duplicate entity and add new entity to *layout*.
+
+.. method:: GraphicEntity.move_to_layout(layout)
+
+   Move entity from actual layout to *layout*.
+
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
    Get DXF attribute *key*, returns *default* if key doesn't exist, or raise

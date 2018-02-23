@@ -109,6 +109,8 @@ class BaseLayout(GraphicsFactory):
         """
         self._entity_space.append(entity.dxf.handle)
         self._set_paperspace(entity)
+        for linked_entity in entity.linked_entities():
+            self._set_paperspace(linked_entity)
 
     def unlink_entity(self, entity):
         """
@@ -437,6 +439,9 @@ class DXF12BlockLayout(BaseLayout):
         Add entity to the block entity space.
         """
         self.add_handle(entity.dxf.handle)
+        entity.dxf.paperspace = 0  # set a model space, because paper space layout is a different class
+        for linked_entity in entity.linked_entities():
+            linked_entity.dxf.paperspace = 0
 
     def add_handle(self, handle):
         """

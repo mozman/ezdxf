@@ -4,7 +4,10 @@ News
 
 Version 0.8.7 - dev
 
-   *
+   * NEW: copy any DXF entity by entity.copy() without associated layout, add copy to any layout you want, by
+     layout.add_entity().
+   * NEW: copy entity to another layout by entity.copy_to_layout(layout)
+   * NEW: move entity from actual layout to another layout by entity.move_to_layout(layout)
 
 Version 0.8.6 - 2018-02-17
 

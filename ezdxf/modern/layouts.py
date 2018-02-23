@@ -561,6 +561,10 @@ class BlockLayout(DXF12BlockLayout):
         if isinstance(entity, ExtendedTags):
             entity = self._dxffactory.wrap_entity(entity)
         entity.dxf.owner = self.block_record_handle
+        entity.dxf.paperspace = 0  # set a model space, because paper space layout is a different class
+        for linked_entity in entity.linked_entities():
+            linked_entity.dxf.owner = self.block_record_handle
+            linked_entity.dxf.paperspace = 0
         self._entity_space.append(entity.dxf.handle)
 
     @property

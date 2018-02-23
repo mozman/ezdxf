@@ -22,6 +22,8 @@ def test_duplicate_simple_entity(dwg):
     assert new_circle.dxf.color == 4
     if dwg.dxfversion > 'AC1009':  # DXF R2000+
         assert new_circle.dxf.owner == '0'  # undefined owner/layout
+        with pytest.raises(ezdxf.DXFKeyError):
+            dwg.layouts.get_layout_for_entity(new_circle)
 
 
 def test_duplicate_polyline_entity(dwg):

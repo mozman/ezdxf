@@ -956,13 +956,7 @@ class Polyline(GraphicEntity):
         raise DXFIndexError("vertex index out of range")
 
     def vertices(self):
-        wrapper = self.dxffactory.wrap_handle
-        handle = self.tags.link
-        while handle is not None:
-            entity = wrapper(handle)
-            handle = entity.tags.link
-            if entity.dxftype() == 'VERTEX':
-                yield entity
+        return (entity for entity in self.linked_entities() if entity.dxftype() == 'VERTEX')
 
     def points(self):
         return (vertex.dxf.location for vertex in self.vertices())
