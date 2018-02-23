@@ -373,10 +373,8 @@ class BSplineU(BSpline):
     Calculate the points of a B-Spline curve, uniform (periodic) knot vector.
 
     """
-
-    def __init__(self, control_points, order=4, knots=None):
-        if knots is None:
-            knots = knot_uniform(len(control_points), order)
+    def __init__(self, control_points, order=4):
+        knots = knot_uniform(len(control_points), order)
         super(BSplineU, self).__init__(control_points, order=order, knots=knots)
 
     def _step_size(self, segments):
@@ -499,13 +497,13 @@ rather than normal 3D coordinates.
 """
 
 
-def weighting(nbasis, weights, npts):
-    s = sum(nbasis[i] * weights[i] for i in range(1, npts + 1))
-    if s == 0.0:
-        r = [0.0] * (npts + 1)
-    else:
-        r = one_based_array(nbasis[i] * weights[i] / s for i in range(1, npts + 1))
-    return r
+def weighting(nbasis, weights):
+    # nbasis ... 1-based arrays
+    # weight ... 0-based arrays
+    products = [nb * w for nb, w in zip(nbasis[1:], weights)]
+    s = sum(products)
+    # return 1-based array
+    return [0.0]*(len(weights)+1) if s == 0.0 else one_based_array(p/s for p in products)
 
 
 class RBSpline(BSpline):
@@ -517,11 +515,11 @@ class RBSpline(BSpline):
         if len(control_points) != len(weights):
             raise ValueError("Item count of 'control_points and 'weights' is different.")
         super(RBSpline, self).__init__(control_points, order)
-        self.weights = one_based_array(weights, float)
+        self.weights = weights  # 0-based
 
     def basis(self, t):
         nbasis = super(RBSpline, self).basis(t)
-        return weighting(nbasis, self.weights, self._cp_count)
+        return weighting(nbasis, self.weights)
 
 
 class RBSplineU(BSplineU):
@@ -531,8 +529,8 @@ class RBSplineU(BSplineU):
     """
     def __init__(self, control_points, weights, order=3):
         super(RBSplineU, self).__init__(control_points, order)
-        self.weights = one_based_array(weights, float)
+        self.weights = weights  # 0-based
 
     def basis(self, t):
         nbasis = super(RBSplineU, self).basis(t)
-        return weighting(nbasis, self.weights, self._cp_count)
+        return weighting(nbasis, self.weights)
