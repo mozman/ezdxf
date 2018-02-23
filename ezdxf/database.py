@@ -98,3 +98,19 @@ class EntityDB(object):
             if handle not in self._database:  # you can not trust $HANDSEED value
                 return handle
 
+    def duplicate_tags(self, tags):
+        new_tags = tags.__copy__()
+        new_tags.noclass.replace_handle(self.get_unique_handle())
+        self.add_tags(new_tags)
+
+        link = new_tags.link
+        new_tags_link = new_tags
+        while link is not None:
+            copy_link = link.__copy__()
+            copy_link.noclass.replace_handle(self.get_unique_handle())
+            self.add_tags(new_tags)
+
+            new_tags_link.link = copy_link
+            new_tags_link = copy_link
+            link = link.link
+        return new_tags

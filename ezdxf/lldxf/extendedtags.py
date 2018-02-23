@@ -28,6 +28,9 @@ class ExtendedTags(object):
             self._setup(iterable)
 
     def __copy__(self):
+        """
+        Shallow copy - link entities are not duplicated!
+        """
         def copy(tag_lists):
             return [tags.clone() for tags in tag_lists]
 

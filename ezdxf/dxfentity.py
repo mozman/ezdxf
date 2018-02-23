@@ -88,6 +88,14 @@ class DXFEntity(object):
         self.dxffactory.copy_layout(self, entity)
         return entity
 
+    def __copy__(self):
+        """
+        Deep copy of DXFEntity with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND).
+        """
+        new_tags = self.entitydb.duplicate_tags(self.tags)
+        return self.dxffactory.wrap_entity(new_tags)
+    copy = __copy__
+
     def dxftype(self):
         return self.tags.noclass[0].value
 

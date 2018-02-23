@@ -262,6 +262,7 @@ class Tags(list):
         """
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
 
+
 def group_tags(tags, splitcode=STRUCTURE_MARKER):
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
@@ -313,4 +314,3 @@ class CompressedTags(object):
 
     def decompress(self):
         return internal_tag_compiler(self.tostring())
-
