@@ -3,8 +3,6 @@
 # License: MIT License
 from __future__ import unicode_literals
 import pytest
-
-import ezdxf
 from ezdxf.database import EntityDB
 
 
@@ -28,21 +26,3 @@ def test_del_value(db):
     del db[0]
     with pytest.raises(KeyError):
         db[0]
-
-
-@pytest.fixture(params=['R12', 'R2000'], scope='module')
-def dwg(request):
-    return ezdxf.new(request.param)
-
-
-def test_duplicate_simple_entity(dwg):
-    pass
-
-
-def test_duplicate_polyline_entity(dwg):
-    pass
-
-
-def test_duplicate_insert_with_attribs_entity(dwg):
-    pass
-

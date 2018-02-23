@@ -99,18 +99,25 @@ class EntityDB(object):
                 return handle
 
     def duplicate_tags(self, tags):
-        new_tags = tags.__copy__()
-        new_tags.noclass.replace_handle(self.get_unique_handle())
-        self.add_tags(new_tags)
+        """
+        Deep copy of tags with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND) with also new handles.
+        An existing owner tag is not changed because this is not the domain of the EntityDB() class.
 
-        link = new_tags.link
-        new_tags_link = new_tags
-        while link is not None:
-            copy_link = link.__copy__()
-            copy_link.noclass.replace_handle(self.get_unique_handle())
-            self.add_tags(new_tags)
-
-            new_tags_link.link = copy_link
-            new_tags_link = copy_link
-            link = link.link
+        This is not a deep copy in the meaning of Python, because handle and link is changed.
+        
+        """
+        new_tags = tags.copy()
+        new_tags.noclass.replace_handle(self.get_unique_handle())  # set new handle
+        self.add_tags(new_tags)  # add new tags to database
+        source_link = tags.link  # follow link structure of original entity
+        parent_copy = new_tags
+        while source_link is not None:  # duplicate linked entities (VERTEX, ATTRIB, SEQEND)
+            source_linked_entity = self.get(source_link)
+            linked_entity_copy = source_linked_entity.copy()
+            new_handle = self.get_unique_handle()
+            linked_entity_copy.noclass.replace_handle(new_handle)  # set new handle
+            self.add_tags(linked_entity_copy)  # add new tags to database
+            parent_copy.link = new_handle
+            source_link = source_linked_entity.link  # follow link structure of original entity
+            parent_copy = linked_entity_copy
         return new_tags

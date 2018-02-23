@@ -23,13 +23,18 @@ class ExtendedTags(object):
         self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
         self.xdata = list()  # code >= 1000, keys are "APPNAME", values are Tags()
-        self.link = None  # link to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
+        self.link = None  # link (as handle) to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
         if iterable is not None:
             self._setup(iterable)
 
     def __copy__(self):
         """
-        Shallow copy - link entities are not duplicated!
+        Shallow copy - linked entities are not duplicated!
+
+        ExtendedTags() knows nothing about the entity database, and has no access to, so it is not possible for
+        ExtendedTags() to do a deep copy, by also copying linked entities (VERTEX, ATTRIB, SEQEND).
+        To do a deep copy you have to go one level up and use DXFEntity.copy()
+
         """
         def copy(tag_lists):
             return [tags.clone() for tags in tag_lists]

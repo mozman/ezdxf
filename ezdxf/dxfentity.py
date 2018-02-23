@@ -91,9 +91,20 @@ class DXFEntity(object):
     def __copy__(self):
         """
         Deep copy of DXFEntity with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND).
+        The new entity is not included in any layout space, so the owner tag is set to '0' for undefined owner/layout.
+
+        Use Layout.add_entity(new_entity) to add the duplicated entity to a layout, layout can be the model space,
+        a paper space layout or a block layout.
+
+        It is not called __deepcopy__, because this is not a deep copy in the meaning of Python, because handle, link
+        and owner is changed.
+
         """
         new_tags = self.entitydb.duplicate_tags(self.tags)
-        return self.dxffactory.wrap_entity(new_tags)
+        entity = self.dxffactory.wrap_entity(new_tags)
+        if self.supports_dxf_attrib('owner'):  # R2000+
+            entity.dxf.owner = '0'  # reset ownership/layout
+        return entity
     copy = __copy__
 
     def dxftype(self):
