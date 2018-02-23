@@ -106,14 +106,14 @@ class EntityDB(object):
         This is not a deep copy in the meaning of Python, because handle and link is changed.
         
         """
-        new_tags = tags.copy()
+        new_tags = tags.clone()
         new_tags.noclass.replace_handle(self.get_unique_handle())  # set new handle
         self.add_tags(new_tags)  # add new tags to database
         source_link = tags.link  # follow link structure of original entity
         parent_copy = new_tags
         while source_link is not None:  # duplicate linked entities (VERTEX, ATTRIB, SEQEND)
-            source_linked_entity = self.get(source_link)
-            linked_entity_copy = source_linked_entity.copy()
+            source_linked_entity = self.get(source_link)  # extended tags
+            linked_entity_copy = source_linked_entity.clone()
             new_handle = self.get_unique_handle()
             linked_entity_copy.noclass.replace_handle(new_handle)  # set new handle
             self.add_tags(linked_entity_copy)  # add new tags to database
