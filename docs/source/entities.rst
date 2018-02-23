@@ -41,6 +41,16 @@ Common Base Class
    transparent (invisible). This is the recommend method to get/set transparency values, when ever possible do not use
    the DXF low level attribute :attr:`entity.dxf.transparency`
 
+.. method:: GraphicEntity.copy()
+
+   Deep copy of DXFEntity with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND).
+   The new entity is not included in any layout space, so the owner tag is set to '0' for undefined owner/layout.
+
+   Use :meth:`Layout.add_entity()` to add the duplicated entity to a layout, layout can be the model space, a paper
+   space layout or a block layout.
+
+   This is not a deep copy in the meaning of Python, because handle, link and owner is changed.
+
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
    Get DXF attribute *key*, returns *default* if key doesn't exist, or raise
