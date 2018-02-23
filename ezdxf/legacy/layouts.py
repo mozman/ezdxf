@@ -2,15 +2,12 @@
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from ..graphicsfactory import GraphicsFactory
 from ..entityspace import EntitySpace
 from ..query import EntityQuery
 from ..groupby import groupby
-from ..lldxf.const import STD_SCALES
+from ..lldxf.const import STD_SCALES, DXFValueError
 
 class DXF12Layouts(object):
     """
@@ -152,6 +149,21 @@ class BaseLayout(GraphicsFactory):
 
     def groupby(self, dxfattrib="", key=None):
         return groupby(iter(self), dxfattrib, key)
+
+    def move_to_layout(self, entity, layout):
+        """
+        Move entity from block layout to another layout.
+
+        Args:
+            entity: DXF entity to move
+            layout: any layout (model space, paper space, block)
+
+        """
+        if entity.dxf.handle in self._entity_space:
+            self.unlink_entity(entity)
+            layout.add_entity(entity)
+        else:
+            raise DXFValueError('Layout does not contain entity.')
 
 
 class DXF12Layout(BaseLayout):
@@ -338,9 +350,9 @@ class DXF12BlockLayout(BaseLayout):
         ExtendedTags() or a wrapped entity.
 
         """
-        if hasattr('get_handle', entity):
+        if hasattr(entity, 'get_handle'):
             handle = entity.get_handle()
-        elif hasattr('dxf', entity):  # it's a wrapped entity
+        elif hasattr(entity, 'dxf'):  # it's a wrapped entity
             handle = entity.dxf.handle
         else:
             handle = entity
@@ -475,4 +487,3 @@ class DXF12BlockLayout(BaseLayout):
         Returns a generator for constant ATTDEF entities.
         """
         return (attdef for attdef in self.attdefs() if attdef.is_const)
-

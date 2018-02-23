@@ -84,3 +84,18 @@ def test_move_polyline_to_block(dwg):
     if dwg.dxfversion > 'AC1009':  # DXF R2000+
         for vertex in polyline.vertices():
             assert vertex.dxf.owner == polyline.dxf.owner
+
+
+def test_move_from_block_to_block(dwg):
+    source_block = dwg.blocks.new('Test2')
+    target_block = dwg.blocks.new('Test3')
+    polyline = source_block.add_polyline3d(points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)])
+    with pytest.raises(ezdxf.DXFValueError):
+        polyline.move_to_layout(target_block)  # does not work with entities in block layouts
+    polyline.move_to_layout(target_block, source=source_block)
+    assert len(source_block) == 0
+    assert len(target_block) == 1
+    # and back by layout.move_to_layout()
+    target_block.move_to_layout(polyline, source_block)
+    assert len(source_block) == 1
+    assert len(target_block) == 0

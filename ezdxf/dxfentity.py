@@ -3,7 +3,8 @@
 # License: MIT License
 from __future__ import unicode_literals
 from .lldxf.types import cast_tag_value, DXFTag
-from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFValueError, DXFAttributeError, DXFInvalidLayerName
+from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFAttributeError, DXFInvalidLayerName
+from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
 
 
@@ -142,17 +143,22 @@ class DXFEntity(object):
         layout.add_entity(new_entity)
         return new_entity
 
-    def move_to_layout(self, layout):
+    def move_to_layout(self, layout, source=None):
         """
-        Move entity to another layout.
+        Move entity from model space or a paper space layout to another layout. For block layout as source, the
+        block layout has to be specified.
 
         Args:
             layout: any layout (model space, paper space, block)
+            source: source layout, only for block layouts required
 
         """
-        actual_layout = self.drawing.layouts.get_layout_for_entity(self)
-        actual_layout.unlink_entity(self)
-        layout.add_entity(self)
+        if source is None:
+            try:
+                source = self.drawing.layouts.get_layout_for_entity(self)
+            except DXFKeyError:  # R2000+
+                raise DXFValueError('Entity not in model space or paper space, specify block layout as source parameter.')
+        source.move_to_layout(self, layout)
 
     def dxftype(self):
         return self.tags.noclass[0].value
