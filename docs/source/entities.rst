@@ -55,9 +55,10 @@ Common Base Class
 
    Duplicate entity and add new entity to *layout*.
 
-.. method:: GraphicEntity.move_to_layout(layout)
+.. method:: GraphicEntity.move_to_layout(layout, source=None)
 
-   Move entity from actual layout to *layout*.
+   Move entity from actual layout to *layout*. *Source* has to be specified if the entity resides in a block layout,
+   *source* is not required if the entity resides in the model space or in a paper space layout.
 
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
