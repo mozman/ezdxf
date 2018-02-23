@@ -1,11 +1,7 @@
-# Purpose: entity module
 # Created: 11.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from .lldxf.types import cast_tag_value, DXFTag
 from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFValueError, DXFAttributeError, DXFInvalidLayerName
 from .lldxf.validator import is_valid_layer_name
@@ -15,7 +11,9 @@ ACAD_REACTORS = '{ACAD_REACTORS'
 
 
 class DXFNamespace(object):
-    """ Provides the dxf namespace for GenericWrapper.
+    """
+    Provides the dxf namespace for GenericWrapper.
+
     """
     __slots__ = ('_setter', '_getter', '_deleter')
 
@@ -26,22 +24,27 @@ class DXFNamespace(object):
         super(DXFNamespace, self).__setattr__('_deleter', wrapper.del_dxf_attrib)
 
     def __getattr__(self, attrib):
-        """Returns value of DXF attribute *attrib*. usage: value = DXFEntity.dxf.attrib
+        """
+        Returns value of DXF attribute *attrib*. usage: value = DXFEntity.dxf.attrib
+
         """
         return self._getter(attrib)
 
     def __setattr__(self, attrib, value):
-        """Set DXF attribute *attrib* to *value.  usage: DXFEntity.dxf.attrib = value
+        """
+        Set DXF attribute *attrib* to *value.  usage: DXFEntity.dxf.attrib = value
+
         """
         self._setter(attrib, value)
 
     def __delattr__(self, attrib):
-        """Remove DXF attribute *attrib*.  usage: del DXFEntity.dxf.attrib
+        """
+        Remove DXF attribute *attrib*.  usage: del DXFEntity.dxf.attrib
+
         """
         self._deleter(attrib)
 
 
-# noinspection PyUnresolvedReferences
 class DXFEntity(object):
     TEMPLATE = None
     DXFATTRIBS = {}
@@ -75,14 +78,18 @@ class DXFEntity(object):
         return entity
 
     def post_new_hook(self):
-        """ Called after entity creation.
+        """
+        Called after entity creation.
+
         """
         pass
 
     def _new_entity(self, type_, dxfattribs):
-        """ Create new entity with same layout settings as *self*.
+        """
+        Create new entity with same layout settings as *self*.
 
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it to create new standalone entities.
+
         """
         entity = self.dxffactory.create_db_entry(type_, dxfattribs)
         self.dxffactory.copy_layout(self, entity)
@@ -108,6 +115,12 @@ class DXFEntity(object):
     copy = __copy__
 
     def linked_entities(self):
+        """
+        Iterate over all linked entities, only POLYLINE and INSERT has linked entities (VERTEX, ATTRIB, SEQEND)
+
+        Yields: DXFEntity() objects
+
+        """
         link = self.tags.link
         wrap = self.dxffactory.wrap_handle
         while link is not None:
@@ -116,11 +129,27 @@ class DXFEntity(object):
             link = entity.tags.link
 
     def copy_to_layout(self, layout):
+        """
+        Copy entity to another layout.
+
+        Args:
+            layout: any layout (model space, paper space, block)
+
+        Returns: new created entity as DXFEntity() object
+
+        """
         new_entity = self.copy()
         layout.add_entity(new_entity)
         return new_entity
 
     def move_to_layout(self, layout):
+        """
+        Move entity to another layout.
+
+        Args:
+            layout: any layout (model space, paper space, block)
+
+        """
         actual_layout = self.drawing.layouts.get_layout_for_entity(self)
         actual_layout.unlink_entity(self)
         layout.add_entity(self)
@@ -129,8 +158,9 @@ class DXFEntity(object):
         return self.tags.noclass[0].value
 
     def supports_dxf_attrib(self, key):
-        """ Returns *True* if DXF attrib *key* is supported by this entity else False. Does not grant that attrib
-        *key* really exists.
+        """
+        Returns True if DXF attribute key is supported else False. Does not grant that attribute key really exists.
+
         """
         dxfattr = self.DXFATTRIBS.get(key, None)
         if dxfattr is None:
@@ -140,14 +170,18 @@ class DXFEntity(object):
         return self.drawing.dxfversion >= dxfattr.dxfversion
 
     def valid_dxf_attrib_names(self):
-        """ Returns a list of supported DXF attribute names.
+        """
+        Returns a list of supported DXF attribute names.
+
         """
         is_dxfversion = None if self.drawing is None else self.drawing.dxfversion
         return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or
                                                                   (attrib.dxfversion <= is_dxfversion)]
 
     def dxf_attrib_exists(self, key):
-        """ Returns *True* if DXF attrib *key* really exists else False. Raises *AttributeError* if *key* isn't supported.
+        """
+        Returns True if DXF attrib key really exists else False. Raises AttributeError if key isn't supported.
+
         """
         # attributes with default values don't raise an exception!
         return self.get_dxf_attrib(key, default=None) is not None
@@ -179,7 +213,9 @@ class DXFEntity(object):
                 return default
 
     def get_dxf_default_value(self, key):
-        """ Returns the default value as defined in the DXF standard.
+        """
+        Returns the default value as defined in the DXF standard.
+
         """
         return self._get_dxfattr_definition(key).default
 
@@ -197,7 +233,9 @@ class DXFEntity(object):
             return subclass_tags.get_first_value(dxfattr.code)
 
     def has_dxf_default_value(self, key):
-        """ Returns *True* if the DXF attribute *key* has a DXF standard default value.
+        """
+        Returns True if the DXF attribute key has a DXF standard default value.
+
         """
         return self._get_dxfattr_definition(key).default is not None
 
@@ -219,7 +257,9 @@ class DXFEntity(object):
         self._del_dxf_attrib(dxfattr)
 
     def clone_dxf_attribs(self):
-        """ Clones defined and existing DXF attributes as dict.
+        """
+        Clones defined and existing DXF attributes as dict.
+
         """
         dxfattribs = {}
         for key in self.DXFATTRIBS.keys():
@@ -322,5 +362,6 @@ class DXFEntity(object):
 
         Args:
             auditor: Audit() object
+
         """
         pass
