@@ -130,9 +130,16 @@ class Spline(ModernGraphicEntity):
         self.set_control_points(control_points)
         self.set_knot_values(knot_uniform(len(control_points), degree+1))
 
-    def set_rational(self, control_points, weights, degree=3):
+    def set_open_rational(self, control_points, weights, degree=3):
         self.dxf.flags = self.dxf.flags | self.RATIONAL
         self.set_open_uniform(control_points, degree=degree)
+        if len(weights) != len(control_points):
+            raise DXFValueError('Control point count must be equal to weights count.')
+        self.set_weights(weights)
+
+    def set_uniform_rational(self, control_points, weights, degree=3):
+        self.dxf.flags = self.dxf.flags | self.RATIONAL | self.PERIODIC
+        self.set_uniform(control_points, degree=degree)
         if len(weights) != len(control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)

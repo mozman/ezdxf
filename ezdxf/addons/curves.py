@@ -10,7 +10,8 @@ from ezdxf.lldxf import const
 from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.base import rotate_2d, equals_almost
 from ezdxf.algebra.cspline import CubicSpline
-from ezdxf.algebra.bspline import RBSpline, BSpline, BSplineU, RBSplineU, is_uniform_knots
+from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
+from ezdxf.algebra.bspline import RBSpline, RBSplineU, RBSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
 from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
 from .mixins import SubscriptAttributes
@@ -212,45 +213,79 @@ class Spline(_BaseCurve):
             layout.add_polyline2d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
     render = render_as_fit_points
 
-    def render_bspline(self, layout, knots=None, degree=3):
+    def render_open_bspline(self, layout, degree=3):
         """
-        Render a BSpline as 3d polyline. Definition points are control points.
+        Render aa open uniform BSpline as 3d polyline. Definition points are control points.
 
         Args:
             layout: ezdxf layout
-            knots: knot vector or 'uniform' for auto generated uniform knot vector
             degree: B-spline degree (order = degree + 1)
 
         """
-        order = degree + 1
-        if knots is None:  # open uniform knots
-            spline = BSpline(self.points, order=order)
-        elif knots == 'uniform' or is_uniform_knots(knots):
-            spline = BSplineU(self.points, order=order)
-        else:  # pass non-uniform user defined knot vector
-            spline = BSpline(self.points, knots=knots, order=order)
+        spline = BSpline(self.points, order=degree+1)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
 
-    def render_rbspline(self, layout, knots=None, weights=None, degree=3):
+    def render_uniform_bspline(self, layout, degree=3):
+        """
+        Render a uniform BSpline as 3d polyline. Definition points are control points.
+
+        Args:
+            layout: ezdxf layout
+            degree: B-spline degree (order = degree + 1)
+
+        """
+        spline = BSplineU(self.points, order=degree+1)
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+
+    def render_closed_bspline(self, layout, degree=3):
+        """
+        Render a closed uniform BSpline as 3d polyline. Definition points are control points.
+
+        Args:
+            layout: ezdxf layout
+            degree: B-spline degree (order = degree + 1)
+
+        """
+        spline = BSplineClosed(self.points, order=degree+1)
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+
+    def render_open_rbspline(self, layout, weights, degree=3):
+        """
+        Render a rational open uniform BSpline as 3d polyline.
+
+        Args:
+            layout: ezdxf layout
+            weights: list of weights, requires a weight value for each defpoint.
+            degree: B-spline degree (order = degree + 1)
+
+        """
+        spline = RBSpline(self.points, weights=weights, order=degree+1)
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+
+    def render_uniform_rbspline(self, layout, weights, degree=3):
+        """
+        Render a rational uniform BSpline as 3d polyline.
+
+        Args:
+            layout: ezdxf layout
+            weights: list of weights, requires a weight value for each defpoint.
+            degree: B-spline degree (order = degree + 1)
+
+        """
+        spline = RBSplineU(self.points, weights=weights, order=degree+1)
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+
+    def render_closed_rbspline(self, layout, weights, degree=3):
         """
         Render a rational BSpline as 3d polyline.
 
         Args:
             layout: ezdxf layout
-            knots: knot vector or 'uniform' for auto generated uniform knot vector
             weights: list of weights, requires a weight value for each defpoint.
             degree: B-spline degree (order = degree + 1)
 
         """
-        order = degree + 1
-        if weights is None:
-            weights = [1.] * len(self.points)
-        if knots is None:  # open uniform knots - default
-            spline = RBSpline(self.points, weights=weights, order=order)
-        elif knots == 'uniform' or is_uniform_knots(knots):
-            spline = RBSplineU(self.points, weights=weights, order=order)
-        else:  # pass non-uniform user defined knot vector
-            spline = RBSpline(self.points, weights=weights, knots=knots, order=order)
+        spline = RBSplineClosed(self.points, weights=weights, order=degree+1)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
 
 

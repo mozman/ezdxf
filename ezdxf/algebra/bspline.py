@@ -247,44 +247,6 @@ def knot_uniform(n, order):
     return [float(knot_value) for knot_value in range(0, n + order)]
 
 
-def knot_closed_old(control_points, order):  # closed ???
-    # 1-based
-    control_points = one_based_array(control_points)
-    n = len(control_points) - 1
-    spacing = list(distance(control_points[i - 1], control_points[i]) for i in range(2, n + 1))
-    maxc = sum(spacing)
-    knots = [0.] * (order + 1)
-    for i in range(1, n - order + 2):
-        csum = sum(spacing[:i])
-        numerator = float(i) / float(n - order + 2) * spacing[i] + csum
-        knots.append(numerator / maxc * float(n - order + 2))
-    knots.extend([n - order + 2] * (order - 1))
-    return knots[1:]
-
-
-def knot_closed(control_points, order):  # closed ???
-    """
-    Returns a knot vector.
-
-    Args:
-        control_points: control points as (x, y[, z]) tuples
-        order: spline order
-
-    Returns: list of floats (knot vector)
-
-    """
-    n = len(control_points)
-    spacing = [distance(p1, p2) for p1, p2 in zip(control_points[:-1], control_points[1:])]
-    norder2 = float(n-order+2)
-    denominator = sum(spacing) / norder2
-    knots = [0.] * order
-    for i in range(1, int(norder2)):
-        numerator = float(i) / norder2 * spacing[i] + sum(spacing[:i])
-        knots.append(numerator / denominator)
-    knots.extend([norder2] * (order-1))
-    return knots
-
-
 def required_knot_values(count, order):
     # just to show the connections
     # count = count of control points = n + 1
@@ -390,6 +352,18 @@ class BSplineU(BSpline):
         base = float(self.order - 1)
         for point_index in range(segments + 1):
             yield self.point(base + point_index * step)
+
+
+class BSplineClosed(BSplineU):
+    """
+    Calculate the points of a closed uniform B-Spline curve.
+
+    """
+    def __init__(self, control_points, order=4):
+        # control points wrap around
+        points = control_points[:]
+        points.extend(points[:order-1])
+        super(BSplineClosed, self).__init__(points, order=order)
 
 
 class DBSplineMixin(object):
@@ -529,13 +503,29 @@ class RBSpline(BSpline):
 
 class RBSplineU(BSplineU):
     """
-    Calculate the points of a rational B-Spline curve, using an uniform open knot vector.
+    Calculate the points of a rational B-Spline curve, using an uniform knot vector.
 
     """
-    def __init__(self, control_points, weights, order=3):
+    def __init__(self, control_points, weights, order=4):
         super(RBSplineU, self).__init__(control_points, order)
         self.weights = weights  # 0-based
 
     def basis(self, t):
         nbasis = super(RBSplineU, self).basis(t)
         return weighting(nbasis, self.weights)
+
+
+class RBSplineClosed(RBSplineU):
+    """
+    Calculate the points of a cloased rational B-Spline curve, using an uniform knot vector.
+
+    """
+    def __init__(self, control_points, weights, order=4):
+        # control points wrap around
+        points = control_points[:]
+        points.extend(points[:order-1])
+        weights = weights[:]
+        weights.extend(weights[:order-1])
+        super(RBSplineClosed, self).__init__(points, weights, order)
+
+

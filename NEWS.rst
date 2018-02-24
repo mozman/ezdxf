@@ -8,7 +8,7 @@ Version 0.8.7 - dev
      layout.add_entity().
    * NEW: copy entity to another layout by entity.copy_to_layout(layout)
    * NEW: move entity from actual layout to another layout by entity.move_to_layout(layout)
-   * NEW: support for splines by control points: add_open_uniform_spline(), add_uniform_spline(), add_rational_spline()
+   * NEW: support for splines by control points: add_open_spline(), add_uniform_spline(), add_closed_spline(), add_rational_spline()
 
 Version 0.8.6 - 2018-02-17
 
