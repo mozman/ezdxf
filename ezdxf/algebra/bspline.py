@@ -228,6 +228,11 @@ def knot_open_uniform(n, order):
     return knots
 
 
+def is_uniform_knots(knots, places=4):
+    deltas = set(round(k2-k1, ndigits=places) for k1, k2 in zip(knots, knots[1:]))
+    return len(deltas) == 1
+
+
 def knot_uniform(n, order):
     """
     Returns a uniform knot vector.

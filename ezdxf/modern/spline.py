@@ -13,7 +13,7 @@ from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..lldxf.const import DXFValueError
-
+from ..algebra.bspline import knot_uniform, knot_open_uniform
 
 _SPLINE_TPL = """  0
 SPLINE
@@ -56,6 +56,11 @@ spline_subclass = DefSubclass('AcDbSpline', {
 class Spline(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_SPLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
+    CLOSED = 1  # closed b-spline
+    PERIODIC = 2  # uniform b-spline
+    RATIONAL = 4  # rational b-spline
+    PLANAR = 8  # all spline points in a plane
+    LINEAR = 16  # ??? but always with PLANAR set
 
     @property
     def AcDbSpline(self):
@@ -63,15 +68,15 @@ class Spline(ModernGraphicEntity):
 
     @property
     def closed(self):
-        return bool(self.dxf.flags & const.CLOSED_SPLINE)
+        return bool(self.dxf.flags & self.CLOSED)
 
     @closed.setter
     def closed(self, status):
         flagsnow = self.dxf.flags
         if status:
-            self.dxf.flags = flagsnow | const.CLOSED_SPLINE
+            self.dxf.flags = flagsnow | self.CLOSED
         else:
-            self.dxf.flags = flagsnow & (~const.CLOSED_SPLINE)
+            self.dxf.flags = flagsnow & (~self.CLOSED)
 
     def get_knot_values(self):  # group code 40
         return [tag.value for tag in self.AcDbSpline.find_all(code=40)]
@@ -115,6 +120,22 @@ class Spline(ModernGraphicEntity):
         self.AcDbSpline.remove_tags(codes=(11, ))
         count = self._append_points(points, code=11)
         self.dxf.n_fit_points = count
+
+    def set_open_uniform(self, control_points, degree=3):
+        self.set_control_points(control_points)
+        self.set_knot_values(knot_open_uniform(len(control_points), degree+1))
+
+    def set_uniform(self, control_points, degree=3):
+        self.dxf.flags = self.dxf.flags | self.PERIODIC  # periodic is uniform
+        self.set_control_points(control_points)
+        self.set_knot_values(knot_uniform(len(control_points), degree+1))
+
+    def set_rational(self, control_points, weights, degree=3):
+        self.dxf.flags = self.dxf.flags | self.RATIONAL
+        self.set_open_uniform(control_points, degree=degree)
+        if len(weights) != len(control_points):
+            raise DXFValueError('Control point count must be equal to weights count.')
+        self.set_weights(weights)
 
     @contextmanager
     def edit_data(self):

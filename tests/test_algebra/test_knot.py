@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from ezdxf.algebra.bspline import knot_open_uniform, knot_uniform, knot_closed_old, knot_closed, required_knot_values
+from ezdxf.algebra.bspline import is_uniform_knots
 
 open_uniform_order2 = [0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 4.0]
 open_uniform_order3 = [ 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0]
@@ -53,3 +54,11 @@ def test_knots_closed():
     result = knot_closed(points, 4)
     assert len(result) == required_knot_values(4, 4)
     assert result == knot_closed_old(points, 4)
+
+
+def test_is_uniform_knots():
+    assert is_uniform_knots([0, 1, 2, 3, 4]) is True
+    assert is_uniform_knots([0, .1, .2, .3, .4]) is True
+    assert is_uniform_knots([0, 0, 0, 0, 0]) is True
+    assert is_uniform_knots([0, 1, 3, 3, 3]) is False
+

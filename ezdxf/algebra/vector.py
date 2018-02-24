@@ -66,6 +66,7 @@ class Vector(object):
         1 arg: decompose(arg), arg is tuple or list, tuple has to be an (x, y[, z]) tuple, decompose((x, y)) -> (x, y, 0.)
 
         2 args: decompose(x, y), returns (x, y, 0.) tuple
+                decompose(v1, v2), returns v2 - v1 as (x, y, z) tuple, where v1, v2 are Vector() objects
 
         3 args: decompose(x, y, z) -> (x, y, z)
 
@@ -357,6 +358,7 @@ class Vector(object):
 X_AXIS = Vector(1, 0, 0)
 Y_AXIS = Vector(0, 1, 0)
 Z_AXIS = Vector(0, 0, 1)
+NULLVEC = Vector(0, 0, 0)
 
 
 def distance(point1, point2):

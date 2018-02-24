@@ -1,8 +1,8 @@
-# Purpose: 2d spline
+# Purpose: 2d/3d spline defined by fit points
 # Created: 26.03.2010
 # License: MIT License
 # Source: http://www-lehre.informatik.uni-osnabrueck.de/~cg/2000/skript/7_2_Splines.html
-from ezdxf.algebra.vector import distance
+from ezdxf.algebra.vector import distance, Vector
 
 
 class CubicSpline(object):
@@ -14,10 +14,12 @@ class CubicSpline(object):
 
     """
     def __init__(self, points):
-        self.fit_points = points
         self.spatial = any(len(point) > 2 for point in points)  # 2d or 3d
-        self.count = len(points)
-        self.t = self._get_t_array(points)
+        self.fit_points = [Vector(p) for p in points]  # Vector() has always 3 axis
+
+    @property
+    def count(self):
+        return len(self.fit_points)
 
     def approximate(self, segments):
         """
@@ -26,35 +28,33 @@ class CubicSpline(object):
         Generates <segments>+1 2d/3d points
 
         """
-
         def axis(index):
-            return [point[index] for point in self.fit_points]
+            return [p[index] for p in self.fit_points]
 
         if self.spatial:
             return zip(
-                self._cubic_spline(axis(0), segments),  # x-coords
-                self._cubic_spline(axis(1), segments),  # y-coords
-                self._cubic_spline(axis(2), segments),  # z-coords
+                self._cubic_spline(axis(0), segments),  # x-axis
+                self._cubic_spline(axis(1), segments),  # y-axis
+                self._cubic_spline(axis(2), segments),  # z-axis
             )
         else:
             return zip(
-                self._cubic_spline(axis(0), segments),  # x-coords
-                self._cubic_spline(axis(1), segments),  # y-coords
+                self._cubic_spline(axis(0), segments),  # x-axis
+                self._cubic_spline(axis(1), segments),  # y-axis
             )
 
     def _create_array(self):
         return [0.] * self.count
 
-    @staticmethod
-    def _get_t_array(points):
+    def _create_t_array(self):
         t = [0.]
         s = 0.
-        for p1, p2 in zip(points, points[1:]):
+        for p1, p2 in zip(self.fit_points, self.fit_points[1:]):
             s += distance(p1, p2)
             t.append(s)
         return t
 
-    def _cubic_spline(self, f, spline_size):
+    def _cubic_spline(self, axis_vector, segments):
         def get_delta_t_D(f):
             delta_t = self._create_array()
             D = self._create_array()
@@ -102,21 +102,22 @@ class CubicSpline(object):
             return b, c
 
         n = self.count
-        t = self.t
+        t = self._create_t_array()
+
         nrange = list(range(n))
 
-        delta_t, D = get_delta_t_D(f)
+        delta_t, D = get_delta_t_D(axis_vector)
         k, m = get_k_m(D, delta_t)
         a = get_a(k, m, delta_t)
         b, c = get_b_c(a, D, delta_t)
 
-        wt = 0.0
+        wt = 0.
         j = 0
-        dt = t[n-1] / float(spline_size - 1)
-        for _ in range(spline_size-1):
-            while (j < (n-1)) and (t[j+1] < wt):
+        dt = t[-1] / float(segments - 1)
+        for _ in range(segments - 1):
+            while (j <= n) and (t[j+1] < wt):
                 j += 1
             h = wt - t[j]
-            yield f[j] + h * (a[j] + h * (b[j] + h * c[j] / 3.) / 2.)
+            yield axis_vector[j] + h * (a[j] + h * (b[j] + h * c[j] / 3.) / 2.)
             wt += dt
-        yield f[n-1]
+        yield axis_vector[-1]

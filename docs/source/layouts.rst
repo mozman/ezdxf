@@ -206,6 +206,33 @@ Create new entities
    Add a :class:`Spline`, `fit_points` has to be a list (container or generator) of (x, y, z) tuples.
    (requires DXF version AC1015 or later)
 
+   AutoCAD creates a spline through fit points by a proprietary algorithm. `ezdxf` can not reproduce the control point
+   calculation.
+
+.. method:: Layout.add_open_uniform_spline(control_points, degree=3, dxfattribs=None)
+
+   Add an open uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z) tuples,
+   `degree` specifies degree of spline. (requires DXF version AC1015 or later)
+
+   Open uniform B-splines start and end at your first and last control points.
+
+.. method:: Layout.add_uniform_spline(control_points, degree=3, dxfattribs=None)
+
+   Add an uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z) tuples,
+   `degree` specifies degree of spline. (requires DXF version AC1015 or later)
+
+   Uniform B-splines do not start and end at your first and last control points.
+
+.. method:: Layout.add_rational_spline(control_points, weights, degree=3, dxfattribs=None)
+
+   Add a rational open uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z)
+   tuples, `weights` has to be a list of values, which defines the influence of the associated control point, therefor
+   count of control points has to be equal to the count of weights, `degree` specifies degree of spline. (requires DXF
+   version AC1015 or later)
+
+   Rational open uniform B-splines start and end at your first and last control points, and have additional control
+   possibilities by weighting each control point.
+
 .. method:: Layout.add_body(acis_data="", dxfattribs=None)
 
    Add a :class:`Body` entity, `acis_data` has to be a list (container or generator) of text lines **without** line

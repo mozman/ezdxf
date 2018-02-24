@@ -230,17 +230,30 @@ class GraphicsFactory(object):
         dxfattribs['unit_vector'] = unit_vector
         return self.build_and_add_entity('XLINE', dxfattribs)
 
-    def add_spline(self, fit_points=None, dxfattribs=None):
+    def add_spline(self, fit_points=None, degree=3, dxfattribs=None):
         # by default, fit points coincide with the spline
         # control vertices define a control frame
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('SPLINE requires DXF version AC1015 (R2000) or later, '
                                   'actual DXF version is {}.'.format(self.dxfversion))
         dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['degree'] = degree
         spline = self.build_and_add_entity('SPLINE', dxfattribs)
         if fit_points is not None:
             spline.set_fit_points(fit_points)
         return spline
+
+    def add_open_uniform_spline(self, control_points, degree=3, dxfattribs=None):
+        spline = self.add_spline(dxfattribs=dxfattribs)
+        spline.set_open_uniform(control_points, degree)
+
+    def add_uniform_spline(self, control_points, degree=3, dxfattribs=None):
+        spline = self.add_spline(dxfattribs=dxfattribs)
+        spline.set_uniform(control_points, degree)
+
+    def add_rational_spline(self, control_points, weights, degree=3, dxfattribs=None):
+        spline = self.add_spline(dxfattribs=dxfattribs)
+        spline.set_rational(control_points, weights, degree)
 
     def add_body(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':
