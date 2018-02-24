@@ -511,10 +511,10 @@ class RBSpline(BSpline):
     Calculate the points of a rational B-Spline curve, using an uniform open knot vector.
 
     """
-    def __init__(self, control_points, weights, order=3):
+    def __init__(self, control_points, weights, order=4, knots=None):
         if len(control_points) != len(weights):
-            raise ValueError("Item count of 'control_points and 'weights' is different.")
-        super(RBSpline, self).__init__(control_points, order)
+            raise ValueError("Item count of 'control_points' and 'weights' is different.")
+        super(RBSpline, self).__init__(control_points, order, knots=knots)
         self.weights = weights  # 0-based
 
     def basis(self, t):

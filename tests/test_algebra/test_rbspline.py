@@ -1,7 +1,7 @@
 # Created: 06.01.2012
 # Copyright (c) 2012 Manfred Moitzi
 # License: MIT License
-from ezdxf.algebra.spline import RBSpline, RBSplineU
+from ezdxf.algebra.bspline import RBSpline, RBSplineU
 from ezdxf.algebra.base import equals_almost
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -9,7 +9,7 @@ DEFWEIGHTS = [1, 10, 10, 10, 1]
 
 
 def test_rbspline():
-    curve = RBSpline(DEFPOINTS, DEFWEIGHTS)
+    curve = RBSpline(DEFPOINTS, DEFWEIGHTS, order=3)
     expected = RBSPLINE
     points = list(curve.approximate(40))
 
@@ -22,7 +22,7 @@ def test_rbspline():
 
 
 def test_rbsplineu():
-    curve = RBSplineU(DEFPOINTS, DEFWEIGHTS)
+    curve = RBSplineU(DEFPOINTS, DEFWEIGHTS, order=3)
     expected = RBSPLINEU
     points = list(curve.approximate(40))
 

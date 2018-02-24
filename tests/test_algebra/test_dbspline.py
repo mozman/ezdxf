@@ -2,7 +2,7 @@
 # Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.algebra.spline import BSpline, DBSpline
+from ezdxf.algebra.bspline import BSpline, DBSpline
 from ezdxf.algebra.base import equals_almost
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]

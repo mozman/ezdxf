@@ -2,24 +2,20 @@
 # Created: 26.03.2010
 # License: MIT License
 # Source: http://www-lehre.informatik.uni-osnabrueck.de/~cg/2000/skript/7_2_Splines.html
-__author__ = "mozman <mozman@gmx.at>"
-
-import math
-from array import array
-from itertools import repeat
-
-
-def _coords(points, index=0):
-    return array('f', (point[index] for point in points))
+from ezdxf.algebra.vector import distance
 
 
 class CubicSpline(object):
     """
-    Cubic 2d spline.
+    2d/3d cubic spline defined by fit points.
+
+    2d in -> 2d out
+    3d in -> 3d out
 
     """
     def __init__(self, points):
-        self.breakpoints = points
+        self.fit_points = points
+        self.spatial = any(len(point) > 2 for point in points)  # 2d or 3d
         self.count = len(points)
         self.t = self._get_t_array(points)
 
@@ -27,21 +23,35 @@ class CubicSpline(object):
         """
         Approximate spline curve with  <segments> line-segments.
 
-        Generates <segments>+1 2D points (float, float).
+        Generates <segments>+1 2d/3d points
+
         """
-        return zip(self._cubic_spline(_coords(self.breakpoints, 0), segments),  # x-coords
-                   self._cubic_spline(_coords(self.breakpoints, 1), segments))  # y-coords
+
+        def axis(index):
+            return [point[index] for point in self.fit_points]
+
+        if self.spatial:
+            return zip(
+                self._cubic_spline(axis(0), segments),  # x-coords
+                self._cubic_spline(axis(1), segments),  # y-coords
+                self._cubic_spline(axis(2), segments),  # z-coords
+            )
+        else:
+            return zip(
+                self._cubic_spline(axis(0), segments),  # x-coords
+                self._cubic_spline(axis(1), segments),  # y-coords
+            )
 
     def _create_array(self):
-        return array('f', repeat(0.0, self.count))
+        return [0.] * self.count
 
     @staticmethod
     def _get_t_array(points):
-        t = array('f')
-        t.append(0.0)
-        for p1, p2 in zip(points[:-1], points[1:]):
-            distance = math.hypot(p1[0] - p2[0], p1[1] - p2[1])
-            t.append(t[-1] + distance)
+        t = [0.]
+        s = 0.
+        for p1, p2 in zip(points, points[1:]):
+            s += distance(p1, p2)
+            t.append(s)
         return t
 
     def _cubic_spline(self, f, spline_size):
@@ -93,7 +103,7 @@ class CubicSpline(object):
 
         n = self.count
         t = self.t
-        nrange = list(range(n)) # list() is a Python 3 adaption
+        nrange = list(range(n))
 
         delta_t, D = get_delta_t_D(f)
         k, m = get_k_m(D, delta_t)
@@ -103,7 +113,7 @@ class CubicSpline(object):
         wt = 0.0
         j = 0
         dt = t[n-1] / float(spline_size - 1)
-        for i in range(spline_size-1):
+        for _ in range(spline_size-1):
             while (j < (n-1)) and (t[j+1] < wt):
                 j += 1
             h = wt - t[j]

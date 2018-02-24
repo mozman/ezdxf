@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from ezdxf.algebra.spline import knot_open_uniform, knot_uniform, knot_closed_old, knot_closed, required_knot_values
+from ezdxf.algebra.bspline import knot_open_uniform, knot_uniform, knot_closed_old, knot_closed, required_knot_values
 
 open_uniform_order2 = [0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 4.0]
 open_uniform_order3 = [ 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0]
