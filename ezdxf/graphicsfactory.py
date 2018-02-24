@@ -246,14 +246,17 @@ class GraphicsFactory(object):
     def add_open_uniform_spline(self, control_points, degree=3, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_uniform(control_points, degree)
+        return spline
 
     def add_uniform_spline(self, control_points, degree=3, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_uniform(control_points, degree)
+        return spline
 
     def add_rational_spline(self, control_points, weights, degree=3, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_rational(control_points, weights, degree)
+        return spline
 
     def add_body(self, acis_data=None, dxfattribs=None):
         if self.dxfversion < 'AC1015':

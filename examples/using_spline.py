@@ -18,7 +18,7 @@ def clone_spline():
 
 
 def fit_spline():
-    dwg = ezdxf.new('AC1015')
+    dwg = ezdxf.new('R2000')
     fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
     msp = dwg.modelspace()
     spline = msp.add_spline(fit_points)
@@ -28,7 +28,7 @@ def fit_spline():
 
 
 def fit_spline_with_control_points():
-    dwg = ezdxf.new('AC1015')
+    dwg = ezdxf.new('R2000')
     fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
     control_points = [(0, 0, 0), (1250, 1560, 0), (3130, 610, 0), (2250, 1250, 0)]
     msp = dwg.modelspace()
@@ -51,8 +51,36 @@ def add_points_to_spline():
     dwg.saveas("Spline_R2000_with_added_points.dxf")
 
 
+def open_uniform_spline():
+    dwg = ezdxf.new('R2000')
+    control_points = [(0, 0, 0), (1250, 1560, 0), (3130, 610, 0), (2250, 1250, 0)]
+    msp = dwg.modelspace()
+    msp.add_open_uniform_spline(control_points, degree=3)
+    dwg.saveas("Spline_R2000_open_uniform_spline.dxf")
+
+
+def uniform_spline():
+    dwg = ezdxf.new('R2000')
+    control_points = [(0, 0, 0), (1250, 1560, 0), (3130, 610, 0), (2250, 1250, 0)]
+    msp = dwg.modelspace()
+    msp.add_uniform_spline(control_points, degree=3)
+    dwg.saveas("Spline_R2000_uniform_spline.dxf")
+
+
+def rational_spline():
+    dwg = ezdxf.new('R2000')
+    control_points = [(0, 0, 0), (1250, 1560, 0), (3130, 610, 0), (2250, 1250, 0)]
+    weights = [1, 10, 1, 1]
+    msp = dwg.modelspace()
+    msp.add_rational_spline(control_points, weights,degree=3)
+    dwg.saveas("Spline_R2000_rational_spline.dxf")
+
+
 if __name__ == '__main__':
     clone_spline()
     fit_spline()
     fit_spline_with_control_points()
     add_points_to_spline()
+    open_uniform_spline()
+    uniform_spline()
+    rational_spline()

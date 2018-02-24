@@ -27,13 +27,15 @@ draw(spline_points)
 Spline(spline_points, color=3).render_as_fit_points(msp)  # curve with definition points as fit points
 spline = msp.add_spline(fit_points=spline_points, dxfattribs={'color': 4})
 msp.add_text("Spline.render_as_fit_points() differs from AutoCAD fit point rendering", dxfattribs={'height': .1}).set_pos(spline_points[0])
+spline.closed = True
 
 # open uniform b-spline
 spline_points = next_frame.transform_vectors(spline_points)
 draw(spline_points)
 msp.add_text("Spline.render_bspline() 'open uniform' matches AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 Spline(spline_points, color=3).render_bspline(msp, degree=3)  # B-spline defined by control points, open uniform knots
-msp.add_open_uniform_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
+spline = msp.add_open_uniform_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
+spline.closed = True
 
 rbspline_points = right_frame.transform_vectors(spline_points)
 
@@ -42,7 +44,8 @@ spline_points = next_frame.transform_vectors(spline_points)
 draw(spline_points)
 msp.add_text("Spline.render_bspline(knots='uniform') 'uniform' matches AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 Spline(spline_points, color=3).render_bspline(msp, knots='uniform', degree=3)  # B-spline defined by control points, uniform knots
-msp.add_uniform_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
+spline = msp.add_uniform_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
+spline.closed = True
 
 # rational open uniform b-spline
 spline_points = rbspline_points
@@ -50,8 +53,8 @@ weights = [1, 50, 50, 1]
 draw(spline_points)
 msp.add_text("Spline.render_rbspline() 'rational open uniform' matches AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 Spline(spline_points, color=3).render_rbspline(msp, weights=weights,degree=3)  # Rational B-spline defined by control points, open uniform knots
-msp.add_rational_spline(control_points=spline_points, weights=weights, degree=3, dxfattribs={'color': 4})
-
+spline = msp.add_rational_spline(control_points=spline_points, weights=weights, degree=3, dxfattribs={'color': 4})
+spline.closed = True
 
 dwg.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)
