@@ -195,7 +195,7 @@ class Spline(_BaseCurve):
             'linetype': self.linetype,
         }
 
-    def render_as_fit_points(self, layout):
+    def render_as_fit_points(self, layout, method='distance'):
         """
         Render a cubic Spline as 2d/3d polyline, where the definition points are fit points.
 
@@ -204,9 +204,10 @@ class Spline(_BaseCurve):
 
         Args:
             layout: ezdxf layout
+            method: 'distance' or 'uniform'
 
         """
-        spline = CubicSpline(self.points)
+        spline = CubicSpline(self.points, method=method)
         if spline.spatial:
             layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
         else:

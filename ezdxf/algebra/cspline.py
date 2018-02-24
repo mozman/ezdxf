@@ -5,6 +5,19 @@
 from ezdxf.algebra.vector import distance, Vector
 
 
+def distance_t_array(points):
+    t = [0.]
+    s = 0.
+    for p1, p2 in zip(points, points[1:]):
+        s += distance(p1, p2)
+        t.append(s)
+    return t
+
+
+def uniform_t_array(points):
+    return list(range(len(points)))
+
+
 class CubicSpline(object):
     """
     2d/3d cubic spline defined by fit points.
@@ -13,9 +26,15 @@ class CubicSpline(object):
     3d in -> 3d out
 
     """
-    def __init__(self, points):
+    def __init__(self, points, method='distance'):
         self.spatial = any(len(point) > 2 for point in points)  # 2d or 3d
         self.fit_points = [Vector(p) for p in points]  # Vector() has always 3 axis
+        if method == 'distance':
+            self.t_array = distance_t_array(self.fit_points)
+        elif method == 'uniform':
+            self.t_array = uniform_t_array(self.fit_points)
+        else:
+            self.t_array = list(method)
 
     @property
     def count(self):
@@ -45,14 +64,6 @@ class CubicSpline(object):
 
     def _create_array(self):
         return [0.] * self.count
-
-    def _create_t_array(self):
-        t = [0.]
-        s = 0.
-        for p1, p2 in zip(self.fit_points, self.fit_points[1:]):
-            s += distance(p1, p2)
-            t.append(s)
-        return t
 
     def _cubic_spline(self, axis_vector, segments):
         def get_delta_t_D(f):
@@ -102,7 +113,7 @@ class CubicSpline(object):
             return b, c
 
         n = self.count
-        t = self._create_t_array()
+        t = self.t_array
 
         nrange = list(range(n))
 
