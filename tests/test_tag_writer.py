@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 

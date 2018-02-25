@@ -1,16 +1,10 @@
-# encoding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test tagreader
 # Created: 10.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
 import unittest
 from io import StringIO
-
 from ezdxf.tools.c23 import ustr
-from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.types import tag_type, point_tuple
