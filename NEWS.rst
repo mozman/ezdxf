@@ -4,6 +4,7 @@ News
 
 Version 0.8.7 - dev
 
+   * Release notes: https://ezdxf.mozman.at/release-v0-8-7.html
    * NEW: copy any DXF entity by entity.copy() without associated layout, add copy to any layout you want, by
      layout.add_entity().
    * NEW: copy entity to another layout by entity.copy_to_layout(layout)
@@ -13,6 +14,7 @@ Version 0.8.7 - dev
 
 Version 0.8.6 - 2018-02-17
 
+   * Release notes: https://ezdxf.mozman.at/release-v0-8-6.html
    * NEW: ezdxf project website: https://ezdxf.mozman.at/
    * CHANGE: create all missing tables of the TABLES sections for DXF R12
    * BUGFIX: entities on new layouts will be saved
@@ -26,6 +28,7 @@ Version 0.8.6 - 2018-02-17
 
 Version 0.8.5 - 2018-01-28
 
+   * Release notes: https://ezdxf.mozman.at/release-v0-8-5.html
    * CHANGE: block names are case insensitive 'TEST' == 'Test' (like AutoCAD)
    * CHANGE: table entry (layer, linetype, style, dimstyle, ...) names are case insensitive 'TEST' == 'Test' (like AutoCAD)
    * CHANGE: raises DXFInvalidLayerName() for invalid characters in layer names: <>/\":;?*|=`
@@ -39,6 +42,7 @@ Version 0.8.5 - 2018-01-28
 
 Version 0.8.4 - 2018-01-14
 
+  * Release notes: https://ezdxf.mozman.at/release-v0-8-4.html
   * NEW: Support for complex line types with text or shapes
   * NEW: DXF file structure validator at SECTION level, tags outside of sections will be removed
   * NEW: Basic read support for DIMENSION

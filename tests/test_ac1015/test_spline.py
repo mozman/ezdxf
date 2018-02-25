@@ -3,6 +3,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 import pytest
+import ezdxf
 from ezdxf.modern.spline import Spline, _SPLINE_TPL
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
@@ -10,6 +11,16 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 @pytest.fixture
 def spline():
     return Spline(ExtendedTags.from_text(_SPLINE_TPL))
+
+
+@pytest.fixture
+def points():
+    return [(1., 1., 0.), (2.5, 3., 0.), (4.5, 2., 0), (6.5, 4., 0)]
+
+
+@pytest.fixture
+def weights():
+    return [1, 2, 3, 4]
 
 
 def test_default_settings(spline):
@@ -72,17 +83,119 @@ def test_weights_ctx_manager(spline):
     assert [1, 2, 3, 4, 5, 6, 7, 8, 9] == spline.get_weights()
 
 
-def test_control_points(spline):
-    spline = spline
-    points = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
+def test_control_points(spline, points):
     spline.set_control_points(points)
-    assert 3 == spline.dxf.n_control_points
+    assert spline.dxf.n_control_points == 4
     assert points == spline.get_control_points()
 
 
-def test_fit_points(spline):
-    spline = spline
-    points = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
+def test_fit_points(spline, points):
     spline.set_fit_points(points)
-    assert 3 == spline.dxf.n_fit_points
+    assert spline.dxf.n_fit_points == 4
     assert points == spline.get_fit_points()
+
+
+def test_set_open_uniform(spline, points):
+    spline.set_open_uniform(points, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.dxf.n_control_points == len(points)
+    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.closed is False
+
+
+def test_set_uniform(spline, points):
+    spline.set_uniform(points, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.dxf.n_control_points == len(points)
+    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.closed is False
+
+
+def test_set_periodic(spline, points):
+    spline.set_periodic(points, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.dxf.n_control_points == len(points)
+    assert spline.dxf.n_knots == len(points) + 1  # according the Autodesk developer documentation
+    assert spline.closed is True
+
+
+def test_set_open_rational(spline, points, weights):
+    spline.set_open_rational(points, weights, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.get_weights() == weights
+    assert spline.dxf.n_control_points == len(points)
+    assert len(spline.get_weights()) == len(points)
+    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.closed is False
+
+
+def test_set_uniform_rational(spline, points, weights):
+    spline.set_uniform_rational(points, weights, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.get_weights() == weights
+    assert spline.dxf.n_control_points == len(points)
+    assert len(spline.get_weights()) == len(points)
+    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.closed is False
+
+
+def test_set_periodic_rational(spline, points, weights):
+    spline.set_periodic_rational(points, weights, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.get_weights() == weights
+    assert spline.dxf.n_control_points == len(points)
+    assert len(spline.get_weights()) == len(points)
+    assert spline.dxf.n_knots == len(points) + 1  # according the Autodesk developer documentation
+    assert spline.closed is True
+
+
+@pytest.fixture(scope='module')
+def msp():
+    dwg = ezdxf.new('R2000')
+    return dwg.modelspace()
+
+
+def test_open_spline(msp, points):
+    spline = msp.add_open_spline(points, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.dxf.n_control_points == len(points)
+    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.closed is False
+
+
+def test_closed_spline(msp, points):
+    spline = msp.add_closed_spline(points, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.dxf.n_control_points == len(points)
+    assert spline.dxf.n_knots == len(points) + 1  # according the Autodesk developer documentation
+    assert spline.closed is True
+
+
+def test_open_rational_spline(msp, points, weights):
+    spline = msp.add_rational_spline(points, weights, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.get_weights() == weights
+    assert spline.dxf.n_control_points == len(points)
+    assert len(spline.get_weights()) == len(points)
+    assert spline.dxf.n_knots == len(points) + spline.dxf.degree + 1  # n + p + 2
+    assert spline.closed is False
+
+
+def test_closed_rational_spline(msp, points, weights):
+    spline = msp.add_closed_rational_spline(points, weights, degree=3)
+    assert spline.dxf.degree == 3
+    assert spline.get_control_points() == points
+    assert spline.get_weights() == weights
+    assert spline.dxf.n_control_points == len(points)
+    assert len(spline.get_weights()) == len(points)
+    assert spline.dxf.n_knots == len(points) + 1  # according the Autodesk developer documentation
+    assert spline.closed is True

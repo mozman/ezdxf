@@ -221,7 +221,7 @@ Create new entities
    Add a closed uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z) tuples,
    `degree` specifies degree of spline. (requires DXF version AC1015 or later)
 
-   Closed uniform B-splines is a closed curve start and end at your first control points.
+   Closed uniform B-splines is a closed curve start and end at the first control points.
 
 .. method:: Layout.add_rational_spline(control_points, weights, degree=3, dxfattribs=None)
 
@@ -240,7 +240,7 @@ Create new entities
    count of control points has to be equal to the count of weights, `degree` specifies degree of spline. (requires DXF
    version AC1015 or later)
 
-   Closed rational uniform B-splines start and end at your first and last control points, and have additional control
+   Closed rational uniform B-splines start and end at the first control point, and have additional control
    possibilities by weighting each control point.
 
 
@@ -283,7 +283,6 @@ Create new entities
    Add an existing DXF entity to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity from
    the previous owner layout.
 
-.. warning:: Moving DXF entities between layouts is not well tested and may break the DXF structure!
 
 Delete entities
 ---------------
