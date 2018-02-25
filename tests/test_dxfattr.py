@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman --<mozman@gmx.at>
 # Purpose: test dxfattr
-# Created: 2011-04-28
+# Copyright (c) 2011-2018 Manfred Moitzi
+# License: MIT License
 from __future__ import unicode_literals
-
-import unittest
+import pytest
 
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -61,43 +58,41 @@ class AttributeChecker(DXFEntity):
         }))
 
 
-class TestDXFAttributes(unittest.TestCase):
-    def setUp(self):
-        self.dxfattribs = AttributeChecker.DXFATTRIBS
+class TestDXFAttributes:
+    @pytest.fixture
+    def dxfattribs(self):
+        return AttributeChecker.DXFATTRIBS
 
-    def test_init(self):
-        count = len(list(self.dxfattribs.subclasses()))
-        self.assertEqual(3, count)
-
-
-class TestAttributeAccess(unittest.TestCase):
-    def setUp(self):
-        self.entity = AttributeChecker(ExtendedTags.from_text(XTEMPLATE))
-
-    def test_get_from_none_subclass(self):
-        self.assertEqual('0', self.entity.dxf.handle)
-
-    def test_set_to_none_subclass(self):
-        self.entity.dxf.handle = 'ABCD'
-        self.assertEqual('ABCD', self.entity.dxf.handle)
-
-    def test_get_from_AcDbEntity_subclass(self):
-        self.assertEqual('0', self.entity.dxf.layer)
-
-    def test_set_to_AcDbEntity_subclass(self):
-        self.entity.dxf.layer = 'LAYER'
-        self.assertEqual('LAYER', self.entity.dxf.layer)
-
-    def test_set_new_to_AcDbEntity_subclass(self):
-        self.entity.dxf.color = 7
-        self.assertEqual(7, self.entity.dxf.color)
-
-    def test_get_from_AcDbLine_subclass(self):
-        self.assertEqual((0, 0, 0), self.entity.dxf.start)
-
-    def test_get_default_values(self):
-        self.assertEqual(256, self.entity.get_dxf_default_value('color'))
+    def test_init(self, dxfattribs):
+        count = len(list(dxfattribs.subclasses()))
+        assert 3 == count
 
 
-if __name__ == '__main__':
-    unittest.main()
+class TestAttributeAccess:
+    @pytest.fixture
+    def entity(self):
+        return AttributeChecker(ExtendedTags.from_text(XTEMPLATE))
+
+    def test_get_from_none_subclass(self, entity):
+        assert '0' == entity.dxf.handle
+
+    def test_set_to_none_subclass(self, entity):
+        entity.dxf.handle = 'ABCD'
+        assert 'ABCD' == entity.dxf.handle
+
+    def test_get_from_AcDbEntity_subclass(self, entity):
+        assert '0' == entity.dxf.layer
+
+    def test_set_to_AcDbEntity_subclass(self, entity):
+        entity.dxf.layer = 'LAYER'
+        assert 'LAYER' == entity.dxf.layer
+
+    def test_set_new_to_AcDbEntity_subclass(self, entity):
+        entity.dxf.color = 7
+        assert 7 == entity.dxf.color
+
+    def test_get_from_AcDbLine_subclass(self, entity):
+        assert (0, 0, 0) == entity.dxf.start
+
+    def test_get_default_values(self, entity):
+        assert 256 == entity.get_dxf_default_value('color')

@@ -2,19 +2,17 @@
 # Created: 24.05.2015
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
 from contextlib import contextmanager
 import math
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+from ..algebra.vector import Vector
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
-from ..tools import safe_3D_point
 from ..lldxf.const import DXFValueError
 
 _MTEXT_TPL = """ 0
@@ -117,7 +115,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         return self
 
     def set_location(self, insert, rotation=None, attachment_point=None):
-        self.dxf.insert = safe_3D_point(insert)
+        self.dxf.insert = Vector(insert)
         if rotation is not None:
             self.set_rotation(rotation)
         if attachment_point is not None:
