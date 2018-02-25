@@ -216,13 +216,6 @@ Create new entities
 
    Open uniform B-splines start and end at your first and last control points.
 
-.. method:: Layout.add_uniform_spline(control_points, degree=3, dxfattribs=None)
-
-   Add an uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z) tuples,
-   `degree` specifies degree of spline. (requires DXF version AC1015 or later)
-
-   Uniform B-splines do not start and end at your first and last control points.
-
 .. method:: Layout.add_closed_spline(control_points, degree=3, dxfattribs=None)
 
    Add a closed uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z) tuples,
