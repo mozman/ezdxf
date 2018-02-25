@@ -248,22 +248,19 @@ class GraphicsFactory(object):
         spline.set_open_uniform(control_points, degree)
         return spline
 
-    def add_uniform_spline(self, control_points, degree=3, dxfattribs=None):
-        spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_uniform(control_points, degree)
-        return spline
-
     def add_closed_spline(self, control_points, degree=3, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
-        points = control_points[:]
-        points.extend(points[:degree])
-        spline.set_uniform(points, degree)
-        spline.closed = True
+        spline.set_periodic(control_points, degree)
         return spline
 
     def add_rational_spline(self, control_points, weights, degree=3, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(control_points, weights, degree)
+        return spline
+
+    def add_closed_rational_spline(self, control_points, weights, degree=3, dxfattribs=None):
+        spline = self.add_spline(dxfattribs=dxfattribs)
+        spline.set_periodic_rational(control_points, weights, degree)
         return spline
 
     def add_body(self, acis_data=None, dxfattribs=None):

@@ -11,7 +11,6 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf import const
 from ..lldxf.const import DXFValueError
 from ..algebra.bspline import knot_uniform, knot_open_uniform
 
@@ -59,8 +58,8 @@ class Spline(ModernGraphicEntity):
     CLOSED = 1  # closed b-spline
     PERIODIC = 2  # uniform b-spline
     RATIONAL = 4  # rational b-spline
-    PLANAR = 8  # all spline points in a plane
-    LINEAR = 16  # ??? but always with PLANAR set
+    PLANAR = 8  # all spline points in a plane, don't read or set this bit, just ignore like AutoCAD
+    LINEAR = 16  # always set with PLANAR, don't read or set this bit, just ignore like AutoCAD
 
     @property
     def AcDbSpline(self):
@@ -122,30 +121,85 @@ class Spline(ModernGraphicEntity):
         self.dxf.n_fit_points = count
 
     def set_open_uniform(self, control_points, degree=3):
+        """
+        Open B-spline with uniform knot vector, start and end at your first and last control points.
+
+        """
+        self.dxf.flags = 0  # clear all flags
+        self.dxf.degree = degree
         self.set_control_points(control_points)
         self.set_knot_values(knot_open_uniform(len(control_points), degree+1))
 
     def set_uniform(self, control_points, degree=3):
-        self.dxf.flags = self.dxf.flags | self.PERIODIC  # periodic is uniform
+        """
+        B-spline with uniform knot vector, does NOT start and end at your first and last control points.
+
+        """
+        self.dxf.flags = 0  # clear all flags
+        self.dxf.degree = degree
         self.set_control_points(control_points)
         self.set_knot_values(knot_uniform(len(control_points), degree+1))
 
+    def set_periodic(self, control_points, degree=3):
+        """
+        Closed B-spline with uniform knot vector, start and end at your first control point.
+
+        """
+        self.dxf.flags = self.PERIODIC | self.CLOSED
+        self.dxf.degree = degree
+        self.set_control_points(control_points)
+        # AutoDesk Developer Docs:
+        # If the spline is periodic, the length of knot vector will be greater than length of the control array by 1.
+        self.set_knot_values(list(range(len(control_points)+1)))
+
     def set_open_rational(self, control_points, weights, degree=3):
-        self.dxf.flags = self.dxf.flags | self.RATIONAL
+        """
+        Open rational B-spline with uniform knot vector, start and end at your first and last control points, and has
+        additional control possibilities by weighting each control point.
+
+        """
         self.set_open_uniform(control_points, degree=degree)
+        self.dxf.flags = self.dxf.flags | self.RATIONAL
         if len(weights) != len(control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)
 
     def set_uniform_rational(self, control_points, weights, degree=3):
-        self.dxf.flags = self.dxf.flags | self.RATIONAL | self.PERIODIC
+        """
+        Rational B-spline with uniform knot vector, deos NOT start and end at your first and last control points, and
+        has additional control possibilities by weighting each control point.
+
+        """
         self.set_uniform(control_points, degree=degree)
+        self.dxf.flags = self.dxf.flags | self.RATIONAL
+        if len(weights) != len(control_points):
+            raise DXFValueError('Control point count must be equal to weights count.')
+        self.set_weights(weights)
+
+    def set_periodic_rational(self, control_points, weights, degree=3):
+        """
+        Closed rational B-spline with uniform knot vector, start and end at your first control point, and has
+        additional control possibilities by weighting each control point.
+
+        """
+        self.set_periodic(control_points, degree=degree)
+        self.dxf.flags = self.dxf.flags | self.RATIONAL
         if len(weights) != len(control_points):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)
 
     @contextmanager
     def edit_data(self):
+        """
+        Edit spline data by context manager, usage::
+
+        with spline.edit_data() as data:
+            # set uniform knot vector
+            data.knots = list(range(spline.dxf.n_control_points+spline.dxf.degree+1))
+
+        Yields: SplineData()
+
+        """
         data = SplineData(self)
         yield data
         self.set_fit_points(data.fit_points)
