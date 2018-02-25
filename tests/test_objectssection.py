@@ -9,14 +9,15 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, normlines, load_section
+import ezdxf
+from ezdxf.tools.test import normlines, load_section
 from ezdxf.sections.objects import ObjectsSection
 from ezdxf.lldxf.tagwriter import TagWriter
 
 
 @pytest.fixture
 def section():
-    dwg = DrawingProxy('AC1015')
+    dwg = ezdxf.new('R2000')
     return ObjectsSection(load_section(TESTOBJECTS, 'OBJECTS', dwg.entitydb), dwg)
 
 
@@ -30,7 +31,7 @@ def test_write(section):
 
 def test_empty_section():
     ent = load_section(EMPTYSEC, 'OBJECTS')
-    dwg = DrawingProxy('AC1015')
+    dwg = ezdxf.new('R2000')
     section = ObjectsSection(ent, dwg)
     stream = StringIO()
     section.write(TagWriter(stream))

@@ -6,15 +6,16 @@ import pytest
 from io import StringIO
 
 import ezdxf
-from ezdxf.tools.test import DrawingProxy, Tags, compile_tags_without_handles, load_section
+from ezdxf.lldxf.tags import Tags
+from ezdxf.tools.test import compile_tags_without_handles, load_section
 from ezdxf.sections.tables import TablesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.drawing import Drawing
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def tables():
-    dwg = DrawingProxy('AC1009')
+    dwg = ezdxf.new('R12')
     tables = load_section(TEST_TABLES, 'TABLES', dwg.entitydb)
     return TablesSection(tables, dwg)
 

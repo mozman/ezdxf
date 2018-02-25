@@ -4,16 +4,16 @@
 from __future__ import unicode_literals
 import pytest
 
+import ezdxf
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ezdxf.tools.test import DrawingProxy
 from ezdxf.lldxf.loader import load_dxf_structure
 from ezdxf.sections import Sections
 from ezdxf.lldxf.const import DXFStructureError
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def sections():
-    dwg = DrawingProxy('AC1009')
+    dwg = ezdxf.new('R12')
     return Sections(load_dxf_structure(internal_tag_compiler(TEST_HEADER)), dwg)
 
 

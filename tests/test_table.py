@@ -5,14 +5,15 @@ from __future__ import unicode_literals
 import pytest
 from io import StringIO
 
-from ezdxf.tools.test import DrawingProxy, compile_tags_without_handles, load_section, internal_tag_compiler
+import ezdxf
+from ezdxf.tools.test import compile_tags_without_handles, load_section, internal_tag_compiler
 from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagWriter
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def table_ac1009():
-    dwg = DrawingProxy('AC1009')
+    dwg = ezdxf.new('R12')
     entities = load_section(AC1009TABLE, 'TABLES', dwg.entitydb)
     return Table(entities[1:-1], dwg)  # without SECTION tags and ENDTAB
 
@@ -41,9 +42,9 @@ def test_ac1009_entry_names_are_case_insensitive(table_ac1009):
     assert 'ACAD' == entry.dxf.name
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def table_ac1024():
-    dwg = DrawingProxy('AC1024')
+    dwg = ezdxf.new('R2010')
     entities = load_section(AC1024TABLE, 'TABLES', dwg.entitydb)
     return Table(entities[1:-1], dwg)  # without SECTION tags and ENDTAB
 

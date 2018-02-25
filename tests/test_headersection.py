@@ -1,12 +1,12 @@
 # Purpose: test header section
 # Created: 12.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.drawing import Drawing
-from ezdxf.tools.test import DrawingProxy, Tags
+from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.header import HeaderSection
 from ezdxf.lldxf.validator import header_validator
 
@@ -82,7 +82,6 @@ def test_invalid_header_var_name():
 def header():
     tags = Tags.from_text(TESTHEADER)
     tags.pop()  # remove 'ENDSEC'
-    dwg = DrawingProxy('AC1009')
     header = HeaderSection(tags)
     return header
 
@@ -159,7 +158,6 @@ def test_str_point(header):
 def header_custom():
     tags = Tags.from_text(TESTCUSTOMPROPERTIES)
     tags.pop()  # remove 'ENDSEC'
-    dwg = DrawingProxy('AC1009')
     header = HeaderSection(tags)
     return header
 

@@ -6,23 +6,21 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
-from ezdxf.tools.test import DrawingProxy
+import pytest
+from ezdxf.database import EntityDB
 from ezdxf.entityspace import EntitySpace
 from ezdxf.lldxf.tags import internal_tag_compiler, group_tags
 
 
-class TestEntitySpace(unittest.TestCase):
-    def setUp(self):
-        self.dwg = DrawingProxy('AC1009')
-        self.space = EntitySpace(self.dwg.entitydb)
+@pytest.fixture
+def space():
+    return EntitySpace(EntityDB())
 
-    def test_add(self):
-        for group in group_tags(internal_tag_compiler(TESTENTITIES)):
-            self.space.store_tags(group)
-        self.assertEqual(4, len(self.space))
+
+def test_add_to_entity_space(space):
+    for group in group_tags(internal_tag_compiler(TESTENTITIES)):
+        space.store_tags(group)
+    assert 4 == len(space)
 
 
 TESTENTITIES = """  0
@@ -90,6 +88,3 @@ BYBLOCK
  62
      0
 """
-
-if __name__ == '__main__':
-    unittest.main()

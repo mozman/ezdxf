@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import pytest
 import ezdxf
-from ezdxf.tools import test
+from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
 @pytest.fixture(scope='module')
@@ -83,7 +83,7 @@ def test_rstrip_points(layout):
 
 @pytest.fixture
 def lwpolyline(layout):
-    tags = test.ExtendedTags.from_text(LWPOLYLINE1)
+    tags = ExtendedTags.from_text(LWPOLYLINE1)
     return layout._dxffactory.wrap_entity(tags)
 
 

@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import unittest
 
 import ezdxf
-from ezdxf.tools.test import ExtendedTags
+from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
 

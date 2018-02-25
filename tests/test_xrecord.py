@@ -2,8 +2,7 @@
 # License: MIT-License
 from __future__ import unicode_literals
 import pytest
-
-from ezdxf.tools.test import ExtendedTags, DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.modern.dxfobjects import XRecord
 
 
