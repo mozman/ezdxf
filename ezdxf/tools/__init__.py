@@ -10,3 +10,11 @@ def float2transparency(value):
 
 def transparency2float(value):
     return 1. - float(int(value) & 0xFF) / 255.
+
+
+def set_flag_state(flags, flag, state=True):
+    if state:
+        flags = flags | flag
+    else:
+        flags = flags & ~flag
+    return flags

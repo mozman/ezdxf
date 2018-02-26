@@ -8,6 +8,7 @@ import ezdxf
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.dxfentity import DXFEntity, DXFTag
+from ezdxf.tools import set_flag_state
 from ezdxf import DXFStructureError, DXFAttributeError, DXFValueError
 
 DWG = ezdxf.new('R12')
@@ -25,6 +26,14 @@ class PointAccessor(DXFEntity):
 
     def __init__(self, tags):
         super(PointAccessor, self).__init__(tags, drawing=DWG)
+
+
+def test_set_flag_state():
+    assert set_flag_state(0, 1, True) == 1
+    assert set_flag_state(0b10, 1, True) == 0b11
+    assert set_flag_state(0b111, 0b010, False) == 0b101
+    assert set_flag_state(0b010, 0b111, True) == 0b111
+    assert set_flag_state(0b1111, 0b1001, False) == 0b0110
 
 
 class TestDXFEntity:
@@ -158,7 +167,9 @@ class TestDXFEntity:
         tags = ExtendedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         assert point.get_flag_state(1, name='flags') is True
-        assert point.get_flag_state(16, name='flags') is False
+        assert point.get_flag_state(2) is True
+        assert point.get_flag_state(4) is True
+        assert point.get_flag_state(16) is False
 
     def test_get_flag_state_non__existing_flags(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")

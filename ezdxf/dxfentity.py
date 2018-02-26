@@ -6,6 +6,7 @@ from .lldxf.types import cast_tag_value, DXFTag
 from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFAttributeError, DXFInvalidLayerName
 from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
+from .tools import set_flag_state
 
 
 ACAD_REACTORS = '{ACAD_REACTORS'
@@ -260,11 +261,7 @@ class DXFEntity(object):
 
     def set_flag_state(self, flag, state=True, name='flags'):
         flags = self.get_dxf_attrib(name, 0)
-        if state:
-            flags = flags | flag
-        else:
-            flags = flags & ~flag
-        self.set_dxf_attrib(name, flags)
+        self.set_dxf_attrib(name, set_flag_state(flags, flag, state=state))
 
     def get_flag_state(self, flag, name='flags'):
         return bool(self.get_dxf_attrib(name, 0) & flag)

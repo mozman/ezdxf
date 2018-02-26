@@ -497,12 +497,7 @@ class Layout(DXF12Layout):
         self.set_plot_flags(self.PREV_PLOT_INIT, state)
 
     def set_plot_flags(self, flag, state=True):
-        flags = self.dxf_layout.dxf.plot_layout_flags
-        if state:
-            flags = flags | flag
-        else:
-            flags = flags & ~flag
-        self.dxf_layout.dxf.plot_layout_flags = flags
+        self.dxf_layout.set_flag_state(flag, state=state, name='plot_layout_flags')
 
     def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
         if dxfattribs is None:
