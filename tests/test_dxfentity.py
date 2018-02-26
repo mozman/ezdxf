@@ -422,3 +422,62 @@ class TestReactors:
         assert 2 == len(entity.get_reactors())
 
 
+class TestGetLayoutR2000:
+    @pytest.fixture(scope='class')
+    def dwg(self):
+        return ezdxf.new('R2000')
+
+    def test_get_layout_model_space(self, dwg):
+        msp = dwg.modelspace()
+        circle = msp.add_circle(center=(0, 0), radius=1)
+        layout = circle.get_layout()
+        assert msp.name == layout.name
+
+    def test_get_layout_paper_space(self, dwg):
+        psp = dwg.layout()
+        circle = psp.add_circle(center=(0, 0), radius=1)
+        layout = circle.get_layout()
+        assert psp.name == layout.name
+
+    def test_get_layout_block(self, dwg):
+        block = dwg.blocks.new('TEST')
+        circle = block.add_circle(center=(0, 0), radius=1)
+        layout = circle.get_layout()
+        assert block.name == layout.name
+
+    def test_get_layout_without_layout(self, dwg):
+        msp = dwg.modelspace()
+        circle = msp.add_circle(center=(0, 0), radius=1)
+        msp.unlink_entity(circle)
+        assert circle.get_layout() is None
+
+
+class TestGetLayoutR12:
+    @pytest.fixture(scope='class')
+    def dwg(self):
+        return ezdxf.new('R12')
+
+    def test_get_layout_model_space(self, dwg):
+        msp = dwg.modelspace()
+        circle = msp.add_circle(center=(0, 0), radius=1)
+        layout = circle.get_layout()
+        assert layout._paperspace == 0
+
+    def test_get_layout_paper_space(self, dwg):
+        psp = dwg.layout()
+        circle = psp.add_circle(center=(0, 0), radius=1)
+        layout = circle.get_layout()
+        assert layout._paperspace == 1
+
+    def test_get_layout_block(self, dwg):
+        block = dwg.blocks.new('TEST')
+        circle = block.add_circle(center=(0, 0), radius=1)
+        layout = circle.get_layout()
+        assert block.name == layout.name
+
+    def test_get_layout_without_layout(self, dwg):
+        msp = dwg.modelspace()
+        circle = msp.add_circle(center=(0, 0), radius=1)
+        msp.unlink_entity(circle)
+        assert circle.get_layout() is None
+

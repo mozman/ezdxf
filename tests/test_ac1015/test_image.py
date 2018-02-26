@@ -67,9 +67,10 @@ def test_reset_boundary_path(image):
 
 def test_set_boundary_path(image):
     image.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
-    assert 3 == image.dxf.count_boundary_points
+    assert 4 == image.dxf.count_boundary_points
     assert 2 == image.dxf.clipping_boundary_type
-    assert [(0, 0), (640, 180), (320, 360)], image.get_boundary_path()
+    # auto close
+    assert [(0, 0), (640, 180), (320, 360), (0, 0)] == image.get_boundary_path()
     assert image.dxf.clipping == 1
     assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is True
 

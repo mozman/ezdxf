@@ -33,7 +33,12 @@ class DXF12Layouts(object):
 
     def get_layout_for_entity(self, entity):
         # paperspace attribute defaults to 0 if not present
-        return self._paperspace if entity.dxf.paperspace else self._modelspace
+        if entity in self._modelspace:
+            return self._modelspace
+        elif entity in self._paperspace:
+            return self._paperspace
+        else:
+            return None
 
     def active_layout(self):
         return self._paperspace
@@ -115,6 +120,8 @@ class BaseLayout(GraphicsFactory):
         """
         self._entity_space.delete_entity(entity)
         entity.dxf.paperspace = -1  # set invalid paper space
+        if entity.supports_dxf_attrib('owner'):  # R2000
+            entity.dxf.owner = '0'
 
     def delete_entity(self, entity):
         """
@@ -184,7 +191,7 @@ class DXF12Layout(BaseLayout):
         """
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
             entity = self.get_entity_by_handle(entity)
-        return entity.dxf.paperspace == self._paperspace
+        return entity.dxf.paperspace == self._paperspace and entity.dxf.handle in self._entity_space
 
     # end of public interface
 

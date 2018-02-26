@@ -169,3 +169,14 @@ class LegacyDXFFactory(object):
 
     def post_read_tags_fixer(self, tags):
         pass
+
+    def get_layout_for_entity(self, entity):
+        dwg = self.drawing
+        layout = dwg.layouts.get_layout_for_entity(entity)
+        if layout is not None:
+            return layout
+        handle = entity.dxf.handle
+        for block in dwg.blocks:  # search block definitions
+            if handle in block._entity_space:
+                return block
+        return None

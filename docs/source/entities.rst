@@ -57,8 +57,8 @@ Common Base Class
 
 .. method:: GraphicEntity.move_to_layout(layout, source=None)
 
-   Move entity from actual layout to *layout*. *Source* has to be specified if the entity resides in a block layout,
-   *source* is not required if the entity resides in the model space or in a paper space layout.
+   Move entity from actual layout to *layout*. For DXF R12 providing *source* is faster, if the entity resides in a
+   block layout, because ezdxf has to search in all block layouts, else *source* is not required.
 
 .. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
 
@@ -112,6 +112,10 @@ Common Base Class
 .. method:: GraphicEntity.get_flag_state(flag, name='flags')
 
    Returns True if any `flag` of DXF attribute is 1 (on), else False. Always check just one flag state at the time.
+
+.. method:: GraphicEntity.get_layout()
+
+   Returns the :class:`Layout` which contains this entity, `None` if entity is not assigned to any layout.
 
 .. _Common DXF attributes for DXF R12:
 

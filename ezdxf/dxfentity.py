@@ -151,14 +151,13 @@ class DXFEntity(object):
 
         Args:
             layout: any layout (model space, paper space, block)
-            source: source layout, only for block layouts required
+            source: provide source layout, faster for DXF R12 and entity is in a block layout
 
         """
         if source is None:
-            try:
-                source = self.drawing.layouts.get_layout_for_entity(self)
-            except DXFKeyError:  # R2000+
-                raise DXFValueError('Entity not in model space or paper space, specify block layout as source parameter.')
+            source = self.get_layout()
+            if source is None:
+                raise DXFValueError('Source layout for entity not found.')
         source.move_to_layout(self, layout)
 
     def dxftype(self):
@@ -369,6 +368,9 @@ class DXFEntity(object):
         reactors = set(self.get_reactors())
         reactors.discard(handle)
         self.set_reactors(reactors)
+
+    def get_layout(self):
+        return self.dxffactory.get_layout_for_entity(self)
 
     def audit(self, auditor):
         """

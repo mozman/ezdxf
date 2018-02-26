@@ -1,9 +1,8 @@
 # Purpose: dxf factory for R2000/AC1015
 # Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
 from ..legacy import LegacyDXFFactory
 from . import tableentries
@@ -25,6 +24,7 @@ from . import dxfobjects
 from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
 from ..tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
+from ..lldxf.const import DXFKeyError
 
 UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects
@@ -141,3 +141,16 @@ class ModernDXFFactory(LegacyDXFFactory):
             key = self.underlay_key_generator.next()
             if checkfunc(key):
                 return key
+
+    def get_layout_for_entity(self, entity):
+        if entity.dxf.owner not in self.entitydb:
+            return None
+
+        dwg = self.drawing
+        try:
+            layout = dwg.layouts.get_layout_for_entity(entity)
+        except DXFKeyError:
+            block_rec = dwg.dxffactory.wrap_handle(entity.dxf.owner)
+            block_name = block_rec.dxf.name
+            layout = dwg.blocks.get(block_name)
+        return layout
