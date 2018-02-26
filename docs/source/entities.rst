@@ -104,6 +104,15 @@ Common Base Class
 
    Set DXF attributes by a dict() like :code:`{'layer': 'test', 'color': 4}`.
 
+.. method:: GraphicEntity.set_flag_state(flag, state=True, name='flags')
+
+   Set binary coded `flag` of DXF attribute `name` to 1 (on) if `state` is True, set `flag` to 0 (off) if `state`
+   is False.
+
+.. method:: GraphicEntity.get_flag_state(flag, name='flags')
+
+   Returns True if any `flag` of DXF attribute is 1 (on), else False. Always check just one flag state at the time.
+
 .. _Common DXF attributes for DXF R12:
 
 Common DXF attributes for DXF R12

@@ -195,21 +195,21 @@ class Layout(DXF12Layout):
     space of the BlockLayout() object and the entity space of the Layout() object are the SAME object.
 
     """
-    class PlotLayoutFlags:
-        PLOT_VIEWPORT_BORDERS = 1
-        SHOW_PLOT_STYLES = 2
-        PLOT_CENTERED = 4
-        PLOT_HIDDEN = 8
-        USE_STANDARD_SCALE = 16
-        PLOT_PLOTSTYLES = 32
-        SCALE_LINEWEIGHTS = 64
-        PRINT_LINEWEIGHTS = 128
-        DRAW_VIEWPORTS_FIRST = 512
-        MODEL_TYPE = 1024
-        UPDATE_PAPER = 2048
-        ZOOM_TO_PAPER_ON_UPDATE = 4096
-        INITIALIZING = 8192
-        PREV_PLOT_INIT = 16384
+
+    PLOT_VIEWPORT_BORDERS = 1
+    SHOW_PLOT_STYLES = 2
+    PLOT_CENTERED = 4
+    PLOT_HIDDEN = 8
+    USE_STANDARD_SCALE = 16
+    PLOT_PLOTSTYLES = 32
+    SCALE_LINEWEIGHTS = 64
+    PRINT_LINEWEIGHTS = 128
+    DRAW_VIEWPORTS_FIRST = 512
+    MODEL_TYPE = 1024
+    UPDATE_PAPER = 2048
+    ZOOM_TO_PAPER_ON_UPDATE = 4096
+    INITIALIZING = 8192
+    PREV_PLOT_INIT = 16384
 
     def __init__(self, drawing, layout_handle):
         dxffactory = drawing.dxffactory
@@ -455,46 +455,46 @@ class Layout(DXF12Layout):
 
     # plot layout flags setter
     def plot_viewport_borders(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PLOT_VIEWPORT_BORDERS, state)
+        self.set_plot_flags(self.PLOT_VIEWPORT_BORDERS, state)
 
     def show_plot_styles(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.SHOW_PLOT_STYLES, state)
+        self.set_plot_flags(self.SHOW_PLOT_STYLES, state)
 
     def plot_centered(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PLOT_CENTERED, state)
+        self.set_plot_flags(self.PLOT_CENTERED, state)
 
     def plot_hidden(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PLOT_HIDDEN, state)
+        self.set_plot_flags(self.PLOT_HIDDEN, state)
 
     def use_standard_scale(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.USE_STANDARD_SCALE, state)
+        self.set_plot_flags(self.USE_STANDARD_SCALE, state)
 
     def use_plot_styles(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PLOT_PLOTSTYLES, state)
+        self.set_plot_flags(self.PLOT_PLOTSTYLES, state)
 
     def scale_lineweights(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.SCALE_LINEWEIGHTS, state)
+        self.set_plot_flags(self.SCALE_LINEWEIGHTS, state)
 
     def print_lineweights(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PRINT_LINEWEIGHTS, state)
+        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
 
     def draw_viewports_first(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PRINT_LINEWEIGHTS, state)
+        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
 
     def model_type(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.MODEL_TYPE, state)
+        self.set_plot_flags(self.MODEL_TYPE, state)
 
     def update_paper(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.UPDATE_PAPER, state)
+        self.set_plot_flags(self.UPDATE_PAPER, state)
 
     def zoom_to_paper_on_update(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.ZOOM_TO_PAPER_ON_UPDATE, state)
+        self.set_plot_flags(self.ZOOM_TO_PAPER_ON_UPDATE, state)
 
     def plot_flags_initializing(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.INITIALIZING, state)
+        self.set_plot_flags(self.INITIALIZING, state)
 
     def prev_plot_init(self, state=True):
-        self.set_plot_flags(self.PlotLayoutFlags.PREV_PLOT_INIT, state)
+        self.set_plot_flags(self.PREV_PLOT_INIT, state)
 
     def set_plot_flags(self, flag, state=True):
         flags = self.dxf_layout.dxf.plot_layout_flags

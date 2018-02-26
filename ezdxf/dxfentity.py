@@ -258,6 +258,17 @@ class DXFEntity(object):
         else:
             subclasstags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
 
+    def set_flag_state(self, flag, state=True, name='flags'):
+        flags = self.get_dxf_attrib(name, 0)
+        if state:
+            flags = flags | flag
+        else:
+            flags = flags & ~flag
+        self.set_dxf_attrib(name, flags)
+
+    def get_flag_state(self, flag, name='flags'):
+        return bool(self.get_dxf_attrib(name, 0) & flag)
+
     def del_dxf_attrib(self, key):
         dxfattr = self._get_dxfattr_definition(key)
         self._del_dxf_attrib(dxfattr)

@@ -154,6 +154,35 @@ class TestDXFEntity:
         point.dxf.flex = (7, 8)
         assert (7, 8) == point.dxf.flex
 
+    def test_get_flag_state(self):
+        tags = ExtendedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        assert point.get_flag_state(1, name='flags') is True
+        assert point.get_flag_state(16, name='flags') is False
+
+    def test_get_flag_state_non__existing_flags(self):
+        tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        # non-existing flags are always 0
+        assert point.get_flag_state(1, name='flags') is False
+        assert point.get_flag_state(16, name='flags') is False
+
+    def test_set_flag_state(self):
+        tags = ExtendedTags.from_text("70\n7\n10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        point.set_flag_state(1, state=False, name='flags')
+        assert point.dxf.flags == 6
+        point.set_flag_state(1, state=True, name='flags')
+        assert point.dxf.flags == 7
+
+    def test_set_flag_state_none_existing_flags(self):
+        tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        point.set_flag_state(1, state=True, name='flags')
+        assert point.dxf.flags == 1
+        with pytest.raises(DXFAttributeError):
+            point.set_flag_state(1, state=True, name='plot_flags')
+
 
 class TestPoint3D:
     def test_get_3d_point(self):
