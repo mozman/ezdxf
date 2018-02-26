@@ -11,6 +11,8 @@ Version 0.8.7 - dev
    * NEW: move entity from actual layout to another layout by entity.move_to_layout(layout)
    * NEW: support for splines by control points: add_open_spline(), add_closed_spline(), add_rational_spline(),
      add_closed_rational_spline()
+   * NEW: added get_flag_state() and set_flag_state() to DXFEntity() class for easy access to binary coded flags
+   * BUGFIX: closing user defined image boundary path automatically, else AutoCAD crashes
 
 Version 0.8.6 - 2018-02-17
 

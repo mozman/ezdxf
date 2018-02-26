@@ -60,8 +60,9 @@ def test_get_boundary_path(image):
 def test_reset_boundary_path(image):
     image.reset_boundary_path()
     assert 2 == image.dxf.count_boundary_points
-    assert 3 == image.dxf.flags
-    assert [(0, 0) == image.dxf.image_size], image.get_boundary_path()
+    assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is False
+    assert image.dxf.clipping == 0
+    assert [(0, 0), image.dxf.image_size] == image.get_boundary_path()
 
 
 def test_set_boundary_path(image):
@@ -69,6 +70,8 @@ def test_set_boundary_path(image):
     assert 3 == image.dxf.count_boundary_points
     assert 2 == image.dxf.clipping_boundary_type
     assert [(0, 0), (640, 180), (320, 360)], image.get_boundary_path()
+    assert image.dxf.clipping == 1
+    assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is True
 
 
 @pytest.fixture

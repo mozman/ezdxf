@@ -1246,16 +1246,17 @@ contrast                R13     Contrast value (0-100; default = 50)
 fade                    R13     Fade value (0-100; default = 0)
 clipping_boundary_type  R13     Clipping boundary type. 1 = Rectangular; 2 = Polygonal
 count_boundary_points   R13     Number of clip boundary vertices
+clip_mode               R2010   Clip mode: 0 = Outside; 1 = Inside
 ======================= ======= ===========
 
 
 =========================== ======= ===========
 Image.dxf.flags             Value   Description
 =========================== ======= ===========
-IMAGE_SHOW                  1       Show image
-IMAGE_SHOW_WHEN_NOT_ALIGNED 2       Show image when not aligned with screen
-IMAGE_USE_CLIPPING_BOUNDARY 4       Use clipping boundary
-IMAGE_TRANSPARENCY_IS_ON    8       Transparency is on
+Image.SHOW_IMAGE            1       Show image
+Image.SHOW_WHEN_NOT_ALIGNED 2       Show image when not aligned with screen
+Image.USE_CLIPPING_BOUNDARY 4       Use clipping boundary
+Image.USE_TRANSPARENCY      8       Transparency is on
 =========================== ======= ===========
 
 
@@ -1271,7 +1272,7 @@ IMAGE_TRANSPARENCY_IS_ON    8       Transparency is on
 .. method:: Image.set_boundary(vertices)
 
     Set boundary path to vertices. 2 points describe a rectangle (lower left and upper right corner), more than 2 points
-    is a polygon as clipping path. Sets clipping state to 1 and also sets the IMAGE_USE_CLIPPING_BOUNDARY flag.
+    is a polygon as clipping path. Sets clipping state to 1 and also sets the Image.USE_CLIPPING_BOUNDARY flag.
 
 .. method:: Image.get_image_def()
 

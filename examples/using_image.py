@@ -2,16 +2,27 @@
 # License: MIT License
 from __future__ import unicode_literals
 import ezdxf
+import os
 
+IMAGE_PATH = os.path.abspath('mycat.jpg')
 dwg = ezdxf.new('R2004')  # image requires the DXF 2000 or newer format
-my_image_def = dwg.add_image_def(filename='mycat.jpg', size_in_pixel=(640, 360))
+my_image_def = dwg.add_image_def(filename=IMAGE_PATH, size_in_pixel=(640, 360))
 # image definition is like a block definition
 
 msp = dwg.modelspace()
 # add first image, image is like a block reference (INSERT)
 msp.add_image(image_def=my_image_def, insert=(2, 1), size_in_units=(6.4, 3.6), rotation=0)
+
 # add first image
 msp.add_image(image_def=my_image_def, insert=(4, 5), size_in_units=(3.2, 1.8), rotation=30)
+
+# rectangular boundaries
+image = msp.add_image(image_def=my_image_def, insert=(10, 1), size_in_units=(6.4, 3.6), rotation=0)
+image.set_boundary_path([(50, 50), (600, 300)])
+
+# user defined boundary path
+image = msp.add_image(image_def=my_image_def, insert=(10, 5), size_in_units=(6.4, 3.6), rotation=0)
+image.set_boundary_path([(50, 50), (500, 70), (450, 300), (70, 280)])
 
 # get existing image definitions
 image_defs = dwg.objects.query('IMAGEDEF')  # get all image defs in drawing

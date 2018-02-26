@@ -77,10 +77,6 @@ image_subclass = DefSubclass('AcDbRasterImage', {
     'image_size': DXFAttr(13, xtype='Point2D'),  # Image size in pixels
     'image_def': DXFAttr(340),  # Hard reference to image def object
     'flags': DXFAttr(70, default=3),  # Image display properties:
-    # 1 = Show image
-    # 2 = Show image when not aligned with screen
-    # 4 = Use clipping boundary
-    # 8 = Transparency is on
     'clipping': DXFAttr(280, default=0),  # Clipping state: 0 = Off; 1 = On
     'brightness': DXFAttr(281, default=50),  # Brightness value (0-100; default = 50)
     'contrast': DXFAttr(282, default=50),  # Contrast value (0-100; default = 50)
@@ -88,6 +84,7 @@ image_subclass = DefSubclass('AcDbRasterImage', {
     'image_def_reactor': DXFAttr(360),  # Hard reference to image def reactor object, not required by AutoCAD
     'clipping_boundary_type': DXFAttr(71, default=1),  # Clipping boundary type. 1 = Rectangular; 2 = Polygonal
     'count_boundary_points': DXFAttr(91),  # Number of clip boundary vertices that follow
+    'clip_mode': DXFAttr(290, dxfversion='AC1024'),  # 0 = outside, 1 = inside mode
     # boundary path coordinates are pixel coordinates NOT drawing units
 })
 
@@ -95,14 +92,22 @@ image_subclass = DefSubclass('AcDbRasterImage', {
 class Image(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_IMAGE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, image_subclass)
+    # flags for IMAGE
+    SHOW_IMAGE = 1
+    SHOW_IMAGE_WHEN_NOT_ALIGNED = 2
+    USE_CLIPPING_BOUNDARY = 4
+    USE_TRANSPARENCY = 8
 
     def post_new_hook(self):
         self.reset_boundary_path()
 
     def set_boundary_path(self, vertices):
         vertices = list(vertices)
+        if len(vertices) > 2 and vertices[-1] != vertices[0]:
+            vertices.append(vertices[0])  # close path, else AutoCAD crashes
         self._set_path_tags(vertices)
-        self.dxf.flags |= 4  # use clipping boundary
+        self.set_flag_state(self.USE_CLIPPING_BOUNDARY, state=True)
+        self.dxf.clipping = 1
         self.dxf.clipping_boundary_type = 1 if len(vertices) < 3 else 2
 
     def _set_path_tags(self, vertices):
@@ -114,8 +119,9 @@ class Image(ModernGraphicEntity):
 
     def reset_boundary_path(self):
         self._set_path_tags([(0., 0.), self.dxf.image_size])
-        self.dxf.flags &= (1 + 2 + 8)  # do not use boundary
+        self.set_flag_state(Image.USE_CLIPPING_BOUNDARY, state=False)
         self.dxf.clipping = 0
+        self.dxf.clipping_boundary_type = 1
 
     def get_boundary_path(self):
         image_subclass = self.tags.subclasses[2]

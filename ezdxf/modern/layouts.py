@@ -195,7 +195,7 @@ class Layout(DXF12Layout):
     space of the BlockLayout() object and the entity space of the Layout() object are the SAME object.
 
     """
-
+    # plot_layout_flags of LAYOUT entity
     PLOT_VIEWPORT_BORDERS = 1
     SHOW_PLOT_STYLES = 2
     PLOT_CENTERED = 4
