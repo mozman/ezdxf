@@ -27,7 +27,7 @@ msp.add_line((-7, 0), (+7, 0), dxfattribs=attribs)
 msp.add_line((0, -5), (0, +5), dxfattribs=attribs)
 
 for rotation in [0, 30, 45, 60, 90]:
-    render(Ellipse((20,0), 5., 2., rotation=rotation, segments=100))
+    render(Ellipse((20, 0), 5., 2., rotation=rotation, segments=100))
 
 for startangle in [0, 30, 45, 60, 90]:
     render(Ellipse((40, 0), 5., 2., startangle=startangle, endangle=startangle+90, rotation=startangle, segments=90))

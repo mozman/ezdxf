@@ -4,37 +4,18 @@
 # License: MIT License
 from __future__ import unicode_literals
 from math import sin, cos, radians, fmod
-from abc import abstractmethod
-
-from ezdxf.lldxf import const
 from ezdxf.algebra.vector import Vector
-from ezdxf.algebra.base import rotate_2d, equals_almost
+from ezdxf.algebra.base import is_close
 from ezdxf.algebra.cspline import CubicSpline
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.algebra.bspline import RBSpline, RBSplineU, RBSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
 from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
-from .mixins import SubscriptAttributes
 
 
-def vadd(vector1, vector2):
-    return vector1[0] + vector2[0], vector1[1] + vector2[1]
-
-
-class _BaseCurve(SubscriptAttributes):
-    @abstractmethod
-    def render(self, layout):
-        pass
-
-
-class Ellipse(_BaseCurve):
-    def __init__(self, center=(0., 0., 0.), rx=1.0, ry=1.0,
-                 startangle=0., endangle=360., rotation=0., segments=100,
-                 color=const.BYLAYER, layer='0', linetype='ByLayer'):
-        self.color = color
-        self.layer = layer
-        self.linetype = linetype
-        self.center = center
+class Ellipse(object):
+    def __init__(self, center=(0., 0., 0.), rx=1.0, ry=1.0, startangle=0., endangle=360., rotation=0., segments=100):
+        self.center = Vector(center)
         self.rx = float(rx)
         self.ry = float(ry)
         self.startangle = float(startangle)
@@ -42,14 +23,10 @@ class Ellipse(_BaseCurve):
         self.rotation = float(rotation)
         self.segments = int(segments)
 
-    def render(self, layout):
+    def render(self, layout, dxfattribs=None):
         def curve_point(alpha):
-            alpha = radians(alpha)
-            point = (cos(alpha) * self.rx,
-                     sin(alpha) * self.ry)
-            point = rotate_2d(point, radians(self.rotation))
-            x, y = vadd(self.center, point)
-            return x, y, zaxis
+            point = self.center + Vector(cos(alpha) * self.rx, sin(alpha) * self.ry)
+            return point.rot_z_deg(self.rotation)
 
         def normalize_angle(angle):
             angle = fmod(angle, 360.)
@@ -57,23 +34,19 @@ class Ellipse(_BaseCurve):
                 angle += 360.
             return angle
 
-        zaxis = 0. if len(self.center) < 3 else self.center[2]
         points = []
         delta = (self.endangle - self.startangle) / self.segments
         for segment in range(self.segments):
             alpha = self.startangle + delta * segment
-            points.append(curve_point(alpha))
+            points.append(curve_point(radians(alpha)))
 
-        attribs = {
-            'color': self.color,
-            'layer': self.layer,
-            'linetype': self.linetype,
-            'closed': equals_almost(self.startangle, normalize_angle(self.endangle)),
-        }
-        layout.add_polyline2d(points, dxfattribs=attribs)
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['closed'] = is_close(self.startangle, normalize_angle(self.endangle))
+        layout.add_polyline2d(points, dxfattribs=dxfattribs)
 
 
-class Bezier(_BaseCurve):
+class Bezier(object):
     """
     Bezier 2d/3d curve.
 
@@ -100,10 +73,7 @@ class Bezier(_BaseCurve):
             bezier = Bezier4P(control_points)
             return bezier.approximate(self.segments)
 
-    def __init__(self, color=const.BYLAYER, layer='0', linetype='ByLayer'):
-        self.color = color
-        self.layer = layer
-        self.linetype = linetype
+    def __init__(self):
         self.points = []
 
     def start(self, point, tangent):
@@ -149,53 +119,33 @@ class Bezier(_BaseCurve):
         else:
             raise ValueError('Two or more points needed!')
 
-    def render(self, layout, force3d=False):
+    def render(self, layout, force3d=False, dxfattribs=None):
         """
         Render curve as DXF POLYLINE entity.
 
         Args:
             layout: ezdxf layout object
             force3d: force 3d polyline rendering
+            dxfattribs: DXF attributes for base DXF entity (POLYLINE/LWPOLYLINE)
 
         """
         points = []
         for segment in self._build_bezier_segments():
             points.extend(segment.approximate())
-
-        attribs = {
-            'layer': self.layer,
-            'color': self.color,
-            'linetype': self.linetype,
-        }
         if force3d or any(p[2] for p in points):
-            layout.add_polyline3d(points, dxfattribs=attribs)
+            layout.add_polyline3d(points, dxfattribs=dxfattribs)
         else:
-            layout.add_polyline2d(points, dxfattribs=attribs)
+            layout.add_polyline2d(points, dxfattribs=dxfattribs)
 
 
-class Spline(_BaseCurve):
-    """
-    Cubic 2d spline.
-
-    """
-    def __init__(self, points=None, segments=100, color=const.BYLAYER, layer='0',
-                 linetype='ByLayer'):
+class Spline(object):
+    def __init__(self, points=None, segments=100):
         if points is None:
             points = []
-        self.color = color
-        self.layer = layer
-        self.linetype = linetype
         self.points = points
         self.segments = int(segments)
 
-    def _dxfattribs(self):
-        return {
-            'layer': self.layer,
-            'color': self.color,
-            'linetype': self.linetype,
-        }
-
-    def render_as_fit_points(self, layout, method='distance'):
+    def render_as_fit_points(self, layout, method='distance', dxfattribs=None):
         """
         Render a cubic Spline as 2d/3d polyline, where the definition points are fit points.
 
@@ -205,52 +155,56 @@ class Spline(_BaseCurve):
         Args:
             layout: ezdxf layout
             method: 'distance' or 'uniform'
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = CubicSpline(self.points, method=method)
         if spline.spatial:
-            layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+            layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
         else:
-            layout.add_polyline2d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+            layout.add_polyline2d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
     render = render_as_fit_points
 
-    def render_open_bspline(self, layout, degree=3):
+    def render_open_bspline(self, layout, degree=3, dxfattribs=None):
         """
         Render aa open uniform BSpline as 3d polyline. Definition points are control points.
 
         Args:
             layout: ezdxf layout
             degree: B-spline degree (order = degree + 1)
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = BSpline(self.points, order=degree+1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_uniform_bspline(self, layout, degree=3):
+    def render_uniform_bspline(self, layout, degree=3, dxfattribs=None):
         """
         Render a uniform BSpline as 3d polyline. Definition points are control points.
 
         Args:
             layout: ezdxf layout
             degree: B-spline degree (order = degree + 1)
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = BSplineU(self.points, order=degree+1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_closed_bspline(self, layout, degree=3):
+    def render_closed_bspline(self, layout, degree=3, dxfattribs=None):
         """
         Render a closed uniform BSpline as 3d polyline. Definition points are control points.
 
         Args:
             layout: ezdxf layout
             degree: B-spline degree (order = degree + 1)
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = BSplineClosed(self.points, order=degree+1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_open_rbspline(self, layout, weights, degree=3):
+    def render_open_rbspline(self, layout, weights, degree=3, dxfattribs=None):
         """
         Render a rational open uniform BSpline as 3d polyline.
 
@@ -258,12 +212,13 @@ class Spline(_BaseCurve):
             layout: ezdxf layout
             weights: list of weights, requires a weight value for each defpoint.
             degree: B-spline degree (order = degree + 1)
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = RBSpline(self.points, weights=weights, order=degree+1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_uniform_rbspline(self, layout, weights, degree=3):
+    def render_uniform_rbspline(self, layout, weights, degree=3, dxfattribs=None):
         """
         Render a rational uniform BSpline as 3d polyline.
 
@@ -271,12 +226,13 @@ class Spline(_BaseCurve):
             layout: ezdxf layout
             weights: list of weights, requires a weight value for each defpoint.
             degree: B-spline degree (order = degree + 1)
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = RBSplineU(self.points, weights=weights, order=degree+1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_closed_rbspline(self, layout, weights, degree=3):
+    def render_closed_rbspline(self, layout, weights, degree=3, dxfattribs=None):
         """
         Render a rational BSpline as 3d polyline.
 
@@ -284,20 +240,16 @@ class Spline(_BaseCurve):
             layout: ezdxf layout
             weights: list of weights, requires a weight value for each defpoint.
             degree: B-spline degree (order = degree + 1)
+            dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = RBSplineClosed(self.points, weights=weights, order=degree+1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=self._dxfattribs())
+        layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
 
-class Clothoid(_BaseCurve):
-    def __init__(self, start=(0, 0), rotation=0., length=1., paramA=1.0,
-                 mirror='', segments=100, color=const.BYLAYER, layer='0',
-                 linetype='ByLayer'):
-        self.color = color
-        self.layer = layer
-        self.linetype = linetype
-        self.start = start
+class Clothoid(object):
+    def __init__(self, start=(0, 0), rotation=0., length=1., paramA=1.0, mirror='', segments=100):
+        self.start = Vector(start)
         self.rotation = float(rotation)
         self.length = float(length)
         self.paramA = float(paramA)
@@ -305,26 +257,16 @@ class Clothoid(_BaseCurve):
         self.mirrory = 'y' in mirror.lower()
         self.segments = int(segments)
 
-    def render(self, layout):
+    def render(self, layout, dxfattribs=None):
         def transform(points):
             for point in points:
                 if self.mirrorx:
-                    point = (point[0], -point[1])
+                    point = Vector(point[0], -point[1])
                 if self.mirrory:
-                    point = (-point[0], point[1])
-                point = rotate_2d(point, rotation)
-                x, y = vadd(self.start, point)
-                yield (x, y, zaxis)
+                    point = Vector(-point[0], point[1])
+                yield self.start + point.rot_z_rad(rotation)
 
-        zaxis = 0. if len(self.start) < 3 else self.start[2]
         rotation = radians(self.rotation)
         clothoid = _ClothoidValues(self.paramA)
         points = clothoid.approximate(self.length, self.segments)
-        layout.add_polyline3d(
-            list(transform(points)),
-            dxfattribs={
-                'layer': self.layer,
-                'color': self.color,
-                'linetype': self.linetype,
-            }
-        )
+        layout.add_polyline3d(list(transform(points)), dxfattribs=dxfattribs)

@@ -8,14 +8,14 @@ from ezdxf.addons import Clothoid
 
 
 def four_c(A, length, rotation):
-    render(Clothoid(start=(2, 2), length=length, paramA=A, rotation=rotation, color=1))
-    render(Clothoid(start=(2, 2), mirror='x', length=length, paramA=A, rotation=rotation, color=2))
-    render(Clothoid(start=(2, 2), mirror='y', length=length, paramA=A, rotation=rotation, color=3))
-    render(Clothoid(start=(2, 2), mirror='xy', length=length, paramA=A, rotation=rotation, color=4))
+    render(Clothoid(start=(2, 2), length=length, paramA=A, rotation=rotation), dxfattribs={'color': 1})
+    render(Clothoid(start=(2, 2), mirror='x', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 2})
+    render(Clothoid(start=(2, 2), mirror='y', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 3})
+    render(Clothoid(start=(2, 2), mirror='xy', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 4})
 
 
-def render(clothoid):
-    clothoid.render(msp)
+def render(clothoid, dxfattribs):
+    clothoid.render(msp, dxfattribs=dxfattribs)
 
 
 NAME = 'clothoid.dxf'

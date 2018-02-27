@@ -24,7 +24,7 @@ NAME = 'bezier.dxf'
 dwg = ezdxf.new('R12')
 msp = dwg.modelspace()
 
-bezier = Bezier(color=4)
+bezier = Bezier()
 
 # define start point
 bezier.start((2, 4, 1), tangent=(0, 2, 0))
@@ -42,6 +42,6 @@ draw_control_point((12, 5, 2), (-2, 0, 0), (2, 0, 0))
 bezier.append((16, 9, 20), tangent1=(-0.5, -3, 0))
 draw_control_point((16, 9, 20), (-0.5, -3, 0))
 
-bezier.render(msp)
+bezier.render(msp, dxfattribs={'color': 4})
 dwg.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)
