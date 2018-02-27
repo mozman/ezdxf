@@ -32,7 +32,7 @@ class CubicSpline(object):
         method: 'uniform', 'distance' or lambda function with one argument, argument is point distance
 
     """
-    def __init__(self, points, method='uniform'):
+    def __init__(self, points, method='distance'):
         self.spatial = any(len(point) > 2 for point in points)  # 2d or 3d
         self.fit_points = [Vector(p) for p in points]  # Vector() has always 3 axis
         if method == 'uniform':
