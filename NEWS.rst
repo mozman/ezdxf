@@ -5,13 +5,14 @@ News
 Version 0.8.7 - dev
 
    * Release notes: https://ezdxf.mozman.at/release-v0-8-7.html
+   * NEW: entity.get_layout() returns layout in which entity resides or None if unassigned
    * NEW: copy any DXF entity by entity.copy() without associated layout, add copy to any layout you want, by
      layout.add_entity().
    * NEW: copy entity to another layout by entity.copy_to_layout(layout)
    * NEW: move entity from actual layout to another layout by entity.move_to_layout(layout)
    * NEW: support for splines by control points: add_open_spline(), add_closed_spline(), add_rational_spline(),
      add_closed_rational_spline()
-   * NEW: added get_flag_state() and set_flag_state() to DXFEntity() class for easy access to binary coded flags
+   * NEW: added entity.get_flag_state() and entity.set_flag_state() for easy access to binary coded flags
    * BUGFIX: closing user defined image boundary path automatically, else AutoCAD crashes
 
 Version 0.8.6 - 2018-02-17

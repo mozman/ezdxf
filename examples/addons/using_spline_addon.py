@@ -24,9 +24,12 @@ spline_points = [Vector(p) for p in [(1., 1.), (2.5, 3.), (4.5, 2.), (6.5, 4.)]]
 
 # fit points
 draw(spline_points)
-Spline(spline_points, color=3).render_as_fit_points(msp, method='distance')  # curve with definition points as fit points
-Spline(spline_points, color=2).render_as_fit_points(msp, method='uniform')
-msp.add_spline(fit_points=spline_points, dxfattribs={'color': 4})
+Spline(spline_points, color=2).render_as_fit_points(msp, method='distance')  # curve with definition points as fit points
+Spline(spline_points, color=3).render_as_fit_points(msp, method='uniform')
+Spline(spline_points, color=4).render_as_fit_points(msp, method=lambda x: 1./x)  # inverse distance
+Spline(spline_points, color=5).render_as_fit_points(msp, method=lambda x: x*x)  # square distance
+Spline(spline_points, color=6).render_as_fit_points(msp, method=lambda x: 1./x/x)  # inverse square distance
+msp.add_spline(fit_points=spline_points, dxfattribs={'color': 1})
 msp.add_text("Spline.render_as_fit_points() differs from AutoCAD fit point rendering", dxfattribs={'height': .1}).set_pos(spline_points[0])
 
 # open uniform b-spline

@@ -5,12 +5,14 @@
 from ezdxf.algebra.vector import distance, Vector
 
 
-def distance_t_array(points):
+def distance_t_array(points, func=lambda x: x):
+    def distances():
+        for p1, p2 in zip(points, points[1:]):
+            yield distance(p1, p2)
+
     t = [0.]
-    s = 0.
-    for p1, p2 in zip(points, points[1:]):
-        s += distance(p1, p2)
-        t.append(s)
+    for d in distances():
+        t.append(t[-1] + func(d))
     return t
 
 
@@ -24,17 +26,20 @@ class CubicSpline(object):
 
     2d in -> 2d out
     3d in -> 3d out
+    Args:
+        points: list of 2d/3d points as tuples (x, y[, z])
+        method: 'uniform', 'distance' or lambda function with one argument, argument is point distance
 
     """
-    def __init__(self, points, method='distance'):
+    def __init__(self, points, method='uniform'):
         self.spatial = any(len(point) > 2 for point in points)  # 2d or 3d
         self.fit_points = [Vector(p) for p in points]  # Vector() has always 3 axis
-        if method == 'distance':
-            self.t_array = distance_t_array(self.fit_points)
-        elif method == 'uniform':
+        if method == 'uniform':
             self.t_array = uniform_t_array(self.fit_points)
+        elif method == 'distance':
+            self.t_array = distance_t_array(self.fit_points, func=lambda x: x)
         else:
-            self.t_array = list(method)
+            self.t_array = distance_t_array(self.fit_points, func=method)
 
     @property
     def count(self):
