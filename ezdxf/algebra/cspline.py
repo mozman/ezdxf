@@ -22,10 +22,11 @@ def uniform_t_array(points):
 
 class CubicSpline(object):
     """
-    2d/3d cubic spline defined by fit points.
+    2d/3d cubic spline interpolation through fit points.
 
     2d in -> 2d out
     3d in -> 3d out
+
     Args:
         points: list of 2d/3d points as tuples (x, y[, z])
         method: 'uniform', 'distance' or lambda function with one argument, argument is point distance
