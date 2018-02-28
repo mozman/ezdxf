@@ -3,8 +3,9 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from math import pi, sin, cos
-from ezdxf.algebra.vector import Vector
-from ezdxf.algebra.base import is_close_points
+from ezdxf.algebra import Vector, Matrix44
+from ezdxf.algebra.base import is_close_points, is_close
+from ezdxf.algebra.cspline import CubicSpline
 from .mesh import MeshBuilder, MeshVertexMerger
 
 
@@ -15,7 +16,7 @@ def circle(count, radius=1.0, z=0., close=False):
     Args:
         count: polygon corners
         radius: circle radius
-        z: elevation
+        z: z axis value
         close: yields first vertex also as last vertex if True.
 
     Returns:
@@ -34,21 +35,21 @@ def circle(count, radius=1.0, z=0., close=False):
         yield Vector(radius, 0, z)
 
 
+def translate(points, vec=(0, 0, 1)):
+    vec = Vector(vec)
+    for p in points:
+        yield vec + p
+
+
 def close_polygon(points):
     """
     Yields first point at the end to close polygon if necessary.
 
     """
-    first_point = None
-    last_point = None
-    for point in points:
-        if first_point is None:
-            first_point = point
-        yield point
-        last_point = point
-
-    if not is_close_points(first_point, last_point):
-        yield first_point
+    points = list(points)
+    if not is_close_points(points[0], points[-1]):
+        points.append(points[0])
+    return points
 
 
 # 8 corner vertices
@@ -143,43 +144,137 @@ def extrude(profile, path, close=True):
     return mesh
 
 
-def cylinder(count, radius=1., height=1.):
+def cylinder(count, radius=1., top_radius=None, top_center=(0, 0, 1), caps=True):
     """
     Create a cylinder as MeshVertexMerger() object.
 
     Args:
-        count: edge count
-        radius: cylinder radius
-        height: cylinder height
+        count: profiles edge count
+        radius: radius for bottom profile
+        top_radius: radius for top profile, if None top_radius == radius
+        top_center: location vector for the center of the top profile
+        caps: close hull with bottom cap and top cap (as N-gons)
+
+    Returns: MeshVertexMerger()
+
+    """
+    if top_radius is None:
+        top_radius = radius
+
+    if is_close(top_radius, 0.):  # pyramid/cone
+        return cone(count=count, radius=radius, top=top_center)
+
+    base_profile = list(circle(count, radius, close=True))
+    top_profile = list(translate(circle(count, top_radius, close=True), top_center))
+    return from_profiles_linear([base_profile, top_profile], caps=caps)
+
+
+def from_profiles_linear(profiles, close=True, caps=False):
+    """
+    Mesh by connecting profiles linear.
+
+    Args:
+        profiles: list of profiles
+        close: close profile polygon if True
+        caps: close hull with bottom cap and top cap (as N-gons)
+
+    Returns: MeshVertexMerger()
+
+    """
+    mesh = MeshVertexMerger()
+    profiles = list(profiles)  # generator -> list
+    if close:
+        profiles = [close_polygon(p) for p in profiles]
+    if caps:
+        mesh.add_face(profiles[0])
+        mesh.add_face(profiles[-1])
+
+    for profile1, profile2 in zip(profiles, profiles[1:]):
+        prev_v1, prev_v2 = None, None
+        for v1, v2 in zip(profile1, profile2):
+            if prev_v1 is not None:
+                mesh.add_face([prev_v1, v1, v2, prev_v2])
+            prev_v1 = v1
+            prev_v2 = v2
+
+    return mesh
+
+
+def spline_interpolation(vertices, subdivide=4):
+    # Interpolation by cubic open uniform B-spline
+    spline = CubicSpline(vertices, method='uniform')
+    return list(spline.approximate(count=(len(vertices)-1)*subdivide+1))
+
+
+def spline_interpolated_profiles(profiles, subdivide=4):
+    profiles = [list(p) for p in profiles]
+    if len(set(len(p) for p in profiles)) != 1:
+        raise ValueError('All profiles have to have the same vertex count')
+
+    vertex_count = len(profiles[0])
+    edges = []  # interpolated spline vertices, where profile vertices are fit points
+    for index in range(vertex_count):
+        edge_vertices = [p[index] for p in profiles]
+        edges.append(spline_interpolation(edge_vertices, subdivide=subdivide))
+
+    profile_count = len(edges[0])
+    for profile_index in range(profile_count):
+        yield [edge[profile_index] for edge in edges]
+
+
+def from_profiles_spline(profiles, subdivide=4, close=True, caps=False):
+    if len(profiles) > 2:
+        profiles = spline_interpolated_profiles(profiles, subdivide)
+    return from_profiles_linear(profiles, close=close, caps=caps)
+
+
+def cone(count, radius, apex=(0, 0, 1), caps=True):
+    """
+    Cone as Mesh.
+
+    Args:
+        count: edge count of basis
+        radius: radius of basis
+        apex: apex of the cone
+        caps: add a bottom face if true
 
     Returns: MeshVertexMerger()
 
     """
     mesh = MeshVertexMerger()
     base_circle = list(circle(count, radius, close=True))
-    top_circle = list(circle(count, radius, z=height, close=True))
-    mesh.add_face(reversed(base_circle))  # clock wise: normals down
-    mesh.add_face(top_circle)  # count clockwise: normals up
-    hull = extrude(base_circle, [(0, 0, 0), (0, 0, height)])
-    mesh.add_mesh(vertices=hull.vertices, faces=hull.faces)  # normal outwards
+    for p1, p2 in zip(base_circle, base_circle[1:]):
+        mesh.add_face([p1, p2, apex])
+    if caps:
+        mesh.add_face(base_circle)
     return mesh
 
 
-def from_profiles_linear(profiles, close=True):
-    pass
+def rotation_form(count, profile, angle=2*pi, axis=(1, 0, 0)):
+    """
+    Mesh by rotating a profile around an axis.
 
+    Args:
+        count: count of rotated profiles
+        profile: profile to rotate as list of vertices
+        angle: rotation angle in radians
+        axis: rotation axis
+        close: close form, last profile == first profile
 
-def from_profiles_bezier(profiles, subdivide=4, close=True):
-    if len(profiles) < 3:
-        return from_profiles_linear(profiles, close=close)
+    Returns: MeshVertexMerger()
 
-
-def cone(count, radius, height):
-    pass
-
-
-def rotation_form(count, profile, angle=2*pi, axis=(0., 0., 1.)):
-    pass
+    """
+    if count < 3:
+        raise ValueError('count >= 2')
+    delta = float(angle) / count
+    m = Matrix44.axis_rotate(Vector(axis), delta)
+    profile = [Vector(p) for p in profile]
+    profiles = [profile]
+    for _ in range(int(count)):
+        profile = m.transform_vectors(profile)
+        profiles.append(profile)
+    mesh = from_profiles_linear(profiles, close=False, caps=False)
+    return mesh
 
 
 def doughnut(mcount, ncount, outer_radius=1., ring_radius=.25):

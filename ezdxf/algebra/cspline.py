@@ -46,11 +46,11 @@ class CubicSpline(object):
     def count(self):
         return len(self.fit_points)
 
-    def approximate(self, segments):
+    def approximate(self, count):
         """
-        Approximate spline curve with  <segments> line-segments.
+        Approximate spline curve with count vertices.
 
-        Generates <segments>+1 2d/3d points
+        Generates count 2d/3d points
 
         """
         def axis(index):
@@ -58,20 +58,20 @@ class CubicSpline(object):
 
         if self.spatial:
             return zip(
-                self._cubic_spline(axis(0), segments),  # x-axis
-                self._cubic_spline(axis(1), segments),  # y-axis
-                self._cubic_spline(axis(2), segments),  # z-axis
+                self._cubic_spline(axis(0), count),  # x-axis
+                self._cubic_spline(axis(1), count),  # y-axis
+                self._cubic_spline(axis(2), count),  # z-axis
             )
         else:
             return zip(
-                self._cubic_spline(axis(0), segments),  # x-axis
-                self._cubic_spline(axis(1), segments),  # y-axis
+                self._cubic_spline(axis(0), count),  # x-axis
+                self._cubic_spline(axis(1), count),  # y-axis
             )
 
     def _create_array(self):
         return [0.] * self.count
 
-    def _cubic_spline(self, axis_vector, segments):
+    def _cubic_spline(self, axis_vector, count):
         def get_delta_t_D(f):
             delta_t = self._create_array()
             D = self._create_array()
@@ -130,8 +130,8 @@ class CubicSpline(object):
 
         wt = 0.
         j = 0
-        dt = t[-1] / float(segments - 1)
-        for _ in range(segments - 1):
+        dt = t[-1] / float(count - 1)
+        for _ in range(count - 1):
             while (j <= n) and (t[j+1] < wt):
                 j += 1
             h = wt - t[j]

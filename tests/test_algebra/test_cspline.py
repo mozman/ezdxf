@@ -61,7 +61,8 @@ expected = [
 def test_check_values():
     test_points = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
     spline = CubicSpline(test_points, method='distance')
-    result = spline.approximate(50)
+    result = list(spline.approximate(50))
+    assert len(result) == 50
     for p1, p2 in zip(result, expected):
         assert equals_almost(p1[0], p2[0], 4)
         assert equals_almost(p1[1], p2[1], 4)
