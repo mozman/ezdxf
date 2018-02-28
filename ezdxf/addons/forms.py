@@ -35,21 +35,31 @@ def circle(count, radius=1.0, z=0., close=False):
         yield Vector(radius, 0, z)
 
 
-def translate(points, vec=(0, 0, 1)):
+def translate(vertices, vec=(0, 0, 1)):
+    """
+    Simple translation, faster than a Matrix44 transformation.
+
+    Args:
+        vertices: list of vertices
+        vec: translation vector
+
+    Yields: transformed vertices
+
+    """
     vec = Vector(vec)
-    for p in points:
+    for p in vertices:
         yield vec + p
 
 
-def close_polygon(points):
+def close_polygon(vertices):
     """
-    Yields first point at the end to close polygon if necessary.
+    Returns list of vertices, where vertices[0] == vertices[-1].
 
     """
-    points = list(points)
-    if not is_close_points(points[0], points[-1]):
-        points.append(points[0])
-    return points
+    vertices = list(vertices)
+    if not is_close_points(vertices[0], vertices[-1]):
+        vertices.append(vertices[0])
+    return vertices
 
 
 # 8 corner vertices
@@ -162,7 +172,7 @@ def cylinder(count, radius=1., top_radius=None, top_center=(0, 0, 1), caps=True)
         top_radius = radius
 
     if is_close(top_radius, 0.):  # pyramid/cone
-        return cone(count=count, radius=radius, top=top_center)
+        return cone(count=count, radius=radius, apex=top_center)
 
     base_profile = list(circle(count, radius, close=True))
     top_profile = list(translate(circle(count, top_radius, close=True), top_center))
@@ -171,7 +181,7 @@ def cylinder(count, radius=1., top_radius=None, top_center=(0, 0, 1), caps=True)
 
 def from_profiles_linear(profiles, close=True, caps=False):
     """
-    Mesh by connecting profiles linear.
+    Mesh by linear connected profiles.
 
     Args:
         profiles: list of profiles
@@ -201,12 +211,31 @@ def from_profiles_linear(profiles, close=True, caps=False):
 
 
 def spline_interpolation(vertices, subdivide=4):
-    # Interpolation by cubic open uniform B-spline
+    """
+    Cubic spline interpolation, vertices are fit points for the spline definition.
+
+    Args:
+        vertices: fit points
+        subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
+
+    Returns: list of vertices
+
+    """
     spline = CubicSpline(vertices, method='uniform')
     return list(spline.approximate(count=(len(vertices)-1)*subdivide+1))
 
 
 def spline_interpolated_profiles(profiles, subdivide=4):
+    """
+    Profile interpolation by cubic B-spline interpolation.
+
+    Args:
+        profiles: list of profiles
+        subdivide: count of interpolated profiles + 1, e.g. 4 creates 3 sub-profiles between two main profiles (4 face loops)
+
+    Yields: profiles as list of vertices
+
+    """
     profiles = [list(p) for p in profiles]
     if len(set(len(p) for p in profiles)) != 1:
         raise ValueError('All profiles have to have the same vertex count')
@@ -223,8 +252,23 @@ def spline_interpolated_profiles(profiles, subdivide=4):
 
 
 def from_profiles_spline(profiles, subdivide=4, close=True, caps=False):
-    if len(profiles) > 2:
+    """
+    Mesh entity by spline interpolation between given profiles. Requires at least 4 profiles. A subdivide value of 4,
+    means, create 4 face loops between two profiles, without interpolation two profiles create one face loop.
+
+    Args:
+        profiles: list of profiles
+        subdivide: count of face loops
+        close: close profile polygon if True
+        caps: close hull with bottom cap and top cap (as N-gons)
+
+    Returns: MeshVertexMerger()
+
+    """
+    if len(profiles) > 3:
         profiles = spline_interpolated_profiles(profiles, subdivide)
+    else:
+        raise ValueError("Spline interpolation requires at least 4 profiles")
     return from_profiles_linear(profiles, close=close, caps=caps)
 
 
@@ -259,7 +303,6 @@ def rotation_form(count, profile, angle=2*pi, axis=(1, 0, 0)):
         profile: profile to rotate as list of vertices
         angle: rotation angle in radians
         axis: rotation axis
-        close: close form, last profile == first profile
 
     Returns: MeshVertexMerger()
 
