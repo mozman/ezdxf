@@ -12,7 +12,7 @@ from ..dxfentity import DXFEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
-
+from ezdxf.algebra import Vector
 
 _IMAGE_TPL = """ 0
 IMAGE
@@ -118,7 +118,9 @@ class Image(ModernGraphicEntity):
         self.dxf.count_boundary_points = len(vertices)
 
     def reset_boundary_path(self):
-        self._set_path_tags([(0., 0.), self.dxf.image_size])
+        lower_left_corner = (-.5, -.5)
+        upper_right_corner = Vector(self.dxf.image_size) + lower_left_corner
+        self._set_path_tags([lower_left_corner, upper_right_corner.tup2])
         self.set_flag_state(Image.USE_CLIPPING_BOUNDARY, state=False)
         self.dxf.clipping = 0
         self.dxf.clipping_boundary_type = 1
