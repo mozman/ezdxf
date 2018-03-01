@@ -377,14 +377,14 @@ POLYLINE_GENERATE_LINETYPE_PATTERN 128   The linetype pattern is generated
 
 Polymesh constants for *smooth_type* defined in :mod:`ezdxf.const`:
 
-======================== =====  =============================
-Polyline.dxf.smooth_type Value  Description
-======================== =====  =============================
-POLYMESH_NO_SMOOTH       0      no smooth surface fitted
-POLYMESH_QUADRIC_BSPLINE 5      quadratic B-spline surface
-POLYMESH_CUBIC_BSPLINE   6      cubic B-spline surface
-POLYMESH_BEZIER_SURFACE  8      Bezier surface
-======================== =====  =============================
+========================== =====  =============================
+Polyline.dxf.smooth_type   Value  Description
+========================== =====  =============================
+POLYMESH_NO_SMOOTH         0      no smooth surface fitted
+POLYMESH_QUADRATIC_BSPLINE 5      quadratic B-spline surface
+POLYMESH_CUBIC_BSPLINE     6      cubic B-spline surface
+POLYMESH_BEZIER_SURFACE    8      Bezier surface
+========================== =====  =============================
 
 .. attribute:: Polyline.is_2d_polyline
 

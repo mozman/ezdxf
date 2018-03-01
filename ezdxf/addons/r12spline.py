@@ -14,7 +14,7 @@ The spline itself is always in a plane, but as any 2d entity, the spline can be 
 by elevation, extrusion and thickness/width.
 
 Open Quadratic Spline with Fit Vertices
----------------------------------------
+-------------------------------------
 
 Example: 2D_SPLINE_QUADRATIC.dxf
 expected knot vector: open uniform
@@ -23,7 +23,7 @@ order: 3
 
 POLYLINE:
 flags (70): 4 = SPLINE_FIT_VERTICES_ADDED
-smooth type (75): 5 = QUADRIC_BSPLINE
+smooth type (75): 5 = QUADRATIC_BSPLINE
 
 Sequence of VERTEX
 flags (70): SPLINE_VERTEX_CREATED = 8  # Spline vertex created by spline-fitting
@@ -48,7 +48,7 @@ order: 3
 
 POLYLINE:
 flags (70): 5 = CLOSED | SPLINE_FIT_VERTICES_ADDED
-smooth type (75): 5 = QUADRIC_BSPLINE
+smooth type (75): 5 = QUADRATIC_BSPLINE
 
 Sequence of VERTEX
 flags (70): SPLINE_VERTEX_CREATED = 8  # Spline vertex created by spline-fitting
@@ -123,7 +123,7 @@ class R12Spline(object):
         polyline.dxf.flags = flags
 
         if self.degree == 2:
-            smooth_type = polyline.QUADRIC_BSPLINE
+            smooth_type = polyline.QUADRATIC_BSPLINE
         elif self.degree == 3:
             smooth_type = polyline.CUBIC_BSPLINE
         else:

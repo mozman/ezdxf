@@ -904,7 +904,7 @@ class Polyline(GraphicEntity):
     GENERATE_LINETYPE_PATTERN = 128
     # polymesh smooth type (75)
     NO_SMOOTH = 0
-    QUADRIC_BSPLINE = 5
+    QUADRATIC_BSPLINE = 5
     CUBIC_BSPLINE = 6
     BEZIER_SURFACE = 8
     ANY3D = POLYLINE_3D | POLYMESH | POLYFACE

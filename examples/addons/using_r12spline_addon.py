@@ -22,9 +22,9 @@ def draw(points):
 
 spline_points = [Vector(p) for p in [(8.55, 2.96), (8.55, -.03), (2.75, -.03), (2.76, 3.05), (4.29, 1.78), (6.79, 3.05)]]
 
-# open quadric b-spline
+# open quadratic b-spline
 draw(spline_points)
-msp.add_text("Open Quadric R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
+msp.add_text("Open Quadratic R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
 R12Spline(spline_points, degree=2, closed=False).render(msp, segments=SEGMENTS, dxfattribs={'color': 3})
 if dwg.dxfversion > 'AC1009':
     msp.add_open_spline(control_points=spline_points, degree=2, dxfattribs={'color': 4})

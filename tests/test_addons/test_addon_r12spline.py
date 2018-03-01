@@ -13,7 +13,7 @@ def msp():
     return ezdxf.new('R12').modelspace()
 
 
-def test_r12_quadric_spline(msp):
+def test_r12_quadratic_spline(msp):
     spline = R12Spline(CONTROL_POINTS, degree=2, closed=False)
     polyline = spline.render(msp, segments=40)
     assert polyline.dxftype() == 'POLYLINE'

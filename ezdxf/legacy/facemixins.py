@@ -1,23 +1,22 @@
-# Purpose: graphic mixins
 # Created: 2011-04-30
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from itertools import chain
-
 from ..lldxf import const
 from .polyfacebuilder import PolyfaceBuilder
 
 
 class PolymeshMixin(object):
     def set_mesh_vertex(self, pos, point, dxfattribs=None):
-        """ Set location and DXF attributes of a single mesh vertex.
+        """
+        Set location and DXF attributes of a single mesh vertex.
 
-        :param pos: 0-based (row, col)-tuple, position of mesh vertex
-        :param point point: (x, y, z)-tuple, new 3D coordinates of the mesh vertex
-        :param dxfattribs: dict of DXF attributes
+        Args:
+            pos: 0-based (row, col)-tuple, position of mesh vertex
+            point point: (x, y, z)-tuple, new 3D coordinates of the mesh vertex
+            dxfattribs: dict of DXF attributes
+
         """
         if dxfattribs is None:
             dxfattribs = {}
@@ -26,9 +25,12 @@ class PolymeshMixin(object):
         vertex.update_dxf_attribs(dxfattribs)
 
     def get_mesh_vertex(self, pos):
-        """ Get location of a single mesh vertex.
+        """
+        Get location of a single mesh vertex.
 
-        :param pos: 0-based (row, col)-tuple, position of mesh vertex
+        Args:
+            pos: 0-based (row, col)-tuple, position of mesh vertex
+
         """
         m_count = self.dxf.m_count
         n_count = self.dxf.n_count
@@ -40,21 +42,21 @@ class PolymeshMixin(object):
             raise const.DXFIndexError(repr(pos))
 
     def get_mesh_vertex_cache(self):
-        """ Get a MeshVertexCache() object for this Polymesh. The caching object provides fast access to the location
+        """
+        Get a MeshVertexCache() object for this Polymesh. The caching object provides fast access to the location
         attributes of the mesh vertices.
+
         """
         return MeshVertexCache(self)
 
 
 class MeshVertexCache(object):
-    """ Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
+    """
+    Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
 
-    .. attribute:: vertices (read only)
-
+    vertices:
        Dict of mesh vertices, keys are 0-based (row, col)-tuples. Writing to this dict doesn't change the DXF entity.
 
-    - set vertex location: cache[row, col] = (x, y, z)
-    - get vertex location: x, y, z = cache[row, col]
     """
     def __init__(self, mesh):
         self.vertices = self._setup(mesh, mesh.dxf.m_count, mesh.dxf.n_count)
@@ -68,7 +70,8 @@ class MeshVertexCache(object):
         return cache
 
     def __getitem__(self, pos):
-        """ Get mesh vertex location as (x, y, z)-tuple.
+        """
+        Get mesh vertex location as (x, y, z)-tuple.
         """
         try:
             return self.vertices[pos].dxf.location
@@ -76,7 +79,8 @@ class MeshVertexCache(object):
             raise const.DXFIndexError(repr(pos))
 
     def __setitem__(self, pos, location):
-        """ Get mesh vertex location as (x, y, z)-tuple.
+        """
+        Get mesh vertex location as (x, y, z)-tuple.
         """
         try:
             self.vertices[pos].dxf.location = location
@@ -85,25 +89,33 @@ class MeshVertexCache(object):
 
 
 class PolyfaceMixin(object):
-    """ Order of mesh_vertices and face_records *IS* important (ACAD2010)
+    """
+    Order of mesh_vertices and face_records is important (DXF R2010):
 
-    1. mesh_vertices: the polyface mesh vertex locations
-    2. face_records: indices of the face forming vertices
+        1. mesh_vertices: the polyface mesh vertex locations
+        2. face_records: indices of the face forming vertices
+
     """
     def append_face(self, face, dxfattribs=None):
-        """ Appends a single *face*. Appending single faces is very inefficient, try collecting single faces and use
-        *Polyface.append_faces()*
+        """
+        Appends a single face. Appending single faces is very inefficient, try collecting single faces and use
+        Polyface.append_faces().
 
-        :param face: list of (x, y, z)-tuples
-        :param dxfattribs: dict of DXF attributes
+        Args:
+            face: list of (x, y, z)-tuples
+            dxfattribs: dict of DXF attributes
+
         """
         self.append_faces([face], dxfattribs)
 
     def append_faces(self, faces, dxfattribs=None):
-        """ Append multiple *faces*. *faces* is a list of single faces and a single face is a list of (x, y, z)-tuples.
+        """
+        Append multiple *faces*. *faces* is a list of single faces and a single face is a list of (x, y, z)-tuples.
 
-        :param faces: list of (list of (x, y, z)-tuples)
-        :param dxfattribs: dict of DXF attributes
+        Args:
+            faces: list of (list of (x, y, z)-tuples)
+            dxfattribs: dict of DXF attributes
+
         """
         def new_face_record():
             dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
@@ -129,9 +141,12 @@ class PolyfaceMixin(object):
         self._rebuild(chain(existing_faces, new_faces))
 
     def _rebuild(self, faces, precision=6):
-        """ Build a valid Polyface() structure out of *faces*.
+        """
+        Build a valid Polyface() structure out of *faces*.
 
-        :param faces: list of Face() objects.
+        Args:
+            faces: list of Face() objects.
+
         """
         polyface_builder = PolyfaceBuilder(faces, precision=precision)
         self._unlink_all_vertices()  # but don't remove it from database
@@ -143,16 +158,20 @@ class PolyfaceMixin(object):
         self.dxf.n_count = nfaces
 
     def optimize(self, precision=6):
-        """ Rebuilds polyface with vertex optimization. Merges vertices with nearly same vertex locations.
+        """
+        Rebuilds polyface with vertex optimization. Merges vertices with nearly same vertex locations.
         Polyfaces created by *ezdxf* are optimized automatically.
 
-        :param int precision: decimal precision for determining identical vertex locations
+        Args:
+            precision: decimal precision for determining identical vertex locations
+
         """
         vertices, faces = self.indexed_faces()
         self._rebuild(faces, precision)
 
     def faces(self):
-        """ Iterate over all faces, a face is a tuple of vertices.
+        """
+        Iterate over all faces, a face is a tuple of vertices.
         result is a list: vertex, vertex, vertex, [vertex,] face_record
         """
         faces = self.indexed_faces()[1]  # just need the faces generator
@@ -162,7 +181,8 @@ class PolyfaceMixin(object):
             yield face_vertices
 
     def indexed_faces(self):
-        """ Returns a list of all vertices and a generator of Face() objects.
+        """
+        Returns a list of all vertices and a generator of Face() objects.
         """
         vertices = []
         face_records = []
@@ -174,22 +194,24 @@ class PolyfaceMixin(object):
 
 
 class Face(object):
-    """ Represents a single face of a polyface structure.
+    """
+    Represents a single face of a polyface structure.
 
-    .. attribute:: Face.vertices
+    vertices:
 
         List of all polyface vertices.
 
-    .. attribute:: Face.face_record
+    face_record:
 
         The face forming vertex of type ``AcDbFaceRecord``, contains the indices to the face building vertices. Indices
         of the DXF structure are 1-based and a negative index indicates the beginning of an invisible edge.
         Face.face_record.dxf.color determines the color of the face.
 
-    .. attribute:: Face.indices
+    indices:
 
         Indices to the face building vertices as tuple. This indices are 0-base and are used to get vertices from the
         list *Face.vertices*.
+
     """
     def __init__(self, face_record, vertices):
         self.vertices = vertices
