@@ -1,10 +1,8 @@
 # Purpose: optimizing face builder
 # Created: 04.04.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from ..lldxf.const import VERTEXNAMES
 
 

@@ -1,68 +1,8 @@
-# Purpose: legacy dxf factory for R12/AC1009
+# Purpose: legacy dxf factory for DXF R12/AC1009
 # Created: 11.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-"""
-File Sections
-=============
-
-The DXF file is subdivided into four editable sections, plus the END
-OF FILE marker. File separator groups are used to delimit these file
-sections. The following is an example of a void DXF file with only
-the section markers and table headers present:
-
-   0            (Begin HEADER section)
-  SECTION
-   2
-  HEADER
-               <<<<Header variable items go here>>>>
-  0
-  ENDSEC       (End HEADER section)
-   0           (Begin TABLES section)
-  SECTION
-   2
-  TABLES
-   0
-  TABLE
-   2
-  VPORT
-   70
-  (viewport table maximum item count)
-               <<<<viewport table items go here>>>>
-  0
-  ENDTAB
-  0
-  TABLE
-  2
-  APPID, DIMSTYLE, LTYPE, LAYER, STYLE, UCS, VIEW, or VPORT
-  70
-  (Table maximum item count)
-               <<<<Table items go here>>>>
-  0
-  ENDTAB
-  0
-  ENDSEC       (End TABLES section)
-  0            (Begin BLOCKS section)
-  SECTION
-  2
-  BLOCKS
-               <<<<Block definition entities go here>>>>
-  0
-  ENDSEC       (End BLOCKS section)
-  0            (Begin ENTITIES section)
-  SECTION
-  2
-  ENTITIES
-               <<<<Drawing entities go here>>>>
-  0
-  ENDSEC       (End ENTITIES section)
-  0
-  EOF          (End of file)
-
-"""
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from . import tableentries
 from . import graphics
 from .viewport import Viewport
