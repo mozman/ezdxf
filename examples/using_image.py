@@ -4,9 +4,10 @@ from __future__ import unicode_literals
 import ezdxf
 import os
 
-IMAGE_PATH = os.path.abspath('mycat.jpg')
+IMAGE_PATH = 'mycat.jpg'
+ABS_IMAGE_PATH = os.path.abspath(IMAGE_PATH)
 dwg = ezdxf.new('R2004')  # image requires the DXF 2000 or newer format
-my_image_def = dwg.add_image_def(filename=IMAGE_PATH, size_in_pixel=(640, 360))
+my_image_def = dwg.add_image_def(filename=ABS_IMAGE_PATH, size_in_pixel=(640, 360))
 # image definition is like a block definition
 
 msp = dwg.modelspace()

@@ -604,3 +604,41 @@ class ACDBPlaceHolder(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_PLACEHOLDER_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, )
 
+
+_RASTER_VARIABLES_TPL = """  0
+RASTERVARIABLES
+  5
+0
+102
+{ACAD_REACTORS
+330
+0
+102
+}
+330
+0
+100
+AcDbRasterVariables
+ 90
+     0
+ 70
+     0
+ 71
+     1
+ 72
+     3
+"""
+
+
+class RasterVariables(DXFEntity):
+    TEMPLATE = ExtendedTags.from_text(_RASTER_VARIABLES_TPL)
+    DXFATTRIBS = DXFAttributes(
+        none_subclass,
+        DefSubclass('AcDbRasterVariables', {
+            'version': DXFAttr(90, default=0),
+            'frame': DXFAttr(70, default=0),  # 0 = no frame; 1= show frame
+            'quality': DXFAttr(71, default=1),  # 0=draft; 1=high
+            'units': DXFAttr(72, default=3),  # 0 = None; 1 = mm; 2 = cm 3 = m; 4 = km; 5 = in 6 = ft; 7 = yd; 8 = mi
+        }),
+
+                               )

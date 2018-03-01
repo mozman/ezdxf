@@ -2,6 +2,8 @@
 # Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+from uuid import uuid1
+from .c23 import ustr
 
 
 def float2transparency(value):
@@ -18,3 +20,7 @@ def set_flag_state(flags, flag, state=True):
     else:
         flags = flags & ~flag
     return flags
+
+
+def guid():
+    return ustr(uuid1()).upper()

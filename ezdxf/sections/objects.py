@@ -76,13 +76,30 @@ class ObjectsSection(AbstractSection):
             'default': default,
         })
 
+    def set_raster_variables(self, frame=0, qualtity=1, units=3):
+        raster_vars_handle = self.rootdict.get('ACAD_IMAGE_VARS', None)
+        if raster_vars_handle is None:
+            owner = self.rootdict.dxf.handle
+            raster_vars = self.create_new_dxf_entity('RASTERVARIABLES', dxfattribs={
+                'owner': owner,
+                'frame': frame,
+                'quality': qualtity,
+                'units': units,
+            })
+            raster_vars.set_reactors([owner])
+            self.rootdict['ACAD_IMAGE_VARS'] = raster_vars.dxf.handle
+        else:
+            raster_vars = self.dxffactory.wrap_handle(raster_vars_handle)
+            raster_vars.dxf.frame = frame
+            raster_vars.dxf.quality = qualtity
+            raster_vars.dxf.units = units
+
     def add_image_def(self, filename, size_in_pixel, name=None):
-        image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
-
-        # auto-generated image key
+        # removed auto-generated name
+        # use absolute image paths for filename and AutoCAD loads images automatically
         if name is None:
-            name = self.dxffactory.next_image_key(lambda k: k not in image_dict)
-
+            name = filename
+        image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
         image_def = self.create_new_dxf_entity('IMAGEDEF', dxfattribs={
             'owner': image_dict.dxf.handle,
             'filename': filename,

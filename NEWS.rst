@@ -13,6 +13,8 @@ Version 0.8.7 - dev
    * NEW: support for splines by control points: add_open_spline(), add_closed_spline(), add_rational_spline(),
      add_closed_rational_spline()
    * NEW: added entity.get_flag_state() and entity.set_flag_state() for easy access to binary coded flags
+   * NEW: set new $FINGERPRINTGUID for new drawings
+   * NEW: set new $VERSIONGUID on saving a drawing
    * BUGFIX: closing user defined image boundary path automatically, else AutoCAD crashes
 
 Version 0.8.6 - 2018-02-17

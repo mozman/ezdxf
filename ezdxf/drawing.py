@@ -18,6 +18,7 @@ from .tools.codepage import tocodepage, toencoding
 from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
+from .tools import guid
 logger = logging.getLogger('ezdxf')
 
 
@@ -217,15 +218,47 @@ class Drawing(object):
         """
         Add an image definition to the objects section.
 
+        For AutoCAD works best with absolute image paths but not good, you have to update external references manually
+        in AutoCAD, which is not possible in TrueView. If you drawing units differ from 1 meter, you also have to use:
+        Drawing.set_raster_variables().
+
         Args:
-            filename: image file name
+            filename: image file name (absolute path works best for AutoCAD)
             size_in_pixel: image size in pixel as (x, y) tuple
-            name: image name for internal use, None for an auto-generated name
+            name: image name for internal use, None for using filename as name (best for AutoCAD)
 
         """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('The IMAGE entity needs at least DXF version R2000 or later.')
+
+        if 'ACAD_IMAGE_VARS' not in self.rootdict:
+            self.objects.set_raster_variables(frame=0, qualtity=1, units=3)
+        if name is None:
+            name = filename
         return self.objects.add_image_def(filename, size_in_pixel, name)
+
+    def set_raster_variables(self, frame=0, quality=1, units=3):
+        """
+        Set raster variables.
+
+        Args:
+            frame: 0 = do not show image frame; 1 = show image frame
+            quality: 0 = draft; 1 = high
+            units: units for inserting images. This is what one drawing unit is equal to for the purpose of inserting
+                   and scaling images with an associated resolution
+
+                   0 = None
+                   1 = Millimeter
+                   2 = Centimeter
+                   3 = Meter (ezdxf default)
+                   4 = Kilometer
+                   5 = Inch
+                   6 = Foot
+                   7 = Yard
+                   8 = Mile
+
+        """
+        self.objects.set_raster_variables(frame=frame, quality=quality, units=units)
 
     def add_underlay_def(self, filename, format='ext', name=None):
         """
@@ -356,6 +389,7 @@ class Drawing(object):
         self.header['$TDUPDATE'] = juliandate(now)
         self.header['$HANDSEED'] = str(self.entitydb.handles)
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
+        self.reset_versionguid()
 
     def _create_appids(self):
         def create_appid_if_not_exist(name, flags=0):
@@ -364,3 +398,9 @@ class Drawing(object):
 
         if self.dxfversion > 'AC1009':
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
+
+    def reset_fingerprintguid(self):
+        self.header['$FINGERPRINTGUID'] = guid()
+
+    def reset_versionguid(self):
+        self.header['$VERSIONGUID'] = guid()

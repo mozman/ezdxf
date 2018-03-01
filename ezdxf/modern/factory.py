@@ -42,6 +42,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'PDFDEFINITION': PdfDefinition,
     'DWFDEFINITION': DwfDefinition,
     'DGNDEFINITION': DgnDefinition,
+    'RASTERVARIABLES': dxfobjects.RasterVariables,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

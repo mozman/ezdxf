@@ -29,7 +29,11 @@ def new(dxfversion='AC1009'):
         dxfversion: DXF version specifier, default is AC1009
 
     """
-    return Drawing.new(dxfversion)
+    dwg = Drawing.new(dxfversion)
+    if dwg.dxfversion > 'AC1009':
+        dwg.reset_fingerprintguid()
+        dwg.reset_versionguid()
+    return dwg
 
 
 def read(stream, legacy_mode=True, dxfversion=None):
