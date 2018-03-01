@@ -17,7 +17,7 @@ def distance_t_array(points, func=lambda x: x):
 
 
 def uniform_t_array(points):
-    return list(range(len(points)))
+    return list(float(f) for f in range(len(points)))
 
 
 class CubicSpline(object):
@@ -71,7 +71,7 @@ class CubicSpline(object):
     def _create_array(self):
         return [0.] * self.count
 
-    def _cubic_spline(self, axis_vector, count):
+    def _cubic_spline(self, axis_vector, npnt):
         def get_delta_t_D(f):
             delta_t = self._create_array()
             D = self._create_array()
@@ -130,8 +130,8 @@ class CubicSpline(object):
 
         wt = 0.
         j = 0
-        dt = t[-1] / float(count - 1)
-        for _ in range(count - 1):
+        dt = t[-1] / float(npnt - 1)
+        for _ in range(npnt - 1):
             while (j <= n) and (t[j+1] < wt):
                 j += 1
             h = wt - t[j]

@@ -222,7 +222,7 @@ def spline_interpolation(vertices, subdivide=4):
 
     """
     spline = CubicSpline(vertices, method='uniform')
-    return list(spline.approximate(count=(len(vertices)-1)*subdivide+1))
+    return list(spline.approximate(count=(len(vertices) - 1) * subdivide + 1))
 
 
 def spline_interpolated_profiles(profiles, subdivide=4):

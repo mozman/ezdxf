@@ -7,7 +7,7 @@ import pytest
 import ezdxf
 from ezdxf.modern.image import ImageDef, Image
 from ezdxf.lldxf.extendedtags import ExtendedTags
-
+from ezdxf.algebra import Vector
 
 @pytest.fixture(scope='module')
 def dwg():
@@ -50,11 +50,12 @@ def test_image_dxf_attribs(image):
     assert 'DEAD' == image.dxf.image_def_reactor
     assert 1 == image.dxf.clipping_boundary_type
     assert 2 == image.dxf.count_boundary_points
-    assert [(0, 0), image.dxf.image_size] == image.get_boundary_path()
+    x, y = image.dxf.image_size
+    assert [(-.5, -.5), (x-.5, y-.5)] == image.get_boundary_path()
 
 
 def test_get_boundary_path(image):
-    assert [(0, 0), (640, 360)] == image.get_boundary_path()
+    assert [(-.5, -.5), (639.5, 359.5)] == image.get_boundary_path()
 
 
 def test_reset_boundary_path(image):
@@ -62,7 +63,8 @@ def test_reset_boundary_path(image):
     assert 2 == image.dxf.count_boundary_points
     assert image.get_flag_state(image.USE_CLIPPING_BOUNDARY) is False
     assert image.dxf.clipping == 0
-    assert [(0, 0), image.dxf.image_size] == image.get_boundary_path()
+    x, y = image.dxf.image_size
+    assert [(-.5, -.5), (x-.5, y-.5)] == image.get_boundary_path()
 
 
 def test_set_boundary_path(image):
@@ -111,7 +113,8 @@ def test_create_and_delete_image(new_dwg):
     assert 3 == image.dxf.flags
     assert 0 == image.dxf.clipping
     assert 2 == image.dxf.count_boundary_points
-    assert [(0, 0), image.dxf.image_size] == image.get_boundary_path()
+    x, y = image.dxf.image_size
+    assert [(-.5, -.5), (x-.5, y-.5)] == image.get_boundary_path()
 
     image_def2 = image.get_image_def()
     assert image_def.dxf.handle, image_def2.dxf.handle
@@ -213,11 +216,11 @@ DEAD
  91
         2
  14
-0.
+-.5
  24
-0.
+-.5
  14
-640.
+639.5
  24
-360.
+359.5
 """
