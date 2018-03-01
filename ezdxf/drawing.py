@@ -400,7 +400,9 @@ class Drawing(object):
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
     def reset_fingerprintguid(self):
-        self.header['$FINGERPRINTGUID'] = guid()
+        if self.dxfversion > 'AC1009':
+            self.header['$FINGERPRINTGUID'] = guid()
 
     def reset_versionguid(self):
-        self.header['$VERSIONGUID'] = guid()
+        if self.dxfversion > 'AC1009':
+            self.header['$VERSIONGUID'] = guid()

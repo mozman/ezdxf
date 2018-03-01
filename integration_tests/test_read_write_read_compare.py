@@ -84,6 +84,8 @@ def compare_tag_list(orig, copy):
 def compare_header_vars(orig_header, copy_header):
     compare_len(orig_header, copy_header)
     for key in orig_header.varnames():
+        if key == '$VERSIONGUID':  # saving creates a new $VERSIONGUID
+            continue
         value = orig_header[key]
         copy_value = copy_header[key]
         if isinstance(value, tuple):
