@@ -4,7 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 import ezdxf
-
+from ezdxf.algebra.bspline import bspline_control_frame
 
 def clone_spline():
     dwg = ezdxf.readfile("Spline_R2000.dxf")
@@ -86,6 +86,20 @@ def closed_rational_spline():
     dwg.saveas("Spline_R2000_closed_rational_spline.dxf")
 
 
+def spline_control_frame_from_fit_points():
+    dwg = ezdxf.new('R2000')
+    fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0), (4000, 750, 0)]
+
+    msp = dwg.modelspace()
+    spline = bspline_control_frame(fit_points, degree=3)
+    msp.add_polyline2d(fit_points, dxfattribs={'color': 2})
+    msp.add_polyline2d(spline.control_points, dxfattribs={'color': 3})
+    msp.add_polyline2d(list(spline.approximate(40)), dxfattribs={'color': 4})
+    msp.add_open_spline(spline.control_points, degree=3, dxfattribs={'color': 5})
+    # msp.add_spline(fit_points, degree=3, dxfattribs={'color': 6})
+    dwg.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
+
+
 if __name__ == '__main__':
     clone_spline()
     fit_spline()
@@ -95,3 +109,4 @@ if __name__ == '__main__':
     closed_spline()
     rational_spline()
     closed_rational_spline()
+    spline_control_frame_from_fit_points()

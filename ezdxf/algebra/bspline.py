@@ -197,8 +197,7 @@ If there are no pressing reasons for doing otherwise, your B-spline should be de
 
 """
 from .vector import Vector, distance
-from .base import is_close
-from .gauss import gaussian_elimination
+from .base import is_close, gauss
 
 from math import pow
 
@@ -278,70 +277,44 @@ def chord_length_t_vector(fit_points):
 def centripetal_t_vector(fit_points, power=.5):
     distances = [pow(distance(p1, p2), power) for p1, p2 in zip(fit_points, fit_points[1:])]
     total_length = sum(distances)
-    s = 0
+    s = 0.
     yield s
     for d in distances:
         s += d
         yield s / total_length
 
 
-class ControlFrame(object):
+def bspline_control_frame(fit_points, degree=3, method='chord length', power=.5):
     """
     Calculate B-spline control frame, given are the fit points and the degree of the B-spline.
 
-    You can choose from different calculation methods:
-
         1. method = 'uniform', gives a uniform t vector [0 .. count of fit points - 1]
         2. method = 'chord length', gives a t vector with values proportional to the fit point distances
-        3. method = 'centripetal', gives a t vector with values proportional to the fit point distances^power,
-                    'chord length' == 'centripetal' with power=1
+        3. method = 'centripetal', gives a t vector with values proportional to the fit point distances^power
+
+    Args:
+        fit_points: fit points of B-spline
+        degree: degree of B-spline
+        method: calculation method for t_vector
+        power: power for centripetal method
 
     """
-    def __init__(self, fit_points, degree=3):
-        self.fit_points = [Vector(p) for p in fit_points]
-        self.degree = int(degree)
-        if self.degree < 2:
-            raise ValueError('Invalid degree, degree >= 2 required.')
 
-        self.t_vector = []
-        self.control_points = []
-        self.knots = []
-
-    @property
-    def order(self):
-        return self.degree + 1
-
-    @property
-    def count(self):
-        return len(self.fit_points)
-
-    def run(self, method='chord length', power=.5):
-        """
-        Execute control frame calculation. You can choose from different calculation methods:
-
-            1. method = 'uniform', gives a uniform t vector [0 .. count of fit points - 1]
-            2. method = 'chord length', gives a t vector with values proportional to the fit point distances
-            3. method = 'centripetal', gives a t vector with values proportional to the fit point distances^power
-
-        Args:
-            method: calculation method for t_vector
-            power: power for centripetal method
-
-        """
-        self.t_vector = self._create_t_vector(method, power)
-        self.knots = list(control_frame_knots(self.count-1, self.degree, self.t_vector))
-        self.control_points = global_curve_interpolation(self.fit_points, self.degree, self.t_vector, self.knots)
-        return self.control_points
-
-    def _create_t_vector(self, method, power=.5):
+    def create_t_vector():
         if method.startswith('uniform'):
-            return list(uniform_t_vector(self.fit_points))  # equally spaced 0 .. 1
+            return list(uniform_t_vector(fit_points))  # equally spaced 0 .. 1
         elif method.startswith('chord'):
-            return list(chord_length_t_vector(self.fit_points))
+            return list(chord_length_t_vector(fit_points))
         elif method.startswith('centripetal'):
-            return list(centripetal_t_vector(self.fit_points, power=power))
+            return list(centripetal_t_vector(fit_points, power=power))
         else:
             raise ValueError('Unknown method: {}'.format(method))
+    count = len(fit_points)
+    t_vector = create_t_vector()
+    knots = list(control_frame_knots(count-1, degree, t_vector))
+    control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
+    spline = BSpline(control_points, order=degree+1, knots=knots)
+    return spline
 
 
 def control_frame_knots(n, p, t_vector):
@@ -434,7 +407,7 @@ def global_curve_interpolation(fit_points, degree, t_vector, knots):
                 row = list(row)
                 row.append(D[index][axis])
                 m.append(row)
-            result.append(gaussian_elimination(m))
+            result.append(gauss(m))
         return [Vector(x, y, z) for x, y, z in zip(result[0], result[1], result[2])]
 
     N = create_matrix_N()
@@ -470,6 +443,13 @@ class BSpline(object):
     @property
     def count(self):
         return self._cp_count
+
+    @property
+    def degree(self):
+        return self.order-1
+
+    def get_knot_values(self):
+        return self.knots[1:]  # 1-based array
 
     def _step_size(self, segments):
         return self.max_t / float(segments)

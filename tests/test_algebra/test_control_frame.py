@@ -1,5 +1,5 @@
 import pytest
-from ezdxf.algebra.bspline import ControlFrame
+from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import uniform_t_vector, chord_length_t_vector, centripetal_t_vector
 from ezdxf.algebra.bspline import control_frame_knots
 from ezdxf.algebra.bspline import bspline_basis, bspline_basis_vector, bspline_vertex
@@ -88,6 +88,5 @@ def test_compare_basis(fit_points):
 
 
 def test_control_frame():
-    cf = ControlFrame(POINTS1, degree=3)
-    cpoints = cf.run()
-    assert len(cpoints) == len(POINTS1)
+    spline = bspline_control_frame(POINTS1, degree=3)
+    assert len(spline.control_points) == len(POINTS1)
