@@ -34,7 +34,7 @@ class GaussianElimination(object):
             tmp = 0.0
             for k in range(j + 1, self.rank):
                 tmp += a[j][k] * x[k]
-            x[j] = (a[j][self.rank + 1] - tmp) / a[j][j]
+            x[j] = (a[j][self.rank] - tmp) / a[j][j]
 
 
 def gaussian_elimination(matrix):
