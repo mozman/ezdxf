@@ -1,9 +1,7 @@
 # Created: 2012.01.03
 # Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
-from .vector import Vector, distance
 """
-
 B-Splines
 =========
 
@@ -198,6 +196,7 @@ If there are no pressing reasons for doing otherwise, your B-spline should be de
     - uniform (for a closed curve) or open uniform (for an open curve) knot vector.
 
 """
+from .vector import Vector
 
 
 def one_based_array(values, decor=lambda x: x):
@@ -262,6 +261,23 @@ def required_knot_values(count, order):
     return n + p + 2
 
 
+class ControlFrame(object):
+    def __init__(self, fit_points, method='coord length', t_vector=None):
+        self.fit_points = list(fit_points)
+        self.method = method
+        self.t_vector = [] if t_vector is None else list(t_vector)
+        if len(self.t_vector):
+            self.method = 'user defined'
+            if len(self.fit_points) != len(self.t_vector):
+                raise ValueError('Length of t_vector != fit point count.')
+        self.control_points = []
+        self.knots = []
+        self.run()
+
+    def run(self):
+        pass
+
+
 class BSpline(object):
     """
     Calculate the points of a B-Spline curve, using an uniform open knot vector.
@@ -300,7 +316,8 @@ class BSpline(object):
             yield self.point(point_index * step)
 
     def point(self, t):
-        """ Get point at SplineCurve(t) as tuple (x, y, z).
+        """
+        Get point at SplineCurve(t) as tuple (x, y, z).
 
         Args:
             t: parameter in range [0, max_t]
@@ -487,7 +504,7 @@ def weighting(nbasis, weights):
 
 class RBSpline(BSpline):
     """
-    Calculate the points of a rational B-Spline curve, using an uniform open knot vector.
+    Calculate the points of a rational B-spline curve, using an uniform open knot vector.
 
     """
     def __init__(self, control_points, weights, order=4, knots=None):
@@ -503,7 +520,7 @@ class RBSpline(BSpline):
 
 class RBSplineU(BSplineU):
     """
-    Calculate the points of a rational B-Spline curve, using an uniform knot vector.
+    Calculate the points of a rational B-spline curve, using an uniform knot vector.
 
     """
     def __init__(self, control_points, weights, order=4):
@@ -517,7 +534,7 @@ class RBSplineU(BSplineU):
 
 class RBSplineClosed(RBSplineU):
     """
-    Calculate the points of a cloased rational B-Spline curve, using an uniform knot vector.
+    Calculate the points of a closed rational B-spline curve, using an uniform knot vector.
 
     """
     def __init__(self, control_points, weights, order=4):

@@ -237,7 +237,7 @@ class Drawing(object):
             name = filename
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
-    def set_raster_variables(self, frame=0, quality=1, units=3):
+    def set_raster_variables(self, frame=0, quality=1, units='m'):
         """
         Set raster variables.
 
@@ -247,15 +247,15 @@ class Drawing(object):
             units: units for inserting images. This is what one drawing unit is equal to for the purpose of inserting
                    and scaling images with an associated resolution
 
-                   0 = None
-                   1 = Millimeter
-                   2 = Centimeter
-                   3 = Meter (ezdxf default)
-                   4 = Kilometer
-                   5 = Inch
-                   6 = Foot
-                   7 = Yard
-                   8 = Mile
+                   'mm' = Millimeter
+                   'cm' = Centimeter
+                   'm' = Meter (ezdxf default)
+                   'km' = Kilometer
+                   'in' = Inch
+                   'ft' = Foot
+                   'yd' = Yard
+                   'mi' = Mile
+                   everything else is None
 
         """
         self.objects.set_raster_variables(frame=frame, quality=quality, units=units)

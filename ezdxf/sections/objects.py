@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
 from .abstract import AbstractSection
-from ..lldxf.const import DXFStructureError, DXFValueError
+from ..lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS
 from ..modern.groups import DXFGroupTable
 from ..entityspace import EntitySpace
 
@@ -76,8 +76,9 @@ class ObjectsSection(AbstractSection):
             'default': default,
         })
 
-    def set_raster_variables(self, frame=0, qualtity=1, units=3):
+    def set_raster_variables(self, frame=0, qualtity=1, units='m'):
         raster_vars_handle = self.rootdict.get('ACAD_IMAGE_VARS', None)
+        units = RASTER_UNITS.get(units, 0)
         if raster_vars_handle is None:
             owner = self.rootdict.dxf.handle
             raster_vars = self.create_new_dxf_entity('RASTERVARIABLES', dxfattribs={
