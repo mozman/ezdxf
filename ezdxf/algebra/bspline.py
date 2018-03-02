@@ -299,7 +299,6 @@ def bspline_control_frame(fit_points, degree=3, method='chord length', power=.5)
         power: power for centripetal method
 
     """
-
     def create_t_vector():
         if method.startswith('uniform'):
             return list(uniform_t_vector(fit_points))  # equally spaced 0 .. 1
@@ -339,62 +338,11 @@ def control_frame_knots(n, p, t_vector):
         yield t_vector[-1]
 
 
-def bspline_basis(u, index, degree, knots):
-    """
-    Naive implementation of B-spline basis function.
-
-    Args:
-        u: curve parameter in range [0 .. max(knots)]
-        index: index of control point
-        degree: degree of B-spline
-        knots: knots vector
-
-    Returns: basis value N_i,p(u)
-
-    """
-    cache = {}
-    u = float(u)
-
-    def N(i, p):
-        try:
-            return cache[(i, p)]
-        except KeyError:
-            if p == 0:
-                retval = 1 if knots[i] <= u < knots[i+1] else 0.
-            else:
-                dominator = (knots[i+p]-knots[i])
-                f1 = (u-knots[i]) / dominator * N(i, p-1) if dominator != 0. else 0.
-
-                dominator = (knots[i+p+1]-knots[i+1])
-                f2 = (knots[i+p+1]-u) / dominator * N(i+1, p-1) if dominator != 0. else 0.
-
-                retval = f1 + f2
-            cache[(i, p)] = retval
-            return retval
-
-    return N(int(index), int(degree))
-
-
-def bspline_basis_vector(u, count, degree, knots):
-    basis = [bspline_basis(u, index, degree, knots) for index in range(count)]
-    if is_close(u, knots[-1]):  # pick up last point ??? why is this necessary ???
-        basis[-1] = 1.
-    return basis
-
-
-def bspline_vertex(u, degree, control_points, knots):
-    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
-
-    vertex = Vector()
-    for basis, point in zip(basis_vector, control_points):
-        vertex += Vector(point) * basis
-    return vertex
-
-
 def global_curve_interpolation(fit_points, degree, t_vector, knots):
     def create_matrix_N():
+        spline = BSpline(fit_points, order=degree+1, knots=knots)
         count = len(fit_points)
-        return [bspline_basis_vector(t, count, degree, knots) for t in t_vector]
+        return [spline.basis(t)[1:count+1] for t in t_vector]
 
     def create_matrix_D():
         return [Vector(p) for p in fit_points]
@@ -428,13 +376,13 @@ class BSpline(object):
         self.order = order
         self.nplusc = self._cp_count + self.order  # == n + p + 2
         if knots is None:
-            self.knots = one_based_array(knot_open_uniform(self._cp_count, self.order))
+            self._knots = one_based_array(knot_open_uniform(self._cp_count, self.order))
         else:
             if len(knots) != self.nplusc:
                 raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
-            self.knots = one_based_array(knots)
+            self._knots = one_based_array(knots)
 
-        self.max_t = max(self.knots)
+        self.max_t = max(self._knots)
 
     @property
     def control_points(self):
@@ -449,7 +397,7 @@ class BSpline(object):
         return self.order-1
 
     def get_knot_values(self):
-        return self.knots[1:]  # 1-based array
+        return self._knots[1:]  # 1-based array
 
     def _step_size(self, segments):
         return self.max_t / float(segments)
@@ -480,10 +428,10 @@ class BSpline(object):
     def create_nbasis(self, t):
         # calculate the first order basis functions n[i][1]
         # for 1-base array, first value is a dummy value/ignored
-        return [1. if k1 <= t < k2 else 0. for k1, k2 in zip(self.knots, self.knots[1:])]
+        return [1. if k1 <= t < k2 else 0. for k1, k2 in zip(self._knots, self._knots[1:])]
 
     def basis(self, t):
-        knots = self.knots
+        knots = self._knots
         nbasis = self.create_nbasis(t)
         # calculate the higher order basis functions
         for k in range(2, self.order + 1):
@@ -553,7 +501,7 @@ class DBSplineMixin(object):
         return point, d1, d2
 
     def dbasis(self, t):
-        knots = self.knots
+        knots = self._knots
         nbasis = self.create_nbasis2(t)
         d1nbasis = [0.] * (self.nplusc+1)  # [0] is a dummy value, 1-based array
         d2nbasis = d1nbasis[:]
@@ -590,7 +538,7 @@ class DBSpline(DBSplineMixin, BSpline):
     """
     def create_nbasis2(self, t):
         nbasis = self.create_nbasis(t)
-        if t == self.knots[self.nplusc]:  # nplusc = n + p + 2 = last knot value
+        if t == self._knots[self.nplusc]:  # nplusc = n + p + 2 = last knot value
             nbasis[self._cp_count] = 1.
         return nbasis
 
@@ -603,7 +551,7 @@ class DBSplineU(DBSplineMixin, BSplineU):
     def create_nbasis2(self, t):
         npts = self._cp_count
         nbasis = self.create_nbasis(t)
-        if t == self.knots[npts+1]:
+        if t == self._knots[npts + 1]:
             nbasis[npts] = 1.
             nbasis[npts+1] = 0.
         return nbasis

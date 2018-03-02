@@ -12,6 +12,7 @@ Version 0.8.7 - dev
    * NEW: move entity from actual layout to another layout by entity.move_to_layout(layout)
    * NEW: support for splines by control points: add_open_spline(), add_closed_spline(), add_rational_spline(),
      add_closed_rational_spline()
+   * NEW: bspline_control_frame() calculates B-spline control points from fit points, but not the same as AutoCAD
    * NEW: R12Spline add-on, 2d B-spline with control frame support by AutoCAD, but curve is just an approximated POLYLINE
    * NEW: added entity.get_flag_state() and entity.set_flag_state() for easy access to binary coded flags
    * NEW: set new $FINGERPRINTGUID for new drawings
