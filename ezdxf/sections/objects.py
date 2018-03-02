@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
 from .abstract import AbstractSection
-from ..lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS
+from ..lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ..modern.groups import DXFGroupTable
 from ..entityspace import EntitySpace
 
@@ -76,23 +76,23 @@ class ObjectsSection(AbstractSection):
             'default': default,
         })
 
-    def set_raster_variables(self, frame=0, qualtity=1, units='m'):
-        raster_vars_handle = self.rootdict.get('ACAD_IMAGE_VARS', None)
+    def set_raster_variables(self, frame=0, quality=1, units='m'):
         units = RASTER_UNITS.get(units, 0)
-        if raster_vars_handle is None:
+        try:
+            raster_vars = self.rootdict.get_entity('ACAD_IMAGE_VARS')
+        except DXFKeyError:
             owner = self.rootdict.dxf.handle
             raster_vars = self.create_new_dxf_entity('RASTERVARIABLES', dxfattribs={
                 'owner': owner,
                 'frame': frame,
-                'quality': qualtity,
+                'quality': quality,
                 'units': units,
             })
             raster_vars.set_reactors([owner])
             self.rootdict['ACAD_IMAGE_VARS'] = raster_vars.dxf.handle
         else:
-            raster_vars = self.dxffactory.wrap_handle(raster_vars_handle)
             raster_vars.dxf.frame = frame
-            raster_vars.dxf.quality = qualtity
+            raster_vars.dxf.quality = quality
             raster_vars.dxf.units = units
 
     def add_image_def(self, filename, size_in_pixel, name=None):

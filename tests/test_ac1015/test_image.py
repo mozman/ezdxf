@@ -7,17 +7,36 @@ import pytest
 import ezdxf
 from ezdxf.modern.image import ImageDef, Image
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.algebra import Vector
+
 
 @pytest.fixture(scope='module')
 def dwg():
-    return ezdxf.new('AC1015')
+    return ezdxf.new('R2000')
 
 
 @pytest.fixture(scope='module')
 def image_def(dwg):
     tags = ExtendedTags.from_text(IMAGE_DEF)
     return ImageDef(tags, dwg)
+
+
+def test_set_raster_variables():
+    dwg = ezdxf.new('R2000')
+    assert 'ACAD_IMAGE_VARS' not in dwg.rootdict
+    dwg.set_raster_variables(frame=0, quality=1, units='m')
+    raster_vars = dwg.rootdict.get_entity('ACAD_IMAGE_VARS')
+    assert raster_vars.dxftype() == 'RASTERVARIABLES'
+    assert raster_vars.dxf.frame == 0
+    assert raster_vars.dxf.quality == 1
+    assert raster_vars.dxf.units == 3  # m
+
+    assert 'ACAD_IMAGE_VARS' in dwg.rootdict
+    dwg.set_raster_variables(frame=1, quality=0, units='km')
+    raster_vars = dwg.rootdict.get_entity('ACAD_IMAGE_VARS')
+    assert raster_vars.dxftype() == 'RASTERVARIABLES'
+    assert raster_vars.dxf.frame == 1
+    assert raster_vars.dxf.quality == 0
+    assert raster_vars.dxf.units == 4  # km
 
 
 def test_imagedef_attribs(image_def):

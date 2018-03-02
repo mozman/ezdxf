@@ -232,7 +232,7 @@ class Drawing(object):
             raise DXFVersionError('The IMAGE entity needs at least DXF version R2000 or later.')
 
         if 'ACAD_IMAGE_VARS' not in self.rootdict:
-            self.objects.set_raster_variables(frame=0, qualtity=1, units=3)
+            self.objects.set_raster_variables(frame=0, quality=1, units=3)
         if name is None:
             name = filename
         return self.objects.add_image_def(filename, size_in_pixel, name)
