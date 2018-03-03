@@ -6,6 +6,8 @@ from __future__ import unicode_literals
 import ezdxf
 from ezdxf.addons import Spline
 from ezdxf.algebra import Vector, Matrix44
+from ezdxf.algebra.bspline import bspline_control_frame
+
 
 next_frame = Matrix44.translate(0, 5, 0)
 right_frame = Matrix44.translate(10, 0, 0)
@@ -24,10 +26,11 @@ spline_points = [Vector(p) for p in [(1., 1.), (2.5, 3.), (4.5, 2.), (6.5, 4.)]]
 
 # fit points
 draw(spline_points)
-# Spline(spline_points).render_as_fit_points(msp, method='distance', dxfattribs={'color': 2})  # curve with definition points as fit points
+Spline(spline_points).render_as_fit_points(msp, method='distance', dxfattribs={'color': 2})  # curve with definition points as fit points
 Spline(spline_points).render_as_fit_points(msp, method='uniform', dxfattribs={'color': 3})
-Spline(spline_points).render_as_fit_points(msp, method=lambda x: x**.5, dxfattribs={'color': 4})  # centripetal ^ 1/2
-Spline(spline_points).render_as_fit_points(msp, method=lambda x: x**(1./3.), dxfattribs={'color': 6})  # centripetal ^ 1/3
+Spline(spline_points).render_as_fit_points(msp, method='centripetal', dxfattribs={'color': 4})  # distance ^ 1/2
+Spline(spline_points).render_as_fit_points(msp, method='centripetal', power=1./3., dxfattribs={'color': 6})  # distance ^ 1/3
+
 msp.add_spline(fit_points=spline_points, dxfattribs={'color': 1})
 msp.add_text("Spline.render_as_fit_points() differs from AutoCAD fit point rendering", dxfattribs={'height': .1}).set_pos(spline_points[0])
 

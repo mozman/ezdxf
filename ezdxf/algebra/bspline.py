@@ -270,7 +270,7 @@ def uniform_t_vector(fit_points):
         yield float(t) / n
 
 
-def chord_length_t_vector(fit_points):
+def distance_t_vector(fit_points):
     return centripetal_t_vector(fit_points, power=1)
 
 
@@ -284,12 +284,12 @@ def centripetal_t_vector(fit_points, power=.5):
         yield s / total_length
 
 
-def bspline_control_frame(fit_points, degree=3, method='chord length', power=.5):
+def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
     """
     Calculate B-spline control frame, given are the fit points and the degree of the B-spline.
 
         1. method = 'uniform', gives a uniform t vector [0 .. count of fit points - 1]
-        2. method = 'chord length', gives a t vector with values proportional to the fit point distances
+        2. method = 'distance', gives a t vector with values proportional to the fit point distances
         3. method = 'centripetal', gives a t vector with values proportional to the fit point distances^power
 
     Args:
@@ -300,11 +300,11 @@ def bspline_control_frame(fit_points, degree=3, method='chord length', power=.5)
 
     """
     def create_t_vector():
-        if method.startswith('uniform'):
+        if method == 'uniform':
             return list(uniform_t_vector(fit_points))  # equally spaced 0 .. 1
-        elif method.startswith('chord'):
-            return list(chord_length_t_vector(fit_points))
-        elif method.startswith('centripetal'):
+        elif method == 'distance':
+            return list(distance_t_vector(fit_points))
+        elif method == 'centripetal':
             return list(centripetal_t_vector(fit_points, power=power))
         else:
             raise ValueError('Unknown method: {}'.format(method))
@@ -396,7 +396,7 @@ class BSpline(object):
     def degree(self):
         return self.order-1
 
-    def get_knot_values(self):
+    def knot_values(self):
         return self._knots[1:]  # 1-based array
 
     def _step_size(self, segments):

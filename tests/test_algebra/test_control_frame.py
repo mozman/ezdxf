@@ -1,6 +1,6 @@
 import pytest
 from ezdxf.algebra.bspline import bspline_control_frame
-from ezdxf.algebra.bspline import uniform_t_vector, chord_length_t_vector, centripetal_t_vector
+from ezdxf.algebra.bspline import uniform_t_vector, distance_t_vector, centripetal_t_vector
 from ezdxf.algebra.bspline import control_frame_knots
 
 POINTS1 = [(1, 1), (2, 4), (4, 1), (7, 6)]
@@ -22,7 +22,7 @@ def test_uniform_t_array(fit_points):
 
 
 def test_chord_length_t_array(fit_points):
-    t_vector = list(chord_length_t_vector(fit_points))
+    t_vector = list(distance_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
     assert t_vector[0] == 0.
     assert t_vector[-1] == 1.

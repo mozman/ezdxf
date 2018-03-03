@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from math import sin, cos, radians, fmod
 from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.base import is_close
-from ezdxf.algebra.cspline import CubicSpline
+from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.algebra.bspline import RBSpline, RBSplineU, RBSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
@@ -145,7 +145,7 @@ class Spline(object):
         self.points = points
         self.segments = int(segments)
 
-    def render_as_fit_points(self, layout, method='distance', dxfattribs=None):
+    def render_as_fit_points(self, layout, degree=3, method='distance', power=.5, dxfattribs=None):
         """
         Render a cubic Spline as 2d/3d polyline, where the definition points are fit points.
 
@@ -154,15 +154,18 @@ class Spline(object):
 
         Args:
             layout: ezdxf layout
-            method: 'distance' or 'uniform'
+            degree: degree of B-spline
+            method: 'uniform', 'distance',  or 'centripetal'
+            power: power for 'centripetal', default is distance ^ .5
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = CubicSpline(self.points, method=method)
-        if spline.spatial:
-            layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
+        spline = bspline_control_frame(self.points, degree=degree, method=method, power=power)
+        vertices = list(spline.approximate(self.segments))
+        if any(v.z != 0. for v in vertices):
+            layout.add_polyline3d(vertices, dxfattribs=dxfattribs)
         else:
-            layout.add_polyline2d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
+            layout.add_polyline2d(vertices, dxfattribs=dxfattribs)
     render = render_as_fit_points
 
     def render_open_bspline(self, layout, degree=3, dxfattribs=None):

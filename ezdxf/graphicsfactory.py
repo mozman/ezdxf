@@ -233,24 +233,32 @@ class GraphicsFactory(object):
             spline.set_fit_points(list(fit_points))
         return spline
 
-    def add_open_spline(self, control_points, degree=3, dxfattribs=None):
+    def add_open_spline(self, control_points, degree=3, knots=None, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_uniform(list(control_points), degree)
+        if knots is not None:
+            spline.set_knot_values(list(knots))
         return spline
 
-    def add_closed_spline(self, control_points, degree=3, dxfattribs=None):
+    def add_closed_spline(self, control_points, degree=3, knots=None, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic(list(control_points), degree)
+        if knots is not None:
+            spline.set_knot_values(list(knots))
         return spline
 
-    def add_rational_spline(self, control_points, weights, degree=3, dxfattribs=None):
+    def add_rational_spline(self, control_points, weights, degree=3, knots=None, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(list(control_points), weights, degree)
+        if knots is not None:
+            spline.set_knot_values(list(knots))
         return spline
 
-    def add_closed_rational_spline(self, control_points, weights, degree=3, dxfattribs=None):
+    def add_closed_rational_spline(self, control_points, weights, degree=3, knots=None, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic_rational(list(control_points), weights, degree)
+        if knots is not None:
+            spline.set_knot_values(list(knots))
         return spline
 
     def add_body(self, acis_data=None, dxfattribs=None):
