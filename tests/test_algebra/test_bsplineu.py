@@ -35,7 +35,6 @@ def iter_data(result, n):
     return zip(iter_points(result, n), iter_points(DBSPLINEU, n))
 
 
-@pytest.mark.skip(reason='FU')
 def test_dbsplineu_points(dbsplineu):
     for rpoint, epoint in iter_data(dbsplineu, 0):
         epx, epy, epz = epoint
@@ -45,7 +44,6 @@ def test_dbsplineu_points(dbsplineu):
         assert equals_almost(epz, rpz)
 
 
-@pytest.mark.skip(reason='FU')
 def test_dbsplineu_derivative_1(dbsplineu):
     for rpoint, epoint in iter_data(dbsplineu, 1):
         epx, epy, epz = epoint
@@ -55,7 +53,6 @@ def test_dbsplineu_derivative_1(dbsplineu):
         assert equals_almost(epz, rpz)
 
 
-@pytest.mark.skip(reason='FU')
 def test_dbsplineu_derivative_2(dbsplineu):
     for rpoint, epoint in iter_data(dbsplineu, 2):
         epx, epy, epz = epoint

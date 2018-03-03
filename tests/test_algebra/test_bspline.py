@@ -2,7 +2,7 @@
 # Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.algebra.bspline import BSpline, DBSpline, Knots, DKnots
+from ezdxf.algebra.bspline import BSpline, DBSpline, Basis, DBasis
 from ezdxf.algebra.base import equals_almost
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -34,7 +34,6 @@ def iter_data(result, n):
     return zip(iter_points(result, n), iter_points(DBSPLINE, n))
 
 
-@pytest.mark.skip(reason='FU')
 def test_dbspline_points(dbspline):
     for rpoint, epoint in iter_data(dbspline, 0):
         epx, epy, epz = epoint
@@ -44,7 +43,6 @@ def test_dbspline_points(dbspline):
         assert equals_almost(epz, rpz)
 
 
-@pytest.mark.skip(reason='FU')
 def test_dbspline_derivative_1(dbspline):
     for rpoint, epoint in iter_data(dbspline, 1):
         epx, epy, epz = epoint
@@ -54,7 +52,6 @@ def test_dbspline_derivative_1(dbspline):
         assert equals_almost(epz, rpz)
 
 
-@pytest.mark.skip(reason='FU')
 def test_dbspline_derivative_2(dbspline):
     for rpoint, epoint in iter_data(dbspline, 2):
         epx, epy, epz = epoint

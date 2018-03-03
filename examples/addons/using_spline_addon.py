@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import ezdxf
 from ezdxf.addons import Spline
 from ezdxf.algebra import Vector, Matrix44
-from ezdxf.algebra.bspline import bspline_control_frame
 
 
 next_frame = Matrix44.translate(0, 5, 0)

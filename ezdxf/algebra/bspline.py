@@ -364,8 +364,8 @@ def control_frame_knots(n, p, t_vector):
 
 def global_curve_interpolation(fit_points, degree, t_vector, knots):
     def create_matrix_N():
-        spline = BSpline(fit_points, order=degree+1, knots=knots)
-        return [spline.basis_values(t) for t in t_vector]
+        spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
+        return [spline.basis(t) for t in t_vector]
 
     def create_matrix_D():
         return [Vector(p) for p in fit_points]
@@ -386,7 +386,7 @@ def global_curve_interpolation(fit_points, degree, t_vector, knots):
     return solve(D, N)
 
 
-class Knots(object):
+class Basis(object):
     def __init__(self, knots, order, count, weights=None):
         self.knots = list(knots)
         self.order = order
@@ -403,7 +403,7 @@ class Knots(object):
 
     def create_nbasis(self, t):
         """
-        Calculate the first order basis functions n[i][1]
+        Calculate the first order basis functions N[i][1]
 
         Returns: list of basis values
 
@@ -421,7 +421,7 @@ class Knots(object):
                 nbasis[i] = d + e
         if is_close(t, self.max_t):  # pick up last point
             nbasis[self.count-1] = 1.
-        if self. weights is None:
+        if self.weights is None:
             return nbasis[:self.count]
         else:
             return self.weighting(nbasis[:self.count])
@@ -432,10 +432,10 @@ class Knots(object):
         return [0.0]*self.count if s == 0.0 else [p/s for p in products]
 
 
-class DKnots(Knots):
+class DBasis(Basis):
     def basis(self, t):
         knots = self.knots
-        nbasis = self.create_nbasis(t)
+        nbasis = self.create_nbasis2(t)
         d1nbasis = [0.] * self.nplusc
         d2nbasis = d1nbasis[:]
 
@@ -460,20 +460,24 @@ class DKnots(Knots):
                 nbasis[i] = b1 + b2
                 d1nbasis[i] = f1 + f2 + f3 + f4
                 d2nbasis[i] = s1 + s2 + s3 + s4
+                
+        count = self.count
+        if self.weights is None:
+            return nbasis[:count], d1nbasis[:count], d2nbasis[:count]
+        else:
+            self.weighting(nbasis[:count]), self.weighting(d1nbasis[:count]), self.weighting(d2nbasis[:count])
 
-        return nbasis[:self.count], d1nbasis[:self.count], d2nbasis[:self.count]
-
-    def create_nbasis(self, t):
-        nbasis = super(DKnots, self).create_nbasis(t)
+    def create_nbasis2(self, t):
+        nbasis = self.create_nbasis(t)
         if is_close(t, self.max_t):
-            nbasis[self.count] = 1.
+            nbasis[self.count-1] = 1.
         return nbasis
 
 
-class DKnotsU(DKnots):
-    def create_nbasis(self, t):
-        nbasis = super(DKnotsU, self).create_nbasis(t)
-        if is_close(t, self.max_t):
+class DBasisU(DBasis):
+    def create_nbasis2(self, t):
+        nbasis = self.create_nbasis(t)
+        if is_close(t, self.knots[self.count]):
             nbasis[self.count-1] = 1.
             nbasis[self.count] = 0.
         return nbasis
@@ -487,40 +491,32 @@ class BSpline(object):
 
     """
     def __init__(self, control_points, order=4, knots=None, weights=None):
-        self._control_points = [Vector(p) for p in control_points]
-        self._cp_count = len(control_points)  # control points count
+        self.control_points = [Vector(p) for p in control_points]
+        self.count = len(control_points)  # control points count
         self.order = order
-        self.nplusc = self._cp_count + self.order  # == n + p + 2
+        self.nplusc = self.count + self.order  # == n + p + 2
 
         if knots is None:
-            knots = knot_open_uniform(self._cp_count, self.order)
+            knots = knot_open_uniform(self.count, self.order)
         else:
             if len(knots) != self.nplusc:
                 raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
             knots = list(knots)
-        self.knot_vector = Knots(knots, self.order, self.count, weights=weights)
+        self.basis = Basis(knots, self.order, self.count, weights=weights)
 
     @property
     def max_t(self):
-        return self.knot_vector.max_t
-
-    @property
-    def control_points(self):
-        return self._control_points
-
-    @property
-    def count(self):
-        return self._cp_count
+        return self.basis.max_t
 
     @property
     def degree(self):
         return self.order-1
 
     def knot_values(self):
-        return self.knot_vector.knots
+        return self.basis.knots
 
     def basis_values(self, t):
-        return self.knot_vector.basis(t)
+        return self.basis.basis(t)
 
     def step_size(self, segments):
         return self.max_t / float(segments)
@@ -544,7 +540,7 @@ class BSpline(object):
             t = self.max_t
 
         p = Vector()
-        for control_point, basis in zip(self._control_points, self.basis_values(t)):
+        for control_point, basis in zip(self.control_points, self.basis_values(t)):
             p += control_point * basis
         return p
 
@@ -577,6 +573,9 @@ class BSplineClosed(BSplineU):
         # control points wrap around
         points = control_points[:]
         points.extend(points[:order-1])
+        if weights is not None:
+            weights = list(weights)
+            weights.extend(weights[:order - 1])
         super(BSplineClosed, self).__init__(points, order=order, weights=weights)
 
 
@@ -590,15 +589,14 @@ class DerivativePoint(object):
             t: parameter in range [0, max_t]
 
         """
-        if is_close(self.max_t, t) < 5e-6:
+        if is_close(self.max_t, t):
             t = self.max_t
 
         nbasis, d1nbasis, d2nbasis = self.basis_values(t)
         point = Vector()
         d1 = Vector()
         d2 = Vector()
-        for i in range(self.count):
-            control_point = self.control_points[i]
+        for i, control_point in enumerate(self.control_points):
             point += control_point * nbasis[i]
             d1 += control_point * d1nbasis[i]
             d2 += control_point * d2nbasis[i]
@@ -610,9 +608,9 @@ class DBSpline(DerivativePoint, BSpline):
     Calculate the Points and Derivative of a B-Spline curve.
 
     """
-    def __init__(self, control_points, order=4, knots=None):
-        super(DBSpline, self).__init__(control_points, order=order, knots=knots)
-        self.knot_vector = DKnots(self.knot_values(), self.order, self.count)
+    def __init__(self, control_points, order=4, knots=None, weights=None):
+        super(DBSpline, self).__init__(control_points, order=order, knots=knots, weights=weights)
+        self.basis = DBasis(self.knot_values(), self.order, self.count)
 
 
 class DBSplineU(DerivativePoint, BSplineU):
@@ -620,9 +618,20 @@ class DBSplineU(DerivativePoint, BSplineU):
     Calculate the Points and Derivative of a B-SplineU curve.
 
     """
-    def __init__(self, control_points, order=4):
-        super(DBSplineU, self).__init__(control_points, order=order)
-        self.knot_vector = DKnotsU(self.knot_values(), self.order, self.count)
+    def __init__(self, control_points, order=4, weights=None):
+        super(DBSplineU, self).__init__(control_points, order=order, weights=weights)
+        self.basis = DBasisU(self.knot_values(), self.order, self.count)
+
+
+class DBSplineClosed(DerivativePoint, BSplineClosed):
+    """
+    Calculate the Points and Derivative of a closed B-Spline curve.
+
+    UNTESTED!
+    """
+    def __init__(self, control_points, order=4, weights=None):
+        super(DBSplineClosed, self).__init__(control_points, order=order, weights=weights)
+        self.basis = DBasisU(self.knot_values(), self.order, self.count)
 
 
 
