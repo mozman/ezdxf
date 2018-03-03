@@ -210,7 +210,10 @@ class DXFDictionary(DXFObject):
         except DXFKeyError:
             dxf_dict = self.add_new_dict(key)
         else:
-            dxf_dict = self.dxffactory.wrap_handle(dict_handle)
+            if dict_handle not in self.entitydb:  # invalid handle
+                dxf_dict = self.add_new_dict(key)
+            else:
+                dxf_dict = self.dxffactory.wrap_handle(dict_handle)
         return dxf_dict
 
     def audit(self, auditor):
