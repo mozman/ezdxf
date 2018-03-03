@@ -5,7 +5,7 @@
 from math import pi, sin, cos
 from ezdxf.algebra import Vector, Matrix44
 from ezdxf.algebra.base import is_close_points, is_close
-from ezdxf.algebra.cspline import CubicSpline
+from ezdxf.algebra.bspline import bspline_control_frame
 from .mesh import MeshBuilder, MeshVertexMerger
 
 
@@ -210,19 +210,24 @@ def from_profiles_linear(profiles, close=True, caps=False):
     return mesh
 
 
-def spline_interpolation(vertices, subdivide=4):
+def spline_interpolation(vertices, degree=3, method='uniform', power=.5, subdivide=4):
     """
-    Cubic spline interpolation, vertices are fit points for the spline definition.
+    B-spline interpolation, vertices are fit points for the spline definition.
+
+    Only method 'uniform', yields vertices at fit points.
 
     Args:
         vertices: fit points
+        degree: degree of B-spline
+        method: 'uniform', 'distance',  or 'centripetal'
+        power: power for 'centripetal', default is distance ^ .5
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 
     Returns: list of vertices
 
     """
-    spline = CubicSpline(vertices, method='uniform')
-    return list(spline.approximate(count=(len(vertices) - 1) * subdivide + 1))
+    spline = bspline_control_frame(vertices, degree=degree, method=method, power=power)
+    return list(spline.approximate(segments=(len(vertices)-1)*subdivide))
 
 
 def spline_interpolated_profiles(profiles, subdivide=4):

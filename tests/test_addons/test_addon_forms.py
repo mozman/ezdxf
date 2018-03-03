@@ -80,7 +80,7 @@ def test_cylinder():
 
 def test_spline_interpolation():
     vertices = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
-    result = spline_interpolation(vertices, subdivide=4)
+    result = spline_interpolation(vertices, method='uniform', subdivide=4)
     assert len(result) == 13  # (len-1) * subdivide + 1
     assert is_close_points((0, 0, 0), result[0]), 'expected start point'
     assert is_close_points((5, 3, 0), result[-1]), 'expected end point'
