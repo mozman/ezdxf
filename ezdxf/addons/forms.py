@@ -219,7 +219,7 @@ def spline_interpolation(vertices, degree=3, method='uniform', power=.5, subdivi
     Args:
         vertices: fit points
         degree: degree of B-spline
-        method: 'uniform', 'distance',  or 'centripetal'
+        method: 'uniform', 'distance' or 'centripetal', calculation method for parameter t
         power: power for 'centripetal', default is distance ^ .5
         subdivide: count of sub vertices + 1, e.g. 4 creates 3 sub-vertices
 

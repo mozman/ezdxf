@@ -8,7 +8,6 @@ from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.base import is_close
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
-from ezdxf.algebra.bspline import RBSpline, RBSplineU, RBSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
 from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
 
@@ -145,24 +144,39 @@ class Spline(object):
         self.points = points
         self.segments = int(segments)
 
+    def subdivide(self, segments=4):
+        """
+        Calculate overall segment count, where segments is the sub-segment count, segments=4, means 4 line segments
+        between two definition points e.g. 4 definition points and 4 segments = 12 overall segments, useful for fit
+        point rendering.
+
+        Args:
+            segments: sub-segments count between two definition points
+
+        """
+        self.segments = (len(self.points)-1) * segments
+
     def render_as_fit_points(self, layout, degree=3, method='distance', power=.5, dxfattribs=None):
         """
-        Render a cubic Spline as 2d/3d polyline, where the definition points are fit points.
+        Render a B-spline as 2d/3d polyline, where the definition points are fit points.
 
-        2d points in -> add_polyline2d()
-        3d points in -> add_polyline3d()
+           - 2d points in -> add_polyline2d()
+           - 3d points in -> add_polyline3d()
+
+        To get vertices at fit points, use method='uniform' and use Spline.subdivide(count), where
+        count is the sub-segment count, count=4, means 4 line segments between two definition points.
 
         Args:
             layout: ezdxf layout
             degree: degree of B-spline
-            method: 'uniform', 'distance',  or 'centripetal'
+            method: 'uniform', 'distance' or 'centripetal', calculation method for parameter t
             power: power for 'centripetal', default is distance ^ .5
             dxfattribs: DXF attributes for POLYLINE
 
         """
         spline = bspline_control_frame(self.points, degree=degree, method=method, power=power)
         vertices = list(spline.approximate(self.segments))
-        if any(v.z != 0. for v in vertices):
+        if any(vertex.z != 0. for vertex in vertices):
             layout.add_polyline3d(vertices, dxfattribs=dxfattribs)
         else:
             layout.add_polyline2d(vertices, dxfattribs=dxfattribs)
@@ -218,7 +232,7 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = RBSpline(self.points, weights=weights, order=degree+1)
+        spline = BSpline(self.points, order=degree+1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
     def render_uniform_rbspline(self, layout, weights, degree=3, dxfattribs=None):
@@ -232,7 +246,7 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = RBSplineU(self.points, weights=weights, order=degree+1)
+        spline = BSplineU(self.points, order=degree+1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
     def render_closed_rbspline(self, layout, weights, degree=3, dxfattribs=None):
@@ -246,7 +260,7 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = RBSplineClosed(self.points, weights=weights, order=degree+1)
+        spline = BSplineClosed(self.points, order=degree+1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
 
