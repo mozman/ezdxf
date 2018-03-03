@@ -222,14 +222,7 @@ rather than normal 3D coordinates.
 """
 from .vector import Vector, distance
 from .base import is_close, gauss
-
 from math import pow
-
-
-def one_based_array(values, decor=lambda x: x):
-    newlist = [0.]
-    newlist.extend(decor(value) for value in values)
-    return newlist
 
 
 def knot_open_uniform(n, order):
@@ -460,7 +453,7 @@ class DBasis(Basis):
                 nbasis[i] = b1 + b2
                 d1nbasis[i] = f1 + f2 + f3 + f4
                 d2nbasis[i] = s1 + s2 + s3 + s4
-                
+
         count = self.count
         if self.weights is None:
             return nbasis[:count], d1nbasis[:count], d2nbasis[:count]
