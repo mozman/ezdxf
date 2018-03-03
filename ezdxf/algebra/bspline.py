@@ -305,32 +305,33 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
     """
     Calculate B-spline control frame, given are the fit points and the degree of the B-spline.
 
-        1. method = 'uniform', gives a uniform t vector [0 .. count of fit points - 1]
-        2. method = 'distance', gives a t vector with values proportional to the fit point distances
-        3. method = 'centripetal', gives a t vector with values proportional to the fit point distances^power
+        1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
+        2. method = 'distance', creates a t vector with values proportional to the fit point distances
+        3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
 
     Args:
         fit_points: fit points of B-spline
         degree: degree of B-spline
-        method: calculation method for t_vector
+        method: calculation method for parameter vector t
         power: power for centripetal method
 
     """
     def create_t_vector():
         if method == 'uniform':
-            return list(uniform_t_vector(fit_points))  # equally spaced 0 .. 1
+            return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
         elif method == 'distance':
-            return list(distance_t_vector(fit_points))
+            return distance_t_vector(fit_points)
         elif method == 'centripetal':
-            return list(centripetal_t_vector(fit_points, power=power))
+            return centripetal_t_vector(fit_points, power=power)
         else:
             raise ValueError('Unknown method: {}'.format(method))
+
+    fit_points = list(fit_points)
     count = len(fit_points)
-    t_vector = create_t_vector()
+    t_vector = list(create_t_vector())
     knots = list(control_frame_knots(count-1, degree, t_vector))
     control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
-    spline = BSpline(control_points, order=degree+1, knots=knots)
-    return spline
+    return BSpline(control_points, order=degree+1, knots=knots)
 
 
 def control_frame_knots(n, p, t_vector):
@@ -363,20 +364,17 @@ def global_curve_interpolation(fit_points, degree, t_vector, knots):
     def create_matrix_D():
         return [Vector(p) for p in fit_points]
 
-    def solve(D, N):
-        result = []
-        for axis in (0, 1, 2):
-            m = []
-            for index, row in enumerate(N):
-                row = list(row)
-                row.append(D[index][axis])
-                m.append(row)
-            result.append(gauss(m))
-        return [Vector(x, y, z) for x, y, z in zip(result[0], result[1], result[2])]
-
     N = create_matrix_N()
     D = create_matrix_D()
-    return solve(D, N)
+    result = []
+    for axis in (0, 1, 2):
+        m = []
+        for index, row in enumerate(N):
+            row = list(row)
+            row.append(D[index][axis])
+            m.append(row)
+        result.append(gauss(m))
+    return [Vector(x, y, z) for x, y, z in zip(result[0], result[1], result[2])]
 
 
 class Basis(object):
@@ -478,7 +476,7 @@ class DBasisU(DBasis):
 
 class BSpline(object):
     """
-    Calculate the points of a B-Spline curve, using an uniform open knot vector.
+    Calculate the points of a B-spline curve, using an uniform open knot vector ("clamped").
 
     Accepts 2d points as definition points, but output ist always 3d (z-axis is 0).
 
@@ -487,14 +485,15 @@ class BSpline(object):
         self.control_points = [Vector(p) for p in control_points]
         self.count = len(control_points)  # control points count
         self.order = order
-        self.nplusc = self.count + self.order  # == n + p + 2
+        self.nplusc = self.count + self.order  # equals n + p + 2
 
         if knots is None:
             knots = knot_open_uniform(self.count, self.order)
         else:
+            knots = list(knots)
             if len(knots) != self.nplusc:
                 raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
-            knots = list(knots)
+
         self.basis = Basis(knots, self.order, self.count, weights=weights)
 
     @property
@@ -540,7 +539,7 @@ class BSpline(object):
 
 class BSplineU(BSpline):
     """
-    Calculate the points of a B-Spline curve, uniform (periodic) knot vector.
+    Calculate the points of a B-spline curve, uniform (periodic) knot vector (not "clamped").
 
     """
     def __init__(self, control_points, order=4, weights=None):
@@ -559,7 +558,7 @@ class BSplineU(BSpline):
 
 class BSplineClosed(BSplineU):
     """
-    Calculate the points of a closed uniform B-Spline curve.
+    Calculate the points of a closed uniform B-spline curve.
 
     """
     def __init__(self, control_points, order=4, weights=None):
@@ -575,7 +574,7 @@ class BSplineClosed(BSplineU):
 class DerivativePoint(object):
     def point(self, t):
         """
-        Get point, 1st and 2nd derivative at B-Spline(t) as tuple (p, d1, d3),
+        Get point, 1st and 2nd derivative at B-spline(t) as tuple (p, d1, d3),
         where p, d1 nad d2 is a tuple (x, y, z).
 
         Args:
@@ -598,7 +597,7 @@ class DerivativePoint(object):
 
 class DBSpline(DerivativePoint, BSpline):
     """
-    Calculate the Points and Derivative of a B-Spline curve.
+    Calculate the Points and Derivative of an open uniform B-spline curve ("clamped").
 
     """
     def __init__(self, control_points, order=4, knots=None, weights=None):
@@ -608,7 +607,7 @@ class DBSpline(DerivativePoint, BSpline):
 
 class DBSplineU(DerivativePoint, BSplineU):
     """
-    Calculate the Points and Derivative of a B-SplineU curve.
+    Calculate the Points and Derivative of an uniform B-spline curve (not "clamped").
 
     """
     def __init__(self, control_points, order=4, weights=None):
@@ -618,7 +617,7 @@ class DBSplineU(DerivativePoint, BSplineU):
 
 class DBSplineClosed(DerivativePoint, BSplineClosed):
     """
-    Calculate the Points and Derivative of a closed B-Spline curve.
+    Calculate the Points and Derivative of a closed B-spline curve.
 
     UNTESTED!
     """
