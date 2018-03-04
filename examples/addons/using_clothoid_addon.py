@@ -27,8 +27,6 @@ msp.add_line((-20, 0), (20, 0), dxfattribs={'linetype': "PHANTOM"})
 msp.add_line((0, -20), (0, 20), dxfattribs={'linetype': "PHANTOM"})
 for rotation in [0, 30, 45, 60, 75, 90]:
     four_c(10., 25, rotation)
-auditor = dwg.auditor()
-result = auditor.run()
 
 if dwg.validate(print_report=True):
     dwg.saveas(NAME)
