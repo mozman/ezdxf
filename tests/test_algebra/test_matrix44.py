@@ -64,11 +64,15 @@ class TestMatrix44(unittest.TestCase):
         self.assertEqual(matrix.get_row(2), (8.0, 9.0, 10.0, 11.0))
         self.assertEqual(matrix.get_row(3), (12.0, 13.0, 14.0, 15.0))
 
-    def test_from_iter(self):
-        values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-        matrix = Matrix44.from_iter(values)
-        for v1, m1 in zip(values, matrix):
-            self.assertAlmostEqual(v1, m1)
+    def test_invalid_init(self):
+        with self.assertRaises(ValueError):
+            Matrix44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15, 16))
+        with self.assertRaises(ValueError):
+            Matrix44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), )
+        with self.assertRaises(ValueError):
+            Matrix44([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+        with self.assertRaises(ValueError):
+            Matrix44([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
 
     def test_iter(self):
         values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]

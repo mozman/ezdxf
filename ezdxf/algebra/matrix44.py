@@ -2,15 +2,17 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Adaptation for package geoalg (ezdxf), API is not compatible to gameobjects.Matrix44
-# Author: mozman
 # Created: 19.04.2010
-# Purpose: 4x4 matrix math
-# module belongs to package ezdxf
+# Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-
 from math import sin, cos, tan
-from array import array
+from itertools import chain
+
+# removed array.array because array is optimized for space not speed, and space optimization is not needed
+
+
+def floats(items):
+    return [float(v) for v in items]
 
 
 class Matrix44(object):
@@ -24,27 +26,38 @@ class Matrix44(object):
 
     def __init__(self, *args):
         """
-        If no parameteres are given, the Matrix44 is initialised to identity.
+        Matrix44() is the identity matrix.
 
-        If 1 parameter is given it should be an iterable with the 16 components
-        of the matrix.
+        Matrix44(values) values is an iterable with the 16 components of the matrix.
 
-        If 4 parameters are given they should be 4 sequences of up to 4 values.
-        Missing values in each row are padded out with values from the identity matrix
-        (so you can use Vector3's or tuples of 3 values).
+        Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
         """
-        self.matrix = array('d', Matrix44._identity)
+        self.matrix = None
+        self.set(*args)
+
+    def set(self, *args):
+        """
+        Reset matrix values.
+
+        set() creates the identity matrix.
+
+        set(values) values is an iterable with the 16 components of the matrix.
+
+        set(row1, row2, row3, row4) four rows, each row with four values.
+
+        """
         nargs = len(args)
         if nargs == 0:
-            return
+            self.matrix = floats(Matrix44._identity)
         elif nargs == 1:
-            self.matrix = array('d', args[0])
+            self.matrix = floats(args[0])
         elif nargs == 4:
-            for index, row in enumerate(args):
-                self.set_row(index, row)
+            self.matrix = floats(chain(*args))
         else:
             raise ValueError("Invalid count of arguments (4 row vectors or one list with 16 values).")
+        if len(self.matrix) != 16:
+            raise ValueError("Invalid matrix count")
 
     def __repr__(self):
         def format_row(row):
@@ -58,7 +71,7 @@ class Matrix44(object):
 
     def set_row(self, row, values):
         index = row * 4
-        self.matrix[index:index+len(values)] = array('d', values)
+        self.matrix[index:index+len(values)] = floats(values)
 
     def get_col(self, col):
         """Returns a column as a tuple of 4 values."""
@@ -74,26 +87,8 @@ class Matrix44(object):
         m[col + 8] = float(c)
         m[col + 12] = float(d)
 
-    def set(self, row0, row1, row2, row3):
-        """
-        Sets all four rows of the matrix.
-        """
-        for index, row in enumerate((row0, row1, row2, row3)):
-            self.set_row(index, row)
-
-    @classmethod
-    def from_iter(cls, iterable):
-        """
-        Creates a Matrix44 from an iterable of 16 values.
-        """
-        matrix = cls()
-        matrix.matrix = array('d', iterable)
-        if len(matrix.matrix) != 16:
-            raise ValueError("Iterable must have 16 values")
-        return matrix
-
     def copy(self):
-        return self.from_iter(self.matrix)
+        return self.__class__(self.matrix)
     __copy__ = copy
 
     @classmethod
@@ -116,7 +111,7 @@ class Matrix44(object):
         if scale_z is None:
             scale_z = scale_x
 
-        return cls.from_iter([
+        return cls([
             float(scale_x), 0., 0., 0.,
             0., float(scale_y), 0., 0.,
             0., 0., float(scale_z), 0.,
@@ -128,7 +123,7 @@ class Matrix44(object):
         """
         Creates a translation Matrix44 to (x, y, z).
         """
-        return cls.from_iter([
+        return cls([
             1., 0., 0., 0.,
             0., 1., 0., 0.,
             0., 0., 1., 0.,
@@ -145,7 +140,7 @@ class Matrix44(object):
         """
         cos_a = cos(angle)
         sin_a = sin(angle)
-        return cls.from_iter([
+        return cls([
             1., 0., 0., 0.,
             0., cos_a, sin_a, 0.,
             0., -sin_a, cos_a, 0.,
@@ -162,7 +157,7 @@ class Matrix44(object):
         """
         cos_a = cos(angle)
         sin_a = sin(angle)
-        return cls.from_iter([
+        return cls([
             cos_a, 0., -sin_a, 0.,
             0., 1., 0., 0.,
             sin_a, 0., cos_a, 0.,
@@ -179,7 +174,7 @@ class Matrix44(object):
         """
         cos_a = cos(angle)
         sin_a = sin(angle)
-        return cls.from_iter([
+        return cls([
             cos_a, sin_a, 0., 0.,
             -sin_a, cos_a, 0., 0.,
             0., 0., 1., 0.,
@@ -199,7 +194,7 @@ class Matrix44(object):
         s = sin(angle)
         omc = 1. - c
         x, y, z = axis
-        return cls.from_iter([
+        return cls([
             x*x*omc+c, y*x*omc+z*s, x*z*omc-y*s, 0.,
             x*y*omc-z*s, y*y*omc+c, y*z*omc+x*s, 0.,
             x*z*omc+y*s, y*z*omc-x*s, z*z*omc+c, 0.,
@@ -226,7 +221,7 @@ class Matrix44(object):
         sxsy = sx*sy
         cxsy = cx*sy
 
-        return cls.from_iter([
+        return cls([
             cy*cz, sxsy*cz+cx*sz, -cxsy*cz+sx*sz, 0.,
             -cy*sz, -sxsy*sz+cx*cz, cxsy*sz+sx*cz, 0.,
             sy, -sx*cy, cx*cy, 0.,
@@ -245,7 +240,7 @@ class Matrix44(object):
         far -- Coordinate of the far clipping plane
 
         """
-        return cls.from_iter([
+        return cls([
             (2.*near)/(right-left), 0., 0., 0.,
             0., (2.*near)/(top-bottom), 0., 0.,
             (right+left)/(right-left), (top+bottom)/(top-bottom), -((far+near)/(far-near)), -1.,
@@ -326,7 +321,7 @@ class Matrix44(object):
         """
         m1 = self.matrix
         m2 = other.matrix
-        self.matrix = array('d', [
+        self.matrix = [
             m1[0] * m2[0] + m1[1] * m2[4] + m1[2] * m2[8] + m1[3] * m2[12],
             m1[0] * m2[1] + m1[1] * m2[5] + m1[2] * m2[9] + m1[3] * m2[13],
             m1[0] * m2[2] + m1[1] * m2[6] + m1[2] * m2[10] + m1[3] * m2[14],
@@ -346,7 +341,7 @@ class Matrix44(object):
             m1[12] * m2[1] + m1[13] * m2[5] + m1[14] * m2[9] + m1[15] * m2[13],
             m1[12] * m2[2] + m1[13] * m2[6] + m1[14] * m2[10] + m1[15] * m2[14],
             m1[12] * m2[3] + m1[13] * m2[7] + m1[14] * m2[11] + m1[15] * m2[15]
-        ])
+        ]
         return self
 
     def fast_mul(self, other):
@@ -359,7 +354,7 @@ class Matrix44(object):
         """
         m1 = self.matrix
         m2 = other.matrix
-        self.matrix = array('d', [
+        self.matrix = [
             m1[0] * m2[0] + m1[1] * m2[4] + m1[2] * m2[8],
             m1[0] * m2[1] + m1[1] * m2[5] + m1[2] * m2[9],
             m1[0] * m2[2] + m1[1] * m2[6] + m1[2] * m2[10],
@@ -379,7 +374,7 @@ class Matrix44(object):
             m1[12] * m2[1] + m1[13] * m2[5] + m1[14] * m2[9] + m2[13],
             m1[12] * m2[2] + m1[13] * m2[6] + m1[14] * m2[10] + m2[14],
             1.0
-        ])
+        ]
         return self
 
     def rows(self):
@@ -428,12 +423,12 @@ class Matrix44(object):
         m20, m21, m22, m23, \
         m30, m31, m32, m33 = self.matrix
 
-        self.matrix = array('d', [
+        self.matrix = [
             m00, m10, m20, m30,
             m01, m11, m21, m31,
             m02, m12, m22, m32,
             m03, m13, m23, m33
-        ])
+        ]
 
     def get_transpose(self):
         """
@@ -467,7 +462,7 @@ class Matrix44(object):
         m10, m11, m12, m13, \
         m20, m21, m22, m23, \
         m30, m31, m32, m33 = self.matrix
-        self.matrix = array('d', (
+        self.matrix = [
             (m12*m23*m31 - m13*m22*m31 + m13*m21*m32 - m11*m23*m32 - m12*m21*m33 + m11*m22*m33)*f,
             (m03*m22*m31 - m02*m23*m31 - m03*m21*m32 + m01*m23*m32 + m02*m21*m33 - m01*m22*m33)*f,
             (m02*m13*m31 - m03*m12*m31 + m03*m11*m32 - m01*m13*m32 - m02*m11*m33 + m01*m12*m33)*f,
@@ -483,4 +478,5 @@ class Matrix44(object):
             (m12*m21*m30 - m11*m22*m30 - m12*m20*m31 + m10*m22*m31 + m11*m20*m32 - m10*m21*m32)*f,
             (m01*m22*m30 - m02*m21*m30 + m02*m20*m31 - m00*m22*m31 - m01*m20*m32 + m00*m21*m32)*f,
             (m02*m11*m30 - m01*m12*m30 - m02*m10*m31 + m00*m12*m31 + m01*m10*m32 - m00*m11*m32)*f,
-            (m01*m12*m20 - m02*m11*m20 + m02*m10*m21 - m00*m12*m21 - m01*m10*m22 + m00*m11*m22)*f))
+            (m01*m12*m20 - m02*m11*m20 + m02*m10*m21 - m00*m12*m21 - m01*m10*m22 + m00*m11*m22)*f,
+        ]

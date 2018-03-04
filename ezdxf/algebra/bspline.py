@@ -374,7 +374,7 @@ def global_curve_interpolation(fit_points, degree, t_vector, knots):
             row.append(D[index][axis])
             m.append(row)
         result.append(gauss(m))
-    return [Vector(x, y, z) for x, y, z in zip(result[0], result[1], result[2])]
+    return Vector.list(zip(result[0], result[1], result[2]))
 
 
 class Basis(object):
@@ -482,7 +482,7 @@ class BSpline(object):
 
     """
     def __init__(self, control_points, order=4, knots=None, weights=None):
-        self.control_points = [Vector(p) for p in control_points]
+        self.control_points = Vector.list(control_points)
         self.count = len(control_points)  # control points count
         self.order = order
         self.nplusc = self.count + self.order  # equals n + p + 2
