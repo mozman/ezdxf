@@ -376,6 +376,25 @@ class Drawing(object):
         from ezdxf.audit.auditor import Auditor
         return Auditor(self)
 
+    def validate(self, print_report=True):
+        """
+        Simple way to run an audit process.
+
+        Args:
+            print_report: print report to stdout
+
+        Returns: True if no errors occurred else False
+
+        """
+        auditor = self.auditor()
+        result = auditor.run()
+        if len(result):
+            if print_report:
+                auditor.print_report()
+            return False
+        else:
+            return True
+
     def update_class_instance_counters(self):
         if 'classes' in self.sections:
             self.sections.classes.update_instance_counters()

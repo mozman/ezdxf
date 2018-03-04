@@ -16,7 +16,7 @@ def four_c(A, length, rotation):
 
 def render(clothoid, dxfattribs):
     clothoid.render(msp, segments=100, dxfattribs=dxfattribs)
-    clothoid.render_spline(msp, segments=10, dxfattribs={'color': 5, 'linetype': "DASHED"})
+    clothoid.render_spline(msp, segments=10, dxfattribs={'color': 6, 'linetype': "DASHED"})
 
 
 NAME = 'clothoid.dxf'
@@ -27,5 +27,9 @@ msp.add_line((-20, 0), (20, 0), dxfattribs={'linetype': "PHANTOM"})
 msp.add_line((0, -20), (0, 20), dxfattribs={'linetype': "PHANTOM"})
 for rotation in [0, 30, 45, 60, 75, 90]:
     four_c(10., 25, rotation)
-dwg.saveas(NAME)
-print("drawing '%s' created.\n" % NAME)
+auditor = dwg.auditor()
+result = auditor.run()
+
+if dwg.validate(print_report=True):
+    dwg.saveas(NAME)
+    print("drawing '%s' created.\n" % NAME)

@@ -1,7 +1,8 @@
 # Created: 26.03.2010
 # License: MIT License
-from ezdxf.algebra import Vector, BSpline
-from ezdxf.algebra.bspline import control_frame_knots, uniform_t_vector, bspline_control_frame
+from ezdxf.algebra import Vector
+from ezdxf.algebra.bspline import bspline_control_frame
+
 
 class Clothoid(object):
     """

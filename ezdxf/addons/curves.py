@@ -287,9 +287,9 @@ class Clothoid(object):
                 point = Vector(-point[0], point[1])
             yield self.start + point.rot_z_rad(rotation)
 
-    def render_spline(self, layout, segments=10, dxfattribs=None):
+    def render_spline(self, layout, segments=10, degree=3, dxfattribs=None):
         clothoid = _ClothoidValues(self.paramA)
-        spline = clothoid.bspline(self.length, segments)
+        spline = clothoid.bspline(self.length, segments, degree=degree)
         points = self.transform(spline.control_points)
         layout.add_open_spline(
             control_points=points,
