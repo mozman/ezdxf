@@ -207,7 +207,7 @@ Returns orthogonal 2D vector, z value is unchanged.
 
 .. method:: Vector.lerp(other, factor=.5)
 
-Linear interpolation between self and other, returns new Vector() object.
+Linear interpolation between vector and other, returns new Vector() object.
 
     :param other: target vector/point
     :param factor: interpolation factor (0==self, 1=other, 0.5=mid point)
