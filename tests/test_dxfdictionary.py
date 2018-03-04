@@ -1,148 +1,155 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test dxf dictionary
 # Created: 22.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-import unittest
-
+import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
 
 
-class TestNoneEmptyDXFDict(unittest.TestCase):
-    def setUp(self):
-        self.dxfdict = DXFDictionary(ExtendedTags.from_text(ROOTDICT))
+class TestNoneEmptyDXFDict:
+    @pytest.fixture
+    def dxfdict(self):
+        return DXFDictionary(ExtendedTags.from_text(ROOTDICT))
 
-    def test_getitem(self):
-        self.assertEqual(self.dxfdict['ACAD_PLOTSTYLENAME'], 'E')
+    def test_getitem(self, dxfdict):
+        assert dxfdict['ACAD_PLOTSTYLENAME'] == 'E'
 
-    def test_len(self):
-        self.assertEqual(14, len(self.dxfdict))
+    def test_len(self, dxfdict):
+        assert 14 == len(dxfdict)
 
-    def test_getitem_with_keyerror(self):
-        with self.assertRaises(ezdxf.DXFKeyError):
-            self.dxfdict['MOZMAN']
+    def test_getitem_with_keyerror(self, dxfdict):
+        with pytest.raises(ezdxf.DXFKeyError):
+            dxfdict['MOZMAN']
 
-    def test_owner(self):
-        self.assertEqual(self.dxfdict.dxf.owner, '0')
+    def test_owner(self, dxfdict):
+        assert dxfdict.dxf.owner == '0'
 
-    def test_handle(self):
-        self.assertEqual(self.dxfdict.dxf.handle, 'C')
+    def test_handle(self, dxfdict):
+        assert dxfdict.dxf.handle == 'C'
 
-    def test_get(self):
-        self.assertEqual(self.dxfdict.get('ACAD_MOZMAN', 'XXX'), 'XXX')
+    def test_get(self, dxfdict):
+        assert dxfdict.get('ACAD_MOZMAN', 'XXX') == 'XXX'
 
-    def test_get_entity(self):
+    def test_get_entity(self, dxfdict):
         # returns just the handle, because no associated drawing exists
-        self.assertEqual('E', self.dxfdict.get_entity('ACAD_PLOTSTYLENAME'))
+        assert 'E' == dxfdict.get_entity('ACAD_PLOTSTYLENAME')
 
-    def test_get_with_keyerror(self):
-        with self.assertRaises(ezdxf.DXFKeyError):
-            self.dxfdict.get('ACAD_MOZMAN')
+    def test_get_with_keyerror(self, dxfdict):
+        with pytest.raises(ezdxf.DXFKeyError):
+            dxfdict.get('ACAD_MOZMAN')
 
-    def test_contains(self):
-        self.assertTrue('ACAD_PLOTSTYLENAME' in self.dxfdict)
+    def test_contains(self, dxfdict):
+        assert 'ACAD_PLOTSTYLENAME' in dxfdict
 
-    def test_not_contains(self):
-        self.assertFalse('MOZMAN' in self.dxfdict)
+    def test_not_contains(self, dxfdict):
+        assert 'MOZMAN' not in dxfdict
 
-    def test_delete_existing_key(self):
-        del self.dxfdict['ACAD_PLOTSTYLENAME']
-        self.assertFalse('ACAD_PLOTSTYLENAME' in self.dxfdict)
-        self.assertEqual(13, len(self.dxfdict))
+    def test_delete_existing_key(self, dxfdict):
+        del dxfdict['ACAD_PLOTSTYLENAME']
+        assert 'ACAD_PLOTSTYLENAME' not in dxfdict
+        assert 13 == len(dxfdict)
 
-    def test_delete_not_existing_key(self):
-        with self.assertRaises(ezdxf.DXFKeyError):
-            del self.dxfdict['MOZMAN']
+    def test_delete_not_existing_key(self, dxfdict):
+        with pytest.raises(ezdxf.DXFKeyError):
+            del dxfdict['MOZMAN']
 
-    def test_remove_existing_key(self):
-        self.dxfdict.remove('ACAD_PLOTSTYLENAME')
-        self.assertFalse('ACAD_PLOTSTYLENAME' in self.dxfdict)
-        self.assertEqual(13, len(self.dxfdict))
+    def test_remove_existing_key(self, dxfdict):
+        dxfdict.remove('ACAD_PLOTSTYLENAME')
+        assert 'ACAD_PLOTSTYLENAME' not in dxfdict
+        assert 13 == len(dxfdict)
 
-    def test_remove_not_existing_key(self):
-        with self.assertRaises(ezdxf.DXFKeyError):
-            self.dxfdict.remove('MOZMAN')
+    def test_remove_not_existing_key(self, dxfdict):
+        with pytest.raises(ezdxf.DXFKeyError):
+            dxfdict.remove('MOZMAN')
 
-    def test_discard_existing_key(self):
-        self.dxfdict.discard('ACAD_PLOTSTYLENAME')
-        self.assertFalse('ACAD_PLOTSTYLENAME' in self.dxfdict)
-        self.assertEqual(13, len(self.dxfdict))
+    def test_discard_existing_key(self, dxfdict):
+        dxfdict.discard('ACAD_PLOTSTYLENAME')
+        assert 'ACAD_PLOTSTYLENAME' not in dxfdict
+        assert 13 == len(dxfdict)
 
-    def test_discard_not_existing_key(self):
-        self.dxfdict.discard('MOZMAN')
-        self.assertEqual(14, len(self.dxfdict))
+    def test_discard_not_existing_key(self, dxfdict):
+        dxfdict.discard('MOZMAN')
+        assert 14 == len(dxfdict)
 
-    def test_clear(self):
-        self.assertEqual(14, len(self.dxfdict))
-        self.dxfdict.clear()
-        self.assertEqual(0, len(self.dxfdict))
-
-
-class TestEmptyDXFDict(unittest.TestCase):
-    def setUp(self):
-        self.dxfdict = DXFDictionary(ExtendedTags.from_text(EMPTY_DICT))
-
-    def test_len(self):
-        self.assertEqual(0, len(self.dxfdict))
-
-    def test_add_first_item(self):
-        self.dxfdict['TEST'] = "HANDLE"
-        self.assertEqual(1, len(self.dxfdict))
-        self.assertEqual("HANDLE", self.dxfdict['TEST'])
-
-    def test_add_first_item_2(self):
-        self.dxfdict.add(key='TEST', value="HANDLE")
-        self.assertEqual(1, len(self.dxfdict))
-        self.assertEqual("HANDLE", self.dxfdict['TEST'])
-
-    def test_add_and_replace_first_item(self):
-        self.dxfdict['TEST'] = "HANDLE"
-        self.assertEqual(1, len(self.dxfdict))
-        self.assertEqual("HANDLE", self.dxfdict['TEST'])
-        self.dxfdict['TEST'] = "HANDLE2"
-        self.assertEqual(1, len(self.dxfdict))
-        self.assertEqual("HANDLE2", self.dxfdict['TEST'])
-
-    def test_clear(self):
-        self.assertEqual(0, len(self.dxfdict))
-        self.dxfdict.clear()
-        self.assertEqual(0, len(self.dxfdict))
+    def test_clear(self, dxfdict):
+        assert 14 == len(dxfdict)
+        dxfdict.clear()
+        assert 0 == len(dxfdict)
 
 
-class TestDXFDictSubDictCreation(unittest.TestCase):
-    def setUp(self):  # this tests require a proper setup DXF drawing
-        self.dwg = ezdxf.new('AC1015')
+class TestEmptyDXFDict:
+    @pytest.fixture
+    def dxfdict(self):
+        return DXFDictionary(ExtendedTags.from_text(EMPTY_DICT))
 
-    def test_add_sub_dict(self):
-        rootdict = self.dwg.rootdict
-        self.assertFalse('MOZMAN_TEST' in rootdict)
-        new_dict = rootdict.get_required_dict('MOZMAN_TEST')
-        self.assertEqual('DICTIONARY', new_dict.dxftype())
-        self.assertTrue('MOZMAN_TEST' in rootdict)
+    def test_len(self, dxfdict):
+        assert 0 == len(dxfdict)
+
+    def test_add_first_item(self, dxfdict):
+        dxfdict['TEST'] = "HANDLE"
+        assert 1 == len(dxfdict)
+        assert "HANDLE" == dxfdict['TEST']
+
+    def test_add_first_item_2(self, dxfdict):
+        dxfdict.add(key='TEST', value="HANDLE")
+        assert 1 == len(dxfdict)
+        assert "HANDLE" == dxfdict['TEST']
+
+    def test_add_and_replace_first_item(self, dxfdict):
+        dxfdict['TEST'] = "HANDLE"
+        assert 1 == len(dxfdict)
+        assert "HANDLE" == dxfdict['TEST']
+        dxfdict['TEST'] = "HANDLE2"
+        assert 1 == len(dxfdict)
+        assert "HANDLE2" == dxfdict['TEST']
+
+    def test_clear(self, dxfdict):
+        assert 0 == len(dxfdict)
+        dxfdict.clear()
+        assert 0 == len(dxfdict)
 
 
-class TestDXFDictWithDefault(unittest.TestCase):
-    def setUp(self):
-        self.dxfdict = DXFDictionaryWithDefault(ExtendedTags.from_text(DEFAULT_DICT))
+@pytest.fixture(scope='module')
+def dwg():
+    return ezdxf.new('R2000')
 
-    def test_get_existing_value(self):
-        self.assertEqual('F', self.dxfdict['Normal'])
 
-    def test_get_not_existing_value(self):
-        self.assertEqual('F', self.dxfdict['Mozman'])
+def test_get_entity_invalid_handle(dwg):
+    dwg.rootdict['TEST'] = '0'
+    with pytest.raises(ezdxf.DXFKeyError):
+        dwg.rootdict.get_entity('TEST')
 
-    def test_get_default_value(self):
-        self.assertEqual('F', self.dxfdict.dxf.default)
+    dxfdict = dwg.rootdict.get_required_dict('TEST')
+    assert dxfdict.dxftype() == 'DICTIONARY', 'previous statement should not raise an exception'
 
-    def test_set_default_value(self):
-        self.dxfdict.dxf.default = "MOZMAN"
-        self.assertEqual('MOZMAN', self.dxfdict['Mozman'])
+
+def test_add_sub_dict(dwg):
+    rootdict = dwg.rootdict
+    assert 'MOZMAN_TEST' not in rootdict
+    new_dict = rootdict.get_required_dict('MOZMAN_TEST')
+    assert 'DICTIONARY' == new_dict.dxftype()
+    assert 'MOZMAN_TEST' in rootdict
+
+
+class TestDXFDictWithDefault:
+    @pytest.fixture
+    def dxfdict(self):
+        return DXFDictionaryWithDefault(ExtendedTags.from_text(DEFAULT_DICT))
+
+    def test_get_existing_value(self, dxfdict):
+        assert 'F' == dxfdict['Normal']
+
+    def test_get_not_existing_value(self, dxfdict):
+        assert 'F' == dxfdict['Mozman']
+
+    def test_get_default_value(self, dxfdict):
+        assert 'F' == dxfdict.dxf.default
+
+    def test_set_default_value(self, dxfdict):
+        dxfdict.dxf.default = "MOZMAN"
+        assert 'MOZMAN' == dxfdict['Mozman']
 
 
 ROOTDICT = """  0
@@ -250,6 +257,3 @@ AcDbDictionaryWithDefault
 340
 F
 """
-
-if __name__ == '__main__':
-    unittest.main()

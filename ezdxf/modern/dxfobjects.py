@@ -206,14 +206,9 @@ class DXFDictionary(DXFObject):
 
     def get_required_dict(self, key):
         try:
-            dict_handle = self.get(key)
+            dxf_dict = self.get_entity(key)
         except DXFKeyError:
             dxf_dict = self.add_new_dict(key)
-        else:
-            if dict_handle not in self.entitydb:  # invalid handle
-                dxf_dict = self.add_new_dict(key)
-            else:
-                dxf_dict = self.dxffactory.wrap_handle(dict_handle)
         return dxf_dict
 
     def audit(self, auditor):

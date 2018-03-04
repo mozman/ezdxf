@@ -2,7 +2,7 @@
 
 .. module:: ezdxf.algebra
 
-This utilities are located at :code:`ezdxf.algebra`::
+This utilities are located at :mod:`ezdxf.algebra`, import::
 
     from ezdxf.algebra import Vector
 

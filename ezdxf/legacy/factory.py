@@ -8,7 +8,7 @@ from . import graphics
 from .viewport import Viewport
 
 from .layouts import DXF12Layouts, DXF12BlockLayout
-from ..lldxf.const import DXFValueError
+from ..lldxf.const import DXFValueError, DXFKeyError
 
 
 ENTITY_WRAPPERS = {
@@ -83,7 +83,11 @@ class LegacyDXFFactory(object):
         return entity
 
     def wrap_handle(self, handle):
-        tags = self.entitydb[handle]
+        try:
+            tags = self.entitydb[handle]
+        except KeyError:
+            raise DXFKeyError('invalid handle #{}'.format(handle))
+
         return self.wrap_entity(tags)
 
     def create_db_entry(self, type_, dxfattribs):
