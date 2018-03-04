@@ -265,25 +265,35 @@ class Spline(object):
 
 
 class Clothoid(object):
-    def __init__(self, start=(0, 0), rotation=0., length=1., paramA=1.0, mirror='', segments=100):
+    def __init__(self, start=(0, 0), rotation=0., length=1., paramA=1.0, mirror=''):
         self.start = Vector(start)
         self.rotation = float(rotation)
         self.length = float(length)
         self.paramA = float(paramA)
         self.mirrorx = 'x' in mirror.lower()
         self.mirrory = 'y' in mirror.lower()
-        self.segments = int(segments)
 
-    def render(self, layout, dxfattribs=None):
-        def transform(points):
-            for point in points:
-                if self.mirrorx:
-                    point = Vector(point[0], -point[1])
-                if self.mirrory:
-                    point = Vector(-point[0], point[1])
-                yield self.start + point.rot_z_rad(rotation)
-
-        rotation = radians(self.rotation)
+    def render(self, layout, segments=100,  dxfattribs=None):
         clothoid = _ClothoidValues(self.paramA)
-        points = clothoid.approximate(self.length, self.segments)
-        layout.add_polyline3d(list(transform(points)), dxfattribs=dxfattribs)
+        points = clothoid.approximate(self.length, segments)
+        layout.add_polyline3d(list(self.transform(points)), dxfattribs=dxfattribs)
+
+    def transform(self, points):
+        rotation = radians(self.rotation)
+        for point in points:
+            if self.mirrorx:
+                point = Vector(point[0], -point[1])
+            if self.mirrory:
+                point = Vector(-point[0], point[1])
+            yield self.start + point.rot_z_rad(rotation)
+
+    def render_spline(self, layout, segments=10, dxfattribs=None):
+        clothoid = _ClothoidValues(self.paramA)
+        spline = clothoid.bspline(self.length, segments)
+        points = self.transform(spline.control_points)
+        layout.add_open_spline(
+            control_points=points,
+            degree=spline.degree,
+            knots=spline.knot_values(),
+            dxfattribs=dxfattribs,
+        )

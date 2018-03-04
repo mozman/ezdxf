@@ -15,15 +15,16 @@ def four_c(A, length, rotation):
 
 
 def render(clothoid, dxfattribs):
-    clothoid.render(msp, dxfattribs=dxfattribs)
+    clothoid.render(msp, segments=100, dxfattribs=dxfattribs)
+    clothoid.render_spline(msp, segments=10, dxfattribs={'color': 5, 'linetype': "DASHED"})
 
 
 NAME = 'clothoid.dxf'
-dwg = ezdxf.new('R12')
+dwg = ezdxf.new('R2000')
 msp = dwg.modelspace()
 
-msp.add_line((-20,0), (20, 0), dxfattribs={'linetype': "DASHDOT2"})
-msp.add_line((0, -20), (0, 20), dxfattribs={'linetype': "DASHDOT"})
+msp.add_line((-20, 0), (20, 0), dxfattribs={'linetype': "PHANTOM"})
+msp.add_line((0, -20), (0, 20), dxfattribs={'linetype': "PHANTOM"})
 for rotation in [0, 30, 45, 60, 75, 90]:
     four_c(10., 25, rotation)
 dwg.saveas(NAME)

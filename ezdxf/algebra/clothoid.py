@@ -78,6 +78,6 @@ class Clothoid(object):
     def bspline(self, length, segments=10, degree=3):
         fit_points = list(self.approximate(length, segments=segments))
         spline = bspline_control_frame(fit_points, degree, method='uniform')
-        knots = [v*length for v in spline.knot_values()]  # scale knot values
+        knots = [v*length for v in spline.knot_values()]  # scale knot values to length
         spline.basis.knots = knots
         return spline

@@ -240,6 +240,17 @@ class GraphicsFactory(object):
             spline.set_knot_values(list(knots))
         return spline
 
+    def add_open_spline2(self, bspline, dxfattribs=None):
+        """
+        Add open spline from parameters of a BSpline() object.
+        """
+        return self.add_open_spline(
+            control_points=bspline.control_points,
+            degree=bspline.degree,
+            knots=bspline.knot_values(),
+            dxfattribs=dxfattribs,
+        )
+
     def add_closed_spline(self, control_points, degree=3, knots=None, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic(list(control_points), degree)
