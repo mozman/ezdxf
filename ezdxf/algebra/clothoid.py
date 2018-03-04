@@ -1,74 +1,83 @@
-# Purpose: 2d clothoid
 # Created: 26.03.2010
 # License: MIT License
-import math
-from ezdxf.algebra.vector import Vector
-
+from ezdxf.algebra import Vector, BSpline
+from ezdxf.algebra.bspline import control_frame_knots, uniform_t_vector, bspline_control_frame
 
 class Clothoid(object):
     """
-    This object represents a clothoid (a.k.a. Euler spiral) for parameter
-    <paramA>. The curve always starts at the coordinate system origin = (0, 0).
+    This object represents a clothoid (a.k.a. Euler spiral) for parameter A.
+    This is a parametric curve, which always starts at the origin = (0, 0).
 
     """
-    def __init__(self, paramA=1.0):
-        self.A = paramA  # Clothiod Parameter A
-        self.powersA = [paramA**power for power in range(19)]
-        self.coords = {}  # coordinates cache
+    def __init__(self, A=1.0):
+        self.A = A  # Clothiod Parameter A
+        self.powersA = [A ** power for power in range(19)]
+        self._cache = {}  # coordinates cache
 
-    def get_radius(self, L):
+    def radius(self, t):
         """
         Get radius of circle at distance <L>.
         """
-        if L > 0.:
-            return self.powersA[2] / L
-        else :
-            return 0. # radius = infinite
+        if t > 0.:
+            return self.powersA[2] / t
+        else:
+            return 0.  # radius = infinite
 
-    def get_tau(self, L):
+    def tangent(self, t):
         """
-        Get tangent angle at distance <L> in radians.
-        """
-        return L**2 / (2. * self.powersA[2])
+        Get tangent at distance t as Vector() object.
 
-    def get_L(self, radius):
         """
-        Get distance L from origin for <radius>.
+        angle = t ** 2 / (2. * self.powersA[2])
+        return Vector.from_rad_angle(angle)
+
+    def distance(self, radius):
+        """
+        Get distance L from origin for radius.
+
         """
         return self.powersA[2] / float(radius)
 
-    def get_xy(self, L):
+    def point(self, t):
         """
-        Get xy-coordinates of curve point at distance <L>.
+        Get point at distance t as Vector().
+
         """
         def term(powerL, powerA, const):
-            return L**powerL/(const * self.powersA[powerA])
-        if L not in self.coords:
+            return t ** powerL / (const * self.powersA[powerA])
+
+        if t not in self._cache:
             y = term(3, 2, 6.) - term(7, 6, 336.) + term(11, 10, 42240.) - \
                 term(15, 14, 9676800.) + term(19, 18, 3530096640.)
-            x = L - term(5, 4, 40.) + term(9, 8, 3456.) - term(13, 12, 599040.) + \
+            x = t - term(5, 4, 40.) + term(9, 8, 3456.) - term(13, 12, 599040.) + \
                 term(17, 16, 175472640.)
-            self.coords[L] = (x, y)
-        return self.coords[L]
+            self._cache[t] = Vector(x, y)
+        return self._cache[t]
 
     def approximate(self, length, segments):
         """
-        Approximate curve of <length> with <segments> line-segments.
+        Approximate curve of length with line segments.
 
-        Generates <segments>+1 2D points (float, float).
+        Generates segments+1 vertices as Vector() objects.
+
         """
         delta_l = float(length) / float(segments)
-        yield Vector(0., 0.)
-        for index in range(1, segments+1):
-            yield Vector(self.get_xy(delta_l * index))
+        yield Vector(0, 0)
+        for index in range(1, segments + 1):
+            yield self.point(delta_l * index)
 
-    def get_center(self, L):
+    def circle_midpoint(self, t):
         """
-        Get center point of circle at point L.
+        Get circle midpoint at distance t.
+
         """
-        x, y = self.get_xy(L)
-        r = self.get_radius(L)
-        tau = self.get_tau(L)
-        xm = x - r * math.sin(tau)
-        ym = y + r * math.cos(tau)
-        return xm, ym
+        p = self.point(t)
+        r = self.radius(t)
+        return p + self.tangent(t).normalize(r).orthogonal()
+
+    def bspline(self, length, segments=10, degree=3):
+        fit_points = list(self.approximate(length, segments=segments))
+        spline = bspline_control_frame(fit_points, degree, method='uniform')
+        knots = [v*length for v in spline.knot_values()]  # scale knot values
+        spline.basis.knots = knots
+        return spline

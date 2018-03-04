@@ -1,11 +1,12 @@
 # Created: 28.03.2010
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
-import unittest
 from ezdxf.algebra.clothoid import Clothoid
+from ezdxf.algebra import is_close_points, is_close
 
 expected_points = [
-    (0.0, 0.0), (0.4999511740825297, 0.0052079700401204106),
+    (0.0, 0.0),
+    (0.4999511740825297, 0.0052079700401204106),
     (0.99843862987320509, 0.041620186803547267),
     (1.4881781381789292, 0.13983245006538086),
     (1.9505753764262783, 0.32742809475246343),
@@ -18,29 +19,40 @@ expected_points = [
 ]
 
 
-class TestAlgebraClothoid(unittest.TestCase):
-    def test_approximate(self):
-        clothoid = Clothoid(2.0)
-        results = clothoid.approximate(5, 10)
-        for expected, result in zip(expected_points, results):
-            self.assertAlmostEqual(expected[0], result[0])
-            self.assertAlmostEqual(expected[1], result[1])
+def test_approximate():
+    clothoid = Clothoid(2.0)
+    results = clothoid.approximate(5, 10)
+    for expected, result in zip(expected_points, results):
+        assert is_close_points(expected, result)
 
-    def test_get_radius(self):
-        clothoid = Clothoid(2.0)
-        self.assertAlmostEqual(clothoid.get_radius(1), 4.)
-        self.assertAlmostEqual(clothoid.get_radius(0), 0.)
 
-    def test_get_tau(self):
-        clothoid = Clothoid(2.0)
-        self.assertAlmostEqual(clothoid.get_tau(1), 0.125)
+def test_radius():
+    clothoid = Clothoid(2.0)
+    assert is_close(clothoid.radius(1), 4.)
+    assert is_close(clothoid.radius(0), 0.)
 
-    def test_get_L(self):
-        clothoid = Clothoid(2.0)
-        self.assertAlmostEqual(clothoid.get_L(10), 0.4)
 
-    def test_get_center(self):
-        clothoid = Clothoid(2.0)
-        xm, ym = clothoid.get_center(2.0)
-        self.assertAlmostEqual(xm, 0.9917243)
-        self.assertAlmostEqual(ym, 2.0825932)
+def test_tangent():
+    clothoid = Clothoid(2.0)
+    assert is_close(clothoid.tangent(1).angle_rad, 0.125)
+
+
+def test_distance():
+    clothoid = Clothoid(2.0)
+    assert is_close(clothoid.distance(10), 0.4)
+
+
+def test_circle_midpoint():
+    clothoid = Clothoid(2.0)
+    m = clothoid.circle_midpoint(2.0)
+    assert is_close_points(m, (0.9917242992178723, 2.082593218533209))
+
+
+def test_as_bspline():
+    clothoid = Clothoid(2.0)
+    spline = clothoid.bspline(5, 10)
+    assert spline.degree == 3
+    assert spline.max_t == 5
+    results = spline.approximate(10)
+    for expected, result in zip(expected_points, results):
+        assert is_close_points(expected, result)
