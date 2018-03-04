@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.8.7 - dev
+Version 0.8.7 - 2018-03-04
 
    * Release notes: https://ezdxf.mozman.at/release-v0-8-7.html
    * NEW: entity.get_layout() returns layout in which entity resides or None if unassigned
@@ -17,6 +17,7 @@ Version 0.8.7 - dev
    * NEW: added entity.get_flag_state() and entity.set_flag_state() for easy access to binary coded flags
    * NEW: set new $FINGERPRINTGUID for new drawings
    * NEW: set new $VERSIONGUID on saving a drawing
+   * NEW: improved IMAGE support, by adding RASTERVARIABLES entity, use Drawing.set_raster_variables(frame, quality, units)
    * BUGFIX: closing user defined image boundary path automatically, else AutoCAD crashes
 
 Version 0.8.6 - 2018-02-17

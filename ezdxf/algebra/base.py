@@ -1,7 +1,5 @@
-# Created: 27.03.2010
+# Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-__author__ = "mozman <me@mozman.at>"
-
 import math
 import sys
 from functools import partial

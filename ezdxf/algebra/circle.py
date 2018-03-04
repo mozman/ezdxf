@@ -1,10 +1,6 @@
-# Purpose: 2d circle calculations
-# Created: 28.02.2010
+# Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-__author__ = "mozman <me@mozman.at>"
-
 import math
-
 from .ray import Ray2D
 from .base import equals_almost
 

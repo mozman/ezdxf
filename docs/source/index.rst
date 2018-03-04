@@ -56,6 +56,7 @@ Contents
    introduction
    tutorials
    reference
+   addons
    howto
    dxfinternals
 
