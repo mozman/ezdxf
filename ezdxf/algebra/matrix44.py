@@ -94,34 +94,34 @@ class Matrix44(object):
     @classmethod
     def identity(cls):
         """
-        Creates and identity Matrix44.
+        Returns the identity matrix.
+
         """
         return Matrix44()
 
     @classmethod
-    def scale(cls, scale_x, scale_y=None, scale_z=None):
+    def scale(cls, sx, sy=None, sz=None):
         """
-        Creates a scale Matrix44.
+        Returns a scaling transformation matrix. If sy is None, sy = sx, and if sz is None sz = sx.
 
-        If one parameter is given the scale is uniform, if three parameters are give the scale is different (potentialy)
-        on each x axis.
         """
-        if scale_y is None:
-            scale_y = scale_x
-        if scale_z is None:
-            scale_z = scale_x
+        if sy is None:
+            sy = sx
+        if sz is None:
+            sz = sx
 
         return cls([
-            float(scale_x), 0., 0., 0.,
-            0., float(scale_y), 0., 0.,
-            0., 0., float(scale_z), 0.,
+            float(sx), 0., 0., 0.,
+            0., float(sy), 0., 0.,
+            0., 0., float(sz), 0.,
             0., 0., 0., 1.
         ])
 
     @classmethod
     def translate(cls, x, y, z):
         """
-        Creates a translation Matrix44 to (x, y, z).
+        Returns a translation matrix to (x, y, z).
+
         """
         return cls([
             1., 0., 0., 0.,
@@ -133,9 +133,10 @@ class Matrix44(object):
     @classmethod
     def x_rotate(cls, angle):
         """
-        Creates a Matrix44 that does a rotation about the x axis.
+        Returns a rotation matrix about the x-axis.
 
-        angle -- Angle of rotation (in radians)
+        Args:
+            angle: rotation angle in radians
 
         """
         cos_a = cos(angle)
@@ -150,9 +151,10 @@ class Matrix44(object):
     @classmethod
     def y_rotate(cls, angle):
         """
-        Creates a Matrix44 that does a rotation about the y axis.
+        Returns a rotation matrix about the y-axis.
 
-        angle -- Angle of rotation (in radians)
+        Args:
+            angle: rotation angle in radians
 
         """
         cos_a = cos(angle)
@@ -167,9 +169,10 @@ class Matrix44(object):
     @classmethod
     def z_rotate(cls, angle):
         """
-        Creates a Matrix44 that does a rotation about the z axis.
+        Returns a rotation matrix about the z-axis.
 
-        angle -- Angle of rotation (in radians)
+        Args:
+            angle: rotation angle in radians
 
         """
         cos_a = cos(angle)
@@ -184,10 +187,11 @@ class Matrix44(object):
     @classmethod
     def axis_rotate(cls, axis, angle):
         """
-        Creates a Matrix44 that does a rotation about an axis.
+        Returns a rotation matrix about an arbitrary axis.
 
-        axis -- A vector of the axis
-        angle -- Angle of rotation
+        Args:
+            axis: rotation axis as (x, y, z) tuple
+            angle: rotation angle in radians
 
         """
         c = cos(angle)
@@ -204,11 +208,12 @@ class Matrix44(object):
     @classmethod
     def xyz_rotate(cls, angle_x, angle_y, angle_z):
         """
-        Creates a Matrix44 that does a rotation about each axis.
+        Returns a rotation matrix for rotation about each axis.
 
-        angle_x -- Angle of rotation, about x
-        angle_y -- Angle of rotation, about y
-        angle_z -- Angle of rotation, about z
+        Args:
+            angle_x: rotation angle about x-axis in radians
+            angle_y: rotation angle about y-axis in radians
+            angle_z: rotation angle about z-axis in radians
 
         """
         cx = cos(angle_x)
@@ -230,14 +235,15 @@ class Matrix44(object):
     @classmethod
     def perspective_projection(cls, left, right, top, bottom, near, far):
         """
-        Creates a Matrix44 that projects points in to 2d space.
+        Returns a matrix for a 2d projection.
 
-        left -- Coordinate of left of screen
-        right -- Coordination of right of screen
-        top -- Coordination of the top of the screen
-        bottom -- Coordination of the borrom of the screen
-        near -- Coordination of the near clipping plane
-        far -- Coordinate of the far clipping plane
+        Args:
+            left: Coordinate of left of screen
+            right: Coordinate of right of screen
+            top: Coordinate of the top of the screen
+            bottom: Coordinate of the bottom of the screen
+            near: Coordinate of the near clipping plane
+            far: Coordinate of the far clipping plane
 
         """
         return cls([
@@ -250,12 +256,13 @@ class Matrix44(object):
     @classmethod
     def perspective_projection_fov(cls, fov, aspect, near, far):
         """
-        Creates a Matrix44 that projects points in to 2d space
+        Returns a matrix for a 2d projection.
 
-        fov -- The field of view (in radians)
-        aspect -- The aspect ratio of the screen (width / height)
-        near -- Coordinate of the near clipping plane
-        far -- Coordinate of the far clipping plane
+        Args:
+            fov: The field of view (in radians)
+            aspect: The aspect ratio of the screen (width / height)
+            near: Coordinate of the near clipping plane
+            far: Coordinate of the far clipping plane
 
         """
         vrange = near*tan(fov/2.)
@@ -268,7 +275,8 @@ class Matrix44(object):
     @staticmethod
     def chain(*matrices):
         """
-        Compose a transformation matrix from <*matrices>.
+        Compose a transformation matrix from one or more matrices.
+
         """
         transformation = Matrix44()
         for matrix in matrices:
@@ -276,16 +284,11 @@ class Matrix44(object):
         return transformation
 
     def __hash__(self):
-        """
-        Allows matrices to be used as keys in a dictionary.
-        """
         return self.matrix.__hash__()
 
     def __setitem__(self, coord, value):
         """
-        Set element in the Matrix44.
-
-        <coord> is a tuple of (row, column)
+        Set (row, column) element.
 
         """
         row, col = coord
@@ -293,9 +296,7 @@ class Matrix44(object):
 
     def __getitem__(self, coord):
         """
-        Get element in the Matrix44.
-
-        <coord> is a tuple of (row, column)
+        Get (row, column) element.
 
         """
         row, col = coord
@@ -303,13 +304,15 @@ class Matrix44(object):
 
     def __iter__(self):
         """
-        Iterates over all 16 values in the Matrix44.
+        Iterates over all matrix values.
+
         """
         return iter(self.matrix)
 
     def __mul__(self, other):
         """
-        Returns the result of multiplying this Matrix44 by another, called by the * (multiply) operator.
+        Returns a new matrix as result of the matrix multiplication with another matrix.
+
         """
         res_matrix = self.copy()
         res_matrix.__imul__(other)
@@ -317,7 +320,8 @@ class Matrix44(object):
 
     def __imul__(self, other):
         """
-        Multiplies this Matrix44 by another, called by the *= operator.
+        Inplace multiplication with another matrix.
+
         """
         m1 = self.matrix
         m2 = other.matrix
@@ -346,10 +350,10 @@ class Matrix44(object):
 
     def fast_mul(self, other):
         """
-        Multiplies this matrix by <other>.
+        Multiplies this matrix with other matrix.
 
-        Assumes that both matrices have a right column of (0, 0, 0, 1). This is true for matrices composed of rotations,
-        translations and scales. fast_mul is approximately 25% quicker than the *= operator.
+        Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
+        rotations,  translations and scales. fast_mul is approximately 25% quicker than the *= operator.
 
         """
         m1 = self.matrix
@@ -379,19 +383,22 @@ class Matrix44(object):
 
     def rows(self):
         """
-        Returns an iterator for the rows in the Matrix44.
+        Iterate over rows as 4-tuples.
+
         """
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
     def columns(self):
         """
-        Returns an iterator for the columns in the Matrix44.
+        Iterate over columns as 4-tuples.
+
         """
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
     def transform(self, vector):
         """
-        Transforms a Vector3 and returns the result as a tuple.
+        Transforms a 3d vector and return the result as a tuple.
+
         """
         m = self.matrix
         x, y, z = vector
@@ -401,7 +408,8 @@ class Matrix44(object):
 
     def transform_vectors(self, vectors):
         """
-        Transform multiple vectors.
+        Returns a list of transformed vectors.
+
         """
         result = []
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
@@ -416,7 +424,8 @@ class Matrix44(object):
 
     def transpose(self):
         """
-        Swaps the rows for columns.
+        Swaps the rows for columns inplace.
+
         """
         m00, m01, m02, m03, \
         m10, m11, m12, m13, \
@@ -432,7 +441,8 @@ class Matrix44(object):
 
     def get_transpose(self):
         """
-        Returns a Matrix44 that is a copy of this, but with rows and columns swapped.
+        Returns a new transposed matrix.
+
         """
         matrix = self.copy()
         matrix.transpose()
