@@ -4,8 +4,9 @@
 from __future__ import unicode_literals
 import math
 from .lldxf import const
-from .algebra.vector import Vector
 from .lldxf.const import DXFValueError, DXFVersionError
+from ezdxf.algebra import Vector
+from ezdxf.algebra import bspline_control_frame
 
 
 def copy_attribs(dxfattribs=None):
@@ -222,8 +223,20 @@ class GraphicsFactory(object):
         return self.build_and_add_entity('XLINE', dxfattribs)
 
     def add_spline(self, fit_points=None, degree=3, dxfattribs=None):
-        # by default, fit points coincide with the spline
-        # control vertices define a control frame
+        """
+        Add a B-spline defined by fit points, the control points and knot values are created by the CAD application,
+        therefor it is not predictable how the rendered spline will look like, because for every set of fit points
+        exists an infinite set of B-splines. If fit_points is None, an 'empty' spline will be created, all data has to
+        be set by the user.
+
+        Args:
+            fit_points: list of fit points as (x, y[, z]) tuples, if None -> user defined spline
+            degree: degree fo B-spline
+            dxfattribs: DXF attributes for the SPLINE entity
+
+        Returns: DXF Spline() object
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('SPLINE requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -233,23 +246,40 @@ class GraphicsFactory(object):
             spline.set_fit_points(list(fit_points))
         return spline
 
-    def add_open_spline(self, control_points, degree=3, knots=None, dxfattribs=None):
-        spline = self.add_spline(dxfattribs=dxfattribs)
-        spline.set_open_uniform(list(control_points), degree)
-        if knots is not None:
-            spline.set_knot_values(list(knots))
-        return spline
+    def add_spline_control_frame(self, fit_points, degree=3, method='distance', power=.5, dxfattribs=None):
+        """
+        Create and add B-spline control frame from fit points.
 
-    def add_open_spline2(self, bspline, dxfattribs=None):
+            1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
+            2. method = 'distance', creates a t vector with values proportional to the fit point distances
+            3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+
+        None of this methods matches the spline created from fit points by AutoCAD.
+
+        Args:
+            fit_points: fit points of B-spline
+            degree: degree of B-spline
+            method: calculation method for parameter vector t
+            power: power for centripetal method
+            dxfattribs: DXF attributes for SPLINE entity
+
+        Returns: DXF Spline() object
+
         """
-        Add open spline from parameters of a BSpline() object.
-        """
+        bspline = bspline_control_frame(fit_points, degree=degree, method=method, power=power)
         return self.add_open_spline(
             control_points=bspline.control_points,
             degree=bspline.degree,
             knots=bspline.knot_values(),
             dxfattribs=dxfattribs,
         )
+
+    def add_open_spline(self, control_points, degree=3, knots=None, dxfattribs=None):
+        spline = self.add_spline(dxfattribs=dxfattribs)
+        spline.set_open_uniform(list(control_points), degree)
+        if knots is not None:
+            spline.set_knot_values(list(knots))
+        return spline
 
     def add_closed_spline(self, control_points, degree=3, knots=None, dxfattribs=None):
         spline = self.add_spline(dxfattribs=dxfattribs)

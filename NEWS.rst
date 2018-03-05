@@ -2,6 +2,10 @@
 News
 ====
 
+Version 0.8.8 - dev
+
+   * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
+
 Version 0.8.7 - 2018-03-04
 
    * Release notes: https://ezdxf.mozman.at/release-v0-8-7.html
