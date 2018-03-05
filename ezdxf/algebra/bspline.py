@@ -223,6 +223,7 @@ rather than normal 3D coordinates.
 from .vector import Vector, distance
 from .base import is_close, gauss
 from math import pow
+from ezdxf.lldxf.const import DXFValueError
 
 
 def knot_open_uniform(n, order):
@@ -276,7 +277,8 @@ def required_knot_values(count, order):
     k = order
     n = count - 1
     p = k - 1
-    assert 2 <= k <= (n + 1)
+    if not (2 <= k <= (n + 1)):
+        raise DXFValueError('Invalid count/order combination')
     # n + p + 2 = count + order
     return n + p + 2
 
@@ -324,10 +326,14 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
         elif method == 'centripetal':
             return centripetal_t_vector(fit_points, power=power)
         else:
-            raise ValueError('Unknown method: {}'.format(method))
+            raise DXFValueError('Unknown method: {}'.format(method))
 
     fit_points = list(fit_points)
     count = len(fit_points)
+    order = degree + 1
+    if order > count:
+        raise DXFValueError('Need more fit points for degree {}'.format(degree))
+
     t_vector = list(create_t_vector())
     knots = list(control_frame_knots(count-1, degree, t_vector))
     control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
@@ -349,6 +355,9 @@ def control_frame_knots(n, p, t_vector):
 
     """
     order = int(p+1)
+    if order > (n + 1):
+        raise DXFValueError('Invalid n/p combination')
+
     t_vector = [float(t) for t in t_vector]
     for _ in range(order):  # clamped spline has 'order' leading 0s
         yield t_vector[0]
@@ -488,6 +497,9 @@ class BSpline(object):
         self.count = len(control_points)  # control points count
         self.order = order
         self.nplusc = self.count + self.order  # equals n + p + 2
+
+        if order > self.count:
+            raise DXFValueError('Invalid need more control points for order {}'.format(order))
 
         if knots is None:
             knots = knot_open_uniform(self.count, self.order)

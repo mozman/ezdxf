@@ -4,6 +4,25 @@
 # License: MIT License
 
 
+def setup_linetypes(dwg):
+    for name, desc, pattern in linetypes():
+        if name in dwg.linetypes:
+            continue
+        dwg.linetypes.new(name, dxfattribs={
+            'description': desc,
+            'pattern': pattern,
+        })
+
+
+def setup_styles(dwg):
+    for name, font in styles():
+        if name in dwg.styles:
+            continue
+        dwg.styles.new(name, dxfattribs={
+            'font': font,
+        })
+
+
 def linetypes():
     """ Creates a list of standard line types.
     """

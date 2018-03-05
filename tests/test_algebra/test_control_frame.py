@@ -1,7 +1,8 @@
 import pytest
+import ezdxf
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import uniform_t_vector, distance_t_vector, centripetal_t_vector
-from ezdxf.algebra.bspline import control_frame_knots
+from ezdxf.algebra.bspline import control_frame_knots, required_knot_values
 from ezdxf.algebra.base import equals_almost
 
 POINTS1 = [(1, 1), (2, 4), (4, 1), (7, 6)]
@@ -40,13 +41,24 @@ def test_centripetal_length_t_array(fit_points):
         assert t1 <= t2
 
 
+def test_invalid_order_count_combination():
+    count = 4
+    order = 5
+    with pytest.raises(ezdxf.DXFValueError):
+        required_knot_values(count, order)
+    with pytest.raises(ezdxf.DXFValueError):
+        list(control_frame_knots(n=count-1, p=order-1, t_vector=[]))
+
+
 def test_control_frame_knot_values(fit_points):
-    n = len(fit_points)
-    for p in (2, 3):  # degree
+    count = len(fit_points)
+    n = count - 1
+    degrees = (2, 3, 4) if len(fit_points) > 4 else (2, 3)
+    for p in degrees:  # degree
         order = p + 1
         t_vector = uniform_t_vector(fit_points)
         knots = list(control_frame_knots(n, p, t_vector))
-        assert len(knots) == n + p + 2
+        assert len(knots) == required_knot_values(count, order)
         assert len(set(knots[:order])) == 1, 'first order elements have to be equal'
         assert len(set(knots[-order:])) == 1, 'last order elements have to be equal'
         for k1, k2 in zip(knots, knots[1:]):

@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import ezdxf
 from ezdxf.algebra.bspline import bspline_control_frame
+from ezdxf.tools.standards import setup_linetypes
 
 
 def clone_spline():
@@ -89,14 +90,24 @@ def closed_rational_spline():
 
 def spline_control_frame_from_fit_points():
     dwg = ezdxf.new('R2000')
+    setup_linetypes(dwg)
+
     fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
     msp = dwg.modelspace()
-    spline = bspline_control_frame(fit_points, degree=3, method='distance')
-    msp.add_polyline2d(fit_points, dxfattribs={'color': 2})
-    msp.add_polyline2d(spline.control_points, dxfattribs={'color': 3})
-    msp.add_open_spline(spline.control_points, degree=3, dxfattribs={'color': 5})
-    msp.add_spline(fit_points, degree=3, dxfattribs={'color': 6})
-    dwg.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
+    msp.add_polyline2d(fit_points, dxfattribs={'color': 2, 'linetype': 'DOT2'})
+
+    def add_spline(degree=2, color=3):
+        spline = bspline_control_frame(fit_points, degree=degree, method='distance')
+        msp.add_polyline2d(spline.control_points, dxfattribs={'color': color, 'linetype': 'DASHED'})
+        msp.add_open_spline(spline.control_points, degree=spline.degree, dxfattribs={'color': color})
+
+    add_spline(degree=2, color=3)
+    add_spline(degree=3, color=4)
+    add_spline(degree=4, color=5)
+
+    msp.add_spline(fit_points, degree=3, dxfattribs={'color': 1})
+    if dwg.validate():
+        dwg.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
 
 
 if __name__ == '__main__':
