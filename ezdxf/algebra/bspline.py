@@ -494,10 +494,7 @@ class BSpline(object):
     """
     def __init__(self, control_points, order=4, knots=None, weights=None):
         self.control_points = Vector.list(control_points)
-        self.count = len(control_points)  # control points count
         self.order = order
-        self.nplusc = self.count + self.order  # equals n + p + 2
-
         if order > self.count:
             raise DXFValueError('Invalid need more control points for order {}'.format(order))
 
@@ -509,6 +506,14 @@ class BSpline(object):
                 raise ValueError("{} knot values required, got {}.".format(self.nplusc, len(knots)))
 
         self.basis = Basis(knots, self.order, self.count, weights=weights)
+
+    @property
+    def nplusc(self):
+        return self.count + self.order
+
+    @property
+    def count(self):
+        return len(self.control_points)
 
     @property
     def max_t(self):
@@ -549,6 +554,41 @@ class BSpline(object):
         for control_point, basis in zip(self.control_points, self.basis_values(t)):
             p += control_point * basis
         return p
+
+    def insert_knot(self, t):
+        """
+        Insert additional knot, without altering the curve shape.
+
+        Args:
+            t: position of new knot 0 < t < max_t
+
+        """
+        if self.basis.weights is not None:
+            raise DXFValueError('Rational splines not supported.')
+
+        knots = self.basis.knots
+        cpoints = self.control_points
+        p = self.degree
+
+        def find_knot_index():
+            for knot_index in range(1, len(knots)):
+                if knots[knot_index-1] <= t < knots[knot_index]:
+                    return knot_index-1
+
+        def new_point(index):
+            a = (t - knots[index]) / (knots[index+p] - knots[index])
+            return cpoints[index-1] * (1 - a) + cpoints[index] * a
+
+        if t <= 0. or t >= self.max_t:
+            raise DXFValueError('Invalid position t')
+
+        k = find_knot_index()
+        if k < p:
+            raise DXFValueError('Invalid position t')
+
+        cpoints[k-p+1:k] = [new_point(i) for i in range(k-p+1, k+1)]
+        knots.insert(k+1, t)  # knot[k] <= t < knot[k+1]
+        self.basis.count = len(cpoints)
 
 
 class BSplineU(BSpline):

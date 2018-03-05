@@ -2,7 +2,7 @@
 # Copyright (c) 2012-2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.algebra.bspline import BSpline, DBSpline, Basis, DBasis
+from ezdxf.algebra.bspline import BSpline, DBSpline
 from ezdxf.algebra.base import equals_almost
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
@@ -59,6 +59,14 @@ def test_dbspline_derivative_2(dbspline):
         assert equals_almost(epx, rpx)
         assert equals_almost(epy, rpy)
         assert equals_almost(epz, rpz)
+
+
+def test_bspline_insert_knot():
+    bspline = BSpline([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    t = bspline.max_t / 2
+    assert len(bspline.control_points) == 8
+    bspline.insert_knot(t)
+    assert len(bspline.control_points) == 9
 
 
 DBSPLINE = [

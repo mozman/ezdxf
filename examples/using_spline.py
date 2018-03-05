@@ -108,6 +108,27 @@ def spline_control_frame_from_fit_points():
         dwg.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
 
 
+def spline_insert_knot():
+    from ezdxf.algebra import BSpline, Vector
+    dwg = ezdxf.new('R2000')
+    ezdxf.setup_linetypes(dwg)
+    msp = dwg.modelspace()
+
+    def add_spline(control_points, color=3, knots=None):
+        msp.add_polyline2d(control_points, dxfattribs={'color': color, 'linetype': 'DASHED'})
+        msp.add_open_spline(control_points, degree=3, knots=knots, dxfattribs={'color': color})
+
+    control_points = Vector.list([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70)])
+    add_spline(control_points, color=3, knots=None)
+
+    bspline = BSpline(control_points, order=4)
+    bspline.insert_knot(bspline.max_t/2)
+    add_spline(bspline.control_points, color=4, knots=bspline.knot_values())
+
+    if dwg.validate():
+        dwg.saveas("Spline_R2000_spline_insert_knot.dxf")
+
+
 if __name__ == '__main__':
     clone_spline()
     fit_spline()
@@ -118,3 +139,4 @@ if __name__ == '__main__':
     rational_spline()
     closed_rational_spline()
     spline_control_frame_from_fit_points()
+    spline_insert_knot()
