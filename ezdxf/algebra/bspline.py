@@ -221,7 +221,7 @@ rather than normal 3D coordinates.
 
 """
 from .vector import Vector, distance
-from .base import is_close, gauss
+from .base import is_close, gauss, matrix_mul
 from math import pow
 from ezdxf.lldxf.const import DXFValueError
 
@@ -342,6 +342,44 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
     return bspline
 
 
+def bspline_control_frame_approx(fit_points, count, degree=3, method='distance', power=.5):
+    """
+    Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
+
+        1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
+        2. method = 'distance', creates a t vector with values proportional to the fit point distances
+        3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+
+    Args:
+        fit_points: all fit points of B-spline
+        count: count of designated control points
+        degree: degree of B-spline
+        method: calculation method for parameter vector t
+        power: power for centripetal method
+
+    """
+    def create_t_vector():
+        if method == 'uniform':
+            return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
+        elif method == 'distance':
+            return distance_t_vector(fit_points)
+        elif method == 'centripetal':
+            return centripetal_t_vector(fit_points, power=power)
+        else:
+            raise DXFValueError('Unknown method: {}'.format(method))
+
+    fit_points = list(fit_points)
+    order = degree + 1
+    if order > count:
+        raise DXFValueError('More control points for degree {} required.'.format(degree))
+
+    t_vector = list(create_t_vector())
+    knots = list(control_frame_knots(len(fit_points)-1, degree, t_vector))
+    control_points = global_curve_approximation(fit_points, count, degree, t_vector, knots)
+    bspline = BSpline(control_points, order=degree+1)
+    return bspline
+
+
 def control_frame_knots(n, p, t_vector):
     """
     Generates a 'clamped' knot vector for control frame creation. All knot values in the range [0 .. 1].
@@ -386,6 +424,61 @@ def global_curve_interpolation(fit_points, degree, t_vector, knots):
             m.append(row)
         result.append(gauss(m))
     return Vector.list(zip(result[0], result[1], result[2]))
+
+
+def global_curve_approximation(fit_points, count, degree, t_vector, knots):
+    """
+    Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
+
+    Args:
+        fit_points: all B-spline fit point
+        count: count of designated control points
+        degree: degree of B-spline
+        t_vector: parameter vector
+        knots: knot vector
+
+    Returns: BSpline() object
+
+    """
+    fit_points = Vector.list(fit_points)
+    n = len(fit_points) - 1
+    h = count - 1
+    d0 = fit_points[0]
+    dn = fit_points[n]
+    spline = Basis(knots, degree+1, len(fit_points))
+    # matrix_N[0] == row 0
+    matrix_N = [spline.basis(t) for t in t_vector]
+
+    def qpoint(k):
+        nk = matrix_N[k]
+        return fit_points[k] - d0*nk[0] - dn*nk[h]
+
+    q = [qpoint(k) for k in range(n)]
+    # matrix_Q[0] == row 1
+    matrix_Q = []  # row = (x, y, z)
+    for i in range(1, h):
+        p = Vector()
+        for k in range(1, n):
+            p += q[k] * matrix_N[k][i]
+        matrix_Q.append(p)
+
+    # remove row 0 => matrix_N[0] == row 1, matrixN and matrix_Q in sync
+    matrix_N = [row[1:h] for row in matrix_N[1:]]
+    # matrix transpose = zip(*matrix)
+    matrix_M = matrix_mul(zip(*matrix_N), matrix_N)
+    result = []
+    for axis in (0, 1, 2):
+        m = []
+        for index, row in enumerate(matrix_M):
+            row = list(row)
+            row.append(matrix_Q[index][axis])
+            m.append(row)
+        result.append(gauss(m))
+
+    control_points = [fit_points[0]]
+    control_points.extend(Vector.generate(zip(result[0], result[1], result[2])))
+    control_points.append(fit_points[-1])
+    return control_points
 
 
 class Basis(object):

@@ -1,6 +1,7 @@
 import pytest
 import ezdxf
 from ezdxf.algebra.bspline import bspline_control_frame
+from ezdxf.algebra.bspline import bspline_control_frame_approx
 from ezdxf.algebra.bspline import uniform_t_vector, distance_t_vector, centripetal_t_vector
 from ezdxf.algebra.bspline import control_frame_knots, required_knot_values
 from ezdxf.algebra.base import equals_almost
@@ -47,7 +48,7 @@ def test_invalid_order_count_combination():
     with pytest.raises(ezdxf.DXFValueError):
         required_knot_values(count, order)
     with pytest.raises(ezdxf.DXFValueError):
-        list(control_frame_knots(n=count-1, p=order-1, t_vector=[]))
+        list(control_frame_knots(n=count - 1, p=order - 1, t_vector=[]))
 
 
 def test_control_frame_knot_values(fit_points):
@@ -75,6 +76,14 @@ def test_control_frame(fit_points):
     t_points = [spline.point(t) for t in spline.t_array]
     for p1, p2 in zip(t_points, fit_points):
         assert p1 == p2
+
+
+def test_control_frame_approx():
+    points = [(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7), (2, 10), (5, 12), (7, 8)]
+    spline = bspline_control_frame_approx(points, 7, degree=3)
+    assert len(spline.control_points) == 7
+    assert spline.control_points[0] == points[0]
+    assert spline.control_points[-1] == points[-1]
 
 
 expected = [

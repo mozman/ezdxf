@@ -6,7 +6,7 @@ import math
 from .lldxf import const
 from .lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.algebra import Vector
-from ezdxf.algebra import bspline_control_frame
+from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 
 
 def copy_attribs(dxfattribs=None):
@@ -271,6 +271,32 @@ class GraphicsFactory(object):
             control_points=bspline.control_points,
             degree=bspline.degree,
             knots=bspline.knot_values(),
+            dxfattribs=dxfattribs,
+        )
+
+    def add_spline_approx(self, fit_points, count, degree=3, method='distance', power=.5, dxfattribs=None):
+        """
+        Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
+
+            1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
+            2. method = 'distance', creates a t vector with values proportional to the fit point distances
+            3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+
+        Args:
+            fit_points: all fit points of B-spline
+            count: count of designated control points
+            degree: degree of B-spline
+            method: calculation method for parameter vector t
+            power: power for centripetal method
+            dxfattribs: DXF attributes for SPLINE entity
+
+        Returns: DXF Spline() object
+
+        """
+        bspline = bspline_control_frame_approx(fit_points, count, degree=degree, method=method, power=power)
+        return self.add_open_spline(
+            control_points=bspline.control_points,
+            degree=bspline.degree,
             dxfattribs=dxfattribs,
         )
 
