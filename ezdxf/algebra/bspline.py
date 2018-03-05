@@ -331,7 +331,9 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
     t_vector = list(create_t_vector())
     knots = list(control_frame_knots(count-1, degree, t_vector))
     control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
-    return BSpline(control_points, order=degree+1, knots=knots)
+    bspline = BSpline(control_points, order=degree+1, knots=knots)
+    bspline.t_array = t_vector
+    return bspline
 
 
 def control_frame_knots(n, p, t_vector):
@@ -554,6 +556,9 @@ class BSplineU(BSpline):
         base = float(self.order - 1)
         for point_index in range(segments + 1):
             yield self.point(base + point_index * step)
+
+    def t_array(self):
+        raise NotImplemented
 
 
 class BSplineClosed(BSplineU):

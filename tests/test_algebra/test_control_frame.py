@@ -53,9 +53,16 @@ def test_control_frame_knot_values(fit_points):
             assert k1 <= k2
 
 
-def test_control_frame():
-    spline = bspline_control_frame(POINTS1, degree=3)
-    assert len(spline.control_points) == len(POINTS1)
+def test_control_frame(fit_points):
+    spline = bspline_control_frame(fit_points, degree=3)
+    assert len(spline.control_points) == len(fit_points)
+    assert spline.t_array[0] == 0.
+    assert spline.t_array[-1] == 1.
+    assert len(spline.t_array) == len(fit_points)
+
+    t_points = [spline.point(t) for t in spline.t_array]
+    for p1, p2 in zip(t_points, fit_points):
+        assert p1 == p2
 
 
 expected = [
