@@ -92,14 +92,6 @@ class Matrix44(object):
     __copy__ = copy
 
     @classmethod
-    def identity(cls):
-        """
-        Returns the identity matrix.
-
-        """
-        return Matrix44()
-
-    @classmethod
     def scale(cls, sx, sy=None, sz=None):
         """
         Returns a scaling transformation matrix. If sy is None, sy = sx, and if sz is None sz = sx.

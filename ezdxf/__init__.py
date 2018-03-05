@@ -24,6 +24,7 @@ from .tools.pattern import PATTERN
 from .lldxf import const  #  restore module structure ezdxf.const
 from .lldxf.validator import is_dxf_file, is_dxf_stream
 from .filemanagement import new, read, readfile, readzip
+from .tools.standards import setup_linetypes, setup_styles
 
 # exceptions
 from .lldxf.const import DXFError  # base error exception

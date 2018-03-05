@@ -126,11 +126,11 @@ Returns square length of vector
 
 Returns True for Vector(0, 0, 0) else False
 
-.. attribute:: Vector.spatial_angle_rad:
+.. attribute:: Vector.spatial_angle_rad
 
 Returns spatial angle between vector and x-axis in radians
 
-.. attribute:: Vector.spatial_angle_deg:
+.. attribute:: Vector.spatial_angle_deg
 
 Returns spatial angle between vector and x-axis in degrees
 
@@ -145,11 +145,11 @@ Returns angle of vector in the xy-plane in degrees.
 Vector Methods
 ~~~~~~~~~~~~~~
 
-.. method:: Vector.generate(items):
+.. method:: Vector.generate(items)
 
 Static method returns generator of Vector() objects created from items.
 
-.. method:: Vector.list(items):
+.. method:: Vector.list(items)
 
 Static method returns list of Vector() objects created from items.
 
@@ -173,7 +173,7 @@ Return ``Vector(x, y, z)`` as string.
 
 Returns always 3
 
-.. method:: Vector.__hash__():
+.. method:: Vector.__hash__()
 
 .. method:: Vector.copy()
 
@@ -220,7 +220,7 @@ Project vector other onto self, returns new Vector() object.
 
 Returns new normalized Vector() object, optional scaled by length.
 
-.. method:: Vector.reversed(self)
+.. method:: Vector.reversed()
 
 Returns -vector as new Vector() object
 
@@ -336,10 +336,6 @@ Sets the values in a column.
 .. method:: Matrix44.copy()
 
 .. method:: Matrix44.__copy__()
-
-.. method:: Matrix44.identity(cls):
-
-Class method to create an identity matrix.
 
 .. method:: Matrix44.scale(sx, sy=None, sz=None)
 

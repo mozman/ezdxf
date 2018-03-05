@@ -5,6 +5,8 @@ News
 Version 0.8.8 - dev
 
    * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
+   * NEW: ezdxf.setup_linetypes(dwg), setup standard line types
+   * NEW: ezdxf.setup_styles(dwg), setup standard text styles
 
 Version 0.8.7 - 2018-03-04
 
