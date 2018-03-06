@@ -45,36 +45,3 @@ def test_is_close_points():
     assert is_close_points((1, 1, 1), (1, 1)) is False
     assert is_close_points((1, 1, 1), (1, 1, 1.0000000001)) is True
 
-
-def test_matrix_transpose():
-    X = [
-        [12, 7],
-        [4, 5],
-        [3, 8],
-    ]
-    R = [
-        (12, 4, 3),
-        (7, 5, 8),
-    ]
-    assert list(zip(*X)) == R
-
-
-def test_matrix_mul():
-    X = [
-        [12, 7, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-    ]
-
-    Y = [
-        [5, 8, 1, 2],
-        [6, 7, 3, 0],
-        [4, 5, 9, 1],
-    ]
-
-    R = [
-        [114, 160, 60, 27],
-        [74, 97, 73, 14],
-        [119, 157, 112, 23],
-    ]
-    assert matrix_mul(X, Y) == R

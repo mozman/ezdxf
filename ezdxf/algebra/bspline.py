@@ -221,7 +221,7 @@ rather than normal 3D coordinates.
 
 """
 from .vector import Vector, distance
-from .base import is_close, gauss, matrix_mul
+from .base import is_close, gauss
 from math import pow
 from ezdxf.lldxf.const import DXFValueError
 
@@ -440,6 +440,9 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
     Returns: BSpline() object
 
     """
+    def matrix_mul(X, Y):
+        return [[sum(a * b for a, b in zip(X_row, Y_col)) for Y_col in zip(*Y)] for X_row in X]
+
     fit_points = Vector.list(fit_points)
     n = len(fit_points) - 1
     h = count - 1
