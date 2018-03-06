@@ -221,6 +221,7 @@ rather than normal 3D coordinates.
 
 """
 from .vector import Vector, distance
+from .matrix import Matrix
 from .base import is_close, gauss
 from math import pow
 from ezdxf.lldxf.const import DXFValueError
@@ -337,7 +338,7 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
     t_vector = list(create_t_vector())
     knots = list(control_frame_knots(count-1, degree, t_vector))
     control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
-    bspline = BSpline(control_points, order=degree+1, knots=knots)
+    bspline = BSpline(control_points, order=order, knots=knots)
     bspline.t_array = t_vector
     return bspline
 
@@ -376,7 +377,7 @@ def bspline_control_frame_approx(fit_points, count, degree=3, method='distance',
     t_vector = list(create_t_vector())
     knots = list(control_frame_knots(len(fit_points)-1, degree, t_vector))
     control_points = global_curve_approximation(fit_points, count, degree, t_vector, knots)
-    bspline = BSpline(control_points, order=degree+1)
+    bspline = BSpline(control_points, order=order)
     return bspline
 
 
@@ -440,9 +441,6 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
     Returns: BSpline() object
 
     """
-    def matrix_mul(X, Y):
-        return [[sum(a * b for a, b in zip(X_row, Y_col)) for Y_col in zip(*Y)] for X_row in X]
-
     fit_points = Vector.list(fit_points)
     n = len(fit_points) - 1
     h = count - 1
@@ -464,22 +462,11 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
         for k in range(1, n):
             p += q[k] * matrix_N[k][i]
         matrix_Q.append(p)
-
-    # remove row 0 => matrix_N[0] == row 1, matrixN and matrix_Q in sync
-    matrix_N = [row[1:h] for row in matrix_N[1:]]
-    # matrix transpose = zip(*matrix)
-    matrix_M = matrix_mul(zip(*matrix_N), matrix_N)
-    result = []
-    for axis in (0, 1, 2):
-        m = []
-        for index, row in enumerate(matrix_M):
-            row = list(row)
-            row.append(matrix_Q[index][axis])
-            m.append(row)
-        result.append(gauss(m))
-
+    matrix_N = Matrix([row[1:h] for row in matrix_N[1:]])
+    matrix_M = matrix_N.transpose() * matrix_N
+    P = matrix_M.gauss_matrix(matrix_Q)
     control_points = [fit_points[0]]
-    control_points.extend(Vector.generate(zip(result[0], result[1], result[2])))
+    control_points.extend(Vector.generate(P.rows()))
     control_points.append(fit_points[-1])
     return control_points
 

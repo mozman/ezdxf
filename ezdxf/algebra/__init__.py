@@ -4,6 +4,7 @@
 from .base import is_close, is_close_points
 from .vector import Vector
 from .matrix44 import Matrix44
+from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx
 from .bspline import BSpline, BSplineU, BSplineClosed, DBSpline, DBasisU, DBSplineClosed
 from .bezier import Bezier, DBezier

@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from itertools import repeat
+from .base import gauss
 
 
 class Matrix(object):
@@ -73,6 +74,19 @@ class Matrix(object):
     def cols(self):
         return [self.col(i) for i in range(self.ncols)]
 
+    def append_row(self, items):
+        if len(items) == self.ncols:
+            self.matrix.append(items)
+        else:
+            raise ValueError('Invalid item count.')
+
+    def append_col(self, items):
+        if len(items) == self.nrows:
+            for row, item in zip(self.matrix, items):
+                row.append(item)
+        else:
+            raise ValueError('Invalid item count.')
+
     def __getitem__(self, item):
         row, col = item
         return self.matrix[row][col]
@@ -120,3 +134,16 @@ class Matrix(object):
 
     def transpose(self):
         return Matrix(matrix=list(zip(*self.matrix)))
+
+    def gauss(self, col):
+        m = Matrix(self)
+        m.append_col(col)
+        return gauss(m.matrix)
+
+    def gauss_matrix(self, matrix):
+        B = Matrix(matrix)
+        if self.nrows != B.nrows:
+            raise ValueError('Row count of matrices do not match.')
+        result = [self.gauss(col) for col in B.cols()]
+        return Matrix(zip(*result))
+
