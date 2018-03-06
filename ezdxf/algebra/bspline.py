@@ -222,7 +222,7 @@ rather than normal 3D coordinates.
 """
 from .vector import Vector, distance
 from .matrix import Matrix
-from .base import is_close, gauss
+from .base import is_close
 from math import pow
 from ezdxf.lldxf.const import DXFValueError
 
@@ -409,22 +409,11 @@ def control_frame_knots(n, p, t_vector):
 def global_curve_interpolation(fit_points, degree, t_vector, knots):
     def create_matrix_N():
         spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
-        return [spline.basis(t) for t in t_vector]
+        return Matrix([spline.basis(t) for t in t_vector])
 
-    def create_matrix_D():
-        return [Vector(p) for p in fit_points]
-
-    N = create_matrix_N()
-    D = create_matrix_D()
-    result = []
-    for axis in (0, 1, 2):
-        m = []
-        for index, row in enumerate(N):
-            row = list(row)
-            row.append(D[index][axis])
-            m.append(row)
-        result.append(gauss(m))
-    return Vector.list(zip(result[0], result[1], result[2]))
+    matrix_N = create_matrix_N()
+    control_points = matrix_N.gauss_matrix(fit_points)
+    return Vector.list(control_points.rows())
 
 
 def global_curve_approximation(fit_points, count, degree, t_vector, knots):
@@ -441,33 +430,29 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
     Returns: BSpline() object
 
     """
-    fit_points = Vector.list(fit_points)
+    # source: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-APP-global.html
+    fit_points = Vector.list(fit_points)  # data points D
     n = len(fit_points) - 1
     h = count - 1
     d0 = fit_points[0]
     dn = fit_points[n]
-    spline = Basis(knots, degree+1, len(fit_points))
+    spline = Basis(knots, order=degree+1, count=len(fit_points))
     # matrix_N[0] == row 0
     matrix_N = [spline.basis(t) for t in t_vector]
 
-    def qpoint(k):
-        nk = matrix_N[k]
-        return fit_points[k] - d0*nk[0] - dn*nk[h]
+    def Q(k):
+        ntk = matrix_N[k]
+        return fit_points[k] - d0*ntk[0] - dn*ntk[h]
 
-    q = [qpoint(k) for k in range(n)]
     # matrix_Q[0] == row 1
-    matrix_Q = []  # row = (x, y, z)
-    for i in range(1, h):
-        p = Vector()
-        for k in range(1, n):
-            p += q[k] * matrix_N[k][i]
-        matrix_Q.append(p)
+    # maybe an error =>    N_i,p(tk)?????
+    matrix_Q = [sum(Q(k) * matrix_N[k][i] for k in range(1, n)) for i in range(1, h)]
     matrix_N = Matrix([row[1:h] for row in matrix_N[1:]])
     matrix_M = matrix_N.transpose() * matrix_N
     P = matrix_M.gauss_matrix(matrix_Q)
-    control_points = [fit_points[0]]
+    control_points = [d0]
     control_points.extend(Vector.generate(P.rows()))
-    control_points.append(fit_points[-1])
+    control_points.append(dn)
     return control_points
 
 

@@ -1,7 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from itertools import repeat
-from .base import gauss
 
 
 class Matrix(object):
@@ -75,13 +74,17 @@ class Matrix(object):
         return [self.col(i) for i in range(self.ncols)]
 
     def append_row(self, items):
-        if len(items) == self.ncols:
+        if self.matrix is None:
+            self.matrix = [list(items)]
+        elif len(items) == self.ncols:
             self.matrix.append(items)
         else:
             raise ValueError('Invalid item count.')
 
     def append_col(self, items):
-        if len(items) == self.nrows:
+        if self.matrix is None:
+            self.matrix = [[item] for item in items]
+        elif len(items) == self.nrows:
             for row, item in zip(self.matrix, items):
                 row.append(item)
         else:
@@ -146,4 +149,53 @@ class Matrix(object):
             raise ValueError('Row count of matrices do not match.')
         result = [self.gauss(col) for col in B.cols()]
         return Matrix(zip(*result))
+
+
+def gauss(A):
+    """
+    Solves a nxn Matrix A x = b, Matrix has 1 column more than rows.
+
+    Args:
+        A: matrix [[a11, a12, ..., a1n, b1],
+                   [a21, a22, ..., a2n, b2],
+                   [a21, a22, ..., a2n, b3],
+                   ...
+                   [an1, an2, ..., ann, bn],]
+
+    Returns: x vector as list
+
+    """
+    n = len(A)
+
+    for i in range(0, n):
+        # Search for maximum in this column
+        maxEl = abs(A[i][i])
+        maxRow = i
+        for k in range(i + 1, n):
+            if abs(A[k][i]) > maxEl:
+                maxEl = abs(A[k][i])
+                maxRow = k
+
+        # Swap maximum row with current row (column by column)
+        for k in range(i, n + 1):
+            tmp = A[maxRow][k]
+            A[maxRow][k] = A[i][k]
+            A[i][k] = tmp
+
+        # Make all rows below this one 0 in current column
+        for k in range(i + 1, n):
+            c = -A[k][i] / A[i][i]
+            for j in range(i, n + 1):
+                if i == j:
+                    A[k][j] = 0
+                else:
+                    A[k][j] += c * A[i][j]
+
+    # Solve equation Ax=b for an upper triangular matrix A
+    x = [0] * n
+    for i in range(n - 1, -1, -1):
+        x[i] = A[i][n] / A[i][i]
+        for k in range(i - 1, -1, -1):
+            A[k][n] -= A[k][i] * x[i]
+    return x
 

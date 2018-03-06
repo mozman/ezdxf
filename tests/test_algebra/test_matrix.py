@@ -124,3 +124,17 @@ def test_sub(X):
 
     R = X - 10
     assert R == Matrix([[2, -3], [-6, -5], [-7, -2]])
+
+
+def test_build_matrix_by_rows():
+    m = Matrix()
+    m.append_row([1, 2, 3])
+    assert m.nrows == 1
+    assert m.ncols == 3
+
+
+def test_build_matrix_by_cols():
+    m = Matrix()
+    m.append_col([1, 2, 3])
+    assert m.nrows == 3
+    assert m.ncols == 1
