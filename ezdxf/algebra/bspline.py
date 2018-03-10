@@ -304,6 +304,89 @@ def centripetal_t_vector(fit_points, power=.5):
         yield s / total_length
 
 
+def bspline_basis(u, index, degree, knots):
+    """
+    B-spline basis function.
+
+    Simple recursive implementation for testing and comparision.
+
+    Args:
+        u: curve parameter in range [0 .. max(knots)]
+        index: index of control point
+        degree: degree of B-spline
+        knots: knots vector
+
+    Returns: basis value N_i,p(u)
+
+    """
+    cache = {}
+    u = float(u)
+
+    def N(i, p):
+        try:
+            return cache[(i, p)]
+        except KeyError:
+            if p == 0:
+                retval = 1 if knots[i] <= u < knots[i+1] else 0.
+            else:
+                dominator = (knots[i+p]-knots[i])
+                f1 = (u-knots[i]) / dominator * N(i, p-1) if dominator != 0. else 0.
+
+                dominator = (knots[i+p+1]-knots[i+1])
+                f2 = (knots[i+p+1]-u) / dominator * N(i+1, p-1) if dominator != 0. else 0.
+
+                retval = f1 + f2
+            cache[(i, p)] = retval
+            return retval
+
+    return N(int(index), int(degree))
+
+
+def bspline_basis_vector(u, count, degree, knots):
+    """
+    Create basis vector at parameter u.
+
+    Used with the bspline_basis() for testing and comparision.
+
+    Args:
+        u: curve parameter in range [0 .. max(knots)]
+        count: control point count (n + 1)
+        degree: degree of B-spline (order = degree + 1)
+        knots: knot vector
+
+    Returns: basis vector as list fo floats, len(basis_vector) == count
+
+    """
+    assert len(knots) == len(count + degree + 1)
+    basis = [bspline_basis(u, index, degree, knots) for index in range(count)]
+    if is_close(u, knots[-1]):  # pick up last point ??? why is this necessary ???
+        basis[-1] = 1.
+    return basis
+
+
+def bspline_vertex(u, degree, control_points, knots):
+    """
+    Calculate B-spline vertex at parameter u.
+
+    Used with the bspline_basis_vector() for testing and comparision.
+
+    Args:
+        u:  curve parameter in range [0 .. max(knots)]
+        degree: degree of B-spline (order = degree + 1)
+        control_points: control points as list of (x, y[,z]) tuples
+        knots: knot vector as list of floats, len(knots) == (count + order)
+
+    Returns: Vector() object
+
+    """
+    basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
+
+    vertex = Vector()
+    for basis, point in zip(basis_vector, control_points):
+        vertex += Vector(point) * basis
+    return vertex
+
+
 def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
     """
     Calculate B-spline control frame, given are the fit points and the degree of the B-spline.
