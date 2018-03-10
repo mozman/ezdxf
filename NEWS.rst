@@ -6,7 +6,7 @@ Version 0.8.8 - dev
 
    * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
    * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points, given are the fit points and
-          the degree of the B-spline, e.g. create a spline for 200 fit points by just 30 control points
+     the degree of the B-spline
    * NEW: ezdxf.setup_linetypes(dwg), setup standard line types
    * NEW: ezdxf.setup_styles(dwg), setup standard text styles
 

@@ -316,7 +316,7 @@ def bspline_basis(u, index, degree, knots):
         degree: degree of B-spline
         knots: knots vector
 
-    Returns: basis value N_i,p(u)
+    Returns: basis value N_i,p(u) as float
 
     """
     cache = {}
@@ -354,7 +354,7 @@ def bspline_basis_vector(u, count, degree, knots):
         degree: degree of B-spline (order = degree + 1)
         knots: knot vector
 
-    Returns: basis vector as list fo floats, len(basis_vector) == count
+    Returns: basis vector as list fo floats, len(basis) == count
 
     """
     assert len(knots) == len(count + degree + 1)

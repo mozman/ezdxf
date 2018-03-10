@@ -369,8 +369,7 @@ Class method returns a rotation matrix about the z-axis.
 Class method returns a rotation matrix about an arbitrary axis.
 
 :param axis: rotation axis as (x, y, z) tuple
-
-angle: rotation angle in radians
+:param angle: rotation angle in radians
 
 .. method:: Matrix44.xyz_rotate(angle_x, angle_y, angle_z)
 
