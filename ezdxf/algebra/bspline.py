@@ -330,10 +330,10 @@ def bspline_basis(u, index, degree, knots):
                 retval = 1 if knots[i] <= u < knots[i+1] else 0.
             else:
                 dominator = (knots[i+p]-knots[i])
-                f1 = (u-knots[i]) / dominator * N(i, p-1) if dominator != 0. else 0.
+                f1 = (u-knots[i]) / dominator * N(i, p-1) if dominator else 0.
 
                 dominator = (knots[i+p+1]-knots[i+1])
-                f2 = (knots[i+p+1]-u) / dominator * N(i+1, p-1) if dominator != 0. else 0.
+                f2 = (knots[i+p+1]-u) / dominator * N(i+1, p-1) if dominator else 0.
 
                 retval = f1 + f2
             cache[(i, p)] = retval
@@ -521,16 +521,15 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
     dn = fit_points[n]
     spline = Basis(knots, order=degree+1, count=len(fit_points))
     # matrix_N[0] == row 0
-    matrix_N = [spline.basis(t) for t in t_vector]
+    matrix_N = [spline.basis(t) for t in t_vector]  # 0 .. n
 
     def Q(k):
         ntk = matrix_N[k]
         return fit_points[k] - d0*ntk[0] - dn*ntk[h]
 
     # matrix_Q[0] == row 1
-    # maybe an error =>    N_i,p(tk)?????
     matrix_Q = [sum(Q(k) * matrix_N[k][i] for k in range(1, n)) for i in range(1, h)]
-    matrix_N = Matrix([row[1:h] for row in matrix_N[1:]])
+    matrix_N = Matrix([row[1:h] for row in matrix_N[1:-1]])
     matrix_M = matrix_N.transpose() * matrix_N
     P = matrix_M.gauss_matrix(matrix_Q)
     control_points = [d0]
