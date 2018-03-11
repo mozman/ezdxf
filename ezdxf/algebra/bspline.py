@@ -357,7 +357,7 @@ def bspline_basis_vector(u, count, degree, knots):
     Returns: basis vector as list fo floats, len(basis) == count
 
     """
-    assert len(knots) == len(count + degree + 1)
+    assert len(knots) == (count + degree + 1)
     basis = [bspline_basis(u, index, degree, knots) for index in range(count)]
     if is_close(u, knots[-1]):  # pick up last point ??? why is this necessary ???
         basis[-1] = 1.
