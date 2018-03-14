@@ -9,6 +9,7 @@ Version 0.8.8 - dev
      the degree of the B-spline
    * NEW: ezdxf.setup_linetypes(dwg), setup standard line types
    * NEW: ezdxf.setup_styles(dwg), setup standard text styles
+   * NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
 
 Version 0.8.7 - 2018-03-04
 

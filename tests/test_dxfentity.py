@@ -311,6 +311,13 @@ AcDbLine
 """
 
 
+def test_str():
+    from ezdxf.legacy.graphics import Line
+    line = Line(ExtendedTags.from_text(LINE_DATA))
+    assert str(line) == "LINE(#0)"
+    assert repr(line) == "<class 'ezdxf.legacy.graphics.Line'> LINE(#0)"
+
+
 class TestAppData:
     @pytest.fixture
     def entity(self):

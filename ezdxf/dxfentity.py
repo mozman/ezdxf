@@ -56,6 +56,12 @@ class DXFEntity(object):
         self.dxf = DXFNamespace(self)  # all DXF attributes are accessible by the dxf attribute, like entity.dxf.handle
         self.drawing = drawing
 
+    def __str__(self):
+        return "{}(#{})".format(self.dxftype(), self.dxf.handle)
+
+    def __repr__(self):
+        return str(self.__class__) + " " + self.__str__()
+
     @property
     def dxffactory(self):
         return self.drawing.dxffactory
