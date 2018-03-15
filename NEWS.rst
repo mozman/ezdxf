@@ -10,6 +10,7 @@ Version 0.8.8 - dev
    * NEW: ezdxf.setup_linetypes(dwg), setup standard line types
    * NEW: ezdxf.setup_styles(dwg), setup standard text styles
    * NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
+   * BUGFIX: entity structure validator excepts group code >= 1000 before XDATA section (used in AutoCAD Civil 3D and AutoCAD Map 3D)
 
 Version 0.8.7 - 2018-03-04
 

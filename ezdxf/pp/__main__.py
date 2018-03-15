@@ -98,6 +98,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     options.compress_binary_data = True
+    options.check_entity_tag_structures = False
     for filename in args.files:
         if not Path(filename).exists():
             print("File '{}' not found.".format(filename))

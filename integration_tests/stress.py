@@ -7,7 +7,7 @@ from itertools import chain
 DIR1 = r"D:\Source\dxftest\CADKitSamples\*.dxf"
 DIR2 = r"D:\Source\dxftest\*.dxf"
 LEGACY_MODE = False
-options.check_entity_tag_structures = False
+options.check_entity_tag_structures = True
 
 
 @pytest.fixture(params=chain(glob.glob(DIR1), glob.glob(DIR2)))

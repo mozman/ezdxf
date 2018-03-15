@@ -100,8 +100,11 @@ For explanation of all group codes see: `DXF Group Codes in Numerical Order Refe
 Extended Data
 -------------
 
-Extended data (xdata) is created by AutoLISP or ObjectARX applications but any other application like ezdxf can also
-define xdata. If an entity contains extended data, it **follows** the entity's normal definition data.
+Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any other application like ezdxf can also
+define XDATA. If an entity contains extended data, it **follows** the entity's normal definition data.
+
+But extended group codes (>=1000) can appear **before** the XDATA section, an example is the BLOCKBASEPOINTPARAMETER
+entity in AutoCAD Civil 3D or AutoCAD Map 3D.
 
 ================= ===================================================================================
 Group Code        Description
@@ -252,8 +255,8 @@ The persistent reactors tag sequence:
 Application-Defined Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Starting at DXF R13, DXF objects can contain application-defined codes outside of xdata. This application-defined
-codes can contain any tag except :code:`(0, ...)` and :code:`(102, ...)`. "{YOURAPPID" means the APPID string with an
+Starting at DXF R13, DXF objects can contain application-defined codes outside of XDATA. This application-defined
+codes can contain any tag except :code:`(0, ...)` and :code:`(102, '{...')`. "{YOURAPPID" means the APPID string with an
 preceding "{". The application defined data tag sequence:
 
 .. code-block:: none
@@ -264,11 +267,22 @@ preceding "{". The application defined data tag sequence:
     102
     }
 
+:code:`(102, 'YOURAPPID}')` is also a valid closing tag:
+
+.. code-block:: none
+
+    102
+    {YOURAPPID
+    ...
+    102
+    YOURAPPID}
 
 All groups defined with a beginning :code:`(102, ...)` appear in the DXF reference before the first subclass marker,
 I don't know if these groups can appear after the first or any subclass marker. ezdxf accepts them at any position,
 and by default ezdxf adds new app data in front of the first subclass marker to the first tag section of an DXF object.
 
+**Exception XRECORD:** Tags with group code 102 and a value string without a preceding "{" or the scheme "YOURAPPID}",
+should be treated as usual group codes.
 
 .. include:: reflinks.inc
 

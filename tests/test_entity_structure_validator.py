@@ -86,6 +86,136 @@ STRING
 """
 
 
+def test_xrecord_with_group_code_102():
+    tags = list(entity_structure_validator(compile(XRECORD_WITH_GROUP_CODE_102)))
+    assert tags[0] == (0, 'XRECORD')
+
+
+XRECORD_WITH_GROUP_CODE_102 = """0
+XRECORD
+5
+D9B071D01A0CB6A5
+102
+{ACAD_REACTORS
+330
+D9B071D01A0CB69D
+102
+}
+330
+D9B071D01A0CB69D
+100
+AcDbXrecord
+280
+ 1
+102
+ACAD_ROUNDTRIP_PRE2007_TABLESTYLE
+90
+    4
+91
+    0
+1
+
+92
+    4
+93
+    0
+2
+
+94
+    4
+95
+    0
+3
+
+"""
+
+
+def test_xrecord_with_long_closing_tag():
+    tags = list(entity_structure_validator(compile(XRECORD_APP_DATA_LONG_CLOSING_TAG)))
+    assert tags[0] == (0, 'XRECORD')
+
+
+XRECORD_APP_DATA_LONG_CLOSING_TAG = """  0
+XRECORD
+5
+2F9
+102
+{ACAD_REACTORS
+330
+2FF
+102
+}
+330
+2FF
+100
+AcDbXrecord
+280
+1
+1
+AcDb_Thumbnail_Schema
+102
+{ATTRRECORD
+341
+2FA
+2
+AcDbDs::TreatedAsObjectData
+280
+1
+291
+1
+102
+ATTRRECORD}
+102
+{ATTRRECORD
+341
+2FB
+2
+AcDbDs::Legacy
+280
+1
+291
+1
+102
+ATTRRECORD}
+2
+AcDbDs::ID
+280
+10
+91
+8
+102
+{ATTRRECORD
+341
+2FC
+2
+AcDs:Indexable
+280
+1
+291
+1
+102
+ATTRRECORD}
+102
+{ATTRRECORD
+341
+2FD
+2
+AcDbDs::HandleAttribute
+280
+7
+282
+1
+102
+ATTRRECORD}
+2
+Thumbnail_Data
+280
+15
+91
+0
+"""
+
+
 def test_invalid_xdata():
     with pytest.raises(DXFXDataError):
         list(entity_structure_validator(compile(INVALID_XDATA_STRUCTURE_TAG)))
@@ -172,6 +302,67 @@ STRING
 """
 
 
-if __name__ == '__main__':
-    pytest.main([__file__])
+BLOCKBASEPOINTPARAMETER_CVIL_3D_2018 = """0
+BLOCKBASEPOINTPARAMETER
+5
+4C25
+330
+4C23
+100
+AcDbEvalExpr
+90
+1
+98
+33
+99
+4
+100
+AcDbBlockElement
+300
+Base Point
+98
+33
+99
+4
+1071
+0
+100
+AcDbBlockParameter
+280
+1
+281
+0
+100
+AcDbBlock1PtParameter
+1010
+-3.108080399920343
+1020
+-0.9562299080084814
+1030
+0.0
+93
+0
+170
+0
+171
+0
+100
+AcDbBlockBasepointParameter
+1011
+0.0
+1021
+0.0
+1031
+0.0
+1012
+0.0
+1022
+0.0
+1032
+0.0
+"""
 
+
+def test_extended_group_code_before_XDATA():
+    tags = list(entity_structure_validator(compile(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018)))
+    assert tags[0] == (0, 'BLOCKBASEPOINTPARAMETER')
