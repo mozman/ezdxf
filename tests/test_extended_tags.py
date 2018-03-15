@@ -340,19 +340,23 @@ ACAD_REACTORS = '{ACAD_REACTORS'
 def xtags4():
     return ExtendedTags.from_text(NO_REACTORS)
 
+
 def test_get_not_existing_reactor(xtags4):
     with pytest.raises(DXFValueError):
         xtags4.get_app_data(ACAD_REACTORS)
 
+
 def test_new_reactors(xtags4):
     xtags4.new_app_data(ACAD_REACTORS)
     assert (102, 0) == xtags4.noclass[-1]  # code = 102, value = index in appdata list
+
 
 def test_append_not_existing_reactors(xtags4):
     xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
     reactors = xtags4.get_app_data_content(ACAD_REACTORS)
     assert 1 == len(reactors)
     assert DXFTag(330, 'DEAD') == reactors[0]
+
 
 def test_append_to_existing_reactors(xtags4):
     xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
@@ -363,6 +367,7 @@ def test_append_to_existing_reactors(xtags4):
     reactors = xtags4.get_app_data_content(ACAD_REACTORS)
     assert DXFTag(330, 'DEAD') == reactors[0]
     assert DXFTag(330, 'DEAD2') == reactors[1]
+
 
 NO_REACTORS = """  0
 TEXT
@@ -433,4 +438,242 @@ AcDbLine
 0
 230
 1
+"""
+
+
+def test_group_code_1000_outside_XDATA():
+    tags = ExtendedTags(Tags.from_text(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018))
+    assert tags.dxftype() == 'BLOCKBASEPOINTPARAMETER'
+    assert len(tags.subclasses) == 6
+    block_base_point_parameter = tags.get_subclass('AcDbBlockBasepointParameter')
+    assert len(block_base_point_parameter) == 3
+    assert block_base_point_parameter[0] == (100, 'AcDbBlockBasepointParameter')
+    assert block_base_point_parameter[1] == (1011, (0., 0., 0.))
+    assert block_base_point_parameter[2] == (1012, (0., 0., 0.))
+
+    block_element = tags.get_subclass('AcDbBlockElement')
+    assert block_element[4] == (1071, 0)
+
+    stream = StringIO()
+    tagwriter = TagWriter(stream)
+    tagwriter.write_tags(tags)
+    lines = stream.getvalue()
+    stream.close()
+    assert len(lines.split('\n')) == len(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018.split('\n'))
+
+
+BLOCKBASEPOINTPARAMETER_CVIL_3D_2018 = """0
+BLOCKBASEPOINTPARAMETER
+5
+4C25
+330
+4C23
+100
+AcDbEvalExpr
+90
+1
+98
+33
+99
+4
+100
+AcDbBlockElement
+300
+Base Point
+98
+33
+99
+4
+1071
+0
+100
+AcDbBlockParameter
+280
+1
+281
+0
+100
+AcDbBlock1PtParameter
+1010
+-3.108080399920343
+1020
+-0.9562299080084814
+1030
+0.0
+93
+0
+170
+0
+171
+0
+100
+AcDbBlockBasepointParameter
+1011
+0.0
+1021
+0.0
+1031
+0.0
+1012
+0.0
+1022
+0.0
+1032
+0.0
+"""
+
+
+def test_xrecord_with_group_code_102():
+    tags = ExtendedTags(Tags.from_text(XRECORD_WITH_GROUP_CODE_102))
+    assert tags.dxftype() == 'XRECORD'
+    assert len(tags.appdata) == 1
+    assert tags.noclass[2] == (102, 0)  # 0 == index in appdata list
+    assert tags.appdata[0][0] == (102, '{ACAD_REACTORS')
+
+    xrecord = tags.get_subclass('AcDbXrecord')
+    assert xrecord[2] == (102, 'ACAD_ROUNDTRIP_PRE2007_TABLESTYLE')
+    assert len(list(tags)) * 2 + 1 == len(XRECORD_WITH_GROUP_CODE_102.split('\n'))  # +1 == appending '\n'
+
+
+XRECORD_WITH_GROUP_CODE_102 = """0
+XRECORD
+5
+D9B071D01A0CB6A5
+102
+{ACAD_REACTORS
+330
+D9B071D01A0CB69D
+102
+}
+330
+D9B071D01A0CB69D
+100
+AcDbXrecord
+280
+ 1
+102
+ACAD_ROUNDTRIP_PRE2007_TABLESTYLE
+90
+    4
+91
+    0
+1
+
+92
+    4
+93
+    0
+2
+
+94
+    4
+95
+    0
+3
+
+"""
+
+
+def test_xrecord_with_long_closing_tag():
+    tags = ExtendedTags(Tags.from_text(XRECORD_APP_DATA_LONG_CLOSING_TAG))
+    assert tags.dxftype() == 'XRECORD'
+    assert len(tags.appdata) == 5
+
+    attr_rec = tags.appdata[4]
+    assert attr_rec[0] == (102, '{ATTRRECORD')
+    assert attr_rec[1] == (341, '2FD')
+    assert len(list(tags)) * 2 + 1 == len(XRECORD_APP_DATA_LONG_CLOSING_TAG.split('\n'))  # +1 == appending '\n'
+
+    # test USUAL_102_TAG_INSIDE_APP_DATA
+    attr_rec = tags.appdata[1]
+    assert attr_rec[0] == (102, '{ATTRRECORD')
+    assert attr_rec[1] == (341, '2FA')
+    assert attr_rec[2] == (102, 'USUAL_102_TAG_INSIDE_APP_DATA')
+
+    # test USUAL_102_TAG_OUTSIDE_APP_DATA
+    xrecord = tags.get_subclass('AcDbXrecord')
+    assert xrecord[4] == (102, 'USUAL_102_TAG_OUTSIDE_APP_DATA')
+
+XRECORD_APP_DATA_LONG_CLOSING_TAG = """  0
+XRECORD
+5
+2F9
+102
+{ACAD_REACTORS
+330
+2FF
+102
+}
+330
+2FF
+100
+AcDbXrecord
+280
+1
+1
+AcDb_Thumbnail_Schema
+102
+{ATTRRECORD
+341
+2FA
+102
+USUAL_102_TAG_INSIDE_APP_DATA
+2
+AcDbDs::TreatedAsObjectData
+280
+1
+291
+1
+102
+ATTRRECORD}
+102
+USUAL_102_TAG_OUTSIDE_APP_DATA
+102
+{ATTRRECORD
+341
+2FB
+2
+AcDbDs::Legacy
+280
+1
+291
+1
+102
+ATTRRECORD}
+2
+AcDbDs::ID
+280
+10
+91
+8
+102
+{ATTRRECORD
+341
+2FC
+2
+AcDs:Indexable
+280
+1
+291
+1
+102
+ATTRRECORD}
+102
+{ATTRRECORD
+341
+2FD
+2
+AcDbDs::HandleAttribute
+280
+7
+282
+1
+102
+ATTRRECORD}
+2
+Thumbnail_Data
+280
+15
+91
+0
 """

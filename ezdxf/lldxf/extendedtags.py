@@ -94,14 +94,16 @@ class ExtendedTags(object):
         def collect_appdata(starttag):
             """ appdata, cannot contain xdata or subclasses """
             data = Tags([starttag])
+            closing_strings = ('}', starttag.value[1:] + '}')  # alternative closing tag 'APPID}'
             while True:
                 try:
                     tag = next(tagstream)
                 except StopIteration:
                     raise DXFStructureError("Missing closing (102, '}') tag for appdata structure.")
                 data.append(tag)
-                if tag.code == APP_DATA_MARKER:
+                if (tag.code == APP_DATA_MARKER) and (tag.value in closing_strings):
                     break
+                    # every other (102, ) tag is treated as usual tag
             self.appdata.append(data)
 
         def collect_xdata(starttag):
