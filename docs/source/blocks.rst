@@ -60,7 +60,8 @@ Block Definition
 
 .. class:: Block
 
-   Blocks are embedded into the :class:`BlockLayout` object.
+   Blocks are embedded into the :class:`BlockLayout` object. The BLOCK entity is accessible by
+   :attr:`BlockLayout.block`.
 
 =========== ===========
 DXFAttr     Description
@@ -90,7 +91,7 @@ Block Reference
 
 .. class:: Insert
 
-   A block reference with the possibility to append attributes (:class:`Attrib`).
+   A block reference (DXF type: INSERT) with the possibility to append attributes (:class:`Attrib`).
 
 ============== ======= ======
 DXFAttr        Version Description
