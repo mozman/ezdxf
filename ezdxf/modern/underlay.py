@@ -4,8 +4,8 @@
 # License: MIT License
 
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
+__author__ = "mozman <me@mozman.at>"
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
@@ -14,6 +14,24 @@ from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
+
+_PDFUNDERLAY_CLS = """  0
+CLASS
+1
+PDFUNDERLAY
+2
+AcDbPdfReference
+3
+ObjectDBX Classes
+90
+4095
+91
+0
+280
+0
+281
+1
+"""
 
 _PDFUNDERLAY_TPL = """  0
 PDFUNDERLAY
@@ -51,7 +69,6 @@ AcDbUnderlayReference
 0
 """
 
-
 underlay_subclass = DefSubclass('AcDbUnderlayReference', {
     'underlay_def': DXFAttr(340),  # Hard reference to underlay definition object
     'insert': DXFAttr(10, xtype='Point3D'),
@@ -72,6 +89,7 @@ underlay_subclass = DefSubclass('AcDbUnderlayReference', {
 
 class PdfUnderlay(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL)
+    CLASS = ExtendedTags.from_text(_PDFUNDERLAY_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, underlay_subclass)
 
     @property
@@ -154,14 +172,71 @@ class PdfUnderlay(ModernGraphicEntity):
         underlay_def.remove_reactor_handle(self.dxf.handle)
 
 
+_DWFUNDERLAY_CLS = """  0
+CLASS
+1
+DWFUNDERLAY
+2
+AcDbDwfReference
+3
+ObjectDBX Classes
+90
+1153
+91
+0
+280
+0
+281
+1
+"""
+
+
 class DwfUnderlay(PdfUnderlay):
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DWF'))
+    CLASS = ExtendedTags.from_text(_DWFUNDERLAY_CLS)
+
+
+_DGNUNDERLAY_CLS = """  0
+CLASS
+1
+DGNUNDERLAY
+2
+AcDbDgnReference
+3
+ObjectDBX Classes
+90
+1153
+91
+0
+280
+0
+281
+1
+"""
 
 
 class DgnUnderlay(PdfUnderlay):
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DGN'))
+    CLASS = ExtendedTags.from_text(_DGNUNDERLAY_CLS)
 
 
+_PDF_DEF_CLS = """  0
+CLASS
+1
+PDFDEFINITION
+2
+AcDbPdfDefinition
+3
+ObjectDBX Classes
+90
+1153
+91
+0
+280
+0
+281
+0
+"""
 # Using reactors in PdfDefinition for well defined UNDERLAYS
 _PDF_DEF_TPL = """  0
 PDFDEFINITION
@@ -191,6 +266,7 @@ underlay_def_subclass = DefSubclass('AcDbUnderlayDefinition', {
 # ACAD_(PDF|DWF|DGN)DEFINITIONS do not exist by default
 class PdfDefinition(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL)
+    CLASS = ExtendedTags.from_text(_PDF_DEF_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, underlay_def_subclass)
 
     @property
@@ -201,9 +277,49 @@ class PdfDefinition(DXFEntity):
         self.set_reactors([self.dxf.owner])
 
 
+_DWF_DEF_CLS = """  0
+CLASS
+1
+DWFDEFINITION
+2
+AcDbDwfDefinition
+3
+ObjectDBX Classes
+90
+1153
+91
+0
+280
+0
+281
+0
+"""
+
+
 class DwfDefinition(PdfDefinition):
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DWF'))
+    CLASS = ExtendedTags.from_text(_DWF_DEF_CLS)
+
+
+_DGN_DEF_CLS = """  0
+CLASS
+1
+DGNDEFINITION
+2
+AcDbDgnDefinition
+3
+ObjectDBX Classes
+90
+1153
+91
+0
+280
+0
+281
+0
+"""
 
 
 class DgnDefinition(PdfDefinition):
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DGN'))
+    CLASS = ExtendedTags.from_text(_DGN_DEF_CLS)

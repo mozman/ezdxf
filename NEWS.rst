@@ -5,7 +5,7 @@ News
 Version 0.8.8 - dev
 
    * NEW: read support for GEODATA entity
-   * NEW: DXFEntity.has_extension_dict() and DXFEntity.get_extension_dict()
+   * NEW: DXFEntity.has_extension_dict(), DXFEntity.get_extension_dict() and DXFEntity.new_extension_dict()
    * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
    * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points, given are the fit points and
      the degree of the B-spline
@@ -41,8 +41,8 @@ Version 0.8.6 - 2018-02-17
    * NEW: Layout.page_setup() and correct 'main' viewport for DXF R2000+; For DXF R12 page_setup() exists, but does not
      provide useful results. Page setup for DXF R12 is still a mystery to me.
    * NEW: Table(), MText(), Ellipse(), Spline(), Bezier(), Clothoid(), LinearDimension(), RadialDimension(),
-     ArcDimension() and AngularDimension() composite objects from dxfwrite as addons, these addons support DXF R12
-   * NEW: geometry builder as addons: MeshBuilder(), MeshVertexMerger(), MengerSponge(), SierpinskyPyramid(), these
+     ArcDimension() and AngularDimension() composite objects from dxfwrite as add-ons, these addons support DXF R12
+   * NEW: geometry builder as add-ons: MeshBuilder(), MeshVertexMerger(), MengerSponge(), SierpinskyPyramid(), these
      addons require DXF R2000+ (MESH entity)
    * BUGFIX: fixed invalid implementation of context manager for r12writer
 

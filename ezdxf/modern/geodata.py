@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from .dxfobjects import DXFEntity, none_subclass
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.const import DXFStructureError, DXFValueError
+from ..lldxf.extendedtags import ExtendedTags
 
 _GEODATA_CLS = """  0
 CLASS
@@ -95,7 +96,8 @@ class GeoData(DXFEntity):
     # BLOCK_RECORD (e.g. Model Space) has an (102, ACAD_XDICTIONARY) with an entry ACAD_GEOGRAPHICDATA which points to
     # a GEODATA entity, GEODATA ACAD_REACTORS and owner points to this ACAD_XDICTIONARY, block_record points
     # to BLOCK_RECORD entry
-    # TEMPLATE = ExtendedTags.from_text(_GEODATA_TPL)
+    TEMPLATE = ExtendedTags.from_text(_GEODATA_TPL)
+    CLASS = ExtendedTags.from_text(_GEODATA_CLS)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbGeoData', {

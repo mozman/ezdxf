@@ -1,11 +1,9 @@
 # Purpose: entity section
 # Created: 13.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 from collections import Counter
-from ..lldxf.tags import group_tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFStructureError
 from ..modern.dxfobjects import DXFClass
@@ -17,20 +15,29 @@ class ClassesSection(object):
     def __init__(self, entities=None, drawing=None):
         self.classes = []  # DXFClasses are not stored in the entities database!
         self.drawing = drawing
+        self.registrated_classes = set()
         if entities is not None:
-            self._build(iter(entities), drawing)
+            self._build(iter(entities))
 
     def __iter__(self):
         return iter(self.classes)
 
-    def _build(self, entities, drawing):
+    def _build(self, entities):
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'CLASSES'):
             raise DXFStructureError("Critical structure error in CLASSES section.")
 
         for class_tags in entities:
             # DXFClasses are not stored in the entities database!
-            self.classes.append(DXFClass(ExtendedTags(class_tags), drawing))
+            self.register(ExtendedTags(class_tags))
+            # self.classes.append(DXFClass(ExtendedTags(class_tags), drawing))
+
+    def register(self, tags):
+        if tags.noclass.get_first_value(1) in self.registrated_classes:
+            return
+        dxf_class = DXFClass(tags, self.drawing)
+        self.registrated_classes.add(dxf_class.dxf.name)
+        self.classes.append(dxf_class)
 
     def write(self, tagwriter):
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")

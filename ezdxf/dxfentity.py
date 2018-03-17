@@ -50,6 +50,7 @@ class DXFNamespace(object):
 
 class DXFEntity(object):
     TEMPLATE = None
+    CLASS = None
     DXFATTRIBS = {}
 
     def __init__(self, tags, drawing=None):
@@ -75,6 +76,9 @@ class DXFEntity(object):
     def new(cls, handle, dxfattribs=None, drawing=None):
         if cls.TEMPLATE is None:
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
+        if cls.CLASS is not None and drawing is not None:
+            # only AC1018 entities should have class tags
+            drawing.sections.classes.register(cls.CLASS)
         entity = cls(cls.TEMPLATE.clone(), drawing)
         entity.dxf.handle = handle
         if dxfattribs is not None:
@@ -395,8 +399,11 @@ class DXFEntity(object):
         return self.has_app_data(ACAD_XDICTIONARY)
 
     def get_extension_dict(self):
-        app_data = self.get_app_data(ACAD_XDICTIONARY)
+        """
+        Get associated extension dictionary as DXFDictionary() object.
 
+        """
+        app_data = self.get_app_data(ACAD_XDICTIONARY)
         if len(app_data) == 0 or app_data[0].code != 360:
             raise DXFStructureError("XDICTIONARY error in entity: "+self.__str__())
         # are more than one XDICTIONARY possible?
@@ -405,7 +412,7 @@ class DXFEntity(object):
 
     def new_extension_dict(self):
         """
-        Returns a new extensions dictionary.
+        Creates and assigns a new extensions dictionary. Link to an existing extension dictionary will be lost.
 
         """
         xdict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)

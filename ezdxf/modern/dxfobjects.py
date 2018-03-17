@@ -37,7 +37,7 @@ class DXFObject(DXFEntity):
 
 _DICT_TPL = """  0
 DICTIONARY
-  5
+5
 0
 330
 0
@@ -216,9 +216,27 @@ class DXFDictionary(DXFObject):
         auditor.check_pointer_target_exists(self, ignore_codes=codes)
 
 
+_DICT_WITH_DEFAULT_CLS = """  0
+CLASS
+1
+ACDBDICTIONARYWDFLT
+2
+AcDbDictionaryWithDefault
+3
+ObjectDBX Classes
+90
+0
+91
+0
+280
+0
+281
+0
+"""
+
 _DICT_WITH_DEFAULT_TPL = """  0
 ACDBDICTIONARYWDFLT
-  5
+5
 0
 330
 0
@@ -235,6 +253,7 @@ AcDbDictionaryWithDefault
 
 class DXFDictionaryWithDefault(DXFDictionary):
     TEMPLATE = ExtendedTags.from_text(_DICT_WITH_DEFAULT_TPL)
+    CLASS = ExtendedTags.from_text(_DICT_WITH_DEFAULT_CLS)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbDictionary', {
@@ -362,39 +381,39 @@ class DXFPlotSettings(DXFObject):
 # removed reactors 5 .. 102 330 102 .. 330
 _LAYOUT_TPL = """  0
 LAYOUT
-  5
+5
 0
 330
 1A
 100
 AcDbPlotSettings
-  1
+1
 
-  2
+2
 Adobe PDF
-  4
+4
 A4
-  6
+6
 
- 40
+40
 3.175
- 41
+41
 3.175
- 42
+42
 3.175
- 43
+43
 3.175
- 44
+44
 209.91
- 45
+45
 297.03
- 46
+46
 0.0
- 47
+47
 0.0
- 48
+48
 0.0
- 49
+49
 0.0
 140
 0.0
@@ -404,25 +423,25 @@ A4
 1.0
 143
 1.0
- 70
+70
 688
- 72
+72
 0
- 73
+73
 1
- 74
+74
 5
-  7
+7
 
- 75
+75
 16
 147
 1.0
- 76
+76
 0
- 77
+77
 2
- 78
+78
 300
 148
 0.0
@@ -430,59 +449,59 @@ A4
 0.0
 100
 AcDbLayout
-  1
+1
 Layoutname
- 70
+70
 1
- 71
+71
 1
- 10
+10
 -3.175
- 20
+20
 -3.175
- 11
+11
 293.857
- 21
+21
 206.735
- 12
+12
 0.0
- 22
+22
 0.0
- 32
+32
 0.0
- 14
+14
 29.068
- 24
+24
 20.356
- 34
+34
 0.0
- 15
+15
 261.614
- 25
+25
 183.204
- 35
+35
 0.0
 146
 0.0
- 13
+13
 0.0
- 23
+23
 0.0
- 33
+33
 0.0
- 16
+16
 1.0
- 26
+26
 0.0
- 36
+36
 0.0
- 17
+17
 0.0
- 27
+27
 1.0
- 37
+37
 0.0
- 76
+76
 1
 330
 0
@@ -588,7 +607,7 @@ class DXFDataTable(DXFObject):
 
 _PLACEHOLDER_TPL = """  0
 ACDBPLACEHOLDER
-  5
+5
 0
 330
 0
@@ -600,9 +619,26 @@ class ACDBPlaceHolder(DXFEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, )
 
 
+_RASTER_VARIABLES_CLS = """  0
+CLASS
+1
+RASTERVARIABLES
+2
+AcDbRasterVariables
+3
+ISM
+90
+0
+91
+0
+280
+0
+281
+0
+"""
 _RASTER_VARIABLES_TPL = """  0
 RASTERVARIABLES
-  5
+5
 0
 102
 {ACAD_REACTORS
@@ -614,19 +650,20 @@ RASTERVARIABLES
 0
 100
 AcDbRasterVariables
- 90
-     0
- 70
-     0
- 71
-     1
- 72
-     3
+90
+0
+70
+0
+71
+1
+72
+3
 """
 
 
 class RasterVariables(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_RASTER_VARIABLES_TPL)
+    CLASS = ExtendedTags.from_text(_RASTER_VARIABLES_CLS)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbRasterVariables', {

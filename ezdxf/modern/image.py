@@ -14,60 +14,78 @@ from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ezdxf.algebra import Vector
 
+
+_IMAGE_CLS = """  0
+CLASS
+1
+IMAGE
+2
+AcDbRasterImage
+3
+ISM
+90
+2175
+91
+0
+280
+0
+281
+1
+"""
 _IMAGE_TPL = """ 0
 IMAGE
- 5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbRasterImage
- 90
+90
 0
- 10
+10
 0
- 20
+20
 0.0
- 30
+30
 0.0
- 11
+11
 0.0
- 21
+21
 0.0
- 31
+31
 0.0
- 12
+12
 0.0
- 22
+22
 0.0
- 32
+32
 0.0
- 13
+13
 640
- 23
+23
 320
 340
 0
- 70
-     3
+70
+3
 280
-     0
+0
 281
-    50
+50
 282
-    50
+50
 283
-     0
+0
 360
 0
- 71
-  1
- 91
-  2
+71
+1
+91
+2
 """
 
 image_subclass = DefSubclass('AcDbRasterImage', {
@@ -91,6 +109,7 @@ image_subclass = DefSubclass('AcDbRasterImage', {
 
 class Image(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_IMAGE_TPL)
+    CLASS = ExtendedTags.from_text(_IMAGE_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, image_subclass)
     # flags for IMAGE
     SHOW_IMAGE = 1
@@ -144,6 +163,23 @@ class Image(ModernGraphicEntity):
             reactor = self.dxffactory.wrap_handle(reactor_handle)
             self.drawing.objects.delete_entity(reactor)
 
+_IMAGE_DEF_CLS = """  0
+CLASS
+1
+IMAGEDEF
+2
+AcDbRasterImageDef
+3
+ISM
+90
+0
+91
+0
+280
+0
+281
+0
+"""
 
 _IMAGE_DEF_TPL = """  0
 IMAGEDEF
@@ -188,9 +224,27 @@ image_def_subclass = DefSubclass('AcDbRasterImageDef', {
 # IMAGEDEF - requires entry in objects table ACAD_IMAGE_DICT, ACAD_IMAGE_DICT exists not by default
 class ImageDef(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_IMAGE_DEF_TPL)
+    CLASS = ExtendedTags.from_text(_IMAGE_DEF_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, image_def_subclass)
 
 
+_IMAGE_DEF_REACTOR_CLS = """  0
+CLASS
+  1
+IMAGEDEF_REACTOR
+  2
+AcDbRasterImageDefReactor
+  3
+ISM
+ 90
+1
+ 91
+0
+280
+0
+281
+0
+"""
 _IMAGE_DEF_REACTOR_TPL = """  0
 IMAGEDEF_REACTOR
   5
@@ -210,6 +264,7 @@ AcDbRasterImageDefReactor
 # owner -> IMAGE
 class ImageDefReactor(DXFEntity):
     TEMPLATE = ExtendedTags.from_text(_IMAGE_DEF_REACTOR_TPL)
+    CLASS = ExtendedTags.from_text(_IMAGE_DEF_REACTOR_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbRasterImageDef', {
         'image': DXFAttr(330),  # handle to image
     }))
