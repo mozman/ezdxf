@@ -209,7 +209,7 @@ class ExtendedTags(object):
 
     def get_app_data_content(self, appid):
         """Get app data without first and last marker tag."""
-        return self.get_app_data(appid)[1:-1]
+        return Tags(self.get_app_data(appid)[1:-1])
 
     def set_app_data_content(self, appid, tags):
         index = self.app_data_index(appid)

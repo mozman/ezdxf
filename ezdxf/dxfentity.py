@@ -6,6 +6,7 @@ from .lldxf.types import cast_tag_value, DXFTag
 from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFAttributeError, DXFInvalidLayerName
 from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
+from .lldxf.tags import Tags
 from .tools import set_flag_state
 
 ACAD_REACTORS = '{ACAD_REACTORS'
@@ -347,7 +348,7 @@ class DXFEntity(object):
         return self.tags.has_xdata(appid)
 
     def get_xdata(self, appid):
-        return self.tags.get_xdata(appid)[1:]  # without app id tag
+        return Tags(self.tags.get_xdata(appid)[1:])  # without app id tag
 
     def set_xdata(self, appid, xdata_tags):
         if self.tags.has_xdata(appid):
