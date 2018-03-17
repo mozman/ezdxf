@@ -28,15 +28,14 @@ class ClassesSection(object):
             raise DXFStructureError("Critical structure error in CLASSES section.")
 
         for class_tags in entities:
-            # DXFClasses are not stored in the entities database!
             self.register(ExtendedTags(class_tags))
-            # self.classes.append(DXFClass(ExtendedTags(class_tags), drawing))
 
     def register(self, tags):
         if tags.noclass.get_first_value(1) in self.registrated_classes:
             return
         dxf_class = DXFClass(tags, self.drawing)
         self.registrated_classes.add(dxf_class.dxf.name)
+        # DXFClasses are not stored in the entities database!
         self.classes.append(dxf_class)
 
     def write(self, tagwriter):
