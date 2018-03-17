@@ -95,7 +95,7 @@ Common Base Class
 
    Returns a list of supported DXF attribute names.
 
-.. method:: GraphicEntity.clone_dxf_attribs()
+.. method:: GraphicEntity.dxfattribs()
 
    Create a dict() with all accessible DXF attributes and their value, not all data is accessible by dxf attributes like
    definition points of :class:`LWPolyline` or :class:`Spline`

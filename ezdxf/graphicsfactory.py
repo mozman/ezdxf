@@ -79,7 +79,7 @@ class GraphicsFactory(object):
 
     def add_auto_blockref(self, name, insert, values, dxfattribs=None):
         def get_dxfattribs(attdef):
-            dxfattribs = attdef.clone_dxf_attribs()
+            dxfattribs = attdef.dxfattribs()
             dxfattribs.pop('prompt', None)
             dxfattribs.pop('handle', None)
             return dxfattribs

@@ -21,6 +21,7 @@ from .underlay import DgnDefinition, DgnUnderlay
 from .dimension import Dimension
 
 from . import dxfobjects
+from .geodata import GeoData
 from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
 from ..tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
@@ -43,6 +44,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'DWFDEFINITION': DwfDefinition,
     'DGNDEFINITION': DgnDefinition,
     'RASTERVARIABLES': dxfobjects.RasterVariables,
+    'GEODATA': GeoData,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

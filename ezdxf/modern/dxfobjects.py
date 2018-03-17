@@ -1,11 +1,7 @@
-# Purpose: dxf objects wrapper, dxf-objects are non-graphical entities
-# all dxf objects resides in the OBJECTS SECTION
 # Created: 22.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -133,6 +129,7 @@ class DXFDictionary(DXFObject):
                 return default
         else:
             return self.AcDbDictinary[index + 1].value
+
     get_handle = get  # synonym
 
     def get_entity(self, key):
@@ -178,7 +175,7 @@ class DXFDictionary(DXFObject):
 
     def _discard(self, index):
         if index:
-            del self.AcDbDictinary[index:index+2]  # remove key and value
+            del self.AcDbDictinary[index:index + 2]  # remove key and value
 
     def _get_item_index(self, key):
         for index, tag in enumerate(self.AcDbDictinary):
@@ -213,7 +210,7 @@ class DXFDictionary(DXFObject):
 
     def audit(self, auditor):
         if auditor.drawing.rootdict.tags is self.tags:  # if root dict, ignore owner tag because it is always #0
-            codes = (330, )
+            codes = (330,)
         else:
             codes = None
         auditor.check_pointer_target_exists(self, ignore_codes=codes)
@@ -277,76 +274,76 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
     'scale_numerator': DXFAttr(142, default=1.),  # Numerator of custom print scale: real world (paper) units
     'scale_denominator': DXFAttr(143, default=1.),  # Denominator of custom print scale: drawing units
     'plot_layout_flags': DXFAttr(70),
-        # 1 = Plot Viewport Borders
-        # 2 = Show Plot Styles
-        # 4 = Plot Centered
-        # 8 = Plot Hidden
-        # 16 = Use Standard Scale
-        # 32 = Plot Plot Styles
-        # 64 = Scale Lineweights
-        # 128 = Print Lineweights
-        # 512 = Draw Viewports First
-        # 1024 = Model Type
-        # 2048 = Update Paper
-        # 4096 = Zoom To Paper On Update
-        # 8192 = Initializing
-        # 16384 = Prev PlotInit
+    # 1 = Plot Viewport Borders
+    # 2 = Show Plot Styles
+    # 4 = Plot Centered
+    # 8 = Plot Hidden
+    # 16 = Use Standard Scale
+    # 32 = Plot Plot Styles
+    # 64 = Scale Lineweights
+    # 128 = Print Lineweights
+    # 512 = Draw Viewports First
+    # 1024 = Model Type
+    # 2048 = Update Paper
+    # 4096 = Zoom To Paper On Update
+    # 8192 = Initializing
+    # 16384 = Prev PlotInit
     'plot_paper_units': DXFAttr(72),  # 0 = Plot in inches; 1 = Plot in millimeters; 2 = Plot in pixels
     'plot_rotation': DXFAttr(73),
-        # 0 = No rotation
-        # 1 = 90 degrees counterclockwise
-        # 2 = Upside-down
-        # 3 = 90 degrees clockwise
+    # 0 = No rotation
+    # 1 = 90 degrees counterclockwise
+    # 2 = Upside-down
+    # 3 = 90 degrees clockwise
     'plot_type': DXFAttr(74),
-        # 0 = Last screen display
-        # 1 = Drawing extents
-        # 2 = Drawing limits
-        # 3 = View specified by code 6
-        # 4 = Window specified by codes 48, 49, 140, and 141
-        # 5 = Layout information
+    # 0 = Last screen display
+    # 1 = Drawing extents
+    # 2 = Drawing limits
+    # 3 = View specified by code 6
+    # 4 = Window specified by codes 48, 49, 140, and 141
+    # 5 = Layout information
     'current_style_sheet': DXFAttr(7),
     'standard_scale_type': DXFAttr(75),
-        # 0 = Scaled to Fit
-        # 1 = 1/128"=1'
-        # 2 = 1/64"=1'
-        # 3 = 1/32"=1'
-        # 4 = 1/16"=1'
-        # 5 = 3/32"=1'
-        # 6 = 1/8"=1'
-        # 7 = 3/16"=1'
-        # 8 = 1/4"=1'
-        # 9 = 3/8"=1'
-        # 10 = 1/2"=1'
-        # 11 = 3/4"=1'
-        # 12 = 1"=1'
-        # 13 = 3"=1'
-        # 14 = 6"=1'
-        # 15 = 1'=1'
-        # 16 = 1:1
-        # 17 = 1:2
-        # 18 = 1:4
-        # 19 = 1:8
-        # 20 = 1:10
-        # 21 = 1:16
-        # 22 = 1:20
-        # 23 = 1:30
-        # 24 = 1:40
-        # 25 = 1:50
-        # 26 = 1:100
-        # 27 = 2:1
-        # 28 = 4:1
-        # 29 = 8:1
-        # 30 = 10:1
-        # 31 = 100:1
-        # 32 = 1000:1
+    # 0 = Scaled to Fit
+    # 1 = 1/128"=1'
+    # 2 = 1/64"=1'
+    # 3 = 1/32"=1'
+    # 4 = 1/16"=1'
+    # 5 = 3/32"=1'
+    # 6 = 1/8"=1'
+    # 7 = 3/16"=1'
+    # 8 = 1/4"=1'
+    # 9 = 3/8"=1'
+    # 10 = 1/2"=1'
+    # 11 = 3/4"=1'
+    # 12 = 1"=1'
+    # 13 = 3"=1'
+    # 14 = 6"=1'
+    # 15 = 1'=1'
+    # 16 = 1:1
+    # 17 = 1:2
+    # 18 = 1:4
+    # 19 = 1:8
+    # 20 = 1:10
+    # 21 = 1:16
+    # 22 = 1:20
+    # 23 = 1:30
+    # 24 = 1:40
+    # 25 = 1:50
+    # 26 = 1:100
+    # 27 = 2:1
+    # 28 = 4:1
+    # 29 = 8:1
+    # 30 = 10:1
+    # 31 = 100:1
+    # 32 = 1000:1
     'shade_plot_mode': DXFAttr(76),  # 0 = As Displayed; 1 = Wireframe; 2 = Hidden; 3 = Rendered
     'shade_plot_resolution_level': DXFAttr(77),
-        # 0 = Draft
-        # 1 = Preview
-        # 2 = Normal
-        # 3 = Presentation
-        # 4 = Maximum
-        # 5 = Custom
+    # 0 = Draft
+    # 1 = Preview
+    # 2 = Normal
+    # 3 = Presentation
+    # 4 = Maximum
+    # 5 = Custom
     'shade_plot_custom_dpi': DXFAttr(78),
     # Valid range: 100 to 32767, Only applied when the shade_plot_resolution level is set to 5 (Custom)
     'unit_factor': DXFAttr(147),
@@ -638,5 +635,4 @@ class RasterVariables(DXFEntity):
             'quality': DXFAttr(71, default=1),  # 0=draft; 1=high
             'units': DXFAttr(72, default=3),  # 0 = None; 1 = mm; 2 = cm 3 = m; 4 = km; 5 = in 6 = ft; 7 = yd; 8 = mi
         }),
-
-                               )
+    )

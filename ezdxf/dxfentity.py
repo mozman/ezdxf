@@ -8,8 +8,8 @@ from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
 from .tools import set_flag_state
 
-
 ACAD_REACTORS = '{ACAD_REACTORS'
+ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
 
 
 class DXFNamespace(object):
@@ -275,7 +275,7 @@ class DXFEntity(object):
         dxfattr = self._get_dxfattr_definition(key)
         self._del_dxf_attrib(dxfattr)
 
-    def clone_dxf_attribs(self):
+    def dxfattribs(self):
         """
         Clones defined and existing DXF attributes as dict.
 
@@ -286,6 +286,8 @@ class DXFEntity(object):
             if value is not None:
                 dxfattribs[key] = value
         return dxfattribs
+
+    clone_dxf_attribs = dxfattribs
 
     def update_dxf_attribs(self, dxfattribs):
         for key, value in dxfattribs.items():
@@ -387,3 +389,24 @@ class DXFEntity(object):
 
         """
         pass
+
+    def has_extension_dict(self):
+        return self.has_app_data(ACAD_XDICTIONARY)
+
+    def get_extension_dict(self):
+        app_data = self.get_app_data(ACAD_XDICTIONARY)
+
+        if len(app_data) == 0 or app_data[0].code != 360:
+            raise DXFStructureError("XDICTIONARY error in entity: "+self.__str__())
+        # are more than one XDICTIONARY possible?
+        xdict_handle = app_data[0].value
+        return self.dxffactory.wrap_handle(xdict_handle)
+
+    def new_extension_dict(self):
+        """
+        Returns a new extensions dictionary.
+
+        """
+        xdict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)
+        self.set_app_data(ACAD_XDICTIONARY, [DXFTag(360, xdict.dxf.handle)])
+        return xdict

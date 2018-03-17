@@ -126,9 +126,9 @@ def test_default_entity_settings(modelspace):
     assert (0.0, 0.0, 1.0) == line.dxf.extrusion
 
 
-def test_clone_dxf_attribs(modelspace):
+def test_clone_dxfattribs(modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
-    attribs = line.clone_dxf_attribs()
+    attribs = line.dxfattribs()
     assert 'extrusion' not in attribs, "Don't clone unset attribs with default values."
 
 
