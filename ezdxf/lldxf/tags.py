@@ -311,3 +311,21 @@ class CompressedTags(object):
 
     def decompress(self):
         return internal_tag_compiler(self.tostring())
+
+
+def text_to_multi_tags(text, code=303, size=255, line_ending='^J'):
+    text = ''.join(text).replace('\n', line_ending)
+
+    def chop():
+        start = 0
+        end = size
+        while start < len(text):
+            yield text[start:end]
+            start = end
+            end += size
+
+    return [DXFTag(code, part) for part in chop()]
+
+def multi_tags_to_text(tags, line_ending='^J'):
+    return ''.join(tag.value for tag in tags).replace(line_ending, '\n')
+

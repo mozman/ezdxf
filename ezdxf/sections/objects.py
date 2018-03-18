@@ -149,7 +149,6 @@ class ObjectsSection(AbstractSection):
                 'owner': owner
             })
 
-
 _OBJECT_TABLE_NAMES = [
     "ACAD_COLOR",
     "ACAD_GROUP",

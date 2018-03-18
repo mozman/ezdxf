@@ -547,6 +547,54 @@ class Layout(DXF12Layout):
         self.drawing.objects.remove_handle(self._layout_handle)
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
+    def new_geodata(self, dxfattribs=None):
+        """
+        Create a new GEODATA entity for this layout and replaces existing ones.
+
+        GEODATA entity requires DXF version R2010 (AC1024) or later.
+
+        The DXF Reference does not document if other layouts than model space supports geo referencing, so this may
+        only make sense for the model space layout.
+
+        Args:
+            dxfattribs: DXF attributes for the GEODATA entity
+
+        Returns: GeoData() object
+
+        """
+        if dxfattribs is None:
+            dxfattribs = {}
+        dwg = self.drawing
+        if dwg.dxfversion < 'AC1024':
+            raise DXFValueError('GEODATA entity requires DXF version R2010 (AC1024) or later.')
+
+        block_record = self.block_record
+        try:
+            xdict = block_record.get_extension_dict()
+        except DXFValueError:
+            xdict = block_record.new_extension_dict()
+
+        owner = xdict.dxf.handle
+        dxfattribs['owner'] = owner
+        geodata = dwg.objects.create_new_dxf_entity('GEODATA', dxfattribs=dxfattribs)
+        geodata.set_reactors([owner])
+        xdict['ACAD_GEOGRAPHICDATA'] = geodata.dxf.handle
+        return geodata
+
+    def get_geodata(self):
+        """
+        Returns the associated GEODATA entity as GeoData() object or None.
+
+        """
+        try:
+            xdict = self.block_record.get_extension_dict()
+        except DXFValueError:
+            return None
+        try:
+            return xdict.get_entity('ACAD_GEOGRAPHICDATA')
+        except DXFKeyError:
+            return None
+
 
 class BlockLayout(DXF12BlockLayout):
     def add_entity(self, entity):

@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
+import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.modern.geodata import GeoData
 
@@ -64,8 +65,43 @@ def test_geodata_set_get_mesh_data(geodata):
     assert faces == faces2
 
 
+TEST_TEXT = """Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore 
+magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd 
+gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing 
+elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero 
+eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum 
+dolor sit amet.
+"""
+
+
 def test_geodata_coordinate_system_definition(geodata):
-    assert geodata.coordinate_system_definition() == 'Text0Text1'
+    assert geodata.get_coordinate_system_definition() == 'Text0Text1'
+
+    geodata.set_coordinate_system_definition(TEST_TEXT)
+    assert geodata.get_coordinate_system_definition() == TEST_TEXT
+
+
+def test_internals_set_geodata_coordinate_system_definition_(geodata):
+    # in this case interal structure testing is required
+    geodata.AcDbGeoData.remove_tags((301, 303))  # delete existing text
+    assert geodata.get_coordinate_system_definition() == ''
+
+    with pytest.raises(ezdxf.DXFValueError):
+        geodata.AcDbGeoData.tag_index(301)
+
+    # all 301 and 303 tags are removed
+    geodata.set_coordinate_system_definition(TEST_TEXT)
+    # Not tested if AutoCAD accepts the new position of 301 and 303 tags, but according to the DXF reference tag order
+    # should not matter!
+    assert geodata.get_coordinate_system_definition() == TEST_TEXT
+
+
+def test_create_new_geo_data_for_model_space():
+    dwg = ezdxf.new('R2010')
+    msp = dwg.modelspace()
+    assert msp.get_geodata() is None
+    geodata = msp.new_geodata()
+    assert geodata.dxftype() == 'GEODATA'
 
 
 GEODATA = """  0

@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from uuid import uuid1
 from .c23 import ustr
 
-
 def float2transparency(value):
     return int((1. - float(value)) * 255) | 0x02000000
 

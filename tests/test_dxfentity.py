@@ -467,6 +467,9 @@ class TestExtensionDict:
     def test_new_extension_dict(self, dwg):
         msp = dwg.modelspace()
         entity = msp.add_line((0, 0), (10, 0))
+        with pytest.raises(DXFValueError):
+            entity.get_extension_dict()
+
         xdict = entity.new_extension_dict()
         assert xdict.dxftype() == 'DICTIONARY'
         assert xdict.dxf.owner == entity.dxf.handle

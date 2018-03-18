@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import math
 from .lldxf import const
-from .lldxf.const import DXFValueError, DXFVersionError
+from .lldxf.const import DXFValueError, DXFVersionError, DXFKeyError
 from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 

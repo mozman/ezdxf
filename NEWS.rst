@@ -4,7 +4,7 @@ News
 
 Version 0.8.8 - dev
 
-   * NEW: read support for GEODATA entity
+   * NEW: read/write support for GEODATA entity
    * NEW: DXFEntity.has_extension_dict(), DXFEntity.get_extension_dict() and DXFEntity.new_extension_dict()
    * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
    * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points, given are the fit points and
