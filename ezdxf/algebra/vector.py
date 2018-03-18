@@ -66,7 +66,6 @@ class Vector(object):
         1 arg: decompose(arg), arg is tuple or list, tuple has to be an (x, y[, z]) tuple, decompose((x, y)) -> (x, y, 0.)
 
         2 args: decompose(x, y), returns (x, y, 0.) tuple
-                decompose(v1, v2), returns v2 - v1 as (x, y, z) tuple, where v1, v2 are Vector() objects
 
         3 args: decompose(x, y, z) -> (x, y, z)
 
@@ -91,10 +90,7 @@ class Vector(object):
                 return float(x), float(y), float(z)
         elif length == 2:
             x, y = args
-            if isinstance(x, (float, int)):
-                return float(x), float(y), 0.
-            else:
-                return Vector(y) - Vector(x)
+            return float(x), float(y), 0.
         elif length == 3:
             x, y, z = args
             return float(x), float(y), float(z)

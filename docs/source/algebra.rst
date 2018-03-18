@@ -64,10 +64,6 @@ Vector initialization:
 
 - Vecotr(x, y), returns Vector(x, y, 0)
 
-- Vector(v1, v2), returns v2 - v1 as Vector(x, y, z), where v1, v2 are Vector() objects
-
-- Vector((x1, y1, z1), (x2, y2, z2)), returns Vector(x2, y2, z2) - Vector(x1, y1, z1) as Vector() object
-
 - Vector(x, y, z), returns  Vector(x, y, z)
 
 Addition, subtraction, scalar multiplication and scalar division left and right handed are supported::

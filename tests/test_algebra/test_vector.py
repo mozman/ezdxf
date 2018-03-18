@@ -23,7 +23,7 @@ def test_init_two_params():
     v = Vector(1, 2)
     assert v == (1, 2)  # z is 0.
 
-    v = Vector((1, 1, 1), (5, 6, 7))
+    v = Vector(5, 6, 7) - Vector(1, 1, 1)
     assert v == (4, 5, 6)
 
     v = Vector.from_deg_angle(0)
