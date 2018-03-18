@@ -34,10 +34,34 @@ def test_geodata_dxf_attributes(geodata):
     assert geodata.dxf.mesh_point_count == 4
 
 
-def test_geodata_mesh_data(geodata):
+def test_geodata_get_mesh_data(geodata):
     vertices, faces = geodata.get_mesh_data()
     assert len(vertices) == geodata.dxf.mesh_point_count
     assert len(faces) == 0
+
+
+def test_geodata_delete_mesh_data(geodata):
+    geodata.set_mesh_data()
+    assert geodata.dxf.mesh_point_count == 0
+    assert geodata.dxf.mesh_faces_count == 0
+
+
+def test_geodata_set_get_mesh_data(geodata):
+    # vertex structure
+    # [(source vertex, target_vertex), ...]
+    vertices = [
+        ((1, 1), (2, 2)),
+        ((3, 3), (4, 4)),
+        ((5, 5), (6, 6)),
+    ]
+    faces = [[0, 1, 2]]
+    geodata.set_mesh_data(vertices, faces)
+    assert geodata.dxf.mesh_point_count == 3
+    assert geodata.dxf.mesh_faces_count == 1
+
+    vertices2, faces2 = geodata.get_mesh_data()
+    assert vertices == vertices2
+    assert faces == faces2
 
 
 def test_geodata_coordinate_system_definition(geodata):

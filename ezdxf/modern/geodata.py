@@ -2,10 +2,9 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-from .dxfobjects import DXFEntity, none_subclass
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from .dxfobjects import DXFEntity, none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags
 from ..lldxf.const import DXFStructureError, DXFValueError
-from ..lldxf.extendedtags import ExtendedTags
+from ..lldxf.types import DXFTag
 
 _GEODATA_CLS = """  0
 CLASS
@@ -124,7 +123,7 @@ class GeoData(DXFEntity):
             # mesh definition:
             # source mesh point (13, 23) repeat, mesh_point_count?
             # target mesh point (14, 24) repeat, mesh_point_count?
-            'faces_count': DXFAttr(96),  # Number of faces
+            'mesh_faces_count': DXFAttr(96),  # Number of faces
             # face index 97 repeat, faces_count
             # face index 98 repeat, faces_count
             # face index 99 repeat, faces_count
@@ -201,3 +200,26 @@ class GeoData(DXFEntity):
             return faces
 
         return get_vertices(), get_faces()
+
+    def set_mesh_data(self, vertices=None, faces=None):
+        if vertices is None:
+            vertices = []
+        else:
+            vertices = list(vertices)
+        if faces is None:
+            faces = []
+        else:
+            faces = list(faces)
+        self._remove_mesh_data()
+        geodata = self.AcDbGeoData
+        geodata.append(DXFTag(93, len(vertices)))
+        for source, target in vertices:
+            geodata.append(DXFTag(13, (source[0], source[1])))
+            geodata.append(DXFTag(14, (target[0], target[1])))
+        geodata.append(DXFTag(96, len(faces)))
+        for face in faces:
+            geodata.extend(DXFTag(code, index) for code, index in zip((97, 98, 99), face))
+
+    def _remove_mesh_data(self):
+        self.AcDbGeoData.remove_tags(codes=(93, 13, 14, 96, 97, 98, 99))
+
