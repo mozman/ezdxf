@@ -33,6 +33,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'DICTIONARY': dxfobjects.DXFDictionary,
     'CLASS': dxfobjects.DXFClass,
     'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
+    'DICTIONARYVAR': dxfobjects.DXFDictionaryVar,
     'PLOTSETTINGS': DXFPlotSettings,
     'LAYOUT': DXFLayout,
     'XRECORD': dxfobjects.XRecord,

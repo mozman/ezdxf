@@ -1,5 +1,5 @@
 # Created: 11.03.2011
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 from .lldxf.types import cast_tag_value, DXFTag
