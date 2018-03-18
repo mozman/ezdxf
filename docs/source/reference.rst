@@ -48,9 +48,32 @@ Entities
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   entities
+   graphic_base_class
+   point_entity
+   line_entity
+   circle_entity
+   arc_entity
+   text_entity
+   shape_entity
+   polyline_entity
+   solid_entity
+   trace_entity
+   3dface_entity
+   ellipse_entity
+   lwpolyline_entity
+   mtext_entity
+   hatch_entity
+   mesh_entity
+   spline_entity
+   image_entity
+   ray_entity
+   xline_entity
+   body_entity
+   region_entity
+   3dsolid_entity
+   underlay_entity
 
 Blocks
 ------
@@ -64,9 +87,20 @@ Groups
 ------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    groups
+
+Objects
+-------
+
+.. toctree::
+   :maxdepth: 1
+
+   object_base_class
+   imagedef_entity
+   underlaydef_entity
+
 
 Importer
 --------

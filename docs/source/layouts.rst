@@ -308,6 +308,21 @@ Model Space
 
    At this time the :class:`Modelspace` class is the :class:`Layout` class.
 
+
+.. method:: Modelspace.new_geodata(dxfattribs=None)
+
+    Creates a new :class:`GeoData` entity and replaces existing ones. The GEODATA entity resides in the OBJECTS section
+    and NOT in the layout entity space and it is linked to the layout by an extension dictionary located in BLOCK_RECORD
+    of the layout.
+
+    The GEODATA entity requires DXF version R2010 (AC1024) or later. The DXF Reference does not document if other
+    layouts than model space supports geo referencing, so getting/setting geo data may only make sense for the model
+    space layout, but it is also available in paper space layouts.
+
+.. method:: Modelspace.get_geodata(dxfattribs=None)
+
+    Returns the :class:`GeoData` entity associated to this layout or None.
+
 .. _paper space:
 
 Paper Space

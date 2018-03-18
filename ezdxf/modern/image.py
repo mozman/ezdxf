@@ -3,8 +3,6 @@
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
