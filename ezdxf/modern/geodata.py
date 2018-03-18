@@ -132,6 +132,18 @@ class GeoData(DXFEntity):
         }),
 
     )
+    # coordinate_type const
+    UNKNOWN = 0
+    LOCAL_GRID = 1
+    PROJECTED_GRID = 2
+    GEOGRAPHIC = 3
+
+    # scale_estimation_method const
+    NONE = 1
+    USER_SCALE = 2
+    GRID_SCALE = 3
+    PRISMOIDEAL = 4
+
 
     @property
     def AcDbGeoData(self):

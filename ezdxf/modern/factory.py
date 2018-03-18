@@ -14,10 +14,11 @@ from .mtext import MText
 from .hatch import Hatch
 from .viewport import Viewport
 from .image import Image
-from .image import ImageDef, ImageDefReactor
+from .image import ImageDef, ImageDefReactor, RasterVariables
 from .underlay import PdfDefinition, PdfUnderlay
 from .underlay import DwfDefinition, DwfUnderlay
 from .underlay import DgnDefinition, DgnUnderlay
+from .dxflayout import DXFPlotSettings, DXFLayout
 from .dimension import Dimension
 
 from . import dxfobjects
@@ -32,8 +33,8 @@ UPDATE_ENTITY_WRAPPERS = {
     'DICTIONARY': dxfobjects.DXFDictionary,
     'CLASS': dxfobjects.DXFClass,
     'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
-    'PLOTSETTINGS': dxfobjects.DXFPlotSettings,
-    'LAYOUT': dxfobjects.DXFLayout,
+    'PLOTSETTINGS': DXFPlotSettings,
+    'LAYOUT': DXFLayout,
     'XRECORD': dxfobjects.XRecord,
     'DATATABLE': dxfobjects.DXFDataTable,
     'GROUP': DXFGroup,
@@ -43,7 +44,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'PDFDEFINITION': PdfDefinition,
     'DWFDEFINITION': DwfDefinition,
     'DGNDEFINITION': DgnDefinition,
-    'RASTERVARIABLES': dxfobjects.RasterVariables,
+    'RASTERVARIABLES': RasterVariables,
     'GEODATA': GeoData,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
