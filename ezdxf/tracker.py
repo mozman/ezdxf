@@ -3,4 +3,4 @@
 
 
 class Tracker(object):
-    dxftypes = set()
+    dxftypes = set()  # track used DXF types

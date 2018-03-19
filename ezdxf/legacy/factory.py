@@ -71,10 +71,12 @@ class LegacyDXFFactory(object):
         """ Create a new entity. """
         wrapper_class = self.get_wrapper_class(dxftype)
         entity = wrapper_class.new(handle, dxfattribs, self.drawing)
+        # track used DXF types, but only for new created DXF entities
         self.drawing.tracker.dxftypes.add(dxftype)
         return entity
 
     def get_wrapper_class(self, dxftype):
+        # future feature: to track all used DXF types, this is the right place
         return self.ENTITY_WRAPPERS.get(dxftype, self.DEFAULT_WRAPPER)
 
     def wrap_entity(self, tags):
