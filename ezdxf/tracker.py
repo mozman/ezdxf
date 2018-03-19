@@ -4,4 +4,3 @@
 
 class Tracker(object):
     dxftypes = set()
-    appids = set()

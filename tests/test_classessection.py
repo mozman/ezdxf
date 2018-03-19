@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import pytest
 from io import StringIO
-
+import ezdxf
 from ezdxf.lldxf.tags import Tags, internal_tag_compiler, group_tags
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
@@ -34,6 +34,28 @@ def test_empty_section():
     result = stream.getvalue()
     stream.close()
     assert EMPTYSEC == result
+
+
+def test_count_class_instances():
+    dwg = ezdxf.new('R2004')
+    dwg.update_class_instance_counters()
+    cls = dwg.sections.classes.get('IMAGE')
+    assert cls is not None
+    assert cls.dxf.instance_count == 0
+
+    image_def = dwg.add_image_def('test', size_in_pixel=(400, 400))
+    msp = dwg.modelspace()
+    msp.add_image(image_def, insert=(0, 0), size_in_units=(10, 10))
+
+    dwg.update_class_instance_counters()
+    cls = dwg.sections.classes.get('IMAGE')
+    assert cls.dxf.instance_count == 1
+    cls = dwg.sections.classes.get('IMAGEDEF')
+    assert cls.dxf.instance_count == 1
+    cls = dwg.sections.classes.get('IMAGEDEF_REACTOR')
+    assert cls.dxf.instance_count == 1
+    cls = dwg.sections.classes.get('RASTERVARIABLES')
+    assert cls.dxf.instance_count == 1
 
 
 EMPTYSEC = """  0

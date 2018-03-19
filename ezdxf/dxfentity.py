@@ -76,9 +76,6 @@ class DXFEntity(object):
     def new(cls, handle, dxfattribs=None, drawing=None):
         if cls.TEMPLATE is None:
             raise NotImplementedError("new() for type %s not implemented." % cls.__name__)
-        if cls.CLASS is not None and drawing is not None:
-            # only AC1018 entities should have class tags
-            drawing.sections.classes.register(cls.CLASS)
         entity = cls(cls.TEMPLATE.clone(), drawing)
         entity.dxf.handle = handle
         if dxfattribs is not None:

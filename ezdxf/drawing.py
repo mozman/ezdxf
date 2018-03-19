@@ -348,6 +348,8 @@ class Drawing(object):
             handles = bool(self.header['$HANDLING'])
         else:
             handles = True
+        if self.dxfversion > 'AC1009':
+            self._register_required_classes()
         self._create_appids()
         self._update_metadata()
         tagwriter = TagWriter(stream, write_handles=handles)
@@ -395,11 +397,20 @@ class Drawing(object):
 
     def update_class_instance_counters(self):
         if 'classes' in self.sections:
+            self._register_required_classes()
             self.sections.classes.update_instance_counters()
 
     def reset_class_instance_counters(self):
         if 'classes' in self.sections:
+            self._register_required_classes()
             self.sections.classes.reset_instance_counters()
+
+    def _register_required_classes(self):
+        register = self.sections.classes.register
+        for dxftype in self.tracker.dxftypes:
+            cls = self.dxffactory.get_wrapper_class(dxftype)
+            if cls.CLASS is not None:
+                register(cls.CLASS)
 
     def _update_metadata(self):
         now = datetime.now()
@@ -413,7 +424,7 @@ class Drawing(object):
             if name not in self.appids:
                 self.appids.new(name, {'flags': flags})
 
-        if self.dxfversion > 'AC1009':
+        if 'HATCH' in self.tracker.dxftypes:
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
     def reset_fingerprintguid(self):

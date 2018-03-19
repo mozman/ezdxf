@@ -21,6 +21,12 @@ class ClassesSection(object):
     def __iter__(self):
         return iter(self.classes)
 
+    def get(self, name):
+        for cls in self.classes:
+            if cls.dxf.name == name:
+                return cls
+        return None
+
     def _build(self, entities):
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'CLASSES'):
@@ -30,6 +36,8 @@ class ClassesSection(object):
             self.register(ExtendedTags(class_tags))
 
     def register(self, tags):
+        if tags is None:
+            return
         if tags.noclass.get_first_value(1) in self.registrated_classes:
             return
         dxf_class = DXFClass(tags, self.drawing)
@@ -44,16 +52,12 @@ class ClassesSection(object):
         tagwriter.write_str("  0\nENDSEC\n")
 
     def update_instance_counters(self):
-        if len(self.classes) == 0:
-            return  # nothing to do
-        if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
+        if self.drawing.dxfversion < 'AC1018':
             return  # instance counter not supported
         counter = Counter()
-        for entity in self.drawing.entities:
-            counter[entity.dxftype()] += 1
-        if 'objects' in self.drawing.sections:
-            for obj in self.drawing.objects:
-                counter[obj.dxftype()] += 1
+        # count all entities in the entity database
+        for xtags in self.drawing.entitydb.values():
+            counter[xtags.dxftype()] += 1
 
         for dxfclass in self.classes:
             dxfclass.dxf.instance_count = counter[dxfclass.dxf.name]
