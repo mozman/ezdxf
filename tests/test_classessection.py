@@ -37,25 +37,25 @@ def test_empty_section():
 
 
 def test_count_class_instances():
+    def instance_count(name):
+        cls = dwg.sections.classes.get(name)
+        return cls.dxf.instance_count
     dwg = ezdxf.new('R2004')
     dwg.update_class_instance_counters()
-    cls = dwg.sections.classes.get('IMAGE')
-    assert cls is not None
-    assert cls.dxf.instance_count == 0
+    assert instance_count('IMAGE') == 0
+    assert instance_count('IMAGEDEF') == 0
+    assert instance_count('IMAGEDEF_REACTOR') == 0
+    assert instance_count('RASTERVARIABLES') == 0
 
     image_def = dwg.add_image_def('test', size_in_pixel=(400, 400))
     msp = dwg.modelspace()
     msp.add_image(image_def, insert=(0, 0), size_in_units=(10, 10))
 
     dwg.update_class_instance_counters()
-    cls = dwg.sections.classes.get('IMAGE')
-    assert cls.dxf.instance_count == 1
-    cls = dwg.sections.classes.get('IMAGEDEF')
-    assert cls.dxf.instance_count == 1
-    cls = dwg.sections.classes.get('IMAGEDEF_REACTOR')
-    assert cls.dxf.instance_count == 1
-    cls = dwg.sections.classes.get('RASTERVARIABLES')
-    assert cls.dxf.instance_count == 1
+    assert instance_count('IMAGE') == 1
+    assert instance_count('IMAGEDEF') == 1
+    assert instance_count('IMAGEDEF_REACTOR') == 1
+    assert instance_count('RASTERVARIABLES') == 1
 
 
 EMPTYSEC = """  0

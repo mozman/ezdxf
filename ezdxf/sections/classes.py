@@ -22,6 +22,9 @@ class ClassesSection(object):
         return iter(self.classes)
 
     def get(self, name):
+        # Using a dict for classes is not necessary, because in normal use-cases classes queries do not happen.
+        # This method is just for testing, and a list preserves class appearance order (Python 2 compatible), which
+        # makes other tests easier.
         for cls in self.classes:
             if cls.dxf.name == name:
                 return cls
