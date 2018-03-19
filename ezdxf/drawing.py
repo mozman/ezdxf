@@ -16,6 +16,7 @@ from .sections import Sections
 from .tools.juliandate import juliandate
 from .lldxf import repair
 from .tools import guid
+from .tracker import Tracker
 logger = logging.getLogger('ezdxf')
 
 
@@ -34,7 +35,7 @@ class Drawing(object):
             from .sections.header import HeaderSection
             header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
             return HeaderSection(header_entities)
-
+        self.tracker = Tracker()
         self._is_binary_data_compressed = False
         self._groups = None  # read only
         self.filename = None  # read/write

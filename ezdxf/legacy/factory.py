@@ -67,17 +67,19 @@ class LegacyDXFFactory(object):
     def dxfversion(self):
         return self.drawing.dxfversion
 
-    def new_entity(self, type_, handle, dxfattribs):
+    def new_entity(self, dxftype, handle, dxfattribs):
         """ Create a new entity. """
-        try:
-            class_ = self.ENTITY_WRAPPERS[type_]
-            return class_.new(handle, dxfattribs, self.drawing)
-        except KeyError:
-            raise DXFValueError('Unsupported entity type: %s' % type_)
+        wrapper_class = self.get_wrapper_class(dxftype)
+        entity = wrapper_class.new(handle, dxfattribs, self.drawing)
+        self.drawing.tracker.dxftypes.add(dxftype)
+        return entity
+
+    def get_wrapper_class(self, dxftype):
+        return self.ENTITY_WRAPPERS.get(dxftype, self.DEFAULT_WRAPPER)
 
     def wrap_entity(self, tags):
-        wrapper = self.ENTITY_WRAPPERS.get(tags.dxftype(), self.DEFAULT_WRAPPER)
-        entity = wrapper(tags, self.drawing)
+        wrapper_class = self.get_wrapper_class(tags.dxftype())
+        entity = wrapper_class(tags, self.drawing)
         if hasattr(entity, 'cast'):
             entity = entity.cast()
         return entity
