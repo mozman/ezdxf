@@ -38,9 +38,9 @@ def test_empty_section():
 
 def test_count_class_instances():
     def instance_count(name):
-        cls = dwg.sections.classes.get(name)
-        return cls.dxf.instance_count
+        return classes[name].dxf.instance_count
     dwg = ezdxf.new('R2004')
+    classes = dwg.sections.classes.classes
     dwg.update_class_instance_counters()
     assert instance_count('IMAGE') == 0
     assert instance_count('IMAGEDEF') == 0

@@ -400,11 +400,6 @@ class Drawing(object):
             self._register_required_classes()
             self.sections.classes.update_instance_counters()
 
-    def reset_class_instance_counters(self):
-        if 'classes' in self.sections:
-            self._register_required_classes()
-            self.sections.classes.reset_instance_counters()
-
     def _register_required_classes(self):
         register = self.sections.classes.register
         for dxftype in self.tracker.dxftypes:
