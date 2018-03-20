@@ -69,10 +69,6 @@ Text generation flags (int)
 Attrib Attributes
 -----------------
 
-.. attribute:: Attrib.dxf
-
-DXF attributes namespace, read/write DXF attributes, like :code:`object.dxf.layer = 'MyLayer'`
-
 .. attribute:: Attrib.is_invisibe
 
 (read/write) Attribute is invisible (does not appear).
