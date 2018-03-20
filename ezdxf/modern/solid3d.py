@@ -1,13 +1,8 @@
-# Purpose: support for ACIS based 3D entities - BODY, REGION, 3DSOLID
 # Created: 24.05.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.types import convert_tags_to_text_lines, convert_text_lines_to_tags
 from ..lldxf.extendedtags import ExtendedTags
@@ -16,17 +11,17 @@ from ..tools import crypt
 
 _BODY_TPL = """  0
 BODY
-  5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbModelerGeometry
- 70
+70
 1
 """
 
@@ -78,17 +73,17 @@ class Region(Body):
 
 _3DSOLID_TPL = """  0
 3DSOLID
-  5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbModelerGeometry
- 70
+70
 1
 100
 AcDb3dSolid
@@ -107,6 +102,28 @@ class Solid3d(Body):
     )
 
 
+_SURFACE_TPL = """  0
+SURFACE
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
+100
+AcDbModelerGeometry
+70
+1
+100
+AcDbSurface
+71
+0
+72
+0
+"""
+
 surface_subclass = DefSubclass('AcDbSurface', {
     'u_count': DXFAttr(71),
     'v_count': DXFAttr(72),
@@ -114,4 +131,5 @@ surface_subclass = DefSubclass('AcDbSurface', {
 
 
 class Surface(Body):
+    TEMPLATE = ExtendedTags.from_text(_SURFACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass, surface_subclass)

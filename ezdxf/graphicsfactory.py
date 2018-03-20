@@ -346,6 +346,12 @@ class GraphicsFactory(object):
         dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
 
+    def add_surface(self, acis_data=None, dxfattribs=None):
+        if self.dxfversion < 'AC1015':
+            raise DXFVersionError('SURFACE requires DXF version R2000+')
+        dxfattribs = copy_attribs(dxfattribs)
+        return self._add_acis_entiy('SURFACE', acis_data, dxfattribs)
+
     def _add_acis_entiy(self, name, acis_data, dxfattribs):
         entity = self.build_and_add_entity(name, dxfattribs)
         if acis_data is not None:
