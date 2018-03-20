@@ -12,6 +12,10 @@ Create a :class:`Shape` reference in layouts and blocks by factory function :met
 DXF Attributes for Shape
 ------------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Shape.dxf.insert
 
 Insertion point as (2D/3D Point)

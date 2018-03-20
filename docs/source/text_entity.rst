@@ -12,6 +12,10 @@ Create text in layouts and blocks by factory function :meth:`~Layout.add_text`.
 DXF Attributes for Text
 -----------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Text.dxf.text
 
 the content text itself (str)
@@ -81,22 +85,18 @@ Baseline       LEFT            CENTER            RIGHT
 ============   =============== ================= =====
 
 Special alignments are, ALIGNED and FIT, they require a second alignment point, the text
-is justified with the vertical alignment *Baseline* on the virtual line between these two points.
+is justified with the vertical alignment `Baseline` on the virtual line between these two points.
 
-
-ALIGNED
-    Text is stretched or compressed to fit exactly between *p1* and *p2* and the text height is also adjusted to preserve height/width ratio.
-
-FIT
-    Text is stretched or compressed to fit exactly between *p1* and *p2* but only the text width is adjusted, the text height is fixed by the *height* attribute.
-
-MIDDLE
-    also a *special* adjustment, but the result is the same as for MIDDLE_CENTER.
+- ALIGNED: Text is stretched or compressed to fit exactly between `p1` and `p2` and the text height is also adjusted to
+  preserve height/width ratio.
+- FIT: Text is stretched or compressed to fit exactly between `p1` and `p2` but only the text width is adjusted, the
+  text height is fixed by the `height` attribute.
+- MIDDLE: also a `special` adjustment, but the result is the same as for MIDDLE_CENTER.
 
 .. method:: Text.get_pos()
 
-Returns a tuple (*align*, *p1*, *p2*), *align* is the alignment method, *p1* is the alignment point, *p2* is only
-relevant if *align* is ALIGNED or FIT, else it's *None*.
+Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method, `p1` is the alignment point, `p2` is only
+relevant if `align` is ALIGNED or FIT, else it's None.
 
 .. method:: Text.get_align()
 
@@ -104,5 +104,5 @@ Returns the actual text alignment as string, see tables above.
 
 .. method:: Text.set_align(align='LEFT')
 
-Just for experts: Sets the text alignment without setting the alignment points, set adjustment points *insert*
-and *alignpoint* manually.
+Just for experts: Sets the text alignment without setting the alignment points, set adjustment points `insert`
+and `alignpoint` manually.

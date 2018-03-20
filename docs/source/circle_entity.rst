@@ -9,6 +9,10 @@ Create circles in layouts and blocks by factory function :meth:`~Layout.add_circ
 DXF Attributes for Circle
 -------------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Circle.dxf.center
 
 center point of circle (2D/3D Point)

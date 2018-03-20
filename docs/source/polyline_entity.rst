@@ -14,6 +14,10 @@ Create 3D polylines in layouts and blocks by factory function :meth:`~Layout.add
 DXF Attributes for Polyline
 ---------------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Polyline.dxf.elevation
 
 Elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (3D Point)

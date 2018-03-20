@@ -25,6 +25,8 @@ Context manager for  ACIS text lines, returns :class:`ModelerGeometryData`.
 DXF Attributes for 3DSolid
 --------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: 3DSolid.dxf.history
 
 Handle to history object, see: :ref:`low_level_access_to_dxf_entities`

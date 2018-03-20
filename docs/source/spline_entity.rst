@@ -28,6 +28,8 @@ For more information about spline mathematics go to `Wikipedia`_.
 DXF Attributes for Spline
 -------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Spline.dxf.degree
 
 Degree of the spline curve (int)

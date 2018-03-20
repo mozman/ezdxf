@@ -16,6 +16,8 @@ the *v_pixel* vectors by yourself.
 DXF Attributes for Image
 ------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Image.dxf.insert
 
 Insertion point, lower left corner of the image

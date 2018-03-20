@@ -25,29 +25,29 @@ or `dimstyles`.
 
 .. method:: Table.get(name)
 
-    Get table-entry `name`. Raises `ValueError` if table-entry is not
-    present.
+Get table-entry `name`. Raises `ValueError` if table-entry is not
+present.
 
 .. method:: Table.remove(name)
 
-    Removes table-entry `name`. Raises `ValueError` if table-entry is not
-    present.
+Removes table-entry `name`. Raises `ValueError` if table-entry is not
+present.
 
 .. method:: Table.__len__()
 
-    Get count of table-entries.
+Get count of table-entries.
 
 .. method:: Table.has_entry(name)
 
-    `True` if table contains a table-entry `name`.
+`True` if table contains a table-entry `name`.
 
 .. method:: Table.__contains__(name)
 
-    `True` if table contains a table-entry `name`.
+`True` if table contains a table-entry `name`.
 
 .. method:: Table.__iter__()
 
-    Iterate over all table.entries, yields table-entry-objects.
+Iterate over all table.entries, yields table-entry-objects.
 
 Style Table Class
 -----------------
@@ -56,32 +56,32 @@ Style Table Class
 
 .. method:: StyleTable.get_shx(name)
 
-    Get existing shx entry, or create a new entry.
+Get existing shx entry, or create a new entry.
 
 .. method:: StyleTable.find_shx(name)
 
-    Find .shx shape file table entry, by a case insensitive search. A .shx shape file table entry has no name, so you
-    have to search by the font attribute.
+Find .shx shape file table entry, by a case insensitive search. A .shx shape file table entry has no name, so you
+have to search by the font attribute.
 
 Viewport Table Class
 --------------------
 
 .. class:: ViewportTable(Table)
 
-    The viewport table stores the model space viewport configurations. A viewport configuration is a tiled view of multiple
-    viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries with the same
-    name, because all viewport entries of a multi-viewport configuration are having the same name - the viewport
-    configuration name.
+The viewport table stores the model space viewport configurations. A viewport configuration is a tiled view of multiple
+viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries with the same
+name, because all viewport entries of a multi-viewport configuration are having the same name - the viewport
+configuration name.
 
-    The name of the actual displayed viewport configuration is ``*ACTIVE``.
+The name of the actual displayed viewport configuration is ``*ACTIVE``.
 
 .. method:: ViewportTable.get_config(name)
 
-    Returns a list of :class:`Viewport` objects, of the multi-viewport configuration *name*.
+Returns a list of :class:`Viewport` objects, of the multi-viewport configuration *name*.
 
 .. method:: ViewportTable.delete_config(name):
 
-    Delete all :class:`Viewport` objects of the multi-viewport configuration *name*.
+Delete all :class:`Viewport` objects of the multi-viewport configuration *name*.
 
 
 Table Entry Classes
@@ -92,12 +92,12 @@ Layer
 
 .. class:: Layer
 
-   Layer definition, defines attribute values for entities on this layer for their attributes set to ``BYLAYER``.
+Layer definition, defines attribute values for entities on this layer for their attributes set to ``BYLAYER``.
 
 .. attribute:: Layer.dxf
 
-   The DXF attributes namespace, access DXF attributes by this attribute, like :code:`object.dxf.linetype = 'DASHED'`.
-   Just the *dxf* attribute is read only, the DXF attributes are read- and writeable. (read only)
+The DXF attributes namespace, access DXF attributes by this attribute, like :code:`object.dxf.linetype = 'DASHED'`.
+Just the *dxf* attribute is read only, the DXF attributes are read- and writeable. (read only)
 
 ===============  ======= ===========
 DXFAttr          Version Description
@@ -122,11 +122,11 @@ plot_style_name  R13     handle to PlotStyleName (feature for experts)
 
 .. method:: Layer.lock()
 
-   Lock layer, entities on this layer are not editable - just important in CAD applications.
+Lock layer, entities on this layer are not editable - just important in CAD applications.
 
 .. method:: Layer.unlock()
 
-   unlock layer, entities on this layer are editable - just important in CAD applications.
+unlock layer, entities on this layer are editable - just important in CAD applications.
 
 .. method:: Layer.is_off()
 
@@ -134,30 +134,30 @@ plot_style_name  R13     handle to PlotStyleName (feature for experts)
 
 .. method:: Layer.on()
 
-   Switch layer *on* (visible).
+Switch layer *on* (visible).
 
 .. method:: Layer.off()
 
-   Switch layer *off* (invisible).
+Switch layer *off* (invisible).
 
 .. method:: Layer.get_color()
 
-   Get layer color, preferred method for getting the layer color, because color is negative for layer status *off*.
+Get layer color, preferred method for getting the layer color, because color is negative for layer status *off*.
 
 .. method:: Layer.set_color(color)
 
-   Set layer color to *color*, preferred method for setting the layer color, because color is negative for layer status *off*.
+Set layer color to *color*, preferred method for setting the layer color, because color is negative for layer status *off*.
 
 Style
 -----
 
 .. class:: Style
 
-   Defines a text style, can be used by entities: :class:`Text`, :class:`Attrib` and :class:`Attdef`
+Defines a text style, can be used by entities: :class:`Text`, :class:`Attrib` and :class:`Attdef`
 
 .. attribute:: Style.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 ====================== ===========
 DXFAttr                Description
@@ -181,15 +181,15 @@ Linetype
 
 .. seealso::
 
-   DXF Internals: :ref:`LTYPE Table`
+    DXF Internals: :ref:`LTYPE Table`
 
 .. class:: Linetype
 
-   Defines a linetype.
+Defines a linetype.
 
 .. attribute:: Linetype.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 =========== ===========
 DXFAttr     Description
@@ -205,11 +205,11 @@ DimStyle
 
 .. class:: DimStyle
 
-   Defines a dimension style.
+Defines a dimension style.
 
 .. attribute:: DimStyle.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 TODO DXFAttr for DimStyle class
 
@@ -221,15 +221,15 @@ space viewports, for paper space viewports see the :class:`Viewport` entity.
 
 .. seealso::
 
-   DXF Internals: :ref:`VPORT Table`
+    DXF Internals: :ref:`VPORT Table`
 
 .. class:: VPort
 
-   Defines a viewport to the model space.
+Defines a viewport to the model space.
 
 .. attribute:: VPort.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 TODO DXFAttr for the Viewport class
 
@@ -247,11 +247,11 @@ convenience of CAD application users.
 
 .. class:: View
 
-   Defines a view.
+Defines a view.
 
 .. attribute:: View.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 TODO DXFAttr for the View class
 
@@ -260,11 +260,11 @@ AppID
 
 .. class:: AppID
 
-   Defines an AppID.
+Defines an AppID.
 
 .. attribute:: AppID.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 TODO DXFAttr for the AppID class
 
@@ -273,11 +273,11 @@ UCS
 
 .. class:: UCS
 
-   Defines an user coordinate system (UCS).
+Defines an user coordinate system (UCS).
 
 .. attribute:: UCS.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 TODO DXFAttr for the UCS class
 
@@ -286,10 +286,10 @@ BlockRecord
 
 .. class:: BlockRecord
 
-   Defines a BlockRecord, exist just in DXF version R13 and later.
+Defines a BlockRecord, exist just in DXF version R13 and later.
 
 .. attribute:: BlockRecord.dxf
 
-   The DXF attributes namespace.
+The DXF attributes namespace.
 
 TODO DXFAttr for the BlockRecord class

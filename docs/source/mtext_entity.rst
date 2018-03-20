@@ -16,6 +16,8 @@ words or characters within the MText. Create :class:`MText` in layouts and block
 DXF Attributes for MText
 ------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: MText.dxf.insert
 
 Insertion point (3D Point)

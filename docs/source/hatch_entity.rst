@@ -11,6 +11,8 @@ Create :class:`Hatch` in layouts and blocks by factory function :meth:`~Layout.a
 DXF Attributes for Hatch
 ------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Hatch.dxf.pattern_name
 
 pattern name as string

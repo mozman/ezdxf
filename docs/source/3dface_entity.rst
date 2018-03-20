@@ -13,6 +13,10 @@ Create 3DFaces in layouts and blocks by factory function :meth:`~Layout.add_3dfa
 DXF Attributes for 3DFace
 -------------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: 3DFace.dxf.vtx0
 
 location of the 1. point (3D Point)

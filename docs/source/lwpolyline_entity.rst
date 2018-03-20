@@ -18,6 +18,8 @@ z axis.
 DXF Attributes for LWPolyline
 -----------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: LWPolyline.dxf.elevation
 
 z-axis value in WCS is the polyline elevation (float), default=0

@@ -11,6 +11,8 @@ function :meth:`~Layout.add_ray`.
 DXF Attributes for Ray
 ----------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Ray.dxf.start
 
 Start point as (3D Point)

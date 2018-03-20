@@ -79,9 +79,13 @@ Blocks
 ------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    blocks
+   block_entity
+   insert_entity
+   attdef_entity
+   attrib_entity
 
 Groups
 ------

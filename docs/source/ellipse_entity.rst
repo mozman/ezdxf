@@ -13,6 +13,8 @@ layouts and blocks by factory function :meth:`~Layout.add_ellipse`.
 DXF Attributes for Ellipse
 --------------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Ellipse.dxf.center
 
 center point of circle (2D/3D Point)

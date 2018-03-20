@@ -10,6 +10,10 @@ An arc at location *center* and *radius* from *start_angle* to *end_angle*, *dxf
 DXF Attributes for Arc
 ----------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Arc.dxf.center
 
 center point of arc (2D/3D Point)

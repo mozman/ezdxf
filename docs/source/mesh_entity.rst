@@ -12,6 +12,8 @@ blocks by factory function :meth:`~Layout.add_mesh`.
 DXF Attributes for Mesh
 -----------------------
 
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Mesh.dxf.version
 
 .. attribute:: Mesh.dxf.blend_crease

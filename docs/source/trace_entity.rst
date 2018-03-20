@@ -11,6 +11,10 @@ Create traces in layouts and blocks by factory function :meth:`~Layout.add_trace
 DXF Attributes for Trace
 ------------------------
 
+:ref:`Common DXF attributes for DXF R12`
+
+:ref:`Common DXF attributes for DXF R13 or later`
+
 .. attribute:: Trace.dxf.vtx0
 
 location of the 1. point (2D/3D Point)
