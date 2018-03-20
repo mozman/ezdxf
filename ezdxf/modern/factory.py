@@ -84,6 +84,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'BODY': solid3d.Body,
     'REGION': solid3d.Region,
     '3DSOLID': solid3d.Solid3d,
+    'SURFACE': solid3d.Surface,
     'MESH': Mesh,
     'HATCH': Hatch,
     'VIEWPORT': Viewport,

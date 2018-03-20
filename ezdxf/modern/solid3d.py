@@ -106,3 +106,12 @@ class Solid3d(Body):
         DefSubclass('AcDb3dSolid', {'history': DXFAttr(350, default=0)})
     )
 
+
+surface_subclass = DefSubclass('AcDbSurface', {
+    'u_count': DXFAttr(71),
+    'v_count': DXFAttr(72),
+})
+
+
+class Surface(Body):
+    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass, surface_subclass)
