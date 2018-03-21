@@ -9,7 +9,7 @@ from ezdxf.algebra import BSpline, Vector
 
 
 def clone_spline():
-    dwg = ezdxf.readfile("Spline_R2000.dxf")
+    dwg = ezdxf.readfile("Spline_R2000_fit_spline.dxf")
     msp = dwg.modelspace()
     spline = msp.query('SPLINE')[0]  # take first spline
     # delete the existing spline from model space and drawing database
@@ -41,11 +41,11 @@ def fit_spline_with_control_points():
 
 
 def add_points_to_spline():
-    dwg = ezdxf.readfile("Spline_R2000.dxf")
+    dwg = ezdxf.readfile("Spline_R2000_fit_spline.dxf")
     msp = dwg.modelspace()
     spline = msp.query('SPLINE')[0]  # take first spline
     with spline.edit_data() as data:
-        data.fit_points.append((800, 150, 0))
+        data.fit_points.append((3130, 610, 0))
         # As far I tested this works without complaints from AutoCAD, but for the case of problems
         data.control_points = []  # delete control points, this could modify the geometry of the spline
         data.knot_values = []  # delete knot values, this shouldn't modify the geometry of the spline
@@ -101,7 +101,7 @@ def spline_control_frame_from_fit_points():
         msp.add_polyline2d(spline.control_points, dxfattribs={'color': color, 'linetype': 'DASHED'})
         msp.add_open_spline(spline.control_points, degree=spline.degree, dxfattribs={'color': color})
 
-    add_spline(degree=2, color=3)
+    # add_spline(degree=2, color=3)
     add_spline(degree=3, color=4)
 
     msp.add_spline(fit_points, degree=3, dxfattribs={'color': 1})
@@ -146,8 +146,8 @@ def spline_insert_knot():
 
 
 if __name__ == '__main__':
-    clone_spline()
     fit_spline()
+    clone_spline()
     fit_spline_with_control_points()
     add_points_to_spline()
     open_spline()
