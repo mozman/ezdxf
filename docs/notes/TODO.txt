@@ -1,0 +1,38 @@
+TO-DO list
+----------
+
+- DXFInternals for extension dictionaries
+- DXFInternals for reactors
+- DXFInternals for colors/ctb/lineweight
+- DXFInternals for POLYLINE
+- DXFInternals for GEODATA
+- DXFInternals for DICTIONARY
+- DXFInternals for XRECORD
+
+- ezdxf low level Structure:
+    - DXFTag()
+    - Tags()
+    - ExtendedTags()
+
+- docs for SURFACE in Reference/Entities
+- docs for GEODATA in Reference/Objects
+- docs for DICTIONARY Reference/Objects
+- docs for XRECORD Reference/Objects
+- docs for LAYOUT Reference/Objects
+- docs for PLOTSETTINGS Reference/Objects
+- docs for DATATABLE Reference/Objects
+- docs for RASTERVARIABLES Reference/Objects
+- docs for GROUP Reference/Objects
+
+- tutorial for extended HATCH usage
+- tutorial for lineweight
+
+- docs for add-on mesh
+- docs for add-on curves
+- docs for add-on forms
+- docs for add-on table
+- docs for add-on mtext
+- docs for add-on dimlines
+- docs for add-on r12spline
+
+- look at ACIS geometry again

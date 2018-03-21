@@ -234,17 +234,25 @@ class DXFEntity(object):
         return self._get_dxfattr_definition(key).default
 
     def _get_dxf_attrib(self, dxfattr):
-        # no subclass is subclass index 0
-        try:
-            subclass_tags = self.tags.subclasses[dxfattr.subclass]
-        except IndexError:  # internal exception
-            params = (self.dxftype(), self.tags.get_handle(), dxfattr.subclass)
-            raise DXFInternalEzdxfError('Subclass index error in {} handle={} subclass={}.'.format(*params))
-
+        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
         if dxfattr.xtype is not None:
             return self._get_extented_type(subclass_tags, dxfattr.code, dxfattr.xtype)
         else:
             return subclass_tags.get_first_value(dxfattr.code)
+
+    def _get_dxf_attrib_subclass_tags(self, subclass_key):
+        try:  # fast access subclass by index as int
+            # no subclass is subclass index 0
+            return self.tags.subclasses[subclass_key]
+        except IndexError:
+            raise DXFInternalEzdxfError('Subclass index error in {dxftype}(#{handle} subclass={index}.'.format(
+                dxftype=self.dxftype(),
+                handle=self.tags.get_handle(),
+                index=subclass_key,
+            ))
+        except TypeError:  # slow access subclass by name as string
+            # raises DXFKeyError if subclass does not exist
+            return self.tags.get_subclass(subclass_key)
 
     def has_dxf_default_value(self, key):
         """
@@ -259,12 +267,11 @@ class DXFEntity(object):
             if self.drawing.dxfversion < dxfattr.dxfversion:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
                 raise DXFAttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
-        # no subclass is subclass index 0
-        subclasstags = self.tags.subclasses[dxfattr.subclass]
+        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
         if dxfattr.xtype is not None:
-            self._set_extended_type(subclasstags, dxfattr.code, dxfattr.xtype, value)
+            self._set_extended_type(subclass_tags, dxfattr.code, dxfattr.xtype, value)
         else:
-            subclasstags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
+            subclass_tags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
 
     def set_flag_state(self, flag, state=True, name='flags'):
         flags = self.get_dxf_attrib(name, 0)
@@ -323,7 +330,7 @@ class DXFEntity(object):
         def point_codes(base_code):
             return base_code, base_code + 10, base_code + 20
 
-        subclass_tags = self.tags.subclasses[dxfattr.subclass]
+        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
         if dxfattr.xtype is not None:
             subclass_tags.remove_tags(codes=point_codes(dxfattr.code))
         else:

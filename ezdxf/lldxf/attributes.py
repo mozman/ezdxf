@@ -1,20 +1,17 @@
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from collections import namedtuple
-
 _DXFAttr = namedtuple('DXFAttr', 'code xtype default dxfversion')
 DXFAttr3 = namedtuple('DXFAttr3', 'code xtype subclass default dxfversion')
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
 
-# *dxfversion* == None - valid for all supported DXF versions managed by the dxffactory:
+# dxfversion is None - valid for all supported DXF versions managed by the dxffactory:
 # dxffactory AC1009 - manages just DXF version AC1009, but dxffactory AC1015 manages the DXF version AC1015 and all
-# later DXF versions! Set *dxfversion* to 'AC1018' and this attribute can only be set in drawings with DXF version
+# later DXF versions! Set dxfversion to 'AC1018' and this attribute can only be set in drawings with DXF version
 # AC1018 or later.
+
 def DXFAttr(code, xtype=None, default=None, dxfversion=None):
     return _DXFAttr(code, xtype, default, dxfversion)
 
