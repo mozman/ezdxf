@@ -70,8 +70,10 @@ class ExtendedTags(object):
             return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
 
         def collect_subclass(starttag):
-            """ a subclass can contain appdata, but not xdata, ends with
+            """
+            A subclass can contain appdata, but not xdata, ends with
             SUBCLASSMARKER or XDATACODE.
+
             """
             data = Tags() if starttag is None else Tags([starttag])
             try:
@@ -92,7 +94,10 @@ class ExtendedTags(object):
             return NONE_TAG
 
         def collect_appdata(starttag):
-            """ appdata, cannot contain xdata or subclasses """
+            """
+            Appdata, cannot contain xdata or subclasses.
+
+            """
             data = Tags([starttag])
             closing_strings = ('}', starttag.value[1:] + '}')  # alternative closing tag 'APPID}'
             while True:
@@ -108,7 +113,8 @@ class ExtendedTags(object):
 
         def collect_xdata(starttag):
             """
-            xdata is always at the end of the entity and can not contain appdata or subclasses
+            Xdata is always at the end of the entity and can not contain appdata or subclasses
+
             """
             data = Tags([starttag])
             try:
@@ -154,28 +160,22 @@ class ExtendedTags(object):
             getpos += 1
         raise DXFKeyError("Subclass '%s' does not exist." % name)
 
-    def xdata_index(self, appid):
-        for index, xdata in enumerate(self.xdata):
-            if xdata[0].value == appid:
-                return index
-        return None
-
     def has_xdata(self, appid):
-        return self.xdata_index(appid) is not None
+        return any(xdata[0].value == appid for xdata in self.xdata)
 
     def get_xdata(self, appid):
-        index = self.xdata_index(appid)
-        if index is None:
-            raise DXFValueError("No extended data for APPID '%s'" % appid)
-        else:
-            return self.xdata[index]
+        for xdata in self.xdata:
+            if xdata[0].value == appid:
+                return xdata
+        raise DXFValueError("No extended data for APPID '%s'" % appid)
 
     def set_xdata(self, appid, tags):
         xdata = self.get_xdata(appid)
         xdata[1:] = (DXFTag(t[0], t[1]) for t in tags)
 
     def new_xdata(self, appid, tags=None):
-        """Append a new xdata block.
+        """
+        Append a new xdata block.
 
         Assumes that no xdata block with the same appid already exists::
 
@@ -190,36 +190,33 @@ class ExtendedTags(object):
         self.xdata.append(xtags)
         return xtags
 
-    def app_data_index(self, appid):
-        for index, appdata in enumerate(self.appdata):
-            if appdata[0].value == appid:
-                return index
-        return None
-
     def has_app_data(self, appid):
-        return self.app_data_index(appid) is not None
+        return any(appdata[0].value == appid for appdata in self.appdata)
 
     def get_app_data(self, appid):
-        """Get app data including first and last marker tag."""
-        index = self.app_data_index(appid)
-        if index is None:
-            raise DXFValueError("Application defined group '%s' does not exist." % appid)
-        else:
-            return self.appdata[index]
+        """
+        Get app data including first and last marker tag.
+
+        """
+        for appdata in self.appdata:
+            if appdata[0].value == appid:
+                return appdata
+        raise DXFValueError("Application defined group '%s' does not exist." % appid)
 
     def get_app_data_content(self, appid):
-        """Get app data without first and last marker tag."""
+        """
+        Get app data without first and last marker tag.
+
+        """
         return Tags(self.get_app_data(appid)[1:-1])
 
     def set_app_data_content(self, appid, tags):
-        index = self.app_data_index(appid)
-        if index is None:
-            raise DXFValueError("Application defined group '%s' does not exist." % appid)
-        else:
-            self.appdata[index][1:-1] = tags
+        app_data = self.get_app_data(appid)
+        app_data[1:-1] = tags
 
     def new_app_data(self, appid, tags=None, subclass_name=None):
-        """Append a new app data block to subclass *subclass_name*.
+        """
+        Append a new app data block to subclass *subclass_name*.
 
         Assumes that no app data block with the same appid already exists::
 
@@ -227,6 +224,7 @@ class ExtendedTags(object):
                 app_data = tags.get_app_data('{ACAD_REACTORS', tags)
             except ValueError:
                 app_data = tags.new_app_data('{ACAD_REACTORS', tags)
+
         """
         if not appid.startswith('{'):
             raise DXFValueError("App data id has to start with '{'.")

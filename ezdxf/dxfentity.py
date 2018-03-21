@@ -254,54 +254,6 @@ class DXFEntity(object):
             # raises DXFKeyError if subclass does not exist
             return self.tags.get_subclass(subclass_key)
 
-    def has_dxf_default_value(self, key):
-        """
-        Returns True if the DXF attribute key has a DXF standard default value.
-
-        """
-        return self._get_dxfattr_definition(key).default is not None
-
-    def set_dxf_attrib(self, key, value):
-        dxfattr = self._get_dxfattr_definition(key)
-        if dxfattr.dxfversion is not None and self.drawing is not None:
-            if self.drawing.dxfversion < dxfattr.dxfversion:
-                msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
-                raise DXFAttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
-        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
-        if dxfattr.xtype is not None:
-            self._set_extended_type(subclass_tags, dxfattr.code, dxfattr.xtype, value)
-        else:
-            subclass_tags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
-
-    def set_flag_state(self, flag, state=True, name='flags'):
-        flags = self.get_dxf_attrib(name, 0)
-        self.set_dxf_attrib(name, set_flag_state(flags, flag, state=state))
-
-    def get_flag_state(self, flag, name='flags'):
-        return bool(self.get_dxf_attrib(name, 0) & flag)
-
-    def del_dxf_attrib(self, key):
-        dxfattr = self._get_dxfattr_definition(key)
-        self._del_dxf_attrib(dxfattr)
-
-    def dxfattribs(self):
-        """
-        Clones defined and existing DXF attributes as dict.
-
-        """
-        dxfattribs = {}
-        for key in self.DXFATTRIBS.keys():
-            value = self.get_dxf_attrib(key, default=None)
-            if value is not None:
-                dxfattribs[key] = value
-        return dxfattribs
-
-    clone_dxf_attribs = dxfattribs
-
-    def update_dxf_attribs(self, dxfattribs):
-        for key, value in dxfattribs.items():
-            self.set_dxf_attrib(key, value)
-
     @staticmethod
     def _get_extented_type(tags, code, xtype):
         value = tags.get_first_value(code)
@@ -326,6 +278,29 @@ class DXFEntity(object):
             raise DXFValueError('2 or 3 axis required')
         tags.set_first(code, value)
 
+    def has_dxf_default_value(self, key):
+        """
+        Returns True if the DXF attribute key has a DXF standard default value.
+
+        """
+        return self._get_dxfattr_definition(key).default is not None
+
+    def set_dxf_attrib(self, key, value):
+        dxfattr = self._get_dxfattr_definition(key)
+        if dxfattr.dxfversion is not None and self.drawing is not None:
+            if self.drawing.dxfversion < dxfattr.dxfversion:
+                msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
+                raise DXFAttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
+        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
+        if dxfattr.xtype is not None:
+            self._set_extended_type(subclass_tags, dxfattr.code, dxfattr.xtype, value)
+        else:
+            subclass_tags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
+
+    def del_dxf_attrib(self, key):
+        dxfattr = self._get_dxfattr_definition(key)
+        self._del_dxf_attrib(dxfattr)
+
     def _del_dxf_attrib(self, dxfattr):
         def point_codes(base_code):
             return base_code, base_code + 10, base_code + 20
@@ -335,6 +310,31 @@ class DXFEntity(object):
             subclass_tags.remove_tags(codes=point_codes(dxfattr.code))
         else:
             subclass_tags.remove_tags(codes=(dxfattr.code,))
+
+    def dxfattribs(self):
+        """
+        Clones defined and existing DXF attributes as dict.
+
+        """
+        dxfattribs = {}
+        for key in self.DXFATTRIBS.keys():
+            value = self.get_dxf_attrib(key, default=None)
+            if value is not None:
+                dxfattribs[key] = value
+        return dxfattribs
+
+    clone_dxf_attribs = dxfattribs
+
+    def update_dxf_attribs(self, dxfattribs):
+        for key, value in dxfattribs.items():
+            self.set_dxf_attrib(key, value)
+
+    def set_flag_state(self, flag, state=True, name='flags'):
+        flags = self.get_dxf_attrib(name, 0)
+        self.set_dxf_attrib(name, set_flag_state(flags, flag, state=state))
+
+    def get_flag_state(self, flag, name='flags'):
+        return bool(self.get_dxf_attrib(name, 0) & flag)
 
     def destroy(self):
         pass
@@ -386,19 +386,6 @@ class DXFEntity(object):
         reactors.discard(handle)
         self.set_reactors(reactors)
 
-    def get_layout(self):
-        return self.dxffactory.get_layout_for_entity(self)
-
-    def audit(self, auditor):
-        """
-        Audit entity for errors.
-
-        Args:
-            auditor: Audit() object
-
-        """
-        pass
-
     def has_extension_dict(self):
         return self.has_app_data(ACAD_XDICTIONARY)
 
@@ -422,3 +409,16 @@ class DXFEntity(object):
         xdict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)
         self.set_app_data(ACAD_XDICTIONARY, [DXFTag(360, xdict.dxf.handle)])
         return xdict
+
+    def get_layout(self):
+        return self.dxffactory.get_layout_for_entity(self)
+
+    def audit(self, auditor):
+        """
+        Audit entity for errors.
+
+        Args:
+            auditor: Audit() object
+
+        """
+        pass
