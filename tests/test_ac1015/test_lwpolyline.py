@@ -81,6 +81,12 @@ def test_rstrip_points(layout):
     assert rpoints[0] == (0, 0)
 
 
+def test_vertices(layout):
+    points = [(0, 0, 1, 1, 1), (2, 2, 1, 1, 1), (3, 3, 1, 1, 1)]
+    line = layout.add_lwpolyline(points)
+    assert list(line.vertices()) == [(0, 0), (2, 2), (3, 3)]
+
+
 @pytest.fixture
 def lwpolyline(layout):
     tags = ExtendedTags.from_text(LWPOLYLINE1)

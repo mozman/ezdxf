@@ -1,31 +1,8 @@
-# Purpose: AC1015 graphics entities
 # Created: 25.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-
-# Support for new AC1015 entities planned for the future:
-# - RText
-# - ArcAlignedText
-# - Hatch
-# - Image
-# - Viewport
-# - Dimension
-# - Tolerance
-# - Leader
-# - Wipeout ???
-# - MLine ???
-# - Surface
-#
-# Unsupported AutoCAD/Windows entities: (existing entities will be preserved)
-# - ACAD_PROXY_ENTITY (compressed data)
-# - OLEFRAME (compressed data)
-# - OLE2FRAME (compressed data)
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
-
 from ..legacy import graphics as legacy
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
@@ -82,21 +59,24 @@ class ModernGraphicEntityExtension(object):
 
 
 class ModernGraphicEntity(legacy.GraphicEntity, ModernGraphicEntityExtension):
-    """ Default graphic entity wrapper, allows access to following dxf attributes:
-     - handle
-     - owner handle
-     - layer
-     - linetype
-     - color
-     - paperspace
-     - ltscale
-     - invisible
-     - true_color (as int), requires DXF Version AC1018 (AutoCAD R2004)
-     - color_name, requires DXF Version AC1018 (AutoCAD R2004)
-     - transparency, requires DXF Version AC1018 (AutoCAD R2004)
-     - shadow_mode, requires DXF Version AC1021 (AutoCAD R2007)
+    """
+    Default graphic entity wrapper, allows access to following dxf attributes:
 
-     Wrapper for all unsupported graphic entities.
+        - handle
+        - owner handle
+        - layer
+        - linetype
+        - color
+        - paperspace
+        - ltscale
+        - invisible
+        - true_color (as int), requires DXF Version AC1018 (AutoCAD R2004)
+        - color_name, requires DXF Version AC1018 (AutoCAD R2004)
+        - transparency, requires DXF Version AC1018 (AutoCAD R2004)
+        - shadow_mode, requires DXF Version AC1021 (AutoCAD R2007)
+
+    Wrapper for all unsupported graphic entities.
+
     """
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
 
@@ -488,7 +468,9 @@ class Polyline(legacy.Polyline, ModernGraphicEntityExtension):
 
 
 class Polyface(Polyline, PolyfaceMixin):
-    """ PolyFace structure:
+    """
+    PolyFace structure:
+
     POLYLINE
       AcDbEntity
       AcDbPolyFaceMesh
@@ -500,6 +482,7 @@ class Polyface(Polyline, PolyfaceMixin):
       AcDbEntity
       AcDbFaceRecord
     SEQEND
+
     """
     @staticmethod
     def convert(polyline):
@@ -507,7 +490,9 @@ class Polyface(Polyline, PolyfaceMixin):
 
 
 class Polymesh(Polyline, PolymeshMixin):
-    """ PolyMesh structure:
+    """
+    PolyMesh structure:
+
     POLYLINE
       AcDbEntity
       AcDbPolygonMesh
@@ -661,8 +646,9 @@ class LWPolyline(ModernGraphicEntity):
         return self.dxf.count
 
     def __iter__(self):
-        """ Yielding tuples of (x, y, start_width, end_width, bulge), start_width, end_width and bulge is 0 if not
-        present.
+        """
+        Yielding tuples of (x, y, start_width, end_width, bulge), start_width, end_width and bulge is 0 if not present.
+
         """
         def get_vertex():
             point.append(attribs.get(40, 0))
@@ -684,6 +670,14 @@ class LWPolyline(ModernGraphicEntity):
         if point is not None:
             yield get_vertex()  # last point
 
+    def vertices(self):
+        """
+        Yields all points as (x, y) tuples.
+
+        """
+        for point in self:
+            yield point[0], point[1]
+
     def get_rstrip_points(self):
         last0 = 4
         for point in self:
@@ -692,8 +686,10 @@ class LWPolyline(ModernGraphicEntity):
             yield tuple(point[:last0+1])
 
     def append_points(self, points):
-        """ Append new *points* to polyline, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
+        """
+        Append new *points* to polyline, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
         tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
+
         """
         tags = self.AcDbPolyline
 
