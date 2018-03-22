@@ -10,89 +10,179 @@ DXF Attributes for DimStyle
 
 .. attribute:: DimStyle.dxf.handle
 
+Handle of table entry.
+
 .. attribute:: DimStyle.dxf.owner
 
-requires DXF R13 or later
+Handle to dimstyle table, requires DXF R13 or later
 
 .. attribute:: DimStyle.dxf.name
 
+Text style name.
+
 .. attribute:: DimStyle.dxf.flags
+
+Standard flag values (bit-coded values):
+
+- 16 = If set, table entry is externally dependent on an xref
+- 32 = If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
+- 64 = If set, the table entry was referenced by at least one entity in the drawing the last time the drawing
+  was edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read
+  DXF files and need not be set by programs that write DXF files)
 
 .. attribute:: DimStyle.dxf.dimpost
 
+Prefix/suffix for primary units dimension values.
+
 .. attribute:: DimStyle.dxf.dimapost
+
+Prefix/suffix for alternate units dimensions.
 
 .. attribute:: DimStyle.dxf.dimblk
 
-.. attribute:: DimStyle.dxf.dimblk1
+Block type to use for both arrowheads. (R2000 obsolete, now object ID)
 
-.. attribute:: DimStyle.dxf.dimblk2
+.. attribute:: DimStyle.dxf.dimblk1 (R2000 obsolete, now object ID)
+
+Block type to use for first arrowhead.
+
+.. attribute:: DimStyle.dxf.dimblk2 (R2000 obsolete, now object ID)
+
+Block type to use for second arrowhead.
 
 .. attribute:: DimStyle.dxf.dimscale
 
+Global dimension feature scale factor. (default=1.)
+
 .. attribute:: DimStyle.dxf.dimasz
+
+Dimension line and arrowhead size. (default=0.28)
 
 .. attribute:: DimStyle.dxf.dimexo
 
+Distance from origin points to extension lines. (default imperial=0.0625, default metric=0.625)
+
 .. attribute:: DimStyle.dxf.dimdli
+
+Incremental spacing between baseline dimensions. (default imperial=0.38, default metric=3.75)
 
 .. attribute:: DimStyle.dxf.dimexe
 
+Extension line distance beyond dimension line. (default imperial=0.28, default metric=2.25)
+
 .. attribute:: DimStyle.dxf.dimrnd
+
+Rounding value for dimensions. (default=0)
 
 .. attribute:: DimStyle.dxf.dimdle
 
+Dimension line extension beyond extension lines. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtp
+
+Upper tolerance value for tolerance dimensions. (default=0)
 
 .. attribute:: DimStyle.dxf.dimtm
 
+Lower tolerance value for tolerance dimensions. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtxt
+
+Size of dimension text. (default imperial=0.28, default metric=2.5)
 
 .. attribute:: DimStyle.dxf.dimcen
 
+Controls placement of center marks or centerlines. (default imperial=0.09, default metric=2.5)
+
 .. attribute:: DimStyle.dxf.dimtsz
+
+Controls size of dimension line tick marks drawn instead of arrowheads. (default=0)
 
 .. attribute:: DimStyle.dxf.dimaltf
 
+Alternate units dimension scale factor. (default=25.4)
+
 .. attribute:: DimStyle.dxf.dimlfac
+
+Scale factor for linear dimension values. (default=1)
 
 .. attribute:: DimStyle.dxf.dimtvp
 
+Vertical position of text above or below dimension line. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtfac
+
+Scale factor for fractional or tolerance text size. (default=1)
 
 .. attribute:: DimStyle.dxf.dimgap
 
+Gap size between dimension line and dimension text. (default imperial=0.09, default metric=0.625)
+
 .. attribute:: DimStyle.dxf.dimtol
+
+Toggles creation of appended tolerance dimensions. (default imperial=1, default metric=0)
 
 .. attribute:: DimStyle.dxf.dimlim
 
+Toggles creation of limits-style dimension text. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtih
+
+Orientation of text inside extension lines. (default imperial=1, default metric=0)
 
 .. attribute:: DimStyle.dxf.dimtoh
 
+Orientation of text outside extension lines. (default imperial=1, default metric=0)
+
 .. attribute:: DimStyle.dxf.dimse1
+
+Toggles suppression of first extension line. (default=0)
 
 .. attribute:: DimStyle.dxf.dimse2
 
+Toggles suppression of second extension line. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtad
+
+Sets text placement relative to dimension line. (default imperial=0, default metric=1)
 
 .. attribute:: DimStyle.dxf.dimzin
 
+Zero suppression for primary units dimensions. (default imperial=0, default metric=8) ???
+
 .. attribute:: DimStyle.dxf.dimalt
+
+Enables or disables alternate units dimensioning. (default=0)
 
 .. attribute:: DimStyle.dxf.dimaltd
 
+Controls decimal places for alternate units dimensions. (default imperial=2, default metric=3)
+
 .. attribute:: DimStyle.dxf.dimtofl
+
+Toggles forced dimension line creation. (default imperial=0, default metric=1)
 
 .. attribute:: DimStyle.dxf.dimsah
 
+Toggles appearance of arrowhead blocks. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtix
+
+Toggles forced placement of text between extension lines. (default=0)
 
 .. attribute:: DimStyle.dxf.dimsoxd
 
+Suppresses dimension lines outside extension lines. (default=0)
+
 .. attribute:: DimStyle.dxf.dimclrd
+
+Dimension line, arrowhead, and leader line color. (default=0)
 
 .. attribute:: DimStyle.dxf.dimclre
 
+Dimension extension line color. (default=0)
+
 .. attribute:: DimStyle.dxf.dimclrt
+
+Dimension text color. (default=0)
 

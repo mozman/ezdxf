@@ -625,6 +625,8 @@ LWPOINTCODES = (10, 20, 40, 41, 42)
 class LWPolyline(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_LWPOLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
+    CLOSED = 1
+    PLINEGEN = 128
 
     @property
     def AcDbPolyline(self):
@@ -632,15 +634,11 @@ class LWPolyline(ModernGraphicEntity):
 
     @property
     def closed(self):
-        return bool(self.dxf.flags & const.LWPOLYLINE_CLOSED)
+        return self.get_flag_state(self.CLOSED, name='flags')
 
     @closed.setter
     def closed(self, status):
-        flagsnow = self.dxf.flags
-        if status:
-            self.dxf.flags = flagsnow | const.LWPOLYLINE_CLOSED
-        else:
-            self.dxf.flags = flagsnow & (~const.LWPOLYLINE_CLOSED)
+        self.set_flag_state(self.CLOSED, status, name='flags')
 
     def __len__(self):
         return self.dxf.count

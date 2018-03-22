@@ -14,6 +14,8 @@ COMMENT_CODE = 999
 def text2tags(text):
     return Tags.from_text(text)
 
+def tuples2dxftags(tuples):
+    return [DXFTag(t[0], t[1]) for t in tuples]
 
 class DXFInfo(object):
     def __init__(self):

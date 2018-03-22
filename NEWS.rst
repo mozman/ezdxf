@@ -14,6 +14,7 @@ Version 0.8.8 - dev
    * NEW: ezdxf.setup_styles(dwg), setup standard text styles
    * NEW: LWPolyline.vertices() yields all points as (x, y) tuples
    * NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
+   * CHANGE: DXFEntity.set_app_data() and Entity.set_xdata accept also list of tuples as tags, DXFTag() is not required
    * BUGFIX: entity structure validator excepts group code >= 1000 before XDATA section (used in AutoCAD Civil 3D and AutoCAD Map 3D)
 
 Version 0.8.7 - 2018-03-04
