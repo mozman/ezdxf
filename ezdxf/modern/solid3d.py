@@ -100,36 +100,3 @@ class Solid3d(Body):
         modeler_geometry_subclass,
         DefSubclass('AcDb3dSolid', {'history': DXFAttr(350, default=0)})
     )
-
-
-_SURFACE_TPL = """  0
-SURFACE
-5
-0
-330
-0
-100
-AcDbEntity
-8
-0
-100
-AcDbModelerGeometry
-70
-1
-100
-AcDbSurface
-71
-0
-72
-0
-"""
-
-surface_subclass = DefSubclass('AcDbSurface', {
-    'u_count': DXFAttr(71),
-    'v_count': DXFAttr(72),
-})
-
-
-class Surface(Body):
-    TEMPLATE = ExtendedTags.from_text(_SURFACE_TPL)
-    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass, surface_subclass)

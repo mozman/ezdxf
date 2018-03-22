@@ -8,6 +8,7 @@ from ..legacy import LegacyDXFFactory
 from . import tableentries
 from . import graphics
 from . import solid3d
+from . import surface
 from .mesh import Mesh
 from .spline import Spline
 from .mtext import MText
@@ -84,7 +85,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'BODY': solid3d.Body,
     'REGION': solid3d.Region,
     '3DSOLID': solid3d.Solid3d,
-    'SURFACE': solid3d.Surface,
+    'SURFACE': surface.Surface,
     'MESH': Mesh,
     'HATCH': Hatch,
     'VIEWPORT': Viewport,
