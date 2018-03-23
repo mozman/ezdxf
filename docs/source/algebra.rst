@@ -38,6 +38,61 @@ Functions
     :returns: a :class:`BSpline` object, with :attr:`BSpline.control_points` containing the calculated control points,
               also :meth:`BSpline.knot_values` returns the used `knot`_ values.
 
+Bulge Related Functions
+-----------------------
+
+.. function:: ezdxf.algebra.bulge.bulge_center(start_point, end_point, bulge)
+
+    Calculate center of arc described by the given bulge parameters.
+
+    :param start_point: start point as (x, y) tuple
+    :param end_point: end point as (x, y) tuple
+    :param bulge: bulge value as float
+
+    :return: arc center as :class:`Vector`
+
+.. function:: ezdxf.algebra.bulge.bulge_radius(start_point, end_point, bulge)
+
+    Calculate radius of arc defined by the given bulge parameters.
+
+    :param start_point: start point as (x, y) tuple
+    :param end_point: end point as (x, y) tuple
+    :param bulge: bulge value as float
+
+    :return: arc radius as float
+
+.. function:: ezdxf.algebra.bulge.arc_to_bulge(center, start_angle, end_angle, radius)
+
+    Calculate bulge parameters from arc parameters.
+
+    :param center: circle center point as (x, y) tuple
+    :param start_angle: start angle in radians
+    :param end_angle: end angle in radians
+    :param radius: circle radius
+
+:return: (start_point, end_point, bulge)
+
+.. function:: ezdxf.algebra.bulge.bulge_to_arc(start_point, end_point, bulge)
+
+    Calculate arc parameters from bulge parameters.
+
+    :param start_point: start point as (x, y) tuple
+    :param end_point: end point as (x, y) tuple
+    :param bulge: bulge value as float
+
+    :return: (center, start_angle, end_angle, radius)
+
+.. function:: ezdxf.algebra.bulge.bulge_3_points(start_point, end_point, point)
+
+    Calculate bulge value defined by three points.
+
+    :param start_point: start point of arc
+    :param end_point: end point of arc
+    :param point: arbitrary point on arc
+
+    :return: bulge value as float
+
+
 
 Vector
 ------
@@ -143,90 +198,90 @@ Vector Methods
 
 .. method:: Vector.generate(items)
 
-Static method returns generator of Vector() objects created from items.
+    Static method returns generator of Vector() objects created from items.
 
 .. method:: Vector.list(items)
 
-Static method returns list of Vector() objects created from items.
+    Static method returns list of Vector() objects created from items.
 
 .. method:: Vector.from_rad_angle(angle, length=1.)
 
-Static method returns Vector() from angle scaled by length, angle in radians.
+    Static method returns Vector() from angle scaled by length, angle in radians.
 
 .. method:: Vector.from_deg_angle(angle, length=1.)
 
-Static method returns Vector() from angle scaled by length, angle in degree.
+    Static method returns Vector() from angle scaled by length, angle in degree.
 
 .. method:: Vector.__str__()
 
-Return ``(x, y, z)`` as string.
+    Return ``(x, y, z)`` as string.
 
 .. method:: Vector.__repr__()
 
-Return ``Vector(x, y, z)`` as string.
+    Return ``Vector(x, y, z)`` as string.
 
 .. method:: Vector.__len__()
 
-Returns always 3
+    Returns always 3
 
 .. method:: Vector.__hash__()
 
 .. method:: Vector.copy()
 
-Returns copy of vector.
+    Returns copy of vector.
 
 .. method:: Vector.__copy__()
 
-Support for copy.copy().
+    Support for copy.copy().
 
 .. method:: Vector.__deepcopy__(memodict)
 
-Support for copy.deepcopy().
+    Support for copy.deepcopy().
 
 .. method:: Vector.__getitem__(index)
 
-Support for indexing :code:`v[0] == v.x; v[1] == v.y; v[2] == v.z;`
+    Support for indexing :code:`v[0] == v.x; v[1] == v.y; v[2] == v.z;`
 
 .. method:: Vector.__iter__()
 
-Support for the Python iterator protocol.
+    Support for the Python iterator protocol.
 
 .. method:: Vector.__abs__()
 
-Returns length (magnitude) of vector.
+    Returns length (magnitude) of vector.
 
 .. method:: Vector.orthogonal(ccw=True)
 
-Returns orthogonal 2D vector, z value is unchanged.
+    Returns orthogonal 2D vector, z value is unchanged.
 
     :param ccw: counter clockwise if True else clockwise
 
 .. method:: Vector.lerp(other, factor=.5)
 
-Linear interpolation between vector and other, returns new Vector() object.
+    Linear interpolation between vector and other, returns new Vector() object.
 
     :param other: target vector/point
     :param factor: interpolation factor (0==self, 1=other, 0.5=mid point)
 
 .. method:: Vector.project(other)
 
-Project vector other onto self, returns new Vector() object.
+    Project vector other onto self, returns new Vector() object.
 
 .. method:: Vector.normalize(length=1)
 
-Returns new normalized Vector() object, optional scaled by length.
+    Returns new normalized Vector() object, optional scaled by length.
 
 .. method:: Vector.reversed()
 
-Returns -vector as new Vector() object
+    Returns -vector as new Vector() object
 
 .. method:: Vector.__neg__()
 
-Returns -vector as new Vector() object
+    Returns -vector as new Vector() object
 
 .. method:: Vector.__bool__()
 
-Returns True if vector != (0, 0, 0)
+    Returns True if vector != (0, 0, 0)
 
 .. method:: Vector.__eq__(other)
 
@@ -254,27 +309,27 @@ Returns True if vector != (0, 0, 0)
 
 .. method:: Vector.dot(other)
 
-Returns 'dot' product of vector . other.
+    Returns 'dot' product of vector . other.
 
 .. method:: Vector.cross(other)
 
-Returns 'cross' product of vector x other
+    Returns 'cross' product of vector x other
 
 .. method:: Vector.distance(other)
 
-Returns distance between vector and other.
+    Returns distance between vector and other.
 
 .. method:: Vector.angle_between(other)
 
-Returns angle between vector and other in th xy-plane in radians. +angle is counter clockwise orientation.
+    Returns angle between vector and other in th xy-plane in radians. +angle is counter clockwise orientation.
 
 .. method:: Vector.rot_z_rad(angle)
 
-Return rotated vector around z axis, angle in radians.
+    Return rotated vector around z axis, angle in radians.
 
 .. method:: Vector.rot_z_deg(angle)
 
-Return rotated vector around z axis, angle in degrees.
+    Return rotated vector around z axis, angle in degrees.
 
 
 Matrix44
@@ -282,37 +337,37 @@ Matrix44
 
 .. class:: Matrix44
 
-This is a pure Python implementation for 4x4 transformation matrices, to avoid dependency to big numerical packages like
-numpy, and before binary wheels, installation of these packages wasn't always easy on Windows.
+    This is a pure Python implementation for 4x4 transformation matrices, to avoid dependency to big numerical packages
+    like numpy, and before binary wheels, installation of these packages wasn't always easy on Windows.
 
-Matrix44 initialization:
+    Matrix44 initialization:
 
-- Matrix44() is the identity matrix.
-- Matrix44(values) values is an iterable with the 16 components of the matrix.
-- Matrix44(row1, row2, row3, row4) four rows, each row with four values.
+    - Matrix44() is the identity matrix.
+    - Matrix44(values) values is an iterable with the 16 components of the matrix.
+    - Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
 
 .. method:: Matrix44.set(*args)
 
-Reset matrix values:
+    Reset matrix values:
 
-- set() creates the identity matrix.
-- set(values) values is an iterable with the 16 components of the matrix.
-- set(row1, row2, row3, row4) four rows, each row with four values.
+    - set() creates the identity matrix.
+    - set(values) values is an iterable with the 16 components of the matrix.
+    - set(row1, row2, row3, row4) four rows, each row with four values.
 
 .. method:: Matrix44.__repr__()
 
-Returns the representation string of the matrix:
+    Returns the representation string of the matrix:
 
-``Matrix44((col0, col1, col2, col3), (...), (...), (...))``
+    ``Matrix44((col0, col1, col2, col3), (...), (...), (...))``
 
 .. method:: Matrix44.get_row(row)
 
-Get row as list of of four float values.
+    Get row as list of of four float values.
 
 .. method:: Matrix44.set_row(row, values)
 
-Sets the values in a row.
+    Sets the values in a row.
 
     :param row: row index [0..3]
     :param values: four column values as iterable.
@@ -320,11 +375,11 @@ Sets the values in a row.
 
 .. method:: Matrix44.get_col(col)
 
-Get column as list of of four float values.
+    Get column as list of of four float values.
 
 .. method:: Matrix44.set_col(col, values)
 
-Sets the values in a column.
+    Sets the values in a column.
 
     :param col: column index [0..3]
     :param values: four column values as iterable.
@@ -335,134 +390,133 @@ Sets the values in a column.
 
 .. method:: Matrix44.scale(sx, sy=None, sz=None)
 
-Class method returns a scaling transformation matrix. If sy is None, sy = sx, and if sz is None sz = sx.
+    Class method returns a scaling transformation matrix. If sy is None, sy = sx, and if sz is None sz = sx.
 
 .. method:: Matrix44.translate(x, y, z)
 
-Class method returns a translation matrix to (x, y, z).
+    Class method returns a translation matrix to (x, y, z).
 
 .. method:: Matrix44.x_rotate(angle)
 
-Class method returns a rotation matrix about the x-axis.
+    Class method returns a rotation matrix about the x-axis.
 
     :param angle: rotation angle in radians
 
 .. method:: Matrix44.y_rotate(angle)
 
-Class method returns a rotation matrix about the y-axis.
+    Class method returns a rotation matrix about the y-axis.
 
     :param angle: rotation angle in radians
 
 .. method:: Matrix44.z_rotate(angle)
 
-Class method returns a rotation matrix about the z-axis.
+    Class method returns a rotation matrix about the z-axis.
 
 :param angle: rotation angle in radians
-
 
 .. method:: Matrix44.axis_rotate(axis, angle)
 
-Class method returns a rotation matrix about an arbitrary axis.
+    Class method returns a rotation matrix about an arbitrary axis.
 
-:param axis: rotation axis as (x, y, z) tuple
-:param angle: rotation angle in radians
+    :param axis: rotation axis as (x, y, z) tuple
+    :param angle: rotation angle in radians
 
 .. method:: Matrix44.xyz_rotate(angle_x, angle_y, angle_z)
 
-Class method returns a rotation matrix for rotation about each axis.
+    Class method returns a rotation matrix for rotation about each axis.
 
-:param angle_x: rotation angle about x-axis in radians
-:param angle_y: rotation angle about y-axis in radians
-:param angle_z: rotation angle about z-axis in radians
+    :param angle_x: rotation angle about x-axis in radians
+    :param angle_y: rotation angle about y-axis in radians
+    :param angle_z: rotation angle about z-axis in radians
 
 
 .. method:: Matrix44.perspective_projection(left, right, top, bottom, near, far)
 
-Class method returns a matrix for a 2d projection.
+    Class method returns a matrix for a 2d projection.
 
 
-:param left: Coordinate of left of screen
-:param right: Coordinate of right of screen
-:param top: Coordinate of the top of the screen
-:param bottom: Coordinate of the bottom of the screen
-:param near: Coordinate of the near clipping plane
-:param far: Coordinate of the far clipping plane
+    :param left: Coordinate of left of screen
+    :param right: Coordinate of right of screen
+    :param top: Coordinate of the top of the screen
+    :param bottom: Coordinate of the bottom of the screen
+    :param near: Coordinate of the near clipping plane
+    :param far: Coordinate of the far clipping plane
 
 
 .. method:: Matrix44.perspective_projection_fov(fov, aspect, near, far)
 
-Class method returns a matrix for a 2d projection.
+    Class method returns a matrix for a 2d projection.
 
 
-:param fov: The field of view (in radians)
-:param aspect: The aspect ratio of the screen (width / height)
-:param near: Coordinate of the near clipping plane
-:param far: Coordinate of the far clipping plane
+    :param fov: The field of view (in radians)
+    :param aspect: The aspect ratio of the screen (width / height)
+    :param near: Coordinate of the near clipping plane
+    :param far: Coordinate of the far clipping plane
 
 .. method:: Matrix44.chain(*matrices)
 
-Compose a transformation matrix from one or more matrices.
+    Compose a transformation matrix from one or more matrices.
 
 .. method:: Matrix44.__setitem__(coord, value)
 
-Set (row, column) element.
+    Set (row, column) element.
 
 .. method:: Matrix44.__getitem__(coord)
 
-Get (row, column) element.
+    Get (row, column) element.
 
 .. method:: Matrix44.__iter__()
 
-Iterates over all matrix values.
+    Iterates over all matrix values.
 
 .. method:: Matrix44.__mul__(other)
 
-Returns a new matrix as result of the matrix multiplication with another matrix.
+    Returns a new matrix as result of the matrix multiplication with another matrix.
 
 .. method:: Matrix44.__imul__(other)
 
-Inplace multiplication with another matrix.
+    Inplace multiplication with another matrix.
 
 .. method:: Matrix44.fast_mul(other)
 
-Multiplies this matrix with other matrix inplace.
+    Multiplies this matrix with other matrix inplace.
 
-Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
-rotations,  translations and scales. fast_mul is approximately 25% quicker than __imul__().
+    Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
+    rotations,  translations and scales. fast_mul is approximately 25% quicker than __imul__().
 
 .. method:: Matrix44.rows()
 
-Iterate over rows as 4-tuples.
+    Iterate over rows as 4-tuples.
 
 .. method:: Matrix44.columns()
 
-Iterate over columns as 4-tuples.
+    Iterate over columns as 4-tuples.
 
 .. method:: Matrix44.transform(vector)
 
-Transforms a 3d vector and return the result as a tuple.
+    Transforms a 3d vector and return the result as a tuple.
 
 .. method:: Matrix44.transform_vectors(vectors)
 
-Returns a list of transformed vectors.
+    Returns a list of transformed vectors.
 
 .. method:: Matrix44.transpose()
 
-Swaps the rows for columns inplace.
+    Swaps the rows for columns inplace.
 
 .. method:: Matrix44.get_transpose()
 
-Returns a new transposed matrix.
+    Returns a new transposed matrix.
 
 .. method:: Matrix44.determinant()
 
-Returns determinant.
+    Returns determinant.
 
 .. method:: Matrix44.inverse()
 
-Returns the inverse of the matrix.
+    Returns the inverse of the matrix.
 
-Raises ZeroDivisionError if matrix has no inverse.
+    :raises ZeroDivisionError: if matrix has no inverse.
 
 BSpline
 -------

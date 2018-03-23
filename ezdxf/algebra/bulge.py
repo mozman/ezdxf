@@ -39,14 +39,14 @@ def arc_to_bulge(center, start_angle, end_angle, radius):
     return start_point, end_point, bulge
 
 
-def bulge_3_points(start_point, point, end_point):
+def bulge_3_points(start_point, end_point, point):
     """
     Calculate bulge value defined by three points.
 
     Args:
         start_point: start point of arc
-        point: arbitrary point on arc
         end_point: end point of arc
+        point: arbitrary point on arc
 
     Returns: bulge value as float
 
