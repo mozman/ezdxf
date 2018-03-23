@@ -2,7 +2,7 @@
 
 .. module:: ezdxf.algebra
 
-This utilities are located at :mod:`ezdxf.algebra`, import::
+This utilities are located at :mod:`ezdxf.algebra`::
 
     from ezdxf.algebra import Vector
 
@@ -41,6 +41,10 @@ Functions
 Bulge Related Functions
 -----------------------
 
+Bulge related functions are located at :mod:`ezdxf.algebra.bulge`::
+
+    from ezdxf.algebra.bulge import bulge_center
+
 .. function:: ezdxf.algebra.bulge.bulge_center(start_point, end_point, bulge)
 
     Calculate center of arc described by the given bulge parameters.
@@ -70,7 +74,7 @@ Bulge Related Functions
     :param end_angle: end angle in radians
     :param radius: circle radius
 
-:return: (start_point, end_point, bulge)
+    :return: (start_point, end_point, bulge)
 
 .. function:: ezdxf.algebra.bulge.bulge_to_arc(start_point, end_point, bulge)
 
@@ -91,8 +95,6 @@ Bulge Related Functions
     :param point: arbitrary point on arc
 
     :return: bulge value as float
-
-
 
 Vector
 ------
