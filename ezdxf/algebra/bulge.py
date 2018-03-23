@@ -3,114 +3,117 @@
 # source: http://www.lee-mac.com/bulgeconversion.html
 # source: http://www.afralisp.net/archive/lisp/Bulges1.htm
 from .vector import Vector
+import math
 
+
+# minusp: Verifies that a number is negative
+# rem: Divides the first number by the second, and returns the remainder (math.fmod)
 # polar signature: (polar pt ang dist) - Returns the UCS 3D point at a specified angle and distance from a point
+def polar(p, ang, dist):
+    return Vector(p) + Vector.from_rad_angle(ang, dist)
+
+
 # angle signature: (angle pt1 pt2) - Returns an angle in radians of a line defined by two endpoints
+def angle(p1, p2):
+    return (Vector(p2) - p1).angle_rad
 
 
-def arc_to_bulge():
+def arc_to_bulge(center, start_angle, end_angle, radius):
     """
-    ;; Arc to Bulge  -  Lee Mac
-    ;; c     - center
-    ;; a1,a2 - start, end angle
-    ;; r     - radius
-    ;; Returns: (<vertex> <bulge> <vertex>)
+    Calculate bulge parameters from arc parameters.
 
-    (defun LM:arc->bulge ( c a1 a2 r )
-        (list
-            (polar c a1 r)
-            (   (lambda ( a ) (/ (sin a) (cos a)))
-                (/ (rem (+ pi pi (- a2 a1)) (+ pi pi)) 4.0)
-            )
-            (polar c a2 r)
-        )
-    )
+    Args:
+        center: circle center point as (x, y) tuple
+        start_angle: start angle in radians
+        end_angle: end angle in radians
+        radius: circle radius
+
+    Returns: (start_point, end_point, bulge)
+
     """
-    pass
+    start_point = polar(center, start_angle, radius)
+    end_point = polar(center, end_angle, radius)
+    pi2 = math.pi*2
+    a = math.fmod((pi2 + (end_angle - start_angle)), pi2) / 4.
+    bulge = math.sin(a) / math.cos(a)
+    return start_point, end_point, bulge
 
 
-def bulge_3_points():
+def bulge_3_points(start_point, point, end_point):
     """
-    ;; 3-Points to Bulge  -  Lee Mac
+    Calculate bulge value defined by three points.
 
-    (defun LM:3p->bulge ( pt1 pt2 pt3 )
-        ((lambda ( a ) (/ (sin a) (cos a))) (/ (+ (- pi (angle pt2 pt1)) (angle pt2 pt3)) 2))
-    )
+    Args:
+        start_point: start point of arc
+        point: arbitrary point on arc
+        end_point: end point of arc
+
+    Returns: bulge value as float
+
+    Based on 3-Points to Bulge by Lee Mac
+
     """
+    a = (math.pi - angle(point, start_point) + angle(point, end_point)) / 2
+    return math.sin(a) / math.cos(a)
 
 
-def bulge_to_arc1():
+def bulge_to_arc(start_point, end_point, bulge):
     """
-    ;; Bulge to Arc  -  Lee Mac
-    ;; p1 - start vertex
-    ;; p2 - end vertex
-    ;; b  - bulge
-    ;; Returns: (<center> <start angle> <end angle> <radius>)
+    Calculate arc parameters from bulge parameters.
 
-    (defun LM:Bulge->Arc ( p1 p2 b / a c r )
-        (setq a (* 2 (atan b))
-              r (/ (distance p1 p2) 2 (sin a))
-              c (polar p1 (+ (- (/ pi 2) a) (angle p1 p2)) r)
-        )
-        (if (minusp b)
-            (list c (angle c p2) (angle c p1) (abs r))
-            (list c (angle c p1) (angle c p2) (abs r))
-        )
-    )
+    Based on Bulge to Arc by Lee Mac
+
+    Args:
+        start_point: start vertex as (x, y) tuple
+        end_point: end vertex as (x, y) tuple
+        bulge: bulge value as float
+
+    Returns: (center, start_angle, end_angle, radius)
+
     """
+    r = signed_bulge_radius(start_point, end_point, bulge)
+    a = angle(start_point, end_point) + (math.pi / 2 - math.atan(bulge) * 2)
+    c = polar(start_point, a, r)
+    if bulge < 0:
+        return c, angle(c, end_point), angle(c, start_point), abs(r)
+    else:
+        return c, angle(c, start_point), angle(c, end_point), abs(r)
 
 
-def bulge_to_arc2():
+def bulge_center(start_point, end_point, bulge):
     """
-    ;; Bulge to Arc  -  Lee Mac
-    ;; p1 - start vertex
-    ;; p2 - end vertex
-    ;; b  - bulge
-    ;; Returns: (<center> <start angle> <end angle> <radius>)
-
-    (defun LM:Bulge->Arc ( p1 p2 b / c r )
-        (setq r (/ (* (distance p1 p2) (1+ (* b b))) 4 b)
-              c (polar p1 (+ (angle p1 p2) (- (/ pi 2) (* 2 (atan b)))) r)
-        )
-        (if (minusp b)
-            (list c (angle c p2) (angle c p1) (abs r))
-            (list c (angle c p1) (angle c p2) (abs r))
-        )
-    )
-    """
-
-
-def bulge_center(p1, p2, bulge):
-    """
-    Returns the center of the arc described by the given bulge and vertices
+    Calculate center of arc described by the given bulge parameters.
 
     Based on  Bulge Center by Lee Mac.
 
     Args:
-        p1: start vertex as (x, y) tuple
-        p2: end vertex as (x, y) tuple
+        start_point: start vertex as (x, y) tuple
+        end_point: end vertex as (x, y) tuple
         bulge: bulge value as float
 
-    (defun LM:BulgeCenter ( p1 p2 b )
-        (polar p1
-            (+ (angle p1 p2) (- (/ pi 2) (* 2 (atan b))))
-            (/ (* (distance p1 p2) (1+ (* b b))) 4 b)
-        )
-    )
+    Returns: Vector
+
     """
+    start_point = Vector(start_point)
+    a = angle(start_point, end_point) + (math.pi / 2. - math.atan(bulge) * 2.)
+    return start_point + Vector.from_rad_angle(a, signed_bulge_radius(start_point, end_point, bulge))
 
 
-def bulge_radius(p1, p2, bulge):
+def signed_bulge_radius(start_point, end_point, bulge):
+    return Vector(start_point).distance(end_point) * (1. + (bulge * bulge)) / 4. / bulge
+
+
+def bulge_radius(start_point, end_point, bulge):
     """
-    Returns the radius of the arc described by the given bulge and vertices.
+    Calculate radius of arc defined by the given bulge parameters.
 
     Based on Bulge Radius by Lee Mac
 
     Args:
-        p1: start vertex as (x, y) tuple
-        p2: end vertex as (x, y) tuple
+        start_point: start vertex as (x, y) tuple
+        end_point: end vertex as (x, y) tuple
         bulge: bulge value as float
 
     """
-    return Vector(p1).distance(p2) * (1. + (bulge * bulge)) / 4. / abs(bulge)
+    return abs(signed_bulge_radius(start_point, end_point, bulge))
 
