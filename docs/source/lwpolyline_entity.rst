@@ -11,9 +11,34 @@ consume less disk space and RAM. Create :class:`LWPolyline` in layouts and block
 :meth:`~Layout.add_lwpolyline`. LWPolylines are planar elements, therefore all coordinates have no value for the
 z axis.
 
+Bulge Value
+-----------
+
+The bulge value is used to create arc shaped line segments. The bulge defines the ratio of the arc sagitta (versine)
+to half line segment length, a bulge value of 1 defines a semicircle.
+
+The sign of the bulge value defines the side of the bulge:
+
+- positive value (> 0): bulge is right of line (count clockwise)
+- negative value (< 0): bulge is left of line (clockwise)
+- 0 = no bulge
+
+Start Width And End Width
+-------------------------
+
+The start width and end width values defines the width in drawing units for the following line segment.
+To use the default width value for a line segment set value to 0.
+
+Width and Bulge Values at Last Point
+------------------------------------
+
+The width and bulge values of the last vertex has only a meaning if the polyline is closed, and they apply
+to the last line segment from the last vertex to the first vertex.
+
 .. seealso::
 
     :ref:`tut_lwpolyline`
+
 
 DXF Attributes for LWPolyline
 -----------------------------

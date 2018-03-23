@@ -319,6 +319,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimtvp': DXFAttr(145),
     'dimtfac': DXFAttr(146),
     'dimgap': DXFAttr(147),
+    'dimaltrnd': DXFAttr(148),
     'dimtol': DXFAttr(71),
     'dimlim': DXFAttr(72),
     'dimtih': DXFAttr(73),
@@ -327,6 +328,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimse2': DXFAttr(76),
     'dimtad': DXFAttr(77),
     'dimzin': DXFAttr(78),
+    'dimazin': DXFAttr(79),
     'dimalt': DXFAttr(170),
     'dimaltd': DXFAttr(171),
     'dimtofl': DXFAttr(172),
@@ -336,6 +338,33 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimclrd': DXFAttr(176),
     'dimclre': DXFAttr(177),
     'dimclrt': DXFAttr(178),
+    'dimadec': DXFAttr(179),
+    'dimunit': DXFAttr(270),
+    'dimdec': DXFAttr(271),
+    'dimtdec': DXFAttr(272),
+    'dimaltu': DXFAttr(273),
+    'dimalttd': DXFAttr(274),
+    'dimaunit': DXFAttr(275),
+    'dimfrac': DXFAttr(276),
+    'dimlunit': DXFAttr(277),
+    'dimdsep': DXFAttr(278),
+    'dimtmove': DXFAttr(279),
+    'dimjust': DXFAttr(280),
+    'dimsd1': DXFAttr(281),
+    'dimsd2': DXFAttr(282),
+    'dimtolj': DXFAttr(283),
+    'dimaltz': DXFAttr(285),
+    'dimalttz': DXFAttr(286),
+    'dimfit': DXFAttr(287),  # obsolete, now use DIMATFIT and DIMTMOVE
+    'dimupt': DXFAttr(288),
+    'dimatfit': DXFAttr(289),
+    'dimtxsty_handle': DXFAttr(340),  # handle of referenced STYLE
+    'dimldrblk_handle': DXFAttr(341),  # handle of referenced BLOCK
+    'dimblk_handle': DXFAttr(342),  # handle of referenced BLOCK
+    'dimblk1_handle': DXFAttr(343),  # handle of referenced BLOCK
+    'dimblk2_handle': DXFAttr(344),  # handle of referenced BLOCK
+    'dimlwd': DXFAttr(371),  # lineweight enum value
+    'dimlwe': DXFAttr(372),  # lineweight enum value
 })
 
 

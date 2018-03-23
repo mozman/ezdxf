@@ -1,5 +1,4 @@
-
-SURFACE
+Surface
 =======
 
 .. class:: Surface(Body)

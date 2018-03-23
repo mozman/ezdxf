@@ -83,6 +83,7 @@ Entities
    body_entity
    region_entity
    3dsolid_entity
+   surface_entity
    underlay_entity
 
 Blocks

@@ -118,6 +118,10 @@ Scale factor for fractional or tolerance text size. (default=1)
 
 Gap size between dimension line and dimension text. (default imperial=0.09, default metric=0.625)
 
+.. attribute:: DimStyle.dxf.dimaltrnd
+
+Rounding value for alternate dimension units. (default=0)
+
 .. attribute:: DimStyle.dxf.dimtol
 
 Toggles creation of appended tolerance dimensions. (default imperial=1, default metric=0)
@@ -149,6 +153,10 @@ Sets text placement relative to dimension line. (default imperial=0, default met
 .. attribute:: DimStyle.dxf.dimzin
 
 Zero suppression for primary units dimensions. (default imperial=0, default metric=8) ???
+
+.. attribute:: DimStyle.dxf.dimazin
+
+Controls zero suppression for angular dimensions. (default=0)
 
 .. attribute:: DimStyle.dxf.dimalt
 
@@ -186,3 +194,110 @@ Dimension extension line color. (default=0)
 
 Dimension text color. (default=0)
 
+.. attribute:: DimStyle.dxf.dimadec
+
+Controls the number of decimal places for angular dimensions.
+
+.. attribute:: DimStyle.dxf.dimunit
+
+Obsolete, now use DIMLUNIT AND DIMFRAC
+
+.. attribute:: DimStyle.dxf.dimdec
+
+Decimal places for dimension values. (default imperial=4, default metric=2)
+
+.. attribute:: DimStyle.dxf.dimtdec
+
+Decimal places for primary units tolerance values. (default imperial=4, default metric=2)
+
+.. attribute:: DimStyle.dxf.dimaltu
+
+Units format for alternate units dimensions. (default=2)
+
+.. attribute:: DimStyle.dxf.dimalttd
+
+Decimal places for alternate units tolerance values. (default imperial=4, default metric=2)
+
+.. attribute:: DimStyle.dxf.dimaunit
+
+Unit format for angular dimension values. (default=0)
+
+.. attribute:: DimStyle.dxf.dimfrac
+
+Controls the fraction format used for architectural and fractional dimensions. (default=0)
+
+.. attribute:: DimStyle.dxf.dimlunit
+
+Specifies units for all nonangular dimensions. (default=2)
+
+.. attribute:: DimStyle.dxf.dimdsep
+
+Specifies a single character to use as a decimal separator. (default imperial=".", default metric=",")
+
+.. attribute:: DimStyle.dxf.dimtmove
+
+Controls the format of dimension text when it is moved. (default=0)
+
+.. attribute:: DimStyle.dxf.dimjust
+
+Horizontal justification of dimension text. (default=0)
+
+.. attribute:: DimStyle.dxf.dimsd1
+
+Toggles suppression of first dimension line. (default=0)
+
+.. attribute:: DimStyle.dxf.dimsd2
+
+Toggles suppression of second dimension line. (default=0)
+
+.. attribute:: DimStyle.dxf.dimtolj
+
+Vertical justification for dimension tolerance text. (default=1)
+
+.. attribute:: DimStyle.dxf.dimaltz
+
+Zero suppression for alternate units dimension values. (default=0)
+
+.. attribute:: DimStyle.dxf.dimalttz
+
+Zero suppression for alternate units tolerance values. (default=0)
+
+.. attribute:: DimStyle.dxf.dimfit
+
+Obsolete, now use DIMATFIT and DIMTMOVE
+
+.. attribute:: DimStyle.dxf.dimupt
+
+Controls user placement of dimension line and text. (default=0)
+
+.. attribute:: DimStyle.dxf.dimatfit
+
+Controls placement of text and arrowheads when there is insufficient space between the extension lines. (default=3)
+
+.. attribute:: DimStyle.dxf.dimtxsty_handle
+
+Text style used for dimension text, handle of referenced style.
+
+.. attribute:: DimStyle.dxf.dimldrblk_handle
+
+Controls the type of arrowhead used for leaders, handle of referenced block.
+
+.. attribute:: DimStyle.dxf.dimblk_handle
+
+Block type to use for both arrowheads, handle of referenced block.
+
+.. attribute:: DimStyle.dxf.dimblk1_handle
+
+Block type to use for first arrowhead, handle of referenced block.
+
+.. attribute:: DimStyle.dxf.dimblk2_handle
+
+Block type to use for second arrowhead, handle of referenced block.
+
+.. attribute:: DimStyle.dxf.dimlwd
+
+Lineweight value for dimension lines. (default=-2, BYBLOCK)
+
+.. attribute:: DimStyle.dxf.dimlwe
+
+Lineweight value for extension lines. (default=-2, BYBLOCK)
