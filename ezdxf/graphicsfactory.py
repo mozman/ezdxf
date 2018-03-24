@@ -329,49 +329,37 @@ class GraphicsFactory(object):
         return spline
 
     def add_body(self, acis_data=None, dxfattribs=None):
-        if self.dxfversion < 'AC1015':
-            raise DXFVersionError('BODY requires DXF version R2000+')
-        dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('BODY', acis_data, dxfattribs)
 
     def add_region(self, acis_data=None, dxfattribs=None):
-        if self.dxfversion < 'AC1015':
-            raise DXFVersionError('REGION requires DXF version R2000+')
-        dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('REGION', acis_data, dxfattribs)
 
     def add_3dsolid(self, acis_data=None, dxfattribs=None):
-        if self.dxfversion < 'AC1015':
-            raise DXFVersionError('3DSOLID requires DXF version R2000+')
-        dxfattribs = copy_attribs(dxfattribs)
         return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
 
     def add_surface(self, acis_data=None, dxfattribs=None):
-        return self._add_surface_subtype('SURFACE', acis_data, dxfattribs)
+        return self._add_acis_entiy('SURFACE', acis_data, dxfattribs)
 
-    def _add_surface_subtype(self, subtype, acis_data, dxfattribs):
-        if self.dxfversion < 'AC1015':
-            raise DXFVersionError('{} requires DXF version R2000+'.format(subtype))
-        dxfattribs = copy_attribs(dxfattribs)
-        return self._add_acis_entiy(subtype, acis_data, dxfattribs)
+    def add_extruded_surface(self, acis_data=None, dxfattribs=None):
+        return self._add_acis_entiy('EXTRUDEDSURFACE', acis_data, dxfattribs)
+
+    def add_lofted_surface(self, acis_data=None, dxfattribs=None):
+        return self._add_acis_entiy('LOFTEDSURFACE', acis_data, dxfattribs)
+
+    def add_revolved_surface(self, acis_data=None, dxfattribs=None):
+        return self._add_acis_entiy('REVOLVEDSURFACE', acis_data, dxfattribs)
+
+    def add_swept_surface(self, acis_data=None, dxfattribs=None):
+        return self._add_acis_entiy('SWEPTSURFACE', acis_data, dxfattribs)
 
     def _add_acis_entiy(self, name, acis_data, dxfattribs):
+        if self.dxfversion < 'AC1015':
+            raise DXFVersionError('{} requires DXF version R2000+'.format(name))
+        dxfattribs = copy_attribs(dxfattribs)
         entity = self.build_and_add_entity(name, dxfattribs)
         if acis_data is not None:
             entity.set_acis_data(acis_data)
         return entity
-
-    def add_extruded_surface(self, acis_data=None, dxfattribs=None):
-        return self._add_surface_subtype('EXTRUDEDSURFACE', acis_data, dxfattribs)
-
-    def add_lofted_surface(self, acis_data=None, dxfattribs=None):
-        return self._add_surface_subtype('LOFTEDSURFACE', acis_data, dxfattribs)
-
-    def add_revolved_surface(self, acis_data=None, dxfattribs=None):
-        return self._add_surface_subtype('REVOLVEDSURFACE', acis_data, dxfattribs)
-
-    def add_swept_surface(self, acis_data=None, dxfattribs=None):
-        return self._add_surface_subtype('SWEPTSURFACE', acis_data, dxfattribs)
 
     def add_hatch(self, color=7, dxfattribs=None):
         if self.dxfversion < 'AC1015':

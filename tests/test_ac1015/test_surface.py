@@ -44,6 +44,9 @@ def test_extruded_surface(msp):
     surface.set_transformation_matrix_extruded_entity(MATRIX_CHECK)
     assert list(surface.get_transformation_matrix_extruded_entity()) == MATRIX_CHECK
 
+    with pytest.raises(ezdxf.DXFValueError):
+        surface.set_transformation_matrix_extruded_entity(MATRIX_CHECK[:-1])
+
 
 def test_lofted_surface(msp):
     surface = msp.add_lofted_surface()
