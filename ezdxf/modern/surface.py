@@ -67,7 +67,7 @@ class Surface(Body):
 
     def _get_matrix(self, code):
         subclass = self.tags.subclasses[4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
-        values = [tag.value for tag in subclass.findall(code)]
+        values = [tag.value for tag in subclass.find_all(code)]
         if len(values) != 16:
             raise DXFStructureError('Invalid transformation matrix in entity ' + self.__str__())
         return Matrix44(values)
@@ -82,7 +82,7 @@ class Surface(Body):
             insert_pos = subclass.tag_index(code)
         except DXFValueError:
             insert_pos = len(subclass)
-        subclass.remove_tags(code)
+        subclass.remove_tags((code, ))
         tags = [DXFTag(code, value) for value in values]
         subclass[insert_pos:insert_pos] = tags
 

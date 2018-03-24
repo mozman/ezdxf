@@ -6,7 +6,7 @@ Version 0.8.8 - dev
 
    * Release notes: https://ezdxf.mozman.at/release-v0-8-8.html
    * NEW: read/write support for GEODATA entity
-   * NEW: read/write support for SURFACE entity
+   * NEW: read/(limited)write support for SURFACE, EXTRUDEDSURFACE, REVOLVEDSURFACE, LOFTEDSURFACE and SWEPTSURFACE entity
    * NEW: support for extension dictionaries
    * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
    * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points

@@ -16,11 +16,14 @@ def test_bulge_center():
 
 
 def test_arc_to_bulge():
-    assert arc_to_bulge(center=(.5, 0), start_angle=math.pi, end_angle=0, radius=.5) == ((0., 0., 0.), (1., 0., 0.), 1.)
+    start, end, bulge = arc_to_bulge(center=(.5, 0), start_angle=math.pi, end_angle=0, radius=.5)
+    assert start == (0., 0., 0.)
+    assert end == (1., 0., 0.)
+    assert is_close(bulge, 1.)
 
 
 def test_bulge_3_points():
-    assert bulge_3_points(start_point=(0, 0), end_point=(1, 0), point=(.5, -.5)) == 1.
+    assert is_close(bulge_3_points(start_point=(0, 0), end_point=(1, 0), point=(.5, -.5)), 1.)
 
 
 def test_bulge_to_arc():
@@ -29,4 +32,3 @@ def test_bulge_to_arc():
     assert is_close(start_angle, 0)
     assert is_close(end_angle, math.pi)
     assert radius == .5
-
