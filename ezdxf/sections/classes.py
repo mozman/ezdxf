@@ -25,12 +25,15 @@ class ClassesSection(object):
         for class_tags in entities:
             self.register(ExtendedTags(class_tags))
 
-    def register(self, tags):
-        if tags is None:
+    def register(self, classes):
+        if classes is None:
             return
-        dxftype = tags.noclass.get_first_value(1)
-        if dxftype not in self.classes:
-            self.classes[dxftype] = DXFClass(tags, self.drawing)
+        if not isinstance(classes, tuple):
+            classes = (classes, )
+        for class_tags in classes:
+            dxftype = class_tags.noclass.get_first_value(1)
+            if dxftype not in self.classes:
+                self.classes[dxftype] = DXFClass(class_tags, self.drawing)
 
     def write(self, tagwriter):
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")

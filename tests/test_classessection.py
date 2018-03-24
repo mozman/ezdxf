@@ -1,11 +1,11 @@
-# Created: 15.03.2011, 2018 rewritten for pytest
+# Created: 15.03.2011
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 import pytest
 from io import StringIO
 import ezdxf
-from ezdxf.lldxf.tags import Tags, internal_tag_compiler, group_tags
+from ezdxf.lldxf.tags import internal_tag_compiler
 from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.tools.test import load_section

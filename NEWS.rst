@@ -7,10 +7,9 @@ Version 0.8.8 - dev
    * Release notes: https://ezdxf.mozman.at/release-v0-8-8.html
    * NEW: read/write support for GEODATA entity
    * NEW: read/write support for SURFACE entity
-   * NEW: DXFEntity.has_extension_dict(), DXFEntity.get_extension_dict() and DXFEntity.new_extension_dict()
+   * NEW: support for extension dictionaries
    * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
-   * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points, given are the fit points and
-     the degree of the B-spline
+   * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points
    * NEW: ezdxf.setup_linetypes(dwg), setup standard line types
    * NEW: ezdxf.setup_styles(dwg), setup standard text styles
    * NEW: LWPolyline.vertices() yields all points as (x, y) tuples
@@ -46,9 +45,9 @@ Version 0.8.6 - 2018-02-17
    * NEW: Layout.page_setup() and correct 'main' viewport for DXF R2000+; For DXF R12 page_setup() exists, but does not
      provide useful results. Page setup for DXF R12 is still a mystery to me.
    * NEW: Table(), MText(), Ellipse(), Spline(), Bezier(), Clothoid(), LinearDimension(), RadialDimension(),
-     ArcDimension() and AngularDimension() composite objects from dxfwrite as add-ons, these addons support DXF R12
+     ArcDimension() and AngularDimension() composite objects from dxfwrite as add-ons, these add-ons support DXF R12
    * NEW: geometry builder as add-ons: MeshBuilder(), MeshVertexMerger(), MengerSponge(), SierpinskyPyramid(), these
-     addons require DXF R2000+ (MESH entity)
+     add-ons require DXF R2000+ (MESH entity)
    * BUGFIX: fixed invalid implementation of context manager for r12writer
 
 Version 0.8.5 - 2018-01-28
