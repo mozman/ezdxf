@@ -15,6 +15,7 @@ Version 0.8.8 - dev
    * NEW: LWPolyline.vertices() yields all points as (x, y) tuples
    * NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
    * NEW: bulge related function in module ezdxf.algebra.bulge
+   * NEW: Object Coordinate System support by DXFEntity.get_ocs() and OCS related functions and classes in module ezdxf.algebra.ocs
    * CHANGE: DXFEntity.set_app_data() and Entity.set_xdata accept also list of tuples as tags, DXFTag() is not required
    * BUGFIX: entity structure validator excepts group code >= 1000 before XDATA section (used in AutoCAD Civil 3D and AutoCAD Map 3D)
 

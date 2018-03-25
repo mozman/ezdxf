@@ -1,7 +1,5 @@
 .. _algebra utilities:
 
-.. module:: ezdxf.algebra
-
 This utilities are located at :mod:`ezdxf.algebra`::
 
     from ezdxf.algebra import Vector
@@ -37,6 +35,42 @@ Functions
 
     :returns: a :class:`BSpline` object, with :attr:`BSpline.control_points` containing the calculated control points,
               also :meth:`BSpline.knot_values` returns the used `knot`_ values.
+
+OCS Related Functions
+---------------------
+
+OCS related functions and classes are located at :mod:`ezdxf.algebra.ocs`::
+
+    from ezdxf.algebra.ocs import OCS
+
+.. function:: ezdxf.algebra.ocs.ocs_to_wcs(point, extrusion=(0, 0, 1))
+
+    Calculate object coordinates for point in world coordinates, OCS defined by a given extrusion direction.
+    For calculating multiple points for the same OCS, it is more efficient to use the :class:`OCS` class.
+
+.. function:: ezdxf.algebra.ocs.wcs_to_ocs(point, extrusion=(0, 0, 1))
+
+    Calculate world coordinates for point in object coordinates, OCS defined by a given extrusion direction.
+    For calculating multiple points for the same OCS, it is more efficient to use the :class:`OCS` class.
+
+.. class:: OCS
+
+.. method:: OCS.__init__(extrusion=(0, 0, 1))
+
+    Establish an Object Coordinate System for a given extrusion vector.
+
+.. method:: OCS.ocs_to_wcs(point)
+
+    Calculate object coordinates for point in world coordinates.
+
+.. method:: OCS.wcs_to_ocs(point)
+
+    Calculate world coordinates for point in object coordinates.
+
+.. seealso::
+
+    :ref:`ocs`
+
 
 Bulge Related Functions
 -----------------------
@@ -101,48 +135,48 @@ Vector
 
 .. class:: Vector
 
-This is an immutable universal 3d vector object. This class is optimized for universality not for speed.
-Immutable means you can't change (x, y, z) components after initialization::
+    This is an immutable universal 3d vector object. This class is optimized for universality not for speed.
+    Immutable means you can't change (x, y, z) components after initialization::
 
-    v1 = Vector(1, 2, 3)
-    v2 = v1
-    v2.z = 7  # this is not possible, raises AttributeError
-    v2 = Vector(v2.x, v2.y, 7)  # this creates a new Vector() object
-    assert v1.z == 3  # and v1 remains unchanged
+        v1 = Vector(1, 2, 3)
+        v2 = v1
+        v2.z = 7  # this is not possible, raises AttributeError
+        v2 = Vector(v2.x, v2.y, 7)  # this creates a new Vector() object
+        assert v1.z == 3  # and v1 remains unchanged
 
 
-Vector initialization:
+    Vector initialization:
 
-- Vector(), returns Vector(0, 0, 0)
+    - Vector(), returns Vector(0, 0, 0)
 
-- Vector((x, y)), returns Vector(x, y, 0)
+    - Vector((x, y)), returns Vector(x, y, 0)
 
-- Vector((x, y, z)), returns Vector(x, y, z)
+    - Vector((x, y, z)), returns Vector(x, y, z)
 
-- Vecotr(x, y), returns Vector(x, y, 0)
+    - Vecotr(x, y), returns Vector(x, y, 0)
 
-- Vector(x, y, z), returns  Vector(x, y, z)
+    - Vector(x, y, z), returns  Vector(x, y, z)
 
-Addition, subtraction, scalar multiplication and scalar division left and right handed are supported::
+    Addition, subtraction, scalar multiplication and scalar division left and right handed are supported::
 
-    v = Vector(1, 2, 3)
-    v + (1, 2, 3) == Vector(2, 4, 6)
-    (1, 2, 3) + v == Vector(2, 4, 6)
-    v - (1, 2, 3) == Vector(0, 0, 0)
-    (1, 2, 3) - v == Vector(0, 0, 0)
-    v * 3 == Vector(3, 6, 9)
-    3 * v == Vector(3, 6, 9)
-    Vector(3, 6, 9) / 3 == Vector(1, 2, 3)
-    -Vector(1, 2, 3) == (-1, -2, -3)
+        v = Vector(1, 2, 3)
+        v + (1, 2, 3) == Vector(2, 4, 6)
+        (1, 2, 3) + v == Vector(2, 4, 6)
+        v - (1, 2, 3) == Vector(0, 0, 0)
+        (1, 2, 3) - v == Vector(0, 0, 0)
+        v * 3 == Vector(3, 6, 9)
+        3 * v == Vector(3, 6, 9)
+        Vector(3, 6, 9) / 3 == Vector(1, 2, 3)
+        -Vector(1, 2, 3) == (-1, -2, -3)
 
-Comparision between vectors and vectors to tuples is supported::
+    Comparision between vectors and vectors to tuples is supported::
 
-    Vector(1, 2, 3) < Vector (2, 2, 2)
-    (1, 2, 3) < tuple(Vector(2, 2, 2))  # conversion necessary
-    Vector(1, 2, 3) == (1, 2, 3)
+        Vector(1, 2, 3) < Vector (2, 2, 2)
+        (1, 2, 3) < tuple(Vector(2, 2, 2))  # conversion necessary
+        Vector(1, 2, 3) == (1, 2, 3)
 
-    bool(Vector(1, 2, 3)) is True
-    bool(Vector(0, 0, 0)) is False
+        bool(Vector(1, 2, 3)) is True
+        bool(Vector(0, 0, 0)) is False
 
 
 
@@ -157,43 +191,43 @@ Vector Attributes
 
 .. attribute:: Vector.xy
 
-Returns Vector (x, y, 0)
+    Returns Vector (x, y, 0)
 
 .. attribute:: Vector.tup2
 
-Returns (x, y) tuple
+    Returns (x, y) tuple
 
 .. attribute:: Vector.tup3
 
-Returns (x, y, z) tuple
+    Returns (x, y, z) tuple
 
 .. attribute:: Vector.magnitude
 
-Returns length of vector
+    Returns length of vector
 
 .. attribute:: Vector.magnitude_square
 
-Returns square length of vector
+    Returns square length of vector
 
 .. attribute:: Vector.is_null
 
-Returns True for Vector(0, 0, 0) else False
+    Returns True for Vector(0, 0, 0) else False
 
 .. attribute:: Vector.spatial_angle_rad
 
-Returns spatial angle between vector and x-axis in radians
+    Returns spatial angle between vector and x-axis in radians
 
 .. attribute:: Vector.spatial_angle_deg
 
-Returns spatial angle between vector and x-axis in degrees
+    Returns spatial angle between vector and x-axis in degrees
 
 .. attribute:: Vector.angle_rad
 
-Returns angle of vector in the xy-plane in radians.
+    Returns angle of vector in the xy-plane in radians.
 
 .. attribute:: Vector.angle_deg
 
-Returns angle of vector in the xy-plane in degrees.
+    Returns angle of vector in the xy-plane in degrees.
 
 Vector Methods
 ~~~~~~~~~~~~~~

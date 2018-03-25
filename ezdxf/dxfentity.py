@@ -8,6 +8,7 @@ from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
 from .lldxf.tags import Tags, tuples2dxftags
 from .tools import set_flag_state
+from .algebra.ocs import OCS
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
@@ -335,6 +336,10 @@ class DXFEntity(object):
 
     def get_flag_state(self, flag, name='flags'):
         return bool(self.get_dxf_attrib(name, 0) & flag)
+
+    def get_ocs(self):
+        extrusion = self.get_dxf_attrib('extrusion', default=(0, 0, 1))
+        return OCS(extrusion)
 
     def destroy(self):
         pass
