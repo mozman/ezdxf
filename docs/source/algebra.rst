@@ -1,6 +1,8 @@
 .. _algebra utilities:
 
-This utilities are located at :mod:`ezdxf.algebra`::
+.. module:: ezdxf.algebra
+
+This utilities located in module :mod:`ezdxf.algebra`::
 
     from ezdxf.algebra import Vector
 
@@ -8,16 +10,16 @@ This utilities are located at :mod:`ezdxf.algebra`::
 Functions
 ---------
 
-.. function:: ezdxf.algebra.is_close(a, b)
+.. function:: is_close(a, b)
 
     Returns True if value is close to value b, uses :code:`math.isclose(a, b, abs_tol=1e-9)` for Python 3, and emulates
     this function for Python 2.7.
 
-.. function:: ezdxf.algebra.is_close_points(p1, p2)
+.. function:: is_close_points(p1, p2)
 
     Returns True if all axis of p1 and p2 are close.
 
-.. function:: ezdxf.algebra.bspline_control_frame(fit_points, degree=3, method='distance', power=.5)
+.. function:: bspline_control_frame(fit_points, degree=3, method='distance', power=.5)
 
     Generates the control points for the  B-spline control frame by `Curve Global Interpolation`_.
     Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
@@ -36,22 +38,8 @@ Functions
     :returns: a :class:`BSpline` object, with :attr:`BSpline.control_points` containing the calculated control points,
               also :meth:`BSpline.knot_values` returns the used `knot`_ values.
 
-OCS Related Functions
----------------------
-
-OCS related functions and classes are located at :mod:`ezdxf.algebra.ocs`::
-
-    from ezdxf.algebra.ocs import OCS
-
-.. function:: ezdxf.algebra.ocs.ocs_to_wcs(point, extrusion=(0, 0, 1))
-
-    Calculate object coordinates for point in world coordinates, OCS defined by a given extrusion direction.
-    For calculating multiple points for the same OCS, it is more efficient to use the :class:`OCS` class.
-
-.. function:: ezdxf.algebra.ocs.wcs_to_ocs(point, extrusion=(0, 0, 1))
-
-    Calculate world coordinates for point in object coordinates, OCS defined by a given extrusion direction.
-    For calculating multiple points for the same OCS, it is more efficient to use the :class:`OCS` class.
+OCS Class
+---------
 
 .. class:: OCS
 
@@ -61,25 +49,48 @@ OCS related functions and classes are located at :mod:`ezdxf.algebra.ocs`::
 
 .. method:: OCS.ocs_to_wcs(point)
 
-    Calculate object coordinates for point in world coordinates.
+    Calculate world coordinates for point in object coordinates.
 
 .. method:: OCS.wcs_to_ocs(point)
 
-    Calculate world coordinates for point in object coordinates.
+    Calculate object coordinates for point in world coordinates.
 
 .. seealso::
 
     :ref:`ocs`
 
+UCS Class
+---------
+
+.. class:: UCS
+
+.. method:: UCS.__init__(origin=(0, 0, 0), ux=(1, 0, 0), uy=(0, 1, 0)
+
+    Establish an User Coordinate System. The UCS is defined by the origin and two unit vectors for the x- and y-axis
+    all in WCS, the z-axis is the cross product of ux and uy. Normalization of unit vectors is not required.
+
+    :param origin: defines the UCS origin in world coordinates
+    :param ux: defines the UCS x-axis as vector in WCS
+    :param uy: defines the UCS y-axis as vector in WCS
+
+.. method:: UCS.ucs_to_wcs(point)
+
+    Calculate world coordinates for point in UCS coordinates.
+
+.. method:: UCS.wcs_to_ucs(point)
+
+    Calculate UCS coordinates for point in world coordinates.
+
+.. seealso::
+
+    :ref:`ucs`
+
 
 Bulge Related Functions
 -----------------------
 
-Bulge related functions are located at :mod:`ezdxf.algebra.bulge`::
 
-    from ezdxf.algebra.bulge import bulge_center
-
-.. function:: ezdxf.algebra.bulge.bulge_center(start_point, end_point, bulge)
+.. function:: bulge_center(start_point, end_point, bulge)
 
     Calculate center of arc described by the given bulge parameters.
 
@@ -89,7 +100,7 @@ Bulge related functions are located at :mod:`ezdxf.algebra.bulge`::
 
     :return: arc center as :class:`Vector`
 
-.. function:: ezdxf.algebra.bulge.bulge_radius(start_point, end_point, bulge)
+.. function:: bulge_radius(start_point, end_point, bulge)
 
     Calculate radius of arc defined by the given bulge parameters.
 
@@ -99,7 +110,7 @@ Bulge related functions are located at :mod:`ezdxf.algebra.bulge`::
 
     :return: arc radius as float
 
-.. function:: ezdxf.algebra.bulge.arc_to_bulge(center, start_angle, end_angle, radius)
+.. function:: arc_to_bulge(center, start_angle, end_angle, radius)
 
     Calculate bulge parameters from arc parameters.
 
@@ -110,7 +121,7 @@ Bulge related functions are located at :mod:`ezdxf.algebra.bulge`::
 
     :return: (start_point, end_point, bulge)
 
-.. function:: ezdxf.algebra.bulge.bulge_to_arc(start_point, end_point, bulge)
+.. function:: bulge_to_arc(start_point, end_point, bulge)
 
     Calculate arc parameters from bulge parameters.
 
@@ -120,7 +131,7 @@ Bulge related functions are located at :mod:`ezdxf.algebra.bulge`::
 
     :return: (center, start_angle, end_angle, radius)
 
-.. function:: ezdxf.algebra.bulge.bulge_3_points(start_point, end_point, point)
+.. function:: bulge_3_points(start_point, end_point, point)
 
     Calculate bulge value defined by three points.
 

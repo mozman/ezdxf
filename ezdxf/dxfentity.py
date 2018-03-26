@@ -8,7 +8,7 @@ from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
 from .lldxf.tags import Tags, tuples2dxftags
 from .tools import set_flag_state
-from .algebra.ocs import OCS
+from .algebra import OCS
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'

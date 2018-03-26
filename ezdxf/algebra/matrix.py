@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from itertools import repeat
+from .vector import Vector
 
 
 class Matrix(object):
@@ -149,6 +150,47 @@ class Matrix(object):
             raise ValueError('Row count of matrices do not match.')
         result = [self.gauss(col) for col in B.cols()]
         return Matrix(zip(*result))
+
+    @staticmethod
+    def setup_ucs_transform(ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1)):
+        """
+        Setup optimized coordinate transformation matrix, requires as special 3x3 transformation matrix.
+
+        For better performance the transformation values are stored in TRANSPOSED orientation.
+        Usual the cols represent the UCS x-, y- and z-axis, but this class stores the unit vectors as rows.
+
+        Args:
+            ux: x-axis as unit vector
+            uy: y-axis as unit vector
+            uz: z-axis as unit vector
+
+        Returns: Matrix() object
+
+        """
+        matrix = Matrix(matrix=[list(ux), list(uy), list(uz)])
+        if matrix.nrows != 3 or matrix.ncols != 3:
+            raise ValueError("Invalid unit vectors")
+        return matrix
+
+    def fast_ucs_transform(self, vector):
+        """
+        Optimized coordinate transformation, requires as special 3x3 transformation matrix,
+        see Matrix.setup_ucs_transform().
+
+        Args:
+            vector: vector to transform as (x, y, z) tuple or Vector() object.
+
+        Returns: Vector() object
+
+        """
+        px, py, pz = Vector(vector)  # accepts 2d and 3d points
+        ux_x, ux_y, ux_z = self.matrix[0]
+        uy_x, uy_y, uy_z = self.matrix[1]
+        uz_x, uz_y, uz_z = self.matrix[2]
+        x = px * ux_x + py * ux_y + pz * ux_z
+        y = px * uy_x + py * uy_y + pz * uy_z
+        z = px * uz_x + py * uz_y + pz * uz_z
+        return Vector(x, y, z)
 
 
 def gauss(A):
