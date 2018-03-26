@@ -11,6 +11,7 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.validator import is_valid_layer_name
 from ..lldxf.const import DXFInvalidLayerName
+from ..algebra.ucs import UCS as UserCoordinateSystem
 
 
 _LAYERTEMPLATE = """  0
@@ -322,6 +323,13 @@ class UCS(DXFEntity):
         'xaxis': DXFAttr(11, xtype='Point3D'),
         'yaxis': DXFAttr(12, xtype='Point3D'),
     }))
+
+    def ucs(self):
+        return UserCoordinateSystem(
+            origin=self.get_dxf_attrib('origin', default=(0, 0, 0)),
+            ux=self.get_dxf_attrib('xaxis', default=(1, 0, 0)),
+            uy=self.get_dxf_attrib('yaxis', default=(0, 1, 0)),
+        )
 
 
 _APPIDTEMPLATE = """  0

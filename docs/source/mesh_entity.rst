@@ -8,6 +8,7 @@ Introduced in DXF version R13 (AC1012), dxftype is MESH.
 3D mesh entity similar to the :class:`Polyface` entity. Create :class:`Mesh` in layouts and
 blocks by factory function :meth:`~Layout.add_mesh`.
 
+All points in :ref:`WCS` as (x, y, z) tuples
 
 DXF Attributes for Mesh
 -----------------------

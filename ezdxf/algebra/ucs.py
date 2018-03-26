@@ -40,11 +40,19 @@ class OCS(object):
         else:
             return point
 
+    def points_to_ocs(self, points):
+        for point in points:
+            yield self.wcs_to_ocs(point)
+
     def ocs_to_wcs(self, point):
         if self.transform:
             return self.transpose.fast_ucs_transform(point)
         else:
             return point
+
+    def points_to_wcs(self, points):
+        for point in points:
+            yield self.ocs_to_wcs(point)
 
 
 class UCS(object):
@@ -71,6 +79,17 @@ class UCS(object):
     def ucs_to_wcs(self, point):
         return self.origin + self.matrix.fast_ucs_transform(point)
 
+    def points_to_wcs(self, points):
+        for point in points:
+            yield self.ucs_to_wcs(point)
+
     def wcs_to_ucs(self, point):
         return self.transpose.fast_ucs_transform(point - self.origin)
 
+    def points_to_ucs(self, points):
+        for point in points:
+            yield self.wcs_to_ucs(point)
+
+    @property
+    def is_cartesian(self):
+        return self.uy.cross(self.uz).is_almost_equal(self.ux)

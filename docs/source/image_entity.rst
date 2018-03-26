@@ -20,7 +20,7 @@ DXF Attributes for Image
 
 .. attribute:: Image.dxf.insert
 
-Insertion point, lower left corner of the image
+Insertion point, lower left corner of the image (3D Point in :ref:`WCS`).
 
 .. attribute:: Image.dxf.u_pixel
 

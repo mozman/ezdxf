@@ -15,8 +15,8 @@ DXF Attributes for Line
 
 .. attribute:: Line.dxf.start
 
-start point of line (2D/3D Point)
+start point of line (2D/3D Point in :ref:`WCS`)
 
 .. attribute:: Line.dxf.end
 
-end point of line (2D/3D Point)
+end point of line (2D/3D Point in :ref:`WCS`)

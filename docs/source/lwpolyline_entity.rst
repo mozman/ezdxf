@@ -8,8 +8,8 @@ Introduced in DXF version R13 (AC1012), dxftype is LWPOLYLINE.
 A lightweight polyline is defined as a single graphic entity. The :class:`LWPolyline` differs from the old-style
 :class:`Polyline`, which is defined as a group of subentities. :class:`LWPolyline` display faster (in AutoCAD) and
 consume less disk space and RAM. Create :class:`LWPolyline` in layouts and blocks by factory function
-:meth:`~Layout.add_lwpolyline`. LWPolylines are planar elements, therefore all coordinates have no value for the
-z axis.
+:meth:`~Layout.add_lwpolyline`. :class:`LWPolyline` is a planar element, therefore all points in :ref:`OCS` as (x, y)
+tuples (:attr:`~LWPolyline.dxf.elevation` is the z-axis value).
 
 Bulge Value
 -----------
@@ -47,7 +47,7 @@ DXF Attributes for LWPolyline
 
 .. attribute:: LWPolyline.dxf.elevation
 
-z-axis value in WCS is the polyline elevation (float), default=0
+:ref:`OCS` z-axis value for all polyline points, default=0
 
 .. attribute:: LWPolyline.dxf.flags
 
@@ -87,6 +87,8 @@ Returns all polyline points as list of tuples (x, y, start_width, end_width, bul
 
 start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
 
+All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
+
 .. method:: LWPolyline.get_rstrip_points()
 
 Generates points without appending zeros: yields (x1, y1), (x2, y2) instead of (x1, y1, 0, 0, 0), (x2, y2, 0, 0, 0).
@@ -96,6 +98,8 @@ Generates points without appending zeros: yields (x1, y1), (x2, y2) instead of (
 Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
 Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
+All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
+
 .. method:: LWPolyline.points()
 
 Context manager for polyline points. Returns a list of tuples (x, y, start_width, end_width, bulge)
@@ -103,6 +107,16 @@ Context manager for polyline points. Returns a list of tuples (x, y, start_width
 start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present). Setting/Appending
 points accepts (x, y, [start_width, [end_width, [bulge]]]) tuples. Set start_width, end_width to 0 to be ignored
 (x, y, 0, 0, bulge).
+
+All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
+
+.. method:: LWPolyline.vertices()
+
+Yield all polyline points as (x, y) tuples in :ref:`OCS` (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
+
+.. method:: LWPolyline.vertices_in_wcs()
+
+Yield all polyline points as (x, y, z) tuples in :ref:`WCS`.
 
 .. method:: LWPolyline.rstrip_points()
 
@@ -112,6 +126,8 @@ Context manager for polyline points without appending zeros.
 
 Append additional *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
 Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
+
+All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
 
 .. method:: LWPolyline.discard_points()
 
@@ -125,3 +141,4 @@ Number of polyline vertices.
 
 Get point at position *index* as (x, y, start_width, end_width, bulge) tuple. Actual implementation is very slow!
 start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
+

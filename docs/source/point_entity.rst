@@ -15,4 +15,4 @@ DXF Attributes for Point
 
 .. attribute:: Point.dxf.location
 
-Location of the point (2D/3D Point)
+Location of the point (2D/3D Point in :ref:`WCS`)

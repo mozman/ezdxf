@@ -22,11 +22,11 @@ the content text itself (str)
 
 .. attribute:: Text.dxf.insert
 
-first alignment point of text (2D/3D Point), relevant for the adjustments LEFT, ALIGN and FIT.
+first alignment point of text (2D/3D Point in :ref:`OCS`), relevant for the adjustments LEFT, ALIGN and FIT.
 
 .. attribute:: Text.dxf.align_point
 
-second alignment point of text (2D/3D Point), if the justification is anything other than LEFT, the second
+second alignment point of text (2D/3D Point in :ref:`OCS`), if the justification is anything other than LEFT, the second
 alignment point specify also the first alignment point: (or just the second alignment point for ALIGN and FIT)
 
 .. attribute:: Text.dxf.height

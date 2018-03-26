@@ -31,3 +31,11 @@ def test_xaxis(ucs):
 
 def test_yaxis(ucs):
     assert ucs.dxf.yaxis == (-1.0, 0.0, 0.0)
+
+
+def test_ucs(ucs):
+    coords = ucs.ucs()
+    assert coords.origin == (1, 1, 1)
+    assert coords.ux == (0, 1, 0)
+    assert coords.uy == (-1, 0, 0)
+    assert coords.is_cartesian is True

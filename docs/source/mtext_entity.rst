@@ -20,7 +20,7 @@ DXF Attributes for MText
 
 .. attribute:: MText.dxf.insert
 
-Insertion point (3D Point)
+Insertion point (3D Point in :ref:`OCS`)
 
 .. attribute:: MText.dxf.char_height
 
@@ -67,7 +67,7 @@ Text style (string); default='STANDARD'
 
 .. attribute:: MText.dxf.text_direction
 
-X-axis direction vector in WCS (3D Point); default=(1, 0, 0); if rotation and text_direction are present,
+X-axis direction vector in :ref:`WCS` (3D Point); default=(1, 0, 0); if rotation and text_direction are present,
 text_direction wins
 
 .. attribute:: MText.dxf.rotation

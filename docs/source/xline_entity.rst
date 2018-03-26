@@ -15,9 +15,9 @@ DXF Attributes for XLine
 
 .. attribute:: XLine.dxf.start
 
-Location point of line as (3D Point)
+Location point of line as (3D Point in :ref:`WCS`)
 
 .. attribute:: XLine.dxf.unit_vector
 
-Unit direction vector as (3D Point)
+Unit direction vector as (3D Point in :ref:`WCS`)
 

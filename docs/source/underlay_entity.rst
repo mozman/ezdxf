@@ -21,7 +21,7 @@ DXF Attributes for Underlay
 
 .. attribute:: underlay.dxf.insert
 
-Insertion point, lower left corner of the image
+Insertion point, lower left corner of the image in :ref:`OCS`.
 
 .. attribute:: underlay.dxf.scale_x
 

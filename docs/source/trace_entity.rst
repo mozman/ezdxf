@@ -17,17 +17,17 @@ DXF Attributes for Trace
 
 .. attribute:: Trace.dxf.vtx0
 
-location of the 1. point (2D/3D Point)
+location of the 1. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Trace.dxf.vtx1
 
-location of the 2. point (2D/3D Point)
+location of the 2. point (2D/3D Pointin :ref:`OCS`)
 
 .. attribute:: Trace.dxf.vtx2
 
-location of the 3. point (2D/3D Point)
+location of the 3. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Trace.dxf.vtx3
 
-location of the 4. point (2D/3D Point)
+location of the 4. point (2D/3D Point in :ref:`OCS`)
 

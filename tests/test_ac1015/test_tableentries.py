@@ -117,6 +117,14 @@ def test_ucs_origin(ucs):
     assert (1.0, 1.0, 1.0) == ucs.dxf.origin
 
 
+def test_ucs_ucs(ucs):
+    coords = ucs.ucs()
+    assert coords.origin == (1, 1, 1)
+    assert coords.ux == (0, 1, 0)
+    assert coords.uy == (-1, 0, 0)
+    assert coords.is_cartesian is True
+
+
 def test_viewport_name():
     vport = VPort.new('FFFF', dxfattribs={
         'name': 'VP1',

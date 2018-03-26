@@ -16,16 +16,16 @@ DXF Attributes for Solid
 
 .. attribute:: Solid.dxf.vtx0
 
-location of the 1. point (2D/3D Point)
+location of the 1. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Solid.dxf.vtx1
 
-location of the 2. point (2D/3D Point)
+location of the 2. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Solid.dxf.vtx2
 
-location of the 3. point (2D/3D Point)
+location of the 3. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Solid.dxf.vtx3
 
-location of the 4. point (2D/3D Point)
+location of the 4. point (2D/3D Point in :ref:`OCS`)

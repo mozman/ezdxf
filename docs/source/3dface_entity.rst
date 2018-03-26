@@ -19,19 +19,19 @@ DXF Attributes for 3DFace
 
 .. attribute:: 3DFace.dxf.vtx0
 
-location of the 1. point (3D Point)
+location of the 1. point (3D Point in :ref:`WCS`)
 
 .. attribute:: 3DFace.dxf.vtx1
 
-location of the 2. point (3D Point)
+location of the 2. point (3D Point in :ref:`WCS`)
 
 .. attribute:: 3DFace.dxf.vtx2
 
-location of the 3. point (3D Point)
+location of the 3. point (3D Point in :ref:`WCS`)
 
 .. attribute:: 3DFace.dxf.vtx3
 
-location of the 4. point (3D Point)
+location of the 4. point (3D Point in :ref:`WCS`)
 
 .. attribute:: 3DFace.dxf.invisible_edge
 

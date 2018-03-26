@@ -51,9 +51,18 @@ OCS Class
 
     Calculate world coordinates for point in object coordinates.
 
+.. method:: OCS.points_to_wcs(points)
+
+    Translate multiple object coordinates into world coordinates (generator).
+
 .. method:: OCS.wcs_to_ocs(point)
 
     Calculate object coordinates for point in world coordinates.
+
+.. method:: OCS.points_to_ocs(points)
+
+    Translate multiple world coordinates into object coordinates (generator).
+
 
 .. seealso::
 
@@ -77,13 +86,22 @@ UCS Class
 
     Calculate world coordinates for point in UCS coordinates.
 
+.. method:: UCS.points_to_wcs(points)
+
+    Translate multiple user coordinates into world coordinates (generator).
+
 .. method:: UCS.wcs_to_ucs(point)
 
     Calculate UCS coordinates for point in world coordinates.
 
+.. method:: UCS.points_to_ucs(points)
+
+    Translate multiple world coordinates into user coordinates (generator).
+
 .. seealso::
 
     :ref:`ucs`
+
 
 
 Bulge Related Functions

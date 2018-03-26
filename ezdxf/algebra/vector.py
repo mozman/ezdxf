@@ -2,7 +2,7 @@
 # Purpose: general purpose vector 2D/3D Vector and 2D/3D Point
 # License: MIT License
 import math
-from .base import is_close
+from .base import is_close, equals_almost
 
 
 class Vector(object):
@@ -239,6 +239,12 @@ class Vector(object):
 
     def __bool__(self):
         return not self.is_null
+
+    def is_almost_equal(self, other, places=6):
+        other = Vector(other)
+        return equals_almost(self.x, other.x, places=places) and \
+               equals_almost(self.y, other.y, places=places) and \
+               equals_almost(self.z, other.z, places=places)
 
     def __eq__(self, other):
         x, y, z = self.decompose(other)

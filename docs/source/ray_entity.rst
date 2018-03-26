@@ -15,9 +15,9 @@ DXF Attributes for Ray
 
 .. attribute:: Ray.dxf.start
 
-Start point as (3D Point)
+Start point as (3D Point in :ref:`WCS`)
 
 .. attribute:: Ray.dxf.unit_vector
 
-Unit direction vector as (3D Point)
+Unit direction vector as (3D Point in :ref:`WCS`)
 

@@ -15,7 +15,7 @@ DXF Attributes for Circle
 
 .. attribute:: Circle.dxf.center
 
-center point of circle (2D/3D Point)
+center point of circle (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Circle.dxf.radius
 

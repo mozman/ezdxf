@@ -337,7 +337,7 @@ class DXFEntity(object):
     def get_flag_state(self, flag, name='flags'):
         return bool(self.get_dxf_attrib(name, 0) & flag)
 
-    def get_ocs(self):
+    def ocs(self):
         extrusion = self.get_dxf_attrib('extrusion', default=(0, 0, 1))
         return OCS(extrusion)
 

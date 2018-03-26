@@ -19,7 +19,7 @@ The default text prompted by CAD programs (str)
 
 .. attribute:: AttDef.dxf.insert
 
-First alignment point of text (2D/3D Point), relevant for the adjustments LEFT, ALIGN and FIT.
+First alignment point of text (2D/3D Point in :ref:`OCS`), relevant for the adjustments LEFT, ALIGN and FIT.
 
 .. attribute:: AttDef.dxf.tag
 
@@ -27,7 +27,7 @@ Tag to identify the attribute (str)
 
 .. attribute:: AttDef.dxf.align_point
 
-Second alignment point of text (2D/3D Point), if the justification is anything other than LEFT, the second alignment
+Second alignment point of text (2D/3D Point in :ref:`OCS`), if the justification is anything other than LEFT, the second alignment
 point specify also the first alignment point: (or just the second alignment point for ALIGN and FIT)
 
 .. attribute:: AttDef.dxf.height

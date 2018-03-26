@@ -1,4 +1,4 @@
-.. _ocs:
+.. _Object Coordinate System:
 
 Object Coordinate System (OCS)
 ==============================

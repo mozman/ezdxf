@@ -10,6 +10,9 @@ minor axis to major axis. *start_param* and *end_param* defines start and end po
 goes from 0 to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction. Create ellipses in
 layouts and blocks by factory function :meth:`~Layout.add_ellipse`.
 
+:attr:`Ellipse.dxf.extrusion` is supported, but does not establish an :ref:`OCS`, it is used to create an 3D entity by
+extruding the base ellipse.
+
 DXF Attributes for Ellipse
 --------------------------
 
@@ -17,7 +20,7 @@ DXF Attributes for Ellipse
 
 .. attribute:: Ellipse.dxf.center
 
-center point of circle (2D/3D Point)
+center point of circle (2D/3D Point in :ref:`WCS`)
 
 .. attribute:: Ellipse.dxf.major_axis
 

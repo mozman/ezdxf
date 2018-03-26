@@ -8,6 +8,8 @@ Introduced in DXF version R13 (AC1012), *dxftype* is HATCH.
 Fills an enclosed area defined by one or more boundary paths with a hatch pattern, solid fill, or gradient fill.
 Create :class:`Hatch` in layouts and blocks by factory function :meth:`~Layout.add_hatch`.
 
+All points in :ref:`OCS` as (x, y) tuples (:attr:`~Hatch.dxf.elevation` is the z-axis value).
+
 DXF Attributes for Hatch
 ------------------------
 
@@ -47,6 +49,10 @@ Pattern angle in degrees (360 deg = circle)
 .. attribute:: Hatch.dxf.n_seed_points
 
 Count of seed points (better user: :meth:`Hatch.get_seed_points`)
+
+.. attribute:: Hatch.dxf.elevation
+
+   Z value represents the elevation height of the :ref:`OCS`
 
 
 Hatch Attributes
@@ -150,12 +156,13 @@ Set :class:`Hatch` to pattern fill mode. Removes all gradient related data.
 
 .. method:: Hatch.get_seed_points()
 
-Get seed points as list of (x, y) points, I don't know why there can be more than one seed point.
+Get seed points as list of (x, y) points, I don't know why there can be more than one seed point. All points in
+:ref:`OCS` (:attr:`~Hatch.dxf.elevation` is the Z value).
 
 .. method:: Hatch.set_seed_points(points)
 
 Set seed points, *points* is a list of (x, y) tuples, I don't know why there can be more than one seed point.
-
+All points in :ref:`OCS` (:attr:`~Hatch.dxf.elevation` is the Z value)
 
 .. seealso::
 

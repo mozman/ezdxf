@@ -28,6 +28,8 @@ For more information about spline mathematics go to `Wikipedia`_.
 DXF Attributes for Spline
 -------------------------
 
+All points in :ref:`WCS` as (x, y) tuples
+
 :ref:`Common DXF attributes for DXF R13 or later`
 
 .. attribute:: Spline.dxf.degree
@@ -74,11 +76,11 @@ Control point tolerance (float); default=1e-10
 
 .. attribute:: Spline.dxf.start_tangent
 
-Start tangent vector as (3D Point)
+Start tangent vector as (3D Point in :ref:`WCS`)
 
 .. attribute:: Spline.dxf.end_tangent
 
-End tangent vector as (3D Point)
+End tangent vector as (3D Point in :ref:`WCS`)
 
 .. seealso::
 
@@ -97,19 +99,19 @@ Spline Methods
 
 .. method:: Spline.get_control_points()
 
-Returns the control points as list of (x, y, z) tuples.
+Returns the control points as list of (x, y, z) tuples in :ref:`WCS`.
 
 .. method:: Spline.set_control_points(points)
 
-Set control points, *points* is a list (container or generator) of (x, y, z) tuples.
+Set control points, *points* is a list (container or generator) of (x, y, z) tuples in :ref:`WCS`.
 
 .. method:: Spline.get_fit_points()
 
-Returns the fit points as list of (x, y, z) tuples.
+Returns the fit points as list of (x, y, z) tuples in :ref:`WCS`.
 
 .. method:: Spline.set_fit_points(points)
 
-Set fit points, *points* is a list (container or generator) of (x, y, z) tuples.
+Set fit points, *points* is a list (container or generator) of (x, y, z) tuples in :ref:`WCS`.
 
 .. method:: Spline.get_knot_values()
 

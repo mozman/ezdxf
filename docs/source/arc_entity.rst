@@ -16,7 +16,7 @@ DXF Attributes for Arc
 
 .. attribute:: Arc.dxf.center
 
-center point of arc (2D/3D Point)
+center point of arc (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Arc.dxf.radius
 

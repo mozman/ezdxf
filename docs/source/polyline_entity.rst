@@ -9,7 +9,11 @@ exists a different wrapper class but they all have the same dxftype of POLYLINE.
 
 Create 2D polylines in layouts and blocks by factory function :meth:`~Layout.add_polyline2D`.
 
+For 2D entities all points in :ref:`OCS`.
+
 Create 3D polylines in layouts and blocks by factory function :meth:`~Layout.add_polyline3D`.
+
+For 3D entities all points in :ref:`WCS`.
 
 DXF Attributes for Polyline
 ---------------------------
@@ -20,7 +24,8 @@ DXF Attributes for Polyline
 
 .. attribute:: Polyline.dxf.elevation
 
-Elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (3D Point)
+Elevation point, the X and Y values are always 0, and the Z value is the polyline's elevation (3D Point in
+:ref:`OCS` when 2D, :ref:`WCS` when 3D).
 
 .. attribute:: Polyline.dxf.flags
 
@@ -187,7 +192,7 @@ DXF Attributes for Vertex
 
 .. attribute:: Vertex.dxf.location
 
-vertex location (2D/3D Point)
+vertex location (2D/3D Point :ref:`OCS` when 2D, :ref:`WCS` when 3D)
 
 .. attribute:: Vertex.dxf.start_width
 

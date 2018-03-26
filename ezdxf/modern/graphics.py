@@ -676,6 +676,16 @@ class LWPolyline(ModernGraphicEntity):
         for point in self:
             yield point[0], point[1]
 
+    def vertices_in_wcs(self):
+        """
+        Yields all points as (x, y, z) tuples in WCS.
+
+        """
+        ocs = self.ocs()
+        elevation = self.get_dxf_attrib('elevation', default=0.)
+        for vertex in self.vertices():
+            yield ocs.ocs_to_wcs((vertex[0], vertex[1], elevation))
+
     def get_rstrip_points(self):
         last0 = 4
         for point in self:

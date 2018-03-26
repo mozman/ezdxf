@@ -283,7 +283,6 @@ class TestFlexPoint:
         with pytest.raises(DXFValueError):
             point.dxf.flex = (3., )
 
-
 LINE_DATA = """  0
 LINE
   5
@@ -316,6 +315,14 @@ def test_str():
     line = Line(ExtendedTags.from_text(LINE_DATA))
     assert str(line) == "LINE(#0)"
     assert repr(line) == "<class 'ezdxf.legacy.graphics.Line'> LINE(#0)"
+
+
+def test_ocs():
+    from ezdxf.legacy.graphics import Line
+    line = Line(ExtendedTags.from_text(LINE_DATA))
+    ocs = line.ocs()
+    assert ocs.uz == (0, 0, 1)
+    assert ocs.transform is False
 
 
 class TestAppData:

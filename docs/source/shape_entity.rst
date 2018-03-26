@@ -18,7 +18,7 @@ DXF Attributes for Shape
 
 .. attribute:: Shape.dxf.insert
 
-Insertion point as (2D/3D Point)
+Insertion point as (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Shape.dxf.name
 
