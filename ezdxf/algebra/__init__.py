@@ -2,7 +2,7 @@
 # Created: 27.03.2010, 2018 integrated into ezdxf
 # License: MIT License
 from .base import is_close, is_close_points
-from .vector import Vector
+from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx

@@ -73,14 +73,19 @@ UCS Class
 
 .. class:: UCS
 
-.. method:: UCS.__init__(origin=(0, 0, 0), ux=(1, 0, 0), uy=(0, 1, 0)
+.. method:: UCS.__init__(origin=(0, 0, 0), ux=None, uy=None, uz=None)
 
-    Establish an User Coordinate System. The UCS is defined by the origin and two unit vectors for the x- and y-axis
-    all in WCS, the z-axis is the cross product of ux and uy. Normalization of unit vectors is not required.
+    Establish an User Coordinate System. The UCS is defined by the origin and two unit vectors for the x-, y-axis or
+    z-axis, all axis n WCS. The missing axis is the cross product of the given axis.
+
+    If x- and y-axis are None: ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1).
+
+    Normalization of unit vectors is not required.
 
     :param origin: defines the UCS origin in world coordinates
     :param ux: defines the UCS x-axis as vector in WCS
     :param uy: defines the UCS y-axis as vector in WCS
+    :param uz: defines the UCS z-axis as vector in WCS
 
 .. method:: UCS.ucs_to_wcs(point)
 
@@ -89,6 +94,18 @@ UCS Class
 .. method:: UCS.points_to_wcs(points)
 
     Translate multiple user coordinates into world coordinates (generator).
+
+.. method:: UCS.ucs_to_ocs(point)
+
+    Calculate OCS coordinates for point in UCS coordinates.
+
+    OCS is defined by the z-axis of the UCS.
+
+.. method:: UCS.points_to_ocs(points)
+
+    Translate multiple user coordinates into OCS coordinates (generator).
+
+    OCS is defined by the z-axis of the UCS.
 
 .. method:: UCS.wcs_to_ucs(point)
 

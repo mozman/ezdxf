@@ -57,8 +57,9 @@ def test_wcs_to_ocs():
 
 def test_ocs_to_wcs():
     ocs = OCS(EXTRUSION)
+    wcs = ocs.ocs_to_wcs((9.41378764657076, 13.15481838975576, 0.8689258932616031))
     assert is_close_points(
-        ocs.ocs_to_wcs((9.41378764657076, 13.15481838975576, 0.8689258932616031)),
+        wcs,
         (-9.56460754, 8.44764172, 9.97894327),
         places=6,
     )

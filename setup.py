@@ -33,7 +33,7 @@ setup(
     description='A Python package to create/manipulate DXF drawings.',
     author=AUTHOR_NAME,
     url='https://ezdxf.mozman.at',
-    download_url='https://pypi.python.org/pypi/ezdxf/',
+    download_url='https://pypi.org/project/ezdxf/',
     author_email=AUTHOR_EMAIL,
     packages=['ezdxf',
               'ezdxf.legacy',
@@ -64,7 +64,7 @@ setup(
     tests_requires=['pytest'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
-    long_description=read('README.rst')+read('NEWS.rst', until='Version 0.6.5'),
+    long_description=read('README.rst')+read('NEWS.rst', until='Version 0.7.6'),
     platforms="OS Independent",
     license="MIT License",
     classifiers=[

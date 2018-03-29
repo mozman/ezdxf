@@ -156,9 +156,6 @@ class Matrix(object):
         """
         Setup optimized coordinate transformation matrix, requires as special 3x3 transformation matrix.
 
-        For better performance the transformation values are stored in TRANSPOSED orientation.
-        Usual the cols represent the UCS x-, y- and z-axis, but this class stores the unit vectors as rows.
-
         Args:
             ux: x-axis as unit vector
             uy: y-axis as unit vector
@@ -187,9 +184,9 @@ class Matrix(object):
         ux_x, ux_y, ux_z = self.matrix[0]
         uy_x, uy_y, uy_z = self.matrix[1]
         uz_x, uz_y, uz_z = self.matrix[2]
-        x = px * ux_x + py * ux_y + pz * ux_z
-        y = px * uy_x + py * uy_y + pz * uy_z
-        z = px * uz_x + py * uz_y + pz * uz_z
+        x = px * ux_x + py * uy_x + pz * uz_x
+        y = px * ux_y + py * uy_y + pz * uz_y
+        z = px * ux_z + py * uy_z + pz * uz_z
         return Vector(x, y, z)
 
 
