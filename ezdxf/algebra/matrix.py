@@ -164,7 +164,7 @@ class Matrix(object):
         Returns: Matrix() object
 
         """
-        matrix = Matrix(matrix=[list(ux), list(uy), list(uz)])
+        matrix = Matrix(matrix=[tuple(ux), tuple(uy), tuple(uz)])
         if matrix.nrows != 3 or matrix.ncols != 3:
             raise ValueError("Invalid unit vectors")
         return matrix

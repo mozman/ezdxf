@@ -31,7 +31,10 @@ def main(filename):
             'color': 7
         }
     )
-    print("Point in XY plane: "+str(ucs.wcs_to_ucs(def_point_in_xy_plane)))
+    circle = msp.add_circle(center=origin, radius=1, dxfattribs={'color': 2})
+    circle.dxf.extrusion = ucs.uz
+    ocs = circle.ocs()
+    circle.dxf.center = ocs.wcs_to_ocs(origin)
     dwg.saveas(filename)
 
 

@@ -32,7 +32,7 @@ class OCS(object):
 
     def wcs_to_ocs(self, point):
         if self.transform:
-            return self.matrix.fast_ucs_transform(point)
+            return self.transpose.fast_ucs_transform(point)
         else:
             return point
 
@@ -42,7 +42,7 @@ class OCS(object):
 
     def ocs_to_wcs(self, point):
         if self.transform:
-            return self.transpose.fast_ucs_transform(point)
+            return self.matrix.fast_ucs_transform(point)
         else:
             return point
 
