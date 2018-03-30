@@ -66,7 +66,7 @@ OCS Class
 
 .. seealso::
 
-    :ref:`ocs`
+    :ref:`OCS`
 
 UCS Class
 ---------
@@ -75,7 +75,7 @@ UCS Class
 
 .. method:: UCS.__init__(origin=(0, 0, 0), ux=None, uy=None, uz=None)
 
-    Establish an User Coordinate System. The UCS is defined by the origin and two unit vectors for the x-, y-axis or
+    Establish an User Coordinate System. The UCS is defined by the origin and two unit vectors for the x-, y- or
     z-axis, all axis n WCS. The missing axis is the cross product of the given axis.
 
     If x- and y-axis are None: ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1).
@@ -83,9 +83,9 @@ UCS Class
     Normalization of unit vectors is not required.
 
     :param origin: defines the UCS origin in world coordinates
-    :param ux: defines the UCS x-axis as vector in WCS
-    :param uy: defines the UCS y-axis as vector in WCS
-    :param uz: defines the UCS z-axis as vector in WCS
+    :param ux: defines the UCS x-axis as vector in :ref:`WCS`
+    :param uy: defines the UCS y-axis as vector in :ref:`WCS`
+    :param uz: defines the UCS z-axis as vector in :ref:`WCS`
 
 .. method:: UCS.ucs_to_wcs(point)
 
@@ -97,13 +97,13 @@ UCS Class
 
 .. method:: UCS.ucs_to_ocs(point)
 
-    Calculate OCS coordinates for point in UCS coordinates.
+    Calculate :ref:`OCS` coordinates for point in UCS coordinates.
 
     OCS is defined by the z-axis of the UCS.
 
 .. method:: UCS.points_to_ocs(points)
 
-    Translate multiple user coordinates into OCS coordinates (generator).
+    Translate multiple user coordinates into :ref:`OCS` coordinates (generator).
 
     OCS is defined by the z-axis of the UCS.
 
@@ -115,9 +115,57 @@ UCS Class
 
     Translate multiple world coordinates into user coordinates (generator).
 
+.. method:: UCS.from_x_axis_and_point_in_xy(origin, axis, point)
+
+    Returns an new :class:`UCS` defined by the origin, the x-axis vector and an arbitrary point in the xy-plane. (static method)
+
+    :param origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+    :param axis: x-axis vector as (x, y, z) tuple in :ref:`WCS`
+    :param point: arbitrary point unlike the origin in the xy-plane as (x, y, z) tuple in :ref:`WCS`
+
+.. method:: UCS.from_x_axis_and_point_in_xz(origin, axis, point)
+
+    Returns an new :class:`UCS` defined by the origin, the x-axis vector and an arbitrary point in the xz-plane. (static method)
+
+    :param origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+    :param axis: x-axis vector as (x, y, z) tuple in :ref:`WCS`
+    :param point: arbitrary point unlike the origin in the xz-plane as (x, y, z) tuple in :ref:`WCS`
+
+.. method:: UCS.from_y_axis_and_point_in_xy(origin, axis, point)
+
+    Returns an new :class:`UCS` defined by the origin, the y-axis vector and an arbitrary point in the xy-plane. (static method)
+
+    :param origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+    :param axis: y-axis vector as (x, y, z) tuple in :ref:`WCS`
+    :param point: arbitrary point unlike the origin in the xy-plane as (x, y, z) tuple in :ref:`WCS`
+
+.. method:: UCS.from_y_axis_and_point_in_yz(origin, axis, point)
+
+    Returns an new :class:`UCS` defined by the origin, the y-axis vector and an arbitrary point in the yz-plane. (static method)
+
+    :param origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+    :param axis: y-axis vector as (x, y, z) tuple in :ref:`WCS`
+    :param point: arbitrary point unlike the origin in the yz-plane as (x, y, z) tuple in :ref:`WCS`
+
+.. method:: UCS.from_z_axis_and_point_in_xz(origin, axis, point)
+
+    Returns an new :class:`UCS` defined by the origin, the z-axis vector and an arbitrary point in the xz-plane. (static method)
+
+    :param origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+    :param axis: z-axis vector as (x, y, z) tuple in :ref:`WCS`
+    :param point: arbitrary point unlike the origin in the xz-plane as (x, y, z) tuple in :ref:`WCS`
+
+.. method:: UCS.from_z_axis_and_point_in_yz(origin, axis, point)
+
+    Returns an new :class:`UCS` defined by the origin, the z-axis vector and an arbitrary point in the yz-plane. (static method)
+
+    :param origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+    :param axis: z-axis vector as (x, y, z) tuple in :ref:`WCS`
+    :param point: arbitrary point unlike the origin in the yz-plane as (x, y, z) tuple in :ref:`WCS`
+
 .. seealso::
 
-    :ref:`ucs`
+    :ref:`UCS`
 
 
 

@@ -145,3 +145,44 @@ class UCS(object):
     @property
     def is_cartesian(self):
         return self.uy.cross(self.uz).is_almost_equal(self.ux)
+
+    @staticmethod
+    def from_x_axis_and_point_in_xy(origin, axis, point):
+        x_axis = Vector(axis)
+        z_axis = x_axis.cross(Vector(point) - origin)
+        return UCS(origin=origin, ux=x_axis, uz=z_axis)
+
+    @staticmethod
+    def from_x_axis_and_point_in_xz(origin, axis, point):
+        x_axis = Vector(axis)
+        xz_vector = Vector(point) - origin
+        y_axis = xz_vector.cross(x_axis)
+        return UCS(origin=origin, ux=x_axis, uy=y_axis)
+
+    @staticmethod
+    def from_y_axis_and_point_in_xy(origin, axis, point):
+        y_axis = Vector(axis)
+        xy_vector = Vector(point) - origin
+        z_axis = xy_vector.cross(y_axis)
+        return UCS(origin=origin, uy=y_axis, uz=z_axis)
+
+    @staticmethod
+    def from_y_axis_and_point_in_yz(origin, axis, point):
+        y_axis = Vector(axis)
+        yz_vector = Vector(point) - origin
+        x_axis = yz_vector.cross(y_axis)
+        return UCS(origin=origin, ux=x_axis, uy=y_axis)
+
+    @staticmethod
+    def from_z_axis_and_point_in_xz(origin, axis, point):
+        z_axis = Vector(axis)
+        y_axis = z_axis.cross(Vector(point) - origin)
+        return UCS(origin=origin, uy=y_axis, uz=z_axis)
+
+    @staticmethod
+    def from_z_axis_and_point_in_yz(origin, axis, point):
+        z_axis = Vector(axis)
+        yz_vector = Vector(point) - origin
+        x_axis = yz_vector.cross(z_axis)
+        return UCS(origin=origin, ux=x_axis, uz=z_axis)
+
