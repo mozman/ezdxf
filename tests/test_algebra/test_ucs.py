@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 
-from ezdxf.algebra import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.algebra import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS, is_close
 
 
 def test_ucs_init():
@@ -72,3 +72,32 @@ def test_arbitrary_ucs():
     assert ucs.ucs_to_wcs(def_point_in_ucs) == def_point_in_xy_plane
     assert ucs.is_cartesian is True
 
+
+def test_constructor_functions():
+    # does not check the math, because tis would just duplicate the implementation code
+    origin = (3, 3, 3)
+    axis = (1, 0, -1)
+    def_point = (3, 10, 4)
+    ucs = UCS.from_x_axis_and_point_in_xy(origin, axis=axis, point=def_point)
+    assert ucs.is_cartesian
+    assert is_close(ucs.wcs_to_ucs(def_point).z, 0)
+
+    ucs = UCS.from_x_axis_and_point_in_xz(origin, axis=axis, point=def_point)
+    assert ucs.is_cartesian
+    assert is_close(ucs.wcs_to_ucs(def_point).y, 0)
+
+    ucs = UCS.from_y_axis_and_point_in_xy(origin, axis=axis, point=def_point)
+    assert ucs.is_cartesian
+    assert is_close(ucs.wcs_to_ucs(def_point).z, 0)
+
+    ucs = UCS.from_y_axis_and_point_in_yz(origin, axis=axis, point=def_point)
+    assert ucs.is_cartesian
+    assert is_close(ucs.wcs_to_ucs(def_point).x, 0)
+
+    ucs = UCS.from_z_axis_and_point_in_xz(origin, axis=axis, point=def_point)
+    assert ucs.is_cartesian
+    assert is_close(ucs.wcs_to_ucs(def_point).y, 0)
+
+    ucs = UCS.from_z_axis_and_point_in_yz(origin, axis=axis, point=def_point)
+    assert ucs.is_cartesian
+    assert is_close(ucs.wcs_to_ucs(def_point).x, 0)

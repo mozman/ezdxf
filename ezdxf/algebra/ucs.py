@@ -6,9 +6,9 @@ from .matrix import Matrix
 
 class OCS(object):
     def __init__(self, extrusion=Z_AXIS):
-        self.transform = extrusion != Z_AXIS
+        Az = Vector(extrusion).normalize()
+        self.transform = not Az.is_almost_equal(Z_AXIS)
         if self.transform:
-            Az = Vector(extrusion).normalize()
             if (abs(Az.x) < 1/64.) and (abs(Az.y) < 1/64.):
                 Ax = Y_AXIS.cross(Az)
             else:
@@ -186,3 +186,11 @@ class UCS(object):
         x_axis = yz_vector.cross(z_axis)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
+    def render_axis(self, layout, length=1, colors=(1, 3, 5)):
+        def add_axis(target, color):
+            end = self.ucs_to_wcs(target)
+            layout.add_line(self.origin, end, dxfattribs={'color': color})
+
+        add_axis(target=X_AXIS * length, color=colors[0])
+        add_axis(target=Y_AXIS * length, color=colors[1])
+        add_axis(target=Z_AXIS * length, color=colors[2])
