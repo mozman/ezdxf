@@ -97,6 +97,8 @@ Group Code        Meaning
 
 For explanation of all group codes see: `DXF Group Codes in Numerical Order Reference`_ provided by Autodesk
 
+.. _xdata_tags:
+
 Extended Data
 -------------
 
@@ -251,6 +253,8 @@ The persistent reactors tag sequence:
   ...
   102
   }
+
+.. _app_data_tags:
 
 Application-Defined Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~

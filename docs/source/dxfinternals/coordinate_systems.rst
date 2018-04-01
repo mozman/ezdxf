@@ -6,6 +6,8 @@ Coordinate Systems
 `AutoLISP Reference to Coordinate Systems <http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0F0B833D-78ED-4491-9918-9481793ED10B>`_
 provided by Autodesk.
 
+To brush up you knowledge about vectors, watch the YouTube tutorials of `3Blue1Brown`_ about `Linear Algebra`_.
+
 .. _WCS:
 
 WCS
@@ -67,3 +69,7 @@ Display coordinate system - the coordinate system into which objects are transfo
 origin of the DCS is the point stored in the AutoCAD system variable TARGET, and its Z axis is the viewing direction.
 In other words, a viewport is always a plan view of its DCS. These coordinates can be used to determine where something
 will be displayed to the AutoCAD user.
+
+
+.. _Linear Algebra: https://www.youtube.com/watch?v=kjBOesZCoqc&list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab
+.. _3Blue1Brown: https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw

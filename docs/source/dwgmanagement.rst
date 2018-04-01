@@ -89,3 +89,9 @@ Global Options
     template file with :meth:`ezdxf.readfile` and save the drawing as new file with the :meth:`Drawing.saveas` method.
 
     This option is very useful if the *ezdxf* package resides in a zip archive.
+
+.. attribute:: ezdxf.options.check_entity_tag_structures
+
+    Check app data (:ref:`app_data_tags`) and xdata (:ref:`xdata_tags`) tag structures, set this option to `False` for
+    a little performance boost, default is `True`.
+

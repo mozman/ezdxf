@@ -19,4 +19,4 @@ Tutorials
    tutorials/image
    tutorials/underlay
    tutorials/linetypes
-   tutorials/coordinates
+   tutorials/ocs_usage

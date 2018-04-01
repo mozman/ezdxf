@@ -1,26 +1,25 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from itertools import repeat
-from .vector import Vector
 
 
 class Matrix(object):
     """
-    Simple unoptimized Matrix math.
+    Simple unoptimized Matrix33 math.
 
     Initialization:
 
-    Matrix(shape=(rows, cols))
+    Matrix33(shape=(rows, cols))
 
         matrix filled with zeros
 
-    Matrix(matrix[, shape=(rows, cols)])
+    Matrix33(matrix[, shape=(rows, cols)])
 
         copy constructor and reshape
 
-    Matrix([[row_0], [row_1], ..., [row_n]])
+    Matrix33([[row_0], [row_1], ..., [row_n]])
 
-    Matrix([a1, a2, ..., an], shape=(rows, cols))
+    Matrix33([a1, a2, ..., an], shape=(rows, cols))
 
     """
     def __init__(self, items=None, shape=None, matrix=None):
@@ -101,7 +100,7 @@ class Matrix(object):
 
     def __eq__(self, other):
         if not isinstance(other, Matrix):
-            raise TypeError('Only comparable to class Matrix.')
+            raise TypeError('Only comparable to class Matrix33.')
         if self.shape != other.shape:
             raise TypeError('Matrices has to have the same shape.')
         for row1, row2 in zip(self.matrix, other.matrix):
@@ -151,48 +150,10 @@ class Matrix(object):
         result = [self.gauss(col) for col in B.cols()]
         return Matrix(zip(*result))
 
-    @staticmethod
-    def setup_ucs_transform(ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1)):
-        """
-        Setup optimized coordinate transformation matrix, requires as special 3x3 transformation matrix.
-
-        Args:
-            ux: x-axis as unit vector
-            uy: y-axis as unit vector
-            uz: z-axis as unit vector
-
-        Returns: Matrix() object
-
-        """
-        matrix = Matrix(matrix=[tuple(ux), tuple(uy), tuple(uz)])
-        if matrix.nrows != 3 or matrix.ncols != 3:
-            raise ValueError("Invalid unit vectors")
-        return matrix
-
-    def fast_ucs_transform(self, vector):
-        """
-        Optimized coordinate transformation, requires as special 3x3 transformation matrix,
-        see Matrix.setup_ucs_transform().
-
-        Args:
-            vector: vector to transform as (x, y, z) tuple or Vector() object.
-
-        Returns: Vector() object
-
-        """
-        px, py, pz = Vector(vector)  # accepts 2d and 3d points
-        ux_x, ux_y, ux_z = self.matrix[0]
-        uy_x, uy_y, uy_z = self.matrix[1]
-        uz_x, uz_y, uz_z = self.matrix[2]
-        x = px * ux_x + py * uy_x + pz * uz_x
-        y = px * ux_y + py * uy_y + pz * uz_y
-        z = px * ux_z + py * uy_z + pz * uz_z
-        return Vector(x, y, z)
-
 
 def gauss(A):
     """
-    Solves a nxn Matrix A x = b, Matrix has 1 column more than rows.
+    Solves a nxn Matrix33 A x = b, Matrix33 has 1 column more than rows.
 
     Args:
         A: matrix [[a11, a12, ..., a1n, b1],

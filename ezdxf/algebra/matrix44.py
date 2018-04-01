@@ -275,6 +275,33 @@ class Matrix44(object):
             transformation *= matrix
         return transformation
 
+    @staticmethod
+    def ucs(ux, uy, uz):
+        """
+        Returns a matrix for coordinate transformation from WCS to UCS.
+        Origin of both systems is (0, 0, 0).
+        For transformation from UCS to WCS, transpose the returned matrix.
+
+        All vectors as (x, y, z) tuples.
+
+        Args:
+            ux: x-axis for UCS as unit vector
+            uy: y-axis for UCS as unit vector
+            uz: z-axis for UCS as unit vector
+
+        Returns: Matrix44() object.
+
+        """
+        ux_x, ux_y, ux_z = ux
+        uy_x, uy_y, uy_z = uy
+        uz_x, uz_y, uz_z = uz
+        return Matrix44((
+            ux_x, uy_x, uz_x, 0,
+            ux_y, uy_y, uz_y, 0,
+            ux_z, uy_z, uz_z, 0,
+            0, 0, 0, 1,
+        ))
+
     def __hash__(self):
         return self.matrix.__hash__()
 
