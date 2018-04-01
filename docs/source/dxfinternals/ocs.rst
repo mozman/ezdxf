@@ -60,6 +60,8 @@ Elevation Group code 38:
 Exists only in output from versions prior to R11. Otherwise, Z coordinates are supplied as part of each of the entity's
 defining points.
 
+.. _Arbitrary Axis Algorithm:
+
 Arbitrary Axis Algorithm
 ------------------------
 

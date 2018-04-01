@@ -173,6 +173,32 @@ class UCS(object):
         for point in points:
             yield ocs.wcs_to_ocs(wcs(point))
 
+    def ocs_angle_deg(self, angle):
+        """
+        Transform angle in UCS xy-plane to angle in OCS xy-plane.
+
+        Args:
+            angle: in UCS in degrees
+
+        Returns: angle in OCS in degrees
+
+        """
+        direction = Vector.from_deg_angle(angle)
+        return self.ucs_to_ocs(direction).angle_deg
+
+    def ocs_angle_rad(self, angle):
+        """
+        Transform angle in UCS xy-plane to angle in OCS xy-plane.
+
+        Args:
+            angle: in UCS in radians
+
+        Returns: angle in OCS in radians
+
+        """
+        direction = Vector.from_rad_angle(angle)
+        return self.ucs_to_ocs(direction).angle_rad
+
     def wcs_to_ucs(self, point):
         """
         Calculate UCS coordinates for point in world coordinates.
