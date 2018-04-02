@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.8.8 - dev
+Version 0.8.8 - 2018-04-02
 
    * Release notes: https://ezdxf.mozman.at/release-v0-8-8.html
    * NEW: read/write support for GEODATA entity

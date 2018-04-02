@@ -1,7 +1,7 @@
 # Created: 10.03.2011
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-version = (0, 8, 7)  # also update VERSION in setup.py
+version = (0, 8, 8)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <me@mozman.at>"
