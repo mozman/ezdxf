@@ -34,7 +34,7 @@ msp.add_polyline3d(
         'closed': True,
         'color': 2,
     })
-center_wcs = ucs.ucs_to_wcs((0, .333, .333))
+center_wcs = ucs.to_wcs((0, .333, .333))
 for corner in corners_wcs:
     msp.add_line(center_wcs, corner, dxfattribs={'color': 2})
 # include-end

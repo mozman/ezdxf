@@ -16,7 +16,7 @@ def main(filename):
 
     ocs = OCS(ucs.uz)
     msp.add_circle(
-        center=ocs.wcs_to_ocs(origin),
+        center=ocs.from_wcs(origin),
         radius=1,
         dxfattribs={
             'color': 2,

@@ -52,7 +52,7 @@ OCS differ from WCS only if extrusion != (0, 0, 1), convert OCS into WCS::
 
     # circle is an DXF entity with extrusion != (0, 0, 1)
     ocs = circle.ocs()
-    wcs_center = ocs.ocs_to_wcs(circle.dxf.center)
+    wcs_center = ocs.to_wcs(circle.dxf.center)
 
 
 .. seealso::

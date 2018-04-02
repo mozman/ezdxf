@@ -11,8 +11,8 @@ def test_ucs_init():
     assert ucs.uy == (0, 1, 0)
     assert ucs.uz == (0, 0, 1)
 
-    assert ucs.wcs_to_ucs((3, 4, 5)) == (3, 4, 5)
-    assert ucs.ucs_to_wcs((5, 4, 3)) == (5, 4, 3)
+    assert ucs.from_wcs((3, 4, 5)) == (3, 4, 5)
+    assert ucs.to_wcs((5, 4, 3)) == (5, 4, 3)
 
 
 def test_ucs_init_ux_uy():
@@ -40,8 +40,8 @@ def test_translation():
     assert ucs.ux == (1, 0, 0)
     assert ucs.uy == (0, 1, 0)
     assert ucs.uz == (0, 0, 1)
-    assert ucs.wcs_to_ucs((3, 4, 5)) == (0, 0, 0)
-    assert ucs.ucs_to_wcs((1, 1, 1)) == (4, 5, 6)
+    assert ucs.from_wcs((3, 4, 5)) == (0, 0, 0)
+    assert ucs.to_wcs((1, 1, 1)) == (4, 5, 6)
 
 
 def test_rotation():
@@ -67,9 +67,9 @@ def test_arbitrary_ucs():
     def_point_in_xy_plane = Vector(3, 10, 4)
     uz = ux.cross(def_point_in_xy_plane - origin)
     ucs = UCS(origin=origin, ux=ux, uz=uz)
-    def_point_in_ucs = ucs.wcs_to_ucs(def_point_in_xy_plane)
+    def_point_in_ucs = ucs.from_wcs(def_point_in_xy_plane)
     assert def_point_in_ucs.z == 0
-    assert ucs.ucs_to_wcs(def_point_in_ucs) == def_point_in_xy_plane
+    assert ucs.to_wcs(def_point_in_ucs) == def_point_in_xy_plane
     assert ucs.is_cartesian is True
 
 
@@ -80,24 +80,24 @@ def test_constructor_functions():
     def_point = (3, 10, 4)
     ucs = UCS.from_x_axis_and_point_in_xy(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
-    assert is_close(ucs.wcs_to_ucs(def_point).z, 0)
+    assert is_close(ucs.from_wcs(def_point).z, 0)
 
     ucs = UCS.from_x_axis_and_point_in_xz(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
-    assert is_close(ucs.wcs_to_ucs(def_point).y, 0)
+    assert is_close(ucs.from_wcs(def_point).y, 0)
 
     ucs = UCS.from_y_axis_and_point_in_xy(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
-    assert is_close(ucs.wcs_to_ucs(def_point).z, 0)
+    assert is_close(ucs.from_wcs(def_point).z, 0)
 
     ucs = UCS.from_y_axis_and_point_in_yz(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
-    assert is_close(ucs.wcs_to_ucs(def_point).x, 0)
+    assert is_close(ucs.from_wcs(def_point).x, 0)
 
     ucs = UCS.from_z_axis_and_point_in_xz(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
-    assert is_close(ucs.wcs_to_ucs(def_point).y, 0)
+    assert is_close(ucs.from_wcs(def_point).y, 0)
 
     ucs = UCS.from_z_axis_and_point_in_yz(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
-    assert is_close(ucs.wcs_to_ucs(def_point).x, 0)
+    assert is_close(ucs.from_wcs(def_point).x, 0)

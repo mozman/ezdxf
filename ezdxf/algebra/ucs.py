@@ -64,17 +64,17 @@ class OCS(object):
     def uz(self):
         return self.matrix.uz if self.transform else Z_AXIS
 
-    def wcs_to_ocs(self, point):
+    def from_wcs(self, point):
         if self.transform:
             return self.transpose.transform(point)
         else:
             return point
 
-    def points_to_ocs(self, points):
+    def points_from_wcs(self, points):
         for point in points:
-            yield self.wcs_to_ocs(point)
+            yield self.from_wcs(point)
 
-    def ocs_to_wcs(self, point):
+    def to_wcs(self, point):
         if self.transform:
             return self.matrix.transform(point)
         else:
@@ -82,16 +82,16 @@ class OCS(object):
 
     def points_to_wcs(self, points):
         for point in points:
-            yield self.ocs_to_wcs(point)
+            yield self.to_wcs(point)
 
     def render_axis(self, layout, length=1, colors=(1, 3, 5)):
         render_axis(
             layout,
             start=(0, 0, 0),
             points=(
-                self.ocs_to_wcs(X_AXIS * length),
-                self.ocs_to_wcs(Y_AXIS * length),
-                self.ocs_to_wcs(Z_AXIS * length),
+                self.to_wcs(X_AXIS * length),
+                self.to_wcs(Y_AXIS * length),
+                self.to_wcs(Z_AXIS * length),
             ),
             colors=colors,
         )
@@ -136,7 +136,7 @@ class UCS(object):
     def uz(self):
         return self.matrix.uz
 
-    def ucs_to_wcs(self, point):
+    def to_wcs(self, point):
         """
         Calculate world coordinates for point in UCS coordinates.
 
@@ -149,17 +149,17 @@ class UCS(object):
 
         """
         for point in points:
-            yield self.ucs_to_wcs(point)
+            yield self.to_wcs(point)
 
-    def ucs_to_ocs(self, point):
+    def to_ocs(self, point):
         """
         Calculate OCS coordinates for point in UCS coordinates.
 
         OCS is defined by the z-axis of the UCS.
 
         """
-        wpoint = self.ucs_to_wcs(point)
-        return OCS(self.uz).wcs_to_ocs(wpoint)
+        wpoint = self.to_wcs(point)
+        return OCS(self.uz).from_wcs(wpoint)
 
     def points_to_ocs(self, points):
         """
@@ -168,12 +168,12 @@ class UCS(object):
         OCS is defined by the z-axis of the UCS.
 
         """
-        wcs = self.ucs_to_wcs
+        wcs = self.to_wcs
         ocs = OCS(self.uz)
         for point in points:
-            yield ocs.wcs_to_ocs(wcs(point))
+            yield ocs.from_wcs(wcs(point))
 
-    def ocs_angle_deg(self, angle):
+    def to_ocs_angle_deg(self, angle):
         """
         Transform angle in UCS xy-plane to angle in OCS xy-plane.
 
@@ -184,9 +184,9 @@ class UCS(object):
 
         """
         direction = Vector.from_deg_angle(angle)
-        return self.ucs_to_ocs(direction).angle_deg
+        return self.to_ocs(direction).angle_deg
 
-    def ocs_angle_rad(self, angle):
+    def to_ocs_angle_rad(self, angle):
         """
         Transform angle in UCS xy-plane to angle in OCS xy-plane.
 
@@ -197,22 +197,22 @@ class UCS(object):
 
         """
         direction = Vector.from_rad_angle(angle)
-        return self.ucs_to_ocs(direction).angle_rad
+        return self.to_ocs(direction).angle_rad
 
-    def wcs_to_ucs(self, point):
+    def from_wcs(self, point):
         """
         Calculate UCS coordinates for point in world coordinates.
 
         """
         return self.transpose.transform(point - self.origin)
 
-    def points_to_ucs(self, points):
+    def points_from_wcs(self, points):
         """
         Translate multiple world coordinates into user coordinates (generator).
 
         """
         for point in points:
-            yield self.wcs_to_ucs(point)
+            yield self.from_wcs(point)
 
     @property
     def is_cartesian(self):
@@ -263,9 +263,9 @@ class UCS(object):
             layout,
             start=self.origin,
             points=(
-                self.ucs_to_wcs(X_AXIS * length),
-                self.ucs_to_wcs(Y_AXIS * length),
-                self.ucs_to_wcs(Z_AXIS * length),
+                self.to_wcs(X_AXIS * length),
+                self.to_wcs(Y_AXIS * length),
+                self.to_wcs(Z_AXIS * length),
             ),
             colors=colors,
         )

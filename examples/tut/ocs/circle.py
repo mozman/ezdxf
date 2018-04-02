@@ -15,7 +15,7 @@ ocs = OCS((0, 1, 1))
 msp.add_circle(
     # You can place the 2D circle in 3D space
     # but you have to convert WCS into OCS
-    center=ocs.wcs_to_ocs((0, 2, 2)),
+    center=ocs.from_wcs((0, 2, 2)),
     # center in OCS: (0.0, 0.0, 2.82842712474619)
     radius=1,
     dxfattribs={
@@ -28,6 +28,6 @@ msp.add_circle(
 msp.add_point((0, 2, 2), dxfattribs={'color': 2})
 # include-end
 
-print("center in OCS: {}".format(ocs.wcs_to_ocs((0, 2, 2))))
+print("center in OCS: {}".format(ocs.from_wcs((0, 2, 2))))
 ocs.render_axis(msp)
 dwg.saveas('ocs_circle.dxf')

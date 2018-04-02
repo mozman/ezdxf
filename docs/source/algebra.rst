@@ -47,7 +47,7 @@ OCS Class
 
     Establish an Object Coordinate System for a given extrusion vector.
 
-.. method:: OCS.ocs_to_wcs(point)
+.. method:: OCS.to_wcs(point)
 
     Calculate world coordinates for point in object coordinates.
 
@@ -55,11 +55,11 @@ OCS Class
 
     Translate multiple object coordinates into world coordinates (generator).
 
-.. method:: OCS.wcs_to_ocs(point)
+.. method:: OCS.from_wcs(point)
 
     Calculate object coordinates for point in world coordinates.
 
-.. method:: OCS.points_to_ocs(points)
+.. method:: OCS.points_from_wcs(points)
 
     Translate multiple world coordinates into object coordinates (generator).
 
@@ -87,7 +87,7 @@ UCS Class
     :param uy: defines the UCS y-axis as vector in :ref:`WCS`
     :param uz: defines the UCS z-axis as vector in :ref:`WCS`
 
-.. method:: UCS.ucs_to_wcs(point)
+.. method:: UCS.to_wcs(point)
 
     Calculate world coordinates for point in UCS coordinates.
 
@@ -95,23 +95,23 @@ UCS Class
 
     Translate multiple user coordinates into world coordinates (generator).
 
-.. method:: UCS.ucs_to_ocs(point)
+.. method:: UCS.to_ocs(point)
 
     Calculate :ref:`OCS` coordinates for point in UCS coordinates.
 
     OCS is defined by the z-axis of the UCS.
 
-.. method:: UCS.points_to_ocs(points)
+.. method:: UCS.points_from_wcs(points)
 
     Translate multiple user coordinates into :ref:`OCS` coordinates (generator).
 
     OCS is defined by the z-axis of the UCS.
 
-.. method:: UCS.wcs_to_ucs(point)
+.. method:: UCS.from_wcs(point)
 
     Calculate UCS coordinates for point in world coordinates.
 
-.. method:: UCS.points_to_ucs(points)
+.. method:: UCS.points_from_wcs(points)
 
     Translate multiple world coordinates into user coordinates (generator).
 

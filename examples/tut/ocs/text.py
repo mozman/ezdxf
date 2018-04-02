@@ -16,7 +16,7 @@ ucs = UCS(origin=(0, 2, 2), ux=(1, 0, 0), uz=(0, 1, 1))
 # convert text rotation in degree into a vector in UCS
 text_direction = Vector.from_deg_angle(-45)
 # transform vector into OCS and get angle of vector in xy-plane
-rotation = ucs.ucs_to_ocs(text_direction).angle_deg
+rotation = ucs.to_ocs(text_direction).angle_deg
 
 text = msp.add_text(
     text="TEXT",
@@ -29,7 +29,7 @@ text = msp.add_text(
         'style': 'TXT',
     })
 # set text position in OCS
-text.set_pos(ucs.ucs_to_ocs((0, 0, 0)), align='MIDDLE_CENTER')
+text.set_pos(ucs.to_ocs((0, 0, 0)), align='MIDDLE_CENTER')
 
 # include-end
 

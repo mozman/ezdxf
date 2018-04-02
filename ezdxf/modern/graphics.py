@@ -684,7 +684,7 @@ class LWPolyline(ModernGraphicEntity):
         ocs = self.ocs()
         elevation = self.get_dxf_attrib('elevation', default=0.)
         for vertex in self.vertices():
-            yield ocs.ocs_to_wcs((vertex[0], vertex[1], elevation))
+            yield ocs.to_wcs((vertex[0], vertex[1], elevation))
 
     def get_rstrip_points(self):
         last0 = 4
