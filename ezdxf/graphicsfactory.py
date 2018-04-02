@@ -338,18 +338,28 @@ class GraphicsFactory(object):
         return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
 
     def add_surface(self, acis_data=None, dxfattribs=None):
+        if self.dxfversion < 'AC1021':
+            raise DXFVersionError('SURFACE requires DXF version R2007+')
         return self._add_acis_entiy('SURFACE', acis_data, dxfattribs)
 
     def add_extruded_surface(self, acis_data=None, dxfattribs=None):
+        if self.dxfversion < 'AC1021':
+            raise DXFVersionError('EXTRUDEDSURFACE requires DXF version R2007+')
         return self._add_acis_entiy('EXTRUDEDSURFACE', acis_data, dxfattribs)
 
     def add_lofted_surface(self, acis_data=None, dxfattribs=None):
+        if self.dxfversion < 'AC1021':
+            raise DXFVersionError('LOFTEDSURFACE requires DXF version R2007+')
         return self._add_acis_entiy('LOFTEDSURFACE', acis_data, dxfattribs)
 
     def add_revolved_surface(self, acis_data=None, dxfattribs=None):
+        if self.dxfversion < 'AC1021':
+            raise DXFVersionError('REVOLVEDSURFACE requires DXF version R2007+')
         return self._add_acis_entiy('REVOLVEDSURFACE', acis_data, dxfattribs)
 
     def add_swept_surface(self, acis_data=None, dxfattribs=None):
+        if self.dxfversion < 'AC1021':
+            raise DXFVersionError('SWEPT requires DXF version R2007+')
         return self._add_acis_entiy('SWEPTSURFACE', acis_data, dxfattribs)
 
     def _add_acis_entiy(self, name, acis_data, dxfattribs):

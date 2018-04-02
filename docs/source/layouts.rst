@@ -70,7 +70,7 @@ Paper Space Layout Setup
     Set plot window size in (scaled) paper space units, and relative to the plot origin.
 
 Access existing entities
-------------------------
+========================
 
 .. method:: Layout.__iter__()
 
@@ -93,8 +93,10 @@ Access existing entities
    :param function key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or
        None for ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
 
+.. _Entity Factory Functions:
+
 Create new entities
--------------------
+===================
 
 .. method:: Layout.add_point(location, dxfattribs=None)
 
@@ -243,6 +245,40 @@ Create new entities
    Closed rational uniform B-splines start and end at the first control point, and have additional control
    possibilities by weighting each control point.
 
+.. method:: Layout.add_spline_control_frame(fit_points, degree=3, method='distance', power=.5, dxfattribs=None)
+
+    Create and add B-spline control frame from fit points.
+
+    Supported methods are:
+
+    - uniform: creates a uniform t vector, [0 \.. 1] equally spaced
+    - distance: creates a t vector with values proportional to the fit point distances
+    - centripetal: creates a t vector with values proportional to the fit point distances^power
+
+    None of this methods matches the spline created from fit points by AutoCAD.
+
+    :param fit_points: fit points of B-spline
+    :param degree: degree of B-spline
+    :param method: calculation method for parameter vector t
+    :param power: power for centripetal method
+    :param dxfattribs: DXF attributes for SPLINE entity
+    :returns: DXF :class:`Spline` object
+
+.. method:: Layout.add_spline_approx(fit_points, count, degree=3, method='distance', power=.5, dxfattribs=None)
+
+    Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
+
+    - uniform: creates a uniform t vector, [0 \.. 1] equally spaced
+    - distance: creates a t vector with values proportional to the fit point distances
+    - centripetal: creates a t vector with values proportional to the fit point distances^power
+
+    :param fit_points: all fit points of B-spline
+    :param count: count of designated control points
+    :param degree: degree of B-spline
+    :param method: calculation method for parameter vector t
+    :param power: power for centripetal method
+    :param dxfattribs: DXF attributes for SPLINE entity
+    :returns: DXF :class:`Spline` object
 
 .. method:: Layout.add_body(acis_data="", dxfattribs=None)
 
@@ -285,7 +321,7 @@ Create new entities
 
 
 Delete entities
----------------
+===============
 
 .. method:: Layout.unlink_entity(entity)
 
@@ -322,6 +358,7 @@ Model Space
 .. method:: Modelspace.get_geodata(dxfattribs=None)
 
     Returns the :class:`GeoData` entity associated to this layout or None.
+
 
 .. _paper space:
 

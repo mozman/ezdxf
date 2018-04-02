@@ -14,8 +14,6 @@ TO-DO list
     - Tags()
     - ExtendedTags()
 
-- docs for SURFACE in Reference/Entities
-- docs for GEODATA in Reference/Objects
 - docs for DICTIONARY Reference/Objects
 - docs for XRECORD Reference/Objects
 - docs for LAYOUT Reference/Objects

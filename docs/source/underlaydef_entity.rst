@@ -14,15 +14,15 @@ DXF Attributes for UnderlayDefinition
 
 .. attribute:: UnderlayDefinition.dxf.filename
 
-Relative (to the DXF file) or absolute path to the image file as string
+    Relative (to the DXF file) or absolute path to the image file as string
 
 .. attribute:: UnderlayDefinition.dxf.name
 
-defines what to display
+    defines what to display
 
-- pdf: page number
-- dgn: 'default'
-- dwf: ???
+    - pdf: page number
+    - dgn: 'default'
+    - dwf: ???
 
 
 

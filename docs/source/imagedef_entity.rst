@@ -14,24 +14,24 @@ DXF Attributes for ImageDef
 
 .. attribute:: ImageDef.dxf.filename
 
-Relative (to the DXF file) or absolute path to the image file as string
+    Relative (to the DXF file) or absolute path to the image file as string
 
 .. attribute:: ImageDef.dxf.image_size
 
-Image size in pixel as (x, y) tuple
+    Image size in pixel as (x, y) tuple
 
 .. attribute:: ImageDef.dxf.pixel_size
 
-Default size of one pixel in AutoCAD units (x, y) tuple
+    Default size of one pixel in AutoCAD units (x, y) tuple
 
 .. attribute:: ImageDef.dxf.loaded
 
-Default = 1
+    Default = 1
 
 .. attribute:: ImageDef.dxf.resolution_units
 
-- 0 = No units
-- 2 = Centimeters
-- 5 = Inch
-- default is 0
+    - 0 = No units
+    - 2 = Centimeters
+    - 5 = Inch
+    - default is 0
 

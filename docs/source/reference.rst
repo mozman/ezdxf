@@ -115,6 +115,7 @@ Objects
    object_base_class
    imagedef_entity
    underlaydef_entity
+   geodata_entity
 
 
 Importer
