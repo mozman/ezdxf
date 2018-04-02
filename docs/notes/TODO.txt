@@ -26,6 +26,9 @@ TO-DO list
 
 - tutorial for extended HATCH usage
 - tutorial for lineweight
+- tutorial for groupby (in getting_data.rst)
+- tutorial for getting all entities on a layer (query & groupby) (in layers.rst)
+- howto get all entities of a layer (in howto.rst)
 
 - docs for add-on mesh
 - docs for add-on curves

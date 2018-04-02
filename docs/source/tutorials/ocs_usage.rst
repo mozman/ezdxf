@@ -11,7 +11,7 @@ First you need an understanding of vectors, if you don't have it, watch the YouT
 Second read the :ref:`Coordinate Systems` introduction please.
 
 
-For :ref:`WCS` there is not much to say as, it is what it is: the main world coordinate system, and an a drawing unit can
+For :ref:`WCS` there is not much to say as, it is what it is: the main world coordinate system, and a drawing unit can
 have any real world unit you want. Autodesk added some mechanism to define a scale for dimension and text entities, but
 because I am not an AutoCAD user, I am not familiar with it, and further more I think this is more an AutoCAD topic than
 a DXF topic.
@@ -96,7 +96,7 @@ the pentagon have the same elevation, and you see that the y- axis of UCS, OCS a
 Using UCS to Place 3D Polyline
 ------------------------------
 
-It is much simpler to use a 3D :class:`Polyline` to create the 3D pentagon, but the :class:`UCS` class is handy too for
+It is much simpler to use a 3D :class:`Polyline` to create the 3D pentagon. The :class:`UCS` class is handy for
 this example and all kind of 3D operations.
 
 .. literalinclude:: ../../../examples/tut/ocs/polyline3d.py
@@ -135,7 +135,8 @@ AutoCAD supports thickness for the TEXT entity only for shx fonts and not for tr
 Placing 2D Arc in 3D space
 --------------------------
 
-Same problem as for placing text, you need the start and end angle of the arc in degrees in OCS.
+Here we have the same problem as for placing text, you need the start and end angle of the arc in degrees in OCS, and
+this example also shows a shortcut for calculating the OCS angles.
 
 .. literalinclude:: ../../../examples/tut/ocs/arc.py
     :start-after: # include-start

@@ -19,29 +19,38 @@ At first load the drawing::
 Layouts
 -------
 
-I use the term layout as synonym for an arbitrary entity space which can contain any DXF construction element like
-LINE, CIRCLE, TEXT and so on. Every construction element has to reside in exact one layout.
+I use the term layout as synonym for an arbitrary entity space which can contain any DXF entity like
+LINE, CIRCLE, TEXT and so on. Every DXF entity can only reside in exact one layout.
 
 There are three different layout types:
 
-- model space: this is the common construction place
-- paper space: used to to create printable drawings
+- model space: this is the common construction space
+- paper space: used to to create print layouts
 - block: reusable elements, every block has its own entity space
 
 A DXF drawing consist of exact one model space and at least of one paper space. The DXF12 standard has only one unnamed
-paper space the later DXF standards can have more than one paper space and each paper space has a name.
+paper space the later DXF versions support more than one paper space and each paper space has a name.
 
 Iterate over DXF Entities of a Layout
 -------------------------------------
 
-Iterate over all construction elements in the model space::
+Iterate over all DXF entities in model space. Although this is a possible way to retrieve DXF entities, I
+would like to point out that `entity queries`_ are the better way.::
 
-    modelspace = dwg.modelspace()
-    for e in modelspace:
+    # iterate over all entities in model space
+    msp = dwg.modelspace()
+    for e in msp:
         if e.dxftype() == 'LINE':
-            print("LINE on layer: %s\n" % e.dxf.layer)
-            print("start point: %s\n" % e.dxf.start)
-            print("end point: %s\n" % e.dxf.end)
+            print_entity(e)
+
+    # entity query for all LINE entities in model space
+    for e in msp.query('LINE'):
+        print_entity(e)
+
+    def print_entity(e):
+        print("LINE on layer: %s\n" % e.dxf.layer)
+        print("start point: %s\n" % e.dxf.start)
+        print("end point: %s\n" % e.dxf.end)
 
 All layout objects supports the standard Python iterator protocol and the `in` operator.
 
@@ -70,7 +79,7 @@ An unsupported DXF attribute raises an `AttributeError`.
 Getting a Paper Space
 ---------------------
 
-::
+.. code::
 
     paperspace = dwg.layout('layout0')
 
@@ -79,15 +88,7 @@ The DXF12 standard provides only one paper space, therefore the paper space name
 `dwg.layout('layout0')` is ignored or can be left off. For the later standards you get a list of the names of the
 available layouts by :meth:`Drawing.layout_names`.
 
-Iterate Over All DXF Entities at Once
--------------------------------------
-
-Because the DXF entities of the model space and the entities of all paper spaces are stored in the ENTITIES section of
-the DXF drawing, you can also iterate over all drawing elements at once, except the entities placed in the block
-layouts::
-
-    for e in dwg.entities:
-        print("DXF Entity: %s\n" % e.dxftype())
+.. _entity queries:
 
 Retrieve Entities by Query Language
 -----------------------------------
@@ -132,6 +133,14 @@ The ENTITIES section also supports the `query()` method::
 Get all model space entities at layer ``construction``, but no entities with the `linestyle` ``DASHED``::
 
     not_dashed_entities = modelspace.query('*[layer=="construction" and linestyle!="DASHED"]')
+
+
+.. _groupby:
+
+Retrieve Entities by groupby
+----------------------------
+
+TODO
 
 Default Layer Settings
 ----------------------
