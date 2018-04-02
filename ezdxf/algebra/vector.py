@@ -36,7 +36,19 @@ class Vector(object):
 
     @property
     def xy(self):
+        """
+        Returns Vector (x, y, 0)
+
+        """
         return Vector(self._x, self._y)
+
+    @property
+    def xyz(self):
+        """
+        Returns vector as (x, y, z) tuple.
+
+        """
+        return self._x, self._y, self._z
 
     @staticmethod
     def list(items):
@@ -106,19 +118,22 @@ class Vector(object):
         return 3
 
     def __hash__(self):
-        return hash(self.tup3)
+        return hash(self.xyz)
 
     def copy(self):
         return Vector(self._x, self._y, self._z)
     __copy__ = copy
 
     def __deepcopy__(self, memodict):
-        v = self.copy()
-        memodict[id(self)] = v
-        return v
+        try:
+            return memodict[id(self)]
+        except KeyError:
+            v = self.copy()
+            memodict[id(self)] = v
+            return v
 
     def __getitem__(self, index):
-        return self.tup3[index]
+        return self.xyz[index]
 
     def __iter__(self):
         yield self._x
@@ -129,20 +144,12 @@ class Vector(object):
         return self.magnitude
 
     @property
-    def tup2(self):
-        return self._x, self._y
-
-    @property
-    def tup3(self):
-        return self._x, self._y, self._z
-
-    @property
     def magnitude(self):
         return self.magnitude_square ** .5
 
     @property
     def magnitude_square(self):
-        x, y, z = self.tup3
+        x, y, z = self._x, self._y, self._z
         return x*x + y*y + z*z
 
     @property

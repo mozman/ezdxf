@@ -287,11 +287,7 @@ Vector Attributes
 
     Returns Vector (x, y, 0)
 
-.. attribute:: Vector.tup2
-
-    Returns (x, y) tuple
-
-.. attribute:: Vector.tup3
+.. attribute:: Vector.xyz
 
     Returns (x, y, z) tuple
 

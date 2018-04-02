@@ -27,7 +27,7 @@ elevation = ocs_points[0].z
 msp.add_lwpolyline(
     # LWPOLYLINE point format: (x, y, [start_width, [end_width, [bulge]]])
     # the z-axis would be start_width, so remove it
-    points=[p.xy for p in ocs_points],  # uses Vector.xy
+    points=[p[:2] for p in ocs_points],
     dxfattribs={
         'elevation': elevation,
         'extrusion': ucs.uz,

@@ -137,7 +137,7 @@ class Image(ModernGraphicEntity):
     def reset_boundary_path(self):
         lower_left_corner = (-.5, -.5)
         upper_right_corner = Vector(self.dxf.image_size) + lower_left_corner
-        self._set_path_tags([lower_left_corner, upper_right_corner.tup2])
+        self._set_path_tags([lower_left_corner, upper_right_corner[:2]])
         self.set_flag_state(Image.USE_CLIPPING_BOUNDARY, state=False)
         self.dxf.clipping = 0
         self.dxf.clipping_boundary_type = 1
