@@ -35,16 +35,16 @@ Tables
 .. toctree::
    :maxdepth: 1
 
-   tables
-   layer_table_entry
-   style_table_entry
-   linetype_table_entry
-   dimstyle_table_entry
-   vport_table_entry
-   view_table_entry
-   appid_table_entry
-   ucs_table_entry
-   blockrecord_table_entry
+   tables/tables
+   tables/layer_table_entry
+   tables/style_table_entry
+   tables/linetype_table_entry
+   tables/dimstyle_table_entry
+   tables/vport_table_entry
+   tables/view_table_entry
+   tables/appid_table_entry
+   tables/ucs_table_entry
+   tables/blockrecord_table_entry
 
 Layouts
 -------
@@ -60,31 +60,31 @@ Entities
 .. toctree::
    :maxdepth: 1
 
-   graphic_base_class
-   point_entity
-   line_entity
-   circle_entity
-   arc_entity
-   text_entity
-   shape_entity
-   polyline_entity
-   solid_entity
-   trace_entity
-   3dface_entity
-   ellipse_entity
-   lwpolyline_entity
-   mtext_entity
-   hatch_entity
-   mesh_entity
-   spline_entity
-   image_entity
-   ray_entity
-   xline_entity
-   body_entity
-   region_entity
-   3dsolid_entity
-   surface_entity
-   underlay_entity
+   dxfentities/graphic_base_class
+   dxfentities/point
+   dxfentities/line
+   dxfentities/circle
+   dxfentities/arc
+   dxfentities/text
+   dxfentities/shape
+   dxfentities/polyline
+   dxfentities/solid
+   dxfentities/trace
+   dxfentities/3dface
+   dxfentities/ellipse
+   dxfentities/lwpolyline
+   dxfentities/mtext
+   dxfentities/hatch
+   dxfentities/mesh
+   dxfentities/spline
+   dxfentities/image
+   dxfentities/ray
+   dxfentities/xline
+   dxfentities/body
+   dxfentities/region
+   dxfentities/3dsolid
+   dxfentities/surface
+   dxfentities/underlay
 
 Blocks
 ------
@@ -92,11 +92,11 @@ Blocks
 .. toctree::
    :maxdepth: 1
 
-   blocks
-   block_entity
-   insert_entity
-   attdef_entity
-   attrib_entity
+   blocks/blocks
+   blocks/block
+   blocks/insert
+   blocks/attdef
+   blocks/attrib
 
 Groups
 ------
@@ -112,10 +112,10 @@ Objects
 .. toctree::
    :maxdepth: 1
 
-   object_base_class
-   imagedef_entity
-   underlaydef_entity
-   geodata_entity
+   dxfobjects/object_base_class
+   dxfobjects/imagedef
+   dxfobjects/underlaydef
+   dxfobjects/geodata
 
 
 Importer
@@ -148,7 +148,11 @@ Algebra Utilities
 .. toctree::
    :maxdepth: 1
 
-   algebra
+   algebra/functions
+   algebra/ocs_ucs
+   algebra/vector
+   algebra/matrix44
+   algebra/bspline
 
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301

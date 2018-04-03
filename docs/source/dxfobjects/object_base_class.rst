@@ -28,10 +28,10 @@ Object Base Class
    Deep copy of DXFObject with new handle. This is not a deep copy in the meaning of Python, because handle, link and
    owner is changed.
 
-.. method:: DXFObject.get_dxf_attrib(key, default=ValueError)
+.. method:: DXFObject.get_dxf_attrib(key, default=DXFValueError)
 
    Get DXF attribute *key*, returns *default* if key doesn't exist, or raise
-   :class:`ValueError` if *default* is :class:`ValueError` and no DXF default
+   ``DXFValueError`` if *default* is ``DXFValueError`` and no DXF default
    value is defined.
 
 .. method:: DXFObject.set_dxf_attrib(key, value)

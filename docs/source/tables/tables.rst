@@ -26,12 +26,12 @@ or `dimstyles`.
 
 .. method:: Table.get(name)
 
-Get table-entry `name`. Raises `ValueError` if table-entry is not
+Get table-entry `name`. Raises ``DXFValueError`` if table-entry is not
 present.
 
 .. method:: Table.remove(name)
 
-Removes table-entry `name`. Raises `ValueError` if table-entry is not
+Removes table-entry `name`. Raises ``DXFValueError`` if table-entry is not
 present.
 
 .. method:: Table.__len__()

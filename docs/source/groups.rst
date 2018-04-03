@@ -96,7 +96,7 @@ There only exists one group table in each drawing, which is accessible by the at
 
 .. method:: DXFGroupTable.get(name)
 
-   Returns the group `name` as :class:`DXFGroup` object. Raises `KeyError` if no group `name` exists.
+   Returns the group `name` as :class:`DXFGroup` object. Raises ``DXFKeyError`` if no group `name` exists.
 
 .. method:: DXFGroupTable.new(name=None, description="", selectable=1)
 

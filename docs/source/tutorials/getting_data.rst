@@ -68,12 +68,12 @@ See common DXF attributes:
 - :ref:`Common DXF attributes for DXF R12`
 - :ref:`Common DXF attributes for DXF R13 or later`
 
-If a DXF attribute is not set (a valid DXF attribute has no value), a `ValueError` will be raised. To avoid this use
+If a DXF attribute is not set (a valid DXF attribute has no value), a ``DXFValueError`` will be raised. To avoid this use
 the :meth:`GraphicEntity.get_dxf_attrib` method with a default value::
 
     p = e.get_dxf_attrib('paperspace', 0)  # if 'paperspace' is left off, the entity defaults to model space
 
-An unsupported DXF attribute raises an `AttributeError`.
+An unsupported DXF attribute raises an `DXFAttributeError`.
 
 
 Getting a Paper Space

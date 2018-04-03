@@ -22,13 +22,13 @@ Graphic Base Class
 .. attribute:: GraphicEntity.rgb
 
     (read/write) Get/Set true color as RGB-Tuple. This attribute does not exist in DXF AC1009 (R12) entities, the
-    attribute exists in DXF AC1015 entities but does not work (raises :class:`ValueError`), requires at least DXF Version
+    attribute exists in DXF AC1015 entities but does not work (raises ``DXFValueError``), requires at least DXF Version
     AC1018 (AutoCAD R2004). usage: :code:`entity.rgb = (30, 40, 50)`;
 
 .. attribute:: GraphicEntity.transparency
 
     (read/write) Get/Set transparency value as float. This attribute does not exist in DXF AC1009 (R12) entities, the
-    attribute exists in DXF AC1015 entities but does not work (raises :class:`ValueError`), requires at least DXF Version
+    attribute exists in DXF AC1015 entities but does not work (raises ``DXFValueError``), requires at least DXF Version
     AC1018 (AutoCAD R2004). Value range 0.0 to 1.0 where 0.0 means entity is opaque and 1.0 means entity is 100%
     transparent (invisible). This is the recommend method to get/set transparency values, when ever possible do not use
     the DXF low level attribute :attr:`entity.dxf.transparency`
@@ -56,10 +56,10 @@ Graphic Base Class
     Move entity from actual layout to *layout*. For DXF R12 providing *source* is faster, if the entity resides in a
     block layout, because ezdxf has to search in all block layouts, else *source* is not required.
 
-.. method:: GraphicEntity.get_dxf_attrib(key, default=ValueError)
+.. method:: GraphicEntity.get_dxf_attrib(key, default=DXFValueError)
 
     Get DXF attribute *key*, returns *default* if key doesn't exist, or raise
-    :class:`ValueError` if *default* is :class:`ValueError` and no DXF default
+    ``DXFValueError`` if *default* is ``DXFValueError`` and no DXF default
     value is defined::
 
         layer = entity.get_dxf_attrib("layer")

@@ -97,7 +97,7 @@ Example for appending an attribute to an INSERT entity with none standard alignm
 
 .. method:: Insert.delete_attrib(tag, ignore=False)
 
-Delete an :class:`Attrib` from :class:`Insert`. If `ignore` is `False`, an `KeyError` exception is raised, if
+Delete an :class:`Attrib` from :class:`Insert`. If `ignore` is `False`, an ``DXFKeyError`` exception is raised, if
 :class:`Attrib` `tag` does not exist.
 
 .. method:: Insert.delete_all_attribs()

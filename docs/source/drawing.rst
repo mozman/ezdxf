@@ -239,11 +239,11 @@ Low Level Access to DXF entities
 .. method:: Drawing.get_dxf_entity(handle)
 
     Get entity by *handle* from entity database. Low level access to DXF entities database.
-    Raises *KeyError* if *handle* doesn't exist. Returns :class:`DXFEntity` or inherited.
+    Raises ``DXFKeyError`` if *handle* doesn't exist. Returns :class:`DXFEntity` or inherited.
 
 If you just need the raw DXF tags use::
 
-    tags = Drawing.entitydb[handle]  # raises KeyError, if handle does not exist
+    tags = Drawing.entitydb[handle]  # raises DXFKeyError, if handle does not exist
     tags = Drawing.entitydb.get(handle)  # returns a default value, if handle does not exist (None by default)
 
 type of tags: :class:`ClassifiedTags`

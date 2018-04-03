@@ -17,7 +17,7 @@ can be a block name as `str` or the :class:`Block` definition itself.
 
 .. method:: BlocksSection.__getitem__(name)
 
-Get the :class:`Block` definition by `name`, raises `KeyError` if no block
+Get the :class:`Block` definition by `name`, raises ``DXFKeyError`` if no block
 `name` exists.
 
 .. method:: BlocksSection.get(name, default=None)
@@ -41,7 +41,7 @@ Rename block 'old_name' in 'new_name'.
 
 .. method:: BlockSection.delete_block(name):
 
-Delete block *name*. Raises *KeyError* if block not exists.
+Delete block *name*. Raises ``DXFKeyError`` if block not exists.
 
 .. method:: BlockSection.delete_all_blocks():
 
