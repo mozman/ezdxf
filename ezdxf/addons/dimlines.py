@@ -39,9 +39,9 @@ ANGLE_GRAD = 200. / pi
 ANGLE_RAD = 1.
 
 
-class _DimStyle(dict):
+class DimStyle(dict):
     """
-    _DimStyle parameter struct, a dumb object just to store values
+    DimStyle parameter struct, a dumb object just to store values
 
     """
     default_values = [
@@ -86,7 +86,7 @@ class _DimStyle(dict):
     ]
 
     def __init__(self, name, **kwargs):
-        super(_DimStyle, self).__init__(_DimStyle.default_values)
+        super(DimStyle, self).__init__(DimStyle.default_values)
         # dimstyle name
         self['name'] = name
         self.update(kwargs)
@@ -98,14 +98,14 @@ class _DimStyle(dict):
         self[attr] = value
 
 
-class _DimStyles(object):
+class DimStyles(object):
     """
     DimStyle container
 
     """
     def __init__(self):
         self._styles = {}
-        self.default = _DimStyle('Default')
+        self.default = DimStyle('Default')
 
         self.new(
             "angle.deg",
@@ -148,7 +148,7 @@ class _DimStyles(object):
         """
         Create a new dimstyle
         """
-        style = _DimStyle(name, **kwargs)
+        style = DimStyle(name, **kwargs)
         self._styles[name] = style
         return style
 
@@ -191,7 +191,7 @@ class _DimStyles(object):
         block.add_solid([(0, 0), (.3, .05), (0.25, 0.), (.3, -.05)], dxfattribs=color7)
 
 
-dimstyles = _DimStyles()  # use this factory to create new dimstyles
+dimstyles = DimStyles()  # use this factory to create new dimstyles
 
 
 class _DimensionBase(object):
