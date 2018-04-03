@@ -28,9 +28,6 @@ TO-DO list
 - tutorial for getting all entities on a layer (query & groupby) (in layers.rst)
 - howto get all entities of a layer (in howto.rst)
 
-- docs for add-on mesh
-- docs for add-on curves
-- docs for add-on forms
 - docs for add-on table
 - docs for add-on mtext
 - docs for add-on dimlines

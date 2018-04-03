@@ -116,7 +116,7 @@ class MengerSponge(object):
 
     def cubes(self):
         """
-        Generates all cubes of the menger sponge as individual MashBuilder() objects.
+        Generates all cubes of the menger sponge as individual MeshBuilder() objects.
 
         Yields: MeshBuilder()
 

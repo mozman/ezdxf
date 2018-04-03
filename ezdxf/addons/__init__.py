@@ -3,7 +3,7 @@
 # License: MIT License
 from .table import Table, CustomCell
 from .mtext import MText
-from .curves import Ellipse, Bezier, Clothoid, Spline
+from .curves import Ellipse, Bezier, EulerSpiral, Spline
 from .dimlines import LinearDimension, AngularDimension, ArcDimension, RadialDimension, dimstyles
 from .menger_sponge import MengerSponge
 from .sierpinski_pyramid import SierpinskyPyramid

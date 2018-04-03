@@ -9,11 +9,11 @@ from ezdxf.algebra.base import is_close
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
-from ezdxf.algebra.clothoid import Clothoid as _ClothoidValues
+from ezdxf.algebra.clothoid import Clothoid
 
 
 class Ellipse(object):
-    def __init__(self, center=(0., 0., 0.), rx=1.0, ry=1.0, startangle=0., endangle=360., rotation=0., segments=100):
+    def __init__(self, center=(0, 0), rx=1.0, ry=1.0, startangle=0., endangle=360., rotation=0., segments=100):
         self.center = Vector(center)
         self.rx = float(rx)
         self.ry = float(ry)
@@ -184,7 +184,7 @@ class Spline(object):
 
     def render_open_bspline(self, layout, degree=3, dxfattribs=None):
         """
-        Render aa open uniform BSpline as 3d polyline. Definition points are control points.
+        Render an open uniform BSpline as 3d polyline. Definition points are control points.
 
         Args:
             layout: ezdxf layout
@@ -264,7 +264,7 @@ class Spline(object):
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
 
-class Clothoid(object):
+class EulerSpiral(object):
     def __init__(self, start=(0, 0), rotation=0., length=1., paramA=1.0, mirror=''):
         self.start = Vector(start)
         self.rotation = float(rotation)
@@ -274,7 +274,7 @@ class Clothoid(object):
         self.mirrory = 'y' in mirror.lower()
 
     def render(self, layout, segments=100,  dxfattribs=None):
-        clothoid = _ClothoidValues(self.paramA)
+        clothoid = Clothoid(self.paramA)
         points = clothoid.approximate(self.length, segments)
         layout.add_polyline3d(list(self.transform(points)), dxfattribs=dxfattribs)
 
@@ -288,7 +288,7 @@ class Clothoid(object):
             yield self.start + point.rot_z_rad(rotation)
 
     def render_spline(self, layout, segments=10, degree=3, dxfattribs=None):
-        clothoid = _ClothoidValues(self.paramA)
+        clothoid = Clothoid(self.paramA)
         spline = clothoid.bspline(self.length, segments, degree=degree)
         points = self.transform(spline.control_points)
         layout.add_open_spline(

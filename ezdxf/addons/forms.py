@@ -20,7 +20,7 @@ def circle(count, radius=1.0, z=0., close=False):
         close: yields first vertex also as last vertex if True.
 
     Returns:
-        yields Vector() objects in count clockwise orientation
+        yields Vector() objects in counter clockwise orientation
 
     """
     delta = 2. * pi / count

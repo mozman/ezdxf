@@ -4,14 +4,14 @@
 # License: MIT License
 from __future__ import unicode_literals
 import ezdxf
-from ezdxf.addons import Clothoid
+from ezdxf.addons import EulerSpiral
 
 
 def four_c(A, length, rotation):
-    render(Clothoid(start=(2, 2), length=length, paramA=A, rotation=rotation), dxfattribs={'color': 1})
-    render(Clothoid(start=(2, 2), mirror='x', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 2})
-    render(Clothoid(start=(2, 2), mirror='y', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 3})
-    render(Clothoid(start=(2, 2), mirror='xy', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 4})
+    render(EulerSpiral(start=(2, 2), length=length, paramA=A, rotation=rotation), dxfattribs={'color': 1})
+    render(EulerSpiral(start=(2, 2), mirror='x', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 2})
+    render(EulerSpiral(start=(2, 2), mirror='y', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 3})
+    render(EulerSpiral(start=(2, 2), mirror='xy', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 4})
 
 
 def render(clothoid, dxfattribs):
@@ -19,7 +19,7 @@ def render(clothoid, dxfattribs):
     clothoid.render_spline(msp, segments=10, dxfattribs={'color': 6, 'linetype': "DASHED"})
 
 
-NAME = 'clothoid.dxf'
+NAME = 'euler_spiral.dxf'
 dwg = ezdxf.new('R2000')
 msp = dwg.modelspace()
 

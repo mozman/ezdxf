@@ -105,7 +105,7 @@ class SierpinskyPyramid(object):
 
     def pyramids(self):
         """
-        Generates all pyramids of the sierpinsky pyramid as individual MashBuilder() objects.
+        Generates all pyramids of the sierpinsky pyramid as individual MeshBuilder() objects.
 
         Yields: MeshBuilder()
 
