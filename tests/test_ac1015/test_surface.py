@@ -16,7 +16,7 @@ MATRIX_CHECK = [
 
 @pytest.fixture(scope='module')
 def msp():
-    dwg = ezdxf.new('R2000')
+    dwg = ezdxf.new('R2007')
     return dwg.modelspace()
 
 
