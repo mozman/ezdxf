@@ -6,12 +6,12 @@ from ezdxf.algebra.bspline import bspline_control_frame
 
 class EulerSpiral(object):
     """
-    This object represents an euler spiral (clothoid) for parameter A.
+    This object represents an euler spiral (clothoid) for parameter A (Radius of curvature).
     This is a parametric curve, which always starts at the origin = (0, 0).
 
     """
     def __init__(self, A=1.0):
-        self.A = A  # Clothiod Parameter A
+        self.A = A  # Radius of curvature
         self.powersA = [A ** power for power in range(19)]
         self._cache = {}  # coordinates cache
 

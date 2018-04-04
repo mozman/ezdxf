@@ -125,19 +125,26 @@ Render `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_ as 3D :class
 
 .. class:: EulerSpiral
 
-.. method:: EulerSpiral.render(layout, segments=100, dxfattribs=None)
+.. method:: EulerSpiral.__init__(length=1, curvature=1)
+
+    :param length: Length measured along the spiral curve from its initial position
+    :param curvature: Radius of curvature
+
+.. method:: EulerSpiral.render(layout, segments=100, matrix=None, dxfattribs=None)
 
     Render euler spiral as 3D :class:`Polyline` entity into layout.
 
     :param layout: ezdxf :class:`Layout` object
     :param segments: count of line segments to use, vertex count is segments+1
+    :param matrix: transformation matrix as :class:`~ezdxf.algebra.Matrix44`
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
 
-.. method:: EulerSpiral.render_spline(layout, segments=10, degree=3, dxfattribs=None)
+.. method:: EulerSpiral.render_spline(layout, segments=10, degree=3, matrix=None, dxfattribs=None)
 
     Render euler spiral as :class:`Spline` entity into layout, DXF version R2000 or later required.
 
     :param layout: ezdxf :class:`Layout` object
     :param segments: count of spline fit points to use
     :param degree: degree of spline
+    :param matrix: transformation matrix as :class:`~ezdxf.algebra.Matrix44`
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}

@@ -231,32 +231,23 @@ class Spline(object):
 
 
 class EulerSpiral(object):
-    def __init__(self, start=(0, 0), rotation=0., length=1., paramA=1.0, mirror=''):
-        self.start = Vector(start)
-        self.rotation = float(rotation)
+    def __init__(self, length=1, curvature=1):
         self.length = float(length)
-        self.paramA = float(paramA)
-        self.mirrorx = 'x' in mirror.lower()
-        self.mirrory = 'y' in mirror.lower()
+        self.curvature = float(curvature)
 
-    def render(self, layout, segments=100,  dxfattribs=None):
-        clothoid = _EulerSpiral(self.paramA)
-        points = clothoid.approximate(self.length, segments)
-        layout.add_polyline3d(list(self.transform(points)), dxfattribs=dxfattribs)
+    def render(self, layout, segments=100, matrix=None, dxfattribs=None):
+        spiral = _EulerSpiral(self.curvature)
+        points = spiral.approximate(self.length, segments)
+        if matrix is not None:
+            points = matrix.transform_vectors(points)
+        layout.add_polyline3d(list(points), dxfattribs=dxfattribs)
 
-    def transform(self, points):
-        rotation = radians(self.rotation)
-        for point in points:
-            if self.mirrorx:
-                point = Vector(point[0], -point[1])
-            if self.mirrory:
-                point = Vector(-point[0], point[1])
-            yield self.start + point.rot_z_rad(rotation)
-
-    def render_spline(self, layout, segments=10, degree=3, dxfattribs=None):
-        clothoid = _EulerSpiral(self.paramA)
-        spline = clothoid.bspline(self.length, segments, degree=degree)
-        points = self.transform(spline.control_points)
+    def render_spline(self, layout, segments=10, degree=3, matrix=None, dxfattribs=None):
+        spiral = _EulerSpiral(self.curvature)
+        spline = spiral.bspline(self.length, segments, degree=degree)
+        points = spline.control_points
+        if matrix is not None:
+            points = matrix.transform_vectors(points)
         layout.add_open_spline(
             control_points=points,
             degree=spline.degree,

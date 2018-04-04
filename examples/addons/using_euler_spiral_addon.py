@@ -3,20 +3,33 @@
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+from math import radians
 import ezdxf
 from ezdxf.addons import EulerSpiral
+from ezdxf.algebra import Matrix44
 
 
-def four_c(A, length, rotation):
-    render(EulerSpiral(start=(2, 2), length=length, paramA=A, rotation=rotation), dxfattribs={'color': 1})
-    render(EulerSpiral(start=(2, 2), mirror='x', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 2})
-    render(EulerSpiral(start=(2, 2), mirror='y', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 3})
-    render(EulerSpiral(start=(2, 2), mirror='xy', length=length, paramA=A, rotation=rotation), dxfattribs={'color': 4})
+def four_c(curvature, length, rotation):
+    spiral = EulerSpiral(length=length, curvature=curvature)
+    render(spiral, tmatrix(2, 2, angle=rotation), dxfattribs={'color': 1})
+    # scaling sx=-1 is mirror about y-axis
+    render(spiral, tmatrix(2, 2, sx=-1, sy=1, angle=rotation), dxfattribs={'color': 2})
+    # scaling sy=-1 is mirror about x-axis
+    render(spiral, tmatrix(2, 2, sx=1, sy=-1, angle=rotation), dxfattribs={'color': 3})
+    render(spiral, tmatrix(2, 2, sx=-1, sy=-1, angle=rotation), dxfattribs={'color': 4})
 
 
-def render(clothoid, dxfattribs):
-    clothoid.render(msp, segments=100, dxfattribs=dxfattribs)
-    clothoid.render_spline(msp, segments=10, dxfattribs={'color': 6, 'linetype': "DASHED"})
+def render(spiral, matrix, dxfattribs):
+    spiral.render(msp, segments=100, matrix=matrix, dxfattribs=dxfattribs)
+    spiral.render_spline(msp, segments=10, matrix=matrix, dxfattribs={'color': 6, 'linetype': "DASHED"})
+
+
+def tmatrix(dx, dy, sx=1, sy=1, angle=0):
+    return Matrix44.chain(
+        Matrix44.scale(sx=sx, sy=sy, sz=1),
+        Matrix44.z_rotate(radians(angle)),
+        Matrix44.translate(dx, dy, 0),
+    )
 
 
 NAME = 'euler_spiral.dxf'
