@@ -9,12 +9,12 @@ from ezdxf.algebra.bspline import bspline_control_frame
 from .mesh import MeshBuilder, MeshVertexMerger
 
 
-def circle(count, radius=1.0, z=0., close=False):
+def circle(count, radius=1, z=0, close=False):
     """
     Create polygon vertices for a circle with *radius* and *count* corners at *z* height.
 
     Args:
-        count: polygon corners
+        count: count of polygon vertices
         radius: circle radius
         z: z axis value
         close: yields first vertex also as last vertex if True.
@@ -23,6 +23,7 @@ def circle(count, radius=1.0, z=0., close=False):
         yields Vector() objects in counter clockwise orientation
 
     """
+    radius = float(radius)
     delta = 2. * pi / count
     alpha = 0.
     for index in range(count):
@@ -33,6 +34,39 @@ def circle(count, radius=1.0, z=0., close=False):
 
     if close:
         yield Vector(radius, 0, z)
+
+
+def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, z=0):
+    """
+    Create polygon vertices for an ellipse with *rx* as x-axis radius and
+    *ry* for y-axis radius with *count* vertices, at *z* height. The ellipse
+    goes from *start_param* to *end_param* in counter clockwise orientation.
+
+    Args:
+        count: count of polygon vertices
+        rx: ellipse x-axis radius
+        ry: ellipse y-axis radius
+        start_param: start of ellipse in range 0 .. 2*pi
+        end_param: end of ellipse in range 0 .. 2*pi
+        z: z axis value
+
+    Returns:
+        yields Vector() objects
+
+    """
+    rx = float(rx)
+    ry = float(ry)
+    start_param = float(start_param)
+    end_param = float(end_param)
+    count = int(count)
+    delta = (end_param - start_param) / (count-1)
+    for param in range(count):
+        alpha = start_param + param*delta
+        yield Vector(cos(alpha)*rx, sin(alpha)*ry, z)
+
+
+def euler_spiral(length=1, paramA=1):
+    pass
 
 
 def translate(vertices, vec=(0, 0, 1)):

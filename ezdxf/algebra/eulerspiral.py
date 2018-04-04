@@ -4,9 +4,9 @@ from ezdxf.algebra import Vector
 from ezdxf.algebra.bspline import bspline_control_frame
 
 
-class Clothoid(object):
+class EulerSpiral(object):
     """
-    This object represents a clothoid (a.k.a. Euler spiral) for parameter A.
+    This object represents an euler spiral (clothoid) for parameter A.
     This is a parametric curve, which always starts at the origin = (0, 0).
 
     """

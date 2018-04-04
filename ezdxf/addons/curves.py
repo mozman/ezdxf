@@ -3,46 +3,12 @@
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from math import sin, cos, radians, fmod
+from math import radians
 from ezdxf.algebra.vector import Vector
-from ezdxf.algebra.base import is_close
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
-from ezdxf.algebra.clothoid import Clothoid
-
-
-class Ellipse(object):
-    def __init__(self, center=(0, 0), rx=1.0, ry=1.0, startangle=0., endangle=360., rotation=0., segments=100):
-        self.center = Vector(center)
-        self.rx = float(rx)
-        self.ry = float(ry)
-        self.startangle = float(startangle)
-        self.endangle = float(endangle)
-        self.rotation = float(rotation)
-        self.segments = int(segments)
-
-    def render(self, layout, dxfattribs=None):
-        def curve_point(alpha):
-            point = self.center + Vector(cos(alpha) * self.rx, sin(alpha) * self.ry)
-            return point.rot_z_deg(self.rotation)
-
-        def normalize_angle(angle):
-            angle = fmod(angle, 360.)
-            if angle < 0:
-                angle += 360.
-            return angle
-
-        points = []
-        delta = (self.endangle - self.startangle) / self.segments
-        for segment in range(self.segments):
-            alpha = self.startangle + delta * segment
-            points.append(curve_point(radians(alpha)))
-
-        if dxfattribs is None:
-            dxfattribs = {}
-        dxfattribs['closed'] = is_close(self.startangle, normalize_angle(self.endangle))
-        layout.add_polyline2d(points, dxfattribs=dxfattribs)
+from ezdxf.algebra.eulerspiral import EulerSpiral as _EulerSpiral
 
 
 class Bezier(object):
@@ -274,7 +240,7 @@ class EulerSpiral(object):
         self.mirrory = 'y' in mirror.lower()
 
     def render(self, layout, segments=100,  dxfattribs=None):
-        clothoid = Clothoid(self.paramA)
+        clothoid = _EulerSpiral(self.paramA)
         points = clothoid.approximate(self.length, segments)
         layout.add_polyline3d(list(self.transform(points)), dxfattribs=dxfattribs)
 
@@ -288,7 +254,7 @@ class EulerSpiral(object):
             yield self.start + point.rot_z_rad(rotation)
 
     def render_spline(self, layout, segments=10, degree=3, dxfattribs=None):
-        clothoid = Clothoid(self.paramA)
+        clothoid = _EulerSpiral(self.paramA)
         spline = clothoid.bspline(self.length, segments, degree=degree)
         points = self.transform(spline.control_points)
         layout.add_open_spline(

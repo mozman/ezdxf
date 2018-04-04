@@ -1,4 +1,4 @@
-# Purpose: examples for using Clothoid() add-on
+# Purpose: examples for using EulerSpiral() add-on
 # Created: 09.02.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License

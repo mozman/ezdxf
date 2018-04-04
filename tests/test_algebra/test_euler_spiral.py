@@ -1,7 +1,7 @@
 # Created: 28.03.2010
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
-from ezdxf.algebra.clothoid import Clothoid
+from ezdxf.algebra.eulerspiral import EulerSpiral
 from ezdxf.algebra import is_close_points, is_close
 
 expected_points = [
@@ -20,37 +20,37 @@ expected_points = [
 
 
 def test_approximate():
-    clothoid = Clothoid(2.0)
-    results = clothoid.approximate(5, 10)
+    spiral = EulerSpiral(2.0)
+    results = spiral.approximate(5, 10)
     for expected, result in zip(expected_points, results):
         assert is_close_points(expected, result)
 
 
 def test_radius():
-    clothoid = Clothoid(2.0)
-    assert is_close(clothoid.radius(1), 4.)
-    assert is_close(clothoid.radius(0), 0.)
+    spiral = EulerSpiral(2.0)
+    assert is_close(spiral.radius(1), 4.)
+    assert is_close(spiral.radius(0), 0.)
 
 
 def test_tangent():
-    clothoid = Clothoid(2.0)
-    assert is_close(clothoid.tangent(1).angle_rad, 0.125)
+    spiral = EulerSpiral(2.0)
+    assert is_close(spiral.tangent(1).angle_rad, 0.125)
 
 
 def test_distance():
-    clothoid = Clothoid(2.0)
-    assert is_close(clothoid.distance(10), 0.4)
+    spiral = EulerSpiral(2.0)
+    assert is_close(spiral.distance(10), 0.4)
 
 
 def test_circle_midpoint():
-    clothoid = Clothoid(2.0)
-    m = clothoid.circle_midpoint(2.0)
+    spiral = EulerSpiral(2.0)
+    m = spiral.circle_midpoint(2.0)
     assert is_close_points(m, (0.9917242992178723, 2.082593218533209))
 
 
 def test_as_bspline():
-    clothoid = Clothoid(2.0)
-    spline = clothoid.bspline(5, 10)
+    spiral = EulerSpiral(2.0)
+    spline = spiral.bspline(5, 10)
     assert spline.degree == 3
     assert spline.max_t == 5
     results = spline.approximate(10)

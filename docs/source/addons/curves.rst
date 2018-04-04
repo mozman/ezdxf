@@ -1,31 +1,6 @@
 .. module:: ezdxf.addons
 
-These entities render to :class:`Polyline` entities for usage with DXF version R12, which do not support :class:`Ellipse` and
-:class:`Spline`. If you are using DXF version R2000 or later there is no need for using :class:`Ellipse` or :class:`Spline`.
-
-Ellipse
-=======
-
-Render ellipse as 2D :class:`Polyline`.
-
-.. class:: Ellipse
-
-.. method:: Ellipse.__init__(center=(0, 0), rx=1.0, ry=1.0, startangle=0., endangle=360., rotation=0., segments=100)
-
-    :param center: center point as (x, y) tuple.
-    :param rx: radius in x-axis
-    :param ry: radius in y-axis
-    :param start_angle: start angle in degrees
-    :param end_angle: end angle in degrees
-    :param rotation: rotation angle in degrees
-    :param segments: count of line segments,
-
-.. method:: Ellipse.render(layout, dxfattribs=None)
-
-    Render ellipse as 2D :class:`Polyline` entity into layout.
-
-    :param layout: ezdxf :class:`Layout` object
-    :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
+These entities render to :class:`Polyline` entities for usage with DXF version R12.
 
 Spline
 ======
