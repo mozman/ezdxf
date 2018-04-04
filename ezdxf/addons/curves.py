@@ -3,7 +3,6 @@
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from math import radians
 from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
@@ -231,24 +230,54 @@ class Spline(object):
 
 
 class EulerSpiral(object):
-    def __init__(self, length=1, curvature=1):
-        self.length = float(length)
-        self.curvature = float(curvature)
+    """
+    Euler spiral (clothoid) for *curvature* (Radius of curvature).
 
-    def render(self, layout, segments=100, matrix=None, dxfattribs=None):
-        spiral = _EulerSpiral(self.curvature)
-        points = spiral.approximate(self.length, segments)
+    This is a parametric curve, which always starts at the origin = (0, 0).
+
+    """
+    def __init__(self, curvature=1):
+        self.spiral = _EulerSpiral(float(curvature))
+
+    def render_polyline(self, layout, length=1, segments=100, matrix=None, dxfattribs=None):
+        """
+        Render curve as polyline.
+
+        Args:
+            layout: ezdxf layout
+            length: length measured along the spiral curve from its initial position
+            segments: count of line segments to use, vertex count is segments+1
+            matrix: transformation matrix as ezdxf.algebra.Matrix44
+            dxfattribs: DXF attributes for POLYLINE
+
+        Returns: DXF Polyline entity
+
+        """
+        points = self.spiral.approximate(length, segments)
         if matrix is not None:
             points = matrix.transform_vectors(points)
-        layout.add_polyline3d(list(points), dxfattribs=dxfattribs)
+        return layout.add_polyline3d(list(points), dxfattribs=dxfattribs)
 
-    def render_spline(self, layout, segments=10, degree=3, matrix=None, dxfattribs=None):
-        spiral = _EulerSpiral(self.curvature)
-        spline = spiral.bspline(self.length, segments, degree=degree)
+    def render_spline(self, layout, length=1, fit_points=10, degree=3, matrix=None, dxfattribs=None):
+        """
+        Render curve as B-spline.
+
+        Args:
+            layout: ezdxf layout 
+            length: length measured along the spiral curve from its initial position
+            fit_points: count of spline fit points to use
+            degree: degree of B-spline
+            matrix: transformation matrix as ezdxf.algebra.Matrix44
+            dxfattribs: DXF attributes for POLYLINE
+
+        Returns: DXF Spline entity
+
+        """
+        spline = self.spiral.bspline(length, fit_points, degree=degree)
         points = spline.control_points
         if matrix is not None:
             points = matrix.transform_vectors(points)
-        layout.add_open_spline(
+        return layout.add_open_spline(
             control_points=points,
             degree=spline.degree,
             knots=spline.knot_values(),

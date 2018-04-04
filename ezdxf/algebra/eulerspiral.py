@@ -6,21 +6,23 @@ from ezdxf.algebra.bspline import bspline_control_frame
 
 class EulerSpiral(object):
     """
-    This object represents an euler spiral (clothoid) for parameter A (Radius of curvature).
+    This object represents an euler spiral (clothoid) for *curvature* (Radius of curvature).
+
     This is a parametric curve, which always starts at the origin = (0, 0).
 
     """
-    def __init__(self, A=1.0):
-        self.A = A  # Radius of curvature
-        self.powersA = [A ** power for power in range(19)]
+    def __init__(self, curvature=1.0):
+        self.curvature = curvature  # Radius of curvature
+        self.curvature_powers = [curvature ** power for power in range(19)]
         self._cache = {}  # coordinates cache
 
     def radius(self, t):
         """
         Get radius of circle at distance <L>.
+
         """
         if t > 0.:
-            return self.powersA[2] / t
+            return self.curvature_powers[2] / t
         else:
             return 0.  # radius = infinite
 
@@ -29,7 +31,7 @@ class EulerSpiral(object):
         Get tangent at distance t as Vector() object.
 
         """
-        angle = t ** 2 / (2. * self.powersA[2])
+        angle = t ** 2 / (2. * self.curvature_powers[2])
         return Vector.from_rad_angle(angle)
 
     def distance(self, radius):
@@ -37,15 +39,15 @@ class EulerSpiral(object):
         Get distance L from origin for radius.
 
         """
-        return self.powersA[2] / float(radius)
+        return self.curvature_powers[2] / float(radius)
 
     def point(self, t):
         """
         Get point at distance t as Vector().
 
         """
-        def term(powerL, powerA, const):
-            return t ** powerL / (const * self.powersA[powerA])
+        def term(length_power, curvature_power, const):
+            return t ** length_power / (const * self.curvature_powers[curvature_power])
 
         if t not in self._cache:
             y = term(3, 2, 6.) - term(7, 6, 336.) + term(11, 10, 42240.) - \
