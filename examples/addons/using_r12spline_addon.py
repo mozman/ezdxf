@@ -48,17 +48,13 @@ if dwg.dxfversion > 'AC1009':
 
 # place open cubic b-spline in 3D space
 ucs = UCS(origin=(10, 3, 3), ux=(1, 0, 0), uz=(0, 1, 1))  # 45 deg rotated around x-axis
-wcs_points = list(ucs.points_to_wcs(base_spline_points))
-draw(wcs_points)
-extrusion = ucs.uz
-
-text = msp.add_text(
+draw(ucs.points_to_wcs(base_spline_points))
+msp.add_text(
     "Open Cubic R12Spline in 3D space",
     dxfattribs={
         'height': .1,
-        'extrusion': extrusion,
-    })
-text.set_pos(ucs.to_ocs(base_spline_points[0]))
+        'extrusion': ucs.uz,
+    }).set_pos(ucs.to_ocs(base_spline_points[0]))
 R12Spline(base_spline_points, degree=3, closed=False).render(msp, segments=SEGMENTS, ucs=ucs, dxfattribs={'color': 3})
 
 
