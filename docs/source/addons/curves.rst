@@ -1,11 +1,11 @@
 .. module:: ezdxf.addons
 
-These entities render to :class:`Polyline` entities for usage with DXF version R12.
-
 Spline
 ======
 
-Render B-spline as 2D/3D :class:`Polyline`.
+Render B-spline as 2D/3D :class:`Polyline`, can be used with DXF R12. The advantage over :class:`R12Spline` is the real
+3D support which means the B-spline curve vertices has not to be in a plane and no hassle with :ref:`UCS` for 3D
+placing.
 
 .. class:: Spline
 
@@ -81,6 +81,46 @@ Render B-spline as 2D/3D :class:`Polyline`.
     :param weights: list of weights, requires a weight value for each defpoint.
     :param degree: degree of B-spline, (order = degree + 1)
     :param dxfattribs: DXF attributes for :class:`Polyline`
+
+R12Spline
+=========
+
+DXF R12 supports 2D B-splines, but Autodesk do not document the usage in the DXF Reference. The base entity for splines
+in DXF R12 is the POLYLINE entity. The spline itself is always in a plane, but as any 2D entity, the spline can be
+transformed into the 3D object by elevation and extrusion (:ref:`OCS`, :ref:`UCS`).
+
+The result is not better than :class:`Spline`, it is also just a POLYLINE, but as with all tools, I never know if
+someone needs it some day.
+
+:class: R12Spline
+
+.. method:: R12Spline.__init__(control_points, degree=2, closed=True)
+
+    :param control_points: B-spline control frame vertices as (x, y) tuples
+    :param degree: degree of B-spline, 2 or 3 is valid
+    :param closed: True for closed curve
+
+.. method:: R12Spline.render(layout, segments=40, ucs=None, dxfattribs=None)
+
+    Renders the B-spline into *layout* as 2D :class:`Polyline` entity. Use an :class:`~ezdxf.algebra.UCS` to place the
+    2D spline in 3D space, see :meth:`R12Spline.approximate` for more information.
+
+    :param layout:  ezdxf :class:`Layout`
+    :param segments: count of line segments to use, vertex count is segments+1
+    :param ucs: :class:`~ezdxf.algebra.UCS` definition, control points in ucs coordinates.
+    :param dxfattribs: DXF attributes for :class:`Polyline`
+    :returns: the :class:`Polyline` object
+
+.. method:: R12Spline.approximate(segments=40, ucs=None)
+
+    :param segments: count of line segments to use, vertex count is segments+1
+    :param ucs: :class:`~ezdxf.algebra.UCS` definition, control points in ucs coordinates.
+    :returns: list of vertices in :class:`~ezdxf.algebra.OCS` as :class:`~ezdxf.algebra.Vector` objects
+
+    Approximate B-spline by a polyline with *segments* line segments. If *ucs* is not None, ucs defines an
+    :class:`~ezdxf.algebra.UCS`, to transformed the curve into :ref:`OCS`. The control points are placed in this UCS
+    xy-plane, you shouldn't use z-axis coordinates, if so make sure all control points are a plane parallel to the OCS
+    base plane (UCS xy-plane), else the result is unpredictable and depends on the used CAD application (may be crash).
 
 
 Bezier

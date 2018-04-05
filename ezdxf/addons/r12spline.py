@@ -108,14 +108,17 @@ class R12Spline(object):
         self.degree = degree
         self.closed = closed
 
-    def approximate(self, segments=40):
+    def approximate(self, segments=40, ucs=None):
         if self.closed:
             spline = BSplineClosed(self.control_points, order=self.degree+1)
         else:
             spline = BSpline(self.control_points, order=self.degree+1)
-        return list(spline.approximate(segments))
+        vertices = spline.approximate(segments)
+        if ucs is not None:
+            vertices = (ucs.to_ocs(vertex) for vertex in vertices)
+        return list(vertices)
 
-    def render(self, layout, segments=40, dxfattribs=None):
+    def render(self, layout, segments=40, ucs=None, dxfattribs=None):
         polyline = layout.add_polyline2d(points=[], dxfattribs=dxfattribs)
         flags = polyline.SPLINE_FIT_VERTICES_ADDED
         if self.closed:
@@ -130,16 +133,24 @@ class R12Spline(object):
             raise ValueError('invalid degree of spline')
         polyline.dxf.smooth_type = smooth_type
 
-        # add fit points
+        # set OCS extrusion vector
+        if ucs is not None:
+            polyline.dxf.extrusion = ucs.uz
+
+        # add fit points in OCS
         polyline.append_vertices(
-            self.approximate(segments),
+            self.approximate(segments, ucs),
             dxfattribs={
                 'layer': polyline.dxf.layer,
                 'flags': const.VTX_SPLINE_VERTEX_CREATED,
         })
 
-        # add control frame points
-        polyline.append_vertices(self.control_points, dxfattribs={
+        # add control frame points in OCS
+        control_points = self.control_points
+        if ucs is not None:
+            control_points = list(ucs.points_to_ocs(control_points))
+            polyline.dxf.elevation = (0, 0, control_points[0].z)
+        polyline.append_vertices(control_points, dxfattribs={
             'layer': polyline.dxf.layer,
             'flags': const.VTX_SPLINE_FRAME_CONTROL_POINT,
         })

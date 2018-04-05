@@ -23,3 +23,10 @@ requires DXF R13 or later
 .. attribute:: UCS.dxf.xaxis
 
 .. attribute:: UCS.dxf.yaxis
+
+UCS Methods
+-----------
+
+.. method:: UCS.ucs()
+
+    Returns an :class:`ezdxf.algebra.UCS` object for this UCS table entry.
