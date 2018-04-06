@@ -22,6 +22,7 @@ from .dimension import Dimension
 
 from . import dxfobjects
 from .geodata import GeoData
+from .material import Material
 from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
 from ..tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
@@ -46,6 +47,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'DGNDEFINITION': DgnDefinition,
     'RASTERVARIABLES': RasterVariables,
     'GEODATA': GeoData,
+    'MATERIAL': Material,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
