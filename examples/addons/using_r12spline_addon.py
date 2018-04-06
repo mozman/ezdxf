@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import ezdxf
 from ezdxf.addons import R12Spline
-from ezdxf.algebra import Vector, Matrix44, UCS
+from ezdxf.algebra import Vector, Matrix44, UCS, OCS
 
 next_frame = Matrix44.translate(0, 7, 0)
 
@@ -15,9 +15,15 @@ dwg = ezdxf.new('R12')
 msp = dwg.modelspace()
 
 
-def draw(points):
+def draw(points, extrusion=None):
+    dxfattribs = {'color': 1}
+    if extrusion is not None:
+        ocs = OCS(extrusion)
+        points = ocs.points_from_wcs(points)
+        dxfattribs['extrusion'] = extrusion
+
     for point in points:
-        msp.add_circle(radius=0.1, center=point, dxfattribs={'color': 1})
+        msp.add_circle(radius=0.1, center=point, dxfattribs=dxfattribs)
 
 
 base_spline_points = [(8.55, 2.96), (8.55, -.03), (2.75, -.03), (2.76, 3.05), (4.29, 1.78), (6.79, 3.05)]
@@ -48,7 +54,8 @@ if dwg.dxfversion > 'AC1009':
 
 # place open cubic b-spline in 3D space
 ucs = UCS(origin=(10, 3, 3), ux=(1, 0, 0), uz=(0, 1, 1))  # 45 deg rotated around x-axis
-draw(ucs.points_to_wcs(base_spline_points))
+assert ucs.is_cartesian
+draw(ucs.points_to_wcs(base_spline_points), extrusion=ucs.uz)
 msp.add_text(
     "Open Cubic R12Spline in 3D space",
     dxfattribs={

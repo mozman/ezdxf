@@ -21,7 +21,7 @@ def draw(points):
         msp.add_circle(radius=0.1, center=point, dxfattribs={'color': 1})
 
 
-spline_points = [Vector(p) for p in [(1., 1.), (2.5, 3.), (4.5, 2.), (6.5, 4.)]]
+spline_points = Vector.list([(1., 1.), (2.5, 3.), (4.5, 2.), (6.5, 4.)])
 
 # fit points
 draw(spline_points)
