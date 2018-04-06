@@ -54,6 +54,12 @@ def test_vector_as_tuple():
     assert v[2] == 3
     assert tuple(v) == (1, 2, 3)
 
+    assert isinstance(v[:2], tuple)
+    assert v[:2] == (1, 2)
+    assert v[1:] == (2, 3)
+    assert isinstance(v.xyz, tuple)
+    assert v.xyz == (1, 2, 3)
+
 
 def test_iter():
     assert sum(Vector(1, 2, 3)) == 6
