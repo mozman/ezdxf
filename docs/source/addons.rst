@@ -11,7 +11,4 @@ Add-ons
    addons/curves
    addons/mtext
    addons/table
-   addons/dimlines
-   addons/r12spline
-
 
