@@ -6,27 +6,39 @@ Forms
 Basic Forms
 -----------
 
-.. function:: circle(count, radius=1, z=0, close=False)
+.. function:: circle(count, radius=1, elevation=0, close=False)
 
-    Create polygon vertices for a circle with *radius* and *count* vertices at *z* height.
+    Create polygon vertices for a circle with *radius* and *count* vertices.
 
     :param count: count of polygon vertices
     :param radius: circle radius
-    :param z: z axis value
+    :param elevation: z axis for all vertices
     :param close: yields first vertex also as last vertex if True.
     :returns: yields :class:`~ezdxf.algebra.Vector` objects in counter clockwise orientation
 
-.. function:: ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, z=0)
+.. function:: ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, elevation=0)
 
-    Create polygon vertices for an ellipse with *rx* as x-axis radius and *ry* for y-axis radius with *count* vertices,
-    at *z* height. The curve goes from *start_param* to *end_param* in counter clockwise orientation.
+    Create polygon vertices for an ellipse with *rx* as x-axis radius and *ry* for y-axis radius with *count* vertices.
+    The curve goes from *start_param* to *end_param* in counter clockwise orientation.
 
     :param count: count of polygon vertices
     :param rx: ellipse x-axis radius
     :param ry: ellipse y-axis radius
     :param start_param: start of ellipse in range 0 ... 2\*pi
     :param end_param: end of ellipse in range 0 ... 2\*pi
-    :param z: z axis value
+    :param elevation: z axis for all vertices
+    :returns: yields :class:`~ezdxf.algebra.Vector` objects
+
+.. function:: euler_spiral(count, length=1, curvature=1, elevation=0)
+
+    Create polygon vertices for an euler spiral of a given *length* and
+    radius of *curvature*. This is a parametric curve, which always starts
+    at the origin.
+
+    :param count: count of polygon vertices
+    :param length: length of curve in drawing units
+    :param curvature: radius of curvature
+    :param elevation: z-axis for all vertices
     :returns: yields :class:`~ezdxf.algebra.Vector` objects
 
 .. function:: cube(center=True, matrix=None)

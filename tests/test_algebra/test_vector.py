@@ -288,3 +288,11 @@ def test_lerp():
     assert v1.lerp(v2, .5) == (2.5, 2.5, 2.5)
     assert v1.lerp(v2, 0) == (1, 1, 1)
     assert v1.lerp(v2, 1) == (4, 4, 4)
+
+
+def test_replace():
+    v = Vector(1, 2, 3)
+    assert v.replace(x=7) == (7, 2, 3)
+    assert v.replace(y=7) == (1, 7, 3)
+    assert v.replace(z=7) == (1, 2, 7)
+    assert v.replace(x=7, z=7) == (7, 2, 7)

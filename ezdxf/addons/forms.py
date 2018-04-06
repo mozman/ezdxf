@@ -6,21 +6,22 @@ from math import pi, sin, cos
 from ezdxf.algebra import Vector, Matrix44
 from ezdxf.algebra.base import is_close_points, is_close
 from ezdxf.algebra.bspline import bspline_control_frame
+from ezdxf.algebra.eulerspiral import EulerSpiral
 from .mesh import MeshBuilder, MeshVertexMerger
 
 
-def circle(count, radius=1, z=0, close=False):
+def circle(count, radius=1, elevation=0, close=False):
     """
-    Create polygon vertices for a circle with *radius* and *count* corners at *z* height.
+    Create polygon vertices for a circle with *radius* and *count* corners,
+    *elevation* is the z-axis for all vertices.
 
     Args:
         count: count of polygon vertices
         radius: circle radius
-        z: z axis value
+        elevation: z axis for all vertices
         close: yields first vertex also as last vertex if True.
 
-    Returns:
-        yields Vector() objects in counter clockwise orientation
+    Returns: yields Vector() objects in counter clockwise orientation
 
     """
     radius = float(radius)
@@ -29,18 +30,19 @@ def circle(count, radius=1, z=0, close=False):
     for index in range(count):
         x = cos(alpha)*radius
         y = sin(alpha)*radius
-        yield Vector(x, y, z)
+        yield Vector(x, y, elevation)
         alpha += delta
 
     if close:
-        yield Vector(radius, 0, z)
+        yield Vector(radius, 0, elevation)
 
 
-def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, z=0):
+def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, elevation=0):
     """
-    Create polygon vertices for an ellipse with *rx* as x-axis radius and
-    *ry* for y-axis radius with *count* vertices, at *z* height. The ellipse
-    goes from *start_param* to *end_param* in counter clockwise orientation.
+    Create polygon vertices for an ellipse with *rx* as x-axis radius and *ry*
+    for y-axis radius with *count* vertices, *elevation* is the z-axis for all
+    vertices. The ellipse goes from *start_param* to *end_param* in counter
+    clockwise orientation.
 
     Args:
         count: count of polygon vertices
@@ -48,10 +50,9 @@ def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, z=0):
         ry: ellipse y-axis radius
         start_param: start of ellipse in range 0 .. 2*pi
         end_param: end of ellipse in range 0 .. 2*pi
-        z: z axis value
+        elevation: z-axis for all vertices
 
-    Returns:
-        yields Vector() objects
+    Returns: yields Vector() objects
 
     """
     rx = float(rx)
@@ -62,11 +63,27 @@ def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, z=0):
     delta = (end_param - start_param) / (count-1)
     for param in range(count):
         alpha = start_param + param*delta
-        yield Vector(cos(alpha)*rx, sin(alpha)*ry, z)
+        yield Vector(cos(alpha) * rx, sin(alpha) * ry, elevation)
 
 
-def euler_spiral(length=1, paramA=1):
-    pass
+def euler_spiral(count, length=1, curvature=1, elevation=0):
+    """
+    Create polygon vertices for an euler spiral of a given length and
+    radius of curvature. This is a parametric curve, which always starts
+    at the origin.
+
+    Args:
+        count: count of polygon vertices
+        length: length of curve in drawing units
+        curvature: radius of curvature
+        elevation: z-axis for all vertices
+
+    Returns: yields Vector() objects
+
+    """
+    spiral = EulerSpiral(curvature=curvature)
+    for vertex in spiral.approximate(length, count-1):
+        yield vertex.replace(z=elevation)
 
 
 def translate(vertices, vec=(0, 0, 1)):
@@ -77,7 +94,7 @@ def translate(vertices, vec=(0, 0, 1)):
         vertices: list of vertices
         vec: translation vector
 
-    Yields: transformed vertices
+    Returns: yields transformed vertices
 
     """
     vec = Vector(vec)
@@ -151,7 +168,8 @@ def cube(center=True, matrix=None):
 
 def extrude(profile, path, close=True):
     """
-    Extrude a profile polygon along a path polyline, vertices of profile should be in counter clockwise order.
+    Extrude a profile polygon along a path polyline, vertices of profile should be in
+    counter clockwise order.
 
     Args:
         profile: sweeping profile as list of (x, y, z) tuples in counter clock wise order
@@ -272,7 +290,7 @@ def spline_interpolated_profiles(profiles, subdivide=4):
         profiles: list of profiles
         subdivide: count of interpolated profiles + 1, e.g. 4 creates 3 sub-profiles between two main profiles (4 face loops)
 
-    Yields: profiles as list of vertices
+    Returns: yields profiles as list of vertices
 
     """
     profiles = [list(p) for p in profiles]

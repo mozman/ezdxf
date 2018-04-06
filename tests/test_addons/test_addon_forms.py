@@ -89,19 +89,19 @@ def test_spline_interpolation():
 
 
 def test_spline_interpolated_profiles():
-    p1 = circle(12, radius=2, z=0, close=True)
-    p2 = circle(12, radius=3, z=2, close=True)
-    p3 = circle(12, radius=1, z=4, close=True)
-    p4 = circle(12, radius=2, z=6, close=True)
+    p1 = circle(12, radius=2, elevation=0, close=True)
+    p2 = circle(12, radius=3, elevation=2, close=True)
+    p3 = circle(12, radius=1, elevation=4, close=True)
+    p4 = circle(12, radius=2, elevation=6, close=True)
     profiles = list(spline_interpolated_profiles([p1, p2, p3, p4], subdivide=4))
     assert len(profiles) == 13  # 3*4 + 1
 
 
 def test_from_profiles_splines():
-    p1 = circle(12, radius=2, z=0, close=True)
-    p2 = circle(12, radius=3, z=2, close=True)
-    p3 = circle(12, radius=1, z=4, close=True)
-    p4 = circle(12, radius=2, z=6, close=True)
+    p1 = circle(12, radius=2, elevation=0, close=True)
+    p2 = circle(12, radius=3, elevation=2, close=True)
+    p3 = circle(12, radius=1, elevation=4, close=True)
+    p4 = circle(12, radius=2, elevation=6, close=True)
     mesh = from_profiles_spline([p1, p2, p3, p4], subdivide=4, caps=True)
     assert len(mesh.vertices) == 156  # 12 (circle) * 13 (profiles)
     assert len(mesh.faces) == 146  # 12 (circle) * 12 + 2

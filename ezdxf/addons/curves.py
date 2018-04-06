@@ -233,7 +233,7 @@ class EulerSpiral(object):
     """
     Euler spiral (clothoid) for *curvature* (Radius of curvature).
 
-    This is a parametric curve, which always starts at the origin = (0, 0).
+    This is a parametric curve, which always starts at the origin.
 
     """
     def __init__(self, curvature=1):

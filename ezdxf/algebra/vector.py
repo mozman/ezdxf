@@ -50,6 +50,15 @@ class Vector(object):
         """
         return self._x, self._y, self._z
 
+    def replace(self, x=None, y=None, z=None):
+        if x is None:
+            x = self._x
+        if y is None:
+            y = self._y
+        if z is None:
+            z = self._z
+        return self.__class__(x, y, z)
+
     @staticmethod
     def list(items):
         return list(Vector.generate(items))

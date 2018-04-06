@@ -103,6 +103,10 @@ Vector Attributes
 Vector Methods
 ~~~~~~~~~~~~~~
 
+.. method:: Vector.replace(x=None, y=None, z=None)
+
+    Return new Vector() with replaced components != None.
+
 .. method:: Vector.generate(items)
 
     Static method returns generator of Vector() objects created from items.
