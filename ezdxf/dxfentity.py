@@ -342,6 +342,7 @@ class DXFEntity(object):
         return OCS(extrusion)
 
     def destroy(self):
+        # TODO: remove XDictionary idf exists
         pass
 
     def has_app_data(self, appid):

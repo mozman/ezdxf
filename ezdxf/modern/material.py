@@ -2,7 +2,7 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFStructureError, DXFValueError
+from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
 from ..lldxf.types import DXFTag
 from .dxfobjects import none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, DXFObject
 from ..algebra.matrix44 import Matrix44
@@ -12,10 +12,6 @@ _MATERIAL_TPL = """0
 MATERIAL
 5
 0
-102
-{ACAD_XDICTIONARY
-102
-}
 102
 {ACAD_REACTORS
 102
@@ -210,7 +206,7 @@ material_subclass = DefSubclass('AcDbMaterial', {
     # 4 = Include current block transform in mapper transform
     # 16x group code 47: Transform matrix of specular map mapper (16 reals; row major format; default = identity matrix)
     'reflection_map_blend_factor': DXFAttr(48, default=1.),  # valid range is 0.0 to 1.0
-    'reflection_map_source': DXFAttr(171, default=1), # 0=use current scene; 1=use image file (specified by file name; null file name specifies no map)
+    'reflection_map_source': DXFAttr(171, default=1),  # 0=use current scene; 1=use image file (specified by file name; null file name specifies no map)
     'reflection_map_file_name': DXFAttr(6, default=''),
     'reflection_map_projection_method': DXFAttr(172, default=1),  # 1=Planar; 2=Box; 3=Cylinder; 4=Sphere
     'reflection_map_tiling_method': DXFAttr(173, default=1),  # 1=Tile; 2=Crop; 3=Clamp
@@ -363,3 +359,58 @@ class Material(DXFObject):
 
     def get_transformation_matrix_refraction_map(self):
         return self._get_matrix(code=147)
+
+
+class MaterialManager(object):
+    def __init__(self, drawing):
+        self.drawing = drawing
+        self.material_dict = drawing.rootdict.get_required_dict('ACAD_MATERIAL')
+        self.create_required_entries()
+
+    @property
+    def objects(self):
+        return self.drawing.objects
+
+    def create_required_entries(self):
+        def clear(material):
+            subclass = material.tags.get_subclass('AcDbMaterial')
+            subclass.remove_tags_except((1, 94))
+
+        if 'ByLayer' not in self.material_dict:
+            material = self.new('ByLayer')
+            clear(material)
+
+        if 'ByBlock' not in self.material_dict:
+            material = self.new('ByBlock')
+            clear(material)
+
+        if 'Global' not in self.material_dict:
+            self.new('Global')
+
+    def __contains__(self, name):
+        return name in self.material_dict
+
+    def get(self, name):
+        return self.material_dict.get(name)
+
+    def new(self, name, description=''):
+        if name in self.material_dict:
+            raise DXFValueError('Material entry {} already exists.'.format(name))
+
+        owner = self.material_dict.dxf.handle
+        material = self.objects.create_new_dxf_entity(
+            'DICTIONARY',
+            dxfattribs={
+                'owner': owner,
+                'name': name,
+                'description': description,
+            }
+        )
+        material.set_reactors([owner])
+        return material
+
+    def discard(self, name):
+        material = self.material_dict.get(name, None)
+        if material is not None:
+            self.material_dict.discard(name)
+            self.objects.delete_entity(material.dxf.handle)

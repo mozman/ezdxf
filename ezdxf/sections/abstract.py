@@ -47,7 +47,9 @@ class AbstractSection(object):
         tagwriter.write_tag2(0, "ENDSEC")
 
     def create_new_dxf_entity(self, _type, dxfattribs):
-        """ Create new DXF entity add it to th entity database and add it to the entity space.
+        """
+        Create new DXF entity add it to th entity database and add it to the entity space.
+
         """
         dxf_entity = self.dxffactory.create_db_entry(_type, dxfattribs)
         self._entity_space.add_handle(dxf_entity.dxf.handle)
