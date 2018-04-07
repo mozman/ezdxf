@@ -151,21 +151,19 @@ class GroupManager(ObjectManager):
     def new(self, name=None, description="", selectable=1):
         if name in self:
             raise DXFValueError("GROUP '{}' already exists.".format(name))
-        unnamed = 0
+
         if name is None:
             name = self.next_name()
             unnamed = 1
+        else:
+            unnamed = 0
         # The group name isn't stored in the group entity itself.
-        owner = self.object_dict.dxf.handle
-        group = self.objects.create_new_dxf_entity(self.object_type, dxfattribs={
-            'owner': owner,
+        dxfattribs = {
             'description': description,
             'unnamed': unnamed,
             'selectable': selectable,
-        })
-        self.object_dict.add(name, group.dxf.handle)
-        group.set_reactors([owner])
-        return group
+        }
+        return self._new(name, dxfattribs)
 
     def delete(self, group):
         """

@@ -52,17 +52,14 @@ class ObjectManager(object):
         """
         if name in self.object_dict:
             raise DXFValueError('{} entry {} already exists.'.format(self.object_type, name))
+        return self._new(name, dxfattribs={'name': name})
 
+    def _new(self, name, dxfattribs):
         owner = self.object_dict.dxf.handle
-        obj = self.objects.create_new_dxf_entity(
-            self.object_type,
-            dxfattribs={
-                'owner': owner,
-                'name': name,
-            }
-        )
+        dxfattribs['owner'] = owner
+        obj = self.objects.create_new_dxf_entity(self.object_type, dxfattribs=dxfattribs)
         obj.set_reactors([owner])
-        self.object_dict.add(obj.dxf.name, obj.dxf.handle)
+        self.object_dict.add(name, obj.dxf.handle)
         return obj
 
     def delete(self, name):

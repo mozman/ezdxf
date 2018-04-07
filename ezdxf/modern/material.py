@@ -239,10 +239,6 @@ class MaterialManager(ObjectManager):
         super(MaterialManager, self).__init__(drawing, dict_name='ACAD_MATERIAL', object_type='MATERIAL')
         self.create_required_entries()
 
-    @property
-    def objects(self):
-        return self.drawing.objects
-
     def create_required_entries(self):
         for name in ('ByBlock', 'ByLayer', 'Global'):
             if name not in self.object_dict:
