@@ -8,6 +8,7 @@ __author__ = "mozman <me@mozman.at>"
 from .abstract import AbstractSection
 from ..lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ..modern.groups import DXFGroupTable
+from ..modern.material import MaterialManager
 from ..entityspace import EntitySpace
 
 
@@ -66,6 +67,9 @@ class ObjectsSection(AbstractSection):
     def groups(self):
         group_table = self.rootdict.get_required_dict('ACAD_GROUP')
         return DXFGroupTable(group_table)
+
+    def materials(self):
+        return MaterialManager(self.drawing)
 
     def add_dictionary(self, owner='0'):
         return self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})

@@ -38,6 +38,7 @@ class Drawing(object):
         self.tracker = Tracker()
         self._is_binary_data_compressed = False
         self._groups = None  # read only
+        self._materials = None  # read only
         self.filename = None  # read/write
         self.entitydb = EntityDB()  # read only
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
@@ -63,6 +64,7 @@ class Drawing(object):
             # some applications don't setup properly the model and paper space layouts
             repair.setup_layouts(self)
             self._groups = self.objects.groups()
+            self._materials = self.objects.materials()
 
         if self.dxfversion <= 'AC1009':  # do cleanup work, before building layouts
             if self.dxfversion < 'AC1009':  # legacy DXF version
@@ -139,10 +141,15 @@ class Drawing(object):
 
     @property
     def groups(self):
-        if self._groups is not None:
-            return self._groups
-        else:
+        if self.dxfversion <= 'AC1009':
             raise DXFVersionError('Groups not supported in DXF version R12.')
+        return self._groups
+
+    @property
+    def materials(self):
+        if self.dxfversion <= 'AC1009':
+            raise DXFVersionError('Materials not supported in DXF version R12.')
+        return self._materials
 
     def modelspace(self):
         return self.layouts.modelspace()

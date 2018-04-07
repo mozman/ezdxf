@@ -21,135 +21,7 @@ MATERIAL
 100
 AcDbMaterial
 1
-Global
-43
-1.0
-43
-0.0
-43
-0.0
-43
-0.0
-43
-0.0
-43
-1.0
-43
-0.0
-43
-0.0
-43
-0.0
-43
-0.0
-43
-1.0
-43
-0.0
-43
-0.0
-43
-0.0
-43
-0.0
-43
-1.0
-49
-1.0
-49
-0.0
-49
-0.0
-49
-0.0
-49
-0.0
-49
-1.0
-49
-0.0
-49
-0.0
-49
-0.0
-49
-0.0
-49
-1.0
-49
-0.0
-49
-0.0
-49
-0.0
-49
-0.0
-49
-1.0
-142
-1.0
-142
-0.0
-142
-0.0
-142
-0.0
-142
-0.0
-142
-1.0
-142
-0.0
-142
-0.0
-142
-0.0
-142
-0.0
-142
-1.0
-142
-0.0
-142
-0.0
-142
-0.0
-142
-0.0
-142
-1.0
-144
-1.0
-144
-0.0
-144
-0.0
-144
-0.0
-144
-0.0
-144
-1.0
-144
-0.0
-144
-0.0
-144
-0.0
-144
-0.0
-144
-1.0
-144
-0.0
-144
-0.0
-144
-0.0
-144
-0.0
-144
-1.0
+Name
 94
 63
 """
@@ -372,45 +244,34 @@ class MaterialManager(object):
         return self.drawing.objects
 
     def create_required_entries(self):
-        def clear(material):
-            subclass = material.tags.get_subclass('AcDbMaterial')
-            subclass.remove_tags_except((1, 94))
-
-        if 'ByLayer' not in self.material_dict:
-            material = self.new('ByLayer')
-            clear(material)
-
-        if 'ByBlock' not in self.material_dict:
-            material = self.new('ByBlock')
-            clear(material)
-
-        if 'Global' not in self.material_dict:
-            self.new('Global')
+        for name in ('ByBlock', 'ByLayer', 'Global'):
+            if name not in self.material_dict:
+                self.new(name)
 
     def __contains__(self, name):
         return name in self.material_dict
 
     def get(self, name):
-        return self.material_dict.get(name)
+        return self.material_dict.get_entity(name)
 
-    def new(self, name, description=''):
+    def new(self, name):
         if name in self.material_dict:
             raise DXFValueError('Material entry {} already exists.'.format(name))
 
         owner = self.material_dict.dxf.handle
         material = self.objects.create_new_dxf_entity(
-            'DICTIONARY',
+            'MATERIAL',
             dxfattribs={
                 'owner': owner,
                 'name': name,
-                'description': description,
             }
         )
         material.set_reactors([owner])
+        self.material_dict.add(material.dxf.name, material.dxf.handle)
         return material
 
     def discard(self, name):
-        material = self.material_dict.get(name, None)
+        material = self.material_dict.get_entity(name, None)
         if material is not None:
             self.material_dict.discard(name)
             self.objects.delete_entity(material.dxf.handle)
