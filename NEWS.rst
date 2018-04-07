@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.8.9 - dev
+
+   * Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
+   * NEW: support for MATERIAL object
+
 Version 0.8.8 - 2018-04-02
 
    * Release notes: https://ezdxf.mozman.at/release-v0-8-8.html

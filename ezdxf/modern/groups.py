@@ -184,7 +184,8 @@ class DXFGroupTable(object):
         raise DXFKeyError("KeyError: '{}'".format(name))
 
     def delete(self, group):
-        """Delete group. Does not delete any drawing entities referenced by this group.
+        """
+        Delete group. Does not delete any drawing entities referenced by this group.
         """
         if isstring(group):  # delete group by name
             name = group

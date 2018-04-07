@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
 from ..lldxf.types import DXFTag
 from .dxfobjects import none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, DXFObject
+from .object_manager import ObjectManager
 from ..algebra.matrix44 import Matrix44
 
 
@@ -233,10 +234,9 @@ class Material(DXFObject):
         return self._get_matrix(code=147)
 
 
-class MaterialManager(object):
+class MaterialManager(ObjectManager):
     def __init__(self, drawing):
-        self.drawing = drawing
-        self.material_dict = drawing.rootdict.get_required_dict('ACAD_MATERIAL')
+        super(MaterialManager, self).__init__(drawing, dict_name='ACAD_MATERIAL', object_type='MATERIAL')
         self.create_required_entries()
 
     @property
@@ -245,33 +245,6 @@ class MaterialManager(object):
 
     def create_required_entries(self):
         for name in ('ByBlock', 'ByLayer', 'Global'):
-            if name not in self.material_dict:
+            if name not in self.object_dict:
                 self.new(name)
 
-    def __contains__(self, name):
-        return name in self.material_dict
-
-    def get(self, name):
-        return self.material_dict.get_entity(name)
-
-    def new(self, name):
-        if name in self.material_dict:
-            raise DXFValueError('Material entry {} already exists.'.format(name))
-
-        owner = self.material_dict.dxf.handle
-        material = self.objects.create_new_dxf_entity(
-            'MATERIAL',
-            dxfattribs={
-                'owner': owner,
-                'name': name,
-            }
-        )
-        material.set_reactors([owner])
-        self.material_dict.add(material.dxf.name, material.dxf.handle)
-        return material
-
-    def discard(self, name):
-        material = self.material_dict.get_entity(name, None)
-        if material is not None:
-            self.material_dict.discard(name)
-            self.objects.delete_entity(material.dxf.handle)
