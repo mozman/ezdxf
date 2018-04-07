@@ -9,6 +9,7 @@ __author__ = "mozman <me@mozman.at>"
 from contextlib import contextmanager
 
 from .dxfobjects import none_subclass
+from .object_manager import ObjectManager
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -72,7 +73,7 @@ class DXFGroup(DXFEntity):
         return (tag.value for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
     def get_name(self):
-        group_table = self.dxffactory.wrap_handle(self.dxf.owner)  # returns DXFDictionary() and not DXFGroupTable()!!!
+        group_table = self.dxffactory.wrap_handle(self.dxf.owner)  # returns DXFDictionary() and not GroupManager()!!!
         my_handle = self.dxf.handle
         for name, handle in group_table.items():
             if handle == my_handle:
@@ -128,32 +129,19 @@ def all_entities_on_same_layout(entities):
     return len(owners) < 2  # 0 for no entities; 1 for all entities on the same layout
 
 
-class DXFGroupTable(object):
-    def __init__(self, dxfgroups):
-        self.dxfgroups = dxfgroups  # AcDbDictionary
-        self.objects_section = dxfgroups.drawing.objects
+class GroupManager(ObjectManager):
+    def __init__(self, drawing):
+        super(GroupManager, self).__init__(drawing, dict_name='ACAD_GROUP', object_type='GROUP')
         self._next_unnamed_number = 0
-
-    def __iter__(self):
-        wrap = self.dxfgroups.dxffactory.wrap_handle
-        for name, handle in self.dxfgroups.items():
-            yield name, wrap(handle)
-
-    def __len__(self):
-        return len(self.dxfgroups)
-
-    def __contains__(self, name):
-        return name in self.dxfgroups
 
     def groups(self):
         for name, group in self:
             yield group
 
     def next_name(self):
-        name_exists = True
-        while name_exists:
+        name = self._next_name()
+        while name in self:
             name = self._next_name()
-            name_exists = name in self.dxfgroups
         return name
 
     def _next_name(self):
@@ -161,58 +149,43 @@ class DXFGroupTable(object):
         return "*A{}".format(self._next_unnamed_number)
 
     def new(self, name=None, description="", selectable=1):
-        if name in self.dxfgroups:
-            raise DXFValueError("Group '{}' already exists. Group name has to be unique.".format(name))
+        if name in self:
+            raise DXFValueError("GROUP '{}' already exists.".format(name))
         unnamed = 0
         if name is None:
             name = self.next_name()
             unnamed = 1
         # The group name isn't stored in the group entity itself.
-        group = self.objects_section.create_new_dxf_entity("GROUP", dxfattribs={
+        owner = self.object_dict.dxf.handle
+        group = self.objects.create_new_dxf_entity(self.object_type, dxfattribs={
+            'owner': owner,
             'description': description,
             'unnamed': unnamed,
             'selectable': selectable,
         })
-        self.dxfgroups[name] = group.dxf.handle
-        group.dxf.owner = self.dxfgroups.dxf.handle  # group table is owner of group
+        self.object_dict.add(name, group.dxf.handle)
+        group.set_reactors([owner])
         return group
-
-    def get(self, name):
-        for group_name, group in self:
-            if name == group_name:
-                return group
-        raise DXFKeyError("KeyError: '{}'".format(name))
 
     def delete(self, group):
         """
-        Delete group. Does not delete any drawing entities referenced by this group.
+        Delete GROUP by name or Group() object.
+
         """
         if isstring(group):  # delete group by name
-            name = group
-            group_handle = self.dxfgroups[name]
-            del self.dxfgroups[name]
+            super(GroupManager, self).delete(group)
         else:  # group should be a DXFEntity
             group_handle = group.dxf.handle
             for name, _group in self:
                 if group_handle == _group.dxf.handle:
-                    del self.dxfgroups[name]
+                    super(GroupManager, self).delete(name)
                     return
-            raise DXFValueError("Group not in group table registered.")
-        self._destroy_dxf_group_entity(group_handle)
-
-    def _destroy_dxf_group_entity(self, handle):
-        self.objects_section.remove_handle(handle)  # remove from entity space
-        self.objects_section.entitydb.delete_handle(handle)  # remove from drawing database
-
-    def clear(self):
-        """Delete all groups. Does not delete any drawing entities referenced by this groups.
-        """
-        for name, group in self:  # destroy dxf group entities
-            self._destroy_dxf_group_entity(group.dxf.handle)
-        self.dxfgroups.clear()  # delete all group references
+            raise DXFValueError("GROUP not in group table registered.")
 
     def cleanup(self):
-        """Removes invalid handles in all groups and removes empty groups.
+        """
+        Removes invalid handles in all groups and removes empty groups.
+
         """
         empty_groups = []
         for name, group in self:

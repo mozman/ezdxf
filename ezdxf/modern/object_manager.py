@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from ..lldxf.const import DXFValueError
+from ..lldxf.const import DXFValueError, DXFKeyError
 
 
 class ObjectManager(object):
@@ -26,7 +26,7 @@ class ObjectManager(object):
 
     def get(self, name):
         """
-        Get object ny name.
+        Get object by name.
 
         Args:
             name: object name as string
@@ -65,8 +65,19 @@ class ObjectManager(object):
         self.object_dict.add(obj.dxf.name, obj.dxf.handle)
         return obj
 
-    def discard(self, name):
-        obj = self.object_dict.get_entity(name, None)
-        if obj is not None:
+    def delete(self, name):
+        try:
+            obj = self.object_dict.get_entity(name)
+        except DXFKeyError:
+            return
+        else:
             self.object_dict.discard(name)
-            self.objects.delete_entity(obj.dxf.handle)
+            self.objects.delete_entity(obj)
+
+    def clear(self):
+        """
+        Delete all entries.
+        """
+        for name, obj in self:  # destroy dxf group entities
+            self.objects.delete_entity(obj)
+        self.object_dict.clear()  # delete all group references

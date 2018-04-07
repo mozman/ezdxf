@@ -20,7 +20,7 @@ def test_create_new_group(groups):
     g = groups.new('MyGroup', description="The group description.")
     assert 'GROUP' == g.dxftype()
     assert 'MyGroup' in groups
-    assert 0 ==  g.dxf.unnamed, "Named group has wrong unnamed attribute."
+    assert 0 == g.dxf.unnamed, "Named group has wrong unnamed attribute."
     assert 1 == g.dxf.selectable, "Group should be selectable by default."
     assert "The group description." == g.dxf.description
     assert 1 == len(groups)
@@ -47,6 +47,7 @@ def test_delete_group_by_entity(groups):
 
 
 def test_delete_group_by_name(groups):
+    assert 'MyGroup' not in groups
     groups.new('MyGroup')
     groups.delete('MyGroup')
     assert 0 == len(groups)
