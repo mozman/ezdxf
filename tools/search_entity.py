@@ -5,12 +5,12 @@ import ezdxf
 from pathlib import Path
 
 BASE_DXF_FOLDER = r'D:\source\dxftest'
-DXF_ENTITY = 'SUN'
+DXF_ENTITY = 'TOLERANCE'
 
 
 def has_dxf_entity(filename, entity_name):
     try:
-        dwg = ezdxf.readfile(filename)
+        dwg = ezdxf.readfile(filename, legacy_mode=True)
     except IOError:
         return False
     except ezdxf.DXFError as e:
@@ -20,8 +20,10 @@ def has_dxf_entity(filename, entity_name):
         return False
     else:
         entities = dwg.modelspace().query(entity_name)
+        if len(entities):
+            return True
         if 'objects' in dwg.sections:
-            entities.extend(dwg.objects.query(entity_name))
+            entities = dwg.objects.query(entity_name)
         return bool(len(entities))
 
 

@@ -17,7 +17,7 @@ Version 0.8.9 - dev
        - OLE2FRAME
        - SECTION
        - TABLE (todo)
-       - TOLERANCE (todo)
+       - TOLERANCE
        - WIPEOUT (todo)
    - NEW: **basic** read support for all missing DXF objects:
        - ACAD_PROXY_OBJECT

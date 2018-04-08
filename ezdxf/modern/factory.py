@@ -38,6 +38,7 @@ from .mline import MLine, MLineStyle
 from .oleframe import OLE2Frame, OLEFrame
 from .section import Section
 from .sun import Sun
+from .tolerance import Tolerance
 
 from . import dxfobjects
 from . import dxfdict
@@ -134,6 +135,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'OLEFRAME': OLEFrame,
     'OLE2FRAME': OLE2Frame,
     'SECTION': Section,
+    'TOLERANCE': Tolerance,
 }
 
 
