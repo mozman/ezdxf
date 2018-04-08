@@ -15,7 +15,7 @@ Version 0.8.9 - dev
        - MLINE (incomplete)
        - OLEFRAME
        - OLE2FRAME
-       - SECTION (todo)
+       - SECTION
        - SUN (todo)
        - TABLE (todo)
        - TOLERANCE (todo)
