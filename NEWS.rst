@@ -24,8 +24,8 @@ Version 0.8.9 - dev
    - NEW: **basic** read support for all missing DXF objects:
        - ACAD_PROXY_OBJECT
        - ACDBNAVISWORKSMODELDEF (todo)
-       - DATATABLE (todo)
-       - DICTIONARYVAR (todo)
+       - DATATABLE
+       - DICTIONARYVAR
        - FIELD (todo)
        - IDBUFFER (todo)
        - LAYER_FILTER (todo)

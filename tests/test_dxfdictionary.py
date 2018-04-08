@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.modern.dxfobjects import DXFDictionary, DXFDictionaryWithDefault
+from ezdxf.modern.dxfdict import DXFDictionary, DXFDictionaryWithDefault
 
 
 class TestNoneEmptyDXFDict:

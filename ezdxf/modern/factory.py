@@ -32,6 +32,9 @@ from .acad_proxy_entity import ProxyEntity, ProxyObject
 from .coordination_model import CoordinationModel
 
 from . import dxfobjects
+from . import dxfdict
+from .xrecord import XRecord
+from .dxfdatatable import DXFDataTable
 from .geodata import GeoData
 from .material import Material
 from .groups import DXFGroup
@@ -41,14 +44,14 @@ from ..lldxf.const import DXFKeyError
 
 UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects
-    'DICTIONARY': dxfobjects.DXFDictionary,
+    'DICTIONARY': dxfdict.DXFDictionary,
     'CLASS': dxfobjects.DXFClass,
-    'ACDBDICTIONARYWDFLT': dxfobjects.DXFDictionaryWithDefault,
-    'DICTIONARYVAR': dxfobjects.DXFDictionaryVar,
+    'ACDBDICTIONARYWDFLT': dxfdict.DXFDictionaryWithDefault,
+    'DICTIONARYVAR': dxfdict.DXFDictionaryVar,
     'PLOTSETTINGS': DXFPlotSettings,
     'LAYOUT': DXFLayout,
-    'XRECORD': dxfobjects.XRecord,
-    'DATATABLE': dxfobjects.DXFDataTable,
+    'XRECORD': XRecord,
+    'DATATABLE': DXFDataTable,
     'GROUP': DXFGroup,
     'ACDBPLACEHOLDER': dxfobjects.ACDBPlaceHolder,
     'IMAGEDEF': ImageDef,

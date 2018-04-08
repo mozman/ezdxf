@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 import pytest
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
-from ezdxf.modern.dxfobjects import XRecord
+from ezdxf.modern.xrecord import XRecord
 
 
 @pytest.fixture
