@@ -75,16 +75,108 @@ ACDB_MLEADERSTYLE_CLASS
 0
 """
 
-_MLEADER_STYLE_TPL = """0
+_MLEADER_STYLE_TPL = """  0
 MLEADERSTYLE
 5
 0
+102
+{ACAD_REACTORS
+102
+}
 330
 0
 100
 AcDbMLeaderStyle
+179
+2
 170
 2
+171
+1
+172
+0
+90
+2
+40
+0.0
+41
+0.0
+173
+1
+91
+-1056964608
+340
+14
+92
+-2
+290
+1
+42
+2.0
+291
+1
+43
+8.0
+3
+Standard
+341
+0
+44
+4.0
+300
+
+342
+11
+174
+1
+178
+1
+175
+1
+176
+0
+93
+-1056964608
+45
+4.0
+292
+0
+297
+0
+46
+4.0
+343
+0
+94
+-1056964608
+47
+1.0
+49
+1.0
+140
+1.0
+293
+1
+141
+0.0
+294
+1
+177
+0
+142
+1.0
+295
+0
+296
+0
+143
+3.75
+271
+0
+272
+9
+273
+9
 """
 
 mleader_style_subclass = DefSubclass('AcDbMLeaderStyle', {
@@ -102,7 +194,7 @@ mleader_style_subclass = DefSubclass('AcDbMLeaderStyle', {
     'landing_gap': DXFAttr(42),
     'enable_dog_leg': DXFAttr(291),
     'dog_leg_length': DXFAttr(43),
-    'mleader_style_description': DXFAttr(3),
+    'name': DXFAttr(3),
     'arrow_head_id': DXFAttr(341),
     'arrow_head_size': DXFAttr(44),
     'default_mtext_contents': DXFAttr(300),
@@ -144,4 +236,9 @@ class MLeaderStyle(DXFObject):
 class MLeaderStyleManager(ObjectManager):
     def __init__(self, drawing):
         super(MLeaderStyleManager, self).__init__(drawing, dict_name='ACAD_MLEADERSTYLE', object_type='MLEADERSTYLE')
+        self.create_required_entries()
 
+    def create_required_entries(self):
+        for name in ('Standard', ):
+            if name not in self.object_dict:
+                self.new(name)

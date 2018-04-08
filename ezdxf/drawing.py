@@ -40,6 +40,7 @@ class Drawing(object):
         self._groups = None  # read only
         self._materials = None  # read only
         self._mleader_styles = None  # read only
+        self._mline_styles = None  # read only
         self.filename = None  # read/write
         self.entitydb = EntityDB()  # read only
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
@@ -67,6 +68,7 @@ class Drawing(object):
             self._groups = self.objects.groups()
             self._materials = self.objects.materials()
             self._mleader_styles = self.objects.mleader_styles()
+            self._mline_styles = self.objects.mline_styles()
 
         if self.dxfversion <= 'AC1009':  # do cleanup work, before building layouts
             if self.dxfversion < 'AC1009':  # legacy DXF version
@@ -158,6 +160,12 @@ class Drawing(object):
         if self.dxfversion <= 'AC1009':
             raise DXFVersionError('MLeaderStyles not supported in DXF version R12.')
         return self._mleader_styles
+
+    @property
+    def mline_styles(self):
+        if self.dxfversion <= 'AC1009':
+            raise DXFVersionError('MLineStyles not supported in DXF version R12.')
+        return self._mline_styles
 
     def modelspace(self):
         return self.layouts.modelspace()

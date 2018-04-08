@@ -16,7 +16,7 @@ def test_generic_mleader(dwg):
     assert mleader.dxf.leader_style_id == '0'
 
 
-def test_generic_mleader_style(dwg):
-    mleader_style = dwg.objects.create_new_dxf_entity('MLEADERSTYLE', {'owner': '0'})
+def test_standard_mleader_style(dwg):
+    mleader_style = dwg.mleader_styles.get('Standard')
     assert mleader_style.dxftype() == 'MLEADERSTYLE'
     assert mleader_style.dxf.content_type == 2

@@ -34,6 +34,7 @@ from .helix import Helix
 from .leader import Leader
 from .light import Light
 from .mleader import MLeader, MLeaderStyle
+from .mline import MLine, MLineStyle
 
 from . import dxfobjects
 from . import dxfdict
@@ -68,6 +69,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'MATERIAL': Material,
     'ACAD_PROXY_OBJECT': ProxyObject,
     'MLEADERSTYLE': MLeaderStyle,
+    'MLINESTYLE': MLineStyle,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -124,6 +126,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'LEADER': Leader,
     'LIGHT': Light,
     'MLEADER': MLeader,
+    'MLINE': MLine,
 }
 
 

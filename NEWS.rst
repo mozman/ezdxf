@@ -11,8 +11,8 @@ Version 0.8.9 - dev
        - HELIX
        - LEADER
        - LIGHT
-       - MLEADER (todo)
-       - MLINE (todo)
+       - MLEADER (incomplete)
+       - MLINE (incomplete)
        - OLEFRAME (todo)
        - OLEFRAME2 (todo)
        - SECTION (todo)
@@ -32,7 +32,7 @@ Version 0.8.9 - dev
        - LIGHTLIST (todo)
        - MATERIAL
        - MLEADERSTYLE
-       - MLINESTYLE (todo)
+       - MLINESTYLE
        - OBJECT_PTR (todo)
        - RENDER (todo)
        - SECTION (todo)
