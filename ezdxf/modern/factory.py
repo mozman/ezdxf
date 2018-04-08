@@ -20,6 +20,8 @@ from .underlay import DgnDefinition, DgnUnderlay
 from .dxflayout import DXFPlotSettings, DXFLayout
 from .dimension import Dimension
 from .acad_proxy_entity import ProxyEntity, ProxyObject
+from .coordination_model import CoordinationModel
+
 from . import dxfobjects
 from .geodata import GeoData
 from .material import Material
@@ -48,6 +50,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'RASTERVARIABLES': RasterVariables,
     'GEODATA': GeoData,
     'MATERIAL': Material,
+    'ACAD_PROXY_OBJECT': ProxyObject,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -99,7 +102,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'DGNUNDERLAY': DgnUnderlay,
     'DIMENSION': Dimension,
     'ACAD_PROXY_ENTITY': ProxyEntity,
-    'ACAD_PROXY_OBJECT': ProxyObject,
+    'COORDINATION_MODEL': CoordinationModel,
 }
 
 

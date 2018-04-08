@@ -2,12 +2,10 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
-from ..lldxf.types import DXFTag
+from ..lldxf.const import DXFStructureError
 from .dxfobjects import none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, DXFObject
 from .object_manager import ObjectManager
-from ..algebra.matrix44 import Matrix44
-
+from . import matrix_accessors
 
 _MATERIAL_TPL = """0
 MATERIAL
@@ -172,24 +170,14 @@ class Material(DXFObject):
 
     def _get_matrix(self, code):
         subclass = self.tags.subclasses[1]  # always 2nd subclass
-        values = [tag.value for tag in subclass.find_all(code)]
-        if len(values) != 16:
+        try:
+            return matrix_accessors.get_matrix(subclass, code)
+        except DXFStructureError:
             raise DXFStructureError('Invalid transformation matrix in entity ' + self.__str__())
-        return Matrix44(values)
 
     def _set_matrix(self, code, data):
-        values = list(data)
-        if len(values) != 16:
-            raise DXFValueError("Transformation matrix requires 16 values.")
-
         subclass = self.tags.subclasses[1]  # always 2nd subclass
-        try:
-            insert_pos = subclass.tag_index(code)
-        except DXFValueError:
-            insert_pos = len(subclass)
-        subclass.remove_tags((code, ))
-        tags = [DXFTag(code, value) for value in values]
-        subclass[insert_pos:insert_pos] = tags
+        matrix_accessors.set_matrix(subclass, code, list(data))
 
     def set_transformation_matrix_diffuse_map(self, matrix):
         self._set_matrix(code=43, data=matrix)

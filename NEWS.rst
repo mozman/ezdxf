@@ -7,7 +7,7 @@ Version 0.8.9 - dev
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
    - NEW: **basic** read support for all missing DXF entities:
        - ACAD_PROXY_GRAPHIC
-       - COORDINATION_MODEL (todo)
+       - COORDINATION_MODEL
        - HELIX (todo)
        - LEADER (todo)
        - LIGHT (todo)
