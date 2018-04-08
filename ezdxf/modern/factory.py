@@ -7,6 +7,15 @@ from . import tableentries
 from . import graphics
 from . import solid3d
 from . import surface
+from . import polyline
+from . import trace
+from . import block
+from . import attrib
+from . import ray
+from .text import Text
+from .insert import Insert
+from .lwpolyline import LWPolyline
+from .ellipse import Ellipse
 from .mesh import Mesh
 from .spline import Spline
 from .mtext import MText
@@ -66,23 +75,23 @@ UPDATE_ENTITY_WRAPPERS = {
     'POINT': graphics.Point,
     'CIRCLE': graphics.Circle,
     'ARC': graphics.Arc,
-    'TRACE': graphics.Trace,
-    'SOLID': graphics.Solid,
-    '3DFACE': graphics.Face,
-    'TEXT': graphics.Text,
+    'TRACE': trace.Trace,
+    'SOLID': trace.Solid,
+    '3DFACE': trace.Face,
+    'TEXT': Text,
     'MTEXT': MText,
-    'POLYLINE': graphics.Polyline,
-    'VERTEX': graphics.Vertex,
+    'POLYLINE': polyline.Polyline,
+    'VERTEX': polyline.Vertex,
     'SEQEND': graphics.SeqEnd,
-    'LWPOLYLINE': graphics.LWPolyline,
-    'BLOCK': graphics.Block,
-    'ENDBLK': graphics.EndBlk,
-    'INSERT': graphics.Insert,
-    'ATTDEF': graphics.Attdef,
-    'ATTRIB': graphics.Attrib,
-    'ELLIPSE': graphics.Ellipse,
-    'RAY': graphics.Ray,
-    'XLINE': graphics.XLine,
+    'LWPOLYLINE': LWPolyline,
+    'BLOCK': block.Block,
+    'ENDBLK': block.EndBlk,
+    'INSERT': Insert,
+    'ATTDEF': attrib.Attdef,
+    'ATTRIB': attrib.Attrib,
+    'ELLIPSE': Ellipse,
+    'RAY': ray.Ray,
+    'XLINE': ray.XLine,
     'SHAPE': graphics.Shape,
     'SPLINE': Spline,
     'BODY': solid3d.Body,
@@ -144,7 +153,7 @@ class ModernDXFFactory(LegacyDXFFactory):
 
     def post_read_tags_fixer(self, tags):
         if tags.dxftype() == 'VERTEX':
-            graphics.Vertex.fix_tags(tags)
+            polyline.Vertex.fix_tags(tags)
 
     def next_image_key(self, checkfunc=lambda k: True):
         while True:

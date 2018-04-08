@@ -1,13 +1,8 @@
-# Purpose: dxf objects wrapper, dxf-objects are non-graphical entities
-# all dxf objects resides in the OBJECTS SECTION
 # Created: 22.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
-
 from .dxfobjects import none_subclass
 from .object_manager import ObjectManager
 from ..lldxf.tags import DXFTag
@@ -15,11 +10,11 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
 from ..tools.c23 import isstring
-from ..lldxf.const import DXFValueError, DXFKeyError
+from ..lldxf.const import DXFValueError
 
-_GROUP_TPL = """  0
+_GROUP_TPL = """0
 GROUP
-  5
+5
 0
 330
 0
@@ -27,10 +22,10 @@ GROUP
 AcDbGroup
 300
 
- 70
-     1
- 71
-     1
+70
+1
+71
+1
 """
 GROUP_ITEM_CODE = 340
 

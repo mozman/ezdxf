@@ -1,11 +1,9 @@
-# Purpose: support for the Ac1015 HATCH entity
 # Created: 24.05.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 import math
 from contextlib import contextmanager
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, DXFStructureError, group_tags, Tags
@@ -15,25 +13,25 @@ from ..tools.pattern import PATTERN  # acad standard pattern definitions
 from ..tools.rgb import rgb2int, int2rgb
 from ..lldxf.const import DXFValueError, DXFVersionError
 
-_HATCH_TPL = """  0
+_HATCH_TPL = """0
 HATCH
-  5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
- 62
-     1
+62
+1
 100
 AcDbHatch
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
 210
 0.0
@@ -41,23 +39,23 @@ AcDbHatch
 0.0
 230
 1.0
-  2
+2
 SOLID
- 70
-     1
- 71
-     0
- 91
-     0
- 75
-     1
- 76
-     1
- 98
-     1
- 10
+70
+1
+71
+0
+91
+0
+75
+1
+76
+1
+98
+1
+10
 0.0
- 20
+20
 0.0
 """
 

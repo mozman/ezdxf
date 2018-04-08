@@ -14,35 +14,35 @@ class QuadrilateralMixin(object):
         return self.set_dxf_attrib(VERTEXNAMES[num], value)
 
 
-_TRACE_TPL = """  0
+_TRACE_TPL = """0
 TRACE
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 11
+11
 0.0
- 21
+21
 0.0
- 31
+31
 0.0
- 12
+12
 0.0
- 22
+22
 0.0
- 32
+32
 0.0
- 13
+13
 0.0
- 23
+23
 0.0
- 33
+33
 0.0
 """
 

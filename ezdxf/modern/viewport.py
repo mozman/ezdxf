@@ -1,97 +1,92 @@
-# Purpose: support for the Ac1015 VIEWPORT entity
 # Created: 11.10.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.tags import DXFTag
 from ..lldxf.const import DXFAttributeError, DXFValueError
 
-_VIEWPORT_TPL = """  0
+_VIEWPORT_TPL = """0
 VIEWPORT
-  5
+5
 0
 330
 0
 100
 AcDbEntity
- 67
+67
 1
-  8
+8
 VIEWPORTS
 100
 AcDbViewport
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 1.0
- 41
+41
 1.0
- 68
+68
 2
- 69
+69
 2
- 12
+12
 0.0
- 22
+22
 0.0
- 13
+13
 0.0
- 23
+23
 0.0
- 14
+14
 0.1
- 24
+24
 0.1
- 15
+15
 0.1
- 25
+25
 0.1
- 16
+16
 0.0
- 26
+26
 0.0
- 36
+36
 0.0
- 17
+17
 0.0
- 27
+27
 0.0
- 37
+37
 0.0
- 42
+42
 50.0
- 43
+43
 0.0
- 44
+44
 0.0
- 45
+45
 1.0
- 50
+50
 0.0
- 51
+51
 0.0
- 72
+72
 100
- 90
+90
 32864
-  1
+1
 
 281
 0
- 71
+71
 0
- 74
+74
 0
 110
 0.0
@@ -111,7 +106,7 @@ AcDbViewport
 1.0
 132
 0.0
- 79
+79
 0
 146
 0.0

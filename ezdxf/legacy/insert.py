@@ -1,4 +1,3 @@
-# Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
@@ -6,27 +5,27 @@ from __future__ import unicode_literals
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
 from ..lldxf.const import DXFValueError, DXFKeyError
 
-_INSERT_TPL = """  0
+_INSERT_TPL = """0
 INSERT
-  5
+5
 0
-  8
+8
 0
-  2
+2
 BLOCKNAME
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 41
+41
 1.0
- 42
+42
 1.0
- 43
+43
 1.0
- 50
+50
 0.0
 """
 # IMPORTANT: Bug in AutoCAD 2010

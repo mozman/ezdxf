@@ -1,21 +1,15 @@
-# Purpose: support for the Ac1015 UNDERLAY entity
 # Created: 03.04.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (C) 2016-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-
-__author__ = "mozman <me@mozman.at>"
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
-
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 
-_PDFUNDERLAY_CLS = """  0
+_PDFUNDERLAY_CLS = """0
 CLASS
 1
 PDFUNDERLAY
@@ -33,33 +27,33 @@ ObjectDBX Classes
 1
 """
 
-_PDFUNDERLAY_TPL = """  0
+_PDFUNDERLAY_TPL = """0
 PDFUNDERLAY
-  5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbUnderlayReference
 340
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 41
+41
 1.0
- 42
+42
 1.0
- 43
+43
 1.0
- 50
+50
 0.0
 280
 2
@@ -172,7 +166,7 @@ class PdfUnderlay(ModernGraphicEntity):
         underlay_def.remove_reactor_handle(self.dxf.handle)
 
 
-_DWFUNDERLAY_CLS = """  0
+_DWFUNDERLAY_CLS = """0
 CLASS
 1
 DWFUNDERLAY
@@ -196,7 +190,7 @@ class DwfUnderlay(PdfUnderlay):
     CLASS = ExtendedTags.from_text(_DWFUNDERLAY_CLS)
 
 
-_DGNUNDERLAY_CLS = """  0
+_DGNUNDERLAY_CLS = """0
 CLASS
 1
 DGNUNDERLAY
@@ -220,7 +214,7 @@ class DgnUnderlay(PdfUnderlay):
     CLASS = ExtendedTags.from_text(_DGNUNDERLAY_CLS)
 
 
-_PDF_DEF_CLS = """  0
+_PDF_DEF_CLS = """0
 CLASS
 1
 PDFDEFINITION
@@ -238,9 +232,9 @@ ObjectDBX Classes
 0
 """
 # Using reactors in PdfDefinition for well defined UNDERLAYS
-_PDF_DEF_TPL = """  0
+_PDF_DEF_TPL = """0
 PDFDEFINITION
-  5
+5
 0
 102
 {ACAD_REACTORS
@@ -250,9 +244,9 @@ PDFDEFINITION
 0
 100
 AcDbUnderlayDefinition
-  1
+1
 noname.pdf
-  2
+2
 1
 """
 
@@ -277,7 +271,7 @@ class PdfDefinition(DXFEntity):
         self.set_reactors([self.dxf.owner])
 
 
-_DWF_DEF_CLS = """  0
+_DWF_DEF_CLS = """0
 CLASS
 1
 DWFDEFINITION
@@ -301,7 +295,7 @@ class DwfDefinition(PdfDefinition):
     CLASS = ExtendedTags.from_text(_DWF_DEF_CLS)
 
 
-_DGN_DEF_CLS = """  0
+_DGN_DEF_CLS = """0
 CLASS
 1
 DGNDEFINITION

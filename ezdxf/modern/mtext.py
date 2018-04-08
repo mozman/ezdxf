@@ -1,12 +1,9 @@
-# Purpose: support for the Ac1015 MTEXT entity
 # Created: 24.05.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
 from contextlib import contextmanager
 import math
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..algebra.vector import Vector
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -15,31 +12,31 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..lldxf.const import DXFValueError
 
-_MTEXT_TPL = """ 0
+_MTEXT_TPL = """0
 MTEXT
- 5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbMText
- 50
+50
 0.0
- 40
+40
 1.0
- 41
+41
 1.0
- 71
+71
 1
- 72
+72
 5
- 73
+73
 1
-  1
+1
 
 """
 

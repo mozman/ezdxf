@@ -1,29 +1,28 @@
-# Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, DXFAttributes, DefSubclass
 
-_BLOCK_TPL = """  0
+_BLOCK_TPL = """0
 BLOCK
-  5
+5
 0
-  8
+8
 0
-  2
+2
 BLOCKNAME
-  3
+3
 BLOCKNAME
- 70
+70
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
-  1
+1
 
 """
 

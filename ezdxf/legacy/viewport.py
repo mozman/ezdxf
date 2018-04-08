@@ -1,34 +1,30 @@
-# Purpose: DXF 12 viewport entity
 # Created: 10.10.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
-
 from .graphics import make_attribs, GraphicEntity
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.const import DXFStructureError, DXFValueError
 
-_VPORT_TPL = """  0
+_VPORT_TPL = """0
 VIEWPORT
-  5
+5
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 1.0
- 41
+41
 1.0
- 68
- 1
+68
+1
 1001
 ACAD
 1000
@@ -64,21 +60,21 @@ MVIEW
 1040
 0.0
 1070
-  0
+0
 1070
 100
 1070
-  1
+1
 1070
-  3
+3
 1070
-  0
+0
 1070
-  0
+0
 1070
-  0
+0
 1070
-  0
+0
 1040
 0.0
 1040
@@ -94,7 +90,7 @@ MVIEW
 1040
 0.1
 1070
- 0
+0
 1002
 {
 1002

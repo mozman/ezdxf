@@ -1,4 +1,3 @@
-# Purpose: optimizing face builder
 # Created: 04.04.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License

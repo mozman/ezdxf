@@ -1,44 +1,39 @@
-# Purpose: support for the Ac1015 MESH entity
 # Created: 24.05.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFStructureError, DXFValueError
 
-_MESH_TPL = """  0
+_MESH_TPL = """0
 MESH
-  5
+5
 0
 330
 1F
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbSubDMesh
- 71
+71
 2
- 72
+72
 0
- 91
+91
 0
- 92
+92
 0
- 93
+93
 0
- 94
+94
 0
- 95
+95
 0
 """
 

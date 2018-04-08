@@ -1,4 +1,3 @@
-# Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
@@ -7,63 +6,63 @@ from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
 from ..lldxf.const import DXFInternalEzdxfError
 from ..lldxf import const
 
-_DIMENSION_TPL = """  0
+_DIMENSION_TPL = """0
 DIMENSION
-  5
+5
 0
-  2
+2
 *BLOCKNAME
-  3
+3
 DIMSTYLE
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 11
+11
 0.0
- 21
+21
 0.0
- 31
+31
 0.0
- 12
+12
 0.0
- 22
+22
 0.0
- 32
+32
 0.0
- 70
+70
 0
-  1
+1
 
- 13
+13
 0.0
- 23
+23
 0.0
- 33
+33
 0.0
- 14
+14
 0.0
- 24
+24
 0.0
- 34
+34
 0.0
- 15
+15
 0.0
- 25
+25
 0.0
- 35
+35
 0.0
- 16
+16
 0.0
- 26
+26
 0.0
- 36
+36
 0.0
- 40
+40
 1.0
- 50
+50
 0.0
 """
 

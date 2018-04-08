@@ -1,4 +1,3 @@
-# Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
@@ -7,41 +6,41 @@ from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
 from ..lldxf.const import DXFValueError
 from ..lldxf import const
 
-_TEXT_TPL = """  0
+_TEXT_TPL = """0
 TEXT
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 1.0
-  1
+1
 TEXTCONTENT
- 50
+50
 0.0
- 51
+51
 0.0
-  7
+7
 STANDARD
- 41
+41
 1.0
- 71
+71
 0
- 72
+72
 0
- 73
+73
 0
- 11
+11
 0.0
- 21
+21
 0.0
- 31
+31
 0.0
 """
 

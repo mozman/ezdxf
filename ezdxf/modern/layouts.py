@@ -1,11 +1,7 @@
-# Purpose: AC1009 layout manager
 # Created: 21.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-# The ModelSpace is a special Layout called 'Model'
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from ..entityspace import EntitySpace
 from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ..lldxf.extendedtags import ExtendedTags

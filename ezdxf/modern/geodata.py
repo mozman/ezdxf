@@ -7,7 +7,7 @@ from ..lldxf.const import DXFStructureError, DXFValueError
 from ..lldxf.types import DXFTag
 from ..lldxf.tags import multi_tags_to_text, text_to_multi_tags
 
-_GEODATA_CLS = """  0
+_GEODATA_CLS = """0
 CLASS
 1
 GEODATA

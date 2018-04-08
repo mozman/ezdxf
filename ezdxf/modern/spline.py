@@ -1,12 +1,8 @@
-# Purpose: support for the Ac1015 SPLINE entity
 # Created: 24.05.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag
@@ -14,27 +10,27 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFValueError
 from ..algebra.bspline import knot_uniform, knot_open_uniform
 
-_SPLINE_TPL = """  0
+_SPLINE_TPL = """0
 SPLINE
-  5
+5
 0
 330
 0
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbSpline
- 70
+70
 0
- 71
+71
 3
- 72
+72
 0
- 73
+73
 0
- 74
+74
 0
 """
 spline_subclass = DefSubclass('AcDbSpline', {

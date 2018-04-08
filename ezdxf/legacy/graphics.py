@@ -1,4 +1,3 @@
-# Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
@@ -43,23 +42,23 @@ class GraphicEntity(DXFEntity):
         auditor.check_for_valid_color_index(self)
 
 
-_LINE_TPL = """  0
+_LINE_TPL = """0
 LINE
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 11
+11
 1.0
- 21
+21
 1.0
- 31
+31
 1.0
 """
 
@@ -72,17 +71,17 @@ class Line(GraphicEntity):
     })
 
 
-_POINT_TPL = """  0
+_POINT_TPL = """0
 POINT
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
 """
 
@@ -94,19 +93,19 @@ class Point(GraphicEntity):
     })
 
 
-_CIRCLE_TPL = """  0
+_CIRCLE_TPL = """0
 CIRCLE
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 1.0
 """
 
@@ -119,23 +118,23 @@ class Circle(GraphicEntity):
     })
 
 
-_ARC_TPL = """  0
+_ARC_TPL = """0
 ARC
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 1.0
- 50
+50
 0
- 51
+51
 360
 """
 
@@ -158,27 +157,27 @@ class SeqEnd(GraphicEntity):
     }))
 
 
-_SHAPE_TPL = """  0
+_SHAPE_TPL = """0
 SHAPE
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 1.0
-  2
+2
 NAME
- 50
+50
 0.0
- 41
+41
 1.0
- 51
+51
 0.0
 """
 

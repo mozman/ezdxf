@@ -9,21 +9,21 @@ from .trace import QuadrilateralMixin
 from ..lldxf import const
 
 
-_POLYLINE_TPL = """  0
+_POLYLINE_TPL = """0
 POLYLINE
-  5
+5
 0
-  8
+8
 0
- 66
+66
 1
- 70
+70
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
 """
 
@@ -266,25 +266,25 @@ class Polymesh(Polyline, PolymeshMixin):
         return mesh
 
 
-_VERTEX_TPL = """ 0
+_VERTEX_TPL = """0
 VERTEX
-  5
+5
 0
-  8
+8
 0
- 10
+10
 0.0
- 20
+20
 0.0
- 30
+30
 0.0
- 40
+40
 0.0
- 41
+41
 0.0
- 42
+42
 0.0
- 70
+70
 0
 """
 

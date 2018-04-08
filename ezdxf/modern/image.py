@@ -1,19 +1,16 @@
-# Purpose: support for the Ac1015 IMAGE entity
 # Created: 07.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
-
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.tags import DXFTag, Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ezdxf.algebra import Vector
 
 
-_IMAGE_CLS = """  0
+_IMAGE_CLS = """0
 CLASS
 1
 IMAGE
@@ -30,7 +27,7 @@ ISM
 281
 1
 """
-_IMAGE_TPL = """ 0
+_IMAGE_TPL = """0
 IMAGE
 5
 0
@@ -161,7 +158,8 @@ class Image(ModernGraphicEntity):
             reactor = self.dxffactory.wrap_handle(reactor_handle)
             self.drawing.objects.delete_entity(reactor)
 
-_IMAGE_DEF_CLS = """  0
+
+_IMAGE_DEF_CLS = """0
 CLASS
 1
 IMAGEDEF
@@ -179,7 +177,7 @@ ISM
 0
 """
 
-_IMAGE_DEF_TPL = """  0
+_IMAGE_DEF_TPL = """0
 IMAGEDEF
   5
 0
@@ -226,32 +224,32 @@ class ImageDef(DXFEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, image_def_subclass)
 
 
-_IMAGE_DEF_REACTOR_CLS = """  0
+_IMAGE_DEF_REACTOR_CLS = """0
 CLASS
-  1
-IMAGEDEF_REACTOR
-  2
-AcDbRasterImageDefReactor
-  3
-ISM
- 90
 1
- 91
+IMAGEDEF_REACTOR
+2
+AcDbRasterImageDefReactor
+3
+ISM
+90
+1
+91
 0
 280
 0
 281
 0
 """
-_IMAGE_DEF_REACTOR_TPL = """  0
+_IMAGE_DEF_REACTOR_TPL = """0
 IMAGEDEF_REACTOR
-  5
+5
 0
 330
 0
 100
 AcDbRasterImageDefReactor
- 90
+90
 2
 330
 0
@@ -268,7 +266,7 @@ class ImageDefReactor(DXFEntity):
     }))
 
 
-_RASTER_VARIABLES_CLS = """  0
+_RASTER_VARIABLES_CLS = """0
 CLASS
 1
 RASTERVARIABLES
@@ -285,7 +283,8 @@ ISM
 281
 0
 """
-_RASTER_VARIABLES_TPL = """  0
+
+_RASTER_VARIABLES_TPL = """0
 RASTERVARIABLES
 5
 0

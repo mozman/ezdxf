@@ -1,6 +1,5 @@
-# Purpose: support for the Ac1015 DIMENSION entity
 # Created: 09.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity

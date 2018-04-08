@@ -110,7 +110,7 @@ class DXFPlotSettings(DXFObject):
 
 
 # removed reactors 5 .. 102 330 102 .. 330
-_LAYOUT_TPL = """  0
+_LAYOUT_TPL = """0
 LAYOUT
 5
 0

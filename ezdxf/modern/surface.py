@@ -7,7 +7,7 @@ from .graphics import none_subclass, entity_subclass, DXFAttr, DXFAttributes, De
 from .solid3d import Body, modeler_geometry_subclass
 from . import matrix_accessors
 
-_SURFACE_TPL = """  0
+_SURFACE_TPL = """0
 SURFACE
 5
 0
@@ -330,7 +330,7 @@ class ExtrudedSurface(Surface):
         return self._get_matrix(code=47)
 
 
-_LOFTEDSURFACE_TPL = """  0
+_LOFTEDSURFACE_TPL = """0
 LOFTEDSURFACE
 5
 0
@@ -395,21 +395,21 @@ AcDbLoftedSurface
 44
 0.0
 290
- 0
+0
 291
- 1
+1
 292
- 1
+1
 293
- 1
+1
 294
- 0
+0
 295
- 0
+0
 296
- 0
+0
 297
- 1
+1
 """
 
 
@@ -488,7 +488,7 @@ class LoftedSurface(Surface):
         return self._get_matrix(code=40)
 
 
-_REVOLVEDSURFACE_TPL = """  0
+_REVOLVEDSURFACE_TPL = """0
 REVOLVEDSURFACE
 5
 0
@@ -648,7 +648,7 @@ class RevolvedSurface(Surface):
         return self._get_matrix(code=42)
 
 
-_SWEPTSURFACE_TPL = """  0
+_SWEPTSURFACE_TPL = """0
 SWEPTSURFACE
 5
 0
@@ -963,7 +963,7 @@ ObjectDBX Classes
 
 
 # TODO: related by a handle to any surface entity
-_NURBSURFACE_CLS = """  0
+_NURBSURFACE_CLS = """0
 CLASS
 1
 NURBSURFACE

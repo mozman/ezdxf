@@ -9,7 +9,7 @@ from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..tools import crypt
 
-_BODY_TPL = """  0
+_BODY_TPL = """0
 BODY
 5
 0
@@ -71,7 +71,7 @@ class Region(Body):
     TEMPLATE = ExtendedTags.from_text(_BODY_TPL.replace('BODY', 'REGION'))
 
 
-_3DSOLID_TPL = """  0
+_3DSOLID_TPL = """0
 3DSOLID
 5
 0
