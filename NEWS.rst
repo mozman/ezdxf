@@ -9,7 +9,7 @@ Version 0.8.9 - dev
        - ACAD_PROXY_GRAPHIC
        - COORDINATION_MODEL
        - HELIX
-       - LEADER (todo)
+       - LEADER
        - LIGHT (todo)
        - MLEADER (todo)
        - MLEADERSTYLE (todo)

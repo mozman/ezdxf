@@ -97,3 +97,29 @@ DIMTZIN         0 (imperial)    Zero suppression for primary units tolerance val
 DIMUPT          Off             Controls user placement of dimension line and text.
 DIMZIN          0 (imperial)    Zero suppression for primary units dimensions.
                 8 (metric)      -
+
+DIMSTYLE OVERRIDE EXAMPLE
+=========================
+
+Dimension style overrides can be applied to dimension, leader, and tolerance entities. Any overrides applied to these
+entities are stored in the entity as xdata. The overridden dimension variable group codes and the related values are
+contained within group 1002 control strings. 
+
+http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-6A4C31C0-4988-499C-B5A4-15582E433B0F
+
+1001
+ACAD
+1000
+DSTYLE
+1002
+{
+1070
+147
+1040
+0.09375
+1070
+77
+1070
+0
+1002
+}
