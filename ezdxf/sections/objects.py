@@ -3,8 +3,6 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from .abstract import AbstractSection
 from ..lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ..modern.groups import GroupManager
@@ -95,14 +93,12 @@ class ObjectsSection(AbstractSection):
         try:
             raster_vars = self.rootdict.get_entity('ACAD_IMAGE_VARS')
         except DXFKeyError:
-            owner = self.rootdict.dxf.handle
-            raster_vars = self.create_new_dxf_entity('RASTERVARIABLES', dxfattribs={
-                'owner': owner,
+            raster_vars = self.add_dxf_object_with_reactor('RASTERVARIABLES', dxfattribs={
+                'owner': self.rootdict.dxf.handle,
                 'frame': frame,
                 'quality': quality,
                 'units': units,
             })
-            raster_vars.set_reactors([owner])
             self.rootdict['ACAD_IMAGE_VARS'] = raster_vars.dxf.handle
         else:
             raster_vars.dxf.frame = frame
