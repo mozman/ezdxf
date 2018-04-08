@@ -42,7 +42,7 @@ AcDbRasterImage
 90
 0
 10
-0
+0.0
 20
 0.0
 30
@@ -90,6 +90,10 @@ image_subclass = DefSubclass('AcDbRasterImage', {
     'image_size': DXFAttr(13, xtype='Point2D'),  # Image size in pixels
     'image_def': DXFAttr(340),  # Hard reference to image def object
     'flags': DXFAttr(70, default=3),  # Image display properties:
+    # 1 = Show image
+    # 2 = Show image when not aligned with screen
+    # 4 = Use clipping boundary
+    # 8 = Transparency is on
     'clipping': DXFAttr(280, default=0),  # Clipping state: 0 = Off; 1 = On
     'brightness': DXFAttr(281, default=50),  # Brightness value (0-100; default = 50)
     'contrast': DXFAttr(282, default=50),  # Contrast value (0-100; default = 50)

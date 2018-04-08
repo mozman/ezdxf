@@ -18,7 +18,7 @@ Version 0.8.9 - dev
        - SECTION
        - TABLE (todo)
        - TOLERANCE
-       - WIPEOUT (todo)
+       - WIPEOUT
    - NEW: **basic** read support for all missing DXF objects:
        - ACAD_PROXY_OBJECT
        - ACDBNAVISWORKSMODELDEF (todo)
@@ -43,7 +43,7 @@ Version 0.8.9 - dev
        - TABLESTYLE (todo)
        - VBA_PROJECT (todo)
        - VISUALSTYLE (todo)
-       - WIPEOUTVARIABLES (todo)
+       - WIPEOUTVARIABLES
 
 Version 0.8.8 - 2018-04-02
 

@@ -281,6 +281,16 @@ class Drawing(object):
         """
         self.objects.set_raster_variables(frame=frame, quality=quality, units=units)
 
+    def set_wipeout_variables(self, frame=0):
+        """
+        Set wipeout variables.
+
+        Args:
+            frame: 0 = do not show image frame; 1 = show image frame
+
+        """
+        self.objects.set_wipeout_variables(frame=frame)
+
     def add_underlay_def(self, filename, format='ext', name=None):
         """
         Add an underlay definition to the objects section.

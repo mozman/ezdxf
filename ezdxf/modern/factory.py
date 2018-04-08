@@ -39,6 +39,7 @@ from .oleframe import OLE2Frame, OLEFrame
 from .section import Section
 from .sun import Sun
 from .tolerance import Tolerance
+from .wipeout import Wipeout, WipeoutVariables
 
 from . import dxfobjects
 from . import dxfdict
@@ -75,6 +76,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'MLEADERSTYLE': MLeaderStyle,
     'MLINESTYLE': MLineStyle,
     'SUN': Sun,
+    'WIPEOUTVARIABLES': WipeoutVariables,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -136,6 +138,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'OLE2FRAME': OLE2Frame,
     'SECTION': Section,
     'TOLERANCE': Tolerance,
+    'WIPEOUT': Wipeout,
 }
 
 

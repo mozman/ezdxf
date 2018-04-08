@@ -113,6 +113,18 @@ class ObjectsSection(AbstractSection):
             raster_vars.dxf.quality = quality
             raster_vars.dxf.units = units
 
+    def set_wipeout_variables(self, frame=0):
+        try:
+            wipeout_vars = self.rootdict.get_entity('ACAD_WIPEOUT_VARS')
+        except DXFKeyError:
+            wipeout_vars = self.add_dxf_object_with_reactor('WIPEOUTVARIABLES', dxfattribs={
+                'owner': self.rootdict.dxf.handle,
+                'frame': int(frame),
+            })
+            self.rootdict['ACAD_WIPEOUT_VARS'] = wipeout_vars.dxf.handle
+        else:
+            wipeout_vars.dxf.frame = int(frame)
+
     def add_image_def(self, filename, size_in_pixel, name=None):
         # removed auto-generated name
         # use absolute image paths for filename and AutoCAD loads images automatically
