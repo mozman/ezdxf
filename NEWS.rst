@@ -10,7 +10,7 @@ Version 0.8.9 - dev
        - COORDINATION_MODEL
        - HELIX
        - LEADER
-       - LIGHT (todo)
+       - LIGHT
        - MLEADER (todo)
        - MLEADERSTYLE (todo)
        - MLINE (todo)

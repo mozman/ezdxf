@@ -32,6 +32,7 @@ from .acad_proxy_entity import ProxyEntity, ProxyObject
 from .coordination_model import CoordinationModel
 from .helix import Helix
 from .leader import Leader
+from .light import Light
 
 from . import dxfobjects
 from . import dxfdict
@@ -119,6 +120,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'COORDINATION_MODEL': CoordinationModel,
     'HELIX': Helix,
     'LEADER': Leader,
+    'LIGHT': Light,
 }
 
 
