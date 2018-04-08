@@ -13,8 +13,8 @@ Version 0.8.9 - dev
        - LIGHT
        - MLEADER (incomplete)
        - MLINE (incomplete)
-       - OLEFRAME (todo)
-       - OLEFRAME2 (todo)
+       - OLEFRAME
+       - OLE2FRAME
        - SECTION (todo)
        - SUN (todo)
        - TABLE (todo)

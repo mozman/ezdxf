@@ -35,6 +35,7 @@ from .leader import Leader
 from .light import Light
 from .mleader import MLeader, MLeaderStyle
 from .mline import MLine, MLineStyle
+from .oleframe import OLE2Frame, OLEFrame
 
 from . import dxfobjects
 from . import dxfdict
@@ -127,6 +128,8 @@ UPDATE_ENTITY_WRAPPERS = {
     'LIGHT': Light,
     'MLEADER': MLeader,
     'MLINE': MLine,
+    'OLEFRAME': OLEFrame,
+    'OLE2FRAME': OLE2Frame,
 }
 
 
