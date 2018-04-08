@@ -6,6 +6,24 @@ from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass
 from .spline import Spline, spline_subclass
 
+_HELIX_CLS = """  0
+CLASS
+1
+HELIX
+2
+AcDbHelix
+3
+ObjectDBX Classes
+90
+4095
+91
+0
+280
+0
+281
+1
+"""
+
 _HELIX_TPL = """0
 HELIX
 5
@@ -82,3 +100,4 @@ class Helix(Spline):
     # Requires AC1021/R2007
     TEMPLATE = ExtendedTags.from_text(_HELIX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass, helix_subclass)
+    CLASS = ExtendedTags.from_text(_HELIX_CLS)

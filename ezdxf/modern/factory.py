@@ -33,6 +33,7 @@ from .coordination_model import CoordinationModel
 from .helix import Helix
 from .leader import Leader
 from .light import Light
+from .mleader import MLeader, MLeaderStyle
 
 from . import dxfobjects
 from . import dxfdict
@@ -66,6 +67,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'GEODATA': GeoData,
     'MATERIAL': Material,
     'ACAD_PROXY_OBJECT': ProxyObject,
+    'MLEADERSTYLE': MLeaderStyle,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
@@ -121,6 +123,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'HELIX': Helix,
     'LEADER': Leader,
     'LIGHT': Light,
+    'MLEADER': MLeader,
 }
 
 

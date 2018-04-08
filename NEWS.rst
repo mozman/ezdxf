@@ -12,7 +12,6 @@ Version 0.8.9 - dev
        - LEADER
        - LIGHT
        - MLEADER (todo)
-       - MLEADERSTYLE (todo)
        - MLINE (todo)
        - OLEFRAME (todo)
        - OLEFRAME2 (todo)
@@ -32,6 +31,7 @@ Version 0.8.9 - dev
        - LAYER_INDEX (todo)
        - LIGHTLIST (todo)
        - MATERIAL
+       - MLEADERSTYLE
        - MLINESTYLE (todo)
        - OBJECT_PTR (todo)
        - RENDER (todo)

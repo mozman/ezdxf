@@ -50,8 +50,8 @@ number = Regex(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 number.addParseAction(lambda t: float(t[0]))
 string_ = quotedString.addParseAction(lambda t: t[0][1:-1])
 
-EntityName = Word(alphanums)
-AttribName = Word(alphanums+'_')
+EntityName = Word(alphanums+'_')
+AttribName = EntityName
 Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
 
 AttribValue = string_ | number

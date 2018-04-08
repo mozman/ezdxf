@@ -5,7 +5,7 @@ import ezdxf
 from pathlib import Path
 
 BASE_DXF_FOLDER = r'D:\source\dxftest'
-DXF_ENTITY = 'LIGHT'
+DXF_ENTITY = 'ACAD_PROXY_GRAPHIC'
 
 
 def has_dxf_entity(filename, entity_name):

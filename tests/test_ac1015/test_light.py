@@ -10,7 +10,7 @@ def msp():
     return dwg.modelspace()
 
 
-def test_generic_leader(msp):
+def test_generic_light(msp):
     light = msp.build_and_add_entity('LIGHT', {})
     assert light.dxftype() == 'LIGHT'
     assert light.dxf.name == 'NAME'

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+# example: D:\source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf
 
 _LEADER_TPL = """0
 LEADER

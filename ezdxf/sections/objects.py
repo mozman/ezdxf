@@ -7,6 +7,7 @@ from .abstract import AbstractSection
 from ..lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ..modern.groups import GroupManager
 from ..modern.material import MaterialManager
+from ..modern.mleader import MLeaderStyleManager
 from ..entityspace import EntitySpace
 
 
@@ -72,6 +73,9 @@ class ObjectsSection(AbstractSection):
 
     def materials(self):
         return MaterialManager(self.drawing)
+
+    def mleader_styles(self):
+        return MLeaderStyleManager(self.drawing)
 
     def add_dictionary(self, owner='0'):
         return self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
