@@ -5,7 +5,14 @@
 from __future__ import unicode_literals
 from . import tableentries
 from . import graphics
-from .viewport import Viewport
+from . import polyline
+from . import trace
+from . import text
+from . import attrib
+from . import block
+from . import insert
+from . import dimension
+from . import viewport
 
 from .layouts import DXF12Layouts, DXF12BlockLayout
 from ..lldxf.const import DXFValueError, DXFKeyError
@@ -26,21 +33,21 @@ ENTITY_WRAPPERS = {
     'POINT': graphics.Point,
     'CIRCLE': graphics.Circle,
     'ARC': graphics.Arc,
-    'TRACE': graphics.Trace,
-    'SOLID': graphics.Solid,
-    '3DFACE': graphics.Face,
-    'TEXT': graphics.Text,
-    'ATTRIB': graphics.Attrib,
-    'ATTDEF': graphics.Attdef,
-    'INSERT': graphics.Insert,
-    'BLOCK': graphics.Block,
-    'ENDBLK': graphics.EndBlk,
-    'POLYLINE': graphics.Polyline,
-    'VERTEX': graphics.Vertex,
+    'TRACE': trace.Trace,
+    'SOLID': trace.Solid,
+    '3DFACE': trace.Face,
+    'TEXT': text.Text,
+    'ATTRIB': attrib.Attrib,
+    'ATTDEF': attrib.Attdef,
+    'INSERT': insert.Insert,
+    'BLOCK': block.Block,
+    'ENDBLK': block.EndBlk,
+    'POLYLINE': polyline.Polyline,
+    'VERTEX': polyline.Vertex,
     'SEQEND': graphics.SeqEnd,
     'SHAPE': graphics.Shape,
-    'VIEWPORT': Viewport,
-    'DIMENSION': graphics.Dimension,
+    'VIEWPORT': viewport.Viewport,
+    'DIMENSION': dimension.Dimension,
 }
 
 

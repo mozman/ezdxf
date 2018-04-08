@@ -2,12 +2,9 @@
 # Created: 09.03.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..legacy import graphics as legacy
+from ..legacy import dimension
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 
 
@@ -113,7 +110,7 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
 })
 
 
-class Dimension(legacy.Dimension, ModernGraphicEntity):
+class Dimension(dimension.Dimension, ModernGraphicEntity):
     TEMPLATE = None
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass)
 
