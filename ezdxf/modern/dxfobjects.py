@@ -324,7 +324,7 @@ XRECORD
 0
 330
 0
-102
+100
 AcDbXrecord
 280
 """

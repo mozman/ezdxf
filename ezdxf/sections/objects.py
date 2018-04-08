@@ -64,6 +64,11 @@ class ObjectsSection(AbstractSection):
             else:
                 rootdict.add_new_dict(name)
 
+    def add_dxf_object_with_reactor(self, dxftype, dxfattribs):
+        dxfobject = self.create_new_dxf_entity(dxftype, dxfattribs)
+        dxfobject.set_reactors([dxfattribs['owner']])
+        return dxfobject
+
     def groups(self):
         return GroupManager(self.drawing)
 
@@ -78,6 +83,12 @@ class ObjectsSection(AbstractSection):
             'owner': owner,
             'default': default,
         })
+
+    def add_xrecord(self, owner='0'):
+        return self.create_new_dxf_entity('XRECORD', dxfattribs={'owner': owner})
+
+    def add_placeholder(self, owner='0'):
+        return self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={'owner': owner})
 
     def set_raster_variables(self, frame=0, quality=1, units='m'):
         units = RASTER_UNITS.get(units, 0)
@@ -104,13 +115,12 @@ class ObjectsSection(AbstractSection):
         if name is None:
             name = filename
         image_dict = self.rootdict.get_required_dict('ACAD_IMAGE_DICT')
-        image_def = self.create_new_dxf_entity('IMAGEDEF', dxfattribs={
+        image_def = self.add_dxf_object_with_reactor('IMAGEDEF', dxfattribs={
             'owner': image_dict.dxf.handle,
             'filename': filename,
             'image_size': size_in_pixel,
         })
         image_dict[name] = image_def.dxf.handle
-        image_def.set_reactors([image_def.dxf.owner])
         return image_def
 
     def add_image_def_reactor(self, image_handle):
@@ -147,10 +157,12 @@ class ObjectsSection(AbstractSection):
         underlay_dict[key] = underlay_def.dxf.handle
         return underlay_def
 
-    def add_placeholder(self, owner='0'):
-            return self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={
-                'owner': owner
-            })
+    def add_geodata(self, owner='0', dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        dxfattribs['owner'] = owner
+        return self.add_dxf_object_with_reactor('GEODATA', dxfattribs)
+
 
 _OBJECT_TABLE_NAMES = [
     "ACAD_COLOR",

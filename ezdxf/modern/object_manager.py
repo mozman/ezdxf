@@ -57,8 +57,7 @@ class ObjectManager(object):
     def _new(self, name, dxfattribs):
         owner = self.object_dict.dxf.handle
         dxfattribs['owner'] = owner
-        obj = self.objects.create_new_dxf_entity(self.object_type, dxfattribs=dxfattribs)
-        obj.set_reactors([owner])
+        obj = self.objects.add_dxf_object_with_reactor(self.object_type, dxfattribs=dxfattribs)
         self.object_dict.add(name, obj.dxf.handle)
         return obj
 

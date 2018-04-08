@@ -574,10 +574,10 @@ class Layout(DXF12Layout):
         except DXFValueError:
             xdict = block_record.new_extension_dict()
 
-        owner = xdict.dxf.handle
-        dxfattribs['owner'] = owner
-        geodata = dwg.objects.create_new_dxf_entity('GEODATA', dxfattribs=dxfattribs)
-        geodata.set_reactors([owner])
+        geodata = dwg.objects.add_geodata(
+            owner=xdict.dxf.handle,
+            dxfattribs=dxfattribs,
+        )
         xdict['ACAD_GEOGRAPHICDATA'] = geodata.dxf.handle
         return geodata
 
