@@ -16,7 +16,6 @@ Version 0.8.9 - dev
        - OLEFRAME
        - OLE2FRAME
        - SECTION
-       - SUN (todo)
        - TABLE (todo)
        - TOLERANCE (todo)
        - WIPEOUT (todo)
@@ -39,6 +38,7 @@ Version 0.8.9 - dev
        - SORTENTSTABLE (todo)
        - SPATIAL_FILTER (todo)
        - SPATIAL_INDEX (todo)
+       - SUN
        - SUNSTUDY (todo)
        - TABLESTYLE (todo)
        - VBA_PROJECT (todo)

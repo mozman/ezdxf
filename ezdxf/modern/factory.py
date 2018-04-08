@@ -37,6 +37,7 @@ from .mleader import MLeader, MLeaderStyle
 from .mline import MLine, MLineStyle
 from .oleframe import OLE2Frame, OLEFrame
 from .section import Section
+from .sun import Sun
 
 from . import dxfobjects
 from . import dxfdict
@@ -72,6 +73,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'ACAD_PROXY_OBJECT': ProxyObject,
     'MLEADERSTYLE': MLeaderStyle,
     'MLINESTYLE': MLineStyle,
+    'SUN': Sun,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
