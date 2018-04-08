@@ -8,7 +8,7 @@ Version 0.8.9 - dev
    - NEW: **basic** read support for all missing DXF entities:
        - ACAD_PROXY_GRAPHIC
        - COORDINATION_MODEL
-       - HELIX (todo)
+       - HELIX
        - LEADER (todo)
        - LIGHT (todo)
        - MLEADER (todo)
