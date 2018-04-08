@@ -2,10 +2,7 @@
 # Created: 24.05.2015
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 import math
 from contextlib import contextmanager
 

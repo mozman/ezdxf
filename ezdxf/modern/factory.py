@@ -19,7 +19,7 @@ from .underlay import DwfDefinition, DwfUnderlay
 from .underlay import DgnDefinition, DgnUnderlay
 from .dxflayout import DXFPlotSettings, DXFLayout
 from .dimension import Dimension
-
+from .acad_proxy_entity import ProxyEntity, ProxyObject
 from . import dxfobjects
 from .geodata import GeoData
 from .material import Material
@@ -98,6 +98,8 @@ UPDATE_ENTITY_WRAPPERS = {
     'DWFUNDERLAY': DwfUnderlay,
     'DGNUNDERLAY': DgnUnderlay,
     'DIMENSION': Dimension,
+    'ACAD_PROXY_ENTITY': ProxyEntity,
+    'ACAD_PROXY_OBJECT': ProxyObject,
 }
 
 

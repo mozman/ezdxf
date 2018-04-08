@@ -4,27 +4,65 @@ News
 
 Version 0.8.9 - dev
 
-   * Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
-   * NEW: support for MATERIAL object
+   - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
+   - NEW: **basic** read support for all missing DXF entities:
+       - ACAD_PROXY_GRAPHIC
+       - COORDINATION_MODEL (todo)
+       - HELIX (todo)
+       - LEADER (todo)
+       - LIGHT (todo)
+       - MLEADER (todo)
+       - MLEADERSTYLE (todo)
+       - MLINE (todo)
+       - OLEFRAME (todo)
+       - OLEFRAME2 (todo)
+       - SECTION (todo)
+       - SUN (todo)
+       - TABLE (todo)
+       - TOLERANCE (todo)
+       - WIPEOUT (todo)
+   - NEW: **basic** read support for all missing DXF objects:
+       - ACAD_PROXY_OBJECT
+       - ACDBNAVISWORKSMODELDEF (todo)
+       - DATATABLE (todo)
+       - DICTIONARYVAR (todo)
+       - FIELD (todo)
+       - IDBUFFER (todo)
+       - LAYER_FILTER (todo)
+       - LAYER_INDEX (todo)
+       - LIGHTLIST (todo)
+       - MATERIAL
+       - MLINESTYLE (todo)
+       - OBJECT_PTR (todo)
+       - RENDER (todo)
+       - SECTION (todo)
+       - SORTENTSTABLE (todo)
+       - SPATIAL_FILTER (todo)
+       - SPATIAL_INDEX (todo)
+       - SUNSTUDY (todo)
+       - TABLESTYLE (todo)
+       - VBA_PROJECT (todo)
+       - VISUALSTYLE (todo)
+       - WIPEOUTVARIABLES (todo)
 
 Version 0.8.8 - 2018-04-02
 
-   * Release notes: https://ezdxf.mozman.at/release-v0-8-8.html
-   * NEW: read/write support for GEODATA entity
-   * NEW: read/(limited)write support for SURFACE, EXTRUDEDSURFACE, REVOLVEDSURFACE, LOFTEDSURFACE and SWEPTSURFACE entity
-   * NEW: support for extension dictionaries
-   * NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
-   * NEW: add_spline_approx(), approximate B-spline by a reduced count of control points
-   * NEW: ezdxf.setup_linetypes(dwg), setup standard line types
-   * NEW: ezdxf.setup_styles(dwg), setup standard text styles
-   * NEW: LWPolyline.vertices() yields all points as (x, y) tuples in OCS, LWPolyline.dxf.elevation is the z-axis value
-   * NEW: LWPolyline.vertices_in_wcs() yields all points as (x, y, z) tuples in WCS
-   * NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
-   * NEW: bulge related function in module ezdxf.algebra.bulge
-   * NEW: Object Coordinate System support by DXFEntity.ocs() and OCS() class in module ezdxf.algebra
-   * NEW: User Coordinate System support by UCS() class in module ezdxf.algebra
-   * CHANGE: DXFEntity.set_app_data() and Entity.set_xdata accept also list of tuples as tags, DXFTag() is not required
-   * BUGFIX: entity structure validator excepts group code >= 1000 before XDATA section (used in AutoCAD Civil 3D and AutoCAD Map 3D)
+   - Release notes: https://ezdxf.mozman.at/release-v0-8-8.html
+   - NEW: read/write support for GEODATA entity
+   - NEW: read/(limited)write support for SURFACE, EXTRUDEDSURFACE, REVOLVEDSURFACE, LOFTEDSURFACE and SWEPTSURFACE entity
+   - NEW: support for extension dictionaries
+   - NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
+   - NEW: add_spline_approx(), approximate B-spline by a reduced count of control points
+   - NEW: ezdxf.setup_linetypes(dwg), setup standard line types
+   - NEW: ezdxf.setup_styles(dwg), setup standard text styles
+   - NEW: LWPolyline.vertices() yields all points as (x, y) tuples in OCS, LWPolyline.dxf.elevation is the z-axis value
+   - NEW: LWPolyline.vertices_in_wcs() yields all points as (x, y, z) tuples in WCS
+   - NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
+   - NEW: bulge related function in module ezdxf.algebra.bulge
+   - NEW: Object Coordinate System support by DXFEntity.ocs() and OCS() class in module ezdxf.algebra
+   - NEW: User Coordinate System support by UCS() class in module ezdxf.algebra
+   - CHANGE: DXFEntity.set_app_data() and Entity.set_xdata accept also list of tuples as tags, DXFTag() is not required
+   - BUGFIX: entity structure validator excepts group code >= 1000 before XDATA section (used in AutoCAD Civil 3D and AutoCAD Map 3D)
 
 Version 0.8.7 - 2018-03-04
 
