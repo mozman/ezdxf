@@ -29,7 +29,6 @@ from .underlay import DgnDefinition, DgnUnderlay
 from .dxflayout import DXFPlotSettings, DXFLayout
 from .dimension import Dimension
 from .acad_proxy_entity import ProxyEntity, ProxyObject
-from .coordination_model import CoordinationModel
 from .helix import Helix
 from .leader import Leader
 from .light import Light
@@ -128,7 +127,6 @@ UPDATE_ENTITY_WRAPPERS = {
     'DGNUNDERLAY': DgnUnderlay,
     'DIMENSION': Dimension,
     'ACAD_PROXY_ENTITY': ProxyEntity,
-    'COORDINATION_MODEL': CoordinationModel,
     'HELIX': Helix,
     'LEADER': Leader,
     'LIGHT': Light,
