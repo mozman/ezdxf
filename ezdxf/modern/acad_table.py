@@ -113,7 +113,7 @@ AcDbTable
 
 block_reference_subclass = DefSubclass('AcDbBlockReference', {
     'block_name': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
-    'block_insert': DXFAttr(10, xtype='Point3D'),  # Insertion point
+    'insert': DXFAttr(10, xtype='Point3D'),  # Insertion point
 })
 
 table_subclass = DefSubclass('AcDbTable', {

@@ -246,5 +246,5 @@ If you just need the raw DXF tags use::
     tags = Drawing.entitydb[handle]  # raises DXFKeyError, if handle does not exist
     tags = Drawing.entitydb.get(handle)  # returns a default value, if handle does not exist (None by default)
 
-type of tags: :class:`ClassifiedTags`
+type of tags: :class:`ExtendedTags`
 
