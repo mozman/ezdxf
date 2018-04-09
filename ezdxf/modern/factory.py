@@ -39,6 +39,7 @@ from .section import Section
 from .sun import Sun
 from .tolerance import Tolerance
 from .wipeout import Wipeout, WipeoutVariables
+from .acad_table import ACADTable
 
 from . import dxfobjects
 from . import dxfdict
@@ -137,6 +138,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'SECTION': Section,
     'TOLERANCE': Tolerance,
     'WIPEOUT': Wipeout,
+    'ACAD_TABLE': ACADTable,
 }
 
 
