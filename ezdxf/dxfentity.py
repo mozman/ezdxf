@@ -246,9 +246,8 @@ class DXFEntity(object):
             # no subclass is subclass index 0
             return self.tags.subclasses[subclass_key]
         except IndexError:
-            raise DXFInternalEzdxfError('Subclass index error in {dxftype}(#{handle} subclass={index}.'.format(
-                dxftype=self.dxftype(),
-                handle=self.tags.get_handle(),
+            raise DXFInternalEzdxfError('Subclass index error in {entity} subclass={index}.'.format(
+                entity=self.__str__(),
                 index=subclass_key,
             ))
         except TypeError:  # slow access subclass by name as string
@@ -342,8 +341,9 @@ class DXFEntity(object):
         return OCS(extrusion)
 
     def destroy(self):
-        # TODO: remove XDictionary idf exists
-        pass
+        if self.has_extension_dict():
+            xdict = self.get_extension_dict()
+            self.drawing.objects.delete_entity(xdict)
 
     def has_app_data(self, appid):
         return self.tags.has_app_data(appid)
