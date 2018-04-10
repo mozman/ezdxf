@@ -9,7 +9,7 @@ from .dxfobjects import none_subclass
 
 ENTRY_NAME_CODE = 3
 
-_DICT_TPL = """  0
+_DICT_TPL = """0
 DICTIONARY
 5
 0
@@ -61,12 +61,14 @@ class DXFDictionary(DXFObject):
     def keys(self):
         """
         Generator for the dictionary's keys.
+
         """
         return (item[0] for item in self.items())
 
     def items(self):
         """
         Generator for the dictionary's items (``(key, value)`` pairs).
+
         """
         key = ""
         for code, value in self.AcDbDictinary:
@@ -78,37 +80,42 @@ class DXFDictionary(DXFObject):
     def __getitem__(self, key):
         """
         Return the value for *key* if *key* is in the dictionary, else raises a :class:`KeyError()`.
+
         """
         return self.get(key)
 
     def __setitem__(self, key, value):
         """
         Add item *(key, value)* to dictionary.
+
         """
         return self.add(key, value)
 
     def __delitem__(self, key):
         """
-        Remove element *key* from the dictionary. *KeyError* if *key* is not contained in the
-        dictionary.
+        Remove element *key* from the dictionary. *KeyError* if *key* is not contained in the dictionary.
+
         """
         return self.remove(key)
 
     def __contains__(self, key):
         """
         Return *True* if the dictionary has a key *key*, else *False*.
+
         """
         return False if self._get_item_index(key) is None else True
 
     def __len__(self):
         """
         Return the number of items in the dictionary.
+
         """
         return self.count()
 
     def count(self):
         """
         Return the number of items in the dictionary.
+
         """
         return sum(1 for tag in self.AcDbDictinary if tag.code == ENTRY_NAME_CODE)
 
@@ -116,6 +123,7 @@ class DXFDictionary(DXFObject):
         """
         Return the value (handle) for *key* if *key* is in the dictionary, else *default*, raises a *DXFKeyError*
         for *default*=DXFKeyError.
+
         """
         index = self._get_item_index(key)
         if index is None:
@@ -131,6 +139,7 @@ class DXFDictionary(DXFObject):
     def get_entity(self, key):
         """
         Get object referenced by handle associated by *key* as wrapped entity, raises a *KeyError* if *key* not exists.
+
         """
         handle = self.get(key)
         if self.drawing is not None:
@@ -142,6 +151,7 @@ class DXFDictionary(DXFObject):
         """
         Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
         data and defaults to ``350`` (soft-owner handle).
+
         """
         index = self._get_item_index(key)
         value_tag = DXFTag(code, value)
@@ -212,6 +222,7 @@ class DXFDictionary(DXFObject):
 
         Args:
             key: name of the sub dictionary
+            
         """
         dxf_dict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)
         self.add(key, dxf_dict.dxf.handle)
@@ -236,7 +247,7 @@ class DXFDictionary(DXFObject):
             self.delete_hard_owned_entries()
 
 
-_DICT_WITH_DEFAULT_CLS = """  0
+_DICT_WITH_DEFAULT_CLS = """0
 CLASS
 1
 ACDBDICTIONARYWDFLT
@@ -254,7 +265,7 @@ ObjectDBX Classes
 0
 """
 
-_DICT_WITH_DEFAULT_TPL = """  0
+_DICT_WITH_DEFAULT_TPL = """0
 ACDBDICTIONARYWDFLT
 5
 0
@@ -286,11 +297,12 @@ class DXFDictionaryWithDefault(DXFDictionary):
         """
         Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
         value. Parameter *default* is always ignored!
+
         """
         return super(DXFDictionaryWithDefault, self).get(key, default=self.dxf.default)
 
 
-_DICTIONARYVAR_CLS = """  0
+_DICTIONARYVAR_CLS = """0
 CLASS
 1
 DICTIONARYVAR
@@ -308,7 +320,7 @@ ObjectDBX Classes
 0
 """
 
-_DICTIONARYVAR_TPL = """  0
+_DICTIONARYVAR_TPL = """0
 DICTIONARYVAR
 5
 0
