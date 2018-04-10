@@ -466,27 +466,6 @@ class TestGetLayoutR2000:
         assert circle.get_layout() is None
 
 
-class TestExtensionDict:
-    @pytest.fixture(scope='class')
-    def dwg(self):
-        return ezdxf.new('R2000')
-
-    def test_new_extension_dict(self, dwg):
-        msp = dwg.modelspace()
-        entity = msp.add_line((0, 0), (10, 0))
-        with pytest.raises(DXFValueError):
-            entity.get_extension_dict()
-
-        xdict = entity.new_extension_dict()
-        assert xdict.dxftype() == 'DICTIONARY'
-        assert xdict.dxf.owner == entity.dxf.handle
-        assert entity.has_app_data('{ACAD_XDICTIONARY')
-        assert entity.has_extension_dict() is True
-
-        xdict2 = entity.get_extension_dict()
-        assert xdict.dxf.handle == xdict2.dxf.handle
-
-
 class TestGetLayoutR12:
     @pytest.fixture(scope='class')
     def dwg(self):

@@ -22,7 +22,7 @@ AcDbDictionary
 """
 
 dictionary_subclass = DefSubclass('AcDbDictionary', {
-    'hard_owned': DXFAttr(280),
+    'hard_owned': DXFAttr(280),  # Hard-owner flag. If set to 1, indicates that elements of the dictionary are to be treated as hard-owned
     'cloning': DXFAttr(281),
     # 0=not applicable; 1=keep existing; 2=use clone; 3=<xref>$0$<name>; 4=$0$<name>; 5=Unmangle name
 })
@@ -136,8 +136,14 @@ class DXFDictionary(DXFObject):
     def remove(self, key):
         """
         Remove element *key* from the dictionary. Raises *DXFKeyError* if *key* is not contained in the
-        dictionary.
+        dictionary. Deletes hard owned DXF objects from OBJECTS section.
+
         """
+        if self.get_dxf_attrib('hard_owned', False):
+            entity = self.get_entity(key)
+            # Presumption: hard owned DXF objects always reside in the OBJECTS section
+            self.drawing.objects.delete_entity(entity)
+
         index = self._get_item_index(key)
         if index is None:
             raise DXFKeyError("KeyError: '{}'".format(key))
@@ -146,7 +152,8 @@ class DXFDictionary(DXFObject):
 
     def discard(self, key):
         """
-        Remove *key* from the dictionary if it is present.
+        Remove *key* from the dictionary, if it is present. Does NOT delete hard owned entities!
+
         """
         self._discard(self._get_item_index(key))
 
@@ -161,11 +168,24 @@ class DXFDictionary(DXFObject):
         return None
 
     def clear(self):
+        """
+        Removes all entries from DXFDictionary, and also deletes all hard owned DXF objects from OBJECTS section.
+
+        """
+        if self.get_dxf_attrib('hard_owned', False):
+            self.delete_hard_owned_entries()
         try:
             start_index = self.AcDbDictinary.tag_index(code=ENTRY_NAME_CODE)
         except DXFValueError:  # no entries found
             return
         del self.AcDbDictinary[start_index:]
+
+    def delete_hard_owned_entries(self):
+        # Presumption: hard owned DXF objects always reside in the OBJECTS section
+        objects = self.drawing.objects
+        wrap = self.dxffactory.wrap_handle
+        for key, handle in self.items():
+            objects.delete_entity(wrap(handle))
 
     def add_new_dict(self, key):
         """
@@ -191,6 +211,10 @@ class DXFDictionary(DXFObject):
         else:
             codes = None
         auditor.check_pointer_target_exists(self, ignore_codes=codes)
+
+    def destroy(self):
+        if self.get_dxf_attrib('hard_owned', False):
+            self.delete_hard_owned_entries()
 
 
 _DICT_WITH_DEFAULT_CLS = """  0

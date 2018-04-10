@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
-from ..lldxf.tags import DXFStructureError
+from ..lldxf.tags import DXFStructureError, DXFValueError
 from ..lldxf.extendedtags import get_xtags_linker
 from ..query import EntityQuery
 
@@ -59,7 +59,10 @@ class AbstractSection(object):
         self._entity_space.add_handle(handle)
 
     def remove_handle(self, handle):
-        self._entity_space.remove(handle)
+        try:
+            self._entity_space.remove(handle)
+        except ValueError:
+            raise DXFValueError('Handle #{} not in entity space.'.format(handle))
 
     def delete_entity(self, entity):
         self.remove_handle(entity.dxf.handle)
