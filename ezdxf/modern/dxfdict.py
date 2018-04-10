@@ -22,13 +22,28 @@ AcDbDictionary
 """
 
 dictionary_subclass = DefSubclass('AcDbDictionary', {
-    'hard_owned': DXFAttr(280),  # Hard-owner flag. If set to 1, indicates that elements of the dictionary are to be treated as hard-owned
-    'cloning': DXFAttr(281),
-    # 0=not applicable; 1=keep existing; 2=use clone; 3=<xref>$0$<name>; 4=$0$<name>; 5=Unmangle name
+    'hard_owned': DXFAttr(280, default=0),  # Hard-owner flag.
+    # If set to 1, indicates that elements of the dictionary are to be treated as hard-owned
+    'cloning': DXFAttr(281, default=1),  # Duplicate record cloning flag (determines how to merge duplicate entries):
+    # 0 = not applicable
+    # 1 = keep existing
+    # 2 = use clone
+    # 3 = <xref>$0$<name>
+    # 4 = $0$<name>
+    # 5 = Unmangle name
 })
 
 
 class DXFDictionary(DXFObject):
+    """
+    AutoCAD maintains items such as mline styles and group definitions as objects in dictionaries.
+    Other applications are free to create and use their own dictionaries as they see fit. The prefix "ACAD_" is reserved
+    for use by AutoCAD applications.
+
+    DXFDictionary entries are (key, handle) values, so it can only store handles and nothing else, to store other
+    values, you have to create a DXFDictionaryVar object, and store its handle.
+
+    """
     TEMPLATE = ExtendedTags.from_text(_DICT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
@@ -38,6 +53,10 @@ class DXFDictionary(DXFObject):
     @property
     def AcDbDictinary(self):
         return self.tags.subclasses[1]
+
+    @property
+    def is_hard_owner(self):
+        return bool(self.get_dxf_attrib('hard_owned', False))
 
     def keys(self):
         """
@@ -139,7 +158,7 @@ class DXFDictionary(DXFObject):
         dictionary. Deletes hard owned DXF objects from OBJECTS section.
 
         """
-        if self.get_dxf_attrib('hard_owned', False):
+        if self.is_hard_owner:
             entity = self.get_entity(key)
             # Presumption: hard owned DXF objects always reside in the OBJECTS section
             self.drawing.objects.delete_entity(entity)
@@ -172,7 +191,7 @@ class DXFDictionary(DXFObject):
         Removes all entries from DXFDictionary, and also deletes all hard owned DXF objects from OBJECTS section.
 
         """
-        if self.get_dxf_attrib('hard_owned', False):
+        if self.is_hard_owner:
             self.delete_hard_owned_entries()
         try:
             start_index = self.AcDbDictinary.tag_index(code=ENTRY_NAME_CODE)
@@ -305,12 +324,40 @@ DictionaryVariables
 
 
 class DXFDictionaryVar(DXFObject):
+    """
+    DICTIONARYVAR objects are used by AutoCAD as a means to store named values in the database for setvar / getvar
+    purposes without the need to add entries to the DXF HEADER section. System variables that are stored as
+    DICTIONARYVAR objects are the following:
+
+        - DEFAULTVIEWCATEGORY
+        - DIMADEC
+        - DIMASSOC
+        - DIMDSEP
+        - DRAWORDERCTL
+        - FIELDEVAL
+        - HALOGAP
+        - HIDETEXT
+        - INDEXCTL
+        - INDEXCTL
+        - INTERSECTIONCOLOR
+        - INTERSECTIONDISPLAY
+        - MSOLESCALE
+        - OBSCOLOR
+        - OBSLTYPE
+        - OLEFRAME
+        - PROJECTNAME
+        - SORTENTS
+        - UPDATETHUMBNAIL
+        - XCLIPFRAME
+        - XCLIPFRAME
+
+    """
     TEMPLATE = ExtendedTags.from_text(_DICTIONARYVAR_TPL)
     CLASS = ExtendedTags.from_text(_DICTIONARYVAR_CLS)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('DictionaryVariables', {
-            'schema': DXFAttr(280, default=0),
+            'schema': DXFAttr(280, default=0),  # Object schema number (currently set to 0)
             'value': DXFAttr(1),
         }),
     )
