@@ -5,7 +5,7 @@ News
 Version 0.8.9 - dev
 
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
-   - NEW: **basic** read support for all missing DXF entities:
+   - `Basic` read support for all missing DXF entities/objects:
        - ACAD_PROXY_GRAPHIC
        - HELIX
        - LEADER
@@ -18,7 +18,6 @@ Version 0.8.9 - dev
        - TABLE (incomplete)
        - TOLERANCE
        - WIPEOUT
-   - NEW: **basic** read support for all missing DXF objects:
        - ACAD_PROXY_OBJECT
        - DATATABLE
        - DICTIONARYVAR
