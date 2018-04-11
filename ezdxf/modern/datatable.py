@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
 
 
-_DATATABLE_CLS = """  0
+_DATATABLE_CLS = """0
 CLASS
 1
 DATATABLE
@@ -23,7 +23,7 @@ ObjectDBX Classes
 0
 """
 
-_DATATABLE_TPL = """  0
+_DATATABLE_TPL = """0
 DATATABLE
 5
 0

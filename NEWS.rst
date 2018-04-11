@@ -35,7 +35,7 @@ Version 0.8.9 - dev
        - SPATIAL_FILTER (todo)
        - SUN
        - SUNSTUDY (todo)
-       - TABLESTYLE (todo)
+       - TABLESTYLE (incomplete)
        - VBA_PROJECT (todo)
        - VISUALSTYLE (todo)
        - WIPEOUTVARIABLES

@@ -40,6 +40,7 @@ from .sun import Sun
 from .tolerance import Tolerance
 from .wipeout import Wipeout, WipeoutVariables
 from .acad_table import ACADTable
+from .tablestyle import TableStyle
 
 from . import dxfobjects
 from . import dxfdict
@@ -77,6 +78,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'MLINESTYLE': MLineStyle,
     'SUN': Sun,
     'WIPEOUTVARIABLES': WipeoutVariables,
+    'TABLESTYLE': TableStyle,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

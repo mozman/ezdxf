@@ -9,6 +9,7 @@ from ..modern.groups import GroupManager
 from ..modern.material import MaterialManager
 from ..modern.mleader import MLeaderStyleManager
 from ..modern.mline import MLineStyleManager
+from ..modern.tablestyle import TableStyleManager
 from ..entityspace import EntitySpace
 
 
@@ -80,6 +81,9 @@ class ObjectsSection(AbstractSection):
 
     def mline_styles(self):
         return MLineStyleManager(self.drawing)
+
+    def table_styles(self):
+        return TableStyleManager(self.drawing)
 
     def add_dictionary(self, owner='0'):
         return self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
