@@ -222,7 +222,7 @@ class DXFDictionary(DXFObject):
 
         Args:
             key: name of the sub dictionary
-            
+
         """
         dxf_dict = self.drawing.objects.add_dictionary(owner=self.dxf.handle)
         self.add(key, dxf_dict.dxf.handle)

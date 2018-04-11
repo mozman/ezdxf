@@ -15,7 +15,7 @@ Version 0.8.9 - dev
        - OLEFRAME
        - OLE2FRAME
        - SECTION
-       - TABLE (todo)
+       - TABLE (incomplete)
        - TOLERANCE
        - WIPEOUT
    - NEW: **basic** read support for all missing DXF objects:
