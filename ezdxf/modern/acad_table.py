@@ -71,44 +71,6 @@ AcDbTable
 0
 96
 0
-141
-11.0
-141
-9.0
-141
-9.0
-141
-9.0
-142
-70.40972631711483
-142
-70.40972631711483
-142
-70.40972631711483
-142
-70.40972631711483
-142
-70.40972631711483
-171
-1
-172
-0
-173
-0
-174
-0
-175
-5
-176
-1
-91
-262144
-178
-0
-145
-0.0
-92
-0
 """
 
 block_reference_subclass = DefSubclass('AcDbBlockReference', {
@@ -123,7 +85,7 @@ table_subclass = DefSubclass('AcDbTable', {
     'horizontal_direction': DXFAttr(11),  # Horizontal direction vector
     'table_value': DXFAttr(90),  # Flag for table value (unsigned integer)
     'n_rows': DXFAttr(91),  # Number of rows
-    'n_col': DXFAttr(92),  # Number of columns
+    'n_cols': DXFAttr(92),  # Number of columns
     'override_flag': DXFAttr(93),  # Flag for an override
     'border_color_override_flag': DXFAttr(94),  # Flag for an override of border color
     'border_lineweight_override_flag': DXFAttr(95),  # Flag for an override of border lineweight
@@ -206,7 +168,7 @@ table_subclass = DefSubclass('AcDbTable', {
     #
     # AutoCAD 2007 and before:
     # 177: Cell override flag value (before AutoCAD 2007)
-    #  92: Extended cell flags (from AutoCAD 2007)
+    #  92: Extended cell flags (from AutoCAD 2007), COLLISION: group code also used by n_cols
     # 301: Text string in a cell. If the string is shorter than 250 characters, all characters appear in code 302. If
     #      the string is longer than 250 characters, it is divided into chunks of 250 characters. The chunks are
     #      contained in one or more code 303 codes. If code 393 codes are used, the last group is a code 1 and is
