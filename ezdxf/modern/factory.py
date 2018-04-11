@@ -44,7 +44,7 @@ from .acad_table import ACADTable
 from . import dxfobjects
 from . import dxfdict
 from .xrecord import XRecord
-from .dxfdatatable import DXFDataTable
+from .datatable import DataTable
 from .geodata import GeoData
 from .material import Material
 from .groups import DXFGroup
@@ -61,7 +61,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'PLOTSETTINGS': DXFPlotSettings,
     'LAYOUT': DXFLayout,
     'XRECORD': XRecord,
-    'DATATABLE': DXFDataTable,
+    'DATATABLE': DataTable,
     'GROUP': DXFGroup,
     'ACDBPLACEHOLDER': dxfobjects.ACDBPlaceHolder,
     'IMAGEDEF': ImageDef,

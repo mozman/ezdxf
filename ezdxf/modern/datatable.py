@@ -1,5 +1,5 @@
-# Created: 22.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Created: 08.04.2018
+# Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
@@ -54,9 +54,11 @@ Column1
 """
 
 
-class DXFDataTable(DXFObject):
+class DataTable(DXFObject):
     """
     Data storage (non-graphical entity), organized as column, rows table.
+
+    Requires DXF version AC1021/R2007
 
     each column start with
     93              >>> start first column
