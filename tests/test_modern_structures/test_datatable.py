@@ -10,6 +10,6 @@ def dwg():
 
 
 def test_generic_data_table(dwg):
-    sun = dwg.objects.create_new_dxf_entity('DATATABLE', {})
-    assert sun.dxftype() == 'DATATABLE'
-    assert sun.dxf.version == 2
+    datatable = dwg.objects.create_new_dxf_entity('DATATABLE', {})
+    assert datatable.dxftype() == 'DATATABLE'
+    assert datatable.dxf.version == 2

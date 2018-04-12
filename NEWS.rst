@@ -22,7 +22,8 @@ Version 0.8.9 - dev
        - DATATABLE
        - DICTIONARYVAR
        - FIELD (todo)
-       - IDBUFFER (todo)
+       - FIELDLIST (todo) (undocumented)
+       - IDBUFFER
        - LAYER_FILTER (todo)
        - LIGHTLIST (todo)
        - MATERIAL

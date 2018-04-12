@@ -10,7 +10,7 @@ def dwg():
 
 
 def test_generic_table_style(dwg):
-    sun = dwg.objects.create_new_dxf_entity('TABLESTYLE', {})
-    assert sun.dxftype() == 'TABLESTYLE'
-    assert sun.dxf.version == 0
-    assert sun.dxf.name == 'Standard'
+    table_style = dwg.objects.create_new_dxf_entity('TABLESTYLE', {})
+    assert table_style.dxftype() == 'TABLESTYLE'
+    assert table_style.dxf.version == 0
+    assert table_style.dxf.name == 'Standard'

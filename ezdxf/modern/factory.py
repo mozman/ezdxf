@@ -41,6 +41,7 @@ from .tolerance import Tolerance
 from .wipeout import Wipeout, WipeoutVariables
 from .acad_table import ACADTable
 from .tablestyle import TableStyle
+from .idbuffer import IDBuffer
 
 from . import dxfobjects
 from . import dxfdict
@@ -79,6 +80,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'SUN': Sun,
     'WIPEOUTVARIABLES': WipeoutVariables,
     'TABLESTYLE': TableStyle,
+    'IDBUFFER': IDBuffer,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
