@@ -42,6 +42,7 @@ from .wipeout import Wipeout, WipeoutVariables
 from .acad_table import ACADTable
 from .tablestyle import TableStyle
 from .idbuffer import IDBuffer
+from .fieldlist import FieldList
 
 from . import dxfobjects
 from . import dxfdict
@@ -81,6 +82,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'WIPEOUTVARIABLES': WipeoutVariables,
     'TABLESTYLE': TableStyle,
     'IDBUFFER': IDBuffer,
+    'FIELDLIST': FieldList,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

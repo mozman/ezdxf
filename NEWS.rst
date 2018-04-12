@@ -22,7 +22,7 @@ Version 0.8.9 - dev
        - DATATABLE
        - DICTIONARYVAR
        - FIELD (todo)
-       - FIELDLIST (todo) (undocumented)
+       - FIELDLIST (not documented by Autodesk)
        - IDBUFFER
        - LAYER_FILTER (todo)
        - LIGHTLIST (todo)
