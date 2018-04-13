@@ -11,6 +11,7 @@ from ..lldxf.const import STD_SCALES, DXFValueError
 class DXF12Layouts(object):
     """
     The Layout container.
+
     """
     def __init__(self, drawing):
         entities = drawing.sections.entities
@@ -19,6 +20,13 @@ class DXF12Layouts(object):
         paper_space = entities.active_layout_entities()
         self._paperspace = DXF12Layout(paper_space, drawing.dxffactory, 1)
         entities.clear()  # remove entites for entities section -> stored in layouts
+
+    def __iter__(self):
+        yield self._modelspace
+        yield self._paperspace
+
+    def __len__(self):
+        return 2
 
     def modelspace(self):
         return self._modelspace
@@ -52,6 +60,7 @@ class BaseLayout(GraphicsFactory):
     Base class for DXF12Layout() and DXF12BlockLayout()
 
     Entities are wrapped into class GraphicEntity() or inherited.
+
     """
     def __init__(self, dxffactory, entity_space):
         super(BaseLayout, self).__init__(dxffactory)
@@ -63,6 +72,7 @@ class BaseLayout(GraphicsFactory):
     def __iter__(self):
         """
         Iterate over all block entities, yielding class GraphicEntity() or inherited.
+
         """
         wrap = self._dxffactory.wrap_handle
         for handle in self._entity_space:
@@ -107,6 +117,7 @@ class BaseLayout(GraphicsFactory):
     def add_entity(self, entity):
         """
         Add entity to entity space but not to the drawing database.
+
         """
         self._entity_space.append(entity.dxf.handle)
         self._set_paperspace(entity)
@@ -116,6 +127,7 @@ class BaseLayout(GraphicsFactory):
     def unlink_entity(self, entity):
         """
         Delete entity from entity space but not from the drawing database.
+
         """
         self._entity_space.delete_entity(entity)
         entity.dxf.paperspace = -1  # set invalid paper space
@@ -125,6 +137,7 @@ class BaseLayout(GraphicsFactory):
     def delete_entity(self, entity):
         """
         Delete entity from entity space and drawing database.
+
         """
         self.entitydb.delete_entity(entity)  # 1. delete from drawing database
         self.unlink_entity(entity)  # 2. unlink from entity space
@@ -135,6 +148,7 @@ class BaseLayout(GraphicsFactory):
 
         Deletes only entities from this layout. Important because ALL layout entities are stored in just one entity
         space.
+
         """
         # noinspection PyTypeChecker
         for entity in list(self):  # temp list, because delete modifies the base data structure of the iterator
@@ -146,6 +160,7 @@ class BaseLayout(GraphicsFactory):
     def get_entity_by_handle(self, handle):
         """
         Get entity by handle as GraphicEntity() or inherited.
+
         """
         return self._dxffactory.wrap_handle(handle)
 
@@ -175,6 +190,7 @@ class BaseLayout(GraphicsFactory):
 class DXF12Layout(BaseLayout):
     """
     Layout representation
+
     """
     def __init__(self, entityspace, dxffactory, paperspace=0):
         super(DXF12Layout, self).__init__(dxffactory, entityspace)
@@ -282,6 +298,7 @@ class DXF12Layout(BaseLayout):
     def get_paper_limits(self):
         """
         Returns paper limits in plot paper units
+
         """
         limmin = self.drawing.header.get('$PLIMMIN', (0, 0))
         limmax = self.drawing.header.get('$PLIMMAX', (0, 0))
@@ -296,6 +313,7 @@ class DXF12Layout(BaseLayout):
         """
         Get all VIEWPORT entities defined in the layout. Returns a list of Viewport() objects, sorted by id, the first
         entity is always the paper space view with the id=1.
+
         """
         vports =  [entity for entity in self if entity.dxftype() == 'VIEWPORT']
         vports.sort(key=lambda e: e.dxf.id)
@@ -406,6 +424,7 @@ class DXF12BlockLayout(BaseLayout):
     def attdefs(self):
         """
         Iterate over all ATTDEF entities.
+
         """
         return (entity for entity in self if entity.dxftype() == 'ATTDEF')
 
@@ -415,6 +434,7 @@ class DXF12BlockLayout(BaseLayout):
 
         Args:
             tag (str): tag name
+
         """
         return self.get_attdef(tag) is not None
 
@@ -455,6 +475,7 @@ class DXF12BlockLayout(BaseLayout):
     def add_entity(self, entity):
         """
         Add entity to the block entity space.
+
         """
         self.add_handle(entity.dxf.handle)
         entity.dxf.paperspace = 0  # set a model space, because paper space layout is a different class
@@ -464,6 +485,7 @@ class DXF12BlockLayout(BaseLayout):
     def add_handle(self, handle):
         """
         Add entity by handle to the block entity space.
+
         """
         self._entity_space.append(handle)
 
@@ -491,5 +513,6 @@ class DXF12BlockLayout(BaseLayout):
     def get_const_attdefs(self):
         """
         Returns a generator for constant ATTDEF entities.
+        
         """
         return (attdef for attdef in self.attdefs() if attdef.is_const)
