@@ -513,6 +513,6 @@ class DXF12BlockLayout(BaseLayout):
     def get_const_attdefs(self):
         """
         Returns a generator for constant ATTDEF entities.
-        
+
         """
         return (attdef for attdef in self.attdefs() if attdef.is_const)

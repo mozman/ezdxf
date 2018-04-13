@@ -10,10 +10,8 @@ LAYOUT_NAMES = ('*PAPER_SPACE', '$PAPER_SPACE', '*MODEL_SPACE', '$MODEL_SPACE')
 
 def _get_all_block_references(dwg):
     block_references = []
-    for layout in dwg.layouts:
+    for layout in dwg.layouts_and_blocks():
         block_references.extend(layout.query('INSERT'))
-    for block in dwg.blocks:
-        block_references.extend(block.query('INSERT'))
     return block_references
 
 

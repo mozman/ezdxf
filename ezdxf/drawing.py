@@ -194,6 +194,18 @@ class Drawing(object):
         else:
             raise DXFVersionError('new_layout() not supported for DXF version R12.')
 
+    def layouts_and_blocks(self):
+        """
+        Iterate over all layouts (mode space and paper space) and all block definitions.
+
+        Returns: yields Layout() objects
+
+        """
+        for layout in self.layouts:
+            yield layout
+        for block in self.blocks:
+            yield block
+
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':
             try:

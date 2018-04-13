@@ -166,6 +166,12 @@ Drawing Methods
     Delete paper space layout *name* and all its entities. Available only for DXF version AC1015
     or newer, AC1009 supports only one paper space and you can't delete it.
 
+.. method:: Drawing.layouts_and_blocks()
+
+    Iterate over all layouts (mode space and paper space) and all block definitions.
+
+    :param returns: yields :class:`Layout` objects
+
 .. method:: Drawing.add_image_def(filename, size_in_pixel, name=None)
 
     Add an :class:`ImageDef` entity to the drawing (objects section). `filename` is the image file name as relative or
