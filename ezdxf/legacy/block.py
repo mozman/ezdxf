@@ -3,6 +3,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.const import LAYOUT_NAMES
 
 _BLOCK_TPL = """0
 BLOCK
@@ -49,6 +50,15 @@ class Block(GraphicEntity):
     EXTERNAL = 16  # This block is externally dependent
     RESOLVED = 32  # This is a resolved external reference, or dependent of an external reference (ignored on input)
     REFERENCED = 64  # This definition is a referenced external reference (ignored on input)
+
+    @property
+    def is_layout_block(self):
+        """
+        True if block is a model space or paper space block definition.
+
+        """
+        name = self.dxf.name.upper()
+        return any(name.startswith(layout_name) for layout_name in LAYOUT_NAMES)
 
 
 class EndBlk(GraphicEntity):

@@ -6,6 +6,7 @@ Version 0.8.9 - dev
 
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
    - NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
+   - NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
    - `Basic` read support for all missing DXF entities/objects:
        - ACAD_PROXY_GRAPHIC
        - HELIX

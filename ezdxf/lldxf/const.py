@@ -388,3 +388,5 @@ RASTER_UNITS = {
     'yd': 7,
     'mi': 8,
 }
+
+LAYOUT_NAMES = ('*PAPER_SPACE', '$PAPER_SPACE', '*MODEL_SPACE', '$MODEL_SPACE')

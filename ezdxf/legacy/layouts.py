@@ -404,6 +404,14 @@ class DXF12BlockLayout(BaseLayout):
         block.dxf.name = new_name
         block.dxf.name2 = new_name
 
+    @property
+    def is_layout_block(self):
+        """
+        True if block is a model space or paper space block definition.
+
+        """
+        return self.block.is_layout_block
+
     def add_attdef(self, tag, insert=(0, 0), text='', dxfattribs=None):
         """
         Create an ATTDEF entity in the drawing database and add it to the block entity space.

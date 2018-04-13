@@ -52,6 +52,19 @@ def test_create_block(blocks):
     assert block in blocks
 
 
+def test_is_layout_block(blocks):
+    block = blocks.new('TEST')
+    assert block.is_layout_block is False
+    msp = blocks.new('*Model_Space')
+    assert msp.is_layout_block is True
+    msp = blocks.new('$Model_Space')
+    assert msp.is_layout_block is True
+    psp = blocks.new('*Paper_Space')
+    assert psp.is_layout_block is True
+    psp = blocks.new('$Paper_Space')
+    assert psp.is_layout_block is True
+
+
 def test_overwrite_existing_block(blocks):
     block = blocks.new('TEST')
     assert block in blocks

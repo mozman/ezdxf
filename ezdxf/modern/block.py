@@ -2,7 +2,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..legacy.graphics import GraphicEntity
+from ..legacy import block
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, ModernGraphicEntityExtension, ModernGraphicEntity
 
@@ -47,7 +47,7 @@ block_subclass = (
 )
 
 
-class Block(GraphicEntity, ModernGraphicEntityExtension):
+class Block(block.Block, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *block_subclass)
 

@@ -384,6 +384,10 @@ BlockLayout
 
    Get the associated DXF *BLOCK* entity.
 
+.. attribute:: BlockLayout.is_layout_block
+
+    True if block is a model space or paper space block definition.
+
 .. method:: BlockLayout.add_attdef(tag, insert=(0, 0), dxfattribs=None)
 
    Add an :class:`Attdef` element, `tag` is the attribute-tag, `insert` is the

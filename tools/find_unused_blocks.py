@@ -5,7 +5,6 @@ import ezdxf
 from pathlib import Path
 
 BASE_DXF_FOLDER = r'D:\source\dxftest'
-LAYOUT_NAMES = ('*PAPER_SPACE', '$PAPER_SPACE', '*MODEL_SPACE', '$MODEL_SPACE')
 
 
 def _get_all_block_references(dwg):
@@ -16,13 +15,9 @@ def _get_all_block_references(dwg):
 
 
 def _find_unused_blocks(dwg):
-    def is_layout(block):
-        name = block.name.upper()
-        return any(name.startswith(layout_name) for layout_name in LAYOUT_NAMES)
-
     references = _get_all_block_references(dwg)
     used_block_names = set(entity.dxf.name for entity in references)
-    existing_blocks = set(block.name for block in dwg.blocks if not is_layout(block))
+    existing_blocks = set(block.name for block in dwg.blocks if not block.is_layout_block)
     unused_blocks = existing_blocks - used_block_names
     references_without_definition = used_block_names - existing_blocks
 
