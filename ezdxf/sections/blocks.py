@@ -3,11 +3,8 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 import logging
-
-from ..lldxf.const import DXFStructureError, DXFAttributeError
+from ..lldxf.const import DXFStructureError, DXFAttributeError, DXFValueError
 from ..tools.c23 import isstring
 from ..lldxf import const
 from ..lldxf.extendedtags import get_xtags_linker
@@ -154,7 +151,11 @@ class BlocksSection(object):
         self.__delitem__(old_name)
         self.add(block_layout)  # add new dict entry
 
-    def delete_block(self, name):
+    def delete_block(self, name, save=False):
+        if save:
+            block_refs = self.drawing.query("INSERT[name='{}']".format(name))
+            if len(block_refs):
+                raise DXFValueError('Block "{}" is still in use and can not deleted.'.format(name))
         block_layout = self[name]
         block_layout.destroy()
         self.__delitem__(name)

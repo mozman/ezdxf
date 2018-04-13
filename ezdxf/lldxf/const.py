@@ -389,4 +389,4 @@ RASTER_UNITS = {
     'mi': 8,
 }
 
-LAYOUT_NAMES = ('*PAPER_SPACE', '$PAPER_SPACE', '*MODEL_SPACE', '$MODEL_SPACE')
+LAYOUT_NAMES = ('*paper_space', '$paper_space', '*model_space', '$model_space')

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from datetime import datetime
 import io
 import logging
+from itertools import chain
 from .database import EntityDB
 from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
 from .lldxf.loader import load_dxf_structure, fill_database
@@ -17,6 +18,8 @@ from .tools.juliandate import juliandate
 from .lldxf import repair
 from .tools import guid
 from .tracker import Tracker
+from .query import EntityQuery
+from .groupby import groupby
 logger = logging.getLogger('ezdxf')
 
 
@@ -399,6 +402,38 @@ class Drawing(object):
         self._update_metadata()
         tagwriter = TagWriter(stream, write_handles=handles)
         self.sections.write(tagwriter)
+
+    def query(self, query='*'):
+        """
+        Entity query over all layouts and blocks.
+
+        Excluding the OBJECTS section!
+
+        Args:
+            query: query string
+
+        Returns: EntityQuery() container
+
+        """
+        layouts = list(self.layouts_and_blocks())
+        return EntityQuery(chain(*layouts), query)
+
+    def groupby(self, dxfattrib="", key=None):
+        """
+        Groups a DXF entities of all layouts and blocks by an DXF attribute or a key function.
+
+        Excluding the OBJECTS section!
+
+        Args:
+            dxfattrib: grouping DXF attribute like 'layer'
+            key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for ignore
+                 this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+
+        Returns: dict
+
+        """
+        layouts = list(self.layouts_and_blocks())
+        return groupby(chain(*layouts), dxfattrib, key)
 
     def cleanup(self, groups=True):
         """

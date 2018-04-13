@@ -12,7 +12,9 @@ from .groupby import groupby
 
 
 class EntityQuery(Sequence):
-    """EntityQuery is a result container, which is filled with dxf entities matching the query string.
+    """
+
+    EntityQuery is a result container, which is filled with dxf entities matching the query string.
     It is possible to add entities to the container (extend), remove entities from the container and
     to filter the container.
 
@@ -65,7 +67,7 @@ class EntityQuery(Sequence):
         '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
     """
 
-    def __init__(self, entities, query='*'):
+    def __init__(self, entities=None, query='*'):
         """
         Setup container with entities matching the initial query.
 
@@ -73,7 +75,9 @@ class EntityQuery(Sequence):
             entities: sequence of wrapped DXF entities (at least GraphicEntity class)
             query: query string, see class documentation
         """
-        if query == '*':
+        if entities is None:
+            self.entities = []
+        elif query == '*':
             self.entities = list(entities)
         else:
             match = entity_matcher(query)

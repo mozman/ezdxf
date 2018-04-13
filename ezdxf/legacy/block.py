@@ -57,7 +57,7 @@ class Block(GraphicEntity):
         True if block is a model space or paper space block definition.
 
         """
-        name = self.dxf.name.upper()
+        name = self.dxf.name.lower()
         return any(name.startswith(layout_name) for layout_name in LAYOUT_NAMES)
 
 

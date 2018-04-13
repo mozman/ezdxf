@@ -17,8 +17,8 @@ def groupby(entities, dxfattrib='', key=None):
         key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for ignore
              this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
 
-    Returns:
-        dict
+    Returns: dict
+
     """
     if all((dxfattrib, key)):
         raise DXFValueError('Specify a dxfattrib or a key function, but not both.')

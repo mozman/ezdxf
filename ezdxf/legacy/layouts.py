@@ -164,7 +164,6 @@ class BaseLayout(GraphicsFactory):
         """
         return self._dxffactory.wrap_handle(handle)
 
-    # noinspection PyTypeChecker
     def query(self, query='*'):
         return EntityQuery(iter(self), query)
 

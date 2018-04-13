@@ -24,6 +24,10 @@ class TestEntityQuery_AC1009(unittest.TestCase):
     VERSION = 'AC1009'
     dwg = make_test_drawing(VERSION)
 
+    def test_empty_init(self):
+        result = EntityQuery()
+        self.assertEqual(len(result), 0)
+
     def test_select_all(self):
         modelspace = self.dwg.modelspace()
         result = EntityQuery(modelspace, '*')
