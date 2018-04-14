@@ -6,6 +6,12 @@ Version 0.8.9 - dev
 
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
    - NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
+   - NEW: Drawing.chain_layouts_and_blocks(), chain entity spaces of all layouts and blocks. Yields an iterator for all
+          entities in all layouts and blocks
+   - NEW: Drawing.query(), entity query over all layouts and blocks
+   - NEW: Drawing.groupby(), groups DXF entities of all layouts and blocks by an DXF attribute or a key function
+   - CHANGE: Drawing.block.delete_block(name, save=True), new parameter save, check if block is still referenced (raises DXFValueError)
+   - CHANGE: Drawing.block.delete_all_block(save=True), new parameter save, enables reference check (raises DXFValueError)
    - NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
    - `Basic` read support for all missing DXF entities/objects:
        - ACAD_PROXY_GRAPHIC

@@ -164,7 +164,7 @@ class BlocksSection(object):
         self.__delitem__(old_name)
         self.add(block_layout)  # add new dict entry
 
-    def delete_block(self, name, save=False):
+    def delete_block(self, name, save=True):
         """
         Delete block. If save is True, check if block is still referenced.
 
@@ -183,9 +183,12 @@ class BlocksSection(object):
         block_layout.destroy()
         self.__delitem__(name)
 
-    def delete_all_blocks(self):
+    def delete_all_blocks(self, save=True):
         """
         Delete all blocks except layout blocks (model space or paper space).
+
+        Args:
+            save: check if block is still referenced
 
         """
         # do not delete blocks defined for layouts
@@ -197,7 +200,7 @@ class BlocksSection(object):
         else:
             for block_name in list(self._block_layouts.keys()):
                 if block_name not in ('$model_space', '$paper_space'):
-                    self.delete_block(block_name)
+                    self.delete_block(block_name, save=save)
 
     # end of public interface
 

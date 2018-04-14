@@ -429,7 +429,7 @@ class Drawing(object):
 
     def groupby(self, dxfattrib="", key=None):
         """
-        Groups a DXF entities of all layouts and blocks by an DXF attribute or a key function.
+        Groups DXF entities of all layouts and blocks by an DXF attribute or a key function.
 
         Excluding the OBJECTS section!
 

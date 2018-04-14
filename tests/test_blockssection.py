@@ -126,7 +126,7 @@ def test_save_delete_block(blocks, ac1009):
 
 
 def test_delete_all_blocks(blocks):
-    blocks.delete_all_blocks()
+    blocks.delete_all_blocks(save=False)
     blocks = list(blocks)
     # assure not deleting layout blocks
     assert 2 == len(blocks)
