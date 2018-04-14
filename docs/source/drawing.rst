@@ -170,7 +170,9 @@ Drawing Methods
 
     Iterate over all layouts (mode space and paper space) and all block definitions.
 
-    :param returns: yields :class:`Layout` objects
+.. method:: Drawing.chain_layouts_and_blocks()
+
+    Chain entity spaces of all layouts and blocks. Yields an iterator for all entities in all layouts and blocks.
 
 .. method:: Drawing.add_image_def(filename, size_in_pixel, name=None)
 
@@ -236,6 +238,29 @@ Drawing Methods
     If you don't need access to binary data of DXF entities, you can compress them in memory for a lower
     memory footprint, you can set :code:`ezdxf.options.compress_binray_data = True` to compress binary data
     for every drawing you open, but data compression cost time, so this option isn't active by default.
+
+.. method:: Drawing.query(query='*')
+
+    Entity query over all layouts and blocks. (see also: :ref:`name query string` and :ref:`entity queries`)
+
+    Excluding the OBJECTS section!
+
+    :param query: query string
+
+    :returns: :class:`EntityQuery` container
+
+
+.. method:: Drawing.qroupby(dxfattrib="", key=None)
+
+    Groups DXF entities of all layouts and blocks by an DXF attribute or a key function. (see also: :ref:`groupby`)
+
+    Excluding the OBJECTS section!
+
+    :param dxfattrib: grouping DXF attribute like 'layer'
+    :param key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for
+        ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+
+    :returns: dict
 
 .. _low_level_access_to_dxf_entities:
 

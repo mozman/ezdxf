@@ -172,7 +172,9 @@ class BlocksSection(object):
             name: block name (case insensitive)
             save: check if block is still referenced
 
-        Raises: DXFValueError() if block is still referenced, and save is True
+        Raises:
+            DXFKeyError() if block not exists
+            DXFValueError() if block is still referenced, and save is True
 
         """
         if save:
