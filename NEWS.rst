@@ -32,7 +32,7 @@ Version 0.8.9 - dev
        - FIELD (incomplete)
        - FIELDLIST (not documented by Autodesk)
        - IDBUFFER
-       - LAYER_FILTER (todo)
+       - LAYER_FILTER
        - LIGHTLIST (todo)
        - MATERIAL
        - MLEADERSTYLE

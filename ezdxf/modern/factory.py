@@ -44,6 +44,7 @@ from .tablestyle import TableStyle
 from .idbuffer import IDBuffer
 from .fieldlist import FieldList
 from .field import Field
+from .layer_filter import LayerFilter
 
 from . import dxfobjects
 from . import dxfdict
@@ -85,6 +86,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'IDBUFFER': IDBuffer,
     'FIELDLIST': FieldList,
     'FIELD': Field,
+    'LAYER_FILTER': LayerFilter,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
