@@ -10,8 +10,8 @@ Version 0.8.9 - dev
           entities in all layouts and blocks
    - NEW: Drawing.query(), entity query over all layouts and blocks
    - NEW: Drawing.groupby(), groups DXF entities of all layouts and blocks by an DXF attribute or a key function
-   - CHANGE: Drawing.block.delete_block(name, save=True), new parameter save, check if block is still referenced (raises DXFValueError)
-   - CHANGE: Drawing.block.delete_all_block(save=True), new parameter save, enables reference check (raises DXFValueError)
+   - CHANGE: Drawing.block.delete_block(name, safe=True), new parameter save, check if block is still referenced (raises DXFValueError)
+   - CHANGE: Drawing.block.delete_all_block(safe=True), new parameter save, ignores blocks still referenced if safe is True
    - NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
    - `Basic` read support for all missing DXF entities/objects:
        - ACAD_PROXY_GRAPHIC

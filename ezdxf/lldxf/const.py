@@ -84,6 +84,10 @@ class DXFInvalidLayerName(DXFValueError):
     pass
 
 
+class DXFBlockInUseError(DXFValueError):
+    pass
+
+
 APP_DATA_MARKER = 102
 SUBCLASS_MARKER = 100
 XDATA_MARKER = 1001

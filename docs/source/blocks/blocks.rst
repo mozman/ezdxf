@@ -35,22 +35,22 @@ The :class:`BlocksSection` class manages all block definitions of a drawing docu
 
     Rename block 'old_name' in 'new_name'.
 
-.. method:: BlockSection.delete_block(name, save=True)
+.. method:: BlockSection.delete_block(name, safe=True)
 
-    Delete block *name*. If *save* is True, check if block is still referenced.
+    Delete block *name*. If *safe* is True, check if block is still referenced.
 
     :param name: block name (case insensitive)
-    :param save: check if block is still referenced
+    :param safe: check if block is still referenced
 
     :raises DXFKeyError: if block *name* does not exist
-    :raises DXFValueError: if block *name* is still referenced, and *save* is True
+    :raises DXFBlockInUseError: if block *name* is still referenced, and *safe* is True
 
-.. method:: BlockSection.delete_all_blocks(save=True)
+.. method:: BlockSection.delete_all_blocks(safe=True)
 
     Delete all blocks except layout blocks (model space or paper space).
 
-    :param save: check if block is still referenced before deleting
-    :raises DXFValueError: if a block is still referenced, and *save* is True
+    :param safe: check if block is still referenced before deleting and ignore them if so
+
 
 ========= ==========
 type_char Anonymous Block Type

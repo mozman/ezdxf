@@ -122,11 +122,11 @@ def test_save_delete_block(blocks, ac1009):
     msp = ac1009.modelspace()
     msp.add_blockref('_archtick', insert=(0, 0))
     with pytest.raises(ezdxf.DXFValueError):
-        blocks.delete_block('_ArchTick', save=True)
+        blocks.delete_block('_ArchTick', safe=True)
 
 
 def test_delete_all_blocks(blocks):
-    blocks.delete_all_blocks(save=False)
+    blocks.delete_all_blocks(safe=False)
     blocks = list(blocks)
     # assure not deleting layout blocks
     assert 2 == len(blocks)

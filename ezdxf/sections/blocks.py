@@ -4,7 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 import logging
-from ..lldxf.const import DXFStructureError, DXFAttributeError, DXFValueError
+from ..lldxf.const import DXFStructureError, DXFAttributeError, DXFValueError, DXFBlockInUseError
 from ..tools.c23 import isstring
 from ..lldxf import const
 from ..lldxf.extendedtags import get_xtags_linker
@@ -135,13 +135,15 @@ class BlocksSection(object):
         """
         Create name for an anonymous block.
 
-        type_char
-            U = *U### anonymous blocks
-            E = *E### anonymous non-uniformly scaled blocks
-            X = *X### anonymous hatches
-            D = *D### anonymous dimensions
-            A = *A### anonymous groups
-            T = *T### anonymous ACAD_TABLE
+        Args:
+            type_char: letter
+
+                U = *U### anonymous blocks
+                E = *E### anonymous non-uniformly scaled blocks
+                X = *X### anonymous hatches
+                D = *D### anonymous dimensions
+                A = *A### anonymous groups
+                T = *T### anonymous ACAD_TABLE content
 
         """
         while True:
@@ -164,45 +166,58 @@ class BlocksSection(object):
         self.__delitem__(old_name)
         self.add(block_layout)  # add new dict entry
 
-    def delete_block(self, name, save=True):
+    def delete_block(self, name, safe=True):
         """
         Delete block. If save is True, check if block is still referenced.
 
         Args:
             name: block name (case insensitive)
-            save: check if block is still referenced
+            safe: check if block is still referenced
 
         Raises:
             DXFKeyError() if block not exists
             DXFValueError() if block is still referenced, and save is True
 
         """
-        if save:
+        if safe:
             block_refs = self.drawing.query("INSERT[name=='{}']i".format(name))  # ignore case
             if len(block_refs):
-                raise DXFValueError('Block "{}" is still in use and can not deleted. (Hint: block name is case insensitive!)'.format(name))
+                raise DXFBlockInUseError('Block "{}" is still in use and can not deleted. (Hint: block name is case insensitive!)'.format(name))
         block_layout = self[name]
         block_layout.destroy()
         self.__delitem__(name)
 
-    def delete_all_blocks(self, save=True):
+    def delete_all_blocks(self, safe=True):
         """
         Delete all blocks except layout blocks (model space or paper space).
 
         Args:
-            save: check if block is still referenced
+            safe: check if block is still referenced and ignore them
 
         """
+        if safe:
+            # block names are case insensitive
+            references = set(entity.dxf.name.lower() for entity in self.drawing.query('INSERT'))
+
+        def is_save(name):
+            if safe:
+                return name.lower() not in references
+            else:
+                return True
+
         # do not delete blocks defined for layouts
         if self.drawing.dxfversion > 'AC1009':
             layout_keys = set(layout.layout_key for layout in self.drawing.layouts)
             for block in list(self):
-                if block.block_record_handle not in layout_keys:
-                    self.delete_block(block.name)
+                name = block.name
+                if block.block_record_handle not in layout_keys and is_save(name):
+                    # safety check is already done
+                    self.delete_block(name, safe=False)
         else:
             for block_name in list(self._block_layouts.keys()):
-                if block_name not in ('$model_space', '$paper_space'):
-                    self.delete_block(block_name, save=save)
+                if block_name not in ('$model_space', '$paper_space') and is_save(block_name):
+                    # safety check is already done
+                    self.delete_block(block_name, safe=False)
 
     # end of public interface
 
