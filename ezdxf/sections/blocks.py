@@ -89,8 +89,6 @@ class BlocksSection(object):
         """
         self._block_layouts[self.key(block_layout.name)] = block_layout
 
-    # start of public interface
-
     def __iter__(self):
         return iter(self._block_layouts.values())
 
@@ -192,7 +190,7 @@ class BlocksSection(object):
         Delete all blocks except layout blocks (model space or paper space).
 
         Args:
-            safe: check if block is still referenced and ignore them
+            safe: check if block is still referenced and ignore them if so
 
         """
         if safe:
@@ -200,10 +198,7 @@ class BlocksSection(object):
             references = set(entity.dxf.name.lower() for entity in self.drawing.query('INSERT'))
 
         def is_save(name):
-            if safe:
-                return name.lower() not in references
-            else:
-                return True
+            return name.lower() not in references if safe else True
 
         # do not delete blocks defined for layouts
         if self.drawing.dxfversion > 'AC1009':
@@ -218,8 +213,6 @@ class BlocksSection(object):
                 if block_name not in ('$model_space', '$paper_space') and is_save(block_name):
                     # safety check is already done
                     self.delete_block(block_name, safe=False)
-
-    # end of public interface
 
     def write(self, tagwriter):
         tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
