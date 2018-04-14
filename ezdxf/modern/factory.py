@@ -43,6 +43,7 @@ from .acad_table import ACADTable
 from .tablestyle import TableStyle
 from .idbuffer import IDBuffer
 from .fieldlist import FieldList
+from .field import Field
 
 from . import dxfobjects
 from . import dxfdict
@@ -83,6 +84,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'TABLESTYLE': TableStyle,
     'IDBUFFER': IDBuffer,
     'FIELDLIST': FieldList,
+    'FIELD': Field,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

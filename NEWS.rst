@@ -29,7 +29,7 @@ Version 0.8.9 - dev
        - ACAD_PROXY_OBJECT
        - DATATABLE
        - DICTIONARYVAR
-       - FIELD (todo)
+       - FIELD (incomplete)
        - FIELDLIST (not documented by Autodesk)
        - IDBUFFER
        - LAYER_FILTER (todo)
