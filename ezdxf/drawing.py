@@ -209,6 +209,16 @@ class Drawing(object):
         for block in self.blocks:
             yield block
 
+    def chain_layouts_and_blocks(self):
+        """
+        Chain entity spaces of all layouts and blocks. Yields an iterator for all entities in all layouts and blocks.
+
+        Returns: yields all entities as DXFEntity() objects
+
+        """
+        layouts = list(self.layouts_and_blocks())
+        return chain(*layouts)
+
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':
             try:
@@ -415,8 +425,7 @@ class Drawing(object):
         Returns: EntityQuery() container
 
         """
-        layouts = list(self.layouts_and_blocks())
-        return EntityQuery(chain(*layouts), query)
+        return EntityQuery(self.chain_layouts_and_blocks(), query)
 
     def groupby(self, dxfattrib="", key=None):
         """
@@ -432,8 +441,7 @@ class Drawing(object):
         Returns: dict
 
         """
-        layouts = list(self.layouts_and_blocks())
-        return groupby(chain(*layouts), dxfattrib, key)
+        return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)
 
     def cleanup(self, groups=True):
         """

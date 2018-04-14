@@ -80,7 +80,12 @@ class BlocksSection(object):
                 handles = []
 
     def add(self, block_layout):
-        """ Add or replace a BlockLayout() object.
+        """
+        Add or replace a block object.
+
+        Args:
+            block_layout: BlockLayout() object
+
         """
         self._block_layouts[self.key(block_layout.name)] = block_layout
 
@@ -105,7 +110,10 @@ class BlocksSection(object):
             return default
 
     def new(self, name, base_point=(0, 0), dxfattribs=None):
-        """ Create a new named block. """
+        """
+        Create a new named block.
+
+        """
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['name'] = name
@@ -124,7 +132,8 @@ class BlocksSection(object):
         return block
 
     def anonymous_blockname(self, type_char):
-        """ Create name for an anonymous block.
+        """
+        Create name for an anonymous block.
 
         type_char
             U = *U### anonymous blocks
@@ -132,6 +141,8 @@ class BlocksSection(object):
             X = *X### anonymous hatches
             D = *D### anonymous dimensions
             A = *A### anonymous groups
+            T = *T### anonymous ACAD_TABLE
+
         """
         while True:
             self._anonymous_block_counter += 1
@@ -140,7 +151,9 @@ class BlocksSection(object):
                 return blockname
 
     def rename_block(self, old_name, new_name):
-        """ Renames the block and the associated block record.
+        """
+        Renames the block and the associated block record.
+
         """
         block_layout = self.get(old_name)  # block key is lower case
         block_layout.name = new_name
@@ -152,15 +165,29 @@ class BlocksSection(object):
         self.add(block_layout)  # add new dict entry
 
     def delete_block(self, name, save=False):
+        """
+        Delete block. If save is True, check if block is still referenced.
+
+        Args:
+            name: block name (case insensitive)
+            save: check if block is still referenced
+
+        Raises: DXFValueError() if block is still referenced, and save is True
+
+        """
         if save:
-            block_refs = self.drawing.query("INSERT[name='{}']".format(name))
+            block_refs = self.drawing.query("INSERT[name=='{}']i".format(name))  # ignore case
             if len(block_refs):
-                raise DXFValueError('Block "{}" is still in use and can not deleted.'.format(name))
+                raise DXFValueError('Block "{}" is still in use and can not deleted. (Hint: block name is case insensitive!)'.format(name))
         block_layout = self[name]
         block_layout.destroy()
         self.__delitem__(name)
 
     def delete_all_blocks(self):
+        """
+        Delete all blocks except layout blocks (model space or paper space).
+
+        """
         # do not delete blocks defined for layouts
         if self.drawing.dxfversion > 'AC1009':
             layout_keys = set(layout.layout_key for layout in self.drawing.layouts)

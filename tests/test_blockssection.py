@@ -117,6 +117,14 @@ def test_delete_block(blocks, ac1009):
         assert entity.dxf.handle not in db
 
 
+def test_save_delete_block(blocks, ac1009):
+    # block names are case insensitive
+    msp = ac1009.modelspace()
+    msp.add_blockref('_archtick', insert=(0, 0))
+    with pytest.raises(ezdxf.DXFValueError):
+        blocks.delete_block('_ArchTick', save=True)
+
+
 def test_delete_all_blocks(blocks):
     blocks.delete_all_blocks()
     blocks = list(blocks)

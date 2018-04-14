@@ -65,8 +65,8 @@ class EntityQuery(Sequence):
     examples:
         'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
         '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
-    """
 
+    """
     def __init__(self, entities=None, query='*'):
         """
         Setup container with entities matching the initial query.
@@ -74,6 +74,7 @@ class EntityQuery(Sequence):
         Args:
             entities: sequence of wrapped DXF entities (at least GraphicEntity class)
             query: query string, see class documentation
+
         """
         if entities is None:
             self.entities = []
@@ -86,6 +87,7 @@ class EntityQuery(Sequence):
     def __len__(self):
         """
         Count of result entities.
+
         """
         return len(self.entities)
 
@@ -95,6 +97,7 @@ class EntityQuery(Sequence):
     def extend(self, entities, query='*', unique=True):
         """
         Extent the query container by entities matching a additional query.
+
         """
         self.entities.extend(EntityQuery(entities, query))
         if unique:
@@ -104,6 +107,7 @@ class EntityQuery(Sequence):
     def remove(self, query='*'):
         """
         Remove all entities from result container matching this additional query.
+
         """
         handles_of_entities_to_remove = frozenset(entity.dxf.handle for entity in self.query(query))
         self.entities = [entity for entity in self.entities if entity.dxf.handle not in handles_of_entities_to_remove]
@@ -113,6 +117,7 @@ class EntityQuery(Sequence):
         Returns a new result container with all entities matching this additional query.
 
         raises: ParseException (pyparsing.py)
+
         """
         return EntityQuery(self.entities, query)
 
@@ -125,8 +130,8 @@ class EntityQuery(Sequence):
             key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for
             ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
 
-        Returns:
-            dict
+        Returns: dict
+
         """
         return groupby(self.entities, dxfattrib, key)
 
