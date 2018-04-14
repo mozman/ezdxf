@@ -204,10 +204,7 @@ class Drawing(object):
         Returns: yields Layout() objects
 
         """
-        for layout in self.layouts:
-            yield layout
-        for block in self.blocks:
-            yield block
+        return chain(self.layouts, self.blocks)
 
     def chain_layouts_and_blocks(self):
         """
