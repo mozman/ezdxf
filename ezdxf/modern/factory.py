@@ -45,6 +45,7 @@ from .idbuffer import IDBuffer
 from .fieldlist import FieldList
 from .field import Field
 from .layer_filter import LayerFilter
+from .sortentstable import SortEntitiesTable
 
 from . import dxfobjects
 from . import dxfdict
@@ -87,6 +88,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'FIELDLIST': FieldList,
     'FIELD': Field,
     'LAYER_FILTER': LayerFilter,
+    'SORTENTSTABLE': SortEntitiesTable,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

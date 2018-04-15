@@ -214,7 +214,7 @@ class Drawing(object):
 
         """
         layouts = list(self.layouts_and_blocks())
-        return chain(*layouts)
+        return chain.from_iterable(layouts)
 
     def get_active_layout_key(self):
         if self.dxfversion > 'AC1009':

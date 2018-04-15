@@ -38,6 +38,9 @@ class IDBuffer(DXFObject):
     def set_ids(self, handles):
         self.buffer_subclass[self.BUFFER_START_INDEX:] = [DXFTag(330, handle) for handle in handles]
 
+    def clear(self):
+        del self.buffer_subclass[self.BUFFER_START_INDEX:]
+
     def __len__(self):
         return len(self.buffer_subclass)-self.BUFFER_START_INDEX
 

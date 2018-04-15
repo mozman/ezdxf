@@ -21,7 +21,7 @@ def get_unsupported_entities(filename):
         return unsupported_entities
 
     if dwg.dxfversion > 'AC1009':
-        unsupported_entities.update(find_unsupported_entities(dwg.modelspace()))
+        unsupported_entities.update(find_unsupported_entities(dwg.chain_layouts_and_blocks()))
         unsupported_entities.update(find_unsupported_entities(dwg.objects))
     return unsupported_entities
 

@@ -38,7 +38,7 @@ Version 0.8.9 - dev
        - MLINESTYLE
        - RENDER (todo)
        - SECTION (todo)
-       - SORTENTSTABLE (todo)
+       - SORTENTSTABLE
        - SPATIAL_FILTER (todo)
        - SUN
        - SUNSTUDY (todo)

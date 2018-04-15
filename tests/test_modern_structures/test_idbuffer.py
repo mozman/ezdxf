@@ -25,6 +25,9 @@ def test_set_get_id_buffer(dwg):
     id_buffer.append('FFFF')
     assert id_buffer[-1] == 'FFFF'
 
+    id_buffer.clear()
+    assert len(id_buffer) == 0
+
 
 def test_magic_methods(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
