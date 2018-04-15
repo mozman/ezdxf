@@ -46,6 +46,7 @@ from .fieldlist import FieldList
 from .field import Field
 from .layer_filter import LayerFilter
 from .sortentstable import SortEntitiesTable
+from .dimassoc import DimAssoc
 
 from . import dxfobjects
 from . import dxfdict
@@ -89,6 +90,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'FIELD': Field,
     'LAYER_FILTER': LayerFilter,
     'SORTENTSTABLE': SortEntitiesTable,
+    'DIMASSOC': DimAssoc,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,

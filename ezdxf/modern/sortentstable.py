@@ -1,4 +1,4 @@
-# Created: 12.04.2018
+# Created: 15.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
@@ -6,22 +6,22 @@ from ..lldxf.types import DXFTag
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
 
 
-_SORT_ENTITIES_TABLE_CLS = """  0
+_SORT_ENTITIES_TABLE_CLS = """0
 CLASS
-  1
+1
 SORTENTSTABLE
-  2
+2
 AcDbSortentsTable
-  3
+3
 ObjectDBX Classes
- 90
-        0
- 91
-        4
+90
+0
+91
+4
 280
-     0
+0
 281
-     0
+0
 """
 
 _SORT_ENTITIES_TABLE_TPL = """0
