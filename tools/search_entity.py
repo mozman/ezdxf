@@ -5,7 +5,7 @@ import ezdxf
 from pathlib import Path
 
 BASE_DXF_FOLDER = r'D:\source\dxftest'
-DXF_ENTITY = 'SORTENTSTABLE'
+DXF_ENTITY = 'DIMASSOC'
 
 
 def has_dxf_entity(filename, entity_name):

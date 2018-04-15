@@ -10,16 +10,16 @@ def dwg():
 
 
 def test_sort_entities_table(dwg):
-    sort_entities_table = dwg.objects.create_new_dxf_entity('SORTENTSTABLE', {'layout': 'FFFF'})
+    sort_entities_table = dwg.objects.create_new_dxf_entity('SORTENTSTABLE', {'block_record': 'FFFF'})
     assert sort_entities_table.dxftype() == 'SORTENTSTABLE'
-    assert sort_entities_table.dxf.layout == 'FFFF'
+    assert sort_entities_table.dxf.block_record == 'FFFF'
     assert len(sort_entities_table) == 0
     sort_entities_table.append('AAA', 'BBB')
     assert sort_entities_table[0] == ('AAA', 'BBB')
 
 
 def test_sort_entities_table_as_list(dwg):
-    sort_entities_table = dwg.objects.create_new_dxf_entity('SORTENTSTABLE', {'layout': 'FFFF'})
+    sort_entities_table = dwg.objects.create_new_dxf_entity('SORTENTSTABLE', {})
     sort_entities_table.set_handles([
         ('AAA', 'BBB'), ('CCC', 'DDD'), ('EEE', 'FFF'),
     ])
@@ -41,7 +41,7 @@ def test_sort_entities_table_as_list(dwg):
 
 
 def test_sort_entities_table_to_dict(dwg):
-    sort_entities_table = dwg.objects.create_new_dxf_entity('SORTENTSTABLE', {'layout': 'FFFF'})
+    sort_entities_table = dwg.objects.create_new_dxf_entity('SORTENTSTABLE', {})
     sort_entities_table.set_handles([
         ('AAA', 'BBB'), ('CCC', 'DDD'), ('EEE', 'FFF'),
     ])
