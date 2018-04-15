@@ -38,8 +38,8 @@ class LayerFilter(DXFObject):
     def get_layer_names(self):
         return [tag.value for tag in self.layer_filter_subclass[self.BUFFER_START_INDEX:]]
 
-    def set_layer_names(self, handles):
-        self.layer_filter_subclass[self.BUFFER_START_INDEX:] = [DXFTag(330, handle) for handle in handles]
+    def set_layer_names(self, names):
+        self.layer_filter_subclass[self.BUFFER_START_INDEX:] = [DXFTag(330, layer_name) for layer_name in names]
 
     def __len__(self):
         return len(self.layer_filter_subclass) - self.BUFFER_START_INDEX
@@ -59,3 +59,11 @@ class LayerFilter(DXFObject):
         handles = self.get_layer_names()
         del handles[key]
         self.set_layer_names(handles)
+
+    def append(self, name):
+        self.layer_filter_subclass.append(DXFTag(330, name))
+
+    def __iadd__(self, name):
+        self.append(name)
+        return self
+

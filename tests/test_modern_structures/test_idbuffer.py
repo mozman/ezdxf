@@ -22,6 +22,9 @@ def test_set_get_id_buffer(dwg):
     assert len(id_buffer) == 3
     assert id_buffer.get_ids() == ['FF', 'EE', 'DD']
 
+    id_buffer.append('FFFF')
+    assert id_buffer[-1] == 'FFFF'
+
 
 def test_magic_methods(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
@@ -39,6 +42,9 @@ def test_magic_methods(dwg):
     assert id_buffer.get_ids() == ['FF', 'EE', 'DD', 'CC']
 
     assert id_buffer[1:3] == ['EE', 'DD']
+
+    id_buffer += 'AAAA'
+    assert id_buffer[-1] == 'AAAA'
 
 
 

@@ -13,7 +13,7 @@ Version 0.8.9 - dev
    - CHANGE: Drawing.block.delete_block(name, safe=True), new parameter save, check if block is still referenced (raises DXFValueError)
    - CHANGE: Drawing.block.delete_all_block(safe=True), new parameter save, ignores blocks still referenced if safe is True
    - NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
-   - `Basic` read support for all missing DXF entities/objects:
+   - `Basic` read support for almost all missing DXF entities/objects:
        - ACAD_PROXY_GRAPHIC
        - HELIX
        - LEADER
@@ -33,7 +33,6 @@ Version 0.8.9 - dev
        - FIELDLIST (not documented by Autodesk)
        - IDBUFFER
        - LAYER_FILTER
-       - LIGHTLIST (todo)
        - MATERIAL
        - MLEADERSTYLE
        - MLINESTYLE

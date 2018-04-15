@@ -22,6 +22,9 @@ def test_set_get_layer_filter(dwg):
     assert len(layer_filter) == 3
     assert layer_filter.get_layer_names() == ['FF', 'EE', 'DD']
 
+    layer_filter.append('Layer')
+    assert layer_filter[-1] == 'Layer'
+
 
 def test_magic_methods(dwg):
     layer_filter = dwg.objects.create_new_dxf_entity('LAYER_FILTER', {})
@@ -39,3 +42,6 @@ def test_magic_methods(dwg):
     assert layer_filter.get_layer_names() == ['FF', 'EE', 'DD', 'CC']
 
     assert layer_filter[1:3] == ['EE', 'DD']
+
+    layer_filter += 'Layer2'
+    assert layer_filter[-1] == 'Layer2'

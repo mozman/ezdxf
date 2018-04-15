@@ -57,3 +57,9 @@ class IDBuffer(DXFObject):
         del handles[key]
         self.set_ids(handles)
 
+    def append(self, handle):
+        self.buffer_subclass.append(DXFTag(330, handle))
+
+    def __iadd__(self, handle):
+        self.append(handle)
+        return self

@@ -22,6 +22,9 @@ def test_set_get_field_list(dwg):
     assert len(field_list) == 3
     assert field_list.get_ids() == ['FF', 'EE', 'DD']
 
+    field_list.append('FFFF')
+    assert field_list[-1] == 'FFFF'
+
 
 def test_magic_methods(dwg):
     field_list = dwg.objects.create_new_dxf_entity('FIELDLIST', {})
