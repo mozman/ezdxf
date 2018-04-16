@@ -17,7 +17,7 @@ ObjectDBX Classes
 90
 0
 91
-4
+0
 280
 0
 281
@@ -54,10 +54,25 @@ def take2(iterable):
 
 
 class SortEntitiesTable(DXFObject):
-    # If the SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in ascending handle order.
+    # should work with AC1015/R2000 but causes problems with TrueView/AutoCAD LT 2019: "expected was-a-zombie-flag"
+    # No problems with AC1018/R2004 and later
+    #
+    # If the header variable $SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in ascending
+    # handle order.
+    #
     # When the DRAWORDER command is used, a SORTENTSTABLE object is attached to the *Model_Space or *Paper_Space block's
     # extension dictionary under the name ACAD_SORTENTS. The SORTENTSTABLE object related to this dictionary associates
     # a different handle with each entity, which redefines the order in which the entities are regenerated.
+    #
+    # $SORTENTS (280): Controls the object sorting methods (bitcode):
+    # 0 = Disables SORTENTS
+    # 1 = Sorts for object selection
+    # 2 = Sorts for object snap
+    # 4 = Sorts for redraws; obsolete
+    # 8 = Sorts for MSLIDE command slide creation; obsolete
+    # 16 = Sorts for REGEN commands
+    # 32 = Sorts for plotting
+    # 64 = Sorts for PostScript output; obsolete
     TEMPLATE = ExtendedTags.from_text(_SORT_ENTITIES_TABLE_TPL)
     CLASS = ExtendedTags.from_text(_SORT_ENTITIES_TABLE_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbSortentsTable', {
@@ -88,6 +103,12 @@ class SortEntitiesTable(DXFObject):
         del self.sortentstable_subclass[self.TABLE_START_INDEX:]
 
     def set_handles(self, handles):
+        # The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
+        # can use existing handles too.
+        #
+        # The '0' handle can be used, but this sort_handle will be drawn as latest (on top of all other entities) and
+        # not as first as expected.
+
         self.clear()
         for handle, sort_handle in handles:
             self.append(handle, sort_handle)

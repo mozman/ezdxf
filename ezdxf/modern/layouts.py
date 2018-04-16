@@ -543,6 +543,19 @@ class Layout(DXF12Layout):
         self.drawing.objects.remove_handle(self._layout_handle)
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
+    def get_extension_dict(self, create=True):
+        block_record = self.block_record
+        try:
+            xdict = block_record.get_extension_dict()
+        except (DXFValueError, DXFKeyError):
+            # DXFValueError: block_record has no extension dict
+            # DXFKeyError: block_record has an extension dict handle, but extension dict does not exist
+            if create:
+                xdict = block_record.new_extension_dict()
+            else:
+                raise DXFValueError('Extension dictionary do not exist.')
+        return xdict
+
     def new_geodata(self, dxfattribs=None):
         """
         Create a new GEODATA entity for this layout and replaces existing ones.
@@ -563,13 +576,7 @@ class Layout(DXF12Layout):
         dwg = self.drawing
         if dwg.dxfversion < 'AC1024':
             raise DXFValueError('GEODATA entity requires DXF version R2010 (AC1024) or later.')
-
-        block_record = self.block_record
-        try:
-            xdict = block_record.get_extension_dict()
-        except DXFValueError:
-            xdict = block_record.new_extension_dict()
-
+        xdict = self.get_extension_dict(create=True)
         geodata = dwg.objects.add_geodata(
             owner=xdict.dxf.handle,
             dxfattribs=dxfattribs,
@@ -590,6 +597,74 @@ class Layout(DXF12Layout):
             return xdict.get_entity('ACAD_GEOGRAPHICDATA')
         except DXFKeyError:
             return None
+
+    def get_sortents_table(self, create=True):
+        """
+        Get/Create to layout associated SORTENTSTABLE object.
+
+        Args:
+            create: new table if table do not exists and create is True
+
+        Returns: SortEntitiesTable() object
+
+        Raises: DXFValueError() if table not exists and create is False
+
+        """
+        xdict = self.get_extension_dict(create=True)
+        try:
+            sortents_table = xdict.get_entity('ACAD_SORTENTS')
+        except DXFKeyError:
+            if create:
+                sortents_table = self.drawing.objects.create_new_dxf_entity(
+                    'SORTENTSTABLE',
+                    dxfattribs={
+                        'owner': xdict.dxf.handle,
+                        'block_record': self.layout_key
+                    },
+                )
+                xdict['ACAD_SORTENTS'] = sortents_table.dxf.handle
+            else:
+                raise DXFValueError('Extension dictionary entry ACAD_SORTENTS do not exist.')
+        return sortents_table
+
+    def set_redraw_order(self, handles):
+        """
+        If the header variable $SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in
+        ascending handles order.
+
+        To change redraw order associate a different handle to entities, which redefines the order in which the entities
+        are regenerated. *handles* can be a dict of object_handle and  sort_handle as (key, value) pairs, or an
+        iterable of (object_handle,  sort_handle) tuples.
+
+        The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
+        can use existing handles too.
+
+        The '0' handle can be used, but this sort_handle will be drawn as latest (on top of all other entities) and not
+        as first as expected.
+
+        Args:
+            handles: list or dict of handle associations
+
+        """
+        sortents = self.get_sortents_table()
+        if isinstance(handles, dict):
+            handles = handles.items()
+        sortents.set_handles(handles)
+
+    def get_redraw_order(self):
+        """
+        Returns iterator for all entries as (object_handle, sort_handle) pairs.
+
+        """
+        try:
+            xdict = self.get_extension_dict(create=False)
+        except DXFValueError:
+            return None
+        try:
+            sortents_table = xdict.get_entity('ACAD_SORTENTS')
+        except DXFKeyError:
+            return None
+        return iter(sortents_table)
 
 
 class BlockLayout(DXF12BlockLayout):
