@@ -49,7 +49,7 @@ def order_solids_by_color(msp):
 
 
 def run():
-    dwg = ezdxf.new('R2004')
+    dwg = ezdxf.new('R2004')  # does not work with AC1015/R2000, but it should
     dwg.header['$SORTENTS'] = 16  # Sorts for REGEN commands
     msp = dwg.modelspace()
 

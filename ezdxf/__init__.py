@@ -16,6 +16,7 @@ from .tools.standards import setup_linetypes, setup_styles
 from .lldxf.const import DXFError  # base error exception
 from .lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
 from .lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError, DXFInvalidLayerName
+from .lldxf.const import DXFBlockInUseError
 import codecs
 from .lldxf.encoding import dxfbackslashreplace
 codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
