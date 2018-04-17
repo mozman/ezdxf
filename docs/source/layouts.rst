@@ -69,8 +69,8 @@ Paper Space Layout Setup
 
     Set plot window size in (scaled) paper space units, and relative to the plot origin.
 
-Access existing entities
-========================
+Access Existing Entities
+------------------------
 
 .. method:: Layout.__iter__()
 
@@ -95,8 +95,8 @@ Access existing entities
 
 .. _Entity Factory Functions:
 
-Create new entities
-===================
+Create New Entities
+-------------------
 
 .. method:: Layout.add_point(location, dxfattribs=None)
 
@@ -319,9 +319,33 @@ Create new entities
    Add an existing DXF entity to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity from
    the previous owner layout.
 
+Change Redraw Order
+-------------------
 
-Delete entities
-===============
+.. method:: Layout.set_redraw_order(handles)
+
+    If the header variable $SORTENTS regen flag (bit-code value 16) is set, AutoCAD regenerates entities in
+    ascending handles order.
+
+    To change redraw order associate a different sort handle to this entities, this redefines the order in which the
+    entities are regenerated. Parameter *handles* can be a dict of object_handle and sort_handle as (key, value) pairs,
+    or an iterable of (object_handle,  sort_handle) tuples.
+
+    The sort_handle doesn't have to be unique, same or all object handles can share the same sort handle, and sort
+    handles can collide with existing handles too. Also the ``'0'`` handle can be used, but this sort handle will be
+    drawn as latest (on top of all other entities) and not as first as expected.
+
+    Changing redraw order just works for model space and paper space layouts, not for block layouts.
+
+    :param handles: list or dict of handle associations
+
+.. method:: Layout.get_redraw_order()
+
+    Returns iterator for all existing table entries as (object_handle, sort_handle) pairs. (see also
+    :meth:`~Layout.set_redraw_order`)
+
+Delete Entities
+---------------
 
 .. method:: Layout.unlink_entity(entity)
 
@@ -340,7 +364,7 @@ Delete entities
 Model Space
 ===========
 
-.. class:: Modelspace
+.. class:: Modelspace(Layout)
 
    At this time the :class:`Modelspace` class is the :class:`Layout` class.
 
@@ -365,7 +389,7 @@ Model Space
 Paper Space
 ===========
 
-.. class:: Paperspace
+.. class:: Paperspace(Layout)
 
    At this time the :class:`Paperspace` class is the :class:`Layout` class.
 

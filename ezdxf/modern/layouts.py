@@ -632,8 +632,8 @@ class Layout(DXF12Layout):
         If the header variable $SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in
         ascending handles order.
 
-        To change redraw order associate a different handle to entities, which redefines the order in which the entities
-        are regenerated. *handles* can be a dict of object_handle and  sort_handle as (key, value) pairs, or an
+        To change redraw order associate a different sort handle to entities, this redefines the order in which the
+        entities are regenerated. *handles* can be a dict of object_handle and  sort_handle as (key, value) pairs, or an
         iterable of (object_handle,  sort_handle) tuples.
 
         The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
@@ -653,17 +653,18 @@ class Layout(DXF12Layout):
 
     def get_redraw_order(self):
         """
-        Returns iterator for all entries as (object_handle, sort_handle) pairs.
+        Returns iterator for all existing table entries as (object_handle, sort_handle) pairs.
 
         """
+        empty = []
         try:
             xdict = self.get_extension_dict(create=False)
         except DXFValueError:
-            return None
+            return empty
         try:
             sortents_table = xdict.get_entity('ACAD_SORTENTS')
         except DXFKeyError:
-            return None
+            return empty
         return iter(sortents_table)
 
 

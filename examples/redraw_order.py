@@ -41,22 +41,44 @@ def add_solids(msp, count=20, min_size=1, max_size=5, color=None, layer='SOLIDS'
 
 
 def order_solids_by_color(msp):
-    solids = msp.query('SOLID')
-    sorted_solids = sorted(solids, key=lambda e: e.dxf.color)
-    # just use color as sort handle
-    redraw_order = [(solid.dxf.handle, str(solid.dxf.color)) for solid in sorted_solids]
-    msp.set_redraw_order(redraw_order)
+    # AutoCAD regenerates entities in ascending handle order.
+    # Change redraw order for DXF entities by assigning an sort handle to an objects handle
+    # The sort handle can be any handle you want, even '0', but this sort handle will be drawn as latest (on top of all
+    # other entities) and not as first as expected.
+    #
+    # just use color as sort handle, '%X': uppercase hex-value without 0x prefix, like 'FF'
+    msp.set_redraw_order(
+        (solid.dxf.handle, '%X' % solid.dxf.color) for solid in msp.query('SOLID')
+    )
+
+
+def reverse_order_solids_by_color(msp):
+    msp.set_redraw_order(
+        (solid.dxf.handle, '%X' % (10-solid.dxf.color)) for solid in msp.query('SOLID')
+    )
+
+
+def move_solids_on_top(msp, color, sort_handle='FFFF'):
+    # This also works if a redraw order is already set
+    order = dict(msp.get_redraw_order())  # returns a list of [(object_handle, sort_handle), ...] -> dict
+    for solid in msp.query('SOLID[color=={}]'.format(color)):
+        order[solid.dxf.handle] = sort_handle
+    msp.set_redraw_order(order)  # accepts also a dict
 
 
 def run():
     dwg = ezdxf.new('R2004')  # does not work with AC1015/R2000, but it should
-    dwg.header['$SORTENTS'] = 16  # Sorts for REGEN commands
+    dwg.header['$SORTENTS'] = 16  # sorts for REGEN commands
     msp = dwg.modelspace()
 
     add_solids(msp, count=1000, min_size=3, max_size=7)
-    dwg.saveas('colored_solids_unordered.dxf')
-    order_solids_by_color(msp)
-    dwg.saveas('colored_solids_ordered.dxf')
+    dwg.saveas('sort_solids_unordered.dxf')
+    order_solids_by_color(msp)  # 1 -> 7
+    dwg.saveas('sort_solids_ordered.dxf')
+    reverse_order_solids_by_color(msp)  # 7 -> 1
+    dwg.saveas('sort_solids_reversed_ordered.dxf')
+    move_solids_on_top(msp, 6)  # 7, 5, 4, 3, 2, 1, 6
+    dwg.saveas('sort_solids_6_on_top.dxf')  # 6 is magenta
 
 
 if __name__ == '__main__':
