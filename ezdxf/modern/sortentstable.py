@@ -81,6 +81,8 @@ class SortEntitiesTable(DXFObject):
         # 331: Soft-pointer ID/handle to an entity (zero or more entries may exist)
         #   5: Sort handle (zero or more entries may exist)
     }))
+    # AutoCAD has no problem with not existing entities as group code 331, just ignores this entries,
+    # so it is not necessary to update the SORTENTSTABLE when deleting entities
     TABLE_START_INDEX = 2
 
     @property
@@ -91,37 +93,69 @@ class SortEntitiesTable(DXFObject):
         return (len(self.sortentstable_subclass)-self.TABLE_START_INDEX) // 2
 
     def __iter__(self):
+        """
+        Yields all redraw associations as (object_handle, sort_handle) tuples.
+
+        """
         for handle, sort_handle in take2(self.sortentstable_subclass[self.TABLE_START_INDEX:]):
             yield handle.value, sort_handle.value
 
     def append(self, handle, sort_handle):
+        """
+        Append redraw association (handle, sort_handle).
+
+        Args:
+            handle: DXF entity handle (uppercase hex value without leading '0x')
+            sort_handle: sort handle (uppercase hex value without leading '0x')
+
+        """
         subclass = self.sortentstable_subclass
         subclass.append(DXFTag(331, handle))
         subclass.append(DXFTag(5, sort_handle))
 
     def clear(self):
+        """
+        Remove all handles from redraw order table.
+
+        """
         del self.sortentstable_subclass[self.TABLE_START_INDEX:]
 
     def set_handles(self, handles):
+        """
+        Set all redraw associations from iterable *handles*, after removing all existing associations.
+
+        Args:
+            handles: iterable yielding (object_handle, sort_handle) tuples
+
+        """
         # The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
         # can use existing handles too.
         #
         # The '0' handle can be used, but this sort_handle will be drawn as latest (on top of all other entities) and
-        # not as first as expected.
-
+        # not as first as expected. Invalid entity handles will be ignored by AutoCAD.
         self.clear()
         for handle, sort_handle in handles:
             self.append(handle, sort_handle)
 
-    def __getitem__(self, item):
-        return list(self)[item]
+    def remove_invalid_handles(self):
+        """
+        Remove all handles which do not exists in the drawing database.
 
-    def __setitem__(self, item, value):
-        handles = list(self)
-        handles[item] = value
-        self.set_handles(handles)
+        """
+        entitydb = self.drawing.entitydb
+        valid_handles = [(handle, sort_handle) for handle, sort_handle in self if handle in entitydb]
+        # list is required, set_handles() deletes all entries before iterating valid_handles
+        self.set_handles(valid_handles)
 
-    def __delitem__(self, key):
-        handles = list(self)
-        del handles[key]
-        self.set_handles(handles)
+    def remove_handle(self, handle):
+        """
+        Remove handle of DXF entity from redraw order table.
+
+        Args:
+            handle: DXF entity handle (uppercase hex value without leading '0x')
+
+        """
+        handles = dict(self)
+        if handle in handles:
+            del handles[handle]
+            self.set_handles(handles.items())

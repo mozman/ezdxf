@@ -3,6 +3,7 @@
 import random
 import ezdxf
 from ezdxf.algebra import Vector
+from ezdxf.lldxf.const import SortEntities
 
 
 def random_in_range(a, b):
@@ -66,9 +67,14 @@ def move_solids_on_top(msp, color, sort_handle='FFFF'):
     msp.set_redraw_order(order)  # accepts also a dict
 
 
+def remove_solids(msp, color=6):
+    for solid in msp.query('SOLID[color=={}]'.format(color)):
+        msp.delete_entity(solid)
+
+
 def run():
     dwg = ezdxf.new('R2004')  # does not work with AC1015/R2000, but it should
-    dwg.header['$SORTENTS'] = 16  # sorts for REGEN commands
+    dwg.header['$SORTENTS'] = SortEntities.REGEN
     msp = dwg.modelspace()
 
     add_solids(msp, count=1000, min_size=3, max_size=7)
@@ -79,6 +85,9 @@ def run():
     dwg.saveas('sort_solids_reversed_ordered.dxf')
     move_solids_on_top(msp, 6)  # 7, 5, 4, 3, 2, 1, 6
     dwg.saveas('sort_solids_6_on_top.dxf')  # 6 is magenta
+    # AutoCAD has no problem with removed entities in the redraw order table (SORTENTSTABLE)
+    remove_solids(msp, 6)
+    dwg.saveas('sort_solids_removed_color_6.dxf')
 
 
 if __name__ == '__main__':
