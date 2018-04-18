@@ -1,5 +1,3 @@
-999
-last saved by ezdxf 0.8.3 on 2017-12-29 08:11:23
   0
 SECTION
   2
@@ -2108,12 +2106,6 @@ AcDbSymbolTable
 BLOCK_RECORD
   5
 1F
-102
-{ACAD_XDICTIONARY
-360
-15D
-102
-}
 330
 1
 100
