@@ -19,7 +19,7 @@ class DXF12Layouts(object):
         self._modelspace = DXF12Layout(model_space, drawing.dxffactory, 0)
         paper_space = entities.active_layout_entities()
         self._paperspace = DXF12Layout(paper_space, drawing.dxffactory, 1)
-        entities.clear()  # remove entites for entities section -> stored in layouts
+        entities.clear()  # remove entities for entities section -> stored in layouts
 
     def __iter__(self):
         yield self._modelspace

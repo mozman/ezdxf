@@ -33,6 +33,7 @@ class EntitySection(AbstractSection):
     # none public interface
 
     def clear(self):
+        # remove entities for entities section -> stored in layouts
         del self._entity_space
 
     def _setup_entities(self):

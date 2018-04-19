@@ -104,7 +104,8 @@ def load_dxf_entities_into_database(database, dxf_entities):
         if dxftype not in DATABASE_EXCLUDE:
             if check_tag_structure:
                 entity = entity_structure_validator(entity)
-
+            # execution point for coming feature:
+            # TagArray() and TagDict() compiling
             entity = ExtendedTags(entity)
             database.add_tags(entity)
         yield entity

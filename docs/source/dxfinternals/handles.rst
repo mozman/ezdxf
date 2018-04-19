@@ -4,7 +4,7 @@ Handles
 =======
 
 A handle is an arbitrary but in your DXF file unique hex value as string like '10FF'. It is common to to use
-uppercase letters for hex numbers. Handle can have up to 16 hexadecimal digits.
+uppercase letters for hex numbers. Handle can have up to 16 hexadecimal digits (8 bytes).
 
 For DXF R10 until R12 the usage of handles was optional. The header variable $HANDLING set to 1 indicate the usage of
 handles, else $HANDLING is 0 or missing.
