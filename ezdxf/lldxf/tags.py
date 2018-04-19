@@ -308,11 +308,11 @@ class CompressedTags(object):
         else:
             raise DXFIndexError
 
-    def tostring(self):
+    def dxfstring(self):
         return self.value.decompress()
 
     def decompress(self):
-        return internal_tag_compiler(self.tostring())
+        return internal_tag_compiler(self.dxfstring())
 
 
 def text_to_multi_tags(text, code=303, size=255, line_ending='^J'):

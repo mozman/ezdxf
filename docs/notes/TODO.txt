@@ -97,3 +97,22 @@ Auditor
 
 - docs for Auditor
 - check for existence of all referenced BLOCK definitions.
+
+Compact Tag List
+----------------
+
+Store tags with same group codes as array objects.
+
+- TagArray() class
+- from_tags()
+- tags() -> DXFTags
+- complete list interface
+- (group code, TagArray)
+- group code < 0
+- accessible by DXFEntity.dxf: weights = spline.dxf.weights
+
+extending for multi tag lists:
+
+- LWPOLYLINE: points (x, y, start_width, end_width, bulge); points = lwpolyline.dxf.points
+- MESH: vertices, edges (2 vertices), faces (variable length)?
+- SPLINE: fit_points, control_points, weights

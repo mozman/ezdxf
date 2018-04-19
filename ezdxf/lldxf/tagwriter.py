@@ -1,11 +1,7 @@
-# Purpose: tag writer
 # Created: 13.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
-from .tags import CompressedTags
 from .types import strtag2, TAG_STRING_FORMAT
 
 
@@ -37,8 +33,8 @@ class TagWriter(object):
                 self.write_tag(tag)
 
     def write_tag(self, tag):
-        if isinstance(tag, CompressedTags):
-            s = tag.tostring()
+        if hasattr(tag, 'dxfstring'):
+            s = tag.dxfstring()
         else:
             s = strtag2(tag)
         self._stream.write(s)

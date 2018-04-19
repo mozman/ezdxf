@@ -1,14 +1,9 @@
-# Purpose: dxf tag type def
 # Created: 30.04.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
-
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from collections import namedtuple
 from itertools import chain
-
 from ..tools.c23 import ustr
 from .const import DXFValueError
 
