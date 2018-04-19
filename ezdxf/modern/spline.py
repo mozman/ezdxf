@@ -1,5 +1,5 @@
 # Created: 24.05.2015
-# Copyright (C) 2015-2018, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
 from contextlib import contextmanager
@@ -45,6 +45,10 @@ spline_subclass = DefSubclass('AcDbSpline', {
     'start_tangent': DXFAttr(12, xtype='Point3D'),
     'end_tangent': DXFAttr(13, xtype='Point3D'),
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    # 10: Control points (in WCS); one entry per control point
+    # 11: Fit points (in WCS); one entry per fit point
+    # 40: Knot value (one entry per knot)
+    # 41: Weight (if not 1); with multiple group pairs, they are present if all are not 1
 })
 
 
@@ -63,15 +67,11 @@ class Spline(ModernGraphicEntity):
 
     @property
     def closed(self):
-        return bool(self.dxf.flags & self.CLOSED)
+        return self.get_flag_state(self.CLOSED, name='flags')
 
     @closed.setter
     def closed(self, status):
-        flagsnow = self.dxf.flags
-        if status:
-            self.dxf.flags = flagsnow | self.CLOSED
-        else:
-            self.dxf.flags = flagsnow & (~self.CLOSED)
+        self.set_flag_state(self.CLOSED, state=status, name='flags')
 
     def get_knot_values(self):  # group code 40
         return [tag.value for tag in self.AcDbSpline.find_all(code=40)]

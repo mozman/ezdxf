@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.types import convert_tags_to_text_lines, convert_text_lines_to_tags
+from ..lldxf.types import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..tools import crypt
@@ -28,6 +28,40 @@ AcDbModelerGeometry
 modeler_geometry_subclass = DefSubclass('AcDbModelerGeometry', {
     'version': DXFAttr(70, default=1),
 })
+
+
+def convert_tags_to_text_lines(line_tags):
+    """
+    Args:
+        line_tags: tags with code 1 or 3, tag with code 3 is the tail of previous line with more than 255 chars.
+
+    Returns: yield strings
+
+    """
+    line_tags = iter(line_tags)
+    try:
+        line = next(line_tags).value  # raises StopIteration
+    except StopIteration:
+        return
+    while True:
+        try:
+            tag = next(line_tags)
+        except StopIteration:
+            if line:
+                yield line
+            return
+        if tag.code == 3:
+            line += tag.value
+            continue
+        yield line
+        line = tag.value
+
+
+def convert_text_lines_to_tags(text_lines):
+    for line in text_lines:
+        yield DXFTag(1, line[:255])
+        if len(line) > 255:
+            yield DXFTag(3, line[255:])  # tail (max. 255 chars), what if line > 510 chars???
 
 
 class Body(ModernGraphicEntity):

@@ -1,13 +1,10 @@
-# Purpose: test text2tags and vice versa
 # Created: 02.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <mozman@gmx.at>"
-
 
 import unittest
-from ezdxf.lldxf.types import convert_tags_to_text_lines, convert_text_lines_to_tags, DXFTag
+from ezdxf.modern.solid3d import convert_tags_to_text_lines, convert_text_lines_to_tags, DXFTag
 
 
 class TestTextChunkConverter(unittest.TestCase):

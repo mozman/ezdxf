@@ -101,18 +101,17 @@ Auditor
 Compact Tag List
 ----------------
 
-Store tags with same group codes as array objects.
+Store tags with same group codes as array (or list) of objects.
 
-- TagArray() class
-- from_tags()
-- tags() -> DXFTags
+- TagArray() or TagList() class
+- dxfstr() and dxftags() interface
 - complete list interface
 - (group code, TagArray)
 - group code < 0
 - accessible by DXFEntity.dxf: weights = spline.dxf.weights
+- SPLINE: control_points (10), fit_points (11), knots (40), weights (41)
 
 extending for multi tag lists:
 
 - LWPOLYLINE: points (x, y, start_width, end_width, bulge); points = lwpolyline.dxf.points
-- MESH: vertices, edges (2 vertices), faces (variable length)?
-- SPLINE: fit_points, control_points, weights
+

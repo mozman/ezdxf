@@ -295,6 +295,7 @@ class CompressedTags(object):
 
     The compressed string stores points in external representation (10, x) (20, y) (30, z) and not in internal
     representation (10, (x, y, z)).
+
     """
     def __init__(self, code, tags):
         self.code = code
@@ -308,11 +309,19 @@ class CompressedTags(object):
         else:
             raise DXFIndexError
 
-    def dxfstring(self):
+    def dxfstr(self):
+        """
+        Returns content as DXF string like ' 10\n1.0\n 20\n1.0\n 30\n1.0\n'.
+
+        """
         return self.value.decompress()
 
-    def decompress(self):
-        return internal_tag_compiler(self.dxfstring())
+    def dxftags(self):
+        """
+        Returns content as sequence of DXFTag() objects.
+
+        """
+        return internal_tag_compiler(self.dxfstr())
 
 
 def text_to_multi_tags(text, code=303, size=255, line_ending='^J'):

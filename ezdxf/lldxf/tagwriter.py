@@ -33,8 +33,8 @@ class TagWriter(object):
                 self.write_tag(tag)
 
     def write_tag(self, tag):
-        if hasattr(tag, 'dxfstring'):
-            s = tag.dxfstring()
+        if hasattr(tag, 'dxfstr'):
+            s = tag.dxfstr()
         else:
             s = strtag2(tag)
         self._stream.write(s)
