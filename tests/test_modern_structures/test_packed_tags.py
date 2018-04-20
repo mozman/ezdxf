@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.lldxf.packedtags import TagArray, TagDict, MultiTagArray
+from ezdxf.lldxf.packedtags import TagArray, TagDict
 
 
 @pytest.fixture()

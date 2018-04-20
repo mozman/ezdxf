@@ -2,10 +2,28 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from array import array
+from abc import abstractmethod
 from .types import DXFTag, strtag2
 
 
-class TagArray(object):
+class PackedTags(object):
+    @abstractmethod
+    def dxftags(self):
+        """
+        Yield packed tags as unpacked DXFTags().
+
+        """
+        pass
+
+    def dxfstr(self):
+        """
+        Returns the DXF strings constructed from dxftags().
+
+        """
+        return ''.join(strtag2(tag) for tag in self.dxftags())
+
+
+class TagArray(PackedTags):
     def __init__(self, code, values, dtype='f'):
         self.code = int(code)
         self.values = array(dtype, values)
@@ -15,16 +33,6 @@ class TagArray(object):
         for value in self.values:
             yield DXFTag(code, value)
 
-    def dxfstr(self):
-        def to_string():
-            for tag in self.dxftags():
-                yield strtag2(tag)
-        return ''.join(to_string())
 
-
-class MultiTagArray(object):
-    pass
-
-
-class TagDict(object):
+class TagDict(PackedTags):
     pass
