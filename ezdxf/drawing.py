@@ -57,7 +57,7 @@ class Drawing(object):
         # setup handles
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
-        fill_database(self.entitydb, sections, dxffactory=self.dxffactory)
+        fill_database(self.entitydb, sections, dxfversion=self.dxfversion)
         # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
         self.sections = Sections(sections, drawing=self, header=header)
 

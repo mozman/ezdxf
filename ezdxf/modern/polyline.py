@@ -3,6 +3,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 from ..lldxf.tags import DXFTag, Tags
+from ..lldxf.loader import register_post_load_tag_processor
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 from ..legacy import polyline
@@ -185,9 +186,16 @@ class Vertex(polyline.Vertex, ModernGraphicEntityExtension):
         else:
             set_subclass('AcDb2dVertex')
 
-    @staticmethod
-    def fix_tags(tags):
-        """ If subclass[2] is not 'AcDbVertex', insert empty subclass
-        """
-        if tags.subclasses[2][0].value != 'AcDbVertex':
-            tags.subclasses.insert(2, EMPTY_VERTEX_SUBCLASS)
+
+def vertex_tags_processor(tags):
+    """
+    If subclass[2] is not 'AcDbVertex', insert empty subclass
+
+    """
+    if not isinstance(tags, ExtendedTags):
+        return
+    if tags.subclasses[2][0].value != 'AcDbVertex':
+        tags.subclasses.insert(2, EMPTY_VERTEX_SUBCLASS)
+
+
+register_post_load_tag_processor('VERTEX', vertex_tags_processor, legacy=False)

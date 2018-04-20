@@ -16,11 +16,11 @@ def normlines(text):
     return [line.strip() for line in lines]
 
 
-def load_section(text, name, database=None, dxffactory=None):
+def load_section(text, name, database=None, dxfversion='AC1009'):
     from ezdxf.lldxf.loader import load_dxf_structure, fill_database
     dxf = load_dxf_structure(internal_tag_compiler(text), ignore_missing_eof=True)
     if database is not None:
-        fill_database(database, dxf, dxffactory)
+        fill_database(database, dxf, dxfversion)
     return dxf[name]
 
 

@@ -122,9 +122,6 @@ class LegacyDXFFactory(object):
         # Place target_entity in same layout as source_entity
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
 
-    def post_read_tags_fixer(self, tags):
-        pass
-
     def get_layout_for_entity(self, entity):
         dwg = self.drawing
         layout = dwg.layouts.get_layout_for_entity(entity)

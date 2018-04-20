@@ -1,9 +1,8 @@
 # Purpose: DXF structure loader and validator
 # Created: 25.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 import logging
 from .const import DXFStructureError
 from .tags import group_tags
@@ -12,6 +11,23 @@ from .validator import entity_structure_validator
 from .. import options
 
 logger = logging.getLogger('ezdxf')
+
+modern_post_load_tag_processors = {}
+legacy_post_load_tag_processors = {}
+
+
+def register_post_load_tag_processor(entity, processor, legacy=False):
+    """
+    Register functions to process from DXF file loaded tags.
+
+    Args:
+        entity: DXF type like 'LINE' or 'VERTEX'
+        processor: function with one parameter 'tags'
+        legacy: use for legacy tag structure (DXF version <= AC1009) or modern tag structures
+
+    """
+    processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
+    processors[entity] = processor
 
 
 def load_dxf_structure(tagger, ignore_missing_eof=False):
@@ -111,17 +127,15 @@ def load_dxf_entities_into_database(database, dxf_entities):
         yield entity
 
 
-def fill_database(database, sections, dxffactory=None):
-    post_read_tags_fixer = None if dxffactory is None else dxffactory.post_read_tags_fixer
+def fill_database(database, sections, dxfversion='AC1009'):
+    post_processors = legacy_post_load_tag_processors if dxfversion <= 'AC1009' else modern_post_load_tag_processors
     for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
-        if name in ('ENTITIES', 'BLOCKS'):
-            fix_tags = post_read_tags_fixer
-        else:
-            fix_tags = None
         if name in sections:
             section = sections[name]
             # entities stored in the database are converted from Tags() to ExtendedTags()
             for index, entity in enumerate(load_dxf_entities_into_database(database, section)):
-                if fix_tags is not None and isinstance(entity, ExtendedTags):
-                    fix_tags(entity)
+                # entities not stored in database are still Tags() e.g. CLASS
+                processor = post_processors.get(entity.dxftype())
+                if processor:
+                    processor(entity)
                 section[index] = entity

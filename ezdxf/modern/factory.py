@@ -192,10 +192,6 @@ class ModernDXFFactory(LegacyDXFFactory):
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
         target_entity.dxf.owner = source_entity.dxf.owner
 
-    def post_read_tags_fixer(self, tags):
-        if tags.dxftype() == 'VERTEX':
-            polyline.Vertex.fix_tags(tags)
-
     def next_image_key(self, checkfunc=lambda k: True):
         while True:
             key = self.image_key_generator.next()

@@ -240,7 +240,7 @@ def test_internals_polyface(layout):
 
 
 def test_new_style_polyface_face_count(dwg):
-    section = EntitySection(load_section(NEW_STYLE_POLYFACE, 'ENTITIES', dwg.entitydb, dwg.dxffactory), dwg)
+    section = EntitySection(load_section(NEW_STYLE_POLYFACE, 'ENTITIES', dwg.entitydb, dwg.dxfversion), dwg)
     entities = section.model_space_entities()
     polyface = dwg.get_dxf_entity(list(entities)[0])
     faces = list(polyface.faces())
