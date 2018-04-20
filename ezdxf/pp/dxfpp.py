@@ -16,6 +16,7 @@ from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
 from ezdxf.lldxf.tags import CompressedTags
+from ezdxf.lldxf.packedtags import PackedTags
 
 # Tag groups
 
@@ -257,6 +258,10 @@ class DXF2HtmlConverter(object):
                 if len(vstr) > MAX_STR_LEN:
                     vstr = vstr[:(MAX_STR_LEN-15)] + " ... " + vstr[-10:]
                 return vstr
+
+            if isinstance(tag, PackedTags):
+                # inflate packed tags
+                return ''.join(tag2html(tag) for tag in tag.dxftags())
 
             tpl = TAG_TPL
             if tag.code in HANDLE_CODES:  # is handle definition
