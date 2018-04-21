@@ -3,7 +3,8 @@
 # License: MIT-License
 from __future__ import unicode_literals
 from .dxfobjects import DefSubclass, DXFAttr, DXFAttributes, none_subclass, ExtendedTags
-from .idbuffer import IDBuffer
+from .idbuffer import IDBuffer, PackedHandles, replace_tags
+from ..lldxf import loader
 
 _FIELDLIST_CLS = """0
 CLASS
@@ -44,8 +45,17 @@ AcDbFieldList
 """
 
 
+@loader.register('FIELDLIST', legacy=False)
+def tag_processor(tags):
+    subclass = tags.get_subclass('AcDbFieldList')
+    points = PackedHandles()
+    points.set_ids([tag.value for tag in subclass[1:]])
+    replace_tags(subclass, codes=(330, ), packed_data=points)
+    return tags
+
+
 class FieldList(IDBuffer):
-    TEMPLATE = ExtendedTags.from_text(_FIELDLIST_TPL)
+    TEMPLATE = tag_processor(ExtendedTags.from_text(_FIELDLIST_TPL))
     CLASS = ExtendedTags.from_text(_FIELDLIST_CLS)
     DXFATTRIBS = DXFAttributes(
         none_subclass,
@@ -55,4 +65,7 @@ class FieldList(IDBuffer):
                     }),
         DefSubclass('AcDbFieldList', {}),
     )
-    BUFFER_START_INDEX = 2
+
+    @property
+    def buffer_subclass(self):
+        return self.tags.subclasses[2]  # 3rd subclass

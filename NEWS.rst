@@ -36,8 +36,8 @@ Version 0.8.9 - dev
        - DICTIONARYVAR
        - DIMASSOC
        - FIELD (incomplete)
-       - FIELDLIST (not documented by Autodesk)
-       - IDBUFFER
+       - FIELDLIST (not documented by Autodesk, with packed data)
+       - IDBUFFER (with packed data)
        - LAYER_FILTER
        - MATERIAL
        - MLEADERSTYLE

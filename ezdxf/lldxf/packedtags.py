@@ -45,5 +45,23 @@ class TagArray(PackedTags):
         return TagArray(self.code, self.value, self.value.typecode)
 
 
+def replace_tags(tags, codes, packed_data):
+    """
+    Replace single DXF tags by packed data object.
+
+    Args:
+        tags: Tags() object
+        codes: codes to replace as tuple
+        packed_data: packed data object
+
+    """
+    try:
+        pos = tags.tag_index(codes[0])
+    except ValueError:
+        pos = len(tags)
+    tags.remove_tags(codes=codes)
+    tags.insert(pos, packed_data)
+
+
 class TagDict(PackedTags):
     pass

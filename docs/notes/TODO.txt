@@ -98,54 +98,15 @@ Auditor
 - docs for Auditor
 - check for existence of all referenced BLOCK definitions.
 
-Packed Tags
-===========
 
-Store tags with same group codes as array (or list) of tags.
+Candidates for Packed Data
+----------------------------
 
-Don't forget DXF pretty printer!!!!
-
-TagArray
---------
-
-- dxfstr() and dxftags() interface
-- complete list interface
-- (group code, TagArray)
-- accessible by DXFEntity.dxf: weights = spline.dxf.weights; NO - not a good idea! Value assigning is a problem!
 - SPLINE: control_points (10), fit_points (11), knots (40), weights (41)
-- points are 3x 'd' double values, for weights and knots is 'f' sufficient
+  points are 3x 'd' double values, for weights and knots is 'f' sufficient
 - IDBUFFER: handles require array type 'Q' for max 16 hex digits
 - LAYER_FILTER
-- matrices in MATERIAL
-
+- MATERIAL: matrices
 - HATCH ?!?!? a really complex structure
-
-MultiTagArray(
--------------
-
-extending for multi tag usage:
-
-- LWPOLYLINE: points (x, y, start_width, end_width, bulge); points = lwpolyline.dxf.points
-- LWPOLYLINE: points need a no special group code (10, ...), because of dxfstr() usage in MultiTagArray()
-
-TagDict
--------
-
 - DICTIONARY and DICTIONARYWITHDFLT
 - SORTENTSTABLE
-
-Compiler
---------
-
-- function compact_tags(extended_tags) -> ExtendedTags() with compact tag arrays and tag dicts
-- compile TagArray() and TagDict() at subclass level: compile_subclasses(tags.subclasses)
-- compile only for DXF R2000 and later
-- register as dict of 'subclass': tag_list_compiler; if subclass in register: compile lists and dicts in subclass
-- register not in factory!!!
-
-EntryPoints
------------
-
-- on loading, at loader.fill_database() call in Drawing() setup
-  execution pint in oad_dxf_entities_into_database()
-- on new, at DXF attribute definition, wrap compact_tags(ExtendedTags())

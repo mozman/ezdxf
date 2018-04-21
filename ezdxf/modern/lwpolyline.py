@@ -39,7 +39,7 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
 })
 
 LWPOINTCODES = (10, 20, 40, 41, 42)
-PACKED_POINTS_CODE = -10  # good idea? or better just 10
+PACKED_POINTS_CODE = -10
 
 
 class PackedPoints(PackedTags):
