@@ -27,9 +27,7 @@ class PackedHandles(PackedTags):
     def __init__(self, handles=None):
         # compatible with DXFTag.code, DXFTag.value
         self.code = PACKED_HANDLES_CODE
-        self.value = new_array()
-        if handles is not None:
-            self.value.extend(handles)
+        self.value = new_array(handles)
 
     def __len__(self):
         return len(self.value)
