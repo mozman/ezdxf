@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.modern.lwpolyline import PackedPoints, tag_processor
 
 
 @pytest.fixture(scope='module')
@@ -18,7 +19,7 @@ def test_new_line(layout):
     line = layout.add_lwpolyline(points)
     assert points == list(line.get_rstrip_points())
     assert 3 == len(line)
-    assert line.closed is False , "Polyline should be open by default."
+    assert line.closed is False, "Polyline should be open by default."
 
 
 def test_getitem_first(layout):
@@ -31,6 +32,20 @@ def test_getitem_last(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points)
     assert (3, 3, 0, 0, 0) == line[-1]
+
+
+def test_setitem_first(layout):
+    points = [(1, 1), (2, 2), (3, 3)]
+    line = layout.add_lwpolyline(points)
+    line[0] = (4, 4)
+    assert (4, 4, 0, 0, 0) == line[0]
+
+
+def test_setitem_last(layout):
+    points = [(1, 1), (2, 2), (3, 3)]
+    line = layout.add_lwpolyline(points)
+    line[-1] = (4, 4)
+    assert (4, 4, 0, 0, 0) == line[-1]
 
 
 def test_getitem_error(layout):
@@ -89,7 +104,7 @@ def test_vertices(layout):
 
 @pytest.fixture
 def lwpolyline(layout):
-    tags = ExtendedTags.from_text(LWPOLYLINE1)
+    tags = tag_processor(ExtendedTags.from_text(LWPOLYLINE1))
     return layout._dxffactory.wrap_entity(tags)
 
 
@@ -101,34 +116,89 @@ def test_handle(lwpolyline):
     assert 4 == lwpolyline.dxf.count
 
 
-LWPOLYLINE1 = """  0
+def test_packed_points_basics():
+    packed_points = PackedPoints()
+    packed_points.setup(ExtendedTags.from_text(LWPOLYLINE1))
+    assert len(packed_points) == 2
+    points = list(packed_points)
+    assert len(points) == 2
+    assert packed_points[0] == (-.5, -.5, 0, 0, 0)
+    assert packed_points[1] == (.5, .5, 0, 0, 0)
+    # test negative index
+    assert packed_points[-1] == (.5, .5, 0, 0, 0)
+    with pytest.raises(IndexError):
+        packed_points.get_point(-3)
+    with pytest.raises(IndexError):
+        packed_points.get_point(2)
+
+
+def test_packed_points_advanced():
+    packed_points = PackedPoints()
+    packed_points.setup(ExtendedTags.from_text(LWPOLYLINE1))
+    packed_points.append((5, 5, 1, 2, 3))
+    assert len(packed_points) == 3
+    assert packed_points[-1] == (5, 5, 1, 2, 3)
+    packed_points[0] = (7, 7, 0, 0, 0)
+    assert packed_points[0] == (7, 7, 0, 0, 0)
+    assert len(packed_points) == 3
+    packed_points.clear()
+    assert len(packed_points) == 0
+
+
+def test_packed_points_to_dxf_tags():
+    tags = ExtendedTags.from_text(LWPOLYLINE1)
+    packed_points = PackedPoints()
+    packed_points.setup(tags)
+    tags = list(packed_points.dxftags())
+    assert len(tags) == 2
+    assert tags[0] == (10, (-.5, -.5))
+    assert tags[1] == (10, (.5, .5))
+
+
+def test_packed_points_to_dxf_tags_with_bulge():
+    tags = ExtendedTags.from_text(LWPOLYLINE1)
+    packed_points = PackedPoints()
+    packed_points.setup(tags)
+    packed_points[0] = (-.5, -.5, 0, 0, 1)
+    packed_points[1] = (.5, .5, .1, .2, -1)
+    tags = list(packed_points.dxftags())
+    assert len(tags) == 6
+    assert tags[0] == (10, (-.5, -.5))
+    assert tags[1] == (42, 1)
+    assert tags[2] == (10, (.5, .5))
+    assert tags[3] == (40, .1)
+    assert tags[4] == (41, .2)
+    assert tags[5] == (42, -1)
+
+
+LWPOLYLINE1 = """0
 LWPOLYLINE
-  5
+5
 239
 330
 238
 100
 AcDbEntity
-  8
+8
 0
-  6
+6
 ByBlock
- 62
+62
 0
 100
 AcDbPolyline
- 90
+90
 2
- 70
+70
 0
- 43
+43
 0.15
- 10
+10
 -0.5
- 20
+20
 -0.5
- 10
+10
 0.5
- 20
+20
 0.5
 """

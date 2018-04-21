@@ -13,7 +13,10 @@ from .tagger import internal_tag_compiler
 
 
 class ExtendedTags(object):
-    """ Manage Subclasses, AppData and Extended Data """
+    """
+    Manage Subclasses, AppData and Extended Data
+
+    """
     __slots__ = ('subclasses', 'appdata', 'xdata', 'link')
 
     def __init__(self, iterable=None):

@@ -15,6 +15,14 @@ class PackedTags(object):
         """
         pass
 
+    @abstractmethod
+    def clone(self):
+        """
+        Returns cloned tags (deep copy).
+
+        """
+        pass
+
     def dxfstr(self):
         """
         Returns the DXF strings constructed from dxftags().
@@ -24,14 +32,17 @@ class PackedTags(object):
 
 
 class TagArray(PackedTags):
-    def __init__(self, code, values, dtype='f'):
+    def __init__(self, code, value, dtype='f'):
         self.code = int(code)
-        self.values = array(dtype, values)
+        self.value = array(dtype, value)
 
     def dxftags(self):
         code = self.code
-        for value in self.values:
+        for value in self.value:
             yield DXFTag(code, value)
+
+    def clone(self):
+        return TagArray(self.code, self.value, self.value.typecode)
 
 
 class TagDict(PackedTags):

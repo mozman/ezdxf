@@ -5,6 +5,8 @@ News
 Version 0.8.9 - dev
 
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
+   - NEW: packed data for more memory efficient data storage for some entities
+   - NEW: packed data for LWPOLYLINE points, high level API unchanged, added __setitem__ support
    - NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
    - NEW: Drawing.chain_layouts_and_blocks(), chain entity spaces of all layouts and blocks. Yields an iterator for all
           entities in all layouts and blocks

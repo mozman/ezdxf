@@ -2,6 +2,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+from  copy import deepcopy
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
 from ..tools.codepage import toencoding
@@ -60,14 +61,19 @@ def dxf_info(stream):
 class Tags(list):
     """
     DXFTag() chunk as flat list.
-    """
 
+    """
     @classmethod
     def from_text(cls, text):
         return cls(internal_tag_compiler(text))
 
     def __copy__(self):
-        return self.__class__(DXFTag(*tag) for tag in self)
+        def copy(tag):
+            if hasattr(tag, 'clone'):
+                return tag.clone()
+            else:
+                return DXFTag(tag.code, tag.value)
+        return self.__class__(copy(tag) for tag in self)
 
     clone = __copy__
 
@@ -75,8 +81,8 @@ class Tags(list):
         """
         Get DXF handle. Raises DXFValueError if handle not exists.
 
-        Returns:
-            handle as hex-string like 'FF'
+        Returns: handle as hex-string like 'FF'
+
         """
         try:
             code, handle = self[1]  # fast path  for most common cases
@@ -97,6 +103,7 @@ class Tags(list):
 
         Args:
             new_handle: new handle as hex string
+
         """
         for index, tag in enumerate(self):
             if tag.code in (5, 105):
@@ -112,6 +119,7 @@ class Tags(list):
 
         Args:
             code: group code as int
+
         """
         return any(True for tag in self if tag.code == code)
 
@@ -122,6 +130,7 @@ class Tags(list):
         Args:
             code: group code as int
             default: return value for default case or raises DXFValueError
+
         """
         for tag in self:
             if tag.code == code:
@@ -138,6 +147,7 @@ class Tags(list):
         Args:
             code: group code as int
             default: return value for default case or raises DXFValueError
+
         """
         for tag in self:
             if tag.code == code:
@@ -153,6 +163,7 @@ class Tags(list):
 
         Args:
             code: group code as int
+
         """
         return [tag for tag in self if tag.code == code]
 
@@ -164,6 +175,7 @@ class Tags(list):
             code: group code as int
             start: start index as int
             end: end index as int, if None end index = len(self)
+
         """
         if end is None:
             end = len(self)
@@ -181,6 +193,9 @@ class Tags(list):
         Args:
             code: group code as int
             value: tag value
+
+        * does not support PackedTags!
+
         """
         index = self.tag_index(code)
         self[index] = DXFTag(code, value)
@@ -192,6 +207,9 @@ class Tags(list):
         Args:
             code: group code as int
             value: tag value
+
+        * does not support PackedTags!
+
         """
         try:
             self.update(code, value)
@@ -205,8 +223,8 @@ class Tags(list):
         Args:
             codes: iterable of group codes
 
-        Returns:
-            Tags() object
+        Returns: Tags() object
+
         """
         self[:] = [tag for tag in self if tag.code not in frozenset(codes)]
 
@@ -217,8 +235,8 @@ class Tags(list):
         Args:
             codes: iterable of group codes
 
-        Returns:
-            Tags() object
+        Returns: Tags() object
+
         """
         self[:] = [tag for tag in self if tag.code in frozenset(codes)]
 
@@ -232,8 +250,8 @@ class Tags(list):
             start: start index as int
             end: end index as int, if None end index = len(self)
 
-        Returns:
-            collected tags as Tags().
+        Returns: collected tags as Tags() object
+
         """
         codes = frozenset(codes)
         index = int(start)
@@ -258,6 +276,7 @@ class Tags(list):
         Args:
             tags: iterable of DXFTags() objects
             codes: iterable of group codes
+
         """
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
 
@@ -266,12 +285,13 @@ def group_tags(tags, splitcode=STRUCTURE_MARKER):
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
     A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
+
     Args:
         tags: iterable of DXFTag()
         splitcode int: group code of split tag
 
-    Yields:
-        list of DXFTag()
+    Yields: list of DXFTag()
+
     """
     def append(tag):  # first do nothing, skip tags in front of the first split tag
         pass

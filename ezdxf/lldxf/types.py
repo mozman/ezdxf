@@ -24,12 +24,8 @@ def _build_type_table(types):
     return table
 
 
-def internal_type(value):
-    return value
-
-
 TYPE_TABLE = _build_type_table([
-    (internal_type, (-10, )),  # spacial tags for internal use
+    # all group code < 0 are spacial tags for internal use, but not accessible by get_dxf_attrib()
     (point_tuple, range(10, 20)),  # 2d or 3d points
     (float, range(20, 60)),  # code 20-39 belongs to 2d/3d points and should not appear alone
     (int, range(60, 100)),

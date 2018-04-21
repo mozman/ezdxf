@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import os
 import io
 
-from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, internal_type, is_pointer_code
+from ezdxf.lldxf.types import tag_type, point_tuple, is_point_code, is_pointer_code
 from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
@@ -83,7 +83,6 @@ TAG_TYPES = {
     float: '<float>',
     ustr: '<str>',
     point_tuple: '<point>',
-    internal_type: '<internal>',
 }
 
 

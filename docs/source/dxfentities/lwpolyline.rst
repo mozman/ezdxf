@@ -139,6 +139,11 @@ Number of polyline vertices.
 
 .. method:: LWPolyline.__getitem__(index)
 
-Get point at position *index* as (x, y, start_width, end_width, bulge) tuple. Actual implementation is very slow!
-start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
+Get point at position *index* as (x, y, start_width, end_width, bulge) tuple. start_width, end_width and bulge is 0 if
+not present (0 is the DXF default value if not present).
+
+.. method:: LWPolyline.__setitem__(index, value)
+
+Set point at position *index* as (x, y, [start_width, [end_width, [bulge]]]) tuple. If start_width or end_width is 0 or
+left off the default value is used. If the bulge value is left off, bulge is 0 by default (straight line).
 

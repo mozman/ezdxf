@@ -16,18 +16,30 @@ modern_post_load_tag_processors = {}
 legacy_post_load_tag_processors = {}
 
 
-def register_post_load_tag_processor(entity, processor, legacy=False):
+def register(entity, legacy=False):
     """
-    Register functions to process from DXF file loaded tags.
+    Register (decorator) functions to process from DXF file loaded tags.
 
     Args:
         entity: DXF type like 'LINE' or 'VERTEX'
-        processor: function with one parameter 'tags'
         legacy: use for legacy tag structure (DXF version <= AC1009) or modern tag structures
 
     """
-    processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
-    processors[entity] = processor
+    logger.debug('Register post load tag processor for DXF type: {}; legacy: {}'.format(entity, legacy))
+
+    def decorator(processor):
+        """
+
+        Args:
+            processor: function with one parameter 'tags'
+
+        Returns: processor
+
+        """
+        processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
+        processors[entity] = processor
+        return processor
+    return decorator
 
 
 def load_dxf_structure(tagger, ignore_missing_eof=False):
