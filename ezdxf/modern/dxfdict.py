@@ -2,12 +2,21 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFValueError, DXFKeyError
-from ..lldxf.types import DXFTag
+from ..lldxf.const import DXFKeyError
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, ExtendedTags
 from .dxfobjects import none_subclass
+from ..lldxf.packedtags import TagDict
+from ..lldxf import loader
 
-ENTRY_NAME_CODE = 3
+
+@loader.register('ACDBDICTIONARYWDFLT', legacy=False)
+@loader.register('DICTIONARY', legacy=False)
+def tag_processor(tags):
+    subclass = tags.get_subclass('AcDbDictionary')
+    d = TagDict.from_tags(subclass)
+    d.replace_tags(subclass)
+    return tags
+
 
 _DICT_TPL = """0
 DICTIONARY
@@ -31,6 +40,10 @@ dictionary_subclass = DefSubclass('AcDbDictionary', {
     # 3 = <xref>$0$<name>
     # 4 = $0$<name>
     # 5 = Unmangle name
+
+    # 3: entry name
+    # 350: entry handle, some DICTIONARY objects have 360 as handle group code, this is accepted by AutoCAD but not
+    # documented by the DXF reference!!! ezdxf replaces 360 codes by 350.
 })
 
 
@@ -44,7 +57,7 @@ class DXFDictionary(DXFObject):
     values, you have to create a DXFDictionaryVar object, and store its handle.
 
     """
-    TEMPLATE = ExtendedTags.from_text(_DICT_TPL)
+    TEMPLATE = tag_processor(ExtendedTags.from_text(_DICT_TPL))
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         dictionary_subclass,
@@ -58,66 +71,60 @@ class DXFDictionary(DXFObject):
     def is_hard_owner(self):
         return bool(self.get_dxf_attrib('hard_owned', False))
 
+    @property
+    def data(self):
+        return self.AcDbDictinary.get_first_value(TagDict.code)
+
     def keys(self):
         """
         Generator for the dictionary's keys.
 
         """
-        return (item[0] for item in self.items())
+        return self.data.keys()
 
     def items(self):
         """
-        Generator for the dictionary's items (``(key, value)`` pairs).
+        Generator for the dictionary's items as (key, value) pairs.
 
         """
-        key = ""
-        for code, value in self.AcDbDictinary:
-            if code == ENTRY_NAME_CODE:  # Entry name
-                key = value
-            elif code == 350:  # handle to entry object
-                yield key, value
+        return self.data.items()
 
     def __getitem__(self, key):
         """
-        Return the value for *key* if *key* is in the dictionary, else raises a :class:`KeyError()`.
+        Return the value for key if key is in the dictionary, else raises a KeyError.
 
         """
         return self.get(key)
 
     def __setitem__(self, key, value):
         """
-        Add item *(key, value)* to dictionary.
+        Add item (key, value) to dictionary.
 
         """
         return self.add(key, value)
 
     def __delitem__(self, key):
         """
-        Remove element *key* from the dictionary. *KeyError* if *key* is not contained in the dictionary.
+        Remove element key from the dictionary. Raises KeyError if key is not contained in the dictionary.
 
         """
         return self.remove(key)
 
     def __contains__(self, key):
         """
-        Return *True* if the dictionary has a key *key*, else *False*.
+        Return True if the dictionary has key, else False.
 
         """
-        return False if self._get_item_index(key) is None else True
+        return key in self.data
 
     def __len__(self):
         """
         Return the number of items in the dictionary.
 
         """
-        return self.count()
+        return len(self.data)
 
-    def count(self):
-        """
-        Return the number of items in the dictionary.
-
-        """
-        return sum(1 for tag in self.AcDbDictinary if tag.code == ENTRY_NAME_CODE)
+    count = __len__
 
     def get(self, key, default=DXFKeyError):
         """
@@ -125,14 +132,13 @@ class DXFDictionary(DXFObject):
         for *default*=DXFKeyError.
 
         """
-        index = self._get_item_index(key)
-        if index is None:
+        try:
+            return self.data[key]
+        except KeyError:
             if default is DXFKeyError:
                 raise DXFKeyError("KeyError: '{}'".format(key))
             else:
                 return default
-        else:
-            return self.AcDbDictinary[index + 1].value
 
     get_handle = get  # synonym
 
@@ -147,20 +153,12 @@ class DXFDictionary(DXFObject):
         else:
             return handle
 
-    def add(self, key, value, code=350):
+    def add(self, key, value):
         """
-        Add item ``(key, value)`` to dictionary. The key parameter *code* specifies the group code of the *value*
-        data and defaults to ``350`` (soft-owner handle).
+        Add item (key, value) to dictionary.
 
         """
-        index = self._get_item_index(key)
-        value_tag = DXFTag(code, value)
-        content_tags = self.AcDbDictinary
-        if index is None:  # create new entry
-            content_tags.append(DXFTag(ENTRY_NAME_CODE, key))
-            content_tags.append(value_tag)
-        else:  # always replace existing values, until I understand the 281-tag (name mangling)
-            content_tags[index + 1] = value_tag
+        self.data[key] = value
 
     def remove(self, key):
         """
@@ -168,33 +166,25 @@ class DXFDictionary(DXFObject):
         dictionary. Deletes hard owned DXF objects from OBJECTS section.
 
         """
+        data = self.data
+        if key not in data:
+            raise DXFKeyError(key)
+
         if self.is_hard_owner:
             entity = self.get_entity(key)
             # Presumption: hard owned DXF objects always reside in the OBJECTS section
             self.drawing.objects.delete_entity(entity)
-
-        index = self._get_item_index(key)
-        if index is None:
-            raise DXFKeyError("KeyError: '{}'".format(key))
-        else:
-            self._discard(index)
+        del data[key]
 
     def discard(self, key):
         """
         Remove *key* from the dictionary, if it is present. Does NOT delete hard owned entities!
 
         """
-        self._discard(self._get_item_index(key))
-
-    def _discard(self, index):
-        if index:
-            del self.AcDbDictinary[index:index + 2]  # remove key and value
-
-    def _get_item_index(self, key):
-        for index, tag in enumerate(self.AcDbDictinary):
-            if tag.code == ENTRY_NAME_CODE and tag.value == key:
-                return index
-        return None
+        try:
+            del self.data[key]
+        except KeyError:
+            pass
 
     def clear(self):
         """
@@ -203,11 +193,7 @@ class DXFDictionary(DXFObject):
         """
         if self.is_hard_owner:
             self.delete_hard_owned_entries()
-        try:
-            start_index = self.AcDbDictinary.tag_index(code=ENTRY_NAME_CODE)
-        except DXFValueError:  # no entries found
-            return
-        del self.AcDbDictinary[start_index:]
+        self.data.clear()
 
     def delete_hard_owned_entries(self):
         # Presumption: hard owned DXF objects always reside in the OBJECTS section
@@ -236,11 +222,7 @@ class DXFDictionary(DXFObject):
         return dxf_dict
 
     def audit(self, auditor):
-        if auditor.drawing.rootdict.tags is self.tags:  # if root dict, ignore owner tag because it is always #0
-            codes = (330,)
-        else:
-            codes = None
-        auditor.check_pointer_target_exists(self, ignore_codes=codes)
+        auditor.check_handles_exists(self, handles=self.data.values())
 
     def destroy(self):
         if self.get_dxf_attrib('hard_owned', False):
@@ -283,8 +265,8 @@ AcDbDictionaryWithDefault
 
 
 class DXFDictionaryWithDefault(DXFDictionary):
-    TEMPLATE = ExtendedTags.from_text(_DICT_WITH_DEFAULT_TPL)
-    CLASS = ExtendedTags.from_text(_DICT_WITH_DEFAULT_CLS)
+    TEMPLATE = tag_processor(ExtendedTags.from_text(_DICT_WITH_DEFAULT_TPL))
+    CLASS = (ExtendedTags.from_text(_DICT_WITH_DEFAULT_CLS))
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         dictionary_subclass,

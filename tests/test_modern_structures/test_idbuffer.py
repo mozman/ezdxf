@@ -9,6 +9,11 @@ def dwg():
     return ezdxf.new('R2007')
 
 
+def test_is_registered():
+    from ezdxf.lldxf import loader
+    assert loader.is_registered('IDBUFFER', legacy=False)
+
+
 def test_generic_id_buffer(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
     assert id_buffer.dxftype() == 'IDBUFFER'

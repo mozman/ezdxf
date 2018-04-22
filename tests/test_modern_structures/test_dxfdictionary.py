@@ -5,13 +5,17 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.modern.dxfdict import DXFDictionary, DXFDictionaryWithDefault
+from ezdxf.modern.dxfdict import DXFDictionary, DXFDictionaryWithDefault, tag_processor
+from ezdxf.lldxf import loader
 
 
 class TestNoneEmptyDXFDict:
     @pytest.fixture
     def dxfdict(self):
-        return DXFDictionary(ExtendedTags.from_text(ROOTDICT))
+        return DXFDictionary(tag_processor(ExtendedTags.from_text(ROOTDICT)))
+
+    def test_is_registered(self):
+        assert loader.is_registered('DICTIONARY', legacy=False)
 
     def test_getitem(self, dxfdict):
         assert dxfdict['ACAD_PLOTSTYLENAME'] == 'E'
@@ -82,7 +86,7 @@ class TestNoneEmptyDXFDict:
 class TestEmptyDXFDict:
     @pytest.fixture
     def dxfdict(self):
-        return DXFDictionary(ExtendedTags.from_text(EMPTY_DICT))
+        return DXFDictionary(tag_processor(ExtendedTags.from_text(EMPTY_DICT)))
 
     def test_len(self, dxfdict):
         assert 0 == len(dxfdict)
@@ -136,7 +140,10 @@ def test_add_sub_dict(dwg):
 class TestDXFDictWithDefault:
     @pytest.fixture
     def dxfdict(self):
-        return DXFDictionaryWithDefault(ExtendedTags.from_text(DEFAULT_DICT))
+        return DXFDictionaryWithDefault(tag_processor(ExtendedTags.from_text(DEFAULT_DICT)))
+
+    def test_is_registered(self):
+        assert loader.is_registered('ACDBDICTIONARYWDFLT', legacy=False)
 
     def test_get_existing_value(self, dxfdict):
         assert 'F' == dxfdict['Normal']

@@ -1,6 +1,7 @@
 # created: 19.04.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from __future__ import unicode_literals
 from array import array
 from abc import abstractmethod
 from collections import OrderedDict
@@ -63,6 +64,7 @@ class TagDict(PackedTags):
     code = -101  # compatible with DXFTag.code
     KEY_CODE = 3
     VALUE_CODE = 350
+    SEARCH_CODES = (350, 360, 3)  # some DICTIONARY have 360 handles
     __slots__ = ('value', )
 
     def __init__(self, data=None):
@@ -77,12 +79,11 @@ class TagDict(PackedTags):
         return self.__class__(data=self.value)
 
     def replace_tags(self, tags):
-        return replace_tags(tags, codes=(self.KEY_CODE, self.VALUE_CODE), packed_data=self)
+        return replace_tags(tags, codes=self.SEARCH_CODES, packed_data=self)
 
     @classmethod
     def from_tags(cls, tags):
-        codes = (cls.KEY_CODE, cls.VALUE_CODE)
-        return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in codes)))
+        return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in cls.SEARCH_CODES)))
 
 
 def replace_tags(tags, codes, packed_data):

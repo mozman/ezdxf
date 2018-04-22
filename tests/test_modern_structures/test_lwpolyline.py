@@ -8,6 +8,11 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.modern.lwpolyline import PackedPoints, tag_processor
 
 
+def test_is_registered():
+    from ezdxf.lldxf import loader
+    assert loader.is_registered('LWPOLYLINE', legacy=False)
+
+
 @pytest.fixture(scope='module')
 def layout():
     dwg = ezdxf.new('AC1015')

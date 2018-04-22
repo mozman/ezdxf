@@ -16,6 +16,12 @@ modern_post_load_tag_processors = {}
 legacy_post_load_tag_processors = {}
 
 
+def is_registered(entity, legacy=False):
+    # just for testing
+    processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
+    return entity in processors
+
+
 def register(entity, legacy=False):
     """
     Register (decorator) functions to process from DXF file loaded tags.

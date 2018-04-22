@@ -232,3 +232,19 @@ class Auditor(object):
                     data=tag,
                 )
                 self.undefined_targets.add(handle)
+
+    def check_handles_exists(self, entity, handles, zero_pointer_valid=False):
+        db = self.drawing.entitydb
+        for handle in handles:
+            if handle not in db:
+                if handle == '0' and zero_pointer_valid:  # default unset pointer
+                    continue
+                if handle in self.undefined_targets:  # for every undefined pointer add just one error message
+                    continue
+                self.add_error(
+                    code=Error.POINTER_TARGET_NOT_EXISTS,
+                    message='handle target does not exist: (#{})'.format(handle),
+                    dxf_entity=entity,
+                    data=handle,
+                )
+                self.undefined_targets.add(handle)

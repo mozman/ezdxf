@@ -9,6 +9,11 @@ def dwg():
     return ezdxf.new('R2007')
 
 
+def test_is_registered():
+    from ezdxf.lldxf import loader
+    assert loader.is_registered('FIELDLIST', legacy=False)
+
+
 def test_generic_field_list(dwg):
     field_list = dwg.objects.create_new_dxf_entity('FIELDLIST', {})
     assert field_list.dxftype() == 'FIELDLIST'
