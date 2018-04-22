@@ -7,7 +7,7 @@ audit(drawing, stream): check a DXF drawing for errors.
 """
 from __future__ import unicode_literals
 import sys
-from ezdxf.lldxf.types import is_pointer_code
+from ezdxf.lldxf.types import is_pointer_code, DXFTag
 from ezdxf.lldxf.const import Error
 from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.dxfentity import DXFEntity
@@ -245,6 +245,6 @@ class Auditor(object):
                     code=Error.POINTER_TARGET_NOT_EXISTS,
                     message='handle target does not exist: (#{})'.format(handle),
                     dxf_entity=entity,
-                    data=handle,
+                    data=DXFTag(-1, handle),  # DXFTag is expected
                 )
                 self.undefined_targets.add(handle)
