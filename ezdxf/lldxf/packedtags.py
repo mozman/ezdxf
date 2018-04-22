@@ -3,7 +3,9 @@
 # License: MIT License
 from array import array
 from abc import abstractmethod
+from collections import OrderedDict
 from .types import DXFTag, strtag2
+from ..tools import take2
 
 
 class PackedTags(object):
@@ -32,17 +34,55 @@ class PackedTags(object):
 
 
 class TagArray(PackedTags):
-    def __init__(self, code, value, dtype='f'):
-        self.code = int(code)
-        self.value = array(dtype, value)
+    code = -100  # compatible with DXFTag.code
+    VALUE_CODE = 60
+    DTYPE = 'i'
+    __slots__ = ('value', )
+
+    def __init__(self, data=None):
+        if data is None:
+            data = []
+        self.value = array(self.DTYPE, data)  # compatible with DXFTag.value
 
     def dxftags(self):
-        code = self.code
         for value in self.value:
-            yield DXFTag(code, value)
+            yield DXFTag(self.VALUE_CODE, value)
 
     def clone(self):
-        return TagArray(self.code, self.value, self.value.typecode)
+        return self.__class__(data=self.value)
+
+    def replace_tags(self, tags):
+        return replace_tags(tags, codes=(self.VALUE_CODE, ), packed_data=self)
+
+    @classmethod
+    def from_tags(cls, tags):
+        return cls(data=(tag.value for tag in tags if tag.code == cls.VALUE_CODE))
+
+
+class TagDict(PackedTags):
+    code = -101  # compatible with DXFTag.code
+    KEY_CODE = 3
+    VALUE_CODE = 350
+    __slots__ = ('value', )
+
+    def __init__(self, data=None):
+        self.value = OrderedDict(data if data is not None else {})  # compatible with DXFTag.value
+
+    def dxftags(self):
+        for key, value in self.value.items():
+            yield DXFTag(self.KEY_CODE, key)
+            yield DXFTag(self.VALUE_CODE, value)
+
+    def clone(self):
+        return self.__class__(data=self.value)
+
+    def replace_tags(self, tags):
+        return replace_tags(tags, codes=(self.KEY_CODE, self.VALUE_CODE), packed_data=self)
+
+    @classmethod
+    def from_tags(cls, tags):
+        codes = (cls.KEY_CODE, cls.VALUE_CODE)
+        return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in codes)))
 
 
 def replace_tags(tags, codes, packed_data):
@@ -61,7 +101,3 @@ def replace_tags(tags, codes, packed_data):
         pos = len(tags)
     tags.remove_tags(codes=codes)
     tags.insert(pos, packed_data)
-
-
-class TagDict(PackedTags):
-    pass

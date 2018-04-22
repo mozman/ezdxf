@@ -9,8 +9,6 @@ from ..lldxf.packedtags import PackedTags, replace_tags
 from ..lldxf import loader
 from ..tools.c23 import PY3
 
-PACKED_HANDLES_CODE = -330
-
 
 def new_array(values=None):
     # Handles are 64bit values and Python2 does not support 64bit values in array, using list() instead of array() for
@@ -22,11 +20,11 @@ def new_array(values=None):
 
 
 class PackedHandles(PackedTags):
-    __slots__ = ('code', 'value')
+    code = -330  # compatible with DXFTag.code
+    __slots__ = ('value', )
 
     def __init__(self, handles=None):
-        # compatible with DXFTag.code, DXFTag.value
-        self.code = PACKED_HANDLES_CODE
+        # compatible with DXFTag.value
         self.value = new_array(handles)
 
     def __len__(self):
@@ -108,4 +106,4 @@ class IDBuffer(DXFObject):
 
     @property
     def handles(self):
-        return self.buffer_subclass.get_first_tag(PACKED_HANDLES_CODE)
+        return self.buffer_subclass.get_first_tag(PackedHandles.code)

@@ -24,3 +24,13 @@ def set_flag_state(flags, flag, state=True):
 
 def guid():
     return ustr(uuid1()).upper()
+
+
+def take2(iterable):
+    store = None
+    for item in iterable:
+        if store is None:
+            store = item
+        else:
+            yield store, item
+            store = None

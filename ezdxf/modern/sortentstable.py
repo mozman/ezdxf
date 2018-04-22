@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from ..lldxf.types import DXFTag
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
-
+from ..tools import take2
 
 _SORT_ENTITIES_TABLE_CLS = """0
 CLASS
@@ -41,16 +41,6 @@ AcDbSortentsTable
 330
 0
 """
-
-
-def take2(iterable):
-    store = None
-    for item in iterable:
-        if store is None:
-            store = item
-        else:
-            yield store, item
-            store = None
 
 
 class SortEntitiesTable(DXFObject):

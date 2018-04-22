@@ -39,15 +39,16 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
 })
 
 LWPOINTCODES = (10, 20, 40, 41, 42)
-PACKED_POINTS_CODE = -10
 
 
 class PackedPoints(PackedTags):
-    __slots__ = ('code', 'value')
+    code = -10  # compatible with DXFTag.code
+    __slots__ = ('value', )
 
-    def __init__(self):
-        self.code = PACKED_POINTS_CODE  # compatible with DXFTag.code
+    def __init__(self, data=None):
         self.value = array.array('d')  # compatible with DXFTag.value
+        if data is not None:
+            self.value.extend(data)
 
     def __len__(self):
         return len(self.value) // 5
@@ -59,10 +60,7 @@ class PackedPoints(PackedTags):
         self.set_point(index, point)
 
     def clone(self):
-        p = PackedPoints()
-        p.code = self.code
-        p.value = array.array('d', self.value)
-        return p
+        return PackedPoints(data=self.value)
 
     def setup(self, tags):
         """
@@ -185,7 +183,7 @@ class LWPolyline(ModernGraphicEntity):
 
     @property
     def packed_points(self):
-        return self.AcDbPolyline.get_first_tag(PACKED_POINTS_CODE)
+        return self.AcDbPolyline.get_first_tag(PackedPoints.code)
 
     @closed.setter
     def closed(self, status):
