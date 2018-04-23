@@ -39,6 +39,21 @@ def test_getitem_last(layout):
     assert (3, 3, 0, 0, 0) == line[-1]
 
 
+def test_slicing(layout):
+    points = [(1, 1), (2, 2), (3, 3)]
+    line = layout.add_lwpolyline(points)
+    assert len(line[:1]) == 1
+    assert len(line[:]) == 3
+    assert len(line[:2]) == 2
+    assert len(line[:-1]) == 2
+    assert len(line[1:-1]) == 1
+    result = line[::-1]
+    assert len(result) == 3
+    assert result[0] == (3, 3, 0, 0, 0)
+    assert result[1] == (2, 2, 0, 0, 0)
+    assert result[2] == (1, 1, 0, 0, 0)
+
+
 def test_setitem_first(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points)
@@ -132,9 +147,9 @@ def test_packed_points_basics():
     # test negative index
     assert packed_points[-1] == (.5, .5, 0, 0, 0)
     with pytest.raises(IndexError):
-        packed_points.get_point(-3)
+        packed_points[-3]
     with pytest.raises(IndexError):
-        packed_points.get_point(2)
+        packed_points[2]
 
 
 def test_packed_points_advanced():

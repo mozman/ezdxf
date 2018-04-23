@@ -5,11 +5,12 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
 from ..lldxf.types import DXFTag
-from ..lldxf.const import DXFIndexError, DXFValueError
+from ..lldxf.const import DXFIndexError, DXFValueError, DXFTypeError
 from ..lldxf.packedtags import PackedTags
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf import loader
+from ezdxf.tools.indexing import Index
 
 _LWPOLYLINE_TPL = """0
 LWPOLYLINE
@@ -54,10 +55,16 @@ class PackedPoints(PackedTags):
         return len(self.value) // 5
 
     def __getitem__(self, index):
-        return self.get_point(index)
+        if isinstance(index, slice):
+            return list(self._slicing(index))
+        else:
+            return self._get_point(Index(self).index(index, error=DXFIndexError))
 
     def __setitem__(self, index, point):
-        self.set_point(index, point)
+        if isinstance(index, slice):
+            raise DXFTypeError('slicing not supported')
+        else:
+            self._set_point(Index(self).index(index, error=DXFIndexError), point)
 
     def clone(self):
         return PackedPoints(data=self.value)
@@ -92,25 +99,20 @@ class PackedPoints(PackedTags):
         if point is not None:
             self.append(get_vertex())
 
-    def real_index(self, index):
-        if index >= len(self):
-            raise IndexError
-        elif index < 0:
-            index += len(self)
-            if index < 0:
-                raise IndexError
-        return index
+    def _slicing(self, s):
+        for index in Index(self).slicing(s):
+            yield self._get_point(index)
 
-    def get_point(self, index):
-        index = self.real_index(index) * 5
+    def _get_point(self, index):
+        index = index * 5
         return tuple(self.value[index:index+5])
 
-    def set_point(self, index, point):
+    def _set_point(self, index, point):
         if len(point) != 5:
             raise DXFValueError('point requires exact 5 components.')
         if isinstance(point, (tuple, list)):
             point = array.array('d', point)
-        index = self.real_index(index) * 5
+        index = index * 5
         self.value[index:index+5] = point
 
     def dxftags(self):
@@ -207,10 +209,7 @@ class LWPolyline(ModernGraphicEntity):
         bulge is 0 if not present.
 
         """
-        try:
-            return self.packed_points.get_point(index)
-        except IndexError:
-            raise DXFIndexError
+        return self.packed_points[index]
 
     def __setitem__(self, index, value):
         """
@@ -221,10 +220,7 @@ class LWPolyline(ModernGraphicEntity):
             value: point value as (x, y, [start_width, [end_width, [bulge]]]) tuple
 
         """
-        try:
-            self.packed_points.set_point(index, point_to_array(value))
-        except IndexError:
-            raise DXFIndexError
+        self.packed_points[index] = point_to_array(value)
 
     def vertices(self):
         """

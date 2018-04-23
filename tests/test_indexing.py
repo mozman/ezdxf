@@ -29,8 +29,17 @@ def test_slicing_ascending_order(check_list):
     assert list(i.slicing(-70, -30, 7)) == check_list[-70:-30:7]
     assert list(i.slicing(-70, -30, -7)) == check_list[-70:-30:-7]
 
+
+def test_errors():
+    i = Index(100)
     with pytest.raises(ValueError):
         list(i.slicing(10, 50, 0))
+
+    with pytest.raises(IndexError):
+        list(i.index(100, error=IndexError))
+
+    with pytest.raises(IndexError):
+        list(i.index(-101, error=IndexError))
 
 
 def test_slicing_descending_order(check_list):

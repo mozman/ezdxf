@@ -10,11 +10,14 @@ class Index(object):
         except TypeError:
             self.length = int(item)
 
-    def index(self, item):
+    def index(self, item, error=None):
         if item < 0:
-            return self.length + int(item)
+            result = self.length + int(item)
         else:
-            return int(item)
+            result = int(item)
+        if error and not (0 <= result < self.length):
+            raise error('index out of range')
+        return result
 
     def slicing(self, *args):
         if isinstance(args[0], slice):
