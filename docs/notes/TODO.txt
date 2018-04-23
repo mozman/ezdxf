@@ -107,5 +107,4 @@ Candidates for Packed Data
 - LAYER_FILTER
 - MATERIAL: matrices
 - HATCH ?!?!? a really complex structure
-- DICTIONARY and DICTIONARYWITHDFLT
 - SORTENTSTABLE
