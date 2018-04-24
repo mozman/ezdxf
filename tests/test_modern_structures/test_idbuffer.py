@@ -23,10 +23,10 @@ def test_generic_id_buffer(dwg):
 def test_set_get_id_buffer(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
     assert id_buffer.dxftype() == 'IDBUFFER'
+    id_buffer.handles = ['FF', 'EE', 'DD']
     handles = id_buffer.handles
-    handles.set_ids(['FF', 'EE', 'DD'])
     assert len(handles) == 3
-    assert handles.get_ids() == ['FF', 'EE', 'DD']
+    assert handles == ['FF', 'EE', 'DD']
 
     handles.append('FFFF')
     assert handles[-1] == 'FFFF'
@@ -37,8 +37,9 @@ def test_set_get_id_buffer(dwg):
 
 def test_magic_methods(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
+    id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     handles = id_buffer.handles
-    handles.set_ids(['FF', 'EE', 'DD', 'CC'])
+
     assert len(handles) == 4
     assert handles[1] == 'EE'
 
@@ -46,10 +47,10 @@ def test_magic_methods(dwg):
     assert handles[1] == 'ABCD'
 
     del handles[1:3]
-    assert handles.get_ids() == ['FF', 'CC']
+    assert handles[:] == ['FF', 'CC']
 
     handles[1:1] = ['EE', 'DD']
-    assert handles.get_ids() == ['FF', 'EE', 'DD', 'CC']
+    assert handles == ['FF', 'EE', 'DD', 'CC']
 
     assert handles[1:3] == ['EE', 'DD']
 
@@ -59,7 +60,7 @@ def test_magic_methods(dwg):
 
 def test_dxf_tags(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
-    id_buffer.handles.set_ids(['FF', 'EE', 'DD', 'CC'])
+    id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     tags = list(id_buffer.handles.dxftags())
     assert len(tags) == 4
     assert tags[0] == (330, 'FF')
@@ -68,7 +69,7 @@ def test_dxf_tags(dwg):
 
 def test_clone(dwg):
     id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
-    id_buffer.handles.set_ids(['FF', 'EE', 'DD', 'CC'])
+    id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     handles = id_buffer.handles
     handles2 = handles.clone()
     handles2[-1] = 'ABCD'

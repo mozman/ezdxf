@@ -48,9 +48,9 @@ AcDbFieldList
 @loader.register('FIELDLIST', legacy=False)
 def tag_processor(tags):
     subclass = tags.get_subclass('AcDbFieldList')
-    points = PackedHandles()
-    points.set_ids([tag.value for tag in subclass[1:]])
-    replace_tags(subclass, codes=(330, ), packed_data=points)
+    flist = PackedHandles()
+    flist.handles = [tag.value for tag in subclass[1:]]
+    replace_tags(subclass, codes=(330, ), packed_data=flist)
     return tags
 
 

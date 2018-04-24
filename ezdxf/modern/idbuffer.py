@@ -50,21 +50,21 @@ class PackedHandles(PackedTags):
         self.append(value)
         return self
 
+    def __eq__(self, other):
+        return self.value == new_array(int(handle, 16) for handle in other)
+
     def append(self, handle):
         self.value.append(int(handle, 16))
+
+    def extend(self, handles):
+        self.value.extend(int(handle, 16) for handle in handles)
 
     def dxftags(self):
         for handle in self.value:
             yield DXFTag(330, "%X" % handle)
 
     def clone(self):
-        return PackedHandles(handles=self.value)
-
-    def set_ids(self, handles):
-        self.value = new_array(int(handle, 16) for handle in handles)
-
-    def get_ids(self):
-        return ['%X' % handle for handle in self.value]
+        return self.__class__(handles=self.value)
 
     def clear(self):
         del self.value[:]
@@ -73,9 +73,9 @@ class PackedHandles(PackedTags):
 @loader.register('IDBUFFER', legacy=False)
 def tag_processor(tags):
     subclass = tags.get_subclass('AcDbIdBuffer')
-    points = PackedHandles()
-    points.set_ids([tag.value for tag in subclass[1:]])
-    replace_tags(subclass, codes=(330, ), packed_data=points)
+    id_buffer = PackedHandles()
+    id_buffer.handles = [tag.value for tag in subclass[1:]]
+    replace_tags(subclass, codes=(330, ), packed_data=id_buffer)
     return tags
 
 
@@ -106,4 +106,14 @@ class IDBuffer(DXFObject):
 
     @property
     def handles(self):
-        return self.buffer_subclass.get_first_tag(PackedHandles.code)
+        try:
+            return self._cached_handles
+        except AttributeError:
+            self._cached_handles = self.buffer_subclass.get_first_tag(PackedHandles.code)
+            return self._cached_handles
+
+    @handles.setter
+    def handles(self, items):
+        self.handles[:] = list(items)
+
+

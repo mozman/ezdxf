@@ -34,16 +34,15 @@ class PackedTags(object):
         return ''.join(strtag2(tag) for tag in self.dxftags())
 
 
-class TagArray(PackedTags):
+class TagList(PackedTags):
     code = -100  # compatible with DXFTag.code
-    VALUE_CODE = 60
-    DTYPE = 'i'
+    VALUE_CODE = 330
     __slots__ = ('value', )
 
     def __init__(self, data=None):
         if data is None:
             data = []
-        self.value = array(self.DTYPE, data)  # compatible with DXFTag.value
+        self.value = list(data)  # compatible with DXFTag.value
 
     def dxftags(self):
         for value in self.value:
@@ -60,8 +59,20 @@ class TagArray(PackedTags):
         return cls(data=(tag.value for tag in tags if tag.code == cls.VALUE_CODE))
 
 
-class TagDict(PackedTags):
+class TagArray(TagList):
     code = -101  # compatible with DXFTag.code
+    VALUE_CODE = 60
+    DTYPE = 'i'
+    __slots__ = ('value', )
+
+    def __init__(self, data=None):
+        if data is None:
+            data = []
+        self.value = array(self.DTYPE, data)  # compatible with DXFTag.value
+
+
+class TagDict(PackedTags):
+    code = -102  # compatible with DXFTag.code
     KEY_CODE = 3
     VALUE_CODE = 350
     SEARCH_CODES = (350, 360, 3)  # some DICTIONARY have 360 handles

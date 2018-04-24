@@ -73,7 +73,11 @@ class DXFDictionary(DXFObject):
 
     @property
     def data(self):
-        return self.AcDbDictinary.get_first_value(TagDict.code)
+        try:
+            return self._cached_dict
+        except AttributeError:
+            self._cached_dict = self.AcDbDictinary.get_first_value(TagDict.code)
+            return self._cached_dict
 
     def keys(self):
         """
