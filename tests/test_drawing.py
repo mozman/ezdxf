@@ -134,7 +134,7 @@ def test_chain_layout_and_block(dwg_r12, dwg_r2000):
         # check for unique handles
         assert len(handles) == len(set(handles))
 
-        check = set([line_msp.dxf.handle, line_blk.dxf.handle])
+        check = {line_msp.dxf.handle, line_blk.dxf.handle}
         assert check.intersection(handles) == check
 
 
