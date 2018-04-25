@@ -123,6 +123,20 @@ def test_min_r12_entity_section(min_r12):
     assert len(min_r12.entities) == 0
 
 
+def test_chain_layout_and_block(dwg_r12, dwg_r2000):
+    for dwg in (dwg_r12, dwg_r2000):
+        msp = dwg.modelspace()
+        line_msp = msp.add_line((0, 0), (1, 1))
+        blk = dwg.blocks.new('TEST_CHAIN')
+        line_blk = blk.add_line((0, 0), (1, 1))
+
+        handles = list(e.dxf.handle for e in dwg.chain_layouts_and_blocks())
+        # check for unique handles
+        assert len(handles) == len(set(handles))
+
+        check = set([line_msp.dxf.handle, line_blk.dxf.handle])
+        assert check.intersection(handles) == check
+
 
 MINIMALISTIC_DXF12 = """  0
 SECTION

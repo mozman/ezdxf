@@ -204,7 +204,12 @@ class Drawing(object):
         Returns: yields Layout() objects
 
         """
-        return chain(self.layouts, self.blocks)
+        # DXF R12: model space and paper space layouts not linked into the associated BLOCK entity
+        if self.dxfversion <= 'AC1009':
+            return chain(self.layouts, self.blocks)
+        # DXF R2000+: all layout spaces linked into their associated BLOCK entity
+        else:
+            return iter(self.blocks)
 
     def chain_layouts_and_blocks(self):
         """
