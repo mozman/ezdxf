@@ -1,14 +1,12 @@
 #!/usr/bin/env python
-# Author:  mozman
-# Purpose: setup
 # Created: 10.03.2011
+# Copyright (c) 2011-2018 Manfred Moitzi
 # License: MIT License
-
-
+from __future__ import unicode_literals
 import os
 from setuptools import setup
 
-VERSION = "0.8.8"  # also update VERSION in __init__.py
+VERSION = "0.8.9"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'me@mozman.at'
 

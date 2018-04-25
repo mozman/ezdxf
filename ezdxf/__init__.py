@@ -20,7 +20,7 @@ from .lldxf.const import DXFBlockInUseError
 import codecs
 from .lldxf.encoding import dxfbackslashreplace
 codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
-version = (0, 8, 8)  # also update VERSION in setup.py
+version = (0, 8, 9)  # also update VERSION in setup.py
 VERSION = "%d.%d.%d" % version
 __version__ = VERSION
 __author__ = "mozman <me@mozman.at>"

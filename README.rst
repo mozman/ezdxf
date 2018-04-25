@@ -64,6 +64,10 @@ Install with pip::
 
     pip install ezdxf
 
+Install develop version (only if you have to)::
+
+    pip install git+https://github.com/mozman/ezdxf.git@develop
+
 or from source::
 
     python setup.py install
