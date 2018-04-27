@@ -4,8 +4,25 @@
 from __future__ import unicode_literals
 from array import array
 from itertools import chain
-from ..tools.c23 import ustr
+from ..tools.c23 import ustr, reprlib, byte_to_hexstr, encode_hex_code_string_to_bytes
+
 TAG_STRING_FORMAT = '%3d\n%s\n'
+POINT_CODES = frozenset([
+    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    110, 111, 112, 210,
+    1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
+])
+
+GENERAL_MARKER = 0
+SUBCLASS_MARKER = 100
+APP_DATA_MARKER = 102
+EXT_DATA_MARKER = 1001
+GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
+BINARY_FLAGS = frozenset([70, 90])
+HANDLE_CODES = frozenset([5, 105])
+POINTER_CODES = frozenset(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
+HEX_HANDLE_CODES = frozenset(chain(HANDLE_CODES, POINTER_CODES))
+BINARAY_DATA = frozenset(range(310, 320))
 
 
 class DXFTag(object):
@@ -74,8 +91,24 @@ class DXFVertex(DXFTag):
         return ''.join(TAG_STRING_FORMAT % tag for tag in self.dxftags())
 
 
-def point_tuple(value):
-    return tuple(float(f) for f in value)
+class DXFBinaryTag(DXFTag):
+    __slots__ = ['code', '_value']
+
+    def __init__(self, code, value):
+        data = encode_hex_code_string_to_bytes(value)
+        super(DXFBinaryTag, self).__init__(code, data)
+
+    def __str__(self):
+        return "({}, {})".format(self.code, self.tostring())
+
+    def __repr__(self):
+        return "DXFBinaryTag({}, {})".format(self.code, reprlib.repr(self.tostring()))
+
+    def tostring(self):
+        return ''.join(byte_to_hexstr(b) for b in self.value)
+
+    def dxfstr(self):
+        return TAG_STRING_FORMAT % (self.code, self.tostring())
 
 
 def _build_type_table(types):
@@ -105,21 +138,9 @@ TYPE_TABLE = _build_type_table([
     (int, range(1060, 1072)),
 ])
 
-POINT_CODES = frozenset([
-    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-    110, 111, 112, 210,
-    1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
-])
 
-GENERAL_MARKER = 0
-SUBCLASS_MARKER = 100
-APP_DATA_MARKER = 102
-EXT_DATA_MARKER = 1001
-GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
-BINARY_FLAGS = frozenset([70, 90])
-HANDLE_CODES = frozenset([5, 105])
-POINTER_CODES = frozenset(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
-HEX_HANDLE_CODES = frozenset(chain(HANDLE_CODES, POINTER_CODES))
+def is_binary_data(code):
+    return code in BINARAY_DATA
 
 
 def is_pointer_code(code):
