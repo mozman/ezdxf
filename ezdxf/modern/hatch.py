@@ -121,7 +121,7 @@ class Hatch(ModernGraphicEntity):
                 DXFTag(1071, color_value),
             ]))
         else:
-            xdata_bgcolor.set_first(1071, color_value)
+            xdata_bgcolor.set_first(DXFTag(1071, color_value))
 
     @bgcolor.deleter
     def bgcolor(self):

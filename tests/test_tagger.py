@@ -5,8 +5,7 @@ import pytest
 from io import StringIO
 
 from ezdxf.lldxf.tagger import internal_tag_compiler, low_level_tagger, tag_compiler, DXFStructureError
-from ezdxf.lldxf.tags import DXFTag
-from ezdxf.lldxf.types import strtag, strtag2
+from ezdxf.lldxf.types import strtag, DXFTag, DXFVertex
 from ezdxf.algebra.vector import Vector
 
 
@@ -23,10 +22,10 @@ def test_strtag_str():
 
 
 def test_strtag2_vector():
-    assert ' 10\n1.0\n 20\n2.0\n 30\n3.0\n' == strtag2(DXFTag(10, Vector(1, 2, 3)))
-    assert ' 10\n1.0\n 20\n2.0\n 30\n3.0\n' == strtag2(DXFTag(10, Vector((1, 2, 3))))
-    assert ' 10\n1.0\n 20\n2.0\n 30\n0.0\n' == strtag2(DXFTag(10, Vector(1, 2)))
-    assert ' 10\n1.0\n 20\n2.0\n 30\n0.0\n' == strtag2(DXFTag(10, Vector((1, 2))))
+    assert ' 10\n1.0\n 20\n2.0\n 30\n3.0\n' == DXFVertex(10, Vector(1, 2, 3)).dxfstr()
+    assert ' 10\n1.0\n 20\n2.0\n 30\n3.0\n' == DXFVertex(10, Vector((1, 2, 3))).dxfstr()
+    assert ' 10\n1.0\n 20\n2.0\n 30\n0.0\n' == DXFVertex(10, Vector(1, 2)).dxfstr()
+    assert ' 10\n1.0\n 20\n2.0\n 30\n0.0\n' == DXFVertex(10, Vector((1, 2))).dxfstr()
 
 
 def test_int_not_skip_comments():

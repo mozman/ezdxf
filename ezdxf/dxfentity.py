@@ -2,7 +2,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from .lldxf.types import cast_tag_value, DXFTag
+from .lldxf.types import cast_tag_value, DXFTag, DXFVertex
 from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFAttributeError, DXFInvalidLayerName
 from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
@@ -266,7 +266,7 @@ class DXFEntity(object):
 
     @staticmethod
     def _set_extended_type(tags, code, xtype, value):
-        value = cast_tag_value(code, value)
+        value = tuple(value)
         vlen = len(value)
         if vlen == 3:
             if xtype == 'Point2D':
@@ -276,7 +276,7 @@ class DXFEntity(object):
                 raise DXFValueError('3 axis required')
         else:
             raise DXFValueError('2 or 3 axis required')
-        tags.set_first(code, value)
+        tags.set_first(DXFVertex(code, value))
 
     def has_dxf_default_value(self, key):
         """
@@ -295,7 +295,7 @@ class DXFEntity(object):
         if dxfattr.xtype is not None:
             self._set_extended_type(subclass_tags, dxfattr.code, dxfattr.xtype, value)
         else:
-            subclass_tags.set_first(dxfattr.code, cast_tag_value(dxfattr.code, value))
+            subclass_tags.set_first(DXFTag(dxfattr.code, cast_tag_value(dxfattr.code, value)))
 
     def del_dxf_attrib(self, key):
         dxfattr = self._get_dxfattr_definition(key)

@@ -169,7 +169,7 @@ class Linetype(legacy.Linetype):
             else:  # TEXT or SHAPE
                 subclass.extend(token.complex_ltype_tags(self.drawing))
         subclass.append(DXFTag(74, 0))  # useless 74 at the end :))
-        subclass.update(73, count)
+        subclass.update(DXFTag(73, count))
 
 
 _APPIDTEMPLATE = """0

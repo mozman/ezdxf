@@ -101,15 +101,15 @@ class TestTags:
         assert TEST_TAGREADER == result
 
     def test_update(self, tags):
-        tags.update(2, 'XHEADER')
+        tags.update(DXFTag(2, 'XHEADER'))
         assert 'XHEADER' == tags[1].value
 
     def test_update_error(self, tags):
         with pytest.raises(DXFValueError):
-            tags.update(999, 'DOESNOTEXIST')
+            tags.update(DXFTag(999, 'DOESNOTEXIST'))
 
     def test_set_first(self, tags):
-        tags.set_first(999, 'NEWTAG')
+        tags.set_first(DXFTag(999, 'NEWTAG'))
         assert 'NEWTAG' == tags[-1].value
 
     def test_find_first(self, tags):

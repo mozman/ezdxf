@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
-from ..lldxf.types import DXFTag
+from ..lldxf.types import DXFTag, DXFVertex
 from ..lldxf.const import DXFIndexError, DXFValueError, DXFTypeError
 from ..lldxf.packedtags import PackedTags
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
@@ -118,7 +118,7 @@ class PackedPoints(PackedTags):
     def dxftags(self):
         for point in self:
             x, y, start_width, end_width, bulge = point
-            yield DXFTag(10, (x, y))
+            yield DXFVertex(10, (x, y))
             if start_width:
                 yield DXFTag(40, start_width)
             if end_width:

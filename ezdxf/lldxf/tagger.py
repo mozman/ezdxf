@@ -1,11 +1,10 @@
 # Purpose: untrusted stream tag reader, tag compiler for trusted and untrusted sources
 # Created: 10.04.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
-from .types import DXFTag
+from .types import DXFTag, DXFVertex
 from .const import DXFStructureError
 
 
@@ -51,7 +50,7 @@ def internal_tag_compiler(s):
                 point = (float(x_value), float(y), float(z))
             else:  # 2d point
                 point = (float(x_value), float(y))
-            yield DXFTag(x_code, point)  # 2d/3d point
+            yield DXFVertex(x_code, point)  # 2d/3d point
         else:  # single value tag: int, float or string
             yield DXFTag(x_code, TYPE_TABLE.get(x_code, ustr)(x_value))
 
@@ -140,7 +139,7 @@ def tag_compiler(tagger):
                         undo_tag = z
                 except ValueError:  # internal exception
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
-                yield DXFTag(code, point)
+                yield DXFVertex(code, point)
             else:  # just a single tag; internal type casting, not types.cast_tag()
                 try:
                     # fast path!

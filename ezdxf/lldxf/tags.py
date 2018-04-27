@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from  copy import deepcopy
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
-from .types import NONE_TAG, strtag2, DXFTag, is_point_code, cast_tag
+from .types import NONE_TAG, DXFTag, is_point_code
 from ..tools.codepage import toencoding
 from ..tools.compressedstring import CompressedString
 from .tagger import internal_tag_compiler, low_level_tagger
@@ -68,12 +68,7 @@ class Tags(list):
         return cls(internal_tag_compiler(text))
 
     def __copy__(self):
-        def copy(tag):
-            if hasattr(tag, 'clone'):
-                return tag.clone()
-            else:
-                return DXFTag(tag.code, tag.value)
-        return self.__class__(copy(tag) for tag in self)
+        return self.__class__(tag.clone() for tag in self)
 
     clone = __copy__
 
@@ -186,35 +181,23 @@ class Tags(list):
             index += 1
         raise DXFValueError(code)
 
-    def update(self, code, value):
+    def update(self, tag):
         """
-        Update first existing tag, raises DXFValueError if tag not exists.
-
-        Args:
-            code: group code as int
-            value: tag value
-
-        * does not support PackedTags!
+        Update first existing tag with group code == tag.code, raises DXFValueError if tag not exists.
 
         """
-        index = self.tag_index(code)
-        self[index] = DXFTag(code, value)
+        index = self.tag_index(tag.code)
+        self[index] = tag
 
-    def set_first(self, code, value):
+    def set_first(self, tag):
         """
-        Update first existing DXFTag(code, value) or append a new DXFTag(code, value).
-
-        Args:
-            code: group code as int
-            value: tag value
-
-        * does not support PackedTags!
+        Update first existing tag with group code tag.code or append tag.
 
         """
         try:
-            self.update(code, value)
+            self.update(tag)
         except DXFValueError:
-            self.append(DXFTag(code, value))
+            self.append(tag)
 
     def remove_tags(self, codes):
         """
@@ -319,7 +302,7 @@ class CompressedTags(object):
     """
     def __init__(self, code, tags):
         self.code = code
-        self.value = CompressedString("".join(strtag2(tag) for tag in tags))
+        self.value = CompressedString("".join(tag.dxfstr() for tag in tags))
 
     def __getitem__(self, item):
         if item == 0:

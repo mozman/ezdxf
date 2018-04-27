@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from array import array
 from abc import abstractmethod
 from collections import OrderedDict
-from .types import DXFTag, strtag2
+from .types import DXFTag
 from ..tools import take2
 
 
@@ -31,7 +31,7 @@ class PackedTags(object):
         Returns the DXF strings constructed from dxftags().
 
         """
-        return ''.join(strtag2(tag) for tag in self.dxftags())
+        return ''.join(tag.dxfstr() for tag in self.dxftags())
 
 
 class TagList(PackedTags):

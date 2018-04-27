@@ -2,7 +2,7 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from .types import strtag2, TAG_STRING_FORMAT
+from .types import TAG_STRING_FORMAT
 
 
 class TagWriter(object):
@@ -33,11 +33,7 @@ class TagWriter(object):
                 self.write_tag(tag)
 
     def write_tag(self, tag):
-        if hasattr(tag, 'dxfstr'):
-            s = tag.dxfstr()
-        else:
-            s = strtag2(tag)
-        self._stream.write(s)
+        self._stream.write(tag.dxfstr())
 
     def write_tag2(self, code, value):
         self._stream.write(TAG_STRING_FORMAT % (code, value))

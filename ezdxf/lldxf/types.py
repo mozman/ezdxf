@@ -2,14 +2,79 @@
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from collections import namedtuple
+from array import array
 from itertools import chain
-from ..tools.c23 import ustr
-from .const import DXFValueError
-
-DXFTag = namedtuple('DXFTag', 'code value')
-NONE_TAG = DXFTag(None, None)
+from ..tools.c23 import ustr, PY3
 TAG_STRING_FORMAT = '%3d\n%s\n'
+
+
+class DXFTag(object):
+    __slots__ = ['_code', '_value']
+
+    def __init__(self, code, value):
+        self._code = code
+        self._value = value
+
+    def __str__(self):
+        return str((self.code, self.value))
+
+    def __repr__(self):
+        return "DXFTag{}".format(str(self))
+
+    @property
+    def code(self):
+        return self._code
+
+    @property
+    def value(self):
+        return self._value
+
+    def __getitem__(self, item):
+        return (self.code, self.value)[item]
+
+    def __iter__(self):
+        yield self.code
+        yield self.value
+
+    def __eq__(self, other):
+        return (self.code, self.value) == other
+
+    # for Python 2.7 required
+    def __ne__(self, other):
+        return (self.code, self.value) != other
+
+    def dxfstr(self):
+        return TAG_STRING_FORMAT % (self._code, self._value)
+
+    def clone(self):
+        return self.__class__(self._code, self._value)
+
+
+NONE_TAG = DXFTag(None, None)
+
+
+class DXFVertex(DXFTag):
+    __slots__ = ['_code', '_value']
+
+    def __init__(self, code, value):
+        super(DXFVertex, self).__init__(code, array('d', value))
+
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return "DXFVertex({}, {})".format(self.code, str(self))
+
+    @property
+    def value(self):
+        return tuple(self._value)
+
+    def dxftags(self):
+        c = self.code
+        return ((code, value) for code, value in zip((c, c+10, c+20), self.value))
+
+    def dxfstr(self):
+        return ''.join(TAG_STRING_FORMAT % tag for tag in self.dxftags())
 
 
 def point_tuple(value):
@@ -76,13 +141,6 @@ def is_point_tag(tag):
     return tag[0] in POINT_CODES
 
 
-def cast_tag(tag, types=TYPE_TABLE):
-    try:
-        return DXFTag(tag[0], types.get(tag[0], ustr)(tag[1]))
-    except ValueError:  # internal exception
-        raise DXFValueError('Casting error for tag({0[0]}, {0[1]}).'.format(tag))
-
-
 def cast_tag_value(code, value, types=TYPE_TABLE):
     return types.get(code, ustr)(value)
 
@@ -92,18 +150,6 @@ def tag_type(code):
 
 
 def strtag(tag):
-    return TAG_STRING_FORMAT % tag
-
-
-def strtag2(tag):
-    code = tag.code
-    if is_point_code(code):
-        s = ""
-        for coord in tag.value:
-            s += strtag(DXFTag(code, coord))
-            code += 10
-        return s
-    else:
-        return strtag(tag)
+    return TAG_STRING_FORMAT % tuple(tag)
 
 

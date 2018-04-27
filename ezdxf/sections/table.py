@@ -4,6 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 from ..tools.c23 import isstring
+from ..lldxf.types import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
 
@@ -172,7 +173,7 @@ class Table(object):
             subclass = self._table_header.get_subclass('AcDbSymbolTable')
         else:
             subclass = self._table_header.noclass
-        subclass.set_first(70, count)
+        subclass.set_first(DXFTag(70, count))
 
     def remove_handle(self, handle):
         """ Remove table-entry from table and entitydb by handle. """

@@ -88,9 +88,9 @@ def create_layout_tags(dwg, block_record_handle, owner, tag_string):
     entitydb.add_tags(tags)  # add layout entity to entity database
     object_section.add_handle(layout_handle)  # add layout entity to objects section
 
-    tags.noclass.set_first(330, owner)  # set owner tag
+    tags.noclass.set_first(DXFTag(330, owner))  # set owner tag
     acdblayout = tags.get_subclass('AcDbLayout')
-    acdblayout.set_first(330, block_record_handle)  # link to block record
+    acdblayout.set_first(DXFTag(330, block_record_handle))  # link to block record
     return layout_handle
 
 

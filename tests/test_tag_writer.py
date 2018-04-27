@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 
 from io import StringIO
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.lldxf.tags import DXFTag, Tags
+from ezdxf.lldxf.types import DXFTag, DXFVertex
+from ezdxf.lldxf.tags import Tags
 
 
 def setup_stream():
@@ -29,7 +30,7 @@ def test_write_tag():
 
 def test_write_point_tag():
     s, t = setup_stream()
-    t.write_tag(DXFTag(10, (7., 8., 9.)))
+    t.write_tag(DXFVertex(10, (7., 8., 9.)))
     result = s.getvalue()
     assert result == ' 10\n7.0\n 20\n8.0\n 30\n9.0\n'
 
