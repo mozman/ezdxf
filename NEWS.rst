@@ -52,6 +52,7 @@ Version 0.8.9 - dev
        - VBA_PROJECT (todo)
        - VISUALSTYLE (todo)
        - WIPEOUTVARIABLES
+   - CHANGE: refactoring of internal tag representation for smaller memory footprint, but with some speed penalty
 
 Version 0.8.8 - 2018-04-02
 

@@ -4,10 +4,8 @@
 from __future__ import unicode_literals
 import pytest
 from io import StringIO
-from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.tags import Tags, tuples2dxftags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.lldxf.types import tag_type, point_tuple
 from ezdxf.lldxf.const import DXFValueError
 
 TEST_TAGREADER = """  0
@@ -201,23 +199,6 @@ LAST
   1
 TEST2
 """
-
-
-class TestTagType:
-    def test_int(self):
-        assert int is tag_type(60)
-
-    def test_float(self):
-        assert point_tuple is tag_type(10)
-
-    def test_str(self):
-        assert ustr is tag_type(0)
-
-    def test_point_tuple_2d(self):
-        assert (1, 2) == point_tuple(('1', '2'))
-
-    def test_point_tuple_3d(self):
-        assert (1, 2, 3) == point_tuple(('1', '2', '3'))
 
 
 COLLECT_1 = """  0
