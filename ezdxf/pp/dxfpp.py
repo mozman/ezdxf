@@ -15,7 +15,6 @@ from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BIN
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
-from ezdxf.lldxf.tags import CompressedTags
 from ezdxf.lldxf.packedtags import PackedTags
 
 # Tag groups
@@ -279,10 +278,7 @@ class DXF2HtmlConverter(object):
 
             type_str = tag_type_str(tag.code)
             if type_str == '<bin>':
-                if isinstance(tag, CompressedTags):
-                    type_str = '<multiple binary encoded data tags compressed to one tag>'
-                else:
-                    type_str = '<binary encoded data>'
+                type_str = '<binary encoded data>'
                 vstr = ""
 
             return tpl.format(code=tag.code, value=escape(vstr), type=escape(type_str))

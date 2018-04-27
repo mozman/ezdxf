@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
-from .tools.binarydata import compress_binary_data
 from .tools.handle import HandleGenerator
 from .lldxf.const import DXFValueError
 from .lldxf.tags import DXFTag
@@ -87,10 +86,6 @@ class EntityDB(object):
 
     def delete_handle(self, handle):
         del self._database[handle]
-
-    def compress_binary_data(self):
-        for tags in self.values():
-            compress_binary_data(tags)
 
     def get_unique_handle(self):
         while True:

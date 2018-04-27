@@ -39,7 +39,6 @@ class Drawing(object):
             header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
             return HeaderSection(header_entities)
         self.tracker = Tracker()
-        self._is_binary_data_compressed = False
         self._groups = None  # read only
         self._materials = None  # read only
         self._mleader_styles = None  # read only
@@ -82,13 +81,7 @@ class Drawing(object):
             self.header['$HANDLING'] = 1  # write handles by default
 
         self.layouts = self.dxffactory.get_layouts()
-        if options.compress_binary_data:
-            self.compress_binary_data()
 
-    def compress_binary_data(self):
-        if self.dxfversion > 'AC1009' and not self._is_binary_data_compressed:
-            self.entitydb.compress_binary_data()
-            self._is_binary_data_compressed = True
 
     @property
     def acad_release(self):
@@ -97,10 +90,6 @@ class Drawing(object):
     @property
     def _handles(self):
         return self.entitydb.handles
-
-    @property
-    def is_binary_data_compressed(self):
-        return self._is_binary_data_compressed
 
     @property
     def header(self):

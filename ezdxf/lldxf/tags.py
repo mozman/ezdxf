@@ -6,7 +6,6 @@ from  copy import deepcopy
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, DXFTag, is_point_code
 from ..tools.codepage import toencoding
-from ..tools.compressedstring import CompressedString
 from .tagger import internal_tag_compiler, low_level_tagger
 
 COMMENT_CODE = 999
@@ -290,41 +289,6 @@ def group_tags(tags, splitcode=STRUCTURE_MARKER):
             append(tag)
     if group is not None:
         yield group
-
-
-class CompressedTags(object):
-    """
-    Store multiple tags, compressed by zlib, as one DXFTag(code, value). value is a CompressedString() object.
-
-    The compressed string stores points in external representation (10, x) (20, y) (30, z) and not in internal
-    representation (10, (x, y, z)).
-
-    """
-    def __init__(self, code, tags):
-        self.code = code
-        self.value = CompressedString("".join(tag.dxfstr() for tag in tags))
-
-    def __getitem__(self, item):
-        if item == 0:
-            return self.code
-        elif item == 1:
-            return self.value
-        else:
-            raise DXFIndexError
-
-    def dxfstr(self):
-        """
-        Returns content as DXF string like ' 10\n1.0\n 20\n1.0\n 30\n1.0\n'.
-
-        """
-        return self.value.decompress()
-
-    def dxftags(self):
-        """
-        Returns content as sequence of DXFTag() objects.
-
-        """
-        return internal_tag_compiler(self.dxfstr())
 
 
 def text_to_multi_tags(text, code=303, size=255, line_ending='^J'):

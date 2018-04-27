@@ -88,12 +88,12 @@ def _build_type_table(types):
 
 TYPE_TABLE = _build_type_table([
     # all group code < 0 are spacial tags for internal use, but not accessible by get_dxf_attrib()
-    (float, range(10, 60)),  # code 20-39 belongs to 2d/3d points and should not appear alone
+    (float, range(10, 60)),
     (int, range(60, 100)),
-    (float, range(110, 150)),  # 113-139 belongs to UCS definition and should not appear alone
+    (float, range(110, 150)),
     (int, range(160, 170)),
     (int, range(170, 180)),
-    (float, range(210, 240)),  # code 220, 230 belongs to extrusion direction and should not appear alone
+    (float, range(210, 240)),
     (int, range(270, 290)),
     (int, range(290, 300)),  # bool 1=True 0=False
     (int, range(370, 390)),
@@ -101,7 +101,7 @@ TYPE_TABLE = _build_type_table([
     (int, range(420, 430)),
     (int, range(440, 460)),
     (float, range(460, 470)),
-    (float, range(1010, 1060)),  # code 1020-1039 belongs to 2d/3d points and should not appear alone
+    (float, range(1010, 1060)),
     (int, range(1060, 1072)),
 ])
 
