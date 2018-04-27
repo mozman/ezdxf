@@ -65,11 +65,11 @@ def _execute_compress_tasks(tags, tasks):
             compressed_tag = CompressedTags(code, binary_tags)
             index = tags.index("COMPRESSED_{}".format(num))
             tags[index] = compressed_tag
-    tags[:] = (tag for tag in tags if tag is not None)  # remove delete tags
+    tags[:] = (tag for tag in tags if tag is not None)  # remove deleted tags
 
 
 def binary_encoded_data_to_bytes(data):
-    byte_array = array('B' if PY3 else b'B')
+    byte_array = array('B')
     for text in data:
         byte_array.extend(int(text[index:index+2], 16) for index in range(0, len(text), 2))
     if PY3:
