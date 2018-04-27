@@ -1,7 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-
-import pytest
+from __future__ import unicode_literals
 from ezdxf.lldxf.types import DXFTag
 
 
@@ -46,14 +45,6 @@ def test_public_attributes():
     tag = DXFTag(1, 'text')
     assert tag.code == 1
     assert tag.value == 'text'
-
-
-def test_immutable():
-    tag = DXFTag(1, 'text')
-    with pytest.raises(AttributeError):
-        tag.code = 2
-    with pytest.raises(AttributeError):
-        tag.value = 'another text'
 
 
 def test_dxf_str():

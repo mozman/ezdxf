@@ -4,15 +4,15 @@
 from __future__ import unicode_literals
 from array import array
 from itertools import chain
-from ..tools.c23 import ustr, PY3
+from ..tools.c23 import ustr
 TAG_STRING_FORMAT = '%3d\n%s\n'
 
 
 class DXFTag(object):
-    __slots__ = ['_code', '_value']
+    __slots__ = ['code', '_value']
 
     def __init__(self, code, value):
-        self._code = code
+        self.code = code
         self._value = value
 
     def __str__(self):
@@ -21,9 +21,6 @@ class DXFTag(object):
     def __repr__(self):
         return "DXFTag{}".format(str(self))
 
-    @property
-    def code(self):
-        return self._code
 
     @property
     def value(self):
@@ -44,17 +41,17 @@ class DXFTag(object):
         return (self.code, self.value) != other
 
     def dxfstr(self):
-        return TAG_STRING_FORMAT % (self._code, self._value)
+        return TAG_STRING_FORMAT % (self.code, self._value)
 
     def clone(self):
-        return self.__class__(self._code, self._value)
+        return self.__class__(self.code, self._value)
 
 
 NONE_TAG = DXFTag(None, None)
 
 
 class DXFVertex(DXFTag):
-    __slots__ = ['_code', '_value']
+    __slots__ = ['code', '_value']
 
     def __init__(self, code, value):
         super(DXFVertex, self).__init__(code, array('d', value))
