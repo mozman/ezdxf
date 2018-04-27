@@ -104,7 +104,7 @@ class DXFBinaryTag(DXFTag):
     def __repr__(self):
         return "DXFBinaryTag({}, {})".format(self.code, reprlib.repr(self.tostring()))
 
-    def tostring(self):
+    def tostring(self):  # value to string
         return ''.join(byte_to_hexstr(b) for b in self.value)
 
     def dxfstr(self):

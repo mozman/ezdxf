@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import os
 import io
 
-from ezdxf.lldxf.types import tag_type, is_point_code, is_pointer_code
+from ezdxf.lldxf.types import tag_type, is_point_code, is_pointer_code, is_binary_data
 from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS
 from ezdxf.tools.c23 import escape, ustr
 from .reflinks import get_reference_link
@@ -66,7 +66,7 @@ REF_LINK_TPL = '<a class="dxf-ref-link" href={target} target="_blank" ' \
 BUTTON_BAR_TPL = '<div class="button-bar">{content}</div>'
 BUTTON_TPL = '<a class="link-button" href="#{target}">{name}</a>'
 
-MAX_STR_LEN = 110
+MAX_STR_LEN = 100
 
 
 def build_ref_link_button(name):
@@ -90,7 +90,7 @@ def tag_type_str(code):
         return '<hex>'
     elif is_point_code(code):
         return '<point>'
-    elif 309 < code < 320:
+    elif is_binary_data(code):
         return '<bin>'
     else:
         return TAG_TYPES[tag_type(code)]
@@ -273,13 +273,13 @@ class DXF2HtmlConverter(object):
             if tag.code in BINARY_FLAGS:
                 vstr = with_bitmask(tag.value)
             else:
-                vstr = trim_str(ustr(tag.value))
+                if hasattr(tag, 'tostring'):
+                    s = tag.tostring()
+                else:
+                    s = ustr(tag.value)
+                vstr = trim_str(s)
 
             type_str = tag_type_str(tag.code)
-            if type_str == '<bin>':
-                type_str = '<binary encoded data>'
-                vstr = ""
-
             return tpl.format(code=tag.code, value=escape(vstr), type=escape(type_str))
 
         def group_marker(tag, tag_html):
