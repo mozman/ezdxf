@@ -4,7 +4,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 import ezdxf
-from ezdxf.tools import knot_values_by_control_points
+from ezdxf.algebra.bspline import knot_uniform, bspline_control_frame
 from ezdxf.lldxf import const
 
 
@@ -147,11 +147,13 @@ def using_hatch_with_spline_edge():
     dwg = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = dwg.modelspace()  # we are working in model space
     # draw outline
-    vertices = [(8, 0, 0), (10, 2, 0), (6, 6, 0), (8, 8, 0)]
+    fitpoints = [(8, 0, 0), (10, 2, 0), (6, 6, 0), (8, 8, 0)]
     msp.add_line((8, 8), (0, 8))
     msp.add_line((0, 8), (0, 0))
     msp.add_line((0, 0), (8, 0))
-    msp.add_spline(vertices)
+    # use spline with control points created by ezdxf
+    # Don't know how AutoCAD calculates control points from fit points
+    msp.add_spline_control_frame(fit_points=fitpoints)
 
     # next create DXF hatch entities
     hatch = msp.add_hatch(color=3)
@@ -161,14 +163,7 @@ def using_hatch_with_spline_edge():
         path.add_line((8, 8), (0, 8))
         path.add_line((0, 8), (0, 0))
         path.add_line((0, 0), (8, 0))
-        spline = path.add_spline(vertices)
-        # This control points are taken from a hatch created by AutoCAD, because this values are necessary otherwise
-        # AutoCAD crashes. Sadly AutoCAD doesn't calculate this values by itself, like it does for the SPLINE entity
-        cpoints = [(8.0, 0.0), (9.0, 0.66), (12.0, 2.67), (4.0, 5.33), (7.0, 7.33), (8.0, 8.0)]
-        spline.control_points = cpoints
-        # I found this knot function on the internet - but the generated values do not match the values calculated by
-        # AutoCAD for the SPLINE entity
-        spline.knot_values = knot_values_by_control_points(cpoints, spline.degree)
+        path.add_spline_control_frame(fit_points=fitpoints)
     dwg.saveas("hatch_with_spline_edge.dxf")  # save DXF drawing
 
 

@@ -466,7 +466,7 @@ class Drawing(object):
 
         """
         auditor = self.auditor()
-        result = auditor.run()
+        result = list(auditor.filter_zero_pointers(auditor.run()))
         if len(result):
             if print_report:
                 auditor.print_report()

@@ -13,6 +13,7 @@ from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
 from ..tools.rgb import rgb2int, int2rgb
 from ..lldxf.const import DXFValueError, DXFVersionError
+from ..algebra.bspline import bspline_control_frame
 
 _HATCH_TPL = """0
 HATCH
@@ -522,6 +523,14 @@ class EdgePath(object):
         spline.periodic = int(periodic)
         self.edges.append(spline)
         return spline
+
+    def add_spline_control_frame(self, fit_points, degree=3, method='distance', power=.5):
+        bspline = bspline_control_frame(fit_points=fit_points, degree=degree, method=method, power=power)
+        return self.add_spline(
+            fit_points=fit_points,
+            control_points=bspline.control_points,
+            knot_values=bspline.knot_values(),
+        )
 
     def clear(self):
         self.edges = []
