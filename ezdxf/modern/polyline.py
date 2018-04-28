@@ -2,7 +2,8 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.tags import DXFTag, Tags
+from ..lldxf.types import DXFTag, DXFVertex
+from ..lldxf.tags import Tags
 from ..lldxf import loader
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension

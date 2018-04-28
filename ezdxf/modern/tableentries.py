@@ -3,7 +3,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 from ..tools.c23 import isstring
-from ..lldxf.tags import DXFTag
+from ..lldxf.types import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..legacy import tableentries as legacy

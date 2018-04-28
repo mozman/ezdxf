@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag
+from ..lldxf.types import DXFTag, DXFVertex
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFValueError
 from ..algebra.bspline import knot_uniform, knot_open_uniform
@@ -104,7 +104,7 @@ class Spline(ModernGraphicEntity):
         for point in points:
             if len(point) != 3:
                 raise DXFValueError("3D points required.")
-            tags.append(DXFTag(code, point))
+            tags.append(DXFVertex(code, point))
         self.AcDbSpline.extend(tags)
         return len(tags)
 

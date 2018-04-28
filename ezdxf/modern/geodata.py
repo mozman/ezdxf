@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from .dxfobjects import DXFEntity, none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags
 from ..lldxf.const import DXFStructureError, DXFValueError
-from ..lldxf.types import DXFTag
+from ..lldxf.types import DXFTag, DXFVertex
 from ..lldxf.tags import multi_tags_to_text, text_to_multi_tags
 
 _GEODATA_CLS = """0
@@ -239,8 +239,8 @@ class GeoData(DXFEntity):
         geodata = self.AcDbGeoData
         geodata.append(DXFTag(93, len(vertices)))
         for source, target in vertices:
-            geodata.append(DXFTag(13, (source[0], source[1])))
-            geodata.append(DXFTag(14, (target[0], target[1])))
+            geodata.append(DXFVertex(13, (source[0], source[1])))
+            geodata.append(DXFVertex(14, (target[0], target[1])))
         geodata.append(DXFTag(96, len(faces)))
         for face in faces:
             geodata.extend(DXFTag(code, index) for code, index in zip((97, 98, 99), face))

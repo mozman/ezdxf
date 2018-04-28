@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.tags import DXFTag
+from ..lldxf.types import DXFTag
 from ..lldxf.const import DXFAttributeError, DXFValueError
 
 _VIEWPORT_TPL = """0

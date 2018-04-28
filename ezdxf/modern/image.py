@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag, Tags
+from ..lldxf.types import DXFTag, DXFVertex
+from ..lldxf.tags import Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ezdxf.algebra import Vector
 
@@ -129,7 +130,7 @@ class Image(ModernGraphicEntity):
         self.dxf.clipping_boundary_type = 1 if len(vertices) < 3 else 2
 
     def _set_path_tags(self, vertices):
-        boundary = [DXFTag(14, value) for value in vertices]
+        boundary = [DXFVertex(14, value) for value in vertices]
         subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 14)
         subclasstags.extend(boundary)
         self.tags.subclasses[2] = subclasstags

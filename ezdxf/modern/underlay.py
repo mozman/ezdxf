@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..dxfentity import DXFEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag, Tags
+from ..lldxf.types import DXFVertex
+from ..lldxf.tags import Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 
@@ -144,7 +145,7 @@ class PdfUnderlay(ModernGraphicEntity):
         self.clipping = bool(len(vertices))
 
     def _set_path_tags(self, vertices):
-        boundary = [DXFTag(11, value) for value in vertices]
+        boundary = [DXFVertex(11, value) for value in vertices]
         subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 11)  # filter out existing path tags
         subclasstags.extend(boundary)
         self.tags.subclasses[2] = subclasstags

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag
+from ..lldxf.types import DXFTag, DXFVertex
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFStructureError, DXFValueError
 
@@ -89,7 +89,7 @@ class Mesh(ModernGraphicEntity):
         # (92) vertex count
         tags = self.AcDbSubDMesh
         tags.append(DXFTag(92, len(vertices)))
-        tags.extend(DXFTag(10, vertex) for vertex in vertices)
+        tags.extend(DXFVertex(10, vertex) for vertex in vertices)
 
     def _append_faces(self, faces):
         # (93) count of face tags

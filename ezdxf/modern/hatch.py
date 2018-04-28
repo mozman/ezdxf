@@ -6,7 +6,8 @@ import math
 from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag, DXFStructureError, group_tags, Tags
+from ..lldxf.types import DXFTag, DXFVertex
+from ..lldxf.tags import DXFStructureError, group_tags, Tags
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf import const
 from ..tools.pattern import PATTERN  # acad standard pattern definitions
@@ -289,7 +290,7 @@ class Hatch(ModernGraphicEntity):
         hatch_tags = self.AcDbHatch
         first_seed_point_index = self._get_seed_point_index(hatch_tags)
         existing_seed_points = hatch_tags.collect_consecutive_tags([10], start=first_seed_point_index)  # don't rely on 'Number of seed points'
-        new_seed_points = [DXFTag(10, (point[0], point[1])) for point in points]  # only use x and y coordinate,
+        new_seed_points = [DXFVertex(10, (point[0], point[1])) for point in points]  # only use x and y coordinate,
         self.dxf.n_seed_points = len(new_seed_points)  # set new count of seed points
         # replace existing seed points
         hatch_tags[first_seed_point_index: first_seed_point_index+len(existing_seed_points)] = new_seed_points
@@ -433,7 +434,7 @@ class PolylinePath(object):
 
         vtags = []
         for x, y, bulge in self.vertices:
-            vtags.append(DXFTag(10, (float(x), float(y))))
+            vtags.append(DXFVertex(10, (float(x), float(y))))
             if has_bulge:
                 vtags.append(DXFTag(42, float(bulge)))
 
@@ -555,8 +556,8 @@ class LineEdge(object):
     def dxftags(self):
         return [
             DXFTag(72, 1),  # edge type
-            DXFTag(10, self.start),
-            DXFTag(11, self.end),
+            DXFVertex(10, self.start),
+            DXFVertex(11, self.end),
         ]
 
 
@@ -591,7 +592,7 @@ class ArcEdge(object):
     def dxftags(self):
         return [
             DXFTag(72, 2),  # edge type
-            DXFTag(10, self.center),
+            DXFVertex(10, self.center),
             DXFTag(40, self.radius),
             DXFTag(50, self.start_angle),
             DXFTag(51, self.end_angle),
@@ -633,8 +634,8 @@ class EllipseEdge(object):
     def dxftags(self):
         return [
             DXFTag(72, 3),  # edge type
-            DXFTag(10, self.center),
-            DXFTag(11, self.major_axis),
+            DXFVertex(10, self.center),
+            DXFVertex(11, self.major_axis),
             DXFTag(40, self.ratio),
             DXFTag(50, self.start_angle),
             DXFTag(51, self.end_angle),
@@ -699,7 +700,7 @@ class SplineEdge(object):
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
-        tags.extend([DXFTag(10, (float(value[0]), float(value[1]))) for value in self.control_points])
+        tags.extend([DXFVertex(10, (float(value[0]), float(value[1]))) for value in self.control_points])
 
         # build weights list, optional
         tags.extend([DXFTag(42, float(value)) for value in self.weights])
@@ -708,10 +709,10 @@ class SplineEdge(object):
         # fit points have to be present and valid, otherwise AutoCAD crashes
         # edit 2016-12-20: this is not true - there are cases with no fit points and without crashing AutoCAD
         tags.append(DXFTag(97, len(self.fit_points)))
-        tags.extend([DXFTag(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
+        tags.extend([DXFVertex(11, (float(value[0]), float(value[1]))) for value in self.fit_points])
 
-        tags.append(DXFTag(12, (float(self.start_tangent[0]), float(self.start_tangent[1]))))
-        tags.append(DXFTag(13, (float(self.end_tangent[0]), float(self.end_tangent[1]))))
+        tags.append(DXFVertex(12, (float(self.start_tangent[0]), float(self.start_tangent[1]))))
+        tags.append(DXFVertex(13, (float(self.end_tangent[0]), float(self.end_tangent[1]))))
         return tags
 
 

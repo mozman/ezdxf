@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 from .dxfobjects import none_subclass
 from .object_manager import ObjectManager
-from ..lldxf.tags import DXFTag
+from ..lldxf.types import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..dxfentity import DXFEntity
