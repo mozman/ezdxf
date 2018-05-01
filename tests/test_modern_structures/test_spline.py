@@ -8,6 +8,11 @@ from ezdxf.modern.spline import Spline, _SPLINE_TPL, tag_processor
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
+def test_is_registered():
+    from ezdxf.lldxf import loader
+    assert loader.is_registered('SPLINE', legacy=False)
+
+
 @pytest.fixture
 def spline():
     return Spline(tag_processor(ExtendedTags.from_text(_SPLINE_TPL)))

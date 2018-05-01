@@ -7,7 +7,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFValueError
-from ..lldxf.packedtags import TagArray, VertexTags, replace_tags
+from ..lldxf.packedtags import TagArray, VertexTags
 from ..algebra.bspline import knot_uniform, knot_open_uniform
 from ..lldxf import loader
 
@@ -40,17 +40,18 @@ class FitPoints(VertexTags):
     VERTEX_SIZE = 3
 
 
+REMOVE_CODES = (ControlPoints.VERTEX_CODE, FitPoints.VERTEX_CODE, KnotTags.VALUE_CODE, WeightTags.VALUE_CODE)
+
+
 @loader.register('SPLINE', legacy=False)
 def tag_processor(tags):
     spline_tags = tags.get_subclass('AcDbSpline')
     control_points = ControlPoints.from_tags(spline_tags)
-    replace_tags(spline_tags, codes=(control_points.VERTEX_CODE, ), packed_data=control_points)
     fit_points = FitPoints.from_tags(spline_tags)
-    replace_tags(spline_tags, codes=(fit_points.VERTEX_CODE, ), packed_data=fit_points)
     knots = KnotTags.from_tags(spline_tags)
-    replace_tags(spline_tags, codes=(knots.VALUE_CODE, ), packed_data=knots)
     weights = WeightTags.from_tags(spline_tags)
-    replace_tags(spline_tags, codes=(weights.VALUE_CODE,), packed_data=weights)
+    spline_tags.remove_tags(codes=REMOVE_CODES)
+    spline_tags.extend((knots, weights, control_points, fit_points))
     return tags
 
 
