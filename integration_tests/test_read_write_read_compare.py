@@ -10,6 +10,7 @@ import pytest
 from zipfile import ZipFile
 from functools import partial
 import ezdxf
+from ezdxf.lldxf.types import DXFVertex
 
 round_n = partial(round, ndigits=6)
 
@@ -64,7 +65,7 @@ def compare_values(value1, value2):
 
 def compare_tag(orig, copy):
     def compare_value(v1, v2):
-        return compare_points(v1, v2) if isinstance(v1, tuple) else compare_values(v1, v2)
+        return compare_points(v1, v2) if isinstance(orig, DXFVertex) else compare_values(v1, v2)
     assert orig.code == copy.code
     compare_value(orig.value, copy.value)
 

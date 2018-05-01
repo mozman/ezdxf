@@ -38,216 +38,216 @@ def test_acdsrecord(section):
 
     asm_data = record['ASM_Data']
     binary_data = (tag for tag in asm_data if tag.code == 310)
-    length = sum(len(tag.value) for tag in binary_data) / 2
+    length = sum(len(tag.value) for tag in binary_data)
     assert asm_data[2].value == length
 
 
-ACDSSECTION = """  0
+ACDSSECTION = """0
 SECTION
-  2
+2
 ACDSDATA
- 70
-     2
- 71
-     6
-  0
+70
+2
+71
+6
+0
 ACDSSCHEMA
- 90
-        0
-  1
+90
+0
+1
 AcDb3DSolid_ASM_Data
-  2
+2
 AcDbDs::ID
 280
-    10
- 91
-        8
-  2
+10
+91
+8
+2
 ASM_Data
 280
-    15
- 91
-        0
+15
+91
+0
 101
 ACDSRECORD
- 95
-        0
- 90
-        2
-  2
+95
+0
+90
+2
+2
 AcDbDs::TreatedAsObjectData
 280
-     1
+1
 291
-     1
+1
 101
 ACDSRECORD
- 95
-        0
- 90
-        3
-  2
+95
+0
+90
+3
+2
 AcDbDs::Legacy
 280
-     1
+1
 291
-     1
+1
 101
 ACDSRECORD
-  1
+1
 AcDbDs::ID
- 90
-        4
-  2
+90
+4
+2
 AcDs:Indexable
 280
-     1
+1
 291
-     1
+1
 101
 ACDSRECORD
-  1
+1
 AcDbDs::ID
- 90
-        5
-  2
+90
+5
+2
 AcDbDs::HandleAttribute
 280
-     7
+7
 282
-     1
-  0
+1
+0
 ACDSSCHEMA
- 90
-        1
-  1
+90
+1
+1
 AcDb_Thumbnail_Schema
-  2
+2
 AcDbDs::ID
 280
-    10
- 91
-        8
-  2
+10
+91
+8
+2
 Thumbnail_Data
 280
-    15
- 91
-        0
+15
+91
+0
 101
 ACDSRECORD
- 95
-        1
- 90
-        2
-  2
+95
+1
+90
+2
+2
 AcDbDs::TreatedAsObjectData
 280
-     1
+1
 291
-     1
+1
 101
 ACDSRECORD
- 95
-        1
- 90
-        3
-  2
+95
+1
+90
+3
+2
 AcDbDs::Legacy
 280
-     1
+1
 291
-     1
+1
 101
 ACDSRECORD
-  1
+1
 AcDbDs::ID
- 90
-        4
-  2
+90
+4
+2
 AcDs:Indexable
 280
-     1
+1
 291
-     1
+1
 101
 ACDSRECORD
-  1
+1
 AcDbDs::ID
- 90
-        5
-  2
+90
+5
+2
 AcDbDs::HandleAttribute
 280
-     7
+7
 282
-     1
-  0
+1
+0
 ACDSSCHEMA
- 90
-        2
-  1
+90
+2
+1
 AcDbDs::TreatedAsObjectDataSchema
-  2
+2
 AcDbDs::TreatedAsObjectData
 280
-     1
- 91
-        0
-  0
+1
+91
+0
+0
 ACDSSCHEMA
- 90
-        3
-  1
+90
+3
+1
 AcDbDs::LegacySchema
-  2
+2
 AcDbDs::Legacy
 280
-     1
- 91
-        0
-  0
+1
+91
+0
+0
 ACDSSCHEMA
- 90
-        4
-  1
+90
+4
+1
 AcDbDs::IndexedPropertySchema
-  2
+2
 AcDs:Indexable
 280
-     1
- 91
-        0
-  0
+1
+91
+0
+0
 ACDSSCHEMA
- 90
-        5
-  1
+90
+5
+1
 AcDbDs::HandleAttributeSchema
-  2
+2
 AcDbDs::HandleAttribute
 280
-     7
- 91
-        1
+7
+91
+1
 284
-     1
-  0
+1
+0
 ACDSRECORD
- 90
-        0
-  2
+90
+0
+2
 AcDbDs::ID
 280
-    10
+10
 320
 339
-  2
+2
 ASM_Data
 280
-    15
- 94
-     1088
+15
+94
+1088
 310
 414349532042696E61727946696C652855000000000000020000000C00000007104175746F6465736B204175746F434144071841534D203231392E302E302E3536303020556E6B6E6F776E071853756E204D61792020342031353A34373A3233203230313406000000000000F03F068DEDB5A0F7C6B03E06BBBDD7D9DF7CDB
 310

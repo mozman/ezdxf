@@ -91,10 +91,6 @@ class DXFVertex(DXFTag):
 class DXFBinaryTag(DXFTag):
     __slots__ = ['code', '_value']
 
-    def __init__(self, code, value):
-        data = encode_hex_code_string_to_bytes(value)
-        super(DXFBinaryTag, self).__init__(code, data)
-
     def __str__(self):
         return "({}, {})".format(self.code, self.tostring())
 
@@ -106,6 +102,10 @@ class DXFBinaryTag(DXFTag):
 
     def dxfstr(self):
         return TAG_STRING_FORMAT % (self.code, self.tostring())
+
+    @classmethod
+    def from_string(cls, code, value):
+        return cls(code, encode_hex_code_string_to_bytes(value))
 
 
 def _build_type_table(types):

@@ -31,9 +31,9 @@ else:  # Python 2.7
 
 def byte_to_hexstr(byte):
     if PY3:
-        return "%X" % byte
+        return "%0.2X" % byte
     else:
-        return "%X" % ord(byte)
+        return "%0.2X" % ord(byte)
 
 
 def encode_hex_code_string_to_bytes(data):

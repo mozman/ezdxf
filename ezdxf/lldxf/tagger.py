@@ -4,8 +4,10 @@
 # License: MIT License
 from __future__ import unicode_literals
 
-from .types import DXFTag, DXFVertex
+from .types import DXFTag, DXFVertex, DXFBinaryTag
 from .const import DXFStructureError
+from .types import POINT_CODES, TYPE_TABLE, ustr, BINARAY_DATA
+from ..tools.c23 import isstring
 
 
 def internal_tag_compiler(s):
@@ -17,13 +19,10 @@ def internal_tag_compiler(s):
     Args:
         s: DXF unicode string, lines separated by universal line endings '\n'
 
-    Yields: DXFTag()
+    Yields: DXFTag() or inherited
+
     """
-    from .types import POINT_CODES, TYPE_TABLE, ustr
-    from ..tools.c23 import isstring
-
     assert isstring(s)
-
     lines = s.split('\n')
     # split() creates an extra item, if s ends with '\n',
     # but lines[-1] can be an empty string!!!
@@ -32,10 +31,10 @@ def internal_tag_compiler(s):
     pos = 0
     count = len(lines)
     while pos < count:
-        x_code = int(lines[pos])
-        x_value = lines[pos+1]
+        code = int(lines[pos])
+        value = lines[pos+1]
         pos += 2
-        if x_code in POINT_CODES:
+        if code in POINT_CODES:
             # next tag; y coordinate is mandatory - internal_tag_compiler relies on well formed DXF strings
             y = lines[pos+1]
             pos += 2
@@ -45,14 +44,16 @@ def internal_tag_compiler(s):
                 z = lines[pos+1]
             else:  # if string s ends with a 2d point
                 z_code, z = None, 0.
-            if z_code == x_code+20:  # 3d point
+            if z_code == code+20:  # 3d point
                 pos += 2
-                point = (float(x_value), float(y), float(z))
+                point = (float(value), float(y), float(z))
             else:  # 2d point
-                point = (float(x_value), float(y))
-            yield DXFVertex(x_code, point)  # 2d/3d point
+                point = (float(value), float(y))
+            yield DXFVertex(code, point)  # 2d/3d point
+        elif code in BINARAY_DATA:
+            yield DXFBinaryTag.from_string(code, value)
         else:  # single value tag: int, float or string
-            yield DXFTag(x_code, TYPE_TABLE.get(x_code, ustr)(x_value))
+            yield DXFTag(code, TYPE_TABLE.get(code, ustr)(value))
 
 
 def low_level_tagger(stream):
@@ -104,12 +105,11 @@ def tag_compiler(tagger):
     Args:
         tagger: DXF tag generator/iterator like low_level_tagger() or skip_comments()
 
-    Yields: DXFTag()
+    Yields: DXFTag() or inherited
 
     Raises: DXFStructureError() for invalid dxf values and unexpected coordinate order.
-    """
-    from .types import POINT_CODES, TYPE_TABLE, ustr
 
+    """
     def error_msg(tag):
         return 'Invalid tag (code={code}, value="{value}") near line: {line}.'.format(line=line, code=tag.code, value=tag.value)
 
@@ -140,6 +140,11 @@ def tag_compiler(tagger):
                 except ValueError:  # internal exception
                     raise DXFStructureError('Invalid floating point values near line: {}.'.format(line))
                 yield DXFVertex(code, point)
+            elif code in BINARAY_DATA:
+                try:
+                    yield DXFBinaryTag.from_string(code, x.value)
+                except ValueError:
+                    raise DXFStructureError(error_msg(x))
             else:  # just a single tag; internal type casting, not types.cast_tag()
                 try:
                     # fast path!
