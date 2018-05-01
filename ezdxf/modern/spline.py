@@ -5,10 +5,54 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.types import DXFTag, DXFVertex
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFValueError
+from ..lldxf.packedtags import TagArray, VertexTags, replace_tags
 from ..algebra.bspline import knot_uniform, knot_open_uniform
+from ..lldxf import loader
+
+
+class KnotTags(TagArray):
+    __slots__ = ('value', )
+    code = -40  # compatible with DXFTag.code
+    VALUE_CODE = 40
+    DTYPE = 'f'
+
+
+class WeightTags(TagArray):
+    __slots__ = ('value', )
+    code = -41  # compatible with DXFTag.code
+    VALUE_CODE = 41
+    DTYPE = 'f'
+
+
+class ControlPoints(VertexTags):
+    __slots__ = ('value', )
+    code = -10  # compatible with DXFTag.code
+    VERTEX_CODE = 10
+    VERTEX_SIZE = 3
+
+
+class FitPoints(VertexTags):
+    __slots__ = ('value', )
+    code = -11  # compatible with DXFTag.code
+    VERTEX_CODE = 11
+    VERTEX_SIZE = 3
+
+
+@loader.register('SPLINE', legacy=False)
+def tag_processor(tags):
+    spline_tags = tags.get_subclass('AcDbSpline')
+    control_points = ControlPoints.from_tags(spline_tags)
+    replace_tags(spline_tags, codes=(control_points.VERTEX_CODE, ), packed_data=control_points)
+    fit_points = FitPoints.from_tags(spline_tags)
+    replace_tags(spline_tags, codes=(fit_points.VERTEX_CODE, ), packed_data=fit_points)
+    knots = KnotTags.from_tags(spline_tags)
+    replace_tags(spline_tags, codes=(knots.VALUE_CODE, ), packed_data=knots)
+    weights = WeightTags.from_tags(spline_tags)
+    replace_tags(spline_tags, codes=(weights.VALUE_CODE,), packed_data=weights)
+    return tags
+
 
 _SPLINE_TPL = """0
 SPLINE
@@ -53,7 +97,7 @@ spline_subclass = DefSubclass('AcDbSpline', {
 
 
 class Spline(ModernGraphicEntity):
-    TEMPLATE = ExtendedTags.from_text(_SPLINE_TPL)
+    TEMPLATE = tag_processor(ExtendedTags.from_text(_SPLINE_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
     CLOSED = 1  # closed b-spline
     PERIODIC = 2  # uniform b-spline
@@ -74,47 +118,37 @@ class Spline(ModernGraphicEntity):
         self.set_flag_state(self.CLOSED, state=status, name='flags')
 
     def get_knot_values(self):  # group code 40
-        return [tag.value for tag in self.AcDbSpline.find_all(code=40)]
+        return self.AcDbSpline.get_first_tag(KnotTags.code).value
 
     def set_knot_values(self, knot_values):
-        self._set_values(knot_values, code=40)
-        self.dxf.n_knots = len(knot_values)
-
-    def _set_values(self, values, code):
-        tags = self.AcDbSpline
-        tags.remove_tags(codes=(code, ))
-        tags.extend([DXFTag(code, value) for value in values])
+        knots = self.AcDbSpline.get_first_tag(KnotTags.code)
+        knots.set_values(knot_values)
+        self.dxf.n_knots = len(knots.value)
 
     def get_weights(self):  # group code 41
-        return [tag.value for tag in self.AcDbSpline.find_all(code=41)]
+        return self.AcDbSpline.get_first_tag(WeightTags.code).value
 
     def set_weights(self, values):
-        self._set_values(values, code=41)
+        weights = self.AcDbSpline.get_first_tag(WeightTags.code)
+        weights.set_values(values)
 
     def get_control_points(self):  # group code 10
-        return [tag.value for tag in self.AcDbSpline if tag.code == 10]
+        return self.AcDbSpline.get_first_tag(ControlPoints.code)
 
     def set_control_points(self, points):
-        self.AcDbSpline.remove_tags(codes=(10, ))
-        count = self._append_points(points, code=10)
-        self.dxf.n_control_points = count
-
-    def _append_points(self, points, code):
-        tags = []
-        for point in points:
-            if len(point) != 3:
-                raise DXFValueError("3D points required.")
-            tags.append(DXFVertex(code, point))
-        self.AcDbSpline.extend(tags)
-        return len(tags)
+        vertices = self.get_control_points()
+        vertices.clear()
+        vertices.extend(points)
+        self.dxf.n_control_points = len(vertices)
 
     def get_fit_points(self):  # group code 11
-        return [tag.value for tag in self.AcDbSpline if tag.code == 11]
+        return self.AcDbSpline.get_first_tag(FitPoints.code)
 
     def set_fit_points(self, points):
-        self.AcDbSpline.remove_tags(codes=(11, ))
-        count = self._append_points(points, code=11)
-        self.dxf.n_fit_points = count
+        vertices = self.get_fit_points()
+        vertices.clear()
+        vertices.extend(points)
+        self.dxf.n_fit_points = len(vertices)
 
     def set_open_uniform(self, control_points, degree=3):
         """

@@ -1,8 +1,9 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.lldxf.packedtags import TagArray, TagDict
+from ezdxf.lldxf.packedtags import TagArray, TagDict, VertexTags
 from ezdxf.lldxf.extendedtags import ExtendedTags
+
 
 @pytest.fixture()
 def numbers():
@@ -21,6 +22,13 @@ def test_tag_array_dxf_tags(numbers):
     assert len(tags) == len(numbers)
     for index, value in enumerate(tags):
         assert value == (TagArray.VALUE_CODE, numbers[index])
+
+
+def test_empty_tag_array_dxf_tags():
+    array = TagArray()
+    tags = list(array.dxftags())
+    assert len(tags) == 0
+    assert array.dxfstr() == ''
 
 
 def test_tag_array_clone(numbers):
@@ -100,6 +108,45 @@ def test_dict_from_tags():
     assert len(tags) == 3
 
 
+def test_vertex_tags_basics():
+    tags = ExtendedTags.from_text(SPLINE)
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    assert len(vertices) == 7
+    points = list(vertices)
+    assert len(points) == 7
+    assert vertices[0] == (0., 0., 0.)
+    assert vertices[1] == (10., 10., 10.)
+    # test negative index
+    assert vertices[-1] == (60., 60., 60.)
+    with pytest.raises(IndexError):
+        vertices[-8]
+    with pytest.raises(IndexError):
+        vertices[8]
+
+
+def test_vertex_tags_advanced():
+    tags = ExtendedTags.from_text(SPLINE)
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices.append((70, 70, 70))
+    assert len(vertices) == 8
+    assert vertices[-1] == (70., 70., 70.)
+    vertices[0] = (1, 1, 1)
+    assert vertices[0] == (1, 1, 1)
+    assert len(vertices) == 8
+    vertices.clear()
+    assert len(vertices) == 0
+
+
+def test_vertex_tags_to_dxf_tags():
+    tags = ExtendedTags.from_text(SPLINE)
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    tags = list(vertices.dxftags())
+    assert len(tags) == 7
+    assert tags[0] == (10, (0., 0., 0.))
+    assert tags[1] == (10, (10., 10., 10.))
+    assert tags[-1] == (10, (60., 60., 60.))
+
+
 ROOTDICT = """0
 DICTIONARY
 5
@@ -166,4 +213,110 @@ AcDbVariableDictionary
 DWGPROPS
 350
 410
+"""
+
+SPLINE = """0
+SPLINE
+5
+697
+102
+{ACAD_REACTORS
+330
+6E8
+102
+}
+330
+1F
+100
+AcDbEntity
+8
+1
+370
+20
+100
+AcDbSpline
+210
+0.0
+220
+0.0
+230
+1.0
+70
+8
+71
+3
+72
+11
+73
+7
+74
+0
+42
+0.000000001
+43
+0.0000000001
+40
+0.0
+40
+0.0
+40
+0.0
+40
+0.0
+40
+1.0
+40
+2.0
+40
+3.0
+40
+3.0
+40
+3.0
+40
+3.0
+40
+3.0
+10
+0.0
+20
+0.0
+30
+0.0
+10
+10.
+20
+10.
+30
+10.
+10
+20.
+20
+20.
+30
+20.
+10
+30.
+20
+30.
+30
+30.
+10
+40.
+20
+40.
+30
+40.
+10
+50.
+20
+50.
+30
+50.
+10
+60.
+20
+60.
+30
+60.
 """
