@@ -68,12 +68,13 @@ def low_level_tagger(stream):
     Yields: DXFTag()
 
     Raises: DXFStructureError() for invalid group codes.
+
     """
     line = 1
     while True:
         try:
             code = stream.readline()
-            value = stream.readline()  # if throws EOFError -> DXFStructureError, but should be handled in upper layers
+            value = stream.readline()  # if throws EOFError -> DXFStructureError, but should be handled in higher layers
         except EOFError:
             return
         if code and value:  # StringIO(): empty strings indicates EOF
@@ -144,8 +145,8 @@ def tag_compiler(tagger):
                 try:
                     yield DXFBinaryTag.from_string(code, x.value)
                 except ValueError:
-                    raise DXFStructureError(error_msg(x))
-            else:  # just a single tag; internal type casting, not types.cast_tag()
+                    raise DXFStructureError('Invalid binary data near line: {}.'.format(line))
+            else:  # just a single tag
                 try:
                     # fast path!
                     yield DXFTag(code, TYPE_TABLE.get(code, ustr)(x.value))
