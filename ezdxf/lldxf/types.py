@@ -7,22 +7,19 @@ from itertools import chain
 from ..tools.c23 import ustr, reprlib, byte_to_hexstr, encode_hex_code_string_to_bytes
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
-POINT_CODES = frozenset([
-    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-    110, 111, 112, 210,
-    1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019,
-])
+POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111, 112, 210, 1010, 1011, 1012, 1013, 1014, 1015, 1016,
+               1017, 1018, 1019, }
 
 GENERAL_MARKER = 0
 SUBCLASS_MARKER = 100
 APP_DATA_MARKER = 102
 EXT_DATA_MARKER = 1001
-GROUP_MARKERS = frozenset([GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER])
-BINARY_FLAGS = frozenset([70, 90])
-HANDLE_CODES = frozenset([5, 105])
-POINTER_CODES = frozenset(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
-HEX_HANDLE_CODES = frozenset(chain(HANDLE_CODES, POINTER_CODES))
-BINARAY_DATA = frozenset(range(310, 320))
+GROUP_MARKERS = {GENERAL_MARKER, SUBCLASS_MARKER, APP_DATA_MARKER, EXT_DATA_MARKER}
+BINARY_FLAGS = {70, 90}
+HANDLE_CODES = {5, 105}
+POINTER_CODES = set(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
+HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
+BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 
 
 class DXFTag(object):
