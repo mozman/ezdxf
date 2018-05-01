@@ -75,7 +75,7 @@ class TagDict(PackedTags):
     code = -102  # compatible with DXFTag.code
     KEY_CODE = 3
     VALUE_CODE = 350
-    SEARCH_CODES = (350, 360, 3)  # some DICTIONARY have 360 handles
+    SEARCH_CODES = (3, 350, 360)  # some DICTIONARY have 360 handles
     __slots__ = ('value', )
 
     def __init__(self, data=None):
@@ -94,7 +94,7 @@ class TagDict(PackedTags):
 
     @classmethod
     def from_tags(cls, tags):
-        return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in cls.SEARCH_CODES)))
+        return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in set(cls.SEARCH_CODES))))
 
 
 def replace_tags(tags, codes, packed_data):
