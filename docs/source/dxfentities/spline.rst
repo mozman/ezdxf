@@ -94,36 +94,37 @@ Spline Attributes
 True if spline is closed else False.  A closed spline has a connection from the last control point
 to the first control point. (read/write)
 
+.. attribute:: Spline.control_points
+
+Returns the control points as :class:`ControlPoints` object in :ref:`WCS`.
+
+.. attribute:: Spline.fit_points
+
+Returns the fit points as :class:`FitPoints` object in :ref:`WCS`.
+
+
+.. attribute:: Spline.knots
+
+Returns the knot values as array.array('f').
+
+.. attribute:: Spline.weights
+
+Returns the control point weights as array.array('f').
+
 Spline Methods
 --------------
-
-.. method:: Spline.get_control_points()
-
-Returns the control points as list of (x, y, z) tuples in :ref:`WCS`.
 
 .. method:: Spline.set_control_points(points)
 
 Set control points, *points* is a list (container or generator) of (x, y, z) tuples in :ref:`WCS`.
 
-.. method:: Spline.get_fit_points()
-
-Returns the fit points as list of (x, y, z) tuples in :ref:`WCS`.
-
 .. method:: Spline.set_fit_points(points)
 
 Set fit points, *points* is a list (container or generator) of (x, y, z) tuples in :ref:`WCS`.
 
-.. method:: Spline.get_knot_values()
-
-Returns the knot values as list of *floats*.
-
 .. method:: Spline.set_knot_values(values)
 
 Set knot values, *values* is a list (container or generator) of *floats*.
-
-.. method:: Spline.get_weights()
-
-Returns the weight values as list of *floats*.
 
 .. method:: Spline.set_weights(values)
 
@@ -157,6 +158,12 @@ Closed rational B-spline with uniform knot vector, start and end at your first c
 additional control possibilities by weighting each control point.
 
 
+.. method:: Spline.update_counters()
+
+Update all (unnecessary but required) attribute counters.
+
+Update all counters if you edit spline data inplace (without context manager).
+
 .. method:: Spline.edit_data()
 
 Context manager for all spline data, returns :class:`SplineData`.
@@ -165,11 +172,11 @@ Fit points, control points, knot values and weights can be manipulated as lists 
 :meth:`Spline.edit_data`::
 
     with spline.edit_data() as spline_data:
-        # spline_data contains standard python lists: add, change or delete items as you want
-        # fit_points and control_points have to be (x, y, z)-tuples
+        # spline_data contains list like objects: add, change or delete items as you want
+        # fit_points and control_points have to be (x, y, z) tuples
         # knot_values and weights have to be numbers
         spline_data.fit_points.append((200, 300, 0))  # append a fit point
-        # on exit the context manager calls all spline set methods automatically
+        # on exit the context manager sets spline data automatically and updates all counters
 
 SplineData
 ----------
@@ -178,16 +185,38 @@ SplineData
 
 .. attribute:: SplineData.fit_points
 
-Standard Python list of :class:`Spline` fit points as (x, y, z)-tuples. (read/write)
+:class:`FitPoints` object  with list like behavior.
 
 .. attribute:: SplineData.control_points
 
-Standard Python list of :class:`Spline` control points as (x, y, z)-tuples. (read/write)
+:class:`ControlPoints` object with list like behavior.
 
 .. attribute:: SplineData.knot_values
 
-Standard Python list of :class:`Spline` knot values as floats. (read/write)
+:class:`Spline` knot values as array.array('f').
 
 .. attribute:: SplineData.weights
 
-Standard Python list of :class:`Spline` weights as floats. (read/write)
+:class:`Spline` weights as array.array('f').
+
+
+ControlPoints
+-------------
+
+A list like object to store vertices as array.array('d') flat list.
+
+Supports most standard list operations like indexing, iteration, insert, append, extend and so on.
+
+.. class:: ControlPoints(VertexTags)
+
+For attributes and methods see :class:`VertexTags`
+
+
+FitPoints
+---------
+
+.. class:: FitPoints(VertexTags)
+
+Same as :class:`ControlPoints`.
+
+For attributes and methods see :class:`VertexTags`

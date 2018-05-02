@@ -118,35 +118,67 @@ class Spline(ModernGraphicEntity):
     def closed(self, status):
         self.set_flag_state(self.CLOSED, state=status, name='flags')
 
-    def get_knot_values(self):  # group code 40
+    @property
+    def knots(self):  # group code 40
+        """
+        Returns spline knot values as array.array('f').
+
+        """
         return self.AcDbSpline.get_first_tag(KnotTags.code).value
+
+    def get_knot_values(self):  # deprecated
+        return self.knots
 
     def set_knot_values(self, knot_values):
         knots = self.AcDbSpline.get_first_tag(KnotTags.code)
         knots.set_values(knot_values)
         self.dxf.n_knots = len(knots.value)
 
-    def get_weights(self):  # group code 41
+    @property
+    def weights(self):  # group code 41
+        """
+        Returns spline control point weights as array.array('f').
+
+        """
         return self.AcDbSpline.get_first_tag(WeightTags.code).value
+
+    def get_weights(self):  # deprecated
+        return self.weights
 
     def set_weights(self, values):
         weights = self.AcDbSpline.get_first_tag(WeightTags.code)
         weights.set_values(values)
 
-    def get_control_points(self):  # group code 10
+    @property
+    def control_points(self):  # group code 10
+        """
+        Returns spline control points as ControlPoints() object.
+
+        """
         return self.AcDbSpline.get_first_tag(ControlPoints.code)
 
+    def get_control_points(self):  # deprecated
+        return self.control_points
+
     def set_control_points(self, points):
-        vertices = self.get_control_points()
+        vertices = self.control_points
         vertices.clear()
         vertices.extend(points)
         self.dxf.n_control_points = len(vertices)
 
-    def get_fit_points(self):  # group code 11
+    @property
+    def fit_points(self):  # group code 11
+        """
+        Returns spline fit points as FitPoints() object.
+
+        """
         return self.AcDbSpline.get_first_tag(FitPoints.code)
 
+    def get_fit_points(self):  # deprecated
+        return self.fit_points
+
     def set_fit_points(self, points):
-        vertices = self.get_fit_points()
+        vertices = self.fit_points
         vertices.clear()
         vertices.extend(points)
         self.dxf.n_fit_points = len(vertices)
@@ -219,6 +251,15 @@ class Spline(ModernGraphicEntity):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)
 
+    def update_counters(self):
+        """
+        Update all (unnecessary) attribute counters.
+
+        """
+        self.dxf.n_knots = len(self.knots)
+        self.dxf.n_control_points = len(self.control_points)
+        self.dxf.n_fit_points = len(self.fit_points)
+
     @contextmanager
     def edit_data(self):
         """
@@ -233,15 +274,28 @@ class Spline(ModernGraphicEntity):
         """
         data = SplineData(self)
         yield data
-        self.set_fit_points(data.fit_points)
-        self.set_control_points(data.control_points)
-        self.set_knot_values(data.knot_values)
-        self.set_weights(data.weights)
+        if data.fit_points is self.fit_points:  # inplace editing
+            self.dxf.n_fit_points = len(data.fit_points)
+        else:
+            self.set_fit_points(data.fit_points)
+
+        if data.control_points is self.control_points:  # inplace editing
+            self.dxf.n_control_points = len(data.control_points)
+        else:
+            self.set_control_points(data.control_points)
+
+        if data.knot_values is self.knots:  # inplace editing
+            self.dxf.n_knots = len(data.knot_values)
+        else:
+            self.set_knot_values(data.knot_values)
+
+        if data.weights is not self.weights:  # not inplace editing
+            self.set_weights(data.weights)
 
 
 class SplineData(object):
     def __init__(self, spline):
-        self.fit_points = spline.get_fit_points()
-        self.control_points = spline.get_control_points()
-        self.knot_values = spline.get_knot_values()
-        self.weights = spline.get_weights()
+        self.fit_points = spline.fit_points
+        self.control_points = spline.control_points
+        self.knot_values = spline.knots
+        self.weights = spline.weights
