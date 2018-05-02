@@ -24,16 +24,4 @@ class Index(object):
             s = args[0]
         else:
             s = slice(*args)
-        start, end, stride = s.indices(self.length)
-        if start < end:
-            if stride < 0:
-                return
-            while start < end:
-                yield start
-                start += stride
-        else:
-            if stride > 0:
-                return
-            while start > end:
-                yield start
-                start += stride
+        return range(*s.indices(self.length))
