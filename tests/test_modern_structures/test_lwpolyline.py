@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.modern.lwpolyline import PackedPoints, tag_processor
+from ezdxf.modern.lwpolyline import LWPolylinePoints, tag_processor
 
 
 def test_is_registered():
@@ -137,8 +137,7 @@ def test_handle(lwpolyline):
 
 
 def test_packed_points_basics():
-    packed_points = PackedPoints()
-    packed_points.setup(ExtendedTags.from_text(LWPOLYLINE1))
+    packed_points = LWPolylinePoints.from_tags(ExtendedTags.from_text(LWPOLYLINE1))
     assert len(packed_points) == 2
     points = list(packed_points)
     assert len(points) == 2
@@ -153,8 +152,7 @@ def test_packed_points_basics():
 
 
 def test_packed_points_advanced():
-    packed_points = PackedPoints()
-    packed_points.setup(ExtendedTags.from_text(LWPOLYLINE1))
+    packed_points = LWPolylinePoints.from_tags(ExtendedTags.from_text(LWPOLYLINE1))
     packed_points.append((5, 5, 1, 2, 3))
     assert len(packed_points) == 3
     assert packed_points[-1] == (5, 5, 1, 2, 3)
@@ -167,8 +165,7 @@ def test_packed_points_advanced():
 
 def test_packed_points_to_dxf_tags():
     tags = ExtendedTags.from_text(LWPOLYLINE1)
-    packed_points = PackedPoints()
-    packed_points.setup(tags)
+    packed_points = LWPolylinePoints.from_tags(tags)
     tags = list(packed_points.dxftags())
     assert len(tags) == 2
     assert tags[0] == (10, (-.5, -.5))
@@ -177,8 +174,7 @@ def test_packed_points_to_dxf_tags():
 
 def test_packed_points_to_dxf_tags_with_bulge():
     tags = ExtendedTags.from_text(LWPOLYLINE1)
-    packed_points = PackedPoints()
-    packed_points.setup(tags)
+    packed_points = LWPolylinePoints.from_tags(tags)
     packed_points[0] = (-.5, -.5, 0, 0, 1)
     packed_points[1] = (.5, .5, .1, .2, -1)
     tags = list(packed_points.dxftags())

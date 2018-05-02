@@ -210,7 +210,7 @@ class VertexArray(PackedTags):
             yield DXFVertex(self.VERTEX_CODE, point)
 
     def append(self, point):
-        # PackedPoints does not maintain the point count attribute!
+        # LWPolylinePoints does not maintain the point count attribute!
         if len(point) != self.VERTEX_SIZE:
             raise DXFValueError('point requires exact {} components.'.format(self.VERTEX_SIZE))
         self.value.extend(point)

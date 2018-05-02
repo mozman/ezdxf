@@ -5,12 +5,10 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
 from ..lldxf.types import DXFTag, DXFVertex
-from ..lldxf.const import DXFIndexError, DXFValueError, DXFTypeError
-from ..lldxf.packedtags import PackedTags
+from ..lldxf.packedtags import VertexArray, replace_tags
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf import loader
-from ezdxf.tools.indexing import Index
 
 _LWPOLYLINE_TPL = """0
 LWPOLYLINE
@@ -42,34 +40,17 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
 LWPOINTCODES = (10, 20, 40, 41, 42)
 
 
-class PackedPoints(PackedTags):
+class LWPolylinePoints(VertexArray):
     code = -10  # compatible with DXFTag.code
+    VERTEX_CODE = 10
+    START_WIDTH_CODE = 40
+    END_WIDTH_CODE = 41
+    BULGE_CODE = 42
+    VERTEX_SIZE = 5
     __slots__ = ('value', )
 
-    def __init__(self, data=None):
-        self.value = array.array('d')  # compatible with DXFTag.value
-        if data is not None:
-            self.value.extend(data)
-
-    def __len__(self):
-        return len(self.value) // 5
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            return list(self._slicing(index))
-        else:
-            return self._get_point(Index(self).index(index, error=DXFIndexError))
-
-    def __setitem__(self, index, point):
-        if isinstance(index, slice):
-            raise DXFTypeError('slicing not supported')
-        else:
-            self._set_point(Index(self).index(index, error=DXFIndexError), point)
-
-    def clone(self):
-        return PackedPoints(data=self.value)
-
-    def setup(self, tags):
+    @classmethod
+    def from_tags(cls, tags):
         """
         Setup point array from extended tags.
 
@@ -80,60 +61,39 @@ class PackedPoints(PackedTags):
         subclass = tags.get_subclass('AcDbPolyline')
 
         def get_vertex():
-            point.append(attribs.get(40, 0))
-            point.append(attribs.get(41, 0))
-            point.append(attribs.get(42, 0))
+            point.append(attribs.get(cls.START_WIDTH_CODE, 0))
+            point.append(attribs.get(cls.END_WIDTH_CODE, 0))
+            point.append(attribs.get(cls.BULGE_CODE, 0))
             return tuple(point)
-
+        data = []
         point = None
         attribs = {}
         for tag in subclass:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
                     if point is not None:
-                        self.append(get_vertex())
+                        data.extend(get_vertex())
                     point = list(tag.value[0:2])  # just use x, y coordinates, z is invalid but you never know!
                     attribs = {}
                 else:
                     attribs[tag.code] = tag.value
         if point is not None:
-            self.append(get_vertex())
+            data.extend(get_vertex())
+        return cls(data=data)
 
-    def _slicing(self, s):
-        for index in Index(self).slicing(s):
-            yield self._get_point(index)
-
-    def _get_point(self, index):
-        index = index * 5
-        return tuple(self.value[index:index+5])
-
-    def _set_point(self, index, point):
-        if len(point) != 5:
-            raise DXFValueError('point requires exact 5 components.')
-        if isinstance(point, (tuple, list)):
-            point = array.array('d', point)
-        index = index * 5
-        self.value[index:index+5] = point
+    def append(self, point):
+        super(LWPolylinePoints, self).append(point_to_array(point))
 
     def dxftags(self):
         for point in self:
             x, y, start_width, end_width, bulge = point
-            yield DXFVertex(10, (x, y))
+            yield DXFVertex(self.VERTEX_CODE, (x, y))
             if start_width:
-                yield DXFTag(40, start_width)
+                yield DXFTag(self.START_WIDTH_CODE, start_width)
             if end_width:
-                yield DXFTag(41, end_width)
+                yield DXFTag(self.END_WIDTH_CODE, end_width)
             if bulge:
-                yield DXFTag(42, bulge)
-
-    def append(self, point):
-        # PackedPoints does not maintain the point count attribute!
-        if len(point) != 5:
-            raise DXFValueError('point requires exact 5 components.')
-        self.value.extend(point)
-
-    def clear(self):
-        del self.value[:]
+                yield DXFTag(self.BULGE_CODE, bulge)
 
 
 def point_to_array(point):
@@ -143,29 +103,11 @@ def point_to_array(point):
     return double_point
 
 
-def replace_point_tags(tags, packed_points):
-    """
-    Replace single DXF tags for points, start_width, end_width and bulge by PackedPoints() object.
-
-    Args:
-        tags: ExtendedTags
-        packed_points: PackedPoints() object
-
-    """
-    subclass = tags.get_subclass('AcDbPolyline')
-    try:
-        pos = subclass.tag_index(10)
-    except ValueError:
-        pos = len(subclass)
-    subclass.remove_tags(codes=LWPOINTCODES)
-    subclass.insert(pos, packed_points)
-
-
 @loader.register('LWPOLYLINE', legacy=False)
 def tag_processor(tags):
-    points = PackedPoints()
-    points.setup(tags)
-    replace_point_tags(tags, points)
+    points = LWPolylinePoints.from_tags(tags)
+    subclass = tags.get_subclass('AcDbPolyline')
+    replace_tags(subclass, codes=LWPOINTCODES, packed_data=points)
     return tags
 
 
@@ -185,14 +127,14 @@ class LWPolyline(ModernGraphicEntity):
 
     @property
     def packed_points(self):
-        return self.AcDbPolyline.get_first_tag(PackedPoints.code)
+        return self.AcDbPolyline.get_first_tag(LWPolylinePoints.code)
 
     @closed.setter
     def closed(self, status):
         self.set_flag_state(self.CLOSED, status, name='flags')
 
     def __len__(self):
-        return self.dxf.count
+        return len(self.packed_points)
 
     def __iter__(self):
         """
@@ -221,6 +163,10 @@ class LWPolyline(ModernGraphicEntity):
 
         """
         self.packed_points[index] = point_to_array(value)
+
+    def __delitem__(self, index):
+        del self.packed_points[index]
+        self.update_count()
 
     def vertices(self):
         """
@@ -253,13 +199,10 @@ class LWPolyline(ModernGraphicEntity):
         tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
 
         """
-        packed_points = self.packed_points
-        for point in points:
-            packed_points.append(point_to_array(point))
+        self.packed_points.extend(points)
+        self.update_count()
 
-        self._update_count()
-
-    def _update_count(self):
+    def update_count(self):
         self.dxf.count = len(self.packed_points)
 
     def set_points(self, points):
@@ -273,9 +216,9 @@ class LWPolyline(ModernGraphicEntity):
 
     @contextmanager
     def points(self):
-        points = list(self)
+        points = self.packed_points
         yield points
-        self.set_points(points)
+        self.update_count()
 
     @contextmanager
     def rstrip_points(self):
