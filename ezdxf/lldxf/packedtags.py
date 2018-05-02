@@ -118,15 +118,39 @@ class VertexTags(PackedTags):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            return list(self._slicing(index))
+            return list(self._get_points(self._slicing(index)))
         else:
-            return self._get_point(Index(self).index(index, error=DXFIndexError))
+            return self._get_point(self._index(index))
 
     def __setitem__(self, index, point):
         if isinstance(index, slice):
             raise DXFTypeError('slicing not supported')
         else:
-            self._set_point(Index(self).index(index, error=DXFIndexError), point)
+            self._set_point(self._index(index), point)
+
+    def __delitem__(self, index):
+        if isinstance(index, slice):
+            self._del_points(self._slicing(index))
+        else:
+            self._del_point(self._index(index))
+
+    def insert(self, pos, point):
+        """
+        Insert point in front of point at index pos.
+
+        Args:
+            pos: insert position
+            point: point as tuple
+
+        """
+        size = self.VERTEX_SIZE
+        if len(point) != size:
+            raise DXFValueError('point requires exact {} components.'.format(size))
+
+        pos = self._index(pos) * size
+        _insert = self.value.insert
+        for value in reversed(point):
+            _insert(pos, value)
 
     def clone(self):
         return self.__class__(data=self.value)
@@ -146,14 +170,20 @@ class VertexTags(PackedTags):
                 vertices.extend(tag.value)
         return cls(data=vertices)
 
-    def _slicing(self, s):
-        for index in Index(self).slicing(s):
-            yield self._get_point(index)
+    def _index(self, item):
+        return Index(self).index(item, error=DXFIndexError)
+
+    def _slicing(self, index):
+        return Index(self).slicing(index)
 
     def _get_point(self, index):
         size = self.VERTEX_SIZE
         index = index * size
         return tuple(self.value[index:index+size])
+
+    def _get_points(self, indices):
+        for index in indices:
+            yield self._get_point(index)
 
     def _set_point(self, index, point):
         size = self.VERTEX_SIZE
@@ -163,6 +193,17 @@ class VertexTags(PackedTags):
             point = array('d', point)
         index = index * size
         self.value[index:index+size] = point
+
+    def _del_point(self, index):
+        size = self.VERTEX_SIZE
+        pos = index * size
+        del self.value[pos:pos+size]
+
+    def _del_points(self, indices):
+        del_flags = set(indices)
+        size = self.VERTEX_SIZE
+        survivors = array('d', (v for i, v in enumerate(self.value) if (i//size) not in del_flags))
+        self.value = survivors
 
     def dxftags(self):
         for point in self:

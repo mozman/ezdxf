@@ -127,14 +127,67 @@ def test_vertex_tags_basics():
 def test_vertex_tags_advanced():
     tags = ExtendedTags.from_text(SPLINE)
     vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    # append()
     vertices.append((70, 70, 70))
     assert len(vertices) == 8
     assert vertices[-1] == (70., 70., 70.)
-    vertices[0] = (1, 1, 1)
-    assert vertices[0] == (1, 1, 1)
+
+    # set vertex
+    vertices[0] = (7, 6, 5)
+    assert vertices[0] == (7, 6, 5)
     assert len(vertices) == 8
+
+    # clear()
     vertices.clear()
     assert len(vertices) == 0
+
+    # extend()
+    vertices.extend([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
+    assert len(vertices) == 3
+    assert vertices[0] == (0, 0, 0)
+    assert vertices[1] == (1, 2, 3)
+    assert vertices[2] == (4, 5, 6)
+
+
+def test_vertex_tags_delete():
+    tags = ExtendedTags.from_text(SPLINE)
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    assert len(vertices) == 7
+    assert vertices[0] == (0, 0, 0)
+    del vertices[0]
+    assert vertices[0] == (10, 10, 10)
+    assert len(vertices) == 6
+
+    del vertices[1]  # (20, 20, 20)
+    assert vertices[1] == (30, 30, 30)
+    assert len(vertices) == 5
+
+
+def test_vertex_tags_delete_slices():
+    tags = ExtendedTags.from_text(SPLINE)
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    del vertices[:2]
+    assert len(vertices) == 5
+    assert vertices[0] == (20, 20, 20)
+
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    del vertices[::2]
+    assert len(vertices) == 3
+    assert vertices[0] == (10, 10, 10)
+    assert vertices[1] == (30, 30, 30)
+    assert vertices[2] == (50, 50, 50)
+
+
+def test_vertex_tags_insert():
+    tags = ExtendedTags.from_text(SPLINE)
+    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    assert vertices[0] == (0, 0, 0)
+    assert vertices[1] == (10, 10, 10)
+    vertices.insert(1, (-1, -2, -3))
+    assert vertices[0] == (0, 0, 0)
+    assert vertices[1] == (-1, -2, -3)
+    assert vertices[2] == (10, 10, 10)
+    assert len(vertices) == 8
 
 
 def test_vertex_tags_to_dxf_tags():
