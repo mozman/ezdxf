@@ -37,7 +37,7 @@ def test_default_settings(spline):
     assert 0 == spline.dxf.invisible
     assert (0.0, 0.0, 1.0) == spline.dxf.extrusion
 
-    assert 0 == len(spline.knots)
+    assert 0 == len(spline.knot_values)
     assert 0 == len(spline.weights)
     assert 0 == len(spline.control_points)
     assert 0 == len(spline.fit_points)
@@ -60,7 +60,7 @@ def test_knot_values(spline):
     values = [1, 2, 3, 4, 5, 6, 7]
     spline.set_knot_values(values)
     assert 7 == spline.dxf.n_knots
-    assert values == list(spline.knots)
+    assert values == list(spline.knot_values)
 
 
 def test_knots_ctx_manager(spline):
@@ -69,7 +69,7 @@ def test_knots_ctx_manager(spline):
     spline.set_knot_values(values)
     with spline.edit_data() as data:
         data.knot_values.extend([8, 9])
-    assert [1, 2, 3, 4, 5, 6, 7, 8, 9] == list(spline.knots)
+    assert [1, 2, 3, 4, 5, 6, 7, 8, 9] == list(spline.knot_values)
 
 
 def test_weights(spline):

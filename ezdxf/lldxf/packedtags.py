@@ -102,7 +102,7 @@ class TagDict(PackedTags):
         return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in set(cls.SEARCH_CODES))))
 
 
-class VertexTags(PackedTags):
+class VertexArray(PackedTags):
     code = -10  # compatible with DXFTag.code
     VERTEX_CODE = 10
     VERTEX_SIZE = 3  # set to 2 for 2d points

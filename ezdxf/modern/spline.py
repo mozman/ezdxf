@@ -7,7 +7,7 @@ from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFValueError
-from ..lldxf.packedtags import TagArray, VertexTags
+from ..lldxf.packedtags import TagArray, VertexArray
 from ..algebra.bspline import knot_uniform, knot_open_uniform
 from ..lldxf import loader
 
@@ -26,14 +26,14 @@ class WeightTags(TagArray):
     DTYPE = 'f'
 
 
-class ControlPoints(VertexTags):
+class ControlPoints(VertexArray):
     __slots__ = ('value', )
     code = -10  # compatible with DXFTag.code
     VERTEX_CODE = 10
     VERTEX_SIZE = 3
 
 
-class FitPoints(VertexTags):
+class FitPoints(VertexArray):
     __slots__ = ('value', )
     code = -11  # compatible with DXFTag.code
     VERTEX_CODE = 11
@@ -119,7 +119,7 @@ class Spline(ModernGraphicEntity):
         self.set_flag_state(self.CLOSED, state=status, name='flags')
 
     @property
-    def knots(self):  # group code 40
+    def knot_values(self):  # group code 40
         """
         Returns spline knot values as array.array('f').
 
@@ -127,7 +127,7 @@ class Spline(ModernGraphicEntity):
         return self.AcDbSpline.get_first_tag(KnotTags.code).value
 
     def get_knot_values(self):  # deprecated
-        return self.knots
+        return self.knot_values
 
     def set_knot_values(self, knot_values):
         knots = self.AcDbSpline.get_first_tag(KnotTags.code)
@@ -256,7 +256,7 @@ class Spline(ModernGraphicEntity):
         Update all (unnecessary) attribute counters.
 
         """
-        self.dxf.n_knots = len(self.knots)
+        self.dxf.n_knots = len(self.knot_values)
         self.dxf.n_control_points = len(self.control_points)
         self.dxf.n_fit_points = len(self.fit_points)
 
@@ -267,7 +267,7 @@ class Spline(ModernGraphicEntity):
 
         with spline.edit_data() as data:
             # set uniform knot vector
-            data.knots = list(range(spline.dxf.n_control_points+spline.dxf.degree+1))
+            data.knots_values = list(range(spline.dxf.n_control_points+spline.dxf.degree+1))
 
         Yields: SplineData()
 
@@ -284,7 +284,7 @@ class Spline(ModernGraphicEntity):
         else:
             self.set_control_points(data.control_points)
 
-        if data.knot_values is self.knots:  # inplace editing
+        if data.knot_values is self.knot_values:  # inplace editing
             self.dxf.n_knots = len(data.knot_values)
         else:
             self.set_knot_values(data.knot_values)
@@ -297,5 +297,5 @@ class SplineData(object):
     def __init__(self, spline):
         self.fit_points = spline.fit_points
         self.control_points = spline.control_points
-        self.knot_values = spline.knots
+        self.knot_values = spline.knot_values
         self.weights = spline.weights

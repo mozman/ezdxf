@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.lldxf.packedtags import TagArray, TagDict, VertexTags
+from ezdxf.lldxf.packedtags import TagArray, TagDict, VertexArray
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
@@ -108,9 +108,9 @@ def test_dict_from_tags():
     assert len(tags) == 3
 
 
-def test_vertex_tags_basics():
+def test_vertex_array_basics():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     assert len(vertices) == 7
     points = list(vertices)
     assert len(points) == 7
@@ -124,9 +124,9 @@ def test_vertex_tags_basics():
         vertices[8]
 
 
-def test_vertex_tags_advanced():
+def test_vertex_array_advanced():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     # append()
     vertices.append((70, 70, 70))
     assert len(vertices) == 8
@@ -149,9 +149,9 @@ def test_vertex_tags_advanced():
     assert vertices[2] == (4, 5, 6)
 
 
-def test_vertex_tags_delete():
+def test_vertex_array_delete():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     assert len(vertices) == 7
     assert vertices[0] == (0, 0, 0)
     del vertices[0]
@@ -163,14 +163,14 @@ def test_vertex_tags_delete():
     assert len(vertices) == 5
 
 
-def test_vertex_tags_delete_slices():
+def test_vertex_array_delete_slices():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     del vertices[:2]
     assert len(vertices) == 5
     assert vertices[0] == (20, 20, 20)
 
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     del vertices[::2]
     assert len(vertices) == 3
     assert vertices[0] == (10, 10, 10)
@@ -178,9 +178,9 @@ def test_vertex_tags_delete_slices():
     assert vertices[2] == (50, 50, 50)
 
 
-def test_vertex_tags_insert():
+def test_vertex_array_insert():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     assert vertices[0] == (0, 0, 0)
     assert vertices[1] == (10, 10, 10)
     vertices.insert(1, (-1, -2, -3))
@@ -190,9 +190,9 @@ def test_vertex_tags_insert():
     assert len(vertices) == 8
 
 
-def test_vertex_tags_to_dxf_tags():
+def test_vertex_array_to_dxf_tags():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexTags.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
     tags = list(vertices.dxftags())
     assert len(tags) == 7
     assert tags[0] == (10, (0., 0., 0.))

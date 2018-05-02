@@ -5,25 +5,27 @@ News
 Version 0.8.9 - dev
 
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
+   - CHANGE: refactoring of internal tag representation for smaller memory footprint, but with some speed penalty
    - NEW: packed data for more memory efficient data storage for some entities
    - NEW: packed data for LWPOLYLINE points, high level API unchanged, faster __getitem__ and added __setitem__ support
    - NEW: packed data for SPLINE, knots and weights stored as 4-byte float arrays, vertices stored as 8-byte double
-          arrays; Spline.get_knot_values(), Spline.get_weights(), Spline.get_control_points() and Spline.get_fit_points()
-          are deprecated, direct access to this attributes by Spline.knots, Spline.weights, Spline.control_points and
-          Spline.fit_points all with a list-like interface. After inplace editing Spline.update_counters() call is
-          necessary, if elements are added or removed.
+     arrays; Spline.get_knot_values(), Spline.get_weights(), Spline.get_control_points() and Spline.get_fit_points()
+     are deprecated, direct access to this attributes by Spline.knot_values, Spline.weights, Spline.control_points and
+     Spline.fit_points all with a list-like interface. After inplace editing Spline.update_counters() call is
+     necessary, if elements are added or removed.
    - NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
    - NEW: Drawing.chain_layouts_and_blocks(), chain entity spaces of all layouts and blocks. Yields an iterator for all
-          entities in all layouts and blocks
+     entities in all layouts and blocks
    - NEW: Drawing.query(), entity query over all layouts and blocks
    - NEW: Drawing.groupby(), groups DXF entities of all layouts and blocks by an DXF attribute or a key function
    - NEW: Layout.set_redraw_order() and Layout.get_redraw_order(), to change redraw order of entities in model space and
      paper space layouts
-   - CHANGE: Drawing.block.delete_block(name, safe=True), new parameter save, check if block is still referenced
-     (raises DXFValueError)
-   - CHANGE: Drawing.block.delete_all_block(safe=True), new parameter save, ignores blocks still referenced if safe is True
    - NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
-   - `Basic` read support for almost all missing DXF entities/objects:
+   - CHANGE: Drawing.blocks.delete_block(name, safe=True), new parameter save, check if block is still referenced
+     (raises DXFValueError)
+   - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), new parameter save, ignores blocks still referenced if safe is True
+   - `Basic` read support for almost all missing DXF entities/objects
+
        - ACAD_PROXY_GRAPHIC
        - HELIX
        - LEADER
@@ -57,7 +59,7 @@ Version 0.8.9 - dev
        - VBA_PROJECT (todo)
        - VISUALSTYLE (todo)
        - WIPEOUTVARIABLES
-   - CHANGE: refactoring of internal tag representation for smaller memory footprint, but with some speed penalty
+
 
 Version 0.8.8 - 2018-04-02
 
