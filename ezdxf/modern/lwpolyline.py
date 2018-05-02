@@ -126,7 +126,7 @@ class LWPolyline(ModernGraphicEntity):
         return self.get_flag_state(self.CLOSED, name='flags')
 
     @property
-    def packed_points(self):
+    def lwpoints(self):
         return self.AcDbPolyline.get_first_tag(LWPolylinePoints.code)
 
     @closed.setter
@@ -134,16 +134,14 @@ class LWPolyline(ModernGraphicEntity):
         self.set_flag_state(self.CLOSED, status, name='flags')
 
     def __len__(self):
-        return len(self.packed_points)
+        return len(self.lwpoints)
 
     def __iter__(self):
         """
         Yielding tuples of (x, y, start_width, end_width, bulge), start_width, end_width and bulge is 0 if not present.
 
         """
-        return iter(self.packed_points)
-
-    get_points = __iter__
+        return iter(self.lwpoints)
 
     def __getitem__(self, index):
         """
@@ -151,7 +149,7 @@ class LWPolyline(ModernGraphicEntity):
         bulge is 0 if not present.
 
         """
-        return self.packed_points[index]
+        return self.lwpoints[index]
 
     def __setitem__(self, index, value):
         """
@@ -162,10 +160,10 @@ class LWPolyline(ModernGraphicEntity):
             value: point value as (x, y, [start_width, [end_width, [bulge]]]) tuple
 
         """
-        self.packed_points[index] = point_to_array(value)
+        self.lwpoints[index] = point_to_array(value)
 
     def __delitem__(self, index):
-        del self.packed_points[index]
+        del self.lwpoints[index]
         self.update_count()
 
     def vertices(self):
@@ -199,11 +197,14 @@ class LWPolyline(ModernGraphicEntity):
         tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
 
         """
-        self.packed_points.extend(points)
+        self.lwpoints.extend(points)
         self.update_count()
 
     def update_count(self):
-        self.dxf.count = len(self.packed_points)
+        self.dxf.count = len(self.lwpoints)
+
+    def get_points(self):  # deprecated, use LWPolyine.lwpoints
+        return self.lwpoints
 
     def set_points(self, points):
         """
@@ -211,12 +212,12 @@ class LWPolyline(ModernGraphicEntity):
         tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
 
         """
-        self.discard_points()
+        self.lwpoints.clear()
         self.append_points(points)
 
     @contextmanager
     def points(self):
-        points = self.packed_points
+        points = self.lwpoints
         yield points
         self.update_count()
 
@@ -226,6 +227,6 @@ class LWPolyline(ModernGraphicEntity):
         yield points
         self.set_points(points)
 
-    def discard_points(self):
-        self.packed_points.clear()
+    def clear(self):
+        self.lwpoints.clear()
         self.dxf.count = 0

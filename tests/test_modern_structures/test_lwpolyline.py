@@ -94,7 +94,7 @@ def test_discard_points(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points, {'closed': True})
     assert line.closed is True, "Polyline should be closed"
-    line.discard_points()
+    line.clear()
     assert 0 == len(line), "Polyline count should be 0."
     assert len(list(line.get_points())) == 0, "Polyline should not have any points."
     assert line.closed is True, "Polyline should be closed"
