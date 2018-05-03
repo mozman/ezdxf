@@ -184,13 +184,6 @@ class LWPolyline(ModernGraphicEntity):
         for x, y in self.vertices():
             yield ocs.to_wcs((x, y, elevation))
 
-    def get_rstrip_points(self):
-        last0 = 4
-        for point in self:
-            while point[last0] == 0 and last0 > 1:
-                last0 -= 1
-            yield tuple(point[:last0+1])
-
     def append_points(self, points):
         """
         Append new *points* to polyline, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
@@ -203,6 +196,12 @@ class LWPolyline(ModernGraphicEntity):
     def update_count(self):
         self.dxf.count = len(self.lwpoints)
 
+    @contextmanager
+    def points(self):
+        points = self.lwpoints
+        yield points
+        self.update_count()
+
     def get_points(self):  # deprecated, use LWPolyine.lwpoints
         return self.lwpoints
 
@@ -214,18 +213,6 @@ class LWPolyline(ModernGraphicEntity):
         """
         self.lwpoints.clear()
         self.append_points(points)
-
-    @contextmanager
-    def points(self):
-        points = self.lwpoints
-        yield points
-        self.update_count()
-
-    @contextmanager
-    def rstrip_points(self):
-        points = list(self.get_rstrip_points())
-        yield points
-        self.set_points(points)
 
     def clear(self):
         self.lwpoints.clear()

@@ -22,20 +22,15 @@ def layout():
 def test_new_line(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points)
-    assert points == list(line.get_rstrip_points())
+    assert points == list(line.vertices())
     assert 3 == len(line)
     assert line.closed is False, "Polyline should be open by default."
 
 
-def test_getitem_first(layout):
+def test_get_point(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points)
     assert (1, 1, 0, 0, 0) == line[0]
-
-
-def test_getitem_last(layout):
-    points = [(1, 1), (2, 2), (3, 3)]
-    line = layout.add_lwpolyline(points)
     assert (3, 3, 0, 0, 0) == line[-1]
 
 
@@ -54,25 +49,38 @@ def test_slicing(layout):
     assert result[2] == (1, 1, 0, 0, 0)
 
 
-def test_setitem_first(layout):
+def test_set_point(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points)
+
     line[0] = (4, 4)
     assert (4, 4, 0, 0, 0) == line[0]
 
-
-def test_setitem_last(layout):
-    points = [(1, 1), (2, 2), (3, 3)]
-    line = layout.add_lwpolyline(points)
     line[-1] = (4, 4)
     assert (4, 4, 0, 0, 0) == line[-1]
 
 
-def test_getitem_error(layout):
+def test_get_point_error(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points)
     with pytest.raises(ezdxf.DXFIndexError):
         line[3]
+
+
+def test_del_points(layout):
+    points = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
+    line = layout.add_lwpolyline(points)
+    assert len(line) == 5
+
+    del line[0]
+    assert len(line) == 4
+    assert line[0] == (2, 2, 0, 0, 0)
+    assert line[-1] == (5, 5, 0, 0, 0)
+
+    del line[:2]
+    assert len(line) == 2
+    assert line[0] == (4, 4, 0, 0, 0)
+    assert line[-1] == (5, 5, 0, 0, 0)
 
 
 def test_append_points(layout):
@@ -90,7 +98,7 @@ def test_context_manager(layout):
     assert (4, 4, 0, 0, 0) == line[-2]
 
 
-def test_discard_points(layout):
+def test_clear(layout):
     points = [(1, 1), (2, 2), (3, 3)]
     line = layout.add_lwpolyline(points, {'closed': True})
     assert line.closed is True, "Polyline should be closed"
@@ -107,13 +115,6 @@ def test_delete_const_width(layout):
     assert 0.1 == pytest.approx(line.dxf.const_width)
     del line.dxf.const_width
     assert line.AcDbPolyline.has_tag(43) is False
-
-
-def test_rstrip_points(layout):
-    points = [(0, 0), (2, 2), (3, 3)]
-    line = layout.add_lwpolyline(points)
-    rpoints = list(line.get_rstrip_points())
-    assert rpoints[0] == (0, 0)
 
 
 def test_vertices(layout):

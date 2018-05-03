@@ -94,10 +94,6 @@ LWPolyline Methods
 
     All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
 
-.. method:: LWPolyline.get_rstrip_points()
-
-    Generates points without appending zeros: yields (x1, y1), (x2, y2) instead of (x1, y1, 0, 0, 0), (x2, y2, 0, 0, 0).
-
 .. method:: LWPolyline.set_points(points)
 
     Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
@@ -122,10 +118,6 @@ LWPolyline Methods
 .. method:: LWPolyline.vertices_in_wcs()
 
     Yield all polyline points as (x, y, z) tuples in :ref:`WCS`.
-
-.. method:: LWPolyline.rstrip_points()
-
-    Context manager for polyline points without appending zeros.
 
 .. method:: LWPolyline.append_points(points)
 
