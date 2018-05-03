@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.modern.lwpolyline import LWPolylinePoints, tag_processor
+from ezdxf.modern.lwpolyline import LWPolylinePoints, tag_processor, format_point, compile_array
 
 
 def test_is_registered():
@@ -67,6 +67,25 @@ def test_get_point_error(layout):
         line[3]
 
 
+def test_insert_point(layout):
+    points = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
+    line = layout.add_lwpolyline(points)
+    assert len(line) == 5
+
+    line.insert(0, (7, 8))
+    assert len(line) == 6
+    assert line[0] == (7, 8, 0, 0, 0)
+    assert line[1] == (1, 1, 0, 0, 0)
+    assert line[-1] == (5, 5, 0, 0, 0)
+
+    line.insert(1, (1, 9, 4), format='bxy')
+    assert len(line) == 7
+    assert line[0] == (7, 8, 0, 0, 0)
+    assert line[1] == (9, 4, 0, 0, 1)
+    assert line[2] == (1, 1, 0, 0, 0)
+    assert line[-1] == (5, 5, 0, 0, 0)
+
+
 def test_del_points(layout):
     points = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
     line = layout.add_lwpolyline(points)
@@ -121,6 +140,22 @@ def test_vertices(layout):
     points = [(0, 0, 1, 1, 1), (2, 2, 1, 1, 1), (3, 3, 1, 1, 1)]
     line = layout.add_lwpolyline(points)
     assert list(line.vertices()) == [(0, 0), (2, 2), (3, 3)]
+
+
+def test_format_point():
+    assert format_point((1, 2, 3, 4, 5), 'xy') == (1, 2)
+    assert format_point((1, 2, 3, 4, 5), 'bse') == (5, 3, 4)
+    assert format_point((1, 2, 3, 4, 5), 'v,b') == ((1, 2), 5)
+
+
+def test_point_to_array():
+    assert tuple(compile_array((1, 2), 'xy')) == (1, 2, 0, 0, 0)
+    assert tuple(compile_array((1, 2, 5), 'xyb')) == (1, 2, 0, 0, 5)
+
+    assert tuple(compile_array((1, 2, 5), 'xy')) == (1, 2, 0, 0, 0)
+    assert tuple(compile_array((5, (1, 2)), 'b,v')) == (1, 2, 0, 0, 5)
+    # mix of x, y, v codes is allowed, but only last is set
+    assert tuple(compile_array(((1, 2), 4, 5), 'vxy')) == (4, 5, 0, 0, 0)
 
 
 @pytest.fixture

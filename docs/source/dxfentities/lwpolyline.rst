@@ -40,6 +40,24 @@ Width and Bulge Values at Last Point
     :ref:`tut_lwpolyline`
 
 
+.. _format codes:
+
+User Defined Point Format Codes
+-------------------------------
+
+
+    ==== ================
+    Code Point Component
+    ==== ================
+       x x coordinate
+       y y coordinate
+       s start width
+       e end width
+       b bulge value
+       v (x, y) as tuple
+    ==== ================
+
+
 DXF Attributes for LWPolyline
 -----------------------------
 
@@ -78,38 +96,37 @@ LWPolyline Attributes
     *True* if polyline is closed else *False*.  A closed polyline has a connection from the last vertex
     to the first vertex. (read/write)
 
-.. attribute:: LWPolyline.lwpoints
-
-    Returns :class:`LWPolylinePoints` object.
 
 LWPolyline Methods
 ------------------
 
-.. method:: LWPolyline.get_points()
+.. method:: LWPolyline.get_points(format='xyseb')
 
-    Returns all polyline points as list of tuples (x, y, start_width, end_width, bulge) (deprecated). New way is to use
-    :attr:`LWPolyline.lwpoints` or use the context manager :meth:`LWPolyline.points`.
+    :param format: format string, see `format codes`_
+
+    Returns all polyline points as list of tuples (x, y, start_width, end_width, bulge), format specifies a user defined
+    point format.
 
     start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present).
 
     All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
 
-.. method:: LWPolyline.set_points(points)
+.. method:: LWPolyline.set_points(points, format='xyseb')
 
-    Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
-    Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
+    :param format: format string, see `format codes`_
 
-    All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
-
-.. method:: LWPolyline.points()
-
-    Context manager for polyline points. Returns a list of tuples (x, y, start_width, end_width, bulge)
-
-    start_width, end_width and bulge is 0 if not present (0 is the DXF default value if not present). Setting/Appending
-    points accepts (x, y, [start_width, [end_width, [bulge]]]) tuples. Set start_width, end_width to 0 to be ignored
-    (x, y, 0, 0, bulge).
+    Replace existing polyline points by new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
+    tuples. Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
     All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
+
+.. method:: LWPolyline.points(format='xyseb')
+
+    :param format: format string, see `format codes`_
+
+    Context manager for polyline points. Returns a standard Python list of points, according to the format string.
+
+    All coordinates in :ref:`OCS`.
 
 .. method:: LWPolyline.vertices()
 
@@ -119,12 +136,33 @@ LWPolyline Methods
 
     Yield all polyline points as (x, y, z) tuples in :ref:`WCS`.
 
-.. method:: LWPolyline.append_points(points)
+.. method:: LWPolyline.append(point, format='xyseb')
 
-    Append additional *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
+    :param format: format string, see `format codes`_
+
+    Append new point, format specifies a user defined point format.
+
+    All coordinates in :ref:`OCS`.
+
+.. method:: LWPolyline.append_points(points, format='xyseb')
+
+    :param points: iterable of point, point is (x, y, [start_width, [end_width, [bulge]]]) tuple
+    :param format: format string, see `format codes`_
+
+    Append new points, points is a list of (x, y, [start_width, [end_width, [bulge]]]) tuples.
     Set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
-    All points in :ref:`OCS` as (x, y) tuples (:attr:`~LWpolyline.dxf.elevation` is the z-axis value).
+    All coordinates in :ref:`OCS`.
+
+.. method:: LWPolyline.insert(pos, point, format='xyseb')
+
+    :param pos: insertion position for new point
+    :param point: new polyline point
+    :param format: format string, see `format codes`_
+
+    Insert new point in front of position *pos*, format specifies a user defined point format.
+
+    All coordinates in :ref:`OCS`.
 
 .. method:: LWPolyline.clear()
 
@@ -132,31 +170,24 @@ LWPolyline Methods
 
 .. method:: LWPolyline.__len__()
 
-    Number of polyline vertices.
+    Number of polyline points.
 
 .. method:: LWPolyline.__getitem__(index)
 
-    Get point at position *index* as (x, y, start_width, end_width, bulge) tuple. start_width, end_width and bulge is 0 if
-    not present (0 is the DXF default value if not present), supports extended slicing.
+    Get point at position *index* as (x, y, start_width, end_width, bulge) tuple. start_width, end_width and bulge is
+    0 if not present (0 is the DXF default value if not present), supports extended slicing. Point format is fixed as
+    'xyseb'.
+
+    All coordinates in :ref:`OCS`.
 
 .. method:: LWPolyline.__setitem__(index, value)
 
     Set point at position *index* as (x, y, [start_width, [end_width, [bulge]]]) tuple. If start_width or end_width is 0 or
     left off the default value is used. If the bulge value is left off, bulge is 0 by default (straight line). Does NOT
-    support extend slicing.
+    support extend slicing. Point format is fixed as 'xyseb'.
+
+    All coordinates in :ref:`OCS`.
 
 .. method:: LWPolyline.__delitem__(index)
 
     Delete point at position *index*, supports extended slicing.
-
-LWPolylinePoints
-----------------
-
-    A list like object to store :class:`LWPolyline` vertices, start width, end width and bulge values in
-    a :code:`array.array('d')` flat list.
-
-    Supports most standard list operations like indexing, iteration, insert, append, extend and so on.
-
-.. class:: LWPolylinePoints(VertexArray)
-
-    For attributes and methods see :class:`~ezdxf.lldxf.VertexArray`

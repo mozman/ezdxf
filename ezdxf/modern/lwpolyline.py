@@ -10,6 +10,9 @@ from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf import loader
 
+FORMAT_CODES = frozenset('xysebv')
+DEFAULT_FORMAT = 'xyseb'
+
 _LWPOLYLINE_TPL = """0
 LWPOLYLINE
 5
@@ -81,8 +84,8 @@ class LWPolylinePoints(VertexArray):
             data.extend(get_vertex())
         return cls(data=data)
 
-    def append(self, point):
-        super(LWPolylinePoints, self).append(point_to_array(point))
+    def append(self, point, format=DEFAULT_FORMAT):
+        super(LWPolylinePoints, self).append(compile_array(point, format=format))
 
     def dxftags(self):
         for point in self:
@@ -94,13 +97,6 @@ class LWPolylinePoints(VertexArray):
                 yield DXFTag(self.END_WIDTH_CODE, end_width)
             if bulge:
                 yield DXFTag(self.BULGE_CODE, bulge)
-
-
-def point_to_array(point):
-    double_point = array.array('d', point)
-    if len(double_point) < 5:
-        double_point.extend((0., )*(5-len(double_point)))
-    return double_point
 
 
 @loader.register('LWPOLYLINE', legacy=False)
@@ -138,29 +134,28 @@ class LWPolyline(ModernGraphicEntity):
 
     def __iter__(self):
         """
-        Yielding tuples of (x, y, start_width, end_width, bulge), start_width, end_width and bulge is 0 if not present.
+        Yielding tuples of (x, y, start_width, end_width, bulge).
 
         """
         return iter(self.lwpoints)
 
     def __getitem__(self, index):
         """
-        Returns polyline point at *index* as (x, y, start_width, end_width, bulge) tuple, start_width, end_width and
-        bulge is 0 if not present.
+        Returns polyline point at position index as (x, y, start_width, end_width, bulge) tuple.
 
         """
         return self.lwpoints[index]
 
     def __setitem__(self, index, value):
         """
-        Set polyline point at position index.
+        Set polyline point at position index. Point format is fixed as 'xyseb'.
 
         Args:
             index: point index
             value: point value as (x, y, [start_width, [end_width, [bulge]]]) tuple
 
         """
-        self.lwpoints[index] = point_to_array(value)
+        self.lwpoints[index] = compile_array(value)
 
     def __delitem__(self, index):
         del self.lwpoints[index]
@@ -184,36 +179,161 @@ class LWPolyline(ModernGraphicEntity):
         for x, y in self.vertices():
             yield ocs.to_wcs((x, y, elevation))
 
-    def append_points(self, points):
+    def append(self, point, format=DEFAULT_FORMAT):
         """
-        Append new *points* to polyline, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
-        tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
+        Append point to polyline, format specifies a user defined point format.
+
+        Args:
+            point: (x, y, [start_width, [end_width, [bulge]]]) tuple
+            format: format string, default is 'xyseb'
+                x = x coordinate
+                y = y coordinate
+                s = start width
+                e = end width
+                b = bulge value
+                v = (x, y) as tuple
 
         """
-        self.lwpoints.extend(points)
+        self.lwpoints.append(point, format=format)
+        self.update_count()
+
+    def insert(self, pos, point, format=DEFAULT_FORMAT):
+        """
+        Insert new point in front of positions pos, format specifies a user defined point format.
+
+        Args:
+            pos: insert position
+            point: point data
+            format: format string, default is 'xyseb'
+                x = x coordinate
+                y = y coordinate
+                s = start width
+                e = end width
+                b = bulge value
+                v = (x, y) as tuple
+
+        """
+        data = compile_array(point, format=format)
+        self.lwpoints.insert(pos, data)
+        self.update_count()
+
+    def append_points(self, points, format=DEFAULT_FORMAT):
+        """
+        Append new points to polyline, format specifies a user defined point format.
+
+        Args:
+            points: iterable of point, point is (x, y, [start_width, [end_width, [bulge]]]) tuple
+            format: format string, default is 'xyseb'
+                x = x coordinate
+                y = y coordinate
+                s = start width
+                e = end width
+                b = bulge value
+                v = (x, y) as tuple
+
+        """
+        for point in points:
+            self.lwpoints.append(point, format=format)
         self.update_count()
 
     def update_count(self):
         self.dxf.count = len(self.lwpoints)
 
     @contextmanager
-    def points(self):
-        points = self.lwpoints
+    def points(self, format=DEFAULT_FORMAT):
+        points = self.get_points(format=format)
         yield points
-        self.update_count()
+        self.set_points(points, format=format)
 
-    def get_points(self):  # deprecated, use LWPolyine.lwpoints
-        return self.lwpoints
-
-    def set_points(self, points):
+    def get_points(self, format=DEFAULT_FORMAT):
         """
-        Remove all points and append new *points*, *points* is a list of (x, y, [start_width, [end_width, [bulge]]])
-        tuples. Set start_width, end_width to 0 to ignore (x, y, 0, 0, bulge).
+        Returns all points as list of tuples, format specifies a user defined point format.
+
+        Args:
+            format: format string, default is 'xyseb'
+                x = x coordinate
+                y = y coordinate
+                s = start width
+                e = end width
+                b = bulge value
+                v = (x, y) as tuple
+
+        """
+        return [format_point(p, format=format) for p in self.lwpoints]
+
+    def set_points(self, points, format=DEFAULT_FORMAT):
+        """
+        Remove all points and append new points.
+
+        Args:
+            points: iterable of point, point is (x, y, [start_width, [end_width, [bulge]]]) tuple
+            format: format string, default is 'xyseb'
+                x = x coordinate
+                y = y coordinate
+                s = start width
+                e = end width
+                b = bulge value
+                v = (x, y) as tuple
 
         """
         self.lwpoints.clear()
-        self.append_points(points)
+        self.append_points(points, format=format)
 
     def clear(self):
         self.lwpoints.clear()
         self.dxf.count = 0
+
+
+def format_point(point, format='xyseb'):
+    """
+    Reformat point components.
+
+    Args:
+        point: list or tuple of (x, y, start_width, end_width, bulge)
+        format: format string, default is 'xyseb'
+            x = x coordinate
+            y = y coordinate
+            s = start width
+            e = end width
+            b = bulge value
+            v = (x, y) as tuple
+
+    Returns: tuple of selected components
+
+    """
+    x, y, s, e, b = point
+    v = (x, y)
+    vars = locals()
+    return tuple(vars[code] for code in format.lower() if code in FORMAT_CODES)
+
+
+def compile_array(data, format='xyseb'):
+    """
+    Gather point components from input data.
+
+    Args:
+        data: list or tuple of point components
+        format: format string, default is 'xyseb'
+            x = x coordinate
+            y = y coordinate
+            s = start width
+            e = end width
+            b = bulge value
+            v = (x, y) as tuple
+
+    Returns: array.array('d', (x, y, start_width, end_width, bulge))
+
+    """
+    a = array.array('d', (0., 0., 0., 0., 0.))
+    format = [code for code in format.lower() if code in FORMAT_CODES]
+    for code, value in zip(format, data):
+        if code not in FORMAT_CODES:
+            continue
+        if code == 'v':
+            a[0] = value[0]
+            a[1] = value[1]
+        else:
+            a['xyseb'.index(code)] = value
+    return a
+
+

@@ -7,8 +7,9 @@ Version 0.8.9 - dev
    - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
    - CHANGE: refactoring of internal tag representation for smaller memory footprint, but with some speed penalty
    - NEW: packed data for more memory efficient data storage for some entities
-   - NEW: packed data for LWPOLYLINE points, faster __getitem__ and added __setitem__ and __delitem__ support, renamed
-     discard_points() in clear(); removed get_rstrip_points(), use vertices() instead, and ctx manager rstrip_points()
+   - NEW: packed data for LWPOLYLINE points, faster __getitem__;  added __setitem__, __delitem__, insert() and append()
+     methods; renamed discard_points() in clear(); removed get_rstrip_points() and ctx manager rstrip_points();
+     user defined point format;
    - NEW: packed data for SPLINE, knots and weights stored as 4-byte float arrays, vertices stored as 8-byte double
      arrays; Spline.get_knot_values(), Spline.get_weights(), Spline.get_control_points() and Spline.get_fit_points()
      are deprecated, direct access to this attributes by Spline.knot_values, Spline.weights, Spline.control_points and
