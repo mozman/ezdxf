@@ -109,7 +109,7 @@ class Tags(list):
 
     def has_tag(self, code):
         """
-        Returns True if a DXFTag() with group code == code is present else False.
+        Returns True if a DXF tag with group code == code is present else False.
 
         Args:
             code: group code as int
@@ -119,7 +119,7 @@ class Tags(list):
 
     def get_first_value(self, code, default=DXFValueError):
         """
-        Returns value of first DXFTag(code, value) or default if default != DXFValueError, else raises DXFValueError.
+        Returns value of first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
         Args:
             code: group code as int
@@ -136,7 +136,7 @@ class Tags(list):
 
     def get_first_tag(self, code, default=DXFValueError):
         """
-        Returns first DXFTag(code, value) or default if default != DXFValueError, else raises DXFValueError.
+        Returns first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
         Args:
             code: group code as int
@@ -153,7 +153,7 @@ class Tags(list):
 
     def find_all(self, code):
         """
-        Returns a list of DXFTag(code, value).
+        Returns a list of DXF tag with given group code.
 
         Args:
             code: group code as int
@@ -163,7 +163,7 @@ class Tags(list):
 
     def tag_index(self, code, start=0, end=None):
         """
-        Return first index of DXFTag(code, value).
+        Return index of first DXF tag with given group code.
 
         Args:
             code: group code as int
@@ -182,7 +182,7 @@ class Tags(list):
 
     def update(self, tag):
         """
-        Update first existing tag with group code == tag.code, raises DXFValueError if tag not exists.
+        Update first existing tag with same group code as tag, raises DXFValueError if tag not exists.
 
         """
         index = self.tag_index(tag.code)
@@ -200,7 +200,7 @@ class Tags(list):
 
     def remove_tags(self, codes):
         """
-        Remove tags inplace with group codes specified in codes.
+        Remove all tags inplace with group codes specified in codes.
 
         Args:
             codes: iterable of group codes
@@ -212,7 +212,7 @@ class Tags(list):
 
     def remove_tags_except(self, codes):
         """
-        Remove tags inplace except those with group codes specified in codes.
+        Remove all tags inplace except those with group codes specified in codes.
 
         Args:
             codes: iterable of group codes
@@ -224,7 +224,7 @@ class Tags(list):
 
     def collect_consecutive_tags(self, codes, start=0, end=None):
         """
-        Collect all consecutive tags with code in codes, start and end delimits the search range. A tag code not
+        Collect all consecutive tags with group code in codes, start and end delimits the search range. A tag code not
         in codes ends the process.
 
         Args:

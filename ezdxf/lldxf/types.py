@@ -23,7 +23,7 @@ BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 
 
 class DXFTag(object):
-    __slots__ = ['code', '_value']
+    __slots__ = ('code', '_value')
 
     def __init__(self, code, value):
         self.code = code
@@ -65,7 +65,7 @@ NONE_TAG = DXFTag(None, None)
 
 
 class DXFVertex(DXFTag):
-    __slots__ = ['code', '_value']
+    __slots__ = ('code', '_value')
 
     def __init__(self, code, value):
         super(DXFVertex, self).__init__(code, array('d', value))
@@ -89,7 +89,7 @@ class DXFVertex(DXFTag):
 
 
 class DXFBinaryTag(DXFTag):
-    __slots__ = ['code', '_value']
+    __slots__ = ('code', '_value')
 
     def __str__(self):
         return "({}, {})".format(self.code, self.tostring())
