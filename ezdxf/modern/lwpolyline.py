@@ -101,14 +101,14 @@ class LWPolylinePoints(VertexArray):
                 yield DXFTag(self.BULGE_CODE, bulge)
 
 
-REMOVE_LWPOINTCODES = (90, 10, 20, 40, 41, 42)
+REMOVE_CODES = LWPOINTCODES + (90, )
 
 
 @loader.register('LWPOLYLINE', legacy=False)
 def tag_processor(tags):
     points = LWPolylinePoints.from_tags(tags)
     subclass = tags.get_subclass('AcDbPolyline')
-    replace_tags(subclass, codes=REMOVE_LWPOINTCODES, packed_data=points)
+    replace_tags(subclass, codes=REMOVE_CODES, packed_data=points)
     return tags
 
 

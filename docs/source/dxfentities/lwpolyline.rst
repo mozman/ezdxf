@@ -84,7 +84,7 @@ DXF Attributes for LWPolyline
 
 .. attribute:: LWPolyline.dxf.count
 
-    number of vertices
+    number of vertices (read only), same as :code:`len(polyline)`
 
 
 LWPolyline Attributes
@@ -93,7 +93,7 @@ LWPolyline Attributes
 
 .. attribute:: LWPolyline.closed
 
-    *True* if polyline is closed else *False*.  A closed polyline has a connection from the last vertex
+    *True* if polyline is closed else *False*. A closed polyline has a connection from the last vertex
     to the first vertex. (read/write)
 
 

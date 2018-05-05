@@ -210,7 +210,7 @@ class DXFEntity(object):
     def get_dxf_attrib(self, key, default=DXFValueError):
         dxfattr = self._get_dxfattr_definition(key)
         if isinstance(dxfattr, DXFCallback):
-            return getattr(self, dxfattr.getter)()
+            return dxfattr.get_value(self)
         try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
             return self._get_dxf_attrib(dxfattr)
         except DXFValueError:
@@ -289,16 +289,16 @@ class DXFEntity(object):
 
     def set_dxf_attrib(self, key, value):
         dxfattr = self._get_dxfattr_definition(key)
-        if isinstance(dxfattr, DXFCallback):
-            if dxfattr.setter is None:
-                raise DXFAttributeError("DXFAttrib '{}' is read only.".format(key))
-            else:
-                getattr(self, dxfattr.setter)(value)
-                return
+
         if dxfattr.dxfversion is not None and self.drawing is not None:
             if self.drawing.dxfversion < dxfattr.dxfversion:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
                 raise DXFAttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
+
+        if isinstance(dxfattr, DXFCallback):
+            dxfattr.set_value(self, value)
+            return
+
         subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
         if dxfattr.xtype is not None:
             self._set_extended_type(subclass_tags, dxfattr.code, dxfattr.xtype, value)

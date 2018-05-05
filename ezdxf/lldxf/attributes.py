@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 from collections import namedtuple
+from .const import DXFAttributeError
 _DXFAttr = namedtuple('DXFAttr', 'code xtype default dxfversion')
 DXFAttr3 = namedtuple('DXFAttr3', 'code xtype subclass default dxfversion')
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
@@ -13,11 +14,27 @@ DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
 
 class DXFCallback(object):
+    """
+    Defines a callback DXF Attribute, calls get_value(entity) for DXFEntity.dxf.name to get the DXF value for 'name',
+    and calls set_value(entity, value) for DXFEntity.dxf.name = value, to set DXF attribute 'name' to 'value'.
+
+    For example definition see LWPolyline.dxf.count or TestDXFEntity.test_callback() in file test_dxfentity.py
+
+    """
     def __init__(self, getter, setter=None, dxfversion=None):
         self.getter = getter
         self.setter = setter
         self.default = None
         self.dxfversion = dxfversion
+
+    def get_value(self, entity):
+        return getattr(entity, self.getter)()
+
+    def set_value(self, entity, value):
+        if self.setter is None:
+            raise DXFAttributeError('DXF attribute is read only')
+        else:
+            getattr(entity, self.setter)(value)
 
 
 def DXFAttr(code, xtype=None, default=None, dxfversion=None):
