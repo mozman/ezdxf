@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
 from ..lldxf.types import DXFTag, DXFVertex
+from ..lldxf.attributes import DXFCallback
 from ..lldxf.packedtags import VertexArray, replace_tags
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
@@ -36,7 +37,7 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
     'thickness': DXFAttr(39, default=0.0),
     'flags': DXFAttr(70, default=0),
     'const_width': DXFAttr(43, default=0.0),
-    'count': DXFAttr(90),
+    'count': DXFCallback(getter='__len__'),  # LWPolyline.__len__()
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 
@@ -88,6 +89,7 @@ class LWPolylinePoints(VertexArray):
         super(LWPolylinePoints, self).append(compile_array(point, format=format))
 
     def dxftags(self):
+        yield DXFTag(90, len(self))
         for point in self:
             x, y, start_width, end_width, bulge = point
             yield DXFVertex(self.VERTEX_CODE, (x, y))
@@ -99,11 +101,14 @@ class LWPolylinePoints(VertexArray):
                 yield DXFTag(self.BULGE_CODE, bulge)
 
 
+REMOVE_LWPOINTCODES = (90, 10, 20, 40, 41, 42)
+
+
 @loader.register('LWPOLYLINE', legacy=False)
 def tag_processor(tags):
     points = LWPolylinePoints.from_tags(tags)
     subclass = tags.get_subclass('AcDbPolyline')
-    replace_tags(subclass, codes=LWPOINTCODES, packed_data=points)
+    replace_tags(subclass, codes=REMOVE_LWPOINTCODES, packed_data=points)
     return tags
 
 
@@ -159,7 +164,6 @@ class LWPolyline(ModernGraphicEntity):
 
     def __delitem__(self, index):
         del self.lwpoints[index]
-        self.update_count()
 
     def vertices(self):
         """
@@ -195,7 +199,6 @@ class LWPolyline(ModernGraphicEntity):
 
         """
         self.lwpoints.append(point, format=format)
-        self.update_count()
 
     def insert(self, pos, point, format=DEFAULT_FORMAT):
         """
@@ -215,7 +218,6 @@ class LWPolyline(ModernGraphicEntity):
         """
         data = compile_array(point, format=format)
         self.lwpoints.insert(pos, data)
-        self.update_count()
 
     def append_points(self, points, format=DEFAULT_FORMAT):
         """
@@ -234,10 +236,6 @@ class LWPolyline(ModernGraphicEntity):
         """
         for point in points:
             self.lwpoints.append(point, format=format)
-        self.update_count()
-
-    def update_count(self):
-        self.dxf.count = len(self.lwpoints)
 
     @contextmanager
     def points(self, format=DEFAULT_FORMAT):
@@ -281,7 +279,6 @@ class LWPolyline(ModernGraphicEntity):
 
     def clear(self):
         self.lwpoints.clear()
-        self.dxf.count = 0
 
 
 def format_point(point, format='xyseb'):

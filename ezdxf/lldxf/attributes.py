@@ -6,11 +6,19 @@ _DXFAttr = namedtuple('DXFAttr', 'code xtype default dxfversion')
 DXFAttr3 = namedtuple('DXFAttr3', 'code xtype subclass default dxfversion')
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
-
 # dxfversion is None - valid for all supported DXF versions managed by the dxffactory:
 # dxffactory AC1009 - manages just DXF version AC1009, but dxffactory AC1015 manages the DXF version AC1015 and all
 # later DXF versions! Set dxfversion to 'AC1018' and this attribute can only be set in drawings with DXF version
 # AC1018 or later.
+
+
+class DXFCallback(object):
+    def __init__(self, getter, setter=None, dxfversion=None):
+        self.getter = getter
+        self.setter = setter
+        self.default = None
+        self.dxfversion = dxfversion
+
 
 def DXFAttr(code, xtype=None, default=None, dxfversion=None):
     return _DXFAttr(code, xtype, default, dxfversion)
@@ -30,8 +38,11 @@ class DXFAttributes:
         
     def _add_subclass_attribs(self, subclass, subclass_index):
         for name, dxfattrib in subclass.attribs.items():
-            self._attribs[name] = DXFAttr3(dxfattrib.code, dxfattrib.xtype, subclass_index, dxfattrib.default,
-                                           dxfattrib.dxfversion)
+            if isinstance(dxfattrib, DXFCallback):
+                self._attribs[name] = dxfattrib
+            else:
+                self._attribs[name] = DXFAttr3(dxfattrib.code, dxfattrib.xtype, subclass_index,
+                                               dxfattrib.default, dxfattrib.dxfversion)
 
     def __getitem__(self, name):
         return self._attribs[name]

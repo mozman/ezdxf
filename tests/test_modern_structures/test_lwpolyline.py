@@ -24,7 +24,13 @@ def test_new_line(layout):
     line = layout.add_lwpolyline(points)
     assert points == list(line.vertices())
     assert 3 == len(line)
+
     assert line.closed is False, "Polyline should be open by default."
+    # test callback DXF attribute
+    assert 3 == line.dxf.count  # DXF attrib callback
+    with pytest.raises(ezdxf.DXFAttributeError):
+        # count attribute is read only
+        line.dxf.count = 0
 
 
 def test_get_point(layout):
@@ -166,10 +172,10 @@ def lwpolyline(layout):
 
 def test_handle(lwpolyline):
     assert '239' == lwpolyline.dxf.handle
-    assert 2 == lwpolyline.dxf.count
+    assert 2 == len(lwpolyline)
     lwpolyline.append_points([(10, 12), (13, 13)])
     assert 4 == len(list(lwpolyline))
-    assert 4 == lwpolyline.dxf.count
+    assert 4 == len(lwpolyline)
 
 
 def test_packed_points_basics():
@@ -203,9 +209,10 @@ def test_packed_points_to_dxf_tags():
     tags = ExtendedTags.from_text(LWPOLYLINE1)
     packed_points = LWPolylinePoints.from_tags(tags)
     tags = list(packed_points.dxftags())
-    assert len(tags) == 2
-    assert tags[0] == (10, (-.5, -.5))
-    assert tags[1] == (10, (.5, .5))
+    assert len(tags) == 3  # group code 90 length tag included
+    assert tags[0] == (90, 2)
+    assert tags[1] == (10, (-.5, -.5))
+    assert tags[2] == (10, (.5, .5))
 
 
 def test_packed_points_to_dxf_tags_with_bulge():
@@ -214,13 +221,14 @@ def test_packed_points_to_dxf_tags_with_bulge():
     packed_points[0] = (-.5, -.5, 0, 0, 1)
     packed_points[1] = (.5, .5, .1, .2, -1)
     tags = list(packed_points.dxftags())
-    assert len(tags) == 6
-    assert tags[0] == (10, (-.5, -.5))
-    assert tags[1] == (42, 1)
-    assert tags[2] == (10, (.5, .5))
-    assert tags[3] == (40, .1)
-    assert tags[4] == (41, .2)
-    assert tags[5] == (42, -1)
+    assert len(tags) == 7
+    assert tags[0] == (90, 2)
+    assert tags[1] == (10, (-.5, -.5))
+    assert tags[2] == (42, 1)
+    assert tags[3] == (10, (.5, .5))
+    assert tags[4] == (40, .1)
+    assert tags[5] == (41, .2)
+    assert tags[6] == (42, -1)
 
 
 LWPOLYLINE1 = """0

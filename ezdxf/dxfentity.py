@@ -3,6 +3,7 @@
 # License: MIT License
 from __future__ import unicode_literals
 from .lldxf.types import cast_tag_value, DXFTag, DXFVertex
+from .lldxf.attributes import DXFCallback
 from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFAttributeError, DXFInvalidLayerName
 from .lldxf.const import DXFKeyError, DXFValueError
 from .lldxf.validator import is_valid_layer_name
@@ -190,8 +191,7 @@ class DXFEntity(object):
 
         """
         is_dxfversion = None if self.drawing is None else self.drawing.dxfversion
-        return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or
-                                                                  (attrib.dxfversion <= is_dxfversion)]
+        return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or (attrib.dxfversion <= is_dxfversion)]
 
     def dxf_attrib_exists(self, key):
         """
@@ -209,6 +209,8 @@ class DXFEntity(object):
 
     def get_dxf_attrib(self, key, default=DXFValueError):
         dxfattr = self._get_dxfattr_definition(key)
+        if isinstance(dxfattr, DXFCallback):
+            return getattr(self, dxfattr.getter)()
         try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
             return self._get_dxf_attrib(dxfattr)
         except DXFValueError:
@@ -287,6 +289,12 @@ class DXFEntity(object):
 
     def set_dxf_attrib(self, key, value):
         dxfattr = self._get_dxfattr_definition(key)
+        if isinstance(dxfattr, DXFCallback):
+            if dxfattr.setter is None:
+                raise DXFAttributeError("DXFAttrib '{}' is read only.".format(key))
+            else:
+                getattr(self, dxfattr.setter)(value)
+                return
         if dxfattr.dxfversion is not None and self.drawing is not None:
             if self.drawing.dxfversion < dxfattr.dxfversion:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."

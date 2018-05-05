@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import pytest
 import ezdxf
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, DXFCallback
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.dxfentity import DXFEntity, DXFTag
 from ezdxf.tools import set_flag_state
@@ -21,11 +21,19 @@ class PointAccessor(DXFEntity):
         'xp': DXFAttr(12, 'Point3D'),
         'flex': DXFAttr(13, 'Point2D/3D'),
         'flags': DXFAttr(70),
+        'counter': DXFCallback(getter='get_counter', setter='set_counter'),
         'just_AC1015': DXFAttr(71, default=777, dxfversion='AC1015'),
     }))
 
     def __init__(self, tags):
         super(PointAccessor, self).__init__(tags, drawing=DWG)
+        self._counter = 0
+
+    def get_counter(self):
+        return self._counter
+
+    def set_counter(self, value):
+        self._counter = value
 
 
 def test_set_flag_state():
@@ -93,7 +101,7 @@ class TestDXFEntity:
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         # just_AC1015 - is not valid for AC1009
-        assert ['flags', 'flat', 'flex', 'point', 'xp'] == sorted(point.valid_dxf_attrib_names())
+        assert ['counter', 'flags', 'flat', 'flex', 'point', 'xp'] == sorted(point.valid_dxf_attrib_names())
 
     def test_set_and_get_dxfattrib(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
@@ -193,6 +201,14 @@ class TestDXFEntity:
         assert point.dxf.flags == 1
         with pytest.raises(DXFAttributeError):
             point.set_flag_state(1, state=True, name='plot_flags')
+
+    def test_callback(self):
+        tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
+        point = PointAccessor(tags)
+        assert point.dxf.counter == 0
+        point.dxf.counter = 7
+        assert point.dxf.counter == 7
+        assert point.has_dxf_default_value('counter') is False
 
 
 class TestPoint3D:
