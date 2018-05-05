@@ -28,7 +28,7 @@ Spline
 DXF Attributes for Spline
 -------------------------
 
-    All points in :ref:`WCS` as (x, y) tuples
+    All points in :ref:`WCS` as (x, y, z) tuples
 
     :ref:`Common DXF attributes for DXF R13 or later`
 
@@ -52,15 +52,15 @@ DXF Attributes for Spline
 
 .. attribute:: Spline.dxf.n_knots
 
-    Count of knot values (int), automatically set by ezdxf, treat it as read only
+    Count of knot values (int), automatically set by ezdxf (read only)
 
 .. attribute:: Spline.dxf.n_fit_points
 
-    Count of fit points (int), automatically set by ezdxf, treat it as read only
+    Count of fit points (int), automatically set by ezdxf (read only)
 
 .. attribute:: Spline.dxf.n_control_points
 
-    Count of control points (int), automatically set by ezdxf, treat it as read only
+    Count of control points (int), automatically set by ezdxf (read only)
 
 .. attribute:: Spline.dxf.knot_tolerance
 
@@ -155,13 +155,6 @@ Spline Methods
 
     Closed rational B-spline with uniform knot vector, start and end at your first control point, and has
     additional control possibilities by weighting each control point.
-
-
-.. method:: Spline.update_counters()
-
-    Update all (unnecessary but required) attribute counters.
-
-    Update all counters if you edit spline data inplace (without context manager).
 
 .. method:: Spline.edit_data()
 

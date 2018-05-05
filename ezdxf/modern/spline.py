@@ -4,7 +4,8 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, DXFCallback
+from ..lldxf.types import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFValueError
 from ..lldxf.packedtags import TagArray, VertexArray
@@ -17,6 +18,13 @@ class KnotTags(TagArray):
     code = -40  # compatible with DXFTag.code
     VALUE_CODE = 40
     DTYPE = 'f'
+
+    def dxftags(self):
+        # knot value count
+        yield DXFTag(72, len(self.value))
+        # Python 2.7 compatible
+        for t in super(KnotTags, self).dxftags():
+            yield t
 
 
 class WeightTags(TagArray):
@@ -32,6 +40,13 @@ class ControlPoints(VertexArray):
     VERTEX_CODE = 10
     VERTEX_SIZE = 3
 
+    def dxftags(self):
+        # control point count
+        yield DXFTag(73, len(self))
+        # Python 2.7 compatible
+        for t in super(ControlPoints, self).dxftags():
+            yield t
+
 
 class FitPoints(VertexArray):
     __slots__ = ('value', )
@@ -39,8 +54,15 @@ class FitPoints(VertexArray):
     VERTEX_CODE = 11
     VERTEX_SIZE = 3
 
+    def dxftags(self):
+        # fit point count
+        yield DXFTag(74, len(self))
+        # Python 2.7 compatible
+        for t in super(FitPoints, self).dxftags():
+            yield t
 
-REMOVE_CODES = (ControlPoints.VERTEX_CODE, FitPoints.VERTEX_CODE, KnotTags.VALUE_CODE, WeightTags.VALUE_CODE)
+
+REMOVE_CODES = (ControlPoints.VERTEX_CODE, FitPoints.VERTEX_CODE, KnotTags.VALUE_CODE, WeightTags.VALUE_CODE) + (72, 73, 74)
 
 
 @loader.register('SPLINE', legacy=False)
@@ -78,12 +100,16 @@ AcDbSpline
 74
 0
 """
+
 spline_subclass = DefSubclass('AcDbSpline', {
     'flags': DXFAttr(70, default=0),
     'degree': DXFAttr(71),
-    'n_knots': DXFAttr(72),
-    'n_control_points': DXFAttr(73),  # control vertices define a control frame
-    'n_fit_points': DXFAttr(74),  # by default, fit points coincide with the spline
+    # 'n_knots': DXFAttr(72),
+    'n_knots': DXFCallback(getter='knot_value_count'),  # group code 72
+    # 'n_control_points': DXFAttr(73),  # control vertices define a control frame
+    'n_control_points': DXFCallback(getter='control_point_count'),  # group code 73
+    # 'n_fit_points': DXFAttr(74),  # by default, fit points coincide with the spline
+    'n_fit_points': DXFCallback(getter='fit_point_count'),  # group code 74
     'knot_tolerance': DXFAttr(42, default=1e-10),
     'control_point_tolerance': DXFAttr(43, default=1e-10),
     'fit_tolerance': DXFAttr(44, default=1e-10),
@@ -126,13 +152,15 @@ class Spline(ModernGraphicEntity):
         """
         return self.AcDbSpline.get_first_tag(KnotTags.code).value
 
+    def knot_value_count(self):
+        return len(self.knot_values)
+
     def get_knot_values(self):  # deprecated
         return self.knot_values
 
     def set_knot_values(self, knot_values):
         knots = self.AcDbSpline.get_first_tag(KnotTags.code)
         knots.set_values(knot_values)
-        self.dxf.n_knots = len(knots.value)
 
     @property
     def weights(self):  # group code 41
@@ -157,6 +185,9 @@ class Spline(ModernGraphicEntity):
         """
         return self.AcDbSpline.get_first_tag(ControlPoints.code)
 
+    def control_point_count(self):
+        return len(self.control_points)
+
     def get_control_points(self):  # deprecated
         return self.control_points
 
@@ -164,7 +195,6 @@ class Spline(ModernGraphicEntity):
         vertices = self.control_points
         vertices.clear()
         vertices.extend(points)
-        self.dxf.n_control_points = len(vertices)
 
     @property
     def fit_points(self):  # group code 11
@@ -174,6 +204,9 @@ class Spline(ModernGraphicEntity):
         """
         return self.AcDbSpline.get_first_tag(FitPoints.code)
 
+    def fit_point_count(self):
+        return len(self.fit_points)
+
     def get_fit_points(self):  # deprecated
         return self.fit_points
 
@@ -181,7 +214,6 @@ class Spline(ModernGraphicEntity):
         vertices = self.fit_points
         vertices.clear()
         vertices.extend(points)
-        self.dxf.n_fit_points = len(vertices)
 
     def set_open_uniform(self, control_points, degree=3):
         """
@@ -251,15 +283,6 @@ class Spline(ModernGraphicEntity):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)
 
-    def update_counters(self):
-        """
-        Update all (unnecessary) attribute counters.
-
-        """
-        self.dxf.n_knots = len(self.knot_values)
-        self.dxf.n_control_points = len(self.control_points)
-        self.dxf.n_fit_points = len(self.fit_points)
-
     @contextmanager
     def edit_data(self):
         """
@@ -274,22 +297,16 @@ class Spline(ModernGraphicEntity):
         """
         data = SplineData(self)
         yield data
-        if data.fit_points is self.fit_points:  # inplace editing
-            self.dxf.n_fit_points = len(data.fit_points)
-        else:
+        if data.fit_points is not self.fit_points:
             self.set_fit_points(data.fit_points)
 
-        if data.control_points is self.control_points:  # inplace editing
-            self.dxf.n_control_points = len(data.control_points)
-        else:
+        if data.control_points is not self.control_points:
             self.set_control_points(data.control_points)
 
-        if data.knot_values is self.knot_values:  # inplace editing
-            self.dxf.n_knots = len(data.knot_values)
-        else:
+        if data.knot_values is not self.knot_values:
             self.set_knot_values(data.knot_values)
 
-        if data.weights is not self.weights:  # not inplace editing
+        if data.weights is not self.weights:
             self.set_weights(data.weights)
 
 

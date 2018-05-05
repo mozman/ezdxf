@@ -13,8 +13,8 @@ Version 0.8.9 - dev
    - NEW: packed data for SPLINE, knots and weights stored as 4-byte float arrays, vertices stored as 8-byte double
      arrays; Spline.get_knot_values(), Spline.get_weights(), Spline.get_control_points() and Spline.get_fit_points()
      are deprecated, direct access to this attributes by Spline.knot_values, Spline.weights, Spline.control_points and
-     Spline.fit_points all with a list-like interface. After inplace editing Spline.update_counters() call is
-     necessary, if elements are added or removed.
+     Spline.fit_points all with a list-like interface. Knot, control point and fit point counter updated automatically,
+     therefor counters are read only now.
    - NEW: packed data for MESH, vertices, faces, edges and edge crease values stored as array.array(), high level interface unchanged
    - NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
    - NEW: Drawing.chain_layouts_and_blocks(), chain entity spaces of all layouts and blocks. Yields an iterator for all
