@@ -104,11 +104,8 @@ AcDbSpline
 spline_subclass = DefSubclass('AcDbSpline', {
     'flags': DXFAttr(70, default=0),
     'degree': DXFAttr(71),
-    # 'n_knots': DXFAttr(72),
     'n_knots': DXFCallback(getter='knot_value_count'),  # group code 72
-    # 'n_control_points': DXFAttr(73),  # control vertices define a control frame
     'n_control_points': DXFCallback(getter='control_point_count'),  # group code 73
-    # 'n_fit_points': DXFAttr(74),  # by default, fit points coincide with the spline
     'n_fit_points': DXFCallback(getter='fit_point_count'),  # group code 74
     'knot_tolerance': DXFAttr(42, default=1e-10),
     'control_point_tolerance': DXFAttr(43, default=1e-10),
@@ -152,7 +149,7 @@ class Spline(ModernGraphicEntity):
         """
         return self.AcDbSpline.get_first_tag(KnotTags.code).value
 
-    def knot_value_count(self):
+    def knot_value_count(self):  # DXF callback attribute Spline.dxf.n_knots
         return len(self.knot_values)
 
     def get_knot_values(self):  # deprecated
@@ -185,7 +182,7 @@ class Spline(ModernGraphicEntity):
         """
         return self.AcDbSpline.get_first_tag(ControlPoints.code)
 
-    def control_point_count(self):
+    def control_point_count(self):  # DXF callback attribute Spline.dxf.n_control_points
         return len(self.control_points)
 
     def get_control_points(self):  # deprecated
@@ -204,7 +201,7 @@ class Spline(ModernGraphicEntity):
         """
         return self.AcDbSpline.get_first_tag(FitPoints.code)
 
-    def fit_point_count(self):
+    def fit_point_count(self):  # DXF callback attribute Spline.dxf.n_fit_points
         return len(self.fit_points)
 
     def get_fit_points(self):  # deprecated
