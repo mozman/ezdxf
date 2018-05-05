@@ -15,6 +15,7 @@ Version 0.8.9 - dev
      are deprecated, direct access to this attributes by Spline.knot_values, Spline.weights, Spline.control_points and
      Spline.fit_points all with a list-like interface. After inplace editing Spline.update_counters() call is
      necessary, if elements are added or removed.
+   - NEW: packed data for MESH, vertices, faces, edges and edge crease values stored as array.array(), high level interface unchanged
    - NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
    - NEW: Drawing.chain_layouts_and_blocks(), chain entity spaces of all layouts and blocks. Yields an iterator for all
      entities in all layouts and blocks

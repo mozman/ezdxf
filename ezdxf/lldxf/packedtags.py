@@ -60,6 +60,9 @@ class TagList(PackedTags):
     def from_tags(cls, tags):
         return cls(data=(tag.value for tag in tags if tag.code == cls.VALUE_CODE))
 
+    def clear(self):
+        del self.value[:]
+
 
 class TagArray(TagList):
     code = -101  # compatible with DXFTag.code

@@ -3,11 +3,210 @@
 # License: MIT License
 from __future__ import unicode_literals
 from contextlib import contextmanager
+import array
+from itertools import chain
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.types import DXFTag, DXFVertex
+from ..lldxf.types import DXFTag
 from ..lldxf.extendedtags import ExtendedTags
 from ..lldxf.const import DXFStructureError, DXFValueError
+from ..lldxf.packedtags import TagArray, VertexArray, TagList
+from ..tools import take2
+from ..lldxf import loader
+
+
+class MeshVertexArray(VertexArray):
+    __slots__ = ('value',)
+    code = -92
+
+    def dxftags(self):
+        yield DXFTag(92, len(self))
+        # python 2.7 compatible
+        for tag in super(MeshVertexArray, self).dxftags():
+            yield tag
+
+    def set_data(self, vertices):
+        self.value = array.array('d', chain.from_iterable(vertices))
+
+
+def create_vertex_array(tags, start_index):
+    vertex_tags = tags.collect_consecutive_tags(codes=(10,), start=start_index)
+    return MeshVertexArray(data=chain.from_iterable(t.value for t in vertex_tags))
+
+
+class FaceList(TagList):
+    __slots__ = ('value',)
+    code = -93
+
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def dxftags(self):
+        # count = count of tags not faces!
+        yield DXFTag(93, self.tag_count())
+        for face in self.value:
+            yield DXFTag(90, len(face))
+            for index in face:
+                yield DXFTag(90, index)
+
+    def tag_count(self):
+        return len(self.value) + sum(len(f) for f in self.value)
+
+    def set_data(self, faces):
+        _faces = []
+        for face in faces:
+            _faces.append(array.array('L', face))
+        self.value = _faces
+
+
+def create_face_list(tags, start_index):
+    faces = FaceList()
+    faces_list = faces.value
+    face = []
+    counter = 0
+    for tag in tags.collect_consecutive_tags(codes=(90, ), start=start_index):
+        if not counter:
+            # leading counter tag
+            counter = tag.value
+            if face:
+                # group code 90 = 32 bit integer
+                faces_list.append(array.array('L', face))
+                face = []
+        else:
+            # followed by count face tags
+            counter -= 1
+            face.append(tag.value)
+
+    # add last face
+    if face:
+        # group code 90 = 32 bit integer
+        faces_list.append(array.array('L', face))
+
+    return faces
+
+
+class EdgeArray(TagArray):
+    __slots__ = ('value',)
+    code = -94
+    VALUE_CODE = 90  # 32 bit integer
+    DTYPE = 'L'
+
+    def dxftags(self):
+        # count = count of edges not tags!
+        yield DXFTag(94, len(self.value)//2)
+        # python 2.7 compatible
+        for v in super(EdgeArray, self).dxftags():
+            yield v
+
+    def __len__(self):
+        return len(self.value) // 2
+
+    def __iter__(self):
+        for edge in take2(self.value):
+            yield edge
+
+    def set_data(self, edges):
+        self.value = array.array('L', chain.from_iterable(edges))
+
+
+def create_edge_array(tags, start_index):
+    return EdgeArray(data=collect_values(tags, start_index, code=90))
+
+
+def collect_values(tags, start_index, code):
+    values = tags.collect_consecutive_tags(codes=(code, ), start=start_index)
+    return (t.value for t in values)
+
+
+def create_crease_array(tags, start_index):
+    return CreaseArray(data=collect_values(tags, start_index, code=140))
+
+
+class CreaseArray(TagArray):
+    __slots__ = ('value',)
+    code = -95
+    VALUE_CODE = 140  # double precision
+    DTYPE = 'd'
+
+    def dxftags(self):
+        yield DXFTag(95, len(self.value))
+        # python 2.7 compatible
+        for v in super(CreaseArray, self).dxftags():
+            yield v
+
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def set_data(self, creases):
+        self.value = array.array('d', creases)
+
+
+COUNT_ERROR_MSG = "'MESH (#{}) without {} count.'"
+
+
+def convert_and_replace_tags(tags, handle):
+    def process_vertices():
+        try:
+            vertex_count_index = tags.tag_index(92)
+        except DXFValueError:
+            raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'vertex'))
+        vertices = create_vertex_array(tags, vertex_count_index+1)
+        # replace vertex count tag and all vertex tags by MeshVertexArray()
+        end_index = vertex_count_index + 1 + len(vertices)
+        tags[vertex_count_index:end_index] = [vertices]
+
+    def process_faces():
+        try:
+            face_count_index = tags.tag_index(93)
+        except DXFValueError:
+            raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'face'))
+        else:
+            # replace face count tag and all face tags by FaceList()
+            faces = create_face_list(tags, face_count_index+1)
+            end_index = face_count_index + 1 + faces.tag_count()
+            tags[face_count_index:end_index] = [faces]
+
+    def process_edges():
+        try:
+            edge_count_index = tags.tag_index(94)
+        except DXFValueError:
+            raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'edge'))
+        else:
+            edges = create_edge_array(tags, edge_count_index+1)
+            # replace edge count tag and all edge tags by EdgeArray()
+            end_index = edge_count_index + 1 + len(edges.value)
+            tags[edge_count_index:end_index] = [edges]
+
+    def process_creases():
+        try:
+            crease_count_index = tags.tag_index(95)
+        except DXFValueError:
+            raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'crease'))
+        else:
+            creases = create_crease_array(tags, crease_count_index+1)
+            # replace crease count tag and all crease tags by CreaseArray()
+            end_index = crease_count_index + 1 + len(creases.value)
+            tags[crease_count_index:end_index] = [creases]
+
+    process_vertices()
+    process_faces()
+    process_edges()
+    process_creases()
+
+
+@loader.register('MESH', legacy=False)
+def tag_processor(tags):
+    subclass = tags.get_subclass('AcDbSubDMesh')
+    handle = tags.get_handle()
+    convert_and_replace_tags(subclass, handle)
+    return tags
+
 
 _MESH_TPL = """0
 MESH
@@ -35,87 +234,72 @@ AcDbSubDMesh
 0
 95
 0
+90
+0
 """
 
 mesh_subclass = DefSubclass('AcDbSubDMesh', {
     'version': DXFAttr(71),
     'blend_crease': DXFAttr(72),  # 0 = off, 1 = on
     'subdivision_levels': DXFAttr(91),  # int >= 0, 0 is no smoothing
+    # 92: Vertex count of level 0
+    # 10: Vertex position, multiple entries
+    # 93: Size of face list of level 0
+    # 90: Face list item, >=3 possible
+    #     90: length of face list
+    #     90: 1st vertex index
+    #     90: 2nd vertex index ...
+    # 94: Edge count of level 0
+    #     90: Vertex index of 1st edge
+    #     90: Vertex index of 2nd edge
+    # 95: Edge crease count of level 0
+    #     95 same as 94, or how is the 'edge create value' associated to edge index
+    # 140: Edge create value
+    #
+    # Overriding properties: how does this work?
+    # 90: Count of sub-entity which property has been overridden
+    # 91: Sub-entity marker
+    # 92: Count of property was overridden
+    # 90: Property type
+    #     0 = Color
+    #     1 = Material
+    #     2 = Transparency
+    #     3 = Material mapper
 })
 
 
 class Mesh(ModernGraphicEntity):
-    TEMPLATE = ExtendedTags.from_text(_MESH_TPL)
+    TEMPLATE = tag_processor(ExtendedTags.from_text(_MESH_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mesh_subclass)
 
     @property
     def AcDbSubDMesh(self):
         return self.tags.subclasses[2]
 
+    @property
+    def vertices(self):
+        return self.AcDbSubDMesh.get_first_tag(MeshVertexArray.code)
+
+    @property
+    def faces(self):
+        return self.AcDbSubDMesh.get_first_tag(FaceList.code)
+
+    @property
+    def edges(self):
+        return self.AcDbSubDMesh.get_first_tag(EdgeArray.code)
+
+    @property
+    def creases(self):
+        return self.AcDbSubDMesh.get_first_tag(CreaseArray.code)
+
     def get_data(self):
         return MeshData(self)
 
     def set_data(self, data):
-        try:
-            pos92 = self.AcDbSubDMesh.tag_index(92)
-        except DXFValueError:
-            raise DXFStructureError("Tag 92 (vertex count) in MESH entity not found.")
-        pending_tags = self._remove_existing_data(pos92)
-        self._append_vertices(data.vertices)
-        self._append_faces(data.faces)
-        self._append_edges(data.edges)
-        self._append_edge_crease_values(data.edge_crease_values)
-        self.AcDbSubDMesh.extend(pending_tags)
-
-    def _remove_existing_data(self, insert_pos):
-        tags = self.AcDbSubDMesh
-        code = 95
-        # search count tags 95, 94, 93 at least face list (93) should exist
-        while True:
-            try:
-                count_tag = tags.tag_index(code)
-            except DXFValueError:
-                code -= 1
-                if code == 92:
-                    raise DXFStructureError("No count tag 93, 94 or 95 in MESH entity found.")
-            else:
-                break
-        last_pos = count_tag + 1 + tags[count_tag].value
-        pending_tags = tags[last_pos:]
-        del tags[insert_pos:]
-        return pending_tags
-
-    def _append_vertices(self, vertices):
-        # (92) vertex count
-        tags = self.AcDbSubDMesh
-        tags.append(DXFTag(92, len(vertices)))
-        tags.extend(DXFVertex(10, vertex) for vertex in vertices)
-
-    def _append_faces(self, faces):
-        # (93) count of face tags
-        tags = []
-        list_size = 0
-        for face in faces:
-            list_size += (len(face) + 1)
-            tags.append(DXFTag(90, len(face)))
-            for index in face:
-                tags.append(DXFTag(90, index))
-        tags.insert(0, DXFTag(93, list_size))
-        self.AcDbSubDMesh.extend(tags)
-
-    def _append_edges(self, edges):
-        # (94) count of edge tags
-        tags = self.AcDbSubDMesh
-        tags.append(DXFTag(94, len(edges)*2))
-        for edge in edges:
-            tags.append(DXFTag(90, edge[0]))
-            tags.append(DXFTag(90, edge[1]))
-
-    def _append_edge_crease_values(self, values):
-        # (95) edge crease count
-        tags = self.AcDbSubDMesh
-        tags.append(DXFTag(95, len(values)))
-        tags.extend(DXFTag(140, value) for value in values)
+        self.vertices.set_data(data.vertices)
+        self.faces.set_data(data.faces)
+        self.edges.set_data(data.edges)
+        self.creases.set_data(data.edge_crease_values)
 
     @contextmanager
     def edit_data(self):
@@ -123,93 +307,13 @@ class Mesh(ModernGraphicEntity):
         yield data
         self.set_data(data)
 
-    def get_vertices(self):
-        vertices = []
-        try:
-            pos = self.AcDbSubDMesh.tag_index(92)
-        except DXFValueError:
-            return vertices
-        itags = iter(self.AcDbSubDMesh[pos+1:])
-        while True:
-            try:
-                tag = next(itags)
-            except StopIteration:  # premature end of tags, return what you got
-                break
-            if tag.code == 10:
-               vertices.append(tag.value)
-            else:  # end of vertex list
-                break
-        return vertices
-
-    def get_faces(self):
-        faces = []
-        try:
-            pos = self.AcDbSubDMesh.tag_index(93)
-        except DXFValueError:
-            return faces
-        face = []
-        itags = iter(self.AcDbSubDMesh[pos+1:])
-        try:
-            while True:
-                tag = next(itags)
-                # loop until first tag.code != 90
-                if tag.code != 90:
-                    break
-                count = tag.value  # count of vertex indices
-                while count > 0:
-                    tag = next(itags)
-                    face.append(tag.value)
-                    count -= 1
-                faces.append(tuple(face))
-                del face[:]
-        except StopIteration:  # premature end of tags, return what you got
-            pass
-        return faces
-
-    def get_edges(self):
-        edges = []
-        try:
-            pos = self.AcDbSubDMesh.tag_index(94)
-        except DXFValueError:
-            return edges
-        start_index = None
-        for index in Mesh.get_raw_list(self.AcDbSubDMesh, pos+1, code=90):
-            if start_index is None:
-                start_index = index
-            else:
-                edges.append((start_index, index))
-                start_index = None
-        return edges
-
-    def get_edge_crease_values(self):
-        try:
-            pos = self.AcDbSubDMesh.tag_index(95)
-        except DXFValueError:
-            return []
-        return Mesh.get_raw_list(self.AcDbSubDMesh, pos+1, code=140)
-
-    @staticmethod
-    def get_raw_list(tags, pos, code):
-        raw_list = []
-        itags = iter(tags[pos:])
-        while True:
-            try:
-                tag = next(itags)
-            except StopIteration:
-                break
-            if tag.code == code:
-                raw_list.append(tag.value)
-            else:
-                break
-        return raw_list
-
 
 class MeshData(object):
     def __init__(self, mesh):
-        self.vertices = mesh.get_vertices()
-        self.faces = mesh.get_faces()
-        self.edges = mesh.get_edges()
-        self.edge_crease_values = mesh.get_edge_crease_values()
+        self.vertices = list(mesh.vertices)
+        self.faces = list(mesh.faces)
+        self.edges = list(mesh.edges)
+        self.edge_crease_values = list(mesh.creases)
 
     def add_face(self, vertices):
         return self.add_entity(vertices, self.faces)
