@@ -46,11 +46,9 @@ setup(
               'ezdxf.audit',
               ],
     package_data={'ezdxf': ['templates/*.dxf',
-                            'pp/dxfpp.html',
-                            'pp/dxfpp.js',
-                            'pp/dxfpp.css',
-                            'pp/rawpp.css',
-                            'pp/rawpp.html',
+                            'pp/*.html',
+                            'pp/*.js',
+                            'pp/*.css',
                             ]},
     entry_points={
         'console_scripts': [
@@ -59,7 +57,7 @@ setup(
         ]
     },
     provides=['ezdxf'],
-    tests_requires=['pytest'],
+    tests_require=['pytest'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
     long_description=read('README.rst')+read('NEWS.rst', until='Version 0.7.6'),
@@ -69,7 +67,6 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: Implementation :: CPython",

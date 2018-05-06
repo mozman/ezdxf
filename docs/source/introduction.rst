@@ -35,16 +35,18 @@ What ezdxf is NOT
 Supported Python Versions
 -------------------------
 
-*ezdxf* requires at least Python 2.7 and it's Python 3 compatible. I run unit tests with the latest stable
-CPython 3 version and the latest stable release of pypy during development. *ezdxf* is written in pure Python
-and requires only *pyparser* as additional library beside the Python Standard Library, hence it should run with
-IronPython and Jython also. *pytest* is required to run the provided unit and integration tests. Data to run the
-stress and audit test can not be provided, because I don't have the publishing rights for this DXF files.
+*ezdxf* requires at least Python 3.6. Python 2 support will be dropped in the near future, because Python 2 support get
+more and more annoying. I run unit tests with the latest stable CPython 3 version and the latest stable release of pypy
+during development.
+
+*ezdxf* is written in pure Python and requires only *pyparser* as additional library beside the Python Standard Library.
+*pytest* is required to run the provided unit and integration tests. Data to run the stress and audit test can not be
+provided, because I don't have the rights for publishing this DXF files.
 
 Supported Operating Systems
 ---------------------------
 
-*ezdxf* is OS independent and runs on all platforms which provide an appropriate Python interpreter (>=2.7).
+*ezdxf* is OS independent and runs on all platforms which provide an appropriate Python interpreter (>=3.6).
 
 Supported DXF Versions
 ----------------------
