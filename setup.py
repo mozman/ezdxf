@@ -33,6 +33,8 @@ setup(
     url='https://ezdxf.mozman.at',
     download_url='https://pypi.org/project/ezdxf/',
     author_email=AUTHOR_EMAIL,
+    # for v0.9.0 set 'universal = 0' in setup.cfg
+    python_requires='>=2.7',
     packages=['ezdxf',
               'ezdxf.legacy',
               'ezdxf.modern',
