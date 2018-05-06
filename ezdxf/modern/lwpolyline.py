@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
 from ..lldxf.types import DXFTag, DXFVertex
-from ..lldxf.attributes import DXFCallback
 from ..lldxf.packedtags import VertexArray, replace_tags
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
@@ -37,7 +36,7 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
     'thickness': DXFAttr(39, default=0.0),
     'flags': DXFAttr(70, default=0),
     'const_width': DXFAttr(43, default=0.0),
-    'count': DXFCallback(getter='__len__'),  # LWPolyline.__len__()
+    'count': DXFAttr(90, xtype='Callback', getter='__len__'),
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
 

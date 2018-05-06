@@ -140,7 +140,7 @@ AcDbPoint
 0.0
 """
 point_subclass = DefSubclass('AcDbPoint', {
-    'location': DXFAttr(10, 'Point2D/3D'),
+    'location': DXFAttr(10, xtype='Point2D/3D'),
     'thickness': DXFAttr(39, None),
     'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
 })
