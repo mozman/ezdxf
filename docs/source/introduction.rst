@@ -35,7 +35,7 @@ What ezdxf is NOT
 Supported Python Versions
 -------------------------
 
-*ezdxf* requires at least Python 3.6. Python 2 support will be dropped in the near future, because Python 2 support get
+*ezdxf* requires at least Python 3.6. Python 2 support will be dropped in *ezdxf* v0.9.0, because Python 2 support get
 more and more annoying. I run unit tests with the latest stable CPython 3 version and the latest stable release of pypy
 during development.
 

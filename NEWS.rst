@@ -5,7 +5,7 @@ News
 Version 0.8.9 - dev
 
     - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
-    - IMPORTANT: Python 2 support will be dropped in the near future, because Python 2 support get more and more annoying.
+    - IMPORTANT: Python 2 support will be dropped in ezdxf v0.9.0, because Python 2 support get more and more annoying.
     - tox does not succeed with pypy 2.7, package_data config in setup.py fails in pypy 2.7
     - CHANGE: refactoring of internal tag representation for smaller memory footprint, but with some speed penalty
     - NEW: packed data for more memory efficient data storage for some entities
