@@ -1,10 +1,8 @@
-# Purpose: classified tags
 # Created: 30.04.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
+from .types import tuples_to_tags
 from .tags import Tags,  DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .const import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
@@ -185,7 +183,7 @@ class ExtendedTags(object):
 
     def set_xdata(self, appid, tags):
         xdata = self.get_xdata(appid)
-        xdata[1:] = (DXFTag(t[0], t[1]) for t in tags)
+        xdata[1:] = tuples_to_tags(tags)
 
     def new_xdata(self, appid, tags=None):
         """
@@ -200,7 +198,7 @@ class ExtendedTags(object):
         """
         xtags = Tags([DXFTag(XDATA_MARKER, appid)])
         if tags is not None:
-            xtags.extend(DXFTag(t[0], t[1]) for t in tags)
+            xtags.extend(tuples_to_tags(tags))
         self.xdata.append(xtags)
         return xtags
 
@@ -226,7 +224,7 @@ class ExtendedTags(object):
 
     def set_app_data_content(self, appid, tags):
         app_data = self.get_app_data(appid)
-        app_data[1:-1] = tags
+        app_data[1:-1] = tuples_to_tags(tags)
 
     def new_app_data(self, appid, tags=None, subclass_name=None):
         """
@@ -248,7 +246,7 @@ class ExtendedTags(object):
             DXFTag(APP_DATA_MARKER, '}'),
         ])
         if tags is not None:
-            app_tags[1:1] = tags
+            app_tags[1:1] = tuples_to_tags(tags)
 
         if subclass_name is None:
             subclass = self.noclass

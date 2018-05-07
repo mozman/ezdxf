@@ -35,7 +35,6 @@ class DXFTag(object):
     def __repr__(self):
         return "DXFTag{}".format(str(self))
 
-
     @property
     def value(self):
         return self._value
@@ -108,6 +107,17 @@ class DXFBinaryTag(DXFTag):
         return cls(code, encode_hex_code_string_to_bytes(value))
 
 
+# TODO: test tuples_to_tags()
+def tuples_to_tags(iterable):
+    for code, value in iterable:
+        if code in POINT_CODES:
+            yield DXFVertex(code, value)
+        elif code in BINARAY_DATA:
+            yield DXFBinaryTag.from_string(code, value)
+        else:
+            yield DXFTag(code, value)
+
+
 def _build_type_table(types):
     table = {}
     for caster, codes in types:
@@ -162,5 +172,4 @@ def tag_type(code):
 
 def strtag(tag):
     return TAG_STRING_FORMAT % tuple(tag)
-
 
