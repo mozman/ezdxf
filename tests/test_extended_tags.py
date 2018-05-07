@@ -296,40 +296,40 @@ def test_key_error(xtags3):
 
 
 def test_skip_empty_subclass(xtags3):
-    xtags3.subclasses[1] = Tags()
+    xtags3.subclasses[1] = Tags()  # create empty subclass
     subclass2 = xtags3.get_subclass('AcDbText')
     assert (100, 'AcDbText') == subclass2[0]
 
 
 SPECIALCASE_TEXT = """  0
 TEXT
-  5
+5
 8C9
 330
 6D
 100
 AcDbEntity
-  8
+8
 0
 100
 AcDbText
- 10
+10
 4.30
- 20
+20
 1.82
- 30
+30
 0.0
- 40
+40
 0.125
-  1
+1
 Title:
- 41
+41
 0.85
-  7
+7
 ARIALNARROW
 100
 AcDbText
- 73
+73
 2
 """
 

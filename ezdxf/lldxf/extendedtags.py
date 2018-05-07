@@ -51,7 +51,7 @@ class ExtendedTags(object):
     clone = __copy__
 
     def __getitem__(self, index):
-        return self.noclass[0]
+        return self.noclass[index]
 
     @property
     def noclass(self):
@@ -78,6 +78,13 @@ class ExtendedTags(object):
             SUBCLASSMARKER or XDATACODE.
 
             """
+            # All subclasses begin with (100, subclass name)
+            # EXCEPT DIMASSOC has one subclass starting with: (1, AcDbOsnapPointRef). Well done, Autodesk!
+            # This special subclass is ignored by ezdxf, content is included in the preceding subclass: (100, AcDbDimAssoc)
+            #
+            # TEXT contains 2x the (100, AcDbText). Also well done, Autodesk! Therefor it is not possible to use an
+            # (ordered) dict where subclass name is key, but usual use case is access by index.
+
             data = Tags() if starttag is None else Tags([starttag])
             try:
                 while True:
@@ -146,21 +153,25 @@ class ExtendedTags(object):
         for subclass in self.subclasses:
             for tag in subclass:
                 if tag.code == APP_DATA_MARKER and isinstance(tag.value, int):
+                    # PY3: yield from self.appdata[tag.value]
                     for subtag in self.appdata[tag.value]:
                         yield subtag
                 else:
                     yield tag
 
         for xdata in self.xdata:
+            # PY3: yield from chain.from_iterable(self.xdata)
             for tag in xdata:
                 yield tag
 
     def get_subclass(self, name, pos=0):
-        getpos = 0
-        for subclass in self.subclasses:
-            if len(subclass) and subclass[0].value == name and getpos >= pos:
-                return subclass
-            getpos += 1
+        for index, subclass in enumerate(self.subclasses):
+            try:
+                if (index >= pos) and (subclass[0].value == name):
+                    return subclass
+            except IndexError:
+                pass  # subclass[0]: ignore empty subclasses
+
         raise DXFKeyError("Subclass '%s' does not exist." % name)
 
     def has_xdata(self, appid):
