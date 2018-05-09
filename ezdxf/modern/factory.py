@@ -47,6 +47,7 @@ from .field import Field
 from .layer_filter import LayerFilter
 from .sortentstable import SortEntitiesTable
 from .dimassoc import DimAssoc
+from .vba_project import VBAProject
 
 from . import dxfobjects
 from . import dxfdict
@@ -91,6 +92,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'LAYER_FILTER': LayerFilter,
     'SORTENTSTABLE': SortEntitiesTable,
     'DIMASSOC': DimAssoc,
+    'VBA_PROJECT': VBAProject,
     # DXF Table Entries
     'LAYER': tableentries.Layer,
     'STYLE': tableentries.Style,
