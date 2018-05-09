@@ -61,7 +61,7 @@ Version 0.8.9 - dev
         - SUN
         - SUNSTUDY (todo)
         - TABLESTYLE (incomplete)
-        - VBA_PROJECT (untested, no DXF files with embedded VBA available)
+        - VBA_PROJECT (no real world DXF files with embedded VBA for testing available)
         - VISUALSTYLE (todo)
         - WIPEOUTVARIABLES
 
