@@ -2,7 +2,9 @@
 # License: MIT License
 from __future__ import unicode_literals
 from collections import namedtuple
-from .const import DXFAttributeError
+from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
+from .types import dxftag, DXFVertex
+
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
 
@@ -47,7 +49,7 @@ class DXFAttr(object):
         self.getter = getter  # DXF entity getter method name for callback attributes
         self.setter = setter  # DXF entity setter method name for callback attributes
 
-    def get_value(self, entity):
+    def get_callback_value(self, entity):
         try:
             return getattr(entity, self.getter)()
         except AttributeError:
@@ -55,13 +57,94 @@ class DXFAttr(object):
         except TypeError:  # None
             DXFAttributeError('DXF attribute {} has no getter.'.format(self.name))
 
-    def set_value(self, entity, value):
+    def set_callback_value(self, entity, value):
         try:
             getattr(entity, self.setter)(value)
         except AttributeError:
             raise DXFAttributeError('DXF attribute {}: invalid setter {}.'.format(self.name, self.setter))
         except TypeError:  # None
             raise DXFAttributeError('DXF attribute {} has no setter.'.format(self.name))
+
+    def get_attrib(self, entity, key, default=DXFValueError):
+        if self.xtype == 'Callback':
+            return self.get_callback_value(entity)
+        try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
+            return self._get_dxf_attrib(entity.tags)
+        except DXFValueError:
+            if default is DXFValueError:
+                # no DXF default values if DXF version is incorrect
+                if self.dxfversion is not None and entity.drawing.dxfversion < self.dxfversion:
+                    msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
+                    raise DXFValueError(msg.format(key, entity.drawing.dxfversion, self.dxfversion))
+                result = self.default  # default value defined by DXF specs
+                if result is not None:
+                    return result
+                else:
+                    raise DXFValueError("DXFAttrib '%s' does not exist." % key)
+            else:
+                return default
+
+    def _get_dxf_attrib(self, tags):
+        subclass_tags = self._get_dxf_attrib_subclass_tags(tags, self.subclass)
+        if self.xtype is not None:
+            return self._get_extented_type(subclass_tags)
+        else:
+            return subclass_tags.get_first_value(self.code)
+
+    def _get_extented_type(self, tags):
+        value = tags.get_first_value(self.code)
+        if len(value) == 3:
+            if self.xtype == 'Point2D':
+                raise DXFStructureError("expected 2D point but found 3D point")
+        elif self.xtype == 'Point3D':  # len(value) == 2
+            raise DXFStructureError("expected 3D point but found 2D point")
+        return value
+
+    def _get_dxf_attrib_subclass_tags(self, tags, subclass_key):
+        try:  # fast access subclass by index as int
+            # no subclass is subclass index 0
+            return tags.subclasses[subclass_key]
+        except IndexError:
+            raise DXFInternalEzdxfError('Subclass index error in {entity} subclass={index}.'.format(
+                entity=self.__str__(),
+                index=subclass_key,
+            ))
+        except TypeError:  # slow access subclass by name as string
+            # raises DXFKeyError if subclass does not exist
+            return tags.get_subclass(subclass_key)
+
+    def set_attrib(self, entity, key, value):
+        if self.dxfversion is not None:
+            if entity.drawing.dxfversion < self.dxfversion:
+                msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
+                raise DXFAttributeError(msg.format(key, entity.drawing.dxfversion, self.dxfversion))
+
+        if self.xtype == 'Callback':
+            self.set_callback_value(entity, value)
+            return
+
+        subclass_tags = self._get_dxf_attrib_subclass_tags(entity.tags, self.subclass)
+        if self.xtype is not None:
+            self._set_extended_type(subclass_tags, value)
+        else:
+            subclass_tags.set_first(dxftag(self.code, value))
+
+    def _set_extended_type(self, tags, value):
+        value = tuple(value)
+        vlen = len(value)
+        if vlen == 3:
+            if self.xtype == 'Point2D':
+                raise DXFValueError('2 axis required')
+        elif vlen == 2:
+            if self.xtype == 'Point3D':
+                raise DXFValueError('3 axis required')
+        else:
+            raise DXFValueError('2 or 3 axis required')
+        tags.set_first(DXFVertex(self.code, value))
+
+    def del_attrib(self, entity):
+        subclass_tags = self._get_dxf_attrib_subclass_tags(entity.tags, self.subclass)
+        subclass_tags.remove_tags(codes=(self.code,))
 
 
 class DXFAttributes(object):

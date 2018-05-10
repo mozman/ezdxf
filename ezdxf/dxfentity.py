@@ -173,6 +173,24 @@ class DXFEntity(object):
     def dxftype(self):
         return self.tags.noclass[0].value
 
+    def _get_dxfattr_definition(self, key):
+        try:
+            return self.DXFATTRIBS[key]
+        except KeyError:
+            raise DXFAttributeError(key)
+
+    def get_dxf_attrib(self, key, default=DXFValueError):
+        dxfattr = self._get_dxfattr_definition(key)
+        return dxfattr.get_attrib(self, key, default)
+
+    def set_dxf_attrib(self, key, value):
+        dxfattr = self._get_dxfattr_definition(key)
+        dxfattr.set_attrib(self, key, value)
+
+    def del_dxf_attrib(self, key):
+        dxfattr = self._get_dxfattr_definition(key)
+        dxfattr.del_attrib(self)
+
     def supports_dxf_attrib(self, key):
         """
         Returns True if DXF attribute key is supported else False. Does not grant that attribute key really exists.
@@ -181,17 +199,9 @@ class DXFEntity(object):
         dxfattr = self.DXFATTRIBS.get(key, None)
         if dxfattr is None:
             return False
-        if dxfattr.dxfversion is None or self.drawing is None:
+        if dxfattr.dxfversion is None:
             return True
         return self.drawing.dxfversion >= dxfattr.dxfversion
-
-    def valid_dxf_attrib_names(self):
-        """
-        Returns a list of supported DXF attribute names.
-
-        """
-        is_dxfversion = None if self.drawing is None else self.drawing.dxfversion
-        return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or (attrib.dxfversion <= is_dxfversion)]
 
     def dxf_attrib_exists(self, key):
         """
@@ -201,33 +211,12 @@ class DXFEntity(object):
         # attributes with default values don't raise an exception!
         return self.get_dxf_attrib(key, default=None) is not None
 
-    def _get_dxfattr_definition(self, key):
-        try:
-            return self.DXFATTRIBS[key]
-        except KeyError:
-            raise DXFAttributeError(key)
+    def valid_dxf_attrib_names(self):
+        """
+        Returns a list of supported DXF attribute names.
 
-    def get_dxf_attrib(self, key, default=DXFValueError):
-        dxfattr = self._get_dxfattr_definition(key)
-        if dxfattr.xtype == 'Callback':
-            return dxfattr.get_value(self)
-        try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
-            return self._get_dxf_attrib(dxfattr)
-        except DXFValueError:
-            if default is DXFValueError:
-                # no DXF default values if DXF version is incorrect
-                if dxfattr.dxfversion is not None and \
-                        self.drawing is not None and \
-                        self.drawing.dxfversion < dxfattr.dxfversion:
-                    msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
-                    raise DXFValueError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
-                result = dxfattr.default  # default value defined by DXF specs
-                if result is not None:
-                    return result
-                else:
-                    raise DXFValueError("DXFAttrib '%s' does not exist." % key)
-            else:
-                return default
+        """
+        return [key for key, attrib in self.DXFATTRIBS.items() if attrib.dxfversion is None or (attrib.dxfversion <= self.drawing.dxfversion)]
 
     def get_dxf_default_value(self, key):
         """
@@ -236,88 +225,12 @@ class DXFEntity(object):
         """
         return self._get_dxfattr_definition(key).default
 
-    def _get_dxf_attrib(self, dxfattr):
-        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
-        if dxfattr.xtype is not None:
-            return self._get_extented_type(subclass_tags, dxfattr.code, dxfattr.xtype)
-        else:
-            return subclass_tags.get_first_value(dxfattr.code)
-
-    def _get_dxf_attrib_subclass_tags(self, subclass_key):
-        try:  # fast access subclass by index as int
-            # no subclass is subclass index 0
-            return self.tags.subclasses[subclass_key]
-        except IndexError:
-            raise DXFInternalEzdxfError('Subclass index error in {entity} subclass={index}.'.format(
-                entity=self.__str__(),
-                index=subclass_key,
-            ))
-        except TypeError:  # slow access subclass by name as string
-            # raises DXFKeyError if subclass does not exist
-            return self.tags.get_subclass(subclass_key)
-
-    @staticmethod
-    def _get_extented_type(tags, code, xtype):
-        value = tags.get_first_value(code)
-        if len(value) == 3:
-            if xtype == 'Point2D':
-                raise DXFStructureError("expected 2D point but found 3D point")
-        elif xtype == 'Point3D':  # len(value) == 2
-            raise DXFStructureError("expected 3D point but found 2D point")
-        return value
-
-    @staticmethod
-    def _set_extended_type(tags, code, xtype, value):
-        value = tuple(value)
-        vlen = len(value)
-        if vlen == 3:
-            if xtype == 'Point2D':
-                raise DXFValueError('2 axis required')
-        elif vlen == 2:
-            if xtype == 'Point3D':
-                raise DXFValueError('3 axis required')
-        else:
-            raise DXFValueError('2 or 3 axis required')
-        tags.set_first(DXFVertex(code, value))
-
     def has_dxf_default_value(self, key):
         """
         Returns True if the DXF attribute key has a DXF standard default value.
 
         """
         return self._get_dxfattr_definition(key).default is not None
-
-    def set_dxf_attrib(self, key, value):
-        dxfattr = self._get_dxfattr_definition(key)
-
-        if dxfattr.dxfversion is not None and self.drawing is not None:
-            if self.drawing.dxfversion < dxfattr.dxfversion:
-                msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
-                raise DXFAttributeError(msg.format(key, self.drawing.dxfversion, dxfattr.dxfversion))
-
-        if dxfattr.xtype == 'Callback':
-            dxfattr.set_value(self, value)
-            return
-
-        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
-        if dxfattr.xtype is not None:
-            self._set_extended_type(subclass_tags, dxfattr.code, dxfattr.xtype, value)
-        else:
-            subclass_tags.set_first(DXFTag(dxfattr.code, cast_tag_value(dxfattr.code, value)))
-
-    def del_dxf_attrib(self, key):
-        dxfattr = self._get_dxfattr_definition(key)
-        self._del_dxf_attrib(dxfattr)
-
-    def _del_dxf_attrib(self, dxfattr):
-        def point_codes(base_code):
-            return base_code, base_code + 10, base_code + 20
-
-        subclass_tags = self._get_dxf_attrib_subclass_tags(dxfattr.subclass)
-        if dxfattr.xtype is not None:
-            subclass_tags.remove_tags(codes=point_codes(dxfattr.code))
-        else:
-            subclass_tags.remove_tags(codes=(dxfattr.code,))
 
     def dxfattribs(self):
         """

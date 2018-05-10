@@ -107,6 +107,25 @@ class DXFBinaryTag(DXFTag):
         return cls(code, encode_hex_code_string_to_bytes(value))
 
 
+def dxftag(code, value):
+    """
+    DXF tag factory function.
+
+    Args:
+        code: group code
+        value: tag value
+
+    Returns: DXFTag() or inherited
+
+    """
+    if code in BINARAY_DATA:
+        return DXFBinaryTag(code, value)
+    elif code in POINT_CODES:
+        return DXFVertex(code, value)
+    else:
+        return DXFTag(code, cast_tag_value(code, value))
+
+
 # TODO: test tuples_to_tags()
 def tuples_to_tags(iterable):
     for code, value in iterable:
