@@ -64,7 +64,7 @@ NONE_TAG = DXFTag(None, None)
 
 
 class DXFVertex(DXFTag):
-    __slots__ = ('code', '_value')
+    __slots__ = ()
 
     def __init__(self, code, value):
         super(DXFVertex, self).__init__(code, array('d', value))
@@ -88,7 +88,7 @@ class DXFVertex(DXFTag):
 
 
 class DXFBinaryTag(DXFTag):
-    __slots__ = ('code', '_value')
+    __slots__ = ()
 
     def __str__(self):
         return "({}, {})".format(self.code, self.tostring())

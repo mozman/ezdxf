@@ -8,6 +8,8 @@ from .polyfacebuilder import PolyfaceBuilder
 
 
 class PolymeshMixin(object):
+    __slots__ = ()
+
     def set_mesh_vertex(self, pos, point, dxfattribs=None):
         """
         Set location and DXF attributes of a single mesh vertex.
@@ -51,6 +53,7 @@ class PolymeshMixin(object):
 
 
 class MeshVertexCache(object):
+    __slots__ = ('vertices', )
     """
     Cache mesh vertices in a dict, keys are 0-based (row, col)-tuples.
 
@@ -89,6 +92,7 @@ class MeshVertexCache(object):
 
 
 class PolyfaceMixin(object):
+    __slots__ = ()
     """
     Order of mesh_vertices and face_records is important (DXF R2010):
 
@@ -194,6 +198,7 @@ class PolyfaceMixin(object):
 
 
 class Face(object):
+    __slots__ = ('vertices', 'face_record', 'indices')
     """
     Represents a single face of a polyface structure.
 

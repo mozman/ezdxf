@@ -7,6 +7,7 @@ from ..lldxf.const import VERTEXNAMES
 
 
 class QuadrilateralMixin(object):
+    __slots__ = ()
     def __getitem__(self, num):
         return self.get_dxf_attrib(VERTEXNAMES[num])
 
@@ -48,6 +49,7 @@ TRACE
 
 
 class Trace(GraphicEntity, QuadrilateralMixin):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = make_attribs({
         'vtx0': DXFAttr(10, xtype='Point2D/3D'),
@@ -58,10 +60,12 @@ class Trace(GraphicEntity, QuadrilateralMixin):
 
 
 class Solid(Trace):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL.replace('TRACE', 'SOLID'))
 
 
 class Face(Trace):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL.replace('TRACE', '3DFACE'))
     DXFATTRIBS = make_attribs({
         'vtx0': DXFAttr(10, xtype='Point3D'),

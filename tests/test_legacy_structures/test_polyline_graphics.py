@@ -24,6 +24,7 @@ def test_create_polyline2D(modelspace):
     assert (0., 0.) == polyline[0].dxf.location
     assert (1., 1.) == polyline[1].dxf.location
     assert 'AcDb2dPolyline' == polyline.get_mode()
+    assert hasattr(polyline, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_polyline3D(modelspace):
@@ -32,6 +33,7 @@ def test_create_polyline3D(modelspace):
     assert (4., 5., 6.) == polyline[1].dxf.location
     assert VTX_3D_POLYLINE_VERTEX == polyline[0].dxf.flags
     assert 'AcDb3dPolyline' == polyline.get_mode()
+    assert hasattr(polyline[0], '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_polyline3d_vertex_layer(modelspace):
@@ -39,6 +41,7 @@ def test_polyline3d_vertex_layer(modelspace):
     polyline = modelspace.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
     for vertex in polyline.vertices():
         assert 'polyline_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
+
 
 
 def test_polyline3d_change_polyline_layer(modelspace):
@@ -208,7 +211,3 @@ def cube_faces():
         [p1, p3, p4, p2],
         [p2, p6, p8, p4],
     ]
-
-
-if __name__ == '__main__':
-    unittest.main()

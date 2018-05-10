@@ -23,6 +23,7 @@ def make_attribs(additional=None):
 
 
 class GraphicEntity(DXFEntity):
+    __slots__ = ()
     """ Default graphic entity wrapper, allows access to following dxf attributes:
 
      - handle
@@ -64,6 +65,7 @@ LINE
 
 
 class Line(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LINE_TPL)
     DXFATTRIBS = make_attribs({
         'start': DXFAttr(10, xtype='Point2D/3D'),
@@ -87,6 +89,7 @@ POINT
 
 
 class Point(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_POINT_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, xtype='Point2D/3D'),
@@ -111,6 +114,7 @@ CIRCLE
 
 
 class Circle(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, xtype='Point2D/3D'),
@@ -140,6 +144,7 @@ ARC
 
 
 class Arc(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ARC_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, xtype='Point2D/3D'),
@@ -150,6 +155,7 @@ class Arc(GraphicEntity):
 
 
 class SeqEnd(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text("  0\nSEQEND\n  5\n0\n")
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -184,6 +190,7 @@ NAME
 
 # SHAPE is not tested with real world DXF drawings!
 class Shape(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SHAPE_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, xtype='Point2D/3D'),

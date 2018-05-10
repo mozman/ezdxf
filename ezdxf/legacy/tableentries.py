@@ -28,6 +28,7 @@ CONTINUOUS
 
 # noinspection PyAugmentAssignment,PyUnresolvedReferences
 class Layer(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LAYERTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -109,6 +110,7 @@ arial.ttf
 
 
 class Style(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_STYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -140,6 +142,7 @@ LTYPEDESCRIPTION
 
 
 class Linetype(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -248,6 +251,7 @@ VPORTNAME
 
 
 class VPort(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -311,6 +315,7 @@ UCSNAME
 
 
 class UCS(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -341,6 +346,7 @@ APPNAME
 
 
 class AppID(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -391,6 +397,7 @@ VIEWNAME
 
 
 class View(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(5),
@@ -499,6 +506,7 @@ DIMSTYLENAME
 
 
 class DimStyle(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
         'handle': DXFAttr(105),

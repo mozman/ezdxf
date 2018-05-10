@@ -101,6 +101,7 @@ MVIEW
 
 
 class Viewport(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VPORT_TPL)
     DXFATTRIBS = make_attribs({
         'center': DXFAttr(10, xtype='Point2D/3D'),  # center point of entity in paper space coordinates)

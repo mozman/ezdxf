@@ -25,6 +25,8 @@ def test_drawing_attribute(dwg, modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
     assert dwg is line.drawing
 
+    assert hasattr(line, '__dict__') is False, "Invalid usage of __slots__"
+
 
 def test_dxffactory_property(dwg, modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
@@ -144,14 +146,16 @@ def test_create_line(modelspace):
 
 
 def test_create_point(modelspace):
-    line = modelspace.add_point((1, 2))
-    assert line.dxf.location == (1, 2)
+    point = modelspace.add_point((1, 2))
+    assert point.dxf.location == (1, 2)
+    assert hasattr(point, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_circle(modelspace):
     circle = modelspace.add_circle((3, 3), 5)
     assert circle.dxf.center == (3., 3.)
     assert circle.dxf.radius == 5.
+    assert hasattr(circle, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_arc(modelspace):
@@ -160,6 +164,7 @@ def test_create_arc(modelspace):
     assert arc.dxf.radius == 5.
     assert arc.dxf.start_angle == 30.
     assert arc.dxf.end_angle == 60.
+    assert hasattr(arc, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_trace(modelspace):
@@ -168,7 +173,7 @@ def test_create_trace(modelspace):
     assert trace.dxf.vtx1 == (1, 0)
     assert trace[2] == (1, 1)
     assert trace.dxf.vtx3 == (0, 1)
-
+    assert hasattr(trace, '__dict__') is False, "Invalid usage of __slots__"
 
 def test_create_solid(modelspace):
     trace = modelspace.add_solid([(0, 0), (1, 0), (1, 1)])
@@ -189,6 +194,7 @@ def test_create_3dface(modelspace):
 def test_create_text(modelspace):
     text = modelspace.add_text('text')
     assert text.dxf.text == 'text'
+    assert hasattr(text, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_text_set_alignment(modelspace):
@@ -241,6 +247,7 @@ def test_create_shape(modelspace):
     assert shape.dxf.rotation == 0
     assert shape.dxf.xscale == 1
     assert shape.dxf.oblique == 0
+
 
 @pytest.fixture
 def blockref(modelspace):

@@ -29,6 +29,7 @@ BLOCKNAME
 
 
 class Block(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = make_attribs({
         'name': DXFAttr(2),
@@ -62,5 +63,6 @@ class Block(GraphicEntity):
 
 
 class EndBlk(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text("  0\nENDBLK\n  5\n0\n")
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {'handle': DXFAttr(5)}))

@@ -68,6 +68,7 @@ DIMSTYLE
 
 
 class Dimension(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMENSION_TPL)
     DXFATTRIBS = make_attribs({
         'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry

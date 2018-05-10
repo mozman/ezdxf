@@ -50,6 +50,7 @@ class DXFNamespace(object):
 
 
 class DXFEntity(object):
+    __slots__ = ('tags', 'dxf', 'drawing')
     TEMPLATE = None
     CLASS = None
     DXFATTRIBS = {}
@@ -63,7 +64,7 @@ class DXFEntity(object):
         return "{}(#{})".format(self.dxftype(), self.dxf.handle)
 
     def __repr__(self):
-        return str(self.__class__) + " " + self.__str__()
+        return str(self.__class__) + " " + str(self)
 
     @property
     def dxffactory(self):

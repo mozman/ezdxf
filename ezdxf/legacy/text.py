@@ -46,6 +46,7 @@ STANDARD
 
 
 class Text(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, xtype='Point2D/3D'),

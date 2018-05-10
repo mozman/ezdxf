@@ -54,6 +54,7 @@ STANDARD
 
 
 class Attrib(Text):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, xtype='Point2D/3D'),
@@ -178,6 +179,7 @@ STANDARD
 
 
 class Attdef(Attrib):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = make_attribs({
         'insert': DXFAttr(10, xtype='Point2D/3D'),

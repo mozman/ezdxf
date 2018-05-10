@@ -34,6 +34,7 @@ BLOCKNAME
 
 
 class Insert(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = make_attribs({
         'attribs_follow': DXFAttr(66, default=0),

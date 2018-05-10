@@ -29,6 +29,7 @@ POLYLINE
 
 
 class Polyline(GraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = make_attribs({
         'elevation': DXFAttr(10, xtype='Point2D/3D'),
@@ -290,6 +291,7 @@ VERTEX
 
 
 class Vertex(GraphicEntity, QuadrilateralMixin):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, xtype='Point2D/3D'),
