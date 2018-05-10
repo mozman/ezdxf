@@ -68,6 +68,7 @@ light_subclass = DefSubclass('AcDbLight', {
 
 class Light(ModernGraphicEntity):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LIGHT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, light_subclass)
 

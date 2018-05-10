@@ -84,6 +84,7 @@ PATTERN_DEFINITION_LINE_CODES = frozenset((53, 43, 44, 45, 46, 79, 49))
 
 
 class Hatch(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_HATCH_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, hatch_subclass)
 

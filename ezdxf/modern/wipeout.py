@@ -86,6 +86,7 @@ wipeout_subclass = image_subclass._replace(name='AcDbWipeout')
 
 class Wipeout(ModernGraphicEntity):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_WIPEOUT_TPL)
     CLASS = ExtendedTags.from_text(_WIPEOUT_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, wipeout_subclass)

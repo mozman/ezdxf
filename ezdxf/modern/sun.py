@@ -74,6 +74,7 @@ sun_subclass = DefSubclass('AcDbSun', {
 
 class Sun(DXFObject):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SUN_TPL)
     CLASS = ExtendedTags.from_text(_SUN_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, sun_subclass)

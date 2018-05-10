@@ -14,7 +14,6 @@ from ..lldxf import loader
 
 
 class KnotTags(TagArray):
-    __slots__ = ('value', )
     code = -40  # compatible with DXFTag.code
     VALUE_CODE = 40
     DTYPE = 'f'
@@ -28,14 +27,12 @@ class KnotTags(TagArray):
 
 
 class WeightTags(TagArray):
-    __slots__ = ('value', )
     code = -41  # compatible with DXFTag.code
     VALUE_CODE = 41
     DTYPE = 'f'
 
 
 class ControlPoints(VertexArray):
-    __slots__ = ('value', )
     code = -10  # compatible with DXFTag.code
     VERTEX_CODE = 10
     VERTEX_SIZE = 3
@@ -49,7 +46,6 @@ class ControlPoints(VertexArray):
 
 
 class FitPoints(VertexArray):
-    __slots__ = ('value', )
     code = -11  # compatible with DXFTag.code
     VERTEX_CODE = 11
     VERTEX_SIZE = 3
@@ -121,6 +117,7 @@ spline_subclass = DefSubclass('AcDbSpline', {
 
 
 class Spline(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = tag_processor(ExtendedTags.from_text(_SPLINE_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass)
     CLOSED = 1  # closed b-spline

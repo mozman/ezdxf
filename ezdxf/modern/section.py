@@ -57,6 +57,7 @@ section_subclass = DefSubclass('AcDbSection', {
 
 class Section(ModernGraphicEntity):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SECTION_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, section_subclass)
 

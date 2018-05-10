@@ -87,6 +87,7 @@ attdef_subclass = (
 
 
 class Attdef(attrib.Attdef, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attdef_subclass)
 
@@ -167,6 +168,7 @@ attrib_subclass = (
 
 
 class Attrib(attrib.Attrib, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *attrib_subclass)
 

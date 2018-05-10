@@ -21,6 +21,8 @@ proxy_entity_subclass = DefSubclass('AcDbProxyEntity', {
 
 
 class ProxyMixin(object):
+    __slots__ = ()
+
     def get_proxy_graphic(self):
         # TODO: get_proxy_graphic()
         raise NotImplementedError()
@@ -35,8 +37,10 @@ class ProxyMixin(object):
 
 
 class ProxyEntity(ModernGraphicEntity, ProxyMixin):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, proxy_entity_subclass)
 
 
 class ProxyObject(DXFObject, ProxyMixin):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, proxy_entity_subclass)

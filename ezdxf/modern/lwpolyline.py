@@ -112,6 +112,7 @@ def tag_processor(tags):
 
 
 class LWPolyline(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = tag_processor(ExtendedTags.from_text(_LWPOLYLINE_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
     CLOSED = 1

@@ -37,6 +37,7 @@ def tag_processor(tags):
 
 
 class LayerFilter(DXFObject):
+    __slots__ = ('_cached_layers', )
     # Requires AC1015/R2000
     TEMPLATE = tag_processor(ExtendedTags.from_text(_LAYER_FILTER_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbFilter', {}), DefSubclass('AcDbLayerFilter', {}),)

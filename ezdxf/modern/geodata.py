@@ -98,6 +98,7 @@ class GeoData(DXFEntity):
     # BLOCK_RECORD (e.g. Model Space) has an (102, ACAD_XDICTIONARY) with an entry ACAD_GEOGRAPHICDATA which points to
     # a GEODATA entity, GEODATA ACAD_REACTORS and owner points to this ACAD_XDICTIONARY, block_record points
     # to BLOCK_RECORD entry
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_GEODATA_TPL)
     CLASS = ExtendedTags.from_text(_GEODATA_CLS)
     DXFATTRIBS = DXFAttributes(

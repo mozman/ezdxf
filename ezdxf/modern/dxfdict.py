@@ -48,6 +48,7 @@ dictionary_subclass = DefSubclass('AcDbDictionary', {
 
 
 class DXFDictionary(DXFObject):
+    __slots__ = ('_cached_dict', )
     """
     AutoCAD maintains items such as mline styles and group definitions as objects in dictionaries.
     Other applications are free to create and use their own dictionaries as they see fit. The prefix "ACAD_" is reserved

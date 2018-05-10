@@ -98,6 +98,7 @@ helix_subclass = DefSubclass('AcDbHelix', {
 
 class Helix(Spline):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_HELIX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, spline_subclass, helix_subclass)
     CLASS = ExtendedTags.from_text(_HELIX_CLS)

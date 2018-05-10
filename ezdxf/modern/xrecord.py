@@ -17,6 +17,7 @@ AcDbXrecord
 
 
 class XRecord(DXFObject):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(
         none_subclass,
         DefSubclass('AcDbXrecord', {

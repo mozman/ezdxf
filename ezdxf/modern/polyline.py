@@ -51,6 +51,7 @@ polyline_subclass = DefSubclass('AcDb2dPolyline', {
 
 
 class Polyline(polyline.Polyline, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, polyline_subclass)
 
@@ -76,6 +77,7 @@ class Polyline(polyline.Polyline, ModernGraphicEntityExtension):
 
 
 class Polyface(Polyline, PolyfaceMixin):
+    __slots__ = ()
     """
     PolyFace structure:
 
@@ -98,6 +100,7 @@ class Polyface(Polyline, PolyfaceMixin):
 
 
 class Polymesh(Polyline, PolymeshMixin):
+    __slots__ = ()
     """
     PolyMesh structure:
 
@@ -164,6 +167,7 @@ EMPTY_VERTEX_SUBCLASS = Tags()
 
 
 class Vertex(polyline.Vertex, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 

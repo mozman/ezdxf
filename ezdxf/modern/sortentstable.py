@@ -63,6 +63,7 @@ class SortEntitiesTable(DXFObject):
     # 16 = Sorts for REGEN commands
     # 32 = Sorts for plotting
     # 64 = Sorts for PostScript output; obsolete
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SORT_ENTITIES_TABLE_TPL)
     CLASS = ExtendedTags.from_text(_SORT_ENTITIES_TABLE_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbSortentsTable', {

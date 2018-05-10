@@ -38,9 +38,11 @@ ray_subclass = DefSubclass('AcDbRay', {
 
 
 class Ray(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_RAY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ray_subclass)
 
 
 class XLine(Ray):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_RAY_TPL.replace('RAY', 'XLINE'))

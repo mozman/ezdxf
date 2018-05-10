@@ -48,13 +48,13 @@ AcDbFieldList
 @loader.register('FIELDLIST', legacy=False)
 def tag_processor(tags):
     subclass = tags.get_subclass('AcDbFieldList')
-    flist = PackedHandles()
-    flist.handles = [tag.value for tag in subclass[1:]]
+    flist = PackedHandles(handles=(tag.value for tag in subclass[1:]))
     replace_tags(subclass, codes=(330, ), packed_data=flist)
     return tags
 
 
 class FieldList(IDBuffer):
+    __slots__ = ()
     TEMPLATE = tag_processor(ExtendedTags.from_text(_FIELDLIST_TPL))
     CLASS = ExtendedTags.from_text(_FIELDLIST_CLS)
     DXFATTRIBS = DXFAttributes(

@@ -71,5 +71,6 @@ text_subclass = (
 
 
 class Text(text.Text, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *text_subclass)

@@ -106,6 +106,7 @@ plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
 
 
 class DXFPlotSettings(DXFObject):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, plot_settings_subclass)
 
 
@@ -240,6 +241,7 @@ Layoutname
 
 
 class DXFLayout(DXFObject):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LAYOUT_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,

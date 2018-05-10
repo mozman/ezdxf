@@ -56,6 +56,7 @@ layer_subclass = DefSubclass('AcDbLayerTableRecord', {
 
 
 class Layer(legacy.Layer):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LAYERTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, layer_subclass)
 
@@ -107,6 +108,7 @@ style_subclass = DefSubclass('AcDbTextStyleTableRecord', {
 
 
 class Style(legacy.Style):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_STYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, style_subclass)
 
@@ -137,6 +139,7 @@ linetype_subclass = DefSubclass('AcDbLinetypeTableRecord', {
 
 
 class Linetype(legacy.Linetype):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
@@ -192,6 +195,7 @@ appid_subclass = DefSubclass('AcDbRegAppTableRecord', {
 
 
 class AppID(legacy.AppID):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_APPIDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, appid_subclass)
 
@@ -367,6 +371,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
 
 
 class DimStyle(legacy.DimStyle):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
 
@@ -412,6 +417,7 @@ ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
 
 
 class UCS(legacy.UCS):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_UCSTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, ucs_subclass)
 
@@ -476,6 +482,7 @@ view_subclass = DefSubclass('AcDbViewTableRecord', {
 
 
 class View(legacy.View):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VIEWTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, view_subclass)
 
@@ -590,6 +597,7 @@ vport_subclass = DefSubclass('AcDbViewportTableRecord', {
 
 
 class VPort(legacy.VPort):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VPORTTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, vport_subclass)
 
@@ -622,5 +630,6 @@ class BlockRecord(DXFEntity):
     owner: Soft-pointer ID/handle to owner object
     layout: Hard-pointer ID/handle to associated LAYOUT object - is '0' if block definition
     """
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_BLOCKRECORDTEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, blockrec_subclass)

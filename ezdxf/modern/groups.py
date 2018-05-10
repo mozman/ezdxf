@@ -31,6 +31,7 @@ GROUP_ITEM_CODE = 340
 
 
 class DXFGroup(DXFEntity):
+    __slots__ = ()
     # groups are not allowed in block definitions
     TEMPLATE = ExtendedTags.from_text(_GROUP_TPL)
     DXFATTRIBS = DXFAttributes(

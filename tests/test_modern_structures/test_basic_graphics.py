@@ -107,12 +107,14 @@ def test_create_line(layout):
     line = layout.add_line((0, 0), (1, 1))
     assert (0., 0.) == line.dxf.start
     assert (1., 1.) == line.dxf.end
+    assert hasattr(line, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_circle(layout):
     circle = layout.add_circle((3, 3), 5)
     assert (3., 3.) == circle.dxf.center
     assert 5. == circle.dxf.radius
+    assert hasattr(circle, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_arc(layout):
@@ -121,6 +123,7 @@ def test_create_arc(layout):
     assert 5. == arc.dxf.radius
     assert 30. == arc.dxf.start_angle
     assert 60. == arc.dxf.end_angle
+    assert hasattr(arc, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_trace(layout):
@@ -129,6 +132,7 @@ def test_create_trace(layout):
     assert (1, 0) == trace.dxf.vtx1
     assert (1, 1) == trace[2]
     assert (0, 1) == trace.dxf.vtx3
+    assert hasattr(trace, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_solid(layout):
@@ -137,6 +141,7 @@ def test_create_solid(layout):
     assert (1, 0) == trace[1]
     assert (1, 1) == trace.dxf.vtx2
     assert (1, 1) == trace[3]
+    assert hasattr(trace, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_3dface(layout):
@@ -145,11 +150,13 @@ def test_create_3dface(layout):
     assert (1, 0, 0) == trace[1]
     assert (1, 1, 0) == trace.dxf.vtx2
     assert (0, 1, 0) == trace[3]
+    assert hasattr(trace, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_text(layout):
     text = layout.add_text('text')
     assert 'text' == text.dxf.text
+    assert hasattr(text, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_text_set_alignment(layout):
@@ -208,6 +215,7 @@ def test_create_ray(layout):
     ray = layout.add_ray((1, 2, 0), (1, 0, 0))
     assert (1, 2, 0) == ray.dxf.start
     assert (1, 0, 0) == ray.dxf.unit_vector
+    assert hasattr(ray, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_ray(layout):

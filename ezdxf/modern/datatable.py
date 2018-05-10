@@ -101,6 +101,7 @@ class DataTable(DXFObject):
     330         soft-pointer ID/handle
 
     """
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DATATABLE_TPL)
     CLASS = ExtendedTags.from_text(_DATATABLE_CLS)
     DXFATTRIBS = DXFAttributes(

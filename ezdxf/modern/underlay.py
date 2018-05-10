@@ -83,6 +83,7 @@ underlay_subclass = DefSubclass('AcDbUnderlayReference', {
 
 
 class PdfUnderlay(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL)
     CLASS = ExtendedTags.from_text(_PDFUNDERLAY_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, underlay_subclass)
@@ -187,6 +188,7 @@ ObjectDBX Classes
 
 
 class DwfUnderlay(PdfUnderlay):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DWF'))
     CLASS = ExtendedTags.from_text(_DWFUNDERLAY_CLS)
 
@@ -211,6 +213,7 @@ ObjectDBX Classes
 
 
 class DgnUnderlay(PdfUnderlay):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDFUNDERLAY_TPL.replace('PDF', 'DGN'))
     CLASS = ExtendedTags.from_text(_DGNUNDERLAY_CLS)
 
@@ -260,6 +263,7 @@ underlay_def_subclass = DefSubclass('AcDbUnderlayDefinition', {
 # (PDF|DWF|DGN)DEFINITION - requires entry in objects table ACAD_(PDF|DWF|DGN)DEFINITIONS,
 # ACAD_(PDF|DWF|DGN)DEFINITIONS do not exist by default
 class PdfDefinition(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL)
     CLASS = ExtendedTags.from_text(_PDF_DEF_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, underlay_def_subclass)
@@ -292,6 +296,7 @@ ObjectDBX Classes
 
 
 class DwfDefinition(PdfDefinition):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DWF'))
     CLASS = ExtendedTags.from_text(_DWF_DEF_CLS)
 
@@ -316,5 +321,6 @@ ObjectDBX Classes
 
 
 class DgnDefinition(PdfDefinition):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DGN'))
     CLASS = ExtendedTags.from_text(_DGN_DEF_CLS)

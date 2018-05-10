@@ -26,6 +26,7 @@ vba_project_subclass = DefSubclass('AcDbVbaProject', {
 
 
 class VBAProject(DXFObject):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, vba_project_subclass)
     TEMPLATE = ExtendedTags.from_text(_VBA_PROJECT_TPL)
     # CLASS = ExtendedTags.from_text(_VBA_PROJECT_CLS)

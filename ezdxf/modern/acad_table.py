@@ -187,6 +187,7 @@ table_subclass = DefSubclass('AcDbTable', {
 
 
 class ACADTable(ModernGraphicEntity):
+    __slots__ = ()
     # Requires AC1024/R2010
     TEMPLATE = ExtendedTags.from_text(_ACAD_TABLE_TPL)
     CLASS = ExtendedTags.from_text(_ACAD_TABLE_CLS)

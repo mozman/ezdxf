@@ -70,6 +70,7 @@ mtext_subclass = DefSubclass('AcDbMText', {
 
 
 class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC1021 (ACAD 2007)
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_MTEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
 

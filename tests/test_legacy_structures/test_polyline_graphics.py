@@ -43,7 +43,6 @@ def test_polyline3d_vertex_layer(modelspace):
         assert 'polyline_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
-
 def test_polyline3d_change_polyline_layer(modelspace):
     attribs = {'layer': 'polyline_layer'}
     polyline = modelspace.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)

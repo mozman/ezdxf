@@ -74,6 +74,7 @@ class DimAssoc(DXFObject):
     # DIMASSOC objects implement associative dimensions by specifying an association between a dimension object and
     # drawing geometry objects. An associative dimension is a dimension that will automatically update when the
     # associated geometry is modified.
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMASSOC_TPL)
     CLASS = ExtendedTags.from_text(_DIMASSOC_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbDimAssoc', {

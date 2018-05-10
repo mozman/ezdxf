@@ -105,6 +105,7 @@ mline_subclass = DefSubclass('AcDbMline', {
 
 class MLine(ModernGraphicEntity):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_MLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mline_subclass)
 
@@ -176,6 +177,7 @@ mline_style_subclass = DefSubclass('AcDbMlineStyle', {
 
 class MLineStyle(DXFObject):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_MLINE_STYLE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, mline_style_subclass)
 

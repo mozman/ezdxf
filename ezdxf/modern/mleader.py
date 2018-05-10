@@ -52,6 +52,7 @@ mleader_subclass = DefSubclass('AcDbMLeader', {
 
 class MLeader(ModernGraphicEntity):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_MLEADER_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mleader_subclass)
     CLASS = ExtendedTags.from_text(_MLEADER_CLS)
@@ -228,6 +229,7 @@ mleader_style_subclass = DefSubclass('AcDbMLeaderStyle', {
 
 class MLeaderStyle(DXFObject):
     # Requires AC1021/R2007
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_MLEADER_STYLE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, mleader_style_subclass)
     CLASS = ExtendedTags.from_text(_MLEADER_STYLE_CLS)

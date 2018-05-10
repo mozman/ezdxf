@@ -161,6 +161,7 @@ material_subclass = DefSubclass('AcDbMaterial', {
 
 
 class Material(DXFObject):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_MATERIAL_TPL)
     CLASS = ExtendedTags.from_text(_MATERIAL_CLS)
     DXFATTRIBS = DXFAttributes(

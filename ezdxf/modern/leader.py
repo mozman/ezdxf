@@ -81,6 +81,7 @@ leader_subclass = DefSubclass('AcDbLeader', {
 
 class Leader(ModernGraphicEntity):
     # Requires AC1015/R2000
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LEADER_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, leader_subclass)
 

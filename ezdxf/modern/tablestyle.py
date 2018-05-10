@@ -88,6 +88,7 @@ class TableStyle(DXFObject):
 
     Requires DXF version AC1021/R2007
     """
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TABLESTYLE_TPL)
     CLASS = ExtendedTags.from_text(_TABLESTYLE_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, tablestyle_subclass)

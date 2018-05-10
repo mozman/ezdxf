@@ -54,6 +54,7 @@ surface_subclass = DefSubclass('AcDbSurface', {
 
 
 class Surface(Body):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SURFACE_TPL)
     CLASS = ExtendedTags.from_text(_SURFACE_CLS)
     DXFATTRIBS = DXFAttributes(
@@ -298,6 +299,7 @@ extruded_surface_subclass = DefSubclass('AcDbExtrudedSurface', {
 
 
 class ExtrudedSurface(Surface):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_EXTRUDEDSURFACE_TPL)
     CLASS = (
         ExtendedTags.from_text(_EXTRUDEDSURFACE_CLS),
@@ -468,6 +470,7 @@ lofted_surface_subclass = DefSubclass('AcDbLoftedSurface', {
 
 
 class LoftedSurface(Surface):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LOFTEDSURFACE_TPL)
     CLASS = (
         ExtendedTags.from_text(_LOFTEDSURFACE_CLS),
@@ -628,6 +631,7 @@ revolved_surface_subclass = DefSubclass('AcDbRevolvedSurface', {
 
 
 class RevolvedSurface(Surface):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_REVOLVEDSURFACE_TPL)
     CLASS = (
         ExtendedTags.from_text(_REVOLVEDSURFACE_CLS),
@@ -904,6 +908,7 @@ swept_surface_subclass = DefSubclass('AcDbSweptSurface', {
 
 
 class SweptSurface(Surface):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SWEPTSURFACE_TPL)
     CLASS = (
         ExtendedTags.from_text(_SWEPTSURFACE_CLS),

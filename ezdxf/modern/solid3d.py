@@ -65,6 +65,7 @@ def convert_text_lines_to_tags(text_lines):
 
 
 class Body(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_BODY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass)
 
@@ -102,6 +103,7 @@ class ModelerGeometryData(object):
 
 
 class Region(Body):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_BODY_TPL.replace('BODY', 'REGION'))
 
 
@@ -127,6 +129,7 @@ AcDb3dSolid
 
 
 class Solid3d(Body):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_3DSOLID_TPL)
     DXFATTRIBS = DXFAttributes(
         none_subclass,

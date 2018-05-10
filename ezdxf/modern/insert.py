@@ -54,5 +54,6 @@ insert_subclass = DefSubclass('AcDbBlockReference', {
 
 
 class Insert(insert.Insert, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_INSERT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, insert_subclass)

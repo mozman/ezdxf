@@ -70,6 +70,7 @@ field_subclass = DefSubclass('AcDbField', {
 
 
 class Field(DXFObject):
+    __slots__ = ()
     # Requires AC1021/R2007
     TEMPLATE = ExtendedTags.from_text(_FIELD_TPL)
     CLASS = ExtendedTags.from_text(_FIELD_CLS)

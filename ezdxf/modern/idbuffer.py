@@ -73,8 +73,7 @@ class PackedHandles(PackedTags):
 @loader.register('IDBUFFER', legacy=False)
 def tag_processor(tags):
     subclass = tags.get_subclass('AcDbIdBuffer')
-    id_buffer = PackedHandles()
-    id_buffer.handles = [tag.value for tag in subclass[1:]]
+    id_buffer = PackedHandles(handles=(tag.value for tag in subclass[1:]))
     replace_tags(subclass, codes=(330, ), packed_data=id_buffer)
     return tags
 
@@ -97,6 +96,7 @@ AcDbIdBuffer
 
 
 class IDBuffer(DXFObject):
+    __slots__ = ('_cached_handles', )
     TEMPLATE = tag_processor(ExtendedTags.from_text(_IDBUFFER_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, DefSubclass('AcDbIdBuffer', {}))
 

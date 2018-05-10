@@ -56,11 +56,13 @@ trace_subclass = DefSubclass('AcDbTrace', {
 
 
 class Trace(trace.Trace, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, trace_subclass)
 
 
 class Solid(Trace):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL.replace('TRACE', 'SOLID'))
 
 
@@ -111,5 +113,6 @@ face_subclass = DefSubclass('AcDbFace', {
 
 
 class Face(trace.Face, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_3DFACE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, face_subclass)

@@ -49,5 +49,6 @@ ellipse_subclass = DefSubclass('AcDbEllipse', {
 
 
 class Ellipse(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ELLIPSE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ellipse_subclass)

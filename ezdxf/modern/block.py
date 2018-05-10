@@ -48,6 +48,7 @@ block_subclass = (
 
 
 class Block(block.Block, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_BLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *block_subclass)
 
@@ -72,6 +73,7 @@ endblock_subclass = (
 
 
 class EndBlk(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ENDBLOCK_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, *endblock_subclass)
 

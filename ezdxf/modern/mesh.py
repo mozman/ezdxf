@@ -16,7 +16,6 @@ from ..lldxf import loader
 
 
 class MeshVertexArray(VertexArray):
-    __slots__ = ('value',)
     code = -92
 
     def dxftags(self):
@@ -35,7 +34,6 @@ def create_vertex_array(tags, start_index):
 
 
 class FaceList(TagList):
-    __slots__ = ('value',)
     code = -93
 
     def __len__(self):
@@ -89,7 +87,6 @@ def create_face_list(tags, start_index):
 
 
 class EdgeArray(TagArray):
-    __slots__ = ('value',)
     code = -94
     VALUE_CODE = 90  # 32 bit integer
     DTYPE = 'L'
@@ -126,7 +123,6 @@ def create_crease_array(tags, start_index):
 
 
 class CreaseArray(TagArray):
-    __slots__ = ('value',)
     code = -95
     VALUE_CODE = 140  # double precision
     DTYPE = 'd'
@@ -269,6 +265,7 @@ mesh_subclass = DefSubclass('AcDbSubDMesh', {
 
 
 class Mesh(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = tag_processor(ExtendedTags.from_text(_MESH_TPL))
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mesh_subclass)
 

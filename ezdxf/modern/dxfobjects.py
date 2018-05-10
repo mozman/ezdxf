@@ -13,6 +13,7 @@ none_subclass = DefSubclass(None, {
 
 
 class DXFClass(DXFEntity):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(
         DefSubclass(None, {
             'name': DXFAttr(1),
@@ -27,6 +28,7 @@ class DXFClass(DXFEntity):
 
 
 class DXFObject(DXFEntity):
+    __slots__ = ()
     def audit(self, auditor):
         auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
 
@@ -41,5 +43,6 @@ ACDBPLACEHOLDER
 
 
 class ACDBPlaceHolder(DXFEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PLACEHOLDER_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, )

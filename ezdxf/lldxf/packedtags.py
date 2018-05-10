@@ -12,6 +12,8 @@ from .const import DXFTypeError, DXFIndexError, DXFValueError
 
 
 class PackedTags(object):
+    __slots__ = ()
+
     @abstractmethod
     def dxftags(self):
         """
@@ -68,7 +70,6 @@ class TagArray(TagList):
     code = -101  # compatible with DXFTag.code
     VALUE_CODE = 60
     DTYPE = 'i'
-    __slots__ = ('value', )
 
     def __init__(self, data=None):
         if data is None:
@@ -80,11 +81,11 @@ class TagArray(TagList):
 
 
 class TagDict(PackedTags):
+    __slots__ = ('value',)
     code = -102  # compatible with DXFTag.code
     KEY_CODE = 3
     VALUE_CODE = 350
     SEARCH_CODES = (3, 350, 360)  # some DICTIONARY have 360 handles
-    __slots__ = ('value', )
 
     def __init__(self, data=None):
         self.value = OrderedDict(data if data is not None else {})  # compatible with DXFTag.value

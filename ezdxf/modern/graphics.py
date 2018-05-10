@@ -36,6 +36,8 @@ entity_subclass = DefSubclass('AcDbEntity', {
 
 # noinspection PyUnresolvedReferences
 class ModernGraphicEntityExtension(object):
+    __slots__ = ()
+
     @property
     def rgb(self):
         return int2rgb(self.get_dxf_attrib('true_color'))
@@ -55,6 +57,7 @@ class ModernGraphicEntityExtension(object):
 
 
 class ModernGraphicEntity(r12graphics.GraphicEntity, ModernGraphicEntityExtension):
+    __slots__ = ()
     """
     Default graphic entity wrapper, allows access to following dxf attributes:
 
@@ -116,6 +119,7 @@ line_subclass = DefSubclass('AcDbLine', {
 
 
 class Line(r12graphics.Line, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LINETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, line_subclass)
 
@@ -147,6 +151,7 @@ point_subclass = DefSubclass('AcDbPoint', {
 
 
 class Point(r12graphics.Point, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_POINT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, point_subclass)
 
@@ -181,6 +186,7 @@ circle_subclass = DefSubclass('AcDbCircle', {
 
 
 class Circle(r12graphics.Circle, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass)
 
@@ -220,11 +226,13 @@ arc_subclass = DefSubclass('AcDbArc', {
 
 
 class Arc(r12graphics.Arc, ModernGraphicEntityExtension):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ARC_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, circle_subclass, arc_subclass)
 
 
 class SeqEnd(r12graphics.SeqEnd):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text("  0\nSEQEND\n  5\n0\n330\n 0\n100\nAcDbEntity\n")
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
 
@@ -273,5 +281,6 @@ shape_subclass = DefSubclass('AcDbShape', {
 
 # SHAPE is not tested with real world DXF drawings!
 class Shape(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SHAPE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, shape_subclass)

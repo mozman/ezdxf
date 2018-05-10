@@ -110,6 +110,7 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
 
 
 class Dimension(dimension.Dimension, ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = None
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass)
 
@@ -119,27 +120,33 @@ class Dimension(dimension.Dimension, ModernGraphicEntity):
 
 
 class AlignedDimension(Dimension):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, aligned_dimension_subclass)
 
 
 class RotatedDimension(Dimension):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, aligned_dimension_subclass,
                                rotated_dimension_subclass)
 
 
 class RadialDimension(Dimension):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, radial_dimension_subclass)
 
 
 class DiametricDimension(Dimension):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, diametric_dimension_subclass)
 
 
 class AngularDimension(Dimension):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, angular_dimension_subclass)
 
 
 class OrdinateDimension(Dimension):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass, ordinate_dimension_subclass)
 
 

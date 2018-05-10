@@ -12,6 +12,7 @@ oleframe_subclass = DefSubclass('AcDbOleFrame', {
 
 
 class OLEFrame(ModernGraphicEntity):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, oleframe_subclass)
 
 
@@ -29,4 +30,5 @@ ole2frame_subclass = DefSubclass('AcDbOle2Frame', {
 
 
 class OLE2Frame(ModernGraphicEntity):
+    __slots__ = ()
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, ole2frame_subclass)

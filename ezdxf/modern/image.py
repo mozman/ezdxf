@@ -108,6 +108,7 @@ image_subclass = DefSubclass('AcDbRasterImage', {
 
 
 class Image(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_IMAGE_TPL)
     CLASS = ExtendedTags.from_text(_IMAGE_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, image_subclass)

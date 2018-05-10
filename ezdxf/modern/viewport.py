@@ -193,6 +193,7 @@ viewport_subclass = DefSubclass('AcDbViewport', {
 
 
 class Viewport(ModernGraphicEntity):
+    __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VIEWPORT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, viewport_subclass)
     viewport_id = 2  # notes to id:
