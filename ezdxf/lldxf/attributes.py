@@ -50,6 +50,16 @@ class DXFAttr(object):
         self.setter = setter  # DXF entity setter method name for callback attributes
 
     def get_callback_value(self, entity):
+        """
+        Executes a callback function in 'entity' to get a DXF value.
+
+        Callback function is defined by self.getter as string.
+
+        Args:
+            entity: DXF entity
+
+        Returns: DXF attribute value
+        """
         try:
             return getattr(entity, self.getter)()
         except AttributeError:
@@ -58,6 +68,16 @@ class DXFAttr(object):
             DXFAttributeError('DXF attribute {} has no getter.'.format(self.name))
 
     def set_callback_value(self, entity, value):
+        """
+        Executes a callback function in 'entity' to set a DXF value.
+
+        Callback function is defined by self.setter as string.
+
+        Args:
+            entity: DXF entity
+            value: DXF attribute value
+
+        """
         try:
             getattr(entity, self.setter)(value)
         except AttributeError:
@@ -66,6 +86,17 @@ class DXFAttr(object):
             raise DXFAttributeError('DXF attribute {} has no setter.'.format(self.name))
 
     def get_attrib(self, entity, key, default=DXFValueError):
+        """
+        Return value of DXF attribute 'key'.
+
+        Args:
+            entity: DXF entity
+            key: attribute name
+            default: default value or DXFValueError for raising an exception if attribute does not exist
+
+        Returns: value of DXF attribute
+
+        """
         if self.xtype == 'Callback':
             return self.get_callback_value(entity)
         try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
@@ -114,6 +145,17 @@ class DXFAttr(object):
             return tags.get_subclass(subclass_key)
 
     def set_attrib(self, entity, key, value):
+        """
+        Set DXF attribute 'key' to value.
+
+        Args:
+            entity: DXF entity
+            key: attribute name
+            value: attribute value
+
+        Returns: cache able value of attribute or None for not cache able
+
+        """
         if self.dxfversion is not None:
             if entity.drawing.dxfversion < self.dxfversion:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
@@ -121,13 +163,15 @@ class DXFAttr(object):
 
         if self.xtype == 'Callback':
             self.set_callback_value(entity, value)
-            return
+            return None  # callback not cache able
 
         subclass_tags = self._get_dxf_attrib_subclass_tags(entity.tags, self.subclass)
         if self.xtype is not None:
-            self._set_extended_type(subclass_tags, value)
+            return self._set_extended_type(subclass_tags, value)
         else:
-            subclass_tags.set_first(dxftag(self.code, value))
+            tag = dxftag(self.code, value)
+            subclass_tags.set_first(tag)
+            return tag.value  # cache able value
 
     def _set_extended_type(self, tags, value):
         value = tuple(value)
@@ -140,9 +184,18 @@ class DXFAttr(object):
                 raise DXFValueError('3 axis required')
         else:
             raise DXFValueError('2 or 3 axis required')
-        tags.set_first(DXFVertex(self.code, value))
+        vertex = DXFVertex(self.code, value)
+        tags.set_first(vertex)
+        return vertex.value  # cache able value
 
     def del_attrib(self, entity):
+        """
+        Remove tag of DXF attribute in 'entity'.
+
+        Args:
+            entity: DXF entity
+
+        """
         subclass_tags = self._get_dxf_attrib_subclass_tags(entity.tags, self.subclass)
         subclass_tags.remove_tags(codes=(self.code,))
 
