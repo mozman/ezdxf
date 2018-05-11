@@ -59,7 +59,7 @@ Version 0.8.9 - dev
         - SORTENTSTABLE
         - SPATIAL_FILTER (todo)
         - SUN
-        - SUNSTUDY (todo)
+        - SUNSTUDY (incomplete)
         - TABLESTYLE (incomplete)
         - VBA_PROJECT (no real world DXF files with embedded VBA for testing available)
         - VISUALSTYLE (todo)

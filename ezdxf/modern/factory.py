@@ -37,6 +37,7 @@ from .mline import MLine, MLineStyle
 from .oleframe import OLE2Frame, OLEFrame
 from .section import Section
 from .sun import Sun
+from .sunstudy import SunStudy
 from .tolerance import Tolerance
 from .wipeout import Wipeout, WipeoutVariables
 from .acad_table import ACADTable
@@ -84,6 +85,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'MLEADERSTYLE': MLeaderStyle,
     'MLINESTYLE': MLineStyle,
     'SUN': Sun,
+    'SUNSTUDY': SunStudy,
     'WIPEOUTVARIABLES': WipeoutVariables,
     'TABLESTYLE': TableStyle,
     'IDBUFFER': IDBuffer,
