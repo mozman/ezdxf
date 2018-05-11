@@ -49,7 +49,7 @@ Version 0.8.9 - dev
         - DIMASSOC
         - FIELD (incomplete)
         - FIELDLIST (not documented by Autodesk, with packed data)
-        - IDBUFFER (with packed data)
+        - IDBUFFER
         - LAYER_FILTER
         - MATERIAL
         - MLEADERSTYLE
@@ -59,7 +59,7 @@ Version 0.8.9 - dev
         - SORTENTSTABLE
         - SPATIAL_FILTER (todo)
         - SUN
-        - SUNSTUDY (incomplete)
+        - SUNSTUDY (incomplete) (no real world DXF files with SUNSTUDY for testing available)
         - TABLESTYLE (incomplete)
         - VBA_PROJECT (no real world DXF files with embedded VBA for testing available)
         - VISUALSTYLE (todo)
