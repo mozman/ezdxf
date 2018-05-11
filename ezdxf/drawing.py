@@ -71,17 +71,15 @@ class Drawing(object):
             self._materials = self.objects.materials()
             self._mleader_styles = self.objects.mleader_styles()
             self._mline_styles = self.objects.mline_styles()
-
-        if self.dxfversion <= 'AC1009':  # do cleanup work, before building layouts
+        else:  # dxfversion <= 'AC1009' do cleanup work, before building layouts
             if self.dxfversion < 'AC1009':  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
             repair.cleanup_r12(self)
             # ezdxf puts automatically handles into all entities added to the entities database
-            # new feature: write R12 without handles, if $HANDLING=0 is set by user
+            # write R12 without handles, by setting $HANDLING = 0
             self.header['$HANDLING'] = 1  # write handles by default
 
         self.layouts = self.dxffactory.get_layouts()
-
 
     @property
     def acad_release(self):
