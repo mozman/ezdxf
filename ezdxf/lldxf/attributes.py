@@ -153,8 +153,6 @@ class DXFAttr(object):
             key: attribute name
             value: attribute value
 
-        Returns: cache able value of attribute or None for not cache able
-
         """
         if self.dxfversion is not None:
             if entity.drawing.dxfversion < self.dxfversion:
@@ -163,15 +161,13 @@ class DXFAttr(object):
 
         if self.xtype == 'Callback':
             self.set_callback_value(entity, value)
-            return None  # callback not cache able
+            return
 
         subclass_tags = self._get_dxf_attrib_subclass_tags(entity.tags, self.subclass)
         if self.xtype is not None:
-            return self._set_extended_type(subclass_tags, value)
+            self._set_extended_type(subclass_tags, value)
         else:
-            tag = dxftag(self.code, value)
-            subclass_tags.set_first(tag)
-            return tag.value  # cache able value
+            subclass_tags.set_first(dxftag(self.code, value))
 
     def _set_extended_type(self, tags, value):
         value = tuple(value)
@@ -184,9 +180,7 @@ class DXFAttr(object):
                 raise DXFValueError('3 axis required')
         else:
             raise DXFValueError('2 or 3 axis required')
-        vertex = DXFVertex(self.code, value)
-        tags.set_first(vertex)
-        return vertex.value  # cache able value
+        tags.set_first(DXFVertex(self.code, value))
 
     def del_attrib(self, entity):
         """
