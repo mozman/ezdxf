@@ -2,9 +2,8 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from .lldxf.types import cast_tag_value, DXFTag, DXFVertex
-from .lldxf.const import DXFStructureError, DXFInternalEzdxfError, DXFAttributeError, DXFInvalidLayerName
-from .lldxf.const import DXFKeyError, DXFValueError
+from .lldxf.types import DXFTag
+from .lldxf.const import DXFStructureError, DXFAttributeError, DXFInvalidLayerName, DXFValueError
 from .lldxf.validator import is_valid_layer_name
 from .lldxf.tags import Tags, tuples2dxftags
 from .tools import set_flag_state
@@ -19,34 +18,32 @@ class DXFNamespace(object):
     Provides the dxf namespace for GenericWrapper.
 
     """
-    __slots__ = ('_setter', '_getter', '_deleter')
+    __slots__ = ('_wrapper', )
 
     def __init__(self, wrapper):
-        # DXFNamespace.__setattr__ can not set _getter and _setter
-        super(DXFNamespace, self).__setattr__('_getter', wrapper.get_dxf_attrib)
-        super(DXFNamespace, self).__setattr__('_setter', wrapper.set_dxf_attrib)
-        super(DXFNamespace, self).__setattr__('_deleter', wrapper.del_dxf_attrib)
+        # DXFNamespace.__setattr__ can not set _wrapper
+        super(DXFNamespace, self).__setattr__('_wrapper', wrapper)
 
     def __getattr__(self, attrib):
         """
         Returns value of DXF attribute *attrib*. usage: value = DXFEntity.dxf.attrib
 
         """
-        return self._getter(attrib)
+        return self._wrapper.get_dxf_attrib(attrib)
 
     def __setattr__(self, attrib, value):
         """
         Set DXF attribute *attrib* to *value.  usage: DXFEntity.dxf.attrib = value
 
         """
-        self._setter(attrib, value)
+        return self._wrapper.set_dxf_attrib(attrib, value)
 
     def __delattr__(self, attrib):
         """
         Remove DXF attribute *attrib*.  usage: del DXFEntity.dxf.attrib
 
         """
-        self._deleter(attrib)
+        return self._wrapper.del_dxf_attrib(attrib)
 
 
 class DXFEntity(object):
