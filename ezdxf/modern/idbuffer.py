@@ -7,15 +7,21 @@ from ..lldxf.types import DXFTag
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, none_subclass, ExtendedTags
 from ..lldxf.packedtags import PackedTags, replace_tags
 from ..lldxf import loader
-from ..tools.c23 import PY3
+from ..tools.c23 import PY3, isstring
+
+
+def convert(values):
+    for value in values:
+        yield int(value, 16) if isstring(value) else value
 
 
 def new_array(values=None):
     # Handles are 64bit values and Python2 does not support 64bit values in array, using list() instead of array() for
     # Python 2. (removed when official Python 2 support ends at 01.01.2020)
+
     a = array.array('Q') if PY3 else list()
     if values is not None:
-        a.extend(values)
+        a.extend(convert(values))
     return a
 
 
@@ -25,7 +31,7 @@ class PackedHandles(PackedTags):
 
     def __init__(self, handles=None):
         # compatible with DXFTag.value
-        self.value = new_array(int(value, 16) for value in handles)
+        self.value = new_array(handles)
 
     def __len__(self):
         return len(self.value)
@@ -38,7 +44,7 @@ class PackedHandles(PackedTags):
 
     def __setitem__(self, item, value):
         if isinstance(value, (tuple, list)):
-            value = new_array(int(value, 16) for value in value)
+            value = new_array(value)
         else:
             value = int(value, 16)
         self.value[item] = value
@@ -51,13 +57,13 @@ class PackedHandles(PackedTags):
         return self
 
     def __eq__(self, other):
-        return self.value == new_array(int(handle, 16) for handle in other)
+        return self.value == new_array(other)
 
     def append(self, handle):
         self.value.append(int(handle, 16))
 
     def extend(self, handles):
-        self.value.extend(int(handle, 16) for handle in handles)
+        self.value.extend(convert(handles))
 
     def dxftags(self):
         for handle in self.value:

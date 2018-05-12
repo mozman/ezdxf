@@ -3,7 +3,7 @@
 import pytest
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.modern.mesh import create_vertex_array, create_face_list, create_edge_array, create_crease_array
-from ezdxf.modern.mesh import tag_processor
+from ezdxf.modern.mesh import tag_processor, face_to_array
 from . test_mesh import MESH
 
 
@@ -102,3 +102,15 @@ def test_tags_processor_empty_mesh():
     creases = mesh_tags.get_first_tag(-95)
     assert len(creases) == 0
     assert len(mesh_tags) == 9
+
+
+def test_face_indices_as_array():
+    a = face_to_array([0, 1, 2, 3])
+    assert a.typecode == 'B'
+
+    a = face_to_array([0, 1, 2, 512])
+    assert a.typecode == 'I'
+
+    a = face_to_array([0, 1, 2, 100000])
+    assert a.typecode == 'L'
+

@@ -56,8 +56,19 @@ class FaceList(TagList):
     def set_data(self, faces):
         _faces = []
         for face in faces:
-            _faces.append(array.array('L', face))
+            _faces.append(face_to_array(face))
         self.value = _faces
+
+
+def face_to_array(face):
+    max_index = max(face)
+    if max_index < 256:
+        dtype = 'B'
+    elif max_index < 65536:
+        dtype = 'I'
+    else:
+        dtype = 'L'
+    return array.array(dtype, face)
 
 
 def create_face_list(tags, start_index):
@@ -71,7 +82,7 @@ def create_face_list(tags, start_index):
             counter = tag.value
             if face:
                 # group code 90 = 32 bit integer
-                faces_list.append(array.array('L', face))
+                faces_list.append(face_to_array(face))
                 face = []
         else:
             # followed by count face tags
@@ -81,7 +92,7 @@ def create_face_list(tags, start_index):
     # add last face
     if face:
         # group code 90 = 32 bit integer
-        faces_list.append(array.array('L', face))
+        faces_list.append(face_to_array(face))
 
     return faces
 
