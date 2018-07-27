@@ -47,12 +47,16 @@ class GraphicsFactory(object):
         dxfattribs['radius'] = radius
         return self.build_and_add_entity('CIRCLE', dxfattribs)
 
-    def add_arc(self, center, radius, start_angle, end_angle, dxfattribs=None):
+    def add_arc(self, center, radius, start_angle, end_angle, is_counter_clockwise=True, dxfattribs=None):
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
-        dxfattribs['start_angle'] = start_angle
-        dxfattribs['end_angle'] = end_angle
+        if is_counter_clockwise:
+            dxfattribs['start_angle'] = start_angle
+            dxfattribs['end_angle'] = end_angle
+        else:
+            dxfattribs['start_angle'] = end_angle
+            dxfattribs['end_angle'] = start_angle
         return self.build_and_add_entity('ARC', dxfattribs)
 
     def add_solid(self, points, dxfattribs=None):
