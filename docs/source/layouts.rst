@@ -118,11 +118,11 @@ Create New Entities
    to major axis, `start_param` and `end_param` defines start and end point of the ellipse, a full ellipse goes from 0
    to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction.
 
-.. method:: Layout.add_arc(center, radius, start_angle, end_angle, dxfattribs=None)
+.. method:: Layout.add_arc(center, radius, start_angle, end_angle, is_counter_clockwise=True, dxfattribs=None)
 
    Add an :class:`Arc` element, `center` is 2D/3D point, `radius` in drawing
    units, `start_angle` and `end_angle` in degrees. The arc goes from start_angle to end_angle in *counter clockwise*
-   direction.
+   direction by default, set parameter `is_counter_clockwise` to False for *clockwise* orientation.
 
 .. method:: Layout.add_solid(points, dxfattribs=None)
 

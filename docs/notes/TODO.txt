@@ -102,8 +102,6 @@ Auditor
 Candidates for Packed Data
 ----------------------------
 
-- SPLINE: control_points (10), fit_points (11), knots (40), weights (41)
-  points are 3x 'd' double values, for weights and knots is 'f' sufficient
 - LAYER_FILTER
 - MATERIAL: matrices
 - HATCH ?!?!? a really complex structure
