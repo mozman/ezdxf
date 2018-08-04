@@ -22,7 +22,7 @@ class Circle(object):
         assert (self.radius > 0.)
 
     @staticmethod
-    def create_3P(p1, p2, p3):
+    def from_3p(p1, p2, p3):
         """ creates a circle through 3 points
         """
         ray1 = Ray2D(p1, p2)

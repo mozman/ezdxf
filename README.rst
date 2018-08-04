@@ -17,7 +17,7 @@ Quick-Info
 - the intended audience are developers
 - requires at least CPython 3.6, support for Python 2 will be dropped with ezdxf v0.9.0
 - OS independent
-- additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
+- additional required packages: `pyparsing <https://pypi.org/project/pyparsing/>`_
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)

@@ -41,6 +41,18 @@ def equals_almost(v1, v2, places=7):
     return round(v1, places) == round(v2, places)
 
 
+def almost_equal_points(p1, p2, places=7):
+    if len(p1) == 2:
+        p1 = p1[0], p1[1], 0.
+    if len(p2) == 2:
+        p2 = p2[0], p2[1], 0.
+
+    for v1, v2 in zip(p1, p2):
+        if not equals_almost(v1, v2, places=places):
+            return False
+    return True
+
+
 def normalize_angle(angle):
     """ return an angle between 0 and 2*pi """
     angle = math.fmod(angle, DOUBLE_PI)
