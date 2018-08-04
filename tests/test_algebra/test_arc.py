@@ -2,7 +2,7 @@
 # License: MIT License
 
 from ezdxf.algebra.base import equals_almost, almost_equal_points
-from ezdxf.algebra.arc import Arc
+from ezdxf.algebra import Arc
 
 
 def test_arc_from_2p_angle():

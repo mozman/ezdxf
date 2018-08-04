@@ -153,6 +153,7 @@ Algebra Utilities
    algebra/vector
    algebra/matrix44
    algebra/bspline
+   algebra/arc
 
 Tag Data Structures
 -------------------

@@ -26,6 +26,7 @@ Version 0.8.9 - dev
     - NEW: Layout.set_redraw_order() and Layout.get_redraw_order(), to change redraw order of entities in model space and
       paper space layouts
     - NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
+    - NEW: ezdxf.algebra.Arc helper class to create arcs from 2 points and an angle or from 3 points
     - CHANGE: Drawing.blocks.delete_block(name, safe=True), new parameter save, check if block is still referenced
       (raises DXFValueError)
     - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), new parameter save, ignores blocks still referenced if safe is True
