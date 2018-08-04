@@ -90,7 +90,7 @@ class Arc(object):
             raise ValueError("z-axis of def point has to be 0.")
 
         circle = Circle.from_3p(start_point, end_point, def_point)
-        center = Vector(circle.center_point)
+        center = Vector(circle.center)
         return Arc(
             center=center,
             radius=circle.radius,

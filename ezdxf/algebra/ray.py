@@ -4,6 +4,7 @@
 
 import math
 from .base import equals_almost, normalize_angle, is_vertical_angle
+from .vector import Vector
 
 
 class ParallelRaysError(ArithmeticError):
@@ -21,21 +22,21 @@ YCOORD = 1
 class Ray2D(object):
     """
     Defines an infinite ray (line with no end points)
-    treat it as IMMUTABLE - dont't change the status
+    treat it as IMMUTABLE - don't change the status
     possible keyword args: slope, angle as float
     point1, point2 as 2d-tuples
 
-    input case A: point1, point2
+    Case A: point1, point2
     ray goes through point1 and point2, vertical lines are possible
     ignores the keyword arguments slope and angle
 
-    input case B: point1, slope
+    Case B: point1, slope
     ray goes through point1 with slope
     argument point2 have to be None
     vertical lines are not possible because slope can't be infinite.
     ignores the keyword argument angle
 
-    input case C: point1, angle (in radian)
+    Case C: point1, angle (in radian)
     argument point2 have to be None
     ray goes through point1 with the submitted angle
     vertical lines are possible
@@ -77,7 +78,10 @@ class Ray2D(object):
 
     @property
     def slope(self):
-        """ get slope of the ray """
+        """
+        Get slope of the ray.
+
+        """
         return self._slope
 
     def _set_slope(self, slope):
@@ -96,20 +100,28 @@ class Ray2D(object):
     @property
     def is_vertical(self):
         return self._vertical
+
     @property
     def is_horizontal(self):
         return equals_almost(self.slope, 0., self.places)
 
     def is_parallel(self, ray):
-        """ return True if the rays are parallel, else False"""
+        """
+        Return True if the rays are parallel, else False.
+
+        """
         if self.is_vertical:
             return ray.is_vertical
         else:
             return equals_almost(self.slope, ray.slope, self.places)
 
     def intersect(self, other_ray):
-        """ returns the intersection point (xy-tuple) of self and
-        other_ray; raises ParallelRaysError, if the rays are parallel"""
+        """
+        Returns the intersection point (xy-tuple) of self and other_ray.
+
+        Raises ParallelRaysError, if the rays are parallel
+
+        """
         ray1 = self
         ray2 = other_ray
         if not ray1.is_parallel(ray2):
@@ -124,16 +136,22 @@ class Ray2D(object):
                 # based on y(x) = y0 + x*slope
                 x = (ray1._y0 - ray2._y0)/(ray2.slope - ray1.slope)
                 y = ray1.get_y(x)
-            return x, y
+            return Vector(x, y)
         else:
             raise ParallelRaysError("no intersection, rays are parallel")
 
     def normal_through(self, point):
-        """ returns a ray which is normal to self and goes through point"""
+        """
+        Returns a ray which is normal to self and goes through point.
+
+        """
         return Ray2D(point, angle=self.angle+HALF_PI)
 
     def goes_through(self, point):
-        """ returns True if ray goes through point, else False"""
+        """
+        Returns True if ray goes through point, else False.
+
+        """
         if self.is_vertical:
             return equals_almost(point[XCOORD], self._x, self.places)
         else:
@@ -141,13 +159,19 @@ class Ray2D(object):
                                  self.places)
 
     def get_y(self, x):
-        """ get y by x, raises ArithmeticError for vertical lines"""
+        """
+        Get y-coordinate by x-coordinate, raises ArithmeticError for vertical lines.
+
+        """
         if self.is_vertical:
             raise ArithmeticError
         return self._y0 + float(x) * self.slope
 
     def get_x(self, y):
-        """ get x by y, raises ArithmeticError for horizontal lines"""
+        """
+        Get x-coordinate by y-coordinate, raises ArithmeticError for horizontal lines.
+
+        """
         if self.is_vertical:
             return self._x
         else :
@@ -156,7 +180,10 @@ class Ray2D(object):
             return (float(y) - self._y0) / self.slope
 
     def bisectrix(self, other_ray):
-        """ bisectrix between self and other_ray """
+        """
+        Bisectrix between self and other_ray.
+
+        """
         if self.is_parallel(other_ray):
             raise ParallelRaysError
         cross_point = self.intersect(other_ray)

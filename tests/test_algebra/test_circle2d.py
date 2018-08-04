@@ -192,8 +192,8 @@ class TestCircle(unittest.TestCase):
         p2 = (5., 7.)
         p3 = (12., 5.)
         circle = Circle.from_3p(p1, p2, p3)
-        self.assertAlmostEqual(circle.center_point[0], 7.6875, 4)
-        self.assertAlmostEqual(circle.center_point[1], 3.15625, 4)
+        self.assertAlmostEqual(circle.center[0], 7.6875, 4)
+        self.assertAlmostEqual(circle.center[1], 3.15625, 4)
         self.assertAlmostEqual(circle.radius, 4.6901, 4)
 
     def test_get_y(self):
