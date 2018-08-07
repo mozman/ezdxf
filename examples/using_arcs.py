@@ -32,6 +32,21 @@ arc.add_to_layout(modelspace, ucs, dxfattribs={'color': 1})  # red arc
 arc = Arc.from_3p(end_point_ucs, start_point_ucs, def_point_ucs)
 arc.add_to_layout(modelspace, ucs, dxfattribs={'color': 2})  # yellow arc
 
+p1 = Vector(0, -18)
+p2 = Vector(0, +18)
+arc = Arc.from_2p_angle(p1, p2, 90)
+arc.add_to_layout(modelspace, dxfattribs={'color': 1})
+
+arc = Arc.from_2p_angle(p1, p2, 90, ccw=False)
+arc.add_to_layout(modelspace, dxfattribs={'color': 2})
+
+p1 = Vector(20, -18)
+p2 = Vector(20, +18)
+arc = Arc.from_2p_radius(p1, p2, 100)
+arc.add_to_layout(modelspace, dxfattribs={'color': 1})
+
+arc = Arc.from_2p_radius(p1, p2, 100, ccw=False)
+arc.add_to_layout(modelspace, dxfattribs={'color': 2})
 
 # saving DXF file
 filename = 'using_arcs.dxf'

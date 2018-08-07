@@ -39,7 +39,7 @@ class Arc(object):
         return start_point, end_point
 
     @classmethod
-    def from_2p_angle(cls, start_point, end_point, angle):
+    def from_2p_angle(cls, start_point, end_point, angle, ccw=True):
         """
         Create arc from two points and enclosing angle. Additional precondition: arc goes in counter clockwise
         orientation from start_point to end_point. Z-axis of start_point and end_point has to be 0 if given.
@@ -48,6 +48,7 @@ class Arc(object):
             start_point: start point as (x, y [,z]) tuple
             end_point: end point as (x, y [,z]) tuple
             angle: enclosing angle in degrees
+            ccw: counter clockwise direction True/False
 
         Returns: Arc()
 
@@ -56,7 +57,8 @@ class Arc(object):
         angle = math.radians(angle)
         if angle == 0:
             raise ValueError("angle can not be 0.")
-
+        if ccw is False:
+            start_point, end_point = end_point, start_point
         alpha2 = angle / 2.
         distance = end_point.distance(start_point)
         distance2 = distance / 2.
@@ -77,7 +79,7 @@ class Arc(object):
         )
 
     @classmethod
-    def from_2p_radius(cls, start_point, end_point, radius):
+    def from_2p_radius(cls, start_point, end_point, radius, ccw=True):
         """
         Create arc from two points and arc radius. Additional precondition: arc goes in counter clockwise
         orientation from start_point to end_point. Z-axis of start_point and end_point has to be 0 if given.
@@ -86,6 +88,7 @@ class Arc(object):
             start_point: start point as (x, y [,z]) tuple
             end_point: end point as (x, y [,z]) tuple
             radius: arc radius as float
+            ccw: counter clockwise direction True/False
 
         Returns: Arc()
 
@@ -94,6 +97,9 @@ class Arc(object):
         radius = float(radius)
         if radius <= 0:
             raise ValueError("radius has to be > 0.")
+        if ccw is False:
+            start_point, end_point = end_point, start_point
+
         mid_point = end_point.lerp(start_point, factor=.5)
         distance = end_point.distance(start_point)
         distance2 = distance / 2.
@@ -109,7 +115,7 @@ class Arc(object):
         )
 
     @classmethod
-    def from_3p(cls, start_point, end_point, def_point):
+    def from_3p(cls, start_point, end_point, def_point, ccw=True):
         """
         Create arc from three points. Additional precondition: arc goes in counter clockwise
         orientation from start_point to end_point. Z-axis of start_point, end_point and def_point has to be 0 if given.
@@ -118,6 +124,7 @@ class Arc(object):
             start_point: start point as (x, y [,z]) tuple
             end_point: end point as (x, y [,z]) tuple
             def_point: additional definition point as (x, y [,z]) tuple
+            ccw: counter clockwise direction True/False
 
         Returns: Arc()
 
@@ -136,7 +143,7 @@ class Arc(object):
             radius=circle.radius,
             start_angle=(start_point - center).angle_deg,
             end_angle=(end_point - center).angle_deg,
-            is_counter_clockwise=True,
+            is_counter_clockwise=ccw,
         )
 
     def add_to_layout(self, layout, ucs=None, dxfattribs=None):

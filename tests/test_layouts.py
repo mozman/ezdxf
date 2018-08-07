@@ -21,3 +21,14 @@ def test_create_layout(dwg):
     assert len(layout) == 1, "missing 'main' viewport entity"
 
 
+def test_rename_layout(dwg):
+    layouts = dwg.layouts
+    with pytest.raises(ValueError):
+        layouts.rename('Model', 'XXX')
+
+    with pytest.raises(KeyError):
+        layouts.rename('mozman', 'XXX')
+
+    layouts.rename('Layout1', 'ezdxf')
+    layout = layouts.get('ezdxf')
+    assert layout.name == 'ezdxf'

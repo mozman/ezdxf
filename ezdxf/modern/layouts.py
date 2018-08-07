@@ -55,32 +55,88 @@ class Layouts(object):
         return self.get('Model')
 
     def names(self):
+        """
+        Returns iterable of all layout names.
+
+        """
         return self._layouts.keys()
 
     def get(self, name):
+        """
+        Get layout by name.
+
+        Args:
+            name: layout name as shown in tab
+
+        Returns: Layout()
+
+        """
         if name is None:
             first_layout_name = self.names_in_taborder()[1]
             return self._layouts[first_layout_name]
         else:
             return self._layouts[name]
 
+    def rename(self, old_name, new_name):
+        """
+        Rename a layout. Layout *Model* can not renamed and the new name of a layout must not exist.
+
+        Args:
+            old_name: actual layout name as string
+            new_name: new layout name as string
+
+        """
+        if old_name == 'Model':
+            raise ValueError('Can not rename model space.')
+        if new_name in self._layouts:
+            raise ValueError('Layout name "{}" already used.'.format(new_name))
+
+        layout = self._layouts[old_name]
+        del self._layouts[old_name]
+        layout.dxf_layout.dxf.name = new_name
+        self._layouts[new_name] = layout
+
     def names_in_taborder(self):
+        """
+        Returns all layout names in tab order as a list of strings.
+
+        """
         names = []
         for name, layout in self._layouts.items():
             names.append((layout.dxf.taborder, name))
         return [name for order, name in sorted(names)]
 
     def get_layout_for_entity(self, entity):
+        """
+        Returns the Layout an entity resides as Layout() object.
+
+        Args:
+            entity: DXF entity
+
+        """
         return self.get_layout_by_key(entity.dxf.owner)
 
     def get_layout_by_key(self, layout_key):
+        """
+        Returns a Layout by its layout key as Layout() object.
+
+        Args:
+            layout_key: layout key as string (handle)
+
+        """
         for layout in self._layouts.values():
             if layout_key == layout.layout_key:
                 return layout
         raise DXFKeyError("Layout with key '{}' does not exist.".format(layout_key))
 
     def new(self, name, dxfattribs=None):
-        """ Create a new Layout.
+        """
+        Create a new Layout.
+
+        Args:
+            name: layout name as shown in tab
+            dxfattribs: DXF attributes for the LAYOUT entity
+
         """
         if not is_valid_name(name):
             raise DXFValueError('name contains invalid characters')
@@ -115,6 +171,13 @@ class Layouts(object):
         return layout
 
     def set_active_layout(self, name):
+        """
+        Set active paper space layout.
+
+        Args:
+            name: layout name as shown in tab
+
+        """
         if name == 'Model':  # reserved layout name
             raise DXFValueError("Can not set model space as active layout")
         new_active_layout = self.get(name)  # raises KeyError if no layout 'name' exists
@@ -130,8 +193,15 @@ class Layouts(object):
         blocks.rename_block(TMP_PAPER_SPACE_NAME, new_active_paper_space_name)
 
     def delete(self, name):
-        """ Delete layout *name* and all entities on it. Raises *KeyError* if layout *name* not exists.
-        Raises *ValueError* for deleting model space.
+        """
+        Delete layout *name* and all entities on it.
+
+        Args:
+            name: layout name as shown in tab
+
+        Raises: *KeyError* if layout *name* not exists.
+        Raises: *ValueError* for deleting model space.
+
         """
         if name == 'Model':
             raise DXFValueError("can not delete model space layout")
@@ -147,6 +217,10 @@ class Layouts(object):
         layout.destroy()
 
     def active_layout(self):
+        """
+        Returns active paper space layout.
+
+        """
         for layout in self:
             if layout.block_record_name.upper() == '*PAPER_SPACE':
                 return layout
@@ -161,7 +235,8 @@ class Layouts(object):
 
 
 class Layout(DXF12Layout):
-    """ Layout representation
+    """
+    Layout representation
 
     Every layout consist of a LAYOUT entity in the OBJECTS section, an associated BLOCK in the BLOCKS section and a
     BLOCK_RECORD_TABLE entry.

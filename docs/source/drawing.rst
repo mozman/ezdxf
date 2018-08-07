@@ -80,6 +80,10 @@ Drawing Attributes
 
     Reference to the blocks section, see also :class:`BlocksSection`.
 
+.. attribute:: Drawing.layouts
+
+    Reference to the layout management object, see also :class:`Layouts`.
+
 .. attribute:: Drawing.groups
 
     requires DXF version R13 or later
