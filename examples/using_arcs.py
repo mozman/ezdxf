@@ -48,6 +48,12 @@ arc.add_to_layout(modelspace, dxfattribs={'color': 1})
 arc = Arc.from_2p_radius(p1, p2, 100, ccw=False)
 arc.add_to_layout(modelspace, dxfattribs={'color': 2})
 
+arc = Arc.from_2p_radius(p1, p2, 100, center_is_left=False)
+arc.add_to_layout(modelspace, dxfattribs={'color': 3})
+
+arc = Arc.from_2p_radius(p1, p2, 100, ccw=False, center_is_left=False)
+arc.add_to_layout(modelspace, dxfattribs={'color': 4})
+
 # saving DXF file
 filename = 'using_arcs.dxf'
 dwg.saveas(filename)

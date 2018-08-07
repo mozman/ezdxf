@@ -41,8 +41,9 @@ class Arc(object):
     @classmethod
     def from_2p_angle(cls, start_point, end_point, angle, ccw=True):
         """
-        Create arc from two points and enclosing angle. Additional precondition: arc goes in counter clockwise
-        orientation from start_point to end_point. Z-axis of start_point and end_point has to be 0 if given.
+        Create arc from two points and enclosing angle. Additional precondition: arc goes by default in counter
+        clockwise orientation from start_point to end_point, can be changed by ccw=False.
+        Z-axis of start_point and end_point has to be 0 if given.
 
         Args:
             start_point: start point as (x, y [,z]) tuple
@@ -79,16 +80,21 @@ class Arc(object):
         )
 
     @classmethod
-    def from_2p_radius(cls, start_point, end_point, radius, ccw=True):
+    def from_2p_radius(cls, start_point, end_point, radius, ccw=True, center_is_left=True):
         """
-        Create arc from two points and arc radius. Additional precondition: arc goes in counter clockwise
-        orientation from start_point to end_point. Z-axis of start_point and end_point has to be 0 if given.
+        Create arc from two points and arc radius. Additional precondition: arc goes by default in counter clockwise
+        orientation from start_point to end_point can be changed by ccw=False.
+        Z-axis of start_point and end_point has to be 0 if given.
+
+        The parameter *center_is_left* defines if the center of the arc is left or right of the line *start point* ->
+        *end point*. Parameter ccw=False swaps start- and end point, which inverts the meaning of center_is_left.
 
         Args:
             start_point: start point as (x, y [,z]) tuple
             end_point: end point as (x, y [,z]) tuple
             radius: arc radius as float
             ccw: counter clockwise direction True/False
+            center_is_left: center point of arc is left of line SP->EP if True, else on the right side of this line
 
         Returns: Arc()
 
@@ -104,7 +110,7 @@ class Arc(object):
         distance = end_point.distance(start_point)
         distance2 = distance / 2.
         height = math.sqrt(radius**2 - distance2**2)
-        center = mid_point + (end_point-start_point).orthogonal().normalize(height)
+        center = mid_point + (end_point-start_point).orthogonal(ccw=center_is_left).normalize(height)
 
         return Arc(
             center=center,
