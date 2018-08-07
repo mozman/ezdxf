@@ -348,3 +348,6 @@ class DXFEntity(object):
 
         """
         pass
+
+    def has_embedded_objects(self):
+        return any(tags.has_embedded_objects() for tags in self.tags.subclasses)
