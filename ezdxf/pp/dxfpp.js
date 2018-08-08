@@ -49,6 +49,7 @@ function initTooltips(){
           "defined by different classes in the inheritance chain for the same object. " +
           "This is in addition to the requirement for DXF names for each distinct concrete class derived " +
           "from ObjectARX (see Subclass Markers)"],
+        [101, 101, "Embedded object marker"],
         [102, 102, "Control string, followed by '{arbitrary name' or '}'. " +
           "Similar to the xdata 1002 group code, except that when the string begins with '{', " +
           "it can be followed by an arbitrary string whose interpretation is up to the application. " +

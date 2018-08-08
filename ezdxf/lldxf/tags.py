@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from  copy import deepcopy
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
-from .types import NONE_TAG, DXFTag, is_point_code
+from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
 from ..tools.codepage import toencoding
 from .tagger import internal_tag_compiler, low_level_tagger
 
@@ -252,7 +252,7 @@ class Tags(list):
 
     def has_embedded_objects(self):
         for tag in self:
-            if tag.code == EMBEDDED_OBJECT and tag.value == EMBEDDED_OBJECT_STR:
+            if tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR:
                 return True
         return False
 
