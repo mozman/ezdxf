@@ -251,7 +251,7 @@ class Tags(list):
         return bag
 
     def has_embedded_objects(self):
-        for tag in self.find_all(EMBEDDED_OBJECT):
+        for tag in self:
             if tag.code == EMBEDDED_OBJECT and tag.value == EMBEDDED_OBJECT_STR:
                 return True
         return False
