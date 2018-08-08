@@ -102,8 +102,9 @@ For explanation of all group codes see: `DXF Group Codes in Numerical Order Refe
 Extended Data
 -------------
 
-Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any other application like ezdxf can also
-define XDATA. If an entity contains extended data, it **follows** the entity's normal definition data.
+Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any other application like *ezdxf* can also
+define XDATA. If an entity contains extended data, it **follows** the entity's normal definition data but ends
+**before** :ref:`Embedded Objects`.
 
 But extended group codes (>=1000) can appear **before** the XDATA section, an example is the BLOCKBASEPOINTPARAMETER
 entity in AutoCAD Civil 3D or AutoCAD Map 3D.
@@ -288,9 +289,107 @@ and by default ezdxf adds new app data in front of the first subclass marker to 
 **Exception XRECORD:** Tags with group code 102 and a value string without a preceding "{" or the scheme "YOURAPPID}",
 should be treated as usual group codes.
 
+.. _Embedded Objects:
+
+Embedded Objects
+----------------
+
+The concept of embedded objects was introduced with AutoCAD 2018 (DXF version AC1032).
+
+This is the only information found at the Autodesk knowledge base: `Embedded and Encapsulated Objects`_
+
+**Hard Facts:**
+
+- Embedded object start with :code:`(101, "Embedded Object")` tag
+- Embedded object is appended to the encapsulated object
+
+Statement from `Embedded and Encapsulated Objects`_:
+
+    For DXF filing, the embedded object must be filed out
+    and in after all the data of the encapsulating object
+    has been filed out and in.
+
+- Embedded object is the end of the encapsulating object, also the :ref:`xdata_tags`
+- Embedded object tags can contain any group code except the DXF structure tag :code:`(0, ...)`
+
+**Unconfirmed assumptions:**
+
+- The encapsulating object can contain more than one embedded object.
+- Embedded objects separated by :code:`(101, "Embedded Object")` tags
+- every entity can contain embedded objects
+
+Real world example from an AutoCAD 2018 file:
+
+.. code-block:: none
+
+  100       <<< start of encapsulating object
+  AcDbMText
+  10
+  2762.148
+  20
+  2327.073
+  30
+  0.0
+  40
+  2.5
+  41
+  18.852
+  46
+  0.0
+  71
+  1
+  72
+  5
+  1
+  {\fArial|b0|i0|c162|p34;CHANGE;\P\P\PTEXT}
+  73
+  1
+  44
+  1.0
+  101       <<< start of embedded object
+  Embedded Object
+  70
+  1
+  10
+  1.0
+  20
+  0.0
+  30
+  0.0
+  11
+  2762.148
+  21
+  2327.073
+  31
+  0.0
+  40
+  18.852
+  41
+  0.0
+  42
+  15.428
+  43
+  15.043
+  71
+  2
+  72
+  1
+  44
+  18.852
+  45
+  12.5
+  73
+  0
+  74
+  0
+  46
+  0.0
+
 .. include:: reflinks.inc
 
 
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
 
 .. _Subclass Marker Example: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-CC5ACB1B-BBA3-463B-84A5-6CCD320C66E7
+
+.. _Embedded and Encapsulated Objects: https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2017/ENU/OARXMAC-DevGuide/files/GUID-C953866F-A335-4FFD-AE8C-256A76065552-htm.html
