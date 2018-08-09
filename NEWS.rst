@@ -29,6 +29,8 @@ Version 0.8.9 - dev
     - NEW: ezdxf.algebra.Arc helper class to create arcs from 2 points and an angle or radius, or from 3 points
     - NEW: ezdxf.algebra.Arc.add_to_layout() with UCS support to create 3D arcs
     - NEW: rename paper space layouts by Drawing.layouts.rename(old_name, new_name)
+    - NEW: Basic support for embedded objects (new in AutoCAD 2018), ezdxf reads and writes the embedded data as it is,
+      no interpretation no modification, just enough to no break DXF files with embedded objects at saving.
     - CHANGE: Drawing.blocks.delete_block(name, safe=True), new parameter save, check if block is still referenced
       (raises DXFValueError)
     - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), new parameter save, ignores blocks still referenced if safe is True
