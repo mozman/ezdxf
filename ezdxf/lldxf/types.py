@@ -12,6 +12,7 @@ POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111, 112, 210, 1010,
 
 GENERAL_MARKER = 0
 SUBCLASS_MARKER = 100
+XDATA_MARKER = 1001
 EMBEDDED_OBJ_MARKER = 101
 APP_DATA_MARKER = 102
 EXT_DATA_MARKER = 1001
@@ -22,6 +23,14 @@ POINTER_CODES = set(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
 HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
 BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
+
+
+def is_app_data_marker(tag):
+    return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
+
+
+def is_embedded_object_marker(tag):
+    return tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR
 
 
 class DXFTag(object):

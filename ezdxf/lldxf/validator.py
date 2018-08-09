@@ -12,6 +12,7 @@ from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, 
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS
 from .tagger import low_level_tagger
+from .types import is_embedded_object_marker
 
 logger = logging.getLogger('ezdxf')
 
@@ -54,6 +55,7 @@ def entity_structure_validator(tags):
     - XDATA section starts with (1001, APPID) and is always at the end of an entity
     - XDATA section: only group code >= 1000 is allowed
     - XDATA control strings (1002, '{') and (1002, '}') have to be balanced
+    - embedded objects may follow XDATA
 
     XRECORD entities will not be checked.
 
@@ -74,10 +76,19 @@ def entity_structure_validator(tags):
     xdata = False
     xdata_list_level = 0
     app_data_closing_tag = '}'
+    embedded_object = False
     for tag in tags:
         if tag.code == 5 and handle == '???':
             handle = tag.value
-        if xdata:
+
+        if is_embedded_object_marker(tag):
+            embedded_object = True
+
+        if embedded_object:  # no further validation
+            yield tag
+            continue  # with next tag
+
+        if xdata and not embedded_object:
             if tag.code < 1000:
                 dxftype = tags[0].value
                 raise DXFXDataError('Invalid XDATA structure in entity {}(#{}), only group code >=1000 allowed in XDATA section'.format(dxftype, handle))
@@ -109,7 +120,8 @@ def entity_structure_validator(tags):
                 if dxftype != 'XRECORD':  # group code 102 as non app data allowed in XRECORD
                     raise DXFAppDataError('Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(value, dxftype, handle))
 
-        # XDATA section starts with (1001, APPID) and is always at the end of an entity
+        # XDATA section starts with (1001, APPID) and is always at the end of an entity,
+        # since AutoCAD 2018, embedded objects may follow XDATA
         if tag.code == XDATA_MARKER and xdata is False:
             xdata = True
             if app_data:

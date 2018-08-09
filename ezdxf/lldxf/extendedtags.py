@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 from .types import tuples_to_tags
 from .tags import Tags,  DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
-from .const import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
+from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
+from .types import is_app_data_marker, is_embedded_object_marker
 from ..tools.c23 import isstring
 from .tagger import internal_tag_compiler
 
@@ -15,7 +16,7 @@ class ExtendedTags(object):
     Manage Subclasses, AppData and Extended Data
 
     """
-    __slots__ = ('subclasses', 'appdata', 'xdata', 'link')
+    __slots__ = ('subclasses', 'appdata', 'xdata', 'link', 'embedded_objects')
 
     def __init__(self, iterable=None):
         if isstring(iterable):
@@ -25,6 +26,10 @@ class ExtendedTags(object):
         self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
         self.xdata = list()  # code >= 1000, keys are "APPNAME", values are Tags()
         self.link = None  # link (as handle) to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
+
+        # store embedded objects as list, but embedded objects are rare, so storing an empty list for every DXF entity
+        # is waste of memory
+        self.embedded_objects = None
         if iterable is not None:
             self._setup(iterable)
 
@@ -44,6 +49,8 @@ class ExtendedTags(object):
         clone.appdata = copy(self.appdata)
         clone.subclasses = copy(self.subclasses)
         clone.xdata = copy(self.xdata)
+        if self.embedded_objects is not None:
+            clone.embedded_objects = copy(self.embedded_objects)
         clone.link = self.link  # important for dxf importer!
         return clone
     clone = __copy__
@@ -67,13 +74,10 @@ class ExtendedTags(object):
     def _setup(self, iterable):
         tagstream = iter(iterable)
 
-        def isappdata(tag):
-            return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
-
         def collect_subclass(starttag):
             """
-            A subclass can contain appdata, but not xdata, ends with
-            SUBCLASSMARKER or XDATACODE.
+            A subclass can contain appdata, but not XDATA, ends with
+            SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
 
             """
             # All subclasses begin with (100, subclass name)
@@ -87,11 +91,11 @@ class ExtendedTags(object):
             try:
                 while True:
                     tag = next(tagstream)
-                    if isappdata(tag):
+                    if is_app_data_marker(tag):
                         app_data_pos = len(self.appdata)
                         data.append(DXFTag(tag.code, app_data_pos))
-                        collect_appdata(tag)
-                    elif tag.code in (SUBCLASS_MARKER, XDATA_MARKER):
+                        collect_app_data(tag)
+                    elif tag.code in (SUBCLASS_MARKER, XDATA_MARKER) or is_embedded_object_marker(tag):
                         self.subclasses.append(data)
                         return tag
                     else:
@@ -101,9 +105,9 @@ class ExtendedTags(object):
             self.subclasses.append(data)
             return NONE_TAG
 
-        def collect_appdata(starttag):
+        def collect_app_data(starttag):
             """
-            Appdata, cannot contain xdata or subclasses.
+            Appdata, cannot contain XDATA or subclasses.
 
             """
             data = Tags([starttag])
@@ -121,7 +125,12 @@ class ExtendedTags(object):
 
         def collect_xdata(starttag):
             """
-            Xdata is always at the end of the entity and can not contain appdata or subclasses
+            XDATA is always at the end of the entity and can not contain appdata or subclasses
+
+            NEW: 09.08.2018
+
+            Since AutoCAD 2018, DXF entities can contain embedded objects, this objects appear at the end of an entity,
+            after XDATA (if XDATA exists).
 
             """
             data = Tags([starttag])
@@ -138,11 +147,47 @@ class ExtendedTags(object):
             self.xdata.append(data)
             return NONE_TAG
 
+        def collect_embedded_object(starttag):
+            """
+            Since AutoCAD 2018, DXF entities can contain embedded objects, this objects appear at the end of an entity,
+            also after XDATA, and start with the (101, 'Embedded Object') tag.
+
+            All embedded object data is collected in a simple Tags() object, no subclass app data or XDATA processing is
+            done. ezdxf does not use or modify the embedded object data, the data is just stored and written out as it
+            is.
+
+            self.embedded_objects = [1. embedded object as Tags(), 2. embedded object as Tags(), ...]
+
+            """
+            if self.embedded_objects is None:
+                self.embedded_objects = list()
+            data = Tags([starttag])
+            try:
+                while True:
+                    tag = next(tagstream)
+                    if is_embedded_object_marker(tag):
+                        # another embedded object found, don't know if an DXF entity can contain more than one embedded
+                        # objects
+                        self.embedded_objects.append(data)
+                        return tag
+                    else:
+                        data.append(tag)
+            except StopIteration:
+                pass
+            self.embedded_objects.append(data)
+            return NONE_TAG
+
         tag = collect_subclass(None)  # preceding tags without a subclass
         while tag.code == SUBCLASS_MARKER:
             tag = collect_subclass(tag)
-        while tag.code == XDATA_MARKER:
-            tag = collect_xdata(tag)
+
+        if not is_embedded_object_marker(tag):
+            # XDATA can not appear after an embedded object
+            while tag.code == XDATA_MARKER:
+                tag = collect_xdata(tag)
+
+        while is_embedded_object_marker(tag):
+            tag = collect_embedded_object(tag)
 
         if tag is not NONE_TAG:
             raise DXFStructureError("Unexpected tag '%r' at end of entity." % tag)
@@ -157,10 +202,16 @@ class ExtendedTags(object):
                 else:
                     yield tag
 
+        # PY3: yield from chain.from_iterable(self.xdata)
         for xdata in self.xdata:
-            # PY3: yield from chain.from_iterable(self.xdata)
             for tag in xdata:
                 yield tag
+
+        if self.embedded_objects is not None:
+            # PY3: yield from chain.from_iterable(self.embedded_objects)
+            for embedded_obj in self.embedded_objects:
+                for tag in embedded_obj:
+                    yield tag
 
     def get_subclass(self, name, pos=0):
         for index, subclass in enumerate(self.subclasses):

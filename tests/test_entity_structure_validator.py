@@ -366,3 +366,28 @@ AcDbBlockBasepointParameter
 def test_extended_group_code_before_XDATA():
     tags = list(entity_structure_validator(compile(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018)))
     assert tags[0] == (0, 'BLOCKBASEPOINTPARAMETER')
+
+
+ENTITY_W_EMBEDDED_OBJECT = """0
+LINE
+102
+{APP
+40
+1
+102
+}
+1001
+TEST
+1000
+STRING
+101
+Embedded Object
+1
+Text
+"""
+
+
+def test_embedded_object_follows_XDATA():
+    tags = list(entity_structure_validator(compile(ENTITY_W_EMBEDDED_OBJECT)))
+    assert len(tags) == 8
+    assert tags[-1] == (1, 'Text')
