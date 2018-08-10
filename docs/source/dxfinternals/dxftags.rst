@@ -321,6 +321,7 @@ Quote from `Embedded and Encapsulated Objects`_:
 - The encapsulating object can contain more than one embedded object.
 - Embedded objects separated by :code:`(101, "Embedded Object")` tags
 - every entity can contain embedded objects
+- XDATA sections replaced by embedded objects, at least for the MTEXT entity
 
 Real world example from an AutoCAD 2018 file:
 
