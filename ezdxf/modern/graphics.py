@@ -65,6 +65,7 @@ class ModernGraphicEntity(r12graphics.GraphicEntity, ModernGraphicEntityExtensio
         - owner handle
         - layer
         - linetype
+        - lineweight
         - color
         - paperspace
         - ltscale
