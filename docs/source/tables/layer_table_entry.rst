@@ -3,63 +3,68 @@ Layer
 
 .. class:: Layer
 
-Layer definition, defines attribute values for entities on this layer for their attributes set to ``BYLAYER``.
+    Layer definition, defines attribute values for entities on this layer for their attributes set to ``BYLAYER``.
 
 DXF Attributes for Layer
 ------------------------
 
 .. attribute:: Layer.dxf.handle
 
-DXF handle (feature for experts)
+    DXF handle (feature for experts)
 
 .. attribute:: Layer.dxf.owner
 
-requires DXF R13 or later
+    requires DXF R13 or later
 
 .. attribute:: Layer.dxf.name
 
-Layer name (str)
+    Layer name (str)
 
 .. attribute:: Layer.dxf.flags
 
-Layer flags (feature for experts)
+    Layer flags (feature for experts)
 
 .. attribute:: Layer.dxf.color
 
-Layer color, but use :meth:`Layer.get_color`, because color is negative for layer status *off* (int)
+    Layer color, but use :meth:`Layer.get_color`, because color is negative for layer status *off* (int)
 
 .. attribute:: Layer.dxf.linetype
 
-Name of line type (str)
+    Name of line type (str)
 
 .. attribute:: Layer.dxf.plot
 
-Plot flag (int)
+    Plot flag (int)
 
-- 1 = plot layer (default value)
-- 0 = don't plot layer
+    - 1 = plot layer (default value)
+    - 0 = don't plot layer
 
-.. attribute:: Layer.dxf.line_weight
+.. attribute:: Layer.dxf.lineweight
 
-Line weight enum value (int)
+    Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
+    outside this range prevents AutoCAD from loading the file.
 
-.. attribute:: Layer.dxf.plot_style_name
+    :code:`ezdxf.lldxf.const.LINEWEIGHT_DEFAULT` for using global default line weight.
 
-Handle to PlotStyleName (feature for experts)
-
-requires DXF R13 or later
-
-.. attribute:: Layer.dxf.line_weight
-
-requires DXF R13 or later
+    requires DXF R13 or later
 
 .. attribute:: Layer.dxf.plot_style_name
 
-requires DXF R13 or later
+    Handle to PlotStyleName (feature for experts)
+
+    requires DXF R13 or later
+
+.. attribute:: Layer.dxf.line_weight
+
+    requires DXF R13 or later
+
+.. attribute:: Layer.dxf.plot_style_name
+
+    requires DXF R13 or later
 
 .. attribute:: Layer.dxf.material
 
-requires DXF R13 or later
+    requires DXF R13 or later
 
 Layer Methods
 -------------
@@ -74,11 +79,11 @@ Layer Methods
 
 .. method:: Layer.lock()
 
-Lock layer, entities on this layer are not editable - just important in CAD applications.
+    Lock layer, entities on this layer are not editable - just important in CAD applications.
 
 .. method:: Layer.unlock()
 
-Unlock layer, entities on this layer are editable - just important in CAD applications.
+    Unlock layer, entities on this layer are editable - just important in CAD applications.
 
 .. method:: Layer.is_off()
 
@@ -86,16 +91,16 @@ Unlock layer, entities on this layer are editable - just important in CAD applic
 
 .. method:: Layer.on()
 
-Switch layer *on* (visible).
+    Switch layer *on* (visible).
 
 .. method:: Layer.off()
 
-Switch layer *off* (invisible).
+    Switch layer *off* (invisible).
 
 .. method:: Layer.get_color()
 
-Get layer color, preferred method for getting the layer color, because color is negative for layer status *off*.
+    Get layer color, preferred method for getting the layer color, because color is negative for layer status *off*.
 
 .. method:: Layer.set_color(color)
 
-Set layer color to *color*, preferred method for setting the layer color, because color is negative for layer status *off*.
+    Set layer color to *color*, preferred method for setting the layer color, because color is negative for layer status *off*.
