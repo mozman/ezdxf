@@ -171,7 +171,7 @@ Common DXF Attributes for DXF R13 or later
 
 .. attribute:: GraphicEntity.dxf.color
 
-    dxf color index,  default= 256
+    dxf color index,  default = 256
 
     - 0 = BYBLOCK
     - 256 = BYLAYER
@@ -179,7 +179,15 @@ Common DXF Attributes for DXF R13 or later
 
 .. attribute:: GraphicEntity.dxf.lineweight
 
-    lineweight enum value. Stored and moved around as a 16-bit integer.
+    Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
+    outside this range prevents AutoCAD from loading the file.
+
+    Constants defined in ezdxf.lldxf.const
+
+    - LINEWEIGHT_BYLAYER = -1
+    - LINEWEIGHT_BYBLOCK = -2
+    - LINEWEIGHT_DEFAULT = -3
+
 
 .. attribute:: GraphicEntity.dxf.ltscale
 
