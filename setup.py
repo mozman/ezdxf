@@ -3,12 +3,20 @@
 # Copyright (c) 2011-2018 Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-import os
+import os, sys
 from setuptools import setup
 
+PY3 = sys.version_info.major > 2
 VERSION = "0.8.9"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'me@mozman.at'
+
+if PY3:
+    PACKAGE_DATA = {'ezdxf': ['templates/*.dxf', 'pp/*.html', 'pp/*.js', 'pp/*.css', ]}
+else:
+    # Python 2.7: package_data seems to be broken
+    # added required data to MANIFEST.in
+    PACKAGE_DATA = dict()
 
 
 def read(fname, until=""):
@@ -47,11 +55,7 @@ setup(
               'ezdxf.algebra',
               'ezdxf.audit',
               ],
-    package_data={'ezdxf': ['templates/*.dxf',
-                            'pp/*.html',
-                            'pp/*.js',
-                            'pp/*.css',
-                            ]},
+    package_data=PACKAGE_DATA,
     entry_points={
         'console_scripts': [
             'dxfpp = ezdxf.pp.__main__:main',  # DXF Pretty Printer
@@ -69,6 +73,7 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: Implementation :: CPython",

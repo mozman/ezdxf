@@ -5,3 +5,8 @@ recursive-include tests *.py
 recursive-include tests/data *
 recursive-include integration_tests *.py
 recursive-include integration_tests/data *
+# added for Python 2.7, package_data seems to be broken
+include ezdxf/pp/*.css
+include ezdxf/pp/*.js
+include ezdxf/pp/*.html
+include ezdxf/templates/*.dxf
