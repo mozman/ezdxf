@@ -194,7 +194,7 @@ class Table(object):
         self.styles[name] = style
         return style
 
-    def new_border_style(self, color=const.BYLAYER, status=True, priority=100, linetype=None):
+    def new_border_style(self, color=const.BYLAYER, status=True, priority=100, linetype="BYLAYER"):
         """
         Create a new border style.
 
@@ -417,7 +417,7 @@ class Grid(object):
         # of the last column
         self._vborders = None # created in _init_borders
         # border style to delete borders inside of merged cells
-        self.noborder = dict(status=False, priority=999, linetype=None, color=0)
+        self.noborder = dict(status=False, priority=999, linetype="BYLAYER", color=0)
 
     def _init_borders(self, hborder, vborder):
         """
