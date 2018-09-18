@@ -82,7 +82,7 @@ def test_geodata_coordinate_system_definition(geodata):
 
 
 def test_internals_set_geodata_coordinate_system_definition_(geodata):
-    # in this case interal structure testing is required
+    # in this case internal structure testing is required
     geodata.AcDbGeoData.remove_tags((301, 303))  # delete existing text
     assert geodata.get_coordinate_system_definition() == ''
 

@@ -40,7 +40,7 @@ class CalendarDate:
         Z = floor(self.jdate)
 
         if Z < 2299161:
-            A = Z  # julian calender
+            A = Z  # julian calendar
         else:
             g = floor((Z - 1867216.25) / 36524.25)  # gregorian calendar
             A = Z + 1. + g - floor(g / 4.)

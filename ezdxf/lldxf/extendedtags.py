@@ -84,7 +84,7 @@ class ExtendedTags(object):
             # EXCEPT DIMASSOC has one subclass starting with: (1, AcDbOsnapPointRef). Well done, Autodesk!
             # This special subclass is ignored by ezdxf, content is included in the preceding subclass: (100, AcDbDimAssoc)
             #
-            # TEXT contains 2x the (100, AcDbText). Also well done, Autodesk! Therefor it is not possible to use an
+            # TEXT contains 2x the (100, AcDbText). Also well done, Autodesk! Therefore it is not possible to use an
             # (ordered) dict where subclass name is key, but usual use case is access by index.
 
             data = Tags() if starttag is None else Tags([starttag])
@@ -359,7 +359,7 @@ def get_xtags_linker():
                 #   ATTRIB as connected entity
                 #   SEQEND
                 #
-                # Therefor a ATTRIB following an INSERT doesn't mean that these entities are connected.
+                # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
                 pass
             else:
                 vars.prev = tags

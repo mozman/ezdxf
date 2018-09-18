@@ -54,7 +54,7 @@ table.new_cell_style(
     rotation=90,  # vertical written
     bgcolor=8,
 )
-# set colum width, first column has index 0
+# set column width, first column has index 0
 table.set_col_width(1, 7)
 
 # set row height, first row has index 0

@@ -6,7 +6,7 @@ Abstract
 --------
 
 A Python package to create and modify DXF drawings, independent from the DXF
-version. You can open/save every DXF file without loosing any content (except comments),
+version. You can open/save every DXF file without losing any content (except comments),
 Unknown tags in the DXF file will be ignored but preserved for saving. With this behavior
 it is possible to open also DXF drawings that contains data from 3rd party applications.
 

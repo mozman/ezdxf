@@ -136,7 +136,7 @@ def sierpinsky_pyramid(location=(0., 0., 0.), length=1., level=1, sides=4):
     Args:
         location: base center point of the pyramid
         length: base length of the pyramid
-        level: recursive building levels, has to 1 ot bigger
+        level: recursive building levels, has to 1 or bigger
         sides: 3 or 4 sided pyramids supported
 
     Returns: list of pyramid vertices

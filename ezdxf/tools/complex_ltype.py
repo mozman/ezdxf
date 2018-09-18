@@ -1,4 +1,4 @@
-# Purpose: compiler for line type defintions
+# Purpose: compiler for line type definitions
 # Created: 12.01.2018
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License

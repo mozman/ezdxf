@@ -44,7 +44,7 @@ Vector
         Vector(3, 6, 9) / 3 == Vector(1, 2, 3)
         -Vector(1, 2, 3) == (-1, -2, -3)
 
-    Comparision between vectors and vectors to tuples is supported::
+    Comparison between vectors and vectors to tuples is supported::
 
         Vector(1, 2, 3) < Vector (2, 2, 2)
         (1, 2, 3) < tuple(Vector(2, 2, 2))  # conversion necessary

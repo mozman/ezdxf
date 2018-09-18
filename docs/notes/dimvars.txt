@@ -1,4 +1,4 @@
-AutoCAD Dimension Variabes
+AutoCAD Dimension Variables
 ==========================
 
 DIMADEC                         Controls the number of decimal places for angular dimensions.
