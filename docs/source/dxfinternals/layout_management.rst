@@ -198,7 +198,7 @@ Main VIEWPORT Entity for LAYOUT
 
 The "main" viewport for layout ``Layout1`` shown above. This viewport is located in the associated BLOCK definition called
 ``*Paper_Space0``. Group code 330 in subclass AcDbLayout points to the BLOCK_RECORD of ``*Paper_Space0``.
-Remember: the entities of the `active` paper space layout are located in the ENTITIES section, therefor ``Layout1`` is not
+Remember: the entities of the `active` paper space layout are located in the ENTITIES section, therefore ``Layout1`` is not
 the active paper space layout.
 
 The "main" VIEWPORT describes, how the application shows the paper space layout on the screen, and I guess only AutoCAD

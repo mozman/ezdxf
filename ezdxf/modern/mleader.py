@@ -8,7 +8,7 @@ from .dxfobjects import DXFObject
 from .object_manager import ObjectManager
 
 # DXF Examples:
-# D:\source\dxftest\CADKitSamples\house design for two family with comman staircasedwg.dxf
+# D:\source\dxftest\CADKitSamples\house design for two family with common staircasedwg.dxf
 # D:\source\dxftest\CADKitSamples\house design.dxf
 
 _MLEADER_CLS = """0

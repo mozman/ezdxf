@@ -161,7 +161,7 @@ Reference
 
 .. method:: R12FastStreamWriter.add_3dface(vertices, invisible=0, layer="0", color=None, linetype=None)
 
-    Add a 3DFACE entity. 3DFACE is a spatial area with 3 ot 4 vertices, all vertices have to be in the same plane.
+    Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices, all vertices have to be in the same plane.
 
     :param vertices: list of 3 or 4 (x, y, z) vertices.
     :param invisible: bit coded flag to define the invisible edges, 1. edge = 1, 2. edge = 2, 3. edge = 4, 4. edge = 8;

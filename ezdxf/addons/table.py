@@ -153,7 +153,7 @@ class Table(object):
         try:
             return self._cells[row, col]
         except KeyError:
-            return self.empty_cell  # emtpy cell with default style
+            return self.empty_cell  # empty cell with default style
 
     def validate_index(self, row, col):
         row = int(row)
@@ -406,7 +406,7 @@ class Grid(object):
         self.col_pos = self._calc_col_pos()
         # contains the y-axis coords of the grid lines between the data rows.
         self.row_pos = self._calc_row_pos()
-        # contans the horizontal border elements, list of border styles
+        # contains the horizontal border elements, list of border styles
         # get index with _border_index(row, col), which means the border element
         # above row, col, and row-indices are [0 .. nrows+1], nrows+1 for the
         # grid line below the last row; list contains only the border style with

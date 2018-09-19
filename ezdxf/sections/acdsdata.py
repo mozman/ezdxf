@@ -3,7 +3,7 @@
 # Copyright (C) 2014, Manfred Moitzi
 # License: MIT License
 """
-ACDSDATA entities have NO handles, therefor they can not be stored in the drawing entity database.
+ACDSDATA entities have NO handles, therefore they can not be stored in the drawing entity database.
 every routine written until now (2014-05-05), expects entities with valid handle
 
 section structure (work in progress):

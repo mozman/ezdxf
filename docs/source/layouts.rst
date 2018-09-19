@@ -228,7 +228,7 @@ Create New Entities
 .. method:: Layout.add_rational_spline(control_points, weights, degree=3, dxfattribs=None)
 
    Add an open rational uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z)
-   tuples, `weights` has to be a list of values, which defines the influence of the associated control point, therefor
+   tuples, `weights` has to be a list of values, which defines the influence of the associated control point, therefore
    count of control points has to be equal to the count of weights, `degree` specifies degree of spline. (requires DXF
    version AC1015 or later)
 
@@ -238,7 +238,7 @@ Create New Entities
 .. method:: Layout.add_closed_rational_spline(control_points, weights, degree=3, dxfattribs=None)
 
    Add a closed rational uniform :class:`Spline`, `control_points` has to be a list (container or generator) of (x, y, z)
-   tuples, `weights` has to be a list of values, which defines the influence of the associated control point, therefor
+   tuples, `weights` has to be a list of values, which defines the influence of the associated control point, therefore
    count of control points has to be equal to the count of weights, `degree` specifies degree of spline. (requires DXF
    version AC1015 or later)
 

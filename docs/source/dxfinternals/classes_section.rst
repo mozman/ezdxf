@@ -23,7 +23,7 @@ CLASS Entities
 
     DXF Reference: `Group Codes for the CLASS entity`_
 
-CLASS entities have no handle and therefor ezdxf does not store the CLASS entity in the drawing entities database!
+CLASS entities have no handle and therefore ezdxf does not store the CLASS entity in the drawing entities database!
 
 .. code-block:: none
 

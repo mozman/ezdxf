@@ -444,7 +444,7 @@ class CtbParser(object):
     """
 
     def __init__(self, text):
-        """Construtor
+        """Constructor
 
         text -- ctb content as string
         """

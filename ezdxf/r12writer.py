@@ -96,7 +96,7 @@ class R12FastStreamWriter(object):
         dxf.append(dxf_attribs(layer, color, linetype))
         vertices = list(vertices)
         if len(vertices) < 3:
-            raise DXFValueError("%s needs 3 ot 4 vertices." % dxftype)
+            raise DXFValueError("%s needs 3 or 4 vertices." % dxftype)
         elif len(vertices) == 3:
             vertices.append(vertices[-1])  # double last vertex
         dxf.extend(dxf_vertex(vertex, code) for code, vertex in enumerate(vertices, start=10))

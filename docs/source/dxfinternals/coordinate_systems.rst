@@ -25,7 +25,7 @@ User coordinate system - the working coordinate system defined by the user to ma
 passed to AutoCAD commands, including those returned from AutoLISP routines and external functions, are points in the
 current UCS. As far as I know, all coordinates stored in DXF files are always WCS or OCS never UCS.
 
-User defined coordinate systems are not just helpful for interactive CAD, therefor ezdxf provides a converter class
+User defined coordinate systems are not just helpful for interactive CAD, therefore ezdxf provides a converter class
 :class:`~ezdxf.algebra.UCS` to translate coordinates from UCS into WCS and vice versa, but always remember: store only
 WCS or OCS coordinates in DXF files, because there is no method to determine which UCS was active or used to create UCS
 coordinates.

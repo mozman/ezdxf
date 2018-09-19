@@ -229,7 +229,7 @@ class GraphicsFactory(object):
     def add_spline(self, fit_points=None, degree=3, dxfattribs=None):
         """
         Add a B-spline defined by fit points, the control points and knot values are created by the CAD application,
-        therefor it is not predictable how the rendered spline will look like, because for every set of fit points
+        therefore it is not predictable how the rendered spline will look like, because for every set of fit points
         exists an infinite set of B-splines. If fit_points is None, an 'empty' spline will be created, all data has to
         be set by the user.
 

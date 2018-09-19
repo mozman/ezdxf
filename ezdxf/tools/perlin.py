@@ -82,7 +82,7 @@ class BaseNoise:
         table with period elements. The period determines the (integer)
         interval that the noise repeats, which is useful for creating tiled
         textures.  period should be a power-of-two, though this is not
-        enforced. Note that the speed of the noise algorithm is indpendent of
+        enforced. Note that the speed of the noise algorithm is independent of
         the period size, though larger periods mean a larger table, which
         consume more memory.
 
@@ -323,7 +323,7 @@ def grad3(hash, x, y, z):
 
 
 class TileableNoise(BaseNoise):
-    """Tileable implemention of Perlin "improved" noise. This
+    """Tileable implementation of Perlin "improved" noise. This
     is based on the reference implementation published here:
 
     http://mrl.nyu.edu/~perlin/noise/

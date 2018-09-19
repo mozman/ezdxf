@@ -26,7 +26,7 @@ Create a new layer definition::
     dwg.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
 
 The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
-by using ``BYLAYER`` as linetype string ans `256` as color, both values are default values for new entities so you can
+by using ``BYLAYER`` as linetype string and `256` as color, both values are default values for new entities so you can
 left off this assignments::
 
     msp.add_line((0, 0), (10, 0), dxfattribs={'layer': 'Lines'})

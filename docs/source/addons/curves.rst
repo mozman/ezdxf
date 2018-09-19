@@ -12,7 +12,7 @@ placing.
 .. method:: Spline.__init__(points=None, segments=100)
 
     :param points: spline definition points
-    :param segemnts: count of line segemnts for approximation, vertex count is segments+1
+    :param segments: count of line segments for approximation, vertex count is segments+1
 
 .. method:: Spline.render_as_fit_points(layout, degree=3, method='distance', power=.5, dxfattribs=None)
 

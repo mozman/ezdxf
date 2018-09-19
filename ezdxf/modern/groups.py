@@ -188,6 +188,6 @@ class GroupManager(ObjectManager):
                 # do not delete groups while iterating over groups!
                 empty_groups.append(name)
 
-        # now delete emtpy groups
+        # now delete empty groups
         for name in empty_groups:
             self.delete(name)

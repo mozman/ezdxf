@@ -417,7 +417,7 @@ class DXF12BlockLayout(BaseLayout):
 
         Args:
             tag (str): attribute name as string without spaces
-            insert: attribute insert point relative to blcok origin (0, 0, 0)
+            insert: attribute insert point relative to block origin (0, 0, 0)
             text (str): preset text for attribute
 
         """

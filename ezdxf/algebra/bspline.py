@@ -308,7 +308,7 @@ def bspline_basis(u, index, degree, knots):
     """
     B-spline basis function.
 
-    Simple recursive implementation for testing and comparision.
+    Simple recursive implementation for testing and comparison.
 
     Args:
         u: curve parameter in range [0 .. max(knots)]
@@ -346,7 +346,7 @@ def bspline_basis_vector(u, count, degree, knots):
     """
     Create basis vector at parameter u.
 
-    Used with the bspline_basis() for testing and comparision.
+    Used with the bspline_basis() for testing and comparison.
 
     Args:
         u: curve parameter in range [0 .. max(knots)]
@@ -368,7 +368,7 @@ def bspline_vertex(u, degree, control_points, knots):
     """
     Calculate B-spline vertex at parameter u.
 
-    Used with the bspline_basis_vector() for testing and comparision.
+    Used with the bspline_basis_vector() for testing and comparison.
 
     Args:
         u:  curve parameter in range [0 .. max(knots)]
