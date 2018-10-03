@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
 from contextlib import contextmanager
-from ezdxf.lldxf.const import DXFValueError
 
 
 def rnd(x):  # adjust output precision of floats by changing 'ndigits'
@@ -96,7 +95,7 @@ class R12FastStreamWriter(object):
         dxf.append(dxf_attribs(layer, color, linetype))
         vertices = list(vertices)
         if len(vertices) < 3:
-            raise DXFValueError("%s needs 3 or 4 vertices." % dxftype)
+            raise ValueError("%s needs 3 or 4 vertices." % dxftype)
         elif len(vertices) == 3:
             vertices.append(vertices[-1])  # double last vertex
         dxf.extend(dxf_vertex(vertex, code) for code, vertex in enumerate(vertices, start=10))
@@ -160,7 +159,7 @@ def dxf_attribs(layer, color=None, linetype=None):
         if 0 <= int(color) < 257:
             dxf.append("62\n%d\n" % color)
         else:
-            raise DXFValueError("color has to be an integer in the range from 0 to 256.")
+            raise ValueError("color has to be an integer in the range from 0 to 256.")
     return "".join(dxf)
 
 
