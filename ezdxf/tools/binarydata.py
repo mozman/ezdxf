@@ -2,8 +2,9 @@
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from .c23 import PY3
 from array import array
+
+from .c23 import PY3
 
 
 def binary_encoded_data_to_bytes(data):

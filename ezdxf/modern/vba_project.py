@@ -2,10 +2,12 @@
 # License: MIT License
 from __future__ import unicode_literals
 import array
-from ..tools.c23 import PY3
+
+from ezdxf.tools.c23 import PY3
+from ezdxf.lldxf.types import DXFBinaryTag
+from ezdxf.tools.binarydata import array_to_bytes
+
 from .dxfobjects import DXFObject, none_subclass, DefSubclass, DXFAttr, DXFAttributes, ExtendedTags
-from ..lldxf.types import DXFBinaryTag
-from ..tools.binarydata import array_to_bytes
 
 _VBA_PROJECT_TPL = """0
 VBA_PROJECT

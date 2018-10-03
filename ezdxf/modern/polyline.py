@@ -2,13 +2,15 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.types import DXFTag, DXFVertex
-from ..lldxf.tags import Tags
-from ..lldxf import loader
+
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf import loader
+from ezdxf.legacy import polyline
+from ezdxf.legacy.facemixins import PolyfaceMixin, PolymeshMixin
+
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
-from ..legacy import polyline
-from ..legacy.facemixins import PolyfaceMixin, PolymeshMixin
 
 
 _POLYLINE_TPL = """0

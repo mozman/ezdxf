@@ -4,7 +4,8 @@
 from __future__ import unicode_literals
 from array import array
 from itertools import chain
-from ..tools.c23 import ustr, reprlib, byte_to_hexstr, encode_hex_code_string_to_bytes
+
+from ezdxf.tools.c23 import ustr, reprlib, byte_to_hexstr, encode_hex_code_string_to_bytes
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
 POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111, 112, 210, 1010, 1011, 1012, 1013, 1014, 1015, 1016,

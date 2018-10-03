@@ -2,9 +2,11 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
+
 from .dxfobjects import DefSubclass, DXFAttr, DXFAttributes, none_subclass, ExtendedTags
 from .idbuffer import IDBuffer, PackedHandles, replace_tags
-from ..lldxf import loader
+
+from ezdxf.lldxf import loader
 
 _FIELDLIST_CLS = """0
 CLASS

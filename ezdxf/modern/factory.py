@@ -2,7 +2,11 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..legacy import LegacyDXFFactory
+
+from ezdxf.legacy import LegacyDXFFactory
+from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
+from ezdxf.lldxf.const import DXFKeyError
+
 from . import tableentries
 from . import graphics
 from . import solid3d
@@ -58,8 +62,7 @@ from .geodata import GeoData
 from .material import Material
 from .groups import DXFGroup
 from .layouts import Layouts, BlockLayout
-from ..tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
-from ..lldxf.const import DXFKeyError
+
 
 UPDATE_ENTITY_WRAPPERS = {
     # DXF Objects

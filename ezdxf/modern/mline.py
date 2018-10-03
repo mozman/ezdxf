@@ -2,7 +2,9 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFIndexError
+
+from ezdxf.lldxf.const import DXFIndexError
+
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from .dxfobjects import DXFObject

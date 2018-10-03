@@ -2,9 +2,10 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..dxfentity import DXFEntity
+
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.dxfentity import DXFEntity
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -29,6 +30,7 @@ class DXFClass(DXFEntity):
 
 class DXFObject(DXFEntity):
     __slots__ = ()
+
     def audit(self, auditor):
         auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
 

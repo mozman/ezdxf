@@ -2,10 +2,11 @@
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..legacy import dimension
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 
+from ezdxf.legacy import dimension
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 dimension_subclass = DefSubclass('AcDbDimension', {
     'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry

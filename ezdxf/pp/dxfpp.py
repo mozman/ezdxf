@@ -12,9 +12,10 @@ import io
 from ezdxf.lldxf.types import tag_type, is_point_code, is_pointer_code, is_binary_data
 from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS
 from ezdxf.tools.c23 import escape, ustr
-from .reflinks import get_reference_link
 from ezdxf.sections.sections import KNOWN_SECTIONS
 from ezdxf.lldxf.packedtags import PackedTags
+
+from .reflinks import get_reference_link
 
 # Tag groups
 

@@ -1,8 +1,8 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from ..lldxf.const import DXFStructureError, DXFValueError
-from ..lldxf.types import DXFTag
-from ..algebra.matrix44 import Matrix44
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.algebra.matrix44 import Matrix44
 
 
 def get_matrix(subclass, code):

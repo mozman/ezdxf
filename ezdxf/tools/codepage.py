@@ -1,9 +1,8 @@
 # Purpose: constant values
 # Created: 10.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
 codepage_to_encoding = {
     '874': 'cp874',  # Thai,

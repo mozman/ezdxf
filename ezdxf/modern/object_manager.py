@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from ..lldxf.const import DXFValueError, DXFKeyError
+from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 
 
 class ObjectManager(object):

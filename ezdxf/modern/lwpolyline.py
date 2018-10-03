@@ -4,11 +4,13 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
-from ..lldxf.types import DXFTag, DXFVertex
-from ..lldxf.packedtags import VertexArray, replace_tags
+
+from ezdxf.lldxf.types import DXFTag, DXFVertex
+from ezdxf.lldxf.packedtags import VertexArray, replace_tags
+from ezdxf.lldxf import loader
+
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf import loader
 
 FORMAT_CODES = frozenset('xysebv')
 DEFAULT_FORMAT = 'xyseb'

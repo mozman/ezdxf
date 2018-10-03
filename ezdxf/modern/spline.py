@@ -3,14 +3,16 @@
 # License: MIT License
 from __future__ import unicode_literals
 from contextlib import contextmanager
+
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf.packedtags import TagArray, VertexArray
+from ezdxf.algebra.bspline import knot_uniform, knot_open_uniform
+from ezdxf.lldxf import loader
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.types import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFValueError
-from ..lldxf.packedtags import TagArray, VertexArray
-from ..algebra.bspline import knot_uniform, knot_open_uniform
-from ..lldxf import loader
 
 
 class KnotTags(TagArray):

@@ -2,12 +2,13 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import DXFValueError, DXFIndexError
+from ezdxf.lldxf import const
+
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
 from .facemixins import PolyfaceMixin, PolymeshMixin
-from ..lldxf.const import DXFValueError, DXFIndexError
 from .trace import QuadrilateralMixin
-from ..lldxf import const
-
 
 _POLYLINE_TPL = """0
 POLYLINE

@@ -2,11 +2,11 @@
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..graphicsfactory import GraphicsFactory
-from ..entityspace import EntitySpace
-from ..query import EntityQuery
-from ..groupby import groupby
-from ..lldxf.const import STD_SCALES, DXFValueError
+from ezdxf.graphicsfactory import GraphicsFactory
+from ezdxf.entityspace import EntitySpace
+from ezdxf.query import EntityQuery
+from ezdxf.groupby import groupby
+from ezdxf.lldxf.const import STD_SCALES, DXFValueError
 
 class DXF12Layouts(object):
     """

@@ -2,13 +2,14 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..dxfentity import DXFEntity
-from ..lldxf.tags import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.validator import is_valid_layer_name
-from ..lldxf.const import DXFInvalidLayerName
-from ..algebra.ucs import UCS as UserCoordinateSystem
+
+from ezdxf.dxfentity import DXFEntity
+from ezdxf.lldxf.tags import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.validator import is_valid_layer_name
+from ezdxf.lldxf.const import DXFInvalidLayerName
+from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
 
 
 _LAYERTEMPLATE = """0

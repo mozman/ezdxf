@@ -2,10 +2,11 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..legacy import attrib
+
+from ezdxf.legacy import attrib
+
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
-
 
 _ATTDEF_TPL = """0
 ATTDEF

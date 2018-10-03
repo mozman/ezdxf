@@ -2,11 +2,13 @@
 # Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.const import DXFAttributeError, DXFValueError
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.types import DXFTag
-from ..lldxf.const import DXFAttributeError, DXFValueError
 
 _VIEWPORT_TPL = """0
 VIEWPORT

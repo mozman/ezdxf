@@ -2,10 +2,12 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError
+from ezdxf.lldxf.types import DXFTag, DXFVertex
+from ezdxf.lldxf.tags import multi_tags_to_text, text_to_multi_tags
+
 from .dxfobjects import DXFEntity, none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags
-from ..lldxf.const import DXFStructureError, DXFValueError
-from ..lldxf.types import DXFTag, DXFVertex
-from ..lldxf.tags import multi_tags_to_text, text_to_multi_tags
 
 _GEODATA_CLS = """0
 CLASS

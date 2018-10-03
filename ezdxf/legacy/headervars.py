@@ -3,7 +3,8 @@
 # Just one header var definition for all DXF version needed, because AutoCAD ignores unknown header vars
 from __future__ import unicode_literals
 from functools import partial
-from ..lldxf.hdrvars import SingleValue, Point2D, Point3D
+
+from ezdxf.lldxf.hdrvars import SingleValue, Point2D, Point3D
 
 VARMAP = {
     '$ACADVER': partial(SingleValue, code=1),

@@ -1,6 +1,6 @@
 # Purpose: compiler for line type definitions
 # Created: 12.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 
 # Auszug acadlt.lin
@@ -43,8 +43,8 @@
 # *ZICKZACK,Zickzack /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 # A,.0001,-.2,[ZIG,ltypeshp.shx,x=-.2,s=.2],-.4,[ZIG,ltypeshp.shx,r=180,x=.2,s=.2],-.2
 
-from ..lldxf.const import DXFValueError, DXFTableEntryError
-from ..lldxf.tags import DXFTag, Tags
+from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
+from ezdxf.lldxf.tags import DXFTag, Tags
 
 
 def lin_compiler(definition):

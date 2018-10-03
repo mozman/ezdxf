@@ -5,10 +5,12 @@ from __future__ import unicode_literals
 from array import array
 from abc import abstractmethod
 from collections import OrderedDict
+
 from .types import DXFTag, DXFVertex
-from ..tools import take2
-from ..tools.indexing import Index
 from .const import DXFTypeError, DXFIndexError, DXFValueError
+
+from ezdxf.tools import take2
+from ezdxf.tools.indexing import Index
 
 
 class PackedTags(object):

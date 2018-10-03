@@ -1,14 +1,14 @@
 # Purpose: tables section
 # Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
+
+from ezdxf.lldxf.tags import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 
 from .table import Table, ViewportTable, StyleTable
-from ..lldxf.tags import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFAttributeError, DXFStructureError
 
 
 class TablesSection(object):

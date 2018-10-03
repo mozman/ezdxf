@@ -5,9 +5,11 @@
 """Creates a structured HTML view of raw DXF tags - not a CAD drawing!
 """
 from __future__ import unicode_literals
+
 from ezdxf.tools.c23 import escape, ustr
 from ezdxf.lldxf.tags import group_tags
 from ezdxf.lldxf.types import GROUP_MARKERS, BINARY_FLAGS, HEX_HANDLE_CODES
+
 from .dxfpp import tag_type_str, load_resource, with_bitmask, MAX_STR_LEN
 
 TAG_TPL = '<div class="dxf-tag" ><span class="tag-code">{code}</span> <span class="var-type">{type}</span>' \

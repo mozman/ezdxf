@@ -3,11 +3,13 @@
 # License: MIT License
 from __future__ import unicode_literals
 from contextlib import contextmanager
+
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.tools import crypt
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.types import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..tools import crypt
 
 _BODY_TPL = """0
 BODY

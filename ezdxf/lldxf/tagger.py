@@ -7,7 +7,8 @@ from __future__ import unicode_literals
 from .types import DXFTag, DXFVertex, DXFBinaryTag
 from .const import DXFStructureError
 from .types import POINT_CODES, TYPE_TABLE, ustr, BINARAY_DATA
-from ..tools.c23 import isstring
+
+from ezdxf.tools.c23 import isstring
 
 
 def internal_tag_compiler(s):

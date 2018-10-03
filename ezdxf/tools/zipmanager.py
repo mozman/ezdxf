@@ -1,11 +1,8 @@
 # Purpose: read DXF files from zip archive
 # Created: 02.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-
-__author__ = "mozman <me@mozman.at>"
-
 import zipfile
 from contextlib import contextmanager
 

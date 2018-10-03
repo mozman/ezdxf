@@ -3,11 +3,13 @@
 # License: MIT License
 from __future__ import unicode_literals
 from contextlib import contextmanager
+
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr
+from ezdxf.lldxf.tags import DXFTag, Tags
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError
+
 from .graphics import make_attribs, GraphicEntity
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr
-from ..lldxf.tags import DXFTag, Tags
-from ..lldxf.const import DXFStructureError, DXFValueError
 
 _VPORT_TPL = """0
 VIEWPORT

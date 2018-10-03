@@ -1,10 +1,11 @@
 # Purpose: test tools
 # Created: 27.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ..modern import ModernDXFFactory
+from ezdxf.modern import ModernDXFFactory
 
 
 def compile_tags_without_handles(text):

@@ -3,11 +3,13 @@
 # License: MIT-License
 from __future__ import unicode_literals
 import array
-from ..lldxf.types import DXFTag
+
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.packedtags import PackedTags, replace_tags
+from ezdxf.lldxf import loader
+from ezdxf.tools.c23 import PY3, isstring
+
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, none_subclass, ExtendedTags
-from ..lldxf.packedtags import PackedTags, replace_tags
-from ..lldxf import loader
-from ..tools.c23 import PY3, isstring
 
 
 def convert(values):

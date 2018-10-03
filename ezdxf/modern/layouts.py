@@ -2,11 +2,12 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..entityspace import EntitySpace
-from ..legacy.layouts import DXF12Layout, DXF12BlockLayout
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, STD_SCALES, DXFInternalEzdxfError
-from ..lldxf.validator import is_valid_name
+
+from ezdxf.entityspace import EntitySpace
+from ezdxf.legacy.layouts import DXF12Layout, DXF12BlockLayout
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, STD_SCALES, DXFInternalEzdxfError
+from ezdxf.lldxf.validator import is_valid_name
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'

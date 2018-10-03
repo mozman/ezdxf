@@ -3,14 +3,16 @@
 # License: MIT-License
 from __future__ import unicode_literals
 from contextlib import contextmanager
+
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.dxfentity import DXFEntity
+from ezdxf.tools.c23 import isstring
+from ezdxf.lldxf.const import DXFValueError
+
 from .dxfobjects import none_subclass
 from .object_manager import ObjectManager
-from ..lldxf.types import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..dxfentity import DXFEntity
-from ..tools.c23 import isstring
-from ..lldxf.const import DXFValueError
 
 _GROUP_TPL = """0
 GROUP

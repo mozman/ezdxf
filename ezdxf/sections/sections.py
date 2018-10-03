@@ -1,10 +1,12 @@
 # Purpose: sections module
 # Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 import logging
+
+from ezdxf.lldxf.const import DXFStructureError
+
 from .header import HeaderSection
 from .tables import TablesSection
 from .blocks import BlocksSection
@@ -12,7 +14,6 @@ from .classes import ClassesSection
 from .objects import ObjectsSection
 from .entities import EntitySection
 from .unsupported import UnsupportedSection
-from ..lldxf.const import DXFStructureError
 
 logger = logging.getLogger('ezdxf')
 KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')

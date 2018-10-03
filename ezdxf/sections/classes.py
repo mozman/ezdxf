@@ -3,9 +3,10 @@
 # License: MIT License
 from __future__ import unicode_literals
 from collections import Counter, OrderedDict
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFStructureError
-from ..modern.dxfobjects import DXFClass
+
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.modern.dxfobjects import DXFClass
 
 
 class ClassesSection(object):

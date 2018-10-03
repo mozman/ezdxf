@@ -2,12 +2,13 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..tools.c23 import isstring
-from ..lldxf.types import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..legacy import tableentries as legacy
-from ..dxfentity import DXFEntity
+
+from ezdxf.tools.c23 import isstring
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.legacy import tableentries as legacy
+from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools.complex_ltype import lin_compiler
 
 _LAYERTEMPLATE = """0

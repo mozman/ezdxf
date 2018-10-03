@@ -4,16 +4,18 @@
 from __future__ import unicode_literals
 import math
 from contextlib import contextmanager
+
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.types import DXFTag, DXFVertex
+from ezdxf.lldxf.tags import DXFStructureError, group_tags, Tags
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf import const
+from ezdxf.tools.pattern import PATTERN  # acad standard pattern definitions
+from ezdxf.tools.rgb import rgb2int, int2rgb
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError
+from ezdxf.algebra.bspline import bspline_control_frame
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.types import DXFTag, DXFVertex
-from ..lldxf.tags import DXFStructureError, group_tags, Tags
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf import const
-from ..tools.pattern import PATTERN  # acad standard pattern definitions
-from ..tools.rgb import rgb2int, int2rgb
-from ..lldxf.const import DXFValueError, DXFVersionError
-from ..algebra.bspline import bspline_control_frame
 
 _HATCH_TPL = """0
 HATCH

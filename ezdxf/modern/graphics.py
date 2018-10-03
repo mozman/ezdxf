@@ -2,11 +2,12 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..legacy import graphics as r12graphics
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..tools.rgb import int2rgb, rgb2int
-from ..tools import float2transparency, transparency2float
+
+from ezdxf.legacy import graphics as r12graphics
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.tools.rgb import int2rgb, rgb2int
+from ezdxf.tools import float2transparency, transparency2float
 
 
 none_subclass = DefSubclass(None, {

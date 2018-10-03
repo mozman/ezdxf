@@ -1,12 +1,13 @@
 # Purpose: tables contained in tables sections
 # Created: 13.03.2011
-# Copyright (C) , Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..tools.c23 import isstring
-from ..lldxf.types import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
+
+from ezdxf.tools.c23 import isstring
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
 
 TABLENAMES = {
     'LAYER': 'LAYERS',

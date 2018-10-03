@@ -3,7 +3,9 @@
 # License: MIT License
 from __future__ import unicode_literals
 from itertools import chain
-from ..lldxf import const
+
+from ezdxf.lldxf import const
+
 from .polyfacebuilder import PolyfaceBuilder
 
 

@@ -1,6 +1,6 @@
 # Purpose: Define standard linetypes, text styles
 # Created: 23.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 
 

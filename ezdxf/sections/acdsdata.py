@@ -1,6 +1,6 @@
 # Purpose: acdsdata section manager
 # Created: 05.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 """
 ACDSDATA entities have NO handles, therefore they can not be stored in the drawing entity database.
@@ -75,11 +75,10 @@ section structure (work in progress):
 0 <str> ENDSEC
 """
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from itertools import islice
-from ..lldxf.tags import group_tags, Tags
-from ..lldxf.const import DXFKeyError, DXFStructureError
+
+from ezdxf.lldxf.tags import group_tags, Tags
+from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 
 class AcDsDataSection(object):

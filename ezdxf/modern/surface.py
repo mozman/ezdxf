@@ -2,7 +2,9 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFStructureError
+
+from ezdxf.lldxf.const import DXFStructureError
+
 from .graphics import none_subclass, entity_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags
 from .solid3d import Body, modeler_geometry_subclass
 from . import matrix_accessors

@@ -1,6 +1,6 @@
 # Purpose: Python 2/3 compatibility layer
 # Created: 12.05.13
-# Copyright (C) 2013, Manfred Moitzi
+# Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
 
 import sys

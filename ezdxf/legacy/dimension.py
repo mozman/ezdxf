@@ -2,9 +2,11 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import DXFInternalEzdxfError
+from ezdxf.lldxf import const
+
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
-from ..lldxf.const import DXFInternalEzdxfError
-from ..lldxf import const
 
 _DIMENSION_TPL = """0
 DIMENSION

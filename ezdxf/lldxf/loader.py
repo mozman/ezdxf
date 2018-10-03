@@ -4,11 +4,13 @@
 # License: MIT License
 from __future__ import unicode_literals
 import logging
+
 from .const import DXFStructureError
 from .tags import group_tags
 from .extendedtags import ExtendedTags
 from .validator import entity_structure_validator
-from .. import options
+
+from ezdxf.options import options
 
 logger = logging.getLogger('ezdxf')
 

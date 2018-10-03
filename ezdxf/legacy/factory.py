@@ -3,6 +3,9 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import DXFValueError, DXFKeyError
+
 from . import tableentries
 from . import graphics
 from . import polyline
@@ -13,9 +16,8 @@ from . import block
 from . import insert
 from . import dimension
 from . import viewport
-
 from .layouts import DXF12Layouts, DXF12BlockLayout
-from ..lldxf.const import DXFValueError, DXFKeyError
+
 
 
 ENTITY_WRAPPERS = {

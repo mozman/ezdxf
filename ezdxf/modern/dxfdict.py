@@ -2,11 +2,14 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFKeyError
+
+from ezdxf.lldxf.const import DXFKeyError
+from ezdxf.lldxf.packedtags import TagDict
+from ezdxf.lldxf import loader
+
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, ExtendedTags
 from .dxfobjects import none_subclass
-from ..lldxf.packedtags import TagDict
-from ..lldxf import loader
+
 
 
 @loader.register('ACDBDICTIONARYWDFLT', legacy=False)

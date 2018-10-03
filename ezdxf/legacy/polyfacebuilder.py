@@ -2,7 +2,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.const import VERTEXNAMES
+from ezdxf.lldxf.const import VERTEXNAMES
 
 
 class PolyfaceBuilder(object):

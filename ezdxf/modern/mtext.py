@@ -4,13 +4,15 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 import math
+
+from ezdxf.algebra.vector import Vector
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.tags import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf import const
+from ezdxf.lldxf.const import DXFValueError
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..algebra.vector import Vector
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.tags import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf import const
-from ..lldxf.const import DXFValueError
 
 _MTEXT_TPL = """0
 MTEXT

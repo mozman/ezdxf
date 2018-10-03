@@ -2,12 +2,14 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf import loader
+from ezdxf.lldxf.packedtags import TagList
+from ezdxf.tools.c23 import isstring
+
 from .dxfobjects import ExtendedTags, DefSubclass, DXFAttributes
 from .dxfobjects import none_subclass, DXFObject
-from ..lldxf.const import DXFValueError
-from ..lldxf import loader
-from ..lldxf.packedtags import TagList
-from ..tools.c23 import isstring
 
 _LAYER_FILTER_TPL = """0
 LAYER_FILTER

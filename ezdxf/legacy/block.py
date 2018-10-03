@@ -2,8 +2,10 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import LAYOUT_NAMES
+
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.const import LAYOUT_NAMES
 
 _BLOCK_TPL = """0
 BLOCK

@@ -1,9 +1,8 @@
 # Purpose: DXF drawing templates
 # Created: 16.07.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
 import os
 import io

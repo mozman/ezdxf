@@ -1,6 +1,6 @@
 # Purpose: Standard definitions
 # Created: 08.07.2015
-# Copyright (C) 2015, Manfred Moitzi
+# Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
 
 # pattern type: predefined (1)

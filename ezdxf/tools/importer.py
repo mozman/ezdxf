@@ -1,6 +1,6 @@
 # Purpose: Import data from another DXF drawing
 # Created: 27.04.13
-# Copyright (C) 2013, Manfred Moitzi
+# Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
 
 from ezdxf.query import name_query

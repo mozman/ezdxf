@@ -2,13 +2,15 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
 from .types import tuples_to_tags
 from .tags import Tags,  DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from .types import is_app_data_marker, is_embedded_object_marker
-from ..tools.c23 import isstring
 from .tagger import internal_tag_compiler
+
+from ezdxf.tools.c23 import isstring
 
 
 class ExtendedTags(object):

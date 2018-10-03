@@ -1,9 +1,8 @@
 # Purpose: decode/encode DXF proprietary data
 # Created: 01.05.2014
-# Copyright (C) 2014, Manfred Moitzi
+# Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
 
 from .c23 import PY3
 

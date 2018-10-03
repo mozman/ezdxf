@@ -5,14 +5,16 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 import array
 from itertools import chain
+
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError
+from ezdxf.lldxf.packedtags import TagArray, VertexArray, TagList
+from ezdxf.tools import take2
+from ezdxf.lldxf import loader
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.types import DXFTag
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf.const import DXFStructureError, DXFValueError
-from ..lldxf.packedtags import TagArray, VertexArray, TagList
-from ..tools import take2
-from ..lldxf import loader
 
 
 class MeshVertexArray(VertexArray):

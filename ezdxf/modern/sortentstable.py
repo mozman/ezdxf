@@ -2,9 +2,11 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
 from __future__ import unicode_literals
-from ..lldxf.types import DXFTag
+
+from ezdxf.lldxf.types import DXFTag
+from ezdxf.tools import take2
+
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
-from ..tools import take2
 
 _SORT_ENTITIES_TABLE_CLS = """0
 CLASS

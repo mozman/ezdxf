@@ -2,12 +2,15 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import VERTEXNAMES
+
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
-from ..lldxf.const import VERTEXNAMES
 
 
 class QuadrilateralMixin(object):
     __slots__ = ()
+
     def __getitem__(self, num):
         return self.get_dxf_attrib(VERTEXNAMES[num])
 

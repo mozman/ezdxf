@@ -2,7 +2,9 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..lldxf.const import DXFStructureError
+
+from ezdxf.lldxf.const import DXFStructureError
+
 from .dxfobjects import none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, DXFObject
 from .object_manager import ObjectManager
 from . import matrix_accessors

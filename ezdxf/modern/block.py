@@ -2,7 +2,9 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ..legacy import block
+
+from ezdxf.legacy import block
+
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, ModernGraphicEntityExtension, ModernGraphicEntity
 

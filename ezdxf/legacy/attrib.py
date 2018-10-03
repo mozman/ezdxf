@@ -2,11 +2,12 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf import const
+from ezdxf.tools import set_flag_state
+
 from .graphics import ExtendedTags, make_attribs, DXFAttr
 from .text import Text
-from ..lldxf import const
-from ..tools import set_flag_state
-
 
 _ATTRIB_TPL = """0
 ATTRIB

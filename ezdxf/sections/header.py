@@ -1,20 +1,17 @@
 # Purpose: manage header section
 # Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from collections import OrderedDict
 
-from ..tools.c23 import ustr
-from ..lldxf.types import strtag
-from ..lldxf.tags import group_tags, Tags
-from ..lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
-from ..lldxf.validator import header_validator
-
-from ..legacy.headervars import VARMAP as VARMAP_R12
-from ..modern.headervars import VARMAP as VARMAP_R13
+from ezdxf.tools.c23 import ustr
+from ezdxf.lldxf.types import strtag
+from ezdxf.lldxf.tags import group_tags, Tags
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
+from ezdxf.lldxf.validator import header_validator
+from ezdxf.legacy.headervars import VARMAP as VARMAP_R12
+from ezdxf.modern.headervars import VARMAP as VARMAP_R13
 
 MIN_HEADER_TEXT = """  0
 SECTION

@@ -2,13 +2,15 @@
 # Copyright (C) 2016-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.dxfentity import DXFEntity
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.types import DXFVertex
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf import const
+
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
-from ..dxfentity import DXFEntity
-from ..lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ..lldxf.types import DXFVertex
-from ..lldxf.tags import Tags
-from ..lldxf.extendedtags import ExtendedTags
-from ..lldxf import const
 
 _PDFUNDERLAY_CLS = """0
 CLASS

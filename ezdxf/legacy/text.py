@@ -2,9 +2,11 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
+
+from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf import const
+
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
-from ..lldxf.const import DXFValueError
-from ..lldxf import const
 
 _TEXT_TPL = """0
 TEXT
