@@ -3,7 +3,7 @@
 # Copyright (C) 2017, Manfred Moitzi
 # License: MIT License
 
-from .lldxf.const import DXFValueError, DXFAttributeError
+from ezdxf.lldxf.const import DXFValueError, DXFAttributeError
 
 
 def groupby(entities, dxfattrib='', key=None):

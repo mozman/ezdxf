@@ -6,20 +6,20 @@ from datetime import datetime
 import io
 import logging
 from itertools import chain
-from .database import EntityDB
-from .lldxf.const import DXFVersionError, acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
-from .lldxf.loader import load_dxf_structure, fill_database
-from .dxffactory import dxffactory
-from .templates import TemplateLoader
-from .options import options
-from .tools.codepage import tocodepage, toencoding
-from .sections import Sections
-from .tools.juliandate import juliandate
-from .lldxf import repair
-from .tools import guid
-from .tracker import Tracker
-from .query import EntityQuery
-from .groupby import groupby
+from ezdxf.database import EntityDB
+from ezdxf.lldxf.const import DXFVersionError, acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
+from ezdxf.lldxf.loader import load_dxf_structure, fill_database
+from ezdxf.dxffactory import dxffactory
+from ezdxf.templates import TemplateLoader
+from ezdxf.options import options
+from ezdxf.tools.codepage import tocodepage, toencoding
+from ezdxf.sections import Sections
+from ezdxf.tools.juliandate import juliandate
+from ezdxf.lldxf import repair
+from ezdxf.tools import guid
+from ezdxf.tracker import Tracker
+from ezdxf.query import EntityQuery
+from ezdxf.groupby import groupby
 logger = logging.getLogger('ezdxf')
 
 

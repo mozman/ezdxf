@@ -3,8 +3,8 @@
 # License: MIT License
 from __future__ import unicode_literals
 import math
-from .lldxf import const
-from .lldxf.const import DXFValueError, DXFVersionError, DXFKeyError
+from ezdxf.lldxf import const
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 

@@ -4,11 +4,11 @@
 # License: MIT License
 
 import io
-from .drawing import Drawing
-from .tools.zipmanager import ctxZipReader
-from .lldxf.tags import dxf_info
-from .lldxf.validator import is_dxf_file
-from .tools.codepage import is_supported_encoding
+from ezdxf.drawing import Drawing
+from ezdxf.tools.zipmanager import ctxZipReader
+from ezdxf.lldxf.tags import dxf_info
+from ezdxf.lldxf.validator import is_dxf_file
+from ezdxf.tools.codepage import is_supported_encoding
 
 
 def new(dxfversion='AC1009'):

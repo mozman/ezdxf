@@ -5,8 +5,8 @@
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
-from .legacy import LegacyDXFFactory
-from .modern import ModernDXFFactory
+from ezdxf.legacy import LegacyDXFFactory
+from ezdxf.modern import ModernDXFFactory
 
 
 def dxffactory(drawing):

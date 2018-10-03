@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
 from contextlib import contextmanager
-from .lldxf.const import DXFValueError
+from ezdxf.lldxf.const import DXFValueError
 
 
 def rnd(x):  # adjust output precision of floats by changing 'ndigits'

@@ -5,9 +5,9 @@
 from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 
-from .tools.handle import HandleGenerator
-from .lldxf.const import DXFValueError
-from .lldxf.tags import DXFTag
+from ezdxf.tools.handle import HandleGenerator
+from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf.tags import DXFTag
 
 
 class EntityDB(object):

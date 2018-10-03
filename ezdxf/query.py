@@ -6,9 +6,9 @@
 import re
 import operator
 
-from .tools.c23 import isstring, Sequence
-from .queryparser import EntityQueryParser
-from .groupby import groupby
+from ezdxf.tools.c23 import isstring, Sequence
+from ezdxf.queryparser import EntityQueryParser
+from ezdxf.groupby import groupby
 
 
 class EntityQuery(Sequence):
