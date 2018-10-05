@@ -536,7 +536,7 @@ class Grid(object):
         rtop = (right, top)
         rbot = (right, bottom)
         layout.add_solid(
-            points=(ltop, lbot, rbot, rtop),
+            points=(ltop, lbot, rtop, rbot),
             dxfattribs={
                 'color': style['bgcolor'],
                 'layer': self.table.bglayer,
