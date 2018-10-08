@@ -226,7 +226,7 @@ VTX_3D_POLYFACE_MESH_VERTEX    128     polyface mesh vertex
 
 .. attribute:: Vertex.dxf.tangent
 
-urve fit tangent direction (float)
+curve fit tangent direction (float)
 
 .. attribute:: Vertex.dxf.vtx1
 
