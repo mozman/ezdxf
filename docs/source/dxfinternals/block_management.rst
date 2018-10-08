@@ -15,7 +15,7 @@ The :code:`(10, base_point)` tag (in BLOCK defines a insertion point of the bloc
 the INSERT entity, this point of the block is placed at the location defined by the :code:`(10, insert)` tag in
 the INSERT entity, and it is also the base point for stretching and rotation.
 
-A block defintion can contain INSERT entities, and it is possible to create cyclic block definitions (a
+A block definition can contain INSERT entities, and it is possible to create cyclic block definitions (a
 BLOCK contains a INSERT of itself), but this should be avoided, CAD applications will not load the DXF file at all or
 maybe just crash. This is also the case for all other kinds of cyclic definitions like: BLOCK 'A' -> INSERT BLOCK 'B'
 and BLOCK 'B' -> INSERT BLOCK 'A'.
@@ -271,7 +271,7 @@ DXF R13 BLOCK_RECORD structure:
     ...
     0           <<< next BLOCK_RECORD
     BLOCK_RECORD
-    5           <<< handle of BLOCK_RECORD, in ezdxf often refered as 'layout key'
+    5           <<< handle of BLOCK_RECORD, in ezdxf often referred as 'layout key'
     238
     330         <<< owner of the BLOCK_RECORD is the BLOCK_RECORD table
     1

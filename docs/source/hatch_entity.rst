@@ -90,7 +90,7 @@ Context manager to edit hatch pattern data, yields a :class:`PatternData` object
 
 .. method:: Hatch.set_pattern_definition(lines)
 
-Setup hatch patten definition by a list of definition lines and a definition line is a 4-tuple [angle, base_point,
+Setup hatch pattern definition by a list of definition lines and a definition line is a 4-tuple [angle, base_point,
 offset, dash_length_items]
 
 - *angle*: line angle in degrees
