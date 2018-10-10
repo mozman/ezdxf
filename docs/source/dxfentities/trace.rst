@@ -21,7 +21,7 @@ location of the 1. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Trace.dxf.vtx1
 
-location of the 2. point (2D/3D Pointin :ref:`OCS`)
+location of the 2. point (2D/3D Point in :ref:`OCS`)
 
 .. attribute:: Trace.dxf.vtx2
 
