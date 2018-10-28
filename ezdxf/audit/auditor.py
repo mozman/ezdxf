@@ -13,8 +13,6 @@ from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.dxfentity import DXFEntity
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
-CLASSES_SECTION_VALID_GROUP_CODES_AC1015 = {0, 1, 2, 3, 90, 280, 281}
-CLASSES_SECTION_VALID_GROUP_CODES_AC1018 = {0, 1, 2, 3, 90, 91, 280, 281}
 
 
 class ErrorEntry(object):
@@ -253,10 +251,10 @@ class Auditor(object):
                 self.undefined_targets.add(handle)
 
     def check_classes_section(self):
-        def check_invalid_group_codes(codes):
+        def check_invalid_group_codes(valid_codes):
             def find_invalid_group_code(tags):
                 for code, value in tags.noclass:
-                    if code not in codes:
+                    if code not in valid_codes:
                         return code
                 return None
 
@@ -272,7 +270,6 @@ class Auditor(object):
         if dxfversion <= 'AC1009':
             return
         if dxfversion < 'AC1018':
-            check_invalid_group_codes(CLASSES_SECTION_VALID_GROUP_CODES_AC1015)
+            check_invalid_group_codes(valid_codes={0, 1, 2, 3, 90, 280, 281})
         else:
-            check_invalid_group_codes(CLASSES_SECTION_VALID_GROUP_CODES_AC1018)
-
+            check_invalid_group_codes(valid_codes={0, 1, 2, 3, 90, 91, 280, 281})
