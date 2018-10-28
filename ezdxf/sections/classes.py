@@ -18,6 +18,9 @@ class ClassesSection(object):
         if entities is not None:
             self._build(iter(entities))
 
+    def __iter__(self):
+        return (cls for cls in self.classes.values())
+
     def _build(self, entities):
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'CLASSES'):

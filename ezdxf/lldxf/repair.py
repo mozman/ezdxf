@@ -283,7 +283,7 @@ COORDINATE_FIXING_TOOLBOX = {
 
 def fix_classes(dwg):
     def remove_group_code_91():
-        for cls in dwg.sections.classes.classes.values():
+        for cls in dwg.sections.classes:
             xtags = cls.tags
             xtags.noclass.remove_tags((91,))
 

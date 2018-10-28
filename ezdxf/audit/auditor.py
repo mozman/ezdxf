@@ -13,6 +13,8 @@ from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.dxfentity import DXFEntity
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
+CLASSES_SECTION_VALID_GROUP_CODES_AC1015 = {0, 1, 2, 3, 90, 280, 281}
+CLASSES_SECTION_VALID_GROUP_CODES_AC1018 = {0, 1, 2, 3, 90, 91, 280, 281}
 
 
 class ErrorEntry(object):
@@ -251,19 +253,26 @@ class Auditor(object):
                 self.undefined_targets.add(handle)
 
     def check_classes_section(self):
-        def check_invalid_group_code_91():
-            def has_invalid_group_code_91(tags):
-                return tags.noclass.get_first_value(91, default=None) is not None
+        def check_invalid_group_codes(codes):
+            def find_invalid_group_code(tags):
+                for code, value in tags.noclass:
+                    if code not in codes:
+                        return code
+                return None
 
-            for cls in self.drawing.sections.classes.classes.values():
-                if has_invalid_group_code_91(cls.tags):
+            for cls in self.drawing.sections.classes:
+                invalid_code = find_invalid_group_code(cls.tags)
+                if invalid_code is not None:
                     self.add_error(
-                        code=Error.INVALID_GROUP_CODE_91_IN_CLASS_DEFINITION,
-                        message='Invalid group code 91 in CLASS definition: {}.'.format(cls.dxf.name),
+                        code=Error.INVALID_GROUP_CODE_IN_CLASS_DEFINITION,
+                        message='Invalid group code {} in CLASS definition: {}.'.format(invalid_code, cls.dxf.name),
                     )
 
         dxfversion = self.drawing.dxfversion
-        if dxfversion < 'AC1009':
+        if dxfversion <= 'AC1009':
             return
         if dxfversion < 'AC1018':
-            check_invalid_group_code_91()
+            check_invalid_group_codes(CLASSES_SECTION_VALID_GROUP_CODES_AC1015)
+        else:
+            check_invalid_group_codes(CLASSES_SECTION_VALID_GROUP_CODES_AC1018)
+
