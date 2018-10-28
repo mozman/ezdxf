@@ -29,11 +29,23 @@ class ClassesSection(object):
     def register(self, classes):
         if classes is None:
             return
+
+        # instance count is not supported before AC1018
+        if self.drawing is not None:
+            remove_instance_count = self.drawing.dxfversion < 'AC1018'
+        else:
+            remove_instance_count = False
+
+        def filter_instance_count(xtags):
+            if remove_instance_count:
+                xtags.noclass.remove_tags((91, ))
+
         if not isinstance(classes, tuple):
             classes = (classes, )
         for class_tags in classes:
             dxftype = class_tags.noclass.get_first_value(1)
             if dxftype not in self.classes:
+                filter_instance_count(class_tags)
                 self.classes[dxftype] = DXFClass(class_tags, self.drawing)
 
     def write(self, tagwriter):

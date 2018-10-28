@@ -33,7 +33,8 @@ Version 0.8.9 - dev
       no interpretation no modification, just enough to not break DXF files with embedded objects at saving.
     - CHANGE: Drawing.blocks.delete_block(name, safe=True), new parameter save, check if block is still referenced
       (raises DXFValueError)
-    - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), new parameter save, ignores blocks still referenced if safe is True
+    - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), if parameter safe is True, do not delete blocks that are still referenced
+    - BUGFIX: invalid CLASS definition for DXF version R2000 (AC1015) fixed, bug was only triggered at upgrading from R13/R14 to R2000
     - `Basic` read support for almost all missing DXF entities/objects
 
         - ACAD_PROXY_GRAPHIC
