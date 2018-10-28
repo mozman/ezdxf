@@ -397,6 +397,10 @@ class Drawing(object):
             handles = True
         if self.dxfversion > 'AC1009':
             self._register_required_classes()
+            if self.dxfversion < 'AC1018':
+                # remove unsupported group code 91
+                repair.fix_classes(self)
+
         self._create_appids()
         self._update_metadata()
         tagwriter = TagWriter(stream, write_handles=handles)

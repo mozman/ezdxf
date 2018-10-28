@@ -281,6 +281,20 @@ COORDINATE_FIXING_TOOLBOX = {
 }
 
 
+def fix_classes(dwg):
+    def remove_group_code_91():
+        for cls in dwg.sections.classes.classes.values():
+            xtags = cls.tags
+            xtags.noclass.remove_tags((91,))
+
+    if dwg.dxfversion <= 'AC1009':  # DXF R12 and prior has no CLASSES
+        return
+
+    if dwg.dxfversion < 'AC1018':
+        # remove group code 91, which is not supported prior to AC1018
+        remove_group_code_91()
+
+
 _MODEL_SPACE_LAYOUT_TPL = """  0
 LAYOUT
   5

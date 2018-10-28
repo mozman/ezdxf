@@ -87,6 +87,7 @@ class Auditor(object):
         dxfversion = self.drawing.dxfversion
         if dxfversion > 'AC1009':  # modern style DXF13 or later
             self.check_root_dict()
+            self.check_classes_section()
         self.check_table_entries()
         self.check_database_entities()
         return self.errors
@@ -248,3 +249,21 @@ class Auditor(object):
                     data=DXFTag(-1, handle),  # DXFTag is expected
                 )
                 self.undefined_targets.add(handle)
+
+    def check_classes_section(self):
+        def check_invalid_group_code_91():
+            def has_invalid_group_code_91(tags):
+                return tags.noclass.get_first_value(91, default=None) is not None
+
+            for cls in self.drawing.sections.classes.classes.values():
+                if has_invalid_group_code_91(cls.tags):
+                    self.add_error(
+                        code=Error.INVALID_GROUP_CODE_91_IN_CLASS_DEFINITION,
+                        message='Invalid group code 91 in CLASS definition: {}.'.format(cls.dxf.name),
+                    )
+
+        dxfversion = self.drawing.dxfversion
+        if dxfversion < 'AC1009':
+            return
+        if dxfversion < 'AC1018':
+            check_invalid_group_code_91()
