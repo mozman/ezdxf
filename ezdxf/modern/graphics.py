@@ -19,7 +19,13 @@ entity_subclass = DefSubclass('AcDbEntity', {
     'paperspace': DXFAttr(67, default=0),  # 0 .. modelspace, 1 .. paperspace
     'layer': DXFAttr(8, default='0'),  # layername as string
     'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
-    'lineweight': DXFAttr(370),  # lineweight enum value. Stored and moved around as a 16-bit integer
+    'lineweight': DXFAttr(370),  # Stored and moved around as a 16-bit integer
+    # Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
+    # outside this range prevents AutoCAD from loading the file.
+    # Special values:
+    # LINEWEIGHT_BYLAYER = -1
+    # LINEWEIGHT_BYBLOCK = -2
+    # LINEWEIGHT_DEFAULT = -3
     'ltscale': DXFAttr(48, default=1.0),  # linetype scale
     'invisible': DXFAttr(60, default=0),  # invisible .. 1, visible .. 0
     'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
