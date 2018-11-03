@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Purpose: support for the Ac1015 DIMENSION entity
 # Created: 09.03.2016
 # Copyright (C) 2016, Manfred Moitzi

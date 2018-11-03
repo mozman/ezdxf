@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Purpose: DXF 12 graphics entities
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi

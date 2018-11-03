@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Purpose: dimension lines as composite entities build with basic dxf entities, but not the DIMENSION entity.
 # Created: 10.03.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
