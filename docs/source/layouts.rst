@@ -100,41 +100,41 @@ Create New Entities
 
 .. method:: Layout.add_point(location, dxfattribs=None)
 
-   Add a :class:`Point` element at `location`.
+   Add a :class:`Point` element at `location` as (x, y[, z]) tuple. (2D/3D Point in :ref:`WCS`).
 
 .. method:: Layout.add_line(start, end, dxfattribs=None)
 
    Add a :class:`Line` element, starting at 2D/3D point `start` and ending at
-   the 2D/3D point `end`.
+   the 2D/3D point `end`. Start and end point are (x, y[, z]) tuple.
 
 .. method:: Layout.add_circle(center, radius, dxfattribs=None)
 
-   Add a :class:`Circle` element, `center` is 2D/3D point, `radius` in drawing
+   Add a :class:`Circle` element, `center` is a 2D/3D point as (x, y[, z]) tuple, `radius` in drawing
    units.
 
 .. method:: Layout.add_ellipse(center, major_axis=(1, 0, 0), ratio=1, start_param=0, end_param=6.283185307, dxfattribs=None)
 
-   Add an :class:`Ellipse` element, `center` is 2D/3D point, `major_axis` as vector, `ratio` is the ratio of minor axis
-   to major axis, `start_param` and `end_param` defines start and end point of the ellipse, a full ellipse goes from 0
-   to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction.
+   Add an :class:`Ellipse` element, `center` is a 2D/3D point as (x, y[, z]) tuple, `major_axis` as vector, `ratio` is
+   the ratio of minor axis to major axis, `start_param` and `end_param` defines start and end point of the ellipse, a
+   full ellipse goes from 0 to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction.
 
 .. method:: Layout.add_arc(center, radius, start_angle, end_angle, is_counter_clockwise=True, dxfattribs=None)
 
-   Add an :class:`Arc` element, `center` is 2D/3D point, `radius` in drawing
+   Add an :class:`Arc` element, `center` is a 2D/3D point as (x, y[, z]) tuple, `radius` in drawing
    units, `start_angle` and `end_angle` in degrees. The arc goes from start_angle to end_angle in *counter clockwise*
    direction by default, set parameter `is_counter_clockwise` to False for *clockwise* orientation.
 
 .. method:: Layout.add_solid(points, dxfattribs=None)
 
-   Add a :class:`Solid` element, `points` is list of 3 or 4 2D/3D points.
+   Add a :class:`Solid` element, `points` is list of 3 or 4 2D/3D points as (x, y[, z]) tuple.
 
 .. method:: Layout.add_trace(points, dxfattribs=None)
 
-   Add a :class:`Trace` element, `points` is list of 3 or 4 2D/3D points.
+   Add a :class:`Trace` element, `points` is list of 3 or 4 2D/3D points as (x, y[, z]) tuple.
 
 .. method:: Layout.add_3dface(points, dxfattribs=None)
 
-   Add a :class:`3DFace` element, `points` is list of 3 or 4 2D/3D points.
+   Add a :class:`3DFace` element, `points` is list of 3 or 4 2D/3D points as (x, y[, z]) tuple.
 
 .. method:: Layout.add_text(text, dxfattribs=None)
 
@@ -143,12 +143,12 @@ Create New Entities
 .. method:: Layout.add_blockref(name, insert, dxfattribs=None)
 
    Add an :class:`Insert` element, `name` is the block name, `insert` is a
-   2D/3D point.
+   2D/3D point as (x, y[, z]) tuple.
 
 .. method:: Layout.add_auto_blockref(name, insert, values, dxfattribs=None)
 
    Add an :class:`Insert` element, `name` is the block name, `insert` is a
-   2D/3D point. Add :class:`Attdef`, defined in the block definition,
+   2D/3D point as (x, y[, z]) tuple. Add :class:`Attdef`, defined in the block definition,
    automatically as :class:`Attrib` to the block reference, and set text of
    :class:`Attrib`. `values` is a dict with key=tag, value=text values.
    The :class:`Attrib` elements are placed relative to the insert point =
@@ -161,11 +161,11 @@ Create New Entities
 
 .. method:: Layout.add_polyline2d(points, dxfattribs=None)
 
-   Add a :class:`Polyline` element, `points` is list of 2D points.
+   Add a :class:`Polyline` element, `points` is list of 2D points as (x, y) tuple.
 
 .. method:: Layout.add_polyline3d(points, dxfattribs=None)
 
-   Add a :class:`Polyline` element, `points` is list of 3D points.
+   Add a :class:`Polyline` element, `points` is list of 3D points as (x, y, z) tuple.
 
 .. method:: Layout.add_polymesh(size=(3, 3), dxfattribs=None)
 
@@ -195,7 +195,7 @@ Create New Entities
 
 .. method:: Layout.add_ray(start, unit_vector, dxfattribs=None)
 
-   Add a :class:`Ray` that starts at a point and continues to infinity (construction line).
+   Add a :class:`Ray` that begins at start point, *start* as (x, y, z) tuple, and continues to infinity (construction line).
    (requires DXF version AC1015 or later)
 
 .. method:: Layout.add_xline(start, unit_vector, dxfattribs=None)
