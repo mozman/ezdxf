@@ -12,14 +12,15 @@ Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 .. note::
 
    **Python 2** support will be dropped in *ezdxf* v0.9.0, because **Python 2** support get more and more annoying.
-   *ezdxf* v0.9.0 requires at least **Python 3.6**, because I want f-strings!
+   *ezdxf* v0.9.0 requires at least **Python 3.5**, I wanted *Python 3.6* because I would like to use f-strings, but
+   pypy is just at *Python 3.5* support level.
 
 Quick-Info
 ==========
 
 - *ezdxf* is a Python package to create new DXF files and read/modify/write existing DXF files
 - the intended audience are developers
-- requires at least CPython 3.6, because of more and more troubles with Python 2 support for Python 2 will be dropped
+- requires at least CPython 3.5, because of more and more troubles with Python 2, support for Python 2 will be dropped
   in *ezdxf* v0.9.0
 - OS independent
 - additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/2.0.1>`_
