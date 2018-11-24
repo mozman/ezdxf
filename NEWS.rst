@@ -34,7 +34,7 @@ Version 0.8.9 - dev
       (raises DXFValueError)
     - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), if parameter safe is True, do not delete blocks that are still referenced
     - BUGFIX: invalid CLASS definition for DXF version R2000 (AC1015) fixed, bug was only triggered at upgrading from R13/R14 to R2000
-    - `Basic` read support for almost all missing DXF entities/objects
+    - `Basic` read support for many missing DXF entities/objects
 
         - ACAD_PROXY_GRAPHIC
         - HELIX
@@ -59,17 +59,14 @@ Version 0.8.9 - dev
         - MATERIAL
         - MLEADERSTYLE
         - MLINESTYLE
-        - RENDER (todo)
-        - SECTION (todo)
         - SORTENTSTABLE
-        - SPATIAL_FILTER (todo)
         - SUN
         - SUNSTUDY (incomplete) (no real world DXF files with SUNSTUDY for testing available)
         - TABLESTYLE (incomplete)
         - VBA_PROJECT (no real world DXF files with embedded VBA for testing available)
-        - VISUALSTYLE (todo)
+        - VISUALSTYLE
         - WIPEOUTVARIABLES
-
+        - for all unsupported entities/objects exist only raw DXF tag support
 
 Version 0.8.8 - 2018-04-02
 

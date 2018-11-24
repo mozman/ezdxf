@@ -53,6 +53,7 @@ from .layer_filter import LayerFilter
 from .sortentstable import SortEntitiesTable
 from .dimassoc import DimAssoc
 from .vba_project import VBAProject
+from .visualstyle import VisualStyle
 
 from . import dxfobjects
 from . import dxfdict
@@ -160,6 +161,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'TOLERANCE': Tolerance,
     'WIPEOUT': Wipeout,
     'ACAD_TABLE': ACADTable,
+    'VISUALSTYLE': VisualStyle,
 }
 
 
