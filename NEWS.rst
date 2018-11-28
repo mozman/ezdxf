@@ -6,7 +6,7 @@ Version 0.8.9 - dev
 
     - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
     - IMPORTANT: Python 2 support will be dropped in ezdxf v0.9.0, because Python 2 support get more and more annoying.
-    - CHANGE: refactoring of internal tag representation for smaller memory footprint, but with some speed penalty
+    - CHANGE: refactoring of internal tag representation for a smaller memory footprint, but with some speed penalty
     - NEW: packed data for more memory efficient data storage for some entities
     - NEW: packed data for LWPOLYLINE points, faster __getitem__;  added __setitem__, __delitem__, insert() and append()
       methods; renamed discard_points() in clear(); removed get_rstrip_points() and ctx manager rstrip_points();
@@ -34,6 +34,7 @@ Version 0.8.9 - dev
       (raises DXFValueError)
     - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), if parameter safe is True, do not delete blocks that are still referenced
     - BUGFIX: invalid CLASS definition for DXF version R2000 (AC1015) fixed, bug was only triggered at upgrading from R13/R14 to R2000
+    - BUGFIX: fixed broken Viewport.AcDbViewport property
     - `Basic` read support for many missing DXF entities/objects
 
         - ACAD_PROXY_GRAPHIC

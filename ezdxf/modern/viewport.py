@@ -205,7 +205,7 @@ class Viewport(ModernGraphicEntity):
 
     @property
     def AcDbViewport(self):
-        return self.tags.sublasses[2]
+        return self.tags.subclasses[2]
 
     def get_next_viewport_id(self):
         current_id = Viewport.viewport_id
@@ -217,7 +217,7 @@ class Viewport(ModernGraphicEntity):
 
     def get_frozen_layer_entities(self):
         if self.drawing is None:
-            raise DXFAttributeError("'drawing' attribute is None, can not build DXF entities.")
+            raise DXFAttributeError("'drawing attribute is None, can not build DXF entities.")
         wrapper = self.dxffactory.wrap_handle
         return (wrapper(handle) for handle in self.get_frozen_layer_handles())
 
