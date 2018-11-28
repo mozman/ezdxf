@@ -213,17 +213,39 @@ class Viewport(ModernGraphicEntity):
         return current_id
 
     def get_frozen_layer_handles(self):
+        """
+        Returns generator of layer handels.
+
+        """
         return (tag.value for tag in self.AcDbViewport if tag.code == 331)
 
     def get_frozen_layer_entities(self):
+        """
+        Returns generator of Layer() objects.
+
+        """
         if self.drawing is None:
             raise DXFAttributeError("'drawing attribute is None, can not build DXF entities.")
         wrapper = self.dxffactory.wrap_handle
         return (wrapper(handle) for handle in self.get_frozen_layer_handles())
 
-    def set_frozen_layers(self, layer_handles):
+    def set_frozen_layers(self, layers):
+        """
+        Set frozen layers for this viewport.
+
+        Args:
+            layers: list or generator of layer handles or Layer() objects.
+
+        """
+        def layer_handles():
+            for layer in layers:
+                if hasattr(layer, 'dxf'):
+                    yield layer.dxf.handle
+                else:
+                    yield layer
+
         self.AcDbViewport.remove_tags([331])  # remove existing frozen layer tags
-        frozen_layer_tags = [DXFTag(331, handle) for handle in layer_handles]
+        frozen_layer_tags = [DXFTag(331, handle) for handle in layer_handles()]
         try:  # insert frozen layer tags in front of the flags-tag
             # try to create order like in the DXF standard, because order is sometimes important
             insert_pos = self.AcDbViewport.tag_index(90)
