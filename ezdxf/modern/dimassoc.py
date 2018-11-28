@@ -1,7 +1,6 @@
 # Created: 15.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
 # Autodesk gone crazy: subclass AcDbOsnapPointRef with group code 1!!!!!
 

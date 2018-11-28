@@ -2,7 +2,6 @@
 # Created: 11.08.2013
 # Copyright (c) 2013 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.new('ac1015')

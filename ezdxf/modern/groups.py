@@ -1,14 +1,12 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 from contextlib import contextmanager
 
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.dxfentity import DXFEntity
-from ezdxf.tools.c23 import isstring
 from ezdxf.lldxf.const import DXFValueError
 
 from .dxfobjects import none_subclass
@@ -64,7 +62,7 @@ class DXFGroup(DXFEntity):
         return sum(1 for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
     def __contains__(self, item):
-        handle = item if isstring(item) else item.dxf.handle
+        handle = item if isinstance(item, str) else item.dxf.handle
         return handle in set(self.handles())
 
     def handles(self):
@@ -168,7 +166,7 @@ class GroupManager(ObjectManager):
         Delete GROUP by name or Group() object.
 
         """
-        if isstring(group):  # delete group by name
+        if isinstance(group, str):  # delete group by name
             super(GroupManager, self).delete(group)
         else:  # group should be a DXFEntity
             group_handle = group.dxf.handle

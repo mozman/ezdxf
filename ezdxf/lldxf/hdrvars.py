@@ -2,7 +2,6 @@
 # Created: 20.11.2010
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 
 from .types import DXFVertex, DXFTag, cast_tag_value
 

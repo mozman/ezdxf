@@ -2,9 +2,6 @@
 # Created: 03.01.2018
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 import logging
 import io
 

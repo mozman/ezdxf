@@ -1,8 +1,6 @@
 # Created: 07.03.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.types import DXFVertex

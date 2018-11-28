@@ -2,7 +2,6 @@
 # Created: 06.12.2016
 # Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from .mesh import MeshBuilder, MeshVertexMerger
 
 all_cubes_size_3_template = [

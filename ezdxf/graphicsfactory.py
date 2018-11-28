@@ -1,7 +1,6 @@
 # Created: 10.03.2013
 # Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import math
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError

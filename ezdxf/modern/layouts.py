@@ -1,8 +1,6 @@
 # Created: 21.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.entityspace import EntitySpace
 from ezdxf.legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ezdxf.lldxf.extendedtags import ExtendedTags

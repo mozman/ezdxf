@@ -4,22 +4,9 @@
 # Created: 23.03.2010 for dxfwrite, added to ezdxf package on 2016-03-06
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
-
 # IMPORTANT: use only standard 7-Bit ascii code
 
-__author__ = "mozman <me@mozman.at>"
-
-import sys
-
-PYTHON3 = sys.version_info[0] > 2
-if PYTHON3:
-    from io import StringIO
-
-    unicode = str
-    basestring = str
-else:
-    from StringIO import StringIO
-
+from io import StringIO
 from array import array
 from struct import pack
 import zlib
@@ -94,7 +81,7 @@ def color_name(index):
 
 
 def get_bool(value):
-    if isinstance(value, basestring):
+    if isinstance(value, str):
         upperstr = value.upper()
         if upperstr == 'TRUE':
             value = True
@@ -111,7 +98,7 @@ class UserStyle(object):
             init_dict = {}
         self.parent = parent
         self.index = int(index)
-        self.description = unicode(init_dict.get('description', ""))
+        self.description = str(init_dict.get('description', ""))
         # do not set _color, _mode_color or _color_policy directly
         # use set_color() method, and the properties dithering and grayscale
         self._color = int(init_dict.get('color', OBJECT_COLOR))
@@ -397,13 +384,9 @@ class UserStyles(object):
         """Compress ctb-file-body and write it to <fileobj>."""
 
         def writestr(s):
-            if PYTHON3:
-                fileobj.write(s.encode())
-            else:
-                fileobj.write(s)
+            fileobj.write(s.encode())
 
-        if PYTHON3:
-            body = body.encode()
+        body = body.encode()
         comp_body = zlib.compress(body)
         adler_chksum = zlib.adler32(comp_body)
         writestr('PIAFILEVERSION_2.0,CTBVER1,compress\r\npmzlibcodec')
@@ -416,8 +399,7 @@ def read(fileobj):
     Returns a UserStyle object.
     """
     content = _decompress(fileobj)
-    if PYTHON3:
-        content = content.decode()
+    content = content.decode()
     styles = UserStyles()
     styles.parse(content)
     return styles

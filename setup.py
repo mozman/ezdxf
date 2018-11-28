@@ -1,22 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Created: 10.03.2011
 # Copyright (c) 2011-2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-import os, sys
+import os
 from setuptools import setup
 
-PY3 = sys.version_info.major > 2
 VERSION = "0.9.0-alpha"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'me@mozman.at'
-
-if PY3:
-    PACKAGE_DATA = {'ezdxf': ['templates/*.dxf', 'pp/*.html', 'pp/*.js', 'pp/*.css', ]}
-else:
-    # Python 2.7: package_data seems to be broken
-    # added required data to MANIFEST.in
-    PACKAGE_DATA = dict()
 
 
 def read(fname, until=""):
@@ -33,6 +24,7 @@ def read(fname, until=""):
     except IOError:
         return "File '%s' not found.\n" % fname
 
+
 setup(
     name='ezdxf',
     version=VERSION,
@@ -41,8 +33,7 @@ setup(
     url='https://ezdxf.mozman.at',
     download_url='https://pypi.org/project/ezdxf/',
     author_email=AUTHOR_EMAIL,
-    # for v0.9.0 set 'universal = 0' in setup.cfg
-    python_requires='>=2.7',
+    python_requires='>=3.5',
     packages=['ezdxf',
               'ezdxf.legacy',
               'ezdxf.modern',
@@ -55,7 +46,7 @@ setup(
               'ezdxf.algebra',
               'ezdxf.audit',
               ],
-    package_data=PACKAGE_DATA,
+    package_data={'ezdxf': ['templates/*.dxf', 'pp/*.html', 'pp/*.js', 'pp/*.css', ]},
     entry_points={
         'console_scripts': [
             'dxfpp = ezdxf.pp.__main__:main',  # DXF Pretty Printer
@@ -66,14 +57,13 @@ setup(
     tests_require=['pytest'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
-    long_description=read('README.rst')+read('NEWS.rst', until='Version 0.7.6'),
+    long_description=read('README.rst')+read('NEWS.rst', until='Version 0.7.9'),
     platforms="OS Independent",
     license="MIT License",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",

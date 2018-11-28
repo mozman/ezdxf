@@ -1,8 +1,6 @@
 # Created: 15.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
-
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.tools import take2
 

@@ -2,11 +2,9 @@
 # Created: 02.05.2014
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import zipfile
 from contextlib import contextmanager
 
-from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.tags import dxf_info
 from ezdxf.lldxf.validator import is_dxf_stream
 
@@ -59,7 +57,7 @@ class ZipReader(object):
     # interface to tagging layers
     def readline(self):
         next_line = self.dxf_file.readline().replace(WIN_NEW_LINE, NEW_LINE)
-        return ustr(next_line, self.encoding)
+        return str(next_line, self.encoding)
 
     def close(self):
         self.zip_archive.close()

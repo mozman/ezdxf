@@ -15,7 +15,7 @@ Quick-Info
 
 - ezdxf is a Python package to create new DXF files and read/modify/write existing DXF files
 - the intended audience are developers
-- requires at least CPython 3.5, support for Python 2 will be dropped with ezdxf v0.9.0
+- requires at least CPython 3.5, for Python 2 support use ezdxf < 0.9.0
 - OS independent
 - additional required packages: `pyparsing <https://pypi.org/project/pyparsing/>`_
 - MIT-License
@@ -63,6 +63,11 @@ Install with pip::
 Install develop version (only if you have to)::
 
     pip install git+https://github.com/mozman/ezdxf.git@develop
+
+For Python 2 users::
+
+    pip install ezdxf<0.9.0
+
 
 or from source::
 

@@ -1,7 +1,6 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass
 from .spline import Spline, spline_subclass

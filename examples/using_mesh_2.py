@@ -1,6 +1,5 @@
 # Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 
 # 8 corner vertices

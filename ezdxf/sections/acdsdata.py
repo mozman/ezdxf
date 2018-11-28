@@ -74,7 +74,6 @@ section structure (work in progress):
 
 0 <str> ENDSEC
 """
-from __future__ import unicode_literals
 from itertools import islice
 
 from ezdxf.lldxf.tags import group_tags, Tags

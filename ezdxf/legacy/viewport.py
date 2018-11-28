@@ -1,7 +1,6 @@
 # Created: 10.10.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from contextlib import contextmanager
 
 from ezdxf.lldxf.extendedtags import ExtendedTags

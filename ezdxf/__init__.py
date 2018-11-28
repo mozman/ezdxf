@@ -1,10 +1,6 @@
 # Created: 10.03.2011
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-import sys
-if sys.version_info[:2] < (2, 7):
-    raise ImportError("Package 'ezdxf' requires Python 2.7 or later!")
-
 # name space imports - do not remove
 from ezdxf.options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from ezdxf.tools.importer import Importer

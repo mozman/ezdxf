@@ -1,7 +1,6 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from collections import Counter, OrderedDict
 
 from ezdxf.lldxf.extendedtags import ExtendedTags

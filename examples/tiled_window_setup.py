@@ -1,7 +1,6 @@
 # Purpose: tiled window model space setup for AutoCAD
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 FILENAME = r'C:\Users\manfred\Desktop\Now\tiled_windows_R2000.dxf'
 # FILENAME = 'tiled_windows_R2000.dxf'

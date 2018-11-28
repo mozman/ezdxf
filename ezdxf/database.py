@@ -2,9 +2,6 @@
 # Created: 11.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf.tags import DXFTag

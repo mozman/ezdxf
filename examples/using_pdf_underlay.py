@@ -1,6 +1,5 @@
 # Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.new('AC1015')  # underlay requires the DXF R2000 format or newer

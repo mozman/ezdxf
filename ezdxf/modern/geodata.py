@@ -1,8 +1,6 @@
 # Created: 17.03.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
-
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.tags import multi_tags_to_text, text_to_multi_tags

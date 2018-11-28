@@ -2,11 +2,11 @@
 # Created: 17.01.2018
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
-"""Creates a structured HTML view of raw DXF tags - not a CAD drawing!
 """
-from __future__ import unicode_literals
+Creates a structured HTML view of raw DXF tags - not a CAD drawing!
+"""
 
-from ezdxf.tools.c23 import escape, ustr
+from ezdxf.tools import escape
 from ezdxf.lldxf.tags import group_tags
 from ezdxf.lldxf.types import GROUP_MARKERS, BINARY_FLAGS, HEX_HANDLE_CODES
 
@@ -24,7 +24,7 @@ def rawpp(tagger, filename):
         if tag.code in BINARY_FLAGS:
             vstr = with_bitmask(tag.value)
         else:
-            vstr = ustr(tag.value)
+            vstr = str(tag.value)
             if tag.code in HEX_HANDLE_CODES:
                 vstr = '#' + vstr
         if len(vstr) > MAX_STR_LEN:

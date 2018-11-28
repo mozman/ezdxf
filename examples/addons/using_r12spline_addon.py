@@ -2,7 +2,6 @@
 # Created: 01.03.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 from ezdxf.addons import R12Spline
 from ezdxf.algebra import Vector, Matrix44, UCS, OCS

@@ -1,6 +1,5 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import sys
 import ezdxf
 

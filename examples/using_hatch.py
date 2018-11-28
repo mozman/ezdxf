@@ -2,7 +2,6 @@
 # Created: 21.06.2015
 # Copyright (c) 2015 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 from ezdxf.algebra.bspline import knot_uniform, bspline_control_frame
 from ezdxf.lldxf import const

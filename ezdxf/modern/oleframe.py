@@ -1,6 +1,5 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity, DefSubclass, DXFAttr, DXFAttributes
 
 oleframe_subclass = DefSubclass('AcDbOleFrame', {

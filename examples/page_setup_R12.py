@@ -1,7 +1,6 @@
 # Purpose: setup initial viewport for a DXF drawing
 # Copyright (c) 2016-2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 # FILENAME = r'C:\Users\manfred\Desktop\Now\page_setup_R12.dxf'
 FILENAME = 'page_setup_R12.dxf'

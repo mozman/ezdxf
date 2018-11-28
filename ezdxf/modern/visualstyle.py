@@ -1,7 +1,6 @@
 # Created: 24.11.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 from .dxfobjects import DXFAttr, DefSubclass, DXFAttributes, ExtendedTags
 from .dxfobjects import none_subclass, DXFObject
 

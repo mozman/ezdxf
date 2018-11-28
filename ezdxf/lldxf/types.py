@@ -1,11 +1,11 @@
 # Created: 30.04.2014
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from array import array
 from itertools import chain
 
-from ezdxf.tools.c23 import ustr, reprlib, byte_to_hexstr, encode_hex_code_string_to_bytes
+from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
+import reprlib
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
 POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111, 112, 210, 1010, 1011, 1012, 1013, 1014, 1015, 1016,
@@ -194,11 +194,11 @@ def is_point_tag(tag):
 
 
 def cast_tag_value(code, value, types=TYPE_TABLE):
-    return types.get(code, ustr)(value)
+    return types.get(code, str)(value)
 
 
 def tag_type(code):
-    return TYPE_TABLE.get(code, ustr)
+    return TYPE_TABLE.get(code, str)
 
 
 def strtag(tag):

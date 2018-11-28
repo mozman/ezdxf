@@ -1,8 +1,6 @@
 # Created: 20.03.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.lldxf.const import DXFStructureError
 
 from .graphics import none_subclass, entity_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags

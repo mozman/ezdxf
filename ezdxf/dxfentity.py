@@ -1,7 +1,6 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFInvalidLayerName, DXFValueError
 from ezdxf.lldxf.validator import is_valid_layer_name

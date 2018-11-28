@@ -1,7 +1,6 @@
 # Created: 2011-04-30
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from itertools import chain
 
 from ezdxf.lldxf import const

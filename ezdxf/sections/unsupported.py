@@ -2,7 +2,6 @@
 # Created: 12.03.2011
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 
 
 class UnsupportedSection(object):

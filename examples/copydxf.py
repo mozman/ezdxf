@@ -2,7 +2,6 @@
 # Created: 12.03.2011
 # Copyright (c) , Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import sys
 import time
 import ezdxf

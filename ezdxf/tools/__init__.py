@@ -1,10 +1,12 @@
 # Created: 16.07.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from uuid import uuid1
+import functools
+import array
+import html
 
-from .c23 import ustr
+escape = functools.partial(html.escape, quote=True)
 
 
 def float2transparency(value):
@@ -24,7 +26,7 @@ def set_flag_state(flags, flag, state=True):
 
 
 def guid():
-    return ustr(uuid1()).upper()
+    return str(uuid1()).upper()
 
 
 def take2(iterable):
@@ -35,3 +37,13 @@ def take2(iterable):
         else:
             yield store, item
             store = None
+
+
+def encode_hex_code_string_to_bytes(data):
+    byte_array = array.array('B', (int(data[index:index+2], 16) for index in range(0, len(data), 2)))
+    return byte_array.tobytes()
+
+
+def byte_to_hexstr(byte):
+    return "%0.2X" % byte
+

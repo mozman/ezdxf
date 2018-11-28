@@ -2,11 +2,6 @@
 # Created: 01.05.2014
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
-from .c23 import PY3
-
-
 _decode_table = {
     0x20: ' ',
     0x40: '_',
@@ -20,10 +15,7 @@ def decode(text_lines):
     def _decode(text):
         dectab = _decode_table  # fast local var
         s = []
-        if PY3:
-            text = bytes(text, 'ascii')
-        else:
-            text = map(ord, text)
+        text = bytes(text, 'ascii')
         skip = False
         for c in text:
             if skip:
@@ -36,6 +28,7 @@ def decode(text_lines):
                 s += chr(c ^ 0x5F)
         return ''.join(s)
     return (_decode(line) for line in text_lines)
+
 
 _encode_table = {
     ' ': ' ',  # 0x20

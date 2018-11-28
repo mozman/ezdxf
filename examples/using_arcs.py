@@ -2,7 +2,6 @@
 # Created: 09.07.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 from ezdxf.algebra import Vector, Arc, UCS
 

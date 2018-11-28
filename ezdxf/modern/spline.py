@@ -1,7 +1,6 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from contextlib import contextmanager
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass

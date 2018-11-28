@@ -3,9 +3,6 @@
 # Created: 14.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from contextlib import contextmanager
 
 

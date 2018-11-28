@@ -1,7 +1,6 @@
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
 # Just one header var definition for all DXF version needed, because AutoCAD ignores unknown header vars
-from __future__ import unicode_literals
 from functools import partial
 
 from ezdxf.lldxf.hdrvars import SingleValue, Point2D, Point3D

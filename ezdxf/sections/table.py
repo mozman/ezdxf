@@ -2,9 +2,6 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
-from ezdxf.tools.c23 import isstring
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
@@ -40,7 +37,7 @@ class Table(object):
 
     @staticmethod
     def key(entity):
-        if not isstring(entity):
+        if not isinstance(entity, str):
             entity = entity.dxf.name
         return entity.lower()  # table key is lower case
 

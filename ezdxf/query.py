@@ -2,11 +2,10 @@
 # Created: 27.04.13
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
-
 import re
 import operator
 
-from ezdxf.tools.c23 import isstring, Sequence
+from collections.abc import Sequence
 from ezdxf.queryparser import EntityQueryParser
 from ezdxf.groupby import groupby
 
@@ -231,7 +230,7 @@ def _compile_tokens(tokens, ignore_case):
     def is_relation(tokens):
         return len(tokens) == 3 and tokens[1] in Relation.VALID_CMP_OPERATORS
 
-    if isstring(tokens):  # bool operator as string
+    if isinstance(tokens, str):  # bool operator as string
         return tokens
 
     tokens = tuple(tokens)

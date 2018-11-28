@@ -1,7 +1,7 @@
 # Created: 28.03.2011, 2018 rewritten for pytest
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
+
 from ezdxf.legacy.layouts import BaseLayout
 
 

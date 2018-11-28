@@ -2,11 +2,9 @@
 # Created: 14.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import logging
 
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError
-from ezdxf.tools.c23 import isstring
 from ezdxf.lldxf import const
 from ezdxf.lldxf.extendedtags import get_xtags_linker
 logger = logging.getLogger('ezdxf')
@@ -34,7 +32,7 @@ class BlocksSection(object):
 
     @staticmethod
     def key(entity):
-        if not isstring(entity):
+        if not isinstance(entity, str):
             entity = entity.name
         return entity.lower()  # block key is lower case
 

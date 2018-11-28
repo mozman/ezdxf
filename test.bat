@@ -10,9 +10,9 @@ ECHO ********************************************************
 CALL test37.bat
 
 ECHO ********************************************************
-ECHO Running pypy2 tests
+ECHO Running pypy3 tests
 ECHO ********************************************************
-CALL testpypy.bat
+CALL testpypy3.bat
 
 ECHO ********************************************************
 ECHO Running Python 3.6 integration tests with pytest
@@ -20,6 +20,6 @@ ECHO ********************************************************
 pytest integration_tests
 
 ECHO ********************************************************
-ECHO Running pypy2 integration tests with pytest
+ECHO Running pypy3 integration tests with pytest
 ECHO ********************************************************
-CALL pypy.bat -m pytest integration_tests
+CALL pypy3.bat -m pytest integration_tests

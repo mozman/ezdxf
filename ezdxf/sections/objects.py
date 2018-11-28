@@ -2,8 +2,6 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ezdxf.modern.groups import GroupManager
 from ezdxf.modern.material import MaterialManager

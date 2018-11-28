@@ -2,10 +2,8 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from collections import OrderedDict
 
-from ezdxf.tools.c23 import ustr
 from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
@@ -53,7 +51,7 @@ class CustomVars(object):
 
     def append(self, tag, value):
         # custom properties always stored as strings
-        self.properties.append((tag, ustr(value)))
+        self.properties.append((tag, str(value)))
 
     def get(self, tag, default=None):
         """ Get value of first occurrence of 'tag'.
@@ -160,7 +158,7 @@ class HeaderSection(object):
     def write(self, tagwriter):
         def _write(name, value):
             tagwriter.write_tag2(9, name)
-            tagwriter.write_str(ustr(value))
+            tagwriter.write_str(str(value))
 
         if self.get('$ACADVER', 'AC1009') == 'AC1009' and self.get('$HANDLING', 1) == 0:
             write_handles = False

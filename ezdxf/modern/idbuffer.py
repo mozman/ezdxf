@@ -1,27 +1,22 @@
 # Created: 12.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 import array
 
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.packedtags import PackedTags, replace_tags
 from ezdxf.lldxf import loader
-from ezdxf.tools.c23 import PY3, isstring
 
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, none_subclass, ExtendedTags
 
 
 def convert(values):
     for value in values:
-        yield int(value, 16) if isstring(value) else value
+        yield int(value, 16) if isinstance(value, str) else value
 
 
 def new_array(values=None):
-    # Handles are 64bit values and Python2 does not support 64bit values in array, using list() instead of array() for
-    # Python 2. (removed when official Python 2 support ends at 01.01.2020)
-
-    a = array.array('Q') if PY3 else list()
+    a = array.array('Q')
     if values is not None:
         a.extend(convert(values))
     return a

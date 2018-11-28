@@ -171,7 +171,7 @@ class TestUserStylesImplementation(unittest.TestCase):
         styles._write_aci_table(fp)
         result = fp.getvalue()
         fp.close()
-        self.assertEqual(unicode(result), unicode(expected))
+        self.assertEqual(str(result), str(expected))
 
     def test_write_lineweights(self):
         expected = 'custom_lineweight_table{\n'\
@@ -186,7 +186,7 @@ class TestUserStylesImplementation(unittest.TestCase):
         styles._write_lineweights(fp)
         result = fp.getvalue()
         fp.close()
-        self.assertEqual(unicode(result), unicode(expected))
+        self.assertEqual(str(result), str(expected))
 
 
 class TestCtbImport(unittest.TestCase):

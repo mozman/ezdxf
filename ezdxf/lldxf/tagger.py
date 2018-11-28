@@ -2,13 +2,9 @@
 # Created: 10.04.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from .types import DXFTag, DXFVertex, DXFBinaryTag
 from .const import DXFStructureError
-from .types import POINT_CODES, TYPE_TABLE, ustr, BINARAY_DATA
-
-from ezdxf.tools.c23 import isstring
+from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
 
 
 def internal_tag_compiler(s):
@@ -23,7 +19,7 @@ def internal_tag_compiler(s):
     Yields: DXFTag() or inherited
 
     """
-    assert isstring(s)
+    assert isinstance(s, str)
     lines = s.split('\n')
     # split() creates an extra item, if s ends with '\n',
     # but lines[-1] can be an empty string!!!
@@ -54,7 +50,7 @@ def internal_tag_compiler(s):
         elif code in BINARAY_DATA:
             yield DXFBinaryTag.from_string(code, value)
         else:  # single value tag: int, float or string
-            yield DXFTag(code, TYPE_TABLE.get(code, ustr)(value))
+            yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
 def low_level_tagger(stream):
@@ -150,10 +146,10 @@ def tag_compiler(tagger):
             else:  # just a single tag
                 try:
                     # fast path!
-                    yield DXFTag(code, TYPE_TABLE.get(code, ustr)(x.value))
+                    yield DXFTag(code, TYPE_TABLE.get(code, str)(x.value))
                 except ValueError:  # internal exception
                     # slow path
-                    if TYPE_TABLE.get(code, ustr) is int:  # ProE stores int values as floats :((
+                    if TYPE_TABLE.get(code, str) is int:  # ProE stores int values as floats :((
                         try:
                             yield DXFTag(code, int(float(x.value)))
                         except ValueError:

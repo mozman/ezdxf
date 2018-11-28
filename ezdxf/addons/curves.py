@@ -2,7 +2,6 @@
 # Created: 26.03.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed

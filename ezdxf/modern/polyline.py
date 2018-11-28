@@ -1,8 +1,6 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf import loader

@@ -1,7 +1,6 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass
 
 _XRECORD_TPL = """  0

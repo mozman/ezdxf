@@ -2,7 +2,6 @@
 # Created: 27.12.2017
 # Copyright (C) 2017 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 
 dwg = ezdxf.new('R2018')

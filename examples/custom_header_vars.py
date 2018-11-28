@@ -2,7 +2,6 @@
 # Created: 13.04.2014
 # Copyright (c) , Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 
 

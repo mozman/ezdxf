@@ -2,7 +2,6 @@
 # Created: 09.03.2010, adapted 2018 for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 """
 MText -- MultiLine-Text-Entity, created by simple TEXT-Entities.
 

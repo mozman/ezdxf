@@ -1,7 +1,6 @@
 # Purpose: examples for using ellipse() add-on
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from math import radians
 import ezdxf
 from ezdxf.addons import ellipse

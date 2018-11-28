@@ -2,8 +2,7 @@
 # Created: 10.03.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-""" 
+"""
 Dimension lines as composite entities build with basic dxf entities, but not the DIMENSION entity.
 
 OBJECTS
@@ -26,7 +25,6 @@ dimstyles
 from math import radians, degrees, pi
 from abc import abstractmethod
 
-from ezdxf.tools.c23 import ustr
 from ezdxf.algebra.vector import Vector, distance, lerp
 from ezdxf.algebra.ray import Ray2D
 
@@ -110,7 +108,7 @@ class DimStyles(object):
         self.new(
             "angle.deg",
             scale=ANGLE_DEG,
-            suffix=ustr('°'),
+            suffix=str('°'),
             roundval=0,
             tick="DIMTICK_RADIUS",
             tick2x=True,

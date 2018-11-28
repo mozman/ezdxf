@@ -1,9 +1,6 @@
 # Created: 16.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
-from ezdxf.tools.c23 import isstring
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -148,7 +145,7 @@ class Linetype(legacy.Linetype):
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
     def _setup_pattern(self, pattern, length):
-        complex_line_type = True if isstring(pattern) else False
+        complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
             self._setup_complex_pattern(pattern, length)
         else:

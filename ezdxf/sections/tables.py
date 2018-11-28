@@ -2,8 +2,6 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError

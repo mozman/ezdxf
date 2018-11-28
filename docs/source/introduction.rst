@@ -35,9 +35,8 @@ What ezdxf is NOT
 Supported Python Versions
 -------------------------
 
-*ezdxf* requires at least Python 3.6. Python 2 support will be dropped in *ezdxf* v0.9.0, because Python 2 support get
-more and more annoying. I run unit tests with the latest stable CPython 3 version and the latest stable release of pypy
-during development.
+*ezdxf* requires at least Python 3.5, for Python 2 support use *ezdxf* < v0.9.0, I run unit tests with the latest
+stable CPython 3 version and the latest stable release of pypy3 during development.
 
 *ezdxf* is written in pure Python and requires only *pyparser* as additional library beside the Python Standard Library.
 *pytest* is required to run the provided unit and integration tests. Data to run the stress and audit test can not be

@@ -1,12 +1,8 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import array
 
-from ezdxf.tools.c23 import PY3
 from ezdxf.lldxf.types import DXFBinaryTag
-from ezdxf.tools.binarydata import array_to_bytes
-
 from .dxfobjects import DXFObject, none_subclass, DefSubclass, DXFAttr, DXFAttributes, ExtendedTags
 
 _VBA_PROJECT_TPL = """0
@@ -40,10 +36,8 @@ class VBAProject(DXFObject):
     def get_data(self):
         byte_array = array.array('B')
         for byte_data in (tag.value for tag in self.AcDbVbaProject if tag.code == 310):
-            if not PY3:
-                byte_data = (ord(b) for b in byte_data)
             byte_array.extend(byte_data)
-        return array_to_bytes(byte_array)
+        return byte_array.tobytes()
 
     def set_data(self, byte_data):
         self.clear()

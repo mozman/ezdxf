@@ -1,7 +1,6 @@
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.graphicsfactory import GraphicsFactory
 from ezdxf.entityspace import EntitySpace
 from ezdxf.query import EntityQuery

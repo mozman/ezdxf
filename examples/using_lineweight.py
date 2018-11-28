@@ -2,7 +2,6 @@
 # Created: 05.09.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import ezdxf
 
 LAYER_NAME = 'Lines'

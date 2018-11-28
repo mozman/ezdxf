@@ -2,7 +2,6 @@
 # Created: 03.02.2017
 # Copyright (c) 2017 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import os
 import glob
 import math

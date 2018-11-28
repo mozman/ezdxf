@@ -1,8 +1,6 @@
 # Created: 12.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
-
 from .dxfobjects import DefSubclass, DXFAttr, DXFAttributes, none_subclass, ExtendedTags
 from .idbuffer import IDBuffer, PackedHandles, replace_tags
 

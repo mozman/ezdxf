@@ -1,8 +1,6 @@
 # Created: 09.03.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from ezdxf.legacy import dimension
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 

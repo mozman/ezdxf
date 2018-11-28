@@ -1,7 +1,6 @@
 # created: 19.04.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from array import array
 from abc import abstractmethod
 from collections import OrderedDict
@@ -13,7 +12,7 @@ from ezdxf.tools import take2
 from ezdxf.tools.indexing import Index
 
 
-class PackedTags(object):
+class PackedTags:
     __slots__ = ()
 
     @abstractmethod

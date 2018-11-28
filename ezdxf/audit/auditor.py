@@ -5,7 +5,6 @@
 """
 audit(drawing, stream): check a DXF drawing for errors.
 """
-from __future__ import unicode_literals
 import sys
 from ezdxf.lldxf.types import is_pointer_code, DXFTag
 from ezdxf.lldxf.const import Error

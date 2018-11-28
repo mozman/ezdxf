@@ -2,16 +2,15 @@
 # Created: 20.05.13
 # Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
-"""Creates a structured HTML view of the DXF tags - not a CAD drawing!
 """
-from __future__ import unicode_literals
-
+Creates a structured HTML view of the DXF tags - not a CAD drawing!
+"""
 import os
 import io
 
 from ezdxf.lldxf.types import tag_type, is_point_code, is_pointer_code, is_binary_data
 from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS
-from ezdxf.tools.c23 import escape, ustr
+from ezdxf.tools import escape
 from ezdxf.sections.sections import KNOWN_SECTIONS
 from ezdxf.lldxf.packedtags import PackedTags
 
@@ -80,7 +79,7 @@ def build_ref_link_button(name):
 TAG_TYPES = {
     int: '<int>',
     float: '<float>',
-    ustr: '<str>',
+    str: '<str>',
 }
 
 
@@ -210,12 +209,12 @@ class DXF2HtmlConverter(object):
                 return tag_type_str(hdrvar.code)
 
         varstrings = [
-            HEADER_VAR_TPL.format(code=name, value=escape(ustr(hdrvar.value)), type=escape(vartype(hdrvar)))
+            HEADER_VAR_TPL.format(code=name, value=escape(str(hdrvar.value)), type=escape(vartype(hdrvar)))
             for name, hdrvar in hdrvars.items()
         ]
 
         custom_property_strings = [
-            CUSTOM_VAR_TPL.format(tag=escape(ustr(tag)), value=escape(ustr(value)))
+            CUSTOM_VAR_TPL.format(tag=escape(str(tag)), value=escape(str(value)))
             for tag, value in custom_vars
         ]
         varstrings.extend(custom_property_strings)
@@ -277,7 +276,7 @@ class DXF2HtmlConverter(object):
                 if hasattr(tag, 'tostring'):
                     s = tag.tostring()
                 else:
-                    s = ustr(tag.value)
+                    s = str(tag.value)
                 vstr = trim_str(s)
 
             type_str = tag_type_str(tag.code)

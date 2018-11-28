@@ -2,7 +2,6 @@
 # Created: 18.03.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 """
 Table object like a HTML-Table, as composite pf basic DXF R12 entities.
 

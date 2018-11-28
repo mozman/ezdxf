@@ -1,16 +1,12 @@
 # Created: 30.04.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 from .types import tuples_to_tags
 from .tags import Tags,  DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from .types import is_app_data_marker, is_embedded_object_marker
 from .tagger import internal_tag_compiler
-
-from ezdxf.tools.c23 import isstring
 
 
 class ExtendedTags(object):
@@ -21,7 +17,7 @@ class ExtendedTags(object):
     __slots__ = ('subclasses', 'appdata', 'xdata', 'link', 'embedded_objects')
 
     def __init__(self, iterable=None):
-        if isstring(iterable):
+        if isinstance(iterable, str):
             raise DXFValueError("use ExtendedTags.from_text() to create tags from a string.")
 
         self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()

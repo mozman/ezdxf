@@ -5,10 +5,6 @@
 # --------------------------------------------------- #
 # Welcome to the place, where it gets dirty and ugly! #
 # --------------------------------------------------- #
-
-from __future__ import unicode_literals
-__author__ = "mozman <me@mozman.at>"
-
 from functools import partial
 import logging
 
