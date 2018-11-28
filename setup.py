@@ -7,7 +7,7 @@ import os, sys
 from setuptools import setup
 
 PY3 = sys.version_info.major > 2
-VERSION = "0.8.9"  # also update VERSION in __init__.py
+VERSION = "0.9.0-alpha"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'me@mozman.at'
 

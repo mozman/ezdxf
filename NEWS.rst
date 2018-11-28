@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.9.0 - dev
+
+- Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
+- IMPORTANT: Python 2 support REMOVED
+
 Version 0.8.9 - 2018-11-28
 
 - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
