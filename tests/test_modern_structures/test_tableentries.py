@@ -9,13 +9,13 @@ from ezdxf.modern.tableentries import AppID, BlockRecord, DimStyle
 from ezdxf.modern.tableentries import UCS, View, VPort
 
 
-class DXFFactory:
+class Drawing:
     rootdict = {'ACAD_PLOTSTYLENAME': 'AFAF'}
 
 
 @pytest.fixture
 def layer():
-    return Layer.new('FFFF', dxffactory=DXFFactory())
+    return Layer.new('FFFF', drawing=Drawing())
 
 
 def test_layer_get_handle(layer):

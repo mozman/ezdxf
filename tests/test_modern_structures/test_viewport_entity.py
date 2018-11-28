@@ -4,13 +4,13 @@
 from __future__ import unicode_literals
 import pytest
 
-from ezdxf.modern.viewport import Viewport, _VIEWPORT_TPL
-from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.modern.viewport import Viewport
+from ezdxf.modern.tableentries import Layer
 
 
 @pytest.fixture
 def viewport():
-    return Viewport(ExtendedTags.from_text(_VIEWPORT_TPL))
+    return Viewport.new('F000')
 
 
 def test_viewport_init_values(viewport):
@@ -44,18 +44,9 @@ def test_viewport_set_frozen_layer_handles(viewport):
     assert layer_handles == list(viewport.get_frozen_layer_handles())
 
 
-class Layer:
-    class DXF(object):
-        def __init__(self, handle):
-            self.handle = handle
-
-    def __init__(self, handle):
-        self.dxf = Layer.DXF(handle)
-
-
 def test_viewport_set_frozen_layer_objects(viewport):
     layer_handles = ['A000', 'A001', 'A002']
-    layers = [Layer(handle) for handle in layer_handles]
+    layers = [Layer.new(handle) for handle in layer_handles]
     viewport.set_frozen_layers(layers)
     assert layer_handles == list(viewport.get_frozen_layer_handles())
 

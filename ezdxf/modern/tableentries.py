@@ -63,9 +63,11 @@ class Layer(legacy.Layer):
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, layer_subclass)
 
     @classmethod
-    def new(cls, handle, dxfattribs=None, dxffactory=None):
-        layer = super(Layer, cls).new(handle, dxfattribs, dxffactory)
-        layer.dxf.plot_style_name = dxffactory.rootdict['ACAD_PLOTSTYLENAME']
+    def new(cls, handle, dxfattribs=None, drawing=None):
+        layer = super(Layer, cls).new(handle, dxfattribs, drawing)
+        # just for testing scenarios where drawing is None
+        if drawing is not None:
+            layer.dxf.plot_style_name = drawing.rootdict['ACAD_PLOTSTYLENAME']
         return layer
 
 
