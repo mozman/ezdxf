@@ -239,7 +239,7 @@ Drawing Methods
 
 .. method:: Drawing.compress_binary_data()
 
-    If you don't need access to binary data of DXF entities, you can compress them in memory for a lower
+    If you don't need access to binary data of DXF entities, you can compress them in memory for a smaller
     memory footprint, you can set :code:`ezdxf.options.compress_binray_data = True` to compress binary data
     for every drawing you open, but data compression cost time, so this option isn't active by default.
 

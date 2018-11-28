@@ -87,7 +87,7 @@ The source code of ezdxf can be found at GitHub.com:
 
 http://github.com/mozman/ezdxf.git
 
-Only pull requests only for the **develop** branch will be accepted.
+Only pull requests for the **develop** branch will be accepted.
 
 Feedback
 ========

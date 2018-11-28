@@ -11,6 +11,8 @@ LWPolyline
     :meth:`~Layout.add_lwpolyline`. :class:`LWPolyline` is a planar element, therefore all points in :ref:`OCS` as (x, y)
     tuples (:attr:`~LWPolyline.dxf.elevation` is the z-axis value).
 
+    Since *ezdxf* v0.8.9 :class:`LWPolyline` stores point data as packed data (:code:`array.array()`).
+
 Bulge Value
 -----------
 

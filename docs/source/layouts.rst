@@ -327,7 +327,7 @@ Change Redraw Order
     If the header variable $SORTENTS regen flag (bit-code value 16) is set, AutoCAD regenerates entities in
     ascending handles order.
 
-    To change redraw order associate a different sort handle to this entities, this redefines the order in which the
+    To change redraw order associate a different sort handle to entities, this redefines the order in which the
     entities are regenerated. Parameter *handles* can be a dict of object_handle and sort_handle as (key, value) pairs,
     or an iterable of (object_handle,  sort_handle) tuples.
 

@@ -23,6 +23,8 @@ Spline
 
     For more information about spline mathematics go to `Wikipedia`_.
 
+    Since *ezdxf* v0.8.9 :class:`Spline` stores fit- and control points, knots and weights as packed data (:code:`array.array()`).
+
 .. _Wikipedia: https://en.wikipedia.org/wiki/Spline_%28mathematics%29
 
 DXF Attributes for Spline

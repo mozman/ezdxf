@@ -11,7 +11,6 @@ from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, Extended
 from .dxfobjects import none_subclass
 
 
-
 @loader.register('ACDBDICTIONARYWDFLT', legacy=False)
 @loader.register('DICTIONARY', legacy=False)
 def tag_processor(tags):
