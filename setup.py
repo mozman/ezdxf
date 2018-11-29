@@ -3,11 +3,9 @@
 # Copyright (c) 2011-2018 Manfred Moitzi
 # License: MIT License
 import os
-from setuptools import setup
-
-VERSION = "0.9.0-alpha"  # also update VERSION in __init__.py
-AUTHOR_NAME = 'Manfred Moitzi'
-AUTHOR_EMAIL = 'me@mozman.at'
+from setuptools import setup, find_packages
+# setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
+VERSION = "0.9a1"  # also update VERSION in __init__.py
 
 
 def read(fname, until=""):
@@ -29,23 +27,12 @@ setup(
     name='ezdxf',
     version=VERSION,
     description='A Python package to create/manipulate DXF drawings.',
-    author=AUTHOR_NAME,
+    author='Manfred Moitzi',
     url='https://ezdxf.mozman.at',
     download_url='https://pypi.org/project/ezdxf/',
-    author_email=AUTHOR_EMAIL,
+    author_email='me@mozman.at',
     python_requires='>=3.5',
-    packages=['ezdxf',
-              'ezdxf.legacy',
-              'ezdxf.modern',
-              'ezdxf.lldxf',
-              'ezdxf.pp',
-              'ezdxf.sections',
-              'ezdxf.templates',
-              'ezdxf.tools',
-              'ezdxf.addons',
-              'ezdxf.algebra',
-              'ezdxf.audit',
-              ],
+    packages=find_packages(),
     package_data={'ezdxf': ['templates/*.dxf', 'pp/*.html', 'pp/*.js', 'pp/*.css', ]},
     entry_points={
         'console_scripts': [

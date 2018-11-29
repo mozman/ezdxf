@@ -1,4 +1,3 @@
-
 ezdxf
 =====
 
@@ -54,7 +53,7 @@ The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER
 present, except FIXED-TABLES are written, than some additional predefined text styles and line types are available.
 
 Installation
-============
+------------
 
 Install with pip::
 
@@ -74,19 +73,19 @@ or from source::
     python setup.py install
 
 Website
-=======
+-------
 
 https://ezdxf.mozman.at/
 
 Documentation
-=============
+-------------
 
 Documentation of development version at https://ezdxf.mozman.at/docs
 
 Documentation of latest release at http://ezdxf.readthedocs.io/
 
 Contribution
-============
+------------
 
 The source code of ezdxf can be found at GitHub.com:
 
@@ -95,7 +94,7 @@ http://github.com/mozman/ezdxf.git
 Only pull requests for the **develop** branch will be accepted.
 
 Feedback
-========
+--------
 
 Issue Tracker at:
 
@@ -112,6 +111,6 @@ Feedback is greatly appreciated.
 Manfred
 
 Contact
-=======
+-------
 
 ezdxf@mozman.at
