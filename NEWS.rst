@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.9a1 - dev
+Version 0.9a2 - dev
 -------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
