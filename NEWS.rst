@@ -4,7 +4,7 @@ News
 
 Latest versions of ezdxf (>= 0.9.0) are not Python 2 compatible
 
-Version 0.8.10a0 - dev
+Version 0.8.10a1 - dev
 ----------------------
 
 - BUGFIX release for Python 2 compatible main version 0.8

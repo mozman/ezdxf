@@ -25,6 +25,6 @@ import codecs
 from ezdxf.lldxf.encoding import dxfbackslashreplace
 codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
 version = (0, 8, 10)  # also update VERSION in setup.py
-VERSION = "0.8.10a0"
+VERSION = "0.8.10a1"
 __version__ = VERSION
 __author__ = "mozman <me@mozman.at>"
