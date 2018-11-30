@@ -7,7 +7,7 @@ import os, sys
 from setuptools import setup
 
 PY3 = sys.version_info.major > 2
-VERSION = "0.8.9"  # also update VERSION in __init__.py
+VERSION = "0.8.10a0"  # also update VERSION in __init__.py
 AUTHOR_NAME = 'Manfred Moitzi'
 AUTHOR_EMAIL = 'me@mozman.at'
 
@@ -19,17 +19,10 @@ else:
     PACKAGE_DATA = dict()
 
 
-def read(fname, until=""):
-    def read_until(lines):
-        last_index = -1
-        for index, line in enumerate(lines):
-            if line.startswith(until):
-                last_index = index
-                break
-        return "".join(lines[:last_index])
+def read(fname):
     try:
         with open(os.path.join(os.path.dirname(__file__), fname)) as f:
-            return read_until(f.readlines()) if until else f.read()
+            return f.read()
     except IOError:
         return "File '%s' not found.\n" % fname
 
@@ -66,7 +59,7 @@ setup(
     tests_require=['pytest'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
-    long_description=read('README.rst')+read('NEWS.rst', until='Version 0.7.6'),
+    long_description=read('README.rst')+read('NEWS.rst'),
     platforms="OS Independent",
     license="MIT License",
     classifiers=[

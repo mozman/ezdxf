@@ -15,7 +15,7 @@ def test_encode():
         assert enc == dec
 
 
-DECODED_LINES = """21200 115 2 26
+DECODED_LINES = r"""21200 115 2 26
 16 Autodesk AutoCAD 19 ASM 217.0.0.4503 NT 0
 1 9.9999999999999995e-007 1e-010
 asmheader $-1 -1 @12 217.0.0.4503 #
@@ -135,7 +135,7 @@ straight-curve $-1 -1 $-1 0 5 0 0 1 0 I I #
 point $-1 -1 $-1 0 10 0 #
 """.splitlines()
 
-ENCODED_LINES = """mnmoo nnj m mi
+ENCODED_LINES = r"""mnmoo nnj m mi
 ni ^ *+0;:,4 ^ *+0\^ [ nf ^ LR mnhqoqoqkjol QK o
 n fqfffffffffffffffj:rooh n:rono
 >,27:>;:- {rn rn _nm mnhqoqoqkjol |

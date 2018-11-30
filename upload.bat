@@ -1,10 +1,4 @@
 @ECHO OFF
-
-if "%1" == "release" (
-    ECHO Upload to PyPI - NO TEST
-    PAUSE
-    twine upload --repository pypi dist/ezdxf*
-) else (
-    ECHO Upload to TestPyPI - TEST
-    twine upload --repository testpypi dist/ezdxf*
-)
+ECHO TEST - TEST- TEST Upload to TestPyPI - TEST - TEST - TEST
+twine upload --repository testpypi dist/ezdxf*
+mv -f dist/ezdxf* dist/archiv
