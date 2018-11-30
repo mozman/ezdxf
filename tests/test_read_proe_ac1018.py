@@ -5,7 +5,7 @@ import pytest
 
 import ezdxf
 import os
-FILE = "D:\Source\dxftest\ProE_AC1018.dxf"
+FILE = r"D:\Source\dxftest\ProE_AC1018.dxf"
 
 
 def test_file_not_exists():

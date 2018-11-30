@@ -5,7 +5,16 @@
 import os
 from setuptools import setup, find_packages
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
-VERSION = "0.9a1"  # also update VERSION in __init__.py
+
+
+def get_version():
+    v = {}
+    # do not import ezdxf, because required packages may not installed yet
+    for line in open('./ezdxf/version.py').readlines():
+        if line.strip().startswith('__version__'):
+            exec(line, v)
+            return v['__version__']
+    raise IOError('__version__ string not found')
 
 
 def read(fname, until=""):
@@ -25,7 +34,7 @@ def read(fname, until=""):
 
 setup(
     name='ezdxf',
-    version=VERSION,
+    version=get_version(),
     description='A Python package to create/manipulate DXF drawings.',
     author='Manfred Moitzi',
     url='https://ezdxf.mozman.at',
@@ -33,6 +42,7 @@ setup(
     author_email='me@mozman.at',
     python_requires='>=3.5',
     packages=find_packages(),
+    zip_safe=False,
     package_data={'ezdxf': ['templates/*.dxf', 'pp/*.html', 'pp/*.js', 'pp/*.css', ]},
     entry_points={
         'console_scripts': [
