@@ -3,6 +3,7 @@
 # License: MIT License
 # import version data
 from .version import version, __version__
+VERSION = __version__
 __author__ = "mozman <me@mozman.at>"
 
 # name space imports - do not remove
