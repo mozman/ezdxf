@@ -8,7 +8,6 @@ __author__ = "mozman <me@mozman.at>"
 
 # name space imports - do not remove
 from ezdxf.options import options  # example: ezdxf.options.template_dir = 'c:\templates'
-from ezdxf.tools.importer import Importer
 from ezdxf.tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools.pattern import PATTERN

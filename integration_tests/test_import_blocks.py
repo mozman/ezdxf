@@ -3,6 +3,7 @@
 import os
 import pytest
 import ezdxf
+from ezdxf.addons import Importer
 
 BASEDIR = 'integration_tests' if os.path.exists('integration_tests') else '.'
 DATADIR = 'data'
@@ -19,7 +20,7 @@ def filename(request):
 def test_block_import(filename, tmpdir):
     source_dwg = ezdxf.readfile(filename)
     target_dwg = ezdxf.new(source_dwg.dxfversion)
-    importer = ezdxf.Importer(source_dwg, target_dwg)
+    importer = Importer(source_dwg, target_dwg)
     importer.import_blocks(query='CustomBlock1')
     importer.import_modelspace_entities()
     filename = str(tmpdir.join('custom_blocks_import.dxf'))

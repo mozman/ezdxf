@@ -1,6 +1,11 @@
 Import data from other DXF drawings
 ===================================
 
+.. warning::
+
+    Internal structures of modern DXF files are too complex and too undocumented to support importing data in a reliable
+    way. Using Importer() may corrupt your DXF files!
+
 .. class:: Importer
 
     Import definitions and entities from other DXF drawings.
@@ -37,10 +42,11 @@ blocks section or DXF entities from the model-space.
 First create an :class:`Importer` object::
 
     import ezdxf
+    from ezdxf.addons import Importer
 
     source_drawing = ezdxf.readfile("Source_DXF_Drawing.dxf")
     target_drawing = ezdxf.new(dxfversion=source_drawing.dxfversion)
-    importer = ezdxf.Importer(source_drawing, target_drawing)
+    importer = Importer(source_drawing, target_drawing)
 
 
 Import Tables

@@ -11,3 +11,4 @@ from .mesh import MeshBuilder, MeshVertexMerger
 from .menger_sponge import MengerSponge
 from .sierpinski_pyramid import SierpinskyPyramid
 from .dimlines import LinearDimension, AngularDimension, ArcDimension, RadialDimension, dimstyles
+from .importer import Importer

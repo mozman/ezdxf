@@ -119,14 +119,6 @@ Objects
    dxfobjects/geodata
 
 
-Importer
---------
-
-.. toctree::
-   :maxdepth: 2
-
-   importer
-
 Data Query
 ----------
 

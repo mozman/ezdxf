@@ -11,4 +11,5 @@ Add-ons
    addons/curves
    addons/mtext
    addons/table
+   addons/importer
 
