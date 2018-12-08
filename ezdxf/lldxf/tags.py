@@ -2,9 +2,10 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from copy import deepcopy
+from typing import Iterable, List, TextIO, Any
 
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
-from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
+from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR, TagValue
 from .tagger import internal_tag_compiler, low_level_tagger
 
 from ezdxf.tools.codepage import toencoding
@@ -12,11 +13,7 @@ from ezdxf.tools.codepage import toencoding
 COMMENT_CODE = 999
 
 
-def text2tags(text: str):
-    return Tags.from_text(text)
-
-
-def tuples2dxftags(tuples):
+def tuples2dxftags(tuples) -> List[DXFTag]:
     return [DXFTag(t[0], t[1]) for t in tuples]
 
 
@@ -27,7 +24,7 @@ class DXFInfo(object):
         self.encoding = 'cp1252'
         self.handseed = '0'
 
-    def set_header_var(self, name: str, value: str):
+    def set_header_var(self, name: str, value: str) -> int:
         if name == '$ACADVER':
             self.version = value
             self.release = acad_release.get(value, 'R12')
@@ -40,7 +37,7 @@ class DXFInfo(object):
         return 1
 
 
-def dxf_info(stream):
+def dxf_info(stream: TextIO) -> DXFInfo:
     info = DXFInfo()
     tagger = low_level_tagger(stream)  # filters already comments
     if next(tagger) != (0, 'SECTION'):  # maybe a DXF structure error, handled by later processing
@@ -68,10 +65,10 @@ class Tags(list):
     """
 
     @classmethod
-    def from_text(cls, text: str):
+    def from_text(cls, text: str) -> 'Tags':
         return cls(internal_tag_compiler(text))
 
-    def __copy__(self):
+    def __copy__(self) -> 'Tags':
         return self.__class__(tag.clone() for tag in self)
 
     clone = __copy__
@@ -96,7 +93,7 @@ class Tags(list):
                 return handle
         raise DXFValueError('No handle found.')
 
-    def replace_handle(self, new_handle: str):
+    def replace_handle(self, new_handle: str) -> None:
         """
         Replace existing handle.
 
@@ -122,7 +119,7 @@ class Tags(list):
         """
         return any(True for tag in self if tag.code == code)
 
-    def get_first_value(self, code: int, default=DXFValueError):
+    def get_first_value(self, code: int, default: TagValue = DXFValueError) -> TagValue:
         """
         Returns value of first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
@@ -139,7 +136,7 @@ class Tags(list):
         else:
             return default
 
-    def get_first_tag(self, code: int, default=DXFValueError) -> DXFTag:
+    def get_first_tag(self, code: int, default: TagValue = DXFValueError) -> DXFTag:
         """
         Returns first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
@@ -156,7 +153,7 @@ class Tags(list):
         else:
             return default
 
-    def find_all(self, code: int) -> list:
+    def find_all(self, code: int) -> List[DXFTag]:
         """
         Returns a list of DXF tag with given group code.
 
@@ -185,7 +182,7 @@ class Tags(list):
             index += 1
         raise DXFValueError(code)
 
-    def update(self, tag: DXFTag):
+    def update(self, tag: DXFTag) -> None:
         """
         Update first existing tag with same group code as tag, raises DXFValueError if tag not exists.
 
@@ -193,7 +190,7 @@ class Tags(list):
         index = self.tag_index(tag.code)
         self[index] = tag
 
-    def set_first(self, tag: DXFTag):
+    def set_first(self, tag: DXFTag) -> None:
         """
         Update first existing tag with group code tag.code or append tag.
 
@@ -203,7 +200,7 @@ class Tags(list):
         except DXFValueError:
             self.append(tag)
 
-    def remove_tags(self, codes):
+    def remove_tags(self, codes: Iterable[int]) -> None:
         """
         Remove all tags inplace with group codes specified in codes.
 
@@ -215,19 +212,17 @@ class Tags(list):
         """
         self[:] = [tag for tag in self if tag.code not in frozenset(codes)]
 
-    def remove_tags_except(self, codes):
+    def remove_tags_except(self, codes: Iterable[int]) -> None:
         """
         Remove all tags inplace except those with group codes specified in codes.
 
         Args:
             codes: iterable of group codes
 
-        Returns: Tags() object
-
         """
         self[:] = [tag for tag in self if tag.code in frozenset(codes)]
 
-    def collect_consecutive_tags(self, codes, start: int = 0, end: int = None):
+    def collect_consecutive_tags(self, codes: Iterable[int], start: int = 0, end: int = None) -> 'Tags':
         """
         Collect all consecutive tags with group code in codes, start and end delimits the search range. A tag code not
         in codes ends the process.
@@ -262,7 +257,7 @@ class Tags(list):
         return False
 
     @classmethod
-    def strip(cls, tags, codes):
+    def strip(cls, tags: 'Tags', codes: Iterable[int]) -> 'Tags':
         """
         Strips all tags with group codes in codes from tags.
 
@@ -274,7 +269,11 @@ class Tags(list):
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
 
 
-def group_tags(tags, splitcode: int = STRUCTURE_MARKER):
+def text2tags(text: str) -> Tags:
+    return Tags.from_text(text)
+
+
+def group_tags(tags: Tags, splitcode: int = STRUCTURE_MARKER) -> Iterable[Tags]:
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
     A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
@@ -286,6 +285,7 @@ def group_tags(tags, splitcode: int = STRUCTURE_MARKER):
     Yields: list of DXFTag()
 
     """
+
     def append(tag):  # first do nothing, skip tags in front of the first split tag
         pass
 
@@ -302,7 +302,7 @@ def group_tags(tags, splitcode: int = STRUCTURE_MARKER):
         yield group
 
 
-def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending: str = '^J'):
+def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending: str = '^J') -> List[DXFTag]:
     text = ''.join(text).replace('\n', line_ending)
 
     def chop():
@@ -316,5 +316,5 @@ def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending:
     return [DXFTag(code, part) for part in chop()]
 
 
-def multi_tags_to_text(tags, line_ending: str = '^J'):
+def multi_tags_to_text(tags, line_ending: str = '^J') -> str:
     return ''.join(tag.value for tag in tags).replace(line_ending, '\n')

@@ -1,10 +1,12 @@
 # Created: 13.01.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
+from typing import Any, TextIO
 from .types import TAG_STRING_FORMAT
+from .tags import Tags, DXFTag
 
 
-class TagWriter(object):
+class TagWriter:
     """
     Writes DXF tags into a stream.
 
@@ -13,11 +15,12 @@ class TagWriter(object):
         write_handles: if False don't write handles (5, 105), use only for DXF R12 format
 
     """
-    def __init__(self, stream, write_handles=True):
+
+    def __init__(self, stream: TextIO, write_handles=True):
         self._stream = stream
         self._write_handles = write_handles
 
-    def write_tags(self, tags):
+    def write_tags(self, tags: Tags) -> None:
         if self._write_handles:
             for tag in tags:
                 self.write_tag(tag)
@@ -31,12 +34,11 @@ class TagWriter(object):
                     continue  # skip handles in DXF R12 files, use only for DXF R12 files!!!
                 self.write_tag(tag)
 
-    def write_tag(self, tag):
+    def write_tag(self, tag: DXFTag) -> None:
         self._stream.write(tag.dxfstr())
 
-    def write_tag2(self, code, value):
+    def write_tag2(self, code: int, value: Any) -> None:
         self._stream.write(TAG_STRING_FORMAT % (code, value))
 
-    def write_str(self, s):
+    def write_str(self, s: str) -> None:
         self._stream.write(s)
-

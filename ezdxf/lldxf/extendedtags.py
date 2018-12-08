@@ -1,15 +1,18 @@
 # Created: 30.04.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import Iterable, Optional, Callable
+from itertools import chain
+
 from .types import tuples_to_tags
-from .tags import Tags,  DXFTag, NONE_TAG
+from .tags import Tags, DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from .types import is_app_data_marker, is_embedded_object_marker
 from .tagger import internal_tag_compiler
 
 
-class ExtendedTags(object):
+class ExtendedTags:
     """
     Manage Subclasses, AppData and Extended Data
 
@@ -31,7 +34,7 @@ class ExtendedTags(object):
         if iterable is not None:
             self._setup(iterable)
 
-    def __copy__(self):
+    def __copy__(self) -> 'ExtendedTags':
         """
         Shallow copy - linked entities are not duplicated!
 
@@ -40,6 +43,7 @@ class ExtendedTags(object):
         To do a deep copy you have to go one level up and use DXFEntity.copy()
 
         """
+
         def copy(tag_lists):
             return [tags.clone() for tags in tag_lists]
 
@@ -51,28 +55,29 @@ class ExtendedTags(object):
             clone.embedded_objects = copy(self.embedded_objects)
         clone.link = self.link  # important for dxf importer!
         return clone
+
     clone = __copy__
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Tags:
         return self.noclass[index]
 
     @property
-    def noclass(self):
+    def noclass(self) -> Tags:
         return self.subclasses[0]
 
-    def get_handle(self):
+    def get_handle(self) -> str:
         return self.noclass.get_handle()
 
-    def dxftype(self):
+    def dxftype(self) -> str:
         return self.noclass[0].value
 
-    def replace_handle(self, handle):
+    def replace_handle(self, handle: str) -> None:
         self.noclass.replace_handle(handle)
 
-    def _setup(self, iterable):
+    def _setup(self, iterable: Iterable[DXFTag]):
         tagstream = iter(iterable)
 
-        def collect_subclass(starttag):
+        def collect_subclass(starttag: Optional[DXFTag]) -> DXFTag:
             """
             A subclass can contain appdata, but not XDATA, ends with
             SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
@@ -103,7 +108,7 @@ class ExtendedTags(object):
             self.subclasses.append(data)
             return NONE_TAG
 
-        def collect_app_data(starttag):
+        def collect_app_data(starttag: DXFTag) -> None:
             """
             Appdata, cannot contain XDATA or subclasses.
 
@@ -121,7 +126,7 @@ class ExtendedTags(object):
                     # every other (102, ) tag is treated as usual tag
             self.appdata.append(data)
 
-        def collect_xdata(starttag):
+        def collect_xdata(starttag: DXFTag) -> DXFTag:
             """
             XDATA is always at the end of the entity and can not contain appdata or subclasses
 
@@ -145,7 +150,7 @@ class ExtendedTags(object):
             self.xdata.append(data)
             return NONE_TAG
 
-        def collect_embedded_object(starttag):
+        def collect_embedded_object(starttag: DXFTag) -> DXFTag:
             """
             Since AutoCAD 2018, DXF entities can contain embedded objects, this objects appear at the end of an entity,
             also after XDATA, and start with the (101, 'Embedded Object') tag.
@@ -190,28 +195,20 @@ class ExtendedTags(object):
         if tag is not NONE_TAG:
             raise DXFStructureError("Unexpected tag '%r' at end of entity." % tag)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[DXFTag]:
         for subclass in self.subclasses:
             for tag in subclass:
                 if tag.code == APP_DATA_MARKER and isinstance(tag.value, int):
-                    # PY3: yield from self.appdata[tag.value]
-                    for subtag in self.appdata[tag.value]:
-                        yield subtag
+                    yield from self.appdata[tag.value]
                 else:
                     yield tag
 
-        # PY3: yield from chain.from_iterable(self.xdata)
-        for xdata in self.xdata:
-            for tag in xdata:
-                yield tag
+        yield from chain.from_iterable(self.xdata)
 
         if self.embedded_objects is not None:
-            # PY3: yield from chain.from_iterable(self.embedded_objects)
-            for embedded_obj in self.embedded_objects:
-                for tag in embedded_obj:
-                    yield tag
+            yield from chain.from_iterable(self.embedded_objects)
 
-    def get_subclass(self, name, pos=0):
+    def get_subclass(self, name: str, pos: int = 0) -> Tags:
         for index, subclass in enumerate(self.subclasses):
             try:
                 if (index >= pos) and (subclass[0].value == name):
@@ -221,20 +218,20 @@ class ExtendedTags(object):
 
         raise DXFKeyError("Subclass '%s' does not exist." % name)
 
-    def has_xdata(self, appid):
+    def has_xdata(self, appid: str) -> bool:
         return any(xdata[0].value == appid for xdata in self.xdata)
 
-    def get_xdata(self, appid):
+    def get_xdata(self, appid: str) -> Tags:
         for xdata in self.xdata:
             if xdata[0].value == appid:
                 return xdata
         raise DXFValueError("No extended data for APPID '%s'" % appid)
 
-    def set_xdata(self, appid, tags):
+    def set_xdata(self, appid: str, tags: Tags) -> None:
         xdata = self.get_xdata(appid)
         xdata[1:] = tuples_to_tags(tags)
 
-    def new_xdata(self, appid, tags=None):
+    def new_xdata(self, appid: str, tags: Tags = None) -> Tags:
         """
         Append a new xdata block.
 
@@ -251,10 +248,10 @@ class ExtendedTags(object):
         self.xdata.append(xtags)
         return xtags
 
-    def has_app_data(self, appid):
+    def has_app_data(self, appid: str) -> bool:
         return any(appdata[0].value == appid for appdata in self.appdata)
 
-    def get_app_data(self, appid):
+    def get_app_data(self, appid: str) -> Tags:
         """
         Get app data including first and last marker tag.
 
@@ -264,18 +261,18 @@ class ExtendedTags(object):
                 return appdata
         raise DXFValueError("Application defined group '%s' does not exist." % appid)
 
-    def get_app_data_content(self, appid):
+    def get_app_data_content(self, appid: str) -> Tags:
         """
         Get app data without first and last marker tag.
 
         """
         return Tags(self.get_app_data(appid)[1:-1])
 
-    def set_app_data_content(self, appid, tags):
+    def set_app_data_content(self, appid: str, tags: Tags) -> None:
         app_data = self.get_app_data(appid)
         app_data[1:-1] = tuples_to_tags(tags)
 
-    def new_app_data(self, appid, tags=None, subclass_name=None):
+    def new_app_data(self, appid: str, tags: Tags = None, subclass_name: str = None) -> Tags:
         """
         Append a new app data block to subclass *subclass_name*.
 
@@ -307,7 +304,7 @@ class ExtendedTags(object):
         return app_tags
 
     @classmethod
-    def from_text(cls, text):
+    def from_text(cls, text: str) -> 'ExtendedTags':
         return cls(internal_tag_compiler(text))
 
 
@@ -317,16 +314,15 @@ LINKED_ENTITIES = {
 }
 
 
-def get_xtags_linker():
-    class PersistentVars(object):  # Python 2.7 has no nonlocal statement
-        def __init__(self):
-            self.prev = None
-            self.expected = ""
+def get_xtags_linker() -> Callable[[ExtendedTags], bool]:
+    prev = None
+    expected = ""
 
-    def xtags_linker(tags):
+    def xtags_linker(tags: ExtendedTags) -> bool:
+        nonlocal prev, expected
         handle = tags.get_handle()
 
-        def attribs_follow():
+        def attribs_follow() -> bool:
             try:
                 ref_tags = tags.get_subclass('AcDbBlockReference')
             except DXFKeyError:
@@ -336,15 +332,15 @@ def get_xtags_linker():
 
         dxftype = tags.dxftype()
         are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
-        if vars.prev is not None:
+        if prev is not None:
             are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
             if dxftype == 'SEQEND':
-                vars.prev.link = handle
-                vars.prev = None
+                prev.link = handle
+                prev = None
             # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
-            elif dxftype == vars.expected:
-                vars.prev.link = handle
-                vars.prev = tags
+            elif dxftype == expected:
+                prev.link = handle
+                prev = tags
             else:
                 raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
         elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
@@ -360,9 +356,8 @@ def get_xtags_linker():
                 # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
                 pass
             else:
-                vars.prev = tags
-                vars.expected = LINKED_ENTITIES[dxftype]
+                prev = tags
+                expected = LINKED_ENTITIES[dxftype]
         return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
 
-    vars = PersistentVars()
     return xtags_linker

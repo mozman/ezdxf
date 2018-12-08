@@ -3,6 +3,8 @@
 # License: MIT License
 from array import array
 from itertools import chain
+from typing import Union, Tuple, Iterable, Callable
+from numbers import Real
 
 from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
 import reprlib
@@ -25,101 +27,99 @@ HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
 BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
 
-
-def is_app_data_marker(tag):
-    return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
+TagValue = Union[str, int, float, Tuple[float, ...]]
 
 
-def is_embedded_object_marker(tag):
-    return tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR
-
-
-class DXFTag(object):
+class DXFTag:
     __slots__ = ('code', '_value')
 
-    def __init__(self, code, value):
-        self.code = code
-        self._value = value
+    def __init__(self, code: int, value: TagValue):
+        self.code = code  # type: int
+        self._value = value  # type: TagValue
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str((self.code, self.value))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "DXFTag{}".format(str(self))
 
     @property
-    def value(self):
+    def value(self) -> TagValue:
         return self._value
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
         return (self.code, self.value)[item]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable:
         yield self.code
         yield self.value
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (self.code, self.value) == other
 
-    # for Python 2.7 required
-    def __ne__(self, other):
-        return (self.code, self.value) != other
-
-    def dxfstr(self):
+    def dxfstr(self) -> str:
         return TAG_STRING_FORMAT % (self.code, self._value)
 
-    def clone(self):
+    def clone(self) -> 'DXFTag':
         return self.__class__(self.code, self._value)
 
 
-NONE_TAG = DXFTag(None, None)
+NONE_TAG = DXFTag(None, None)  # type: ignore
+
+
+def is_app_data_marker(tag: DXFTag) -> bool:
+    return tag.code == APP_DATA_MARKER and tag.value.startswith('{')
+
+
+def is_embedded_object_marker(tag: DXFTag) -> bool:
+    return tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR
 
 
 class DXFVertex(DXFTag):
     __slots__ = ()
 
-    def __init__(self, code, value):
-        super(DXFVertex, self).__init__(code, array('d', value))
+    def __init__(self, code: int, value: Tuple[float, ...]):
+        super(DXFVertex, self).__init__(code, array('d', value))  # type: ignore # array is like a tuple
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "DXFVertex({}, {})".format(self.code, str(self))
 
     @property
-    def value(self):
+    def value(self) -> Tuple:
         return tuple(self._value)
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[Tuple]:
         c = self.code
-        return ((code, value) for code, value in zip((c, c+10, c+20), self.value))
+        return ((code, value) for code, value in zip((c, c + 10, c + 20), self.value))
 
-    def dxfstr(self):
+    def dxfstr(self) -> str:
         return ''.join(TAG_STRING_FORMAT % tag for tag in self.dxftags())
 
 
 class DXFBinaryTag(DXFTag):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "({}, {})".format(self.code, self.tostring())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "DXFBinaryTag({}, {})".format(self.code, reprlib.repr(self.tostring()))
 
-    def tostring(self):  # value to string
+    def tostring(self) -> str:  # value to string
         return ''.join(byte_to_hexstr(b) for b in self.value)
 
-    def dxfstr(self):
+    def dxfstr(self) -> str:
         return TAG_STRING_FORMAT % (self.code, self.tostring())
 
     @classmethod
-    def from_string(cls, code, value):
+    def from_string(cls, code: int, value: str):
         return cls(code, encode_hex_code_string_to_bytes(value))
 
 
-def dxftag(code, value):
+def dxftag(code: int, value: TagValue) -> Union[DXFTag, DXFBinaryTag, DXFVertex]:
     """
     DXF tag factory function.
 
@@ -139,7 +139,7 @@ def dxftag(code, value):
 
 
 # TODO: test tuples_to_tags()
-def tuples_to_tags(iterable):
+def tuples_to_tags(iterable: Iterable[Tuple[int, TagValue]]):
     for code, value in iterable:
         if code in POINT_CODES:
             yield DXFVertex(code, value)
@@ -177,30 +177,29 @@ TYPE_TABLE = _build_type_table([
 ])
 
 
-def is_binary_data(code):
+def is_binary_data(code: int) -> bool:
     return code in BINARAY_DATA
 
 
-def is_pointer_code(code):
+def is_pointer_code(code: int) -> bool:
     return code in POINTER_CODES
 
 
-def is_point_code(code):
+def is_point_code(code: int) -> bool:
     return code in POINT_CODES
 
 
-def is_point_tag(tag):
+def is_point_tag(tag: Tuple) -> bool:
     return tag[0] in POINT_CODES
 
 
-def cast_tag_value(code, value, types=TYPE_TABLE):
-    return types.get(code, str)(value)
+def cast_tag_value(code: int, value: TagValue) -> TagValue:
+    return TYPE_TABLE.get(code, str)(value)
 
 
-def tag_type(code):
+def tag_type(code: int) -> Callable:
     return TYPE_TABLE.get(code, str)
 
 
-def strtag(tag):
+def strtag(tag: DXFTag) -> str:
     return TAG_STRING_FORMAT % tuple(tag)
-
