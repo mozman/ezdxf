@@ -7,8 +7,8 @@ Version 0.9a2 - dev
 
 - Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
 - IMPORTANT: Python 2 support REMOVED
-- moved Importer() to add-ons - internal structures of modern DXF files are too complex and too undocumented to support
-  importing data in a reliable way - using Importer() may corrupt your DXF files!
+- CHANGE: moved Importer() from ezdxf.tools to ezdxf.addons - internal structures of modern DXF files are too complex
+  and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
 
 Version 0.8.9 - 2018-11-28
 --------------------------
