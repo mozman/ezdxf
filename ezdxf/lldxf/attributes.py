@@ -2,11 +2,11 @@
 # License: MIT License
 from collections import namedtuple
 from enum import Enum
-from typing import Any, Tuple, Iterable, List, Mapping
+from typing import Any, Tuple, Iterable, List, Dict, Union, ItemsView, KeysView
 
 from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
 from .types import dxftag, DXFVertex
-from .tags import Tags
+from .tags import Tags, TagValue
 from .extendedtags import ExtendedTags
 
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
@@ -53,13 +53,13 @@ class DXFAttr:
         self.xtype = xtype  # type: XType # Point2D, Point3D, Point2D/3D, Callback
         self.default = default  # type: Any # DXF default value
 
-        # If dxfversion is None - this attribute is valid for all supported DXF versions, set dxfversion to as specific
+        # If dxfversion is None - this attribute is valid for all supported DXF versions, set dxfversion to a specific
         # DXF version like 'AC1018' and this attribute can only be set by DXF version 'AC1018' or later.
-        self.dxfversion = dxfversion
-        self.getter = getter  # DXF entity getter method name for callback attributes
-        self.setter = setter  # DXF entity setter method name for callback attributes
+        self.dxfversion = dxfversion  # type: str
+        self.getter = getter  # type: str # DXF entity getter method name for callback attributes
+        self.setter = setter  # type: str # DXF entity setter method name for callback attributes
 
-    def get_callback_value(self, entity: 'DXFEntity') -> Any:
+    def get_callback_value(self, entity: 'DXFEntity') -> TagValue:
         """
         Executes a callback function in 'entity' to get a DXF value.
 
@@ -77,7 +77,7 @@ class DXFAttr:
         except TypeError:  # None
             DXFAttributeError('DXF attribute {} has no getter.'.format(self.name))
 
-    def set_callback_value(self, entity: 'DXFEntity', value: Any) -> None:
+    def set_callback_value(self, entity: 'DXFEntity', value: TagValue) -> None:
         """
         Executes a callback function in 'entity' to set a DXF value.
 
@@ -95,7 +95,7 @@ class DXFAttr:
         except TypeError:  # None
             raise DXFAttributeError('DXF attribute {} has no setter.'.format(self.name))
 
-    def get_attrib(self, entity: 'DXFEntity', key: str, default: Any = DXFValueError) -> Any:
+    def get_attrib(self, entity: 'DXFEntity', key: str, default: TagValue = DXFValueError) -> TagValue:
         """
         Return value of DXF attribute 'key'.
 
@@ -125,14 +125,14 @@ class DXFAttr:
             else:
                 return default
 
-    def _get_dxf_attrib(self, tags: ExtendedTags) -> Any:
+    def _get_dxf_attrib(self, tags: ExtendedTags) -> TagValue:
         subclass_tags = self._get_dxf_attrib_subclass_tags(tags, self.subclass)
         if self.xtype is not None:
             return self._get_extented_type(subclass_tags)
         else:
             return subclass_tags.get_first_value(self.code)
 
-    def _get_extented_type(self, tags: Tags) -> Tuple:
+    def _get_extented_type(self, tags: Tags) -> Tuple[float, ...]:
         value = tags.get_first_value(self.code)
         if len(value) == 3:
             if self.xtype is XType.point2d:
@@ -141,7 +141,7 @@ class DXFAttr:
             raise DXFStructureError("expected 3D point but found 2D point")
         return value
 
-    def _get_dxf_attrib_subclass_tags(self, tags: ExtendedTags, subclass_key: int) -> Tags:
+    def _get_dxf_attrib_subclass_tags(self, tags: ExtendedTags, subclass_key: Union[int, str]) -> Tags:
         try:  # fast access subclass by index as int
             # no subclass is subclass index 0
             return tags.subclasses[subclass_key]
@@ -154,7 +154,7 @@ class DXFAttr:
             # raises DXFKeyError if subclass does not exist
             return tags.get_subclass(subclass_key)
 
-    def set_attrib(self, entity: 'DXFEntity', key: str, value: Any) -> None:
+    def set_attrib(self, entity: 'DXFEntity', key: str, value: TagValue) -> None:
         """
         Set DXF attribute 'key' to value.
 
@@ -207,7 +207,7 @@ class DXFAttr:
 class DXFAttributes:
     def __init__(self, *subclassdefs: DefSubclass):
         self._subclasses = []  # type: List[DefSubclass]
-        self._attribs = {}  # type: Mapping[str, DXFAttr]
+        self._attribs = {}  # type: Dict[str, DXFAttr]
         for subclass in subclassdefs:
             self.add_subclass(subclass)
 
@@ -231,10 +231,10 @@ class DXFAttributes:
     def get(self, key: str, default: Any = None) -> Any:
         return self._attribs.get(key, default)
 
-    def keys(self) -> Iterable[str]:
+    def keys(self) -> KeysView[str]:
         return self._attribs.keys()
 
-    def items(self) -> Iterable[Tuple[str, DXFAttr]]:
+    def items(self) -> ItemsView[str, DXFAttr]:
         return self._attribs.items()
 
     def subclasses(self) -> Iterable[DefSubclass]:
