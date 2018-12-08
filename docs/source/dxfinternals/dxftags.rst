@@ -167,7 +167,7 @@ String values containing Unicode characters are represented with control charact
 
 For example, 'TEST\U+7F3A\U+4E4F\U+89E3\U+91CA\U+6B63THIS\U+56FE'
 
-To support the DXF unicode encoding ezdxf registers an encoding codec `dxfbackslashreplace`, defined in
+To support the DXF unicode encoding ezdxf registers an encoding codec `dxf_backslash_replace`, defined in
 :func:`ezdxf.lldxf.encoding`.
 
 String values can be stored with these dxf group codes:

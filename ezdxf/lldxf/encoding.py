@@ -1,12 +1,11 @@
 # Purpose: low level DXF data encoding/decoding module
 # Created: 26.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
-import sys
 from .const import DXFEncodingError
 
 
-def dxfbackslashreplace(exc):
+def dxf_backslash_replace(exc: Exception):
     if isinstance(exc, (UnicodeEncodeError, UnicodeTranslateError)):
         s = u""
         for c in exc.object[exc.start:exc.end]:
@@ -16,23 +15,17 @@ def dxfbackslashreplace(exc):
                 s += u"\\U+%04x" % ord(c)
             else:
                 s += u"\\U+%08x" % ord(c)
-        return (s, exc.end)
+        return s, exc.end
     else:
         raise TypeError("can't handle %s" % exc.__name__)
 
 
-PY3 = sys.version_info.major > 2
-if not PY3:
-    bytes = lambda u, e: u.encode(e)
-
-
-def encode(unicode_string, encoding='cp1252', ignore_error=False):
+def encode(unicode: str, encoding: str = 'cp1252', ignore_error: bool = False):
     try:
-        return bytes(unicode_string, encoding)
+        return bytes(unicode, encoding)
     except UnicodeEncodeError:  # can not use the given encoding
         if ignore_error:  # encode string with the default unicode encoding
-            return bytes(unicode_string, 'utf-8')
+            return bytes(unicode, 'utf-8')
         else:
-            raise DXFEncodingError("Can not encode string '{}' with given encoding '{}'".format(unicode_string, encoding))
-
-
+            raise DXFEncodingError(
+                "Can not encode string '{}' with given encoding '{}'".format(unicode, encoding))

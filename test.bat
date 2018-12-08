@@ -22,4 +22,4 @@ pytest integration_tests
 ECHO ********************************************************
 ECHO Running pypy3 integration tests with pytest
 ECHO ********************************************************
-CALL pypy3.bat -m pytest integration_tests
+pypy3 -m pytest integration_tests

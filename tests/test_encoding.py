@@ -9,8 +9,8 @@ from __future__ import unicode_literals
 import unittest
 
 import codecs
-from ezdxf.lldxf.encoding import dxfbackslashreplace
-codecs.register_error('dxfreplace', dxfbackslashreplace)  # setup DXF unicode encoder -> '\U+nnnn'
+from ezdxf.lldxf.encoding import dxf_backslash_replace
+codecs.register_error('dxfreplace', dxf_backslash_replace)  # setup DXF unicode encoder -> '\U+nnnn'
 
 from ezdxf.lldxf.encoding import encode
 from ezdxf.lldxf.const import DXFEncodingError
