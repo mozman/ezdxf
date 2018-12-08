@@ -131,9 +131,9 @@ class DXFAttr:
     def _get_extented_type(self, tags):
         value = tags.get_first_value(self.code)
         if len(value) == 3:
-            if self.xtype == XType.point2d:
+            if self.xtype is XType.point2d:
                 raise DXFStructureError("expected 2D point but found 3D point")
-        elif self.xtype == XType.point3d:  # len(value) == 2
+        elif self.xtype is XType.point3d:  # len(value) == 2
             raise DXFStructureError("expected 3D point but found 2D point")
         return value
 
@@ -165,7 +165,7 @@ class DXFAttr:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
                 raise DXFAttributeError(msg.format(key, entity.drawing.dxfversion, self.dxfversion))
 
-        if self.xtype == XType.callback:
+        if self.xtype is XType.callback:
             self.set_callback_value(entity, value)
             return
 
