@@ -1,7 +1,7 @@
 # Created: 10.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from  copy import deepcopy
+from copy import deepcopy
 
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
@@ -12,11 +12,13 @@ from ezdxf.tools.codepage import toencoding
 COMMENT_CODE = 999
 
 
-def text2tags(text):
+def text2tags(text: str):
     return Tags.from_text(text)
+
 
 def tuples2dxftags(tuples):
     return [DXFTag(t[0], t[1]) for t in tuples]
+
 
 class DXFInfo(object):
     def __init__(self):
@@ -25,7 +27,7 @@ class DXFInfo(object):
         self.encoding = 'cp1252'
         self.handseed = '0'
 
-    def set_header_var(self, name, value):
+    def set_header_var(self, name: str, value: str):
         if name == '$ACADVER':
             self.version = value
             self.release = acad_release.get(value, 'R12')
@@ -36,6 +38,7 @@ class DXFInfo(object):
         else:
             return 0
         return 1
+
 
 def dxf_info(stream):
     info = DXFInfo()
@@ -63,8 +66,9 @@ class Tags(list):
     DXFTag() chunk as flat list.
 
     """
+
     @classmethod
-    def from_text(cls, text):
+    def from_text(cls, text: str):
         return cls(internal_tag_compiler(text))
 
     def __copy__(self):
@@ -72,7 +76,7 @@ class Tags(list):
 
     clone = __copy__
 
-    def get_handle(self):
+    def get_handle(self) -> str:
         """
         Get DXF handle. Raises DXFValueError if handle not exists.
 
@@ -92,7 +96,7 @@ class Tags(list):
                 return handle
         raise DXFValueError('No handle found.')
 
-    def replace_handle(self, new_handle):
+    def replace_handle(self, new_handle: str):
         """
         Replace existing handle.
 
@@ -105,10 +109,10 @@ class Tags(list):
                 self[index] = DXFTag(tag.code, new_handle)
                 return
 
-    def dxftype(self):
+    def dxftype(self) -> str:
         return self[0].value
 
-    def has_tag(self, code):
+    def has_tag(self, code: int) -> bool:
         """
         Returns True if a DXF tag with group code == code is present else False.
 
@@ -118,7 +122,7 @@ class Tags(list):
         """
         return any(True for tag in self if tag.code == code)
 
-    def get_first_value(self, code, default=DXFValueError):
+    def get_first_value(self, code: int, default=DXFValueError):
         """
         Returns value of first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
@@ -135,7 +139,7 @@ class Tags(list):
         else:
             return default
 
-    def get_first_tag(self, code, default=DXFValueError):
+    def get_first_tag(self, code: int, default=DXFValueError) -> DXFTag:
         """
         Returns first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
@@ -152,7 +156,7 @@ class Tags(list):
         else:
             return default
 
-    def find_all(self, code):
+    def find_all(self, code: int) -> list:
         """
         Returns a list of DXF tag with given group code.
 
@@ -162,7 +166,7 @@ class Tags(list):
         """
         return [tag for tag in self if tag.code == code]
 
-    def tag_index(self, code, start=0, end=None):
+    def tag_index(self, code: int, start: int = 0, end: int = None) -> int:
         """
         Return index of first DXF tag with given group code.
 
@@ -181,7 +185,7 @@ class Tags(list):
             index += 1
         raise DXFValueError(code)
 
-    def update(self, tag):
+    def update(self, tag: DXFTag):
         """
         Update first existing tag with same group code as tag, raises DXFValueError if tag not exists.
 
@@ -189,7 +193,7 @@ class Tags(list):
         index = self.tag_index(tag.code)
         self[index] = tag
 
-    def set_first(self, tag):
+    def set_first(self, tag: DXFTag):
         """
         Update first existing tag with group code tag.code or append tag.
 
@@ -223,7 +227,7 @@ class Tags(list):
         """
         self[:] = [tag for tag in self if tag.code in frozenset(codes)]
 
-    def collect_consecutive_tags(self, codes, start=0, end=None):
+    def collect_consecutive_tags(self, codes, start: int = 0, end: int = None):
         """
         Collect all consecutive tags with group code in codes, start and end delimits the search range. A tag code not
         in codes ends the process.
@@ -251,7 +255,7 @@ class Tags(list):
                 break
         return bag
 
-    def has_embedded_objects(self):
+    def has_embedded_objects(self) -> bool:
         for tag in self:
             if tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR:
                 return True
@@ -270,7 +274,7 @@ class Tags(list):
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
 
 
-def group_tags(tags, splitcode=STRUCTURE_MARKER):
+def group_tags(tags, splitcode: int = STRUCTURE_MARKER):
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
     A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
@@ -298,7 +302,7 @@ def group_tags(tags, splitcode=STRUCTURE_MARKER):
         yield group
 
 
-def text_to_multi_tags(text, code=303, size=255, line_ending='^J'):
+def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending: str = '^J'):
     text = ''.join(text).replace('\n', line_ending)
 
     def chop():
@@ -311,6 +315,6 @@ def text_to_multi_tags(text, code=303, size=255, line_ending='^J'):
 
     return [DXFTag(code, part) for part in chop()]
 
-def multi_tags_to_text(tags, line_ending='^J'):
-    return ''.join(tag.value for tag in tags).replace(line_ending, '\n')
 
+def multi_tags_to_text(tags, line_ending: str = '^J'):
+    return ''.join(tag.value for tag in tags).replace(line_ending, '\n')
