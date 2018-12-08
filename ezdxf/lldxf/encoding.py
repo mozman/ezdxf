@@ -7,14 +7,14 @@ from .const import DXFEncodingError
 
 def dxf_backslash_replace(exc: Exception):
     if isinstance(exc, (UnicodeEncodeError, UnicodeTranslateError)):
-        s = u""
+        s = ""
         for c in exc.object[exc.start:exc.end]:
             if ord(c) <= 0xff:
-                s += u"\\x%02x" % ord(c)
+                s += "\\x%02x" % ord(c)
             elif ord(c) <= 0xffff:
-                s += u"\\U+%04x" % ord(c)
+                s += "\\U+%04x" % ord(c)
             else:
-                s += u"\\U+%08x" % ord(c)
+                s += "\\U+%08x" % ord(c)
         return s, exc.end
     else:
         raise TypeError("can't handle %s" % exc.__name__)
@@ -27,5 +27,4 @@ def encode(unicode: str, encoding: str = 'cp1252', ignore_error: bool = False):
         if ignore_error:  # encode string with the default unicode encoding
             return bytes(unicode, 'utf-8')
         else:
-            raise DXFEncodingError(
-                "Can not encode string '{}' with given encoding '{}'".format(unicode, encoding))
+            raise DXFEncodingError("Can not encode string '{}' with given encoding '{}'".format(unicode, encoding))
