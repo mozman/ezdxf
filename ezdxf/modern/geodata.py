@@ -5,7 +5,7 @@ from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.tags import multi_tags_to_text, text_to_multi_tags
 
-from .dxfobjects import DXFEntity, none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags
+from .dxfobjects import DXFEntity, none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, XType
 
 _GEODATA_CLS = """0
 CLASS
@@ -107,14 +107,14 @@ class GeoData(DXFEntity):
             'version': DXFAttr(90, default=2),  # works in R2009=1 but this release has no DXF version, R2010=2
             'coordinate_type': DXFAttr(70, default=3),  # 0=unknown; 1=local grid; 2= projected grid; 3=geographic (latitude/longitude)
             'block_record': DXFAttr(330),  # handle to host block table record
-            'design_point': DXFAttr(10, 'Point3D'),  # Design point, reference point in WCS coordinates
-            'reference_point': DXFAttr(11, 'Point3D'),  # Reference point in coordinate system coordinates, valid only when coordinate type is Local Grid.
-            'north_direction': DXFAttr(12, 'Point2D'),  # North direction vector (2D)
+            'design_point': DXFAttr(10, XType.point3d),  # Design point, reference point in WCS coordinates
+            'reference_point': DXFAttr(11, XType.point3d),  # Reference point in coordinate system coordinates, valid only when coordinate type is Local Grid.
+            'north_direction': DXFAttr(12, XType.point2d),  # North direction vector (2D)
             'horizontal_unit_scale': DXFAttr(40),  # Horizontal unit scale, factor which converts horizontal design coordinates to meters by multiplication.
             'vertical_unit_scale': DXFAttr(41),  # Vertical unit scale, factor which converts vertical design coordinates to meters by multiplication.
             'horizontal_units': DXFAttr(91),  # Horizontal units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by horizontal unit scale is not supported by AutoCAD enumeration.
             'vertical_units': DXFAttr(92),  # Vertical units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by vertical unit scale is not supported by AutoCAD enumeration.
-            'up_direction': DXFAttr(210, 'Point3D'),  # Up direction
+            'up_direction': DXFAttr(210, XType.point3d),  # Up direction
             'scale_estimation_method': DXFAttr(95, default=1),  # 1=None; 2=User specified scale factor; 3=Grid scale at reference point; 4=Prismoidal
             'sea_level_correction': DXFAttr(294, default=0),  # Bool flag specifying whether to do sea level correction
             'user_scale_factor': DXFAttr(141, default=1),  # User specified scale factor

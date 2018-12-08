@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from .graphics import none_subclass, entity_subclass, ModernGraphicEntity, DefSubclass, DXFAttr, DXFAttributes
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity, DefSubclass, DXFAttr, DXFAttributes, XType
 
 oleframe_subclass = DefSubclass('AcDbOleFrame', {
     'version': DXFAttr(70),  # OLE version number
@@ -18,8 +18,8 @@ class OLEFrame(ModernGraphicEntity):
 ole2frame_subclass = DefSubclass('AcDbOle2Frame', {
     'version': DXFAttr(70),  # OLE version number
     'type': DXFAttr(3),  # content type as string e.g. "Paintbrush Picture"
-    'upper_left_corner': DXFAttr(10, xtype='Point3D'),  # Upper-left corner (WCS)
-    'lower_right_corner': DXFAttr(11, xtype='Point3D'),  # Upper-left corner (WCS)
+    'upper_left_corner': DXFAttr(10, xtype=XType.point3d),  # Upper-left corner (WCS)
+    'lower_right_corner': DXFAttr(11, xtype=XType.point3d),  # Upper-left corner (WCS)
     'ole_object_type': DXFAttr(71),  # OLE object type, 1 = Link; 2 = Embedded; 3 = Static
     'ole_tile_mode': DXFAttr(72),  # Tile mode descriptor: 0 = Object resides in model space; 1 = Object resides in paper space
     'length': DXFAttr(90),  # Length of binary data

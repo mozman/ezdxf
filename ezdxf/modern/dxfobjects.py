@@ -2,7 +2,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.dxfentity import DXFEntity
 
 none_subclass = DefSubclass(None, {

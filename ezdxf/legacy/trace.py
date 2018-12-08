@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.lldxf.const import VERTEXNAMES
 
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 
 class QuadrilateralMixin(object):
@@ -53,10 +53,10 @@ class Trace(GraphicEntity, QuadrilateralMixin):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL)
     DXFATTRIBS = make_attribs({
-        'vtx0': DXFAttr(10, xtype='Point2D/3D'),
-        'vtx1': DXFAttr(11, xtype='Point2D/3D'),
-        'vtx2': DXFAttr(12, xtype='Point2D/3D'),
-        'vtx3': DXFAttr(13, xtype='Point2D/3D'),
+        'vtx0': DXFAttr(10, xtype=XType.any_point),
+        'vtx1': DXFAttr(11, xtype=XType.any_point),
+        'vtx2': DXFAttr(12, xtype=XType.any_point),
+        'vtx3': DXFAttr(13, xtype=XType.any_point),
     })
 
 
@@ -69,9 +69,9 @@ class Face(Trace):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TRACE_TPL.replace('TRACE', '3DFACE'))
     DXFATTRIBS = make_attribs({
-        'vtx0': DXFAttr(10, xtype='Point3D'),
-        'vtx1': DXFAttr(11, xtype='Point3D'),
-        'vtx2': DXFAttr(12, xtype='Point3D'),
-        'vtx3': DXFAttr(13, xtype='Point3D'),
+        'vtx0': DXFAttr(10, xtype=XType.point3d),
+        'vtx1': DXFAttr(11, xtype=XType.point3d),
+        'vtx2': DXFAttr(12, xtype=XType.point3d),
+        'vtx3': DXFAttr(13, xtype=XType.point3d),
         'invisible_edge': DXFAttr(70, default=0),
     })

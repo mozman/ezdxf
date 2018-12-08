@@ -4,7 +4,7 @@
 from ezdxf.lldxf.const import DXFValueError, DXFIndexError
 from ezdxf.lldxf import const
 
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 from .facemixins import PolyfaceMixin, PolymeshMixin
 from .trace import QuadrilateralMixin
 
@@ -31,7 +31,7 @@ class Polyline(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = make_attribs({
-        'elevation': DXFAttr(10, xtype='Point2D/3D'),
+        'elevation': DXFAttr(10, xtype=XType.any_point),
         'flags': DXFAttr(70, default=0),
         'default_start_width': DXFAttr(40, default=0.0),
         'default_end_width': DXFAttr(41, default=0.0),
@@ -293,7 +293,7 @@ class Vertex(GraphicEntity, QuadrilateralMixin):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = make_attribs({
-        'location': DXFAttr(10, xtype='Point2D/3D'),
+        'location': DXFAttr(10, xtype=XType.any_point),
         'start_width': DXFAttr(40, default=0.0),
         'end_width': DXFAttr(41, default=0.0),
         'bulge': DXFAttr(42, default=0),

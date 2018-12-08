@@ -1,7 +1,7 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass
 from .spline import Spline, spline_subclass
 
@@ -84,9 +84,9 @@ AcDbHelix
 helix_subclass = DefSubclass('AcDbHelix', {
     'major_release_number': DXFAttr(90),
     'maintenance_release_number': DXFAttr(91),
-    'axis_base_point': DXFAttr(10, xtype='Point3D'),
-    'start_point': DXFAttr(11, xtype='Point3D'),
-    'axis_vector': DXFAttr(12, xtype='Point3D'),
+    'axis_base_point': DXFAttr(10, xtype=XType.point3d),
+    'start_point': DXFAttr(11, xtype=XType.point3d),
+    'axis_vector': DXFAttr(12, xtype=XType.point3d),
     'radius': DXFAttr(40),
     'turns': DXFAttr(41),
     'turn_height': DXFAttr(42),

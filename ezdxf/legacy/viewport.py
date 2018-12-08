@@ -4,7 +4,7 @@
 from contextlib import contextmanager
 
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr
+from ezdxf.lldxf.attributes import DXFAttr, XType
 from ezdxf.lldxf.tags import DXFTag, Tags
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 
@@ -105,7 +105,7 @@ class Viewport(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VPORT_TPL)
     DXFATTRIBS = make_attribs({
-        'center': DXFAttr(10, xtype='Point2D/3D'),  # center point of entity in paper space coordinates)
+        'center': DXFAttr(10, xtype=XType.any_point),  # center point of entity in paper space coordinates)
         'width': DXFAttr(40),  # width in paper space units
         'height': DXFAttr(41),  # height in paper space units
         'status': DXFAttr(68),

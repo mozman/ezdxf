@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.legacy import block
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, ModernGraphicEntityExtension, ModernGraphicEntity
 
 
@@ -41,7 +41,7 @@ block_subclass = (
         'name2': DXFAttr(3),
         'description': DXFAttr(4),
         'flags': DXFAttr(70),
-        'base_point': DXFAttr(10, xtype='Point2D/3D'),
+        'base_point': DXFAttr(10, xtype=XType.any_point),
         'xref_path': DXFAttr(1, default=""),
     })
 )

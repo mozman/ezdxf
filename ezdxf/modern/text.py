@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.legacy import text
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 
 
@@ -54,7 +54,7 @@ AcDbText
 """
 text_subclass = (
     DefSubclass('AcDbText', {
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'height': DXFAttr(40),
         'text': DXFAttr(1),
         'rotation': DXFAttr(50, default=0.0),  # in degrees (circle = 360deg)
@@ -63,9 +63,9 @@ text_subclass = (
         'width': DXFAttr(41, default=1.0),  # width FACTOR!
         'text_generation_flag': DXFAttr(71, default=0),  # 2 = backward (mirror-x), 4 = upside down (mirror-y)
         'halign': DXFAttr(72, default=0),  # horizontal justification
-        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'align_point': DXFAttr(11, xtype=XType.any_point),
         'thickness': DXFAttr(39, default=0.0),
-        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+        'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
     }),
     DefSubclass('AcDbText', {'valign': DXFAttr(73, default=0)}))
 

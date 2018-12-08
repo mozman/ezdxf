@@ -4,7 +4,7 @@
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
 
-from .graphics import ExtendedTags, make_attribs, DXFAttr
+from .graphics import ExtendedTags, make_attribs, DXFAttr, XType
 from .text import Text
 
 _ATTRIB_TPL = """0
@@ -56,7 +56,7 @@ class Attrib(Text):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ATTRIB_TPL)
     DXFATTRIBS = make_attribs({
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'height': DXFAttr(40),
         'text': DXFAttr(1),
         'tag': DXFAttr(2),
@@ -69,7 +69,7 @@ class Attrib(Text):
         'text_generation_flag': DXFAttr(71, default=0),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, default=0),  # horizontal justification
         'valign': DXFAttr(74, default=0),  # vertical justification
-        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'align_point': DXFAttr(11, xtype=XType.any_point),
     })
 
     @property
@@ -181,7 +181,7 @@ class Attdef(Attrib):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ATTDEF_TPL)
     DXFATTRIBS = make_attribs({
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'height': DXFAttr(40),
         'text': DXFAttr(1),
         'prompt': DXFAttr(3),
@@ -195,6 +195,6 @@ class Attdef(Attrib):
         'text_generation_flag': DXFAttr(71, default=0),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, default=0),  # horizontal justification
         'valign': DXFAttr(74, default=0),  # vertical justification
-        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'align_point': DXFAttr(11, xtype=XType.any_point),
     })
 

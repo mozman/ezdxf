@@ -1,7 +1,7 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 
@@ -46,8 +46,8 @@ light_subclass = DefSubclass('AcDbLight', {
     'status': DXFAttr(290),  # on/off ???
     'plot_glyph': DXFAttr(291),  # no/yes
     'intensity': DXFAttr(40),
-    'location': DXFAttr(10, xtype='Point3D'),  # Light position
-    'target': DXFAttr(11, xtype='Point3D'),  # Target location
+    'location': DXFAttr(10, xtype=XType.point3d),  # Light position
+    'target': DXFAttr(11, xtype=XType.point3d),  # Target location
     'attenuation_type': DXFAttr(72),  # Attenuation type:
     # 0 = None
     # 1 = Inverse Linear

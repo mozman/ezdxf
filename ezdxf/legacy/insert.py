@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 _INSERT_TPL = """0
 INSERT
@@ -39,7 +39,7 @@ class Insert(GraphicEntity):
     DXFATTRIBS = make_attribs({
         'attribs_follow': DXFAttr(66, default=0),
         'name': DXFAttr(2),
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'xscale': DXFAttr(41, default=1.0),
         'yscale': DXFAttr(42, default=1.0),
         'zscale': DXFAttr(43, default=1.0),

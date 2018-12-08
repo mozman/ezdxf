@@ -2,7 +2,7 @@
 # Copyright (C) 2016-2018, Manfred Moitzi
 # License: MIT License
 from ezdxf.dxfentity import DXFEntity
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFVertex
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -66,12 +66,12 @@ AcDbUnderlayReference
 
 underlay_subclass = DefSubclass('AcDbUnderlayReference', {
     'underlay_def': DXFAttr(340),  # Hard reference to underlay definition object
-    'insert': DXFAttr(10, xtype='Point3D'),
+    'insert': DXFAttr(10, xtype=XType.point3d),
     'scale_x': DXFAttr(41, default=1.),  # scale x factor
     'scale_y': DXFAttr(42, default=1.),  # scale y factor
     'scale_z': DXFAttr(43, default=1.),  # scale z factor
     'rotation': DXFAttr(50, default=0.),  # rotation angle in degrees?
-    'extrusion': DXFAttr(210, xtype='Point3D'),
+    'extrusion': DXFAttr(210, xtype=XType.point3d),
     'flags': DXFAttr(280, default=0),  # Underlay display properties:
     # 1 = Clipping is on
     # 2 = Underlay is on

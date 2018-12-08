@@ -2,7 +2,7 @@
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from ezdxf.dxfentity import DXFEntity
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFVertex
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -85,10 +85,10 @@ AcDbRasterImage
 """
 
 image_subclass = DefSubclass('AcDbRasterImage', {
-    'insert': DXFAttr(10, xtype='Point3D'),
-    'u_pixel': DXFAttr(11, xtype='Point3D'),  # U-vector of a single pixel (points along the visual bottom of the image, starting at the insertion point)
-    'v_pixel': DXFAttr(12, xtype='Point3D'),  # V-vector of a single pixel (points along the visual left side of the image, starting at the insertion point)
-    'image_size': DXFAttr(13, xtype='Point2D'),  # Image size in pixels
+    'insert': DXFAttr(10, xtype=XType.point3d),
+    'u_pixel': DXFAttr(11, xtype=XType.point3d),  # U-vector of a single pixel (points along the visual bottom of the image, starting at the insertion point)
+    'v_pixel': DXFAttr(12, xtype=XType.point3d),  # V-vector of a single pixel (points along the visual left side of the image, starting at the insertion point)
+    'image_size': DXFAttr(13, xtype=XType.point2d),  # Image size in pixels
     'image_def': DXFAttr(340),  # Hard reference to image def object
     'flags': DXFAttr(70, default=3),  # Image display properties:
     # 1 = Show image
@@ -216,8 +216,8 @@ path/filename.jpg
 image_def_subclass = DefSubclass('AcDbRasterImageDef', {
     'class_version': DXFAttr(90),  # class version
     'filename': DXFAttr(1),  # File name of image
-    'image_size': DXFAttr(10, xtype='Point2D'),  # image size in pixels
-    'pixel_size': DXFAttr(11, xtype='Point2D'),  # Default size of one pixel in AutoCAD units
+    'image_size': DXFAttr(10, xtype=XType.point2d),  # image size in pixels
+    'pixel_size': DXFAttr(11, xtype=XType.point2d),  # Default size of one pixel in AutoCAD units
     'loaded': DXFAttr(280, default=1),
     'resolution_units': DXFAttr(281, default=0),  # Resolution units. 0 = No units; 2 = Centimeters; 5 = Inch
 })

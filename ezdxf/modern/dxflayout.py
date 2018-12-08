@@ -1,7 +1,7 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
-from .dxfobjects import DXFObject, none_subclass, ExtendedTags, DXFAttr, DXFAttributes, DefSubclass
+from .dxfobjects import DXFObject, none_subclass, ExtendedTags, DXFAttr, DXFAttributes, DefSubclass, XType
 
 plot_settings_subclass = DefSubclass('AcDbPlotSettings', {
     'page_setup_name': DXFAttr(1),
@@ -249,15 +249,15 @@ class DXFLayout(DXFObject):
             'name': DXFAttr(1),  # layout name
             'layout_flags': DXFAttr(70),
             'taborder': DXFAttr(71),
-            'limmin': DXFAttr(10, xtype='Point2D'),  # minimum limits
-            'limmax': DXFAttr(11, xtype='Point2D'),  # maximum limits
-            'insert_base': DXFAttr(12, xtype='Point3D'),  # Insertion base point for this layout
-            'extmin': DXFAttr(14, xtype='Point3D'),  # Minimum extents for this layout
-            'extmax': DXFAttr(15, xtype='Point3D'),  # Maximum extents for this layout
+            'limmin': DXFAttr(10, xtype=XType.point2d),  # minimum limits
+            'limmax': DXFAttr(11, xtype=XType.point2d),  # maximum limits
+            'insert_base': DXFAttr(12, xtype=XType.point3d),  # Insertion base point for this layout
+            'extmin': DXFAttr(14, xtype=XType.point3d),  # Minimum extents for this layout
+            'extmax': DXFAttr(15, xtype=XType.point3d),  # Maximum extents for this layout
             'elevation': DXFAttr(146, default=0.),
-            'ucs_origin': DXFAttr(13, xtype='Point3D'),
-            'ucs_xaxis': DXFAttr(16, xtype='Point3D'),
-            'ucs_yaxis': DXFAttr(17, xtype='Point3D'),
+            'ucs_origin': DXFAttr(13, xtype=XType.point3d),
+            'ucs_xaxis': DXFAttr(16, xtype=XType.point3d),
+            'ucs_yaxis': DXFAttr(17, xtype=XType.point3d),
             'ucs_type': DXFAttr(76),
             # Orthographic type of UCS 0 = UCS is not orthographic;
             # 1 = Top; 2 = Bottom; 3 = Front; 4 = Back; 5 = Left; 6 = Right

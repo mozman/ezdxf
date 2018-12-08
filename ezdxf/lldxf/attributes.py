@@ -1,41 +1,48 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from collections import namedtuple
+from enum import Enum
 from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
 from .types import dxftag, DXFVertex
 
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
 
-class DXFAttr(object):
+class XType(Enum):
+    """ Extended Attribute Types
+    """
+    point2d = 1  # 2D points only
+    point3d = 2  # 3D points only
+    any_point = 3  # 2D or 3D points
+    callback = 4  #
+
+
+class DXFAttr:
     """
     Defines a DXF attribute, accessible by DXFEntity.dxf.name.
 
     Extended Attribute Types
     ------------------------
 
-    xtype = 'Point2D'
-
-    2D points only
-
-    xtype = 'Point3D'
-
-    3D point only
-
-    xtype = 'Point2D/3D'
-
-    mixed 2D/3D point
-
-    xtype = 'Callback'
-
-    Calls get_value(entity) to get the value of DXF attribute 'name', and calls set_value(entity, value) to set value of
-    DXF attribute 'name'.
+    - XType.point2d:  2D points only
+    - XType.point3d:  3D point only
+    - XType.any_point:  mixed 2D/3D point
+    - XType.callback: Calls get_value(entity) to get the value of DXF attribute 'name', and calls
+      set_value(entity, value) to set value of DXF attribute 'name'.
 
     For example definitions see TestDXFEntity.test_callback() in file test_dxfentity.py
 
     """
-    def __init__(self, code=None, subclass=0, xtype=None, default=None, dxfversion=None,
-                 getter=None, setter=None):
+
+    def __init__(self,
+                 code: int = None,
+                 subclass: int = 0,
+                 xtype: XType = None,
+                 default=None,
+                 dxfversion: str = None,
+                 getter=None,
+                 setter=None,
+                 ):
         self.name = ''  # set by DXFAttributes._add_subclass_attribs()
         self.code = code  # DXF group code
         self.subclass = subclass  # subclass index
@@ -84,7 +91,7 @@ class DXFAttr(object):
         except TypeError:  # None
             raise DXFAttributeError('DXF attribute {} has no setter.'.format(self.name))
 
-    def get_attrib(self, entity, key, default=DXFValueError):
+    def get_attrib(self, entity, key: str, default=DXFValueError):
         """
         Return value of DXF attribute 'key'.
 
@@ -96,7 +103,7 @@ class DXFAttr(object):
         Returns: value of DXF attribute
 
         """
-        if self.xtype == 'Callback':
+        if self.xtype is XType.callback:
             return self.get_callback_value(entity)
         try:  # No check if attribute is valid for DXF version of drawing, if it is there you get it
             return self._get_dxf_attrib(entity.tags)
@@ -124,13 +131,13 @@ class DXFAttr(object):
     def _get_extented_type(self, tags):
         value = tags.get_first_value(self.code)
         if len(value) == 3:
-            if self.xtype == 'Point2D':
+            if self.xtype == XType.point2d:
                 raise DXFStructureError("expected 2D point but found 3D point")
-        elif self.xtype == 'Point3D':  # len(value) == 2
+        elif self.xtype == XType.point3d:  # len(value) == 2
             raise DXFStructureError("expected 3D point but found 2D point")
         return value
 
-    def _get_dxf_attrib_subclass_tags(self, tags, subclass_key):
+    def _get_dxf_attrib_subclass_tags(self, tags, subclass_key: int):
         try:  # fast access subclass by index as int
             # no subclass is subclass index 0
             return tags.subclasses[subclass_key]
@@ -143,7 +150,7 @@ class DXFAttr(object):
             # raises DXFKeyError if subclass does not exist
             return tags.get_subclass(subclass_key)
 
-    def set_attrib(self, entity, key, value):
+    def set_attrib(self, entity, key: str, value):
         """
         Set DXF attribute 'key' to value.
 
@@ -158,7 +165,7 @@ class DXFAttr(object):
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
                 raise DXFAttributeError(msg.format(key, entity.drawing.dxfversion, self.dxfversion))
 
-        if self.xtype == 'Callback':
+        if self.xtype == XType.callback:
             self.set_callback_value(entity, value)
             return
 
@@ -172,10 +179,10 @@ class DXFAttr(object):
         value = tuple(value)
         vlen = len(value)
         if vlen == 3:
-            if self.xtype == 'Point2D':
+            if self.xtype is XType.point2d:
                 raise DXFValueError('2 axis required')
         elif vlen == 2:
-            if self.xtype == 'Point3D':
+            if self.xtype is XType.point3d:
                 raise DXFValueError('3 axis required')
         else:
             raise DXFValueError('2 or 3 axis required')
@@ -193,31 +200,31 @@ class DXFAttr(object):
         subclass_tags.remove_tags(codes=(self.code,))
 
 
-class DXFAttributes(object):
+class DXFAttributes:
     def __init__(self, *subclassdefs):
         self._subclasses = []
         self._attribs = {}
         for subclass in subclassdefs:
             self.add_subclass(subclass)
-            
+
     def add_subclass(self, subclass):
         subclass_index = len(self._subclasses)
         self._subclasses.append(subclass)
         self._add_subclass_attribs(subclass, subclass_index)
-        
+
     def _add_subclass_attribs(self, subclass, subclass_index):
         for name, dxfattrib in subclass.attribs.items():
             dxfattrib.name = name
             dxfattrib.subclass = subclass_index
             self._attribs[name] = dxfattrib
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         return self._attribs[name]
 
-    def __contains__(self, name):
+    def __contains__(self, name: str):
         return name in self._attribs
 
-    def get(self, key, default=None):
+    def get(self, key: str, default=None):
         return self._attribs.get(key, default)
 
     def keys(self):

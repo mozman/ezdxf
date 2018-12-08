@@ -8,7 +8,7 @@ from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray, replace_tags
 from ezdxf.lldxf import loader
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 FORMAT_CODES = frozenset('xysebv')
@@ -37,8 +37,8 @@ lwpolyline_subclass = DefSubclass('AcDbPolyline', {
     'thickness': DXFAttr(39, default=0.0),
     'flags': DXFAttr(70, default=0),
     'const_width': DXFAttr(43, default=0.0),
-    'count': DXFAttr(90, xtype='Callback', getter='__len__'),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'count': DXFAttr(90, xtype=XType.callback, getter='__len__'),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 LWPOINTCODES = (10, 20, 40, 41, 42)

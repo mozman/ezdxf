@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.legacy import insert
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 
 
@@ -40,7 +40,7 @@ BLOCKNAME
 insert_subclass = DefSubclass('AcDbBlockReference', {
     'attribs_follow': DXFAttr(66, default=0),
     'name': DXFAttr(2),
-    'insert': DXFAttr(10, xtype='Point2D/3D'),
+    'insert': DXFAttr(10, xtype=XType.any_point),
     'xscale': DXFAttr(41, default=1.0),
     'yscale': DXFAttr(42, default=1.0),
     'zscale': DXFAttr(43, default=1.0),
@@ -49,7 +49,7 @@ insert_subclass = DefSubclass('AcDbBlockReference', {
     'row_count': DXFAttr(71, default=1),
     'column_spacing': DXFAttr(44, default=0.0),
     'row_spacing': DXFAttr(45, default=0.0),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 

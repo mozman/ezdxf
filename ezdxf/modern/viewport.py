@@ -1,7 +1,7 @@
 # Created: 11.10.2015
 # Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.const import DXFAttributeError, DXFValueError
@@ -117,17 +117,17 @@ AcDbViewport
 # DXF drawing.
 
 viewport_subclass = DefSubclass('AcDbViewport', {
-    'center': DXFAttr(10, xtype='Point2D/3D'),
+    'center': DXFAttr(10, xtype=XType.any_point),
     'width': DXFAttr(40),
     'height': DXFAttr(41),
     'status': DXFAttr(68),
     'id': DXFAttr(69),
-    'view_center_point': DXFAttr(12, xtype='Point2D'),
-    'snap_base_point': DXFAttr(13, xtype='Point2D'),
-    'snap_spacing': DXFAttr(14, xtype='Point2D'),
-    'grid_spacing': DXFAttr(15, xtype='Point2D'),
-    'view_direction_vector': DXFAttr(16, xtype='Point3D'),
-    'view_target_point': DXFAttr(17, xtype='Point3D'),
+    'view_center_point': DXFAttr(12, xtype=XType.point2d),
+    'snap_base_point': DXFAttr(13, xtype=XType.point2d),
+    'snap_spacing': DXFAttr(14, xtype=XType.point2d),
+    'grid_spacing': DXFAttr(15, xtype=XType.point2d),
+    'view_direction_vector': DXFAttr(16, xtype=XType.point3d),
+    'view_target_point': DXFAttr(17, xtype=XType.point3d),
     'perspective_lens_length': DXFAttr(42, default=50),
     'front_clip_plane_z_value': DXFAttr(43, default=0),
     'back_clip_plane_z_value': DXFAttr(44, default=0),
@@ -165,9 +165,9 @@ viewport_subclass = DefSubclass('AcDbViewport', {
     'render_mode': DXFAttr(281, default=0),
     'ucs_per_viewport': DXFAttr(71, default=0),
     'ucs_icon': DXFAttr(74, default=0),
-    'ucs_origin': DXFAttr(110, xtype='Point3D'),
-    'ucs_x_axis': DXFAttr(111, xtype='Point3D'),
-    'ucs_y_axis': DXFAttr(112, xtype='Point3D'),
+    'ucs_origin': DXFAttr(110, xtype=XType.point3d),
+    'ucs_x_axis': DXFAttr(111, xtype=XType.point3d),
+    'ucs_y_axis': DXFAttr(112, xtype=XType.point3d),
     'ucs_handle': DXFAttr(345),  # ID/handle of AcDbUCSTableRecord if UCS is a named UCS. If not present, then UCS is unnamed
     'ucs_base_handle': DXFAttr(346),  # ID/handle of AcDbUCSTableRecord of base UCS if UCS is orthographic (79 code is non-zero). If not present and 79 code is non-zero, then base UCS is taken to be WORLD
     'ucs_ortho_type': DXFAttr(79),  # 0 = not orthographic; 1= Top; 2= Bottom; 3= Front; 4= Back; 5= Left; 6= Right

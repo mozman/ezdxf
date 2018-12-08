@@ -1,7 +1,7 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 
@@ -39,7 +39,7 @@ section_subclass = DefSubclass('AcDbSection', {
     'state': DXFAttr(90),
     'flags': DXFAttr(91),
     'name': DXFAttr(1),
-    'vertical_direction': DXFAttr(10, xtype='Point3D'),
+    'vertical_direction': DXFAttr(10, xtype=XType.point3d),
     'top_height': DXFAttr(40),
     'bottom_height': DXFAttr(41),
     'indicator_transparency': DXFAttr(70),

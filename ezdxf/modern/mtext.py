@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import math
 
 from ezdxf.algebra.vector import Vector
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf import const
@@ -42,7 +42,7 @@ AcDbMText
 """
 
 mtext_subclass = DefSubclass('AcDbMText', {
-    'insert': DXFAttr(10, xtype='Point3D'),
+    'insert': DXFAttr(10, xtype=XType.point3d),
     'char_height': DXFAttr(40),  # nominal (initial) text height
     'width': DXFAttr(41),  # reference column width
     'attachment_point': DXFAttr(71),
@@ -54,8 +54,8 @@ mtext_subclass = DefSubclass('AcDbMText', {
     # 3 = Top to bottom
     # 5 = By style (the flow direction is inherited from the associated text style)
     'style': DXFAttr(7, default='STANDARD'),  # text style name
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
-    'text_direction': DXFAttr(11, xtype='Point3D'),  # x-axis direction vector (in WCS)
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
+    'text_direction': DXFAttr(11, xtype=XType.point3d),  # x-axis direction vector (in WCS)
     # If *rotation* and *text_direction* are present, *text_direction* wins
     'rect_width': DXFAttr(42),  # Horizontal width of the characters that make up the mtext entity.
     # This value will always be equal to or less than the value of *width*, (read-only, ignored if supplied)

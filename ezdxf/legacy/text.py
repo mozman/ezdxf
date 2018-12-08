@@ -4,7 +4,7 @@
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf import const
 
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 _TEXT_TPL = """0
 TEXT
@@ -49,7 +49,7 @@ class Text(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_TEXT_TPL)
     DXFATTRIBS = make_attribs({
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'height': DXFAttr(40),
         'text': DXFAttr(1),
         'rotation': DXFAttr(50, default=0.0),  # in degrees (circle = 360deg)
@@ -59,7 +59,7 @@ class Text(GraphicEntity):
         'text_generation_flag': DXFAttr(71, default=0),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, default=0),  # horizontal justification
         'valign': DXFAttr(73,  default=0),  # vertical justification
-        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'align_point': DXFAttr(11, xtype=XType.any_point),
     })
     # horizontal align values
     LEFT = 0

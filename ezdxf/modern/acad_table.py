@@ -1,7 +1,7 @@
 # Created: 09.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 _ACAD_TABLE_CLS = """0
@@ -74,7 +74,7 @@ AcDbTable
 
 block_reference_subclass = DefSubclass('AcDbBlockReference', {
     'block_name': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
-    'insert': DXFAttr(10, xtype='Point3D'),  # Insertion point
+    'insert': DXFAttr(10, xtype=XType.point3d),  # Insertion point
 })
 
 table_subclass = DefSubclass('AcDbTable', {

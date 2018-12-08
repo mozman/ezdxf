@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.legacy import tableentries as legacy
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools.complex_ltype import lin_compiler
@@ -411,9 +411,9 @@ UCSNAME
 ucs_subclass = DefSubclass('AcDbUCSTableRecord', {
     'name': DXFAttr(2),
     'flags': DXFAttr(70),
-    'origin': DXFAttr(10, xtype='Point3D'),
-    'xaxis': DXFAttr(11, xtype='Point3D'),
-    'yaxis': DXFAttr(12, xtype='Point3D'),
+    'origin': DXFAttr(10, xtype=XType.point3d),
+    'xaxis': DXFAttr(11, xtype=XType.point3d),
+    'yaxis': DXFAttr(12, xtype=XType.point3d),
 })
 
 
@@ -471,9 +471,9 @@ view_subclass = DefSubclass('AcDbViewTableRecord', {
     'flags': DXFAttr(70),
     'height': DXFAttr(40),
     'width': DXFAttr(41),
-    'center_point': DXFAttr(10, xtype='Point2D'),
-    'direction_point': DXFAttr(11, xtype='Point3D'),
-    'target_point': DXFAttr(12, xtype='Point3D'),
+    'center_point': DXFAttr(10, xtype=XType.point2d),
+    'direction_point': DXFAttr(11, xtype=XType.point3d),
+    'target_point': DXFAttr(12, xtype=XType.point3d),
     'lens_length': DXFAttr(42),
     'front_clipping': DXFAttr(43),
     'back_clipping': DXFAttr(44),
@@ -570,14 +570,14 @@ VPORTNAME
 vport_subclass = DefSubclass('AcDbViewportTableRecord', {
     'name': DXFAttr(2),
     'flags': DXFAttr(70),
-    'lower_left': DXFAttr(10, xtype='Point2D'),
-    'upper_right': DXFAttr(11, xtype='Point2D'),
-    'center_point': DXFAttr(12, xtype='Point2D'),
-    'snap_base': DXFAttr(13, xtype='Point2D'),
-    'snap_spacing': DXFAttr(14, xtype='Point2D'),
-    'grid_spacing': DXFAttr(15, xtype='Point2D'),
-    'direction_point': DXFAttr(16, xtype='Point3D'),
-    'target_point': DXFAttr(17, xtype='Point3D'),
+    'lower_left': DXFAttr(10, xtype=XType.point2d),
+    'upper_right': DXFAttr(11, xtype=XType.point2d),
+    'center_point': DXFAttr(12, xtype=XType.point2d),
+    'snap_base': DXFAttr(13, xtype=XType.point2d),
+    'snap_spacing': DXFAttr(14, xtype=XType.point2d),
+    'grid_spacing': DXFAttr(15, xtype=XType.point2d),
+    'direction_point': DXFAttr(16, xtype=XType.point3d),
+    'target_point': DXFAttr(17, xtype=XType.point3d),
     'height': DXFAttr(40),
     'aspect_ratio': DXFAttr(41),
     'lens_length': DXFAttr(42),

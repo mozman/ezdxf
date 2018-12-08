@@ -2,11 +2,11 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.dxfentity import DXFEntity
 
 
-def make_attribs(additional=None):
+def make_attribs(additional: dict = None):
     dxfattribs = {
         'handle': DXFAttr(5),
         'layer': DXFAttr(8, default='0'),  # layer name as string, mandatory according to the DXF Reference
@@ -14,7 +14,8 @@ def make_attribs(additional=None):
         'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
         'thickness': DXFAttr(39, default=0),  # thickness of 2D elements
         'paperspace': DXFAttr(67, default=0),  # 0=modelspace; 1=paperspace
-        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),  # Z-axis of OCS (Object-Coordinate-System)
+        'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
+    # Z-axis of OCS (Object-Coordinate-System)
     }
     if additional is not None:
         dxfattribs.update(additional)
@@ -67,8 +68,8 @@ class Line(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_LINE_TPL)
     DXFATTRIBS = make_attribs({
-        'start': DXFAttr(10, xtype='Point2D/3D'),
-        'end': DXFAttr(11, xtype='Point2D/3D'),
+        'start': DXFAttr(10, xtype=XType.any_point),
+        'end': DXFAttr(11, xtype=XType.any_point),
     })
 
 
@@ -91,7 +92,7 @@ class Point(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_POINT_TPL)
     DXFATTRIBS = make_attribs({
-        'location': DXFAttr(10, xtype='Point2D/3D'),
+        'location': DXFAttr(10, xtype=XType.any_point),
     })
 
 
@@ -116,7 +117,7 @@ class Circle(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_CIRCLE_TPL)
     DXFATTRIBS = make_attribs({
-        'center': DXFAttr(10, xtype='Point2D/3D'),
+        'center': DXFAttr(10, xtype=XType.any_point),
         'radius': DXFAttr(40),
     })
 
@@ -146,7 +147,7 @@ class Arc(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_ARC_TPL)
     DXFATTRIBS = make_attribs({
-        'center': DXFAttr(10, xtype='Point2D/3D'),
+        'center': DXFAttr(10, xtype=XType.any_point),
         'radius': DXFAttr(40),
         'start_angle': DXFAttr(50),
         'end_angle': DXFAttr(51),
@@ -192,7 +193,7 @@ class Shape(GraphicEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_SHAPE_TPL)
     DXFATTRIBS = make_attribs({
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'size': DXFAttr(40),
         'name': DXFAttr(2),
         'rotation': DXFAttr(50, default=0.0),

@@ -3,7 +3,7 @@
 # License: MIT License
 from contextlib import contextmanager
 
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFValueError
@@ -101,15 +101,15 @@ AcDbSpline
 spline_subclass = DefSubclass('AcDbSpline', {
     'flags': DXFAttr(70, default=0),
     'degree': DXFAttr(71),
-    'n_knots': DXFAttr(72, xtype='Callback', getter='knot_value_count'),
-    'n_control_points': DXFAttr(73, xtype='Callback', getter='control_point_count'),
-    'n_fit_points': DXFAttr(74, xtype='Callback', getter='fit_point_count'),
+    'n_knots': DXFAttr(72, xtype=XType.callback, getter='knot_value_count'),
+    'n_control_points': DXFAttr(73, xtype=XType.callback, getter='control_point_count'),
+    'n_fit_points': DXFAttr(74, xtype=XType.callback, getter='fit_point_count'),
     'knot_tolerance': DXFAttr(42, default=1e-10),
     'control_point_tolerance': DXFAttr(43, default=1e-10),
     'fit_tolerance': DXFAttr(44, default=1e-10),
-    'start_tangent': DXFAttr(12, xtype='Point3D'),
-    'end_tangent': DXFAttr(13, xtype='Point3D'),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'start_tangent': DXFAttr(12, xtype=XType.point3d),
+    'end_tangent': DXFAttr(13, xtype=XType.point3d),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
     # 10: Control points (in WCS); one entry per control point
     # 11: Fit points (in WCS); one entry per fit point
     # 40: Knot value (one entry per knot)

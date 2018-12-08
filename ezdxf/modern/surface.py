@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.lldxf.const import DXFStructureError
 
-from .graphics import none_subclass, entity_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags
+from .graphics import none_subclass, entity_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, XType
 from .solid3d import Body, modeler_geometry_subclass
 from . import matrix_accessors
 
@@ -276,7 +276,7 @@ ObjectDBX Classes
 
 extruded_surface_subclass = DefSubclass('AcDbExtrudedSurface', {
     'class_id': DXFAttr(90),
-    'sweep_vector': DXFAttr(10, xtype='Point3D'),
+    'sweep_vector': DXFAttr(10, xtype=XType.point3d),
     # 16x group code 40: Transform matrix of extruded entity (16 floats; row major format; default = identity matrix)
     'draft_angle': DXFAttr(42, default=0.),  # in radians
     'draft_start_distance': DXFAttr(43, default=0.),
@@ -294,7 +294,7 @@ extruded_surface_subclass = DefSubclass('AcDbExtrudedSurface', {
     'base_point_set': DXFAttr(294, default=0),  # true/false
     'sweep_entity_transform_computed': DXFAttr(295, default=0),  # true/false
     'path_entity_transform_computed': DXFAttr(296, default=0),  # true/false
-    'reference_vector_for_controlling_twist': DXFAttr(11, xtype='Point3D'),
+    'reference_vector_for_controlling_twist': DXFAttr(11, xtype=XType.point3d),
 })
 
 
@@ -616,8 +616,8 @@ ObjectDBX Classes
 
 revolved_surface_subclass = DefSubclass('AcDbRevolvedSurface', {
     'class_id': DXFAttr(90, default=0.),
-    'axis_point': DXFAttr(10, xtype='Point3D'),
-    'axis_vector': DXFAttr(11, xtype='Point3D'),
+    'axis_point': DXFAttr(10, xtype=XType.point3d),
+    'axis_vector': DXFAttr(11, xtype=XType.point3d),
     'revolve_angle': DXFAttr(40),  # in radians
     'start_angle': DXFAttr(41),  # in radians
     # 16x group code 42: Transform matrix of revolved entity (16 floats; row major format; default = identity matrix)
@@ -903,7 +903,7 @@ swept_surface_subclass = DefSubclass('AcDbSweptSurface', {
     'base_point_set': DXFAttr(294, default=0),  # true/false
     'sweep_entity_transform_computed': DXFAttr(295, default=0),  # true/false
     'path_entity_transform_computed': DXFAttr(296, default=0),  # true/false
-    'reference_vector_for_controlling_twist': DXFAttr(11, xtype='Point3D'),
+    'reference_vector_for_controlling_twist': DXFAttr(11, xtype=XType.point3d),
 })
 
 

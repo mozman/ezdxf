@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.legacy import attrib
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 
 _ATTDEF_TPL = """0
@@ -62,7 +62,7 @@ TAG
 
 attdef_subclass = (
     DefSubclass('AcDbText', {
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'thickness': DXFAttr(39, default=0.0),
         'height': DXFAttr(40),
         'text': DXFAttr(1),
@@ -72,8 +72,8 @@ attdef_subclass = (
         'style': DXFAttr(7, default='STANDARD'),
         'text_generation_flag': DXFAttr(71, default=0),
         'halign': DXFAttr(72, default=0),
-        'align_point': DXFAttr(11, xtype='Point2D/3D'),
-        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+        'align_point': DXFAttr(11, xtype=XType.any_point),
+        'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
     }),
     DefSubclass('AcDbAttributeDefinition', {
         'prompt': DXFAttr(3),
@@ -144,7 +144,7 @@ TAG
 """
 attrib_subclass = (
     DefSubclass('AcDbText', {
-        'insert': DXFAttr(10, xtype='Point2D/3D'),
+        'insert': DXFAttr(10, xtype=XType.any_point),
         'thickness': DXFAttr(39, default=0.0),
         'height': DXFAttr(40),
         'text': DXFAttr(1),
@@ -152,9 +152,9 @@ attrib_subclass = (
         'width': DXFAttr(41, default=1.0),  # error in DXF description, because placed in 'AcDbAttribute'
         'oblique': DXFAttr(51, default=0.0),  # error in DXF description, because placed in 'AcDbAttribute'
         'style': DXFAttr(7, default='STANDARD'),  # error in DXF description, because placed in 'AcDbAttribute'
-        'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),  # error in DXF description, because placed in 'AcDbAttribute'
+        'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),  # error in DXF description, because placed in 'AcDbAttribute'
         'halign': DXFAttr(72, default=0),
-        'align_point': DXFAttr(11, xtype='Point2D/3D'),
+        'align_point': DXFAttr(11, xtype=XType.any_point),
     }),
     DefSubclass('AcDbAttribute', {
         'tag': DXFAttr(2),

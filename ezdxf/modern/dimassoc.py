@@ -1,7 +1,7 @@
 # Created: 15.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
+from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, XType, none_subclass, ExtendedTags
 # Autodesk gone crazy: subclass AcDbOsnapPointRef with group code 1!!!!!
 
 
@@ -107,7 +107,7 @@ class DimAssoc(DXFObject):
         'object_gs_marker': DXFAttr(91),  # GsMarker of main object (index)
         'object_xref_id': DXFAttr(301),  # Handle (string) of Xref object
         'near_param': DXFAttr(40),  # Geometry parameter for Near Osnap
-        'osnap_point': DXFAttr(10, xtype='Point3D'),  # Osnap point in WCS
+        'osnap_point': DXFAttr(10, xtype=XType.point3d),  # Osnap point in WCS
         'intersect_id': DXFAttr(332),  # ID of intersection object (geometry)
         'intersect_subtype': DXFAttr(74),  # SubentType of intersection object (edge/face)
         'intersect_gs_marker': DXFAttr(92),  # GsMarker of intersection object (index)

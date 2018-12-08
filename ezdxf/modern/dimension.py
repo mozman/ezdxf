@@ -2,7 +2,7 @@
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
 from ezdxf.legacy import dimension
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
@@ -11,8 +11,8 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     'dimstyle': DXFAttr(3, default='STANDARD'),  # dimension style name
     # The dimension style is stored in Drawing.sections.tables.dimstyles,
     # shortcut Drawings.dimstyles property
-    'defpoint': DXFAttr(10, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # definition point for all dimension types
-    'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # middle point of dimension text
+    'defpoint': DXFAttr(10, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # definition point for all dimension types
+    'text_midpoint': DXFAttr(11, xtype=XType.any_point),  # middle point of dimension text
     'dimtype': DXFAttr(70, default=0),  # Dimension type:
     # Values 0–6 are integer values that represent the dimension type.
     # Values 32, 64, and 128 are bit values, which are added to the integer values
@@ -52,14 +52,14 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     # indicates the horizontal direction for the dimension entity. The dimension entity determines the orientation of
     # dimension text and lines for horizontal, vertical, and rotated linear dimensions. This group value is the negative
     # of the angle between the OCS X axis and the UCS X axis. It is always in the XY plane of the OCS
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 aligned_dimension_subclass = DefSubclass('AcDbAlignedDimension', {
-    'insert': DXFAttr(12, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Insertion point for clones of a
+    'insert': DXFAttr(12, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Insertion point for clones of a
     # dimension—Baseline and Continue (in OCS)
-    'defpoint2': DXFAttr(13, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
-    'defpoint3': DXFAttr(14, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
+    'defpoint2': DXFAttr(13, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
+    'defpoint3': DXFAttr(14, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
     # The defpoint2 (13,23,33) specifies the start point of the first extension line and
     # the defpoint3 (14,24,34) specifies the start point of the second extension line.
     # Defpoint (10,20,30) specifies the dimension line location. The text_midpoint (11,21,31)
@@ -74,7 +74,7 @@ rotated_dimension_subclass = DefSubclass('AcDbRotatedDimension', {
 })
 
 radial_diametric_attribs = {
-    'defpoint4': DXFAttr(15, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for diameter, radius, and angular dimensions (in WCS)
+    'defpoint4': DXFAttr(15, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for diameter, radius, and angular dimensions (in WCS)
     'leader_length': DXFAttr(40),  # Leader length for radius and diameter dimensions
 }
 
@@ -83,10 +83,10 @@ radial_dimension_subclass = DefSubclass('AcDbRadialDimension', radial_diametric_
 diametric_dimension_subclass = DefSubclass('AcDbDiametricDimension', radial_diametric_attribs)
 
 angular_dimension_subclass = DefSubclass('AcDb3dPointAngularDimension', {
-    'defpoint2': DXFAttr(13, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
-    'defpoint3': DXFAttr(14, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
-    'defpoint4': DXFAttr(15, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for diameter, radius, and angular dimensions (in WCS)
-    'defpoint5': DXFAttr(16, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Point defining dimension arc for angular dimensions (in OCS)
+    'defpoint2': DXFAttr(13, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
+    'defpoint3': DXFAttr(14, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
+    'defpoint4': DXFAttr(15, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for diameter, radius, and angular dimensions (in WCS)
+    'defpoint5': DXFAttr(16, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Point defining dimension arc for angular dimensions (in OCS)
     # The defpoint2 (13,23,33) and defpoint3 (14,24,34) specify the endpoints of the line used to determine the first
     # extension line. Defpoint (10,20,30) and defpoint4 (15,25,35) specify the endpoints of the line used to determine
     # the second extension line. Defpoint5 (16,26,36) specifies the location of the dimension line arc.
@@ -100,8 +100,8 @@ angular_dimension_subclass = DefSubclass('AcDb3dPointAngularDimension', {
 })
 
 ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
-    'defpoint2': DXFAttr(13, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
-    'defpoint3': DXFAttr(14, xtype='Point3D', default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
+    'defpoint2': DXFAttr(13, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
+    'defpoint3': DXFAttr(14, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),  # Definition point for linear and angular dimensions (in WCS)
     # The defpoint1 (13,23,33) specifies the feature location and the defpoint2 (14,24,34) specifies the leader
     # endpoint. The text_midpoint (11,21,31) specifies the midpoint of the dimension text. Defpoint (10,20,30) is placed
     # at the origin of the UCS that is current when the dimension is created.

@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.legacy import trace
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 
 
@@ -46,12 +46,12 @@ AcDbTrace
 """
 
 trace_subclass = DefSubclass('AcDbTrace', {
-    'vtx0': DXFAttr(10, xtype='Point2D/3D'),
-    'vtx1': DXFAttr(11, xtype='Point2D/3D'),
-    'vtx2': DXFAttr(12, xtype='Point2D/3D'),
-    'vtx3': DXFAttr(13, xtype='Point2D/3D'),
+    'vtx0': DXFAttr(10, xtype=XType.any_point),
+    'vtx1': DXFAttr(11, xtype=XType.any_point),
+    'vtx2': DXFAttr(12, xtype=XType.any_point),
+    'vtx3': DXFAttr(13, xtype=XType.any_point),
     'thickness': DXFAttr(39, default=0.0),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -104,10 +104,10 @@ AcDbFace
 0.0
 """
 face_subclass = DefSubclass('AcDbFace', {
-    'vtx0': DXFAttr(10, xtype='Point3D'),
-    'vtx1': DXFAttr(11, xtype='Point3D'),
-    'vtx2': DXFAttr(12, xtype='Point3D'),
-    'vtx3': DXFAttr(13, xtype='Point3D'),
+    'vtx0': DXFAttr(10, xtype=XType.point3d),
+    'vtx1': DXFAttr(11, xtype=XType.point3d),
+    'vtx2': DXFAttr(12, xtype=XType.point3d),
+    'vtx3': DXFAttr(13, xtype=XType.point3d),
     'invisible_edge': DXFAttr(70, default=0),
 })
 

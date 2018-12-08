@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import pytest
 import ezdxf
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.dxfentity import DXFEntity, DXFTag
 from ezdxf.tools import set_flag_state
@@ -16,12 +16,12 @@ DWG = ezdxf.new('R12')
 
 class PointAccessor(DXFEntity):
     DXFATTRIBS = DXFAttributes(DefSubclass(None, {
-        'point': DXFAttr(10, xtype='Point3D'),
-        'flat': DXFAttr(11, xtype='Point2D'),
-        'xp': DXFAttr(12, xtype='Point3D'),
-        'flex': DXFAttr(13, xtype='Point2D/3D'),
+        'point': DXFAttr(10, xtype=XType.point3d),
+        'flat': DXFAttr(11, xtype=XType.point2d),
+        'xp': DXFAttr(12, xtype=XType.point3d),
+        'flex': DXFAttr(13, xtype=XType.any_point),
         'flags': DXFAttr(70),
-        'counter': DXFAttr(xtype='Callback', getter='get_counter', setter='set_counter'),
+        'counter': DXFAttr(xtype=XType.callback, getter='get_counter', setter='set_counter'),
         'just_AC1015': DXFAttr(71, default=777, dxfversion='AC1015'),
     }))
 

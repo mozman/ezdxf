@@ -1,7 +1,7 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 
@@ -38,9 +38,9 @@ AcDbEllipse
 """
 
 ellipse_subclass = DefSubclass('AcDbEllipse', {
-    'center': DXFAttr(10, xtype='Point2D/3D'),
-    'major_axis': DXFAttr(11, xtype='Point2D/3D'),  # relative to the center
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'center': DXFAttr(10, xtype=XType.any_point),
+    'major_axis': DXFAttr(11, xtype=XType.any_point),  # relative to the center
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
     'ratio': DXFAttr(40),
     'start_param': DXFAttr(41),  # this value is 0.0 for a full ellipse
     'end_param': DXFAttr(42),  # this value is 2*pi for a full ellipse

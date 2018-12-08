@@ -1,7 +1,7 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 
@@ -31,8 +31,8 @@ AcDbRay
 0.0
 """
 ray_subclass = DefSubclass('AcDbRay', {
-    'start': DXFAttr(10, xtype='Point3D'),
-    'unit_vector': DXFAttr(11, xtype='Point3D'),
+    'start': DXFAttr(10, xtype=XType.point3d),
+    'unit_vector': DXFAttr(11, xtype=XType.point3d),
 })
 
 

@@ -4,7 +4,7 @@
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.lldxf import const
 
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 _DIMENSION_TPL = """0
 DIMENSION
@@ -75,9 +75,9 @@ class Dimension(GraphicEntity):
         'dimstyle': DXFAttr(3, default='STANDARD'),  # dimension style name
         # The dimension style is stored in Drawing.sections.tables.dimstyles,
         # shortcut Drawings.dimstyles property
-        'defpoint': DXFAttr(10, xtype='Point2D/3D'),  # WCS, definition point for all dimension types
-        'text_midpoint': DXFAttr(11, xtype='Point2D/3D'),  # OCS, middle point of dimension text
-        'translation_vector': DXFAttr(12, xtype='Point3D'),  # OCS, dimension block translation vector
+        'defpoint': DXFAttr(10, xtype=XType.any_point),  # WCS, definition point for all dimension types
+        'text_midpoint': DXFAttr(11, xtype=XType.any_point),  # OCS, middle point of dimension text
+        'translation_vector': DXFAttr(12, xtype=XType.point3d),  # OCS, dimension block translation vector
         'dimtype': DXFAttr(70, default=0),  # Dimension type:
         # Values 0–6 are integer values that represent the dimension type.
         # Values 64 and 128 are bit values, which are added to the integer values
@@ -97,10 +97,10 @@ class Dimension(GraphicEntity):
         # If null or "<>", the dimension measurement is drawn as the text,
         # if " " [one blank space], the text is suppressed.
         # Anything else is drawn as the text.
-        'defpoint2': DXFAttr(13, xtype='Point2D/3D'),  # WCS, definition point for linear and angular dimensions
-        'defpoint3': DXFAttr(14, xtype='Point2D/3D'),  # WCS, definition point for linear and angular dimensions
-        'defpoint4': DXFAttr(15, xtype='Point2D/3D'),  # WCS, definition point for diameter, radius, and angular dimensions
-        'defpoint5': DXFAttr(16, xtype='Point2D/3D'),  # OCS, point defining dimension arc for angular dimensions
+        'defpoint2': DXFAttr(13, xtype=XType.any_point),  # WCS, definition point for linear and angular dimensions
+        'defpoint3': DXFAttr(14, xtype=XType.any_point),  # WCS, definition point for linear and angular dimensions
+        'defpoint4': DXFAttr(15, xtype=XType.any_point),  # WCS, definition point for diameter, radius, and angular dimensions
+        'defpoint5': DXFAttr(16, xtype=XType.any_point),  # OCS, point defining dimension arc for angular dimensions
         'leader_length': DXFAttr(40),  # leader length for radius and diameter dimensions
         'angle': DXFAttr(50),  # angle of rotated, horizontal, or vertical linear dimensions
         'horizontal_direction': DXFAttr(51),

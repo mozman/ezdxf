@@ -1,7 +1,7 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 # example: D:\source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf
@@ -69,10 +69,10 @@ leader_subclass = DefSubclass('AcDbLeader', {
     # 10, 20, 30 - Vertex coordinates (one entry for each vertex)
     'block_color': DXFAttr(76),  # Color to use if leader's DIMCLRD = BYBLOCK
     'annotation': DXFAttr(340),  # Hard reference to associated annotation (mtext, tolerance, or insert entity)
-    'normal_vector': DXFAttr(210, xtype='Point3D'),  # Normal vector
-    'horizontal_direction': DXFAttr(211, xtype='Point3D'),  # 'horizontal' direction for leader
-    'leader_offset_block_ref': DXFAttr(212, xtype='Point3D'),  # Offset of last leader vertex from block reference insertion point
-    'leader_offset_annotation_placement': DXFAttr(213, xtype='Point3D'),  # Offset of last leader vertex from annotation placement point
+    'normal_vector': DXFAttr(210, xtype=XType.point3d),  # Normal vector
+    'horizontal_direction': DXFAttr(211, xtype=XType.point3d),  # 'horizontal' direction for leader
+    'leader_offset_block_ref': DXFAttr(212, xtype=XType.point3d),  # Offset of last leader vertex from block reference insertion point
+    'leader_offset_annotation_placement': DXFAttr(213, xtype=XType.point3d),  # Offset of last leader vertex from annotation placement point
     # Xdata belonging to the application ID "ACAD" follows a leader entity if any dimension overrides have been applied
     # to this entity. See Dimension Style Overrides.
 })

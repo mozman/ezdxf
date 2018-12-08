@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.lldxf.const import LAYOUT_NAMES
 
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, DXFAttributes, DefSubclass
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, DXFAttributes, DefSubclass, XType
 
 _BLOCK_TPL = """0
 BLOCK
@@ -35,7 +35,7 @@ class Block(GraphicEntity):
         'name': DXFAttr(2),
         'name2': DXFAttr(3),
         'flags': DXFAttr(70),
-        'base_point': DXFAttr(10, xtype='Point2D/3D'),
+        'base_point': DXFAttr(10, xtype=XType.any_point),
         'xref_path': DXFAttr(1),
     })
     # block entity flags

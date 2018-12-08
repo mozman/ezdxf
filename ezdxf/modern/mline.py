@@ -3,7 +3,7 @@
 # License: MIT-License
 from ezdxf.lldxf.const import DXFIndexError
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from .dxfobjects import DXFObject
 from .object_manager import ObjectManager
@@ -63,8 +63,8 @@ mline_subclass = DefSubclass('AcDbMline', {
     # 8 = Suppress end caps
     'n_vertices': DXFAttr(72),  # Number of vertices
     'n_style_elements': DXFAttr(73),  # Number of elements in MLINESTYLE definition
-    'start_point': DXFAttr(10, xtype='Point3D'),  # in WCS!
-    'extrusion': DXFAttr(210, xtype='Point3D'),  # but all vertices in WCS!
+    'start_point': DXFAttr(10, xtype=XType.point3d),  # in WCS!
+    'extrusion': DXFAttr(210, xtype=XType.point3d),  # but all vertices in WCS!
     # 11: vertex coordinates (multiple entries; one entry for each vertex)
     # 12: Direction vector of segment starting at this vertex (multiple entries; one for each vertex)
     # 13: Direction vector of miter at this vertex (multiple entries: one for each vertex)

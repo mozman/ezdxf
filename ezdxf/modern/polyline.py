@@ -7,7 +7,7 @@ from ezdxf.lldxf import loader
 from ezdxf.legacy import polyline
 from ezdxf.legacy.facemixins import PolyfaceMixin, PolymeshMixin
 
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 
 
@@ -36,7 +36,7 @@ AcDb2dPolyline
 """
 
 polyline_subclass = DefSubclass('AcDb2dPolyline', {
-    'elevation': DXFAttr(10, xtype='Point3D'),
+    'elevation': DXFAttr(10, xtype=XType.point3d),
     'flags': DXFAttr(70, default=0),
     'default_start_width': DXFAttr(40, default=0.0),
     'default_end_width': DXFAttr(41, default=0.0),
@@ -46,7 +46,7 @@ polyline_subclass = DefSubclass('AcDb2dPolyline', {
     'n_smooth_density': DXFAttr(74, default=0),
     'smooth_type': DXFAttr(75, default=0),
     'thickness': DXFAttr(39, default=0.0),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -149,7 +149,7 @@ AcDb2dVertex
 vertex_subclass = (
     DefSubclass('AcDbVertex', {}),  # subclasses[2]
     DefSubclass('AcDb2dVertex', {  # subclasses[3]
-        'location': DXFAttr(10, xtype='Point2D/3D'),
+        'location': DXFAttr(10, xtype=XType.any_point),
         'start_width': DXFAttr(40, default=0.0),
         'end_width': DXFAttr(41, default=0.0),
         'bulge': DXFAttr(42, default=0),

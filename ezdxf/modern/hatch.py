@@ -4,7 +4,7 @@
 import math
 from contextlib import contextmanager
 
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.tags import DXFStructureError, group_tags, Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -66,8 +66,8 @@ SOLID
 
 # default is a solid fil hatch
 hatch_subclass = DefSubclass('AcDbHatch', {
-    'elevation': DXFAttr(10, xtype='Point3D', default=(0.0, 0.0, 0.0)),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'elevation': DXFAttr(10, xtype=XType.point3d, default=(0.0, 0.0, 0.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
     'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
     'solid_fill': DXFAttr(70, default=1),  # pattern fill = 0
     'associative': DXFAttr(71, default=0),  # associative flag = 0

@@ -3,7 +3,7 @@
 # License: MIT License
 from ezdxf.legacy import graphics as r12graphics
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 
@@ -117,10 +117,10 @@ AcDbLine
 """
 
 line_subclass = DefSubclass('AcDbLine', {
-    'start': DXFAttr(10, xtype='Point2D/3D'),
-    'end': DXFAttr(11, xtype='Point2D/3D'),
+    'start': DXFAttr(10, xtype=XType.any_point),
+    'end': DXFAttr(11, xtype=XType.any_point),
     'thickness': DXFAttr(39, default=0),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -150,9 +150,9 @@ AcDbPoint
 0.0
 """
 point_subclass = DefSubclass('AcDbPoint', {
-    'location': DXFAttr(10, xtype='Point2D/3D'),
+    'location': DXFAttr(10, xtype=XType.any_point),
     'thickness': DXFAttr(39, None),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -184,10 +184,10 @@ AcDbCircle
 1.0
 """
 circle_subclass = DefSubclass('AcDbCircle', {
-    'center': DXFAttr(10, xtype='Point2D/3D'),
+    'center': DXFAttr(10, xtype=XType.any_point),
     'radius': DXFAttr(40),
     'thickness': DXFAttr(39, default=0.0),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 
@@ -275,13 +275,13 @@ NAME
 
 shape_subclass = DefSubclass('AcDbShape', {
     'thickness': DXFAttr(39, default=0.0),
-    'insert': DXFAttr(10, xtype='Point2D/3D'),
+    'insert': DXFAttr(10, xtype=XType.any_point),
     'size': DXFAttr(40),
     'name': DXFAttr(2),
     'rotation': DXFAttr(50, default=0.0),
     'xscale': DXFAttr(41, default=1.0),
     'oblique': DXFAttr(51, default=0.0),
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 
 

@@ -1,7 +1,7 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
+from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 
@@ -37,10 +37,10 @@ STANDARD
 
 tolerance_subclass = DefSubclass('AcDbFcf', {
     'dimstyle': DXFAttr(3),
-    'insert': DXFAttr(10, xtype='Point3D'),  # Insertion point (in WCS)
+    'insert': DXFAttr(10, xtype=XType.point3d),  # Insertion point (in WCS)
     'content': DXFAttr(1),  # String representing the visual representation of the tolerance
-    'extrusion': DXFAttr(210, xtype='Point3D', default=(0, 0, 1)),  # Extrusion direction
-    'x_axis_vector': DXFAttr(11, xtype='Point3D'),  # X-axis direction vector (in WCS)
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1)),  # Extrusion direction
+    'x_axis_vector': DXFAttr(11, xtype=XType.point3d),  # X-axis direction vector (in WCS)
 })
 
 

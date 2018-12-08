@@ -6,7 +6,7 @@ import pytest
 
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr, DefSubclass, DXFAttributes
+from ezdxf.lldxf.attributes import DXFAttr, DefSubclass, DXFAttributes, XType
 
 XTEMPLATE = """  0
 LINE
@@ -51,10 +51,10 @@ class AttributeChecker(DXFEntity):
             'color': DXFAttr(62, default=256),
         }),
         DefSubclass('AcDbLine', {
-            'start': DXFAttr(10, 'Point2D/3D'),
-            'end': DXFAttr(11, 'Point2D/3D'),
+            'start': DXFAttr(10, XType.any_point),
+            'end': DXFAttr(11, XType.any_point),
             'thickness': DXFAttr(39),
-            'extrusion': DXFAttr(210, 'Point3D'),
+            'extrusion': DXFAttr(210, XType.point3d),
         }))
 
 
