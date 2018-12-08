@@ -19,7 +19,7 @@ class ExtendedTags:
     """
     __slots__ = ('subclasses', 'appdata', 'xdata', 'link', 'embedded_objects')
 
-    def __init__(self, iterable=None):
+    def __init__(self, iterable: Iterable[DXFTag] = None):
         if isinstance(iterable, str):
             raise DXFValueError("use ExtendedTags.from_text() to create tags from a string.")
 

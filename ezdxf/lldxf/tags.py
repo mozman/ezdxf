@@ -273,7 +273,7 @@ def text2tags(text: str) -> Tags:
     return Tags.from_text(text)
 
 
-def group_tags(tags: Tags, splitcode: int = STRUCTURE_MARKER) -> Iterable[Tags]:
+def group_tags(tags: Iterable[DXFTag], splitcode: int = STRUCTURE_MARKER) -> Iterable[Tags]:
     """
     Group of tags starts with a SplitTag and ends before the next SplitTag.
     A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.

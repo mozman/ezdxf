@@ -4,10 +4,12 @@
 from array import array
 from abc import abstractmethod
 from collections import OrderedDict
+from typing import Iterable, Tuple, Sequence
 
 from .types import DXFTag, DXFVertex
 from .const import DXFTypeError, DXFIndexError, DXFValueError
 
+from .tags import Tags
 from ezdxf.tools import take2
 from ezdxf.tools.indexing import Index
 
@@ -42,28 +44,28 @@ class PackedTags:
 class TagList(PackedTags):
     code = -100  # compatible with DXFTag.code
     VALUE_CODE = 330
-    __slots__ = ('value', )
+    __slots__ = ('value',)
 
     def __init__(self, data=None):
         if data is None:
             data = []
         self.value = list(data)  # compatible with DXFTag.value
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         for value in self.value:
             yield DXFTag(self.VALUE_CODE, value)
 
-    def clone(self):
+    def clone(self) -> 'TagList':
         return self.__class__(data=self.value)
 
-    def replace_tags(self, tags):
-        return replace_tags(tags, codes=(self.VALUE_CODE, ), packed_data=self)
+    def replace_tags(self, tags: Tags):
+        return replace_tags(tags, codes=(self.VALUE_CODE,), packed_data=self)
 
     @classmethod
-    def from_tags(cls, tags):
+    def from_tags(cls, tags: Tags) -> 'TagList':
         return cls(data=(tag.value for tag in tags if tag.code == cls.VALUE_CODE))
 
-    def clear(self):
+    def clear(self) -> None:
         del self.value[:]
 
 
@@ -72,12 +74,12 @@ class TagArray(TagList):
     VALUE_CODE = 60
     DTYPE = 'i'
 
-    def __init__(self, data=None):
+    def __init__(self, data: Iterable = None):
         if data is None:
             data = []
         self.value = array(self.DTYPE, data)  # compatible with DXFTag.value
 
-    def set_values(self, values):
+    def set_values(self, values: Iterable) -> None:
         self.value[:] = array(self.DTYPE, values)
 
 
@@ -88,22 +90,22 @@ class TagDict(PackedTags):
     VALUE_CODE = 350
     SEARCH_CODES = (3, 350, 360)  # some DICTIONARY have 360 handles
 
-    def __init__(self, data=None):
+    def __init__(self, data: dict = None):
         self.value = OrderedDict(data if data is not None else {})  # compatible with DXFTag.value
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         for key, value in self.value.items():
             yield DXFTag(self.KEY_CODE, key)
             yield DXFTag(self.VALUE_CODE, value)
 
-    def clone(self):
+    def clone(self) -> 'TagDict':
         return self.__class__(data=self.value)
 
-    def replace_tags(self, tags):
+    def replace_tags(self, tags: Tags):
         return replace_tags(tags, codes=self.SEARCH_CODES, packed_data=self)
 
     @classmethod
-    def from_tags(cls, tags):
+    def from_tags(cls, tags: Tags) -> 'TagDict':
         return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in set(cls.SEARCH_CODES))))
 
 
@@ -111,35 +113,35 @@ class VertexArray(PackedTags):
     code = -10  # compatible with DXFTag.code
     VERTEX_CODE = 10
     VERTEX_SIZE = 3  # set to 2 for 2d points
-    __slots__ = ('value', )
+    __slots__ = ('value',)
 
-    def __init__(self, data=None):
+    def __init__(self, data: Iterable = None):
         if data is None:
             data = []
         self.value = array('d', data)  # compatible with DXFTag.value
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value) // self.VERTEX_SIZE
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         if isinstance(index, slice):
             return list(self._get_points(self._slicing(index)))
         else:
             return self._get_point(self._index(index))
 
-    def __setitem__(self, index, point):
+    def __setitem__(self, index: int, point: Tuple[float, ...]) -> None:
         if isinstance(index, slice):
             raise DXFTypeError('slicing not supported')
         else:
             self._set_point(self._index(index), point)
 
-    def __delitem__(self, index):
+    def __delitem__(self, index: int) -> None:
         if isinstance(index, slice):
             self._del_points(self._slicing(index))
         else:
             self._del_point(self._index(index))
 
-    def insert(self, pos, point):
+    def insert(self, pos: int, point: Tuple[float, ...]):
         """
         Insert point in front of point at index pos.
 
@@ -157,16 +159,16 @@ class VertexArray(PackedTags):
         for value in reversed(point):
             _insert(pos, value)
 
-    def clone(self):
+    def clone(self) -> 'VertexArray':
         return self.__class__(data=self.value)
 
     @classmethod
-    def from_tags(cls, tags):
+    def from_tags(cls, tags: Iterable[DXFTag]) -> 'VertexArray':
         """
         Setup point array from extended tags.
 
         Args:
-            tags: ExtendedTags() object
+            tags: Tags() object
 
         """
         vertices = array('d')
@@ -175,59 +177,59 @@ class VertexArray(PackedTags):
                 vertices.extend(tag.value)
         return cls(data=vertices)
 
-    def _index(self, item):
+    def _index(self, item) -> int:
         return Index(self).index(item, error=DXFIndexError)
 
-    def _slicing(self, index):
+    def _slicing(self, index) -> Iterable[int]:
         return Index(self).slicing(index)
 
-    def _get_point(self, index):
+    def _get_point(self, index: int) -> Tuple[float, ...]:
         size = self.VERTEX_SIZE
         index = index * size
-        return tuple(self.value[index:index+size])
+        return tuple(self.value[index:index + size])
 
-    def _get_points(self, indices):
+    def _get_points(self, indices) -> Iterable:
         for index in indices:
             yield self._get_point(index)
 
-    def _set_point(self, index, point):
+    def _set_point(self, index: int, point: Sequence[float]):
         size = self.VERTEX_SIZE
         if len(point) != size:
             raise DXFValueError('point requires exact {} components.'.format(size))
         if isinstance(point, (tuple, list)):
             point = array('d', point)
         index = index * size
-        self.value[index:index+size] = point
+        self.value[index:index + size] = point
 
-    def _del_point(self, index):
+    def _del_point(self, index: int) -> None:
         size = self.VERTEX_SIZE
         pos = index * size
-        del self.value[pos:pos+size]
+        del self.value[pos:pos + size]
 
-    def _del_points(self, indices):
+    def _del_points(self, indices: Iterable[int]) -> None:
         del_flags = set(indices)
         size = self.VERTEX_SIZE
-        survivors = array('d', (v for i, v in enumerate(self.value) if (i//size) not in del_flags))
+        survivors = array('d', (v for i, v in enumerate(self.value) if (i // size) not in del_flags))
         self.value = survivors
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFVertex]:
         for point in self:
             yield DXFVertex(self.VERTEX_CODE, point)
 
-    def append(self, point):
+    def append(self, point: Sequence[float]) -> None:
         if len(point) != self.VERTEX_SIZE:
             raise DXFValueError('point requires exact {} components.'.format(self.VERTEX_SIZE))
         self.value.extend(point)
 
-    def extend(self, points):
+    def extend(self, points: Iterable[Sequence[float]]) -> None:
         for point in points:
             self.append(point)
 
-    def clear(self):
+    def clear(self) -> None:
         del self.value[:]
 
 
-def replace_tags(tags, codes, packed_data):
+def replace_tags(tags: Tags, codes: Sequence[int], packed_data: PackedTags):
     """
     Replace single DXF tags by packed data object.
 

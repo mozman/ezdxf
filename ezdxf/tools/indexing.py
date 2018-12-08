@@ -2,15 +2,17 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 
+from typing import Iterable
 
-class Index(object):
+
+class Index:
     def __init__(self, item):
         try:
             self.length = len(item)
         except TypeError:
             self.length = int(item)
 
-    def index(self, item, error=None):
+    def index(self, item: int, error=None) -> int:
         if item < 0:
             result = self.length + int(item)
         else:
@@ -19,7 +21,7 @@ class Index(object):
             raise error('index out of range')
         return result
 
-    def slicing(self, *args):
+    def slicing(self, *args) -> Iterable[int]:
         if isinstance(args[0], slice):
             s = args[0]
         else:

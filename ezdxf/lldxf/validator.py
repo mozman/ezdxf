@@ -4,17 +4,18 @@
 # License: MIT License
 import logging
 import io
+from typing import TextIO, Iterable, List
 
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
 from .const import INVALID_LAYER_NAME_CHARACTERS
 from .tagger import low_level_tagger
-from .types import is_embedded_object_marker
+from .types import is_embedded_object_marker, DXFTag
 
 logger = logging.getLogger('ezdxf')
 
 
-def header_validator(tagger):
+def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     """
     Checks the tag structure of the content of the header section.
 
@@ -43,7 +44,7 @@ def header_validator(tagger):
         yield tag
 
 
-def entity_structure_validator(tags):
+def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
     """
     Checks for valid DXF entity tag structure.
 
@@ -135,12 +136,12 @@ def entity_structure_validator(tags):
             raise DXFXDataError('Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "}}").'.format(dxftype, handle))
 
 
-def is_dxf_file(filename):
+def is_dxf_file(filename: str) -> bool:
     with io.open(filename, errors='ignore') as fp:
         return is_dxf_stream(fp)
 
 
-def is_dxf_stream(stream):
+def is_dxf_stream(stream: TextIO) -> bool:
     try:
         reader = low_level_tagger(stream)
         return next(reader) == (0, 'SECTION')
@@ -148,12 +149,12 @@ def is_dxf_stream(stream):
         return False
 
 
-def is_valid_layer_name(name):
+def is_valid_layer_name(name: str) -> bool:
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
 
 
 is_valid_name = is_valid_layer_name
 
 
-def is_adsk_special_layer(name):
+def is_adsk_special_layer(name: str) -> bool:
     return name.upper().startswith('*ADSK_')  # special Autodesk layers starts with invalid character *

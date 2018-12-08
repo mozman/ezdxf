@@ -2,12 +2,14 @@
 # Created: 10.04.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
+from typing import Iterable, TextIO, Iterator
+
 from .types import DXFTag, DXFVertex, DXFBinaryTag
 from .const import DXFStructureError
 from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
 
 
-def internal_tag_compiler(s):
+def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
     """
     Generates DXFTag() from trusted (internal) source - relies on
     well formed and error free DXF format. Does not skip comment
@@ -29,19 +31,19 @@ def internal_tag_compiler(s):
     count = len(lines)
     while pos < count:
         code = int(lines[pos])
-        value = lines[pos+1]
+        value = lines[pos + 1]
         pos += 2
         if code in POINT_CODES:
             # next tag; y coordinate is mandatory - internal_tag_compiler relies on well formed DXF strings
-            y = lines[pos+1]
+            y = lines[pos + 1]
             pos += 2
             if pos < count:
                 # next tag; z coordinate just for 3d points
                 z_code = int(lines[pos])
-                z = lines[pos+1]
+                z = lines[pos + 1]
             else:  # if string s ends with a 2d point
                 z_code, z = None, 0.
-            if z_code == code+20:  # 3d point
+            if z_code == code + 20:  # 3d point
                 pos += 2
                 point = (float(value), float(y), float(z))
             else:  # 2d point
@@ -53,7 +55,7 @@ def internal_tag_compiler(s):
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
-def low_level_tagger(stream):
+def low_level_tagger(stream: TextIO) -> Iterator[DXFTag]:
     """
     Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
     Skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
@@ -87,7 +89,7 @@ def low_level_tagger(stream):
             return
 
 
-def tag_compiler(tagger):
+def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     """
     Compiles DXF tag values imported by low_level_tagger() into Python types.
 
@@ -108,8 +110,10 @@ def tag_compiler(tagger):
     Raises: DXFStructureError() for invalid dxf values and unexpected coordinate order.
 
     """
+
     def error_msg(tag):
-        return 'Invalid tag (code={code}, value="{value}") near line: {line}.'.format(line=line, code=tag.code, value=tag.value)
+        return 'Invalid tag (code={code}, value="{value}") near line: {line}.'.format(line=line, code=tag.code,
+                                                                                      value=tag.value)
 
     undo_tag = None
     line = 0
