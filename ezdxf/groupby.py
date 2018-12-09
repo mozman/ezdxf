@@ -2,11 +2,13 @@
 # Created: 03.02.2017
 # Copyright (C) 2017, Manfred Moitzi
 # License: MIT License
+from typing import Callable, Iterable, Hashable
 
 from ezdxf.lldxf.const import DXFValueError, DXFAttributeError
+from ezdxf.dxfentity import DXFEntity
 
 
-def groupby(entities, dxfattrib='', key=None):
+def groupby(entities: Iterable[DXFEntity], dxfattrib: str = '', key: Callable[[DXFEntity], Hashable] = None):
     """
     Groups a sequence of DXF entities by an DXF attribute like 'layer', returns the result as dict. Just specify
     argument `dxfattrib` OR a `key` function.

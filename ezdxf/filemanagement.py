@@ -2,16 +2,16 @@
 # Created: 05.01.2018
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
+from typing import TextIO
 
-import io
 from ezdxf.drawing import Drawing
 from ezdxf.tools.zipmanager import ctxZipReader
-from ezdxf.lldxf.tags import dxf_info
+from ezdxf.lldxf.tags import dxf_info, DXFInfo
 from ezdxf.lldxf.validator import is_dxf_file
 from ezdxf.tools.codepage import is_supported_encoding
 
 
-def new(dxfversion='AC1009'):
+def new(dxfversion: str = 'AC1009') -> Drawing:
     """
     Create a new DXF drawing.
 
@@ -36,7 +36,7 @@ def new(dxfversion='AC1009'):
     return dwg
 
 
-def read(stream, legacy_mode=True, dxfversion=None):
+def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> Drawing:
     """
     Read DXF drawing from a text stream, which only needs a readline() method.
 
@@ -65,7 +65,7 @@ def read(stream, legacy_mode=True, dxfversion=None):
     return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
 
 
-def dxf_file_info(filename):
+def dxf_file_info(filename: str) -> DXFInfo:
     """
     Reads basic file information from DXF files: DXF version, encoding and handle seed.
 
@@ -73,11 +73,11 @@ def dxf_file_info(filename):
         DXF info object with attributes: version, release, handseed, encoding
 
     """
-    with io.open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
+    with open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
         return dxf_stream_info(fp)
 
 
-def dxf_stream_info(stream):
+def dxf_stream_info(stream: TextIO) -> DXFInfo:
     """
     Reads basic DXF information from a text stream: DXF version, encoding and handle seed.
 
@@ -91,7 +91,7 @@ def dxf_stream_info(stream):
     return info
 
 
-def readfile(filename, encoding=None, legacy_mode=False):
+def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> Drawing:
     """
     Read DXF drawing specified by *filename* from file system.
 
@@ -118,7 +118,7 @@ def readfile(filename, encoding=None, legacy_mode=False):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
     info = dxf_file_info(filename)
-    with io.open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
+    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
         dwg = read(fp, legacy_mode=legacy_mode, dxfversion=info.version)
 
     dwg.filename = filename
@@ -127,7 +127,7 @@ def readfile(filename, encoding=None, legacy_mode=False):
     return dwg
 
 
-def readzip(zipfile, filename=None):
+def readzip(zipfile: str, filename: str = None) -> Drawing:
     """
     Read DXF drawing specified by filename from a zip archive, or if filename is None the first DXF file in the zip
     archive.
