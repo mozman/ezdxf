@@ -1,7 +1,7 @@
 # Created: 30.04.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, Callable
+from typing import Iterable, Optional, Callable, List
 from itertools import chain
 
 from .types import tuples_to_tags
@@ -23,14 +23,14 @@ class ExtendedTags:
         if isinstance(iterable, str):
             raise DXFValueError("use ExtendedTags.from_text() to create tags from a string.")
 
-        self.appdata = list()  # code == 102, keys are "{<arbitrary name>", values are Tags()
-        self.subclasses = list()  # code == 100, keys are "subclassname", values are Tags()
-        self.xdata = list()  # code >= 1000, keys are "APPNAME", values are Tags()
-        self.link = None  # link (as handle) to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
+        self.appdata = list()  # type: List[Tags] # code == 102, keys are "{<arbitrary name>", values are Tags()
+        self.subclasses = list()  # type: List[Tags] # code == 100, keys are "subclassname", values are Tags()
+        self.xdata = list()  # type: List[Tags] # code >= 1000, keys are "APPNAME", values are Tags()
+        self.link = None  # type: Optional[str] # link (as handle) to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
 
         # store embedded objects as list, but embedded objects are rare, so storing an empty list for every DXF entity
         # is waste of memory
-        self.embedded_objects = None
+        self.embedded_objects = None  # type: Optional[List[Tags]]
         if iterable is not None:
             self._setup(iterable)
 
@@ -74,7 +74,7 @@ class ExtendedTags:
     def replace_handle(self, handle: str) -> None:
         self.noclass.replace_handle(handle)
 
-    def _setup(self, iterable: Iterable[DXFTag]):
+    def _setup(self, iterable: Iterable[DXFTag]) -> None:
         tagstream = iter(iterable)
 
         def collect_subclass(starttag: Optional[DXFTag]) -> DXFTag:
@@ -315,7 +315,7 @@ LINKED_ENTITIES = {
 
 
 def get_xtags_linker() -> Callable[[ExtendedTags], bool]:
-    prev = None
+    prev = None  # type: Optional[ExtendedTags]
     expected = ""
 
     def xtags_linker(tags: ExtendedTags) -> bool:
@@ -330,7 +330,7 @@ def get_xtags_linker() -> Callable[[ExtendedTags], bool]:
             else:
                 return bool(ref_tags.get_first_value(66, 0))
 
-        dxftype = tags.dxftype()
+        dxftype = tags.dxftype()  # type: str
         are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
         if prev is not None:
             are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space

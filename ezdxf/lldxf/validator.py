@@ -68,7 +68,7 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
         DXFXDataError() for invalid XDATA
     """
     assert isinstance(tags, list)
-    dxftype = tags[0].value
+    dxftype = tags[0].value  # type: str
     handle = '???'
     app_data = False
     xdata = False

@@ -2,12 +2,15 @@
 # License: MIT License
 from collections import namedtuple
 from enum import Enum
-from typing import Any, Tuple, Iterable, List, Dict, Union, ItemsView, KeysView
+from typing import Any, Tuple, Iterable, List, Dict, Union, ItemsView, KeysView, TYPE_CHECKING
 
 from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
 from .types import dxftag, DXFVertex
 from .tags import Tags, TagValue
 from .extendedtags import ExtendedTags
+
+if TYPE_CHECKING:  # import forward declarations
+    from ezdxf.dxfentity import DXFEntity
 
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
@@ -39,7 +42,7 @@ class DXFAttr:
     """
 
     def __init__(self,
-                 code: int = None,
+                 code: int,
                  subclass: int = 0,
                  xtype: XType = None,
                  default=None,
@@ -48,16 +51,16 @@ class DXFAttr:
                  setter: str = None,  # name of setter method
                  ):
         self.name = ''  # type: str  # set by DXFAttributes._add_subclass_attribs()
-        self.code = code  # type: int  # DXF group code
-        self.subclass = subclass  # type: int  # subclass index
-        self.xtype = xtype  # type: XType # Point2D, Point3D, Point2D/3D, Callback
-        self.default = default  # type: Any # DXF default value
+        self.code = code  # DXF group code
+        self.subclass = subclass  # subclass index
+        self.xtype = xtype  # Point2D, Point3D, Point2D/3D, Callback
+        self.default = default  # type: TagValue # DXF default value
 
         # If dxfversion is None - this attribute is valid for all supported DXF versions, set dxfversion to a specific
         # DXF version like 'AC1018' and this attribute can only be set by DXF version 'AC1018' or later.
-        self.dxfversion = dxfversion  # type: str
-        self.getter = getter  # type: str # DXF entity getter method name for callback attributes
-        self.setter = setter  # type: str # DXF entity setter method name for callback attributes
+        self.dxfversion = dxfversion
+        self.getter = getter  # DXF entity getter method name for callback attributes
+        self.setter = setter  # DXF entity setter method name for callback attributes
 
     def get_callback_value(self, entity: 'DXFEntity') -> TagValue:
         """
@@ -128,11 +131,11 @@ class DXFAttr:
     def _get_dxf_attrib(self, tags: ExtendedTags) -> TagValue:
         subclass_tags = self._get_dxf_attrib_subclass_tags(tags, self.subclass)
         if self.xtype is not None:
-            return self._get_extented_type(subclass_tags)
+            return self._get_extended_type(subclass_tags)
         else:
             return subclass_tags.get_first_value(self.code)
 
-    def _get_extented_type(self, tags: Tags) -> Tuple[float, ...]:
+    def _get_extended_type(self, tags: Tags) -> Tuple[float, ...]:
         value = tags.get_first_value(self.code)
         if len(value) == 3:
             if self.xtype is XType.point2d:
@@ -142,12 +145,11 @@ class DXFAttr:
         return value
 
     def _get_dxf_attrib_subclass_tags(self, tags: ExtendedTags, subclass_key: Union[int, str]) -> Tags:
-        try:  # fast access subclass by index as int
-            # no subclass is subclass index 0
+        try:  # fast access subclass by index as int, no subclass is subclass index 0
             return tags.subclasses[subclass_key]
         except IndexError:
             raise DXFInternalEzdxfError('Subclass index error in {entity} subclass={index}.'.format(
-                entity=self.__str__(),
+                entity=str(self),
                 index=subclass_key,
             ))
         except TypeError:  # slow access subclass by name as string

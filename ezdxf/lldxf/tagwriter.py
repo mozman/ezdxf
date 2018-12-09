@@ -16,7 +16,7 @@ class TagWriter:
 
     """
 
-    def __init__(self, stream: TextIO, write_handles=True):
+    def __init__(self, stream: TextIO, write_handles: bool = True):
         self._stream = stream
         self._write_handles = write_handles
 

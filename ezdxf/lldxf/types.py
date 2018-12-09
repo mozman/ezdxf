@@ -3,8 +3,7 @@
 # License: MIT License
 from array import array
 from itertools import chain
-from typing import Union, Tuple, Iterable, Callable
-from numbers import Real
+from typing import Union, Tuple, Iterable, Callable, Sequence
 
 from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
 import reprlib
@@ -27,7 +26,7 @@ HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
 BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
 
-TagValue = Union[str, int, float, Tuple[float, ...]]
+TagValue = Union[str, int, float, Sequence[float]]
 
 
 class DXFTag:
@@ -64,6 +63,7 @@ class DXFTag:
         return self.__class__(self.code, self._value)
 
 
+# Special marker tag
 NONE_TAG = DXFTag(None, None)  # type: ignore
 
 
@@ -78,7 +78,7 @@ def is_embedded_object_marker(tag: DXFTag) -> bool:
 class DXFVertex(DXFTag):
     __slots__ = ()
 
-    def __init__(self, code: int, value: Tuple[float, ...]):
+    def __init__(self, code: int, value: Sequence[float]):
         super(DXFVertex, self).__init__(code, array('d', value))  # type: ignore # array is like a tuple
 
     def __str__(self) -> str:
@@ -119,7 +119,7 @@ class DXFBinaryTag(DXFTag):
         return cls(code, encode_hex_code_string_to_bytes(value))
 
 
-def dxftag(code: int, value: TagValue) -> Union[DXFTag, DXFBinaryTag, DXFVertex]:
+def dxftag(code: int, value: TagValue) -> DXFTag:
     """
     DXF tag factory function.
 

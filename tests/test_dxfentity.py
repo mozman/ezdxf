@@ -21,7 +21,7 @@ class PointAccessor(DXFEntity):
         'xp': DXFAttr(12, xtype=XType.point3d),
         'flex': DXFAttr(13, xtype=XType.any_point),
         'flags': DXFAttr(70),
-        'counter': DXFAttr(xtype=XType.callback, getter='get_counter', setter='set_counter'),
+        'counter': DXFAttr(-1, xtype=XType.callback, getter='get_counter', setter='set_counter'),
         'just_AC1015': DXFAttr(71, default=777, dxfversion='AC1015'),
     }))
 

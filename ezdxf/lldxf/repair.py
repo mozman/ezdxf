@@ -5,6 +5,7 @@
 # --------------------------------------------------- #
 # Welcome to the place, where it gets dirty and ugly! #
 # --------------------------------------------------- #
+from typing import TYPE_CHECKING, Iterable, Optional, List
 from functools import partial
 import logging
 
@@ -13,26 +14,29 @@ from .tags import DXFTag, Tags
 from .const import DXFInternalEzdxfError, DXFValueError, DXFKeyError, SUBCLASS_MARKER
 logger = logging.getLogger('ezdxf')
 
+if TYPE_CHECKING:  # import forward declarations
+    from ezdxf.drawing import Drawing
 
-def setup_layouts(dwg):
+
+def setup_layouts(dwg: 'Drawing'):
     layout_dict = dwg.rootdict.get_required_dict('ACAD_LAYOUT')
     if 'Model' not in layout_dict:  # do it only if model space is not defined
         setup_model_space(dwg)
         setup_paper_space(dwg)
 
 
-def setup_model_space(dwg):
+def setup_model_space(dwg: 'Drawing'):
     setup_layout_space(dwg, 'Model', '*Model_Space', _MODEL_SPACE_LAYOUT_TPL)
 
 
-def setup_paper_space(dwg):
+def setup_paper_space(dwg: 'Drawing'):
     setup_layout_space(dwg, 'Layout1', '*Paper_Space', _PAPER_SPACE_LAYOUT_TPL)
 
 
-def setup_layout_space(dwg, layout_name, block_name, tag_string):
+def setup_layout_space(dwg: 'Drawing', layout_name: str, block_name: str, tag_string: str):
     # This is just necessary for existing DXF drawings without properly setup management structures.
     # Layout structure is not initialized at this runtime phase
-    def get_block_record_by_alt_names(names):
+    def get_block_record_by_alt_names(names: Iterable[str]):
         for name in names:
             try:
                 brecord = dwg.block_records.get(name)
@@ -70,7 +74,7 @@ def setup_layout_space(dwg, layout_name, block_name, tag_string):
         dwg.blocks.rename_block(real_block_name, block_name)
 
 
-def create_layout_tags(dwg, block_record_handle, owner, tag_string):
+def create_layout_tags(dwg: 'Drawing', block_record_handle: str, owner: str, tag_string: str):
     # Problem: ezdxf was not designed to handle the absence of model/paper space LAYOUT entities
     # Layout structure is not initialized at this runtime phase
 
@@ -90,7 +94,7 @@ def create_layout_tags(dwg, block_record_handle, owner, tag_string):
     return layout_handle
 
 
-def upgrade_to_ac1015(dwg):
+def upgrade_to_ac1015(dwg: 'Drawing'):
     """
     Upgrade DXF versions AC1012 and AC1014 to AC1015.
     """
@@ -147,7 +151,7 @@ def upgrade_to_ac1015(dwg):
     dwg.header['$ACADVER'] = 'AC1015'
 
 
-def upgrade_to_ac1009(dwg):
+def upgrade_to_ac1009(dwg: 'Drawing'):
     """
     Upgrade DXF versions prior to AC1009 (R12) to AC1009.
     """
@@ -156,7 +160,7 @@ def upgrade_to_ac1009(dwg):
     # as far I know, nothing else to do
 
 
-def cleanup_r12(dwg):
+def cleanup_r12(dwg: 'Drawing'):
     """
     Remove unsupported sections and tables, repair tag structure.
 
@@ -173,7 +177,7 @@ def cleanup_r12(dwg):
         del dwg.sections.tables['BLOCK_RECORDS']
 
 
-def filter_subclass_marker(tagger):
+def filter_subclass_marker(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     """
     Filter subclass marker from malformed DXF R12 files. (like from Leica Disto Units)
 
@@ -193,7 +197,7 @@ def filter_subclass_marker(tagger):
             yield tag
 
 
-def tag_reorder_layer(tagger):
+def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     """
     Reorder coordinates of legacy DXF Entities, for now only LINE.
 
@@ -203,7 +207,7 @@ def tag_reorder_layer(tagger):
     Yields: DXFTags()
 
     """
-    collector = None
+    collector = None  # type: Optional[List]
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:  # stop collecting if inside of an supported entity

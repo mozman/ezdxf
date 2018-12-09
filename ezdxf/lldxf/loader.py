@@ -3,7 +3,7 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 import logging
-from typing import Callable, Dict, Iterable, List, Union
+from typing import Callable, Dict, Iterable, List, Union, TYPE_CHECKING
 
 from .const import DXFStructureError
 from .tags import group_tags, DXFTag, Tags
@@ -12,16 +12,20 @@ from .validator import entity_structure_validator
 
 from ezdxf.options import options
 
+if TYPE_CHECKING:  # import forward declarations
+    from ezdxf.database import EntityDB
+
 logger = logging.getLogger('ezdxf')
 
-modern_post_load_tag_processors = {}  # type: Dict[str, Callable[[ExtendedTags], ExtendedTags]]
-legacy_post_load_tag_processors = {}  # type: Dict[str, Callable[[ExtendedTags], ExtendedTags]]
+TagProcessor = Callable[[ExtendedTags], ExtendedTags]
+modern_post_load_tag_processors = {}  # type: Dict[str, TagProcessor]
+legacy_post_load_tag_processors = {}  # type: Dict[str, TagProcessor]
 
 
 SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
 
 
-def is_registered(entity, legacy=False):
+def is_registered(entity: str, legacy: bool = False):
     # just for testing
     processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
     return entity in processors
@@ -38,7 +42,7 @@ def register(entity: str, legacy: bool = False) -> Callable:
     """
     logger.debug('Register post load tag processor for DXF type: {}; legacy: {}'.format(entity, legacy))
 
-    def decorator(processor: Callable) -> Callable:
+    def decorator(processor: TagProcessor) -> TagProcessor:
         """
 
         Args:
@@ -151,7 +155,7 @@ def load_dxf_entities_into_database(database: 'EntityDB', dxf_entities: List[Tag
         yield entity
 
 
-def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion='AC1009') -> None:
+def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str = 'AC1009') -> None:
     post_processors = legacy_post_load_tag_processors if dxfversion <= 'AC1009' else modern_post_load_tag_processors
     for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:

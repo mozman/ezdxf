@@ -4,7 +4,7 @@
 from array import array
 from abc import abstractmethod
 from collections import OrderedDict
-from typing import Iterable, Tuple, Sequence
+from typing import Iterable, Tuple, Sequence, Mapping, Union
 
 from .types import DXFTag, DXFVertex
 from .const import DXFTypeError, DXFIndexError, DXFValueError
@@ -18,7 +18,7 @@ class PackedTags:
     __slots__ = ()
 
     @abstractmethod
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         """
         Yield packed tags as unpacked DXFTags().
 
@@ -26,14 +26,14 @@ class PackedTags:
         pass
 
     @abstractmethod
-    def clone(self):
+    def clone(self) -> 'PackedTags':
         """
         Returns cloned tags (deep copy).
 
         """
         pass
 
-    def dxfstr(self):
+    def dxfstr(self) -> str:
         """
         Returns the DXF strings constructed from dxftags().
 
@@ -47,9 +47,7 @@ class TagList(PackedTags):
     __slots__ = ('value',)
 
     def __init__(self, data=None):
-        if data is None:
-            data = []
-        self.value = list(data)  # compatible with DXFTag.value
+        self.value = list(data or [])  # compatible with DXFTag.value
 
     def dxftags(self) -> Iterable[DXFTag]:
         for value in self.value:
@@ -75,9 +73,7 @@ class TagArray(TagList):
     DTYPE = 'i'
 
     def __init__(self, data: Iterable = None):
-        if data is None:
-            data = []
-        self.value = array(self.DTYPE, data)  # compatible with DXFTag.value
+        self.value = array(self.DTYPE, data or [])  # compatible with DXFTag.value
 
     def set_values(self, values: Iterable) -> None:
         self.value[:] = array(self.DTYPE, values)
@@ -90,8 +86,8 @@ class TagDict(PackedTags):
     VALUE_CODE = 350
     SEARCH_CODES = (3, 350, 360)  # some DICTIONARY have 360 handles
 
-    def __init__(self, data: dict = None):
-        self.value = OrderedDict(data if data is not None else {})  # compatible with DXFTag.value
+    def __init__(self, data: Union[Mapping, Iterable[Tuple]] = None):
+        self.value = OrderedDict(data or {})  # compatible with DXFTag.value
 
     def dxftags(self) -> Iterable[DXFTag]:
         for key, value in self.value.items():
@@ -106,7 +102,7 @@ class TagDict(PackedTags):
 
     @classmethod
     def from_tags(cls, tags: Tags) -> 'TagDict':
-        return cls(data=((k, v) for k, v in take2(tag.value for tag in tags if tag.code in set(cls.SEARCH_CODES))))
+        return cls(data=(t for t in take2(tag.value for tag in tags if tag.code in set(cls.SEARCH_CODES))))
 
 
 class VertexArray(PackedTags):
@@ -116,9 +112,7 @@ class VertexArray(PackedTags):
     __slots__ = ('value',)
 
     def __init__(self, data: Iterable = None):
-        if data is None:
-            data = []
-        self.value = array('d', data)  # compatible with DXFTag.value
+        self.value = array('d', data or [])  # compatible with DXFTag.value
 
     def __len__(self) -> int:
         return len(self.value) // self.VERTEX_SIZE
@@ -129,7 +123,7 @@ class VertexArray(PackedTags):
         else:
             return self._get_point(self._index(index))
 
-    def __setitem__(self, index: int, point: Tuple[float, ...]) -> None:
+    def __setitem__(self, index: int, point: Sequence[float]) -> None:
         if isinstance(index, slice):
             raise DXFTypeError('slicing not supported')
         else:
@@ -141,7 +135,7 @@ class VertexArray(PackedTags):
         else:
             self._del_point(self._index(index))
 
-    def insert(self, pos: int, point: Tuple[float, ...]):
+    def insert(self, pos: int, point: Sequence[float]):
         """
         Insert point in front of point at index pos.
 
@@ -183,7 +177,7 @@ class VertexArray(PackedTags):
     def _slicing(self, index) -> Iterable[int]:
         return Index(self).slicing(index)
 
-    def _get_point(self, index: int) -> Tuple[float, ...]:
+    def _get_point(self, index: int) -> Sequence[float]:
         size = self.VERTEX_SIZE
         index = index * size
         return tuple(self.value[index:index + size])
