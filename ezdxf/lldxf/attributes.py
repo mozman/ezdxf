@@ -98,7 +98,7 @@ class DXFAttr:
         except TypeError:  # None
             raise DXFAttributeError('DXF attribute {} has no setter.'.format(self.name))
 
-    def get_attrib(self, entity: 'DXFEntity', key: str, default: TagValue = DXFValueError) -> TagValue:
+    def get_attrib(self, entity: 'DXFEntity', key: str, default: Any = DXFValueError) -> TagValue:
         """
         Return value of DXF attribute 'key'.
 

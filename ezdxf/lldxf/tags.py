@@ -13,10 +13,6 @@ from ezdxf.tools.codepage import toencoding
 COMMENT_CODE = 999
 
 
-def tuples2dxftags(tuples) -> List[DXFTag]:
-    return [DXFTag(t[0], t[1]) for t in tuples]
-
-
 class DXFInfo(object):
     def __init__(self):
         self.release = 'R12'

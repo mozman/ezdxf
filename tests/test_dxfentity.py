@@ -6,8 +6,8 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.dxfentity import DXFEntity, DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
+from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools import set_flag_state
 from ezdxf import DXFStructureError, DXFAttributeError, DXFValueError
 
@@ -89,13 +89,13 @@ class TestDXFEntity:
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         with pytest.raises(DXFValueError):
-            point.dxf.flags
+            _ = point.dxf.flags
 
     def test_attribute_error(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")
         point = PointAccessor(tags)
         with pytest.raises(DXFAttributeError):
-            point.dxf.xflag
+            _ = point.dxf.xflag
 
     def test_valid_dxf_attrib_names(self):
         tags = ExtendedTags.from_text("10\n1.0\n20\n2.0\n30\n3.0\n")

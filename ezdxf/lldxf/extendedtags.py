@@ -4,7 +4,7 @@
 from typing import Iterable, Optional, Callable, List
 from itertools import chain
 
-from .types import tuples_to_tags
+from .types import tuples_to_tags, IterableTags
 from .tags import Tags, DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
@@ -227,11 +227,11 @@ class ExtendedTags:
                 return xdata
         raise DXFValueError("No extended data for APPID '%s'" % appid)
 
-    def set_xdata(self, appid: str, tags: Tags) -> None:
+    def set_xdata(self, appid: str, tags: IterableTags) -> None:
         xdata = self.get_xdata(appid)
         xdata[1:] = tuples_to_tags(tags)
 
-    def new_xdata(self, appid: str, tags: Tags = None) -> Tags:
+    def new_xdata(self, appid: str, tags: IterableTags = None) -> Tags:
         """
         Append a new xdata block.
 
@@ -268,11 +268,11 @@ class ExtendedTags:
         """
         return Tags(self.get_app_data(appid)[1:-1])
 
-    def set_app_data_content(self, appid: str, tags: Tags) -> None:
+    def set_app_data_content(self, appid: str, tags: IterableTags) -> None:
         app_data = self.get_app_data(appid)
         app_data[1:-1] = tuples_to_tags(tags)
 
-    def new_app_data(self, appid: str, tags: Tags = None, subclass_name: str = None) -> Tags:
+    def new_app_data(self, appid: str, tags: IterableTags = None, subclass_name: str = None) -> Tags:
         """
         Append a new app data block to subclass *subclass_name*.
 

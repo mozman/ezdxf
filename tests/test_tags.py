@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import pytest
 from io import StringIO
-from ezdxf.lldxf.tags import Tags, tuples2dxftags, DXFTag
+from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.const import DXFValueError
 
@@ -67,10 +67,6 @@ TEST1
   0
 TEST2
 """
-
-
-def test_tuples2dxftags():
-    assert [DXFTag(40, 1), DXFTag(41, 2)] == tuples2dxftags([(40, 1), (41, 2)])
 
 
 class HandlesMock:

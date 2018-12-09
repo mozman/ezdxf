@@ -51,7 +51,7 @@ ENTITY_WRAPPERS = {
 }
 
 
-class LegacyDXFFactory(object):
+class DXFFactory:
     DEFAULT_WRAPPER = graphics.GraphicEntity
 
     def __init__(self, drawing):

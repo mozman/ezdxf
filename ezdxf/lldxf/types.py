@@ -27,6 +27,7 @@ BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
 
 TagValue = Union[str, int, float, Sequence[float]]
+IterableTags = Iterable[Tuple[int, TagValue]]
 
 
 class DXFTag:
@@ -138,8 +139,7 @@ def dxftag(code: int, value: TagValue) -> DXFTag:
         return DXFTag(code, cast_tag_value(code, value))
 
 
-# TODO: test tuples_to_tags()
-def tuples_to_tags(iterable: Iterable[Tuple[int, TagValue]]):
+def tuples_to_tags(iterable: Iterable[Tuple[int, TagValue]]) -> Iterable[DXFTag]:
     for code, value in iterable:
         if code in POINT_CODES:
             yield DXFVertex(code, value)

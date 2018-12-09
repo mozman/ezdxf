@@ -1,7 +1,7 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from ezdxf.legacy import LegacyDXFFactory
+from ezdxf.legacy import DXFFactory
 from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 from ezdxf.lldxf.const import DXFKeyError
 
@@ -163,7 +163,7 @@ UPDATE_ENTITY_WRAPPERS = {
 }
 
 
-class ModernDXFFactory(LegacyDXFFactory):
+class ModernDXFFactory(DXFFactory):
     """ DXf factory for DXF version AC1015 and later. (changed 04.05.2014)
     """
     DEFAULT_WRAPPER = graphics.ModernGraphicEntity
