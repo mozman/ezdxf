@@ -3,11 +3,16 @@
 # Created: 14.04.2016
 # Copyright (C) 2016, Manfred Moitzi
 # License: MIT License
+from typing import TextIO, Union, Sequence, Iterable
 from contextlib import contextmanager
 
+# types
+Vertex = Sequence[float]
 
-def rnd(x):  # adjust output precision of floats by changing 'ndigits'
+
+def rnd(x: float) -> float:  # adjust output precision of floats by changing 'ndigits'
     return round(x, ndigits=6)
+
 
 TEXT_ALIGN_FLAGS = {
     'LEFT': (0, 0),
@@ -26,7 +31,7 @@ TEXT_ALIGN_FLAGS = {
 
 
 @contextmanager
-def r12writer(stream, fixed_tables=False):
+def r12writer(stream: Union[TextIO, str], fixed_tables=False) -> 'R12FastStreamWriter':
     if hasattr(stream, 'write'):
         writer = R12FastStreamWriter(stream, fixed_tables)
         try:
@@ -42,31 +47,48 @@ def r12writer(stream, fixed_tables=False):
                 writer.close()
 
 
-class R12FastStreamWriter(object):
-    def __init__(self, stream, fixed_tables=False):
+class R12FastStreamWriter:
+    def __init__(self, stream: TextIO, fixed_tables=False):
         self.stream = stream
         if fixed_tables:
             stream.write(PREFACE)
         stream.write("0\nSECTION\n2\nENTITIES\n")  # write header
 
-    def close(self):
+    def close(self) -> None:
         self.stream.write("0\nENDSEC\n0\nEOF\n")  # write tail
 
-    def add_line(self, start, end, layer="0", color=None, linetype=None):
+    def add_line(self,
+                 start: Vertex,
+                 end: Vertex,
+                 layer: str = "0",
+                 color: int = None,
+                 linetype: str = None) -> None:
         dxf = ["0\nLINE\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(start, code=10))
         dxf.append(dxf_vertex(end, code=11))
         self.stream.write(''.join(dxf))
 
-    def add_circle(self, center, radius, layer="0", color=None, linetype=None):
+    def add_circle(self,
+                   center: Vertex,
+                   radius: float,
+                   layer: str = "0",
+                   color: int = None,
+                   linetype: str = None) -> None:
         dxf = ["0\nCIRCLE\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(center))
         dxf.append(dxf_tag(40, str(rnd(radius))))
         self.stream.write(''.join(dxf))
 
-    def add_arc(self, center, radius, start=0, end=360, layer="0", color=None, linetype=None):
+    def add_arc(self,
+                center: Vertex,
+                radius: float,
+                start: float = 0,
+                end: float = 360,
+                layer: str = "0",
+                color: int = None,
+                linetype: str = None) -> None:
         dxf = ["0\nARC\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(center))
@@ -75,19 +97,38 @@ class R12FastStreamWriter(object):
         dxf.append(dxf_tag(51, str(rnd(end))))
         self.stream.write(''.join(dxf))
 
-    def add_point(self, location, layer="0", color=None, linetype=None):
+    def add_point(self,
+                  location: Vertex,
+                  layer: str = "0",
+                  color: int = None,
+                  linetype: str = None) -> None:
         dxf = ["0\nPOINT\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(location))
         self.stream.write(''.join(dxf))
 
-    def add_3dface(self, vertices, invisible=0, layer="0", color=None, linetype=None):
+    def add_3dface(self,
+                   vertices: Iterable[Vertex],
+                   invisible: int = 0,
+                   layer: str = "0",
+                   color: int = None,
+                   linetype: str = None) -> None:
         self._add_quadrilateral('3DFACE', vertices, invisible, layer, color, linetype)
 
-    def add_solid(self, vertices, layer="0", color=None, linetype=None):
+    def add_solid(self,
+                  vertices: Iterable[Vertex],
+                  layer: str = "0",
+                  color: int = None,
+                  linetype: str = None) -> None:
         self._add_quadrilateral('SOLID', vertices, 0, layer, color, linetype)
 
-    def _add_quadrilateral(self, dxftype, vertices, flags, layer, color, linetype):
+    def _add_quadrilateral(self,
+                           dxftype: str,
+                           vertices: Iterable[Vertex],
+                           flags: int,
+                           layer: str,
+                           color: int,
+                           linetype: str) -> None:
         dxf = ["0\n%s\n" % dxftype]
         dxf.append(dxf_attribs(layer, color, linetype))
         vertices = list(vertices)
@@ -100,11 +141,15 @@ class R12FastStreamWriter(object):
             dxf.append(dxf_tag(70, str(flags)))
         self.stream.write(''.join(dxf))
 
-    def add_polyline(self, vertices, layer="0", color=None, linetype=None):
-        def write_polyline(flags):
+    def add_polyline(self,
+                     vertices: Iterable[Vertex],
+                     layer: str = "0",
+                     color: int = None,
+                     linetype: str = None) -> None:
+        def write_polyline(flags: int) -> None:
             dxf = ["0\nPOLYLINE\n"]
             dxf.append(dxf_attribs(layer, color, linetype))
-            dxf.append(dxf_tag(66, "1"))  # entities follow
+            dxf.append(dxf_tag(66, 1))  # entities follow
             dxf.append(dxf_tag(70, flags))
             self.stream.write(''.join(dxf))
 
@@ -112,9 +157,9 @@ class R12FastStreamWriter(object):
         for vertex in vertices:
             if polyline_flags is None:  # first vertex
                 if len(vertex) == 3:  # 3d polyline
-                    polyline_flags, vertex_flags = ('8', '32')
+                    polyline_flags, vertex_flags = (8, 32)
                 else:  # 2d polyline
-                    polyline_flags, vertex_flags = ('0', '0')
+                    polyline_flags, vertex_flags = (0, 0)
                 write_polyline(polyline_flags)
 
             dxf = ["0\nVERTEX\n"]
@@ -125,8 +170,17 @@ class R12FastStreamWriter(object):
         if polyline_flags is not None:
             self.stream.write("0\nSEQEND\n")
 
-    def add_text(self, text, insert=(0, 0), height=1., width=1., align="LEFT", rotation=0., oblique=0., style='STANDARD',
-                 layer="0", color=None):
+    def add_text(self,
+                 text: str,
+                 insert: Vertex = (0, 0),
+                 height: float = 1.,
+                 width: float = 1.,
+                 align: str = "LEFT",
+                 rotation: float = 0.,
+                 oblique: float = 0.,
+                 style: str = 'STANDARD',
+                 layer: str = "0",
+                 color: int = None) -> None:
         # text style is always STANDARD without a TABLES section
         dxf = ["0\nTEXT\n"]
         dxf.append(dxf_attribs(layer, color))
@@ -148,7 +202,7 @@ class R12FastStreamWriter(object):
         self.stream.write(''.join(dxf))
 
 
-def dxf_attribs(layer, color=None, linetype=None):
+def dxf_attribs(layer: str, color: int = None, linetype: str = None) -> str:
     dxf = ["8\n%s\n" % layer]  # layer is required
     if linetype is not None:
         dxf.append("6\n%s\n" % linetype)
@@ -160,7 +214,7 @@ def dxf_attribs(layer, color=None, linetype=None):
     return "".join(dxf)
 
 
-def dxf_vertex(vertex, code=10):
+def dxf_vertex(vertex: Vertex, code=10) -> str:
     dxf = []
     for c in vertex:
         dxf.append("%d\n%s\n" % (code, str(rnd(c))))
@@ -168,7 +222,7 @@ def dxf_vertex(vertex, code=10):
     return "".join(dxf)
 
 
-def dxf_tag(code, value):
+def dxf_tag(code: int, value) -> str:
     return "%d\n%s\n" % (code, value)
 
 

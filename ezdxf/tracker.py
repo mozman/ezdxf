@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from typing import Set
 
 
-class Tracker(object):
-    dxftypes = set()  # track used DXF types
+class Tracker:
+    dxftypes = set()  # type: Set[str] # track used DXF types
