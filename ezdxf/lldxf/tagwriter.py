@@ -1,9 +1,13 @@
 # Created: 13.01.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from typing import Any, TextIO
+from typing import Any, TextIO, TYPE_CHECKING, Union
 from .types import TAG_STRING_FORMAT
-from .tags import Tags, DXFTag
+from .tags import DXFTag
+
+if TYPE_CHECKING:
+    from ezdxf.lldxf.tags import Tags
+    from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
 class TagWriter:
@@ -20,7 +24,7 @@ class TagWriter:
         self._stream = stream
         self._write_handles = write_handles
 
-    def write_tags(self, tags: Tags) -> None:
+    def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
         if self._write_handles:
             for tag in tags:
                 self.write_tag(tag)
