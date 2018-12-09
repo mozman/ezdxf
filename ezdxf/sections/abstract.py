@@ -7,8 +7,8 @@ from ezdxf.lldxf.extendedtags import get_xtags_linker
 from ezdxf.query import EntityQuery
 
 
-class AbstractSection(object):
-    name = 'abstract'
+class AbstractSection:
+    name = 'abstract'  # type: str
 
     def __init__(self, entity_space, entities, drawing):
         self._entity_space = entity_space

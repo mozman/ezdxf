@@ -5,9 +5,9 @@
 """
 Creates a structured HTML view of raw DXF tags - not a CAD drawing!
 """
-
+from typing import Iterable
 from ezdxf.tools import escape
-from ezdxf.lldxf.tags import group_tags
+from ezdxf.lldxf.tags import group_tags, DXFTag
 from ezdxf.lldxf.types import GROUP_MARKERS, BINARY_FLAGS, HEX_HANDLE_CODES
 
 from .dxfpp import tag_type_str, load_resource, with_bitmask, MAX_STR_LEN
@@ -18,8 +18,8 @@ MARKER_TPL = '<div class="tag-group-marker">{tag}</div>'
 CONTROL_TPL = '<div class="tag-control-tag">{tag}</div>'
 
 
-def rawpp(tagger, filename):
-    def tag2html(tag):
+def rawpp(tagger: Iterable[DXFTag], filename: str) -> str:
+    def tag2html(tag: DXFTag) -> str:
         type_str = tag_type_str(tag.code)
         if tag.code in BINARY_FLAGS:
             vstr = with_bitmask(tag.value)
@@ -28,10 +28,10 @@ def rawpp(tagger, filename):
             if tag.code in HEX_HANDLE_CODES:
                 vstr = '#' + vstr
         if len(vstr) > MAX_STR_LEN:
-            vstr = vstr[:MAX_STR_LEN-3] + '...'
+            vstr = vstr[:MAX_STR_LEN - 3] + '...'
         return TAG_TPL.format(code=tag.code, value=escape(vstr), type=escape(type_str))
 
-    def marker(tag, tag_html):
+    def marker(tag: DXFTag, tag_html: str) -> str:
         if tag.code == 0:
             return CONTROL_TPL.format(tag=tag_html)
         elif tag.code in GROUP_MARKERS:
@@ -39,14 +39,14 @@ def rawpp(tagger, filename):
         else:
             return tag_html
 
-    def tags2html(tags):
+    def tags2html(tags: Iterable[DXFTag]) -> str:
         return '\n'.join(marker(tag, tag2html(tag)) for tag in tags)
 
-    def groups(tags):
+    def groups(tags: Iterable[DXFTag]) -> Iterable[str]:
         for group in group_tags(tags, splitcode=0):
             yield '<div class="dxf-tag-group">\n{content}\n</div>'.format(content=tags2html(group))
 
-    def dxf_control_structures(tags):
+    def dxf_control_structures(tags: Iterable[DXFTag]) -> str:
         return '\n'.join(groups(tags))
 
     template = load_resource('rawpp.html')

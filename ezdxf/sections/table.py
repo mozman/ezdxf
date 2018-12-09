@@ -25,7 +25,7 @@ def tablename(dxfname):
     return TABLENAMES.get(name, name + 'S')
 
 
-class Table(object):
+class Table:
     def __init__(self, entities, drawing):
         self._table_header = None
         self._dxfname = None
