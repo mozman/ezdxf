@@ -43,11 +43,17 @@
 # *ZICKZACK,Zickzack /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 # A,.0001,-.2,[ZIG,ltypeshp.shx,x=-.2,s=.2],-.4,[ZIG,ltypeshp.shx,r=180,x=.2,s=.2],-.2
 
+from typing import TYPE_CHECKING, Iterable, Sequence, Union
 from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
 from ezdxf.lldxf.tags import DXFTag, Tags
 
+if TYPE_CHECKING:  # import forward references
+    from ezdxf.drawing import Drawing
 
-def lin_compiler(definition):
+Token = Union[str, float, list]
+
+
+def lin_compiler(definition: str) -> Sequence[DXFTag]:
     """
     Compiles line type definitions like 'A,.5,-.25,.5,-.25,0,-.25' or 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25'
     into DXFTags().
@@ -72,14 +78,14 @@ def lin_compiler(definition):
 
 
 class ComplexLineTypePart:
-    def __init__(self, type_, value, font='STANDARD'):
+    def __init__(self, type_: str, value, font: str = 'STANDARD'):
         self.type = type_
         self.value = value
         self.font = font
         self.tags = Tags()
 
-    def complex_ltype_tags(self, drawing):
-        def get_font_handle():
+    def complex_ltype_tags(self, drawing: 'Drawing') -> Sequence[DXFTag]:
+        def get_font_handle() -> str:
             if self.type == 'SHAPE':
                 font = drawing.styles.get_shx(self.font)  # creates new shx or returns existing entry
             else:
@@ -88,6 +94,7 @@ class ComplexLineTypePart:
                 except DXFTableEntryError:
                     font = drawing.styles.new(self.font)
             return font.dxf.handle
+
         if drawing is not None:
             handle = get_font_handle()
         else:
@@ -115,7 +122,7 @@ CMD_CODES = {
 }
 
 
-def compile_complex_defnition(tokens):
+def compile_complex_defnition(tokens: Sequence) -> ComplexLineTypePart:
     part = ComplexLineTypePart(tokens[0], tokens[1], tokens[2])
     commands = list(reversed(tokens[3:]))
     params = {}
@@ -131,7 +138,7 @@ def compile_complex_defnition(tokens):
     return part
 
 
-def lin_parser(definition):
+def lin_parser(definition: str) -> Sequence[Token]:
     bag = []
     sublist = None
     first = True
@@ -154,7 +161,7 @@ def lin_parser(definition):
             sublist = []
             if token.startswith('["'):
                 sublist.append('TEXT')
-                sublist.append(token[2:-1])  # text ohne '["' und '"'
+                sublist.append(token[2:-1])  # text without surrounding '["' and '"'
             else:
                 sublist.append('SHAPE')
                 try:
@@ -177,7 +184,7 @@ def lin_parser(definition):
     return bag
 
 
-def lin_tokenizer(definition):
+def lin_tokenizer(definition: str) -> Iterable[str]:
     token = ''
     escape = False
     for char in definition:

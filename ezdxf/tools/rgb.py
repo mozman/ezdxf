@@ -2,9 +2,12 @@
 # Created: 03.07.2015 taken from my dxfgrabber package
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import Tuple
+
+RGB = Tuple[int, int, int]
 
 
-def int2rgb(value):
+def int2rgb(value: int) -> RGB:
     return (
         (value >> 16) & 0xFF,  # red
         (value >> 8) & 0xFF,  # green
@@ -12,12 +15,12 @@ def int2rgb(value):
     )
 
 
-def rgb2int(rgb):
+def rgb2int(rgb: RGB) -> int:
     r, g, b = rgb
     return ((int(r) & 0xff) << 16) | ((int(g) & 0xff) << 8) | (int(b) & 0xff)
 
 
-def aci2rgb(index):
+def aci2rgb(index: int) -> RGB:
         if index < 1:
             raise IndexError(index)
         return int2rgb(dxf_default_colors[index])

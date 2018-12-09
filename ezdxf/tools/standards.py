@@ -2,9 +2,13 @@
 # Created: 23.03.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, List, Tuple, Sequence
+
+if TYPE_CHECKING:  # import forward declarations
+    from ezdxf.drawing import Drawing
 
 
-def setup_linetypes(dwg):
+def setup_linetypes(dwg: 'Drawing') -> None:
     for name, desc, pattern in linetypes():
         if name in dwg.linetypes:
             continue
@@ -14,7 +18,7 @@ def setup_linetypes(dwg):
         })
 
 
-def setup_styles(dwg):
+def setup_styles(dwg: 'Drawing') -> None:
     for name, font in styles():
         if name in dwg.styles:
             continue
@@ -23,7 +27,7 @@ def setup_styles(dwg):
         })
 
 
-def linetypes():
+def linetypes() -> List[Tuple[str, str, Sequence[float]]]:
     """ Creates a list of standard line types.
     """
     # dxf linetype definition

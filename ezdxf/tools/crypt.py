@@ -2,6 +2,8 @@
 # Created: 01.05.2014
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
+from typing import Iterable
+
 _decode_table = {
     0x20: ' ',
     0x40: '_',
@@ -11,7 +13,7 @@ for c in range(0x41, 0x5F):
     _decode_table[c] = chr(0x41 + (0x5E - c))  # 0x5E -> 'A', 0x5D->'B', ...
 
 
-def decode(text_lines):
+def decode(text_lines: Iterable[str]) -> Iterable[str]:
     def _decode(text):
         dectab = _decode_table  # fast local var
         s = []
@@ -39,7 +41,7 @@ for c in range(0x41, 0x5F):
     _encode_table[chr(c)] = chr(0x5E - (c - 0x41))  # 0x5E->'A', 'B'->0x5D, ...
 
 
-def encode(text_lines):
+def encode(text_lines: Iterable[str]) -> Iterable[str]:
     def _encode(text):
         s = []
         enctab = _encode_table  # fast local var
