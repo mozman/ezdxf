@@ -1,13 +1,16 @@
 # Purpose: database module
 # Created: 11.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import Optional, Iterable, Tuple
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf.tags import DXFTag
+from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.dxfentity import DXFEntity
 
 
-class EntityDB(object):
+class EntityDB:
     """ A simple key/value database a.k.a. dict(), but can be replaced by other
     classes that implements all of the methods of `EntityDB`. The entities
     have no order.
@@ -15,7 +18,7 @@ class EntityDB(object):
     The Data Model
 
     Every entity/object, except tables and sections, are represented as
-    tag-list (see Tags Class), this lists are stored in the drawing-associated
+    tag-list (see ExtendedTags Class), this lists are stored in the drawing-associated
     database, database-key is the 'handle' tag (code == 5 or 105).
 
     For the entity/object manipulation this tag-list will be wrapped into
@@ -23,50 +26,51 @@ class EntityDB(object):
     The dxffactory-object generates DXF-Version specific wrapper classes.
 
     """
+
     def __init__(self):
         self._database = {}
         self.handles = HandleGenerator()
 
-    def __delitem__(self, key):
-        del self._database[key]
+    def __delitem__(self, handle: str) -> None:
+        del self._database[handle]
 
-    def __getitem__(self, handle):
+    def __getitem__(self, handle: str) -> ExtendedTags:
         return self._database[handle]
 
-    def get(self, handle, default=None):
+    def get(self, handle: str) -> Optional[ExtendedTags]:
         try:
             return self.__getitem__(handle)
         except KeyError:  # internal exception
-            return default
+            return None
 
-    def __setitem__(self, handle, entity):
-        self._database[handle] = entity
+    def __setitem__(self, handle: str, tags: ExtendedTags) -> None:
+        self._database[handle] = tags
 
-    def __contains__(self, handle):
+    def __contains__(self, handle: str) -> bool:
         """ Database contains handle? """
         return handle in self._database
 
-    def __len__(self):
+    def __len__(self) -> int:
         """ Count of database items. """
         return len(self._database)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[str]:
         """ Iterate over all handles. """
         return iter(self._database.keys())
 
-    def keys(self):
+    def keys(self) -> Iterable[str]:
         """ Iterate over all handles. """
         return self._database.keys()
 
-    def values(self):
+    def values(self) -> Iterable[ExtendedTags]:
         """ Iterate over all entities. """
         return self._database.values()
 
-    def items(self):
+    def items(self) -> Iterable[Tuple[str, ExtendedTags]]:
         """ Iterate over all (handle, entities) pairs. """
         return self._database.items()
 
-    def add_tags(self, tags):
+    def add_tags(self, tags: ExtendedTags) -> str:
         try:
             handle = tags.get_handle()
         except DXFValueError:  # create new handle
@@ -77,20 +81,20 @@ class EntityDB(object):
         self.__setitem__(handle, tags)
         return handle
 
-    def delete_entity(self, entity):
+    def delete_entity(self, entity: DXFEntity) -> None:
         entity.destroy()
         self.delete_handle(entity.dxf.handle)
 
-    def delete_handle(self, handle):
+    def delete_handle(self, handle: str) -> None:
         del self._database[handle]
 
-    def get_unique_handle(self):
+    def get_unique_handle(self)-> str:
         while True:
             handle = self.handles.next()
             if handle not in self._database:  # you can not trust $HANDSEED value
                 return handle
 
-    def duplicate_tags(self, tags):
+    def duplicate_tags(self, tags: ExtendedTags) -> ExtendedTags:
         """
         Deep copy of tags with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND) with also new handles.
         An existing owner tag is not changed because this is not the domain of the EntityDB() class.
