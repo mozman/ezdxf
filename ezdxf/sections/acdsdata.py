@@ -74,31 +74,38 @@ section structure (work in progress):
 
 0 <str> ENDSEC
 """
+from typing import TYPE_CHECKING, Iterator, Iterable, List, Any
 from itertools import islice
 
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
+if TYPE_CHECKING:  # import forward declarations
+    from ezdxf.drawing import Drawing
+    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.database import EntityDB
+    from ezdxf.dxffactory import DXFFactory
 
-class AcDsDataSection(object):
+
+class AcDsDataSection:
     name = 'ACDSDATA'
 
-    def __init__(self, entities, drawing):
-        self.entities = []  # stores AcDsData objects
-        self.section_info = []
+    def __init__(self, entities: Iterable[Tags], drawing: 'Drawing'):
+        self.entities = []  # type: List[AcDsData]
+        self.section_info = []  # type: Tags
         self.drawing = drawing
         if entities is not None:
             self._build(iter(entities))
 
     @property
-    def dxffactory(self):
+    def dxffactory(self) -> 'DXFFactory':
         return self.drawing.dxffactory
 
     @property
-    def entitydb(self):
+    def entitydb(self) -> 'EntityDB':
         return self.drawing.entitydb
 
-    def _build(self, entities):
+    def _build(self, entities: Iterator[Tags]) -> None:
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'ACDSDATA'):
             raise DXFStructureError("Critical structure error in ACDSDATA section.")
@@ -107,13 +114,13 @@ class AcDsDataSection(object):
         for entity in entities:
             self._append_entity(AcDsData(entity))  # tags have no subclasses
 
-    def _append_entity(self, entity):
+    def _append_entity(self, entity: 'AcDsData') -> None:
         cls = ACDSDATA_TYPES.get(entity.dxftype())
         if cls is not None:
             entity = cls(entity.tags)
         self.entities.append(entity)
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nACDSDATA\n")
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:
@@ -121,44 +128,44 @@ class AcDsDataSection(object):
         tagwriter.write_tag2(0, 'ENDSEC')
 
 
-class AcDsData(object):
-    def __init__(self, tags):
+class AcDsData:
+    def __init__(self, tags: Tags):
         self.tags = tags
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter'):
         tagwriter.write_tags(self.tags)
 
-    def dxftype(self):
+    def dxftype(self) -> str:
         return self.tags[0].value
 
 
 class Section(Tags):
     @property
-    def name(self):
+    def name(self) -> str:
         return self[0].value
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self[1].value
 
     @property
-    def data(self):
+    def data(self) -> Tags:
         return self[2:]
 
 
-class AcDsRecord(object):
-    def __init__(self, tags):
+class AcDsRecord:
+    def __init__(self, tags: Tags):
         self._dxftype = tags[0]
         self.flags = tags[1]
         self.sections = [Section(tags) for tags in group_tags(islice(tags, 2, None), splitcode=2)]
 
-    def dxftype(self):
+    def dxftype(self) -> str:
         return self._dxftype.value
 
-    def has_section(self, name):
+    def has_section(self, name: str) -> bool:
         return self.get_section(name, default=None) is not None
 
-    def get_section(self, name, default=DXFKeyError):
+    def get_section(self, name: str, default: Any = DXFKeyError) -> Section:
         for section in self.sections:
             if section.name == name:
                 return section
@@ -167,13 +174,13 @@ class AcDsRecord(object):
         else:
             return default
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Section:
         return self.get_section(name)
 
-    def _write_header(self, tagwriter):
+    def _write_header(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tags(Tags([self._dxftype, self.flags]))
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter') -> None:
         self._write_header(tagwriter)
         for section in self.sections:
             tagwriter.write_tags(section)
