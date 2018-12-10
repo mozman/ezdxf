@@ -56,7 +56,7 @@ class DXFNamespace:
         return self._wrapper.del_dxf_attrib(attrib)
 
 
-class DXFEntity(object):
+class DXFEntity:
     __slots__ = ('tags', 'dxf', 'drawing')
     TEMPLATE = None
     CLASS = None
