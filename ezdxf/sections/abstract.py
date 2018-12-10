@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # import forward declarations
     from ezdxf.dxfentity import DXFEntity
     from ezdxf.entityspace import EntitySpace
     from ezdxf.drawing import Drawing
-    from ezdxf.dxffactory import DXFFactory
+    from ezdxf.dxffactory import DXFFactoryType
     from ezdxf.database import EntityDB
 
 
@@ -29,7 +29,7 @@ class AbstractSection:
             self._build(iter(entities))
 
     @property
-    def dxffactory(self) -> 'DXFFactory':
+    def dxffactory(self) -> 'DXFFactoryType':
         return self.drawing.dxffactory
 
     @property

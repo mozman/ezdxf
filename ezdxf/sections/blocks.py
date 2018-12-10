@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ezdxf.drawing import Drawing
     from ezdxf.modern.layouts import BlockLayout
     from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.dxffactory import DXFFactory
+    from ezdxf.dxffactory import DXFFactoryType
     from ezdxf.database import EntityDB
     from ezdxf.lldxf.tagwriter import TagWriter
 
@@ -51,7 +51,7 @@ class BlocksSection:
         return self.drawing.entitydb
 
     @property
-    def dxffactory(self) -> 'DXFFactory':
+    def dxffactory(self) -> 'DXFFactoryType':
         return self.drawing.dxffactory
 
     def _build(self, entities: Iterator['ExtendedTags']) -> None:

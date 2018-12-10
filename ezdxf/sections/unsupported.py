@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Sequence, Iterable
 
 if TYPE_CHECKING:
     from ezdxf.drawing import Drawing
-    from ezdxf.dxffactory import DXFFactory
+    from ezdxf.dxffactory import DXFFactoryType
     from ezdxf.lldxf.tagwriter import TagWriter
     from ezdxf.lldxf.tags import Tags, DXFTag
 
@@ -17,7 +17,7 @@ class UnsupportedSection:
         self._drawing = drawing
 
     @property
-    def dxffactory(self) -> 'DXFFactory':
+    def dxffactory(self) -> 'DXFFactoryType':
         return self._drawing.dxffactory
 
     @property

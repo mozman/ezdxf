@@ -9,7 +9,7 @@ from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.dxffactory import DXFFactory
+    from ezdxf.dxffactory import DXFFactoryType
     from ezdxf.dxfentity import DXFEntity
     from ezdxf.modern.spline import Spline
 
@@ -24,7 +24,7 @@ class GraphicsFactory:
     """ Abstract base class for BaseLayout()
     """
 
-    def __init__(self, dxffactory: 'DXFFactory'):
+    def __init__(self, dxffactory: 'DXFFactoryType'):
         self._dxffactory = dxffactory
 
     @property
