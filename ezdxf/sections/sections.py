@@ -2,6 +2,7 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Dict, Union, List, Iterable
 import logging
 
 from ezdxf.lldxf.const import DXFStructureError
@@ -14,23 +15,31 @@ from .objects import ObjectsSection
 from .entities import EntitySection
 from .unsupported import UnsupportedSection
 
+SectionType = Union[
+    HeaderSection, TablesSection, BlocksSection, ClassesSection, ObjectsSection, EntitySection, UnsupportedSection]
+
+if TYPE_CHECKING:
+    from ezdxf.drawing import Drawing
+    from ezdxf.lldxf.tagwriter import TagWriter
+
 logger = logging.getLogger('ezdxf')
 KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
-class Sections(object):
-    def __init__(self, sections, drawing, header=None):
-        self._sections = {'HEADER': header if header is not None else HeaderSection(tags=None)}
+class Sections:
+    def __init__(self, sections: Dict, drawing: 'Drawing', header: HeaderSection = None):
+        self._sections = {
+            'HEADER': header if header is not None else HeaderSection(tags=None)}  # type: Dict[str, SectionType]
         self._setup_sections(sections, drawing)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[SectionType]:
         return iter(self._sections.values())
 
     @staticmethod
-    def key(name):
+    def key(name: str) -> str:
         return name.upper()
 
-    def _setup_sections(self, sections, drawing):
+    def _setup_sections(self, sections: Dict, drawing: 'Drawing') -> None:
         # required sections
         self._sections['TABLES'] = TablesSection(sections.get('TABLES', None), drawing)
         self._sections['BLOCKS'] = BlocksSection(sections.get('BLOCKS', None), drawing)
@@ -49,10 +58,10 @@ class Sections(object):
             if section_name not in KNOWN_SECTIONS:
                 logging.info('Found unknown SECTION: "{}", removed by ezdxf on saving!'.format(section_name))
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return Sections.key(item) in self._sections
 
-    def __getattr__(self, key):
+    def __getattr__(self, key: str) -> SectionType:
         try:
             return self._sections[Sections.key(key)]
         except KeyError:  # internal exception
@@ -60,13 +69,13 @@ class Sections(object):
             # invalid DXF file.
             raise DXFStructureError('{} section not found'.format(key.upper()))
 
-    def get(self, name):
+    def get(self, name: str) -> SectionType:
         return self._sections.get(Sections.key(name), None)
 
-    def names(self):
+    def names(self) -> List[str]:
         return list(self._sections.keys())
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter') -> None:
         write_order = list(KNOWN_SECTIONS)
 
         unknown_sections = frozenset(self._sections.keys()) - frozenset(KNOWN_SECTIONS)
@@ -82,7 +91,10 @@ class Sections(object):
 
         tagwriter.write_tag2(0, 'EOF')
 
-    def delete_section(self, name):
-        """ Delete a complete section, please delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA'.
+    def delete_section(self, name: str) -> None:
+        """
+        Delete a complete section, delete only unnecessary sections like 'THUMBNAILIMAGE' or 'ACDSDATA', else the DXF
+        file is corrupted.
+
         """
         del self._sections[Sections.key(name)]
