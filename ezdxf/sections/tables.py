@@ -2,17 +2,23 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, Sequence, Iterator
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 
 from .table import Table, ViewportTable, StyleTable
 
+if TYPE_CHECKING:
+    from ezdxf.drawing import Drawing
+    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.lldxf.tags import Tags
 
-class TablesSection(object):
+
+class TablesSection:
     name = 'TABLES'
 
-    def __init__(self, entities, drawing):
+    def __init__(self, entities: Iterable[Sequence[DXFTag]], drawing: 'Drawing'):
         self._drawing = drawing
         self._tables = {}
         if entities is None:
@@ -20,14 +26,14 @@ class TablesSection(object):
             entities = [section_head]
         self._setup_tables(iter(entities))
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Table]:
         return iter(self._tables.values())
 
     @staticmethod
-    def key(name):
+    def key(name: str) -> str:
         return name.upper()
 
-    def _setup_tables(self, entities):
+    def _setup_tables(self, entities: Iterator['Tags']) -> None:
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'TABLES'):
             raise DXFStructureError("Critical structure error in TABLES section.")
@@ -52,10 +58,10 @@ class TablesSection(object):
 
         self._create_missing_tables()
 
-    def _new_table(self, name, table_entities):
-            table_class = TABLESMAP[name]
-            new_table = table_class(table_entities, self._drawing)
-            self._tables[self.key(new_table.name)] = new_table
+    def _new_table(self, name: str, table_entities: Iterable['Tags']) -> None:
+        table_class = TABLESMAP[name]
+        new_table = table_class(table_entities, self._drawing)
+        self._tables[self.key(new_table.name)] = new_table
 
     def _setup_table(self, name):
         """
@@ -90,7 +96,7 @@ class TablesSection(object):
             ]]
         self._new_table(name, table_entities)
 
-    def _create_missing_tables(self):
+    def _create_missing_tables(self) -> None:
         if 'LAYERS' not in self:
             self._setup_table('LAYER')
         if 'LINETYPES' not in self:
@@ -106,23 +112,23 @@ class TablesSection(object):
         if 'UCS' not in self:
             self._setup_table('UCS')
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return self.key(item) in self._tables
 
-    def __getattr__(self, key):
+    def __getattr__(self, key: str) -> Table:
         key = self.key(key)
         try:
             return self._tables[key]
         except KeyError:  # internal exception
             raise DXFAttributeError(key)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Table:
         return self._tables[self.key(key)]
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         del self._tables[self.key(key)]
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str('  0\nSECTION\n  2\nTABLES\n')
         for table_name in TABLE_ORDER:
             table = self._tables.get(table_name)
