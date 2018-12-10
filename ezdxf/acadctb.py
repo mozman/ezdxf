@@ -278,7 +278,6 @@ class UserStyles:
         dxf_color_index = self.check_color_index(dxf_color_index)
         return self.styles[dxf_color_index]
 
-    # interface for dxfwrite.std.DXFColorIndex
     def get_color(self, dxf_color_index: int) -> Optional[Tuple[int, int, int, int]]:
         """
         Get rgb-color-tuple for <dxf_color_index> or None if not specified.
@@ -287,7 +286,6 @@ class UserStyles:
         style = self.get_style(dxf_color_index)
         return style.get_color()
 
-    # interface for dxfwrite.std.DXFLineweight
     def get_lineweight(self, dxf_color_index: int):
         """
         Returns the assigned lineweight for <dxf_color_index> in mm.
