@@ -3,7 +3,7 @@
 # License: MIT License
 from array import array
 from itertools import chain
-from typing import Union, Tuple, Iterable, Callable, Sequence
+from typing import Union, Tuple, Iterable, Callable, Sequence, Any
 
 from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
 import reprlib
@@ -201,5 +201,5 @@ def tag_type(code: int) -> Callable:
     return TYPE_TABLE.get(code, str)
 
 
-def strtag(tag: DXFTag) -> str:
+def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
     return TAG_STRING_FORMAT % tuple(tag)
