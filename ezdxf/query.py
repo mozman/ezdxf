@@ -2,15 +2,19 @@
 # Created: 27.04.13
 # Copyright (C) 2013, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, Callable, Hashable, Dict, List, Any, Sequence, Union
 import re
 import operator
 
-from collections.abc import Sequence
+from collections import abc
 from ezdxf.queryparser import EntityQueryParser
 from ezdxf.groupby import groupby
 
+if TYPE_CHECKING:  # import forward references
+    from ezdxf.dxfentity import DXFEntity
 
-class EntityQuery(Sequence):
+
+class EntityQuery(abc.Sequence):
     """
 
     EntityQuery is a result container, which is filled with dxf entities matching the query string.
@@ -66,7 +70,8 @@ class EntityQuery(Sequence):
         '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
 
     """
-    def __init__(self, entities=None, query='*'):
+
+    def __init__(self, entities: Iterable['DXFEntity'] = None, query: str = '*'):
         """
         Setup container with entities matching the initial query.
 
@@ -83,17 +88,17 @@ class EntityQuery(Sequence):
             match = entity_matcher(query)
             self.entities = [entity for entity in entities if match(entity)]
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Count of result entities.
 
         """
         return len(self.entities)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> 'DXFEntity':
         return self.entities.__getitem__(item)
 
-    def extend(self, entities, query='*', unique=True):
+    def extend(self, entities: Iterable['DXFEntity'], query: str = '*', unique: bool = True) -> 'EntityQuery':
         """
         Extent the query container by entities matching a additional query.
 
@@ -103,7 +108,7 @@ class EntityQuery(Sequence):
             self.entities = list(unique_entities(self.entities))
         return self
 
-    def remove(self, query='*'):
+    def remove(self, query: str = '*') -> None:
         """
         Remove all entities from result container matching this additional query.
 
@@ -111,7 +116,7 @@ class EntityQuery(Sequence):
         handles_of_entities_to_remove = frozenset(entity.dxf.handle for entity in self.query(query))
         self.entities = [entity for entity in self.entities if entity.dxf.handle not in handles_of_entities_to_remove]
 
-    def query(self, query='*'):
+    def query(self, query: str = '*') -> 'EntityQuery':
         """
         Returns a new result container with all entities matching this additional query.
 
@@ -120,7 +125,8 @@ class EntityQuery(Sequence):
         """
         return EntityQuery(self.entities, query)
 
-    def groupby(self, dxfattrib='', key=None):
+    def groupby(self, dxfattrib: str = '', key: Callable[['DXFEntity'], Hashable] = None) \
+            -> Dict[Hashable, List['DXFEntity']]:
         """
         Returns a dict of entity lists, where entities are grouped by a dxfattrib or a key function.
 
@@ -135,18 +141,18 @@ class EntityQuery(Sequence):
         return groupby(self.entities, dxfattrib, key)
 
 
-def entity_matcher(query):
+def entity_matcher(query: str) -> Callable[['DXFEntity'], bool]:
     query_args = EntityQueryParser.parseString(query, parseAll=True)
     entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
     attrib_matcher = build_entity_attributes_matcher(query_args.AttribQuery, query_args.AttribQueryOptions)
 
-    def matcher(entity):
+    def matcher(entity: 'DXFEntity') -> bool:
         return entity_matcher_(entity) and attrib_matcher(entity)
 
     return matcher
 
 
-def build_entity_name_matcher(names):
+def build_entity_name_matcher(names: Sequence[str]) -> Callable[['DXFEntity'], bool]:
     entity_names = frozenset(names)
     if names[0] == '*':
         return lambda e: True
@@ -167,7 +173,7 @@ class Relation:
     }
     VALID_CMP_OPERATORS = frozenset(CMP_OPERATORS.keys())
 
-    def __init__(self, relation, ignore_case):
+    def __init__(self, relation: Sequence, ignore_case: bool):
         name, op, value = relation
         self.dxf_attrib = name
         self.compare = Relation.CMP_OPERATORS[op]
@@ -179,7 +185,7 @@ class Relation:
         else:
             self.value = self.convert_case(value)
 
-    def evaluate(self, entity):
+    def evaluate(self, entity: 'DXFEntity') -> bool:
         try:
             value = self.convert_case(entity.get_dxf_attrib(self.dxf_attrib))
             return self.compare(value, self.value)
@@ -199,13 +205,13 @@ class BoolExpression:
         '|': operator.or_,
     }
 
-    def __init__(self, tokens):
+    def __init__(self, tokens: Sequence):
         self.tokens = tokens
 
     def __iter__(self):
         return iter(self.tokens)
 
-    def evaluate(self, entity):
+    def evaluate(self, entity: 'DXFEntity') -> bool:
         if isinstance(self.tokens, Relation):  # expression is just one relation, no bool operations
             return self.tokens.evaluate(entity)
 
@@ -226,8 +232,8 @@ class BoolExpression:
         return values.pop()
 
 
-def _compile_tokens(tokens, ignore_case):
-    def is_relation(tokens):
+def _compile_tokens(tokens: Union[str, Sequence], ignore_case: bool) -> Union[str, Relation, BoolExpression]:
+    def is_relation(tokens: Sequence) -> bool:
         return len(tokens) == 3 and tokens[1] in Relation.VALID_CMP_OPERATORS
 
     if isinstance(tokens, str):  # bool operator as string
@@ -240,19 +246,19 @@ def _compile_tokens(tokens, ignore_case):
         return BoolExpression([_compile_tokens(token, ignore_case) for token in tokens])
 
 
-def build_entity_attributes_matcher(tokens, options):
+def build_entity_attributes_matcher(tokens: Sequence, options: str) -> Callable[['DXFEntity'], bool]:
     if not len(tokens):
         return lambda x: True
     ignore_case = 'i' == options  # at this time just one option is supported
     expr = BoolExpression(_compile_tokens(tokens, ignore_case))
 
-    def match_bool_expr(entity):
+    def match_bool_expr(entity: 'DXFEntity') -> bool:
         return expr.evaluate(entity)
 
     return match_bool_expr
 
 
-def unique_entities(entities):
+def unique_entities(entities: Iterable['DXFEntity']) -> Iterable['DXFEntity']:
     """
     Yield all unique entities, order of all entities will be preserved.
     """
@@ -264,8 +270,8 @@ def unique_entities(entities):
             yield entity
 
 
-def name_query(names, query="*"):
-    def build_regexp_matcher():
+def name_query(names: Iterable[str], query: str = "*") -> Iterable[str]:
+    def build_regexp_matcher() -> Callable[[str], bool]:
         if query == "*":
             return lambda n: True
         else:
@@ -278,6 +284,4 @@ def name_query(names, query="*"):
 
 
 def new(entities=None, query='*'):
-    if entities is None:
-        entities = []
     return EntityQuery(entities, query)

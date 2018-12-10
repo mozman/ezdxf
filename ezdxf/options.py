@@ -4,9 +4,9 @@
 # License: MIT License
 
 
-class Options(object):
+class Options:
     def __init__(self):
-        self.template_dir = None
+        self.template_dir = None  # type: str
 
         # check app data and xdata tag structures, turn this option off for a little performance boost
         self.check_entity_tag_structures = True

@@ -47,8 +47,8 @@ LBRK = Suppress('[')
 RBRK = Suppress(']')
 
 number = Regex(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
-number.addParseAction(lambda t: float(t[0]))
-string_ = quotedString.addParseAction(lambda t: t[0][1:-1])
+number.addParseAction(lambda t: float(t[0]))  # convert to float
+string_ = quotedString.addParseAction(lambda t: t[0][1:-1])  # remove quotes
 
 EntityName = Word(alphanums+'_')
 AttribName = EntityName
