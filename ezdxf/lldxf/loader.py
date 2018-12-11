@@ -13,7 +13,7 @@ from .validator import entity_structure_validator
 from ezdxf.options import options
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.database import EntityDB
+    from ezdxf.eztypes import EntityDB
 
 logger = logging.getLogger('ezdxf')
 

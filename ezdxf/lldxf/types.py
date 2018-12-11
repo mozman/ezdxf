@@ -1,12 +1,16 @@
 # Created: 30.04.2014
 # Copyright (c) 2014-2018, Manfred Moitzi
 # License: MIT License
+from typing import Union, Tuple, Iterable, Callable, Sequence, Any, TYPE_CHECKING
 from array import array
 from itertools import chain
-from typing import Union, Tuple, Iterable, Callable, Sequence, Any
+import reprlib
 
 from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
-import reprlib
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import TagValue
+
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
 POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111, 112, 210, 1010, 1011, 1012, 1013, 1014, 1015, 1016,
@@ -26,14 +30,11 @@ HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
 BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
 
-TagValue = Union[str, int, float, Sequence[float]]
-IterableTags = Iterable[Tuple[int, TagValue]]
-
 
 class DXFTag:
     __slots__ = ('code', '_value')
 
-    def __init__(self, code: int, value: TagValue):
+    def __init__(self, code: int, value: 'TagValue'):
         self.code = code  # type: int
         self._value = value  # type: TagValue
 
@@ -44,7 +45,7 @@ class DXFTag:
         return "DXFTag{}".format(str(self))
 
     @property
-    def value(self) -> TagValue:
+    def value(self) -> 'TagValue':
         return self._value
 
     def __getitem__(self, item: int):
@@ -120,7 +121,7 @@ class DXFBinaryTag(DXFTag):
         return cls(code, encode_hex_code_string_to_bytes(value))
 
 
-def dxftag(code: int, value: TagValue) -> DXFTag:
+def dxftag(code: int, value: 'TagValue') -> DXFTag:
     """
     DXF tag factory function.
 
@@ -139,7 +140,7 @@ def dxftag(code: int, value: TagValue) -> DXFTag:
         return DXFTag(code, cast_tag_value(code, value))
 
 
-def tuples_to_tags(iterable: Iterable[Tuple[int, TagValue]]) -> Iterable[DXFTag]:
+def tuples_to_tags(iterable: Iterable[Tuple[int, 'TagValue']]) -> Iterable[DXFTag]:
     for code, value in iterable:
         if code in POINT_CODES:
             yield DXFVertex(code, value)
@@ -193,7 +194,7 @@ def is_point_tag(tag: Tuple) -> bool:
     return tag[0] in POINT_CODES
 
 
-def cast_tag_value(code: int, value: TagValue) -> TagValue:
+def cast_tag_value(code: int, value: 'TagValue') -> 'TagValue':
     return TYPE_TABLE.get(code, str)(value)
 
 

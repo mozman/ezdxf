@@ -10,13 +10,7 @@ from ezdxf.lldxf.extendedtags import get_xtags_linker
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.dxfentity import DXFEntity
-    from ezdxf.entityspace import EntitySpace
-    from ezdxf.drawing import Drawing
-    from ezdxf.dxffactory import DXFFactoryType
-    from ezdxf.database import EntityDB
+    from ezdxf.eztypes import ExtendedTags, TagWriter, DXFEntity, EntitySpace, Drawing, DXFFactoryType, EntityDB
 
 
 class AbstractSection:

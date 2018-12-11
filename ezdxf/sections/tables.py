@@ -10,9 +10,7 @@ from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 from .table import Table, ViewportTable, StyleTable
 
 if TYPE_CHECKING:
-    from ezdxf.drawing import Drawing
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.lldxf.tags import Tags
+    from ezdxf.eztypes import Drawing, TagWriter, Tags
 
 
 class TablesSection:
@@ -33,7 +31,7 @@ class TablesSection:
     def key(name: str) -> str:
         return name.upper()
 
-    def _setup_tables(self, entities: Iterator['Tags']) -> None:
+    def _setup_tables(self, entities: Iterator[Sequence[DXFTag]]) -> None:
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'TABLES'):
             raise DXFStructureError("Critical structure error in TABLES section.")

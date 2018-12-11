@@ -1,18 +1,22 @@
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Union
 from ezdxf.graphicsfactory import GraphicsFactory
 from ezdxf.entityspace import EntitySpace
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.lldxf.const import STD_SCALES, DXFValueError
 
-class DXF12Layouts(object):
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing
+
+class DXF12Layouts:
     """
     The Layout container.
 
     """
-    def __init__(self, drawing):
+    def __init__(self, drawing: 'Drawing'):
         entities = drawing.sections.entities
         model_space = entities.model_space_entities()
         self._modelspace = DXF12Layout(model_space, drawing.dxffactory, 0)
@@ -522,3 +526,5 @@ class DXF12BlockLayout(BaseLayout):
 
         """
         return (attdef for attdef in self.attdefs() if attdef.is_const)
+
+LegacyLayoutType = Union[DXF12Layout, DXF12BlockLayout]

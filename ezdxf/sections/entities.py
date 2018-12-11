@@ -10,10 +10,7 @@ from ezdxf.entityspace import EntitySpace
 from .abstract import AbstractSection
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.drawing import Drawing
-    from ezdxf.dxfentity import DXFEntity
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import ExtendedTags, Drawing, DXFEntity, TagWriter
 
 
 class EntitySection(AbstractSection):

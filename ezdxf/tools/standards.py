@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, List, Tuple, Sequence
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.drawing import Drawing
+    from ezdxf.eztypes import Drawing
 
 
 def setup_linetypes(dwg: 'Drawing') -> None:

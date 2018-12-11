@@ -15,7 +15,7 @@ from .const import DXFInternalEzdxfError, DXFValueError, DXFKeyError, SUBCLASS_M
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.drawing import Drawing
+    from ezdxf.eztypes import Drawing
 
 
 def setup_layouts(dwg: 'Drawing'):

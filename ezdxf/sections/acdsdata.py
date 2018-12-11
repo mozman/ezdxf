@@ -81,10 +81,7 @@ from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.drawing import Drawing
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.database import EntityDB
-    from ezdxf.dxffactory import DXFFactory
+    from ezdxf.eztypes import Drawing, TagWriter, EntityDB, DXFFactoryType
 
 
 class AcDsDataSection:
@@ -98,7 +95,7 @@ class AcDsDataSection:
             self._build(iter(entities))
 
     @property
-    def dxffactory(self) -> 'DXFFactory':
+    def dxffactory(self) -> 'DXFFactoryType':
         return self.drawing.dxffactory
 
     @property

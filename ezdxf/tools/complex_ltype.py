@@ -48,7 +48,7 @@ from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
 from ezdxf.lldxf.tags import DXFTag, Tags
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.drawing import Drawing
+    from ezdxf.eztypes import Drawing
 
 Token = Union[str, float, list]
 

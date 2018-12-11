@@ -6,8 +6,7 @@ from .types import TAG_STRING_FORMAT
 from .tags import DXFTag
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tags import Tags
-    from ezdxf.lldxf.extendedtags import ExtendedTags
+    from ezdxf.eztypes import Tags, ExtendedTags
 
 
 class TagWriter:

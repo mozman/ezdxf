@@ -1,7 +1,9 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from ezdxf.legacy import DXFFactory
+from typing import TYPE_CHECKING, Optional
+
+from ezdxf.legacy import LegacyDXFFactory
 from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 from ezdxf.lldxf.const import DXFKeyError
 
@@ -60,7 +62,10 @@ from .datatable import DataTable
 from .geodata import GeoData
 from .material import Material
 from .groups import DXFGroup
-from .layouts import Layouts, BlockLayout
+from .layouts import Layouts, BlockLayout, ModernLayoutType
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, Table, DXFEntity
 
 
 UPDATE_ENTITY_WRAPPERS = {
@@ -163,55 +168,57 @@ UPDATE_ENTITY_WRAPPERS = {
 }
 
 
-class ModernDXFFactory(DXFFactory):
-    """ DXf factory for DXF version AC1015 and later. (changed 04.05.2014)
+class ModernDXFFactory(LegacyDXFFactory):
+    """
+    DXf factory for DXF version AC1015 and later.
+
     """
     DEFAULT_WRAPPER = graphics.ModernGraphicEntity
 
-    def __init__(self, drawing):
+    def __init__(self, drawing: 'Drawing'):
         super(ModernDXFFactory, self).__init__(drawing)
         self.ENTITY_WRAPPERS.update(UPDATE_ENTITY_WRAPPERS)
         self.image_key_generator = ImageKeyGenerator()
         self.underlay_key_generator = UnderlayKeyGenerator()
 
     @property
-    def rootdict(self):
+    def rootdict(self) -> dxfdict.DXFDictionary:
         return self.drawing.rootdict
 
     @property
-    def block_records(self):
+    def block_records(self) -> 'Table':
         return self.drawing.sections.tables.block_records
 
-    def create_block_entry_in_block_records_table(self, block_layout):
+    def create_block_entry_in_block_records_table(self, block_layout: BlockLayout) -> None:
         # required for DXFVERSION > ac1009: Entry in the BLOCK_RECORDS section
         block_record = self.block_records.new(block_layout.name)
         block_layout.set_block_record_handle(block_record.dxf.handle)
 
-    def get_layouts(self):
+    def get_layouts(self) -> Layouts:
         return Layouts(self.drawing)
 
-    def new_block_layout(self, block_handle, endblk_handle):
+    def new_block_layout(self, block_handle: str, endblk_handle: str) -> BlockLayout:
         # Warning: Do not call create_block_entry_in_block_records_table() from this point, this will not work!
         return BlockLayout(self.entitydb, self, block_handle, endblk_handle)
 
-    def copy_layout(self, source_entity, target_entity):
+    def copy_layout(self, source_entity: 'DXFEntity', target_entity: 'DXFEntity'):
         # Place target_entity in same layout as source_entity
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
         target_entity.dxf.owner = source_entity.dxf.owner
 
-    def next_image_key(self, checkfunc=lambda k: True):
+    def next_image_key(self, checkfunc=lambda k: True) -> str:
         while True:
             key = self.image_key_generator.next()
             if checkfunc(key):
                 return key
 
-    def next_underlay_key(self, checkfunc=lambda k: True):
+    def next_underlay_key(self, checkfunc=lambda k: True) -> str:
         while True:
             key = self.underlay_key_generator.next()
             if checkfunc(key):
                 return key
 
-    def get_layout_for_entity(self, entity):
+    def get_layout_for_entity(self, entity: 'DXFEntity') -> Optional[ModernLayoutType]:
         if entity.dxf.owner not in self.entitydb:
             return None
 

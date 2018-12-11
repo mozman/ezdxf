@@ -1,18 +1,22 @@
 # Created: 21.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Union
 from ezdxf.entityspace import EntitySpace
 from ezdxf.legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, STD_SCALES, DXFInternalEzdxfError
 from ezdxf.lldxf.validator import is_valid_name
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing
+
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
 
 
-class Layouts(object):
-    def __init__(self, drawing):
+class Layouts:
+    def __init__(self, drawing: 'Drawing'):
         self.drawing = drawing
         self._layouts = {}  # stores Layout() objects
         self._dxf_layout_management_table = None  # stores DXF layout handles key=layout_name; value=layout_handle
@@ -787,3 +791,6 @@ class BlockLayout(DXF12BlockLayout):
             self._entity_space = save
         else:
             super(BlockLayout, self).write(tagwriter)
+
+
+ModernLayoutType = Union[Layout, BlockLayout]

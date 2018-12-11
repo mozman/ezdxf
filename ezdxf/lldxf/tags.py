@@ -2,13 +2,16 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from copy import deepcopy
-from typing import Iterable, List, TextIO, Any
+from typing import Iterable, List, TextIO, Any, TYPE_CHECKING
 
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
-from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR, TagValue
+from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
 from .tagger import internal_tag_compiler, low_level_tagger
 
 from ezdxf.tools.codepage import toencoding
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import TagValue
 
 COMMENT_CODE = 999
 
@@ -115,7 +118,7 @@ class Tags(list):
         """
         return any(True for tag in self if tag.code == code)
 
-    def get_first_value(self, code: int, default: TagValue = DXFValueError) -> TagValue:
+    def get_first_value(self, code: int, default: 'TagValue' = DXFValueError) -> 'TagValue':
         """
         Returns value of first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
@@ -132,7 +135,7 @@ class Tags(list):
         else:
             return default
 
-    def get_first_tag(self, code: int, default: TagValue = DXFValueError) -> DXFTag:
+    def get_first_tag(self, code: int, default: 'TagValue' = DXFValueError) -> DXFTag:
         """
         Returns first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 

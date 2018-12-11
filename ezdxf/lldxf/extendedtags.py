@@ -1,15 +1,18 @@
 # Created: 30.04.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, Callable, List
+from typing import TYPE_CHECKING, Iterable, Optional, Callable, List
 from itertools import chain
 
-from .types import tuples_to_tags, IterableTags
+from .types import tuples_to_tags
 from .tags import Tags, DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from .types import is_app_data_marker, is_embedded_object_marker
 from .tagger import internal_tag_compiler
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import IterableTags
 
 
 class ExtendedTags:
@@ -227,11 +230,11 @@ class ExtendedTags:
                 return xdata
         raise DXFValueError("No extended data for APPID '%s'" % appid)
 
-    def set_xdata(self, appid: str, tags: IterableTags) -> None:
+    def set_xdata(self, appid: str, tags: 'IterableTags') -> None:
         xdata = self.get_xdata(appid)
         xdata[1:] = tuples_to_tags(tags)
 
-    def new_xdata(self, appid: str, tags: IterableTags = None) -> Tags:
+    def new_xdata(self, appid: str, tags: 'IterableTags' = None) -> Tags:
         """
         Append a new xdata block.
 
@@ -268,11 +271,11 @@ class ExtendedTags:
         """
         return Tags(self.get_app_data(appid)[1:-1])
 
-    def set_app_data_content(self, appid: str, tags: IterableTags) -> None:
+    def set_app_data_content(self, appid: str, tags: 'IterableTags') -> None:
         app_data = self.get_app_data(appid)
         app_data[1:-1] = tuples_to_tags(tags)
 
-    def new_app_data(self, appid: str, tags: IterableTags = None, subclass_name: str = None) -> Tags:
+    def new_app_data(self, appid: str, tags: 'IterableTags' = None, subclass_name: str = None) -> Tags:
         """
         Append a new app data block to subclass *subclass_name*.
 

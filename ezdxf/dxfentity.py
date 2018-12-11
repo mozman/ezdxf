@@ -1,8 +1,7 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, List
-from ezdxf.lldxf.types import TagValue, IterableTags
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, List, cast
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFInvalidLayerName, DXFValueError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.lldxf.tags import Tags
@@ -12,12 +11,8 @@ from ezdxf.tools import set_flag_state
 from ezdxf.algebra import OCS
 
 if TYPE_CHECKING:  # import forward dependencies
-    from ezdxf.drawing import Drawing
-    from ezdxf.database import EntityDB
-    from ezdxf.dxffactory import DXFFactory
-    from ezdxf.legacy.layouts import BaseLayout
-    from ezdxf.lldxf.attributes import DXFAttr
-    from ezdxf.modern.dxfdict import DXFDictionary
+    from eztypes import TagValue, IterableTags, DXFAttr, DXFDictionary
+    from eztypes import Drawing, EntityDB, DXFFactoryType, GenericLayoutType
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
@@ -76,7 +71,7 @@ class DXFEntity:
         return str(self.__class__) + " " + str(self)
 
     @property
-    def dxffactory(self) -> 'DXFFactory':
+    def dxffactory(self) -> 'DXFFactoryType':
         return self.drawing.dxffactory
 
     @property
@@ -150,7 +145,7 @@ class DXFEntity:
             yield entity
             link = entity.tags.link
 
-    def copy_to_layout(self, layout: 'BaseLayout') -> 'DXFEntity':
+    def copy_to_layout(self, layout: 'GenericLayoutType') -> 'DXFEntity':
         """
         Copy entity to another layout.
 
@@ -164,7 +159,7 @@ class DXFEntity:
         layout.add_entity(new_entity)
         return new_entity
 
-    def move_to_layout(self, layout: 'BaseLayout', source: 'BaseLayout' = None) -> None:
+    def move_to_layout(self, layout: 'GenericLayoutType', source: 'GenericLayoutType' = None) -> None:
         """
         Move entity from model space or a paper space layout to another layout. For block layout as source, the
         block layout has to be specified.
@@ -189,11 +184,11 @@ class DXFEntity:
         except KeyError:
             raise DXFAttributeError(key)
 
-    def get_dxf_attrib(self, key: str, default: Any = DXFValueError) -> TagValue:
+    def get_dxf_attrib(self, key: str, default: Any = DXFValueError) -> 'TagValue':
         dxfattr = self._get_dxfattr_definition(key)
         return dxfattr.get_attrib(self, key, default)
 
-    def set_dxf_attrib(self, key: str, value: TagValue) -> None:
+    def set_dxf_attrib(self, key: str, value: 'TagValue') -> None:
         dxfattr = self._get_dxfattr_definition(key)
         dxfattr.set_attrib(self, key, value)
 
@@ -229,7 +224,7 @@ class DXFEntity:
         return [key for key, attrib in self.DXFATTRIBS.items() if
                 attrib.dxfversion is None or (attrib.dxfversion <= self.drawing.dxfversion)]
 
-    def get_dxf_default_value(self, key: str) -> TagValue:
+    def get_dxf_default_value(self, key: str) -> 'TagValue':
         """
         Returns the default value as defined in the DXF standard.
 
@@ -283,7 +278,7 @@ class DXFEntity:
     def get_app_data(self, appid: str) -> Tags:
         return self.tags.get_app_data_content(appid)
 
-    def set_app_data(self, appid: str, app_data_tags: IterableTags) -> None:
+    def set_app_data(self, appid: str, app_data_tags: 'IterableTags') -> None:
         if self.tags.has_app_data(appid):
             self.tags.set_app_data_content(appid, app_data_tags)
         else:
@@ -295,7 +290,7 @@ class DXFEntity:
     def get_xdata(self, appid: str) -> Tags:
         return Tags(self.tags.get_xdata(appid)[1:])  # without app id tag
 
-    def set_xdata(self, appid: str, xdata_tags: IterableTags) -> None:
+    def set_xdata(self, appid: str, xdata_tags: 'IterableTags') -> None:
         if self.tags.has_xdata(appid):
             self.tags.set_xdata(appid, xdata_tags)
         else:
@@ -335,7 +330,7 @@ class DXFEntity:
             raise DXFStructureError("XDICTIONARY error in entity: " + str(self))
         # are more than one XDICTIONARY possible?
         xdict_handle = app_data[0].value
-        return self.dxffactory.wrap_handle(xdict_handle)
+        return cast('DXFDictionary', self.dxffactory.wrap_handle(xdict_handle))
 
     def new_extension_dict(self) -> 'DXFDictionary':
         """
@@ -346,7 +341,7 @@ class DXFEntity:
         self.set_app_data(ACAD_XDICTIONARY, [(360, xdict.dxf.handle)])
         return xdict
 
-    def get_layout(self) -> 'BaseLayout':
+    def get_layout(self) -> 'GenericLayoutType':
         return self.dxffactory.get_layout_for_entity(self)
 
     def audit(self, auditor):

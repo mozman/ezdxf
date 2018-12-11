@@ -14,9 +14,7 @@ from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.dxfentity import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.dxfentity import DXFEntity
-    from ezdxf.drawing import Drawing
-    from ezdxf.lldxf.extendedtags import ExtendedTags
+    from ezdxf.eztypes import DXFEntity, Drawing, ExtendedTags
 
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 

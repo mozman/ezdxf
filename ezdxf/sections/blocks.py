@@ -12,12 +12,7 @@ from ezdxf.lldxf.extendedtags import get_xtags_linker
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.drawing import Drawing
-    from ezdxf.modern.layouts import BlockLayout
-    from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.dxffactory import DXFFactoryType
-    from ezdxf.database import EntityDB
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import Drawing, BlockLayout, ExtendedTags, DXFFactoryType, EntityDB, TagWriter
 
 
 class BlocksSection:

@@ -2,7 +2,7 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Callable, KeysView, Any, Iterator
+from typing import TYPE_CHECKING, Iterable, List, Tuple, KeysView, Any, Iterator
 
 from collections import OrderedDict
 
@@ -14,7 +14,7 @@ from ezdxf.legacy.headervars import VARMAP as VARMAP_R12
 from ezdxf.modern.headervars import VARMAP as VARMAP_R13
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import TagWriter
 
 MIN_HEADER_TEXT = """  0
 SECTION

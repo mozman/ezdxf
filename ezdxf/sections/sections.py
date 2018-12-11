@@ -2,7 +2,7 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Union, List, Iterable
+from typing import TYPE_CHECKING, Dict, List, Iterable
 import logging
 
 from ezdxf.lldxf.const import DXFStructureError
@@ -15,12 +15,10 @@ from .objects import ObjectsSection
 from .entities import EntitySection
 from .unsupported import UnsupportedSection
 
-SectionType = Union[
-    HeaderSection, TablesSection, BlocksSection, ClassesSection, ObjectsSection, EntitySection, UnsupportedSection]
 
 if TYPE_CHECKING:
-    from ezdxf.drawing import Drawing
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import Drawing, SectionType, TagWriter
+
 
 logger = logging.getLogger('ezdxf')
 KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
@@ -32,7 +30,7 @@ class Sections:
             'HEADER': header if header is not None else HeaderSection(tags=None)}  # type: Dict[str, SectionType]
         self._setup_sections(sections, drawing)
 
-    def __iter__(self) -> Iterable[SectionType]:
+    def __iter__(self) -> Iterable['SectionType']:
         return iter(self._sections.values())
 
     @staticmethod
@@ -61,7 +59,7 @@ class Sections:
     def __contains__(self, item: str) -> bool:
         return Sections.key(item) in self._sections
 
-    def __getattr__(self, key: str) -> SectionType:
+    def __getattr__(self, key: str) -> 'SectionType':
         try:
             return self._sections[Sections.key(key)]
         except KeyError:  # internal exception
@@ -69,7 +67,7 @@ class Sections:
             # invalid DXF file.
             raise DXFStructureError('{} section not found'.format(key.upper()))
 
-    def get(self, name: str) -> SectionType:
+    def get(self, name: str) -> 'SectionType':
         return self._sections.get(Sections.key(name), None)
 
     def names(self) -> List[str]:

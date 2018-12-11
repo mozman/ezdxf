@@ -1,7 +1,7 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-
+from typing import TYPE_CHECKING, TextIO, Iterable
 from datetime import datetime
 import io
 import logging
@@ -20,39 +20,49 @@ from ezdxf.tools import guid
 from ezdxf.tracker import Tracker
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
+
 logger = logging.getLogger('ezdxf')
 
+if TYPE_CHECKING:
+    from eztypes import HandleGenerator, DXFTag, LayoutType, SectionDict
+    from eztypes import GroupManager, MaterialManager, MLeaderStyleManager, MLineStyleManager
+    from eztypes import SectionType, HeaderSection, BlocksSection
+    from eztypes import Table, ViewportTable
 
-class Drawing(object):
+
+class Drawing:
     """
     The Central Data Object
     """
-    def __init__(self, tagger):
+
+    def __init__(self, tagger: Iterable['DXFTag']):
         """
         Build a new DXF drawing from a steam of DXF tags.
 
         Args:
              tagger: generator or list of DXF tags as DXFTag() objects
         """
-        def get_header(sections):
+
+        def get_header(sections: 'SectionDict') -> 'SectionType':
             from .sections.header import HeaderSection
             header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
             return HeaderSection(header_entities)
+
         self.tracker = Tracker()
-        self._groups = None  # read only
-        self._materials = None  # read only
-        self._mleader_styles = None  # read only
-        self._mline_styles = None  # read only
-        self.filename = None  # read/write
+        self._groups = None  # type: GroupManager  # read only
+        self._materials = None  # type: MaterialManager # read only
+        self._mleader_styles = None  # type: MLeaderStyleManager # read only
+        self._mline_styles = None  # type: MLineStyleManager # read only
+        self.filename = None  # type: str # read/write
         self.entitydb = EntityDB()  # read only
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
         # create section HEADER
         header = get_header(sections)
-        self.dxfversion = header.get('$ACADVER', 'AC1009')  # read only
+        self.dxfversion = header.get('$ACADVER', 'AC1009')  # type: str # read only
         self.dxffactory = dxffactory(self)  # read only, requires self.dxfversion
-        self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # read/write
+        self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
-        seed = header.get('$HANDSEED', str(self.entitydb.handles))
+        seed = header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
         # setup handles
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
@@ -82,88 +92,88 @@ class Drawing(object):
         self.layouts = self.dxffactory.get_layouts()
 
     @property
-    def acad_release(self):
+    def acad_release(self) -> str:
         return acad_release.get(self.dxfversion, "unknown")
 
     @property
-    def _handles(self):
+    def _handles(self) -> 'HandleGenerator':
         return self.entitydb.handles
 
     @property
-    def header(self):
+    def header(self) -> 'HeaderSection':
         return self.sections.header
 
     @property
-    def layers(self):
+    def layers(self) -> 'Table':
         return self.sections.tables.layers
 
     @property
-    def linetypes(self):
+    def linetypes(self) -> 'Table':
         return self.sections.tables.linetypes
 
     @property
-    def styles(self):
+    def styles(self) -> 'Table':
         return self.sections.tables.styles
 
     @property
-    def dimstyles(self):
+    def dimstyles(self) -> 'Table':
         return self.sections.tables.dimstyles
 
     @property
-    def ucs(self):
+    def ucs(self) -> 'Table':
         return self.sections.tables.ucs
 
     @property
-    def appids(self):
+    def appids(self) -> 'Table':
         return self.sections.tables.appids
 
     @property
-    def views(self):
+    def views(self) -> 'Table':
         return self.sections.tables.views
 
     @property
-    def block_records(self):
+    def block_records(self) -> 'Table':
         return self.sections.tables.block_records
 
     @property
-    def viewports(self):
+    def viewports(self) -> 'ViewportTable':
         return self.sections.tables.viewports
 
     @property
-    def blocks(self):
+    def blocks(self) -> 'BlocksSection':
         return self.sections.blocks
 
     @property
-    def groups(self):
+    def groups(self) -> 'GroupManager':
         if self.dxfversion <= 'AC1009':
             raise DXFVersionError('Groups not supported in DXF version R12.')
         return self._groups
 
     @property
-    def materials(self):
+    def materials(self) -> 'MaterialManager':
         if self.dxfversion <= 'AC1009':
             raise DXFVersionError('Materials not supported in DXF version R12.')
         return self._materials
 
     @property
-    def mleader_styles(self):
+    def mleader_styles(self) -> 'MLeaderStyleManager':
         if self.dxfversion <= 'AC1009':
             raise DXFVersionError('MLeaderStyles not supported in DXF version R12.')
         return self._mleader_styles
 
     @property
-    def mline_styles(self):
+    def mline_styles(self) -> 'MLineStyleManager':
         if self.dxfversion <= 'AC1009':
             raise DXFVersionError('MLineStyles not supported in DXF version R12.')
         return self._mline_styles
 
-    def modelspace(self):
+    def modelspace(self) -> 'LayoutType':
         return self.layouts.modelspace()
 
-    def layout(self, name=None):
+    def layout(self, name: str = None) -> 'LayoutType':
         return self.layouts.get(name)
 
-    def layout_names(self):
+    def layout_names(self) -> Iterable[str]:
         return list(self.layouts.names())
 
     def delete_layout(self, name):
@@ -317,7 +327,7 @@ class Drawing(object):
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('The UNDERLAY entity needs at least DXF version R2000 or later.')
         if format == 'ext':
-            format=filename[-3:]
+            format = filename[-3:]
         return self.objects.add_underlay_def(filename, format, name)
 
     def add_xref_def(self, filename, name, flags=BLK_XREF | BLK_EXTERNAL):
@@ -362,7 +372,7 @@ class Drawing(object):
         self.header['$TDCREATE'] = juliandate(datetime.now())
 
     @staticmethod
-    def read(stream, legacy_mode=False, dxfversion=None):
+    def read(stream: TextIO, legacy_mode: bool = False, dxfversion: str = None) -> 'Drawing':
         """ Open an existing drawing. """
         from .lldxf.tagger import low_level_tagger, tag_compiler
 

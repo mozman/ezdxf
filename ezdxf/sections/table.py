@@ -10,12 +10,7 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFAttributeError, Error
 
 if TYPE_CHECKING:
-    from ezdxf.drawing import Drawing
-    from ezdxf.dxfentity import DXFEntity
-    from ezdxf.dxffactory import DXFFactory
-    from ezdxf.database import EntityDB
-    from ezdxf.tools.handle import HandleGenerator
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import Drawing, DXFEntity, DXFFactoryType, EntityDB, HandleGenerator, TagWriter
 
 TABLENAMES = {
     'LAYER': 'LAYERS',
@@ -111,7 +106,7 @@ class Table:
         return self._drawing.entitydb.handles
 
     @property
-    def dxffactory(self) -> 'DXFFactory':
+    def dxffactory(self) -> 'DXFFactoryType':
         return self._drawing.dxffactory
 
     def _iter_table_entries_as_tags(self) -> Iterable[ExtendedTags]:

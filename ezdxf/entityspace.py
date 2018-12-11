@@ -2,13 +2,10 @@
 # Created: 13.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.database import EntityDB
-    from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.dxfentity import DXFEntity
+    from eztypes import EntityDB, ExtendedTags, TagWriter, DXFEntity
 
 
 class EntitySpace(list):

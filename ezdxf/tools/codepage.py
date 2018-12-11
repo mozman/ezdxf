@@ -25,7 +25,7 @@ encoding_to_codepage = {
     }
 
 
-def is_supported_encoding(encoding='cp1252') -> bool:
+def is_supported_encoding(encoding: str='cp1252') -> bool:
     return encoding in encoding_to_codepage
 
 

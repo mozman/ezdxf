@@ -16,11 +16,7 @@ from ezdxf.lldxf.packedtags import PackedTags
 from .reflinks import get_reference_link
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.drawing import Drawing
-    from ezdxf.sections.table import Table
-    from ezdxf.dxfentity import DXFEntity
-    from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.lldxf.types import DXFTag
+    from ezdxf.eztypes import Drawing, Table, DXFEntity, ExtendedTags, DXFTag
 
 # Tag groups
 

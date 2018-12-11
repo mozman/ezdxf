@@ -5,10 +5,7 @@
 from typing import TYPE_CHECKING, Sequence, Iterable
 
 if TYPE_CHECKING:
-    from ezdxf.drawing import Drawing
-    from ezdxf.dxffactory import DXFFactoryType
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.lldxf.tags import Tags, DXFTag
+    from ezdxf.eztypes import Drawing, DXFFactoryType, TagWriter, Tags, DXFTag
 
 
 class UnsupportedSection:

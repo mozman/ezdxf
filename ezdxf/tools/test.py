@@ -7,10 +7,7 @@ from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.modern import ModernDXFFactory
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.lldxf.types import DXFTag
-    from ezdxf.database import EntityDB
-    from ezdxf.lldxf.extendedtags import ExtendedTags
-    from ezdxf.dxfentity import DXFEntity
+    from ezdxf.eztypes import DXFTag, EntityDB, ExtendedTags, DXFEntity
 
 
 def compile_tags_without_handles(text: str) -> Iterable['DXFTag']:

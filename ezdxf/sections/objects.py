@@ -16,8 +16,7 @@ from ezdxf.entityspace import EntitySpace
 from .abstract import AbstractSection
 
 if TYPE_CHECKING:
-    from ezdxf.drawing import Drawing
-    from ezdxf.dxfentity import DXFEntity
+    from ezdxf.eztypes import Drawing, DXFEntity
 
 
 class ObjectsSection(AbstractSection):

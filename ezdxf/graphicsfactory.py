@@ -9,9 +9,8 @@ from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.dxffactory import DXFFactoryType
-    from ezdxf.dxfentity import DXFEntity
-    from ezdxf.modern.spline import Spline
+    from eztypes import DXFFactoryType, DXFEntity, Spline
+
 
 Vertex = Union[Sequence[float], Vector]
 

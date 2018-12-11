@@ -10,8 +10,7 @@ from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.modern.dxfobjects import DXFClass
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.drawing import Drawing
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import Drawing, TagWriter
 
 
 class ClassesSection:

@@ -6,11 +6,11 @@ from typing import Any, Tuple, Iterable, List, Dict, Union, ItemsView, KeysView,
 
 from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
 from .types import dxftag, DXFVertex
-from .tags import Tags, TagValue
+from .tags import Tags
 from .extendedtags import ExtendedTags
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.dxfentity import DXFEntity
+    from ezdxf.eztypes import DXFEntity, TagValue
 
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 
@@ -62,7 +62,7 @@ class DXFAttr:
         self.getter = getter  # DXF entity getter method name for callback attributes
         self.setter = setter  # DXF entity setter method name for callback attributes
 
-    def get_callback_value(self, entity: 'DXFEntity') -> TagValue:
+    def get_callback_value(self, entity: 'DXFEntity') -> 'TagValue':
         """
         Executes a callback function in 'entity' to get a DXF value.
 
@@ -80,7 +80,7 @@ class DXFAttr:
         except TypeError:  # None
             DXFAttributeError('DXF attribute {} has no getter.'.format(self.name))
 
-    def set_callback_value(self, entity: 'DXFEntity', value: TagValue) -> None:
+    def set_callback_value(self, entity: 'DXFEntity', value: 'TagValue') -> None:
         """
         Executes a callback function in 'entity' to set a DXF value.
 
@@ -98,7 +98,7 @@ class DXFAttr:
         except TypeError:  # None
             raise DXFAttributeError('DXF attribute {} has no setter.'.format(self.name))
 
-    def get_attrib(self, entity: 'DXFEntity', key: str, default: Any = DXFValueError) -> TagValue:
+    def get_attrib(self, entity: 'DXFEntity', key: str, default: Any = DXFValueError) -> 'TagValue':
         """
         Return value of DXF attribute 'key'.
 
@@ -128,7 +128,7 @@ class DXFAttr:
             else:
                 return default
 
-    def _get_dxf_attrib(self, tags: ExtendedTags) -> TagValue:
+    def _get_dxf_attrib(self, tags: ExtendedTags) -> 'TagValue':
         subclass_tags = self._get_dxf_attrib_subclass_tags(tags, self.subclass)
         if self.xtype is not None:
             return self._get_extended_type(subclass_tags)
@@ -156,7 +156,7 @@ class DXFAttr:
             # raises DXFKeyError if subclass does not exist
             return tags.get_subclass(subclass_key)
 
-    def set_attrib(self, entity: 'DXFEntity', key: str, value: TagValue) -> None:
+    def set_attrib(self, entity: 'DXFEntity', key: str, value: 'TagValue') -> None:
         """
         Set DXF attribute 'key' to value.
 
