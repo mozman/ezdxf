@@ -11,7 +11,7 @@ from ezdxf.lldxf.const import DXFError
 from ezdxf.lldxf.validator import is_dxf_file
 
 
-def audit(filename, ignore_zero_pointers=False):
+def audit(filename: str, ignore_zero_pointers: bool = False) -> None:
     try:
         dwg = readfile(filename, legacy_mode=True)
     except IOError:
@@ -28,12 +28,12 @@ def audit(filename, ignore_zero_pointers=False):
     auditor.print_report(errors)
 
 
-def processing_msg(text):
+def processing_msg(text: str) -> None:
     print(text)
-    print('-'*len(text))
+    print('-' * len(text))
 
 
-def main():
+def main() -> None:
     print()
     parser = argparse.ArgumentParser()
     parser.add_argument(

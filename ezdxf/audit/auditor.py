@@ -5,49 +5,56 @@
 """
 audit(drawing, stream): check a DXF drawing for errors.
 """
+from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Sequence, Optional
+
 import sys
 from ezdxf.lldxf.types import is_pointer_code, DXFTag
 from ezdxf.lldxf.const import Error
 from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 from ezdxf.dxfentity import DXFEntity
 
+if TYPE_CHECKING:
+    from ezdxf.dxfentity import DXFEntity
+    from ezdxf.drawing import Drawing
+    from ezdxf.lldxf.extendedtags import ExtendedTags
+
 REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
 
 
-class ErrorEntry(object):
-    def __init__(self, code, message='', dxf_entity=None, data=None):
+class ErrorEntry:
+    def __init__(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None):
         self.code = code
         self.entity = dxf_entity
         self.message = message
         self.data = data
 
 
-def target_pointers(tags):
+def target_pointers(tags: Iterable[DXFTag]) -> Iterable[DXFTag]:
     for tag in tags:
         if is_pointer_code(tag.code):
             yield tag
 
 
-class Auditor(object):
-    def __init__(self, drawing):
+class Auditor:
+    def __init__(self, drawing: 'Drawing'):
         self.drawing = drawing
+        self.errors = []  # type: List[ErrorEntry]
+        self.undefined_targets = set()  # type: Set[str]
+
+    def reset(self) -> None:
         self.errors = []
         self.undefined_targets = set()
 
-    def reset(self):
-        self.errors = []
-        self.undefined_targets = set()
-
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.errors)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.__len__() > 0
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[ErrorEntry]:
         return iter(self.errors)
 
-    def print_report(self, errors=None, stream=None):
+    def print_report(self, errors: List[ErrorEntry] = None, stream: TextIO = None) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
                 return "{:4d}. Issue [{}] in {} #{}".format(count, code, entity.dxftype(), entity.dxf.handle)
@@ -67,21 +74,21 @@ class Auditor(object):
         else:
             stream.write('{} issues found.\n\n'.format(len(errors)))
             for count, error in enumerate(errors):
-                stream.write(entity_str(count+1, error.code, error.entity) + '\n')
-                stream.write('   '+error.message+'\n\n')
+                stream.write(entity_str(count + 1, error.code, error.entity) + '\n')
+                stream.write('   ' + error.message + '\n\n')
 
     @staticmethod
-    def filter_zero_pointers(errors):
+    def filter_zero_pointers(errors: Iterable[ErrorEntry]) -> Iterable[ErrorEntry]:
         for error in errors:
             if error.code == Error.POINTER_TARGET_NOT_EXISTS and error.data.value == '0':
                 continue
             yield error
 
-    def add_error(self, code, message='', dxf_entity=None, data=None):
+    def add_error(self, code: int, message: str = '', dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
         error = ErrorEntry(code, message, dxf_entity, data)
         self.errors.append(error)
 
-    def run(self):
+    def run(self) -> Sequence[ErrorEntry]:
         self.reset()
         dxfversion = self.drawing.dxfversion
         if dxfversion > 'AC1009':  # modern style DXF13 or later
@@ -91,7 +98,7 @@ class Auditor(object):
         self.check_database_entities()
         return self.errors
 
-    def check_root_dict(self):
+    def check_root_dict(self) -> None:
         root_dict = self.drawing.rootdict
         for name in REQUIRED_ROOT_DICT_ENTRIES:
             if name not in root_dict:
@@ -101,12 +108,13 @@ class Auditor(object):
                     dxf_entity=root_dict,
                 )
 
-    def check_table_entries(self):
+    def check_table_entries(self) -> None:
         tables = self.drawing.sections.tables
 
         def check_table(name):
             if name in tables:
                 tables[name].audit(self)
+
         check_table('layers')
         check_table('linetypes')
         check_table('styles')
@@ -117,12 +125,12 @@ class Auditor(object):
         if self.drawing.dxfversion > 'AC1009':
             check_table('block_records')
 
-    def check_database_entities(self):
+    def check_database_entities(self) -> None:
         for handle in self.drawing.entitydb.keys():
             entity = self.drawing.get_dxf_entity(handle)
             entity.audit(self)
 
-    def check_if_linetype_exists(self, entity):
+    def check_if_linetype_exists(self, entity: 'DXFEntity') -> None:
         """
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
@@ -139,7 +147,7 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_if_text_style_exists(self, entity):
+    def check_if_text_style_exists(self, entity: 'DXFEntity') -> None:
         """
         Check for usage of undefined text styles.
         """
@@ -153,7 +161,7 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_if_dimension_style_exists(self, entity):
+    def check_if_dimension_style_exists(self, entity: 'DXFEntity') -> None:
         """
         Check for usage of undefined dimension styles.
         """
@@ -167,7 +175,7 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_for_valid_layer_name(self, entity):
+    def check_for_valid_layer_name(self, entity: 'DXFEntity') -> None:
         """
         Check layer names for invalid characters: <>/\":;?*|='
         """
@@ -183,7 +191,7 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_for_valid_color_index(self, entity):
+    def check_for_valid_color_index(self, entity: 'DXFEntity') -> None:
         if not entity.supports_dxf_attrib('color'):
             return
         color = entity.dxf.color
@@ -197,7 +205,7 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_for_existing_owner(self, entity):
+    def check_for_existing_owner(self, entity: 'DXFEntity') -> None:
         if not entity.supports_dxf_attrib('owner'):
             return
         owner_handle = entity.dxf.owner
@@ -208,7 +216,9 @@ class Auditor(object):
                 dxf_entity=entity,
             )
 
-    def check_pointer_target_exists(self, entity, zero_pointer_valid=False, ignore_codes=None):
+    def check_pointer_target_exists(self, entity: 'DXFEntity',
+                                    zero_pointer_valid: bool = False,
+                                    ignore_codes: Iterable[int] = None) -> None:
         assert isinstance(entity, DXFEntity)
         if ignore_codes is None:
             ignore_codes = set()
@@ -233,7 +243,9 @@ class Auditor(object):
                 )
                 self.undefined_targets.add(handle)
 
-    def check_handles_exists(self, entity, handles, zero_pointer_valid=False):
+    def check_handles_exists(self, entity: 'DXFEntity',
+                             handles: Iterable[str],
+                             zero_pointer_valid: bool = False) -> None:
         db = self.drawing.entitydb
         for handle in handles:
             if handle not in db:
@@ -249,9 +261,9 @@ class Auditor(object):
                 )
                 self.undefined_targets.add(handle)
 
-    def check_classes_section(self):
-        def check_invalid_group_codes(valid_codes):
-            def find_invalid_group_code(tags):
+    def check_classes_section(self) -> None:
+        def check_invalid_group_codes(valid_codes: Set[int]) -> None:
+            def find_invalid_group_code(tags: 'ExtendedTags') -> Optional[int]:
                 for code, value in tags.noclass:
                     if code not in valid_codes:
                         return code
