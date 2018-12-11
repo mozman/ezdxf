@@ -7,10 +7,10 @@ from typing import Callable, Iterable, Hashable, Dict, List, TYPE_CHECKING
 from ezdxf.lldxf.const import DXFValueError, DXFAttributeError
 
 if TYPE_CHECKING:
-    from eztypes import DXFEntity
+    from eztypes import DXFEntity, KeyFunc
 
 
-def groupby(entities: Iterable['DXFEntity'], dxfattrib: str = '', key: Callable[['DXFEntity'], Hashable] = None) \
+def groupby(entities: Iterable['DXFEntity'], dxfattrib: str = '', key: 'KeyFunc' = None) \
         -> Dict[Hashable, List['DXFEntity']]:
     """
     Groups a sequence of DXF entities by an DXF attribute like 'layer', returns the result as dict. Just specify

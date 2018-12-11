@@ -1,6 +1,7 @@
 # Created: 16.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Sequence
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -9,6 +10,8 @@ from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.lldxf.const import DXFInvalidLayerName
 from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import DXFFactoryType
 
 _LAYERTEMPLATE = """0
 LAYER
@@ -41,44 +44,44 @@ class Layer(DXFEntity):
     LOCK = 0b00000100
     UNLOCK = 0b11111011
 
-    def post_new_hook(self):
+    def post_new_hook(self) -> None:
         if not is_valid_layer_name(self.dxf.name):
             raise DXFInvalidLayerName("Invalid layer name '{}'".format(self.dxf.name))
 
-    def is_frozen(self):
+    def is_frozen(self) -> bool:
         return self.dxf.flags & Layer.FROZEN > 0
 
-    def freeze(self):
+    def freeze(self) -> None:
         self.dxf.flags = self.dxf.flags | Layer.FROZEN
 
-    def thaw(self):
+    def thaw(self) -> None:
         self.dxf.flags = self.dxf.flags & Layer.THAW
 
-    def is_locked(self):
+    def is_locked(self) -> bool:
         return self.dxf.flags & Layer.LOCK > 0
 
-    def lock(self):
+    def lock(self) -> None:
         self.dxf.flags = self.dxf.flags | Layer.LOCK
 
-    def unlock(self):
+    def unlock(self) -> None:
         self.dxf.flags = self.dxf.flags & Layer.UNLOCK
 
-    def is_off(self):
+    def is_off(self) -> bool:
         return self.dxf.color < 0
 
-    def is_on(self):
+    def is_on(self) -> bool:
         return not self.is_off()
 
-    def on(self):
+    def on(self) -> None:
         self.dxf.color = abs(self.dxf.color)
 
-    def off(self):
+    def off(self) -> None:
         self.dxf.color = -abs(self.dxf.color)
 
-    def get_color(self):
+    def get_color(self) -> int:
         return abs(self.dxf.color)
 
-    def set_color(self, color):
+    def set_color(self, color: int) -> None:
         color = abs(color) if self.is_on() else -abs(color)
         self.dxf.color = color
 
@@ -152,7 +155,7 @@ class Linetype(DXFEntity):
     }))
 
     @classmethod
-    def new(cls, handle, dxfattribs=None, dxffactory=None):
+    def new(cls, handle: str, dxfattribs: dict = None, dxffactory: 'DXFFactoryType' = None) -> DXFEntity:
         if dxfattribs is not None:
             pattern = dxfattribs.pop('pattern', [0.0])
             length = dxfattribs.pop('length', 0.)
@@ -163,7 +166,7 @@ class Linetype(DXFEntity):
         entity._setup_pattern(pattern, length)
         return entity
 
-    def _setup_pattern(self, pattern, length):
+    def _setup_pattern(self, pattern: Sequence[float], length: float) -> None:
         # length parameter is required for complex line types
         # pattern: [2.0, 1.25, -0.25, 0.25, -0.25] - 1. element is total pattern length
         # pattern elements: >0 line, <0 gap, =0 point
@@ -325,7 +328,7 @@ class UCS(DXFEntity):
         'yaxis': DXFAttr(12, xtype=XType.point3d),
     }))
 
-    def ucs(self):
+    def ucs(self) -> UserCoordinateSystem:
         return UserCoordinateSystem(
             origin=self.get_dxf_attrib('origin', default=(0, 0, 0)),
             ux=self.get_dxf_attrib('xaxis', default=(1, 0, 0)),
@@ -552,7 +555,7 @@ class DimStyle(DXFEntity):
         'dimclrt': DXFAttr(178),
     }))
 
-    def print_attribs(self):
+    def print_attribs(self) -> None:
         attribs = [
             'dimpost', 'dimapost', 'dimblk', 'dimblk1', 'dimblk2', 'dimscale', 'dimasz', 'dimexo', 'dimdli',
             'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac',

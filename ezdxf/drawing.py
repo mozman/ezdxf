@@ -26,8 +26,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from eztypes import HandleGenerator, DXFTag, LayoutType, SectionDict
     from eztypes import GroupManager, MaterialManager, MLeaderStyleManager, MLineStyleManager
-    from eztypes import SectionType, HeaderSection, BlocksSection
-    from eztypes import Table, ViewportTable
+    from eztypes import SectionType, HeaderSection, BlocksSection, Table, ViewportTable
 
 
 class Drawing:

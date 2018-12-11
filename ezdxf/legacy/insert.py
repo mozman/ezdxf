@@ -1,9 +1,13 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, Tuple, Union, Optional, cast
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Attrib, Attdef, Vertex
 
 _INSERT_TPL = """0
 INSERT
@@ -28,6 +32,8 @@ BLOCKNAME
 50
 0.0
 """
+
+
 # IMPORTANT: Bug in AutoCAD 2010
 # attribsfollow = 0, for NO attribsfollow, does not work with ACAD 2010
 # if no attribs attached to the INSERT entity, omit attribsfollow tag
@@ -50,7 +56,7 @@ class Insert(GraphicEntity):
         'row_spacing': DXFAttr(45, default=0.0),
     })
 
-    def attribs(self):
+    def attribs(self) -> Iterable['Attrib']:
         """
         Iterate over all appended ATTRIB entities, yields Attrib() objects.
 
@@ -68,7 +74,9 @@ class Insert(GraphicEntity):
                 yield entity
                 handle = next_entity
 
-    def place(self, insert=None, scale=None, rotation=None):
+    def place(self, insert: 'Vertex' = None,
+              scale: Tuple[float, float, float] = None,
+              rotation: float = None) -> 'Insert':
         """
         Set placing attributes of the INSERT entity.
 
@@ -78,14 +86,14 @@ class Insert(GraphicEntity):
             rotation (float): rotation angle in degrees
 
         Returns:
-            Insert() object (fluent interface)
+            Insert object (fluent interface)
 
         """
         if insert is not None:
             self.dxf.insert = insert
         if scale is not None:
             if len(scale) != 3:
-                raise DXFValueError("Parameter scale has to be a 3-tuple.")
+                raise DXFValueError("Parameter scale has to be a (x, y, z)-tuple.")
             x, y, z = scale
             self.dxf.xscale = x
             self.dxf.yscale = y
@@ -94,7 +102,7 @@ class Insert(GraphicEntity):
             self.dxf.rotation = rotation
         return self
 
-    def grid(self, size=(1, 1), spacing=(1, 1)):
+    def grid(self, size: Tuple[int, int] = (1, 1), spacing: Tuple[float, float] = (1, 1)) -> 'Insert':
         """
         Set grid placing attributes of the INSERT entity.
 
@@ -103,7 +111,7 @@ class Insert(GraphicEntity):
             spacing: distance between placing as (row_spacing, column_spacing) tuple
 
         Returns:
-            Insert() object (fluent interface)
+            Insert object (fluent interface)
 
         """
         if len(size) != 2:
@@ -116,16 +124,16 @@ class Insert(GraphicEntity):
         self.dxf.column_spacing = spacing[1]
         return self
 
-    def get_attrib(self, tag, search_const=False):
+    def get_attrib(self, tag: str, search_const: bool = False) -> Optional[Union['Attrib', 'Attdef']]:
         """
         Get attached ATTRIB entity by *tag*.
 
         Args:
-            tag (str): tag name
-            search_const (bool): search also const ATTDEF entities
+            tag: tag name
+            search_const: search also const ATTDEF entities
 
         Returns:
-            Attrib()/Attdef() object
+            Attrib or Attdef object
 
         """
         for attrib in self.attribs():
@@ -138,14 +146,14 @@ class Insert(GraphicEntity):
                     return attdef
         return None
 
-    def get_attrib_text(self, tag, default=None, search_const=False):
+    def get_attrib_text(self, tag: str, default: str = None, search_const: bool = False) -> str:
         """
         Get content text of attached ATTRIB entity *tag*.
 
         Args:
-            tag (str): tag name
-            default (str): default value if tag is absent
-            search_const (bool): search also const ATTDEF entities
+            tag: tag name
+            default: default value if tag is absent
+            search_const: search also const ATTDEF entities
 
         Returns:
             content text as str
@@ -156,41 +164,40 @@ class Insert(GraphicEntity):
             return default
         return attrib.dxf.text
 
-    def has_attrib(self, tag, search_const=False):
+    def has_attrib(self, tag: str, search_const: bool = False) -> bool:
         """
         Check if ATTRIB for *tag* exists.
 
         Args:
-            tag (str): tag name
+            tag: tag name
             search_const: search also const ATTDEF entities
 
         """
         return self.get_attrib(tag, search_const) is not None
 
-    def add_attrib(self, tag, text, insert=(0, 0), dxfattribs=None):
+    def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0), dxfattribs: dict = None) -> 'Attrib':
         """
         Add new ATTRIB entity.
 
         Args:
-            tag (str): tag name
-            text (str): content text
+            tag: tag name
+            text: content text
             insert: insert position as tuple (x, y[, z])
             dxfattribs: additional DXF attributes
 
         Returns:
-            Attrib() object
+            Attrib object
 
         """
-        if dxfattribs is None:
-            dxfattribs = {}
+        dxfattribs = dxfattribs or {}
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
-        attrib_entity = self._new_entity('ATTRIB', dxfattribs)
+        attrib_entity = cast('Attrib', self._new_entity('ATTRIB', dxfattribs))
         self._append_attrib_entity(attrib_entity)
         return attrib_entity
 
-    def _append_attrib_entity(self, entity):
+    def _append_attrib_entity(self, entity: 'Attrib') -> None:
         has_no_attribs_attached = self.tags.link is None
         if has_no_attribs_attached or self.dxf.attribs_follow == 0:
             prev = self
@@ -204,14 +211,14 @@ class Insert(GraphicEntity):
         entity.tags.link = seqend.dxf.handle
         self.dxf.attribs_follow = 1
 
-    def delete_attrib(self, tag, ignore=False):
+    def delete_attrib(self, tag: str, ignore=False) -> None:
         """
         Delete attached ATTRIB entity `tag`, raises a KeyError exception if `tag` does not exist, set `ignore` to True,
         to ignore not existing ATTRIB entities.
         
         Args:
-            tag (str): ATTRIB name 
-            ignore (bool): False -> raise KeyError exception if `tag` does not exist 
+            tag: ATTRIB name
+            ignore: False -> raise KeyError exception if `tag` does not exist
 
         """
         if self.dxf.attribs_follow == 0:
@@ -239,7 +246,7 @@ class Insert(GraphicEntity):
         if not ignore:
             raise DXFKeyError(tag)
 
-    def delete_all_attribs(self):
+    def delete_all_attribs(self) -> None:
         """
         Delete all ATTRIB entities attached to the INSERT entity and the following SEQEND entity. Ignores the value
         of dxf.attribs_follow.
@@ -256,7 +263,7 @@ class Insert(GraphicEntity):
         self.tags.link = None
         self.dxf.attribs_follow = 0
 
-    def _fix_attribs(self):
+    def _fix_attribs(self) -> None:
         if self.dxf.attribs_follow == 0:
             self.delete_all_attribs()
         else:
@@ -272,7 +279,7 @@ class Insert(GraphicEntity):
                 self.tags.link = None
                 return
 
-    def destroy(self):
+    def destroy(self) -> None:
         """
         Delete all attached ATTRIB entities from entity database.
 

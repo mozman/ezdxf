@@ -118,12 +118,12 @@ class Viewport(GraphicEntity):
     # the id is greater than 1.
 
     @contextmanager
-    def edit_data(self):
+    def edit_data(self) -> 'ViewportData':
         viewport_data = self.get_viewport_data()
         yield viewport_data
         self.set_viewport_data(viewport_data)
 
-    def get_viewport_data(self):
+    def get_viewport_data(self) -> 'ViewportData':
         try:
             extended_dxf_data = self.tags.get_xdata('ACAD')
         except DXFValueError:
@@ -131,7 +131,7 @@ class Viewport(GraphicEntity):
         else:
             return ViewportData.from_tags(extended_dxf_data)
 
-    def set_viewport_data(self, viewport_data):
+    def set_viewport_data(self, viewport_data: 'ViewportData') -> None:
         dxftags = viewport_data.dxftags()
         pos = None
         for index, xdata in enumerate(self.tags.xdata):
@@ -142,13 +142,13 @@ class Viewport(GraphicEntity):
         else:
             self.tags.xdata[pos] = dxftags
 
-    def get_next_viewport_id(self):
+    def get_next_viewport_id(self) -> int:
         current_id = Viewport.viewport_id
         Viewport.viewport_id += 1
         return current_id
 
 
-class ViewportData(object):
+class ViewportData:
     """ Helper class for Viewport().
 
     This class defines the extended dxf tags, which can not be treated as DXFAttr()
@@ -186,7 +186,7 @@ class ViewportData(object):
         self.hidden_plot = 0
         self.frozen_layers = []  # add layer names as strings
 
-    def dxftags(self):
+    def dxftags(self) -> Tags:
         tags = [
             DXFTag(1001, 'ACAD'),
             DXFTag(1000, 'MVIEW'),
@@ -227,7 +227,7 @@ class ViewportData(object):
         return Tags(tags)
 
     @classmethod
-    def from_tags(cls, tags):
+    def from_tags(cls, tags: Tags) -> 'ViewportData':
         vp_data = cls()
         try:
             vp_data.view_target_point = tags[4].value

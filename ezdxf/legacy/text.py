@@ -1,10 +1,14 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Tuple, Union
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf import const
 
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 _TEXT_TPL = """0
 TEXT
@@ -58,7 +62,7 @@ class Text(GraphicEntity):
         'width': DXFAttr(41, default=1.0),  # width FACTOR!
         'text_generation_flag': DXFAttr(71, default=0),  # 2 = backward (mirr-x), 4 = upside down (mirr-y)
         'halign': DXFAttr(72, default=0),  # horizontal justification
-        'valign': DXFAttr(73,  default=0),  # vertical justification
+        'valign': DXFAttr(73, default=0),  # vertical justification
         'align_point': DXFAttr(11, xtype=XType.any_point),
     })
     # horizontal align values
@@ -76,7 +80,7 @@ class Text(GraphicEntity):
     BACKWARD = MIRROR_X
     UPSIDE_DOWN = MIRROR_Y
 
-    def set_pos(self, p1, p2=None, align=None):
+    def set_pos(self, p1: 'Vertex', p2: 'Vertex' = None, align: str = None) -> 'Text':
         if align is None:
             align = self.get_align()
         align = align.upper()
@@ -90,7 +94,7 @@ class Text(GraphicEntity):
         self.set_dxf_attrib('align_point', p2)
         return self
 
-    def get_pos(self):
+    def get_pos(self) -> Tuple[str, 'Vertex', Union['Vertex', None]]:
         p1 = self.dxf.insert
         p2 = self.get_dxf_attrib('align_point', (0., 0., 0.))
         align = self.get_align()
@@ -100,14 +104,14 @@ class Text(GraphicEntity):
             return align, p1, p2
         return align, p2, None
 
-    def set_align(self, align='LEFT'):
+    def set_align(self, align: str='LEFT') -> 'Text':
         align = align.upper()
         halign, valign = const.TEXT_ALIGN_FLAGS[align]
         self.set_dxf_attrib('halign', halign)
         self.set_dxf_attrib('valign', valign)
         return self
 
-    def get_align(self):
+    def get_align(self) -> str:
         halign = self.get_dxf_attrib('halign', 0)
         valign = self.get_dxf_attrib('valign', 0)
         if halign > 2:

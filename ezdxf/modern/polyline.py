@@ -166,7 +166,7 @@ vertex_subclass = (
 EMPTY_VERTEX_SUBCLASS = Tags()
 
 
-class Vertex(polyline.Vertex, ModernGraphicEntityExtension):
+class DXFVertex(polyline.DXFVertex, ModernGraphicEntityExtension):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)

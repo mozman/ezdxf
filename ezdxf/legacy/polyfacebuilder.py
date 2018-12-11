@@ -1,11 +1,16 @@
 # Created: 04.04.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf.const import VERTEXNAMES
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import DXFVertex
+    from .facemixins import FaceProxy
 
-class PolyfaceBuilder(object):
-    def __init__(self, faces, precision=6):
+
+class PolyfaceBuilder:
+    def __init__(self, faces: Iterable['FaceProxy'], precision: int = 6):
         self.precision = precision
         self.faces = []
         self.vertices = []
@@ -13,19 +18,19 @@ class PolyfaceBuilder(object):
         self.build(faces)
 
     @property
-    def nvertices(self):
+    def nvertices(self) -> int:
         return len(self.vertices)
 
     @property
-    def nfaces(self):
+    def nfaces(self) -> int:
         return len(self.faces)
 
-    def get_vertices(self):
+    def get_vertices(self) -> List['DXFVertex']:
         vertices = self.vertices[:]
         vertices.extend(self.faces)
         return vertices
 
-    def build(self, faces):
+    def build(self, faces: Iterable['FaceProxy']) -> None:
         for face in faces:
             face_record = face.face_record
             for vertex, name in zip(face, VERTEXNAMES):
@@ -35,7 +40,7 @@ class PolyfaceBuilder(object):
                 face_record.set_dxf_attrib(name, (index + 1) * sign)
             self.faces.append(face_record)
 
-    def add(self, vertex):
+    def add(self, vertex: 'DXFVertex') -> int:
         def key(point):
             return tuple((round(coord, self.precision) for coord in point))
 

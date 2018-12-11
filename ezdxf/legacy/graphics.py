@@ -1,12 +1,16 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.dxfentity import DXFEntity
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Auditor
 
-def make_attribs(additional: dict = None):
+
+def make_attribs(additional: dict = None) -> DXFAttributes:
     dxfattribs = {
         'handle': DXFAttr(5),
         'layer': DXFAttr(8, default='0'),  # layer name as string, mandatory according to the DXF Reference
@@ -36,7 +40,7 @@ class GraphicEntity(DXFEntity):
     """
     DXFATTRIBS = make_attribs()
 
-    def audit(self, auditor):
+    def audit(self, auditor: 'Auditor') -> None:
         auditor.check_for_valid_layer_name(self)
         auditor.check_if_linetype_exists(self)
         auditor.check_for_valid_color_index(self)

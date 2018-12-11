@@ -46,7 +46,7 @@ ENTITY_WRAPPERS = {
     'BLOCK': block.Block,
     'ENDBLK': block.EndBlk,
     'POLYLINE': polyline.Polyline,
-    'VERTEX': polyline.Vertex,
+    'VERTEX': polyline.DXFVertex,
     'SEQEND': graphics.SeqEnd,
     'SHAPE': graphics.Shape,
     'VIEWPORT': viewport.Viewport,

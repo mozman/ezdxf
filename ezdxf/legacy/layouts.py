@@ -1,7 +1,7 @@
 # Created: 21.03.2011
 # Copyright (C) 2011, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, List, Iterable, Tuple, Dict, Hashable, Sequence, Optional
 from ezdxf.graphicsfactory import GraphicsFactory
 from ezdxf.entityspace import EntitySpace
 from ezdxf.query import EntityQuery
@@ -9,13 +9,16 @@ from ezdxf.groupby import groupby
 from ezdxf.lldxf.const import STD_SCALES, DXFValueError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, EntityDB, LayoutType, DXFEntity, TagWriter, DXFFactoryType, EntitySpace
+    from ezdxf.eztypes import KeyFunc, GenericLayoutType
+
 
 class DXF12Layouts:
     """
     The Layout container.
 
     """
+
     def __init__(self, drawing: 'Drawing'):
         entities = drawing.sections.entities
         model_space = entities.model_space_entities()
@@ -24,24 +27,24 @@ class DXF12Layouts:
         self._paperspace = DXF12Layout(paper_space, drawing.dxffactory, 1)
         entities.clear()  # remove entities for entities section -> stored in layouts
 
-    def __iter__(self):
+    def __iter__(self) -> 'LayoutType':
         yield self._modelspace
         yield self._paperspace
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 2
 
-    def modelspace(self):
+    def modelspace(self) -> 'LayoutType':
         return self._modelspace
 
-    def get(self, name=""):
+    def get(self, name: str = "") -> 'LayoutType':
         # AC1009 supports only one paperspace/layout
         return self._paperspace
 
-    def names(self):
+    def names(self) -> List[str]:
         return []
 
-    def get_layout_for_entity(self, entity):
+    def get_layout_for_entity(self, entity: 'DXFEntity') -> 'LayoutType':
         # paperspace attribute defaults to 0 if not present
         if entity in self._modelspace:
             return self._modelspace
@@ -50,10 +53,10 @@ class DXF12Layouts:
         else:
             return None
 
-    def active_layout(self):
+    def active_layout(self) -> 'LayoutType':
         return self._paperspace
 
-    def write_entities_section(self, tagwriter):
+    def write_entities_section(self, tagwriter: 'TagWriter') -> None:
         self._modelspace.write(tagwriter)
         self._paperspace.write(tagwriter)
 
@@ -65,14 +68,15 @@ class BaseLayout(GraphicsFactory):
     Entities are wrapped into class GraphicEntity() or inherited.
 
     """
-    def __init__(self, dxffactory, entity_space):
+
+    def __init__(self, dxffactory: 'DXFFactoryType', entity_space: 'EnitySpace'):
         super(BaseLayout, self).__init__(dxffactory)
         self._entity_space = entity_space
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._entity_space)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable['DXFEntity']:
         """
         Iterate over all block entities, yielding class GraphicEntity() or inherited.
 
@@ -82,14 +86,14 @@ class BaseLayout(GraphicsFactory):
             yield wrap(handle)
 
     @property
-    def entitydb(self):
+    def entitydb(self) -> 'EnityDB':
         return self._dxffactory.entitydb
 
     @property
-    def drawing(self):
+    def drawing(self) -> 'Drawing':
         return self._dxffactory.drawing
 
-    def build_and_add_entity(self, type_, dxfattribs):
+    def build_and_add_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
         """
         Create entity in drawing database and add entity to the entity space.
 
@@ -102,7 +106,7 @@ class BaseLayout(GraphicsFactory):
         self.add_entity(entity)
         return entity
 
-    def build_entity(self, type_, dxfattribs):
+    def build_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
         """
         Create entity in drawing database, returns a wrapper class inherited from GraphicEntity().
 
@@ -117,7 +121,7 @@ class BaseLayout(GraphicsFactory):
         self._set_paperspace(entity)
         return entity
 
-    def add_entity(self, entity):
+    def add_entity(self, entity: 'DXFEntity') -> None:
         """
         Add entity to entity space but not to the drawing database.
 
@@ -127,7 +131,7 @@ class BaseLayout(GraphicsFactory):
         for linked_entity in entity.linked_entities():
             self._set_paperspace(linked_entity)
 
-    def unlink_entity(self, entity):
+    def unlink_entity(self, entity: 'DXFEntity') -> None:
         """
         Delete entity from entity space but not from the drawing database.
 
@@ -137,7 +141,7 @@ class BaseLayout(GraphicsFactory):
         if entity.supports_dxf_attrib('owner'):  # R2000
             entity.dxf.owner = '0'
 
-    def delete_entity(self, entity):
+    def delete_entity(self, entity: 'DXFEntity') -> None:
         """
         Delete entity from entity space and drawing database.
 
@@ -145,7 +149,7 @@ class BaseLayout(GraphicsFactory):
         self.entitydb.delete_entity(entity)  # 1. delete from drawing database
         self.unlink_entity(entity)  # 2. unlink from entity space
 
-    def delete_all_entities(self):
+    def delete_all_entities(self) -> None:
         """
         Delete all entities of this layout from entity space and from drawing database.
 
@@ -157,23 +161,23 @@ class BaseLayout(GraphicsFactory):
         for entity in list(self):  # temp list, because delete modifies the base data structure of the iterator
             self.delete_entity(entity)
 
-    def _set_paperspace(self, entity):
-        pass
+    def _set_paperspace(self, entity: 'DXFEntity') -> None:
+        pass  # only for DXF 2000 and later necessary
 
-    def get_entity_by_handle(self, handle):
+    def get_entity_by_handle(self, handle: str) -> 'DXFEntity':
         """
         Get entity by handle as GraphicEntity() or inherited.
 
         """
         return self._dxffactory.wrap_handle(handle)
 
-    def query(self, query='*'):
+    def query(self, query='*') -> EntityQuery:
         return EntityQuery(iter(self), query)
 
-    def groupby(self, dxfattrib="", key=None):
+    def groupby(self, dxfattrib: str = "", key: 'KeyFunc' = None) -> Dict[Hashable, List['DXFEntity']]:
         return groupby(iter(self), dxfattrib, key)
 
-    def move_to_layout(self, entity, layout):
+    def move_to_layout(self, entity: 'DXFEntity', layout: 'GenericLayoutType') -> None:
         """
         Move entity from block layout to another layout.
 
@@ -194,13 +198,14 @@ class DXF12Layout(BaseLayout):
     Layout representation
 
     """
-    def __init__(self, entityspace, dxffactory, paperspace=0):
+
+    def __init__(self, entityspace: 'EntitySpace', dxffactory: 'DXFFactoryType', paperspace: int = 0):
         super(DXF12Layout, self).__init__(dxffactory, entityspace)
         self._paperspace = paperspace
 
     # start of public interface
 
-    def __contains__(self, entity):
+    def __contains__(self, entity: Union[str, 'DXFEntity']):
         """
         Returns True if layout contains entity else False. entity can be an entity handle as string or a wrapped
         dxf entity.
@@ -212,10 +217,15 @@ class DXF12Layout(BaseLayout):
 
     # end of public interface
 
-    def _set_paperspace(self, entity):
+    def _set_paperspace(self, entity: 'DXFEntity'):
         entity.dxf.paperspace = self._paperspace
 
-    def page_setup(self, size=(297, 210), margins=(0, 0, 0, 0), units='mm', offset=(0, 0), rotation=0, scale=16):
+    def page_setup(self, size: Tuple[int, int] = (297, 210),
+                   margins: Tuple[int, int, int, int] = (0, 0, 0, 0),
+                   units: str = 'mm',
+                   offset: Tuple[int, int] = (0, 0),
+                   rotation: float = 0,
+                   scale: int = 16) -> None:
         if self._paperspace == 0:
             raise DXFTypeError("No paper setup for model space.")
 
@@ -249,11 +259,9 @@ class DXF12Layout(BaseLayout):
         else:
             raise DXFValueError('Supported units: "mm" and "inch"')
 
-
-
         # all viewport parameters are scaled paper space units
         def paper_units(value):
-            return value  * scale_factor
+            return value * scale_factor
 
         # TODO: don't know how paper setup in DXF R12 works
         paper_width, paper_height = size
@@ -263,7 +271,6 @@ class DXF12Layout(BaseLayout):
 
         paper_width = paper_units(size[0])
         paper_height = paper_units(size[1])
-
 
         plimmin = self.drawing.header['$PLIMMIN'] = (0, 0)
         plimmax = self.drawing.header['$PLIMMAX'] = (paper_width, paper_height)
@@ -289,15 +296,14 @@ class DXF12Layout(BaseLayout):
             center=center,  # no influence to 'main' viewport?
             size=(vp_width, vp_height),  # I don't get it, just use paper size!
             view_center_point=center,  # same as center
-            view_height=vp_height,   # view height in paper space units
+            view_height=vp_height,  # view height in paper space units
         )
         main_viewport.dxf.id = 1  # set as main viewport
         main_viewport.dxf.status = 2  # AutoCAD default value
         with main_viewport.edit_data() as vpdata:
             vpdata.view_mode = 1000  # AutoDesk default
 
-
-    def get_paper_limits(self):
+    def get_paper_limits(self) -> Tuple[float, float]:
         """
         Returns paper limits in plot paper units
 
@@ -306,29 +312,33 @@ class DXF12Layout(BaseLayout):
         limmax = self.drawing.header.get('$PLIMMAX', (0, 0))
         return limmin, limmax
 
-
     @property
-    def layout_key(self):
+    def layout_key(self) -> int:
         return self._paperspace
 
-    def viewports(self):
+    def viewports(self) -> List['DXFEntity']:
         """
         Get all VIEWPORT entities defined in the layout. Returns a list of Viewport() objects, sorted by id, the first
         entity is always the paper space view with the id=1.
 
         """
-        vports =  [entity for entity in self if entity.dxftype() == 'VIEWPORT']
+        vports = [entity for entity in self if entity.dxftype() == 'VIEWPORT']
         vports.sort(key=lambda e: e.dxf.id)
         return vports
 
-    def renumber_viewports(self):
+    def renumber_viewports(self) -> None:
         for num, viewport in enumerate(self.viewports(), start=1):
             viewport.dxf.id = num
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter') -> None:
         self._entity_space.write(tagwriter)
 
-    def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
+    def add_viewport(self,
+                     center: Tuple[float, float],
+                     size: Tuple[float, float],
+                     view_center_point: Tuple[float, float],
+                     view_height: float,
+                     dxfattribs: dict = None) -> 'DXFEntity':
         if dxfattribs is None:
             dxfattribs = {}
         else:
@@ -363,14 +373,15 @@ class DXF12BlockLayout(BaseLayout):
         _entityspace: is the block content
 
     """
-    def __init__(self, entitydb, dxffactory, block_handle, endblk_handle):
+
+    def __init__(self, entitydb: 'EntityDB', dxffactory: 'DXFFactoryType', block_handle: str, endblk_handle: str):
         super(DXF12BlockLayout, self).__init__(dxffactory, EntitySpace(entitydb))
         self._block_handle = block_handle
         self._endblk_handle = endblk_handle
 
     # start of public interface
 
-    def __contains__(self, entity):
+    def __contains__(self, entity: 'DXFEntity') -> bool:
         """
         Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
         ExtendedTags() or a wrapped entity.
@@ -385,36 +396,37 @@ class DXF12BlockLayout(BaseLayout):
         return handle in self._entity_space
 
     @property
-    def block(self):
+    def block(self) -> 'DXFEntity':
         """ Get associated BLOCK entity. """
         return self.get_entity_by_handle(self._block_handle)
 
     @property
-    def endblk(self):
+    def endblk(self) -> 'DXFEntity':
         """ Get associated ENDBLK entity. """
         return self.get_entity_by_handle(self._endblk_handle)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """ Get block name """
         return self.block.dxf.name
 
     @name.setter
-    def name(self, new_name):
+    def name(self, new_name) -> None:
         """ Set block name """
         block = self.block
         block.dxf.name = new_name
         block.dxf.name2 = new_name
 
     @property
-    def is_layout_block(self):
+    def is_layout_block(self) -> bool:
         """
         True if block is a model space or paper space block definition.
 
         """
         return self.block.is_layout_block
 
-    def add_attdef(self, tag, insert=(0, 0), text='', dxfattribs=None):
+    def add_attdef(self, tag: str, insert: Sequence[float] = (0, 0), text: str = '',
+                   dxfattribs: dict = None) -> 'DXFEntity':
         """
         Create an ATTDEF entity in the drawing database and add it to the block entity space.
 
@@ -431,14 +443,14 @@ class DXF12BlockLayout(BaseLayout):
         dxfattribs['text'] = text
         return self.build_and_add_entity('ATTDEF', dxfattribs)
 
-    def attdefs(self):
+    def attdefs(self) -> Iterable['DXFEntity']:
         """
         Iterate over all ATTDEF entities.
 
         """
         return (entity for entity in self if entity.dxftype() == 'ATTDEF')
 
-    def has_attdef(self, tag):
+    def has_attdef(self, tag: str) -> bool:
         """
         Check if ATTDEF for *tag* exists.
 
@@ -448,7 +460,7 @@ class DXF12BlockLayout(BaseLayout):
         """
         return self.get_attdef(tag) is not None
 
-    def get_attdef(self, tag):
+    def get_attdef(self, tag: str) -> Optional['DXFEntity']:
         """
         Get attached ATTDEF entity by *tag*.
 
@@ -463,7 +475,7 @@ class DXF12BlockLayout(BaseLayout):
             if tag == attdef.dxf.tag:
                 return attdef
 
-    def get_attdef_text(self, tag, default=None):
+    def get_attdef_text(self, tag: str, default: str = None) -> str:
         """
         Get content text of attached ATTDEF entity *tag*.
 
@@ -482,7 +494,7 @@ class DXF12BlockLayout(BaseLayout):
 
     # end of public interface
 
-    def add_entity(self, entity):
+    def add_entity(self, entity: 'DXFEntity') -> None:
         """
         Add entity to the block entity space.
 
@@ -492,14 +504,14 @@ class DXF12BlockLayout(BaseLayout):
         for linked_entity in entity.linked_entities():
             linked_entity.dxf.paperspace = 0
 
-    def add_handle(self, handle):
+    def add_handle(self, handle: str) -> None:
         """
         Add entity by handle to the block entity space.
 
         """
         self._entity_space.append(handle)
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter') -> None:
         def write_tags(handle):
             tags = self._entity_space.get_tags_by_handle(handle)
             tagwriter.write_tags(tags)
@@ -508,23 +520,21 @@ class DXF12BlockLayout(BaseLayout):
         self._entity_space.write(tagwriter)
         write_tags(self._endblk_handle)
 
-    def delete_all_entities(self):
+    def delete_all_entities(self) -> None:
         # 1. delete from database
         for handle in self._entity_space:
             del self.entitydb[handle]
         # 2. delete from entity space
         self._entity_space.delete_all_entities()
 
-    def destroy(self):
+    def destroy(self) -> None:
         self.delete_all_entities()
         del self.entitydb[self._block_handle]
         del self.entitydb[self._endblk_handle]
 
-    def get_const_attdefs(self):
+    def get_const_attdefs(self) -> Iterable['DXFEntity']:
         """
         Returns a generator for constant ATTDEF entities.
 
         """
         return (attdef for attdef in self.attdefs() if attdef.is_const)
-
-LegacyLayoutType = Union[DXF12Layout, DXF12BlockLayout]

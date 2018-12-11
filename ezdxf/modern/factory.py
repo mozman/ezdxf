@@ -123,7 +123,7 @@ UPDATE_ENTITY_WRAPPERS = {
     'TEXT': Text,
     'MTEXT': MText,
     'POLYLINE': polyline.Polyline,
-    'VERTEX': polyline.Vertex,
+    'VERTEX': polyline.DXFVertex,
     'SEQEND': graphics.SeqEnd,
     'LWPOLYLINE': LWPolyline,
     'BLOCK': block.Block,

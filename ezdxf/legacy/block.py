@@ -53,7 +53,7 @@ class Block(GraphicEntity):
     REFERENCED = 64  # This definition is a referenced external reference (ignored on input)
 
     @property
-    def is_layout_block(self):
+    def is_layout_block(self) -> bool:
         """
         True if block is a model space or paper space block definition.
 

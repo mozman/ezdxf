@@ -73,42 +73,42 @@ class Attrib(Text):
     })
 
     @property
-    def is_const(self):
+    def is_const(self) -> bool:
         """
         This is a constant attribute.
         """
         return bool(self.dxf.flags & const.ATTRIB_CONST)
 
     @is_const.setter
-    def is_const(self, state):
+    def is_const(self, state: bool) -> None:
         """
         This is a constant attribute.
         """
         self.dxf.flags = set_flag_state(self.dxf.flags, const.ATTRIB_CONST, state)
 
     @property
-    def is_invisible(self):
+    def is_invisible(self) -> bool:
         """
         Attribute is invisible (does not appear).
         """
         return bool(self.dxf.flags & const.ATTRIB_INVISIBLE)
 
     @is_invisible.setter
-    def is_invisible(self, state):
+    def is_invisible(self, state: bool) -> None:
         """
         Attribute is invisible (does not appear).
         """
         self.dxf.flags = set_flag_state(self.dxf.flags, const.ATTRIB_INVISIBLE, state)
 
     @property
-    def is_verify(self):
+    def is_verify(self) -> bool:
         """
         Verification is required on input of this attribute. (CAD application feature)
         """
         return bool(self.dxf.flags & const.ATTRIB_VERIFY)
 
     @is_verify.setter
-    def is_verify(self, state):
+    def is_verify(self, state: bool) -> None:
         """
         Verification is required on input of this attribute. (CAD application feature)
         """
@@ -116,14 +116,14 @@ class Attrib(Text):
 
 
     @property
-    def is_preset(self):
+    def is_preset(self) -> bool:
         """
         No prompt during insertion. (CAD application feature)
         """
         return bool(self.dxf.flags & const.ATTRIB_IS_PRESET)
 
     @is_preset.setter
-    def is_preset(self, state):
+    def is_preset(self, state: bool) -> None:
         """
         No prompt during insertion. (CAD application feature)
         """

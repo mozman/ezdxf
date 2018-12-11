@@ -130,14 +130,14 @@ class Dimension(GraphicEntity):
     })
 
     @property
-    def dim_type(self):
+    def dim_type(self) -> int:
         return self.dxf.dimtype & 7
 
     @property
-    def dim_type_name(self):
+    def dim_type_name(self) -> str:
         return const.DimensionTypeNames[self.dim_type]
 
-    def dim_style(self):
+    def dim_style(self) -> str:
         if self.drawing is not None:
             dim_style_name = self.dxf.dimstyle
             # raises ValueError if not exists, but all used dim styles should exists!

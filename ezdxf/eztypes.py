@@ -55,6 +55,11 @@ if TYPE_CHECKING:
 
     # Entities
     from ezdxf.modern.spline import Spline
+    from ezdxf.legacy.polyline import Polyline, Polyface, Polymesh, DXFVertex
+    from ezdxf.legacy.attrib import Attdef, Attrib
+
+    # other
+    from ezdxf.audit import Auditor
 
     # Type compositions
     Vertex = Union[Sequence[float], Vector]
@@ -62,6 +67,8 @@ if TYPE_CHECKING:
     RGB = Tuple[int, int, int]
     IterableTags = Iterable[Tuple[int, TagValue]]
     SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
+    KeyFunc = Callable[['DXFEntity'], Hashable]
+    FaceType = Sequence[Vertex]
 
     # Type Unions
     DXFFactoryType = Union[LegacyDXFFactory, ModernDXFFactory]
