@@ -2,11 +2,12 @@
 News
 ====
 
-Version 0.9a2 - dev
+Version 0.9a4 - dev
 -------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
 - IMPORTANT: Python 2 support REMOVED
+- CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved Importer() from ezdxf.tools to ezdxf.addons - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
 
@@ -16,7 +17,7 @@ Version 0.8.9 - 2018-11-28
 - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
 - IMPORTANT: Python 2 support will be dropped in ezdxf v0.9.0, because Python 2 support get more and more annoying.
 - CHANGE: refactoring of internal tag representation for a smaller memory footprint, but with some speed penalty
-- NEW: packed data for LWPOLYLINE points, faster __getitem__;  added __setitem__, __delitem__, insert() and append()
+- NEW: packed data for LWPOLYLINE points, faster \_\_getitem__;  added \_\_setitem__, \_\_delitem__, insert() and append()
   methods; renamed discard_points() in clear(); removed get_rstrip_points() and ctx manager rstrip_points();
   user defined point format;
 - NEW: packed data for SPLINE, knots, weights, fit- and control points are stored as array.array();
@@ -43,7 +44,7 @@ Version 0.8.9 - 2018-11-28
 - CHANGE: Drawing.blocks.delete_all_blocks(safe=True), if parameter safe is True, do not delete blocks that are still referenced
 - BUGFIX: invalid CLASS definition for DXF version R2000 (AC1015) fixed, bug was only triggered at upgrading from R13/R14 to R2000
 - BUGFIX: fixed broken Viewport.AcDbViewport property
-- `Basic` read support for many missing DXF entities/objects
+- __BASIC__ read support for many missing DXF entities/objects
 
     - ACAD_PROXY_GRAPHIC
     - HELIX
@@ -274,8 +275,8 @@ Version 0.7.3 - 2016-03-06
 * NEW: improved DXF R13/R14 compatibility
 * BUGFIX: create CLASSES section only for DXF versions newer than R12 (AC1009)
 * TEST: converted a bunch of R8 (AC1003) files to R12 (AC1009), AutoCAD didn't complain
-* TEST: converted a bunch of R13 (AC1012) files to R2000 (AC1015), AutoCAD didn't complain
-* TEST: converted a bunch of R14 (AC1014) files to R2000 (AC1015), AutoCAD didn't complain
+* TEST: converted a bunch of R13 (AC1012) files to R2000 (AC1015), AutoCAD did not complain
+* TEST: converted a bunch of R14 (AC1014) files to R2000 (AC1015), AutoCAD did not complain
 
 Version 0.7.2 - 2016-03-05
 --------------------------

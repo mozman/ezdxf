@@ -58,16 +58,22 @@ class DXFEntity:
     DXFATTRIBS = {}
 
     def __init__(self, tags: ExtendedTags, drawing: 'Drawing' = None):
-        self.tags = tags
-        # all DXF attributes are accessible by the dxf attribute, like entity.dxf.handle
-        # type checking disabled by type Any, because dynamic attribute access
-        self.dxf = DXFNamespace(self)  # type: Any
+        self.tags = tags  # DXF tags stored as DXFTag (and inherited) in an ExtendedTags container
+        self.dxf = DXFNamespace(self)  # type: Any # dynamic DXF attribute dispatching, e.g. DXFEntity.dxf.layer
         self.drawing = drawing
 
     def __str__(self) -> str:
+        """
+        Returns a simple string representation.
+
+        """
         return "{}(#{})".format(self.dxftype(), self.dxf.handle)
 
     def __repr__(self) -> str:
+        """
+        Returns a simple string representation including the class.
+
+        """
         return str(self.__class__) + " " + str(self)
 
     @property

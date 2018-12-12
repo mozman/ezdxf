@@ -1,7 +1,7 @@
 # Created: 21.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, cast, Dict, Iterable, List, Union, Tuple, Any, Optional
 from ezdxf.entityspace import EntitySpace
 from ezdxf.legacy.layouts import DXF12Layout, DXF12BlockLayout
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -9,7 +9,8 @@ from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFTypeError, STD_SCAL
 from ezdxf.lldxf.validator import is_valid_name
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, TagWriter, DXFFactoryType, DXFDictionary, BlockRecord
+    from ezdxf.eztypes import DXFEntity, Vertex, Viewport, GeoData, SortEntitiesTable
 
 PAPER_SPACE = '*Paper_Space'
 TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
@@ -18,13 +19,17 @@ TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
 class Layouts:
     def __init__(self, drawing: 'Drawing'):
         self.drawing = drawing
-        self._layouts = {}  # stores Layout() objects
-        self._dxf_layout_management_table = None  # stores DXF layout handles key=layout_name; value=layout_handle
-        self._move_entities_section_into_blocks(drawing)
+        self._layouts = {}  # type: Dict[str, Layout]
+        self._dxf_layout_management_table = None  # type: DXFDictionary # key: layout name; value: layout_handle
+        self._link_entities_section_into_blocks(drawing)
         self._setup()
 
     @staticmethod
-    def _move_entities_section_into_blocks(drawing):
+    def _link_entities_section_into_blocks(drawing: 'Drawing') -> None:
+        """
+        Link entity spaces from entities section into associated block layouts.
+
+        """
         blocks = drawing.blocks
         model_space_block = blocks.get('*MODEL_SPACE')
         model_space_block.set_entity_space(drawing.entities.model_space_entities())
@@ -33,45 +38,71 @@ class Layouts:
         drawing.entities.clear()  # remove entities for entities section -> stored in blocks
 
     @property
-    def dxffactory(self):
+    def dxffactory(self) -> 'DXFFactoryType':
         return self.drawing.dxffactory
 
-    def _setup(self):
+    def _setup(self) -> None:
+        """
+        Setup layout management table.
+
+        """
         layout_table_handle = self.drawing.rootdict['ACAD_LAYOUT']
-        self._dxf_layout_management_table = self.dxffactory.wrap_handle(layout_table_handle)
+        self._dxf_layout_management_table = cast('DXFDictionary', self.dxffactory.wrap_handle(layout_table_handle))
         # name ... layout name
         # handle ...  handle to DXF object Layout
         for name, handle in self._dxf_layout_management_table.items():
             layout = Layout(self.drawing, handle)
             self._layouts[name] = layout
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """
+        Returns layout count.
+
+        """
         return len(self._layouts)
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
+        """
+        Returns if layout `name` exists.
+
+        Args:
+            name str: layout name
+
+        """
         return name in self._layouts
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable['Layout']:
         return iter(self._layouts.values())
 
-    def modelspace(self):
+    def modelspace(self) -> 'Layout':
+        """
+        Get model space layout.
+
+        Returns:
+            Layout: model space layout
+
+        """
         return self.get('Model')
 
-    def names(self):
+    def names(self) -> Iterable[str]:
         """
-        Returns iterable of all layout names.
+        Returns all layout names.
+
+        Returns:
+            Iterable[str]: layout names
 
         """
         return self._layouts.keys()
 
-    def get(self, name):
+    def get(self, name: str) -> 'Layout':
         """
         Get layout by name.
 
         Args:
-            name: layout name as shown in tab
+            name (str): layout name as shown in tab, e.g. ``Model`` for model space
 
-        Returns: Layout()
+        Returns:
+            Layout: layout
 
         """
         if name is None:
@@ -80,65 +111,63 @@ class Layouts:
         else:
             return self._layouts[name]
 
-    def rename(self, old_name, new_name):
+    def rename(self, old_name: str, new_name: str) -> None:
         """
-        Rename a layout. Layout *Model* can not renamed and the new name of a layout must not exist.
+        Rename a layout. Layout ``Model`` can not renamed and the new name of a layout must not exist.
 
         Args:
-            old_name: actual layout name as string
-            new_name: new layout name as string
+            old_name (str): actual layout name
+            new_name (str): new layout name
 
         """
         if old_name == 'Model':
             raise ValueError('Can not rename model space.')
         if new_name in self._layouts:
-            raise ValueError('Layout name "{}" already used.'.format(new_name))
+            raise ValueError('Layout "{}" already exists.'.format(new_name))
 
         layout = self._layouts[old_name]
         del self._layouts[old_name]
         layout.dxf_layout.dxf.name = new_name
         self._layouts[new_name] = layout
 
-    def names_in_taborder(self):
+    def names_in_taborder(self) -> List[str]:
         """
         Returns all layout names in tab order as a list of strings.
 
         """
-        names = []
-        for name, layout in self._layouts.items():
-            names.append((layout.dxf.taborder, name))
+        names = [(layout.dxf.taborder, name) for name, layout in self._layouts.items()]
         return [name for order, name in sorted(names)]
 
-    def get_layout_for_entity(self, entity):
+    def get_layout_for_entity(self, entity: 'DXFEntity') -> 'Layout':
         """
-        Returns the Layout an entity resides as Layout() object.
+        Returns layout the `entity` resides in.
 
         Args:
-            entity: DXF entity
+            entity (DXFEntity): generic DXF entity
 
         """
         return self.get_layout_by_key(entity.dxf.owner)
 
-    def get_layout_by_key(self, layout_key):
+    def get_layout_by_key(self, layout_key: str) -> 'Layout':
         """
-        Returns a Layout by its layout key as Layout() object.
+        Returns a layout by its layout key.
 
         Args:
-            layout_key: layout key as string (handle)
+            layout_key (str): layout key
 
         """
         for layout in self._layouts.values():
             if layout_key == layout.layout_key:
                 return layout
-        raise DXFKeyError("Layout with key '{}' does not exist.".format(layout_key))
+        raise DXFKeyError('Layout with key "{}" does not exist.'.format(layout_key))
 
-    def new(self, name, dxfattribs=None):
+    def new(self, name: str, dxfattribs: dict = None) -> 'Layout':
         """
         Create a new Layout.
 
         Args:
-            name: layout name as shown in tab
-            dxfattribs: DXF attributes for the LAYOUT entity
+            name (str): layout name as shown in tab
+            dxfattribs (dict): DXF attributes for the ``LAYOUT`` entity
 
         """
         if not is_valid_name(name):
@@ -148,9 +177,9 @@ class Layouts:
             dxfattribs = {}
 
         if name in self._layouts:
-            raise DXFValueError("Layout '{}' already exists".format(name))
+            raise DXFValueError('Layout "{}" already exists'.format(name))
 
-        def create_dxf_layout_entity():
+        def create_dxf_layout_entity() -> str:
             dxfattribs['name'] = name
             dxfattribs['owner'] = self._dxf_layout_management_table.dxf.handle
             dxfattribs.setdefault('taborder', len(self._layouts) + 1)
@@ -173,16 +202,16 @@ class Layouts:
 
         return layout
 
-    def set_active_layout(self, name):
+    def set_active_layout(self, name: str) -> None:
         """
         Set active paper space layout.
 
         Args:
-            name: layout name as shown in tab
+            name (str): layout name as shown in tab
 
         """
         if name == 'Model':  # reserved layout name
-            raise DXFValueError("Can not set model space as active layout")
+            raise DXFValueError('Can not set model space as active layout')
         new_active_layout = self.get(name)  # raises KeyError if no layout 'name' exists
         old_active_layout_key = self.drawing.get_active_layout_key()
         if old_active_layout_key == new_active_layout.layout_key:
@@ -195,19 +224,20 @@ class Layouts:
         blocks.rename_block(new_active_paper_space_name, PAPER_SPACE)
         blocks.rename_block(TMP_PAPER_SPACE_NAME, new_active_paper_space_name)
 
-    def delete(self, name):
+    def delete(self, name: str) -> None:
         """
-        Delete layout *name* and all entities on it.
+        Delete layout `name` and all entities in it.
 
         Args:
-            name: layout name as shown in tab
+            name (str): layout name as shown in tabs
 
-        Raises: *KeyError* if layout *name* not exists.
-        Raises: *ValueError* for deleting model space.
+        Raises:
+            KeyError: if layout `name` do not exists
+            ValueError: if `name` is ``Model`` (deleting model space)
 
         """
         if name == 'Model':
-            raise DXFValueError("can not delete model space layout")
+            raise DXFValueError("Can not delete model space layout.")
 
         layout = self._layouts[name]
         if layout.layout_key == self.drawing.get_active_layout_key():  # name is the active layout
@@ -219,7 +249,7 @@ class Layouts:
         del self._layouts[layout.name]
         layout.destroy()
 
-    def active_layout(self):
+    def active_layout(self) -> 'Layout':
         """
         Returns active paper space layout.
 
@@ -229,10 +259,18 @@ class Layouts:
                 return layout
         raise DXFInternalEzdxfError('No active paper space found.')
 
-    def write_entities_section(self, tagwriter):
-        # DXF entities of the model space and the active paper space are stored in the ENTITIES section,
-        # all DXF entities of other paper space layouts are stored in the BLOCK definition of the paper space layout
-        # in the BLOCKS section.
+    def write_entities_section(self, tagwriter: 'TagWriter') -> None:
+        """
+        Write ``ENTITIES`` section to DXF file, the  ``ENTITIES`` section consist of all entities in model space and
+        active paper space layout.
+
+        All DXF entities of the remaining paper space layouts are stored in their associated ``BLOCK`` entity in the
+        ``BLOCKS`` section.
+
+        Args:
+            tagwriter (TagWriter): tag writer object
+
+        """
         self.modelspace().write(tagwriter)
         self.active_layout().write(tagwriter)
 
@@ -249,24 +287,24 @@ class Layout(DXF12Layout):
     There are 3 different layout types:
 
     1. Model Space - not deletable, all entities of this layout are stored in the DXF file in the ENTITIES section, the
-    associated '*Model_Space' block is empty, block name '*Model_Space' is mandatory, the layout name is 'Model' and it
-    is mandatory.
+       associated ``*Model_Space`` block is empty, block name ``*Model_Space`` is mandatory, the layout name is
+       ``Model`` and it is mandatory.
 
-    2. Active Layout - all entities of this layout are stored in the ENTITIES section, the
-    associated '*Paper_Space' block is empty, block name '*Paper_Space' is mandatory and also marks the active
-    layout, the layout name can be an arbitrary string.
+    2. Active Layout - all entities of this layout are stored in the ENTITIES section, the associated ``*Paper_Space``
+       block is empty, block name ``*Paper_Space`` is mandatory and also marks the active layout, the layout name can
+       be an arbitrary string.
 
-    3. Inactive Layout - all entities of this layouts are stored in the associated BLOCK
-    called '*Paper_SpaceN', where N is an arbitrary number, I don't know if the block name schema '*Paper_SpaceN' is
-    mandatory, the layout name can be an arbitrary string.
+    3. Inactive Layout - all entities of this layouts are stored in the associated BLOCK called ``*Paper_SpaceN``, where
+       ``N`` is an arbitrary number, I don't know if the block name schema '*Paper_SpaceN' is mandatory, the layout
+       name can be an arbitrary string.
 
     There is no different handling for active layouts and inactive layouts in ezdxf, this differentiation is just
-    for AutoCAD important and it is not described in the DXF standard.
+    for AutoCAD important and it is not documented in the DXF reference.
 
-    Internal Structure:
+    Internal Structure
 
-    For EVERY layout exists a BlockLayout() object in the blocks section and a Layout() object in Layouts(). The entity
-    space of the BlockLayout() object and the entity space of the Layout() object are the SAME object.
+    For **every** layout exists a BlockLayout() object in the BLOCKS section and a Layout() object in Layouts().
+    The entity space of the BlockLayout() object and the entity space of the Layout() object are the **same** object.
 
     """
     # plot_layout_flags of LAYOUT entity
@@ -297,12 +335,16 @@ class Layout(DXF12Layout):
         self._repair_owner_tags()
 
     @staticmethod
-    def _get_layout_entity_space(drawing, layout):
+    def _get_layout_entity_space(drawing: 'Drawing', layout: 'Layout') -> 'EntitySpace':
         block_record = drawing.dxffactory.wrap_handle(layout.dxf.block_record)
         block = drawing.blocks.get(block_record.dxf.name)
         return block.get_entity_space()
 
-    def _repair_owner_tags(self):
+    def _repair_owner_tags(self) -> None:
+        """
+        Set `owner` and `paperspace` attributes of entities hosted by this layout to correct values.
+
+        """
         layout_key = self.layout_key
         paper_space = self._paperspace
         for entity in self:
@@ -313,33 +355,49 @@ class Layout(DXF12Layout):
 
     # start of public interface
 
-    def __contains__(self, entity):
-        if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
+    def __contains__(self, entity: Union['DXFEntity', str]) -> bool:
+        if isinstance(entity, str):  # entity is a handle string
             entity = self.get_entity_by_handle(entity)
         return entity.dxf.owner == self.layout_key
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """
+        Returns layout name (as shown in tabs).
+
+        """
         return self.dxf_layout.dxf.name
 
     @property
-    def dxf(self):
+    def dxf(self) -> Any:  # dynamic DXF attribute dispatching, e.g. DXFLayout.dxf.layout_flags
+        """
+        Returns the DXF name space attribute of the associated DXF ``LAYOUT`` entity.
+
+        This enables direct access to the ``LAYOUT`` entity, e.g. Layout.dxf.layout_flags
+
+        """
         return self.dxf_layout.dxf
 
-    def page_setup(self, size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16,
-                   name='ezdxf', device='DWG to PDF.pc3'):
+    def page_setup(self, size: Tuple[int, int] = (297, 210),
+                   margins: Tuple[float, float, float, float] = (10, 15, 10, 15),
+                   units: str = 'mm',
+                   offset: Tuple[float, float] = (0, 0),
+                   rotation: int = 0,
+                   scale: int = 16,
+                   name: str = 'ezdxf',
+                   device: str = 'DWG to PDF.pc3') -> None:
         """
-        Setup plot settings and paper size and reset viewports. All parameters in given *units* (mm or inch).
+        Setup plot settings and paper size and reset viewports. All parameters in given `units` (mm or inch).
 
         Args:
-            size: paper size
-            margins: (top, right, bottom, left) hint: clockwise
-            units: 'mm' or 'inch'
-            offset: plot origin offset
-            rotation: 0=no rotation, 1=90deg count-clockwise, 2=upside-down, 3=90deg clockwise
-            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
-            name: paper name prefix '{name}_({width}_x_{height}_{unit})'
-            device: device .pc3 configuration file or system printer name
+            size (Tuple[int, int]): paper size
+            margins (Tuple[float, float, float, float]): (top, right, bottom, left) hint: clockwise
+            units (str): 'mm' or 'inch'
+            offset (Tuple[float, float]): plot origin offset
+            rotation (int): 0=no rotation, 1=90deg count-clockwise, 2=upside-down, 3=90deg clockwise
+            scale (int): int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
+            name (str): paper name prefix '{name}_({width}_x_{height}_{unit})'
+            device (str): device .pc3 configuration file or system printer name
 
         """
         if self.name == 'Model':
@@ -395,21 +453,26 @@ class Layout(DXF12Layout):
         dxf.plot_origin_x_offset = x_offset * unit_factor  # conversion to mm
         dxf.plot_origin_y_offset = y_offset * unit_factor  # conversion to mm
         dxf.standard_scale_type = standard_scale
-        dxf.unit_factor = 1./unit_factor  # 1/1 for mm; 1/25.4 ... for inch
+        dxf.unit_factor = 1. / unit_factor  # 1/1 for mm; 1/25.4 ... for inch
 
         # Setup Layout
         self.reset_paper_limits()
         self.reset_extends()
         self.reset_viewports()
 
-    def reset_extends(self):
+    def reset_extends(self) -> None:
+        """
+        Reset `extmax` and `extmin` attributes to AutoCAD default values.
+
+        """
         dxf = self.dxf_layout.dxf
         dxf.extmin = (+1e20, +1e20, +1e20)  # AutoCAD default
         dxf.extmax = (-1e20, -1e20, -1e20)  # AutoCAD default
 
-    def reset_paper_limits(self):
+    def reset_paper_limits(self) -> None:
         """
         Set paper limits to default values, all values in paper space units but without plot scale (?).
+
         """
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inch
@@ -426,12 +489,12 @@ class Layout(DXF12Layout):
         y_offset = dxf.plot_origin_y_offset / unit_factor
         # plot origin is the lower left corner of the printable paper area
         # limits are the paper borders relative to the plot origin
-        shift_x = left_margin+x_offset
-        shift_y = bottom_margin+y_offset
+        shift_x = left_margin + x_offset
+        shift_y = bottom_margin + y_offset
         dxf.limmin = (-shift_x, -shift_y)  # paper space units
-        dxf.limmax = (paper_width-shift_x, paper_height-shift_y)
+        dxf.limmax = (paper_width - shift_x, paper_height - shift_y)
 
-    def get_paper_limits(self):
+    def get_paper_limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         """
         Returns paper limits in plot paper units, relative to the plot origin, as tuple ((x1, y1), (x2, y2)).
         Lower left corner is (x1, y1), upper right corner is (x2, y2).
@@ -441,18 +504,20 @@ class Layout(DXF12Layout):
         """
         return self.dxf.limmin, self.dxf.limmax
 
-    def reset_viewports(self):
+    def reset_viewports(self) -> None:
         """
         Delete all existing viewports, and add a new main viewport.
+
         """
         # remove existing viewports
         for viewport in self.viewports():
             self.delete_entity(viewport)
         self.add_new_main_viewport()
 
-    def add_new_main_viewport(self):
+    def add_new_main_viewport(self) -> None:
         """
         Add a new main viewport.
+
         """
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inches
@@ -489,34 +554,55 @@ class Layout(DXF12Layout):
             center=center,  # no influence to 'main' viewport?
             size=(vp_width, vp_height),  # I don't get it, just use paper size!
             view_center_point=center,  # same as center
-            view_height=vp_height,   # view height in paper space units
+            view_height=vp_height,  # view height in paper space units
         )
         main_viewport.dxf.id = 1  # set as main viewport
         main_viewport.dxf.flags = 557088  # AutoCAD default value
         dxf.viewport = main_viewport.dxf.handle
 
-    def set_plot_type(self, value=5):
+    def set_plot_type(self, value: int = 5) -> None:
         """
-        Set plot type:
+        Args:
+            value (int):  plot type
+                - 0 = LAST_SCREEN_DISPLAY
+                - 1 = DRAWING_EXTENDS
+                - 2 = DRAWING_LIMITS
+                - 3 = VIEW_SPECIFIC (defined by Layout.dxf.plot_view_name)
+                - 4 = WINDOW_SPECIFIC (defined by Layout.set_plot_window_limits())
+                - 5 = LAYOUT_INFORMATION (default)
 
-            - LAST_SCREEN_DISPLAY = 0
-            - DRAWING_EXTENDS = 1
-            - DRAWING_LIMITS = 2
-            - VIEW_SPECIFIC = 3 (defined by Layout.dxf.plot_view_name)
-            - WINDOW_SPECIFIC = 4 (defined by Layout.set_plot_window_limits())
-            - LAYOUT_INFORMATION = 5 (default)
+        Raises:
+            DXFValueError: for `value` out of range
+
         """
         if 0 <= int(value) <= 5:
-            self.dxf.plot_type = value
+            self.dxf.plot_type = value  # type: ignore
+        else:
+            raise DXFValueError('Plot type value out of range (0-5).')
 
-    def set_plot_style(self, name='ezdxf.ctb', show=False):
+    def set_plot_style(self, name: str = 'ezdxf.ctb', show: bool = False) -> None:
+        """
+        Set plot style file of type `ctb`.
+
+        Args:
+            name (str): plot style filename
+            show (bool): show plot style effect in preview? (AutoCAD specific attribute)
+
+        """
         self.dxf_layout.dxf.current_style_sheet = name
         self.use_plot_styles(True)
         self.show_plot_styles(show)
 
-    def set_plot_window(self, lower_left=(0, 0), upper_right=(0, 0)):
+    def set_plot_window(self,
+                        lower_left: Tuple[float, float] = (0, 0),
+                        upper_right: Tuple[float, float] = (0, 0)) -> None:
         """
         Set plot window size in (scaled) paper space units.
+
+        Args:
+            lower_left (Tuple[float, float]): lower left corner
+            upper_right (Tuple[float, float]): upper right corner
+
         """
         x1, y1 = lower_left
         x2, y2 = upper_right
@@ -528,56 +614,57 @@ class Layout(DXF12Layout):
         self.set_plot_type(4)
 
     # plot layout flags setter
-    def plot_viewport_borders(self, state=True):
+    def plot_viewport_borders(self, state: bool = True) -> None:
         self.set_plot_flags(self.PLOT_VIEWPORT_BORDERS, state)
 
-    def show_plot_styles(self, state=True):
+    def show_plot_styles(self, state: bool = True) -> None:
         self.set_plot_flags(self.SHOW_PLOT_STYLES, state)
 
-    def plot_centered(self, state=True):
+    def plot_centered(self, state: bool = True) -> None:
         self.set_plot_flags(self.PLOT_CENTERED, state)
 
-    def plot_hidden(self, state=True):
+    def plot_hidden(self, state: bool = True) -> None:
         self.set_plot_flags(self.PLOT_HIDDEN, state)
 
-    def use_standard_scale(self, state=True):
+    def use_standard_scale(self, state: bool = True) -> None:
         self.set_plot_flags(self.USE_STANDARD_SCALE, state)
 
-    def use_plot_styles(self, state=True):
+    def use_plot_styles(self, state: bool = True) -> None:
         self.set_plot_flags(self.PLOT_PLOTSTYLES, state)
 
-    def scale_lineweights(self, state=True):
+    def scale_lineweights(self, state: bool = True) -> None:
         self.set_plot_flags(self.SCALE_LINEWEIGHTS, state)
 
-    def print_lineweights(self, state=True):
+    def print_lineweights(self, state: bool = True) -> None:
         self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
 
-    def draw_viewports_first(self, state=True):
+    def draw_viewports_first(self, state: bool = True) -> None:
         self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
 
-    def model_type(self, state=True):
+    def model_type(self, state: bool = True) -> None:
         self.set_plot_flags(self.MODEL_TYPE, state)
 
-    def update_paper(self, state=True):
+    def update_paper(self, state: bool = True) -> None:
         self.set_plot_flags(self.UPDATE_PAPER, state)
 
-    def zoom_to_paper_on_update(self, state=True):
+    def zoom_to_paper_on_update(self, state: bool = True) -> None:
         self.set_plot_flags(self.ZOOM_TO_PAPER_ON_UPDATE, state)
 
-    def plot_flags_initializing(self, state=True):
+    def plot_flags_initializing(self, state: bool = True) -> None:
         self.set_plot_flags(self.INITIALIZING, state)
 
-    def prev_plot_init(self, state=True):
+    def prev_plot_init(self, state: bool = True) -> None:
         self.set_plot_flags(self.PREV_PLOT_INIT, state)
 
-    def set_plot_flags(self, flag, state=True):
+    def set_plot_flags(self, flag, state: bool = True) -> None:
         self.dxf_layout.set_flag_state(flag, state=state, name='plot_layout_flags')
 
-    def add_viewport(self, center, size, view_center_point, view_height, dxfattribs=None):
-        if dxfattribs is None:
-            dxfattribs = {}
-        else:
-            dxfattribs = dict(dxfattribs)
+    def add_viewport(self, center: 'Vertex',
+                     size: Tuple[float, float],
+                     view_center_point: 'Vertex',
+                     view_height: float,
+                     dxfattribs: dict = None) -> 'Viewport':
+        dxfattribs = dxfattribs or {}
         width, height = size
         attribs = {
             'center': center,
@@ -589,39 +676,78 @@ class Layout(DXF12Layout):
             'view_height': view_height,
         }
         attribs.update(dxfattribs)
-        viewport = self.build_and_add_entity('VIEWPORT', attribs)
+        viewport = cast('Viewport', self.build_and_add_entity('VIEWPORT', attribs))
         viewport.dxf.id = viewport.get_next_viewport_id()
         return viewport
 
     # end of public interface
 
     @property
-    def layout_key(self):
+    def layout_key(self) -> str:
+        """
+        Returns the layout key as string.
+
+        The layout key is the handle of the associated ``BLOCK_RECORD`` entry in the ``BLOCK_RECORDS`` table.
+
+        """
         return self._block_record_handle
 
     @property
-    def block_record(self):
+    def block_record(self) -> 'BlockRecord':
+        """
+        Returns the associated ``BLOCK_RECORD``.
+
+        """
         return self.drawing.dxffactory.wrap_handle(self._block_record_handle)
 
     @property
-    def block_record_name(self):
+    def block_record_name(self) -> str:
+        """
+        Returns the name of the associated ``BLOCK_RECORD`` as string.
+
+        """
         return self.block_record.dxf.name
 
     @property
-    def block(self):
+    def block(self) -> 'BlockLayout':
+        """
+        Returns the associated `BlockLayout` object.
+
+        """
         return self.drawing.blocks.get(self.block_record_name)
 
-    def _set_paperspace(self, entity):
+    def _set_paperspace(self, entity: 'DXFEntity') -> None:
+        """
+        Set correct `owner` and `paperspace` attribute, to be a valid member of this layout.
+
+        Args:
+            entity (DXFEntiy): generic DXF entity
+
+        """
         entity.dxf.paperspace = self._paperspace
         entity.dxf.owner = self.layout_key
 
-    def destroy(self):
+    def destroy(self) -> None:
+        """
+        Delete all member entities and the layout itself from entity database and all other structures.
+
+        """
         self.delete_all_entities()
         self.drawing.blocks.delete_block(self.block.name)
         self.drawing.objects.remove_handle(self._layout_handle)
         self.drawing.entitydb.delete_handle(self._layout_handle)
 
-    def get_extension_dict(self, create=True):
+    def get_extension_dict(self, create: bool = True) -> 'DXFDictionary':
+        """
+        Returns the associated extension dictionary.
+
+        Args:
+            create (bool): create extension dictionary if not exists
+
+        Raises:
+            DXFValueError: if extension dictionary do not exists and `create` is False
+
+        """
         block_record = self.block_record
         try:
             xdict = block_record.get_extension_dict()
@@ -634,19 +760,17 @@ class Layout(DXF12Layout):
                 raise DXFValueError('Extension dictionary do not exist.')
         return xdict
 
-    def new_geodata(self, dxfattribs=None):
+    def new_geodata(self, dxfattribs: dict = None) -> 'GeoData':
         """
-        Create a new GEODATA entity for this layout and replaces existing ones.
+        Create a new ``GEODATA`` entity for this layout and replaces existing ones.
 
-        GEODATA entity requires DXF version R2010 (AC1024) or later.
+        ``GEODATA`` entity requires DXF version R2010 (AC1024) or later.
 
         The DXF Reference does not document if other layouts than model space supports geo referencing, so this may
         only make sense for the model space layout.
 
         Args:
-            dxfattribs: DXF attributes for the GEODATA entity
-
-        Returns: GeoData() object
+            dxfattribs (dict): DXF attributes for the ``GEODATA`` entity
 
         """
         if dxfattribs is None:
@@ -662,9 +786,9 @@ class Layout(DXF12Layout):
         xdict['ACAD_GEOGRAPHICDATA'] = geodata.dxf.handle
         return geodata
 
-    def get_geodata(self):
+    def get_geodata(self) -> Optional['GeoData']:
         """
-        Returns the associated GEODATA entity as GeoData() object or None.
+        Returns the associated ``GEODATA`` entity as `GeoData` object or None.
 
         """
         try:
@@ -676,16 +800,15 @@ class Layout(DXF12Layout):
         except DXFKeyError:
             return None
 
-    def get_sortents_table(self, create=True):
+    def get_sortents_table(self, create: bool = True) -> 'SortEntitiesTable':
         """
-        Get/Create to layout associated SORTENTSTABLE object.
+        Get/Create to layout associated ``SORTENTSTABLE`` object.
 
         Args:
-            create: new table if table do not exists and create is True
+            create (bool): new table if table do not exists and create is True
 
-        Returns: SortEntitiesTable() object
-
-        Raises: DXFValueError() if table not exists and create is False
+        Raises:
+            DXFValueError: if table not exists and `create` is False
 
         """
         xdict = self.get_extension_dict(create=True)
@@ -705,7 +828,7 @@ class Layout(DXF12Layout):
                 raise DXFValueError('Extension dictionary entry ACAD_SORTENTS do not exist.')
         return sortents_table
 
-    def set_redraw_order(self, handles):
+    def set_redraw_order(self, handles: Union[Dict, Iterable[Tuple[str, str]]]) -> None:
         """
         If the header variable $SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in
         ascending handles order.
@@ -721,7 +844,9 @@ class Layout(DXF12Layout):
         as first as expected.
 
         Args:
-            handles: list or dict of handle associations
+            handles (Iterable[Tuple[str, str]]): iterable or dict of handle associations; for iterable an association
+                                                 is a tuple (object_handle, sort_handle); for dict the association is
+                                                 key: object_handle, value: sort_handle
 
         """
         sortents = self.get_sortents_table()
@@ -729,7 +854,7 @@ class Layout(DXF12Layout):
             handles = handles.items()
         sortents.set_handles(handles)
 
-    def get_redraw_order(self):
+    def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
         """
         Returns iterator for all existing table entries as (object_handle, sort_handle) pairs.
 
@@ -747,8 +872,10 @@ class Layout(DXF12Layout):
 
 
 class BlockLayout(DXF12BlockLayout):
-    def add_entity(self, entity):
-        """ Add entity to the block entity space.
+    def add_entity(self, entity: 'DXFEntity') -> None:
+        """
+        Add entity as member to the block entity space.
+
         """
         # entity can be ExtendedTags() or a GraphicEntity() or inherited wrapper class
         if isinstance(entity, ExtendedTags):
@@ -761,28 +888,28 @@ class BlockLayout(DXF12BlockLayout):
         self._entity_space.append(entity.dxf.handle)
 
     @property
-    def block_record_handle(self):
+    def block_record_handle(self) -> str:
         return self.block.dxf.owner
 
-    def set_block_record_handle(self, block_record_handle):
+    def set_block_record_handle(self, block_record_handle: str) -> None:
         self.block.dxf.owner = block_record_handle
         self.endblk.dxf.owner = block_record_handle
 
     @property
-    def block_record(self):
+    def block_record(self) -> 'BlockRecord':
         return self.drawing.dxffactory.wrap_handle(self.block_record_handle)
 
-    def get_entity_space(self):
+    def get_entity_space(self) -> EntitySpace:
         return self._entity_space
 
-    def set_entity_space(self, entity_space):
+    def set_entity_space(self, entity_space: EntitySpace) -> None:
         self._entity_space = entity_space
 
-    def destroy(self):
+    def destroy(self) -> None:
         self.drawing.sections.tables.block_records.remove_handle(self.block_record_handle)
         super(BlockLayout, self).destroy()
 
-    def write(self, tagwriter):
+    def write(self, tagwriter: 'TagWriter'):
         # BLOCK section: do not write content of model space and active layout
         if self.name.upper() in ('*MODEL_SPACE', '*PAPER_SPACE'):
             save = self._entity_space
@@ -791,6 +918,3 @@ class BlockLayout(DXF12BlockLayout):
             self._entity_space = save
         else:
             super(BlockLayout, self).write(tagwriter)
-
-
-ModernLayoutType = Union[Layout, BlockLayout]

@@ -28,8 +28,6 @@ if TYPE_CHECKING:
 
     from ezdxf.legacy.layouts import DXF12Layout, DXF12BlockLayout
     from ezdxf.modern.layouts import Layout, BlockLayout
-    from ezdxf.modern.dxfdict import DXFDictionary
-    from ezdxf.dxfentity import DXFEntity
 
     # Entities manager
     from ezdxf.entityspace import EntitySpace
@@ -47,16 +45,29 @@ if TYPE_CHECKING:
     from ezdxf.sections.entities import EntitySection
     from ezdxf.sections.unsupported import UnsupportedSection
 
+    # Table entries
+    from ezdxf.modern.tableentries import BlockRecord, Layer, Linetype, Style, DimStyle
+    from ezdxf.modern.tableentries import UCS, View, AppID, VPort
+
     # Style Manager
     from ezdxf.modern.groups import GroupManager
     from ezdxf.modern.material import MaterialManager
     from ezdxf.modern.mleader import MLeaderStyleManager
     from ezdxf.modern.mline import MLineStyleManager
 
-    # Entities
+    # DXF objects
+    from ezdxf.modern.dxfdict import DXFDictionary
+    from ezdxf.modern.geodata import GeoData
+    from ezdxf.modern.sortentstable import SortEntitiesTable
+
+    # DXF entities
+    from ezdxf.dxfentity import DXFEntity
     from ezdxf.modern.spline import Spline
     from ezdxf.legacy.polyline import Polyline, Polyface, Polymesh, DXFVertex
     from ezdxf.legacy.attrib import Attdef, Attrib
+    from ezdxf.legacy.text import Text
+    from ezdxf.modern.viewport import Viewport
+    from ezdxf.modern.block import Block
 
     # other
     from ezdxf.audit import Auditor

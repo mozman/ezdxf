@@ -9,7 +9,7 @@ from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 
 if TYPE_CHECKING:  # import forward references
-    from eztypes import DXFFactoryType, DXFEntity, Spline
+    from eztypes import DXFFactoryType, DXFEntity, Spline, Text
 
 
 Vertex = Union[Sequence[float], Vector]
@@ -72,7 +72,7 @@ class GraphicsFactory:
     def add_3dface(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'DXFEntity':
         return self._add_quadrilateral('3DFACE', points, dxfattribs)
 
-    def add_text(self, text: str, dxfattribs: dict = None) -> 'DXFEntity':
+    def add_text(self, text: str, dxfattribs: dict = None) -> 'Text':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['text'] = text
         dxfattribs.setdefault('insert', (0, 0))

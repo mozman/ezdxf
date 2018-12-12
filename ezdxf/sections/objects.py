@@ -16,7 +16,7 @@ from ezdxf.entityspace import EntitySpace
 from .abstract import AbstractSection
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, DXFEntity
+    from ezdxf.eztypes import Drawing, DXFEntity, GeoData
 
 
 class ObjectsSection(AbstractSection):
@@ -184,11 +184,11 @@ class ObjectsSection(AbstractSection):
         underlay_dict[key] = underlay_def.dxf.handle
         return underlay_def
 
-    def add_geodata(self, owner: str = '0', dxfattribs: dict = None) -> 'DXFEntity':
+    def add_geodata(self, owner: str = '0', dxfattribs: dict = None) -> 'GeoData':
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs['owner'] = owner
-        return self.add_dxf_object_with_reactor('GEODATA', dxfattribs)
+        return cast('GeoData', self.add_dxf_object_with_reactor('GEODATA', dxfattribs))
 
 
 _OBJECT_TABLE_NAMES = [

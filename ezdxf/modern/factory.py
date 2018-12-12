@@ -62,10 +62,10 @@ from .datatable import DataTable
 from .geodata import GeoData
 from .material import Material
 from .groups import DXFGroup
-from .layouts import Layouts, BlockLayout, ModernLayoutType
+from .layouts import Layouts, BlockLayout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, Table, DXFEntity
+    from ezdxf.eztypes import Drawing, Table, DXFEntity, GenericLayoutType
 
 
 UPDATE_ENTITY_WRAPPERS = {
@@ -218,7 +218,7 @@ class ModernDXFFactory(LegacyDXFFactory):
             if checkfunc(key):
                 return key
 
-    def get_layout_for_entity(self, entity: 'DXFEntity') -> Optional[ModernLayoutType]:
+    def get_layout_for_entity(self, entity: 'DXFEntity') -> Optional['GenericLayoutType']:
         if entity.dxf.owner not in self.entitydb:
             return None
 

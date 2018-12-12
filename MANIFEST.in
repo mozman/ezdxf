@@ -1,4 +1,4 @@
-include NEWS.rst README.rst LICENSE.txt
+include NEWS.md README.md LICENSE.txt
 include requirements.txt
 recursive-include examples *.py *.bat *.sh
 recursive-include tests *.py

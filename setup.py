@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 def get_version():
     v = {}
-    # do not import ezdxf, because required packages may not installed yet
+    # do not import ezdxf, because required packages may not be installed yet
     for line in open('./ezdxf/version.py').readlines():
         if line.strip().startswith('__version__'):
             exec(line, v)
@@ -54,7 +54,8 @@ setup(
     tests_require=['pytest'],
     install_requires=['pyparsing>=2.0.1'],
     keywords=['DXF', 'CAD'],
-    long_description=read('README.rst')+read('NEWS.rst', until='Version 0.7.9'),
+    long_description=read('README.md')+read('NEWS.md', until='Version 0.7.9'),
+    long_description_content_type="text/markdown",
     platforms="OS Independent",
     license="MIT License",
     classifiers=[

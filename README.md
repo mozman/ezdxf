@@ -16,7 +16,7 @@ Quick-Info
 - the intended audience are developers
 - requires at least CPython 3.5, for Python 2 support use ezdxf < 0.9.0
 - OS independent
-- additional required packages: `pyparsing <https://pypi.org/project/pyparsing/>`_
+- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/)
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read support for DXF versions R13/R14 (upgraded to R2000)
@@ -24,30 +24,43 @@ Quick-Info
 - preserves third-party DXF content
 - additional fast DXF R12 writer, that creates just an ENTITIES section with support for the basic DXF entities
 
-a simple example::
+a simple example:
 
-    import ezdxf
+```python
+import ezdxf
 
-    drawing = ezdxf.new(dxfversion='AC1024')  # or use the AutoCAD release name ezdxf.new(dxfversion='R2010')
-    modelspace = drawing.modelspace()
-    modelspace.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
-    drawing.layers.new('TEXTLAYER', dxfattribs={'color': 2})
-    # use set_pos() for proper TEXT alignment - the relations between halign, valign, insert and align_point are tricky.
-    modelspace.add_text('Test', dxfattribs={'layer': 'TEXTLAYER'}).set_pos((0, 0.2), align='CENTER')
-    drawing.saveas('test.dxf')
+drawing = ezdxf.new(dxfversion='AC1024')  
+# alternative:  use the AutoCAD release name 
+# ezdxf.new(dxfversion='R2010')
+modelspace = drawing.modelspace()
+modelspace.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
+drawing.layers.new('TEXTLAYER', dxfattribs={'color': 2})
 
-example for the *r12writer*, writes a simple DXF R12 file without in-memory structures::
+# use set_pos() for proper TEXT alignment:
+# the relations between halign, valign, insert and align_point are tricky.
+modelspace.add_text(
+    'Test', 
+    dxfattribs={
+        'layer': 'TEXTLAYER'
+    }).set_pos((0, 0.2), align='CENTER')
+    
+drawing.saveas('test.dxf')
+```
 
-    from random import random
-    from ezdxf.r12writer import r12writer
+example for the *r12writer*, writes a simple DXF R12 file without in-memory structures:
 
-    MAX_X_COORD = 1000.0
-    MAX_Y_COORD = 1000.0
-    CIRCLE_COUNT = 100000
+```python
+from random import random
+from ezdxf.r12writer import r12writer
 
-    with r12writer("many_circles.dxf") as dxf:
-        for i in range(CIRCLE_COUNT):
-            dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+MAX_X_COORD = 1000.0
+MAX_Y_COORD = 1000.0
+CIRCLE_COUNT = 100000
+
+with r12writer("many_circles.dxf") as dxf:
+    for i in range(CIRCLE_COUNT):
+        dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+```
 
 The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
 present, except FIXED-TABLES are written, than some additional predefined text styles and line types are available.
@@ -55,7 +68,7 @@ present, except FIXED-TABLES are written, than some additional predefined text s
 Installation
 ------------
 
-Install with pip::
+Install with pip:
 
     pip install ezdxf
 
@@ -63,12 +76,12 @@ Install develop version (only if you have to)::
 
     pip install git+https://github.com/mozman/ezdxf.git@develop
 
-For Python 2 users::
+For Python 2 users:
 
     pip install ezdxf<0.9.0
 
 
-or from source::
+or from source:
 
     python setup.py install
 
