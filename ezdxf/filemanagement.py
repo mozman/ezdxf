@@ -2,16 +2,13 @@
 # Created: 05.01.2018
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
-from typing import TextIO
-
-from ezdxf.drawing import Drawing
-from ezdxf.tools.zipmanager import ctxZipReader
-from ezdxf.lldxf.tags import dxf_info, DXFInfo
-from ezdxf.lldxf.validator import is_dxf_file
-from ezdxf.tools.codepage import is_supported_encoding
+# Local imports to avoid cyclic import
+from typing import TextIO, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, DXFInfo
 
 
-def new(dxfversion: str = 'AC1009') -> Drawing:
+def new(dxfversion: str = 'AC1009') -> 'Drawing':
     """
     Create a new DXF drawing.
 
@@ -29,6 +26,8 @@ def new(dxfversion: str = 'AC1009') -> Drawing:
         dxfversion: DXF version specifier, default is AC1009
 
     """
+    from ezdxf.drawing import Drawing
+
     dwg = Drawing.new(dxfversion)
     if dwg.dxfversion > 'AC1009':
         dwg.reset_fingerprintguid()
@@ -36,7 +35,7 @@ def new(dxfversion: str = 'AC1009') -> Drawing:
     return dwg
 
 
-def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> Drawing:
+def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'Drawing':
     """
     Read DXF drawing from a text stream, which only needs a readline() method.
 
@@ -62,10 +61,12 @@ def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> Dr
         dxfversion: DXF version, None = auto detect, just important for legacy mode.
 
     """
+    from ezdxf.drawing import Drawing
+
     return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
 
 
-def dxf_file_info(filename: str) -> DXFInfo:
+def dxf_file_info(filename: str) -> 'DXFInfo':
     """
     Reads basic file information from DXF files: DXF version, encoding and handle seed.
 
@@ -77,7 +78,7 @@ def dxf_file_info(filename: str) -> DXFInfo:
         return dxf_stream_info(fp)
 
 
-def dxf_stream_info(stream: TextIO) -> DXFInfo:
+def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
     """
     Reads basic DXF information from a text stream: DXF version, encoding and handle seed.
 
@@ -85,13 +86,15 @@ def dxf_stream_info(stream: TextIO) -> DXFInfo:
         DXF info object with attributes: version, release, handseed, encoding
 
     """
+    from ezdxf.lldxf.tags import dxf_info
+
     info = dxf_info(stream)
     if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
         info.encoding = 'utf-8'
     return info
 
 
-def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> Drawing:
+def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing':
     """
     Read DXF drawing specified by *filename* from file system.
 
@@ -114,6 +117,9 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> 
         legacy_mode: True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
 
     """
+    from ezdxf.lldxf.validator import is_dxf_file
+    from ezdxf.tools.codepage import is_supported_encoding
+
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
@@ -127,7 +133,7 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> 
     return dwg
 
 
-def readzip(zipfile: str, filename: str = None) -> Drawing:
+def readzip(zipfile: str, filename: str = None) -> 'Drawing':
     """
     Read DXF drawing specified by filename from a zip archive, or if filename is None the first DXF file in the zip
     archive.
@@ -150,6 +156,8 @@ def readzip(zipfile: str, filename: str = None) -> Drawing:
         filename: filename of DXF file, or None to read the first DXF file from the zip archive.
 
     """
+    from ezdxf.tools.zipmanager import ctxZipReader
+
     with ctxZipReader(zipfile, filename) as zipstream:
         dwg = read(zipstream, dxfversion=zipstream.dxfversion)
         dwg.filename = zipstream.dxf_file_name

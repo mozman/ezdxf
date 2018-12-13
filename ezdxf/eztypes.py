@@ -71,6 +71,7 @@ if TYPE_CHECKING:
 
     # other
     from ezdxf.audit import Auditor
+    from ezdxf.lldxf.tags import DXFInfo
 
     # Type compositions
     Vertex = Union[Sequence[float], Vector]

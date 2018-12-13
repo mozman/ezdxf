@@ -7,7 +7,7 @@ import pytest
 import ezdxf
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.lldxf.loader import load_dxf_structure
-from ezdxf.sections import Sections
+from ezdxf.sections.sections import Sections
 from ezdxf.lldxf.const import DXFStructureError
 
 
@@ -34,12 +34,12 @@ def test_getattr_upper_case(sections):
 
 def test_error_getitem(sections):
     with pytest.raises(DXFStructureError):
-        sections.testx
+        _ = sections.testx
 
 
 def test_error_getattr(sections):
     with pytest.raises(DXFStructureError):
-        sections.testx
+        _ = sections.testx
 
 
 TEST_HEADER = """  0

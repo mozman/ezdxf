@@ -13,7 +13,7 @@ from ezdxf.dxffactory import dxffactory
 from ezdxf.templates import TemplateLoader
 from ezdxf.options import options
 from ezdxf.tools.codepage import tocodepage, toencoding
-from ezdxf.sections import Sections
+from ezdxf.sections.sections import Sections
 from ezdxf.tools.juliandate import juliandate
 from ezdxf.lldxf import repair
 from ezdxf.tools import guid
