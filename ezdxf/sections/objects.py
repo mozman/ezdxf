@@ -3,6 +3,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple, cast
+import logging
 
 from ezdxf.modern.dxfdict import DXFDictionary
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
@@ -17,6 +18,8 @@ from .abstract import AbstractSection
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFEntity, GeoData
+
+logger = logging.getLogger('ezdxf')
 
 
 class ObjectsSection(AbstractSection):
@@ -47,7 +50,7 @@ class ObjectsSection(AbstractSection):
         """
         if len(self):
             raise DXFStructureError("Can not create root dictionary in none empty objects section.")
-
+        logger.debug('Creating ROOT dictionary.')
         # root directory has no owner
         return self.add_dictionary(owner='0')
 
@@ -66,6 +69,7 @@ class ObjectsSection(AbstractSection):
         for name in _OBJECT_TABLE_NAMES:
             if name in rootdict:
                 continue  # just create not existing tables
+            logger.info('creating {} dictionary'.format(name))
             if name == "ACAD_PLOTSTYLENAME":
                 setup_plot_style_name_table()
             else:
@@ -95,11 +99,12 @@ class ObjectsSection(AbstractSection):
         entity = self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
         return cast(DXFDictionary, entity)
 
-    def add_dictionary_with_default(self, owner='0', default="0") -> 'DXFEntity':
-        return self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
+    def add_dictionary_with_default(self, owner='0', default="0") -> 'DXFDictionary':
+        entity = self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
             'owner': owner,
             'default': default,
         })
+        return cast(DXFDictionary, entity)
 
     def add_xrecord(self, owner: str = '0') -> 'DXFEntity':
         return self.create_new_dxf_entity('XRECORD', dxfattribs={'owner': owner})

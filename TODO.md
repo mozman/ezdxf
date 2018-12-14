@@ -26,10 +26,13 @@ DXF Entities
 
 - dim line rendering
 
-DXF Audit
----------
+DXF Audit & Cleanup
+-------------------
 
 - check ownership
     - DXF objects in OBJECTS section
     - DXF Entities in a layout (model space, paper space, block)
-- VERTEX on same layer as POLYLINE
+- VERTEX on same layer as POLYLINE; cleanup: set VERTEX layer to POLYLINE layer
+- find unreferenced objects:
+    - DICTIONARY e.g. orphaned extension dicts; cleanup: delete
+- find unused BLOCK definitions: has no corresponding INSERT (except layout blocks); cleanup: delete

@@ -5,7 +5,7 @@
 """
 audit(drawing, stream): check a DXF drawing for errors.
 """
-from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Sequence, Optional
+from typing import TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Optional
 
 import sys
 from ezdxf.lldxf.types import is_pointer_code, DXFTag
@@ -86,7 +86,7 @@ class Auditor:
         error = ErrorEntry(code, message, dxf_entity, data)
         self.errors.append(error)
 
-    def run(self) -> Sequence[ErrorEntry]:
+    def run(self) -> List[ErrorEntry]:
         self.reset()
         dxfversion = self.drawing.dxfversion
         if dxfversion > 'AC1009':  # modern style DXF13 or later

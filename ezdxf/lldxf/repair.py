@@ -36,6 +36,8 @@ def setup_paper_space(dwg: 'Drawing'):
 def setup_layout_space(dwg: 'Drawing', layout_name: str, block_name: str, tag_string: str):
     # This is just necessary for existing DXF drawings without properly setup management structures.
     # Layout structure is not initialized at this runtime phase
+    logger.info('creating LAYOUT structure for: {}'.format(layout_name))
+
     def get_block_record_by_alt_names(names: Iterable[str]):
         for name in names:
             try:
@@ -56,28 +58,33 @@ def setup_layout_space(dwg: 'Drawing', layout_name: str, block_name: str, tag_st
                                   "<ezdxf@mozman.at> with your DXF file." % block_name)
     real_block_name = block_record.dxf.name  # can be *Model_Space or *MODEL_SPACE
     block_record_handle = block_record.dxf.handle
+    logger.debug('found {}: {}'.format(str(block_record), real_block_name))
 
     try:
-        block = dwg.blocks.get(real_block_name)
+        block_layout = dwg.blocks.get(real_block_name)
+        logger.debug('found {}: {}'.format(str(block_layout.block), real_block_name))
     except DXFKeyError:
+        logger.debug('expected BLOCK: {} not found.'.format(real_block_name))
         raise NotImplementedError("'%s' block setup not implemented, send an email to "
                                   "<ezdxf@mozman.at> with your DXF file." % real_block_name)
     else:
-        block.set_block_record_handle(block_record_handle)   # grant valid linking
+        block_layout.set_block_record_handle(block_record_handle)   # grant valid linking
 
     layout_handle = create_layout_tags(dwg, block_record_handle, owner=layout_dict.dxf.handle, tag_string=tag_string)
+    logger.debug('creating entry in ACAD_LAYOUT dictionary for {}'.format(layout_name))
     layout_dict[layout_name] = layout_handle  # insert layout into the layout management table
     block_record.dxf.layout = layout_handle  # link model space block record to layout
 
     # rename block to standard format (*Model_Space or *Paper_Space)
     if real_block_name != block_name:
+        logger.debug('renaming BLOCK form {} to {}'.format(block_name, real_block_name))
         dwg.blocks.rename_block(real_block_name, block_name)
 
 
 def create_layout_tags(dwg: 'Drawing', block_record_handle: str, owner: str, tag_string: str):
     # Problem: ezdxf was not designed to handle the absence of model/paper space LAYOUT entities
     # Layout structure is not initialized at this runtime phase
-
+    logger.debug('creating LAYOUT entity for BLOCK_RECORD(#{})'.format(block_record_handle))
     object_section = dwg.objects
     entitydb = dwg.entitydb
 
@@ -106,6 +113,7 @@ def upgrade_to_ac1015(dwg: 'Drawing'):
             raise DXFInternalEzdxfError("Table ACAD_LAYOUT should already exist in root dict.")
 
     def upgrade_layer_table():
+        logger.debug('upgrading LAYERS table')
         try:
             plot_style_name_handle = dwg.rootdict.get('ACAD_PLOTSTYLENAME')  # DXFDictionaryWithDefault
         except DXFKeyError:
@@ -120,10 +128,12 @@ def upgrade_to_ac1015(dwg: 'Drawing'):
             defpoints_layer.dxf.plot = 0
 
     def set_plot_style_name_in_layers(plot_style_name_handle):
+        logger.debug('setting layers "plot_style_name" attribute')
         for layer in dwg.layers:
             layer.dxf.plot_style_name = plot_style_name_handle
 
     def upgrade_dim_style_table():
+        logger.debug('upgrading DIMSTYLES table')
         dim_styles = dwg.dimstyles
         header = dim_styles._table_header
         dim_style_table = Tags([
@@ -135,6 +145,7 @@ def upgrade_to_ac1015(dwg: 'Drawing'):
         header.subclasses.append(dim_style_table)
 
     def upgrade_objects():
+        logger.debug('upgrading ACDBPLACEHOLDER entities in the OBJECTS section')
         upgrade_acdbplaceholder(dwg.objects.query('ACDBPLACEHOLDER'))
 
     def upgrade_acdbplaceholder(entities):
@@ -142,11 +153,13 @@ def upgrade_to_ac1015(dwg: 'Drawing'):
             entity.tags.subclasses = entity.tags.subclasses[0:1]  # remove subclass AcDbPlaceHolder
 
     # calling order is important!
+    logger.info('Upgrading drawing to DXF R2000.')
     upgrade_layout_table()
     upgrade_layer_table()
     upgrade_dim_style_table()
     upgrade_objects()
 
+    logger.debug('Setting DXF version to AC1015.')
     dwg.dxfversion = 'AC1015'
     dwg.header['$ACADVER'] = 'AC1015'
 
@@ -155,6 +168,8 @@ def upgrade_to_ac1009(dwg: 'Drawing'):
     """
     Upgrade DXF versions prior to AC1009 (R12) to AC1009.
     """
+    logger.info('Upgrading drawing to DXF R12.')
+    logger.debug('Setting DXF version to AC1009.')
     dwg.dxfversion = 'AC1009'
     dwg.header['$ACADVER'] = 'AC1009'
     # as far I know, nothing else to do
@@ -168,12 +183,15 @@ def cleanup_r12(dwg: 'Drawing'):
         dwg: Drawing() object
 
     """
+    logger.info('Cleanup DXF R12 drawing.')
     if dwg.dxfversion > 'AC1009':
         return
     for section_name in ('CLASSES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA'):  # unsupported sections for DXF R12
         if section_name in dwg.sections:
+            logger.debug('Deleting {} section.'.format(section_name))
             dwg.sections.delete_section(section_name)
     if 'BLOCK_RECORDS' in dwg.sections.tables:
+        logger.debug('Deleting BLOCK_RECORDS table.')
         del dwg.sections.tables['BLOCK_RECORDS']
 
 
@@ -187,14 +205,15 @@ def filter_subclass_marker(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     Args:
         tagger: low level tagger
 
-    Yields: DXFTags()
-
     """
+    found = 0
     for tag in tagger:
         if tag.code == SUBCLASS_MARKER and tag.value.startswith('AcDb'):
-            pass
+            found += 1
         else:
             yield tag
+    if found:
+        logger.debug('Filtered {} SUBCLASS marker from DXF R12 tag stream.'.format(found))
 
 
 def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
@@ -204,16 +223,14 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     Args:
         tagger: low level tagger
 
-    Yields: DXFTags()
-
     """
+    logger.debug('Reordering coordinate tags for LINE entity.')
     collector = None  # type: Optional[List]
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:  # stop collecting if inside of an supported entity
                 entity = collector[0].value
-                for tag_ in COORDINATE_FIXING_TOOLBOX[entity](collector):
-                    yield tag_  # no yield from in python 2.7
+                yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
                 collector = None
 
             if tag.value in COORDINATE_FIXING_TOOLBOX:
@@ -236,7 +253,7 @@ def fix_coordinate_order(tags, codes=(10, 11)):
 
     def get_coords(code):
         # if x or y coordinate is missing, it is a DXFStructureError
-        # but here is not the place to validate the DXF structure
+        # but here is not the location to validate the DXF structure
         try:
             yield coordinates[code]
         except KeyError:
@@ -265,7 +282,7 @@ def fix_coordinate_order(tags, codes=(10, 11)):
 
     if len(coordinates) == 0:
         # no coordinates found, this is probably a DXFStructureError,
-        # but here is not the place to validate the DXF structure,
+        # but here is not the location to validate the DXF structure,
         # just do nothing.
         return tags
 
@@ -283,6 +300,7 @@ COORDINATE_FIXING_TOOLBOX = {
 
 def fix_classes(dwg):
     def remove_group_code_91():
+        logger.debug('Deleting group code 91 tags from CLASS entities for DXF Versions prior AC1018.')
         for cls in dwg.sections.classes:
             xtags = cls.tags
             xtags.noclass.remove_tags((91,))
