@@ -1,10 +1,14 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from .dxfobjects import DXFObject
 from .object_manager import ObjectManager
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing
 
 # DXF Examples:
 # D:\source\dxftest\CADKitSamples\house design for two family with common staircasedwg.dxf
@@ -235,11 +239,11 @@ class MLeaderStyle(DXFObject):
 
 
 class MLeaderStyleManager(ObjectManager):
-    def __init__(self, drawing):
-        super(MLeaderStyleManager, self).__init__(drawing, dict_name='ACAD_MLEADERSTYLE', object_type='MLEADERSTYLE')
+    def __init__(self, drawing: 'Drawing'):
+        super().__init__(drawing, dict_name='ACAD_MLEADERSTYLE', object_type='MLEADERSTYLE')
         self.create_required_entries()
 
-    def create_required_entries(self):
+    def create_required_entries(self) -> None:
         for name in ('Standard', ):
             if name not in self.object_dict:
                 self.new(name)

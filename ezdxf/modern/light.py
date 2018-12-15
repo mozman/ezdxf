@@ -4,6 +4,9 @@
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
 
 _LIGHT_TPL = """0
 LIGHT
@@ -72,5 +75,5 @@ class Light(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, light_subclass)
 
     @property
-    def AcDbLight(self):
+    def AcDbLight(self) -> 'Tags':
         return self.tags.subclasses[2]

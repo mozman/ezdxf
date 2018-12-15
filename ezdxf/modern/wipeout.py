@@ -90,7 +90,7 @@ class Wipeout(ModernGraphicEntity):
     CLASS = ExtendedTags.from_text(_WIPEOUT_CLS)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, wipeout_subclass)
 
-    def destroy(self):
+    def destroy(self) -> None:
         return
 
 

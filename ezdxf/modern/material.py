@@ -1,11 +1,16 @@
 # Created: 06.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf.const import DXFStructureError
 
 from .dxfobjects import none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, DXFObject
 from .object_manager import ObjectManager
 from . import matrix_accessors
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, Matrix44
+
 
 _MATERIAL_TPL = """0
 MATERIAL
@@ -169,66 +174,66 @@ class Material(DXFObject):
         material_subclass,
     )
 
-    def _get_matrix(self, code):
+    def _get_matrix(self, code: int) -> 'Matrix44':
         subclass = self.tags.subclasses[1]  # always 2nd subclass
         try:
             return matrix_accessors.get_matrix(subclass, code)
         except DXFStructureError:
             raise DXFStructureError('Invalid transformation matrix in entity ' + self.__str__())
 
-    def _set_matrix(self, code, data):
+    def _set_matrix(self, code: int, data: Iterable[float]):
         subclass = self.tags.subclasses[1]  # always 2nd subclass
         matrix_accessors.set_matrix(subclass, code, list(data))
 
-    def set_transformation_matrix_diffuse_map(self, matrix):
+    def set_transformation_matrix_diffuse_map(self, matrix: Iterable[float]):
         self._set_matrix(code=43, data=matrix)
 
-    def get_transformation_matrix_diffuse_map(self):
+    def get_transformation_matrix_diffuse_map(self) -> 'Matrix44':
         return self._get_matrix(code=43)
 
-    def set_transformation_matrix_normal_map(self, matrix):  # collision with diffuse map
+    def set_transformation_matrix_normal_map(self, matrix: Iterable[float]):  # collision with diffuse map
         self._set_matrix(code=43, data=matrix)
 
-    def get_transformation_matrix_normal_map(self):  # collision with diffuse map
+    def get_transformation_matrix_normal_map(self) -> 'Matrix44':  # collision with diffuse map
         return self._get_matrix(code=43)
 
-    def set_transformation_matrix_specular_map(self, matrix):
+    def set_transformation_matrix_specular_map(self, matrix: Iterable[float]):
         self._set_matrix(code=47, data=matrix)
 
-    def get_transformation_matrix_specular_map(self):
+    def get_transformation_matrix_specular_map(self) -> 'Matrix44':
         return self._get_matrix(code=47)
 
-    def set_transformation_matrix_reflection_map(self, matrix):
+    def set_transformation_matrix_reflection_map(self, matrix: Iterable[float]):
         self._set_matrix(code=49, data=matrix)
 
-    def get_transformation_matrix_reflection_map(self):
+    def get_transformation_matrix_reflection_map(self) -> 'Matrix44':
         return self._get_matrix(code=49)
 
-    def set_transformation_matrix_opacity_map(self, matrix):
+    def set_transformation_matrix_opacity_map(self, matrix: Iterable[float]):
         self._set_matrix(code=142, data=matrix)
 
-    def get_transformation_matrix_opacity_map(self):
+    def get_transformation_matrix_opacity_map(self) -> 'Matrix44':
         return self._get_matrix(code=142)
 
-    def set_transformation_matrix_bump_map(self, matrix):
+    def set_transformation_matrix_bump_map(self, matrix: Iterable[float]):
         self._set_matrix(code=144, data=matrix)
 
-    def get_transformation_matrix_bump_map(self):
+    def get_transformation_matrix_bump_map(self) -> 'Matrix44':
         return self._get_matrix(code=144)
 
-    def set_transformation_matrix_refraction_map(self, matrix):
+    def set_transformation_matrix_refraction_map(self, matrix: Iterable[float]):
         self._set_matrix(code=147, data=matrix)
 
-    def get_transformation_matrix_refraction_map(self):
+    def get_transformation_matrix_refraction_map(self) -> 'Matrix44':
         return self._get_matrix(code=147)
 
 
 class MaterialManager(ObjectManager):
-    def __init__(self, drawing):
-        super(MaterialManager, self).__init__(drawing, dict_name='ACAD_MATERIAL', object_type='MATERIAL')
+    def __init__(self, drawing: 'Drawing'):
+        super().__init__(drawing, dict_name='ACAD_MATERIAL', object_type='MATERIAL')
         self.create_required_entries()
 
-    def create_required_entries(self):
+    def create_required_entries(self) -> None:
         for name in ('ByBlock', 'ByLayer', 'Global'):
             if name not in self.object_dict:
                 self.new(name)

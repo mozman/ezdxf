@@ -220,6 +220,7 @@ Rational B-splines are defined simply by applying the B-spline equation (Equatio
 rather than normal 3D coordinates.
 
 """
+from typing import List, Iterable, Sequence
 from .vector import Vector, distance
 from .matrix import Matrix
 from .base import is_close
@@ -227,7 +228,7 @@ from math import pow
 from ezdxf.lldxf.const import DXFValueError
 
 
-def knot_open_uniform(n, order):
+def knot_open_uniform(n: int, order: int) -> List[float]:
     """
     Returns a open uniform knot vector.
 
@@ -249,12 +250,12 @@ def knot_open_uniform(n, order):
     return knots
 
 
-def is_uniform_knots(knots, places=4):
+def is_uniform_knots(knots, places: int=4):
     deltas = set(round(k2-k1, ndigits=places) for k1, k2 in zip(knots, knots[1:]))
     return len(deltas) == 1
 
 
-def knot_uniform(n, order):
+def knot_uniform(n: int, order: int) -> List[float]:
     """
     Returns a uniform knot vector.
 
@@ -268,7 +269,7 @@ def knot_uniform(n, order):
     return [float(knot_value) for knot_value in range(0, n + order)]
 
 
-def required_knot_values(count, order):
+def required_knot_values(count: int, order: int) -> int:
     # just to show the connections
     # count = count of control points = n + 1
     # k = order of spline = degree + 1
@@ -284,7 +285,7 @@ def required_knot_values(count, order):
     return n + p + 2
 
 
-def uniform_t_vector(fit_points):
+def uniform_t_vector(fit_points: Sequence) -> Iterable[float]:
     n = float(len(fit_points)-1)
     for t in range(len(fit_points)):
         yield float(t) / n

@@ -1,6 +1,7 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple, Union, Dict
 from contextlib import contextmanager
 import array
 from itertools import chain
@@ -15,21 +16,24 @@ from ezdxf.lldxf import loader
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Vertex
+
 
 class MeshVertexArray(VertexArray):
     code = -92
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         yield DXFTag(92, len(self))
         # python 2.7 compatible
         for tag in super(MeshVertexArray, self).dxftags():
             yield tag
 
-    def set_data(self, vertices):
+    def set_data(self, vertices: Iterable['Vertex']) -> None:
         self.value = array.array('d', chain.from_iterable(vertices))
 
 
-def create_vertex_array(tags, start_index):
+def create_vertex_array(tags: 'Tags', start_index: int) -> 'MeshVertexArray':
     vertex_tags = tags.collect_consecutive_tags(codes=(10,), start=start_index)
     return MeshVertexArray(data=chain.from_iterable(t.value for t in vertex_tags))
 
@@ -37,13 +41,13 @@ def create_vertex_array(tags, start_index):
 class FaceList(TagList):
     code = -93
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[array.array]:
         return iter(self.value)
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         # count = count of tags not faces!
         yield DXFTag(93, self.tag_count())
         for face in self.value:
@@ -51,17 +55,17 @@ class FaceList(TagList):
             for index in face:
                 yield DXFTag(90, index)
 
-    def tag_count(self):
+    def tag_count(self) -> int:
         return len(self.value) + sum(len(f) for f in self.value)
 
-    def set_data(self, faces):
+    def set_data(self, faces: Iterable[Sequence[int]]) -> None:
         _faces = []
         for face in faces:
             _faces.append(face_to_array(face))
         self.value = _faces
 
 
-def face_to_array(face):
+def face_to_array(face: Sequence[int]) -> array.array:
     max_index = max(face)
     if max_index < 256:
         dtype = 'B'
@@ -72,12 +76,12 @@ def face_to_array(face):
     return array.array(dtype, face)
 
 
-def create_face_list(tags, start_index):
+def create_face_list(tags: 'Tags', start_index: int) -> 'FaceList':
     faces = FaceList()
     faces_list = faces.value
     face = []
     counter = 0
-    for tag in tags.collect_consecutive_tags(codes=(90, ), start=start_index):
+    for tag in tags.collect_consecutive_tags(codes=(90,), start=start_index):
         if not counter:
             # leading counter tag
             counter = tag.value
@@ -103,35 +107,35 @@ class EdgeArray(TagArray):
     VALUE_CODE = 90  # 32 bit integer
     DTYPE = 'L'
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         # count = count of edges not tags!
-        yield DXFTag(94, len(self.value)//2)
+        yield DXFTag(94, len(self.value) // 2)
         # python 2.7 compatible
         for v in super(EdgeArray, self).dxftags():
             yield v
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value) // 2
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Tuple[int, int]]:
         for edge in take2(self.value):
             yield edge
 
-    def set_data(self, edges):
+    def set_data(self, edges: Iterable[Tuple[int, int]]) -> None:
         self.value = array.array('L', chain.from_iterable(edges))
 
 
-def create_edge_array(tags, start_index):
-    return EdgeArray(data=collect_values(tags, start_index, code=90))
+def create_edge_array(tags: 'Tags', start_index: int) -> 'EdgeArray':
+    return EdgeArray(data=collect_values(tags, start_index, code=90))  # int values
 
 
-def collect_values(tags, start_index, code):
-    values = tags.collect_consecutive_tags(codes=(code, ), start=start_index)
+def collect_values(tags: 'Tags', start_index: int, code: int) -> Iterable[Union[float, int]]:
+    values = tags.collect_consecutive_tags(codes=(code,), start=start_index)
     return (t.value for t in values)
 
 
-def create_crease_array(tags, start_index):
-    return CreaseArray(data=collect_values(tags, start_index, code=140))
+def create_crease_array(tags: 'Tags', start_index: int) -> 'CreaseArray':
+    return CreaseArray(data=collect_values(tags, start_index, code=140))  # float values
 
 
 class CreaseArray(TagArray):
@@ -139,32 +143,32 @@ class CreaseArray(TagArray):
     VALUE_CODE = 140  # double precision
     DTYPE = 'd'
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         yield DXFTag(95, len(self.value))
         # python 2.7 compatible
         for v in super(CreaseArray, self).dxftags():
             yield v
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[float]:
         return iter(self.value)
 
-    def set_data(self, creases):
+    def set_data(self, creases: Iterable[float]) -> None:
         self.value = array.array('d', creases)
 
 
 COUNT_ERROR_MSG = "'MESH (#{}) without {} count.'"
 
 
-def convert_and_replace_tags(tags, handle):
+def convert_and_replace_tags(tags: 'Tags', handle: str) -> None:
     def process_vertices():
         try:
             vertex_count_index = tags.tag_index(92)
         except DXFValueError:
             raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'vertex'))
-        vertices = create_vertex_array(tags, vertex_count_index+1)
+        vertices = create_vertex_array(tags, vertex_count_index + 1)
         # replace vertex count tag and all vertex tags by MeshVertexArray()
         end_index = vertex_count_index + 1 + len(vertices)
         tags[vertex_count_index:end_index] = [vertices]
@@ -176,7 +180,7 @@ def convert_and_replace_tags(tags, handle):
             raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'face'))
         else:
             # replace face count tag and all face tags by FaceList()
-            faces = create_face_list(tags, face_count_index+1)
+            faces = create_face_list(tags, face_count_index + 1)
             end_index = face_count_index + 1 + faces.tag_count()
             tags[face_count_index:end_index] = [faces]
 
@@ -186,7 +190,7 @@ def convert_and_replace_tags(tags, handle):
         except DXFValueError:
             raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'edge'))
         else:
-            edges = create_edge_array(tags, edge_count_index+1)
+            edges = create_edge_array(tags, edge_count_index + 1)
             # replace edge count tag and all edge tags by EdgeArray()
             end_index = edge_count_index + 1 + len(edges.value)
             tags[edge_count_index:end_index] = [edges]
@@ -197,7 +201,7 @@ def convert_and_replace_tags(tags, handle):
         except DXFValueError:
             raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'crease'))
         else:
-            creases = create_crease_array(tags, crease_count_index+1)
+            creases = create_crease_array(tags, crease_count_index + 1)
             # replace crease count tag and all crease tags by CreaseArray()
             end_index = crease_count_index + 1 + len(creases.value)
             tags[crease_count_index:end_index] = [creases]
@@ -209,7 +213,7 @@ def convert_and_replace_tags(tags, handle):
 
 
 @loader.register('MESH', legacy=False)
-def tag_processor(tags):
+def tag_processor(tags: ExtendedTags) -> ExtendedTags:
     subclass = tags.get_subclass('AcDbSubDMesh')
     handle = tags.get_handle()
     convert_and_replace_tags(subclass, handle)
@@ -282,71 +286,71 @@ class Mesh(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mesh_subclass)
 
     @property
-    def AcDbSubDMesh(self):
+    def AcDbSubDMesh(self) -> 'Tags':
         return self.tags.subclasses[2]
 
     @property
-    def vertices(self):
+    def vertices(self) -> MeshVertexArray:
         return self.AcDbSubDMesh.get_first_tag(MeshVertexArray.code)
 
     @property
-    def faces(self):
+    def faces(self) -> FaceList:
         return self.AcDbSubDMesh.get_first_tag(FaceList.code)
 
     @property
-    def edges(self):
+    def edges(self) -> EdgeArray:
         return self.AcDbSubDMesh.get_first_tag(EdgeArray.code)
 
     @property
-    def creases(self):
+    def creases(self) -> CreaseArray:
         return self.AcDbSubDMesh.get_first_tag(CreaseArray.code)
 
-    def get_data(self):
+    def get_data(self) -> 'MeshData':
         return MeshData(self)
 
-    def set_data(self, data):
+    def set_data(self, data: 'MeshData') -> None:
         self.vertices.set_data(data.vertices)
         self.faces.set_data(data.faces)
         self.edges.set_data(data.edges)
         self.creases.set_data(data.edge_crease_values)
 
     @contextmanager
-    def edit_data(self):
+    def edit_data(self) -> 'MeshData':
         data = self.get_data()
         yield data
         self.set_data(data)
 
 
-class MeshData(object):
+class MeshData:
     def __init__(self, mesh):
-        self.vertices = list(mesh.vertices)
-        self.faces = list(mesh.faces)
-        self.edges = list(mesh.edges)
-        self.edge_crease_values = list(mesh.creases)
+        self.vertices = list(mesh.vertices)  # type: List[array.array]
+        self.faces = list(mesh.faces)  # type: List[array.array]
+        self.edges = list(mesh.edges)  # type: List[Tuple[int, int]]
+        self.edge_crease_values = list(mesh.creases)  # type: List[float]
 
-    def add_face(self, vertices):
+    def add_face(self, vertices: Iterable[Sequence[float]]) -> Sequence[int]:
         return self.add_entity(vertices, self.faces)
 
-    def add_edge(self, vertices):
+    def add_edge(self, vertices: Sequence[Sequence[float]]) -> Sequence[int]:
         if len(vertices) != 2:
             raise DXFValueError("Parameter vertices has to be a list/tuple of 2 vertices [(x1, y1, z1), (x2, y2, z2)].")
         return self.add_entity(vertices, self.edges)
 
-    def add_entity(self, vertices, entity_list):
+    def add_entity(self, vertices: Iterable[Sequence[float]], entity_list: List) -> Sequence[int]:
         indices = [self.add_vertex(vertex) for vertex in vertices]
         entity_list.append(indices)
         return indices
 
-    def add_vertex(self, vertex):
+    def add_vertex(self, vertex: Sequence[float]) -> int:
         if len(vertex) != 3:
             raise DXFValueError('Parameter vertex has to be a 3-tuple (x, y, z).')
         index = len(self.vertices)
         self.vertices.append(vertex)
         return index
 
-    def optimize(self, precision=6):
-        def remove_doublette_vertices():
-            def prepare_vertices():
+    def optimize(self, precision: int = 6):
+        def remove_doublette_vertices() -> Dict[int, int]:
+            def prepare_vertices() -> Iterable[Tuple[float, float, float]]:
                 for index, vertex in enumerate(self.vertices):
                     x, y, z = vertex
                     yield round(x, precision), round(y, precision), round(z, precision), index
@@ -354,7 +358,7 @@ class MeshData(object):
             sorted_vertex_list = list(sorted(prepare_vertices()))
             original_vertices = self.vertices
             self.vertices = []
-            index_map = {}
+            index_map = {}  # type: Dict[int, int]
             cmp_vertex = None
             index = 0
             while len(sorted_vertex_list):
@@ -370,19 +374,19 @@ class MeshData(object):
                     index_map[original_index] = index
             return index_map
 
-        def remap_faces(index_map):
-            self.faces = remap_indices(self.faces, index_map)
+        def remap_faces() -> None:
+            self.faces = remap_indices(self.faces)
 
-        def remap_edges(index_map):
-            self.edges = remap_indices(self.edges, index_map)
+        def remap_edges() -> None:
+            self.edges = remap_indices(self.edges)
 
-        def remap_indices(entity_list, index_map):
-            mapped_indices = []
+        def remap_indices(entity_list: Sequence[Sequence[int]]) -> List[Tuple]:
+            mapped_indices = []  # type: List[Tuple]
             for entity in entity_list:
                 index_list = [index_map[index] for index in entity]
                 mapped_indices.append(tuple(index_list))
             return mapped_indices
 
         index_map = remove_doublette_vertices()
-        remap_faces(index_map)
-        remap_edges(index_map)
+        remap_faces()
+        remap_edges()

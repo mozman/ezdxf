@@ -1,12 +1,16 @@
 # Created: 16.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, Union, cast
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.legacy import tableentries as legacy
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools.complex_ltype import lin_compiler
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, ComplexLineTypePart
 
 _LAYERTEMPLATE = """0
 LAYER
@@ -60,7 +64,7 @@ class Layer(legacy.Layer):
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, layer_subclass)
 
     @classmethod
-    def new(cls, handle, dxfattribs=None, drawing=None):
+    def new(cls, handle: str, dxfattribs: dict = None, drawing: 'Drawing' = None) -> 'Layer':
         layer = super(Layer, cls).new(handle, dxfattribs, drawing)
         # just for testing scenarios where drawing is None
         if drawing is not None:
@@ -144,7 +148,7 @@ class Linetype(legacy.Linetype):
     TEMPLATE = ExtendedTags.from_text(_LTYPETEMPLATE)
     DXFATTRIBS = DXFAttributes(none_subclass, symbol_subclass, linetype_subclass)
 
-    def _setup_pattern(self, pattern, length):
+    def _setup_pattern(self, pattern: Union[Iterable[float], str], length: float) -> None:
         complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
             self._setup_complex_pattern(pattern, length)
@@ -158,7 +162,7 @@ class Linetype(legacy.Linetype):
                 subclass.append(DXFTag(49, float(element)))
                 subclass.append(DXFTag(74, 0))
 
-    def _setup_complex_pattern(self, pattern, length):
+    def _setup_complex_pattern(self, pattern: str, length: float) -> None:
         tokens = lin_compiler(pattern)
         subclass = self.tags.get_subclass('AcDbLinetypeTableRecord')
         subclass.append(DXFTag(73, 0))  # temp length of 0
@@ -171,7 +175,8 @@ class Linetype(legacy.Linetype):
                 subclass.append(token)
                 count += 1
             else:  # TEXT or SHAPE
-                subclass.extend(token.complex_ltype_tags(self.drawing))
+                tags = cast('ComplexLineTypePart', token).complex_ltype_tags(self.drawing)
+                subclass.extend(tags)
         subclass.append(DXFTag(74, 0))  # useless 74 at the end :))
         subclass.update(DXFTag(73, count))
 

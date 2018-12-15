@@ -1,11 +1,15 @@
 # Created: 17.03.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, Optional, List, Tuple
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.tags import multi_tags_to_text, text_to_multi_tags
 
 from .dxfobjects import DXFEntity, none_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, XType
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Vertex
 
 _GEODATA_CLS = """0
 CLASS
@@ -105,17 +109,24 @@ class GeoData(DXFEntity):
         none_subclass,
         DefSubclass('AcDbGeoData', {
             'version': DXFAttr(90, default=2),  # works in R2009=1 but this release has no DXF version, R2010=2
-            'coordinate_type': DXFAttr(70, default=3),  # 0=unknown; 1=local grid; 2= projected grid; 3=geographic (latitude/longitude)
+            'coordinate_type': DXFAttr(70, default=3),
+            # 0=unknown; 1=local grid; 2= projected grid; 3=geographic (latitude/longitude)
             'block_record': DXFAttr(330),  # handle to host block table record
-            'design_point': DXFAttr(10, XType.point3d),  # Design point, reference point in WCS coordinates
-            'reference_point': DXFAttr(11, XType.point3d),  # Reference point in coordinate system coordinates, valid only when coordinate type is Local Grid.
-            'north_direction': DXFAttr(12, XType.point2d),  # North direction vector (2D)
-            'horizontal_unit_scale': DXFAttr(40),  # Horizontal unit scale, factor which converts horizontal design coordinates to meters by multiplication.
-            'vertical_unit_scale': DXFAttr(41),  # Vertical unit scale, factor which converts vertical design coordinates to meters by multiplication.
-            'horizontal_units': DXFAttr(91),  # Horizontal units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by horizontal unit scale is not supported by AutoCAD enumeration.
-            'vertical_units': DXFAttr(92),  # Vertical units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by vertical unit scale is not supported by AutoCAD enumeration.
-            'up_direction': DXFAttr(210, XType.point3d),  # Up direction
-            'scale_estimation_method': DXFAttr(95, default=1),  # 1=None; 2=User specified scale factor; 3=Grid scale at reference point; 4=Prismoidal
+            'design_point': DXFAttr(10, xtype=XType.point3d),  # Design point, reference point in WCS coordinates
+            'reference_point': DXFAttr(11, xtype=XType.point3d),
+            # Reference point in coordinate system coordinates, valid only when coordinate type is Local Grid.
+            'north_direction': DXFAttr(12, xtype=XType.point2d),  # North direction vector (2D)
+            'horizontal_unit_scale': DXFAttr(40),
+            # Horizontal unit scale, factor which converts horizontal design coordinates to meters by multiplication.
+            'vertical_unit_scale': DXFAttr(41),
+            # Vertical unit scale, factor which converts vertical design coordinates to meters by multiplication.
+            'horizontal_units': DXFAttr(91),
+            # Horizontal units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by horizontal unit scale is not supported by AutoCAD enumeration.
+            'vertical_units': DXFAttr(92),
+            # Vertical units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by vertical unit scale is not supported by AutoCAD enumeration.
+            'up_direction': DXFAttr(210, xtype=XType.point3d),  # Up direction
+            'scale_estimation_method': DXFAttr(95, default=1),
+            # 1=None; 2=User specified scale factor; 3=Grid scale at reference point; 4=Prismoidal
             'sea_level_correction': DXFAttr(294, default=0),  # Bool flag specifying whether to do sea level correction
             'user_scale_factor': DXFAttr(141, default=1),  # User specified scale factor
             'sea_level_elevation': DXFAttr(142, default=0),  # Sea level elevation
@@ -148,10 +159,10 @@ class GeoData(DXFEntity):
     PRISMOIDEAL = 4
 
     @property
-    def AcDbGeoData(self):
+    def AcDbGeoData(self) -> 'Tags':
         return self.tags.get_subclass('AcDbGeoData')
 
-    def get_coordinate_system_definition(self):
+    def get_coordinate_system_definition(self) -> str:
         # 303, 303, 301, Coordinate system definition string, always XML?
         start = self._get_start_of_coordinate_system_definition()
         if start is not None:
@@ -160,7 +171,7 @@ class GeoData(DXFEntity):
         else:
             return ""
 
-    def set_coordinate_system_definition(self, text):
+    def set_coordinate_system_definition(self, text: str) -> None:
         tags = text_to_multi_tags(text, code=303, size=255, line_ending='^J')
         if len(tags):
             last_value = tags[-1].value
@@ -168,11 +179,11 @@ class GeoData(DXFEntity):
             insert_pos = self._get_start_of_coordinate_system_definition()
             geodata = self.AcDbGeoData
             if insert_pos is None:
-                insert_pos = geodata.tag_index(330)+1  # 330 host block record is required
+                insert_pos = geodata.tag_index(330) + 1  # 330 host block record is required
             self.AcDbGeoData.remove_tags((301, 303))
             geodata[insert_pos:insert_pos] = tags
 
-    def _get_start_of_coordinate_system_definition(self):
+    def _get_start_of_coordinate_system_definition(self) -> Optional[int]:
         try:
             start = self.AcDbGeoData.tag_index(303)
         except DXFValueError:
@@ -182,18 +193,18 @@ class GeoData(DXFEntity):
                 return None
         return start
 
-    def get_mesh_data(self):
+    def get_mesh_data(self) -> Tuple[List[Tuple['Vertex', 'Vertex']], List[List['Vertex']]]:
         geo_data = self.AcDbGeoData
 
-        def get_vertices():
+        def get_vertices() -> List[Tuple['Vertex', 'Vertex']]:
             try:
                 start = geo_data.tag_index(93)
             except DXFValueError:
                 return []
 
             vertex_tags = geo_data.collect_consecutive_tags((13, 14), start=start + 1)
-            source_vertices = []
-            target_vertices = []
+            source_vertices = []  # type: List[Vertex]
+            target_vertices = []  # type: List[Vertex]
             for vertex in vertex_tags:
                 if vertex.code == 13:
                     source_vertices.append(vertex.value)
@@ -206,15 +217,15 @@ class GeoData(DXFEntity):
 
             return list(zip(source_vertices, target_vertices))
 
-        def get_faces():
+        def get_faces() -> List[List['Vertex']]:
             try:
                 start = geo_data.tag_index(96)
             except DXFValueError:
                 return []
 
             face_tags = geo_data.collect_consecutive_tags((97, 98, 99), start=start + 1)
-            faces = []
-            face = []
+            faces = []  # type: List[List[Vertex]]
+            face = []  # type: List[Vertex]
             for face_tag in face_tags:
                 if face_tag.code == 97:
                     if len(face):
@@ -227,7 +238,9 @@ class GeoData(DXFEntity):
 
         return get_vertices(), get_faces()
 
-    def set_mesh_data(self, vertices=None, faces=None):
+    def set_mesh_data(self,
+                      vertices: List[Tuple['Vertex', 'Vertex']] = None,
+                      faces: List[List['Vertex']] = None) -> None:
         if vertices is None:
             vertices = []
         else:
@@ -246,5 +259,5 @@ class GeoData(DXFEntity):
         for face in faces:
             geodata.extend(DXFTag(code, index) for code, index in zip((97, 98, 99), face))
 
-    def _remove_mesh_data(self):
+    def _remove_mesh_data(self) -> None:
         self.AcDbGeoData.remove_tags(codes=(93, 13, 14, 96, 97, 98, 99))

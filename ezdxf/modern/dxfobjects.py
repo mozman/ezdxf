@@ -1,9 +1,13 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.dxfentity import DXFEntity
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Auditor
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -29,7 +33,7 @@ class DXFClass(DXFEntity):
 class DXFObject(DXFEntity):
     __slots__ = ()
 
-    def audit(self, auditor):
+    def audit(self, auditor: 'Auditor') -> None:
         auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
 
 

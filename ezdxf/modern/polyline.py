@@ -1,6 +1,7 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf import loader
@@ -10,6 +11,8 @@ from ezdxf.legacy.facemixins import PolyfaceMixin, PolymeshMixin
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntityExtension
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
 
 _POLYLINE_TPL = """0
 POLYLINE
@@ -55,18 +58,18 @@ class Polyline(polyline.Polyline, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_POLYLINE_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, polyline_subclass)
 
-    def post_new_hook(self):
+    def post_new_hook(self) -> None:
         super(Polyline, self).post_new_hook()
         self.update_subclass_specifier()
 
-    def update_subclass_specifier(self):
+    def update_subclass_specifier(self) -> None:
         # For dxf attribute access not the name of the subclass is important, but
         # the order of the subclasses 1st, 2nd, 3rd and so on.
         # The 3rd subclass is the AcDb3dPolyline or AcDb2dPolyline subclass
-        subclass = self.tags.subclasses[2]
+        subclass = self.tags.subclasses[2]  # type: Tags
         subclass[0] = DXFTag(100, self.get_mode())
 
-    def cast(self):
+    def cast(self) -> 'Polyline':
         mode = self.get_mode()
         if mode == 'AcDbPolyFaceMesh':
             return Polyface.convert(self)
@@ -95,7 +98,7 @@ class Polyface(Polyline, PolyfaceMixin):
 
     """
     @staticmethod
-    def convert(polyline):
+    def convert(polyline: 'Polyline') -> 'Polyface':
         return Polyface(polyline.tags, polyline.drawing)
 
 
@@ -113,7 +116,7 @@ class Polymesh(Polyline, PolymeshMixin):
       AcDbPolygonMeshVertex
     """
     @staticmethod
-    def convert(polyline):
+    def convert(polyline: 'Polyline') -> 'Polymesh':
         return Polymesh(polyline.tags, polyline.drawing)
 
 
@@ -171,11 +174,11 @@ class DXFVertex(polyline.DXFVertex, ModernGraphicEntityExtension):
     TEMPLATE = ExtendedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, *vertex_subclass)
 
-    def post_new_hook(self):
+    def post_new_hook(self) -> None:
         self.update_subclass_specifier()
 
-    def update_subclass_specifier(self):
-        def set_subclass(subclassname):
+    def update_subclass_specifier(self) -> None:
+        def set_subclass(subclassname: str) -> None:
             subclass = self.tags.subclasses[3]
             subclass[0] = DXFTag(100, subclassname)
 
@@ -193,7 +196,7 @@ class DXFVertex(polyline.DXFVertex, ModernGraphicEntityExtension):
 
 
 @loader.register('VERTEX', legacy=False)
-def vertex_tags_processor(tags):
+def vertex_tags_processor(tags: ExtendedTags) -> Optional[ExtendedTags]:
     """
     If subclass[2] is not 'AcDbVertex', insert empty subclass
 

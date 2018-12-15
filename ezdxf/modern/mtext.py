@@ -1,6 +1,7 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, List
 from contextlib import contextmanager
 import math
 
@@ -12,6 +13,9 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 _MTEXT_TPL = """0
 MTEXT
@@ -75,7 +79,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
     TEMPLATE = ExtendedTags.from_text(_MTEXT_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, mtext_subclass)
 
-    def get_text(self):
+    def get_text(self) -> str:
         tags = self.tags.get_subclass('AcDbMText')
         tail = ""
         parts = []
@@ -87,7 +91,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         parts.append(tail)
         return "".join(parts)
 
-    def set_text(self, text):
+    def set_text(self, text: str) -> 'MText':
         tags = self.tags.get_subclass('AcDbMText')
         tags.remove_tags(codes=(1, 3))
         str_chunks = split_string_in_chunks(text, size=250)
@@ -98,7 +102,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         tags.append(DXFTag(1, str_chunks[0]))
         return self
 
-    def get_rotation(self):
+    def get_rotation(self) -> float:
         try:
             vector = self.dxf.text_direction
         except DXFValueError:
@@ -108,12 +112,12 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
             rotation = math.degrees(radians)
         return rotation
 
-    def set_rotation(self, angle):
+    def set_rotation(self, angle: float) -> 'MText':
         del self.dxf.text_direction  # *text_direction* has higher priority than *rotation*, therefore delete it
         self.dxf.rotation = angle
         return self
 
-    def set_location(self, insert, rotation=None, attachment_point=None):
+    def set_location(self, insert: 'Vertex', rotation: float = None, attachment_point: 'Vertex' = None) -> 'MText':
         self.dxf.insert = Vector(insert)
         if rotation is not None:
             self.set_rotation(rotation)
@@ -122,12 +126,13 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         return self
 
     @contextmanager
-    def edit_data(self):
+    def edit_data(self) -> 'MTextData':
         buffer = MTextData(self.get_text())
         yield buffer
         self.set_text(buffer.text)
 
     buffer = edit_data  # alias
+
 
 ##################################################
 # MTEXT inline codes
@@ -184,7 +189,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
 # Codes and braces can be nested up to 8 levels deep
 
 
-class MTextData(object):
+class MTextData:
     UNDERLINE_START = '\\L;'
     UNDERLINE_STOP = '\\l;'
     UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
@@ -200,29 +205,31 @@ class MTextData(object):
     GROUP = GROUP_START + '%s' + GROUP_END
     NBSP = '\\~'  # none breaking space
 
-    def __init__(self, text):
+    def __init__(self, text: str):
         self.text = text
 
-    def __iadd__(self, text):
+    def __iadd__(self, text: str) -> 'MTextData':
         self.text += text
         return self
+
     append = __iadd__
 
-    def set_font(self, name, bold=False, italic=False, codepage=1252, pitch=0):
+    def set_font(self, name: str, bold: bool = False, italic: bool = False, codepage: int = 1252,
+                 pitch: int = 0) -> None:
         bold_flag = 1 if bold else 0
         italic_flag = 1 if italic else 0
         s = "\\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
         self.append(s)
 
-    def set_color(self, color_name):
+    def set_color(self, color_name: str) -> None:
         self.append("\\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
 
 
-def split_string_in_chunks(s, size=250):
+def split_string_in_chunks(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos:pos+size]
+        chunk = s[pos:pos + size]
         chunk_len = len(chunk)
         if chunk_len:
             chunks.append(chunk)

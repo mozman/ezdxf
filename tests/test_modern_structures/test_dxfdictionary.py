@@ -25,7 +25,7 @@ class TestNoneEmptyDXFDict:
 
     def test_getitem_with_keyerror(self, dxfdict):
         with pytest.raises(ezdxf.DXFKeyError):
-            dxfdict['MOZMAN']
+            _ = dxfdict['MOZMAN']
 
     def test_owner(self, dxfdict):
         assert dxfdict.dxf.owner == '0'
@@ -42,7 +42,7 @@ class TestNoneEmptyDXFDict:
 
     def test_get_with_keyerror(self, dxfdict):
         with pytest.raises(ezdxf.DXFKeyError):
-            dxfdict.get('ACAD_MOZMAN')
+            _ = dxfdict.get('ACAD_MOZMAN')
 
     def test_contains(self, dxfdict):
         assert 'ACAD_PLOTSTYLENAME' in dxfdict
@@ -81,6 +81,12 @@ class TestNoneEmptyDXFDict:
         assert 14 == len(dxfdict)
         dxfdict.clear()
         assert 0 == len(dxfdict)
+
+    def test_keys(self, dxfdict):
+        assert 14 == len(list(dxfdict.keys()))
+
+    def test_items(self, dxfdict):
+        assert 14 == len(list(dxfdict.items()))
 
 
 class TestEmptyDXFDict:

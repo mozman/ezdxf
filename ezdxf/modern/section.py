@@ -1,9 +1,12 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, List
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Vertex
 
 _SECTION_TPL = """0
 SECTION
@@ -61,12 +64,12 @@ class Section(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, section_subclass)
 
     @property
-    def AcDbSection(self):
+    def AcDbSection(self) -> 'Tags':
         return self.tags.subclasses[2]
 
-    def get_vertices(self):
+    def get_vertices(self) -> List['Vertex']:
         return [vertex.value for vertex in self.AcDbSection.find_all(11)]
 
-    def get_back_line_vertices(self):
+    def get_back_line_vertices(self) -> List['Vertex']:
         return [vertex.value for vertex in self.AcDbSection.find_all(12)]
 

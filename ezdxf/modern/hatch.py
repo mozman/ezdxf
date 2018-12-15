@@ -1,6 +1,7 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Optional, List, Tuple, Sequence, Union, Iterable
 import math
 from contextlib import contextmanager
 
@@ -15,6 +16,9 @@ from ezdxf.lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.algebra.bspline import bspline_control_frame
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import RGB
 
 _HATCH_TPL = """0
 HATCH
@@ -90,23 +94,23 @@ class Hatch(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, hatch_subclass)
 
     @property
-    def AcDbHatch(self):
+    def AcDbHatch(self) -> Tags:
         return self.tags.subclasses[2]
 
     @property
-    def has_solid_fill(self):
+    def has_solid_fill(self) -> bool:
         return bool(self.dxf.solid_fill)
 
     @property
-    def has_pattern_fill(self):
+    def has_pattern_fill(self) -> bool:
         return not bool(self.dxf.solid_fill)
 
     @property
-    def has_gradient_data(self):
+    def has_gradient_data(self) -> bool:
         return bool(self.AcDbHatch.get_first_value(450, 0))
 
     @property
-    def bgcolor(self):
+    def bgcolor(self) -> Optional['RGB']:
         try:
             xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
         except ValueError:
@@ -115,7 +119,7 @@ class Hatch(ModernGraphicEntity):
         return int2rgb(color)
 
     @bgcolor.setter
-    def bgcolor(self, rgb):
+    def bgcolor(self, rgb: 'RGB') -> None:
         color_value = rgb2int(rgb) | -0b111110000000000000000000000000  # it's magic
         try:
             xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
@@ -128,7 +132,7 @@ class Hatch(ModernGraphicEntity):
             xdata_bgcolor.set_first(DXFTag(1071, color_value))
 
     @bgcolor.deleter
-    def bgcolor(self):
+    def bgcolor(self) -> None:
         try:
             xdata_bgcolor = self.tags.get_xdata('HATCHBACKGROUNDCOLOR')
         except DXFValueError:  # background color does not exist
@@ -137,18 +141,18 @@ class Hatch(ModernGraphicEntity):
             self.tags.xdata.remove(xdata_bgcolor)
 
     @contextmanager
-    def edit_boundary(self):
+    def edit_boundary(self) -> 'BoundaryPathData':
         boundary_path_data = BoundaryPathData(self)
         yield boundary_path_data
         self._set_boundary_path_data(boundary_path_data)
 
-    def _set_boundary_path_data(self, boundary_path_data):
+    def _set_boundary_path_data(self, boundary_path_data: 'BoundaryPathData') -> None:
         # replace existing path tags by the new path
         start_index = boundary_path_data.start_index
         end_index = boundary_path_data.end_index
         self.AcDbHatch[start_index: end_index] = boundary_path_data.dxftags()
 
-    def set_solid_fill(self, color=7, style=1, rgb=None):
+    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
         self._remove_gradient_data()
         if self.has_pattern_fill:
             self._remove_pattern_data()
@@ -161,7 +165,7 @@ class Hatch(ModernGraphicEntity):
         if rgb is not None:  # if a rgb value is present, the color value is ignored by AutoCAD
             self.rgb = rgb  # rgb should be a (r, g, b) tuple
 
-    def _remove_pattern_data(self):
+    def _remove_pattern_data(self) -> None:
         if self.has_pattern_fill:
             with self.edit_pattern() as e:  # delete existing pattern definition
                 e.clear()
@@ -169,10 +173,17 @@ class Hatch(ModernGraphicEntity):
             # Important: AutoCAD does not allow the tags pattern_angle (52), pattern_scale (41), pattern_double (77) for
             # hatches with SOLID fill.
 
-    def set_gradient(self, color1=(0, 0, 0), color2=(255, 255, 255), rotation=0., centered=0., one_color=0, tint=0.,
-                     name='LINEAR'):
+    def set_gradient(self,
+                     color1: 'RGB' = (0, 0, 0),
+                     color2: 'RGB' = (255, 255, 255),
+                     rotation: float = 0.,
+                     centered: float = 0.,
+                     one_color: int = 0,
+                     tint: float = 0.,
+                     name: str = 'LINEAR') -> None:
         if self.drawing is not None and self.drawing.dxfversion < 'AC1018':
-            raise DXFVersionError("Gradient support requires at least DXF version AC1018, this drawing is:%s" % self.drawing.dxfversion)
+            raise DXFVersionError(
+                "Gradient support requires at least DXF version AC1018, this drawing is:%s" % self.drawing.dxfversion)
         gradient_data = GradientData()
         gradient_data.color1 = color1
         gradient_data.color2 = color2
@@ -183,12 +194,12 @@ class Hatch(ModernGraphicEntity):
         gradient_data.name = name
         self._set_gradient(gradient_data)
 
-    def get_gradient(self):
+    def get_gradient(self) -> 'GradientData':
         if not self.has_gradient_data:
             raise DXFValueError('HATCH has no gradient data.')
         return GradientData.from_tags(self.AcDbHatch)
 
-    def _set_gradient(self, gradient_data):
+    def _set_gradient(self, gradient_data: 'GradientData') -> None:
         gradient_data.name = gradient_data.name.upper()
         if gradient_data.name not in const.GRADIENT_TYPES:
             raise DXFValueError('Invalid gradient type name: %s' % gradient_data.name)
@@ -200,18 +211,19 @@ class Hatch(ModernGraphicEntity):
         self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
         self.AcDbHatch.extend(gradient_data.dxftags())
 
-    def _remove_gradient_data(self):
+    def _remove_gradient_data(self) -> None:
         self.AcDbHatch.remove_tags(GRADIENT_CODES)
 
     @contextmanager
-    def edit_gradient(self):
+    def edit_gradient(self) -> 'GradientData':
         if not self.has_gradient_data:
             raise DXFValueError('HATCH has no gradient data.')
         gradient_data = GradientData.from_tags(self.AcDbHatch)
         yield gradient_data
         self._set_gradient(gradient_data)
 
-    def set_pattern_fill(self, name, color=7, angle=0., scale=1., double=0, style=1, pattern_type=1, definition=None):
+    def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0., scale: float = 1., double: int = 0,
+                         style: int = 1, pattern_type: int = 1, definition=None) -> None:
         self._remove_gradient_data()
         self.dxf.solid_fill = 0
         self.dxf.pattern_name = name
@@ -234,14 +246,14 @@ class Hatch(ModernGraphicEntity):
         self.set_pattern_definition(definition)
 
     @contextmanager
-    def edit_pattern(self):
+    def edit_pattern(self) -> 'PatternData':
         if self.has_solid_fill:
             raise DXFValueError('Solid fill HATCH has no pattern data.')
         pattern_data = PatternData(self)
         yield pattern_data
         self._set_pattern_data(pattern_data)
 
-    def _set_pattern_data(self, new_pattern_data):
+    def _set_pattern_data(self, new_pattern_data: 'PatternData') -> None:
         start_index = new_pattern_data.existing_pattern_start_index
         end_index = new_pattern_data.existing_pattern_end_index
         pattern_tags = new_pattern_data.dxftags()
@@ -254,7 +266,7 @@ class Hatch(ModernGraphicEntity):
         # replace existing pattern data
         self.AcDbHatch[start_index: end_index] = pattern_tags
 
-    def set_pattern_definition(self, lines):
+    def set_pattern_definition(self, lines: Sequence) -> None:
         """
         Setup hatch patten definition by a list of definition lines and  a definition line is a 4-tuple [angle,
         base_point, offset, dash_length_items]
@@ -270,42 +282,43 @@ class Hatch(ModernGraphicEntity):
         with self.edit_pattern() as pattern_editor:
             pattern_editor.lines = pattern_lines
 
-    def get_seed_points(self):
+    def get_seed_points(self) -> List[Tuple[float, float]]:
         hatch_tags = self.AcDbHatch
         first_seed_point_index = self._get_seed_point_index(hatch_tags)
         seed_points = hatch_tags.collect_consecutive_tags([10], start=first_seed_point_index)
         return [tag.value for tag in seed_points]
 
-    def _get_seed_point_index(self, hatch_tags):
+    def _get_seed_point_index(self, hatch_tags: Tags) -> int:
         try:
             seed_count_index = hatch_tags.tag_index(98)  # find index of 'Number of seed points'
         except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tag 'Number of seed points' (code=98).")
         try:
-            first_seed_point_index = hatch_tags.tag_index(10, seed_count_index+1)
+            first_seed_point_index = hatch_tags.tag_index(10, seed_count_index + 1)
         except DXFValueError:
             raise DXFStructureError("HATCH: Missing required DXF tags 'seed point X value' (code=10).")
         return first_seed_point_index
 
-    def set_seed_points(self, points):
+    def set_seed_points(self, points: Sequence[Tuple[float, float]]) -> None:
         if len(points) < 1:
             raise DXFValueError("Param points should be a collection of 2D points and requires at least one point.")
         hatch_tags = self.AcDbHatch
         first_seed_point_index = self._get_seed_point_index(hatch_tags)
-        existing_seed_points = hatch_tags.collect_consecutive_tags([10], start=first_seed_point_index)  # don't rely on 'Number of seed points'
+        existing_seed_points = hatch_tags.collect_consecutive_tags([10],
+                                                                   start=first_seed_point_index)  # don't rely on 'Number of seed points'
         new_seed_points = [DXFVertex(10, (point[0], point[1])) for point in points]  # only use x and y coordinate,
         self.dxf.n_seed_points = len(new_seed_points)  # set new count of seed points
         # replace existing seed points
-        hatch_tags[first_seed_point_index: first_seed_point_index+len(existing_seed_points)] = new_seed_points
+        hatch_tags[first_seed_point_index: first_seed_point_index + len(existing_seed_points)] = new_seed_points
 
 
-class BoundaryPathData(object):
+class BoundaryPathData:
     def __init__(self, hatch):
         self.start_index = 0
         self.end_index = 0
         self.paths = self._setup_paths(hatch.AcDbHatch)
 
-    def _setup_paths(self, tags):
+    def _setup_paths(self, tags: Tags) -> List['PolylinePath']:
         paths = []
         try:
             self.start_index = tags.tag_index(91)  # code 91=Number of boundary paths (loops)
@@ -317,7 +330,7 @@ class BoundaryPathData(object):
         if n_paths == 0:  # created by ezdxf from template without path data
             return paths
 
-        all_path_tags = tags.collect_consecutive_tags(PATH_CODES, start=self.start_index+1)
+        all_path_tags = tags.collect_consecutive_tags(PATH_CODES, start=self.start_index + 1)
         self.end_index = self.start_index + len(all_path_tags) + 1  # + 1 for Tag(91, Number of boundary paths)
         # end_index: stored for Hatch._set_boundary_path_data()
         grouped_path_tags = group_tags(all_path_tags, splitcode=92)
@@ -329,30 +342,31 @@ class BoundaryPathData(object):
             paths.append(path)
         return paths
 
-    def clear(self):
+    def clear(self) -> None:
         self.paths = []
 
-    def add_polyline_path(self, path_vertices, is_closed=1, flags=1):
+    def add_polyline_path(self, path_vertices: Sequence[Tuple[float, float]], is_closed: int = 1,
+                          flags: int = 1) -> 'PolylinePath':
         new_path = PolylinePath()
         new_path.set_vertices(path_vertices, is_closed)
         new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
         self.paths.append(new_path)
         return new_path
 
-    def add_edge_path(self, flags=1):
+    def add_edge_path(self, flags: int = 1) -> 'EdgePath':
         new_path = EdgePath()
         new_path.path_type_flags = flags
         self.paths.append(new_path)
         return new_path
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         tags = [DXFTag(91, len(self.paths))]
         for path in self.paths:
             tags.extend(path.dxftags())
         return tags
 
 
-def pop_source_boundary_objects_tags(all_path_tags):
+def pop_source_boundary_objects_tags(all_path_tags: Tags) -> List[DXFTag]:
     source_boundary_object_tags = []
     while len(all_path_tags):
         if all_path_tags[-1].code in (97, 333):
@@ -367,28 +381,28 @@ def pop_source_boundary_objects_tags(all_path_tags):
             return []  # no source boundary objects found - entity is not valid for AutoCAD
 
 
-def build_source_boundary_object_tags(source_boundary_objects):
+def build_source_boundary_object_tags(source_boundary_objects: Sequence[DXFTag]) -> List[DXFTag]:
     source_boundary_object_tags = [DXFTag(97, len(source_boundary_objects))]
     source_boundary_object_tags.extend(source_boundary_objects)
     return source_boundary_object_tags
 
 
-class PolylinePath(object):
+class PolylinePath:
     PATH_TYPE = 'PolylinePath'
 
     def __init__(self):
         self.path_type_flags = const.BOUNDARY_PATH_POLYLINE
         self.is_closed = 0
-        self.vertices = []  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
-        self.source_boundary_objects = []
+        self.vertices = []  # type: List[Tuple[float, float, float]]  # list of 2D coordinates with bulge values (x, y, bulge); bulge default = 0.0
+        self.source_boundary_objects = []  # type: List[DXFTag]  # (330, handle) tags
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags) -> 'PolylinePath':
         polyline_path = PolylinePath()
         polyline_path._setup_path(tags)
         return polyline_path
 
-    def _setup_path(self, tags):
+    def _setup_path(self, tags: Tags) -> None:
         self.source_boundary_objects = pop_source_boundary_objects_tags(tags)
         for tag in tags:
             code, value = tag
@@ -406,9 +420,8 @@ class PolylinePath(object):
             elif code == 93:  # number of polyline vertices
                 pass  # ignore this value
 
-    def set_vertices(self, vertices, is_closed=1):
+    def set_vertices(self, vertices: Sequence[Sequence[float]], is_closed: bool = 1) -> None:
         new_vertices = []
-        has_bulge = 0
         for vertex in vertices:
             if len(vertex) == 2:
                 x, y = vertex
@@ -421,18 +434,18 @@ class PolylinePath(object):
         self.vertices = new_vertices
         self.is_closed = is_closed
 
-    def clear(self):
+    def clear(self) -> None:
         self.vertices = []
         self.is_closed = 0
         self.source_boundary_objects = []
 
-    def has_bulge(self):
+    def has_bulge(self) -> bool:
         for x, y, bulge in self.vertices:
             if bulge != 0:
                 return True
         return False
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         has_bulge = self.has_bulge()
 
         vtags = []
@@ -452,7 +465,7 @@ class PolylinePath(object):
         return tags
 
 
-class EdgePath(object):
+class EdgePath:
     PATH_TYPE = 'EdgePath'
 
     def __init__(self):
@@ -461,32 +474,36 @@ class EdgePath(object):
         self.source_boundary_objects = []
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'EdgePath':
         edge_path = EdgePath()
         edge_path._setup_path(tags)
         return edge_path
 
-    def _setup_path(self, tags):
+    def _setup_path(self, tags: Tags) -> None:
         self.source_boundary_objects = pop_source_boundary_objects_tags(tags)
         edge_groups = group_tags(tags, splitcode=72)
         for edge_tags in edge_groups:
             self.edges.append(self._setup_edge(edge_tags))
 
-    def _setup_edge(self, tags):
+    def _setup_edge(self, tags: Tags) -> 'EdgeTypes':
         edge_type = tags[0].value
         if 0 < edge_type < 5:
             return EDGE_CLASSES[edge_type].from_tags(tags[1:])
         else:
             raise DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
 
-    def add_line(self, start, end):
+    def add_line(self, start: int, end: int) -> 'LineEdge':
         line = LineEdge()
         line.start = start
         line.end = end
         self.edges.append(line)
         return line
 
-    def add_arc(self, center, radius=1., start_angle=0., end_angle=360., is_counter_clockwise=0):
+    def add_arc(self, center: Tuple[float, float],
+                radius: float = 1.,
+                start_angle: float = 0.,
+                end_angle: float = 360.,
+                is_counter_clockwise: int = 0) -> 'ArcEdge':
         arc = ArcEdge()
         arc.center = center
         arc.radius = radius
@@ -496,8 +513,12 @@ class EdgePath(object):
         self.edges.append(arc)
         return arc
 
-    def add_ellipse(self, center, major_axis=(1., 0.), ratio=1.,
-                    start_angle=0., end_angle=360., is_counter_clockwise=0):
+    def add_ellipse(self, center: Tuple[float, float],
+                    major_axis: Tuple[float, float] = (1., 0.),
+                    ratio: float = 1.,
+                    start_angle: float = 0.,
+                    end_angle: float = 360.,
+                    is_counter_clockwise: int = 0) -> 'EllipseEdge':
         if ratio > 1.:
             raise DXFValueError("Parameter 'ratio' has to be <= 1.0")
         ellipse = EllipseEdge()
@@ -510,7 +531,13 @@ class EdgePath(object):
         self.edges.append(ellipse)
         return ellipse
 
-    def add_spline(self, fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0):
+    def add_spline(self, fit_points: Iterable[Tuple[float, float]] = None,
+                   control_points: Iterable[Tuple[float, float]] = None,
+                   knot_values: Iterable[float] = None,
+                   weights: Iterable[float] = None,
+                   degree: int = 3,
+                   rational: int = 0,
+                   periodic: int = 0) -> 'SplineEdge':
         spline = SplineEdge()
         if fit_points is not None:
             spline.fit_points = list(fit_points)
@@ -526,7 +553,10 @@ class EdgePath(object):
         self.edges.append(spline)
         return spline
 
-    def add_spline_control_frame(self, fit_points, degree=3, method='distance', power=.5):
+    def add_spline_control_frame(self, fit_points: Iterable[Tuple[float, float]],
+                                 degree: int = 3,
+                                 method: str = 'distance',
+                                 power: float = .5) -> 'SplineEdge':
         bspline = bspline_control_frame(fit_points=fit_points, degree=degree, method=method, power=power)
         return self.add_spline(
             fit_points=fit_points,
@@ -534,10 +564,10 @@ class EdgePath(object):
             knot_values=bspline.knot_values(),
         )
 
-    def clear(self):
+    def clear(self) -> None:
         self.edges = []
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         tags = [DXFTag(92, int(self.path_type_flags)), DXFTag(93, len(self.edges))]
         for edge in self.edges:
             tags.extend(edge.dxftags())
@@ -545,16 +575,17 @@ class EdgePath(object):
         return tags
 
 
-class LineEdge(object):
+class LineEdge:
     EDGE_TYPE = "LineEdge"
+
     # more struct than object
 
     def __init__(self):
-        self.start = (0, 0)
-        self.end = (0, 0)
+        self.start = (0, 0)  # type: Tuple[float, float]
+        self.end = (0, 0)  # type: Tuple[float, float]
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'LineEdge':
         edge = LineEdge()
         for tag in tags:
             code, value = tag
@@ -564,7 +595,7 @@ class LineEdge(object):
                 edge.end = value
         return edge
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         return [
             DXFTag(72, 1),  # edge type
             DXFVertex(10, self.start),
@@ -572,19 +603,20 @@ class LineEdge(object):
         ]
 
 
-class ArcEdge(object):
+class ArcEdge:
     EDGE_TYPE = "ArcEdge"
+
     # more struct than object
 
     def __init__(self):
-        self.center = (0., 0.)
+        self.center = (0., 0.)  # type: Tuple[float, float]
         self.radius = 1.
         self.start_angle = 0.
         self.end_angle = 360.
         self.is_counter_clockwise = 0
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'ArcEdge':
         edge = ArcEdge()
         for tag in tags:
             code, value = tag
@@ -600,7 +632,7 @@ class ArcEdge(object):
                 edge.is_counter_clockwise = value
         return edge
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         return [
             DXFTag(72, 2),  # edge type
             DXFVertex(10, self.center),
@@ -611,20 +643,21 @@ class ArcEdge(object):
         ]
 
 
-class EllipseEdge(object):
+class EllipseEdge:
     EDGE_TYPE = "EllipseEdge"
+
     # more struct than object
 
     def __init__(self):
-        self.center = (0., 0.)
-        self.major_axis = (1., 0.)  # Endpoint of major axis relative to center point (in OCS)
+        self.center = (0., 0.)  # type: Tuple[float, float]
+        self.major_axis = (1., 0.)    # type: Tuple[float, float] # Endpoint of major axis relative to center point (in OCS)
         self.ratio = 1.
         self.start_angle = 0.
         self.end_angle = 360.
         self.is_counter_clockwise = 0
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'EllipseEdge':
         edge = EllipseEdge()
         for tag in tags:
             code, value = tag
@@ -642,7 +675,7 @@ class EllipseEdge(object):
                 edge.is_counter_clockwise = value
         return edge
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         return [
             DXFTag(72, 3),  # edge type
             DXFVertex(10, self.center),
@@ -654,22 +687,22 @@ class EllipseEdge(object):
         ]
 
 
-class SplineEdge(object):
+class SplineEdge:
     EDGE_TYPE = "SplineEdge"
 
     def __init__(self):
         self.degree = 3  # code = 94
         self.rational = 0  # code = 73
         self.periodic = 0  # code = 74
-        self.knot_values = []
-        self.control_points = []
-        self.fit_points = []
-        self.weights = []
-        self.start_tangent = (0, 0)
-        self.end_tangent = (0, 0)
+        self.knot_values = []  # type: List[float]
+        self.control_points = []  # type: List[Tuple[float, float]]
+        self.fit_points = []  # type: List[Tuple[float, float]]
+        self.weights = []  # type: List[float]
+        self.start_tangent = (0, 0)  # type: Tuple[float, float]
+        self.end_tangent = (0, 0)  # type: Tuple[float, float]
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'SplineEdge':
         edge = SplineEdge()
         for tag in tags:
             code, value = tag
@@ -693,9 +726,9 @@ class SplineEdge(object):
                 edge.end_tangent = value
         return edge
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         tags = [
-            DXFTag(72, 4),   # edge type
+            DXFTag(72, 4),  # edge type
             DXFTag(94, int(self.degree)),
             DXFTag(73, int(self.rational)),
             DXFTag(74, int(self.periodic)),
@@ -728,15 +761,16 @@ class SplineEdge(object):
 
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
+EdgeTypes = Union[LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 
 
-class PatternData(object):
-    def __init__(self, hatch):
+class PatternData:
+    def __init__(self, hatch: Hatch):
         self.existing_pattern_start_index = 0
         self.existing_pattern_end_index = 0
         self.lines = self._setup_pattern_lines(hatch.AcDbHatch)
 
-    def _setup_pattern_lines(self, tags):
+    def _setup_pattern_lines(self, tags: Tags) -> List['PatternDefinitionLine']:
         try:
             self.existing_pattern_start_index = tags.tag_index(78)  # code 78=Number of patter definition lines
         except DXFValueError:  # no pattern definition lines found
@@ -744,25 +778,34 @@ class PatternData(object):
             self.existing_pattern_end_index = 0
             return []
 
-        all_pattern_tags = tags.collect_consecutive_tags(PATTERN_DEFINITION_LINE_CODES, start=self.existing_pattern_start_index+1)
-        self.existing_pattern_end_index = self.existing_pattern_start_index + len(all_pattern_tags) + 1  # + 1 for Tag(78, Number of boundary paths)
+        all_pattern_tags = tags.collect_consecutive_tags(PATTERN_DEFINITION_LINE_CODES,
+                                                         start=self.existing_pattern_start_index + 1)
+        self.existing_pattern_end_index = self.existing_pattern_start_index + len(
+            all_pattern_tags) + 1  # + 1 for Tag(78, Number of boundary paths)
         # existing_pattern_end_index: stored for Hatch._set_pattern_data()
         grouped_line_tags = group_tags(all_pattern_tags, splitcode=53)
         return [PatternDefinitionLine.from_tags(line_tags) for line_tags in grouped_line_tags]
 
-    def clear(self):
+    def clear(self) -> None:
         self.lines = []
 
-    def add_line(self, angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
+    def add_line(self,
+                 angle: float = 0.,
+                 base_point: Tuple[float, float] = (0., 0.),
+                 offset: Tuple[float, float] = (0., 0.),
+                 dash_length_items: List[float] = None) -> None:
         self.lines.append(self.new_line(angle, base_point, offset, dash_length_items))
 
     @staticmethod
-    def new_line(angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
+    def new_line(angle: float = 0.,
+                 base_point: Tuple[float, float] = (0., 0.),
+                 offset: Tuple[float, float] = (0., 0.),
+                 dash_length_items: List[float] = None) -> 'PatternDefinitionLine':
         if dash_length_items is None:
             raise DXFValueError("Parameter 'dash_length_items' must not be None.")
         return PatternDefinitionLine(angle, base_point, offset, dash_length_items)
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         if len(self.lines):
             tags = [DXFTag(78, len(self.lines))]
             for line in self.lines:
@@ -771,21 +814,25 @@ class PatternData(object):
             tags = []
         return tags
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "[" + ",".join(str(line) for line in self.lines) + "]"
 
 
-class PatternDefinitionLine(object):
-    def __init__(self,  angle=0., base_point=(0., 0.), offset=(0., 0.), dash_length_items=None):
+class PatternDefinitionLine:
+    def __init__(self,
+                 angle: float = 0.,
+                 base_point: Tuple[float, float] = (0., 0.),
+                 offset: Tuple[float, float] = (0., 0.),
+                 dash_length_items: List[float] = None):
         self.angle = angle  # as always in degrees (circle = 360 deg)
         self.base_point = base_point
         self.offset = offset
-        self.dash_length_items = [] if dash_length_items is None else dash_length_items
+        self.dash_length_items = [] if dash_length_items is None else dash_length_items  # type: List[float]
         # dash_length_items = [item0, item1, ...]
         # item > 0 is line, < 0 is gap, 0.0 = dot;
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'PatternDefinitionLine':
         p = {53: 0, 43: 0, 44: 0, 45: 0, 46: 0}
         dash_length_items = []
         for tag in tags:
@@ -796,7 +843,7 @@ class PatternDefinitionLine(object):
                 p[code] = value
         return PatternDefinitionLine(p[53], (p[43], p[44]), (p[45], p[46]), dash_length_items)
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         tags = [
             DXFTag(53, self.angle),
             DXFTag(43, self.base_point[0]),
@@ -812,10 +859,10 @@ class PatternDefinitionLine(object):
         return "[{0.angle}, {0.base_point}, {0.offset}, {0.dash_length_items}]".format(self)
 
 
-class GradientData(object):
+class GradientData:
     def __init__(self):
-        self.color1 = (0, 0, 0)
-        self.color2 = (255, 255, 255)
+        self.color1 = (0, 0, 0)  # type: RGB
+        self.color2 = (255, 255, 255)  # type: RGB
         self.one_color = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
         self.rotation = 0.  # use grad NOT radians here, because there should be ONE system for all angles
         self.centered = 0.
@@ -823,7 +870,7 @@ class GradientData(object):
         self.name = 'LINEAR'
 
     @staticmethod
-    def from_tags(tags):
+    def from_tags(tags: Tags) -> 'GradientData':
         gdata = GradientData()
         try:
             index = tags.tag_index(450)  # required tag if hatch has gradient data
@@ -851,7 +898,7 @@ class GradientData(object):
                     gdata.color2 = int2rgb(value)
         return gdata
 
-    def dxftags(self):
+    def dxftags(self) -> List[DXFTag]:
         return [
             DXFTag(450, 1),  # gradient
             DXFTag(451, 0),  # reserved for the future
@@ -868,4 +915,3 @@ class GradientData(object):
             DXFTag(421, rgb2int(self.color2)),  # second color
             DXFTag(470, self.name),
         ]
-

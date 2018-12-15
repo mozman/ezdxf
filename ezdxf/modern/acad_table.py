@@ -1,8 +1,12 @@
 # Created: 09.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+
+if TYPE_CHECKING:
+    from eztypes import Tags
 
 _ACAD_TABLE_CLS = """0
 CLASS
@@ -193,5 +197,5 @@ class ACADTable(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, block_reference_subclass, table_subclass)
 
     @property
-    def AcDbTable(self):
+    def AcDbTable(self) -> 'Tags':
         return self.tags.subclasses[3]

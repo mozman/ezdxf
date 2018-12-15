@@ -1,12 +1,15 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Tuple
 from ezdxf.legacy import graphics as r12graphics
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Auditor
 
 none_subclass = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -40,23 +43,23 @@ entity_subclass = DefSubclass('AcDbEntity', {
 
 
 # noinspection PyUnresolvedReferences
-class ModernGraphicEntityExtension(object):
+class ModernGraphicEntityExtension:
     __slots__ = ()
 
     @property
-    def rgb(self):
+    def rgb(self) -> Tuple[int, int, int]:
         return int2rgb(self.get_dxf_attrib('true_color'))
 
     @rgb.setter  # line.rgb = (12, 34, 56)
-    def rgb(self, rgb):
+    def rgb(self, rgb: Tuple[int, int, int])->None:
         self.set_dxf_attrib('true_color', rgb2int(rgb))
 
     @property
-    def transparency(self):
+    def transparency(self) -> float:
         return transparency2float(self.get_dxf_attrib('transparency'))
 
     @transparency.setter  # line.transparency = 0.50
-    def transparency(self, transparency):
+    def transparency(self, transparency: float) -> None:
         # 0.0 = opaque & 1.0 if 100% transparent
         self.set_dxf_attrib('transparency', float2transparency(transparency))
 
@@ -85,7 +88,7 @@ class ModernGraphicEntity(r12graphics.GraphicEntity, ModernGraphicEntityExtensio
     """
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass)
 
-    def audit(self, auditor):
+    def audit(self, auditor: 'Auditor') -> None:
         super(ModernGraphicEntity, self).audit(auditor)
         auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
 
@@ -151,7 +154,7 @@ AcDbPoint
 """
 point_subclass = DefSubclass('AcDbPoint', {
     'location': DXFAttr(10, xtype=XType.any_point),
-    'thickness': DXFAttr(39, None),
+    'thickness': DXFAttr(39, default=None),
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
 })
 

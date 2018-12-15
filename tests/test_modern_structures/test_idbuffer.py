@@ -1,7 +1,10 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
+from typing import cast
+
 import ezdxf
+from ezdxf.modern.idbuffer import IDBuffer
 
 
 @pytest.fixture(scope='module')
@@ -59,7 +62,7 @@ def test_magic_methods(dwg):
 
 
 def test_dxf_tags(dwg):
-    id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
+    id_buffer = cast(IDBuffer, dwg.objects.create_new_dxf_entity('IDBUFFER', {}))
     id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     tags = list(id_buffer.handles.dxftags())
     assert len(tags) == 4
@@ -68,7 +71,7 @@ def test_dxf_tags(dwg):
 
 
 def test_clone(dwg):
-    id_buffer = dwg.objects.create_new_dxf_entity('IDBUFFER', {})
+    id_buffer = cast(IDBuffer, dwg.objects.create_new_dxf_entity('IDBUFFER', {}))
     id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     handles = id_buffer.handles
     handles2 = handles.clone()

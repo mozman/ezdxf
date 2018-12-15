@@ -1,6 +1,7 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
+from typing import Iterable, TYPE_CHECKING, cast, Sequence
 from contextlib import contextmanager
 
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -13,13 +14,17 @@ from ezdxf.lldxf import loader
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Vertex
+    import array
+
 
 class KnotTags(TagArray):
     code = -40  # compatible with DXFTag.code
     VALUE_CODE = 40
     DTYPE = 'f'
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         # knot value count
         yield DXFTag(72, len(self.value))
         # Python 2.7 compatible
@@ -38,7 +43,7 @@ class ControlPoints(VertexArray):
     VERTEX_CODE = 10
     VERTEX_SIZE = 3
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         # control point count
         yield DXFTag(73, len(self))
         # Python 2.7 compatible
@@ -51,7 +56,7 @@ class FitPoints(VertexArray):
     VERTEX_CODE = 11
     VERTEX_SIZE = 3
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         # fit point count
         yield DXFTag(74, len(self))
         # Python 2.7 compatible
@@ -59,11 +64,12 @@ class FitPoints(VertexArray):
             yield t
 
 
-REMOVE_CODES = (ControlPoints.VERTEX_CODE, FitPoints.VERTEX_CODE, KnotTags.VALUE_CODE, WeightTags.VALUE_CODE) + (72, 73, 74)
+REMOVE_CODES = (ControlPoints.VERTEX_CODE, FitPoints.VERTEX_CODE, KnotTags.VALUE_CODE, WeightTags.VALUE_CODE) + (
+    72, 73, 74)
 
 
 @loader.register('SPLINE', legacy=False)
-def tag_processor(tags):
+def tag_processor(tags: ExtendedTags) -> ExtendedTags:
     spline_tags = tags.get_subclass('AcDbSpline')
     control_points = ControlPoints.from_tags(spline_tags)
     fit_points = FitPoints.from_tags(spline_tags)
@@ -128,89 +134,89 @@ class Spline(ModernGraphicEntity):
     LINEAR = 16  # always set with PLANAR, don't read or set this bit, just ignore like AutoCAD
 
     @property
-    def AcDbSpline(self):
+    def AcDbSpline(self) -> 'Tags':
         return self.tags.subclasses[2]
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.get_flag_state(self.CLOSED, name='flags')
 
     @closed.setter
-    def closed(self, status):
+    def closed(self, status: bool) -> None:
         self.set_flag_state(self.CLOSED, state=status, name='flags')
 
     @property
-    def knot_values(self):  # group code 40
+    def knot_values(self) -> 'array.array':  # group code 40
         """
         Returns spline knot values as array.array('f').
 
         """
-        return self.AcDbSpline.get_first_tag(KnotTags.code).value
+        return cast('array.array', self.AcDbSpline.get_first_tag(KnotTags.code).value)
 
-    def knot_value_count(self):  # DXF callback attribute Spline.dxf.n_knots
+    def knot_value_count(self) -> int:  # DXF callback attribute Spline.dxf.n_knots
         return len(self.knot_values)
 
-    def get_knot_values(self):  # deprecated
+    def get_knot_values(self) -> 'array.array':  # deprecated
         return self.knot_values
 
-    def set_knot_values(self, knot_values):
-        knots = self.AcDbSpline.get_first_tag(KnotTags.code)
+    def set_knot_values(self, knot_values: Iterable[float]) -> None:
+        knots = cast(KnotTags, self.AcDbSpline.get_first_tag(KnotTags.code))
         knots.set_values(knot_values)
 
     @property
-    def weights(self):  # group code 41
+    def weights(self) -> 'array.array':  # group code 41
         """
         Returns spline control point weights as array.array('f').
 
         """
-        return self.AcDbSpline.get_first_tag(WeightTags.code).value
+        return cast('array.array', self.AcDbSpline.get_first_tag(WeightTags.code).value)
 
     def get_weights(self):  # deprecated
         return self.weights
 
     def set_weights(self, values):
-        weights = self.AcDbSpline.get_first_tag(WeightTags.code)
+        weights = cast(WeightTags, self.AcDbSpline.get_first_tag(WeightTags.code))
         weights.set_values(values)
 
     @property
-    def control_points(self):  # group code 10
+    def control_points(self) -> ControlPoints:  # group code 10
         """
         Returns spline control points as ControlPoints() object.
 
         """
         return self.AcDbSpline.get_first_tag(ControlPoints.code)
 
-    def control_point_count(self):  # DXF callback attribute Spline.dxf.n_control_points
+    def control_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_control_points
         return len(self.control_points)
 
-    def get_control_points(self):  # deprecated
+    def get_control_points(self) -> ControlPoints:  # deprecated
         return self.control_points
 
-    def set_control_points(self, points):
+    def set_control_points(self, points: Iterable['Vertex']) -> None:
         vertices = self.control_points
         vertices.clear()
         vertices.extend(points)
 
     @property
-    def fit_points(self):  # group code 11
+    def fit_points(self) -> FitPoints:  # group code 11
         """
         Returns spline fit points as FitPoints() object.
 
         """
         return self.AcDbSpline.get_first_tag(FitPoints.code)
 
-    def fit_point_count(self):  # DXF callback attribute Spline.dxf.n_fit_points
+    def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
         return len(self.fit_points)
 
-    def get_fit_points(self):  # deprecated
+    def get_fit_points(self) -> FitPoints:  # deprecated
         return self.fit_points
 
-    def set_fit_points(self, points):
+    def set_fit_points(self, points: Iterable['Vertex']) -> None:
         vertices = self.fit_points
         vertices.clear()
         vertices.extend(points)
 
-    def set_open_uniform(self, control_points, degree=3):
+    def set_open_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
         """
         Open B-spline with uniform knot vector, start and end at your first and last control points.
 
@@ -218,9 +224,9 @@ class Spline(ModernGraphicEntity):
         self.dxf.flags = 0  # clear all flags
         self.dxf.degree = degree
         self.set_control_points(control_points)
-        self.set_knot_values(knot_open_uniform(len(control_points), degree+1))
+        self.set_knot_values(knot_open_uniform(len(control_points), degree + 1))
 
-    def set_uniform(self, control_points, degree=3):
+    def set_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
         """
         B-spline with uniform knot vector, does NOT start and end at your first and last control points.
 
@@ -228,9 +234,9 @@ class Spline(ModernGraphicEntity):
         self.dxf.flags = 0  # clear all flags
         self.dxf.degree = degree
         self.set_control_points(control_points)
-        self.set_knot_values(knot_uniform(len(control_points), degree+1))
+        self.set_knot_values(knot_uniform(len(control_points), degree + 1))
 
-    def set_periodic(self, control_points, degree=3):
+    def set_periodic(self, control_points: Sequence['Vertex'], degree=3) -> None:
         """
         Closed B-spline with uniform knot vector, start and end at your first control point.
 
@@ -240,9 +246,9 @@ class Spline(ModernGraphicEntity):
         self.set_control_points(control_points)
         # AutoDesk Developer Docs:
         # If the spline is periodic, the length of knot vector will be greater than length of the control array by 1.
-        self.set_knot_values(list(range(len(control_points)+1)))
+        self.set_knot_values(list(range(len(control_points) + 1)))
 
-    def set_open_rational(self, control_points, weights, degree=3):
+    def set_open_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float], degree: int = 3) -> None:
         """
         Open rational B-spline with uniform knot vector, start and end at your first and last control points, and has
         additional control possibilities by weighting each control point.
@@ -254,7 +260,8 @@ class Spline(ModernGraphicEntity):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)
 
-    def set_uniform_rational(self, control_points, weights, degree=3):
+    def set_uniform_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float],
+                             degree: int = 3) -> None:
         """
         Rational B-spline with uniform knot vector, deos NOT start and end at your first and last control points, and
         has additional control possibilities by weighting each control point.
@@ -266,7 +273,8 @@ class Spline(ModernGraphicEntity):
             raise DXFValueError('Control point count must be equal to weights count.')
         self.set_weights(weights)
 
-    def set_periodic_rational(self, control_points, weights, degree=3):
+    def set_periodic_rational(self, control_points: Sequence['Vertex'], weights: Sequence[float],
+                              degree: int = 3) -> None:
         """
         Closed rational B-spline with uniform knot vector, start and end at your first control point, and has
         additional control possibilities by weighting each control point.
@@ -279,7 +287,7 @@ class Spline(ModernGraphicEntity):
         self.set_weights(weights)
 
     @contextmanager
-    def edit_data(self):
+    def edit_data(self) -> 'SplineData':
         """
         Edit spline data by context manager, usage::
 
@@ -305,8 +313,8 @@ class Spline(ModernGraphicEntity):
             self.set_weights(data.weights)
 
 
-class SplineData(object):
-    def __init__(self, spline):
+class SplineData:
+    def __init__(self, spline: 'Spline'):
         self.fit_points = spline.fit_points
         self.control_points = spline.control_points
         self.knot_values = spline.knot_values

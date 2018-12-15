@@ -1,8 +1,12 @@
 # Created: 10.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
 from .object_manager import ObjectManager
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing
 
 _TABLESTYLE_CLS = """0
 CLASS
@@ -94,5 +98,5 @@ class TableStyle(DXFObject):
 
 
 class TableStyleManager(ObjectManager):
-    def __init__(self, drawing):
-        super(TableStyleManager, self).__init__(drawing, dict_name='ACAD_TABLESTYLE', object_type='TABLESTYLE')
+    def __init__(self, drawing: 'Drawing'):
+        super().__init__(drawing, dict_name='ACAD_TABLESTYLE', object_type='TABLESTYLE')

@@ -1,12 +1,16 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf import loader
 from ezdxf.lldxf.packedtags import TagList
 
 from .dxfobjects import ExtendedTags, DefSubclass, DXFAttributes
 from .dxfobjects import none_subclass, DXFObject
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
 
 _LAYER_FILTER_TPL = """0
 LAYER_FILTER
@@ -28,7 +32,7 @@ AcDbLayerFilter
 
 
 @loader.register('LAYER_FILTER', legacy=False)
-def tag_processor(tags):
+def tag_processor(tags: ExtendedTags):
     subclass = tags.get_subclass('AcDbLayerFilter')
     names = TagList.from_tags(subclass)
     names.replace_tags(subclass)
@@ -43,11 +47,11 @@ class LayerFilter(DXFObject):
     BUFFER_START_INDEX = 1
 
     @property
-    def layer_filter_subclass(self):
+    def layer_filter_subclass(self) -> 'Tags':
         return self.tags.subclasses[2]
 
     @property
-    def layers(self):
+    def layers(self) -> List:
         try:
             return self._cached_layers
         except AttributeError:
@@ -55,7 +59,7 @@ class LayerFilter(DXFObject):
             return self._cached_layers
 
     @layers.setter
-    def layers(self, names):
+    def layers(self, names: Iterable[str]):
         if isinstance(names, str):
             raise DXFValueError('requires iterable but not string')
         self.layers[:] = list(names)

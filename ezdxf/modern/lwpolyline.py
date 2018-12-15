@@ -11,6 +11,13 @@ from ezdxf.lldxf import loader
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+from typing import TYPE_CHECKING, Tuple, Iterable, cast, Sequence, List
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Vertex
+
+LWPointType = Tuple[float, float, float, float, float]
+
 FORMAT_CODES = frozenset('xysebv')
 DEFAULT_FORMAT = 'xyseb'
 
@@ -51,10 +58,10 @@ class LWPolylinePoints(VertexArray):
     END_WIDTH_CODE = 41
     BULGE_CODE = 42
     VERTEX_SIZE = 5
-    __slots__ = ('value', )
+    __slots__ = ('value',)
 
     @classmethod
-    def from_tags(cls, tags):
+    def from_tags(cls, tags: ExtendedTags) -> 'LWPolylinePoints':
         """
         Setup point array from extended tags.
 
@@ -64,11 +71,12 @@ class LWPolylinePoints(VertexArray):
         """
         subclass = tags.get_subclass('AcDbPolyline')
 
-        def get_vertex():
+        def get_vertex() -> LWPointType:
             point.append(attribs.get(cls.START_WIDTH_CODE, 0))
             point.append(attribs.get(cls.END_WIDTH_CODE, 0))
             point.append(attribs.get(cls.BULGE_CODE, 0))
             return tuple(point)
+
         data = []
         point = None
         attribs = {}
@@ -85,10 +93,10 @@ class LWPolylinePoints(VertexArray):
             data.extend(get_vertex())
         return cls(data=data)
 
-    def append(self, point, format=DEFAULT_FORMAT):
+    def append(self, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         super(LWPolylinePoints, self).append(compile_array(point, format=format))
 
-    def dxftags(self):
+    def dxftags(self) -> Iterable[DXFTag]:
         yield DXFTag(90, len(self))
         for point in self:
             x, y, start_width, end_width, bulge = point
@@ -101,11 +109,11 @@ class LWPolylinePoints(VertexArray):
                 yield DXFTag(self.BULGE_CODE, bulge)
 
 
-REMOVE_CODES = LWPOINTCODES + (90, )
+REMOVE_CODES = LWPOINTCODES + (90,)
 
 
 @loader.register('LWPOLYLINE', legacy=False)
-def tag_processor(tags):
+def tag_processor(tags: ExtendedTags) -> ExtendedTags:
     points = LWPolylinePoints.from_tags(tags)
     subclass = tags.get_subclass('AcDbPolyline')
     replace_tags(subclass, codes=REMOVE_CODES, packed_data=points)
@@ -120,39 +128,39 @@ class LWPolyline(ModernGraphicEntity):
     PLINEGEN = 128
 
     @property
-    def AcDbPolyline(self):
+    def AcDbPolyline(self) -> 'Tags':
         return self.tags.subclasses[2]
 
     @property
-    def closed(self):
-        return self.get_flag_state(self.CLOSED, name='flags')
+    def lwpoints(self) -> LWPolylinePoints:
+        return cast(LWPolylinePoints, self.AcDbPolyline.get_first_tag(LWPolylinePoints.code))
 
     @property
-    def lwpoints(self):
-        return self.AcDbPolyline.get_first_tag(LWPolylinePoints.code)
+    def closed(self) -> bool:
+        return self.get_flag_state(self.CLOSED, name='flags')
 
     @closed.setter
-    def closed(self, status):
+    def closed(self, status: bool) -> None:
         self.set_flag_state(self.CLOSED, status, name='flags')
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.lwpoints)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[LWPointType]:
         """
         Yielding tuples of (x, y, start_width, end_width, bulge).
 
         """
         return iter(self.lwpoints)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> LWPointType:
         """
         Returns polyline point at position index as (x, y, start_width, end_width, bulge) tuple.
 
         """
         return self.lwpoints[index]
 
-    def __setitem__(self, index, value):
+    def __setitem__(self, index: int, value: Sequence[float]) -> None:
         """
         Set polyline point at position index. Point format is fixed as 'xyseb'.
 
@@ -163,10 +171,10 @@ class LWPolyline(ModernGraphicEntity):
         """
         self.lwpoints[index] = compile_array(value)
 
-    def __delitem__(self, index):
+    def __delitem__(self, index: int) -> None:
         del self.lwpoints[index]
 
-    def vertices(self):
+    def vertices(self) -> Iterable[Tuple[float, float]]:
         """
         Yields all points as (x, y) tuples.
 
@@ -174,7 +182,7 @@ class LWPolyline(ModernGraphicEntity):
         for point in self:
             yield point[0], point[1]
 
-    def vertices_in_wcs(self):
+    def vertices_in_wcs(self) -> Iterable['Vertex']:
         """
         Yields all points as (x, y, z) tuples in WCS.
 
@@ -184,7 +192,7 @@ class LWPolyline(ModernGraphicEntity):
         for x, y in self.vertices():
             yield ocs.to_wcs((x, y, elevation))
 
-    def append(self, point, format=DEFAULT_FORMAT):
+    def append(self, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         """
         Append point to polyline, format specifies a user defined point format.
 
@@ -201,7 +209,7 @@ class LWPolyline(ModernGraphicEntity):
         """
         self.lwpoints.append(point, format=format)
 
-    def insert(self, pos, point, format=DEFAULT_FORMAT):
+    def insert(self, pos: int, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         """
         Insert new point in front of positions pos, format specifies a user defined point format.
 
@@ -220,7 +228,7 @@ class LWPolyline(ModernGraphicEntity):
         data = compile_array(point, format=format)
         self.lwpoints.insert(pos, data)
 
-    def append_points(self, points, format=DEFAULT_FORMAT):
+    def append_points(self, points: Iterable[Sequence[float]], format: str = DEFAULT_FORMAT) -> None:
         """
         Append new points to polyline, format specifies a user defined point format.
 
@@ -239,12 +247,12 @@ class LWPolyline(ModernGraphicEntity):
             self.lwpoints.append(point, format=format)
 
     @contextmanager
-    def points(self, format=DEFAULT_FORMAT):
+    def points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
         points = self.get_points(format=format)
         yield points
         self.set_points(points, format=format)
 
-    def get_points(self, format=DEFAULT_FORMAT):
+    def get_points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
         """
         Returns all points as list of tuples, format specifies a user defined point format.
 
@@ -260,7 +268,7 @@ class LWPolyline(ModernGraphicEntity):
         """
         return [format_point(p, format=format) for p in self.lwpoints]
 
-    def set_points(self, points, format=DEFAULT_FORMAT):
+    def set_points(self, points: List[Sequence[float]], format: str = DEFAULT_FORMAT) -> None:
         """
         Remove all points and append new points.
 
@@ -278,11 +286,11 @@ class LWPolyline(ModernGraphicEntity):
         self.lwpoints.clear()
         self.append_points(points, format=format)
 
-    def clear(self):
+    def clear(self) -> None:
         self.lwpoints.clear()
 
 
-def format_point(point, format='xyseb'):
+def format_point(point: Sequence[float], format: str = 'xyseb') -> Sequence[float]:
     """
     Reformat point components.
 
@@ -305,7 +313,7 @@ def format_point(point, format='xyseb'):
     return tuple(vars[code] for code in format.lower() if code in FORMAT_CODES)
 
 
-def compile_array(data, format='xyseb'):
+def compile_array(data: Sequence[float], format='xyseb'):
     """
     Gather point components from input data.
 
@@ -328,10 +336,9 @@ def compile_array(data, format='xyseb'):
         if code not in FORMAT_CODES:
             continue
         if code == 'v':
+            value = cast('Vertex', value)
             a[0] = value[0]
             a[1] = value[1]
         else:
             a['xyseb'.index(code)] = value
     return a
-
-

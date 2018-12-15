@@ -1,10 +1,16 @@
 # Created: 15.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, Iterable, Tuple
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.tools import take2
 
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass, ExtendedTags
+
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
+
 
 _SORT_ENTITIES_TABLE_CLS = """0
 CLASS
@@ -77,13 +83,13 @@ class SortEntitiesTable(DXFObject):
     TABLE_START_INDEX = 2
 
     @property
-    def sortentstable_subclass(self):
+    def sortentstable_subclass(self) -> 'Tags':
         return self.tags.subclasses[1]  # 2nd subclass
 
-    def __len__(self):
+    def __len__(self) -> int:
         return (len(self.sortentstable_subclass)-self.TABLE_START_INDEX) // 2
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Tuple[str, str]]:
         """
         Yields all redraw associations as (object_handle, sort_handle) tuples.
 
@@ -91,7 +97,7 @@ class SortEntitiesTable(DXFObject):
         for handle, sort_handle in take2(self.sortentstable_subclass[self.TABLE_START_INDEX:]):
             yield handle.value, sort_handle.value
 
-    def append(self, handle, sort_handle):
+    def append(self, handle: str, sort_handle: str) -> None:
         """
         Append redraw association (handle, sort_handle).
 
@@ -104,16 +110,16 @@ class SortEntitiesTable(DXFObject):
         subclass.append(DXFTag(331, handle))
         subclass.append(DXFTag(5, sort_handle))
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Remove all handles from redraw order table.
 
         """
         del self.sortentstable_subclass[self.TABLE_START_INDEX:]
 
-    def set_handles(self, handles):
+    def set_handles(self, handles: Iterable[Tuple[str, str]]) -> None:
         """
-        Set all redraw associations from iterable *handles*, after removing all existing associations.
+        Set all redraw associations from iterable `handles`, after removing all existing associations.
 
         Args:
             handles: iterable yielding (object_handle, sort_handle) tuples
@@ -128,7 +134,7 @@ class SortEntitiesTable(DXFObject):
         for handle, sort_handle in handles:
             self.append(handle, sort_handle)
 
-    def remove_invalid_handles(self):
+    def remove_invalid_handles(self) -> None:
         """
         Remove all handles which do not exists in the drawing database.
 
@@ -138,7 +144,7 @@ class SortEntitiesTable(DXFObject):
         # list is required, set_handles() deletes all entries before iterating valid_handles
         self.set_handles(valid_handles)
 
-    def remove_handle(self, handle):
+    def remove_handle(self, handle: str) -> None:
         """
         Remove handle of DXF entity from redraw order table.
 

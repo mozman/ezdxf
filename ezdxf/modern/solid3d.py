@@ -1,6 +1,7 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
+from typing import Iterable
 from contextlib import contextmanager
 
 from ezdxf.lldxf.types import DXFTag
@@ -31,7 +32,7 @@ modeler_geometry_subclass = DefSubclass('AcDbModelerGeometry', {
 })
 
 
-def convert_tags_to_text_lines(line_tags):
+def convert_tags_to_text_lines(line_tags: Iterable[DXFTag]) -> Iterable[str]:
     """
     Args:
         line_tags: tags with code 1 or 3, tag with code 3 is the tail of previous line with more than 255 chars.
@@ -58,7 +59,7 @@ def convert_tags_to_text_lines(line_tags):
         line = tag.value
 
 
-def convert_text_lines_to_tags(text_lines):
+def convert_text_lines_to_tags(text_lines: Iterable[str]) -> Iterable[DXFTag]:
     for line in text_lines:
         yield DXFTag(1, line[:255])
         if len(line) > 255:
@@ -70,12 +71,12 @@ class Body(ModernGraphicEntity):
     TEMPLATE = ExtendedTags.from_text(_BODY_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, modeler_geometry_subclass)
 
-    def get_acis_data(self):
+    def get_acis_data(self) -> Iterable[str]:
         modeler_geometry = self.tags.subclasses[2]
         text_lines = convert_tags_to_text_lines(tag for tag in modeler_geometry if tag.code in (1, 3))
         return crypt.decode(text_lines)
 
-    def set_acis_data(self, text_lines):
+    def set_acis_data(self, text_lines: Iterable[str]) -> None:
         def cleanup(lines):
             for line in lines:
                 yield line.rstrip().replace('\n', '')
@@ -86,20 +87,20 @@ class Body(ModernGraphicEntity):
         modeler_geometry.extend(convert_text_lines_to_tags(crypt.encode(cleanup(text_lines))))
 
     @contextmanager
-    def edit_data(self):
+    def edit_data(self) -> 'ModelerGeometryData':
         data = ModelerGeometryData(self)
         yield data
         self.set_acis_data(data.text_lines)
 
 
-class ModelerGeometryData(object):
-    def __init__(self, body):
+class ModelerGeometryData:
+    def __init__(self, body: 'Body'):
         self.text_lines = list(body.get_acis_data())
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n".join(self.text_lines)
 
-    def set_text(self, text, sep='\n'):
+    def set_text(self, text: str, sep: str = '\n') -> None:
         self.text_lines = text.split(sep)
 
 

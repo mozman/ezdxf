@@ -1,6 +1,7 @@
 # Created: 03.04.2016
 # Copyright (C) 2016-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Tuple, Union, Iterable, List, cast
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFVertex
@@ -9,6 +10,9 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf import const
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 _PDFUNDERLAY_CLS = """0
 CLASS
@@ -89,43 +93,43 @@ class PdfUnderlay(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, underlay_subclass)
 
     @property
-    def clipping(self):
+    def clipping(self) -> bool:
         return bool(self.dxf.flags & const.UNDERLAY_CLIPPING)
 
     @clipping.setter
-    def clipping(self, state):
+    def clipping(self, state: bool) -> None:
         self.set_flags(const.UNDERLAY_CLIPPING, state)
 
     @property
-    def on(self):
+    def on(self) -> bool:
         return bool(self.dxf.flags & const.UNDERLAY_ON)
 
     @on.setter
-    def on(self, state):
+    def on(self, state: bool) -> None:
         self.set_flags(const.UNDERLAY_ON, state)
 
     @property
-    def monochrome(self):
+    def monochrome(self) -> bool:
         return bool(self.dxf.flags & const.UNDERLAY_MONOCHROME)
 
     @monochrome.setter
-    def monochrome(self, state):
+    def monochrome(self, state: bool) -> None:
         self.set_flags(const.UNDERLAY_MONOCHROME, state)
 
     @property
-    def adjust_for_background(self):
+    def adjust_for_background(self) -> bool:
         return bool(self.dxf.flags & const.UNDERLAY_ADJUST_FOR_BG)
 
     @adjust_for_background.setter
-    def adjust_for_background(self, state):
+    def adjust_for_background(self, state: bool):
         self.set_flags(const.UNDERLAY_ADJUST_FOR_BG, state)
 
     @property
-    def scale(self):
+    def scale(self) -> Tuple[float, float, float]:
         return self.dxf.scale_x, self.dxf.scale_y, self.dxf.scale_z
 
     @scale.setter
-    def scale(self, scale):
+    def scale(self, scale: Union[float, Tuple]):
         if type(scale) in (float, int):
             x, y, z = scale, scale, scale
         else:
@@ -134,35 +138,35 @@ class PdfUnderlay(ModernGraphicEntity):
         self.dxf.scale_y = y
         self.dxf.scale_z = z
 
-    def set_flags(self, flag, state=True):
+    def set_flags(self, flag: int, state: bool = True) -> None:
         if state:
             self.dxf.flags = self.dxf.flags | flag
         else:
             self.dxf.flags = self.dxf.flags & ~flag
 
-    def set_boundary_path(self, vertices):  # path coordinates as drawing coordinates but unscaled
+    def set_boundary_path(self, vertices: Iterable['Vertex']) -> None:  # path coordinates as drawing coordinates but unscaled
         vertices = list(vertices)
         self._set_path_tags(vertices)
         self.clipping = bool(len(vertices))
 
-    def _set_path_tags(self, vertices):
+    def _set_path_tags(self, vertices: Iterable['Vertex']):
         boundary = [DXFVertex(11, value) for value in vertices]
         subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 11)  # filter out existing path tags
         subclasstags.extend(boundary)
         self.tags.subclasses[2] = subclasstags
 
-    def reset_boundary_path(self):
+    def reset_boundary_path(self) -> None:
         self._set_path_tags([])
         self.clipping = False
 
-    def get_boundary_path(self):
+    def get_boundary_path(self) -> List['Vertex']:
         underlay_subclass = self.tags.subclasses[2]
         return [tag.value for tag in underlay_subclass if tag.code == 11]  # fetch path tags
 
-    def get_underlay_def(self):
-        return self.dxffactory.wrap_handle(self.dxf.underlay_def)
+    def get_underlay_def(self) -> 'UnderlayDef':
+        return cast('UnderlayDef', self.dxffactory.wrap_handle(self.dxf.underlay_def))
 
-    def destroy(self):
+    def destroy(self) -> None:
         super(PdfUnderlay, self).destroy()
         underlay_def = self.get_underlay_def()
         underlay_def.remove_reactor_handle(self.dxf.handle)
@@ -324,3 +328,7 @@ class DgnDefinition(PdfDefinition):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_PDF_DEF_TPL.replace('PDF', 'DGN'))
     CLASS = ExtendedTags.from_text(_DGN_DEF_CLS)
+
+
+UnderlayDef = Union[PdfDefinition, DgnDefinition, DwfDefinition]
+Underlay = Union[PdfUnderlay, DgnUnderlay, DwfUnderlay]

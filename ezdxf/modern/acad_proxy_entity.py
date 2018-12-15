@@ -19,7 +19,7 @@ proxy_entity_subclass = DefSubclass('AcDbProxyEntity', {
 })
 
 
-class ProxyMixin(object):
+class ProxyMixin:
     __slots__ = ()
 
     def get_proxy_graphic(self):

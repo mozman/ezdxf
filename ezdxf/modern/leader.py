@@ -4,6 +4,10 @@
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
+from typing import TYPE_CHECKING, Iterable
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Vertex
+
 # example: D:\source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf
 
 _LEADER_TPL = """0
@@ -85,8 +89,8 @@ class Leader(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, leader_subclass)
 
     @property
-    def AcDbLeader(self):
+    def AcDbLeader(self) -> 'Tags':
         return self.tags.subclasses[2]
 
-    def get_vertices(self):
+    def get_vertices(self) -> Iterable['Vertex']:
         return (tag.value for tag in self.AcDbLeader if tag.code == 10)

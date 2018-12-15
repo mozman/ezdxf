@@ -1,6 +1,7 @@
 # Created: 07.03.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
+from typing import Iterable, Tuple, Sequence, List, TYPE_CHECKING, cast
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFVertex
@@ -9,6 +10,10 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.algebra import Vector
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 
 _IMAGE_CLS = """0
@@ -118,10 +123,10 @@ class Image(ModernGraphicEntity):
     USE_CLIPPING_BOUNDARY = 4
     USE_TRANSPARENCY = 8
 
-    def post_new_hook(self):
+    def post_new_hook(self) -> None:
         self.reset_boundary_path()
 
-    def set_boundary_path(self, vertices):
+    def set_boundary_path(self, vertices: Iterable[Tuple[float, float]]) -> None:
         vertices = list(vertices)
         if len(vertices) > 2 and vertices[-1] != vertices[0]:
             vertices.append(vertices[0])  # close path, else AutoCAD crashes
@@ -130,14 +135,14 @@ class Image(ModernGraphicEntity):
         self.dxf.clipping = 1
         self.dxf.clipping_boundary_type = 1 if len(vertices) < 3 else 2
 
-    def _set_path_tags(self, vertices):
+    def _set_path_tags(self, vertices: Sequence[Tuple[float, float]]):
         boundary = [DXFVertex(14, value) for value in vertices]
         subclasstags = Tags(tag for tag in self.tags.subclasses[2] if tag.code != 14)
         subclasstags.extend(boundary)
         self.tags.subclasses[2] = subclasstags
         self.dxf.count_boundary_points = len(vertices)
 
-    def reset_boundary_path(self):
+    def reset_boundary_path(self) -> None:
         lower_left_corner = (-.5, -.5)
         upper_right_corner = Vector(self.dxf.image_size) + lower_left_corner
         self._set_path_tags([lower_left_corner, upper_right_corner[:2]])
@@ -145,14 +150,14 @@ class Image(ModernGraphicEntity):
         self.dxf.clipping = 0
         self.dxf.clipping_boundary_type = 1
 
-    def get_boundary_path(self):
+    def get_boundary_path(self) -> List['Vertex']:
         image_subclass = self.tags.subclasses[2]
         return [tag.value for tag in image_subclass if tag.code == 14]
 
-    def get_image_def(self):
-        return self.dxffactory.wrap_handle(self.dxf.image_def)
+    def get_image_def(self) -> 'ImageDef':
+        return cast('ImageDef', self.dxffactory.wrap_handle(self.dxf.image_def))
 
-    def destroy(self):
+    def destroy(self) -> None:
         super(Image, self).destroy()
         # remove rectors
         image_def = self.get_image_def()

@@ -15,12 +15,14 @@ from typing import *
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.algebra.vector import Vector
+    from ezdxf.algebra.matrix44 import Matrix44
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
     from ezdxf.lldxf.attributes import XType, DXFAttr
     from ezdxf.lldxf.tags import Tags
     from ezdxf.lldxf.extendedtags import ExtendedTags
     from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.tools.complex_ltype import ComplexLineTypePart
 
     # Entity factories
     from ezdxf.legacy.factory import LegacyDXFFactory
@@ -56,18 +58,33 @@ if TYPE_CHECKING:
     from ezdxf.modern.mline import MLineStyleManager
 
     # DXF objects
+    from ezdxf.modern.dxfobjects import DXFObject
     from ezdxf.modern.dxfdict import DXFDictionary
     from ezdxf.modern.geodata import GeoData
     from ezdxf.modern.sortentstable import SortEntitiesTable
 
     # DXF entities
     from ezdxf.dxfentity import DXFEntity
-    from ezdxf.modern.spline import Spline
+    from ezdxf.legacy.graphics import Line, Point, Circle, Arc, Shape
+    from ezdxf.legacy.trace import Solid, Trace, Face
     from ezdxf.legacy.polyline import Polyline, Polyface, Polymesh, DXFVertex
+    from ezdxf.legacy.insert import Insert
     from ezdxf.legacy.attrib import Attdef, Attrib
     from ezdxf.legacy.text import Text
+
+    from ezdxf.modern.spline import Spline
     from ezdxf.modern.viewport import Viewport
     from ezdxf.modern.block import Block
+    from ezdxf.modern.image import ImageDef, Image
+    from ezdxf.modern.underlay import UnderlayDef, Underlay
+    from ezdxf.modern.mesh import Mesh
+    from ezdxf.modern.hatch import Hatch
+    from ezdxf.modern.lwpolyline import LWPolyline
+    from ezdxf.modern.ellipse import Ellipse
+    from ezdxf.modern.ray import Ray, XLine
+    from ezdxf.modern.mtext import MText
+    from ezdxf.modern.solid3d import Solid3d, Body, Region
+    from ezdxf.modern.surface import Surface, ExtrudedSurface, RevolvedSurface, LoftedSurface, SweptSurface
 
     # other
     from ezdxf.audit import Auditor

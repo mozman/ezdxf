@@ -1,6 +1,7 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, Iterable, Union, cast, List
 from contextlib import contextmanager
 
 from ezdxf.lldxf.types import DXFTag
@@ -11,6 +12,9 @@ from ezdxf.lldxf.const import DXFValueError
 
 from .dxfobjects import none_subclass
 from .object_manager import ObjectManager
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Drawing
 
 _GROUP_TPL = """0
 GROUP
@@ -44,10 +48,10 @@ class DXFGroup(DXFEntity):
     )
 
     @property
-    def AcDbGroup(self):
+    def AcDbGroup(self) -> 'Tags':
         return self.tags.subclasses[1]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[DXFEntity]:
         """ Yields all DXF entities of this group as wrapped DXFEntity (LINE, CIRCLE, ...) objects.
         """
         wrap = self.dxffactory.wrap_handle
@@ -58,18 +62,18 @@ class DXFGroup(DXFEntity):
             except KeyError:  # handle not in entity database, maybe entity were deleted; internal exception
                 pass
 
-    def __len__(self):
+    def __len__(self) -> int:
         return sum(1 for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
-    def __contains__(self, item):
+    def __contains__(self, item: Union[str, DXFEntity]) -> bool:
         handle = item if isinstance(item, str) else item.dxf.handle
         return handle in set(self.handles())
 
-    def handles(self):
+    def handles(self) -> Iterable[str]:
         return (tag.value for tag in self.AcDbGroup if tag.code == GROUP_ITEM_CODE)
 
     def get_name(self):
-        group_table = self.dxffactory.wrap_handle(self.dxf.owner)  # returns DXFDictionary() and not GroupManager()!!!
+        group_table = cast('DXFDictionary', self.dxffactory.wrap_handle(self.dxf.owner))
         my_handle = self.dxf.handle
         for name, handle in group_table.items():
             if handle == my_handle:
@@ -77,33 +81,45 @@ class DXFGroup(DXFEntity):
         return None
 
     @contextmanager
-    def edit_data(self):
+    def edit_data(self) -> List['DXFEntity']:
         data = list(self)
         yield data
         self.set_data(data)
 
-    def set_data(self, entities):
+    def set_data(self, entities: List['DXFEntity']) -> None:
         entities = list(entities)  # for generators
         if not all_entities_on_same_layout(entities):
-            raise DXFValueError("All entities have to be on the same layout (model space or any paper layout but not block).")
+            raise DXFValueError(
+                "All entities have to be on the same layout (model space or any paper layout but not block).")
         self.clear()
         self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, entity.dxf.handle) for entity in entities)
 
-    def extend(self, entities):
+    def extend(self, entities: Iterable['DXFEntity']) -> None:
+        """
+        Add `entities` to group.
+
+        Args:
+            entities: iterable of DXFEntity
+
+        """
         with self.edit_data() as e:
             e.extend(entities)
 
-    def clear(self):
-        """ Remove all entity references, does not delete any drawing entities referenced by this group.
+    def clear(self) -> None:
+        """
+        Remove all entity references, does not delete any drawing entities referenced by this group.
+
         """
         self.AcDbGroup.remove_tags((GROUP_ITEM_CODE,))
 
-    def remove_invalid_handles(self):
-        """ Remove invalid handles from group.
-
-        Invalid handles: deleted entities, entities in a block layout
+    def remove_invalid_handles(self) -> None:
         """
-        def handle_not_in_block_definition(handle):
+        Remove invalid handles from group.
+
+        Invalid handles are: deleted entities, entities in a block layout
+        """
+
+        def handle_not_in_block_definition(handle: str) -> bool:
             wrap = self.dxffactory.wrap_handle  # shortcut
             # owner block_record.layout is 0 if entity is in a block definition
             owner_handle = wrap(handle).dxf.owner
@@ -118,33 +134,35 @@ class DXFGroup(DXFEntity):
             self.AcDbGroup.extend(DXFTag(GROUP_ITEM_CODE, handle) for handle in valid_handles)
 
 
-def all_entities_on_same_layout(entities):
-    """ Check if all entities are on the same layout (model space or any paper layout but not block).
+def all_entities_on_same_layout(entities: Iterable['DXFEntity']):
+    """
+    Check if all entities are on the same layout (model space or any paper layout but not block).
+
     """
     owners = set(entity.dxf.owner for entity in entities)
     return len(owners) < 2  # 0 for no entities; 1 for all entities on the same layout
 
 
 class GroupManager(ObjectManager):
-    def __init__(self, drawing):
-        super(GroupManager, self).__init__(drawing, dict_name='ACAD_GROUP', object_type='GROUP')
+    def __init__(self, drawing: 'Drawing'):
+        super().__init__(drawing, dict_name='ACAD_GROUP', object_type='GROUP')
         self._next_unnamed_number = 0
 
-    def groups(self):
+    def groups(self) -> Iterable[DXFGroup]:
         for name, group in self:
             yield group
 
-    def next_name(self):
+    def next_name(self) -> str:
         name = self._next_name()
         while name in self:
             name = self._next_name()
         return name
 
-    def _next_name(self):
+    def _next_name(self) -> str:
         self._next_unnamed_number += 1
         return "*A{}".format(self._next_unnamed_number)
 
-    def new(self, name=None, description="", selectable=1):
+    def new(self, name: str = None, description: str = "", selectable: int = 1) -> DXFGroup:
         if name in self:
             raise DXFValueError("GROUP '{}' already exists.".format(name))
 
@@ -159,9 +177,9 @@ class GroupManager(ObjectManager):
             'unnamed': unnamed,
             'selectable': selectable,
         }
-        return self._new(name, dxfattribs)
+        return cast(DXFGroup, self._new(name, dxfattribs))
 
-    def delete(self, group):
+    def delete(self, group: DXFGroup) -> None:
         """
         Delete GROUP by name or Group() object.
 
@@ -176,7 +194,7 @@ class GroupManager(ObjectManager):
                     return
             raise DXFValueError("GROUP not in group table registered.")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Removes invalid handles in all groups and removes empty groups.
 

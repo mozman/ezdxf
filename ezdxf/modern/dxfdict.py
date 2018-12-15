@@ -1,6 +1,7 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, cast, KeysView, ItemsView, Any, Union
 from ezdxf.lldxf.const import DXFKeyError
 from ezdxf.lldxf.packedtags import TagDict
 from ezdxf.lldxf import loader
@@ -8,10 +9,14 @@ from ezdxf.lldxf import loader
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, ExtendedTags
 from .dxfobjects import none_subclass
 
+if TYPE_CHECKING:
+    from collections import OrderedDict
+    from eztypes import Tags, DXFEntity, Auditor
+
 
 @loader.register('ACDBDICTIONARYWDFLT', legacy=False)
 @loader.register('DICTIONARY', legacy=False)
-def tag_processor(tags):
+def tag_processor(tags: ExtendedTags) -> ExtendedTags:
     subclass = tags.get_subclass('AcDbDictionary')
     d = TagDict.from_tags(subclass)
     d.replace_tags(subclass)
@@ -48,7 +53,7 @@ dictionary_subclass = DefSubclass('AcDbDictionary', {
 
 
 class DXFDictionary(DXFObject):
-    __slots__ = ('_cached_dict', )
+    __slots__ = ('_cached_dict',)
     """
     AutoCAD maintains items such as mline styles and group definitions as objects in dictionaries.
     Other applications are free to create and use their own dictionaries as they see fit. The prefix "ACAD_" is reserved
@@ -65,64 +70,64 @@ class DXFDictionary(DXFObject):
     )
 
     @property
-    def AcDbDictinary(self):
+    def AcDbDictinary(self) -> 'Tags':
         return self.tags.subclasses[1]
 
     @property
-    def is_hard_owner(self):
+    def is_hard_owner(self) -> bool:
         return bool(self.get_dxf_attrib('hard_owned', False))
 
     @property
-    def data(self):
+    def data(self) -> 'OrderedDict':
         try:
             return self._cached_dict
         except AttributeError:
-            self._cached_dict = self.AcDbDictinary.get_first_value(TagDict.code)
+            self._cached_dict = cast('OrderedDict', self.AcDbDictinary.get_first_value(TagDict.code))
             return self._cached_dict
 
-    def keys(self):
+    def keys(self) -> KeysView:
         """
         Generator for the dictionary's keys.
 
         """
         return self.data.keys()
 
-    def items(self):
+    def items(self) -> ItemsView:
         """
         Generator for the dictionary's items as (key, value) pairs.
 
         """
         return self.data.items()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> str:
         """
-        Return the value for key if key is in the dictionary, else raises a KeyError.
+        Return the value for `key` if key is in the dictionary, else raises a `KeyError`.
 
         """
         return self.get(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: str) -> None:
         """
-        Add item (key, value) to dictionary.
+        Add item `(key, value)` to dictionary.
 
         """
         return self.add(key, value)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         """
-        Remove element key from the dictionary. Raises KeyError if key is not contained in the dictionary.
+        Remove element `key` from the dictionary. Raises `KeyError` if key is not contained in the dictionary.
 
         """
         return self.remove(key)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         """
-        Return True if the dictionary has key, else False.
+        Return True if the dictionary has `key`, else False.
 
         """
         return key in self.data
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Return the number of items in the dictionary.
 
@@ -131,10 +136,10 @@ class DXFDictionary(DXFObject):
 
     count = __len__
 
-    def get(self, key, default=DXFKeyError):
+    def get(self, key: str, default: Any = DXFKeyError) -> str:
         """
-        Return the value (handle) for *key* if *key* is in the dictionary, else *default*, raises a *DXFKeyError*
-        for *default*=DXFKeyError.
+        Return the value (handle) for `key` if `key` is in the dictionary, else `default` or raises a `DXFKeyError`
+        for `default`=`DXFKeyError`.
 
         """
         try:
@@ -147,9 +152,9 @@ class DXFDictionary(DXFObject):
 
     get_handle = get  # synonym
 
-    def get_entity(self, key):
+    def get_entity(self, key: str) -> Union['DXFEntity', str]:
         """
-        Get object referenced by handle associated by *key* as wrapped entity, raises a *KeyError* if *key* not exists.
+        Get object referenced by handle associated by `key` as wrapped entity, raises a `KeyError` if *key* not exists.
 
         """
         handle = self.get(key)
@@ -158,17 +163,17 @@ class DXFDictionary(DXFObject):
         else:
             return handle
 
-    def add(self, key, value):
+    def add(self, key: str, value: str) -> None:
         """
-        Add item (key, value) to dictionary.
+        Add item `(key, value)` to dictionary.
 
         """
         self.data[key] = value
 
-    def remove(self, key):
+    def remove(self, key: str) -> None:
         """
-        Remove element *key* from the dictionary. Raises *DXFKeyError* if *key* is not contained in the
-        dictionary. Deletes hard owned DXF objects from OBJECTS section.
+        Remove element `key` from the dictionary. Raises `DXFKeyError` if `key` not exists. Deletes hard owned DXF
+        objects from OBJECTS section.
 
         """
         data = self.data
@@ -181,9 +186,9 @@ class DXFDictionary(DXFObject):
             self.drawing.objects.delete_entity(entity)
         del data[key]
 
-    def discard(self, key):
+    def discard(self, key: str) -> None:
         """
-        Remove *key* from the dictionary, if it is present. Does NOT delete hard owned entities!
+        Remove `key` from dictionary, if exists. Does NOT delete hard owned entities!
 
         """
         try:
@@ -191,7 +196,7 @@ class DXFDictionary(DXFObject):
         except KeyError:
             pass
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Removes all entries from DXFDictionary, and also deletes all hard owned DXF objects from OBJECTS section.
 
@@ -200,14 +205,14 @@ class DXFDictionary(DXFObject):
             self.delete_hard_owned_entries()
         self.data.clear()
 
-    def delete_hard_owned_entries(self):
+    def delete_hard_owned_entries(self) -> None:
         # Presumption: hard owned DXF objects always reside in the OBJECTS section
         objects = self.drawing.objects
         wrap = self.dxffactory.wrap_handle
         for key, handle in self.items():
             objects.delete_entity(wrap(handle))
 
-    def add_new_dict(self, key):
+    def add_new_dict(self, key: str) -> 'DXFDictionary':
         """
         Create a new sub dictionary.
 
@@ -219,17 +224,21 @@ class DXFDictionary(DXFObject):
         self.add(key, dxf_dict.dxf.handle)
         return dxf_dict
 
-    def get_required_dict(self, key):
+    def get_required_dict(self, key: str) -> 'DXFDictionary':
+        """
+        Get DXFDictionary `key`, if exists or create a new DXFDictionary.
+
+        """
         try:
             dxf_dict = self.get_entity(key)
         except DXFKeyError:
             dxf_dict = self.add_new_dict(key)
         return dxf_dict
 
-    def audit(self, auditor):
+    def audit(self, auditor: 'Auditor') -> None:
         auditor.check_handles_exists(self, handles=self.data.values())
 
-    def destroy(self):
+    def destroy(self) -> None:
         if self.get_dxf_attrib('hard_owned', False):
             self.delete_hard_owned_entries()
 
@@ -280,10 +289,10 @@ class DXFDictionaryWithDefault(DXFDictionary):
         }),
     )
 
-    def get(self, key, default=DXFKeyError):
+    def get(self, key: str, default: Any = DXFKeyError) -> str:
         """
-        Return the value for *key* if *key* is in the dictionary, else the predefined dictionary wide *default*
-        value. Parameter *default* is always ignored!
+        Return the value for `key` if exists else returns the predefined dictionary wide `default` value. Parameter
+        `default` is always ignored!
 
         """
         return super(DXFDictionaryWithDefault, self).get(key, default=self.dxf.default)

@@ -202,7 +202,9 @@ class ModernDXFFactory(LegacyDXFFactory):
         return BlockLayout(self.entitydb, self, block_handle, endblk_handle)
 
     def copy_layout(self, source_entity: 'DXFEntity', target_entity: 'DXFEntity'):
-        # Place target_entity in same layout as source_entity
+        """
+        Place `target_entity` in same layout as `source_entity`
+        """
         target_entity.dxf.paperspace = source_entity.dxf.paperspace
         target_entity.dxf.owner = source_entity.dxf.owner
 

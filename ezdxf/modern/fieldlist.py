@@ -1,10 +1,14 @@
 # Created: 12.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING
 from .dxfobjects import DefSubclass, DXFAttr, DXFAttributes, none_subclass, ExtendedTags
 from .idbuffer import IDBuffer, PackedHandles, replace_tags
 
 from ezdxf.lldxf import loader
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
 
 _FIELDLIST_CLS = """0
 CLASS
@@ -46,7 +50,7 @@ AcDbFieldList
 
 
 @loader.register('FIELDLIST', legacy=False)
-def tag_processor(tags):
+def tag_processor(tags: ExtendedTags) -> ExtendedTags:
     subclass = tags.get_subclass('AcDbFieldList')
     flist = PackedHandles(handles=(tag.value for tag in subclass[1:]))
     replace_tags(subclass, codes=(330, ), packed_data=flist)
@@ -67,5 +71,5 @@ class FieldList(IDBuffer):
     )
 
     @property
-    def buffer_subclass(self):
+    def buffer_subclass(self) -> 'Tags':
         return self.tags.subclasses[2]  # 3rd subclass

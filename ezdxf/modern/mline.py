@@ -1,12 +1,16 @@
 # Created: 08.04.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, Iterable, Dict
 from ezdxf.lldxf.const import DXFIndexError
 
 from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 from .dxfobjects import DXFObject
 from .object_manager import ObjectManager
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, Tags
 
 # example: processing: D:\source\dxftest\CADKitSamples\Lock-Off.dxf
 
@@ -182,10 +186,10 @@ class MLineStyle(DXFObject):
     DXFATTRIBS = DXFAttributes(none_subclass, mline_style_subclass)
 
     @property
-    def AcDbMLineStyle(self):
+    def AcDbMLineStyle(self) -> 'Tags':
         return self.tags.subclasses[1]
 
-    def get_elements(self):
+    def get_elements(self) -> Iterable[Dict]:
         tags = self.AcDbMLineStyle
         try:
             start = tags.tag_index(71)
@@ -207,11 +211,11 @@ class MLineStyle(DXFObject):
 
 
 class MLineStyleManager(ObjectManager):
-    def __init__(self, drawing):
-        super(MLineStyleManager, self).__init__(drawing, dict_name='ACAD_MLINESTYLE', object_type='MLINESTYLE')
+    def __init__(self, drawing: 'Drawing'):
+        super().__init__(drawing, dict_name='ACAD_MLINESTYLE', object_type='MLINESTYLE')
         self.create_required_entries()
 
-    def create_required_entries(self):
+    def create_required_entries(self) -> None:
         for name in ('STANDARD', ):
             if name not in self.object_dict:
                 self.new(name)

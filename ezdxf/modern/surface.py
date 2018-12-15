@@ -1,11 +1,15 @@
 # Created: 20.03.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf.const import DXFStructureError
 
 from .graphics import none_subclass, entity_subclass, DXFAttr, DXFAttributes, DefSubclass, ExtendedTags, XType
 from .solid3d import Body, modeler_geometry_subclass
 from . import matrix_accessors
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Matrix44
 
 _SURFACE_TPL = """0
 SURFACE
@@ -64,14 +68,14 @@ class Surface(Body):
         surface_subclass,
     )
 
-    def _get_matrix(self, code):
+    def _get_matrix(self, code: int) -> 'Matrix44':
         subclass = self.tags.subclasses[4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
         try:
             return matrix_accessors.get_matrix(subclass, code)
         except DXFStructureError:
             raise DXFStructureError('Invalid transformation matrix in entity ' + self.__str__())
 
-    def _set_matrix(self, code, data):
+    def _set_matrix(self, code: int, data: Iterable[float]):
         subclass = self.tags.subclasses[4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
         matrix_accessors.set_matrix(subclass, code, list(data))
 
@@ -313,22 +317,22 @@ class ExtrudedSurface(Surface):
         extruded_surface_subclass,
     )
 
-    def set_transformation_matrix_extruded_entity(self, matrix):
+    def set_transformation_matrix_extruded_entity(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=40, data=matrix)
 
-    def get_transformation_matrix_extruded_entity(self):
+    def get_transformation_matrix_extruded_entity(self) -> 'Matrix44':
         return self._get_matrix(code=40)
 
-    def set_sweep_entity_transformation_matrix(self, matrix):
+    def set_sweep_entity_transformation_matrix(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=46, data=matrix)
 
-    def get_sweep_entity_transformation_matrix(self):
+    def get_sweep_entity_transformation_matrix(self) -> 'Matrix44':
         return self._get_matrix(code=46)
 
-    def set_path_entity_transformation_matrix(self, matrix):
+    def set_path_entity_transformation_matrix(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=47, data=matrix)
 
-    def get_path_entity_transformation_matrix(self):
+    def get_path_entity_transformation_matrix(self) -> 'Matrix44':
         return self._get_matrix(code=47)
 
 
@@ -484,10 +488,10 @@ class LoftedSurface(Surface):
         lofted_surface_subclass,
     )
 
-    def set_transformation_matrix_lofted_entity(self, matrix):
+    def set_transformation_matrix_lofted_entity(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=40, data=matrix)
 
-    def get_transformation_matrix_lofted_entity(self):
+    def get_transformation_matrix_lofted_entity(self) -> 'Matrix44':
         return self._get_matrix(code=40)
 
 
@@ -645,10 +649,10 @@ class RevolvedSurface(Surface):
         revolved_surface_subclass,
     )
 
-    def set_transformation_matrix_revolved_entity(self, matrix):
+    def set_transformation_matrix_revolved_entity(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=42, data=matrix)
 
-    def get_transformation_matrix_revolved_entity(self):
+    def get_transformation_matrix_revolved_entity(self) -> 'Matrix44':
         return self._get_matrix(code=42)
 
 
@@ -922,29 +926,29 @@ class SweptSurface(Surface):
         swept_surface_subclass,
     )
 
-    def set_transformation_matrix_sweep_entity(self, matrix):
+    def set_transformation_matrix_sweep_entity(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=40, data=matrix)
 
-    def get_transformation_matrix_sweep_entity(self):
+    def get_transformation_matrix_sweep_entity(self) -> 'Matrix44':
         return self._get_matrix(code=40)
 
-    def set_transformation_matrix_path_entity(self, matrix):
+    def set_transformation_matrix_path_entity(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=41, data=matrix)
 
-    def get_transformation_matrix_path_entity(self):
+    def get_transformation_matrix_path_entity(self) -> 'Matrix44':
         return self._get_matrix(code=41)
 
     # don't know the meaning of this matrices
-    def set_sweep_entity_transformation_matrix(self, matrix):
+    def set_sweep_entity_transformation_matrix(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=46, data=matrix)
 
-    def get_sweep_entity_transformation_matrix(self):
+    def get_sweep_entity_transformation_matrix(self) -> 'Matrix44':
         return self._get_matrix(code=46)
 
-    def set_path_entity_transformation_matrix(self, matrix):
+    def set_path_entity_transformation_matrix(self, matrix: 'Matrix44') -> None:
         self._set_matrix(code=47, data=matrix)
 
-    def get_path_entity_transformation_matrix(self):
+    def get_path_entity_transformation_matrix(self) -> 'Matrix44':
         return self._get_matrix(code=47)
 
 

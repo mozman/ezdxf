@@ -1,7 +1,11 @@
 # Created: 22.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT-License
+from typing import TYPE_CHECKING, Iterable
 from .dxfobjects import DXFObject, DefSubclass, DXFAttributes, DXFAttr, none_subclass
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, DXFTag
 
 _XRECORD_TPL = """  0
 XRECORD
@@ -26,42 +30,46 @@ class XRecord(DXFObject):
     )
 
     @property
-    def content_tags(self):
+    def content_tags(self) -> 'Tags':
         return self.tags.get_subclass('AcDbXrecord')
 
     @staticmethod
-    def _adjust_index(index):
+    def _adjust_index(index: int) -> int:
         return index if index < 0 else index + 2
 
-    def __len__(self):
+    def __len__(self) -> int:
         # ignore first tags = (100, 'AcDbXrecord'), (280, ...)
         return len(self.content_tags) - 2
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> 'DXFTag':
         """
-        Returns DXF tag at position *index*.
+        Returns DXF tag at position `index`.
+
         """
         # skip first tags = (100, 'AcDbXrecord'), (280, ...)
         return self.content_tags[XRecord._adjust_index(index)]
 
-    def __setitem__(self, index, dxftag):
+    def __setitem__(self, index: int, dxftag: 'DXFTag') -> None:
         """
-        Replace DXF tag at position *index* with *dxftag*.
+        Replace DXF tag at position `index` with `dxftag`.
+        
         """
         # skip first tags = (100, 'AcDbXrecord'), (280, ...)
         self.content_tags[XRecord._adjust_index(index)] = dxftag
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable['DXFTag']:
         """
-        Iterate over data, yielding DXF tags as named tuple *(code, value)*.
+        Iterate over data, yielding DXF tags as named tuple `(code, value)`.
+
         """
         tags = iter(self.content_tags)
         next(tags)  # skip (100, 'AcDbXrecord')
         next(tags)  # skip (280, ...)
         return tags
 
-    def append(self, dxftag):
+    def append(self, dxftag: 'DXFTag') -> None:
         """
-        Append *dxftag* at the end of the tag list.
+        Append `dxftag` at the end of the tag list.
+
         """
         self.content_tags.append(dxftag)

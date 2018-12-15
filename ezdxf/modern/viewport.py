@@ -1,12 +1,16 @@
 # Created: 11.10.2015
 # Copyright (C) 2015-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, Union
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.const import DXFAttributeError, DXFValueError
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Tags, Layer
 
 _VIEWPORT_TPL = """0
 VIEWPORT
@@ -202,22 +206,22 @@ class Viewport(ModernGraphicEntity):
     # the id is greater than 1.
 
     @property
-    def AcDbViewport(self):
+    def AcDbViewport(self)->'Tags':
         return self.tags.subclasses[2]
 
-    def get_next_viewport_id(self):
+    def get_next_viewport_id(self) -> int:
         current_id = Viewport.viewport_id
         Viewport.viewport_id += 1
         return current_id
 
-    def get_frozen_layer_handles(self):
+    def get_frozen_layer_handles(self) -> Iterable[str]:
         """
         Returns generator of layer handels.
 
         """
         return (tag.value for tag in self.AcDbViewport if tag.code == 331)
 
-    def get_frozen_layer_entities(self):
+    def get_frozen_layer_entities(self) -> Iterable['Layer']:
         """
         Returns generator of Layer() objects.
 
@@ -227,7 +231,7 @@ class Viewport(ModernGraphicEntity):
         wrapper = self.dxffactory.wrap_handle
         return (wrapper(handle) for handle in self.get_frozen_layer_handles())
 
-    def set_frozen_layers(self, layers):
+    def set_frozen_layers(self, layers: Iterable[Union[str, 'Layer']]) -> None:
         """
         Set frozen layers for this viewport.
 

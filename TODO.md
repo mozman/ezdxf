@@ -32,6 +32,10 @@ DXF Audit & Cleanup
 - check ownership
     - DXF objects in OBJECTS section
     - DXF Entities in a layout (model space, paper space, block)
+- check required DXF attributes:
+    - R12: layer; cleanup: set to '0' (in ezdxf defaults to '0')
+    - R2000+: layer, owner?, handle?
+- check required subclasses
 - VERTEX on same layer as POLYLINE; cleanup: set VERTEX layer to POLYLINE layer
 - find unreferenced objects:
     - DICTIONARY e.g. orphaned extension dicts; cleanup: delete
