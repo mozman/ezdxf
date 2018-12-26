@@ -61,7 +61,7 @@ from .xrecord import XRecord
 from .datatable import DataTable
 from .geodata import GeoData
 from .material import Material
-from .groups import DXFGroup
+from .dxfgroups import DXFGroup
 from .layouts import Layouts, BlockLayout
 
 if TYPE_CHECKING:

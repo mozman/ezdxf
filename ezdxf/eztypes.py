@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from ezdxf.modern.tableentries import UCS, View, AppID, VPort
 
     # Style Manager
-    from ezdxf.modern.groups import GroupManager
+    from ezdxf.modern.dxfgroups import GroupManager
     from ezdxf.modern.material import MaterialManager
     from ezdxf.modern.mleader import MLeaderStyleManager
     from ezdxf.modern.mline import MLineStyleManager
