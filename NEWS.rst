@@ -8,6 +8,8 @@ Version 0.8.10a1 - dev
 ----------------------
 
 - BUGFIX release for Python 2 compatible main version 0.8
+- renamed groups.py into dxfgroups.py to avoid confilicts with cython
+
 
 Version 0.8.9 - 2018-11-28
 --------------------------

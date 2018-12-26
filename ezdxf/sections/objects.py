@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
-from ezdxf.modern.groups import GroupManager
+from ezdxf.modern.dxfgroups import GroupManager
 from ezdxf.modern.material import MaterialManager
 from ezdxf.modern.mleader import MLeaderStyleManager
 from ezdxf.modern.mline import MLineStyleManager
