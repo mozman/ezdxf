@@ -2,7 +2,12 @@
 # Created: 26.03.2010
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, List, Iterable, Tuple, Dict
 from ezdxf.algebra.vector import Vector
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
+
 """
 
 Bezier curves
@@ -58,26 +63,27 @@ Any Bezier curve is infinitely differentiable within itself, and is therefore co
 """
 
 
-class Bezier(object):
+class Bezier:
     """
     A general Bezier curve.
 
     Accepts 2d points as definition points, but output ist always 3d (z-axis is 0).
 
     """
-    def __init__(self, defpoints):
-        self._defpoints = [Vector(p) for p in defpoints]
+
+    def __init__(self, defpoints: Iterable['Vertex']):
+        self._defpoints = [Vector(p) for p in defpoints]  # type: List[Vector]
 
     @property
-    def control_points(self):
+    def control_points(self) -> List[Vector]:
         return self._defpoints
 
-    def approximate(self, segments=20):
+    def approximate(self, segments: int = 20) -> Iterable[Vector]:
         step = 1.0 / float(segments)
         for point_index in range(segments + 1):
             yield self.point(point_index * step)
 
-    def point(self, t):
+    def point(self, t: float) -> Vector:
         """
         Returns point at BezierCurve(t) as tuple (x, y, z)
 
@@ -107,7 +113,8 @@ class DBezier(Bezier):
     Calculate the Points and Derivative of a Bezier curve.
 
     """
-    def point(self, t):
+
+    def point(self, t: float) -> Tuple[Vector, Vector, Vector]:
         """
         Returns (point, derivative1, derivative2) at BezierCurve(t)
 
@@ -150,7 +157,7 @@ class DBezier(Bezier):
         return Vector(point), Vector(d1), Vector(d2)
 
 
-def bernstein_basis(n, i, t):
+def bernstein_basis(n: int, i: int, t: float) -> float:
     # handle the special cases to avoid domain problem with pow
     if t == 0.0 and i == 0:
         ti = 1.0
@@ -164,16 +171,16 @@ def bernstein_basis(n, i, t):
     return Ni * ti * tni
 
 
-class _Factorial(object):
-    _values = {0: 1.0}
+class _Factorial:
+    _values = {0: 1.0}  # type: Dict[int, float]
 
-    def __init__(self, maxvalue=33):
+    def __init__(self, maxvalue: int = 33):
         value = 1.
         for i in range(1, maxvalue):
             value *= i
             self._values[i] = value
 
-    def get(self, value):
+    def get(self, value: int) -> float:
         value = int(value)
         try:
             return self._values[value]

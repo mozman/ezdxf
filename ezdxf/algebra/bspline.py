@@ -220,12 +220,15 @@ Rational B-splines are defined simply by applying the B-spline equation (Equatio
 rather than normal 3D coordinates.
 
 """
-from typing import List, Iterable, Sequence
+from typing import List, Iterable, Sequence, TYPE_CHECKING, Dict, Tuple, Optional
 from .vector import Vector, distance
 from .matrix import Matrix
 from .base import is_close
 from math import pow
 from ezdxf.lldxf.const import DXFValueError
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 
 def knot_open_uniform(n: int, order: int) -> List[float]:
@@ -242,7 +245,7 @@ def knot_open_uniform(n: int, order: int) -> List[float]:
     nplusc = n + order
     nplus2 = n + 2
     knots = [0.]
-    for i in range(2, nplusc+1):
+    for i in range(2, nplusc + 1):
         if (i > order) and (i < nplus2):
             knots.append(knots[-1] + 1.)
         else:
@@ -250,8 +253,8 @@ def knot_open_uniform(n: int, order: int) -> List[float]:
     return knots
 
 
-def is_uniform_knots(knots, places: int=4):
-    deltas = set(round(k2-k1, ndigits=places) for k1, k2 in zip(knots, knots[1:]))
+def is_uniform_knots(knots: Sequence[float], places: int = 4) -> bool:
+    deltas = set(round(k2 - k1, ndigits=places) for k1, k2 in zip(knots, knots[1:]))
     return len(deltas) == 1
 
 
@@ -286,16 +289,16 @@ def required_knot_values(count: int, order: int) -> int:
 
 
 def uniform_t_vector(fit_points: Sequence) -> Iterable[float]:
-    n = float(len(fit_points)-1)
+    n = float(len(fit_points) - 1)
     for t in range(len(fit_points)):
         yield float(t) / n
 
 
-def distance_t_vector(fit_points):
+def distance_t_vector(fit_points: Iterable['Vertex']):
     return centripetal_t_vector(fit_points, power=1)
 
 
-def centripetal_t_vector(fit_points, power=.5):
+def centripetal_t_vector(fit_points: Iterable['Vertex'], power: float = .5) -> Iterable[float]:
     distances = [pow(distance(p1, p2), power) for p1, p2 in zip(fit_points, fit_points[1:])]
     total_length = sum(distances)
     s = 0.
@@ -305,7 +308,7 @@ def centripetal_t_vector(fit_points, power=.5):
         yield s / total_length
 
 
-def bspline_basis(u, index, degree, knots):
+def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> float:
     """
     B-spline basis function.
 
@@ -320,21 +323,21 @@ def bspline_basis(u, index, degree, knots):
     Returns: basis value N_i,p(u) as float
 
     """
-    cache = {}
+    cache = {}  # type: Dict[Tuple[int, int], float]
     u = float(u)
 
-    def N(i, p):
+    def N(i: int, p: int) -> float:
         try:
             return cache[(i, p)]
         except KeyError:
             if p == 0:
-                retval = 1 if knots[i] <= u < knots[i+1] else 0.
+                retval = 1 if knots[i] <= u < knots[i + 1] else 0.
             else:
-                dominator = (knots[i+p]-knots[i])
-                f1 = (u-knots[i]) / dominator * N(i, p-1) if dominator else 0.
+                dominator = (knots[i + p] - knots[i])
+                f1 = (u - knots[i]) / dominator * N(i, p - 1) if dominator else 0.
 
-                dominator = (knots[i+p+1]-knots[i+1])
-                f2 = (knots[i+p+1]-u) / dominator * N(i+1, p-1) if dominator else 0.
+                dominator = (knots[i + p + 1] - knots[i + 1])
+                f2 = (knots[i + p + 1] - u) / dominator * N(i + 1, p - 1) if dominator else 0.
 
                 retval = f1 + f2
             cache[(i, p)] = retval
@@ -343,7 +346,7 @@ def bspline_basis(u, index, degree, knots):
     return N(int(index), int(degree))
 
 
-def bspline_basis_vector(u, count, degree, knots):
+def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[float]) -> List[float]:
     """
     Create basis vector at parameter u.
 
@@ -359,13 +362,13 @@ def bspline_basis_vector(u, count, degree, knots):
 
     """
     assert len(knots) == (count + degree + 1)
-    basis = [bspline_basis(u, index, degree, knots) for index in range(count)]
+    basis = [bspline_basis(u, index, degree, knots) for index in range(count)]  # type: List[float]
     if is_close(u, knots[-1]):  # pick up last point ??? why is this necessary ???
         basis[-1] = 1.
     return basis
 
 
-def bspline_vertex(u, degree, control_points, knots):
+def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], knots: Sequence[float]) -> Vector:
     """
     Calculate B-spline vertex at parameter u.
 
@@ -388,7 +391,7 @@ def bspline_vertex(u, degree, control_points, knots):
     return vertex
 
 
-def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
+def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance', power: float = .5):
     """
     Calculate B-spline control frame, given are the fit points and the degree of the B-spline.
 
@@ -403,6 +406,7 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
         power: power for centripetal method
 
     """
+
     def create_t_vector():
         if method == 'uniform':
             return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
@@ -420,14 +424,15 @@ def bspline_control_frame(fit_points, degree=3, method='distance', power=.5):
         raise DXFValueError('Need more fit points for degree {}'.format(degree))
 
     t_vector = list(create_t_vector())
-    knots = list(control_frame_knots(count-1, degree, t_vector))
+    knots = list(control_frame_knots(count - 1, degree, t_vector))
     control_points = global_curve_interpolation(fit_points, degree, t_vector, knots)
     bspline = BSpline(control_points, order=order, knots=knots)
     bspline.t_array = t_vector
     return bspline
 
 
-def bspline_control_frame_approx(fit_points, count, degree=3, method='distance', power=.5):
+def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'distance',
+                                 power: float = .5):
     """
     Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
 
@@ -443,6 +448,7 @@ def bspline_control_frame_approx(fit_points, count, degree=3, method='distance',
         power: power for centripetal method
 
     """
+
     def create_t_vector():
         if method == 'uniform':
             return uniform_t_vector(fit_points)  # equally spaced 0 .. 1
@@ -459,13 +465,13 @@ def bspline_control_frame_approx(fit_points, count, degree=3, method='distance',
         raise DXFValueError('More control points for degree {} required.'.format(degree))
 
     t_vector = list(create_t_vector())
-    knots = list(control_frame_knots(len(fit_points)-1, degree, t_vector))
+    knots = list(control_frame_knots(len(fit_points) - 1, degree, t_vector))
     control_points = global_curve_approximation(fit_points, count, degree, t_vector, knots)
     bspline = BSpline(control_points, order=order)
     return bspline
 
 
-def control_frame_knots(n, p, t_vector):
+def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[float]:
     """
     Generates a 'clamped' knot vector for control frame creation. All knot values in the range [0 .. 1].
 
@@ -477,20 +483,23 @@ def control_frame_knots(n, p, t_vector):
     Yields: n+p+2 knot values as floats
 
     """
-    order = int(p+1)
+    order = int(p + 1)
     if order > (n + 1):
         raise DXFValueError('Invalid n/p combination')
 
     t_vector = [float(t) for t in t_vector]
     for _ in range(order):  # clamped spline has 'order' leading 0s
         yield t_vector[0]
-    for j in range(1, n-p+1):
-        yield sum(t_vector[j: j+p]) / p
+    for j in range(1, n - p + 1):
+        yield sum(t_vector[j: j + p]) / p
     for _ in range(order):  # clamped spline has 'order' appended 1s
         yield t_vector[-1]
 
 
-def global_curve_interpolation(fit_points, degree, t_vector, knots):
+def global_curve_interpolation(fit_points: Sequence['Vertex'],
+                               degree: int,
+                               t_vector: Iterable[float],
+                               knots: Iterable[float]) -> List[Vector]:
     def create_matrix_N():
         spline = Basis(knots=knots, order=degree + 1, count=len(fit_points))
         return Matrix([spline.basis(t) for t in t_vector])
@@ -500,7 +509,11 @@ def global_curve_interpolation(fit_points, degree, t_vector, knots):
     return Vector.list(control_points.rows())
 
 
-def global_curve_approximation(fit_points, count, degree, t_vector, knots):
+def global_curve_approximation(fit_points: Iterable['Vertex'],
+                               count: int,
+                               degree: int,
+                               t_vector: Iterable[float],
+                               knots: Iterable[float]) -> List[Vector]:
     """
     Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
 
@@ -520,13 +533,13 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
     h = count - 1
     d0 = fit_points[0]
     dn = fit_points[n]
-    spline = Basis(knots, order=degree+1, count=len(fit_points))
+    spline = Basis(knots, order=degree + 1, count=len(fit_points))
     # matrix_N[0] == row 0
     matrix_N = [spline.basis(t) for t in t_vector]  # 0 .. n
 
     def Q(k):
         ntk = matrix_N[k]
-        return fit_points[k] - d0*ntk[0] - dn*ntk[h]
+        return fit_points[k] - d0 * ntk[0] - dn * ntk[h]
 
     # matrix_Q[0] == row 1
     matrix_Q = [sum(Q(k) * matrix_N[k][i] for k in range(1, n)) for i in range(1, h)]
@@ -539,22 +552,22 @@ def global_curve_approximation(fit_points, count, degree, t_vector, knots):
     return control_points
 
 
-class Basis(object):
-    def __init__(self, knots, order, count, weights=None):
-        self.knots = list(knots)
-        self.order = order
-        self.count = count
-        self.weights = weights
+class Basis:
+    def __init__(self, knots: Iterable[float], order: int, count: int, weights: Sequence[float] = None):
+        self.knots = list(knots)  # type: List[float]
+        self.order = order  # type: int
+        self.count = count  # type: int
+        self.weights = weights  # type: Optional[Sequence[float]]
 
     @property
-    def max_t(self):
+    def max_t(self) -> float:
         return self.knots[-1]
 
     @property
-    def nplusc(self):
+    def nplusc(self) -> int:
         return self.count + self.order
 
-    def create_nbasis(self, t):
+    def create_nbasis(self, t: float) -> List[float]:
         """
         Calculate the first order basis functions N[i][1]
 
@@ -563,52 +576,54 @@ class Basis(object):
         """
         return [1. if k1 <= t < k2 else 0. for k1, k2 in zip(self.knots, self.knots[1:])]
 
-    def basis(self, t):
+    def basis(self, t: float) -> List[float]:
         knots = self.knots
         nbasis = self.create_nbasis(t)
         # calculate the higher order basis functions
         for k in range(2, self.order + 1):
             for i in range(self.nplusc - k):
                 d = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
-                e = ((knots[i+k] - t) * nbasis[i+1]) / (knots[i+k] - knots[i+1]) if nbasis[i+1] != 0. else 0.
+                e = ((knots[i + k] - t) * nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0. else 0.
                 nbasis[i] = d + e
         if is_close(t, self.max_t):  # pick up last point
-            nbasis[self.count-1] = 1.
+            nbasis[self.count - 1] = 1.
         if self.weights is None:
             return nbasis[:self.count]
         else:
             return self.weighting(nbasis[:self.count])
 
-    def weighting(self, nbasis):
+    def weighting(self, nbasis: Iterable[float]) -> List[float]:
         products = [nb * w for nb, w in zip(nbasis, self.weights)]
         s = sum(products)
-        return [0.0]*self.count if s == 0.0 else [p/s for p in products]
+        return [0.0] * self.count if s == 0.0 else [p / s for p in products]
 
 
 class DBasis(Basis):
-    def basis(self, t):
+    def basis(self, t: float) -> Tuple[List[float], List[float], List[float]]:
         knots = self.knots
         nbasis = self.create_nbasis2(t)
         d1nbasis = [0.] * self.nplusc
         d2nbasis = d1nbasis[:]
 
-        for k in range(2, self.order+1):
-            for i in range(self.nplusc-k):
+        for k in range(2, self.order + 1):
+            for i in range(self.nplusc - k):
                 # calculate basis functions
-                b1 = ((t - knots[i]) * nbasis[i]) / (knots[i+k-1] - knots[i]) if nbasis[i] != 0. else 0.
-                b2 = ((knots[i+k] - t) * nbasis[i+1]) / (knots[i+k] - knots[i+1]) if nbasis[i+1] != 0. else 0.
+                b1 = ((t - knots[i]) * nbasis[i]) / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
+                b2 = ((knots[i + k] - t) * nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0. else 0.
 
                 # calculate first derivative
-                f1 = nbasis[i] / (knots[i+k-1] - knots[i]) if nbasis[i] != 0. else 0.
-                f2 = -nbasis[i+1] / (knots[i+k] - knots[i+1]) if nbasis[i+1] != 0. else 0.
-                f3 = ((t - knots[i]) * d1nbasis[i]) / (knots[i+k-1] - knots[i]) if d1nbasis[i] != 0. else 0.
-                f4 = ((knots[i+k] - t) * d1nbasis[i+1]) / (knots[i+k] - knots[i+1]) if d1nbasis[i+1] != 0. else 0.
+                f1 = nbasis[i] / (knots[i + k - 1] - knots[i]) if nbasis[i] != 0. else 0.
+                f2 = -nbasis[i + 1] / (knots[i + k] - knots[i + 1]) if nbasis[i + 1] != 0. else 0.
+                f3 = ((t - knots[i]) * d1nbasis[i]) / (knots[i + k - 1] - knots[i]) if d1nbasis[i] != 0. else 0.
+                f4 = ((knots[i + k] - t) * d1nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d1nbasis[
+                                                                                                   i + 1] != 0. else 0.
 
                 # calculate second derivative
-                s1 = (2 * d1nbasis[i]) / (knots[i+k-1] - knots[i]) if d1nbasis[i] != 0. else 0.
-                s2 = (-2 * d1nbasis[i+1]) / (knots[i+k] - knots[i+1]) if d1nbasis[i+1] != 0. else 0.
-                s3 = ((t - knots[i]) * d2nbasis[i]) / (knots[i+k-1] - knots[i]) if d2nbasis[i] != 0. else 0.
-                s4 = ((knots[i+k] - t) * d2nbasis[i+1]) / (knots[i+k] - knots[i+1]) if d2nbasis[i+1] != 0. else 0.
+                s1 = (2 * d1nbasis[i]) / (knots[i + k - 1] - knots[i]) if d1nbasis[i] != 0. else 0.
+                s2 = (-2 * d1nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d1nbasis[i + 1] != 0. else 0.
+                s3 = ((t - knots[i]) * d2nbasis[i]) / (knots[i + k - 1] - knots[i]) if d2nbasis[i] != 0. else 0.
+                s4 = ((knots[i + k] - t) * d2nbasis[i + 1]) / (knots[i + k] - knots[i + 1]) if d2nbasis[
+                                                                                                   i + 1] != 0. else 0.
 
                 nbasis[i] = b1 + b2
                 d1nbasis[i] = f1 + f2 + f3 + f4
@@ -620,30 +635,34 @@ class DBasis(Basis):
         else:
             self.weighting(nbasis[:count]), self.weighting(d1nbasis[:count]), self.weighting(d2nbasis[:count])
 
-    def create_nbasis2(self, t):
+    def create_nbasis2(self, t: float) -> List[float]:
         nbasis = self.create_nbasis(t)
         if is_close(t, self.max_t):
-            nbasis[self.count-1] = 1.
+            nbasis[self.count - 1] = 1.
         return nbasis
 
 
 class DBasisU(DBasis):
-    def create_nbasis2(self, t):
+    def create_nbasis2(self, t: float) -> List[float]:
         nbasis = self.create_nbasis(t)
         if is_close(t, self.knots[self.count]):
-            nbasis[self.count-1] = 1.
+            nbasis[self.count - 1] = 1.
             nbasis[self.count] = 0.
         return nbasis
 
 
-class BSpline(object):
+class BSpline:
     """
     Calculate the points of a B-spline curve, using an uniform open knot vector ("clamped").
 
     Accepts 2d points as definition points, but output ist always 3d (z-axis is 0).
 
     """
-    def __init__(self, control_points, order=4, knots=None, weights=None):
+
+    def __init__(self, control_points: Iterable['Vertex'],
+                 order: int = 4,
+                 knots: Iterable[float] = None,
+                 weights: Iterable[float] = None):
         self.control_points = Vector.list(control_points)
         self.order = order
         if order > self.count:
@@ -659,36 +678,36 @@ class BSpline(object):
         self.basis = Basis(knots, self.order, self.count, weights=weights)
 
     @property
-    def nplusc(self):
+    def nplusc(self) -> int:
         return self.count + self.order
 
     @property
-    def count(self):
+    def count(self) -> int:
         return len(self.control_points)
 
     @property
-    def max_t(self):
+    def max_t(self) -> float:
         return self.basis.max_t
 
     @property
-    def degree(self):
-        return self.order-1
+    def degree(self) -> int:
+        return self.order - 1
 
-    def knot_values(self):
+    def knot_values(self) -> List[float]:
         return self.basis.knots
 
-    def basis_values(self, t):
+    def basis_values(self, t: float) -> List[float]:
         return self.basis.basis(t)
 
-    def step_size(self, segments):
+    def step_size(self, segments: int) -> float:
         return self.max_t / float(segments)
 
-    def approximate(self, segments=20):
+    def approximate(self, segments: int = 20) -> Iterable[Vector]:
         step = self.step_size(segments)
         for point_index in range(segments + 1):
             yield self.point(point_index * step)
 
-    def point(self, t):
+    def point(self, t: float) -> Vector:
         """
         Get point at SplineCurve(t) as tuple (x, y, z).
 
@@ -706,7 +725,7 @@ class BSpline(object):
             p += control_point * basis
         return p
 
-    def insert_knot(self, t):
+    def insert_knot(self, t: float) -> None:
         """
         Insert additional knot, without altering the curve shape.
 
@@ -721,14 +740,14 @@ class BSpline(object):
         cpoints = self.control_points
         p = self.degree
 
-        def find_knot_index():
+        def find_knot_index() -> int:
             for knot_index in range(1, len(knots)):
-                if knots[knot_index-1] <= t < knots[knot_index]:
-                    return knot_index-1
+                if knots[knot_index - 1] <= t < knots[knot_index]:
+                    return knot_index - 1
 
-        def new_point(index):
-            a = (t - knots[index]) / (knots[index+p] - knots[index])
-            return cpoints[index-1] * (1 - a) + cpoints[index] * a
+        def new_point(index: int) -> Vector:
+            a = (t - knots[index]) / (knots[index + p] - knots[index])
+            return cpoints[index - 1] * (1 - a) + cpoints[index] * a
 
         if t <= 0. or t >= self.max_t:
             raise DXFValueError('Invalid position t')
@@ -737,8 +756,8 @@ class BSpline(object):
         if k < p:
             raise DXFValueError('Invalid position t')
 
-        cpoints[k-p+1:k] = [new_point(i) for i in range(k-p+1, k+1)]
-        knots.insert(k+1, t)  # knot[k] <= t < knot[k+1]
+        cpoints[k - p + 1:k] = [new_point(i) for i in range(k - p + 1, k + 1)]
+        knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
         self.basis.count = len(cpoints)
 
 
@@ -747,20 +766,22 @@ class BSplineU(BSpline):
     Calculate the points of a B-spline curve, uniform (periodic) knot vector (not "clamped").
 
     """
-    def __init__(self, control_points, order=4, weights=None):
-        knots = knot_uniform(len(control_points), order)
-        super(BSplineU, self).__init__(control_points, order=order, knots=knots, weights=weights)
 
-    def step_size(self, segments):
+    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
+        control_points = list(control_points)
+        knots = knot_uniform(len(control_points), order)
+        super().__init__(control_points, order=order, knots=knots, weights=weights)
+
+    def step_size(self, segments: int) -> float:
         return float(self.count - self.order + 1) / segments
 
-    def approximate(self, segments=20):
+    def approximate(self, segments=20) -> Iterable[Vector]:
         step = self.step_size(segments)
         base = float(self.order - 1)
         for point_index in range(segments + 1):
             yield self.point(base + point_index * step)
 
-    def t_array(self):
+    def t_array(self) -> List[float]:
         raise NotImplemented
 
 
@@ -769,18 +790,19 @@ class BSplineClosed(BSplineU):
     Calculate the points of a closed uniform B-spline curve.
 
     """
-    def __init__(self, control_points, order=4, weights=None):
+
+    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         # control points wrap around
-        points = control_points[:]
-        points.extend(points[:order-1])
+        points = list(control_points)
+        points.extend(points[:order - 1])
         if weights is not None:
             weights = list(weights)
             weights.extend(weights[:order - 1])
-        super(BSplineClosed, self).__init__(points, order=order, weights=weights)
+        super().__init__(points, order=order, weights=weights)
 
 
-class DerivativePoint(object):
-    def point(self, t):
+class DerivativePoint:  # Mixin
+    def point(self, t: float) -> Tuple[Vector, Vector, Vector]:
         """
         Get point, 1st and 2nd derivative at B-spline(t) as tuple (p, d1, d3),
         where p, d1 nad d2 is a tuple (x, y, z).
@@ -808,8 +830,12 @@ class DBSpline(DerivativePoint, BSpline):
     Calculate the Points and Derivative of an open uniform B-spline curve ("clamped").
 
     """
-    def __init__(self, control_points, order=4, knots=None, weights=None):
-        super(DBSpline, self).__init__(control_points, order=order, knots=knots, weights=weights)
+
+    def __init__(self, control_points: Iterable['Vertex'],
+                 order: int = 4,
+                 knots: Iterable[float] = None,
+                 weights: Iterable[float] = None):
+        super().__init__(control_points, order=order, knots=knots, weights=weights)
         self.basis = DBasis(self.knot_values(), self.order, self.count)
 
 
@@ -818,8 +844,9 @@ class DBSplineU(DerivativePoint, BSplineU):
     Calculate the Points and Derivative of an uniform B-spline curve (not "clamped").
 
     """
-    def __init__(self, control_points, order=4, weights=None):
-        super(DBSplineU, self).__init__(control_points, order=order, weights=weights)
+
+    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
+        super().__init__(control_points, order=order, weights=weights)
         self.basis = DBasisU(self.knot_values(), self.order, self.count)
 
 
@@ -829,12 +856,7 @@ class DBSplineClosed(DerivativePoint, BSplineClosed):
 
     UNTESTED!
     """
-    def __init__(self, control_points, order=4, weights=None):
-        super(DBSplineClosed, self).__init__(control_points, order=order, weights=weights)
+
+    def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
+        super().__init__(control_points, order=order, weights=weights)
         self.basis = DBasisU(self.knot_values(), self.order, self.count)
-
-
-
-
-
-
