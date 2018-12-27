@@ -98,27 +98,33 @@ flags (70): 1 = EXTRA_VERTEX_CREATED
 Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 
 """
+from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf import const
 from ezdxf.algebra.bspline import BSpline, BSplineClosed
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex, GenericLayoutType, Polyline
+    from ezdxf.algebra.ucs import UCS
 
-class R12Spline(object):
-    def __init__(self, control_points, degree=2, closed=True):
+
+class R12Spline:
+    def __init__(self, control_points: Iterable['Vertex'], degree: int = 2, closed: bool = True):
         self.control_points = list(control_points)
         self.degree = degree
         self.closed = closed
 
-    def approximate(self, segments=40, ucs=None):
+    def approximate(self, segments: int = 40, ucs: 'UCS' = None) -> List['Vertex']:
         if self.closed:
-            spline = BSplineClosed(self.control_points, order=self.degree+1)
+            spline = BSplineClosed(self.control_points, order=self.degree + 1)
         else:
-            spline = BSpline(self.control_points, order=self.degree+1)
+            spline = BSpline(self.control_points, order=self.degree + 1)
         vertices = spline.approximate(segments)
         if ucs is not None:
             vertices = (ucs.to_ocs(vertex) for vertex in vertices)
         return list(vertices)
 
-    def render(self, layout, segments=40, ucs=None, dxfattribs=None):
+    def render(self, layout: 'GenericLayoutType', segments: int = 40, ucs: 'UCS' = None,
+               dxfattribs: dict = None) -> 'Polyline':
         polyline = layout.add_polyline2d(points=[], dxfattribs=dxfattribs)
         flags = polyline.SPLINE_FIT_VERTICES_ADDED
         if self.closed:
@@ -143,7 +149,7 @@ class R12Spline(object):
             dxfattribs={
                 'layer': polyline.dxf.layer,
                 'flags': const.VTX_SPLINE_VERTEX_CREATED,
-        })
+            })
 
         # add control frame points in OCS
         control_points = self.control_points
@@ -155,5 +161,3 @@ class R12Spline(object):
             'flags': const.VTX_SPLINE_FRAME_CONTROL_POINT,
         })
         return polyline
-
-
