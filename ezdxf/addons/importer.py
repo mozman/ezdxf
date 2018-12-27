@@ -2,22 +2,25 @@
 # Created: 27.04.13
 # Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
-
+from typing import TYPE_CHECKING, Dict, Iterable, List, cast
 from ezdxf.query import name_query
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, DXFEntity, Insert, BlockRecord, Layout
 
-class Importer(object):
-    def __init__(self, source, target, strict_mode=True):
-        self.source = source  # type of: ezdxf.Drawing
-        self.target = target  # type of: ezdxf.Drawing
-        self._renamed_blocks = {}
-        self._handle_translation_table = {}
-        self._requires_data_from_objects_section = []
+
+class Importer:
+    def __init__(self, source: 'Drawing', target: 'Drawing', strict_mode: bool = True):
+        self.source = source  # type: Drawing
+        self.target = target  # type: Drawing
+        self._renamed_blocks = {}  # type: Dict[str, str]
+        self._handle_translation_table = {}  # type: Dict[str, str]
+        self._requires_data_from_objects_section = []  # type: List[DXFEntity]
         if strict_mode and not self.is_compatible():
             raise TypeError("DXF drawings are not compatible. Source version {}; Target version {}".format(
                 source.dxfversion, target.dxfversion))
 
-    def is_compatible(self):
+    def is_compatible(self) -> bool:
         if self.source.dxfversion == self.target.dxfversion:
             return True
         # The basic DXF structure has been changed with version AC1012 (AutoCAD R13)
@@ -33,13 +36,13 @@ class Importer(object):
         # Importer(s, t, strict_mode=False).
         return False
 
-    def import_all(self, table_conflict="discard", block_conflict="discard"):
+    def import_all(self, table_conflict: str = "discard", block_conflict: str = "discard") -> None:
         self.import_tables(conflict=table_conflict)
         self.import_blocks(conflict=block_conflict)
         self.import_modelspace_entities()
         self.import_required_data_from_objects_section()
 
-    def import_modelspace_entities(self, query="*"):
+    def import_modelspace_entities(self, query: str = "*") -> None:
         import_entities = self.source.modelspace().query(query)
         target_modelspace = self.target.modelspace()
         new_handle = self.target._handles.next
@@ -52,23 +55,25 @@ class Importer(object):
             target_modelspace.add_entity(new_entity)  # add entity to modelspace
             self.entity_post_processing(new_entity)
 
-    def entity_post_processing(self, dxf_entity):
-            dxftype = dxf_entity.dxftype()
-            if dxftype == "INSERT":
-                self.resolve_block_ref(dxf_entity)
-            elif dxftype == 'IMAGE':
-                self._requires_data_from_objects_section.append(dxf_entity)
+    def entity_post_processing(self, dxf_entity: 'DXFEntity') -> None:
+        dxftype = dxf_entity.dxftype()
+        if dxftype == "INSERT":
+            self.resolve_block_ref(cast('Insert', dxf_entity))
+        elif dxftype == 'IMAGE':
+            self._requires_data_from_objects_section.append(cast('Image', dxf_entity))
 
-    def resolve_block_ref(self, block_ref):
+    def resolve_block_ref(self, block_ref: 'Insert') -> None:
         old_block_name = block_ref.dxf.name
         new_block_name = self._renamed_blocks.get(old_block_name, old_block_name)
         block_ref.dxf.name = new_block_name
 
-    def import_blocks(self, query="*", conflict="discard"):
+    def import_blocks(self, query: str = "*", conflict: str = "discard") -> None:
         """ Import block definitions.
 
-        :param str query: names of blocks to import, "*" for all
-        :param str conflict: discard|replace|rename
+        Args:
+            query: names of blocks to import, "*" for all
+            conflict: discard|replace|rename
+
         """
         has_block_records = self.target.dxfversion > 'AC1009'
 
@@ -155,23 +160,26 @@ class Importer(object):
         for block_ref in resolve_block_references:
             self.resolve_block_ref(block_ref)
 
-    def import_tables(self, query="*", conflict="discard"):
+    def import_tables(self, query: str = "*", conflict: str = "discard") -> None:
         """ Import table entries.
 
-        :param str conflict: discard|replace
+        Args:
+            query: names of tables to import, "*" for all
+            conflict: discard|replace
         """
         table_names = [table.name for table in self.source.sections.tables if table.name != 'block_records']
         for table_name in name_query(table_names, query):
             self.import_table(table_name, query="*", conflict=conflict)
 
-    def import_table(self, name, query="*", conflict="discard"):
+    def import_table(self, name: str, query: str = "*", conflict: str = "discard") -> None:
         """ Import specific entries from a table.
+        Args:
+            name: valid table names are 'layers', 'linetypes', 'appids', 'dimstyles',
+                  'styles', 'ucs', 'views', 'viewports' except 'block_records'
+                  as defined in ezdxf.table.TABLENAMES
+            query: table name query, "*" for all
+            conflict: discard|replace
 
-        :param str name: valid table names are 'layers', 'linetypes', 'appids', 'dimstyles',
-                         'styles', 'ucs', 'views', 'viewports' except 'block_records'
-                         as defined in ezdxf.table.TABLENAMES
-
-        :param str conflict: discard|replace
         """
         if conflict not in ('replace', 'discard'):
             raise ValueError("Unknown value '{}' for parameter 'conflict'.".format(conflict))
@@ -197,8 +205,9 @@ class Importer(object):
             new_handle = self.import_tags(table_entry.dxf.handle)
             target_table._append_entry_handle(new_handle)
 
-    def import_tags(self, source_handle):
-        """Clone tags from source drawing, give it a new valid handle for the target drawing
+    def import_tags(self, source_handle: str) -> str:
+        """
+        Clone tags from source drawing, give it a new valid handle for the target drawing
         and insert tags into the entity database of the target drawing. Returns the target handle.
         Avoids duplicate imports of the same database entity.
         """
@@ -240,7 +249,7 @@ class Importer(object):
             pass
 
 
-def _cleanup_block_record(block_record):
+def _cleanup_block_record(block_record: 'BlockRecord') -> None:
     def remove_tags(tags, code):
         del_tags = [tag for tag in tags if tag.code == code]
         for tag in del_tags:
@@ -258,8 +267,8 @@ def _cleanup_block_record(block_record):
         remove_tags(subclass, 310)
 
 
-def _get_layout_block_names(dwg):
-    def get_block_record_name(layout):
+def _get_layout_block_names(dwg: 'Drawing') -> Iterable[str]:
+    def get_block_record_name(layout: 'Layout') -> str:
         block_record = dwg.dxffactory.wrap_handle(layout._block_record_handle)
         return block_record.dxf.name
 
