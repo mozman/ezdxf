@@ -96,7 +96,11 @@ def test_transpose(X):
         (12, 4, 3),
         (7, 5, 8),
     ])
-    assert X.transpose() == R
+    T = X.transpose()
+    assert T == R
+    # is T mutable?
+    T[0, 0] = 99
+    assert T[0, 0] == 99
 
 
 def test_add(X):
