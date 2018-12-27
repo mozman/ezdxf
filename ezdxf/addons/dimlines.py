@@ -21,13 +21,15 @@ dimstyles
     - get(name) to get a dimstyle, 'Default' if name does not exist
     - setup(drawing) create Blocks and Layers in drawing
 """
-
+from typing import Any, Dict, TYPE_CHECKING, Iterable, List, Tuple
 from math import radians, degrees, pi
 from abc import abstractmethod
 
 from ezdxf.algebra.vector import Vector, distance, lerp
 from ezdxf.algebra.ray import Ray2D
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing, GenericLayoutType, Vertex
 
 DIMENSIONS_MIN_DISTANCE = 0.05
 DIMENSIONS_FLOATINGPOINT = '.'
@@ -83,26 +85,27 @@ class DimStyle(dict):
         ('dimextlinegap', 0.3)
     ]
 
-    def __init__(self, name, **kwargs):
-        super(DimStyle, self).__init__(DimStyle.default_values)
+    def __init__(self, name: str, **kwargs):
+        super().__init__(DimStyle.default_values)
         # dimstyle name
         self['name'] = name
         self.update(kwargs)
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         return self[attr]
 
-    def __setattr__(self, attr, value):
+    def __setattr__(self, attr: str, value: Any) -> None:
         self[attr] = value
 
 
-class DimStyles(object):
+class DimStyles:
     """
     DimStyle container
 
     """
+
     def __init__(self):
-        self._styles = {}
+        self._styles = {}  # type: Dict[str, DimStyle]
         self.default = DimStyle('Default')
 
         self.new(
@@ -136,13 +139,13 @@ class DimStyles(object):
             dimextline=False
         )
 
-    def get(self, name):
+    def get(self, name: str) -> DimStyle:
         """
         Get DimStyle() object by name.
         """
         return self._styles.get(name, self.default)
 
-    def new(self, name, **kwargs):
+    def new(self, name: str, **kwargs) -> DimStyle:
         """
         Create a new dimstyle
         """
@@ -151,7 +154,7 @@ class DimStyles(object):
         return style
 
     @staticmethod
-    def setup(drawing):
+    def setup(drawing: 'Drawing'):
         """
         Insert necessary definitions into drawing:
 
@@ -192,17 +195,18 @@ class DimStyles(object):
 dimstyles = DimStyles()  # use this factory to create new dimstyles
 
 
-class _DimensionBase(object):
+class _DimensionBase:
     """
     Abstract base class for dimension lines.
 
     """
-    def __init__(self, dimstyle, layer, roundval):
+
+    def __init__(self, dimstyle: str, layer: str, roundval: int):
         self.dimstyle = dimstyles.get(dimstyle)
         self.layer = layer
         self.roundval = roundval
 
-    def prop(self, property_name):
+    def prop(self, property_name: str) -> Any:
         """
         Get dimension line properties by `property_name` with the possibility to override several properties.
         """
@@ -213,7 +217,7 @@ class _DimensionBase(object):
         else:  # pass through self.dimstyle object DimStyle()
             return self.dimstyle[property_name]
 
-    def format_dimtext(self, dimvalue):
+    def format_dimtext(self, dimvalue: float) -> str:
         """
         Format the dimension text.
         """
@@ -228,7 +232,7 @@ class _DimensionBase(object):
         return self.prop('prefix') + dimtext + self.prop('suffix')
 
     @abstractmethod
-    def render(self, layout):
+    def render(self, layout: 'GenericLayoutType'):
         pass
 
 
@@ -238,72 +242,74 @@ class LinearDimension(_DimensionBase):
     dimension entity. And This is a 2D element, so all z-values will be ignored!
 
     """
-    def __init__(self, pos, measure_points, angle=0., dimstyle='Default',
-                 layer=None, roundval=None):
+
+    def __init__(self, pos: 'Vertex', measure_points: Iterable['Vertex'], angle: float = 0., dimstyle: str = 'Default',
+                 layer: str = None, roundval: int = None):
         """
         LinearDimension Constructor.
 
         Args:
             pos: location as (x, y) tuple of dimension line, line goes through this point
             measure_points: list of points as (x, y) tuples to dimension (two or more)
-            float angle: angle (in degree) of dimension line
+            angle: angle (in degree) of dimension line
             dimstyle: dimstyle name, 'Default' - style is the default value
-            str layer: dimension line layer, override the default value of dimstyle
-            int roundval: count of decimal places
+            layer: dimension line layer, override the default value of dimstyle
+            roundval: count of decimal places
 
         """
-        super(LinearDimension, self).__init__(dimstyle, layer, roundval)
+        super().__init__(dimstyle, layer, roundval)
         self.angle = angle
-        self.measure_points = measure_points
+        self.measure_points = list(measure_points)
         self.text_override = [""] * self.section_count
         self.dimlinepos = Vector(pos)
         self.layout = None
 
-    def set_text(self, section, text):
+    def set_text(self, section: int, text: str) -> None:
         """
         Set and override the text of the dimension text for the given dimension line section.
         """
         self.text_override[section] = text
 
-    def _setup(self):
+    def _setup(self) -> None:
         """
         Calc setup values and determines the point order of the dimension line points.
         """
-        self.measure_points = [Vector(point) for point in self.measure_points]
-        dimlineray = Ray2D(self.dimlinepos, angle=radians(self.angle))
-        self.dimline_points = [self._get_point_on_dimline(point, dimlineray) for point in self.measure_points]
-        self.point_order = self._indices_of_sorted_points(self.dimline_points)
+        self.measure_points = [Vector(point) for point in self.measure_points]  # type: List[Vector]
+        dimlineray = Ray2D(self.dimlinepos, angle=radians(self.angle))  # Type: Ray2D
+        self.dimline_points = [self._get_point_on_dimline(point, dimlineray) for point in
+                               self.measure_points]  # type: List[Vector]
+        self.point_order = self._indices_of_sorted_points(self.dimline_points)  # type: List[int]
         self._build_vectors()
 
-    def _get_dimline_point(self, index):
+    def _get_dimline_point(self, index: int) -> 'Vertex':
         """
         Get point on the dimension line, index runs left to right.
         """
         return self.dimline_points[self.point_order[index]]
 
-    def _get_section_points(self, section):
+    def _get_section_points(self, section: int) -> Tuple[Vector, Vector]:
         """
         Get start and end point on the dimension line of dimension section.
         """
         return self._get_dimline_point(section), self._get_dimline_point(section + 1)
 
-    def _get_dimline_bounds(self):
+    def _get_dimline_bounds(self) -> Tuple[Vector, Vector]:
         """
         Get the first and the last point of dimension line.
         """
         return self._get_dimline_point(0), self._get_dimline_point(-1)
 
     @property
-    def section_count(self):
+    def section_count(self) -> int:
         """ count of dimline sections """
         return len(self.measure_points) - 1
 
     @property
-    def point_count(self):
+    def point_count(self) -> int:
         """ count of dimline points """
         return len(self.measure_points)
 
-    def render(self, layout):
+    def render(self, layout: 'GenericLayoutType') -> None:
         """ build dimension line object with basic dxf entities """
         self._setup()
         self._draw_dimline(layout)
@@ -313,24 +319,24 @@ class LinearDimension(_DimensionBase):
         self._draw_ticks(layout)
 
     @staticmethod
-    def _indices_of_sorted_points(points):
+    def _indices_of_sorted_points(points: Iterable['Vertex']) -> List[int]:
         """ get indices of points, for points sorted by x, y values """
         indexed_points = [(point, idx) for idx, point in enumerate(points)]
         indexed_points.sort()
         return [idx for point, idx in indexed_points]
 
-    def _build_vectors(self):
+    def _build_vectors(self) -> None:
         """ build unit vectors, parallel and normal to dimension line """
         point1, point2 = self._get_dimline_bounds()
         self.parallel_vector = (Vector(point2) - Vector(point1)).normalize()
         self.normal_vector = self.parallel_vector.orthogonal()
 
     @staticmethod
-    def _get_point_on_dimline(point, dimray):
+    def _get_point_on_dimline(point: 'Vertex', dimray: Ray2D) -> Vector:
         """ get the measure target point projection on the dimension line """
         return dimray.intersect(dimray.normal_through(point))
 
-    def _draw_dimline(self, layout):
+    def _draw_dimline(self, layout: 'GenericLayoutType') -> None:
         """ build dimension line entity """
         start_point, end_point = self._get_dimline_bounds()
 
@@ -349,7 +355,7 @@ class LinearDimension(_DimensionBase):
             dxfattribs=attribs,
         )
 
-    def _draw_extension_lines(self, layout):
+    def _draw_extension_lines(self, layout: 'GenericLayoutType') -> None:
         """ build the extension lines entities """
         dimextlinegap = self.prop('dimextlinegap')
         attribs = {
@@ -367,7 +373,7 @@ class LinearDimension(_DimensionBase):
                     dxfattribs=attribs,
                 )
 
-    def _draw_text(self, layout):
+    def _draw_text(self, layout: 'GenericLayoutType') -> None:
         """ build the dimension value text entity """
         attribs = {
             'height': self.prop('height'),
@@ -384,7 +390,7 @@ class LinearDimension(_DimensionBase):
                 dxfattribs=attribs,
             ).set_pos(insert_point, align='MIDDLE_CENTER')
 
-    def _get_dimvalue_text(self, section):
+    def _get_dimvalue_text(self, section: int) -> str:
         """ get the dimension value as text, distance from point1 to point2 """
         override = self.text_override[section]
         if len(override):
@@ -394,13 +400,13 @@ class LinearDimension(_DimensionBase):
         dimvalue = distance(point1, point2) * self.prop('scale')
         return self.format_dimtext(dimvalue)
 
-    def _get_text_insert_point(self, section):
+    def _get_text_insert_point(self, section: int) -> Vector:
         """ get the dimension value text insert point """
         point1, point2 = self._get_section_points(section)
         dist = self.prop('height') / 2. + self.prop('textabove')
         return lerp(point1, point2) + (self.normal_vector * dist)
 
-    def _draw_ticks(self, layout):
+    def _draw_ticks(self, layout: 'GenericLayoutType') -> None:
         """ insert the dimension line ticks, (markers on the dimension line) """
         attribs = {
             'xscale': self.prop('tickfactor'),
@@ -408,7 +414,7 @@ class LinearDimension(_DimensionBase):
             'layer': self.prop('layer'),
         }
 
-        def add_tick(index, rotate=False):
+        def add_tick(index: int, rotate: bool = False) -> None:
             """ build the insert-entity for the tick block """
             attribs['rotation'] = self.angle + (180. if rotate else 0.)
             layout.add_blockref(
@@ -437,8 +443,8 @@ class AngularDimension(_DimensionBase):
     GRAD = ANGLE_GRAD
     RAD = ANGLE_RAD
 
-    def __init__(self, pos, center, start, end,
-                 dimstyle='angle.deg', layer=None, roundval=None):
+    def __init__(self, pos: 'Vertex', center: 'Vertex', start: 'Vertex', end: 'Vertex',
+                 dimstyle: str = 'angle.deg', layer: str = None, roundval: int = None):
         """
         AngularDimension constructor.
 
@@ -452,22 +458,22 @@ class AngularDimension(_DimensionBase):
             roundval: count of decimal places
 
         """
-        super(AngularDimension, self).__init__(dimstyle, layer, roundval)
+        super().__init__(dimstyle, layer, roundval)
         self.dimlinepos = Vector(pos)
         self.center = Vector(center)
         self.start = Vector(start)
         self.end = Vector(end)
 
-    def _setup(self):
+    def _setup(self) -> None:
         """ setup calculation values """
-        self.pos_radius = distance(self.center, self.dimlinepos)
-        self.radius = distance(self.center, self.start)
-        self.start_vector = (self.start - self.center).normalize()
-        self.end_vector = (self.end - self.center).normalize()
-        self.start_angle = self.start_vector.angle_rad
-        self.end_angle = self.end_vector.angle_rad
+        self.pos_radius = distance(self.center, self.dimlinepos)  # type: float
+        self.radius = distance(self.center, self.start)  # type: float
+        self.start_vector = (self.start - self.center).normalize()  # type: Vector
+        self.end_vector = (self.end - self.center).normalize()  # type: Vector
+        self.start_angle = self.start_vector.angle_rad  # type: float
+        self.end_angle = self.end_vector.angle_rad  # type: float
 
-    def render(self, layout):
+    def render(self, layout: 'GenericLayoutType') -> None:
         """ build dimension line object with basic dxf entities """
 
         self._setup()
@@ -477,7 +483,7 @@ class AngularDimension(_DimensionBase):
         self._draw_dimension_text(layout)
         self._draw_ticks(layout)
 
-    def _draw_dimension_line(self, layout):
+    def _draw_dimension_line(self, layout: 'GenericLayoutType') -> None:
         """ draw the dimension line from start- to endangle. """
         layout.add_arc(
             radius=self.pos_radius,
@@ -490,25 +496,25 @@ class AngularDimension(_DimensionBase):
             }
         )
 
-    def _draw_extension_lines(self, layout):
+    def _draw_extension_lines(self, layout: 'GenericLayoutType') -> None:
         """ build the extension lines entities """
         for vector in [self.start_vector, self.end_vector]:
             layout.add_line(
                 start=self._get_extline_start(vector),
                 end=self._get_extline_end(vector),
                 dxfattribs={
-                     'layer': self.prop('layer'),
-                     'color': self.prop('dimextlinecolor'),
+                    'layer': self.prop('layer'),
+                    'color': self.prop('dimextlinecolor'),
                 }
             )
 
-    def _get_extline_start(self, vector):
+    def _get_extline_start(self, vector: Vector) -> Vector:
         return self.center + (vector * self.prop('dimextlinegap'))
 
-    def _get_extline_end(self, vector):
+    def _get_extline_end(self, vector: Vector) -> Vector:
         return self.center + (vector * self.pos_radius)
 
-    def _draw_dimension_text(self, layout):
+    def _draw_dimension_text(self, layout: 'GenericLayoutType') -> None:
         attribs = {
             'height': self.prop('height'),
             'rotation': degrees((self.start_angle + self.end_angle) / 2 - pi / 2.),
@@ -521,12 +527,12 @@ class AngularDimension(_DimensionBase):
             dxfattribs=attribs,
         ).set_pos(self._get_text_insert_point(), align='MIDDLE_CENTER')
 
-    def _get_text_insert_point(self):
+    def _get_text_insert_point(self) -> Vector:
         midvector = ((self.start_vector + self.end_vector) / 2.).normalize()
         length = self.pos_radius + self.prop('textabove') + self.prop('height') / 2.
         return self.center + (midvector * length)
 
-    def _draw_ticks(self, layout):
+    def _draw_ticks(self, layout: 'GenericLayoutType') -> None:
         attribs = {
             'xscale': self.prop('tickfactor'),
             'yscale': self.prop('tickfactor'),
@@ -542,7 +548,7 @@ class AngularDimension(_DimensionBase):
                 dxfattribs=attribs,
             )
 
-    def _get_dimtext(self):
+    def _get_dimtext(self) -> str:
         # set scale = ANGLE_DEG for degrees (circle = 360 deg)
         # set scale = ANGLE_GRAD for grad(circle = 400 grad)
         # set scale = ANGLE_RAD for rad(circle = 2*pi)
@@ -556,8 +562,9 @@ class ArcDimension(AngularDimension):
     is True. Measured length goes from start- to endpoint. The dimension line goes through the dimlinepos.
 
     """
-    def __init__(self, pos, center, start, end, arc3points=False,
-                 dimstyle='Default', layer=None, roundval=None):
+
+    def __init__(self, pos: 'Vertex', center: 'Vertex', start: 'Vertex', end: 'Vertex', arc3points: bool = False,
+                 dimstyle: str = 'Default', layer: str = None, roundval: int = None):
         """
         Args:
             pos: location as (x, y) tuple of dimension line, line goes through this point
@@ -570,24 +577,22 @@ class ArcDimension(AngularDimension):
             roundval: count of decimal places
 
         """
-        super(ArcDimension, self).__init__(pos, center, start, end,
-                                           dimstyle, layer, roundval)
+        super().__init__(pos, center, start, end, dimstyle, layer, roundval)
         self.arc3points = arc3points
 
-    def _setup(self):
-        super(ArcDimension, self)._setup()
+    def _setup(self) -> None:
+        super()._setup()
         if self.arc3points:
             self.center = center_of_3points_arc(self.center, self.start, self.end)
 
-    def _get_extline_start(self, vector):
+    def _get_extline_start(self, vector: Vector) -> Vector:
         return self.center + (vector * (self.radius + self.prop('dimextlinegap')))
 
-    def _get_extline_end(self, vector):
+    def _get_extline_end(self, vector: Vector) -> Vector:
         return self.center + (vector * self.pos_radius)
 
-    def _get_dimtext(self):
-        arc_length = (self.end_angle - self.start_angle) * \
-                     self.radius * self.prop('scale')
+    def _get_dimtext(self) -> str:
+        arc_length = (self.end_angle - self.start_angle) * self.radius * self.prop('scale')
         return self.format_dimtext(arc_length)
 
 
@@ -597,8 +602,8 @@ class RadialDimension(_DimensionBase):
     a special tick!!
     """
 
-    def __init__(self, center, target, length=1.,
-                 dimstyle='Default', layer=None, roundval=None):
+    def __init__(self, center: 'Vertex', target: 'Vertex', length: float = 1., dimstyle: str = 'Default',
+                 layer: str = None, roundval: int = None):
         """
         Args:
             center: center point of radius
@@ -609,34 +614,33 @@ class RadialDimension(_DimensionBase):
             roundval: count of decimal places
 
         """
-        super(RadialDimension, self).__init__(dimstyle, layer, roundval)
+        super().__init__(dimstyle, layer, roundval)
         self.center = Vector(center)
         self.target = Vector(target)
         self.length = float(length)
 
-    def _setup(self):
-        self.target_vector = (self.target - self.center).normalize()
-        self.radius = distance(self.center, self.target)
+    def _setup(self) -> None:
+        self.target_vector = (self.target - self.center).normalize()  # type: Vector
+        self.radius = distance(self.center, self.target)  # type: float
 
-    def render(self, layout):
+    def render(self, layout: 'GenericLayoutType') -> None:
         """ build dimension line object with basic dxf entities """
         self._setup()
         self._draw_dimension_line(layout)
         self._draw_dimension_text(layout)
         self._draw_ticks(layout)
 
-    def _draw_dimension_line(self, layout):
+    def _draw_dimension_line(self, layout: 'GenericLayoutType') -> None:
         start_point = self.center + (self.target_vector * (self.radius - self.length))
         layout.add_line(
             start=start_point, end=self.target,
-
             dxfattribs={
                 'color': self.prop('dimlinecolor'),
                 'layer': self.prop('layer'),
             },
         )
 
-    def _draw_dimension_text(self, layout):
+    def _draw_dimension_text(self, layout: 'GenericLayoutType') -> None:
         layout.add_text(
             text=self._get_dimtext(),
             dxfattribs={
@@ -648,13 +652,13 @@ class RadialDimension(_DimensionBase):
             }
         ).set_pos(self._get_insert_point(), align='MIDDLE_RIGHT')
 
-    def _get_insert_point(self):
+    def _get_insert_point(self) -> Vector:
         return self.target - (self.target_vector * (self.length + self.prop('textabove')))
 
-    def _get_dimtext(self):
+    def _get_dimtext(self) -> str:
         return self.format_dimtext(self.radius * self.prop('scale'))
 
-    def _draw_ticks(self, layout):
+    def _draw_ticks(self, layout: 'GenericLayoutType') -> None:
         layout.add_blockref(
             insert=self.target,
             name='DIMTICK_RADIUS',
@@ -667,7 +671,7 @@ class RadialDimension(_DimensionBase):
         )
 
 
-def center_of_3points_arc(point1, point2, point3):
+def center_of_3points_arc(point1: 'Vertex', point2: 'Vertex', point3: 'Vertex') -> Vector:
     """
     Calc center point of 3 point arc. Circle is defined by 3 points on the circle: point1, point2 and point3.
     """
