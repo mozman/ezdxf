@@ -1,8 +1,5 @@
-import sys
-import pytest
 import math
 from ezdxf.algebra.vector import Vector, is_close
-PY3 = sys.version_info.major > 2
 
 
 def test_init_no_params():
@@ -16,7 +13,7 @@ def test_init_one_param():
     assert v == (2, 3)  # z is 0.
 
     v = Vector((2, 3, 4))
-    assert v == (2, 3, 4)  # z is 0.
+    assert v == (2, 3, 4)
 
 
 def test_init_two_params():
@@ -95,10 +92,7 @@ def test_spatial_angle():
 
 def test_compare_vectors():
     v1 = Vector(1, 2, 3)
-
-    # compare to tuple
     assert v1 == (1, 2, 3)
-    # compare tuple to vector
     assert (1, 2, 3) == v1
 
     v2 = Vector(2, 3, 4)
@@ -116,11 +110,11 @@ def test_is_null():
 
     v1 = Vector(23.56678, 56678.56778, 2.56677) * (1.0 / 14.5667)
     v2 = Vector(23.56678, 56678.56778, 2.56677) / 14.5667
-    result = v2 - v1
+    assert (v2 - v1).is_null
+
     assert Vector(0, 0, 0).is_null
 
 
-@pytest.mark.skipif(not PY3, reason="__bool__ not supported")
 def test_bool():
     v = Vector()
     assert bool(v) is False

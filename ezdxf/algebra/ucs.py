@@ -1,33 +1,40 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import GenericLayoutType, Vertex
 
-def render_axis(layout, start, points, colors=(1, 3, 5)):
+
+def render_axis(layout: 'GenericLayoutType',
+                start: 'Vertex',
+                points: Sequence['Vertex'],
+                colors: Tuple[int, int, int] = (1, 3, 5)) -> None:
     for point, color in zip(points, colors):
         layout.add_line(start, point, dxfattribs={'color': color})
 
 
-class Matrix33(object):
+class Matrix33:
     """
     Simple 3x3 Matrix for coordinate transformation.
 
     """
     __slots__ = ('ux', 'uy', 'uz')
 
-    def __init__(self, ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1)):
+    def __init__(self, ux: 'Vertex' = (1, 0, 0), uy: 'Vertex' = (0, 1, 0), uz: 'Vertex' = (0, 0, 1)):
         self.ux = Vector(ux)
         self.uy = Vector(uy)
         self.uz = Vector(uz)
 
-    def transpose(self):
+    def transpose(self) -> 'Matrix33':
         return Matrix33(
             (self.ux.x, self.uy.x, self.uz.x),
             (self.ux.y, self.uy.y, self.uz.y),
             (self.ux.z, self.uy.z, self.uz.z),
         )
 
-    def transform(self, vector):
+    def transform(self, vector: 'Vertex') -> Vector:
         px, py, pz = Vector(vector)
         ux = self.ux
         uy = self.uy
@@ -38,8 +45,8 @@ class Matrix33(object):
         return Vector(x, y, z)
 
 
-class OCS(object):
-    def __init__(self, extrusion=Z_AXIS):
+class OCS:
+    def __init__(self, extrusion: 'Vertex' = Z_AXIS):
         Az = Vector(extrusion).normalize()
         self.transform = not Az.is_almost_equal(Z_AXIS)
         if self.transform:
@@ -53,38 +60,38 @@ class OCS(object):
             self.transpose = self.matrix.transpose()
 
     @property
-    def ux(self):
+    def ux(self) -> Vector:
         return self.matrix.ux if self.transform else X_AXIS
 
     @property
-    def uy(self):
+    def uy(self) -> Vector:
         return self.matrix.uy if self.transform else Y_AXIS
 
     @property
-    def uz(self):
+    def uz(self) -> Vector:
         return self.matrix.uz if self.transform else Z_AXIS
 
-    def from_wcs(self, point):
+    def from_wcs(self, point: 'Vertex') -> 'Vertex':
         if self.transform:
             return self.transpose.transform(point)
         else:
             return point
 
-    def points_from_wcs(self, points):
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         for point in points:
             yield self.from_wcs(point)
 
-    def to_wcs(self, point):
+    def to_wcs(self, point: 'Vertex') -> 'Vertex':
         if self.transform:
             return self.matrix.transform(point)
         else:
             return point
 
-    def points_to_wcs(self, points):
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         for point in points:
             yield self.to_wcs(point)
 
-    def render_axis(self, layout, length=1, colors=(1, 3, 5)):
+    def render_axis(self, layout: 'GenericLayoutType', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         render_axis(
             layout,
             start=(0, 0, 0),
@@ -97,8 +104,8 @@ class OCS(object):
         )
 
 
-class UCS(object):
-    def __init__(self, origin=(0, 0, 0), ux=None, uy=None, uz=None):
+class UCS:
+    def __init__(self, origin: 'Vertex' = (0, 0, 0), ux: 'Vertex' = None, uy: 'Vertex' = None, uz: 'Vertex' = None):
         self.origin = Vector(origin)
         if ux is None and uy is None:
             ux = X_AXIS
@@ -125,25 +132,25 @@ class UCS(object):
         self.transpose = self.matrix.transpose()
 
     @property
-    def ux(self):
+    def ux(self) -> Vector:
         return self.matrix.ux
 
     @property
-    def uy(self):
+    def uy(self) -> Vector:
         return self.matrix.uy
 
     @property
-    def uz(self):
+    def uz(self) -> Vector:
         return self.matrix.uz
 
-    def to_wcs(self, point):
+    def to_wcs(self, point: 'Vertex') -> Vector:
         """
         Calculate world coordinates for point in UCS coordinates.
 
         """
         return self.origin + self.matrix.transform(point)
 
-    def points_to_wcs(self, points):
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
         """
         Translate multiple user coordinates into world coordinates (generator).
 
@@ -151,7 +158,7 @@ class UCS(object):
         for point in points:
             yield self.to_wcs(point)
 
-    def to_ocs(self, point):
+    def to_ocs(self, point: 'Vertex') -> 'Vertex':
         """
         Calculate OCS coordinates for point in UCS coordinates.
 
@@ -161,7 +168,7 @@ class UCS(object):
         wpoint = self.to_wcs(point)
         return OCS(self.uz).from_wcs(wpoint)
 
-    def points_to_ocs(self, points):
+    def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         """
         Translate multiple user coordinates into OCS coordinates (generator).
 
@@ -173,7 +180,7 @@ class UCS(object):
         for point in points:
             yield ocs.from_wcs(wcs(point))
 
-    def to_ocs_angle_deg(self, angle):
+    def to_ocs_angle_deg(self, angle: float) -> float:
         """
         Transform angle in UCS xy-plane to angle in OCS xy-plane.
 
@@ -186,7 +193,7 @@ class UCS(object):
         direction = Vector.from_deg_angle(angle)
         return self.to_ocs(direction).angle_deg
 
-    def to_ocs_angle_rad(self, angle):
+    def to_ocs_angle_rad(self, angle: float) -> float:
         """
         Transform angle in UCS xy-plane to angle in OCS xy-plane.
 
@@ -199,14 +206,14 @@ class UCS(object):
         direction = Vector.from_rad_angle(angle)
         return self.to_ocs(direction).angle_rad
 
-    def from_wcs(self, point):
+    def from_wcs(self, point: 'Vertex') -> Vector:
         """
         Calculate UCS coordinates for point in world coordinates.
 
         """
         return self.transpose.transform(point - self.origin)
 
-    def points_from_wcs(self, points):
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
         """
         Translate multiple world coordinates into user coordinates (generator).
 
@@ -215,50 +222,50 @@ class UCS(object):
             yield self.from_wcs(point)
 
     @property
-    def is_cartesian(self):
+    def is_cartesian(self) -> bool:
         return self.uy.cross(self.uz).is_almost_equal(self.ux)
 
     @staticmethod
-    def from_x_axis_and_point_in_xy(origin, axis, point):
+    def from_x_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
         x_axis = Vector(axis)
         z_axis = x_axis.cross(Vector(point) - origin)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
     @staticmethod
-    def from_x_axis_and_point_in_xz(origin, axis, point):
+    def from_x_axis_and_point_in_xz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
         x_axis = Vector(axis)
         xz_vector = Vector(point) - origin
         y_axis = xz_vector.cross(x_axis)
         return UCS(origin=origin, ux=x_axis, uy=y_axis)
 
     @staticmethod
-    def from_y_axis_and_point_in_xy(origin, axis, point):
+    def from_y_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
         y_axis = Vector(axis)
         xy_vector = Vector(point) - origin
         z_axis = xy_vector.cross(y_axis)
         return UCS(origin=origin, uy=y_axis, uz=z_axis)
 
     @staticmethod
-    def from_y_axis_and_point_in_yz(origin, axis, point):
+    def from_y_axis_and_point_in_yz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
         y_axis = Vector(axis)
         yz_vector = Vector(point) - origin
         x_axis = yz_vector.cross(y_axis)
         return UCS(origin=origin, ux=x_axis, uy=y_axis)
 
     @staticmethod
-    def from_z_axis_and_point_in_xz(origin, axis, point):
+    def from_z_axis_and_point_in_xz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
         z_axis = Vector(axis)
         y_axis = z_axis.cross(Vector(point) - origin)
         return UCS(origin=origin, uy=y_axis, uz=z_axis)
 
     @staticmethod
-    def from_z_axis_and_point_in_yz(origin, axis, point):
+    def from_z_axis_and_point_in_yz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
         z_axis = Vector(axis)
         yz_vector = Vector(point) - origin
         x_axis = yz_vector.cross(z_axis)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
-    def render_axis(self, layout, length=1, colors=(1, 3, 5)):
+    def render_axis(self, layout: 'GenericLayoutType', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         render_axis(
             layout,
             start=self.origin,
