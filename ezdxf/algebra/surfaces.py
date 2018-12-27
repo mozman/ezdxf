@@ -1,10 +1,13 @@
 # Copyright (c) 2012 Manfred Moitzi
 # License: MIT License
+from typing import List, Sequence
 from .bezier import bernstein_basis
 
+Vector = Sequence[float]
 
-class BezierSurface(object):
-    def __init__(self, defpoints):
+
+class BezierSurface:
+    def __init__(self, defpoints: List[List[Vector]]):
         """
         BezierSurface constructor
 
@@ -18,18 +21,18 @@ class BezierSurface(object):
         self.nrows = len(defpoints)
         self.ncols = len(defpoints[0])
 
-    def appoximate(self, usegs, vsegs):
+    def appoximate(self, usegs: int, vsegs: int) -> List[List[Vector]]:
         stepu = 1.0 / float(usegs)
         stepv = 1.0 / float(vsegs)
-        result = [[0.0] * self.ncols] * self.nrows
-        for ucounter in range(usegs+1):
-            u = stepu * ucounter
-            for vcounter in range(vsegs+1):
-                v = stepv * vcounter
-                result[u][v] = self.get_point(u, v)
+        result = [[None] * self.ncols] * self.nrows  # type: List[List[Vector]]
+        for u_index in range(usegs + 1):
+            u = stepu * u_index
+            for v_index in range(vsegs + 1):
+                v = stepv * v_index
+                result[u_index][v_index] = self.get_point(u, v)
         return result
 
-    def get_point(self, u, v):
+    def get_point(self, u: float, v: float) -> Vector:
         """ u, v in range [0.0, 1.0].
         """
         point = [0.0, 0.0, 0.0]
