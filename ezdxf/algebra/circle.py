@@ -1,31 +1,35 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Tuple
 import math
 from .ray import Ray2D
 from .vector import Vector
 from .base import equals_almost
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
+
 HALF_PI = math.pi / 2.
 
 
-def _distance(point1, point2):
+def _distance(point1: 'Vertex', point2: 'Vertex') -> float:
     return math.hypot(point1[0] - point2[0], point1[1] - point2[1])
 
 
-def midpoint(point1, point2):
+def midpoint(point1: 'Vertex', point2: 'Vertex') -> Tuple[float, float]:
     return (point1[0] + point2[0]) * .5, (point1[1] + point2[1]) * .5
 
 
-class Circle(object):
-    def __init__(self, center, radius=1.0):
+class Circle:
+    def __init__(self, center: 'Vertex', radius: float = 1.0):
         self.center = Vector(center)
         self.radius = float(radius)
         if self.radius <= 0.:
             raise ValueError("Radius has to be > 0.")
 
     @staticmethod
-    def from_3p(p1, p2, p3):
-        """ creates a circle through 3 points
+    def from_3p(p1: 'Vertex', p2: 'Vertex', p3: 'Vertex') -> 'Circle':
+        """ Creates a circle by three points.
         """
         ray1 = Ray2D(p1, p2)
         ray2 = Ray2D(p1, p3)
@@ -37,14 +41,14 @@ class Circle(object):
         r = center.distance(p1)
         return Circle(center, r)
 
-    def get_point(self, angle):
+    def get_point(self, angle: float) -> Vector:
         """
-        Calculate point on circle at angle as Vector.
+        Calculate point on circle at `angle` as Vector.
 
         """
         return self.center + Vector.from_rad_angle(angle, self.radius)
 
-    def within(self, point):
+    def within(self, point: 'Vertex') -> bool:
         """
         Test if point is within circle.
 
@@ -52,24 +56,24 @@ class Circle(object):
         radius2 = self.center.distance(point)
         return self.radius >= radius2
 
-    def in_x_range(self, x):
+    def in_x_range(self, x: float) -> bool:
         mx = self.center.x
         r = self.radius
         return (mx - r) <= x <= (mx + r)
 
-    def in_y_range(self, y):
+    def in_y_range(self, y: float) -> bool:
         my = self.center.y
         r = self.radius
         return (my - r) <= y <= (my + r)
 
-    def get_y(self, x):
+    def get_y(self, x: float) -> Tuple[float]:
         """
-        Calculate the y-coordinate at the given x-coordinate.
+        Calculates y-coordinates at the given x-coordinate.
 
         Args:
             x: x-coordinate
 
-        Returns: list of Vector, empty list if the x-coordinate ist outside of circle
+        Returns: tuple of y-coordinates, empty tuple if the x-coordinate ist outside of circle
 
         """
         result = []
@@ -78,15 +82,16 @@ class Circle(object):
             dy = (self.radius ** 2 - dx ** 2) ** 0.5  # pythagoras
             result.append(self.center.y + dy)
             result.append(self.center.y - dy)
-        return result
+        return tuple(result)
 
-    def get_x(self, y):
+    def get_x(self, y: float) -> Tuple[float]:
         """
-        Calculate the x-coordinate at the given y-coordinate.
+        Calculates x-coordinates at the given y-coordinate.
+
         Args:
             y: y-coordinate
 
-        Returns: list of Vector, empty list if the y-coordinate ist outside of circle
+        Returns: tuple of x-coordinates, empty tuple if the y-coordinate ist outside of circle
 
         """
         result = []
@@ -95,36 +100,36 @@ class Circle(object):
             dx = (self.radius ** 2 - dy ** 2) ** 0.5  # pythagoras
             result.append(self.center.x + dx)
             result.append(self.center.x - dx)
-        return result
+        return tuple(result)
 
-    def tangent(self, angle):
+    def tangent(self, angle: float) -> Ray2D:
         """
-        Calculate tangent to circle at angle as Ray2D
+        Calculate tangent to circle at angle as Ray2D().
 
         """
         point_on_circle = self.get_point(angle)
         ray = Ray2D(self.center, point_on_circle)
         return ray.normal_through(point_on_circle)
 
-    def intersect_ray(self, ray, places=7):
+    def intersect_ray(self, ray: Ray2D, places: int = 7) -> Tuple[Vector]:
         """
-        Calculates the intersection points for circle with a ray.
+        Calculates the intersection points for this circle with a ray.
 
         Args:
-            ray: Ray2D() object
+            ray: intersection ray
             places: significant decimal places for tests (e.g. test for tangents)
 
-        Returns: list of Vector
+        Returns: tuple of Vector()
 
-            return list contains:
+            tuple contains:
             0 points .. no intersection
             1 point .. ray is a tangent on the circle
             2 points .. ray intersects with the circle
 
         """
         normal_ray = ray.normal_through(self.center)
-        cross_point = ray.intersect(normal_ray)
-        dist = self.center.distance(cross_point)
+        intersection_point = ray.intersect(normal_ray)
+        dist = self.center.distance(intersection_point)
         result = []
         if dist < self.radius:  # intersect in two points
             if equals_almost(dist, 0., places):  # if ray goes through midpoint
@@ -132,32 +137,32 @@ class Circle(object):
                 alpha = HALF_PI
             else:  # the exact direction of angle (all 4 quadrants Q1-Q4) is important:
                 # normal_ray.angle is only at the center point correct
-                angle = (cross_point - self.center).angle_rad
-                alpha = math.acos(cross_point.distance(self.center) / self.radius)
+                angle = (intersection_point - self.center).angle_rad
+                alpha = math.acos(intersection_point.distance(self.center) / self.radius)
             result.append(self.get_point(angle + alpha))
             result.append(self.get_point(angle - alpha))
         elif equals_almost(dist, self.radius, places):  # ray is a tangent of circle
-            result.append(cross_point)
+            result.append(intersection_point)
             # else no intersection
-        return result
+        return tuple(result)
 
-    def intersect_circle(self, other, places=7):
+    def intersect_circle(self, other: 'Circle', places: int = 7) -> Tuple[Vector]:
         """
-        Calculates the intersection points for circle with other circle.
+        Calculates the intersection points for two circles.
 
         Args:
-            other: other Circle() instance
+            other: intersection circle
             places: significant decimal places for tests (e.g. test for circle touch point)
 
+        Returns: tuple of Vector()
 
-        Returns: list of Vector
-
-        Return list contains:
+            tuple contains:
             0 points .. no intersection
             1 point .. circle touches the other_circle in one point
             2 points .. circle intersects with the other_circle
 
         """
+
         def get_angle_through_center_points():
             return (other.center - self.center).angle_rad
 
@@ -177,4 +182,4 @@ class Circle(object):
                 angle = get_angle_through_center_points()
                 result.append(self.get_point(angle + alpha))
                 result.append(self.get_point(angle - alpha))
-        return result
+        return tuple(result)

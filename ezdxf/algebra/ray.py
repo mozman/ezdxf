@@ -46,7 +46,8 @@ class Ray2D:
     if keyword argument slope is defined, angle will be ignored
 
     """
-    def __init__(self, point1: 'Vertex', point2: 'Vertex'=None, **kwargs):
+
+    def __init__(self, point1: 'Vertex', point2: 'Vertex' = None, **kwargs):
         self._vertical = False  # type: bool
         self.places = 7  # type: int
         p1x = float(point1[XCOORD])
@@ -68,7 +69,7 @@ class Ray2D:
                 self._x = p1x
                 self._set_angle(HALF_PI)
             else:
-                self._set_slope(dy/dx)
+                self._set_slope(dy / dx)
         elif 'slope' in kwargs:  # case B
             self._set_slope(float(kwargs['slope']))
         elif 'angle' in kwargs:  # case C
@@ -138,7 +139,7 @@ class Ray2D:
             else:
                 # calc intersection with the 'straight-line-equation'
                 # based on y(x) = y0 + x*slope
-                x = (ray1._y0 - ray2._y0)/(ray2.slope - ray1.slope)
+                x = (ray1._y0 - ray2._y0) / (ray2.slope - ray1.slope)
                 y = ray1.get_y(x)
             return Vector(x, y)
         else:
@@ -149,7 +150,7 @@ class Ray2D:
         Returns a ray which is normal to self and goes through point.
 
         """
-        return Ray2D(point, angle=self.angle+HALF_PI)
+        return Ray2D(point, angle=self.angle + HALF_PI)
 
     def goes_through(self, point: 'Vertex') -> bool:
         """
@@ -178,7 +179,7 @@ class Ray2D:
         """
         if self.is_vertical:
             return self._x
-        else :
+        else:
             if self.is_horizontal:
                 raise ArithmeticError
             return (float(y) - self._y0) / self.slope
