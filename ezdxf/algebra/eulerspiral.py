@@ -1,24 +1,26 @@
 # Created: 26.03.2010
 # License: MIT License
+from typing import Dict, Iterable
 from ezdxf.algebra import Vector
-from ezdxf.algebra.bspline import bspline_control_frame
+from ezdxf.algebra.bspline import bspline_control_frame, BSpline
 
 
-class EulerSpiral(object):
+class EulerSpiral:
     """
     This object represents an euler spiral (clothoid) for *curvature* (Radius of curvature).
 
     This is a parametric curve, which always starts at the origin = (0, 0).
 
     """
-    def __init__(self, curvature=1.0):
+
+    def __init__(self, curvature: float = 1.0):
         self.curvature = curvature  # Radius of curvature
         self.curvature_powers = [curvature ** power for power in range(19)]
-        self._cache = {}  # coordinates cache
+        self._cache = {}  # type: Dict[float, Vector] # coordinates cache
 
-    def radius(self, t):
+    def radius(self, t: float) -> float:
         """
-        Get radius of circle at distance <L>.
+        Get radius of circle at distance 't'.
 
         """
         if t > 0.:
@@ -26,26 +28,27 @@ class EulerSpiral(object):
         else:
             return 0.  # radius = infinite
 
-    def tangent(self, t):
+    def tangent(self, t: float) -> Vector:
         """
-        Get tangent at distance t as Vector() object.
+        Get tangent at distance `t` as Vector() object.
 
         """
         angle = t ** 2 / (2. * self.curvature_powers[2])
         return Vector.from_rad_angle(angle)
 
-    def distance(self, radius):
+    def distance(self, radius: float) -> float:
         """
         Get distance L from origin for radius.
 
         """
         return self.curvature_powers[2] / float(radius)
 
-    def point(self, t):
+    def point(self, t: float) -> Vector:
         """
-        Get point at distance t as Vector().
+        Get point at distance `t` as Vector().
 
         """
+
         def term(length_power, curvature_power, const):
             return t ** length_power / (const * self.curvature_powers[curvature_power])
 
@@ -57,7 +60,7 @@ class EulerSpiral(object):
             self._cache[t] = Vector(x, y)
         return self._cache[t]
 
-    def approximate(self, length, segments):
+    def approximate(self, length: float, segments: int) -> Iterable[Vector]:
         """
         Approximate curve of length with line segments.
 
@@ -69,18 +72,28 @@ class EulerSpiral(object):
         for index in range(1, segments + 1):
             yield self.point(delta_l * index)
 
-    def circle_midpoint(self, t):
+    def circle_midpoint(self, t: float) -> Vector:
         """
-        Get circle midpoint at distance t.
+        Get circle midpoint at distance `t`.
 
         """
         p = self.point(t)
         r = self.radius(t)
         return p + self.tangent(t).normalize(r).orthogonal()
 
-    def bspline(self, length, segments=10, degree=3, method='uniform'):
+    def bspline(self, length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline:
+        """
+        Approximate euler spiral by B-spline.
+
+        Args:
+            length: length of euler spiral
+            segments: count of fit points for B-spline calculation
+            degree: degree of BSpline
+            method: calculation method for parameter vector t
+
+        """
         fit_points = list(self.approximate(length, segments=segments))
         spline = bspline_control_frame(fit_points, degree, method=method)
-        knots = [v*length for v in spline.knot_values()]  # scale knot values to length
+        knots = [v * length for v in spline.knot_values()]  # scale knot values to length
         spline.basis.knots = knots
         return spline
