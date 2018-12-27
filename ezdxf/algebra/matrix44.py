@@ -5,17 +5,24 @@
 # Created: 19.04.2010
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
+from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 from math import sin, cos, tan
 from itertools import chain
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
+
+Tuple4Float = Tuple[float, float, float, float]
+
 
 # removed array.array because array is optimized for space not speed, and space optimization is not needed
 
 
-def floats(items):
+def floats(items: Iterable) -> List[float]:
     return [float(v) for v in items]
 
 
-class Matrix44(object):
+class Matrix44:
     _identity = (
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
@@ -33,10 +40,10 @@ class Matrix44(object):
         Matrix44(row1, row2, row3, row4) four rows, each row with four values.
 
         """
-        self.matrix = None
+        self.matrix = None  # type: List
         self.set(*args)
 
-    def set(self, *args):
+    def set(self, *args) -> None:
         """
         Reset matrix values.
 
@@ -59,27 +66,32 @@ class Matrix44(object):
         if len(self.matrix) != 16:
             raise ValueError("Invalid matrix count")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         def format_row(row):
-            return "(%s)" % ", ".join(str(value) for value in row )
+            return "(%s)" % ", ".join(str(value) for value in row)
+
         return "Matrix44(%s)" % \
                ", ".join(format_row(row) for row in self.rows())
 
-    def get_row(self, row):
+    def get_row(self, row: int) -> Tuple4Float:
         index = row * 4
-        return tuple(self.matrix[index:index+4])
+        return tuple(self.matrix[index:index + 4])
 
-    def set_row(self, row, values):
+    def set_row(self, row: int, values: Sequence[float]) -> None:
         index = row * 4
-        self.matrix[index:index+len(values)] = floats(values)
+        self.matrix[index:index + len(values)] = floats(values)
 
-    def get_col(self, col):
-        """Returns a column as a tuple of 4 values."""
+    def get_col(self, col: int) -> Tuple4Float:
+        """
+        Returns a column as a tuple of four floats.
+        """
         m = self.matrix
-        return m[col], m[col+4], m[col+8], m[col+12]
+        return m[col], m[col + 4], m[col + 8], m[col + 12]
 
-    def set_col(self, col, values):
-        """Sets the values in a column."""
+    def set_col(self, col: int, values: Sequence[float]):
+        """
+        Sets the values in a column.
+        """
         m = self.matrix
         a, b, c, d = values
         m[col] = float(a)
@@ -87,12 +99,13 @@ class Matrix44(object):
         m[col + 8] = float(c)
         m[col + 12] = float(d)
 
-    def copy(self):
+    def copy(self) -> 'Matrix44':
         return self.__class__(self.matrix)
+
     __copy__ = copy
 
     @classmethod
-    def scale(cls, sx, sy=None, sz=None):
+    def scale(cls, sx: float, sy: float = None, sz: float = None) -> 'Matrix44':
         """
         Returns a scaling transformation matrix. If sy is None, sy = sx, and if sz is None sz = sx.
 
@@ -110,7 +123,7 @@ class Matrix44(object):
         ])
 
     @classmethod
-    def translate(cls, x, y, z):
+    def translate(cls, x: float, y: float, z: float) -> 'Matrix44':
         """
         Returns a translation matrix to (x, y, z).
 
@@ -123,7 +136,7 @@ class Matrix44(object):
         ])
 
     @classmethod
-    def x_rotate(cls, angle):
+    def x_rotate(cls, angle: float) -> 'Matrix44':
         """
         Returns a rotation matrix about the x-axis.
 
@@ -141,7 +154,7 @@ class Matrix44(object):
         ])
 
     @classmethod
-    def y_rotate(cls, angle):
+    def y_rotate(cls, angle: float) -> 'Matrix44':
         """
         Returns a rotation matrix about the y-axis.
 
@@ -159,7 +172,7 @@ class Matrix44(object):
         ])
 
     @classmethod
-    def z_rotate(cls, angle):
+    def z_rotate(cls, angle: float) -> 'Matrix44':
         """
         Returns a rotation matrix about the z-axis.
 
@@ -177,7 +190,7 @@ class Matrix44(object):
         ])
 
     @classmethod
-    def axis_rotate(cls, axis, angle):
+    def axis_rotate(cls, axis: 'Vertex', angle: float) -> 'Matrix44':
         """
         Returns a rotation matrix about an arbitrary axis.
 
@@ -191,14 +204,14 @@ class Matrix44(object):
         omc = 1. - c
         x, y, z = axis
         return cls([
-            x*x*omc+c, y*x*omc+z*s, x*z*omc-y*s, 0.,
-            x*y*omc-z*s, y*y*omc+c, y*z*omc+x*s, 0.,
-            x*z*omc+y*s, y*z*omc-x*s, z*z*omc+c, 0.,
+            x * x * omc + c, y * x * omc + z * s, x * z * omc - y * s, 0.,
+            x * y * omc - z * s, y * y * omc + c, y * z * omc + x * s, 0.,
+            x * z * omc + y * s, y * z * omc - x * s, z * z * omc + c, 0.,
             0., 0., 0., 1.
         ])
 
     @classmethod
-    def xyz_rotate(cls, angle_x, angle_y, angle_z):
+    def xyz_rotate(cls, angle_x: float, angle_y: float, angle_z: float) -> 'Matrix44':
         """
         Returns a rotation matrix for rotation about each axis.
 
@@ -215,17 +228,18 @@ class Matrix44(object):
         cz = cos(angle_z)
         sz = sin(angle_z)
 
-        sxsy = sx*sy
-        cxsy = cx*sy
+        sxsy = sx * sy
+        cxsy = cx * sy
 
         return cls([
-            cy*cz, sxsy*cz+cx*sz, -cxsy*cz+sx*sz, 0.,
-            -cy*sz, -sxsy*sz+cx*cz, cxsy*sz+sx*cz, 0.,
-            sy, -sx*cy, cx*cy, 0.,
+            cy * cz, sxsy * cz + cx * sz, -cxsy * cz + sx * sz, 0.,
+            -cy * sz, -sxsy * sz + cx * cz, cxsy * sz + sx * cz, 0.,
+            sy, -sx * cy, cx * cy, 0.,
             0., 0., 0., 1.])
 
     @classmethod
-    def perspective_projection(cls, left, right, top, bottom, near, far):
+    def perspective_projection(cls, left: float, right: float, top: float, bottom: float, near: float,
+                               far: float) -> 'Matrix44':
         """
         Returns a matrix for a 2d projection.
 
@@ -239,14 +253,14 @@ class Matrix44(object):
 
         """
         return cls([
-            (2.*near)/(right-left), 0., 0., 0.,
-            0., (2.*near)/(top-bottom), 0., 0.,
-            (right+left)/(right-left), (top+bottom)/(top-bottom), -((far+near)/(far-near)), -1.,
-            0., 0., -((2.*far*near)/(far-near)), 0.
+            (2. * near) / (right - left), 0., 0., 0.,
+            0., (2. * near) / (top - bottom), 0., 0.,
+            (right + left) / (right - left), (top + bottom) / (top - bottom), -((far + near) / (far - near)), -1.,
+            0., 0., -((2. * far * near) / (far - near)), 0.
         ])
 
     @classmethod
-    def perspective_projection_fov(cls, fov, aspect, near, far):
+    def perspective_projection_fov(cls, fov: float, aspect: float, near: float, far: float) -> 'Matrix44':
         """
         Returns a matrix for a 2d projection.
 
@@ -257,15 +271,15 @@ class Matrix44(object):
             far: Coordinate of the far clipping plane
 
         """
-        vrange = near*tan(fov/2.)
-        left = -vrange*aspect
-        right = vrange*aspect
+        vrange = near * tan(fov / 2.)
+        left = -vrange * aspect
+        right = vrange * aspect
         bottom = -vrange
         top = vrange
         return cls.perspective_projection(left, right, bottom, top, near, far)
 
     @staticmethod
-    def chain(*matrices):
+    def chain(*matrices: Iterable['Matrix44']) -> 'Matrix44':
         """
         Compose a transformation matrix from one or more matrices.
 
@@ -276,7 +290,7 @@ class Matrix44(object):
         return transformation
 
     @staticmethod
-    def ucs(ux, uy, uz):
+    def ucs(ux: 'Vertex', uy: 'Vertex', uz: 'Vertex') -> 'Matrix44':
         """
         Returns a matrix for coordinate transformation from WCS to UCS.
         Origin of both systems is (0, 0, 0).
@@ -302,10 +316,10 @@ class Matrix44(object):
             0, 0, 0, 1,
         ))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self.matrix.__hash__()
 
-    def __setitem__(self, coord, value):
+    def __setitem__(self, coord: Tuple[int, int], value: float):
         """
         Set (row, column) element.
 
@@ -313,7 +327,7 @@ class Matrix44(object):
         row, col = coord
         self.matrix[row * 4 + col] = float(value)
 
-    def __getitem__(self, coord):
+    def __getitem__(self, coord: Tuple[int, int]):
         """
         Get (row, column) element.
 
@@ -321,14 +335,14 @@ class Matrix44(object):
         row, col = coord
         return self.matrix[row * 4 + col]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[float]:
         """
         Iterates over all matrix values.
 
         """
         return iter(self.matrix)
 
-    def __mul__(self, other):
+    def __mul__(self, other: 'Matrix44') -> 'Matrix44':
         """
         Returns a new matrix as result of the matrix multiplication with another matrix.
 
@@ -337,7 +351,7 @@ class Matrix44(object):
         res_matrix.__imul__(other)
         return res_matrix
 
-    def __imul__(self, other):
+    def __imul__(self, other: 'Matrix44') -> 'Matrix44':
         """
         Inplace multiplication with another matrix.
 
@@ -367,7 +381,7 @@ class Matrix44(object):
         ]
         return self
 
-    def fast_mul(self, other):
+    def fast_mul(self, other: 'Matrix44') -> 'Matrix44':
         """
         Multiplies this matrix with other matrix.
 
@@ -400,21 +414,21 @@ class Matrix44(object):
         ]
         return self
 
-    def rows(self):
+    def rows(self) -> Iterable[Tuple4Float]:
         """
         Iterate over rows as 4-tuples.
 
         """
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
-    def columns(self):
+    def columns(self) -> Iterable[Tuple4Float]:
         """
         Iterate over columns as 4-tuples.
 
         """
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
-    def transform(self, vector):
+    def transform(self, vector: 'Vertex') -> Tuple[float, float, float]:
         """
         Transforms a 3d vector and return the result as a tuple.
 
@@ -425,7 +439,7 @@ class Matrix44(object):
                 x * m[1] + y * m[5] + z * m[9] + m[13],
                 x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def transform_vectors(self, vectors):
+    def transform_vectors(self, vectors: Iterable['Vertex']) -> List[Tuple[float, float, float]]:
         """
         Returns a list of transformed vectors.
 
@@ -441,7 +455,7 @@ class Matrix44(object):
             ))
         return result
 
-    def transpose(self):
+    def transpose(self) -> None:
         """
         Swaps the rows for columns inplace.
 
@@ -458,7 +472,7 @@ class Matrix44(object):
             m03, m13, m23, m33
         ]
 
-    def get_transpose(self):
+    def get_transpose(self) -> 'Matrix44':
         """
         Returns a new transposed matrix.
 
@@ -467,7 +481,7 @@ class Matrix44(object):
         matrix.transpose()
         return matrix
 
-    def determinant(self):
+    def determinant(self) -> float:
         e11, e12, e13, e14, \
         e21, e22, e23, e24, \
         e31, e32, e33, e34, \
@@ -479,33 +493,49 @@ class Matrix44(object):
                e13 * e22 * e34 * e41 - e13 * e22 * e31 * e44 - e14 * e21 * e32 * e43 + e14 * e21 * e33 * e42 - \
                e14 * e22 * e33 * e41 + e14 * e22 * e31 * e43 - e14 * e23 * e31 * e42 + e14 * e23 * e32 * e41
 
-    def inverse(self):
+    def inverse(self) -> None:
         """
         Calculates the inverse of the matrix.
 
         Raises ZeroDivisionError if matrix has no inverse.
         """
         det = self.determinant()
-        f = 1./det  # catch ZeroDivisionError by caller
+        f = 1. / det  # catch ZeroDivisionError by caller
         m00, m01, m02, m03, \
         m10, m11, m12, m13, \
         m20, m21, m22, m23, \
         m30, m31, m32, m33 = self.matrix
         self.matrix = [
-            (m12*m23*m31 - m13*m22*m31 + m13*m21*m32 - m11*m23*m32 - m12*m21*m33 + m11*m22*m33)*f,
-            (m03*m22*m31 - m02*m23*m31 - m03*m21*m32 + m01*m23*m32 + m02*m21*m33 - m01*m22*m33)*f,
-            (m02*m13*m31 - m03*m12*m31 + m03*m11*m32 - m01*m13*m32 - m02*m11*m33 + m01*m12*m33)*f,
-            (m03*m12*m21 - m02*m13*m21 - m03*m11*m22 + m01*m13*m22 + m02*m11*m23 - m01*m12*m23)*f,
-            (m13*m22*m30 - m12*m23*m30 - m13*m20*m32 + m10*m23*m32 + m12*m20*m33 - m10*m22*m33)*f,
-            (m02*m23*m30 - m03*m22*m30 + m03*m20*m32 - m00*m23*m32 - m02*m20*m33 + m00*m22*m33)*f,
-            (m03*m12*m30 - m02*m13*m30 - m03*m10*m32 + m00*m13*m32 + m02*m10*m33 - m00*m12*m33)*f,
-            (m02*m13*m20 - m03*m12*m20 + m03*m10*m22 - m00*m13*m22 - m02*m10*m23 + m00*m12*m23)*f,
-            (m11*m23*m30 - m13*m21*m30 + m13*m20*m31 - m10*m23*m31 - m11*m20*m33 + m10*m21*m33)*f,
-            (m03*m21*m30 - m01*m23*m30 - m03*m20*m31 + m00*m23*m31 + m01*m20*m33 - m00*m21*m33)*f,
-            (m01*m13*m30 - m03*m11*m30 + m03*m10*m31 - m00*m13*m31 - m01*m10*m33 + m00*m11*m33)*f,
-            (m03*m11*m20 - m01*m13*m20 - m03*m10*m21 + m00*m13*m21 + m01*m10*m23 - m00*m11*m23)*f,
-            (m12*m21*m30 - m11*m22*m30 - m12*m20*m31 + m10*m22*m31 + m11*m20*m32 - m10*m21*m32)*f,
-            (m01*m22*m30 - m02*m21*m30 + m02*m20*m31 - m00*m22*m31 - m01*m20*m32 + m00*m21*m32)*f,
-            (m02*m11*m30 - m01*m12*m30 - m02*m10*m31 + m00*m12*m31 + m01*m10*m32 - m00*m11*m32)*f,
-            (m01*m12*m20 - m02*m11*m20 + m02*m10*m21 - m00*m12*m21 - m01*m10*m22 + m00*m11*m22)*f,
+            (
+                    m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 + m11 * m22 * m33) * f,
+            (
+                    m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 - m01 * m22 * m33) * f,
+            (
+                    m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 + m01 * m12 * m33) * f,
+            (
+                    m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 - m01 * m12 * m23) * f,
+            (
+                    m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 - m10 * m22 * m33) * f,
+            (
+                    m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 + m00 * m22 * m33) * f,
+            (
+                    m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 - m00 * m12 * m33) * f,
+            (
+                    m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 + m00 * m12 * m23) * f,
+            (
+                    m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 + m10 * m21 * m33) * f,
+            (
+                    m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 - m00 * m21 * m33) * f,
+            (
+                    m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 + m00 * m11 * m33) * f,
+            (
+                    m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 - m00 * m11 * m23) * f,
+            (
+                    m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 - m10 * m21 * m32) * f,
+            (
+                    m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 + m00 * m21 * m32) * f,
+            (
+                    m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 - m00 * m11 * m32) * f,
+            (
+                    m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 + m00 * m11 * m22) * f,
         ]
