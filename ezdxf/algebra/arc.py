@@ -1,14 +1,25 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Tuple
 
 from .vector import Vector
 from .circle import Circle
 from .ucs import OCS, UCS
 import math
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex, GenericLayoutType
+    from ezdxf.eztypes import Arc as DXFArc
 
-class Arc(object):
-    def __init__(self, center=(0, 0), radius=1, start_angle=0, end_angle=360, is_counter_clockwise=True):
+
+class Arc:
+    def __init__(self,
+                 center: 'Vertex' = (0, 0),
+                 radius: float = 1,
+                 start_angle: float = 0,
+                 end_angle: float = 360,
+                 is_counter_clockwise: bool = True):
+
         self.center = Vector(center)
         self.radius = radius
         if is_counter_clockwise:
@@ -19,15 +30,15 @@ class Arc(object):
             self.end_angle = start_angle
 
     @property
-    def start_angle_rad(self):
+    def start_angle_rad(self) -> float:
         return math.radians(self.start_angle)
 
     @property
-    def end_angle_rad(self):
+    def end_angle_rad(self) -> float:
         return math.radians(self.end_angle)
 
     @staticmethod
-    def validate_start_and_end_point(start_point, end_point):
+    def validate_start_and_end_point(start_point: 'Vertex', end_point: 'Vertex') -> Tuple[Vector, Vector]:
         start_point = Vector(start_point)
         if start_point.z != 0:
             raise ValueError("z-axis of start point has to be 0.")
@@ -39,19 +50,17 @@ class Arc(object):
         return start_point, end_point
 
     @classmethod
-    def from_2p_angle(cls, start_point, end_point, angle, ccw=True):
+    def from_2p_angle(cls, start_point: 'Vertex', end_point: 'Vertex', angle: float, ccw: bool = True) -> 'Arc':
         """
         Create arc from two points and enclosing angle. Additional precondition: arc goes by default in counter
         clockwise orientation from start_point to end_point, can be changed by ccw=False.
         Z-axis of start_point and end_point has to be 0 if given.
 
         Args:
-            start_point: start point as (x, y [,z]) tuple
-            end_point: end point as (x, y [,z]) tuple
+            start_point: start point (x, y [,z]) as args accepted by Vector()
+            end_point: end point (x, y [,z]) as args accepted by Vector()
             angle: enclosing angle in degrees
             ccw: counter clockwise direction True/False
-
-        Returns: Arc()
 
         """
         start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
@@ -80,7 +89,8 @@ class Arc(object):
         )
 
     @classmethod
-    def from_2p_radius(cls, start_point, end_point, radius, ccw=True, center_is_left=True):
+    def from_2p_radius(cls, start_point: 'Vertex', end_point: 'Vertex', radius: float, ccw: bool = True,
+                       center_is_left: bool = True) -> 'Arc':
         """
         Create arc from two points and arc radius. Additional precondition: arc goes by default in counter clockwise
         orientation from start_point to end_point can be changed by ccw=False.
@@ -90,13 +100,11 @@ class Arc(object):
         *end point*. Parameter ccw=False swaps start- and end point, which inverts the meaning of center_is_left.
 
         Args:
-            start_point: start point as (x, y [,z]) tuple
-            end_point: end point as (x, y [,z]) tuple
-            radius: arc radius as float
+            start_point: start point (x, y [,z]) as args accepted by Vector()
+            end_point: end point (x, y [,z]) as args accepted by Vector()
+            radius: arc radius
             ccw: counter clockwise direction True/False
             center_is_left: center point of arc is left of line SP->EP if True, else on the right side of this line
-
-        Returns: Arc()
 
         """
         start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
@@ -109,8 +117,8 @@ class Arc(object):
         mid_point = end_point.lerp(start_point, factor=.5)
         distance = end_point.distance(start_point)
         distance2 = distance / 2.
-        height = math.sqrt(radius**2 - distance2**2)
-        center = mid_point + (end_point-start_point).orthogonal(ccw=center_is_left).normalize(height)
+        height = math.sqrt(radius ** 2 - distance2 ** 2)
+        center = mid_point + (end_point - start_point).orthogonal(ccw=center_is_left).normalize(height)
 
         return Arc(
             center=center,
@@ -121,18 +129,16 @@ class Arc(object):
         )
 
     @classmethod
-    def from_3p(cls, start_point, end_point, def_point, ccw=True):
+    def from_3p(cls, start_point: 'Vertex', end_point: 'Vertex', def_point: 'Vertex', ccw: bool = True) -> 'Arc':
         """
         Create arc from three points. Additional precondition: arc goes in counter clockwise
         orientation from start_point to end_point. Z-axis of start_point, end_point and def_point has to be 0 if given.
 
         Args:
-            start_point: start point as (x, y [,z]) tuple
-            end_point: end point as (x, y [,z]) tuple
+            start_point: start point (x, y [,z])  as args accepted by Vector()
+            end_point: end point (x, y [,z]) as args accepted by Vector()
             def_point: additional definition point as (x, y [,z]) tuple
             ccw: counter clockwise direction True/False
-
-        Returns: Arc()
 
         """
         start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
@@ -152,7 +158,7 @@ class Arc(object):
             is_counter_clockwise=ccw,
         )
 
-    def add_to_layout(self, layout, ucs=None, dxfattribs=None):
+    def add_to_layout(self, layout: 'GenericLayoutType', ucs: UCS = None, dxfattribs: dict = None) -> 'DXFArc':
         """
         Add arc as DXF entity to a layout.
 
@@ -167,6 +173,7 @@ class Arc(object):
         Returns: DXF Arc() object
 
         """
+
         def ocs_angle(angle):
             point = self.center + Vector.from_deg_angle(angle)
             wcs_point = ucs.to_wcs(point)
