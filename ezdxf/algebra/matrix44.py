@@ -439,7 +439,7 @@ class Matrix44:
                 x * m[1] + y * m[5] + z * m[9] + m[13],
                 x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def transform_vectors(self, vectors: Iterable['Vertex']) -> List[Tuple[float, float, float]]:
+    def transform_vectors(self, vectors: Iterable['Vertex']) -> List['Vertex']:
         """
         Returns a list of transformed vectors.
 

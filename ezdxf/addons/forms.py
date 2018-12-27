@@ -2,6 +2,7 @@
 # Created: 15.02.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, List
 from math import pi, sin, cos
 from ezdxf.algebra import Vector, Matrix44
 from ezdxf.algebra.base import is_close_points, is_close
@@ -9,8 +10,11 @@ from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.eulerspiral import EulerSpiral
 from .mesh import MeshBuilder, MeshVertexMerger
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
-def circle(count, radius=1, elevation=0, close=False):
+
+def circle(count: int, radius: float = 1, elevation: float = 0, close: bool = False) -> Iterable[Vector]:
     """
     Create polygon vertices for a circle with *radius* and *count* corners,
     *elevation* is the z-axis for all vertices.
@@ -28,8 +32,8 @@ def circle(count, radius=1, elevation=0, close=False):
     delta = 2. * pi / count
     alpha = 0.
     for index in range(count):
-        x = cos(alpha)*radius
-        y = sin(alpha)*radius
+        x = cos(alpha) * radius
+        y = sin(alpha) * radius
         yield Vector(x, y, elevation)
         alpha += delta
 
@@ -37,7 +41,8 @@ def circle(count, radius=1, elevation=0, close=False):
         yield Vector(radius, 0, elevation)
 
 
-def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, elevation=0):
+def ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0, end_param: float = 2 * pi,
+            elevation: float = 0) -> Iterable[Vector]:
     """
     Create polygon vertices for an ellipse with *rx* as x-axis radius and *ry*
     for y-axis radius with *count* vertices, *elevation* is the z-axis for all
@@ -60,13 +65,13 @@ def ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, elevation=0):
     start_param = float(start_param)
     end_param = float(end_param)
     count = int(count)
-    delta = (end_param - start_param) / (count-1)
+    delta = (end_param - start_param) / (count - 1)
     for param in range(count):
-        alpha = start_param + param*delta
+        alpha = start_param + param * delta
         yield Vector(cos(alpha) * rx, sin(alpha) * ry, elevation)
 
 
-def euler_spiral(count, length=1, curvature=1, elevation=0):
+def euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation: float = 0) -> Iterable[Vector]:
     """
     Create polygon vertices for an euler spiral of a given length and
     radius of curvature. This is a parametric curve, which always starts
@@ -82,11 +87,11 @@ def euler_spiral(count, length=1, curvature=1, elevation=0):
 
     """
     spiral = EulerSpiral(curvature=curvature)
-    for vertex in spiral.approximate(length, count-1):
+    for vertex in spiral.approximate(length, count - 1):
         yield vertex.replace(z=elevation)
 
 
-def translate(vertices, vec=(0, 0, 1)):
+def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterable[Vector]:
     """
     Simple translation, faster than a Matrix44 transformation.
 
@@ -102,7 +107,7 @@ def translate(vertices, vec=(0, 0, 1)):
         yield vec + p
 
 
-def close_polygon(vertices):
+def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:
     """
     Returns list of vertices, where vertices[0] == vertices[-1].
 
@@ -148,7 +153,7 @@ cube_faces = [
 ]
 
 
-def cube(center=True, matrix=None):
+def cube(center: bool = True, matrix: Matrix44 = None) -> MeshBuilder:
     """
     Create a cube as MeshBuilder() object.
 
@@ -166,7 +171,7 @@ def cube(center=True, matrix=None):
     return mesh
 
 
-def extrude(profile, path, close=True):
+def extrude(profile: Iterable['Vertex'], path: Iterable['Vertex'], close: bool = True) -> MeshVertexMerger:
     """
     Extrude a profile polygon along a path polyline, vertices of profile should be in
     counter clockwise order.
@@ -179,6 +184,7 @@ def extrude(profile, path, close=True):
     Returns: MeshVertexMerger()
 
     """
+
     def add_hull(bottom_profile, top_profile):
         prev_bottom = bottom_profile[0]
         prev_top = top_profile[0]
@@ -206,7 +212,8 @@ def extrude(profile, path, close=True):
     return mesh
 
 
-def cylinder(count, radius=1., top_radius=None, top_center=(0, 0, 1), caps=True):
+def cylinder(count: int, radius: float = 1., top_radius: float = None, top_center: 'Vertex' = (0, 0, 1),
+             caps: bool = True) -> MeshVertexMerger:
     """
     Create a cylinder as MeshVertexMerger() object.
 
@@ -231,7 +238,8 @@ def cylinder(count, radius=1., top_radius=None, top_center=(0, 0, 1), caps=True)
     return from_profiles_linear([base_profile, top_profile], caps=caps)
 
 
-def from_profiles_linear(profiles, close=True, caps=False):
+def from_profiles_linear(profiles: Iterable[Iterable['Vertex']], close: bool = True,
+                         caps: bool = False) -> MeshVertexMerger:
     """
     Mesh by linear connected profiles.
 
@@ -262,7 +270,8 @@ def from_profiles_linear(profiles, close=True, caps=False):
     return mesh
 
 
-def spline_interpolation(vertices, degree=3, method='uniform', power=.5, subdivide=4):
+def spline_interpolation(vertices: Iterable['Vertex'], degree: int = 3, method: str = 'uniform', power: float = .5,
+                         subdivide: int = 4) -> List[Vector]:
     """
     B-spline interpolation, vertices are fit points for the spline definition.
 
@@ -278,11 +287,12 @@ def spline_interpolation(vertices, degree=3, method='uniform', power=.5, subdivi
     Returns: list of vertices
 
     """
+    vertices = list(vertices)
     spline = bspline_control_frame(vertices, degree=degree, method=method, power=power)
-    return list(spline.approximate(segments=(len(vertices)-1)*subdivide))
+    return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 
-def spline_interpolated_profiles(profiles, subdivide=4):
+def spline_interpolated_profiles(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4) -> Iterable[List[Vector]]:
     """
     Profile interpolation by cubic B-spline interpolation.
 
@@ -308,7 +318,8 @@ def spline_interpolated_profiles(profiles, subdivide=4):
         yield [edge[profile_index] for edge in edges]
 
 
-def from_profiles_spline(profiles, subdivide=4, close=True, caps=False):
+def from_profiles_spline(profiles: Iterable[Iterable['Vertex']], subdivide: int = 4, close: bool = True,
+                         caps: bool = False) -> MeshVertexMerger:
     """
     Mesh entity by spline interpolation between given profiles. Requires at least 4 profiles. A subdivide value of 4,
     means, create 4 face loops between two profiles, without interpolation two profiles create one face loop.
@@ -322,6 +333,7 @@ def from_profiles_spline(profiles, subdivide=4, close=True, caps=False):
     Returns: MeshVertexMerger()
 
     """
+    profiles = list(profiles)
     if len(profiles) > 3:
         profiles = spline_interpolated_profiles(profiles, subdivide)
     else:
@@ -329,7 +341,7 @@ def from_profiles_spline(profiles, subdivide=4, close=True, caps=False):
     return from_profiles_linear(profiles, close=close, caps=caps)
 
 
-def cone(count, radius, apex=(0, 0, 1), caps=True):
+def cone(count: int, radius: float, apex: 'Vertex' = (0, 0, 1), caps: bool = True) -> MeshVertexMerger:
     """
     Cone as Mesh.
 
@@ -351,7 +363,8 @@ def cone(count, radius, apex=(0, 0, 1), caps=True):
     return mesh
 
 
-def rotation_form(count, profile, angle=2*pi, axis=(1, 0, 0)):
+def rotation_form(count: int, profile: Iterable['Vertex'], angle: float = 2 * pi,
+                  axis: 'Vertex' = (1, 0, 0)) -> MeshVertexMerger:
     """
     Mesh by rotating a profile around an axis.
 
@@ -377,9 +390,9 @@ def rotation_form(count, profile, angle=2*pi, axis=(1, 0, 0)):
     return mesh
 
 
-def doughnut(mcount, ncount, outer_radius=1., ring_radius=.25):
+def doughnut(mcount: int, ncount: int, outer_radius: float = 1., ring_radius: float = .25) -> MeshVertexMerger:
     pass
 
 
-def sphere(mcount, ncount, radius=1.):
+def sphere(mcount: int, ncount: int, radius: float = 1.) -> MeshVertexMerger:
     pass

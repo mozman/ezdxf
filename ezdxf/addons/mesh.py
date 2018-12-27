@@ -1,10 +1,15 @@
 # Purpose: simple mesh builders
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
 from ezdxf.algebra.vector import Vector
+from ezdxf import DXFValueError
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex, Matrix44, GenericLayoutType
 
 
-class MeshBuilder(object):
+class MeshBuilder:
     """
     A simple Mesh builder. Stores a list of vertices, a list of edges where an edge is a list of indices into the
     vertices list, and a faces list where each face is a list of indices into the vertices list.
@@ -15,12 +20,13 @@ class MeshBuilder(object):
     Can only create new meshes.
 
     """
-    def __init__(self):
-        self.vertices = []  # vertex storage, list of (x, y, z) tuples or Vector() objects
-        self.faces = []  # face storage, each face is a list/tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
-        self.edges = []  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
 
-    def add_face(self, vertices):
+    def __init__(self):
+        self.vertices = []  # type: list[Vector]  # vertex storage, list of (x, y, z) tuples or Vector() objects
+        self.faces = []  # type: List[Sequence[int]]  # face storage, each face is a list/tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
+        self.edges = []  # type: list[Tuple[int, int]]  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
+
+    def add_face(self, vertices: Iterable['Vertex']) -> None:
         """
         Add a face as vertices list to the mesh. A face requires at least 3 vertices, each vertex is a (x, y, z) tuple.
         A face is stored as index list, which means, a face does not contain the vertex itself, but the indices of the
@@ -34,7 +40,7 @@ class MeshBuilder(object):
         """
         self.faces.append(self.add_vertices(vertices))
 
-    def add_edge(self, vertices):
+    def add_edge(self, vertices: Iterable['Vertex']) -> None:
         """
         An edge consist of two vertices [v1, v2]. Each vertex is a (x, y, z) tuple and will be added to the mesh
         and the resulting vertex indices will be added to the mesh edges list. The stored edge is [index v1, index v2]
@@ -43,9 +49,13 @@ class MeshBuilder(object):
             vertices: list of 2 vertices : [(x1, y1, z1), (x2, y2, z2)]
 
         """
-        self.edges.append(self.add_vertices(vertices))
+        vertices = list(vertices)
+        if len(vertices) == 2:
+            self.edges.append(self.add_vertices(vertices))
+        else:
+            raise DXFValueError('Invalid vertices count, expected two vertices.')
 
-    def add_vertices(self, vertices):
+    def add_vertices(self, vertices: Iterable['Vertex']) -> Tuple:
         """
         Add new vertices to the mesh.
 
@@ -62,7 +72,11 @@ class MeshBuilder(object):
         self.vertices.extend(vertices)
         return tuple(range(start_index, len(self.vertices)))
 
-    def add_mesh(self, vertices=None, faces=None, edges=None, mesh=None):
+    def add_mesh(self,
+                 vertices: List[Vector] = None,
+                 faces: List[Sequence[int]] = None,
+                 edges: List[Tuple[int, int]] = None,
+                 mesh: 'MeshBuilder' = None) -> None:
         """
         Add another mesh to this mesh.
 
@@ -92,7 +106,7 @@ class MeshBuilder(object):
         for face_vertices in faces:
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
 
-    def transform(self, matrix):
+    def transform(self, matrix: 'Matrix44') -> 'MeshBuilder':
         """
         Transform actual mesh into a new mesh by applying the transformation matrix to vertices.
 
@@ -110,7 +124,7 @@ class MeshBuilder(object):
         )
         return mesh
 
-    def translate(self, x=0, y=0, z=0):
+    def translate(self, x: float = 0, y: float = 0, z: float = 0) -> None:
         """
         Translate mesh inplace.
 
@@ -120,18 +134,18 @@ class MeshBuilder(object):
         else:
             t = Vector(x)
         for index, vertex in enumerate(self.vertices):
-            self.vertices[index] = t+vertex
+            self.vertices[index] = t + vertex
 
-    def scale(self, sx=1, sy=1, sz=1):
+    def scale(self, sx: float = 1, sy: float = 1, sz: float = 1) -> None:
         """
         Scale mesh inplace.
 
         """
-        self.vertices = [Vector(v[0]*sx, v[1]*sy, v[2]*sz) for v in self.vertices]
+        self.vertices = [Vector(v[0] * sx, v[1] * sy, v[2] * sz) for v in self.vertices]
         for index, vertex in enumerate(self.vertices):
-            self.vertices[index] = Vector(vertex[0]*sx, vertex[1]*sy, vertex[2]*sz)
+            self.vertices[index] = Vector(vertex[0] * sx, vertex[1] * sy, vertex[2] * sz)
 
-    def render(self, layout, dxfattribs=None, matrix=None):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None, matrix: 'Matrix44' = None):
         """
         Render mesh as MESH entity into layout.
 
@@ -151,7 +165,7 @@ class MeshBuilder(object):
             data.faces = self.faces
 
     @classmethod
-    def from_mesh(cls, other):
+    def from_mesh(cls, other: 'MeshBuilder') -> 'MeshBuilder':
         mesh = cls()
         mesh.add_mesh(mesh=other)
         return mesh
@@ -165,16 +179,17 @@ class MeshVertexMerger(MeshBuilder):
     Can only create new meshes.
 
     """
-    def __init__(self, precision=6):
-        super(MeshVertexMerger, self).__init__()
+
+    def __init__(self, precision: int = 6):
+        super().__init__()
         self.ledger = {}
         self.precision = precision
 
-    def key(self, vertex):
+    def key(self, vertex: 'Vertex') -> 'Vertex':
         p = self.precision
         return round(vertex[0], p), round(vertex[1], p), round(vertex[2], p)
 
-    def add_vertices(self, vertices):
+    def add_vertices(self, vertices: Iterable['Vertex']) -> Sequence[int]:
         """
         Add new vertices only, if no vertex with identical x, y, z coordinates already exists, else the index of the
         existing vertex is returned as index of the new (not added) vertex.
@@ -198,7 +213,7 @@ class MeshVertexMerger(MeshBuilder):
                 indices.append(index)
         return tuple(indices)
 
-    def index(self, vertex):
+    def index(self, vertex: 'Vertex') -> int:
         """
         Get index of vertex, raise KeyError if not found.
 
