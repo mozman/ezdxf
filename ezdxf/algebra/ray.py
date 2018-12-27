@@ -1,10 +1,13 @@
 # Created: 13.03.2010
 # Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
-
+from typing import TYPE_CHECKING
 import math
 from .base import equals_almost, normalize_angle, is_vertical_angle
 from .vector import Vector
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 
 class ParallelRaysError(ArithmeticError):
@@ -19,7 +22,7 @@ XCOORD = 0
 YCOORD = 1
 
 
-class Ray2D(object):
+class Ray2D:
     """
     Defines an infinite ray (line with no end points)
     treat it as IMMUTABLE - don't change the status
@@ -43,9 +46,9 @@ class Ray2D(object):
     if keyword argument slope is defined, angle will be ignored
 
     """
-    def __init__(self, point1, point2=None, **kwargs):
-        self._vertical = False
-        self.places = 7
+    def __init__(self, point1: 'Vertex', point2: 'Vertex'=None, **kwargs):
+        self._vertical = False  # type: bool
+        self.places = 7  # type: int
         p1x = float(point1[XCOORD])
         p1y = float(point1[YCOORD])
         if point2 is not None:  # case A
@@ -77,7 +80,7 @@ class Ray2D(object):
             self._y0 = p1y - self.slope * p1x
 
     @property
-    def slope(self):
+    def slope(self) -> float:
         """
         Get slope of the ray.
 
@@ -85,27 +88,27 @@ class Ray2D(object):
         return self._slope
 
     def _set_slope(self, slope):
-        self._slope = slope
-        self._angle = normalize_angle(math.atan(slope))
+        self._slope = slope  # type: float
+        self._angle = normalize_angle(math.atan(slope))  # type: float
 
     @property
-    def angle(self):
+    def angle(self) -> float:
         return self._angle
 
-    def _set_angle(self, angle):
+    def _set_angle(self, angle: float) -> None:
         self._angle = angle
         self._slope = math.tan(angle)
         self._vertical = is_vertical_angle(angle)
 
     @property
-    def is_vertical(self):
+    def is_vertical(self) -> bool:
         return self._vertical
 
     @property
-    def is_horizontal(self):
+    def is_horizontal(self) -> bool:
         return equals_almost(self.slope, 0., self.places)
 
-    def is_parallel(self, ray):
+    def is_parallel(self, ray: 'Ray2D') -> bool:
         """
         Return True if the rays are parallel, else False.
 
@@ -115,11 +118,12 @@ class Ray2D(object):
         else:
             return equals_almost(self.slope, ray.slope, self.places)
 
-    def intersect(self, other_ray):
+    def intersect(self, other_ray: 'Ray2D') -> Vector:
         """
         Returns the intersection point (xy-tuple) of self and other_ray.
 
-        Raises ParallelRaysError, if the rays are parallel
+        Raises:
+             ParallelRaysError: if the rays are parallel
 
         """
         ray1 = self
@@ -140,14 +144,14 @@ class Ray2D(object):
         else:
             raise ParallelRaysError("no intersection, rays are parallel")
 
-    def normal_through(self, point):
+    def normal_through(self, point: 'Vertex') -> 'Ray2D':
         """
         Returns a ray which is normal to self and goes through point.
 
         """
         return Ray2D(point, angle=self.angle+HALF_PI)
 
-    def goes_through(self, point):
+    def goes_through(self, point: 'Vertex') -> bool:
         """
         Returns True if ray goes through point, else False.
 
@@ -158,7 +162,7 @@ class Ray2D(object):
             return equals_almost(point[YCOORD], self.get_y(point[XCOORD]),
                                  self.places)
 
-    def get_y(self, x):
+    def get_y(self, x: float) -> float:
         """
         Get y-coordinate by x-coordinate, raises ArithmeticError for vertical lines.
 
@@ -167,7 +171,7 @@ class Ray2D(object):
             raise ArithmeticError
         return self._y0 + float(x) * self.slope
 
-    def get_x(self, y):
+    def get_x(self, y: float) -> float:
         """
         Get x-coordinate by y-coordinate, raises ArithmeticError for horizontal lines.
 
@@ -179,7 +183,7 @@ class Ray2D(object):
                 raise ArithmeticError
             return (float(y) - self._y0) / self.slope
 
-    def bisectrix(self, other_ray):
+    def bisectrix(self, other_ray: 'Ray2D') -> 'Ray2D':
         """
         Bisectrix between self and other_ray.
 
