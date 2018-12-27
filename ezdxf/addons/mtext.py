@@ -10,10 +10,14 @@ TEXT entities. Supports valign (TOP, MIDDLE, BOTTOM), halign (LEFT, CENTER,
 RIGHT), rotation for an arbitrary (!) angle and mirror.
 
 """
+from typing import TYPE_CHECKING
 import math
 from .mixins import SubscriptAttributes
 import ezdxf
 from ezdxf.lldxf import const
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex, GenericLayoutType
 
 
 class MText(SubscriptAttributes):
@@ -53,7 +57,7 @@ class MText(SubscriptAttributes):
         'TOP_RIGHT',
     ])
 
-    def __init__(self, text, insert, linespacing=1.5, **kwargs):
+    def __init__(self, text: str, insert: 'Vertex', linespacing: float = 1.5, **kwargs):
         self.textlines = text.split('\n')
         self.insert = insert
         self.linespacing = linespacing
@@ -77,12 +81,12 @@ class MText(SubscriptAttributes):
         self.color = kwargs.get('color', const.BYLAYER)
 
     @property
-    def lineheight(self):
+    def lineheight(self) -> float:
         """ Absolute linespacing in drawing units. 
         """
         return self.height * self.linespacing
-    
-    def render(self, layout):
+
+    def render(self, layout: 'GenericLayoutType') -> None:
         """ Create the DXF-TEXT entities. 
         """
         textlines = self.textlines
@@ -101,7 +105,7 @@ class MText(SubscriptAttributes):
                 dxfattribs=self._dxfattribs(self.insert),
             )
 
-    def _get_align_point(self, linenum):
+    def _get_align_point(self, linenum: int) -> 'Vertex':
         """ Calculate the align point depending on the line number. 
         """
         x = self.insert[0]
@@ -117,12 +121,12 @@ class MText(SubscriptAttributes):
         elif self.align.startswith('MIDDLE'):
             y0 = linenum * self.lineheight
             fullheight = (len(self.textlines) - 1) * self.lineheight
-            y += (fullheight/2) - y0
+            y += (fullheight / 2) - y0
         else:  # BOTTOM
             y += (len(self.textlines) - 1 - linenum) * self.lineheight
         return self._rotate((x, y, z))  # consider rotation
 
-    def _rotate(self, alignpoint):
+    def _rotate(self, alignpoint: 'Vertex') -> 'Vertex':
         """
         Rotate alignpoint around insert point about rotation degrees.
         """
@@ -133,7 +137,7 @@ class MText(SubscriptAttributes):
         y = self.insert[1] + dy * math.cos(beta) + dx * math.sin(beta)
         return round(x, 6), round(y, 6), alignpoint[2]
 
-    def _dxfattribs(self, alignpoint):
+    def _dxfattribs(self, alignpoint: 'Vertex') -> dict:
         """
         Build keyword arguments for TEXT entity creation.
         """
@@ -152,4 +156,3 @@ class MText(SubscriptAttributes):
             'halign': halign,
             'valign': valign,
         }
-
