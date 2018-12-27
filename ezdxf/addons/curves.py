@@ -2,14 +2,18 @@
 # Created: 26.03.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
 from ezdxf.algebra.vector import Vector
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.bspline import BSpline, BSplineU, BSplineClosed
 from ezdxf.algebra.bezier4p import Bezier4P
 from ezdxf.algebra.eulerspiral import EulerSpiral as _EulerSpiral
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
 
-class Bezier(object):
+
+class Bezier:
     """
     Bezier 2d/3d curve.
 
@@ -18,15 +22,17 @@ class Bezier(object):
     and point (3) is end point + end vector. Each segment has its own approximation count.
 
     """
-    class Segment(object):
-        def __init__(self, start, end, start_tangent, end_tangent, segments):
+
+    class Segment:
+        def __init__(self, start: 'Vertex', end: 'Vertex', start_tangent: 'Vertex', end_tangent: 'Vertex',
+                     segments: int):
             self.start = Vector(start)
             self.end = Vector(end)
             self.start_tangent = Vector(start_tangent)  # as vector, from start point
             self.end_tangent = Vector(end_tangent)  # as vector, from end point
             self.segments = segments
 
-        def approximate(self):
+        def approximate(self) -> Iterable[Vector]:
             control_points = [
                 self.start,
                 self.start + self.start_tangent,
@@ -37,9 +43,10 @@ class Bezier(object):
             return bezier.approximate(self.segments)
 
     def __init__(self):
-        self.points = []
+        # fit point, first control vector, second control vector, segment count
+        self.points = []  # type: List[Tuple[Vector, Optional[Vector], Optional[Vector], Optional[int]]]
 
-    def start(self, point, tangent):
+    def start(self, point: 'Vertex', tangent: 'Vertex') -> None:
         """
         Set start point and start tangent.
 
@@ -50,7 +57,7 @@ class Bezier(object):
         """
         self.points.append((point, None, tangent, None))
 
-    def append(self, point, tangent1, tangent2=None, segments=20):
+    def append(self, point: 'Vertex', tangent1: 'Vertex', tangent2: 'Vertex' = None, segments: int = 20):
         """
         Append a control point with two control tangents.
 
@@ -69,7 +76,7 @@ class Bezier(object):
             tangent2 = Vector(tangent2)
         self.points.append((point, tangent1, tangent2, int(segments)))
 
-    def _build_bezier_segments(self):
+    def _build_bezier_segments(self) -> Iterable[Segment]:
         if len(self.points) > 1:
             for from_point, to_point in zip(self.points[:-1], self.points[1:]):
                 start_point = from_point[0]
@@ -82,7 +89,7 @@ class Bezier(object):
         else:
             raise ValueError('Two or more points needed!')
 
-    def render(self, layout, force3d=False, dxfattribs=None):
+    def render(self, layout: 'GenericLayoutType', force3d: bool = False, dxfattribs: dict = None) -> None:
         """
         Render curve as DXF POLYLINE entity.
 
@@ -101,14 +108,14 @@ class Bezier(object):
             layout.add_polyline2d(points, dxfattribs=dxfattribs)
 
 
-class Spline(object):
-    def __init__(self, points=None, segments=100):
+class Spline:
+    def __init__(self, points: Iterable['Vertex'] = None, segments: int = 100):
         if points is None:
             points = []
         self.points = points
         self.segments = int(segments)
 
-    def subdivide(self, segments=4):
+    def subdivide(self, segments: int = 4) -> None:
         """
         Calculate overall segment count, where segments is the sub-segment count, segments=4, means 4 line segments
         between two definition points e.g. 4 definition points and 4 segments = 12 overall segments, useful for fit
@@ -118,9 +125,10 @@ class Spline(object):
             segments: sub-segments count between two definition points
 
         """
-        self.segments = (len(self.points)-1) * segments
+        self.segments = (len(self.points) - 1) * segments
 
-    def render_as_fit_points(self, layout, degree=3, method='distance', power=.5, dxfattribs=None):
+    def render_as_fit_points(self, layout: 'GenericLayoutType', degree: int = 3, method: str = 'distance',
+                             power: float = .5, dxfattribs: dict = None) -> None:
         """
         Render a B-spline as 2d/3d polyline, where the definition points are fit points.
 
@@ -144,9 +152,10 @@ class Spline(object):
             layout.add_polyline3d(vertices, dxfattribs=dxfattribs)
         else:
             layout.add_polyline2d(vertices, dxfattribs=dxfattribs)
+
     render = render_as_fit_points
 
-    def render_open_bspline(self, layout, degree=3, dxfattribs=None):
+    def render_open_bspline(self, layout: 'GenericLayoutType', degree: int = 3, dxfattribs: dict = None) -> None:
         """
         Render an open uniform BSpline as 3d polyline. Definition points are control points.
 
@@ -156,10 +165,10 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = BSpline(self.points, order=degree+1)
+        spline = BSpline(self.points, order=degree + 1)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_uniform_bspline(self, layout, degree=3, dxfattribs=None):
+    def render_uniform_bspline(self, layout: 'GenericLayoutType', degree: int = 3, dxfattribs: dict = None) -> None:
         """
         Render a uniform BSpline as 3d polyline. Definition points are control points.
 
@@ -169,10 +178,10 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = BSplineU(self.points, order=degree+1)
+        spline = BSplineU(self.points, order=degree + 1)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_closed_bspline(self, layout, degree=3, dxfattribs=None):
+    def render_closed_bspline(self, layout: 'GenericLayoutType', degree: int = 3, dxfattribs: dict = None) -> None:
         """
         Render a closed uniform BSpline as 3d polyline. Definition points are control points.
 
@@ -182,10 +191,11 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = BSplineClosed(self.points, order=degree+1)
+        spline = BSplineClosed(self.points, order=degree + 1)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_open_rbspline(self, layout, weights, degree=3, dxfattribs=None):
+    def render_open_rbspline(self, layout: 'GenericLayoutType', weights: Iterable[float], degree: int = 3,
+                             dxfattribs: dict = None) -> None:
         """
         Render a rational open uniform BSpline as 3d polyline.
 
@@ -196,10 +206,11 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = BSpline(self.points, order=degree+1, weights=weights)
+        spline = BSpline(self.points, order=degree + 1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_uniform_rbspline(self, layout, weights, degree=3, dxfattribs=None):
+    def render_uniform_rbspline(self, layout: 'GenericLayoutType', weights: Iterable[float], degree: int = 3,
+                                dxfattribs: dict = None) -> None:
         """
         Render a rational uniform BSpline as 3d polyline.
 
@@ -210,10 +221,11 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = BSplineU(self.points, order=degree+1, weights=weights)
+        spline = BSplineU(self.points, order=degree + 1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
-    def render_closed_rbspline(self, layout, weights, degree=3, dxfattribs=None):
+    def render_closed_rbspline(self, layout: 'GenericLayoutType', weights: Iterable[float], degree: int = 3,
+                               dxfattribs: dict = None) -> None:
         """
         Render a rational BSpline as 3d polyline.
 
@@ -224,21 +236,23 @@ class Spline(object):
             dxfattribs: DXF attributes for POLYLINE
 
         """
-        spline = BSplineClosed(self.points, order=degree+1, weights=weights)
+        spline = BSplineClosed(self.points, order=degree + 1, weights=weights)
         layout.add_polyline3d(list(spline.approximate(self.segments)), dxfattribs=dxfattribs)
 
 
-class EulerSpiral(object):
+class EulerSpiral:
     """
     Euler spiral (clothoid) for *curvature* (Radius of curvature).
 
     This is a parametric curve, which always starts at the origin.
 
     """
-    def __init__(self, curvature=1):
+
+    def __init__(self, curvature: float = 1):
         self.spiral = _EulerSpiral(float(curvature))
 
-    def render_polyline(self, layout, length=1, segments=100, matrix=None, dxfattribs=None):
+    def render_polyline(self, layout: 'GenericLayoutType', length: float = 1, segments: int = 100,
+                        matrix: 'Matrix44' = None, dxfattribs: dict = None):
         """
         Render curve as polyline.
 
@@ -257,7 +271,8 @@ class EulerSpiral(object):
             points = matrix.transform_vectors(points)
         return layout.add_polyline3d(list(points), dxfattribs=dxfattribs)
 
-    def render_spline(self, layout, length=1, fit_points=10, degree=3, matrix=None, dxfattribs=None):
+    def render_spline(self, layout: 'GenericLayoutType', length: float = 1, fit_points: int = 10, degree: int = 3,
+                      matrix: 'Matrix44' = None, dxfattribs: dict = None):
         """
         Render curve as B-spline.
 

@@ -2,9 +2,10 @@
 # Created: 26.03.2010
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List
+from typing import List, TYPE_CHECKING, Iterable
 
-Vector = Sequence[float]
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex
 
 
 def check_if_in_valid_range(t: float):
@@ -20,7 +21,7 @@ class Bezier4P:
 
     """
 
-    def __init__(self, control_points: List[Vector]):
+    def __init__(self, control_points: List['Vertex']):
         if len(control_points) == 4:
             is3d = any(len(p) > 2 for p in control_points)
             self.math = D3D if is3d else D2D
@@ -29,10 +30,10 @@ class Bezier4P:
             raise ValueError("Four control points required.")
 
     @property
-    def control_points(self) -> List[Vector]:
+    def control_points(self) -> List['Vertex']:
         return self._cpoints
 
-    def tangent(self, t: float) -> Vector:
+    def tangent(self, t: float) -> 'Vertex':
         """
         Calculate tangent at parameter t [0, 1].
 
@@ -45,7 +46,7 @@ class Bezier4P:
         check_if_in_valid_range(t)
         return self._get_curve_tangent(t)
 
-    def point(self, t: float) -> Vector:
+    def point(self, t: float) -> 'Vertex':
         """
         Calculate curve point at parameter t [0, 1].
 
@@ -58,14 +59,14 @@ class Bezier4P:
         check_if_in_valid_range(t)
         return self._get_curve_point(t)
 
-    def approximate(self, segments: int):
+    def approximate(self, segments: int) -> Iterable['Vertex']:
         delta_t = 1. / segments
         yield self._cpoints[0]
         for segment in range(1, segments):
             yield self.point(delta_t * segment)
         yield self._cpoints[3]
 
-    def _get_curve_point(self, t: float) -> Vector:
+    def _get_curve_point(self, t: float) -> 'Vertex':
         """
         Calculate curve point at parameter t [0, 1].
 
@@ -81,7 +82,7 @@ class Bezier4P:
         point = m.vadd(point, m.vmul_scalar(b4, t ** 3))
         return tuple(point)
 
-    def _get_curve_tangent(self, t: float) -> Vector:
+    def _get_curve_tangent(self, t: float) -> 'Vertex':
         """
         Calculate tangent at parameter t [0, 1]. Implementation optimized for 4 control points.
 
@@ -109,22 +110,22 @@ class Bezier4P:
 
 class D2D:
     @staticmethod
-    def vadd(vector1: Vector, vector2: Vector) -> Vector:
+    def vadd(vector1: 'Vertex', vector2: 'Vertex') -> 'Vertex':
         """ Add vectors """
         return vector1[0] + vector2[0], vector1[1] + vector2[1]
 
     @staticmethod
-    def vmul_scalar(vector: Vector, scalar: float) -> Vector:
+    def vmul_scalar(vector: 'Vertex', scalar: float) -> 'Vertex':
         """ Mul vector with scalar """
         return vector[0] * scalar, vector[1] * scalar
 
     @staticmethod
-    def tovector(vector: Vector) -> Vector:
+    def tovector(vector: 'Vertex') -> 'Vertex':
         """ Return a 2d point """
         return float(vector[0]), float(vector[1])
 
     @staticmethod
-    def distance(point1: Vector, point2: Vector) -> float:
+    def distance(point1: 'Vertex', point2: 'Vertex') -> float:
         """ calc distance between two 2d points """
         return ((point1[0] - point2[0]) ** 2 +
                 (point1[1] - point2[1]) ** 2) ** 0.5
@@ -132,17 +133,17 @@ class D2D:
 
 class D3D:
     @staticmethod
-    def vadd(vector1: Vector, vector2: Vector) -> Vector:
+    def vadd(vector1: 'Vertex', vector2: 'Vertex') -> 'Vertex':
         """ Add vectors """
         return vector1[0] + vector2[0], vector1[1] + vector2[1], vector1[2] + vector2[2]
 
     @staticmethod
-    def vmul_scalar(vector: Vector, scalar: float) -> Vector:
+    def vmul_scalar(vector: 'Vertex', scalar: float) -> 'Vertex':
         """ Mul vector with scalar """
         return vector[0] * scalar, vector[1] * scalar, vector[2] * scalar
 
     @staticmethod
-    def tovector(vector: Vector) -> Vector:
+    def tovector(vector: 'Vertex') -> 'Vertex':
         """ Return a 3d point """
         try:
             z = float(vector[2])
@@ -151,7 +152,7 @@ class D3D:
         return float(vector[0]), float(vector[1]), z
 
     @staticmethod
-    def distance(point1: Vector, point2: Vector) -> float:
+    def distance(point1: 'Vertex', point2: 'Vertex') -> float:
         """Calc distance between two 3d points """
         return ((point1[0] - point2[0]) ** 2 +
                 (point1[1] - point2[1]) ** 2 +
