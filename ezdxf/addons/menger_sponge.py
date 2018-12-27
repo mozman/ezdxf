@@ -2,7 +2,11 @@
 # Created: 06.12.2016
 # Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING, Iterable, List, Tuple
 from .mesh import MeshBuilder, MeshVertexMerger
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
 
 all_cubes_size_3_template = [
     (0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0),
@@ -72,11 +76,11 @@ cube_faces = [
 ]
 
 
-class MengerSponge(object):
-    def __init__(self, location=(0., 0., 0.), length=1., level=1, kind=0):
+class MengerSponge:
+    def __init__(self, location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0):
         self.cube_definitions = _menger_sponge(location=location, length=length, level=level, kind=kind)
 
-    def vertices(self):
+    def vertices(self) -> Iterable['Vertex']:
         """
         Yields the cube vertices as list of (x, y, z) tuples.
 
@@ -84,17 +88,19 @@ class MengerSponge(object):
         for location, length in self.cube_definitions:
             x, y, z = location
             yield [(x + xf * length, y + yf * length, z + zf * length) for xf, yf, zf in _cube_vertices]
+
     __iter__ = vertices
 
     @staticmethod
-    def faces():
+    def faces() -> List[List[int]]:
         """
         Returns list of cube faces. All cube vertices have the same order, so one faces list fits them all.
 
         """
         return cube_faces
 
-    def render(self, layout, merge=False, dxfattribs=None, matrix=None):
+    def render(self, layout: 'GenericLayoutType', merge: bool = False, dxfattribs: dict = None,
+               matrix: 'Matrix44' = None) -> None:
         """
         Renders the menger sponge into layout, set merge == *True* for rendering the whole menger sponge into one MESH
         entity, set merge to *False* for rendering the individual cubes of the menger sponge as MESH entities.
@@ -113,7 +119,7 @@ class MengerSponge(object):
             for cube in self.cubes():
                 cube.render(layout, dxfattribs, matrix=matrix)
 
-    def cubes(self):
+    def cubes(self) -> Iterable[MeshBuilder]:
         """
         Generates all cubes of the menger sponge as individual MeshBuilder() objects.
 
@@ -126,7 +132,7 @@ class MengerSponge(object):
             mesh.add_mesh(vertices=vertices, faces=faces)
             yield mesh
 
-    def mesh(self):
+    def mesh(self) -> MeshVertexMerger:
         """
         Returns geometry as one single MESH entity.
 
@@ -140,7 +146,7 @@ class MengerSponge(object):
         return mesh
 
 
-def _subdivide(location=(0., 0., 0.), length=1., kind=0):
+def _subdivide(location: 'Vertex' = (0., 0., 0.), length: float = 1., kind: int = 0) -> List[Tuple['Vertex', float]]:
     """
     Divides a cube in sub-cubes and keeps only cubes determined by the building schema.
 
@@ -160,15 +166,16 @@ def _subdivide(location=(0., 0., 0.), length=1., kind=0):
     step_size = float(length) / cube_sizes[kind]
     remaining_cubes = building_schemas[kind]
 
-    def sub_location(indices):
+    def sub_location(indices) -> Tuple[float, float, float]:
         x, y, z = indices
         return (init_x + x * step_size,
                 init_y + y * step_size,
                 init_z + z * step_size)
+
     return [(sub_location(indices), step_size) for indices in remaining_cubes]
 
 
-def _menger_sponge(location=(0., 0., 0.), length=1., level=1, kind=0):
+def _menger_sponge(location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0) -> List[Tuple['Vertex', float]]:
     """
     Builds a menger sponge for given level.
 
@@ -178,7 +185,7 @@ def _menger_sponge(location=(0., 0., 0.), length=1., level=1, kind=0):
         level: level of menger sponge, has to be 1 or bigger
         kind: int for 0: original menger sponge; 1: Variant XOX; 2: Variant OXO; 3: Jerusalem Cube;
 
-    Returns: list of cube vertices
+    Returns: list of sub-cubes (location, length)
 
     """
     kind = int(kind)
@@ -188,7 +195,7 @@ def _menger_sponge(location=(0., 0., 0.), length=1., level=1, kind=0):
     if level < 1:
         raise ValueError("level has to be 1 or bigger.")
     cubes = _subdivide(location, length, kind=kind)
-    for _ in range(level-1):
+    for _ in range(level - 1):
         next_level_cubes = []
         for location, length in cubes:
             next_level_cubes.extend(_subdivide(location, length, kind=kind))
