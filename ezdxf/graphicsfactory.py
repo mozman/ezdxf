@@ -1,7 +1,7 @@
 # Created: 10.03.2013
 # Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast, Callable, Optional
+from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast
 import math
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError
@@ -16,7 +16,6 @@ if TYPE_CHECKING:  # import forward references
     from ezdxf.algebra.ucs import UCS
 
 Vertex = Union[Sequence[float], Vector]
-DimRenderFunc = Callable[['Dimension', 'DimStyle', 'GenericLayoutType', Optional['UCS']], None]
 
 
 def copy_attribs(dxfattribs: dict = None) -> dict:
@@ -453,72 +452,86 @@ class GraphicsFactory:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
-    def _get_dimstyle_name(self, dxfattribs: dict):
-        dimstyle_name = dxfattribs['dimstyle']
+    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None):
         dwg = cast('Drawing', self.drawing)
-        if dimstyle_name not in dwg.dimstyles:
-            raise const.DXFTableEntryError('Dimension style "{}" not defined'.format(dimstyle_name))
-        else:
-            return dwg.dimstyles.get(dimstyle_name)
-
-    def _render_dimension(self, render: DimRenderFunc, ucs: 'UCS', dxfattribs: dict):
-        dimstyle = self._get_dimstyle_name(dxfattribs)
-        dimension = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
-        render(dimension, dimstyle, cast('GenericLayoutType', self), ucs)
-        return dimension
+        dim_style = dimension.dim_style()
+        dim_block = dwg.blocks.new_anonymous_block(type_char='D')
+        dimension.dxf.geometry = dim_block.name
+        dwg.dimension_renderer.dispatch(dimension, dim_style, dim_block, ucs)
 
     def add_rotated_dim(self,
-                        render: DimRenderFunc = None,
-                        ucs: 'UCS' = None,
+                        base: 'Vertex',
+                        ext1: 'Vertex',
+                        ext2: 'Vertex',
+                        text_midpoint: 'Vertex' = None,
+                        dimstyle: str = 'STANDARD',
+                        text: str = "<>",
+                        angle: float = 0,
+                        text_rotation: float = 0,
                         dxfattribs: dict = None) -> 'Dimension':
-        if render is None:
-            from ezdxf.render.dimension import render_linear_dimension as render
+        """
+        Horizontal, vertical and rotated dimension line. If an UCS is used for dimension line rendering, all point
+        definitions in UCS coordinates, translation into WCS and OCS is done by the rendering function. Manual set
+        extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
 
+        To create the necessary geometry, you have to call layout.render_dimension(dimension, ucs) manually, this two
+        step process allows additional processing steps on the DIMENSION entity between creation and rendering.
+
+        Args:
+            base: definition point, intersection of extension line 1 and dimension line (in UCS)
+            ext1: start point of extension line 1 (in UCS)
+            ext2: start point of extension line 2 (in UCS)
+            text_midpoint: text mid point (in UCS), or None for computed text placing
+            text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
+            dimstyle: dimension style name (DimStyle table entry), default is `STANDARD`
+            angle: angle from ucs x-axis to dimension line in degrees
+            text_rotation: rotation angle of the dimension text away from its default orientation
+                           (the direction of the dimension line) in degrees
+            dxfattribs: DXF attributes for DIMENSION entity
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['defpoint'] = Vector(base)
+        dxfattribs['defpoint2'] = Vector(ext1)
+        dxfattribs['defpoint3'] = Vector(ext2)
+        if text_midpoint:
+            dxfattribs['text_midpoint'] = Vector(text_midpoint)
+        dxfattribs['text'] = text
+        dxfattribs['angle'] = float(angle)
+        dxfattribs['text_rotation'] = float(text_rotation)
         dxfattribs['dimtype'] = const.DIM_LINEAR
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_aligned_dim(self,
-                        render: DimRenderFunc = None,
-                        ucs: 'UCS' = None,
                         dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimtype'] = const.DIM_ALIGNED
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_angular_dim(self,
-                        render: DimRenderFunc = None,
-                        ucs: 'UCS' = None,
                         dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_diameter_dim(self,
-                         render: DimRenderFunc = None,
-                         ucs: 'UCS' = None,
                          dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_radius_dim(self,
-                       render: DimRenderFunc = None,
-                       ucs: 'UCS' = None,
                        dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_angular_3p_dim(self,
-                           render: DimRenderFunc = None,
-                           ucs: 'UCS' = None,
                            dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimtype'] = const.DIM_ANGULAR_3P
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_ordinate_dim(self,
-                         render: DimRenderFunc = None,
-                         ucs: 'UCS' = None,
                          dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimtype'] = const.DIM_ORDINATE
-        return self._render_dimension(render, ucs, dxfattribs)
+        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())

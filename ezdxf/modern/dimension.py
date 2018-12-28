@@ -41,12 +41,12 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     # Percentage of default (3-on-5) line spacing to be applied. Valid values
     # range from 0.25 to 4.00
     'actual_measurement': DXFAttr(42),  # Actual measurement (optional; read-only value)
-    'user_text': DXFAttr(1),  # Dimension text explicitly entered by the user. Optional;
+    'text': DXFAttr(1),  # Dimension text explicitly entered by the user. Optional;
     # default is the measurement.
     # If null or “<>”, the dimension measurement is drawn as the text,
     # if “ “ (one blank space), the text is suppressed.
     # Anything else is drawn as the text.
-    'dim_text_rotation': DXFAttr(53, default=0),  # The optional group code 53 is the rotation angle of the dimension
+    'text_rotation': DXFAttr(53, default=0),  # The optional group code 53 is the rotation angle of the dimension
     # text away from its default orientation (the direction of the dimension line) (optional)
     'horizontal_direction': DXFAttr(51, default=0),  # All dimension types have an optional 51 group code, which
     # indicates the horizontal direction for the dimension entity. The dimension entity determines the orientation of

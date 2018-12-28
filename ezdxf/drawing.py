@@ -20,6 +20,7 @@ from ezdxf.tools import guid
 from ezdxf.tracker import Tracker
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
+from ezdxf.render.dimension import DimensionRenderer
 
 logger = logging.getLogger('ezdxf')
 
@@ -48,6 +49,7 @@ class Drawing:
             return HeaderSection(header_entities)
 
         self.tracker = Tracker()
+        self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
         self._groups = None  # type: GroupManager  # read only
         self._materials = None  # type: MaterialManager # read only
         self._mleader_styles = None  # type: MLeaderStyleManager # read only
@@ -165,6 +167,20 @@ class Drawing:
         if self.dxfversion <= 'AC1009':
             raise DXFVersionError('MLineStyles not supported in DXF version R12.')
         return self._mline_styles
+
+    @property
+    def dimension_renderer(self) -> DimensionRenderer:
+        return self._dimension_renderer
+
+    @dimension_renderer.setter
+    def dimension_renderer(self, renderer: DimensionRenderer) -> None:
+        """
+        Set your own dimension line renderer if needed.
+
+        see also: ezdxf.render.dimension
+
+        """
+        self._dimension_renderer = renderer
 
     def modelspace(self) -> 'LayoutType':
         return self.layouts.modelspace()
@@ -519,3 +535,4 @@ class Drawing:
     def reset_versionguid(self):
         if self.dxfversion > 'AC1009':
             self.header['$VERSIONGUID'] = guid()
+

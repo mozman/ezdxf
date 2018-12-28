@@ -1,10 +1,14 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.lldxf import const
 
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import DimStyle
 
 _DIMENSION_TPL = """0
 DIMENSION
@@ -104,7 +108,7 @@ class Dimension(GraphicEntity):
         # 128 = This is a bit value (bit 8) added to the other group 70 values if
         # the dimension text has been positioned at a user-defined location
         # rather than at the default location
-        'user_text': DXFAttr(1),  # dimension text explicitly entered by the user.
+        'text': DXFAttr(1),  # dimension text explicitly entered by the user.
         # If null or "<>", the dimension measurement is drawn as the text,
         # if " " [one blank space], the text is suppressed.
         # Anything else is drawn as the text.
@@ -134,7 +138,7 @@ class Dimension(GraphicEntity):
         # optional group (code 52).When added to the rotation angle
         # of the linear dimension (group code 50) this gives the
         # angle of the extension lines
-        'dim_text_rotation': DXFAttr(53),
+        'text_rotation': DXFAttr(53),
         # The optional group code 53  is the rotation angle of the
         # dimension text away from its default orientation (the direction
         # of the dimension line).
@@ -144,7 +148,7 @@ class Dimension(GraphicEntity):
     def dim_type(self) -> int:
         return self.dxf.dimtype & 7
 
-    def dim_style(self) -> str:
+    def dim_style(self) -> 'DimStyle':
         if self.drawing is not None:
             dim_style_name = self.dxf.dimstyle
             # raises ValueError if not exists, but all used dim styles should exists!
