@@ -314,15 +314,6 @@ DIM_REF = 32
 DIM_ORDINATE_TYPE = 64
 DIM_USER_LOCATION_OVERRIDE = 128
 
-DimensionTypeNames = [
-    'Rotated',  # 0
-    'Aligned',  # 1
-    'Angular',  # 2
-    'Diameter',  # 3
-    'Radial',   # 4
-    'Angular3point',  # 5
-    'Ordinate',  # 6
-]
 
 # ATTRIB & ATTDEF flags
 ATTRIB_INVISIBLE = 1  # Attribute is invisible (does not appear)

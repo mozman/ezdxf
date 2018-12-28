@@ -276,3 +276,36 @@ class UCS:
             ),
             colors=colors,
         )
+
+
+class PassTroughUCS(UCS):
+    """ UCS is equal to the WCS and OCS (extrusion = 0, 0, 1) """
+    def __init__(self):
+        super().__init__()
+
+    def to_wcs(self, point: 'Vertex') -> Vector:
+        return point
+
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+        for point in points:
+            yield point
+
+    def to_ocs(self, point: 'Vertex') -> 'Vertex':
+        return point
+
+    def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
+        for point in points:
+            yield point
+
+    def to_ocs_angle_deg(self, angle: float) -> float:
+        return angle
+
+    def to_ocs_angle_rad(self, angle: float) -> float:
+        return angle
+
+    def from_wcs(self, point: 'Vertex') -> Vector:
+        return point
+
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+        for point in points:
+            yield point

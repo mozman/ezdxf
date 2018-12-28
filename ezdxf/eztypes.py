@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from ezdxf.legacy.polyline import Polyline, Polyface, Polymesh, DXFVertex
     from ezdxf.legacy.insert import Insert
     from ezdxf.legacy.attrib import Attdef, Attrib
+    from ezdxf.legacy.dimension import Dimension
     from ezdxf.legacy.text import Text
 
     from ezdxf.modern.spline import Spline

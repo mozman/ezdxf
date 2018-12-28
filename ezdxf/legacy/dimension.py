@@ -69,6 +69,17 @@ DIMSTYLE
 
 class Dimension(GraphicEntity):
     __slots__ = ()
+    LINEAR = 0
+    ALIGNED = 1
+    ANGULAR = 2
+    DIAMETER = 3
+    RADIUS = 4
+    ANGULAR_3P = 5
+    ORDINATE = 6
+    REF = 32
+    ORDINATE_TYPE = 64
+    USER_LOCATION_OVERRIDE = 128
+
     TEMPLATE = ExtendedTags.from_text(_DIMENSION_TPL)
     DXFATTRIBS = make_attribs({
         'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry
@@ -133,10 +144,6 @@ class Dimension(GraphicEntity):
     def dim_type(self) -> int:
         return self.dxf.dimtype & 7
 
-    @property
-    def dim_type_name(self) -> str:
-        return const.DimensionTypeNames[self.dim_type]
-
     def dim_style(self) -> str:
         if self.drawing is not None:
             dim_style_name = self.dxf.dimstyle
@@ -144,3 +151,6 @@ class Dimension(GraphicEntity):
             return self.drawing.dimstyles.get(dim_style_name)
         else:
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
+
+    def cast(self) -> 'Dimension':  # for modern dimension lines
+        return self

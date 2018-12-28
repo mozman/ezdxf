@@ -10,6 +10,7 @@ Version 0.9a4 - dev
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved Importer() from ezdxf.tools to ezdxf.addons - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
+- NEW: Type annotations to core package and add-ons  
 
 Version 0.8.9 - 2018-11-28
 --------------------------

@@ -1,7 +1,7 @@
 # Created: 10.03.2013
 # Copyright (c) 2013-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast
+from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast, Callable, Optional
 import math
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError
@@ -11,10 +11,12 @@ from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 if TYPE_CHECKING:  # import forward references
     from eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
     from eztypes import Solid, Trace, Face, Insert, Attrib, Polyline, Polyface, Polymesh, UnderlayDef, Underlay
-    from eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine
+    from eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension
     from eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, LoftedSurface
+    from ezdxf.algebra.ucs import UCS
 
 Vertex = Union[Sequence[float], Vector]
+DimRenderFunc = Callable[['Dimension', 'DimStyle', 'GenericLayoutType', Optional['UCS']], None]
 
 
 def copy_attribs(dxfattribs: dict = None) -> dict:
@@ -351,35 +353,35 @@ class GraphicsFactory:
         return self._add_acis_entiy('BODY', acis_data, dxfattribs)
 
     def add_region(self, acis_data: str = None, dxfattribs: dict = None) -> 'Region':
-        return self._add_acis_entiy('REGION', acis_data, dxfattribs)
+        return cast('Region', self._add_acis_entiy('REGION', acis_data, dxfattribs))
 
     def add_3dsolid(self, acis_data: str = None, dxfattribs: dict = None) -> 'Solid3d':
-        return self._add_acis_entiy('3DSOLID', acis_data, dxfattribs)
+        return cast('Solid3d', self._add_acis_entiy('3DSOLID', acis_data, dxfattribs))
 
     def add_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'Surface':
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('SURFACE requires DXF version R2007+')
-        return self._add_acis_entiy('SURFACE', acis_data, dxfattribs)
+        return cast('Surface', self._add_acis_entiy('SURFACE', acis_data, dxfattribs))
 
     def add_extruded_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'ExtrudedSurface':
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('EXTRUDEDSURFACE requires DXF version R2007+')
-        return self._add_acis_entiy('EXTRUDEDSURFACE', acis_data, dxfattribs)
+        return cast('ExtrudedSurface', self._add_acis_entiy('EXTRUDEDSURFACE', acis_data, dxfattribs))
 
     def add_lofted_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'LoftedSurface':
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('LOFTEDSURFACE requires DXF version R2007+')
-        return self._add_acis_entiy('LOFTEDSURFACE', acis_data, dxfattribs)
+        return cast('LoftedSurface', self._add_acis_entiy('LOFTEDSURFACE', acis_data, dxfattribs))
 
     def add_revolved_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'RevolvedSurface':
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('REVOLVEDSURFACE requires DXF version R2007+')
-        return self._add_acis_entiy('REVOLVEDSURFACE', acis_data, dxfattribs)
+        return cast('RevolvedSurface', self._add_acis_entiy('REVOLVEDSURFACE', acis_data, dxfattribs))
 
     def add_swept_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'SweptSurface':
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('SWEPT requires DXF version R2007+')
-        return self._add_acis_entiy('SWEPTSURFACE', acis_data, dxfattribs)
+        return cast('SweptSurface', self._add_acis_entiy('SWEPTSURFACE', acis_data, dxfattribs))
 
     def _add_acis_entiy(self, name, acis_data: str, dxfattribs: dict) -> 'Body':
         if self.dxfversion < 'AC1015':
@@ -451,23 +453,72 @@ class GraphicsFactory:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
-    def add_rotated_dim(self) -> 'DXFEntity':
-        pass
+    def _get_dimstyle_name(self, dxfattribs: dict):
+        dimstyle_name = dxfattribs['dimstyle']
+        dwg = cast('Drawing', self.drawing)
+        if dimstyle_name not in dwg.dimstyles:
+            raise const.DXFTableEntryError('Dimension style "{}" not defined'.format(dimstyle_name))
+        else:
+            return dwg.dimstyles.get(dimstyle_name)
 
-    def add_aligned_dim(self) -> 'DXFEntity':
-        pass
+    def _render_dimension(self, render: DimRenderFunc, ucs: 'UCS', dxfattribs: dict):
+        dimstyle = self._get_dimstyle_name(dxfattribs)
+        dimension = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        render(dimension, dimstyle, cast('GenericLayoutType', self), ucs)
+        return dimension
 
-    def add_angular_dim(self) -> 'DXFEntity':
-        pass
+    def add_rotated_dim(self,
+                        render: DimRenderFunc = None,
+                        ucs: 'UCS' = None,
+                        dxfattribs: dict = None) -> 'Dimension':
+        if render is None:
+            from ezdxf.render.dimension import render_linear_dimension as render
 
-    def add_diameter_dim(self) -> 'DXFEntity':
-        pass
+        dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = const.DIM_LINEAR
+        return self._render_dimension(render, ucs, dxfattribs)
 
-    def add_radial_dim(self) -> 'DXFEntity':
-        pass
+    def add_aligned_dim(self,
+                        render: DimRenderFunc = None,
+                        ucs: 'UCS' = None,
+                        dxfattribs: dict = None) -> 'Dimension':
+        dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = const.DIM_ALIGNED
+        return self._render_dimension(render, ucs, dxfattribs)
 
-    def add_angular_3p_dim(self) -> 'DXFEntity':
-        pass
+    def add_angular_dim(self,
+                        render: DimRenderFunc = None,
+                        ucs: 'UCS' = None,
+                        dxfattribs: dict = None) -> 'Dimension':
+        dxfattribs = copy_attribs(dxfattribs)
+        return self._render_dimension(render, ucs, dxfattribs)
 
-    def add_ordinate_dim(self) -> 'DXFEntity':
-        pass
+    def add_diameter_dim(self,
+                         render: DimRenderFunc = None,
+                         ucs: 'UCS' = None,
+                         dxfattribs: dict = None) -> 'Dimension':
+        dxfattribs = copy_attribs(dxfattribs)
+        return self._render_dimension(render, ucs, dxfattribs)
+
+    def add_radius_dim(self,
+                       render: DimRenderFunc = None,
+                       ucs: 'UCS' = None,
+                       dxfattribs: dict = None) -> 'Dimension':
+        dxfattribs = copy_attribs(dxfattribs)
+        return self._render_dimension(render, ucs, dxfattribs)
+
+    def add_angular_3p_dim(self,
+                           render: DimRenderFunc = None,
+                           ucs: 'UCS' = None,
+                           dxfattribs: dict = None) -> 'Dimension':
+        dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = const.DIM_ANGULAR_3P
+        return self._render_dimension(render, ucs, dxfattribs)
+
+    def add_ordinate_dim(self,
+                         render: DimRenderFunc = None,
+                         ucs: 'UCS' = None,
+                         dxfattribs: dict = None) -> 'Dimension':
+        dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = const.DIM_ORDINATE
+        return self._render_dimension(render, ucs, dxfattribs)

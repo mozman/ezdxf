@@ -4,7 +4,6 @@ TODO
 Python Code
 -----------
 
-- type annotations
 - caching for entity creation
     - options for enable/disable caching
     - cache all for max performance
@@ -24,7 +23,17 @@ Python Code
 DXF Entities
 ------------
 
-- dim line rendering
+- DIMENSION rendering
+    - aligned dim
+    - rotated dim
+    - angular dim
+    - diameter dim
+    - radius dim
+    - angular 3 point dim
+    - ordinate dim
+- LEADER rendering
+- MLEADER rendering ???
+- MLINE rendering ???
 
 DXF Audit & Cleanup
 -------------------
