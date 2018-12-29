@@ -439,13 +439,13 @@ DIMSTYLENAME
 40
 1.0
 41
-3.0
+1.0
 42
-2.0
+0.0625
 43
-9.0
+3.75
 44
-5.0
+2.25
 45
 0.0
 46
@@ -455,13 +455,13 @@ DIMSTYLENAME
 48
 0.0
 140
-3.0
+2.5
 141
-2.0
+2.5
 142
 0.0
 143
-25.399999999999999
+25.4
 144
 1.0
 145
@@ -469,7 +469,7 @@ DIMSTYLENAME
 146
 1.0
 147
-2.0
+0.625
 71
 0
 72
@@ -531,7 +531,7 @@ class DimStyle(DXFEntity):
         'dimtxt': DXFAttr(140),
         'dimcen': DXFAttr(141),
         'dimtsz': DXFAttr(142),
-        'dimaltf': DXFAttr(143),
+        'dimaltf': DXFAttr(143, default=1.),
         'dimlfac': DXFAttr(144),
         'dimtvp': DXFAttr(145),
         'dimtfac': DXFAttr(146),

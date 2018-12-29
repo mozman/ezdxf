@@ -93,7 +93,7 @@ if TYPE_CHECKING:
 
     # Type compositions
     Vertex = Union[Sequence[float], Vector]
-    TagValue = Union[str, int, float, Sequence[float]]
+    TagValue = Union[str, int, float, Sequence[float], Vector]
     RGB = Tuple[int, int, int]
     IterableTags = Iterable[Tuple[int, TagValue]]
     SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]

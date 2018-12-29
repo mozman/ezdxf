@@ -452,23 +452,23 @@ class GraphicsFactory:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
-    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None):
+    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None,  txtstyle: str = None) -> None:
         dwg = cast('Drawing', self.drawing)
         dim_style = dimension.dim_style()
         dim_block = dwg.blocks.new_anonymous_block(type_char='D')
         dimension.dxf.geometry = dim_block.name
-        dwg.dimension_renderer.dispatch(dimension, dim_style, dim_block, ucs)
+        dwg.dimension_renderer.dispatch(dimension, dim_style, dim_block, ucs, txtstyle)
 
-    def add_rotated_dim(self,
-                        base: 'Vertex',
-                        ext1: 'Vertex',
-                        ext2: 'Vertex',
-                        text_midpoint: 'Vertex' = None,
-                        dimstyle: str = 'STANDARD',
-                        text: str = "<>",
-                        angle: float = 0,
-                        text_rotation: float = 0,
-                        dxfattribs: dict = None) -> 'Dimension':
+    def add_linear_dim(self,
+                       base: 'Vertex',
+                       ext1: 'Vertex',
+                       ext2: 'Vertex',
+                       text_midpoint: 'Vertex' = None,
+                       dimstyle: str = 'STANDARD',
+                       text: str = "<>",
+                       angle: float = 0,  # 0=horizontal, 90=vertical, else=rotated
+                       text_rotation: float = 0,
+                       dxfattribs: dict = None) -> 'Dimension':
         """
         Horizontal, vertical and rotated dimension line. If an UCS is used for dimension line rendering, all point
         definitions in UCS coordinates, translation into WCS and OCS is done by the rendering function. Manual set
@@ -487,6 +487,7 @@ class GraphicsFactory:
             angle: angle from ucs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text away from its default orientation
                            (the direction of the dimension line) in degrees
+            txtstyle: text style name required for DXF R12, because not stored in DimStyle
             dxfattribs: DXF attributes for DIMENSION entity
 
         """
@@ -500,38 +501,48 @@ class GraphicsFactory:
         dxfattribs['text'] = text
         dxfattribs['angle'] = float(angle)
         dxfattribs['text_rotation'] = float(text_rotation)
-        dxfattribs['dimtype'] = const.DIM_LINEAR
+        dxfattribs['dimtype'] = dimtype(const.DIM_LINEAR, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
-    def add_aligned_dim(self,
-                        dxfattribs: dict = None) -> 'Dimension':
-        dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = const.DIM_ALIGNED
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+    # def add_aligned_dim(self, dxfattribs: dict = None) -> 'Dimension': dxfattribs = copy_attribs(dxfattribs))
+    # don't understand the difference between aligned and linear yet!
 
     def add_angular_dim(self,
                         dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = dimtype(const.DIM_ANGULAR, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_diameter_dim(self,
                          dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = dimtype(const.DIM_DIAMETER, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_radius_dim(self,
                        dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['dimtype'] = dimtype(const.DIM_RADIUS, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_angular_3p_dim(self,
                            dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = const.DIM_ANGULAR_3P
+        dxfattribs['dimtype'] = dimtype(const.DIM_ANGULAR_3P, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_ordinate_dim(self,
                          dxfattribs: dict = None) -> 'Dimension':
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = const.DIM_ORDINATE
+        dxfattribs['dimtype'] = dimtype(const.DIM_ORDINATE, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+
+
+def dimtype(dtype: int, dxfversion: str) -> int:
+    # always set user defined text location, because replicating the exact AutoCAD placing is not documented
+    if dxfversion <= 'AC1009':
+        flags = const.DIM_USER_LOCATION_OVERRIDE
+    else:
+        # every DIMENSION entity has an exclusive geometry BLOCK, this flag is not supported by DXF12 and prior
+        flags = const.DIM_BLOCK_EXCLUSIVE | const.DIM_USER_LOCATION_OVERRIDE
+    return dtype | flags

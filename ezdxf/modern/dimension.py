@@ -110,6 +110,7 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
 
 class Dimension(dimension.Dimension, ModernGraphicEntity):
     __slots__ = ()
+    BLOCK_EXCLUSIVE = 32
     TEMPLATE = None
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass)
 

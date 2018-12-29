@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING, List, Tuple, Sequence
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.eztypes import Drawing
 
+EZTICK = 'EZTICK'
+EZBULLET = 'EZBULLET'
+
 
 def setup_linetypes(dwg: 'Drawing') -> None:
     for name, desc, pattern in linetypes():
@@ -25,6 +28,47 @@ def setup_styles(dwg: 'Drawing') -> None:
         dwg.styles.new(name, dxfattribs={
             'font': font,
         })
+
+
+def setup_dimension_blocks(dwg: 'Drawing') -> None:
+    def add_cross(block, size=(1., 1.)):
+        h, v = size
+        h = h / 2
+        v = v / 2
+        block.add_line((-h, 0), (h, 0))
+        block.add_line((0, -v), (0, v))
+
+    if EZBULLET not in dwg.blocks:
+        blk = dwg.blocks.new(EZBULLET)
+        add_cross(blk)
+        blk.add_circle(center=(0, 0), radius=.1)
+
+    if EZTICK not in dwg.blocks:
+        blk = dwg.blocks.new(EZTICK)
+        add_cross(blk, size=(.5, 1.))
+        blk.add_line((-.25, -.25), (.25, .25))
+
+
+def setup_dimstyles(dwg: 'Drawing') -> None:
+    setup_dimension_blocks(dwg)
+
+    if 'STANDARD' not in dwg.dimstyles:
+        dwg.dimstyles.new('STANDARD')
+    std = dwg.dimstyles.get('STANDARD')
+    std.dxf.dimblk = EZTICK
+    std.dxf.dimblk1 = EZTICK
+    std.dxf.dimblk2 = EZTICK
+    if dwg.dxfversion > 'AC1009':
+        # set handle to STANDARD text style
+        style = dwg.styles.get('STANDARD')
+        std.dxf.dimtxsty_handle = style.dxf.handle
+
+        # set handles to EZTICK block record
+        blk = dwg.blocks.get(EZTICK)
+        handle = blk.block_record_handle
+        std.dxf.dimblk_handle = handle
+        std.dxf.dimblk1_handle = handle
+        std.dxf.dimblk2_handle = handle
 
 
 def linetypes() -> List[Tuple[str, str, Sequence[float]]]:
@@ -83,5 +127,9 @@ def styles():
         ('ARIAL', 'arial.ttf'),
         ('ARIAL_NARROW', 'arialn.ttf'),
         ('ISOCPEUR', 'isocpeur.ttf'),
+        ('OPEN_SANS', 'Open Sans'),
+        ('OPEN_SANS_BOLD', 'Open Sans Bold'),
+        ('OPEN_SANS_CONDENSED_BOLD', 'Open Sans Condensed'),
+        ('OPEN_SANS_CONDENSED_LIGHT', 'Open Sans Condensed Light'),
         ('TIMES', 'times.ttf'),
     ]

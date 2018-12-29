@@ -366,11 +366,11 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimfit': DXFAttr(287),  # obsolete, now use DIMATFIT and DIMTMOVE
     'dimupt': DXFAttr(288),
     'dimatfit': DXFAttr(289),
-    'dimtxsty_handle': DXFAttr(340),  # handle of referenced STYLE
-    'dimldrblk_handle': DXFAttr(341),  # handle of referenced BLOCK
-    'dimblk_handle': DXFAttr(342),  # handle of referenced BLOCK
-    'dimblk1_handle': DXFAttr(343),  # handle of referenced BLOCK
-    'dimblk2_handle': DXFAttr(344),  # handle of referenced BLOCK
+    'dimtxsty_handle': DXFAttr(340),  # handle of referenced STYLE entry
+    'dimldrblk_handle': DXFAttr(341),  # handle of referenced BLOCK_RECORD
+    'dimblk_handle': DXFAttr(342),  # handle of referenced BLOCK_RECORD
+    'dimblk1_handle': DXFAttr(343),  # handle of referenced BLOCK_RECORD
+    'dimblk2_handle': DXFAttr(344),  # handle of referenced BLOCK_RECORD
     'dimlwd': DXFAttr(371),  # lineweight enum value
     'dimlwe': DXFAttr(372),  # lineweight enum value
 })

@@ -14,6 +14,8 @@ _DIMENSION_TPL = """0
 DIMENSION
 5
 0
+8
+0
 2
 *BLOCKNAME
 3
@@ -23,18 +25,6 @@ DIMSTYLE
 20
 0.0
 30
-0.0
-11
-0.0
-21
-0.0
-31
-0.0
-12
-0.0
-22
-0.0
-32
 0.0
 70
 0
@@ -80,7 +70,6 @@ class Dimension(GraphicEntity):
     RADIUS = 4
     ANGULAR_3P = 5
     ORDINATE = 6
-    REF = 32
     ORDINATE_TYPE = 64
     USER_LOCATION_OVERRIDE = 128
 
@@ -92,7 +81,7 @@ class Dimension(GraphicEntity):
         # shortcut Drawings.dimstyles property
         'defpoint': DXFAttr(10, xtype=XType.any_point),  # WCS, definition point for all dimension types
         'text_midpoint': DXFAttr(11, xtype=XType.any_point),  # OCS, middle point of dimension text
-        'translation_vector': DXFAttr(12, xtype=XType.point3d),  # OCS, dimension block translation vector
+        'insert': DXFAttr(12, xtype=XType.point3d),  # OCS, Insertion point for clones of a dimension—Baseline and Continue
         'dimtype': DXFAttr(70, default=0),  # Dimension type:
         # Values 0–6 are integer values that represent the dimension type.
         # Values 64 and 128 are bit values, which are added to the integer values

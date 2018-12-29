@@ -3,11 +3,14 @@
 
 import pytest
 import ezdxf
+from ezdxf.tools.standards import setup_dimstyles
 
 
 @pytest.fixture(scope='module')
 def dxf12():
-    return ezdxf.new('R12')
+    dwg = ezdxf.new('R12')
+    setup_dimstyles(dwg)
+    return dwg
 
 
 def test_dimstyle_standard_exist(dxf12):
@@ -16,7 +19,7 @@ def test_dimstyle_standard_exist(dxf12):
 
 def test_horizontal_dimline(dxf12):
     msp = dxf12.modelspace()
-    dimline = msp.add_rotated_dim(
+    dimline = msp.add_linear_dim(
         base=(0, 0, 0),
         ext1=(0, 0, 0),
         ext2=(0, 0, 0),
