@@ -120,6 +120,9 @@ class LinearDimension(DimensionBase):
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
         dim.defpoint = dimline_start  # set defpoint to expected location
+        dimlfac = self.dim_style.get_dxf_attrib('dimlfac', 1.)
+        measurement = (dimline_start - dimline_end).magnitude
+        dim_text = self.get_text(measurement * dimlfac)
 
         # add dimension line
         self.add_dimension_line(dimline_start, dimline_end)
@@ -136,15 +139,14 @@ class LinearDimension(DimensionBase):
         self.add_ticks(dimline_start, dimline_end)
 
         # add text
-        dimlfac = self.dim_style.get_dxf_attrib('dimlfac', 1.)
-        measurement = (dimline_start - dimline_end).magnitude
-        dim_text = self.get_text(measurement * dimlfac)
         if dim_text:
             pos = self.dimension.get_dxf_attrib('text_midpoint', None)
+            # calculate text midpoint if unset
             if pos is None:
                 pos = self.get_text_midpoint(dimline_start, dimline_end)
                 self.dimension.set_dxf_attrib('text_midpoint', pos)
-                self.add_measurement_text(dim_text, pos)
+
+            self.add_measurement_text(dim_text, pos)
 
         # add POINT at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
