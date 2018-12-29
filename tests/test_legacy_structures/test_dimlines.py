@@ -20,16 +20,20 @@ def test_dimstyle_standard_exist(dxf12):
 def test_horizontal_dimline(dxf12):
     msp = dxf12.modelspace()
     dimline = msp.add_linear_dim(
-        base=(0, 0, 0),
+        base=(3, 2, 0),
         ext1=(0, 0, 0),
-        ext2=(0, 0, 0),
-        text_midpoint=(0, 0, 0),
+        ext2=(3, 0, 0),
     )
     assert dimline.dxf.dimstyle == 'STANDARD'
 
-    # place to modify dimension or call methods on dimension
-    # dimline.set_text('BlaBla')
     msp.render_dimension(dimline)
     block_name = dimline.dxf.geometry
     assert block_name.startswith('*D')
+
+    block = dxf12.blocks.get(block_name)
+    assert len(list(block.query('TEXT'))) == 1
+    assert len(list(block.query('INSERT'))) == 2  # ticks
+    assert len(list(block.query('LINE'))) == 3  # dimension line + 2 extension lines
+    assert len(list(block.query('POINT'))) == 3  # def points
+
 

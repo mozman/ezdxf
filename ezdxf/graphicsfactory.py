@@ -454,10 +454,7 @@ class GraphicsFactory:
 
     def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None,  txtstyle: str = None) -> None:
         dwg = cast('Drawing', self.drawing)
-        dim_style = dimension.dim_style()
-        dim_block = dwg.blocks.new_anonymous_block(type_char='D')
-        dimension.dxf.geometry = dim_block.name
-        dwg.dimension_renderer.dispatch(dimension, dim_style, dim_block, ucs, txtstyle)
+        dwg.dimension_renderer.dispatch(dimension, ucs, txtstyle)
 
     def add_linear_dim(self,
                        base: 'Vertex',
@@ -487,7 +484,6 @@ class GraphicsFactory:
             angle: angle from ucs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text away from its default orientation
                            (the direction of the dimension line) in degrees
-            txtstyle: text style name required for DXF R12, because not stored in DimStyle
             dxfattribs: DXF attributes for DIMENSION entity
 
         """
