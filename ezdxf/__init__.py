@@ -14,7 +14,7 @@ from ezdxf.tools.pattern import PATTERN
 from ezdxf.lldxf import const  # restore module structure ezdxf.const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
 from ezdxf.filemanagement import new, read, readfile, readzip
-from ezdxf.tools.standards import setup_linetypes, setup_styles
+from ezdxf.tools.standards import setup_linetypes, setup_styles, setup_dimstyles, setup_dimstyle
 # Exceptions
 from ezdxf.lldxf.const import DXFError  # base error exception
 from ezdxf.lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError

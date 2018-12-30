@@ -88,8 +88,7 @@ def closed_rational_spline():
 
 
 def spline_control_frame_from_fit_points():
-    dwg = ezdxf.new('R2000')
-    ezdxf.setup_linetypes(dwg)
+    dwg = ezdxf.new('R2000', setup=True)
 
     fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
     msp = dwg.modelspace()
@@ -109,8 +108,7 @@ def spline_control_frame_from_fit_points():
 
 
 def spline_control_frame_approximation():
-    dwg = ezdxf.new('R2000')
-    ezdxf.setup_linetypes(dwg)
+    dwg = ezdxf.new('R2000', setup=True)
 
     fit_points = Vector.list([(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50), (80, 70), (65, 75)])
     msp = dwg.modelspace()
@@ -125,8 +123,7 @@ def spline_control_frame_approximation():
 
 
 def spline_insert_knot():
-    dwg = ezdxf.new('R2000')
-    ezdxf.setup_linetypes(dwg)
+    dwg = ezdxf.new('R2000', setup=True)
     msp = dwg.modelspace()
 
     def add_spline(control_points, color=3, knots=None):

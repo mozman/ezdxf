@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # import forward declarations
 logger = logging.getLogger('ezdxf')
 
 
-def setup_drawing(dwg: 'Drawing', topics: Union[str, Sequence] = 'all'):
+def setup_drawing(dwg: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
     if not topics:  # topics is None, False or ''
         return
 
@@ -23,8 +23,9 @@ def setup_drawing(dwg: 'Drawing', topics: Union[str, Sequence] = 'all'):
                 return token
         return []
 
-    if topics == 'all':
+    if topics in ('all', True):
         setup_all = True
+        topics = []
     else:
         setup_all = False
         topics = list(t.lower() for t in topics)
@@ -91,21 +92,6 @@ def setup_dimension_ticks(dwg: 'Drawing') -> None:
         blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
 
 
-LENGTH_FACTOR = {
-    'm': 1,
-    'dm': 10,
-    'cm': 100,
-    'mm': 1000,
-}
-
-UNIT_FACTOR = {
-    'm': 1,  # 1 drawing unit == 1 meter
-    'dm': 10,  # 1 drawing unit == 1 decimeter
-    'cm': 100,  # 1 drawing unit == 1 centimeter
-    'mm': 1000,  # 1 drawing unit == 1 millimeter
-}
-
-
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
     setup_dimension_ticks(dwg)
@@ -122,28 +108,73 @@ def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
 
 
 class DimStyleFmt:
+    UNIT_FACTOR = {
+        'm': 1,  # 1 drawing unit == 1 meter
+        'dm': 10,  # 1 drawing unit == 1 decimeter
+        'cm': 100,  # 1 drawing unit == 1 centimeter
+        'mm': 1000,  # 1 drawing unit == 1 millimeter
+    }
+
     def __init__(self, fmt: str):
         tokens = fmt.lower().split('_')
         self.name = fmt
-        self.unit = tokens[1]  # EZ_<M>_100_H25_CM
+        self.drawing_unit = tokens[1]  # EZ_<M>_100_H25_CM
         self.scale = float(tokens[2])  # EZ_M_<100>_H25_CM
         self.height = float(tokens[3][1:]) / 10.  # EZ_M_100_H<25>_CM  # in mm
-        self.length_factor = LENGTH_FACTOR[tokens[4]]  # EZ_M_100_H25_<CM>
+        self.measurement_unit = tokens[4]  # EZ_M_100_H25_<CM>
+
+    @property
+    def unit_factor(self):
+        return self.UNIT_FACTOR[self.drawing_unit]
+
+    @property
+    def measurement_factor(self):
+        return self.UNIT_FACTOR[self.measurement_unit]
+
+    @property
+    def text_factor(self):
+        return self.unit_factor / self.UNIT_FACTOR['mm']
+
+    @property
+    def dimlfac(self):
+        return self.measurement_factor / self.unit_factor
+
+    @property
+    def dimasz(self):
+        return self.scale * self.unit_factor
 
 
-def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = 'OPEN SANS', tick: str = 'EZTICK', name: str = '') -> None:
+def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = DEFAULT_DIM_TEXT_STYLE, tick: str = 'EZTICK', name: str = '') -> None:
+    """
+    Easy DimStyle setup, the `fmt` string defines four essential dimension parameters separated by the `_` character.
+    Tested and works with the metric system, I don't touch the 'english unit' system.
+
+    Example: `fmt` = 'EZ_M_100_H25_CM'
+
+        1. '<EZ>_M_100_H25_CM': arbitrary prefix
+        2. 'EZ_<M>_100_H25_CM': defines the drawing unit, valid values are 'M', 'DM', 'CM', 'MM'
+        3. 'EZ_M_<100>_H25_CM': defines the scale of the drawing, '100' is for 1:100
+        4. 'EZ_M_100_<H25>_CM': defines the text height in mm in paper space times 10, 'H25' is 2.5mm
+        5. 'EZ_M_100_H25_<CM>': defines the units for the measurement text, valid values are 'M', 'DM', 'CM', 'MM'
+
+    Args:
+        dwg: DXF drawing
+        fmt: format string
+        style: text style for measurement
+        tick: dimension line marker as block name
+        name: dimension style name, if name is '', `fmt` string is used as name
+
+    """
     fmt = DimStyleFmt(fmt)
     name = name or fmt.name
     if dwg.dimstyles.has_entry(name):
         logging.debug('DimStyle "{}" already exists.'.format(name))
         return
 
-    unit_factor = UNIT_FACTOR[fmt.unit]
     dimstyle = cast('DimStyle', dwg.dimstyles.new(name))
-    txt_height_in_dwg_units = fmt.height / UNIT_FACTOR['mm']  # fmt.height is in mm e.g. H25 = 2.5mm
-    dimstyle.dxf.dimtxt = txt_height_in_dwg_units * fmt.scale
-    dimstyle.dxf.dimlfac = fmt.length_factor  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
-    dimstyle.dxf.dimasz = (fmt.scale * unit_factor)  # tick factor
+    dimstyle.dxf.dimtxt = fmt.height * fmt.text_factor * fmt.scale
+    dimstyle.dxf.dimlfac = fmt.dimlfac  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
+    dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
     dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # text above dimline
     dimstyle.set_ticks(blk=tick)
     if dwg.dxfversion > 'AC1009':

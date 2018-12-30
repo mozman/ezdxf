@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFInfo
 
 
-def new(dxfversion: str = 'AC1009', setup: Union[str, Sequence[str]] = None) -> 'Drawing':
+def new(dxfversion: str = 'AC1009', setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
     """
     Create a new DXF drawing.
 
@@ -27,8 +27,8 @@ def new(dxfversion: str = 'AC1009', setup: Union[str, Sequence[str]] = None) -> 
     Args:
         dxfversion: DXF version specifier, default is AC1009
         setup: setup drawing standard for linetypes, text styles, dimension styles
-               None: no setup
-               'all': to setup all
+               None or False: no setup
+               'all' or True: setup all
                list of topics as strings:
                   - 'linetypes' ... setup line types
                   - 'styles'  ... setup text styles
