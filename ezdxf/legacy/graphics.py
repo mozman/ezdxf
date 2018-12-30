@@ -1,3 +1,4 @@
+# coding: utf8
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License

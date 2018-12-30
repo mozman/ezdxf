@@ -1,3 +1,4 @@
+# coding: utf8
 # Purpose: compiler for line type definitions
 # Created: 12.01.2018
 # Copyright (c) 2018, Manfred Moitzi

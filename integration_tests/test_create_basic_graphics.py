@@ -1,3 +1,4 @@
+# coding: utf8
 # Copyright 2018, Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals

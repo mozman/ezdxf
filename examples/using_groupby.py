@@ -1,3 +1,4 @@
+# coding: utf8
 # Purpose: example for using the groupby feature
 # Created: 03.02.2017
 # Copyright (c) 2017 Manfred Moitzi

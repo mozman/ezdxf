@@ -1,3 +1,4 @@
+# coding: utf8
 import ezdxf
 
 dwg = ezdxf.new('AC1018')
