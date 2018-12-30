@@ -161,13 +161,60 @@ def dimstyle():
     })
 
 
-def test_dimstyle_name(dimstyle):
-    assert 'DIMSTYLE1' == dimstyle.dxf.name
+@pytest.fixture(scope='module')
+def dimstyle2():
+    import ezdxf
+    dwg = ezdxf.new('R2000')
+    dwg.blocks.new('left_arrow')
+    dwg.blocks.new('right_arrow')
+    dwg.blocks.new('arrow')
+    dwg.styles.new('TestStyle')
+    return dwg.dimstyles.new('testing')
 
 
 def test_dimstyle_handle_code(dimstyle):
     handle = dimstyle.tags.noclass.get_first_value(105)
     assert 'FFFF' == handle
+
+
+def test_dimstyle_name(dimstyle2):
+    assert 'testing' == dimstyle2.dxf.name
+
+
+def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
+    dimstyle2.set_ticks('', 'left_arrow', 'right_arrow')
+    assert dimstyle2.dxf.dimblk == ''
+    assert dimstyle2.dxf.dimblk1 == 'left_arrow'
+    assert dimstyle2.dxf.dimblk2 == 'right_arrow'
+
+    # test handles
+    blocks = dimstyle2.drawing.blocks
+    left_arrow = blocks.get('left_arrow')
+    right_arrow = blocks.get('right_arrow')
+    assert dimstyle2.dxf.dimblk1_handle == left_arrow.block_record_handle
+    assert dimstyle2.dxf.dimblk2_handle == right_arrow.block_record_handle
+
+
+def test_dimstyle_both_ticks(dimstyle2):
+    dimstyle2.set_ticks('arrow')
+    assert dimstyle2.dxf.dimblk == 'arrow'
+    assert dimstyle2.dxf.dimblk1 == 'arrow'
+    assert dimstyle2.dxf.dimblk2 == 'arrow'
+
+    # test handles
+    blocks = dimstyle2.drawing.blocks
+    arrow = blocks.get('arrow')
+    assert dimstyle2.dxf.dimblk_handle == arrow.block_record_handle
+    assert dimstyle2.dxf.dimblk1_handle == arrow.block_record_handle
+    assert dimstyle2.dxf.dimblk2_handle == arrow.block_record_handle
+
+
+def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):
+    dwg = dimstyle2.drawing
+    style_handle = dwg.styles.get('TestStyle').dxf.handle
+    dimstyle2.dxf.dimtxsty = 'TestStyle'
+    assert dimstyle2.dxf.dimtxsty_handle == style_handle
+    assert dimstyle2.dxf.dimtxsty == 'TestStyle'
 
 
 def test_block_record_name():

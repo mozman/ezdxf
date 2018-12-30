@@ -7,7 +7,7 @@ from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.validator import is_valid_layer_name
-from ezdxf.lldxf.const import DXFInvalidLayerName
+from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError
 from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
 
 if TYPE_CHECKING:
@@ -565,3 +565,22 @@ class DimStyle(DXFEntity):
         for name in attribs:
             value = self.get_dxf_attrib(name, None)
             print("{name}= {value}".format(name=name, value=value))
+
+    def set_ticks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+        # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set
+        if blk:
+            blk1 = blk
+            blk2 = blk
+        self.set_dxf_attrib('dimblk', blk)
+        self.set_dxf_attrib('dimblk1', blk1)
+        self.set_dxf_attrib('dimblk2', blk2)
+
+        # only existing BLOCK definitions allowed
+        if self.drawing:
+            # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set
+            if blk == '#':
+                blk = ''
+            blocks = self.drawing.blocks
+            for b in (blk, blk1, blk2):
+                if b and b not in blocks:
+                    raise DXFValueError('BLOCK "{}" does not exist.'.format(blk))

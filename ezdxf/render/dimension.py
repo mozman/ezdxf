@@ -1,24 +1,51 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable
+from typing import TYPE_CHECKING, Tuple, Iterable, Any
 import math
 from ezdxf.algebra import Vector, Ray2D
 from ezdxf.algebra import UCS, PassTroughUCS
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DEFAULT_DIM_TEXT_STYLE, DXFAttributeError
+
+from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DimStyle, Dimension, BlockLayout, Vertex
+    from ezdxf.eztypes import Dimension, BlockLayout, Vertex
+
+DIMSTYLE_CHECKER = DimStyle.new('0', dxfattribs={'name': 'DIMSTYLE_CHECKER'})
+
+
+class DimStyleOverride:
+    def __init__(self, dim_style: 'DimStyle', override: dict = None):
+        self.dim_style = dim_style
+        self.override = override or {}
+
+    def get(self, attribute: str, default: Any = None) -> Any:
+        # has to be at least a valid DXF R2000 attribute
+        if not DIMSTYLE_CHECKER.supports_dxf_attrib(attribute):
+            raise DXFAttributeError('Invalid DXF attribute "{}" for DIMSTYLE.'.format(attribute))
+
+        if attribute in self.override:
+            return self.override[attribute]
+
+        # Return default value for attributes not supported by DXF R12.
+        # This is a hack to use the same algorithm to render DXF R2000 and DXF R12 DIMENSION entities.
+        # But the DXF R2000 attributes are not stored in the DXF R12 file!!!
+        try:
+            return self.dim_style.get_dxf_attrib(attribute, default)
+        except DXFAttributeError:
+            # return default value for DXF R12 if valid DXF R2000 attribute
+            return default
 
 
 class DimensionBase:
     def __init__(self, dimension: 'Dimension', dim_style: 'DimStyle', block: 'BlockLayout', ucs: 'UCS' = None,
-                 text_style: str = None):
+                 override: dict = None):
         self.drawing = dimension.drawing
         self.dxfversion = self.drawing.dxfversion
         self.block = block
-        self.dim_style = dim_style
-        self.text_style = self.get_text_style(text_style)
+        self.dim_style = DimStyleOverride(dim_style, override)
+        self.text_style = self.dim_style.get('dimtxsty', DEFAULT_DIM_TEXT_STYLE)
         self.dimension = dimension
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
@@ -27,15 +54,15 @@ class DimensionBase:
 
     @property
     def text_height(self) -> float:
-        return self.dim_style.get_dxf_attrib('dimtxt', 1.0)
+        return self.dim_style.get('dimtxt', 1.0)
 
     @property
     def suppress_extension_line1(self) -> bool:
-        return bool(self.dim_style.get_dxf_attrib('dimse1', False))
+        return bool(self.dim_style.get('dimse1', False))
 
     @property
     def suppress_extension_line2(self) -> bool:
-        return bool(self.dim_style.get_dxf_attrib('dimse2', False))
+        return bool(self.dim_style.get('dimse2', False))
 
     def default_attributes(self) -> dict:
         return {
@@ -58,17 +85,6 @@ class DimensionBase:
             return text_fmt.format(measurement)
         else:  # user override
             return text
-
-    def get_text_style(self, text_style: str = None) -> str:
-        if self.dxfversion <= 'AC1009':
-            return text_style or 'STANDARD'
-        else:
-            handle = self.dim_style.get_dxf_attrib('dimtxsty_handle', None)
-            if handle:
-                style = self.drawing.get_dxf_entity(handle)
-                return style.dxf.name
-            else:
-                return text_style or 'STANDARD'
 
     def get_text_format(self) -> str:
         return "{:.0f}"
@@ -120,7 +136,7 @@ class LinearDimension(DimensionBase):
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
         dim.defpoint = dimline_start  # set defpoint to expected location
-        dimlfac = self.dim_style.get_dxf_attrib('dimlfac', 1.)
+        dimlfac = self.dim_style.get('dimlfac', 1.)
         measurement = (dimline_start - dimline_end).magnitude
         dim_text = self.get_text(measurement * dimlfac)
 
@@ -151,7 +167,7 @@ class LinearDimension(DimensionBase):
         # add POINT at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
 
-    def add_measurement_text(self, dim_text:str, pos: Vector) -> None:
+    def add_measurement_text(self, dim_text: str, pos: Vector) -> None:
         angle = self.dimension.get_dxf_attrib('angle', 0)
         text_rotation = self.dimension.get_dxf_attrib('text_rotation', 0)
         self.add_text(dim_text, pos=pos, rotation=angle + text_rotation)
@@ -166,19 +182,19 @@ class LinearDimension(DimensionBase):
 
     def add_ticks(self, start: 'Vertex', end: 'Vertex') -> None:
         dim = self.dimension.dxf
-        style = self.dim_style.dxf
+        get_dxf_attr = self.dim_style.get
 
-        scale = (style.dimasz, style.dimasz)
-        blk = style.dimblk
+        scale = (get_dxf_attr('dimasz'), get_dxf_attr('dimasz'))
+        blk = get_dxf_attr('dimblk')
         blocks = self.drawing.blocks
         if blk in blocks:
             blk1 = blk
             blk2 = blk
         else:
-            blk1 = style.dimblk1
+            blk1 = get_dxf_attr('dimblk1')
             if blk1 not in blocks:
                 raise DXFUndefinedBlockError('Undefined tick block 1: "{}"'.format(blk1))
-            blk2 = style.dimblk2
+            blk2 = get_dxf_attr('dimblk2')
             if blk2 not in blocks:
                 raise DXFUndefinedBlockError('Undefined tick block 2: "{}"'.format(blk2))
 
@@ -187,7 +203,7 @@ class LinearDimension(DimensionBase):
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
         height = self.text_height
-        gap = self.dim_style.get_dxf_attrib('dimgap', 0.625)
+        gap = self.dim_style.get('dimgap', 0.625)
         dist = height / 2. + gap
         base = end - start
         ortho = base.orthogonal().normalize(dist)

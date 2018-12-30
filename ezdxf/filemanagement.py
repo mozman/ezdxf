@@ -3,12 +3,14 @@
 # Copyright (C) 2018, Manfred Moitzi
 # License: MIT License
 # Local imports to avoid cyclic import
-from typing import TextIO, TYPE_CHECKING
+from typing import TextIO, TYPE_CHECKING, Union, Sequence
+from ezdxf.tools.standards import setup_drawing
+
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFInfo
 
 
-def new(dxfversion: str = 'AC1009') -> 'Drawing':
+def new(dxfversion: str = 'AC1009', setup: Union[str, Sequence[str]] = None) -> 'Drawing':
     """
     Create a new DXF drawing.
 
@@ -24,6 +26,15 @@ def new(dxfversion: str = 'AC1009') -> 'Drawing':
 
     Args:
         dxfversion: DXF version specifier, default is AC1009
+        setup: setup drawing standard for linetypes, text styles, dimension styles
+               None: no setup
+               'all': to setup all
+               list of topics as strings:
+                  - 'linetypes' ... setup line types
+                  - 'styles'  ... setup text styles
+                  - 'dimstyles ... setup all dimension styles
+                  - 'dimstyles:metric' ... setup metric dimension styles
+                  - 'dimstyles:imperial' ... setup imperial dimension styles (not implemented yet)
 
     """
     from ezdxf.drawing import Drawing
@@ -32,6 +43,8 @@ def new(dxfversion: str = 'AC1009') -> 'Drawing':
     if dwg.dxfversion > 'AC1009':
         dwg.reset_fingerprintguid()
         dwg.reset_versionguid()
+    if setup:
+        setup_drawing(dwg, topics=setup)
     return dwg
 
 

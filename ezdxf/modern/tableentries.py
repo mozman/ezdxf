@@ -2,12 +2,17 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, cast
+import logging
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, VIRTUAL_TAG
+from ezdxf.lldxf.const import DXFKeyError
 from ezdxf.legacy import tableentries as legacy
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools.complex_ltype import lin_compiler
+
+logger = logging.getLogger('ezdxf')
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, ComplexLineTypePart
@@ -367,6 +372,8 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimupt': DXFAttr(288),
     'dimatfit': DXFAttr(289),
     'dimtxsty_handle': DXFAttr(340),  # handle of referenced STYLE entry
+    # virtual DXF attribute 'dimtxsty': set/get referenced STYLE by name as callback
+    'dimtxsty': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_text_style', setter='set_text_style'),
     'dimldrblk_handle': DXFAttr(341),  # handle of referenced BLOCK_RECORD
     'dimblk_handle': DXFAttr(342),  # handle of referenced BLOCK_RECORD
     'dimblk1_handle': DXFAttr(343),  # handle of referenced BLOCK_RECORD
@@ -380,6 +387,39 @@ class DimStyle(legacy.DimStyle):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
+
+    def set_ticks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+        def set_blk_handle(attr: str) -> None:
+            blk_name = self.get_dxf_attrib(attr)
+            if blk_name in ('', '#'):  # block not defined
+                return
+            blk = blocks.get(blk_name)
+            self.set_dxf_attrib(attr+'_handle', blk.block_record_handle)
+
+        super().set_ticks(blk, blk1, blk2)
+        blocks = self.drawing.blocks
+        set_blk_handle('dimblk')
+        set_blk_handle('dimblk1')
+        set_blk_handle('dimblk2')
+
+    def get_text_style(self) -> str:
+        handle = self.get_dxf_attrib('dimtxsty_handle', None)
+        if handle:
+            try:
+                entry = self.drawing.get_dxf_entity(handle)
+            except DXFKeyError:
+                logging.warning('DIMSTYLE "{}": invalid text style handle "{}".'.format(self.dxf.name, handle))
+                text_style_name = 'STANDARD'
+            else:
+                text_style_name = entry.dxf.name
+        else:
+            logging.warning('DIMSTYLE "{}": text style handle not set.'. format(self.dxf.name))
+            text_style_name = 'STANDARD'
+        return text_style_name
+
+    def set_text_style(self, name: str) -> None:
+        style = self.drawing.styles.get(name)
+        self.set_dxf_attrib('dimtxsty_handle', style.dxf.handle)
 
 
 _UCSTEMPLATE = """0

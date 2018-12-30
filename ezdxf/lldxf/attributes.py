@@ -13,6 +13,7 @@ if TYPE_CHECKING:  # import forward declarations
     from ezdxf.eztypes import DXFEntity, TagValue
 
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
+VIRTUAL_TAG = -666
 
 
 class XType(Enum):

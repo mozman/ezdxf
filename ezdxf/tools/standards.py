@@ -2,13 +2,46 @@
 # Created: 23.03.2016
 # Copyright (c) 2016-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Tuple, Sequence
+from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
+from ezdxf.lldxf.const import DEFAULT_DIM_TEXT_STYLE, EZTICK, EZBULLET
+import logging
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, DimStyle
 
-EZTICK = 'EZTICK'
-EZBULLET = 'EZBULLET'
+logger = logging.getLogger('ezdxf')
+
+
+def setup_drawing(dwg: 'Drawing', topics: Union[str, Sequence] = 'all'):
+    if not topics:  # topics is None, False or ''
+        return
+
+    def get_token(name: str) -> List[str]:
+        for t in topics:
+            token = t.split(':')
+            if token[0] == name:
+                return token
+        return []
+
+    if topics == 'all':
+        setup_all = True
+    else:
+        setup_all = False
+        topics = list(t.lower() for t in topics)
+
+    if setup_all or 'linetypes' in topics:
+        setup_linetypes(dwg)
+
+    if setup_all or 'styles' in topics:
+        setup_styles(dwg)
+
+    dimstyles = get_token('dimstyles')
+    if setup_all or len(dimstyles):
+        if len(dimstyles) == 2:
+            domain = dimstyles[1]
+        else:
+            domain = 'all'
+        setup_dimstyles(dwg, domain=domain)
 
 
 def setup_linetypes(dwg: 'Drawing') -> None:
@@ -30,45 +63,92 @@ def setup_styles(dwg: 'Drawing') -> None:
         })
 
 
-def setup_dimension_blocks(dwg: 'Drawing') -> None:
+def setup_dimension_ticks(dwg: 'Drawing') -> None:
+    # ticks scaled for 1:1 drawing unit = 1 m
+    # tick size on paper 5x5mm
     def add_cross(block, size=(1., 1.)):
         h, v = size
         h = h / 2
         v = v / 2
-        block.add_line((-h, 0), (h, 0))
-        block.add_line((0, -v), (0, v))
+        block.add_line((-h, 0), (h, 0), dxfattribs=cross_attribs)
+        block.add_line((0, -v), (0, v), dxfattribs=cross_attribs)
+
+    cross_attribs = {}
+    tick_attribs = {}
+    if dwg.dxfversion > 'AC1009':
+        cross_attribs['lineweight'] = 18
+        tick_attribs['lineweight'] = 35
 
     if EZBULLET not in dwg.blocks:
         blk = dwg.blocks.new(EZBULLET)
-        add_cross(blk)
-        blk.add_circle(center=(0, 0), radius=.1)
+        add_cross(blk, size=(.005, .005))
+        blk.add_circle(center=(0, 0), radius=.001, dxfattribs=tick_attribs)
 
     if EZTICK not in dwg.blocks:
         blk = dwg.blocks.new(EZTICK)
-        add_cross(blk, size=(.5, 1.))
-        blk.add_line((-.25, -.25), (.25, .25))
+        add_cross(blk, size=(.0025, .005))
+        s2 = .0025/2.
+        blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
 
 
-def setup_dimstyles(dwg: 'Drawing') -> None:
-    setup_dimension_blocks(dwg)
+LENGTH_FACTOR = {
+    'm': 1,
+    'dm': 10,
+    'cm': 100,
+    'mm': 1000,
+}
 
-    if 'STANDARD' not in dwg.dimstyles:
-        dwg.dimstyles.new('STANDARD')
-    std = dwg.dimstyles.get('STANDARD')
-    std.dxf.dimblk = EZTICK
-    std.dxf.dimblk1 = EZTICK
-    std.dxf.dimblk2 = EZTICK
+UNIT_FACTOR = {
+    'm': 1,  # 1 drawing unit == 1 meter
+    'dm': 10,  # 1 drawing unit == 1 decimeter
+    'cm': 100,  # 1 drawing unit == 1 centimeter
+    'mm': 1000,  # 1 drawing unit == 1 millimeter
+}
+
+
+def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
+    setup_styles(dwg)
+    setup_dimension_ticks(dwg)
+    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+
+    if domain == 'metric':
+        setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_25_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_20_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_10_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_5_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_1_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+
+
+class DimStyleFmt:
+    def __init__(self, fmt: str):
+        tokens = fmt.lower().split('_')
+        self.name = fmt
+        self.unit = tokens[1]  # EZ_<M>_100_H25_CM
+        self.scale = float(tokens[2])  # EZ_M_<100>_H25_CM
+        self.height = float(tokens[3][1:]) / 10.  # EZ_M_100_H<25>_CM  # in mm
+        self.length_factor = LENGTH_FACTOR[tokens[4]]  # EZ_M_100_H25_<CM>
+
+
+def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = 'OPEN SANS', tick: str = 'EZTICK', name: str = '') -> None:
+    fmt = DimStyleFmt(fmt)
+    name = name or fmt.name
+    if dwg.dimstyles.has_entry(name):
+        logging.debug('DimStyle "{}" already exists.'.format(name))
+        return
+
+    unit_factor = UNIT_FACTOR[fmt.unit]
+    dimstyle = cast('DimStyle', dwg.dimstyles.new(name))
+    txt_height_in_dwg_units = fmt.height / UNIT_FACTOR['mm']  # fmt.height is in mm e.g. H25 = 2.5mm
+    dimstyle.dxf.dimtxt = txt_height_in_dwg_units * fmt.scale
+    dimstyle.dxf.dimlfac = fmt.length_factor  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
+    dimstyle.dxf.dimasz = (fmt.scale * unit_factor)  # tick factor
+    dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # text above dimline
+    dimstyle.set_ticks(blk=tick)
     if dwg.dxfversion > 'AC1009':
-        # set handle to STANDARD text style
-        style = dwg.styles.get('STANDARD')
-        std.dxf.dimtxsty_handle = style.dxf.handle
-
-        # set handles to EZTICK block record
-        blk = dwg.blocks.get(EZTICK)
-        handle = blk.block_record_handle
-        std.dxf.dimblk_handle = handle
-        std.dxf.dimblk1_handle = handle
-        std.dxf.dimblk2_handle = handle
+        # set text style
+        dimstyle.dxf.dimtxsty = style
 
 
 def linetypes() -> List[Tuple[str, str, Sequence[float]]]:

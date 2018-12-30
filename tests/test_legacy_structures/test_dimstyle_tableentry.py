@@ -20,3 +20,16 @@ def test_name(dimstyle):
 def test_handle_code(dimstyle):
     assert 'FFFF' == dimstyle.tags.noclass.get_first_value(105), 'expected group code 105 handle'
 
+
+def test_set_blk1_and_blk2_ticks(dimstyle):
+    dimstyle.set_ticks('', 'left_arrow', 'right_arrow')
+    assert dimstyle.dxf.dimblk == ''
+    assert dimstyle.dxf.dimblk1 == 'left_arrow'
+    assert dimstyle.dxf.dimblk2 == 'right_arrow'
+
+
+def test_set_both_ticks(dimstyle):
+    dimstyle.set_ticks('arrow')
+    assert dimstyle.dxf.dimblk == 'arrow'
+    assert dimstyle.dxf.dimblk1 == 'arrow'
+    assert dimstyle.dxf.dimblk2 == 'arrow'

@@ -452,16 +452,16 @@ class GraphicsFactory:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
-    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None,  txtstyle: str = None) -> None:
+    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None,  override: dict = None) -> None:
         dwg = cast('Drawing', self.drawing)
-        dwg.dimension_renderer.dispatch(dimension, ucs, txtstyle)
+        dwg.dimension_renderer.dispatch(dimension, ucs, override)
 
     def add_linear_dim(self,
                        base: 'Vertex',
                        ext1: 'Vertex',
                        ext2: 'Vertex',
                        text_midpoint: 'Vertex' = None,
-                       dimstyle: str = 'STANDARD',
+                       dimstyle: str = 'EZDXF',
                        text: str = "<>",
                        angle: float = 0,  # 0=horizontal, 90=vertical, else=rotated
                        text_rotation: float = 0,
@@ -480,7 +480,7 @@ class GraphicsFactory:
             ext2: start point of extension line 2 (in UCS)
             text_midpoint: text mid point (in UCS), or None for computed text placing
             text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
-            dimstyle: dimension style name (DimStyle table entry), default is `STANDARD`
+            dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
             angle: angle from ucs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text away from its default orientation
                            (the direction of the dimension line) in degrees

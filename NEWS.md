@@ -8,9 +8,10 @@ Version 0.9a4 - dev
 - Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
 - IMPORTANT: Python 2 support REMOVED
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
-- CHANGE: moved Importer() from ezdxf.tools to ezdxf.addons - internal structures of modern DXF files are too complex
+- CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
-- NEW: Type annotations to core package and add-ons  
+- NEW: Type annotations to core package and add-ons
+- NEW: parameter `setup` in `ezdxf.new()` to setup some line types, text styles and dimension styles, feature is disabled by default
 
 Version 0.8.9 - 2018-11-28
 --------------------------
@@ -18,33 +19,33 @@ Version 0.8.9 - 2018-11-28
 - Release notes: https://ezdxf.mozman.at/release-v0-8-9.html
 - IMPORTANT: Python 2 support will be dropped in ezdxf v0.9.0, because Python 2 support get more and more annoying.
 - CHANGE: refactoring of internal tag representation for a smaller memory footprint, but with some speed penalty
-- NEW: packed data for LWPOLYLINE points, faster \_\_getitem__;  added \_\_setitem__, \_\_delitem__, insert() and append()
-  methods; renamed discard_points() in clear(); removed get_rstrip_points() and ctx manager rstrip_points();
-  user defined point format;
-- NEW: packed data for SPLINE, knots, weights, fit- and control points are stored as array.array();
-  Spline.get_knot_values(), Spline.get_weights(), Spline.get_control_points() and Spline.get_fit_points() are deprecated,
-  direct access to this attributes by Spline.knot_values, Spline.weights, Spline.control_points and Spline.fit_points,
-  all attributes with a list-like interface. Knot, control point and fit point counter updated automatically,
-  therefore counters are read only now.
-- NEW: packed data for MESH, vertices, faces, edges and edge crease values stored as array.array(), high level interface unchanged
-- NEW: Drawing.layouts_and_blocks(), iterate over all layouts (mode space and paper space) and all block definitions.
-- NEW: Drawing.chain_layouts_and_blocks(), chain entity spaces of all layouts and blocks. Yields an iterator for all
+- NEW: packed data for LWPOLYLINE points, faster `__getitem__`;  added `__setitem__`, `__delitem__`, `insert()` and 
+  `append()` methods; renamed `discard_points()` in `clear()`; removed `get_rstrip_points()` and ctx manager 
+  `rstrip_points()`; user defined point format;
+- NEW: packed data for SPLINE, knots, weights, fit- and control points are stored as `array.array()`;
+  `Spline.get_knot_values()`, `Spline.get_weights()`, `Spline.get_control_points()` and `Spline.get_fit_points()` are 
+  deprecated, direct access to this attributes by `Spline.knot_values`, `Spline.weights`, `Spline.control_points` and 
+  `Spline.fit_points`, all attributes with a list-like interface. Knot, control point and fit point counter updated 
+  automatically, therefore counters are read only now.
+- NEW: packed data for MESH, vertices, faces, edges and edge crease values stored as `array.array()`, high level interface unchanged
+- NEW: `Drawing.layouts_and_blocks()`, iterate over all layouts (mode space and paper space) and all block definitions.
+- NEW: `Drawing.chain_layouts_and_blocks()`, chain entity spaces of all layouts and blocks. Yields an iterator for all
   entities in all layouts and blocks
-- NEW: Drawing.query(), entity query over all layouts and blocks
-- NEW: Drawing.groupby(), groups DXF entities of all layouts and blocks by an DXF attribute or a key function
-- NEW: Layout.set_redraw_order() and Layout.get_redraw_order(), to change redraw order of entities in model space and
+- NEW: `Drawing.query()`, entity query over all layouts and blocks
+- NEW: `Drawing.groupby()`, groups DXF entities of all layouts and blocks by an DXF attribute or a key function
+- NEW: `Layout.set_redraw_order()` and `Layout.get_redraw_order()`, to change redraw order of entities in model space and
   paper space layouts
-- NEW: BlockLayout.is_layout_block, True if block is a model space or paper space block definition
-- NEW: ezdxf.algebra.Arc helper class to create arcs from 2 points and an angle or radius, or from 3 points
-- NEW: ezdxf.algebra.Arc.add_to_layout() with UCS support to create 3D arcs
-- NEW: rename paper space layouts by Drawing.layouts.rename(old_name, new_name)
+- NEW: `BlockLayout.is_layout_block`, `True` if block is a model space or paper space block definition
+- NEW: `ezdxf.algebra.Arc` helper class to create arcs from 2 points and an angle or radius, or from 3 points
+- NEW: `ezdxf.algebra.Arc.add_to_layout()` with UCS support to create 3D arcs
+- NEW: rename paper space layouts by `Drawing.layouts.rename(old_name, new_name)`
 - NEW: Basic support for embedded objects (new in AutoCAD 2018), ezdxf reads and writes the embedded data as it is,
   no interpretation no modification, just enough to not break DXF files with embedded objects at saving.
-- CHANGE: Drawing.blocks.delete_block(name, safe=True), new parameter save, check if block is still referenced
-  (raises DXFValueError)
-- CHANGE: Drawing.blocks.delete_all_blocks(safe=True), if parameter safe is True, do not delete blocks that are still referenced
+- CHANGE: `Drawing.blocks.delete_block(name, safe=True)`, new parameter save, check if block is still referenced
+  (raises `DXFValueError`)
+- CHANGE: `Drawing.blocks.delete_all_blocks(safe=True)`, if parameter safe is `True`, do not delete blocks that are still referenced
 - BUGFIX: invalid CLASS definition for DXF version R2000 (AC1015) fixed, bug was only triggered at upgrading from R13/R14 to R2000
-- BUGFIX: fixed broken Viewport.AcDbViewport property
+- BUGFIX: fixed broken `Viewport.AcDbViewport` property
 - __BASIC__ read support for many missing DXF entities/objects
 
     - ACAD_PROXY_GRAPHIC
@@ -92,7 +93,7 @@ Version 0.8.8 - 2018-04-02
 - NEW: ezdxf.setup_styles(dwg), setup standard text styles
 - NEW: LWPolyline.vertices() yields all points as (x, y) tuples in OCS, LWPolyline.dxf.elevation is the z-axis value
 - NEW: LWPolyline.vertices_in_wcs() yields all points as (x, y, z) tuples in WCS
-- NEW: basic __str__()  and __repr__() support for DXF entities, returns just DXF type and handle
+- NEW: basic \_\_str__()  and \_\_repr__() support for DXF entities, returns just DXF type and handle
 - NEW: bulge related function in module ezdxf.algebra.bulge
 - NEW: Object Coordinate System support by DXFEntity.ocs() and OCS() class in module ezdxf.algebra
 - NEW: User Coordinate System support by UCS() class in module ezdxf.algebra

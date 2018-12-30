@@ -3,18 +3,29 @@
 
 import pytest
 import ezdxf
-from ezdxf.tools.standards import setup_dimstyles
+from ezdxf.render.dimension import DimStyleOverride, DXFAttributeError
 
 
 @pytest.fixture(scope='module')
 def dxf12():
-    dwg = ezdxf.new('R12')
-    setup_dimstyles(dwg)
+    dwg = ezdxf.new('R12', setup='all')
     return dwg
 
 
 def test_dimstyle_standard_exist(dxf12):
-    assert 'STANDARD' in dxf12.dimstyles
+    assert 'EZDXF' in dxf12.dimstyles
+
+
+def test_dimstyle_override(dxf12):
+    override_sttribute = {
+        'dimtxsty': 'TEST',
+        'invalid': 'invalid',
+    }
+    dimstyle = dxf12.dimstyles.get('EZDXF')
+    override = DimStyleOverride(dimstyle, override_sttribute)
+    assert override.get('dimtxsty') == 'TEST'
+    with pytest.raises(DXFAttributeError):
+        _ = override.get('invalid')
 
 
 def test_horizontal_dimline(dxf12):
@@ -23,8 +34,9 @@ def test_horizontal_dimline(dxf12):
         base=(3, 2, 0),
         ext1=(0, 0, 0),
         ext2=(3, 0, 0),
+
     )
-    assert dimline.dxf.dimstyle == 'STANDARD'
+    assert dimline.dxf.dimstyle == 'EZDXF'
 
     msp.render_dimension(dimline)
     block_name = dimline.dxf.geometry
