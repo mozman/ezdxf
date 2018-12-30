@@ -98,6 +98,7 @@ class EntityDB:
         """
         Deep copy of tags with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND) with also new handles.
         An existing owner tag is not changed because this is not the domain of the EntityDB() class.
+        The new entity tags are added to the drawing database.
 
         This is not a deep copy in the meaning of Python, because handle and link is changed.
         

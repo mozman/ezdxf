@@ -42,6 +42,21 @@ def test_ac1009_entry_names_are_case_insensitive(table_ac1009):
     assert 'ACAD' == entry.dxf.name
 
 
+def test_ac1009_duplicate_entry(table_ac1009):
+    new_entry = table_ac1009.duplicate_entry('ACAD', 'ACAD2018')
+    assert new_entry.dxf.name == 'ACAD2018'
+
+    entry2 = table_ac1009.get('ACAD2018')
+    assert new_entry.dxf.handle == entry2.dxf.handle
+
+    new_entry2 = table_ac1009.duplicate_entry('ACAD2018', 'ACAD2019')
+    new_entry.dxf.flags = 71
+    new_entry2.dxf.flags = 17
+    # really different entities
+    assert new_entry.dxf.flags == 71
+    assert new_entry2.dxf.flags == 17
+
+
 @pytest.fixture(scope='module')
 def table_ac1024():
     dwg = ezdxf.new('R2010')

@@ -10,8 +10,11 @@ Version 0.9a4 - dev
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
-- NEW: Type annotations to core package and add-ons
-- NEW: parameter `setup` in `ezdxf.new()` to setup some line types, text styles and dimension styles, feature is disabled by default
+- NEW: Type annotations to core package and add-ons.
+- NEW: Argument `setup` in `ezdxf.new('R12', setup='all')` to setup default line types, text styles and dimension styles, 
+  this feature is disabled by default.
+- NEW: Duplicate table entries: `dwg.styles.duplicate_entry('OPEN_SANS_25', new_name='OPEN_SANS_35')`, this works for 
+  all tables, but is intended to duplicate STYLES and DIMSTYLES.
 
 Version 0.8.9 - 2018-11-28
 --------------------------
@@ -87,17 +90,17 @@ Version 0.8.8 - 2018-04-02
 - NEW: read/write support for GEODATA entity
 - NEW: read/(limited)write support for SURFACE, EXTRUDEDSURFACE, REVOLVEDSURFACE, LOFTEDSURFACE and SWEPTSURFACE entity
 - NEW: support for extension dictionaries
-- NEW: add_spline_control_frame(), create and add B-spline control frame from fit points
-- NEW: add_spline_approx(), approximate B-spline by a reduced count of control points
-- NEW: ezdxf.setup_linetypes(dwg), setup standard line types
-- NEW: ezdxf.setup_styles(dwg), setup standard text styles
-- NEW: LWPolyline.vertices() yields all points as (x, y) tuples in OCS, LWPolyline.dxf.elevation is the z-axis value
-- NEW: LWPolyline.vertices_in_wcs() yields all points as (x, y, z) tuples in WCS
-- NEW: basic \_\_str__()  and \_\_repr__() support for DXF entities, returns just DXF type and handle
-- NEW: bulge related function in module ezdxf.algebra.bulge
-- NEW: Object Coordinate System support by DXFEntity.ocs() and OCS() class in module ezdxf.algebra
-- NEW: User Coordinate System support by UCS() class in module ezdxf.algebra
-- CHANGE: DXFEntity.set_app_data() and Entity.set_xdata accept also list of tuples as tags, DXFTag() is not required
+- NEW: `add_spline_control_frame()`, create and add B-spline control frame from fit points
+- NEW: `add_spline_approx()`, approximate B-spline by a reduced count of control points
+- NEW: `ezdxf.setup_linetypes(dwg)`, setup standard line types
+- NEW: `ezdxf.setup_styles(dwg)`, setup standard text styles
+- NEW: `LWPolyline.vertices()` yields all points as `(x, y)` tuples in OCS, `LWPolyline.dxf.elevation` is the z-axis value
+- NEW: `LWPolyline.vertices_in_wcs()` yields all points as `(x, y, z)` tuples in WCS
+- NEW: basic `__str__()`  and `__repr__()` support for DXF entities, returns just DXF type and handle
+- NEW: bulge related function in module `ezdxf.algebra.bulge`
+- NEW: Object Coordinate System support by `DXFEntity.ocs()` and `OCS()` class in module ezdxf.algebra
+- NEW: User Coordinate System support by `UCS()` class in module `ezdxf.algebra`
+- CHANGE: `DXFEntity.set_app_data()` and `Entity.set_xdata` accept also list of tuples as tags, `DXFTag()` is not required
 - BUGFIX: entity structure validator excepts group code >= 1000 before XDATA section (used in AutoCAD Civil 3D and AutoCAD Map 3D)
 
 Version 0.8.7 - 2018-03-04

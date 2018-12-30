@@ -125,6 +125,14 @@ class Table:
         self._add_entry(entry)
         return entry
 
+    def duplicate_entry(self, name: str, new_name: str) -> 'DXFEntity':
+        entry = self.get(name)
+        xtags = self.entitydb.duplicate_tags(entry.tags)
+        new_entity = self.dxffactory.wrap_entity(xtags)
+        new_entity.dxf.name = new_name
+        self._add_entry(new_entity)
+        return new_entity
+
     def _add_entry(self, entry: Union[ExtendedTags, 'DXFEntity']) -> None:
         """ Add table-entry to table and entitydb. """
         if isinstance(entry, ExtendedTags):
