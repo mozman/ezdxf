@@ -37,6 +37,27 @@ class DimStyleOverride:
             # return default value for DXF R12 if valid DXF R2000 attribute
             return default
 
+    def set_xdata(self, dimension: 'Dimension') -> None:
+        def group_code_of_value(value):
+            if isinstance(value, (int, bool)):
+                return 1070
+            if isinstance(value, float):
+                return 1040
+            return 1000
+
+        tags = [
+            (1000, 'DSTYLE'),
+            (1002, '{'),
+        ]
+        for key, value in self.override.items():
+            dxf_attr = DIMSTYLE_CHECKER._get_dxfattr_definition(key)
+            if dxf_attr.code > 0:  # skip internal and virtual tags
+                tags.append((1070, dxf_attr.code))
+                tags.append((group_code_of_value(value), value))
+        if len(tags) > 2:
+            tags.append((1002, '}'))
+            dimension.set_xdata('ACAD', tags)
+
 
 class DimensionBase:
     def __init__(self, dimension: 'Dimension', dim_style: 'DimStyle', block: 'BlockLayout', ucs: 'UCS' = None,
@@ -51,6 +72,8 @@ class DimensionBase:
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
             self.dimension.dxf.extrusion = self.ucs.uz
+        # write override values into dimension entity XDATA section
+        self.dim_style.set_xdata(dimension)
 
     @property
     def text_height(self) -> float:
