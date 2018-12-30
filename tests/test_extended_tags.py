@@ -1,3 +1,4 @@
+# coding: utf8
 # Created: 30.04.2011, 2018 rewritten for pytest
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License

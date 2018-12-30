@@ -1,4 +1,4 @@
-#coding:utf-8
+# coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: test new binary stream char encoding/decoding
 # Created: 26.03.2016
