@@ -47,3 +47,8 @@ def encode_hex_code_string_to_bytes(data: str) -> bytes:
 
 def byte_to_hexstr(byte: int) -> str:
     return "%0.2X" % byte
+
+
+def text_width(text: str, width_table: dict) -> float:
+    default = width_table['default']
+    return sum(width_table.get(char, default) for char in text)

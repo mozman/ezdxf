@@ -542,7 +542,7 @@ class DimStyle(DXFEntity):
         'dimtoh': DXFAttr(74),
         'dimse1': DXFAttr(75),
         'dimse2': DXFAttr(76),
-        'dimtad': DXFAttr(77),
+        'dimtad': DXFAttr(77),  # 0 center, 1 above, 4 below dimline
         'dimzin': DXFAttr(78),
         'dimalt': DXFAttr(170),
         'dimaltd': DXFAttr(171),

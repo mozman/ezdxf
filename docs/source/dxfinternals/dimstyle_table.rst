@@ -37,6 +37,10 @@ Table Structure DXF R12
 DIMSTYLE Entry DXF R12
 ----------------------
 
+.. image:: gfx/dimstyleR12_variables.svg
+    :align: center
+    :width: 800px
+
 Table Structure DXF R2000+
 --------------------------
 

@@ -217,9 +217,14 @@ class LinearDimension(DimensionBase):
         self.add_blockref(blk2, insert=end, rotation=dim.angle, scale=scale)
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
+        tad = self.dim_style.get('dimtad', 1)
         height = self.text_height
         gap = self.dim_style.get('dimgap', 0.625)
-        dist = height / 2. + gap
+        dist = height / 2. + gap  # above dimline
+        if tad == 0:  # center of dimline
+            dist = 0
+        elif tad == 4:  # below dimline
+            dist = -dist
         base = end - start
         ortho = base.orthogonal().normalize(dist)
         return start.lerp(end) + ortho

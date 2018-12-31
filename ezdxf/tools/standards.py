@@ -175,7 +175,8 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = DEFAULT_DIM_TEXT_STYLE
     dimstyle.dxf.dimtxt = fmt.height * fmt.text_factor * fmt.scale
     dimstyle.dxf.dimlfac = fmt.dimlfac  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
     dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
-    dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # text above dimline
+    dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # gap between text and dimension line
+    dimstyle.dxf.dimtad = 1  # text above dimline
     dimstyle.set_ticks(blk=tick)
     if dwg.dxfversion > 'AC1009':
         # set text style
@@ -244,3 +245,23 @@ def styles():
         ('OPEN_SANS_CONDENSED_LIGHT', 'Open Sans Condensed Light'),
         ('TIMES', 'times.ttf'),
     ]
+
+
+WT_OPEN_SANS_CONDENSED_LIGHT = {
+    'default': .6,
+    '0': .6,
+    '1': .51,
+    '2': .56,
+    '3': .53,
+    '4': .6,
+    '5': .56,
+    '6': .53,
+    '7': .57,
+    '8': .57,
+    '9': .56,
+    ',': .32,
+    '.': .25,
+    '-': .35,
+    '+': .61,
+    '°': .55,
+}
