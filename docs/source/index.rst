@@ -13,6 +13,7 @@ Welcome! This is the documentation for ezdxf |version|, last updated |today|.
 
    **Python 2** support REMOVED, *ezdxf* >= v0.9.0 requires at least **Python 3.5**
 
+
 Quick-Info
 ==========
 
@@ -62,9 +63,6 @@ Contents
    addons
    howto
    dxfinternals
-
-.. include:: ../../NEWS.rst
-   :end-before: Version 0.7.9
 
 Indices and tables
 ------------------

@@ -3,4 +3,11 @@
 ENTITIES Section
 ================
 
-TODO
+ENTITIES
+--------
+
+
+.. toctree::
+   :maxdepth: 1
+
+   dimension_entity

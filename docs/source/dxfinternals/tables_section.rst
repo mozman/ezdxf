@@ -9,6 +9,6 @@ TABLES Section
    view_table
    vport_table
    linetype_table
-
+   dimstyle_table
 
 TODO
