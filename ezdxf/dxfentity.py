@@ -1,8 +1,8 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, List, cast
-from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFInvalidLayerName, DXFValueError
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, List, cast, Tuple
+from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFInvalidLayerName, DXFValueError, DXFXDataError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -16,6 +16,10 @@ if TYPE_CHECKING:  # import forward dependencies
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
+
+
+class NotFoundException(Exception):
+    pass
 
 
 class DXFNamespace:
@@ -302,6 +306,102 @@ class DXFEntity:
         else:
             self.tags.new_xdata(appid, xdata_tags)
 
+    def has_xdata_list(self, appid: str, name: str) -> bool:
+        """
+        Returns if list `name` from XDATA `appid` exists.
+
+        Args:
+            appid: APPID
+            name: list name
+
+        """
+        try:
+            self.get_xdata_list(appid, name)
+        except DXFValueError:
+            return False
+        else:
+            return True
+
+    def get_xdata_list(self, appid: str, name: str) -> List[Tuple]:
+        """
+        Get list `name` from XDATA `appid`.
+
+        Args:
+            appid: APPID
+            name: list name
+
+        Returns: list of DXFTags including list name and curly braces '{' '}' tags
+
+        Raises:
+            DXFValueError: XDATA `appid` do not exist or list `name` do not exist
+
+        """
+        xdata = self.get_xdata(appid)
+        try:
+            return get_named_list_from_xdata(name, xdata)
+        except NotFoundException:
+            raise DXFValueError('No data list "{}" not found for APPID "{}"'.format(name, appid))
+
+    def set_xdata_list(self, appid: str, name: str, xdata_tags: 'IterableTags') -> None:
+        """
+        Create new list `name` of XDATA `appid` with `xdata_tags` and replaces list `name` if already exists.
+
+        Args:
+            appid: APPID
+            name: list name
+            xdata_tags: list content as DXFTags or (code, value) tuples, list name and curly braces '{' '}' tags will
+                        be added
+        """
+        if not self.tags.has_xdata(appid):
+            self.tags.new_xdata(appid, xdata_list(name, xdata_tags))
+        else:
+            self.replace_xdata_list(appid, name, xdata_tags)
+
+    def discard_xdata_list(self, appid: str, name: str) -> None:
+        """
+        Deletes list `name` from XDATA `appid`. Ignores silently if XDATA `appid` or list `name` not exists.
+
+        Args:
+            appid: APPID
+            name: list name
+
+        """
+        try:
+            xdata = self.get_xdata(appid)
+        except DXFValueError:
+            pass
+        else:
+            try:
+                tags = remove_named_list_from_xdata(name, xdata)
+            except NotFoundException:
+                pass
+            else:
+                self.set_xdata(appid, tags)
+
+    def replace_xdata_list(self, appid: str, name: str, xdata_tags: 'IterableTags') -> None:
+        """
+        Replaces list `name` of existing XDATA `appid` with `xdata_tags`. Appends new list if list `name` do not exist,
+        but raises `DXFValueError` if XDATA `appid` do not exist.
+
+        Low level interface, if not sure use `set_xdata_list()` instead.
+
+        Args:
+            appid: APPID
+            name: list name
+            xdata_tags: list content as DXFTags or (code, value) tuples, list name and curly braces '{' '}' tags will
+                        be added
+        Raises:
+            DXFValueError: XDATA `appid` do not exist
+
+        """
+        xdata = self.get_xdata(appid)
+        try:
+            tags = remove_named_list_from_xdata(name, xdata)
+        except NotFoundException:
+            tags = xdata
+        tags.extend(xdata_list(name, xdata_tags))
+        self.tags.set_xdata(appid, tags)
+
     def has_reactors(self) -> bool:
         return self.has_app_data(ACAD_REACTORS)
 
@@ -362,3 +462,56 @@ class DXFEntity:
 
     def has_embedded_objects(self) -> bool:
         return any(tags.has_embedded_objects() for tags in self.tags.subclasses)
+
+
+OPEN_LIST = (1002, '{')
+CLOSE_LIST = (1002, '}')
+
+
+def xdata_list(name: str, xdata_tags: 'IterableTags') -> List[Tuple]:
+    tags = []
+    if name:
+        tags.append((1000, name))
+    tags.append(OPEN_LIST)
+    tags.extend(xdata_tags)
+    tags.append(CLOSE_LIST)
+    return tags
+
+
+def remove_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
+    start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
+    del tags[start: end]
+    return tags
+
+
+def get_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
+    start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
+    return tags[start: end]
+
+
+def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tuple[int, int]:
+    start = None
+    end = None
+    level = 0
+    for index in range(len(tags)):
+        tag = tags[index]
+
+        if start is None and tag == (1000, name):
+            next_tag = tags[index + 1]
+            if next_tag == OPEN_LIST:
+                start = index
+                continue
+        if start is not None:
+            if tag == OPEN_LIST:
+                level += 1
+            elif tag == CLOSE_LIST:
+                level -= 1
+            if level == 0:
+                end = index
+                break
+
+    if start is None:
+        raise NotFoundException
+    if end is None:
+        raise DXFXDataError('Invalid XDATA structure: missing  (1002, "}").')
+    return start, end + 1

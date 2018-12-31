@@ -204,3 +204,13 @@ def tag_type(code: int) -> Callable:
 
 def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
     return TAG_STRING_FORMAT % tuple(tag)
+
+
+def get_xcode_for(value) -> int:
+    if isinstance(value, (int, bool)):
+        return 1070
+    if isinstance(value, float):
+        return 1040
+    if value in ('{', '}'):
+        return 1002
+    return 1000

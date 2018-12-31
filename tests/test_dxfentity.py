@@ -410,6 +410,90 @@ class TestXData:
         with pytest.raises(DXFValueError):
             entity.get_xdata("XYZ")
 
+    def test_get_xdata_list_exception(self, entity):
+        with pytest.raises(DXFValueError, message='XDATA not exist'):
+            _ = entity.get_xdata_list('ACAD', 'DSTYLE')
+        entity.set_xdata('ACAD', xdata_tags=[DXFTag(1000, 'Extended Data String')])
+
+        with pytest.raises(DXFValueError, message='List DSTYLE not exists'):
+            _ = entity.get_xdata_list('ACAD', 'DSTYLE')
+
+    def test_has_xdata_list(self, entity):
+        assert entity.has_xdata_list('ACAD', 'DSTYLE') is False
+        entity.set_xdata('ACAD', xdata_tags=[DXFTag(1000, 'Extended Data String')])
+        assert entity.has_xdata_list('ACAD', 'DSTYLE') is False
+
+    def test_set_xdata_list(self, entity):
+        entity.set_xdata_list('ACAD', 'DSTYLE', [(1070, 1), (1000, 'String')])
+        xdata_list = entity.get_xdata_list('ACAD', 'DSTYLE')
+        assert len(xdata_list) == 5
+        assert xdata_list == [
+            (1000, 'DSTYLE'),
+            (1002, '{'),
+            (1070, 1),
+            (1000, 'String'),
+            (1002, '}'),
+        ]
+        # add another list to ACAD
+        entity.set_xdata_list('ACAD', 'MOZMAN', [(1070, 2), (1000, 'mozman')])
+        xdata = entity.get_xdata_list('ACAD', 'MOZMAN')
+        assert len(xdata) == 5
+        assert xdata == [
+            (1000, 'MOZMAN'),
+            (1002, '{'),
+            (1070, 2),
+            (1000, 'mozman'),
+            (1002, '}'),
+        ]
+        xdata = entity.get_xdata('ACAD')
+        assert len(xdata) == 10
+
+    def test_discard_xdata_list(self, entity):
+        entity.set_xdata_list('ACAD', 'DSTYLE', [(1070, 1), (1000, 'String')])
+        xdata_list = entity.get_xdata_list('ACAD', 'DSTYLE')
+        assert len(xdata_list) == 5
+        entity.discard_xdata_list('ACAD', 'DSTYLE')
+        with pytest.raises(DXFValueError):
+            _ = entity.get_xdata_list('ACAD', 'DSTYLE')
+
+        entity.discard_xdata_list('ACAD', 'DSTYLE')
+
+    def test_replace_xdata_list(self, entity):
+        entity.set_xdata_list('ACAD', 'DSTYLE', [(1070, 1), (1000, 'String')])
+        xdata_list = entity.get_xdata_list('ACAD', 'DSTYLE')
+        assert len(xdata_list) == 5
+        assert xdata_list == [
+            (1000, 'DSTYLE'),
+            (1002, '{'),
+            (1070, 1),
+            (1000, 'String'),
+            (1002, '}'),
+        ]
+        entity.set_xdata_list('ACAD', 'DSTYLE', [(1070, 2), (1000, 'mozman'), (1000, 'data')])
+        xdata_list = entity.get_xdata_list('ACAD', 'DSTYLE')
+        assert len(xdata_list) == 6
+        assert xdata_list == [
+            (1000, 'DSTYLE'),
+            (1002, '{'),
+            (1070, 2),
+            (1000, 'mozman'),
+            (1000, 'data'),
+            (1002, '}'),
+        ]
+        # replace not existing list -> append list
+        entity.replace_xdata_list('ACAD', 'MOZMAN', [(1070, 3), (1000, 'new')])
+        xdata_list = entity.get_xdata_list('ACAD', 'MOZMAN')
+        assert len(xdata_list) == 5
+        assert xdata_list == [
+            (1000, 'MOZMAN'),
+            (1002, '{'),
+            (1070, 3),
+            (1000, 'new'),
+            (1002, '}'),
+        ]
+        xdata = entity.get_xdata('ACAD')
+        assert len(xdata) == 6+5
+
 
 class TestReactors:
     @pytest.fixture

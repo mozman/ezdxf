@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.types import DXFTag, get_xcode_for
 
 
 def test_init():
@@ -49,3 +49,13 @@ def test_public_attributes():
 
 def test_dxf_str():
     assert DXFTag(1, 'text').dxfstr() == "  1\ntext\n"
+
+
+def test_xcode_for():
+    assert get_xcode_for('String') == 1000
+    assert get_xcode_for(100) == 1070
+    assert get_xcode_for(True) == 1070
+    assert get_xcode_for(1.0) == 1040
+    assert get_xcode_for('{') == 1002
+    assert get_xcode_for('}') == 1002
+

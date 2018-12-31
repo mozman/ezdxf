@@ -4,6 +4,7 @@
 from typing import TYPE_CHECKING
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.lldxf import const
+from ezdxf.lldxf.types import get_xcode_for
 
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
@@ -81,7 +82,8 @@ class Dimension(GraphicEntity):
         # shortcut Drawings.dimstyles property
         'defpoint': DXFAttr(10, xtype=XType.any_point),  # WCS, definition point for all dimension types
         'text_midpoint': DXFAttr(11, xtype=XType.any_point),  # OCS, middle point of dimension text
-        'insert': DXFAttr(12, xtype=XType.point3d),  # OCS, Insertion point for clones of a dimension—Baseline and Continue
+        'insert': DXFAttr(12, xtype=XType.point3d),
+        # OCS, Insertion point for clones of a dimension—Baseline and Continue
         'dimtype': DXFAttr(70, default=0),  # Dimension type:
         # Values 0–6 are integer values that represent the dimension type.
         # Values 64 and 128 are bit values, which are added to the integer values
@@ -147,3 +149,14 @@ class Dimension(GraphicEntity):
 
     def cast(self) -> 'Dimension':  # for modern dimension lines
         return self
+
+    def set_acad_dstyle(self, data: dict, dim_style) -> None:
+        tags = []
+        for key, value in data.items():
+            dxf_attr = dim_style.DXFATTRIBS.get(key)
+            if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
+                tags.append((1070, dxf_attr.code))
+                tags.append((get_xcode_for(value), value))
+
+        if len(tags):
+            self.set_xdata_list('ACAD', 'DSTYLE', tags)

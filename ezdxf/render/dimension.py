@@ -37,26 +37,8 @@ class DimStyleOverride:
             # return default value for DXF R12 if valid DXF R2000 attribute
             return default
 
-    def set_xdata(self, dimension: 'Dimension') -> None:
-        def group_code_of_value(value):
-            if isinstance(value, (int, bool)):
-                return 1070
-            if isinstance(value, float):
-                return 1040
-            return 1000
-
-        tags = [
-            (1000, 'DSTYLE'),
-            (1002, '{'),
-        ]
-        for key, value in self.override.items():
-            dxf_attr = DIMSTYLE_CHECKER._get_dxfattr_definition(key)
-            if dxf_attr.code > 0:  # skip internal and virtual tags
-                tags.append((1070, dxf_attr.code))
-                tags.append((group_code_of_value(value), value))
-        if len(tags) > 2:
-            tags.append((1002, '}'))
-            dimension.set_xdata('ACAD', tags)
+    def set_acad_dstyle(self, dimension: 'Dimension')->None:
+        dimension.set_acad_dstyle(self.override, DIMSTYLE_CHECKER)
 
 
 class DimensionBase:
@@ -73,7 +55,7 @@ class DimensionBase:
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
             self.dimension.dxf.extrusion = self.ucs.uz
         # write override values into dimension entity XDATA section
-        self.dim_style.set_xdata(dimension)
+        self.dim_style.set_acad_dstyle(self.dimension)
 
     @property
     def text_height(self) -> float:
@@ -189,6 +171,16 @@ class LinearDimension(DimensionBase):
 
         # add POINT at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
+        self.defpoints_to_wcs()
+
+    def defpoints_to_wcs(self):
+        def from_ucs(attr, func):
+            point = self.dimension.get_dxf_attrib(attr)
+            self.dimension.set_dxf_attrib(attr, func(point))
+        from_ucs('defpoint', self.wcs)
+        from_ucs('defpoint2', self.wcs)
+        from_ucs('defpoint3', self.wcs)
+        from_ucs('text_midpoint', self.ocs)
 
     def add_measurement_text(self, dim_text: str, pos: Vector) -> None:
         angle = self.dimension.get_dxf_attrib('angle', 0)
