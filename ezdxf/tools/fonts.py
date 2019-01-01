@@ -29,7 +29,7 @@ class Font:
         else:
             self.font = FakeTkFont(name)
 
-    def measure(self, s: str):
+    def measure(self, s: str) -> float:
         """ Normalized measurement. """
         return float(self.font.measure(s)) / float(self.SIZE)
 
@@ -50,7 +50,7 @@ class Font:
         return self.str_width(s, height=height, ratio=width)
 
 
-def font(name):
+def font(name: str) -> Font:
     try:
         return Font.fonts[name]
     except KeyError:

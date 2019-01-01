@@ -38,6 +38,36 @@ def linear_tutorial():
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
 
+def linear_tutorial_ext_lines():
+    dwg = ezdxf.new('R12', setup=True)
+    msp = dwg.modelspace()
+
+    msp.add_line((0, 0), (3, 0))
+
+    dim = msp.add_linear_dim(base=(3, 2), ext1=(0, 0), ext2=(3, 0), dimstyle='EZDXF')
+    attributes = {
+        'dimexo': 0.5,
+        'dimexe': 0.5,
+        'dimdle': 0.5,
+        'dimblk': 'EZNONE',
+        'dimclrt': 3,
+    }
+    msp.render_dimension(dim, override=attributes)
+
+    attributes = {
+        'dimtad': 4,
+        'dimclrd': 2,
+        'dimclrt': 4,
+    }
+    dim = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF')
+    msp.render_dimension(dim, override=attributes)
+
+    dim = msp.add_linear_dim(base=(3, 5), ext1=(0, 10), ext2=(3, 10), dimstyle='EZDXF')
+    msp.render_dimension(dim, override=attributes)
+
+    dwg.saveas(OUTDIR / 'dim_linear_R12_ext_lines.dxf')
+
+
 def linear_EZ_M(fmt):
     dwg = ezdxf.new('R12', setup=True)
     msp = dwg.modelspace()
@@ -73,19 +103,14 @@ def linear_EZ_MM(fmt):
 
 if __name__ == '__main__':
     linear_tutorial()
+    linear_tutorial_ext_lines()
 
     linear_EZ_M('EZ_M_100_H25_CM')
-    linear_EZ_M('EZ_M_50_H25_CM')
-    linear_EZ_M('EZ_M_10_H25_CM')
     linear_EZ_M('EZ_M_1_H25_CM')
 
     linear_EZ_CM('EZ_CM_100_H25_CM')
-    linear_EZ_CM('EZ_CM_50_H25_CM')
-    linear_EZ_CM('EZ_CM_10_H25_CM')
     linear_EZ_CM('EZ_CM_1_H25_CM')
 
     linear_EZ_MM('EZ_MM_100_H25_MM')
-    linear_EZ_MM('EZ_MM_50_H25_MM')
-    linear_EZ_MM('EZ_MM_10_H25_MM')
     linear_EZ_MM('EZ_MM_1_H25_MM')
 

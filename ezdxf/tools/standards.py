@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
-from ezdxf.lldxf.const import EZTICK, EZDOT
+from ezdxf.lldxf.const import EZTICK, EZDOT, EZNONE
 from ezdxf.options import options
 import logging
 
@@ -75,19 +75,22 @@ def setup_dimension_ticks(dwg: 'Drawing') -> None:
         block.add_line((-h, 0), (h, 0), dxfattribs=cross_attribs)
         block.add_line((0, -v), (0, v), dxfattribs=cross_attribs)
 
-    cross_attribs = {}
-    tick_attribs = {}
+    cross_attribs = {'color': 0}
+    tick_attribs = {'color': 0}
     if dwg.dxfversion > 'AC1009':
         cross_attribs['lineweight'] = 18
         tick_attribs['lineweight'] = 35
+    blocks = dwg.blocks
+    if EZNONE not in blocks:
+        _ = dwg.blocks.new(EZNONE)
 
-    if EZDOT not in dwg.blocks:
-        blk = dwg.blocks.new(EZDOT)
+    if EZDOT not in blocks:
+        blk = blocks.new(EZDOT)
         add_cross(blk, size=(.005, .005))
         blk.add_circle(center=(0, 0), radius=.001, dxfattribs=tick_attribs)
 
-    if EZTICK not in dwg.blocks:
-        blk = dwg.blocks.new(EZTICK)
+    if EZTICK not in blocks:
+        blk = blocks.new(EZTICK)
         add_cross(blk, size=(.0025, .005))
         s2 = .0025/2.
         blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
@@ -179,6 +182,10 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = 'EZT
     dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
     dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # gap between text and dimension line
     dimstyle.dxf.dimtad = 1  # text above dimline
+    dimstyle.dxf.dimexe = 0.
+    dimstyle.dxf.dimexo = 0.
+    dimstyle.dxf.dimdle = 0.
+    dimstyle.dxf.dimsah = 0
     dimstyle.set_ticks(blk=tick)
     if dwg.dxfversion > 'AC1009':
         # set text style

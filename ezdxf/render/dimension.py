@@ -19,25 +19,32 @@ class DimStyleOverride:
     def __init__(self, dim_style: 'DimStyle', override: dict = None):
         self.dim_style = dim_style
         self.override = override or {}
+        self._cache = {}
 
     def get(self, attribute: str, default: Any = None) -> Any:
+        try:
+            return self._cache[attribute]
+        except KeyError:
+            pass
         # has to be at least a valid DXF R2000 attribute
         if not DIMSTYLE_CHECKER.supports_dxf_attrib(attribute):
             raise DXFAttributeError('Invalid DXF attribute "{}" for DIMSTYLE.'.format(attribute))
 
         if attribute in self.override:
-            return self.override[attribute]
+            result = self.override[attribute]
+        else:
+            # Return default value for attributes not supported by DXF R12.
+            # This is a hack to use the same algorithm to render DXF R2000 and DXF R12 DIMENSION entities.
+            # But the DXF R2000 attributes are not stored in the DXF R12 file!!!
+            try:
+                result = self.dim_style.get_dxf_attrib(attribute, default)
+            except DXFAttributeError:
+                # return default value for DXF R12 if valid DXF R2000 attribute
+                result = default
+        self._cache[attribute] = result
+        return result
 
-        # Return default value for attributes not supported by DXF R12.
-        # This is a hack to use the same algorithm to render DXF R2000 and DXF R12 DIMENSION entities.
-        # But the DXF R2000 attributes are not stored in the DXF R12 file!!!
-        try:
-            return self.dim_style.get_dxf_attrib(attribute, default)
-        except DXFAttributeError:
-            # return default value for DXF R12 if valid DXF R2000 attribute
-            return default
-
-    def set_acad_dstyle(self, dimension: 'Dimension')->None:
+    def set_acad_dstyle(self, dimension: 'Dimension') -> None:
         dimension.set_acad_dstyle(self.override, DIMSTYLE_CHECKER)
 
 
@@ -94,12 +101,14 @@ class DimensionBase:
     def get_text_format(self) -> str:
         return "{:.0f}"
 
-    def add_line(self, start: 'Vertex', end: 'Vertex') -> None:
-        dxfattributes = self.default_attributes()
-        self.block.add_line(self.wcs(start), self.wcs(end), dxfattribs=dxfattributes)
+    def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> None:
+        attribs = self.default_attributes()
+        if dxfattribs:
+            attribs.update(dxfattribs)
+        self.block.add_line(self.wcs(start), self.wcs(end), dxfattribs=attribs)
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
-                     scale: Tuple[float, float] = (1., 1.)) -> None:
+                     scale: Tuple[float, float] = (1., 1.), dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         sx, sy = scale
@@ -109,14 +118,17 @@ class DimensionBase:
             attribs['yscale'] = sy
         if self.requires_extrusion:
             attribs['extrusion'] = self.ucs.uz
-
+        if dxfattribs:
+            attribs.update(dxfattribs)
         self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
 
-    def add_text(self, text: str, pos: 'Vertex', rotation: float) -> None:
+    def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         attribs['style'] = self.text_style
         attribs['height'] = self.text_height
+        if dxfattribs:
+            attribs.update(dxfattribs)
         dxftext = self.block.add_text(text, dxfattribs=attribs)
         dxftext.set_pos(self.ocs(pos), align='MIDDLE_CENTER')
 
@@ -145,8 +157,15 @@ class LinearDimension(DimensionBase):
         measurement = (dimline_start - dimline_end).magnitude
         dim_text = self.get_text(measurement * dimlfac)
 
-        # add dimension line
-        self.add_dimension_line(dimline_start, dimline_end)
+        # add text
+        if dim_text:
+            pos = self.dimension.get_dxf_attrib('text_midpoint', None)
+            # calculate text midpoint if unset
+            if pos is None:
+                pos = self.get_text_midpoint(dimline_start, dimline_end)
+                self.dimension.set_dxf_attrib('text_midpoint', pos)
+
+            self.add_measurement_text(dim_text, pos)
 
         # add extension line 1
         if not self.suppress_extension_line1:
@@ -159,15 +178,8 @@ class LinearDimension(DimensionBase):
         # add ticks
         self.add_ticks(dimline_start, dimline_end)
 
-        # add text
-        if dim_text:
-            pos = self.dimension.get_dxf_attrib('text_midpoint', None)
-            # calculate text midpoint if unset
-            if pos is None:
-                pos = self.get_text_midpoint(dimline_start, dimline_end)
-                self.dimension.set_dxf_attrib('text_midpoint', pos)
-
-            self.add_measurement_text(dim_text, pos)
+        # add dimension line
+        self.add_dimension_line(dimline_start, dimline_end)
 
         # add POINT at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
@@ -177,44 +189,70 @@ class LinearDimension(DimensionBase):
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
+
         from_ucs('defpoint', self.wcs)
         from_ucs('defpoint2', self.wcs)
         from_ucs('defpoint3', self.wcs)
         from_ucs('text_midpoint', self.ocs)
 
     def add_measurement_text(self, dim_text: str, pos: Vector) -> None:
+        attribs = {
+            'color': self.dim_style.get('dimclrt', self.dimension.dxf.color)
+        }
         angle = self.dimension.get_dxf_attrib('angle', 0)
         text_rotation = self.dimension.get_dxf_attrib('text_rotation', 0)
-        self.add_text(dim_text, pos=pos, rotation=angle + text_rotation)
+        self.add_text(dim_text, pos=pos, rotation=angle + text_rotation, dxfattribs=attribs)
 
     def add_dimension_line(self, start: 'Vertex', end: 'Vertex') -> None:
-        # TODO: DXF attributes
-        self.add_line(start, end)
+        if not self.dim_style.get('dimsoxd', False):
+            direction = (end - start).normalize()
+            extension = direction * self.dim_style.get('dimdle', 0.)
+            start = start - extension
+            end = end + extension
+
+        # is dimension line crossing text
+        attribs = {
+            'color': self.dim_style.get('dimclrd', self.dimension.dxf.color)
+        }
+        self.add_line(start, end, dxfattribs=attribs)
 
     def add_extension_line(self, start: 'Vertex', end: 'Vertex') -> None:
-        # TODO: DXF attributes and start and end adjustments
-        self.add_line(start, end)
+        direction = (end - start).normalize()
+        offset = self.dim_style.get('dimexo', 0.)
+        extension = self.dim_style.get('dimexe', 0.)
+        start = start + direction * offset
+        end = end + direction * extension
+        attribs = {
+            'color': self.dim_style.get('dimclre', self.dimension.dxf.color)
+        }
+        self.add_line(start, end, dxfattribs=attribs)
 
     def add_ticks(self, start: 'Vertex', end: 'Vertex') -> None:
         dim = self.dimension.dxf
+        blocks = self.drawing.blocks
         get_dxf_attr = self.dim_style.get
 
-        scale = (get_dxf_attr('dimasz'), get_dxf_attr('dimasz'))
-        blk = get_dxf_attr('dimblk')
-        blocks = self.drawing.blocks
-        if blk in blocks:
-            blk1 = blk
-            blk2 = blk
-        else:
+        if bool(get_dxf_attr('dimsah')):
             blk1 = get_dxf_attr('dimblk1')
             if blk1 not in blocks:
-                raise DXFUndefinedBlockError('Undefined tick block 1: "{}"'.format(blk1))
+                raise DXFUndefinedBlockError('Undefined block 1: "{}"'.format(blk1))
             blk2 = get_dxf_attr('dimblk2')
             if blk2 not in blocks:
-                raise DXFUndefinedBlockError('Undefined tick block 2: "{}"'.format(blk2))
+                raise DXFUndefinedBlockError('Undefined block 2: "{}"'.format(blk2))
+        else:
+            blk = get_dxf_attr('dimblk')
+            if blk in blocks:
+                blk1 = blk
+                blk2 = blk
+            else:
+                raise DXFUndefinedBlockError('Undefined block: "{}"'.format(blk))
 
-        self.add_blockref(blk1, insert=start, rotation=dim.angle, scale=scale)
-        self.add_blockref(blk2, insert=end, rotation=dim.angle, scale=scale)
+        scale = (get_dxf_attr('dimasz'), get_dxf_attr('dimasz'))
+        attribs = {
+            'color': get_dxf_attr('dimclrd', self.dimension.dxf.color),
+        }
+        self.add_blockref(blk1, insert=start, rotation=dim.angle, scale=scale, dxfattribs=attribs)
+        self.add_blockref(blk2, insert=end, rotation=dim.angle, scale=scale, dxfattribs=attribs)
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
         tad = self.dim_style.get('dimtad', 1)
