@@ -16,6 +16,7 @@ Version 0.9a4 - dev
 - NEW: Duplicate table entries: `dwg.styles.duplicate_entry('OPEN_SANS_25', new_name='OPEN_SANS_35')`, this works for 
   all tables, but is intended to duplicate STYLES and DIMSTYLES.
 - __Open Sans Condensed__ font used for default dimension styles can be found at https://fonts.google.com
+- NEW: font measuring tool based on tkinter, results are not good but better than nothing
 
 Version 0.8.9 - 2018-11-28
 --------------------------

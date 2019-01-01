@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Tuple, Iterable, Any
 import math
 from ezdxf.algebra import Vector, Ray2D
 from ezdxf.algebra import UCS, PassTroughUCS
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DEFAULT_DIM_TEXT_STYLE, DXFAttributeError
-
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFAttributeError
+from ezdxf.options import options
 from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class DimensionBase:
         self.dxfversion = self.drawing.dxfversion
         self.block = block
         self.dim_style = DimStyleOverride(dim_style, override)
-        self.text_style = self.dim_style.get('dimtxsty', DEFAULT_DIM_TEXT_STYLE)
+        self.text_style = self.dim_style.get('dimtxsty', options.default_dimension_text_style)
         self.dimension = dimension
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)

@@ -127,6 +127,11 @@ class Style(DXFEntity):
         'bigfont': DXFAttr(4),  # big font name, blank if none
     }))
 
+    def tk_font_tool(self):
+        # initializes Tk(), therefore should only happen if font tools are really required.
+        from ezdxf.tools.fonts import font
+        return font(self.get_dxf_attrib('font', 'arial.ttf'))
+
 
 _LTYPETEMPLATE = """0
 LTYPE

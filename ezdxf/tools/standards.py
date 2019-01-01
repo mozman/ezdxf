@@ -1,9 +1,10 @@
 # Purpose: Define standard linetypes, text styles
 # Created: 23.03.2016
-# Copyright (c) 2016-2018, Manfred Moitzi
+# Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
-from ezdxf.lldxf.const import DEFAULT_DIM_TEXT_STYLE, EZTICK, EZBULLET
+from ezdxf.lldxf.const import EZTICK, EZDOT
+from ezdxf.options import options
 import logging
 
 if TYPE_CHECKING:  # import forward declarations
@@ -80,8 +81,8 @@ def setup_dimension_ticks(dwg: 'Drawing') -> None:
         cross_attribs['lineweight'] = 18
         tick_attribs['lineweight'] = 35
 
-    if EZBULLET not in dwg.blocks:
-        blk = dwg.blocks.new(EZBULLET)
+    if EZDOT not in dwg.blocks:
+        blk = dwg.blocks.new(EZDOT)
         add_cross(blk, size=(.005, .005))
         blk.add_circle(center=(0, 0), radius=.001, dxfattribs=tick_attribs)
 
@@ -95,16 +96,16 @@ def setup_dimension_ticks(dwg: 'Drawing') -> None:
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
     setup_dimension_ticks(dwg)
-    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
 
     if domain == 'metric':
-        setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
-        setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
-        setup_dimstyle(dwg, fmt='EZ_M_25_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
-        setup_dimstyle(dwg, fmt='EZ_M_20_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
-        setup_dimstyle(dwg, fmt='EZ_M_10_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
-        setup_dimstyle(dwg, fmt='EZ_M_5_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
-        setup_dimstyle(dwg, fmt='EZ_M_1_H25_CM', style=DEFAULT_DIM_TEXT_STYLE)
+        setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(dwg, fmt='EZ_M_25_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(dwg, fmt='EZ_M_20_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(dwg, fmt='EZ_M_10_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(dwg, fmt='EZ_M_5_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(dwg, fmt='EZ_M_1_H25_CM', style=options.default_dimension_text_style)
 
 
 class DimStyleFmt:
@@ -144,7 +145,7 @@ class DimStyleFmt:
         return self.scale * self.unit_factor
 
 
-def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = DEFAULT_DIM_TEXT_STYLE, tick: str = 'EZTICK', name: str = '') -> None:
+def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = 'EZTICK', name: str = '') -> None:
     """
     Easy DimStyle setup, the `fmt` string defines four essential dimension parameters separated by the `_` character.
     Tested and works with the metric system, I don't touch the 'english unit' system.
@@ -165,6 +166,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = DEFAULT_DIM_TEXT_STYLE
         name: dimension style name, if name is '', `fmt` string is used as name
 
     """
+    style = style or options.default_dimension_text_style
     fmt = DimStyleFmt(fmt)
     name = name or fmt.name
     if dwg.dimstyles.has_entry(name):
@@ -235,33 +237,21 @@ def styles():
     """ Creates a list of standard styles.
     """
     return [
-        ('STANDARD', 'arial.ttf'),
+        ('STANDARD', 'txt'),
         ('ARIAL', 'arial.ttf'),
         ('ARIAL_NARROW', 'arialn.ttf'),
         ('ISOCPEUR', 'isocpeur.ttf'),
-        ('OPEN_SANS', 'Open Sans'),
-        ('OPEN_SANS_BOLD', 'Open Sans Bold'),
-        ('OPEN_SANS_CONDENSED_BOLD', 'Open Sans Condensed'),
-        ('OPEN_SANS_CONDENSED_LIGHT', 'Open Sans Condensed Light'),
         ('TIMES', 'times.ttf'),
+        ('OPEN_SANS_LIGHT', 'OpenSans-Light.ttf'),
+        ('OPEN_SANS_LIGHT_ITALIC', 'OpenSans-LightItalic.ttf'),
+        ('OPEN_SANS', 'OpenSans-Regular.ttf'),
+        ('OPEN_SANS_ITALIC', 'OpenSans-Italic.ttf'),
+        ('OPEN_SANS_SEMIBOLD', 'OpenSans-SemiBold.ttf'),
+        ('OPEN_SANS_SEMIBOLD_ITALIC', 'OpenSans-SemiBoldItalic.ttf'),
+        ('OPEN_SANS_BOLD', 'OpenSans-Bold.ttf'),
+        ('OPEN_SANS_BOLD_ITALIC', 'OpenSans-BoldItalic.ttf'),
+        ('OPEN_SANS_EXTRABOLD', 'OpenSans-ExtraBold.ttf'),
+        ('OPEN_SANS_EXTRABOLD_ITALIC', 'OpenSans-ExtraBoldItalic.ttf'),
+        ('OPEN_SANS_CONDENSED_BOLD', 'OpenSansCondensed-Bold.ttf'),
+        ('OPEN_SANS_CONDENSED_LIGHT', 'OpenSansCondensed-Light.ttf'),
     ]
-
-
-WT_OPEN_SANS_CONDENSED_LIGHT = {
-    'default': .6,
-    '0': .6,
-    '1': .51,
-    '2': .56,
-    '3': .53,
-    '4': .6,
-    '5': .56,
-    '6': .53,
-    '7': .57,
-    '8': .57,
-    '9': .56,
-    ',': .32,
-    '.': .25,
-    '-': .35,
-    '+': .61,
-    '°': .55,
-}

@@ -49,6 +49,19 @@ def byte_to_hexstr(byte: int) -> str:
     return "%0.2X" % byte
 
 
-def text_width(text: str, width_table: dict) -> float:
-    default = width_table['default']
-    return sum(width_table.get(char, default) for char in text)
+def build_text_width_tables():
+    from .standards import styles
+    from .textwidth import build_width_table
+
+    fonts = styles()
+    for style, ttf_name, tk_attribs in fonts:
+        if tk_attribs is None:
+            continue
+        system_font_name, weight, slant = tk_attribs
+        filename = "WT_{}.json".format(style)
+        build_width_table(
+            filename=filename,
+            system_font_name=system_font_name,
+            weight=weight,
+            slant=slant,
+        )

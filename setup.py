@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Created: 10.03.2011
-# Copyright (c) 2011-2018 Manfred Moitzi
+# Copyright (c) 2011-2019 Manfred Moitzi
 # License: MIT License
 import os
 from setuptools import setup, find_packages

@@ -2,10 +2,13 @@
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
 # import version data
+import sys
 from .version import version, __version__
+
 VERSION = __version__
 __author__ = "mozman <me@mozman.at>"
 
+PYPY = hasattr(sys, 'pypy_version_info')
 # name space imports - do not remove
 from ezdxf.options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from ezdxf.tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1
