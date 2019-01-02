@@ -3,11 +3,12 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, Any
 import math
-from ezdxf.algebra import Vector, Ray2D
+from ezdxf.algebra import Vector, Ray2D, xround
 from ezdxf.algebra import UCS, PassTroughUCS
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFAttributeError
 from ezdxf.options import options
 from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
+from ezdxf.tools import suppress_zeros, raise_decimals
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BlockLayout, Vertex
@@ -90,16 +91,20 @@ class DimensionBase:
 
     def get_text(self, measurement: float) -> str:
         text = self.dimension.dxf.text
-        text_fmt = self.get_text_format()
         if text == ' ':  # suppress text
             return ''
         elif text == '' or text == '<>':  # measured distance
-            return text_fmt.format(measurement)
+            return self.format_text(measurement)
         else:  # user override
             return text
 
-    def get_text_format(self) -> str:
-        return "{:.0f}"
+    def format_text(self, value: float) -> str:
+        dimrnd = self.dim_style.get('dimrnd', None)
+        dimdec = self.dim_style.get('dimdec', None)
+        dimzin = self.dim_style.get('dimzin', 0)
+        dimdsep = self.dim_style.get('dimdsep', '.')
+        dimpost = self.dim_style.get('dimpost', '<>')
+        return format_text(value, dimrnd, dimdec, dimzin, dimdsep, dimpost)
 
     def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -318,3 +323,31 @@ class DimensionRenderer:
     def ordinate(self, dimension: 'Dimension', dim_style: 'DimStyle', layout: 'BlockLayout', ucs: 'UCS',
                  text_style: str = None):
         raise NotImplemented
+
+
+def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: int = 0, dimdsep: str = '.',
+                dimpost: str = '<>', raisedec=False) -> str:
+    if dimrnd is not None:
+        value = xround(value, dimrnd)
+
+    if dimdec is None:
+        fmt = "{:f}"
+        dimzin = dimzin | 8  # remove pending zeros for undefined decimal places, '{:f}'.format(0) -> '0.000000'
+    else:
+        fmt = "{:." + str(dimdec) + "f}"
+    text = fmt.format(value)
+
+    leading = bool(dimzin & 4)
+    pending = bool(dimzin & 8)
+    text = suppress_zeros(text, leading, pending)
+    if raisedec:
+        text = raise_decimals(text)
+    if dimdsep != '.':
+        text = text.replace('.', dimdsep)
+    if dimpost:
+        if '<>' in dimpost:
+            fmt = dimpost.replace('<>', '{}', 1)
+            text = fmt.format(text)
+        else:
+            raise DXFValueError('Invalid dimpost string: "{}"'.format(dimpost))
+    return text

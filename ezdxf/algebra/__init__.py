@@ -1,7 +1,7 @@
 # Purpose: algebra lib to calculate with geometric forms
 # Created: 27.03.2010, 2018 integrated into ezdxf
 # License: MIT License
-from .base import is_close, is_close_points
+from .base import is_close, is_close_points, xround
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .matrix import Matrix

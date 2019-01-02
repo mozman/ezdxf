@@ -45,3 +45,24 @@ def test_is_close_points():
     assert is_close_points((1, 1, 1), (1, 1)) is False
     assert is_close_points((1, 1, 1), (1, 1, 1.0000000001)) is True
 
+
+def test_xround():
+    assert xround(9.999, 0.) == 10
+    assert xround(9.999, 0.5) == 10
+    assert xround(9.75, 0.5) == 10
+    assert xround(9.74, 0.5) == 9.5
+    assert xround(9.74, 0.25) == 9.75
+    assert xround(9.626, 0.25) == 9.75
+    assert xround(9.624, 0.25) == 9.50
+    assert xround(9.624, 0.1) == 9.6
+    assert xround(9.624, 0.01) == 9.62
+    assert xround(9.626, 0.01) == 9.63
+    assert xround(9.626, 0.05) == 9.65
+
+    assert xround(19.1, 1.) == 19
+    assert xround(19.1, 2.) == 20
+    assert xround(18.9, 2.) == 18
+    assert xround(18.9, 5.) == 20
+    assert xround(18.9, 10) == 20
+    assert xround(1234, 10) == 1230
+    assert xround(1236, 10) == 1240

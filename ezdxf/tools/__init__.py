@@ -49,19 +49,53 @@ def byte_to_hexstr(byte: int) -> str:
     return "%0.2X" % byte
 
 
-def build_text_width_tables():
-    from .standards import styles
-    from .textwidth import build_width_table
+def suppress_zeros(s: str, leading: bool = False, pending: bool = True):
+    if (not leading) and (not pending):
+        return s
 
-    fonts = styles()
-    for style, ttf_name, tk_attribs in fonts:
-        if tk_attribs is None:
-            continue
-        system_font_name, weight, slant = tk_attribs
-        filename = "WT_{}.json".format(style)
-        build_width_table(
-            filename=filename,
-            system_font_name=system_font_name,
-            weight=weight,
-            slant=slant,
-        )
+    if float(s) == 0.:
+        return '0'
+
+    if s[0] in '-+':
+        sign = s[0]
+        s = s[1:]
+    else:
+        sign = ""
+
+    if leading:
+        s = s.lstrip('0')
+    if pending:
+        s = s.rstrip('0')
+    if s[-1] in '.,':
+        s = s[:-1]
+    return sign+s
+
+
+lifter = {
+    '0': '\u2070',
+    '1': '\u00B9',
+    '2': '²',
+    '3': '³',
+    '4': '\u2074',
+    '5': '\u2075',
+    '6': '\u2076',
+    '7': '\u2077',
+    '8': '\u2078',
+    '9': '\u2079',
+}
+
+
+def raise_decimals(s: str):
+    def _raise():
+        translate = False
+        for char in s:
+            if translate:
+                if char not in '0123456789':
+                    translate = False
+                else:
+                    char = lifter.get(char, char)
+            if char == '.':
+                translate = True
+                continue
+            yield char
+    return ''.join(_raise())
