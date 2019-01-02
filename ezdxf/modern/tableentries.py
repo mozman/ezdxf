@@ -366,6 +366,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimsd1': DXFAttr(281),
     'dimsd2': DXFAttr(282),
     'dimtolj': DXFAttr(283),
+    'dimtzin': DXFAttr(284),
     'dimaltz': DXFAttr(285),
     'dimalttz': DXFAttr(286),
     'dimfit': DXFAttr(287),  # obsolete, now use DIMATFIT and DIMTMOVE

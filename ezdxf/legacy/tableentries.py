@@ -558,6 +558,7 @@ class DimStyle(DXFEntity):
         'dimclrd': DXFAttr(176),
         'dimclre': DXFAttr(177),
         'dimclrt': DXFAttr(178),
+        'dimdec': DXFAttr(271),
     }))
 
     def print_attribs(self) -> None:
@@ -565,7 +566,8 @@ class DimStyle(DXFEntity):
             'dimpost', 'dimapost', 'dimblk', 'dimblk1', 'dimblk2', 'dimscale', 'dimasz', 'dimexo', 'dimdli',
             'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac',
             'dimtvp', 'dimtfac', 'dimgap', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad',
-            'dimzin', 'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt'
+            'dimzin', 'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt',
+            'dimdec'
         ]
         for name in attribs:
             value = self.get_dxf_attrib(name, None)
