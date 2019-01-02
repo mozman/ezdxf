@@ -46,4 +46,4 @@ LINETYPES = [
 with r12writer('r12_linetypes.dxf', fixed_tables=True) as dxf:
     for n, ltype in enumerate(LINETYPES):
         dxf.add_line((0, n), (10, n), linetype=ltype)
-        dxf.add_text(ltype, (0, n + 0.1), height=0.25, style='ARIAL')
+        dxf.add_text(ltype, (0, n + 0.1), height=0.25, style='OpenSans')

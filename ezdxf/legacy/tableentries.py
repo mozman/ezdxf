@@ -105,7 +105,7 @@ STYLENAME
 42
 1.0
 3
-arial.ttf
+OpenSans-Regular.ttf
 4
 
 """
@@ -130,7 +130,7 @@ class Style(DXFEntity):
     def tk_font_tool(self):
         # initializes Tk(), therefore should only happen if font tools are really required.
         from ezdxf.tools.fonts import font
-        return font(self.get_dxf_attrib('font', 'arial.ttf'))
+        return font(self.get_dxf_attrib('font', 'OpenSans-Regular.ttf'))
 
 
 _LTYPETEMPLATE = """0

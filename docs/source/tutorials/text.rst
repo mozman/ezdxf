@@ -34,4 +34,16 @@ Alignment   Description
 ``MIDDLE``  also a *special* adjustment, but the result is the same as for ``MIDDLE_CENTER``.
 =========== ===========
 
-more is coming soon ...
+
+Standard Text Styles
+--------------------
+
+Setup standard text styles and line types by argument :code:`setup=True`::
+
+    dwg = ezdxf.new('R12', setup=True)
+
+Replaced all proprietary font declarations in :code:`setup_sytles()` (ARIAL, ARIAL_NARROW, ISOCPEUR and TIMES) by open
+source fonts, this is also the style name (e.g. :code:`{'style': 'OpenSans-Italic'}`):
+
+.. image:: gfx/fonts.png
+

@@ -67,7 +67,7 @@ class DimStyle(dict):
         ('prefix', ''),
         ('suffix', ''),
         # dimension value text style
-        ('style', 'ISOCPEUR'),
+        ('style', 'OpenSansCondensed-Light'),
         # default layer for whole dimension object
         ('layer', 'DIMENSIONS'),
         # dimension line color index (0 from layer)

@@ -757,7 +757,7 @@ STYLE
   5
 44A
   2
-ARIAL
+OpenSans
  70
 0
  40
@@ -771,7 +771,7 @@ ARIAL
  42
 1.0
   3
-arial.ttf
+OpenSans-Regular.ttf
   4
 
   0
@@ -779,7 +779,7 @@ STYLE
   5
 44F
   2
-ARIAL_NARROW
+OpenSansCondensed-Light
  70
 0
  40
@@ -793,51 +793,7 @@ ARIAL_NARROW
  42
 1.0
   3
-arialn.ttf
-  4
-
-  0
-STYLE
-  5
-453
-  2
-ISOCPEUR
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-isocpeur.ttf
-  4
-
-  0
-STYLE
-  5
-455
-  2
-TIMES
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-1.0
-  3
-times.ttf
+OpenSansCondensed-Light.ttf
   4
 
   0

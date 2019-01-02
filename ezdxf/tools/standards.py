@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
-from ezdxf.lldxf.const import EZTICK, EZDOT, EZNONE
+from ezdxf.lldxf.const import Marker
 from ezdxf.options import options
 import logging
 
@@ -81,18 +81,34 @@ def setup_dimension_ticks(dwg: 'Drawing') -> None:
         cross_attribs['lineweight'] = 18
         tick_attribs['lineweight'] = 35
     blocks = dwg.blocks
-    if EZNONE not in blocks:
-        _ = dwg.blocks.new(EZNONE)
+    if Marker.NONE not in blocks:
+        _ = dwg.blocks.new(Marker.NONE)
 
-    if EZDOT not in blocks:
-        blk = blocks.new(EZDOT)
-        add_cross(blk, size=(.005, .005))
+    if Marker.DOT not in blocks:
+        blk = blocks.new(Marker.DOT)  # radius = 2mm
+        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
+        blk.add_circle(center=(0, 0), radius=.002, dxfattribs=tick_attribs)
+
+    if Marker.DOT_SMALL not in blocks:  # radius = 1mm
+        blk = blocks.new(Marker.DOT_SMALL)
+        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
         blk.add_circle(center=(0, 0), radius=.001, dxfattribs=tick_attribs)
 
-    if EZTICK not in blocks:
-        blk = blocks.new(EZTICK)
-        add_cross(blk, size=(.0025, .005))
-        s2 = .0025/2.
+    if Marker.DOT_BIG not in blocks:  # radius = 3mm
+        blk = blocks.new(Marker.DOT_BIG)
+        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
+        blk.add_circle(center=(0, 0), radius=.003, dxfattribs=tick_attribs)
+
+    if Marker.TICK not in blocks:  # size = 2.5mm
+        blk = blocks.new(Marker.TICK)
+        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
+        s2 = .00125
+        blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
+
+    if Marker.TICK_SMALL not in blocks:  # size = 1.5mm
+        blk = blocks.new(Marker.TICK_SMALL)
+        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
+        s2 = .00075
         blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
 
 
@@ -148,7 +164,7 @@ class DimStyleFmt:
         return self.scale * self.unit_factor
 
 
-def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = 'EZTICK', name: str = '') -> None:
+def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = Marker.TICK, name: str = '') -> None:
     """
     Easy DimStyle setup, the `fmt` string defines four essential dimension parameters separated by the `_` character.
     Tested and works with the metric system, I don't touch the 'english unit' system.
@@ -245,20 +261,29 @@ def styles():
     """
     return [
         ('STANDARD', 'txt'),
-        ('ARIAL', 'arial.ttf'),
-        ('ARIAL_NARROW', 'arialn.ttf'),
-        ('ISOCPEUR', 'isocpeur.ttf'),
-        ('TIMES', 'times.ttf'),
-        ('OPEN_SANS_LIGHT', 'OpenSans-Light.ttf'),
-        ('OPEN_SANS_LIGHT_ITALIC', 'OpenSans-LightItalic.ttf'),
-        ('OPEN_SANS', 'OpenSans-Regular.ttf'),
-        ('OPEN_SANS_ITALIC', 'OpenSans-Italic.ttf'),
-        ('OPEN_SANS_SEMIBOLD', 'OpenSans-SemiBold.ttf'),
-        ('OPEN_SANS_SEMIBOLD_ITALIC', 'OpenSans-SemiBoldItalic.ttf'),
-        ('OPEN_SANS_BOLD', 'OpenSans-Bold.ttf'),
-        ('OPEN_SANS_BOLD_ITALIC', 'OpenSans-BoldItalic.ttf'),
-        ('OPEN_SANS_EXTRABOLD', 'OpenSans-ExtraBold.ttf'),
-        ('OPEN_SANS_EXTRABOLD_ITALIC', 'OpenSans-ExtraBoldItalic.ttf'),
-        ('OPEN_SANS_CONDENSED_BOLD', 'OpenSansCondensed-Bold.ttf'),
-        ('OPEN_SANS_CONDENSED_LIGHT', 'OpenSansCondensed-Light.ttf'),
+        ('OpenSans-Light', 'OpenSans-Light.ttf'),
+        ('OpenSans-Light-Italic', 'OpenSans-LightItalic.ttf'),
+        ('OpenSans', 'OpenSans-Regular.ttf'),
+        ('OpenSans-Italic', 'OpenSans-Italic.ttf'),
+        ('OpenSans-SemiBold', 'OpenSans-SemiBold.ttf'),
+        ('OpenSans-SemiBoldItalic', 'OpenSans-SemiBoldItalic.ttf'),
+        ('OpenSans-Bold', 'OpenSans-Bold.ttf'),
+        ('OpenSans-BoldItalic', 'OpenSans-BoldItalic.ttf'),
+        ('OpenSans-ExtraBold', 'OpenSans-ExtraBold.ttf'),
+        ('OpenSans-ExtraBoldItalic', 'OpenSans-ExtraBoldItalic.ttf'),
+        ('OpenSansCondensed-Bold', 'OpenSansCondensed-Bold.ttf'),
+        ('OpenSansCondensed-Light', 'OpenSansCondensed-Light.ttf'),
+        ('OpenSansCondensed-Italic', 'OpenSansCondensed-LightItalic.ttf'),
+        ('LiberationSans', 'LiberationSans-Regular.ttf'),
+        ('LiberationSans-Bold', 'LiberationSans-Bold.ttf'),
+        ('LiberationSans-BoldItalic', 'LiberationSans-BoldItalic.ttf'),
+        ('LiberationSans-Italic', 'LiberationSans-Italic.ttf'),
+        ('LiberationSerif', 'LiberationSerif-Regular.ttf'),
+        ('LiberationSerif-Bold', 'LiberationSerif-Bold.ttf'),
+        ('LiberationSerif-BoldItalic', 'LiberationSerif-BoldItalic.ttf'),
+        ('LiberationSerif-Italic', 'LiberationSerif-Italic.ttf'),
+        ('LiberationMono', 'LiberationMono-Regular.ttf'),
+        ('LiberationMono-Bold', 'LiberationMono-Bold.ttf'),
+        ('LiberationMono-BoldItalic', 'LiberationMono-BoldItalic.ttf'),
+        ('LiberationMono-Italic', 'LiberationMono-Italic.ttf'),
     ]

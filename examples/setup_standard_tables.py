@@ -27,7 +27,7 @@ def main():
         msp.add_text(name, dxfattribs={
             'insert': (0, n + 0.1),
             'height': 0.25,
-            'style': 'ARIAL'
+            'style': 'OpenSans'
         })
     dwg.saveas('standard_linetypes.dxf')
 

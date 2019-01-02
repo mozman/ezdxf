@@ -3,6 +3,7 @@
 # Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
+
 import pathlib
 OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
 
@@ -49,7 +50,7 @@ def linear_tutorial_ext_lines():
         'dimexo': 0.5,
         'dimexe': 0.5,
         'dimdle': 0.5,
-        'dimblk': 'EZNONE',
+        'dimblk': ezdxf.Marker.NONE,
         'dimclrt': 3,
     }
     msp.render_dimension(dim, override=attributes)

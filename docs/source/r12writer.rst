@@ -40,10 +40,8 @@ If using FIXED-TABLES, following predefined line types are available:
 
 If using FIXED-TABLES, following predefined text styles are available:
 
-- ARIAL
-- ARIAL_NARROW
-- ISOCPEUR
-- TIMES
+- OpenSans
+- OpenSansCondensed-Light
 
 Tutorial
 --------
@@ -89,7 +87,7 @@ Show all available line types::
     with r12writer('r12_linetypes.dxf', fixed_tables=True) as dxf:
         for n, ltype in enumerate(LINETYPES):
             dxf.add_line((0, n), (10, n), linetype=ltype)
-            dxf.add_text(ltype, (0, n+0.1), height=0.25, style='ARIAL_NARROW')
+            dxf.add_text(ltype, (0, n+0.1), height=0.25, style='OpenSansCondensed-Light')
 
 Reference
 ---------
