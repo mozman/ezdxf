@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
-from ezdxf.lldxf.const import Marker
+from ezdxf.lldxf.const import Arrows
 from ezdxf.options import options
 import logging
 
@@ -65,56 +65,8 @@ def setup_styles(dwg: 'Drawing') -> None:
         })
 
 
-def setup_dimension_ticks(dwg: 'Drawing') -> None:
-    # ticks scaled for 1:1 drawing unit = 1 m
-    # tick size on paper 5x5mm
-    def add_cross(block, size=(1., 1.)):
-        h, v = size
-        h = h / 2
-        v = v / 2
-        block.add_line((-h, 0), (h, 0), dxfattribs=cross_attribs)
-        block.add_line((0, -v), (0, v), dxfattribs=cross_attribs)
-
-    cross_attribs = {'color': 0}
-    tick_attribs = {'color': 0}
-    if dwg.dxfversion > 'AC1009':
-        cross_attribs['lineweight'] = 18
-        tick_attribs['lineweight'] = 35
-    blocks = dwg.blocks
-    if Marker.NONE not in blocks:
-        _ = dwg.blocks.new(Marker.NONE)
-
-    if Marker.DOT not in blocks:
-        blk = blocks.new(Marker.DOT)  # radius = 2mm
-        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
-        blk.add_circle(center=(0, 0), radius=.002, dxfattribs=tick_attribs)
-
-    if Marker.DOT_SMALL not in blocks:  # radius = 1mm
-        blk = blocks.new(Marker.DOT_SMALL)
-        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
-        blk.add_circle(center=(0, 0), radius=.001, dxfattribs=tick_attribs)
-
-    if Marker.DOT_BIG not in blocks:  # radius = 3mm
-        blk = blocks.new(Marker.DOT_BIG)
-        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
-        blk.add_circle(center=(0, 0), radius=.003, dxfattribs=tick_attribs)
-
-    if Marker.TICK not in blocks:  # size = 2.5mm
-        blk = blocks.new(Marker.TICK)
-        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
-        s2 = .00125
-        blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
-
-    if Marker.TICK_SMALL not in blocks:  # size = 1.5mm
-        blk = blocks.new(Marker.TICK_SMALL)
-        add_cross(blk, size=(.0025, .005))  # w/h = 2.5mm/5mm
-        s2 = .00075
-        blk.add_line((-s2, -s2), (s2, s2), dxfattribs=tick_attribs)
-
-
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
-    setup_dimension_ticks(dwg)
     setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
 
     if domain == 'metric':
@@ -161,10 +113,26 @@ class DimStyleFmt:
 
     @property
     def dimasz(self):
-        return self.scale * self.unit_factor
+        return self.unit_factor
+
+    @property
+    def dimexe(self):
+        return 0.5 * self.unit_factor
+
+    @property
+    def dimexo(self):
+        return .1 * self.unit_factor
+
+    @property
+    def dimdle(self):
+        return .25 * self.unit_factor
+
+    @property
+    def dimtsz(self):
+        return 0.5 * self.unit_factor
 
 
-def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = Marker.TICK, name: str = '') -> None:
+def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> None:
     """
     Easy DimStyle setup, the `fmt` string defines four essential dimension parameters separated by the `_` character.
     Tested and works with the metric system, I don't touch the 'english unit' system.
@@ -181,7 +149,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = Mark
         dwg: DXF drawing
         fmt: format string
         style: text style for measurement
-        tick: dimension line marker as block name
+        blk: block name for arrow None for oblique stroke
         name: dimension style name, if name is '', `fmt` string is used as name
 
     """
@@ -195,14 +163,17 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, tick: str = Mark
     dimstyle = cast('DimStyle', dwg.dimstyles.new(name))
     dimstyle.dxf.dimtxt = fmt.height * fmt.text_factor * fmt.scale
     dimstyle.dxf.dimlfac = fmt.dimlfac  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
-    dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
     dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # gap between text and dimension line
     dimstyle.dxf.dimtad = 1  # text above dimline
-    dimstyle.dxf.dimexe = 0.
-    dimstyle.dxf.dimexo = 0.
-    dimstyle.dxf.dimdle = 0.
+    dimstyle.dxf.dimexe = fmt.dimexe
+    dimstyle.dxf.dimexo = fmt.dimexo
+    dimstyle.dxf.dimdle = fmt.dimdle
     dimstyle.dxf.dimsah = 0
-    dimstyle.set_ticks(blk=tick)
+    if blk is None:  # oblique stroke
+        dimstyle.dxf.dimtsz = fmt.dimtsz
+    else:  # arrow or block
+        dimstyle.set_blocks(blk=blk)
+        dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
     if dwg.dxfversion > 'AC1009':
         # set text style
         dimstyle.dxf.dimtxsty = style

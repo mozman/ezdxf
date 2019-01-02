@@ -10,6 +10,7 @@ from ezdxf.lldxf.const import DXFKeyError
 from ezdxf.legacy import tableentries as legacy
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools.complex_ltype import lin_compiler
+from ezdxf.lldxf.const import Arrows
 
 logger = logging.getLogger('ezdxf')
 
@@ -389,15 +390,15 @@ class DimStyle(legacy.DimStyle):
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
 
-    def set_ticks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+    def set_blocks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
         def set_blk_handle(attr: str) -> None:
             blk_name = self.get_dxf_attrib(attr)
-            if blk_name in ('', '#'):  # block not defined
+            if blk_name in Arrows:  # not real blocks
                 return
             blk = blocks.get(blk_name)
             self.set_dxf_attrib(attr+'_handle', blk.block_record_handle)
 
-        super().set_ticks(blk, blk1, blk2)
+        super().set_blocks(blk, blk1, blk2)
         blocks = self.drawing.blocks
         set_blk_handle('dimblk')
         set_blk_handle('dimblk1')

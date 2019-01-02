@@ -22,14 +22,19 @@ def test_handle_code(dimstyle):
 
 
 def test_set_blk1_and_blk2_ticks(dimstyle):
-    dimstyle.set_ticks('', 'left_arrow', 'right_arrow')
+    dimstyle.set_blocks('', 'left_arrow', 'right_arrow')
     assert dimstyle.dxf.dimblk == ''
     assert dimstyle.dxf.dimblk1 == 'left_arrow'
     assert dimstyle.dxf.dimblk2 == 'right_arrow'
 
 
 def test_set_both_ticks(dimstyle):
-    dimstyle.set_ticks('arrow')
+    dimstyle.set_blocks('arrow')
     assert dimstyle.dxf.dimblk == 'arrow'
-    assert dimstyle.dxf.dimblk1 == 'arrow'
-    assert dimstyle.dxf.dimblk2 == 'arrow'
+    assert dimstyle.dxf.dimblk1 == ''
+    assert dimstyle.dxf.dimblk2 == ''
+
+    dimstyle.set_blocks(blk1='OPEN', blk2='DOT')
+    assert dimstyle.dxf.dimblk == ''
+    assert dimstyle.dxf.dimblk1 == 'OPEN'
+    assert dimstyle.dxf.dimblk2 == 'DOT'

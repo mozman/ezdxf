@@ -7,7 +7,7 @@ from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.validator import is_valid_layer_name
-from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError
+from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError, Arrows
 from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
 
 if TYPE_CHECKING:
@@ -558,7 +558,6 @@ class DimStyle(DXFEntity):
         'dimclrd': DXFAttr(176),
         'dimclre': DXFAttr(177),
         'dimclrt': DXFAttr(178),
-        'dimdec': DXFAttr(271),
     }))
 
     def print_attribs(self) -> None:
@@ -567,27 +566,23 @@ class DimStyle(DXFEntity):
             'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac',
             'dimtvp', 'dimtfac', 'dimgap', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad',
             'dimzin', 'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt',
-            'dimdec'
         ]
         for name in attribs:
+            code = self.DXFATTRIBS[name].code
             value = self.get_dxf_attrib(name, None)
-            print("{name}= {value}".format(name=name, value=value))
+            print("{name} ({code}) = {value}".format(name=name, value=value, code=code))
 
-    def set_ticks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+    def set_blocks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
         # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set
-        if blk:
-            blk1 = blk
-            blk2 = blk
         self.set_dxf_attrib('dimblk', blk)
         self.set_dxf_attrib('dimblk1', blk1)
         self.set_dxf_attrib('dimblk2', blk2)
 
         # only existing BLOCK definitions allowed
         if self.drawing:
-            # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set
-            if blk == '#':
-                blk = ''
             blocks = self.drawing.blocks
             for b in (blk, blk1, blk2):
+                if b in Arrows:  # not real blocks
+                    continue
                 if b and b not in blocks:
                     raise DXFValueError('BLOCK "{}" does not exist.'.format(blk))

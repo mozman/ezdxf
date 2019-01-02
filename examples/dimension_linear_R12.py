@@ -26,7 +26,7 @@ def linear_tutorial():
     # feature, this additional attributes are not stored in the DIMSTYLE entity, they are just used to render the DIMENSION
     # entity.
     dxf_r2000_attributes = {
-        'dimtxsty': 'OPEN_SANS'  # R12: there is no attribute in DIMSTYLE to store the TEXT style for the measurement text
+        'dimtxsty': 'OpenSans'  # R12: there is no attribute in DIMSTYLE to store the TEXT style for the measurement text
     }
     msp.render_dimension(dim, override=dxf_r2000_attributes)
 
@@ -34,7 +34,7 @@ def linear_tutorial():
     # angle: defines the angle of the dimension line, measurement is the distance between first and second measurement point
     # in direction of `angle`
     dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF')
-    msp.render_dimension(dim2)
+    msp.render_dimension(dim2, override={'dimblk': '', 'dimtsz': 0., 'dimdle': 0.})
 
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
@@ -50,7 +50,7 @@ def linear_tutorial_ext_lines():
         'dimexo': 0.5,
         'dimexe': 0.5,
         'dimdle': 0.5,
-        'dimblk': ezdxf.Marker.NONE,
+        'dimblk': ezdxf.Arrows.none,
         'dimclrt': 3,
     }
     msp.render_dimension(dim, override=attributes)

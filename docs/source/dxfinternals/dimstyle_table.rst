@@ -74,29 +74,6 @@ DIMASZ              41      Controls the size of dimension line and leader line 
 
 DIMBLK              5       Sets the arrowhead block displayed at the ends of dimension lines.
 
-                            Standard AutoCAD blocks shown below:
-
-                            - "" = closed filled
-                            - "_DOT" = dot
-                            - "_DOTSMALL" = dot small
-                            - "_DOTBLANK"= dot blank
-                            - "_ORIGIN" = origin indicator
-                            - "_ORIGIN2" = origin indicator 2
-                            - "_OPEN" = open
-                            - "_OPEN90" = right angle
-                            - "_OPEN30" = open 30
-                            - "_CLOSED" = closed
-                            - "_SMALL" = dot small blank
-                            - "_NONE" = none
-                            - "_OBLIQUE" = oblique
-                            - "_BOXFILLED" = box filled
-                            - "_BOXBLANK" = box
-                            - "_CLOSEDBLANK" = closed blank
-                            - "_DATUMFILLED" = datum triangle filled
-                            - "_DATUMBLANK" = datum triangle
-                            - "_INTEGRAL" = integral
-                            - "_ARCHTICK" = architectural tick
-
 DIMBLK1             6       Sets the arrowhead for the first end of the dimension line when DIMSAH is 1.
 
 DIMBLK2             7       Sets the arrowhead for the second end of the dimension line when DIMSAH is 1.
@@ -118,9 +95,6 @@ DIMCLRD             176     Assigns colors to dimension lines, arrowheads, and d
 DIMCLRE             177     Assigns colors to dimension extension lines, values like DIMCLRD
 
 DIMCLRT             178     Assigns colors to dimension text, values like DIMCLRD
-
-DIMDEC              271     Sets the number of decimal places displayed for the primary units of a dimension. The
-                            precision is based on the units or angle format you have selected.
 
 DIMDLE              46      Sets the distance the dimension line extends beyond the extension line when oblique strokes
                             are drawn instead of arrowheads.
@@ -371,6 +345,9 @@ DIMBLK_HANDLE       342     defines DIMBLK as handle to the BLOCK RECORD entry
 DIMBLK1_HANDLE      343     defines DIMBLK1 as handle to the BLOCK RECORD entry
 
 DIMBLK2_HANDLE      344     defines DIMBLK2 as handle to the BLOCK RECORD entry
+
+DIMDEC              271     Sets the number of decimal places displayed for the primary units of a dimension. The
+                            precision is based on the units or angle format you have selected.
 
 DIMDSEP             278     Specifies a single-character decimal separator to use when creating dimensions whose unit
                             format is decimal. When prompted, enter a single character at the Command prompt. If

@@ -182,7 +182,7 @@ def test_dimstyle_name(dimstyle2):
 
 
 def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
-    dimstyle2.set_ticks('', 'left_arrow', 'right_arrow')
+    dimstyle2.set_blocks('', 'left_arrow', 'right_arrow')
     assert dimstyle2.dxf.dimblk == ''
     assert dimstyle2.dxf.dimblk1 == 'left_arrow'
     assert dimstyle2.dxf.dimblk2 == 'right_arrow'
@@ -196,17 +196,15 @@ def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
 
 
 def test_dimstyle_both_ticks(dimstyle2):
-    dimstyle2.set_ticks('arrow')
+    dimstyle2.set_blocks('arrow')
     assert dimstyle2.dxf.dimblk == 'arrow'
-    assert dimstyle2.dxf.dimblk1 == 'arrow'
-    assert dimstyle2.dxf.dimblk2 == 'arrow'
+    assert dimstyle2.dxf.dimblk1 == ''
+    assert dimstyle2.dxf.dimblk2 == ''
 
     # test handles
     blocks = dimstyle2.drawing.blocks
     arrow = blocks.get('arrow')
     assert dimstyle2.dxf.dimblk_handle == arrow.block_record_handle
-    assert dimstyle2.dxf.dimblk1_handle == arrow.block_record_handle
-    assert dimstyle2.dxf.dimblk2_handle == arrow.block_record_handle
 
 
 def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):

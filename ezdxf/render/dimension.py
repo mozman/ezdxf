@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Tuple, Iterable, Any
 import math
 from ezdxf.algebra import Vector, Ray2D, xround
 from ezdxf.algebra import UCS, PassTroughUCS
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFAttributeError
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFAttributeError, Arrows
 from ezdxf.options import options
 from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
 from ezdxf.tools import suppress_zeros, raise_decimals
@@ -113,19 +113,21 @@ class DimensionBase:
         self.block.add_line(self.wcs(start), self.wcs(end), dxfattribs=attribs)
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
-                     scale: Tuple[float, float] = (1., 1.), dxfattribs: dict = None) -> None:
+                     scale: float = 1., dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
-        sx, sy = scale
-        if sx != 1.:
-            attribs['xscale'] = sx
-        if sy != 1.:
-            attribs['yscale'] = sy
+        if scale != 1.:
+            attribs['xscale'] = scale
+            attribs['yscale'] = scale
         if self.requires_extrusion:
             attribs['extrusion'] = self.ucs.uz
         if dxfattribs:
             attribs.update(dxfattribs)
         self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
+
+    def add_arrow(self, name: str, insert: 'Vertex', rotation: float = 0, scale: float = 1.,
+                  dxfattribs: dict = None) -> None:
+        self.block.add_arrow(name, insert, rotation, scale, dxfattribs)
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -233,31 +235,42 @@ class LinearDimension(DimensionBase):
         self.add_line(start, end, dxfattribs=attribs)
 
     def add_ticks(self, start: 'Vertex', end: 'Vertex') -> None:
+        def check_if_block_exists(name):
+            if name not in blocks:
+                raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
+
         dim = self.dimension.dxf
         blocks = self.drawing.blocks
         get_dxf_attr = self.dim_style.get
-
-        if bool(get_dxf_attr('dimsah')):
-            blk1 = get_dxf_attr('dimblk1')
-            if blk1 not in blocks:
-                raise DXFUndefinedBlockError('Undefined block 1: "{}"'.format(blk1))
-            blk2 = get_dxf_attr('dimblk2')
-            if blk2 not in blocks:
-                raise DXFUndefinedBlockError('Undefined block 2: "{}"'.format(blk2))
-        else:
-            blk = get_dxf_attr('dimblk')
-            if blk in blocks:
-                blk1 = blk
-                blk2 = blk
-            else:
-                raise DXFUndefinedBlockError('Undefined block: "{}"'.format(blk))
-
-        scale = (get_dxf_attr('dimasz'), get_dxf_attr('dimasz'))
         attribs = {
             'color': get_dxf_attr('dimclrd', self.dimension.dxf.color),
         }
-        self.add_blockref(blk1, insert=start, rotation=dim.angle, scale=scale, dxfattribs=attribs)
-        self.add_blockref(blk2, insert=end, rotation=dim.angle, scale=scale, dxfattribs=attribs)
+
+        dimtsz = get_dxf_attr('dimtsz')
+        if dimtsz > 0.:  # oblique stroke
+            self.add_arrow(Arrows.oblique, insert=start, rotation=dim.angle, scale=dimtsz, dxfattribs=attribs)
+            self.add_arrow(Arrows.oblique, insert=end, rotation=dim.angle, scale=dimtsz, dxfattribs=attribs)
+            return
+
+        if bool(get_dxf_attr('dimsah')):
+            blk1 = get_dxf_attr('dimblk1')
+            blk2 = get_dxf_attr('dimblk2')
+        else:
+            blk = get_dxf_attr('dimblk')
+            blk1 = blk
+            blk2 = blk
+
+        scale = get_dxf_attr('dimasz')
+        if blk1 in Arrows:
+            self.add_arrow(blk1, insert=start, rotation=dim.angle, scale=scale, dxfattribs=attribs)
+        else:
+            check_if_block_exists(blk1)
+            self.add_blockref(blk1, insert=start, rotation=dim.angle, scale=scale, dxfattribs=attribs)
+        if blk2 in Arrows:
+            self.add_arrow(blk2, insert=end, rotation=dim.angle+180, scale=scale, dxfattribs=attribs)
+        else:
+            check_if_block_exists(blk2)
+            self.add_blockref(blk2, insert=end, rotation=dim.angle, scale=scale, dxfattribs=attribs)
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
         tad = self.dim_style.get('dimtad', 1)

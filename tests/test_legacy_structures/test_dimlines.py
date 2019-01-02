@@ -44,8 +44,7 @@ def test_horizontal_dimline(dxf12):
 
     block = dxf12.blocks.get(block_name)
     assert len(list(block.query('TEXT'))) == 1
-    assert len(list(block.query('INSERT'))) == 2  # ticks
-    assert len(list(block.query('LINE'))) == 3  # dimension line + 2 extension lines
+    assert len(list(block.query('LINE'))) == 5  # dimension line + 2 extension lines
     assert len(list(block.query('POINT'))) == 3  # def points
 
 
