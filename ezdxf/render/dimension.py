@@ -115,16 +115,22 @@ class DimensionBase:
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
                      scale: float = 1., dxfattribs: dict = None) -> None:
-        attribs = self.default_attributes()
-        attribs['rotation'] = rotation
-        if scale != 1.:
-            attribs['xscale'] = scale
-            attribs['yscale'] = scale
-        if self.requires_extrusion:
-            attribs['extrusion'] = self.ucs.uz
-        if dxfattribs:
-            attribs.update(dxfattribs)
-        self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
+        if name in ARROWS:
+            self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=dxfattribs)
+        else:
+            if name not in self.drawing.blocks:
+                raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
+
+            attribs = self.default_attributes()
+            attribs['rotation'] = rotation
+            if scale != 1.:
+                attribs['xscale'] = scale
+                attribs['yscale'] = scale
+            if self.requires_extrusion:
+                attribs['extrusion'] = self.ucs.uz
+            if dxfattribs:
+                attribs.update(dxfattribs)
+            self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -232,12 +238,7 @@ class LinearDimension(DimensionBase):
         self.add_line(start, end, dxfattribs=attribs)
 
     def add_ticks(self, start: 'Vertex', end: 'Vertex') -> None:
-        def check_if_block_exists(name):
-            if name not in blocks:
-                raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
-
         dim = self.dimension.dxf
-        blocks = self.drawing.blocks
         get_dxf_attr = self.dim_style.get
         attribs = {
             'color': get_dxf_attr('dimclrd', self.dimension.dxf.color),
@@ -245,29 +246,19 @@ class LinearDimension(DimensionBase):
 
         dimtsz = get_dxf_attr('dimtsz')
         if dimtsz > 0.:  # oblique stroke, but double the size
-            ARROWS.render_arrow(self.block, ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
-            ARROWS.render_arrow(self.block, ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
-            return
-
-        if bool(get_dxf_attr('dimsah')):
-            blk1 = get_dxf_attr('dimblk1')
-            blk2 = get_dxf_attr('dimblk2')
+            self.block.add_arrow(ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
+            self.block.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
         else:
-            blk = get_dxf_attr('dimblk')
-            blk1 = blk
-            blk2 = blk
+            if bool(get_dxf_attr('dimsah')):
+                blk1 = get_dxf_attr('dimblk1')
+                blk2 = get_dxf_attr('dimblk2')
+            else:
+                blk = get_dxf_attr('dimblk')
+                blk1 = blk
+                blk2 = blk
 
-        scale = get_dxf_attr('dimasz')
-        if blk1 in ARROWS:
-            ARROWS.insert_arrow(self.block, blk1, insert=start, size=scale, rotation=dim.angle, dxfattribs=attribs)
-        else:
-            check_if_block_exists(blk1)
+            scale = get_dxf_attr('dimasz')
             self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, dxfattribs=attribs)
-
-        if blk2 in ARROWS:
-            ARROWS.insert_arrow(self.block, blk2, insert=end, size=scale, rotation=dim.angle, reverse=True, dxfattribs=attribs)
-        else:
-            check_if_block_exists(blk2)
             self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:

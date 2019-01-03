@@ -539,6 +539,11 @@ class GraphicsFactory:
         return ARROWS.render_arrow(self, name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
                                    dxfattribs=dxfattribs)
 
+    def add_arrow_blockref(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,
+                           reverse: bool = False, dxfattribs: dict = None) -> Vector:
+        return ARROWS.insert_arrow(self, name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
+                                   dxfattribs=dxfattribs)
+
 
 def dimtype(dtype: int, dxfversion: str) -> int:
     # always set user defined text location, because replicating the exact AutoCAD placing is not documented

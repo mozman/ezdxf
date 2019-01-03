@@ -13,8 +13,8 @@ DEFAULT_BETA = 45.
 
 
 class _Arrows:
-    closed_filled = ""  # dimasz = length
-    dot = "DOT"  # dimasz = diameter
+    closed_filled = ""
+    dot = "DOT"
     dot_small = "DOTSMALL"
     dot_blank = "DOTBLANK"
     origin_indicator = "ORIGIN"
@@ -67,10 +67,12 @@ class _Arrows:
         return block_name
 
     def block_name(self, name):
-        if name == "":
-            return "_CLOSED_FILLED"
-        else:
-            return '_' + name.upper()
+        if not self.is_acad_arrow(name):  # common BLOCK definition
+            return name.upper()  # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
+        elif name == "":  # special AutoCAD arrow symbols 'CLOSED_FILLED' has no name
+            return "_CLOSED_FILLED"  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
+        else:  # special AutoCAD arrow symbols have leading '_' as common practice!
+            return '_' + name.upper()  # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'
 
     def insert_arrow(self, layout: 'GenericLayoutType',
                      name: str,
