@@ -57,6 +57,7 @@ def setup_linetypes(dwg: 'Drawing') -> None:
 
 
 def setup_styles(dwg: 'Drawing') -> None:
+    dwg.header['$TEXTSTYLE'] = 'OpenSans'
     for name, font in styles():
         if name in dwg.styles:
             continue
@@ -68,7 +69,7 @@ def setup_styles(dwg: 'Drawing') -> None:
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
     setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
-
+    dwg.header['$DIMSTYLE'] = 'EZDXF'
     if domain == 'metric':
         setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
         setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=options.default_dimension_text_style)
@@ -129,7 +130,7 @@ class DimStyleFmt:
 
     @property
     def dimtsz(self):
-        return 0.5 * self.unit_factor
+        return 0.25 * self.unit_factor
 
 
 def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> None:

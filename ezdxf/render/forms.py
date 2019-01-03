@@ -2,8 +2,8 @@
 # Created: 15.02.2018
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List
-from math import pi, sin, cos
+from typing import TYPE_CHECKING, Iterable, List, Tuple
+from math import pi, sin, cos, radians, tan
 from ezdxf.algebra import Vector, Matrix44
 from ezdxf.algebra.base import is_close_points, is_close
 from ezdxf.algebra.bspline import bspline_control_frame
@@ -91,12 +91,79 @@ def euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation:
         yield vertex.replace(z=elevation)
 
 
+def square(size: float = 1.) -> Tuple[Vector, Vector, Vector, Vector]:
+    """
+    Return 4 vertices for a square with a side length of `size`, lower left corner is (0, 0), upper right corner is
+    (`size`, `size`).
+
+    """
+    return Vector(0, 0), Vector(size, 0), Vector(size, size), Vector(0, size)
+
+
+def box(sx: float = 1., sy: float = 1.) -> Tuple[Vector, Vector, Vector, Vector]:
+    """
+    Return 4 vertices for a box `sx` by `sy`, lower left corner is (0, 0), upper right corner is (`sx`, `sy`).
+
+    """
+    return Vector(0, 0), Vector(sx, 0), Vector(sx, sy), Vector(0, sy)
+
+
+def open_arrow(size: float = 1., angle: float = 30.) -> Tuple[Vector, Vector, Vector]:
+    """
+    Returns 3 vertices for an open arrow `<` of a length of `size` and an enclosing `angle` in degrees.
+    Vertex order: upward end vertex, tip (0, 0) , downward end vertex (anti clockwise order)
+
+    Args:
+        size: length of arrow
+        angle: enclosing angle in degrees
+
+    """
+    h = sin(radians(angle / 2.)) * size
+    return Vector(size, h), Vector(0, 0), Vector(size, -h)
+
+
+def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vector, Vector, Vector, Vector]:
+    """
+    Returns 4 vertices for an arrow of a length of `size`, an enclosing `angle` in degrees and a slanted back side with
+    an angle `beta`.
+
+                ****
+            ****  *
+        ****     *
+    **** angle   X********************
+        ****     * +beta
+            ****  *
+                ****
+
+                ****
+            ****    *
+        ****         *
+    **** angle        X***************
+        ****         * -beta
+            ****    *
+                ****
+
+    Vertex order: upward end vertex, tip (0, 0), downward end vertex, bottom vertex `X` (anti clockwise order).
+
+    Bottom vertex `X` is also the connection point to a continuation line.
+
+    Args:
+        size: length of arrow
+        angle: enclosing angle in degrees
+        beta: angle if back side in degrees
+
+    """
+    h = sin(radians(angle / 2.)) * size
+    back_step = tan(radians(beta)) * h
+    return Vector(size, h), Vector(0, 0), Vector(size, -h), Vector(size - back_step, 0)
+
+
 def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterable[Vector]:
     """
     Simple translation, faster than a Matrix44 transformation.
 
     Args:
-        vertices: list of vertices
+        vertices: iterable of vertices
         vec: translation vector
 
     Returns: yields transformed vertices
@@ -105,6 +172,24 @@ def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterab
     vec = Vector(vec)
     for p in vertices:
         yield vec + p
+
+
+def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> Iterable[Vector]:
+    """
+    Simple rotation about to z-axis at to origin (0, 0), faster than a Matrix44 transformation.
+
+    Args:
+        vertices: iterable of vertices
+        angle: rotation angle
+        deg: True if angle in degrees, False if angle in radians
+
+    Returns: yields transformed vertices
+
+    """
+    if deg:
+        return (Vector(v).rot_z_deg(angle) for v in vertices)
+    else:
+        return (Vector(v).rot_z_rad(angle) for v in vertices)
 
 
 def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:

@@ -1,7 +1,8 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone
+from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone, square, box
+from ezdxf.render.forms import open_arrow, arrow2
 from ezdxf.render.forms import spline_interpolation, spline_interpolated_profiles
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form
@@ -34,6 +35,30 @@ def test_close_circle():
     assert len(list(circle(8, close=True))) == 9
     assert len(list(close_polygon(circle(8, close=True)))) == 9
     assert len(list(close_polygon(circle(8, close=False)))) == 9
+
+
+def test_square():
+    sq = square(2)
+    assert len(sq) == 4
+    assert sq == (Vector(0, 0), Vector(2, 0), Vector(2, 2), Vector(0, 2))
+
+
+def test_box():
+    b = box(3, 2)
+    assert len(b) == 4
+    assert b == (Vector(0, 0), Vector(3, 0), Vector(3, 2), Vector(0, 2))
+
+
+def test_open_arrow():
+    a = open_arrow(3, 60)
+    assert len(a) == 3
+    assert a == (Vector(3, 1.5), Vector(0, 0), Vector(3, -1.5))
+
+
+def test_closed_arrow():
+    a = arrow2(3, 60, 45)
+    assert len(a) == 4
+    assert a == (Vector(3, 1.5), Vector(0, 0), Vector(3, -1.5), Vector(1.5, 0))
 
 
 def test_cube():

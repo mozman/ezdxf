@@ -280,12 +280,6 @@ VERTEX
 0.0
 30
 0.0
-40
-0.0
-41
-0.0
-42
-0.0
 70
 0
 """
@@ -296,9 +290,9 @@ class DXFVertex(GraphicEntity, QuadrilateralMixin):
     TEMPLATE = ExtendedTags.from_text(_VERTEX_TPL)
     DXFATTRIBS = make_attribs({
         'location': DXFAttr(10, xtype=XType.any_point),
-        'start_width': DXFAttr(40, default=0.0),
-        'end_width': DXFAttr(41, default=0.0),
-        'bulge': DXFAttr(42, default=0),
+        'start_width': DXFAttr(40, default=0.),
+        'end_width': DXFAttr(41, default=0.),
+        'bulge': DXFAttr(42, default=0.),
         'flags': DXFAttr(70, default=0),
         'tangent': DXFAttr(50),
         'vtx0': DXFAttr(71),

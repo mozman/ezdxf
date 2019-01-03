@@ -535,8 +535,9 @@ class GraphicsFactory:
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
     def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0, reverse: bool = False,
-                  dxfattribs: dict = None) -> None:
-        ARROWS.render(self, name=name, insert=insert, size=size, rotation=rotation,  reverse=reverse, dxfattribs=dxfattribs)
+                  dxfattribs: dict = None) -> Vector:
+        return ARROWS.render_arrow(self, name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
+                                   dxfattribs=dxfattribs)
 
 
 def dimtype(dtype: int, dxfversion: str) -> int:

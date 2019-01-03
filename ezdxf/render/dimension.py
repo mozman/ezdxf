@@ -126,15 +126,6 @@ class DimensionBase:
             attribs.update(dxfattribs)
         self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
 
-    def add_arrow(self, name: str,
-                  insert: 'Vertex',
-                  size: float = 1.,
-                  rotation: float = 0,
-                  reverse: bool = False,
-                  dxfattribs: dict = None) -> None:
-        self.block.add_arrow(name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
-                             dxfattribs=dxfattribs)
-
     def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
@@ -253,9 +244,9 @@ class LinearDimension(DimensionBase):
         }
 
         dimtsz = get_dxf_attr('dimtsz')
-        if dimtsz > 0.:  # oblique stroke
-            self.add_arrow(ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz, dxfattribs=attribs)
-            self.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz, dxfattribs=attribs)
+        if dimtsz > 0.:  # oblique stroke, but double the size
+            ARROWS.render_arrow(self.block, ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
+            ARROWS.render_arrow(self.block, ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
             return
 
         if bool(get_dxf_attr('dimsah')):
@@ -267,14 +258,14 @@ class LinearDimension(DimensionBase):
             blk2 = blk
 
         scale = get_dxf_attr('dimasz')
-        if ARROWS.is_acad_arrow(blk1):
-            self.add_arrow(blk1, insert=start, size=scale, rotation=dim.angle, dxfattribs=attribs)
+        if blk1 in ARROWS:
+            ARROWS.insert_arrow(self.block, blk1, insert=start, size=scale, rotation=dim.angle, dxfattribs=attribs)
         else:
             check_if_block_exists(blk1)
             self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, dxfattribs=attribs)
 
-        if ARROWS.is_acad_arrow(blk2):
-            self.add_arrow(blk2, insert=end, size=scale, rotation=dim.angle, reverse=True, dxfattribs=attribs)
+        if blk2 in ARROWS:
+            ARROWS.insert_arrow(self.block, blk2, insert=end, size=scale, rotation=dim.angle, reverse=True, dxfattribs=attribs)
         else:
             check_if_block_exists(blk2)
             self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
