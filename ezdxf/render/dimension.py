@@ -115,7 +115,7 @@ class DimensionBase:
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
                      scale: float = 1., dxfattribs: dict = None) -> None:
-        if name in ARROWS:
+        if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
             self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=dxfattribs)
         else:
             if name not in self.drawing.blocks:

@@ -24,6 +24,7 @@ Version 0.9a4 - dev
 - CHANGE: moved addons.mesh to render.mesh
 - CHANGE: moved addons.r12spline to render.r12spline
 - CHANGE: moved addons.forms to render.forms
+- NEW: Support for AutoCAD standard arrows
 
 Version 0.8.9 - 2018-11-28
 --------------------------
