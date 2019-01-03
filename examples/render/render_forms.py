@@ -2,7 +2,7 @@
 # License: MIT License
 import math
 import ezdxf
-from ezdxf.addons import forms
+from ezdxf.render import forms
 
 
 def write_mesh(filename, mesh):

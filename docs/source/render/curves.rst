@@ -1,4 +1,4 @@
-.. module:: ezdxf.addons
+.. module:: ezdxf.render
 
 Spline
 ======

@@ -3,7 +3,7 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.addons import R12Spline
+from ezdxf.render import R12Spline
 from ezdxf.algebra import Vector, Matrix44, UCS, OCS
 
 next_frame = Matrix44.translate(0, 7, 0)

@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.addons import R12Spline
+from ezdxf.render import R12Spline
 
 
 CONTROL_POINTS = [(8.55, 2.96), (8.55, -.03), (2.75, -.03), (2.76, 3.05), (4.29, 1.78), (6.79, 3.05)]

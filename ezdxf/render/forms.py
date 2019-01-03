@@ -8,7 +8,7 @@ from ezdxf.algebra import Vector, Matrix44
 from ezdxf.algebra.base import is_close_points, is_close
 from ezdxf.algebra.bspline import bspline_control_frame
 from ezdxf.algebra.eulerspiral import EulerSpiral
-from .mesh import MeshBuilder, MeshVertexMerger
+from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

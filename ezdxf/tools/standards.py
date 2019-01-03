@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
-from ezdxf.lldxf.const import Arrows
+from ezdxf.render.arrows import ARROWS
 from ezdxf.options import options
 import logging
 

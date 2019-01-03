@@ -3,7 +3,7 @@
 # Copyright (c) 2016 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
-from .mesh import MeshBuilder, MeshVertexMerger
+from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44

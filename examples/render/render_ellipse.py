@@ -3,7 +3,7 @@
 # License: MIT License
 from math import radians
 import ezdxf
-from ezdxf.addons import ellipse
+from ezdxf.render.forms import ellipse
 from ezdxf.algebra import Matrix44
 
 NAME = 'ellipse.dxf'

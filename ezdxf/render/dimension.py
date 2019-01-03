@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Tuple, Iterable, Any
 import math
 from ezdxf.algebra import Vector, Ray2D, xround
 from ezdxf.algebra import UCS, PassTroughUCS
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFAttributeError, Arrows
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFAttributeError
 from ezdxf.options import options
 from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
 from ezdxf.tools import suppress_zeros, raise_decimals
+from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BlockLayout, Vertex
@@ -125,9 +126,14 @@ class DimensionBase:
             attribs.update(dxfattribs)
         self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
 
-    def add_arrow(self, name: str, insert: 'Vertex', rotation: float = 0, scale: float = 1.,
+    def add_arrow(self, name: str,
+                  insert: 'Vertex',
+                  size: float = 1.,
+                  rotation: float = 0,
+                  reverse: bool = False,
                   dxfattribs: dict = None) -> None:
-        self.block.add_arrow(name, insert, rotation, scale, dxfattribs)
+        self.block.add_arrow(name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
+                             dxfattribs=dxfattribs)
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -248,8 +254,8 @@ class LinearDimension(DimensionBase):
 
         dimtsz = get_dxf_attr('dimtsz')
         if dimtsz > 0.:  # oblique stroke
-            self.add_arrow(Arrows.oblique, insert=start, rotation=dim.angle, scale=dimtsz, dxfattribs=attribs)
-            self.add_arrow(Arrows.oblique, insert=end, rotation=dim.angle, scale=dimtsz, dxfattribs=attribs)
+            self.add_arrow(ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz, dxfattribs=attribs)
+            self.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz, dxfattribs=attribs)
             return
 
         if bool(get_dxf_attr('dimsah')):
@@ -261,16 +267,17 @@ class LinearDimension(DimensionBase):
             blk2 = blk
 
         scale = get_dxf_attr('dimasz')
-        if blk1 in Arrows:
-            self.add_arrow(blk1, insert=start, rotation=dim.angle, scale=scale, dxfattribs=attribs)
+        if ARROWS.is_acad_arrow(blk1):
+            self.add_arrow(blk1, insert=start, size=scale, rotation=dim.angle, dxfattribs=attribs)
         else:
             check_if_block_exists(blk1)
-            self.add_blockref(blk1, insert=start, rotation=dim.angle, scale=scale, dxfattribs=attribs)
-        if blk2 in Arrows:
-            self.add_arrow(blk2, insert=end, rotation=dim.angle+180, scale=scale, dxfattribs=attribs)
+            self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, dxfattribs=attribs)
+
+        if ARROWS.is_acad_arrow(blk2):
+            self.add_arrow(blk2, insert=end, size=scale, rotation=dim.angle, reverse=True, dxfattribs=attribs)
         else:
             check_if_block_exists(blk2)
-            self.add_blockref(blk2, insert=end, rotation=dim.angle, scale=scale, dxfattribs=attribs)
+            self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
         tad = self.dim_style.get('dimtad', 1)

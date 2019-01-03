@@ -307,40 +307,6 @@ UNDERLAY_ON = 2
 UNDERLAY_MONOCHROME = 4
 UNDERLAY_ADJUST_FOR_BG = 8
 
-
-class _Arrows:
-    closed_filled = ""
-    dot = "DOT"
-    dot_small = "DOTSMALL"
-    dot_blank = "DOTBLANK"
-    origin_indicator = "ORIGIN"
-    origin_indicator_2 = "ORIGIN2"
-    open = "OPEN"
-    right_angle = "OPEN90"
-    open_30 = "OPEN30"
-    vlosed = "CLOSED"
-    dot_smallblank = "SMALL"
-    none = "NONE"
-    oblique = "OBLIQUE"
-    box_filled = "BOXFILLED"
-    box = "BOXBLANK"
-    closed_blank = "CLOSEDBLANK"
-    datum_triangle_filled = "DATUMFILLED"
-    datum_triangle = "DATUMBLANK"
-    integral = "INTEGRAL"
-    architectural_tick = "ARCHTICK"
-    __all_names__ = {
-        "", "DOT", "DOTSMALL", "DOTBLANK", "ORIGIN", "ORIGIN2", "OPEN", "OPEN90", "OPEN30", "CLOSED", "SMALL", "NONE",
-        "OBLIQUE", "BOXFILLED", "BOXBLANK", "CLOSEDBLANK", "DATUMFILLED", "DATUMBLANK", "INTEGRAL", "ARCHTICK",
-    }
-
-    def __contains__(self, item):
-        return item.upper() in self.__all_names__
-
-
-Arrows = _Arrows()
-
-
 DIM_LINEAR = 0
 DIM_ALIGNED = 1
 DIM_ANGULAR = 2
@@ -351,7 +317,6 @@ DIM_ORDINATE = 6
 DIM_BLOCK_EXCLUSIVE = 32
 DIM_ORDINATE_TYPE = 64
 DIM_USER_LOCATION_OVERRIDE = 128
-
 
 # ATTRIB & ATTDEF flags
 ATTRIB_INVISIBLE = 1  # Attribute is invisible (does not appear)

@@ -3,7 +3,7 @@
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.addons import Spline
+from ezdxf.render import Spline
 from ezdxf.algebra import Vector, Matrix44
 
 

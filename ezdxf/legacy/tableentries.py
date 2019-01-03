@@ -7,7 +7,8 @@ from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.validator import is_valid_layer_name
-from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError, Arrows
+from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError
+from ezdxf.render.arrows import ARROWS
 from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
 
 if TYPE_CHECKING:
@@ -582,7 +583,7 @@ class DimStyle(DXFEntity):
         if self.drawing:
             blocks = self.drawing.blocks
             for b in (blk, blk1, blk2):
-                if b in Arrows:  # not real blocks
+                if ARROWS.is_acad_arrow(b):  # not real blocks
                     continue
                 if b and b not in blocks:
                     raise DXFValueError('BLOCK "{}" does not exist.'.format(blk))

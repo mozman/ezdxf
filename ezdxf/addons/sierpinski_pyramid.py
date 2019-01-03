@@ -4,7 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple
 import math
-from .mesh import MeshBuilder, MeshVertexMerger
+from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44

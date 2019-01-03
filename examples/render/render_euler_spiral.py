@@ -4,7 +4,7 @@
 # License: MIT License
 from math import radians
 import ezdxf
-from ezdxf.addons import EulerSpiral
+from ezdxf.render import EulerSpiral
 from ezdxf.algebra import Matrix44
 
 

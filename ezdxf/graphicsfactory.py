@@ -4,9 +4,10 @@
 from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast
 import math
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFValueError, DXFVersionError, Arrows
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
+from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:  # import forward references
     from eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
@@ -533,21 +534,9 @@ class GraphicsFactory:
         dxfattribs['dimtype'] = dimtype(const.DIM_ORDINATE, self.dxfversion)
         return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
 
-    def add_arrow(self, name: str, insert: 'Vertex', rotation: float = 0, size: float = 1.,
+    def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0, reverse: bool = False,
                   dxfattribs: dict = None) -> None:
-        p1 = Vector(insert)
-        direction = Vector.from_deg_angle(rotation)
-
-        if name == Arrows.closed_filled:
-            size = size * .25
-            p2 = p1 + direction * size
-            d = (p2 - p1).orthogonal().normalize(size / 4)
-            self.add_solid([p1, p2 + d, p2 - d], dxfattribs=dxfattribs)
-        elif name == Arrows.dot:
-            self.add_circle(center=insert, radius=size, dxfattribs=dxfattribs)
-        elif name == Arrows.oblique:
-            d = Vector.from_deg_angle(rotation + 45).normalize(size * .707106781)  # sqrt(2)
-            self.add_line(start=p1 + d, end=p1 - d, dxfattribs=dxfattribs)
+        ARROWS.render(self, name=name, insert=insert, size=size, rotation=rotation,  reverse=reverse, dxfattribs=dxfattribs)
 
 
 def dimtype(dtype: int, dxfversion: str) -> int:

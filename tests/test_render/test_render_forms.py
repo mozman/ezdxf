@@ -1,10 +1,10 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from __future__ import unicode_literals
-from ezdxf.addons.forms import circle, close_polygon, cube, extrude, cylinder, cone
-from ezdxf.addons.forms import spline_interpolation, spline_interpolated_profiles
-from ezdxf.addons.forms import from_profiles_linear, from_profiles_spline
-from ezdxf.addons.forms import rotation_form
+from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone
+from ezdxf.render.forms import spline_interpolation, spline_interpolated_profiles
+from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
+from ezdxf.render.forms import rotation_form
 from ezdxf.algebra.base import is_close_points
 from ezdxf.algebra import Vector
 

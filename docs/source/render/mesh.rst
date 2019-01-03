@@ -1,4 +1,4 @@
-.. module:: ezdxf.addons
+.. module:: ezdxf.render
 
 MeshBuilder
 ===========
@@ -54,7 +54,7 @@ Can only create new meshes.
     Transform actual mesh into a new mesh by applying the transformation matrix to vertices.
 
     :param matrix: transformation matrix as :class:`~ezdxf.algebra.Matrix44`
-    :returns: new :class:`ezdxf.addons.MeshBuilder` object (same type as builder)
+    :returns: new :class:`ezdxf.render.MeshBuilder` object (same type as builder)
 
 .. method:: MeshBuilder.translate(x=0, y=0, z=0)
 

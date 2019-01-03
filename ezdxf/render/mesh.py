@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
 from ezdxf.algebra.vector import Vector
-from ezdxf import DXFValueError
+from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, Matrix44, GenericLayoutType

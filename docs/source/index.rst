@@ -60,6 +60,7 @@ Contents
    introduction
    tutorials
    reference
+   render
    addons
    howto
    dxfinternals

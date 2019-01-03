@@ -4,7 +4,7 @@
 # License: MIT License
 import ezdxf
 from algebra.vector import Vector
-from ezdxf.addons import Bezier
+from ezdxf.render import Bezier
 
 
 def draw_control_point(point, tangent1, tangent2=(0, 0)):

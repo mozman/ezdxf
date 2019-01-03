@@ -11,7 +11,7 @@ Version 0.9a4 - dev
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
 - NEW: Type annotations to core package and add-ons.
-- NEW: Argument `setup` in `ezdxf.new('R12', setup='all')` to setup default line types, text styles and dimension styles, 
+- NEW: Argument `setup` in `ezdxf.new('R12', setup=True)` to setup default line types, text styles and dimension styles, 
   this feature is disabled by default.
 - NEW: Duplicate table entries: `dwg.styles.duplicate_entry('OPEN_SANS_25', new_name='OPEN_SANS_35')`, this works for 
   all tables, but is intended to duplicate STYLES and DIMSTYLES.
@@ -19,6 +19,11 @@ Version 0.9a4 - dev
 - NEW: open source fonts to download https://github.com/mozman/ezdxf/tree/master/fonts
 - __Open Sans Condensed__ font used for default dimension styles
 - NEW: font measuring tool based on tkinter, results are not good but better than nothing
+- NEW: subpackage ezdxf.render, because of DIMENSION rendering 
+- CHANGE: moved addons.curves to render.curves
+- CHANGE: moved addons.mesh to render.mesh
+- CHANGE: moved addons.r12spline to render.r12spline
+- CHANGE: moved addons.forms to render.forms
 
 Version 0.8.9 - 2018-11-28
 --------------------------

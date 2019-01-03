@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 __author__ = "mozman <me@mozman.at>"
 import pytest
 import ezdxf
-from ezdxf.addons import MeshVertexMerger, SierpinskyPyramid
+from ezdxf.render.mesh import MeshVertexMerger
+from ezdxf.addons import SierpinskyPyramid
 
 
 def test_vertex_merger_indices():
