@@ -3,7 +3,7 @@
 # License: MIT License
 import math
 from ezdxf.algebra import Vector
-from typing import Union, Sequence, Iterable, List
+from typing import Union, Iterable, List, Sequence
 Vertex = Union[Vector, Sequence[float]]
 
 
@@ -12,6 +12,7 @@ class Shape:
     Geometry object as vertices list which can be moved, rotated and scaled.
 
     """
+
     def __init__(self, vertices: Iterable[Vertex]):
         self.vertices = Vector.list(vertices)  # type: List[Vector]
 
@@ -37,3 +38,16 @@ class Shape:
         if center is not None:
             self.translate(center)  # faster than a Matrix44 multiplication
 
+    # Sequence interface
+    def __len__(self) -> int:
+        return len(self.vertices)
+
+    def __getitem__(self, item: Union[int, slice]) -> Vector:
+        return self.vertices[item]
+
+    # limited List interface
+    def append(self, vertex: Vertex)->None:
+        self.vertices.append(Vector(vertex))
+
+    def extend(self, vertices: Iterable)->None:
+        self.vertices.extend(Vector.generate(vertices))
