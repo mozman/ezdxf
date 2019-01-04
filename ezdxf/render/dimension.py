@@ -99,6 +99,20 @@ class DimensionBase:
         else:  # user override
             return text
 
+    def get_arrow_names(self) -> Tuple[str, str]:
+        get_dxf_attr = self.dim_style.get
+        dimtsz = get_dxf_attr('dimtsz')
+        blk1, blk2 = None, None
+        if dimtsz == 0.:  # oblique stroke, but double the size
+            if bool(get_dxf_attr('dimsah')):
+                blk1 = get_dxf_attr('dimblk1')
+                blk2 = get_dxf_attr('dimblk2')
+            else:
+                blk = get_dxf_attr('dimblk')
+                blk1 = blk
+                blk2 = blk
+        return blk1, blk2
+
     def format_text(self, value: float) -> str:
         dimrnd = self.dim_style.get('dimrnd', None)
         dimdec = self.dim_style.get('dimdec', None)
@@ -114,9 +128,10 @@ class DimensionBase:
         self.block.add_line(self.wcs(start), self.wcs(end), dxfattribs=attribs)
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
-                     scale: float = 1., dxfattribs: dict = None) -> None:
+                     scale: float = 1., reverse=False, dxfattribs: dict = None) -> Vector:
         if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
-            self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=dxfattribs)
+            return self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, reverse=reverse,
+                                                 dxfattribs=dxfattribs)
         else:
             if name not in self.drawing.blocks:
                 raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
@@ -131,6 +146,7 @@ class DimensionBase:
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
+            return insert
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -185,11 +201,10 @@ class LinearDimension(DimensionBase):
         if not self.suppress_extension_line2:
             self.add_extension_line(dim.defpoint3, dimline_end)
 
-        # add ticks
-        self.add_ticks(dimline_start, dimline_end)
-
-        # add dimension line
-        self.add_dimension_line(dimline_start, dimline_end)
+        blk1, blk2 = self.get_arrow_names()
+        # add arrows
+        dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2)
+        self.add_dimension_line(dimline_start, dimline_end, blk1, blk2)
 
         # add POINT at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
@@ -213,13 +228,13 @@ class LinearDimension(DimensionBase):
         text_rotation = self.dimension.get_dxf_attrib('text_rotation', 0)
         self.add_text(dim_text, pos=pos, rotation=angle + text_rotation, dxfattribs=attribs)
 
-    def add_dimension_line(self, start: 'Vertex', end: 'Vertex') -> None:
-        if not self.dim_style.get('dimsoxd', False):
-            direction = (end - start).normalize()
-            extension = direction * self.dim_style.get('dimdle', 0.)
+    def add_dimension_line(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None) -> None:
+        direction = (end - start).normalize()
+        extension = direction * self.dim_style.get('dimdle', 0.)
+        if blk1 is None or ARROWS.has_extension_line(blk1):
             start = start - extension
+        if blk2 is None or ARROWS.has_extension_line(blk2):
             end = end + extension
-
         # is dimension line crossing text
         attribs = {
             'color': self.dim_style.get('dimclrd', self.dimension.dxf.color)
@@ -237,29 +252,22 @@ class LinearDimension(DimensionBase):
         }
         self.add_line(start, end, dxfattribs=attribs)
 
-    def add_ticks(self, start: 'Vertex', end: 'Vertex') -> None:
+    def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None) -> Tuple[Vector, Vector]:
         dim = self.dimension.dxf
         get_dxf_attr = self.dim_style.get
         attribs = {
             'color': get_dxf_attr('dimclrd', self.dimension.dxf.color),
         }
-
         dimtsz = get_dxf_attr('dimtsz')
         if dimtsz > 0.:  # oblique stroke, but double the size
             self.block.add_arrow(ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
             self.block.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
         else:
-            if bool(get_dxf_attr('dimsah')):
-                blk1 = get_dxf_attr('dimblk1')
-                blk2 = get_dxf_attr('dimblk2')
-            else:
-                blk = get_dxf_attr('dimblk')
-                blk1 = blk
-                blk2 = blk
-
             scale = get_dxf_attr('dimasz')
-            self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, dxfattribs=attribs)
-            self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
+            start = self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, reverse=True,
+                                      dxfattribs=attribs)
+            end = self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
+        return start, end
 
     def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
         tad = self.dim_style.get('dimtad', 1)

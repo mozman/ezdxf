@@ -119,7 +119,7 @@ def open_arrow(size: float = 1., angle: float = 30.) -> Tuple[Vector, Vector, Ve
 
     """
     h = sin(radians(angle / 2.)) * size
-    return Vector(size, h), Vector(0, 0), Vector(size, -h)
+    return Vector(-size, h), Vector(0, 0), Vector(-size, -h)
 
 
 def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vector, Vector, Vector, Vector]:
@@ -155,7 +155,7 @@ def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vec
     """
     h = sin(radians(angle / 2.)) * size
     back_step = tan(radians(beta)) * h
-    return Vector(size, h), Vector(0, 0), Vector(size, -h), Vector(size - back_step, 0)
+    return Vector(-size, h), Vector(0, 0), Vector(-size, -h), Vector(-size + back_step, 0)
 
 
 def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterable[Vector]:

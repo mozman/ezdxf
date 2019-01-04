@@ -87,6 +87,7 @@ class ClosedArrowFilled(ClosedArrow):
         )
 
 
+# The base Arrow is for the 'Right' side ->| of the Dimension oriented, reverse is the 'Left' side |<-.
 class _OpenArrow(BaseArrow):
     REVERSE_ANGLE = 180
 
@@ -123,7 +124,7 @@ class Circle(BaseArrow):
         # shape = [center point, connection point]
         super().__init__([
             Vector(),
-            Vector(self.radius, 0) if not reverse else Vector(-self.radius, 0)
+            Vector(-self.radius, 0) if not reverse else Vector(self.radius, 0)
         ])
         self.place(insert, angle)
 
@@ -163,7 +164,7 @@ class Box(BaseArrow):
             Vector(+s2, -s2),
             Vector(+s2, +s2),
             Vector(-s2, +s2),
-            Vector(+s2, 0) if not reverse else Vector(-s2, 0)
+            Vector(-s2, 0) if not reverse else Vector(+s2, 0)
         ])
         self.place(insert, angle)
 
@@ -213,7 +214,7 @@ class DatumTriangle(BaseArrow):
         super().__init__([
             Vector(0, d),
             Vector(0, -d),
-            Vector(size, 0),
+            Vector(-size, 0),
         ])
         self.place(insert, self.get_angle(angle, reverse))
 
@@ -319,11 +320,23 @@ class _Arrows:
     }
     __all_arrows__ = __acad__ | __ezdxf__
 
+    EXTENSIONS_ALLOWED = {
+        architectural_tick,
+        oblique,
+        none,
+        dot_smallblank,
+        integral,
+        dot_small,
+    }
+
     def is_acad_arrow(self, item: str) -> bool:
         return item.upper() in self.__acad__
 
     def is_ezdxf_arrow(self, item: str) -> bool:
         return item.upper() in self.__ezdxf__
+
+    def has_extension_line(self, name):
+        return name in self.EXTENSIONS_ALLOWED
 
     def __contains__(self, item: str) -> bool:
         return item.upper() in self.__all_arrows__

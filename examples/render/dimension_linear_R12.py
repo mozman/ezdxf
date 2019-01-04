@@ -39,6 +39,28 @@ def linear_tutorial():
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
 
+def linear_all_arrow_style():
+    dwg = ezdxf.new('R12', setup=True)
+    msp = dwg.modelspace()
+    ezdxf_dimstyle = dwg.dimstyles.get('EZDXF')
+    ezdxf_dimstyle.copy_to_header(dwg)
+
+    for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
+        y = index * 4
+
+        dim = msp.add_linear_dim(base=(3, y+2), ext1=(0, y), ext2=(3, y), dimstyle='EZDXF')
+        attributes = {
+            'dimtxsty': 'OpenSans',
+            'dimblk': name,
+            'dimtsz': 0.,
+            'dimdle': 0.5,
+            'dimasz': .25,
+        }
+        msp.render_dimension(dim, override=attributes)
+
+    dwg.saveas(OUTDIR / 'all_arrow_styles_dim_R12.dxf')
+
+
 def linear_tutorial_ext_lines():
     dwg = ezdxf.new('R12', setup=True)
     msp = dwg.modelspace()
@@ -102,16 +124,21 @@ def linear_EZ_MM(fmt):
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
+ALL = False
+
+
 if __name__ == '__main__':
     linear_tutorial()
-    linear_tutorial_ext_lines()
+    linear_all_arrow_style()
+    if ALL:
+        linear_tutorial_ext_lines()
 
-    linear_EZ_M('EZ_M_100_H25_CM')
-    linear_EZ_M('EZ_M_1_H25_CM')
+        linear_EZ_M('EZ_M_100_H25_CM')
+        linear_EZ_M('EZ_M_1_H25_CM')
 
-    linear_EZ_CM('EZ_CM_100_H25_CM')
-    linear_EZ_CM('EZ_CM_1_H25_CM')
+        linear_EZ_CM('EZ_CM_100_H25_CM')
+        linear_EZ_CM('EZ_CM_1_H25_CM')
 
-    linear_EZ_MM('EZ_MM_100_H25_MM')
-    linear_EZ_MM('EZ_MM_1_H25_MM')
+        linear_EZ_MM('EZ_MM_100_H25_MM')
+        linear_EZ_MM('EZ_MM_1_H25_MM')
 

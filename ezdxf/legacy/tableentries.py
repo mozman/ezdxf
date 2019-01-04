@@ -10,6 +10,8 @@ from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError
 from ezdxf.render.arrows import ARROWS
 from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
+import logging
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFFactoryType
@@ -572,6 +574,17 @@ class DimStyle(DXFEntity):
             code = self.DXFATTRIBS[name].code
             value = self.get_dxf_attrib(name, None)
             print("{name} ({code}) = {value}".format(name=name, value=value, code=code))
+
+    def copy_to_header(self, dwg):
+        attribs = self.dxfattribs()
+        header = dwg.header
+        for name, value in attribs.items():
+            if name.startswith('dim'):
+                header_var = '$'+name.upper()
+                try:
+                    header[header_var] = value
+                except DXFValueError:
+                    logger.debug('Unsupported header variable: {}.'.format(header_var))
 
     def set_blocks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
         # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set

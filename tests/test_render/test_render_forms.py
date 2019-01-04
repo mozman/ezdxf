@@ -52,13 +52,13 @@ def test_box():
 def test_open_arrow():
     a = open_arrow(3, 60)
     assert len(a) == 3
-    assert a == (Vector(3, 1.5), Vector(0, 0), Vector(3, -1.5))
+    assert a == (Vector(-3, 1.5), Vector(0, 0), Vector(-3, -1.5))
 
 
 def test_closed_arrow():
     a = arrow2(3, 60, 45)
     assert len(a) == 4
-    assert a == (Vector(3, 1.5), Vector(0, 0), Vector(3, -1.5), Vector(1.5, 0))
+    assert a == (Vector(-3, 1.5), Vector(0, 0), Vector(-3, -1.5), Vector(-1.5, 0))
 
 
 def test_cube():
