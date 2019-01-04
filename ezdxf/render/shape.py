@@ -13,8 +13,8 @@ class Shape:
 
     """
 
-    def __init__(self, vertices: Iterable[Vertex]):
-        self.vertices = Vector.list(vertices)  # type: List[Vector]
+    def __init__(self, vertices: Iterable[Vertex] = None):
+        self.vertices = [] if vertices is None else Vector.list(vertices)  # type: List[Vector]
 
     def translate(self, vector: Vertex) -> None:
         self.vertices = [v + vector for v in self.vertices]

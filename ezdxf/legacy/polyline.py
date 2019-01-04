@@ -154,8 +154,9 @@ class Polyline(GraphicEntity):
     def points(self) -> Iterable['Vertex']:
         return (vertex.dxf.location for vertex in self.vertices())
 
-    def append_vertices(self, points: Sequence['Vertex'], dxfattribs: dict = None) -> None:
+    def append_vertices(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
         dxfattribs = dxfattribs or {}
+        points = list(points)
         if len(points) > 0:
             last_vertex = self._get_last_vertex()
             for new_vertex in self._points_to_dxf_vertices(points, dxfattribs):
