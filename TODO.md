@@ -18,7 +18,7 @@ Python Code
         - copy BLOCK, BLOCK_RECORD, LAYOUT
         - not possible for model space
         - no converting paper space -> model space, this is a rendering task for CAD applications
-
+- optimized Vector class, SVec for simple or speedy vector? profiling required!!!
 
 DXF Entities
 ------------

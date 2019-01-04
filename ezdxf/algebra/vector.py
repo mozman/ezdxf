@@ -48,7 +48,7 @@ class Vector:
         Returns Vector (x, y, 0)
 
         """
-        return Vector(self._x, self._y)
+        return self.__class__(self._x, self._y)
 
     @property
     def xyz(self) -> Tuple[float, float, float]:
@@ -67,23 +67,23 @@ class Vector:
             z = self._z
         return self.__class__(x, y, z)
 
-    @staticmethod
-    def list(items: Iterable[Iterable]) -> List['Vector']:
-        return list(Vector.generate(items))
+    @classmethod
+    def list(cls, items: Iterable[Iterable]) -> List['Vector']:
+        return list(cls.generate(items))
 
-    @staticmethod
-    def generate(items: Iterable[Iterable]) -> Iterable['Vector']:
-        return (Vector(item) for item in items)
+    @classmethod
+    def generate(cls, items: Iterable[Iterable]) -> Iterable['Vector']:
+        return (cls(item) for item in items)
 
-    @staticmethod
-    def from_rad_angle(angle: float, length: float = 1.) -> 'Vector':
-        return Vector(math.cos(angle) * length, math.sin(angle) * length, 0.)
+    @classmethod
+    def from_rad_angle(cls, angle: float, length: float = 1.) -> 'Vector':
+        return cls(math.cos(angle) * length, math.sin(angle) * length, 0.)
 
-    @staticmethod
-    def from_deg_angle(angle: float, length: float = 1.) -> 'Vector':
-        return Vector.from_rad_angle(math.radians(angle), length)
+    @classmethod
+    def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vector':
+        return cls.from_rad_angle(math.radians(angle), length)
 
-    @staticmethod
+    @staticmethod  # allows overriding by inheritance
     def decompose(*args) -> Tuple[float, float, float]:
         """
         Converts input into a (x, y, z) tuple.
@@ -134,7 +134,7 @@ class Vector:
         return hash(self.xyz)
 
     def copy(self) -> 'Vector':
-        return Vector(self._x, self._y, self._z)
+        return self.__class__(self._x, self._y, self._z)
 
     __copy__ = copy
 
@@ -220,7 +220,7 @@ class Vector:
             ccw: counter clockwise if True else clockwise
 
         """
-        return Vector(-self._y, self._x, self._z) if ccw else Vector(self._y, -self._x, self._z)
+        return self.__class__(-self._y, self._x, self._z) if ccw else self.__class__(self._y, -self._x, self._z)
 
     def lerp(self, other: Any, factor=.5) -> 'Vector':
         """
@@ -233,7 +233,7 @@ class Vector:
         Returns: interpolated vector
 
         """
-        d = (Vector(other) - self) * float(factor)
+        d = (self.__class__(other) - self) * float(factor)
         return self.__add__(d)
 
     def project(self, other: Any) -> 'Vector':
@@ -256,7 +256,7 @@ class Vector:
         return not self.is_null
 
     def is_almost_equal(self, other: Any, places: int = 6) -> bool:
-        other = Vector(other)
+        other = self.__class__(other)
         return equals_almost(self.x, other.x, places=places) and \
                equals_almost(self.y, other.y, places=places) and \
                equals_almost(self.z, other.z, places=places)
@@ -298,10 +298,10 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             scalar = float(other)
-            return Vector(self._x + scalar, self._y + scalar, self._z + scalar)
+            return self.__class__(self._x + scalar, self._y + scalar, self._z + scalar)
         else:
             x, y, z = self.decompose(other)
-            return Vector(self._x + x, self._y + y, self._z + z)
+            return self.__class__(self._x + x, self._y + y, self._z + z)
 
     def __radd__(self, other: Any) -> 'Vector':
         """
@@ -323,10 +323,10 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             scalar = float(other)
-            return Vector(self._x - scalar, self._y - scalar, self._z - scalar)
+            return self.__class__(self._x - scalar, self._y - scalar, self._z - scalar)
         else:
             x, y, z = self.decompose(other)
-            return Vector(self._x - x, self._y - y, self._z - z)
+            return self.__class__(self._x - x, self._y - y, self._z - z)
 
     def __rsub__(self, other: Any) -> 'Vector':
         """
@@ -338,10 +338,10 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             scalar = float(other)
-            return Vector(scalar - self._x, scalar - self._y - scalar, scalar - self._z)
+            return self.__class__(scalar - self._x, scalar - self._y - scalar, scalar - self._z)
         else:
             x, y, z = self.decompose(other)
-            return Vector(x - self._x, y - self._y, z - self._z)
+            return self.__class__(x - self._x, y - self._y, z - self._z)
 
     def __mul__(self, other: float) -> 'Vector':
         """
@@ -351,7 +351,7 @@ class Vector:
             other: scale factor
         """
         scalar = float(other)
-        return Vector(self._x * scalar, self._y * scalar, self._z * scalar)
+        return self.__class__(self._x * scalar, self._y * scalar, self._z * scalar)
 
     def __rmul__(self, other: float) -> 'Vector':
         """
@@ -370,7 +370,7 @@ class Vector:
             other: scale factor
         """
         scalar = float(other)
-        return Vector(self._x / scalar, self._y / scalar, self._z / scalar)
+        return self.__class__(self._x / scalar, self._y / scalar, self._z / scalar)
 
     __div__ = __truediv__
 
@@ -382,7 +382,7 @@ class Vector:
             other: scale factor
         """
         scalar = float(other)
-        return Vector(scalar / self._x, scalar / self._y, scalar / self._z)
+        return self.__class__(scalar / self._x, scalar / self._y, scalar / self._z)
 
     __rdiv__ = __rtruediv__
 
@@ -404,10 +404,10 @@ class Vector:
             other: vector as args accepted by Vector()
         """
         x, y, z = self.decompose(other)
-        return Vector(self._y * z - self._z * y, self._z * x - self._x * z, self._x * y - self._y * x)
+        return self.__class__(self._y * z - self._z * y, self._z * x - self._x * z, self._x * y - self._y * x)
 
     def distance(self, other: Any) -> float:
-        v = Vector(other)
+        v = self.__class__(other)
         return v.__sub__(self).magnitude
 
     def angle_between(self, other: Any) -> float:
@@ -419,7 +419,7 @@ class Vector:
 
         """
         v1 = self.normalize()
-        v2 = Vector(other).normalize()
+        v2 = self.__class__(other).normalize()
         return math.acos(v1.dot(v2))
 
     def rot_z_rad(self, angle: float) -> 'Vector':
@@ -432,9 +432,9 @@ class Vector:
         Returns: rotated vector
 
         """
-        v = Vector(self.x, self.y, 0.)
+        v = self.__class__(self.x, self.y, 0.)
         v = Vector.from_rad_angle(v.angle_rad + angle, v.magnitude)
-        return Vector(v.x, v.y, self.z)
+        return self.__class__(v.x, v.y, self.z)
 
     def rot_z_deg(self, angle: float) -> 'Vector':
         """
