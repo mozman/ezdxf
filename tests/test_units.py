@@ -68,42 +68,42 @@ def test_msp_1_in():
 
 def test_paper_space_scale_1_1():
     psu = PaperSpaceUnits(DrawingUnits(1, 'm'), unit='mm', scale=1.)
-    assert psu.msp_to_psp(1, 'm') == 1000, 'should be 1000 mm in paper space'
-    assert psu.msp_to_psp(10, 'cm') == 100
-    assert psu.msp_to_psp(10, 'mm') == 10
+    assert psu.from_msp(1, 'm') == 1000, 'should be 1000 mm in paper space'
+    assert psu.from_msp(10, 'cm') == 100
+    assert psu.from_msp(10, 'mm') == 10
 
     psu = PaperSpaceUnits(DrawingUnits(1, 'yd'), unit='in', scale=1.)
-    assert round(psu.msp_to_psp(1, 'yd')) == 36, 'should be 36 inch in paper space'
-    assert round(psu.msp_to_psp(1, 'ft')) == 12, 'should be 12 inch in paper space'
+    assert round(psu.from_msp(1, 'yd')) == 36, 'should be 36 inch in paper space'
+    assert round(psu.from_msp(1, 'ft')) == 12, 'should be 12 inch in paper space'
 
 
 def test_paper_space_scale_1_100():
     psu = PaperSpaceUnits(DrawingUnits(1, 'm'), unit='mm', scale=100.)
-    assert psu.msp_to_psp(1, 'm') == 10, 'should be 10 mm in paper space'
-    assert psu.msp_to_psp(500, 'cm') == 50
+    assert psu.from_msp(1, 'm') == 10, '1m in msp, should be 10 mm in paper space 1:100'
+    assert psu.from_msp(500, 'cm') == 50
 
     psu = PaperSpaceUnits(DrawingUnits(1, 'yd'), unit='in', scale=100.)
-    assert round(psu.msp_to_psp(1, 'yd'), 2) == .36, 'should be .36 inch in paper space'
-    assert round(psu.msp_to_psp(1, 'ft'), 2) == .12, 'should be .12 inch in paper space'
+    assert round(psu.from_msp(1, 'yd'), 2) == .36, '1 yd in msp, should be .36 inch in paper space 1:100'
+    assert round(psu.from_msp(1, 'ft'), 2) == .12, '1 ft in msp,should be .12 inch in paper space 1:100'
 
 
 def test_paper_space_default():
     # Default: 1 drawing unit = 1 m, paperspace units = 'mm', scale = 1:1
     psu = PaperSpaceUnits()
-    assert psu.msp_to_psp(1, 'm') == 1000
+    assert psu.from_msp(1, 'm') == 1000
 
     psu = PaperSpaceUnits(scale=100)
-    assert psu.msp_to_psp(1, 'm') == 10
+    assert psu.from_msp(1, 'm') == 10
 
 
 def test_paper_space_to_model_space_metric():
     psu = PaperSpaceUnits(msp=DrawingUnits(1, 'm'), scale=100)
-    assert psu.psp_to_msp(10, 'mm') == 1, '1mm in PSP 1:100 => should be 1 drawing unit in model space'
-    assert psu.psp_to_msp(5, 'cm') == 5, '5cm in PSP 1:100 => should be 5 drawing unit in model space'
+    assert psu.to_msp(10, 'mm') == 1, '1mm in PSP 1:100 => should be 1 drawing unit in model space'
+    assert psu.to_msp(5, 'cm') == 5, '5cm in PSP 1:100 => should be 5 drawing unit in model space'
 
 
 def test_paper_space_to_model_space_us():
     psu = PaperSpaceUnits(msp=DrawingUnits(1, 'yd'), scale=100)
-    assert isclose(psu.psp_to_msp(1, 'in'), 2.77777777777), '1 inch in PSP 1:100 => should be 2.777 drawing unit in model space'
+    assert isclose(psu.to_msp(1, 'in'), 2.77777777777), '1 inch in PSP 1:100 => should be 2.777 drawing unit in model space'
 
 

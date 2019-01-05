@@ -37,11 +37,11 @@ class PaperSpaceUnits:
         self._msp = msp
         self._psp = DrawingUnits(1, self.unit)
 
-    def msp_to_psp(self, value: float, unit: str):
+    def from_msp(self, value: float, unit: str):
         drawing_units = value * self._msp(unit.lower())
         return drawing_units / (self._msp(self.unit) * self.scale)
 
-    def psp_to_msp(self, value: float, unit: str):
+    def to_msp(self, value: float, unit: str):
         paper_space_units = value * self.scale * self._psp.factor(unit)
         model_space_units = paper_space_units * self._msp.factor(self.unit)
         return model_space_units
