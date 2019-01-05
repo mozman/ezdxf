@@ -389,11 +389,12 @@ class DimStyle(legacy.DimStyle):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
+    CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(legacy.dim_filter))
 
     def set_blocks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
         def set_blk_handle(attr: str) -> None:
             blk_name = self.get_dxf_attrib(attr)
-            if ARROWS.is_acad_arrow(blk_name):  # not real blocks
+            if ARROWS.is_acad_arrow(blk_name):
                 return
             blk = blocks.get(blk_name)
             self.set_dxf_attrib(attr+'_handle', blk.block_record_handle)

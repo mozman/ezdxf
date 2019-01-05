@@ -2,10 +2,9 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.lldxf.const import DXFInternalEzdxfError
-from ezdxf.lldxf import const
+from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError
 from ezdxf.lldxf.types import get_xcode_for
-
+from ezdxf.tools import take2
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 if TYPE_CHECKING:
@@ -140,17 +139,25 @@ class Dimension(GraphicEntity):
         return self.dxf.dimtype & 7
 
     def dim_style(self) -> 'DimStyle':
-        if self.drawing is not None:
-            dim_style_name = self.dxf.dimstyle
-            # raises ValueError if not exists, but all used dim styles should exists!
-            return self.drawing.dimstyles.get(dim_style_name)
-        else:
+        if self.drawing is None:
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
+
+        dim_style_name = self.dxf.dimstyle
+        # raises ValueError if not exists, but all used dim styles should exists!
+        return self.drawing.dimstyles.get(dim_style_name)
 
     def cast(self) -> 'Dimension':  # for modern dimension lines
         return self
 
     def set_acad_dstyle(self, data: dict, dim_style) -> None:
+        if self.drawing is None:
+            raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
+
+        if ('dimtxsty' in data) and (self.drawing.dxfversion > 'AC1009'):
+            dimtxsty = data['dimtxsty']
+            txtstyle = self.drawing.styles.get(dimtxsty)
+            data['dimtxsty_handle'] = txtstyle.dxf.handle
+
         tags = []
         for key, value in data.items():
             dxf_attr = dim_style.DXFATTRIBS.get(key)
@@ -160,3 +167,21 @@ class Dimension(GraphicEntity):
 
         if len(tags):
             self.set_xdata_list('ACAD', 'DSTYLE', tags)
+
+    def get_acad_dstyle(self, dim_style) -> dict:
+        try:
+            data = self.get_xdata_list('ACAD', 'DSTYLE')
+        except DXFValueError:
+            return {}
+        attribs = {}
+        codes = dim_style.CODE_TO_DXF_ATTRIB
+        for code_tag, value_tag in take2(data):
+            group_code = code_tag.value
+            value = value_tag.value
+            if group_code in codes:
+                attribs[codes[group_code]] = value
+        return attribs
+
+    def dimstyle_override(self, dxfattribs=None):
+        from ezdxf.override import DimStyleOverride
+        return DimStyleOverride(self, override=dxfattribs)

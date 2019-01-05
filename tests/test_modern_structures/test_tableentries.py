@@ -215,6 +215,16 @@ def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):
     assert dimstyle2.dxf.dimtxsty == 'TestStyle'
 
 
+def test_dimstyle_group_codes(dimstyle):
+    codes = DimStyle.CODE_TO_DXF_ATTRIB
+    assert 105 not in codes
+    assert 2 not in codes
+    assert 70 not in codes
+    assert 5 in codes and codes[5] == 'dimblk'
+    assert 6 in codes and codes[6] == 'dimblk1'
+    assert 7 in codes and codes[7] == 'dimblk2'
+
+
 def test_block_record_name():
     blockrec = BlockRecord.new('FFFF', dxfattribs={
         'name': 'BLOCKREC1',

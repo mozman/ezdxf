@@ -242,3 +242,8 @@ class DXFAttributes:
 
     def subclasses(self) -> Iterable[DefSubclass]:
         return iter(self._subclasses)
+
+    def build_group_code_items(self, func=lambda x: True):
+        for name, attrib in self.items():
+            if attrib.code > 0 and func(name):  # skip internal tags
+                yield attrib.code, name

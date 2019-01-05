@@ -11,6 +11,7 @@ from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError
 from ezdxf.render.arrows import ARROWS
 from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
 import logging
+
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
@@ -515,6 +516,10 @@ DIMSTYLENAME
 """
 
 
+def dim_filter(name: str) -> bool:
+    return name.startswith('dim')
+
+
 class DimStyle(DXFEntity):
     __slots__ = ()
     TEMPLATE = ExtendedTags.from_text(_DIMSTYLETEMPLATE)
@@ -562,6 +567,7 @@ class DimStyle(DXFEntity):
         'dimclre': DXFAttr(177),
         'dimclrt': DXFAttr(178),
     }))
+    CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(dim_filter))
 
     def print_attribs(self) -> None:
         attribs = [
@@ -580,7 +586,7 @@ class DimStyle(DXFEntity):
         header = dwg.header
         for name, value in attribs.items():
             if name.startswith('dim'):
-                header_var = '$'+name.upper()
+                header_var = '$' + name.upper()
                 try:
                     header[header_var] = value
                 except DXFValueError:

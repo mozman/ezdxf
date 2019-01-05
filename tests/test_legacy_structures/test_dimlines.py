@@ -1,9 +1,9 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-
 import pytest
 import ezdxf
-from ezdxf.render.dimension import DimStyleOverride, DXFAttributeError, format_text, DXFValueError
+from ezdxf.lldxf.const import DXFAttributeError
+from ezdxf.render.dimension import format_text, DXFValueError
 
 
 @pytest.fixture(scope='module')
@@ -17,15 +17,39 @@ def test_dimstyle_standard_exist(dxf12):
 
 
 def test_dimstyle_override(dxf12):
-    override_sttribute = {
+    msp = dxf12.modelspace()
+    dimline = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dxfattribs={
+            'dimstyle': 'EZDXF',
+        }
+    )
+    assert dimline.dxf.dimstyle == 'EZDXF'
+
+    preset = {
         'dimtxsty': 'TEST',
-        'invalid': 'invalid',
+        'dimexe': 0.777,
     }
-    dimstyle = dxf12.dimstyles.get('EZDXF')
-    override = DimStyleOverride(dimstyle, override_sttribute)
-    assert override.get('dimtxsty') == 'TEST'
+    dimstyle = dimline.dimstyle_override(preset)
+    assert dimstyle['dimtxsty'] == 'TEST'
+    assert dimstyle['dimexe'] == 0.777
+
     with pytest.raises(DXFAttributeError):
-        _ = override.get('invalid')
+        _ = dimstyle['invalid']
+
+    with pytest.raises(DXFAttributeError):
+        dimstyle.update({'invalid': 0})
+
+    dstyle_orig = dimstyle.get_dstyle_dict()
+    assert len(dstyle_orig) == 0
+
+    dimstyle.commit()
+    dstyle = dimstyle.get_dstyle_dict()
+    assert dstyle['dimexe'] == 0.777
+    # unsupported DXF DimStyle attributes are not stored in dstyle
+    assert 'dimtxsty' not in dstyle, 'dimtxsty is not a DXF12 attribute'
 
 
 def test_horizontal_dimline(dxf12):
