@@ -191,3 +191,72 @@ def test_dimstyle_override(dxf2000):
     assert 'dimtxsty_handle' in dstyle, 'expected handle of text style'
     assert dstyle['dimtxsty_handle'] == dxf2000.styles.get('TEST').dxf.handle
 
+
+def test_dimstyle_override_arrows(dxf2000):
+    msp = dxf2000.modelspace()
+    dimline = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dxfattribs={
+            'dimstyle': 'EZDXF',
+        }
+    )
+    arrows = ezdxf.ARROWS
+    blocks = dxf2000.blocks
+
+    dot_blank = arrows.create_block(blocks, arrows.dot_blank)
+    dimblk = blocks.get(dot_blank)
+
+    box = arrows.create_block(blocks, arrows.box)
+    dimblk1 = blocks.get(box)
+
+    closed = arrows.create_block(blocks, arrows.closed)
+    dimblk2 = blocks.get(closed)
+
+    closed_filled = arrows.create_block(blocks, arrows.closed_filled)
+    dimldrblk = blocks.get(closed_filled)
+
+    preset = {
+        'dimblk': arrows.dot_blank,
+        'dimblk1': arrows.box,
+        'dimblk2': arrows.closed,
+        'dimldrblk': arrows.closed_filled,  # virtual attribute
+    }
+
+    dimstyle = dimline.dimstyle_override(preset)
+    # still as block names stored
+    assert dimstyle['dimblk'] == arrows.dot_blank
+    assert dimstyle['dimblk1'] == arrows.box
+    assert dimstyle['dimblk2'] == arrows.closed
+    assert dimstyle['dimldrblk'] == arrows.closed_filled
+
+    dstyle_orig = dimstyle.get_dstyle_dict()
+    assert len(dstyle_orig) == 0
+
+    dimstyle.commit()
+    # now store blocks as block handles
+    dstyle = dimstyle.get_dstyle_dict()
+    assert 'dimblk' not in dstyle, 'Do not store block name, dimblk_handle is required'
+    assert 'dimblk1' not in dstyle, 'Do not store block name, dimblk1_handle is required'
+    assert 'dimblk2' not in dstyle, 'Do not store block name, dimblk2_handle is required'
+    assert 'dimldrblk' not in dstyle, 'Do not store block name, dimldrblk_handle is required'
+
+    assert dstyle['dimblk_handle'] == dimblk.block_record_handle
+    assert dstyle['dimblk1_handle'] == dimblk1.block_record_handle
+    assert dstyle['dimblk2_handle'] == dimblk2.block_record_handle
+    assert dstyle['dimldrblk_handle'] == dimldrblk.block_record_handle
+
+    dimstyle.set_arrows(blk=arrows.closed, blk1=arrows.dot_blank, blk2=arrows.box, ldrblk=arrows.dot_small)
+    assert dimstyle['dimblk'] == arrows.closed
+    assert dimstyle['dimblk1'] == arrows.dot_blank
+    assert dimstyle['dimblk2'] == arrows.box
+    assert dimstyle['dimldrblk'] == arrows.dot_small
+
+    dimstyle.commit()
+    dstyle = dimstyle.get_dstyle_dict()
+    assert dstyle['dimblk_handle'] == dimblk2.block_record_handle
+    assert dstyle['dimblk1_handle'] == dimblk.block_record_handle
+    assert dstyle['dimblk2_handle'] == dimblk1.block_record_handle
+    # create acad arrows on demand
+    assert dstyle['dimldrblk_handle'] == blocks.get(arrows.block_name(arrows.dot_small)).block_record_handle

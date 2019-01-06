@@ -1,6 +1,7 @@
 from typing import Any, TYPE_CHECKING
 from ezdxf.modern.tableentries import DimStyle, get_text_style_by_handle  # DimStyle for DXF R2000 and later
 from ezdxf.lldxf.const import DXFAttributeError
+from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension
@@ -59,6 +60,25 @@ class DimStyleOverride:
             pass
 
     def commit(self) -> None:
+        def set_handle(attrib_name, block_name):
+            attrib_name += '_handle'
+            if ARROWS.is_acad_arrow(block_name):
+                block_name = ARROWS.create_block(blocks, block_name)
+
+            handle = blocks.get(block_name).block_record_handle
+            self.dxfattribs[attrib_name] = handle
+
+        if self.drawing.dxfversion > 'AC1009':
+            # transform block names into block record handles
+            blocks = self.drawing.blocks
+            for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
+                try:
+                    block_name = self.dxfattribs.pop(attrib_name)
+                except KeyError:
+                    pass
+                else:
+                    set_handle(attrib_name, block_name)
+
         self.dimension.set_acad_dstyle(self.dxfattribs, DIMSTYLE_CHECKER)
 
     def get_dstyle_dict(self) -> dict:
@@ -80,8 +100,8 @@ class DimStyleOverride:
         if blk is not None:
             set_arrow('dimblk', blk)
         if blk1 is not None:
-            set_arrow('dimblk1', blk)
+            set_arrow('dimblk1', blk1)
         if blk2 is not None:
-            set_arrow('dimblk2', blk)
+            set_arrow('dimblk2', blk2)
         if ldrblk is not None:
-            set_arrow('dimldrblk', blk)
+            set_arrow('dimldrblk', ldrblk)

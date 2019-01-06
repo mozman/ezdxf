@@ -357,6 +357,15 @@ class _Arrows:
         else:  # special AutoCAD arrow symbols have leading '_' as common practice!
             return '_' + name.upper()  # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'
 
+    def arrow_name(self, block_name: str) -> str:
+        if block_name.startswith('_'):
+            name = block_name[1:].upper()
+            if name == 'CLOSED_FILLED':
+                return ''
+            elif self.is_acad_arrow(name):
+                return name
+        return block_name
+
     def insert_arrow(self, layout: 'GenericLayoutType',
                      name: str,
                      insert: 'Vertex',

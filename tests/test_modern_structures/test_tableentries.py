@@ -182,7 +182,7 @@ def test_dimstyle_name(dimstyle2):
 
 
 def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
-    dimstyle2.set_blocks('', 'left_arrow', 'right_arrow')
+    dimstyle2.set_arrows('', 'left_arrow', 'right_arrow')
     assert dimstyle2.dxf.dimblk == ''
     assert dimstyle2.dxf.dimblk1 == 'left_arrow'
     assert dimstyle2.dxf.dimblk2 == 'right_arrow'
@@ -196,7 +196,7 @@ def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
 
 
 def test_dimstyle_both_ticks(dimstyle2):
-    dimstyle2.set_blocks('arrow')
+    dimstyle2.set_arrows('arrow')
     assert dimstyle2.dxf.dimblk == 'arrow'
     assert dimstyle2.dxf.dimblk1 == ''
     assert dimstyle2.dxf.dimblk2 == ''
@@ -213,6 +213,19 @@ def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):
     dimstyle2.dxf.dimtxsty = 'TestStyle'
     assert dimstyle2.dxf.dimtxsty_handle == style_handle
     assert dimstyle2.dxf.dimtxsty == 'TestStyle'
+
+
+def test_dimstyle_virtual_dimldrblk_attribute(dimstyle2):
+    dwg = dimstyle2.drawing
+
+    dimstyle2.dxf.dimldrblk = 'CLOSED'
+    handle = dwg.blocks.get('_CLOSED').block_record_handle
+    assert dimstyle2.dxf.dimldrblk_handle == handle
+
+    arrow = dwg.blocks.new('TestArrow')
+    dimstyle2.dxf.dimldrblk = 'TestArrow'
+    assert dimstyle2.dxf.dimldrblk_handle == arrow.block_record_handle
+    assert dimstyle2.dxf.dimldrblk == 'TestArrow'
 
 
 def test_dimstyle_group_codes(dimstyle):

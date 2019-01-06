@@ -52,6 +52,52 @@ def test_dimstyle_override(dxf12):
     assert 'dimtxsty' not in dstyle, 'dimtxsty is not a DXF12 attribute'
 
 
+def test_dimstyle_override_arrows(dxf12):
+    msp = dxf12.modelspace()
+    dimline = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dxfattribs={'dimstyle': 'EZDXF', }
+    )
+
+    preset = {
+        'dimblk': 'XYZ',
+        'dimblk1': 'ABC',
+        'dimblk2': 'DEF',
+        'dimldrblk': 'ZZZLDR',  # not supported by DXF12, but used by ezdxf for rendering
+
+    }
+    dimstyle = dimline.dimstyle_override(preset)
+    assert dimstyle['dimblk'] == 'XYZ'
+    assert dimstyle['dimblk1'] == 'ABC'
+    assert dimstyle['dimblk2'] == 'DEF'
+    assert dimstyle['dimldrblk'] == 'ZZZLDR'
+
+    dstyle_orig = dimstyle.get_dstyle_dict()
+    assert len(dstyle_orig) == 0
+
+    dimstyle.commit()
+    dstyle = dimstyle.get_dstyle_dict()
+    assert dstyle['dimblk'] == 'XYZ'
+    assert dstyle['dimblk1'] == 'ABC'
+    assert dstyle['dimblk2'] == 'DEF'
+    assert 'dimldrblk' not in dstyle, "not supported by DXF12"
+
+    dimstyle.set_arrows(blk='BLK', blk1='B1', blk2='B2', ldrblk='LBLK')
+    assert dimstyle['dimblk'] == 'BLK'
+    assert dimstyle['dimblk1'] == 'B1'
+    assert dimstyle['dimblk2'] == 'B2'
+    assert dimstyle['dimldrblk'] == 'LBLK'  # not supported by DXF12, but used by ezdxf for rendering
+
+    dimstyle.commit()
+    dstyle = dimstyle.get_dstyle_dict()
+    assert dstyle['dimblk'] == 'BLK'
+    assert dstyle['dimblk1'] == 'B1'
+    assert dstyle['dimblk2'] == 'B2'
+    assert 'dimnldrblk' not in dstyle, "not supported by DXF12"
+
+
 def test_horizontal_dimline(dxf12):
     msp = dxf12.modelspace()
     dimline = msp.add_linear_dim(

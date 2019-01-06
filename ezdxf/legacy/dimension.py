@@ -5,10 +5,13 @@ from typing import TYPE_CHECKING
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
+import logging
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DimStyle, DimStyleOverride
+
+logger = logging.getLogger('ezdxf')
 
 _DIMENSION_TPL = """0
 DIMENSION
@@ -153,6 +156,9 @@ class Dimension(GraphicEntity):
     def set_acad_dstyle(self, data: dict, dim_style: 'DimStyle') -> None:
         tags = []
         for key, value in data.items():
+            if key not in dim_style.DXFATTRIBS:  # ignore unknown attributes, but log
+                logging.debug('ignore unknown DIMSTYLE attribute: "{}"'.format(key))
+                continue
             dxf_attr = dim_style.DXFATTRIBS.get(key)
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
                 code = dxf_attr.code

@@ -593,7 +593,7 @@ class DimStyle(DXFEntity):
                 except DXFValueError:
                     logger.debug('Unsupported header variable: {}.'.format(header_var))
 
-    def set_blocks(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
         # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set
         self.set_dxf_attrib('dimblk', blk)
         self.set_dxf_attrib('dimblk1', blk1)

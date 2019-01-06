@@ -176,7 +176,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
     if blk is None:  # oblique stroke
         dimstyle.dxf.dimtsz = fmt.dimtsz
     else:  # arrow or block
-        dimstyle.set_blocks(blk=blk)
+        dimstyle.set_arrows(blk=blk)
         dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
     if dwg.dxfversion > 'AC1009':
         # set text style
