@@ -408,21 +408,25 @@ class DimStyle(legacy.DimStyle):
     def get_text_style(self) -> str:
         handle = self.get_dxf_attrib('dimtxsty_handle', None)
         if handle:
-            try:
-                entry = self.drawing.get_dxf_entity(handle)
-            except DXFKeyError:
-                logging.warning('DIMSTYLE "{}": invalid text style handle "{}".'.format(self.dxf.name, handle))
-                text_style_name = 'STANDARD'
-            else:
-                text_style_name = entry.dxf.name
+            return get_text_style_by_handle(handle, self.drawing)
         else:
-            logging.warning('DIMSTYLE "{}": text style handle not set.'. format(self.dxf.name))
-            text_style_name = 'STANDARD'
-        return text_style_name
+            logging.warning('DIMSTYLE "{}": text style handle not set.'.format(self.dxf.name))
+            return 'STANARD'
 
     def set_text_style(self, name: str) -> None:
         style = self.drawing.styles.get(name)
         self.set_dxf_attrib('dimtxsty_handle', style.dxf.handle)
+
+
+def get_text_style_by_handle(handle, drawing: 'Drawing', default='STANDARD') -> str:
+    try:
+        entry = drawing.get_dxf_entity(handle)
+    except DXFKeyError:
+        logging.warning('Invalid text style handle "{}".'.format(handle))
+        text_style_name = default
+    else:
+        text_style_name = entry.dxf.name
+    return text_style_name
 
 
 _UCSTEMPLATE = """0

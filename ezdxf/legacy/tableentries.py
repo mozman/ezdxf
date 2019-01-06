@@ -584,6 +584,7 @@ class DimStyle(DXFEntity):
     def copy_to_header(self, dwg):
         attribs = self.dxfattribs()
         header = dwg.header
+        header['$DIMSTYLE'] = self.dxf.name
         for name, value in attribs.items():
             if name.startswith('dim'):
                 header_var = '$' + name.upper()

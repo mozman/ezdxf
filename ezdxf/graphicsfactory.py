@@ -12,7 +12,7 @@ from ezdxf.render.arrows import ARROWS
 if TYPE_CHECKING:  # import forward references
     from eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
     from eztypes import Solid, Trace, Face, Insert, Attrib, Polyline, Polyface, Polymesh, UnderlayDef, Underlay
-    from eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension
+    from eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
     from eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, LoftedSurface
     from ezdxf.algebra.ucs import UCS
 
@@ -453,7 +453,7 @@ class GraphicsFactory:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
-    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None, override: dict = None) -> None:
+    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None) -> None:
         dwg = cast('Drawing', self.drawing)
         dwg.dimension_renderer.dispatch(dimension, ucs, override)
 
@@ -488,51 +488,59 @@ class GraphicsFactory:
             dxfattribs: DXF attributes for DIMENSION entity
 
         """
+        type_ = {'dimtype': dimtype(const.DIM_LINEAR, self.dxfversion)}
+        dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['dimtype'] = dimtype(const.DIM_LINEAR, self.dxfversion)
         dxfattribs['defpoint'] = Vector(base)
-        dxfattribs['defpoint2'] = Vector(ext1)
-        dxfattribs['defpoint3'] = Vector(ext2)
         if text_midpoint:
             dxfattribs['text_midpoint'] = Vector(text_midpoint)
         dxfattribs['text'] = text
+        dxfattribs['defpoint2'] = Vector(ext1)
+        dxfattribs['defpoint3'] = Vector(ext2)
         dxfattribs['angle'] = float(angle)
         dxfattribs['text_rotation'] = float(text_rotation)
-        dxfattribs['dimtype'] = dimtype(const.DIM_LINEAR, self.dxfversion)
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        dimline.update_dxf_attribs(dxfattribs)
+        return dimline
 
     # def add_aligned_dim(self, dxfattribs: dict = None) -> 'Dimension': dxfattribs = copy_attribs(dxfattribs))
     # don't understand the difference between aligned and linear yet!
 
-    def add_angular_dim(self,
-                        dxfattribs: dict = None) -> 'Dimension':
+    def add_angular_dim(self, dxfattribs: dict = None) -> 'Dimension':
+        type_ = {'dimtype': dimtype(const.DIM_ANGULAR, self.dxfversion)}
+        dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = dimtype(const.DIM_ANGULAR, self.dxfversion)
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        dimline.update_dxf_attribs(dxfattribs)
+        return dimline
 
-    def add_diameter_dim(self,
-                         dxfattribs: dict = None) -> 'Dimension':
+    def add_diameter_dim(self, dxfattribs: dict = None) -> 'Dimension':
+        type_ = {'dimtype': dimtype(const.DIM_DIAMETER, self.dxfversion)}
+        dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = dimtype(const.DIM_DIAMETER, self.dxfversion)
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        dimline.update_dxf_attribs(dxfattribs)
+        return dimline
 
-    def add_radius_dim(self,
-                       dxfattribs: dict = None) -> 'Dimension':
+    def add_radius_dim(self, dxfattribs: dict = None) -> 'Dimension':
+        type_ = {'dimtype': dimtype(const.DIM_RADIUS, self.dxfversion)}
+        dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = dimtype(const.DIM_RADIUS, self.dxfversion)
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        dimline.update_dxf_attribs(dxfattribs)
+        return dimline
 
-    def add_angular_3p_dim(self,
-                           dxfattribs: dict = None) -> 'Dimension':
+    def add_angular_3p_dim(self, dxfattribs: dict = None) -> 'Dimension':
+        type_ = {'dimtype': dimtype(const.DIM_ANGULAR_3P, self.dxfversion)}
+        dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = dimtype(const.DIM_ANGULAR_3P, self.dxfversion)
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        dimline.update_dxf_attribs(dxfattribs)
+        return dimline
 
-    def add_ordinate_dim(self,
-                         dxfattribs: dict = None) -> 'Dimension':
+    def add_ordinate_dim(self, dxfattribs: dict = None) -> 'Dimension':
+        type_ = {'dimtype': dimtype(const.DIM_ORDINATE, self.dxfversion)}
+        dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['dimtype'] = dimtype(const.DIM_ORDINATE, self.dxfversion)
-        return cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs).cast())
+        dimline.update_dxf_attribs(dxfattribs)
+        return dimline
 
     def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0, reverse: bool = False,
                   dxfattribs: dict = None) -> Vector:

@@ -206,7 +206,11 @@ def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
     return TAG_STRING_FORMAT % tuple(tag)
 
 
-def get_xcode_for(value) -> int:
+def get_xcode_for(code, value) -> int:
+    if is_pointer_code(code) or (code in HANDLE_CODES):
+        return 1005
+    if is_binary_data(code):
+        return 1004
     if isinstance(value, (int, bool)):
         return 1070
     if isinstance(value, float):

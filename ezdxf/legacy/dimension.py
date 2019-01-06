@@ -8,7 +8,7 @@ from ezdxf.tools import take2
 from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DimStyle
+    from ezdxf.eztypes import DimStyle, DimStyleOverride
 
 _DIMENSION_TPL = """0
 DIMENSION
@@ -104,7 +104,8 @@ class Dimension(GraphicEntity):
         # Anything else is drawn as the text.
         'defpoint2': DXFAttr(13, xtype=XType.any_point),  # WCS, definition point for linear and angular dimensions
         'defpoint3': DXFAttr(14, xtype=XType.any_point),  # WCS, definition point for linear and angular dimensions
-        'defpoint4': DXFAttr(15, xtype=XType.any_point),  # WCS, definition point for diameter, radius, and angular dimensions
+        'defpoint4': DXFAttr(15, xtype=XType.any_point),
+    # WCS, definition point for diameter, radius, and angular dimensions
         'defpoint5': DXFAttr(16, xtype=XType.any_point),  # OCS, point defining dimension arc for angular dimensions
         'leader_length': DXFAttr(40),  # leader length for radius and diameter dimensions
         'angle': DXFAttr(50),  # angle of rotated, horizontal, or vertical linear dimensions
@@ -149,26 +150,19 @@ class Dimension(GraphicEntity):
     def cast(self) -> 'Dimension':  # for modern dimension lines
         return self
 
-    def set_acad_dstyle(self, data: dict, dim_style) -> None:
-        if self.drawing is None:
-            raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
-
-        if ('dimtxsty' in data) and (self.drawing.dxfversion > 'AC1009'):
-            dimtxsty = data['dimtxsty']
-            txtstyle = self.drawing.styles.get(dimtxsty)
-            data['dimtxsty_handle'] = txtstyle.dxf.handle
-
+    def set_acad_dstyle(self, data: dict, dim_style: 'DimStyle') -> None:
         tags = []
         for key, value in data.items():
             dxf_attr = dim_style.DXFATTRIBS.get(key)
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
-                tags.append((1070, dxf_attr.code))
-                tags.append((get_xcode_for(value), value))
+                code = dxf_attr.code
+                tags.append((1070, code))
+                tags.append((get_xcode_for(code, value), value))
 
         if len(tags):
             self.set_xdata_list('ACAD', 'DSTYLE', tags)
 
-    def get_acad_dstyle(self, dim_style) -> dict:
+    def get_acad_dstyle(self, dim_style: 'DimStyle') -> dict:
         try:
             data = self.get_xdata_list('ACAD', 'DSTYLE')
         except DXFValueError:
@@ -182,6 +176,6 @@ class Dimension(GraphicEntity):
                 attribs[codes[group_code]] = value
         return attribs
 
-    def dimstyle_override(self, dxfattribs=None):
+    def dimstyle_override(self, dxfattribs: dict = None) -> 'DimStyleOverride':
         from ezdxf.override import DimStyleOverride
         return DimStyleOverride(self, override=dxfattribs)

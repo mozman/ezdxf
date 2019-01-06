@@ -29,7 +29,7 @@ def test_dimstyle_override(dxf12):
     assert dimline.dxf.dimstyle == 'EZDXF'
 
     preset = {
-        'dimtxsty': 'TEST',
+        'dimtxsty': 'TEST',  # virtual attribute - 'dimtxsty_handle' stores the text style handle
         'dimexe': 0.777,
     }
     dimstyle = dimline.dimstyle_override(preset)

@@ -11,17 +11,20 @@ from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BlockLayout, Vertex
+    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride
 
 
 class DimensionBase:
-    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None, override: dict = None):
+    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
         self.drawing = dimension.drawing
         self.dimension = dimension
         self.dxfversion = self.drawing.dxfversion
         self.block = block
-        self.dim_style = dimension.dimstyle_override(override)
-        self.text_style = self.dim_style.get('dimtxsty', options.default_dimension_text_style)
+        if override:
+            self.dim_style = override
+        else:
+            self.dim_style = self.dimension.dimstyle_override()
+        self.text_style = self.dim_style.get_text_style(default=options.default_dimension_text_style)
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
@@ -247,47 +250,47 @@ class LinearDimension(DimensionBase):
 
 
 class DimensionRenderer:
-    def dispatch(self, dimension: 'Dimension', ucs: 'UCS', text_style: str = None) -> None:
+    def dispatch(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None) -> None:
         dwg = dimension.drawing
         block = dwg.blocks.new_anonymous_block(type_char='D')
         dimension.dxf.geometry = block.name
         dim_type = dimension.dim_type
 
         if dim_type in (0, 1):
-            self.linear(dimension, block, ucs, text_style)
+            self.linear(dimension, block, ucs, override)
         elif dim_type == 2:
-            self.angular(dimension, block, ucs, text_style)
+            self.angular(dimension, block, ucs, override)
         elif dim_type == 3:
-            self.diameter(dimension, block, ucs, text_style)
+            self.diameter(dimension, block, ucs, override)
         elif dim_type == 4:
-            self.radius(dimension, block, ucs, text_style)
+            self.radius(dimension, block, ucs, override)
         elif dim_type == 5:
-            self.angular3p(dimension, block, ucs, text_style)
+            self.angular3p(dimension, block, ucs, override)
         elif dim_type == 6:
-            self.ordinate(dimension, block, ucs, text_style)
+            self.ordinate(dimension, block, ucs, override)
         else:
             raise DXFValueError("Unknown DIMENSION type: {}".format(dim_type))
 
-    def linear(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', text_style: str = None):
+    def linear(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         """
         Call renderer for linear dimension lines: horizontal, vertical and rotated
         """
-        render = LinearDimension(dimension, block, ucs, text_style)
+        render = LinearDimension(dimension, block, ucs, override)
         render.render()
 
-    def angular(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', text_style: str = None):
+    def angular(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
         raise NotImplemented
 
-    def diameter(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', text_style: str = None):
+    def diameter(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
         raise NotImplemented
 
-    def radius(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', text_style: str = None):
+    def radius(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
         raise NotImplemented
 
-    def angular3p(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', text_style: str = None):
+    def angular3p(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
         raise NotImplemented
 
-    def ordinate(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', text_style: str = None):
+    def ordinate(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
         raise NotImplemented
 
 

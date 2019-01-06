@@ -25,17 +25,14 @@ def linear_tutorial():
     # ezdxf supports DXF R2000 attributes for DXF R12 rendering, but they have to be applied by the DIMSTYLE override
     # feature, this additional attributes are not stored in the DIMSTYLE entity, they are just used to render the DIMENSION
     # entity.
-    dxf_r2000_attributes = {
-        'dimtxsty': 'OpenSans'  # R12: there is no attribute in DIMSTYLE to store the TEXT style for the measurement text
-    }
-    msp.render_dimension(dim, override=dxf_r2000_attributes)
+    msp.render_dimension(dim, override=dim.dimstyle_override({'dimtxsty': 'OpenSans'}))
 
     # rotated DIMENSION without `override` uses DEFAULT_DIM_TEXT_STYLE="OPEN_SANS_CONDENSED_LIGHT"
     # angle: defines the angle of the dimension line, measurement is the distance between first and second measurement point
     # in direction of `angle`
     dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF')
-    msp.render_dimension(dim2, override={'dimblk': ezdxf.ARROWS.closed_filled, 'dimtsz': 0., 'dimdle': 0.})
-
+    style = dim2.dimstyle_override(dxfattribs={'dimblk': ezdxf.ARROWS.closed_filled, 'dimtsz': 0., 'dimdle': 0.})
+    msp.render_dimension(dim2, override=style)
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
 
@@ -49,14 +46,16 @@ def linear_all_arrow_style():
         y = index * 4
 
         dim = msp.add_linear_dim(base=(3, y+2), ext1=(0, y), ext2=(3, y), dimstyle='EZDXF')
+
         attributes = {
-            'dimtxsty': 'OpenSans',
+            'dimtxsty': 'LiberationMono',
             'dimblk': name,
             'dimtsz': 0.,
             'dimdle': 0.5,
             'dimasz': .25,
         }
-        msp.render_dimension(dim, override=attributes)
+        style = dim.dimstyle_override(attributes)
+        msp.render_dimension(dim, override=style)
 
     dwg.saveas(OUTDIR / 'all_arrow_styles_dim_R12.dxf')
 
@@ -75,7 +74,8 @@ def linear_tutorial_ext_lines():
         'dimblk': ezdxf.ARROWS.none,
         'dimclrt': 3,
     }
-    msp.render_dimension(dim, override=attributes)
+    style = dim.dimstyle_override(attributes)
+    msp.render_dimension(dim, override=style)
 
     attributes = {
         'dimtad': 4,
@@ -83,10 +83,10 @@ def linear_tutorial_ext_lines():
         'dimclrt': 4,
     }
     dim = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF')
-    msp.render_dimension(dim, override=attributes)
+    msp.render_dimension(dim, override=dim.dimstyle_override(attributes))
 
     dim = msp.add_linear_dim(base=(3, 5), ext1=(0, 10), ext2=(3, 10), dimstyle='EZDXF')
-    msp.render_dimension(dim, override=attributes)
+    msp.render_dimension(dim, override=dim.dimstyle_override(attributes))
 
     dwg.saveas(OUTDIR / 'dim_linear_R12_ext_lines.dxf')
 
@@ -124,7 +124,7 @@ def linear_EZ_MM(fmt):
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = False
+ALL = True
 
 
 if __name__ == '__main__':

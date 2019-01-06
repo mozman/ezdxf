@@ -1,5 +1,5 @@
 from typing import Any, TYPE_CHECKING
-from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
+from ezdxf.modern.tableentries import DimStyle, get_text_style_by_handle  # DimStyle for DXF R2000 and later
 from ezdxf.lldxf.const import DXFAttributeError
 
 if TYPE_CHECKING:
@@ -63,3 +63,25 @@ class DimStyleOverride:
 
     def get_dstyle_dict(self) -> dict:
         return self.dimension.get_acad_dstyle(self.dim_style)
+
+    def get_text_style(self, default='STANDARD'):
+        try:  # virtual 'dimtxsty' attribute
+            return self.dxfattribs['dimtxsty']
+        except KeyError:
+            pass
+        # get text style form 'dimtxsty_handle' attribute or as default value
+        handle = self.get('dimtxsty_handle', None)
+        return get_text_style_by_handle(handle, self.drawing) if handle else default
+
+    def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None):
+        def set_arrow(dimvar: str, name: str) -> None:
+            self.dxfattribs[dimvar] = name
+
+        if blk is not None:
+            set_arrow('dimblk', blk)
+        if blk1 is not None:
+            set_arrow('dimblk1', blk)
+        if blk2 is not None:
+            set_arrow('dimblk2', blk)
+        if ldrblk is not None:
+            set_arrow('dimldrblk', blk)

@@ -3,8 +3,9 @@
 # License: MIT License
 from ezdxf.legacy import dimension
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-
-from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+from ezdxf.lldxf.const import DXFInternalEzdxfError
+from ezdxf.lldxf.tags import Tags
+from .graphics import none_subclass, entity_subclass, ModernGraphicEntity, ExtendedTags
 
 dimension_subclass = DefSubclass('AcDbDimension', {
     'geometry': DXFAttr(2),  # name of pseudo-Block containing the current dimension  entity geometry
@@ -108,15 +109,128 @@ ordinate_dimension_subclass = DefSubclass('AcDbOrdinateDimension', {
 })
 
 
+_DIMTXSTY = 'dimtxsty'
+
+_DIMENSION_TPL = """  0
+DIMENSION
+5
+0
+102
+{ACAD_REACTORS
+330
+0
+102
+}
+330
+DEAD
+100
+AcDbEntity
+8
+0
+100
+AcDbDimension
+2
+*D0
+10
+0.0
+20
+0.0
+30
+0.0
+11
+0.0
+21
+0.0
+31
+0.0
+70
+32
+71
+5
+42
+0.0
+3
+STANDARD
+"""
+
+_ALIGNED_TPL = """100
+AcDbAlignedDimension
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 14
+0.0
+ 24
+0.0
+ 34
+0.0
+"""
+
+_ROTATED_TPL = """100
+AcDbRotatedDimension
+"""
+
+_RADIAL_TPL = """100
+AcDbRadialDimension
+"""
+
+_DIAMETRIC_TPL = """100
+AcDbDiametricDimension
+"""
+
+_ANGULAR_TPL = """100
+AcDb3dPointAngularDimension
+"""
+
+_ORDINATE_TPL = """100
+AcDbOrdinateDimension
+"""
+
+
 class Dimension(dimension.Dimension, ModernGraphicEntity):
     __slots__ = ()
     BLOCK_EXCLUSIVE = 32
-    TEMPLATE = None
+    TEMPLATE = ExtendedTags.from_text(_DIMENSION_TPL)
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, dimension_subclass)
+
+    def post_new_hook(self) -> None:
+        self.add_subclasses()
+
+    def add_subclasses(self) -> None:
+        def add_subclasses(templates) -> None:
+            for template in templates:
+                self.tags.subclasses.append(Tags.from_text(template))
+        dim_type = self.dim_type
+        if dim_type == self.LINEAR:
+            add_subclasses([_ALIGNED_TPL, _ROTATED_TPL])
+        elif dim_type == self.ALIGNED:
+            add_subclasses([_ALIGNED_TPL])
+        elif dim_type in (self.ANGULAR, self.ANGULAR_3P):
+            add_subclasses([_ANGULAR_TPL])
+        elif dim_type == self.RADIUS:
+            add_subclasses([_RADIAL_TPL])
+        elif dim_type == self.DIAMETER:
+            add_subclasses([_DIAMETRIC_TPL])
+        elif dim_type == self.ORDINATE:
+            add_subclasses([_ORDINATE_TPL])
 
     def cast(self) -> 'Dimension':  # create the REAL dimension entity
         DimClass = DimensionClasses[self.dim_type]
         return DimClass(self.tags, self.drawing)
+
+    def set_acad_dstyle(self, data: dict, dim_style) -> None:
+        if self.drawing is None:
+            raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
+        # replace virtual 'dimtxsty' attribute by 'dimtxsty_handle'
+        if _DIMTXSTY in data:
+            dimtxsty = data[_DIMTXSTY]
+            txtstyle = self.drawing.styles.get(dimtxsty)
+            data['dimtxsty_handle'] = txtstyle.dxf.handle
+            del data[_DIMTXSTY]
+        super().set_acad_dstyle(data, dim_style)
 
 
 class AlignedDimension(Dimension):

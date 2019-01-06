@@ -52,10 +52,12 @@ def test_dxf_str():
 
 
 def test_xcode_for():
-    assert get_xcode_for('String') == 1000
-    assert get_xcode_for(100) == 1070
-    assert get_xcode_for(True) == 1070
-    assert get_xcode_for(1.0) == 1040
-    assert get_xcode_for('{') == 1002
-    assert get_xcode_for('}') == 1002
+    assert get_xcode_for(3, 'String') == 1000
+    assert get_xcode_for(70, 100) == 1070
+    assert get_xcode_for(71, True) == 1070
+    assert get_xcode_for(40, 1.0) == 1040
+    assert get_xcode_for(100, '{') == 1002
+    assert get_xcode_for(100, '}') == 1002
+    assert get_xcode_for(5, 'FFFF') == 1005
+    assert get_xcode_for(344, 'FFFF') == 1005
 
