@@ -62,10 +62,10 @@ class DimStyleOverride:
     def commit(self) -> None:
         def set_handle(attrib_name, block_name):
             attrib_name += '_handle'
-            if ARROWS.is_acad_arrow(block_name):
+            if block_name in ARROWS:  # create all arrows on demand
                 block_name = ARROWS.create_block(blocks, block_name)
-
-            handle = blocks.get(block_name).block_record_handle
+            block = blocks.get(block_name)
+            handle = block.block_record_handle
             self.dxfattribs[attrib_name] = handle
 
         if self.drawing.dxfversion > 'AC1009':

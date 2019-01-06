@@ -36,8 +36,8 @@ def linear_tutorial():
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
 
-def linear_all_arrow_style():
-    dwg = ezdxf.new('R12', setup=True)
+def linear_all_arrow_style(version='R12'):
+    dwg = ezdxf.new(version, setup=True)
     msp = dwg.modelspace()
     ezdxf_dimstyle = dwg.dimstyles.get('EZDXF')
     ezdxf_dimstyle.copy_to_header(dwg)
@@ -57,7 +57,7 @@ def linear_all_arrow_style():
         style = dim.dimstyle_override(attributes)
         msp.render_dimension(dim, override=style)
 
-    dwg.saveas(OUTDIR / 'all_arrow_styles_dim_R12.dxf')
+    dwg.saveas(OUTDIR / 'all_arrow_styles_dim_{}.dxf'.format(version))
 
 
 def linear_tutorial_ext_lines():
@@ -124,12 +124,13 @@ def linear_EZ_MM(fmt):
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = True
+ALL = False
 
 
 if __name__ == '__main__':
     linear_tutorial()
-    linear_all_arrow_style()
+    linear_all_arrow_style('R12')
+    linear_all_arrow_style('R2000')
     if ALL:
         linear_tutorial_ext_lines()
 

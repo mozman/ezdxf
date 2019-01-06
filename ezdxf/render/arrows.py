@@ -68,9 +68,14 @@ class ClosedArrow(BaseArrow):
         return self.shape[1]
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        polyline = layout.add_polyline2d(
-            points=self.shape,
-            dxfattribs=dxfattribs)
+        if layout.dxfversion > 'AC1009':
+            polyline = layout.add_lwpolyline(
+                points=self.shape,
+                dxfattribs=dxfattribs)
+        else:
+            polyline = layout.add_polyline2d(
+                points=self.shape,
+                dxfattribs=dxfattribs)
         polyline.close(True)
 
 
@@ -100,7 +105,10 @@ class _OpenArrow(BaseArrow):
         return self.shape[1]
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        layout.add_polyline2d(points=self.shape, dxfattribs=dxfattribs)
+        if layout.dxfversion > 'AC1009':
+            layout.add_lwpolyline(points=self.shape, dxfattribs=dxfattribs)
+        else:
+            layout.add_polyline2d(points=self.shape, dxfattribs=dxfattribs)
 
 
 class OpenArrow(_OpenArrow):
@@ -169,7 +177,10 @@ class Box(BaseArrow):
         self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        polyline = layout.add_polyline2d(points=self.shape[0:4], dxfattribs=dxfattribs)
+        if layout.dxfversion > 'AC1009':
+            polyline = layout.add_lwpolyline(points=self.shape[0:4], dxfattribs=dxfattribs)
+        else:
+            polyline = layout.add_polyline2d(points=self.shape[0:4], dxfattribs=dxfattribs)
         polyline.close(True)
 
     def connection_point(self):
@@ -219,7 +230,10 @@ class DatumTriangle(BaseArrow):
         self.place(insert, self.get_angle(angle, reverse))
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        polyline = layout.add_polyline2d(points=self.shape, dxfattribs=dxfattribs)
+        if layout.dxfversion > 'AC1009':
+            polyline = layout.add_lwpolyline(points=self.shape, dxfattribs=dxfattribs)
+        else:
+            polyline = layout.add_polyline2d(points=self.shape, dxfattribs=dxfattribs)
         polyline.close(True)
 
     def connection_point(self):
@@ -242,7 +256,10 @@ class EzArrow(BaseArrow):
         return self.shape[1]
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        polyline = layout.add_polyline2d(self.shape, dxfattribs=dxfattribs)
+        if layout.dxfversion > 'AC1009':
+            polyline = layout.add_lwpolyline(self.shape, dxfattribs=dxfattribs)
+        else:
+            polyline = layout.add_polyline2d(self.shape, dxfattribs=dxfattribs)
         polyline.close(True)
 
 
@@ -353,6 +370,7 @@ class _Arrows:
         if not self.is_acad_arrow(name):  # common BLOCK definition
             return name.upper()  # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
         elif name == "":  # special AutoCAD arrow symbols 'CLOSED_FILLED' has no name
+            # ezdxf uses blocks for ALL arrows, but '_' (closed filled) as block name?
             return "_CLOSED_FILLED"  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
         else:  # special AutoCAD arrow symbols have leading '_' as common practice!
             return '_' + name.upper()  # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'

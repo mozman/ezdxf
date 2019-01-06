@@ -117,7 +117,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         self.dxf.rotation = angle
         return self
 
-    def set_location(self, insert: 'Vertex', rotation: float = None, attachment_point: 'Vertex' = None) -> 'MText':
+    def set_location(self, insert: 'Vertex', rotation: float = None, attachment_point: int = None) -> 'MText':
         self.dxf.insert = Vector(insert)
         if rotation is not None:
             self.set_rotation(rotation)

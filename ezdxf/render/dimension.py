@@ -9,6 +9,7 @@ from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.options import options
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS
+from ezdxf.modern.tableentries import get_block_name_by_handle
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride
@@ -66,15 +67,24 @@ class DimensionBase:
             return text
 
     def get_arrow_names(self) -> Tuple[str, str]:
+        def arrow_name(attrib)->str:
+            if self.dxfversion > 'AC1009':
+                handle = get_dxf_attr(attrib+'_handle', None)
+                if handle:
+                    block_name = get_block_name_by_handle(handle, self.drawing)
+                    return ARROWS.arrow_name(block_name)
+            # DXF12 or no handle -> use block name
+            return get_dxf_attr(attrib)
+
         get_dxf_attr = self.dim_style.get
         dimtsz = get_dxf_attr('dimtsz')
         blk1, blk2 = None, None
-        if dimtsz == 0.:  # oblique stroke, but double the size
+        if dimtsz == 0.:
             if bool(get_dxf_attr('dimsah')):
-                blk1 = get_dxf_attr('dimblk1')
-                blk2 = get_dxf_attr('dimblk2')
+                blk1 = arrow_name('dimblk1')
+                blk2 = arrow_name('dimblk2')
             else:
-                blk = get_dxf_attr('dimblk')
+                blk = arrow_name('dimblk')
                 blk1 = blk
                 blk2 = blk
         return blk1, blk2
@@ -118,11 +128,20 @@ class DimensionBase:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         attribs['style'] = self.text_style
-        attribs['height'] = self.text_height
-        if dxfattribs:
-            attribs.update(dxfattribs)
-        dxftext = self.block.add_text(text, dxfattribs=attribs)
-        dxftext.set_pos(self.ocs(pos), align='MIDDLE_CENTER')
+
+        if self.dxfversion > 'AC1009':
+            attribs['char_height'] = self.text_height
+            attribs['insert'] = pos
+            attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', 5)
+            if dxfattribs:
+                attribs.update(dxfattribs)
+            self.block.add_mtext(text, dxfattribs=attribs)
+        else:
+            attribs['height'] = self.text_height
+            if dxfattribs:
+                attribs.update(dxfattribs)
+            dxftext = self.block.add_text(text, dxfattribs=attribs)
+            dxftext.set_pos(self.ocs(pos), align='MIDDLE_CENTER')
 
     def add_defpoints(self, points: Iterable['Vertex']) -> None:
         attribs = {

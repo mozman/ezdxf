@@ -143,6 +143,10 @@ class LWPolyline(ModernGraphicEntity):
     def closed(self, status: bool) -> None:
         self.set_flag_state(self.CLOSED, status, name='flags')
 
+    # same as POLYLINE
+    def close(self, state=True) -> None:
+        self.closed = state
+
     def __len__(self) -> int:
         return len(self.lwpoints)
 
