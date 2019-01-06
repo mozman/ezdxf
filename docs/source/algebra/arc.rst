@@ -2,38 +2,38 @@
 
 This class located in module :mod:`ezdxf.algebra`::
 
-    from ezdxf.algebra import Arc
+    from ezdxf.algebra import ConstructionArc
 
 
-Arc
----
+ConstructionArc
+---------------
 
-.. class:: Arc
+.. class:: ConstructionArc
 
-    This is a helper class to create parameters for the DXF :class:`Arc` class.
+    This is a helper class to create parameters for the DXF :class:`ConstructionArc` class.
 
 
-.. attribute:: Arc.center
+.. attribute:: ConstructionArc.center
 
     Center point as :class:`~ezdxf.algebra.Vector`
 
-.. attribute:: Arc.radius
+.. attribute:: ConstructionArc.radius
 
     Arc radius
 
-.. attribute:: Arc.start_angle
+.. attribute:: ConstructionArc.start_angle
 
     Start angle of arc in degrees.
 
-.. attribute:: Arc.start_angle_rad
+.. attribute:: ConstructionArc.start_angle_rad
 
     Start angle of arc in radians.
 
-.. attribute:: Arc.end_angle
+.. attribute:: ConstructionArc.end_angle
 
     End angle of arc in degrees.
 
-.. attribute:: Arc.end_angle_rad
+.. attribute:: ConstructionArc.end_angle_rad
 
     End angle of arc in radians.
 
@@ -41,7 +41,7 @@ Arc
 Class Methods
 ~~~~~~~~~~~~~
 
-.. method:: Arc.from_2p_angle(start_point, end_point, angle, ccw=True)
+.. method:: ConstructionArc.from_2p_angle(start_point, end_point, angle, ccw=True)
 
     Create arc from two points and enclosing angle. Arc goes by default in counter clockwise orientation from
     start_point to end_point, can be changed by *ccw* =False.
@@ -53,9 +53,9 @@ Class Methods
     :param float angle: enclosing angle in degrees
     :param bool ccw: counter clockwise orientation
 
-    :Return: new :class:`~ezdxf.algebra.Arc`
+    :Return: new :class:`~ezdxf.algebra.ConstructionArc`
 
-.. method:: Arc.from_2p_radius(start_point, end_point, radius, ccw=True, center_is_left=True)
+.. method:: ConstructionArc.from_2p_radius(start_point, end_point, radius, ccw=True, center_is_left=True)
 
     Create arc from two points and arc radius. Arc goes by default in counter clockwise orientation from
     start_point to end_point, can be changed by *ccw* =False.
@@ -70,9 +70,9 @@ Class Methods
     :param bool ccw: counter clockwise orientation
     :param bool center_is_left: center point of arc is left of line *start point* -> *end point* if True, else on the right side of this line
 
-    :Return: new :class:`~ezdxf.algebra.Arc`
+    :Return: new :class:`~ezdxf.algebra.ConstructionArc`
 
-.. method:: Arc.from_3p(start_point, end_point, def_point, ccw=True)
+.. method:: ConstructionArc.from_3p(start_point, end_point, def_point, ccw=True)
 
     Create arc from three points. Arc goes by default in counter clockwise orientation from
     start_point to end_point, can be changed by *ccw* =False.
@@ -83,13 +83,13 @@ Class Methods
     :param def_point: additional definition point as (x, y [,z]) tuple
     :param bool ccw: counter clockwise orientation
 
-    :Return: new :class:`~ezdxf.algebra.Arc`
+    :Return: new :class:`~ezdxf.algebra.ConstructionArc`
 
 
 Methods
 ~~~~~~~
 
-.. method:: Arc.add_to_layout(layout, ucs=None, dxfattribs=None)
+.. method:: ConstructionArc.add_to_layout(layout, ucs=None, dxfattribs=None)
 
     Add arc as DXF entity to a layout.
 
@@ -100,7 +100,7 @@ Methods
     :param layout: destination layout (model space, paper space or block)
     :param ucs: :class:`~ezdxf.algebra.UCS` definition for arc properties transformation to :class:`~ezdxf.algebra.OCS`,
                 *None* for 2D arcs
-    :param dict dxfattribs: usual DXF attributes supported by :class:`Arc`
+    :param dict dxfattribs: usual DXF attributes supported by :class:`ConstructionArc`
 
-    :Return: DXF :class:`Arc` object
+    :Return: DXF :class:`ConstructionArc` object
 

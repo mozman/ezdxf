@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Tuple
 
 from .vector import Vector
-from .circle import Circle
+from .circle import ConstructionCircle
 from .ucs import OCS, UCS
 import math
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Arc as DXFArc
 
 
-class Arc:
+class ConstructionArc:
     def __init__(self,
                  center: 'Vertex' = (0, 0),
                  radius: float = 1,
@@ -50,7 +50,7 @@ class Arc:
         return start_point, end_point
 
     @classmethod
-    def from_2p_angle(cls, start_point: 'Vertex', end_point: 'Vertex', angle: float, ccw: bool = True) -> 'Arc':
+    def from_2p_angle(cls, start_point: 'Vertex', end_point: 'Vertex', angle: float, ccw: bool = True) -> 'ConstructionArc':
         """
         Create arc from two points and enclosing angle. Additional precondition: arc goes by default in counter
         clockwise orientation from start_point to end_point, can be changed by ccw=False.
@@ -80,7 +80,7 @@ class Arc:
         height_vector = distance_vector.orthogonal().normalize(height)
         center = mid_point + height_vector
 
-        return Arc(
+        return ConstructionArc(
             center=center,
             radius=radius,
             start_angle=(start_point - center).angle_deg,
@@ -90,7 +90,7 @@ class Arc:
 
     @classmethod
     def from_2p_radius(cls, start_point: 'Vertex', end_point: 'Vertex', radius: float, ccw: bool = True,
-                       center_is_left: bool = True) -> 'Arc':
+                       center_is_left: bool = True) -> 'ConstructionArc':
         """
         Create arc from two points and arc radius. Additional precondition: arc goes by default in counter clockwise
         orientation from start_point to end_point can be changed by ccw=False.
@@ -120,7 +120,7 @@ class Arc:
         height = math.sqrt(radius ** 2 - distance2 ** 2)
         center = mid_point + (end_point - start_point).orthogonal(ccw=center_is_left).normalize(height)
 
-        return Arc(
+        return ConstructionArc(
             center=center,
             radius=radius,
             start_angle=(start_point - center).angle_deg,
@@ -129,7 +129,7 @@ class Arc:
         )
 
     @classmethod
-    def from_3p(cls, start_point: 'Vertex', end_point: 'Vertex', def_point: 'Vertex', ccw: bool = True) -> 'Arc':
+    def from_3p(cls, start_point: 'Vertex', end_point: 'Vertex', def_point: 'Vertex', ccw: bool = True) -> 'ConstructionArc':
         """
         Create arc from three points. Additional precondition: arc goes in counter clockwise
         orientation from start_point to end_point. Z-axis of start_point, end_point and def_point has to be 0 if given.
@@ -148,9 +148,9 @@ class Arc:
         if def_point == start_point or def_point == end_point:
             raise ValueError("def point has to be different to start- and end point")
 
-        circle = Circle.from_3p(start_point, end_point, def_point)
+        circle = ConstructionCircle.from_3p(start_point, end_point, def_point)
         center = Vector(circle.center)
-        return Arc(
+        return ConstructionArc(
             center=center,
             radius=circle.radius,
             start_angle=(start_point - center).angle_deg,
@@ -162,7 +162,7 @@ class Arc:
         """
         Add arc as DXF entity to a layout.
 
-        Supports 3D arcs by using an UCS. An Arc is always defined in the xy-plane, but by using an arbitrary UCS, the
+        Supports 3D arcs by using an UCS. An ConstructionArc is always defined in the xy-plane, but by using an arbitrary UCS, the
         arc can be placed in 3D space, automatically OCS transformation included.
 
         Args:
@@ -170,7 +170,7 @@ class Arc:
             ucs: arc properties transformation from ucs to ocs
             dxfattribs: usual DXF attributes supported by ARC
 
-        Returns: DXF Arc() object
+        Returns: DXF ConstructionArc() object
 
         """
 

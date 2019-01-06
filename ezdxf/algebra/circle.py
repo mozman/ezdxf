@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from .ray import Ray2D
+from .ray import ConstructionRay
 from .vector import Vector
 from .base import equals_almost
 
@@ -20,7 +20,7 @@ def midpoint(point1: 'Vertex', point2: 'Vertex') -> Tuple[float, float]:
     return (point1[0] + point2[0]) * .5, (point1[1] + point2[1]) * .5
 
 
-class Circle:
+class ConstructionCircle:
     def __init__(self, center: 'Vertex', radius: float = 1.0):
         self.center = Vector(center)
         self.radius = float(radius)
@@ -28,18 +28,18 @@ class Circle:
             raise ValueError("Radius has to be > 0.")
 
     @staticmethod
-    def from_3p(p1: 'Vertex', p2: 'Vertex', p3: 'Vertex') -> 'Circle':
+    def from_3p(p1: 'Vertex', p2: 'Vertex', p3: 'Vertex') -> 'ConstructionCircle':
         """ Creates a circle by three points.
         """
-        ray1 = Ray2D(p1, p2)
-        ray2 = Ray2D(p1, p3)
+        ray1 = ConstructionRay(p1, p2)
+        ray2 = ConstructionRay(p1, p3)
         mid_point1 = midpoint(p1, p2)
         mid_point2 = midpoint(p1, p3)
         center_ray1 = ray1.normal_through(mid_point1)
         center_ray2 = ray2.normal_through(mid_point2)
         center = Vector(center_ray1.intersect(center_ray2))
         r = center.distance(p1)
-        return Circle(center, r)
+        return ConstructionCircle(center, r)
 
     def get_point(self, angle: float) -> Vector:
         """
@@ -102,16 +102,16 @@ class Circle:
             result.append(self.center.x - dx)
         return tuple(result)
 
-    def tangent(self, angle: float) -> Ray2D:
+    def tangent(self, angle: float) -> ConstructionRay:
         """
-        Calculate tangent to circle at angle as Ray2D().
+        Calculate tangent to circle at angle as ConstructionRay().
 
         """
         point_on_circle = self.get_point(angle)
-        ray = Ray2D(self.center, point_on_circle)
+        ray = ConstructionRay(self.center, point_on_circle)
         return ray.normal_through(point_on_circle)
 
-    def intersect_ray(self, ray: Ray2D, places: int = 7) -> Tuple[Vector]:
+    def intersect_ray(self, ray: ConstructionRay, places: int = 7) -> Tuple[Vector]:
         """
         Calculates the intersection points for this circle with a ray.
 
@@ -146,7 +146,7 @@ class Circle:
             # else no intersection
         return tuple(result)
 
-    def intersect_circle(self, other: 'Circle', places: int = 7) -> Tuple[Vector]:
+    def intersect_circle(self, other: 'ConstructionCircle', places: int = 7) -> Tuple[Vector]:
         """
         Calculates the intersection points for two circles.
 

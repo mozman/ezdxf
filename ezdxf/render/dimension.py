@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable
 import math
-from ezdxf.algebra import Vector, Ray2D, xround
+from ezdxf.algebra import Vector, ConstructionRay, xround
 from ezdxf.algebra import UCS, PassTroughUCS
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.options import options
@@ -136,9 +136,9 @@ class LinearDimension(DimensionBase):
         angle = math.radians(dim.angle)
         ext_angle = angle + math.pi / 2.
 
-        dimline_ray = Ray2D(dim.defpoint, angle=angle)
-        ext1_ray = Ray2D(dim.defpoint2, angle=ext_angle)
-        ext2_ray = Ray2D(dim.defpoint3, angle=ext_angle)
+        dimline_ray = ConstructionRay(dim.defpoint, angle=angle)
+        ext1_ray = ConstructionRay(dim.defpoint2, angle=ext_angle)
+        ext2_ray = ConstructionRay(dim.defpoint3, angle=ext_angle)
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
         dim.defpoint = dimline_start  # set defpoint to expected location

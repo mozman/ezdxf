@@ -19,12 +19,16 @@ Version 0.9a4 - dev
 - NEW: open source fonts to download https://github.com/mozman/ezdxf/tree/master/fonts
 - __Open Sans Condensed__ font used for default dimension styles
 - NEW: font measuring tool based on tkinter, results are not good but better than nothing
-- NEW: subpackage ezdxf.render, because of DIMENSION rendering 
+- NEW: subpackage ezdxf.render, because of DIMENSION rendering
+- NEW: Support for AutoCAD standard arrows 
 - CHANGE: moved addons.curves to render.curves
 - CHANGE: moved addons.mesh to render.mesh
 - CHANGE: moved addons.r12spline to render.r12spline
 - CHANGE: moved addons.forms to render.forms
-- NEW: Support for AutoCAD standard arrows
+- CHANGE: renamed construction helper classes into Construction...()
+  - Ray2D() renamed to ConstructionRay()
+  - Circle() renamed to ConstructionCircle()
+  - Arc() renamed to ConstructionArc()
 
 Version 0.8.9 - 2018-11-28
 --------------------------

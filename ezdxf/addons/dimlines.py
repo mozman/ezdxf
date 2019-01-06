@@ -26,7 +26,7 @@ from math import radians, degrees, pi
 from abc import abstractmethod
 
 from ezdxf.algebra.vector import Vector, distance, lerp
-from ezdxf.algebra.ray import Ray2D
+from ezdxf.algebra.ray import ConstructionRay
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, GenericLayoutType, Vertex
@@ -275,7 +275,7 @@ class LinearDimension(_DimensionBase):
         Calc setup values and determines the point order of the dimension line points.
         """
         self.measure_points = [Vector(point) for point in self.measure_points]  # type: List[Vector]
-        dimlineray = Ray2D(self.dimlinepos, angle=radians(self.angle))  # Type: Ray2D
+        dimlineray = ConstructionRay(self.dimlinepos, angle=radians(self.angle))  # Type: ConstructionRay
         self.dimline_points = [self._get_point_on_dimline(point, dimlineray) for point in
                                self.measure_points]  # type: List[Vector]
         self.point_order = self._indices_of_sorted_points(self.dimline_points)  # type: List[int]
@@ -332,7 +332,7 @@ class LinearDimension(_DimensionBase):
         self.normal_vector = self.parallel_vector.orthogonal()
 
     @staticmethod
-    def _get_point_on_dimline(point: 'Vertex', dimray: Ray2D) -> Vector:
+    def _get_point_on_dimline(point: 'Vertex', dimray: ConstructionRay) -> Vector:
         """ get the measure target point projection on the dimension line """
         return dimray.intersect(dimray.normal_through(point))
 
@@ -673,10 +673,10 @@ class RadialDimension(_DimensionBase):
 
 def center_of_3points_arc(point1: 'Vertex', point2: 'Vertex', point3: 'Vertex') -> Vector:
     """
-    Calc center point of 3 point arc. Circle is defined by 3 points on the circle: point1, point2 and point3.
+    Calc center point of 3 point arc. ConstructionCircle is defined by 3 points on the circle: point1, point2 and point3.
     """
-    ray1 = Ray2D(point1, point2)
-    ray2 = Ray2D(point1, point3)
+    ray1 = ConstructionRay(point1, point2)
+    ray2 = ConstructionRay(point1, point3)
     midpoint1 = lerp(point1, point2)
     midpoint2 = lerp(point1, point3)
     center_ray1 = ray1.normal_through(midpoint1)

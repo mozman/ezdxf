@@ -22,7 +22,7 @@ XCOORD = 0
 YCOORD = 1
 
 
-class Ray2D:
+class ConstructionRay:
     """
     Defines an infinite ray (line with no end points)
     treat it as IMMUTABLE - don't change the status
@@ -109,7 +109,7 @@ class Ray2D:
     def is_horizontal(self) -> bool:
         return equals_almost(self.slope, 0., self.places)
 
-    def is_parallel(self, ray: 'Ray2D') -> bool:
+    def is_parallel(self, ray: 'ConstructionRay') -> bool:
         """
         Return True if the rays are parallel, else False.
 
@@ -119,7 +119,7 @@ class Ray2D:
         else:
             return equals_almost(self.slope, ray.slope, self.places)
 
-    def intersect(self, other_ray: 'Ray2D') -> Vector:
+    def intersect(self, other_ray: 'ConstructionRay') -> Vector:
         """
         Returns the intersection point (xy-tuple) of self and other_ray.
 
@@ -145,12 +145,12 @@ class Ray2D:
         else:
             raise ParallelRaysError("no intersection, rays are parallel")
 
-    def normal_through(self, point: 'Vertex') -> 'Ray2D':
+    def normal_through(self, point: 'Vertex') -> 'ConstructionRay':
         """
         Returns a ray which is normal to self and goes through point.
 
         """
-        return Ray2D(point, angle=self.angle + HALF_PI)
+        return ConstructionRay(point, angle=self.angle + HALF_PI)
 
     def goes_through(self, point: 'Vertex') -> bool:
         """
@@ -184,7 +184,7 @@ class Ray2D:
                 raise ArithmeticError
             return (float(y) - self._y0) / self.slope
 
-    def bisectrix(self, other_ray: 'Ray2D') -> 'Ray2D':
+    def bisectrix(self, other_ray: 'ConstructionRay') -> 'ConstructionRay':
         """
         Bisectrix between self and other_ray.
 
@@ -193,4 +193,4 @@ class Ray2D:
             raise ParallelRaysError
         cross_point = self.intersect(other_ray)
         alpha = (self.angle + other_ray.angle) / 2.0
-        return Ray2D(cross_point, angle=alpha)
+        return ConstructionRay(cross_point, angle=alpha)

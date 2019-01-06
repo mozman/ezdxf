@@ -3,15 +3,15 @@
 import unittest
 import math
 from ezdxf.algebra.base import equals_almost
-from ezdxf.algebra.ray import Ray2D
-from ezdxf.algebra.circle import Circle
+from ezdxf.algebra.ray import ConstructionRay
+from ezdxf.algebra.circle import ConstructionCircle
 
 HALF_PI = math.pi / 2.
 
 
 class TestCircle(unittest.TestCase):
     def test_init_circle(self):
-        circle = Circle((0., 0.), 5)
+        circle = ConstructionCircle((0., 0.), 5)
         point = circle.get_point(HALF_PI)
         self.assertAlmostEqual(point[0], 0., 3)
         self.assertAlmostEqual(point[1], 5., 3)
@@ -20,14 +20,14 @@ class TestCircle(unittest.TestCase):
         self.assertAlmostEqual(point[1], 3.5355, 3)
 
     def test_within(self):
-        circle = Circle((0., 0.), 5)
+        circle = ConstructionCircle((0., 0.), 5)
         p1 = (3., 2.)
         p2 = (4., 5.)
         self.assertTrue(circle.within(p1))
         self.assertFalse(circle.within(p2))
 
     def test_tangent(self):
-        circle = Circle((0., 0.), 5.)
+        circle = ConstructionCircle((0., 0.), 5.)
         tangent = circle.tangent(HALF_PI / 2)
         self.assertAlmostEqual(tangent.slope, -1, 4)
         tangent = circle.tangent(-HALF_PI / 2)
@@ -38,12 +38,12 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(tangent.is_horizontal)
 
     def test_intersect_ray_pass(self):
-        circle = Circle((10., 10.), 3)
-        ray1_hor = Ray2D((10., 15.), angle=0)
-        ray2_hor = Ray2D((10., 5.), angle=0)
-        ray1_vert = Ray2D((5., 10.), angle=HALF_PI)
-        ray2_vert = Ray2D((15., 10.), angle=-HALF_PI)
-        ray3 = Ray2D((13.24, 14.95), angle=0.3992)
+        circle = ConstructionCircle((10., 10.), 3)
+        ray1_hor = ConstructionRay((10., 15.), angle=0)
+        ray2_hor = ConstructionRay((10., 5.), angle=0)
+        ray1_vert = ConstructionRay((5., 10.), angle=HALF_PI)
+        ray2_vert = ConstructionRay((15., 10.), angle=-HALF_PI)
+        ray3 = ConstructionRay((13.24, 14.95), angle=0.3992)
         self.assertFalse(circle.intersect_ray(ray1_hor))
         self.assertFalse(circle.intersect_ray(ray2_hor))
         self.assertFalse(circle.intersect_ray(ray1_vert))
@@ -53,7 +53,7 @@ class TestCircle(unittest.TestCase):
     def test_intersect_ray_touch(self):
         def test_touch(testnum, x, y, _angle, places=7):
             result = True
-            ray = Ray2D((x, y), angle=_angle)
+            ray = ConstructionRay((x, y), angle=_angle)
             points = circle.intersect_ray(ray, places)
             if len(points) != 1:
                 result = False
@@ -64,7 +64,7 @@ class TestCircle(unittest.TestCase):
                 if not equals_almost(point[1], y, 4): result = False
             return result
 
-        circle = Circle((10., 10.), 3)
+        circle = ConstructionCircle((10., 10.), 3)
         self.assertTrue(test_touch(1, 10., 13., 0))
         self.assertTrue(test_touch(2, 10., 7., 0))
         self.assertTrue(test_touch(3, 7., 10., HALF_PI))
@@ -72,8 +72,8 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(test_touch(5, 8.8341, 12.7642, 0.3991568, places=4))
 
     def test_intersect_ray_intersect(self):
-        circle = Circle((10., 10.), 3)
-        ray_vert = Ray2D((8.5, 10.), angle=HALF_PI)
+        circle = ConstructionCircle((10., 10.), 3)
+        ray_vert = ConstructionRay((8.5, 10.), angle=HALF_PI)
         cross_points = circle.intersect_ray(ray_vert)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
@@ -81,7 +81,7 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(equal_points_almost(p1, (8.5, 7.4019), places=4))
         self.assertTrue(equal_points_almost(p2, (8.5, 12.5981), places=4))
 
-        ray_hor = Ray2D((10, 8.5), angle=0.)
+        ray_hor = ConstructionRay((10, 8.5), angle=0.)
         cross_points = circle.intersect_ray(ray_hor)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
@@ -89,7 +89,7 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(equal_points_almost(p1, (7.4019, 8.5), places=4))
         self.assertTrue(equal_points_almost(p2, (12.5981, 8.5), places=4))
 
-        ray_slope = Ray2D((5, 5), (16, 12))
+        ray_slope = ConstructionRay((5, 5), (16, 12))
         cross_points = circle.intersect_ray(ray_slope)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
@@ -98,7 +98,7 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(equal_points_almost(p2, (12.9986, 10.0900), places=4))
 
         # ray with slope through midpoint
-        ray_slope = Ray2D((10, 10), angle=HALF_PI / 2)
+        ray_slope = ConstructionRay((10, 10), angle=HALF_PI / 2)
         cross_points = circle.intersect_ray(ray_slope)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
@@ -108,7 +108,7 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(equal_points_almost(p2, (12.1213, 12.1213), places=4))
 
         # horizontal ray through midpoint
-        ray_hor = Ray2D((10, 10), angle=0)
+        ray_hor = ConstructionRay((10, 10), angle=0)
         cross_points = circle.intersect_ray(ray_hor)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
@@ -118,7 +118,7 @@ class TestCircle(unittest.TestCase):
         self.assertTrue(equal_points_almost(p2, (13, 10), places=4))
 
         # vertical ray through midpoint
-        ray_vert = Ray2D((10, 10), angle=HALF_PI)
+        ray_vert = ConstructionRay((10, 10), angle=HALF_PI)
         cross_points = circle.intersect_ray(ray_vert)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
@@ -131,10 +131,10 @@ class TestCircle(unittest.TestCase):
         M1 = (30, 30)
         M2 = (40, 40)
         M3 = (30.3, 30.3)
-        circle1 = Circle(M1, 5)
-        circle2 = Circle(M1, 3)
-        circle3 = Circle(M2, 3)
-        circle4 = Circle(M3, 3)
+        circle1 = ConstructionCircle(M1, 5)
+        circle2 = ConstructionCircle(M1, 3)
+        circle3 = ConstructionCircle(M2, 3)
+        circle4 = ConstructionCircle(M3, 3)
 
         cross_points = circle1.intersect_circle(circle2)
         self.assertFalse(cross_points)
@@ -145,12 +145,12 @@ class TestCircle(unittest.TestCase):
 
     def test_intersect_circle_touch(self):
         def check_touch(m, t):
-            circle2 = Circle(m, 1.5)
+            circle2 = ConstructionCircle(m, 1.5)
             points = circle1.intersect_circle(circle2, 4)
             self.assertEqual(len(points), 1)
             return equal_points_almost(points[0], t, 4)
 
-        circle1 = Circle((20, 20), 5)
+        circle1 = ConstructionCircle((20, 20), 5)
 
         self.assertTrue(check_touch((26.5, 20.), (25., 20.)))
         self.assertTrue(check_touch((20., 26.5), (20., 25.)))
@@ -166,7 +166,7 @@ class TestCircle(unittest.TestCase):
 
     def test_intersect_circle_intersect(self):
         def check_intersection(m, p1, p2):
-            circle2 = Circle(m, 1.5)
+            circle2 = ConstructionCircle(m, 1.5)
             points = circle1.intersect_circle(circle2, 4)
             self.assertEqual(len(points), 2)
             a, b = points
@@ -175,7 +175,7 @@ class TestCircle(unittest.TestCase):
             result2 = equal_points_almost(a, p2, 4) and equal_points_almost(b, p1, 4)
             return result1 or result2
 
-        circle1 = Circle((40, 20), 5)
+        circle1 = ConstructionCircle((40, 20), 5)
         self.assertTrue(check_intersection((46., 20.), (44.8958, 21.0153), (44.8958, 18.9847)))
         self.assertTrue(check_intersection((44., 20.), (44.8438, 21.2402), (44.8438, 18.7598)))
         self.assertTrue(check_intersection((40., 26.), (38.9847, 24.8958), (41.0153, 24.8958)))
@@ -191,7 +191,7 @@ class TestCircle(unittest.TestCase):
         p1 = (3., 3.)
         p2 = (5., 7.)
         p3 = (12., 5.)
-        circle = Circle.from_3p(p1, p2, p3)
+        circle = ConstructionCircle.from_3p(p1, p2, p3)
         self.assertAlmostEqual(circle.center[0], 7.6875, 4)
         self.assertAlmostEqual(circle.center[1], 3.15625, 4)
         self.assertAlmostEqual(circle.radius, 4.6901, 4)
@@ -205,7 +205,7 @@ class TestCircle(unittest.TestCase):
             v2 = equals_almost(result[0], y2, 4) and equals_almost(result[1], y1, 4)
             return v1 or v2
 
-        circle = Circle((20., -20.), 5)
+        circle = ConstructionCircle((20., -20.), 5)
         self.assertFalse(circle.get_x(-14))
         self.assertTrue(check(15., -20., -20.))
         self.assertTrue(check(25., -20., -20.))
@@ -222,7 +222,7 @@ class TestCircle(unittest.TestCase):
             v2 = equals_almost(result[0], x2, 4) and equals_almost(result[1], x1, 4)
             return v1 or v2
 
-        circle = Circle((20., -20.), 5.)
+        circle = ConstructionCircle((20., -20.), 5.)
         self.assertEqual(len(circle.get_y(-14.)), 0)
         self.assertTrue(check(-15., 20., 20.))
         self.assertTrue(check(-25., 20., 20.))

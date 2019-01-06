@@ -3,16 +3,16 @@
 
 import ezdxf
 from ezdxf.algebra.base import equals_almost, almost_equal_points
-from ezdxf.algebra import Arc, Vector, UCS
+from ezdxf.algebra import ConstructionArc, Vector, UCS
 
 
 def test_arc_from_2p_angle_complex():
     p1 = (-15.73335, 10.98719)
     p2 = (-12.67722, 8.76554)
     angle = 55.247230
-    arc = Arc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
+    arc = ConstructionArc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
 
-    arc_result = Arc(
+    arc_result = ConstructionArc(
         center=(-12.08260, 12.79635),
         radius=4.07443,
         start_angle=-153.638906,
@@ -30,13 +30,13 @@ def test_arc_from_2p_angle_simple():
     p2 = (0, 3)
     angle = 90
 
-    arc = Arc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
+    arc = ConstructionArc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
     assert almost_equal_points(arc.center, Vector(0, 1))
     assert equals_almost(arc.radius, 2)
     assert equals_almost(arc.start_angle, 0)
     assert equals_almost(arc.end_angle, 90)
 
-    arc = Arc.from_2p_angle(start_point=p2, end_point=p1, angle=angle)
+    arc = ConstructionArc.from_2p_angle(start_point=p2, end_point=p1, angle=angle)
     assert almost_equal_points(arc.center, Vector(2, 3))
     assert equals_almost(arc.radius, 2)
     assert equals_almost(arc.start_angle, 180)
@@ -48,13 +48,13 @@ def test_arc_from_2p_radius():
     p2 = (0, 3)
     radius = 2
 
-    arc = Arc.from_2p_radius(start_point=p1, end_point=p2, radius=radius)
+    arc = ConstructionArc.from_2p_radius(start_point=p1, end_point=p2, radius=radius)
     assert almost_equal_points(arc.center, Vector(0, 1))
     assert equals_almost(arc.radius, radius)
     assert equals_almost(arc.start_angle, 0)
     assert equals_almost(arc.end_angle, 90)
 
-    arc = Arc.from_2p_radius(start_point=p2, end_point=p1, radius=radius)
+    arc = ConstructionArc.from_2p_radius(start_point=p2, end_point=p1, radius=radius)
     assert almost_equal_points(arc.center, Vector(2, 3))
     assert equals_almost(arc.radius, radius)
     assert equals_almost(arc.start_angle, 180)
@@ -65,9 +65,9 @@ def test_arc_from_3p():
     p1 = (-15.73335, 10.98719)
     p2 = (-12.67722, 8.76554)
     p3 = (-8.00817, 12.79635)
-    arc = Arc.from_3p(start_point=p1, end_point=p2, def_point=p3)
+    arc = ConstructionArc.from_3p(start_point=p1, end_point=p2, def_point=p3)
 
-    arc_result = Arc(
+    arc_result = ConstructionArc(
         center=(-12.08260, 12.79635),
         radius=4.07443,
         start_angle=-153.638906,
@@ -90,7 +90,7 @@ def test_spatial_arc_from_3p():
     end_point_ucs = ucs.from_wcs(end_point_wcs)
     def_point_ucs = Vector(0, 0)
 
-    arc = Arc.from_3p(start_point_ucs, end_point_ucs, def_point_ucs)
+    arc = ConstructionArc.from_3p(start_point_ucs, end_point_ucs, def_point_ucs)
     dwg = ezdxf.new('R12')
     msp = dwg.modelspace()
 
