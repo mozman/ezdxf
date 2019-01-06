@@ -11,7 +11,6 @@ from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
 
-
 TAG_STRING_FORMAT = '%3d\n%s\n'
 POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111, 112, 210, 1010, 1011, 1012, 1013, 1014, 1015, 1016,
                1017, 1018, 1019, }
@@ -206,15 +205,14 @@ def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
     return TAG_STRING_FORMAT % tuple(tag)
 
 
-def get_xcode_for(code, value) -> int:
-    if is_pointer_code(code) or (code in HANDLE_CODES):
+def get_xcode_for(code) -> int:
+    if code in HEX_HANDLE_CODES:
         return 1005
-    if is_binary_data(code):
+    if code in BINARAY_DATA:
         return 1004
-    if isinstance(value, (int, bool)):
+    type_ = TYPE_TABLE.get(code, str)
+    if type_ is int:
         return 1070
-    if isinstance(value, float):
+    if type_ is float:
         return 1040
-    if value in ('{', '}'):
-        return 1002
     return 1000
