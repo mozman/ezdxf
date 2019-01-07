@@ -31,6 +31,7 @@ def test_dimstyle_override(dxf12):
     preset = {
         'dimtxsty': 'TEST',  # virtual attribute - 'dimtxsty_handle' stores the text style handle
         'dimexe': 0.777,
+        'dimblk': ezdxf.ARROWS.dot_blank
     }
     dimstyle = dimline.dimstyle_override(preset)
     assert dimstyle['dimtxsty'] == 'TEST'
@@ -46,6 +47,12 @@ def test_dimstyle_override(dxf12):
     assert len(dstyle_orig) == 0
 
     dimstyle.commit()
+    # check group code 5 handling for 'dimblk'
+    data = dimline.get_xdata_list('ACAD', 'DSTYLE')
+    for tag in data:
+        if tag.value == ezdxf.ARROWS.dot_blank:
+            assert tag.code == 1000, "Despite group code 5, 'dimblk' should be treated as string, not as handle"
+
     dstyle = dimstyle.get_dstyle_dict()
     assert dstyle['dimexe'] == 0.777
     # unsupported DXF DimStyle attributes are not stored in dstyle

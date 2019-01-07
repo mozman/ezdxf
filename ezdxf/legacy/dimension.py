@@ -163,7 +163,10 @@ class Dimension(GraphicEntity):
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
                 code = dxf_attr.code
                 tags.append((1070, code))
-                tags.append((get_xcode_for(code), value))
+                if code == 5:  # DimStyle code 5 is not a handle
+                    tags.append((1000, value))
+                else:
+                    tags.append((get_xcode_for(code), value))
 
         if len(tags):
             self.set_xdata_list('ACAD', 'DSTYLE', tags)
