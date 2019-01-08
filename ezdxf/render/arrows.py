@@ -157,6 +157,7 @@ class Dot(Circle):
             polyline[0].dxf.bulge = 1
             polyline[1].dxf.bulge = 1
 
+
 class CircleBlank(Circle):
     def connection_point(self) -> Vector:
         return self.shape[1]  # blank circle
