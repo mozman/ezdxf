@@ -162,26 +162,29 @@ class LinearDimension(DimensionBase):
         angle = math.radians(dim.angle)
         ext_angle = angle + math.pi / 2.
 
-        dimline_ray = ConstructionRay(dim.defpoint, angle=angle)
+        # USER_LOCATION_OVERRIDE, moves dimension line location!
+        if self.user_location_override:
+            dimline_ray = ConstructionRay(dim.text_midpoint, angle=angle)
+        else:
+            dimline_ray = ConstructionRay(dim.defpoint, angle=angle)
+
+        # extension lines
         ext1_ray = ConstructionRay(dim.defpoint2, angle=ext_angle)
         ext2_ray = ConstructionRay(dim.defpoint3, angle=ext_angle)
+
+        # dimension definition points
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
         dim.defpoint = dimline_start  # set defpoint to expected location
+
         dimlfac = self.dim_style.get('dimlfac', 1.)
         measurement = (dimline_start - dimline_end).magnitude
         dim_text = self.get_text(measurement * dimlfac)
 
         # add text
         if dim_text:
-
-            if not self.user_location_override:
-                # calculate text midpoint
-                pos = self.calc_text_midpoint(dimline_start, dimline_end)
-                self.dimension.set_dxf_attrib('text_midpoint', pos)
-            else:
-                pos = self.dimension.get_dxf_attrib('text_midpoint')
-            self.add_measurement_text(dim_text, pos)
+            text_location = self.text_location(dimline_start, dimline_end)
+            self.add_measurement_text(dim_text, text_location)
 
         # add extension line 1
         if not self.suppress_extension_line1:
@@ -259,7 +262,11 @@ class LinearDimension(DimensionBase):
             end = self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
         return start, end
 
-    def calc_text_midpoint(self, start: Vector, end: Vector) -> Vector:
+    def text_vertical_distance(self) -> float:
+        """
+        Returns the vertical distcance for dimension line to text midpoint. Positive values are above the line, negative
+        values are below the line.
+        """
         tad = self.dim_style.get('dimtad', 1)
         height = self.text_height
         gap = self.dim_style.get('dimgap', 0.625)
@@ -268,9 +275,23 @@ class LinearDimension(DimensionBase):
             dist = 0
         elif tad == 4:  # below dimline
             dist = -dist
-        base = end - start
-        ortho = base.orthogonal().normalize(dist)
-        return start.lerp(end) + ortho
+        return dist
+
+    def text_location(self, start: Vector, end: Vector) -> Vector:
+        if not self.user_location_override:
+            # text_location defines the text location along the dimension line
+            # TODO: there are more the possible location than 'center'
+            text_location = start.lerp(end)
+            self.dimension.set_dxf_attrib('text_midpoint', text_location)
+        else:
+            # text_location defines the text location along the dimension line
+            text_location = self.dimension.get_dxf_attrib('text_midpoint')
+
+        # vertical distance from dimension line to text midpoint, normal to the dimension line
+        dist = self.text_vertical_distance()
+        # shift text location
+        ortho = (end - start).orthogonal().normalize(dist)
+        return text_location + ortho
 
 
 class DimensionRenderer:

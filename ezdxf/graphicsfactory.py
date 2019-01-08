@@ -461,7 +461,7 @@ class GraphicsFactory:
                        base: 'Vertex',
                        ext1: 'Vertex',
                        ext2: 'Vertex',
-                       text_midpoint: 'Vertex' = None,
+                       location_override: 'Vertex' = None,
                        dimstyle: str = 'EZDXF',
                        text: str = "<>",
                        angle: float = 0,  # 0=horizontal, 90=vertical, else=rotated
@@ -479,7 +479,9 @@ class GraphicsFactory:
             base: definition point, intersection of extension line 1 and dimension line (in UCS)
             ext1: start point of extension line 1 (in UCS)
             ext2: start point of extension line 2 (in UCS)
-            text_midpoint: text mid point (in UCS), or None for computed text placing
+            location_override: user defined location for text mid point (in UCS) projected onto the dimension line, or
+                               None for computed text placing, this point defines the location of the dimension text AND
+                               the dimension line.
             text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
             dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
             angle: angle from ucs x-axis to dimension line in degrees
@@ -493,8 +495,8 @@ class GraphicsFactory:
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint'] = Vector(base)
-        if text_midpoint:
-            dxfattribs['text_midpoint'] = Vector(text_midpoint)
+        if location_override:
+            dxfattribs['text_midpoint'] = Vector(location_override)
             dimline.set_flag_state(const.DIM_USER_LOCATION_OVERRIDE, True, name='dimtype')
         dxfattribs['text'] = text
         dxfattribs['defpoint2'] = Vector(ext1)
