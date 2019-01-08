@@ -143,14 +143,19 @@ class Circle(BaseArrow):
 class Dot(Circle):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         dxfattribs['closed'] = True
-        dxfattribs['default_start_width'] = self.radius
-        dxfattribs['default_end_width'] = self.radius
         center = self.shape[0]
         d = Vector(self.radius / 2, 0)
-        polyline = layout.add_polyline2d(points=[center - d, center + d], dxfattribs=dxfattribs)
-        polyline[0].dxf.bulge = 1
-        polyline[1].dxf.bulge = 1
-
+        p1 = center - d
+        p2 = center + d
+        if layout.dxfversion > 'AC1009':
+            dxfattribs['const_width'] = self.radius
+            layout.add_lwpolyline([(p1, 1), (p2, 1)], format='vb', dxfattribs=dxfattribs)
+        else:
+            dxfattribs['default_start_width'] = self.radius
+            dxfattribs['default_end_width'] = self.radius
+            polyline = layout.add_polyline2d(points=[p1, p2], dxfattribs=dxfattribs)
+            polyline[0].dxf.bulge = 1
+            polyline[1].dxf.bulge = 1
 
 class CircleBlank(Circle):
     def connection_point(self) -> Vector:

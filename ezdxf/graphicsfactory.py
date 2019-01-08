@@ -188,13 +188,13 @@ class GraphicsFactory:
 
     # new entities in DXF AC1015 (R2000)
 
-    def add_lwpolyline(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'LWPolyline':
+    def add_lwpolyline(self, points: Iterable[Vertex], format: str = 'xyseb', dxfattribs: dict = None) -> 'LWPolyline':
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('LWPOLYLINE requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
         closed = dxfattribs.pop('closed', False)
         lwpolyline = self.build_and_add_entity('LWPOLYLINE', dxfattribs)
-        lwpolyline.set_points(points)
+        lwpolyline.set_points(points, format=format)
         lwpolyline.closed = closed
         return lwpolyline
 

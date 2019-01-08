@@ -125,7 +125,7 @@ def test_context_manager(layout):
 
 def test_clear(layout):
     points = [(1, 1), (2, 2), (3, 3)]
-    line = layout.add_lwpolyline(points, {'closed': True})
+    line = layout.add_lwpolyline(points, dxfattribs={'closed': True})
     assert line.closed is True, "Polyline should be closed"
     line.clear()
     assert 0 == len(line), "Polyline count should be 0."
