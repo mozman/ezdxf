@@ -29,6 +29,12 @@ DIMSTYLE
 0.0
 30
 0.0
+11
+0.0
+21
+0.0
+31
+0.0
 70
 0
 1
@@ -44,18 +50,6 @@ DIMSTYLE
 24
 0.0
 34
-0.0
-15
-0.0
-25
-0.0
-35
-0.0
-16
-0.0
-26
-0.0
-36
 0.0
 40
 1.0
@@ -163,7 +157,7 @@ class Dimension(GraphicEntity):
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
                 code = dxf_attr.code
                 tags.append((1070, code))
-                if code == 5:  # DimStyle code 5 is not a handle
+                if code == 5:  # DimStyle 'dimblk' has group code 5 but is not a handle
                     tags.append((1000, value))
                 else:
                     tags.append((get_xcode_for(code), value))

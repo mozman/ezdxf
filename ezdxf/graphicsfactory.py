@@ -488,14 +488,14 @@ class GraphicsFactory:
             dxfattribs: DXF attributes for DIMENSION entity
 
         """
-        type_ = {'dimtype': dimtype(const.DIM_LINEAR, self.dxfversion)}
+        type_ = {'dimtype': const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimstyle'] = dimstyle
-        dxfattribs['dimtype'] = dimtype(const.DIM_LINEAR, self.dxfversion)
         dxfattribs['defpoint'] = Vector(base)
         if text_midpoint:
             dxfattribs['text_midpoint'] = Vector(text_midpoint)
+            dimline.set_flag_state(const.DIM_USER_LOCATION_OVERRIDE, True, name='dimtype')
         dxfattribs['text'] = text
         dxfattribs['defpoint2'] = Vector(ext1)
         dxfattribs['defpoint3'] = Vector(ext2)
@@ -508,35 +508,35 @@ class GraphicsFactory:
     # don't understand the difference between aligned and linear yet!
 
     def add_angular_dim(self, dxfattribs: dict = None) -> 'Dimension':
-        type_ = {'dimtype': dimtype(const.DIM_ANGULAR, self.dxfversion)}
+        type_ = {'dimtype': const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
         return dimline
 
     def add_diameter_dim(self, dxfattribs: dict = None) -> 'Dimension':
-        type_ = {'dimtype': dimtype(const.DIM_DIAMETER, self.dxfversion)}
+        type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
         return dimline
 
     def add_radius_dim(self, dxfattribs: dict = None) -> 'Dimension':
-        type_ = {'dimtype': dimtype(const.DIM_RADIUS, self.dxfversion)}
+        type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
         return dimline
 
     def add_angular_3p_dim(self, dxfattribs: dict = None) -> 'Dimension':
-        type_ = {'dimtype': dimtype(const.DIM_ANGULAR_3P, self.dxfversion)}
+        type_ = {'dimtype': const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
         return dimline
 
     def add_ordinate_dim(self, dxfattribs: dict = None) -> 'Dimension':
-        type_ = {'dimtype': dimtype(const.DIM_ORDINATE, self.dxfversion)}
+        type_ = {'dimtype': const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
@@ -551,13 +551,3 @@ class GraphicsFactory:
                            reverse: bool = False, dxfattribs: dict = None) -> Vector:
         return ARROWS.insert_arrow(self, name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
                                    dxfattribs=dxfattribs)
-
-
-def dimtype(dtype: int, dxfversion: str) -> int:
-    # always set user defined text location, because replicating the exact AutoCAD placing is not documented
-    if dxfversion <= 'AC1009':
-        flags = const.DIM_USER_LOCATION_OVERRIDE
-    else:
-        # every DIMENSION entity has an exclusive geometry BLOCK, this flag is not supported by DXF12 and prior
-        flags = const.DIM_BLOCK_EXCLUSIVE | const.DIM_USER_LOCATION_OVERRIDE
-    return dtype | flags

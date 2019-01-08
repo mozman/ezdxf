@@ -45,6 +45,10 @@ class DimensionBase:
     def suppress_extension_line2(self) -> bool:
         return bool(self.dim_style.get('dimse2', False))
 
+    @property
+    def user_location_override(self) -> bool:
+        return self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE, name='dimtype')
+
     def default_attributes(self) -> dict:
         return {
             'layer': self.dimension.dxf.layer,
@@ -170,12 +174,13 @@ class LinearDimension(DimensionBase):
 
         # add text
         if dim_text:
-            pos = self.dimension.get_dxf_attrib('text_midpoint', None)
-            # calculate text midpoint if unset
-            if pos is None:
-                pos = self.get_text_midpoint(dimline_start, dimline_end)
-                self.dimension.set_dxf_attrib('text_midpoint', pos)
 
+            if not self.user_location_override:
+                # calculate text midpoint
+                pos = self.calc_text_midpoint(dimline_start, dimline_end)
+                self.dimension.set_dxf_attrib('text_midpoint', pos)
+            else:
+                pos = self.dimension.get_dxf_attrib('text_midpoint')
             self.add_measurement_text(dim_text, pos)
 
         # add extension line 1
@@ -254,7 +259,7 @@ class LinearDimension(DimensionBase):
             end = self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
         return start, end
 
-    def get_text_midpoint(self, start: Vector, end: Vector) -> Vector:
+    def calc_text_midpoint(self, start: Vector, end: Vector) -> Vector:
         tad = self.dim_style.get('dimtad', 1)
         height = self.text_height
         gap = self.dim_style.get('dimgap', 0.625)
