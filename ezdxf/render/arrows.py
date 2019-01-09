@@ -331,6 +331,20 @@ class _Arrows:
         ez_arrow_blank: EzArrowBlank,
         ez_arrow_filled: EzArrowFilled,
     }
+
+    STROKE_ARROWS = {
+        closed_filled,
+        dot_small,
+        open_30,
+        closed,
+        dot_smallblank,
+        none,
+        oblique,
+        closed_blank,
+        integral,
+        architectural_tick,
+    }
+
     __acad__ = {
         closed_filled, dot, dot_small, dot_blank, origin_indicator, origin_indicator_2, open, right_angle, open_30,
         closed, dot_smallblank, none, oblique, box_filled, box, closed_blank, datum_triangle, datum_triangle_filled,
@@ -430,6 +444,13 @@ class _Arrows:
             size *= .5
         cls = self.CLASSES[name]
         return cls(insert, size, rotation, reverse)
+
+
+def connection_point(arrow_name: str, insert: 'Vertex', scale: float = 1, rotation: float = 0) -> Vector:
+    if arrow_name in _Arrows.STROKE_ARROWS:
+        return Vector(insert)
+    else:
+        return Vector.from_deg_angle(rotation, scale) + insert
 
 
 ARROWS = _Arrows()

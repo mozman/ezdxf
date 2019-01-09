@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Tuple, Iterable
 import math
 from ezdxf.algebra import Vector, ConstructionRay, xround
 from ezdxf.algebra import UCS, PassTroughUCS
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, MTEXT_ALIGN_FLAGS
 from ezdxf.options import options
 from ezdxf.tools import suppress_zeros, raise_decimals
-from ezdxf.render.arrows import ARROWS
+from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.modern.tableentries import get_block_name_by_handle
 
 if TYPE_CHECKING:
@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 
 
 class DimensionBase:
-    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
+    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
+                 override: 'DimStyleOverride' = None):
         self.drawing = dimension.drawing
         self.dimension = dimension
         self.dxfversion = self.drawing.dxfversion
@@ -71,9 +72,9 @@ class DimensionBase:
             return text
 
     def get_arrow_names(self) -> Tuple[str, str]:
-        def arrow_name(attrib)->str:
+        def arrow_name(attrib) -> str:
             if self.dxfversion > 'AC1009':
-                handle = get_dxf_attr(attrib+'_handle', None)
+                handle = get_dxf_attr(attrib + '_handle', None)
                 if handle == '0':  # special: closed filled
                     pass  # return default value
                 elif handle:
@@ -131,7 +132,8 @@ class DimensionBase:
             self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
             return insert
 
-    def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
+    def add_text(self, text: str, pos: 'Vertex', rotation: float, align='MIDDLE_CENTER',
+                 dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         attribs['style'] = self.text_style
@@ -139,7 +141,7 @@ class DimensionBase:
         if self.dxfversion > 'AC1009':
             attribs['char_height'] = self.text_height
             attribs['insert'] = pos
-            attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', 5)
+            attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', MTEXT_ALIGN_FLAGS.get(align, 5))
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)
@@ -148,7 +150,7 @@ class DimensionBase:
             if dxfattribs:
                 attribs.update(dxfattribs)
             dxftext = self.block.add_text(text, dxfattribs=attribs)
-            dxftext.set_pos(self.ocs(pos), align='MIDDLE_CENTER')
+            dxftext.set_pos(self.ocs(pos), align=align)
 
     def add_defpoints(self, points: Iterable['Vertex']) -> None:
         attribs = {
@@ -248,7 +250,7 @@ class LinearDimension(DimensionBase):
         }
         self.add_line(start, end, dxfattribs=attribs)
 
-    def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None) -> Tuple[Vector, Vector]:
+    def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = '', blk2: str = '') -> Tuple[Vector, Vector]:
         dim = self.dimension.dxf
         get_dxf_attr = self.dim_style.get
         attribs = {
@@ -263,6 +265,11 @@ class LinearDimension(DimensionBase):
             start = self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, reverse=True,
                                       dxfattribs=attribs)
             end = self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
+            # test connection point
+            # if blk1 not in ARROWS.STROKE_ARROWS:
+            #    start = connection_point(blk1, start, scale, dim.angle)
+            # if blk2 not in ARROWS.STROKE_ARROWS:
+            #    end = connection_point(blk2, end, scale, dim.angle+180)
         return start, end
 
     def text_vertical_distance(self) -> float:
@@ -326,19 +333,19 @@ class DimensionRenderer:
         render = LinearDimension(dimension, block, ucs, override)
         render.render()
 
-    def angular(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
+    def angular(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def diameter(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
+    def diameter(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def radius(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
+    def radius(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def angular3p(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
+    def angular3p(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def ordinate(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride'=None):
+    def ordinate(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
 
