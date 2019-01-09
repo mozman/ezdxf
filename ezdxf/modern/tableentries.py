@@ -14,7 +14,6 @@ from ezdxf.render.arrows import ARROWS
 
 logger = logging.getLogger('ezdxf')
 
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, ComplexLineTypePart
 
@@ -228,12 +227,6 @@ STANDARD
 
 4
 
-5
-
-6
-
-7
-
 40
 1.0
 41
@@ -313,9 +306,9 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'flags': DXFAttr(70),
     'dimpost': DXFAttr(3),
     'dimapost': DXFAttr(4),
-    'dimblk': DXFAttr(5),
-    'dimblk1': DXFAttr(6),
-    'dimblk2': DXFAttr(7),
+    'dimblk': DXFAttr(5),  # obsolete
+    'dimblk1': DXFAttr(6),  # obsolete
+    'dimblk2': DXFAttr(7),  # obsolete
     'dimscale': DXFAttr(40),
     'dimasz': DXFAttr(41),
     'dimexo': DXFAttr(42),
@@ -377,7 +370,8 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     # virtual DXF attribute 'dimtxsty': set/get referenced STYLE by name as callback
     'dimtxsty': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_text_style', setter='set_text_style'),
     # virtual DXF attribute 'dimldrblk': set/get referenced STYLE by name as callback
-    'dimldrblk': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_leader_block_name', setter='set_leader_block_name'),
+    'dimldrblk': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_leader_block_name',
+                         setter='set_leader_block_name'),
     'dimldrblk_handle': DXFAttr(341),  # handle of referenced BLOCK_RECORD
     'dimblk_handle': DXFAttr(342),  # handle of referenced BLOCK_RECORD
     'dimblk1_handle': DXFAttr(343),  # handle of referenced BLOCK_RECORD
@@ -393,19 +387,32 @@ class DimStyle(legacy.DimStyle):
     DXFATTRIBS = DXFAttributes(handle105_subclass, symbol_subclass, dimstyle_subclass)
     CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(legacy.dim_filter))
 
-    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
-        def set_blk_handle(attr: str) -> None:
-            blk_name = self.get_dxf_attrib(attr)
-            if ARROWS.is_acad_arrow(blk_name):
-                return
-            blk = blocks.get(blk_name)
-            self.set_dxf_attrib(attr+'_handle', blk.block_record_handle)
+    def _set_blk_handle(self, attr: str, arrow_name: str) -> None:
+        if arrow_name == ARROWS.closed_filled:
+            # special arrow, no handle needed (is '0' if set)
+            # do not create block by default, this will be done if arrow is used
+            # and block record handle is not needed here
+            self.del_dxf_attrib(attr)
+            return
 
-        super().set_arrows(blk, blk1, blk2)
         blocks = self.drawing.blocks
-        set_blk_handle('dimblk')
-        set_blk_handle('dimblk1')
-        set_blk_handle('dimblk2')
+        if ARROWS.is_acad_arrow(arrow_name):
+            # create block, because need block record handle is needed here
+            block_name = ARROWS.create_block(blocks, arrow_name)
+        else:
+            block_name = arrow_name
+
+        blk = blocks.get(block_name)
+        self.set_dxf_attrib(attr, blk.block_record_handle)
+
+    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+        if self.dxfversion > 'AC1009':
+            self._set_blk_handle('dimblk_handle', blk)
+            self._set_blk_handle('dimblk1_handle', blk1)
+            self._set_blk_handle('dimblk2_handle', blk2)
+        else:
+            # set arrows by arrow name
+            super().set_arrows(blk, blk1, blk2)
 
     def get_text_style(self) -> str:
         handle = self.get_dxf_attrib('dimtxsty_handle', None)
@@ -421,18 +428,15 @@ class DimStyle(legacy.DimStyle):
 
     def get_leader_block_name(self) -> str:
         handle = self.get_dxf_attrib('dimldrblk_handle', None)
-        if handle:
+        if handle in (None, '0'):
+            # unset handle or handle '0' is default closed filled arrow
+            return ARROWS.closed_filled
+        else:
             block_name = get_block_name_by_handle(handle, self.drawing)
             return ARROWS.arrow_name(block_name)  # if arrow return standard arrow name else just the block name
 
     def set_leader_block_name(self, name) -> None:
-        blocks = self.drawing.blocks
-        if ARROWS.is_acad_arrow(name):
-            block_name = ARROWS.create_block(blocks, name)
-        else:
-            block_name = name
-        block = blocks.get(block_name)
-        self.set_dxf_attrib('dimldrblk_handle', block.block_record_handle)
+        self._set_blk_handle('dimldrblk_handle', name)
 
 
 def get_text_style_by_handle(handle, drawing: 'Drawing', default='STANDARD') -> str:

@@ -377,14 +377,14 @@ class _Arrows:
             return name.upper()  # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
         elif name == "":  # special AutoCAD arrow symbols 'CLOSED_FILLED' has no name
             # ezdxf uses blocks for ALL arrows, but '_' (closed filled) as block name?
-            return "_CLOSED_FILLED"  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
+            return "_CLOSEDFILLED"  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
         else:  # special AutoCAD arrow symbols have leading '_' as common practice!
             return '_' + name.upper()  # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'
 
     def arrow_name(self, block_name: str) -> str:
         if block_name.startswith('_'):
             name = block_name[1:].upper()
-            if name == 'CLOSED_FILLED':
+            if name == 'CLOSEDFILLED':
                 return ''
             elif self.is_acad_arrow(name):
                 return name

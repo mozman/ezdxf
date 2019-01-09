@@ -245,7 +245,7 @@ def test_dimstyle_override_arrows(dxf2000):
     assert dstyle['dimblk_handle'] == dimblk.block_record_handle
     assert dstyle['dimblk1_handle'] == dimblk1.block_record_handle
     assert dstyle['dimblk2_handle'] == dimblk2.block_record_handle
-    assert dstyle['dimldrblk_handle'] == dimldrblk.block_record_handle
+    assert dstyle['dimldrblk_handle'] == '0'  # special handle for closed filled
 
     dimstyle.set_arrows(blk=arrows.closed, blk1=arrows.dot_blank, blk2=arrows.box, ldrblk=arrows.dot_small)
     assert dimstyle['dimblk'] == arrows.closed

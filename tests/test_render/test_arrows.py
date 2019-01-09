@@ -10,7 +10,7 @@ def test_filled_solid_arrow():
 
 
 def test_arrow_name():
-    assert ARROWS.arrow_name('_CLOSED_FILLED') == ''
+    assert ARROWS.arrow_name('_CLOSEDFILLED') == ''
     assert ARROWS.arrow_name('') == ''
     assert ARROWS.arrow_name('_DOTSMALL') == 'DOTSMALL'
     assert ARROWS.arrow_name('_boxBlank') == 'BOXBLANK'

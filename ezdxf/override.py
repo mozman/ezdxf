@@ -64,8 +64,11 @@ class DimStyleOverride:
             attrib_name += '_handle'
             if block_name in ARROWS:  # create all arrows on demand
                 block_name = ARROWS.create_block(blocks, block_name)
-            block = blocks.get(block_name)
-            handle = block.block_record_handle
+            if block_name == '_CLOSEDFILLED':  # special arrow
+                handle = '0'  # set special #0 handle for closed filled arrow
+            else:
+                block = blocks.get(block_name)
+                handle = block.block_record_handle
             self.dxfattribs[attrib_name] = handle
 
         if self.drawing.dxfversion > 'AC1009':

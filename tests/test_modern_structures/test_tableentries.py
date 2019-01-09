@@ -183,9 +183,9 @@ def test_dimstyle_name(dimstyle2):
 
 def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
     dimstyle2.set_arrows('', 'left_arrow', 'right_arrow')
-    assert dimstyle2.dxf.dimblk == ''
-    assert dimstyle2.dxf.dimblk1 == 'left_arrow'
-    assert dimstyle2.dxf.dimblk2 == 'right_arrow'
+    assert dimstyle2.get_dxf_attrib('dimblk', None) is None, 'dxfattrib "dimblk" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk1', None) is None, 'dxfattrib "dimblk1" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk2', None) is None, 'dxfattrib "dimblk2" should not exists'
 
     # test handles
     blocks = dimstyle2.drawing.blocks
@@ -197,14 +197,16 @@ def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
 
 def test_dimstyle_both_ticks(dimstyle2):
     dimstyle2.set_arrows('arrow')
-    assert dimstyle2.dxf.dimblk == 'arrow'
-    assert dimstyle2.dxf.dimblk1 == ''
-    assert dimstyle2.dxf.dimblk2 == ''
+    assert dimstyle2.get_dxf_attrib('dimblk', None) is None, 'dxfattrib "dimblk" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk1', None) is None, 'dxfattrib "dimblk1" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk2', None) is None, 'dxfattrib "dimblk2" should not exists'
 
     # test handles
     blocks = dimstyle2.drawing.blocks
     arrow = blocks.get('arrow')
     assert dimstyle2.dxf.dimblk_handle == arrow.block_record_handle
+    assert dimstyle2.get_dxf_attrib('dimblk1', None) is None, 'dxfattrib "dimblk1" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk2', None) is None, 'dxfattrib "dimblk2" should not exists'
 
 
 def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):

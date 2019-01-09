@@ -85,6 +85,10 @@ class DXFEntity:
         return self.drawing.dxffactory
 
     @property
+    def dxfversion(self) -> str:
+        return self.drawing.dxfversion
+
+    @property
     def entitydb(self) -> 'EntityDB':
         return self.drawing.entitydb
 

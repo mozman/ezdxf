@@ -1,7 +1,7 @@
 # Created: 16.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, Tuple, Iterable
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -569,17 +569,15 @@ class DimStyle(DXFEntity):
     }))
     CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(dim_filter))
 
-    def print_attribs(self) -> None:
-        attribs = [
-            'dimpost', 'dimapost', 'dimblk', 'dimblk1', 'dimblk2', 'dimscale', 'dimasz', 'dimexo', 'dimdli',
-            'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac',
-            'dimtvp', 'dimtfac', 'dimgap', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad',
-            'dimzin', 'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt',
-        ]
-        for name in attribs:
-            code = self.DXFATTRIBS[name].code
+    def dim_attribs(self) -> Iterable[Tuple[str, DXFAttr]]:
+        return ((name, attrib) for name, attrib in self.DXFATTRIBS.items() if name.startswith('dim'))
+
+    def print_dim_attribs(self) -> None:
+        for name, attrib in self.dim_attribs():
+            code = attrib.code
             value = self.get_dxf_attrib(name, None)
-            print("{name} ({code}) = {value}".format(name=name, value=value, code=code))
+            if value is not None:
+                print("{name} ({code}) = {value}".format(name=name, value=value, code=code))
 
     def copy_to_header(self, dwg):
         attribs = self.dxfattribs()
@@ -594,7 +592,6 @@ class DimStyle(DXFEntity):
                     logger.debug('Unsupported header variable: {}.'.format(header_var))
 
     def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
-        # Allplan sets '#' for dimblk if dimblk1 and dimblk2 is set
         self.set_dxf_attrib('dimblk', blk)
         self.set_dxf_attrib('dimblk1', blk1)
         self.set_dxf_attrib('dimblk2', blk2)

@@ -3,12 +3,12 @@
 import os
 import ezdxf
 
-DIMPATH = r"D:\Source\dxftest\dimlines"
+DIMPATH = r"C:\Users\manfred\Desktop\outbox"
 
-dwg = ezdxf.readfile(os.path.join(DIMPATH, "linear_R2000.dxf"))
+dwg = ezdxf.readfile(os.path.join(DIMPATH, "brics_R2000.dxf"))
 
 for dimstyle in dwg.dimstyles:
     print("Dimstyle: {}".format(dimstyle.dxf.name))
     print("flags: {:x}".format(dimstyle.dxf.flags))
-    dimstyle.print_attribs()
+    dimstyle.print_dim_attribs()
     print("-"*20)

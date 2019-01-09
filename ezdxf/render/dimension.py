@@ -74,11 +74,14 @@ class DimensionBase:
         def arrow_name(attrib)->str:
             if self.dxfversion > 'AC1009':
                 handle = get_dxf_attr(attrib+'_handle', None)
-                if handle:
+                if handle == '0':  # special: closed filled
+                    pass  # return default value
+                elif handle:
                     block_name = get_block_name_by_handle(handle, self.drawing)
                     return ARROWS.arrow_name(block_name)
-            # DXF12 or no handle -> use block name
-            return get_dxf_attr(attrib)
+                return ARROWS.closed_filled
+            else:  # DXF12 or no handle -> use block name
+                return get_dxf_attr(attrib)
 
         get_dxf_attr = self.dim_style.get
         dimtsz = get_dxf_attr('dimtsz')
