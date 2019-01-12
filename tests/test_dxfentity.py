@@ -411,11 +411,11 @@ class TestXData:
             entity.get_xdata("XYZ")
 
     def test_get_xdata_list_exception(self, entity):
-        with pytest.raises(DXFValueError, message='XDATA not exist'):
+        with pytest.raises(DXFValueError):
             _ = entity.get_xdata_list('ACAD', 'DSTYLE')
         entity.set_xdata('ACAD', xdata_tags=[DXFTag(1000, 'Extended Data String')])
 
-        with pytest.raises(DXFValueError, message='List DSTYLE not exists'):
+        with pytest.raises(DXFValueError):
             _ = entity.get_xdata_list('ACAD', 'DSTYLE')
 
     def test_has_xdata_list(self, entity):
