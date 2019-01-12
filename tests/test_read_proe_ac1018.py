@@ -8,11 +8,7 @@ import os
 FILE = r"D:\Source\dxftest\ProE_AC1018.dxf"
 
 
-def test_file_not_exists():
-    return not os.path.exists(FILE)
-
-
-@pytest.mark.skipIf(test_file_not_exists(), "Skip reading ProE AC1018: test file '{}' not available.".format(FILE))
+@pytest.mark.skipif(not os.path.exists(FILE), reason="Skip reading ProE AC1018: test file '{}' not available.".format(FILE))
 def test_open_proe_ac1018():
     dwg = ezdxf.readfile(FILE)
     modelspace = dwg.modelspace()
