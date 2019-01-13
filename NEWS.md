@@ -6,7 +6,8 @@ Version 0.9a4 - dev
 -------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
-- IMPORTANT: Python 2 support REMOVED
+- IMPORTANT: Python 2 support REMOVED, if Python 2 support needed: add `ezdxf<0.9.0` to your `requirements.txt` 
+- NEW: testing on Manjaro Linux in a VM by tox
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
@@ -18,7 +19,6 @@ Version 0.9a4 - dev
 - CHANGED: replaced proprietary fonts in style declarations by open source fonts
 - NEW: open source fonts to download https://github.com/mozman/ezdxf/tree/master/fonts
 - __Open Sans Condensed__ font used for default dimension styles
-- NEW: font measuring tool based on tkinter, results are not good but better than nothing
 - NEW: subpackage ezdxf.render, because of DIMENSION rendering
 - NEW: Support for AutoCAD standard arrows 
 - CHANGE: moved addons.curves to render.curves
