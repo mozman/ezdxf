@@ -112,10 +112,9 @@ class DimensionBase:
         self.block.add_line(self.wcs(start), self.wcs(end), dxfattribs=attribs)
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
-                     scale: float = 1., reverse=False, dxfattribs: dict = None) -> Vector:
+                     scale: float = 1., dxfattribs: dict = None) -> Vector:
         if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
-            return self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, reverse=reverse,
-                                                 dxfattribs=dxfattribs)
+            self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=dxfattribs)
         else:
             if name not in self.drawing.blocks:
                 raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
@@ -262,14 +261,13 @@ class LinearDimension(DimensionBase):
             self.block.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
         else:
             scale = get_dxf_attr('dimasz')
-            start = self.add_blockref(blk1, insert=start, scale=scale, rotation=dim.angle, reverse=True,
-                                      dxfattribs=attribs)
-            end = self.add_blockref(blk2, insert=end, scale=scale, rotation=dim.angle, dxfattribs=attribs)
-            # test connection point
-            # if blk1 not in ARROWS.STROKE_ARROWS:
-            #    start = connection_point(blk1, start, scale, dim.angle)
-            # if blk2 not in ARROWS.STROKE_ARROWS:
-            #    end = connection_point(blk2, end, scale, dim.angle+180)
+            start_angle = dim.angle + 180.
+            end_angle = dim.angle
+            self.add_blockref(blk1, insert=start, scale=scale, rotation=start_angle, dxfattribs=attribs)  # reverse
+            self.add_blockref(blk2, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
+            start = connection_point(blk1, start, scale, start_angle)
+            end = connection_point(blk2, end, scale, end_angle)
+
         return start, end
 
     def text_vertical_distance(self) -> float:

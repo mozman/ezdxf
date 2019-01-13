@@ -13,14 +13,10 @@ DEFAULT_ARROW_ANGLE = 18.924644
 DEFAULT_BETA = 45.
 
 
+# The base Arrow is for the 'Right' side ->| of the Dimension oriented, reverse is the 'Left' side |<-.
 class BaseArrow:
-    REVERSE_ANGLE = 0
-
     def __init__(self, vertices: Iterable['Vertex']):
         self.shape = Shape(vertices)
-
-    def connection_point(self) -> Vector:
-        return self.shape[0]
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         pass
@@ -29,43 +25,40 @@ class BaseArrow:
         self.shape.rotate(angle)
         self.shape.translate(insert)
 
-    def get_angle(self, rotation: float, reverse: bool):
-        return rotation + self.REVERSE_ANGLE if reverse else rotation
-
 
 class NoneStroke(BaseArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         super().__init__([Vector(insert)])
 
 
 class ObliqueStroke(BaseArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         self.size = size
         s2 = size / 2
         # shape = [center, lower left, upper right]
-        super().__init__([Vector(), Vector(-s2, -s2), Vector(s2, s2)])
+        super().__init__([Vector(-s2, -s2), Vector(s2, s2)])
         self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        layout.add_line(start=self.shape[1], end=self.shape[2], dxfattribs=dxfattribs)
+        layout.add_line(start=self.shape[0], end=self.shape[1], dxfattribs=dxfattribs)
 
 
 class ArchTick(ObliqueStroke):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        dxfattribs['default_start_width'] = self.size * .15
-        dxfattribs['default_end_width'] = self.size * .15
-        layout.add_polyline2d(self.shape[1:], dxfattribs=dxfattribs)
+        width = self.size * .15
+        if layout.dxfversion > 'AC1009':
+            dxfattribs['const_width'] = width
+            layout.add_lwpolyline(self.shape, format='v', dxfattribs=dxfattribs)
+        else:
+            dxfattribs['default_start_width'] = width
+            dxfattribs['default_end_width'] = width
+            layout.add_polyline2d(self.shape, dxfattribs=dxfattribs)
 
 
-class ClosedArrow(BaseArrow):
-    REVERSE_ANGLE = 180
-
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+class ClosedArrowBlank(BaseArrow):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         super().__init__(open_arrow(size, angle=DEFAULT_ARROW_ANGLE))
-        self.place(insert, self.get_angle(angle, reverse))
-
-    def connection_point(self) -> Vector:
-        return self.shape[1]
+        self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         if layout.dxfversion > 'AC1009':
@@ -79,9 +72,12 @@ class ClosedArrow(BaseArrow):
         polyline.close(True)
 
 
-class ClosedArrowBlank(ClosedArrow):
-    def connection_point(self):
-        return self.shape[0].lerp(self.shape[2])
+class ClosedArrow(ClosedArrowBlank):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
+        super().render(layout, dxfattribs)
+        end_point = self.shape[0].lerp(self.shape[2])
+
+        layout.add_line(start=self.shape[1], end=end_point, dxfattribs=dxfattribs)
 
 
 class ClosedArrowFilled(ClosedArrow):
@@ -92,47 +88,44 @@ class ClosedArrowFilled(ClosedArrow):
         )
 
 
-# The base Arrow is for the 'Right' side ->| of the Dimension oriented, reverse is the 'Left' side |<-.
 class _OpenArrow(BaseArrow):
-    REVERSE_ANGLE = 180
-
-    def __init__(self, arrow_angle: float, insert: 'Vertex', size: float = 1.0, angle: float = 0,
-                 reverse: bool = False):
-        super().__init__(open_arrow(size, angle=arrow_angle))
-        self.place(insert, self.get_angle(angle, reverse))
-
-    def connection_point(self) -> Vector:
-        return self.shape[1]
+    def __init__(self, arrow_angle: float, insert: 'Vertex', size: float = 1.0, angle: float = 0):
+        points = list(open_arrow(size, angle=arrow_angle))
+        points.append((-1, 0))
+        super().__init__(points)
+        self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         if layout.dxfversion > 'AC1009':
-            layout.add_lwpolyline(points=self.shape, dxfattribs=dxfattribs)
+            layout.add_lwpolyline(points=self.shape[:-1], dxfattribs=dxfattribs)
         else:
-            layout.add_polyline2d(points=self.shape, dxfattribs=dxfattribs)
+            layout.add_polyline2d(points=self.shape[:-1], dxfattribs=dxfattribs)
+        layout.add_line(start=self.shape[1], end=self.shape[-1], dxfattribs=dxfattribs)
 
 
 class OpenArrow(_OpenArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
-        super().__init__(DEFAULT_ARROW_ANGLE, insert, size, angle, reverse)
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
+        super().__init__(DEFAULT_ARROW_ANGLE, insert, size, angle)
 
 
 class OpenArrow30(_OpenArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
-        super().__init__(30, insert, size, angle, reverse)
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
+        super().__init__(30, insert, size, angle)
 
 
 class OpenArrow90(_OpenArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
-        super().__init__(90, insert, size, angle, reverse)
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
+        super().__init__(90, insert, size, angle)
 
 
 class Circle(BaseArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         self.radius = size / 2
         # shape = [center point, connection point]
         super().__init__([
             Vector(),
-            Vector(-self.radius, 0) if not reverse else Vector(self.radius, 0)
+            Vector(-self.radius, 0),
+            Vector(-size, 0),
         ])
         self.place(insert, angle)
 
@@ -140,7 +133,26 @@ class Circle(BaseArrow):
         layout.add_circle(center=self.shape[0], radius=self.radius, dxfattribs=dxfattribs)
 
 
-class Dot(Circle):
+class Origin(Circle):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
+        super().render(layout, dxfattribs)
+        layout.add_line(start=self.shape[0], end=self.shape[2], dxfattribs=dxfattribs)
+
+
+class CircleBlank(Circle):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
+        super().render(layout, dxfattribs)
+        layout.add_line(start=self.shape[1], end=self.shape[2], dxfattribs=dxfattribs)
+
+
+class Origin2(Circle):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
+        layout.add_circle(center=self.shape[0], radius=self.radius, dxfattribs=dxfattribs)
+        layout.add_circle(center=self.shape[0], radius=self.radius / 2, dxfattribs=dxfattribs)
+        layout.add_line(start=self.shape[1], end=self.shape[2], dxfattribs=dxfattribs)
+
+
+class DotSmall(Circle):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         dxfattribs['closed'] = True
         center = self.shape[0]
@@ -158,19 +170,14 @@ class Dot(Circle):
             polyline[1].dxf.bulge = 1
 
 
-class CircleBlank(Circle):
-    def connection_point(self) -> Vector:
-        return self.shape[1]  # blank circle
-
-
-class OriginIndicator2(CircleBlank):
+class Dot(DotSmall):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
-        layout.add_circle(center=self.shape[0], radius=self.radius, dxfattribs=dxfattribs)
-        layout.add_circle(center=self.shape[0], radius=self.radius / 2, dxfattribs=dxfattribs)
+        layout.add_line(start=self.shape[1], end=self.shape[2], dxfattribs=dxfattribs)
+        super().render(layout, dxfattribs)
 
 
 class Box(BaseArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         # shape = [lower_left, lower_right, upper_right, upper_left, connection point]
         s2 = size / 2
         super().__init__([
@@ -178,7 +185,8 @@ class Box(BaseArrow):
             Vector(+s2, -s2),
             Vector(+s2, +s2),
             Vector(-s2, +s2),
-            Vector(-s2, 0) if not reverse else Vector(+s2, 0)
+            Vector(-s2, 0),
+            Vector(-size, 0),
         ])
         self.place(insert, angle)
 
@@ -188,9 +196,7 @@ class Box(BaseArrow):
         else:
             polyline = layout.add_polyline2d(points=self.shape[0:4], dxfattribs=dxfattribs)
         polyline.close(True)
-
-    def connection_point(self):
-        return self.shape[4]
+        layout.add_line(start=self.shape[4], end=self.shape[5], dxfattribs=dxfattribs)
 
 
 class BoxFilled(Box):
@@ -200,10 +206,11 @@ class BoxFilled(Box):
             return [v[0], v[1], v[3], v[2]]
 
         layout.add_solid(points=solid_order(), dxfattribs=dxfattribs)
+        layout.add_line(start=self.shape[4], end=self.shape[5], dxfattribs=dxfattribs)
 
 
 class Integral(BaseArrow):
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         self.radius = size * .3535534
         self.angle = angle
         # shape = [center, left_center, right_center]
@@ -225,7 +232,7 @@ class Integral(BaseArrow):
 class DatumTriangle(BaseArrow):
     REVERSE_ANGLE = 180
 
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
         d = .577350269 * size  # tan(30)
         # shape = [upper_corner, lower_corner, connection_point]
         super().__init__([
@@ -233,7 +240,7 @@ class DatumTriangle(BaseArrow):
             Vector(0, -d),
             Vector(-size, 0),
         ])
-        self.place(insert, self.get_angle(angle, reverse))
+        self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         if layout.dxfversion > 'AC1009':
@@ -242,42 +249,44 @@ class DatumTriangle(BaseArrow):
             polyline = layout.add_polyline2d(points=self.shape, dxfattribs=dxfattribs)
         polyline.close(True)
 
-    def connection_point(self):
-        return self.shape[2]
-
 
 class DatumTriangleFilled(DatumTriangle):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         layout.add_solid(points=self.shape, dxfattribs=dxfattribs)
 
 
-class EzArrow(BaseArrow):
-    REVERSE_ANGLE = 180
-
-    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0, reverse: bool = False):
-        super().__init__(arrow2(size, angle=DEFAULT_ARROW_ANGLE))
-        self.place(insert, self.get_angle(angle, reverse))
-
-    def connection_point(self) -> Vector:
-        return self.shape[1]
+class _EzArrow(BaseArrow):
+    def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
+        points = list(arrow2(size, angle=DEFAULT_ARROW_ANGLE))
+        points.append((-1, 0))
+        super().__init__(points)
+        self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         if layout.dxfversion > 'AC1009':
-            polyline = layout.add_lwpolyline(self.shape, dxfattribs=dxfattribs)
+            polyline = layout.add_lwpolyline(self.shape[:-1], dxfattribs=dxfattribs)
         else:
-            polyline = layout.add_polyline2d(self.shape, dxfattribs=dxfattribs)
+            polyline = layout.add_polyline2d(self.shape[:-1], dxfattribs=dxfattribs)
         polyline.close(True)
 
 
-class EzArrowBlank(EzArrow):
-    def connection_point(self) -> Vector:
-        return self.shape[3]
+class EzArrowBlank(_EzArrow):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
+        super().render(layout, dxfattribs)
+        layout.add_line(start=self.shape[-2], end=self.shape[-1], dxfattribs=dxfattribs)
 
 
-class EzArrowFilled(EzArrow):
+class EzArrow(_EzArrow):
+    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
+        super().render(layout, dxfattribs)
+        layout.add_line(start=self.shape[1], end=self.shape[-1], dxfattribs=dxfattribs)
+
+
+class EzArrowFilled(_EzArrow):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         points = self.shape.vertices
         layout.add_solid([points[0], points[1], points[3], points[2]], dxfattribs=dxfattribs)
+        layout.add_line(start=self.shape[-2], end=self.shape[-1], dxfattribs=dxfattribs)
 
 
 class _Arrows:
@@ -309,15 +318,15 @@ class _Arrows:
     CLASSES = {
         closed_filled: ClosedArrowFilled,
         dot: Dot,
-        dot_small: Dot,
+        dot_small: DotSmall,
         dot_blank: CircleBlank,
-        origin_indicator: Circle,
-        origin_indicator_2: OriginIndicator2,
+        origin_indicator: Origin,
+        origin_indicator_2: Origin2,
         open: OpenArrow,
         right_angle: OpenArrow90,
         open_30: OpenArrow30,
         closed: ClosedArrow,
-        dot_smallblank: CircleBlank,
+        dot_smallblank: Circle,
         none: NoneStroke,
         oblique: ObliqueStroke,
         box_filled: BoxFilled,
@@ -332,17 +341,13 @@ class _Arrows:
         ez_arrow_filled: EzArrowFilled,
     }
 
-    STROKE_ARROWS = {
-        closed_filled,
-        dot_small,
-        open_30,
-        closed,
-        dot_smallblank,
-        none,
-        oblique,
-        closed_blank,
-        integral,
+    ORIGIN_ZERO = {
         architectural_tick,
+        oblique,
+        dot_small,
+        dot_smallblank,
+        integral,
+        none,
     }
 
     __acad__ = {
@@ -382,7 +387,7 @@ class _Arrows:
         block_name = self.block_name(name)
         if block_name not in blocks:
             block = blocks.new(block_name)
-            arrow = self.arrow_shape(name, insert=(0, 0), size=1, rotation=0, reverse=False)
+            arrow = self.arrow_shape(name, insert=(0, 0), size=1, rotation=0)
             arrow.render(block, dxfattribs={'color': 0, 'linetype': 'BYBLOCK'})
         return block_name
 
@@ -409,48 +414,44 @@ class _Arrows:
                      insert: 'Vertex',
                      size: float = 1.,
                      rotation: float = 0,
-                     reverse: bool = False,
                      dxfattribs: dict = None) -> Vector:
 
         block_name = self.create_block(layout.drawing.blocks, name)
         dxfattribs = dxfattribs or {}
-        # real placed arrow shape required for correct connection point
-        arrow = self.arrow_shape(name, insert=insert, size=size, rotation=rotation, reverse=reverse)
-
-        dxfattribs['rotation'] = arrow.get_angle(rotation, reverse)
+        dxfattribs['rotation'] = rotation
         dxfattribs['xscale'] = size
         dxfattribs['yscale'] = size
         layout.add_blockref(block_name, insert=insert, dxfattribs=dxfattribs)
-        return arrow.connection_point()
+        return connection_point(name, insert=insert, scale=size, rotation=rotation)
 
     def render_arrow(self, layout: 'GenericLayoutType',
                      name: str,
                      insert: 'Vertex',
                      size: float = 1.,
                      rotation: float = 0,
-                     reverse: bool = False,
                      dxfattribs: dict = None) -> Vector:
 
         dxfattribs = dxfattribs or {}
-        arrow = self.arrow_shape(name, insert, size, rotation, reverse)
+        arrow = self.arrow_shape(name, insert, size, rotation)
         arrow.render(layout, dxfattribs)
-        return arrow.connection_point()
+        return connection_point(name, insert=insert, scale=size, rotation=rotation)
 
-    def arrow_shape(self, name: str, insert: 'Vertex', size: float, rotation: float, reverse: bool) -> BaseArrow:
+    def arrow_shape(self, name: str, insert: 'Vertex', size: float, rotation: float) -> BaseArrow:
         # size depending shapes
         if name == self.dot_small:
             size *= .25
         elif name == self.dot_smallblank:
             size *= .5
         cls = self.CLASSES[name]
-        return cls(insert, size, rotation, reverse)
+        return cls(insert, size, rotation)
 
 
 def connection_point(arrow_name: str, insert: 'Vertex', scale: float = 1, rotation: float = 0) -> Vector:
-    if arrow_name in _Arrows.STROKE_ARROWS:
-        return Vector(insert)
+    insert = Vector(insert)
+    if arrow_name in _Arrows.ORIGIN_ZERO:
+        return insert
     else:
-        return Vector.from_deg_angle(rotation, scale) + insert
+        return insert - Vector.from_deg_angle(rotation, scale)
 
 
 ARROWS = _Arrows()

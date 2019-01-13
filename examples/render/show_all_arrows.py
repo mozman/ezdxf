@@ -19,9 +19,9 @@ for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
     msp.add_line((-5, y), (-1, y))
     msp.add_line((5, y), (10, y))
     # left side |<- is the reverse orientation
-    cp1 = msp.add_arrow(name, insert=(0, y), size=1, rotation=0, reverse=True)
+    cp1 = msp.add_arrow(name, insert=(0, y), size=1, rotation=180)
     # right side ->| is the base orientation
-    cp2 = msp.add_arrow(name, insert=(4, y), size=1, rotation=0, reverse=False)
+    cp2 = msp.add_arrow(name, insert=(4, y), size=1, rotation=0)
     msp.add_line(cp1, cp2)
     add_connection_point(cp1)
     add_connection_point(cp2)

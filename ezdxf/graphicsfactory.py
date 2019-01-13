@@ -544,12 +544,10 @@ class GraphicsFactory:
         dimline.update_dxf_attribs(dxfattribs)
         return dimline
 
-    def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0, reverse: bool = False,
+    def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,
                   dxfattribs: dict = None) -> Vector:
-        return ARROWS.render_arrow(self, name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
-                                   dxfattribs=dxfattribs)
+        return ARROWS.render_arrow(self, name=name, insert=insert, size=size, rotation=rotation, dxfattribs=dxfattribs)
 
     def add_arrow_blockref(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,
-                           reverse: bool = False, dxfattribs: dict = None) -> Vector:
-        return ARROWS.insert_arrow(self, name=name, insert=insert, size=size, rotation=rotation, reverse=reverse,
-                                   dxfattribs=dxfattribs)
+                           dxfattribs: dict = None) -> Vector:
+        return ARROWS.insert_arrow(self, name=name, insert=insert, size=size, rotation=rotation, dxfattribs=dxfattribs)
