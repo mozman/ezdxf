@@ -30,6 +30,7 @@ Version 0.9a4 - dev
   - Ray2D() renamed to ConstructionRay()
   - Circle() renamed to ConstructionCircle()
   - Arc() renamed to ConstructionArc()
+- BUGFIX: closed LWPOLYLINE did not work in AutoCAD (tag order matters), introduced with v0.8.9 packed data structure
 
 Version 0.8.9 - 2018-11-28
 --------------------------
