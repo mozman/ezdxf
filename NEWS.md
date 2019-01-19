@@ -10,7 +10,8 @@ Version 0.9a4 - dev
 - NEW: testing on Manjaro Linux in a VM by tox
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
-  and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files!
+  and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files or just 
+  don't work!
 - NEW: Type annotations to core package and add-ons.
 - NEW: Argument `setup` in `ezdxf.new('R12', setup=True)` to setup default line types, text styles and dimension styles, 
   this feature is disabled by default.

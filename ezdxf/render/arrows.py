@@ -48,7 +48,7 @@ class ArchTick(ObliqueStroke):
         width = self.size * .15
         if layout.dxfversion > 'AC1009':
             dxfattribs['const_width'] = width
-            layout.add_lwpolyline(self.shape, format='v', dxfattribs=dxfattribs)
+            layout.add_lwpolyline(self.shape, format='xy', dxfattribs=dxfattribs)
         else:
             dxfattribs['default_start_width'] = width
             dxfattribs['default_end_width'] = width
