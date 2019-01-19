@@ -217,6 +217,16 @@ Subclass markers :code:`(100, Subclass Name)` divides DXF objects into several s
 in different sections. A subclass ends with the following subclass marker or at the beginning of xdata or the end of the
 object. See `Subclass Marker Example`_ in the DXF Reference.
 
+
+Tag Order is Sometimes Important Especially for AutoCAD
+=======================================================
+
+Placed here until I find a better location
+
+In `LWPOLYLINE` the order of tags is important, if the `count` tag is not the first tag in the `AcDbPolyline` subclass,
+AutoCAD will not close the polyline when the `close` flag is set, by the way other applications like BricsCAD ignores
+the tag order and renders the polyline always correct.
+
 Extension Dictionary
 ~~~~~~~~~~~~~~~~~~~~
 

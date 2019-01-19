@@ -3,8 +3,9 @@
 
 import ezdxf
 
-dwg = ezdxf.new('R12', setup=True)
+dwg = ezdxf.new('R2018', setup=True)
 msp = dwg.modelspace()
+y = 0
 
 for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
     if name == "":
@@ -19,9 +20,9 @@ for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
     msp.add_line((-5, y), (-1, y))
     msp.add_line((5, y), (10, y))
     # left side |<- is the reverse orientation
-    cp1 = msp.add_arrow(name, insert=(0, y), size=1, rotation=180)
+    cp1 = msp.add_arrow(name, insert=(0, y), size=1, rotation=180, dxfattribs={'color': 7})
     # right side ->| is the base orientation
-    cp2 = msp.add_arrow(name, insert=(4, y), size=1, rotation=0)
+    cp2 = msp.add_arrow(name, insert=(4, y), size=1, rotation=0, dxfattribs={'color': 7})
     msp.add_line(cp1, cp2)
     add_connection_point(cp1)
     add_connection_point(cp2)
@@ -35,4 +36,4 @@ msp.add_line((0, 0), (0, y))
 msp.add_line((4, 0), (4, y))
 msp.add_line((8, 0), (8, y))
 
-dwg.saveas('all_arrows.dxf')
+dwg.saveas('all_arrows_{}.dxf'.format(dwg.acad_release))

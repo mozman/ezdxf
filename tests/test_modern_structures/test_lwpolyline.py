@@ -28,9 +28,9 @@ def test_new_line(layout):
     assert line.closed is False, "Polyline should be open by default."
     # test callback DXF attribute
     assert 3 == line.dxf.count  # DXF attrib callback
-    with pytest.raises(ezdxf.DXFAttributeError):
-        # count attribute is read only
-        line.dxf.count = 0
+    line.dxf.count = 0  # set dxf tag 90
+    assert 0 == line.dxf._count  # test count tag
+    assert 3 == line.dxf.count  # but callback reports true count
 
 
 def test_get_point(layout):
@@ -209,10 +209,9 @@ def test_packed_points_to_dxf_tags():
     tags = ExtendedTags.from_text(LWPOLYLINE1)
     packed_points = LWPolylinePoints.from_tags(tags)
     tags = list(packed_points.dxftags())
-    assert len(tags) == 3  # group code 90 length tag included
-    assert tags[0] == (90, 2)
-    assert tags[1] == (10, (-.5, -.5))
-    assert tags[2] == (10, (.5, .5))
+    assert len(tags) == 2  # just the points
+    assert tags[0] == (10, (-.5, -.5))
+    assert tags[1] == (10, (.5, .5))
 
 
 def test_packed_points_to_dxf_tags_with_bulge():
@@ -221,14 +220,13 @@ def test_packed_points_to_dxf_tags_with_bulge():
     packed_points[0] = (-.5, -.5, 0, 0, 1)
     packed_points[1] = (.5, .5, .1, .2, -1)
     tags = list(packed_points.dxftags())
-    assert len(tags) == 7
-    assert tags[0] == (90, 2)
-    assert tags[1] == (10, (-.5, -.5))
-    assert tags[2] == (42, 1)
-    assert tags[3] == (10, (.5, .5))
-    assert tags[4] == (40, .1)
-    assert tags[5] == (41, .2)
-    assert tags[6] == (42, -1)
+    assert len(tags) == 6
+    assert tags[0] == (10, (-.5, -.5))
+    assert tags[1] == (42, 1)
+    assert tags[2] == (10, (.5, .5))
+    assert tags[3] == (40, .1)
+    assert tags[4] == (41, .2)
+    assert tags[5] == (42, -1)
 
 
 LWPOLYLINE1 = """0
