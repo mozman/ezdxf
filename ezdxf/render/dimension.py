@@ -10,7 +10,6 @@ from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
-from ezdxf.modern.tableentries import get_block_name_by_handle
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride
@@ -62,32 +61,6 @@ class DimensionBase:
             return self.format_text(measurement)
         else:  # user override
             return text
-
-    def get_arrow_names(self) -> Tuple[str, str]:
-        def arrow_name(attrib) -> str:
-            if self.supports_dxf_r2000:
-                handle = get_dxf_attr(attrib + '_handle', None)
-                if handle == '0':  # special: closed filled
-                    pass  # return default value
-                elif handle:
-                    block_name = get_block_name_by_handle(handle, self.drawing)
-                    return ARROWS.arrow_name(block_name)
-                return ARROWS.closed_filled
-            else:  # DXF12 or no handle -> use block name
-                return get_dxf_attr(attrib)
-
-        get_dxf_attr = self.dim_style.get
-        dimtsz = get_dxf_attr('dimtsz')
-        blk1, blk2 = None, None
-        if dimtsz == 0.:
-            if bool(get_dxf_attr('dimsah')):
-                blk1 = arrow_name('dimblk1')
-                blk2 = arrow_name('dimblk2')
-            else:
-                blk = arrow_name('dimblk')
-                blk1 = blk
-                blk2 = blk
-        return blk1, blk2
 
     def format_text(self, value: float) -> str:
         dimrnd = self.dim_style.get('dimrnd', None)
@@ -192,7 +165,7 @@ class LinearDimension(DimensionBase):
             start, end = self.extension_line_points(dim.defpoint3, dimline_end)
             self.add_extension_line(start, end, num=2)
 
-        blk1, blk2 = self.get_arrow_names()
+        blk1, blk2 = self.dim_style.get_arrow_names()
         # add arrows
         dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2)
         self.add_dimension_line(dimline_start, dimline_end, blk1, blk2)

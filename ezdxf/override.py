@@ -1,5 +1,6 @@
-from typing import Any, TYPE_CHECKING
-from ezdxf.modern.tableentries import DimStyle, get_text_style_by_handle  # DimStyle for DXF R2000 and later
+from typing import Any, TYPE_CHECKING, Tuple
+from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
+from ezdxf.modern.tableentries import get_block_name_by_handle
 from ezdxf.lldxf.const import DXFAttributeError
 from ezdxf.render.arrows import ARROWS
 import logging
@@ -30,8 +31,10 @@ class DimStyleOverride:
         if name not in DimStyle.DXFATTRIBS:
             raise DXFAttributeError('Invalid DXF attribute "{}" for DIMSTYLE.'.format(name))
 
+    def get_dstyle_dict(self) -> dict:
+        return self.dimension.get_acad_dstyle(self.dim_style)
+
     def get(self, attribute: str, default: Any = None) -> Any:
-        """ Get DimStyle or overridden attributes but does not handle special tags. """
         if attribute in self.dxfattribs:
             result = self.dxfattribs[attribute]
         else:
@@ -104,9 +107,6 @@ class DimStyleOverride:
 
         self.dimension.set_acad_dstyle(self.dxfattribs, DimStyle)
 
-    def get_dstyle_dict(self) -> dict:
-        return self.dimension.get_acad_dstyle(self.dim_style)
-
     def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None):
         def set_arrow(dimvar: str, name: str) -> None:
             self.dxfattribs[dimvar] = name
@@ -119,3 +119,28 @@ class DimStyleOverride:
             set_arrow('dimblk2', blk2)
         if ldrblk is not None:
             set_arrow('dimldrblk', ldrblk)
+
+    def get_arrow_names(self) -> Tuple[str, str]:
+        def arrow_name(attrib) -> str:
+            if self.dxfversion > 'AC1009':
+                handle = self.get(attrib + '_handle', None)
+                if handle == '0':  # special: closed filled
+                    pass  # return default value
+                elif handle:
+                    block_name = get_block_name_by_handle(handle, self.drawing)
+                    return ARROWS.arrow_name(block_name)
+                return ARROWS.closed_filled
+            else:  # DXF12 or no handle -> use block name
+                return self.get(attrib)
+
+        dimtsz = self.get('dimtsz')
+        blk1, blk2 = None, None
+        if dimtsz == 0.:
+            if bool(self.get('dimsah')):
+                blk1 = arrow_name('dimblk1')
+                blk2 = arrow_name('dimblk2')
+            else:
+                blk = arrow_name('dimblk')
+                blk1 = blk
+                blk2 = blk
+        return blk1, blk2
