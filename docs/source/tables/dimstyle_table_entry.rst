@@ -5,6 +5,14 @@ DimStyle
 
 Defines a dimension style.
 
+.. image:: ../dxfinternals/gfx/dimvars1.svg
+    :align: center
+    :width: 800px
+
+.. image:: ../dxfinternals/gfx/dimvars2.svg
+    :align: center
+    :width: 800px
+
 DXF Attributes for DimStyle
 ---------------------------
 
@@ -40,15 +48,15 @@ Prefix/suffix for alternate units dimensions.
 
 .. attribute:: DimStyle.dxf.dimblk
 
-Block type to use for both arrowheads. (R2000 obsolete, now object ID)
+Block type to use for both arrowheads as name string.
 
-.. attribute:: DimStyle.dxf.dimblk1 (R2000 obsolete, now object ID)
+.. attribute:: DimStyle.dxf.dimblk1
 
-Block type to use for first arrowhead.
+Block type to use for first arrowhead as name string.
 
-.. attribute:: DimStyle.dxf.dimblk2 (R2000 obsolete, now object ID)
+.. attribute:: DimStyle.dxf.dimblk2
 
-Block type to use for second arrowhead.
+Block type to use for second arrowhead as name string.
 
 .. attribute:: DimStyle.dxf.dimscale
 
@@ -274,25 +282,38 @@ Controls user placement of dimension line and text. (default=0)
 
 Controls placement of text and arrowheads when there is insufficient space between the extension lines. (default=3)
 
+.. attribute:: DimStyle.dxf.dimtxsty
+
+Text style used for dimension text by name.
+
 .. attribute:: DimStyle.dxf.dimtxsty_handle
 
-Text style used for dimension text, handle of referenced style.
+Text style used for dimension text by handle of STYLE entry.
+(use :attr:`DimStyle.dxf.dimtxsty` to get/set text style by name)
+
+.. attribute:: DimStyle.dxf.dimldrblk
+
+Specify arrowhead used for leaders by name.
 
 .. attribute:: DimStyle.dxf.dimldrblk_handle
 
-Controls the type of arrowhead used for leaders, handle of referenced block.
+Specify arrowhead used for leaders by handle of referenced block.
+(use :attr:`DimStyle.dxf.dimldrblk` to get/set arrowhead by name)
 
 .. attribute:: DimStyle.dxf.dimblk_handle
 
 Block type to use for both arrowheads, handle of referenced block.
+(use :attr:`DimStyle.dxf.dimblk` to get/set arrowheads by name)
 
 .. attribute:: DimStyle.dxf.dimblk1_handle
 
 Block type to use for first arrowhead, handle of referenced block.
+(use :attr:`DimStyle.dxf.dimblk1` to get/set arrowhead by name)
 
 .. attribute:: DimStyle.dxf.dimblk2_handle
 
 Block type to use for second arrowhead, handle of referenced block.
+(use :attr:`DimStyle.dxf.dimblk2` to get/set arrowhead by name)
 
 .. attribute:: DimStyle.dxf.dimlwd
 
@@ -301,3 +322,30 @@ Lineweight value for dimension lines. (default=-2, BYBLOCK)
 .. attribute:: DimStyle.dxf.dimlwe
 
 Lineweight value for extension lines. (default=-2, BYBLOCK)
+
+.. attribute:: DimStyle.dxf.dimltype
+
+Specifies the linetype used for the dimension line as linetype name, requires DXF R2007+
+
+.. attribute:: DimStyle.dxf.dimltype_handle
+
+Specifies the linetype used for the dimension line as handle to LTYPE entry, requires DXF R2007+
+(use :attr:`DimStyle.dxf.dimltype` to get/set linetype by name)
+
+.. attribute:: DimStyle.dxf.dimltex1
+
+Specifies the linetype used for the extension line 1 as linetype name, requires DXF R2007+
+
+.. attribute:: DimStyle.dxf.dimlex1_handle
+
+Specifies the linetype used for the extension line 1 as handle to LTYPE entry, requires DXF R2007+
+(use :attr:`DimStyle.dxf.dimltex1` to get/set linetype by name)
+
+.. attribute:: DimStyle.dxf.dimltex2
+
+Specifies the linetype used for the extension line 2 as linetype name, requires DXF R2007+
+
+.. attribute:: DimStyle.dxf.dimlex2_handle
+
+Specifies the linetype used for the extension line 2 as handle to LTYPE entry, requires DXF R2007+
+(use :attr:`DimStyle.dxf.dimltex2` to get/set linetype by name)

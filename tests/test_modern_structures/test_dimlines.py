@@ -12,6 +12,12 @@ def dxf2000():
     return dwg
 
 
+@pytest.fixture(scope='module')
+def dxf2007():
+    dwg = ezdxf.new('R2007', setup='all')
+    return dwg
+
+
 def test_dimstyle_standard_exist(dxf2000):
     assert 'EZDXF' in dxf2000.dimstyles
 
@@ -190,6 +196,67 @@ def test_dimstyle_override(dxf2000):
     assert 'dimtxsty' not in dstyle, 'do not store "dimtxsty" in dstyle, because virtual attribute'
     assert 'dimtxsty_handle' in dstyle, 'expected handle of text style'
     assert dstyle['dimtxsty_handle'] == dxf2000.styles.get('TEST').dxf.handle
+
+
+def test_linetype_override_R2000(dxf2000):
+    msp = dxf2000.modelspace()
+    dimline = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dxfattribs={
+            'dimstyle': 'EZDXF',
+        }
+    )
+    preset = {
+        'dimltype': 'DOT',
+        'dimltex1': 'DOT2',
+        'dimltex2': 'DOTX2',
+    }
+    dimstyle = dimline.dimstyle_override(preset)
+    assert dimstyle['dimltype'] == 'DOT'
+    assert dimstyle['dimltex1'] == 'DOT2'
+    assert dimstyle['dimltex2'] == 'DOTX2'
+
+    dimstyle.commit()
+    dstyle = dimstyle.get_dstyle_dict()
+    assert 'dimltype_handle' not in dstyle, "not supported by DXF R2000"
+    assert 'dimltex1_handle' not in dstyle, "not supported by DXF R2000"
+    assert 'dimltex2_handle' not in dstyle, "not supported by DXF R2000"
+    assert 'dimltype' not in dstyle, "not a real dimvar"
+    assert 'dimltex1' not in dstyle, "not a real dimvar"
+    assert 'dimltex2' not in dstyle, "not a real dimvar"
+
+
+def test_linetype_override_R2007(dxf2007):
+    msp = dxf2007.modelspace()
+    dimline = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dxfattribs={
+            'dimstyle': 'EZDXF',
+        }
+    )
+    preset = {
+        'dimltype': 'DOT',
+        'dimltex1': 'DOT2',
+        'dimltex2': 'DOTX2',
+    }
+    dimstyle = dimline.dimstyle_override(preset)
+    assert dimstyle['dimltype'] == 'DOT'
+    assert dimstyle['dimltex1'] == 'DOT2'
+    assert dimstyle['dimltex2'] == 'DOTX2'
+
+    dimstyle.commit()
+
+    dstyle = dimstyle.get_dstyle_dict()
+    assert dstyle['dimltype_handle'] == dxf2007.linetypes.get('DOT').dxf.handle
+    assert dstyle['dimltex1_handle'] == dxf2007.linetypes.get('DOT2').dxf.handle
+    assert dstyle['dimltex2_handle'] == dxf2007.linetypes.get('DOTX2').dxf.handle
+    assert 'dimltype' not in dstyle, "not a real dimvar"
+    assert 'dimltex1' not in dstyle, "not a real dimvar"
+    assert 'dimltex2' not in dstyle, "not a real dimvar"
 
 
 def test_dimstyle_override_arrows(dxf2000):

@@ -1,7 +1,7 @@
 # Created: 25.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
@@ -146,7 +146,7 @@ class Dimension(GraphicEntity):
     def cast(self) -> 'Dimension':  # for modern dimension lines
         return self
 
-    def set_acad_dstyle(self, data: dict, dim_style: 'DimStyle') -> None:
+    def set_acad_dstyle(self, data: dict, dim_style: Type['DimStyle']) -> None:
         tags = []
         for key, value in data.items():
             if key not in dim_style.DXFATTRIBS:  # ignore unknown attributes, but log

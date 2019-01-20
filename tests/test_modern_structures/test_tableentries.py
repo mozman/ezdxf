@@ -164,7 +164,7 @@ def dimstyle():
 @pytest.fixture(scope='module')
 def dimstyle2():
     import ezdxf
-    dwg = ezdxf.new('R2000')
+    dwg = ezdxf.new('R2007', setup=('linetypes', ))
     dwg.blocks.new('left_arrow')
     dwg.blocks.new('right_arrow')
     dwg.blocks.new('arrow')
@@ -228,6 +228,24 @@ def test_dimstyle_virtual_dimldrblk_attribute(dimstyle2):
     dimstyle2.dxf.dimldrblk = 'TestArrow'
     assert dimstyle2.dxf.dimldrblk_handle == arrow.block_record_handle
     assert dimstyle2.dxf.dimldrblk == 'TestArrow'
+
+
+def test_dimstyle_virtual_linetypes_attributes(dimstyle2):
+    linetypes = dimstyle2.drawing.linetypes
+    dimstyle2.set_linetype('DOT2')
+    assert dimstyle2.get_linetype() == 'DOT2'
+    assert dimstyle2.dxf.dimltype == 'DOT2'
+    assert dimstyle2.dxf.dimltype_handle == linetypes.get('DOT2').dxf.handle
+
+    dimstyle2.set_ext1_linetype('DOT')
+    assert dimstyle2.get_ext1_linetype() == 'DOT'
+    assert dimstyle2.dxf.dimltex1 == 'DOT'
+    assert dimstyle2.dxf.dimltex1_handle == linetypes.get('DOT').dxf.handle
+
+    dimstyle2.set_ext2_linetype('DOTX2')
+    assert dimstyle2.get_ext2_linetype() == 'DOTX2'
+    assert dimstyle2.dxf.dimltex2 == 'DOTX2'
+    assert dimstyle2.dxf.dimltex2_handle == linetypes.get('DOTX2').dxf.handle
 
 
 def test_dimstyle_group_codes(dimstyle):

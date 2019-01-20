@@ -104,7 +104,7 @@ Extended Data
 
 Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any other application like *ezdxf* can also
 define XDATA. If an entity contains extended data, it **follows** the entity's normal definition data but ends
-**before** :ref:`Embedded Objects`.
+**before** `Embedded Objects`_.
 
 But extended group codes (>=1000) can appear **before** the XDATA section, an example is the BLOCKBASEPOINTPARAMETER
 entity in AutoCAD Civil 3D or AutoCAD Map 3D.
@@ -219,7 +219,7 @@ object. See `Subclass Marker Example`_ in the DXF Reference.
 
 
 Tag Order is Sometimes Important Especially for AutoCAD
-=======================================================
+-------------------------------------------------------
 
 Placed here until I find a better location
 

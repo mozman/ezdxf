@@ -1,12 +1,12 @@
 # Created: 16.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Union, cast
+from typing import TYPE_CHECKING, Iterable, Union, cast, Tuple, Optional
 import logging
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, VIRTUAL_TAG
-from ezdxf.lldxf.const import DXFKeyError
+from ezdxf.lldxf.const import DXFKeyError, LINEWEIGHT_BYBLOCK, DXFVersionError
 from ezdxf.legacy import tableentries as legacy
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.tools.complex_ltype import lin_compiler
@@ -370,14 +370,41 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     # virtual DXF attribute 'dimtxsty': set/get referenced STYLE by name as callback
     'dimtxsty': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_text_style', setter='set_text_style'),
     # virtual DXF attribute 'dimldrblk': set/get referenced STYLE by name as callback
-    'dimldrblk': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_leader_block_name',
+    'dimldrblk': DXFAttr(VIRTUAL_TAG,
+                         xtype=XType.callback,
+                         getter='get_leader_block_name',
                          setter='set_leader_block_name'),
     'dimldrblk_handle': DXFAttr(341),  # handle of referenced BLOCK_RECORD
     'dimblk_handle': DXFAttr(342),  # handle of referenced BLOCK_RECORD
     'dimblk1_handle': DXFAttr(343),  # handle of referenced BLOCK_RECORD
     'dimblk2_handle': DXFAttr(344),  # handle of referenced BLOCK_RECORD
-    'dimlwd': DXFAttr(371),  # lineweight enum value
-    'dimlwe': DXFAttr(372),  # lineweight enum value
+
+    'dimltype_handle': DXFAttr(345, dxfversion='AC1021'),  # handle of linetype for dimension line
+    # virtual DXF attribute 'dimldtype': set/get referenced LINETYPE by name as callback
+    'dimltype': DXFAttr(VIRTUAL_TAG,
+                        xtype=XType.callback,
+                        getter='get_linetype',
+                        setter='set_linetype',
+                        dxfversion='AC1021'),
+
+    'dimltex1_handle': DXFAttr(346, dxfversion='AC1021'),  # handle of linetype for extension line 1
+    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
+    'dimltex1': DXFAttr(VIRTUAL_TAG,
+                        xtype=XType.callback,
+                        getter='get_ext1_linetype',
+                        setter='set_ext1_linetype',
+                        dxfversion='AC1021'),
+
+    'dimltex2_handle': DXFAttr(347, dxfversion='AC1021'),  # handle of linetype for extension line 2
+    # virtual DXF attribute 'dimltex2': set/get referenced LINETYPE by name as callback
+    'dimltex2': DXFAttr(VIRTUAL_TAG,
+                        xtype=XType.callback,
+                        getter='get_ext2_linetype',
+                        setter='set_ext2_linetype',
+                        dxfversion='AC1021'),
+
+    'dimlwd': DXFAttr(371, default=LINEWEIGHT_BYBLOCK),  # dimension line lineweight enum value, default BYBLOCK
+    'dimlwe': DXFAttr(372, default=LINEWEIGHT_BYBLOCK),  # extension line lineweight enum value, default BYBLOCK
 })
 
 
@@ -437,6 +464,50 @@ class DimStyle(legacy.DimStyle):
 
     def set_leader_block_name(self, name) -> None:
         self._set_blk_handle('dimldrblk_handle', name)
+
+    def get_ltype_name(self, dimvar: str) -> Optional[str]:
+        if self.dxfversion < 'AC1021':
+            logger.debug('Linetype support requires DXF R2007 or later.')
+
+        handle = self.get_dxf_attrib(dimvar, None)
+        if handle:
+            ltype = self.drawing.get_dxf_entity(handle)
+            return ltype.dxf.name
+        else:
+            return None
+
+    def get_linetype(self):
+        return self.get_ltype_name('dimltype_handle')
+
+    def get_ext1_linetype(self):
+        return self.get_ltype_name('dimltex1_handle')
+
+    def get_ext2_linetype(self):
+        return self.get_ltype_name('dimltex2_handle')
+
+    def get_ltype_handle(self, linetype_name: str) -> str:
+        ltype = self.drawing.linetypes.get(linetype_name)
+        return ltype.dxf.handle
+
+    def set_linetype(self, name: str) -> None:
+        self.dxf.dimltype_handle = self.get_ltype_handle(name)
+
+    def set_ext1_linetype(self, name: str) -> None:
+        self.dxf.dimltex1_handle = self.get_ltype_handle(name)
+
+    def set_ext2_linetype(self, name: str) -> None:
+        self.dxf.dimltex2_handle = self.get_ltype_handle(name)
+
+    def set_linetypes(self, dimline=None, ext1=None, ext2=None) -> None:
+        if self.dxfversion >= 'AC1021':
+            if dimline is not None:
+                self.set_linetype(dimline)
+            if ext1 is not None:
+                self.set_ext1_linetype(ext1)
+            if ext2 is not None:
+                self.set_ext2_linetype(ext2)
+        else:
+            logger.debug('Linetype support requires DXF R2007 or later.')
 
 
 def get_text_style_by_handle(handle, drawing: 'Drawing', default='STANDARD') -> str:

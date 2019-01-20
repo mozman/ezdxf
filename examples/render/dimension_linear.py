@@ -36,7 +36,7 @@ def linear_tutorial():
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
 
-def linear_all_arrow_style(version='R12'):
+def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2=None, filename=""):
     dwg = ezdxf.new(version, setup=True)
     msp = dwg.modelspace()
     ezdxf_dimstyle = dwg.dimstyles.get('EZDXF')
@@ -54,10 +54,20 @@ def linear_all_arrow_style(version='R12'):
             'dimdle': 0.5,
             'dimasz': .25,
         }
+
+        if dimltype:
+            attributes['dimltype'] = dimltype
+        if dimltex1:
+            attributes['dimltex1'] = dimltex1
+        if dimltex2:
+            attributes['dimltex2'] = dimltex2
+
         style = dim.dimstyle_override(attributes)
         msp.render_dimension(dim, override=style)
+    if not filename:
+        filename = 'all_arrow_styles_dim_{}.dxf'.format(version)
 
-    dwg.saveas(OUTDIR / 'all_arrow_styles_dim_{}.dxf'.format(version))
+    dwg.saveas(OUTDIR / filename)
 
 
 def linear_tutorial_ext_lines():
@@ -130,7 +140,9 @@ ALL = False
 if __name__ == '__main__':
     linear_tutorial()
     linear_all_arrow_style('R12')
+    linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')
     linear_all_arrow_style('R2000')
+    linear_all_arrow_style('R2007', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R2007.dxf')
     if ALL:
         linear_tutorial_ext_lines()
 

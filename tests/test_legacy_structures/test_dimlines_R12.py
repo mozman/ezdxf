@@ -105,6 +105,35 @@ def test_dimstyle_override_arrows(dxf12):
     assert 'dimnldrblk' not in dstyle, "not supported by DXF12"
 
 
+def test_dimstyle_override_linetypes(dxf12):
+    msp = dxf12.modelspace()
+    dimline = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dxfattribs={'dimstyle': 'EZDXF', }
+    )
+
+    preset = {
+        'dimltype': 'DOT',
+        'dimltex1': 'DOT2',
+        'dimltex2': 'DOTX2',
+    }
+    dimstyle = dimline.dimstyle_override(preset)
+    assert dimstyle['dimltype'] == 'DOT'
+    assert dimstyle['dimltex1'] == 'DOT2'
+    assert dimstyle['dimltex2'] == 'DOTX2'
+
+    dimstyle.commit()
+    dstyle = dimstyle.get_dstyle_dict()
+    assert 'dimltype' not in dstyle, "not supported by DXF12"
+    assert 'dimltype_handle' not in dstyle, "not supported by DXF12"
+    assert 'dimltex1' not in dstyle, "not supported by DXF12"
+    assert 'dimltex1_handle' not in dstyle, "not supported by DXF12"
+    assert 'dimltex2' not in dstyle, "not supported by DXF12"
+    assert 'dimltex2_handle' not in dstyle, "not supported by DXF12"
+
+
 def test_horizontal_dimline(dxf12):
     msp = dxf12.modelspace()
     dimline = msp.add_linear_dim(

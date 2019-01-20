@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Tuple, Iterable
 import math
 from ezdxf.algebra import Vector, ConstructionRay, xround
 from ezdxf.algebra import UCS, PassTroughUCS
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, MTEXT_ALIGN_FLAGS
+from ezdxf.lldxf import const
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFTableEntryError
 from ezdxf.options import options
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
@@ -26,13 +27,16 @@ class DimensionBase:
             self.dim_style = override
         else:
             self.dim_style = self.dimension.dimstyle_override()
-        self.text_style = self.dim_style.get_text_style(default=options.default_dimension_text_style)
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
             self.dimension.dxf.extrusion = self.ucs.uz
         # write override values into dimension entity XDATA section
         self.dim_style.commit()
+
+    @property
+    def supports_dxf_r2000(self) -> bool:
+        return self.dxfversion >= 'AC1015'
 
     @property
     def text_height(self) -> float:
@@ -56,6 +60,22 @@ class DimensionBase:
             'color': self.dimension.dxf.color,
         }
 
+    @property
+    def dimtxsty(self):
+        return self.dim_style.get_text_style(default=options.default_dimension_text_style)
+
+    @property
+    def dimltype(self):
+        return self.dim_style.get_linetype('dimltype')
+
+    @property
+    def dimltex1(self):
+        return self.dim_style.get_linetype('dimltex1')
+
+    @property
+    def dimltex2(self):
+        return self.dim_style.get_linetype('dimltex2')
+
     def wcs(self, point: 'Vertex') -> Vector:
         return self.ucs.to_wcs(point)
 
@@ -73,7 +93,7 @@ class DimensionBase:
 
     def get_arrow_names(self) -> Tuple[str, str]:
         def arrow_name(attrib) -> str:
-            if self.dxfversion > 'AC1009':
+            if self.supports_dxf_r2000:
                 handle = get_dxf_attr(attrib + '_handle', None)
                 if handle == '0':  # special: closed filled
                     pass  # return default value
@@ -135,12 +155,12 @@ class DimensionBase:
                  dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
-        attribs['style'] = self.text_style
+        attribs['style'] = self.dimtxsty
 
         if self.dxfversion > 'AC1009':
             attribs['char_height'] = self.text_height
             attribs['insert'] = pos
-            attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', MTEXT_ALIGN_FLAGS.get(align, 5))
+            attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', const.MTEXT_ALIGN_FLAGS.get(align, 5))
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)
@@ -192,11 +212,13 @@ class LinearDimension(DimensionBase):
 
         # add extension line 1
         if not self.suppress_extension_line1:
-            self.add_extension_line(dim.defpoint2, dimline_start)
+            start, end = self.extension_line_points(dim.defpoint2, dimline_start)
+            self.add_extension_line(start, end, num=1)
 
-        # add extension line 1
+        # add extension line 2
         if not self.suppress_extension_line2:
-            self.add_extension_line(dim.defpoint3, dimline_end)
+            start, end = self.extension_line_points(dim.defpoint3, dimline_end)
+            self.add_extension_line(start, end, num=2)
 
         blk1, blk2 = self.get_arrow_names()
         # add arrows
@@ -236,17 +258,42 @@ class LinearDimension(DimensionBase):
         attribs = {
             'color': self.dim_style.get('dimclrd', self.dimension.dxf.color)
         }
+        linetype_name = self.dimltype
+        if linetype_name is not None:
+            attribs['linetype'] = linetype_name
+
+        # lineweight requires DXF R2000 or later
+        if self.supports_dxf_r2000:
+            attribs['lineweight'] = self.dim_style.get('dimlwd', const.LINEWEIGHT_BYBLOCK)
+
         self.add_line(start, end, dxfattribs=attribs)
 
-    def add_extension_line(self, start: 'Vertex', end: 'Vertex') -> None:
+    def extension_line_points(self, start: 'Vertex', end: 'Vertex') -> Tuple[Vector, Vector]:
         direction = (end - start).normalize()
         offset = self.dim_style.get('dimexo', 0.)
         extension = self.dim_style.get('dimexe', 0.)
         start = start + direction * offset
         end = end + direction * extension
+        return start, end
+
+    def add_extension_line(self, start: 'Vertex', end: 'Vertex', num: int = 1) -> None:
         attribs = {
             'color': self.dim_style.get('dimclre', self.dimension.dxf.color)
         }
+        if num == 1:
+            linetype_name = self.dimltex1
+        elif num == 2:
+            linetype_name = self.dimltex2
+        else:
+            raise ValueError('invalid argument num, has to be 1 or 2.')
+
+        if linetype_name is not None:
+            attribs['linetype'] = linetype_name
+
+        # lineweight requires DXF R2000 or later
+        if self.supports_dxf_r2000:
+            attribs['lineweight'] = self.dim_style.get('dimlwe', const.LINEWEIGHT_BYBLOCK)
+
         self.add_line(start, end, dxfattribs=attribs)
 
     def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = '', blk2: str = '') -> Tuple[Vector, Vector]:
@@ -272,7 +319,7 @@ class LinearDimension(DimensionBase):
 
     def text_vertical_distance(self) -> float:
         """
-        Returns the vertical distcance for dimension line to text midpoint. Positive values are above the line, negative
+        Returns the vertical distance for dimension line to text midpoint. Positive values are above the line, negative
         values are below the line.
         """
         tad = self.dim_style.get('dimtad', 1)

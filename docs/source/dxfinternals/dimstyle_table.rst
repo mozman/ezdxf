@@ -471,9 +471,52 @@ DIMTMOVE            279     Sets dimension text movement rules.
                             - 2 = Allows text to be moved freely without a leader
 =================== ======= ==============================================================================================
 
+Linetypes
+---------
+
+Prior to DXF R2007, the linetype settings for the dimension and the extension lines are stored in the XDATA section by
+following entries, this is not documented by `Autodesk`_:
+
+.. code-block:: none
+
+    1001
+    ACAD_DSTYLE_DIM_LINETYPE        <<< dimension line
+    1070
+    380                             <<< group code, which differs from R2007 DIMDLTYPE
+    1005
+    FFFF                            <<< handle to LTYPE entry
+    1001
+    ACAD_DSTYLE_DIM_EXT1_LINETYPE   <<< extension line 1
+    1070
+    381                             <<< group code, which differs from R2007 DIMLTEX1
+    1005
+    FFFF                            <<< handle to LTYPE entry
+    1001
+    ACAD_DSTYLE_DIM_EXT2_LINETYPE   <<< extension line 1
+    1070
+    382                             <<< group code, which differs from R2007 DIMLTEX2
+    1005
+    FFFF                            <<< handle to LTYPE entry
+
+This feature is not supported by `ezdxf`.
+
+Unofficial DIMSTYLE Variables for DXF R2007 and later
+-----------------------------------------------------
+
+The following DIMVARS are **not documented** in the `DXF Reference`_ by Autodesk.
+
+=================== ======= ============================================================================================
+DIMVAR              Code    Description
+=================== ======= ============================================================================================
+DIMLTYPE_HANDLE     345     Specifies the LINETYPE of the dimension line. Handle to LTYPE table entry
+DIMLTEX1_HANDLE     346     Specifies the LINETYPE of the extension line 1. Handle to LTYPE table entry
+DIMLTEX2_HANDLE     347     Specifies the LINETYPE of the extension line 2. Handle to LTYPE table entry
+=================== ======= ============================================================================================
 
 .. _DIMSTYLE: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F2FAD36F-0CE3-4943-9DAD-A9BCD2AE81DA
 
 .. _TABLES Section: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A9FD9590-C97B-4E41-9F26-BD82C34A4F9F
 
 .. _CADDManger Blog: http://www.caddmanager.com/CMB/2009/09/cad-standards-autocad-dimension-variables/
+
+.. include:: reflinks.inc
