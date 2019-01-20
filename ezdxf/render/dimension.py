@@ -6,8 +6,8 @@ import math
 from ezdxf.algebra import Vector, ConstructionRay, xround
 from ezdxf.algebra import UCS, PassTroughUCS
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError, DXFTableEntryError
 from ezdxf.options import options
+from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.modern.tableentries import get_block_name_by_handle
@@ -39,18 +39,6 @@ class DimensionBase:
         return self.dxfversion >= 'AC1015'
 
     @property
-    def text_height(self) -> float:
-        return self.dim_style.get('dimtxt', 1.0)
-
-    @property
-    def suppress_extension_line1(self) -> bool:
-        return bool(self.dim_style.get('dimse1', False))
-
-    @property
-    def suppress_extension_line2(self) -> bool:
-        return bool(self.dim_style.get('dimse2', False))
-
-    @property
     def user_location_override(self) -> bool:
         return self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE, name='dimtype')
 
@@ -59,22 +47,6 @@ class DimensionBase:
             'layer': self.dimension.dxf.layer,
             'color': self.dimension.dxf.color,
         }
-
-    @property
-    def dimtxsty(self):
-        return self.dim_style.get_text_style(default=options.default_dimension_text_style)
-
-    @property
-    def dimltype(self):
-        return self.dim_style.get_linetype('dimltype')
-
-    @property
-    def dimltex1(self):
-        return self.dim_style.get_linetype('dimltex1')
-
-    @property
-    def dimltex2(self):
-        return self.dim_style.get_linetype('dimltex2')
 
     def wcs(self, point: 'Vertex') -> Vector:
         return self.ucs.to_wcs(point)
@@ -155,17 +127,17 @@ class DimensionBase:
                  dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
-        attribs['style'] = self.dimtxsty
+        attribs['style'] = self.dim_style.get('dimtxsty', options.default_dimension_text_style)
 
         if self.dxfversion > 'AC1009':
-            attribs['char_height'] = self.text_height
+            attribs['char_height'] = self.dim_style.get('dimtxt', 1.0)
             attribs['insert'] = pos
             attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', const.MTEXT_ALIGN_FLAGS.get(align, 5))
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)
         else:
-            attribs['height'] = self.text_height
+            attribs['height'] = self.dim_style.get('dimtxt', 1.0)
             if dxfattribs:
                 attribs.update(dxfattribs)
             dxftext = self.block.add_text(text, dxfattribs=attribs)
@@ -211,12 +183,12 @@ class LinearDimension(DimensionBase):
             self.add_measurement_text(dim_text, text_location)
 
         # add extension line 1
-        if not self.suppress_extension_line1:
+        if not self.dim_style.get('dimse1', False):  # suppress extension line 1
             start, end = self.extension_line_points(dim.defpoint2, dimline_start)
             self.add_extension_line(start, end, num=1)
 
         # add extension line 2
-        if not self.suppress_extension_line2:
+        if not self.dim_style.get('dimse2', False):  # suppress extension line 2
             start, end = self.extension_line_points(dim.defpoint3, dimline_end)
             self.add_extension_line(start, end, num=2)
 
@@ -258,7 +230,7 @@ class LinearDimension(DimensionBase):
         attribs = {
             'color': self.dim_style.get('dimclrd', self.dimension.dxf.color)
         }
-        linetype_name = self.dimltype
+        linetype_name = self.dim_style['dimltype']
         if linetype_name is not None:
             attribs['linetype'] = linetype_name
 
@@ -281,9 +253,9 @@ class LinearDimension(DimensionBase):
             'color': self.dim_style.get('dimclre', self.dimension.dxf.color)
         }
         if num == 1:
-            linetype_name = self.dimltex1
+            linetype_name = self.dim_style['dimltex1']
         elif num == 2:
-            linetype_name = self.dimltex2
+            linetype_name = self.dim_style['dimltex2']
         else:
             raise ValueError('invalid argument num, has to be 1 or 2.')
 
@@ -323,7 +295,7 @@ class LinearDimension(DimensionBase):
         values are below the line.
         """
         tad = self.dim_style.get('dimtad', 1)
-        height = self.text_height
+        height = self.dim_style.get('dimtxt', 1.0)
         gap = self.dim_style.get('dimgap', 0.625)
         dist = height / 2. + gap  # above dimline
         if tad == 0:  # center of dimline

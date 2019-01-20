@@ -128,7 +128,6 @@ class LWPolyline(ModernGraphicEntity):
     DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, lwpolyline_subclass)
     CLOSED = 1
     PLINEGEN = 128
-    LOCK_UPDATE = False
 
     @property
     def AcDbPolyline(self) -> 'Tags':

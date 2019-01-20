@@ -368,7 +368,11 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimatfit': DXFAttr(289),
     'dimtxsty_handle': DXFAttr(340),  # handle of referenced STYLE entry
     # virtual DXF attribute 'dimtxsty': set/get referenced STYLE by name as callback
-    'dimtxsty': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_text_style', setter='set_text_style'),
+    'dimtxsty': DXFAttr(VIRTUAL_TAG,
+                        xtype=XType.callback,
+                        getter='get_text_style',
+                        setter='set_text_style'),
+
     # virtual DXF attribute 'dimldrblk': set/get referenced STYLE by name as callback
     'dimldrblk': DXFAttr(VIRTUAL_TAG,
                          xtype=XType.callback,

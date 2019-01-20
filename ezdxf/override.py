@@ -3,6 +3,7 @@ from ezdxf.modern.tableentries import DimStyle, get_text_style_by_handle  # DimS
 from ezdxf.lldxf.const import DXFAttributeError
 from ezdxf.render.arrows import ARROWS
 import logging
+
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ class DimStyleOverride:
             raise DXFAttributeError('Invalid DXF attribute "{}" for DIMSTYLE.'.format(name))
 
     def get(self, attribute: str, default: Any = None) -> Any:
+        """ Get DimStyle or overridden attributes but does not handle special tags. """
         if attribute in self.dxfattribs:
             result = self.dxfattribs[attribute]
         else:
@@ -77,7 +79,7 @@ class DimStyleOverride:
 
         def set_linetype_handle(attrib_name, linetype_name):
             ltype = self.drawing.linetypes.get(linetype_name)
-            self.dxfattribs[attrib_name+'_handle'] = ltype.dxf.handle
+            self.dxfattribs[attrib_name + '_handle'] = ltype.dxf.handle
 
         if self.drawing.dxfversion > 'AC1009':
             # transform block names into block record handles
@@ -91,7 +93,7 @@ class DimStyleOverride:
                     set_arrow_handle(attrib_name, block_name)
 
         if self.drawing.dxfversion >= 'AC1021':
-            # transform linetype names into handles
+            # transform linetype names into LTYPE entry handles
             for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
                 try:
                     linetype_name = self.dxfattribs.pop(attrib_name)
@@ -104,23 +106,6 @@ class DimStyleOverride:
 
     def get_dstyle_dict(self) -> dict:
         return self.dimension.get_acad_dstyle(self.dim_style)
-
-    def get_text_style(self, default='STANDARD') -> str:
-        try:  # virtual 'dimtxsty' attribute
-            return self.dxfattribs['dimtxsty']
-        except KeyError:
-            pass
-        # get text style form 'dimtxsty_handle' attribute or as default value
-        handle = self.get('dimtxsty_handle', None)
-        return get_text_style_by_handle(handle, self.drawing) if handle else default
-
-    def get_linetype(self, dimvar: str) -> str:
-        ltype = self.get(dimvar, None)
-        if ltype is None and self.dxfversion >= 'AC1021':
-            ltype_handle = self.get(dimvar + '_handle', None)
-            if ltype_handle:
-                return self.drawing.get_dxf_entity(ltype_handle).dxf.name
-        return ltype
 
     def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None):
         def set_arrow(dimvar: str, name: str) -> None:
