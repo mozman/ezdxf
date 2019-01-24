@@ -157,6 +157,7 @@ def test_format_point():
 def test_point_to_array():
     assert tuple(compile_array((1, 2), 'xy')) == (1, 2, 0, 0, 0)
     assert tuple(compile_array((1, 2, 5), 'xyb')) == (1, 2, 0, 0, 5)
+    assert tuple(compile_array((1, 2), 'xyseb')) == (1, 2, 0, 0, 0)
 
     assert tuple(compile_array((1, 2, 5), 'xy')) == (1, 2, 0, 0, 0)
     assert tuple(compile_array((5, (1, 2)), 'b,v')) == (1, 2, 0, 0, 5)

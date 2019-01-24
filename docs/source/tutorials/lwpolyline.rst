@@ -88,9 +88,26 @@ LWPolyline can also have curved elements, they are defined by the `bulge` value:
 
     dwg.saveas("lwpolyline5.dxf")
 
-The curved segment is drawn from the vertex with the defined `bulge` value to the following vertex, the curved segment
-is always a circle, the diameter is relative to the vertex distance, `bulge` = 1.0 means the diameter equals the vertex
-distance, `bulge` = 0.5 means the diameter is the half of the vertex distance. `bulge` > 0 the curve is on the right
-side of the vertex connection line, `bulge` < 0 the curve is on the left side.
-
 .. image:: gfx/LWPolyline5.PNG
+
+The curved segment is drawn from the vertex with the defined `bulge` value to the following vertex, the curved segment
+is always a circle, The bulge defines the ratio of the arc sagitta (segment height `h`) to half line segment length (vertex
+distance), a bulge value of 1 defines a semicircle. `bulge` > 0 the curve is on the right side of the vertex connection
+line, `bulge` < 0 the curve is on the left side.
+
+`ezdxf` v0.8.9 supports a user defined points format, default is ``xyseb``:
+
+    - ``x`` = x coordinate
+    - ``y`` = y coordinate
+    - ``s`` = start width
+    - ``e`` = end width
+    - ``b`` = bulge value
+    - ``v`` = (x, y) as tuple
+
+.. code::
+
+    msp.add_lwpolyline([(0, 0, 0), (10, 0, 1), (20, 0, 0)], format='xyb')
+    msp.add_lwpolyline([(0, 10, 0), (10, 10, .5), (20, 10, 0)], format='xyb')
+
+
+.. image:: gfx/bulge.png

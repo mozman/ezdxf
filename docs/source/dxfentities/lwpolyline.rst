@@ -25,6 +25,8 @@ Bulge Value
     - negative value (< 0): bulge is left of line (clockwise)
     - 0 = no bulge
 
+.. image:: ../tutorials/gfx/bulge.png
+
 Start Width And End Width
 -------------------------
 
