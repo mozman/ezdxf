@@ -12,7 +12,7 @@ from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride
+    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride, Style
 
 
 class DimensionBase:
@@ -30,8 +30,6 @@ class DimensionBase:
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
             self.dimension.dxf.extrusion = self.ucs.uz
-        # write override values into dimension entity XDATA section
-        self.dim_style.commit()
 
     @property
     def supports_dxf_r2000(self) -> bool:
@@ -40,6 +38,33 @@ class DimensionBase:
     @property
     def user_location_override(self) -> bool:
         return self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE, name='dimtype')
+
+    @property
+    def text_style_name(self) -> str:
+        return self.dim_style.get('dimtxsty', options.default_dimension_text_style)
+
+    @property
+    def text_style(self) -> 'Style':
+        return self.drawing.styles.get(self.text_style_name)
+
+    @property
+    def char_height(self) -> float:
+        return self.dim_style.get('dimtxt', 1.0)
+
+    def text_width(self, text: str) -> float:
+        style = self.text_style
+        default_height = style.get_dxf_attrib('height', 0)
+        if default_height == 0:  # variable text height (not fixed)
+            default_height = 1.0
+        char_height = self.dim_style.get('dimtxt', default_height)
+        char_width = char_height * style.get_dxf_attrib('width', 1.)
+        return len(text) * char_width
+
+    @property
+    def text_rotation(self):
+        angle = self.dimension.get_dxf_attrib('angle', 0)
+        text_rotation = self.dimension.get_dxf_attrib('text_rotation', 0)  # absolute angle
+        return text_rotation if text_rotation else angle
 
     def default_attributes(self) -> dict:
         return {
@@ -100,17 +125,17 @@ class DimensionBase:
                  dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
-        attribs['style'] = self.dim_style.get('dimtxsty', options.default_dimension_text_style)
+        attribs['style'] = self.text_style_name
 
         if self.dxfversion > 'AC1009':
-            attribs['char_height'] = self.dim_style.get('dimtxt', 1.0)
+            attribs['char_height'] = self.char_height
             attribs['insert'] = pos
             attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', const.MTEXT_ALIGN_FLAGS.get(align, 5))
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)
         else:
-            attribs['height'] = self.dim_style.get('dimtxt', 1.0)
+            attribs['height'] = self.char_height
             if dxfattribs:
                 attribs.update(dxfattribs)
             dxftext = self.block.add_text(text, dxfattribs=attribs)
@@ -166,12 +191,15 @@ class LinearDimension(DimensionBase):
             self.add_extension_line(start, end, num=2)
 
         blk1, blk2 = self.dim_style.get_arrow_names()
-        # add arrows
+
+        # add arrow symbols (block references)
         dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2)
         self.add_dimension_line(dimline_start, dimline_end, blk1, blk2)
 
-        # add POINT at definition points
+        # add POINT entities at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
+
+        # transform ucs coordinates into WCS and OCS
         self.defpoints_to_wcs()
 
     def defpoints_to_wcs(self):
@@ -188,9 +216,7 @@ class LinearDimension(DimensionBase):
         attribs = {
             'color': self.dim_style.get('dimclrt', self.dimension.dxf.color)
         }
-        angle = self.dimension.get_dxf_attrib('angle', 0)
-        text_rotation = self.dimension.get_dxf_attrib('text_rotation', 0)
-        self.add_text(dim_text, pos=pos, rotation=angle + text_rotation, dxfattribs=attribs)
+        self.add_text(dim_text, pos=pos, rotation=self.text_rotation, dxfattribs=attribs)
 
     def add_dimension_line(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None) -> None:
         direction = (end - start).normalize()
@@ -268,9 +294,8 @@ class LinearDimension(DimensionBase):
         values are below the line.
         """
         tad = self.dim_style.get('dimtad', 1)
-        height = self.dim_style.get('dimtxt', 1.0)
         gap = self.dim_style.get('dimgap', 0.625)
-        dist = height / 2. + gap  # above dimline
+        dist = self.char_height / 2. + gap  # above dimline
         if tad == 0:  # center of dimline
             dist = 0
         elif tad == 4:  # below dimline

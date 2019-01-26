@@ -121,26 +121,14 @@ class DimStyleOverride:
             set_arrow('dimldrblk', ldrblk)
 
     def get_arrow_names(self) -> Tuple[str, str]:
-        def arrow_name(attrib) -> str:
-            if self.dxfversion > 'AC1009':
-                handle = self.get(attrib + '_handle', None)
-                if handle == '0':  # special: closed filled
-                    pass  # return default value
-                elif handle:
-                    block_name = get_block_name_by_handle(handle, self.drawing)
-                    return ARROWS.arrow_name(block_name)
-                return ARROWS.closed_filled
-            else:  # DXF12 or no handle -> use block name
-                return self.get(attrib)
-
         dimtsz = self.get('dimtsz')
         blk1, blk2 = None, None
         if dimtsz == 0.:
             if bool(self.get('dimsah')):
-                blk1 = arrow_name('dimblk1')
-                blk2 = arrow_name('dimblk2')
+                blk1 = self.get('dimblk1')
+                blk2 = self.get('dimblk2')
             else:
-                blk = arrow_name('dimblk')
+                blk = self.get('dimblk')
                 blk1 = blk
                 blk2 = blk
         return blk1, blk2

@@ -11,7 +11,7 @@ Create a simple polyline::
 
     import ezdxf
 
-    dwg = ezdxf.new('AC1015')
+    dwg = ezdxf.new('R2000')
     msp = dwg.modelspace()
 
     points = [(0, 0), (3, 0), (6, 3), (6, 6)]
@@ -58,7 +58,7 @@ Use context manager to edit polyline::
 
 Each line segment can have a different start/end width, if omitted start/end width = 0::
 
-    dwg = ezdxf.new('AC1015')
+    dwg = ezdxf.new('R2000')
     msp = dwg.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
@@ -77,7 +77,7 @@ so on, the start/end width value of the last vertex is ignored. Start/end width 
 
 LWPolyline can also have curved elements, they are defined by the `bulge` value::
 
-    dwg = ezdxf.new('AC1015')
+    dwg = ezdxf.new('R2000')
     msp = dwg.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])

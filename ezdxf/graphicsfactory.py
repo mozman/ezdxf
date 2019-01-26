@@ -457,6 +457,10 @@ class GraphicsFactory:
         dwg = cast('Drawing', self.drawing)
         dwg.dimension_renderer.dispatch(dimension, ucs, override)
 
+        # write override values into dimension entity
+        if override:
+            override.commit()
+
     def add_linear_dim(self,
                        base: 'Vertex',
                        ext1: 'Vertex',
