@@ -310,9 +310,6 @@ Table Structure DXF R2000+
     ENDTAB
 
 
-DIMSTYLE Entry DXF R2000+
--------------------------
-
 Additional DIMSTYLE Variables DXF R13/14
 ----------------------------------------
 
@@ -471,6 +468,16 @@ DIMTMOVE            279     Sets dimension text movement rules.
                             - 2 = Allows text to be moved freely without a leader
 =================== ======= ==============================================================================================
 
+Text Location
+-------------
+
+This image shows the default text locations created by `BricsCAD`_ for dimension variables ``dimtad`` and ``dimjust``:
+
+.. image:: gfx/dimtad-dimjust.svg
+    :align: center
+    :width: 800px
+
+
 Linetypes
 ---------
 
@@ -518,5 +525,6 @@ DIMLTEX2_HANDLE     347     Specifies the LINETYPE of the extension line 2. Hand
 .. _TABLES Section: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A9FD9590-C97B-4E41-9F26-BD82C34A4F9F
 
 .. _CADDManger Blog: http://www.caddmanager.com/CMB/2009/09/cad-standards-autocad-dimension-variables/
+
 
 .. include:: reflinks.inc

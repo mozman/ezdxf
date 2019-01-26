@@ -31,7 +31,13 @@ def linear_tutorial():
     # angle: defines the angle of the dimension line, measurement is the distance between first and second measurement point
     # in direction of `angle`
     dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF')
-    style = dim2.dimstyle_override(dxfattribs={'dimblk': ezdxf.ARROWS.closed_filled, 'dimtsz': 0., 'dimdle': 0.})
+    style = dim2.dimstyle_override(dxfattribs={
+        'dimblk': ezdxf.ARROWS.closed_filled,
+        'dimtsz': 0.,
+        'dimdle': 0.,
+        'dimjust': 2,
+        'dimasz': .25
+    })
     msp.render_dimension(dim2, override=style)
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 

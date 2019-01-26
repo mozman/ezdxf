@@ -49,28 +49,46 @@ class DimensionBase:
 
     @property
     def char_height(self) -> float:
-        return self.dim_style.get('dimtxt', 1.0)
+        height = self.text_style.get_dxf_attrib('height', 0)
+        if height == 0:  # variable text height (not fixed)
+            height = self.dim_style.get('dimtxt', 1.)
+        return height
 
     def text_width(self, text: str) -> float:
-        style = self.text_style
-        default_height = style.get_dxf_attrib('height', 0)
-        if default_height == 0:  # variable text height (not fixed)
-            default_height = 1.0
-        char_height = self.dim_style.get('dimtxt', default_height)
-        char_width = char_height * style.get_dxf_attrib('width', 1.)
+        char_width = self.char_height * self.text_style.get_dxf_attrib('width', 1.)
         return len(text) * char_width
 
     @property
-    def text_rotation(self):
-        angle = self.dimension.get_dxf_attrib('angle', 0)
-        text_rotation = self.dimension.get_dxf_attrib('text_rotation', 0)  # absolute angle
-        return text_rotation if text_rotation else angle
+    def text_rotation(self) -> float:
+        text_rotation = self.dimension.get_dxf_attrib('text_rotation', None)
+        if text_rotation is not None:
+            angle = text_rotation  # absolute angle
+        else:
+            # dimtih - text inside horizontal: not supported by ezdxf, use text_rotation attribute
+            # dimtoh - text outside horizontal: not supported by ezdxf, use text_rotation attribute
+            # text is aligned to dimension line
+            angle = self.dimension.get_dxf_attrib('angle', 0)
+            if self.dim_style.get('dimjust', 0) in (3, 4):  # text above extension line, rotated about 90 degrees
+                angle += 90.
+        return angle
+
+    @property
+    def text_offset(self) -> float:
+        return self.dim_style.get('dimgap', 0.625)
+
+    @property
+    def arrow_size(self) -> float:
+        return self.dim_style.get('dimasz')
 
     def default_attributes(self) -> dict:
         return {
             'layer': self.dimension.dxf.layer,
             'color': self.dimension.dxf.color,
         }
+
+    @property
+    def text_movement_rule(self) -> int:
+        return self.dim_style.get('dimtmove', 0)
 
     def wcs(self, point: 'Vertex') -> Vector:
         return self.ucs.to_wcs(point)
@@ -156,8 +174,13 @@ class LinearDimension(DimensionBase):
         angle = math.radians(dim.angle)
         ext_angle = angle + math.pi / 2.
 
-        # USER_LOCATION_OVERRIDE, moves dimension line location!
-        if self.user_location_override:
+        # text_movement_rule (dimtmove):
+        # 0 = Moves the dimension line with dimension text
+        # 1 = Adds a leader when dimension text is moved
+        # 2 = Allows text to be moved freely without a leader
+
+        if self.user_location_override and self.text_movement_rule == 0:
+            # user_location_override also moves dimension line location!
             dimline_ray = ConstructionRay(dim.text_midpoint, angle=angle)
         else:
             dimline_ray = ConstructionRay(dim.defpoint, angle=angle)
@@ -169,15 +192,22 @@ class LinearDimension(DimensionBase):
         # dimension definition points
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
-        dim.defpoint = dimline_start  # set defpoint to expected location
+        dim.defpoint = dimline_start  # set defpoint to expected location for text_movement_rule == 0
 
         dimlfac = self.dim_style.get('dimlfac', 1.)
         measurement = (dimline_start - dimline_end).magnitude
         dim_text = self.get_text(measurement * dimlfac)
+        text_outside = False
 
         # add text
         if dim_text:
-            text_location = self.text_location(dimline_start, dimline_end)
+            dim_text_width = self.text_width(dim_text)
+            reqired_text_space = dim_text_width + 2 * (self.arrow_size + self.text_offset)
+            text_outside = reqired_text_space < measurement
+            if self.dim_style.get('dimtix', 0) == 1:  # force text inside
+                text_outside = False
+
+            text_location = self.text_location(dimline_start, dimline_end, dim_text_width, text_outside)
             self.add_measurement_text(dim_text, text_location)
 
         # add extension line 1
@@ -278,7 +308,7 @@ class LinearDimension(DimensionBase):
             self.block.add_arrow(ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
             self.block.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
         else:
-            scale = get_dxf_attr('dimasz')
+            scale = self.arrow_size
             start_angle = dim.angle + 180.
             end_angle = dim.angle
             self.add_blockref(blk1, insert=start, scale=scale, rotation=start_angle, dxfattribs=attribs)  # reverse
@@ -288,34 +318,69 @@ class LinearDimension(DimensionBase):
 
         return start, end
 
+    @property
+    def tad_factor(self) -> float:
+        """dimtad value as factor: returns 1 for above, 0 for center and -1 for below dimension line"""
+        tad = self.dim_style.get('dimtad', 1)
+        if tad == 0:
+            return 0
+        elif tad == 4:
+            return -1
+        else:
+            return 1
+
     def text_vertical_distance(self) -> float:
         """
         Returns the vertical distance for dimension line to text midpoint. Positive values are above the line, negative
         values are below the line.
         """
-        tad = self.dim_style.get('dimtad', 1)
-        gap = self.dim_style.get('dimgap', 0.625)
-        dist = self.char_height / 2. + gap  # above dimline
-        if tad == 0:  # center of dimline
-            dist = 0
-        elif tad == 4:  # below dimline
-            dist = -dist
-        return dist
+        return (self.char_height / 2. + self.text_offset) * self.tad_factor
 
-    def text_location(self, start: Vector, end: Vector) -> Vector:
-        if not self.user_location_override:
-            # text_location defines the text location along the dimension line
-            # TODO: there are more the possible location than 'center'
-            text_location = start.lerp(end)
-            self.dimension.set_dxf_attrib('text_midpoint', text_location)
+    def text_location(self, start: Vector, end: Vector, text_width: float, text_outside: bool = False) -> Vector:
+        """
+        Calculate text midpoint in drawing units.
+
+        Args:
+            start: start point of dimension line
+            end: end point of dimension line
+            text_width: text with in drawing units
+            text_outside: place text outside of extension lines, applies only for dimjust = 0, 1 or 2
+
+        """
+        if self.user_location_override:
+            text_location = self.dimension.get_dxf_attrib('text_midpoint')
+            if self.text_movement_rule == 0:
+                # text_location defines the text location along the dimension line
+                # vertical distance from dimension line to text midpoint, normal to the dimension line
+                vdist = self.text_vertical_distance()
+            else:  # move text freely by text_midpoint
+                return text_location
         else:
             # text_location defines the text location along the dimension line
-            text_location = self.dimension.get_dxf_attrib('text_midpoint')
+            justify = self.dim_style.get('dimjust', 0)
+            # default location: above the dimension line and centered between extension lines
+            text_location = start.lerp(end)
+            offset = self.text_offset + self.arrow_size + text_width / 2
+            if justify == 1:  # positions the text next to the first extension line
+                text_location = start + (end - start).normalize(offset)
+            elif justify == 2:  # positions the text next to the second extension line
+                text_location = end + (start - end).normalize(offset)
+            elif justify in (3, 4):  # positions the text above and aligned with the first/second extension line
+                dist = self.text_offset + self.char_height / 2.
+                _offset = (start - end).normalize(dist) * self.tad_factor
+                if justify == 3:
+                    text_location = start + _offset
+                else:
+                    text_location = end + _offset
 
-        # vertical distance from dimension line to text midpoint, normal to the dimension line
-        dist = self.text_vertical_distance()
-        # shift text location
-        ortho = (end - start).orthogonal().normalize(dist)
+            self.dimension.set_dxf_attrib('text_midpoint', text_location)
+            if justify in (0, 1, 2):
+                vdist = self.text_vertical_distance()
+            else:
+                vdist = offset
+
+        # lift text location
+        ortho = (end - start).orthogonal().normalize(vdist)
         return text_location + ortho
 
 
