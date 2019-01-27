@@ -1,7 +1,7 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable, List
+from typing import TYPE_CHECKING, Tuple, Iterable, List, Sequence
 import math
 from ezdxf.algebra import Vector, ConstructionRay, xround, ConstructionLine
 from ezdxf.algebra import UCS, PassTroughUCS
@@ -179,7 +179,7 @@ class DimensionBase:
 
 class LinearDimension(DimensionBase):
     @property
-    def required_arrows_space(self):
+    def required_arrows_space(self) -> float:
         return 2 * self.arrow_size + self.text_gap
 
     def render(self):
@@ -267,7 +267,7 @@ class LinearDimension(DimensionBase):
         # transform ucs coordinates into WCS and OCS
         self.defpoints_to_wcs()
 
-    def defpoints_to_wcs(self):
+    def defpoints_to_wcs(self) -> None:
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
@@ -388,7 +388,7 @@ class LinearDimension(DimensionBase):
                 end = connection_point(blk2, end, scale, end_angle)
 
         if outside:  # add extension lines to arrows if outside
-            def has_arrow_extension(name):
+            def has_arrow_extension(name: str) -> bool:
                 return (name is not None) and (name in ARROWS) and (name not in ARROWS.ORIGIN_ZERO)
 
             arrow_vector = (end - start).normalize(self.arrow_size)
@@ -561,7 +561,7 @@ class TextBox:
         vstr = ', '.join(str(c) for c in self.corners)
         return "TextBox({})".format(vstr)
 
-    def border_lines(self):
+    def border_lines(self) -> Sequence[ConstructionLine]:
         p1, p2, p3, p4 = self.corners
         return (
             ConstructionLine(p1, p2),
