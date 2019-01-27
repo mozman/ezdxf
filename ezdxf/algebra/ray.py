@@ -1,7 +1,7 @@
 # Created: 13.03.2010
 # Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import math
 from .base import equals_almost, normalize_angle, is_vertical_angle
 from .vector import Vector
@@ -194,3 +194,90 @@ class ConstructionRay:
         cross_point = self.intersect(other_ray)
         alpha = (self.angle + other_ray.angle) / 2.0
         return ConstructionRay(cross_point, angle=alpha)
+
+
+class ConstructionLine:
+    """
+    ConstructionLine is similar to ConstructionRay, but has a start and endpoint and therefor also an direction.
+    The direction goes from start to end, 'left of line' is always in relation to this line direction.
+
+    """
+    def __init__(self, start: 'Vertex', end: 'Vertex'):
+        self.start = Vector(start)
+        self.end = Vector(end)
+
+    @property
+    def sorted_points(self):
+        return (self.end, self.start) if self.start > self.end else (self.start, self.end)
+
+    @property
+    def ray(self):
+        return ConstructionRay(self.start, self.end)
+
+    def __eq__(self, other: 'ConstructionLine') -> bool:
+        return self.sorted_points == other.sorted_points
+
+    def __lt__(self, other: 'ConstructionLine') -> bool:
+        return self.sorted_points < other.sorted_points
+
+    def length(self) -> float:
+        return (self.end - self.start).magnitude
+
+    def midpoint(self) -> Vector:
+        return self.start.lerp(self.end)
+
+    @property
+    def is_vertical(self) -> bool:
+        return math.isclose(self.start.x, self.end.x)
+
+    def is_in_coordinate_range(self, point: Vector) -> bool:
+        start, end = self.sorted_points
+        if not self.is_vertical:
+            return start.x <= point.x <= end.x
+        else:
+            return start.y <= point.y <= end.y
+
+    def intersect(self, other: 'ConstructionLine') -> Optional[Vector]:
+        """
+        Returns the intersection point of to lines or None if they have no intersection point.
+
+        Args:
+            other: other construction line
+
+        Returns: intersection point or None
+
+        """
+        try:
+            point = self.ray.intersect(other.ray)
+        except ParallelRaysError:
+            return None
+        else:
+            if self.is_in_coordinate_range(point) and other.is_in_coordinate_range(point):
+                return point
+            else:
+                return None
+
+    def left_of_line(self, point: 'Vertex') -> bool:
+        """
+        True if `point` is left of construction line in relation to the line direction from start to end.
+
+        Points exact at the line are not left of the line.
+
+        """
+        start, end = self.start, self.end
+        point = Vector(point)
+        if self.is_vertical:
+            # compute on which site of the line self should be
+            should_be_left = self.start.y < self.end.y
+            if should_be_left:
+                return point.x < self.start.x
+            else:
+                return point.x > self.start.x
+        else:
+            y = self.ray.get_y(point.x)
+            # compute if point should be above or below the line
+            should_be_above = start.x < end.x
+            if should_be_above:
+                return point.y > y
+            else:
+                return point.y < y

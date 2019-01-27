@@ -478,35 +478,6 @@ This image shows the default text locations created by `BricsCAD`_ for dimension
     :width: 800px
 
 
-Linetypes
----------
-
-Prior to DXF R2007, the linetype settings for the dimension and the extension lines are stored in the XDATA section by
-following entries, this is not documented by `Autodesk`_:
-
-.. code-block:: none
-
-    1001
-    ACAD_DSTYLE_DIM_LINETYPE        <<< dimension line
-    1070
-    380                             <<< group code, which differs from R2007 DIMDLTYPE
-    1005
-    FFFF                            <<< handle to LTYPE entry
-    1001
-    ACAD_DSTYLE_DIM_EXT1_LINETYPE   <<< extension line 1
-    1070
-    381                             <<< group code, which differs from R2007 DIMLTEX1
-    1005
-    FFFF                            <<< handle to LTYPE entry
-    1001
-    ACAD_DSTYLE_DIM_EXT2_LINETYPE   <<< extension line 1
-    1070
-    382                             <<< group code, which differs from R2007 DIMLTEX2
-    1005
-    FFFF                            <<< handle to LTYPE entry
-
-This feature is not supported by `ezdxf`.
-
 Unofficial DIMSTYLE Variables for DXF R2007 and later
 -----------------------------------------------------
 
@@ -515,10 +486,54 @@ The following DIMVARS are **not documented** in the `DXF Reference`_ by Autodesk
 =================== ======= ============================================================================================
 DIMVAR              Code    Description
 =================== ======= ============================================================================================
+DIMEXFIX            290     Extension line has fixed length if set to 1
+DIMEXLEN            49      Length of extension line below dimension line if fixed (DIMEXFIX is 1), DIMEXE defines the
+                            the length above the dimension line
 DIMLTYPE_HANDLE     345     Specifies the LINETYPE of the dimension line. Handle to LTYPE table entry
 DIMLTEX1_HANDLE     346     Specifies the LINETYPE of the extension line 1. Handle to LTYPE table entry
 DIMLTEX2_HANDLE     347     Specifies the LINETYPE of the extension line 2. Handle to LTYPE table entry
 =================== ======= ============================================================================================
+
+Extended Settings as Special XDATA Groups
+-----------------------------------------
+
+Prior to DXF R2007, some extended settings for the dimension and the extension lines are stored in the XDATA section by
+following entries, this is not documented by `Autodesk`_:
+
+.. code-block:: none
+
+    1001
+    ACAD_DSTYLE_DIM_LINETYPE        <<< linetype for dimension line
+    1070
+    380                             <<< group code, which differs from R2007 DIMDLTYPE
+    1005
+    FFFF                            <<< handle to LTYPE entry
+    1001
+    ACAD_DSTYLE_DIM_EXT1_LINETYPE   <<< linetype for extension line 1
+    1070
+    381                             <<< group code, which differs from R2007 DIMLTEX1
+    1005
+    FFFF                            <<< handle to LTYPE entry
+    1001
+    ACAD_DSTYLE_DIM_EXT2_LINETYPE   <<< linetype for extension line 1
+    1070
+    382                             <<< group code, which differs from R2007 DIMLTEX2
+    1005
+    FFFF                            <<< handle to LTYPE entry
+    1001
+    ACAD_DSTYLE_DIMEXT_ENABLED      <<< extension line fixed
+    1070
+    383                             <<< group code, which differs from R2007 DIMEXFIX
+    1070
+    1                               <<< fixed if 1 else 0
+    1001
+    ACAD_DSTYLE_DIMEXT_LENGTH       <<< extension line fixed length
+    1070
+    378                             <<< group code, which differs from R2007 DIMEXLEN
+    1040
+    1.33                            <<< length of extension line below dimension line
+
+This XDATA groups requires also an appropriate APPID entry in the APPID table. This feature is not supported by `ezdxf`.
 
 .. _DIMSTYLE: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F2FAD36F-0CE3-4943-9DAD-A9BCD2AE81DA
 

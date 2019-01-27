@@ -73,7 +73,7 @@ class DimensionBase:
         return angle
 
     @property
-    def text_offset(self) -> float:
+    def text_gap(self) -> float:
         return self.dim_style.get('dimgap', 0.625)
 
     @property
@@ -166,6 +166,16 @@ class DimensionBase:
         for point in points:
             self.block.add_point(self.wcs(point), dxfattribs=attribs)
 
+    def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None) -> None:
+        attribs = self.default_attributes()
+        if dxfattribs:
+            attribs.update(dxfattribs)
+        if self.supports_dxf_r2000:
+            self.block.add_lwpolyline([p1.xy, p2.xy, p3.xy], dxfattribs=dxfattribs)
+        else:
+            self.block.add_line(self.wcs(p1), self.wcs(p2), dxfattribs=attribs)
+            self.block.add_line(self.wcs(p2), self.wcs(p3), dxfattribs=attribs)
+
 
 class LinearDimension(DimensionBase):
     def render(self):
@@ -202,13 +212,23 @@ class LinearDimension(DimensionBase):
         # add text
         if dim_text:
             dim_text_width = self.text_width(dim_text)
-            reqired_text_space = dim_text_width + 2 * (self.arrow_size + self.text_offset)
+            reqired_text_space = dim_text_width + 2 * (self.arrow_size + self.text_gap)
             text_outside = reqired_text_space < measurement
             if self.dim_style.get('dimtix', 0) == 1:  # force text inside
                 text_outside = False
 
             text_location = self.text_location(dimline_start, dimline_end, dim_text_width, text_outside)
             self.add_measurement_text(dim_text, text_location)
+
+            # add leader
+            if self.user_location_override and self.text_movement_rule == 1:
+                angle = self.text_rotation
+                gap = self.text_gap
+                height = self.char_height
+                width = dim_text_width
+                bounding_box = self.get_text_bounding_box(text_location, angle, width, height, gap)
+                target_point = dimline_start.lerp(dimline_end)
+                self.add_leader(target_point, bounding_box[0], bounding_box[1])
 
         # add extension line 1
         if not self.dim_style.get('dimse1', False):  # suppress extension line 1
@@ -270,10 +290,26 @@ class LinearDimension(DimensionBase):
         self.add_line(start, end, dxfattribs=attribs)
 
     def extension_line_points(self, start: 'Vertex', end: 'Vertex') -> Tuple[Vector, Vector]:
+        """
+        Adjust start and end point of extension line by dimension variables DIMEXE, DIMEXO, DIMEXFIX, DIMEXLEN.
+
+        Args:
+            start: start point of extension line (measurement point)
+            end: end point at dimension line
+
+        Returns: adjusted start and end point
+
+        """
+        has_fixed_length = self.dim_style.get('dimexfix', 0)
         direction = (end - start).normalize()
-        offset = self.dim_style.get('dimexo', 0.)
         extension = self.dim_style.get('dimexe', 0.)
-        start = start + direction * offset
+
+        if has_fixed_length:
+            fixed_length = self.dim_style.get('dimexlen', extension)
+            start = end - (direction * fixed_length)
+        else:
+            offset = self.dim_style.get('dimexo', 0.)
+            start = start + direction * offset
         end = end + direction * extension
         return start, end
 
@@ -334,7 +370,7 @@ class LinearDimension(DimensionBase):
         Returns the vertical distance for dimension line to text midpoint. Positive values are above the line, negative
         values are below the line.
         """
-        return (self.char_height / 2. + self.text_offset) * self.tad_factor
+        return (self.char_height / 2. + self.text_gap) * self.tad_factor
 
     def text_location(self, start: Vector, end: Vector, text_width: float, text_outside: bool = False) -> Vector:
         """
@@ -360,13 +396,13 @@ class LinearDimension(DimensionBase):
             justify = self.dim_style.get('dimjust', 0)
             # default location: above the dimension line and centered between extension lines
             text_location = start.lerp(end)
-            offset = self.text_offset + self.arrow_size + text_width / 2
+            offset = self.text_gap + self.arrow_size + text_width / 2
             if justify == 1:  # positions the text next to the first extension line
                 text_location = start + (end - start).normalize(offset)
             elif justify == 2:  # positions the text next to the second extension line
                 text_location = end + (start - end).normalize(offset)
             elif justify in (3, 4):  # positions the text above and aligned with the first/second extension line
-                dist = self.text_offset + self.char_height / 2.
+                dist = self.text_gap + self.char_height / 2.
                 _offset = (start - end).normalize(dist) * self.tad_factor
                 if justify == 3:
                     text_location = start + _offset

@@ -9,7 +9,7 @@ from ezdxf.algebra.circle import ConstructionCircle
 HALF_PI = math.pi / 2.
 
 
-class TestCircle(unittest.TestCase):
+class TestConstructionCircle(unittest.TestCase):
     def test_init_circle(self):
         circle = ConstructionCircle((0., 0.), 5)
         point = circle.get_point(HALF_PI)

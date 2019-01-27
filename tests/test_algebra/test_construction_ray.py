@@ -8,7 +8,7 @@ from ezdxf.algebra.ray import ConstructionRay, ParallelRaysError
 HALF_PI = math.pi / 2.
 
 
-class Test_Ray2D(unittest.TestCase):
+class TestConstructionRay(unittest.TestCase):
     def test_init_with_slope(self):
         ray1 = ConstructionRay((10, 10), slope=1)
         ray2 = ConstructionRay((-3, -3), slope=-1)
@@ -112,7 +112,3 @@ class Test_Ray2D(unittest.TestCase):
         self.assertAlmostEqual(a.angle, 1.309, 4)
         self.assertAlmostEqual(a.get_y(7), 12.80385, 4)
         self.assertRaises(ParallelRaysError, ray1.bisectrix, ray3)
-
-
-if __name__ == '__main__':
-    unittest.main()

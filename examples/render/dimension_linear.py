@@ -8,7 +8,7 @@ import pathlib
 OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
 
 
-def linear_tutorial():
+def linear_tutorial_R12():
     dwg = ezdxf.new('R12', setup=True)
     msp = dwg.modelspace()
 
@@ -40,6 +40,32 @@ def linear_tutorial():
     })
     msp.render_dimension(dim2, override=style)
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
+
+
+def linear_tutorial_R2007():
+    dwg = ezdxf.new('R2007', setup=True)
+    msp = dwg.modelspace()
+
+    msp.add_line((0, 0), (10, 0))
+
+    # horizontal DIMENSION
+    # Default DimStyle EZDXF: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
+    #
+    # base: defines the dimension line, ezdxf accepts any point on the dimension line
+    # ext1: defines the start point of the first extension line, which also defines the first point to measure
+    # ext2: defines the start point of the second extension line, which also defines the second point to measure
+    dim = msp.add_linear_dim(base=(3, 2), ext1=(0, 0), ext2=(10, 0), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs={
+        'dimblk': ezdxf.ARROWS.closed_filled,
+        'dimtsz': 0.,
+        'dimdle': 0.,
+        'dimasz': .25,
+        'dimexe': .5,  # length of extension line above dimension line
+        'dimexfix': 1,  # fix length extension line
+        'dimexlen': .5,  # length of extension line below dimension line
+    })
+    msp.render_dimension(dim, override=style)
+    dwg.saveas(OUTDIR / 'dim_linear_R2007_tutorial.dxf')
 
 
 def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2=None, filename=""):
@@ -144,7 +170,8 @@ ALL = False
 
 
 if __name__ == '__main__':
-    linear_tutorial()
+    linear_tutorial_R12()
+    linear_tutorial_R2007()
     linear_all_arrow_style('R12')
     linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')
     linear_all_arrow_style('R2000')
