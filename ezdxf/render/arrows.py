@@ -340,7 +340,7 @@ class _Arrows:
         ez_arrow_blank: EzArrowBlank,
         ez_arrow_filled: EzArrowFilled,
     }
-
+    # arrows with origin at dimension line start/end
     ORIGIN_ZERO = {
         architectural_tick,
         oblique,
@@ -417,7 +417,8 @@ class _Arrows:
                      dxfattribs: dict = None) -> Vector:
 
         block_name = self.create_block(layout.drawing.blocks, name)
-        dxfattribs = dxfattribs or {}
+
+        dxfattribs = dict(dxfattribs) if dxfattribs else {}  # copy attribs
         dxfattribs['rotation'] = rotation
         dxfattribs['xscale'] = size
         dxfattribs['yscale'] = size

@@ -169,8 +169,9 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
     dimstyle.dxf.dimexe = fmt.dimexe
     dimstyle.dxf.dimexo = fmt.dimexo
     dimstyle.dxf.dimdle = fmt.dimdle
-    dimstyle.dxf.dimtix = 1  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
-    dimstyle.dxf.dimtih = 0  # Aligns text with the dimension line; 1 = Draws text horizontally
+    dimstyle.dxf.dimtix = 0  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
+    dimstyle.dxf.dimtih = 0  # Aligns text inside extension lines with dimension line; 1 = Draws text horizontally
+    dimstyle.dxf.dimtoh = 0  # Aligns text outside of extension lines with dimension line; 1 = Draws text horizontally
     dimstyle.dxf.dimzin = 8  # Suppresses trailing zeros in decimal dimensions
     dimstyle.dxf.dimsah = 0
     if blk is None:  # oblique stroke

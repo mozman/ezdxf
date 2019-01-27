@@ -56,15 +56,29 @@ def linear_tutorial_R2007():
     # ext2: defines the start point of the second extension line, which also defines the second point to measure
     dim = msp.add_linear_dim(base=(3, 2), ext1=(0, 0), ext2=(10, 0), dimstyle='EZDXF')
     style = dim.dimstyle_override(dxfattribs={
-        'dimblk': ezdxf.ARROWS.closed_filled,
-        'dimtsz': 0.,
         'dimdle': 0.,
         'dimasz': .25,
+        'dimtad': 0,  # center dimension text vertical
         'dimexe': .5,  # length of extension line above dimension line
         'dimexfix': 1,  # fix length extension line
         'dimexlen': .5,  # length of extension line below dimension line
     })
     msp.render_dimension(dim, override=style)
+
+    # text and arrows outside
+    dim2 = msp.add_linear_dim(base=(3, 2), ext1=(15, 0), ext2=(15.3, 0), dimstyle='EZDXF')
+    style = dim2.dimstyle_override(dxfattribs={
+        'dimblk': ezdxf.ARROWS.closed_filled,
+        'dimtsz': 0.,  # set 0 to enable arrows
+        'dimdle': 0.,
+        'dimasz': .25,
+        'dimtad': 0,  # center dimension text vertical
+        'dimexe': .5,  # length of extension line above dimension line
+        'dimexfix': 1,  # fix length extension line
+        'dimexlen': .5,  # length of extension line below dimension line
+    })
+    msp.render_dimension(dim2, override=style)
+
     dwg.saveas(OUTDIR / 'dim_linear_R2007_tutorial.dxf')
 
 

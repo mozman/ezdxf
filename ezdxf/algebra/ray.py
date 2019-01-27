@@ -92,6 +92,9 @@ class ConstructionRay:
         self._slope = slope  # type: float
         self._angle = normalize_angle(math.atan(slope))  # type: float
 
+    def __str__(self):
+        return 'ConstructionRay(x={0._x:.3f}, y={0._y:.3f}, k={0.slope:.3f}, phi={0.angle:.5f} rad)'.format(self)
+
     @property
     def angle(self) -> float:
         return self._angle
@@ -205,6 +208,9 @@ class ConstructionLine:
     def __init__(self, start: 'Vertex', end: 'Vertex'):
         self.start = Vector(start)
         self.end = Vector(end)
+
+    def __str__(self):
+        return 'ConstructionLine({0.start}, {0.end})'.format(self)
 
     @property
     def sorted_points(self):

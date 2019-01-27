@@ -1,9 +1,9 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable
+from typing import TYPE_CHECKING, Tuple, Iterable, List
 import math
-from ezdxf.algebra import Vector, ConstructionRay, xround
+from ezdxf.algebra import Vector, ConstructionRay, xround, ConstructionLine
 from ezdxf.algebra import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
@@ -178,6 +178,10 @@ class DimensionBase:
 
 
 class LinearDimension(DimensionBase):
+    @property
+    def required_arrows_space(self):
+        return 2 * self.arrow_size + self.text_gap
+
     def render(self):
         dim = self.dimension.dxf
 
@@ -202,12 +206,16 @@ class LinearDimension(DimensionBase):
         # dimension definition points
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
+        dimline_vector = dimline_end - dimline_start
+        measurement = dimline_vector.magnitude
+
         dim.defpoint = dimline_start  # set defpoint to expected location for text_movement_rule == 0
 
         dimlfac = self.dim_style.get('dimlfac', 1.)
-        measurement = (dimline_start - dimline_end).magnitude
+
         dim_text = self.get_text(measurement * dimlfac)
         text_outside = False
+        text_box = None
 
         # add text
         if dim_text:
@@ -219,16 +227,21 @@ class LinearDimension(DimensionBase):
 
             text_location = self.text_location(dimline_start, dimline_end, dim_text_width, text_outside)
             self.add_measurement_text(dim_text, text_location)
+            text_box = TextBox(
+                center=text_location,
+                width=dim_text_width,
+                height=self.char_height,
+                angle=self.text_rotation,
+                # shrink gap slightly, to avoid congruent lower border of text box and dimension line for standard
+                # text locations above and below dimension line
+                gap=self.text_gap * .99
+            )
 
             # add leader
             if self.user_location_override and self.text_movement_rule == 1:
-                angle = self.text_rotation
-                gap = self.text_gap
-                height = self.char_height
-                width = dim_text_width
-                bounding_box = self.get_text_bounding_box(text_location, angle, width, height, gap)
                 target_point = dimline_start.lerp(dimline_end)
-                self.add_leader(target_point, bounding_box[0], bounding_box[1])
+                corners = text_box.corners
+                self.add_leader(target_point, corners[0], corners[1])
 
         # add extension line 1
         if not self.dim_style.get('dimse1', False):  # suppress extension line 1
@@ -240,11 +253,13 @@ class LinearDimension(DimensionBase):
             start, end = self.extension_line_points(dim.defpoint3, dimline_end)
             self.add_extension_line(start, end, num=2)
 
-        blk1, blk2 = self.dim_style.get_arrow_names()
+        blk1, blk2 = self.dim_style.get_arrow_names()  # real arrow names if not a user defined block
 
         # add arrow symbols (block references)
-        dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2)
-        self.add_dimension_line(dimline_start, dimline_end, blk1, blk2)
+        arrows_outside = self.required_arrows_space > measurement
+        dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2, arrows_outside)
+
+        self.add_dimension_line(dimline_start, dimline_end, blk1, blk2, text_box)
 
         # add POINT entities at definition points
         self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
@@ -268,14 +283,16 @@ class LinearDimension(DimensionBase):
         }
         self.add_text(dim_text, pos=pos, rotation=self.text_rotation, dxfattribs=attribs)
 
-    def add_dimension_line(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None) -> None:
+    def add_dimension_line(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None,
+                           text_box: 'TextBox' = None) -> None:
+
         direction = (end - start).normalize()
         extension = direction * self.dim_style.get('dimdle', 0.)
         if blk1 is None or ARROWS.has_extension_line(blk1):
             start = start - extension
         if blk2 is None or ARROWS.has_extension_line(blk2):
             end = end + extension
-        # is dimension line crossing text
+
         attribs = {
             'color': self.dim_style.get('dimclrd', self.dimension.dxf.color)
         }
@@ -287,7 +304,21 @@ class LinearDimension(DimensionBase):
         if self.supports_dxf_r2000:
             attribs['lineweight'] = self.dim_style.get('dimlwd', const.LINEWEIGHT_BYBLOCK)
 
-        self.add_line(start, end, dxfattribs=attribs)
+        if text_box:  # is dimension line crossing text
+            intersection_points = text_box.intersect(ConstructionLine(start, end))
+        else:
+            intersection_points = []
+        if len(intersection_points) == 2:
+            # sort all points, line[0-1] - gap - line[2-3]
+            intersection_points.extend([start, end])
+            p0, p1, p2, p3 = sorted(intersection_points)
+            if self.dim_style.get('dimsd1', 0) == 0:  # not suppress first dimension line
+                self.add_line(p0, p1, dxfattribs=attribs)
+            if self.dim_style.get('dimsd2', 0) == 0:  # not suppress second dimension line
+                self.add_line(p2, p3, dxfattribs=attribs)
+
+        else:  # no intersection
+            self.add_line(start, end, dxfattribs=attribs)
 
     def extension_line_points(self, start: 'Vertex', end: 'Vertex') -> Tuple[Vector, Vector]:
         """
@@ -333,7 +364,8 @@ class LinearDimension(DimensionBase):
 
         self.add_line(start, end, dxfattribs=attribs)
 
-    def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = '', blk2: str = '') -> Tuple[Vector, Vector]:
+    def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = '', blk2: str = '',
+                   outside: bool = False) -> Tuple[Vector, Vector]:
         dim = self.dimension.dxf
         get_dxf_attr = self.dim_style.get
         attribs = {
@@ -347,10 +379,29 @@ class LinearDimension(DimensionBase):
             scale = self.arrow_size
             start_angle = dim.angle + 180.
             end_angle = dim.angle
+            if outside:
+                start_angle, end_angle = end_angle, start_angle
             self.add_blockref(blk1, insert=start, scale=scale, rotation=start_angle, dxfattribs=attribs)  # reverse
             self.add_blockref(blk2, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
-            start = connection_point(blk1, start, scale, start_angle)
-            end = connection_point(blk2, end, scale, end_angle)
+            if not outside:
+                start = connection_point(blk1, start, scale, start_angle)
+                end = connection_point(blk2, end, scale, end_angle)
+
+        if outside:  # add extension lines to arrows if outside
+            def has_arrow_extension(name):
+                return (name is not None) and (name in ARROWS) and (name not in ARROWS.ORIGIN_ZERO)
+
+            arrow_vector = (end - start).normalize(self.arrow_size)
+            # extension line for first arrow
+            if has_arrow_extension(blk1):  # just for arrows
+                start_ = start - arrow_vector
+                end_ = start_ - arrow_vector
+                self.block.add_line(start_, end_, dxfattribs=attribs)
+            # extension line for second arrow
+            if has_arrow_extension(blk2):  # just for arrows
+                start_ = end + arrow_vector
+                end_ = start_ + arrow_vector
+                self.block.add_line(start_, end_, dxfattribs=attribs)
 
         return start, end
 
@@ -383,6 +434,7 @@ class LinearDimension(DimensionBase):
             text_outside: place text outside of extension lines, applies only for dimjust = 0, 1 or 2
 
         """
+        # todo: text location outside
         if self.user_location_override:
             text_location = self.dimension.get_dxf_attrib('text_midpoint')
             if self.text_movement_rule == 0:
@@ -491,3 +543,46 @@ def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: 
         else:
             raise DXFValueError('Invalid dimpost string: "{}"'.format(dimpost))
     return text
+
+
+class TextBox:
+    def __init__(self, center: 'Vertex', width: float, height: float, angle: float, gap: float = 0.):
+        self.center = Vector(center)
+        w2 = Vector.from_deg_angle(angle, width / 2 + gap)
+        h2 = Vector.from_deg_angle(angle + 90, height / 2 + gap)
+        self.corners = (
+            self.center - w2 - h2,  # lower left
+            self.center + w2 - h2,  # lower right
+            self.center + w2 + h2,  # upper right
+            self.center - w2 + h2,  # upper left
+        )
+
+    def __str__(self):
+        vstr = ', '.join(str(c) for c in self.corners)
+        return "TextBox({})".format(vstr)
+
+    def border_lines(self):
+        p1, p2, p3, p4 = self.corners
+        return (
+            ConstructionLine(p1, p2),
+            ConstructionLine(p2, p3),
+            ConstructionLine(p3, p4),
+            ConstructionLine(p4, p1),
+        )
+
+    def intersect(self, line: ConstructionLine) -> List[Vector]:
+        """
+        Returns 0, 1 or 2 intersection points between `line` and `TextBox` border lines.
+
+        Args:
+            line: line to intersect with border lines
+
+        Returns: list of intersection points
+
+        """
+        result = set()
+        for border_line in self.border_lines():
+            p = line.intersect(border_line)
+            if p is not None:
+                result.add(p)
+        return sorted(result)
