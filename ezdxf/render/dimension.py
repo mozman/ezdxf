@@ -184,7 +184,6 @@ class LinearDimension(DimensionBase):
 
     def render(self):
         dim = self.dimension.dxf
-
         angle = math.radians(dim.angle)
         ext_angle = angle + math.pi / 2.
 
@@ -200,39 +199,40 @@ class LinearDimension(DimensionBase):
             dimline_ray = ConstructionRay(dim.defpoint, angle=angle)
 
         # extension lines
+        # todo: oblique extension lines
         ext1_ray = ConstructionRay(dim.defpoint2, angle=ext_angle)
         ext2_ray = ConstructionRay(dim.defpoint3, angle=ext_angle)
 
         # dimension definition points
         dimline_start = dimline_ray.intersect(ext1_ray)
         dimline_end = dimline_ray.intersect(ext2_ray)
-        dimline_vector = dimline_end - dimline_start
-        measurement = dimline_vector.magnitude
-
+        dimline_vector = dimline_end - dimline_start  # vector from start to end
         dim.defpoint = dimline_start  # set defpoint to expected location for text_movement_rule == 0
 
-        dimlfac = self.dim_style.get('dimlfac', 1.)
-
+        # do measurement and create dimension text
+        measurement = dimline_vector.magnitude  # distance between start and end point
+        dimlfac = self.dim_style.get('dimlfac', 1.)  # general measurement factor
         dim_text = self.get_text(measurement * dimlfac)
-        text_outside = False
         text_box = None
 
-        # add text
+        # add measurement text
         if dim_text:
             dim_text_width = self.text_width(dim_text)
-            reqired_text_space = dim_text_width + 2 * (self.arrow_size + self.text_gap)
-            text_outside = reqired_text_space < measurement
-            if self.dim_style.get('dimtix', 0) == 1:  # force text inside
+            required_text_space = dim_text_width + 2 * (self.arrow_size + self.text_gap)
+
+            if self.dim_style.get('dimtix', 0) == 1:  # force text between extension lines
                 text_outside = False
+            else:
+                text_outside = required_text_space > measurement
 
             text_location = self.text_location(dimline_start, dimline_end, dim_text_width, text_outside)
-            self.add_measurement_text(dim_text, text_location)
+            self.add_measurement_text(dim_text, text_location, self.text_rotation)
             text_box = TextBox(
                 center=text_location,
                 width=dim_text_width,
                 height=self.char_height,
                 angle=self.text_rotation,
-                # shrink gap slightly, to avoid congruent lower border of text box and dimension line for standard
+                # shrink gap slightly, to avoid congruent borders of text box and dimension line for standard
                 # text locations above and below dimension line
                 gap=self.text_gap * .99
             )
@@ -259,6 +259,7 @@ class LinearDimension(DimensionBase):
         arrows_outside = self.required_arrows_space > measurement
         dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2, arrows_outside)
 
+        # add dimension line
         self.add_dimension_line(dimline_start, dimline_end, blk1, blk2, text_box)
 
         # add POINT entities at definition points
@@ -277,11 +278,11 @@ class LinearDimension(DimensionBase):
         from_ucs('defpoint3', self.wcs)
         from_ucs('text_midpoint', self.ocs)
 
-    def add_measurement_text(self, dim_text: str, pos: Vector) -> None:
+    def add_measurement_text(self, dim_text: str, pos: Vector, rotation: float) -> None:
         attribs = {
             'color': self.dim_style.get('dimclrt', self.dimension.dxf.color)
         }
-        self.add_text(dim_text, pos=pos, rotation=self.text_rotation, dxfattribs=attribs)
+        self.add_text(dim_text, pos=pos, rotation=rotation, dxfattribs=attribs)
 
     def add_dimension_line(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None,
                            text_box: 'TextBox' = None) -> None:
