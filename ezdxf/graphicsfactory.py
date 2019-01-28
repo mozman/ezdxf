@@ -469,7 +469,7 @@ class GraphicsFactory:
                        dimstyle: str = 'EZDXF',
                        text: str = "<>",
                        angle: float = 0,  # 0=horizontal, 90=vertical, else=rotated
-                       text_rotation: float = 0,
+                       text_rotation: float = None,
                        dxfattribs: dict = None) -> 'Dimension':
         """
         Horizontal, vertical and rotated dimension line. If an UCS is used for dimension line rendering, all point
@@ -506,7 +506,9 @@ class GraphicsFactory:
         dxfattribs['defpoint2'] = Vector(ext1)
         dxfattribs['defpoint3'] = Vector(ext2)
         dxfattribs['angle'] = float(angle)
-        dxfattribs['text_rotation'] = float(text_rotation)
+        # text_rotation ALWAYS overrides implicit angles as absolute angle (0 is horizontal)!
+        if text_rotation is not None:
+            dxfattribs['text_rotation'] = float(text_rotation)
         dimline.update_dxf_attribs(dxfattribs)
         return dimline
 

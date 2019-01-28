@@ -21,6 +21,7 @@ class DimensionBase:
         self.drawing = dimension.drawing
         self.dimension = dimension
         self.dxfversion = self.drawing.dxfversion
+        self.supports_dxf_r2000 = self.dxfversion >= 'AC1015'
         self.block = block
         if override:
             self.dim_style = override
@@ -31,21 +32,61 @@ class DimensionBase:
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
             self.dimension.dxf.extrusion = self.ucs.uz
 
-    @property
-    def supports_dxf_r2000(self) -> bool:
-        return self.dxfversion >= 'AC1015'
+        self.user_location_override = self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE,
+                                                                    name='dimtype')
+        self.default_color = self.dimension.dxf.color
+        get = self.dim_style.get
+        self.dim_scale = get('dimscale', 1)  # ignored by ezdxf
+        self.dim_measurement_factor = get('dimlfac', 1)
 
-    @property
-    def user_location_override(self) -> bool:
-        return self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE, name='dimtype')
+        # text properties
+        self.text_style_name = get('dimtxsty', options.default_dimension_text_style)
+        self.text_style = self.drawing.styles.get(self.text_style_name)
+        self.text_height = self.char_height
+        self.text_width_factor = self.text_style.get_dxf_attrib('width', 1.)
+        self.text_gap = get('dimgap', 0.625)
+        self.text_rotation = self.dimension.get_dxf_attrib('text_rotation', None)
+        self.text_color = get('dimclrt', self.default_color)
 
-    @property
-    def text_style_name(self) -> str:
-        return self.dim_style.get('dimtxsty', options.default_dimension_text_style)
+        # text_halign = 0: center; 1: left; 2: right; 3: above ext1; 4: above ext2
+        self.text_halign = get('dimjust', 0)
 
-    @property
-    def text_style(self) -> 'Style':
-        return self.drawing.styles.get(self.text_style_name)
+        # text_valign = 0: center; 1: above; 2: farthest away?; 3: JIS?; 4: below (2, 3 ignored by ezdxf)
+        self.text_valign = get('dimtad', 0)
+
+        self.text_movement_rule = get('dimtmove', 0)
+        self.text_inside_horizontal = get('dimtih', 0)  # ignored by ezdxf
+        self.text_outside_horizontal = get('dimtoh', 0)  # ignored by ezdxf
+        self.force_text_inside = bool(get('dimtix', 0))
+
+        # arrow properties
+        self.tick_size = get('dimtsz')
+        if self.tick_size > 0:
+            self.arrow1_name, self.arrow2_name = None, None
+        else:
+            # arrow name or block name if user defined arrow
+            self.arrow1_name, self.arrow2_name = self.dim_style.get_arrow_names()
+        self.arrow_size = get('dimasz')
+
+        # dimension line properties
+        self.dim_line_color = get('dimclrd', self.default_color)
+        self.dim_line_extension = bool(get('dimdle', 0.))
+        self.dim_linetype = get('dimltype', None)
+        self.dim_lineweight = get('dimlwd', const.LINEWEIGHT_BYBLOCK)
+        self.suppress_dim1_line = bool(get('dimsd1', 0))
+        self.suppress_dim2_line = bool(get('dimsd2', 0))
+
+        # extension line properties
+        self.ext_line_color = get('dimclre', self.default_color)
+        self.ext1_linetype_name = get('dimltex1', None)
+        self.ext2_linetype_name = get('dimltex2', None)
+        self.ext_lineweight = get('dimlwe', const.LINEWEIGHT_BYBLOCK)
+        self.suppress_ext1_line = bool(get('dimse1', False))
+        self.suppress_ext2_line = bool(get('dimse2', False))
+        self.ext_line_extension = get('dimexe', 0.)
+        self.ext_line_offset = get('dimexo', 0.)
+        self.ext_line_fixed = bool(get('dimexfix', False))
+        self.ext_line_length = bool(get('dimexlen', self.ext_line_extension))
 
     @property
     def char_height(self) -> float:
@@ -55,30 +96,8 @@ class DimensionBase:
         return height
 
     def text_width(self, text: str) -> float:
-        char_width = self.char_height * self.text_style.get_dxf_attrib('width', 1.)
+        char_width = self.text_height * self.text_width_factor
         return len(text) * char_width
-
-    @property
-    def text_rotation(self) -> float:
-        text_rotation = self.dimension.get_dxf_attrib('text_rotation', None)
-        if text_rotation is not None:
-            angle = text_rotation  # absolute angle
-        else:
-            # dimtih - text inside horizontal: not supported by ezdxf, use text_rotation attribute
-            # dimtoh - text outside horizontal: not supported by ezdxf, use text_rotation attribute
-            # text is aligned to dimension line
-            angle = self.dimension.get_dxf_attrib('angle', 0)
-            if self.dim_style.get('dimjust', 0) in (3, 4):  # text above extension line, rotated about 90 degrees
-                angle += 90.
-        return angle
-
-    @property
-    def text_gap(self) -> float:
-        return self.dim_style.get('dimgap', 0.625)
-
-    @property
-    def arrow_size(self) -> float:
-        return self.dim_style.get('dimasz')
 
     def default_attributes(self) -> dict:
         return {
@@ -86,17 +105,13 @@ class DimensionBase:
             'color': self.dimension.dxf.color,
         }
 
-    @property
-    def text_movement_rule(self) -> int:
-        return self.dim_style.get('dimtmove', 0)
-
     def wcs(self, point: 'Vertex') -> Vector:
         return self.ucs.to_wcs(point)
 
     def ocs(self, point: 'Vertex') -> Vector:
         return self.ucs.to_ocs(point)
 
-    def get_text(self, measurement: float) -> str:
+    def text_override(self, measurement: float) -> str:
         text = self.dimension.dxf.text
         if text == ' ':  # suppress text
             return ''
@@ -141,6 +156,7 @@ class DimensionBase:
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, align='MIDDLE_CENTER',
                  dxfattribs: dict = None) -> None:
+        # todo: ucs to ocs
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         attribs['style'] = self.text_style_name
@@ -167,103 +183,100 @@ class DimensionBase:
             self.block.add_point(self.wcs(point), dxfattribs=attribs)
 
     def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None) -> None:
-        attribs = self.default_attributes()
-        if dxfattribs:
-            attribs.update(dxfattribs)
-        if self.supports_dxf_r2000:
-            self.block.add_lwpolyline([p1.xy, p2.xy, p3.xy], dxfattribs=dxfattribs)
-        else:
-            self.block.add_line(self.wcs(p1), self.wcs(p2), dxfattribs=attribs)
-            self.block.add_line(self.wcs(p2), self.wcs(p3), dxfattribs=attribs)
+        self.add_line(p1, p2, dxfattribs)
+        self.add_line(p2, p3, dxfattribs)
 
 
 class LinearDimension(DimensionBase):
-    @property
-    def required_arrows_space(self) -> float:
-        return 2 * self.arrow_size + self.text_gap
+    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
+                 override: 'DimStyleOverride' = None):
+        super().__init__(dimension, block, ucs, override)
 
-    def render(self):
-        dim = self.dimension.dxf
-        angle = math.radians(dim.angle)
-        ext_angle = angle + math.pi / 2.
+        self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)
+        self.dim_line_angle_rad = math.radians(self.dim_line_angle)
+        self.ext_line_angle = self.dim_line_angle + 90  # todo: oblique angle
+        self.ext_line_angle_rad = math.radians(self.ext_line_angle)
 
-        # text_movement_rule (dimtmove):
-        # 0 = Moves the dimension line with dimension text
-        # 1 = Adds a leader when dimension text is moved
-        # 2 = Allows text to be moved freely without a leader
+        if self.text_rotation is None:
+            # text_inside_horizontal: not supported by ezdxf, use text_rotation attribute
+            # text_outside_horizontal: not supported by ezdxf, use text_rotation attribute
+            # text is aligned to dimension line
+            self.text_rotation = self.dim_line_angle
+            if self.text_halign in (3, 4):  # text above extension line, rotated about 90 degrees
+                self.text_rotation += 90
 
+        self.ext1_line_start = self.dimension.dxf.defpoint2
+        self.ext2_line_start = self.dimension.dxf.defpoint3
+
+        ext1_ray = ConstructionRay(self.ext1_line_start, angle=self.ext_line_angle_rad)
+        ext2_ray = ConstructionRay(self.ext2_line_start, angle=self.ext_line_angle_rad)
+
+        # text_movement_rule: 0 = Moves the dimension line with dimension text
         if self.user_location_override and self.text_movement_rule == 0:
-            # user_location_override also moves dimension line location!
-            dimline_ray = ConstructionRay(dim.text_midpoint, angle=angle)
+            dim_line_ray = ConstructionRay(self.dimension.dxf.text_midpoint, angle=self.dim_line_angle_rad)
         else:
-            dimline_ray = ConstructionRay(dim.defpoint, angle=angle)
+            dim_line_ray = ConstructionRay(self.dimension.dxf.defpoint, angle=self.dim_line_angle_rad)
 
-        # extension lines
-        # todo: oblique extension lines
-        ext1_ray = ConstructionRay(dim.defpoint2, angle=ext_angle)
-        ext2_ray = ConstructionRay(dim.defpoint3, angle=ext_angle)
-
-        # dimension definition points
-        dimline_start = dimline_ray.intersect(ext1_ray)
-        dimline_end = dimline_ray.intersect(ext2_ray)
-        dimline_vector = dimline_end - dimline_start  # vector from start to end
-        dim.defpoint = dimline_start  # set defpoint to expected location for text_movement_rule == 0
-
-        # do measurement and create dimension text
-        measurement = dimline_vector.magnitude  # distance between start and end point
-        dimlfac = self.dim_style.get('dimlfac', 1.)  # general measurement factor
-        dim_text = self.get_text(measurement * dimlfac)
-        text_box = None
-
-        # add measurement text
-        if dim_text:
-            dim_text_width = self.text_width(dim_text)
-            required_text_space = dim_text_width + 2 * (self.arrow_size + self.text_gap)
-
-            if self.dim_style.get('dimtix', 0) == 1:  # force text between extension lines
-                text_outside = False
-            else:
-                text_outside = required_text_space > measurement
-
-            text_location = self.text_location(dimline_start, dimline_end, dim_text_width, text_outside)
-            self.add_measurement_text(dim_text, text_location, self.text_rotation)
-            text_box = TextBox(
-                center=text_location,
-                width=dim_text_width,
-                height=self.char_height,
+        self.dim_line_start = dim_line_ray.intersect(ext1_ray)
+        self.dim_line_end = dim_line_ray.intersect(ext2_ray)
+        self.dimension.dxf.defpoint = self.dim_line_start  # set defpoint to expected location
+        self.measurement = (self.dim_line_end - self.dim_line_start).magnitude
+        self.text = self.text_override(self.measurement * self.dim_measurement_factor)
+        self.text_location = None
+        self.text_box = None
+        self.text_outside = False
+        self.required_text_space = None
+        if self.text:
+            self.dim_text_width = self.text_width(self.text)
+            self.required_text_space = self.dim_text_width + 2 * (self.arrow_size + self.text_gap)
+            if not self.force_text_inside:
+                self.text_outside = self.required_text_space > self.measurement
+            self.text_location = self.get_text_location(self.dim_text_width, self.text_outside)
+            self.text_box = TextBox(
+                center=self.text_location,
+                width=self.dim_text_width,
+                height=self.text_height,
                 angle=self.text_rotation,
                 # shrink gap slightly, to avoid congruent borders of text box and dimension line for standard
                 # text locations above and below dimension line
                 gap=self.text_gap * .99
             )
 
+        self.required_arrows_space = 2 * self.arrow_size + self.text_gap
+        self.arrows_outside = self.required_arrows_space > self.measurement
+
+    def render(self):
+        # add measurement text
+        if self.text:
+            self.add_measurement_text(self.text, self.text_location, self.text_rotation)
             # add leader
             if self.user_location_override and self.text_movement_rule == 1:
-                target_point = dimline_start.lerp(dimline_end)
-                corners = text_box.corners
+                target_point = self.dim_line_start.lerp(self.dim_line_end)
+                corners = self.text_box.corners
                 self.add_leader(target_point, corners[0], corners[1])
 
         # add extension line 1
-        if not self.dim_style.get('dimse1', False):  # suppress extension line 1
-            start, end = self.extension_line_points(dim.defpoint2, dimline_start)
-            self.add_extension_line(start, end, num=1)
+        if not self.suppress_ext1_line:
+            start, end = self.extension_line_points(self.ext1_line_start, self.dim_line_start)
+            self.add_extension_line(start, end, linetype=self.ext1_linetype_name)
 
         # add extension line 2
-        if not self.dim_style.get('dimse2', False):  # suppress extension line 2
-            start, end = self.extension_line_points(dim.defpoint3, dimline_end)
-            self.add_extension_line(start, end, num=2)
+        if not self.suppress_ext2_line:
+            start, end = self.extension_line_points(self.ext2_line_start, self.dim_line_end)
+            self.add_extension_line(start, end, linetype=self.ext2_linetype_name)
 
-        blk1, blk2 = self.dim_style.get_arrow_names()  # real arrow names if not a user defined block
-
-        # add arrow symbols (block references)
-        arrows_outside = self.required_arrows_space > measurement
-        dimline_start, dimline_end = self.add_arrows(dimline_start, dimline_end, blk1, blk2, arrows_outside)
+        # add arrow symbols (block references), also adjust dimension line start and end point
+        dim_line_start, dim_line_end = self.add_arrows(
+            self.dim_line_start,
+            self.dim_line_end,
+            self.arrows_outside,
+        )
 
         # add dimension line
-        self.add_dimension_line(dimline_start, dimline_end, blk1, blk2, text_box)
+        self.add_dimension_line(dim_line_start, dim_line_end)
 
         # add POINT entities at definition points
-        self.add_defpoints([dim.defpoint, dim.defpoint2, dim.defpoint3])
+        self.add_defpoints([self.dim_line_start, self.ext1_line_start, self.ext2_line_start])
 
         # transform ucs coordinates into WCS and OCS
         self.defpoints_to_wcs()
@@ -280,43 +293,47 @@ class LinearDimension(DimensionBase):
 
     def add_measurement_text(self, dim_text: str, pos: Vector, rotation: float) -> None:
         attribs = {
-            'color': self.dim_style.get('dimclrt', self.dimension.dxf.color)
+            'color': self.text_color,
         }
         self.add_text(dim_text, pos=pos, rotation=rotation, dxfattribs=attribs)
 
-    def add_dimension_line(self, start: 'Vertex', end: 'Vertex', blk1: str = None, blk2: str = None,
-                           text_box: 'TextBox' = None) -> None:
+    def add_dimension_line(self, start: 'Vertex', end: 'Vertex') -> None:
+        def order(a: Vector, b: Vector) -> Tuple[Vector, Vector]:
+            if (start - a).magnitude < (start - b).magnitude:
+                return a, b
+            else:
+                return b, a
 
         direction = (end - start).normalize()
-        extension = direction * self.dim_style.get('dimdle', 0.)
-        if blk1 is None or ARROWS.has_extension_line(blk1):
+        extension = direction * self.dim_line_extension
+        if self.arrow1_name is None or ARROWS.has_extension_line(self.arrow1_name):
             start = start - extension
-        if blk2 is None or ARROWS.has_extension_line(blk2):
+        if self.arrow2_name is None or ARROWS.has_extension_line(self.arrow2_name):
             end = end + extension
 
         attribs = {
-            'color': self.dim_style.get('dimclrd', self.dimension.dxf.color)
+            'color': self.dim_line_color
         }
-        linetype_name = self.dim_style['dimltype']
-        if linetype_name is not None:
-            attribs['linetype'] = linetype_name
+        if self.dim_linetype is not None:
+            attribs['linetype'] = self.dim_linetype
 
         # lineweight requires DXF R2000 or later
         if self.supports_dxf_r2000:
-            attribs['lineweight'] = self.dim_style.get('dimlwd', const.LINEWEIGHT_BYBLOCK)
+            attribs['lineweight'] = self.dim_lineweight
 
-        if text_box:  # is dimension line crossing text
-            intersection_points = text_box.intersect(ConstructionLine(start, end))
+        if self.text_box:  # is dimension line crossing text
+            intersection_points = self.text_box.intersect(ConstructionLine(start, end))
         else:
             intersection_points = []
         if len(intersection_points) == 2:
             # sort all points, line[0-1] - gap - line[2-3]
             intersection_points.extend([start, end])
-            p0, p1, p2, p3 = sorted(intersection_points)
-            if self.dim_style.get('dimsd1', 0) == 0:  # not suppress first dimension line
-                self.add_line(p0, p1, dxfattribs=attribs)
-            if self.dim_style.get('dimsd2', 0) == 0:  # not suppress second dimension line
-                self.add_line(p2, p3, dxfattribs=attribs)
+            p1, p2 = order(intersection_points[0], intersection_points[1])
+
+            if not self.suppress_dim1_line:
+                self.add_line(start, p1, dxfattribs=attribs)
+            if not self.suppress_dim2_line:
+                self.add_line(p2, end, dxfattribs=attribs)
 
         else:  # no intersection
             self.add_line(start, end, dxfattribs=attribs)
@@ -332,61 +349,59 @@ class LinearDimension(DimensionBase):
         Returns: adjusted start and end point
 
         """
-        has_fixed_length = self.dim_style.get('dimexfix', 0)
         direction = (end - start).normalize()
-        extension = self.dim_style.get('dimexe', 0.)
-
-        if has_fixed_length:
-            fixed_length = self.dim_style.get('dimexlen', extension)
-            start = end - (direction * fixed_length)
+        if self.ext_line_fixed:
+            start = end - (direction * self.ext_line_length)
         else:
-            offset = self.dim_style.get('dimexo', 0.)
-            start = start + direction * offset
-        end = end + direction * extension
+            start = start + direction * self.ext_line_offset
+        end = end + direction * self.ext_line_extension
         return start, end
 
-    def add_extension_line(self, start: 'Vertex', end: 'Vertex', num: int = 1) -> None:
+    def add_extension_line(self, start: 'Vertex', end: 'Vertex', linetype: str = None) -> None:
         attribs = {
-            'color': self.dim_style.get('dimclre', self.dimension.dxf.color)
+            'color': self.ext_line_color
         }
-        if num == 1:
-            linetype_name = self.dim_style['dimltex1']
-        elif num == 2:
-            linetype_name = self.dim_style['dimltex2']
-        else:
-            raise ValueError('invalid argument num, has to be 1 or 2.')
-
-        if linetype_name is not None:
-            attribs['linetype'] = linetype_name
+        if linetype is not None:
+            attribs['linetype'] = linetype
 
         # lineweight requires DXF R2000 or later
         if self.supports_dxf_r2000:
-            attribs['lineweight'] = self.dim_style.get('dimlwe', const.LINEWEIGHT_BYBLOCK)
+            attribs['lineweight'] = self.ext_lineweight
 
         self.add_line(start, end, dxfattribs=attribs)
 
-    def add_arrows(self, start: 'Vertex', end: 'Vertex', blk1: str = '', blk2: str = '',
-                   outside: bool = False) -> Tuple[Vector, Vector]:
-        dim = self.dimension.dxf
-        get_dxf_attr = self.dim_style.get
+    def add_arrows(self, start: 'Vertex', end: 'Vertex', outside: bool = False) -> Tuple[Vector, Vector]:
         attribs = {
-            'color': get_dxf_attr('dimclrd', self.dimension.dxf.color),
+            'color': self.dim_line_color,
         }
-        dimtsz = get_dxf_attr('dimtsz')
-        if dimtsz > 0.:  # oblique stroke, but double the size
-            self.block.add_arrow(ARROWS.oblique, insert=start, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
-            self.block.add_arrow(ARROWS.oblique, insert=end, rotation=dim.angle, size=dimtsz * 2, dxfattribs=attribs)
+
+        if self.tick_size > 0.:  # oblique stroke, but double the size
+            self.block.add_arrow(
+                ARROWS.oblique,
+                insert=start,
+                rotation=self.dim_line_angle,
+                size=self.tick_size * 2,
+                dxfattribs=attribs,
+            )
+            self.block.add_arrow(
+                ARROWS.oblique,
+                insert=end,
+                rotation=self.dim_line_angle,
+                size=self.tick_size * 2,
+                dxfattribs=attribs,
+            )
         else:
             scale = self.arrow_size
-            start_angle = dim.angle + 180.
-            end_angle = dim.angle
+            start_angle = self.dim_line_angle + 180.
+            end_angle = self.dim_line_angle
             if outside:
                 start_angle, end_angle = end_angle, start_angle
-            self.add_blockref(blk1, insert=start, scale=scale, rotation=start_angle, dxfattribs=attribs)  # reverse
-            self.add_blockref(blk2, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
+            self.add_blockref(self.arrow1_name, insert=start, scale=scale, rotation=start_angle,
+                              dxfattribs=attribs)  # reverse
+            self.add_blockref(self.arrow2_name, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
             if not outside:
-                start = connection_point(blk1, start, scale, start_angle)
-                end = connection_point(blk2, end, scale, end_angle)
+                start = connection_point(self.arrow1_name, start, scale, start_angle)
+                end = connection_point(self.arrow2_name, end, scale, end_angle)
 
         if outside:  # add extension lines to arrows if outside
             def has_arrow_extension(name: str) -> bool:
@@ -394,12 +409,12 @@ class LinearDimension(DimensionBase):
 
             arrow_vector = (end - start).normalize(self.arrow_size)
             # extension line for first arrow
-            if has_arrow_extension(blk1):  # just for arrows
+            if has_arrow_extension(self.arrow1_name):  # just for arrows
                 start_ = start - arrow_vector
                 end_ = start_ - arrow_vector
                 self.block.add_line(start_, end_, dxfattribs=attribs)
             # extension line for second arrow
-            if has_arrow_extension(blk2):  # just for arrows
+            if has_arrow_extension(self.arrow2_name):  # just for arrows
                 start_ = end + arrow_vector
                 end_ = start_ + arrow_vector
                 self.block.add_line(start_, end_, dxfattribs=attribs)
@@ -407,12 +422,11 @@ class LinearDimension(DimensionBase):
         return start, end
 
     @property
-    def tad_factor(self) -> float:
-        """dimtad value as factor: returns 1 for above, 0 for center and -1 for below dimension line"""
-        tad = self.dim_style.get('dimtad', 1)
-        if tad == 0:
+    def vertical_factor(self) -> float:
+        """text_valign as factor: returns 1 for above, 0 for center and -1 for below dimension line"""
+        if self.text_valign == 0:
             return 0
-        elif tad == 4:
+        elif self.text_valign == 4:
             return -1
         else:
             return 1
@@ -422,19 +436,19 @@ class LinearDimension(DimensionBase):
         Returns the vertical distance for dimension line to text midpoint. Positive values are above the line, negative
         values are below the line.
         """
-        return (self.char_height / 2. + self.text_gap) * self.tad_factor
+        return (self.text_height / 2. + self.text_gap) * self.vertical_factor
 
-    def text_location(self, start: Vector, end: Vector, text_width: float, text_outside: bool = False) -> Vector:
+    def get_text_location(self, text_width: float, text_outside: bool = False) -> Vector:
         """
         Calculate text midpoint in drawing units.
 
         Args:
-            start: start point of dimension line
-            end: end point of dimension line
             text_width: text with in drawing units
             text_outside: place text outside of extension lines, applies only for dimjust = 0, 1 or 2
 
         """
+        start = self.dim_line_start
+        end = self.dim_line_end
         # todo: text location outside
         if self.user_location_override:
             text_location = self.dimension.get_dxf_attrib('text_midpoint')
@@ -445,25 +459,24 @@ class LinearDimension(DimensionBase):
             else:  # move text freely by text_midpoint
                 return text_location
         else:
-            # text_location defines the text location along the dimension line
-            justify = self.dim_style.get('dimjust', 0)
             # default location: above the dimension line and centered between extension lines
             text_location = start.lerp(end)
             offset = self.text_gap + self.arrow_size + text_width / 2
-            if justify == 1:  # positions the text next to the first extension line
+            if self.text_halign == 1:  # positions the text next to the first extension line
                 text_location = start + (end - start).normalize(offset)
-            elif justify == 2:  # positions the text next to the second extension line
+            elif self.text_halign == 2:  # positions the text next to the second extension line
                 text_location = end + (start - end).normalize(offset)
-            elif justify in (3, 4):  # positions the text above and aligned with the first/second extension line
-                dist = self.text_gap + self.char_height / 2.
-                _offset = (start - end).normalize(dist) * self.tad_factor
-                if justify == 3:
+            elif self.text_halign in (
+                    3, 4):  # positions the text above and aligned with the first/second extension line
+                dist = self.text_gap + self.text_height / 2.
+                _offset = (start - end).normalize(dist) * self.vertical_factor
+                if self.text_halign == 3:
                     text_location = start + _offset
                 else:
                     text_location = end + _offset
 
             self.dimension.set_dxf_attrib('text_midpoint', text_location)
-            if justify in (0, 1, 2):
+            if self.text_halign in (0, 1, 2):
                 vdist = self.text_vertical_distance()
             else:
                 vdist = offset

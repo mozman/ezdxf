@@ -279,7 +279,6 @@ GRADIENT_TYPES = frozenset([
     'INVCURVED'
 ])
 
-
 # Viewport Status Flags (VSF) group code=90
 VSF_PERSPECTIVE_MODE = 0x1  # enabled if set
 VSF_FRONT_CLIPPING = 0x2  # enabled if set
@@ -351,20 +350,20 @@ class Error:
     INVALID_GROUP_CODE_IN_CLASS_DEFINITION = 203
 
 
-INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\',  '"', ':', ';', '?', '*', '|', '=', '`'])
+INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '`'])
 
 STD_SCALES = {
-    1: (1./128., 12.),
-    2: (1./64., 12.),
-    3: (1./32., 12.),
-    4: (1./16., 12.),
-    5: (3./32., 12.),
-    6: (1./8., 12.),
-    7: (3./16., 12.),
-    8: (1./4., 12.),
-    9: (3./8., 12.),
-    10: (1./2., 12.),
-    11: (3./4., 12.),
+    1: (1. / 128., 12.),
+    2: (1. / 64., 12.),
+    3: (1. / 32., 12.),
+    4: (1. / 16., 12.),
+    5: (3. / 32., 12.),
+    6: (1. / 8., 12.),
+    7: (3. / 16., 12.),
+    8: (1. / 4., 12.),
+    9: (3. / 8., 12.),
+    10: (1. / 2., 12.),
+    11: (3. / 4., 12.),
     12: (1., 12.),
     13: (3., 12.),
     14: (6., 12.),
@@ -411,3 +410,18 @@ class SortEntities:
     REGEN = 16  # 16 = Sorts for REGEN commands
     PLOT = 32  # 32 = Sorts for plotting
     POSTSCRIPT = 64  # 64 = Sorts for PostScript output; obsolete
+
+
+DIMJUST = {
+    'left': 1,
+    'right': 2,
+    'center': 3,
+    'above1': 4,
+    'above2': 5,
+}
+
+DIMTAD = {
+    'above': 1,
+    'center': 0,
+    'below': 4,
+}

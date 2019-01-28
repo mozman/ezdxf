@@ -1,7 +1,6 @@
 from typing import Any, TYPE_CHECKING, Tuple
 from ezdxf.modern.tableentries import DimStyle  # DimStyle for DXF R2000 and later
-from ezdxf.modern.tableentries import get_block_name_by_handle
-from ezdxf.lldxf.const import DXFAttributeError
+from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.render.arrows import ARROWS
 import logging
 
@@ -107,16 +106,36 @@ class DimStyleOverride:
 
         self.dimension.set_acad_dstyle(self.dxfattribs, DimStyle)
 
-    def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None):
+    def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None,
+                   size: float = None) -> None:
+        """
+        Set arrows or user defined blocks and disable oblique stroke as tick.
+
+        Args:
+            blk: defines both arrows at once as name str or user defined block (name)
+            blk1: defines left arrow as name str or as user defined block (name)
+            blk2: defines right arrow as name str or as user defined block (name)
+            ldrblk: defines leader arrow as name str or as user defined block (name)
+            size: arrow size in drawing units
+
+        """
         def set_arrow(dimvar: str, name: str) -> None:
             self.dxfattribs[dimvar] = name
 
+        if size is not None:
+            self.dxfattribs['dimasz'] = float(size)
         if blk is not None:
             set_arrow('dimblk', blk)
+            self.dxfattribs['dimsah'] = 0
+            self.dxfattribs['dimtsz'] = 0.  # use arrows
         if blk1 is not None:
             set_arrow('dimblk1', blk1)
+            self.dxfattribs['dimsah'] = 1
+            self.dxfattribs['dimtsz'] = 0.  # use arrows
         if blk2 is not None:
             set_arrow('dimblk2', blk2)
+            self.dxfattribs['dimsah'] = 1
+            self.dxfattribs['dimtsz'] = 0.  # use arrows
         if ldrblk is not None:
             set_arrow('dimldrblk', ldrblk)
 
@@ -132,3 +151,29 @@ class DimStyleOverride:
                 blk1 = blk
                 blk2 = blk
         return blk1, blk2
+
+    def set_tick(self, size: float = 1) -> None:
+        """
+        Use oblique stroke as tick, disables arrows.
+
+        Args:
+            size: arrow size in daring units
+
+        """
+        self.dxfattribs['dimtsz'] = float(size)
+
+    def set_align(self, halign=None, valign=None) -> None:
+        """
+        Set measurement text alignment, `halign` defines the horizontal alignment, `valign` defines the vertical
+        alignment, `above1` and `above2` means above extension line 1 or 2 and aligned with extension line.
+
+        Args:
+            halign: `left`, `right` or `center`
+            valign: `above`, `center`, `below`, `above1`, `above2`
+
+        """
+        if halign:
+            self.dxfattribs['dimjust'] = DIMJUST[halign.lower()]
+
+        if valign:
+            self.dxfattribs['dimtad'] = DIMTAD[valign.lower()]

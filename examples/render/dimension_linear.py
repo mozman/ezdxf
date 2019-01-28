@@ -32,12 +32,11 @@ def linear_tutorial_R12():
     # in direction of `angle`
     dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF')
     style = dim2.dimstyle_override(dxfattribs={
-        'dimblk': ezdxf.ARROWS.closed_filled,
-        'dimtsz': 0.,
         'dimdle': 0.,
-        'dimjust': 2,
-        'dimasz': .25
     })
+    # some variables have setter methods for convenience.
+    style.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
+    style.set_align(halign='right')
     msp.render_dimension(dim2, override=style)
     dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
 
@@ -57,26 +56,24 @@ def linear_tutorial_R2007():
     dim = msp.add_linear_dim(base=(3, 2), ext1=(0, 0), ext2=(10, 0), dimstyle='EZDXF')
     style = dim.dimstyle_override(dxfattribs={
         'dimdle': 0.,
-        'dimasz': .25,
-        'dimtad': 0,  # center dimension text vertical
         'dimexe': .5,  # length of extension line above dimension line
         'dimexfix': 1,  # fix length extension line
         'dimexlen': .5,  # length of extension line below dimension line
     })
+    style.set_align(valign='center')
+    style.set_arrows(size=.25)
     msp.render_dimension(dim, override=style)
 
     # text and arrows outside
     dim2 = msp.add_linear_dim(base=(3, 2), ext1=(15, 0), ext2=(15.3, 0), dimstyle='EZDXF')
     style = dim2.dimstyle_override(dxfattribs={
-        'dimblk': ezdxf.ARROWS.closed_filled,
-        'dimtsz': 0.,  # set 0 to enable arrows
         'dimdle': 0.,
-        'dimasz': .25,
-        'dimtad': 0,  # center dimension text vertical
         'dimexe': .5,  # length of extension line above dimension line
         'dimexfix': 1,  # fix length extension line
         'dimexlen': .5,  # length of extension line below dimension line
     })
+    style.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
+    style.set_align(valign='center')
     msp.render_dimension(dim2, override=style)
 
     dwg.saveas(OUTDIR / 'dim_linear_R2007_tutorial.dxf')
@@ -95,10 +92,7 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
 
         attributes = {
             'dimtxsty': 'LiberationMono',
-            'dimblk': name,
-            'dimtsz': 0.,
             'dimdle': 0.5,
-            'dimasz': .25,
         }
 
         if dimltype:
@@ -109,6 +103,7 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
             attributes['dimltex2'] = dimltex2
 
         style = dim.dimstyle_override(attributes)
+        style.set_arrows(blk=name, size=.25)
         msp.render_dimension(dim, override=style)
     if not filename:
         filename = 'all_arrow_styles_dim_{}.dxf'.format(version)
