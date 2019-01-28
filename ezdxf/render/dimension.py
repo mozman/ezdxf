@@ -35,18 +35,30 @@ class DimensionBase:
         self.user_location_override = self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE,
                                                                     name='dimtype')
         self.default_color = self.dimension.dxf.color
+        self.default_layer = self.dimension.dxf.layer
+        # ezdxf creates ALWAYS dimension.dxf.attachment_point = 5
+        self.attachment_point = 5  # ignored by ezdxf at rendering
+        self.horizontal_direction = self.dimension.get_dxf_attrib('horizontal_direction', None)  # ignored by ezdxf
+
         get = self.dim_style.get
-        self.dim_scale = get('dimscale', 1)  # ignored by ezdxf
+        self.dim_scale = get('dimscale', 1)  # overall scaling
+        if self.dim_scale == 0:
+            self.dim_scale = 1
         self.dim_measurement_factor = get('dimlfac', 1)
 
         # text properties
         self.text_style_name = get('dimtxsty', options.default_dimension_text_style)
         self.text_style = self.drawing.styles.get(self.text_style_name)
-        self.text_height = self.char_height
+        self.text_height = self.char_height * self.dim_scale
         self.text_width_factor = self.text_style.get_dxf_attrib('width', 1.)
-        self.text_gap = get('dimgap', 0.625)
+        self.text_gap = get('dimgap', 0.625) * self.dim_scale
         self.text_rotation = self.dimension.get_dxf_attrib('text_rotation', None)
         self.text_color = get('dimclrt', self.default_color)
+        self.text_round = get('dimrnd', None)
+        self.text_decimal_places = get('dimdec', None)
+        self.text_suppress_zeros = get('dimzin', 0)
+        self.text_decimal_separator = self.dim_style.get('dimdsep', '.')
+        self.text_format = self.dim_style.get('dimpost', '<>')
 
         # text_halign = 0: center; 1: left; 2: right; 3: above ext1; 4: above ext2
         self.text_halign = get('dimjust', 0)
@@ -60,21 +72,21 @@ class DimensionBase:
         self.force_text_inside = bool(get('dimtix', 0))
 
         # arrow properties
-        self.tick_size = get('dimtsz')
+        self.tick_size = get('dimtsz') * self.dim_scale
         if self.tick_size > 0:
             self.arrow1_name, self.arrow2_name = None, None
         else:
             # arrow name or block name if user defined arrow
             self.arrow1_name, self.arrow2_name = self.dim_style.get_arrow_names()
-        self.arrow_size = get('dimasz')
+        self.arrow_size = get('dimasz') * self.dim_scale
 
         # dimension line properties
         self.dim_line_color = get('dimclrd', self.default_color)
-        self.dim_line_extension = bool(get('dimdle', 0.))
+        self.dim_line_extension = bool(get('dimdle', False))
         self.dim_linetype = get('dimltype', None)
         self.dim_lineweight = get('dimlwd', const.LINEWEIGHT_BYBLOCK)
-        self.suppress_dim1_line = bool(get('dimsd1', 0))
-        self.suppress_dim2_line = bool(get('dimsd2', 0))
+        self.suppress_dim1_line = bool(get('dimsd1', False))
+        self.suppress_dim2_line = bool(get('dimsd2', False))
 
         # extension line properties
         self.ext_line_color = get('dimclre', self.default_color)
@@ -83,10 +95,10 @@ class DimensionBase:
         self.ext_lineweight = get('dimlwe', const.LINEWEIGHT_BYBLOCK)
         self.suppress_ext1_line = bool(get('dimse1', False))
         self.suppress_ext2_line = bool(get('dimse2', False))
-        self.ext_line_extension = get('dimexe', 0.)
-        self.ext_line_offset = get('dimexo', 0.)
+        self.ext_line_extension = get('dimexe', 0.) * self.dim_scale
+        self.ext_line_offset = get('dimexo', 0.) * self.dim_scale
         self.ext_line_fixed = bool(get('dimexfix', False))
-        self.ext_line_length = bool(get('dimexlen', self.ext_line_extension))
+        self.ext_line_length = get('dimexlen', self.ext_line_extension) * self.dim_scale
 
     @property
     def char_height(self) -> float:
@@ -101,8 +113,8 @@ class DimensionBase:
 
     def default_attributes(self) -> dict:
         return {
-            'layer': self.dimension.dxf.layer,
-            'color': self.dimension.dxf.color,
+            'layer': self.default_layer,
+            'color': self.default_color,
         }
 
     def wcs(self, point: 'Vertex') -> Vector:
@@ -121,12 +133,14 @@ class DimensionBase:
             return text
 
     def format_text(self, value: float) -> str:
-        dimrnd = self.dim_style.get('dimrnd', None)
-        dimdec = self.dim_style.get('dimdec', None)
-        dimzin = self.dim_style.get('dimzin', 0)
-        dimdsep = self.dim_style.get('dimdsep', '.')
-        dimpost = self.dim_style.get('dimpost', '<>')
-        return format_text(value, dimrnd, dimdec, dimzin, dimdsep, dimpost)
+        return format_text(
+            value,
+            self.text_round,
+            self.text_decimal_places,
+            self.text_suppress_zeros,
+            self.text_decimal_separator,
+            self.text_format,
+        )
 
     def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -160,16 +174,17 @@ class DimensionBase:
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         attribs['style'] = self.text_style_name
+        attribs['color'] = self.text_color
 
-        if self.dxfversion > 'AC1009':
-            attribs['char_height'] = self.char_height
+        if self.supports_dxf_r2000:
+            attribs['char_height'] = self.text_height
             attribs['insert'] = pos
-            attribs['attachment_point'] = self.dimension.get_dxf_attrib('align', const.MTEXT_ALIGN_FLAGS.get(align, 5))
+            attribs['attachment_point'] = const.MTEXT_ALIGN_FLAGS[align]
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)
         else:
-            attribs['height'] = self.char_height
+            attribs['height'] = self.text_height
             if dxfattribs:
                 attribs.update(dxfattribs)
             dxftext = self.block.add_text(text, dxfattribs=attribs)
@@ -191,7 +206,7 @@ class LinearDimension(DimensionBase):
     def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
                  override: 'DimStyleOverride' = None):
         super().__init__(dimension, block, ucs, override)
-
+        self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 0.)
         self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)
         self.dim_line_angle_rad = math.radians(self.dim_line_angle)
         self.ext_line_angle = self.dim_line_angle + 90  # todo: oblique angle

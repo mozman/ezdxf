@@ -31,7 +31,7 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     # 128 = This is a bit value (bit 8) added to the other group 70 values if
     # the dimension text has been positioned at a user-defined location
     # rather than at the default location
-    'align': DXFAttr(71),  # Attachment point:
+    'attachment_point': DXFAttr(71),  # Attachment point:
     # 1 = Top left; 2 = Top center; 3 = Top right
     # 4 = Middle left; 5 = Middle center; 6 = Middle right
     # 7 = Bottom left; 8 = Bottom center; 9 = Bottom right
