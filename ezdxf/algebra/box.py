@@ -2,7 +2,7 @@ from typing import List, Sequence, TYPE_CHECKING
 import math
 from .vector import Vector
 from .ray import ConstructionLine
-from .base import not_right_of_line
+from .base import left_of_line
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -109,7 +109,7 @@ class ConstructionBox:
             p1, p2, p3, p4 = self.corners
             point = Vector(point)
             return all(
-                (not_right_of_line(point, a, b) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
+                (left_of_line(point, a, b, online=True) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
             )
 
     def border_lines(self) -> Sequence[ConstructionLine]:

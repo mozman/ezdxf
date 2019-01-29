@@ -3,9 +3,10 @@
 from typing import TYPE_CHECKING, Tuple
 import math
 from functools import partial
+from operator import le, ge, lt, gt
 
 if TYPE_CHECKING:
-    from eztypes import Vertex, Vector
+    from eztypes import Vertex
 
 HALF_PI = math.pi / 2.  # type: float
 THREE_PI_HALF = 1.5 * math.pi  # type: float
@@ -119,52 +120,36 @@ def get_angle(p1: 'Vertex', p2: 'Vertex') -> float:
     return math.atan2(dy, dx)
 
 
-def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
+def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', online=False) -> bool:
     """
-    True if `point` is "left of line" (`p1`, `p2`).
-
-    Hint: Points on the line are not "left of line".
+    True if `point` is "left of line" (`p1`, `p2`). Point on the line is "left of line" if `online` is True.
 
     """
-    # check if a and b are on the same vertical line
-    if p1[0] == p2[0]:
-        # compute # on which site of the line self should be
-        should_be_left = p1[1] < p2[1]
-        if should_be_left:
-            return point[0] < p1[0]
-        else:
-            return point[0] > p1[0]
-    else:
-        # get pitch of line
-        pitch = (p2[1] - p1[1]) / (p2[0] - p1[0])
 
-        # get y-value at c's x-position
-        y = pitch * (point[0] - p1[0]) + p1[1]
-
-        # compute if point should be above or below the line
-        should_be_above = p1[0] < p2[0]
-        if should_be_above:
-            return point[1] > y
-        else:
-            return point[1] < y
-
-
-def not_right_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
-    """
-    True if `point` is "left of line" (`p1`, `p2`) or "on the line", this is a faster function for inside
-    check and "on the line" should be inside.
-
-    """
     px, py, *_ = point
     p1x, p1y, *_ = p1
     p2x, p2y, *_ = p2
 
-    if math.isclose(p1x, p2x):
-        return (px <= p1x) if (p1y < p2y) else (px >= p1x)
+    if online:
+        lower = le  # lower or equal
+        greater = ge  # greater or equal
     else:
+        lower = lt  # real lower then
+        greater = gt  # real greater then
+
+    # check if p1 and p2 are on the same vertical line
+    if math.isclose(p1x, p2x):
+        # compute # on which site of the line point should be
+        should_be_left = p1y < p2y
+        return lower(px, p1x) if should_be_left else greater(px, p1y)
+    else:
+        # get pitch of line
         pitch = (p2y - p1y) / (p2x - p1x)
+        # get y-value at points's x-position
         y = pitch * (px - p1x) + p1y
-        return (py >= y) if (p1x < p2x) else (py <= y)
+        # compute if point should be above or below the line
+        should_be_above = p1x < p2x
+        return greater(py, y) if should_be_above else lower(py, y)
 
 
 def xround(value: float, rounding: float = 0.) -> float:
