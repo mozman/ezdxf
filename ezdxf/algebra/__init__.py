@@ -14,3 +14,4 @@ from .bulge import bulge_to_arc, bulge_3_points, bulge_center, bulge_radius, arc
 from .arc import ConstructionArc
 from .ray import ConstructionRay, ConstructionLine
 from .circle import ConstructionCircle
+from .box import ConstructionBox

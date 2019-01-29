@@ -5,7 +5,7 @@ import math
 from functools import partial
 
 if TYPE_CHECKING:
-    from eztypes import Vertex
+    from eztypes import Vertex, Vector
 
 HALF_PI = math.pi / 2.  # type: float
 THREE_PI_HALF = 1.5 * math.pi  # type: float
@@ -119,17 +119,11 @@ def get_angle(p1: 'Vertex', p2: 'Vertex') -> float:
     return math.atan2(dy, dx)
 
 
-def right_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
-    """
-    True if `point` is right of the line (`p1`, `p2`)
-
-    """
-    return not left_of_line(point, p1, p2)
-
-
 def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
     """
-    True if `point` is left of the line (`p1`, `p2`)
+    True if `point` is "left of line" (`p1`, `p2`).
+
+    Hint: Points on the line are not "left of line".
 
     """
     # check if a and b are on the same vertical line
@@ -153,6 +147,24 @@ def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
             return point[1] > y
         else:
             return point[1] < y
+
+
+def not_right_of_line(point: 'Vector', p1: 'Vector', p2: 'Vector') -> bool:
+    """
+    True if `point` is "left of line" (`p1`, `p2`) or "on the line", this is a faster function for inside
+    check and "on the line" should be inside.
+
+    """
+    px, py, _ = point.xyz
+    p1x, p1y, _ = p1.xyz
+    p2x, p2y, _ = p2.xyz
+
+    if math.isclose(p1x, p2x):
+        return (px <= p1x) if (p1y < p2y) else (px >= p1x)
+    else:
+        pitch = (p2y - p1y) / (p2x - p1x)
+        y = pitch * (px - p1x) + p1y
+        return (py >= y) if (p1x < p2x) else (py <= y)
 
 
 def xround(value: float, rounding: float = 0.) -> float:

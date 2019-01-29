@@ -2,6 +2,7 @@
 # Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
 from ezdxf.algebra.base import *
+from ezdxf.algebra import Vector
 
 
 def test_rotate_2s():
@@ -26,17 +27,27 @@ def test_get_angle():
     assert is_close(get_angle((0., 0.), (1., 1.)), HALF_PI / 2.)
 
 
-def test_right_of_line():
-    assert right_of_line((1, 0), (0, 0), (0, 1)) is True
-    assert left_of_line((1, 0), (0, 0), (0, 1)) is False
-    assert right_of_line((1, 1), (0, 0), (-1, 0)) is True
-
-
 def test_left_of_line():
     assert left_of_line((-1, 0), (0, 0), (0.1, 1)) is True
     assert left_of_line((1, 0), (0, 0), (0, -1)) is True
     assert left_of_line((-1, -1), (0, 0), (0.1, 1)) is True
-    assert right_of_line((-1, 0), (0, 0), (-1, .1)) is False
+
+
+def test_not_right_of_line():
+    # vertical line
+    assert not_right_of_line(Vector(1, 0), Vector(0, 0), Vector(0, 1)) is False
+    assert not_right_of_line(Vector(0, 0.5), Vector(0, 0), Vector(0, 1)) is True
+    assert not_right_of_line(Vector(-1, 0.5), Vector(0, 0), Vector(0, 1)) is True
+
+    # horizontal line
+    assert not_right_of_line(Vector(0, 1), Vector(0, 0), Vector(1, 0)) is True
+    assert not_right_of_line(Vector(0, 0), Vector(0, 0), Vector(1, 0)) is True
+    assert not_right_of_line(Vector(0, -1), Vector(0, 0), Vector(1, 0)) is False
+    # 45 deg line
+    assert not_right_of_line(Vector(0, 0), Vector(0, 0), Vector(1, 1)) is True
+    assert not_right_of_line(Vector(0.5, 0.5), Vector(0, 0), Vector(1, 1)) is True
+    assert not_right_of_line(Vector(1, 1), Vector(0, 0), Vector(1, 1)) is True
+    assert not_right_of_line(Vector(.5, .49), Vector(0, 0), Vector(1, 1)) is False
 
 
 def test_is_close_points():

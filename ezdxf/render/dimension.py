@@ -1,9 +1,9 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable, List, Sequence
+from typing import TYPE_CHECKING, Tuple, Iterable
 import math
-from ezdxf.algebra import Vector, ConstructionRay, xround, ConstructionLine
+from ezdxf.algebra import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
 from ezdxf.algebra import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
@@ -12,7 +12,14 @@ from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride, Style
+    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride
+
+
+class TextBox(ConstructionBox):
+    def __init__(self, center: 'Vertex', width: float, height: float, angle: float, gap: float = 0):
+        width += (2 * gap)
+        height += (2 * gap)
+        super().__init__(center, width, height, angle)
 
 
 class DimensionBase:
@@ -572,46 +579,3 @@ def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: 
         else:
             raise DXFValueError('Invalid dimpost string: "{}"'.format(dimpost))
     return text
-
-
-class TextBox:
-    def __init__(self, center: 'Vertex', width: float, height: float, angle: float, gap: float = 0.):
-        self.center = Vector(center)
-        w2 = Vector.from_deg_angle(angle, width / 2 + gap)
-        h2 = Vector.from_deg_angle(angle + 90, height / 2 + gap)
-        self.corners = (
-            self.center - w2 - h2,  # lower left
-            self.center + w2 - h2,  # lower right
-            self.center + w2 + h2,  # upper right
-            self.center - w2 + h2,  # upper left
-        )
-
-    def __str__(self):
-        vstr = ', '.join(str(c) for c in self.corners)
-        return "TextBox({})".format(vstr)
-
-    def border_lines(self) -> Sequence[ConstructionLine]:
-        p1, p2, p3, p4 = self.corners
-        return (
-            ConstructionLine(p1, p2),
-            ConstructionLine(p2, p3),
-            ConstructionLine(p3, p4),
-            ConstructionLine(p4, p1),
-        )
-
-    def intersect(self, line: ConstructionLine) -> List[Vector]:
-        """
-        Returns 0, 1 or 2 intersection points between `line` and `TextBox` border lines.
-
-        Args:
-            line: line to intersect with border lines
-
-        Returns: list of intersection points
-
-        """
-        result = set()
-        for border_line in self.border_lines():
-            p = line.intersect(border_line)
-            if p is not None:
-                result.add(p)
-        return sorted(result)
