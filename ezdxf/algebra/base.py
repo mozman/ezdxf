@@ -149,15 +149,15 @@ def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
             return point[1] < y
 
 
-def not_right_of_line(point: 'Vector', p1: 'Vector', p2: 'Vector') -> bool:
+def not_right_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex') -> bool:
     """
     True if `point` is "left of line" (`p1`, `p2`) or "on the line", this is a faster function for inside
     check and "on the line" should be inside.
 
     """
-    px, py, _ = point.xyz
-    p1x, p1y, _ = p1.xyz
-    p2x, p2y, _ = p2.xyz
+    px, py, *_ = point
+    p1x, p1y, *_ = p1
+    p2x, p2y, *_ = p2
 
     if math.isclose(p1x, p2x):
         return (px <= p1x) if (p1y < p2y) else (px >= p1x)
