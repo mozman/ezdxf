@@ -381,6 +381,8 @@ class _Arrows:
         return name in self.EXTENSIONS_ALLOWED
 
     def __contains__(self, item: str) -> bool:
+        if item is None:
+            return False
         return item.upper() in self.__all_arrows__
 
     def create_block(self, blocks, name: str):

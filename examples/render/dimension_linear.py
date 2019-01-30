@@ -65,16 +65,58 @@ def linear_tutorial_R2007():
     msp.render_dimension(dim, override=style)
 
     # text and arrows outside
-    dim2 = msp.add_linear_dim(base=(3, 2), ext1=(15, 0), ext2=(15.3, 0), dimstyle='EZDXF')
-    style = dim2.dimstyle_override(dxfattribs={
+    attribs = {
         'dimdle': 0.,
         'dimexe': .5,  # length of extension line above dimension line
         'dimexfix': 1,  # fix length extension line
         'dimexlen': .5,  # length of extension line below dimension line
-    })
+    }
+    x, y = 15, 0
+    dim = msp.add_linear_dim(base=(x, y+2), ext1=(x, y), ext2=(x+.3, y), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs=attribs)
     style.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
     style.set_align(valign='center')
-    msp.render_dimension(dim2, override=style)
+    msp.render_dimension(dim, override=style)
+
+    # text and arrows outside
+    x, y = 15, 5
+    dim = msp.add_linear_dim(base=(x, y + 2), ext1=(x, y), ext2=(x + .3, y), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs=attribs)
+    style.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
+    style.set_align(valign='above')
+    msp.render_dimension(dim, override=style)
+
+    # text and arrows outside
+    x, y = 15, 10
+    dim = msp.add_linear_dim(base=(x, y + 2), ext1=(x, y), ext2=(x + .3, y), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs=attribs)
+    style.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
+    style.set_align(valign='below')
+    msp.render_dimension(dim, override=style)
+
+    # text outside with ticks
+    x, y = 20, 0
+    dim = msp.add_linear_dim(base=(x, y+2), ext1=(x, y), ext2=(x+.3, y), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs=attribs)
+    style.set_tick(size=.25)
+    style.set_align(valign='center')
+    msp.render_dimension(dim, override=style)
+
+    # text outside with ticks
+    x, y = 20, 5
+    dim = msp.add_linear_dim(base=(x, y + 2), ext1=(x, y), ext2=(x + .3, y), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs=attribs)
+    style.set_tick(size=.25)
+    style.set_align(valign='above')
+    msp.render_dimension(dim, override=style)
+
+    # text outside with ticks
+    x, y = 20, 10
+    dim = msp.add_linear_dim(base=(x, y + 2), ext1=(x, y), ext2=(x + .3, y), dimstyle='EZDXF')
+    style = dim.dimstyle_override(dxfattribs=attribs)
+    style.set_tick(size=.25)
+    style.set_align(valign='below')
+    msp.render_dimension(dim, override=style)
 
     dwg.saveas(OUTDIR / 'dim_linear_R2007_tutorial.dxf')
 
@@ -179,7 +221,7 @@ ALL = False
 
 
 if __name__ == '__main__':
-    linear_tutorial_R12()
+    #linear_tutorial_R12()
     linear_tutorial_R2007()
     linear_all_arrow_style('R12')
     linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')

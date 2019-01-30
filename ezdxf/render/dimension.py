@@ -82,10 +82,11 @@ class DimensionBase:
         self.tick_size = get('dimtsz') * self.dim_scale
         if self.tick_size > 0:
             self.arrow1_name, self.arrow2_name = None, None
+            self.arrow_size = self.tick_size
         else:
             # arrow name or block name if user defined arrow
             self.arrow1_name, self.arrow2_name = self.dim_style.get_arrow_names()
-        self.arrow_size = get('dimasz') * self.dim_scale
+            self.arrow_size = get('dimasz') * self.dim_scale
 
         # dimension line properties
         self.dim_line_color = get('dimclrd', self.default_color)
@@ -253,7 +254,7 @@ class LinearDimension(DimensionBase):
             self.required_text_space = self.dim_text_width + 2 * (self.arrow_size + self.text_gap)
             if not self.force_text_inside:
                 self.text_outside = self.required_text_space > self.measurement
-            self.text_location = self.get_text_location(self.dim_text_width, self.text_outside)
+            self.text_location = self.get_text_location()
             self.text_box = TextBox(
                 center=self.text_location,
                 width=self.dim_text_width,
@@ -429,16 +430,46 @@ class LinearDimension(DimensionBase):
             def has_arrow_extension(name: str) -> bool:
                 return (name is not None) and (name in ARROWS) and (name not in ARROWS.ORIGIN_ZERO)
 
-            arrow_vector = (end - start).normalize(self.arrow_size)
+            dim_vec = end - start
+            arrow_vector = dim_vec.normalize(self.arrow_size)
+            extend = dim_vec.normalize(self.dim_text_width + 2 * self.text_gap)
+
+            text_is_left = self.text_outside and self.text_halign == 1
+            text_is_right = self.text_outside and self.text_halign in (0, 2)
+            text_is_vcenter = self.text_valign == 0
+
             # extension line for first arrow
+            start_ = None
+            end_ = None
             if has_arrow_extension(self.arrow1_name):  # just for arrows
                 start_ = start - arrow_vector
                 end_ = start_ - arrow_vector
+
+            if text_is_left:
+                end_ = end - (arrow_vector * 2) - extend
+                if start_ is None:
+                    start_ = start
+                if text_is_vcenter:
+                    end_ = end - (arrow_vector * 2)
+
+            if start_ is not None:
                 self.block.add_line(start_, end_, dxfattribs=attribs)
+
             # extension line for second arrow
+            start_ = None
+            end_ = None
             if has_arrow_extension(self.arrow2_name):  # just for arrows
                 start_ = end + arrow_vector
                 end_ = start_ + arrow_vector
+
+            if text_is_right:
+                end_ = end + (arrow_vector * 2) + extend
+                if start_ is None:
+                    start_ = end
+                if text_is_vcenter:
+                    end_ = end + (arrow_vector * 2)
+
+            if start_ is not None:
                 self.block.add_line(start_, end_, dxfattribs=attribs)
 
         return start, end
@@ -460,18 +491,16 @@ class LinearDimension(DimensionBase):
         """
         return (self.text_height / 2. + self.text_gap) * self.vertical_factor
 
-    def get_text_location(self, text_width: float, text_outside: bool = False) -> Vector:
+    def get_text_location(self) -> Vector:
         """
         Calculate text midpoint in drawing units.
-
-        Args:
-            text_width: text with in drawing units
-            text_outside: place text outside of extension lines, applies only for dimjust = 0, 1 or 2
 
         """
         start = self.dim_line_start
         end = self.dim_line_end
-        # todo: text location outside
+        halign = self.text_halign
+        text_outside = self.text_outside
+        text_width = self.dim_text_width
         if self.user_location_override:
             text_location = self.dimension.get_dxf_attrib('text_midpoint')
             if self.text_movement_rule == 0:
@@ -482,17 +511,24 @@ class LinearDimension(DimensionBase):
                 return text_location
         else:
             # default location: above the dimension line and centered between extension lines
+            if halign > 2:  # for text above extension line, text_outside is ignored
+                text_outside = False
+            if text_outside and halign == 0:
+                halign = 2
             text_location = start.lerp(end)
+            # offset = distance from extension line to text midpoint
             offset = self.text_gap + self.arrow_size + text_width / 2
-            if self.text_halign == 1:  # positions the text next to the first extension line
+            if text_outside:
+                offset = -(offset + self.arrow_size)
+            if halign == 1:  # positions the text next to the first extension line
                 text_location = start + (end - start).normalize(offset)
-            elif self.text_halign == 2:  # positions the text next to the second extension line
+            elif halign == 2:  # positions the text next to the second extension line
                 text_location = end + (start - end).normalize(offset)
-            elif self.text_halign in (
+            elif halign in (
                     3, 4):  # positions the text above and aligned with the first/second extension line
                 dist = self.text_gap + self.text_height / 2.
                 _offset = (start - end).normalize(dist) * self.vertical_factor
-                if self.text_halign == 3:
+                if halign == 3:
                     text_location = start + _offset
                 else:
                     text_location = end + _offset
@@ -503,6 +539,8 @@ class LinearDimension(DimensionBase):
             else:
                 vdist = offset
 
+        self.text_outside = text_outside
+        self.text_halign = halign
         # lift text location
         ortho = (end - start).orthogonal().normalize(vdist)
         return text_location + ortho

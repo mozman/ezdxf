@@ -70,7 +70,7 @@ def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
     setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
     dwg.header['$DIMSTYLE'] = 'EZDXF'
-    if domain == 'metric':
+    if domain in ('metric', 'all'):
         setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
         setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=options.default_dimension_text_style)
         setup_dimstyle(dwg, fmt='EZ_M_25_H25_CM', style=options.default_dimension_text_style)
@@ -81,6 +81,8 @@ def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
 
 
 class DimStyleFmt:
+    DIMASZ = .125
+    DIMTSZ = .25
     UNIT_FACTOR = {
         'm': 1,  # 1 drawing unit == 1 meter
         'dm': 10,  # 1 drawing unit == 1 decimeter
@@ -114,7 +116,7 @@ class DimStyleFmt:
 
     @property
     def dimasz(self):
-        return self.unit_factor
+        return self.DIMASZ * self.unit_factor
 
     @property
     def dimexe(self):
@@ -130,7 +132,7 @@ class DimStyleFmt:
 
     @property
     def dimtsz(self):
-        return 0.25 * self.unit_factor
+        return self.DIMTSZ * self.unit_factor
 
 
 def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> None:

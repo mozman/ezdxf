@@ -1,4 +1,4 @@
-from typing import List, Sequence, TYPE_CHECKING
+from typing import List, Sequence, TYPE_CHECKING, Iterable
 import math
 from .vector import Vector
 from .ray import ConstructionLine
@@ -89,10 +89,10 @@ class ConstructionBox:
         self.update()
         return self._corners
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Vector]:
         return iter(self.corners)
 
-    def __getitem__(self, corner: int) -> Vector:
+    def __getitem__(self, corner) -> Vector:
         return self.corners[corner]
 
     def __repr__(self) -> str:

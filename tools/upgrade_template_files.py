@@ -27,7 +27,7 @@ def repair_layer_pointers(dwg):
 def main():
     for version in ("AC1015", "AC1018", "AC1021", "AC1024", "AC1027", "AC1032"):
         dwg = ezdxf.readfile(PATH.format(version))
-        dwg.reset_class_instance_counters()
+        dwg.header['$AUNITS'] = 0
         dwg.save()
 
 

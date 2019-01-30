@@ -1,5 +1,3 @@
-999
-last saved by ezdxf 0.8.5 on 2018-01-22 06:31:29
   0
 SECTION
   2
@@ -443,7 +441,7 @@ $FILLETRAD
   9
 $AUNITS
  70
-4
+0
   9
 $AUPREC
  70
@@ -495,7 +493,7 @@ $TDCREATE
   9
 $TDUPDATE
  40
-2458141.271863426
+2458514.6288888888
   9
 $TDINDWG
  40
@@ -543,7 +541,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-56B
+570
   9
 $SURFTAB1
  70
@@ -927,7 +925,7 @@ $FINGERPRINTGUID
   9
 $VERSIONGUID
   2
-{69EEBB2D-7039-498F-9366-3F994E4A07E7}
+1D9CCF8C-2498-11E9-84E6-1803733EFA49
   9
 $EXTNAMES
 290
@@ -2798,6 +2796,18 @@ C
 AcDbDictionary
 281
 1
+  3
+ByBlock
+350
+56B
+  3
+ByLayer
+350
+56C
+  3
+Global
+350
+56D
   0
 DICTIONARY
   5
@@ -2808,6 +2818,10 @@ C
 AcDbDictionary
 281
 1
+  3
+Standard
+350
+56E
   0
 DICTIONARY
   5
@@ -2818,6 +2832,10 @@ C
 AcDbDictionary
 281
 1
+  3
+STANDARD
+350
+56F
   0
 DICTIONARY
   5
@@ -3122,6 +3140,204 @@ Layout1
 0
 330
 58
+  0
+MATERIAL
+  5
+56B
+102
+{ACAD_REACTORS
+330
+4E4
+102
+}
+330
+4E4
+100
+AcDbMaterial
+  1
+ByBlock
+ 94
+63
+  0
+MATERIAL
+  5
+56C
+102
+{ACAD_REACTORS
+330
+4E4
+102
+}
+330
+4E4
+100
+AcDbMaterial
+  1
+ByLayer
+ 94
+63
+  0
+MATERIAL
+  5
+56D
+102
+{ACAD_REACTORS
+330
+4E4
+102
+}
+330
+4E4
+100
+AcDbMaterial
+  1
+Global
+ 94
+63
+  0
+MLEADERSTYLE
+  5
+56E
+102
+{ACAD_REACTORS
+330
+4E5
+102
+}
+330
+4E5
+100
+AcDbMLeaderStyle
+179
+2
+170
+2
+171
+1
+172
+0
+ 90
+2
+ 40
+0.0
+ 41
+0.0
+173
+1
+ 91
+-1056964608
+340
+14
+ 92
+-2
+290
+1
+ 42
+2.0
+291
+1
+ 43
+8.0
+  3
+Standard
+341
+0
+ 44
+4.0
+300
+
+342
+11
+174
+1
+178
+1
+175
+1
+176
+0
+ 93
+-1056964608
+ 45
+4.0
+292
+0
+297
+0
+ 46
+4.0
+343
+0
+ 94
+-1056964608
+ 47
+1.0
+ 49
+1.0
+140
+1.0
+293
+1
+141
+0.0
+294
+1
+177
+0
+142
+1.0
+295
+0
+296
+0
+143
+3.75
+271
+0
+272
+9
+273
+9
+  0
+MLINESTYLE
+  5
+56F
+102
+{ACAD_REACTORS
+330
+4E6
+102
+}
+330
+4E6
+100
+AcDbMlineStyle
+  2
+STANDARD
+ 70
+0
+  3
+
+ 62
+256
+ 51
+90.0
+ 52
+90.0
+ 71
+2
+ 49
+0.5
+ 62
+256
+  6
+BYLAYER
+ 49
+-0.5
+ 62
+256
+  6
+BYLAYER
   0
 ENDSEC
   0

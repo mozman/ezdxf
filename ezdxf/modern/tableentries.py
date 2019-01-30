@@ -460,13 +460,7 @@ class DimStyle(legacy.DimStyle):
         self.set_dxf_attrib('dimtxsty_handle', style.dxf.handle)
 
     def get_leader_block_name(self) -> str:
-        handle = self.get_dxf_attrib('dimldrblk_handle', None)
-        if handle in (None, '0'):
-            # unset handle or handle '0' is default closed filled arrow
-            return ARROWS.closed_filled
-        else:
-            block_name = get_block_name_by_handle(handle, self.drawing)
-            return ARROWS.arrow_name(block_name)  # if arrow return standard arrow name else just the block name
+        return get_arrow_block_name(self, 'dimldrblk')
 
     def set_leader_block_name(self, name) -> None:
         self._set_blk_handle('dimldrblk_handle', name)
@@ -514,6 +508,16 @@ class DimStyle(legacy.DimStyle):
                 self.set_ext2_linetype(ext2)
         else:
             logger.debug('Linetype support requires DXF R2007 or later.')
+
+
+def get_arrow_block_name(entry, name: str) -> str:
+    handle = entry.get_dxf_attrib(name + '_handle', None)
+    if handle in (None, '0'):
+        # unset handle or handle '0' is default closed filled arrow
+        return ARROWS.closed_filled
+    else:
+        block_name = get_block_name_by_handle(handle, entry.drawing)
+        return ARROWS.arrow_name(block_name)  # if arrow return standard arrow name else just the block name
 
 
 def get_text_style_by_handle(handle, drawing: 'Drawing', default='STANDARD') -> str:
