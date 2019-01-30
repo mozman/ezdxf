@@ -68,7 +68,7 @@ def setup_styles(dwg: 'Drawing') -> None:
 
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
-    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
+    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style, blk=ARROWS.architectural_tick)
     dwg.header['$DIMSTYLE'] = 'EZDXF'
     if domain in ('metric', 'all'):
         setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)

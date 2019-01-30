@@ -164,7 +164,7 @@ def dimstyle():
 @pytest.fixture(scope='module')
 def dimstyle2():
     import ezdxf
-    dwg = ezdxf.new('R2007', setup=('linetypes', ))
+    dwg = ezdxf.new('R2007', setup=('linetypes',))
     dwg.blocks.new('left_arrow')
     dwg.blocks.new('right_arrow')
     dwg.blocks.new('arrow')
@@ -183,9 +183,9 @@ def test_dimstyle_name(dimstyle2):
 
 def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
     dimstyle2.set_arrows('', 'left_arrow', 'right_arrow')
-    assert dimstyle2.get_dxf_attrib('dimblk', None) is None, 'dxfattrib "dimblk" should not exists'
-    assert dimstyle2.get_dxf_attrib('dimblk1', None) is None, 'dxfattrib "dimblk1" should not exists'
-    assert dimstyle2.get_dxf_attrib('dimblk2', None) is None, 'dxfattrib "dimblk2" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk') == ''
+    assert dimstyle2.get_dxf_attrib('dimblk1') == 'left_arrow'
+    assert dimstyle2.get_dxf_attrib('dimblk2') == 'right_arrow'
 
     # test handles
     blocks = dimstyle2.drawing.blocks
@@ -196,17 +196,18 @@ def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
 
 
 def test_dimstyle_both_ticks(dimstyle2):
+    blocks = dimstyle2.drawing.blocks
     dimstyle2.set_arrows('arrow')
-    assert dimstyle2.get_dxf_attrib('dimblk', None) is None, 'dxfattrib "dimblk" should not exists'
-    assert dimstyle2.get_dxf_attrib('dimblk1', None) is None, 'dxfattrib "dimblk1" should not exists'
-    assert dimstyle2.get_dxf_attrib('dimblk2', None) is None, 'dxfattrib "dimblk2" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk') == 'arrow'
+    assert dimstyle2.get_dxf_attrib('dimblk1') == ''  # closed filled
+    assert dimstyle2.get_dxf_attrib('dimblk2') == ''  # closed filled
 
     # test handles
     blocks = dimstyle2.drawing.blocks
     arrow = blocks.get('arrow')
     assert dimstyle2.dxf.dimblk_handle == arrow.block_record_handle
-    assert dimstyle2.get_dxf_attrib('dimblk1', None) is None, 'dxfattrib "dimblk1" should not exists'
-    assert dimstyle2.get_dxf_attrib('dimblk2', None) is None, 'dxfattrib "dimblk2" should not exists'
+    assert dimstyle2.get_dxf_attrib('dimblk1') == ''
+    assert dimstyle2.get_dxf_attrib('dimblk2') == ''
 
 
 def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):
@@ -253,9 +254,6 @@ def test_dimstyle_group_codes(dimstyle):
     assert 105 not in codes
     assert 2 not in codes
     assert 70 not in codes
-    assert 5 in codes and codes[5] == 'dimblk'
-    assert 6 in codes and codes[6] == 'dimblk1'
-    assert 7 in codes and codes[7] == 'dimblk2'
 
 
 def test_block_record_name():
@@ -263,5 +261,3 @@ def test_block_record_name():
         'name': 'BLOCKREC1',
     })
     assert 'BLOCKREC1' == blockrec.dxf.name
-
-

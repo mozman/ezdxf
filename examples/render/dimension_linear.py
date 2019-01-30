@@ -221,7 +221,7 @@ ALL = False
 
 
 if __name__ == '__main__':
-    #linear_tutorial_R12()
+    linear_tutorial_R12()
     linear_tutorial_R2007()
     linear_all_arrow_style('R12')
     linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')

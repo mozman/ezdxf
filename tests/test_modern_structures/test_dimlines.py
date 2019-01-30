@@ -155,7 +155,8 @@ def test_add_horizontal_dimline(dxf2000):
 
     block = dxf2000.blocks.get(block_name)
     assert len(list(block.query('MTEXT'))) == 1
-    assert len(list(block.query('LINE'))) == 5  # dimension line + 2 extension lines
+    assert len(list(block.query('INSERT'))) == 2
+    assert len(list(block.query('LINE'))) == 3  # dimension line + 2 extension lines
     assert len(list(block.query('POINT'))) == 3  # def points
 
 
