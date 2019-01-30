@@ -131,15 +131,13 @@ def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', online=False) -> b
     p2x, p2y, *_ = p2
 
     if online:
-        lower = le  # lower or equal
-        greater = ge  # greater or equal
+        lower, greater = le, ge  # lower/greater or equal
     else:
-        lower = lt  # real lower then
-        greater = gt  # real greater then
+        lower, greater = lt, gt  # real lower/greater then
 
     # check if p1 and p2 are on the same vertical line
     if math.isclose(p1x, p2x):
-        # compute # on which site of the line point should be
+        # compute on which side of the line point should be
         should_be_left = p1y < p2y
         return lower(px, p1x) if should_be_left else greater(px, p1y)
     else:

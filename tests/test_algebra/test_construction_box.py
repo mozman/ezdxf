@@ -1,7 +1,7 @@
 # Purpose: test ConstructionBox
 # Created: 29.01.2019
 # License: MIT License
-
+import math
 from ezdxf.algebra import ConstructionBox, ConstructionLine
 
 
@@ -69,6 +69,22 @@ class TestTextBox:
         assert box.center == (0, 0)
         assert box[0] == (-0.5, -2)
         assert box[2] == (+0.5, +2)
+
+    def test_incircle_radius(self):
+        box = ConstructionBox(width=3, height=7)
+        assert box.incircle_radius == 1.5
+
+        box = ConstructionBox(width=4, height=2)
+        assert box.incircle_radius == 1
+
+    def test_circum_circle_radius(self):
+        box = ConstructionBox(width=3, height=7)
+        r = math.hypot(1.5, 3.5)
+        assert math.isclose(box.circumcircle_radius, r)
+
+        box = ConstructionBox(width=17, height=1)
+        r = math.hypot(.5, 8.5)
+        assert math.isclose(box.circumcircle_radius, r)
 
     def test_set_angle(self):
         box = ConstructionBox()
@@ -158,4 +174,78 @@ class TestTextBox:
         assert box.is_inside((-1, -1)) is False
         assert box.is_inside((-1, +1)) is False
         assert box.is_inside((+1, -1)) is False
+
+    def test_any_corner_inside(self):
+        box1 = ConstructionBox()
+
+        # one touching corner
+        box2 = ConstructionBox(center=(1, 1))
+        assert box1.is_any_corner_inside(box2) is True
+        assert box2.is_any_corner_inside(box1) is True
+
+        # no overlapping
+        box2 = ConstructionBox(center=(1.01, 1.01))
+        assert box1.is_any_corner_inside(box2) is False
+        assert box2.is_any_corner_inside(box1) is False
+
+        # one point of box2 inside of box1
+        box2 = ConstructionBox(center=(.5404, .5404), angle=45)
+        assert box1.is_any_corner_inside(box2) is False
+        assert box2.is_any_corner_inside(box1) is True
+
+        # one point of box2 inside of box1
+        box2 = ConstructionBox(center=(1.177, .5152), angle=45)
+        assert box2.is_any_corner_inside(box1) is True
+
+        # no overlapping
+        box2 = ConstructionBox(center=(1.2091, .4669), angle=45)
+        assert box2.is_any_corner_inside(box1) is False
+
+    def test_overlapping_boxes(self):
+        box1 = ConstructionBox()
+        assert box1.is_overlapping(box1) is True
+
+        box2 = ConstructionBox(width=2, height=2)
+        # box1 complete inside of box2
+        assert box1.is_overlapping(box2) is True
+        assert box2.is_overlapping(box1) is True
+
+        # one touching corner
+        box2 = ConstructionBox(center=(1, 1))
+        assert box1.is_overlapping(box2) is True
+        assert box2.is_overlapping(box1) is True
+
+        # no overlapping
+        box2 = ConstructionBox(center=(1.2091, .4669), angle=45)
+        assert box1.is_overlapping(box2) is False
+        assert box2.is_overlapping(box1) is False
+
+        # one point of box2 inside of box1
+        box2 = ConstructionBox(center=(.5404, .5404), angle=45)
+        assert box1.is_overlapping(box2) is True
+        assert box2.is_overlapping(box1) is True
+
+    def test_overlapping_crossing_boxes(self):
+        box1 = ConstructionBox()
+        # overlapping boxes with corners inside of each other
+        box2 = ConstructionBox(width=.1, height=3)
+        assert box1.is_any_corner_inside(box2) is False
+        assert box2.is_any_corner_inside(box1) is False
+        assert box1.is_overlapping(box2) is True
+        assert box2.is_overlapping(box1) is True
+
+        # center2 outside of box1
+        box2 = ConstructionBox(center=(.3, .708), width=.18, height=2.88)
+        assert box1.is_overlapping(box2) is True
+        assert box2.is_overlapping(box1) is True
+
+        # center2 outside of box1, no overlapping
+        box2 = ConstructionBox(center=(.6427, .6563), width=.18, height=2.88)
+        assert box1.is_overlapping(box2) is False
+        assert box2.is_overlapping(box1) is False
+
+        # cutting corner of box1
+        box2 = ConstructionBox(center=(.2639, .5721), width=.18, height=2.88, angle=45)
+        assert box1.is_overlapping(box2) is True
+        assert box2.is_overlapping(box1) is True
 

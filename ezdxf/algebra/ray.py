@@ -122,7 +122,7 @@ class ConstructionRay:
         else:
             return equals_almost(self.slope, ray.slope, self.places)
 
-    def intersect(self, other_ray: 'ConstructionRay') -> Vector:
+    def intersect(self, other: 'ConstructionRay') -> Vector:
         """
         Returns the intersection point (xy-tuple) of self and other_ray.
 
@@ -131,7 +131,7 @@ class ConstructionRay:
 
         """
         ray1 = self
-        ray2 = other_ray
+        ray2 = other
         if not ray1.is_parallel(ray2):
             if ray1.is_vertical:
                 x = ray1._x
@@ -262,6 +262,10 @@ class ConstructionLine:
                 return point
             else:
                 return None
+
+    def has_intersection(self, other: 'ConstructionLine') -> bool:
+        # required because intersection Vector(0, 0, 0) is also False
+        return self.intersect(other) is not None
 
     def left_of_line(self, point: 'Vertex') -> bool:
         """

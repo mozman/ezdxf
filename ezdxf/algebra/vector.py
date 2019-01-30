@@ -162,6 +162,14 @@ class Vector:
         return self.magnitude_square ** .5
 
     @property
+    def magnitude_xy(self) -> float:
+        """
+        Faster magnitude function for only 2d purposes.
+
+        """
+        return math.hypot(self._x, self._y)
+
+    @property
     def magnitude_square(self) -> float:
         x, y, z = self._x, self._y, self._z
         return x * x + y * y + z * z

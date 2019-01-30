@@ -68,6 +68,14 @@ class ConstructionBox:
         self._tainted = True
 
     @property
+    def incircle_radius(self) -> float:
+        return min(self._width, self._height) / 2.
+
+    @property
+    def circumcircle_radius(self) -> float:
+        return math.hypot(self._width, self._height) / 2.
+
+    @property
     def angle(self) -> float:
         return self._angle
 
@@ -80,6 +88,9 @@ class ConstructionBox:
     def corners(self) -> Sequence[Vector]:
         self.update()
         return self._corners
+
+    def __iter__(self):
+        return iter(self.corners)
 
     def __getitem__(self, corner: int) -> Vector:
         return self.corners[corner]
@@ -102,15 +113,54 @@ class ConstructionBox:
         self.angle += angle
 
     def is_inside(self, point: 'Vertex') -> bool:
+        point = Vector(point)
+        delta = self.center - point
         if math.isclose(self.angle, 0.):  # fast path for horizontal rectangles
-            delta = self.center - point
-            return abs(delta.x) <= self._width/2 and abs(delta.y) <= self._height/2
+            return abs(delta.x) <= (self._width / 2.) and abs(delta.y) <= (self._height / 2.)
         else:
-            p1, p2, p3, p4 = self.corners
-            point = Vector(point)
-            return all(
-                (left_of_line(point, a, b, online=True) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
-            )
+            distance = delta.magnitude_xy
+            if distance > self.circumcircle_radius:
+                return False
+            elif distance <= self.incircle_radius:
+                return True
+            else:
+                # inside if point is "left of line" of all border lines.
+                p1, p2, p3, p4 = self.corners
+                return all(
+                    (left_of_line(point, a, b, online=True) for a, b in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)])
+                )
+
+    def is_any_corner_inside(self, other: 'ConstructionBox') -> bool:
+        return any(self.is_inside(p) for p in other.corners)
+
+    def is_overlapping(self, other: 'ConstructionBox') -> bool:
+        distance = (self.center - other.center).magnitude_xy
+        max_distance = self.circumcircle_radius + other.circumcircle_radius
+        if distance > max_distance:
+            return False
+        min_distance = self.incircle_radius + other.incircle_radius
+        if distance <= min_distance:
+            return True
+
+        if self.is_any_corner_inside(other):
+            return True
+        if other.is_any_corner_inside(self):
+            return True
+        # no corner inside of any box, maybe crossing boxes?
+        # check intersection of diagonals
+        c1, c2, c3, c4 = self.corners
+        diag1 = ConstructionLine(c1, c3)
+        diag2 = ConstructionLine(c2, c4)
+
+        t1, t2, t3, t4 = other.corners
+        test_diag = ConstructionLine(t1, t3)
+        if test_diag.has_intersection(diag1) or test_diag.has_intersection(diag2):
+            return True
+        test_diag = ConstructionLine(t2, t4)
+        if test_diag.has_intersection(diag1) or test_diag.has_intersection(diag2):
+            return True
+
+        return False
 
     def border_lines(self) -> Sequence[ConstructionLine]:
         p1, p2, p3, p4 = self.corners
