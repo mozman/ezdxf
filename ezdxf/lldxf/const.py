@@ -413,11 +413,11 @@ class SortEntities:
 
 
 DIMJUST = {
+    'center': 0,
     'left': 1,
     'right': 2,
-    'center': 3,
-    'above1': 4,
-    'above2': 5,
+    'above1': 3,
+    'above2': 4,
 }
 
 DIMTAD = {

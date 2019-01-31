@@ -81,8 +81,8 @@ def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
 
 
 class DimStyleFmt:
-    DIMASZ = .125
-    DIMTSZ = .25
+    DIMASZ = .25
+    DIMTSZ = .125
     UNIT_FACTOR = {
         'm': 1,  # 1 drawing unit == 1 meter
         'dm': 10,  # 1 drawing unit == 1 decimeter
@@ -135,7 +135,7 @@ class DimStyleFmt:
         return self.DIMTSZ * self.unit_factor
 
 
-def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> None:
+def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> 'DimStyle':
     """
     Easy DimStyle setup, the `fmt` string defines four essential dimension parameters separated by the `_` character.
     Tested and works with the metric system, I don't touch the 'english unit' system.
@@ -161,12 +161,12 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
     name = name or fmt.name
     if dwg.dimstyles.has_entry(name):
         logging.debug('DimStyle "{}" already exists.'.format(name))
-        return
+        return cast('DimStyle', dwg.dimstyles.get(name))
 
     dimstyle = cast('DimStyle', dwg.dimstyles.new(name))
     dimstyle.dxf.dimtxt = fmt.height * fmt.text_factor * fmt.scale
     dimstyle.dxf.dimlfac = fmt.dimlfac  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
-    dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .2  # gap between text and dimension line
+    dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .25  # gap between text and dimension line
     dimstyle.dxf.dimtad = 1  # text above dimline
     dimstyle.dxf.dimexe = fmt.dimexe
     dimstyle.dxf.dimexo = fmt.dimexo
@@ -185,6 +185,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
         # set text style
         dimstyle.dxf.dimtxsty = style
         dimstyle.dxf.dimupt = 1  # user location override, controls both the text position and the dimension line location, same as DXF12
+    return dimstyle
 
 
 def linetypes() -> List[Tuple[str, str, Sequence[float]]]:
