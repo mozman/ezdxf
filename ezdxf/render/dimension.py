@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Tuple, Iterable
 import math
 from ezdxf.algebra import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
-from ezdxf.algebra import UCS, PassTroughUCS
+from ezdxf.algebra import UCS, PassTroughUCS, OCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
@@ -37,8 +37,6 @@ class BaseDimensionRenderer:
             self.dim_style = DimStyleOverride(dimension)
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
-        if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
-            self.dimension.dxf.extrusion = self.ucs.uz
 
         self.user_location_override = self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE,
                                                                     name='dimtype')
@@ -135,6 +133,9 @@ class BaseDimensionRenderer:
     def ocs(self, point: 'Vertex') -> Vector:
         return self.ucs.to_ocs(point)
 
+    def to_ocs_angle(self, angle: float) -> float:
+        return self.ucs.to_ocs_angle_deg(angle)
+
     def text_override(self, measurement: float) -> str:
         text = self.dimension.dxf.text
         if text == ' ':  # suppress text
@@ -162,36 +163,38 @@ class BaseDimensionRenderer:
 
     def add_blockref(self, name: str, insert: 'Vertex', rotation: float = 0,
                      scale: float = 1., dxfattribs: dict = None) -> Vector:
+        attribs = self.default_attributes()
+        insert = self.ocs(insert)
+        rotation = self.to_ocs_angle(rotation)
+        if self.requires_extrusion:
+            attribs['extrusion'] = self.ucs.uz
         if name in ARROWS:  # generates automatically BLOCK definitions for arrows if needed
-            self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=dxfattribs)
+            if dxfattribs:
+                attribs.update(dxfattribs)
+            self.block.add_arrow_blockref(name, insert=insert, size=scale, rotation=rotation, dxfattribs=attribs)
         else:
             if name not in self.drawing.blocks:
                 raise DXFUndefinedBlockError('Undefined block: "{}"'.format(name))
-
-            attribs = self.default_attributes()
             attribs['rotation'] = rotation
             if scale != 1.:
                 attribs['xscale'] = scale
                 attribs['yscale'] = scale
-            if self.requires_extrusion:
-                attribs['extrusion'] = self.ucs.uz
             if dxfattribs:
                 attribs.update(dxfattribs)
-            self.block.add_blockref(name, insert=self.ocs(insert), dxfattribs=attribs)
+            self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
             return insert
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, align='MIDDLE_CENTER',
                  dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
-        attribs['rotation'] = rotation
         attribs['style'] = self.text_style_name
         attribs['color'] = self.text_color
-
         if self.requires_extrusion:
             attribs['extrusion'] = self.ucs.uz
-            attribs['rotation'] = self.ucs.to_ocs_angle_deg(rotation)
 
         if self.supports_dxf_r2000:
+            text_direction = self.ucs.to_wcs(Vector.from_deg_angle(rotation)) - self.ucs.origin
+            attribs['text_direction'] = text_direction
             attribs['char_height'] = self.text_height
             attribs['insert'] = self.wcs(pos)
             attribs['attachment_point'] = const.MTEXT_ALIGN_FLAGS[align]
@@ -199,6 +202,7 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)
         else:
+            attribs['rotation'] = self.ucs.to_ocs_angle_deg(rotation)
             attribs['height'] = self.text_height
             if dxfattribs:
                 attribs.update(dxfattribs)
@@ -212,19 +216,15 @@ class BaseDimensionRenderer:
         for point in points:
             self.block.add_point(self.wcs(point), dxfattribs=attribs)
 
-    def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None) -> None:
-        self.add_line(p1, p2, dxfattribs)
-        self.add_line(p2, p3, dxfattribs)
-
 
 class LinearDimension(BaseDimensionRenderer):
     def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
                  override: 'DimStyleOverride' = None):
         super().__init__(dimension, block, ucs, override)
-        self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 0.)
+        self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 90)
         self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)
         self.dim_line_angle_rad = math.radians(self.dim_line_angle)
-        self.ext_line_angle = self.dim_line_angle + 90  # todo: oblique angle
+        self.ext_line_angle = self.dim_line_angle + self.oblique_angle
         self.ext_line_angle_rad = math.radians(self.ext_line_angle)
 
         if self.text_rotation is None:
@@ -259,11 +259,13 @@ class LinearDimension(BaseDimensionRenderer):
         self.dim_text_width = 0
         self.required_text_space = 0
 
-        # Relative text location override - not a DXF feature, therefor not stored in the DSTYLE data.
+        # shift text - not a DXF feature, therefore not stored in the DSTYLE data.
         # This is only a rendering effect
         # Ignored if user_defined_location is True
-        self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # in text direction
-        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # perpendicular to text direction
+        self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # shift in text direction
+        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # shift perpendicular to text direction
+        # user location override relative to dimline center?
+        self.relative_user_location = self.dim_style.pop('relative_user_location', False)
 
         if self.text:
             self.dim_text_width = self.text_width(self.text)
@@ -296,6 +298,18 @@ class LinearDimension(BaseDimensionRenderer):
         location += shift_vec.rot_z_deg(text_rotation)
         return location
 
+    def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None) -> Vector:
+        def order_points():
+            if (p1 - p2).magnitude_xy > (p1 - p3).magnitude_xy:
+                return p3, p2
+            else:
+                return p2, p3
+
+        p2, p3 = order_points()
+        self.add_line(p1, p2, dxfattribs)
+        self.add_line(p2, p3, dxfattribs)
+        return p2
+
     def render(self):
         # add measurement text
         if self.text:
@@ -303,8 +317,9 @@ class LinearDimension(BaseDimensionRenderer):
             # add leader
             if self.user_location_override and self.text_movement_rule == 1:
                 target_point = self.dim_line_start.lerp(self.dim_line_end)
-                corners = self.text_box.corners
-                self.add_leader(target_point, corners[0], corners[1])
+                p2, p3, *_ = self.text_box.corners
+                defpoint = self.add_leader(target_point, p2, p3)
+                self.dimension.dxf.text_midpoint = defpoint
 
         # add extension line 1
         if not self.suppress_ext1_line:
@@ -331,10 +346,10 @@ class LinearDimension(BaseDimensionRenderer):
         # add POINT entities at definition points
         self.add_defpoints([self.dim_line_start, self.ext1_line_start, self.ext2_line_start])
 
-        # transform ucs coordinates into WCS and OCS
-        self.defpoints_to_wcs()
+        # transform DIMENSION attributes into WCS and OCS
+        self.dimension_to_wcs()
 
-    def defpoints_to_wcs(self) -> None:
+    def dimension_to_wcs(self) -> None:
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
@@ -343,6 +358,7 @@ class LinearDimension(BaseDimensionRenderer):
         from_ucs('defpoint2', self.wcs)
         from_ucs('defpoint3', self.wcs)
         from_ucs('text_midpoint', self.ocs)
+        self.dimension.dxf.angle = self.ucs.to_wcs_angle_deg(self.dimension.dxf.angle)
 
     def add_measurement_text(self, dim_text: str, pos: Vector, rotation: float) -> None:
         attribs = {
@@ -432,18 +448,18 @@ class LinearDimension(BaseDimensionRenderer):
         }
 
         if self.tick_size > 0.:  # oblique stroke, but double the size
-            self.block.add_arrow(
+            self.add_blockref(
                 ARROWS.oblique,
                 insert=start,
                 rotation=self.dim_line_angle,
-                size=self.tick_size * 2,
+                scale=self.tick_size * 2,
                 dxfattribs=attribs,
             )
-            self.block.add_arrow(
+            self.add_blockref(
                 ARROWS.oblique,
                 insert=end,
                 rotation=self.dim_line_angle,
-                size=self.tick_size * 2,
+                scale=self.tick_size * 2,
                 dxfattribs=attribs,
             )
         else:
@@ -489,7 +505,7 @@ class LinearDimension(BaseDimensionRenderer):
             start_, end_ = extension_line(self.arrow1_name, text_is_left)
             if start_ is not None:
                 dir_vec = (start - end)
-                self.block.add_line(
+                self.add_line(
                     start + dir_vec.normalize(start_),
                     start + dir_vec.normalize(end_),
                     dxfattribs=attribs,
@@ -498,7 +514,7 @@ class LinearDimension(BaseDimensionRenderer):
             start_, end_ = extension_line(self.arrow2_name, text_is_right)
             if start_ is not None:
                 dir_vec = (end - start)
-                self.block.add_line(
+                self.add_line(
                     end + dir_vec.normalize(start_),
                     end + dir_vec.normalize(end_),
                     dxfattribs=attribs,
@@ -535,44 +551,48 @@ class LinearDimension(BaseDimensionRenderer):
         text_width = self.dim_text_width
 
         if self.user_location_override:
-            text_location = self.dimension.get_dxf_attrib('text_midpoint')
+            text_midpoint = self.dimension.get_dxf_attrib('text_midpoint')
             # ignore relative text movement: text_shift_h and text_shift_v
             if self.text_movement_rule == 0:
                 # text_location defines the text location along the dimension line
                 # vertical distance from dimension line to text midpoint, normal to the dimension line
-                vdist = self.text_vertical_distance()
+                return text_midpoint + (end - start).orthogonal().normalize(self.text_vertical_distance())
             else:  # move text freely by text_midpoint
-                return text_location
+                if self.relative_user_location:
+                    text_midpoint = self.dim_line_start.lerp(self.dim_line_end) + text_midpoint
+                    self.dimension.dxf.text_midpoint = text_midpoint
+                return text_midpoint
         else:
             if halign in (3, 4):  # positions the text above and aligned with the first/second extension line
                 vdist = self.ext_line_extension + self.arrow_size + self.text_gap + self.dim_text_width / 2.
                 hdist = self.text_gap + self.text_height / 2.
                 if halign == 3:
-                    text_location = start + (start - end).normalize(hdist)
+                    text_midpoint = start + (start - end).normalize(hdist)
                 else:
-                    text_location = end + (start - end).normalize(hdist)
+                    text_midpoint = end + (start - end).normalize(hdist)
+                # lift text location
+                vec = Vector.from_deg_angle(self.ext_line_angle).normalize(vdist)
+                text_location = text_midpoint + vec
             else:
                 # default location: above the dimension line and centered between extension lines
                 if text_outside and halign == 0:
                     halign = 2
-                text_location = start.lerp(end)
+                text_midpoint = start.lerp(end)
                 # offset = distance from extension line to text midpoint
                 hdist = self.text_gap + self.arrow_size + text_width / 2
                 vdist = self.text_vertical_distance()
                 if text_outside:
                     hdist = -(hdist + self.arrow_size)
                 if halign == 1:  # positions the text next to the first extension line
-                    text_location = start + (end - start).normalize(hdist)
+                    text_midpoint = start + (end - start).normalize(hdist)
                 elif halign == 2:  # positions the text next to the second extension line
-                    text_location = end + (start - end).normalize(hdist)
+                    text_midpoint = end + (start - end).normalize(hdist)
+                text_location = text_midpoint + (end - start).orthogonal().normalize(vdist)
 
-            self.dimension.set_dxf_attrib('text_midpoint', text_location)
+            self.dimension.set_dxf_attrib('text_midpoint', text_midpoint)
 
         self.text_outside = text_outside
         self.text_halign = halign
-
-        # lift text location
-        text_location += (end - start).orthogonal().normalize(vdist)
 
         # apply relative text movement  - not a DXF feature, only a rendering effect
         if self.has_relative_text_movement:

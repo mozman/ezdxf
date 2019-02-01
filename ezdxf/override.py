@@ -1,12 +1,13 @@
 from typing import Any, TYPE_CHECKING, Tuple
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.render.arrows import ARROWS
+from ezdxf.algebra import Vector
 import logging
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, UCS, Drawing, DimStyle
+    from ezdxf.eztypes import Dimension, UCS, Drawing, DimStyle, Vertex
 
 
 class DimStyleOverride:
@@ -69,6 +70,7 @@ class DimStyleOverride:
         Write overwritten DIMSTYLE attributes into XDATA section of the DIMENSION entity.
 
         """
+
         def set_arrow_handle(attrib_name, block_name):
             attrib_name += '_handle'
             if block_name in ARROWS:  # create all arrows on demand
@@ -208,18 +210,24 @@ class DimStyleOverride:
         """
         self.dimension.dxf.text = text
 
-    def set_relative_text_movement(self, dh: float, dv: float) -> None:
+    def shift_text(self, dh: float, dv: float) -> None:
         """
         Set relative text movement, this is not a DXF feature, therefor parameter not stored in the XDATA DSTYLE
         section. This is only a rendering effect and ignored if a user defined location is in use.
 
         Args:
-            dh: relative movement in text direction
-            dv: relative movement perpendicular to text direction
+            dh: shift text in text direction
+            dv: shift text perpendicular to text direction
 
         """
         self.dimstyle_attribs['text_shift_h'] = dh
         self.dimstyle_attribs['text_shift_v'] = dv
+
+    def set_location(self, location: 'Vertex', leader=False, relative=False):
+        self.dimstyle_attribs['dimtmove'] = 1 if leader else 2
+        self.dimension.set_flag_state(self.dimension.USER_LOCATION_OVERRIDE, state=True, name='dimtype')
+        self.dimension.dxf.text_midpoint = Vector(location)
+        self.dimstyle_attribs['relative_user_location'] = relative
 
     def get_renderer(self, ucs: 'UCS' = None):
         return self.drawing.dimension_renderer.dispatch(self, ucs)

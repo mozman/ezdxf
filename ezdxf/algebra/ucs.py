@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
+import math
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType, Vertex
@@ -180,6 +181,32 @@ class UCS:
         for point in points:
             yield ocs.from_wcs(wcs(point))
 
+    def to_wcs_angle_deg(self, angle: float) -> float:
+        """
+        Transform angle in UCS xy-plane to angle in WCS xy-plane.
+
+        Args:
+            angle: in UCS in degrees
+
+        Returns: angle in WCS in degrees
+
+        """
+        return math.degrees(self.to_wcs_angle_rad(math.radians(angle)))
+
+    def to_wcs_angle_rad(self, angle: float) -> float:
+        """
+        Transform angle in UCS xy-plane to angle in WCS xy-plane.
+
+        Args:
+            angle: in UCS in radians
+
+        Returns: angle in WCS in radians
+
+        """
+        vec = Vector.from_rad_angle(angle)
+        vec = self.to_wcs(vec) - self.origin
+        return vec.angle_rad
+
     def to_ocs_angle_deg(self, angle: float) -> float:
         """
         Transform angle in UCS xy-plane to angle in OCS xy-plane.
@@ -190,8 +217,9 @@ class UCS:
         Returns: angle in OCS in degrees
 
         """
-        direction = Vector.from_deg_angle(angle)
-        return self.to_ocs(direction).angle_deg
+        vec = Vector.from_deg_angle(angle)
+        vec = self.to_ocs(vec) - self.origin
+        return vec.angle_deg
 
     def to_ocs_angle_rad(self, angle: float) -> float:
         """
@@ -203,8 +231,9 @@ class UCS:
         Returns: angle in OCS in radians
 
         """
-        direction = Vector.from_rad_angle(angle)
-        return self.to_ocs(direction).angle_rad
+        vec = Vector.from_rad_angle(angle)
+        vec = self.to_ocs(vec) - self.origin
+        return vec.angle_rad
 
     def from_wcs(self, point: 'Vertex') -> Vector:
         """
@@ -280,6 +309,7 @@ class UCS:
 
 class PassTroughUCS(UCS):
     """ UCS is equal to the WCS and OCS (extrusion = 0, 0, 1) """
+
     def __init__(self):
         super().__init__()
 

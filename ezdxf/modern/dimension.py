@@ -47,6 +47,9 @@ dimension_subclass = DefSubclass('AcDbDimension', {
     # If null or “<>”, the dimension measurement is drawn as the text,
     # if “ “ (one blank space), the text is suppressed.
     # Anything else is drawn as the text.
+    'oblique_angle': DXFAttr(52, default=0),  # Linear dimension types with an oblique angle have an optional group
+    # code 52. When added to the rotation angle of the linear dimension (group code 50), it gives the angle of the
+    # extension lines (DXF reference error: false subclass AcDbAlignedDimension)
     'text_rotation': DXFAttr(53, default=0),  # The optional group code 53 is the rotation angle of the dimension
     # text away from its default orientation (the direction of the dimension line) (optional)
     'horizontal_direction': DXFAttr(51, default=0),  # All dimension types have an optional 51 group code, which
@@ -66,9 +69,6 @@ aligned_dimension_subclass = DefSubclass('AcDbAlignedDimension', {
     # Defpoint (10,20,30) specifies the dimension line location. The text_midpoint (11,21,31)
     # specifies the midpoint of the dimension text.
     'angle': DXFAttr(50, default=0),  # Angle of rotated, horizontal, or vertical dimensions
-    'oblique_angle': DXFAttr(52, default=0),  # Linear dimension types with an oblique angle have an optional group
-    # code 52. When added to the rotation angle of the linear dimension (group code 50), it gives the angle of the
-    # extension lines
 })
 
 rotated_dimension_subclass = DefSubclass('AcDbRotatedDimension', {

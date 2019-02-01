@@ -6,11 +6,25 @@ import pathlib
 
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
-
+from ezdxf.algebra import Vector, UCS
 
 OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
 if not OUTDIR.exists():
     OUTDIR = pathlib.Path()
+
+TEXT_ATTRIBS = {
+    'height': .25,
+    'style': 'OpenSansCondensed-Light',
+}
+
+
+def to_ocs_angle(ucs, angle):
+    # center = Vector()
+    angle_vec = Vector.from_deg_angle(angle)
+    # center_ocs = ucs.to_ocs(center)
+    angel_vec_ocs = ucs.to_ocs(angle_vec)
+    end_angle = (angel_vec_ocs - ucs.origin).angle_deg
+    return end_angle
 
 
 def linear_tutorial_R12():
@@ -37,7 +51,8 @@ def linear_tutorial_R12():
     # rotated DIMENSION without `override` uses DEFAULT_DIM_TEXT_STYLE="OPEN_SANS_CONDENSED_LIGHT"
     # angle: defines the angle of the dimension line, measurement is the distance between first and second measurement point
     # in direction of `angle`
-    dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF', override={'dimdle': 0})
+    dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF',
+                              override={'dimdle': 0})
     # Some properties have setter methods for convenience, this is also the reason for not calling dim2.render()
     # automatically.
     dim2.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
@@ -52,12 +67,49 @@ def example_for_all_text_placings_R12():
     example_for_all_text_placings(dwg, 'dim_linear_text_placing_R12.dxf')
 
 
+def example_for_all_text_placings_ucs_R12():
+    ucs = UCS(origin=(10, 10, 0), ux=(3, 1, 0), uz=(0, 0, 1))
+    dwg = ezdxf.new('R12', setup=True)
+    example_for_all_text_placings(dwg, 'dim_linear_text_placing_ucs_R12.dxf', ucs)
+
+
+def example_for_all_text_placings_in_space_R12():
+    ucs = UCS(ux=(1, 1, 0), uy=(0, 0, 1))
+    dwg = ezdxf.new('R12', setup=True)
+    example_for_all_text_placings(dwg, 'dim_linear_text_placing_in_space_R12.dxf', ucs)
+
+
 def example_for_all_text_placings_R2007():
     dwg = ezdxf.new('R2007', setup=True)
     example_for_all_text_placings(dwg, 'dim_linear_text_placing_R2007.dxf')
 
 
-def example_for_all_text_placings(dwg, filename):
+def example_for_all_text_placings_ucs_R2007():
+    ucs = UCS(origin=(10, 10, 0), ux=(3, 1, 0), uz=(0, 0, 1))
+    dwg = ezdxf.new('R2007', setup=True)
+    example_for_all_text_placings(dwg, 'dim_linear_text_placing_ucs_R2007.dxf', ucs)
+
+
+def example_for_all_text_placings_in_space_R2007():
+    ucs = UCS(ux=(1, 1, 0), uy=(0, 0, 1))
+    dwg = ezdxf.new('R2007', setup=True)
+    example_for_all_text_placings(dwg, 'dim_linear_text_placing_in_space_R2007.dxf', ucs)
+
+
+def example_for_all_text_placings(dwg, filename, ucs=None):
+    def add_text(lines, insert):
+        attribs = dict(TEXT_ATTRIBS)
+        line_space = .4
+        delta = Vector(0, line_space, 0)
+        if ucs:
+            attribs['rotation'] = ucs.to_ocs_angle_deg(0)
+            attribs['extrusion'] = ucs.uz
+
+        for line in lines:
+            location = ucs.to_ocs(insert) if ucs else insert
+            msp.add_text(line, dxfattribs=attribs).set_pos(location)
+            insert -= delta
+
     msp = dwg.modelspace()
     setup_dimstyle(dwg,
                    name='TICK',
@@ -74,44 +126,75 @@ def example_for_all_text_placings(dwg, filename):
                    blk=ezdxf.ARROWS.closed_blank,
                    )
 
-    def text(dimstyle, x, y, halign, valign):
-        attribs = {
+    def text(dimstyle, x, y, halign, valign, oblique=0):
+        override = {
             'dimdle': 0.,
             'dimexe': .5,  # length of extension line above dimension line
             'dimexo': .5,  # extension line offset
         }
-        text_attribs = {
-            'height': .25,
-            'style': 'OpenSansCondensed-Light',
-        }
+        dimattr = {}
+        if oblique:
+            dimattr['oblique_angle'] = oblique
+
         base = (x, y + 2)
         # wide
-        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 5, y), dimstyle=dimstyle, override=attribs)
+        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 5, y), dimstyle=dimstyle, override=override,
+                                 dxfattribs=dimattr)
         dim.set_align(halign=halign, valign=valign)
-        dim.render()
+        dim.render(ucs=ucs)
 
-        msp.add_text(f'halign={halign}', dxfattribs=text_attribs).set_pos((x, y))
-        msp.add_text(f'valign={valign}', dxfattribs=text_attribs).set_pos((x, y - .4))
+        add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vector(x, y))
 
         # narrow
-        dim = msp.add_linear_dim(base=base, ext1=(x + 8, y), ext2=(x + 8.3, y), dimstyle=dimstyle, override=attribs)
+        dim = msp.add_linear_dim(base=base, ext1=(x + 8, y), ext2=(x + 8.3, y), dimstyle=dimstyle, override=override,
+                                 dxfattribs=dimattr)
         dim.set_align(halign=halign, valign=valign)
-        dim.render()
+        dim.render(ucs=ucs)
 
         # narrow and force text inside
-        attribs['dimtix'] = 1
-        dim = msp.add_linear_dim(base=base, ext1=(x + 11, y), ext2=(x + 11.3, y), dimstyle=dimstyle, override=attribs)
+        override['dimtix'] = 1
+        dim = msp.add_linear_dim(base=base, ext1=(x + 11, y), ext2=(x + 11.3, y), dimstyle=dimstyle, override=override,
+                                 dxfattribs=dimattr)
         dim.set_align(halign=halign, valign=valign)
-        dim.render()
+        dim.render(ucs=ucs)
 
-    def user_text_fixed(dimstyle, x=0, y=0):
-        pass
+    def user_text_free(dimstyle, x=0, y=0, leader=False):
+        override = {
+            'dimdle': 0.,
+            'dimexe': .5,  # length of extension line above dimension line
+            'dimexo': .5,  # extension line offset
+        }
 
-    def user_text_free(dimstyle, x=0, y=0):
-        pass
+        base = (x, y + 2)
+        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 3, y), dimstyle=dimstyle, override=override)
+        location = Vector(x + 3, y + 3, 0)
+        dim.set_location(location, leader=leader)
+        dim.render(ucs=ucs)
+        add_text([f'usr absolute={location}', f'leader={leader}'], insert=Vector(x, y))
 
-    def user_text_free_leader(dimstyle, x=0, y=0):
-        pass
+        x += 4
+        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 3, y), dimstyle=dimstyle, override=override)
+        relative = Vector(-1, +1)  # relative to dimline center
+        dim.set_location(relative, leader=leader, relative=True)
+        dim.render(ucs=ucs)
+        add_text([f'usr relative={relative}', f'leader={leader}'], insert=Vector(x, y))
+
+        x += 4
+        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dh = -.7
+        dv = 1.5
+        dim.shift_text(dh, dv)
+        dim.render(ucs=ucs)
+        add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
+
+        override['dimtix'] = 1  # force text inside
+        x += 4
+        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + .3, y), dimstyle=dimstyle, override=override)
+        dh = 0
+        dv = 1
+        dim.shift_text(dh, dv)
+        dim.render(ucs=ucs)
+        add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
 
     dimstyles = ['TICK', 'ARCHTICK', 'CLOSEDBLANK']
     xoffset = 15
@@ -132,11 +215,16 @@ def example_for_all_text_placings(dwg, filename):
         text(dimstyle, x=col * xoffset, y=row * yoffset, halign='above2', valign='above')
         row += 1
 
-        user_text_fixed(dimstyle, x=col * xoffset, y=row * yoffset)
-        row += 1
         user_text_free(dimstyle, x=col * xoffset, y=row * yoffset)
         row += 1
-        user_text_free_leader(dimstyle, x=col * xoffset, y=row * yoffset)
+
+        user_text_free(dimstyle, x=col * xoffset, y=row * yoffset, leader=True)
+        row += 1
+
+        text(dimstyle, x=col * xoffset, y=row * yoffset, halign='center', valign='above', oblique=70)
+        row += 1
+
+        text(dimstyle, x=col * xoffset, y=row * yoffset, halign='above1', valign='above', oblique=80)
         row += 1
 
     dwg.saveas(OUTDIR / filename)
@@ -240,6 +328,11 @@ if __name__ == '__main__':
     linear_tutorial_R12()
     example_for_all_text_placings_R12()
     example_for_all_text_placings_R2007()
+    example_for_all_text_placings_ucs_R12()
+    example_for_all_text_placings_ucs_R2007()
+    example_for_all_text_placings_in_space_R12()
+    example_for_all_text_placings_in_space_R2007()
+
     if ALL:
         linear_all_arrow_style('R12')
         linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')
