@@ -6,10 +6,10 @@ from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
 import logging
-from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType
+from .graphics import GraphicEntity, ExtendedTags, make_attribs, DXFAttr, XType, DXFAttributes
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DimStyle, DimStyleOverride
+    from ezdxf.eztypes import DimStyle
 
 logger = logging.getLogger('ezdxf')
 
@@ -146,13 +146,17 @@ class Dimension(GraphicEntity):
     def cast(self) -> 'Dimension':  # for modern dimension lines
         return self
 
-    def set_acad_dstyle(self, data: dict, dim_style: Type['DimStyle']) -> None:
+    def dim_style_attributes(self)->'DXFAttributes':
+        return self.dim_style().DXFATTRIBS
+
+    def set_acad_dstyle(self, data: dict) -> None:
         tags = []
+        dim_style_attributes = self.dim_style_attributes()
         for key, value in data.items():
-            if key not in dim_style.DXFATTRIBS:  # ignore unknown attributes, but log
+            if key not in dim_style_attributes:  # ignore unknown attributes, but log
                 logging.debug('ignore unknown DIMSTYLE attribute: "{}"'.format(key))
                 continue
-            dxf_attr = dim_style.DXFATTRIBS.get(key)
+            dxf_attr = dim_style_attributes.get(key)
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
                 code = dxf_attr.code
                 tags.append((1070, code))

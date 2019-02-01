@@ -38,12 +38,11 @@ def test_dimstyle_override(dxf12):
     assert dimstyle['dimtxsty'] == 'TEST'
     assert dimstyle['dimexe'] == 0.777
 
-    with pytest.raises(DXFAttributeError):
-        _ = dimstyle['invalid']
+    assert dimstyle['invalid'] is None
 
-    with pytest.raises(DXFAttributeError):
-        dimstyle.update({'invalid': 0})
-
+    # ignores invalid attributes
+    dimstyle.update({'invalid': 7})
+    assert dimstyle['invalid'] == 7
     dstyle_orig = dimstyle.get_dstyle_dict()
     assert len(dstyle_orig) == 0
 

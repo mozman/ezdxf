@@ -221,7 +221,7 @@ class Dimension(dimension.Dimension, ModernGraphicEntity):
         DimClass = DimensionClasses[self.dim_type]
         return DimClass(self.tags, self.drawing)
 
-    def set_acad_dstyle(self, data: dict, dim_style) -> None:
+    def set_acad_dstyle(self, data: dict) -> None:
         if self.drawing is None:
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
         # replace virtual 'dimtxsty' attribute by 'dimtxsty_handle'
@@ -229,7 +229,7 @@ class Dimension(dimension.Dimension, ModernGraphicEntity):
             dimtxsty = data.pop(_DIMTXSTY)
             txtstyle = self.drawing.styles.get(dimtxsty)
             data['dimtxsty_handle'] = txtstyle.dxf.handle
-        super().set_acad_dstyle(data, dim_style)
+        super().set_acad_dstyle(data)
 
 
 class AlignedDimension(Dimension):

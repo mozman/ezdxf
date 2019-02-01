@@ -11,9 +11,6 @@ if TYPE_CHECKING:
 
 class DimStyleOverride:
     def __init__(self, dimension: 'Dimension', override: dict = None):
-        # DimStyle for DXF R2000 and later - local import to avoid import cycle!
-        from ezdxf.modern.tableentries import DimStyle
-        self._DIMSTYLE_CHECKER = DimStyle
         self.dimension = dimension  # type: Dimension
         dim_style_name = dimension.get_dxf_attrib('dimstyle', 'STANDARD')
         self.dimstyle = self.drawing.dimstyles.get(dim_style_name)  # type: DimStyle
@@ -28,10 +25,6 @@ class DimStyleOverride:
     def dxfversion(self) -> str:
         return self.dimension.drawing.dxfversion
 
-    def check_valid_attrib(self, name) -> None:
-        if name not in self._DIMSTYLE_CHECKER.DXFATTRIBS:
-            raise DXFAttributeError('Invalid DXF attribute "{}" for DIMSTYLE.'.format(name))
-
     def get_dstyle_dict(self) -> dict:
         return self.dimension.get_acad_dstyle(self.dimstyle)
 
@@ -42,28 +35,30 @@ class DimStyleOverride:
             # Return default value for attributes not supported by DXF R12.
             # This is a hack to use the same algorithm to render DXF R2000 and DXF R12 DIMENSION entities.
             # But the DXF R2000 attributes are not stored in the DXF R12 file!!!
+            # Does not catch invalid attributes names! Look into debug log for ignored DIMSTYLE attributes.
             try:
                 result = self.dimstyle.get_dxf_attrib(attribute, default)
             except DXFAttributeError:
-                self.check_valid_attrib(attribute)
-                # return default value for DXF R12 if valid DXF R2000 attribute
+                # return default value
                 result = default
         return result
 
+    def pop(self, attribute: str, default: Any = None) -> Any:
+        value = self.get(attribute, default)
+        # delete just from override dict
+        del self[attribute]
+        return value
+
     def update(self, attribs: dict) -> None:
-        for key, value in attribs.items():
-            self.check_valid_attrib(key)
-            self.dimstyle_attribs[key] = value
+        self.dimstyle_attribs.update(attribs)
 
     def __getitem__(self, item: str) -> Any:
         return self.get(item)
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self.check_valid_attrib(key)
         self.dimstyle_attribs[key] = value
 
     def __delitem__(self, key: str) -> None:
-        self.check_valid_attrib(key)
         try:
             del self.dimstyle_attribs[key]
         except KeyError:  # silent discard
@@ -110,7 +105,7 @@ class DimStyleOverride:
                 else:
                     set_linetype_handle(attrib_name, linetype_name)
 
-        self.dimension.set_acad_dstyle(self.dimstyle_attribs, self._DIMSTYLE_CHECKER)
+        self.dimension.set_acad_dstyle(self.dimstyle_attribs)
 
     def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None,
                    size: float = None) -> None:
@@ -188,6 +183,43 @@ class DimStyleOverride:
 
         if valign:
             self.dimstyle_attribs['dimtad'] = DIMTAD[valign.lower()]
+
+    def set_text_format(self, prefix='', postfix='', rnd=None, dec=None, suppress_zeros=None):
+        if prefix or postfix:
+            self.dimstyle_attribs['dimpost'] = prefix + '<>' + postfix
+        if rnd is not None:
+            self.dimstyle_attribs['dimrnd'] = rnd
+        if dec is not None:
+            self.dimstyle_attribs['dimdec'] = dec
+        if suppress_zeros is not None:
+            self.dimstyle_attribs['dimzin'] = suppress_zeros
+
+    def set_text(self, text='<>') -> None:
+        """
+        Set dimension text.
+
+            - text == ' ' ... suppress dimension text
+            - text == '' or '<>' ... use measured distance as dimension text
+            - else use text literally
+
+        Args:
+            text: string
+
+        """
+        self.dimension.dxf.text = text
+
+    def set_relative_text_movement(self, dh: float, dv: float) -> None:
+        """
+        Set relative text movement, this is not a DXF feature, therefor parameter not stored in the XDATA DSTYLE
+        section. This is only a rendering effect and ignored if a user defined location is in use.
+
+        Args:
+            dh: relative movement in text direction
+            dv: relative movement perpendicular to text direction
+
+        """
+        self.dimstyle_attribs['text_shift_h'] = dh
+        self.dimstyle_attribs['text_shift_v'] = dv
 
     def get_renderer(self, ucs: 'UCS' = None):
         return self.drawing.dimension_renderer.dispatch(self, ucs)

@@ -182,15 +182,18 @@ class BaseDimensionRenderer:
 
     def add_text(self, text: str, pos: 'Vertex', rotation: float, align='MIDDLE_CENTER',
                  dxfattribs: dict = None) -> None:
-        # todo: ucs to ocs
         attribs = self.default_attributes()
         attribs['rotation'] = rotation
         attribs['style'] = self.text_style_name
         attribs['color'] = self.text_color
 
+        if self.requires_extrusion:
+            attribs['extrusion'] = self.ucs.uz
+            attribs['rotation'] = self.ucs.to_ocs_angle_deg(rotation)
+
         if self.supports_dxf_r2000:
             attribs['char_height'] = self.text_height
-            attribs['insert'] = pos
+            attribs['insert'] = self.wcs(pos)
             attribs['attachment_point'] = const.MTEXT_ALIGN_FLAGS[align]
             if dxfattribs:
                 attribs.update(dxfattribs)
@@ -229,8 +232,9 @@ class LinearDimension(BaseDimensionRenderer):
             # text_outside_horizontal: not supported by ezdxf, use text_rotation attribute
             # text is aligned to dimension line
             self.text_rotation = self.dim_line_angle
-            if self.text_halign in (3, 4):  # text above extension line, rotated about 90 degrees
-                self.text_rotation += 90
+
+        if self.text_halign in (3, 4):  # text above extension line, is always aligned with extension lines
+            self.text_rotation = self.ext_line_angle
 
         self.ext1_line_start = self.dimension.dxf.defpoint2
         self.ext2_line_start = self.dimension.dxf.defpoint3
@@ -252,7 +256,15 @@ class LinearDimension(BaseDimensionRenderer):
         self.text_location = None
         self.text_box = None
         self.text_outside = False
-        self.required_text_space = None
+        self.dim_text_width = 0
+        self.required_text_space = 0
+
+        # Relative text location override - not a DXF feature, therefor not stored in the DSTYLE data.
+        # This is only a rendering effect
+        # Ignored if user_defined_location is True
+        self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # in text direction
+        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # perpendicular to text direction
+
         if self.text:
             self.dim_text_width = self.text_width(self.text)
             self.required_text_space = self.dim_text_width + 2 * (self.arrow_size + self.text_gap)
@@ -274,6 +286,15 @@ class LinearDimension(BaseDimensionRenderer):
 
         self.required_arrows_space = 2 * self.arrow_size + self.text_gap
         self.arrows_outside = self.required_arrows_space > self.measurement
+
+    @property
+    def has_relative_text_movement(self):
+        return bool(self.text_shift_h or self.text_shift_v)
+
+    def apply_relative_text_movement(self, location: Vector, text_rotation: float) -> Vector:
+        shift_vec = Vector(self.text_shift_h, self.text_shift_v)
+        location += shift_vec.rot_z_deg(text_rotation)
+        return location
 
     def render(self):
         # add measurement text
@@ -515,6 +536,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         if self.user_location_override:
             text_location = self.dimension.get_dxf_attrib('text_midpoint')
+            # ignore relative text movement: text_shift_h and text_shift_v
             if self.text_movement_rule == 0:
                 # text_location defines the text location along the dimension line
                 # vertical distance from dimension line to text midpoint, normal to the dimension line
@@ -548,9 +570,14 @@ class LinearDimension(BaseDimensionRenderer):
 
         self.text_outside = text_outside
         self.text_halign = halign
+
         # lift text location
-        ortho = (end - start).orthogonal().normalize(vdist)
-        return text_location + ortho
+        text_location += (end - start).orthogonal().normalize(vdist)
+
+        # apply relative text movement  - not a DXF feature, only a rendering effect
+        if self.has_relative_text_movement:
+            text_location = self.apply_relative_text_movement(text_location, self.text_rotation)
+        return text_location
 
 
 class DimensionRenderer:
