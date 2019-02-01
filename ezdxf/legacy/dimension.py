@@ -177,7 +177,3 @@ class Dimension(GraphicEntity):
             if group_code in codes:
                 attribs[codes[group_code]] = value
         return attribs
-
-    def dimstyle_override(self, dxfattribs: dict = None) -> 'DimStyleOverride':
-        from ezdxf.override import DimStyleOverride
-        return DimStyleOverride(self, override=dxfattribs)

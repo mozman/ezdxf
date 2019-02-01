@@ -141,15 +141,15 @@ def test_ordinate_dimline(dxf2000):
 
 def test_add_horizontal_dimline(dxf2000):
     msp = dxf2000.modelspace()
-    dimline = msp.add_linear_dim(
+    dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
         ext1=(0, 0, 0),
         ext2=(3, 0, 0),
 
     )
+    dimline = dimstyle.dimension
     assert dimline.dxf.dimstyle == 'EZDXF'
-
-    msp.render_dimension(dimline)
+    dimstyle.render()
     block_name = dimline.dxf.geometry
     assert block_name.startswith('*D')
 
@@ -162,7 +162,7 @@ def test_add_horizontal_dimline(dxf2000):
 
 def test_dimstyle_override(dxf2000):
     msp = dxf2000.modelspace()
-    dimline = msp.add_linear_dim(
+    dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
         ext1=(0, 0, 0),
         ext2=(3, 0, 0),
@@ -170,6 +170,7 @@ def test_dimstyle_override(dxf2000):
             'dimstyle': 'EZDXF',
         }
     )
+    dimline = dimstyle.dimension
     assert dimline.dxf.dimstyle == 'EZDXF'
     if 'TEST' not in dxf2000.styles:  # text style must exists
         dxf2000.styles.new('TEST')
@@ -178,7 +179,7 @@ def test_dimstyle_override(dxf2000):
         'dimtxsty': 'TEST',  # virtual attribute - 'dimtxsty_handle' stores the text style handle
         'dimexe': 0.777,
     }
-    dimstyle = dimline.dimstyle_override(preset)
+    dimstyle.update(preset)
     assert dimstyle['dimtxsty'] == 'TEST'
     assert dimstyle['dimexe'] == 0.777
 
@@ -201,20 +202,18 @@ def test_dimstyle_override(dxf2000):
 
 def test_linetype_override_R2000(dxf2000):
     msp = dxf2000.modelspace()
-    dimline = msp.add_linear_dim(
-        base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
-        dxfattribs={
-            'dimstyle': 'EZDXF',
-        }
-    )
     preset = {
         'dimltype': 'DOT',
         'dimltex1': 'DOT2',
         'dimltex2': 'DOTX2',
     }
-    dimstyle = dimline.dimstyle_override(preset)
+    dimstyle = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dimstyle='EZDXF',
+        override=preset,
+    )
     assert dimstyle['dimltype'] == 'DOT'
     assert dimstyle['dimltex1'] == 'DOT2'
     assert dimstyle['dimltex2'] == 'DOTX2'
@@ -231,20 +230,18 @@ def test_linetype_override_R2000(dxf2000):
 
 def test_linetype_override_R2007(dxf2007):
     msp = dxf2007.modelspace()
-    dimline = msp.add_linear_dim(
-        base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
-        dxfattribs={
-            'dimstyle': 'EZDXF',
-        }
-    )
     preset = {
         'dimltype': 'DOT',
         'dimltex1': 'DOT2',
         'dimltex2': 'DOTX2',
     }
-    dimstyle = dimline.dimstyle_override(preset)
+    dimstyle = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dimstyle='EZDXF',
+        override=preset,
+    )
     assert dimstyle['dimltype'] == 'DOT'
     assert dimstyle['dimltex1'] == 'DOT2'
     assert dimstyle['dimltex2'] == 'DOTX2'
@@ -262,14 +259,6 @@ def test_linetype_override_R2007(dxf2007):
 
 def test_dimstyle_override_arrows(dxf2000):
     msp = dxf2000.modelspace()
-    dimline = msp.add_linear_dim(
-        base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
-        dxfattribs={
-            'dimstyle': 'EZDXF',
-        }
-    )
     arrows = ezdxf.ARROWS
     blocks = dxf2000.blocks
 
@@ -291,8 +280,13 @@ def test_dimstyle_override_arrows(dxf2000):
         'dimblk2': arrows.closed,
         'dimldrblk': arrows.closed_filled,  # virtual attribute
     }
-
-    dimstyle = dimline.dimstyle_override(preset)
+    dimstyle = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dimstyle='EZDXF',
+        override=preset,
+    )
     # still as block names stored
     assert dimstyle['dimblk'] == arrows.dot_blank
     assert dimstyle['dimblk1'] == arrows.box

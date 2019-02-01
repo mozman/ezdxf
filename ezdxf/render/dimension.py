@@ -10,9 +10,10 @@ from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
+from ezdxf.override import DimStyleOverride
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, DimStyleOverride
+    from ezdxf.eztypes import Dimension, BlockLayout, Vertex
 
 
 class TextBox(ConstructionBox):
@@ -22,9 +23,9 @@ class TextBox(ConstructionBox):
         super().__init__(center, width, height, angle)
 
 
-class DimensionBase:
+class BaseDimensionRenderer:
     def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
-                 override: 'DimStyleOverride' = None):
+                 override: DimStyleOverride = None):
         self.drawing = dimension.drawing
         self.dimension = dimension
         self.dxfversion = self.drawing.dxfversion
@@ -33,7 +34,7 @@ class DimensionBase:
         if override:
             self.dim_style = override
         else:
-            self.dim_style = self.dimension.dimstyle_override()
+            self.dim_style = DimStyleOverride(dimension)
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
         if self.requires_extrusion:  # set extrusion vector of DIMENSION entity
@@ -107,6 +108,9 @@ class DimensionBase:
         self.ext_line_offset = get('dimexo', 0.) * self.dim_scale
         self.ext_line_fixed = bool(get('dimexfix', False))
         self.ext_line_length = get('dimexlen', self.ext_line_extension) * self.dim_scale
+
+    def render(self):  # interface definition
+        pass
 
     @property
     def char_height(self) -> float:
@@ -210,7 +214,7 @@ class DimensionBase:
         self.add_line(p2, p3, dxfattribs)
 
 
-class LinearDimension(DimensionBase):
+class LinearDimension(BaseDimensionRenderer):
     def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
                  override: 'DimStyleOverride' = None):
         super().__init__(dimension, block, ucs, override)
@@ -550,24 +554,25 @@ class LinearDimension(DimensionBase):
 
 
 class DimensionRenderer:
-    def dispatch(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None) -> None:
-        dwg = dimension.drawing
+    def dispatch(self, override: 'DimStyleOverride', ucs: 'UCS') -> BaseDimensionRenderer:
+        dimension = override.dimension
+        dwg = override.drawing
         block = dwg.blocks.new_anonymous_block(type_char='D')
         dimension.dxf.geometry = block.name
         dim_type = dimension.dim_type
 
         if dim_type in (0, 1):
-            self.linear(dimension, block, ucs, override)
+            return self.linear(dimension, block, ucs, override)
         elif dim_type == 2:
-            self.angular(dimension, block, ucs, override)
+            return self.angular(dimension, block, ucs, override)
         elif dim_type == 3:
-            self.diameter(dimension, block, ucs, override)
+            return self.diameter(dimension, block, ucs, override)
         elif dim_type == 4:
-            self.radius(dimension, block, ucs, override)
+            return self.radius(dimension, block, ucs, override)
         elif dim_type == 5:
-            self.angular3p(dimension, block, ucs, override)
+            return self.angular3p(dimension, block, ucs, override)
         elif dim_type == 6:
-            self.ordinate(dimension, block, ucs, override)
+            return self.ordinate(dimension, block, ucs, override)
         else:
             raise DXFValueError("Unknown DIMENSION type: {}".format(dim_type))
 
@@ -575,8 +580,7 @@ class DimensionRenderer:
         """
         Call renderer for linear dimension lines: horizontal, vertical and rotated
         """
-        render = LinearDimension(dimension, block, ucs, override)
-        render.render()
+        return LinearDimension(dimension, block, ucs, override)
 
     def angular(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented

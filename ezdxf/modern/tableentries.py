@@ -1,7 +1,7 @@
 # Created: 16.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Union, cast, Tuple, Optional
+from typing import TYPE_CHECKING, Iterable, Union, cast, Optional
 import logging
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags

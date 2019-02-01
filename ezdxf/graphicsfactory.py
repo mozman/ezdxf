@@ -8,6 +8,7 @@ from ezdxf.lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.algebra import Vector
 from ezdxf.algebra import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
+from ezdxf.override import DimStyleOverride
 
 if TYPE_CHECKING:  # import forward references
     from eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
@@ -453,14 +454,6 @@ class GraphicsFactory:
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 
-    def render_dimension(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None) -> None:
-        dwg = cast('Drawing', self.drawing)
-        dwg.dimension_renderer.dispatch(dimension, ucs, override)
-
-        # write override values into dimension entity
-        if override:
-            override.commit()
-
     def add_linear_dim(self,
                        base: 'Vertex',
                        ext1: 'Vertex',
@@ -470,7 +463,8 @@ class GraphicsFactory:
                        text: str = "<>",
                        angle: float = 0,  # 0=horizontal, 90=vertical, else=rotated
                        text_rotation: float = None,
-                       dxfattribs: dict = None) -> 'Dimension':
+                       override: dict = None,
+                       dxfattribs: dict = None) -> DimStyleOverride:
         """
         Horizontal, vertical and rotated dimension line. If an UCS is used for dimension line rendering, all point
         definitions in UCS coordinates, translation into WCS and OCS is done by the rendering function. Manual set
@@ -491,6 +485,7 @@ class GraphicsFactory:
             angle: angle from ucs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text away from its default orientation
                            (the direction of the dimension line) in degrees
+            override: DIMSTYLE override attributes
             dxfattribs: DXF attributes for DIMENSION entity
 
         """
@@ -510,45 +505,52 @@ class GraphicsFactory:
         if text_rotation is not None:
             dxfattribs['text_rotation'] = float(text_rotation)
         dimline.update_dxf_attribs(dxfattribs)
-        return dimline
+
+        style = DimStyleOverride(dimline, override=override)
+        return style
 
     # def add_aligned_dim(self, dxfattribs: dict = None) -> 'Dimension': dxfattribs = copy_attribs(dxfattribs))
     # don't understand the difference between aligned and linear yet!
 
-    def add_angular_dim(self, dxfattribs: dict = None) -> 'Dimension':
+    def add_angular_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
         type_ = {'dimtype': const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
-        return dimline
+        style = DimStyleOverride(dimline, override=override)
+        return style
 
-    def add_diameter_dim(self, dxfattribs: dict = None) -> 'Dimension':
+    def add_diameter_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
         type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
-        return dimline
+        style = DimStyleOverride(dimline, override=override)
+        return style
 
-    def add_radius_dim(self, dxfattribs: dict = None) -> 'Dimension':
+    def add_radius_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
         type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
-        return dimline
+        style = DimStyleOverride(dimline, override=override)
+        return style
 
-    def add_angular_3p_dim(self, dxfattribs: dict = None) -> 'Dimension':
+    def add_angular_3p_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
         type_ = {'dimtype': const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
-        return dimline
+        style = DimStyleOverride(dimline, override=override)
+        return style
 
-    def add_ordinate_dim(self, dxfattribs: dict = None) -> 'Dimension':
+    def add_ordinate_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
         type_ = {'dimtype': const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.build_and_add_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = copy_attribs(dxfattribs)
         dimline.update_dxf_attribs(dxfattribs)
-        return dimline
+        style = DimStyleOverride(dimline, override=override)
+        return style
 
     def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,
                   dxfattribs: dict = None) -> Vector:

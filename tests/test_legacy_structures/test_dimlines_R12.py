@@ -18,7 +18,7 @@ def test_dimstyle_standard_exist(dxf12):
 
 def test_dimstyle_override(dxf12):
     msp = dxf12.modelspace()
-    dimline = msp.add_linear_dim(
+    dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
         ext1=(0, 0, 0),
         ext2=(3, 0, 0),
@@ -26,6 +26,7 @@ def test_dimstyle_override(dxf12):
             'dimstyle': 'EZDXF',
         }
     )
+    dimline = dimstyle.dimension
     assert dimline.dxf.dimstyle == 'EZDXF'
 
     preset = {
@@ -33,7 +34,7 @@ def test_dimstyle_override(dxf12):
         'dimexe': 0.777,
         'dimblk': ezdxf.ARROWS.dot_blank
     }
-    dimstyle = dimline.dimstyle_override(preset)
+    dimstyle.update(preset)
     assert dimstyle['dimtxsty'] == 'TEST'
     assert dimstyle['dimexe'] == 0.777
 
@@ -61,13 +62,6 @@ def test_dimstyle_override(dxf12):
 
 def test_dimstyle_override_arrows(dxf12):
     msp = dxf12.modelspace()
-    dimline = msp.add_linear_dim(
-        base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
-        dxfattribs={'dimstyle': 'EZDXF', }
-    )
-
     preset = {
         'dimblk': 'XYZ',
         'dimblk1': 'ABC',
@@ -75,7 +69,15 @@ def test_dimstyle_override_arrows(dxf12):
         'dimldrblk': 'ZZZLDR',  # not supported by DXF12, but used by ezdxf for rendering
 
     }
-    dimstyle = dimline.dimstyle_override(preset)
+
+    dimstyle = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dimstyle='EZDXF',
+        override=preset,
+    )
+
     assert dimstyle['dimblk'] == 'XYZ'
     assert dimstyle['dimblk1'] == 'ABC'
     assert dimstyle['dimblk2'] == 'DEF'
@@ -107,19 +109,18 @@ def test_dimstyle_override_arrows(dxf12):
 
 def test_dimstyle_override_linetypes(dxf12):
     msp = dxf12.modelspace()
-    dimline = msp.add_linear_dim(
-        base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
-        dxfattribs={'dimstyle': 'EZDXF', }
-    )
-
     preset = {
         'dimltype': 'DOT',
         'dimltex1': 'DOT2',
         'dimltex2': 'DOTX2',
     }
-    dimstyle = dimline.dimstyle_override(preset)
+    dimstyle = msp.add_linear_dim(
+        base=(3, 2, 0),
+        ext1=(0, 0, 0),
+        ext2=(3, 0, 0),
+        dimstyle='EZDXF',
+        override=preset,
+    )
     assert dimstyle['dimltype'] == 'DOT'
     assert dimstyle['dimltex1'] == 'DOT2'
     assert dimstyle['dimltex2'] == 'DOTX2'
@@ -136,15 +137,15 @@ def test_dimstyle_override_linetypes(dxf12):
 
 def test_horizontal_dimline(dxf12):
     msp = dxf12.modelspace()
-    dimline = msp.add_linear_dim(
+    dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
         ext1=(0, 0, 0),
         ext2=(3, 0, 0),
-
     )
+    dimline = dimstyle.dimension
     assert dimline.dxf.dimstyle == 'EZDXF'
 
-    msp.render_dimension(dimline)
+    dimstyle.render()
     block_name = dimline.dxf.geometry
     assert block_name.startswith('*D')
 
@@ -177,4 +178,3 @@ def test_format_text():
     with pytest.raises(DXFValueError):
         _ = format_text(-0.51, dimpost='<')
     assert format_text(-1.23, raisedec=True) == '-1²³'
-

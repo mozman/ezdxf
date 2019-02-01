@@ -20,9 +20,6 @@ def test_linear_dimline_all_arrow_style(drawing, tmpdir):
 
     for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
         y = index * 4
-
-        dim = msp.add_linear_dim(base=(3, y + 2), ext1=(0, y), ext2=(3, y), dimstyle='EZDXF')
-
         attributes = {
             'dimtxsty': 'LiberationMono',
             'dimblk': name,
@@ -30,8 +27,9 @@ def test_linear_dimline_all_arrow_style(drawing, tmpdir):
             'dimdle': 0.5,
             'dimasz': .25,
         }
-        style = dim.dimstyle_override(attributes)
-        msp.render_dimension(dim, override=style)
+
+        dim = msp.add_linear_dim(base=(3, y + 2), ext1=(0, y), ext2=(3, y), dimstyle='EZDXF', override=attributes)
+        dim.render()
 
     filename = str(tmpdir.join('all_dimline_styles_{}.dxf'.format(drawing.dxfversion)))
     try:

@@ -226,10 +226,9 @@ class Dimension(dimension.Dimension, ModernGraphicEntity):
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
         # replace virtual 'dimtxsty' attribute by 'dimtxsty_handle'
         if _DIMTXSTY in data:
-            dimtxsty = data[_DIMTXSTY]
+            dimtxsty = data.pop(_DIMTXSTY)
             txtstyle = self.drawing.styles.get(dimtxsty)
             data['dimtxsty_handle'] = txtstyle.dxf.handle
-            del data[_DIMTXSTY]
         super().set_acad_dstyle(data, dim_style)
 
 
