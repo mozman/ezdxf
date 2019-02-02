@@ -3,11 +3,11 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
-from math import pi, sin, cos, radians, tan
-from ezdxf.algebra import Vector, Matrix44
-from ezdxf.algebra.base import is_close_points, is_close
-from ezdxf.algebra.bspline import bspline_control_frame
-from ezdxf.algebra.eulerspiral import EulerSpiral
+from math import pi, sin, cos, radians, tan, isclose
+from ezdxf.ezmath import Vector, Matrix44
+from ezdxf.ezmath.base import is_close_points
+from ezdxf.ezmath.bspline import bspline_control_frame
+from ezdxf.ezmath.eulerspiral import EulerSpiral
 from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
 
 if TYPE_CHECKING:
@@ -315,7 +315,7 @@ def cylinder(count: int, radius: float = 1., top_radius: float = None, top_cente
     if top_radius is None:
         top_radius = radius
 
-    if is_close(top_radius, 0.):  # pyramid/cone
+    if isclose(top_radius, 0.):  # pyramid/cone
         return cone(count=count, radius=radius, apex=top_center)
 
     base_profile = list(circle(count, radius, close=True))

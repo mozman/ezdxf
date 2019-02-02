@@ -13,7 +13,7 @@ from ezdxf.lldxf import const
 from ezdxf.tools.pattern import PATTERN  # acad standard pattern definitions
 from ezdxf.tools.rgb import rgb2int, int2rgb
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError
-from ezdxf.algebra.bspline import bspline_control_frame
+from ezdxf.ezmath.bspline import bspline_control_frame
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 

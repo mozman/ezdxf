@@ -100,11 +100,11 @@ Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 """
 from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf import const
-from ezdxf.algebra.bspline import BSpline, BSplineClosed
+from ezdxf.ezmath.bspline import BSpline, BSplineClosed
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Polyline
-    from ezdxf.algebra.ucs import UCS
+    from ezdxf.ezmath.ucs import UCS
 
 
 class R12Spline:

@@ -74,7 +74,7 @@ Given a unit-length vector to be used as the Z axis of a coordinate system, the 
 corresponding X axis for the coordinate system. The Y axis follows by application of the right-hand rule.
 
 We are looking for the arbitrary X and Y axes to go with the normal Az (the arbitrary Z axis).
-They will be called Ax and Ay (using :class:`~ezdxf.algebra.Vector`)::
+They will be called Ax and Ay (using :class:`~ezdxf.ezmath.Vector`)::
 
     Az = Vector(entity.dxf.extrusion).normalize()  # normal (extrusion) vector
     # Extrusion vector normalization should not be necessary, but don't rely on any DXF content

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 from contextlib import contextmanager
 import math
 
-from ezdxf.algebra.vector import Vector
+from ezdxf.ezmath.vector import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags

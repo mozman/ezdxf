@@ -4,7 +4,7 @@
 # License: MIT License
 import ezdxf
 import pathlib
-from ezdxf.algebra import UCS
+from ezdxf.ezmath import UCS
 
 OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
 

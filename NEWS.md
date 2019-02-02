@@ -10,7 +10,7 @@ Version 0.9a4 - dev
 - NEW: testing on Manjaro Linux in a VM by tox
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
-  and too undocumented to support importing data in a reliable way - using Importer() may corrupt your DXF files or just 
+  and too undocumented to support importing data in a reliable way - using `Importer()` may corrupt your DXF files or just 
   don't work!
 - NEW: Type annotations to core package and add-ons.
 - NEW: Argument `setup` in `ezdxf.new('R12', setup=True)` to setup default line types, text styles and dimension styles, 
@@ -19,18 +19,22 @@ Version 0.9a4 - dev
   all tables, but is intended to duplicate STYLES and DIMSTYLES.
 - CHANGED: replaced proprietary fonts in style declarations by open source fonts
 - NEW: open source fonts to download https://github.com/mozman/ezdxf/tree/master/fonts
-- __Open Sans Condensed__ font used for default dimension styles
-- NEW: subpackage ezdxf.render, because of DIMENSION rendering
+- __OpenSansCondensed-Light__ font used for default dimension styles
+- NEW: subpackage `ezdxf.render`, because of DIMENSION rendering
 - NEW: Support for AutoCAD standard arrows 
-- CHANGE: moved addons.curves to render.curves
-- CHANGE: moved addons.mesh to render.mesh
-- CHANGE: moved addons.r12spline to render.r12spline
-- CHANGE: moved addons.forms to render.forms
-- CHANGE: renamed construction helper classes into Construction...()
-  - Ray2D() renamed to ConstructionRay()
-  - Circle() renamed to ConstructionCircle()
-  - Arc() renamed to ConstructionArc()
+- CHANGE: renamed subpackage `ezdxf.algebra` to `ezdxf.ezmath` (just `math` causes false errors in pycharm)
+- CHANGE: moved `addons.curves` to `render.curves`
+- CHANGE: moved `addons.mesh` to `render.mesh`
+- CHANGE: moved `addons.r12spline` to `render.r12spline`
+- CHANGE: moved `addons.forms` to `render.forms`
+- CHANGE: renamed construction helper classes into Cx...()
+  - `Ray2D()` renamed to `ConstructionRay()`
+  - `Circle()` renamed to `ConstructionCircle()`
+  - `Arc()` renamed to `ConstructionArc()`
+- REMOVED: `almost_equal` use `math.isclose`
+- REMOVED: `almost_equal_points` use `ezdxf.ezmath.is_close_points`
 - BUGFIX: closed LWPOLYLINE did not work in AutoCAD (tag order matters), introduced with v0.8.9 packed data structure
+- BUGFIX: `UCS.to_ocs_angle_deg()` corrected
 
 Version 0.8.9 - 2018-11-28
 --------------------------

@@ -14,8 +14,8 @@ from typing import *
 
 if TYPE_CHECKING:
     # Low level stuff
-    from ezdxf.algebra.vector import Vector
-    from ezdxf.algebra.matrix44 import Matrix44
+    from ezdxf.ezmath.vector import Vector
+    from ezdxf.ezmath.matrix44 import Matrix44
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
     from ezdxf.lldxf.attributes import XType, DXFAttr

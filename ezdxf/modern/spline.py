@@ -9,7 +9,7 @@ from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf.packedtags import TagArray, VertexArray
-from ezdxf.algebra.bspline import knot_uniform, knot_open_uniform
+from ezdxf.ezmath.bspline import knot_uniform, knot_open_uniform
 from ezdxf.lldxf import loader
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity

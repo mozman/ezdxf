@@ -1,7 +1,7 @@
 from typing import Any, TYPE_CHECKING, Tuple
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.render.arrows import ARROWS
-from ezdxf.algebra import Vector
+from ezdxf.ezmath import Vector
 import logging
 
 logger = logging.getLogger('ezdxf')

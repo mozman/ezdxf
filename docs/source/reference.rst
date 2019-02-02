@@ -135,18 +135,18 @@ Fast DXF R12 File/Stream Writer
 
    r12writer
 
-Algebra Utilities
------------------
+Math Utilities
+--------------
 
 .. toctree::
    :maxdepth: 1
 
-   algebra/functions
-   algebra/ocs_ucs
-   algebra/vector
-   algebra/matrix44
-   algebra/bspline
-   algebra/arc
+   math/functions
+   math/ocs_ucs
+   math/vector
+   math/matrix44
+   math/bspline
+   math/arc
 
 Tag Data Structures
 -------------------

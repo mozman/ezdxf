@@ -4,7 +4,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.render import R12Spline
-from ezdxf.algebra import Vector, Matrix44, UCS, OCS
+from ezdxf.ezmath import Vector, Matrix44, UCS, OCS
 
 next_frame = Matrix44.translate(0, 7, 0)
 

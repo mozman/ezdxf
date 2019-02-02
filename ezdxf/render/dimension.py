@@ -3,8 +3,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable
 import math
-from ezdxf.algebra import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
-from ezdxf.algebra import UCS, PassTroughUCS, OCS
+from ezdxf.ezmath import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
+from ezdxf.ezmath import UCS, PassTroughUCS, OCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
@@ -358,7 +358,7 @@ class LinearDimension(BaseDimensionRenderer):
         from_ucs('defpoint2', self.wcs)
         from_ucs('defpoint3', self.wcs)
         from_ucs('text_midpoint', self.ocs)
-        self.dimension.dxf.angle = self.ucs.to_wcs_angle_deg(self.dimension.dxf.angle)
+        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
 
     def add_measurement_text(self, dim_text: str, pos: Vector, rotation: float) -> None:
         attribs = {

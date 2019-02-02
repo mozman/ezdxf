@@ -3,7 +3,7 @@
 import math
 import ezdxf
 from ezdxf.addons import MengerSponge
-from ezdxf.algebra.matrix44 import Matrix44
+from ezdxf.ezmath.matrix44 import Matrix44
 
 
 def write(filename, sponge, merge=False):

@@ -25,8 +25,8 @@ from typing import Any, Dict, TYPE_CHECKING, Iterable, List, Tuple
 from math import radians, degrees, pi
 from abc import abstractmethod
 
-from ezdxf.algebra.vector import Vector, distance, lerp
-from ezdxf.algebra.ray import ConstructionRay
+from ezdxf.ezmath.vector import Vector, distance, lerp
+from ezdxf.ezmath.line import ConstructionRay
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, GenericLayoutType, Vertex

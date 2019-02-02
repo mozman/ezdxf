@@ -3,7 +3,7 @@
 
 # include-start
 import ezdxf
-from ezdxf.algebra import UCS, Vector
+from ezdxf.ezmath import UCS, Vector
 
 dwg = ezdxf.new('R2010')
 msp = dwg.modelspace()

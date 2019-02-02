@@ -2,7 +2,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
-from ezdxf.algebra.vector import Vector
+from ezdxf.ezmath.vector import Vector
 from .forms import open_arrow, arrow2
 from .shape import Shape
 

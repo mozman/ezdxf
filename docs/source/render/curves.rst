@@ -102,23 +102,23 @@ someone needs it some day.
 
 .. method:: R12Spline.render(layout, segments=40, ucs=None, dxfattribs=None)
 
-    Renders the B-spline into *layout* as 2D :class:`Polyline` entity. Use an :class:`~ezdxf.algebra.UCS` to place the
+    Renders the B-spline into *layout* as 2D :class:`Polyline` entity. Use an :class:`~ezdxf.ezmath.UCS` to place the
     2D spline in 3D space, see :meth:`R12Spline.approximate` for more information.
 
     :param layout:  ezdxf :class:`Layout`
     :param segments: count of line segments to use, vertex count is segments+1
-    :param ucs: :class:`~ezdxf.algebra.UCS` definition, control points in ucs coordinates.
+    :param ucs: :class:`~ezdxf.ezmath.UCS` definition, control points in ucs coordinates.
     :param dxfattribs: DXF attributes for :class:`Polyline`
     :returns: the :class:`Polyline` object
 
 .. method:: R12Spline.approximate(segments=40, ucs=None)
 
     :param segments: count of line segments to use, vertex count is segments+1
-    :param ucs: :class:`~ezdxf.algebra.UCS` definition, control points in ucs coordinates.
-    :returns: list of vertices in :class:`~ezdxf.algebra.OCS` as :class:`~ezdxf.algebra.Vector` objects
+    :param ucs: :class:`~ezdxf.ezmath.UCS` definition, control points in ucs coordinates.
+    :returns: list of vertices in :class:`~ezdxf.ezmath.OCS` as :class:`~ezdxf.ezmath.Vector` objects
 
     Approximate B-spline by a polyline with *segments* line segments. If *ucs* is not None, ucs defines an
-    :class:`~ezdxf.algebra.UCS`, to transformed the curve into :ref:`OCS`. The control points are placed in this UCS
+    :class:`~ezdxf.ezmath.UCS`, to transformed the curve into :ref:`OCS`. The control points are placed in this UCS
     xy-plane, you shouldn't use z-axis coordinates, if so make sure all control points are a plane parallel to the OCS
     base plane (UCS xy-plane), else the result is unpredictable and depends on the used CAD application (may be crash).
 
@@ -176,7 +176,7 @@ Render `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_ as 3D :class
     :param layout: ezdxf :class:`Layout` object
     :param length: length measured along the spiral curve from its initial position
     :param segments: count of line segments to use, vertex count is segments+1
-    :param matrix: transformation matrix as :class:`~ezdxf.algebra.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
 
 .. method:: EulerSpiral.render_spline(layout, length=1, fit_points=10, degree=3, matrix=None, dxfattribs=None)
@@ -187,5 +187,5 @@ Render `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_ as 3D :class
     :param length: length measured along the spiral curve from its initial position
     :param fit_points: count of spline fit points to use
     :param degree: degree of spline
-    :param matrix: transformation matrix as :class:`~ezdxf.algebra.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}

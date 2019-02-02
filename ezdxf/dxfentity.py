@@ -8,7 +8,7 @@ from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 
 from ezdxf.tools import set_flag_state
-from ezdxf.algebra import OCS
+from ezdxf.ezmath import OCS
 
 if TYPE_CHECKING:  # import forward dependencies
     from eztypes import TagValue, IterableTags, DXFAttr, DXFDictionary

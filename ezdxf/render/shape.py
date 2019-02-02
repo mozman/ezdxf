@@ -2,7 +2,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import math
-from ezdxf.algebra import Vector
+from ezdxf.ezmath import Vector
 from typing import Union, Iterable, List, Sequence
 Vertex = Union[Vector, Sequence[float]]
 

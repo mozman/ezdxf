@@ -2,7 +2,7 @@
 # License: MIT License
 import random
 import ezdxf
-from ezdxf.algebra import Vector
+from ezdxf.ezmath import Vector
 from ezdxf.lldxf.const import SortEntities
 
 

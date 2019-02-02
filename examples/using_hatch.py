@@ -3,7 +3,7 @@
 # Copyright (c) 2015 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.algebra.bspline import knot_uniform, bspline_control_frame
+from ezdxf.ezmath.bspline import knot_uniform, bspline_control_frame
 from ezdxf.lldxf import const
 
 

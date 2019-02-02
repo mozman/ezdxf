@@ -9,7 +9,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError, DXFKeyError
 from ezdxf.render.arrows import ARROWS
-from ezdxf.algebra.ucs import UCS as UserCoordinateSystem
+from ezdxf.ezmath.ucs import UCS as UserCoordinateSystem
 import logging
 
 logger = logging.getLogger('ezdxf')

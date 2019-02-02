@@ -26,14 +26,14 @@ passed to AutoCAD commands, including those returned from AutoLISP routines and 
 current UCS. As far as I know, all coordinates stored in DXF files are always WCS or OCS never UCS.
 
 User defined coordinate systems are not just helpful for interactive CAD, therefore ezdxf provides a converter class
-:class:`~ezdxf.algebra.UCS` to translate coordinates from UCS into WCS and vice versa, but always remember: store only
+:class:`~ezdxf.ezmath.UCS` to translate coordinates from UCS into WCS and vice versa, but always remember: store only
 WCS or OCS coordinates in DXF files, because there is no method to determine which UCS was active or used to create UCS
 coordinates.
 
 .. seealso::
 
     - Table entry :class:`UCS`
-    - :class:`ezdxf.algebra.UCS` - converter between WCS and UCS
+    - :class:`ezdxf.ezmath.UCS` - converter between WCS and UCS
 
 .. _OCS:
 
@@ -58,7 +58,7 @@ OCS differ from WCS only if extrusion != (0, 0, 1), convert OCS into WCS::
 .. seealso::
 
     - :ref:`Object Coordinate System` - deeper insights into OCS
-    - :class:`ezdxf.algebra.OCS` - converter between WCS and OCS
+    - :class:`ezdxf.ezmath.OCS` - converter between WCS and OCS
 
 .. _DCS:
 

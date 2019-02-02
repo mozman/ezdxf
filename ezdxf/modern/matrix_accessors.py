@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag
-from ezdxf.algebra.matrix44 import Matrix44
+from ezdxf.ezmath.matrix44 import Matrix44
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Tags
