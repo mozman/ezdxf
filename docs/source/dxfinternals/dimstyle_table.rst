@@ -486,8 +486,10 @@ The following DIMVARS are **not documented** in the `DXF Reference`_ by Autodesk
 =================== ======= ============================================================================================
 DIMVAR              Code    Description
 =================== ======= ============================================================================================
-DIMEXFIX            290     Extension line has fixed length if set to 1
-DIMEXLEN            49      Length of extension line below dimension line if fixed (DIMEXFIX is 1), DIMEXE defines the
+DIMTFILL            69      Text fill 0=off; 1=background color; 2=custom color (see DIMTFILLCLR)
+DIMTFILLCLR         70      Text fill custom color
+DIMFXLON            290     Extension line has fixed length if set to 1
+DIMFXL              49      Length of extension line below dimension line if fixed (DIMFXLON is 1), DIMEXE defines the
                             the length above the dimension line
 DIMLTYPE_HANDLE     345     Specifies the LINETYPE of the dimension line. Handle to LTYPE table entry
 DIMLTEX1_HANDLE     346     Specifies the LINETYPE of the extension line 1. Handle to LTYPE table entry

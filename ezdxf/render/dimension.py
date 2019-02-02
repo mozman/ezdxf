@@ -11,6 +11,7 @@ from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.override import DimStyleOverride
+from ezdxf import rgb2int
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BlockLayout, Vertex
@@ -65,7 +66,8 @@ class BaseDimensionRenderer:
         self.text_suppress_zeros = get('dimzin', 0)
         self.text_decimal_separator = self.dim_style.get('dimdsep', '.')
         self.text_format = self.dim_style.get('dimpost', '<>')
-
+        self.text_fill = self.dim_style.get('dimtfill', 0)
+        self.text_fill_color = self.dim_style.get('dimtfillclr', 1)
         # text_halign = 0: center; 1: left; 2: right; 3: above ext1; 4: above ext2
         self.text_halign = get('dimjust', 0)
 
@@ -104,8 +106,8 @@ class BaseDimensionRenderer:
         self.suppress_ext2_line = bool(get('dimse2', False))
         self.ext_line_extension = get('dimexe', 0.) * self.dim_scale
         self.ext_line_offset = get('dimexo', 0.) * self.dim_scale
-        self.ext_line_fixed = bool(get('dimexfix', False))
-        self.ext_line_length = get('dimexlen', self.ext_line_extension) * self.dim_scale
+        self.ext_line_fixed = bool(get('dimflxon', False))
+        self.ext_line_length = get('dimflx', self.ext_line_extension) * self.dim_scale
 
     def render(self):  # interface definition
         pass
@@ -198,6 +200,18 @@ class BaseDimensionRenderer:
             attribs['char_height'] = self.text_height
             attribs['insert'] = self.wcs(pos)
             attribs['attachment_point'] = const.MTEXT_ALIGN_FLAGS[align]
+
+            if self.dxfversion >= 'AC1021':
+                if self.text_fill == 1:
+                    attribs['box_fill_scale'] = 1.1
+                    attribs['bg_fill'] = 3  # use true color
+                    attribs['bg_fill_color'] = 7  # required but ignored
+                    attribs['bg_fill_true_color'] = rgb2int((200, 200, 200))  # used by BricsCAD
+                elif self.text_fill == 2:
+                    attribs['box_fill_scale'] = 1.1
+                    attribs['bg_fill'] = 1
+                    attribs['bg_fill_color'] = self.text_fill_color
+
             if dxfattribs:
                 attribs.update(dxfattribs)
             self.block.add_mtext(text, dxfattribs=attribs)

@@ -27,8 +27,8 @@ def to_ocs_angle(ucs, angle):
     return end_angle
 
 
-def linear_tutorial_R12():
-    dwg = ezdxf.new('R12', setup=True)
+def linear_tutorial(dxfversion='R12'):
+    dwg = ezdxf.new(dxfversion, setup=True)
     msp = dwg.modelspace()
     msp.add_line((0, 0), (3, 0))
 
@@ -52,14 +52,40 @@ def linear_tutorial_R12():
     # angle: defines the angle of the dimension line, measurement is the distance between first and second measurement point
     # in direction of `angle`
     dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF',
-                              override={'dimdle': 0})
+                              override={
+                                  'dimdle': 0,
+                                  'dimtfill': 2,  # custom text fill
+                                  'dimtfillclr': 4,  # cyan
+                              })
     # Some properties have setter methods for convenience, this is also the reason for not calling dim2.render()
     # automatically.
     dim2.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
     dim2.set_align(halign='right')
     dim2.render()
 
-    dwg.saveas(OUTDIR / 'dim_linear_R12_tutorial.dxf')
+    dwg.saveas(OUTDIR / f'dim_linear_{dxfversion}_tutorial.dxf')
+
+
+def example_background_fill(dxfversion='R12'):
+    dwg = ezdxf.new(dxfversion, setup=True)
+    msp = dwg.modelspace()
+    msp.add_line((0, 2.2), (10, 2.2))
+
+    dim = msp.add_linear_dim(base=(0, 2), ext1=(0, 0), ext2=(3, 0), dimstyle='EZDXF',
+                             override={
+                                 'dimtfill': 1,  # background color
+                             })
+    dim.set_text('bgcolor')
+    dim.render()
+
+    dim = msp.add_linear_dim(base=(0, 2), ext1=(5, 0), ext2=(8, 0), dimstyle='EZDXF',
+                             override={
+                                 'dimtfill': 2,  # custom text fill
+                                 'dimtfillclr': 4,  # cyan
+                             })
+    dim.set_text('cyan')
+    dim.render()
+    dwg.saveas(OUTDIR / f'background_fill_example_{dxfversion}.dxf')
 
 
 def example_for_all_text_placings_R12():
@@ -163,6 +189,8 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
             'dimdle': 0.,
             'dimexe': .5,  # length of extension line above dimension line
             'dimexo': .5,  # extension line offset
+            'dimtfill': 2,  # custom text fill
+            'dimtfillclr': 4  # cyan
         }
 
         base = (x, y + 2)
@@ -325,7 +353,8 @@ def linear_EZ_MM(fmt):
 ALL = False
 
 if __name__ == '__main__':
-    linear_tutorial_R12()
+    linear_tutorial('R2007')
+    example_background_fill('R2007')
     example_for_all_text_placings_R12()
     example_for_all_text_placings_R2007()
     example_for_all_text_placings_ucs_R12()
@@ -334,6 +363,7 @@ if __name__ == '__main__':
     example_for_all_text_placings_in_space_R2007()
 
     if ALL:
+
         linear_all_arrow_style('R12')
         linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')
         linear_all_arrow_style('R2000')

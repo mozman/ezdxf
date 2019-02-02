@@ -29,16 +29,10 @@ AcDbEntity
 0
 100
 AcDbMText
-50
-0.0
 40
-1.0
-41
 1.0
 71
 1
-72
-5
 73
 1
 1
@@ -71,6 +65,19 @@ mtext_subclass = DefSubclass('AcDbMText', {
     'line_spacing_factor': DXFAttr(44),  # line spacing factor (optional):
     # Percentage of default (3-on-5) line spacing to be applied. Valid values
     # range from 0.25 to 4.00
+    'box_fill_scale': DXFAttr(45, dxfversion='AC1021'),
+    # Determines how much border there is around the text.
+    # If set bg_fill is required else DXF error for AutoCAD
+    'bg_fill': DXFAttr(90, dxfversion='AC1021'),  # background fill type:
+    # 0=off;
+    # 1=background color -> (63);
+    # 2=drawing window color;
+    # 3=true color ->(421)?
+    'bg_fill_color': DXFAttr(63, dxfversion='AC1021'),  # background fill color as ACI, required even true color is used
+    'bg_fill_true_color': DXFAttr(421, dxfversion='AC1021'),  # background fill color as true color value
+    'bg_fill_color_name': DXFAttr(431, dxfversion='AC1021'),  # background fill color as color name
+    'bg_fill_transparency': DXFAttr(441, dxfversion='AC1021'),  # background fill color transparency
+
 })
 
 

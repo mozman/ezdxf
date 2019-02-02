@@ -319,7 +319,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimdle': DXFAttr(46),
     'dimtp': DXFAttr(47),
     'dimtm': DXFAttr(48),
-    'dimexlen': DXFAttr(49, dxfversion='AC1021'),  # undocumented: length of extension line if fixed (dimexfix = 1)
+    'dimfxl': DXFAttr(49, dxfversion='AC1021'),  # undocumented: length of extension line if fixed (dimfxlon = 1)
     'dimtxt': DXFAttr(140),
     'dimcen': DXFAttr(141),
     'dimtsz': DXFAttr(142),
@@ -329,6 +329,8 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimtfac': DXFAttr(146),
     'dimgap': DXFAttr(147),
     'dimaltrnd': DXFAttr(148),
+    'dimtfill': DXFAttr(69, dxfversion='AC1021'),
+    'dimtfillclr': DXFAttr(70, dxfversion='AC1021'),
     'dimtol': DXFAttr(71),
     'dimlim': DXFAttr(72),
     'dimtih': DXFAttr(73),
@@ -368,7 +370,7 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimfit': DXFAttr(287),  # obsolete, now use DIMATFIT and DIMTMOVE
     'dimupt': DXFAttr(288),
     'dimatfit': DXFAttr(289),
-    'dimexfix': DXFAttr(290, dxfversion='AC1021'),  # undocumented: 1 = fixed extension line length
+    'dimfxlon': DXFAttr(290, dxfversion='AC1021'),  # undocumented: 1 = fixed extension line length
     'dimtxsty_handle': DXFAttr(340),  # handle of referenced STYLE entry
     # virtual DXF attribute 'dimtxsty': set/get referenced STYLE by name as callback
     'dimtxsty': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_text_style', setter='set_text_style'),

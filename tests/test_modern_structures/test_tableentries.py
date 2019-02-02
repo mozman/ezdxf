@@ -253,7 +253,6 @@ def test_dimstyle_group_codes(dimstyle):
     codes = DimStyle.CODE_TO_DXF_ATTRIB
     assert 105 not in codes
     assert 2 not in codes
-    assert 70 not in codes
 
 
 def test_block_record_name():
