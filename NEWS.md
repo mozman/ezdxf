@@ -12,25 +12,29 @@ Version 0.9a4 - dev
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex
   and too undocumented to support importing data in a reliable way - using `Importer()` may corrupt your DXF files or just 
   don't work!
-- NEW: Type annotations to core package and add-ons.
-- NEW: Argument `setup` in `ezdxf.new('R12', setup=True)` to setup default line types, text styles and dimension styles, 
+- NEW: type annotations to core package and add-ons.
+- NEW: argument `setup` in `ezdxf.new('R12', setup=True)` to setup default line types, text styles and dimension styles, 
   this feature is disabled by default.
-- NEW: Duplicate table entries: `dwg.styles.duplicate_entry('OPEN_SANS_25', new_name='OPEN_SANS_35')`, this works for 
+- NEW: Duplicate table entries: `dwg.styles.duplicate_entry('OpenSans', new_name='OpenSansNew')`, this works for 
   all tables, but is intended to duplicate STYLES and DIMSTYLES.
 - CHANGED: replaced proprietary fonts in style declarations by open source fonts
 - NEW: open source fonts to download https://github.com/mozman/ezdxf/tree/master/fonts
 - __OpenSansCondensed-Light__ font used for default dimension styles
 - NEW: subpackage `ezdxf.render`, because of DIMENSION rendering
-- NEW: Support for AutoCAD standard arrows 
+- NEW: support for AutoCAD standard arrows
+- NEW: support for creating linear DIMENSION entities
+- CHANGE: DXF template cleanup, removed non standard text styles, dimension styles, layers and blocks
+- CHANGE: text style STANDARD uses `txt` font 
 - CHANGE: renamed subpackage `ezdxf.algebra` to `ezdxf.ezmath` (just `math` causes false errors in pycharm)
 - CHANGE: moved `addons.curves` to `render.curves`
 - CHANGE: moved `addons.mesh` to `render.mesh`
 - CHANGE: moved `addons.r12spline` to `render.r12spline`
 - CHANGE: moved `addons.forms` to `render.forms`
-- CHANGE: renamed construction helper classes into Cx...()
+- CHANGE: renamed construction helper classes into Construction...()
   - `Ray2D()` renamed to `ConstructionRay()`
   - `Circle()` renamed to `ConstructionCircle()`
   - `Arc()` renamed to `ConstructionArc()`
+- NEW: construction tools `ConstructionLine()` and `ConstructionBox()`
 - REMOVED: `almost_equal` use `math.isclose`
 - REMOVED: `almost_equal_points` use `ezdxf.ezmath.is_close_points`
 - BUGFIX: closed LWPOLYLINE did not work in AutoCAD (tag order matters), introduced with v0.8.9 packed data structure

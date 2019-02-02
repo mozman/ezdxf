@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Tuple, Iterable
 import math
 from ezdxf.ezmath import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
-from ezdxf.ezmath import UCS, PassTroughUCS, OCS
+from ezdxf.ezmath import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 class TextBox(ConstructionBox):
     def __init__(self, center: 'Vertex', width: float, height: float, angle: float, gap: float = 0):
-        width += (2 * gap)
+        # width += (2 * gap)  # without real text width, looks better for proportional fonts
         height += (2 * gap)
         super().__init__(center, width, height, angle)
 
@@ -295,9 +295,7 @@ class LinearDimension(BaseDimensionRenderer):
                 width=self.dim_text_width,
                 height=self.text_height,
                 angle=self.text_rotation,
-                # shrink gap slightly, to avoid congruent borders of text box and dimension line for standard
-                # text locations above and below dimension line
-                gap=self.text_gap * .99
+                gap=self.text_gap * .75
             )
 
         self.required_arrows_space = 2 * self.arrow_size + self.text_gap
@@ -428,6 +426,7 @@ class LinearDimension(BaseDimensionRenderer):
         Args:
             start: start point of extension line (measurement point)
             end: end point at dimension line
+            text_above_extline: True if text is above and aligned with extension line (halign == 3 or 4)
 
         Returns: adjusted start and end point
 
@@ -439,7 +438,7 @@ class LinearDimension(BaseDimensionRenderer):
             start = start + direction * self.ext_line_offset
         extension = self.ext_line_extension
         if text_above_extline:
-            extension += (self.dim_text_width + self.text_gap * 2 + self.arrow_size)
+            extension += self.dim_text_width
         end = end + direction * extension
         return start, end
 
@@ -511,7 +510,7 @@ class LinearDimension(BaseDimensionRenderer):
                         end = two_arrows_length
                 return start, end
 
-            text_width = self.dim_text_width + 2 * self.text_gap
+            text_width = self.dim_text_width
             text_is_left = self.text_outside and self.text_halign == 1
             text_is_right = self.text_outside and self.text_halign in (0, 2)
             text_is_vcenter = self.text_valign == 0
@@ -578,7 +577,7 @@ class LinearDimension(BaseDimensionRenderer):
                 return text_midpoint
         else:
             if halign in (3, 4):  # positions the text above and aligned with the first/second extension line
-                vdist = self.ext_line_extension + self.arrow_size + self.text_gap + self.dim_text_width / 2.
+                vdist = self.ext_line_extension + self.dim_text_width / 2.
                 hdist = self.text_gap + self.text_height / 2.
                 if halign == 3:
                     text_midpoint = start + (start - end).normalize(hdist)

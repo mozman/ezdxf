@@ -17,6 +17,15 @@ TEXT_ATTRIBS = {
     'style': 'OpenSansCondensed-Light',
 }
 
+DIM_TEXT_STYLE = 'STANDARD'
+
+
+def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
+    if dwg.dxfversion == 'AC1009':
+        return
+    dimstyle = dwg.dimstyles.get(name)
+    dimstyle.dxf.dimtxsty = textstyle
+
 
 def to_ocs_angle(ucs, angle):
     # center = Vector()
@@ -107,18 +116,21 @@ def example_for_all_text_placings_in_space_R12():
 
 def example_for_all_text_placings_R2007():
     dwg = ezdxf.new('R2007', setup=True)
+    set_text_style(dwg)
     example_for_all_text_placings(dwg, 'dim_linear_text_placing_R2007.dxf')
 
 
 def example_for_all_text_placings_ucs_R2007():
     ucs = UCS(origin=(10, 10, 0), ux=(3, 1, 0), uz=(0, 0, 1))
     dwg = ezdxf.new('R2007', setup=True)
+    set_text_style(dwg)
     example_for_all_text_placings(dwg, 'dim_linear_text_placing_ucs_R2007.dxf', ucs)
 
 
 def example_for_all_text_placings_in_space_R2007():
     ucs = UCS(ux=(1, 1, 0), uy=(0, 0, 1))
     dwg = ezdxf.new('R2007', setup=True)
+    set_text_style(dwg)
     example_for_all_text_placings(dwg, 'dim_linear_text_placing_in_space_R2007.dxf', ucs)
 
 
@@ -140,16 +152,19 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
     setup_dimstyle(dwg,
                    name='TICK',
                    fmt='EZ_M_100_H25_CM',
+                   style=DIM_TEXT_STYLE,
                    )
     setup_dimstyle(dwg,
                    name='ARCHTICK',
                    fmt='EZ_M_100_H25_CM',
                    blk=ezdxf.ARROWS.architectural_tick,
+                   style=DIM_TEXT_STYLE,
                    )
     setup_dimstyle(dwg,
                    name='CLOSEDBLANK',
                    fmt='EZ_M_100_H25_CM',
                    blk=ezdxf.ARROWS.closed_blank,
+                   style=DIM_TEXT_STYLE,
                    )
 
     def text(dimstyle, x, y, halign, valign, oblique=0):

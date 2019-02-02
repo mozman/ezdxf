@@ -453,7 +453,7 @@ $TDCREATE
   9
 $TDUPDATE
  40
-2458514.6288888888
+2458517.5639814814
   9
 $TDINDWG
  40
@@ -885,7 +885,7 @@ $FINGERPRINTGUID
   9
 $VERSIONGUID
   2
-1D955666-2498-11E9-89AF-1803733EFA49
+8EAD2C3A-26E6-11E9-AD66-1803733EFA49
   9
 $EXTNAMES
 290
@@ -1363,7 +1363,7 @@ LTYPE
 100
 AcDbSymbolTable
  70
-7
+3
   0
 LTYPE
   5
@@ -1431,150 +1431,6 @@ Solid line
  40
 0.0
   0
-LTYPE
-  5
-1B1
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
-CENTER
- 70
-0
-  3
-Center ____ _ ____ _ ____ _ ____ _ ____ _ ____
- 72
-65
- 73
-4
- 40
-2.0
- 49
-1.25
- 74
-0
- 49
--0.25
- 74
-0
- 49
-0.25
- 74
-0
- 49
--0.25
- 74
-0
-  0
-LTYPE
-  5
-1B2
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
-DASHED
- 70
-0
-  3
-Dashed __ __ __ __ __ __ __ __ __ __ __ __ __ _
- 72
-65
- 73
-2
- 40
-0.75
- 49
-0.5
- 74
-0
- 49
--0.25
- 74
-0
-  0
-LTYPE
-  5
-1B3
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
-PHANTOM
- 70
-0
-  3
-Phantom ______  __  __  ______  __  __  ______
- 72
-65
- 73
-6
- 40
-2.5
- 49
-1.25
- 74
-0
- 49
--0.25
- 74
-0
- 49
-0.25
- 74
-0
- 49
--0.25
- 74
-0
- 49
-0.25
- 74
-0
- 49
--0.25
- 74
-0
-  0
-LTYPE
-  5
-39E
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
-HIDDEN
- 70
-0
-  3
-Hidden __ __ __ __ __ __ __ __ __ __ __ __ __ __
- 72
-65
- 73
-2
- 40
-9.525
- 49
-6.35
- 74
-0
- 49
--3.175
- 74
-0
-  0
 ENDTAB
   0
 TABLE
@@ -1587,7 +1443,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-3
+2
   0
 LAYER
   5
@@ -1606,30 +1462,6 @@ AcDbLayerTableRecord
 7
   6
 Continuous
-370
--3
-390
-4DA
-  0
-LAYER
-  5
-1B4
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-View Port
- 70
-0
- 62
-7
-  6
-Continuous
-290
-0
 370
 -3
 390
@@ -1671,7 +1503,7 @@ STYLE
 100
 AcDbSymbolTable
  70
-3
+1
   0
 STYLE
   5
@@ -1697,63 +1529,7 @@ Standard
  42
 0.2
   3
-arial.ttf
-  4
-
-  0
-STYLE
-  5
-DC
-330
-3
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
-Annotative
- 70
-0
- 40
-0.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-arial.ttf
-  4
-
-  0
-STYLE
-  5
-178
-330
-3
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
-Notes
- 70
-0
- 40
-3.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-arial.ttf
+txt
   4
 
   0
@@ -1965,7 +1741,7 @@ A
 100
 AcDbSymbolTable
  70
-3
+1
 100
 AcDbDimStyleTable
  71
@@ -2025,134 +1801,6 @@ ACAD_DSTYLE_DIMTALN
 1070
 0
   0
-DIMSTYLE
-105
-E1
-330
-A
-100
-AcDbSymbolTableRecord
-100
-AcDbDimStyleTableRecord
-  2
-Annotative
- 70
-0
- 40
-0.0
- 41
-3.0
- 42
-2.5
- 43
-10.0
- 44
-5.0
-140
-3.0
-141
-2.0
-147
-2.0
-340
-11
-1001
-AcadAnnotative
-1000
-AnnotativeData
-1002
-{
-1070
-1
-1070
-1
-1002
-}
-1001
-ACAD_DSTYLE_DIMJAG
-1070
-388
-1040
-38.0
-1001
-ACAD_DSTYLE_DIMBREAK
-1070
-391
-1040
-90.0
-1001
-ACAD_DSTYLE_DIMTALN
-1070
-392
-1070
-0
-  0
-DIMSTYLE
-105
-242
-330
-A
-100
-AcDbSymbolTableRecord
-100
-AcDbDimStyleTableRecord
-  2
-Civil-Metric
- 70
-0
- 41
-3.0
- 42
-1.5
- 43
-6.0
- 44
-3.0
- 73
-0
- 74
-0
- 77
-1
- 78
-3
- 79
-2
-140
-3.0
-141
-3.0
-147
-2.0
-179
-2
-271
-2
-272
-2
-276
-1
-340
-11
-1001
-ACAD_DSTYLE_DIMBREAK
-1070
-391
-1040
-3.0
-1001
-ACAD_DSTYLE_DIMJAG
-1070
-388
-1040
-38.0
-1001
-ACAD_DSTYLE_DIMTALN
-1070
-392
-1070
-0
-  0
 ENDTAB
   0
 TABLE
@@ -2165,7 +1813,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-4
+2
   0
 BLOCK_RECORD
   5
@@ -2194,34 +1842,6 @@ AcDbBlockTableRecord
 *Paper_Space
 340
 4E0
-  0
-BLOCK_RECORD
-  5
-238
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbBlockTableRecord
-  2
-_ArchTick
-340
-0
-  0
-BLOCK_RECORD
-  5
-23C
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbBlockTableRecord
-  2
-_Open30
-340
-0
   0
 ENDTAB
   0
@@ -2304,202 +1924,6 @@ ENDBLK
 21
 330
 1F
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-23A
-330
-238
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-_ArchTick
- 70
-0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-_ArchTick
-  1
-
-  0
-LWPOLYLINE
-  5
-239
-330
-238
-100
-AcDbEntity
-  8
-0
-  6
-ByBlock
- 62
-0
-100
-AcDbPolyline
- 90
-2
- 70
-0
- 43
-0.15
- 10
--0.5
- 20
--0.5
- 10
-0.5
- 20
-0.5
-  0
-ENDBLK
-  5
-23B
-330
-238
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
-  0
-BLOCK
-  5
-240
-330
-23C
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-_Open30
- 70
-0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-_Open30
-  1
-
-  0
-LINE
-  5
-23D
-330
-23C
-100
-AcDbEntity
-  8
-0
-  6
-ByBlock
- 62
-0
-370
--2
-100
-AcDbLine
- 10
--1.0
- 20
-0.26794919
- 30
-0.0
- 11
-0.0
- 21
-0.0
- 31
-0.0
-  0
-LINE
-  5
-23E
-330
-23C
-100
-AcDbEntity
-  8
-0
-  6
-ByBlock
- 62
-0
-370
--2
-100
-AcDbLine
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 11
--1.0
- 21
--0.26794919
- 31
-0.0
-  0
-LINE
-  5
-23F
-330
-23C
-100
-AcDbEntity
-  8
-0
-  6
-ByBlock
- 62
-0
-370
--2
-100
-AcDbLine
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 11
--1.0
- 21
-0.0
- 31
-0.0
-  0
-ENDBLK
-  5
-241
-330
-23C
 100
 AcDbEntity
   8
