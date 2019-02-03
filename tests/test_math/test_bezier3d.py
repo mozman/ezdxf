@@ -2,8 +2,8 @@
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.ezmath.bezier import Bezier, DBezier
-from ezdxf.ezmath.bezier4p import Bezier4P
+from ezdxf.math.bezier import Bezier, DBezier
+from ezdxf.math.bezier4p import Bezier4P
 
 DEFPOINTS2D = [(0., 0., 0.), (3., 0., 0.), (7., 10., 0.), (10., 10., 0.)]
 DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]

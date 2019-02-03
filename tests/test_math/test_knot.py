@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from ezdxf.ezmath.bspline import knot_open_uniform, knot_uniform, required_knot_values
-from ezdxf.ezmath.bspline import is_uniform_knots
+from ezdxf.math.bspline import knot_open_uniform, knot_uniform, required_knot_values
+from ezdxf.math.bspline import is_uniform_knots
 
 open_uniform_order2 = [0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 4.0]
 open_uniform_order3 = [ 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0]

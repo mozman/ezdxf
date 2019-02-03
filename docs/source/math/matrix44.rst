@@ -1,8 +1,8 @@
-.. module:: ezdxf.ezmath
+.. module:: ezdxf.math
 
-This utilities located in module :mod:`ezdxf.ezmath`::
+This utilities located in module :mod:`ezdxf.math`::
 
-    from ezdxf.ezmath import Matrix44
+    from ezdxf.math import Matrix44
 
 
 Matrix44

@@ -1,8 +1,8 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 
-from ezdxf.ezmath.ucs import PassTroughUCS, UCS
-from ezdxf.ezmath.vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math.ucs import PassTroughUCS, UCS
+from ezdxf.math.vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 
 
 def test_u_vectors():

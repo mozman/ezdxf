@@ -2,7 +2,7 @@
 # License: MIT License
 
 import ezdxf
-from ezdxf.ezmath import UCS, Vector
+from ezdxf.math import UCS, Vector
 
 dwg = ezdxf.new('R2010')
 msp = dwg.modelspace()

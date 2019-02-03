@@ -3,8 +3,8 @@
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.ezmath.bspline import BSpline, DBSpline
-from ezdxf.ezmath.bspline import bspline_basis_vector, Basis, knot_open_uniform
+from ezdxf.math.bspline import BSpline, DBSpline
+from ezdxf.math.bspline import bspline_basis_vector, Basis, knot_open_uniform
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 

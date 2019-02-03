@@ -4,7 +4,7 @@
 # License: MIT License
 import pytest
 from math import isclose
-from ezdxf.ezmath.bspline import BSplineU, DBSplineU
+from ezdxf.math.bspline import BSplineU, DBSplineU
 
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]

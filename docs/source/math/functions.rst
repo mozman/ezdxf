@@ -1,10 +1,10 @@
 .. _math utilities:
 
-.. module:: ezdxf.ezmath
+.. module:: ezdxf.math
 
-This utilities located in module :mod:`ezdxf.ezmath`::
+This utilities located in module :mod:`ezdxf.math`::
 
-    from ezdxf.ezmath import Vector
+    from ezdxf.math import Vector
 
 
 Functions

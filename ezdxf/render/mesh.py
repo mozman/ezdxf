@@ -2,7 +2,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from typing import List, Sequence, Tuple, Iterable, TYPE_CHECKING
-from ezdxf.ezmath.vector import Vector
+from ezdxf.math.vector import Vector
 from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:

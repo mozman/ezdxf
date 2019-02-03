@@ -2,7 +2,7 @@
 # Copyright (c) 2012 Manfred Moitzi
 # License: MIT License
 from math import isclose
-from ezdxf.ezmath.bspline import BSpline, BSplineU
+from ezdxf.math.bspline import BSpline, BSplineU
 
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]

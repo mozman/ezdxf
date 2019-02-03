@@ -3,11 +3,11 @@
 # Copyright (c) 2010-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
-from ezdxf.ezmath.vector import Vector
-from ezdxf.ezmath.bspline import bspline_control_frame
-from ezdxf.ezmath.bspline import BSpline, BSplineU, BSplineClosed
-from ezdxf.ezmath.bezier4p import Bezier4P
-from ezdxf.ezmath.eulerspiral import EulerSpiral as _EulerSpiral
+from ezdxf.math.vector import Vector
+from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bspline import BSpline, BSplineU, BSplineClosed
+from ezdxf.math.bezier4p import Bezier4P
+from ezdxf.math.eulerspiral import EulerSpiral as _EulerSpiral
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
@@ -260,7 +260,7 @@ class EulerSpiral:
             layout: ezdxf layout
             length: length measured along the spiral curve from its initial position
             segments: count of line segments to use, vertex count is segments+1
-            matrix: transformation matrix as ezdxf.ezmath.Matrix44
+            matrix: transformation matrix as ezdxf.math.Matrix44
             dxfattribs: DXF attributes for POLYLINE
 
         Returns: DXF Polyline entity
@@ -281,7 +281,7 @@ class EulerSpiral:
             length: length measured along the spiral curve from its initial position
             fit_points: count of spline fit points to use
             degree: degree of B-spline
-            matrix: transformation matrix as ezdxf.ezmath.Matrix44
+            matrix: transformation matrix as ezdxf.math.Matrix44
             dxfattribs: DXF attributes for POLYLINE
 
         Returns: DXF Spline entity

@@ -3,7 +3,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.ezmath import Vector, ConstructionArc, UCS
+from ezdxf.math import Vector, ConstructionArc, UCS
 
 dwg = ezdxf.new('R2000')
 modelspace = dwg.modelspace()

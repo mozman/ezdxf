@@ -1,8 +1,8 @@
 # Created: 26.03.2010
 # License: MIT License
 from typing import Dict, Iterable
-from ezdxf.ezmath import Vector
-from ezdxf.ezmath.bspline import bspline_control_frame, BSpline
+from ezdxf.math import Vector
+from ezdxf.math.bspline import bspline_control_frame, BSpline
 
 
 class EulerSpiral:

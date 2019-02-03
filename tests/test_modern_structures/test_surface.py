@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.ezmath import Matrix44
+from ezdxf.math import Matrix44
 import pytest
 
 IDENTITY_MATRIX = list(list(Matrix44()))

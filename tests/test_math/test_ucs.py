@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from math import isclose
-from ezdxf.ezmath import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
 
 
 def test_ucs_init():

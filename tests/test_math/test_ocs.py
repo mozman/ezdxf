@@ -20,8 +20,8 @@ center point, (-5.53851623, 8.87677359, 5.87096886)
 Extrusion direction relative to UCS: X=0.70819791  Y=0.07548520  Z=0.70196702
 
 """
-from ezdxf.ezmath.ucs import OCS
-from ezdxf.ezmath.matrix44 import Matrix44
+from ezdxf.math.ucs import OCS
+from ezdxf.math.matrix44 import Matrix44
 
 EXTRUSION = (0.7081979129501316, 0.0754851955385861, 0.7019670229772758)
 

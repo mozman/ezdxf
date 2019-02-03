@@ -2,7 +2,7 @@
 # Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.ezmath.base import *
+from ezdxf.math.base import *
 from math import isclose
 
 

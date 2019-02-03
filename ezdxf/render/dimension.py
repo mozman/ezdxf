@@ -3,8 +3,8 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable
 import math
-from ezdxf.ezmath import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
-from ezdxf.ezmath import UCS, PassTroughUCS
+from ezdxf.math import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
+from ezdxf.math import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError

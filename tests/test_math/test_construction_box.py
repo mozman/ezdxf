@@ -2,7 +2,7 @@
 # Created: 29.01.2019
 # License: MIT License
 import math
-from ezdxf.ezmath import ConstructionBox, ConstructionLine
+from ezdxf.math import ConstructionBox, ConstructionLine
 
 
 class TestTextBox:

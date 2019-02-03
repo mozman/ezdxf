@@ -1,8 +1,8 @@
-.. module:: ezdxf.ezmath
+.. module:: ezdxf.math
 
-This classes located in module :mod:`ezdxf.ezmath`::
+This classes located in module :mod:`ezdxf.math`::
 
-    from ezdxf.ezmath import OCS, UCS
+    from ezdxf.math import OCS, UCS
 
 OCS Class
 ---------

@@ -3,7 +3,7 @@
 
 # include-start
 import ezdxf
-from ezdxf.ezmath import OCS
+from ezdxf.math import OCS
 
 dwg = ezdxf.new('R2010')
 msp = dwg.modelspace()

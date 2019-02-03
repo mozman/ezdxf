@@ -5,17 +5,17 @@ from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast
 import math
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError
-from ezdxf.ezmath import Vector
-from ezdxf.ezmath import bspline_control_frame, bspline_control_frame_approx
+from ezdxf.math import Vector
+from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.override import DimStyleOverride
 
 if TYPE_CHECKING:  # import forward references
-    from eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
-    from eztypes import Solid, Trace, Face, Insert, Attrib, Polyline, Polyface, Polymesh, UnderlayDef, Underlay
-    from eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
-    from eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, LoftedSurface
-    from ezdxf.ezmath.ucs import UCS
+    from ezdxf.eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
+    from ezdxf.eztypes import Solid, Trace, Face, Insert, Attrib, Polyline, Polyface, Polymesh, UnderlayDef, Underlay
+    from ezdxf.eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
+    from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, LoftedSurface
+
 
 Vertex = Union[Sequence[float], Vector]
 

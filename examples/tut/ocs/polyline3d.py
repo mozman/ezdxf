@@ -3,7 +3,7 @@
 # include-start
 import math
 import ezdxf
-from ezdxf.ezmath import UCS, Matrix44
+from ezdxf.math import UCS, Matrix44
 
 dwg = ezdxf.new('R2010')
 msp = dwg.modelspace()

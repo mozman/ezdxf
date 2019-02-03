@@ -3,8 +3,8 @@
 # Copyright (c) 2014 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.ezmath.bspline import bspline_control_frame, bspline_control_frame_approx
-from ezdxf.ezmath import BSpline, Vector
+from ezdxf.math.bspline import bspline_control_frame, bspline_control_frame_approx
+from ezdxf.math import BSpline, Vector
 
 
 def clone_spline():

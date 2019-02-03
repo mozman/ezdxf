@@ -1,5 +1,5 @@
 import math
-from ezdxf.ezmath.vector import Vector
+from ezdxf.math.vector import Vector
 
 
 def test_init_no_params():

@@ -1,7 +1,7 @@
 # Purpose: test ConstructionLine
 # Created: 27.01.2019
 # License: MIT License
-from ezdxf.ezmath.line import ConstructionLine
+from ezdxf.math.line import ConstructionLine
 
 
 class TestConstructionLine:

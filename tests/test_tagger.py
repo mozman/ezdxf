@@ -6,7 +6,7 @@ from io import StringIO
 
 from ezdxf.lldxf.tagger import internal_tag_compiler, low_level_tagger, tag_compiler, DXFStructureError
 from ezdxf.lldxf.types import strtag, DXFTag, DXFVertex
-from ezdxf.ezmath.vector import Vector
+from ezdxf.math.vector import Vector
 
 
 def test_strtag_int():

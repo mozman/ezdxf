@@ -7,7 +7,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFVertex
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.ezmath import Vector
+from ezdxf.math import Vector
 
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 

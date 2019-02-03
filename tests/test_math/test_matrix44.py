@@ -4,7 +4,7 @@
 
 import unittest
 from math import radians, sin, cos, pi, isclose
-from ezdxf.ezmath.matrix44 import Matrix44
+from ezdxf.math.matrix44 import Matrix44
 
 
 def diag(values):

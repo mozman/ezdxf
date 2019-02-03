@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import math
-from ezdxf.ezmath.bulge import bulge_radius, bulge_center, arc_to_bulge, bulge_3_points, bulge_to_arc
+from ezdxf.math.bulge import bulge_radius, bulge_center, arc_to_bulge, bulge_3_points, bulge_to_arc
 
 
 

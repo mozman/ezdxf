@@ -14,7 +14,7 @@ Basic Forms
     :param radius: circle radius
     :param elevation: z axis for all vertices
     :param close: yields first vertex also as last vertex if True.
-    :returns: yields :class:`~ezdxf.ezmath.Vector` objects in counter clockwise orientation
+    :returns: yields :class:`~ezdxf.math.Vector` objects in counter clockwise orientation
 
 .. function:: ellipse(count, rx=1, ry=1, start_param=0, end_param=2*pi, elevation=0)
 
@@ -27,7 +27,7 @@ Basic Forms
     :param start_param: start of ellipse in range 0 ... 2\*pi
     :param end_param: end of ellipse in range 0 ... 2\*pi
     :param elevation: z axis for all vertices
-    :returns: yields :class:`~ezdxf.ezmath.Vector` objects
+    :returns: yields :class:`~ezdxf.math.Vector` objects
 
 .. function:: euler_spiral(count, length=1, curvature=1, elevation=0)
 
@@ -39,13 +39,13 @@ Basic Forms
     :param length: length of curve in drawing units
     :param curvature: radius of curvature
     :param elevation: z-axis for all vertices
-    :returns: yields :class:`~ezdxf.ezmath.Vector` objects
+    :returns: yields :class:`~ezdxf.math.Vector` objects
 
 .. function:: cube(center=True, matrix=None)
 
     Create a cube.
 
-    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
     :param center: 'mass' center of cube in (0, 0, 0) if True, else first corner at (0, 0, 0)
     :returns: :class:`~ezdxf.render.MeshBuilder`
 

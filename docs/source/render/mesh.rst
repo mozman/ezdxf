@@ -53,7 +53,7 @@ Can only create new meshes.
 
     Transform actual mesh into a new mesh by applying the transformation matrix to vertices.
 
-    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
     :returns: new :class:`ezdxf.render.MeshBuilder` object (same type as builder)
 
 .. method:: MeshBuilder.translate(x=0, y=0, z=0)
@@ -71,7 +71,7 @@ Can only create new meshes.
 
     :param layout: ezdxf :class:`Layout` object
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
-    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
 
 .. method:: MeshBuilder.from_mesh(cls, other)
 

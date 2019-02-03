@@ -1,7 +1,7 @@
 # Purpose: test bbox module
 # Created: 27.01.2019
 # License: MIT License
-from ezdxf.ezmath.bbox import BoundingBox
+from ezdxf.math.bbox import BoundingBox
 
 
 class TestBoundingBox:

@@ -26,7 +26,7 @@ Version 0.9a4 - dev
 - NEW: background color support for MTEXT
 - CHANGE: DXF template cleanup, removed non standard text styles, dimension styles, layers and blocks
 - CHANGE: text style STANDARD uses `txt` font 
-- CHANGE: renamed subpackage `ezdxf.algebra` to `ezdxf.ezmath` (just `math` causes false errors in pycharm)
+- CHANGE: renamed subpackage `ezdxf.algebra` to `ezdxf.math`
 - CHANGE: moved `addons.curves` to `render.curves`
 - CHANGE: moved `addons.mesh` to `render.mesh`
 - CHANGE: moved `addons.r12spline` to `render.r12spline`
@@ -37,7 +37,7 @@ Version 0.9a4 - dev
   - `Arc()` renamed to `ConstructionArc()`
 - NEW: construction tools `ConstructionLine()` and `ConstructionBox()`
 - REMOVED: `almost_equal` use `math.isclose`
-- REMOVED: `almost_equal_points` use `ezdxf.ezmath.is_close_points`
+- REMOVED: `almost_equal_points` use `ezdxf.math.is_close_points`
 - BUGFIX: closed LWPOLYLINE did not work in AutoCAD (tag order matters), introduced with v0.8.9 packed data structure
 - BUGFIX: `UCS.to_ocs_angle_deg()` corrected
 

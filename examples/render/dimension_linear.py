@@ -6,7 +6,7 @@ import pathlib
 
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
-from ezdxf.ezmath import Vector, UCS
+from ezdxf.math import Vector, UCS
 
 OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
 if not OUTDIR.exists():

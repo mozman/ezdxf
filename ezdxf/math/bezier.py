@@ -3,7 +3,7 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable, Tuple, Dict
-from ezdxf.ezmath.vector import Vector
+from ezdxf.math.vector import Vector
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

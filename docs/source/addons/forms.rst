@@ -31,7 +31,7 @@ Build a 3D `Menger sponge <https://en.wikipedia.org/wiki/Menger_sponge>`_.
     :param layout: ezdxf :class:`Layout` object
     :param merge: *True* for one :class:`Mesh` entity, *False* for individual :class:`Mesh` entities per cube
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
-    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
 
 .. method:: MengerSponge.cubes()
 
@@ -64,7 +64,7 @@ Build a 3D `Sierpinsky Pyramid <https://en.wikipedia.org/wiki/Sierpinski_triangl
     :param layout: ezdxf :class:`Layout` object
     :param merge: *True* for one :class:`Mesh` entity, *False* for individual :class:`Mesh` entities per cube
     :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
-    :param matrix: transformation matrix as :class:`~ezdxf.ezmath.Matrix44`
+    :param matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
 
 .. method:: SierpinskyPyramid.pyramids()
 

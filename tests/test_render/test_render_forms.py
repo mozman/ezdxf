@@ -6,8 +6,8 @@ from ezdxf.render.forms import open_arrow, arrow2
 from ezdxf.render.forms import spline_interpolation, spline_interpolated_profiles
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form
-from ezdxf.ezmath.base import is_close_points
-from ezdxf.ezmath import Vector
+from ezdxf.math.base import is_close_points
+from ezdxf.math import Vector
 
 
 def test_circle_open():

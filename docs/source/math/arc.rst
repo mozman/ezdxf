@@ -1,8 +1,8 @@
-.. module:: ezdxf.ezmath
+.. module:: ezdxf.math
 
-This class located in module :mod:`ezdxf.ezmath`::
+This class located in module :mod:`ezdxf.math`::
 
-    from ezdxf.ezmath import ConstructionArc
+    from ezdxf.math import ConstructionArc
 
 
 ConstructionArc
@@ -15,7 +15,7 @@ ConstructionArc
 
 .. attribute:: ConstructionArc.center
 
-    Center point as :class:`~ezdxf.ezmath.Vector`
+    Center point as :class:`~ezdxf.math.Vector`
 
 .. attribute:: ConstructionArc.radius
 
@@ -53,7 +53,7 @@ Class Methods
     :param float angle: enclosing angle in degrees
     :param bool ccw: counter clockwise orientation
 
-    :Return: new :class:`~ezdxf.ezmath.ConstructionArc`
+    :Return: new :class:`~ezdxf.math.ConstructionArc`
 
 .. method:: ConstructionArc.from_2p_radius(start_point, end_point, radius, ccw=True, center_is_left=True)
 
@@ -70,7 +70,7 @@ Class Methods
     :param bool ccw: counter clockwise orientation
     :param bool center_is_left: center point of arc is left of line *start point* -> *end point* if True, else on the right side of this line
 
-    :Return: new :class:`~ezdxf.ezmath.ConstructionArc`
+    :Return: new :class:`~ezdxf.math.ConstructionArc`
 
 .. method:: ConstructionArc.from_3p(start_point, end_point, def_point, ccw=True)
 
@@ -83,7 +83,7 @@ Class Methods
     :param def_point: additional definition point as (x, y [,z]) tuple
     :param bool ccw: counter clockwise orientation
 
-    :Return: new :class:`~ezdxf.ezmath.ConstructionArc`
+    :Return: new :class:`~ezdxf.math.ConstructionArc`
 
 
 Methods
@@ -93,12 +93,12 @@ Methods
 
     Add arc as DXF entity to a layout.
 
-    Supports 3D arcs by using an :class:`~ezdxf.ezmath.UCS`. An arc is always defined in the xy-plane, by using an
-    arbitrary :class:`~ezdxf.ezmath.UCS`, the arc can be placed in 3D space, automatically :class:`~ezdxf.ezmath.OCS`
+    Supports 3D arcs by using an :class:`~ezdxf.math.UCS`. An arc is always defined in the xy-plane, by using an
+    arbitrary :class:`~ezdxf.math.UCS`, the arc can be placed in 3D space, automatically :class:`~ezdxf.math.OCS`
     transformation included.
 
     :param layout: destination layout (model space, paper space or block)
-    :param ucs: :class:`~ezdxf.ezmath.UCS` definition for arc properties transformation to :class:`~ezdxf.ezmath.OCS`,
+    :param ucs: :class:`~ezdxf.math.UCS` definition for arc properties transformation to :class:`~ezdxf.math.OCS`,
                 *None* for 2D arcs
     :param dict dxfattribs: usual DXF attributes supported by :class:`ConstructionArc`
 

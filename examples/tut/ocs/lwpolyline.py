@@ -2,7 +2,7 @@
 # License: MIT License
 # include-start
 import ezdxf
-from ezdxf.ezmath import Vector, UCS
+from ezdxf.math import Vector, UCS
 
 dwg = ezdxf.new('R2010')
 msp = dwg.modelspace()
@@ -36,7 +36,7 @@ msp.add_lwpolyline(
     })
 # include-end
 
-from ezdxf.ezmath import OCS
+from ezdxf.math import OCS
 OCS(ucs.uz).render_axis(msp)
 ucs.render_axis(msp)
 dwg.saveas('ocs_lwpolyline.dxf')

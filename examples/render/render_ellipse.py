@@ -4,7 +4,7 @@
 from math import radians
 import ezdxf
 from ezdxf.render.forms import ellipse
-from ezdxf.ezmath import Matrix44
+from ezdxf.math import Matrix44
 
 NAME = 'ellipse.dxf'
 dwg = ezdxf.new('R12')

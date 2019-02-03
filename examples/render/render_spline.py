@@ -4,7 +4,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.render import Spline
-from ezdxf.ezmath import Vector, Matrix44
+from ezdxf.math import Vector, Matrix44
 
 
 next_frame = Matrix44.translate(0, 5, 0)

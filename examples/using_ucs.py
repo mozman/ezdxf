@@ -1,5 +1,5 @@
 import ezdxf
-from ezdxf.ezmath import UCS, OCS
+from ezdxf.math import UCS, OCS
 
 
 def main(filename):

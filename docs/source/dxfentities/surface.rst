@@ -96,7 +96,7 @@ ExtrudedSurface Methods
 
 .. method:: ExtrudedSurface.get_transformation_matrix_extruded_entity()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 .. method:: ExtrudedSurface.set_sweep_entity_transformation_matrix(matrix)
 
@@ -104,7 +104,7 @@ ExtrudedSurface Methods
 
 .. method:: ExtrudedSurface.get_sweep_entity_transformation_matrix()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 .. method:: ExtrudedSurface.set_path_entity_transformation_matrix(matrix)
 
@@ -112,7 +112,7 @@ ExtrudedSurface Methods
 
 .. method:: ExtrudedSurface.get_path_entity_transformation_matrix()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 LoftedSurface
 =============
@@ -159,7 +159,7 @@ LoftedSurface Methods
 
 .. method:: LoftedSurface.get_transformation_matrix_lofted_entity()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 RevolvedSurface
 ===============
@@ -202,7 +202,7 @@ RevolvedSurface Methods
 
 .. method:: RevolvedSurface.get_transformation_matrix_revolved_entity()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 SweptSurface
 ============
@@ -255,7 +255,7 @@ SweptSurface Methods
 
 .. method:: SweptSurface.get_transformation_matrix_sweep_entity()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 .. method:: SweptSurface.set_transformation_matrix_path_entity(matrix)
 
@@ -263,7 +263,7 @@ SweptSurface Methods
 
 .. method:: SweptSurface.get_transformation_matrix_path_entity()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 .. method:: SweptSurface.set_sweep_entity_transformation_matrix(matrix)
 
@@ -271,7 +271,7 @@ SweptSurface Methods
 
 .. method:: SweptSurface.get_sweep_entity_transformation_matrix()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object
 
 .. method:: SweptSurface.set_path_entity_transformation_matrix(matrix)
 
@@ -279,4 +279,4 @@ SweptSurface Methods
 
 .. method:: SweptSurface.get_path_entity_transformation_matrix()
 
-    :returns: :class:`~ezdxf.ezmath.Matrix44` object
+    :returns: :class:`~ezdxf.math.Matrix44` object

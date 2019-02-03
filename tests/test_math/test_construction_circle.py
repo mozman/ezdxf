@@ -3,9 +3,9 @@
 import unittest
 import math
 from math import isclose
-from ezdxf.ezmath import is_close_points, Vector
-from ezdxf.ezmath.line import ConstructionRay
-from ezdxf.ezmath.circle import ConstructionCircle
+from ezdxf.math import is_close_points, Vector
+from ezdxf.math.line import ConstructionRay
+from ezdxf.math.circle import ConstructionCircle
 
 HALF_PI = math.pi / 2.
 

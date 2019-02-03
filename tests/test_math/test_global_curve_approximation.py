@@ -1,9 +1,9 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from math import isclose
-from ezdxf.ezmath import Vector
-from ezdxf.ezmath.bspline import bspline_basis_vector, Basis, uniform_t_vector, control_frame_knots
-from ezdxf.ezmath.bspline import bspline_control_frame_approx
+from ezdxf.math import Vector
+from ezdxf.math.bspline import bspline_basis_vector, Basis, uniform_t_vector, control_frame_knots
+from ezdxf.math.bspline import bspline_control_frame_approx
 
 POINTS2 = [(1, 1), (2, 4), (4, 1), (7, 6), (5, 8), (3, 3), (1, 7)]
 

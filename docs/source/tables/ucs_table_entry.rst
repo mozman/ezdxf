@@ -29,4 +29,4 @@ UCS Methods
 
 .. method:: UCS.ucs()
 
-    Returns an :class:`ezdxf.ezmath.UCS` object for this UCS table entry.
+    Returns an :class:`ezdxf.math.UCS` object for this UCS table entry.

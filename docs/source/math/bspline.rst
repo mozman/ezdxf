@@ -1,8 +1,8 @@
-.. module:: ezdxf.ezmath
+.. module:: ezdxf.math
 
-This classes located in module :mod:`ezdxf.ezmath`::
+This classes located in module :mod:`ezdxf.math`::
 
-    from ezdxf.ezmath import BSpline
+    from ezdxf.math import BSpline
 
 
 BSpline

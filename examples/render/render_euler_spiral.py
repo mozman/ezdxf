@@ -5,7 +5,7 @@
 from math import radians
 import ezdxf
 from ezdxf.render import EulerSpiral
-from ezdxf.ezmath import Matrix44
+from ezdxf.math import Matrix44
 
 
 def four_c(curvature, length, rotation):

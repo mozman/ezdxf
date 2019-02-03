@@ -1,9 +1,9 @@
 import pytest
 import ezdxf
 from math import isclose
-from ezdxf.ezmath.bspline import bspline_control_frame
-from ezdxf.ezmath.bspline import uniform_t_vector, distance_t_vector, centripetal_t_vector
-from ezdxf.ezmath.bspline import control_frame_knots, required_knot_values
+from ezdxf.math.bspline import bspline_control_frame
+from ezdxf.math.bspline import uniform_t_vector, distance_t_vector, centripetal_t_vector
+from ezdxf.math.bspline import control_frame_knots, required_knot_values
 
 
 POINTS1 = [(1, 1), (2, 4), (4, 1), (7, 6)]

@@ -1,8 +1,8 @@
 # Created: 28.03.2010
 # Copyright (C) 2010, Manfred Moitzi
 # License: MIT License
-from ezdxf.ezmath.eulerspiral import EulerSpiral
-from ezdxf.ezmath import is_close_points, Vector
+from ezdxf.math.eulerspiral import EulerSpiral
+from ezdxf.math import is_close_points, Vector
 from math import isclose
 
 expected_points = [

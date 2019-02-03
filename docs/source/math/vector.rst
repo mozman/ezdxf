@@ -1,8 +1,8 @@
-.. module:: ezdxf.ezmath
+.. module:: ezdxf.math
 
-This class located in module :mod:`ezdxf.ezmath`::
+This class located in module :mod:`ezdxf.math`::
 
-    from ezdxf.ezmath import Vector
+    from ezdxf.math import Vector
 
 
 Vector
