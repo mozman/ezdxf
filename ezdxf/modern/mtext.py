@@ -1,7 +1,7 @@
 # Created: 24.05.2015
 # Copyright (c) 2015-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union, Tuple
 from contextlib import contextmanager
 import math
 
@@ -11,7 +11,7 @@ from ezdxf.lldxf.tags import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError
-
+from ezdxf import rgb2int
 from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
 
 if TYPE_CHECKING:
@@ -67,16 +67,16 @@ mtext_subclass = DefSubclass('AcDbMText', {
     # range from 0.25 to 4.00
     'box_fill_scale': DXFAttr(45, dxfversion='AC1021'),
     # Determines how much border there is around the text.
-    # If set bg_fill is required else DXF error for AutoCAD
+    # (45) + (90) + (63) all three required, if one of them is used
     'bg_fill': DXFAttr(90, dxfversion='AC1021'),  # background fill type:
     # 0=off;
-    # 1=background color -> (63);
-    # 2=drawing window color;
-    # 3=true color ->(421)?
+    # 1=color -> (63) < (421) or (431);
+    # 2=drawing window color
+    # 3=use background color
     'bg_fill_color': DXFAttr(63, dxfversion='AC1021'),  # background fill color as ACI, required even true color is used
-    'bg_fill_true_color': DXFAttr(421, dxfversion='AC1021'),  # background fill color as true color value
-    'bg_fill_color_name': DXFAttr(431, dxfversion='AC1021'),  # background fill color as color name
-    'bg_fill_transparency': DXFAttr(441, dxfversion='AC1021'),  # background fill color transparency
+    'bg_fill_true_color': DXFAttr(421, dxfversion='AC1021'),  # background fill color as true color value, (63) also required but ignored
+    'bg_fill_color_name': DXFAttr(431, dxfversion='AC1021'),  # background fill color as color name ???, (63) also required but ignored
+    'bg_fill_transparency': DXFAttr(441, dxfversion='AC1021'),  # background fill color transparency - not used by AutoCAD/BricsCAD
 
 })
 
@@ -131,6 +131,28 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
         if attachment_point is not None:
             self.dxf.attachment_point = attachment_point
         return self
+
+    def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None], scale: float = 1.5):
+        self.dxf.box_fill_scale = scale
+        if color is None:
+            self.del_dxf_attrib('bg_fill')
+            self.del_dxf_attrib('box_fill_scale')
+            self.del_dxf_attrib('bg_fill_color')
+            self.del_dxf_attrib('bg_fill_true_color')
+            self.del_dxf_attrib('bg_fill_color_name')
+        elif color == 'bg':  # special case for use background color
+            self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR
+            self.dxf.bg_fill_color = 0  # required but ignored
+        else:
+            self.dxf.bg_fill = const.MTEXT_BG_COLOR
+            if isinstance(color, int):
+                self.dxf.bg_fill_color = color
+            elif isinstance(color, str):
+                self.dxf.bg_fill_color = 0  # required but ignored
+                self.dxf.bg_fill_color_name = color
+            elif isinstance(color, tuple):
+                self.dxf.bg_fill_color = 0  # required but ignored
+                self.dxf.bg_fill_true_color = rgb2int(color)
 
     @contextmanager
     def edit_data(self) -> 'MTextData':

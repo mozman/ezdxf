@@ -202,15 +202,10 @@ class BaseDimensionRenderer:
             attribs['attachment_point'] = const.MTEXT_ALIGN_FLAGS[align]
 
             if self.dxfversion >= 'AC1021':
-                if self.text_fill == 1:
+                if self.text_fill:
                     attribs['box_fill_scale'] = 1.1
-                    attribs['bg_fill'] = 3  # use true color
-                    attribs['bg_fill_color'] = 7  # required but ignored
-                    attribs['bg_fill_true_color'] = rgb2int((200, 200, 200))  # used by BricsCAD
-                elif self.text_fill == 2:
-                    attribs['box_fill_scale'] = 1.1
-                    attribs['bg_fill'] = 1
                     attribs['bg_fill_color'] = self.text_fill_color
+                    attribs['bg_fill'] = 3 if self.text_fill == 1 else 1
 
             if dxfattribs:
                 attribs.update(dxfattribs)

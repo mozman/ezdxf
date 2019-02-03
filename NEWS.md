@@ -23,6 +23,7 @@ Version 0.9a4 - dev
 - NEW: subpackage `ezdxf.render`, because of DIMENSION rendering
 - NEW: support for AutoCAD standard arrows
 - NEW: support for creating linear DIMENSION entities
+- NEW: background color support for MTEXT
 - CHANGE: DXF template cleanup, removed non standard text styles, dimension styles, layers and blocks
 - CHANGE: text style STANDARD uses `txt` font 
 - CHANGE: renamed subpackage `ezdxf.algebra` to `ezdxf.ezmath` (just `math` causes false errors in pycharm)
