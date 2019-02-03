@@ -45,43 +45,43 @@ class DimStyle(dict):
 
     """
     default_values = [
-        # tick block name, use setup to generate default blocks
+        # tick block name, use setup to generate default blocks <dimblk> <dimblk1> <dimblk2>
         ('tick', 'DIMTICK_ARCH'),
-        # scale factor for ticks-block
+        # scale factor for ticks-block <dimtsz> <dimasz>
         ('tickfactor', 1.),
         # tick2x means tick is drawn only for one side, insert tick a second
         # time rotated about 180 degree, but only one time at the dimension line
-        # ends, this is useful for arrow-like ticks. hint: set dimlineext to 0.
+        # ends, this is useful for arrow-like ticks. hint: set dimlineext to 0. <none>
         ('tick2x', False),
-        # dimension value scale factor, value = drawing-units * scale
+        # dimension value scale factor, value = drawing-units * scale <dimlfac>
         ('scale', 100.),
-        # round dimension value to roundval fractional digits
+        # round dimension value to roundval fractional digits <dimdec>
         ('roundval', 0),
-        # round dimension value to half units, round 0.4, 0.6 to 0.5
+        # round dimension value to half units, round 0.4, 0.6 to 0.5 <dimrnd>
         ('roundhalf', False),
-        # dimension value text color
+        # dimension value text color <dimclrt>
         ('textcolor', 7),
-        # dimension value text height
+        # dimension value text height <dimtxt>
         ('height', .5),
-        # dimension text prefix and suffix like 'x=' ... ' cm'
+        # dimension text prefix and suffix like 'x=' ... ' cm' <dimpost>
         ('prefix', ''),
         ('suffix', ''),
-        # dimension value text style
+        # dimension value text style <dimtxsty>
         ('style', 'OpenSansCondensed-Light'),
         # default layer for whole dimension object
         ('layer', 'DIMENSIONS'),
-        # dimension line color index (0 from layer)
+        # dimension line color index (0 from layer) <dimclrd>
         ('dimlinecolor', 7),
-        # dimension line extensions (in dimline direction, left and right)
+        # dimension line extensions (in dimline direction, left and right) <dimdle>
         ('dimlineext', .3),
-        # draw dimension value text <textabove> drawing-units above the
-        # dimension line
+        # draw dimension value text `textabove` drawing-units above the
+        # dimension line <dimgap>
         ('textabove', 0.2),
-        # switch extension line False=off, True=on
+        # switch extension line False=off, True=on <dimse1> <dimse2>
         ('dimextline', True),
-        # dimension extension line color index (0 from layer)
+        # dimension extension line color index (0 from layer) <dimclre>
         ('dimextlinecolor', 5),
-        # gap between measure target point and end of extension line
+        # gap between measure target point and end of extension line <dimexo>
         ('dimextlinegap', 0.3)
     ]
 
