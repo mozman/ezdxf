@@ -10,9 +10,27 @@ This utilities located in module :mod:`ezdxf.math`::
 Functions
 ---------
 
-.. function:: is_close_points(p1, p2)
+.. function:: is_close_points(p1, p2, abs_tol=1e-12)
 
     Returns True if all axis of p1 and p2 are close.
+
+    :param p1: point as tuple (x, y, z) or :class:`Vector`
+    :param p2: point as tuple (x, y, z) or :class:`Vector`
+    :param abs_tol: absolute tolerance for equality
+
+.. function:: closest_point(base, points)
+
+    Returns closest point to `base`.
+
+    :param base: base point as tuple (x, y, z) or :class:`Vector`
+    :param points: iterable of points as tuple (x, y, z) or :class:`Vector`
+
+.. function:: convex_hull_2d(points)
+
+    Returns 2d convex hull for points.
+
+    :param iterable points: iterable of points as tuple (x, y) or :class:`Vector`
+    :returns: list of points
 
 .. function:: bspline_control_frame(fit_points, degree=3, method='distance', power=.5)
 

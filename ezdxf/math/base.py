@@ -5,7 +5,7 @@ import math
 from operator import le, ge, lt, gt
 
 if TYPE_CHECKING:
-    from eztypes import Vertex
+    from ezdxf.eztypes import Vertex
 
 HALF_PI = math.pi / 2.  # type: float
 THREE_PI_HALF = 1.5 * math.pi  # type: float
