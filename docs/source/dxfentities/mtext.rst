@@ -165,7 +165,7 @@ MText Methods
 
     Set background color as ACI value (1-255) or as name string or as RGB tuple (r, g, b).
 
-    Use special color name ``bg``, to set background color to canvas background color.
+    Use special color name ``canvas``, to set background color to canvas background color.
 
     :param color: color as ACI, string or RGB tuple
     :param float scale: determines how much border there is around the text

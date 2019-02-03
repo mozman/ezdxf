@@ -10,7 +10,7 @@ from ezdxf.lldxf import const
 
 @pytest.fixture(scope='module')
 def dwg():
-    return ezdxf.new('AC1015')
+    return ezdxf.new('R2007')
 
 
 @pytest.fixture(scope='module')
@@ -76,6 +76,38 @@ def test_set_location(layout):
     assert const.MTEXT_MIDDLE_CENTER == mtext.dxf.attachment_point
     assert 15 == mtext.dxf.rotation
     assert (3, 4, 0) == mtext.dxf.insert
+
+
+def test_set_bg_color(layout):
+    mtext = layout.add_mtext("TEST").set_bg_color(2)
+    assert mtext.dxf.bg_fill == 1
+    assert mtext.dxf.bg_fill_color == 2
+    assert mtext.dxf_attrib_exists('box_fill_scale') is True, "box_fill_scale must exists, else AutoCAD complains"
+
+
+def test_set_bg_true_color(layout):
+    mtext = layout.add_mtext("TEST").set_bg_color((10, 20, 30), scale=2)
+    assert mtext.dxf.bg_fill == 1
+    assert mtext.dxf.bg_fill_true_color == ezdxf.rgb2int((10, 20, 30))
+    assert mtext.dxf.box_fill_scale == 2
+    assert mtext.dxf_attrib_exists('bg_fill_color') is True, "bg_fill_color must exists, else AutoCAD complains"
+
+
+def test_delete_bg_color(layout):
+    mtext = layout.add_mtext("TEST").set_bg_color(None)
+    # AutoCAD always complains about anything if bg_fill is set to 0, so I delete all tags
+    assert mtext.dxf_attrib_exists('bg_fill') is False
+    assert mtext.dxf_attrib_exists('bg_fill_color') is False
+    assert mtext.dxf_attrib_exists('bg_fill_true_color') is False
+    assert mtext.dxf_attrib_exists('bg_fill_color_name') is False
+    assert mtext.dxf_attrib_exists('box_fill_scale') is False
+
+
+def test_set_bg_canvas_color(layout):
+    mtext = layout.add_mtext("TEST").set_bg_color('canvas')
+    assert mtext.dxf.bg_fill == 3
+    assert mtext.dxf_attrib_exists('bg_fill_color') is True, "bg_fill_color must exists, else AutoCAD complains"
+    assert mtext.dxf_attrib_exists('box_fill_scale') is True, "box_fill_scale must exists, else AutoCAD complains"
 
 
 TESTSTR = "0123456789"

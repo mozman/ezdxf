@@ -140,7 +140,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
             self.del_dxf_attrib('bg_fill_color')
             self.del_dxf_attrib('bg_fill_true_color')
             self.del_dxf_attrib('bg_fill_color_name')
-        elif color == 'bg':  # special case for use background color
+        elif color == 'canvas':  # special case for use background color
             self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR
             self.dxf.bg_fill_color = 0  # required but ignored
         else:
@@ -153,6 +153,7 @@ class MText(ModernGraphicEntity):  # MTEXT will be extended in DXF version AC102
             elif isinstance(color, tuple):
                 self.dxf.bg_fill_color = 0  # required but ignored
                 self.dxf.bg_fill_true_color = rgb2int(color)
+        return self  # fluent interface
 
     @contextmanager
     def edit_data(self) -> 'MTextData':
