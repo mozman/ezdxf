@@ -4,10 +4,11 @@
 from typing import TYPE_CHECKING, Sequence, Tuple, Iterable
 from ezdxf.dxfentity import DXFEntity
 from ezdxf.lldxf.tags import DXFTag
+from ezdxf.lldxf import const
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.validator import is_valid_layer_name
-from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError, DXFKeyError
+from ezdxf.lldxf.const import DXFInvalidLayerName, DXFValueError, DXFKeyError, DXFVersionError, DIMJUST, DIMTAD
 from ezdxf.render.arrows import ARROWS
 from ezdxf.math.ucs import UCS as UserCoordinateSystem
 import logging
@@ -587,9 +588,19 @@ class DimStyle(DXFEntity):
                     logger.debug('Unsupported header variable: {}.'.format(header_var))
 
     def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+        """
+        Set arrows by block names or AutoCAD standard arrow names, set dimtsz = 0 which disables tick.
+
+        Args:
+            blk: block/arrow name for both arrows, if dimsah == 0
+            blk1: block/arrow name for first arrow, if dimsah == 1
+            blk2: block/arrow name for second arrow, if dimsah == 1
+
+        """
         self.set_dxf_attrib('dimblk', blk)
         self.set_dxf_attrib('dimblk1', blk1)
         self.set_dxf_attrib('dimblk2', blk2)
+        self.set_dxf_attrib('dimtsz', 0)  # use blocks
 
         # only existing BLOCK definitions allowed
         if self.drawing:
@@ -599,3 +610,168 @@ class DimStyle(DXFEntity):
                     continue
                 if b and b not in blocks:
                     raise DXFValueError('BLOCK "{}" does not exist.'.format(blk))
+
+    def set_tick(self, size: float = 1) -> None:
+        """
+        Use oblique stroke as tick, disables arrows.
+
+        Args:
+            size: arrow size in daring units
+
+        """
+        self.set_dxf_attrib('dimtsz', size)
+
+    def set_text_align(self, halign: str = None, valign: str = None) -> None:
+        """
+        Set measurement text alignment, `halign` defines the horizontal alignment (requires DXFR2000+),
+        `valign` defines the vertical  alignment, `above1` and `above2` means above extension line 1 or 2 and aligned
+        with extension line.
+
+        Args:
+            halign: `left`, `right`, `center`, `above1`, `above2`, requires DXF R2000+
+            valign: `above`, `center`, `below`
+
+        """
+        if valign:
+            self.set_dxf_attrib('dimtad', DIMTAD[valign.lower()])
+        try:
+            if halign:
+                self.set_dxf_attrib('dimjust', DIMJUST[halign.lower()])
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMJUST require DXF R2000+')
+
+    def set_text_format(self, prefix: str = '', postfix: str = '', rnd: float = None, dec: int = None, sep: str = None,
+                        leading_zeros: bool = True, trailing_zeros: bool = True):
+        """
+        Set dimension text format, like prefix and postfix string, rounding rule and number of decimal places.
+
+        Args:
+            prefix: Dimension text prefix text as string
+            postfix: Dimension text postfix text as string
+            rnd: Rounds all dimensioning distances to the specified value, for instance, if DIMRND is set to 0.25, all
+                 distances round to the nearest 0.25 unit. If you set DIMRND to 1.0, all distances round to the nearest
+                 integer.
+            dec: Sets the number of decimal places displayed for the primary units of a dimension. requires DXF R2000+
+            sep: "." or "," as decimal separator requires DXF R2000+
+            leading_zeros: suppress leading zeros for decimal dimensions if False
+            trailing_zeros: suppress trailing zeros for decimal dimensions if False
+
+        """
+        if prefix or postfix:
+            self.dxf.dimpost = prefix + '<>' + postfix
+        if rnd is not None:
+            self.dxf.dimrnd = rnd
+
+        # works only with decimal dimensions not inch and feet, US user set dimzin directly
+        dimzin = 0
+        if leading_zeros is False:
+            dimzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+        if trailing_zeros is False:
+            dimzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
+        if dimzin:
+            self.dxf.dimzin = dimzin
+        try:
+            if dec is not None:
+                self.dxf.dimdec = dec
+            if sep is not None:
+                self.dxf.dimdsep = ord(sep)
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMDSEP and DIMDEC require DXF R2000+')
+
+    def set_dimline_format(self, color: int = None, linetype: str = None, lineweight: int = None,
+                           extension: float = None, disable1: bool = None, disable2: bool = None):
+        """
+        Set dimension line properties
+
+        Args:
+            color: color index
+            linetype: linetype as string, requires DXF R2007+
+            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm, requires DXF R2000+
+            extension: extension length
+            disable1: True to suppress first part of dimension line, requires DXF R2000+
+            disable2: True to suppress second part of dimension line, requires DXF R2000+
+
+        """
+        if color is not None:
+            self.dxf.dimclrd = color
+        if extension is not None:
+            self.dxf.dimdle = extension
+        try:
+            if lineweight is not None:
+                self.dxf.dimlwd = lineweight
+            if disable1 is not None:
+                self.dxf.dimsd1 = disable1
+            if disable2 is not None:
+                self.dxf.dimsd2 = disable2
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMLWD, DIMSD1 and DIMSD2 requires DXF R2000+')
+        try:
+            if linetype is not None:
+                self.dxf.dimltype = linetype
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMLTYPE requires DXF R2007+')
+
+    def set_extline_format(self, color: int = None, lineweight: int = None, extension: float = None,
+                           offset: float = None, fixed_length: float = None):
+        """
+        Set common extension line attributes.
+
+        Args:
+            color: color index
+            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm
+            extension: extension length above dimension line
+            offset: offset from measurement point
+            fixed_length: set fixed length extension line, length below the dimension line
+
+        """
+        if color is not None:
+            self.dxf.dimclre = color
+        if extension is not None:
+            self.dxf.dimexe = extension
+        if offset is not None:
+            self.dxf.dimexo = offset
+        try:
+            if lineweight is not None:
+                self.dxf.dimlwe = lineweight
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMLWE requires DXF R2000+')
+        try:
+            if fixed_length is not None:
+                self.dxf.dimfxlon = 1
+                self.dxf.dimfxl = fixed_length
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMFXL requires DXF R2007+')
+
+    def set_extline1(self, linetype: str = None, disable=False):
+        """
+        Set extension line 1 attributes.
+
+        Args:
+            linetype: linetype for extension line 1, requires DXF R2007+
+            disable: disable extension line 1 if True
+
+        """
+        if disable:
+            self.dxf.dimse1 = 1
+        try:
+            if linetype is not None:
+                self.dxf.dimltex1 = linetype
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMLTEX1 requires DXF R2007+')
+
+    def set_extline2(self, linetype: str = None, disable=False):
+        """
+        Set extension line 2 attributes.
+
+        Args:
+            linetype: linetype for extension line 2, requires DXF R2007+
+            disable: disable extension line 2 if True
+
+        """
+        if disable:
+            self.dxf.dimse2 = 1
+        try:
+            if linetype is not None:
+                self.dxf.dimltex2 = linetype
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMLTEX2 requires DXF R2007+')

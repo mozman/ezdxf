@@ -1,4 +1,5 @@
 from typing import Any, TYPE_CHECKING, Tuple
+from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.render.arrows import ARROWS
 from ezdxf.math import Vector
@@ -170,7 +171,7 @@ class DimStyleOverride:
         """
         self.dimstyle_attribs['dimtsz'] = float(size)
 
-    def set_align(self, halign=None, valign=None) -> None:
+    def set_text_align(self, halign=None, valign=None) -> None:
         """
         Set measurement text alignment, `halign` defines the horizontal alignment, `valign` defines the vertical
         alignment, `above1` and `above2` means above extension line 1 or 2 and aligned with extension line.
@@ -186,15 +187,119 @@ class DimStyleOverride:
         if valign:
             self.dimstyle_attribs['dimtad'] = DIMTAD[valign.lower()]
 
-    def set_text_format(self, prefix='', postfix='', rnd=None, dec=None, suppress_zeros=None):
+    def set_text_format(self, prefix: str = '', postfix: str = '', rnd: float = None, dec: int = None, sep: str = None,
+                        leading_zeros: bool = True, trailing_zeros: bool = True):
+        """
+        Set dimension text format, like prefix and postfix string, rounding rule and number of decimal places.
+
+        Args:
+            prefix: dimension text prefix text as string
+            postfix: dimension text postfix text as string
+            rnd: Rounds all dimensioning distances to the specified value, for instance, if DIMRND is set to 0.25, all
+                 distances round to the nearest 0.25 unit. If you set DIMRND to 1.0, all distances round to the nearest
+                 integer.
+            dec: Sets the number of decimal places displayed for the primary units of a dimension. requires DXF R2000+
+            sep: "." or "," as decimal separator
+            leading_zeros: suppress leading zeros for decimal dimensions if False
+            trailing_zeros: suppress trailing zeros for decimal dimensions if False
+
+        """
         if prefix or postfix:
             self.dimstyle_attribs['dimpost'] = prefix + '<>' + postfix
         if rnd is not None:
             self.dimstyle_attribs['dimrnd'] = rnd
         if dec is not None:
             self.dimstyle_attribs['dimdec'] = dec
-        if suppress_zeros is not None:
-            self.dimstyle_attribs['dimzin'] = suppress_zeros
+        if sep is not None:
+            self.dimstyle_attribs['dimdsep'] = ord(sep)
+        # works only with decimal dimensions not inch and feet, US user set dimzin directly
+        dimzin = 0
+        if leading_zeros is False:
+            dimzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+        if trailing_zeros is False:
+            dimzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
+        if dimzin:
+            self.dimstyle_attribs['dimzin'] = dimzin
+
+    def set_dimline_format(self, color: int = None, linetype: str = None, lineweight: int = None,
+                           extension: float = None, disable1: bool = None, disable2: bool = None):
+        """
+        Set dimension line properties
+
+        Args:
+            color: color index
+            linetype: linetype as string
+            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm
+            extension: extension length
+            disable1: True to suppress first part of dimension line
+            disable2: True to suppress second part of dimension line
+
+        """
+        if color is not None:
+            self.dimstyle_attribs['dimclrd'] = color
+        if linetype is not None:
+            self.dimstyle_attribs['dimltype'] = linetype
+        if lineweight is not None:
+            self.dimstyle_attribs['dimlwd'] = lineweight
+        if extension is not None:
+            self.dimstyle_attribs['dimdle'] = extension
+        if disable1 is not None:
+            self.dimstyle_attribs['dimsd1'] = disable1
+        if disable2 is not None:
+            self.dimstyle_attribs['dimsd2'] = disable2
+
+    def set_extline_format(self, color: int = None, lineweight: int = None, extension: float = None,
+                           offset: float = None, fixed_length: float = None):
+        """
+        Set common extension line attributes.
+
+        Args:
+            color: color index
+            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm
+            extension: extension length above dimension line
+            offset: offset from measurement point
+            fixed_length: set fixed length extension line, length below the dimension line
+
+        """
+        if color is not None:
+            self.dimstyle_attribs['dimclre'] = color
+        if lineweight is not None:
+            self.dimstyle_attribs['dimlwe'] = lineweight
+        if extension is not None:
+            self.dimstyle_attribs['dimexe'] = extension
+        if offset is not None:
+            self.dimstyle_attribs['dimexo'] = offset
+        if fixed_length is not None:
+            self.dimstyle_attribs['dimflxon'] = 1
+            self.dimstyle_attribs['dimflx'] = fixed_length
+
+    def set_extline1(self, linetype: str = None, disable=False):
+        """
+        Set extension line 1 attributes.
+
+        Args:
+            linetype: linetype for extension line 1
+            disable: disable extension line 1 if True
+
+        """
+        if linetype is not None:
+            self.dimstyle_attribs['dimltex1'] = linetype
+        if disable:
+            self.dimstyle_attribs['dimse1'] = 1
+
+    def set_extline2(self, linetype: str = None, disable=False):
+        """
+        Set extension line 2 attributes.
+
+        Args:
+            linetype: linetype for extension line 2
+            disable: disable extension line 2 if True
+
+        """
+        if linetype is not None:
+            self.dimstyle_attribs['dimltex2'] = linetype
+        if disable:
+            self.dimstyle_attribs['dimse2'] = 1
 
     def set_text(self, text='<>') -> None:
         """

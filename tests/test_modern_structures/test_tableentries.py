@@ -255,6 +255,81 @@ def test_dimstyle_group_codes(dimstyle):
     assert 2 not in codes
 
 
+def test_dimstyle_set_align(dimstyle2):
+    dimstyle2.set_text_align(valign='above')
+    assert dimstyle2.dxf.dimtad == 1
+    dimstyle2.set_text_align(halign='above1')
+    assert dimstyle2.dxf.dimjust == 3
+
+
+def test_set_text_format(dimstyle2):
+    dimstyle2.set_text_format(
+        prefix='+',
+        postfix=' cm',
+        rnd=.5,
+        dec=2,
+        sep='.',
+        leading_zeros=False,
+        trailing_zeros=False,
+    )
+    assert dimstyle2.dxf.dimpost == '+<> cm'
+    assert dimstyle2.dxf.dimrnd == .5
+    assert dimstyle2.dxf.dimdec == 2
+    assert dimstyle2.dxf.dimdsep == ord('.')
+    assert dimstyle2.dxf.dimzin == 12
+
+
+def test_set_dimline_format(dimstyle2):
+    dimstyle2.set_dimline_format(
+        color=2,
+        linetype='DOT',
+        lineweight=18,
+        extension=.33,
+        disable1=True,
+        disable2=True,
+    )
+    assert dimstyle2.dxf.dimclrd == 2
+    assert dimstyle2.dxf.dimltype == 'DOT'
+    assert dimstyle2.dxf.dimlwd == 18
+    assert dimstyle2.dxf.dimdle == .33
+    assert dimstyle2.dxf.dimsd1 == 1
+    assert dimstyle2.dxf.dimsd2 == 1
+
+
+def test_set_extline_format(dimstyle2):
+    dimstyle2.set_extline_format(
+        color=2,
+        lineweight=18,
+        extension=.33,
+        offset=.77,
+        fixed_length=.5,
+    )
+    assert dimstyle2.dxf.dimclre == 2
+    assert dimstyle2.dxf.dimlwe == 18
+    assert dimstyle2.dxf.dimexe == .33
+    assert dimstyle2.dxf.dimexo == .77
+    assert dimstyle2.dxf.dimfxlon == 1
+    assert dimstyle2.dxf.dimfxl == .5
+
+
+def test_set_extline1(dimstyle2):
+    dimstyle2.set_extline1(
+        linetype='DOT',
+        disable=True,
+    )
+    assert dimstyle2.dxf.dimltex1 == 'DOT'
+    assert dimstyle2.dxf.dimse1 == 1
+
+
+def test_set_extline2(dimstyle2):
+    dimstyle2.set_extline2(
+        linetype='DOT',
+        disable=True,
+    )
+    assert dimstyle2.dxf.dimltex2 == 'DOT'
+    assert dimstyle2.dxf.dimse2 == 1
+
+
 def test_block_record_name():
     blockrec = BlockRecord.new('FFFF', dxfattribs={
         'name': 'BLOCKREC1',

@@ -17,7 +17,7 @@ TEXT_ATTRIBS = {
     'style': 'OpenSansCondensed-Light',
 }
 
-DIM_TEXT_STYLE = 'STANDARD'
+DIM_TEXT_STYLE = 'OpenSansCondensed-Light'
 
 
 def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
@@ -69,7 +69,7 @@ def linear_tutorial(dxfversion='R12'):
     # Some properties have setter methods for convenience, this is also the reason for not calling dim2.render()
     # automatically.
     dim2.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
-    dim2.set_align(halign='right')
+    dim2.set_text_align(halign='right')
     dim2.render()
 
     dwg.saveas(OUTDIR / f'dim_linear_{dxfversion}_tutorial.dxf')
@@ -181,7 +181,7 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         # wide
         dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 5, y), dimstyle=dimstyle, override=override,
                                  dxfattribs=dimattr)
-        dim.set_align(halign=halign, valign=valign)
+        dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
 
         add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vector(x, y))
@@ -189,14 +189,14 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         # narrow
         dim = msp.add_linear_dim(base=base, ext1=(x + 8, y), ext2=(x + 8.3, y), dimstyle=dimstyle, override=override,
                                  dxfattribs=dimattr)
-        dim.set_align(halign=halign, valign=valign)
+        dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
 
         # narrow and force text inside
         override['dimtix'] = 1
         dim = msp.add_linear_dim(base=base, ext1=(x + 11, y), ext2=(x + 11.3, y), dimstyle=dimstyle, override=override,
                                  dxfattribs=dimattr)
-        dim.set_align(halign=halign, valign=valign)
+        dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
 
     def user_text_free(dimstyle, x=0, y=0, leader=False):

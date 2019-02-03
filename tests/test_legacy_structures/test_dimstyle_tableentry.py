@@ -4,7 +4,9 @@
 from __future__ import unicode_literals
 import pytest
 
+import ezdxf
 from ezdxf.legacy.tableentries import DimStyle
+
 
 @pytest.fixture
 def dimstyle():
@@ -38,3 +40,25 @@ def test_set_both_arrows(dimstyle):
     assert dimstyle.dxf.dimblk == ''
     assert dimstyle.dxf.dimblk1 == 'OPEN'
     assert dimstyle.dxf.dimblk2 == 'DOT'
+
+
+def test_set_tick(dimstyle):
+    dimstyle.set_tick(.25)
+    assert dimstyle.dxf.dimtsz == .25
+
+
+def test_set_text_align(dimstyle):
+    dimstyle.set_text_align(valign='above')
+    assert dimstyle.dxf.dimtad == 1
+    with pytest.raises(ezdxf.DXFVersionError):
+        dimstyle.set_text_align(halign='above1')
+
+
+def test_set_text_format(dimstyle):
+    dimstyle.set_text_format(prefix='+', postfix=' cm', rnd=.5, leading_zeros=False, trailing_zeros=False)
+    assert dimstyle.dxf.dimpost == '+<> cm'
+    assert dimstyle.dxf.dimrnd == .5
+    assert dimstyle.dxf.dimzin == 12
+    with pytest.raises(ezdxf.DXFVersionError):
+        dimstyle.set_text_format(dec=2)
+

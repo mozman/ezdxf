@@ -49,8 +49,8 @@ def byte_to_hexstr(byte: int) -> str:
     return "%0.2X" % byte
 
 
-def suppress_zeros(s: str, leading: bool = False, pending: bool = True):
-    if (not leading) and (not pending):
+def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
+    if (not leading) and (not trailing):
         return s
 
     if float(s) == 0.:
@@ -64,7 +64,7 @@ def suppress_zeros(s: str, leading: bool = False, pending: bool = True):
 
     if leading:
         s = s.lstrip('0')
-    if pending:
+    if trailing:
         s = s.rstrip('0')
     if s[-1] in '.,':
         s = s[:-1]

@@ -3,7 +3,7 @@ BlockRecord
 
 .. class:: BlockRecord
 
-Defines a BlockRecord, exist just in DXF version R13 and later.
+    Defines a BlockRecord, exist just in DXF version R13 and later.
 
 DXF Attributes for BlockRecord
 ------------------------------
@@ -12,7 +12,7 @@ DXF Attributes for BlockRecord
 
 .. attribute:: BlockRecord.dxf.owner
 
-requires DXF R13 or later
+    requires DXF R13 or later
 
 .. attribute:: BlockRecord.dxf.name
 

@@ -36,8 +36,10 @@ DXF Attributes for Layer
 
     Plot flag (int)
 
-    - 1 = plot layer (default value)
-    - 0 = don't plot layer
+    === ============================
+    1   plot layer (default value)
+    0   don't plot layer
+    === ============================
 
 .. attribute:: Layer.dxf.lineweight
 
