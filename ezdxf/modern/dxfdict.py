@@ -11,7 +11,7 @@ from .dxfobjects import none_subclass
 
 if TYPE_CHECKING:
     from collections import OrderedDict
-    from eztypes import Tags, DXFEntity, Auditor
+    from ezdxf.eztypes import Tags, DXFEntity, Auditor
 
 
 @loader.register('ACDBDICTIONARYWDFLT', legacy=False)
