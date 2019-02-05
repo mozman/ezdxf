@@ -7,7 +7,7 @@
 # ------
 #
 # 1. Create an new DXFTag system based on better understanding and knowledge of real world requirements of the DXF format
-# 2. Cython optimization as secondary goal in mind
+# 2. Cython optimization as secondary goal in mind, but avoid manual memory management (malloc() and free()), use array
 # 3. Store DXF entities as wrapped entities in the EntityDB with LAZY SETUP, load time should be fast and most entities
 #    are never touched - especially when only data querying
 
@@ -18,13 +18,27 @@
 # - string
 # DXF string represent a single tag
 
+# Cython types for single data:
+# -----------------------------
+# - DXFInt (code: short, value: long)
+# - DXFFloat (code: :short, value: double)
+# - DXFAny (code: short, value: Py_Object)
+# hidden behind factory function dxftag()
+
+
 # Multi data:
 # -----------
 # - Vertex (3 float array)
 # - Binary data
 # - Long Strings (MTEXT)
-# - LWPolylinePoint (5 float array)
+# - LWVertex (5 float array)
 # DXF string represent multiple tags
+
+# Cython types for multi data:
+# -----------------------------
+# - DXFVertex (code: short, x: double, y: double,  z: double)
+# - DXFLWVertex (code: short, x: double, y: double, s: float, e: float, b: double)
+# - see no advantages for binary data and long strings over Python versions
 
 # Packed Data:
 # ------------
@@ -34,6 +48,7 @@
 # - PackedDict - dict() key, value pairs
 #   key is a string,  same group code for all keys
 #   value is a handle(str), same group code for all keys
+# - see no advantages by Cython optimizations
 
 # array.array codes:
 # float: d (double)
@@ -41,10 +56,13 @@
 # int: L (unsigned long) 4 bytes, for Vertex indices
 # int: Q (unsigned long long) 8 bytes for handles!
 
-from typing import TYPE_CHECKING, Iterable, Union, Any
+# -------------------------------------------------
+# This optimization are postponed after 1.0 release
+# -------------------------------------------------
+
+from typing import TYPE_CHECKING, Union, Any
 from reprlib import repr
 from abc import abstractmethod
-from array import array
 
 from ezdxf.math.vector import Vector
 from ezdxf.lldxf.types import POINT_CODES, cast_tag_value
@@ -163,7 +181,7 @@ class LongString(AbstractTagValue):
         raise NotImplemented()
 
 
-class LWPolylinePoint(AbstractTagValue):
+class LWVertex(AbstractTagValue):
     __slots__ = ('_data', )
 
     def value(self):

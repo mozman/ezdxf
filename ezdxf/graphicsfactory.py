@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.math import Vector
 from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
-from ezdxf.override import DimStyleOverride
+from ezdxf.dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape

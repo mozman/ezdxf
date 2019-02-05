@@ -10,7 +10,7 @@ from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros, raise_decimals
 from ezdxf.render.arrows import ARROWS, connection_point
-from ezdxf.override import DimStyleOverride
+from ezdxf.dimstyleoverride import DimStyleOverride
 from ezdxf import rgb2int
 
 if TYPE_CHECKING:

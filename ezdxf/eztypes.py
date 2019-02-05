@@ -56,7 +56,7 @@ if TYPE_CHECKING:
     from ezdxf.modern.material import MaterialManager
     from ezdxf.modern.mleader import MLeaderStyleManager
     from ezdxf.modern.mline import MLineStyleManager
-    from ezdxf.override import DimStyleOverride
+    from ezdxf.dimstyleoverride import DimStyleOverride
 
     # DXF objects
     from ezdxf.modern.dxfobjects import DXFObject
