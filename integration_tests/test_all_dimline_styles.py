@@ -28,7 +28,7 @@ def test_linear_dimline_all_arrow_style(drawing, tmpdir):
             'dimasz': .25,
         }
 
-        dim = msp.add_linear_dim(base=(3, y + 2), ext1=(0, y), ext2=(3, y), dimstyle='EZDXF', override=attributes)
+        dim = msp.add_linear_dim(base=(3, y + 2), p1=(0, y), p2=(3, y), dimstyle='EZDXF', override=attributes)
         dim.render()
 
     filename = str(tmpdir.join('all_dimline_styles_{}.dxf'.format(drawing.dxfversion)))

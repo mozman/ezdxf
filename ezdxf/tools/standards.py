@@ -68,9 +68,13 @@ def setup_styles(dwg: 'Drawing') -> None:
 
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
-    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style,
-                   blk=ARROWS.architectural_tick)
+    ezdxf_dimstyle = setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM',
+                                    style=options.default_dimension_text_style,
+                                    blk=ARROWS.architectural_tick)
+    ezdxf_dimstyle.dxf.dimasz *= .7  # smaller arch ticks
     dwg.header['$DIMSTYLE'] = 'EZDXF'
+    ezdxf_dimstyle.copy_to_header(dwg)
+
     if domain in ('metric', 'all'):
         setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
         setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=options.default_dimension_text_style)
@@ -188,6 +192,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
         dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
     if dwg.dxfversion > 'AC1009':
         # set text style
+        dimstyle.dxf.dimtmove = 2  # move freely without leader
         dimstyle.dxf.dimtxsty = style
         dimstyle.dxf.dimupt = 1  # user location override, controls both the text position and the dimension line location, same as DXF12
         dimstyle.dxf.dimdsep = ord('.')

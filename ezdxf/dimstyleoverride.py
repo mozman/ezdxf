@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, UCS, Drawing, DimStyle, Vertex
+    from ezdxf.eztypes import Dimension, UCS, Drawing, DimStyle, Vertex, BaseDimensionRenderer
 
 
 class DimStyleOverride:
@@ -344,8 +344,9 @@ class DimStyleOverride:
     def get_renderer(self, ucs: 'UCS' = None):
         return self.drawing.dimension_renderer.dispatch(self, ucs)
 
-    def render(self, ucs: 'UCS' = None) -> None:
+    def render(self, ucs: 'UCS' = None) -> 'BaseDimensionRenderer':
         renderer = self.get_renderer(ucs)
         renderer.render()
         if len(self.dimstyle_attribs):
             self.commit()
+        return renderer

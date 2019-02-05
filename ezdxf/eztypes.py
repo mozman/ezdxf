@@ -87,6 +87,7 @@ if TYPE_CHECKING:
     from ezdxf.modern.mtext import MText
     from ezdxf.modern.solid3d import Solid3d, Body, Region
     from ezdxf.modern.surface import Surface, ExtrudedSurface, RevolvedSurface, LoftedSurface, SweptSurface
+    from ezdxf.render.dimension import BaseDimensionRenderer
 
     # other
     from ezdxf.audit import Auditor

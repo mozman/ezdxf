@@ -1,7 +1,7 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable
+from typing import TYPE_CHECKING, Tuple, Iterable, cast
 import math
 from ezdxf.math import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
 from ezdxf.math import UCS, PassTroughUCS
@@ -269,27 +269,57 @@ class LinearDimension(BaseDimensionRenderer):
         self.dimension.dxf.defpoint = self.dim_line_start  # set defpoint to expected location
         self.measurement = (self.dim_line_end - self.dim_line_start).magnitude
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)
-        self.text_location = None
-        self.text_box = None
+        self.text_location = None  # actual calculated or overridden dimension text location
+        self.text_box = None  # bounding box of dimension text
+        self.is_wide_text = False  # True if text+spacing+arrows  doesn't have enough space between extension lines
+
+        # only for linear dimension in multi point mode
+        self.multi_point_mode = override.pop('multi_point_mode', False)
+        # 1 .. move wide text up
+        # 2 .. move wide text down
+        # None .. ignore
+        self.move_wide_text = override.pop('move_wide_text', None)
+
+        # place text outside of extension lines, only True if really placed outside
+        # for forced text inside, text_outside is False
         self.text_outside = False
-        self.dim_text_width = 0
+        self.dim_text_width = 0  # actual text width in drawing units
+        self.text_spacing = self.text_gap * .75  # spacing in front and after dimension text
         self.required_text_space = 0
 
         if self.text:
             self.dim_text_width = self.text_width(self.text)
-            self.required_text_space = self.dim_text_width + 2 * (self.arrow_size + self.text_gap)
+            self.required_text_space = self.dim_text_width + 2 * (self.arrow_size + self.text_spacing)
+            self.is_wide_text = self.required_text_space > self.measurement
             if self.force_text_inside:
                 if self.text_halign < 3:
                     self.text_halign = 0  # center text
             else:
-                self.text_outside = self.required_text_space > self.measurement
+                # place text outside if wide text and not forced inside
+                self.text_outside = self.is_wide_text
+
+            # use relative text shift to move wide text up or down in multi point mode
+            if self.multi_point_mode and self.is_wide_text and self.move_wide_text > 0:
+                self.text_fill = 1
+                shift_value = self.text_height + self.text_gap
+                if self.move_wide_text == 1:  # move text up
+                    self.text_shift_v = shift_value
+                    if self.vertical_factor == -1:  # text below dimension line
+                        # shift again
+                        self.text_shift_v += shift_value
+                elif self.move_wide_text == 2:  # move text down
+                    self.text_shift_v = -shift_value
+                    if self.vertical_factor == 1:  # text above dimension line
+                        # shift again
+                        self.text_shift_v -= shift_value
+
             self.text_location = self.get_text_location()
             self.text_box = TextBox(
                 center=self.text_location,
                 width=self.dim_text_width,
                 height=self.text_height,
                 angle=self.text_rotation,
-                gap=self.text_gap * .75
+                gap=self.text_spacing
             )
 
         self.required_arrows_space = 2 * self.arrow_size + self.text_gap
@@ -317,16 +347,6 @@ class LinearDimension(BaseDimensionRenderer):
         return p2
 
     def render(self):
-        # add measurement text
-        if self.text:
-            self.add_measurement_text(self.text, self.text_location, self.text_rotation)
-            # add leader
-            if self.user_location is not None and self.text_movement_rule == 1:
-                target_point = self.dim_line_start.lerp(self.dim_line_end)
-                p2, p3, *_ = self.text_box.corners
-                defpoint = self.add_leader(target_point, p2, p3)
-                self.dimension.dxf.text_midpoint = defpoint
-
         # add extension line 1
         if not self.suppress_ext1_line:
             above_ext_line1 = self.text_halign == 3
@@ -348,6 +368,16 @@ class LinearDimension(BaseDimensionRenderer):
 
         # add dimension line
         self.add_dimension_line(dim_line_start, dim_line_end)
+
+        # add measurement text at last to see text fill properly
+        if self.text:
+            self.add_measurement_text(self.text, self.text_location, self.text_rotation)
+            # add leader
+            if self.user_location is not None and self.text_movement_rule == 1:
+                target_point = self.dim_line_start.lerp(self.dim_line_end)
+                p2, p3, *_ = self.text_box.corners
+                defpoint = self.add_leader(target_point, p2, p3)
+                self.dimension.dxf.text_midpoint = defpoint
 
         # add POINT entities at definition points
         self.add_defpoints([self.dim_line_start, self.ext1_line_start, self.ext2_line_start])
@@ -567,7 +597,8 @@ class LinearDimension(BaseDimensionRenderer):
             self.dimension.dxf.text_midpoint = user_location
             return user_location
         else:
-            if halign in (3, 4):  # positions the text above and aligned with the first/second extension line
+            # positions the text above and aligned with the first/second extension line
+            if halign in (3, 4):
                 vdist = self.ext_line_extension + self.dim_text_width / 2.
                 hdist = self.text_gap + self.text_height / 2.
                 if halign == 3:
@@ -680,23 +711,40 @@ def multi_point_linear_dimension(
         layout: 'GenericLayoutType',
         base: 'Vertex',
         points: Iterable['Vertex'],
-        angle: float,
-        ucs: 'UCS',
-        dimstyle: str,
-        override: dict,
-        dxfattribs: dict) -> None:
+        angle: float = 0,
+        ucs: 'UCS' = None,
+        dimstyle: str = 'EZDXF',
+        override: dict = None,
+        dxfattribs: dict = None) -> None:
     points = [Vector(p) for p in points]
     base = Vector(base)
-    
     override = override or {}
     override['dimtix'] = 1  # do not place measurement text outside
+    override['multi_point_mode'] = True
+    move_wide_text = 1  # 1 .. move wide text up; 2 .. move wide text down; None .. ignore
+    first_run = True
 
     for p1, p2 in zip(points[:-1], points[1:]):
+        _override = dict(override)
+        _override['move_wide_text'] = move_wide_text
+        if not first_run:
+            _override['dimse1'] = 1
         style = layout.add_linear_dim(
             base, p1, p2,
             angle=angle,
             dimstyle=dimstyle,
-            override=override,
+            override=_override,
             dxfattribs=dxfattribs,
         )
-        style.render(ucs)
+
+        renderer = cast(LinearDimension, style.render(ucs))
+        if renderer.is_wide_text:
+            # after wide text switch moving direction
+            if move_wide_text == 1:
+                move_wide_text = 2
+            else:
+                move_wide_text = 1
+        else:  # reset to move text up
+            move_wide_text = 1
+        first_run = False
+
