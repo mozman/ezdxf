@@ -17,6 +17,13 @@ class DimStyleOverride:
         dim_style_name = dimension.get_dxf_attrib('dimstyle', 'STANDARD')
         self.dimstyle = self.drawing.dimstyles.get(dim_style_name)  # type: DimStyle
         self.dimstyle_attribs = self.get_dstyle_dict()  # type: dict
+
+        # special ezdxf attributes beyond the DXF reference, therefore not stored in the DSTYLE data.
+        # This are only rendering effects or data transfer objects
+        # user_location: Vector - user location override if not None
+        # relative_user_location: bool - user location override relative to dimline center if True
+        # text_shift_h: float - shift text in text direction, relative to standard text location
+        # text_shift_v: float - shift text perpendicular to text direction, relative to standard text location
         self.update(override or {})
 
     @property

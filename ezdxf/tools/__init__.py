@@ -69,33 +69,3 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
     if s[-1] in '.,':
         s = s[:-1]
     return sign+s
-
-
-lifter = {
-    '0': '\u2070',
-    '1': '\u00B9',
-    '2': '²',
-    '3': '³',
-    '4': '\u2074',
-    '5': '\u2075',
-    '6': '\u2076',
-    '7': '\u2077',
-    '8': '\u2078',
-    '9': '\u2079',
-}
-
-
-def raise_decimals(s: str):
-    def _raise():
-        translate = False
-        for char in s:
-            if translate:
-                if char not in '0123456789':
-                    translate = False
-                else:
-                    char = lifter.get(char, char)
-            if char == '.':
-                translate = True
-                continue
-            yield char
-    return ''.join(_raise())

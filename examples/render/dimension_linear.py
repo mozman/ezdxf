@@ -45,10 +45,10 @@ def linear_tutorial(dxfversion='R12'):
     # Default DimStyle EZDXF: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
     #
     # base: defines the dimension line, ezdxf accepts any point on the dimension line
-    # ext1: defines the start point of the first extension line, which also defines the first point to measure
-    # ext2: defines the start point of the second extension line, which also defines the second point to measure
+    # p1: defines the start point of the first extension line, which also defines the first point to measure
+    # p2: defines the start point of the second extension line, which also defines the second point to measure
 
-    dim = msp.add_linear_dim(base=(3, 2), ext1=(0, 0), ext2=(3, 0), dimstyle='EZDXF', override={'dimtxsty': 'OpenSans'})
+    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF', override={'dimtxsty': 'OpenSans'})
     # Necessary second step, to create the BLOCK entity with the DIMENSION geometry.
     # ezdxf supports DXF R2000 attributes for DXF R12 rendering, but they have to be applied by the DIMSTYLE override
     # feature, this additional attributes are not stored in the XDATA section of the DIMENSION entity, they are just
@@ -60,7 +60,7 @@ def linear_tutorial(dxfversion='R12'):
     # rotated DIMENSION without `override` uses DEFAULT_DIM_TEXT_STYLE="OPEN_SANS_CONDENSED_LIGHT"
     # angle: defines the angle of the dimension line, measurement is the distance between first and second measurement point
     # in direction of `angle`
-    dim2 = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF',
+    dim2 = msp.add_linear_dim(base=(10, 2), p1=(7, 0), p2=(10, 0), angle=-30, dimstyle='EZDXF',
                               override={
                                   'dimdle': 0,
                                   'dimtfill': 2,  # custom text fill
@@ -80,14 +80,14 @@ def example_background_fill(dxfversion='R12'):
     msp = dwg.modelspace()
     msp.add_line((0, 2.2), (10, 2.2))
 
-    dim = msp.add_linear_dim(base=(0, 2), ext1=(0, 0), ext2=(3, 0), dimstyle='EZDXF',
+    dim = msp.add_linear_dim(base=(0, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF',
                              override={
                                  'dimtfill': 1,  # background color
                              })
     dim.set_text('bgcolor')
     dim.render()
 
-    dim = msp.add_linear_dim(base=(0, 2), ext1=(5, 0), ext2=(8, 0), dimstyle='EZDXF',
+    dim = msp.add_linear_dim(base=(0, 2), p1=(5, 0), p2=(8, 0), dimstyle='EZDXF',
                              override={
                                  'dimtfill': 2,  # custom text fill
                                  'dimtfillclr': 4,  # cyan
@@ -168,18 +168,14 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
                    )
 
     def text(dimstyle, x, y, halign, valign, oblique=0):
-        override = {
-            'dimdle': 0.,
-            'dimexe': .5,  # length of extension line above dimension line
-            'dimexo': .5,  # extension line offset
-        }
+        override = {}
         dimattr = {}
         if oblique:
             dimattr['oblique_angle'] = oblique
 
         base = (x, y + 2)
         # wide
-        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 5, y), dimstyle=dimstyle, override=override,
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 5, y), dimstyle=dimstyle, override=override,
                                  dxfattribs=dimattr)
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
@@ -187,14 +183,14 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vector(x, y))
 
         # narrow
-        dim = msp.add_linear_dim(base=base, ext1=(x + 8, y), ext2=(x + 8.3, y), dimstyle=dimstyle, override=override,
+        dim = msp.add_linear_dim(base=base, p1=(x + 8, y), p2=(x + 8.3, y), dimstyle=dimstyle, override=override,
                                  dxfattribs=dimattr)
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
 
         # narrow and force text inside
         override['dimtix'] = 1
-        dim = msp.add_linear_dim(base=base, ext1=(x + 11, y), ext2=(x + 11.3, y), dimstyle=dimstyle, override=override,
+        dim = msp.add_linear_dim(base=base, p1=(x + 11, y), p2=(x + 11.3, y), dimstyle=dimstyle, override=override,
                                  dxfattribs=dimattr)
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
@@ -209,21 +205,21 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         }
 
         base = (x, y + 2)
-        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle, override=override)
         location = Vector(x + 3, y + 3, 0)
         dim.set_location(location, leader=leader)
         dim.render(ucs=ucs)
         add_text([f'usr absolute={location}', f'leader={leader}'], insert=Vector(x, y))
 
         x += 4
-        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle, override=override)
         relative = Vector(-1, +1)  # relative to dimline center
         dim.set_location(relative, leader=leader, relative=True)
         dim.render(ucs=ucs)
         add_text([f'usr relative={relative}', f'leader={leader}'], insert=Vector(x, y))
 
         x += 4
-        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle, override=override)
         dh = -.7
         dv = 1.5
         dim.shift_text(dh, dv)
@@ -232,7 +228,7 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
 
         override['dimtix'] = 1  # force text inside
         x += 4
-        dim = msp.add_linear_dim(base=base, ext1=(x, y), ext2=(x + .3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + .3, y), dimstyle=dimstyle, override=override)
         dh = 0
         dv = 1
         dim.shift_text(dh, dv)
@@ -273,6 +269,15 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
     dwg.saveas(OUTDIR / filename)
 
 
+def example_multi_point_linear_dimension(dxfversion):
+    dwg = ezdxf.new(dxfversion, setup=True)
+    msp = dwg.modelspace()
+    points = [(0, 0), (5, 1), (5.2, 1), (5.4, 0), (7, 0), (10, 3)]
+    msp.add_lwpolyline(points)
+    msp.add_multi_point_linear_dim(base=(0, 5), points=points, dimstyle='EZDXF')
+    dwg.saveas(OUTDIR / f'multi_point_linear_dim_{dxfversion}.dxf')
+
+
 def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2=None, filename=""):
     dwg = ezdxf.new(version, setup=True)
     msp = dwg.modelspace()
@@ -292,7 +297,7 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
         if dimltex2:
             attributes['dimltex2'] = dimltex2
 
-        dim = msp.add_linear_dim(base=(3, y + 2), ext1=(0, y), ext2=(3, y), dimstyle='EZDXF', override=attributes)
+        dim = msp.add_linear_dim(base=(3, y + 2), p1=(0, y), p2=(3, y), dimstyle='EZDXF', override=attributes)
         dim.set_arrows(blk=name, size=.25)
         dim.render()
 
@@ -315,7 +320,7 @@ def linear_tutorial_ext_lines():
         'dimblk': ezdxf.ARROWS.none,
         'dimclrt': 3,
     }
-    dim = msp.add_linear_dim(base=(3, 2), ext1=(0, 0), ext2=(3, 0), dimstyle='EZDXF', override=attributes)
+    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF', override=attributes)
     dim.render()
 
     attributes = {
@@ -323,10 +328,10 @@ def linear_tutorial_ext_lines():
         'dimclrd': 2,
         'dimclrt': 4,
     }
-    dim = msp.add_linear_dim(base=(10, 2), ext1=(7, 0), ext2=(10, 0), angle=-30, dimstyle='EZDXF', override=attributes)
+    dim = msp.add_linear_dim(base=(10, 2), p1=(7, 0), p2=(10, 0), angle=-30, dimstyle='EZDXF', override=attributes)
     dim.render()
 
-    dim = msp.add_linear_dim(base=(3, 5), ext1=(0, 10), ext2=(3, 10), dimstyle='EZDXF', override=attributes)
+    dim = msp.add_linear_dim(base=(3, 5), p1=(0, 10), p2=(3, 10), dimstyle='EZDXF', override=attributes)
     dim.render()
 
     dwg.saveas(OUTDIR / 'dim_linear_R12_ext_lines.dxf')
@@ -338,7 +343,7 @@ def linear_EZ_M(fmt):
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (1, 0))
-    dim = msp.add_linear_dim(base=(0, .1), ext1=(0, 0), ext2=(1, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, .1), p1=(0, 0), p2=(1, 0), dimstyle=fmt)
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
@@ -349,7 +354,7 @@ def linear_EZ_CM(fmt):
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (100, 0))
-    dim = msp.add_linear_dim(base=(0, 10), ext1=(0, 0), ext2=(100, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 10), p1=(0, 0), p2=(100, 0), dimstyle=fmt)
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
@@ -360,7 +365,7 @@ def linear_EZ_MM(fmt):
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (1000, 0))
-    dim = msp.add_linear_dim(base=(0, 100), ext1=(0, 0), ext2=(1000, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 100), p1=(0, 0), p2=(1000, 0), dimstyle=fmt)
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
@@ -372,10 +377,11 @@ if __name__ == '__main__':
     example_background_fill('R2007')
     example_for_all_text_placings_R12()
     example_for_all_text_placings_R2007()
-    example_for_all_text_placings_ucs_R12()
+    # example_for_all_text_placings_ucs_R12()
     example_for_all_text_placings_ucs_R2007()
-    example_for_all_text_placings_in_space_R12()
+    # example_for_all_text_placings_in_space_R12()
     example_for_all_text_placings_in_space_R2007()
+    example_multi_point_linear_dimension('R2007')
 
     if ALL:
 

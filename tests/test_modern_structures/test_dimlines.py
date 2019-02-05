@@ -143,8 +143,8 @@ def test_add_horizontal_dimline(dxf2000):
     msp = dxf2000.modelspace()
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
 
     )
     dimline = dimstyle.dimension
@@ -164,8 +164,8 @@ def test_dimstyle_override(dxf2000):
     msp = dxf2000.modelspace()
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dxfattribs={
             'dimstyle': 'EZDXF',
         }
@@ -206,8 +206,8 @@ def test_linetype_override_R2000(dxf2000):
     }
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dimstyle='EZDXF',
         override=preset,
     )
@@ -234,8 +234,8 @@ def test_linetype_override_R2007(dxf2007):
     }
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dimstyle='EZDXF',
         override=preset,
     )
@@ -279,8 +279,8 @@ def test_dimstyle_override_arrows(dxf2000):
     }
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dimstyle='EZDXF',
         override=preset,
     )

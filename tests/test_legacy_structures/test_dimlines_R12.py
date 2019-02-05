@@ -20,8 +20,8 @@ def test_dimstyle_override(dxf12):
     msp = dxf12.modelspace()
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dxfattribs={
             'dimstyle': 'EZDXF',
         }
@@ -71,8 +71,8 @@ def test_dimstyle_override_arrows(dxf12):
 
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dimstyle='EZDXF',
         override=preset,
     )
@@ -115,8 +115,8 @@ def test_dimstyle_override_linetypes(dxf12):
     }
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
         dimstyle='EZDXF',
         override=preset,
     )
@@ -138,8 +138,8 @@ def test_horizontal_dimline(dxf12):
     msp = dxf12.modelspace()
     dimstyle = msp.add_linear_dim(
         base=(3, 2, 0),
-        ext1=(0, 0, 0),
-        ext2=(3, 0, 0),
+        p1=(0, 0, 0),
+        p2=(3, 0, 0),
     )
     dimline = dimstyle.dimension
     assert dimline.dxf.dimstyle == 'EZDXF'
@@ -176,4 +176,4 @@ def test_format_text():
     assert format_text(-0.51, dimdsep=',', dimpost='<><>') == '-0,51<>'  # ignore stupid
     with pytest.raises(DXFValueError):
         _ = format_text(-0.51, dimpost='<')
-    assert format_text(-1.23, raisedec=True) == '-1²³'
+

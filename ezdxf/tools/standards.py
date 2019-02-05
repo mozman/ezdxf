@@ -68,7 +68,8 @@ def setup_styles(dwg: 'Drawing') -> None:
 
 def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
     setup_styles(dwg)
-    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style, blk=ARROWS.architectural_tick)
+    setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style,
+                   blk=ARROWS.architectural_tick)
     dwg.header['$DIMSTYLE'] = 'EZDXF'
     if domain in ('metric', 'all'):
         setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
@@ -119,12 +120,16 @@ class DimStyleFmt:
         return self.DIMASZ * self.unit_factor
 
     @property
+    def dimtxt(self):
+        return self.height * self.text_factor * self.scale
+
+    @property
     def dimexe(self):
-        return 0.5 * self.unit_factor
+        return self.dimtxt * 1.5
 
     @property
     def dimexo(self):
-        return .1 * self.unit_factor
+        return self.dimtxt / 2
 
     @property
     def dimdle(self):
@@ -164,13 +169,13 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
         return cast('DimStyle', dwg.dimstyles.get(name))
 
     dimstyle = cast('DimStyle', dwg.dimstyles.new(name))
-    dimstyle.dxf.dimtxt = fmt.height * fmt.text_factor * fmt.scale
+    dimstyle.dxf.dimtxt = fmt.dimtxt
     dimstyle.dxf.dimlfac = fmt.dimlfac  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
-    dimstyle.dxf.dimgap = dimstyle.dxf.dimtxt * .25  # gap between text and dimension line
+    dimstyle.dxf.dimgap = fmt.dimtxt * .4  # gap between text and dimension line
     dimstyle.dxf.dimtad = 1  # text above dimline
     dimstyle.dxf.dimexe = fmt.dimexe
     dimstyle.dxf.dimexo = fmt.dimexo
-    dimstyle.dxf.dimdle = fmt.dimdle
+    dimstyle.dxf.dimdle = 0  # dimension extension beyond extension lines
     dimstyle.dxf.dimtix = 0  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
     dimstyle.dxf.dimtih = 0  # Aligns text inside extension lines with dimension line; 1 = Draws text horizontally
     dimstyle.dxf.dimtoh = 0  # Aligns text outside of extension lines with dimension line; 1 = Draws text horizontally

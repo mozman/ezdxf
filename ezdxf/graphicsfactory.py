@@ -9,13 +9,15 @@ from ezdxf.math import Vector
 from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.dimstyleoverride import DimStyleOverride
+from ezdxf.render.dimension import multi_point_linear_dimension
 
 if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
     from ezdxf.eztypes import Solid, Trace, Face, Insert, Attrib, Polyline, Polyface, Polymesh, UnderlayDef, Underlay
     from ezdxf.eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
-    from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, LoftedSurface
-
+    from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, \
+        LoftedSurface
+    from ezdxf.eztypes import UCS, GenericLayoutType
 
 Vertex = Union[Sequence[float], Vector]
 
@@ -456,13 +458,13 @@ class GraphicsFactory:
 
     def add_linear_dim(self,
                        base: 'Vertex',
-                       ext1: 'Vertex',
-                       ext2: 'Vertex',
-                       location_override: 'Vertex' = None,
-                       dimstyle: str = 'EZDXF',
+                       p1: 'Vertex',
+                       p2: 'Vertex',
+                       location: 'Vertex' = None,
                        text: str = "<>",
                        angle: float = 0,  # 0=horizontal, 90=vertical, else=rotated
                        text_rotation: float = None,
+                       dimstyle: str = 'EZDXF',
                        override: dict = None,
                        dxfattribs: dict = None) -> DimStyleOverride:
         """
@@ -470,23 +472,23 @@ class GraphicsFactory:
         definitions in UCS coordinates, translation into WCS and OCS is done by the rendering function. Manual set
         extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
 
-        To create the necessary geometry, you have to call layout.render_dimension(dimension, ucs) manually, this two
-        step process allows additional processing steps on the DIMENSION entity between creation and rendering.
+        To create the necessary geometry, you have to call result.render(ucs) manually, this two step process allows
+        additional processing steps on the DIMENSION entity between creation and rendering.
 
         Args:
-            base: definition point, intersection of extension line 1 and dimension line (in UCS)
-            ext1: start point of extension line 1 (in UCS)
-            ext2: start point of extension line 2 (in UCS)
-            location_override: user defined location for text mid point (in UCS) projected onto the dimension line, or
-                               None for computed text placing, this point defines the location of the dimension text AND
-                               the dimension line.
+            base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
+            p1: measurement point 1 and start point of extension line 1 (in UCS)
+            p2: measurement point 2 and start point of extension line 2 (in UCS)
+            location: user defined location for text mid point (in UCS)
             text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
             dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
-            angle: angle from ucs x-axis to dimension line in degrees
+            angle: angle from ucs/wcs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text away from its default orientation
                            (the direction of the dimension line) in degrees
             override: DIMSTYLE override attributes
             dxfattribs: DXF attributes for DIMENSION entity
+
+        Returns: DimStyleOverride, call its render(ucs) method manually to create necessary DIMENSION geometry
 
         """
         type_ = {'dimtype': const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
@@ -494,12 +496,12 @@ class GraphicsFactory:
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint'] = Vector(base)
-        if location_override:
-            dxfattribs['text_midpoint'] = Vector(location_override)
+        if location is not None:
+            override['user_location'] = Vector(location)
             dimline.set_flag_state(const.DIM_USER_LOCATION_OVERRIDE, True, name='dimtype')
         dxfattribs['text'] = text
-        dxfattribs['defpoint2'] = Vector(ext1)
-        dxfattribs['defpoint3'] = Vector(ext2)
+        dxfattribs['defpoint2'] = Vector(p1)
+        dxfattribs['defpoint3'] = Vector(p2)
         dxfattribs['angle'] = float(angle)
         # text_rotation ALWAYS overrides implicit angles as absolute angle (0 is horizontal)!
         if text_rotation is not None:
@@ -509,8 +511,77 @@ class GraphicsFactory:
         style = DimStyleOverride(dimline, override=override)
         return style
 
-    # def add_aligned_dim(self, dxfattribs: dict = None) -> 'Dimension': dxfattribs = copy_attribs(dxfattribs))
-    # don't understand the difference between aligned and linear yet!
+    def add_multi_point_linear_dim(self,
+                                   base: 'Vertex',
+                                   points: Iterable['Vertex'],
+                                   angle: float = 0,
+                                   ucs: 'UCS' = None,
+                                   dimstyle: str = 'EZDXF',
+                                   override: dict = None,
+                                   dxfattribs: dict = None) -> None:
+        """
+        Create linear dimension for multiple measurement `points`. If an UCS is used for dimension line
+        rendering, all point definitions in UCS coordinates, translation into WCS and OCS is done by the rendering
+        function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
+
+        This method define many design decisions by itself, the necessary geometry will be generated automatically, no
+        required nor possible render() call. This method is easy to use but you get what you get.
+
+        Args:
+            base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
+            points: iterable of measurement points (in UCS)
+            angle: angle from ucs/wcs x-axis to dimension line in degrees
+            ucs: user defined coordinate system
+            dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
+            override: DIMSTYLE override attributes
+            dxfattribs: DXF attributes for DIMENSION entity
+
+        """
+        multi_point_linear_dimension(cast('GenericLayoutType', self), base, points, angle, ucs, dimstyle, override, dxfattribs)
+
+    def add_aligned_dim(self,
+                        p1: 'Vertex',
+                        p2: 'Vertex',
+                        distance: float,
+                        dimstyle: str = 'EZDXF',
+                        text: str = "<>",
+                        override: dict = None,
+                        dxfattribs: dict = None) -> DimStyleOverride:
+        """
+        Create linear dimension aligned with measurement points `p1` and `p2`. If an UCS is used for dimension line
+        rendering, all point definitions in UCS coordinates, translation into WCS and OCS is done by the rendering
+        function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
+
+        To create the necessary geometry, you have to call result.render(ucs) manually, this two step process allows
+        additional processing steps on the DIMENSION entity between creation and rendering.
+
+        Args:
+            p1: measurement point 1 and start point of extension line 1 (in UCS)
+            p2: measurement point 2 and start point of extension line 2 (in UCS)
+            distance: distance of dimension line from measurment points.
+            text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
+            dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
+            override: DIMSTYLE override attributes
+            dxfattribs: DXF attributes for DIMENSION entity
+
+        Returns: DimStyleOverride, call its render(ucs) method manually to create necessary DIMENSION geometry
+
+        """
+        p1 = Vector(p1)
+        p2 = Vector(p2)
+        direction = p2 - p1
+        angle = direction.angle_deg
+        base = direction.orthogonal().normalize(distance)
+        return self.add_linear_dim(
+            base=base,
+            p1=p1,
+            p2=p2,
+            dimstyle=dimstyle,
+            text=text,
+            angle=angle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
 
     def add_angular_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
         type_ = {'dimtype': const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}

@@ -8,13 +8,12 @@ from ezdxf.math import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
-from ezdxf.tools import suppress_zeros, raise_decimals
+from ezdxf.tools import suppress_zeros
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.dimstyleoverride import DimStyleOverride
-from ezdxf import rgb2int
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BlockLayout, Vertex
+    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, Drawing, GenericLayoutType
 
 
 class TextBox(ConstructionBox):
@@ -39,8 +38,17 @@ class BaseDimensionRenderer:
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
 
-        self.user_location_override = self.dimension.get_flag_state(self.dimension.USER_LOCATION_OVERRIDE,
-                                                                    name='dimtype')
+        # special ezdxf attributes beyond DXF reference
+        # user location override as UCS coordinates
+        self.user_location = self.dim_style.pop('user_location', None)
+
+        # user location override relative to dimline center if True
+        self.relative_user_location = self.dim_style.pop('relative_user_location', False)
+
+        # shift text - not a DXF feature, therefore not stored in the DSTYLE data, ignored if user_location is not None
+        self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # shift text in text direction
+        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # shift text perpendicular to text direction
+
         self.default_color = self.dimension.dxf.color
         self.default_layer = self.dimension.dxf.layer
         # ezdxf creates ALWAYS dimension.dxf.attachment_point = 5
@@ -75,7 +83,10 @@ class BaseDimensionRenderer:
         # text_valign = 0: center; 1: above; 2: farthest away?; 3: JIS?; 4: below (2, 3 ignored by ezdxf)
         self.text_valign = get('dimtad', 0)
 
-        self.text_movement_rule = get('dimtmove', 0)
+        self.text_movement_rule = get('dimtmove', 2)  # move text freely
+        if self.text_movement_rule == 0:
+            # moves the dimension line with dimension text and makes no sense for ezdxf (just set `base` argument)
+            self.text_movement_rule = 2
         self.text_inside_horizontal = get('dimtih', 0)  # ignored by ezdxf
         self.text_outside_horizontal = get('dimtoh', 0)  # ignored by ezdxf
         self.force_text_inside = bool(get('dimtix', 0))
@@ -251,12 +262,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         ext1_ray = ConstructionRay(self.ext1_line_start, angle=self.ext_line_angle_rad)
         ext2_ray = ConstructionRay(self.ext2_line_start, angle=self.ext_line_angle_rad)
-
-        # text_movement_rule: 0 = Moves the dimension line with dimension text
-        if self.user_location_override and self.text_movement_rule == 0:
-            dim_line_ray = ConstructionRay(self.dimension.dxf.text_midpoint, angle=self.dim_line_angle_rad)
-        else:
-            dim_line_ray = ConstructionRay(self.dimension.dxf.defpoint, angle=self.dim_line_angle_rad)
+        dim_line_ray = ConstructionRay(self.dimension.dxf.defpoint, angle=self.dim_line_angle_rad)
 
         self.dim_line_start = dim_line_ray.intersect(ext1_ray)
         self.dim_line_end = dim_line_ray.intersect(ext2_ray)
@@ -268,14 +274,6 @@ class LinearDimension(BaseDimensionRenderer):
         self.text_outside = False
         self.dim_text_width = 0
         self.required_text_space = 0
-
-        # shift text - not a DXF feature, therefore not stored in the DSTYLE data.
-        # This is only a rendering effect
-        # Ignored if user_defined_location is True
-        self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # shift in text direction
-        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # shift perpendicular to text direction
-        # user location override relative to dimline center?
-        self.relative_user_location = self.dim_style.pop('relative_user_location', False)
 
         if self.text:
             self.dim_text_width = self.text_width(self.text)
@@ -323,7 +321,7 @@ class LinearDimension(BaseDimensionRenderer):
         if self.text:
             self.add_measurement_text(self.text, self.text_location, self.text_rotation)
             # add leader
-            if self.user_location_override and self.text_movement_rule == 1:
+            if self.user_location is not None and self.text_movement_rule == 1:
                 target_point = self.dim_line_start.lerp(self.dim_line_end)
                 p2, p3, *_ = self.text_box.corners
                 defpoint = self.add_leader(target_point, p2, p3)
@@ -559,18 +557,15 @@ class LinearDimension(BaseDimensionRenderer):
         text_outside = self.text_outside
         text_width = self.dim_text_width
 
-        if self.user_location_override:
-            text_midpoint = self.dimension.get_dxf_attrib('text_midpoint')
+        if self.user_location is not None:
             # ignore relative text movement: text_shift_h and text_shift_v
-            if self.text_movement_rule == 0:
-                # text_location defines the text location along the dimension line
-                # vertical distance from dimension line to text midpoint, normal to the dimension line
-                return text_midpoint + (end - start).orthogonal().normalize(self.text_vertical_distance())
-            else:  # move text freely by text_midpoint
-                if self.relative_user_location:
-                    text_midpoint = self.dim_line_start.lerp(self.dim_line_end) + text_midpoint
-                    self.dimension.dxf.text_midpoint = text_midpoint
-                return text_midpoint
+            # DIMTMOVE == 0 is treated as 2
+            user_location = self.user_location
+            if self.relative_user_location:
+                user_location = self.dim_line_start.lerp(self.dim_line_end) + user_location
+            # set text location override
+            self.dimension.dxf.text_midpoint = user_location
+            return user_location
         else:
             if halign in (3, 4):  # positions the text above and aligned with the first/second extension line
                 vdist = self.ext_line_extension + self.dim_text_width / 2.
@@ -598,7 +593,8 @@ class LinearDimension(BaseDimensionRenderer):
                     text_midpoint = end + (start - end).normalize(hdist)
                 text_location = text_midpoint + (end - start).orthogonal().normalize(vdist)
 
-            self.dimension.set_dxf_attrib('text_midpoint', text_midpoint)
+            # set standard text location
+            self.dimension.dxf.text_midpoint = text_midpoint
 
         self.text_outside = text_outside
         self.text_halign = halign
@@ -655,7 +651,7 @@ class DimensionRenderer:
 
 
 def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: int = 0, dimdsep: str = '.',
-                dimpost: str = '<>', raisedec=False) -> str:
+                dimpost: str = '<>') -> str:
     if dimrnd is not None:
         value = xround(value, dimrnd)
 
@@ -669,8 +665,6 @@ def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: 
     leading = bool(dimzin & 4)
     pending = bool(dimzin & 8)
     text = suppress_zeros(text, leading, pending)
-    if raisedec:
-        text = raise_decimals(text)
     if dimdsep != '.':
         text = text.replace('.', dimdsep)
     if dimpost:
@@ -680,3 +674,29 @@ def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: 
         else:
             raise DXFValueError('Invalid dimpost string: "{}"'.format(dimpost))
     return text
+
+
+def multi_point_linear_dimension(
+        layout: 'GenericLayoutType',
+        base: 'Vertex',
+        points: Iterable['Vertex'],
+        angle: float,
+        ucs: 'UCS',
+        dimstyle: str,
+        override: dict,
+        dxfattribs: dict) -> None:
+    points = [Vector(p) for p in points]
+    base = Vector(base)
+    
+    override = override or {}
+    override['dimtix'] = 1  # do not place measurement text outside
+
+    for p1, p2 in zip(points[:-1], points[1:]):
+        style = layout.add_linear_dim(
+            base, p1, p2,
+            angle=angle,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
+        style.render(ucs)
