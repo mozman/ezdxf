@@ -281,6 +281,10 @@ class LinearDimension(BaseDimensionRenderer):
 
         self.dim_line_start = dim_line_ray.intersect(ext1_ray)
         self.dim_line_end = dim_line_ray.intersect(ext2_ray)
+        if self.dim_line_start == self.dim_line_end:
+            self.dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)
+        else:
+            self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()
         self.dimension.dxf.defpoint = self.dim_line_start  # set defpoint to expected location
         self.measurement = (self.dim_line_end - self.dim_line_start).magnitude
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)
@@ -299,18 +303,21 @@ class LinearDimension(BaseDimensionRenderer):
         # for forced text inside, text_outside is False
         self.text_outside = False
         self.dim_text_width = 0  # actual text width in drawing units
-        self.text_spacing = self.text_gap * .75  # spacing in front and after dimension text
 
         # calculate text location
         if self.text:
             self.dim_text_width = self.text_width(self.text)
             if self.text_valign == 0:  # vertical centered text needs also space for arrows
-                self.is_wide_text = (self.dim_text_width + 2 * self.arrow_size) > self.measurement
+                required_space = self.dim_text_width + 2 * self.arrow_size
             else:
-                self.is_wide_text = self.dim_text_width > self.measurement
+                required_space = self.dim_text_width
+            self.is_wide_text = required_space > self.measurement
             if not self.force_text_inside:
                 # place text outside if wide text and not forced inside
                 self.text_outside = self.is_wide_text
+            else:
+                if self.is_wide_text and self.text_halign < 3:  # center wide text horizontal
+                    self.text_halign = 0
 
             # use relative text shift to move wide text up or down in multi point mode
             if self.multi_point_mode and self.is_wide_text and self.move_wide_text > 0:
@@ -332,7 +339,7 @@ class LinearDimension(BaseDimensionRenderer):
                 width=self.dim_text_width,
                 height=self.text_height,
                 angle=self.text_rotation,
-                gap=self.text_spacing
+                gap=self.text_gap * .75
             )
 
         self.required_arrows_space = 2 * self.arrow_size + self.text_gap
@@ -416,10 +423,8 @@ class LinearDimension(BaseDimensionRenderer):
             self.dimension.dxf.text_midpoint = location
         else:
             location = self.default_text_location()
-
             # project standard text location onto dimension line
-            dim_line_vec = end - start
-            text_midpoint = start + dim_line_vec.project(location - start)
+            text_midpoint = start + self.dim_line_vec.project(location - start)
             self.dimension.dxf.text_midpoint = text_midpoint
 
         return location
@@ -433,17 +438,12 @@ class LinearDimension(BaseDimensionRenderer):
         """
         start = self.dim_line_start
         end = self.dim_line_end
-        if start == end:
-            dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)
-        else:
-            dim_line_vec = end - start
-
         halign = self.text_halign
         # positions the text above and aligned with the first/second extension line
         if halign in (3, 4):
             # horizontal location
             hdist = self.text_gap + self.text_height / 2.
-            hvec = dim_line_vec.normalize(hdist)
+            hvec = self.dim_line_vec * hdist
             location = (start if halign == 3 else end) - hvec
             # vertical location
             vdist = self.ext_line_extension + self.dim_text_width / 2.
@@ -458,16 +458,16 @@ class LinearDimension(BaseDimensionRenderer):
             else:
                 hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
                 if halign == 1:  # positions the text next to the first extension line
-                    location = start + dim_line_vec.normalize(hdist)
+                    location = start + (self.dim_line_vec * hdist)
                 else:  # positions the text next to the second extension line
-                    location = end - dim_line_vec.normalize(hdist)
+                    location = end - (self.dim_line_vec * hdist)
 
             if self.text_outside:  # move text up
                 vdist = self.ext_line_extension + self.text_gap + self.text_height / 2.
             else:
                 # distance from extension line to text midpoint
                 vdist = self.text_vertical_distance()
-            location += dim_line_vec.orthogonal().normalize(vdist)
+            location += self.dim_line_vec.orthogonal().normalize(vdist)
 
         return location
 
@@ -529,22 +529,18 @@ class LinearDimension(BaseDimensionRenderer):
         start = self.dim_line_start
         end = self.dim_line_end
         arrow_size = self.arrow_size
-        if start == end:
-            dir_vec = Vector.from_rad_angle(self.dim_line_angle_rad)
-        else:
-            dir_vec = (end - start).normalize()
 
         if not self.suppress_arrow1 and has_arrow_extension(self.arrow1_name):
             self.add_line(
-                start - dir_vec * arrow_size,
-                start - dir_vec * (2 * arrow_size),
+                start - self.dim_line_vec * arrow_size,
+                start - self.dim_line_vec * (2 * arrow_size),
                 dxfattribs=attribs,
             )
 
         if not self.suppress_arrow2 and has_arrow_extension(self.arrow2_name):
             self.add_line(
-                end + dir_vec * arrow_size,
-                end + dir_vec * (2 * arrow_size),
+                end + self.dim_line_vec * arrow_size,
+                end + self.dim_line_vec * (2 * arrow_size),
                 dxfattribs=attribs,
             )
 
@@ -572,11 +568,7 @@ class LinearDimension(BaseDimensionRenderer):
             else:
                 return b, a
 
-        if start == end:
-            direction = Vector.from_rad_angle(self.dim_line_angle_rad)
-        else:
-            direction = (end - start).normalize()
-        extension = direction * self.dim_line_extension
+        extension = self.dim_line_vec * self.dim_line_extension
         if self.arrow1_name is None or ARROWS.has_extension_line(self.arrow1_name):
             start = start - extension
         if self.arrow2_name is None or ARROWS.has_extension_line(self.arrow2_name):
@@ -621,7 +613,10 @@ class LinearDimension(BaseDimensionRenderer):
         Returns: adjusted start and end point
 
         """
-        direction = (end - start).normalize()
+        if start == end:
+            direction = Vector.from_deg_angle(self.ext_line_angle)
+        else:
+            direction = (end - start).normalize()
         if self.ext_line_fixed:
             start = end - (direction * self.ext_line_length)
         else:
