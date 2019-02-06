@@ -170,29 +170,34 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
                    )
 
     def text(dimstyle, x, y, halign, valign, oblique=0):
-        override = {}
         dimattr = {}
         if oblique:
             dimattr['oblique_angle'] = oblique
 
         base = (x, y + 2)
         # wide
-        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 5, y), dimstyle=dimstyle, override=override,
-                                 dxfattribs=dimattr)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 5, y), dimstyle=dimstyle, dxfattribs=dimattr)
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
 
         add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vector(x, y))
 
         # narrow
-        dim = msp.add_linear_dim(base=base, p1=(x + 8, y), p2=(x + 8.3, y), dimstyle=dimstyle, override=override,
+        dim = msp.add_linear_dim(base=base, p1=(x + 7, y), p2=(x + 7.3, y), dimstyle=dimstyle, dxfattribs=dimattr)
+        dim.set_text_align(halign=halign, valign=valign)
+        dim.render(ucs=ucs)
+
+        # arrows inside, text outside
+
+        dim = msp.add_linear_dim(base=base, p1=(x + 10, y), p2=(x + 10.9999, y), dimstyle=dimstyle,
+                                 override={'dimdec': 2},
                                  dxfattribs=dimattr)
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
 
         # narrow and force text inside
-        override['dimtix'] = 1
-        dim = msp.add_linear_dim(base=base, p1=(x + 11, y), p2=(x + 11.3, y), dimstyle=dimstyle, override=override,
+        dim = msp.add_linear_dim(base=base, p1=(x + 14, y), p2=(x + 14.3, y), dimstyle=dimstyle,
+                                 override={'dimtix': 1},
                                  dxfattribs=dimattr)
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs)
@@ -238,7 +243,7 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
 
     dimstyles = ['TICK', 'ARCHTICK', 'CLOSEDBLANK']
-    xoffset = 15
+    xoffset = 17
     yoffset = 5
     for col, dimstyle in enumerate(dimstyles):
         row = 0
@@ -372,39 +377,39 @@ def linear_tutorial_ext_lines():
 
 
 def linear_EZ_M(fmt):
-    dwg = ezdxf.new('R12', setup=True)
+    dwg = ezdxf.new('R12', setup=('linetypes', 'styles'))
     msp = dwg.modelspace()
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (1, 0))
-    dim = msp.add_linear_dim(base=(0, .1), p1=(0, 0), p2=(1, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 1), p1=(0, 0), p2=(1, 0), dimstyle=fmt)
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
 def linear_EZ_CM(fmt):
-    dwg = ezdxf.new('R12', setup=True)
+    dwg = ezdxf.new('R12', setup=('linetypes', 'styles'))
     msp = dwg.modelspace()
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (100, 0))
-    dim = msp.add_linear_dim(base=(0, 10), p1=(0, 0), p2=(100, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 100), p1=(0, 0), p2=(100, 0), dimstyle=fmt)
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
 def linear_EZ_MM(fmt):
-    dwg = ezdxf.new('R12', setup=True)
+    dwg = ezdxf.new('R12', setup=('linetypes', 'styles'))
     msp = dwg.modelspace()
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (1000, 0))
-    dim = msp.add_linear_dim(base=(0, 100), p1=(0, 0), p2=(1000, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 1000), p1=(0, 0), p2=(1000, 0), dimstyle=fmt)
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = True
+ALL = False
 
 if __name__ == '__main__':
     linear_tutorial('R2007')
@@ -414,12 +419,13 @@ if __name__ == '__main__':
     example_for_all_text_placings_R2007()
     example_for_all_text_placings_ucs_R2007()
     example_multi_point_linear_dimension()
+    example_random_multi_point_linear_dimension(count=10, length=20)
 
     if ALL:
         example_for_all_text_placings_ucs_R12()
         example_for_all_text_placings_in_space_R12()
         example_for_all_text_placings_in_space_R2007()
-        example_random_multi_point_linear_dimension(count=10, length=20)
+
         linear_all_arrow_style('R12')
         linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')
         linear_all_arrow_style('R2000')
@@ -427,11 +433,12 @@ if __name__ == '__main__':
 
         linear_tutorial_ext_lines()
 
-        #linear_EZ_M('EZ_M_100_H25_CM')
-        #linear_EZ_M('EZ_M_1_H25_CM')
+        linear_EZ_M('EZ_M_100_H25_CM')
+        linear_EZ_M('EZ_M_1_H25_CM')
 
-        #linear_EZ_CM('EZ_CM_100_H25_CM')
-        #linear_EZ_CM('EZ_CM_1_H25_CM')
+        linear_EZ_CM('EZ_CM_100_H25_CM')
+        linear_EZ_CM('EZ_CM_1_H25_CM')
 
-        #linear_EZ_MM('EZ_MM_100_H25_MM')
-        #linear_EZ_MM('EZ_MM_1_H25_MM')
+        linear_EZ_MM('EZ_MM_100_H25_MM')
+        linear_EZ_MM('EZ_MM_1_H25_MM')
+

@@ -524,13 +524,13 @@ class GraphicsFactory:
         rendering, all point definitions in UCS coordinates, translation into WCS and OCS is done by the rendering
         function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
 
-        This method define many design decisions by itself, the necessary geometry will be generated automatically, no
+        This method sets many design decisions by itself, the necessary geometry will be generated automatically, no
         required nor possible render() call. This method is easy to use but you get what you get.
 
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
             points: iterable of measurement points (in UCS)
-            angle: angle from ucs/wcs x-axis to dimension line in degrees
+            angle: angle from ucs/wcs x-axis to dimension line in degrees (0=horizontal, 90=vertical)
             ucs: user defined coordinate system
             avoid_double_rendering: suppresses the first extension line and the first arrow if possible for continued
                                     dimension entities

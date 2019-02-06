@@ -14,6 +14,20 @@ logger = logging.getLogger('ezdxf')
 
 
 def setup_drawing(dwg: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
+    """
+    Setup default linetypes, text styles or dimension styles.
+
+    Args:
+        dwg: DXF document
+        topics: 'all' or True to setup everything
+            Tuple of strings to specify setup:
+                - 'linetypes': setup linetypes
+                - 'styles'; setup text styles
+                - 'dimstyles[:all|metric|us]': setup dimension styles (us not implemented)
+
+    Returns:
+
+    """
     if not topics:  # topics is None, False or ''
         return
 
@@ -83,11 +97,13 @@ def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
         setup_dimstyle(dwg, fmt='EZ_M_10_H25_CM', style=options.default_dimension_text_style)
         setup_dimstyle(dwg, fmt='EZ_M_5_H25_CM', style=options.default_dimension_text_style)
         setup_dimstyle(dwg, fmt='EZ_M_1_H25_CM', style=options.default_dimension_text_style)
+    elif domain in ('us', 'all'):
+        pass
 
 
 class DimStyleFmt:
-    DIMASZ = .25
-    DIMTSZ = .125
+    DIMASZ = 2.5  # in mm in paper space
+    DIMTSZ = 1.25  # x2 in mm in paper space
     UNIT_FACTOR = {
         'm': 1,  # 1 drawing unit == 1 meter
         'dm': 10,  # 1 drawing unit == 1 decimeter
@@ -113,7 +129,7 @@ class DimStyleFmt:
 
     @property
     def text_factor(self):
-        return self.unit_factor / self.UNIT_FACTOR['mm']
+        return self.unit_factor / self.UNIT_FACTOR['mm'] * self.scale
 
     @property
     def dimlfac(self):
@@ -121,11 +137,15 @@ class DimStyleFmt:
 
     @property
     def dimasz(self):
-        return self.DIMASZ * self.unit_factor
+        return self.DIMASZ * self.text_factor
+
+    @property
+    def dimtsz(self):
+        return self.DIMTSZ * self.text_factor
 
     @property
     def dimtxt(self):
-        return self.height * self.text_factor * self.scale
+        return self.height * self.text_factor
 
     @property
     def dimexe(self):
@@ -138,10 +158,6 @@ class DimStyleFmt:
     @property
     def dimdle(self):
         return .25 * self.unit_factor
-
-    @property
-    def dimtsz(self):
-        return self.DIMTSZ * self.unit_factor
 
 
 def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> 'DimStyle':
@@ -186,10 +202,11 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
     dimstyle.dxf.dimzin = 8  # Suppresses trailing zeros in decimal dimensions
     dimstyle.dxf.dimsah = 0
     if blk is None:  # oblique stroke
-        dimstyle.dxf.dimtsz = fmt.dimtsz
+        dimstyle.dxf.dimtsz = fmt.dimtsz  # tick size
+        dimstyle.dxf.dimasz = fmt.dimasz  # arrow size
     else:  # arrow or block
         dimstyle.set_arrows(blk=blk)
-        dimstyle.dxf.dimasz = fmt.dimasz  # tick factor
+        dimstyle.dxf.dimasz = fmt.dimasz
     if dwg.dxfversion > 'AC1009':
         # set text style
         dimstyle.dxf.dimtmove = 2  # move freely without leader
