@@ -304,7 +304,10 @@ class LinearDimension(BaseDimensionRenderer):
         # calculate text location
         if self.text:
             self.dim_text_width = self.text_width(self.text)
-            self.is_wide_text = self.dim_text_width > self.measurement
+            if self.text_valign == 0:  # vertical centered text needs also space for arrows
+                self.is_wide_text = (self.dim_text_width + 2 * self.arrow_size) > self.measurement
+            else:
+                self.is_wide_text = self.dim_text_width > self.measurement
             if not self.force_text_inside:
                 # place text outside if wide text and not forced inside
                 self.text_outside = self.is_wide_text

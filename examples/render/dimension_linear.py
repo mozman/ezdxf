@@ -310,6 +310,8 @@ def example_random_multi_point_linear_dimension(count=10, length=20):
     dimstyle = dwg.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')
     dimstyle.dxf.dimblk = ezdxf.ARROWS.closed
     dimstyle.dxf.dimtxsty = 'STANDARD'
+    dimstyle.dxf.dimrnd = .5
+    dimstyle.set_text_align(valign='center')
 
     msp.add_multi_point_linear_dim(base=(0, length+2), points=points, dimstyle='WITHTFILL')
     msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL')
