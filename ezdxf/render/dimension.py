@@ -1,7 +1,7 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable, cast
+from typing import TYPE_CHECKING, Tuple, Iterable, List, cast
 import math
 from ezdxf.math import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
 from ezdxf.math import UCS, PassTroughUCS
@@ -38,16 +38,26 @@ class BaseDimensionRenderer:
         self.ucs = ucs or PassTroughUCS()
         self.requires_extrusion = self.ucs.uz != (0, 0, 1)
 
-        # special ezdxf attributes beyond DXF reference
+        # ezdxf specific attributes beyond DXF reference, therefore not stored in the DSTYLE data
+        # Some of these are just an rendering effect, which will be ignored by CAD applications if they modify the
+        # DIMENSION entity
+        #
         # user location override as UCS coordinates
         self.user_location = self.dim_style.pop('user_location', None)
 
         # user location override relative to dimline center if True
         self.relative_user_location = self.dim_style.pop('relative_user_location', False)
 
-        # shift text - not a DXF feature, therefore not stored in the DSTYLE data, ignored if user_location is not None
+        # shift text from default text location - implemented as user location override without leader
         self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # shift text in text direction
         self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # shift text perpendicular to text direction
+
+        # suppress arrow rendering - only rendering is suppressed (rendering effect), all placing related calculations
+        # are done without this settings. Used for multi point linear dimensions to avoid double rendering of non arrow
+        # ticks.
+        self.suppress_arrow1 = self.dim_style.pop('suppress_arrow1', False)
+        self.suppress_arrow2 = self.dim_style.pop('suppress_arrow2', False)
+        # end of ezdxf specific attributes
 
         self.default_color = self.dimension.dxf.color
         self.default_layer = self.dimension.dxf.layer
@@ -75,7 +85,7 @@ class BaseDimensionRenderer:
         dimdsep = self.dim_style.get('dimdsep', 0)
         self.text_decimal_separator = ',' if dimdsep == 0 else chr(dimdsep)
         self.text_format = self.dim_style.get('dimpost', '<>')
-        self.text_fill = self.dim_style.get('dimtfill', 0)
+        self.text_fill = self.dim_style.get('dimtfill', 0)  # 0= None, 1=Background, 2=DIMTFILLCLR
         self.text_fill_color = self.dim_style.get('dimtfillclr', 1)
         # text_halign = 0: center; 1: left; 2: right; 3: above ext1; 4: above ext2
         self.text_halign = get('dimjust', 0)
@@ -168,6 +178,12 @@ class BaseDimensionRenderer:
             self.text_decimal_separator,
             self.text_format,
         )
+
+    def location_override(self, location: 'Vertex', leader=False, relative=False):
+        self.dim_style.set_location(location, leader, relative)
+        self.user_location = Vector(location)
+        self.text_movement_rule = 1 if leader else 2
+        self.relative_user_location = relative
 
     def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> None:
         attribs = self.default_attributes()
@@ -287,6 +303,7 @@ class LinearDimension(BaseDimensionRenderer):
         self.text_spacing = self.text_gap * .75  # spacing in front and after dimension text
         self.required_text_space = 0
 
+        # calculate text location
         if self.text:
             self.dim_text_width = self.text_width(self.text)
             self.required_text_space = self.dim_text_width + 2 * (self.arrow_size + self.text_spacing)
@@ -300,7 +317,6 @@ class LinearDimension(BaseDimensionRenderer):
 
             # use relative text shift to move wide text up or down in multi point mode
             if self.multi_point_mode and self.is_wide_text and self.move_wide_text > 0:
-                self.text_fill = 1
                 shift_value = self.text_height + self.text_gap
                 if self.move_wide_text == 1:  # move text up
                     self.text_shift_v = shift_value
@@ -329,7 +345,7 @@ class LinearDimension(BaseDimensionRenderer):
     def has_relative_text_movement(self):
         return bool(self.text_shift_h or self.text_shift_v)
 
-    def apply_relative_text_movement(self, location: Vector, text_rotation: float) -> Vector:
+    def apply_text_shift(self, location: Vector, text_rotation: float) -> Vector:
         shift_vec = Vector(self.text_shift_h, self.text_shift_v)
         location += shift_vec.rot_z_deg(text_rotation)
         return location
@@ -385,6 +401,173 @@ class LinearDimension(BaseDimensionRenderer):
         # transform DIMENSION attributes into WCS and OCS
         self.dimension_to_wcs()
 
+    def get_text_location(self) -> Vector:
+        """
+        Get text midpoint in ucs from user defined location or default text location.
+
+        """
+        start = self.dim_line_start
+        end = self.dim_line_end
+
+        # apply relative text shift as user location override without leader
+        if self.has_relative_text_movement:
+            location = self.default_text_location()
+            location = self.apply_text_shift(location, self.text_rotation)
+            self.location_override(location)
+
+        if self.user_location is not None:
+            location = self.user_location
+            if self.relative_user_location:
+                location = start.lerp(end) + location
+            # set text location override
+            self.dimension.dxf.text_midpoint = location
+        else:
+            location = self.default_text_location()
+
+            # project standard text location onto dimension line
+            dim_line_vec = end - start
+            text_midpoint = start + dim_line_vec.project(location - start)
+            self.dimension.dxf.text_midpoint = text_midpoint
+
+        return location
+
+    def default_text_location(self) -> Vector:
+        """
+        Default text location based on `self.text_halign`, `self.text_valign` and `self.text_outside`
+
+        Returns: text midpoint in ucs as Vector()
+
+        """
+        start = self.dim_line_start
+        end = self.dim_line_end
+        halign = self.text_halign
+
+        # positions the text above and aligned with the first/second extension line
+        if halign in (3, 4):
+            # horizontal location
+            hdist = self.text_gap + self.text_height / 2.
+            hvec = (start - end).normalize(hdist)
+            location = (start if halign == 3 else end) + hvec
+            # vertical location
+            vdist = self.ext_line_extension + self.dim_text_width / 2.
+            location += Vector.from_deg_angle(self.ext_line_angle).normalize(vdist)
+        else:
+            # relocate outside text if centered to the second extension line
+            if self.text_outside and halign == 0:
+                halign = 2
+                self.text_halign = halign
+            if start == end:
+                dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)
+            else:
+                dim_line_vec = end - start
+
+            if halign == 0:
+                location = start.lerp(end)  # center of dimension line
+            else:
+                hdist = self.required_text_space / 2
+                if self.text_outside:  # move text outside
+                    hdist = -(hdist + self.arrow_size)
+
+                if halign == 1:  # positions the text next to the first extension line
+                    location = start + dim_line_vec.normalize(hdist)
+                else:  # positions the text next to the second extension line
+                    location = end - dim_line_vec.normalize(hdist)
+
+            # distance from extension line to text midpoint
+            vdist = self.text_vertical_distance()
+            location += dim_line_vec.orthogonal().normalize(vdist)
+
+        return location
+
+    def add_arrows(self, start: 'Vertex', end: 'Vertex', outside: bool = False) -> Tuple[Vector, Vector]:
+        attribs = {
+            'color': self.dim_line_color,
+        }
+        arrow1 = not self.suppress_arrow1
+        arrow2 = not self.suppress_arrow2
+
+        if self.tick_size > 0.:  # oblique stroke, but double the size
+            if arrow1:
+                self.add_blockref(
+                    ARROWS.oblique,
+                    insert=start,
+                    rotation=self.dim_line_angle,
+                    scale=self.tick_size * 2,
+                    dxfattribs=attribs,
+                )
+            if arrow2:
+                self.add_blockref(
+                    ARROWS.oblique,
+                    insert=end,
+                    rotation=self.dim_line_angle,
+                    scale=self.tick_size * 2,
+                    dxfattribs=attribs,
+                )
+        else:
+            scale = self.arrow_size
+            start_angle = self.dim_line_angle + 180.
+            end_angle = self.dim_line_angle
+            if outside:
+                start_angle, end_angle = end_angle, start_angle
+            if arrow1:
+                self.add_blockref(self.arrow1_name, insert=start, scale=scale, rotation=start_angle,
+                                  dxfattribs=attribs)  # reverse
+            if arrow2:
+                self.add_blockref(self.arrow2_name, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
+
+            if not outside:
+                if arrow1:
+                    start = connection_point(self.arrow1_name, start, scale, start_angle)
+                if arrow2:
+                    end = connection_point(self.arrow2_name, end, scale, end_angle)
+
+        if outside:  # add extension lines to arrows if outside
+            def has_arrow_extension(name: str) -> bool:
+                return (name is not None) and (name in ARROWS) and (name not in ARROWS.ORIGIN_ZERO)
+
+            def extension_line(arrow_name, outside):
+                start = None
+                end = None
+                arrow_size = self.arrow_size
+                two_arrows_length = 2 * arrow_size
+
+                if has_arrow_extension(arrow_name):  # just for arrows
+                    start = arrow_size
+                    end = two_arrows_length
+
+                if outside:
+                    end = two_arrows_length + text_width
+                    if start is None:
+                        start = 0
+                    if text_is_vcenter:
+                        end = two_arrows_length
+                return start, end
+
+            text_width = self.dim_text_width
+            text_is_left = self.text_outside and self.text_halign == 1
+            text_is_right = self.text_outside and self.text_halign in (0, 2)
+            text_is_vcenter = self.text_valign == 0
+            if arrow1:
+                start_, end_ = extension_line(self.arrow1_name, text_is_left)
+                if start_ is not None:
+                    dir_vec = (start - end)
+                    self.add_line(
+                        start + dir_vec.normalize(start_),
+                        start + dir_vec.normalize(end_),
+                        dxfattribs=attribs,
+                    )
+            if arrow2:
+                start_, end_ = extension_line(self.arrow2_name, text_is_right)
+                if start_ is not None:
+                    dir_vec = (end - start)
+                    self.add_line(
+                        end + dir_vec.normalize(start_),
+                        end + dir_vec.normalize(end_),
+                        dxfattribs=attribs,
+                    )
+
+        return start, end
+
     def dimension_to_wcs(self) -> None:
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
@@ -408,8 +591,10 @@ class LinearDimension(BaseDimensionRenderer):
                 return a, b
             else:
                 return b, a
-
-        direction = (end - start).normalize()
+        if start == end:
+            direction = Vector.from_rad_angle(self.dim_line_angle_rad)
+        else:
+            direction = (end - start).normalize()
         extension = direction * self.dim_line_extension
         if self.arrow1_name is None or ARROWS.has_extension_line(self.arrow1_name):
             start = start - extension
@@ -479,86 +664,6 @@ class LinearDimension(BaseDimensionRenderer):
 
         self.add_line(start, end, dxfattribs=attribs)
 
-    def add_arrows(self, start: 'Vertex', end: 'Vertex', outside: bool = False) -> Tuple[Vector, Vector]:
-        attribs = {
-            'color': self.dim_line_color,
-        }
-
-        if self.tick_size > 0.:  # oblique stroke, but double the size
-            self.add_blockref(
-                ARROWS.oblique,
-                insert=start,
-                rotation=self.dim_line_angle,
-                scale=self.tick_size * 2,
-                dxfattribs=attribs,
-            )
-            self.add_blockref(
-                ARROWS.oblique,
-                insert=end,
-                rotation=self.dim_line_angle,
-                scale=self.tick_size * 2,
-                dxfattribs=attribs,
-            )
-        else:
-            scale = self.arrow_size
-            start_angle = self.dim_line_angle + 180.
-            end_angle = self.dim_line_angle
-            if outside:
-                start_angle, end_angle = end_angle, start_angle
-            self.add_blockref(self.arrow1_name, insert=start, scale=scale, rotation=start_angle,
-                              dxfattribs=attribs)  # reverse
-            self.add_blockref(self.arrow2_name, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
-            if not outside:
-                start = connection_point(self.arrow1_name, start, scale, start_angle)
-                end = connection_point(self.arrow2_name, end, scale, end_angle)
-
-        if outside:  # add extension lines to arrows if outside
-            def has_arrow_extension(name: str) -> bool:
-                return (name is not None) and (name in ARROWS) and (name not in ARROWS.ORIGIN_ZERO)
-
-            def extension_line(arrow_name, outside):
-                start = None
-                end = None
-                arrow_size = self.arrow_size
-                two_arrows_length = 2 * arrow_size
-
-                if has_arrow_extension(arrow_name):  # just for arrows
-                    start = arrow_size
-                    end = two_arrows_length
-
-                if outside:
-                    end = two_arrows_length + text_width
-                    if start is None:
-                        start = 0
-                    if text_is_vcenter:
-                        end = two_arrows_length
-                return start, end
-
-            text_width = self.dim_text_width
-            text_is_left = self.text_outside and self.text_halign == 1
-            text_is_right = self.text_outside and self.text_halign in (0, 2)
-            text_is_vcenter = self.text_valign == 0
-
-            start_, end_ = extension_line(self.arrow1_name, text_is_left)
-            if start_ is not None:
-                dir_vec = (start - end)
-                self.add_line(
-                    start + dir_vec.normalize(start_),
-                    start + dir_vec.normalize(end_),
-                    dxfattribs=attribs,
-                )
-
-            start_, end_ = extension_line(self.arrow2_name, text_is_right)
-            if start_ is not None:
-                dir_vec = (end - start)
-                self.add_line(
-                    end + dir_vec.normalize(start_),
-                    end + dir_vec.normalize(end_),
-                    dxfattribs=attribs,
-                )
-
-        return start, end
-
     @property
     def vertical_factor(self) -> float:
         """text_valign as factor: returns 1 for above, 0 for center and -1 for below dimension line"""
@@ -573,67 +678,9 @@ class LinearDimension(BaseDimensionRenderer):
         """
         Returns the vertical distance for dimension line to text midpoint. Positive values are above the line, negative
         values are below the line.
+
         """
         return (self.text_height / 2. + self.text_gap) * self.vertical_factor
-
-    def get_text_location(self) -> Vector:
-        """
-        Calculate text midpoint in drawing units.
-
-        """
-        start = self.dim_line_start
-        end = self.dim_line_end
-        halign = self.text_halign
-        text_outside = self.text_outside
-        text_width = self.dim_text_width
-
-        if self.user_location is not None:
-            # ignore relative text movement: text_shift_h and text_shift_v
-            # DIMTMOVE == 0 is treated as 2
-            user_location = self.user_location
-            if self.relative_user_location:
-                user_location = self.dim_line_start.lerp(self.dim_line_end) + user_location
-            # set text location override
-            self.dimension.dxf.text_midpoint = user_location
-            return user_location
-        else:
-            # positions the text above and aligned with the first/second extension line
-            if halign in (3, 4):
-                vdist = self.ext_line_extension + self.dim_text_width / 2.
-                hdist = self.text_gap + self.text_height / 2.
-                if halign == 3:
-                    text_midpoint = start + (start - end).normalize(hdist)
-                else:
-                    text_midpoint = end + (start - end).normalize(hdist)
-                # lift text location
-                vec = Vector.from_deg_angle(self.ext_line_angle).normalize(vdist)
-                text_location = text_midpoint + vec
-            else:
-                # default location: above the dimension line and centered between extension lines
-                if text_outside and halign == 0:
-                    halign = 2
-                text_midpoint = start.lerp(end)
-                # offset = distance from extension line to text midpoint
-                hdist = self.text_gap + self.arrow_size + text_width / 2
-                vdist = self.text_vertical_distance()
-                if text_outside:
-                    hdist = -(hdist + self.arrow_size)
-                if halign == 1:  # positions the text next to the first extension line
-                    text_midpoint = start + (end - start).normalize(hdist)
-                elif halign == 2:  # positions the text next to the second extension line
-                    text_midpoint = end + (start - end).normalize(hdist)
-                text_location = text_midpoint + (end - start).orthogonal().normalize(vdist)
-
-            # set standard text location
-            self.dimension.dxf.text_midpoint = text_midpoint
-
-        self.text_outside = text_outside
-        self.text_halign = halign
-
-        # apply relative text movement  - not a DXF feature, only a rendering effect
-        if self.has_relative_text_movement:
-            text_location = self.apply_relative_text_movement(text_location, self.text_rotation)
-        return text_location
 
 
 class DimensionRenderer:
@@ -707,28 +754,63 @@ def format_text(value: float, dimrnd: float = None, dimdec: int = None, dimzin: 
     return text
 
 
+CAN_SUPPRESS_ARROW1 = {
+    ARROWS.dot,
+    ARROWS.dot_small,
+    ARROWS.dot_blank,
+    ARROWS.origin_indicator,
+    ARROWS.origin_indicator_2,
+    ARROWS.dot_smallblank,
+    ARROWS.none,
+    ARROWS.oblique,
+    ARROWS.box_filled,
+    ARROWS.box,
+    ARROWS.integral,
+    ARROWS.architectural_tick,
+}
+
+
+def sort_projected_points(points: Iterable['Vertex'], angle: float = 0) -> List[Vector]:
+    direction = Vector.from_deg_angle(angle)
+    projected_vectors = [(direction.project(p), p) for p in points]
+    return [p for projection, p in sorted(projected_vectors)]
+
+
 def multi_point_linear_dimension(
         layout: 'GenericLayoutType',
         base: 'Vertex',
         points: Iterable['Vertex'],
         angle: float = 0,
         ucs: 'UCS' = None,
+        avoid_double_rendering: bool = True,
         dimstyle: str = 'EZDXF',
         override: dict = None,
         dxfattribs: dict = None) -> None:
-    points = [Vector(p) for p in points]
+    def suppress_arrow1(dimstyle_override) -> bool:
+        arrow_name1, arrow_name2 = dimstyle_override.get_arrow_names()
+        if (arrow_name1 is None) or (arrow_name1 in CAN_SUPPRESS_ARROW1):
+            return True
+        else:
+            return False
+
+    points = sort_projected_points(points, angle)
     base = Vector(base)
     override = override or {}
     override['dimtix'] = 1  # do not place measurement text outside
     override['multi_point_mode'] = True
-    move_wide_text = 1  # 1 .. move wide text up; 2 .. move wide text down; None .. ignore
+    # 1 .. move wide text up; 2 .. move wide text down; None .. ignore
+    # moving text down, looks best combined with text fill bg: DIMTFILL = 1
+    move_wide_text = 1
+    _suppress_arrow1 = False
     first_run = True
 
     for p1, p2 in zip(points[:-1], points[1:]):
         _override = dict(override)
         _override['move_wide_text'] = move_wide_text
-        if not first_run:
+        if avoid_double_rendering and not first_run:
             _override['dimse1'] = 1
+            _override['suppress_arrow1'] = _suppress_arrow1
+
         style = layout.add_linear_dim(
             base, p1, p2,
             angle=angle,
@@ -736,6 +818,8 @@ def multi_point_linear_dimension(
             override=_override,
             dxfattribs=dxfattribs,
         )
+        if first_run:
+            _suppress_arrow1 = suppress_arrow1(style)
 
         renderer = cast(LinearDimension, style.render(ucs))
         if renderer.is_wide_text:
@@ -747,4 +831,3 @@ def multi_point_linear_dimension(
         else:  # reset to move text up
             move_wide_text = 1
         first_run = False
-

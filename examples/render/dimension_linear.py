@@ -3,7 +3,7 @@
 # Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 import pathlib
-
+import random
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.math import Vector, UCS
@@ -63,6 +63,7 @@ def linear_tutorial(dxfversion='R12'):
     dim2 = msp.add_linear_dim(base=(10, 2), p1=(7, 0), p2=(10, 0), angle=-30, dimstyle='EZDXF',
                               override={
                                   'dimdle': 0,
+                                  'dimdec': 2,
                                   'dimtfill': 2,  # custom text fill
                                   'dimtfillclr': 4,  # cyan
                               })
@@ -136,6 +137,7 @@ def example_for_all_text_placings_in_space_R2007():
 
 def example_for_all_text_placings(dwg, filename, ucs=None):
     def add_text(lines, insert):
+        insert += (.2, 0)
         attribs = dict(TEXT_ATTRIBS)
         line_space = .4
         delta = Vector(0, line_space, 0)
@@ -269,13 +271,45 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
     dwg.saveas(OUTDIR / filename)
 
 
-def example_multi_point_linear_dimension(dxfversion):
-    dwg = ezdxf.new(dxfversion, setup=True)
+def example_multi_point_linear_dimension():
+    dwg = ezdxf.new('R2007', setup=True)
     msp = dwg.modelspace()
     points = [(0, 0), (5, 1), (5.2, 1), (5.4, 0), (7, 0), (10, 3)]
     msp.add_lwpolyline(points)
-    msp.add_multi_point_linear_dim(base=(0, 5), points=points, dimstyle='EZDXF')
-    dwg.saveas(OUTDIR / f'multi_point_linear_dim_{dxfversion}.dxf')
+
+    # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
+    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')
+    dimstyle.dxf.dimtfill = 1
+
+    msp.add_multi_point_linear_dim(base=(0, 5), points=points, dimstyle='WITHTFILL')
+    dwg.saveas(OUTDIR / f'multi_point_linear_dim_R2007.dxf')
+
+
+def random_point(start, end):
+    dist = end-start
+    return Vector(start + random.random()*dist, start + random.random()*dist)
+
+
+def example_random_multi_point_linear_dimension(count=10, length=20):
+    dwg = ezdxf.new('R2007', setup=True)
+    msp = dwg.modelspace()
+    points = [random_point(0, length) for _ in range(count)]
+    msp.add_lwpolyline(points, dxfattribs={'color': 1})
+
+    # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
+    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')
+
+    dimstyle.dxf.dimtfill = 1
+    dimstyle.dxf.dimdec = 2
+
+    dimstyle = dwg.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')
+    dimstyle.dxf.dimblk = ezdxf.ARROWS.closed
+    dimstyle.dxf.dimtxsty = 'STANDARD'
+
+    msp.add_multi_point_linear_dim(base=(0, length+2), points=points, dimstyle='WITHTFILL')
+    msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL')
+    msp.add_multi_point_linear_dim(base=(10, -10), points=points, angle=45, dimstyle='WITHTXT')
+    dwg.saveas(OUTDIR / f'multi_random_point_linear_dim_R2007.dxf')
 
 
 def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2=None, filename=""):
@@ -370,21 +404,22 @@ def linear_EZ_MM(fmt):
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = False
+ALL = True
 
 if __name__ == '__main__':
     linear_tutorial('R2007')
+    linear_tutorial('R12')
     example_background_fill('R2007')
     example_for_all_text_placings_R12()
     example_for_all_text_placings_R2007()
-    # example_for_all_text_placings_ucs_R12()
     example_for_all_text_placings_ucs_R2007()
-    # example_for_all_text_placings_in_space_R12()
-    example_for_all_text_placings_in_space_R2007()
-    example_multi_point_linear_dimension('R2007')
+    example_multi_point_linear_dimension()
 
     if ALL:
-
+        example_for_all_text_placings_ucs_R12()
+        example_for_all_text_placings_in_space_R12()
+        example_for_all_text_placings_in_space_R2007()
+        example_random_multi_point_linear_dimension(count=10, length=20)
         linear_all_arrow_style('R12')
         linear_all_arrow_style('R12', dimltex1='DOT2', dimltex2='DOT2', filename='dotted_extension_lines_R12.dxf')
         linear_all_arrow_style('R2000')
@@ -392,11 +427,11 @@ if __name__ == '__main__':
 
         linear_tutorial_ext_lines()
 
-        linear_EZ_M('EZ_M_100_H25_CM')
-        linear_EZ_M('EZ_M_1_H25_CM')
+        #linear_EZ_M('EZ_M_100_H25_CM')
+        #linear_EZ_M('EZ_M_1_H25_CM')
 
-        linear_EZ_CM('EZ_CM_100_H25_CM')
-        linear_EZ_CM('EZ_CM_1_H25_CM')
+        #linear_EZ_CM('EZ_CM_100_H25_CM')
+        #linear_EZ_CM('EZ_CM_1_H25_CM')
 
-        linear_EZ_MM('EZ_MM_100_H25_MM')
-        linear_EZ_MM('EZ_MM_1_H25_MM')
+        #linear_EZ_MM('EZ_MM_100_H25_MM')
+        #linear_EZ_MM('EZ_MM_1_H25_MM')

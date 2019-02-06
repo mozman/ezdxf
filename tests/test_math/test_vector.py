@@ -296,3 +296,16 @@ def test_replace():
     assert v.replace(y=7) == (1, 7, 3)
     assert v.replace(z=7) == (1, 2, 7)
     assert v.replace(x=7, z=7) == (7, 2, 7)
+
+
+def test_project():
+    v = Vector(10, 0, 0)
+    assert v.project((5, 0, 0)) == (5, 0, 0)
+    assert v.project((5, 5, 0)) == (5, 0, 0)
+    assert v.project((5, 5, 5)) == (5, 0, 0)
+
+    v = Vector(10, 10, 0)
+    assert v.project((10, 0, 0)) == (5, 5, 0)
+
+
+

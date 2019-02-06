@@ -3,8 +3,10 @@
 from __future__ import unicode_literals
 import pytest
 import os
+import random
 import ezdxf
 from ezdxf.lldxf.const import versions_supported_by_new
+from ezdxf.math.vector import Vector
 
 
 @pytest.fixture(params=versions_supported_by_new)
@@ -36,6 +38,43 @@ def test_linear_dimline_all_arrow_style(drawing, tmpdir):
         drawing.saveas(filename)
     except ezdxf.DXFError as e:
         pytest.fail("DXFError: {0} for DXF version {1}".format(str(e), drawing.dxfversion))
+    assert os.path.exists(filename)
+
+
+def random_point(start, end):
+    dist = end - start
+    return Vector(start + random.random() * dist, start + random.random() * dist)
+
+
+def test_random_multi_point_linear_dimension(tmpdir):
+    length = 20
+    count = 10
+    fname = "multi_random_point_linear_dim_R2007.dxf"
+
+    dwg = ezdxf.new('R2007', setup=True)
+    msp = dwg.modelspace()
+    points = [random_point(0, length) for _ in range(count)]
+    msp.add_lwpolyline(points, dxfattribs={'color': 1})
+
+    # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
+    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')
+
+    dimstyle.dxf.dimtfill = 1
+    dimstyle.dxf.dimdec = 2
+
+    dimstyle = dwg.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')
+    dimstyle.dxf.dimblk = ezdxf.ARROWS.closed
+    dimstyle.dxf.dimtxsty = 'STANDARD'
+
+    msp.add_multi_point_linear_dim(base=(0, length + 2), points=points, dimstyle='WITHTFILL')
+    msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL')
+    msp.add_multi_point_linear_dim(base=(10, -10), points=points, angle=45, dimstyle='WITHTXT')
+
+    filename = str(tmpdir.join(fname))
+    try:
+        dwg.saveas(filename)
+    except ezdxf.DXFError as e:
+        pytest.fail("DXFError: {0} for {1}".format(str(e), fname))
     assert os.path.exists(filename)
 
 

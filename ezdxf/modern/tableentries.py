@@ -237,8 +237,6 @@ STANDARD
 9.0
 44
 5.0
-45
-0.0
 46
 0.0
 47
@@ -329,8 +327,8 @@ dimstyle_subclass = DefSubclass('AcDbDimStyleTableRecord', {
     'dimtfac': DXFAttr(146),
     'dimgap': DXFAttr(147),
     'dimaltrnd': DXFAttr(148),
-    'dimtfill': DXFAttr(69, dxfversion='AC1021'),
-    'dimtfillclr': DXFAttr(70, dxfversion='AC1021'),
+    'dimtfill': DXFAttr(69, dxfversion='AC1021'),  # 0=None, 1=canvas color, 2=dimtfillclr
+    'dimtfillclr': DXFAttr(70, dxfversion='AC1021'),  # color index for dimtfill==2
     'dimtol': DXFAttr(71),
     'dimlim': DXFAttr(72),
     'dimtih': DXFAttr(73),

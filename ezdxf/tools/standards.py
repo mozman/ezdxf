@@ -196,6 +196,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
         dimstyle.dxf.dimtxsty = style
         dimstyle.dxf.dimupt = 1  # user location override, controls both the text position and the dimension line location, same as DXF12
         dimstyle.dxf.dimdsep = ord('.')
+        dimstyle.dxf.dimdec = 2  # show just 2 decimals
     return dimstyle
 
 

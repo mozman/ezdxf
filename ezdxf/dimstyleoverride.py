@@ -338,7 +338,7 @@ class DimStyleOverride:
     def set_location(self, location: 'Vertex', leader=False, relative=False):
         self.dimstyle_attribs['dimtmove'] = 1 if leader else 2
         self.dimension.set_flag_state(self.dimension.USER_LOCATION_OVERRIDE, state=True, name='dimtype')
-        self.dimension.dxf.text_midpoint = Vector(location)
+        self.dimstyle_attribs['user_location'] = Vector(location)
         self.dimstyle_attribs['relative_user_location'] = relative
 
     def get_renderer(self, ucs: 'UCS' = None):

@@ -496,9 +496,6 @@ class GraphicsFactory:
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint'] = Vector(base)
-        if location is not None:
-            override['user_location'] = Vector(location)
-            dimline.set_flag_state(const.DIM_USER_LOCATION_OVERRIDE, True, name='dimtype')
         dxfattribs['text'] = text
         dxfattribs['defpoint2'] = Vector(p1)
         dxfattribs['defpoint3'] = Vector(p2)
@@ -509,6 +506,8 @@ class GraphicsFactory:
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.set_location(location, leader=False, relative=False)
         return style
 
     def add_multi_point_linear_dim(self,
@@ -516,6 +515,7 @@ class GraphicsFactory:
                                    points: Iterable['Vertex'],
                                    angle: float = 0,
                                    ucs: 'UCS' = None,
+                                   avoid_double_rendering: bool = True,
                                    dimstyle: str = 'EZDXF',
                                    override: dict = None,
                                    dxfattribs: dict = None) -> None:
@@ -532,12 +532,24 @@ class GraphicsFactory:
             points: iterable of measurement points (in UCS)
             angle: angle from ucs/wcs x-axis to dimension line in degrees
             ucs: user defined coordinate system
+            avoid_double_rendering: suppresses the first extension line and the first arrow if possible for continued
+                                    dimension entities
             dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
             override: DIMSTYLE override attributes
             dxfattribs: DXF attributes for DIMENSION entity
 
         """
-        multi_point_linear_dimension(cast('GenericLayoutType', self), base, points, angle, ucs, dimstyle, override, dxfattribs)
+        multi_point_linear_dimension(
+            cast('GenericLayoutType', self),
+            base=base,
+            points=points,
+            angle=angle,
+            ucs=ucs,
+            avoid_double_rendering=avoid_double_rendering,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
 
     def add_aligned_dim(self,
                         p1: 'Vertex',

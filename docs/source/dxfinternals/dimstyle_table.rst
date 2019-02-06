@@ -487,7 +487,7 @@ The following DIMVARS are **not documented** in the `DXF Reference`_ by Autodesk
 DIMVAR              Code    Description
 =================== ======= ============================================================================================
 DIMTFILL            69      Text fill 0=off; 1=background color; 2=custom color (see DIMTFILLCLR)
-DIMTFILLCLR         70      Text fill custom color
+DIMTFILLCLR         70      Text fill custom color as color index
 DIMFXLON            290     Extension line has fixed length if set to 1
 DIMFXL              49      Length of extension line below dimension line if fixed (DIMFXLON is 1), DIMEXE defines the
                             the length above the dimension line
