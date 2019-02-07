@@ -1,6 +1,5 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone, square, box
 from ezdxf.render.forms import open_arrow, arrow2
 from ezdxf.render.forms import spline_interpolation, spline_interpolated_profiles
