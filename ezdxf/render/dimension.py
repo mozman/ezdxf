@@ -21,6 +21,7 @@ class TextBox(ConstructionBox):
     Text boundaries representation.
 
     """
+
     def __init__(self, center: 'Vertex', width: float, height: float, angle: float, gap: float = 0):
         height += (2 * gap)
         super().__init__(center, width, height, angle)
@@ -31,6 +32,7 @@ class BaseDimensionRenderer:
     Base rendering class for DIMENSION entities.
 
     """
+
     def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
                  override: DimStyleOverride = None):
         # DXF document
@@ -70,7 +72,7 @@ class BaseDimensionRenderer:
         # shift text along in text direction
         self.text_shift_h = self.dim_style.pop('text_shift_h', 0.)  # type: float
         # shift text perpendicular to text direction
-        self.text_shift_v = self.dim_style.pop('text_shift_v',0.)  # type: float
+        self.text_shift_v = self.dim_style.pop('text_shift_v', 0.)  # type: float
 
         # suppress arrow rendering - only rendering is suppressed (rendering effect), all placing related calculations
         # are done without this settings. Used for multi point linear dimensions to avoid double rendering of non arrow
@@ -299,6 +301,7 @@ class BaseDimensionRenderer:
             remove_hidden_lines: removes parts of the line hidden by dimension text if True
 
         """
+
         def order(a: Vector, b: Vector) -> Tuple[Vector, Vector]:
             if (start - a).magnitude < (start - b).magnitude:
                 return a, b
@@ -431,49 +434,53 @@ class LinearDimension(BaseDimensionRenderer):
         override: dimension style override management object
 
     """
+
     def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
                  override: 'DimStyleOverride' = None):
         super().__init__(dimension, block, ucs, override)
-        self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 90)
-        self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)
-        self.dim_line_angle_rad = math.radians(self.dim_line_angle)
-        self.ext_line_angle = self.dim_line_angle + self.oblique_angle
-        self.ext_line_angle_rad = math.radians(self.ext_line_angle)
+        self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 90)  # type: float
+        self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)  # type: float
+        self.dim_line_angle_rad = math.radians(self.dim_line_angle)  # type: float
+        self.ext_line_angle = self.dim_line_angle + self.oblique_angle  # type: float
+        self.ext_line_angle_rad = math.radians(self.ext_line_angle)  # type: float
 
         # text is aligned to dimension line
-        self.text_rotation = self.dim_line_angle
+        self.text_rotation = self.dim_line_angle  # type: float
         if self.text_halign in (3, 4):  # text above extension line, is always aligned with extension lines
             self.text_rotation = self.ext_line_angle
 
-        self.ext1_line_start = self.dimension.dxf.defpoint2
-        self.ext2_line_start = self.dimension.dxf.defpoint3
+        self.ext1_line_start = self.dimension.dxf.defpoint2  # type: Vector
+        self.ext2_line_start = self.dimension.dxf.defpoint3  # type: Vector
 
         ext1_ray = ConstructionRay(self.ext1_line_start, angle=self.ext_line_angle_rad)
         ext2_ray = ConstructionRay(self.ext2_line_start, angle=self.ext_line_angle_rad)
         dim_line_ray = ConstructionRay(self.dimension.dxf.defpoint, angle=self.dim_line_angle_rad)
 
-        self.dim_line_start = dim_line_ray.intersect(ext1_ray)
-        self.dim_line_end = dim_line_ray.intersect(ext2_ray)
+        self.dim_line_start = dim_line_ray.intersect(ext1_ray)  # type: Vector
+        self.dim_line_end = dim_line_ray.intersect(ext2_ray)  # type: Vector
         if self.dim_line_start == self.dim_line_end:
-            self.dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)
+            self.dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)  # type: Vector
         else:
-            self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()
+            self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()  # type: Vector
         self.dimension.dxf.defpoint = self.dim_line_start  # set defpoint to expected location
-        self.measurement = (self.dim_line_end - self.dim_line_start).magnitude
-        self.text = self.text_override(self.measurement * self.dim_measurement_factor)
+        self.measurement = (self.dim_line_end - self.dim_line_start).magnitude  # type: float
+        self.text = self.text_override(self.measurement * self.dim_measurement_factor)  # type: str
 
         # only for linear dimension in multi point mode
         self.multi_point_mode = override.pop('multi_point_mode', False)
+
         # 1 .. move wide text up
         # 2 .. move wide text down
         # None .. ignore
-        self.move_wide_text = override.pop('move_wide_text', None)
-        self.dim_text_width = 0  # actual text width in drawing units
+        self.move_wide_text = override.pop('move_wide_text', None)  # type: bool
+
+        # actual text width in drawing units
+        self.dim_text_width = 0  # type: float
 
         # text location and rotation
         if self.text:
             # text width and required space
-            self.dim_text_width = self.text_width(self.text)
+            self.dim_text_width = self.text_width(self.text)  # type: float
             if self.text_valign == 0:  # vertical centered text needs also space for arrows
                 required_space = self.dim_text_width + 2 * self.arrow_size
             else:
@@ -501,10 +508,10 @@ class LinearDimension(BaseDimensionRenderer):
                         # shift again
                         self.text_shift_v -= shift_value
 
-            self.text_location = self.get_text_location()
+            self.text_location = self.get_text_location()  # type: Vector
 
             # text rotation override
-            rotation = self.text_rotation
+            rotation = self.text_rotation  # type: float
             if self.user_text_rotation is not None:
                 rotation = self.user_text_rotation
             elif self.text_outside and self.text_outside_horizontal:
@@ -521,8 +528,8 @@ class LinearDimension(BaseDimensionRenderer):
                 gap=self.text_gap * .75
             )
 
-        self.required_arrows_space = 2 * self.arrow_size + self.text_gap
-        self.arrows_outside = self.required_arrows_space > self.measurement
+        self.required_arrows_space = 2 * self.arrow_size + self.text_gap  # type: float
+        self.arrows_outside = self.required_arrows_space > self.measurement  # type: bool
 
     @property
     def has_relative_text_movement(self):
@@ -530,7 +537,7 @@ class LinearDimension(BaseDimensionRenderer):
 
     def apply_text_shift(self, location: Vector, text_rotation: float) -> Vector:
         """
-        Adds `self.text_shift_h` and `sel.text_shift_v` to point `location`, shifting along and perpendicular to
+        Add `self.text_shift_h` and `sel.text_shift_v` to point `location`, shifting along and perpendicular to
         text orientation defined by `text_rotation`
 
         Args:
@@ -558,6 +565,7 @@ class LinearDimension(BaseDimensionRenderer):
         Returns: nearest text point to target point
 
         """
+
         def order_points():
             if (p1 - p2).magnitude_xy > (p1 - p3).magnitude_xy:
                 return p3, p2
@@ -571,7 +579,7 @@ class LinearDimension(BaseDimensionRenderer):
 
     def render(self):
         """
-        Main method to create dimension geometry as basic DXF entities in the associated BLOCK definition.
+        Main method to create dimension geometry as basic DXF entities in the associated BLOCK layout.
 
         """
         # add extension line 1
@@ -592,7 +600,7 @@ class LinearDimension(BaseDimensionRenderer):
         # add dimension line
         self.add_dimension_line(dim_line_start, dim_line_end)
 
-        # add measurement text at last to see text fill properly
+        # add measurement text as last entity to see text fill properly
         if self.text:
             self.add_measurement_text(self.text, self.text_location, self.text_rotation)
             # add leader
@@ -600,6 +608,7 @@ class LinearDimension(BaseDimensionRenderer):
                 target_point = self.dim_line_start.lerp(self.dim_line_end)
                 p2, p3, *_ = self.text_box.corners
                 defpoint = self.add_leader(target_point, p2, p3)
+                # not exact what BricsCAD (AutoCAD) expect, but close enough
                 self.dimension.dxf.text_midpoint = defpoint
 
         # add POINT entities at definition points
@@ -610,7 +619,7 @@ class LinearDimension(BaseDimensionRenderer):
 
     def get_text_location(self) -> Vector:
         """
-        Get text midpoint in ucs from user defined location or default text location.
+        Get text midpoint in UCS from user defined location or default text location.
 
         """
         start = self.dim_line_start
@@ -680,7 +689,7 @@ class LinearDimension(BaseDimensionRenderer):
 
     def add_arrows(self) -> Tuple[Vector, Vector]:
         """
-        Adds arrows or ticks to BLOCK.
+        Add arrows or ticks to dimension.
 
         Returns: dimension line connection points
 
@@ -724,19 +733,22 @@ class LinearDimension(BaseDimensionRenderer):
                 self.add_blockref(self.arrow2_name, insert=end, scale=scale, rotation=end_angle, dxfattribs=attribs)
 
             if not outside:
+                # arrows inside extension lines: adjust connection points for the remaining dimension line
                 if arrow1:
                     start = connection_point(self.arrow1_name, start, scale, start_angle)
                 if arrow2:
                     end = connection_point(self.arrow2_name, end, scale, end_angle)
             else:
+                # add additional extension lines to arrows placed outside of dimension extension lines
                 self.add_arrow_extension_lines()
         return start, end
 
     def add_arrow_extension_lines(self):
         """
-        Adds extension lines to arrows placed outside. Called by `self.add_arrows()`.
+        Add extension lines to arrows placed outside of dimension extension lines. Called by `self.add_arrows()`.
 
         """
+
         def has_arrow_extension(name: str) -> bool:
             return (name is not None) and (name in ARROWS) and (name not in ARROWS.ORIGIN_ZERO)
 
@@ -766,6 +778,7 @@ class LinearDimension(BaseDimensionRenderer):
         Transforms dimension definition points into WCS or if required into OCS.
 
         """
+
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
@@ -833,7 +846,7 @@ class LinearDimension(BaseDimensionRenderer):
         Args:
             start: start point of extension line (measurement point)
             end: end point at dimension line
-            text_above_extline: True if text is above and aligned with extension line (halign == 3 or 4)
+            text_above_extline: True if text is above and aligned with extension line
 
         Returns: adjusted start and end point
 
@@ -854,7 +867,7 @@ class LinearDimension(BaseDimensionRenderer):
 
     def add_extension_line(self, start: 'Vertex', end: 'Vertex', linetype: str = None) -> None:
         """
-        Adds extension lines from dimension line to measurement point.
+        Add extension lines from dimension line to measurement point.
 
         """
         attribs = {
@@ -1010,6 +1023,7 @@ def multi_point_linear_dimension(
         dxfattribs: DXF attributes for DIMENSION entities
 
     """
+
     def suppress_arrow1(dimstyle_override) -> bool:
         arrow_name1, arrow_name2 = dimstyle_override.get_arrow_names()
         if (arrow_name1 is None) or (arrow_name1 in CAN_SUPPRESS_ARROW1):
