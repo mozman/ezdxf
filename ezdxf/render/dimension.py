@@ -13,7 +13,7 @@ from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BlockLayout, Vertex, Drawing, GenericLayoutType, Style
+    from ezdxf.eztypes import Dimension, Vertex, Drawing, GenericLayoutType, Style
 
 
 class TextBox(ConstructionBox):
@@ -39,8 +39,7 @@ class BaseDimensionRenderer:
 
     """
 
-    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
-                 override: DimStyleOverride = None):
+    def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: DimStyleOverride = None):
         # DXF document
         self.drawing = dimension.drawing  # type: Drawing
 
@@ -50,9 +49,8 @@ class BaseDimensionRenderer:
         self.dxfversion = self.drawing.dxfversion  # type: str
         self.supports_dxf_r2000 = self.dxfversion >= 'AC1015'  # type: bool
         self.supports_dxf_r2007 = self.dxfversion >= 'AC1021'  # type: bool
-
         # Target BLOCK of the graphical representation of the DIMENSION entity
-        self.block = block
+        self.block = None  # type: GenericLayoutType
 
         # DimStyleOverride object, manages dimension style overriding
         if override:
@@ -160,6 +158,9 @@ class BaseDimensionRenderer:
         if self.text_movement_rule == 0:
             # moves the dimension line with dimension text and makes no sense for ezdxf (just set `base` argument)
             self.text_movement_rule = 2
+
+        # requires a leader?
+        self.text_has_leader = self.user_location is not None and self.text_movement_rule == 1  # type: bool
 
         # text_rotation=0 if dimension text is 'inside', ezdxf defines 'inside' as at the default text location
         self.text_inside_horizontal = get('dimtih', 0)  # type: bool
@@ -351,8 +352,8 @@ class BaseDimensionRenderer:
     def text_inside(self):
         return not self.text_outside
 
-    def render(self):  # interface definition
-        pass
+    def render(self, block: 'GenericLayoutType'):  # interface definition
+        self.block = block
 
     @property
     def char_height(self) -> float:
@@ -624,6 +625,45 @@ class BaseDimensionRenderer:
         for point in points:
             self.block.add_point(self.wcs(point), dxfattribs=attribs)
 
+    def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None):
+        """
+        Add simple leader line from p1 to p2 to p3.
+
+        Args:
+            p1: target point
+            p2: first text point
+            p3: second text point
+            dxfattribs: DXF attribute
+
+        """
+        self.add_line(p1, p2, dxfattribs)
+        self.add_line(p2, p3, dxfattribs)
+
+    def transform_ucs_to_wcs(self) -> None:
+        """
+        Transforms dimension definition points into WCS or if required into OCS.
+
+        Can not be called in __init__(), because inherited classes may be need unmodified values.
+
+        """
+
+        def from_ucs(attr, func):
+            point = self.dimension.get_dxf_attrib(attr)
+            self.dimension.set_dxf_attrib(attr, func(point))
+
+        from_ucs('defpoint', self.wcs)
+        from_ucs('defpoint2', self.wcs)
+        from_ucs('defpoint3', self.wcs)
+        from_ucs('text_midpoint', self.ocs)
+        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
+
+
+def order_leader_points(p1: Vector, p2: Vector, p3: Vector) -> Tuple[Vector, Vector]:
+    if (p1 - p2).magnitude_xy > (p1 - p3).magnitude_xy:
+        return p3, p2
+    else:
+        return p2, p3
+
 
 class LinearDimension(BaseDimensionRenderer):
     """
@@ -631,15 +671,13 @@ class LinearDimension(BaseDimensionRenderer):
 
     Args:
         dimension: DXF entity DIMENSION
-        block: target BLOCK for dimension geometry
         ucs: user defined coordinate system
         override: dimension style override management object
 
     """
 
-    def __init__(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS' = None,
-                 override: 'DimStyleOverride' = None):
-        super().__init__(dimension, block, ucs, override)
+    def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
+        super().__init__(dimension, ucs, override)
         self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 90)  # type: float
         self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)  # type: float
         self.dim_line_angle_rad = math.radians(self.dim_line_angle)  # type: float
@@ -660,11 +698,16 @@ class LinearDimension(BaseDimensionRenderer):
 
         self.dim_line_start = dim_line_ray.intersect(ext1_ray)  # type: Vector
         self.dim_line_end = dim_line_ray.intersect(ext2_ray)  # type: Vector
+        self.dim_line_center = self.dim_line_start.lerp(self.dim_line_end)  # type: Vector
+
         if self.dim_line_start == self.dim_line_end:
             self.dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)  # type: Vector
         else:
             self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()  # type: Vector
-        self.dimension.dxf.defpoint = self.dim_line_start  # set defpoint to expected location
+
+        # set dimension defpoint to expected location
+        self.dimension.dxf.defpoint = self.dim_line_start
+
         self.measurement = (self.dim_line_end - self.dim_line_start).magnitude  # type: float
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)  # type: str
 
@@ -678,6 +721,10 @@ class LinearDimension(BaseDimensionRenderer):
 
         # actual text width in drawing units
         self.dim_text_width = 0  # type: float
+
+        # arrows
+        self.required_arrows_space = 2 * self.arrow_size + self.text_gap  # type: float
+        self.arrows_outside = self.required_arrows_space > self.measurement  # type: bool
 
         # text location and rotation
         if self.text:
@@ -713,6 +760,7 @@ class LinearDimension(BaseDimensionRenderer):
                         # shift again
                         self.text_shift_v -= shift_value
 
+            # get final text location - no altering after this line
             self.text_location = self.get_text_location()  # type: Vector
 
             # text rotation override
@@ -732,9 +780,14 @@ class LinearDimension(BaseDimensionRenderer):
                 angle=self.text_rotation,
                 gap=self.text_gap * .75
             )
-
-        self.required_arrows_space = 2 * self.arrow_size + self.text_gap  # type: float
-        self.arrows_outside = self.required_arrows_space > self.measurement  # type: bool
+            if self.text_has_leader:
+                p1, p2, *_ = self.text_box.corners
+                self.leader1, self.leader2 = order_leader_points(self.dim_line_center, p1, p2)
+                # not exact what BricsCAD (AutoCAD) expect, but close enough
+                self.dimension.dxf.text_midpoint = self.leader1
+            else:
+                # write final text location into DIMENSION entity
+                self.dimension.dxf.text_midpoint = self.text_location
 
     @property
     def has_relative_text_movement(self):
@@ -756,37 +809,16 @@ class LinearDimension(BaseDimensionRenderer):
         location += shift_vec.rot_z_deg(text_rotation)
         return location
 
-    def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None) -> Vector:
-        """
-        Add simple leader line from target point to nearest text point and another line from nearest text point to
-        farthest text point.
-
-        Args:
-            p1: target point
-            p2: first text point
-            p3: second text point
-            dxfattribs: DXF attribute
-
-        Returns: nearest text point to target point
-
-        """
-
-        def order_points():
-            if (p1 - p2).magnitude_xy > (p1 - p3).magnitude_xy:
-                return p3, p2
-            else:
-                return p2, p3
-
-        p2, p3 = order_points()
-        self.add_line(p1, p2, dxfattribs)
-        self.add_line(p2, p3, dxfattribs)
-        return p2
-
-    def render(self):
+    def render(self, block: 'GenericLayoutType') -> None:
         """
         Main method to create dimension geometry as basic DXF entities in the associated BLOCK layout.
 
+        Args:
+            block: target BLOCK for rendering
+
         """
+        super().render(block)
+
         # add extension line 1
         if not self.suppress_ext1_line:
             above_ext_line1 = self.text_halign == 3
@@ -812,28 +844,17 @@ class LinearDimension(BaseDimensionRenderer):
             else:
                 text = self.text
             self.add_measurement_text(text, self.text_location, self.text_rotation)
-            # add leader
-            if self.user_location is not None and self.text_movement_rule == 1:
-                target_point = self.dim_line_start.lerp(self.dim_line_end)
-                p2, p3, *_ = self.text_box.corners
-                defpoint = self.add_leader(target_point, p2, p3)
-                # not exact what BricsCAD (AutoCAD) expect, but close enough
-                self.dimension.dxf.text_midpoint = defpoint
+            if self.text_has_leader:
+                self.add_leader(self.dim_line_center, self.leader1, self.leader2)
 
         # add POINT entities at definition points
         self.add_defpoints([self.dim_line_start, self.ext1_line_start, self.ext2_line_start])
-
-        # transform DIMENSION attributes into WCS and OCS
-        self.dimension_to_wcs()
 
     def get_text_location(self) -> Vector:
         """
         Get text midpoint in UCS from user defined location or default text location.
 
         """
-        start = self.dim_line_start
-        end = self.dim_line_end
-
         # apply relative text shift as user location override without leader
         if self.has_relative_text_movement:
             location = self.default_text_location()
@@ -843,16 +864,11 @@ class LinearDimension(BaseDimensionRenderer):
         if self.user_location is not None:
             location = self.user_location
             if self.relative_user_location:
-                location = start.lerp(end) + location
-            # set text location override
-            self.dimension.dxf.text_midpoint = location
+                location = self.dim_line_center + location
             # define overridden text location as outside
             self.text_outside = True
         else:
             location = self.default_text_location()
-            # project standard text location onto dimension line
-            text_midpoint = start + self.dim_line_vec.project(location - start)
-            self.dimension.dxf.text_midpoint = text_midpoint
 
         return location
 
@@ -879,7 +895,7 @@ class LinearDimension(BaseDimensionRenderer):
                 halign = 0
 
             if halign == 0:
-                location = start.lerp(end)  # center of dimension line
+                location = self.dim_line_center  # center of dimension line
             else:
                 hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
                 if halign == 1:  # positions the text next to the first extension line
@@ -982,22 +998,6 @@ class LinearDimension(BaseDimensionRenderer):
                 dxfattribs=attribs,
             )
 
-    def dimension_to_wcs(self) -> None:
-        """
-        Transforms dimension definition points into WCS or if required into OCS.
-
-        """
-
-        def from_ucs(attr, func):
-            point = self.dimension.get_dxf_attrib(attr)
-            self.dimension.set_dxf_attrib(attr, func(point))
-
-        from_ucs('defpoint', self.wcs)
-        from_ucs('defpoint2', self.wcs)
-        from_ucs('defpoint3', self.wcs)
-        from_ucs('text_midpoint', self.ocs)
-        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
-
     def add_measurement_text(self, dim_text: str, pos: Vector, rotation: float) -> None:
         """
         Add measurement text to dimension BLOCK.
@@ -1023,8 +1023,6 @@ class LinearDimension(BaseDimensionRenderer):
             end: dimension line end
 
         """
-        # calculate dimension line center before adding extensions, they could be asymmetric
-        dim_line_center = start.lerp(end)
         extension = self.dim_line_vec * self.dim_line_extension
         if self.arrow1_name is None or ARROWS.has_extension_line(self.arrow1_name):
             start = start - extension
@@ -1042,9 +1040,9 @@ class LinearDimension(BaseDimensionRenderer):
 
         if self.suppress_dim1_line or self.suppress_dim2_line:
             if not self.suppress_dim1_line:
-                self.add_line(start, dim_line_center, dxfattribs=attribs, remove_hidden_lines=True)
+                self.add_line(start, self.dim_line_center, dxfattribs=attribs, remove_hidden_lines=True)
             if not self.suppress_dim2_line:
-                self.add_line(dim_line_center, end, dxfattribs=attribs, remove_hidden_lines=True)
+                self.add_line(self.dim_line_center, end, dxfattribs=attribs, remove_hidden_lines=True)
         else:
             self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
@@ -1116,45 +1114,42 @@ class LinearDimension(BaseDimensionRenderer):
 class DimensionRenderer:
     def dispatch(self, override: 'DimStyleOverride', ucs: 'UCS') -> BaseDimensionRenderer:
         dimension = override.dimension
-        dwg = override.drawing
-        block = dwg.blocks.new_anonymous_block(type_char='D')
-        dimension.dxf.geometry = block.name
         dim_type = dimension.dim_type
 
         if dim_type in (0, 1):
-            return self.linear(dimension, block, ucs, override)
+            return self.linear(dimension, ucs, override)
         elif dim_type == 2:
-            return self.angular(dimension, block, ucs, override)
+            return self.angular(dimension, ucs, override)
         elif dim_type == 3:
-            return self.diameter(dimension, block, ucs, override)
+            return self.diameter(dimension, ucs, override)
         elif dim_type == 4:
-            return self.radius(dimension, block, ucs, override)
+            return self.radius(dimension, ucs, override)
         elif dim_type == 5:
-            return self.angular3p(dimension, block, ucs, override)
+            return self.angular3p(dimension, ucs, override)
         elif dim_type == 6:
-            return self.ordinate(dimension, block, ucs, override)
+            return self.ordinate(dimension, ucs, override)
         else:
             raise DXFValueError("Unknown DIMENSION type: {}".format(dim_type))
 
-    def linear(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def linear(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         """
         Call renderer for linear dimension lines: horizontal, vertical and rotated
         """
-        return LinearDimension(dimension, block, ucs, override)
+        return LinearDimension(dimension, ucs, override)
 
-    def angular(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def angular(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def diameter(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def diameter(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def radius(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def radius(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def angular3p(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def angular3p(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
-    def ordinate(self, dimension: 'Dimension', block: 'BlockLayout', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def ordinate(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented
 
 
@@ -1224,7 +1219,8 @@ def multi_point_linear_dimension(
         avoid_double_rendering: bool = True,
         dimstyle: str = 'EZDXF',
         override: dict = None,
-        dxfattribs: dict = None) -> None:
+        dxfattribs: dict = None,
+        discard=False) -> None:
     """
     Creates multiple DIMENSION entities for each point pair in `points`. Measurement points will be sorted by appearance
     on the dimension line vector.
@@ -1239,6 +1235,8 @@ def multi_point_linear_dimension(
         dimstyle: dimension style name
         override: dictionary of overridden dimension style attributes
         dxfattribs: DXF attributes for DIMENSION entities
+        discard: discard rendering result for friendly CAD applications like BricsCAD to get a native and likely better
+                 rendering result. (does not work with AutoCAD)
 
     """
 
@@ -1277,7 +1275,7 @@ def multi_point_linear_dimension(
         if first_run:
             _suppress_arrow1 = suppress_arrow1(style)
 
-        renderer = cast(LinearDimension, style.render(ucs))
+        renderer = cast(LinearDimension, style.render(ucs, discard=discard))
         if renderer.is_wide_text:
             # after wide text switch moving direction
             if move_wide_text == 1:

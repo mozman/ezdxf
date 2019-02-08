@@ -25,9 +25,9 @@ from ezdxf.render.dimension import DimensionRenderer
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from eztypes import HandleGenerator, DXFTag, LayoutType, SectionDict
-    from eztypes import GroupManager, MaterialManager, MLeaderStyleManager, MLineStyleManager
-    from eztypes import SectionType, HeaderSection, BlocksSection, Table, ViewportTable
+    from .eztypes import HandleGenerator, DXFTag, LayoutType, SectionDict
+    from .eztypes import GroupManager, MaterialManager, MLeaderStyleManager, MLineStyleManager
+    from .eztypes import SectionType, HeaderSection, BlocksSection, Table, ViewportTable
 
 
 class Drawing:
@@ -54,6 +54,8 @@ class Drawing:
         self._materials = None  # type: MaterialManager # read only
         self._mleader_styles = None  # type: MLeaderStyleManager # read only
         self._mline_styles = None  # type: MLineStyleManager # read only
+        self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
+        self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
         self.filename = None  # type: str # read/write
         self.entitydb = EntityDB()  # read only
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
@@ -95,6 +97,16 @@ class Drawing:
     @property
     def acad_release(self) -> str:
         return acad_release.get(self.dxfversion, "unknown")
+
+    @property
+    def acad_compatible(self) -> bool:
+        return self._acad_compatible
+
+    def add_acad_incompatibility_message(self, msg: str):
+        self._acad_compatible = False
+        if msg not in self._acad_incompatibility_reason:
+            self._acad_incompatibility_reason.add(msg)
+            logger.warning('Drawing is incompatible to AutoCAD, because {}.'.format(msg))
 
     @property
     def _handles(self) -> 'HandleGenerator':
@@ -535,4 +547,3 @@ class Drawing:
     def reset_versionguid(self):
         if self.dxfversion > 'AC1009':
             self.header['$VERSIONGUID'] = guid()
-

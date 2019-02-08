@@ -408,11 +408,18 @@ class DimStyleOverride:
         Returns: used renderer for analytics
 
         """
+
         renderer = self.get_renderer(ucs)
-        renderer.render()
         if discard:
-            self.drawing.blocks.delete_block(self.dimension.dxf.geometry)
-            self.dimension.dxf.geometry = ""
+            self.drawing.add_acad_incompatibility_message('DIMENSION without geometry as BLOCK (discard=True)')
+        else:
+            block = self.drawing.blocks.new_anonymous_block(type_char='D')
+            self.dimension.dxf.geometry = block.name
+            renderer.render(block)
+
+        # should be called after rendering
+        renderer.transform_ucs_to_wcs()
+
         if len(self.dimstyle_attribs):
             self.commit()
         return renderer

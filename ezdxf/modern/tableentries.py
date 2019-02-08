@@ -479,7 +479,7 @@ class DimStyle(legacy.DimStyle):
 
     def get_ltype_name(self, dimvar: str) -> Optional[str]:
         if self.dxfversion < 'AC1021':
-            logger.debug('Linetype support requires DXF R2007 or later.')
+            logger.debug('Linetype support for DIMSTYLE requires DXF R2007 or later.')
 
         handle = self.get_dxf_attrib(dimvar, None)
         if handle:

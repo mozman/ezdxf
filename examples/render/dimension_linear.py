@@ -8,6 +8,9 @@ import random
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.math import Vector, UCS
+import logging
+
+logging.basicConfig(level='WARN')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DimStyle, DimStyleOverride
@@ -24,7 +27,7 @@ TEXT_ATTRIBS = {
 DIM_TEXT_STYLE = 'OpenSansCondensed-Light'
 
 # discarding dimension rendering is possible for BricsCAD, but not for AutoCAD -> error
-BRICSCAD = False
+BRICSCAD = True
 
 
 def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
@@ -308,7 +311,7 @@ def random_point(start, end):
     return Vector(start + random.random() * dist, start + random.random() * dist)
 
 
-def example_random_multi_point_linear_dimension(count=10, length=20):
+def example_random_multi_point_linear_dimension(count=10, length=20, discard=BRICSCAD):
     dwg = ezdxf.new('R2007', setup=True)
     msp = dwg.modelspace()
     points = [random_point(0, length) for _ in range(count)]
@@ -326,9 +329,9 @@ def example_random_multi_point_linear_dimension(count=10, length=20):
     dimstyle.dxf.dimrnd = .5
     dimstyle.set_text_align(valign='center')
 
-    msp.add_multi_point_linear_dim(base=(0, length + 2), points=points, dimstyle='WITHTFILL')
-    msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL')
-    msp.add_multi_point_linear_dim(base=(10, -10), points=points, angle=45, dimstyle='WITHTXT')
+    msp.add_multi_point_linear_dim(base=(0, length + 2), points=points, dimstyle='WITHTFILL', discard=discard)
+    msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL', discard=discard)
+    msp.add_multi_point_linear_dim(base=(10, -10), points=points, angle=45, dimstyle='WITHTXT', discard=discard)
     dwg.saveas(OUTDIR / f'multi_random_point_linear_dim_R2007.dxf')
 
 
@@ -443,6 +446,7 @@ ALL = True
 
 if __name__ == '__main__':
     linear_tutorial_using_tolerances()
+    example_random_multi_point_linear_dimension(count=10, length=20)
 
     if ALL:
         linear_tutorial('R2007')
@@ -452,7 +456,6 @@ if __name__ == '__main__':
         example_for_all_text_placings_R2007()
         example_for_all_text_placings_ucs_R2007()
         example_multi_point_linear_dimension()
-        example_random_multi_point_linear_dimension(count=10, length=20)
 
         example_for_all_text_placings_ucs_R12()
         example_for_all_text_placings_in_space_R12()

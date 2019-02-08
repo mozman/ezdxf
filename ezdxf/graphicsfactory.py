@@ -3,6 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Union, Dict, Tuple, cast
 import math
+import logging
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError
 from ezdxf.math import Vector
@@ -10,6 +11,8 @@ from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dimension import multi_point_linear_dimension
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import DXFFactoryType, DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
@@ -518,7 +521,8 @@ class GraphicsFactory:
                                    avoid_double_rendering: bool = True,
                                    dimstyle: str = 'EZDXF',
                                    override: dict = None,
-                                   dxfattribs: dict = None) -> None:
+                                   dxfattribs: dict = None,
+                                   discard=False) -> None:
         """
         Create linear dimension for multiple measurement `points`. If an UCS is used for dimension line
         rendering, all point definitions in UCS coordinates, translation into WCS and OCS is done by the rendering
@@ -537,6 +541,8 @@ class GraphicsFactory:
             dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
             override: DIMSTYLE override attributes
             dxfattribs: DXF attributes for DIMENSION entity
+            discard: discard rendering result for friendly CAD applications like BricsCAD to get a native and likely
+                     better rendering result. (does not work with AutoCAD)
 
         """
         multi_point_linear_dimension(
@@ -549,6 +555,7 @@ class GraphicsFactory:
             dimstyle=dimstyle,
             override=override,
             dxfattribs=dxfattribs,
+            discard=discard,
         )
 
     def add_aligned_dim(self,
