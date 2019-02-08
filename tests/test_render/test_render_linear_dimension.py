@@ -28,9 +28,10 @@ def test_linear_dimension_with_one_tolerance(dwg):
     renderer = LinearDimension(dimline.dimension, block, override=style)
     assert renderer.text == '100'
     assert renderer.text_decimal_separator == '.'
-    assert renderer.tol_text == '±0.01'
+    assert renderer.tol_decimal_places == 4  # default value
+    assert renderer.tol_text == '±0.0100'
     assert renderer.tol_valign == 0
-    assert renderer.compile_mtext() == r"\A0;100{\H0.50x;±0.01}"
+    assert renderer.compile_mtext() == r"\A0;100{\H0.50x;±0.0100}"
 
 
 def test_linear_dimension_with_two_tolerances(dwg):
@@ -49,8 +50,10 @@ def test_linear_dimension_with_two_tolerances(dwg):
     renderer = LinearDimension(dimline.dimension, block, override=style)
     assert renderer.text == '101'
     assert renderer.text_decimal_separator == '.'
-    assert renderer.tol_text_upper == '+0.02'
-    assert renderer.tol_text_lower == '-0.03'
+    assert renderer.tol_decimal_places == 4  # default value
+    assert renderer.tol_text_upper == '+0.0200'
+    assert renderer.tol_text_lower == '-0.0300'
     assert renderer.tol_valign == 1
-    assert renderer.compile_mtext() == r"\A1;101{\H0.50x;\S+0.02^-0.03}"
+    assert renderer.compile_mtext() == r"\A1;101{\H0.50x;\S+0.0200^-0.0300}"
+
 

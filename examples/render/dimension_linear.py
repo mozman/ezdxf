@@ -2,11 +2,15 @@
 # Created: 29.12.2018
 # Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
+from typing import TYPE_CHECKING
 import pathlib
 import random
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.math import Vector, UCS
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import DimStyle, DimStyleOverride
 
 OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
 if not OUTDIR.exists():
@@ -19,11 +23,14 @@ TEXT_ATTRIBS = {
 
 DIM_TEXT_STYLE = 'OpenSansCondensed-Light'
 
+# discarding dimension rendering is possible for BricsCAD, but not for AutoCAD -> error
+BRICSCAD = False
+
 
 def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
     if dwg.dxfversion == 'AC1009':
         return
-    dimstyle = dwg.dimstyles.get(name)
+    dimstyle = dwg.dimstyles.get(name)  # type: DimStyle
     dimstyle.dxf.dimtxsty = textstyle
 
 
@@ -66,7 +73,7 @@ def linear_tutorial(dxfversion='R12'):
                                   'dimdec': 2,
                                   'dimtfill': 2,  # custom text fill
                                   'dimtfillclr': 4,  # cyan
-                              })
+                              })  # type: DimStyleOverride
     # Some properties have setter methods for convenience, this is also the reason for not calling dim2.render()
     # automatically.
     dim2.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=.25)
@@ -84,7 +91,7 @@ def example_background_fill(dxfversion='R12'):
     dim = msp.add_linear_dim(base=(0, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF',
                              override={
                                  'dimtfill': 1,  # background color
-                             })
+                             })  # type: DimStyleOverride
     dim.set_text('bgcolor')
     dim.render()
 
@@ -92,7 +99,7 @@ def example_background_fill(dxfversion='R12'):
                              override={
                                  'dimtfill': 2,  # custom text fill
                                  'dimtfillclr': 4,  # cyan
-                             })
+                             })  # type: DimStyleOverride
     dim.set_text('cyan')
     dim.render()
     dwg.saveas(OUTDIR / f'background_fill_example_{dxfversion}.dxf')
@@ -176,31 +183,33 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
 
         base = (x, y + 2)
         # wide
-        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 5, y), dimstyle=dimstyle, dxfattribs=dimattr)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 5, y), dimstyle=dimstyle,
+                                 dxfattribs=dimattr)  # type: DimStyleOverride
         dim.set_text_align(halign=halign, valign=valign)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
 
         add_text([f'halign={halign}', f'valign={valign}', f'oblique={oblique}'], insert=Vector(x, y))
 
         # narrow
-        dim = msp.add_linear_dim(base=base, p1=(x + 7, y), p2=(x + 7.3, y), dimstyle=dimstyle, dxfattribs=dimattr)
+        dim = msp.add_linear_dim(base=base, p1=(x + 7, y), p2=(x + 7.3, y), dimstyle=dimstyle,
+                                 dxfattribs=dimattr)  # type: DimStyleOverride
         dim.set_text_align(halign=halign, valign=valign)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
 
         # arrows inside, text outside
 
         dim = msp.add_linear_dim(base=base, p1=(x + 10, y), p2=(x + 10.9999, y), dimstyle=dimstyle,
                                  override={'dimdec': 2},
-                                 dxfattribs=dimattr)
+                                 dxfattribs=dimattr)  # type: DimStyleOverride
         dim.set_text_align(halign=halign, valign=valign)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
 
         # narrow and force text inside
         dim = msp.add_linear_dim(base=base, p1=(x + 14, y), p2=(x + 14.3, y), dimstyle=dimstyle,
                                  override={'dimtix': 1},
-                                 dxfattribs=dimattr)
+                                 dxfattribs=dimattr)  # type: DimStyleOverride
         dim.set_text_align(halign=halign, valign=valign)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
 
     def user_text_free(dimstyle, x=0, y=0, leader=False):
         override = {
@@ -212,34 +221,38 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         }
 
         base = (x, y + 2)
-        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle,
+                                 override=override)  # type: DimStyleOverride
         location = Vector(x + 3, y + 3, 0)
         dim.set_location(location, leader=leader)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
         add_text([f'usr absolute={location}', f'leader={leader}'], insert=Vector(x, y))
 
         x += 4
-        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle,
+                                 override=override)  # type: DimStyleOverride
         relative = Vector(-1, +1)  # relative to dimline center
         dim.set_location(relative, leader=leader, relative=True)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
         add_text([f'usr relative={relative}', f'leader={leader}'], insert=Vector(x, y))
 
         x += 4
-        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + 3, y), dimstyle=dimstyle,
+                                 override=override)  # type: DimStyleOverride
         dh = -.7
         dv = 1.5
         dim.shift_text(dh, dv)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
         add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
 
         override['dimtix'] = 1  # force text inside
         x += 4
-        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + .3, y), dimstyle=dimstyle, override=override)
+        dim = msp.add_linear_dim(base=base, p1=(x, y), p2=(x + .3, y), dimstyle=dimstyle,
+                                 override=override)  # type: DimStyleOverride
         dh = 0
         dv = 1
         dim.shift_text(dh, dv)
-        dim.render(ucs=ucs)
+        dim.render(ucs=ucs, discard=BRICSCAD)
         add_text([f'shift text=({dh}, {dv})', ], insert=Vector(x, y))
 
     dimstyles = ['TICK', 'ARCHTICK', 'CLOSEDBLANK']
@@ -283,7 +296,7 @@ def example_multi_point_linear_dimension():
     msp.add_lwpolyline(points)
 
     # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
-    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')
+    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')  # type: DimStyle
     dimstyle.dxf.dimtfill = 1
 
     msp.add_multi_point_linear_dim(base=(0, 5), points=points, dimstyle='WITHTFILL')
@@ -291,8 +304,8 @@ def example_multi_point_linear_dimension():
 
 
 def random_point(start, end):
-    dist = end-start
-    return Vector(start + random.random()*dist, start + random.random()*dist)
+    dist = end - start
+    return Vector(start + random.random() * dist, start + random.random() * dist)
 
 
 def example_random_multi_point_linear_dimension(count=10, length=20):
@@ -302,18 +315,18 @@ def example_random_multi_point_linear_dimension(count=10, length=20):
     msp.add_lwpolyline(points, dxfattribs={'color': 1})
 
     # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
-    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')
+    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')  # type: DimStyle
 
     dimstyle.dxf.dimtfill = 1
     dimstyle.dxf.dimdec = 2
 
-    dimstyle = dwg.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')
+    dimstyle = dwg.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')  # type: DimStyle
     dimstyle.dxf.dimblk = ezdxf.ARROWS.closed
     dimstyle.dxf.dimtxsty = 'STANDARD'
     dimstyle.dxf.dimrnd = .5
     dimstyle.set_text_align(valign='center')
 
-    msp.add_multi_point_linear_dim(base=(0, length+2), points=points, dimstyle='WITHTFILL')
+    msp.add_multi_point_linear_dim(base=(0, length + 2), points=points, dimstyle='WITHTFILL')
     msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL')
     msp.add_multi_point_linear_dim(base=(10, -10), points=points, angle=45, dimstyle='WITHTXT')
     dwg.saveas(OUTDIR / f'multi_random_point_linear_dim_R2007.dxf')
@@ -322,7 +335,7 @@ def example_random_multi_point_linear_dimension(count=10, length=20):
 def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2=None, filename=""):
     dwg = ezdxf.new(version, setup=True)
     msp = dwg.modelspace()
-    ezdxf_dimstyle = dwg.dimstyles.get('EZDXF')
+    ezdxf_dimstyle = dwg.dimstyles.get('EZDXF')  # type: DimStyle
     ezdxf_dimstyle.copy_to_header(dwg)
 
     for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
@@ -338,7 +351,8 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
         if dimltex2:
             attributes['dimltex2'] = dimltex2
 
-        dim = msp.add_linear_dim(base=(3, y + 2), p1=(0, y), p2=(3, y), dimstyle='EZDXF', override=attributes)
+        dim = msp.add_linear_dim(base=(3, y + 2), p1=(0, y), p2=(3, y), dimstyle='EZDXF',
+                                 override=attributes)  # type: DimStyleOverride
         dim.set_arrows(blk=name, size=.25)
         dim.render()
 
@@ -346,6 +360,17 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
         filename = 'all_arrow_styles_dim_{}.dxf'.format(version)
 
     dwg.saveas(OUTDIR / filename)
+
+
+def linear_tutorial_using_tolerances():
+    # 1. Because of using special MTEXT features ezdxf requires DXF R2000+ for tolerance rendering
+    dwg = ezdxf.new('R2000', setup=True)
+    msp = dwg.modelspace()
+    tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'TOLERANCE')  # type: DimStyle
+    tol_style.set_tolerance(.1, hfactor=.5, align="top", dec=2)
+    msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='tolerance').render()
+    msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='tolerance').render()
+    dwg.saveas(OUTDIR / 'dimensions_with_tolerance.dxf')
 
 
 def linear_tutorial_ext_lines():
@@ -361,7 +386,8 @@ def linear_tutorial_ext_lines():
         'dimblk': ezdxf.ARROWS.none,
         'dimclrt': 3,
     }
-    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF', override=attributes)
+    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF',
+                             override=attributes)  # type: DimStyleOverride
     dim.render()
 
     attributes = {
@@ -369,10 +395,12 @@ def linear_tutorial_ext_lines():
         'dimclrd': 2,
         'dimclrt': 4,
     }
-    dim = msp.add_linear_dim(base=(10, 2), p1=(7, 0), p2=(10, 0), angle=-30, dimstyle='EZDXF', override=attributes)
+    dim = msp.add_linear_dim(base=(10, 2), p1=(7, 0), p2=(10, 0), angle=-30, dimstyle='EZDXF',
+                             override=attributes)  # type: DimStyleOverride
     dim.render()
 
-    dim = msp.add_linear_dim(base=(3, 5), p1=(0, 10), p2=(3, 10), dimstyle='EZDXF', override=attributes)
+    dim = msp.add_linear_dim(base=(3, 5), p1=(0, 10), p2=(3, 10), dimstyle='EZDXF',
+                             override=attributes)  # type: DimStyleOverride
     dim.render()
 
     dwg.saveas(OUTDIR / 'dim_linear_R12_ext_lines.dxf')
@@ -384,7 +412,7 @@ def linear_EZ_M(fmt):
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (1, 0))
-    dim = msp.add_linear_dim(base=(0, 1), p1=(0, 0), p2=(1, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 1), p1=(0, 0), p2=(1, 0), dimstyle=fmt)  # type: DimStyleOverride
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
@@ -395,7 +423,7 @@ def linear_EZ_CM(fmt):
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (100, 0))
-    dim = msp.add_linear_dim(base=(0, 100), p1=(0, 0), p2=(100, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 100), p1=(0, 0), p2=(100, 0), dimstyle=fmt)  # type: DimStyleOverride
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
@@ -406,24 +434,26 @@ def linear_EZ_MM(fmt):
     ezdxf.setup_dimstyle(dwg, fmt)
 
     msp.add_line((0, 0), (1000, 0))
-    dim = msp.add_linear_dim(base=(0, 1000), p1=(0, 0), p2=(1000, 0), dimstyle=fmt)
+    dim = msp.add_linear_dim(base=(0, 1000), p1=(0, 0), p2=(1000, 0), dimstyle=fmt)  # type: DimStyleOverride
     dim.render()
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = False
+ALL = True
 
 if __name__ == '__main__':
-    linear_tutorial('R2007')
-    linear_tutorial('R12')
-    example_background_fill('R2007')
-    example_for_all_text_placings_R12()
-    example_for_all_text_placings_R2007()
-    example_for_all_text_placings_ucs_R2007()
-    example_multi_point_linear_dimension()
-    example_random_multi_point_linear_dimension(count=10, length=20)
+    linear_tutorial_using_tolerances()
 
     if ALL:
+        linear_tutorial('R2007')
+        linear_tutorial('R12')
+        example_background_fill('R2007')
+        example_for_all_text_placings_R12()
+        example_for_all_text_placings_R2007()
+        example_for_all_text_placings_ucs_R2007()
+        example_multi_point_linear_dimension()
+        example_random_multi_point_linear_dimension(count=10, length=20)
+
         example_for_all_text_placings_ucs_R12()
         example_for_all_text_placings_in_space_R12()
         example_for_all_text_placings_in_space_R2007()
@@ -443,4 +473,3 @@ if __name__ == '__main__':
 
         linear_EZ_MM('EZ_MM_100_H25_MM')
         linear_EZ_MM('EZ_MM_1_H25_MM')
-

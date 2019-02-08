@@ -661,12 +661,12 @@ class DimStyle(DXFEntity):
             self.dxf.dimrnd = rnd
 
         # works only with decimal dimensions not inch and feet, US user set dimzin directly
-        dimzin = 0
-        if leading_zeros is False:
-            dimzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
-        if trailing_zeros is False:
-            dimzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
-        if dimzin:
+        if leading_zeros is not None or trailing_zeros is not None:
+            dimzin = 0
+            if leading_zeros is False:
+                dimzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+            if trailing_zeros is False:
+                dimzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
             self.dxf.dimzin = dimzin
         try:
             if dec is not None:
@@ -773,3 +773,48 @@ class DimStyle(DXFEntity):
                 self.dxf.dimltex2 = linetype
         except const.DXFAttributeError:
             raise DXFVersionError('DIMLTEX2 requires DXF R2007+')
+
+    def set_tolerance(self, upper: float, lower: float = None, hfactor: float = 1.0,
+                      align: str = None, dec: int = None, leading_zeros: bool = None,
+                      trailing_zeros: bool = None) -> None:
+        """
+        Set tolerance text format, upper and lower value, text height factor, number of decimal places or leading and
+        trailing zero suppression.
+
+        Args:
+            upper: upper tolerance value
+            lower: lower tolerance value, if None same as upper
+            hfactor: tolerance text height factor in relation to the dimension text height
+            align: tolerance text alignment "TOP", "MIDDLE", "BOTTOM", required DXF R2000+
+            dec: Sets the number of decimal places displayed, required DXF R2000+
+            leading_zeros: suppress leading zeros for decimal dimensions if False, required DXF R2000+
+            trailing_zeros: suppress trailing zeros for decimal dimensions if False, required DXF R2000+
+
+        """
+        self.dxf.dimtol = 1
+        self.dxf.dimlim = 0
+        self.dxf.dimtp = float(upper)
+        if lower is not None:
+            self.dxf.dimtm = float(lower)
+        else:
+            self.dxf.dimtm = float(upper)
+        if hfactor is not None:
+            self.dxf.dimtfac = float(hfactor)
+
+        try:
+            # works only with decimal dimensions not inch and feet, US user set dimzin directly
+            if leading_zeros is not None or trailing_zeros is not None:
+                dimtzin = 0
+                if leading_zeros is False:
+                    dimtzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+                if trailing_zeros is False:
+                    dimtzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
+                self.dxf.dimtzin = dimtzin
+
+            if align is not None:
+                self.dxf.dimtolj = const.MTEXT_INLINE_ALIGN[align.upper()]
+            if dec is not None:
+                self.dxf.dimtdec = int(dec)
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMTZIN, DIMTOLJ and DIMTDEC require DXF R2000+')
+

@@ -78,7 +78,6 @@ class DimStyleOverride:
         Write overwritten DIMSTYLE attributes into XDATA section of the DIMENSION entity.
 
         """
-
         def set_arrow_handle(attrib_name, block_name):
             attrib_name += '_handle'
             if block_name in ARROWS:  # create all arrows on demand
@@ -194,8 +193,48 @@ class DimStyleOverride:
         if valign:
             self.dimstyle_attribs['dimtad'] = DIMTAD[valign.lower()]
 
+    def set_tolerance(self, upper: float, lower: float = None, hfactor: float = None,
+                      align: str = None, dec: int = None, leading_zeros: bool = None,
+                      trailing_zeros: bool = None) -> None:
+        """
+        Set tolerance text format, upper and lower value, text height factor, number of decimal places or leading and
+        trailing zero suppression.
+
+        Args:
+            upper: upper tolerance value
+            lower: lower tolerance value, if None same as upper
+            hfactor: tolerance text height factor in relation to the dimension text height
+            align: tolerance text alignment "TOP", "MIDDLE", "BOTTOM"
+            dec: Sets the number of decimal places displayed
+            leading_zeros: suppress leading zeros for decimal dimensions if False
+            trailing_zeros: suppress trailing zeros for decimal dimensions if False
+
+        """
+        self.dimstyle_attribs['dimtol'] = 1
+        self.dimstyle_attribs['dimlim'] = 0
+        self.dimstyle_attribs['dimtp'] = float(upper)
+        if lower is not None:
+            self.dimstyle_attribs['dimtm'] = float(lower)
+        else:
+            self.dimstyle_attribs['dimtm'] = float(upper)
+        if hfactor is not None:
+            self.dimstyle_attribs['dimtfac'] = float(hfactor)
+        if align is not None:
+            self.dimstyle_attribs['dimtolj'] = const.MTEXT_INLINE_ALIGN[align.upper()]
+        if dec is not None:
+            self.dimstyle_attribs['dimtdec'] = dec
+
+        # works only with decimal dimensions not inch and feet, US user set dimzin directly
+        if leading_zeros is not None or trailing_zeros is not None:
+            dimtzin = 0
+            if leading_zeros is False:
+                dimtzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+            if trailing_zeros is False:
+                dimtzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
+            self.dimstyle_attribs['dimtzin'] = dimtzin
+
     def set_text_format(self, prefix: str = '', postfix: str = '', rnd: float = None, dec: int = None, sep: str = None,
-                        leading_zeros: bool = True, trailing_zeros: bool = True):
+                        leading_zeros: bool = None, trailing_zeros: bool = None) -> None:
         """
         Set dimension text format, like prefix and postfix string, rounding rule and number of decimal places.
 
@@ -220,12 +259,12 @@ class DimStyleOverride:
         if sep is not None:
             self.dimstyle_attribs['dimdsep'] = ord(sep)
         # works only with decimal dimensions not inch and feet, US user set dimzin directly
-        dimzin = 0
-        if leading_zeros is False:
-            dimzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
-        if trailing_zeros is False:
-            dimzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
-        if dimzin:
+        if leading_zeros is not None or trailing_zeros is not None:
+            dimzin = 0
+            if leading_zeros is False:
+                dimzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+            if trailing_zeros is False:
+                dimzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
             self.dimstyle_attribs['dimzin'] = dimzin
 
     def set_dimline_format(self, color: int = None, linetype: str = None, lineweight: int = None,
@@ -344,9 +383,36 @@ class DimStyleOverride:
     def get_renderer(self, ucs: 'UCS' = None):
         return self.drawing.dimension_renderer.dispatch(self, ucs)
 
-    def render(self, ucs: 'UCS' = None) -> 'BaseDimensionRenderer':
+    def render(self, ucs: 'UCS' = None, discard=False) -> 'BaseDimensionRenderer':
+        """
+        Initiate dimension line rendering process and also writes overridden dimension style attributes into the DSTYLE
+        XDATA section.
+
+        For a friendly CAD applications like BricsCAD you can discard the dimension line rendering, because it is done
+        automatically by BricsCAD, if no dimension rendering BLOCK is available and it is likely to get better results
+        as by ezdxf.
+
+        AutoCAD does not render DIMENSION entities automatically, so I rate AutoCAD as unfriendly CAD application.
+
+        But following features require rendering by ezdxf:
+        - multi point linear dimension
+
+        Suppressing the rendering does not provide any speed advantages, because ezdxf adjusts some dimension attributes
+        at the rendering process, so ezdxf has to run the rendering process anyway, but the created geometry block will
+        be discarded.
+
+        Args:
+            ucs: user coordinate system
+            discard: discard rendering done by ezdxf (works with BricsCAD, but not with AutoCAD)
+
+        Returns: used renderer for analytics
+
+        """
         renderer = self.get_renderer(ucs)
         renderer.render()
+        if discard:
+            self.drawing.blocks.delete_block(self.dimension.dxf.geometry)
+            self.dimension.dxf.geometry = ""
         if len(self.dimstyle_attribs):
             self.commit()
         return renderer

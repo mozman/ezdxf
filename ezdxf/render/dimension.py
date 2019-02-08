@@ -285,10 +285,13 @@ class BaseDimensionRenderer:
         # appends tolerances to dimension text. Setting DIMTOL to on turns DIMLIM off.
         self.dim_tolerance = get('dimtol', 0)  # type: bool
         # generates dimension limits as the default text. Setting DIMLIM to On turns DIMTOL off.
-        self.dim_limits = get('dimlim', 0)  # type: bool  # not supported
+        self.dim_limits = get('dimlim', 0)  # type: bool
 
         if self.dim_tolerance:
             self.dim_limits = 0
+
+        if self.dim_limits:
+            self.dim_tolerance = 0
 
         # tolerance requires MTEXT support
         if not self.supports_dxf_r2000:
@@ -297,7 +300,7 @@ class BaseDimensionRenderer:
 
         # scale factor for the text height of fractions and tolerance values relative to the dimension text height
         self.tol_text_scale_factor = get('dimtfac', .5)
-        self.tol_line_spacing = 1.25  # default MTEXT line spacing
+        self.tol_line_spacing = 1.35  # default MTEXT line spacing for tolerances (BricsCAD)
         # sets the minimum (or lower) tolerance limit for dimension text when DIMTOL or DIMLIM is on.
         # DIMTM accepts signed values. If DIMTOL is on and DIMTP and DIMTM are set to the same value, a tolerance value
         # is drawn. If DIMTM and DIMTP values differ, the upper tolerance is drawn above the lower, and a plus sign is
@@ -312,7 +315,7 @@ class BaseDimensionRenderer:
         self.tol_maximum = get('dimtp', 0)  # type: float
 
         # number of decimal places to display in tolerance values
-        self.tol_decimal_places = get('dimtdec', None)  # type: int
+        self.tol_decimal_places = get('dimtdec', 4)  # type: int
 
         # vertical justification for tolerance values relative to the nominal dimension text
         # 0 = Bottom
