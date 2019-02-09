@@ -1,7 +1,7 @@
 # Created: 28.12.2018
 # Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable, List, cast
+from typing import TYPE_CHECKING, Tuple, Iterable, List, cast, Optional
 import math
 from ezdxf.math import Vector, Vec2, ConstructionRay, xround, ConstructionLine, ConstructionBox
 from ezdxf.math import UCS, PassTroughUCS
@@ -31,6 +31,13 @@ PLUS_MINUS = '±'
 _TOLERANCE_COMMON = r"\A{align};{txt}{{\H{fac:.2f}x;"
 TOLERANCE_TEMPLATE1 = _TOLERANCE_COMMON + r"{tol}}}"
 TOLERANCE_TEMPLATE2 = _TOLERANCE_COMMON + r"\S{upr}^{lwr}}}"
+
+
+def OptionalVec2(v) -> Optional[Vec2]:
+    if v is not None:
+        return Vec2(v)
+    else:
+        return None
 
 
 class BaseDimensionRenderer:
@@ -67,7 +74,7 @@ class BaseDimensionRenderer:
         # DIMENSION entity
 
         # user location override as UCS coordinates, stored as text_midpoint in the DIMENSION entity
-        self.user_location = self.dim_style.pop('user_location', None)  # type: Vector
+        self.user_location = OptionalVec2(self.dim_style.pop('user_location', None))
 
         # user location override relative to dimline center if True
         self.relative_user_location = self.dim_style.pop('relative_user_location', False)  # type: bool
@@ -204,7 +211,7 @@ class BaseDimensionRenderer:
         self.text_outside = False
 
         # calculated or overridden dimension text location
-        self.text_location = None  # type: Vector
+        self.text_location = None  # type: Vec2
 
         # bounding box of dimension text including border space
         self.text_box = None  # type: TextBox
@@ -486,7 +493,7 @@ class BaseDimensionRenderer:
 
         """
         self.dim_style.set_location(location, leader, relative)
-        self.user_location = Vector(location)
+        self.user_location = Vec2(location)
         self.text_movement_rule = 1 if leader else 2
         self.relative_user_location = relative
         self.text_outside = True
@@ -504,8 +511,8 @@ class BaseDimensionRenderer:
 
         """
 
-        def order(a: Vector, b: Vector) -> Tuple[Vector, Vector]:
-            if (start - a).magnitude_xy < (start - b).magnitude_xy:
+        def order(a: Vec2, b: Vec2) -> Tuple[Vec2, Vec2]:
+            if (start - a).magnitude < (start - b).magnitude:
                 return a, b
             else:
                 return b, a
@@ -573,7 +580,7 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             self.block.add_blockref(name, insert=insert, dxfattribs=attribs)
 
-    def add_text(self, text: str, pos: 'Vertex', rotation: float, dxfattribs: dict = None) -> None:
+    def add_text(self, text: str, pos: Vector, rotation: float, dxfattribs: dict = None) -> None:
         """
         Add TEXT (DXF R12) or MTEXT (DXF R2000+) entity to the dimension BLOCK.
 
@@ -591,7 +598,7 @@ class BaseDimensionRenderer:
             attribs['extrusion'] = self.ucs.uz
 
         if self.supports_dxf_r2000:
-            text_direction = self.ucs.to_wcs(Vector.from_deg_angle(rotation)) - self.ucs.origin
+            text_direction = self.ucs.to_wcs(Vec2.from_deg_angle(rotation)) - self.ucs.origin
             attribs['text_direction'] = text_direction
             attribs['char_height'] = self.text_height
             attribs['insert'] = self.wcs(pos)
@@ -625,7 +632,7 @@ class BaseDimensionRenderer:
         for point in points:
             self.block.add_point(self.wcs(point), dxfattribs=attribs)
 
-    def add_leader(self, p1: Vector, p2: Vector, p3: Vector, dxfattribs: dict = None):
+    def add_leader(self, p1: Vec2, p2: Vec2, p3: Vec2, dxfattribs: dict = None):
         """
         Add simple leader line from p1 to p2 to p3.
 
@@ -658,8 +665,8 @@ class BaseDimensionRenderer:
         self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
 
 
-def order_leader_points(p1: Vector, p2: Vector, p3: Vector) -> Tuple[Vector, Vector]:
-    if (p1 - p2).magnitude_xy > (p1 - p3).magnitude_xy:
+def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
+    if (p1 - p2).magnitude > (p1 - p3).magnitude:
         return p3, p2
     else:
         return p2, p3
@@ -689,23 +696,23 @@ class LinearDimension(BaseDimensionRenderer):
         if self.text_halign in (3, 4):  # text above extension line, is always aligned with extension lines
             self.text_rotation = self.ext_line_angle
 
-        self.ext1_line_start = Vec2(self.dimension.dxf.defpoint2)  # type: Vector
-        self.ext2_line_start = Vec2(self.dimension.dxf.defpoint3)  # type: Vector
+        self.ext1_line_start = Vec2(self.dimension.dxf.defpoint2)
+        self.ext2_line_start = Vec2(self.dimension.dxf.defpoint3)
 
         ext1_ray = ConstructionRay(self.ext1_line_start, angle=self.ext_line_angle_rad)
         ext2_ray = ConstructionRay(self.ext2_line_start, angle=self.ext_line_angle_rad)
         dim_line_ray = ConstructionRay(self.dimension.dxf.defpoint, angle=self.dim_line_angle_rad)
 
-        self.dim_line_start = dim_line_ray.intersect(ext1_ray)  # type: Vector
-        self.dim_line_end = dim_line_ray.intersect(ext2_ray)  # type: Vector
-        self.dim_line_center = self.dim_line_start.lerp(self.dim_line_end)  # type: Vector
+        self.dim_line_start = dim_line_ray.intersect(ext1_ray)  # type: Vec2
+        self.dim_line_end = dim_line_ray.intersect(ext2_ray)  # type: Vec2
+        self.dim_line_center = self.dim_line_start.lerp(self.dim_line_end)  # type: Vec2
 
         if self.dim_line_start == self.dim_line_end:
-            self.dim_line_vec = Vector.from_rad_angle(self.dim_line_angle_rad)  # type: Vector
+            self.dim_line_vec = Vec2.from_angle(self.dim_line_angle_rad)
         else:
-            self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()  # type: Vector
+            self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()  # type: Vec2
 
-        # set dimension defpoint to expected location
+        # set dimension defpoint to expected location - 3D vertex required!
         self.dimension.dxf.defpoint = Vector(self.dim_line_start)
 
         self.measurement = (self.dim_line_end - self.dim_line_start).magnitude  # type: float
@@ -761,7 +768,7 @@ class LinearDimension(BaseDimensionRenderer):
                         self.text_shift_v -= shift_value
 
             # get final text location - no altering after this line
-            self.text_location = self.get_text_location()  # type: Vector
+            self.text_location = self.get_text_location()  # type: Vec2
 
             # text rotation override
             rotation = self.text_rotation  # type: float
@@ -793,7 +800,7 @@ class LinearDimension(BaseDimensionRenderer):
     def has_relative_text_movement(self):
         return bool(self.text_shift_h or self.text_shift_v)
 
-    def apply_text_shift(self, location: Vector, text_rotation: float) -> Vector:
+    def apply_text_shift(self, location: Vec2, text_rotation: float) -> Vec2:
         """
         Add `self.text_shift_h` and `sel.text_shift_v` to point `location`, shifting along and perpendicular to
         text orientation defined by `text_rotation`
@@ -805,8 +812,8 @@ class LinearDimension(BaseDimensionRenderer):
         Returns: new location
 
         """
-        shift_vec = Vector(self.text_shift_h, self.text_shift_v)
-        location += shift_vec.rot_z_deg(text_rotation)
+        shift_vec = Vec2((self.text_shift_h, self.text_shift_v))
+        location += shift_vec.rotate(text_rotation)
         return location
 
     def render(self, block: 'GenericLayoutType') -> None:
@@ -850,7 +857,7 @@ class LinearDimension(BaseDimensionRenderer):
         # add POINT entities at definition points
         self.add_defpoints([self.dim_line_start, self.ext1_line_start, self.ext2_line_start])
 
-    def get_text_location(self) -> Vector:
+    def get_text_location(self) -> Vec2:
         """
         Get text midpoint in UCS from user defined location or default text location.
 
@@ -872,7 +879,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         return location
 
-    def default_text_location(self) -> Vector:
+    def default_text_location(self) -> Vec2:
         """
         Calculate default text location in UCS based on `self.text_halign`, `self.text_valign` and `self.text_outside`
 
@@ -888,7 +895,7 @@ class LinearDimension(BaseDimensionRenderer):
             location = (start if halign == 3 else end) - hvec
             # vertical location
             vdist = self.ext_line_extension + self.dim_text_width / 2.
-            location += Vector.from_deg_angle(self.ext_line_angle).normalize(vdist)
+            location += Vec2.from_deg_angle(self.ext_line_angle).normalize(vdist)
         else:
             # relocate outside text if centered to the second extension line
             if self.text_outside:
@@ -912,7 +919,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         return location
 
-    def add_arrows(self) -> Tuple[Vector, Vector]:
+    def add_arrows(self) -> Tuple[Vec2, Vec2]:
         """
         Add arrows or ticks to dimension.
 
@@ -998,7 +1005,7 @@ class LinearDimension(BaseDimensionRenderer):
                 dxfattribs=attribs,
             )
 
-    def add_measurement_text(self, dim_text: str, pos: Vector, rotation: float) -> None:
+    def add_measurement_text(self, dim_text: str, pos: Vec2, rotation: float) -> None:
         """
         Add measurement text to dimension BLOCK.
 
@@ -1011,7 +1018,7 @@ class LinearDimension(BaseDimensionRenderer):
         attribs = {
             'color': self.text_color,
         }
-        self.add_text(dim_text, pos=pos, rotation=rotation, dxfattribs=attribs)
+        self.add_text(dim_text, pos=Vector(pos), rotation=rotation, dxfattribs=attribs)
 
     def add_dimension_line(self, start: 'Vertex', end: 'Vertex') -> None:
         """
@@ -1046,7 +1053,7 @@ class LinearDimension(BaseDimensionRenderer):
         else:
             self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
-    def extension_line_points(self, start: 'Vertex', end: 'Vertex', text_above_extline=False) -> Tuple[Vector, Vector]:
+    def extension_line_points(self, start: Vec2, end: Vec2, text_above_extline=False) -> Tuple[Vec2, Vec2]:
         """
         Adjust start and end point of extension line by dimension variables DIMEXE, DIMEXO, DIMEXFIX, DIMEXLEN.
 
@@ -1059,7 +1066,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         """
         if start == end:
-            direction = Vector.from_deg_angle(self.ext_line_angle)
+            direction = Vec2.from_deg_angle(self.ext_line_angle)
         else:
             direction = (end - start).normalize()
         if self.ext_line_fixed:
@@ -1204,9 +1211,9 @@ def sign_char(value: float) -> str:
         return ' '
 
 
-def sort_projected_points(points: Iterable['Vertex'], angle: float = 0) -> List[Vector]:
-    direction = Vector.from_deg_angle(angle)
-    projected_vectors = [(direction.project(p), p) for p in points]
+def sort_projected_points(points: Iterable['Vertex'], angle: float = 0) -> List[Vec2]:
+    direction = Vec2.from_deg_angle(angle)
+    projected_vectors = [(direction.project(Vec2(p)), p) for p in points]
     return [p for projection, p in sorted(projected_vectors)]
 
 
@@ -1248,7 +1255,7 @@ def multi_point_linear_dimension(
             return False
 
     points = sort_projected_points(points, angle)
-    base = Vector(base)
+    base = Vec2(base)
     override = override or {}
     override['dimtix'] = 1  # do not place measurement text outside
     override['multi_point_mode'] = True
@@ -1266,7 +1273,9 @@ def multi_point_linear_dimension(
             _override['suppress_arrow1'] = _suppress_arrow1
 
         style = layout.add_linear_dim(
-            base, p1, p2,
+            Vector(base),
+            Vector(p1),
+            Vector(p2),
             angle=angle,
             dimstyle=dimstyle,
             override=_override,

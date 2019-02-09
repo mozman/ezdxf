@@ -49,15 +49,15 @@ class ConstructionCircle(ConstructionTool):
         return BoundingBox2d(self.center - rvec, self.center + rvec)
 
     def move(self, dx: float, dy: float) -> None:
+        """
+        Move circle about `dx` in x-axis and about `dy` in y-axis.
+
+        Args:
+            dx: translation in x-axis
+            dy: translation in y-axis
+
+        """
         self.center += Vec2((dx, dy))
-
-    def rotate(self, angle: float) -> None:
-        self.center = self.center.rotate(angle)
-
-    def scale(self, sx: float, sy: float) -> None:
-        self.center.x *= sx
-        self.center.y *= sy
-        self.radius *= max(sx, sy)  # uniform scale, can not represent an ellipse
 
     def get_point(self, angle: float) -> Vec2:
         """

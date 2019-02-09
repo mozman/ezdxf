@@ -216,15 +216,38 @@ class ConstructionLine(ConstructionTool):
         return BoundingBox2d(self.start, self.end)
 
     def move(self, dx: float, dy: float) -> None:
+        """
+        Move line about `dx` in x-axis and about `dy` in y-axis.
+
+        Args:
+            dx: translation in x-axis
+            dy: translation in y-axis
+
+        """
         v = Vec2((dx, dy))
         self.start += v
         self.end += v
 
     def rotate(self, angle: float) -> None:
+        """
+        Rotated line around origin about `angle`.
+
+        Args:
+            angle: rotation angle in radians
+
+        """
         self.start = self.start.rotate(angle)
         self.end = self.end.rotate(angle)
 
     def scale(self, sx: float, sy: float) -> None:
+        """
+        Scale line at origin about `sx` in x-axis and about `sy` in y-axis.
+
+        Args:
+            sx: scale factor in x-axis
+            sy: scale factor in y-axis
+
+        """
         self.start, self.end = scale((self.start, self.end), sx, sy)
 
     @property

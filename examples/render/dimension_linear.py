@@ -27,7 +27,7 @@ TEXT_ATTRIBS = {
 DIM_TEXT_STYLE = 'OpenSansCondensed-Light'
 
 # discarding dimension rendering is possible for BricsCAD, but not for AutoCAD -> error
-BRICSCAD = True
+BRICSCAD = False
 
 
 def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):

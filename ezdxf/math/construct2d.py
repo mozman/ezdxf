@@ -128,14 +128,6 @@ class ConstructionTool:
     def move(self, dx: float, dy: float) -> None:
         pass
 
-    @abstractmethod
-    def rotate(self, angle: float) -> None:
-        pass
-
-    @abstractmethod
-    def scale(self, sx: float, sy: float) -> None:
-        pass
-
 
 def move(vectors: Iterable['Vec2'], dx: float, dy: float) -> Iterable[Vec2]:
     """

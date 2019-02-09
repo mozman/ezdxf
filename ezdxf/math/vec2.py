@@ -19,6 +19,8 @@ class Vec2:
     """
     Vec2 represents a special 2D Vector (x, y). This class is optimized for speed.
 
+    IMPORTANT: only for internal usage, at API level use always Vector().
+
     Args:
         v: Vec2 or sequence of float [x, y, ...]
 
@@ -30,8 +32,8 @@ class Vec2:
             self.x = v.x
             self.y = v.y
         else:
-            self.x = v[0]
-            self.y = v[1]
+            self.x = float(v[0])
+            self.y = float(v[1])
 
     @classmethod
     def list(cls, items: Iterable[TVec2]) -> List['Vec2']:
