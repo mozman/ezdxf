@@ -28,7 +28,7 @@ U-vector of a single pixel (points along the visual bottom of the image, startin
 
 .. attribute:: Image.dxf.v_pixel
 
-V-vector of a single pixel (points along the visual left side of the image, starting at the insertion point) (x, y, z) tuple
+V2-vector of a single pixel (points along the visual left side of the image, starting at the insertion point) (x, y, z) tuple
 
 .. attribute:: Image.dxf.image_size
 

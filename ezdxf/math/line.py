@@ -3,8 +3,10 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import normalize_angle, is_vertical_angle
+from .construct2d import normalize_angle, is_vertical_angle, ConstructionTool, scale
+from .bbox import BoundingBox2d
 from .vector import Vector
+from .vec2 import Vec2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -17,9 +19,6 @@ class ParallelRaysError(ArithmeticError):
 HALF_PI = math.pi / 2.
 THREE_PI_HALF = 1.5 * math.pi
 DOUBLE_PI = math.pi * 2.
-
-XCOORD = 0
-YCOORD = 1
 
 
 class ConstructionRay:
@@ -50,15 +49,13 @@ class ConstructionRay:
     def __init__(self, point1: 'Vertex', point2: 'Vertex' = None, **kwargs):
         self._vertical = False  # type: bool
         self.abs_tol = 1e-12  # type: float
-        p1x = float(point1[XCOORD])
-        p1y = float(point1[YCOORD])
+        p1x, p1y, *_ = point1
         if point2 is not None:  # case A
             # normalize point order to assure consist signs for slopes
             # +slope goes up and -slope goes down
             self._slope = 0
             self._angle = 0
-            p2x = float(point2[XCOORD])
-            p2y = float(point2[YCOORD])
+            p2x, p2y, *_ = point2
 
             if p1x > p2x:
                 p1x, p2x = p2x, p1x
@@ -160,10 +157,11 @@ class ConstructionRay:
         Returns True if ray goes through point, else False.
 
         """
+        x, y, *_ = point
         if self.is_vertical:
-            return math.isclose(point[XCOORD], self._x, abs_tol=self.abs_tol)
+            return math.isclose(x, self._x, abs_tol=self.abs_tol)
         else:
-            return math.isclose(point[YCOORD], self.get_y(point[XCOORD]), abs_tol=self.abs_tol)
+            return math.isclose(y, self.get_y(x), abs_tol=self.abs_tol)
 
     def get_y(self, x: float) -> float:
         """
@@ -198,18 +196,36 @@ class ConstructionRay:
         return ConstructionRay(cross_point, angle=alpha)
 
 
-class ConstructionLine:
+class ConstructionLine(ConstructionTool):
     """
     ConstructionLine is similar to ConstructionRay, but has a start and endpoint and therefor also an direction.
     The direction goes from start to end, 'left of line' is always in relation to this line direction.
 
     """
+
     def __init__(self, start: 'Vertex', end: 'Vertex'):
-        self.start = Vector(start)
-        self.end = Vector(end)
+        self.start = Vec2(start)
+        self.end = Vec2(end)
 
     def __str__(self):
         return 'ConstructionLine({0.start}, {0.end})'.format(self)
+
+    # ConstructionTool interface
+    @property
+    def bounding_box(self):
+        return BoundingBox2d(self.start, self.end)
+
+    def move(self, dx: float, dy: float) -> None:
+        v = Vec2((dx, dy))
+        self.start += v
+        self.end += v
+
+    def rotate(self, angle: float) -> None:
+        self.start = self.start.rotate(angle)
+        self.end = self.end.rotate(angle)
+
+    def scale(self, sx: float, sy: float) -> None:
+        self.start, self.end = scale((self.start, self.end), sx, sy)
 
     @property
     def sorted_points(self):
@@ -228,19 +244,15 @@ class ConstructionLine:
     def length(self) -> float:
         return (self.end - self.start).magnitude
 
-    def midpoint(self) -> Vector:
+    def midpoint(self) -> Vec2:
         return self.start.lerp(self.end)
 
     @property
     def is_vertical(self) -> bool:
         return math.isclose(self.start.x, self.end.x)
 
-    def is_in_coordinate_range(self, point: Vector) -> bool:
-        start, end = self.sorted_points
-        if not self.is_vertical:
-            return start.x <= point.x <= end.x
-        else:
-            return start.y <= point.y <= end.y
+    def inside_bounding_box(self, point: 'Vertex') -> bool:
+        return self.bounding_box.inside(point)
 
     def intersect(self, other: 'ConstructionLine') -> Optional[Vector]:
         """
@@ -257,7 +269,7 @@ class ConstructionLine:
         except ParallelRaysError:
             return None
         else:
-            if self.is_in_coordinate_range(point) and other.is_in_coordinate_range(point):
+            if self.inside_bounding_box(point) and other.inside_bounding_box(point):
                 return point
             else:
                 return None
@@ -274,7 +286,7 @@ class ConstructionLine:
 
         """
         start, end = self.start, self.end
-        point = Vector(point)
+        point = Vec2(point)
         if self.is_vertical:
             # compute on which site of the line self should be
             should_be_left = self.start.y < self.end.y

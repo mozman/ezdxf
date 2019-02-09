@@ -1,5 +1,6 @@
-# Purpose: algebra lib to calculate with geometric forms
+# Purpose: math and construction tools
 # Created: 27.03.2010, 2018 integrated into ezdxf
+# Copyright (c) 2010-2019 Manfred Moitzi
 # License: MIT License
 from .construct2d import is_close_points
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS

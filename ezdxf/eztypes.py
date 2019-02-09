@@ -15,7 +15,9 @@ from typing import *
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math.vector import Vector
+    from ezdxf.math.vec2 import Vec2
     from ezdxf.math.matrix44 import Matrix44
+    from ezdxf.math.bbox import BoundingBox, BoundingBox2d
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
     from ezdxf.lldxf.attributes import XType, DXFAttr
@@ -94,7 +96,8 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tags import DXFInfo
 
     # Type compositions
-    Vertex = Union[Sequence[float], Vector]
+    Vertex = Union[Sequence[float], Vector, Vec2]
+    VecXY = Union[Vec2, Vector]  # Vector with x and y attributes
     TagValue = Union[str, int, float, Sequence[float], Vector]
     RGB = Tuple[int, int, int]
     IterableTags = Iterable[Tuple[int, TagValue]]

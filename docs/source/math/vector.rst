@@ -115,7 +115,7 @@ Vector Methods
 
     Static method returns list of Vector() objects created from items.
 
-.. method:: Vector.from_rad_angle(angle, length=1.)
+.. method:: Vector.from_angle(angle, length=1.)
 
     Static method returns Vector() from angle scaled by length, angle in radians.
 

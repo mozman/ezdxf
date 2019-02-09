@@ -2,7 +2,7 @@ import math
 from ezdxf.math.vec2 import Vec2
 
 
-def V(x, y):
+def V2(x, y):
     return Vec2((x, y))
 
 
@@ -13,15 +13,25 @@ def test_init_tuple():
 
 
 def test_init_vec2():
-    v = Vec2(V(2, 3))
+    v = Vec2(V2(2, 3))
     assert v.x == 2
     assert v.y == 3
+
+
+def test_compatible_to_vector():
+    from ezdxf.math.vector import Vector
+    v = Vector(Vec2((1, 2)))
+    assert v == (1, 2, 0)
+
+    v = Vec2(Vector(1, 2, 3))
+    assert v.x == 1
+    assert v.y == 2
 
 
 def test_from_angle():
     angle = math.radians(50)
     length = 3.
-    assert Vec2.from_rad_angle(angle, length) == Vec2((math.cos(angle) * length, math.sin(angle) * length))
+    assert Vec2.from_angle(angle, length) == Vec2((math.cos(angle) * length, math.sin(angle) * length))
 
 
 def test_vector_as_tuple():
@@ -57,7 +67,7 @@ def test_deep_copy():
 def test_get_angle():
     v = Vec2((3, 3))
     assert math.isclose(v.angle_deg, 45)
-    assert math.isclose(v.angle_rad, math.radians(45))
+    assert math.isclose(v.angle, math.radians(45))
 
 
 def test_compare_vectors():
@@ -98,131 +108,131 @@ def test_magnitude():
 
 def test_normalize():
     v = Vec2((2, 0))
-    assert v.normalize() == V(1, 0)
+    assert v.normalize() == (1, 0)
 
 
 def test_normalize_to_length():
     v = Vec2((2, 0))
-    assert v.normalize(4) == V(4, 0)
+    assert v.normalize(4) == (4, 0)
 
 
 def test_orthogonal_ccw():
     v = Vec2((3, 4))
-    assert v.orthogonal() == V(-4, 3)
+    assert v.orthogonal() == (-4, 3)
 
 
 def test_orthogonal_cw():
     v = Vec2((3, 4))
-    assert v.orthogonal(False) == V(4, -3)
+    assert v.orthogonal(False) == (4, -3)
 
 
 def test_negative():
     v = Vec2((2, 3))
-    assert -v == V(-2, -3)
+    assert -v == (-2, -3)
 
 
 def test_add_scalar():
     v = Vec2((2, 3))
-    assert v + 3 == V(5, 6)
+    assert v + 3 == (5, 6)
 
 
 def test_iadd_scalar():
     v = Vec2((2, 3))
     v1 = v
     v += 3
-    assert v == V(5, 6)
-    assert v1 == V(5, 6)
+    assert v == (5, 6)
+    assert v1 == (5, 6)
     assert v is v1
 
 
 def test_sub_scalar():
     v = Vec2((2, 3))
-    assert v - 3 == V(-1, 0)
+    assert v - 3 == (-1, 0)
 
 
 def test_isub_scalar():
     v = Vec2((2, 3))
     v1 = v
     v -= 3
-    assert v == V(-1, 0)
-    assert v1 == V(-1, 0)
+    assert v == (-1, 0)
+    assert v1 == (-1, 0)
     assert v1 is v
 
 
 def test_add_vector():
     v = Vec2((2, 3))
-    assert v + V(7, 7) == V(9, 10)
+    assert v + V2(7, 7) == (9, 10)
 
 
 def test_iadd_vector():
     v = Vec2((2, 3))
     v1 = v
-    v += V(7, 7)
-    assert v == V(9, 10)
-    assert v1 == V(9, 10)
+    v += V2(7, 7)
+    assert v == (9, 10)
+    assert v1 == (9, 10)
     assert v1 is v
 
 
 def test_radd_vector():
     v = Vec2((2, 3))
-    assert 7 + v == V(9, 10)
+    assert 7 + v == (9, 10)
 
 
 def test_sub_vector():
     v = Vec2((2, 3))
-    assert v - V(7, 7) == V(-5, -4)
+    assert v - V2(7, 7) == (-5, -4)
 
 
 def test_isub_vector():
     v = Vec2((2, 3))
     v1 = v
-    v -= V(7, 7)
-    assert v == V(-5, -4)
-    assert v1 == V(-5, -4)
+    v -= V2(7, 7)
+    assert v == (-5, -4)
+    assert v1 == (-5, -4)
     assert v1 is v
 
 
 def test_rsub_vector():
     v = Vec2((2, 3))
-    assert 7 - v == V(5, 4)
+    assert 7 - v == (5, 4)
 
 
 def test_mul_scalar():
     v = Vec2((2, 3))
-    assert v * 2 == V(4, 6)
+    assert v * 2 == (4, 6)
 
 
 def test_imul_scalar():
     v = Vec2((2, 3))
     v1 = v
     v *= 2
-    assert v == V(4, 6)
-    assert v1 == V(4, 6)
+    assert v == (4, 6)
+    assert v1 == (4, 6)
     assert v1 is v
 
 
 def test_rmul_scalar():
     v = Vec2((2, 3))
-    assert 2 * v == V(4, 6)
+    assert 2 * v == (4, 6)
 
 
 def test_div_scalar():
     v = Vec2((2, 3))
-    assert v / 2 == V(1, 1.5)
+    assert v / 2 == (1, 1.5)
 
 
 def test_idiv_scalar():
     v = Vec2((2, 3))
     v1 = v
     v /= 2
-    assert v == V(1, 1.5)
-    assert v1 == V(1, 1.5)
+    assert v == (1, 1.5)
+    assert v1 == (1, 1.5)
     assert v1 is v
 
 
 def test_rdiv_scalar():
     v = Vec2((2, 3))
-    assert 2 / v == V(1, 0.66666666667)
+    assert 2 / v == (1, 0.66666666667)
 
 
 def test_dot_product():
@@ -232,15 +242,15 @@ def test_dot_product():
 
 
 def test_angle_deg():
-    assert math.isclose(V(0, 1).angle_deg, 90)
-    assert math.isclose(V(0, -1).angle_deg, -90)
-    assert math.isclose(V(1, 1).angle_deg, 45)
-    assert math.isclose(V(-1, 1).angle_deg, 135)
+    assert math.isclose(V2(0, 1).angle_deg, 90)
+    assert math.isclose(V2(0, -1).angle_deg, -90)
+    assert math.isclose(V2(1, 1).angle_deg, 45)
+    assert math.isclose(V2(-1, 1).angle_deg, 135)
 
 
 def test_angle_between():
-    v1 = V(0, 1)
-    v2 = V(1, 1)
+    v1 = V2(0, 1)
+    v2 = V2(1, 1)
     angle = v1.angle_between(v2)
     assert math.isclose(angle, math.pi / 4)
     # reverse order, same result
@@ -249,22 +259,22 @@ def test_angle_between():
 
 
 def test_rottate():
-    assert V(2, 2).rotate_deg(90) == V(-2, 2)
+    assert V2(2, 2).rotate_deg(90) == (-2, 2)
 
 
 def test_lerp():
-    v1 = V(1, 1)
-    v2 = V(4, 4)
-    assert v1.lerp(v2, .5) == V(2.5, 2.5)
-    assert v1.lerp(v2, 0) == V(1, 1)
-    assert v1.lerp(v2, 1) == V(4, 4)
+    v1 = V2(1, 1)
+    v2 = V2(4, 4)
+    assert v1.lerp(v2, .5) == (2.5, 2.5)
+    assert v1.lerp(v2, 0) == (1, 1)
+    assert v1.lerp(v2, 1) == (4, 4)
 
 
 def test_project():
-    v = V(10, 0)
-    assert v.project(V(5, 0)) == V(5, 0)
-    assert v.project(V(5, 5)) == V(5, 0)
-    assert v.project(V(5, 5)) == V(5, 0)
+    v = V2(10, 0)
+    assert v.project(V2(5, 0)) == (5, 0)
+    assert v.project(V2(5, 5)) == (5, 0)
+    assert v.project(V2(5, 5)) == (5, 0)
 
-    v = V(10, 10)
-    assert v.project(V(10, 0)) == V(5, 5)
+    v = V2(10, 10)
+    assert v.project(V2(10, 0)) == (5, 5)

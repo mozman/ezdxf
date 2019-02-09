@@ -1,11 +1,13 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Iterable
 import math
 from operator import le, ge, lt, gt
+from abc import abstractmethod
+from .vec2 import Vec2
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.eztypes import BoundingBox2d, Vertex
 
 HALF_PI = math.pi / 2.  # type: float
 THREE_PI_HALF = 1.5 * math.pi  # type: float
@@ -111,3 +113,69 @@ def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', online=False) -> b
         return greater(py, y) if should_be_above else lower(py, y)
 
 
+class ConstructionTool:
+    """
+    Abstract base class for all 2D construction classes.
+
+    """
+
+    @property
+    @abstractmethod
+    def bounding_box(self) -> 'BoundingBox2d':
+        pass
+
+    @abstractmethod
+    def move(self, dx: float, dy: float) -> None:
+        pass
+
+    @abstractmethod
+    def rotate(self, angle: float) -> None:
+        pass
+
+    @abstractmethod
+    def scale(self, sx: float, sy: float) -> None:
+        pass
+
+
+def move(vectors: Iterable['Vec2'], dx: float, dy: float) -> Iterable[Vec2]:
+    """
+    Move `vectors` along translation vector `v`.
+
+    Args:
+        vectors: iterable of Vec2
+        dx: translation in x-axis
+        dy: translation in y-axis
+
+    Returns: iterable of Vec2
+
+    """
+    v = Vec2((dx, dy))
+    return (v + vector for vector in vectors)
+
+
+def rotate(vectors: Iterable['Vec2'], angle: float) -> Iterable[Vec2]:
+    """
+    Rotate `vectors` around the origin (0, 0) about `angle`.
+
+    Args:
+        vectors: iterable of 2d vectors
+        angle: rotation angle in radians
+
+    Returns: iterable of Vec2
+
+    """
+    return (vector.rotate(angle) for vector in vectors)
+
+
+def scale(vectors: Iterable['Vec2'], sx: float, sy: float) -> Iterable[Vec2]:
+    """
+    Scale `vectors` about `sx` and `sy` factors.
+    Args:
+        vectors: iterable of Vec2
+        sx: x-axis scale factor
+        sy: y-axis scale factor
+
+    Returns: iterable of Vec2
+
+    """
+    return (Vec2((vector.x * sx, vector.y * sy)) for vector in vectors)

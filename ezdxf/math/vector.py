@@ -107,14 +107,17 @@ class Vector:
             data = args[0]
             if isinstance(data, Vector):
                 return data._x, data._y, data._z
-            elif isinstance(data, (tuple, list)):
-                x = data[0]
-                y = data[1]
-                if len(data) > 2:
-                    z = data[2]
+            else:
+                try:
+                    x, y, *z = data
+                except TypeError:
+                    raise ValueError('invalid arguments {}'.format(str(args)))
                 else:
-                    z = 0.
-                return float(x), float(y), float(z)
+                    if len(z):
+                        z = z[0]
+                    else:
+                        z = 0.
+                    return float(x), float(y), float(z)
         elif length == 2:
             x, y = args
             return float(x), float(y), 0.

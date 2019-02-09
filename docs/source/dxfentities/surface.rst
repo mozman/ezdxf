@@ -20,7 +20,7 @@ Number of U isolines
 
 .. attribute:: Surface.dxf.v_count
 
-Number of V isolines
+Number of V2 isolines
 
 Surface Methods
 ---------------

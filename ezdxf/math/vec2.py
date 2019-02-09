@@ -1,16 +1,18 @@
 # Author:  mozman <me@mozman.at>
 # Purpose: special 2D vector, optimized for speed
 # License: MIT License
-from typing import Tuple, List, Iterable, Any, Union, TYPE_CHECKING
+from typing import List, Iterable, Union, Sequence, TYPE_CHECKING
 from functools import partial
 import math
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import VecXY, Vertex
+
+
 isclose = partial(math.isclose, abs_tol=1e-14)
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
-TVector = Union["Vec2", "Vertex"]
+TVec2 = Union["VecXY", Sequence[float]]
 
 
 class Vec2:
@@ -23,7 +25,7 @@ class Vec2:
     """
     __slots__ = ['x', 'y']
 
-    def __init__(self, v: TVector):
+    def __init__(self, v: TVec2):
         if isinstance(v, Vec2):
             self.x = v.x
             self.y = v.y
@@ -32,23 +34,23 @@ class Vec2:
             self.y = v[1]
 
     @classmethod
-    def list(cls, items: Iterable[TVector]) -> List['Vec2']:
+    def list(cls, items: Iterable[TVec2]) -> List['Vec2']:
         return list(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable[TVector]) -> Iterable['Vec2']:
+    def generate(cls, items: Iterable[TVec2]) -> Iterable['Vec2']:
         return (cls(item) for item in items)
 
     @classmethod
-    def from_rad_angle(cls, angle: float, length: float = 1.) -> 'Vec2':
+    def from_angle(cls, angle: float, length: float = 1.) -> 'Vec2':
         return cls((math.cos(angle) * length, math.sin(angle) * length))
 
     @classmethod
     def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vec2':
-        return cls.from_rad_angle(math.radians(angle), length)
+        return cls.from_angle(math.radians(angle), length)
 
     def __str__(self) -> str:
-        return '({0.x}, {0.y}'.format(self)
+        return '({0.x}, {0.y})'.format(self)
 
     def __repr__(self) -> str:
         return 'Vector' + self.__str__()
@@ -95,7 +97,7 @@ class Vec2:
         return isclose(self.x, 0.) and isclose(self.y, 0.)
 
     @property
-    def angle_rad(self) -> float:
+    def angle(self) -> float:
         """
         Angle of vector.
 
@@ -114,7 +116,7 @@ class Vec2:
             angle in degrees
 
         """
-        return math.degrees(self.angle_rad)
+        return math.degrees(self.angle)
 
     def orthogonal(self, ccw: bool = True) -> 'Vec2':
         """
@@ -129,7 +131,7 @@ class Vec2:
         else:
             return Vec2((self.y, -self.x))
 
-    def lerp(self, other: 'Vec2', factor: float = .5) -> 'Vec2':
+    def lerp(self, other: 'VecXY', factor: float = .5) -> 'Vec2':
         """
         Linear interpolation between `self` and `other`.
         
@@ -143,7 +145,7 @@ class Vec2:
         d = (other - self) * factor
         return self.__add__(d)
 
-    def project(self, other: 'Vec2') -> 'Vec2':
+    def project(self, other: 'VecXY') -> 'Vec2':
         """
         Project vector `other` onto `self`.
 
@@ -162,28 +164,30 @@ class Vec2:
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'Vec2', abs_tol: float = 1e-12) -> bool:
+    def isclose(self, other: 'VecXY', abs_tol: float = 1e-12) -> bool:
         return math.isclose(self.x, other.x, abs_tol=abs_tol) and math.isclose(self.y, other.y, abs_tol=abs_tol)
 
-    def __eq__(self, other: 'Vec2') -> bool:
-        return isclose(self.x, other.x) and isclose(self.y, other.y)
+    def __eq__(self, other: 'Vertex') -> bool:
+        x, y, *_ = other
+        return isclose(self.x, x) and isclose(self.y, y)
 
-    def __lt__(self, other: 'Vec2') -> bool:
-        if self.x == other.x:
-            return self.y < other.y
+    def __lt__(self, other: 'Vertex') -> bool:
+        x, y, *_ = other
+        if self.x == x:
+            return self.y < y
         else:
-            return self.x < other.x
+            return self.x < x
 
-    def __add__(self, other: Union['Vec2', float]) -> 'Vec2':
+    def __add__(self, other: Union['VecXY', float]) -> 'Vec2':
         if isinstance(other, (float, int)):
             return self.__class__((self.x + other, self.y + other))
         else:
             return self.__class__((self.x + other.x, self.y + other.y))
 
-    def __radd__(self, other: Union['Vec2', float]) -> 'Vec2':
+    def __radd__(self, other: Union['VecXY', float]) -> 'Vec2':
         return self.__add__(other)
 
-    def __iadd__(self, other: Union['Vec2', float]) -> 'Vec2':
+    def __iadd__(self, other: Union['VecXY', float]) -> 'Vec2':
         if isinstance(other, (float, int)):
             x = other
             y = other
@@ -194,19 +198,19 @@ class Vec2:
         self.y += y
         return self
 
-    def __sub__(self, other: Union['Vec2', float]) -> 'Vec2':
+    def __sub__(self, other: Union['VecXY', float]) -> 'Vec2':
         if isinstance(other, (float, int)):
             return self.__class__((self.x - other, self.y - other))
         else:
             return self.__class__((self.x - other.x, self.y - other.y))
 
-    def __rsub__(self, other: Union['Vec2', float]) -> 'Vec2':
+    def __rsub__(self, other: Union['VecXY', float]) -> 'Vec2':
         if isinstance(other, (float, int)):
             return self.__class__((other - self.x, other - self.y))
         else:
             return self.__class__((other.x - self.x, other.y - self.y))
 
-    def __isub__(self, other: Union['Vec2', float]) -> 'Vec2':
+    def __isub__(self, other: Union['VecXY', float]) -> 'Vec2':
         if isinstance(other, (float, int)):
             x = other
             y = other
@@ -245,20 +249,20 @@ class Vec2:
 
     __rdiv__ = __rtruediv__
 
-    def dot(self, other: 'Vec2') -> float:
+    def dot(self, other: 'VecXY') -> float:
         return self.x * other.x + self.y * other.y
 
-    def distance(self, other: 'Vec2') -> float:
+    def distance(self, other: 'VecXY') -> float:
         return math.hypot(self.x - other.x, self.y - other.y)
 
-    def angle_between(self, other: 'Vec2') -> float:
+    def angle_between(self, other: 'VecXY') -> float:
         """
         Calculate angle between `self` and `other` in radians. +angle is counter clockwise orientation.
 
         """
         return math.acos(self.normalize().dot(other.normalize()))
 
-    def rotate_rad(self, angle: float) -> 'Vec2':
+    def rotate(self, angle: float) -> 'Vec2':
         """
         Rotate vector around origin.
 
@@ -266,7 +270,7 @@ class Vec2:
             angle: angle in radians
 
         """
-        return Vec2.from_rad_angle(self.angle_rad + angle, self.magnitude)
+        return Vec2.from_angle(self.angle + angle, self.magnitude)
 
     def rotate_deg(self, angle: float) -> 'Vec2':
         """
@@ -278,4 +282,4 @@ class Vec2:
         Returns: rotated vector
 
         """
-        return Vec2.from_rad_angle(self.angle_rad + math.radians(angle), self.magnitude)
+        return Vec2.from_angle(self.angle + math.radians(angle), self.magnitude)
