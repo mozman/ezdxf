@@ -3,9 +3,9 @@
 import unittest
 import math
 from math import isclose
-from ezdxf.math import is_close_points, Vector
+from ezdxf.math import is_close_points
 from ezdxf.math.line import ConstructionRay
-from ezdxf.math.circle import ConstructionCircle
+from ezdxf.math.circle import ConstructionCircle, Vec2
 
 HALF_PI = math.pi / 2.
 
@@ -81,24 +81,24 @@ class TestConstructionCircle(unittest.TestCase):
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
         if p1[1] > p2[1]: p1, p2 = p2, p1
-        self.assertTrue(is_close_points(p1, (8.5, 7.4019, 0), abs_tol=1e-4))
-        self.assertTrue(is_close_points(p2, (8.5, 12.5981, 0), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p1, (8.5, 7.4019), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p2, (8.5, 12.5981), abs_tol=1e-4))
 
         ray_hor = ConstructionRay((10, 8.5), angle=0.)
         cross_points = circle.intersect_ray(ray_hor)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
         if p1[0] > p2[0]: p1, p2 = p2, p1
-        self.assertTrue(is_close_points(p1, (7.4019, 8.5, 0), abs_tol=1e-4))
-        self.assertTrue(is_close_points(p2, (12.5981, 8.5, 0), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p1, (7.4019, 8.5), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p2, (12.5981, 8.5), abs_tol=1e-4))
 
         ray_slope = ConstructionRay((5, 5), (16, 12))
         cross_points = circle.intersect_ray(ray_slope)
         self.assertEqual(len(cross_points), 2)
         p1, p2 = cross_points
         if p1[0] > p2[0]: p1, p2 = p2, p1
-        self.assertTrue(is_close_points(p1, (8.64840, 7.3217, 0), abs_tol=1e-4))
-        self.assertTrue(is_close_points(p2, (12.9986, 10.0900, 0), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p1, (8.64840, 7.3217), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p2, (12.9986, 10.0900), abs_tol=1e-4))
 
         # ray with slope through midpoint
         ray_slope = ConstructionRay((10, 10), angle=HALF_PI / 2)
@@ -107,8 +107,8 @@ class TestConstructionCircle(unittest.TestCase):
         p1, p2 = cross_points
         if p1[0] > p2[0]: p1, p2 = p2, p1
         # print (p1[0], p1[1], p2[0], p2[1])
-        self.assertTrue(is_close_points(p1, (7.8787, 7.8787, 0), abs_tol=1e-4))
-        self.assertTrue(is_close_points(p2, (12.1213, 12.1213, 0), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p1, (7.8787, 7.8787), abs_tol=1e-4))
+        self.assertTrue(is_close_points(p2, (12.1213, 12.1213), abs_tol=1e-4))
 
         # horizontal ray through midpoint
         ray_hor = ConstructionRay((10, 10), angle=0)
@@ -117,8 +117,8 @@ class TestConstructionCircle(unittest.TestCase):
         p1, p2 = cross_points
         if p1[0] > p2[0]: p1, p2 = p2, p1
         # print (p1[0], p1[1], p2[0], p2[1])
-        self.assertTrue(is_close_points(p1, (7, 10, 0), abs_tol=1e-5))
-        self.assertTrue(is_close_points(p2, (13, 10, 0), abs_tol=1e-5))
+        self.assertTrue(is_close_points(p1, (7, 10), abs_tol=1e-5))
+        self.assertTrue(is_close_points(p2, (13, 10), abs_tol=1e-5))
 
         # vertical ray through midpoint
         ray_vert = ConstructionRay((10, 10), angle=HALF_PI)
@@ -127,8 +127,8 @@ class TestConstructionCircle(unittest.TestCase):
         p1, p2 = cross_points
         if p1[1] > p2[1]: p1, p2 = p2, p1
         # print (p1[0], p1[1], p2[0], p2[1])
-        self.assertTrue(is_close_points(p1, (10, 7, 0), abs_tol=1e-5))
-        self.assertTrue(is_close_points(p2, (10, 13, 0), abs_tol=1e-5))
+        self.assertTrue(is_close_points(p1, (10, 7), abs_tol=1e-5))
+        self.assertTrue(is_close_points(p2, (10, 13), abs_tol=1e-5))
 
     def test_intersect_circle_pass(self):
         M1 = (30, 30)
@@ -151,7 +151,7 @@ class TestConstructionCircle(unittest.TestCase):
             circle2 = ConstructionCircle(m, 1.5)
             points = circle1.intersect_circle(circle2, 4)
             self.assertEqual(len(points), 1)
-            return is_close_points(points[0], Vector(t), abs_tol=abs_tol)
+            return is_close_points(points[0], Vec2(t), abs_tol=abs_tol)
 
         circle1 = ConstructionCircle((20, 20), 5)
 
@@ -169,8 +169,8 @@ class TestConstructionCircle(unittest.TestCase):
 
     def test_intersect_circle_intersect(self):
         def check_intersection(m, p1, p2, abs_tol=1e-4):
-            p1 = Vector(p1)
-            p2 = Vector(p2)
+            p1 = Vec2(p1)
+            p2 = Vec2(p2)
             circle2 = ConstructionCircle(m, 1.5)
             points = circle1.intersect_circle(circle2, abs_tol=abs_tol)
             self.assertEqual(len(points), 2)
@@ -234,5 +234,3 @@ class TestConstructionCircle(unittest.TestCase):
         self.assertTrue(check(-20., 15., 25.))
         self.assertTrue(check(-17.7152, 15.5526, 24.4474))
         self.assertTrue(check(-22.1496, 15.4857, 24.5143))
-
-

@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable, List, cast
 import math
-from ezdxf.math import Vector, ConstructionRay, xround, ConstructionLine, ConstructionBox
+from ezdxf.math import Vector, Vec2, ConstructionRay, xround, ConstructionLine, ConstructionBox
 from ezdxf.math import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
@@ -689,8 +689,8 @@ class LinearDimension(BaseDimensionRenderer):
         if self.text_halign in (3, 4):  # text above extension line, is always aligned with extension lines
             self.text_rotation = self.ext_line_angle
 
-        self.ext1_line_start = self.dimension.dxf.defpoint2  # type: Vector
-        self.ext2_line_start = self.dimension.dxf.defpoint3  # type: Vector
+        self.ext1_line_start = Vec2(self.dimension.dxf.defpoint2)  # type: Vector
+        self.ext2_line_start = Vec2(self.dimension.dxf.defpoint3)  # type: Vector
 
         ext1_ray = ConstructionRay(self.ext1_line_start, angle=self.ext_line_angle_rad)
         ext2_ray = ConstructionRay(self.ext2_line_start, angle=self.ext_line_angle_rad)
@@ -706,7 +706,7 @@ class LinearDimension(BaseDimensionRenderer):
             self.dim_line_vec = (self.dim_line_end - self.dim_line_start).normalize()  # type: Vector
 
         # set dimension defpoint to expected location
-        self.dimension.dxf.defpoint = self.dim_line_start
+        self.dimension.dxf.defpoint = Vector(self.dim_line_start)
 
         self.measurement = (self.dim_line_end - self.dim_line_start).magnitude  # type: float
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)  # type: str

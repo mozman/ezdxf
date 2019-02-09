@@ -119,7 +119,7 @@ class ConstructionRay:
         else:
             return math.isclose(self.slope, ray.slope, abs_tol=self.abs_tol)
 
-    def intersect(self, other: 'ConstructionRay') -> Vector:
+    def intersect(self, other: 'ConstructionRay') -> Vec2:
         """
         Returns the intersection point (xy-tuple) of self and other_ray.
 
@@ -141,7 +141,7 @@ class ConstructionRay:
                 # based on y(x) = y0 + x*slope
                 x = (ray1._y0 - ray2._y0) / (ray2.slope - ray1.slope)
                 y = ray1.get_y(x)
-            return Vector(x, y)
+            return Vec2((x, y))
         else:
             raise ParallelRaysError("no intersection, rays are parallel")
 
@@ -254,7 +254,7 @@ class ConstructionLine(ConstructionTool):
     def inside_bounding_box(self, point: 'Vertex') -> bool:
         return self.bounding_box.inside(point)
 
-    def intersect(self, other: 'ConstructionLine') -> Optional[Vector]:
+    def intersect(self, other: 'ConstructionLine') -> Optional[Vec2]:
         """
         Returns the intersection point of to lines or None if they have no intersection point.
 

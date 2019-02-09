@@ -1,12 +1,15 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Sequence
 import math
 from .line import ConstructionRay
 from .vector import Vector
+from .vec2 import Vec2
+from .bbox import BoundingBox2d
+from .construct2d import ConstructionTool
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.eztypes import Vertex, VecXY
 
 HALF_PI = math.pi / 2.
 
@@ -19,9 +22,9 @@ def midpoint(point1: 'Vertex', point2: 'Vertex') -> Tuple[float, float]:
     return (point1[0] + point2[0]) * .5, (point1[1] + point2[1]) * .5
 
 
-class ConstructionCircle:
+class ConstructionCircle(ConstructionTool):
     def __init__(self, center: 'Vertex', radius: float = 1.0):
-        self.center = Vector(center)
+        self.center = Vec2(center)
         self.radius = float(radius)
         if self.radius <= 0.:
             raise ValueError("Radius has to be > 0.")
@@ -40,19 +43,35 @@ class ConstructionCircle:
         r = center.distance(p1)
         return ConstructionCircle(center, r)
 
-    def get_point(self, angle: float) -> Vector:
+    @property
+    def bounding_box(self) -> 'BoundingBox2d':
+        rvec = Vec2((self.radius, self.radius))
+        return BoundingBox2d(self.center - rvec, self.center + rvec)
+
+    def move(self, dx: float, dy: float) -> None:
+        self.center += Vec2((dx, dy))
+
+    def rotate(self, angle: float) -> None:
+        self.center = self.center.rotate(angle)
+
+    def scale(self, sx: float, sy: float) -> None:
+        self.center.x *= sx
+        self.center.y *= sy
+        self.radius *= max(sx, sy)  # uniform scale, can not represent an ellipse
+
+    def get_point(self, angle: float) -> Vec2:
         """
         Calculate point on circle at `angle` as Vector.
 
         """
-        return self.center + Vector.from_rad_angle(angle, self.radius)
+        return self.center + Vec2.from_angle(angle, self.radius)
 
     def within(self, point: 'Vertex') -> bool:
         """
         Test if point is within circle.
 
         """
-        radius2 = self.center.distance(point)
+        radius2 = self.center.distance(Vec2(point))
         return self.radius >= radius2
 
     def in_x_range(self, x: float) -> bool:
@@ -65,7 +84,7 @@ class ConstructionCircle:
         r = self.radius
         return (my - r) <= y <= (my + r)
 
-    def get_y(self, x: float) -> Tuple[float]:
+    def get_y(self, x: float) -> Sequence[float]:
         """
         Calculates y-coordinates at the given x-coordinate.
 
@@ -75,15 +94,14 @@ class ConstructionCircle:
         Returns: tuple of y-coordinates, empty tuple if the x-coordinate ist outside of circle
 
         """
-        result = []
         if self.in_x_range(x):
             dx = self.center.x - x
             dy = (self.radius ** 2 - dx ** 2) ** 0.5  # pythagoras
-            result.append(self.center.y + dy)
-            result.append(self.center.y - dy)
-        return tuple(result)
+            return self.center.y + dy, self.center.y - dy
+        else:
+            return tuple()
 
-    def get_x(self, y: float) -> Tuple[float]:
+    def get_x(self, y: float) -> Sequence[float]:
         """
         Calculates x-coordinates at the given y-coordinate.
 
@@ -93,13 +111,13 @@ class ConstructionCircle:
         Returns: tuple of x-coordinates, empty tuple if the y-coordinate ist outside of circle
 
         """
-        result = []
+
         if self.in_y_range(y):
             dy = self.center.y - y
             dx = (self.radius ** 2 - dy ** 2) ** 0.5  # pythagoras
-            result.append(self.center.x + dx)
-            result.append(self.center.x - dx)
-        return tuple(result)
+            return self.center.x + dx, self.center.x - dx
+        else:
+            return tuple()
 
     def tangent(self, angle: float) -> ConstructionRay:
         """
@@ -110,7 +128,7 @@ class ConstructionCircle:
         ray = ConstructionRay(self.center, point_on_circle)
         return ray.normal_through(point_on_circle)
 
-    def intersect_ray(self, ray: ConstructionRay, abs_tol: float = 1e-12) -> Tuple[Vector]:
+    def intersect_ray(self, ray: ConstructionRay, abs_tol: float = 1e-12) -> Sequence[Vec2]:
         """
         Calculates the intersection points for this circle with a ray.
 
@@ -136,7 +154,7 @@ class ConstructionCircle:
                 alpha = HALF_PI
             else:  # the exact direction of angle (all 4 quadrants Q1-Q4) is important:
                 # normal_ray.angle is only at the center point correct
-                angle = (intersection_point - self.center).angle_rad
+                angle = (intersection_point - self.center).angle
                 alpha = math.acos(intersection_point.distance(self.center) / self.radius)
             result.append(self.get_point(angle + alpha))
             result.append(self.get_point(angle - alpha))
@@ -145,7 +163,7 @@ class ConstructionCircle:
             # else no intersection
         return tuple(result)
 
-    def intersect_circle(self, other: 'ConstructionCircle', abs_tol: float = 1e-12) -> Tuple[Vector]:
+    def intersect_circle(self, other: 'ConstructionCircle', abs_tol: float = 1e-12) -> Sequence[Vec2]:
         """
         Calculates the intersection points for two circles.
 
@@ -163,7 +181,7 @@ class ConstructionCircle:
         """
 
         def get_angle_through_center_points():
-            return (other.center - self.center).angle_rad
+            return (other.center - self.center).angle
 
         radius1 = self.radius
         radius2 = other.radius
