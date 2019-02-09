@@ -8,26 +8,10 @@ from ezdxf.math.construct2d import *
 from math import isclose, radians
 
 
-def test_rotate_2s():
-    result = rotate_2d((5, 0), HALF_PI)
-    assert isclose(result[0], 0., abs_tol=1e-14)
-    assert isclose(result[1], 5.)
-
-
 def test_normalize_angle():
     angle = 2
     huge_angle = angle + 16 * HALF_PI
     assert isclose(normalize_angle(huge_angle), 2.)
-
-
-def test_is_vertical_angle():
-    assert is_vertical_angle(HALF_PI) is True
-    assert is_vertical_angle(2 * HALF_PI) is False
-
-
-def test_get_angle():
-    assert isclose(get_angle((0., 0.), (0., 1.)), HALF_PI)
-    assert isclose(get_angle((0., 0.), (1., 1.)), HALF_PI / 2.)
 
 
 def test_left_of_line():

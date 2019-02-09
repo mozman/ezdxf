@@ -37,8 +37,8 @@ class ConstructionCircle(ConstructionTool):
         ray2 = ConstructionRay(p1, p3)
         mid_point1 = midpoint(p1, p2)
         mid_point2 = midpoint(p1, p3)
-        center_ray1 = ray1.normal_through(mid_point1)
-        center_ray2 = ray2.normal_through(mid_point2)
+        center_ray1 = ray1.orthogonal(mid_point1)
+        center_ray2 = ray2.orthogonal(mid_point2)
         center = Vector(center_ray1.intersect(center_ray2))
         r = center.distance(p1)
         return ConstructionCircle(center, r)
@@ -126,7 +126,7 @@ class ConstructionCircle(ConstructionTool):
         """
         point_on_circle = self.get_point(angle)
         ray = ConstructionRay(self.center, point_on_circle)
-        return ray.normal_through(point_on_circle)
+        return ray.orthogonal(point_on_circle)
 
     def intersect_ray(self, ray: ConstructionRay, abs_tol: float = 1e-12) -> Sequence[Vec2]:
         """
@@ -144,13 +144,13 @@ class ConstructionCircle(ConstructionTool):
             2 points .. ray intersects with the circle
 
         """
-        normal_ray = ray.normal_through(self.center)
+        normal_ray = ray.orthogonal(self.center)
         intersection_point = ray.intersect(normal_ray)
         dist = self.center.distance(intersection_point)
         result = []
         if dist < self.radius:  # intersect in two points
             if math.isclose(dist, 0., abs_tol=abs_tol):  # if ray goes through midpoint
-                angle = normal_ray.angle
+                angle = normal_ray._angle
                 alpha = HALF_PI
             else:  # the exact direction of angle (all 4 quadrants Q1-Q4) is important:
                 # normal_ray.angle is only at the center point correct

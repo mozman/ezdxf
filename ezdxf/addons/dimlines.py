@@ -334,7 +334,7 @@ class LinearDimension(_DimensionBase):
     @staticmethod
     def _get_point_on_dimline(point: 'Vertex', dimray: ConstructionRay) -> Vector:
         """ get the measure target point projection on the dimension line """
-        return dimray.intersect(dimray.normal_through(point))
+        return dimray.intersect(dimray.orthogonal(point))
 
     def _draw_dimline(self, layout: 'GenericLayoutType') -> None:
         """ build dimension line entity """
@@ -679,6 +679,6 @@ def center_of_3points_arc(point1: 'Vertex', point2: 'Vertex', point3: 'Vertex') 
     ray2 = ConstructionRay(point1, point3)
     midpoint1 = lerp(point1, point2)
     midpoint2 = lerp(point1, point3)
-    center_ray1 = ray1.normal_through(midpoint1)
-    center_ray2 = ray2.normal_through(midpoint2)
+    center_ray1 = ray1.orthogonal(midpoint1)
+    center_ray2 = ray2.orthogonal(midpoint2)
     return center_ray1.intersect(center_ray2)

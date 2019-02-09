@@ -77,15 +77,3 @@ class TestConstructionLine:
         bbox = line.bounding_box
         assert bbox.extmin == (3, 7)
         assert bbox.extmax == (3, 17)
-
-    def test_scale(self):
-        line = ConstructionLine((1, 1), (10, 10))
-        line.scale(2, 2)
-        assert line.start == (2, 2)
-        assert line.end == (20, 20)
-
-    def test_rotate(self):
-        line = ConstructionLine((1, 1), (10, 10))
-        line.rotate(math.radians(90))
-        assert line.start == (-1, 1)
-        assert line.end == (-10, 10)

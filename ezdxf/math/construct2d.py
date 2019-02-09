@@ -1,11 +1,10 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable
+from typing import TYPE_CHECKING
 from functools import partial
 import math
 from operator import le, ge, lt, gt
 from abc import abstractmethod
-from .vec2 import Vec2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import BoundingBox2d, Vertex
@@ -33,22 +32,6 @@ def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=1e-12) -> bool:
     return True
 
 
-def rotate_2d(point: 'Vertex', angle: float) -> Tuple[float, float]:
-    """
-    Rotate `point` in the XY-plane around the z-axis about `angle`.
-
-    Args:
-         point: Vertex
-         angle: rotation angle in radians
-    Returns:
-        x, y - tuple
-
-    """
-    x = point[0] * math.cos(angle) - point[1] * math.sin(angle)
-    y = point[1] * math.cos(angle) + point[0] * math.sin(angle)
-    return x, y
-
-
 def normalize_angle(angle: float) -> float:
     """
     Returns normalized angle between 0 and 2*pi.
@@ -73,31 +56,6 @@ def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=1e-9):
     else:
         r = not (e < a < s)
     return r if ccw else not r
-
-
-def is_vertical_angle(angle: float, abs_tol=1e-12) -> bool:
-    """
-    Returns True for 1/2pi and 3/2pi.
-    """
-    angle = normalize_angle(angle)
-    return math.isclose(angle, HALF_PI, abs_tol=abs_tol) or math.isclose(angle, THREE_PI_HALF, abs_tol=abs_tol)
-
-
-def get_angle(p1: 'Vertex', p2: 'Vertex') -> float:
-    """
-    Returns angle in radians between the line (p1, p2) and x-axis.
-
-    Args:
-        p1: start point
-        p2: end point
-
-    Returns:
-        angle in radians
-
-    """
-    dx = p2[0] - p1[0]
-    dy = p2[1] - p1[1]
-    return math.atan2(dy, dx)
 
 
 def left_of_line(point: 'Vertex', p1: 'Vertex', p2: 'Vertex', online=False) -> bool:
@@ -145,46 +103,3 @@ class ConstructionTool:
     def move(self, dx: float, dy: float) -> None:
         pass
 
-
-def move(vectors: Iterable['Vec2'], dx: float, dy: float) -> Iterable[Vec2]:
-    """
-    Move `vectors` along translation vector `v`.
-
-    Args:
-        vectors: iterable of Vec2
-        dx: translation in x-axis
-        dy: translation in y-axis
-
-    Returns: iterable of Vec2
-
-    """
-    v = Vec2((dx, dy))
-    return (v + vector for vector in vectors)
-
-
-def rotate(vectors: Iterable['Vec2'], angle: float) -> Iterable[Vec2]:
-    """
-    Rotate `vectors` around the origin (0, 0) about `angle`.
-
-    Args:
-        vectors: iterable of 2d vectors
-        angle: rotation angle in radians
-
-    Returns: iterable of Vec2
-
-    """
-    return (vector.rotate(angle) for vector in vectors)
-
-
-def scale(vectors: Iterable['Vec2'], sx: float, sy: float) -> Iterable[Vec2]:
-    """
-    Scale `vectors` about `sx` and `sy` factors.
-    Args:
-        vectors: iterable of Vec2
-        sx: x-axis scale factor
-        sy: y-axis scale factor
-
-    Returns: iterable of Vec2
-
-    """
-    return (Vec2((vector.x * sx, vector.y * sy)) for vector in vectors)

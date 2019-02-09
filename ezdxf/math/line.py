@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .construct2d import normalize_angle, is_vertical_angle, ConstructionTool, scale
+from .construct2d import ConstructionTool
 from .bbox import BoundingBox2d
 from .vector import Vector
 from .vec2 import Vec2
@@ -23,101 +23,55 @@ DOUBLE_PI = math.pi * 2.
 
 class ConstructionRay:
     """
-    Defines an infinite ray (line with no end points)
-    treat it as IMMUTABLE - don't change the status
-    possible keyword args: slope, angle as float
-    point1, point2 as 2d-tuples
+    Infinite construction ray.
 
-    Case A: point1, point2
-    ray goes through point1 and point2, vertical lines are possible
-    ignores the keyword arguments slope and angle
-
-    Case B: point1, slope
-    ray goes through point1 with slope
-    argument point2 have to be None
-    vertical lines are not possible because slope can't be infinite.
-    ignores the keyword argument angle
-
-    Case C: point1, angle (in radian)
-    argument point2 have to be None
-    ray goes through point1 with the submitted angle
-    vertical lines are possible
-    if keyword argument slope is defined, angle will be ignored
+    Args:
+        p1: definition point 1
+        p2: ray direction as 2nd point or None
+        angle: ray direction as angle in radians or None
 
     """
 
-    def __init__(self, point1: 'Vertex', point2: 'Vertex' = None, **kwargs):
-        self._vertical = False  # type: bool
-        self.abs_tol = 1e-12  # type: float
-        p1x, p1y, *_ = point1
-        if point2 is not None:  # case A
-            # normalize point order to assure consist signs for slopes
-            # +slope goes up and -slope goes down
-            self._slope = 0
-            self._angle = 0
-            p2x, p2y, *_ = point2
-
-            if p1x > p2x:
-                p1x, p2x = p2x, p1x
-                p1y, p2y = p2y, p1y
-            dx = p2x - p1x
-            dy = p2y - p1y
-            if dx == 0.:  # line is vertical
-                self._x = p1x
-                self._set_angle(HALF_PI)
+    def __init__(self, p1: 'Vertex', p2: 'Vertex' = None, angle: float = None):
+        self._p1 = Vec2(p1)
+        if p2 is not None:
+            p2 = Vec2(p2)
+            if self._p1.x < p2.x:
+                self._direction = (p2 - self._p1).normalize()
             else:
-                self._set_slope(dy / dx)
-        elif 'slope' in kwargs:  # case B
-            self._set_slope(float(kwargs['slope']))
-        elif 'angle' in kwargs:  # case C
-            self._set_angle(normalize_angle(float(kwargs['angle'])))
-            if self.is_vertical:
-                self._x = p1x
-        if not self.is_vertical:
-            # y0 is the y-coordinate of this ray at x-coordinate == 0
-            self._y0 = p1y - self.slope * p1x
+                self._direction = (self._p1 - p2).normalize()
+            self._angle = self._direction.angle
+        elif angle is not None:
+            self._angle = angle
+            self._direction = Vec2.from_angle(angle)
+        else:
+            raise ValueError('p2 or angle required.')
 
-    @property
-    def slope(self) -> float:
-        """
-        Get slope of the ray.
-
-        """
-        return self._slope
-
-    def _set_slope(self, slope):
-        self._slope = slope  # type: float
-        self._angle = normalize_angle(math.atan(slope))  # type: float
+        if math.isclose(self._direction.x, 0., abs_tol=1e-12):
+            self._slope = None
+            self._yof0 = None
+        else:
+            self._slope = self._direction.y / self._direction.x
+            self._yof0 = self._p1.y - self._slope * self._p1.x
+        self._is_vertical = self._slope is None
+        self._is_horizontal = math.isclose(self._direction.y, 0., abs_tol=1e-12)
 
     def __str__(self):
-        return 'ConstructionRay(x={0._x:.3f}, y={0._y:.3f}, k={0.slope:.3f}, phi={0.angle:.5f} rad)'.format(self)
+        return 'ConstructionRay(x={0._x:.3f}, y={0._y:.3f}, phi={0.angle:.5f} rad)'.format(self)
 
-    @property
-    def angle(self) -> float:
-        return self._angle
-
-    def _set_angle(self, angle: float) -> None:
-        self._angle = angle
-        self._slope = math.tan(angle)
-        self._vertical = is_vertical_angle(angle)
-
-    @property
-    def is_vertical(self) -> bool:
-        return self._vertical
-
-    @property
-    def is_horizontal(self) -> bool:
-        return math.isclose(self.slope, 0., abs_tol=self.abs_tol)
-
-    def is_parallel(self, ray: 'ConstructionRay') -> bool:
+    def is_parallel(self, other: 'ConstructionRay') -> bool:
         """
         Return True if the rays are parallel, else False.
 
         """
-        if self.is_vertical:
-            return ray.is_vertical
-        else:
-            return math.isclose(self.slope, ray.slope, abs_tol=self.abs_tol)
+
+        if self._is_vertical:
+            return other._is_vertical
+
+        if other._is_vertical:
+            return False
+
+        return math.isclose(self._slope, other._slope, abs_tol=1e-12)
 
     def intersect(self, other: 'ConstructionRay') -> Vec2:
         """
@@ -130,70 +84,51 @@ class ConstructionRay:
         ray1 = self
         ray2 = other
         if not ray1.is_parallel(ray2):
-            if ray1.is_vertical:
-                x = ray1._x
-                y = ray2.get_y(x)
-            elif ray2.is_vertical:
-                x = ray2._x
-                y = ray1.get_y(x)
+            if ray1._is_vertical:
+                x = self._p1.x
+                y = ray2.yof(x)
+            elif ray2._is_vertical:
+                x = ray2._p1.x
+                y = ray1.yof(x)
             else:
                 # calc intersection with the 'straight-line-equation'
                 # based on y(x) = y0 + x*slope
-                x = (ray1._y0 - ray2._y0) / (ray2.slope - ray1.slope)
-                y = ray1.get_y(x)
+                x = (ray1._yof0 - ray2._yof0) / (ray2._slope - ray1._slope)
+                y = ray1.yof(x)
             return Vec2((x, y))
         else:
-            raise ParallelRaysError("no intersection, rays are parallel")
+            raise ParallelRaysError("Rays are parallel")
 
-    def normal_through(self, point: 'Vertex') -> 'ConstructionRay':
+    def orthogonal(self, point: 'Vertex') -> 'ConstructionRay':
         """
-        Returns a ray which is normal to self and goes through point.
-
-        """
-        return ConstructionRay(point, angle=self.angle + HALF_PI)
-
-    def goes_through(self, point: 'Vertex') -> bool:
-        """
-        Returns True if ray goes through point, else False.
+        Returns orthogonal construction ray through `point`.
 
         """
-        x, y, *_ = point
-        if self.is_vertical:
-            return math.isclose(x, self._x, abs_tol=self.abs_tol)
-        else:
-            return math.isclose(y, self.get_y(x), abs_tol=self.abs_tol)
+        return ConstructionRay(point, angle=self._angle + HALF_PI)
 
-    def get_y(self, x: float) -> float:
-        """
-        Get y-coordinate by x-coordinate, raises ArithmeticError for vertical lines.
-
-        """
-        if self.is_vertical:
+    def yof(self, x: float) -> float:
+        if self._is_vertical:
             raise ArithmeticError
-        return self._y0 + float(x) * self.slope
+        return self._yof0 + float(x) * self._slope
 
-    def get_x(self, y: float) -> float:
-        """
-        Get x-coordinate by y-coordinate, raises ArithmeticError for horizontal lines.
-
-        """
-        if self.is_vertical:
-            return self._x
+    def xof(self, y: float) -> float:
+        if self._is_vertical:
+            return self._p1.x
+        elif not self._is_horizontal:
+            return (float(y) - self._yof0) / self._slope
         else:
-            if self.is_horizontal:
-                raise ArithmeticError
-            return (float(y) - self._y0) / self.slope
+            raise ArithmeticError
 
-    def bisectrix(self, other_ray: 'ConstructionRay') -> 'ConstructionRay':
+    def bisectrix(self, other: 'ConstructionRay') -> 'ConstructionRay':
         """
-        Bisectrix between self and other_ray.
+        Bisectrix between self and other construction ray.
 
         """
-        if self.is_parallel(other_ray):
+        if self.is_parallel(other):
             raise ParallelRaysError
-        cross_point = self.intersect(other_ray)
-        alpha = (self.angle + other_ray.angle) / 2.0
-        return ConstructionRay(cross_point, angle=alpha)
+        intersection = self.intersect(other)
+        alpha = (self._angle + other._angle) / 2.
+        return ConstructionRay(intersection, angle=alpha)
 
 
 class ConstructionLine(ConstructionTool):
@@ -227,28 +162,6 @@ class ConstructionLine(ConstructionTool):
         v = Vec2((dx, dy))
         self.start += v
         self.end += v
-
-    def rotate(self, angle: float) -> None:
-        """
-        Rotated line around origin about `angle`.
-
-        Args:
-            angle: rotation angle in radians
-
-        """
-        self.start = self.start.rotate(angle)
-        self.end = self.end.rotate(angle)
-
-    def scale(self, sx: float, sy: float) -> None:
-        """
-        Scale line at origin about `sx` in x-axis and about `sy` in y-axis.
-
-        Args:
-            sx: scale factor in x-axis
-            sy: scale factor in y-axis
-
-        """
-        self.start, self.end = scale((self.start, self.end), sx, sy)
 
     @property
     def sorted_points(self):
@@ -318,7 +231,7 @@ class ConstructionLine(ConstructionTool):
             else:
                 return point.x > self.start.x
         else:
-            y = self.ray.get_y(point.x)
+            y = self.ray.yof(point.x)
             # compute if point should be above or below the line
             should_be_above = start.x < end.x
             if should_be_above:

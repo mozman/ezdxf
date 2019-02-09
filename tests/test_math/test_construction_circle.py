@@ -30,13 +30,13 @@ class TestConstructionCircle(unittest.TestCase):
     def test_tangent(self):
         circle = ConstructionCircle((0., 0.), 5.)
         tangent = circle.tangent(HALF_PI / 2)
-        self.assertAlmostEqual(tangent.slope, -1, 4)
+        self.assertAlmostEqual(tangent._slope, -1, 4)
         tangent = circle.tangent(-HALF_PI / 2)
-        self.assertAlmostEqual(tangent.slope, 1, 4)
+        self.assertAlmostEqual(tangent._slope, 1, 4)
         tangent = circle.tangent(0)
-        self.assertTrue(tangent.is_vertical)
+        self.assertTrue(tangent._is_vertical)
         tangent = circle.tangent(HALF_PI)
-        self.assertTrue(tangent.is_horizontal)
+        self.assertTrue(tangent._is_horizontal)
 
     def test_intersect_ray_pass(self):
         circle = ConstructionCircle((10., 10.), 3)
