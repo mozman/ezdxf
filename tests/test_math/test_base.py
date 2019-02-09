@@ -5,7 +5,7 @@ import pytest
 
 from ezdxf.math import xround
 from ezdxf.math.construct2d import *
-from math import isclose
+from math import isclose, radians
 
 
 def test_rotate_2s():
@@ -81,3 +81,23 @@ def test_xround():
     assert xround(18.9, 10) == 20
     assert xround(1234, 10) == 1230
     assert xround(1236, 10) == 1240
+
+
+def test_enclosing_angles():
+    assert enclosing_angles(radians(45), start_angle=radians(45), end_angle=radians(45), ccw=True) is True
+    assert enclosing_angles(radians(45), start_angle=radians(45), end_angle=radians(45), ccw=False) is True
+
+    assert enclosing_angles(radians(90), start_angle=radians(45), end_angle=radians(135), ccw=True) is True
+    assert enclosing_angles(radians(90), start_angle=radians(45), end_angle=radians(135), ccw=False) is False
+
+    assert enclosing_angles(radians(0), start_angle=radians(45), end_angle=radians(135), ccw=True) is False
+    assert enclosing_angles(radians(0), start_angle=radians(45), end_angle=radians(135), ccw=False) is True
+
+    assert enclosing_angles(radians(45), start_angle=radians(50), end_angle=radians(40), ccw=True) is False
+    assert enclosing_angles(radians(45), start_angle=radians(50), end_angle=radians(40), ccw=False) is True
+
+    assert enclosing_angles(radians(90), start_angle=radians(135), end_angle=radians(45), ccw=True) is False
+    assert enclosing_angles(radians(90), start_angle=radians(135), end_angle=radians(45), ccw=False) is True
+
+    assert enclosing_angles(radians(270), start_angle=radians(135), end_angle=radians(45), ccw=True) is True
+    assert enclosing_angles(radians(270), start_angle=radians(135), end_angle=radians(45), ccw=False) is False

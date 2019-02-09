@@ -664,6 +664,9 @@ class BaseDimensionRenderer:
         from_ucs('text_midpoint', self.ocs)
         self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
 
+    def finalize(self) -> None:
+        self.transform_ucs_to_wcs()
+
 
 def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
     if (p1 - p2).magnitude > (p1 - p3).magnitude:

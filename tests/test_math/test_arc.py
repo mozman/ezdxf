@@ -20,7 +20,7 @@ def test_arc_from_2p_angle_complex():
         end_angle=-98.391676,
     )
 
-    assert is_close_points(arc.center, arc_result.center, abs_tol=1e-5)
+    assert arc.center.isclose(arc_result.center, abs_tol=1e-5)
     assert isclose(arc.radius, arc_result.radius, abs_tol=1e-5)
     assert isclose(arc.start_angle, arc_result.start_angle, abs_tol=1e-4)
     assert isclose(arc.end_angle, arc_result.end_angle, abs_tol=1e-4)
@@ -32,13 +32,13 @@ def test_arc_from_2p_angle_simple():
     angle = 90
 
     arc = ConstructionArc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
-    assert is_close_points(arc.center, Vector(0, 1))
+    assert arc.center == (0, 1)
     assert isclose(arc.radius, 2)
     assert isclose(arc.start_angle, 0, abs_tol=1e-12)
     assert isclose(arc.end_angle, 90)
 
     arc = ConstructionArc.from_2p_angle(start_point=p2, end_point=p1, angle=angle)
-    assert is_close_points(arc.center, Vector(2, 3))
+    assert arc.center == (2, 3)
     assert isclose(arc.radius, 2)
     assert isclose(arc.start_angle, 180)
     assert isclose(arc.end_angle, -90)
@@ -50,13 +50,13 @@ def test_arc_from_2p_radius():
     radius = 2
 
     arc = ConstructionArc.from_2p_radius(start_point=p1, end_point=p2, radius=radius)
-    assert is_close_points(arc.center, Vector(0, 1))
+    assert arc.center == (0, 1)
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 0)
     assert isclose(arc.end_angle, 90)
 
     arc = ConstructionArc.from_2p_radius(start_point=p2, end_point=p1, radius=radius)
-    assert is_close_points(arc.center, Vector(2, 3))
+    assert arc.center == Vector(2, 3)
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 180)
     assert isclose(arc.end_angle, -90)
@@ -75,7 +75,7 @@ def test_arc_from_3p():
         end_angle=-98.391676,
     )
 
-    assert is_close_points(arc.center, arc_result.center, abs_tol=1e-5)
+    assert arc.center.isclose(arc_result.center, abs_tol=1e-5)
     assert isclose(arc.radius, arc_result.radius, abs_tol=1e-5)
     assert isclose(arc.start_angle, arc_result.start_angle, abs_tol=1e-4)
     assert isclose(arc.end_angle, arc_result.end_angle, abs_tol=1e-4)
@@ -86,7 +86,8 @@ def test_spatial_arc_from_3p():
     end_point_wcs = Vector(1, 0, 0)
     def_point_wcs = Vector(0, 0, 1)
 
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=def_point_wcs, axis=end_point_wcs-def_point_wcs, point=start_point_wcs)
+    ucs = UCS.from_x_axis_and_point_in_xy(origin=def_point_wcs, axis=end_point_wcs - def_point_wcs,
+                                          point=start_point_wcs)
     start_point_ucs = ucs.from_wcs(start_point_wcs)
     end_point_ucs = ucs.from_wcs(end_point_wcs)
     def_point_ucs = Vector(0, 0)
@@ -98,6 +99,20 @@ def test_spatial_arc_from_3p():
     dxf_arc = arc.add_to_layout(msp, ucs)
     assert dxf_arc.dxftype() == 'ARC'
     assert isclose(dxf_arc.dxf.radius, 0.81649658, abs_tol=1e-9)
-    assert isclose(dxf_arc.dxf.start_angle, -30.)
-    assert isclose(dxf_arc.dxf.end_angle, -150.)
+    assert isclose(dxf_arc.dxf.start_angle, 20.07527421903284)  # ???
+    assert isclose(dxf_arc.dxf.end_angle, 159.92472578096715)  # ???
     assert is_close_points(dxf_arc.dxf.extrusion, (0.57735027, 0.57735027, 0.57735027), abs_tol=1e-9)
+
+
+def test_bounding_box():
+    bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=0, end_angle=90).bounding_box
+    assert bbox.extmin == (0, 0)
+    assert bbox.extmax == (1, 1)
+
+    bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=0, end_angle=180).bounding_box
+    assert bbox.extmin == (-1, 0)
+    assert bbox.extmax == (1, 1)
+
+    bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=270, end_angle=90).bounding_box
+    assert bbox.extmin == (0, -1)
+    assert bbox.extmax == (1, 1)

@@ -1,6 +1,7 @@
 # Copyright (c) 2010-2018 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Iterable
+from functools import partial
 import math
 from operator import le, ge, lt, gt
 from abc import abstractmethod
@@ -56,6 +57,22 @@ def normalize_angle(angle: float) -> float:
     if angle < 0:
         angle += DOUBLE_PI
     return angle
+
+
+def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=1e-9):
+    isclose = partial(math.isclose, abs_tol=abs_tol)
+
+    s = normalize_angle(start_angle)
+    e = normalize_angle(end_angle)
+    a = normalize_angle(angle)
+    if isclose(s, e):
+        return isclose(s, a)
+
+    if s < e:
+        r = s < a < e
+    else:
+        r = not (e < a < s)
+    return r if ccw else not r
 
 
 def is_vertical_angle(angle: float, abs_tol=1e-12) -> bool:

@@ -411,7 +411,7 @@ class DimStyleOverride:
             renderer.render(block)
 
         # should be called after rendering
-        renderer.transform_ucs_to_wcs()
+        renderer.finalize()
 
         if len(self.dimstyle_attribs):
             self.commit()
