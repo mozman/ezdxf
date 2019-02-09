@@ -2,7 +2,9 @@
 # Copyright (c) 2010, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math.base import *
+
+from ezdxf.math import xround
+from ezdxf.math.construct2d import *
 from math import isclose
 
 

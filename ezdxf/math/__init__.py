@@ -1,7 +1,7 @@
 # Purpose: algebra lib to calculate with geometric forms
 # Created: 27.03.2010, 2018 integrated into ezdxf
 # License: MIT License
-from .base import is_close_points, xround
+from .construct2d import is_close_points
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .matrix import Matrix
@@ -17,3 +17,28 @@ from .circle import ConstructionCircle
 from .box import ConstructionBox
 from .convexhull import convex_hull_2d
 from .points import closest_point
+
+
+def xround(value: float, rounding: float = 0.) -> float:
+    """
+    Extended rounding.
+
+    `rounding` defines the rounding limit:
+        - 0 = remove fraction
+        - 0.1 = round next to x.1, x.2, ... x.0
+        - 0.25 = round next to x.25, x.50, x.75 or x.00
+        - 0.5 = round next to x.5 or x.0
+        - 1. = round to a multiple of 1: remove fraction
+        - 2. = round to a multiple of 2: xxx2, xxx4, xxx6 ...
+        - 5. = round to a multiple of 5: xxx5 or xxx0
+        - 10. = round to a multiple of 10: xx10, xx20, ...
+
+    Args:
+        value: float value to round
+        rounding: rounding limit
+
+    """
+    if rounding == 0:
+        return round(value)
+    factor = 1. / rounding
+    return round(value * factor) / factor

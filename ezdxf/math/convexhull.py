@@ -3,7 +3,7 @@
 # Created: 28.02.2010
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List
-from ezdxf.math.base import left_of_line
+from ezdxf.math.construct2d import left_of_line
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

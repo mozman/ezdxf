@@ -2,7 +2,7 @@
 # License: MIT License
 
 import ezdxf
-from ezdxf.math.base import is_close_points
+from ezdxf.math.construct2d import is_close_points
 from ezdxf.math import ConstructionArc, Vector, UCS
 from math import isclose
 

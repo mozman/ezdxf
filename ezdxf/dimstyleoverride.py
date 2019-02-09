@@ -394,13 +394,6 @@ class DimStyleOverride:
 
         AutoCAD does not render DIMENSION entities automatically, so I rate AutoCAD as unfriendly CAD application.
 
-        But following features require rendering by ezdxf:
-        - multi point linear dimension
-
-        Suppressing the rendering does not provide any speed advantages, because ezdxf adjusts some dimension attributes
-        at the rendering process, so ezdxf has to run the rendering process anyway, but the created geometry block will
-        be discarded.
-
         Args:
             ucs: user coordinate system
             discard: discard rendering done by ezdxf (works with BricsCAD, but not with AutoCAD)

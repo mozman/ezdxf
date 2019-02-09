@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 from math import pi, sin, cos, radians, tan, isclose
 from ezdxf.math import Vector, Matrix44
-from ezdxf.math.base import is_close_points
+from ezdxf.math.construct2d import is_close_points
 from ezdxf.math.bspline import bspline_control_frame
 from ezdxf.math.eulerspiral import EulerSpiral
 from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger

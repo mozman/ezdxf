@@ -2,7 +2,7 @@ from typing import List, Sequence, TYPE_CHECKING, Iterable
 import math
 from .vector import Vector
 from .line import ConstructionLine
-from .base import left_of_line
+from .construct2d import left_of_line
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

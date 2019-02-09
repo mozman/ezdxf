@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
-from .base import normalize_angle, is_vertical_angle
+from .construct2d import normalize_angle, is_vertical_angle
 from .vector import Vector
 
 if TYPE_CHECKING:
