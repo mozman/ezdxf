@@ -14,7 +14,7 @@ isclose = partial(math.isclose, abs_tol=1e-12)
 class Vector:
     """
     Vector represents a universal 3D Vector (x, y, z). This class is immutable and optimized for universality not for
-    speed. Vector is a super set of Vec2.
+    speed.
 
     Immutable means you can't change (x, y, z) components after initialization::
 
@@ -28,6 +28,8 @@ class Vector:
         1 arg: decompose(arg), arg is tuple or list, tuple has to be an (x, y[, z]) tuple, decompose((x, y)) -> (x, y, 0.)
         2 args: decompose(x, y), returns (x, y, 0.) tuple
         3 args: decompose(x, y, z) -> (x, y, z)
+
+    Vector() is a super set of Vec2(), test by feature for 2d or 3d vector: if len(v) == 2: Vec2() else Vector().
 
     """
     __slots__ = ['_x', '_y', '_z']
@@ -50,7 +52,7 @@ class Vector:
     @property
     def xy(self) -> 'Vector':
         """
-        Returns Vector (x, y, 0)
+        Returns vector as (x, y, 0), projected into the (x, y) plane.
 
         """
         return self.__class__(self._x, self._y)
@@ -62,6 +64,14 @@ class Vector:
 
         """
         return self._x, self._y, self._z
+
+    @property
+    def vec2(self) -> 'Vec2':
+        """
+        Returns a real 2d vector.
+
+        """
+        return Vec2((self._x, self._y))
 
     def replace(self, x: float = None, y: float = None, z: float = None) -> 'Vector':
         if x is None:
@@ -503,12 +513,15 @@ TVec2 = Union["VecXY", Sequence[float]]
 
 class Vec2:
     """
-    Vec2 represents a special 2D Vector (x, y). This class is optimized for speed.
-    Vec2 is a sub set of Vector.
+    Vec2 represents a special 2d vector (x, y). This class is optimized for speed.
+
     IMPORTANT: only for internal usage, at API level use always Vector().
 
     Args:
         v: Vec2 or sequence of float [x, y, ...]
+
+    Vec2() is a subset of Vector(), test by feature for 2d or 3d vector: if len(v) == 2: Vec2() else Vector().
+
 
     """
     __slots__ = ['x', 'y']
@@ -520,6 +533,14 @@ class Vec2:
         else:
             self.x = float(v[0])
             self.y = float(v[1])
+
+    @property
+    def vec3(self) -> 'Vector':
+        """
+        Returns a 3d vector.
+
+        """
+        return Vector(self.x, self.y, 0)
 
     @classmethod
     def list(cls, items: Iterable[TVec2]) -> List['Vec2']:
@@ -575,7 +596,7 @@ class Vec2:
     @property
     def magnitude(self) -> float:
         """
-        Faster magnitude function for only 2d purposes.
+        Returns length of vector.
 
         """
         return math.hypot(self.x, self.y)
@@ -587,10 +608,7 @@ class Vec2:
     @property
     def angle(self) -> float:
         """
-        Angle of vector.
-
-        Returns:
-            angle in radians
+        Angle of vector in radians.
 
         """
         return math.atan2(self.y, self.x)
@@ -598,10 +616,7 @@ class Vec2:
     @property
     def angle_deg(self) -> float:
         """
-        Angle of vector.
-
-        Returns:
-            angle in degrees
+        Angle of vector in degrees.
 
         """
         return math.degrees(self.angle)

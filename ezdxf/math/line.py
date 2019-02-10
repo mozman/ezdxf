@@ -7,7 +7,6 @@ from .construct2d import ConstructionTool
 from .bbox import BoundingBox2d
 from .vector import Vec2
 
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
@@ -33,13 +32,13 @@ class ConstructionRay:
     """
 
     def __init__(self, p1: 'Vertex', p2: 'Vertex' = None, angle: float = None):
-        self._p1 = Vec2(p1)
+        self._location = Vec2(p1)
         if p2 is not None:
             p2 = Vec2(p2)
-            if self._p1.x < p2.x:
-                self._direction = (p2 - self._p1).normalize()
+            if self._location.x < p2.x:
+                self._direction = (p2 - self._location).normalize()
             else:
-                self._direction = (self._p1 - p2).normalize()
+                self._direction = (self._location - p2).normalize()
             self._angle = self._direction.angle
         elif angle is not None:
             self._angle = angle
@@ -52,11 +51,46 @@ class ConstructionRay:
             self._yof0 = None
         else:
             self._slope = self._direction.y / self._direction.x
-            self._yof0 = self._p1.y - self._slope * self._p1.x
+            self._yof0 = self._location.y - self._slope * self._location.x
         self._is_vertical = self._slope is None
         self._is_horizontal = math.isclose(self._direction.y, 0., abs_tol=1e-12)
 
-    def __str__(self):
+    @property
+    def location(self) -> Vec2:
+        """ Returns location vector of ray. """
+        return self._location
+
+    @property
+    def direction(self) -> Vec2:
+        """ Returns direction vector of ray. """
+        return self._direction
+
+    @property
+    def slope(self) -> float:
+        """ Returns slope of ray or None if vertical. """
+        return self._slope
+
+    @property
+    def angle(self) -> float:
+        """ Returns angle of ray in radians. """
+        return self._angle
+
+    @property
+    def angle_deg(self) -> float:
+        """ Returns angle of ray in degrees. """
+        return math.degrees(self._angle)
+
+    @property
+    def is_vertical(self) -> bool:
+        """ Returns True if ray is vertical. """
+        return self._is_vertical
+
+    @property
+    def is_horizontal(self) -> bool:
+        """ Returns True if ray is horizontal. """
+        return self._is_horizontal
+
+    def __str__(self) -> str:
         return 'ConstructionRay(x={0._x:.3f}, y={0._y:.3f}, phi={0.angle:.5f} rad)'.format(self)
 
     def is_parallel(self, other: 'ConstructionRay') -> bool:
@@ -85,10 +119,10 @@ class ConstructionRay:
         ray2 = other
         if not ray1.is_parallel(ray2):
             if ray1._is_vertical:
-                x = self._p1.x
+                x = self._location.x
                 y = ray2.yof(x)
             elif ray2._is_vertical:
-                x = ray2._p1.x
+                x = ray2._location.x
                 y = ray1.yof(x)
             else:
                 # calc intersection with the 'straight-line-equation'
@@ -113,7 +147,7 @@ class ConstructionRay:
 
     def xof(self, y: float) -> float:
         if self._is_vertical:
-            return self._p1.x
+            return self._location.x
         elif not self._is_horizontal:
             return (float(y) - self._yof0) / self._slope
         else:

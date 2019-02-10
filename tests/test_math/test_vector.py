@@ -58,6 +58,14 @@ def test_vector_as_tuple():
     assert v.xyz == (1, 2, 3)
 
 
+def test_vec2():
+    v = Vector(1, 2, 3)
+    assert len(v) == 3
+    v2 = v.vec2
+    assert len(v2) == 2
+    assert v2 == (1, 2)
+
+
 def test_iter():
     assert sum(Vector(1, 2, 3)) == 6
 
@@ -311,6 +319,3 @@ def test_project():
 
     v = Vector(10, 10, 0)
     assert v.project((10, 0, 0)) == (5, 5, 0)
-
-
-

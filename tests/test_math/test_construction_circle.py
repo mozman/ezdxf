@@ -13,10 +13,10 @@ HALF_PI = math.pi / 2.
 class TestConstructionCircle(unittest.TestCase):
     def test_init_circle(self):
         circle = ConstructionCircle((0., 0.), 5)
-        point = circle.get_point(HALF_PI)
+        point = circle.point_at(HALF_PI)
         self.assertAlmostEqual(point[0], 0., 3)
         self.assertAlmostEqual(point[1], 5., 3)
-        point = circle.get_point(HALF_PI / 2)
+        point = circle.point_at(HALF_PI / 2)
         self.assertAlmostEqual(point[0], 3.5355, 3)
         self.assertAlmostEqual(point[1], 3.5355, 3)
 
@@ -24,8 +24,8 @@ class TestConstructionCircle(unittest.TestCase):
         circle = ConstructionCircle((0., 0.), 5)
         p1 = (3., 2.)
         p2 = (4., 5.)
-        self.assertTrue(circle.within(p1))
-        self.assertFalse(circle.within(p2))
+        self.assertTrue(circle.inside(p1))
+        self.assertFalse(circle.inside(p2))
 
     def test_tangent(self):
         circle = ConstructionCircle((0., 0.), 5.)
@@ -200,37 +200,3 @@ class TestConstructionCircle(unittest.TestCase):
         self.assertAlmostEqual(circle.center[0], 7.6875, 4)
         self.assertAlmostEqual(circle.center[1], 3.15625, 4)
         self.assertAlmostEqual(circle.radius, 4.6901, 4)
-
-    def test_get_y(self):
-        def check(x, y1, y2):
-            result = circle.get_y(x)
-            self.assertTrue(result)
-            # order of results unknown
-            v1 = isclose(result[0], y1, abs_tol=1e-4) and isclose(result[1], y2, abs_tol=1e-4)
-            v2 = isclose(result[0], y2, abs_tol=1e-4) and isclose(result[1], y1, abs_tol=1e-4)
-            return v1 or v2
-
-        circle = ConstructionCircle((20., -20.), 5)
-        self.assertFalse(circle.get_x(-14))
-        self.assertTrue(check(15., -20., -20.))
-        self.assertTrue(check(25., -20., -20.))
-        self.assertTrue(check(20., -15., -25.))
-        self.assertTrue(check(17.8504, -15.4857, -24.5143))
-        self.assertTrue(check(22.2848, -15.5526, -24.4474))
-
-    def test_get_x(self):
-        def check(y, x1, x2):
-            result = circle.get_x(y)
-            self.assertTrue(result)
-            # order of results unknown
-            v1 = isclose(result[0], x1, abs_tol=1e-4) and isclose(result[1], x2, abs_tol=1e-4)
-            v2 = isclose(result[0], x2, abs_tol=1e-4) and isclose(result[1], x1, abs_tol=1e-4)
-            return v1 or v2
-
-        circle = ConstructionCircle((20., -20.), 5.)
-        self.assertEqual(len(circle.get_y(-14.)), 0)
-        self.assertTrue(check(-15., 20., 20.))
-        self.assertTrue(check(-25., 20., 20.))
-        self.assertTrue(check(-20., 15., 25.))
-        self.assertTrue(check(-17.7152, 15.5526, 24.4474))
-        self.assertTrue(check(-22.1496, 15.4857, 24.5143))

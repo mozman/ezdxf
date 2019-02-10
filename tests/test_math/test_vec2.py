@@ -34,6 +34,14 @@ def test_compatible_to_vector():
     assert v.y == 2
 
 
+def test_vec3():
+    v = Vec2((1, 2))
+    assert len(v) == 2
+    v3 = v.vec3
+    assert len(v3) == 3
+    assert v3 == (1, 2, 0)
+
+
 def test_from_angle(vcls):
     angle = math.radians(50)
     length = 3.
