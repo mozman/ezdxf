@@ -366,14 +366,29 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
 
 
 def linear_tutorial_using_tolerances():
-    # 1. Because of using special MTEXT features ezdxf requires DXF R2000+ for tolerance rendering
+    # ezdxf uses MTEXT features for tolerance rendering
     dwg = ezdxf.new('R2000', setup=True)
     msp = dwg.modelspace()
     tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'TOLERANCE')  # type: DimStyle
     tol_style.set_tolerance(.1, hfactor=.5, align="top", dec=2)
     msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='tolerance').render()
-    msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='tolerance').render()
+
+    style = msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='tolerance')
+    # as dim style override
+    style.set_tolerance(.1, .15, hfactor=.4, align="middle", dec=2)
+    style.render()
     dwg.saveas(OUTDIR / 'dimensions_with_tolerance.dxf')
+
+
+def linear_tutorial_using_limits():
+    # ezdxf uses MTEXT features for limits rendering
+    dwg = ezdxf.new('R2000', setup=True)
+    msp = dwg.modelspace()
+    tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'LIMITS')  # type: DimStyle
+    tol_style.set_limits(upper=.1, lower=.1, hfactor=.5, dec=2)
+    msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='limits').render()
+    msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='limits').render()
+    dwg.saveas(OUTDIR / 'dimensions_with_limits.dxf')
 
 
 def linear_tutorial_ext_lines():
@@ -442,11 +457,11 @@ def linear_EZ_MM(fmt):
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = True
+ALL = False
 
 if __name__ == '__main__':
+    linear_tutorial_using_limits()
     linear_tutorial_using_tolerances()
-    example_random_multi_point_linear_dimension(count=10, length=20)
 
     if ALL:
         linear_tutorial('R2007')
@@ -456,6 +471,9 @@ if __name__ == '__main__':
         example_for_all_text_placings_R2007()
         example_for_all_text_placings_ucs_R2007()
         example_multi_point_linear_dimension()
+        example_random_multi_point_linear_dimension(count=10, length=20)
+
+        linear_tutorial_using_tolerances()
 
         example_for_all_text_placings_ucs_R12()
         example_for_all_text_placings_in_space_R12()

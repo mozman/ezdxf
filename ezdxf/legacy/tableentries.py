@@ -791,6 +791,7 @@ class DimStyle(DXFEntity):
             trailing_zeros: suppress trailing zeros for decimal dimensions if False, required DXF R2000+
 
         """
+        # exclusive tolerances
         self.dxf.dimtol = 1
         self.dxf.dimlim = 0
         self.dxf.dimtp = float(upper)
@@ -818,3 +819,39 @@ class DimStyle(DXFEntity):
         except const.DXFAttributeError:
             raise DXFVersionError('DIMTZIN, DIMTOLJ and DIMTDEC require DXF R2000+')
 
+    def set_limits(self, upper: float, lower: float, hfactor: float = 1.0,
+                   dec: int = None, leading_zeros: bool = None, trailing_zeros: bool = None) -> None:
+        """
+        Set limits text format, upper and lower limit values, text height factor, number of decimal places or
+        leading and trailing zero suppression.
+
+        Args:
+            upper: upper limit value added to measurement value
+            lower: lower lower value subtracted from measurement value
+            hfactor: limit text height factor in relation to the dimension text height
+            dec: Sets the number of decimal places displayed, required DXF R2000+
+            leading_zeros: suppress leading zeros for decimal dimensions if False, required DXF R2000+
+            trailing_zeros: suppress trailing zeros for decimal dimensions if False, required DXF R2000+
+
+        """
+        # exclusive limits
+        self.dxf.dimlim = 1
+        self.dxf.dimtol = 0
+        self.dxf.dimtp = float(upper)
+        self.dxf.dimtm = float(lower)
+        self.dxf.dimtfac = float(hfactor)
+
+        try:
+            # works only with decimal dimensions not inch and feet, US user set dimzin directly
+            if leading_zeros is not None or trailing_zeros is not None:
+                dimtzin = 0
+                if leading_zeros is False:
+                    dimtzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+                if trailing_zeros is False:
+                    dimtzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
+                self.dxf.dimtzin = dimtzin
+            self.dxf.dimtolj = 0  # set bottom as default
+            if dec is not None:
+                self.dxf.dimtdec = int(dec)
+        except const.DXFAttributeError:
+            raise DXFVersionError('DIMTZIN, DIMTOLJ and DIMTDEC require DXF R2000+')

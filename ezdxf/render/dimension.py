@@ -30,7 +30,8 @@ class TextBox(ConstructionBox):
 PLUS_MINUS = '±'
 _TOLERANCE_COMMON = r"\A{align};{txt}{{\H{fac:.2f}x;"
 TOLERANCE_TEMPLATE1 = _TOLERANCE_COMMON + r"{tol}}}"
-TOLERANCE_TEMPLATE2 = _TOLERANCE_COMMON + r"\S{upr}^{lwr}}}"
+TOLERANCE_TEMPLATE2 = _TOLERANCE_COMMON + r"\S{upr}^ {lwr};}}"
+LIMITS_TEMPLATE = r"{{\H{fac:.2f}x;\S{upr}^ {lwr};}}"
 
 
 def OptionalVec2(v) -> Optional[Vec2]:
@@ -340,11 +341,12 @@ class BaseDimensionRenderer:
         self.tol_char_height = self.char_height * self.tol_text_scale_factor * self.dim_scale
         # tolerances
         if self.dim_tolerance:
+            # single tolerance value +/- value
             if self.tol_minimum == self.tol_maximum:
                 self.tol_text = PLUS_MINUS + self.format_tolerance_text(abs(self.tol_maximum))
                 self.tol_text_height = self.tol_char_height
                 self.tol_text_width = self.tolerance_text_width(len(self.tol_text))
-            else:
+            else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
                 self.tol_text_upper = sign_char(self.tol_maximum) + self.format_tolerance_text(
                     abs(self.tol_maximum))
                 self.tol_text_lower = sign_char(self.tol_minimum * -1) + self.format_tolerance_text(
@@ -353,6 +355,15 @@ class BaseDimensionRenderer:
                 self.tol_text_height = self.tol_char_height + (self.tol_text_height * self.tol_line_spacing)
                 self.tol_text_width = self.tolerance_text_width(max(len(self.tol_text_upper), len(self.tol_text_lower)))
             # reset text height
+            self.text_height = max(self.text_height, self.tol_text_height)
+
+        elif self.dim_limits:
+            self.tol_text = None  # always None for limits
+            # limits text is always 2 stacked numbers and requires actual measurement
+            self.tol_text_upper = None  # text for upper limit
+            self.tol_text_lower = None  # text for lower limit
+            self.tol_text_height = self.tol_char_height + (self.tol_text_height * self.tol_line_spacing)
+            self.tol_text_width = None  # requires actual measurement
             self.text_height = max(self.text_height, self.tol_text_height)
 
     @property
@@ -467,6 +478,12 @@ class BaseDimensionRenderer:
                     fac=self.tol_text_scale_factor,
                     tol=self.tol_text,
                 )
+        elif self.dim_limits:
+            text = LIMITS_TEMPLATE.format(
+                upr=self.tol_text_upper,
+                lwr=self.tol_text_lower,
+                fac=self.tol_text_scale_factor,
+            )
         return text
 
     def format_tolerance_text(self, value: float) -> str:
@@ -743,7 +760,22 @@ class LinearDimension(BaseDimensionRenderer):
             if self.dim_tolerance:
                 self.dim_text_width += self.tol_text_width
 
-            if self.text_valign == 0:  # vertical centered text needs also space for arrows
+            elif self.dim_limits:
+                # limits show the upper and lower limit of the measurement as stacked values
+                # and with the size of tolerances
+                measurement = self.measurement * self.dim_measurement_factor
+                self.measurement_upper_limit = measurement + self.tol_maximum
+                self.measurement_lower_limit = measurement - self.tol_minimum
+                self.tol_text_upper = self.format_tolerance_text(self.measurement_upper_limit)
+                self.tol_text_lower = self.format_tolerance_text(self.measurement_lower_limit)
+                self.tol_text_width = self.tolerance_text_width(max(len(self.tol_text_upper), len(self.tol_text_lower)))
+
+                # only limits are displayed so:
+                self.dim_text_width = self.tol_text_width
+
+            if self.text_valign == 0:
+                # vertical centered text needs also space for arrows
+                # todo: dimtvp usage
                 required_space = self.dim_text_width + 2 * self.arrow_size
             else:
                 required_space = self.dim_text_width
@@ -827,6 +859,7 @@ class LinearDimension(BaseDimensionRenderer):
             block: target BLOCK for rendering
 
         """
+        # call required to store block into self.block
         super().render(block)
 
         # add extension line 1

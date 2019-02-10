@@ -233,6 +233,41 @@ class DimStyleOverride:
                 dimtzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
             self.dimstyle_attribs['dimtzin'] = dimtzin
 
+    def set_limits(self, upper: float, lower: float, hfactor: float = None,
+                   dec: int = None, leading_zeros: bool = None, trailing_zeros: bool = None) -> None:
+        """
+        Set limits text format, upper and lower limit values, text height factor, number of decimal places or
+        leading and trailing zero suppression.
+
+        Args:
+            upper: upper limit value added to measurement value
+            lower: lower lower value subtracted from measurement value
+            hfactor: limit text height factor in relation to the dimension text height
+            dec: Sets the number of decimal places displayed, required DXF R2000+
+            leading_zeros: suppress leading zeros for decimal dimensions if False, required DXF R2000+
+            trailing_zeros: suppress trailing zeros for decimal dimensions if False, required DXF R2000+
+
+        """
+        # exclusive limits
+        self.dimstyle_attribs['dimlim'] = 1
+        self.dimstyle_attribs['dimtol'] = 0
+        self.dimstyle_attribs['dimtp'] = float(upper)
+        self.dimstyle_attribs['dimtm'] = float(lower)
+        if hfactor is not None:
+            self.dimstyle_attribs['dimtfac'] = float(hfactor)
+
+        # works only with decimal dimensions not inch and feet, US user set dimzin directly
+        if leading_zeros is not None or trailing_zeros is not None:
+            dimtzin = 0
+            if leading_zeros is False:
+                dimtzin = const.DIMZIN_SUPPRESSES_LEADING_ZEROS
+            if trailing_zeros is False:
+                dimtzin += const.DIMZIN_SUPPRESSES_TRAILING_ZEROS
+            self.dimstyle_attribs['dimtzin'] = dimtzin
+
+        if dec is not None:
+            self.dimstyle_attribs['dimtdec'] = int(dec)
+
     def set_text_format(self, prefix: str = '', postfix: str = '', rnd: float = None, dec: int = None, sep: str = None,
                         leading_zeros: bool = None, trailing_zeros: bool = None) -> None:
         """

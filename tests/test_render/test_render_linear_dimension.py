@@ -13,7 +13,6 @@ def dwg():
 
 
 def test_linear_dimension_with_one_tolerance(dwg):
-    block = dwg.blocks.new_anonymous_block(type_char='D')
     msp = dwg.modelspace()
     dimline = msp.add_linear_dim(base=(0, 10), p1=(0, 0), p2=(100, 0))
     override = {
@@ -25,7 +24,7 @@ def test_linear_dimension_with_one_tolerance(dwg):
         'dimtm': 0.01,
     }
     style = DimStyleOverride(dimline.dimension, override)
-    renderer = LinearDimension(dimline.dimension, block, override=style)
+    renderer = LinearDimension(dimline.dimension, override=style)
     assert renderer.text == '100'
     assert renderer.text_decimal_separator == '.'
     assert renderer.tol_decimal_places == 4  # default value
@@ -35,7 +34,6 @@ def test_linear_dimension_with_one_tolerance(dwg):
 
 
 def test_linear_dimension_with_two_tolerances(dwg):
-    block = dwg.blocks.new_anonymous_block(type_char='D')
     msp = dwg.modelspace()
     dimline = msp.add_linear_dim(base=(0, 10), p1=(0, 0), p2=(101, 0))
     override = {
@@ -47,13 +45,33 @@ def test_linear_dimension_with_two_tolerances(dwg):
         'dimtm': 0.03,
     }
     style = DimStyleOverride(dimline.dimension, override)
-    renderer = LinearDimension(dimline.dimension, block, override=style)
+    renderer = LinearDimension(dimline.dimension, override=style)
     assert renderer.text == '101'
     assert renderer.text_decimal_separator == '.'
     assert renderer.tol_decimal_places == 4  # default value
     assert renderer.tol_text_upper == '+0.0200'
     assert renderer.tol_text_lower == '-0.0300'
     assert renderer.tol_valign == 1
-    assert renderer.compile_mtext() == r"\A1;101{\H0.50x;\S+0.0200^-0.0300}"
+    assert renderer.compile_mtext() == r"\A1;101{\H0.50x;\S+0.0200^ -0.0300;}"
+
+
+def test_linear_dimension_with_limits(dwg):
+    msp = dwg.modelspace()
+    dimline = msp.add_linear_dim(base=(0, 10), p1=(0, 0), p2=(101, 0))
+    override = {
+        'dimlfac': 1,
+        'dimlim': 1,
+        'dimtfac': .5,
+        'dimtp': 0.02,
+        'dimtm': 0.03,
+    }
+    style = DimStyleOverride(dimline.dimension, override)
+    renderer = LinearDimension(dimline.dimension, override=style)
+    assert renderer.text == '101'
+    assert renderer.text_decimal_separator == '.'
+    assert renderer.tol_decimal_places == 4  # default value
+    assert renderer.tol_text_upper == '101.0200'
+    assert renderer.tol_text_lower == '100.9700'
+    assert renderer.compile_mtext() == r"{\H0.50x;\S101.0200^ 100.9700;}"
 
 
