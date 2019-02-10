@@ -1,5 +1,5 @@
 # Author:  mozman <me@mozman.at>
-# Purpose: general purpose vector 2D/3D Vector and 2D/3D Point
+# Purpose: General purpose 2d/3d Vector() class and special 2d vector Vec2() class for more speed.
 # License: MIT License
 from typing import Tuple, List, Iterable, Any, Union, Sequence, TYPE_CHECKING
 from functools import partial
@@ -513,12 +513,13 @@ TVec2 = Union["VecXY", Sequence[float]]
 
 class Vec2:
     """
-    Vec2 represents a special 2d vector (x, y). This class is optimized for speed.
+    Vec2 represents a special 2d vector (x, y). The Vec2() class is optimized for speed and not immutable, iadd, isub,
+    imul and idiv modifies the vector itself, the Vector() class returns a new object.
 
     Args:
-        v: Vec2 or sequence of float [x, y, ...]
+        v: vector class with x and y attributes/properties or sequence of float [x, y, ...]
 
-    Vec2() is a subset of Vector(), test by feature for 2d or 3d vector: if len(v) == 2: Vec2() else Vector().
+    Vec2() implements a subset of Vector(), test by feature for 2d or 3d vector: if len(v) == 2: Vec2() else Vector().
 
 
     """
@@ -560,7 +561,7 @@ class Vec2:
         return '({0.x}, {0.y})'.format(self)
 
     def __repr__(self) -> str:
-        return 'Vector' + self.__str__()
+        return 'Vec2' + self.__str__()
 
     def __len__(self) -> int:
         return 2
@@ -628,9 +629,9 @@ class Vec2:
 
         """
         if ccw:
-            return Vec2((-self.y, self.x))
+            return self.__class__((-self.y, self.x))
         else:
-            return Vec2((self.y, -self.x))
+            return self.__class__((self.y, -self.x))
 
     def lerp(self, other: 'VecXY', factor: float = .5) -> 'Vec2':
         """
@@ -643,8 +644,9 @@ class Vec2:
         Returns: interpolated vector
 
         """
-        d = (other - self) * factor
-        return self.__add__(d)
+        x = self.x + (other.x - self.x) * factor
+        y = self.y + (other.y - self.y) * factor
+        return self.__class__((x, y))
 
     def project(self, other: 'VecXY') -> 'Vec2':
         """
@@ -658,7 +660,7 @@ class Vec2:
         return self.__mul__(length / self.magnitude)
 
     def reversed(self) -> 'Vec2':
-        return Vec2((-self.x, -self.y))
+        return self.__class__((-self.x, -self.y))
 
     __neg__ = reversed
 
@@ -669,10 +671,12 @@ class Vec2:
         return math.isclose(self.x, other.x, abs_tol=abs_tol) and math.isclose(self.y, other.y, abs_tol=abs_tol)
 
     def __eq__(self, other: 'Vertex') -> bool:
+        # accepts also tuples, for more convenience at testing
         x, y, *_ = other
         return isclose(self.x, x) and isclose(self.y, y)
 
     def __lt__(self, other: 'Vertex') -> bool:
+        # accepts also tuples, for more convenience at testing
         x, y, *_ = other
         if self.x == x:
             return self.y < y
@@ -771,7 +775,7 @@ class Vec2:
             angle: angle in radians
 
         """
-        return Vec2.from_angle(self.angle + angle, self.magnitude)
+        return self.__class__.from_angle(self.angle + angle, self.magnitude)
 
     def rotate_deg(self, angle: float) -> 'Vec2':
         """
@@ -783,4 +787,4 @@ class Vec2:
         Returns: rotated vector
 
         """
-        return Vec2.from_angle(self.angle + math.radians(angle), self.magnitude)
+        return self.__class__.from_angle(self.angle + math.radians(angle), self.magnitude)
