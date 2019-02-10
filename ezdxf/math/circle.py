@@ -36,7 +36,7 @@ class ConstructionCircle(ConstructionTool):
     @property
     def bounding_box(self) -> 'BoundingBox2d':
         rvec = Vec2((self.radius, self.radius))
-        return BoundingBox2d(self.center - rvec, self.center + rvec)
+        return BoundingBox2d((self.center - rvec, self.center + rvec))
 
     def move(self, dx: float, dy: float) -> None:
         """

@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 
 class BoundingBox:
-    def __init__(self, p1: 'Vertex', p2: 'Vertex'):
-        self.extmin, self.extmax = extends([p1, p2])
+    def __init__(self, vertices: Iterable['Vertex']):
+        self.extmin, self.extmax = extends(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
         x, y, z = Vector(vertex).xyz
@@ -50,8 +50,8 @@ def extends(vertices: Iterable['Vertex']) -> Tuple[Vector, Vector]:
 
 
 class BoundingBox2d:
-    def __init__(self, p1: 'Vertex', p2: 'Vertex'):
-        self.extmin, self.extmax = extends2d([p1, p2])
+    def __init__(self, vertices: Iterable['Vertex']):
+        self.extmin, self.extmax = extends2d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
         v = Vec2(vertex)

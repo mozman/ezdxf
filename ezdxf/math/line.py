@@ -182,7 +182,7 @@ class ConstructionLine(ConstructionTool):
     # ConstructionTool interface
     @property
     def bounding_box(self):
-        return BoundingBox2d(self.start, self.end)
+        return BoundingBox2d((self.start, self.end))
 
     def move(self, dx: float, dy: float) -> None:
         """

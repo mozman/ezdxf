@@ -1,6 +1,6 @@
-from typing import List, Sequence, TYPE_CHECKING, Iterable
+from typing import List, Sequence, TYPE_CHECKING, Iterable, Tuple
 import math
-from .vector import Vector, Vec2
+from .vector import Vec2
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
 from .construct2d import left_of_line, ConstructionTool
@@ -10,16 +10,16 @@ if TYPE_CHECKING:
 
 
 class ConstructionBox(ConstructionTool):
-    def __init__(self, center: 'Vertex' = Vector(), width: float = 1, height: float = 1, angle: float = 0):
+    def __init__(self, center: 'Vertex' = (0, 0), width: float = 1, height: float = 1, angle: float = 0):
         self._center = Vec2(center)
-        self._width = abs(width)
-        self._height = abs(height)
-        self._angle = angle
-        self._corners = None
+        self._width = abs(width)  # type: float
+        self._height = abs(height)  # type: float
+        self._angle = angle  # type: float
+        self._corners = None  # type: Tuple[Vec2, Vec2, Vec2, Vec2]
         self._tainted = True
 
     @classmethod
-    def from_points(cls, p1: 'Vertex', p2: 'Vertex'):
+    def from_points(cls, p1: 'Vertex', p2: 'Vertex') -> 'ConstructionBox':
         p1 = Vec2(p1)
         p2 = Vec2(p2)
         width = abs(p2.x - p1.x)
@@ -27,7 +27,7 @@ class ConstructionBox(ConstructionTool):
         center = p1.lerp(p2)
         return cls(center=center, width=width, height=height)
 
-    def update(self):
+    def update(self) -> None:
         if not self._tainted:
             return
         center = self.center
@@ -43,10 +43,7 @@ class ConstructionBox(ConstructionTool):
 
     @property
     def bounding_box(self) -> BoundingBox2d:
-        c = self.corners
-        bbox = BoundingBox2d(c[0], c[1])
-        bbox.extend(c[2:])
-        return bbox
+        return BoundingBox2d(self.corners)
 
     @property
     def center(self) -> Vec2:

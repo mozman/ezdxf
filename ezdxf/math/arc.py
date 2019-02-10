@@ -43,7 +43,7 @@ class ConstructionArc(ConstructionTool):
 
     @property
     def bounding_box(self) -> 'BoundingBox2d':
-        bbox = BoundingBox2d(self.start_point, self.end_point)
+        bbox = BoundingBox2d((self.start_point, self.end_point))
         bbox.extend(self.main_axis_points())
         return bbox
 
