@@ -619,7 +619,7 @@ class DimStyle(DXFEntity):
         """
         self.set_dxf_attrib('dimtsz', size)
 
-    def set_text_align(self, halign: str = None, valign: str = None) -> None:
+    def set_text_align(self, halign: str = None, valign: str = None, vshift: float = None) -> None:
         """
         Set measurement text alignment, `halign` defines the horizontal alignment (requires DXFR2000+),
         `valign` defines the vertical  alignment, `above1` and `above2` means above extension line 1 or 2 and aligned
@@ -628,10 +628,14 @@ class DimStyle(DXFEntity):
         Args:
             halign: `left`, `right`, `center`, `above1`, `above2`, requires DXF R2000+
             valign: `above`, `center`, `below`
+            vshift: vertical text shift, if `valign` is `center`; >0 shift upward, <0 shift downwards
 
         """
         if valign:
-            self.set_dxf_attrib('dimtad', DIMTAD[valign.lower()])
+            valign = valign.lower()
+            self.set_dxf_attrib('dimtad', DIMTAD[valign])
+            if valign == 'center' and vshift is not None:
+                self.set_dxf_attrib('dimtvp', vshift)
         try:
             if halign:
                 self.set_dxf_attrib('dimjust', DIMJUST[halign.lower()])

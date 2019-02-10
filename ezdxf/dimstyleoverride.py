@@ -78,6 +78,7 @@ class DimStyleOverride:
         Write overwritten DIMSTYLE attributes into XDATA section of the DIMENSION entity.
 
         """
+
         def set_arrow_handle(attrib_name, block_name):
             attrib_name += '_handle'
             if block_name in ARROWS:  # create all arrows on demand
@@ -177,21 +178,25 @@ class DimStyleOverride:
         """
         self.dimstyle_attribs['dimtsz'] = float(size)
 
-    def set_text_align(self, halign=None, valign=None) -> None:
+    def set_text_align(self, halign: str = None, valign: str = None, vshift: float = None) -> None:
         """
         Set measurement text alignment, `halign` defines the horizontal alignment, `valign` defines the vertical
         alignment, `above1` and `above2` means above extension line 1 or 2 and aligned with extension line.
 
         Args:
-            halign: `left`, `right` or `center`
-            valign: `above`, `center`, `below`, `above1`, `above2`
+            halign: `left`, `right`, `center`, `above1`, `above2`, requires DXF R2000+
+            valign: `above`, `center`, `below`
+            vshift: vertical text shift, if `valign` is `center`; >0 shift upward, <0 shift downwards
 
         """
         if halign:
             self.dimstyle_attribs['dimjust'] = DIMJUST[halign.lower()]
 
         if valign:
-            self.dimstyle_attribs['dimtad'] = DIMTAD[valign.lower()]
+            valign = valign.lower()
+            self.dimstyle_attribs['dimtad'] = DIMTAD[valign]
+            if valign == 'center' and vshift is not None:
+                self.dimstyle_attribs['dimtvp'] = float(vshift)
 
     def set_tolerance(self, upper: float, lower: float = None, hfactor: float = None,
                       align: str = None, dec: int = None, leading_zeros: bool = None,
@@ -398,8 +403,7 @@ class DimStyleOverride:
 
     def shift_text(self, dh: float, dv: float) -> None:
         """
-        Set relative text movement, this is not a DXF feature, therefor parameter not stored in the XDATA DSTYLE
-        section. This is only a rendering effect and ignored if a user defined location is in use.
+        Set relative text movement, implemented as user location override without leader.
 
         Args:
             dh: shift text in text direction

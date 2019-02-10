@@ -160,7 +160,7 @@ class BaseDimensionRenderer:
         # Controls the vertical position of dimension text above or below the dimension line, when DIMTAD = 0.
         # The magnitude of the vertical offset of text is the product of the text height (+gap?) and DIMTVP.
         # Setting DIMTVP to 1.0 is equivalent to setting DIMTAD = 1.
-        self.text_vertical_position = get('dimtvp', 1.)  # type: float  # not supported yet
+        self.text_vertical_position = get('dimtvp', 0.)  # type: float  # not supported yet
 
         self.text_movement_rule = get('dimtmove', 2)  # type: int # move text freely
         if self.text_movement_rule == 0:
@@ -773,9 +773,12 @@ class LinearDimension(BaseDimensionRenderer):
                 # only limits are displayed so:
                 self.dim_text_width = self.tol_text_width
 
-            if self.text_valign == 0:
+            if self.multi_point_mode:
+                # ezdxf has total control about vertical text position in multi point mode
+                self.text_vertical_position = 0.
+
+            if self.text_valign == 0 and abs(self.text_vertical_position) < 0.7:
                 # vertical centered text needs also space for arrows
-                # todo: dimtvp usage
                 required_space = self.dim_text_width + 2 * self.arrow_size
             else:
                 required_space = self.dim_text_width
@@ -933,7 +936,7 @@ class LinearDimension(BaseDimensionRenderer):
             vdist = self.ext_line_extension + self.dim_text_width / 2.
             location += Vec2.from_deg_angle(self.ext_line_angle).normalize(vdist)
         else:
-            # relocate outside text if centered to the second extension line
+            # relocate outside text to center location
             if self.text_outside:
                 halign = 0
 
@@ -1139,7 +1142,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         """
         if self.text_valign == 0:
-            return 0
+            return self.text_vertical_position
         elif self.text_valign == 4:
             return -1
         else:
@@ -1294,6 +1297,7 @@ def multi_point_linear_dimension(
     base = Vec2(base)
     override = override or {}
     override['dimtix'] = 1  # do not place measurement text outside
+    override['dimtvp'] = 0  # do not place measurement text outside
     override['multi_point_mode'] = True
     # 1 .. move wide text up; 2 .. move wide text down; None .. ignore
     # moving text down, looks best combined with text fill bg: DIMTFILL = 1

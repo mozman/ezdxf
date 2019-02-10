@@ -37,15 +37,6 @@ def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
     dimstyle.dxf.dimtxsty = textstyle
 
 
-def to_ocs_angle(ucs, angle):
-    # center = Vector()
-    angle_vec = Vector.from_deg_angle(angle)
-    # center_ocs = ucs.to_ocs(center)
-    angel_vec_ocs = ucs.to_ocs(angle_vec)
-    end_angle = (angel_vec_ocs - ucs.origin).angle_deg
-    return end_angle
-
-
 def linear_tutorial(dxfversion='R12'):
     dwg = ezdxf.new(dxfversion, setup=True)
     msp = dwg.modelspace()
@@ -391,6 +382,22 @@ def linear_tutorial_using_limits():
     dwg.saveas(OUTDIR / 'dimensions_with_limits.dxf')
 
 
+def linear_tutorial_using_tvp():
+    dwg = ezdxf.new('R2000', setup=True)
+    msp = dwg.modelspace()
+    style = dwg.dimstyles.duplicate_entry('EZDXF', 'TVP')  # type: DimStyle
+    style.set_text_align(valign='center', vshift=2.0)
+    msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='TVP').render()
+    msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='TVP').render()
+
+    style = dwg.dimstyles.duplicate_entry('EZDXF', 'TVP2')  # type: DimStyle
+    style.set_text_align(valign='center', vshift=-2.0)
+    msp.add_linear_dim(base=(0, 7), p1=(0, 5), p2=(10, 5), dimstyle='TVP2').render()
+    msp.add_linear_dim(base=(0, 7), p1=(15, 5), p2=(15.5, 5), dimstyle='TVP2').render()
+
+    dwg.saveas(OUTDIR / 'dimensions_with_dimtvp.dxf')
+
+
 def linear_tutorial_ext_lines():
     dwg = ezdxf.new('R12', setup=True)
     msp = dwg.modelspace()
@@ -460,8 +467,7 @@ def linear_EZ_MM(fmt):
 ALL = False
 
 if __name__ == '__main__':
-    linear_tutorial_using_limits()
-    linear_tutorial_using_tolerances()
+    linear_tutorial_using_tvp()
 
     if ALL:
         linear_tutorial('R2007')
@@ -473,6 +479,7 @@ if __name__ == '__main__':
         example_multi_point_linear_dimension()
         example_random_multi_point_linear_dimension(count=10, length=20)
 
+        linear_tutorial_using_limits()
         linear_tutorial_using_tolerances()
 
         example_for_all_text_placings_ucs_R12()
