@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 
-from .vec2 import Vec2
+from .vector import Vec2
 from .bbox import BoundingBox2d
 from .construct2d import ConstructionTool, enclosing_angles
 from .circle import ConstructionCircle

@@ -14,8 +14,7 @@ from typing import *
 
 if TYPE_CHECKING:
     # Low level stuff
-    from ezdxf.math.vector import Vector
-    from ezdxf.math.vec2 import Vec2
+    from ezdxf.math.vector import Vector, Vec2
     from ezdxf.math.matrix44 import Matrix44
     from ezdxf.math.bbox import BoundingBox, BoundingBox2d
     from ezdxf.tools.handle import HandleGenerator

@@ -1,7 +1,6 @@
 from typing import List, Sequence, TYPE_CHECKING, Iterable
 import math
-from .vector import Vector
-from .vec2 import Vec2
+from .vector import Vector, Vec2
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
 from .construct2d import left_of_line, ConstructionTool

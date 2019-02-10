@@ -2,8 +2,7 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple
-from .vector import Vector
-from .vec2 import Vec2
+from .vector import Vector, Vec2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex

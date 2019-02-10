@@ -3,8 +3,7 @@
 from typing import TYPE_CHECKING, Tuple, Sequence
 import math
 from .line import ConstructionRay
-from .vector import Vector
-from .vec2 import Vec2
+from .vector import Vector, Vec2
 from .bbox import BoundingBox2d
 from .construct2d import ConstructionTool
 

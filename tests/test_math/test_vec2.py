@@ -1,5 +1,5 @@
 import math
-from ezdxf.math.vec2 import Vec2
+from ezdxf.math.vector import Vec2
 
 
 def V2(x, y):

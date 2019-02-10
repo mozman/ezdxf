@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Optional
 import math
 from .construct2d import ConstructionTool
 from .bbox import BoundingBox2d
-from .vector import Vector
-from .vec2 import Vec2
+from .vector import Vec2
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
