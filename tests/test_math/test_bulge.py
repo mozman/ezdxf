@@ -4,7 +4,6 @@ import math
 from ezdxf.math.bulge import bulge_radius, bulge_center, arc_to_bulge, bulge_3_points, bulge_to_arc
 
 
-
 def test_bulge_radius():
     assert bulge_radius((0, 0), (1, 0), 1) == .5
     assert bulge_radius((0, 0), (1, 0), -1) == .5

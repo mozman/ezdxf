@@ -515,8 +515,6 @@ class Vec2:
     """
     Vec2 represents a special 2d vector (x, y). This class is optimized for speed.
 
-    IMPORTANT: only for internal usage, at API level use always Vector().
-
     Args:
         v: Vec2 or sequence of float [x, y, ...]
 
