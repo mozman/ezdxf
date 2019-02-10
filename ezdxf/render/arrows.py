@@ -2,9 +2,9 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
-from ezdxf.math.vector import Vector
+from ezdxf.math import Vec2, Shape2d
 from .forms import open_arrow, arrow2
-from .shape import Shape
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType
@@ -16,7 +16,7 @@ DEFAULT_BETA = 45.
 # The base Arrow is for the 'Right' side ->| of the Dimension oriented, reverse is the 'Left' side |<-.
 class BaseArrow:
     def __init__(self, vertices: Iterable['Vertex']):
-        self.shape = Shape(vertices)
+        self.shape = Shape2d(vertices)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         pass
@@ -28,7 +28,7 @@ class BaseArrow:
 
 class NoneStroke(BaseArrow):
     def __init__(self, insert: 'Vertex', size: float = 1.0, angle: float = 0):
-        super().__init__([Vector(insert)])
+        super().__init__([Vec2(insert)])
 
 
 class ObliqueStroke(BaseArrow):
@@ -36,7 +36,7 @@ class ObliqueStroke(BaseArrow):
         self.size = size
         s2 = size / 2
         # shape = [center, lower left, upper right]
-        super().__init__([Vector(-s2, -s2), Vector(s2, s2)])
+        super().__init__([Vec2((-s2, -s2)), Vec2((s2, s2))])
         self.place(insert, angle)
 
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
@@ -123,9 +123,9 @@ class Circle(BaseArrow):
         self.radius = size / 2
         # shape = [center point, connection point]
         super().__init__([
-            Vector(),
-            Vector(-self.radius, 0),
-            Vector(-size, 0),
+            Vec2((0, 0)),
+            Vec2((-self.radius, 0)),
+            Vec2((-size, 0)),
         ])
         self.place(insert, angle)
 
@@ -156,7 +156,7 @@ class DotSmall(Circle):
     def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None):
         dxfattribs['closed'] = True
         center = self.shape[0]
-        d = Vector(self.radius / 2, 0)
+        d = Vec2((self.radius / 2, 0))
         p1 = center - d
         p2 = center + d
         if layout.dxfversion > 'AC1009':
@@ -181,12 +181,12 @@ class Box(BaseArrow):
         # shape = [lower_left, lower_right, upper_right, upper_left, connection point]
         s2 = size / 2
         super().__init__([
-            Vector(-s2, -s2),
-            Vector(+s2, -s2),
-            Vector(+s2, +s2),
-            Vector(-s2, +s2),
-            Vector(-s2, 0),
-            Vector(-size, 0),
+            Vec2((-s2, -s2)),
+            Vec2((+s2, -s2)),
+            Vec2((+s2, +s2)),
+            Vec2((-s2, +s2)),
+            Vec2((-s2, 0)),
+            Vec2((-size, 0)),
         ])
         self.place(insert, angle)
 
@@ -215,9 +215,9 @@ class Integral(BaseArrow):
         self.angle = angle
         # shape = [center, left_center, right_center]
         super().__init__([
-            Vector(),
-            Vector(-self.radius, 0),
-            Vector(self.radius, 0),
+            Vec2((0, 0)),
+            Vec2((-self.radius, 0)),
+            Vec2((self.radius, 0)),
         ])
         self.place(insert, angle)
 
@@ -236,9 +236,9 @@ class DatumTriangle(BaseArrow):
         d = .577350269 * size  # tan(30)
         # shape = [upper_corner, lower_corner, connection_point]
         super().__init__([
-            Vector(0, d),
-            Vector(0, -d),
-            Vector(-size, 0),
+            Vec2((0, d)),
+            Vec2((0, -d)),
+            Vec2((-size, 0)),
         ])
         self.place(insert, angle)
 
@@ -416,7 +416,7 @@ class _Arrows:
                      insert: 'Vertex',
                      size: float = 1.,
                      rotation: float = 0,
-                     dxfattribs: dict = None) -> Vector:
+                     dxfattribs: dict = None) -> Vec2:
 
         block_name = self.create_block(layout.drawing.blocks, name)
 
@@ -432,7 +432,7 @@ class _Arrows:
                      insert: 'Vertex',
                      size: float = 1.,
                      rotation: float = 0,
-                     dxfattribs: dict = None) -> Vector:
+                     dxfattribs: dict = None) -> Vec2:
 
         dxfattribs = dxfattribs or {}
         arrow = self.arrow_shape(name, insert, size, rotation)
@@ -449,12 +449,12 @@ class _Arrows:
         return cls(insert, size, rotation)
 
 
-def connection_point(arrow_name: str, insert: 'Vertex', scale: float = 1, rotation: float = 0) -> Vector:
-    insert = Vector(insert)
+def connection_point(arrow_name: str, insert: 'Vertex', scale: float = 1, rotation: float = 0) -> Vec2:
+    insert = Vec2(insert)
     if arrow_name in _Arrows.ORIGIN_ZERO:
         return insert
     else:
-        return insert - Vector.from_deg_angle(rotation, scale)
+        return insert - Vec2.from_deg_angle(rotation, scale)
 
 
 ARROWS = _Arrows()

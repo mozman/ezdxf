@@ -20,9 +20,7 @@ if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, \
         LoftedSurface
-    from ezdxf.eztypes import UCS, GenericLayoutType
-
-Vertex = Union[Sequence[float], Vector]
+    from ezdxf.eztypes import UCS, GenericLayoutType, Vertex
 
 
 def copy_attribs(dxfattribs: dict = None) -> dict:
@@ -43,24 +41,24 @@ class GraphicsFactory:
     def build_and_add_entity(self, type_: str, dxfattribs: dict):
         raise NotImplementedError("Abstract method call.")
 
-    def add_point(self, location: Vertex, dxfattribs: dict = None) -> 'Point':
+    def add_point(self, location: 'Vertex', dxfattribs: dict = None) -> 'Point':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['location'] = location
         return self.build_and_add_entity('POINT', dxfattribs)
 
-    def add_line(self, start: Vertex, end: Vertex, dxfattribs: dict = None) -> 'Line':
+    def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> 'Line':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['end'] = end
         return self.build_and_add_entity('LINE', dxfattribs)
 
-    def add_circle(self, center: Vertex, radius: float, dxfattribs: dict = None) -> 'Circle':
+    def add_circle(self, center: 'Vertex', radius: float, dxfattribs: dict = None) -> 'Circle':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
         return self.build_and_add_entity('CIRCLE', dxfattribs)
 
-    def add_arc(self, center: Vertex, radius: float, start_angle: float, end_angle: float,
+    def add_arc(self, center: 'Vertex', radius: float, start_angle: float, end_angle: float,
                 is_counter_clockwise: bool = True, dxfattribs: dict = None) -> 'Arc':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
@@ -73,13 +71,13 @@ class GraphicsFactory:
             dxfattribs['end_angle'] = start_angle
         return self.build_and_add_entity('ARC', dxfattribs)
 
-    def add_solid(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'Solid':
+    def add_solid(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Solid':
         return cast('Solid', self._add_quadrilateral('SOLID', points, dxfattribs))
 
-    def add_trace(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'Trace':
+    def add_trace(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Trace':
         return cast('Trace', self._add_quadrilateral('TRACE', points, dxfattribs))
 
-    def add_3dface(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'Face':
+    def add_3dface(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Face':
         return cast('Face', self._add_quadrilateral('3DFACE', points, dxfattribs))
 
     def add_text(self, text: str, dxfattribs: dict = None) -> 'Text':
@@ -88,14 +86,14 @@ class GraphicsFactory:
         dxfattribs.setdefault('insert', (0, 0))
         return self.build_and_add_entity('TEXT', dxfattribs)
 
-    def add_blockref(self, name: str, insert: Vertex, dxfattribs: dict = None) -> 'Insert':
+    def add_blockref(self, name: str, insert: 'Vertex', dxfattribs: dict = None) -> 'Insert':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
         blockref = self.build_and_add_entity('INSERT', dxfattribs)
         return blockref
 
-    def add_auto_blockref(self, name: str, insert: Vertex, values: Dict[str, str], dxfattribs: dict = None) \
+    def add_auto_blockref(self, name: str, insert: 'Vertex', values: Dict[str, str], dxfattribs: dict = None) \
             -> 'Insert':
         def get_dxfattribs(attdef) -> dict:
             dxfattribs = attdef.dxfattribs()
@@ -103,7 +101,7 @@ class GraphicsFactory:
             dxfattribs.pop('handle', None)
             return dxfattribs
 
-        def unpack(dxfattribs) -> Tuple[str, str, Vertex]:
+        def unpack(dxfattribs) -> Tuple[str, str, 'Vertex']:
             tag = dxfattribs.pop('tag')
             text = values.get(tag, "")
             insert = dxfattribs.pop('insert')
@@ -123,14 +121,14 @@ class GraphicsFactory:
         autofill(blockref, blockdef)
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 
-    def add_attrib(self, tag: str, text: str, insert: Vertex = (0, 0), dxfattribs: dict = None) -> 'Attrib':
+    def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0), dxfattribs: dict = None) -> 'Attrib':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
         return self.build_and_add_entity('ATTRIB', dxfattribs)
 
-    def add_polyline2d(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'Polyline':
+    def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
         dxfattribs = copy_attribs(dxfattribs)
         closed = dxfattribs.pop('closed', False)
         polyline = self.build_and_add_entity('POLYLINE', dxfattribs)
@@ -138,7 +136,7 @@ class GraphicsFactory:
         polyline.append_vertices(points)
         return polyline
 
-    def add_polyline3d(self, points: Iterable[Vertex], dxfattribs: dict = None) -> 'Polyline':
+    def add_polyline3d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
         return self.add_polyline2d(points, dxfattribs)
@@ -168,7 +166,7 @@ class GraphicsFactory:
         polyface.close(m_close, n_close)
         return polyface.cast()
 
-    def _add_quadrilateral(self, type_: str, points: Iterable[Vertex], dxfattribs: dict = None) -> 'DXFEntity':
+    def _add_quadrilateral(self, type_: str, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'DXFEntity':
         dxfattribs = copy_attribs(dxfattribs)
         entity = self.build_and_add_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
@@ -176,7 +174,7 @@ class GraphicsFactory:
         return entity
 
     @staticmethod
-    def _four_points(points: Iterable[Vertex]) -> Iterable[Vertex]:
+    def _four_points(points: Iterable['Vertex']) -> Iterable['Vertex']:
         vertices = list(points)
         if len(vertices) not in (3, 4):
             raise DXFValueError('3 or 4 points required.')
@@ -185,7 +183,7 @@ class GraphicsFactory:
         if len(vertices) == 3:
             yield vertices[-1]  # last again
 
-    def add_shape(self, name: str, insert: Vertex = (0, 0), size: float = 1.0, dxfattribs: dict = None) -> 'Shape':
+    def add_shape(self, name: str, insert: 'Vertex' = (0, 0), size: float = 1.0, dxfattribs: dict = None) -> 'Shape':
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
@@ -194,7 +192,7 @@ class GraphicsFactory:
 
     # new entities in DXF AC1015 (R2000)
 
-    def add_lwpolyline(self, points: Iterable[Vertex], format: str = 'xyseb', dxfattribs: dict = None) -> 'LWPolyline':
+    def add_lwpolyline(self, points: Iterable['Vertex'], format: str = 'xyseb', dxfattribs: dict = None) -> 'LWPolyline':
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('LWPOLYLINE requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -204,7 +202,7 @@ class GraphicsFactory:
         lwpolyline.closed = closed
         return lwpolyline
 
-    def add_ellipse(self, center: Vertex, major_axis: Vertex = (1, 0, 0), ratio: float = 1, start_param: float = 0,
+    def add_ellipse(self, center: 'Vertex', major_axis: 'Vertex' = (1, 0, 0), ratio: float = 1, start_param: float = 0,
                     end_param: float = 6.283185307, dxfattribs: dict = None) -> 'Ellipse':
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('ELLIPSE requires DXF version R2000+')
@@ -227,7 +225,7 @@ class GraphicsFactory:
         mtext.set_text(text)
         return mtext
 
-    def add_ray(self, start: Vertex, unit_vector: Vertex, dxfattribs: dict = None) -> 'Ray':
+    def add_ray(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'Ray':
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('RAY requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -235,7 +233,7 @@ class GraphicsFactory:
         dxfattribs['unit_vector'] = unit_vector
         return self.build_and_add_entity('RAY', dxfattribs)
 
-    def add_xline(self, start: Vertex, unit_vector: Vertex, dxfattribs: dict = None) -> 'XLine':
+    def add_xline(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'XLine':
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('XLINE requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -243,7 +241,7 @@ class GraphicsFactory:
         dxfattribs['unit_vector'] = unit_vector
         return self.build_and_add_entity('XLINE', dxfattribs)
 
-    def add_spline(self, fit_points: Iterable[Vertex] = None, degree: int = 3, dxfattribs: dict = None) -> 'Spline':
+    def add_spline(self, fit_points: Iterable['Vertex'] = None, degree: int = 3, dxfattribs: dict = None) -> 'Spline':
         """
         Add a B-spline defined by fit points, the control points and knot values are created by the CAD application,
         therefore it is not predictable how the rendered spline will look like, because for every set of fit points
@@ -267,7 +265,7 @@ class GraphicsFactory:
             spline.set_fit_points(list(fit_points))
         return spline
 
-    def add_spline_control_frame(self, fit_points: Iterable[Vertex], degree: int = 3, method: str = 'distance',
+    def add_spline_control_frame(self, fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance',
                                  power: float = .5, dxfattribs: dict = None) -> 'Spline':
         """
         Create and add B-spline control frame from fit points.
@@ -296,7 +294,7 @@ class GraphicsFactory:
             dxfattribs=dxfattribs,
         )
 
-    def add_spline_approx(self, fit_points: Iterable[Vertex], count: int, degree: int = 3, method: str = 'distance',
+    def add_spline_approx(self, fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'distance',
                           power: float = .5, dxfattribs: dict = None) -> 'Spline':
         """
         Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
@@ -323,7 +321,7 @@ class GraphicsFactory:
             dxfattribs=dxfattribs,
         )
 
-    def add_open_spline(self, control_points: Iterable[Vertex], degree: int = 3, knots: Iterable[float] = None,
+    def add_open_spline(self, control_points: Iterable['Vertex'], degree: int = 3, knots: Iterable[float] = None,
                         dxfattribs: dict = None) -> 'Spline':
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_uniform(list(control_points), degree)
@@ -331,7 +329,7 @@ class GraphicsFactory:
             spline.set_knot_values(list(knots))
         return spline
 
-    def add_closed_spline(self, control_points: Iterable[Vertex], degree: int = 3, knots: Iterable[float] = None,
+    def add_closed_spline(self, control_points: Iterable['Vertex'], degree: int = 3, knots: Iterable[float] = None,
                           dxfattribs: dict = None) -> 'Spline':
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic(list(control_points), degree)
@@ -339,7 +337,7 @@ class GraphicsFactory:
             spline.set_knot_values(list(knots))
         return spline
 
-    def add_rational_spline(self, control_points: Iterable[Vertex], weights: Sequence[float], degree: int = 3,
+    def add_rational_spline(self, control_points: Iterable['Vertex'], weights: Sequence[float], degree: int = 3,
                             knots: Iterable[float] = None, dxfattribs: dict = None) -> 'Spline':
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(list(control_points), weights, degree)
@@ -347,7 +345,7 @@ class GraphicsFactory:
             spline.set_knot_values(list(knots))
         return spline
 
-    def add_closed_rational_spline(self, control_points: Iterable[Vertex], weights: Sequence[float], degree: int = 3,
+    def add_closed_rational_spline(self, control_points: Iterable['Vertex'], weights: Sequence[float], degree: int = 3,
                                    knots: Iterable[float] = None, dxfattribs: dict = None) -> 'Spline':
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic_rational(list(control_points), weights, degree)
@@ -413,7 +411,7 @@ class GraphicsFactory:
         dxfattribs = copy_attribs(dxfattribs)
         return self.build_and_add_entity('MESH', dxfattribs)
 
-    def add_image(self, image_def: 'ImageDef', insert: Vertex, size_in_units: Tuple[float, float], rotation: float = 0.,
+    def add_image(self, image_def: 'ImageDef', insert: 'Vertex', size_in_units: Tuple[float, float], rotation: float = 0.,
                   dxfattribs: dict = None) -> 'Image':
         def to_vector(units_per_pixel, angle_in_rad):
             x = math.cos(angle_in_rad) * units_per_pixel
@@ -444,7 +442,7 @@ class GraphicsFactory:
             image_def.append_reactor_handle(reactor_handle)
         return image
 
-    def add_underlay(self, underlay_def: 'UnderlayDef', insert: Vertex = (0, 0, 0),
+    def add_underlay(self, underlay_def: 'UnderlayDef', insert: 'Vertex' = (0, 0, 0),
                      scale: Tuple[float, float, float] = (1, 1, 1),
                      rotation: float = 0., dxfattribs: dict = None) -> 'Underlay':
         if self.dxfversion < 'AC1015':

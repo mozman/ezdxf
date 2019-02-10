@@ -102,4 +102,3 @@ class ConstructionTool:
     @abstractmethod
     def move(self, dx: float, dy: float) -> None:
         pass
-

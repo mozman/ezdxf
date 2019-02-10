@@ -14,7 +14,7 @@ class ConstructionBox(ConstructionTool):
         self._center = Vec2(center)
         self._width = abs(width)  # type: float
         self._height = abs(height)  # type: float
-        self._angle = angle  # type: float
+        self._angle = angle  # type: float  # in degrees
         self._corners = None  # type: Tuple[Vec2, Vec2, Vec2, Vec2]
         self._tainted = True
 

@@ -16,6 +16,8 @@ from .arc import ConstructionArc
 from .line import ConstructionRay, ConstructionLine
 from .circle import ConstructionCircle
 from .box import ConstructionBox
+from .shape import Shape2d
+from .bbox import BoundingBox2d, BoundingBox
 from .convexhull import convex_hull_2d
 from .points import closest_point
 

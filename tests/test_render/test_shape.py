@@ -1,10 +1,10 @@
 import pytest
-from ezdxf.render.shape import Shape, Vector
+from ezdxf.math.shape import Shape2d
 
 
 @pytest.fixture()
 def square():
-    return Shape([(0, 0), (1, 0), (1, 1), (0, 1)])
+    return Shape2d([(0, 0), (1, 0), (1, 1), (0, 1)])
 
 
 def test_init(square):
@@ -54,7 +54,7 @@ def test_rotate(square):
 
 def test_rotate_center(square):
     square.translate((2, 2))
-    square.rotate(90, center=Vector(2, 2))
+    square.rotate(90, center=(2, 2))
     assert square[0] == (2, 2)
     assert square[2] == (1, 3)
 
