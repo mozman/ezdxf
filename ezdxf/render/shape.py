@@ -34,7 +34,7 @@ class Shape:
     def rotate_rad(self, angle: float, center: Vector = None) -> None:
         if center is not None:
             self.translate(-center)  # faster than a Matrix44 multiplication
-        self.vertices = [v.rot_z_rad(angle) for v in self.vertices]
+        self.vertices = [v.rotate(angle) for v in self.vertices]
         if center is not None:
             self.translate(center)  # faster than a Matrix44 multiplication
 

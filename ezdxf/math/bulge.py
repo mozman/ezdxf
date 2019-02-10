@@ -20,7 +20,7 @@ def polar(p: Any, angle: float, distance: float) -> Vector:
         distance: distance
 
     """
-    return Vector(p) + Vector.from_rad_angle(angle, distance)
+    return Vector(p) + Vector.from_angle(angle, distance)
 
 
 def angle(p1: Any, p2: Any) -> float:
@@ -31,7 +31,7 @@ def angle(p1: Any, p2: Any) -> float:
         p2: end point (x, y) as args accepted by Vector()
 
     """
-    return (Vector(p2) - p1).angle_rad
+    return (Vector(p2) - p1).angle
 
 
 def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float, radius: float) -> Tuple[Vector, Vector, float]:
@@ -112,7 +112,7 @@ def bulge_center(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Ve
     """
     start_point = Vector(start_point)
     a = angle(start_point, end_point) + (math.pi / 2. - math.atan(bulge) * 2.)
-    return start_point + Vector.from_rad_angle(a, signed_bulge_radius(start_point, end_point, bulge))
+    return start_point + Vector.from_angle(a, signed_bulge_radius(start_point, end_point, bulge))
 
 
 def signed_bulge_radius(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> float:

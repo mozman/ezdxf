@@ -35,7 +35,7 @@ def test_radius():
 
 def test_tangent():
     spiral = EulerSpiral(2.0)
-    assert isclose(spiral.tangent(1).angle_rad, 0.125)
+    assert isclose(spiral.tangent(1).angle, 0.125)
 
 
 def test_distance():

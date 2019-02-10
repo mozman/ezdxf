@@ -41,7 +41,7 @@ def test_init_three_params():
 def test_from_angle():
     angle = math.radians(50)
     length = 3.
-    assert Vector.from_rad_angle(angle, length) == (math.cos(angle) * length, math.sin(angle) * length, 0)
+    assert Vector.from_angle(angle, length) == (math.cos(angle) * length, math.sin(angle) * length, 0)
 
 
 def test_vector_as_tuple():
@@ -81,13 +81,13 @@ def test_deep_copy():
 def test_get_angle():
     v = Vector(3, 3)
     assert math.isclose(v.angle_deg, 45)
-    assert math.isclose(v.angle_rad, math.radians(45))
+    assert math.isclose(v.angle, math.radians(45))
 
 
 def test_spatial_angle():
     v = Vector(3, 3, 0)
     assert math.isclose(v.spatial_angle_deg, 45)
-    assert math.isclose(v.spatial_angle_rad, math.radians(45))
+    assert math.isclose(v.spatial_angle, math.radians(45))
 
 
 def test_compare_vectors():
@@ -217,6 +217,11 @@ def test_rsub_vector():
     assert (7, 7, 7) - v == (5, 4, 3)
 
 
+def test_rsub_scalar_vector():
+    v = Vector(2, 3, 4)
+    assert 7 - v == (5, 4, 3)
+
+
 def test_mul_scalar():
     v = Vector(2, 3, 4)
     assert v * 2 == (4, 6, 8)
@@ -279,7 +284,7 @@ def test_cross_product():
 
 
 def test_rot_z():
-    assert Vector(2, 2, 7).rot_z_deg(90) == (-2, 2, 7)
+    assert Vector(2, 2, 7).rotate_deg(90) == (-2, 2, 7)
 
 
 def test_lerp():

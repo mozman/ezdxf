@@ -187,9 +187,9 @@ def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> Iterabl
 
     """
     if deg:
-        return (Vector(v).rot_z_deg(angle) for v in vertices)
+        return (Vector(v).rotate_deg(angle) for v in vertices)
     else:
-        return (Vector(v).rot_z_rad(angle) for v in vertices)
+        return (Vector(v).rotate(angle) for v in vertices)
 
 
 def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:

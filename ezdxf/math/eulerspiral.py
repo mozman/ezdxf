@@ -34,7 +34,7 @@ class EulerSpiral:
 
         """
         angle = t ** 2 / (2. * self.curvature_powers[2])
-        return Vector.from_rad_angle(angle)
+        return Vector.from_angle(angle)
 
     def distance(self, radius: float) -> float:
         """

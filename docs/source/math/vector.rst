@@ -84,7 +84,7 @@ Vector Attributes
 
     Returns True for Vector(0, 0, 0) else False
 
-.. attribute:: Vector.spatial_angle_rad
+.. attribute:: Vector.spatial_angle
 
     Returns spatial angle between vector and x-axis in radians
 
@@ -92,7 +92,7 @@ Vector Attributes
 
     Returns spatial angle between vector and x-axis in degrees
 
-.. attribute:: Vector.angle_rad
+.. attribute:: Vector.angle
 
     Returns angle of vector in the xy-plane in radians.
 
@@ -234,10 +234,10 @@ Vector Methods
 
     Returns angle between vector and other in th xy-plane in radians. +angle is counter clockwise orientation.
 
-.. method:: Vector.rot_z_rad(angle)
+.. method:: Vector.rotate(angle)
 
     Return rotated vector around z axis, angle in radians.
 
-.. method:: Vector.rot_z_deg(angle)
+.. method:: Vector.rotate_deg(angle)
 
     Return rotated vector around z axis, angle in degrees.

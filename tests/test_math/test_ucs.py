@@ -48,7 +48,7 @@ def test_rotation():
     # normalization is not necessary
     ux = Vector(1, 2, 0)
     # only cartesian coord systems work
-    uy = ux.rot_z_deg(90)
+    uy = ux.rotate_deg(90)
     ucs = UCS(ux=ux, uy=uy)
     assert ucs.ux == ux.normalize()
     assert ucs.uy == uy.normalize()

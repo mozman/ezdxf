@@ -204,9 +204,9 @@ class UCS:
         Returns: angle in OCS in radians
 
         """
-        vec = Vector.from_rad_angle(angle)
+        vec = Vector.from_angle(angle)
         vec = self.to_ocs(vec) - self.origin
-        return vec.angle_rad
+        return vec.angle
 
     def from_wcs(self, point: 'Vertex') -> Vector:
         """

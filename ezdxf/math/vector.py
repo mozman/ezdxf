@@ -30,7 +30,6 @@ class Vector:
         3 args: decompose(x, y, z) -> (x, y, z)
 
     """
-    isVec3 = True
     __slots__ = ['_x', '_y', '_z']
 
     def __init__(self, *args):
@@ -82,12 +81,12 @@ class Vector:
         return (cls(item) for item in items)
 
     @classmethod
-    def from_rad_angle(cls, angle: float, length: float = 1.) -> 'Vector':
+    def from_angle(cls, angle: float, length: float = 1.) -> 'Vector':
         return cls(math.cos(angle) * length, math.sin(angle) * length, 0.)
 
     @classmethod
     def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vector':
-        return cls.from_rad_angle(math.radians(angle), length)
+        return cls.from_angle(math.radians(angle), length)
 
     @staticmethod  # allows overriding by inheritance
     def decompose(*args) -> Tuple[float, float, float]:
@@ -188,7 +187,7 @@ class Vector:
         return self.__eq__((0, 0, 0))  # __eq__ uses is_close()
 
     @property
-    def spatial_angle_rad(self) -> float:
+    def spatial_angle(self) -> float:
         """
         Spatial angle between vector and x-axis.
 
@@ -205,10 +204,10 @@ class Vector:
         Returns:
             angle in degrees
         """
-        return math.degrees(self.spatial_angle_rad)
+        return math.degrees(self.spatial_angle)
 
     @property
-    def angle_rad(self) -> float:
+    def angle(self) -> float:
         """
         Angle of vector in the xy-plane
 
@@ -227,7 +226,7 @@ class Vector:
             angle in degrees
 
         """
-        return math.degrees(self.angle_rad)
+        return math.degrees(self.angle)
 
     def orthogonal(self, ccw: bool = True) -> 'Vector':
         """
@@ -355,7 +354,7 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             scalar = float(other)
-            return self.__class__(scalar - self._x, scalar - self._y - scalar, scalar - self._z)
+            return self.__class__(scalar - self._x, scalar - self._y, scalar - self._z)
         else:
             x, y, z = self.decompose(other)
             return self.__class__(x - self._x, y - self._y, z - self._z)
@@ -439,7 +438,7 @@ class Vector:
         v2 = self.__class__(other).normalize()
         return math.acos(v1.dot(v2))
 
-    def rot_z_rad(self, angle: float) -> 'Vector':
+    def rotate(self, angle: float) -> 'Vector':
         """
         Rotate vector around z axis.
 
@@ -450,10 +449,10 @@ class Vector:
 
         """
         v = self.__class__(self.x, self.y, 0.)
-        v = Vector.from_rad_angle(v.angle_rad + angle, v.magnitude)
+        v = Vector.from_angle(v.angle + angle, v.magnitude)
         return self.__class__(v.x, v.y, self.z)
 
-    def rot_z_deg(self, angle: float) -> 'Vector':
+    def rotate_deg(self, angle: float) -> 'Vector':
         """
         Rotate vector around z axis.
 
@@ -463,7 +462,7 @@ class Vector:
         Returns: rotated vector
 
         """
-        return self.rot_z_rad(math.radians(angle))
+        return self.rotate(math.radians(angle))
 
 
 X_AXIS = Vector(1, 0, 0)
@@ -512,7 +511,6 @@ class Vec2:
         v: Vec2 or sequence of float [x, y, ...]
 
     """
-    isVec3 = False
     __slots__ = ['x', 'y']
 
     def __init__(self, v: TVec2):

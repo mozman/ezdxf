@@ -470,8 +470,8 @@ class AngularDimension(_DimensionBase):
         self.radius = distance(self.center, self.start)  # type: float
         self.start_vector = (self.start - self.center).normalize()  # type: Vector
         self.end_vector = (self.end - self.center).normalize()  # type: Vector
-        self.start_angle = self.start_vector.angle_rad  # type: float
-        self.end_angle = self.end_vector.angle_rad  # type: float
+        self.start_angle = self.start_vector.angle  # type: float
+        self.end_angle = self.end_vector.angle  # type: float
 
     def render(self, layout: 'GenericLayoutType') -> None:
         """ build dimension line object with basic dxf entities """
@@ -540,7 +540,7 @@ class AngularDimension(_DimensionBase):
         }
         for vector, mirror in [(self.start_vector, False), (self.end_vector, self.prop('tick2x'))]:
             insert_point = self.center + (vector * self.pos_radius)
-            rotation = vector.angle_rad + pi / 2.
+            rotation = vector.angle + pi / 2.
             attribs['rotation'] = degrees(rotation + (pi if mirror else 0.))
             layout.add_blockref(
                 insert=insert_point,
