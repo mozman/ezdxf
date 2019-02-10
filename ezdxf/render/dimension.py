@@ -796,12 +796,12 @@ class LinearDimension(BaseDimensionRenderer):
                 shift_value = self.text_height + self.text_gap
                 if self.move_wide_text == 1:  # move text up
                     self.text_shift_v = shift_value
-                    if self.vertical_factor == -1:  # text below dimension line
+                    if self.vertical_placement == -1:  # text below dimension line
                         # shift again
                         self.text_shift_v += shift_value
                 elif self.move_wide_text == 2:  # move text down
                     self.text_shift_v = -shift_value
-                    if self.vertical_factor == 1:  # text above dimension line
+                    if self.vertical_placement == 1:  # text above dimension line
                         # shift again
                         self.text_shift_v -= shift_value
 
@@ -1136,13 +1136,13 @@ class LinearDimension(BaseDimensionRenderer):
         self.add_line(start, end, dxfattribs=attribs)
 
     @property
-    def vertical_factor(self) -> float:
+    def vertical_placement(self) -> float:
         """
-        text_valign as factor: returns 1 for above, 0 for center and -1 for below dimension line
+        Returns vertical placement of dimension text as 1 for above, 0 for center and -1 for below dimension line.
 
         """
         if self.text_valign == 0:
-            return self.text_vertical_position
+            return 0
         elif self.text_valign == 4:
             return -1
         else:
@@ -1154,7 +1154,10 @@ class LinearDimension(BaseDimensionRenderer):
         values are below the line.
 
         """
-        return (self.text_height / 2. + self.text_gap) * self.vertical_factor
+        if self.text_valign == 0:
+            return self.text_height * self.text_vertical_position
+        else:
+            return (self.text_height / 2. + self.text_gap) * self.vertical_placement
 
 
 class DimensionRenderer:

@@ -27,5 +27,5 @@
 #   1. bug fix release beta0: VERSION = "0.9.1b0"; version = (0, 9, 1, 'b0')
 #   2. bug fix release: VERSION = "0.9.2"; version = (0, 9, 2, 'release')
 
-version = (0, 9, 0, 'a4')  # also update VERSION in setup.py
-__version__ = "0.9a4"
+version = (0, 9, 0, 'b1')  # also update VERSION in setup.py
+__version__ = "0.9b1"

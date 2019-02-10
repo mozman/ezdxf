@@ -383,14 +383,18 @@ def linear_tutorial_using_limits():
 
 
 def linear_tutorial_using_tvp():
+    # For the vertical text alignment `center`, exists an additional DXF feature, to move the dimension text vertical
+    # up and down (DIMTVP). Vertical distance dimension line to text center =  text_height * vshift (DIMTVP)
     dwg = ezdxf.new('R2000', setup=True)
     msp = dwg.modelspace()
     style = dwg.dimstyles.duplicate_entry('EZDXF', 'TVP')  # type: DimStyle
+    # shift text upwards
     style.set_text_align(valign='center', vshift=2.0)
     msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='TVP').render()
     msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='TVP').render()
 
     style = dwg.dimstyles.duplicate_entry('EZDXF', 'TVP2')  # type: DimStyle
+    # shift text downwards
     style.set_text_align(valign='center', vshift=-2.0)
     msp.add_linear_dim(base=(0, 7), p1=(0, 5), p2=(10, 5), dimstyle='TVP2').render()
     msp.add_linear_dim(base=(0, 7), p1=(15, 5), p2=(15.5, 5), dimstyle='TVP2').render()
