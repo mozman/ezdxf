@@ -15,24 +15,24 @@ Create New Drawings
     the official DXF version name or ``'R12'`` the AutoCAD release name (release name works since ezdxf 0.7.4).
     You can only create new drawings for the following DXF versions:
 
-======= ========================
-Version AutoCAD Release
-======= ========================
-AC1009  AutoCAD R12
-AC1015  AutoCAD R2000
-AC1018  AutoCAD R2004
-AC1021  AutoCAD R2007
-AC1024  AutoCAD R2010
-AC1027  AutoCAD R2013
-AC1032  AutoCAD R2018
-======= ========================
+    ======= ========================
+    Version AutoCAD Release
+    ======= ========================
+    AC1009  AutoCAD R12
+    AC1015  AutoCAD R2000
+    AC1018  AutoCAD R2004
+    AC1021  AutoCAD R2007
+    AC1024  AutoCAD R2010
+    AC1027  AutoCAD R2013
+    AC1032  AutoCAD R2018
+    ======= ========================
 
 
 Open Drawings
 -------------
 
-You can open DXF drawings from disk or from a text-stream. (byte-stream usage
-is not implemented yet).
+    You can open DXF drawings from disk or from a text-stream. (byte-stream usage
+    is not implemented yet).
 
 .. function:: ezdxf.readfile(filename, encoding='auto', legacy_mode=False)
 
@@ -63,9 +63,9 @@ is not implemented yet).
 Save Drawings
 -------------
 
-Save the drawing to the file-system by :meth:`Drawing.save` or :meth:`Drawing.saveas`.
-Write the drawing to a text-stream with :meth:`Drawing.write`, the text-stream requires
-at least a :meth:`write` method.
+    Save the drawing to the file-system by :meth:`Drawing.save` or :meth:`Drawing.saveas`.
+    Write the drawing to a text-stream with :meth:`Drawing.write`, the text-stream requires
+    at least a :meth:`write` method.
 
 .. _globaloptions:
 
@@ -74,12 +74,14 @@ Global Options
 
     Global options stored in :mod:`ezdxf.options`
 
-.. attribute:: ezdxf.options.compress_binary_data
+.. attribute:: ezdxf.options.default_text_style
 
-    If you don't need access to binary data of DXF entities, you can compress them in memory for a lower
-    memory footprint, set the global :code:`ezdxf.options.compress_binary_data = True` to compress binray data
-    for every drawing you open, but data compression cost time, so this option isn't active by default.
-    You can individually compress the binary data of a drawing with the method :meth:`Drawing.compress_binary_data`.
+    Default text styles (``OpenSans``).
+
+.. attribute:: ezdxf.options.default_dimension_text_style
+
+    Default text style for Dimensions (``OpenSansCondensed-Light``).
+
 
 .. attribute:: ezdxf.options.templatedir
 

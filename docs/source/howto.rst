@@ -7,6 +7,83 @@ General preconditions::
     dwg = ezdxf.readfile("your_dxf_file.dxf")
     modelspace = dwg.modelspace()
 
+Set/Get Header Variables
+------------------------
+
+*ezdxf* has an interface to get and set HEADER variables::
+
+    dwg.header['VarName'] = value
+    value = dwg.header['VarName']
+
+.. seealso:: :class:`HeaderSection` and online documentation from Autodesk for available `header variables`_.
+
+Set DXF Drawing Units
+---------------------
+
+Use this HEADER variables to setup the default units for CAD applications opening the DXF file.
+This settings are not relevant for *ezdxf* API calls, which are *unitless* for length values and coordinates
+and *decimal degrees* for angles (in most cases).
+
+Sets drawing units:
+
+.. code-block:: python
+
+
+    dwg.header['$MEASUREMENT'] = 1
+
+=== ===============
+0   English
+1   Metric
+=== ===============
+
+Set Units format for angles:
+
+.. code-block:: python
+
+    dwg.header['$AUNITS'] = 0
+
+=== ===============
+0   Decimal degrees
+1   Degrees/minutes/seconds
+2   Grad
+3   Radians
+=== ===============
+
+Set default drawing units for AutoCAD DesignCenter blocks:
+
+.. code-block:: python
+
+
+    dwg.header['$INSUNITS'] = 6
+
+=== ===============
+0   Unitless
+1   Inches
+2   Feet
+3   Miles
+4   Millimeters
+5   Centimeters
+6   Meters
+7   Kilometers
+8   Microinches
+9   Mils
+10  Yards
+11  Angstroms
+12  Nanometers
+13  Microns
+14  Decimeters
+15  Decameters
+16  Hectometers
+17  Gigameters
+18  Astronomical units
+19  Light years
+20  Parsecs
+21  US Survey Feet
+22  US Survey Inch
+23  US Survey Yard
+24  US Survey Mile
+=== ===============
+
 .. _howto_get_attribs:
 
 Get/Set block reference attributes
@@ -17,7 +94,8 @@ with an associated tag appended to the block reference.
 
 Iterate over all appended attributes::
 
-    blockrefs = modelspace.query('INSERT[name=="Part12"]')  # get all INSERT entities with entity.dxf.name == "Part12"
+    # get all INSERT entities with entity.dxf.name == "Part12"
+    blockrefs = modelspace.query('INSERT[name=="Part12"]')
     if len(blockrefs):
         entity = blockrefs[0]  # process first entity found
         for attrib in entity.attribs():
@@ -31,14 +109,6 @@ Get attribute by tag::
     if diameter is not None:
         diameter.dxf.text = "17mm"
 
-.. _howto_reduce_memory_footprint:
-
-Reduce Memory Footprint
------------------------
-
-- compress binary data by :meth:`Drawing.compress_binary_data`
-
-.. warning:: Data compression costs time: *memory usage* vs *run time*
 
 .. _howto_create_more_readable_dxf_files:
 
@@ -126,3 +196,4 @@ Thanks to `David Booth <https://github.com/worlds6440>`_:
 So far - no solution for showing IMAGES with relative paths on loading.
 
 .. _A360: https://a360.autodesk.com/viewer/
+.. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A
