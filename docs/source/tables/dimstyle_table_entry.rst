@@ -3,7 +3,8 @@ DimStyle
 
 .. class:: DimStyle
 
-Defines a dimension style.
+Defines the appearance of :class:`Dimension` entities. Each of this dimension variables statrin with ``dim`` can be
+overridden for any :class:`Dimension` entity individually.
 
 .. image:: ../dxfinternals/gfx/dimvars1.svg
     :align: center

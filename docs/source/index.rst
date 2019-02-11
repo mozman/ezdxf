@@ -7,7 +7,7 @@
    :align: center
    :width: 400px
 
-Welcome! This is the documentation for ezdxf |version|, last updated |today|.
+Welcome! This is the documentation for ezdxf release |release|, last updated |today|.
 
 .. note::
 

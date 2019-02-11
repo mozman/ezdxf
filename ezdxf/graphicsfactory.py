@@ -28,8 +28,7 @@ def copy_attribs(dxfattribs: dict = None) -> dict:
 
 
 class GraphicsFactory:
-    """ Abstract base class for BaseLayout()
-    """
+    """ Abstract base class for BaseLayout() """
 
     def __init__(self, dxffactory: 'DXFFactoryType'):
         self._dxffactory = dxffactory
@@ -42,24 +41,102 @@ class GraphicsFactory:
         raise NotImplementedError("Abstract method call.")
 
     def add_point(self, location: 'Vertex', dxfattribs: dict = None) -> 'Point':
+        """
+        Add a :class:`Point` element at `location`.
+
+        Args:
+            location: 2D/3D point in :ref:`WCS`
+            dxfattribs (dist): additional DXF attributes for :class:`Point` entity
+
+        Returns: :class:`Point`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['location'] = location
         return self.build_and_add_entity('POINT', dxfattribs)
 
     def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> 'Line':
+        """
+        Add a :class:`Line` element from `start` to `end`.
+
+        Args:
+            start: 2D/3D point in :ref:`WCS`
+            end: 2D/3D point in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Line` entity
+
+        Returns: :class:`Line`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['start'] = start
         dxfattribs['end'] = end
         return self.build_and_add_entity('LINE', dxfattribs)
 
     def add_circle(self, center: 'Vertex', radius: float, dxfattribs: dict = None) -> 'Circle':
+        """
+        Add a :class:`Circle` element. This is an 2D element, which can be placed in space by using :ref:`OCS`.
+
+        Args:
+            center: 2D/3D point in :ref:`WCS`
+            radius: circle radius
+            dxfattribs (dcit): additional DXF attributes for :class:`Circle` entity
+
+        Returns: :class:`Circle`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
         return self.build_and_add_entity('CIRCLE', dxfattribs)
 
+    def add_ellipse(self, center: 'Vertex', major_axis: 'Vertex' = (1, 0, 0), ratio: float = 1, start_param: float = 0,
+                    end_param: float = 2*math.pi, dxfattribs: dict = None) -> 'Ellipse':
+        """
+        Add an :class:`Ellipse` element, `ratio` is the ratio of minor axis to major axis, `start_param` and `end_param`
+        defines start and end point of the ellipse, a full ellipse goes from 0 to 2*pi. The ellipse goes from start to
+        end param in `counter clockwise` direction.
+
+        Args:
+            center: center of ellipse as 2D/3D point in :ref:`WCS`
+            major_axis: major axis as vector (x, y, z)
+            ratio: ratio of minor axis to major axis
+            start_param: start of ellipse curve
+            end_param: end param of ellipse curve
+            dxfattribs (dict): additional DXF attributes for :class:`Ellipse` entity
+
+        Returns: :class:`Ellipse`
+
+        """
+        if self.dxfversion < 'AC1015':
+            raise DXFVersionError('ELLIPSE requires DXF version R2000+')
+        if ratio > 1.:
+            raise DXFValueError("Parameter 'ratio' has to be <= 1.0")
+
+        dxfattribs = copy_attribs(dxfattribs)
+        dxfattribs['center'] = center
+        dxfattribs['major_axis'] = major_axis
+        dxfattribs['ratio'] = ratio
+        dxfattribs['start_param'] = start_param
+        dxfattribs['end_param'] = end_param
+        return self.build_and_add_entity('ELLIPSE', dxfattribs)
+
     def add_arc(self, center: 'Vertex', radius: float, start_angle: float, end_angle: float,
                 is_counter_clockwise: bool = True, dxfattribs: dict = None) -> 'Arc':
+        """
+        Add an :class:`Arc` element. The arc goes from `start_angle` to `end_angle` in counter clockwise
+        direction by default, set parameter `is_counter_clockwise` to False for clockwise orientation.
+
+        Args:
+            center: center of arc as 2D/3D point in :ref:`WCS`
+            radius: arc radius
+            start_angle: start angle in degrees
+            end_angle: end angle in degrees
+            is_counter_clockwise: False for clockwise orientation
+            dxfattribs (dict): additional DXF attributes for :class:`Arc` entity
+
+        Returns: :class:`Arc`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['center'] = center
         dxfattribs['radius'] = radius
@@ -72,21 +149,72 @@ class GraphicsFactory:
         return self.build_and_add_entity('ARC', dxfattribs)
 
     def add_solid(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Solid':
+        """
+        Add a :class:`Solid` element, `points` is an iterable of 3 or 4 points.
+
+        Args:
+            points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Solid` entity
+
+        Returns: :class:`Solid`
+
+        """
         return cast('Solid', self._add_quadrilateral('SOLID', points, dxfattribs))
 
     def add_trace(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Trace':
+        """
+        Add a :class:`Trace` element, `points` is an iterable of 3 or 4 points.
+
+        Args:
+            points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Trace` entity
+
+        Returns: :class:`Trace`
+
+        """
         return cast('Trace', self._add_quadrilateral('TRACE', points, dxfattribs))
 
     def add_3dface(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Face':
+        """
+        Add a :class:`3DFace` element, `points` is an iterable 3 or 4 2D/3D points.
+
+        Args:
+            points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`3DFace` entity
+
+        Returns: :class:`3DFace`
+
+        """
         return cast('Face', self._add_quadrilateral('3DFACE', points, dxfattribs))
 
     def add_text(self, text: str, dxfattribs: dict = None) -> 'Text':
+        """
+        Add a :class:`Text` element, see also :class:`Style`.
+
+        Args:
+            text: content string
+            dxfattribs (dict): additional DXF attributes for :class:`Text` entity
+
+        Returns: :class:`Text`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['text'] = text
         dxfattribs.setdefault('insert', (0, 0))
         return self.build_and_add_entity('TEXT', dxfattribs)
 
     def add_blockref(self, name: str, insert: 'Vertex', dxfattribs: dict = None) -> 'Insert':
+        """
+        Add an :class:`Insert` element.
+
+        Args:
+            name: block name
+            insert: insert location as 2D/3D point in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Insert` entity
+
+        Returns: :class:`Insert`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
@@ -95,6 +223,21 @@ class GraphicsFactory:
 
     def add_auto_blockref(self, name: str, insert: 'Vertex', values: Dict[str, str], dxfattribs: dict = None) \
             -> 'Insert':
+        """
+        Add an :class:`Insert` element. This method adds for each :class:`Attdef` entity, defined in the block
+        definition, automatically an :class:`Attrib` entity to the block reference and set tag/value DXF attributes of
+        the Attrib entities. The `values` dict defines the tag/value attributes as key=tag, value=tag value as string.
+        The Attrib entities are placed relative to the insert point, which is equal to the block base point.
+
+        Args:
+            name: block name
+            insert: insert location as 2D/3D point in :ref:`WCS`
+            values (dict): :class:`Attrib` tag values as key=tag, value=tag value pairs
+            dxfattribs (dict): additional DXF attributes for :class:`Insert` entity
+
+        Returns: :class:`Insert`
+
+        """
         def get_dxfattribs(attdef) -> dict:
             dxfattribs = attdef.dxfattribs()
             dxfattribs.pop('prompt', None)
@@ -122,6 +265,18 @@ class GraphicsFactory:
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 
     def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0), dxfattribs: dict = None) -> 'Attrib':
+        """
+        Add an :class:`Attrib` as stand alone DXF entity.
+
+        Args:
+            tag: tag name as string
+            text: tag value as string
+            insert: insert location as 2D/3D point in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Attrib` entity
+
+        Returns: :class:`Attrib`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['tag'] = tag
         dxfattribs['text'] = text
@@ -129,6 +284,16 @@ class GraphicsFactory:
         return self.build_and_add_entity('ATTRIB', dxfattribs)
 
     def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
+        """
+        Add a 2D :class:`Polyline` entity.
+
+        Args:
+            points: iterable of 2D points in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Polyline` entity
+
+        Returns: :class:`Polyline`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         closed = dxfattribs.pop('closed', False)
         polyline = self.build_and_add_entity('POLYLINE', dxfattribs)
@@ -137,11 +302,32 @@ class GraphicsFactory:
         return polyline
 
     def add_polyline3d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
+        """
+        Add a 3D :class:`Polyline` entity.
+
+        Args:
+            points: iterable of 3D points in :ref:`WCS`
+            dxfattribs (dict): additional DXF attributes for :class:`Polyline` entity
+
+        Returns: :class:`Polyline`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYLINE
         return self.add_polyline2d(points, dxfattribs)
 
     def add_polymesh(self, size: Tuple[int, int] = (3, 3), dxfattribs: dict = None) -> 'Polymesh':
+        """
+        Add a :class:`Polymesh` entity, which is represented as :class:`Polyline` entity in the DXF file.
+        A polymesh is a grid of `mcount` x `ncount` vertices and every vertex has its own xyz-coordinates.
+
+        Args:
+            size: 2-tuple (`mcount`, `ncount`)
+            dxfattribs (dict): additional DXF attributes for :class:`Polyline` entity
+
+        Returns: :class:`Polymesh`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_3D_POLYMESH
         m_size = max(size[0], 2)
@@ -158,6 +344,15 @@ class GraphicsFactory:
         return polymesh.cast()
 
     def add_polyface(self, dxfattribs: dict = None) -> 'Polyface':
+        """
+        Add a :class:`Polyface` entity, which is represented as :class:`Polyline` entity in the DXF file.
+
+        Args:
+            dxfattribs (dict): additional DXF attributes for :class:`Polyline` entity
+
+        Returns: :class:`Polyface`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
         m_close = dxfattribs.pop('m_close', False)
@@ -184,6 +379,18 @@ class GraphicsFactory:
             yield vertices[-1]  # last again
 
     def add_shape(self, name: str, insert: 'Vertex' = (0, 0), size: float = 1.0, dxfattribs: dict = None) -> 'Shape':
+        """
+        Add a :class:`Shape` reference to a external stored shape.
+
+        Args:
+            name: shape name as string
+            insert: insert location as 2D/3D point in :ref:`WCS`
+            size: size factor
+            dxfattribs (dict): additional DXF attributes for :class:`Shape` entity
+
+        Returns: :class:`Shape`
+
+        """
         dxfattribs = copy_attribs(dxfattribs)
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
@@ -193,6 +400,22 @@ class GraphicsFactory:
     # new entities in DXF AC1015 (R2000)
 
     def add_lwpolyline(self, points: Iterable['Vertex'], format: str = 'xyseb', dxfattribs: dict = None) -> 'LWPolyline':
+        """
+        Add a 2D polyline as :class:`LWPolyline` entity. A points are defined as (x, y, [start_width, [end_width,
+        [bulge]]]) tuples, but order can be redefined by the `format` argument. Set start_width, end_width to 0 to be
+        ignored (x, y, 0, 0, bulge).
+
+        The :class:`LWPolyline` is defined as a single DXF entity and needs less disk space and memory than a
+        :class:`Polyline` entity. (requires DXF R2000+)
+
+        Args:
+            points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuples
+            format: user defined point format, default is "xyseb"
+            dxfattribs (dict): additional DXF attributes for :class:`LWPolyline` entity
+
+        Returns: :class:`LWPolyline`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('LWPOLYLINE requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -202,22 +425,18 @@ class GraphicsFactory:
         lwpolyline.closed = closed
         return lwpolyline
 
-    def add_ellipse(self, center: 'Vertex', major_axis: 'Vertex' = (1, 0, 0), ratio: float = 1, start_param: float = 0,
-                    end_param: float = 6.283185307, dxfattribs: dict = None) -> 'Ellipse':
-        if self.dxfversion < 'AC1015':
-            raise DXFVersionError('ELLIPSE requires DXF version R2000+')
-        if ratio > 1.:
-            raise DXFValueError("Parameter 'ratio' has to be <= 1.0")
-
-        dxfattribs = copy_attribs(dxfattribs)
-        dxfattribs['center'] = center
-        dxfattribs['major_axis'] = major_axis
-        dxfattribs['ratio'] = ratio
-        dxfattribs['start_param'] = start_param
-        dxfattribs['end_param'] = end_param
-        return self.build_and_add_entity('ELLIPSE', dxfattribs)
-
     def add_mtext(self, text: str, dxfattribs: dict = None) -> 'MText':
+        """
+        Add a multiline text element with automatic text wrapping at boundaries as :class:`MText` entity. (requires
+        DXF R2000+)
+
+        Args:
+            text: content string
+            dxfattribs (dict): additional DXF attributes for :class:`MText` entity
+
+        Returns: :class:`MText`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('MTEXT requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -226,6 +445,18 @@ class GraphicsFactory:
         return mtext
 
     def add_ray(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'Ray':
+        """
+        Add a :class:`Ray` that begins at `start` point and continues to infinity (construction line).
+        (requires DXF R2000+)
+
+        Args:
+            start: location 3D point in :ref:`WCS`
+            unit_vector: 3D vector (x, y, z)
+            dxfattribs (dict): additional DXF attributes for :class:`Ray` entity
+
+        Returns: :class:`Ray`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('RAY requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -234,6 +465,18 @@ class GraphicsFactory:
         return self.build_and_add_entity('RAY', dxfattribs)
 
     def add_xline(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'XLine':
+        """
+        Add an infinity :class:`XLine` (construction line).
+        (requires DXF R2000+)
+
+        Args:
+            start: location 3D point in :ref:`WCS`
+            unit_vector: 3D vector (x, y, z)
+            dxfattribs (dict): additional DXF attributes for :class:`XLine` entity
+
+        Returns: :class:`XLine`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('XLINE requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -246,14 +489,17 @@ class GraphicsFactory:
         Add a B-spline defined by fit points, the control points and knot values are created by the CAD application,
         therefore it is not predictable how the rendered spline will look like, because for every set of fit points
         exists an infinite set of B-splines. If fit_points is None, an 'empty' spline will be created, all data has to
-        be set by the user.
+        be set by the user. (requires DXF R2000+)
+
+        AutoCAD creates a spline through fit points by a proprietary algorithm. `ezdxf` can not reproduce the control
+        point calculation.
 
         Args:
-            fit_points: list of fit points as (x, y[, z]) tuples, if None -> user defined spline
+            fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`, if None -> user defined spline
             degree: degree fo B-spline
-            dxfattribs: DXF attributes for the SPLINE entity
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
 
-        Returns: DXF Spline() object
+        Returns: :class:`Spline`
 
         """
         if self.dxfversion < 'AC1015':
@@ -270,20 +516,20 @@ class GraphicsFactory:
         """
         Create and add B-spline control frame from fit points.
 
-            1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
-            2. method = 'distance', creates a t vector with values proportional to the fit point distances
-            3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+            1. method = "uniform", creates a uniform t vector, [0...1] equally spaced
+            2. method = "distance", creates a t vector with values proportional to the fit point distances
+            3. method = "centripetal", creates a t vector with values proportional to the fit point distances^power
 
         None of this methods matches the spline created from fit points by AutoCAD.
 
         Args:
-            fit_points: fit points of B-spline
+            fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
             degree: degree of B-spline
             method: calculation method for parameter vector t
             power: power for centripetal method
-            dxfattribs: DXF attributes for SPLINE entity
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
 
-        Returns: DXF Spline() object
+        Returns: :class:`Spline`
 
         """
         bspline = bspline_control_frame(fit_points, degree=degree, method=method, power=power)
@@ -299,9 +545,11 @@ class GraphicsFactory:
         """
         Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
 
-            1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
+            1. method = 'uniform', creates a uniform t vector, [0...1] equally spaced
             2. method = 'distance', creates a t vector with values proportional to the fit point distances
             3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+
+        (requires DXF R2000+)
 
         Args:
             fit_points: all fit points of B-spline
@@ -309,9 +557,9 @@ class GraphicsFactory:
             degree: degree of B-spline
             method: calculation method for parameter vector t
             power: power for centripetal method
-            dxfattribs: DXF attributes for SPLINE entity
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
 
-        Returns: DXF Spline() object
+        Returns: :class:`Spline`
 
         """
         bspline = bspline_control_frame_approx(fit_points, count, degree=degree, method=method, power=power)
@@ -323,6 +571,20 @@ class GraphicsFactory:
 
     def add_open_spline(self, control_points: Iterable['Vertex'], degree: int = 3, knots: Iterable[float] = None,
                         dxfattribs: dict = None) -> 'Spline':
+        """
+        Add an open uniform :class:`Spline` defined by `control_points`. (requires DXF R2000+)
+
+        Open uniform B-splines start and end at your first and last control point.
+
+        Args:
+            control_points: iterable of 3D points in :ref:`WCS`
+            degree: degree of B-spline
+            knots: knot values as iterable of floats
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
+
+        Returns: :class:`Spline`
+
+        """
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_uniform(list(control_points), degree)
         if knots is not None:
@@ -331,6 +593,20 @@ class GraphicsFactory:
 
     def add_closed_spline(self, control_points: Iterable['Vertex'], degree: int = 3, knots: Iterable[float] = None,
                           dxfattribs: dict = None) -> 'Spline':
+        """
+        Add a closed uniform :class:`Spline` defined by `control_points`. (requires DXF R2000+)
+
+        Closed uniform B-splines is a closed curve start and end at the first control point.
+
+        Args:
+            control_points: iterable of 3D points in :ref:`WCS`
+            degree: degree of B-spline
+            knots: knot values as iterable of floats
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
+
+        Returns: :class:`Spline`
+
+        """
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic(list(control_points), degree)
         if knots is not None:
@@ -339,6 +615,24 @@ class GraphicsFactory:
 
     def add_rational_spline(self, control_points: Iterable['Vertex'], weights: Sequence[float], degree: int = 3,
                             knots: Iterable[float] = None, dxfattribs: dict = None) -> 'Spline':
+        """
+        Add an open rational uniform :class:`Spline` defined by `control_points`. (requires DXF R2000+)
+
+        `weights` has to be an iterable of floats, which defines the influence of the associated control point to the
+        shape of the B-spline, therefore for each control point is one weight value required.
+
+        Open rational uniform B-splines start and end at the first and last control point.
+
+        Args:
+            control_points: iterable of 3D points in :ref:`WCS`
+            weights: weight values as iterable of floats
+            degree: degree of B-spline
+            knots: knot values as iterable of floats
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
+
+        Returns: :class:`Spline`
+
+        """
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(list(control_points), weights, degree)
         if knots is not None:
@@ -347,6 +641,24 @@ class GraphicsFactory:
 
     def add_closed_rational_spline(self, control_points: Iterable['Vertex'], weights: Sequence[float], degree: int = 3,
                                    knots: Iterable[float] = None, dxfattribs: dict = None) -> 'Spline':
+        """
+        Add a closed rational uniform :class:`Spline` defined by  `control_points`. (requires DXF R2000+)
+
+        `weights` has to be an iterable of floats, which defines the influence of the associated control point to the
+        shape of the B-spline, therefore for each control point is one weight value required.
+
+        Closed rational uniform B-splines start and end at the first control point.
+
+        Args:
+            control_points: iterable of 3D points in :ref:`WCS`
+            weights: weight values as iterable of floats
+            degree: degree of B-spline
+            knots: knot values as iterable of floats
+            dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
+
+        Returns: :class:`Spline`
+
+        """
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic_rational(list(control_points), weights, degree)
         if knots is not None:
@@ -354,35 +666,115 @@ class GraphicsFactory:
         return spline
 
     def add_body(self, acis_data: str = None, dxfattribs: dict = None) -> 'Body':
+        """
+        Add a :class:`Body` entity. (requires DXF R2000+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`Body` entity
+
+        Returns: :class:`Body`
+
+        """
         return self._add_acis_entiy('BODY', acis_data, dxfattribs)
 
     def add_region(self, acis_data: str = None, dxfattribs: dict = None) -> 'Region':
+        """
+        Add a :class:`Region` entity. (requires DXF R2000+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`Region` entity
+
+        Returns: :class:`Region`
+
+        """
         return cast('Region', self._add_acis_entiy('REGION', acis_data, dxfattribs))
 
     def add_3dsolid(self, acis_data: str = None, dxfattribs: dict = None) -> 'Solid3d':
+        """
+        Add a :class:`3DSolid` entity. (requires DXF R2000+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`3DSolid` entity
+
+        Returns: :class:`3DSolid`
+
+        """
         return cast('Solid3d', self._add_acis_entiy('3DSOLID', acis_data, dxfattribs))
 
     def add_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'Surface':
+        """
+        Add a :class:`Surface` entity. (requires DXF R2007+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`Surface` entity
+
+        Returns: :class:`Surface`
+
+        """
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('SURFACE requires DXF version R2007+')
         return cast('Surface', self._add_acis_entiy('SURFACE', acis_data, dxfattribs))
 
     def add_extruded_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'ExtrudedSurface':
+        """
+        Add a :class:`ExtrudedSurface` entity. (requires DXF R2007+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`ExtrudedSurface` entity
+
+        Returns: :class:`ExtrudedSurface`
+
+        """
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('EXTRUDEDSURFACE requires DXF version R2007+')
         return cast('ExtrudedSurface', self._add_acis_entiy('EXTRUDEDSURFACE', acis_data, dxfattribs))
 
     def add_lofted_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'LoftedSurface':
+        """
+        Add a :class:`LoftedSurface` entity. (requires DXF R2007+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`LoftedSurface` entity
+
+        Returns: :class:`LoftedSurface`
+
+        """
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('LOFTEDSURFACE requires DXF version R2007+')
         return cast('LoftedSurface', self._add_acis_entiy('LOFTEDSURFACE', acis_data, dxfattribs))
 
     def add_revolved_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'RevolvedSurface':
+        """
+        Add a :class:`RevolvedSurface` entity. (requires DXF R2007+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`RevolvedSurface` entity
+
+        Returns: :class:`RevolvedSurface`
+
+        """
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('REVOLVEDSURFACE requires DXF version R2007+')
         return cast('RevolvedSurface', self._add_acis_entiy('REVOLVEDSURFACE', acis_data, dxfattribs))
 
     def add_swept_surface(self, acis_data: str = None, dxfattribs: dict = None) -> 'SweptSurface':
+        """
+        Add a :class:`SweptSurface` entity. (requires DXF R2007+)
+
+        Args:
+            acis_data: ACIS data as iterable of text lines as strings, no interpretation by ezdxf possible
+            dxfattribs (dict): additional DXF attributes for :class:`SweptSurface` entity
+
+        Returns: :class:`SweptSurface`
+
+        """
         if self.dxfversion < 'AC1021':
             raise DXFVersionError('SWEPT requires DXF version R2007+')
         return cast('SweptSurface', self._add_acis_entiy('SWEPTSURFACE', acis_data, dxfattribs))
@@ -397,6 +789,16 @@ class GraphicsFactory:
         return entity
 
     def add_hatch(self, color: int = 7, dxfattribs: dict = None) -> 'Hatch':
+        """
+        Add a :class:`Hatch` entity. (requires DXF R2007+)
+
+        Args:
+            color: ACI (AutoCAD Color Index), default is 7 (black/white).
+            dxfattribs (dict): additional DXF attributes for :class:`Hatch` entity
+
+        Returns: :class:`Hatch`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('HATCH requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -406,6 +808,15 @@ class GraphicsFactory:
         return self.build_and_add_entity('HATCH', dxfattribs)
 
     def add_mesh(self, dxfattribs: dict = None) -> 'Mesh':
+        """
+        Add a :class:`Mesh` entity. (requires DXF R2007+)
+
+        Args:
+            dxfattribs (dict): additional DXF attributes for :class:`Mesh` entity
+
+        Returns: :class:`Mesh`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('MESH requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -413,6 +824,20 @@ class GraphicsFactory:
 
     def add_image(self, image_def: 'ImageDef', insert: 'Vertex', size_in_units: Tuple[float, float], rotation: float = 0.,
                   dxfattribs: dict = None) -> 'Image':
+        """
+        Add an :class:`Image` entity. Create :class:`ImageDef` by the :class:`Drawing` factory function
+        :meth:`~Drawing.add_image_def`, see :ref:`tut_image`. (requires DXF R2000+)
+
+        Args:
+            image_def: required image definition as :class:`ImageDef`
+            insert: insertion point as 3D point in :ref:`WCS`
+            size_in_units: size as (x, y) tuple in drawing units
+            rotation: rotation angle around the z-axis in degrees
+            dxfattribs (dict): additional DXF attributes for :class:`Image` entity
+
+        Returns: :class:`Image`
+
+        """
         def to_vector(units_per_pixel, angle_in_rad):
             x = math.cos(angle_in_rad) * units_per_pixel
             y = math.sin(angle_in_rad) * units_per_pixel
@@ -445,6 +870,20 @@ class GraphicsFactory:
     def add_underlay(self, underlay_def: 'UnderlayDef', insert: 'Vertex' = (0, 0, 0),
                      scale: Tuple[float, float, float] = (1, 1, 1),
                      rotation: float = 0., dxfattribs: dict = None) -> 'Underlay':
+        """
+        Add an :class:`Underlay` entity. Create :class:`UnderlayDef` by the :class:`Drawing` factory function
+        :meth:`~Drawing.add_underlay_def`, see :ref:`tut_underlay`. (requires DXF R2000+)
+
+        Args:
+            underlay_def: required underlay definition as :class:`UnderlayDef`
+            insert: insertion point as 3D point in :ref:`WCS`
+            scale:  underlay scaling factor as (x, y, z) tuple
+            rotation: rotation angle around the z-axis in degrees
+            dxfattribs (dict): additional DXF attributes for :class:`Underlay` entity
+
+        Returns: :class:`Underlay`
+
+        """
         if self.dxfversion < 'AC1015':
             raise DXFVersionError('UNDERLAY requires DXF version R2000+')
         dxfattribs = copy_attribs(dxfattribs)
@@ -469,27 +908,29 @@ class GraphicsFactory:
                        override: dict = None,
                        dxfattribs: dict = None) -> DimStyleOverride:
         """
-        Horizontal, vertical and rotated dimension line. If an UCS is used for dimension line rendering, all point
-        definitions in UCS coordinates, translation into WCS and OCS is done by the rendering function. Manual set
-        extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
+        Add horizontal, vertical and rotated dimension line. If an :class:`UCS` is used for dimension line rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
+        function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
 
-        To create the necessary geometry, you have to call result.render(ucs) manually, this two step process allows
-        additional processing steps on the DIMENSION entity between creation and rendering.
+        This method returns a :class:`DimStyleOverride` object, to create the necessary dimension geometry, you have to
+        call :meth:`DimStyleOverride.render` manually, this two step process allows additional processing steps on the
+        :class:`Dimension` entity between creation and rendering.
 
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
             p1: measurement point 1 and start point of extension line 1 (in UCS)
             p2: measurement point 2 and start point of extension line 2 (in UCS)
             location: user defined location for text mid point (in UCS)
-            text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
-            dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
+            text: None or "<>" the measurement is drawn as text, " " (one space) suppresses the dimension text,
+                  everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`DimStyle` table entry), default is "EZDXF"
             angle: angle from ucs/wcs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text away from its default orientation
                            (the direction of the dimension line) in degrees
-            override: DIMSTYLE override attributes
-            dxfattribs: DXF attributes for DIMENSION entity
+            override: :class:`DimStyleOverride` attributes
+            dxfattribs: DXF attributes for :class:`Dimension` entity
 
-        Returns: DimStyleOverride, call its render(ucs) method manually to create necessary DIMENSION geometry
+        Returns: :class:`DimStyleOverride`
 
         """
         type_ = {'dimtype': const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
@@ -522,12 +963,13 @@ class GraphicsFactory:
                                    dxfattribs: dict = None,
                                    discard=False) -> None:
         """
-        Create linear dimension for multiple measurement `points`. If an UCS is used for dimension line
-        rendering, all point definitions in UCS coordinates, translation into WCS and OCS is done by the rendering
-        function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
+        Add multiple linear dimensions for iterable `points`. If an :class:`UCS` is used for dimension line
+        rendering, all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the
+        rendering function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS
+        is used.
 
         This method sets many design decisions by itself, the necessary geometry will be generated automatically, no
-        required nor possible render() call. This method is easy to use but you get what you get.
+        required nor possible :meth:`render` call. This method is easy to use but you get what you get.
 
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
@@ -536,9 +978,9 @@ class GraphicsFactory:
             ucs: user defined coordinate system
             avoid_double_rendering: suppresses the first extension line and the first arrow if possible for continued
                                     dimension entities
-            dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
-            override: DIMSTYLE override attributes
-            dxfattribs: DXF attributes for DIMENSION entity
+            dimstyle: dimension style name (DimStyle table entry), default is "EZDXF"
+            override: :class:`DimStyleOverride` attributes
+            dxfattribs: DXF attributes for :class:`Dimension` entity
             discard: discard rendering result for friendly CAD applications like BricsCAD to get a native and likely
                      better rendering result. (does not work with AutoCAD)
 
@@ -560,28 +1002,31 @@ class GraphicsFactory:
                         p1: 'Vertex',
                         p2: 'Vertex',
                         distance: float,
-                        dimstyle: str = 'EZDXF',
                         text: str = "<>",
+                        dimstyle: str = 'EZDXF',
                         override: dict = None,
                         dxfattribs: dict = None) -> DimStyleOverride:
         """
-        Create linear dimension aligned with measurement points `p1` and `p2`. If an UCS is used for dimension line
-        rendering, all point definitions in UCS coordinates, translation into WCS and OCS is done by the rendering
-        function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1) if no UCS is used.
+        Add linear dimension aligned with measurement points `p1` and `p2`. If an :class:`UCS` is used for dimension
+        line rendering, all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is
+        done by the rendering function. Manual set extrusion vector will be replaced by OCS defined by UCS or (0, 0, 1)
+        if no UCS is used.
 
-        To create the necessary geometry, you have to call result.render(ucs) manually, this two step process allows
-        additional processing steps on the DIMENSION entity between creation and rendering.
+        This method returns a :class:`DimStyleOverride` object, to create the necessary dimension geometry, you have to
+        call :meth:`DimStyleOverride.render` manually, this two step process allows additional processing steps on the
+        :class:`Dimension` entity between creation and rendering.
 
         Args:
             p1: measurement point 1 and start point of extension line 1 (in UCS)
             p2: measurement point 2 and start point of extension line 2 (in UCS)
-            distance: distance of dimension line from measurment points.
-            text: None or "<>" measurement is drawn as text, " " text is suppressed, else `text` is drawn as text
-            dimstyle: dimension style name (DimStyle table entry), default is `EZDXF`
-            override: DIMSTYLE override attributes
-            dxfattribs: DXF attributes for DIMENSION entity
+            distance: distance of dimension line from measurement points
+            text: None or "<>" the measurement is drawn as text, " " (one space) suppresses the dimension text,
+                  everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`DimStyle` table entry), default is "EZDXF"
+            override: :class:`DimStyleOverride` attributes
+            dxfattribs: DXF attributes for :class:`Dimension` entity
 
-        Returns: DimStyleOverride, call its render(ucs) method manually to create necessary DIMENSION geometry
+        Returns: :class:`DimStyleOverride`
 
         """
         p1 = Vector(p1)

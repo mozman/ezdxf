@@ -59,33 +59,35 @@ Entities
 --------
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   dxfentities/graphic_base_class
-   dxfentities/point
-   dxfentities/line
-   dxfentities/circle
-   dxfentities/arc
-   dxfentities/text
-   dxfentities/shape
-   dxfentities/polyline
-   dxfentities/solid
-   dxfentities/trace
-   dxfentities/3dface
-   dxfentities/ellipse
-   dxfentities/lwpolyline
-   dxfentities/mtext
-   dxfentities/hatch
-   dxfentities/mesh
-   dxfentities/spline
-   dxfentities/image
-   dxfentities/ray
-   dxfentities/xline
-   dxfentities/body
-   dxfentities/region
-   dxfentities/3dsolid
-   dxfentities/surface
-   dxfentities/underlay
+    dxfentities/graphic_base_class
+    dxfentities/3dface
+    dxfentities/3dsolid
+    dxfentities/arc
+    dxfentities/body
+    dxfentities/circle
+    dxfentities/dimension
+    dxfentities/ellipse
+    dxfentities/hatch
+    dxfentities/image
+    dxfentities/line
+    dxfentities/lwpolyline
+    dxfentities/mesh
+    dxfentities/mtext
+    dxfentities/point
+    dxfentities/polyline
+    dxfentities/ray
+    dxfentities/region
+    dxfentities/shape
+    dxfentities/solid
+    dxfentities/spline
+    dxfentities/surface
+    dxfentities/text
+    dxfentities/trace
+    dxfentities/underlay
+    dxfentities/xline
+
 
 Blocks
 ------

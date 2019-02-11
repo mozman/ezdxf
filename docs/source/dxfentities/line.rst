@@ -4,7 +4,7 @@ Line
 .. class:: Line(GraphicEntity)
 
 A line form *start* to *end*, *dxftype* is LINE.
-Create lines in layouts and blocks by factory function :meth:`~Layout.add_line`.
+Create lines in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_line`.
 
 DXF Attributes for Line
 -----------------------

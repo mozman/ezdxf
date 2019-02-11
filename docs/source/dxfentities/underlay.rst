@@ -9,7 +9,7 @@ Add an underlay file to the DXF file, the file itself is not embedded into the D
 The (PDF)UNDERLAY entity is like a block reference, you can use it multiple times to add the underlay on different
 locations with different scales and rotations. But therefore you need a also a (PDF)DEFINITION entity, see
 :class:`UnderlayDefinition`.
-Create :class:`Underlay` in layouts and blocks by factory function :meth:`~Layout.add_underlay`. The DXF standard
+Create :class:`Underlay` in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_underlay`. The DXF standard
 supports three different fileformats: PDF, DWF (DWFx) and DGN. An Underlay can be clipped by a rectangle or a
 polygon path. The clipping coordinates are 2D OCS/ECS coordinates and in drawing units but without scaling.
 

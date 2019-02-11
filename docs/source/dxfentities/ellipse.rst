@@ -8,7 +8,7 @@ Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is ELLIPSE.
 An ellipse with center point at location *center* and a major axis *major_axis* as vector. *ratio* is the ratio of
 minor axis to major axis. *start_param* and *end_param* defines start and end point of the ellipse, a full ellipse
 goes from 0 to 2*pi. The ellipse goes from start to end param in *counter clockwise* direction. Create ellipses in
-layouts and blocks by factory function :meth:`~Layout.add_ellipse`.
+layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_ellipse`.
 
 :attr:`Ellipse.dxf.extrusion` is supported, but does not establish an :ref:`OCS`, it is used to create an 3D entity by
 extruding the base ellipse.

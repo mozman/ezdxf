@@ -390,14 +390,23 @@ class Layout(DXF12Layout):
         Setup plot settings and paper size and reset viewports. All parameters in given `units` (mm or inch).
 
         Args:
-            size (Tuple[int, int]): paper size
-            margins (Tuple[float, float, float, float]): (top, right, bottom, left) hint: clockwise
-            units (str): 'mm' or 'inch'
-            offset (Tuple[float, float]): plot origin offset
-            rotation (int): 0=no rotation, 1=90deg count-clockwise, 2=upside-down, 3=90deg clockwise
-            scale (int): int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
-            name (str): paper name prefix '{name}_({width}_x_{height}_{unit})'
-            device (str): device .pc3 configuration file or system printer name
+            size: paper size as (width, height) tuple
+            margins: (top, right, bottom, left) hint: clockwise
+            units: "mm" or "inch"
+            offset: plot origin offset is 2D point
+            rotation: see table `Rotation`
+            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
+            name: paper name prefix '{name}_({width}_x_{height}_{unit})'
+            device: device .pc3 configuration file or system printer name
+
+        === ============
+        int Rotation
+        === ============
+        0   no rotation
+        1   90 degrees counter-clockwise
+        2   upside-down
+        3   90 degrees clockwise
+        === ============
 
         """
         if self.name == 'Model':
@@ -462,7 +471,7 @@ class Layout(DXF12Layout):
 
     def reset_extends(self) -> None:
         """
-        Reset `extmax` and `extmin` attributes to AutoCAD default values.
+        Reset paper space extends. (in :meth:`~Layout.page_setup` included)
 
         """
         dxf = self.dxf_layout.dxf
@@ -472,6 +481,7 @@ class Layout(DXF12Layout):
     def reset_paper_limits(self) -> None:
         """
         Set paper limits to default values, all values in paper space units but without plot scale (?).
+        (in :meth:`~Layout.page_setup` included)
 
         """
         dxf = self.dxf_layout.dxf
@@ -506,7 +516,7 @@ class Layout(DXF12Layout):
 
     def reset_viewports(self) -> None:
         """
-        Delete all existing viewports, and add a new main viewport.
+        Delete all existing viewports, and add a new main viewport. (in :meth:`~Layout.page_setup` included)
 
         """
         # remove existing viewports
@@ -562,14 +572,17 @@ class Layout(DXF12Layout):
 
     def set_plot_type(self, value: int = 5) -> None:
         """
+        === ============================================================
+        0   last screen display
+        1   drawing extents
+        2   drawing limits
+        3   view specific (defined by Layout.dxf.plot_view_name)
+        4   window specific (defined by Layout.set_plot_window_limits())
+        5   layout information (default)
+        === ============================================================
+
         Args:
-            value (int):  plot type
-                - 0 = LAST_SCREEN_DISPLAY
-                - 1 = DRAWING_EXTENDS
-                - 2 = DRAWING_LIMITS
-                - 3 = VIEW_SPECIFIC (defined by Layout.dxf.plot_view_name)
-                - 4 = WINDOW_SPECIFIC (defined by Layout.set_plot_window_limits())
-                - 5 = LAYOUT_INFORMATION (default)
+            value:  plot type
 
         Raises:
             DXFValueError: for `value` out of range
@@ -585,8 +598,8 @@ class Layout(DXF12Layout):
         Set plot style file of type `ctb`.
 
         Args:
-            name (str): plot style filename
-            show (bool): show plot style effect in preview? (AutoCAD specific attribute)
+            name: plot style filename
+            show: show plot style effect in preview? (AutoCAD specific attribute)
 
         """
         self.dxf_layout.dxf.current_style_sheet = name
@@ -600,8 +613,8 @@ class Layout(DXF12Layout):
         Set plot window size in (scaled) paper space units.
 
         Args:
-            lower_left (Tuple[float, float]): lower left corner
-            upper_right (Tuple[float, float]): upper right corner
+            lower_left: lower left corner as 2D point
+            upper_right: upper right corner as 2D point
 
         """
         x1, y1 = lower_left
@@ -762,15 +775,16 @@ class Layout(DXF12Layout):
 
     def new_geodata(self, dxfattribs: dict = None) -> 'GeoData':
         """
-        Create a new ``GEODATA`` entity for this layout and replaces existing ones.
+        Creates a new :class:`GeoData` entity and replaces existing ones. The GEODATA entity resides in the OBJECTS section
+        and NOT in the layout entity space and it is linked to the layout by an extension dictionary located in BLOCK_RECORD
+        of the layout.
 
-        ``GEODATA`` entity requires DXF version R2010 (AC1024) or later.
-
-        The DXF Reference does not document if other layouts than model space supports geo referencing, so this may
-        only make sense for the model space layout.
+        The GEODATA entity requires DXF version R2010+. The DXF Reference does not document if other layouts than model
+        space supports geo referencing, so getting/setting geo data may only make sense for the model space layout, but
+        it is also available in paper space layouts.
 
         Args:
-            dxfattribs (dict): DXF attributes for the ``GEODATA`` entity
+            dxfattribs (dict): DXF attributes for the :class:`GeoData` entity
 
         """
         if dxfattribs is None:
@@ -788,7 +802,7 @@ class Layout(DXF12Layout):
 
     def get_geodata(self) -> Optional['GeoData']:
         """
-        Returns the associated ``GEODATA`` entity as `GeoData` object or None.
+        Returns the :class:`GeoData` entity associated to this layout or None.
 
         """
         try:
@@ -830,11 +844,11 @@ class Layout(DXF12Layout):
 
     def set_redraw_order(self, handles: Union[Dict, Iterable[Tuple[str, str]]]) -> None:
         """
-        If the header variable $SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in
+        If the header variable $SORTENTS `Regen` flag (bit-code value 16) is set, AutoCAD regenerates entities in
         ascending handles order.
 
         To change redraw order associate a different sort handle to entities, this redefines the order in which the
-        entities are regenerated. *handles* can be a dict of object_handle and  sort_handle as (key, value) pairs, or an
+        entities are regenerated. `handles` can be a dict of object_handle and sort_handle as (key, value) pairs, or an
         iterable of (object_handle,  sort_handle) tuples.
 
         The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
@@ -844,9 +858,9 @@ class Layout(DXF12Layout):
         as first as expected.
 
         Args:
-            handles (Iterable[Tuple[str, str]]): iterable or dict of handle associations; for iterable an association
-                                                 is a tuple (object_handle, sort_handle); for dict the association is
-                                                 key: object_handle, value: sort_handle
+            handles: iterable or dict of handle associations; for iterable an association
+                     is a tuple (object_handle, sort_handle); for dict the association is
+                     key: object_handle, value: sort_handle
 
         """
         sortents = self.get_sortents_table()
@@ -856,7 +870,8 @@ class Layout(DXF12Layout):
 
     def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
         """
-        Returns iterator for all existing table entries as (object_handle, sort_handle) pairs.
+        Returns iterable for all existing table entries as (object_handle, sort_handle) pairs.
+        (see also :meth:`~Layout.set_redraw_order`)
 
         """
         empty = []
@@ -874,7 +889,11 @@ class Layout(DXF12Layout):
 class BlockLayout(DXF12BlockLayout):
     def add_entity(self, entity: 'DXFEntity') -> None:
         """
-        Add entity as member to the block entity space.
+        Add an existing DXF entity to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity
+        from the previous owner layout.
+
+        Args:
+            entity: :class:`DXFEntity`
 
         """
         # entity can be ExtendedTags() or a GraphicEntity() or inherited wrapper class

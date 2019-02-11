@@ -5,7 +5,7 @@ Solid
 
 A solid filled triangle or quadrilateral, dxftype is SOLID. Access corner points by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
-Create solids in layouts and blocks by factory function :meth:`~Layout.add_solid`.
+Create solids in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_solid`.
 
 DXF Attributes for Solid
 ------------------------

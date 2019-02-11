@@ -7,7 +7,7 @@ MText
 
     Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
     words or characters within the MText. Create :class:`MText` in layouts and blocks by factory function
-    :meth:`~Layout.add_mtext`.
+    :meth:`~ezdxf.modern.layouts.Layout.add_mtext`.
 
 .. seealso::
 

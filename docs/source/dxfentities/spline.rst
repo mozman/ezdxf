@@ -19,7 +19,7 @@ Spline
     To create a :class:`Spline` curve you just need a bunch of *fit points*, *control point*, *knot_values* and *weights*
     are optional (tested with AutoCAD 2010). If you add additional data, be sure that you know what you do.
 
-    Create :class:`Spline` in layouts and blocks by factory function :meth:`~Layout.add_spline`.
+    Create :class:`Spline` in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_spline`.
 
     For more information about spline mathematics go to `Wikipedia`_.
 

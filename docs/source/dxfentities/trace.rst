@@ -6,7 +6,7 @@ Trace
 A Trace is solid filled triangle or quadrilateral, dxftype is TRACE. Access corner points by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`). I don't know the difference
 between SOLID and TRACE.
-Create traces in layouts and blocks by factory function :meth:`~Layout.add_trace`.
+Create traces in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_trace`.
 
 DXF Attributes for Trace
 ------------------------

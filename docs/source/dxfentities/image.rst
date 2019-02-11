@@ -8,7 +8,7 @@ Introduced in DXF version R13 (AC1012), dxftype is IMAGE.
 Add a raster image to the DXF file, the file itself is not embedded into the DXF file, it is always a separated file.
 The IMAGE entity is like a block reference, you can use it multiple times to add the image on different locations
 with different scales and rotations. But therefore you need a also a IMAGEDEF entity, see :class:`ImageDef`.
-Create :class:`Image` in layouts and blocks by factory function :meth:`~Layout.add_image`. ezdxf creates only
+Create :class:`Image` in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_image`. ezdxf creates only
 images in the XY-plan. You can place images in the 3D space too, but then you have to set the *u_pixel* and
 the *v_pixel* vectors by yourself.
 

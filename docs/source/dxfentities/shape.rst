@@ -7,7 +7,7 @@ Shapes (dxftype is SHAPE) are objects that you use like blocks. Shapes are store
 (\*.SHX). You can specify the scale and rotation for each shape reference as you add it. You can not create shapes
 with *ezdxf*, you can just insert shape references.
 
-Create a :class:`Shape` reference in layouts and blocks by factory function :meth:`~Layout.add_shape`.
+Create a :class:`Shape` reference in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_shape`.
 
 DXF Attributes for Shape
 ------------------------

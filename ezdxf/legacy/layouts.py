@@ -74,11 +74,17 @@ class BaseLayout(GraphicsFactory):
         self._entity_space = entity_space
 
     def __len__(self) -> int:
+        """
+        Entities count.
+
+        """
         return len(self._entity_space)
 
     def __iter__(self) -> Iterable['DXFEntity']:
         """
-        Iterate over all block entities, yielding class GraphicEntity() or inherited.
+        Iterate over all drawing entities in this layout.
+
+        Returns: :class:`DXFEntity`
 
         """
         wrap = self._dxffactory.wrap_handle
@@ -123,7 +129,8 @@ class BaseLayout(GraphicsFactory):
 
     def add_entity(self, entity: 'DXFEntity') -> None:
         """
-        Add entity to entity space but not to the drawing database.
+        Add an existing :class:`DXFEntity` to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity
+        from the previous owner layout.
 
         """
         self._entity_space.append(entity.dxf.handle)
@@ -133,7 +140,12 @@ class BaseLayout(GraphicsFactory):
 
     def unlink_entity(self, entity: 'DXFEntity') -> None:
         """
-        Delete entity from entity space but not from the drawing database.
+        Unlink `entity` from layout but does not delete entity from the drawing database.
+
+        Removes `entity` just from  entity space but not from the drawing database.
+
+        Args:
+            entity: :class:`DXFEntity`
 
         """
         self._entity_space.delete_entity(entity)
@@ -143,7 +155,10 @@ class BaseLayout(GraphicsFactory):
 
     def delete_entity(self, entity: 'DXFEntity') -> None:
         """
-        Delete entity from entity space and drawing database.
+        Delete `entity` from layout (entity space) and drawing database.
+
+        Args:
+            entity: :class:`DXFEntity`
 
         """
         self.entitydb.delete_entity(entity)  # 1. delete from drawing database
@@ -151,10 +166,7 @@ class BaseLayout(GraphicsFactory):
 
     def delete_all_entities(self) -> None:
         """
-        Delete all entities of this layout from entity space and from drawing database.
-
-        Deletes only entities from this layout. Important because ALL layout entities are stored in just one entity
-        space.
+        Delete all entities from Layout (entity space) and from drawing database.
 
         """
         # noinspection PyTypeChecker
@@ -172,9 +184,28 @@ class BaseLayout(GraphicsFactory):
         return self._dxffactory.wrap_handle(handle)
 
     def query(self, query='*') -> EntityQuery:
+        """
+        Get all DXF entities matching the :ref:`entity query string`.
+
+        Args:
+            query: eintity query string
+
+        Returns: :class:`EntityQuery`
+
+        """
         return EntityQuery(iter(self), query)
 
     def groupby(self, dxfattrib: str = "", key: 'KeyFunc' = None) -> Dict[Hashable, List['DXFEntity']]:
+        """
+        Returns a dict of entity lists, where entities are grouped by a `dxfattrib` or a `key` function.
+
+        Args:
+            dxfattrib: grouping by DXF attribute like "layer"
+            key: key function, which accepts a :class:`DXFEntity` as argument, returns grouping key of this entity or
+                 None to ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this
+                 entity.
+
+        """
         return groupby(iter(self), dxfattrib, key)
 
     def move_to_layout(self, entity: 'DXFEntity', layout: 'GenericLayoutType') -> None:
@@ -207,8 +238,7 @@ class DXF12Layout(BaseLayout):
 
     def __contains__(self, entity: Union[str, 'DXFEntity']):
         """
-        Returns True if layout contains entity else False. entity can be an entity handle as string or a wrapped
-        dxf entity.
+        Test if the layout contains the drawing element `entity` (aka `in` operator).
 
         """
         if not hasattr(entity, 'dxf'):  # entity is a handle and not a wrapper class
@@ -428,12 +458,16 @@ class DXF12BlockLayout(BaseLayout):
     def add_attdef(self, tag: str, insert: Sequence[float] = (0, 0), text: str = '',
                    dxfattribs: dict = None) -> 'DXFEntity':
         """
-        Create an ATTDEF entity in the drawing database and add it to the block entity space.
+        Add an :class:`Attdef` entity.
+
+        Set position and alignment by the idiom::
+
+            myblock.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
 
         Args:
-            tag (str): attribute name as string without spaces
+            tag: attribute name (tag) as string without spaces
             insert: attribute insert point relative to block origin (0, 0, 0)
-            text (str): preset text for attribute
+            text: preset text for attribute
 
         """
         if dxfattribs is None:
@@ -445,30 +479,29 @@ class DXF12BlockLayout(BaseLayout):
 
     def attdefs(self) -> Iterable['DXFEntity']:
         """
-        Iterate over all ATTDEF entities.
+        Iterate for all :class:`Attdef` entities.
 
         """
         return (entity for entity in self if entity.dxftype() == 'ATTDEF')
 
     def has_attdef(self, tag: str) -> bool:
         """
-        Check if ATTDEF for *tag* exists.
+        Returns `True` if an :class:`Attdef` for `tag` exists else `False`.
 
         Args:
-            tag (str): tag name
+            tag: tag name
 
         """
         return self.get_attdef(tag) is not None
 
     def get_attdef(self, tag: str) -> Optional['DXFEntity']:
         """
-        Get attached ATTDEF entity by *tag*.
+        Get attached :class:`Attdef` entity by `tag`.
 
         Args:
-            tag (str): tag name
+            tag: tag name
 
-        Returns:
-            Attdef() object
+        Returns: :class:`Attdef`
 
         """
         for attdef in self.attdefs():
@@ -477,14 +510,11 @@ class DXF12BlockLayout(BaseLayout):
 
     def get_attdef_text(self, tag: str, default: str = None) -> str:
         """
-        Get content text of attached ATTDEF entity *tag*.
+        Get content text for :class:`Attdef` `tag` as string or returns `default` if no :class:`Attdef` for `tag` exists.
 
         Args:
-            tag (str): tag name
-            default (str): default value if tag is absent
-
-        Returns:
-            content text as str
+            tag: tag name
+            default: default value if tag is absent
 
         """
         attdef = self.get_attdef(tag)
@@ -496,7 +526,11 @@ class DXF12BlockLayout(BaseLayout):
 
     def add_entity(self, entity: 'DXFEntity') -> None:
         """
-        Add entity to the block entity space.
+        Add an existing DXF entity to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity
+        from the previous owner layout.
+
+        Args:
+            entity: :class:`DXFEntity`
 
         """
         self.add_handle(entity.dxf.handle)

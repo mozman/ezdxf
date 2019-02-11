@@ -7,11 +7,11 @@ The POLYLINE entity is very complex, it's used to build 2D/3D polylines, 3D mesh
 exists a different wrapper class but they all have the same dxftype of POLYLINE. Detect the polyline type by
 :meth:`Polyline.get_mode`.
 
-Create 2D polylines in layouts and blocks by factory function :meth:`~Layout.add_polyline2D`.
+Create 2D polylines in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_polyline2D`.
 
 For 2D entities all points in :ref:`OCS`.
 
-Create 3D polylines in layouts and blocks by factory function :meth:`~Layout.add_polyline3D`.
+Create 3D polylines in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_polyline3D`.
 
 For 3D entities all points in :ref:`WCS`.
 
@@ -253,7 +253,7 @@ Polymesh
 A polymesh is a grid of mcount x ncount vertices and every vertex has its own xyz-coordinates.
 The :class:`Polymesh` is an extended :class:`Polyline` class, dxftype is also ``POLYLINE`` but
 :meth:`~Polyline.get_mode` returns ``AcDbPolygonMesh``.
-Create polymeshes in layouts and blocks by factory function :meth:`~Layout.add_polymesh`.
+Create polymeshes in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_polymesh`.
 
 .. method:: Polymesh.get_mesh_vertex(pos)
 
@@ -308,7 +308,7 @@ Polyface
 A polyface consist of multiple location independent 3D areas called faces.
 The :class:`Polyface` is an extended :class:`Polyline` class, dxftype is also ``POLYLINE`` but
 :meth:`~Polyline.get_mode` returns ``AcDbPolyFaceMesh``.
-Create polyfaces in layouts and blocks by factory function :meth:`~Layout.add_polyface`.
+Create polyfaces in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_polyface`.
 
 .. method:: Polyface.append_face(face, dxfattribs=None)
 

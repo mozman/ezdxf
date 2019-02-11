@@ -7,7 +7,7 @@ A simple one line text, dxftype is TEXT. Text height is in drawing units and def
 the rendering software what you really get. Width is a scaling factor, but it is not defined what is scaled (I
 assume the text height), but it also depends on the rendering software what you get. This is one reason why DXF and
 also DWG are not reliable for exchanging exact styling, they are just reliable for exchanging exact geometry.
-Create text in layouts and blocks by factory function :meth:`~Layout.add_text`.
+Create text in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_text`.
 
 DXF Attributes for Text
 -----------------------

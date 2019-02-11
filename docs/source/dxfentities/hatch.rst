@@ -6,7 +6,7 @@ Hatch
 Introduced in DXF version R13 (AC1012), *dxftype* is HATCH.
 
 Fills an enclosed area defined by one or more boundary paths with a hatch pattern, solid fill, or gradient fill.
-Create :class:`Hatch` in layouts and blocks by factory function :meth:`~Layout.add_hatch`.
+Create :class:`Hatch` in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_hatch`.
 
 All points in :ref:`OCS` as (x, y) tuples (:attr:`~Hatch.dxf.elevation` is the z-axis value).
 

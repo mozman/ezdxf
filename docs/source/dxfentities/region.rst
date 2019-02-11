@@ -7,7 +7,7 @@ Introduced in DXF version R13 (AC1012), dxftype is REGION.
 
 An object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 Create :class:`Region` objects in layouts and blocks by factory function
-:meth:`~Layout.add_region`.
+:meth:`~ezdxf.modern.layouts.Layout.add_region`.
 
 .. method:: Region.get_acis_data()
 

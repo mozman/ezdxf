@@ -4,7 +4,7 @@ Point
 .. class:: Point(GraphicEntity)
 
 A point at location *point*, *dxftype* is POINT.
-Create points in layouts and blocks by factory function :meth:`~Layout.add_point`.
+Create points in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_point`.
 
 DXF Attributes for Point
 ------------------------

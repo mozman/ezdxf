@@ -8,7 +8,7 @@ LWPolyline
     A lightweight polyline is defined as a single graphic entity. The :class:`LWPolyline` differs from the old-style
     :class:`Polyline`, which is defined as a group of subentities. :class:`LWPolyline` display faster (in AutoCAD) and
     consume less disk space and RAM. Create :class:`LWPolyline` in layouts and blocks by factory function
-    :meth:`~Layout.add_lwpolyline`. :class:`LWPolyline` is a planar element, therefore all points in :ref:`OCS` as (x, y)
+    :meth:`~ezdxf.modern.layouts.Layout.add_lwpolyline`. :class:`LWPolyline` is a planar element, therefore all points in :ref:`OCS` as (x, y)
     tuples (:attr:`~LWPolyline.dxf.elevation` is the z-axis value).
 
     Since *ezdxf* v0.8.9 :class:`LWPolyline` stores point data as packed data (:code:`array.array()`).

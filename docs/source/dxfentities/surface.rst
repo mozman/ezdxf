@@ -7,7 +7,7 @@ Introduced in DXF version R2007 (AC1021), dxftype is SURFACE.
 
 A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 Create :class:`Surface` objects in layouts and blocks by factory function
-:meth:`~Layout.add_surface`.
+:meth:`~ezdxf.modern.layouts.Layout.add_surface`.
 
 DXF Attributes for Surface
 --------------------------
