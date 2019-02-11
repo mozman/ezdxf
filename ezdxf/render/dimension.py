@@ -302,11 +302,6 @@ class BaseDimensionRenderer:
         if self.dim_limits:
             self.dim_tolerance = 0
 
-        # tolerance requires MTEXT support
-        if not self.supports_dxf_r2000:
-            self.dim_tolerance = 0
-            self.dim_limits = 0
-
         # scale factor for the text height of fractions and tolerance values relative to the dimension text height
         self.tol_text_scale_factor = get('dimtfac', .5)
         self.tol_line_spacing = 1.35  # default MTEXT line spacing for tolerances (BricsCAD)
@@ -372,6 +367,11 @@ class BaseDimensionRenderer:
 
     def render(self, block: 'GenericLayoutType'):  # interface definition
         self.block = block
+        # tolerance requires MTEXT support, switch of rendering of tolerances and limits
+        if not self.supports_dxf_r2000:
+            self.dim_tolerance = 0
+            self.dim_limits = 0
+
 
     @property
     def char_height(self) -> float:
@@ -862,7 +862,7 @@ class LinearDimension(BaseDimensionRenderer):
             block: target BLOCK for rendering
 
         """
-        # call required to store block into self.block
+        # call required to setup some requirements
         super().render(block)
 
         # add extension line 1

@@ -806,7 +806,7 @@ class DimStyle(DXFEntity):
         if hfactor is not None:
             self.dxf.dimtfac = float(hfactor)
 
-        try:
+        if self.dxfversion > 'AC1009':
             # works only with decimal dimensions not inch and feet, US user set dimzin directly
             if leading_zeros is not None or trailing_zeros is not None:
                 dimtzin = 0
@@ -820,8 +820,6 @@ class DimStyle(DXFEntity):
                 self.dxf.dimtolj = const.MTEXT_INLINE_ALIGN[align.upper()]
             if dec is not None:
                 self.dxf.dimtdec = int(dec)
-        except const.DXFAttributeError:
-            raise DXFVersionError('DIMTZIN, DIMTOLJ and DIMTDEC require DXF R2000+')
 
     def set_limits(self, upper: float, lower: float, hfactor: float = 1.0,
                    dec: int = None, leading_zeros: bool = None, trailing_zeros: bool = None) -> None:
@@ -845,7 +843,7 @@ class DimStyle(DXFEntity):
         self.dxf.dimtm = float(lower)
         self.dxf.dimtfac = float(hfactor)
 
-        try:
+        if self.dxfversion > 'AC1009':
             # works only with decimal dimensions not inch and feet, US user set dimzin directly
             if leading_zeros is not None or trailing_zeros is not None:
                 dimtzin = 0
@@ -857,5 +855,3 @@ class DimStyle(DXFEntity):
             self.dxf.dimtolj = 0  # set bottom as default
             if dec is not None:
                 self.dxf.dimtdec = int(dec)
-        except const.DXFAttributeError:
-            raise DXFVersionError('DIMTZIN, DIMTOLJ and DIMTDEC require DXF R2000+')

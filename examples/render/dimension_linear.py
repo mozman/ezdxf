@@ -356,30 +356,54 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
     dwg.saveas(OUTDIR / filename)
 
 
-def linear_tutorial_using_tolerances():
-    # ezdxf uses MTEXT features for tolerance rendering
-    dwg = ezdxf.new('R2000', setup=True)
+def linear_tutorial_using_tolerances(dxfversion='R2000'):
+    # ezdxf uses MTEXT features for tolerance rendering and therefor requires DXF R2000+, but if you are using a
+    # friendly CAD application like BricsCAD, you can let the CAD application do the rendering job, be aware this files
+    # are not AutoCAD compatible.
+    dwg = ezdxf.new(dxfversion, setup=True)
     msp = dwg.modelspace()
+
+    # DO NOT RENDER BY EZDXF for DXF R12
+    discard = dxfversion == 'R12'
+
     tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'TOLERANCE')  # type: DimStyle
+    # not all features are supported by DXF R12:
+    # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
     tol_style.set_tolerance(.1, hfactor=.5, align="top", dec=2)
-    msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='tolerance').render()
+
+    style = msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='tolerance')
+    style.render(discard=discard)
 
     style = msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='tolerance')
     # as dim style override
     style.set_tolerance(.1, .15, hfactor=.4, align="middle", dec=2)
-    style.render()
-    dwg.saveas(OUTDIR / 'dimensions_with_tolerance.dxf')
+    style.render(discard=discard)
+
+    dwg.saveas(OUTDIR / f'dimensions_with_tolerance_{dxfversion}.dxf')
 
 
-def linear_tutorial_using_limits():
-    # ezdxf uses MTEXT features for limits rendering
-    dwg = ezdxf.new('R2000', setup=True)
+def linear_tutorial_using_limits(dxfversion='R2000'):
+    # ezdxf uses MTEXT features for limits rendering and therefor requires DXF R2000+, but if you are using a
+    # friendly CAD application like BricsCAD, you can let the CAD application do the rendering job, be aware this files
+    # are not AutoCAD compatible.
+    dwg = ezdxf.new(dxfversion, setup=True)
     msp = dwg.modelspace()
+    # DO NOT RENDER BY EZDXF for DXF R12
+    discard = dxfversion == 'R12'
+
     tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'LIMITS')  # type: DimStyle
+
+    # not all features are supported by DXF R12:
+    # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
     tol_style.set_limits(upper=.1, lower=.1, hfactor=.5, dec=2)
-    msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='limits').render()
-    msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='limits').render()
-    dwg.saveas(OUTDIR / 'dimensions_with_limits.dxf')
+
+    style = msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='limits')
+    style.render(discard=discard)
+
+    style = msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='limits')
+    style.render(discard=discard)
+
+    dwg.saveas(OUTDIR / f'dimensions_with_limits_{dxfversion}.dxf')
 
 
 def linear_tutorial_using_tvp():
@@ -472,6 +496,10 @@ ALL = False
 
 if __name__ == '__main__':
     linear_tutorial_using_tvp()
+    linear_tutorial_using_limits('R2000')
+    linear_tutorial_using_limits('R12')
+    linear_tutorial_using_tolerances('R2000')
+    linear_tutorial_using_tolerances('R12')
 
     if ALL:
         linear_tutorial('R2007')
@@ -483,8 +511,6 @@ if __name__ == '__main__':
         example_multi_point_linear_dimension()
         example_random_multi_point_linear_dimension(count=10, length=20)
 
-        linear_tutorial_using_limits()
-        linear_tutorial_using_tolerances()
 
         example_for_all_text_placings_ucs_R12()
         example_for_all_text_placings_in_space_R12()
