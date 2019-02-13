@@ -7,11 +7,12 @@
 # DXFGraphical - graphical DXF entities stored in ENTITIES and BLOCKS sections
 #
 from typing import TYPE_CHECKING, List, Any, cast, Union, Iterable
+from collections import OrderedDict
 from ezdxf.lldxf.types import DXFTag, handle_code, dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000
+from ezdxf.lldxf.const import DXF12, DXF2000, DXFKeyError
 from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFVersionError, DXFStructureError
 from ezdxf.lldxf.const import ACAD_XDICTIONARY, ACAD_REACTORS, XDICT_HANDLE_CODE, REACTOR_HANDLE_CODE, APP_DATA_MARKER
 from ezdxf.lldxf.const import STRUCTURE_MARKER, OWNER_CODE
@@ -173,26 +174,33 @@ class DXFNamespace:  # different for every DXF type
 
 class AppData:
     def __init__(self):
-        self.data = dict()
+        self.data = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
         return uniform_appid(appid) in self.data
+
+    def __len__(self) -> int:
+        return len(self.data)
 
     def get(self, appid: str) -> Tags:
         return self.data[uniform_appid(appid)]
 
     def add(self, data: List) -> None:
-        appid = uniform_appid(data[0].value)
-        self.data[appid] = Tags(data)
+        appid = uniform_appid(data[0][1])
+        self.data[appid] = Tags(dxftag(code, value) for code, value in data)
 
-    def new(self, appid: str, tags: Tags):
+    def new(self, appid: str, tags: Union[Tags, List, Iterable]):
         data = [DXFTag(102, uniform_appid(appid))]
         data.extend(tags)
         data.append(DXFTag(102, '}'))
         self.add(data)
 
     def delete(self, appid: str):
-        del self.data[uniform_appid(appid)]
+        _appid = uniform_appid(appid)
+        if _appid in self.data:
+            del self.data[_appid]
+        else:
+            raise DXFKeyError("Invalid appid {}".format(appid))
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         for data in self.data.values():
