@@ -6,9 +6,9 @@
 # DXFObject - non graphical entities stored in OBJECTS section
 # DXFGraphical - graphical DXF entities stored in ENTITIES and BLOCKS sections
 #
-from typing import TYPE_CHECKING, List, cast, Union, Iterable, Set
+from typing import TYPE_CHECKING, List, cast, Union, Iterable, Set, Sequence
 from collections import OrderedDict
-from ezdxf.lldxf.types import DXFTag, dxftag, uniform_appid
+from ezdxf.lldxf.types import dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 from ezdxf.lldxf.const import ACAD_XDICTIONARY, ACAD_REACTORS, XDICT_HANDLE_CODE, REACTOR_HANDLE_CODE, APP_DATA_MARKER
@@ -33,24 +33,29 @@ class AppData:
         return len(self.data)
 
     def get(self, appid: str) -> Tags:
-        return self.data[uniform_appid(appid)]
+        try:
+            return self.data[uniform_appid(appid)]
+        except KeyError:
+            raise DXFKeyError(appid)
 
-    def add(self, data: List) -> None:
-        appid = uniform_appid(data[0][1])
-        self.data[appid] = Tags(dxftag(code, value) for code, value in data)
+    def set(self, tags: Tags) -> None:
+        if len(tags):
+            appid = tags[0].value
+            self.data[appid] = tags
 
-    def new(self, appid: str, tags: Union[Tags, List, Iterable]):
-        data = [DXFTag(102, uniform_appid(appid))]
-        data.extend(tags)
-        data.append(DXFTag(102, '}'))
-        self.add(data)
+    def add(self, appid: str, data: Iterable[Sequence]) -> None:
+        data = Tags(dxftag(code, value) for code, value in data)
+        appid = uniform_appid(appid)
+        if data[0] != (APP_DATA_MARKER, appid):
+            data.insert(0, dxftag(APP_DATA_MARKER, appid))
+        if data[-1] != (APP_DATA_MARKER, '}'):
+            data.append(dxftag(APP_DATA_MARKER, '}'))
+        self.set(data)
 
-    def delete(self, appid: str):
+    def discard(self, appid: str):
         _appid = uniform_appid(appid)
         if _appid in self.data:
             del self.data[_appid]
-        else:
-            raise DXFKeyError("Invalid appid {}".format(appid))
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         for data in self.data.values():

@@ -25,7 +25,7 @@ class XData:
 
     def _add(self, tags: Tags) -> None:
         if len(tags):
-            appid = tags[0][1]
+            appid = tags[0].value
             self.data[appid] = tags
 
     def add(self, appid: str, tags: Iterable) -> None:
@@ -38,7 +38,7 @@ class XData:
         if appid in self.data:
             return self.data[appid]
         else:
-            raise DXFKeyError("Invalid appid {}".format(appid))
+            raise DXFKeyError(appid)
 
     def discard(self, appid):
         if appid in self.data:

@@ -2,13 +2,13 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable
+from typing import TYPE_CHECKING, List, Any, Iterable, Optional
 from ezdxf.lldxf.types import DXFTag, handle_code, dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, STRUCTURE_MARKER, OWNER_CODE
-from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFVersionError
+from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFVersionError, DXFKeyError
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
 
@@ -176,19 +176,24 @@ class DXFEntity:
 
     def __init__(self, tags: ExtendedTags = None, doc: 'Drawing' = None):
         self.doc = doc
-        self.appdata = AppData()  # same process for every entity
-        self.reactors = None  # type: Reactors
-        self.extension_dict = None  # type: ExtensionDict
+        # create extended data only if needed
+        self.appdata = None  # type: Optional[AppData]
+        self.reactors = None  # type: Optional[Reactors]
+        self.extension_dict = None  # type: Optional[ExtensionDict]
+        self.xdata = None  # type: Optional[XData]
+        self.embedded_objects = None  # type: Optional[EmbeddedObjects]
+
         if tags is not None:
-            self.setup_app_data(tags.appdata)
-            self.xdata = XData(tags.xdata)  # same process for every entity
-            self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
+            if len(tags.appdata):
+                self.setup_app_data(tags.appdata)
+            if len(tags.xdata):
+                self.xdata = XData(tags.xdata)  # same process for every entity
+            if tags.embedded_objects:
+                self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
             self.dxf = self.setup_dxf_attribs(tags.subclasses)
             # todo: set owner for DXF R12 read from file
         else:
             # bare minimum setup - used by new()
-            self.xdata = None
-            self.embedded_objects = None
             self.dxf = self.setup_dxf_attribs(self.default_subclasses())
 
     @classmethod
@@ -228,13 +233,13 @@ class DXFEntity:
 
     def setup_app_data(self, appdata: List[Tags]) -> None:
         for data in appdata:
-            appid = data[0].value
+            code, appid = data[0]
             if appid == '{REACTORS':
                 self.reactors = Reactors.from_tags(data)
             elif appid == '{XDICTIONARY':
                 self.extension_dict = ExtensionDict.from_tags(self, data)
             else:
-                self.appdata.add(data)
+                self.appdata.set(data)
 
     @property
     def dxffactory(self) -> 'DXFFactoryType':
@@ -305,7 +310,8 @@ class DXFEntity:
         tagwriter.write_tag2(STRUCTURE_MARKER, self.DXFTYPE)
         if self.dxfversion >= DXF2000:
             tagwriter.write_tag2(handle_code(self.dxf.dxftype), self.dxf.handle)
-            self.appdata.export_dxf(tagwriter)
+            if self.appdata:
+                self.appdata.export_dxf(tagwriter)
             if self.reactors:
                 self.reactors.export_dxf(tagwriter)
             if self.extension_dict:
@@ -327,7 +333,7 @@ class DXFEntity:
         - has to maintain the correct tag order (because sometimes order matters)
 
         """
-        # base class (handle, appoid, reactors, xdict, owner) export is done by parent class
+        # base class (handle, appid, reactors, xdict, owner) export is done by parent class
         pass
         # xdata and embedded objects  export is also done by parent
 
@@ -343,16 +349,7 @@ class DXFEntity:
         return self.extension_dict is not None
 
     def get_extension_dict(self) -> 'DXFDictionary':
-        """
-        Get associated extension dictionary as DXFDictionary() instance, or create new extension dictionary.
-
-        """
-
         def new_extension_dict():
-            """
-            Creates and assigns a new extensions dictionary. Link to an existing extension dictionary will be lost.
-
-            """
             self.extension_dict = ExtensionDict(self)
             return self.extension_dict.get()
 
@@ -360,6 +357,83 @@ class DXFEntity:
             return self.extension_dict.get()
         else:
             return new_extension_dict()
+
+    def has_app_data(self, appid: str) -> bool:
+        return self.appdata and (appid in self.appdata)
+
+    def get_app_data(self, appid: str) -> Tags:
+        if self.appdata:
+            return self.appdata.get(appid)
+        else:
+            raise DXFKeyError(appid)
+
+    def set_app_data(self, appid: str, tags: Iterable) -> None:
+        if self.appdata is None:
+            self.appdata = AppData()
+        self.appdata.add(appid, tags)
+
+    def discard_app_data(self, appid:str):
+        if self.appdata:
+            self.appdata.discard(appid)
+
+    def has_xdata(self, appid: str) -> bool:
+        return self.xdata and (appid in self.xdata)
+
+    def get_xdata(self, appid: str) -> Tags:
+        if self.xdata:
+            return self.xdata.get(appid)
+        else:
+            raise DXFKeyError(appid)
+
+    def set_xdata(self, appid: str, tags: Iterable) -> None:
+        if self.xdata is None:
+            self.xdata = XData()
+        self.xdata.add(appid, tags)
+
+    def discard_xdata(self, appid: str) -> None:
+        if self.xdata:
+            self.xdata.discard(appid)
+
+    def has_xdata_list(self, appid: str, name: str) -> bool:
+        if self.has_xdata(appid):
+            return self.xdata.has_xlist(appid, name)
+        else:
+            return False
+
+    def get_xdata_list(self, appid: str, name: str) -> List:
+        return self.xdata.get_xlist(appid, name)
+
+    def set_xdata_list(self, appid: str, name: str, tags: Iterable) -> None:
+        if self.xdata is None:
+            self.xdata = XData()
+        self.xdata.set_xlist(appid, name, tags)
+
+    def discard_xdata_list(self, appid: str, name: str) -> None:
+        if self.xdata:
+            self.xdata.discard_xlist(appid, name)
+
+    def replace_xdata_list(self, appid: str, name: str, tags: Iterable) -> None:
+        self.xdata.replace_xlist(appid, name, tags)
+
+    def has_reactors(self) -> bool:
+        return bool(self.reactors)
+
+    def get_reactors(self) -> List[str]:
+        return self.reactors.get() if self.reactors else []
+
+    def set_reactors(self, handles: Iterable[str]) -> None:
+        if self.reactors is None:
+            self.reactors = Reactors()
+        self.reactors.set(handles)
+
+    def append_reactor_handle(self, handle: str) -> None:
+        if self.reactors is None:
+            self.reactors = Reactors()
+        self.reactors.add(handle)
+
+    def discard_reactor_handle(self, handle: str) -> None:
+        if self.reactors:
+            self.reactors.discard(handle)
 
 
 class UnknownEntity(DXFEntity):

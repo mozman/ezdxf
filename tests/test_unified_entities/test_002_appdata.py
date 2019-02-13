@@ -10,6 +10,7 @@ from ezdxf.entities.appdata import AppData
 
 class TagWriter:
     """ Mockup """
+
     def __init__(self):
         self.tags = []
 
@@ -24,7 +25,7 @@ def tags():
 
 def test_app_data_get(tags):
     appdata = AppData()
-    appdata.add(tags.appdata[0])
+    appdata.set(tags.appdata[0])
     mozman = appdata.get('MOZMAN')
     assert mozman[0] == (102, "{MOZMAN")
     assert mozman[-1] == (102, "}")
@@ -32,12 +33,10 @@ def test_app_data_get(tags):
 
 def test_app_data_add():
     appdata = AppData()
-    appdata.add([
-        (102, "{XXX"),
+    appdata.add('XXX', [
         (40, 3),
         (70, 19),
         (1, "Text"),
-        (102, "}"),
     ])
     assert 'XXX' in appdata
     data = appdata.get('XXX')
@@ -49,9 +48,9 @@ def test_app_data_add():
     assert data[-1].value == '}'
 
 
-def test_app_data_new():
+def test_app_data_add_data():
     appdata = AppData()
-    appdata.new('XXX', [
+    appdata.add('XXX', [
         (40, 3),
         (70, 19),
         (1, "Text"),
@@ -68,18 +67,18 @@ def test_app_data_new():
 
 def test_app_data_delete(tags):
     appdata = AppData()
-    appdata.add(tags.appdata[0])
+    appdata.set(tags.appdata[0])
     assert 'MOZMAN' in appdata
-    appdata.delete('MOZMAN')
+    appdata.discard('MOZMAN')
     assert 'MOZMAN' not in appdata
-    with pytest.raises(DXFKeyError):
-        appdata.delete('MOZMAN')
+    # nothing happens if appid does not exist
+    appdata.discard('MOZMAN')
 
 
 def test_app_data_dxf_export(tags):
     appdata = AppData()
-    appdata.add(tags.appdata[0])
-    appdata.new('XXX', [
+    appdata.set(tags.appdata[0])
+    appdata.add('XXX', [
         (40, 3),
         (70, 19),
         (1, "Text"),
