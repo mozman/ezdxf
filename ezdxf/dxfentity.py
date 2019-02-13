@@ -6,7 +6,7 @@ from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFInvalidLa
 from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
-
+from ezdxf.lldxf.tags import xdata_list, remove_named_list_from_xdata, get_named_list_from_xdata, NotFoundException
 from ezdxf.tools import set_flag_state
 from ezdxf.math import OCS
 
@@ -16,10 +16,6 @@ if TYPE_CHECKING:  # import forward dependencies
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
-
-
-class NotFoundException(Exception):
-    pass
 
 
 class DXFNamespace:
@@ -466,56 +462,3 @@ class DXFEntity:
 
     def has_embedded_objects(self) -> bool:
         return any(tags.has_embedded_objects() for tags in self.tags.subclasses)
-
-
-OPEN_LIST = (1002, '{')
-CLOSE_LIST = (1002, '}')
-
-
-def xdata_list(name: str, xdata_tags: 'IterableTags') -> List[Tuple]:
-    tags = []
-    if name:
-        tags.append((1000, name))
-    tags.append(OPEN_LIST)
-    tags.extend(xdata_tags)
-    tags.append(CLOSE_LIST)
-    return tags
-
-
-def remove_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
-    start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
-    del tags[start: end]
-    return tags
-
-
-def get_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
-    start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
-    return tags[start: end]
-
-
-def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tuple[int, int]:
-    start = None
-    end = None
-    level = 0
-    for index in range(len(tags)):
-        tag = tags[index]
-
-        if start is None and tag == (1000, name):
-            next_tag = tags[index + 1]
-            if next_tag == OPEN_LIST:
-                start = index
-                continue
-        if start is not None:
-            if tag == OPEN_LIST:
-                level += 1
-            elif tag == CLOSE_LIST:
-                level -= 1
-            if level == 0:
-                end = index
-                break
-
-    if start is None:
-        raise NotFoundException
-    if end is None:
-        raise DXFXDataError('Invalid XDATA structure: missing  (1002, "}").')
-    return start, end + 1

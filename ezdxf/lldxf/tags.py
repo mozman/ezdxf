@@ -2,7 +2,7 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from copy import deepcopy
-from typing import Iterable, List, TextIO, Any, TYPE_CHECKING
+from typing import Iterable, List, TextIO, Any, TYPE_CHECKING, Tuple
 
 from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
 from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
@@ -317,3 +317,57 @@ def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending:
 
 def multi_tags_to_text(tags, line_ending: str = '^J') -> str:
     return ''.join(tag.value for tag in tags).replace(line_ending, '\n')
+
+OPEN_LIST = (1002, '{')
+CLOSE_LIST = (1002, '}')
+
+def xdata_list(name: str, xdata_tags: 'IterableTags') -> List[Tuple]:
+    tags = []
+    if name:
+        tags.append((1000, name))
+    tags.append(OPEN_LIST)
+    tags.extend(xdata_tags)
+    tags.append(CLOSE_LIST)
+    return tags
+
+
+def remove_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
+    start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
+    del tags[start: end]
+    return tags
+
+
+def get_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
+    start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
+    return tags[start: end]
+
+
+class NotFoundException(Exception):
+    pass
+
+def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tuple[int, int]:
+    start = None
+    end = None
+    level = 0
+    for index in range(len(tags)):
+        tag = tags[index]
+
+        if start is None and tag == (1000, name):
+            next_tag = tags[index + 1]
+            if next_tag == OPEN_LIST:
+                start = index
+                continue
+        if start is not None:
+            if tag == OPEN_LIST:
+                level += 1
+            elif tag == CLOSE_LIST:
+                level -= 1
+            if level == 0:
+                end = index
+                break
+
+    if start is None:
+        raise NotFoundException
+    if end is None:
+        raise DXFXDataError('Invalid XDATA structure: missing  (1002, "}").')
+    return start, end + 1
