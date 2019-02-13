@@ -7,13 +7,15 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXF12, DXFAttributeError
 
 
-class EntityMock:
+class DXFEntity:
+    """ Mockup """
     DXFTYPE = 'DXFENTITY'
     DXFATTRIBS = DXFAttributes(main_class, acdb_entity)
     dxfversion = DXF12
 
 
-class TagWriterMock:
+class TagWriter:
+    """ Mockup """
     def __init__(self):
         self.tags = []
 
@@ -23,7 +25,7 @@ class TagWriterMock:
 
 @pytest.fixture
 def entity():
-    return EntityMock()
+    return DXFEntity()
 
 
 @pytest.fixture
@@ -110,7 +112,7 @@ def test_dxftype(entity, tags1):
 
 def test_dxf_export_one_attribute(entity, tags1):
     attribs = DXFNamespace(tags1.subclasses, entity)
-    tagwriter = TagWriterMock()
+    tagwriter = TagWriter()
     attribs.export_dxf_attribute(tagwriter, 'handle')
     assert len(tagwriter.tags) == 1
     assert tagwriter.tags[0] == (5, 'FFFF')
@@ -120,7 +122,7 @@ def test_dxf_export_one_attribute(entity, tags1):
 
 def test_dxf_export_two_attribute(entity, tags1):
     attribs = DXFNamespace(tags1.subclasses, entity)
-    tagwriter = TagWriterMock()
+    tagwriter = TagWriter()
     attribs.export_dxf_attribs(tagwriter, ['handle', 'owner'])
     assert len(tagwriter.tags) == 2
     assert tagwriter.tags[0] == (5, 'FFFF')

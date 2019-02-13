@@ -7,7 +7,8 @@ from ezdxf.lldxf.const import DXFKeyError
 from ezdxf.entities.dxfentity import AppData, ExtendedTags
 
 
-class TagWriterMock:
+class TagWriter:
+    """ Mockup """
     def __init__(self):
         self.tags = []
 
@@ -83,7 +84,7 @@ def test_app_data_dxf_export(tags):
         (1, "Text"),
     ])
     assert len(appdata) == 2
-    tagwriter = TagWriterMock()
+    tagwriter = TagWriter()
     appdata.export_dxf(tagwriter)
 
     assert len(tagwriter.tags) == 2

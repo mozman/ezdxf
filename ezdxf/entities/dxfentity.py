@@ -6,7 +6,7 @@
 # DXFObject - non graphical entities stored in OBJECTS section
 # DXFGraphical - graphical DXF entities stored in ENTITIES and BLOCKS sections
 #
-from typing import TYPE_CHECKING, List, Any, cast, Union, Iterable
+from typing import TYPE_CHECKING, List, Any, cast, Union, Iterable, Set
 from collections import OrderedDict
 from ezdxf.lldxf.types import DXFTag, handle_code, dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
@@ -214,39 +214,49 @@ class Reactors:
 
     """
 
-    def __init__(self, owner: 'DXFEntity', handles: Iterable[str] = None):
-        self.owner = owner
-        self.reactors = list(handles) or []  # type: List[str]  # stores handle strings
+    def __init__(self, handles: Iterable[str] = None):
+        self.reactors = None  # type: Set[str]  # stores handle strings
+        self.set(handles)
 
     def __len__(self) -> int:
         return len(self.reactors)
 
-    def __getitem__(self, item) -> 'DXFEntity':
-        # todo: some day entitydb stores DXFEntity objects not ExtendedTags
-        return self.owner.entitydb.get(self.reactors[item])
+    def __contains__(self, handle):
+        return handle in self.reactors
 
     @classmethod
-    def from_tags(cls, owner: 'DXFEntity', tags: Tags = None) -> 'Reactors':
+    def from_tags(cls, tags: Tags = None) -> 'Reactors':
         """
         Create Reactors() instance from tags.
 
-        Expected DXF structure: [(102, '{XREACTORS'), (330, handle), ...,(102, '}')]
+        Expected DXF structure: [(102, '{ACAD_REACTORS'), (330, handle), ...,(102, '}')]
 
         Args:
-            owner: owner entity
             tags: list of DXFTags()
 
         """
         if tags is None:
-            return cls(owner, None)
+            return cls(None)
 
         if len(tags) < 3:
-            raise DXFStructureError("REACTORS error in entity: " + str(owner))
-        return cls(owner, (handle.value for handle in tags[1:-1]))
+            raise DXFStructureError("ACAD_REACTORS error")
+        return cls((handle.value for handle in tags[1:-1]))
+
+    def get(self) -> List[str]:
+        return sorted(self.reactors)
+
+    def set(self, handles: Iterable[str]) -> None:
+        self.reactors = set(handles or [])
+
+    def add(self, handle: str) -> None:
+        self.reactors.add(handle)
+
+    def discard(self, handle: str):
+        self.reactors.discard(handle)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(APP_DATA_MARKER, ACAD_REACTORS)
-        for handle in self.reactors:
+        for handle in self.get():
             tagwriter.write_tag2(REACTOR_HANDLE_CODE, handle)
         tagwriter.write_tag2(APP_DATA_MARKER, '}')
 
@@ -264,9 +274,9 @@ class ExtensionDict:
         if tags is None:
             return cls(entity, None)
 
-        # expected DXF structure: [(102, '{XDICTIONARY', (360, handle), (102, '}')]
+        # expected DXF structure: [(102, '{ACAD_XDICTIONARY', (360, handle), (102, '}')]
         if len(tags) != 3 or tags[1].code != XDICT_HANDLE_CODE:
-            raise DXFStructureError("XDICTIONARY error in entity: " + str(entity))
+            raise DXFStructureError("ACAD_XDICTIONARY error in entity: " + str(entity))
         return cls(entity, tags[1].value)
 
     @property
@@ -379,7 +389,7 @@ class DXFEntity:
         for data in appdata:
             appid = data[0].value
             if appid == '{REACTORS':
-                self.reactors = Reactors.from_tags(self, data)
+                self.reactors = Reactors.from_tags(data)
             elif appid == '{XDICTIONARY':
                 self.extension_dict = ExtensionDict.from_tags(self, data)
             else:
