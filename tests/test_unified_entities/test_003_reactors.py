@@ -3,7 +3,7 @@
 # Created 2019-02-13
 import pytest
 
-from ezdxf.entities.dxfentity import Reactors
+from ezdxf.entities.appdata import Reactors
 from ezdxf.lldxf.const import REACTOR_HANDLE_CODE, ACAD_REACTORS, APP_DATA_MARKER
 from ezdxf.lldxf.tags import Tags
 

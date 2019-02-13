@@ -5,7 +5,7 @@ import pytest
 
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.entities.dxfentity import XData
+from ezdxf.entities.xdata import XData
 
 
 class TagWriter:
