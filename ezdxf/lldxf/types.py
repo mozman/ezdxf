@@ -30,6 +30,10 @@ BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
 
 
+def handle_code(dxftype: str) -> int:
+    return 105 if dxftype == 'DIMSTYLE' else 5
+
+
 class DXFTag:
     __slots__ = ('code', '_value')
 
@@ -66,6 +70,13 @@ class DXFTag:
 
 # Special marker tag
 NONE_TAG = DXFTag(None, None)  # type: ignore
+
+
+def uniform_appid(appid: str) -> str:
+    if appid[0] == '{':
+        return appid
+    else:
+        return '{' + appid
 
 
 def is_app_data_marker(tag: DXFTag) -> bool:

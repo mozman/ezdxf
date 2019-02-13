@@ -88,7 +88,7 @@ class EntityDB:
     def delete_handle(self, handle: str) -> None:
         del self._database[handle]
 
-    def get_unique_handle(self)-> str:
+    def get_unique_handle(self) -> str:
         while True:
             handle = self.handles.next()
             if handle not in self._database:  # you can not trust $HANDSEED value

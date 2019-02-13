@@ -3,19 +3,29 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 
+DXF12 = 'AC1009'
+DXF13 = 'AC1012'
+DXF14 = 'AC1014'
+DXF2000 = 'AC1015'
+DXF2004 = 'AC1018'
+DXF2007 = 'AC1021'
+DXF2010 = 'AC1024'
+DXF2013 = 'AC1027'
+DXF2018 = 'AC1032'
+
 acad_release = {
-    'AC1009': 'R12',
-    'AC1012': 'R13',
-    'AC1014': 'R14',
-    'AC1015': 'R2000',
-    'AC1018': 'R2004',
-    'AC1021': 'R2007',
-    'AC1024': 'R2010',
-    'AC1027': 'R2013',
-    'AC1032': 'R2018',
+    DXF12: 'R12',
+    DXF13: 'R13',
+    DXF14: 'R14',
+    DXF2000: 'R2000',
+    DXF2004: 'R2004',
+    DXF2007: 'R2007',
+    DXF2010: 'R2010',
+    DXF2013: 'R2013',
+    DXF2018: 'R2018',
 }
 
-versions_supported_by_new = ['AC1009', 'AC1015', 'AC1018', 'AC1021', 'AC1024', 'AC1027', 'AC1032']
+versions_supported_by_new = [DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018]
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
 acad_release_to_dxf_version = {
@@ -97,6 +107,11 @@ XDATA_MARKER = 1001
 COMMENT_MARKER = 999
 STRUCTURE_MARKER = 0
 HEADER_VAR_MARKER = 9
+ACAD_REACTORS = '{ACAD_REACTORS'
+ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
+XDICT_HANDLE_CODE = 360
+REACTOR_HANDLE_CODE = 330
+OWNER_CODE = 330
 
 # Special tag codes for internal purpose
 # -1 to -5 id reserved by AutoCAD for internal use, but this tags will never be saved to file.

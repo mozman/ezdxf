@@ -118,7 +118,7 @@ class Tags(list):
         """
         return any(True for tag in self if tag.code == code)
 
-    def get_first_value(self, code: int, default: 'TagValue' = DXFValueError) -> 'TagValue':
+    def get_first_value(self, code: int, default=DXFValueError) -> 'TagValue':
         """
         Returns value of first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 
@@ -135,7 +135,7 @@ class Tags(list):
         else:
             return default
 
-    def get_first_tag(self, code: int, default: 'TagValue' = DXFValueError) -> DXFTag:
+    def get_first_tag(self, code: int, default=DXFValueError) -> DXFTag:
         """
         Returns first DXF tag with given group code or default if default != DXFValueError, else raises DXFValueError.
 

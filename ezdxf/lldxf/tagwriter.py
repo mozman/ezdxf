@@ -21,10 +21,10 @@ class TagWriter:
 
     def __init__(self, stream: TextIO, write_handles: bool = True):
         self._stream = stream
-        self.write_handles = write_handles
+        self.write_handles = write_handles  # flag is needed for new new entity structure!
 
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
-        if self.write_handles:
+        if self.write_handles:  # todo: not needed for new entity structure, handled by entity itself at export
             for tag in tags:
                 self.write_tag(tag)
         else:  # don't write handles
