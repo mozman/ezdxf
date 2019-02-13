@@ -170,8 +170,9 @@ class DXFNamespace:  # different for every DXF type
 class DXFEntity:
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(main_class)  # DXF attribute definitions
-    DEFAULT_ATTRIBS = None
-    DEFAULT_R12_ATTRIBS = None
+    DEFAULT_ATTRIBS = None  # type: dict  # for DXF R2000+
+    DEFAULT_R12_ATTRIBS = None  # type: dict
+    DEFAULT_DXF_VERSION = DXF12  # default DXF version id doc is None - only for testing purpose
 
     def __init__(self, tags: ExtendedTags = None, doc: 'Drawing' = None):
         self.doc = doc
@@ -185,23 +186,23 @@ class DXFEntity:
             self.dxf = self.setup_dxf_attribs(tags.subclasses)
             # todo: set owner for DXF R12 read from file
         else:
+            # bare minimum setup - used by new()
             self.xdata = None
             self.embedded_objects = None
             self.dxf = self.setup_dxf_attribs(self.default_subclasses())
 
     @classmethod
     def new(cls, handle: str, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
-        dxfversion = doc.dxfversion if doc is not None else DXF12
+        dxfversion = doc.dxfversion if doc else cls.DEFAULT_DXF_VERSION
         if dxfversion <= DXF12 and cls.DEFAULT_R12_ATTRIBS is None:
-            raise DXFVersionError("DXF type {} not supported by DXF R12".format(cls.DXFTYPE))
-        if cls.DEFAULT_ATTRIBS is None:
+            raise DXFVersionError("new() for DXF type {} not supported for DXF R12".format(cls.DXFTYPE))
+        if dxfversion > DXF12 and cls.DEFAULT_ATTRIBS is None:
             raise DXFTypeError("new() for DXF type {} not supported".format(cls.DXFTYPE))
 
-        entity = cls(None, doc)
+        entity = cls(None, doc)  # bare minimum setup
         entity.dxf.handle = handle
         entity.dxf.owner = owner  # set also for DXF R12 for internal usage
-        dxfversion = doc.dxfversion if doc else DXF12
-        default_attribs = dict(cls.DEFAULT_ATTRIBS) if dxfversion > DXF12 else cls.DEFAULT_R12_ATTRIBS
+        default_attribs = dict(cls.DEFAULT_ATTRIBS if dxfversion > DXF12 else cls.DEFAULT_R12_ATTRIBS)  # copy
         default_attribs.update(dxfattribs or {})
         entity.update_dxf_attribs(default_attribs)
         entity.post_new_hook()
