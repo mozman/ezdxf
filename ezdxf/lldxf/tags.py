@@ -2,9 +2,9 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from copy import deepcopy
-from typing import Iterable, List, TextIO, Any, TYPE_CHECKING, Tuple
+from typing import Iterable, List, TextIO, Any, TYPE_CHECKING, Tuple, Optional
 
-from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER
+from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER, SUBCLASS_MARKER
 from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
 from .tagger import internal_tag_compiler, low_level_tagger
 
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
 
 COMMENT_CODE = 999
-
 
 class DXFInfo(object):
     def __init__(self):

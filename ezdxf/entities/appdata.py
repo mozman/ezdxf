@@ -172,3 +172,8 @@ class ExtensionDict:
         tagwriter.write_tag2(APP_DATA_MARKER, ACAD_XDICTIONARY)
         tagwriter.write_tag2(XDICT_HANDLE_CODE, handle)
         tagwriter.write_tag2(APP_DATA_MARKER, '}')
+
+    def destroy(self, doc: 'Drawing'):
+        if self._xdict is not None:
+            doc.objects.delete_entity(self.get())
+        self._xdict = None

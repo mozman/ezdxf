@@ -15,6 +15,8 @@ def float2transparency(value: float) -> int:
 
 
 def transparency2float(value):
+    # 255 -> 0.
+    # 0 -> 1.
     return 1. - float(int(value) & 0xFF) / 255.
 
 

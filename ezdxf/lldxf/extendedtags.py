@@ -113,8 +113,9 @@ class ExtendedTags:
 
         def collect_app_data(starttag: DXFTag) -> None:
             """
-            Appdata, cannot contain XDATA or subclasses.
+            AppData, cannot contain XDATA or subclasses.
 
+            I guess AppData can only appear in the first subclass (unnamed)
             """
             data = Tags([starttag])
             closing_strings = ('}', starttag.value[1:] + '}')  # alternative closing tag 'APPID}'

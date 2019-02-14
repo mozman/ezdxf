@@ -2,11 +2,12 @@
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
 from typing import Any, TextIO, TYPE_CHECKING, Union
-from .types import TAG_STRING_FORMAT
-from .tags import DXFTag
+from .types import TAG_STRING_FORMAT, cast_tag_value
+from .tags import DXFTag, Tags
+from .const import LATEST_DXF_VERSION
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Tags, ExtendedTags
+    from ezdxf.eztypes import ExtendedTags
 
 
 class TagWriter:
@@ -19,15 +20,17 @@ class TagWriter:
 
     """
 
-    def __init__(self, stream: TextIO, write_handles: bool = True):
+    def __init__(self, stream: TextIO, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True):
         self._stream = stream
+        # this are just options for export functions
+        self.dxfversion = dxfversion
         self.write_handles = write_handles  # flag is needed for new new entity structure!
 
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
-        if self.write_handles:  # todo: not needed for new entity structure, handled by entity itself at export
+        if self.write_handles:
             for tag in tags:
                 self.write_tag(tag)
-        else:  # don't write handles
+        else:  # don't write handles todo: not needed for new entity structure, handled by entity itself at export
             if tags[0] == (0, 'DIMSTYLE'):
                 handle_code = 105
             else:
@@ -45,3 +48,31 @@ class TagWriter:
 
     def write_str(self, s: str) -> None:
         self._stream.write(s)
+
+
+class TagCollector:
+    """
+    Collects DXF tags as DXFTag() entities for testing.
+
+    """
+
+    def __init__(self, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True):
+        self.tags = []
+        self.dxfversion = dxfversion
+        self.write_handles = write_handles  # flag is needed for new new entity structure!
+
+    def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
+        for tag in tags:
+            self.write_tag(tag)
+
+    def write_tag(self, tag: DXFTag) -> None:
+        if hasattr(tag, 'dxftags'):
+            self.tags.extend(tag.dxftags())
+        else:
+            self.tags.append(tag)
+
+    def write_tag2(self, code: int, value: Any) -> None:
+        self.tags.append(DXFTag(code, cast_tag_value(int(code), value)))
+
+    def write_str(self, s: str) -> None:
+        self.write_tags(Tags.from_text(s))

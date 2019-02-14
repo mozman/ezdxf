@@ -4,14 +4,19 @@
 # DXFEntity - Root Entity
 from typing import TYPE_CHECKING, List, Any, Iterable, Optional
 from ezdxf.clone import clone
-from ezdxf.lldxf.types import DXFTag, handle_code, dxftag
+from ezdxf import options
+from ezdxf.lldxf.types import handle_code, dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000, STRUCTURE_MARKER, OWNER_CODE
-from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFVersionError, DXFKeyError
+from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE
+from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFKeyError, DXFValueError
+from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
+import logging
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
@@ -20,18 +25,6 @@ if TYPE_CHECKING:
 ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute {} does not exist'
 
-main_class = DefSubclass(None, {
-    'handle': DXFAttr(5),
-    # owner: Soft-pointer ID/handle to owner BLOCK_RECORD object
-    # this tag is not supported by DXF R12, but is used intern to unify entity handling between DXF R12 and DXF R2000+
-    # do not write this tag into DXF file for DXF R12!
-    'owner': DXFAttr(330),
-    # Application defined data can only appear here:
-    # {APPID ... multiple entries possible DXF R12?
-    # {ACAD_REACTORS ... one entry DXF R2000+, optional
-    # {ACAD_XDICTIONARY  ... one entry DXF R2000+, optional
-})
-
 
 class DXFNamespace:  # different for every DXF type
     """
@@ -39,9 +32,9 @@ class DXFNamespace:  # different for every DXF type
 
     """
 
-    def __init__(self, subclasses: List[Tags] = None, entity: 'DXFEntity' = None):
-        if subclasses:
-            base_class = subclasses[0]
+    def __init__(self, processor: 'SubclassProcessor' = None, entity: 'DXFEntity' = None):
+        if processor:
+            base_class = processor.base_class
             code = handle_code(base_class[0].value)
             handle = base_class.get_first_value(code, None)  # CLASS entity has no handle
             owner = base_class.get_first_value(330, None)  # owner, None for DXF R12 if read from file
@@ -98,7 +91,7 @@ class DXFNamespace:  # different for every DXF type
         else:
             raise DXFAttributeError(ERR_DXF_ATTRIB_NOT_EXITS.format(key))
 
-    def get(self, key: str, default: Any) -> Any:
+    def get(self, key: str, default: Any = None) -> Any:
         if self.hasattr(key):
             # do not return the DXF default value
             return self.__dict__[key]
@@ -107,6 +100,17 @@ class DXFNamespace:  # different for every DXF type
             return default
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(self.dxftype))
+
+    def all_existing_dxf_attribs(self) -> dict:
+        """
+        Returns all existing DXF attributes, except DXFEntity parent link.
+
+        Contains only DXF attributes, which are accessible by DXFNamespace.
+
+        """
+        attribs = dict(self.__dict__)
+        del attribs['_entity']
+        return attribs
 
     def set(self, key: str, value: Any) -> None:
         self.__setattr__(key, value)
@@ -121,14 +125,12 @@ class DXFNamespace:  # different for every DXF type
         """
         Returns True if DXF attribute `key` is supported else False. Does not grant that attribute `key` really exists.
 
+        The new entity system, ignores the DXF version at runtime, unsupported features, are just not saved
+        (no conversion between DXF version is done!).
+
         """
 
-        dxfattr = self.dxfattribs.get(key, None)
-        if dxfattr is None:
-            return False
-        if dxfattr.dxfversion is None:
-            return True
-        return self._entity.dxfversion >= dxfattr.dxfversion
+        return self.dxfattribs.get(key, None) is not None
 
     def hasattr(self, key: str) -> bool:
         """
@@ -193,11 +195,104 @@ class DXFNamespace:  # different for every DXF type
             self.export_dxf_attribute(tagwriter, name)
 
 
+class SubclassProcessor:
+    def __init__(self, tags: ExtendedTags, r12=None):
+        if len(tags.subclasses) == 0:
+            raise ValueError('Invalid tags.')
+        self.subclasses = list(tags.subclasses)  # copy subclasses
+        # DXF R12 and prior have no subclass marker system, all tags of an entity in one flat list
+        # Where later DXF versions have at least 2 subclasses base_class and AcDbEntity
+        # Exception CLASS has also only one subclass and no subclass marker, but this entity
+        # gets it own processing: has also no handle will not be stored in th entitydb
+        self.r12 = len(self.subclasses) == 1 if r12 is None else r12
+        self.name = tags.dxftype()
+        try:
+            self.handle = tags.get_handle()
+        except DXFValueError:
+            self.handle = '<?>'
+
+    @property
+    def base_class(self):
+        return self.subclasses[0]
+
+    def log_unprocessed_tags(self, unprocessed_tags: List, subclass='<?>'):
+        if options.log_unprocessed_tags and len(unprocessed_tags):
+            for tag in unprocessed_tags:
+                logger.debug("unprocessed tag: {} in {}(#{}).{}".format(str(tag), self.name, self.handle, subclass))
+
+    def find_subclass(self, name: str):
+        for subclass in self.subclasses:
+            if len(subclass) and subclass[0].value == name:
+                return subclass
+        return None
+
+    def load_dxfattribs_into_namespace(self, dxf: DXFNamespace, subclass_definition: DefSubclass) -> Tags:
+        """
+        Load all existing DXF attribute into DXFNamespace and return unprocessed tags, without leading subclass marker
+        (102, ...).
+
+        Args:
+            dxf: target namespace
+            subclass_definition: DXF attribute definitions (name=subclass_name, attribs={key=attribute name, value=DXFAttr})
+
+        Returns:
+             Tags: unprocessed tags
+
+        """
+
+        def attribs_by_code():
+            codes = {}
+            for name, dxfattr in subclass_definition.attribs.items():
+                codes[dxfattr.code] = name
+            return codes
+
+        # r12 has always unprocessed tags, because there are all tags in one subclass and one subclass definition never
+        # covers all tags e.g. handle is processed in main_call, so it is an unprocessed tag in AcDbEntity.
+        unprocessed_tags = Tags()
+        if self.r12:
+            tags = self.subclasses[0]
+        else:
+            tags = self.find_subclass(subclass_definition.name)
+            if tags is None:
+                return unprocessed_tags
+
+        group_codes = attribs_by_code()
+        # iterate without leading subclass marker or for r12 without leading (0, ...) structure tag
+        for tag in tags[1:]:
+            code, value = tag
+            if code in group_codes:
+                name = group_codes[code]
+                dxf.set(name, value)
+                # remove group code because only the first occurrence is needed, group codes sometimes are used multiple times
+                # in the same subclass for different purposes.
+                del group_codes[code]
+            else:
+                unprocessed_tags.append(tag)
+        return unprocessed_tags
+
+
+# ezdxf does not care about DXF versions at usage, latest version is used.
+# DXF version of document can be changed, but unsupported features of later DXF versions, are just ignored by saving,
+# ezdxf does no conversion between different DXF versions, ezdxf is still no CAD application.
+
+
+base_class = DefSubclass(None, {
+    'handle': DXFAttr(5),
+    # owner: Soft-pointer ID/handle to owner BLOCK_RECORD object
+    # this tag is not supported by DXF R12, but is used intern to unify entity handling between DXF R12 and DXF R2000+
+    # do not write this tag into DXF file for DXF R12!
+    'owner': DXFAttr(330),
+    # Application defined data can only appear here:
+    # {APPID ... multiple entries possible DXF R12?
+    # {ACAD_REACTORS ... one entry DXF R2000+, optional
+    # {ACAD_XDICTIONARY  ... one entry DXF R2000+, optional
+})
+
+
 class DXFEntity:
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
-    DXFATTRIBS = DXFAttributes(main_class)  # DXF attribute definitions
+    DXFATTRIBS = DXFAttributes(base_class)  # DXF attribute definitions
     DEFAULT_ATTRIBS = None  # type: dict
-    REQUIRED_DXF_VERSION = DXF12
 
     # Explicit excluding is better than implicit excluding; idea to exclude attribs with leading '_' prevents
     # 'protected' members from cloning, which may cause other problems.
@@ -219,11 +314,12 @@ class DXFEntity:
                 self.xdata = XData(tags.xdata)  # same process for every entity
             if tags.embedded_objects:
                 self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
-            self.dxf = self.setup_dxf_attribs(tags.subclasses)
+            processor = SubclassProcessor(tags)
+            self.dxf = self.setup_dxf_attribs(processor)
             # todo: set owner for DXF R12 read from file
         else:
             # bare minimum setup - used by new()
-            self.dxf = self.setup_dxf_attribs(self.default_subclasses())
+            self.dxf = self.setup_dxf_attribs()
 
     @classmethod
     def new(cls, handle: str, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
@@ -255,21 +351,14 @@ class DXFEntity:
 
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
         for key, value in dxfattribs.items():
-            self.set_dxf_attrib(key, value)
-
-    def default_subclasses(self) -> List[Tags]:
-        return [Tags([
-            DXFTag(STRUCTURE_MARKER, self.DXFTYPE),
-            DXFTag(handle_code(self.DXFTYPE), '0'),
-            DXFTag(OWNER_CODE, '0'),
-        ])]
+            self.dxf.set(key, value)
 
     def post_new_hook(self):
         pass
 
-    def setup_dxf_attribs(self, subclasses: List) -> DXFNamespace:
+    def setup_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
         # hook for inherited classes
-        return DXFNamespace(subclasses, self)
+        return DXFNamespace(processor, self)
 
     def setup_app_data(self, appdata: List[Tags]) -> None:
         for data in appdata:
@@ -285,14 +374,7 @@ class DXFEntity:
     def dxffactory(self) -> 'DXFFactoryType':
         return self.doc.dxffactory
 
-    @property
-    def dxfversion(self) -> str:
-        if self.doc:
-            return self.doc.dxfversion
-        else:
-            return DXF12
-
-    def get_dxf_attrib(self, key: str, default: Any) -> Any:
+    def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         self.dxf.get(key, default)
 
     def set_dxf_attrib(self, key: str, value: Any) -> None:
@@ -313,7 +395,7 @@ class DXFEntity:
         Returns a simple string representation.
 
         """
-        return "{}(#{})".format(self.dxf.dxftype, self.dxf.handle)
+        return "{}(#{})".format(self.dxftype(), self.dxf.handle)
 
     def __repr__(self) -> str:
         """
@@ -321,6 +403,39 @@ class DXFEntity:
 
         """
         return str(self.__class__) + " " + str(self)
+
+    def dxfattribs(self) -> dict:
+        """
+        Clones defined and existing DXF attributes as dict.
+
+        """
+        return self.dxf.all_existing_dxf_attribs()
+
+    def set_flag_state(self, flag: int, state: bool = True, name: str = 'flags') -> None:
+        flags = self.dxf.get(name, 0)
+        self.dxf.set(name, set_flag_state(flags, flag, state=state))
+
+    def get_flag_state(self, flag: int, name: str = 'flags') -> bool:
+        return bool(self.dxf.get(name, 0) & flag)
+
+    @property
+    def is_destroyed(self):
+        return not hasattr(self, 'dxf')
+
+    def destroy(self) -> None:
+        """
+        Delete all data and references.
+
+        """
+        if self.extension_dict is not None:
+            self.extension_dict.destroy(self.doc)
+            del self.extension_dict
+        del self.appdata
+        del self.reactors
+        del self.xdata
+        del self.embedded_objects
+        del self.doc
+        del self.dxf
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         """ Export DXF entity by tagwriter
@@ -348,7 +463,7 @@ class DXFEntity:
     def export_base_class(self, tagwriter: 'TagWriter') -> None:
         # 1. tag: (0, DXFTYPE)
         tagwriter.write_tag2(STRUCTURE_MARKER, self.DXFTYPE)
-        if self.dxfversion >= DXF2000:
+        if tagwriter.dxfversion >= DXF2000:
             tagwriter.write_tag2(handle_code(self.dxf.dxftype), self.dxf.handle)
             if self.appdata:
                 self.appdata.export_dxf(tagwriter)
@@ -495,3 +610,7 @@ class UnknownEntity(DXFEntity):
             tagwriter.write_tags(subclass)
 
         # xdata and embedded objects  export is done by parent
+
+    def destroy(self) -> None:
+        del self._subclasses
+        super().destroy()

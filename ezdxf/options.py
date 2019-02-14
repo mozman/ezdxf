@@ -14,6 +14,9 @@ class Options:
         self.default_text_style = 'OpenSans'
         self.default_dimension_text_style = 'OpenSansCondensed-Light'
 
+        # debugging
+        self.log_unprocessed_tags = True
+
 
 # Global Options
 options = Options()

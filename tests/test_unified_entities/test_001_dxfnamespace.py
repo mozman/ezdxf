@@ -2,26 +2,17 @@
 # License: MIT License
 import pytest
 from copy import deepcopy
-from ezdxf.entities.dxfentity import main_class, DXFAttributes, DXFNamespace
+from ezdxf.entities.dxfentity import base_class, DXFAttributes, DXFNamespace, SubclassProcessor
 from ezdxf.entities.dxfgfx import acdb_entity
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.const import DXF12, DXFAttributeError
+from ezdxf.lldxf.const import DXFAttributeError
+from ezdxf.lldxf.tagwriter import TagCollector
 
 
 class DXFEntity:
     """ Mockup """
     DXFTYPE = 'DXFENTITY'
-    DXFATTRIBS = DXFAttributes(main_class, acdb_entity)
-    dxfversion = DXF12
-
-
-class TagWriter:
-    """ Mockup """
-    def __init__(self):
-        self.tags = []
-
-    def write_tag(self, tag):
-        self.tags.append(tag)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
 
 @pytest.fixture
@@ -30,19 +21,19 @@ def entity():
 
 
 @pytest.fixture
-def tags1():
-    return ExtendedTags.from_text(TEST_1)
+def processor():
+    return SubclassProcessor(ExtendedTags.from_text(TEST_1))
 
 
-def test_handle_and_owner(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_handle_and_owner(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     assert attribs.handle == 'FFFF'
     assert attribs.owner == 'ABBA'
     assert attribs._entity is entity
 
 
-def test_default_values(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_default_values(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     assert attribs.layer == '0'
     assert attribs.color == 256
     assert attribs.linetype == 'BYLAYER'
@@ -52,8 +43,8 @@ def test_default_values(entity, tags1):
     assert attribs.hasattr('linetype') is False
 
 
-def test_get_value_with_default(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_get_value_with_default(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     # return existing values
     assert attribs.get('handle', '0') == 'FFFF'
     # return given default value not DXF default value, which would be '0'
@@ -67,8 +58,8 @@ def test_get_value_with_default(entity, tags1):
         _ = attribs.color_name
 
 
-def test_set_values(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_set_values(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     attribs.handle = 'CDEF'
     assert attribs.handle == 'CDEF'
     attribs.set('owner', 'DADA')
@@ -85,8 +76,8 @@ def test_set_values(entity, tags1):
         attribs.set('hallo', 0)
 
 
-def test_delete_attribs(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_delete_attribs(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     attribs.layer = 'mozman'
     assert attribs.layer == 'mozman'
     del attribs.layer
@@ -100,19 +91,20 @@ def test_delete_attribs(entity, tags1):
         del attribs.color
 
 
-def test_is_supported(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_is_supported(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     assert attribs.is_supported('linetype') is True
-    assert attribs.is_supported('true_color') is False  # DXF R12
+    assert attribs.is_supported('true_color') is True  # ezdxf does not care about DXF versions at runtime
+    assert attribs.is_supported('xxx_mozman_xxx') is False
 
 
-def test_dxftype(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_dxftype(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     assert attribs.dxftype == 'DXFENTITY'
 
 
-def test_cloning(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_cloning(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     attribs.color = 77
     attribs2 = attribs.clone()
     # clone everything except _entity, handle, owner
@@ -126,15 +118,15 @@ def test_cloning(entity, tags1):
     assert attribs.owner == 'ABBA'
 
 
-def test_prevent_deepcopy_usage(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
+def test_prevent_deepcopy_usage(entity, processor):
+    attribs = DXFNamespace(processor, entity)
     with pytest.raises(NotImplementedError):
         _ = deepcopy(attribs)
 
 
-def test_dxf_export_one_attribute(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
-    tagwriter = TagWriter()
+def test_dxf_export_one_attribute(entity, processor):
+    attribs = DXFNamespace(processor, entity)
+    tagwriter = TagCollector()
     attribs.export_dxf_attribute(tagwriter, 'handle')
     assert len(tagwriter.tags) == 1
     assert tagwriter.tags[0] == (5, 'FFFF')
@@ -142,9 +134,9 @@ def test_dxf_export_one_attribute(entity, tags1):
         attribs.export_dxf_attribute(tagwriter, 'mozman')
 
 
-def test_dxf_export_two_attribute(entity, tags1):
-    attribs = DXFNamespace(tags1.subclasses, entity)
-    tagwriter = TagWriter()
+def test_dxf_export_two_attribute(entity, processor):
+    attribs = DXFNamespace(processor, entity)
+    tagwriter = TagCollector()
     attribs.export_dxf_attribs(tagwriter, ['handle', 'owner'])
     assert len(tagwriter.tags) == 2
     assert tagwriter.tags[0] == (5, 'FFFF')
