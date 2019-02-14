@@ -1,9 +1,9 @@
 # Created: 10.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 from io import StringIO
+from copy import deepcopy
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.const import DXFValueError
@@ -67,6 +67,17 @@ TEST1
   0
 TEST2
 """
+
+TAGS_WITH_VERTEX = """  0
+TEST
+ 10
+1.0
+ 20
+2.0
+ 30
+3.0
+"""
+
 
 
 class HandlesMock:
@@ -148,13 +159,25 @@ class TestTags:
 
     def test_clone_is_equal(self, tags):
         clone = tags.clone()
-        assert tags is not clone
+        assert id(tags) != id(clone)
         assert tags == clone
 
     def test_clone_is_independent(self, tags):
         clone = tags.clone()
         clone.pop()
         assert self.tags != clone
+
+    def test_deepcopy(self):
+        tags = Tags.from_text(TAGS_WITH_VERTEX)
+        assert len(tags) == 2
+        v = tags[1]
+        assert v.value == (1., 2., 3.)
+
+        tags2 = deepcopy(tags)
+        assert id(tags) != id(tags2)
+        assert tags == tags2, "same content"
+        # same ids, DXFTags are immutable
+        assert id(v) == id(tags[1])
 
     def test_replace_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)

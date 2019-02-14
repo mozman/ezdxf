@@ -35,6 +35,7 @@ def handle_code(dxftype: str) -> int:
 
 
 class DXFTag:
+    """ Immutable DXFTag class """
     __slots__ = ('code', '_value')
 
     def __init__(self, code: int, value: 'TagValue'):
@@ -65,7 +66,7 @@ class DXFTag:
         return TAG_STRING_FORMAT % (self.code, self._value)
 
     def clone(self) -> 'DXFTag':
-        return self.__class__(self.code, self._value)
+        return self  # immutable tags
 
 
 # Special marker tag
@@ -88,6 +89,7 @@ def is_embedded_object_marker(tag: DXFTag) -> bool:
 
 
 class DXFVertex(DXFTag):
+    """ Immutable Vertex class"""
     __slots__ = ()
 
     def __init__(self, code: int, value: Sequence[float]):
@@ -112,6 +114,7 @@ class DXFVertex(DXFTag):
 
 
 class DXFBinaryTag(DXFTag):
+    """ Immutable BinaryTags class """
     __slots__ = ()
 
     def __str__(self) -> str:

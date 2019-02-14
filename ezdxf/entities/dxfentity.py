@@ -3,6 +3,7 @@
 # Created 2019-02-13
 # DXFEntity - Root Entity
 from typing import TYPE_CHECKING, List, Any, Iterable, Optional
+from ezdxf.clone import clone
 from ezdxf.lldxf.types import DXFTag, handle_code, dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -38,16 +39,41 @@ class DXFNamespace:  # different for every DXF type
 
     """
 
-    def __init__(self, subclasses: List[Tags], entity: 'DXFEntity'):
-        assert len(subclasses)
-        mainclass = subclasses[0]
+    def __init__(self, subclasses: List[Tags] = None, entity: 'DXFEntity' = None):
+        if subclasses:
+            base_class = subclasses[0]
+            code = handle_code(base_class[0].value)
+            handle = base_class.get_first_value(code, None)  # CLASS entity has no handle
+            owner = base_class.get_first_value(330, None)  # owner, None for DXF R12 if read from file
+        else:
+            handle = None
+            owner = None
+        self.rewire(entity, handle, owner)
 
-        # bypass __setattr__() because without DXF attributes definition
+    def rewire(self, entity: 'DXFEntity', handle: str = None, owner: str = None) -> None:
+        """
+        Rewire DXF namespace with parent entity
+
+        Args:
+            entity: new associated entity
+            handle: new handle or None
+            owner:  new entity owner handle or None
+
+        """
+        # bypass __setattr__()
         self.__dict__['_entity'] = entity
-        # value of first tag is always the dxftype e.g. (0, LINE)
-        code = handle_code(mainclass[0].value)
-        self.handle = mainclass.get_first_value(code, None)  # CLASS entity has no handle
-        self.owner = mainclass.get_first_value(330, None)  # owner, None for DXF R12 if read from file
+        self.__dict__['handle'] = handle
+        self.__dict__['owner'] = owner
+
+    def clone(self):
+        namespace = self.__class__()
+        for key, value in self.__dict__.items():
+            if key not in {'_entity', 'handle', 'owner'}:
+                namespace.__dict__[key] = clone(value)
+        return namespace
+
+    def __deepcopy__(self, memodict: dict):
+        raise NotImplementedError('use self.clone()')
 
     def __getattr__(self, key: str) -> Any:
         """ called if key does not exist """
@@ -170,9 +196,12 @@ class DXFNamespace:  # different for every DXF type
 class DXFEntity:
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(main_class)  # DXF attribute definitions
-    DEFAULT_ATTRIBS = None  # type: dict  # for DXF R2000+
-    DEFAULT_R12_ATTRIBS = None  # type: dict
-    DEFAULT_DXF_VERSION = DXF12  # default DXF version id doc is None - only for testing purpose
+    DEFAULT_ATTRIBS = None  # type: dict
+    REQUIRED_DXF_VERSION = DXF12
+
+    # Explicit excluding is better than implicit excluding; idea to exclude attribs with leading '_' prevents
+    # 'protected' members from cloning, which may cause other problems.
+    EXCLUDE_FROM_CLONING = {'doc'}
 
     def __init__(self, tags: ExtendedTags = None, doc: 'Drawing' = None):
         self.doc = doc
@@ -198,20 +227,31 @@ class DXFEntity:
 
     @classmethod
     def new(cls, handle: str, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
-        dxfversion = doc.dxfversion if doc else cls.DEFAULT_DXF_VERSION
-        if dxfversion <= DXF12 and cls.DEFAULT_R12_ATTRIBS is None:
-            raise DXFVersionError("new() for DXF type {} not supported for DXF R12".format(cls.DXFTYPE))
-        if dxfversion > DXF12 and cls.DEFAULT_ATTRIBS is None:
+        if cls.DEFAULT_ATTRIBS is None:
             raise DXFTypeError("new() for DXF type {} not supported".format(cls.DXFTYPE))
 
         entity = cls(None, doc)  # bare minimum setup
         entity.dxf.handle = handle
         entity.dxf.owner = owner  # set also for DXF R12 for internal usage
-        default_attribs = dict(cls.DEFAULT_ATTRIBS if dxfversion > DXF12 else cls.DEFAULT_R12_ATTRIBS)  # copy
+        default_attribs = dict(cls.DEFAULT_ATTRIBS)  # copy
         default_attribs.update(dxfattribs or {})
         entity.update_dxf_attribs(default_attribs)
         entity.post_new_hook()
         return entity
+
+    def clone(self) -> 'DXFEntity':
+        entity = self.__class__(doc=self.doc)
+        self._clone_attribs(entity)
+        entity.dxf.rewire(entity)
+        return entity
+
+    def _clone_attribs(self, entity):
+        for key, value in self.__dict__.items():
+            if key not in self.EXCLUDE_FROM_CLONING:
+                entity.__dict__[key] = clone(value)
+
+    def __deepcopy__(self, memodict: dict):
+        raise NotImplementedError('use self.clone()')
 
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
         for key, value in dxfattribs.items():
@@ -372,7 +412,7 @@ class DXFEntity:
             self.appdata = AppData()
         self.appdata.add(appid, tags)
 
-    def discard_app_data(self, appid:str):
+    def discard_app_data(self, appid: str):
         if self.appdata:
             self.appdata.discard(appid)
 

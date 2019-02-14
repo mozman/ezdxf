@@ -1,6 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import pytest
+from copy import deepcopy
 from ezdxf.entities.dxfentity import main_class, DXFAttributes, DXFNamespace
 from ezdxf.entities.dxfgfx import acdb_entity
 from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -108,6 +109,27 @@ def test_is_supported(entity, tags1):
 def test_dxftype(entity, tags1):
     attribs = DXFNamespace(tags1.subclasses, entity)
     assert attribs.dxftype == 'DXFENTITY'
+
+
+def test_cloning(entity, tags1):
+    attribs = DXFNamespace(tags1.subclasses, entity)
+    attribs.color = 77
+    attribs2 = attribs.clone()
+    # clone everything except _entity, handle, owner
+    assert attribs2._entity is None
+    assert attribs2.handle is None
+    assert attribs2.owner is None
+    assert attribs2.color == 77
+    # do not harm original entity
+    assert attribs._entity is entity
+    assert attribs.handle == 'FFFF'
+    assert attribs.owner == 'ABBA'
+
+
+def test_prevent_deepcopy_usage(entity, tags1):
+    attribs = DXFNamespace(tags1.subclasses, entity)
+    with pytest.raises(NotImplementedError):
+        _ = deepcopy(attribs)
 
 
 def test_dxf_export_one_attribute(entity, tags1):

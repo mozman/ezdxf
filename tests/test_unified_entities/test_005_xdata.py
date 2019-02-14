@@ -6,6 +6,7 @@ import pytest
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.xdata import XData
+from ezdxf.clone import clone
 
 
 class TagWriter:
@@ -83,6 +84,22 @@ def test_discard_xdata(xdata):
     # ignore none existing appids
     xdata.discard('xxx')
     assert len(xdata) == 1
+
+
+def test_cloning(xdata):
+    xdata2 = clone(xdata)
+    assert len(xdata2) == 2
+
+    assert 'MOZMAN' in xdata2
+    tags = xdata2.get('MOZMAN')
+    assert len(tags) == 4
+    assert tags[0] == (1001, 'MOZMAN')
+    assert tags[1] == (1000, 'DataStr1')
+    assert tags[2] == (1000, 'DataStr2')
+    assert tags[3] == (1040, 3.14)
+    xdata2.discard('MOZMAN')
+    assert 'MOZMAN' in xdata
+    assert 'MOZMAN' not in xdata2
 
 
 def test_dxf_export(xdata):

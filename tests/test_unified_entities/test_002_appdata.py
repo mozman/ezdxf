@@ -3,7 +3,7 @@
 # Created 2019-02-13
 import pytest
 
-from ezdxf.lldxf.const import DXFKeyError
+from ezdxf.clone import clone
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.appdata import AppData
 
@@ -93,6 +93,21 @@ def test_app_data_dxf_export(tags):
     assert tags1[-1] == (102, '}')
     assert tags2[0] == (102, '{XXX')
     assert tags2[-1] == (102, '}')
+
+
+def test_clone(tags):
+    appdata = AppData()
+    appdata.set(tags.appdata[0])
+    new_appdata = clone(appdata)
+    new_appdata.add('MOZMAN', [
+        (1, "Text"),
+    ])
+    d1 = appdata.get('MOZMAN')
+    d2 = new_appdata.get('MOZMAN')
+    assert len(d1) == 4
+    assert len(d2) == 3
+    assert d1[1] == (40, 1.)
+    assert d2[1] == (1, "Text")
 
 
 APPDATA = """0
