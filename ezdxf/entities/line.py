@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
     from .dxfentity import DXFNamespace
 
-__all__ = ['Line', 'acdb_line', 'export_acdb_line']
+__all__ = ['Line']
 
 acdb_line = DefSubclass('AcDbLine', {
     'start': DXFAttr(10, xtype=XType.point3d),
@@ -20,14 +20,6 @@ acdb_line = DefSubclass('AcDbLine', {
     'thickness': DXFAttr(39, default=0),
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0.0, 0.0, 1.0)),
 })
-
-
-def export_acdb_line(attribs: 'DXFNamespace', tagwriter: 'TagWriter'):
-    """ Export subclass 'AcDbEntity' as DXF tags. """
-    if tagwriter.dxfversion > DXF12:
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_line.name)
-    # for all DXF versions
-    attribs.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
 
 
 class Line(DXFGraphic):
@@ -55,8 +47,11 @@ class Line(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class (handle, appid, reactors, xdict, owner) export is done by parent class
-        # 'AcDbEntity' export is done by parent class
+        # base class export is done by parent class
         super().export_entity(tagwriter)
-        export_acdb_line(self.dxf, tagwriter)
-        # xdata and embedded objects  export is also done by parent
+        # AcDbEntity export is done by parent class
+        if tagwriter.dxfversion > DXF12:
+            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_line.name)
+        # for all DXF versions
+        self.dxf.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
+        # xdata and embedded objects export will be done by parent class

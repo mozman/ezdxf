@@ -70,7 +70,8 @@ def test_write_latest_dxf(entity):
     assert tag[2] == (330, 'ABBA')
 
 
-def test_destroy(entity):
+def test_is_alive(entity):
+    assert entity.is_alive is True
     entity.destroy()
-    assert entity.is_destroyed is True
+    assert entity.is_alive is False
 

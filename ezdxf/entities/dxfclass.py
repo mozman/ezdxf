@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 __all__ = ['DXFClass']
 
-dxfclass_class = DefSubclass(None, {
+class_def = DefSubclass(None, {
     # Class DXF record name; always unique
     'name': DXFAttr(1),
     # C++ class name. Used to bind with software that defines object class behavior; always unique
@@ -47,14 +47,15 @@ dxfclass_class = DefSubclass(None, {
 
 class DXFClass(DXFEntity):
     DXFTYPE = 'CLASS'
-    DXFATTRIBS = DXFAttributes(dxfclass_class)
+    DXFATTRIBS = DXFAttributes(class_def)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     @classmethod
     def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFClass':
         """ New CLASS constructor - has no handle, no owner and do not need document reference """
-        dxfclass = cls()
-        dxfclass.update_dxf_attribs(dxfattribs)
-        return dxfclass
+        dxf_class = cls()
+        dxf_class.update_dxf_attribs(dxfattribs)
+        return dxf_class
 
     def load_tags(self, tags: 'ExtendedTags') -> None:
         """ Called by load constructor. CLASS is special. """
@@ -62,10 +63,10 @@ class DXFClass(DXFEntity):
             # do not process base class!!!
             self.dxf = DXFNamespace(entity=self)
             processor = SubclassProcessor(tags)
-            processor.load_dxfattribs_into_namespace(self.dxf, dxfclass_class)
+            processor.load_dxfattribs_into_namespace(self.dxf, class_def)
 
     def export_dxf(self, tagwriter: 'TagWriter'):
-        """ Do all, because CLASS is special. """
+        """ Do complete export here, because CLASS is special. """
         dxfversion = tagwriter.dxfversion
         if dxfversion < DXF2000:
             return

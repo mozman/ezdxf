@@ -481,8 +481,8 @@ class DXFEntity:
         return bool(self.dxf.get(name, 0) & flag)
 
     @property
-    def is_destroyed(self):
-        return not hasattr(self, 'dxf')
+    def is_alive(self):
+        return hasattr(self, 'dxf')
 
     def destroy(self) -> None:
         """

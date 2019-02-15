@@ -6,7 +6,7 @@ import array
 from contextlib import contextmanager
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED, LWPOLYLINE_PLINEGEN
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
@@ -26,7 +26,7 @@ DEFAULT_FORMAT = 'xyseb'
 LWPOINTCODES = (10, 20, 40, 41, 42)
 
 # Order doesn't matter, not valid for AutoCAD:
-# If tag 90 is not the first TAG, AutoCAD does not close the polyline when the `close` flag is set.
+# If tag 90 is not the first TAG, AutoCAD does not close the polyline, when the `close` flag is set.
 acdb_lwpolyline = DefSubclass('AcDbPolyline', {
     'count': DXFAttr(90, xtype=XType.callback, getter='__len__'),
     # always return actual length and set tag 90
@@ -46,8 +46,6 @@ class LWPolyline(DXFGraphic):
     DXFTYPE = 'LWPOLYLINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_lwpolyline)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
-    CLOSED = 1
-    PLINEGEN = 128
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
@@ -55,7 +53,7 @@ class LWPolyline(DXFGraphic):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
-        Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
+        Adds subclass processing for AcDbPolyline, requires previous base class and AcDbEntity processing by parent
         class.
         """
         dxf = super().load_dxf_attribs(processor)
@@ -80,23 +78,22 @@ class LWPolyline(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class (handle, appid, reactors, xdict, owner) export is done by parent class
-        # 'AcDbEntity' export is done by parent class
+        # base class export is done by parent class
         super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lwpolyline.name)
-        # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['count', 'flags', 'const_width', 'elevation', 'thickness'])
         tagwriter.write_tags(Tags(self.lwpoints.dxftags()))
         self.dxf.export_dxf_attribute(tagwriter, 'extrusion')
-        # xdata and embedded objects  export is also done by parent
+        # xdata and embedded objects export will be done by parent class
 
     @property
     def closed(self) -> bool:
-        return self.get_flag_state(self.CLOSED, name='flags')
+        return self.get_flag_state(LWPOLYLINE_CLOSED, name='flags')
 
     @closed.setter
     def closed(self, status: bool) -> None:
-        self.set_flag_state(self.CLOSED, status, name='flags')
+        self.set_flag_state(LWPOLYLINE_CLOSED, status, name='flags')
 
     # same as POLYLINE
     def close(self, state=True) -> None:
