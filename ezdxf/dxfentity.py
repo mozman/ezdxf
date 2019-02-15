@@ -56,6 +56,9 @@ class DXFEntity:
     TEMPLATE = None
     CLASS = None
     DXFATTRIBS = {}
+    # new entities interface:
+    is_alive = True
+    priority = 0
 
     def __init__(self, tags: ExtendedTags, drawing: 'Drawing' = None):
         self.tags = tags  # DXF tags stored as DXFTag (and inherited) in an ExtendedTags container

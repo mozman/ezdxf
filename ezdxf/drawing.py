@@ -8,6 +8,7 @@ import logging
 from itertools import chain
 from ezdxf.database import EntityDB
 from ezdxf.lldxf.const import DXFVersionError, acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
+from ezdxf.lldxf.const import DXF12, DXF13, DXF14, DXF2000
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database
 from ezdxf.dxffactory import dxffactory
 from ezdxf.templates import TemplateLoader
@@ -61,7 +62,7 @@ class Drawing:
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
         # create section HEADER
         header = get_header(sections)
-        self.dxfversion = header.get('$ACADVER', 'AC1009')  # type: str # read only
+        self.dxfversion = header.get('$ACADVER', DXF12)  # type: str # read only
         self.dxffactory = dxffactory(self)  # read only, requires self.dxfversion
         self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
@@ -73,10 +74,10 @@ class Drawing:
         # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
         self.sections = Sections(sections, drawing=self, header=header)
 
-        if self.dxfversion > 'AC1009':
+        if self.dxfversion > DXF12:
             self.rootdict = self.objects.rootdict
             self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
-            if self.dxfversion in ('AC1012', 'AC1014'):  # releases R13 and R14
+            if self.dxfversion in (DXF13, DXF14):
                 repair.upgrade_to_ac1015(self)
             # some applications don't setup properly the model and paper space layouts
             repair.setup_layouts(self)
@@ -85,7 +86,7 @@ class Drawing:
             self._mleader_styles = self.objects.mleader_styles()
             self._mline_styles = self.objects.mline_styles()
         else:  # dxfversion <= 'AC1009' do cleanup work, before building layouts
-            if self.dxfversion < 'AC1009':  # legacy DXF version
+            if self.dxfversion < DXF12:  # legacy DXF version
                 repair.upgrade_to_ac1009(self)  # upgrade to DXF format AC1009 (DXF R12)
             repair.cleanup_r12(self)
             # ezdxf puts automatically handles into all entities added to the entities database

@@ -480,6 +480,15 @@ class DXFEntity:
     def get_flag_state(self, flag: int, name: str = 'flags') -> bool:
         return bool(self.dxf.get(name, 0) & flag)
 
+    def linked_entities(self) -> Iterable['DXFEntity']:
+        return []
+
+    def set_owner(self, owner: str, paperspace: int = 0) -> None:
+        self.dxf.owner = owner
+        self.dxf.paperspace = paperspace
+        for e in self.linked_entities():
+            e.set_owner(owner, paperspace)
+
     @property
     def is_alive(self):
         return hasattr(self, 'dxf')
@@ -499,7 +508,7 @@ class DXFEntity:
         del self.doc
         del self.dxf
 
-    def preprocess_export(self, tagwriter: 'TagWriter')->bool:
+    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
         """ Pre requirement check and pre processing for export.
 
         Returns False if entity should not be exported at all.

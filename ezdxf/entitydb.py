@@ -122,6 +122,9 @@ class EntitySpace:
     def __len__(self):
         return len(self.entities)
 
+    def has_handle(self, handle: str):
+        return any(e.dxf.handle == handle for e in self)
+
     def purge(self):
         """ Remove deleted entities. """
         self.entities = list(self)
@@ -170,7 +173,7 @@ class EntitySpace:
         """ Add `entity` to entity space. """
         self.entities.append(entity)
 
-    def write(self, tagwriter: 'TagWriter', order=0) -> None:
+    def export_dxf(self, tagwriter: 'TagWriter', order=0) -> None:
         """
         Export all entities into DXF file by `tagwriter` in given `order`.
 
