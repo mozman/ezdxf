@@ -6,15 +6,16 @@
 from typing import TYPE_CHECKING, Optional, Tuple
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, SUBCLASS_MARKER
-from .dxfentity import DXFEntity, base_class, DXFNamespace, SubclassProcessor
+from .dxfentity import DXFEntity, base_class,SubclassProcessor
 from ezdxf.math import OCS
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter
+    from .dxfentity import DXFNamespace
 
-__all__ = ['DXFGfx', 'acdb_entity']
+__all__ = ['DXFGraphic', 'acdb_entity', 'export_acdb_entity']
 
 
 acdb_entity = DefSubclass('AcDbEntity', {
@@ -45,7 +46,24 @@ acdb_entity = DefSubclass('AcDbEntity', {
 })
 
 
-class DXFGfx(DXFEntity):
+def export_acdb_entity(attribs: 'DXFNamespace', tagwriter: 'TagWriter'):
+    """ Export subclass 'AcDbEntity' as DXF tags. """
+    # Full control over tag order and YES, sometimes order matters
+    dxfversion = tagwriter.dxfversion
+    if dxfversion > DXF12:
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
+    # for all DXF versions
+    attribs.export_dxf_attribute(tagwriter, 'layer', force=True)
+    attribs.export_dxf_attribs(tagwriter, ['linetype', 'color', 'paperspace'])
+    if dxfversion >= DXF2000:
+        attribs.export_dxf_attribs(tagwriter, ['lineweight', 'ltscale'])
+    if dxfversion >= DXF2004:
+        attribs.export_dxf_attribs(tagwriter, ['true_color', 'color_name', 'transparency'])
+    if dxfversion >= DXF2004:
+        attribs.export_dxf_attribute(tagwriter, 'shadow_mode')
+
+
+class DXFGraphic(DXFEntity):
     """
     Base class for all graphical DXF entities like Text() or Line().
 
@@ -54,15 +72,15 @@ class DXFGfx(DXFEntity):
     DXFTYPE = 'DXFGFX'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)  # DXF attribute definitions
 
-    def setup_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
-        """ Adds subclass processing for 'AcDbEntity', requires previous base class procssing by super class. """
-        dxf = super().setup_dxf_attribs(processor)
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        """ Adds subclass processing for 'AcDbEntity', requires previous base class processing by parent class. """
+        dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
 
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_entity)
         if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass='AcDbEntity')
+            processor.log_unprocessed_tags(tags, subclass=acdb_entity.name)
         return dxf
 
     def post_new_hook(self):
@@ -112,25 +130,8 @@ class DXFGfx(DXFEntity):
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         # base class (handle, appoid, reactors, xdict, owner) export is done by parent class
-        self.export_acdb_entity(tagwriter)
+        export_acdb_entity(self.dxf, tagwriter)
         # xdata and embedded objects  export is also done by parent
-
-    def export_acdb_entity(self, tagwriter: 'TagWriter'):
-        """ Export subclass 'AcDbEntity' as DXF tags. """
-        attribs = self.dxf
-        # Full control over tag order and YES, sometimes order matters
-        dxfversion = tagwriter.dxfversion
-        if dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
-        # for all DXF versions
-        attribs.export_dxf_attribute(tagwriter, 'layer', force=True)
-        attribs.export_dxf_attribs(tagwriter, ['linetype', 'color', 'paperspace'])
-        if dxfversion >= DXF2000:
-            attribs.export_dxf_attribs(tagwriter, ['lineweight', 'ltscale'])
-        if dxfversion >= DXF2004:
-            attribs.export_dxf_attribs(tagwriter, ['true_color', 'color_name', 'transparency'])
-        if dxfversion >= DXF2004:
-            attribs.export_dxf_attribute(tagwriter, 'shadow_mode')
 
     def audit(self, auditor: 'Auditor') -> None:
         super().audit(auditor)

@@ -1,7 +1,6 @@
 # Created: 25.03.2011, 2018 rewritten for pytest
 # Copyright (C) 2011-2018, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 import ezdxf
 
@@ -24,7 +23,6 @@ def paperspace(dwg):
 def test_drawing_attribute(dwg, modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
     assert dwg is line.drawing
-
     assert hasattr(line, '__dict__') is False, "Invalid usage of __slots__"
 
 

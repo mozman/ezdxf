@@ -5,6 +5,7 @@ from typing import Union, Tuple, Iterable, Callable, Sequence, Any, TYPE_CHECKIN
 from array import array
 from itertools import chain
 import reprlib
+from ezdxf.math.vector import Vector
 
 from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
 
@@ -230,3 +231,12 @@ def get_xcode_for(code) -> int:
     if type_ is float:
         return 1040
     return 1000
+
+
+def cast_value(code: int, value):
+    if value is not None:
+        if code in POINT_CODES:  # cast vertices to Vector()
+            return Vector(value)
+        return TYPE_TABLE.get(code, str)(value)
+    else:
+        return None

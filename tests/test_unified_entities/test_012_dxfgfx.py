@@ -3,12 +3,12 @@
 # created 2019-02-14
 import pytest
 
-from ezdxf.entities.dxfgfx import DXFGfx
+from ezdxf.entities.dxfgfx import DXFGraphic
 
 
 @pytest.fixture
 def entity():
-    return DXFGfx.from_text(LINE)
+    return DXFGraphic.from_text(LINE)
 
 
 def test_init_from_tags(entity):

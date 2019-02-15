@@ -2,8 +2,10 @@
 # License: MIT License
 import pytest
 from copy import deepcopy
+from ezdxf.math import Vector
 from ezdxf.entities.dxfentity import base_class, DXFAttributes, DXFNamespace, SubclassProcessor
 from ezdxf.entities.dxfgfx import acdb_entity
+from ezdxf.entities.line import acdb_line
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFAttributeError
 from ezdxf.lldxf.tagwriter import TagCollector
@@ -12,7 +14,7 @@ from ezdxf.lldxf.tagwriter import TagCollector
 class DXFEntity:
     """ Mockup """
     DXFTYPE = 'DXFENTITY'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_line)
 
 
 @pytest.fixture
@@ -53,9 +55,8 @@ def test_get_value_with_default(entity, processor):
     with pytest.raises(DXFAttributeError):
         _ = attribs.get('hallo', 0)
 
-    # attribs without default raises DXFAttributeError
-    with pytest.raises(DXFAttributeError):
-        _ = attribs.color_name
+    # attribs without default returns None -> will not exported to DXF file
+    assert attribs.color_name is None
 
 
 def test_set_values(entity, processor):
@@ -74,6 +75,24 @@ def test_set_values(entity, processor):
         attribs.hallo = 0
     with pytest.raises(DXFAttributeError):
         attribs.set('hallo', 0)
+
+
+def test_value_types(entity, processor):
+    attribs = DXFNamespace(processor, entity)
+    attribs.handle = None  # None is always accepted, attribute is ignored at export
+    assert attribs.handle is None
+    attribs.handle = 'XYZ'
+    assert attribs.handle == 'XYZ', 'handle is just a string'
+    attribs.handle = 123
+    assert attribs.handle == '123', 'handle is just a string'
+    with pytest.raises(ValueError):
+        attribs.color = 'xxx'
+
+    attribs.start = (1, 2, 3)  # type: Vector
+    assert attribs.start == (1, 2, 3)
+    assert attribs.start.x == 1
+    assert attribs.start.y == 2
+    assert attribs.start.z == 3
 
 
 def test_delete_attribs(entity, processor):

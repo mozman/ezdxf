@@ -57,7 +57,7 @@ class DXFClass(DXFEntity):
         return dxfclass
 
     def load_tags(self, tags: 'ExtendedTags') -> None:
-        """ Called by load constructor. """
+        """ Called by load constructor. CLASS is special. """
         if tags:
             # do not process base class!!!
             self.dxf = DXFNamespace(entity=self)
@@ -65,7 +65,7 @@ class DXFClass(DXFEntity):
             processor.load_dxfattribs_into_namespace(self.dxf, dxfclass_class)
 
     def export_dxf(self, tagwriter: 'TagWriter'):
-        """ Do all, because CLass is special. """
+        """ Do all, because CLASS is special. """
         dxfversion = tagwriter.dxfversion
         if dxfversion < DXF2000:
             return

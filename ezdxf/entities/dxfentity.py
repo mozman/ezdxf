@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union
 from ezdxf.clone import clone
 from ezdxf import options
-from ezdxf.lldxf.types import handle_code, dxftag
+from ezdxf.lldxf.types import handle_code, dxftag, cast_value
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
@@ -15,6 +15,7 @@ from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
 import logging
+
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
@@ -91,19 +92,17 @@ class DXFNamespace:
         raise NotImplementedError('use self.clone()')
 
     def __getattr__(self, key: str) -> Any:
-        """ called if key does not exist """
+        """ called if key does not exist, returns default value or None for unset default values
+        """
         if self.is_supported(key):
-            value = self.dxf_default_value(key)
-            if value is not None:
-                return value
-            else:
-                raise DXFAttributeError(ERR_DXF_ATTRIB_NOT_EXITS.format(key))
+            return self.dxf_default_value(key)  # returns None for attributes without default value
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(self.dxftype))
 
     def __setattr__(self, key: str, value: Any) -> None:
-        if self.hasattr(key) or self.is_supported(key):
-            self.__dict__[key] = value
+        attrib_def = self.dxfattribs.get(key, None)
+        if attrib_def:
+            self.__dict__[key] = cast_value(attrib_def.code, value)
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(self.dxftype))
 
@@ -198,7 +197,7 @@ class DXFNamespace:
             if value is None and force:  # force default value e.g. layer
                 value = attrib.default  # default value could be None
 
-            if value is not None:
+            if value is not None:  # do not export None
                 tag = dxftag(attrib.code, value)
                 tagwriter.write_tag(tag)
         else:
@@ -358,16 +357,16 @@ class DXFEntity:
             if tags.embedded_objects:
                 self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
             processor = SubclassProcessor(tags)
-            self.dxf = self.setup_dxf_attribs(processor)
+            self.dxf = self.load_dxf_attribs(processor)
             # todo: set owner for DXF R12 read from file
 
     @classmethod
-    def new(cls, handle: str, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
+    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
         """
         Constructor for building new entities from scratch by ezdxf (trusted environment)
 
         Args:
-            handle: unique DXF entity handle
+            handle: unique DXF entity handle or None
             owner: owner handle iof entity has an owner else None or '0'
             dxfattribs: DXF attributes to initialize
             doc: DXF document
@@ -377,8 +376,10 @@ class DXFEntity:
             raise DXFTypeError("new() for DXF type {} not supported".format(cls.DXFTYPE))
 
         entity = cls(doc)  # bare minimum setup
-        entity.dxf.handle = handle
-        entity.dxf.owner = owner  # set also for DXF R12 for internal usage
+        if handle is not None:
+            entity.dxf.handle = handle
+        if owner is not None:
+            entity.dxf.owner = owner  # set also for DXF R12 for internal usage
         default_attribs = dict(cls.DEFAULT_ATTRIBS)  # copy
         default_attribs.update(dxfattribs or {})
         entity.update_dxf_attribs(default_attribs)
@@ -406,8 +407,8 @@ class DXFEntity:
     def post_new_hook(self):
         pass
 
-    def setup_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
-        # hook for inherited classes
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
+        # inheritance hook
         return DXFNamespace(processor, self)
 
     def setup_app_data(self, appdata: List[Tags]) -> None:
