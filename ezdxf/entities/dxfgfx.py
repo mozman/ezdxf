@@ -3,7 +3,7 @@
 # Created 2019-02-13
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
-from typing import TYPE_CHECKING, Optional, Tuple, List
+from typing import TYPE_CHECKING, Optional, Tuple
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, SUBCLASS_MARKER
 from .dxfentity import DXFEntity, base_class, DXFNamespace, SubclassProcessor
@@ -12,7 +12,7 @@ from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import Auditor, TagWriter
 
 __all__ = ['DXFGfx', 'acdb_entity']
 
@@ -131,3 +131,10 @@ class DXFGfx(DXFEntity):
             attribs.export_dxf_attribs(tagwriter, ['true_color', 'color_name', 'transparency'])
         if dxfversion >= DXF2004:
             attribs.export_dxf_attribute(tagwriter, 'shadow_mode')
+
+    def audit(self, auditor: 'Auditor') -> None:
+        super().audit(auditor)
+        auditor.check_for_valid_layer_name(self)
+        auditor.check_if_linetype_exists(self)
+        auditor.check_for_valid_color_index(self)
+        auditor.check_pointer_target_exists(self, zero_pointer_valid=False)

@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import DXFKeyError, XDATA_MARKER, DXFValueError
 from ezdxf.lldxf.tags import xdata_list, remove_named_list_from_xdata, get_named_list_from_xdata, NotFoundException
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.eztypes import TagWriter
 
 __all__ = ['XData', 'EmbeddedObjects']
 

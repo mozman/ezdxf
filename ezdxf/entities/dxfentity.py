@@ -18,8 +18,8 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
     from ezdxf.eztypes import DXFDictionary, Drawing, EntityDB, DXFFactoryType
+    from ezdxf.eztypes import Auditor, TagWriter
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'UnknownEntity', 'SubclassProcessor', 'base_class']
 
@@ -224,8 +224,7 @@ class SubclassProcessor:
         self.subclasses = list(tags.subclasses)  # copy subclasses
         # DXF R12 and prior have no subclass marker system, all tags of an entity in one flat list
         # Where later DXF versions have at least 2 subclasses base_class and AcDbEntity
-        # Exception CLASS has also only one subclass and no subclass marker, but this entity
-        # gets it own processing: has also no handle and will not be stored in th entitydb
+        # Exception CLASS has also only one subclass and no subclass marker, handled as DXF R12 entity
         self.r12 = len(self.subclasses) == 1 if r12 is None else r12
         self.name = tags.dxftype()
         try:
@@ -550,6 +549,9 @@ class DXFEntity:
     def export_embedded_objects(self, tagwriter: 'TagWriter') -> None:
         if self.embedded_objects:
             self.embedded_objects.export_dxf(tagwriter)
+
+    def audit(self, auditor: 'Auditor') -> None:
+        pass
 
     def has_extension_dict(self) -> bool:
         return self.extension_dict is not None
