@@ -1,13 +1,15 @@
 # Created: 13.01.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from typing import Any, TextIO, TYPE_CHECKING, Union
+from typing import Any, TextIO, TYPE_CHECKING, Union, List
 from .types import TAG_STRING_FORMAT, cast_tag_value
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import ExtendedTags
+
+__all__ = ['TagWriter', 'TagCollector', 'basic_tags_from_text']
 
 
 class TagWriter:
@@ -55,7 +57,6 @@ class TagCollector:
     Collects DXF tags as DXFTag() entities for testing.
 
     """
-
     def __init__(self, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True):
         self.tags = []
         self.dxfversion = dxfversion
@@ -76,3 +77,19 @@ class TagCollector:
 
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))
+
+
+def basic_tags_from_text(text: str) -> List[DXFTag]:
+    """
+    Returns all tags from `text` as basic DXFTags(). All complex tags are resolved into basic (code, value) tags
+    (e.g. DXFVertex(10, (1, 2, 3)) -> DXFTag(10, 1), DXFTag(20, 2), DXFTag(30, 3).
+
+    Args:
+        text: DXF data as string
+
+    Returns: List of basic DXF tags (code, value)
+
+    """
+    collector = TagCollector()
+    collector.write_tags(Tags.from_text(text))
+    return collector.tags

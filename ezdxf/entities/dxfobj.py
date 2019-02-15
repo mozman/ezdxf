@@ -5,6 +5,8 @@
 # DXFObject - non graphical entities stored in OBJECTS section
 from .dxfentity import DXFEntity
 
+__all__ = ['DXFObject']
+
 
 class DXFObject(DXFEntity):
     pass

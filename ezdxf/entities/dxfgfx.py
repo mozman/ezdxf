@@ -14,6 +14,9 @@ from ezdxf.tools import float2transparency, transparency2float
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
 
+__all__ = ['DXFGfx', 'acdb_entity']
+
+
 acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
     'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
@@ -43,10 +46,16 @@ acdb_entity = DefSubclass('AcDbEntity', {
 
 
 class DXFGfx(DXFEntity):
+    """
+    Base class for all graphical DXF entities like Text() or Line().
+
+    This entities resides in entity spaces like modelspace, any paperspace or blocks.
+    """
     DXFTYPE = 'DXFGFX'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)  # DXF attribute definitions
 
     def setup_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
+        """ Adds subclass processing for 'AcDbEntity', requires previous base class procssing by super class. """
         dxf = super().setup_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -63,29 +72,36 @@ class DXFGfx(DXFEntity):
 
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:
+        """ Returns RGB true color as (red, green, blue) tuple or None if true_color is not set. """
         if self.dxf.hasattr('true_color'):
             return int2rgb(self.dxf.get('true_color'))
         else:
             return None
 
-    @rgb.setter  # line.rgb = (12, 34, 56)
+    @rgb.setter
     def rgb(self, rgb: Tuple[int, int, int]) -> None:
+        """ Set RGB true color as (red, green , blue) tuple e.g. (12, 34, 56) . """
         self.dxf.set('true_color', rgb2int(rgb))
 
     @property
     def transparency(self) -> float:
-        # 0.0 = opaque & 1.0 if 100% transparent
+        """ Get transparency as float value between 0 and 1, 0 is opaque and 1 is fully transparent (invisible) """
         if self.dxf.hasattr('transparency'):
             return transparency2float(self.dxf.get('transparency'))
         else:
             return 0.
 
-    @transparency.setter  # line.transparency = 0.50
+    @transparency.setter
     def transparency(self, transparency: float) -> None:
-        # 0.0 = opaque & 1.0 if 100% transparent
+        """ Set transparency as float value between 0 and 1, 0 is opaque and 1 is fully transparent (invisible) """
         self.dxf.set('transparency', float2transparency(transparency))
 
     def ocs(self) -> Optional[OCS]:
+        """
+        Return object coordinate system (OCS) for 2D entities like Text() or Circle().
+        Returns None for entities without OCS support.
+
+        """
         # extrusion is only defined for 2D entities like Text, Circle, ...
         if self.dxf.is_supported('extrusion'):
             extrusion = self.dxf.get('extrusion', default=(0, 0, 1))
@@ -94,12 +110,13 @@ class DXFGfx(DXFEntity):
             return None
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export DXF entity specific data by tagwriter """
+        """ Export entity specific data as DXF tags. """
         # base class (handle, appoid, reactors, xdict, owner) export is done by parent class
         self.export_acdb_entity(tagwriter)
         # xdata and embedded objects  export is also done by parent
 
     def export_acdb_entity(self, tagwriter: 'TagWriter'):
+        """ Export subclass 'AcDbEntity' as DXF tags. """
         attribs = self.dxf
         # Full control over tag order and YES, sometimes order matters
         dxfversion = tagwriter.dxfversion

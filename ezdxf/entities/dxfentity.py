@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable, Optional
+from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union
 from ezdxf.clone import clone
 from ezdxf import options
 from ezdxf.lldxf.types import handle_code, dxftag
@@ -15,18 +15,33 @@ from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
 import logging
-
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
     from ezdxf.eztypes import DXFDictionary, Drawing, EntityDB, DXFFactoryType
 
+__all__ = ['DXFNamespace', 'DXFEntity', 'UnknownEntity', 'SubclassProcessor', 'base_class']
+
+"""
+DXFEntity() is the base class of **all** DXF entities.
+
+DXFNamespace() manages ass DXF attributes of an entity
+
+New DXF version handling
+
+By introducing the new entity system ezdxf does not care about DXF versions at usage, the
+latest supported version is used. The DXF version of the document can be changed at runtime,
+but unsupported features of later DXF versions, are just ignored by saving, ezdxf does no
+conversion between different DXF versions, ezdxf is still not a CAD application.
+
+"""
+
 ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute {} does not exist'
 
 
-class DXFNamespace:  # different for every DXF type
+class DXFNamespace:
     """
     Uses the Python object itself as attribute storage, only valid Python names can be used as attrib name.
 
@@ -34,14 +49,19 @@ class DXFNamespace:  # different for every DXF type
 
     def __init__(self, processor: 'SubclassProcessor' = None, entity: 'DXFEntity' = None):
         if processor:
-            base_class = processor.base_class
-            code = handle_code(base_class[0].value)
-            handle = base_class.get_first_value(code, None)  # CLASS entity has no handle
-            owner = base_class.get_first_value(330, None)  # owner, None for DXF R12 if read from file
+            base_class_ = processor.base_class
+            code = handle_code(base_class_[0].value)
+            handle = base_class_.get_first_value(code, None)  # CLASS entity has no handle
+            owner = base_class_.get_first_value(330, None)  # owner, None for DXF R12 if read from file
+            self.rewire(entity, handle, owner)
         else:
-            handle = None
-            owner = None
-        self.rewire(entity, handle, owner)
+            self.reset_handles()
+            self.rewire(entity)
+
+    def reset_handles(self):
+        """ Reset handle and owner to None. """
+        self.__dict__['handle'] = None
+        self.__dict__['owner'] = None
 
     def rewire(self, entity: 'DXFEntity', handle: str = None, owner: str = None) -> None:
         """
@@ -55,8 +75,10 @@ class DXFNamespace:  # different for every DXF type
         """
         # bypass __setattr__()
         self.__dict__['_entity'] = entity
-        self.__dict__['handle'] = handle
-        self.__dict__['owner'] = owner
+        if handle is not None:
+            self.__dict__['handle'] = handle
+        if owner is not None:
+            self.__dict__['owner'] = owner
 
     def clone(self):
         namespace = self.__class__()
@@ -203,7 +225,7 @@ class SubclassProcessor:
         # DXF R12 and prior have no subclass marker system, all tags of an entity in one flat list
         # Where later DXF versions have at least 2 subclasses base_class and AcDbEntity
         # Exception CLASS has also only one subclass and no subclass marker, but this entity
-        # gets it own processing: has also no handle will not be stored in th entitydb
+        # gets it own processing: has also no handle and will not be stored in th entitydb
         self.r12 = len(self.subclasses) == 1 if r12 is None else r12
         self.name = tags.dxftype()
         try:
@@ -271,11 +293,6 @@ class SubclassProcessor:
         return unprocessed_tags
 
 
-# ezdxf does not care about DXF versions at usage, latest version is used.
-# DXF version of document can be changed, but unsupported features of later DXF versions, are just ignored by saving,
-# ezdxf does no conversion between different DXF versions, ezdxf is still no CAD application.
-
-
 base_class = DefSubclass(None, {
     'handle': DXFAttr(5),
     # owner: Soft-pointer ID/handle to owner BLOCK_RECORD object
@@ -298,16 +315,43 @@ class DXFEntity:
     # 'protected' members from cloning, which may cause other problems.
     EXCLUDE_FROM_CLONING = {'doc'}
 
-    def __init__(self, tags: ExtendedTags = None, doc: 'Drawing' = None):
-        self.doc = doc
+    def __init__(self, doc: 'Drawing' = None):
+        """ Default constructor """
+        self.doc = doc  # type: Drawing
+        # order of appearance in entity spaces, 100 (top) before 0 (default) before -100 (bottom)
+        # whole int range allowed
+        self.priority = 0  # type: int
         # create extended data only if needed
         self.appdata = None  # type: Optional[AppData]
         self.reactors = None  # type: Optional[Reactors]
         self.extension_dict = None  # type: Optional[ExtensionDict]
         self.xdata = None  # type: Optional[XData]
         self.embedded_objects = None  # type: Optional[EmbeddedObjects]
+        self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
 
-        if tags is not None:
+    @classmethod
+    def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'DXFEntity':
+        """
+        Constructor to generate entities loaded from DXF files (untrusted environment)
+
+        Args:
+            tags: DXF tags as Tags() or ExtendedTags()
+            doc: DXF Document
+
+        """
+        if not isinstance(tags, ExtendedTags):
+            tags = ExtendedTags(tags)
+        entity = cls(doc)  # bare minimum setup
+        entity.load_tags(tags)
+        return entity
+
+    @classmethod
+    def from_text(cls, text: str, doc: 'Drawing' = None) -> 'DXFEntity':
+        """ Load constructor from text for testing """
+        return cls.load(ExtendedTags.from_text(text), doc)
+
+    def load_tags(self, tags: ExtendedTags) -> None:
+        if tags:
             if len(tags.appdata):
                 self.setup_app_data(tags.appdata)
             if len(tags.xdata):
@@ -317,16 +361,23 @@ class DXFEntity:
             processor = SubclassProcessor(tags)
             self.dxf = self.setup_dxf_attribs(processor)
             # todo: set owner for DXF R12 read from file
-        else:
-            # bare minimum setup - used by new()
-            self.dxf = self.setup_dxf_attribs()
 
     @classmethod
     def new(cls, handle: str, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
+        """
+        Constructor for building new entities from scratch by ezdxf (trusted environment)
+
+        Args:
+            handle: unique DXF entity handle
+            owner: owner handle iof entity has an owner else None or '0'
+            dxfattribs: DXF attributes to initialize
+            doc: DXF document
+
+        """
         if cls.DEFAULT_ATTRIBS is None:
             raise DXFTypeError("new() for DXF type {} not supported".format(cls.DXFTYPE))
 
-        entity = cls(None, doc)  # bare minimum setup
+        entity = cls(doc)  # bare minimum setup
         entity.dxf.handle = handle
         entity.dxf.owner = owner  # set also for DXF R12 for internal usage
         default_attribs = dict(cls.DEFAULT_ATTRIBS)  # copy
@@ -594,23 +645,34 @@ class DXFEntity:
 class UnknownEntity(DXFEntity):
     """ Just store all the tags as they are """
 
-    def __init__(self, tags: ExtendedTags, doc=None):
-        super().__init__(tags, doc)
-        # no need to store base class
-        # but store DXFTYPE, overrides class member
+    def __init__(self, doc: 'Drawing' = None):
+        """ Default constructor """
+        super().__init__(doc)
+        self.subclasses = []
+
+    @classmethod
+    def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'UnknownEntity':
+        entity = cls(doc)
+        entity.load_tags(tags)
+        entity.store_tags(tags)
+        return entity
+
+    def store_tags(self, tags: ExtendedTags) -> None:
+        # store DXFTYPE, overrides class member
         # 1. tag of 1. subclass is the structure tag (0, DXFTYPE)
         self.DXFTYPE = tags.subclasses[0][0].value
-        self._subclasses = tags.subclasses[1:]
+        # no need to store base class
+        self.subclasses = tags.subclasses[1:]
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Write subclass tags as they are
         """
         # base class export is done by parent
-        for subclass in self._subclasses:
+        for subclass in self.subclasses:
             tagwriter.write_tags(subclass)
 
         # xdata and embedded objects  export is done by parent
 
     def destroy(self) -> None:
-        del self._subclasses
+        del self.subclasses
         super().destroy()

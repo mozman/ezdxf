@@ -3,22 +3,32 @@
 # created 2019-02-14
 import pytest
 
-from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.const import DXFAttributeError, DXF12
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.entities.dxfentity import DXFEntity
 
+ENTITY = """0
+DXFENTITY
+5
+FFFF
+330
+ABBA
+"""
+
 
 @pytest.fixture
 def entity():
-    return DXFEntity(ExtendedTags.from_text(TEST_1))
+    return DXFEntity.from_text(ENTITY)
 
 
-def test_init_minimal_init():
+def test_default_constructor():
     entity = DXFEntity()
     assert entity.dxftype() == 'DXFENTITY'
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
+    assert entity.priority == 0
+    assert entity == entity
+    assert entity != DXFEntity()
 
 
 def test_init_with_tags(entity):
@@ -63,17 +73,4 @@ def test_write_latest_dxf(entity):
 def test_destroy(entity):
     entity.destroy()
     assert entity.is_destroyed is True
-
-
-TEST_1 = """0
-DXFENTITY
-5
-FFFF
-330
-ABBA
-"""
-
-
-if __name__ == '__main__':
-    pytest.main([__file__])
 

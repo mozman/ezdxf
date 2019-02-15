@@ -3,15 +3,12 @@
 # created 2019-02-14
 import pytest
 
-from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.const import DXFAttributeError, DXF12
-from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.entities.dxfgfx import DXFGfx
 
 
 @pytest.fixture
 def entity():
-    return DXFGfx(ExtendedTags.from_text(LINE))
+    return DXFGfx.from_text(LINE)
 
 
 def test_init_from_tags(entity):
@@ -26,12 +23,12 @@ def test_true_color(entity):
     assert 0xFFFFFF == entity.dxf.true_color
 
 
-def test_ac1018_color_name(entity):
+def test_color_name(entity):
     entity.dxf.color_name = "Rot"
     assert "Rot" == entity.dxf.color_name
 
 
-def test_ac1018_transparency(entity):
+def test_transparency(entity):
     entity.dxf.transparency = 0x020000FF  # 0xFF = opaque; 0x00 = 100% transparent
     assert 0x020000FF == entity.dxf.transparency
     # recommend usage: helper property ModernGraphicEntity.transparency

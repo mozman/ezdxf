@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import DXFDictionary, Drawing
     from ezdxf.entities.dxfentity import DXFEntity
 
+__all__ = ['AppData', 'Reactors', 'ExtensionDict']
+
 ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute {} does not exist'
 

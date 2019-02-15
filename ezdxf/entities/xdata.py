@@ -10,6 +10,8 @@ from ezdxf.lldxf.tags import xdata_list, remove_named_list_from_xdata, get_named
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
 
+__all__ = ['XData', 'EmbeddedObjects']
+
 
 class XData:
     def __init__(self, xdata: List[Tags] = None):
