@@ -129,7 +129,7 @@ class DXFGraphic(DXFEntity):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class (handle, appoid, reactors, xdict, owner) export is done by parent class
+        # base class (handle, appid, reactors, xdict, owner) export is done by parent class
         export_acdb_entity(self.dxf, tagwriter)
         # xdata and embedded objects  export is also done by parent
 

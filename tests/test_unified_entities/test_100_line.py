@@ -4,8 +4,7 @@
 import pytest
 
 from ezdxf.entities.line import Line
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 LINE_R12 = """0

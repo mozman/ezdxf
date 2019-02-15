@@ -2,6 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
+from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
@@ -17,7 +18,7 @@ acdb_line = DefSubclass('AcDbLine', {
     'start': DXFAttr(10, xtype=XType.point3d),
     'end': DXFAttr(11, xtype=XType.point3d),
     'thickness': DXFAttr(39, default=0),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0.0, 0.0, 1.0)),
 })
 
 
@@ -54,7 +55,7 @@ class Line(DXFGraphic):
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
-        # base class (handle, appoid, reactors, xdict, owner) export is done by parent class
+        # base class (handle, appid, reactors, xdict, owner) export is done by parent class
         # 'AcDbEntity' export is done by parent class
         super().export_entity(tagwriter)
         export_acdb_line(self.dxf, tagwriter)
