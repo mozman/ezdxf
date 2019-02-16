@@ -5,7 +5,7 @@
 import logging
 from typing import Callable, Dict, Iterable, List, Union, TYPE_CHECKING
 
-from .const import DXFStructureError
+from .const import DXFStructureError, DXF12
 from .tags import group_tags, DXFTag, Tags
 from .extendedtags import ExtendedTags
 from .validator import entity_structure_validator
@@ -14,13 +14,14 @@ from ezdxf.options import options
 
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.eztypes import EntityDB
+    from ezdxf.entities.factory import EntityFactory
+    from ezdxf.entities.dxfentity import DXFEntity
 
 logger = logging.getLogger('ezdxf')
 
 TagProcessor = Callable[[ExtendedTags], ExtendedTags]
 modern_post_load_tag_processors = {}  # type: Dict[str, TagProcessor]
 legacy_post_load_tag_processors = {}  # type: Dict[str, TagProcessor]
-
 
 SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
 
@@ -155,7 +156,7 @@ def load_dxf_entities_into_database(database: 'EntityDB', dxf_entities: List[Tag
         yield entity
 
 
-def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str = 'AC1009') -> None:
+def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str = DXF12) -> None:
     post_processors = legacy_post_load_tag_processors if dxfversion <= 'AC1009' else modern_post_load_tag_processors
     for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:
@@ -166,4 +167,30 @@ def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str =
                 processor = post_processors.get(entity.dxftype())
                 if processor:
                     processor(entity)
+                section[index] = entity
+
+
+def fill_database2(sections: Dict, factory: 'EntityFactory') -> None:
+    def load_dxf_entities(dxf_entities: List[Tags]) -> Iterable['DXFEntity']:
+        check_tag_structure = options.check_entity_tag_structures
+
+        for entity in dxf_entities:
+            if len(entity) == 0:
+                raise DXFStructureError('Invalid empty DXF entity.')
+            code, dxftype = entity[0]
+            if code != 0:
+                raise DXFStructureError('Invalid first tag in DXF entity, group code={} .'.format(code))
+            if dxftype not in DATABASE_EXCLUDE:
+                if check_tag_structure:
+                    entity = entity_structure_validator(entity)
+
+            yield factory.load(ExtendedTags(entity))
+
+    # tag processors required
+    for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
+        if name in sections:
+            section = sections[name]
+            # entities stored in the database are converted from Tags() to ExtendedTags()
+            for index, entity in enumerate(load_dxf_entities(section)):
+                # all entities are DXFEntity or inherited
                 section[index] = entity

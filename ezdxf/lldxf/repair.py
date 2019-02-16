@@ -11,7 +11,7 @@ import logging
 
 from .extendedtags import ExtendedTags
 from .tags import DXFTag, Tags
-from .const import DXFInternalEzdxfError, DXFValueError, DXFKeyError, SUBCLASS_MARKER
+from .const import DXFInternalEzdxfError, DXFValueError, DXFKeyError, SUBCLASS_MARKER, DXF12
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward declarations
@@ -171,7 +171,7 @@ def upgrade_to_ac1009(dwg: 'Drawing'):
     logger.info('Upgrading drawing to DXF R12.')
     logger.debug('Setting DXF version to AC1009.')
     dwg.dxfversion = 'AC1009'
-    dwg.header['$ACADVER'] = 'AC1009'
+    dwg.header['$ACADVER'] = DXF12
     # as far I know, nothing else to do
 
 
@@ -184,7 +184,7 @@ def cleanup_r12(dwg: 'Drawing'):
 
     """
     logger.info('Cleanup DXF R12 drawing.')
-    if dwg.dxfversion > 'AC1009':
+    if dwg.dxfversion > DXF12:
         return
     for section_name in ('CLASSES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA'):  # unsupported sections for DXF R12
         if section_name in dwg.sections:

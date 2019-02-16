@@ -20,7 +20,8 @@ logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFDictionary, Drawing, EntityDB, DXFFactoryType
-    from ezdxf.eztypes import Auditor, TagWriter
+    from ezdxf.eztypes import Auditor, TagWriter, GenericLayoutType
+    from ezdxf.entities.layouts import BaseLayout
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'UnknownEntity', 'SubclassProcessor', 'base_class']
 
@@ -411,6 +412,9 @@ class DXFEntity:
     def __deepcopy__(self, memodict: dict):
         raise NotImplementedError('use self.clone()')
 
+    def __priority__(self) -> int:
+        return self.priority
+
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
         for key, value in dxfattribs.items():
             self.dxf.set(key, value)
@@ -451,6 +455,26 @@ class DXFEntity:
 
     def dxftype(self) -> str:
         return self.DXFTYPE
+
+    def assign_layout(self, layout: 'BaseLayout') -> None:
+        if layout.is_active_paperspace:
+            self.dxf.paperspace = 1
+        else:
+            self.dxf.discard('paperspace')
+
+        self.dxf.owner = layout.layout_key
+        for linked_entity in self.linked_entities():
+            linked_entity.assign_layout(layout)
+
+    def layout(self) -> Optional['BaseLayout']:
+        doc = self.doc
+        try:  # is modelspace or paperspace
+            layout = doc.layouts.get_layout_for_entity(self)
+        except DXFKeyError:  # is a generic block
+            block_rec = self.doc.entitydb[self.dxf.owner]
+            block_name = block_rec.dxf.name
+            layout = doc.blocks.get(block_name)
+        return layout
 
     def __str__(self) -> str:
         """

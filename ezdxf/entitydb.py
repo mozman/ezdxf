@@ -6,6 +6,7 @@ from typing import Optional, Iterable, Tuple, Union, TYPE_CHECKING
 from ezdxf.clone import clone
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.order import priority, zorder
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -142,32 +143,8 @@ class EntitySpace:
             reverse = False
         else:
             return  # do nothing
+
         self.entities.sort(key=lambda e: e.priority, reverse=reverse)
-
-    def priority(self) -> Iterable['DXFEntity']:
-        """ Iterate over all entities in order of priority.
-
-        Highest priority first e.g. 10, 5, 5, 0, 0, 0, -1, -99
-
-        see :meth:`EntitySpace.zorder` for more information.
-        """
-        return iter(sorted(self, key=lambda e: -e.priority))
-
-    def zorder(self) -> Iterable['DXFEntity']:
-        """ Iterate over all entities in z-order (inverted priority).
-
-        Highest priority last e.g. -99, -1, 0, 0, 0, 5, 5, 10
-
-        Reason is to use the priority in two ways:
-
-        1. set order of appearance in for objects section, highest priority for the root dict, which must be the first
-           entity in the objects section, an down counting iterator (highest priority first) is intuitive.
-
-        2. define entity appearance in the entities section, first entity in the entities section is the lowest by
-           z-order, so an up counting iterator (highest priority at last) is more intuitive.
-
-        """
-        return iter(sorted(self, key=lambda e: e.priority))
 
     def add(self, entity: 'DXFEntity'):
         """ Add `entity` to entity space. """
@@ -186,9 +163,9 @@ class EntitySpace:
         if order == 0:
             entities = iter(self)
         elif order == 1:
-            entities = iter(self.priority())
+            entities = priority(self)
         elif order == 2:
-            entities = iter(self.zorder())
+            entities = zorder(self)
         else:
             raise ValueError('invalid order: 0, 1 or 2')
 

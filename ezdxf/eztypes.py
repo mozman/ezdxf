@@ -61,6 +61,7 @@ if TYPE_CHECKING:
 
     # DXF objects
     from ezdxf.modern.dxfobjects import DXFObject
+    from ezdxf.modern.dxflayout import DXFLayout
     from ezdxf.modern.dxfdict import DXFDictionary
     from ezdxf.modern.geodata import GeoData
     from ezdxf.modern.sortentstable import SortEntitiesTable

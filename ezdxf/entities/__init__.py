@@ -18,3 +18,8 @@
 #    inherited classes of DXFAttrib() as DXFEntity.dxf attribute
 # 7. use individual DXF export functions for each entity, but provide a useful boiler plate
 
+from .dxfentity import DXFEntity, UnknownEntity
+from .dxfgfx import DXFGraphic
+from .line import Line
+from .dxfclass import DXFClass
+from .lwpolyline import LWPolyline
