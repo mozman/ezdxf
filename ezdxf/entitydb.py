@@ -5,7 +5,7 @@
 from typing import Optional, Iterable, Tuple, Union, TYPE_CHECKING
 from ezdxf.clone import clone
 from ezdxf.tools.handle import HandleGenerator
-from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities.dxfentity import DXFEntity, export_seqend
 from ezdxf.order import priority, zorder
 
 if TYPE_CHECKING:
@@ -21,6 +21,7 @@ class EntityDB:
     stored in the drawing-associated database, database-key is the `handle` as string (group code == 5 or 105).
 
     """
+
     def __init__(self):
         self._database = {}
         self.handles = HandleGenerator()
@@ -171,6 +172,13 @@ class EntitySpace:
 
         for entity in entities:
             entity.export_dxf(tagwriter)
+            seqend = False
+            for linked in entity.linked_entities():
+                seqend = True
+                linked.export_dxf(tagwriter)
+
+            if seqend:
+                export_seqend(tagwriter, entity)
 
     def remove(self, entity: 'DXFEntity') -> None:
         """ Remove `entity` from entity space """

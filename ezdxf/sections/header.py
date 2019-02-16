@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
-from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12
 from ezdxf.lldxf.validator import header_validator
 from ezdxf.legacy.headervars import VARMAP as VARMAP_R12
 from ezdxf.modern.headervars import VARMAP as VARMAP_R13
@@ -115,8 +115,8 @@ class HeaderSection:
         self._varmap = self._get_varmap()
 
     def _get_varmap(self) -> dict:
-        dxfversion = self.get('$ACADVER', 'AC1009')
-        if dxfversion > 'AC1009':
+        dxfversion = self.get('$ACADVER', DXF12)
+        if dxfversion > DXF12:
             return dict(VARMAP_R13)
         else:
             return dict(VARMAP_R12)
@@ -166,7 +166,7 @@ class HeaderSection:
             tagwriter.write_tag2(9, name)
             tagwriter.write_str(str(value))
 
-        if self.get('$ACADVER', 'AC1009') == 'AC1009' and self.get('$HANDLING', 1) == 0:
+        if self.get('$ACADVER', DXF12) == DXF12 and self.get('$HANDLING', 1) == 0:
             write_handles = False
         else:
             write_handles = True

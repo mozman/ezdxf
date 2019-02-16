@@ -17,9 +17,10 @@
 # 6. DXFTag and ExtendedTags are no more the main data types - store dxf attributes as object attributes in
 #    inherited classes of DXFAttrib() as DXFEntity.dxf attribute
 # 7. use individual DXF export functions for each entity, but provide a useful boiler plate
-
 from .dxfentity import DXFEntity, UnknownEntity
 from .dxfgfx import DXFGraphic
-from .line import Line
 from .dxfclass import DXFClass
+from .line import Line
+from .insert import Insert
+from .polyline import Polyline
 from .lwpolyline import LWPolyline

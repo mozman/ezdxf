@@ -13,6 +13,8 @@ def test_default_attribs(entity):
     assert entity.dxftype() == 'MTEXT'
     assert entity.dxf.handle == '278'
     assert entity.dxf.owner == '1F'
+    assert entity.base_class[0] == (0, 'MTEXT')
+    assert entity.base_class[1] == (5, '278')
 
 
 def test_dxf_export(entity):

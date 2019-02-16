@@ -312,6 +312,16 @@ class BaseLayout(CreatorInterface):
         return self.block_record.dxf.handle
 
     @property
+    def layout_key(self) -> str:
+        """
+        Returns the layout key as string.
+
+        The layout key is the handle of the associated ``BLOCK_RECORD`` entry in the ``BLOCK_RECORDS`` table.
+
+        """
+        return self.block_record.dxf.handle
+
+    @property
     def entitydb(self) -> 'EntityDB':
         return self.doc.entitydb
 
@@ -508,15 +518,6 @@ class Layout(BaseLayout):
         """
         return self.dxf_layout.dxf
 
-    @property
-    def layout_key(self) -> str:
-        """
-        Returns the layout key as string.
-
-        The layout key is the handle of the associated ``BLOCK_RECORD`` entry in the ``BLOCK_RECORDS`` table.
-
-        """
-        return self._block_record_handle
 
     @property
     def block_record(self) -> 'BlockRecord':
@@ -1203,15 +1204,8 @@ class BlockLayout(BaseLayout):
         block.dxf.name = new_name
         block.dxf.name2 = new_name
 
-    @property
-    def block_record_handle(self) -> str:
-        return self.block.dxf.owner
-
-    @property
-    def block_record(self) -> 'BlockRecord':
-        return self.entitydb[self.block_record_handle]
-
     def set_block_record_handle(self, block_record_handle: str) -> None:
+        self.block_record = self.entitydb[block_record_handle]
         self.block.dxf.owner = block_record_handle
         self.endblk.dxf.owner = block_record_handle
 

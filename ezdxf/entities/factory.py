@@ -14,18 +14,19 @@ if TYPE_CHECKING:
 
 __all__ = ['EntityFactory']
 
-ENTITY_WRAPPERS = {
+ENTITY_CLASSES = {
     'CLASS': entities.DXFClass,
     'LINE': entities.Line,
+    'INSERT': entities.Insert,
+    'POLYLINE': entities.Polyline,
     'LWPOLYLINE': entities.LWPolyline
 
 }
 
+DEFAULT_CLASS = entities.UnknownEntity
+
 
 class EntityFactory:
-    DEFAULT_WRAPPER = entities.UnknownEntity
-    ENTITY_WRAPPERS = dict(ENTITY_WRAPPERS)
-
     def __init__(self, doc: 'Drawing'):
         self.doc = doc
         self.image_key_generator = ImageKeyGenerator()
@@ -53,7 +54,7 @@ class EntityFactory:
 
     def new_entity(self, dxftype: str, dxfattribs: dict = None) -> 'DXFEntity':
         """ Create a new entity. """
-        class_ = self.ENTITY_WRAPPERS.get(dxftype, self.DEFAULT_WRAPPER)
+        class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
         entity = class_.new(handle=None, owner=None, dxfattribs=dxfattribs, doc=self.doc)
         # track used DXF types, but only for new created DXF entities
         self.doc.tracker.dxftypes.add(dxftype)
@@ -67,7 +68,7 @@ class EntityFactory:
 
     def load(self, tags: 'ExtendedTags') -> 'DXFEntity':
         dxftype = tags.dxftype()
-        class_ = self.ENTITY_WRAPPERS.get(dxftype, self.DEFAULT_WRAPPER)
+        class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
         entity = class_.load(tags, self.doc)
         self.doc.entitydb.add(entity)
         return entity

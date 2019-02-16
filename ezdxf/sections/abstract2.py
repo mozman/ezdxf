@@ -3,93 +3,86 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Iterator
-import abc
 
-from ezdxf.lldxf.tags import DXFStructureError, DXFValueError
-from ezdxf.lldxf.extendedtags import get_xtags_linker
+from ezdxf.lldxf.tags import DXFStructureError
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.entitydb import EntitySpace, EntityDB
-    from ezdxf.entities.dxfentity import DXFEntity
-    from ezdxf.eztypes import ExtendedTags, TagWriter, Drawing, DXFFactoryType
+    from ezdxf.entities.dxfentity import DXFEntity, UnknownEntity, entity_linker
+    from ezdxf.entities.factory import EntityFactory
+    from ezdxf.drawing2 import Drawing
+    from ezdxf.eztypes import TagWriter
 
 
 class AbstractSection:
     name = 'abstract'  # type: str
 
-    def __init__(self, entity_space: 'EntitySpace', entities: Iterable['ExtendedTags'], drawing: 'Drawing'):
+    def __init__(self, entity_space: 'EntitySpace', entities: Iterable['DXFEntity'], doc: 'Drawing'):
         self._entity_space = entity_space
-        self.drawing = drawing
+        self.doc = doc
         if entities is not None:
             self._build(iter(entities))
 
     @property
-    def dxffactory(self) -> 'DXFFactoryType':
-        return self.drawing.dxffactory
+    def dxffactory(self) -> 'EntityFactory':
+        return self.doc.dxffactory
 
     @property
     def entitydb(self) -> 'EntityDB':
-        return self.drawing.entitydb
+        return self.doc.entitydb
 
     def get_entity_space(self) -> 'EntitySpace':
         return self._entity_space
 
-    def _build(self, entities: Iterator['ExtendedTags']) -> None:
-        section_head = next(entities)
+    def _build(self, entities: Iterator['DXFEntity']) -> None:
+        section_head = next(entities)  # type: UnknownEntity
 
-        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, self.name.upper()):
+        if section_head.dxftype() == 'SECTION' or section_head.base_class[1] != (2, self.name.upper()):
             raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
-        linked_tags = get_xtags_linker()
+        linked_entities = entity_linker()
         for entity in entities:
-            if not linked_tags(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
-                self._entity_space.store_tags(entity)
+            if not linked_entities(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
+                self._entity_space.add(entity)
 
-    def write(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
-        self._entity_space.write(tagwriter)
+        self._entity_space.export_dxf(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
 
     def create_new_dxf_entity(self, _type: str, dxfattribs: dict) -> 'DXFEntity':
         """
-        Create new DXF entity add it to th entity database and add it to the entity space.
+        Create new DXF entity add it to the entity database and add it to the entity space.
 
         """
         dxf_entity = self.dxffactory.create_db_entry(_type, dxfattribs)
-        self._entity_space.add_handle(dxf_entity.dxf.handle)
+        self._entity_space.add(dxf_entity)
         return dxf_entity
 
-    def add_handle(self, handle: str) -> None:
-        self._entity_space.add_handle(handle)
-
-    def remove_handle(self, handle: str) -> None:
-        try:
-            self._entity_space.remove(handle)
-        except ValueError:
-            raise DXFValueError('Handle #{} not in entity space.'.format(handle))
-
     def delete_entity(self, entity: 'DXFEntity') -> None:
-        self.remove_handle(entity.dxf.handle)
+        self._entity_space.remove(entity)
         self.entitydb.delete_entity(entity)
 
     # start of public interface
 
-    @abc.abstractmethod
     def __iter__(self) -> Iterable['DXFEntity']:
-        pass
+        return iter(self._entity_space)
 
     def __len__(self) -> int:
         return len(self._entity_space)
 
-    def __contains__(self, handle: str) -> bool:
-        return handle in self._entity_space
+    def __contains__(self, entity: 'DXFEntity') -> bool:
+        return entity in self._entity_space
 
     def query(self, query: str = '*') -> EntityQuery:
         return EntityQuery(iter(self), query)
 
     def delete_all_entities(self) -> None:
         """ Delete all entities. """
-        self._entity_space.delete_all_entities()
+        db = self.entitydb
+        for entity in self._entity_space:
+            db.delete_entity(entity)
+        self._entity_space.clear()
 
     # end of public interface

@@ -2,15 +2,15 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union
+from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Callable
 from ezdxf.clone import clone
 from ezdxf import options
-from ezdxf.lldxf.types import handle_code, dxftag, cast_value
+from ezdxf.lldxf.types import handle_code, dxftag, cast_value, DXFTag, SUBCLASS_MARKER
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
-from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFKeyError, DXFValueError
+from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFKeyError, DXFValueError, DXFStructureError
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
@@ -19,11 +19,14 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFDictionary, Drawing, EntityDB, DXFFactoryType
-    from ezdxf.eztypes import Auditor, TagWriter, GenericLayoutType
+    from ezdxf.eztypes import DXFDictionary
+    from ezdxf.eztypes import Auditor, TagWriter
+    from ezdxf.entities.factory import EntityFactory
+    from ezdxf.entitydb import EntityDB
+    from ezdxf.drawing2 import Drawing
     from ezdxf.entities.layouts import BaseLayout
 
-__all__ = ['DXFNamespace', 'DXFEntity', 'UnknownEntity', 'SubclassProcessor', 'base_class']
+__all__ = ['DXFNamespace', 'DXFEntity', 'UnknownEntity', 'SubclassProcessor', 'base_class', 'entity_linker']
 
 """
 DXFEntity() is the base class of **all** DXF entities.
@@ -304,6 +307,13 @@ class SubclassProcessor:
                 unprocessed_tags.append(tag)
         return unprocessed_tags
 
+    def change_subclass_marker(self, index: int, marker: str) -> None:
+        try:
+            self.subclasses[index][0] = DXFTag(SUBCLASS_MARKER, marker)
+        except IndexError:
+            raise DXFStructureError(
+                "DXF structure error in entity {}(#{}) - missing subclass".format(self.name, self.handle))
+
 
 base_class = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -373,7 +383,6 @@ class DXFEntity:
                 self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
             processor = SubclassProcessor(tags)
             self.dxf = self.load_dxf_attribs(processor)
-            # todo: set owner for DXF R12 read from file
 
     @classmethod
     def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
@@ -437,7 +446,7 @@ class DXFEntity:
                 self.appdata.set(data)
 
     @property
-    def dxffactory(self) -> 'DXFFactoryType':
+    def dxffactory(self) -> 'EntityFactory':
         return self.doc.dxffactory
 
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
@@ -507,6 +516,10 @@ class DXFEntity:
     def linked_entities(self) -> Iterable['DXFEntity']:
         return []
 
+    def link_entity(self, entity: 'DXFEntity') -> None:
+        # INSERT and POLYLINE have linked entities
+        pass
+
     def set_owner(self, owner: str, paperspace: int = 0) -> None:
         self.dxf.owner = owner
         self.dxf.paperspace = paperspace
@@ -566,6 +579,7 @@ class DXFEntity:
         # write xdata, embedded objects
         self.export_xdata(tagwriter)
         self.export_embedded_objects(tagwriter)
+        self.post_export(tagwriter)
 
     def export_base_class(self, tagwriter: 'TagWriter') -> None:
         # 1. tag: (0, DXFTYPE)
@@ -606,6 +620,14 @@ class DXFEntity:
     def export_embedded_objects(self, tagwriter: 'TagWriter') -> None:
         if self.embedded_objects:
             self.embedded_objects.export_dxf(tagwriter)
+
+    def post_export(self, tagwriter: 'TagWriter'):
+        """ Called after for entity export.
+
+        Only for INSERT & POLYLINE to add SEQEND
+
+        """
+        pass
 
     def audit(self, auditor: 'Auditor') -> None:
         pass
@@ -707,7 +729,11 @@ class UnknownEntity(DXFEntity):
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         super().__init__(doc)
-        self.subclasses = []
+        self.xtags = []  # type: ExtendedTags
+
+    @property
+    def base_class(self):
+        return self.xtags.subclasses[0]
 
     @classmethod
     def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'UnknownEntity':
@@ -719,19 +745,74 @@ class UnknownEntity(DXFEntity):
     def store_tags(self, tags: ExtendedTags) -> None:
         # store DXFTYPE, overrides class member
         # 1. tag of 1. subclass is the structure tag (0, DXFTYPE)
-        self.DXFTYPE = tags.subclasses[0][0].value
-        # no need to store base class
-        self.subclasses = tags.subclasses[1:]
+        self.xtags = tags
+        self.DXFTYPE = self.base_class[0].value
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Write subclass tags as they are
         """
         # base class export is done by parent
-        for subclass in self.subclasses:
+        for subclass in self.xtags.subclasses[1:]:
             tagwriter.write_tags(subclass)
-
         # xdata and embedded objects  export is done by parent
 
     def destroy(self) -> None:
-        del self.subclasses
+        del self.xtags
         super().destroy()
+
+
+LINKED_ENTITIES = {
+    'INSERT': 'ATTRIB',
+    'POLYLINE': 'VERTEX'
+}
+
+
+def entity_linker() -> Callable[[DXFEntity], bool]:
+    prev = None  # type: Optional[DXFEntity]
+    expected = ""
+
+    def entity_linker_(entity: DXFEntity) -> bool:
+        nonlocal prev, expected
+        dxftype = entity.dxftype()  # type: str
+        are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
+        if prev is not None:
+            are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
+            if dxftype == 'SEQEND':
+                prev.link_entity(entity)
+                prev = None
+            # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
+            elif dxftype == expected:
+                prev.link_entity(entity)
+                prev = entity
+            else:
+                raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
+        elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
+            if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
+                # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
+                #   INSERT with no ATTRIBS, attribs_follow == 0
+                #   ATTRIB as stand alone entity
+                #   ....
+                #   INSERT with ATTRIBS, attribs_follow == 1
+                #   ATTRIB as connected entity
+                #   SEQEND
+                #
+                # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
+                pass
+            else:
+                prev = entity
+                expected = LINKED_ENTITIES[dxftype]
+        return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
+
+    return entity_linker_
+
+
+def export_seqend(tagwriter: 'TagWriter', entity: DXFEntity) -> None:
+    handle = entity.entitydb.next_handle()
+    tagwriter.write_tag2(0, 'SEQEND')
+    tagwriter.write_tag2(5, handle)
+    if tagwriter.dxfversion > DXF12:
+        owner = entity.dxf.owner
+        tagwriter.write_tag2(OWNER_CODE, owner)
+        tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbEntity')
+
+
