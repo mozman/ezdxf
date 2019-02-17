@@ -26,9 +26,10 @@ class EntityDB:
 
     """
 
-    def __init__(self):
+    def __init__(self, dxffactory=None):
         self._database = {}
         self.handles = HandleGenerator()
+        self.dxffactory = dxffactory
 
     def __delitem__(self, handle: str) -> None:
         del self._database[handle]
@@ -118,3 +119,8 @@ class EntityDB:
             parent_copy = linked_entity_copy
         return new_tags
 
+    def wrap_all_entities(self):
+        for key in self.keys():
+            tags = self[key]
+            entity = self.dxffactory.wrap_tags(tags)
+            self[key] = entity

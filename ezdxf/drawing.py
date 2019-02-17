@@ -58,12 +58,14 @@ class Drawing:
         self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
         self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
         self.filename = None  # type: str # read/write
-        self.entitydb = EntityDB()  # read only
+
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
         # create section HEADER
         header = get_header(sections)
         self.dxfversion = header.get('$ACADVER', DXF12)  # type: str # read only
         self.dxffactory = dxffactory(self)  # read only, requires self.dxfversion
+        self.entitydb = EntityDB(self.dxffactory)  # read only
+
         self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
         seed = header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
