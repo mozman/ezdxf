@@ -9,15 +9,15 @@ from ezdxf.lldxf.tags import internal_tag_compiler
 from ezdxf.sections.classes2 import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.tools.test import load_section
-from ezdxf.drawing2 import Drawing2
+from ezdxf.drawing2 import Drawing
 
 
 @pytest.fixture(scope='module')
 def section():
-    doc = Drawing2()
+    doc = Drawing()
     sec = load_section(TESTCLASSES, 'CLASSES')
     cls_entities = [doc.dxffactory.entity(e) for e in sec]
-    return ClassesSection(iter(cls_entities), None)
+    return ClassesSection(None, iter(cls_entities))
 
 
 def test_write(section):
@@ -31,11 +31,11 @@ def test_write(section):
 
 
 def test_empty_section():
-    doc = Drawing2()
+    doc = Drawing()
     sec = load_section(EMPTYSEC, 'CLASSES')
     cls_entities = [doc.dxffactory.entity(e) for e in sec]
 
-    section = ClassesSection(iter(cls_entities), None)
+    section = ClassesSection(None, iter(cls_entities))
     stream = StringIO()
     section.export_dxf(TagWriter(stream))
     result = stream.getvalue()

@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # import forward declarations
 class ClassesSection:
     name = 'CLASSES'
 
-    def __init__(self, entities: Iterable[DXFEntity], doc: 'Drawing'):
+    def __init__(self, doc: 'Drawing' = None, entities: Iterable[DXFEntity] = None):
         self.classes = OrderedDict()  # DXFClasses are not stored in the entities database, because CLASS has no handle
         self.doc = doc
         if entities is not None:

@@ -151,6 +151,9 @@ class EntitySpace:
         """ Add `entity` to entity space. """
         self.entities.append(entity)
 
+    def extend(self, entities: Iterable['DXFEntity']) -> None:
+        self.entities.extend(entities)
+
     def export_dxf(self, tagwriter: 'TagWriter', order=0) -> None:
         """
         Export all entities into DXF file by `tagwriter` in given `order`.

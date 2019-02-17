@@ -8,7 +8,7 @@ import logging
 from itertools import chain
 
 from ezdxf.lldxf.const import DXFVersionError, acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
-from ezdxf.lldxf.const import DXF12, DXF13, DXF14, DXF2000
+from ezdxf.lldxf.const import DXF12, DXF13, DXF14, DXF2000, LATEST_DXF_VERSION
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database2
 from ezdxf.lldxf import repair
 
@@ -18,7 +18,7 @@ from ezdxf.entities.layouts import Layouts
 from ezdxf.templates import TemplateLoader
 from ezdxf.options import options
 from ezdxf.tools.codepage import tocodepage, toencoding
-from ezdxf.sections.sections import Sections
+from ezdxf.sections.sections2 import Sections
 from ezdxf.tools.juliandate import juliandate
 
 from ezdxf.tools import guid
@@ -32,16 +32,188 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from .eztypes import HandleGenerator, DXFTag, LayoutType, SectionDict
     from .eztypes import GroupManager, MaterialManager, MLeaderStyleManager, MLineStyleManager
-    from .eztypes import SectionType, HeaderSection, BlocksSection, Table, ViewportTable
-
-
-class Drawing2:
-    def __init__(self):
-        self.entitydb = EntityDB()
-        self.dxffactory = EntityFactory(self)
+    from .eztypes import SectionType,  Table, ViewportTable
+    from ezdxf.sections.header import HeaderSection
+    from ezdxf.sections.blocks2 import BlocksSection
 
 
 class Drawing:
+    def __init__(self):
+        self.entitydb = EntityDB()
+        self.dxffactory = EntityFactory(self)
+        self.tracker = Tracker()
+        self.dxfversion = LATEST_DXF_VERSION
+        self.encoding = 'ANSI_1252'
+        self.filename = None  # type: str # read/write
+        self._groups = None  # type: GroupManager  # read only
+        self._materials = None  # type: MaterialManager # read only
+        self._mleader_styles = None  # type: MLeaderStyleManager # read only
+        self._mline_styles = None  # type: MLineStyleManager # read only
+        self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
+        self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
+        self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
+
+        self.sections = Sections(self)
+        # self.rootdict = self.objects.rootdict
+        # self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
+        # self._groups = self.objects.groups()
+        # self._materials = self.objects.materials()
+        # self._mleader_styles = self.objects.mleader_styles()
+        # self._mline_styles = self.objects.mline_styles()
+
+        # self.layouts = Layouts(self)
+
+
+    @property
+    def header(self) -> 'HeaderSection':
+        return self.sections.header
+
+    @property
+    def blocks(self) -> 'BlocksSection':
+        return self.sections.blocks
+
+    @property
+    def entities(self):
+        return self.sections.entities
+
+    @property
+    def objects(self):
+        return self.sections.objects
+
+    @property
+    def layers(self) -> 'Table':
+        return self.sections.tables.layers
+
+    @property
+    def linetypes(self) -> 'Table':
+        return self.sections.tables.linetypes
+
+    @property
+    def styles(self) -> 'Table':
+        return self.sections.tables.styles
+
+    @property
+    def dimstyles(self) -> 'Table':
+        return self.sections.tables.dimstyles
+
+    @property
+    def ucs(self) -> 'Table':
+        return self.sections.tables.ucs
+
+    @property
+    def appids(self) -> 'Table':
+        return self.sections.tables.appids
+
+    @property
+    def views(self) -> 'Table':
+        return self.sections.tables.views
+
+    @property
+    def block_records(self) -> 'Table':
+        return self.sections.tables.block_records
+
+    @property
+    def viewports(self) -> 'ViewportTable':
+        return self.sections.tables.viewports
+
+
+    @property
+    def groups(self) -> 'GroupManager':
+        if self.dxfversion <= 'AC1009':
+            raise DXFVersionError('Groups not supported in DXF version R12.')
+        return self._groups
+
+    @property
+    def materials(self) -> 'MaterialManager':
+        if self.dxfversion <= 'AC1009':
+            raise DXFVersionError('Materials not supported in DXF version R12.')
+        return self._materials
+
+    @property
+    def mleader_styles(self) -> 'MLeaderStyleManager':
+        if self.dxfversion <= 'AC1009':
+            raise DXFVersionError('MLeaderStyles not supported in DXF version R12.')
+        return self._mleader_styles
+
+    @property
+    def mline_styles(self) -> 'MLineStyleManager':
+        if self.dxfversion <= 'AC1009':
+            raise DXFVersionError('MLineStyles not supported in DXF version R12.')
+        return self._mline_styles
+
+    @property
+    def dimension_renderer(self) -> DimensionRenderer:
+        return self._dimension_renderer
+
+    @dimension_renderer.setter
+    def dimension_renderer(self, renderer: DimensionRenderer) -> None:
+        """
+        Set your own dimension line renderer if needed.
+
+        see also: ezdxf.render.dimension
+
+        """
+        self._dimension_renderer = renderer
+
+    @classmethod
+    def new(cls) -> 'Drawing':
+        doc = cls()
+        doc.setup_metadata()
+        return doc
+
+    def setup_metadata(self):
+        self.header['$TDCREATE'] = juliandate(datetime.now())
+
+    @classmethod
+    def load(self)->'Drawing':
+        pass
+
+    @classmethod
+    def read(cls, stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
+        """ Open an existing drawing. """
+        from .lldxf.tagger import low_level_tagger, tag_compiler
+
+        tagger = low_level_tagger(stream)
+        if legacy_mode:
+            tagger = repair.tag_reorder_layer(tagger)
+        tagreader = tag_compiler(tagger)
+        doc = Drawing()
+        doc.load_tags(tagreader)
+        return doc
+
+    def load_tags(self, tagger: Iterable['DXFTag'])->'Drawing':
+        def get_header(sections: 'SectionDict') -> 'SectionType':
+            from .sections.header import HeaderSection
+            header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
+            return HeaderSection.load(header_entities)
+
+        sections = load_dxf_structure(tagger)  # load complete DXF entity structure
+        # create section HEADER
+        header = get_header(sections)
+        self.dxfversion = header.get('$ACADVER', LATEST_DXF_VERSION)  # type: str # read only
+        self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
+        # get handle seed
+        seed = header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
+        # setup handles
+        self.entitydb.handles.reset(seed)
+        # store all necessary DXF entities in the drawing database
+        fill_database2(sections, self.dxffactory)
+        # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
+        self.sections = Sections(sections, drawing=self, header=header)
+        self.rootdict = self.objects.rootdict
+        self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
+        if self.dxfversion in (DXF13, DXF14):
+            repair.upgrade_to_ac1015(self)
+        # some applications don't setup properly the model and paper space layouts
+        repair.setup_layouts(self)
+        self._groups = self.objects.groups()
+        self._materials = self.objects.materials()
+        self._mleader_styles = self.objects.mleader_styles()
+        self._mline_styles = self.objects.mline_styles()
+        self.layouts = Layouts(self)
+
+
+class DrawingX(Drawing):
     """
     The Central Data Object
     """
@@ -53,24 +225,15 @@ class Drawing:
         Args:
              tagger: generator or list of DXF tags as DXFTag() objects
         """
+        super().__init__()
 
         def get_header(sections: 'SectionDict') -> 'SectionType':
             from .sections.header import HeaderSection
             header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
             return HeaderSection.load(header_entities)
 
-        self.dxffactory = EntityFactory(self)  # read only
-        self.entitydb = EntityDB()  # read only
-        self.tracker = Tracker()
-
         self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
-        self._groups = None  # type: GroupManager  # read only
-        self._materials = None  # type: MaterialManager # read only
-        self._mleader_styles = None  # type: MLeaderStyleManager # read only
-        self._mline_styles = None  # type: MLineStyleManager # read only
-        self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
         self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
-        self.filename = None  # type: str # read/write
 
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
         # create section HEADER
@@ -136,87 +299,6 @@ class Drawing:
     def _handles(self) -> 'HandleGenerator':
         return self.entitydb.handles
 
-    @property
-    def header(self) -> 'HeaderSection':
-        return self.sections.header
-
-    @property
-    def layers(self) -> 'Table':
-        return self.sections.tables.layers
-
-    @property
-    def linetypes(self) -> 'Table':
-        return self.sections.tables.linetypes
-
-    @property
-    def styles(self) -> 'Table':
-        return self.sections.tables.styles
-
-    @property
-    def dimstyles(self) -> 'Table':
-        return self.sections.tables.dimstyles
-
-    @property
-    def ucs(self) -> 'Table':
-        return self.sections.tables.ucs
-
-    @property
-    def appids(self) -> 'Table':
-        return self.sections.tables.appids
-
-    @property
-    def views(self) -> 'Table':
-        return self.sections.tables.views
-
-    @property
-    def block_records(self) -> 'Table':
-        return self.sections.tables.block_records
-
-    @property
-    def viewports(self) -> 'ViewportTable':
-        return self.sections.tables.viewports
-
-    @property
-    def blocks(self) -> 'BlocksSection':
-        return self.sections.blocks
-
-    @property
-    def groups(self) -> 'GroupManager':
-        if self.dxfversion <= 'AC1009':
-            raise DXFVersionError('Groups not supported in DXF version R12.')
-        return self._groups
-
-    @property
-    def materials(self) -> 'MaterialManager':
-        if self.dxfversion <= 'AC1009':
-            raise DXFVersionError('Materials not supported in DXF version R12.')
-        return self._materials
-
-    @property
-    def mleader_styles(self) -> 'MLeaderStyleManager':
-        if self.dxfversion <= 'AC1009':
-            raise DXFVersionError('MLeaderStyles not supported in DXF version R12.')
-        return self._mleader_styles
-
-    @property
-    def mline_styles(self) -> 'MLineStyleManager':
-        if self.dxfversion <= 'AC1009':
-            raise DXFVersionError('MLineStyles not supported in DXF version R12.')
-        return self._mline_styles
-
-    @property
-    def dimension_renderer(self) -> DimensionRenderer:
-        return self._dimension_renderer
-
-    @dimension_renderer.setter
-    def dimension_renderer(self, renderer: DimensionRenderer) -> None:
-        """
-        Set your own dimension line renderer if needed.
-
-        see also: ezdxf.render.dimension
-
-        """
-        self._dimension_renderer = renderer
 
     def modelspace(self) -> 'LayoutType':
         return self.layouts.modelspace()
@@ -286,13 +368,6 @@ class Drawing:
             layout_keys.append(active_layout_key)
         return layout_keys
 
-    @property
-    def entities(self):
-        return self.sections.entities
-
-    @property
-    def objects(self):
-        return self.sections.objects
 
     def get_dxf_entity(self, handle):
         """

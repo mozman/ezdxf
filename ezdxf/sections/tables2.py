@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class TablesSection:
     name = 'TABLES'
 
-    def __init__(self, entities: Iterable['DXFEntity'], doc: 'Drawing'):
+    def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
         self.doc = doc
         self.tables = {}
         if entities is None:
