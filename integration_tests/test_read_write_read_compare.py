@@ -82,19 +82,6 @@ def compare_tag_list(orig, copy):
         compare_tag(orig_tag, copy_tag)
 
 
-def compare_header_vars(orig_header, copy_header):
-    compare_len(orig_header, copy_header)
-    for key in orig_header.varnames():
-        if key == '$VERSIONGUID':  # saving creates a new $VERSIONGUID
-            continue
-        value = orig_header[key]
-        copy_value = copy_header[key]
-        if isinstance(value, tuple):
-            compare_points(value, copy_value)
-        else:
-            compare_values(value, copy_value)
-
-
 def compare_entities(orig, copy):
     compare_len(orig, copy)
     for orig_e, copy_e in zip(orig, copy):
@@ -114,7 +101,6 @@ def compare_tables(orig, copy):
 
 
 def compare_dwg(orig, copy):
-    compare_header_vars(orig.header, copy.header)
     compare_tables(orig.sections.tables, copy.sections.tables)
     compare_blocks(orig.blocks, copy.blocks)
     compare_entities(orig.entities, copy.entities)

@@ -10,8 +10,6 @@ from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12
 from ezdxf.lldxf.validator import header_validator
-from ezdxf.legacy.headervars import VARMAP as VARMAP_R12
-from ezdxf.modern.headervars import VARMAP as VARMAP_R13
 from ezdxf.sections.headervars import HEADER_VAR_MAP
 import logging
 logger=logging.getLogger('ezdxf')
@@ -115,17 +113,9 @@ class HeaderSection:
         self.hdrvars = OrderedDict()
         self.custom_vars = CustomVars()
         self._build(iter(tags))
-        self._varmap = self._get_varmap()
-
-    def _get_varmap(self) -> dict:
-        dxfversion = self.get('$ACADVER', DXF12)
-        if dxfversion > DXF12:
-            return dict(VARMAP_R13)
-        else:
-            return dict(VARMAP_R12)
 
     def _headervar_factory(self, key: str, value: Any) -> DXFTag:
-        if key in self._varmap:
+        if key in HEADER_VAR_MAP:
             factory = HEADER_VAR_MAP[key].factory
             return factory(value)
         else:
