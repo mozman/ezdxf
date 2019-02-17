@@ -16,11 +16,11 @@ __all__ = ['EntityFactory']
 
 ENTITY_CLASSES = {
     'CLASS': entities.DXFClass,
+    'TABLE': entities.TableHead,
     'LINE': entities.Line,
     'INSERT': entities.Insert,
     'POLYLINE': entities.Polyline,
     'LWPOLYLINE': entities.LWPolyline
-
 }
 
 DEFAULT_CLASS = entities.DXFTagStorage

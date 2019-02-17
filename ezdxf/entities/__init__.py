@@ -20,6 +20,7 @@
 from .dxfentity import DXFEntity, DXFTagStorage
 from .dxfgfx import DXFGraphic
 from .dxfclass import DXFClass
+from .table import TableHead
 from .line import Line
 from .insert import Insert
 from .polyline import Polyline
