@@ -170,27 +170,26 @@ def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str =
                 section[index] = entity
 
 
+def load_dxf_entities(dxf_entities: List[Tags], factory: 'EntityFactory') -> Iterable['DXFEntity']:
+    check_tag_structure = options.check_entity_tag_structures
+    for entity in dxf_entities:
+        if len(entity) == 0:
+            raise DXFStructureError('Invalid empty DXF entity.')
+        code, dxftype = entity[0]
+        if code != 0:
+            raise DXFStructureError('Invalid first tag in DXF entity, group code={} .'.format(code))
+        if dxftype not in DATABASE_EXCLUDE:
+            if check_tag_structure:
+                entity = entity_structure_validator(entity)
+        yield factory.load(ExtendedTags(entity))
+
+
 def fill_database2(sections: Dict, factory: 'EntityFactory') -> None:
-    def load_dxf_entities(dxf_entities: List[Tags]) -> Iterable['DXFEntity']:
-        check_tag_structure = options.check_entity_tag_structures
-
-        for entity in dxf_entities:
-            if len(entity) == 0:
-                raise DXFStructureError('Invalid empty DXF entity.')
-            code, dxftype = entity[0]
-            if code != 0:
-                raise DXFStructureError('Invalid first tag in DXF entity, group code={} .'.format(code))
-            if dxftype not in DATABASE_EXCLUDE:
-                if check_tag_structure:
-                    entity = entity_structure_validator(entity)
-
-            yield factory.load(ExtendedTags(entity))
-
     # tag processors required
     for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:
             section = sections[name]
             # entities stored in the database are converted from Tags() to ExtendedTags()
-            for index, entity in enumerate(load_dxf_entities(section)):
+            for index, entity in enumerate(load_dxf_entities(section, factory)):
                 # all entities are DXFEntity or inherited
                 section[index] = entity

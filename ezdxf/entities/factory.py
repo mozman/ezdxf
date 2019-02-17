@@ -23,7 +23,7 @@ ENTITY_CLASSES = {
 
 }
 
-DEFAULT_CLASS = entities.UnknownEntity
+DEFAULT_CLASS = entities.DXFTagStorage
 
 
 class EntityFactory:
@@ -67,10 +67,16 @@ class EntityFactory:
         return entity
 
     def load(self, tags: 'ExtendedTags') -> 'DXFEntity':
+        entity = self.entity(tags)
+        self.doc.entitydb.add(entity)
+        return entity
+
+    def entity(self, tags: 'ExtendedTags') -> 'DXFEntity':
+        if not isinstance(tags, ExtendedTags):
+            tags = ExtendedTags(tags)
         dxftype = tags.dxftype()
         class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
         entity = class_.load(tags, self.doc)
-        self.doc.entitydb.add(entity)
         return entity
 
     def next_image_key(self, checkfunc=lambda k: True) -> str:

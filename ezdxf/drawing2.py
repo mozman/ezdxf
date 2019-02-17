@@ -35,6 +35,12 @@ if TYPE_CHECKING:
     from .eztypes import SectionType, HeaderSection, BlocksSection, Table, ViewportTable
 
 
+class Drawing2:
+    def __init__(self):
+        self.entitydb = EntityDB()
+        self.dxffactory = EntityFactory(self)
+
+
 class Drawing:
     """
     The Central Data Object

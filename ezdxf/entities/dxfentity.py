@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from ezdxf.drawing2 import Drawing
     from ezdxf.entities.layouts import BaseLayout
 
-__all__ = ['DXFNamespace', 'DXFEntity', 'UnknownEntity', 'SubclassProcessor', 'base_class', 'entity_linker']
+__all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class', 'entity_linker']
 
 """
 DXFEntity() is the base class of **all** DXF entities.
@@ -723,7 +723,7 @@ class DXFEntity:
             self.reactors.discard(handle)
 
 
-class UnknownEntity(DXFEntity):
+class DXFTagStorage(DXFEntity):
     """ Just store all the tags as they are """
 
     def __init__(self, doc: 'Drawing' = None):
@@ -736,7 +736,7 @@ class UnknownEntity(DXFEntity):
         return self.xtags.subclasses[0]
 
     @classmethod
-    def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'UnknownEntity':
+    def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'DXFTagStorage':
         entity = cls(doc)
         entity.load_tags(tags)
         entity.store_tags(tags)

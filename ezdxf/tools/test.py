@@ -27,6 +27,12 @@ def load_section(text: str, name: str, database: 'EntityDB' = None, dxfversion='
     return dxf[name]
 
 
+def load_entities(text: str, name: str, doc):
+    from ezdxf.lldxf.loader import load_dxf_structure, load_dxf_entities
+    dxf = load_dxf_structure(internal_tag_compiler(text), ignore_missing_eof=True)
+    return load_dxf_entities(dxf[name], doc.dxffactory)
+
+
 SUPPORTED_ENTITIES = ModernDXFFactory(None).ENTITY_WRAPPERS
 
 

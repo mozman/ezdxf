@@ -1,12 +1,12 @@
 import pytest
 
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.entities.dxfentity import UnknownEntity
+from ezdxf.entities.dxfentity import DXFTagStorage
 
 
 @pytest.fixture
 def entity():
-    return UnknownEntity.from_text(THE_KNOWN_UNKNOWN)
+    return DXFTagStorage.from_text(THE_KNOWN_UNKNOWN)
 
 
 def test_default_attribs(entity):
