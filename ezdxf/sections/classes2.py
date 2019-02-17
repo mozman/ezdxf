@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast
 from collections import Counter, OrderedDict
 
 from ezdxf.lldxf.const import DXFStructureError, DXF2004
-from ezdxf.entities import DXFClass, DXFEntity
+from ezdxf.entities.dxfclass import DXFClass
+from ezdxf.entities.dxfentity import DXFEntity
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage, entity_linker
+    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
     from ezdxf.drawing2 import Drawing
     from ezdxf.eztypes import TagWriter
 

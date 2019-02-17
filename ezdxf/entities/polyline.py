@@ -7,6 +7,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
+from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -30,6 +31,7 @@ acdb_polyline = DefSubclass('AcDbPolyline', {
 })
 
 
+@register_entity
 class Polyline(DXFGraphic):
     """ DXF POLYLINE entity """
     DXFTYPE = 'POLYLINE'

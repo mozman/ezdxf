@@ -6,6 +6,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, SUBCLASS_MARKER
 
 from .dxfentity import SubclassProcessor, DXFEntity
+from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -24,6 +25,7 @@ acdb_symbol_table = DefSubclass('AcDbSymbolTable', {
 })
 
 
+@register_entity
 class TableHead(DXFEntity):
     DXFTYPE = 'TABLE'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table)

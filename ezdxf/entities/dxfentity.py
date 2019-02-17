@@ -204,7 +204,7 @@ class DXFNamespace:
         Args:
             tagwriter: tag writer object
             name: DXF attribute name
-            force: wriet default value if attribute is noe set
+            force: write default value if attribute is not set
 
         """
         attrib = self.dxfattribs.get(name, None)
@@ -219,17 +219,18 @@ class DXFNamespace:
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
 
-    def export_dxf_attribs(self, tagwriter: 'TagWriter', names: Iterable[str]) -> None:
+    def export_dxf_attribs(self, tagwriter: 'TagWriter', names: Iterable[str], force=False) -> None:
         """
         Exports many DXF attributes by `tagwriter`.  Does not care about DXF version -> caller
 
         Args:
             tagwriter: tag writer object
             names: iterable of attribute names
+            force: write default value if attribute is not set
 
         """
         for name in names:
-            self.export_dxf_attribute(tagwriter, name)
+            self.export_dxf_attribute(tagwriter, name, force=force)
 
 
 class SubclassProcessor:

@@ -12,6 +12,8 @@ from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
+from .factory import register_entity
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, Vertex
@@ -41,6 +43,7 @@ acdb_lwpolyline = DefSubclass('AcDbPolyline', {
 })
 
 
+@register_entity
 class LWPolyline(DXFGraphic):
     """ DXF LWPOLYLINE entity """
     DXFTYPE = 'LWPOLYLINE'

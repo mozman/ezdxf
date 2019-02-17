@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from .dxfentity import DXFEntity, SubclassProcessor, DXFNamespace
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF2004, DXF2000
+from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, ExtendedTags, TagWriter
@@ -45,6 +46,7 @@ class_def = DefSubclass(None, {
 })
 
 
+@register_entity
 class DXFClass(DXFEntity):
     DXFTYPE = 'CLASS'
     DXFATTRIBS = DXFAttributes(class_def)

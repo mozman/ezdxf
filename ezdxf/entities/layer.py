@@ -7,6 +7,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXFInvalidLayerName
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.lldxf.validator import is_valid_layer_name
+from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
 
@@ -34,9 +35,10 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
 })
 
 
+@register_entity
 class Layer(DXFEntity):
-    """ DXF LINE entity """
-    DXFTYPE = 'LINE'
+    """ DXF LAYER entity """
+    DXFTYPE = 'LAYER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_layer_table_record)
     FROZEN = 0b00000001
     THAW = 0b11111110
@@ -44,10 +46,6 @@ class Layer(DXFEntity):
     UNLOCK = 0b11111011
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        """
-        Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
-        class.
-        """
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -58,7 +56,6 @@ class Layer(DXFEntity):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
@@ -66,15 +63,11 @@ class Layer(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layer_table_record.name)
 
         # for all DXF versions
-        self.dxf.export_dxf_attribute(tagwriter, 'name', force=True)
-        self.dxf.export_dxf_attribute(tagwriter, 'flags', force=True)
-        self.dxf.export_dxf_attribute(tagwriter, 'color', force=True)
-        self.dxf.export_dxf_attribute(tagwriter, 'linetype', force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'color', 'linetype'], force=True)
 
         if tagwriter.dxfversion >= DXF2000:
             self.dxf.export_dxf_attribute(tagwriter, 'plot')  # no force required
-            self.dxf.export_dxf_attribute(tagwriter, 'lineweight', force=True)
-            self.dxf.export_dxf_attribute(tagwriter, 'plot_style_name')  # required and always set
+            self.dxf.export_dxf_attribs(tagwriter, ['lineweight', 'plot_style_name'], force=True)
 
         if tagwriter.dxfversion >= DXF2007:
             self.dxf.export_dxf_attribute(tagwriter, 'material')  # required and always set

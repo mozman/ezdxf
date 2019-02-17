@@ -4,26 +4,25 @@
 from typing import TYPE_CHECKING
 from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf import entities
-from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Table, DXFDictionary, BlocksSection
     from ezdxf.entitydb import EntityDB
     from ezdxf.drawing2 import Drawing
 
-__all__ = ['EntityFactory']
+__all__ = ['EntityFactory', 'register_entity']
 
-ENTITY_CLASSES = {
-    'CLASS': entities.DXFClass,
-    'TABLE': entities.TableHead,
-    'LINE': entities.Line,
-    'INSERT': entities.Insert,
-    'POLYLINE': entities.Polyline,
-    'LWPOLYLINE': entities.LWPolyline
-}
+ENTITY_CLASSES = {}  # registered classes
 
-DEFAULT_CLASS = entities.DXFTagStorage
+
+def register_entity(cls):
+    name = cls.DXFTYPE
+    ENTITY_CLASSES[name] = cls
+    return cls
+
+
+DEFAULT_CLASS = DXFTagStorage
 
 
 class EntityFactory:
