@@ -81,7 +81,7 @@ from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import Drawing, TagWriter, EntityDB, DXFFactoryType
+    from ezdxf.eztypes import Drawing, TagWriter
 
 
 class AcDsDataSection:
@@ -92,17 +92,9 @@ class AcDsDataSection:
         self.section_info = []  # type: Tags
         self.drawing = drawing
         if entities is not None:
-            self._build(iter(entities))
+            self.load_tags(iter(entities))
 
-    @property
-    def dxffactory(self) -> 'DXFFactoryType':
-        return self.drawing.dxffactory
-
-    @property
-    def entitydb(self) -> 'EntityDB':
-        return self.drawing.entitydb
-
-    def _build(self, entities: Iterator[Tags]) -> None:
+    def load_tags(self, entities: Iterator[Tags]) -> None:
         section_head = next(entities)
         if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'ACDSDATA'):
             raise DXFStructureError("Critical structure error in ACDSDATA section.")
