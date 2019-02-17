@@ -441,7 +441,7 @@ class Drawing:
 
         self._create_appids()
         self._update_metadata()
-        tagwriter = TagWriter(stream, write_handles=handles)
+        tagwriter = TagWriter(stream, write_handles=handles, dxfversion=self.dxfversion)
         self.sections.write(tagwriter)
 
     def query(self, query='*'):

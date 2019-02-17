@@ -25,7 +25,7 @@ if sys.version_info < (3, 6):
 # ========================================
 # Setup logging
 # ========================================
-logging.basicConfig(level='WARN')
+logging.basicConfig(level='INFO')
 
 # ========================================
 # Setup your preferred output directory
@@ -578,7 +578,7 @@ def linear_EZ_MM(fmt):
     dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = False
+ALL = True
 
 if __name__ == '__main__':
     linear_tutorial_using_tvp()

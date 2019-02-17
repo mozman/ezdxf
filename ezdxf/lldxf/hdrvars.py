@@ -17,3 +17,14 @@ def Point2D(value: Sequence[float]) -> DXFVertex:
 
 def Point3D(value: Sequence[float]) -> DXFVertex:
     return DXFVertex(10, (value[0], value[1], value[2]))
+
+
+class HeaderVarDef:
+    def __init__(self, name, code, factory, mindxf, maxdxf, priority, default=None):
+        self.name = name
+        self.code = code
+        self.factory = factory
+        self.mindxf = mindxf
+        self.maxdxf = maxdxf
+        self.priority = priority
+        self.default = default

@@ -12,6 +12,9 @@ from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF
 from ezdxf.lldxf.validator import header_validator
 from ezdxf.legacy.headervars import VARMAP as VARMAP_R12
 from ezdxf.modern.headervars import VARMAP as VARMAP_R13
+from ezdxf.sections.headervars import HEADER_VAR_MAP
+import logging
+logger=logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -123,7 +126,7 @@ class HeaderSection:
 
     def _headervar_factory(self, key: str, value: Any) -> DXFTag:
         if key in self._varmap:
-            factory = self._varmap[key]
+            factory = HEADER_VAR_MAP[key].factory
             return factory(value)
         else:
             raise DXFKeyError('Invalid header variable {}.'.format(key))
@@ -172,7 +175,8 @@ class HeaderSection:
             write_handles = True
 
         tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
-        for name, value in self.hdrvars.items():
+        # for name, value in self.hdrvars.items():
+        for name, value in header_vars_by_priority(self.hdrvars, tagwriter.dxfversion):
             if not write_handles and name == '$HANDSEED':
                 continue  # skip $HANDSEED
             _write(name, value)
@@ -204,6 +208,20 @@ class HeaderSection:
             del self.hdrvars[key]
         except KeyError:  # map exception
             raise DXFKeyError(str(key))
+
+
+def header_vars_by_priority(header_vars: OrderedDict, dxfversion: str) -> Tuple:
+    order = []
+    for name, value in header_vars.items():
+        vardef = HEADER_VAR_MAP.get(name, None)
+        if vardef is None:
+            logger.info('Header variable {} ignored, dxfversion={}.'.format(name, dxfversion))
+            continue
+        if vardef.mindxf <= dxfversion <= vardef.maxdxf:
+            order.append((vardef.priority, (name, value)))
+    order.sort()
+    for priority, tag in order:
+        yield tag
 
 
 class HeaderVar:
