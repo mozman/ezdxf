@@ -51,7 +51,7 @@ class Drawing:
         def get_header(sections: 'SectionDict') -> 'SectionType':
             from .sections.header import HeaderSection
             header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
-            return HeaderSection(header_entities)
+            return HeaderSection.load(header_entities)
 
         self.dxffactory = EntityFactory(self)  # read only
         self.entitydb = EntityDB()  # read only

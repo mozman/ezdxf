@@ -27,7 +27,7 @@ KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS'
 class Sections:
     def __init__(self, sections: Dict, drawing: 'Drawing', header: HeaderSection = None):
         self._sections = {
-            'HEADER': header if header is not None else HeaderSection(tags=None)}  # type: Dict[str, SectionType]
+            'HEADER': header if header is not None else HeaderSection.load(tags=None)}  # type: Dict[str, SectionType]
         self._setup_sections(sections, drawing)
 
     def __iter__(self) -> Iterable['SectionType']:

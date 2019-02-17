@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.drawing import Drawing
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2018
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.header import HeaderSection
 from ezdxf.lldxf.validator import header_validator
@@ -82,7 +83,7 @@ def test_invalid_header_var_name():
 def header():
     tags = Tags.from_text(TESTHEADER)
     tags.pop()  # remove 'ENDSEC'
-    header = HeaderSection(tags)
+    header = HeaderSection.load(tags)
     return header
 
 
@@ -154,11 +155,16 @@ def test_str_point(header):
     assert INSBASE == insbase_str
 
 
+def test_new_dxf12():
+    header = HeaderSection.new(ezdxf.const.DXF12)
+    assert header['$ACADVER'] == DXF12
+
+
 @pytest.fixture
 def header_custom():
     tags = Tags.from_text(TESTCUSTOMPROPERTIES)
     tags.pop()  # remove 'ENDSEC'
-    header = HeaderSection(tags)
+    header = HeaderSection.load(tags)
     return header
 
 

@@ -118,9 +118,3 @@ class EntityDB:
             source_link = source_linked_entity.link  # follow link structure of original entity
             parent_copy = linked_entity_copy
         return new_tags
-
-    def wrap_all_entities(self):
-        for key in self.keys():
-            tags = self[key]
-            entity = self.dxffactory.wrap_tags(tags)
-            self[key] = entity

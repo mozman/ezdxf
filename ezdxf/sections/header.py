@@ -8,11 +8,12 @@ from collections import OrderedDict
 
 from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
-from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12, LATEST_DXF_VERSION
 from ezdxf.lldxf.validator import header_validator
 from ezdxf.sections.headervars import HEADER_VAR_MAP
 import logging
-logger=logging.getLogger('ezdxf')
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -104,30 +105,53 @@ class CustomVars:
             tagwriter.write_str(s)
 
 
+def default_header_vars(dxfversion: str) -> OrderedDict:
+    vars = OrderedDict()
+    for vardef in HEADER_VAR_MAP.values():
+        if vardef.mindxf <= dxfversion <= vardef.maxdxf:
+            vars[vardef.name] = HeaderVar(DXFTag(vardef.code, vardef.default))
+    return vars
+
+
 class HeaderSection:
     MIN_HEADER_TAGS = Tags.from_text(MIN_HEADER_TEXT)
     name = 'HEADER'
 
-    def __init__(self, tags: Tags = None):
-        tags = tags or self.MIN_HEADER_TAGS
+    def __init__(self):
         self.hdrvars = OrderedDict()
         self.custom_vars = CustomVars()
-        self._build(iter(tags))
 
-    def _headervar_factory(self, key: str, value: Any) -> DXFTag:
-        if key in HEADER_VAR_MAP:
-            factory = HEADER_VAR_MAP[key].factory
-            return factory(value)
-        else:
-            raise DXFKeyError('Invalid header variable {}.'.format(key))
+    @classmethod
+    def load(cls, tags: Iterator[DXFTag] = None) -> 'HeaderSection':
+        """
+        Constructor to generate header variables loaded from DXF files (untrusted environment)
 
-    def __len__(self) -> int:
-        return len(self.hdrvars)
+        Args:
+            tags: DXF tags as Tags() or ExtendedTags()
 
-    def __contains__(self, key) -> bool:
-        return key in self.hdrvars
+        """
+        if tags is None:
+            tags = cls.MIN_HEADER_TAGS
+        section = cls()
+        section.load_tags(iter(tags))
+        return section
 
-    def _build(self, tags: Iterator[DXFTag]) -> None:
+    @classmethod
+    def new(cls, dxfversion=LATEST_DXF_VERSION)->'HeaderSection':
+        section = HeaderSection()
+        section.hdrvars = default_header_vars(dxfversion)
+        section['$ACADVER'] = dxfversion
+        return section
+
+    def load_tags(self, tags: Iterator[DXFTag]) -> None:
+        """
+        Constructor to generate header variables loaded from DXF files (untrusted environment)
+
+        Args:
+            tags: DXF tags as Tags() or ExtendedTags()
+
+        """
+        tags = tags or self.MIN_HEADER_TAGS
         section_tag = next(tags)
         name_tag = next(tags)
 
@@ -150,6 +174,24 @@ class HeaderSection:
                 self.custom_vars.append(tag=custom_property_stack.pop(), value=custom_property_stack.pop())
             except IndexError:  # internal exception
                 break
+
+    @classmethod
+    def from_text(cls, text: str) -> 'HeaderSection':
+        """ Load constructor from text for testing """
+        return cls.load(Tags.from_text(text))
+
+    def _headervar_factory(self, key: str, value: Any) -> DXFTag:
+        if key in HEADER_VAR_MAP:
+            factory = HEADER_VAR_MAP[key].factory
+            return factory(value)
+        else:
+            raise DXFKeyError('Invalid header variable {}.'.format(key))
+
+    def __len__(self) -> int:
+        return len(self.hdrvars)
+
+    def __contains__(self, key) -> bool:
+        return key in self.hdrvars
 
     def varnames(self) -> KeysView:
         return self.hdrvars.keys()
