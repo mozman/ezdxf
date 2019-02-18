@@ -8,15 +8,18 @@ import logging
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.extendedtags import get_xtags_linker
+from ezdxf.layouts.blocklayout import BlockLayout
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockLayout, ExtendedTags, TagWriter
+    from ezdxf.eztypes import ExtendedTags, TagWriter
     from ezdxf.drawing2 import Drawing
     from ezdxf.entitydb import EntityDB
     from ezdxf.entities import DXFEntity
     from ezdxf.entities.factory import EntityFactory
+    from ezdxf.entities.blockrecord import BlockRecord
+    from ezdxf.entities.block import Block, EndBlk
 
 
 class BlocksSection:
@@ -122,14 +125,17 @@ class BlocksSection:
         Create a new named block.
 
         """
+        block_record = self.doc.block_records.new(name)  # type: BlockRecord
+
         dxfattribs = dxfattribs or {}
+        dxfattribs['owner'] = block_record.dxf.handle
         dxfattribs['name'] = name
         dxfattribs['name2'] = name
         dxfattribs['base_point'] = base_point
-        head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)
-        tail = self.dxffactory.create_db_entry('ENDBLK', {})
-        block_layout = self.dxffactory.new_block_layout(head.dxf.handle, tail.dxf.handle)
-        self.dxffactory.create_block_entry_in_block_records_table(block_layout)
+
+        head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)  # type: Block
+        tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})  # type: EndBlk
+        block_layout = BlockLayout(block_record, head, tail)
         self.add(block_layout)
         return block_layout
 

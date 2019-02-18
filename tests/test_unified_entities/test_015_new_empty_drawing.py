@@ -9,7 +9,7 @@ from ezdxf.sections.objects2 import _OBJECT_TABLE_NAMES
 
 @pytest.fixture
 def doc():
-    return Drawing()
+    return Drawing.new()
 
 
 def test_create_new_empty_drawing(doc):
@@ -26,7 +26,9 @@ def test_section(doc):
     e = doc.objects.get_entity_space()
     assert e[0] is doc.rootdict
 
-    assert len(doc.blocks) == 0
+    assert len(doc.blocks) == 2
+    assert '*Model_Space' in doc.blocks
+    assert '*Paper_Space' in doc.blocks
 
 
 def test_tables(doc):
@@ -36,6 +38,7 @@ def test_tables(doc):
 
 
 def test_get_modelspace(doc):
-    pass
-
-
+    msp = doc.modelspace()
+    assert len(msp) == 0
+    msp.add_line((0, 0), (1, 1))
+    assert len(msp) == 1

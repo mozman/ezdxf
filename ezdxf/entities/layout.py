@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
     from .dxfentity import DXFNamespace
 
-__all__ = ['PlotSettings', 'Layout']
+__all__ = ['PlotSettings', 'DXFLayout']
 
 acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
     'page_setup_name': DXFAttr(1, default=''),
@@ -196,9 +196,9 @@ acdb_layout = DefSubclass('AcDbLayout', {
 
 
 @register_entity
-class Layout(PlotSettings):
+class DXFLayout(PlotSettings):
     DXFTYPE = 'LAYOUT'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings)
+    DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings, acdb_layout)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

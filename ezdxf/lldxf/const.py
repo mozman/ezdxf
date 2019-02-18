@@ -431,7 +431,29 @@ RASTER_UNITS = {
     'mi': 8,
 }
 
-LAYOUT_NAMES = ('*paper_space', '$paper_space', '*model_space', '$model_space')
+
+MODEL_SPACE_R2000 = '*Model_Space'
+MODEL_SPACE_R12 = '$Model_Space'
+PAPER_SPACE_R2000 = '*Paper_Space'
+PAPER_SPACE_R12 = '$Paper_Space'
+TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
+
+MODEL_SPACE = {
+    MODEL_SPACE_R2000.lower(),
+    MODEL_SPACE_R12.lower(),
+}
+
+PAPER_SPACE = {
+    PAPER_SPACE_R2000.lower(),
+    PAPER_SPACE_R12.lower(),
+}
+
+LAYOUT_NAMES = {
+    PAPER_SPACE_R2000.lower(),
+    PAPER_SPACE_R12.lower(),
+    MODEL_SPACE_R2000.lower(),
+    MODEL_SPACE_R12.lower(),
+}
 
 
 class SortEntities:

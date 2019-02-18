@@ -4,7 +4,9 @@
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, LAYOUT_NAMES
+from ezdxf.lldxf.const import SUBCLASS_MARKER, LAYOUT_NAMES, DXF12
+from ezdxf.lldxf.const import MODEL_SPACE, PAPER_SPACE, MODEL_SPACE_R12, PAPER_SPACE_R12, MODEL_SPACE_R2000, \
+    PAPER_SPACE_R2000
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .factory import register_entity
 
@@ -54,6 +56,8 @@ class Block(DXFEntity):
 
         processor.load_dxfattribs_into_namespace(dxf, acdb_entity.name)
         processor.load_dxfattribs_into_namespace(dxf, acdb_block_begin.name)
+        # todo: import modelspace and paperspace with leading '*' instead of '$'
+        # todo: block_records for R12 are generated later automatically
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -67,7 +71,17 @@ class Block(DXFEntity):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_begin.name)
 
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'base_point', 'name2', 'xref_path'], force=True)
+        name = self.dxf.name
+        if tagwriter.dxfversion == DXF12:
+            # export modelspace and paperspace with leading '$' instead of '*'
+            if name.lower() == MODEL_SPACE_R2000:
+                name = MODEL_SPACE_R12
+            elif name.lower() == PAPER_SPACE_R2000:
+                name = PAPER_SPACE_R12
+
+        tagwriter.write_tag2(2, name)
+        tagwriter.write_tag2(3, name)
+        self.dxf.export_dxf_attribs(tagwriter, ['flags', 'base_point', 'xref_path'], force=True)
         self.dxf.export_dxf_attribute(tagwriter, 'description')
         # xdata and embedded objects export will be done by parent class
 
