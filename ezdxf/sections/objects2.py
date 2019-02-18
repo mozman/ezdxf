@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, Tuple, cast
 import logging
 
-from ezdxf.modern.dxfdict import DXFDictionary
+from ezdxf.entities.dictionary import Dictionary
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ezdxf.modern.dxfgroups import GroupManager
 from ezdxf.modern.material import MaterialManager
@@ -34,13 +34,13 @@ class ObjectsSection(AbstractSection):
         return iter(self._entity_space)
 
     @property
-    def rootdict(self) -> DXFDictionary:
+    def rootdict(self) -> Dictionary:
         if len(self):
-            return self._entity_space[0]  # type: DXFDictionary
+            return self._entity_space[0]  # type: Dictionary
         else:
             return self.setup_rootdict()
 
-    def setup_rootdict(self) -> DXFDictionary:
+    def setup_rootdict(self) -> Dictionary:
         """
         Create a root dictionary. Has to be the first object in the objects section.
         """
@@ -50,17 +50,13 @@ class ObjectsSection(AbstractSection):
         # root directory has no owner
         return self.add_dictionary(owner='0')
 
-    def setup_objects_management_tables(self, rootdict: DXFDictionary) -> None:
+    def setup_objects_management_tables(self, rootdict: Dictionary) -> None:
         def setup_plot_style_name_table():
             plot_style_name_dict = self.add_dictionary_with_default(owner=rootdict.dxf.handle)
-            plot_style_name_dict_handle = plot_style_name_dict.dxf.handle
-
-            placeholder = self.add_placeholder(owner=plot_style_name_dict_handle)
-            placeholder_handle = placeholder.dxf.handle
-
-            plot_style_name_dict.dxf.default = placeholder_handle
-            plot_style_name_dict['Normal'] = placeholder_handle
-            rootdict['ACAD_PLOTSTYLENAME'] = plot_style_name_dict_handle
+            placeholder = self.add_placeholder(owner=plot_style_name_dict.dxf.handle)
+            plot_style_name_dict.set_default(placeholder)
+            plot_style_name_dict['Normal'] = placeholder
+            rootdict['ACAD_PLOTSTYLENAME'] = plot_style_name_dict
 
         for name in _OBJECT_TABLE_NAMES:
             if name in rootdict:
@@ -91,16 +87,16 @@ class ObjectsSection(AbstractSection):
     def table_styles(self):
         return TableStyleManager(self.doc)
 
-    def add_dictionary(self, owner: str = '0') -> DXFDictionary:
+    def add_dictionary(self, owner: str = '0') -> Dictionary:
         entity = self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
-        return cast(DXFDictionary, entity)
+        return cast(Dictionary, entity)
 
-    def add_dictionary_with_default(self, owner='0', default="0") -> 'DXFDictionary':
+    def add_dictionary_with_default(self, owner='0', default="0") -> 'Dictionary':
         entity = self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
             'owner': owner,
             'default': default,
         })
-        return cast(DXFDictionary, entity)
+        return cast(Dictionary, entity)
 
     def add_xrecord(self, owner: str = '0') -> 'DXFEntity':
         return self.create_new_dxf_entity('XRECORD', dxfattribs={'owner': owner})

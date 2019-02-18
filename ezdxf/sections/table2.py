@@ -34,7 +34,7 @@ def tablename(dxfname: str) -> str:
 
 
 class Table:
-    def __init__(self, entities: Iterable['DXFEntity'], doc: 'Drawing'):
+    def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
         self.doc = doc
         self.entries = OrderedDict()
         self._head = None
@@ -51,7 +51,7 @@ class Table:
 
     @classmethod
     def new_table(cls, name: str, handle: str, doc: 'Drawing') -> 'Table':
-        table = Table(None, doc)
+        table = Table(doc)
         table.set_head(name, handle)
         return table
 

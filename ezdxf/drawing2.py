@@ -54,8 +54,8 @@ class Drawing:
         self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
 
         self.sections = Sections(self)
-        # self.rootdict = self.objects.rootdict
-        # self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
+        self.rootdict = self.objects.rootdict
+        self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
         # self._groups = self.objects.groups()
         # self._materials = self.objects.materials()
         # self._mleader_styles = self.objects.mleader_styles()
@@ -212,6 +212,9 @@ class Drawing:
         self._mline_styles = self.objects.mline_styles()
         self.layouts = Layouts(self)
 
+    def modelspace(self) -> 'LayoutType':
+        return self.layouts.modelspace()
+
 
 class DrawingX(Drawing):
     """
@@ -298,7 +301,6 @@ class DrawingX(Drawing):
     @property
     def _handles(self) -> 'HandleGenerator':
         return self.entitydb.handles
-
 
     def modelspace(self) -> 'LayoutType':
         return self.layouts.modelspace()

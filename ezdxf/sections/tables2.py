@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, Iterator
 from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 
-from .table2 import Table, ViewportTable, StyleTable
+from .table2 import Table, ViewportTable, StyleTable, tablename
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -51,8 +51,8 @@ class TablesSection:
 
     def _load_table(self, name: str, table_entities: Iterable['DXFEntity']) -> None:
         table_class = TABLESMAP[name]
-        new_table = table_class(table_entities, self.doc)
-        self.tables[self.key(new_table.name)] = new_table
+        new_table = table_class(self.doc, table_entities)
+        self.tables[tablename(self.key(new_table.name))] = new_table
 
     def _setup_table(self, name):
         """
@@ -68,7 +68,8 @@ class TablesSection:
         else:  # test environment without Drawing() object
             handle = '0'
         table_class = TABLESMAP[name]
-        return table_class.new_table(name, handle, self.doc)
+        table = table_class.new_table(name, handle, self.doc)
+        self.tables[tablename(name)] = table
 
     def _create_missing_tables(self) -> None:
         if 'LAYERS' not in self:
@@ -81,10 +82,14 @@ class TablesSection:
             self._setup_table('DIMSTYLE')
         if 'VIEWPORTS' not in self:
             self._setup_table('VPORT')
+        if 'VIEWS' not in self:
+            self._setup_table('VIEW')
         if 'APPIDS' not in self:
             self._setup_table('APPID')
         if 'UCS' not in self:
             self._setup_table('UCS')
+        if 'BLOCK_RECORDS' not in self:
+            self._setup_table('BLOCK_RECORD')
 
     def __contains__(self, item: str) -> bool:
         return self.key(item) in self.tables

@@ -28,7 +28,7 @@ from . import dxfclass, table
 from . import ltype, layer, textstyle, dimstyle, view, vport, ucs, appid, blockrecord
 
 # register DXF objects
-
+from . import dxfobj, dictionary
 
 # register graphical entities
 from . import line, lwpolyline, insert, block
