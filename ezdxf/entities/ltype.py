@@ -2,7 +2,6 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Union, Iterable, cast
-import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
@@ -10,8 +9,7 @@ from ezdxf.lldxf.tags import Tags
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from ezdxf.tools.complex_ltype import lin_compiler
-
-logger = logging.getLogger('ezdxf')
+from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -29,6 +27,7 @@ acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
 })
 
 
+@register_entity
 class Linetype(DXFEntity):
     """ DXF LTYPE entity """
     DXFTYPE = 'LTYPE'
@@ -46,7 +45,7 @@ class Linetype(DXFEntity):
 
         processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
         # store whole subclass
-        self._pattern_tags = processor.find_subclass(acdb_linetype.name)[2:]  # remove subclass marker
+        self._pattern_tags = processor.find_subclass(acdb_linetype.name)[1:]  # remove subclass marker
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

@@ -214,6 +214,9 @@ class DXFNamespace:
                 value = attrib.default  # default value could be None
 
             if value is not None:  # do not export None
+                # just use x, y for 2d points if value is a 3d point (Vector, tuple)
+                if attrib.xtype == XType.point2d and len(value) > 2:
+                    value = value[:2]
                 tag = dxftag(attrib.code, value)
                 tagwriter.write_tag(tag)
         else:
@@ -815,5 +818,3 @@ def export_seqend(tagwriter: 'TagWriter', entity: DXFEntity) -> None:
         owner = entity.dxf.owner
         tagwriter.write_tag2(OWNER_CODE, owner)
         tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbEntity')
-
-

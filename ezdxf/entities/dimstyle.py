@@ -27,13 +27,13 @@ base_class = DefSubclass(None, {
 
 acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'name': DXFAttr(2),
-    'flags': DXFAttr(70),
+    'flags': DXFAttr(70, default=0),
     'dimpost': DXFAttr(3),
     'dimapost': DXFAttr(4),
     # redirect dimblk/dimblk1/dimblk2 -> dimblk_handle/dimblk1_handle/dimblk2_handle
-    'dimblk': DXFAttr(5, xtype=XType.callback, getter='get_dimblk', setter='set_dimblk'),
-    'dimblk1': DXFAttr(6, xtype=XType.callback, getter='get_dimblk1', setter='set_dimblk1'),
-    'dimblk2': DXFAttr(7, xtype=XType.callback, getter='get_dimblk2', setter='set_dimblk2'),
+    'dimblk': DXFAttr(5, xtype=XType.callback, getter='get_dimblk', setter='set_dimblk', default=''),
+    'dimblk1': DXFAttr(6, xtype=XType.callback, getter='get_dimblk1', setter='set_dimblk1', default=''),
+    'dimblk2': DXFAttr(7, xtype=XType.callback, getter='get_dimblk2', setter='set_dimblk2', default=''),
     'dimscale': DXFAttr(40),
     'dimasz': DXFAttr(41),
     'dimexo': DXFAttr(42),

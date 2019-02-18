@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-
+from ezdxf.lldxf.const import DXFInternalEzdxfError
 if TYPE_CHECKING:
     from ezdxf.eztypes import Table, DXFDictionary, BlocksSection
     from ezdxf.entitydb import EntityDB
@@ -18,6 +18,8 @@ ENTITY_CLASSES = {}  # registered classes
 
 def register_entity(cls):
     name = cls.DXFTYPE
+    if name in ENTITY_CLASSES:
+        raise DXFInternalEzdxfError('Double registration for DXF type {}.'.format(name))
     ENTITY_CLASSES[name] = cls
     return cls
 
