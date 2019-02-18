@@ -59,6 +59,11 @@ def line(request):
     return Line.from_text(request.param)
 
 
+def test_registered():
+    from ezdxf.entities.factory import ENTITY_CLASSES
+    assert 'LINE' in ENTITY_CLASSES
+
+
 def test_default_init():
     dxfclass = Line()
     assert dxfclass.dxftype() == 'LINE'

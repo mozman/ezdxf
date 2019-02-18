@@ -17,3 +17,18 @@
 # 6. DXFTag and ExtendedTags are no more the main data types - store dxf attributes as object attributes in
 #    inherited classes of DXFAttrib() as DXFEntity.dxf attribute
 # 7. use individual DXF export functions for each entity, but provide a useful boiler plate
+
+# first factory
+from . import factory
+
+# register management structures
+from . import dxfclass, table
+
+# register table entries
+from . import ltype, layer, textstyle, dimstyle, view, vport, ucs, appid, blockrecord
+
+# register DXF objects
+
+
+# register graphical entities
+from . import line, lwpolyline, insert, block

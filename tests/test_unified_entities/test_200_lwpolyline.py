@@ -33,6 +33,11 @@ def entity():
     return LWPolyline.from_text(LWPOLYLINE)
 
 
+def test_registered():
+    from ezdxf.entities.factory import ENTITY_CLASSES
+    assert 'LWPOLYLINE' in ENTITY_CLASSES
+
+
 def test_default_init():
     dxfclass = LWPolyline()
     assert dxfclass.dxftype() == 'LWPOLYLINE'

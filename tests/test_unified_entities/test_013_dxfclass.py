@@ -32,6 +32,11 @@ def entity():
     return DXFClass.from_text(HELIXCLS)
 
 
+def test_registered():
+    from ezdxf.entities.factory import ENTITY_CLASSES
+    assert 'CLASS' in ENTITY_CLASSES
+
+
 def test_default_init():
     dxfclass = DXFClass()
     assert dxfclass.dxftype() == 'CLASS'
