@@ -11,6 +11,8 @@ from ezdxf.order import priority, zorder
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
 
+DATABASE_EXCLUDE = {'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'}
+
 
 class EntityDB:
     """ A simple key/entity database.
@@ -76,13 +78,14 @@ class EntityDB:
         """ Iterate over all (handle, entities) pairs. """
         return self._database.items()
 
-    def add(self, entity: DXFEntity) -> str:
+    def add(self, entity: DXFEntity) -> None:
+        if entity.dxftype() in DATABASE_EXCLUDE:
+            return
         handle = entity.dxf.handle  # type: str
         if handle is None:
             handle = self.next_handle()
             entity.dxf.handle = handle
         self[handle] = entity
-        return handle
 
     def delete_entity(self, entity: DXFEntity) -> None:
         entity.destroy()

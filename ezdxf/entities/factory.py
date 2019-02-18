@@ -1,8 +1,9 @@
 # Created: 2019-02-15
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from ezdxf.tools.handle import ImageKeyGenerator, UnderlayKeyGenerator
+from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
 from ezdxf.lldxf.const import DXFInternalEzdxfError
@@ -67,12 +68,12 @@ class EntityFactory:
         self.entitydb.add(entity)
         return entity
 
-    def load(self, tags: 'ExtendedTags') -> 'DXFEntity':
+    def load(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
         entity = self.entity(tags)
         self.doc.entitydb.add(entity)
         return entity
 
-    def entity(self, tags: 'ExtendedTags') -> 'DXFEntity':
+    def entity(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':
         if not isinstance(tags, ExtendedTags):
             tags = ExtendedTags(tags)
         dxftype = tags.dxftype()

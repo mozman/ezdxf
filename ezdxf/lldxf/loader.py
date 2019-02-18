@@ -170,6 +170,9 @@ def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str =
                 section[index] = entity
 
 
+EXCLUDE_STRUCTURE_CHECK = {'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'}
+
+
 def load_dxf_entities(dxf_entities: List[Tags], factory: 'EntityFactory') -> Iterable['DXFEntity']:
     check_tag_structure = options.check_entity_tag_structures
     for entity in dxf_entities:
@@ -178,10 +181,10 @@ def load_dxf_entities(dxf_entities: List[Tags], factory: 'EntityFactory') -> Ite
         code, dxftype = entity[0]
         if code != 0:
             raise DXFStructureError('Invalid first tag in DXF entity, group code={} .'.format(code))
-        if dxftype not in DATABASE_EXCLUDE:
-            if check_tag_structure:
-                entity = entity_structure_validator(entity)
-        yield factory.load(ExtendedTags(entity))
+
+        if check_tag_structure and (dxftype not in EXCLUDE_STRUCTURE_CHECK):
+            entity = entity_structure_validator(entity)
+        yield factory.load(entity)
 
 
 def fill_database2(sections: Dict, factory: 'EntityFactory') -> None:

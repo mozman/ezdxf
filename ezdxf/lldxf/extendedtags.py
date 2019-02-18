@@ -3,13 +3,15 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Optional, Callable, List
 from itertools import chain
-
+import logging
 from .types import tuples_to_tags
 from .tags import Tags, DXFTag, NONE_TAG
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER
 from .types import is_app_data_marker, is_embedded_object_marker
 from .tagger import internal_tag_compiler
+
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import IterableTags
@@ -22,7 +24,7 @@ class ExtendedTags:
     """
     __slots__ = ('subclasses', 'appdata', 'xdata', 'link', 'embedded_objects')
 
-    def __init__(self, iterable: Iterable[DXFTag] = None):
+    def __init__(self, iterable: Iterable[DXFTag] = None, legacy=False):
         if isinstance(iterable, str):
             raise DXFValueError("use ExtendedTags.from_text() to create tags from a string.")
 
@@ -36,6 +38,44 @@ class ExtendedTags:
         self.embedded_objects = None  # type: Optional[List[Tags]]
         if iterable is not None:
             self._setup(iterable)
+            if legacy:
+                self._merge_subclasses()
+                # ... and we can do some checks:
+                # I think DXF R12 does not support (102, '{APPID') ... structures
+                if len(self.appdata):
+                    # just a debug message, do not delete appdata, this would corrupt the data structure
+                    self.debug('Found application defined entity data in DXF R12.')
+
+                # that is really unlikely, but...
+                if self.embedded_objects is not None:
+                    # removing embedded objects does not corrupt data structure
+                    self.embedded_objects = None
+                    self.debug('Found embedded object in DXF R12.')
+
+    def _merge_subclasses(self):
+        """ Merge subclasses in legacy mode.
+
+        There exists DXF R12 with subclass markers, technical incorrect but worsk if reader ignore subclass marker tags,
+        unfortunately ezdxf, tries to use this subclasses and R12 parsing by ezdxf does not work.
+
+        This method removes the subclass markers and merges all subclasses into 'noclass'.
+
+        """
+        if len(self.subclasses) < 2:
+            return
+        noclass = self.noclass
+        for subclass in self.subclasses[1:]:
+            noclass.extend(subclass[1:])  # exclude first tag (100, subclass marker)
+        self.subclasses = [noclass]
+        self.debug('Removed subclass marker from entity, invalid for R12.')
+
+    def debug(self, msg: str) -> None:
+        try:
+            handle = '(#{})'.format(self.get_handle())
+        except DXFValueError:
+            handle = ''
+        msg += ' <{}{}>'.format(self.dxftype(), handle)
+        logger.debug(msg)
 
     def __copy__(self) -> 'ExtendedTags':
         """
@@ -308,8 +348,8 @@ class ExtendedTags:
         return app_tags
 
     @classmethod
-    def from_text(cls, text: str) -> 'ExtendedTags':
-        return cls(internal_tag_compiler(text))
+    def from_text(cls, text: str, legacy=False) -> 'ExtendedTags':
+        return cls(internal_tag_compiler(text), legacy=legacy)
 
 
 LINKED_ENTITIES = {

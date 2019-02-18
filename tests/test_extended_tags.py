@@ -402,6 +402,19 @@ def test_repair_leica_disto_files():
     tags = ExtendedTags(filter_subclass_marker(Tags.from_text(LEICA_DISTO_TAGS)))
     assert 9 == len(tags.noclass)
     assert 1 == len(tags.subclasses)
+    assert tags.noclass[0] == (0, 'LINE')
+    assert tags.noclass[1] == (8, 'LEICA_DISTO_3D')
+    assert tags.noclass[-1] == (210, (0, 0, 1))
+
+
+def test_legacy_mode():
+    """ Legacy mode does the same job as filter_subclass_markers(). """
+    tags = ExtendedTags.from_text(LEICA_DISTO_TAGS, legacy=True)
+    assert 9 == len(tags.noclass)
+    assert 1 == len(tags.subclasses)
+    assert tags.noclass[0] == (0, 'LINE')
+    assert tags.noclass[1] == (8, 'LEICA_DISTO_3D')
+    assert tags.noclass[-1] == (210, (0, 0, 1))
 
 
 LEICA_DISTO_TAGS = """0
