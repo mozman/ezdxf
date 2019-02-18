@@ -39,26 +39,29 @@ class ExtendedTags:
         if iterable is not None:
             self._setup(iterable)
             if legacy:
-                self._merge_subclasses()
-                # ... and we can do some checks:
-                # I think DXF R12 does not support (102, '{APPID') ... structures
-                if len(self.appdata):
-                    # just a debug message, do not delete appdata, this would corrupt the data structure
-                    self.debug('Found application defined entity data in DXF R12.')
+                self.legacy_repair()
 
-                # that is really unlikely, but...
-                if self.embedded_objects is not None:
-                    # removing embedded objects does not corrupt data structure
-                    self.embedded_objects = None
-                    self.debug('Found embedded object in DXF R12.')
+    def legacy_repair(self):
+        self.flatten_subclasses()
+        # ... and we can do some checks:
+        # I think DXF R12 does not support (102, '{APPID') ... structures
+        if len(self.appdata):
+            # just a debug message, do not delete appdata, this would corrupt the data structure
+            self.debug('Found application defined entity data in DXF R12.')
 
-    def _merge_subclasses(self):
-        """ Merge subclasses in legacy mode.
+        # that is really unlikely, but...
+        if self.embedded_objects is not None:
+            # removing embedded objects does not corrupt data structure
+            self.embedded_objects = None
+            self.debug('Found embedded object in DXF R12.')
 
-        There exists DXF R12 with subclass markers, technical incorrect but worsk if reader ignore subclass marker tags,
-        unfortunately ezdxf, tries to use this subclasses and R12 parsing by ezdxf does not work.
+    def flatten_subclasses(self):
+        """ Flatten subclasses in legacy mode.
 
-        This method removes the subclass markers and merges all subclasses into 'noclass'.
+        There exists DXF R12 with subclass markers, technical incorrect but works if reader ignore subclass marker tags,
+        unfortunately ezdxf, tries to use this subclass markers and R12 parsing by ezdxf does not work.
+
+        This method removes the subclass markers and flattens all subclasses into 'noclass'.
 
         """
         if len(self.subclasses) < 2:

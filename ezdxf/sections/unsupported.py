@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Sequence, Iterable
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFFactoryType, TagWriter, Tags, DXFTag
 
-
+# todo: remove UnsupportedSection
 class UnsupportedSection:
     def __init__(self, entities: Sequence['Tags'], drawing: 'Drawing'):
         self.entities = entities

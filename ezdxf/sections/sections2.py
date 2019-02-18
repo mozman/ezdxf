@@ -4,6 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, List, Iterable
 import logging
+from collections import OrderedDict
 
 from ezdxf.lldxf.const import DXFStructureError, DXF12
 
@@ -19,14 +20,16 @@ if TYPE_CHECKING:
     from ezdxf.drawing2 import Drawing
 
 logger = logging.getLogger('ezdxf')
-KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 
 
 class Sections:
     def __init__(self, doc: 'Drawing' = None, sections: Dict = None, header: HeaderSection = None):
-        self._sections = {
-            'HEADER': header if header is not None else HeaderSection.load(tags=None)
-        }  # type: Dict[str, SectionType]
+        self._sections = OrderedDict()  # type: Dict[str, SectionType]
+        self._sections['HEADER'] = header or HeaderSection.new()
+
+        # unsupported means: the section data is stored as DXFTag collection
+        self.unsupported_sections = []
+
         if sections:
             self.load(sections, doc)
         else:
@@ -48,15 +51,15 @@ class Sections:
 
     def load(self, sections: Dict, doc: 'Drawing') -> None:
         self._sections['TABLES'] = TablesSection(doc, sections.get('TABLES', None))
-        self._sections['BLOCKS'] = BlocksSection(sections.get('BLOCKS', None), doc)
-        self._sections['ENTITIES'] = EntitySection(sections.get('ENTITIES', None), doc)
+        self._sections['BLOCKS'] = BlocksSection(doc, sections.get('BLOCKS', None))
+        self._sections['ENTITIES'] = EntitySection(doc, sections.get('ENTITIES', None))
         if doc.dxfversion > 'AC1009':
             self._sections['CLASSES'] = ClassesSection(doc, sections.get('CLASSES', None))
-            self._sections['OBJECTS'] = ObjectsSection(sections.get('OBJECTS', None), doc)
+            self._sections['OBJECTS'] = ObjectsSection(doc, sections.get('OBJECTS', None))
 
-        for section_name in sections.keys():
-            if section_name not in self._sections:
-                logging.info('SECTION: "{}", removed at saving!'.format(section_name))
+        for name, data in sections.items():
+            if name not in self._sections:
+                self.unsupported_sections.append(sections[name])
 
     def __contains__(self, item: str) -> bool:
         return Sections.key(item) in self._sections
@@ -75,23 +78,10 @@ class Sections:
     def names(self) -> List[str]:
         return list(self._sections.keys())
 
-    def write(self, tagwriter: 'TagWriter') -> None:
-        write_order = list(KNOWN_SECTIONS)
+    def remove_unsupported_sections(self):
+        self.unsupported_sections = []
 
-        unknown_sections = frozenset(self._sections.keys()) - frozenset(KNOWN_SECTIONS)
-        if unknown_sections:
-            write_order.extend(unknown_sections)
-
-        written_sections = []
-        for section_name in KNOWN_SECTIONS:
-            section = self._sections.get(section_name, None)
-            if section is not None:
-                section.write(tagwriter)
-                written_sections.append(section.name)
-
-        tagwriter.write_tag2(0, 'EOF')
-
-    def export_dxf(self, tagwriter: 'TagWriter')->None:
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
         dxfversion = tagwriter.dxfversion
         self._sections['HEADER'].export_dxf(tagwriter)
         if dxfversion > DXF12:
@@ -101,4 +91,16 @@ class Sections:
         self._sections['ENTITIES'].export_dxf(tagwriter)
         if dxfversion > DXF12:
             self._sections['OBJECTS'].export_dxf(tagwriter)
+
+        for section in self.unsupported_sections:
+            self.export_unsupported_section(tagwriter, section)
+
         tagwriter.write_tag2(0, 'EOF')
+
+    @staticmethod
+    def export_unsupported_section(tagwriter: 'TagWriter', entities: Iterable):
+        for entity in entities:
+            tagwriter.write_tags(entity)
+
+        # ENDSEC not stored in entities
+        tagwriter.write_str('  0\nENDSEC\n')

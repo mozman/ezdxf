@@ -4,6 +4,7 @@
 # License: MIT License
 import logging
 from typing import Callable, Dict, Iterable, List, Union, TYPE_CHECKING
+from collections import OrderedDict
 
 from .const import DXFStructureError, DXF12
 from .tags import group_tags, DXFTag, Tags
@@ -103,7 +104,7 @@ def load_dxf_structure(tagger: Iterable[DXFTag], ignore_missing_eof: bool = Fals
             return section[0][0] != (0, 'SECTION')  # first entity, first tag
         return True
 
-    sections = {}  # type: SectionDict
+    sections = OrderedDict()  # type: SectionDict
     section = []  # type: List[Tags]
     eof = False
     for entity in group_tags(tagger):

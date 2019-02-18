@@ -141,6 +141,7 @@ class HeaderSection:
         section = HeaderSection()
         section.hdrvars = default_header_vars(dxfversion)
         section['$ACADVER'] = dxfversion
+        # todo: setup GUIDs, time and dates
         return section
 
     def load_tags(self, tags: Iterator[DXFTag]) -> None:
