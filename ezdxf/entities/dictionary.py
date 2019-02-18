@@ -1,8 +1,8 @@
-# Created: 22.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2019, Manfred Moitzi
 # License: MIT-License
+# Created: 2019-02-18
 from typing import TYPE_CHECKING, KeysView, ItemsView, Any, Union, Dict
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
@@ -50,7 +50,6 @@ class Dictionary(DXFObject):
     """
     DXFTYPE = 'DICTIONARY'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
@@ -273,7 +272,6 @@ acdb_dict_with_default = DefSubclass('AcDbDictionaryWithDefault', {
 class DictionaryWithDefault(Dictionary):
     DXFTYPE = 'ACDBDICTIONARYWDFLT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary, acdb_dict_with_default)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
     CLASS = {
         'name': DXFTYPE,
         'cpp_class_name': 'AcDbDictionaryWithDefault',
@@ -353,7 +351,6 @@ class DictionaryVar(DXFObject):
     """
     DXFTYPE = 'DICTIONARYVAR'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dict_var)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
     CLASS = {
         'name': DXFTYPE,
         'cpp_class_name': 'AcDbDictionaryVar',
