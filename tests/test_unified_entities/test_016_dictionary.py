@@ -1,21 +1,27 @@
 # Created: 22.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 import ezdxf
-from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.modern.dxfdict import DXFDictionary, DXFDictionaryWithDefault, tag_processor
-from ezdxf.lldxf import loader
+
+from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
+from ezdxf import DXFKeyError
+
+
+class MockDoc:
+    class MockEntityDB:
+        def __getitem__(self, item):
+            return item
+
+    def __init__(self):
+        self.entitydb = MockDoc.MockEntityDB()
 
 
 class TestNoneEmptyDXFDict:
     @pytest.fixture
     def dxfdict(self):
-        return DXFDictionary(tag_processor(ExtendedTags.from_text(ROOTDICT)))
-
-    def test_is_registered(self):
-        assert loader.is_registered('DICTIONARY', legacy=False)
+        d = Dictionary.from_text(ROOTDICT, doc=MockDoc())
+        return d
 
     def test_getitem(self, dxfdict):
         assert dxfdict['ACAD_PLOTSTYLENAME'] == 'E'
@@ -38,7 +44,7 @@ class TestNoneEmptyDXFDict:
 
     def test_get_entity(self, dxfdict):
         # returns just the handle, because no associated drawing exists
-        assert 'E' == dxfdict.get_entity('ACAD_PLOTSTYLENAME')
+        assert 'E' == dxfdict.get('ACAD_PLOTSTYLENAME')
 
     def test_get_with_keyerror(self, dxfdict):
         with pytest.raises(ezdxf.DXFKeyError):
@@ -92,7 +98,7 @@ class TestNoneEmptyDXFDict:
 class TestEmptyDXFDict:
     @pytest.fixture
     def dxfdict(self):
-        return DXFDictionary(tag_processor(ExtendedTags.from_text(EMPTY_DICT)))
+        return Dictionary.from_text(EMPTY_DICT, doc=MockDoc())
 
     def test_len(self, dxfdict):
         assert 0 == len(dxfdict)
@@ -122,21 +128,33 @@ class TestEmptyDXFDict:
 
 
 @pytest.fixture(scope='module')
-def dwg():
-    return ezdxf.new('R2000')
+def doc():
+    from ezdxf.drawing2 import Drawing
+    return Drawing.new()
 
 
-def test_get_entity_invalid_handle(dwg):
-    dwg.rootdict['TEST'] = '0'
-    with pytest.raises(ezdxf.DXFKeyError):
-        dwg.rootdict.get_entity('TEST')
+def test_get_entity_invalid_handle(doc):
+    rootdict = doc.rootdict
+    e = doc.dxffactory.new_entity('ACDBPLACEHOLDER', {})
+    e.dxf.handle = 'FFFF'
+    e.dxf.owner = 'ABBA'
+    rootdict['TEST'] = e
+    assert rootdict['TEST'].dxf.handle == 'FFFF'
+    assert rootdict['TEST'].dxf.owner == 'ABBA'
 
-    dxfdict = dwg.rootdict.get_required_dict('TEST')
+    with pytest.raises(DXFKeyError):
+        # just for testing, in production only DXFEntity() objects should be assigned
+        rootdict['TEST'] = 'FFFF'
+
+    with pytest.raises(DXFKeyError):
+        _ = rootdict['MOZMAN']
+
+    dxfdict = doc.rootdict.get_required_dict('TEST2')
     assert dxfdict.dxftype() == 'DICTIONARY', 'previous statement should not raise an exception'
 
 
-def test_add_sub_dict(dwg):
-    rootdict = dwg.rootdict
+def test_add_sub_dict(doc):
+    rootdict = doc.rootdict
     assert 'MOZMAN_TEST' not in rootdict
     new_dict = rootdict.get_required_dict('MOZMAN_TEST')
     assert 'DICTIONARY' == new_dict.dxftype()
@@ -146,10 +164,7 @@ def test_add_sub_dict(dwg):
 class TestDXFDictWithDefault:
     @pytest.fixture
     def dxfdict(self):
-        return DXFDictionaryWithDefault(tag_processor(ExtendedTags.from_text(DEFAULT_DICT)))
-
-    def test_is_registered(self):
-        assert loader.is_registered('ACDBDICTIONARYWDFLT', legacy=False)
+        return DictionaryWithDefault.from_text(DEFAULT_DICT, doc=MockDoc())
 
     def test_get_existing_value(self, dxfdict):
         assert 'F' == dxfdict['Normal']

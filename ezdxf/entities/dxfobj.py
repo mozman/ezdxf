@@ -14,8 +14,7 @@ __all__ = ['DXFObject', 'AcDbPlaceholder']
 
 
 class DXFObject(DXFEntity):
-    def audit(self, auditor: 'Auditor') -> None:
-        pass
+    pass
 
 
 @register_entity

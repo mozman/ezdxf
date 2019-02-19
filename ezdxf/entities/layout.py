@@ -141,7 +141,7 @@ class PlotSettings(DXFObject):
         if processor is None:
             return dxf
 
-        processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings.name)
+        processor.load_dxfattribs_into_namespace(dxf, acdb_plot_settings)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -205,7 +205,7 @@ class DXFLayout(PlotSettings):
         if processor is None:
             return dxf
 
-        processor.load_dxfattribs_into_namespace(dxf, acdb_layout.name)
+        processor.load_dxfattribs_into_namespace(dxf, acdb_layout)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

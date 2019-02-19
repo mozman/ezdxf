@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
     from ezdxf.drawing2 import Drawing
     from .dxfentity import DXFNamespace
-    from ezdxf.eztypes import Tags, Auditor
+    from ezdxf.eztypes import Auditor
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
@@ -59,8 +59,7 @@ class Dictionary(DXFObject):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dictionary.name)
+        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dictionary)
         self.load_dict(tags)
         return dxf
 
@@ -188,7 +187,10 @@ class Dictionary(DXFObject):
 
         """
         if isinstance(value, str):
-            value = self.entitydb[value]
+            try:
+                value = self.entitydb[value]
+            except KeyError:
+                raise DXFKeyError('Invalid entity handle #{} for key {}'.format(value, key))
         self._data[key] = value
 
     def remove(self, key: str) -> None:
@@ -287,7 +289,7 @@ class DictionaryWithDefault(Dictionary):
         if processor is None:
             return dxf
 
-        processor.load_dxfattribs_into_namespace(dxf, acdb_dict_with_default.name)
+        processor.load_dxfattribs_into_namespace(dxf, acdb_dict_with_default)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

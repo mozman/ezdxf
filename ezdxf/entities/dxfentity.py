@@ -10,7 +10,8 @@ from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
-from ezdxf.lldxf.const import DXFAttributeError, DXFTypeError, DXFKeyError, DXFValueError, DXFStructureError
+from ezdxf.lldxf.const import ACAD_REACTORS, ACAD_XDICTIONARY
+from ezdxf.lldxf.const import DXFAttributeError, DXFKeyError, DXFValueError, DXFStructureError
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
@@ -442,9 +443,9 @@ class DXFEntity:
     def setup_app_data(self, appdata: List[Tags]) -> None:
         for data in appdata:
             code, appid = data[0]
-            if appid == '{REACTORS':
+            if appid == ACAD_REACTORS:
                 self.reactors = Reactors.from_tags(data)
-            elif appid == '{XDICTIONARY':
+            elif appid == ACAD_XDICTIONARY:
                 self.extension_dict = ExtensionDict.from_tags(self, data)
             else:
                 self.appdata.set(data)
