@@ -7,7 +7,7 @@ import logging
 
 from ezdxf.entities.dictionary import Dictionary
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
-from ezdxf.modern.dxfgroups import GroupManager
+from ezdxf.entities.dxfgroups import GroupCollection
 from ezdxf.modern.material import MaterialManager
 from ezdxf.modern.mleader import MLeaderStyleManager
 from ezdxf.modern.mline import MLineStyleManager
@@ -73,7 +73,7 @@ class ObjectsSection(AbstractSection):
         return dxfobject
 
     def groups(self):
-        return GroupManager(self.doc)
+        return GroupCollection(self.doc)
 
     def materials(self):
         return MaterialManager(self.doc)

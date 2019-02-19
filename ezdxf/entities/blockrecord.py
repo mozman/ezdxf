@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFStructureError
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFStructureError, DXF2007
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -17,11 +17,48 @@ if TYPE_CHECKING:
 
 __all__ = ['BlockRecord']
 
-
 acdb_blockrec = DefSubclass('AcDbBlockTableRecord', {
     'name': DXFAttr(2),
-    'layout': DXFAttr(340),
+    'layout': DXFAttr(340, default='0'),
+    'explode': DXFAttr(280, default=1, dxfversion=DXF2007),  # 0 = can not explode; 1 = can explode
+    'scale': DXFAttr(281, default=1, dxfversion=DXF2007),  # 0 = can not scale; 1 = can scale
+    'units': DXFAttr(70, default=0, dxfversion=DXF2007),  # ezdxf.InsertUnits
+    # 0 = Unitless
+    # 1 = Inches
+    # 2 = Feet
+    # 3 = Miles
+    # 4 = Millimeters
+    # 5 = Centimeters
+    # 6 = Meters
+    # 7 = Kilometers
+    # 8 = Microinches
+    # 9 = Mils
+    # 10 = Yards
+    # 11 = Angstroms
+    # 12 = Nanometers
+    # 13 = Microns
+    # 14 = Decimeters
+    # 15 = Decameters
+    # 16 = Hectometers
+    # 17 = Gigameters
+    # 18 = Astronomical units
+    # 19 = Light years
+    # 20 = Parsecs
+    # 21 = US Survey Feet
+    # 22 = US Survey Inch
+    # 23 = US Survey Yard
+    # 24 = US Survey Mile
+    # ---------------------
+    # 310: Binary data for bitmap preview (optional) - removed (ignored) by ezdxf
 })
+
+# optional XDATA for all DXF versions
+# 1000: "ACAD"
+# 1001: "DesignCenter Data" (optional)
+# 1002: "{"
+# 1070: Autodesk Design Center version number
+# 1070: Insert units: like 'units'
+# 1002: "}"
 
 
 @register_entity
@@ -36,7 +73,7 @@ class BlockRecord(DXFEntity):
             return dxf
 
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_blockrec)
-        if len(tags) and not processor.r12:
+        if len(tags):  # not supported by DXF R12
             processor.log_unprocessed_tags(tags, subclass=acdb_blockrec.name)
         return dxf
 
@@ -50,4 +87,6 @@ class BlockRecord(DXFEntity):
 
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['name', 'layout'], force=True)
+        if tagwriter.dxfversion >= DXF2007:
+            self.dxf.export_dxf_attribs(tagwriter, ['units', 'explode', 'scale'])
 

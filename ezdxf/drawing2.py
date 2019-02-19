@@ -74,7 +74,7 @@ class Drawing:
         self.sections = Sections(self)
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
-        # self.groups = self.objects.groups()
+        self.groups = self.objects.groups()
         # self.materials = self.objects.materials()
         # self.mleader_styles = self.objects.mleader_styles()
         # self.mline_styles = self.objects.mline_styles()

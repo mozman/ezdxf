@@ -448,7 +448,7 @@ class DXFEntity:
             elif appid == ACAD_XDICTIONARY:
                 self.extension_dict = ExtensionDict.from_tags(self, data)
             else:
-                self.appdata.set(data)
+                self.set_app_data(appid, data)
 
     @property
     def dxffactory(self) -> 'EntityFactory':

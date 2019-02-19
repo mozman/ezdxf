@@ -2,6 +2,7 @@
 # Created: 10.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
+from enum import IntEnum
 
 DXF12 = 'AC1009'
 DXF13 = 'AC1012'
@@ -480,3 +481,31 @@ DIMTAD = {
     'center': 0,
     'below': 4,
 }
+
+
+class InsertUnits(IntEnum):
+    Unitless = 0
+    Inches = 1
+    Feet = 2
+    Miles = 3
+    Millimeters = 4
+    Centimeters = 5
+    Meters = 6
+    Kilometers = 7
+    Microinches = 8
+    Mils = 9
+    Yards = 10
+    Angstroms = 11
+    Nanometers = 12
+    Microns = 13
+    Decimeters = 14
+    Decameters = 15
+    Hectometers = 16
+    Gigameters = 17
+    AstronomicalUnits = 18
+    Lightyears = 19
+    Parsecs = 20
+    USSurveyFeet = 21
+    USSurveyInch = 22
+    USSurveyYard = 23
+    USSurveyMile = 24

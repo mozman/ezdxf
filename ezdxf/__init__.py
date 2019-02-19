@@ -1,5 +1,5 @@
 # Created: 10.03.2011
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
 # import version data
 import sys
@@ -25,6 +25,7 @@ from ezdxf.lldxf.const import DXFError  # base error exception
 from ezdxf.lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryError, DXFAppDataError, DXFXDataError
 from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError, DXFInvalidLayerName
 from ezdxf.lldxf.const import DXFBlockInUseError
+from ezdxf.lldxf.const import InsertUnits
 # name space imports - do not remove
 
 import codecs

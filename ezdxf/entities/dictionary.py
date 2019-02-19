@@ -103,7 +103,6 @@ class Dictionary(DXFObject):
                 value = value.dxf.handle
             tagwriter.write_tag2(VALUE_CODE, value)
 
-
     @property
     def is_hard_owner(self) -> bool:
         return bool(self.dxf.hard_owned)
