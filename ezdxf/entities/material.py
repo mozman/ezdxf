@@ -1,8 +1,8 @@
 # Created: 06.04.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Optional, Iterable
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFStructureError
+from typing import TYPE_CHECKING, Tuple, Optional
+from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -18,11 +18,8 @@ if TYPE_CHECKING:
 
 __all__ = ['Material', 'MaterialCollection']
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, Matrix44
 
-
-def filter_matrix(tags: 'Tags', code: int) -> Tuple[Tags, Optional[Matrix44]]:
+def fetch_matrix(tags: 'Tags', code: int) -> Tuple[Tags, Optional[Matrix44]]:
     values = []
     remaining = Tags()
     for tag in tags:
@@ -201,25 +198,25 @@ class Material(DXFObject):
         return dxf
 
     def load_matrices(self, tags):
-        tags, matrix = filter_matrix(tags, 43)
+        tags, matrix = fetch_matrix(tags, 43)
         if matrix:
             self.diffuse_mapper_matrix = matrix
-        tags, matrix = filter_matrix(tags, 47)
+        tags, matrix = fetch_matrix(tags, 47)
         if matrix:
             self.specular_mapper_matrix = matrix
-        tags, matrix = filter_matrix(tags, 49)
+        tags, matrix = fetch_matrix(tags, 49)
         if matrix:
             self.reflexion_mapper_matrix = matrix
-        tags, matrix = filter_matrix(tags, 142)
+        tags, matrix = fetch_matrix(tags, 142)
         if matrix:
             self.opacity_mapper_matrix = matrix
-        tags, matrix = filter_matrix(tags, 144)
+        tags, matrix = fetch_matrix(tags, 144)
         if matrix:
             self.bump_mapper_matrix = matrix
-        tags, matrix = filter_matrix(tags, 147)
+        tags, matrix = fetch_matrix(tags, 147)
         if matrix:
             self.refraction_mapper_matrix = matrix
-        tags, matrix = filter_matrix(tags, 43)
+        tags, matrix = fetch_matrix(tags, 43)
         if matrix:
             self.normal_mapper_matrix = matrix
 
@@ -230,9 +227,7 @@ class Material(DXFObject):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_material.name)
         self.dxf.export_dxf_attribute(tagwriter, 'name', force=True)
         self.dxf.export_dxf_attribs(tagwriter, [
-            'description', 'ambient_color_method', 'ambient_color_factor', 'ambient_color_value'
-        ])
-        self.dxf.export_dxf_attribs(tagwriter, [
+            'description', 'ambient_color_method', 'ambient_color_factor', 'ambient_color_value',
             'diffuse_color_method', 'diffuse_color_method', 'diffuse_color_factor', 'diffuse_color_value',
             'diffuse_map_blend_factor', 'diffuse_map_source', 'diffuse_map_file_name', 'diffuse_map_projection_method',
             'diffuse_map_tiling_method', 'diffuse_map_auto_transform_method',

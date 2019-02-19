@@ -4,6 +4,7 @@
 #
 # DXFObject - non graphical entities stored in OBJECTS section
 from typing import TYPE_CHECKING
+from ezdxf.lldxf.const import DXF2000
 from .dxfentity import DXFEntity
 from .factory import register_entity
 
@@ -14,7 +15,8 @@ __all__ = ['DXFObject', 'AcDbPlaceholder']
 
 
 class DXFObject(DXFEntity):
-    pass
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+
 
 
 @register_entity

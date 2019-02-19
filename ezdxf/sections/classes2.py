@@ -22,13 +22,16 @@ CLASS_DEFINITIONS = {
     'VISUALSTYLE': ['AcDbVisualStyle', 'ObjectDBX Classes', 4095, 0, 0],
     'SCALE': ['AcDbScale', 'ObjectDBX Classes', 1153, 0, 0],
     'MLEADERSTYLE': ['AcDbMLeaderStyle', 'ACDB_MLEADERSTYLE_CLASS', 4095, 0, 0],
+    'MLEADER': ['AcDbMLeader', 'ACDB_MLEADER_CLASS', 1025, 0, 1],
     'CELLSTYLEMAP': ['AcDbCellStyleMap', 'ObjectDBX Classes', 1152, 0, 0],
     'EXACXREFPANELOBJECT': ['ExAcXREFPanelObject', 'EXAC_ESW', 1025, 0, 0],
     'NPOCOLLECTION': ['AcDbImpNonPersistentObjectsCollection', 'ObjectDBX Classes', 1153, 0, 0],
     'LAYER_INDEX': ['AcDbLayerIndex', 'ObjectDBX Classes', 0, 0, 0],
     'SPATIAL_INDEX': ['AcDbSpatialIndex', 'ObjectDBX Classes', 0, 0, 0],
     'IDBUFFER': ['AcDbIdBuffer', 'ObjectDBX Classes', 0, 0, 0],
-    'DIMASSOC': ['AcDbDimAssoc', '"AcDbDimAssoc|Product Desc:     AcDim ARX App For Dimension|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com"', 0, 0, 0],
+    'DIMASSOC': ['AcDbDimAssoc',
+                 '"AcDbDimAssoc|Product Desc:     AcDim ARX App For Dimension|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com"',
+                 0, 0, 0],
     'ACDBSECTIONVIEWSTYLE': ['AcDbSectionViewStyle', 'ObjectDBX Classes', 1025, 0, 0],
     'ACDBDETAILVIEWSTYLE': ['AcDbDetailViewStyle', 'ObjectDBX Classes', 1025, 0, 0],
     'IMAGEDEF': ['AcDbRasterImageDef', 'ISM', 0, 0, 0],
@@ -76,25 +79,20 @@ class ClassesSection:
             if dxftype not in self.classes:
                 self.classes[dxftype] = dxfclass
 
-    def add_class(self, name: str, class_data: List):
-        if name in self.classes:
+    def add_class(self, name: str):
+        if (name in self.classes) or (name not in CLASS_DEFINITIONS):
             return
+        cls_data = CLASS_DEFINITIONS[name]
         cls = DXFClass(self.doc)
-        cpp, app, flags, proxy, entity = class_data
+        cpp, app, flags, proxy, entity = cls_data
         cls.update_dxf_attribs({
             'cpp_class_name': cpp,
             'app_name': app,
             'flags': flags,
-            'was_a_proxy':proxy,
+            'was_a_proxy': proxy,
             'is_an_entity': entity,
         })
         self.classes[name] = cls
-
-    def add_classes(self, names=None):
-        names = names or []
-        for name in names:
-            cls_data = CLASS_DEFINITIONS[name]
-            self.add_class(name, cls_data)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")

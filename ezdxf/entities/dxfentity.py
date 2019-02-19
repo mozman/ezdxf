@@ -198,23 +198,32 @@ class DXFNamespace:
         else:
             return None
 
-    def export_dxf_attribute(self, tagwriter: 'TagWriter', name: str, force=False) -> None:
+    def export_dxf_attribute(self, tagwriter: 'TagWriter', name: str,
+                             force=False,
+                             check_dxf_version=False) -> None:
         """
-        Exports DXF attribute `name` by `tagwriter`. Does not care about DXF version -> caller
+        Exports DXF attribute `name` by `tagwriter`.
 
         Args:
             tagwriter: tag writer object
             name: DXF attribute name
             force: write default value if attribute is not set
+            check_dxf_version: does not export DXF attribs which are not supported by tagwriter.dxfversion
 
         """
+        export_dxf_version = tagwriter.dxfversion
         attrib = self.dxfattribs.get(name, None)
         if attrib:
             value = self.get(name, None)
             if value is None and force:  # force default value e.g. layer
                 value = attrib.default  # default value could be None
 
-            if value is not None:  # do not export None
+            if attrib.dxfversion and check_dxf_version:
+                required_dxf_version = attrib.dxfversion
+            else:
+                required_dxf_version = DXF12
+
+            if (value is not None) and (export_dxf_version >= required_dxf_version):  # do not export None
                 # just use x, y for 2d points if value is a 3d point (Vector, tuple)
                 if attrib.xtype == XType.point2d and len(value) > 2:
                     value = value[:2]
@@ -223,18 +232,20 @@ class DXFNamespace:
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
 
-    def export_dxf_attribs(self, tagwriter: 'TagWriter', names: Iterable[str], force=False) -> None:
+    def export_dxf_attribs(self, tagwriter: 'TagWriter', names: Iterable[str],
+                           force=False,
+                           check_dxf_version=False) -> None:
         """
-        Exports many DXF attributes by `tagwriter`.  Does not care about DXF version -> caller
+        Exports many DXF attributes by `tagwriter`.
 
         Args:
             tagwriter: tag writer object
             names: iterable of attribute names
             force: write default value if attribute is not set
-
+            check_dxf_version: does not export DXF attribs which are not supported by tagwriter.dxfversion
         """
         for name in names:
-            self.export_dxf_attribute(tagwriter, name, force=force)
+            self.export_dxf_attribute(tagwriter, name, force=force, check_dxf_version=check_dxf_version)
 
 
 class SubclassProcessor:

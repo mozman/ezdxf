@@ -27,12 +27,13 @@ from ezdxf.render.dimension import DimensionRenderer
 
 from ezdxf.entities.dxfgroups import GroupCollection
 from ezdxf.entities.material import MaterialCollection
+from ezdxf.entities.mleader import MLeaderStyleCollection
+from ezdxf.entities.mline import MLineStyleCollection
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from .eztypes import HandleGenerator, DXFTag, SectionDict
-    from .eztypes import MLeaderStyleManager, MLineStyleManager
     from .eztypes import SectionType, Table, ViewportTable
     from ezdxf.sections.header import HeaderSection
     from ezdxf.sections.blocks2 import BlocksSection
@@ -47,7 +48,7 @@ class Drawing:
     def __init__(self):
         self.entitydb = EntityDB()
         self.dxffactory = EntityFactory(self)
-        self.tracker = Tracker()
+        self.tracker = Tracker()  # still required
         self.dxfversion = LATEST_DXF_VERSION
         self.encoding = 'ANSI_1252'
         self.filename = None  # type: str # read/write
@@ -56,8 +57,8 @@ class Drawing:
         self.layouts = None  # type: Layouts
         self.groups = None  # type: GroupCollection  # read only
         self.materials = None  # type: MaterialCollection # read only
-        self.mleader_styles = None  # type: MLeaderStyleManager # read only
-        self.mline_styles = None  # type: MLineStyleManager # read only
+        self.mleader_styles = None  # type: MLeaderStyleCollection # read only
+        self.mline_styles = None  # type: MLineStyleCollection # read only
         self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
         self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
         self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
@@ -83,8 +84,8 @@ class Drawing:
         """ Common setup tasks for new and loaded DXF drawings. """
         self.groups = GroupCollection(self)
         self.materials = MaterialCollection(self)
-        # self.mleader_styles = self.objects.mleader_styles()
-        # self.mline_styles = self.objects.mline_styles()
+        self.mleader_styles = MLeaderStyleCollection(self)
+        self.mline_styles = MLineStyleCollection(self)
         self.setup_metadata()
 
     def setup_metadata(self):
@@ -474,11 +475,8 @@ class DrawingX(Drawing):
             self.sections.classes.update_instance_counters()
 
     def _register_required_classes(self):
-        register = self.sections.classes.register
         for dxftype in self.tracker.dxftypes:
-            cls = self.dxffactory.get_wrapper_class(dxftype)
-            if cls.CLASS is not None:
-                register(cls.CLASS)
+            self.sections.classes.add_class(dxftype)
 
     def _update_metadata(self):
         now = datetime.now()

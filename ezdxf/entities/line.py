@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 __all__ = ['Line']
 
 acdb_line = DefSubclass('AcDbLine', {
-    'start': DXFAttr(10, xtype=XType.point3d),
-    'end': DXFAttr(11, xtype=XType.point3d),
+    'start': DXFAttr(10, xtype=XType.point3d, default=(0, 0, 0)),
+    'end': DXFAttr(11, xtype=XType.point3d, default=(0, 0, 0)),
     'thickness': DXFAttr(39, default=0),
     'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0.0, 0.0, 1.0)),
 })
@@ -28,10 +28,6 @@ class Line(DXFGraphic):
     """ DXF LINE entity """
     DXFTYPE = 'LINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_line)
-    DEFAULT_ATTRIBS = {
-        'start': (0, 0, 0),
-        'end': (0, 0, 0),
-    }
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
@@ -55,5 +51,6 @@ class Line(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_line.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['start', 'end', 'thickness', 'extrusion'])
+        self.dxf.export_dxf_attribs(tagwriter, ['start', 'end'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['thickness', 'extrusion'])
         # xdata and embedded objects export will be done by parent class
