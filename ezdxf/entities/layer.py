@@ -30,8 +30,9 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     # code 390 is required for AutoCAD
     # Pointer/handle to PlotStyleName
     # uses tag(390, ...) from the '0' layer1
-    'plot_style_name': DXFAttr(390, dxfversion=DXF2000),  # handle to PlotStyleName object
-    'material': DXFAttr(347, dxfversion=DXF2007),  # handle to Material object
+    'plotstyle_handle': DXFAttr(390, dxfversion=DXF2000),  # handle to PlotStyleName object
+    'material_handle': DXFAttr(347, dxfversion=DXF2007),  # handle to Material object
+    'unknown1': DXFAttr(348, dxfversion=DXF2007, default=0),  # ???
 })
 
 
@@ -67,10 +68,11 @@ class Layer(DXFEntity):
 
         if tagwriter.dxfversion >= DXF2000:
             self.dxf.export_dxf_attribute(tagwriter, 'plot')  # no force required
-            self.dxf.export_dxf_attribs(tagwriter, ['lineweight', 'plot_style_name'], force=True)
+            self.dxf.export_dxf_attribs(tagwriter, ['lineweight', 'plotstyle_handle'], force=True)
 
         if tagwriter.dxfversion >= DXF2007:
-            self.dxf.export_dxf_attribute(tagwriter, 'material')  # required and always set
+            self.dxf.export_dxf_attribute(tagwriter, 'material_handle')  # required and always set
+            self.dxf.export_dxf_attribute(tagwriter, 'unknown1')  # ???
 
     def post_new_hook(self) -> None:
         if not is_valid_layer_name(self.dxf.name):

@@ -51,7 +51,7 @@ class Table:
 
     @classmethod
     def new_table(cls, name: str, handle: str, doc: 'Drawing') -> 'Table':
-        table = Table(doc)
+        table = cls(doc)
         table.set_head(name, handle)
         return table
 
@@ -161,6 +161,16 @@ class Table:
             entry.dxf.owner = owner_handle
 
 
+class LayerTable(Table):
+    def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
+        if self.doc:
+            if 'material' not in dxfattribs:
+                dxfattribs['material_handle'] = self.doc.materials['Global'].dxf.handle
+            if 'plot_style_name' not in dxfattribs:
+                dxfattribs['plotstyle_handle'] = self.doc.plotstyles['Normal'].dxf.handle
+        return super().new_entry(dxfattribs)
+
+
 class StyleTable(Table):
     def get_shx(self, shxname: str) -> 'DXFEntity':
         """
@@ -222,8 +232,13 @@ class ViewportTable(Table):
         for entries in self.entries.values():
             yield from iter(entries)
 
+    def _flatten(self):
+        for entries in self.entries.values():
+            yield from iter(entries)
+
     def __len__(self):
-        return len(list(self))
+        # calling __iter__() invokes recursion!
+        return len(list(self._flatten()))
 
     def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
         """ Create new table-entry of type 'self._dxfname', and add new entry

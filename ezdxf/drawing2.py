@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from ezdxf.layouts.blocklayout import BlockLayout
     from ezdxf.layouts.layout import Layout
     from ezdxf.entities.dxfentity import DXFEntity
+
     LayoutType = Union[Layout, BlockLayout]
 
 
@@ -86,9 +87,49 @@ class Drawing:
         self.materials = MaterialCollection(self)
         self.mleader_styles = MLeaderStyleCollection(self)
         self.mline_styles = MLineStyleCollection(self)
-        self.setup_metadata()
+        # all required internal structures are ready
+        # now do the stuff to please AutoCAD
+        self._create_required_table_entries()
+        self._setup_metadata()
 
-    def setup_metadata(self):
+    def _create_required_table_entries(self):
+        self._create_required_vports()
+        self._create_required_linetypes()
+        self._create_required_layers()
+        self._create_required_styles()
+        self._create_required_appids()
+        self._create_required_dimstyles()
+
+    def _create_required_vports(self):
+        if '*Active' not in self.viewports:
+            self.viewports.new('*Active')
+
+    def _create_required_appids(self):
+        if 'ACAD' not in self.appids:
+            self.appids.new('ACAD')
+
+    def _create_required_linetypes(self):
+        linetypes = self.linetypes
+        for name in ('ByBlock', 'ByLayer', 'Continuous'):
+            if name not in linetypes:
+                linetypes.new(name)
+
+    def _create_required_dimstyles(self):
+        if 'Standard' not in self.dimstyles:
+            self.dimstyles.new('Standard')
+
+    def _create_required_styles(self):
+        if 'Standard' not in self.styles:
+            self.styles.new('Standard')
+
+    def _create_required_layers(self):
+        layers = self.layers
+        if '0' not in layers:
+            layers.new('0')
+        if 'Defpoints' not in layers:
+            layers.new('Defpoints', dxfattribs={'plot': 0})  # do not plot
+
+    def _setup_metadata(self):
         self.header['$TDCREATE'] = juliandate(datetime.now())
 
     @classmethod
@@ -132,7 +173,6 @@ class Drawing:
         repair.setup_layouts(self)
         self.layouts = Layouts.load(self)
         self._finalize_setup()
-
 
     @property
     def header(self) -> 'HeaderSection':
@@ -187,6 +227,10 @@ class Drawing:
         return self.sections.tables.viewports
 
     @property
+    def plotstyles(self) -> 'Dictionary':
+        return self.rootdict['ACAD_PLOTSTYLENAME']
+
+    @property
     def dimension_renderer(self) -> DimensionRenderer:
         return self._dimension_renderer
 
@@ -202,6 +246,12 @@ class Drawing:
 
     def modelspace(self) -> 'LayoutType':
         return self.layouts.modelspace()
+
+    def layout(self, name: str = None) -> 'Layout':
+        return self.layouts.get(name)
+
+    def layout_names(self) -> Iterable[str]:
+        return list(self.layouts.names())
 
     def reset_fingerprintguid(self):
         self.header['$FINGERPRINTGUID'] = guid()
@@ -232,15 +282,6 @@ class DrawingX(Drawing):
     @property
     def _handles(self) -> 'HandleGenerator':
         return self.entitydb.handles
-
-    def modelspace(self) -> 'Layout':
-        return self.layouts.modelspace()
-
-    def layout(self, name: str = None) -> 'Layout':
-        return self.layouts.get(name)
-
-    def layout_names(self) -> Iterable[str]:
-        return list(self.layouts.names())
 
     def delete_layout(self, name):
         if name not in self.layouts:
@@ -492,4 +533,3 @@ class DrawingX(Drawing):
 
         if 'HATCH' in self.tracker.dxftypes:
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
-

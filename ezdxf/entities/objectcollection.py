@@ -29,6 +29,9 @@ class ObjectCollection:
     def __contains__(self, name: str) -> bool:
         return name in self.object_dict
 
+    def __getitem__(self, item):
+        return self.get(item)
+
     def get(self, name: str) -> 'DXFObject':
         """
         Get object by name.

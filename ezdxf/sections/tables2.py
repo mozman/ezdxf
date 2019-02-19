@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, Iterator
 from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 
-from .table2 import Table, ViewportTable, StyleTable, tablename
+from .table2 import Table, ViewportTable, StyleTable, LayerTable, tablename
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -117,7 +117,7 @@ class TablesSection:
 
 
 TABLESMAP = {
-    'LAYER': Table,
+    'LAYER': LayerTable,
     'LTYPE': Table,
     'STYLE': StyleTable,
     'DIMSTYLE': Table,
