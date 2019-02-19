@@ -198,6 +198,12 @@ class Drawing:
     def modelspace(self) -> 'LayoutType':
         return self.layouts.modelspace()
 
+    def reset_fingerprintguid(self):
+        self.header['$FINGERPRINTGUID'] = guid()
+
+    def reset_versionguid(self):
+        self.header['$VERSIONGUID'] = guid()
+
 
 class DrawingX(Drawing):
     """
@@ -485,10 +491,3 @@ class DrawingX(Drawing):
         if 'HATCH' in self.tracker.dxftypes:
             create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
-    def reset_fingerprintguid(self):
-        if self.dxfversion > 'AC1009':
-            self.header['$FINGERPRINTGUID'] = guid()
-
-    def reset_versionguid(self):
-        if self.dxfversion > 'AC1009':
-            self.header['$VERSIONGUID'] = guid()
