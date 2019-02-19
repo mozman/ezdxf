@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ezdxf.drawing2 import Drawing
     from .dxfentity import DXFNamespace
 
-__all__ = ['DXFGroup']
+__all__ = ['DXFGroup', 'GroupCollection']
 
 acdb_group = DefSubclass('AcDbGroup', {
     'description': DXFAttr(300, default=''),  # Group description

@@ -1,7 +1,7 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast
+from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast, List
 from collections import Counter, OrderedDict
 
 from ezdxf.lldxf.const import DXFStructureError, DXF2004
@@ -12,6 +12,36 @@ if TYPE_CHECKING:  # import forward declarations
     from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
     from ezdxf.drawing2 import Drawing
     from ezdxf.eztypes import TagWriter
+
+# name: cpp_class_name, app_name, flags, was_a_proxy, is_an_entity
+CLASS_DEFINITIONS = {
+    'ACDBDICTIONARYWDFLT': ['AcDbDictionaryWithDefault', 'ObjectDBX Classes', 0, 0, 0],
+    'DICTIONARYVAR': ['AcDbDictionaryVar', 'ObjectDBX Classes', 0, 0, 0],
+    'TABLESTYLE': ['AcDbTableStyle', 'ObjectDBX Classes', 4095, 0, 0],
+    'MATERIAL': ['AcDbMaterial', 'ObjectDBX Classes', 1153, 0, 0],
+    'VISUALSTYLE': ['AcDbVisualStyle', 'ObjectDBX Classes', 4095, 0, 0],
+    'SCALE': ['AcDbScale', 'ObjectDBX Classes', 1153, 0, 0],
+    'MLEADERSTYLE': ['AcDbMLeaderStyle', 'ACDB_MLEADERSTYLE_CLASS', 4095, 0, 0],
+    'CELLSTYLEMAP': ['AcDbCellStyleMap', 'ObjectDBX Classes', 1152, 0, 0],
+    'EXACXREFPANELOBJECT': ['ExAcXREFPanelObject', 'EXAC_ESW', 1025, 0, 0],
+    'NPOCOLLECTION': ['AcDbImpNonPersistentObjectsCollection', 'ObjectDBX Classes', 1153, 0, 0],
+    'LAYER_INDEX': ['AcDbLayerIndex', 'ObjectDBX Classes', 0, 0, 0],
+    'SPATIAL_INDEX': ['AcDbSpatialIndex', 'ObjectDBX Classes', 0, 0, 0],
+    'IDBUFFER': ['AcDbIdBuffer', 'ObjectDBX Classes', 0, 0, 0],
+    'DIMASSOC': ['AcDbDimAssoc', '"AcDbDimAssoc|Product Desc:     AcDim ARX App For Dimension|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com"', 0, 0, 0],
+    'ACDBSECTIONVIEWSTYLE': ['AcDbSectionViewStyle', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBDETAILVIEWSTYLE': ['AcDbDetailViewStyle', 'ObjectDBX Classes', 1025, 0, 0],
+    'IMAGEDEF': ['AcDbRasterImageDef', 'ISM', 0, 0, 0],
+    'RASTERVARIABLES': ['AcDbRasterVariables', 'ISM', 0, 0, 0],
+    'IMAGEDEF_REACTOR': ['AcDbRasterImageDefReactor', 'ISM', 1, 0, 0],
+    'IMAGE': ['AcDbRasterImage', 'ISM', 2175, 0, 1],
+    'PDFDEFINITION': ['AcDbPdfDefinition', 'ObjectDBX Classes', 1153, 0, 0],
+    'PDFUNDERLAY': ['AcDbPdfReference', 'ObjectDBX Classes', 4095, 0, 1],
+    'DWFDEFINITION': ['AcDbDwfDefinition', 'ObjectDBX Classes', 1153, 0, 0],
+    'DWFUNDERLAY': ['AcDbDwfReference', 'ObjectDBX Classes', 1153, 0, 1],
+    'DGNDEFINITION': ['AcDbDgnDefinition', 'ObjectDBX Classes', 1153, 0, 0],
+    'DGNUNDERLAY': ['AcDbDgnReference', 'ObjectDBX Classes', 1153, 0, 1],
+}
 
 
 class ClassesSection:
@@ -45,6 +75,26 @@ class ClassesSection:
             dxftype = dxfclass.dxf.name
             if dxftype not in self.classes:
                 self.classes[dxftype] = dxfclass
+
+    def add_class(self, name: str, class_data: List):
+        if name in self.classes:
+            return
+        cls = DXFClass(self.doc)
+        cpp, app, flags, proxy, entity = class_data
+        cls.update_dxf_attribs({
+            'cpp_class_name': cpp,
+            'app_name': app,
+            'flags': flags,
+            'was_a_proxy':proxy,
+            'is_an_entity': entity,
+        })
+        self.classes[name] = cls
+
+    def add_classes(self, names=None):
+        names = names or []
+        for name in names:
+            cls_data = CLASS_DEFINITIONS[name]
+            self.add_class(name, cls_data)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")

@@ -25,11 +25,14 @@ from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.render.dimension import DimensionRenderer
 
+from ezdxf.entities.dxfgroups import GroupCollection
+from ezdxf.entities.material import MaterialCollection
+
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from .eztypes import HandleGenerator, DXFTag, SectionDict
-    from .eztypes import GroupManager, MaterialManager, MLeaderStyleManager, MLineStyleManager
+    from .eztypes import MLeaderStyleManager, MLineStyleManager
     from .eztypes import SectionType, Table, ViewportTable
     from ezdxf.sections.header import HeaderSection
     from ezdxf.sections.blocks2 import BlocksSection
@@ -37,7 +40,6 @@ if TYPE_CHECKING:
     from ezdxf.layouts.blocklayout import BlockLayout
     from ezdxf.layouts.layout import Layout
     from ezdxf.entities.dxfentity import DXFEntity
-
     LayoutType = Union[Layout, BlockLayout]
 
 
@@ -52,8 +54,8 @@ class Drawing:
         self.sections = None  # type: Sections
         self.rootdict = None  # type: Dictionary
         self.layouts = None  # type: Layouts
-        self.groups = None  # type: GroupManager  # read only
-        self.materials = None  # type: MaterialManager # read only
+        self.groups = None  # type: GroupCollection  # read only
+        self.materials = None  # type: MaterialCollection # read only
         self.mleader_styles = None  # type: MLeaderStyleManager # read only
         self.mline_styles = None  # type: MLineStyleManager # read only
         self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
@@ -74,11 +76,15 @@ class Drawing:
         self.sections = Sections(self)
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
-        self.groups = self.objects.groups()
-        # self.materials = self.objects.materials()
+        self.layouts = Layouts.setup(self)
+        self._finalize_setup()
+
+    def _finalize_setup(self):
+        """ Common setup tasks for new and loaded DXF drawings. """
+        self.groups = GroupCollection(self)
+        self.materials = MaterialCollection(self)
         # self.mleader_styles = self.objects.mleader_styles()
         # self.mline_styles = self.objects.mline_styles()
-        self.layouts = Layouts.setup(self)
         self.setup_metadata()
 
     def setup_metadata(self):
@@ -123,11 +129,9 @@ class Drawing:
             repair.upgrade_to_ac1015(self)
         # some applications don't setup properly the model and paper space layouts
         repair.setup_layouts(self)
-        self.groups = self.objects.groups()
-        self.materials = self.objects.materials()
-        self.mleader_styles = self.objects.mleader_styles()
-        self.mline_styles = self.objects.mline_styles()
         self.layouts = Layouts.load(self)
+        self._finalize_setup()
+
 
     @property
     def header(self) -> 'HeaderSection':

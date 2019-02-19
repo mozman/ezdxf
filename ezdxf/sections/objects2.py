@@ -8,7 +8,7 @@ import logging
 from ezdxf.entities.dictionary import Dictionary
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
 from ezdxf.entities.dxfgroups import GroupCollection
-from ezdxf.modern.material import MaterialManager
+from ezdxf.entities.material import MaterialCollection
 from ezdxf.modern.mleader import MLeaderStyleManager
 from ezdxf.modern.mline import MLineStyleManager
 from ezdxf.modern.tablestyle import TableStyleManager
@@ -71,21 +71,6 @@ class ObjectsSection(AbstractSection):
         dxfobject = self.create_new_dxf_entity(dxftype, dxfattribs)
         dxfobject.set_reactors([dxfattribs['owner']])
         return dxfobject
-
-    def groups(self):
-        return GroupCollection(self.doc)
-
-    def materials(self):
-        return MaterialManager(self.doc)
-
-    def mleader_styles(self):
-        return MLeaderStyleManager(self.doc)
-
-    def mline_styles(self):
-        return MLineStyleManager(self.doc)
-
-    def table_styles(self):
-        return TableStyleManager(self.doc)
 
     def add_dictionary(self, owner: str = '0') -> Dictionary:
         entity = self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})

@@ -273,11 +273,6 @@ acdb_dict_with_default = DefSubclass('AcDbDictionaryWithDefault', {
 class DictionaryWithDefault(Dictionary):
     DXFTYPE = 'ACDBDICTIONARYWDFLT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary, acdb_dict_with_default)
-    CLASS = {
-        'name': DXFTYPE,
-        'cpp_class_name': 'AcDbDictionaryWithDefault',
-        'app_name': 'ObjectDBX Classes',
-    }
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
