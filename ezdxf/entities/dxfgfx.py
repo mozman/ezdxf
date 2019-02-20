@@ -5,8 +5,9 @@
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, SUBCLASS_MARKER
-from .dxfentity import DXFEntity, base_class,SubclassProcessor
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
+from ezdxf.lldxf.validator import is_valid_layer_name
+from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
@@ -16,7 +17,6 @@ if TYPE_CHECKING:
     from .dxfentity import DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'export_acdb_entity']
-
 
 acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
@@ -70,6 +70,7 @@ class DXFGraphic(DXFEntity):
     This entities resides in entity spaces like modelspace, any paperspace or blocks.
     """
     DXFTYPE = 'DXFGFX'
+    DEFAULT_ATTRIBS = {'layer': '0'}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)  # DXF attribute definitions
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -84,9 +85,13 @@ class DXFGraphic(DXFEntity):
         return dxf
 
     def post_new_hook(self):
-        # todo: check valid layer name
-        # todo: check valid linetype, AutoCAD is very picky
-        pass
+        ns = self.dxf
+        if not is_valid_layer_name(ns.layer):
+            raise DXFInvalidLayerName(ns.layer)
+
+        if ns.hasattr('linetype'):
+            if ns.linetype not in self.doc.linetypes:
+                raise DXFInvalidLineType('Linetype "{}" not defined.'.format(ns.linetype))
 
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:

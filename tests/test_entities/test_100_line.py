@@ -71,6 +71,18 @@ def test_default_init():
     assert dxfclass.dxf.owner is None
 
 
+def test_default_attributes():
+    line = Line.new()
+    assert line.dxf.layer == '0'
+    assert line.dxf.hasattr('layer') is True, 'real attribute required'
+    assert line.dxf.color == 256
+    assert line.dxf.hasattr('color') is False, 'just the default value'
+    assert line.dxf.linetype == 'BYLAYER'
+    assert line.dxf.hasattr('linetype') is False, 'just the default value'
+    assert line.dxf.extrusion == (0.0, 0.0, 1.0)
+    assert line.dxf.hasattr('extrusion') is False, 'just the default value'
+
+
 def test_default_new():
     entity = Line.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',

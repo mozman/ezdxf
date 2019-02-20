@@ -88,8 +88,8 @@ class EntityDB:
         self[handle] = entity
 
     def delete_entity(self, entity: DXFEntity) -> None:
-        entity.destroy()
         del self[entity.dxf.handle]
+        entity.destroy()
 
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
         """

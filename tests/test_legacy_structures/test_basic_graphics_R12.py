@@ -26,25 +26,6 @@ def test_drawing_attribute(dwg, modelspace):
     assert hasattr(line, '__dict__') is False, "Invalid usage of __slots__"
 
 
-def test_dxffactory_property(dwg, modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    assert dwg.dxffactory is line.dxffactory
-
-
-def test_delete_entity():
-    dwg = ezdxf.new('AC1009')
-    layout = dwg.modelspace()
-    for _ in range(5):
-        layout.add_line((0, 0), (10, 0))
-    lines = layout.query('LINE')
-    assert 5 == len(lines)
-    line3 = lines[2]
-    layout.delete_entity(line3)
-    assert line3.dxf.paperspace < 0, "Paper space attribute has to be invalid (<0)."
-    assert line3 not in layout
-    assert line3.dxf.handle not in dwg.entitydb
-
-
 def test_delete_polyline(modelspace):
     entity_count = len(list(modelspace))
     pline = modelspace.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])

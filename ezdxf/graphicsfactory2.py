@@ -12,7 +12,6 @@ from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
 from ezdxf.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dimension import multi_point_linear_dimension
-from ezdxf.entities.factory import EntityFactory
 
 logger = logging.getLogger('ezdxf')
 
@@ -22,7 +21,7 @@ if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, \
         LoftedSurface
-    from ezdxf.eztypes import UCS, GenericLayoutType, Vertex, Drawing
+    from ezdxf.eztypes import UCS, Vertex, Drawing
     from ezdxf.entities import DXFEntity
 
 

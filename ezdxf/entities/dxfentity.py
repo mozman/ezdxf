@@ -445,6 +445,7 @@ class DXFEntity:
             self.dxf.set(key, value)
 
     def post_new_hook(self):
+        # for post processing and integrity validation after entity creation
         pass
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:

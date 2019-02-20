@@ -96,6 +96,10 @@ class DXFInvalidLayerName(DXFValueError):
     pass
 
 
+class DXFInvalidLineType(DXFValueError):
+    pass
+
+
 class DXFBlockInUseError(DXFValueError):
     pass
 

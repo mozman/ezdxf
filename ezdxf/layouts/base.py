@@ -101,8 +101,9 @@ class BaseLayout(CreatorInterface):
             entity: :class:`DXFEntity`
 
         """
-        self.entitydb.delete_entity(entity)  # 1. delete from drawing database
-        self.unlink_entity(entity)  # 2. unlink from entity space
+        self.unlink_entity(entity)  # 1. unlink from entity space
+        self.entitydb.delete_entity(entity)  # 2. delete from drawing database
+
 
     def delete_all_entities(self) -> None:
         """
