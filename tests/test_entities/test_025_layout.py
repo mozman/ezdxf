@@ -110,3 +110,33 @@ def test_clone_dxfattribs(modelspace):
 def test_invalid_layer_name(modelspace):
     with pytest.raises(ezdxf.DXFInvalidLayerName):
         modelspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'InvalidName*'})
+
+
+def test_create_layout(doc):
+    assert len(doc.layouts) == 2, "New drawing should have 1 model space and 1 paper space"
+
+    # create a new layout
+    layout = doc.layouts.new('ezdxf')
+    assert 'ezdxf' in doc.layouts
+    assert len(layout) == 0, "New layout should contain no entities"
+
+    with pytest.raises(ezdxf.DXFValueError):
+        doc.layouts.new('invalid characters: <>/\":;?*|=`')
+
+    pytest.skip('Layout.page_setup() not implemented')
+    layout.page_setup()  # default paper setup
+    assert len(layout) == 1, "missing 'main' viewport entity"
+
+
+def test_rename_layout(doc):
+    layouts = doc.layouts
+    with pytest.raises(ValueError):
+        layouts.rename('Model', 'XXX')
+
+    with pytest.raises(KeyError):
+        layouts.rename('mozman', 'XXX')
+
+    pytest.skip('Layout.rename() not implemented')
+    layouts.rename('Layout1', 'ezdxf')
+    layout = layouts.get('ezdxf')
+    assert layout.name == 'ezdxf'

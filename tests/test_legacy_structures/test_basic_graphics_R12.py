@@ -45,107 +45,6 @@ def test_delete_blockref_with_attribs(modelspace):
     assert entity_count == len(list(modelspace))
 
 
-def test_delete_all_entities(dwg):
-    paperspace = dwg.layout()
-    paperspace_count = len(paperspace)
-    modelspace = dwg.modelspace()
-    modelspace_count = len(modelspace)
-    for _ in range(5):
-        modelspace.add_line((0, 0), (1, 1))
-        paperspace.add_line((0, 0), (1, 1))
-
-    assert modelspace_count + 5 == len(modelspace)
-    assert paperspace_count + 5 == len(paperspace)
-
-    modelspace.delete_all_entities()
-    assert len(modelspace) == 0
-    assert paperspace_count + 5 == len(paperspace)
-
-
-def test_paper_space(paperspace):
-    line = paperspace.add_line((0, 0), (1, 1))
-    assert line.dxf.paperspace == 1
-
-
-def test_iter_layout(dwg):
-    paperspace = dwg.layout()
-    paperspace.delete_all_entities()
-    paperspace.add_line((0, 0), (1, 1))
-    paperspace.add_line((0, 0), (1, 1))
-    entities = list(paperspace)
-    assert len(entities) == 2
-    assert entities[0].drawing is dwg
-
-
-def test_query_entities(dwg):
-    paperspace = dwg.layout()
-    paperspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
-    paperspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
-    entities = paperspace.query('*[layer ? "lay_.*"]')
-    assert len(entities) == 2
-    assert entities[0].drawing is dwg
-
-
-def test_model_space_get_layout_for_entity(dwg, modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    layout = dwg.layouts.get_layout_for_entity(line)
-    assert modelspace is layout
-
-
-def test_paper_space_get_layout_for_entity(dwg):
-    paperspace = dwg.layout()
-    line = paperspace.add_line((0, 0), (1, 1))
-    layout = dwg.layouts.get_layout_for_entity(line)
-    assert paperspace is layout
-
-
-def test_default_entity_settings(modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    assert '0' == line.dxf.layer
-    assert 256 == line.dxf.color
-    assert 'BYLAYER' == line.dxf.linetype
-    assert (0.0, 0.0, 1.0) == line.dxf.extrusion
-
-
-def test_clone_dxfattribs(modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    attribs = line.dxfattribs()
-    assert 'extrusion' not in attribs, "Don't clone unset attribs with default values."
-
-
-def test_invalid_layer_name(modelspace):
-    with pytest.raises(ezdxf.DXFInvalidLayerName):
-        modelspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'InvalidName*'})
-
-
-def test_create_line(modelspace):
-    line = modelspace.add_line((0, 0), (1, 1))
-    assert line.dxf.start == (0., 0.)
-    assert line.dxf.end == (1., 1.)
-
-
-def test_create_point(modelspace):
-    point = modelspace.add_point((1, 2))
-    assert point.dxf.location == (1, 2)
-    assert hasattr(point, '__dict__') is False, "Invalid usage of __slots__"
-
-
-def test_create_circle(modelspace):
-    circle = modelspace.add_circle((3, 3), 5)
-    assert circle.dxf.center == (3., 3.)
-    assert circle.dxf.radius == 5.
-    assert hasattr(circle, '__dict__') is False, "Invalid usage of __slots__"
-
-
-def test_create_arc(modelspace):
-    arc = modelspace.add_arc((3, 3), 5, 30, 60)
-    assert arc.dxf.center == (3., 3.)
-    assert arc.dxf.radius == 5.
-    assert arc.dxf.start_angle == 30.
-    assert arc.dxf.end_angle == 60.
-    assert hasattr(arc, '__dict__') is False, "Invalid usage of __slots__"
-
-
 def test_create_trace(modelspace):
     trace = modelspace.add_trace([(0, 0), (1, 0), (1, 1), (0, 1)])
     assert trace[0] == (0, 0)
@@ -153,6 +52,7 @@ def test_create_trace(modelspace):
     assert trace[2] == (1, 1)
     assert trace.dxf.vtx3 == (0, 1)
     assert hasattr(trace, '__dict__') is False, "Invalid usage of __slots__"
+
 
 def test_create_solid(modelspace):
     trace = modelspace.add_solid([(0, 0), (1, 0), (1, 1)])

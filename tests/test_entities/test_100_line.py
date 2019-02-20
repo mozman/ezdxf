@@ -65,22 +65,8 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = Line()
-    assert dxfclass.dxftype() == 'LINE'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
-
-
-def test_default_attributes():
-    line = Line.new()
-    assert line.dxf.layer == '0'
-    assert line.dxf.hasattr('layer') is True, 'real attribute required'
-    assert line.dxf.color == 256
-    assert line.dxf.hasattr('color') is False, 'just the default value'
-    assert line.dxf.linetype == 'BYLAYER'
-    assert line.dxf.hasattr('linetype') is False, 'just the default value'
-    assert line.dxf.extrusion == (0.0, 0.0, 1.0)
-    assert line.dxf.hasattr('extrusion') is False, 'just the default value'
+    entity = Line()
+    assert entity.dxftype() == 'LINE'
 
 
 def test_default_new():
@@ -92,10 +78,13 @@ def test_default_new():
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 7
     assert entity.dxf.start == (1, 2, 3)
-    assert entity.dxf.start.x == 1, 'is Vector compatible'
-    assert entity.dxf.start.y == 2, 'is Vector compatible'
-    assert entity.dxf.start.z == 3, 'is Vector compatible'
+    assert entity.dxf.start.x == 1, 'is not Vector compatible'
+    assert entity.dxf.start.y == 2, 'is not Vector compatible'
+    assert entity.dxf.start.z == 3, 'is not Vector compatible'
     assert entity.dxf.end == (4, 5, 6)
+    assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
+    assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1

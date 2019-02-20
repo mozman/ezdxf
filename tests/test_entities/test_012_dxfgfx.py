@@ -37,6 +37,16 @@ def test_transparency(entity):
     assert 0x02000000 == entity.dxf.transparency
 
 
+def test_default_attributes():
+    entity = DXFGraphic.new()
+    assert entity.dxf.layer == '0'
+    assert entity.dxf.hasattr('layer') is True, 'real attribute required'
+    assert entity.dxf.color == 256
+    assert entity.dxf.hasattr('color') is False, 'just the default value'
+    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.hasattr('linetype') is False, 'just the default value'
+
+
 LINE = """0
 LINE
 5

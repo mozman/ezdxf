@@ -43,8 +43,8 @@ conversion between different DXF versions, ezdxf is still not a CAD application.
 
 """
 
-ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute {} for entity {}'
-ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute {} does not exist'
+ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute "{}" for entity {}'
+ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
 
 
 class DXFNamespace:
