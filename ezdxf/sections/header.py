@@ -105,11 +105,10 @@ class CustomVars:
             tagwriter.write_str(s)
 
 
-def default_header_vars(dxfversion: str) -> OrderedDict:
+def default_vars() -> OrderedDict:
     vars = OrderedDict()
     for vardef in HEADER_VAR_MAP.values():
-        if vardef.mindxf <= dxfversion <= vardef.maxdxf:
-            vars[vardef.name] = HeaderVar(DXFTag(vardef.code, vardef.default))
+        vars[vardef.name] = HeaderVar(DXFTag(vardef.code, vardef.default))
     return vars
 
 
@@ -139,9 +138,8 @@ class HeaderSection:
     @classmethod
     def new(cls, dxfversion=LATEST_DXF_VERSION)->'HeaderSection':
         section = HeaderSection()
-        section.hdrvars = default_header_vars(dxfversion)
+        section.hdrvars = default_vars()
         section['$ACADVER'] = dxfversion
-        # todo: setup GUIDs, time and dates
         return section
 
     def load_tags(self, tags: Iterator[DXFTag]) -> None:
@@ -217,17 +215,36 @@ class HeaderSection:
                 self.custom_vars.write(tagwriter)
         tagwriter.write_str("  0\nENDSEC\n")
 
-    def __getitem__(self, key: str) -> Any:
-        try:
-            return self.hdrvars[key].value
-        except KeyError:  # map exception
-            raise DXFKeyError(str(key))
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        def _write(name: str, value: Any) -> None:
+            tagwriter.write_tag2(9, name)
+            tagwriter.write_str(str(value))
+        dxfversion = tagwriter.dxfversion
+        write_handles = tagwriter.write_handles
+
+        tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
+        save = self['$ACADVER']
+        self['$ACADVER'] = dxfversion
+        for name, value in header_vars_by_priority(self.hdrvars, dxfversion):
+            if not write_handles and name == '$HANDSEED':
+                continue  # skip $HANDSEED
+            _write(name, value)
+            if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
+                self.custom_vars.write(tagwriter)
+        self['$ACADVER'] = save
+        tagwriter.write_str("  0\nENDSEC\n")
 
     def get(self, key: str, default: Any = None) -> Any:
         if key in self.hdrvars:
             return self.__getitem__(key)
         else:
             return default
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return self.hdrvars[key].value
+        except KeyError:  # map exception
+            raise DXFKeyError(str(key))
 
     def __setitem__(self, key: str, value: Any) -> None:
         try:

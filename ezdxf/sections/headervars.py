@@ -37,7 +37,7 @@ HEADER_VAR_MAP = {
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=300,
-        default='hansd'),
+        default='ezdxf'),
     '$REQUIREDVERSIONS': HeaderVarDef(
         name='$REQUIREDVERSIONS',
         code=160,
@@ -806,14 +806,6 @@ HEADER_VAR_MAP = {
         maxdxf=DXF2018,
         priority=9400,
         default=0.785398163397),
-    '$HANDLING': HeaderVarDef(
-        name='$HANDLING',
-        code=70,
-        factory=partial(SingleValue, code=70), 
-        mindxf=DXF12,
-        maxdxf=DXF12,
-        priority=9400,
-        default=1),
     '$DIMTFILL': HeaderVarDef(
         name='$DIMTFILL',
         code=70,
@@ -1118,10 +1110,18 @@ HEADER_VAR_MAP = {
         maxdxf=DXF2018,
         priority=13200,
         default=8),
+    '$HANDLING': HeaderVarDef(
+        name='$HANDLING',
+        code=70,
+        factory=partial(SingleValue, code=70),
+        mindxf=DXF12,
+        maxdxf=DXF12,
+        priority=9400,
+        default=1),
     '$HANDSEED': HeaderVarDef(
         name='$HANDSEED',
         code=5,
-        factory=partial(SingleValue, code=5), 
+        factory=partial(SingleValue, code=5),
         mindxf=DXF12,
         maxdxf=DXF2018,
         priority=13300,

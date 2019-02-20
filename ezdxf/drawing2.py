@@ -7,8 +7,9 @@ import io
 import logging
 from itertools import chain
 
-from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError
-from ezdxf.lldxf.const import DXF13, DXF14, LATEST_DXF_VERSION
+from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError, acad_release_to_dxf_version
+from ezdxf.lldxf.const import DXF13, DXF14, LATEST_DXF_VERSION, DXF2007, DXF12, versions_supported_by_save
+from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database2
 from ezdxf.lldxf import repair
 
@@ -50,8 +51,8 @@ class Drawing:
         self.entitydb = EntityDB()
         self.dxffactory = EntityFactory(self)
         self.tracker = Tracker()  # still required
-        self.dxfversion = LATEST_DXF_VERSION
-        self.encoding = 'ANSI_1252'
+        self._dxfversion = LATEST_DXF_VERSION
+        self.encoding = 'cp1252'
         self.filename = None  # type: str # read/write
         self.sections = None  # type: Sections
         self.rootdict = None  # type: Dictionary
@@ -130,7 +131,27 @@ class Drawing:
             layers.new('Defpoints', dxfattribs={'plot': 0})  # do not plot
 
     def _setup_metadata(self):
+        self.header['$ACADVER'] = self.dxfversion
         self.header['$TDCREATE'] = juliandate(datetime.now())
+        self.reset_fingerprintguid()
+        self.reset_versionguid()
+
+    @property
+    def dxfversion(self):
+        return self._dxfversion
+
+    @dxfversion.setter
+    def dxfversion(self, version):
+        version = version.upper()
+        version = acad_release_to_dxf_version.get(version, version)  # translates 'R12' -> 'AC1009'
+        if version not in versions_supported_by_save:
+            raise DXFVersionError("Can not save DXF drawings as DXF version '{}'.".format(version))
+        self._dxfversion = version
+        self.header['$ACADVER'] = version
+
+    def which_dxfversion(self, dxfversion=None) -> str:
+        dxfversion = dxfversion if dxfversion is not None else self.dxfversion
+        return acad_release_to_dxf_version.get(dxfversion, dxfversion)
 
     @classmethod
     def read(cls, stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
@@ -164,7 +185,8 @@ class Drawing:
         fill_database2(sections, self.dxffactory)
         # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
         self.sections = Sections(doc=self, sections=sections, header=header)
-        # todo: for r12 create block_records and rename $Model_Space and $Paper_Space before Layout setup
+        if self.dxfversion == DXF12:
+            pass  # todo: for r12 create block_records and rename $Model_Space and $Paper_Space before Layout setup
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
         if self.dxfversion in (DXF13, DXF14):
@@ -173,6 +195,65 @@ class Drawing:
         repair.setup_layouts(self)
         self.layouts = Layouts.load(self)
         self._finalize_setup()
+
+    def saveas(self, filename, encoding=None, dxfversion=None):
+        dxfversion = self.which_dxfversion(dxfversion)
+        self.filename = filename
+        self.save(encoding=encoding, dxfversion=dxfversion)
+
+    def save(self, encoding=None, dxfversion=None):
+        # DXF R12, R2000, R2004 - ASCII encoding
+        # DXF R2007 and newer - UTF-8 encoding
+        dxfversion = self.which_dxfversion(dxfversion)
+
+        if encoding is None:
+            enc = 'utf-8' if dxfversion >= DXF2007 else self.encoding
+        else:  # override default encoding, for applications that handles encoding different than AutoCAD
+            enc = encoding
+        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
+
+        with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
+            self.write(fp, dxfversion)
+
+    def write(self, stream, dxfversion=None):
+        dxfversion = self.which_dxfversion(dxfversion)
+
+        from .lldxf.tagwriter import TagWriter
+        if dxfversion == DXF12:
+            handles = bool(self.header['$HANDLING'])
+        else:
+            handles = True
+        if dxfversion > DXF12:
+            self._register_required_classes(dxfversion)
+
+        self._create_appids()
+        self._update_metadata()
+        tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
+        self.sections.export_dxf(tagwriter)
+
+    def _register_required_classes(self, dxfversion):
+        self.sections.classes.add_required_classes(dxfversion)
+        for dxftype in self.tracker.dxftypes:
+            self.sections.classes.add_class(dxftype)
+
+    def _update_metadata(self):
+        now = datetime.now()
+        self.header['$TDUPDATE'] = juliandate(now)
+        self.header['$HANDSEED'] = str(self.entitydb.next_handle())
+        self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
+        self.reset_versionguid()
+
+    def _create_appids(self):
+        def create_appid_if_not_exist(name, flags=0):
+            if name not in self.appids:
+                self.appids.new(name, {'flags': flags})
+
+        if 'HATCH' in self.tracker.dxftypes:
+            create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
+
+    @property
+    def acad_release(self) -> str:
+        return acad_release.get(self.dxfversion, "unknown")
 
     @property
     def header(self) -> 'HeaderSection':
@@ -264,10 +345,6 @@ class DrawingX(Drawing):
     """
     The Central Data Object
     """
-
-    @property
-    def acad_release(self) -> str:
-        return acad_release.get(self.dxfversion, "unknown")
 
     @property
     def acad_compatible(self) -> bool:
@@ -514,22 +591,3 @@ class DrawingX(Drawing):
         if 'classes' in self.sections:
             self._register_required_classes()
             self.sections.classes.update_instance_counters()
-
-    def _register_required_classes(self):
-        for dxftype in self.tracker.dxftypes:
-            self.sections.classes.add_class(dxftype)
-
-    def _update_metadata(self):
-        now = datetime.now()
-        self.header['$TDUPDATE'] = juliandate(now)
-        self.header['$HANDSEED'] = str(self.entitydb.handles)
-        self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
-        self.reset_versionguid()
-
-    def _create_appids(self):
-        def create_appid_if_not_exist(name, flags=0):
-            if name not in self.appids:
-                self.appids.new(name, {'flags': flags})
-
-        if 'HATCH' in self.tracker.dxftypes:
-            create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)

@@ -281,7 +281,7 @@ class Layouts:
                 return layout
         raise DXFInternalEzdxfError('No active paper space found.')
 
-    def export_dxf(self, tagwriter: 'TagWriter')->None:
+    def export_entities_section(self, tagwriter: 'TagWriter')->None:
         """
         Write ``ENTITIES`` section to DXF file, the  ``ENTITIES`` section consist of all entities in model space and
         active paper space layout.

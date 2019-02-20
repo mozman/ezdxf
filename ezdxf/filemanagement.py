@@ -5,16 +5,15 @@
 # Local imports to avoid cyclic import
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 from ezdxf.tools.standards import setup_drawing
-from ezdxf.lldxf.const import DXF12, DXF2018
+from ezdxf.lldxf.const import DXF12
+from ezdxf.drawing2 import Drawing as Drawing2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFInfo
 
 
-def new2(setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
-    from ezdxf.drawing2 import Drawing
-
-    dwg = Drawing.new()
+def new2(setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
+    dwg = Drawing2.new()
     if dwg.dxfversion > 'AC1009':
         dwg.reset_fingerprintguid()
         dwg.reset_versionguid()
@@ -55,7 +54,7 @@ def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) 
     from ezdxf.drawing import Drawing
 
     dwg = Drawing.new(dxfversion)
-    if dwg.dxfversion > 'AC1009':
+    if dwg.dxfversion > DXF12:
         dwg.reset_fingerprintguid()
         dwg.reset_versionguid()
     if setup:

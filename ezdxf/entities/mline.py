@@ -166,9 +166,6 @@ class MLineStyleElements:
     def append(self, offset: float, color: int = 0, linetype: str = 'BYLAYER') -> None:
         self.elements.append((offset, color, linetype))
 
-    def extend(self, elements: Iterable[Sequence]) -> None:
-        self.elements.extend(elements)
-
     @staticmethod
     def parse_tags(tags: Tags) -> Iterable[Dict]:
         collector = None
@@ -222,4 +219,5 @@ class MLineStyleCollection(ObjectCollection):
     def create_required_entries(self) -> None:
         if 'Standard' not in self.object_dict:
             entity = self.new('Standard')  # type: MLineStyle
-            entity.style_elements.extend([(.5, 256), (-.5, 256)])
+            entity.style_elements.append(.5, 256)
+            entity.style_elements.append(-.5, 256)

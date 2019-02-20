@@ -1,10 +1,10 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast, List
+from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast
 from collections import Counter, OrderedDict
 
-from ezdxf.lldxf.const import DXFStructureError, DXF2004
+from ezdxf.lldxf.const import DXFStructureError, DXF2004, DXF2000
 from ezdxf.entities.dxfclass import DXFClass
 from ezdxf.entities.dxfentity import DXFEntity
 
@@ -16,6 +16,7 @@ if TYPE_CHECKING:  # import forward declarations
 # name: cpp_class_name, app_name, flags, was_a_proxy, is_an_entity
 CLASS_DEFINITIONS = {
     'ACDBDICTIONARYWDFLT': ['AcDbDictionaryWithDefault', 'ObjectDBX Classes', 0, 0, 0],
+    'SUN': ['AcDbSun', 'SCENEOE', 1153, 0, 0],
     'DICTIONARYVAR': ['AcDbDictionaryVar', 'ObjectDBX Classes', 0, 0, 0],
     'TABLESTYLE': ['AcDbTableStyle', 'ObjectDBX Classes', 4095, 0, 0],
     'MATERIAL': ['AcDbMaterial', 'ObjectDBX Classes', 1153, 0, 0],
@@ -44,6 +45,23 @@ CLASS_DEFINITIONS = {
     'DWFUNDERLAY': ['AcDbDwfReference', 'ObjectDBX Classes', 1153, 0, 1],
     'DGNDEFINITION': ['AcDbDgnDefinition', 'ObjectDBX Classes', 1153, 0, 0],
     'DGNUNDERLAY': ['AcDbDgnReference', 'ObjectDBX Classes', 1153, 0, 1],
+    'MENTALRAYRENDERSETTINGS': ['AcDbMentalRayRenderSettings', 'SCENEOE', 1024, 0, 0],
+    'ACDBPLACEHOLDER': ['AcDbPlaceHolder', 'ObjectDBX Classes', 0, 0, 0],
+    'LAYOUT': ['AcDbLayout', 'ObjectDBX Classes', 0, 0, 0],
+
+}
+
+REQ_R2000 = ['ACDBDICTIONARYWDFLT', 'SUN', 'VISUALSTYLE', 'MATERIAL', 'SCALE', 'TABLESTYLE', 'MLEADERSTYLE',
+             'DICTIONARYVAR', 'CELLSTYLEMAP', 'MENTALRAYRENDERSETTINGS', 'ACDBDETAILVIEWSTYLE', 'ACDBSECTIONVIEWSTYLE',
+             'RASTERVARIABLES', 'ACDBPLACEHOLDER', 'LAYOUT']
+
+REQ_R2004 = ['ACDBDICTIONARYWDFLT', 'SUN', 'VISUALSTYLE', 'MATERIAL', 'SCALE', 'TABLESTYLE', 'MLEADERSTYLE',
+             'DICTIONARYVAR', 'CELLSTYLEMAP', 'MENTALRAYRENDERSETTINGS', 'ACDBDETAILVIEWSTYLE', 'ACDBSECTIONVIEWSTYLE',
+             'RASTERVARIABLES']
+
+REQUIRED_CLASSES = {
+    DXF2000: REQ_R2000,
+    DXF2004: REQ_R2004,
 }
 
 
@@ -86,6 +104,7 @@ class ClassesSection:
         cls = DXFClass(self.doc)
         cpp, app, flags, proxy, entity = cls_data
         cls.update_dxf_attribs({
+            'name': name,
             'cpp_class_name': cpp,
             'app_name': app,
             'flags': flags,
@@ -93,6 +112,11 @@ class ClassesSection:
             'is_an_entity': entity,
         })
         self.classes[name] = cls
+
+    def add_required_classes(self, dxfversion):
+        names = REQUIRED_CLASSES.get(dxfversion, REQ_R2004)
+        for name in names:
+            self.add_class(name)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")

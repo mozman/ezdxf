@@ -27,6 +27,21 @@ acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
 })
 
 
+class LinetypePattern:
+    def __init__(self, tags: Tags):
+        """ For now just store tags """
+        self.tags = tags
+
+    def __len__(self):
+        return len(self.tags)
+
+    def export_dxf(self, tagwriter: 'TagWriter'):
+        tagwriter.write_tags(self.tags)
+
+    def is_complex_type(self):
+        return False
+
+
 @register_entity
 class Linetype(DXFEntity):
     """ DXF LTYPE entity """
@@ -36,17 +51,44 @@ class Linetype(DXFEntity):
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         super().__init__(doc)
-        self._pattern_tags = None
+        self._pattern_tags = LinetypePattern(Tags())
+
+    @classmethod
+    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
+        """
+        Constructor for building new entities from scratch by ezdxf (trusted environment)
+
+        Args:
+            handle: unique DXF entity handle or None
+            owner: owner handle iof entity has an owner else None or '0'
+            dxfattribs: DXF attributes to initialize
+            doc: DXF document
+
+        """
+        dxfattribs = dxfattribs or {}
+        pattern = dxfattribs.pop('pattern', [0.0])
+        length = dxfattribs.pop('length', 0)  # required for complex types
+        ltype = super().new(handle, owner, dxfattribs, doc)  # type: Linetype
+        ltype._setup_pattern(pattern, length)
+        return ltype
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
 
-        processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
+        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
         # store whole subclass
-        self._pattern_tags = processor.find_subclass(acdb_linetype.name)[1:]  # remove subclass marker
+        self._pattern_tags = LinetypePattern(tags)
         return dxf
+
+    def preprocess_export(self, tagwriter: 'TagWriter'):
+        if len(self._pattern_tags) == 0:
+            return False
+        # do not export complex linetypes for DXF12
+        if tagwriter.dxfversion == DXF12:
+            return not self._pattern_tags.is_complex_type()
+        return True
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
@@ -54,19 +96,18 @@ class Linetype(DXFEntity):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_linetype.name)
-        tagwriter.write_tags(self._pattern_tags)
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'description', 'flags'], force=True)
+        if self._pattern_tags:
+            self._pattern_tags.export_dxf(tagwriter)
 
     def _setup_pattern(self, pattern: Union[Iterable[float], str], length: float) -> None:
         complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
-            self._setup_complex_pattern(pattern, length)
+            tags = self._setup_complex_pattern(pattern, length)
         else:
             # pattern: [2.0, 1.25, -0.25, 0.25, -0.25] - 1. element is total pattern length
             # pattern elements: >0 line, <0 gap, =0 point
             tags = Tags([
-                DXFTag(2, self.dxf.name),
-                DXFTag(70, self.dxf.flags),
-                DXFTag(3, self.dxf.description),
                 DXFTag(72, 65),  # letter 'A'
                 DXFTag(73, len(pattern) - 1),
                 DXFTag(40, float(pattern[0])),
@@ -74,14 +115,11 @@ class Linetype(DXFEntity):
             for element in pattern[1:]:
                 tags.append(DXFTag(49, float(element)))
                 tags.append(DXFTag(74, 0))
-            self._pattern_tags = tags
+        self._pattern_tags = LinetypePattern(tags)
 
-    def _setup_complex_pattern(self, pattern: str, length: float) -> None:
+    def _setup_complex_pattern(self, pattern: str, length: float) -> Tags:
         tokens = lin_compiler(pattern)
         tags = Tags([
-            DXFTag(2, self.dxf.name),
-            DXFTag(70, self.dxf.flags),
-            DXFTag(3, self.dxf.description),
             DXFTag(72, 65),  # letter 'A'
         ])
 
@@ -98,4 +136,4 @@ class Linetype(DXFEntity):
         tags2.append(DXFTag(74, 0))  # useless 74 at the end :))
         tags2[0] = DXFTag(73, count)
         tags.extend(tags2)
-        self._pattern_tags = tags
+        return tags

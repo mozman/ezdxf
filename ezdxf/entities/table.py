@@ -49,11 +49,13 @@ class TableHead(DXFEntity):
             if self.extension_dict:
                 self.extension_dict.export_dxf(tagwriter)
             tagwriter.write_tag2(OWNER_CODE, self.dxf.owner)
+            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table.name)
+            tagwriter.write_tag2(70, self.dxf.count)
+            if self.dxf.name == 'DIMSTYLE':  # the one exception - typical Autodesk
+                    tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDimStyleTable')
         else:  # DXF R12
             if tagwriter.write_handles:
                 tagwriter.write_tag2(5, self.dxf.handle)
+            tagwriter.write_tag2(70, self.dxf.count)
 
-        if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table.name)
-        tagwriter.write_tag2(70, self.dxf.count)
 

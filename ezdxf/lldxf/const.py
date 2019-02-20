@@ -27,6 +27,8 @@ acad_release = {
 }
 
 versions_supported_by_new = [DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018]
+versions_supported_by_save = versions_supported_by_new
+
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
 acad_release_to_dxf_version = {

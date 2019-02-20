@@ -145,8 +145,13 @@ class Table:
             self._head.export_dxf(tagwriter)
 
         def content():
-            for entry in self:
-                entry.export_dxf(tagwriter)
+            for entry in self.entries.values():
+                # VPORT
+                if isinstance(entry, list):
+                    for e in entry:
+                        e.export_dxf(tagwriter)
+                else:
+                    entry.export_dxf(tagwriter)
 
         def epilogue():
             tagwriter.write_tag2(0, 'ENDTAB')

@@ -3,7 +3,7 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Iterator
-from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
+from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError, DXF12
 
 from .table2 import Table, ViewportTable, StyleTable, LayerTable, tablename
 
@@ -109,10 +109,17 @@ class TablesSection:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str('  0\nSECTION\n  2\nTABLES\n')
-        for table_name in TABLE_ORDER:
-            table = self.tables.get(table_name)
-            if table is not None:
-                table.export_dxf(tagwriter)
+        version = tagwriter.dxfversion
+        self.tables['VIEWPORTS'].export_dxf(tagwriter)
+        self.tables['LINETYPES'].export_dxf(tagwriter)
+        self.tables['LAYERS'].export_dxf(tagwriter)
+        self.tables['STYLES'].export_dxf(tagwriter)
+        self.tables['VIEWS'].export_dxf(tagwriter)
+        self.tables['UCS'].export_dxf(tagwriter)
+        self.tables['APPIDS'].export_dxf(tagwriter)
+        self.tables['DIMSTYLES'].export_dxf(tagwriter)
+        if version > DXF12:
+            self.tables['BLOCK_RECORDS'].export_dxf(tagwriter)
         tagwriter.write_tag2(0, 'ENDSEC')
 
 
@@ -127,6 +134,3 @@ TABLESMAP = {
     'APPID': Table,
     'BLOCK_RECORD': Table,
 }
-
-# The order of the tables may change, but the LTYPE table always precedes the LAYER table.
-TABLE_ORDER = ('VIEWPORTS', 'LINETYPES', 'LAYERS', 'STYLES', 'VIEWS', 'UCS', 'APPIDS', 'DIMSTYLES', 'BLOCK_RECORDS')

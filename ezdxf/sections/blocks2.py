@@ -234,7 +234,7 @@ class BlocksSection:
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
         for block in self._block_layouts.values():
-            block.write(tagwriter)
+            block.export_dxf(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
 
     def new_layout_block(self) -> 'BlockLayout':

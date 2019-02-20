@@ -51,7 +51,7 @@ acdb_material = DefSubclass('AcDbMaterial', {
     'ambient_color_value': DXFAttr(90),  # integer representing an AcCmEntityColor
     'diffuse_color_method': DXFAttr(71, default=0),  # 0=use current color; 1=override current color
     'diffuse_color_factor': DXFAttr(41, default=1.),  # valid range is 0.0 to 1.0
-    'diffuse_color_value': DXFAttr(91),  # integer representing an AcCmEntityColor
+    'diffuse_color_value': DXFAttr(91, default=-1023410177),  # integer representing an AcCmEntityColor
     'diffuse_map_blend_factor': DXFAttr(42, default=1.),  # valid range is 0.0 to 1.0
     'diffuse_map_source': DXFAttr(72, default=1),
     # 0=use current scene; 1=use image file (specified by file name; null file name specifies no map)
@@ -175,6 +175,10 @@ acdb_material = DefSubclass('AcDbMaterial', {
 @register_entity
 class Material(DXFObject):
     DXFTYPE = 'MATERIAL'
+    DEFAULT_ATTRIBS = {
+        'diffuse_color_method': 1,
+        'diffuse_color_value': -1023410177,
+    }
     DXFATTRIBS = DXFAttributes(base_class, acdb_material)
 
     def __init__(self, doc: 'Drawing' = None):
@@ -228,7 +232,7 @@ class Material(DXFObject):
         self.dxf.export_dxf_attribute(tagwriter, 'name', force=True)
         self.dxf.export_dxf_attribs(tagwriter, [
             'description', 'ambient_color_method', 'ambient_color_factor', 'ambient_color_value',
-            'diffuse_color_method', 'diffuse_color_method', 'diffuse_color_factor', 'diffuse_color_value',
+            'diffuse_color_method', 'diffuse_color_factor', 'diffuse_color_value',
             'diffuse_map_blend_factor', 'diffuse_map_source', 'diffuse_map_file_name', 'diffuse_map_projection_method',
             'diffuse_map_tiling_method', 'diffuse_map_auto_transform_method',
         ])
@@ -264,10 +268,10 @@ class Material(DXFObject):
             'normal_map_file_name', 'normal_map_projection_method', 'normal_map_tiling_method',
             'normal_map_auto_transform_method',
         ])
-        export_matrix(tagwriter, 43, self.mormal_mapper_matrix)
+        export_matrix(tagwriter, 43, self.normal_mapper_matrix)
         self.dxf.export_dxf_attribs(tagwriter, [
             'color_bleed_scale', 'indirect_dump_scale', 'reflectance_scale', 'transmittance_scale',
-            'two_sided_material','luminance', 'luminance_mode', 'materials_anonymous', 'global_illumination_mode',
+            'two_sided_material', 'luminance', 'luminance_mode', 'materials_anonymous', 'global_illumination_mode',
             'final_gather_mode', 'gen_proc_name', 'gen_proc_val_bool', 'gen_proc_val_int', 'gen_proc_val_real',
             'gen_proc_val_text', 'gen_proc_table_end', 'gen_proc_val_color_index', 'gen_proc_val_color_rgb',
             'gen_proc_val_color_name', 'map_utile', 'translucence', 'self_illuminaton', 'reflectivity',

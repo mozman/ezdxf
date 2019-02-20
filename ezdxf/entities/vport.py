@@ -46,6 +46,13 @@ acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     'snap_isopair': DXFAttr(78, default=0),
 })
 
+EXPORT_MAP = [
+    'name', 'flags', 'lower_left', 'upper_right', 'center', 'snap_base', 'snap_spacing', 'grid_spacing', 'direction',
+    'target', 'height', 'aspect_ratio', 'focal_length', 'front_clipping', 'back_clipping', 'snap_rotation',
+    'view_twist', 'view_mode', 'circle_zoom', 'fast_zoom', 'ucs_icon', 'snap_on', 'grid_on', 'snap_style',
+    'snap_isopair',
+]
+
 
 @register_entity
 class VPort(DXFEntity):
@@ -69,9 +76,4 @@ class VPort(DXFEntity):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_vport.name)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'name', 'flags', 'lower_left', 'upper_right', 'center', 'snap_base', 'snap_spacing', 'direction',
-            'target', 'height', 'aspect_ratio', 'focal_length', 'front_clipping', 'back_clipping', 'snap_rotation',
-            'view_twist', 'view_mode', 'circle_zoom', 'fast_zoom', 'ucs_icon', 'snap_on', 'grid_on', 'snap_style',
-            'snap_isopair'
-        ], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, EXPORT_MAP, force=True)
