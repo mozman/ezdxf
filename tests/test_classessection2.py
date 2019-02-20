@@ -47,7 +47,7 @@ def test_count_class_instances():
     def instance_count(name):
         return classes[name].dxf.instance_count
     pytest.skip('Need Drawing.new() support')
-    dwg = ezdxf.new('R2004')
+    dwg = ezdxf.new2('R2004')
     classes = dwg.sections.classes.classes
     dwg.update_class_instance_counters()
     assert instance_count('IMAGE') == 0

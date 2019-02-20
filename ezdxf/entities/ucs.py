@@ -56,7 +56,7 @@ class UCSTable(DXFEntity):
 
     def ucs(self) -> UCS:
         return UCS(
-            origin=self.get_dxf_attrib('origin', default=(0, 0, 0)),
-            ux=self.get_dxf_attrib('xaxis', default=(1, 0, 0)),
-            uy=self.get_dxf_attrib('yaxis', default=(0, 1, 0)),
+            origin=self.dxf.origin,
+            ux=self.dxf.xaxis,
+            uy=self.dxf.yaxis,
         )

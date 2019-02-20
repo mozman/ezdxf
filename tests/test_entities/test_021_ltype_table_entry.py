@@ -1,10 +1,9 @@
 # Created: 16.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 
-from ezdxf.legacy.tableentries import Linetype
+from ezdxf.entities.ltype import Linetype
 
 
 @pytest.fixture
@@ -25,12 +24,13 @@ def test_description(linetype):
 
 
 def test_pattern_items_count(linetype):
-    def count_items():
-        return len(linetype.tags.noclass.find_all(49))
-
-    assert linetype.dxf.items == 2
-    assert linetype.dxf.items == count_items()
+    assert isinstance(linetype, Linetype)
+    assert len(linetype.pattern_tags) == 7
+    assert linetype.pattern_tags.is_complex_type() is False
 
 
-def test_pattern_length(linetype):
-    assert linetype.dxf.length == .2
+def test_pattern_tags_details(linetype):
+    # pattern tags are accessible but these are implementation details !!!
+    assert linetype.pattern_tags.tags[0] == (72, 65)
+    assert linetype.pattern_tags.tags[2].value == .2
+

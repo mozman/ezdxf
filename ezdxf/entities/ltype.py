@@ -1,8 +1,8 @@
 # Created: 17.02.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union, Iterable, cast
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from typing import TYPE_CHECKING, Union, Iterable, cast, Optional
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, VIRTUAL_TAG
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
@@ -51,7 +51,7 @@ class Linetype(DXFEntity):
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         super().__init__(doc)
-        self._pattern_tags = LinetypePattern(Tags())
+        self.pattern_tags = LinetypePattern(Tags())
 
     @classmethod
     def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
@@ -79,15 +79,15 @@ class Linetype(DXFEntity):
 
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
         # store whole subclass
-        self._pattern_tags = LinetypePattern(tags)
+        self.pattern_tags = LinetypePattern(tags)
         return dxf
 
     def preprocess_export(self, tagwriter: 'TagWriter'):
-        if len(self._pattern_tags) == 0:
+        if len(self.pattern_tags) == 0:
             return False
         # do not export complex linetypes for DXF12
         if tagwriter.dxfversion == DXF12:
-            return not self._pattern_tags.is_complex_type()
+            return not self.pattern_tags.is_complex_type()
         return True
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -97,8 +97,8 @@ class Linetype(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_linetype.name)
         self.dxf.export_dxf_attribs(tagwriter, ['name', 'description', 'flags'], force=True)
-        if self._pattern_tags:
-            self._pattern_tags.export_dxf(tagwriter)
+        if self.pattern_tags:
+            self.pattern_tags.export_dxf(tagwriter)
 
     def _setup_pattern(self, pattern: Union[Iterable[float], str], length: float) -> None:
         complex_line_type = True if isinstance(pattern, str) else False
@@ -115,7 +115,7 @@ class Linetype(DXFEntity):
             for element in pattern[1:]:
                 tags.append(DXFTag(49, float(element)))
                 tags.append(DXFTag(74, 0))
-        self._pattern_tags = LinetypePattern(tags)
+        self.pattern_tags = LinetypePattern(tags)
 
     def _setup_complex_pattern(self, pattern: str, length: float) -> Tags:
         tokens = lin_compiler(pattern)

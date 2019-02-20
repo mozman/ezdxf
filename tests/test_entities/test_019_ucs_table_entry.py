@@ -4,12 +4,12 @@
 from __future__ import unicode_literals
 import pytest
 
-from ezdxf.legacy.tableentries import UCS
+from ezdxf.entities.ucs import UCSTable
 
 
 @pytest.fixture
 def ucs():
-    return UCS.new('FFFF', dxfattribs={
+    return UCSTable.new('FFFF', dxfattribs={
         'name': 'UCS+90',
         'origin': (1.0, 1.0, 1.0),
         'xaxis': (0.0, 1.0, 0.0),
@@ -39,3 +39,11 @@ def test_ucs(ucs):
     assert coords.ux == (0, 1, 0)
     assert coords.uy == (-1, 0, 0)
     assert coords.is_cartesian is True
+
+
+def test_default_vales():
+    ucs = UCSTable.new()
+    assert ucs.dxf.origin == (0, 0, 0)
+    assert ucs.dxf.xaxis == (1, 0, 0)
+    assert ucs.dxf.yaxis == (0, 1, 0)
+

@@ -41,6 +41,7 @@ class Layer(DXFEntity):
     """ DXF LAYER entity """
     DXFTYPE = 'LAYER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_layer_table_record)
+    DEFAULT_ATTRIBS = {'name': '0'}
     FROZEN = 0b00000001
     THAW = 0b11111110
     LOCK = 0b00000100

@@ -466,7 +466,7 @@ class DXFEntity:
         return self.doc.dxffactory
 
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
-        self.dxf.get(key, default)
+        return self.dxf.get(key, default)
 
     def set_dxf_attrib(self, key: str, value: Any) -> None:
         self.dxf.set(key, value)

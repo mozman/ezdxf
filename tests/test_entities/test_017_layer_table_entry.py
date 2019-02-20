@@ -1,20 +1,14 @@
 # Created: 16.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
-
-from ezdxf.legacy.tableentries import Layer
+from ezdxf.entities.layer import Layer
 from ezdxf.lldxf.const import DXFInvalidLayerName
 
 
 @pytest.fixture
 def layer():
-    return Layer.new('FFFF')
-
-
-def test_new_layer(layer):
-    assert len(layer.tags.noclass) == 6
+    return Layer.new(handle='FFFF')
 
 
 def test_get_handle(layer):
@@ -22,7 +16,7 @@ def test_get_handle(layer):
 
 
 def test_get_name(layer):
-    assert 'LAYERNAME' == layer.dxf.name
+    assert '0' == layer.dxf.name
 
 
 def test_get_flags(layer):
@@ -34,7 +28,7 @@ def test_get_color(layer):
 
 
 def test_get_linetype(layer):
-    assert layer.dxf.linetype == 'CONTINUOUS'
+    assert layer.dxf.linetype.upper() == 'CONTINUOUS'
 
 
 def test_set_name(layer):
