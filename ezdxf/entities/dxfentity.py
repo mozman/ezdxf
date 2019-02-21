@@ -246,8 +246,11 @@ class DXFNamespace:
             force: write default value if attribute is not set
             check_dxf_version: does not export DXF attribs which are not supported by tagwriter.dxfversion
         """
-        for name in names:
-            self.export_dxf_attribute(tagwriter, name, force=force, check_dxf_version=check_dxf_version)
+        if isinstance(names, str):
+            self.export_dxf_attribute(tagwriter, names, force=force, check_dxf_version=check_dxf_version)
+        else:
+            for name in names:
+                self.export_dxf_attribute(tagwriter, name, force=force, check_dxf_version=check_dxf_version)
 
 
 class SubclassProcessor:
@@ -280,7 +283,14 @@ class SubclassProcessor:
                 return subclass
         return None
 
-    def load_dxfattribs_into_namespace(self, dxf: DXFNamespace, subclass_definition: DefSubclass) -> Tags:
+    def subclass_by_index(self, index: int):
+        try:
+            return self.subclasses[index]
+        except IndexError:
+            return None
+
+    def load_dxfattribs_into_namespace(self, dxf: DXFNamespace, subclass_definition: DefSubclass,
+                                       index: int = None) -> Tags:
         """
         Load all existing DXF attribute into DXFNamespace and return unprocessed tags, without leading subclass marker
         (102, ...).
@@ -288,17 +298,12 @@ class SubclassProcessor:
         Args:
             dxf: target namespace
             subclass_definition: DXF attribute definitions (name=subclass_name, attribs={key=attribute name, value=DXFAttr})
+            index: locate subclass by location
 
         Returns:
              Tags: unprocessed tags
 
         """
-
-        def attribs_by_code():
-            codes = {}
-            for dxfattr in subclass_definition.attribs.values():
-                codes[dxfattr.code] = dxfattr
-            return codes
 
         # r12 has always unprocessed tags, because there are all tags in one subclass and one subclass definition never
         # covers all tags e.g. handle is processed in main_call, so it is an unprocessed tag in AcDbEntity.
@@ -306,11 +311,16 @@ class SubclassProcessor:
         if self.r12:
             tags = self.subclasses[0]
         else:
-            tags = self.find_subclass(subclass_definition.name)
+            if index is None:
+                tags = self.find_subclass(subclass_definition.name)
+            else:
+                tags = self.subclass_by_index(index)
             if tags is None:
                 return unprocessed_tags
 
-        group_codes = attribs_by_code()
+        # do not cache group codes, content of group code will be deleted while processing
+        group_codes = {dxfattr.code: dxfattr for dxfattr in subclass_definition.attribs.values()}
+
         # iterate without leading subclass marker or for r12 without leading (0, ...) structure tag
         for tag in tags[1:]:
             code, value = tag

@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
+# Created 2019-02-21
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -98,9 +98,11 @@ class Face3d(_Base):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_face)
 
     def is_invisible_edge(self, num)->bool:
+        """ Returns True if edge `num` is an invisible edge. """
         return bool(self.dxf.invisible & (1 << num))
 
     def set_edge_visibilty(self, num, status=False):
+        """ Set visibilty of edge `num`, status `True` for visible, status `False` for invisible. """
         if status:
             self.dxf.invisible = self.dxf.invisible | (1 << num)
         else:
@@ -117,7 +119,6 @@ class Face3d(_Base):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class

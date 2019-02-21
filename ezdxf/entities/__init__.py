@@ -27,8 +27,22 @@ from . import dxfclass, table
 # register table entries
 from . import ltype, layer, textstyle, dimstyle, view, vport, ucs, appid, blockrecord
 
-# register DXF objects
+# register DXF objects R2000
 from . import dxfobj, dictionary, layout
 
-# register graphical entities
-from . import line, point, circle, arc, shape, solid, lwpolyline, insert, block
+# register entities R12
+from . import line, point, circle, arc, shape, solid, text, insert, block
+
+# register graphical entities R2000
+from . import lwpolyline
+
+# register graphical entities R2004
+
+# register graphical entities R2007
+
+# register graphical entities R2010
+
+# register graphical entities R2013
+
+# register graphical entities R2018
+

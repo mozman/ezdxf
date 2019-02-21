@@ -63,6 +63,12 @@ class DXFAttr:
         self.getter = getter  # DXF entity getter method name for callback attributes
         self.setter = setter  # DXF entity setter method name for callback attributes
 
+    def __str__(self):
+        return "({}, {})".format(self.name, self.code)
+
+    def __repr__(self):
+        return "DXFAttr" + self.__str__()
+
     def get_callback_value(self, entity: 'DXFEntity') -> 'TagValue':
         """
         Executes a callback function in 'entity' to get a DXF value.
