@@ -1,6 +1,5 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.lldxf.types import DXFTag, get_xcode_for
 
 
@@ -58,4 +57,3 @@ def test_xcode_for():
     assert get_xcode_for(40) == 1040
     assert get_xcode_for(5) == 1005
     assert get_xcode_for(344) == 1005
-

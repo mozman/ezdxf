@@ -1,4 +1,4 @@
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -98,10 +98,10 @@ def test_tags_from_complex_text():
     tags = cx_part.complex_ltype_tags(None)
     assert tags[0] == (74, 2)
     assert tags[1] == (75, 0)
-    assert tags[2] == (340, 0)     # default handle without a drawing
-    assert tags[3] == (46, .1)     # s
-    assert tags[4] == (50, 0)      # r
-    assert tags[5] == (44, -0.1)   # x
+    assert tags[2] == (340, 0)  # default handle without a drawing
+    assert tags[3] == (46, .1)  # s
+    assert tags[4] == (50, 0)  # r
+    assert tags[5] == (44, -0.1)  # x
     assert tags[6] == (45, -0.05)  # y
     assert tags[7] == (9, 'GAS')
 
@@ -115,13 +115,12 @@ def test_tags_from_complex_shape():
     tags = cx_part.complex_ltype_tags(None)
     assert tags[0] == (74, 4)
     assert tags[1] == (75, 132)  # shape index
-    assert tags[2] == (340, 0)   # default handle with a drawing
-    assert tags[3] == (46, .1)   # s
-    assert tags[4] == (50, 0.)   # r
+    assert tags[2] == (340, 0)  # default handle with a drawing
+    assert tags[3] == (46, .1)  # s
+    assert tags[4] == (50, 0.)  # r
     assert tags[5] == (44, -.1)  # x
-    assert tags[6] == (45, 0.)   # y
+    assert tags[6] == (45, 0.)  # y
 
 
 if __name__ == '__main__':
     pytest.main([__file__])
-

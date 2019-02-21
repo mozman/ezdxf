@@ -1,3 +1,5 @@
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
 from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
 
 
@@ -21,4 +23,3 @@ def test_is_adsk_special_layer():
     assert is_adsk_special_layer('*adsk_xyz') is True
     assert is_adsk_special_layer('*ADSK_xyz') is True
     assert is_adsk_special_layer('ADSK_xyz*') is False
-

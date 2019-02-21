@@ -1,7 +1,6 @@
 # Created: 12.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.tools.codepage import toencoding, tocodepage
 
 
@@ -19,5 +18,3 @@ def test_tocodepage_1252():
 
 def test_tocodepage_936():
     assert 'ANSI_936' == tocodepage('gbk')
-
-

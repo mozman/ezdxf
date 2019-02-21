@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 
 from ezdxf.lldxf.tags import text_to_multi_tags, multi_tags_to_text
@@ -24,4 +24,3 @@ def test_text_to_multi_tags():
 
     text = multi_tags_to_text(tags)
     assert text == TEST_TEXT
-

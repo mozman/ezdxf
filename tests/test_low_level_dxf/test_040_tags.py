@@ -1,5 +1,5 @@
 # Created: 10.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 import pytest
 from io import StringIO
@@ -77,7 +77,6 @@ TEST
  30
 3.0
 """
-
 
 
 class HandlesMock:
@@ -192,15 +191,15 @@ class TestTags:
     def test_replace_no_handle_without_error(self, tags):
         tags.replace_handle('AA')
         with pytest.raises(DXFValueError):
-            tags.get_handle() # handle still doesn't exist
+            tags.get_handle()  # handle still doesn't exist
 
     def test_remove_tags(self, tags):
-        tags.remove_tags(codes=(0, ))
+        tags.remove_tags(codes=(0,))
         assert 5 == len(tags)
 
     def test_strip_tags(self, tags):
-        tags.remove_tags(codes=(0, ))
-        result = Tags.strip(tags, codes=(0, ))
+        tags.remove_tags(codes=(0,))
+        result = Tags.strip(tags, codes=(0,))
         assert 5 == len(result)
         assert isinstance(result, Tags)
 
@@ -218,7 +217,6 @@ LAST
   1
 TEST2
 """
-
 
 COLLECT_1 = """  0
 ZERO

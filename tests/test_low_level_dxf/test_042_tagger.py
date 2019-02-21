@@ -1,6 +1,5 @@
-# Copyright (c) 2010-2018 Manfred Moitzi
+# Copyright (c) 2010-2019 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 from io import StringIO
 

@@ -1,5 +1,5 @@
-from __future__ import unicode_literals
-
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
 import pytest
 
 from ezdxf.lldxf.tagger import low_level_tagger

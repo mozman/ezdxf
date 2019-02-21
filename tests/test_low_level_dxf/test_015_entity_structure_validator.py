@@ -1,5 +1,5 @@
-from __future__ import unicode_literals
-
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
 import pytest
 
 from ezdxf.lldxf.validator import entity_structure_validator
@@ -300,7 +300,6 @@ STRING
 1002
 {
 """
-
 
 BLOCKBASEPOINTPARAMETER_CVIL_3D_2018 = """0
 BLOCKBASEPOINTPARAMETER

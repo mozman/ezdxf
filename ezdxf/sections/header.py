@@ -2,7 +2,7 @@
 # Created: 12.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple, KeysView, Any, Iterator
+from typing import TYPE_CHECKING, Iterable, List, Tuple, KeysView, Any, Iterator, Union, Sequence
 
 from collections import OrderedDict
 
@@ -275,7 +275,7 @@ def header_vars_by_priority(header_vars: OrderedDict, dxfversion: str) -> Tuple:
 
 
 class HeaderVar:
-    def __init__(self, tag: DXFTag):
+    def __init__(self, tag: Union[DXFTag, Sequence]):
         self.tag = tag
 
     @property

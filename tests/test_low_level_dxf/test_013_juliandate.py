@@ -1,7 +1,6 @@
 # Created: 21.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 from datetime import datetime
 
@@ -33,5 +32,3 @@ class TestCalendarDate:
     def test_2011_03_21(self):
         check = datetime(2011, 3, 21, 18, 0, 0)
         assert calendardate(2455642.75) == check
-
-

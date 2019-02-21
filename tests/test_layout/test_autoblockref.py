@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-#coding:utf-8
 # Author:  mozman -- <mozman@gmx.at>
 # Purpose: test autoblockref
 # Created: 03.04.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011, Manfred Moitzi
 # License: MIT License
-
-from __future__ import unicode_literals
-
 import unittest
-
 import ezdxf
 
 
@@ -78,7 +72,3 @@ class TestAutoBlockref(unittest.TestCase):
         self.assertFalse(attrib.is_preset)
         attrib.is_preset = True
         self.assertTrue(attrib.is_preset)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,7 +1,6 @@
 # Created: 25.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 from ezdxf.lldxf.tagger import internal_tag_compiler
 from ezdxf.lldxf.loader import load_dxf_structure

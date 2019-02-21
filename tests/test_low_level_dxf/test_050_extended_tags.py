@@ -1,7 +1,6 @@
 # Created: 30.04.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2018, Manfred Moitzi
+# Copyright (C) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 from io import StringIO
 

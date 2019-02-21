@@ -1,6 +1,5 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 from ezdxf.lldxf.types import DXFVertex
 
 
@@ -27,4 +26,3 @@ def test_dxf_tags():
 def test_dxf_string():
     v = DXFVertex(10, (1, 2, 3))
     assert v.dxfstr() == " 10\n1.0\n 20\n2.0\n 30\n3.0\n"
-
