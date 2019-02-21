@@ -94,6 +94,7 @@ class Drawing:
         # all required internal structures are ready
         # now do the stuff to please AutoCAD
         self._create_required_table_entries()
+        self._set_required_layer_attributes()
         self._setup_metadata()
 
     def _create_required_table_entries(self):
@@ -103,6 +104,10 @@ class Drawing:
         self._create_required_styles()
         self._create_required_appids()
         self._create_required_dimstyles()
+
+    def _set_required_layer_attributes(self):
+        for layer in self.layers:
+            layer.set_required_attributes()
 
     def _create_required_vports(self):
         if '*Active' not in self.viewports:
@@ -200,6 +205,7 @@ class Drawing:
         self.sections = Sections(doc=self, sections=sections, header=header)
 
         if self.dxfversion == DXF12:
+            self.sections.tables.create_table_handles()
             # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
             # and each table entry has an owner tag, pointing to the TABLE entry
             # todo: assign each TABLE entity a handle, which is only now possible, when all used handles in the DXF file are known
@@ -207,10 +213,10 @@ class Drawing:
 
             # All entities have handles, despite DXF R12 works also without handles, ezdxf need it.
             pass  # todo: for r12 create block_records and rename $Model_Space and $Paper_Space before Layout setup
+
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
-        if self.dxfversion in (DXF13, DXF14):
-            repair.upgrade_to_ac1015(self)
+
         # some applications don't setup properly the model and paper space layouts
         # repair.setup_layouts(self)
         self.layouts = Layouts.load(self)

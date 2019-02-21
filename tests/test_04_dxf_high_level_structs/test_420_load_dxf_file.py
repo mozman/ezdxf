@@ -5,21 +5,20 @@ import pytest
 import ezdxf
 
 
-@pytest.fixture(scope='module')
-def dxf12(tmpdir_factory):
+@pytest.fixture(scope='module', params=['R12', 'R2000'])
+def dxf(request, tmpdir_factory):
     doc = ezdxf.new2()
     msp = doc.modelspace()
     msp.add_line((0, 0), (1, 0))
     psp = doc.layout()
     psp.add_circle((0, 0), 1)
-    filename = tmpdir_factory.mktemp("dxf12").join("test.dxf")
-    doc.saveas(filename, dxfversion='R12')
+    filename = tmpdir_factory.mktemp(request.param).join("test.dxf")
+    doc.saveas(filename, dxfversion=request.param)
     return filename
 
 
-def test_load_dxf12(dxf12):
-    doc = ezdxf.readfile2(dxf12)
-    assert doc.dxfversion == ezdxf.DXF12
+def test_load_dxf(dxf):
+    doc = ezdxf.readfile2(dxf)
 
     msp = doc.modelspace()
     assert len(msp) == 1

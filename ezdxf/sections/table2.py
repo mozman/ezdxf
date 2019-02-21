@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import DXFFactoryType, EntityDB, TagWriter
     from ezdxf.drawing2 import Drawing
     from ezdxf.entities import DXFEntity
+    from ezdxf.entities.layer import Layer
 
 TABLENAMES = {
     'LAYER': 'LAYERS',
@@ -165,15 +166,17 @@ class Table:
         for entry in self.entries.values():
             entry.dxf.owner = owner_handle
 
+    def set_handle(self, handle: str):
+        if self._head.dxf.handle is None:
+            self._head.dxf.handle = handle
+            self._update_owner_handles()
+
 
 class LayerTable(Table):
     def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
+        layer = super().new_entry(dxfattribs)  # type: Layer
         if self.doc:
-            if 'material' not in dxfattribs:
-                dxfattribs['material_handle'] = self.doc.materials['Global'].dxf.handle
-            if 'plot_style_name' not in dxfattribs:
-                dxfattribs['plotstyle_handle'] = self.doc.plotstyles['Normal'].dxf.handle
-        return super().new_entry(dxfattribs)
+            layer.set_required_attributes()
 
 
 class StyleTable(Table):

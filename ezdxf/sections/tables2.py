@@ -134,6 +134,15 @@ class TablesSection:
             self.tables['BLOCK_RECORDS'].export_dxf(tagwriter)
         tagwriter.write_tag2(0, 'ENDSEC')
 
+    def create_table_handles(self):
+        # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
+        # and each table entry has an owner tag, pointing to the TABLE entry
+        # todo: assign each TABLE entity a handle, which is only now possible, when all used handles in the DXF file are known
+        # todo: assign all TABLE entries the new handle of TABLE as new owner tag.
+        for table in self:
+            handle = self.doc.entitydb.next_handle()
+            table.set_handle(handle)
+
 
 TABLESMAP = {
     'LAYER': LayerTable,

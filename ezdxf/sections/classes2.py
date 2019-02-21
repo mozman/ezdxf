@@ -79,6 +79,7 @@ class ClassesSection:
 
     def load(self, entities: Iterator[DXFEntity]) -> None:
         section_head = next(entities)  # type: DXFTagStorage
+
         if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, self.name.upper()):
             raise DXFStructureError("Critical structure error in CLASSES section.")
 

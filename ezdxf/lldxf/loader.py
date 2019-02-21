@@ -195,7 +195,7 @@ def load_dxf_entities(dxf_entities: List[Tags], factory: 'EntityFactory') -> Ite
 
 def fill_database2(sections: Dict, factory: 'EntityFactory') -> None:
     # CLASSES and HEADER have no EntityDB entries.
-    for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
+    for name in ['TABLES', 'CLASSES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:
             section = sections[name]
             # entities stored in the database are converted from Tags() to ExtendedTags()

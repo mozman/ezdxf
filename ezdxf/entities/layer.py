@@ -79,6 +79,12 @@ class Layer(DXFEntity):
         if not is_valid_layer_name(self.dxf.name):
             raise DXFInvalidLayerName("Invalid layer name '{}'".format(self.dxf.name))
 
+    def set_required_attributes(self):
+        if not self.dxf.hasattr('material'):
+            self.dxf.material_handle = self.doc.materials['Global'].dxf.handle
+        if not self.dxf.hasattr('plotstyle_handle'):
+            self.dxf.plotstyle_handle = self.doc.plotstyles['Normal'].dxf.handle
+
     def is_frozen(self) -> bool:
         return self.dxf.flags & Layer.FROZEN > 0
 
