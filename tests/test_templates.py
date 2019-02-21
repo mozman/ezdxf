@@ -1,12 +1,5 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
-# Purpose: test templates
-# Created: 12.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
-
 import os
 import unittest
 

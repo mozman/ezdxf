@@ -1,6 +1,5 @@
-# Copyright (C) 2013- 2018, Manfred Moitzi
+# Copyright (c) 2013- 2019, Manfred Moitzi
 # License: MIT-License
-from __future__ import unicode_literals
 import pytest
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.modern.xrecord import XRecord

@@ -1,7 +1,5 @@
-# Created: 2013-08-11, 2018 rewritten for pytest
-# Copyright (C) 2014-2018, Manfred Moitzi
+# Copyright (c) 2014-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 import ezdxf
 from ezdxf.modern.mtext import split_string_in_chunks, MTextData

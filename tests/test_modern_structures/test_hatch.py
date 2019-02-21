@@ -1,9 +1,6 @@
-# Created: 25.05.2015, 2018 rewritten for pytest
-# Copyright (C) 2015-2018, Manfred Moitzi
+# Copyright (c) 2015-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
-import unittest
 
 from ezdxf.modern.hatch import Hatch, _HATCH_TPL
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
