@@ -1,6 +1,5 @@
 # Created: 2014-05-09
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 from ezdxf.tools.rgb import int2rgb, rgb2int, aci2rgb
 
