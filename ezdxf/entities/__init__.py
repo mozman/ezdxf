@@ -31,4 +31,4 @@ from . import ltype, layer, textstyle, dimstyle, view, vport, ucs, appid, blockr
 from . import dxfobj, dictionary, layout
 
 # register graphical entities
-from . import line, point, circle, arc, lwpolyline, insert, block
+from . import line, point, circle, arc, shape, solid, lwpolyline, insert, block
