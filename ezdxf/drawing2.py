@@ -64,6 +64,9 @@ class Drawing:
         self._acad_compatible = True  # will generated DXF file compatible with AutoCAD
         self._dimension_renderer = DimensionRenderer()  # set DIMENSION rendering engine
         self._acad_incompatibility_reason = set()  # avoid multiple warnings for same reason
+        # Don't create any new entities here:
+        # New created handles could collide with handles loaded from DXF file.
+        assert len(self.entitydb) == 0
 
     @classmethod
     def new(cls) -> 'Drawing':
@@ -166,16 +169,25 @@ class Drawing:
         doc._load(tagreader)
         return doc
 
+    @classmethod
+    def from_tags(cls, compiled_tags: Iterable['DXFTag']) -> 'Drawing':
+        doc = Drawing()
+        doc._load(compiled_tags)
+        return doc
+
     def _load(self, tagger: Iterable['DXFTag']):
         def get_header(sections: 'SectionDict') -> 'SectionType':
             from .sections.header import HeaderSection
             header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
-            return HeaderSection.load(header_entities)
+            if header_entities is None:  # create default header
+                return HeaderSection.new(dxfversion=DXF12)  # file without header are by default DXF R12
+            else:
+                return HeaderSection.load(header_entities)
 
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
         # create section HEADER
         header = get_header(sections)
-        self.dxfversion = header.get('$ACADVER', LATEST_DXF_VERSION)  # type: str # read only
+        self._dxfversion = header.get('$ACADVER', DXF12)  # type: str # read only  # no $ACADVER -> DXF R12
         self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
         seed = header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
@@ -183,16 +195,24 @@ class Drawing:
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
         fill_database2(sections, self.dxffactory)
+        # all handles used in the DXF file are known at this point
         # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
         self.sections = Sections(doc=self, sections=sections, header=header)
+
         if self.dxfversion == DXF12:
+            # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
+            # and each table entry has an owner tag, pointing to the TABLE entry
+            # todo: assign each TABLE entity a handle, which is only now possible, when all used handles in the DXF file are known
+            # todo: assign all TABLE entries the new handle of TABLE as new owner tag.
+
+            # All entities have handles, despite DXF R12 works also without handles, ezdxf need it.
             pass  # todo: for r12 create block_records and rename $Model_Space and $Paper_Space before Layout setup
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
         if self.dxfversion in (DXF13, DXF14):
             repair.upgrade_to_ac1015(self)
         # some applications don't setup properly the model and paper space layouts
-        repair.setup_layouts(self)
+        # repair.setup_layouts(self)
         self.layouts = Layouts.load(self)
         self._finalize_setup()
 
@@ -325,7 +345,7 @@ class Drawing:
         """
         self._dimension_renderer = renderer
 
-    def modelspace(self) -> 'LayoutType':
+    def modelspace(self) -> 'Layout':
         return self.layouts.modelspace()
 
     def layout(self, name: str = None) -> 'Layout':

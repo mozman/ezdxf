@@ -16,7 +16,7 @@ from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools.pattern import PATTERN
 from ezdxf.lldxf import const  # restore module structure ezdxf.const
 from ezdxf.lldxf.validator import is_dxf_file, is_dxf_stream
-from ezdxf.filemanagement import new, read, readfile, readzip, new2
+from ezdxf.filemanagement import new, read, readfile, readzip, new2, read2, readfile2
 from ezdxf.tools.standards import setup_linetypes, setup_styles, setup_dimstyles, setup_dimstyle
 from ezdxf.render.arrows import ARROWS
 
@@ -26,6 +26,7 @@ from ezdxf.lldxf.const import DXFStructureError, DXFVersionError, DXFTableEntryE
 from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFKeyError, DXFIndexError, DXFTypeError, DXFInvalidLayerName
 from ezdxf.lldxf.const import DXFBlockInUseError
 from ezdxf.lldxf.const import InsertUnits
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018
 # name space imports - do not remove
 
 import codecs

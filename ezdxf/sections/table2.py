@@ -30,7 +30,8 @@ TABLENAMES = {
 def tablename(dxfname: str) -> str:
     """ Translate DXF-table-name to attribute-name. ('LAYER' -> 'LAYERS') """
     name = dxfname.upper()
-    return TABLENAMES.get(name, name + 'S')
+    name = TABLENAMES.get(name, name + 'S')
+    return name
 
 
 class Table:
@@ -38,7 +39,6 @@ class Table:
         self.doc = doc
         self.entries = OrderedDict()
         self._head = None
-        self._table_entries = []
         if entities is not None:
             self.load(iter(entities))
 
@@ -103,7 +103,7 @@ class Table:
         return len(self.entries)
 
     def __iter__(self) -> Iterable['DXFEntity']:
-        return self.entries.values()
+        return iter(self.entries.values())
 
     # end public interface
 

@@ -2,23 +2,18 @@
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List
-from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
+import logging
+from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError, DXFTableEntryError
 from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
 from ezdxf.lldxf.validator import is_valid_name
 from .layout import Layout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
     from ezdxf.entities.dxfentity import DXFEntity
     from ezdxf.entities.dictionary import Dictionary
     from ezdxf.drawing2 import Drawing
 
-
-# todo DXF12: $MODEL_SPACE and $PAPER_SPACE
-# rename $MODEL_SPACE -> *Model_Space at loading
-# rename $PAPER_SPACE -> *Paper_Space at loading
-# export *MODEL_SPACE as $Model_Space for DXF12
-# export *PAPER_SPACE as $Paper_Space for DXF12
+logger = logging.getLogger('ezdxf')
 
 
 def _link_entities_section_into_blocks(doc: 'Drawing') -> None:
@@ -27,14 +22,11 @@ def _link_entities_section_into_blocks(doc: 'Drawing') -> None:
 
     """
     blocks = doc.blocks
-    if '*MODEL_SPACE' in blocks:
-        model_space_block = blocks.get('*MODEL_SPACE')
-        model_space_block.set_entity_space(doc.entities.model_space_entities())
-        active_layout_block = blocks.get('*PAPER_SPACE')
-        active_layout_block.set_entity_space(doc.entities.active_layout_entities())
-        doc.entities.clear()  # remove entities for entities section -> stored in blocks
-    else:  # todo: no blocks for modelspace and paperspace found
-        pass
+    model_space_block = blocks.get('*MODEL_SPACE')
+    model_space_block.set_entity_space(doc.entities.model_space_entities())
+    active_layout_block = blocks.get('*PAPER_SPACE')
+    active_layout_block.set_entity_space(doc.entities.active_layout_entities())
+    doc.entities.clear()  # remove entities for entities section -> stored in blocks
 
 
 class Layouts:
@@ -63,7 +55,7 @@ class Layouts:
             raise DXFValueError('Layout "{}" already exists'.format(name))
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
         layout = Layout.new(name, block_name, self.doc, dxfattribs=dxfattribs)
-        self._dxf_layouts[name] = layout
+        self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout
 
         return layout
@@ -96,7 +88,7 @@ class Layouts:
         block_name = self.unique_paperspace_name()
         layout = Layout.new(name, block_name, self.doc, dxfattribs=dxfattribs)
 
-        self._dxf_layouts[name] = layout
+        self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout
 
         return layout
@@ -105,9 +97,52 @@ class Layouts:
     def load(cls, doc: 'Drawing') -> 'Layouts':
         """ Constructor if loading from file. """
         _link_entities_section_into_blocks(doc)
-        layouts = Layouts(doc)
+        layouts = cls(doc)
         layouts.setup_from_rootdict()
+
+        # DXF R12: block/block_record for *Model_Space and *Paper_Space already exists
+        if len(layouts) < 2:  # restore missing DXF Layouts
+            layouts.restore('Model', MODEL_SPACE_R2000, taborder=0)
+            layouts.restore('Layout1', PAPER_SPACE_R2000, taborder=1)
+
+        # find orphaned LAYOUTS
+        layout_names = (o.dxf.name for o in doc.objects if o.dxftype == 'LAYOUT')
+        for layout_name in layout_names:
+            if layout_name not in layouts:
+                logger.debug('Found orphaned LAYOUT "{}"'.format(layout_name))
+
+        # find orphaned BLOCK_RECORD *Paper_Space? entries
+        psp_br_handles = {
+            br.dxf.handle for br in doc.block_records if br.dxf.name.lower().startswith('*paper_space')
+        }
+        psp_layout_br_handles = {
+            layout.dxf.block_record for layout in layouts._layouts.values() if layout.dxf.name != 'Model'
+        }
+        mismatch = psp_br_handles.difference(psp_layout_br_handles)
+        if len(mismatch):
+            logger.debug(
+                'Found {} layout(s) defined by BLOCK_RECORD entries without LAYOUT entity.'.format(len(mismatch)))
+
         return layouts
+
+    def restore(self, name: str, block_record_name: str, taborder: int) -> None:
+        if name in self._layouts:
+            return
+        block_layout = self.doc.blocks.get(block_record_name)
+        self._new_from_block_layout(name, block_layout, taborder)
+
+    def _new_from_block_layout(self, name, block_layout, taborder: int) -> 'Layout':
+        dxfattribs = {
+            'owner': self._dxf_layouts.dxf.handle,
+            'name': name,
+            'block_record': block_layout.block_record_handle,
+            'taborder': taborder,
+        }
+        dxf_layout = self.doc.objects.create_new_dxf_entity('LAYOUT', dxfattribs=dxfattribs)
+        layout = Layout.load(dxf_layout, self.doc)
+        self._dxf_layouts[name] = layout.dxf_layout
+        self._layouts[name] = layout
+        return layout
 
     def setup_from_rootdict(self) -> None:
         for name, dxf_layout in self._dxf_layouts.items():
@@ -280,18 +315,3 @@ class Layouts:
             if layout.is_active_paperspace:
                 return layout
         raise DXFInternalEzdxfError('No active paper space found.')
-
-    def export_entities_section(self, tagwriter: 'TagWriter')->None:
-        """
-        Write ``ENTITIES`` section to DXF file, the  ``ENTITIES`` section consist of all entities in model space and
-        active paper space layout.
-
-        All DXF entities of the remaining paper space layouts are stored in their associated ``BLOCK`` entity in the
-        ``BLOCKS`` section.
-
-        Args:
-            tagwriter (TagWriter): tag writer object
-
-        """
-        self.modelspace().export_dxf(tagwriter)
-        self.active_layout().export_dxf(tagwriter)

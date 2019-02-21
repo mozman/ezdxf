@@ -51,11 +51,11 @@ class Sections:
 
     def load(self, sections: Dict, doc: 'Drawing') -> None:
         self._sections['TABLES'] = TablesSection(doc, sections.get('TABLES', None))
-        self._sections['BLOCKS'] = BlocksSection(doc, sections.get('BLOCKS', None))
+        block_records = self.get('TABLES')['BLOCK_RECORDS']
+        self._sections['BLOCKS'] = BlocksSection(doc, sections.get('BLOCKS', None), block_records)
         self._sections['ENTITIES'] = EntitySection(doc, sections.get('ENTITIES', None))
-        if doc.dxfversion > 'AC1009':
-            self._sections['CLASSES'] = ClassesSection(doc, sections.get('CLASSES', None))
-            self._sections['OBJECTS'] = ObjectsSection(doc, sections.get('OBJECTS', None))
+        self._sections['CLASSES'] = ClassesSection(doc, sections.get('CLASSES', None))
+        self._sections['OBJECTS'] = ObjectsSection(doc, sections.get('OBJECTS', None))
 
         for name, data in sections.items():
             if name not in self._sections:

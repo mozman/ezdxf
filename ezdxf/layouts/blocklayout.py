@@ -2,7 +2,7 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Optional
-from ezdxf.lldxf.const import LAYOUT_NAMES
+from ezdxf.lldxf.const import LAYOUT_NAMES, DXFTableEntryError
 from ezdxf.entitydb import EntitySpace
 from .base import BaseLayout
 

@@ -3,7 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, SUBCLASS_MARKER
+from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12, SUBCLASS_MARKER, DXFInternalEzdxfError
 
 from .dxfentity import SubclassProcessor, DXFEntity
 from .factory import register_entity
@@ -41,6 +41,8 @@ class TableHead(DXFEntity):
         return dxf
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        if self.dxf.handle is None:
+            raise DXFInternalEzdxfError('TABLE needs a handle, maybe loaded from DXF R12 without handle!')
         # 1. tag: (0, DXFTYPE)
         tagwriter.write_tag2(STRUCTURE_MARKER, self.DXFTYPE)
         tagwriter.write_tag2(2, self.dxf.name)
@@ -54,8 +56,7 @@ class TableHead(DXFEntity):
             if self.dxf.name == 'DIMSTYLE':  # the one exception - typical Autodesk
                     tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDimStyleTable')
         else:  # DXF R12
-            if tagwriter.write_handles:
-                tagwriter.write_tag2(5, self.dxf.handle)
+            #  TABLE does not need a handle at all
             tagwriter.write_tag2(70, self.dxf.count)
 
 

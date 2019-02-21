@@ -27,8 +27,7 @@ class ObjectsSection(AbstractSection):
     name = 'OBJECTS'
 
     def __init__(self, doc: 'Drawing', entities: Iterable['DXFEntity'] = None):
-        entity_space = EntitySpace(doc.entitydb)
-        super(ObjectsSection, self).__init__(entity_space, entities, doc)
+        super(ObjectsSection, self).__init__(EntitySpace(), entities, doc)
 
     def __iter__(self) -> Iterable['DXFEntity']:
         return iter(self._entity_space)

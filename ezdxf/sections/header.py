@@ -129,8 +129,8 @@ class HeaderSection:
             tags: DXF tags as Tags() or ExtendedTags()
 
         """
-        if tags is None:
-            tags = cls.MIN_HEADER_TAGS
+        if tags is None:  # create default header
+            return cls.new(dxfversion=DXF12)  # file without header are by default DXF R12
         section = cls()
         section.load_tags(iter(tags))
         return section

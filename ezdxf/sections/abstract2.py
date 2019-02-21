@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING, Iterable, Iterator
 
 from ezdxf.lldxf.tags import DXFStructureError
 from ezdxf.query import EntityQuery
+from ezdxf.entities.dxfentity import entity_linker
 
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.entitydb import EntitySpace, EntityDB
-    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage, entity_linker
+    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.drawing2 import Drawing
     from ezdxf.eztypes import TagWriter
@@ -38,7 +39,7 @@ class AbstractSection:
     def _build(self, entities: Iterator['DXFEntity']) -> None:
         section_head = next(entities)  # type: DXFTagStorage
 
-        if section_head.dxftype() == 'SECTION' or section_head.base_class[1] != (2, self.name.upper()):
+        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, self.name.upper()):
             raise DXFStructureError("Critical structure error in {} section.".format(self.name.upper()))
 
         linked_entities = entity_linker()

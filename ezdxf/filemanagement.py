@@ -13,15 +13,35 @@ if TYPE_CHECKING:
 
 
 def new2(setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
-    dwg = Drawing2.new()
-    if dwg.dxfversion > 'AC1009':
-        dwg.reset_fingerprintguid()
-        dwg.reset_versionguid()
+    doc = Drawing2.new()
     if setup:
         pass
         # does not work yet
         # setup_drawing(dwg, topics=setup)
-    return dwg
+    return doc
+
+
+def read2(stream: TextIO, legacy_mode: bool = False) -> 'Drawing2':
+    from ezdxf.drawing2 import Drawing
+
+    return Drawing.read(stream, legacy_mode=legacy_mode)
+
+
+def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing2':
+    from ezdxf.lldxf.validator import is_dxf_file
+    from ezdxf.tools.codepage import is_supported_encoding
+
+    if not is_dxf_file(filename):
+        raise IOError("File '{}' is not a DXF file.".format(filename))
+
+    info = dxf_file_info(filename)
+    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
+        doc = read2(fp, legacy_mode=legacy_mode)
+
+    doc.filename = filename
+    if encoding is not None and is_supported_encoding(encoding):
+        doc.encoding = encoding
+    return doc
 
 
 def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':

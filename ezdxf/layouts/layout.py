@@ -74,6 +74,8 @@ class Layout(BaseLayout):
         self.dxf_layout = layout
         block_record_handle = layout.dxf.block_record
         block_record = doc.entitydb[block_record_handle]
+        # link maybe broken
+        block_record.layout = layout.dxf.handle
         entity_space = get_block_entity_space(doc, block_record_handle)
         super().__init__(block_record, doc, entity_space)
 
@@ -92,6 +94,7 @@ class Layout(BaseLayout):
     def load(cls, layout: 'DXFLayout', doc: 'Drawing'):
         layout = cls(layout, doc)
         layout._repair_owner_tags()
+        return layout
 
     @property
     def name(self) -> str:
@@ -129,7 +132,7 @@ class Layout(BaseLayout):
 
     @property
     def is_modelspace(self):
-        return self.block_record_name.lower() in MODEL_SPACE
+        return self.block_record_name.lower() == '*model_space'
 
     def _repair_owner_tags(self) -> None:
         """
@@ -137,12 +140,12 @@ class Layout(BaseLayout):
 
         """
         layout_key = self.layout_key
-        paper_space = 0 if self.is_modelspace else 1
+        paperspace = 0 if self.is_modelspace else 1
         for entity in self:
-            if entity.get_dxf_attrib('owner', default=None) != layout_key:
-                entity.set_dxf_attrib('owner', layout_key)
-            if entity.get_dxf_attrib('paperspace', default=0) != paper_space:
-                entity.set_dxf_attrib('paperspace', paper_space)
+            if entity.dxf.owner != layout_key:
+                entity.dxf.owner = layout_key
+            if entity.dxf.paperspace != paperspace:
+                entity.dxf.paperspace = paperspace
 
     def __contains__(self, entity: Union['DXFEntity', str]) -> bool:
         if isinstance(entity, str):  # entity is a handle string

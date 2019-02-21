@@ -24,7 +24,7 @@ class EntitySection(AbstractSection):
     name = 'ENTITIES'
 
     def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
-        super().__init__(EntitySpace(doc.entitydb), entities, doc)
+        super().__init__(EntitySpace(), entities, doc)
 
     def __iter__(self) -> 'DXFEntity':
         layouts = self.doc.layouts
@@ -43,15 +43,11 @@ class EntitySection(AbstractSection):
 
     def model_space_entities(self) -> 'EntitySpace':
         # required for the drawing setup process
-        es = EntitySpace(self.entitydb)
-        es.extend(self._filter_entities(paper_space=0))
-        return es
+        return EntitySpace(self._filter_entities(paper_space=0))
 
     def active_layout_entities(self) -> 'EntitySpace':
         # required for the drawing setup process
-        es = EntitySpace(self.entitydb)
-        es.extend(self._filter_entities(paper_space=1))
-        return es
+        return EntitySpace(self._filter_entities(paper_space=1))
 
     def _filter_entities(self, paper_space: int = 0) -> Iterable['DXFEntity']:
         # required for the drawing setup process
@@ -63,7 +59,9 @@ class EntitySection(AbstractSection):
         layouts.active_layout().delete_all_entities()
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        layouts = self.doc.layouts
         tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
         # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
-        self.doc.layouts.export_entities_section(tagwriter)
+        layouts.modelspace().export_dxf(tagwriter)
+        layouts.active_layout().export_dxf(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")

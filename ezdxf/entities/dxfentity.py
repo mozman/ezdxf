@@ -57,8 +57,10 @@ class DXFNamespace:
         if processor:
             base_class_ = processor.base_class
             code = handle_code(base_class_[0].value)
-            handle = base_class_.get_first_value(code, None)  # CLASS entity has no handle
-            owner = base_class_.get_first_value(330, None)  # owner, None for DXF R12 if read from file
+            # CLASS entity has no handle and TABLE also has no handle if loaded from DXF R12 file
+            handle = base_class_.get_first_value(code, None)
+            # owner is None if loaded from DXF R12 file
+            owner = base_class_.get_first_value(330, None)
             self.rewire(entity, handle, owner)
         else:
             self.reset_handles()

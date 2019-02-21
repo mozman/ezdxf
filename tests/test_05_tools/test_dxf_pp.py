@@ -1,3 +1,5 @@
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
 import pytest
 import ezdxf
 
@@ -13,8 +15,4 @@ def test_dxf_drawing_to_html(dwg):
     # checks only if pretty printer is still working
     result = dxfpp(dwg)
     assert len(result) > 0
-
-
-if __name__ == '__main__':
-    pytest.main([__file__])
 

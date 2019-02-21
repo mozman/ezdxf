@@ -1,25 +1,24 @@
-# Purpose: blocks section
-# Created: 14.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Union, Iterator, Sequence
+from typing import TYPE_CHECKING, Iterable, Union, Sequence, List
 import logging
 
-from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError
+from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError
 from ezdxf.lldxf import const
-from ezdxf.lldxf.extendedtags import get_xtags_linker
+from ezdxf.entities.dxfentity import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import ExtendedTags, TagWriter
+    from ezdxf.eztypes import TagWriter
     from ezdxf.drawing2 import Drawing
     from ezdxf.entitydb import EntityDB
-    from ezdxf.entities import DXFEntity
+    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entities.blockrecord import BlockRecord
     from ezdxf.entities.block import Block, EndBlk
+    from ezdxf.sections.tables2 import Table
 
 
 class BlocksSection:
@@ -30,13 +29,13 @@ class BlocksSection:
     """
     name = 'BLOCKS'
 
-    def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
+    def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None, block_records: 'Table' = None):
         # Mapping of BlockLayouts, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().
         self._block_layouts = dict()
         self.doc = doc
         if entities is not None:
-            self.load(iter(entities))
+            self.load(entities, block_records)
         self._anonymous_block_counter = 0
 
     def __len__(self):
@@ -56,41 +55,49 @@ class BlocksSection:
     def dxffactory(self) -> 'EntityFactory':
         return self.doc.dxffactory
 
-    def load(self, entities: Iterator['DXFEntity']) -> None:
-        def build_block_layout(handles: Sequence[str]) -> 'BlockLayout':
-            block = self.dxffactory.new_block_layout(
-                block_handle=handles[0],
-                endblk_handle=handles[-1],
-            )
-            for handle in handles[1:-1]:
-                block.add_handle(handle)
-            return block
+    def load(self, entities: List['DXFEntity'], block_records: 'Table') -> None:
 
-        def link_entities() -> Iterable['ExtendedTags']:
-            linked_tags = get_xtags_linker()
+        def build_block_layout(block_entities: Sequence['DXFEntity']) -> 'BlockLayout':
+            block = block_entities[0]  # type: Block
+            endblk = block_entities[-1]  # type: EndBlk
+
+            try:
+                block_record = block_records.get(block.dxf.name)  # type: BlockRecord
+            except DXFTableEntryError:  # special case DXF R12 - not block record exists
+                block_record = block_records.new(block.dxf.name)  # type: BlockRecord
+                block.dxf.owner = block_record.dxf.handle
+                endblk.dxf.owner = block_record.dxf.handle
+
+            block_layout = BlockLayout(block_record, block, endblk, self.doc)
+            for entity in block_entities[1:-1]:
+                block_layout.add_entity(entity)
+            return block_layout
+
+        def link_entities() -> Iterable['DXFEntity']:
+            linked = entity_linker()
             for entity in entities:
-                if not linked_tags(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in block layout
+                if not linked(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in block layout
                     yield entity
 
-        section_head = next(entities)
-        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'BLOCKS'):
+        section_head = entities[0]  # type: DXFTagStorage
+        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'BLOCKS'):
             raise DXFStructureError("Critical structure error in BLOCKS section.")
-
-        handles = []
-        for xtags in link_entities():
-            handles.append(xtags.get_handle())
-            if xtags.dxftype() == 'ENDBLK':
-                block_layout = build_block_layout(handles)
+        del entities[0]  # remove SECTION entity
+        block_entities = []
+        for entity in link_entities():
+            block_entities.append(entity)
+            if entity.dxftype() == 'ENDBLK':
+                block_layout = build_block_layout(block_entities)
                 try:
                     name = block_layout.name
                 except DXFAttributeError:
                     raise
-                if block_layout.name in self:
+                if name in self:
                     logger.warning(
                         'Warning! Multiple block definitions with name "{}", replacing previous definition'.format(
                             block_layout.name))
                 self.add(block_layout)
-                handles = []
+                block_entities = []
 
     def add(self, block_layout: 'BlockLayout') -> None:
         """

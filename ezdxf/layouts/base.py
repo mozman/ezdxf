@@ -11,7 +11,6 @@ from ezdxf.graphicsfactory2 import CreatorInterface
 if TYPE_CHECKING:
     from ezdxf.drawing2 import Drawing
     from ezdxf.entities.blockrecord import BlockRecord
-    from ezdxf.entities.block import Block, EndBlk
     from ezdxf.entities.dxfentity import DXFEntity
 
 
@@ -67,6 +66,9 @@ class BaseLayout(CreatorInterface):
         """
         return iter(self.entity_space)
 
+    def __getitem__(self, item):
+        return self.entity_space[item]
+
     def rename(self, name) -> None:
         pass
 
@@ -103,7 +105,6 @@ class BaseLayout(CreatorInterface):
         """
         self.unlink_entity(entity)  # 1. unlink from entity space
         self.entitydb.delete_entity(entity)  # 2. delete from drawing database
-
 
     def delete_all_entities(self) -> None:
         """

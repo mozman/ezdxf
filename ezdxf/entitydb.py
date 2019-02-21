@@ -23,7 +23,6 @@ class EntityDB:
     stored in the drawing-associated database, database-key is the `handle` as string (group code == 5 or 105).
 
     """
-
     def __init__(self):
         self._database = {}
         self.handles = HandleGenerator()
@@ -80,6 +79,9 @@ class EntityDB:
 
     def add(self, entity: DXFEntity) -> None:
         if entity.dxftype() in DATABASE_EXCLUDE:
+            if entity.dxf.handle is not None:
+                # store entities with handles (TABLE, maybe others) to avoid reassigning of its handle
+                self[entity.dxf.handle] = entity
             return
         handle = entity.dxf.handle  # type: str
         if handle is None:

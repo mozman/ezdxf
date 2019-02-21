@@ -1,3 +1,5 @@
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
 import pytest
 
 from ezdxf.templates import TemplateLoader
@@ -19,8 +21,4 @@ def test_raw_dxf_tags_to_html(tags):
     # checks only if pretty printer is still working
     result = rawpp(tags, filename='test.dxf')
     assert len(result) > 0
-
-
-if __name__ == '__main__':
-    pytest.main([__file__])
 
