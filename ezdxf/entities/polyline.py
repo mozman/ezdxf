@@ -574,7 +574,11 @@ acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
 })
 
 
+@register_entity
 class DXFVertex(DXFGraphic):
+    """ DXF VERTEXE entity """
+    DXFTYPE = 'VERTEX'
+
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_vertex)
     EXTRA_VERTEX_CREATED = 1  # Extra vertex created by curve-fitting
     CURVE_FIT_TANGENT = 2  # Curve-fit tangent defined for this vertex.

@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-13
-from typing import TYPE_CHECKING, List, Iterable, Tuple
+from typing import TYPE_CHECKING, List, Iterable, Tuple, Dict
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFKeyError, XDATA_MARKER, DXFValueError

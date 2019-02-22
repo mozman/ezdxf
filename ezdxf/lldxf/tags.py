@@ -1,11 +1,10 @@
 # Created: 10.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from copy import deepcopy
-from typing import Iterable, List, TextIO, Any, TYPE_CHECKING, Tuple, Optional
+from typing import Iterable, List, TextIO, TYPE_CHECKING, Tuple
 
-from .const import acad_release, DXFStructureError, DXFValueError, DXFIndexError, HEADER_VAR_MARKER, STRUCTURE_MARKER, SUBCLASS_MARKER
-from .types import NONE_TAG, DXFTag, is_point_code, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
+from .const import acad_release, DXFStructureError, DXFValueError, HEADER_VAR_MARKER, STRUCTURE_MARKER
+from .types import NONE_TAG, DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
 from .tagger import internal_tag_compiler, low_level_tagger
 
 from ezdxf.tools.codepage import toencoding
@@ -14,6 +13,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
 
 COMMENT_CODE = 999
+
 
 class DXFInfo(object):
     def __init__(self):
@@ -317,8 +317,10 @@ def text_to_multi_tags(text: str, code: int = 303, size: int = 255, line_ending:
 def multi_tags_to_text(tags, line_ending: str = '^J') -> str:
     return ''.join(tag.value for tag in tags).replace(line_ending, '\n')
 
+
 OPEN_LIST = (1002, '{')
 CLOSE_LIST = (1002, '}')
+
 
 def xdata_list(name: str, xdata_tags: 'IterableTags') -> List[Tuple]:
     tags = []
@@ -344,6 +346,7 @@ def get_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
 class NotFoundException(Exception):
     pass
 
+
 def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tuple[int, int]:
     start = None
     end = None
@@ -368,5 +371,5 @@ def get_start_and_end_of_named_list_in_xdata(name: str, tags: List[Tuple]) -> Tu
     if start is None:
         raise NotFoundException
     if end is None:
-        raise DXFXDataError('Invalid XDATA structure: missing  (1002, "}").')
+        raise DXFStructureError('Invalid XDATA structure: missing  (1002, "}").')
     return start, end + 1
