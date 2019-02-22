@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
+from ezdxf.lldxf import const
+from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import acdb_entity
 from .text import Text, acdb_text
@@ -73,6 +75,63 @@ class BaseAttrib(Text):
         """ Default constructor """
         super().__init__(doc)
         self.xrecord = None
+
+    @property
+    def is_const(self) -> bool:
+        """
+        This is a constant attribute.
+        """
+        return bool(self.dxf.flags & const.ATTRIB_CONST)
+
+    @is_const.setter
+    def is_const(self, state: bool) -> None:
+        """
+        This is a constant attribute.
+        """
+        self.dxf.flags = set_flag_state(self.dxf.flags, const.ATTRIB_CONST, state)
+
+    @property
+    def is_invisible(self) -> bool:
+        """
+        Attribute is invisible (does not appear).
+        """
+        return bool(self.dxf.flags & const.ATTRIB_INVISIBLE)
+
+    @is_invisible.setter
+    def is_invisible(self, state: bool) -> None:
+        """
+        Attribute is invisible (does not appear).
+        """
+        self.dxf.flags = set_flag_state(self.dxf.flags, const.ATTRIB_INVISIBLE, state)
+
+    @property
+    def is_verify(self) -> bool:
+        """
+        Verification is required on input of this attribute. (CAD application feature)
+        """
+        return bool(self.dxf.flags & const.ATTRIB_VERIFY)
+
+    @is_verify.setter
+    def is_verify(self, state: bool) -> None:
+        """
+        Verification is required on input of this attribute. (CAD application feature)
+        """
+        self.dxf.flags = set_flag_state(self.dxf.flags, const.ATTRIB_VERIFY, state)
+
+
+    @property
+    def is_preset(self) -> bool:
+        """
+        No prompt during insertion. (CAD application feature)
+        """
+        return bool(self.dxf.flags & const.ATTRIB_IS_PRESET)
+
+    @is_preset.setter
+    def is_preset(self, state: bool) -> None:
+        """
+        No prompt during insertion. (CAD application feature)
+        """
+        self.dxf.flags = set_flag_state(self.dxf.flags, const.ATTRIB_IS_PRESET, state)
 
 
 @register_entity

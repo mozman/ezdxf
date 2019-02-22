@@ -249,7 +249,7 @@ class DXFNamespace:
             if (value is not None) and (export_dxf_version >= required_dxf_version):  # do not export None
                 # check optional value == default value
                 if optional and not_force_optional and default is not None and (default == value):
-                        return  # do not write explicit optional attribs if equal to default value
+                    return  # do not write explicit optional attribs if equal to default value
                 # just use x, y for 2d points if value is a 3d point (Vector, tuple)
                 if attrib.xtype == XType.point2d and len(value) > 2:
                     value = value[:2]
@@ -406,6 +406,20 @@ class DXFEntity:
     def from_text(cls, text: str, doc: 'Drawing' = None) -> 'DXFEntity':
         """ Load constructor from text for testing """
         return cls.load(ExtendedTags.from_text(text), doc)
+
+    @classmethod
+    def shallow_copy(cls, other: 'DXFEntity') -> 'DXFEntity':
+        """ Copy constructor for type casting e.g. Polyface and Polymesh """
+        entity = cls(other.doc)
+        entity.dxf = other.dxf
+        entity.extension_dict = other.extension_dict
+        entity.reactors = other.reactors
+        entity.appdata = other.appdata
+        entity.xdata = other.xdata
+        entity.embedded_objects = other.embedded_objects
+        entity.dxf.rewire(entity)
+        entity.doc.entitydb.add(entity)  # same handle -> replaces other
+        return entity
 
     def load_tags(self, tags: ExtendedTags) -> None:
         if tags:
@@ -666,6 +680,18 @@ class DXFEntity:
 
     def audit(self, auditor: 'Auditor') -> None:
         pass
+
+    def _new_compound_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
+        """
+        Create new entity with same layout settings as `self`.
+
+        Used by INSERT & POLYLINE to create appended DXF entities, don't use it to create new standalone entities.
+
+        """
+        entity = self.dxffactory.create_db_entry(type_, dxfattribs)
+        entity.dxf.owner = self.dxf.owner
+        entity.dxf.paperspace = self.dxf.paperspace
+        return entity
 
     def has_extension_dict(self) -> bool:
         return self.extension_dict is not None

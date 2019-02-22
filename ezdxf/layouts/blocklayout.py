@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.blockrecord import BlockRecord
     from ezdxf.entities.block import Block, EndBlk
     from ezdxf.entities.dxfentity import DXFEntity
+    from ezdxf.entities.attrib import AttDef
 
 
 class BlockLayout(BaseLayout):
@@ -92,7 +93,7 @@ class BlockLayout(BaseLayout):
         dxfattribs['text'] = text
         return self.new_entity('ATTDEF', dxfattribs)
 
-    def attdefs(self) -> Iterable['DXFEntity']:
+    def attdefs(self) -> Iterable['AttDef']:
         """
         Iterate for all :class:`Attdef` entities.
 
@@ -187,7 +188,7 @@ class BlockLayout(BaseLayout):
         self.entitydb.delete_entity(self.block)
         self.entitydb.delete_entity(self.endblk)
 
-    def get_const_attdefs(self) -> Iterable['DXFEntity']:
+    def get_const_attdefs(self) -> Iterable['AttDef']:
         """
         Returns a generator for constant ATTDEF entities.
 
