@@ -127,7 +127,7 @@ acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
 
     'paper_image_origin_x': DXFAttr(148, default=0),
     'paper_image_origin_y': DXFAttr(149, default=0),
-    'shade_plot_handle': DXFAttr(333),  # optional
+    'shade_plot_handle': DXFAttr(333, optional=True),  # optional
 })
 
 
@@ -157,7 +157,7 @@ class PlotSettings(DXFObject):
             'scale_numerator', 'scale_denominator', 'plot_layout_flags', 'plot_paper_units', 'plot_rotation',
             'plot_type', 'current_style_sheet', 'standard_scale_type', 'shade_plot_mode', 'shade_plot_resolution_level',
             'shade_plot_custom_dpi', 'unit_factor', 'paper_image_origin_x', 'paper_image_origin_y',
-        ], force=True)
+        ])
 
 
 acdb_layout = DefSubclass('AcDbLayout', {
@@ -215,4 +215,4 @@ class DXFLayout(PlotSettings):
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'layout_flags', 'taborder', 'limmin', 'limmax', 'insert_base', 'extmin', 'extmax', 'elevation',
             'ucs_origin', 'ucs_xaxis', 'ucs_yaxis', 'ucs_type', 'block_record'
-        ], force=True)
+        ])

@@ -5,7 +5,8 @@
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS
@@ -20,11 +21,12 @@ __all__ = ['DXFGraphic', 'acdb_entity']
 
 acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
-    'linetype': DXFAttr(6, default='BYLAYER'),  # linetype as string, special names BYLAYER/BYBLOCK
-    'color': DXFAttr(62, default=256),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
-    'paperspace': DXFAttr(67, default=0),  # 0 .. modelspace, 1 .. paperspace
+    'linetype': DXFAttr(6, default='BYLAYER', optional=True),  # linetype as string, special names BYLAYER/BYBLOCK
+    'color': DXFAttr(62, default=256, optional=True),  # dxf color index, 0 .. BYBLOCK, 256 .. BYLAYER
+    'paperspace': DXFAttr(67, default=0, optional=True),  # 0 .. modelspace, 1 .. paperspace
     # thickness and extrusion is defined in Entity specific subclasses
-    'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000),  # Stored and moved around as a 16-bit integer
+    # Stored and moved around as a 16-bit integer
+    'lineweight': DXFAttr(370, default=-1, dxfversion=DXF2000, optional=True),
     # Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
     # outside this range prevents AutoCAD from loading the file.
     # Special values:
@@ -32,17 +34,19 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # LINEWEIGHT_BYBLOCK = -2
     # LINEWEIGHT_DEFAULT = -3
     #
-    'ltscale': DXFAttr(48, default=1.0, dxfversion=DXF2000),  # linetype scale
-    'invisible': DXFAttr(60, default=0, dxfversion=DXF2000),  # invisible .. 1, visible .. 0
-    'true_color': DXFAttr(420, dxfversion=DXF2004),  # true color as 0x00RRGGBB 24-bit value
-    'color_name': DXFAttr(430, dxfversion=DXF2004),  # color name as string
-    'transparency': DXFAttr(440, dxfversion=DXF2004),
+    'ltscale': DXFAttr(48, default=1.0, dxfversion=DXF2000, optional=True),  # linetype scale
+    'invisible': DXFAttr(60, default=0, dxfversion=DXF2000, optional=True),  # invisible .. 1, visible .. 0
+    'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),  # true color as 0x00RRGGBB 24-bit value
+    'color_name': DXFAttr(430, dxfversion=DXF2004, optional=True),  # color name as string
+    'transparency': DXFAttr(440, dxfversion=DXF2004, optional=True),
     # transparency value 0x020000TT 0 = fully transparent / 255 = opaque
-    'shadow_mode': DXFAttr(284, dxfversion=DXF2007),  # shadow_mode
+    'shadow_mode': DXFAttr(284, dxfversion=DXF2007, optional=True),  # shadow_mode
     # 0 = Casts and receives shadows
     # 1 = Casts shadows
     # 2 = Receives shadows
     # 3 = Ignores shadows
+    'material_handle': DXFAttr(347, dxfversion=DXF2007, optional=True),  # shadow_mode
+    'plotstyle_handle': DXFAttr(390, dxfversion=DXF2007, optional=True),  # shadow_mode
 })
 
 
@@ -127,15 +131,11 @@ class DXFGraphic(DXFEntity):
         dxfversion = tagwriter.dxfversion
         if dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
-        # for all DXF versions
-        self.dxf.export_dxf_attribute(tagwriter, 'layer', force=True)
-        self.dxf.export_dxf_attribs(tagwriter, ['linetype', 'color', 'paperspace'])
-        if dxfversion >= DXF2000:
-            self.dxf.export_dxf_attribs(tagwriter, ['lineweight', 'ltscale'])
-        if dxfversion >= DXF2004:
-            self.dxf.export_dxf_attribs(tagwriter, ['true_color', 'color_name', 'transparency'])
-        if dxfversion >= DXF2004:
-            self.dxf.export_dxf_attribute(tagwriter, 'shadow_mode')
+
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'layer', 'linetype', 'material_handle', 'color', 'paperspace', 'lineweight', 'ltscale', 'true_color',
+            'color_name', 'transparency', 'plotstyle_handle', 'shadow_mode',
+        ])
 
     def audit(self, auditor: 'Auditor') -> None:
         super().audit(auditor)

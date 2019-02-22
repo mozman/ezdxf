@@ -205,7 +205,7 @@ class MLineStyle(DXFObject):
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mline_style.name)
         self.dxf.element_count = len(self.style_elements)
-        self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys(), force=True)
+        self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys())
         self.style_elements.export_dxf(tagwriter)
 
 

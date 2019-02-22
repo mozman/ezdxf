@@ -55,5 +55,5 @@ class Textstyle(DXFEntity):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'flags', 'height', 'width', 'oblique', 'generation_flags', 'last_height', 'font', 'bigfont'
-        ], force=True)
+        ])
 

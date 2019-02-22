@@ -50,7 +50,7 @@ class UCSTable(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_ucs.name)
 
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'origin', 'xaxis', 'yaxis'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'origin', 'xaxis', 'yaxis'])
 
     def ucs(self) -> UCS:
         return UCS(

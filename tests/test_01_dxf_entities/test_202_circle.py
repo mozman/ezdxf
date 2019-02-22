@@ -95,20 +95,14 @@ def test_load_from_text(entity):
     assert entity.dxf.radius == 1
 
 
-def test_write_dxf_2000():
-    expected = basic_tags_from_text(ENTITY_R2000)
-    line = TEST_CLASS.from_text(ENTITY_R2000)
-    collector = TagCollector(dxfversion=DXF2000)
-    line.export_dxf(collector)
+@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+def test_write_dxf(txt, ver):
+    expected = basic_tags_from_text(txt)
+    circle = TEST_CLASS.from_text(txt)
+    collector = TagCollector(dxfversion=ver, optional=True)
+    circle.export_dxf(collector)
     assert collector.tags == expected
 
-
-def test_write_dxf_r12():
-    expected = basic_tags_from_text(ENTITY_R12)
-    line = TEST_CLASS.from_text(ENTITY_R12)
-    line.dxf.shadow_mode = 1  # set value of later DXF version, ignore at export
-    assert line.dxf.shadow_mode == 1
-
-    collector = TagCollector(dxfversion=DXF12)
-    line.export_dxf(collector)
-    assert collector.tags == expected
+    collector2 = TagCollector(dxfversion=ver, optional=False)
+    circle.export_dxf(collector2)
+    assert collector.has_all_tags(collector2)

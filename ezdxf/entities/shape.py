@@ -17,14 +17,14 @@ __all__ = ['Shape']
 
 
 acdb_shape = DefSubclass('AcDbShape', {
-    'thickness': DXFAttr(39, default=0),  # Thickness (optional)
+    'thickness': DXFAttr(39, default=0, optional=True),  # Thickness
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # Insertion point (in WCS)
     'size': DXFAttr(40, default=1),
     'name': DXFAttr(2, default=''),  # Shape name
-    'rotation': DXFAttr(50, default=0),  # Rotation angle (optional) in degrees
-    'xscale': DXFAttr(41, default=1),  # Relative X scale factor (optional)
-    'oblique': DXFAttr(51, default=0),  # Oblique angle (optional)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),  # Extrusion direction (optional)
+    'rotation': DXFAttr(50, default=0, optional=True),  # Rotation angle in degrees
+    'xscale': DXFAttr(41, default=1, optional=True),  # Relative X scale factor
+    'oblique': DXFAttr(51, default=0, optional=True),  # Oblique angle
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),  # Extrusion direction
 })
 
 
@@ -50,6 +50,7 @@ class Shape(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_shape.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['insert', 'size', 'name'], force=True)
-        self.dxf.export_dxf_attribs(tagwriter, ['thickness', 'rotation', 'xscale', 'oblique', 'extrusion'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'insert', 'size', 'name', 'thickness', 'rotation', 'xscale', 'oblique', 'extrusion',
+        ])
 

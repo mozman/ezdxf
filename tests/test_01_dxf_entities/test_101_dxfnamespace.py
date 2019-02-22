@@ -146,7 +146,7 @@ def test_prevent_deepcopy_usage(entity, processor):
 def test_dxf_export_one_attribute(entity, processor):
     attribs = DXFNamespace(processor, entity)
     tagwriter = TagCollector()
-    attribs.export_dxf_attribute(tagwriter, 'handle')
+    attribs.export_dxf_attribs(tagwriter, 'handle')
     assert len(tagwriter.tags) == 1
     assert tagwriter.tags[0] == (5, 'FFFF')
     with pytest.raises(DXFAttributeError):

@@ -24,7 +24,7 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     'flags': DXFAttr(70, default=0),
     'color': DXFAttr(62, default=7),  # dxf color index
     'linetype': DXFAttr(6, default='Continuous'),  # linetype name
-    'plot': DXFAttr(290, default=1, dxfversion=DXF2000),  # don't plot this layer if 0 else 1
+    'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),  # don't plot this layer if 0 else 1
     'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),  # 1/100 mm, min 13 = 0.13mm, max 200 = 2.0mm
 
     # code 390 is required for AutoCAD
@@ -64,16 +64,10 @@ class Layer(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layer_table_record.name)
 
-        # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'color', 'linetype'], force=True)
-
-        if tagwriter.dxfversion >= DXF2000:
-            self.dxf.export_dxf_attribute(tagwriter, 'plot')  # no force required
-            self.dxf.export_dxf_attribs(tagwriter, ['lineweight', 'plotstyle_handle'], force=True)
-
-        if tagwriter.dxfversion >= DXF2007:
-            self.dxf.export_dxf_attribute(tagwriter, 'material_handle')  # required and always set
-            self.dxf.export_dxf_attribute(tagwriter, 'unknown1')  # ???
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'name', 'flags', 'color', 'linetype', 'plot', 'lineweight', 'plotstyle_handle', 'material_handle',
+            'unknown1',
+        ])
 
     def post_new_hook(self) -> None:
         if not is_valid_layer_name(self.dxf.name):

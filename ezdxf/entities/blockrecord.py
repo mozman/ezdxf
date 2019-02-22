@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFStructureError, DXF2007
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2007, DXFInternalEzdxfError
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -79,12 +79,9 @@ class BlockRecord(DXFEntity):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion == DXF12:
-            raise DXFStructureError('Exporting BLOCK_RECORDS for DXF R12.')
+            raise DXFInternalEzdxfError('Exporting BLOCK_RECORDS for DXF R12.')
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_blockrec.name)
 
-        # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'layout'], force=True)
-        if tagwriter.dxfversion >= DXF2007:
-            self.dxf.export_dxf_attribs(tagwriter, ['units', 'explode', 'scale'])
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'layout', 'units', 'explode', 'scale'])
 

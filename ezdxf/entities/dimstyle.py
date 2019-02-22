@@ -51,7 +51,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimaltf': DXFAttr(143, default=0.03937007874),
     'dimlfac': DXFAttr(144, default=1),
     'dimtvp': DXFAttr(145, default=0),
-    'dimtfac': DXFAttr(146, dxfversion=DXF2000, default=1),
+    'dimtfac': DXFAttr(146, default=1),
     'dimgap': DXFAttr(147, default=.625),
     'dimaltrnd': DXFAttr(148, dxfversion=DXF2000, default=0),
     'dimtfill': DXFAttr(69, dxfversion=DXF2007, default=0),  # 0=None, 1=canvas color, 2=dimtfillclr
@@ -201,7 +201,7 @@ class DimStyle(DXFEntity):
             attribs = EXPORT_MAP_R2000
         else:
             attribs = EXPORT_MAP_R2007
-        self.dxf.export_dxf_attribs(tagwriter, attribs, force=True)
+        self.dxf.export_dxf_attribs(tagwriter, attribs)
 
     def _set_blk_handle(self, attr: str, arrow_name: str) -> None:
         if arrow_name == ARROWS.closed_filled:

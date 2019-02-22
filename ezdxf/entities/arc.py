@@ -45,5 +45,5 @@ class Arc(Circle):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_arc.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['start_angle', 'end_angle'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['start_angle', 'end_angle'])
 

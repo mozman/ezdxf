@@ -32,11 +32,11 @@ LWPOINTCODES = (10, 20, 40, 41, 42)
 acdb_lwpolyline = DefSubclass('AcDbPolyline', {
     'count': DXFAttr(90, xtype=XType.callback, getter='__len__'),
     # always return actual length and set tag 90
-    'elevation': DXFAttr(38, default=0.0),
-    'thickness': DXFAttr(39, default=0.0),
+    'elevation': DXFAttr(38, default=0, optional=True),
+    'thickness': DXFAttr(39, default=0, optional=True),
     'flags': DXFAttr(70, default=0),
     'const_width': DXFAttr(43, default=0.0),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0.0, 0.0, 1.0)),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
     # 10, 20 : Vertex x, y
     # 91: vertex identifier ???
     # 40, 41, 42: start width, end width, bulge
@@ -85,7 +85,7 @@ class LWPolyline(DXFGraphic):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lwpolyline.name)
         self.dxf.export_dxf_attribs(tagwriter, ['count', 'flags', 'const_width', 'elevation', 'thickness'])
         tagwriter.write_tags(Tags(self.lwpoints.dxftags()))
-        self.dxf.export_dxf_attribute(tagwriter, 'extrusion')
+        self.dxf.export_dxf_attribs(tagwriter, 'extrusion')
         # xdata and embedded objects export will be done by parent class
 
     @property

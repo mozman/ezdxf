@@ -22,8 +22,8 @@ acdb_trace = DefSubclass('AcDbTrace', {
     'vtx2': DXFAttr(12, xtype=XType.point3d, default=Vector(0, 0, 0)),  # 3. corner Solid WCS; Trace OCS
     # If only three corners are entered to define the SOLID, then the fourth corner coordinate is the same as the third.
     'vtx3': DXFAttr(13, xtype=XType.point3d, default=Vector(0, 0, 0)),  # 4. corner Solid WCS; Trace OCS
-    'thickness': DXFAttr(39, default=0.0),  # Thickness (optional)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),  # Extrusion direction (optional)
+    'thickness': DXFAttr(39, default=0, optional=True),  # Thickness
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),  # Extrusion direction
 })
 
 
@@ -65,8 +65,9 @@ class Solid(_Base):
         # for all DXF versions
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
-        self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3'], force=True)
-        self.dxf.export_dxf_attribs(tagwriter, ['thickness', 'extrusion'])
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'vtx0', 'vtx1', 'vtx2', 'vtx3', 'thickness', 'extrusion',
+        ])
 
 
 @register_entity
@@ -81,7 +82,7 @@ acdb_face = DefSubclass('AcDbFace', {
     'vtx2': DXFAttr(12, xtype=XType.point3d, default=Vector(0, 0, 0)),  # 3. corner WCS
     # If only three corners are entered to define the SOLID, then the fourth corner coordinate is the same as the third.
     'vtx3': DXFAttr(13, xtype=XType.point3d, default=Vector(0, 0, 0)),  # 4. corner WCS
-    'invisible': DXFAttr(70, default=0),  # Invisible edge flags (optional; default = 0):
+    'invisible': DXFAttr(70, default=0, optional=True),  # Invisible edge flags
     # 1 = First edge is invisible
     # 2 = Second edge is invisible
     # 4 = Third edge is invisible
@@ -123,5 +124,4 @@ class Face3d(_Base):
         # for all DXF versions
         if not self.dxf.hasattr('vtx3'):
             self.dxf.vtx3 = self.dxf.vtx2
-        self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3'], force=True)
-        self.dxf.export_dxf_attribute(tagwriter, 'invisible')
+        self.dxf.export_dxf_attribs(tagwriter, ['vtx0', 'vtx1', 'vtx2', 'vtx3', 'invisible'])

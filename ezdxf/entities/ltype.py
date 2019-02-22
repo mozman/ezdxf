@@ -1,8 +1,8 @@
 # Created: 17.02.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union, Iterable, cast, Optional
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, VIRTUAL_TAG
+from typing import TYPE_CHECKING, Union, Iterable, cast
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
@@ -93,7 +93,7 @@ class Linetype(DXFEntity):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_linetype.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'description', 'flags'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'description', 'flags'])
         if self.pattern_tags:
             self.pattern_tags.export_dxf(tagwriter)
 

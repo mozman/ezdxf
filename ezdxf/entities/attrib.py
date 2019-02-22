@@ -104,7 +104,7 @@ class AttDef(BaseAttrib):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attdef.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs_optional(tagwriter, [
+        self.dxf.export_dxf_attribs(tagwriter, [
             'version', 'prompt', 'tag', 'flags', 'field_length', 'valign', 'lock_position',
         ])
 
@@ -165,7 +165,7 @@ class Attrib(BaseAttrib):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attrib_text.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs_optional(tagwriter, [
+        self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique', 'style', 'width',
             'halign', 'align_point', 'extrusion'
         ])
@@ -174,6 +174,6 @@ class Attrib(BaseAttrib):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attrib.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs_optional(tagwriter, [
+        self.dxf.export_dxf_attribs(tagwriter, [
             'version', 'tag', 'flags',  'text_generation_flag', 'field_length', 'valign', 'lock_position',
         ])

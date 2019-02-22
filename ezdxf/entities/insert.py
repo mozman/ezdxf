@@ -20,15 +20,15 @@ acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'attribs_follow': DXFAttr(66, default=0),
     'name': DXFAttr(2),
     'insert': DXFAttr(10, xtype=XType.any_point),
-    'xscale': DXFAttr(41, default=1.0),
-    'yscale': DXFAttr(42, default=1.0),
-    'zscale': DXFAttr(43, default=1.0),
-    'rotation': DXFAttr(50, default=0.0),
-    'column_count': DXFAttr(70, default=1),
-    'row_count': DXFAttr(71, default=1),
-    'column_spacing': DXFAttr(44, default=0.0),
-    'row_spacing': DXFAttr(45, default=0.0),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0.0, 0.0, 1.0)),
+    'xscale': DXFAttr(41, default=1, optional=True),
+    'yscale': DXFAttr(42, default=1, optional=True),
+    'zscale': DXFAttr(43, default=1, optional=True),
+    'rotation': DXFAttr(50, default=0, optional=True),
+    'column_count': DXFAttr(70, default=1, optional=True),
+    'row_count': DXFAttr(71, default=1, optional=True),
+    'column_spacing': DXFAttr(44, default=0, optional=True),
+    'row_spacing': DXFAttr(45, default=0, optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
 })
 
 
@@ -69,7 +69,7 @@ class Insert(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
         # for all DXF versions
         if len(self.attribs):
-            self.dxf.export_dxf_attribute(tagwriter, 'attribs_follow')
+            self.dxf.export_dxf_attribs(tagwriter, 'attribs_follow')
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'insert',
             'xscale', 'yscale', 'zscale',
@@ -79,8 +79,8 @@ class Insert(DXFGraphic):
             'extrusion',
         ])
 
-        # xdata and embedded objects export will be done by parent class
-        # following SEQEND is exported by EntitySpace()
+        # xdata and embedded objects export will be done by parent clas
+        # ATTRIBS and following SEQEND is exported by EntitySpace()
 
     def destroy(self) -> None:
         """

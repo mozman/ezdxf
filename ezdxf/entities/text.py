@@ -98,7 +98,7 @@ class Text(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs_optional(tagwriter, [
+        self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique', 'style', 'width', 'text_generation_flag',
             'halign', 'align_point', 'extrusion'
         ])
@@ -106,7 +106,7 @@ class Text(DXFGraphic):
     def export_acdb_text2(self, tagwriter: 'TagWriter') -> None:
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text2.name)
-        self.dxf.export_dxf_attribs_optional(tagwriter, 'valign')
+        self.dxf.export_dxf_attribs(tagwriter, 'valign')
 
     def set_pos(self, p1: 'Vertex', p2: 'Vertex' = None, align: str = None) -> 'Text':
         if align is None:

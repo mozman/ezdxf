@@ -17,11 +17,11 @@ __all__ = ['Point']
 
 acdb_point = DefSubclass('AcDbPoint', {
     'location': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
-    'thickness': DXFAttr(39, default=0),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),
+    'thickness': DXFAttr(39, default=0, optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
     # angle of the X axis for the UCS in effect when the point was drawn (optional, default = 0); used when PDMODE is
     # nonzero
-    'angle': DXFAttr(50, default=0),
+    'angle': DXFAttr(50, default=0, optional=True),
 })
 
 
@@ -47,6 +47,4 @@ class Point(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_point.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribute(tagwriter, 'location', force=True)
-        self.dxf.export_dxf_attribs(tagwriter, ['thickness', 'extrusion', 'angle'])
-
+        self.dxf.export_dxf_attribs(tagwriter, ['location', 'thickness', 'extrusion', 'angle'])

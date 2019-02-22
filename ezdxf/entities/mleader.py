@@ -49,7 +49,7 @@ class MLeader(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mleader.name)
-        self.dxf.export_dxf_attribute(tagwriter, 'leader_style_id', force=True)
+        self.dxf.export_dxf_attribs(tagwriter, 'leader_style_id')
 
 
 acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', OrderedDict({  # preserve tag order
@@ -120,7 +120,7 @@ class MLeaderStyle(DXFObject):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mleader_style.name)
-        self.dxf.export_dxf_attribs(tagwriter, acdb_mleader_style.attribs.keys(), force=True)
+        self.dxf.export_dxf_attribs(tagwriter, acdb_mleader_style.attribs.keys())
 
 
 class MLeaderStyleCollection(ObjectCollection):

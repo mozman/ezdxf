@@ -227,9 +227,9 @@ class Material(DXFObject):
         super().export_entity(tagwriter)
 
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_material.name)
-        self.dxf.export_dxf_attribute(tagwriter, 'name', force=True)
+
         self.dxf.export_dxf_attribs(tagwriter, [
-            'description', 'ambient_color_method', 'ambient_color_factor', 'ambient_color_value',
+            'name', 'description', 'ambient_color_method', 'ambient_color_factor', 'ambient_color_value',
             'diffuse_color_method', 'diffuse_color_factor', 'diffuse_color_value',
             'diffuse_map_blend_factor', 'diffuse_map_source', 'diffuse_map_file_name', 'diffuse_map_projection_method',
             'diffuse_map_tiling_method', 'diffuse_map_auto_transform_method',

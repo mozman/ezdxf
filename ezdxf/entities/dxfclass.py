@@ -74,8 +74,6 @@ class DXFClass(DXFEntity):
             return
         attribs = self.dxf
         tagwriter.write_tag2(0, self.DXFTYPE)
-        attribs.export_dxf_attribs(tagwriter, ['name', 'cpp_class_name', 'app_name', 'flags'])
-        if dxfversion >= DXF2004:
-            # required, but can always be 0
-            attribs.export_dxf_attribute(tagwriter, 'instance_count', force=True)
-        attribs.export_dxf_attribs(tagwriter, ['was_a_proxy', 'is_an_entity'])
+        attribs.export_dxf_attribs(tagwriter, [
+            'name', 'cpp_class_name', 'app_name', 'flags', 'instance_count', 'was_a_proxy', 'is_an_entity',
+        ])

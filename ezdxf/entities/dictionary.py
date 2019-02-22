@@ -88,7 +88,7 @@ class Dictionary(DXFObject):
         super().export_entity(tagwriter)
 
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dictionary.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['hard_owned', 'cloning'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['hard_owned', 'cloning'])
         self.export_dict(tagwriter)
         # xdata and embedded objects export will be done by parent class
 
@@ -288,7 +288,7 @@ class DictionaryWithDefault(Dictionary):
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_with_default.name)
-        self.dxf.export_dxf_attribute(tagwriter, 'default', force=True)
+        self.dxf.export_dxf_attribs(tagwriter, 'default')
 
     def get(self, key: str, default: Any = DXFKeyError) -> DXFEntity:
         """
@@ -365,4 +365,4 @@ class DictionaryVar(DXFObject):
         # base class export is done by parent class
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_var.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['schema', 'value'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['schema', 'value'])

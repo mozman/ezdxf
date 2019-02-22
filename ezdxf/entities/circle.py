@@ -15,12 +15,11 @@ if TYPE_CHECKING:
 
 __all__ = ['Circle']
 
-
 acdb_circle = DefSubclass('AcDbCircle', {
     'center': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
     'radius': DXFAttr(40, default=1),
-    'thickness': DXFAttr(39, default=0),
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1)),
+    'thickness': DXFAttr(39, default=0, optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=(0, 0, 1), optional=True),
 })
 
 
@@ -46,6 +45,4 @@ class Circle(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_circle.name)
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius'], force=True)
-        self.dxf.export_dxf_attribs(tagwriter, ['thickness', 'extrusion'])
-
+        self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness', 'extrusion'])

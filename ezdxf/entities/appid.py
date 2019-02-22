@@ -47,5 +47,5 @@ class AppID(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_appid.name)
 
         # for all DXF versions
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags'])
 

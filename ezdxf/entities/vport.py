@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 __all__ = ['VPort']
 
+# todo DXF2000+ support for VPORT
 acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     'name': DXFAttr(2),
     'flags': DXFAttr(70, default=0),
@@ -74,4 +75,4 @@ class VPort(DXFEntity):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_vport.name)
-        self.dxf.export_dxf_attribs(tagwriter, EXPORT_MAP, force=True)
+        self.dxf.export_dxf_attribs(tagwriter, EXPORT_MAP)

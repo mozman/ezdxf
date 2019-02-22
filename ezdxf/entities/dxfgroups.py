@@ -63,7 +63,7 @@ class DXFGroup(DXFObject):
         """ Export entity specific data as DXF tags. """
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_group.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['description', 'unnamed', 'selectable'], force=True)
+        self.dxf.export_dxf_attribs(tagwriter, ['description', 'unnamed', 'selectable'])
         self.export_group(tagwriter)
 
     def export_group(self, tagwriter: 'TagWriter'):
