@@ -234,6 +234,64 @@ class DXFNamespace:
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
 
+    def export_dxf_attribs_optional(self, tagwriter: 'TagWriter', attribs: Union[str, Iterable]) -> None:
+        """
+        Exports DXF attribute `name` by `tagwriter`. Non optional attributes are forced and optional tags are only
+        written if different to default value. DXF version check is always on: does not export DXF attribs which are not
+        supported by tagwriter.dxfversion.
+
+        Replaces export_dxf_attribute() and export_dxf_attribs() in the long run.
+
+        Args:
+            tagwriter: tag writer object
+            attribs: DXF attribute name as string or an iterable of names
+
+        """
+        if isinstance(attribs, str):
+            self._export_dxf_attribute_optional(tagwriter, attribs)
+        else:
+            for name in attribs:
+                self._export_dxf_attribute_optional(tagwriter, name)
+
+    def _export_dxf_attribute_optional(self, tagwriter: 'TagWriter', name: str) -> None:
+        """
+        Exports DXF attribute `name` by `tagwriter`. Optional tags are only written if different to default value.
+
+        Args:
+            tagwriter: tag writer object
+            name: DXF attribute name
+
+        """
+        export_dxf_version = tagwriter.dxfversion
+        not_force_optional = not tagwriter.force_optional
+        attrib = self.dxfattribs.get(name, None)
+
+        if attrib:
+            optional = attrib.optional
+            default = attrib.default
+            value = self.get(name, None)
+            if value is None and not optional:  # force default value e.g. layer
+                value = default  # default value could be None
+
+            if attrib.dxfversion:
+                required_dxf_version = attrib.dxfversion
+            else:
+                required_dxf_version = DXF12
+
+            # align_point is optional but default is None, write if exists and ignore force
+            # optional and default value=None is handled correct
+            if (value is not None) and (export_dxf_version >= required_dxf_version):  # do not export None
+                # check optional value == default value
+                if optional and not_force_optional and default is not None and (default == value):
+                        return  # do not write explicit optional attribs if equal to default value
+                # just use x, y for 2d points if value is a 3d point (Vector, tuple)
+                if attrib.xtype == XType.point2d and len(value) > 2:
+                    value = value[:2]
+                tag = dxftag(attrib.code, value)
+                tagwriter.write_tag(tag)
+        else:
+            raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype))
+
     def export_dxf_attribs(self, tagwriter: 'TagWriter', names: Iterable[str],
                            force=False,
                            check_dxf_version=False) -> None:

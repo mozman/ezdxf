@@ -217,15 +217,33 @@ Subclass markers :code:`(100, Subclass Name)` divides DXF objects into several s
 in different sections. A subclass ends with the following subclass marker or at the beginning of xdata or the end of the
 object. See `Subclass Marker Example`_ in the DXF Reference.
 
+Quote About Group Codes from the DXF Reference
+----------------------------------------------
+
+    Some group codes that define an entity always appear; others are optional and appear only if their values differ
+    from the defaults.
+
+    **Do not** write programs that **rely on the order given here**. The end of an entity is indicated by the next 0
+    group, which begins the next entity or indicates the end of the section.
+
+    **Note:** Accommodating DXF files from future releases of AutoCAD will be easier if you write your DXF processing
+    program in a table-driven way, ignore undefined group codes, and make no assumptions about the order of group codes
+    in an entity. With each new AutoCAD release, new group codes will be added to entities to accommodate additional
+    features.
+
+Usage of Group Codes in Subclasses Twice
+----------------------------------------
+
+Some later entities entities contains the same group code twice for different purposes, so order in the sense of which
+one comes first is important. (e.g. ATTDEF group code 280)
 
 Tag Order is Sometimes Important Especially for AutoCAD
 -------------------------------------------------------
 
-Placed here until I find a better location
-
 In `LWPOLYLINE` the order of tags is important, if the `count` tag is not the first tag in the `AcDbPolyline` subclass,
 AutoCAD will not close the polyline when the `close` flag is set, by the way other applications like BricsCAD ignores
 the tag order and renders the polyline always correct.
+
 
 Extension Dictionary
 ~~~~~~~~~~~~~~~~~~~~

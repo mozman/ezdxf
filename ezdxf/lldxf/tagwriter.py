@@ -27,6 +27,9 @@ class TagWriter:
         # this are just options for export functions
         self.dxfversion = dxfversion
         self.write_handles = write_handles  # flag is needed for new new entity structure!
+        # force writing optional values if equal to default value when set
+        # True is only used for testing
+        self.force_optional = False
 
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
         if self.write_handles:
@@ -57,10 +60,14 @@ class TagCollector:
     Collects DXF tags as DXFTag() entities for testing.
 
     """
-    def __init__(self, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True):
+
+    def __init__(self, dxfversion=LATEST_DXF_VERSION, write_handles: bool = True, optional: bool = True):
         self.tags = []
         self.dxfversion = dxfversion
         self.write_handles = write_handles  # flag is needed for new new entity structure!
+        # force writing optional values if equal to default value when set
+        # True is only used for testing
+        self.force_optional = optional
 
     def write_tags(self, tags: Union['Tags', 'ExtendedTags']) -> None:
         for tag in tags:
@@ -77,6 +84,9 @@ class TagCollector:
 
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))
+
+    def has_all_tags(self, other: 'TagCollector'):
+        return all(tag in self.tags for tag in other.tags)
 
 
 def basic_tags_from_text(text: str) -> List[DXFTag]:

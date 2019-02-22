@@ -3,15 +3,16 @@
 # created 2019-02-15
 import pytest
 
-from ezdxf.entities.text import Text
+from ezdxf.entities.attrib import Attrib
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-TEST_CLASS = Text
-TEST_TYPE = 'TEXT'
+
+TEST_CLASS = Attrib
+TEST_TYPE = 'ATTRIB'
 
 ENTITY_R12 = """0
-TEXT
+ATTRIB
 5
 0
 8
@@ -25,17 +26,15 @@ TEXT
 40
 1.0
 1
-TEXTCONTENT
+DEFAULTTEXT
 50
 0.0
 51
 0.0
 7
-Standard
+STANDARD
 41
 1.0
-71
-0
 72
 0
 11
@@ -44,12 +43,18 @@ Standard
 0.0
 31
 0.0
-73
+2
+TAG
+70
+0
+71
+0
+74
 0
 """
 
 ENTITY_R2000 = """0
-TEXT
+ATTRIB
 5
 0
 330
@@ -69,17 +74,15 @@ AcDbText
 40
 1.0
 1
-TEXTCONTENT
+DEFAULTTEXT
 50
 0.0
 51
 0.0
 7
-Standard
+STANDARD
 41
 1.0
-71
-0
 72
 0
 11
@@ -89,8 +92,16 @@ Standard
 31
 0.0
 100
-AcDbText
+AcDbAttribute
+2
+TAG
+70
+0
+71
+0
 73
+0
+74
 0
 """
 
@@ -147,44 +158,3 @@ def test_write_dxf(txt, ver):
     attdef.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
-
-@pytest.fixture
-def text():
-    return Text.new(handle='ABBA', owner='0')
-
-
-def test_text_set_alignment(text):
-    text.set_pos((2, 2), align="TOP_CENTER")
-    assert text.dxf.halign == 1
-    assert text.dxf.valign == 3
-    assert text.dxf.align_point == (2, 2)
-
-
-def test_text_set_fit_alignment(text):
-    text.set_pos((2, 2), (4, 2), align="FIT")
-    assert text.dxf.halign == 5
-    assert text.dxf.valign == 0
-    assert text.dxf.insert == (2, 2)
-    assert text.dxf.align_point == (4, 2)
-
-
-def test_text_get_alignment(text):
-    text.dxf.halign = 1
-    text.dxf.valign = 3
-    assert text.get_align() == 'TOP_CENTER'
-
-
-def test_text_get_pos_TOP_CENTER(text):
-    text.set_pos((2, 2), align="TOP_CENTER")
-    align, p1, p2 = text.get_pos()
-    assert align == "TOP_CENTER"
-    assert p1 == (2, 2)
-    assert p2 is None
-
-
-def test_text_get_pos_LEFT(text):
-    text.set_pos((2, 2))
-    align, p1, p2 = text.get_pos()
-    assert align == "LEFT"
-    assert p1 == (2, 2)
-    assert p2 is None

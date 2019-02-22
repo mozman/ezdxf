@@ -47,6 +47,7 @@ class DXFAttr:
                  subclass: int = 0,
                  xtype: XType = None,
                  default=None,
+                 optional=False,
                  dxfversion: str = None,
                  getter: str = None,  # name of getter method
                  setter: str = None,  # name of setter method
@@ -56,6 +57,7 @@ class DXFAttr:
         self.subclass = subclass  # subclass index
         self.xtype = xtype  # Point2D, Point3D, Point2D/3D, Callback
         self.default = default  # type: TagValue # DXF default value
+        self.optional = optional  # this value is only written if set
 
         # If dxfversion is None - this attribute is valid for all supported DXF versions, set dxfversion to a specific
         # DXF version like 'AC1018' and this attribute can only be set by DXF version 'AC1018' or later.
