@@ -57,10 +57,9 @@ class Dictionary(DXFObject):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dictionary)
-        self.load_dict(tags)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dictionary)
+            self.load_dict(tags)
         return dxf
 
     def load_dict(self, tags):

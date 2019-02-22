@@ -54,11 +54,10 @@ class Insert(DXFGraphic):
         class.
         """
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_block_reference)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_block_reference.name)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_block_reference)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_block_reference.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

@@ -194,11 +194,9 @@ class Material(DXFObject):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_material)
-        # remaining tags are matrices
-        self.load_matrices(tags)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_material)
+            self.load_matrices(tags)
         return dxf
 
     def load_matrices(self, tags):

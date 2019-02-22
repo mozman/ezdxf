@@ -34,10 +34,9 @@ class TableHead(DXFEntity):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-        dxf.name = processor.base_class.get_first_value(2)
-        dxf.count = 0  # no need to load max table count
+        if processor:
+            dxf.name = processor.base_class.get_first_value(2)
+            dxf.count = 0  # no need to load max table count
         return dxf
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:

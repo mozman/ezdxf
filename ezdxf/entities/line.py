@@ -35,12 +35,10 @@ class Line(DXFGraphic):
         class.
         """
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_line)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_line.name)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_line)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_line.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

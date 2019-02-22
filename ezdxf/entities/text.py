@@ -57,16 +57,14 @@ class Text(DXFGraphic):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text, 2)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
 
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text, 2)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text2, 3)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_text2.name)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text2, 3)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_text2.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

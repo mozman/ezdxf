@@ -74,12 +74,9 @@ class Linetype(DXFEntity):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
-        # store whole subclass
-        self.pattern_tags = LinetypePattern(tags)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_linetype)
+            self.pattern_tags = LinetypePattern(tags)
         return dxf
 
     def preprocess_export(self, tagwriter: 'TagWriter'):

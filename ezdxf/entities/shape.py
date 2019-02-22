@@ -36,12 +36,10 @@ class Shape(DXFGraphic):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        if processor is None:
-            return dxf
-
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_shape)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_shape.name)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_shape)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_shape.name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
