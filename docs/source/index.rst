@@ -11,7 +11,7 @@ Welcome! This is the documentation for ezdxf release |release|, last updated |to
 
 .. note::
 
-   **Python 2** support REMOVED, *ezdxf* >= v0.9.0 requires at least **Python 3.5**
+   **Python 2** support REMOVED, *ezdxf* >= v0.9 requires at least **Python 3.5**
 
 
 Quick-Info

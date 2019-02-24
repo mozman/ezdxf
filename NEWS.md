@@ -2,13 +2,11 @@
 News
 ====
 
-Version 0.9b1 - dev
--------------------
+Version 0.9 - 2019-02-24
+------------------------
 
-Beta release - all planned features for next release completed
-
-- Release notes: https://ezdxf.mozman.at/release-v0-9-0.html
-- IMPORTANT: Python 2 support REMOVED, if Python 2 support needed: add `ezdxf<0.9.0` to your `requirements.txt` 
+- Release notes: https://ezdxf.mozman.at/release-v0-9.html
+- IMPORTANT: Python 2 support REMOVED, if Python 2 support needed: add `ezdxf<0.9` to your `requirements.txt` 
 - NEW: testing on Manjaro Linux in a VM by tox
 - CHANGE: converted NEWS.rst to NEWS.md and README.rst to README.md  
 - CHANGE: moved `Importer()` from `ezdxf.tools` to `ezdxf.addons` - internal structures of modern DXF files are too complex

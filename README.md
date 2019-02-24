@@ -14,7 +14,7 @@ Quick-Info
 
 - ezdxf is a Python package to create new DXF files and read/modify/write existing DXF files
 - the intended audience are developers
-- requires at least CPython 3.5, for Python 2 support use ezdxf < 0.9.0
+- requires at least CPython 3.5, for Python 2 support use ezdxf < 0.9
 - OS independent
 - additional required packages: [pyparsing](https://pypi.org/project/pyparsing/)
 - MIT-License
@@ -29,7 +29,7 @@ a simple example:
 ```python
 import ezdxf
 
-drawing = ezdxf.new(dxfversion='AC1024')  
+drawing = ezdxf.new(dxfversion='R2010')  
 # alternative:  use the AutoCAD release name 
 # ezdxf.new(dxfversion='R2010')
 modelspace = drawing.modelspace()
@@ -78,7 +78,7 @@ Install develop version (only if you have to)::
 
 For Python 2 users:
 
-    pip install ezdxf<0.9.0
+    pip install ezdxf<0.9
 
 
 or from source:
