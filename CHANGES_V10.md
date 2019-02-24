@@ -54,6 +54,9 @@ Changes in Detail
 - `templates` no more needed and removed from package but preserved in repository
 - renamed central data object in entities from `DXFEntity.drawing` to `DXFEntity.doc`, this should not impact users
   because they have to save the `Drawing` object in an own variable, else it would be removed by th GC.
+- DXFEntity: get_xdata() keyword `xdata_tag` renamed to `tags`
+- DXFEntity: set_xdata() keyword `xdata_tag` renamed to `tags`
+- DXFEntity: `remove_reactor_handle()` renamed to `discard_reactor_handle()`
 - LAYER: renamed DXF atributes:
     - removed `line_weight` as synonym for `lineweight`
     - `plot_style_name` renamed to `plotstyle_handle` 

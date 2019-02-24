@@ -713,13 +713,16 @@ class DXFEntity:
             return new_extension_dict()
 
     def has_app_data(self, appid: str) -> bool:
-        return self.appdata and (appid in self.appdata)
+        if self.appdata:
+            return appid in self.appdata
+        else:
+            return False
 
     def get_app_data(self, appid: str) -> Tags:
         if self.appdata:
-            return self.appdata.get(appid)
+            return self.appdata.get(appid)[1:-1]
         else:
-            raise DXFKeyError(appid)
+            raise DXFValueError(appid)
 
     def set_app_data(self, appid: str, tags: Iterable) -> None:
         if self.appdata is None:
@@ -731,13 +734,16 @@ class DXFEntity:
             self.appdata.discard(appid)
 
     def has_xdata(self, appid: str) -> bool:
-        return self.xdata and (appid in self.xdata)
+        if self.xdata:
+            return appid in self.xdata
+        else:
+            return False
 
     def get_xdata(self, appid: str) -> Tags:
         if self.xdata:
-            return self.xdata.get(appid)
+            return self.xdata.get(appid)[1:]
         else:
-            raise DXFKeyError(appid)
+            raise DXFValueError(appid)
 
     def set_xdata(self, appid: str, tags: Iterable) -> None:
         if self.xdata is None:
@@ -755,7 +761,10 @@ class DXFEntity:
             return False
 
     def get_xdata_list(self, appid: str, name: str) -> List:
-        return self.xdata.get_xlist(appid, name)
+        if self.xdata:
+            return self.xdata.get_xlist(appid, name)
+        else:
+            raise DXFValueError(appid)
 
     def set_xdata_list(self, appid: str, name: str, tags: Iterable) -> None:
         if self.xdata is None:

@@ -103,7 +103,7 @@ class Reactors:
         return cls((handle.value for handle in tags[1:-1]))
 
     def get(self) -> List[str]:
-        return sorted(self.reactors)
+        return sorted(self.reactors, key=lambda x: int(x, base=16))
 
     def set(self, handles: Iterable[str]) -> None:
         self.reactors = set(handles or [])

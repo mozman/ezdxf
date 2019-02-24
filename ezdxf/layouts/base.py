@@ -93,7 +93,7 @@ class BaseLayout(CreatorInterface):
         """
         self.entity_space.remove(entity)
         entity.dxf.paperspace = -1  # set invalid paper space
-        entity.dxf.owner = '0'
+        entity.dxf.owner = None
 
     def delete_entity(self, entity: 'DXFEntity') -> None:
         """

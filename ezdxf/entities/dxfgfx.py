@@ -140,6 +140,8 @@ class DXFGraphic(DXFEntity):
         ])
 
     def get_layout(self) -> Optional['BaseLayout']:
+        if self.dxf.owner is None:  # unlinked entity
+            return None
         try:
             return self.doc.layouts.get_layout_by_key(self.dxf.owner)
         except DXFKeyError:
