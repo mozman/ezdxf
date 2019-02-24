@@ -3,31 +3,39 @@
 # created 2019-02-15
 import pytest
 
-from ezdxf.entities.polyline import DXFVertex
+from ezdxf.entities.insert import Insert
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-TEST_CLASS = DXFVertex
-TEST_TYPE = 'VERTEX'
+TEST_CLASS = Insert
+TEST_TYPE = 'INSERT'
 
 ENTITY_R12 = """0
-VERTEX
+INSERT
 5
 0
 8
 0
+2
+BLOCKNAME
 10
 0.0
 20
 0.0
 30
 0.0
-70
-0
+41
+1.0
+42
+1.0
+43
+1.0
+50
+0.0
 """
 
 ENTITY_R2000 = """0
-VERTEX
+INSERT
 5
 0
 330
@@ -37,17 +45,23 @@ AcDbEntity
 8
 0
 100
-AcDbVertex
-100
-AcDb2dVertex
+AcDbBlockReference
+2
+BLOCKNAME
 10
 0.0
 20
 0.0
 30
 0.0
-70
-0
+41
+1.0
+42
+1.0
+43
+1.0
+50
+0.0
 """
 
 
@@ -69,15 +83,15 @@ def test_default_init():
 def test_default_new():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
-        'location': (1, 2, 3),
+        'insert': (1, 2, 3),
     })
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 7
     assert entity.dxf.linetype == 'BYLAYER'
-    assert entity.dxf.location == (1, 2, 3)
-    assert entity.dxf.location.x == 1, 'is not Vector compatible'
-    assert entity.dxf.location.y == 2, 'is not Vector compatible'
-    assert entity.dxf.location.z == 3, 'is not Vector compatible'
+    assert entity.dxf.insert == (1, 2, 3)
+    assert entity.dxf.insert.x == 1, 'is not Vector compatible'
+    assert entity.dxf.insert.y == 2, 'is not Vector compatible'
+    assert entity.dxf.insert.z == 3, 'is not Vector compatible'
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
@@ -86,7 +100,7 @@ def test_default_new():
 def test_load_from_text(entity):
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.location == (0, 0, 0)
+    assert entity.dxf.insert == (0, 0, 0)
 
 
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
