@@ -3,31 +3,77 @@
 # created 2019-02-15
 import pytest
 
-from ezdxf.entities.polyline import DXFVertex
+from ezdxf.entities.dimension import Dimension
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-TEST_CLASS = DXFVertex
-TEST_TYPE = 'VERTEX'
+TEST_CLASS = Dimension
+TEST_TYPE = 'DIMENSION'
 
 ENTITY_R12 = """0
-VERTEX
+DIMENSION
 5
 0
 8
 0
+2
+*D0
+3
+Standard
 10
 0.0
 20
 0.0
 30
 0.0
+11
+0.0
+21
+0.0
+31
+0.0
+12
+0.0
+22
+0.0
+32
+0.0
 70
 0
+1
+
+13
+0.0
+23
+0.0
+33
+0.0
+14
+0.0
+24
+0.0
+34
+0.0
+15
+0.0
+25
+0.0
+35
+0.0
+16
+0.0
+26
+0.0
+36
+0.0
+40
+1.0
+50
+0.0
 """
 
-ENTITY_R2000 = """0
-VERTEX
+ENTITY_R2000 = """  0
+DIMENSION
 5
 0
 330
@@ -37,17 +83,53 @@ AcDbEntity
 8
 0
 100
-AcDbVertex
-100
-AcDb2dVertex
+AcDbDimension
+2
+*D0
+3
+Standard
 10
 0.0
 20
 0.0
 30
 0.0
+11
+0.0
+21
+0.0
+31
+0.0
 70
+32
+71
+5
+42
+0.0
+100
+AcDbAlignedDimension
+12
+0.0
+22
+0.0
+32
+0.0
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 14
+0.0
+ 24
+0.0
+ 34
+0.0
+50
 0
+100
+AcDbRotatedDimension
 """
 
 
@@ -69,15 +151,15 @@ def test_default_init():
 def test_default_new():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
-        'location': (1, 2, 3),
+        'defpoint': (1, 2, 3),
     })
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 7
     assert entity.dxf.linetype == 'BYLAYER'
-    assert entity.dxf.location == (1, 2, 3)
-    assert entity.dxf.location.x == 1, 'is not Vector compatible'
-    assert entity.dxf.location.y == 2, 'is not Vector compatible'
-    assert entity.dxf.location.z == 3, 'is not Vector compatible'
+    assert entity.dxf.defpoint == (1, 2, 3)
+    assert entity.dxf.defpoint.x == 1, 'is not Vector compatible'
+    assert entity.dxf.defpoint.y == 2, 'is not Vector compatible'
+    assert entity.dxf.defpoint.z == 3, 'is not Vector compatible'
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
@@ -86,19 +168,19 @@ def test_default_new():
 def test_load_from_text(entity):
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.location == (0, 0, 0)
+    assert entity.dxf.defpoint == (0, 0, 0)
 
 
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
-    vertex = TEST_CLASS.from_text(txt)
+    dimension = TEST_CLASS.from_text(txt)
     collector = TagCollector(dxfversion=ver, optional=True)
-    vertex.export_dxf(collector)
+    dimension.export_dxf(collector)
     assert collector.tags == expected
 
     collector2 = TagCollector(dxfversion=ver, optional=False)
-    vertex.export_dxf(collector2)
+    dimension.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
 
