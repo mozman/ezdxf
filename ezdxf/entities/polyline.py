@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 __all__ = ['Polyline', 'Polyface']
 
-acdb_polyline = DefSubclass('AcDbPolyline', {  # AcDbPolyline is a temp solution while importing
+acdb_polyline = DefSubclass('AcDbPolylineDummy', {  # AcDbPolylineDummy is a temp solution while importing
     # 66: obsolete - not read and not written, because POLYLINE without vertices makes no sense
     # a “dummy” point; the X and Y values are always 0, and the Z value is the polyline's elevation
     # (in OCS when 2D, WCS when 3D) x, y ALWAYS 0
@@ -91,10 +91,13 @@ class Polyline(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-        processor.change_subclass_marker(2, 'AcDbPolyline')
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_polyline)
-        if len(tags) and not processor.r12:
-            processor.log_unprocessed_tags(tags, subclass=acdb_polyline.name)
+        if processor.r12:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_polyline, index=0)
+        else:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_polyline, index=2)
+            name = processor.subclasses[2][0].value
+            if len(tags):
+                processor.log_unprocessed_tags(tags, subclass=name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -104,6 +107,8 @@ class Polyline(DXFGraphic):
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, self.get_mode())
+        else:
+            tagwriter.write_tag2(66, 1)  # entities follow, required for R12? (sure not for R2000+)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'elevation',

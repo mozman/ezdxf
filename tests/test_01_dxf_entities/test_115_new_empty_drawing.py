@@ -9,7 +9,7 @@ from ezdxf.sections.objects2 import _OBJECT_TABLE_NAMES
 
 @pytest.fixture
 def doc():
-    return Drawing.new()
+    return Drawing.new('r2018')
 
 
 def test_create_new_empty_drawing(doc):

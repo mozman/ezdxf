@@ -14,7 +14,7 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
-    from .dxfentity import DXFNamespace
+    from .dxfentity import DXFNamespace, DXFEntity
     from ezdxf.drawing2 import Drawing
 
 __all__ = ['AttDef', 'Attrib']
@@ -75,6 +75,13 @@ class BaseAttrib(Text):
         """ Default constructor """
         super().__init__(doc)
         self.xrecord = None
+        self.attached_mtext = None  # type: DXFEntity
+
+    def link_entity(self, entity: 'DXFEntity'):
+        self.attached_mtext = entity
+
+    def export_attached_mtext(self, tagwriter: 'TagWriter') -> None:
+        raise NotImplementedError()
 
     @property
     def is_const(self) -> bool:
@@ -158,6 +165,8 @@ class AttDef(BaseAttrib):
         self.export_acdb_attdef(tagwriter)
         if self.xrecord:
             tagwriter.write_tags(self.xrecord)
+        if self.attached_mtext:
+            self.export_attached_mtext(tagwriter)
 
     def export_acdb_attdef(self, tagwriter: 'TagWriter') -> None:
         if tagwriter.dxfversion > DXF12:
@@ -218,6 +227,8 @@ class Attrib(BaseAttrib):
         self.export_acdb_attrib(tagwriter)
         if self.xrecord:
             tagwriter.write_tags(self.xrecord)
+        if self.attached_mtext:
+            self.export_attached_mtext(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: 'TagWriter') -> None:
         # difference to export_acdb_text(): do not export 'text_generation_flag'

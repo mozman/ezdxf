@@ -5,8 +5,9 @@
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType, DXFUnsupportedFeature
+from ezdxf.math import Vector, UCS
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS
@@ -14,7 +15,7 @@ from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter
+    from ezdxf.eztypes import Auditor, TagWriter, Vertex, Matrix44
     from .dxfentity import DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity']
@@ -136,6 +137,100 @@ class DXFGraphic(DXFEntity):
             'layer', 'linetype', 'material_handle', 'color', 'paperspace', 'lineweight', 'ltscale', 'true_color',
             'color_name', 'transparency', 'plotstyle_handle', 'shadow_mode',
         ])
+
+    # ------------------------------------------------------------------------------------------
+    # A simple CAD like interface - but don't expect too much
+    # ------------------------------------------------------------------------------------------
+
+    def translate(self, direction: 'Vertex', ignore: bool = False) -> None:
+        """
+        Translate entity in `direction` if supported, else raises :class:`DXFUnsupportedFeature` except `ignore` is
+        True.
+
+        Args:
+            direction: translation direction as :class:`Vector` or (x, y, z) tuple
+            ignore: don't raise exception if not supported
+
+        """
+        direction = Vector(direction)
+        if not ignore:
+            raise DXFUnsupportedFeature(self.DXFTYPE)
+
+    def scale(self, factor: float, ignore: bool = False) -> None:
+        """
+        Scale entity uniform by `factor` in x-, y- and z-direction if supported, else raises
+        :class:`DXFUnsupportedFeature` except `ignore` is True.
+
+        Args:
+            factor: scaling factor for uniform scaling
+            ignore: don't raise exception if not supported
+
+        """
+        factor = float(factor)
+        if not ignore:
+            raise DXFUnsupportedFeature(self.DXFTYPE)
+
+    def scale_xyz(self, sx: float = 1, sy: float = 1, sz: float = 1, ignore: bool = False) -> None:
+        """
+        Scale entity none uniform in x-, y- and z-direction if supported, else raises
+        :class:`DXFUnsupportedFeature` except `ignore` is True.
+
+        Hint: scaling by -1 is mirroring
+
+        Args:
+            sx: x-axis scaling factor
+            sy: y-axis scaling factor
+            sz: z-axis scaling factor
+            ignore: don't raise exception if not supported
+
+        """
+        sx = float(sx)
+        sy = float(sy)
+        sz = float(sz)
+        if not ignore:
+            raise DXFUnsupportedFeature(self.DXFTYPE)
+
+    def rotate(self, angle: float, ucs: UCS = None, ignore: bool = False) -> None:
+        """
+        Rotate entity about the z-axis of `ucs` if supported, else raises :class:`DXFUnsupportedFeature` except
+        `ignore` is True. If ucs is None, WCS is used.
+
+        Args:
+            angle: rotation angle in degrees (all angles in DXF are degrees)
+            ucs: z-axis of ucs is the rotation axis
+            ignore: don't raise exception if not supported
+
+        """
+        angle = float(angle)
+        ucs = ucs or UCS()  # ucs or WCS
+        if not ignore:
+            raise DXFUnsupportedFeature(self.DXFTYPE)
+
+    def transform(self, matrix: 'Matrix44', ignore: bool = False) -> None:
+        """
+        Applies a rigid motion transformation to an object if supported, else raises :class:`DXFUnsupportedFeature`
+        except `ignore` is True.
+
+        Args:
+            matrix: 4 by 4 transformation matrix
+            ignore: don't raise exception if not supported
+
+        """
+        if not ignore:
+            raise DXFUnsupportedFeature(self.DXFTYPE)
+
+    def to_wsc(self, ucs: UCS, ignore: bool = False) -> None:
+        """
+        Transform entity coordinates into WCS. All coordinates of the entity are treated as ucs coordinates and
+        transformed into the WCS. For 2D entities the required OCS transformation is done automatically.
+
+        Args:
+            ucs: user coordinate system
+            ignore: don't raise exception if not supported
+
+        """
+        if not ignore:
+            raise DXFUnsupportedFeature(self.DXFTYPE)
 
     def audit(self, auditor: 'Auditor') -> None:
         super().audit(auditor)

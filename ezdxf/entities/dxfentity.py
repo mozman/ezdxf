@@ -341,13 +341,6 @@ class SubclassProcessor:
                 unprocessed_tags.append(tag)
         return unprocessed_tags
 
-    def change_subclass_marker(self, index: int, marker: str) -> None:
-        try:
-            self.subclasses[index][0] = DXFTag(SUBCLASS_MARKER, marker)
-        except IndexError:
-            raise DXFStructureError(
-                "DXF structure error in entity {}(#{}) - missing subclass".format(self.name, self.handle))
-
 
 base_class = DefSubclass(None, {
     'handle': DXFAttr(5),
@@ -563,10 +556,15 @@ class DXFEntity:
         return bool(self.dxf.get(name, 0) & flag)
 
     def linked_entities(self) -> Iterable['DXFEntity']:
+        """ Yield linked entities: VERTEX or ATTRIB, different handling than attached entities. """
+        return []
+
+    def attached_entities(self) -> Iterable['DXFEntity']:
+        """ Yield attached entities: MTEXT,  different handling than linked entities. """
         return []
 
     def link_entity(self, entity: 'DXFEntity') -> None:
-        # INSERT and POLYLINE have linked entities
+        """ Store linked or attached entities. Same API for both types of appended data. """
         pass
 
     def set_owner(self, owner: str, paperspace: int = 0) -> None:
@@ -688,6 +686,13 @@ class DXFEntity:
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it to create new standalone entities.
 
         """
+        dxfattribs = dxfattribs or {}
+        # if layer is not deliberately set, set same layer as creator entity,
+        # at least VERTEX should have the same layer as the POLYGON entity.
+        # Don't know if that is also important for the ATTRIB & INSERT entity.
+        if 'layer' not in dxfattribs:
+            dxfattribs['layer'] = self.dxf.layer
+
         entity = self.dxffactory.create_db_entry(type_, dxfattribs)
         entity.dxf.owner = self.dxf.owner
         entity.dxf.paperspace = self.dxf.paperspace
@@ -827,26 +832,34 @@ LINKED_ENTITIES = {
     'POLYLINE': 'VERTEX'
 }
 
+# todo: MTEXT attached to ATTRIB & ATTDEF
+# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT') therefor separated entity, but without the
+# base class: no handle, no owner nor AppData, and a limited AcDbEntity subclass.
+# Detect attached entities (more than MTEXT?) by required but missing handle and owner tags
+# use DXFEntity.link_entity() for linking to preceding entity, INSERT & POLYLINE do not have attached entities, so reuse
+# of API for ATTRIB & ATTDEF should be safe.
+
 
 def entity_linker() -> Callable[[DXFEntity], bool]:
-    prev = None  # type: Optional[DXFEntity]
+    main_entity = None  # type: Optional[DXFEntity]
+    prev = None  # type: Optional[DXFEntity] # store preceding entity
     expected = ""
 
     def entity_linker_(entity: DXFEntity) -> bool:
-        nonlocal prev, expected
+        nonlocal main_entity, expected, prev
         dxftype = entity.dxftype()  # type: str
-        are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
-        if prev is not None:
-            are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
+        are_linked_entities = False  # INSERT & POLYLINE are not linked entities, they are stored in the entity space
+        if main_entity is not None:
+            are_linked_entities = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
             if dxftype == 'SEQEND':
-                prev.link_entity(entity)
-                prev = None
+                # do not store SEQEND entity
+                main_entity = None
             # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
             elif dxftype == expected:
-                prev.link_entity(entity)
-                prev = entity
+                main_entity.link_entity(entity)
             else:
                 raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
+        # linked entities
         elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
             if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
@@ -860,9 +873,18 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
                 # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
                 pass
             else:
-                prev = entity
+                main_entity = entity
                 expected = LINKED_ENTITIES[dxftype]
-        return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
+        # attached entities
+        elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):  # attached MTEXT entity
+            if prev:
+
+                prev.link_entity(entity)
+                are_linked_entities = True
+            else:
+                raise DXFStructureError("Attached MTEXT entity without a preceding entity.")
+        prev = entity
+        return are_linked_entities  # caller should know, if *tags* should be stored in the entity space or not
 
     return entity_linker_
 

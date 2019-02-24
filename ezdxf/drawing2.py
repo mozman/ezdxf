@@ -8,7 +8,7 @@ import logging
 from itertools import chain
 
 from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError, acad_release_to_dxf_version
-from ezdxf.lldxf.const import DXF13, DXF14, LATEST_DXF_VERSION, DXF2007, DXF12, versions_supported_by_save
+from ezdxf.lldxf.const import DXF13, DXF14, DXF2007, DXF12, DXF2013, versions_supported_by_save
 from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database2
 from ezdxf.lldxf import repair
@@ -42,16 +42,22 @@ if TYPE_CHECKING:
     from ezdxf.layouts.blocklayout import BlockLayout
     from ezdxf.layouts.layout import Layout
     from ezdxf.entities.dxfentity import DXFEntity
+    from ezdxf.entities.layer import Layer
 
     LayoutType = Union[Layout, BlockLayout]
 
 
 class Drawing:
-    def __init__(self):
+    def __init__(self, dxfversion=DXF2013):
         self.entitydb = EntityDB()
         self.dxffactory = EntityFactory(self)
         self.tracker = Tracker()  # still required
-        self._dxfversion = LATEST_DXF_VERSION
+
+        # Targeted DXF version, but drawing could be exported as any DXF version.
+        # If target version is set, it is possible to warn user, if they try to use unsupported features, where they
+        # use it and not at exporting, where the location of the code who created that features is not known.
+        target_dxfversion = dxfversion.upper()
+        self._dxfversion = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
         self.encoding = 'cp1252'
         self.filename = None  # type: str # read/write
         self.sections = None  # type: Sections
@@ -69,8 +75,8 @@ class Drawing:
         assert len(self.entitydb) == 0
 
     @classmethod
-    def new(cls) -> 'Drawing':
-        doc = Drawing()
+    def new(cls, dxfversion=DXF2013) -> 'Drawing':
+        doc = Drawing(dxfversion)
         doc._setup()
         return doc
 
@@ -106,7 +112,7 @@ class Drawing:
         self._create_required_dimstyles()
 
     def _set_required_layer_attributes(self):
-        for layer in self.layers:
+        for layer in self.layers:  # type: Layer
             layer.set_required_attributes()
 
     def _create_required_vports(self):

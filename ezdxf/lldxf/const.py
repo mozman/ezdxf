@@ -53,10 +53,17 @@ class DXFXDataError(DXFStructureError):
 
 
 class DXFVersionError(DXFError):
+    """ Errors related to features not supported by the chosen DXF Version """
     pass
 
 
 class DXFInternalEzdxfError(DXFError):
+    """ Indicates internal errors -  should be fixed by mozman """
+    pass
+
+
+class DXFUnsupportedFeature(DXFError):
+    """ Indicates unsupported features for DXFEntities e.g. translation for ACIS data """
     pass
 
 

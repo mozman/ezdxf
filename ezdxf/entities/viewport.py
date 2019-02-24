@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
-from typing import TYPE_CHECKING, List, cast
+# Created 2019-02-22
+from typing import TYPE_CHECKING, List
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFTag

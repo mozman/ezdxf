@@ -5,15 +5,15 @@
 # Local imports to avoid cyclic import
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 from ezdxf.tools.standards import setup_drawing
-from ezdxf.lldxf.const import DXF12
+from ezdxf.lldxf.const import DXF12, DXF2013
 from ezdxf.drawing2 import Drawing as Drawing2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFInfo
 
 
-def new2(setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
-    doc = Drawing2.new()
+def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
+    doc = Drawing2.new(dxfversion)
     if setup:
         pass
         # does not work yet
