@@ -3,18 +3,22 @@
 # created 2019-02-15
 import pytest
 
-from ezdxf.entities.polyline import DXFVertex
+from ezdxf.entities.block import Block, EndBlk
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-TEST_CLASS = DXFVertex
-TEST_TYPE = 'VERTEX'
+TEST_CLASS = Block
+TEST_TYPE = 'BLOCK'
 
 ENTITY_R12 = """0
-VERTEX
+BLOCK
 5
 0
 8
+0
+2
+BLOCKNAME
+70
 0
 10
 0.0
@@ -22,12 +26,14 @@ VERTEX
 0.0
 30
 0.0
-70
-0
+3
+BLOCKNAME
+1
+
 """
 
 ENTITY_R2000 = """0
-VERTEX
+BLOCK
 5
 0
 330
@@ -37,17 +43,21 @@ AcDbEntity
 8
 0
 100
-AcDbVertex
-100
-AcDb2dVertex
+AcDbBlockBegin
+2
+BLOCKNAME
+70
+0
 10
 0.0
 20
 0.0
 30
 0.0
-70
-0
+3
+BLOCKNAME
+1
+
 """
 
 
@@ -68,38 +78,58 @@ def test_default_init():
 
 def test_default_new():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'location': (1, 2, 3),
+        'base_point': (1, 2, 3),
     })
     assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
-    assert entity.dxf.location == (1, 2, 3)
-    assert entity.dxf.location.x == 1, 'is not Vector compatible'
-    assert entity.dxf.location.y == 2, 'is not Vector compatible'
-    assert entity.dxf.location.z == 3, 'is not Vector compatible'
-    # can set DXF R2007 value
-    entity.dxf.shadow_mode = 1
-    assert entity.dxf.shadow_mode == 1
+    assert entity.dxf.base_point == (1, 2, 3)
+    assert entity.dxf.base_point.x == 1, 'is not Vector compatible'
+    assert entity.dxf.base_point.y == 2, 'is not Vector compatible'
+    assert entity.dxf.base_point.z == 3, 'is not Vector compatible'
 
 
 def test_load_from_text(entity):
     assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.location == (0, 0, 0)
+    assert entity.dxf.base_point == (0, 0, 0)
 
 
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
-def test_write_dxf(txt, ver):
+def test_write_block_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
-    vertex = TEST_CLASS.from_text(txt)
+    block = TEST_CLASS.from_text(txt)
     collector = TagCollector(dxfversion=ver, optional=True)
-    vertex.export_dxf(collector)
+    block.export_dxf(collector)
     assert collector.tags == expected
 
     collector2 = TagCollector(dxfversion=ver, optional=False)
-    vertex.export_dxf(collector2)
+    block.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
 
+ENDBLK_R12 = "  0\nENDBLK\n  5\n0\n  8\n0\n"
 
+ENDBLK_R2000 = """0
+ENDBLK
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
+100
+AcDbBlockEnd
+"""
+
+
+@pytest.mark.parametrize("txt,ver", [(ENDBLK_R2000, DXF2000), (ENDBLK_R12, DXF12)])
+def test_write_endblk_dxf(txt, ver):
+    expected = basic_tags_from_text(txt)
+    endblk = EndBlk.from_text(txt)
+    collector = TagCollector(dxfversion=ver, optional=True)
+    endblk.export_dxf(collector)
+    assert collector.tags == expected
+
+    collector2 = TagCollector(dxfversion=ver, optional=False)
+    endblk.export_dxf(collector2)
+    assert collector.has_all_tags(collector2)
