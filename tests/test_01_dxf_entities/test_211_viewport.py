@@ -3,51 +3,208 @@
 # created 2019-02-15
 import pytest
 
-from ezdxf.entities.polyline import DXFVertex
+from ezdxf.entities.viewport import Viewport
+from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-TEST_CLASS = DXFVertex
-TEST_TYPE = 'VERTEX'
+TEST_CLASS = Viewport
+TEST_TYPE = 'VIEWPORT'
 
 ENTITY_R12 = """0
-VERTEX
+VIEWPORT
 5
 0
 8
-0
+VIEWPORTS
 10
 0.0
 20
 0.0
 30
 0.0
-70
+40
+1.0
+41
+1.0
+68
+1
+1001
+ACAD
+1000
+MVIEW
+1002
+{
+1070
+16
+1010
+0.0
+1020
+0.0
+1030
+0.0
+1010
+0.0
+1020
+0.0
+1030
+0.0
+1040
+0.0
+1040
+1.0
+1040
+0.0
+1040
+0.0
+1040
+50.0
+1040
+0.0
+1040
+0.0
+1070
 0
+1070
+100
+1070
+1
+1070
+3
+1070
+0
+1070
+0
+1070
+0
+1070
+0
+1040
+0.0
+1040
+0.0
+1040
+0.0
+1040
+0.1
+1040
+0.1
+1040
+0.1
+1040
+0.1
+1070
+0
+1002
+{
+1002
+}
+1002
+}
 """
 
 ENTITY_R2000 = """0
-VERTEX
+VIEWPORT
 5
 0
 330
 0
 100
 AcDbEntity
+67
+1
 8
-0
+VIEWPORTS
 100
-AcDbVertex
-100
-AcDb2dVertex
+AcDbViewport
 10
 0.0
 20
 0.0
 30
 0.0
-70
+40
+1.0
+41
+1.0
+68
+2
+69
+2
+12
+0.0
+22
+0.0
+13
+0.0
+23
+0.0
+14
+0.1
+24
+0.1
+15
+0.1
+25
+0.1
+16
+0.0
+26
+0.0
+36
+0.0
+17
+0.0
+27
+0.0
+37
+0.0
+42
+50.0
+43
+0.0
+44
+0.0
+45
+1.0
+50
+0.0
+51
+0.0
+72
+100
+90
+32864
+1
+
+281
 0
+71
+0
+74
+0
+110
+0.0
+120
+0.0
+130
+0.0
+111
+1.0
+121
+0.0
+131
+0.0
+112
+0.0
+122
+1.0
+132
+0.0
+79
+0
+146
+0.0
 """
 
 
@@ -69,37 +226,41 @@ def test_default_init():
 def test_default_new():
     entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'color': '7',
-        'location': (1, 2, 3),
+        'view_direction_vector': (1, 2, 3),
     })
     assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
-    assert entity.dxf.location == (1, 2, 3)
-    assert entity.dxf.location.x == 1, 'is not Vector compatible'
-    assert entity.dxf.location.y == 2, 'is not Vector compatible'
-    assert entity.dxf.location.z == 3, 'is not Vector compatible'
-    # can set DXF R2007 value
-    entity.dxf.shadow_mode = 1
-    assert entity.dxf.shadow_mode == 1
+    assert entity.dxf.view_direction_vector == (1, 2, 3)
+    assert entity.dxf.view_direction_vector.x == 1, 'is not Vector compatible'
+    assert entity.dxf.view_direction_vector.y == 2, 'is not Vector compatible'
+    assert entity.dxf.view_direction_vector.z == 3, 'is not Vector compatible'
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.location == (0, 0, 0)
+    assert entity.dxf.layer == 'VIEWPORTS'
+    assert entity.dxf.center == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
-def test_write_dxf(txt, ver):
-    expected = basic_tags_from_text(txt)
-    vertex = TEST_CLASS.from_text(txt)
-    collector = TagCollector(dxfversion=ver, optional=True)
-    vertex.export_dxf(collector)
-    assert collector.tags == expected
+def test_write_dxf_r2000():
+    expected = basic_tags_from_text(ENTITY_R2000)
+    viewport = TEST_CLASS.from_text(ENTITY_R2000)
+    collector = TagCollector(dxfversion=DXF2000, optional=True)
+    viewport.export_dxf(collector)
+    # todo: tag checking
+    assert len(collector.tags) == len(expected)
 
-    collector2 = TagCollector(dxfversion=ver, optional=False)
-    vertex.export_dxf(collector2)
+    collector2 = TagCollector(dxfversion=DXF2000, optional=False)
+    viewport.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
 
+
+def test_write_dxf_r12():
+    viewport = TEST_CLASS.from_text(ENTITY_R12)
+    collector = TagCollector(dxfversion=DXF12, optional=True)
+    viewport.export_dxf(collector)
+    xdata = ExtendedTags(DXFTag(c, v) for c, v in collector.tags).xdata[0]
+    assert xdata[0] == (1001, 'ACAD')
+    assert xdata[1] == (1000, 'MVIEW')
+    assert xdata[2] == (1002, '{')
+    assert xdata[-1] == (1002, '}')
 
 

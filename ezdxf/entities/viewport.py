@@ -6,6 +6,8 @@ from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.tags import Tags
+from ezdxf.tools import set_flag_state
+from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFStructureError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
 from .dxfentity import base_class, SubclassProcessor
@@ -102,7 +104,7 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     # 0 = As Displayed
     # 1 = Wireframe
     # 2 = Hidden
-    # 3= Rendered
+    # 3 = Rendered
     # Frequency of major grid lines compared to minor grid lines
     'grid_frequency': DXFAttr(61, dxfversion='AC1021'),
     'background_handle': DXFAttr(332, dxfversion='AC1021'),
@@ -151,7 +153,7 @@ class Viewport(DXFGraphic):
 
     @property
     def frozen_layers(self) -> List[str]:
-        type_ = self._frozen_layer_content_type
+        type_ = self._frozen_layers_content_type
         if type_ == 'names':
             return self._frozen_layers
 
@@ -197,35 +199,42 @@ class Viewport(DXFGraphic):
             tags = [v for c, v in self.xdata.get_xlist('ACAD', 'MVIEW')]
         except DXFValueError:
             return
-
+        tags = tags[3:-2]
         dxf = self.dxf
+        flags = 0
+        flags = set_flag_state(flags, const.VSF_FAST_ZOOM, bool(tags[11]))
+        flags = set_flag_state(flags, const.VSF_SNAP_MODE, bool(tags[13]))
+        flags = set_flag_state(flags, const.VSF_GRID_MODE, bool(tags[14]))
+        flags = set_flag_state(flags, const.VSF_ISOMETRIC_SNAP_STYLE, bool(tags[15]))
+        flags = set_flag_state(flags, const.VSF_HIDE_PLOT_MODE, bool(tags[24]))
         try:
-            dxf.view_target_point = tags[4]
-            dxf.view_direction_vector = tags[5]
-            dxf.view_twist_angle = tags[6]
-            dxf.view_height = tags[7]
-            dxf.view_center_point = tags[8], tags[9]
-            dxf.perspective_lens_length = tags[10]
-            dxf.front_clip_plane_z_value = tags[11]
-            dxf.back_clip_plane_z_value = tags[12]
-            dxf.view_mode = tags[13]
-            dxf.circle_zoom = tags[14]
-            dxf.fast_zoom = tags[15]
-            dxf.ucs_icon = tags[16]
-            dxf.snap = tags[17]
-            dxf.grid = tags[18]
-            dxf.snap_style = tags[19]
-            dxf.snap_isopair = tags[20]
-            dxf.snap_angle = tags[21]
-            dxf.snap_base_point = tags[22], tags[23]
-            dxf.snap_spacing = tags[24], tags[25]
-            dxf.grid_spacing = tags[26], tags[27]
-            dxf.hidden_plot = tags[28]
+            dxf.view_target_point = tags[0]
+            dxf.view_direction_vector = tags[1]
+            dxf.view_twist_angle = tags[2]
+            dxf.view_height = tags[3]
+            dxf.view_center_point = tags[4], tags[5]
+            dxf.perspective_lens_length = tags[6]
+            dxf.front_clip_plane_z_value = tags[7]
+            dxf.back_clip_plane_z_value = tags[8]
+            dxf.render_mode = tags[9]  # view_mode == render_mode ?
+            dxf.circle_zoom = tags[10]
+            # fast zoom flag : tag[11]
+            dxf.ucs_icon = tags[12]
+            # snap mode flag  = tags[13]
+            # grid mode flag = tags[14]
+            # isometric snap style = tags[15]
+            # dxf.snap_isopair = tags[16] ???
+            dxf.snap_angle = tags[17]
+            dxf.snap_base_point = tags[18], tags[19]
+            dxf.snap_spacing = tags[20], tags[21]
+            dxf.grid_spacing = tags[22], tags[23]
+            # hide plot flag  = tags[24]
         except IndexError:  # internal exception
             raise DXFStructureError("Invalid viewport entity - missing data")
-        self._frozen_layers = tags[30:-2]
+        dxf.flags = flags
+        self._frozen_layers = tags[26:]
         self._frozen_layers_content_type = 'names'
-        self.xdata.discard_xlist('ACAD', 'MVIEW')
+        self.xdata.discard('ACAD')
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
@@ -242,14 +251,15 @@ class Viewport(DXFGraphic):
                 'front_clip_plane_z_value', 'back_clip_plane_z_value', 'view_height', 'snap_angle', 'view_twist_angle',
                 'circle_zoom',
             ])
-            layers = self.doc.layers
-            for layer_name in self.frozen_layers:
-                try:
-                    layer = layers.get(layer_name)
-                except DXFTableEntryError:
-                    pass
-                else:
-                    tagwriter.write_tag2(FROZEN_LAYER_GROUP_CODE, layer.dxf.handle)
+            if len(self.frozen_layers):
+                layers = self.doc.layers
+                for layer_name in self.frozen_layers:
+                    try:
+                        layer = layers.get(layer_name)
+                    except DXFTableEntryError:
+                        pass
+                    else:
+                        tagwriter.write_tag2(FROZEN_LAYER_GROUP_CODE, layer.dxf.handle)
 
             self.dxf.export_dxf_attribs(tagwriter, [
                 'flags', 'clipping_boundary_handle', 'plot_style_name', 'render_mode',
@@ -271,8 +281,14 @@ class Viewport(DXFGraphic):
         tagwriter.write_tags(self.dxftags())
 
     def dxftags(self) -> Tags:
+        def flag(flag):
+            return 1 if self.dxf.flags & flag else 0
+
         dxf = self.dxf
         tags = [
+            DXFTag(1001, 'ACAD'),
+            DXFTag(1000, 'MVIEW'),
+            DXFTag(1002, '{'),
             DXFTag(1070, 16),  # extended data version, always 16 for R11/12
             DXFTag(1010, dxf.view_target_point),
             DXFTag(1010, dxf.view_direction_vector),
@@ -283,14 +299,14 @@ class Viewport(DXFGraphic):
             DXFTag(1040, dxf.perspective_lens_length),
             DXFTag(1040, dxf.front_clip_plane_z_value),
             DXFTag(1040, dxf.back_clip_plane_z_value),
-            DXFTag(1070, dxf.view_mode),
+            DXFTag(1070, dxf.render_mode),
             DXFTag(1070, dxf.circle_zoom),
-            DXFTag(1070, dxf.fast_zoom),
+            DXFTag(1070, flag(const.VSF_FAST_ZOOM)),
             DXFTag(1070, dxf.ucs_icon),
-            DXFTag(1070, dxf.snap),
-            DXFTag(1070, dxf.grid),
-            DXFTag(1070, dxf.snap_style),
-            DXFTag(1070, dxf.snap_isopair),
+            DXFTag(1070, flag(const.VSF_SNAP_MODE)),
+            DXFTag(1070, flag(const.VSF_GRID_MODE)),
+            DXFTag(1070, flag(const.VSF_ISOMETRIC_SNAP_STYLE)),
+            DXFTag(1070, 0),  # snap isopair ???
             DXFTag(1040, dxf.snap_angle),
             DXFTag(1040, dxf.snap_base_point[0]),
             DXFTag(1040, dxf.snap_base_point[1]),
@@ -298,11 +314,12 @@ class Viewport(DXFGraphic):
             DXFTag(1040, dxf.snap_spacing[1]),
             DXFTag(1040, dxf.grid_spacing[0]),
             DXFTag(1040, dxf.grid_spacing[1]),
-            DXFTag(1070, dxf.hidden_plot),
+            DXFTag(1070, flag(const.VSF_HIDE_PLOT_MODE)),
             DXFTag(1002, '{'),  # start frozen layer list
         ]
         tags.extend(DXFTag(1003, layer_name) for layer_name in self.frozen_layers)
         tags.extend([
             DXFTag(1002, '}'),  # end of frozen layer list
+            DXFTag(1002, '}'),  # MVIEW
         ])
         return Tags(tags)
