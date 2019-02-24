@@ -132,9 +132,12 @@ class Polyline(DXFGraphic):
 
         """
         for v in self.vertices:
-            v.destroy()
+            self.entitydb.delete_entity(v)
         del self.vertices
         super().destroy()
+
+    def get_vertex_flags(self) -> int:
+        return const.VERTEX_FLAGS[self.get_mode()]
 
     def get_mode(self) -> str:
         if self.is_3d_polyline:

@@ -276,9 +276,9 @@ class CreatorInterface:
                 blockref.add_attrib(tag, text, insert, dxfattribs)
 
         dxfattribs = dict(dxfattribs or {})
-        autoblock = self._dxffactory.blocks.new_anonymous_block()
+        autoblock = self.doc.blocks.new_anonymous_block()
         blockref = autoblock.add_blockref(name, (0, 0))
-        blockdef = self._dxffactory.blocks[name]
+        blockdef = self.doc.blocks[name]
         autofill(blockref, blockdef)
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 

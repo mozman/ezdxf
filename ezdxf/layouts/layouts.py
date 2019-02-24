@@ -250,10 +250,12 @@ class Layouts:
             layout_key (str): layout key
 
         """
-        for layout in self._layouts.values():
-            if layout_key == layout.layout_key:
-                return layout
-        raise DXFKeyError('Layout with key "{}" does not exist.'.format(layout_key))
+        try:
+            block_record = self.doc.entitydb[layout_key]
+            dxf_layout = self.doc.entitydb[block_record.layout]
+        except KeyError:
+            raise DXFKeyError('Layout with key "{}" does not exist.'.format(layout_key))
+        return self.get(dxf_layout.dxf.name)
 
     def get_active_layout_key(self):
         active_layout_block_record = self.doc.block_records.get(PAPER_SPACE_R2000)

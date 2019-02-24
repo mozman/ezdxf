@@ -449,6 +449,7 @@ class DXFEntity:
         return entity
 
     def clone(self) -> 'DXFEntity':
+        """ Returns a real clone with same handle and owner. """
         entity = self.__class__(doc=self.doc)
         self._clone_attribs(entity)
         entity.dxf.rewire(entity)

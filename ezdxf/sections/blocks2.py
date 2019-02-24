@@ -127,6 +127,14 @@ class BlocksSection:
         except KeyError:  # internal exception
             return default
 
+    def get_block_layout_by_handle(self, block_record_handle: str) -> 'BlockLayout':
+        """
+        Returns a block layout by block record handle.
+
+        """
+        block_record = self.doc.entitydb[block_record_handle]
+        return self.get(block_record.dxf.name)
+
     def new(self, name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> 'BlockLayout':
         """
         Create a new named block.
@@ -142,7 +150,7 @@ class BlocksSection:
 
         head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)  # type: Block
         tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})  # type: EndBlk
-        block_layout = BlockLayout(block_record, head, tail)
+        block_layout = BlockLayout(block_record, head, tail, self.doc)
         self.add(block_layout)
         return block_layout
 

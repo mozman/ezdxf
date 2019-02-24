@@ -5,7 +5,7 @@
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
 from typing import TYPE_CHECKING, Optional, Tuple
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType, DXFUnsupportedFeature
 from ezdxf.math import Vector, UCS
 from ezdxf.lldxf.validator import is_valid_layer_name
@@ -16,6 +16,7 @@ from ezdxf.tools import float2transparency, transparency2float
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, TagWriter, Vertex, Matrix44
+    from ezdxf.layouts.base import BaseLayout
     from .dxfentity import DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity']
@@ -137,6 +138,49 @@ class DXFGraphic(DXFEntity):
             'layer', 'linetype', 'material_handle', 'color', 'paperspace', 'lineweight', 'ltscale', 'true_color',
             'color_name', 'transparency', 'plotstyle_handle', 'shadow_mode',
         ])
+
+    def get_layout(self) -> Optional['BaseLayout']:
+        try:
+            return self.doc.layouts.get_layout_by_key(self.dxf.owner)
+        except DXFKeyError:
+            pass
+        try:
+            return self.doc.blocks.get_block_layout_by_handle(self.dxf.owner)
+        except DXFTableEntryError:
+            return None
+
+    def move_to_layout(self, layout: 'BaseLayout', source: 'BaseLayout' = None) -> None:
+        """
+        Move entity from model space or a paper space layout to another layout. For block layout as source, the
+        block layout has to be specified.
+
+        Args:
+            layout: any layout (model space, paper space, block)
+            source: provide source layout, faster for DXF R12, if entity is in a block layout
+
+        """
+        if source is None:
+            source = self.get_layout()
+            if source is None:
+                raise DXFValueError('Source layout for entity not found.')
+        source.move_to_layout(self, layout)
+
+    def copy_to_layout(self, layout: 'BaseLayout') -> 'DXFEntity':
+        """
+        Copy entity to another layout.
+
+        Args:
+            layout: any layout (model space, paper space, block)
+
+        Returns: new created entity as DXFEntity() object
+
+        """
+        raise NotImplementedError()
+        new_entity = self.clone()
+        new_entity.dxf.handle = None
+        self.entitydb.add(new_entity)
+        layout.add_entity(new_entity)
+        return new_entity
 
     # ------------------------------------------------------------------------------------------
     # A simple CAD like interface - but don't expect too much

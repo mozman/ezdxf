@@ -60,6 +60,7 @@ Changes in Detail
     - `material` renamed to `material_handle` 
 - VIEWPORT: same treatment for all DXF versions
 - POLYLINE: `Polyline.vertices()` is now an attribute `Polyline.vertices`, implemented as regular Python list.
+- INSERT: `Insert.attribs()` is now an attribute `Insert.attribs`, implemented as regular Python list.
 - Options:
     - removed `template_dir`, no more needed
     - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 

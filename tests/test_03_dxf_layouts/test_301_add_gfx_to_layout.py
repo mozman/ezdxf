@@ -11,6 +11,27 @@ def msp():
     return doc.modelspace()
 
 
+def test_delete_polyline3d(msp):
+    entity_count = len(msp)
+    db_count = len(msp.entitydb)
+    pline = msp.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
+    assert entity_count + 1 == len(msp), 'vertices should be linked to the POLYLINE entity'
+    assert db_count+4 == len(msp.entitydb), 'database should get 4 additional entities'
+
+    assert len(pline) == 3
+    assert pline.vertices[0].dxf.location == (0, 0, 0)
+    assert pline.vertices[1].dxf.location == (1, 2, 3)
+    assert pline.vertices[2].dxf.location == (4, 5, 6)
+    assert pline.get_mode() == 'AcDb3dPolyline'
+    assert pline.is_3d_polyline is True
+    assert pline.is_2d_polyline is False
+    assert pline.is_closed is False
+    assert list(pline.points()) == [(0, 0, 0), (1, 2, 3), (4, 5, 6)]
+    msp.delete_entity(pline)
+    assert entity_count == len(msp)
+    assert len(msp.entitydb) == db_count
+
+
 def test_create_line(msp):
     line = msp.add_line((0, 0), (1, 1))
     assert line.dxf.start == (0., 0.)
@@ -73,3 +94,5 @@ def test_create_shape(msp):
     assert shape.dxf.rotation == 0
     assert shape.dxf.xscale == 1
     assert shape.dxf.oblique == 0
+
+

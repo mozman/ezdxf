@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 __all__ = ['Insert']
 
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
-    'attribs_follow': DXFAttr(66, default=0),
+    'attribs_follow': DXFAttr(66, xtype=XType.callback, getter='_attribs_follow'),
     'name': DXFAttr(2),
     'insert': DXFAttr(10, xtype=XType.any_point),
     'xscale': DXFAttr(41, default=1, optional=True),
@@ -49,6 +49,9 @@ class Insert(DXFGraphic):
     def link_entity(self, entity: 'DXFEntity') -> None:
         self.attribs.append(entity)
 
+    def _attribs_follow(self) -> bool:
+        return bool(len(self.attribs))
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
         Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
@@ -69,8 +72,8 @@ class Insert(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
         # for all DXF versions
-        if len(self.attribs):
-            tagwriter.write_tag2(66, 1)  # attribs_follow
+        if self._attribs_follow():
+            tagwriter.write_tag2(66, 1)
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'insert',
             'xscale', 'yscale', 'zscale',
@@ -88,9 +91,7 @@ class Insert(DXFGraphic):
         Delete all data and references.
 
         """
-        for a in self.attribs:
-            a.destroy()
-        del self.attribs
+        self.delete_all_attribs()
         super().destroy()
 
     def place(self, insert: 'Vertex' = None,

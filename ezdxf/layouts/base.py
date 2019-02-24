@@ -156,8 +156,9 @@ class BaseLayout(CreatorInterface):
             layout: any layout (model space, paper space, block)
 
         """
-        if entity in self.entity_space:
+        try:
             self.unlink_entity(entity)
-            layout.add_entity(entity)
-        else:
+        except ValueError:
             raise DXFValueError('Layout does not contain entity.')
+        else:
+            layout.add_entity(entity)
