@@ -2,8 +2,7 @@
 # License: MIT License
 # Created 2019-02-13
 import pytest
-
-from ezdxf.clone import clone
+import copy
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.appdata import AppData
 
@@ -98,7 +97,7 @@ def test_app_data_dxf_export(tags):
 def test_clone(tags):
     appdata = AppData()
     appdata.set(tags.appdata[0])
-    new_appdata = clone(appdata)
+    new_appdata = copy.deepcopy(appdata)
     new_appdata.add('MOZMAN', [
         (1, "Text"),
     ])

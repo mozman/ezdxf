@@ -43,12 +43,29 @@ class BaseLayout(CreatorInterface):
         return self.doc.entitydb
 
     @property
-    def is_active_paperspace(self):
-        return self.block_record.dxf.name.lower() in PAPER_SPACE
+    def is_active_paperspace(self) -> bool:
+        """ True if is "active" layout. """
+        return self.block_record.dxf.name.lower() == '*paper_space'
 
     @property
-    def is_modelspace(self):
-        return self.block_record.dxf.name.lower() in MODEL_SPACE
+    def is_any_paperspace(self) -> bool:
+        """ True if is any kind of paperspace layout. """
+        return self.block_record.dxf.name.lower().startswith('*paper_space')
+
+    @property
+    def is_modelspace(self)->bool:
+        """ True if is modelspace layout. """
+        return self.block_record.dxf.name.lower() == '*model_space'
+
+    @property
+    def is_any_layout(self)->bool:
+        """ True if is any kind of modelspace or paperspace layout. """
+        return self.is_modelspace or self.is_any_paperspace
+
+    @property
+    def is_block_layout(self)->bool:
+        """ True if not any kind of modelspace or paperspace layout, just a regular block definition. """
+        return not self.is_any_layout
 
     def __len__(self) -> int:
         """

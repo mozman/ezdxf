@@ -31,7 +31,9 @@ GROUP_ITEM_CODE = 340
 @register_entity
 class DXFGroup(DXFObject):
     """
-    groups are not allowed in block definitions
+    Groups are not allowed in block definitions, and each entity can only reside in one group, so cloning of groups
+    creates also new entities
+
     """
     DXFTYPE = 'GROUP'
     DXFATTRIBS = DXFAttributes(base_class, acdb_group)
@@ -39,6 +41,9 @@ class DXFGroup(DXFObject):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self._data = list()  # type: List[Union[str, DXFEntity]]
+
+    def clone(self) -> 'DXFEntity':
+        raise DXFTypeError('Cloning of GROUP not supported.')
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

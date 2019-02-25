@@ -3,7 +3,6 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import Optional, Iterable, Tuple, Union, TYPE_CHECKING
-from ezdxf.clone import clone
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.entities.dxfentity import DXFEntity, export_seqend
 from ezdxf.order import priority, zorder
@@ -102,7 +101,7 @@ class EntityDB:
         This is not a deep copy in the meaning of Python, because handle and link is changed.
 
         """
-        new_entity = clone(entity)  # type: DXFEntity
+        new_entity = entity.clone()  # type: DXFEntity
         new_entity.dxf.handle = self.next_handle()
         self.add(new_entity)
         return new_entity

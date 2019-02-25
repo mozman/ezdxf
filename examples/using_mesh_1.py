@@ -36,7 +36,7 @@ polygon5_face = [
     [0, 1, 2, 3, 4]
 ]
 
-dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
+dwg = ezdxf.new('R2000')
 msp = dwg.modelspace()
 mesh = msp.add_mesh()
 with mesh.edit_data() as mesh_data:

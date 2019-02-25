@@ -2,7 +2,7 @@
 # Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Optional
-from ezdxf.lldxf.const import SUBCLASS_MARKER
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -191,6 +191,9 @@ class Material(DXFObject):
         self.bump_mapper_matrix = None  # type: Matrix44  # group code 144
         self.refraction_mapper_matrix = None  # type: Matrix44  # group code 147
         self.normal_mapper_matrix = None  # type: Matrix44  # group code 43 ???
+
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

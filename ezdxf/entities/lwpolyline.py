@@ -3,6 +3,7 @@
 # Created 2019-02-15
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List
 import array
+import copy
 from contextlib import contextmanager
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -53,6 +54,10 @@ class LWPolyline(DXFGraphic):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self.lwpoints = LWPolylinePoints()
+
+    def _clone_data(self, entity: 'LWPolyline') -> None:
+        """ Clone lwpoints. """
+        entity.lwpoints = copy.deepcopy(self.lwpoint)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """

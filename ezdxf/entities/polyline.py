@@ -83,6 +83,18 @@ class Polyline(DXFGraphic):
         assert isinstance(entity, DXFVertex)
         self.vertices.append(entity)
 
+    def _clone_data(self, entity: 'Polyline') -> None:
+        """ Clone vertices, but do not store the clones in the entity database, this is a second step, this is just real
+        cloning.
+        """
+        entity.vertices = [vertex.clone() for vertex in self.vertices]
+
+    def _add_data_to_db(self) -> None:
+        """ Add cloned vertices  to database. """
+        for vertex in self.vertices:
+            vertex.dxf.handle = None  # get a new handle from database
+            self.entitydb.add(vertex)
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
         Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
@@ -201,6 +213,7 @@ class Polyline(DXFGraphic):
     def extend(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices(points, dxfattribs))
+
     append_vertices = extend
 
     def insert_vertices(self, pos: int, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
@@ -261,6 +274,7 @@ class Polyface(Polyline):
         2. face_records: indices of the face forming vertices
 
     """
+
     @classmethod
     def from_polyline(cls, polyline: Polyline) -> 'Polyface':
         polyface = cls.shallow_copy(polyline)

@@ -55,6 +55,26 @@ class Dictionary(DXFObject):
         super().__init__(doc)
         self._data = dict()  # type: Dict[str, Union[str, DXFEntity]]
 
+    def _clone_data(self, entity: 'Dictionary') -> None:
+        """ Clone hard owned entities but do not store the clones in the entity database, this is a
+        second step, this is just real cloning.
+        """
+        # todo: what about owner and reactors of cloned DXF objects?
+        if self.dxf.hard_owned:
+            entity._data = {key: entity.clone() for key, entity in self.items()}
+        else:
+            entity._data = {key: entity for key, entity in self.items()}
+
+    def _add_data_to_db(self) -> None:
+        """ Add hard owned and therefor cloned entities into database and the objects section.  """
+        # todo: don't know how to proceed with reactors of cloned objects, may this should be handled by the objects itself.
+        if self.dxf.hard_owned:
+            for _, entity in self.items():
+                entity.dxf.handle = None
+                self.entitydb.add(entity)
+                # add it also to the objects section, else it wouldn't exported to DXF file
+                self.doc.objects.add_object(entity)
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -346,11 +366,6 @@ class DictionaryVar(DXFObject):
     """
     DXFTYPE = 'DICTIONARYVAR'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dict_var)
-    CLASS = {
-        'name': DXFTYPE,
-        'cpp_class_name': 'AcDbDictionaryVar',
-        'app_name': 'ObjectDBX Classes',
-    }
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

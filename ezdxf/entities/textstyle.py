@@ -34,7 +34,6 @@ acdb_style = DefSubclass('AcDbTextStyleTableRecord', {
 class Textstyle(DXFEntity):
     """ DXF STYLE entity """
     DXFTYPE = 'STYLE'
-
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_style)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':

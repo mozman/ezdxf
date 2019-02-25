@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Dict, Iterable, Sequence
 from collections import OrderedDict
 
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -98,6 +98,9 @@ class MLine(DXFGraphic):
         super().__init__(doc)
         self.vertices = MLineVertices([])
 
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -189,6 +192,9 @@ class MLineStyle(DXFObject):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self.style_elements = MLineStyleElements()
+
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

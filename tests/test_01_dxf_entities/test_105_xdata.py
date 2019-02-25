@@ -2,11 +2,10 @@
 # License: MIT License
 # Created 2019-02-13
 import pytest
-
+import copy
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities.xdata import XData
-from ezdxf.clone import clone
 
 
 class TagWriter:
@@ -87,7 +86,7 @@ def test_discard_xdata(xdata):
 
 
 def test_cloning(xdata):
-    xdata2 = clone(xdata)
+    xdata2 = copy.deepcopy(xdata)
     assert len(xdata2) == 2
 
     assert 'MOZMAN' in xdata2

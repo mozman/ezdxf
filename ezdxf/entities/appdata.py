@@ -12,7 +12,6 @@ from ezdxf.lldxf.types import dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 from ezdxf.lldxf.const import ACAD_XDICTIONARY, ACAD_REACTORS, XDICT_HANDLE_CODE, REACTOR_HANDLE_CODE, APP_DATA_MARKER
-from ezdxf.clone import clone
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
@@ -27,7 +26,7 @@ ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute {} does not exist'
 
 class AppData:
     def __init__(self):
-        # no back links, no self.clone() required
+        # no back links, no self.clone() required, use deepcopy
         self.data = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
@@ -84,6 +83,9 @@ class Reactors:
     def __contains__(self, handle):
         return handle in self.reactors
 
+    def __iter__(self):
+        return iter(self.get())
+
     @classmethod
     def from_tags(cls, tags: Tags = None) -> 'Reactors':
         """
@@ -132,9 +134,15 @@ class ExtensionDict:
         self._xdict = handle  # type: Union[str, DXFDictionary, None]
 
     def clone(self):
-        # set owner to None, because actual owner is not the owner of the copied extension dict for sure.
-        # using clone() for safety reason
-        return self.__class__(None, clone(self._xdict))
+        # Real clone: dict and owner copied
+        copy = self._xdict
+        if not isinstance(copy, str):
+            copy = self._xdict.clone()
+        return self.__class__(self.owner, copy)
+
+    def __deepcopy__(self, memodict: dict = None):
+        """ Extension dict is owned by just one entity, multiple references are not possible """
+        return self.clone()
 
     @classmethod
     def from_tags(cls, entity: 'DXFEntity', tags: Tags = None):

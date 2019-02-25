@@ -126,21 +126,39 @@ def test_cloning(entity, processor):
     attribs = DXFNamespace(processor, entity)
     attribs.color = 77
     attribs2 = attribs.clone()
-    # clone everything except _entity, handle, owner
-    assert attribs2._entity is None
-    assert attribs2.handle is None
-    assert attribs2.owner is None
+    # clone everything
+    assert attribs2._entity is attribs._entity
+    assert attribs2.handle is attribs.handle
+    assert attribs2.owner is attribs.owner
     assert attribs2.color == 77
     # do not harm original entity
     assert attribs._entity is entity
     assert attribs.handle == 'FFFF'
     assert attribs.owner == 'ABBA'
+    # change clone
+    attribs2.color = 13
+    assert attribs.color == 77
+    assert attribs2.color == 13
 
 
-def test_prevent_deepcopy_usage(entity, processor):
+def test_deepcopy_usage(entity, processor):
     attribs = DXFNamespace(processor, entity)
-    with pytest.raises(NotImplementedError):
-        _ = deepcopy(attribs)
+    attribs.color = 77
+
+    attribs2 = deepcopy(attribs)
+    # clone everything
+    assert attribs2._entity is attribs._entity
+    assert attribs2.handle is attribs.handle
+    assert attribs2.owner is attribs.owner
+    assert attribs2.color == 77
+    # do not harm original entity
+    assert attribs._entity is entity
+    assert attribs.handle == 'FFFF'
+    assert attribs.owner == 'ABBA'
+    # change clone
+    attribs2.color = 13
+    assert attribs.color == 77
+    assert attribs2.color == 13
 
 
 def test_dxf_export_one_attribute(entity, processor):

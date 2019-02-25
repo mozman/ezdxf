@@ -57,14 +57,6 @@ class BlockLayout(BaseLayout):
         block.dxf.name = new_name
         block.dxf.name2 = new_name
 
-    @property
-    def is_layout_block(self) -> bool:
-        """
-        True if block is a model space or paper space block definition.
-
-        """
-        return self.block.is_layout_block
-
     def get_entity_space(self) -> EntitySpace:
         return self.entity_space
 

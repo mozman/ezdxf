@@ -2,6 +2,7 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
+import copy
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
@@ -13,7 +14,7 @@ from .text import Text, acdb_text
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.eztypes import TagWriter, Tags
     from .dxfentity import DXFNamespace, DXFEntity
     from ezdxf.drawing2 import Drawing
 
@@ -74,8 +75,13 @@ class BaseAttrib(Text):
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         super().__init__(doc)
-        self.xrecord = None
+        self.xrecord = None  # type: Tags
         self.attached_mtext = None  # type: DXFEntity
+
+    def _clone_data(self, entity: 'BaseAttrib') -> None:
+        """ Clone entity data, xrecord data and attached MTEXT are not stored in the entity database. """
+        entity.xrecord = copy.deepcopy(self.xrecord)
+        entity.attached_mtext = self.attached_mtext.clone()
 
     def link_entity(self, entity: 'DXFEntity'):
         self.attached_mtext = entity

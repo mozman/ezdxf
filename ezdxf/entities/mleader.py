@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING
 from collections import OrderedDict
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -33,6 +33,9 @@ class MLeader(DXFGraphic):
     DXFTYPE = 'MLEADER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
@@ -106,6 +109,9 @@ class MLeaderStyle(DXFObject):
     DXFTYPE = 'MLEADERSTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mleader_style)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

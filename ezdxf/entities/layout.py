@@ -2,7 +2,7 @@
 # License: MIT-License
 # Created: 2019-02-18
 from typing import TYPE_CHECKING
-from ezdxf.lldxf.const import SUBCLASS_MARKER
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -136,6 +136,9 @@ class PlotSettings(DXFObject):
     DXFTYPE = 'PLOTSETTINGS'
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings)
 
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
@@ -199,6 +202,9 @@ acdb_layout = DefSubclass('AcDbLayout', {
 class DXFLayout(PlotSettings):
     DXFTYPE = 'LAYOUT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings, acdb_layout)
+
+    def clone(self):
+        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

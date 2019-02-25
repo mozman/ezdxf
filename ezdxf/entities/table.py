@@ -29,8 +29,6 @@ acdb_symbol_table = DefSubclass('AcDbSymbolTable', {
 class TableHead(DXFEntity):
     DXFTYPE = 'TABLE'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table)
-    DEFAULT_ATTRIBS = None  # type: dict
-    MIN_DXF_VERSION_FOR_EXPORT = DXF12
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

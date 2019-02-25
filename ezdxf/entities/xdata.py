@@ -15,7 +15,7 @@ __all__ = ['XData', 'EmbeddedObjects']
 
 class XData:
     def __init__(self, xdata: List[Tags] = None):
-        # no back links, no self.clone() required
+        # no back links, no self.clone() required, use deepcopy
         self.data = dict()
         for data in (xdata or []):
             self._add(data)

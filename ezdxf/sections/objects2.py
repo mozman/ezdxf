@@ -66,6 +66,9 @@ class ObjectsSection(AbstractSection):
             else:
                 rootdict.add_new_dict(name)
 
+    def add_object(self, entity: 'DXFEntity') -> None:
+        self._entity_space.add(entity)
+
     def add_dxf_object_with_reactor(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
         dxfobject = self.create_new_dxf_entity(dxftype, dxfattribs)
         dxfobject.set_reactors([dxfattribs['owner']])

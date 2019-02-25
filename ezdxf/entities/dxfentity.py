@@ -3,7 +3,7 @@
 # Created 2019-02-13
 # DXFEntity - Root Entity
 from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Callable
-from ezdxf.clone import clone
+import copy
 from ezdxf import options
 from ezdxf.lldxf.types import handle_code, dxftag, cast_value, DXFTag, SUBCLASS_MARKER
 from ezdxf.lldxf.tags import Tags
@@ -11,7 +11,7 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
 from ezdxf.lldxf.const import ACAD_REACTORS, ACAD_XDICTIONARY
-from ezdxf.lldxf.const import DXFAttributeError, DXFKeyError, DXFValueError, DXFStructureError
+from ezdxf.lldxf.const import DXFAttributeError, DXFKeyError, DXFValueError, DXFStructureError, DXFTypeError
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors, ExtensionDict
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entitydb import EntityDB
     from ezdxf.drawing2 import Drawing
-    from ezdxf.entities.layouts import BaseLayout
+    from ezdxf.layouts.base import BaseLayout
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class', 'entity_linker']
 
@@ -51,6 +51,9 @@ class DXFNamespace:
     """
     Uses the Python object itself as attribute storage, only valid Python names can be used as attrib name.
 
+    The namespace can only contain immutable objects: string, int, float, bool, Vector
+    Because of the immutability, copy and deepcopy are the same.
+
     """
 
     def __init__(self, processor: 'SubclassProcessor' = None, entity: 'DXFEntity' = None):
@@ -65,6 +68,15 @@ class DXFNamespace:
         else:
             self.reset_handles()
             self.rewire(entity)
+
+    def clone(self):
+        namespace = self.__class__()
+        for k, v in self.__dict__.items():
+            namespace.__dict__[k] = v
+        return namespace
+
+    def __deepcopy__(self, memodict: dict = None):
+        return self.clone()
 
     def reset_handles(self):
         """ Reset handle and owner to None. """
@@ -87,16 +99,6 @@ class DXFNamespace:
             self.__dict__['handle'] = handle
         if owner is not None:
             self.__dict__['owner'] = owner
-
-    def clone(self):
-        namespace = self.__class__()
-        for key, value in self.__dict__.items():
-            if key not in {'_entity', 'handle', 'owner'}:
-                namespace.__dict__[key] = clone(value)
-        return namespace
-
-    def __deepcopy__(self, memodict: dict):
-        raise NotImplementedError('use self.clone()')
 
     def __getattr__(self, key: str) -> Any:
         """ called if key does not exist, returns default value or None for unset default values
@@ -263,7 +265,7 @@ class SubclassProcessor:
     def __init__(self, tags: ExtendedTags, r12=None):
         if len(tags.subclasses) == 0:
             raise ValueError('Invalid tags.')
-        self.subclasses = list(tags.subclasses)  # copy subclasses
+        self.subclasses = list(tags.subclasses)  # type: List[Tags] # copy subclasses
         # DXF R12 and prior have no subclass marker system, all tags of an entity in one flat list
         # Where later DXF versions have at least 2 subclasses base_class and AcDbEntity
         # Exception CLASS has also only one subclass and no subclass marker, handled as DXF R12 entity
@@ -278,18 +280,18 @@ class SubclassProcessor:
     def base_class(self):
         return self.subclasses[0]
 
-    def log_unprocessed_tags(self, unprocessed_tags: List, subclass='<?>'):
+    def log_unprocessed_tags(self, unprocessed_tags: List, subclass='<?>') -> None:
         if options.log_unprocessed_tags and len(unprocessed_tags):
             for tag in unprocessed_tags:
                 logger.debug("unprocessed tag: {} in {}(#{}).{}".format(str(tag), self.name, self.handle, subclass))
 
-    def find_subclass(self, name: str):
+    def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:
             if len(subclass) and subclass[0].value == name:
                 return subclass
         return None
 
-    def subclass_by_index(self, index: int):
+    def subclass_by_index(self, index: int) -> Optional[Tags]:
         try:
             return self.subclasses[index]
         except IndexError:
@@ -414,6 +416,79 @@ class DXFEntity:
         entity.doc.entitydb.add(entity)  # same handle -> replaces other
         return entity
 
+    def clone(self) -> 'DXFEntity':
+        """ Returns a real clone with same handle, owner and reactors. This clone is not stored in the entity database
+        nor does it reside in any layout, block, table or objects section!
+
+        """
+        entity = self.__class__(doc=self.doc)
+        entity.dxf = self.dxf.clone()
+        entity.dxf.rewire(entity)
+        if self.extension_dict:
+            entity.extension_dict = self.extension_dict.clone()
+
+        # what about reactors of cloned DXF objects? Just clone it!
+        entity.reactors = copy.deepcopy(self.reactors)
+        entity.appdata = copy.deepcopy(self.appdata)
+        entity.xdata = copy.deepcopy(self.xdata)
+        entity.embedded_objects = copy.deepcopy(self.embedded_objects)
+        # using the linked_entities() interface is maybe not sufficient
+        self._clone_data(entity)
+        return entity
+
+    def _clone_data(self, entity: 'DXFEntity') -> None:
+        """ Clone entity data like vertices or attribs, do not store the clones in the entity database, this is a
+        second step, this is just real cloning.
+        """
+        pass
+
+    def __deepcopy__(self, memodict: dict = None):
+        """ Some entities maybe linked by more than one entity, to be safe use `memodict` for bookkeeping.
+
+        Returns:
+             self.clone()
+        """
+        memodict = memodict or {}
+        try:
+            return memodict[id(self)]
+        except KeyError:
+            copy = self.clone()
+            memodict[id(self)] = copy
+            return copy
+
+    def _add_to_db(self) -> None:
+        """ Adds entity and all its sub entities to the entity database and all of them get a new handle (e.g. POLYLINE,
+        INSERT).
+
+        Intended usage see copy_entity()
+
+            copy = entity.clone()
+            copy._add_to_db()
+
+        """
+        # what about reactors of cloned DXF objects? Just delete it?
+        if self.entitydb:
+            self.dxf.handle = None  # to get a new handle from entity database
+            self.entitydb.add(self)
+            self._add_data_to_db()  # als add sub entities e.g. VERTEX or ATTRIB
+
+    def _add_data_to_db(self) -> None:
+        """ Add data (payload) to database if needed. Intended to add data from clones to the entity database. """
+        pass
+
+    def copy_entity(self) -> 'DXFEntity':
+        """ Returns a copy of `self` and all its data as new database entries, but with same owner and same reactors.
+        This new entity does not reside in any layout or block just the owner handle is not enough to be in this block,
+        adding to a layout has to be done manually by :meth:`BaseLayout.add_entity`.
+
+        DXF objects not stored in DICTIONARY objects have to added to the objects section
+        :meth:`ObjectsSection.add_object`.
+
+        """
+        copy = self.clone()
+        copy._add_to_db()
+        return copy
+
     def load_tags(self, tags: ExtendedTags) -> None:
         if tags:
             if len(tags.appdata):
@@ -447,21 +522,6 @@ class DXFEntity:
         entity.update_dxf_attribs(default_attribs)
         entity.post_new_hook()
         return entity
-
-    def clone(self) -> 'DXFEntity':
-        """ Returns a real clone with same handle and owner. """
-        entity = self.__class__(doc=self.doc)
-        self._clone_attribs(entity)
-        entity.dxf.rewire(entity)
-        return entity
-
-    def _clone_attribs(self, entity):
-        for key, value in self.__dict__.items():
-            if key not in self.EXCLUDE_FROM_CLONING:
-                entity.__dict__[key] = clone(value)
-
-    def __deepcopy__(self, memodict: dict):
-        raise NotImplementedError('use self.clone()')
 
     def __priority__(self) -> int:
         return self.priority
@@ -509,14 +569,17 @@ class DXFEntity:
         return self.DXFTYPE
 
     def assign_layout(self, layout: 'BaseLayout') -> None:
-        if layout.is_active_paperspace:
-            self.dxf.paperspace = 1
+        """ Assign entity to a modelspace or paperspace layout. """
+        self.set_owner(layout.layout_key, paperspace=int(layout.is_active_paperspace))
+
+    def set_owner(self, owner: str, paperspace: int = 0) -> None:
+        self.dxf.owner = owner
+        if paperspace:
+            self.dxf.paperspace = paperspace
         else:
             self.dxf.discard('paperspace')
-
-        self.dxf.owner = layout.layout_key
-        for linked_entity in self.linked_entities():
-            linked_entity.assign_layout(layout)
+        for e in self.linked_entities():
+            e.set_owner(owner, paperspace)
 
     def layout(self) -> Optional['BaseLayout']:
         doc = self.doc
@@ -567,12 +630,6 @@ class DXFEntity:
     def link_entity(self, entity: 'DXFEntity') -> None:
         """ Store linked or attached entities. Same API for both types of appended data. """
         pass
-
-    def set_owner(self, owner: str, paperspace: int = 0) -> None:
-        self.dxf.owner = owner
-        self.dxf.paperspace = paperspace
-        for e in self.linked_entities():
-            e.set_owner(owner, paperspace)
 
     @property
     def is_alive(self):
@@ -807,6 +864,9 @@ class DXFTagStorage(DXFEntity):
         super().__init__(doc)
         self.xtags = []  # type: ExtendedTags
 
+    def clone(self) -> 'DXFEntity':
+        raise DXFTypeError('Cloning of tag storage {} not supported.'.format(self.DXFTYPE))
+
     @property
     def base_class(self):
         return self.xtags.subclasses[0]
@@ -841,6 +901,7 @@ LINKED_ENTITIES = {
     'INSERT': 'ATTRIB',
     'POLYLINE': 'VERTEX'
 }
+
 
 # todo: MTEXT attached to ATTRIB & ATTDEF
 # This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT') therefor separated entity, but without the

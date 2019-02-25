@@ -112,8 +112,7 @@ class Block(DXFEntity):
 
         """
         name = self.dxf.name.lower()
-        return any(name.startswith(layout_name) for layout_name in LAYOUT_NAMES)
-
+        return name.startswith('*model_space') or name.startswith('*paper_space')
 
 acdb_block_end = DefSubclass('AcDbBlockEnd', {})
 

@@ -6,13 +6,14 @@ from typing import TYPE_CHECKING, Iterable, Iterator, Union, Optional, List
 from collections import OrderedDict
 
 from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError
-from ezdxf.clone import clone
 from ezdxf.entities.table import TableHead
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFFactoryType, EntityDB, TagWriter
+    from ezdxf.eztypes import TagWriter
+    from ezdxf.entities.factory import EntityFactory
+    from ezdxf.entitydb import EntityDB
     from ezdxf.drawing2 import Drawing
-    from ezdxf.entities import DXFEntity
+    from ezdxf.entities.dxfentity import DXFEntity
     from ezdxf.entities.layer import Layer
 
 TABLENAMES = {
@@ -113,7 +114,7 @@ class Table:
         return self.doc.entitydb
 
     @property
-    def dxffactory(self) -> 'DXFFactoryType':
+    def dxffactory(self) -> 'EntityFactory':
         return self.doc.dxffactory
 
     def new_entry(self, dxfattribs: dict) -> 'DXFEntity':
@@ -129,7 +130,11 @@ class Table:
 
     def duplicate_entry(self, name: str, new_name: str) -> 'DXFEntity':
         entry = self.get(name)
-        new_entry = clone(entry)
+        entitydb = self.entitydb
+        if entitydb:
+            new_entry = entitydb.duplicate_entity(entry)
+        else:
+            new_entry = entry.clone()
         new_entry.dxf.name = new_name
         self._append(new_entry)
         return new_entry
