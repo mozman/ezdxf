@@ -9,7 +9,7 @@ from .dxfentity import DXFEntity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor
+    from ezdxf.eztypes2 import Auditor
 
 __all__ = ['DXFObject', 'AcDbPlaceholder']
 

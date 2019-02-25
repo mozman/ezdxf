@@ -4,15 +4,14 @@
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import SUBCLASS_MARKER, LAYOUT_NAMES, DXF12
-from ezdxf.lldxf.const import MODEL_SPACE, PAPER_SPACE, MODEL_SPACE_R12, PAPER_SPACE_R12, MODEL_SPACE_R2000, \
-    PAPER_SPACE_R2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF12
+from ezdxf.lldxf.const import MODEL_SPACE_R12, PAPER_SPACE_R12, MODEL_SPACE_R2000, PAPER_SPACE_R2000
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, DXFNamespace
+
 
 __all__ = ['Block', 'EndBlk']
 

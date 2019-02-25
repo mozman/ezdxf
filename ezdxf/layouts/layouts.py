@@ -9,9 +9,7 @@ from ezdxf.lldxf.validator import is_valid_name
 from .layout import Layout
 
 if TYPE_CHECKING:
-    from ezdxf.entities.dxfentity import DXFEntity
-    from ezdxf.entities.dictionary import Dictionary
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.eztypes2 import DXFEntity, Dictionary, Drawing
 
 logger = logging.getLogger('ezdxf')
 

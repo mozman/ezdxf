@@ -14,9 +14,7 @@ from .objectcollection import ObjectCollection
 from ezdxf.entities.factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, Drawing, DXFNamespace
 
 __all__ = ['MLine', 'MLineStyle', 'MLineStyleCollection']
 

@@ -9,10 +9,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from .dxfentity import DXFNamespace
-    from ezdxf.eztypes import Auditor
+    from ezdxf.eztypes2 import TagWriter, Drawing, DXFNamespace, Auditor
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
@@ -69,7 +66,9 @@ class Dictionary(DXFObject):
         """ Add hard owned and therefor cloned entities into database and the objects section.  """
         # todo: don't know how to proceed with reactors of cloned objects, may this should be handled by the objects itself.
         if self.dxf.hard_owned:
+            my_handle = self.dxf.handle
             for _, entity in self.items():
+                entity.dxf.owner = my_handle
                 entity.dxf.handle = None
                 self.entitydb.add(entity)
                 # add it also to the objects section, else it wouldn't exported to DXF file

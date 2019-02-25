@@ -14,8 +14,7 @@ from ezdxf.tools import take2
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, DimStyle, DXFNamespace
 
 logger = logging.getLogger('ezdxf')
 

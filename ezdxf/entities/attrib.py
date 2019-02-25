@@ -14,9 +14,8 @@ from .text import Text, acdb_text
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Tags
-    from .dxfentity import DXFNamespace, DXFEntity
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.eztypes2 import TagWriter, Tags, Drawing, DXFNamespace, DXFEntity
+
 
 __all__ = ['AttDef', 'Attrib']
 

@@ -12,9 +12,7 @@ from ezdxf.tools.complex_ltype import lin_compiler
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from ezdxf.entities.dxfentity import DXFNamespace
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing
 
 __all__ = ['Linetype']
 

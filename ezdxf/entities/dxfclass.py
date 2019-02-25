@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import DXF2004, DXF2000
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, ExtendedTags, TagWriter
+    from ezdxf.eztypes2 import Drawing, ExtendedTags, TagWriter
 
 __all__ = ['DXFClass']
 

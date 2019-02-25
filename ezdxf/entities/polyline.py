@@ -12,9 +12,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, FaceType
-    from .dxfentity import DXFNamespace, DXFEntity
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.eztypes2 import TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing
 
 __all__ = ['Polyline', 'Polyface']
 

@@ -2,17 +2,12 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Optional
-from ezdxf.lldxf.const import LAYOUT_NAMES, DXFTableEntryError
+from ezdxf.lldxf.const import LAYOUT_NAMES
 from ezdxf.entitydb import EntitySpace
 from .base import BaseLayout
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.entities.blockrecord import BlockRecord
-    from ezdxf.entities.block import Block, EndBlk
-    from ezdxf.entities.dxfentity import DXFEntity
-    from ezdxf.entities.attrib import AttDef
+    from ezdxf.eztypes2 import TagWriter, Drawing, BlockRecord, Block, EndBlk, DXFEntity, AttDef
 
 
 class BlockLayout(BaseLayout):

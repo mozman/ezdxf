@@ -15,8 +15,7 @@ from ezdxf.lldxf.const import ACAD_XDICTIONARY, ACAD_REACTORS, XDICT_HANDLE_CODE
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.eztypes import DXFDictionary, Drawing
-    from ezdxf.entities.dxfentity import DXFEntity
+    from ezdxf.eztypes2 import Dictionary, Drawing, DXFEntity
 
 __all__ = ['AppData', 'Reactors', 'ExtensionDict']
 
@@ -131,7 +130,7 @@ class ExtensionDict:
         # _dict is None -> empty dict
         # _dict as string -> handle to dict
         # _dict as DXFDictionary
-        self._xdict = handle  # type: Union[str, DXFDictionary, None]
+        self._xdict = handle  # type: Union[str, Dictionary, None]
 
     def clone(self):
         # Real clone: dict and owner copied
@@ -158,7 +157,7 @@ class ExtensionDict:
     def doc(self) -> 'Drawing':
         return self.owner.doc
 
-    def get(self) -> 'DXFDictionary':
+    def get(self) -> 'Dictionary':
         """
         Get associated extension dictionary as DXFDictionary() object.
 
@@ -170,7 +169,7 @@ class ExtensionDict:
             self._xdict = cast('DXFDictionary', self.owner.entitydb.get(self._xdict))
         return self._xdict
 
-    def _new(self) -> 'DXFDictionary':
+    def _new(self) -> 'Dictionary':
         xdict = self.doc.objects.add_dictionary(owner=self.owner.dxf.handle)
         return cast('DXFDictionary', xdict)
 

@@ -12,9 +12,7 @@ from .objectcollection import ObjectCollection
 from ezdxf.math.matrix44 import Matrix44
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, Drawing, DXFNamespace
 
 __all__ = ['Material', 'MaterialCollection']
 

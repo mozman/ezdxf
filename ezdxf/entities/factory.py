@@ -9,7 +9,7 @@ from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 
 if TYPE_CHECKING:
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.eztypes2 import Drawing
 
 __all__ = ['EntityFactory', 'register_entity', 'ENTITY_CLASSES']
 

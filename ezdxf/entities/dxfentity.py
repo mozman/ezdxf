@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Callable
+from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Callable, Type, TypeVar
 import copy
 from ezdxf import options
 from ezdxf.lldxf.types import handle_code, dxftag, cast_value, DXFTag, SUBCLASS_MARKER
@@ -20,12 +20,8 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFDictionary
-    from ezdxf.eztypes import Auditor, TagWriter
-    from ezdxf.entities.factory import EntityFactory
-    from ezdxf.entitydb import EntityDB
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.layouts.base import BaseLayout
+    from ezdxf.eztypes2 import Auditor, TagWriter, Drawing, EntityDB, EntityFactory, Dictionary, BaseLayout
+
 
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class', 'entity_linker']
 
@@ -356,6 +352,8 @@ base_class = DefSubclass(None, {
     # {ACAD_XDICTIONARY  ... one entry DXF R2000+, optional
 })
 
+T = TypeVar('T', bound='DXFEntity')
+
 
 class DXFEntity:
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
@@ -382,7 +380,7 @@ class DXFEntity:
         self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
 
     @classmethod
-    def load(cls, tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> 'DXFEntity':
+    def load(cls: Type[T], tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> T:
         """
         Constructor to generate entities loaded from DXF files (untrusted environment)
 
@@ -398,12 +396,12 @@ class DXFEntity:
         return entity
 
     @classmethod
-    def from_text(cls, text: str, doc: 'Drawing' = None) -> 'DXFEntity':
+    def from_text(cls: Type[T], text: str, doc: 'Drawing' = None) -> T:
         """ Load constructor from text for testing """
         return cls.load(ExtendedTags.from_text(text), doc)
 
     @classmethod
-    def shallow_copy(cls, other: 'DXFEntity') -> 'DXFEntity':
+    def shallow_copy(cls: Type[T], other: 'DXFEntity') -> T:
         """ Copy constructor for type casting e.g. Polyface and Polymesh """
         entity = cls(other.doc)
         entity.dxf = other.dxf
@@ -416,9 +414,9 @@ class DXFEntity:
         entity.doc.entitydb.add(entity)  # same handle -> replaces other
         return entity
 
-    def clone(self) -> 'DXFEntity':
-        """ Returns a real clone with same handle, owner and reactors. This clone is not stored in the entity database
-        nor does it reside in any layout, block, table or objects section!
+    def clone(self: T) -> T:
+        """ Returns a real clone but without handle, no owner and no reactors. This clone is not stored in the entity
+        database nor does it reside in any layout, block, table or objects section!
 
         """
         entity = self.__class__(doc=self.doc)
@@ -428,10 +426,12 @@ class DXFEntity:
             entity.extension_dict = self.extension_dict.clone()
 
         # what about reactors of cloned DXF objects? Just clone it!
-        entity.reactors = copy.deepcopy(self.reactors)
+        entity.reactors = Reactors()
         entity.appdata = copy.deepcopy(self.appdata)
         entity.xdata = copy.deepcopy(self.xdata)
         entity.embedded_objects = copy.deepcopy(self.embedded_objects)
+        entity.dxf.handle = None
+        entity.dxf.owner = None
         # using the linked_entities() interface is maybe not sufficient
         self._clone_data(entity)
         return entity
@@ -501,7 +501,7 @@ class DXFEntity:
             self.dxf = self.load_dxf_attribs(processor)
 
     @classmethod
-    def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':
+    def new(cls: Type[T], handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> T:
         """
         Constructor for building new entities from scratch by ezdxf (trusted environment)
 
@@ -759,7 +759,7 @@ class DXFEntity:
     def has_extension_dict(self) -> bool:
         return self.extension_dict is not None
 
-    def get_extension_dict(self) -> 'DXFDictionary':
+    def get_extension_dict(self) -> 'Dictionary':
         def new_extension_dict():
             self.extension_dict = ExtensionDict(self)
             return self.extension_dict.get()

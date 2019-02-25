@@ -2,6 +2,7 @@
 # License: MIT License
 # created 2019-02-15
 import pytest
+import ezdxf
 
 from ezdxf.entities.polyline import Polyline
 from ezdxf.lldxf.const import DXF12, DXF2000
@@ -104,6 +105,34 @@ def test_polygon_mesh():
     assert (100, 'AcDbPolygonMesh') == collector.tags[5]
 
 
+def test_copy_polyline():
+    doc = ezdxf.new2()
+    msp = doc.modelspace()
+    polyline = msp.add_polyline2d([(1, 2), (7, 8), (4, 3)])
+    assert isinstance(polyline, Polyline)
+    assert len(polyline) == 3
+
+    copy = polyline.copy_entity()
+    assert isinstance(polyline, Polyline)
+    assert len(copy) == 3
+    assert list(polyline.points()) == list(copy.points())
+    assert polyline.vertices is not copy.vertices
+    assert polyline.vertices[0] is not copy.vertices[0]
+    copy.extend([(9, 9)])
+    assert len(polyline) == 3
+    assert len(copy) == 4
+
+    assert copy not in msp, 'is not assigned to modelspace'
+    # but only one polyline is stored
+    assert len(msp) == 1
+    msp.add_entity(copy)
+    assert len(msp) == 2
+    assert polyline.dxf.handle != copy.dxf.handle
+    assert polyline.dxf.owner == copy.dxf.owner
+    for vertex in copy.vertices:
+        assert vertex.dxf.owner == copy.dxf.owner, 'vertices should have same owner as polyline'
+
+
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
@@ -115,6 +144,3 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     polyline.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
-
-
-

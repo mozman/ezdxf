@@ -15,9 +15,7 @@ from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, Vertex, Matrix44
-    from ezdxf.layouts.base import BaseLayout
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import Auditor, TagWriter, Vertex, Matrix44, BaseLayout, DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity']
 

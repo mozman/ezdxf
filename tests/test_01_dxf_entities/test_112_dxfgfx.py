@@ -2,7 +2,6 @@
 # License: MIT License
 # created 2019-02-14
 import pytest
-
 from ezdxf.entities.dxfgfx import DXFGraphic
 
 
@@ -47,6 +46,40 @@ def test_default_attributes():
     assert entity.dxf.hasattr('linetype') is False, 'just the default value'
 
 
+def test_clone_graphical_entity(entity):
+    entity.dxf.handle = 'EFEF'
+    entity.dxf.owner = 'ABBA'
+    entity.dxf.layer = 'Layer1'
+    entity.dxf.color = 13
+    entity.set_reactors(['A', 'F'])
+    entity.set_xdata('MOZMAN', [(1000, 'extended data')])
+    clone = entity.clone()
+    assert clone.dxf is not entity.dxf, 'should be different objects'
+    assert clone.dxf.handle is None
+    assert clone.dxf.owner is None
+    assert clone.dxf.layer == 'Layer1'
+    assert clone.dxf.color == 13
+    assert clone.reactors is not entity.reactors, 'should be different objects'
+    assert len(clone.get_reactors()) == 0
+    assert clone.xdata is not entity.xdata, 'should be different objects'
+    assert clone.get_xdata('MOZMAN') == [(1000, 'extended data')]
+
+    clone.dxf.handle = 'CDCD'
+    clone.dxf.owner = 'FEFE'
+    clone.dxf.layer = 'Layer2'
+    clone.dxf.color = 77
+    clone.set_reactors([])
+    clone.set_xdata('MOZMAN', [(1000, 'extended data1')])
+
+    # don't change source entity
+    assert entity.dxf.handle == 'EFEF'
+    assert entity.dxf.owner == 'ABBA'
+    assert entity.dxf.layer == 'Layer1'
+    assert entity.dxf.color == 13
+    assert entity.get_reactors() == ['A', 'F']
+    assert entity.get_xdata('MOZMAN') == [(1000, 'extended data')]
+
+
 LINE = """0
 LINE
 5
@@ -80,6 +113,4 @@ AcDbLine
 """
 
 
-if __name__ == '__main__':
-    pytest.main([__file__])
 

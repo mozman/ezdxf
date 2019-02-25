@@ -12,9 +12,7 @@ from .factory import register_entity
 from .objectcollection import ObjectCollection
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, Drawing, DXFNamespace
 
 __all__ = ['DXFGroup', 'GroupCollection']
 
@@ -42,7 +40,7 @@ class DXFGroup(DXFObject):
         super().__init__(doc)
         self._data = list()  # type: List[Union[str, DXFEntity]]
 
-    def clone(self) -> 'DXFEntity':
+    def clone(self):
         raise DXFTypeError('Cloning of GROUP not supported.')
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':

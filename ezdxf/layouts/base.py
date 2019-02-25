@@ -2,16 +2,14 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List, Hashable
-from ezdxf.lldxf.const import DXFValueError, MODEL_SPACE, PAPER_SPACE
+from ezdxf.lldxf.const import DXFValueError
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntitySpace, EntityDB
 from ezdxf.graphicsfactory2 import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.entities.blockrecord import BlockRecord
-    from ezdxf.entities.dxfentity import DXFEntity
+    from ezdxf.eztypes2 import Drawing, BlockRecord, DXFEntity
 
 
 class BaseLayout(CreatorInterface):

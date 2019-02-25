@@ -11,8 +11,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, Vertex, DXFNamespace
 
 __all__ = ['Text', 'acdb_text']
 

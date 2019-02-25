@@ -3,17 +3,12 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Any, Union, List, Tuple, cast, Optional, Dict
 from ezdxf.entitydb import EntitySpace
-from ezdxf.lldxf.const import MODEL_SPACE, DXFKeyError, DXFValueError, DXF2010, DXFTypeError, STD_SCALES
+from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXF2010, DXFTypeError, STD_SCALES
 from .base import BaseLayout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Viewport, GeoData, SortEntitiesTable
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.entities.dictionary import Dictionary
-    from ezdxf.entities.layout import DXFLayout
-    from ezdxf.entities.dxfentity import DXFEntity
-    from ezdxf.layouts.blocklayout import BlockLayout
+    from ezdxf.eztypes import GeoData, SortEntitiesTable
+    from ezdxf.eztypes2 import Vertex, Viewport, TagWriter, Drawing, Dictionary, DXFLayout, DXFEntity, BlockLayout
 
 
 def get_block_entity_space(doc: 'Drawing', block_record_handle: str) -> 'EntitySpace':

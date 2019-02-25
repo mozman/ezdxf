@@ -16,13 +16,15 @@ from ezdxf.render.dimension import multi_point_linear_dimension
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import DXFEntity, Spline, Text, ImageDef, Image, Line, Point, Circle, Arc, Shape
-    from ezdxf.eztypes import Solid, Trace, Face, Insert, Attrib, Polyline, Polyface, Polymesh, UnderlayDef, Underlay
-    from ezdxf.eztypes import Hatch, Mesh, LWPolyline, Ellipse, MText, Ray, XLine, Dimension, DimStyleOverride
+    from ezdxf.eztypes import Spline, ImageDef, Image
+    from ezdxf.eztypes import UnderlayDef, Underlay
+    from ezdxf.eztypes import Hatch, Mesh, Ellipse, MText, Ray, XLine, DimStyleOverride
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, \
         LoftedSurface
-    from ezdxf.eztypes import UCS, Vertex, Drawing
-    from ezdxf.entities import DXFEntity
+
+    from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFEntity
+    from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
+    from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline
 
 
 class CreatorInterface:
@@ -191,7 +193,7 @@ class CreatorInterface:
         """
         return cast('Trace', self._add_quadrilateral('TRACE', points, dxfattribs))
 
-    def add_3dface(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Face':
+    def add_3dface(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Face3d':
         """
         Add a :class:`3DFace` element, `points` is an iterable 3 or 4 2D/3D points.
 

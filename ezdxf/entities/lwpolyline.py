@@ -17,8 +17,7 @@ from .factory import register_entity
 
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, Vertex
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, Drawing, Vertex, DXFNamespace
 
 __all__ = ['LWPolyline']
 

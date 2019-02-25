@@ -9,8 +9,7 @@ from .dxfentity import SubclassProcessor, DXFEntity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from .dxfentity import DXFNamespace
+    from ezdxf.eztypes2 import TagWriter, DXFNamespace
 
 __all__ = ['TableHead']
 
