@@ -3,7 +3,7 @@ Mesh
 
 .. class:: Mesh(GraphicEntity)
 
-    Introduced in DXF version R13 (AC1012), dxftype is MESH.
+    Introduced in DXF version R2010 (AC1024), dxftype is MESH.
 
     3D mesh entity similar to the :class:`Polyface` entity. Create :class:`Mesh` in layouts and
     blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_mesh`.
