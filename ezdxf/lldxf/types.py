@@ -36,7 +36,7 @@ def handle_code(dxftype: str) -> int:
 
 
 class DXFTag:
-    """ Immutable DXFTag class """
+    """ Immutable DXFTag class - immutable by design, not implementation - don't change it. """
     __slots__ = ('code', '_value')
 
     def __init__(self, code: int, value: 'TagValue'):
@@ -62,6 +62,9 @@ class DXFTag:
 
     def __eq__(self, other) -> bool:
         return (self.code, self.value) == other
+
+    def __hash__(self):
+        return hash((self.code, self._value))
 
     def dxfstr(self) -> str:
         return TAG_STRING_FORMAT % (self.code, self._value)
@@ -90,7 +93,7 @@ def is_embedded_object_marker(tag: DXFTag) -> bool:
 
 
 class DXFVertex(DXFTag):
-    """ Immutable Vertex class"""
+    """ Immutable Vertex class by design - not implementation - don't change it. """
     __slots__ = ()
 
     def __init__(self, code: int, value: Sequence[float]):
@@ -101,6 +104,11 @@ class DXFVertex(DXFTag):
 
     def __repr__(self) -> str:
         return "DXFVertex({}, {})".format(self.code, str(self))
+
+    def __hash__(self):
+        x, y, *z = self._value
+        z = 0. if len(z) == 0 else z[0]
+        return hash((self.code, x, y, z))
 
     @property
     def value(self) -> Tuple:
@@ -115,7 +123,7 @@ class DXFVertex(DXFTag):
 
 
 class DXFBinaryTag(DXFTag):
-    """ Immutable BinaryTags class """
+    """ Immutable BinaryTags class - immutable by design, not implementation - don't change it. """
     __slots__ = ()
 
     def __str__(self) -> str:
