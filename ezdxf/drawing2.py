@@ -34,16 +34,9 @@ from ezdxf.entities.mline import MLineStyleCollection
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from .eztypes import HandleGenerator, DXFTag, SectionDict
-    from .eztypes import SectionType, Table, ViewportTable
-    from ezdxf.sections.header import HeaderSection
-    from ezdxf.sections.blocks2 import BlocksSection
-    from ezdxf.entities.dictionary import Dictionary
-    from ezdxf.layouts.blocklayout import BlockLayout
-    from ezdxf.layouts.layout import Layout
-    from ezdxf.entities.dxfentity import DXFEntity
-    from ezdxf.entities.layer import Layer
-
+    from ezdxf.eztypes2 import HandleGenerator, DXFTag, SectionDict, SectionType, Table, ViewportTable
+    from ezdxf.eztypes2 import HeaderSection, BlocksSection, Dictionary, BlockLayout, Layout
+    from ezdxf.eztypes2 import DXFEntity, Layer, DXFLayout, BlockRecord
     LayoutType = Union[Layout, BlockLayout]
 
 
@@ -358,13 +351,34 @@ class Drawing:
         self._dimension_renderer = renderer
 
     def modelspace(self) -> 'Layout':
+        """ Returns the modelspace layout, displayed as 'Model' tab in CAD applications, defined by block record name
+        '*Model_Space'.
+        """
         return self.layouts.modelspace()
 
     def layout(self, name: str = None) -> 'Layout':
+        """ Returns paperspace layout `name` or returns first layout in tab order if `name` is None. """
         return self.layouts.get(name)
 
+    def active_layout_name(self) -> str:
+        """ Returns the active paperspace layout name, name as displayed in tabs of CAD applications, defined by block
+        record name '*Paper_Space'
+        """
+        active_layout_block_record = self.block_records.get('*Paper_Space')  # type: BlockRecord # block names are case insensitive
+        dxf_layout = active_layout_block_record.dxf.layout  # type: DXFLayout
+        return dxf_layout.dxf.name
+
+    def active_layout(self) -> 'Layout':
+        """ Returns the active paperspace layout, defined by block record name '*Paper_Space' """
+        return self.layouts.get(self.active_layout_name())
+
     def layout_names(self) -> Iterable[str]:
+        """ Returns all layout names (modelspace included) in arbitrary order. """
         return list(self.layouts.names())
+
+    def layout_names_in_taborder(self) -> Iterable[str]:
+        """ Returns all layout names (modelspace included) in tab order. """
+        return list(self.layouts.names_in_taborder())
 
     def reset_fingerprintguid(self):
         self.header['$FINGERPRINTGUID'] = guid()

@@ -468,7 +468,7 @@ class DXFEntity:
         """
         # what about reactors of cloned DXF objects? Just delete it?
         if self.entitydb:
-            self.dxf.handle = None  # to get a new handle from entity database
+            self.dxf.handle = None  # to be safe, getting a new handle from entity database
             self.entitydb.add(self)
             self._add_data_to_db()  # als add sub entities e.g. VERTEX or ATTRIB
 
@@ -477,12 +477,13 @@ class DXFEntity:
         pass
 
     def copy_entity(self) -> 'DXFEntity':
-        """ Returns a copy of `self` and all its data as new database entries, but with same owner and same reactors.
+        """ Returns a copy of `self` and all its data as new database entries, with same owner but without reactors.
         This new entity does not reside in any layout or block just the owner handle is not enough to be in this block,
         adding to a layout has to be done manually by :meth:`BaseLayout.add_entity`.
 
-        DXF objects not stored in DICTIONARY objects have to added to the objects section
-        :meth:`ObjectsSection.add_object`.
+        DXF objects not stored in DICTIONARY objects have to be added to the objects section
+        :meth:`ObjectsSection.add_object`. DICTIONARY is a container entity and does copied child assignment to the
+        object section by itself.
 
         """
         copy = self.clone()

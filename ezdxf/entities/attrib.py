@@ -80,7 +80,8 @@ class BaseAttrib(Text):
     def _clone_data(self, entity: 'BaseAttrib') -> None:
         """ Clone entity data, xrecord data and attached MTEXT are not stored in the entity database. """
         entity.xrecord = copy.deepcopy(self.xrecord)
-        entity.attached_mtext = self.attached_mtext.clone()
+        if self.attached_mtext:
+            entity.attached_mtext = self.attached_mtext.clone()
 
     def link_entity(self, entity: 'DXFEntity'):
         self.attached_mtext = entity
