@@ -5,7 +5,7 @@ import logging
 
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError
 from ezdxf.lldxf import const
-from ezdxf.entities.dxfentity import entity_linker
+from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
 
 logger = logging.getLogger('ezdxf')

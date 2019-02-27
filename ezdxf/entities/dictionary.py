@@ -56,15 +56,15 @@ class Dictionary(DXFObject):
         """ Copy hard owned entities but do not store the copies in the entity database, this is a
         second step, this is just real copying.
         """
-        # todo: what about owner and reactors of cloned DXF objects?
+        # todo: what about reactors of cloned DXF objects?
         if self.dxf.hard_owned:
-            entity._data = {key: entity.clone() for key, entity in self.items()}
+            entity._data = {key: entity.copy() for key, entity in self.items()}
         else:
             entity._data = {key: entity for key, entity in self.items()}
 
     def _add_data_to_db(self) -> None:
         """ Add hard owned and therefor copied entities into database and the objects section.  """
-        # todo: don't know how to proceed with reactors of cloned objects, may this should be handled by the objects itself.
+        # todo: don't know how to proceed with reactors of cloned objects?
         if self.dxf.hard_owned:
             my_handle = self.dxf.handle
             for _, entity in self.items():
@@ -251,15 +251,16 @@ class Dictionary(DXFObject):
         for key, entity in self.items():
             objects.delete_entity(entity)
 
-    def add_new_dict(self, key: str) -> 'Dictionary':
+    def add_new_dict(self, key: str, hard_owned: bool = False) -> 'Dictionary':
         """
         Create a new sub dictionary.
 
         Args:
             key: name of the sub dictionary
+            hard_owned: entries of the new dictionary are hard owned
 
         """
-        dxf_dict = self.doc.objects.add_dictionary(owner=self.dxf.handle)
+        dxf_dict = self.doc.objects.add_dictionary(owner=self.dxf.handle, hard_owned=hard_owned)
         self.add(key, dxf_dict)
         return dxf_dict
 
@@ -319,7 +320,7 @@ class DictionaryWithDefault(Dictionary):
             self._default = self.entitydb[self.dxf.default]
         return super().get(key, default=self._default)
 
-    def set_default(self, default)-> None:
+    def set_default(self, default) -> None:
         if isinstance(default, str):
             self._default = self.entitydb[default]
         else:

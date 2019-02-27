@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, Iterator
 
 from ezdxf.lldxf.tags import DXFStructureError
 from ezdxf.query import EntityQuery
-from ezdxf.entities.dxfentity import entity_linker
+from ezdxf.entities.dxfgfx import entity_linker
 
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.entitydb import EntitySpace, EntityDB

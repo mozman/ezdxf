@@ -250,7 +250,7 @@ class Layouts:
         """
         try:
             block_record = self.doc.entitydb[layout_key]
-            dxf_layout = self.doc.entitydb[block_record.layout]
+            dxf_layout = self.doc.entitydb[block_record.dxf.layout]
         except KeyError:
             raise DXFKeyError('Layout with key "{}" does not exist.'.format(layout_key))
         return self.get(dxf_layout.dxf.name)

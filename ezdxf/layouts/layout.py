@@ -70,7 +70,7 @@ class Layout(BaseLayout):
         block_record_handle = layout.dxf.block_record
         block_record = doc.entitydb[block_record_handle]
         # link maybe broken
-        block_record.layout = layout.dxf.handle
+        block_record.dxf.layout = layout.dxf.handle
         entity_space = get_block_entity_space(doc, block_record_handle)
         super().__init__(block_record, doc, entity_space)
 

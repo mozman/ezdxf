@@ -4,7 +4,8 @@
 # License: MIT License
 from typing import Optional, Iterable, Tuple, Union, TYPE_CHECKING
 from ezdxf.tools.handle import HandleGenerator
-from ezdxf.entities.dxfentity import DXFEntity, export_seqend
+from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities.dxfgfx import export_seqend
 from ezdxf.order import priority, zorder
 
 if TYPE_CHECKING:
@@ -183,9 +184,10 @@ class EntitySpace:
         for entity in entities:
             entity.export_dxf(tagwriter)
             seqend = False
-            for linked in entity.linked_entities():
-                seqend = True
-                linked.export_dxf(tagwriter)
+            if hasattr(entity, 'linked_entities'):  # only POLYLINE & INSERT can have linked entities
+                for linked in entity.linked_entities():
+                    seqend = True
+                    linked.export_dxf(tagwriter)
 
             if seqend:
                 export_seqend(tagwriter, entity)

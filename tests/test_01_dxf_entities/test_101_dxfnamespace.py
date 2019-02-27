@@ -125,7 +125,7 @@ def test_dxftype(entity, processor):
 def test_cloning(entity, processor):
     attribs = DXFNamespace(processor, entity)
     attribs.color = 77
-    attribs2 = attribs.clone(entity)
+    attribs2 = attribs.copy(entity)
     # clone everything
     assert attribs2._entity is attribs._entity
     assert attribs2.handle is attribs.handle

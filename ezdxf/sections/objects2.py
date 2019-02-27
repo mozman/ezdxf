@@ -74,14 +74,18 @@ class ObjectsSection(AbstractSection):
         dxfobject.set_reactors([dxfattribs['owner']])
         return dxfobject
 
-    def add_dictionary(self, owner: str = '0') -> Dictionary:
-        entity = self.create_new_dxf_entity('DICTIONARY', dxfattribs={'owner': owner})
+    def add_dictionary(self, owner: str = '0', hard_owned: bool = False) -> Dictionary:
+        entity = self.create_new_dxf_entity('DICTIONARY', dxfattribs={
+            'owner': owner,
+            'hard_owned': hard_owned,
+        })
         return cast(Dictionary, entity)
 
-    def add_dictionary_with_default(self, owner='0', default="0") -> 'Dictionary':
+    def add_dictionary_with_default(self, owner='0', default='0', hard_owned: bool = False) -> 'Dictionary':
         entity = self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
             'owner': owner,
             'default': default,
+            'hard_owned': hard_owned,
         })
         return cast(Dictionary, entity)
 

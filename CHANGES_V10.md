@@ -57,6 +57,7 @@ Changes in Detail
 - DXFEntity: get_xdata() keyword `xdata_tag` renamed to `tags`
 - DXFEntity: set_xdata() keyword `xdata_tag` renamed to `tags`
 - DXFEntity: `remove_reactor_handle()` renamed to `discard_reactor_handle()`
+- DXFEntity: get_extension_dict() returns `ExtensionDict` instead of the raw DICTIONARY object
 - LAYER: renamed DXF atributes:
     - removed `line_weight` as synonym for `lineweight`
     - `plot_style_name` renamed to `plotstyle_handle` 

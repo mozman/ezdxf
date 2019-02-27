@@ -3,10 +3,11 @@
 # Created 2019-02-13
 #
 # DXFGraphic - graphical DXF entities stored in ENTITIES and BLOCKS sections
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType, DXFUnsupportedFeature
+from ezdxf.lldxf.const import DXFStructureError, OWNER_CODE
 from ezdxf.math import Vector, UCS
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
@@ -17,7 +18,7 @@ from ezdxf.tools import float2transparency, transparency2float
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import Auditor, TagWriter, Vertex, Matrix44, BaseLayout, DXFNamespace
 
-__all__ = ['DXFGraphic', 'acdb_entity']
+__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'export_seqend']
 
 acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
@@ -118,6 +119,41 @@ class DXFGraphic(DXFEntity):
             return OCS(extrusion)
         else:
             return None
+
+    def layout(self) -> Optional['BaseLayout']:
+        doc = self.doc
+        try:  # is modelspace or paperspace
+            layout = doc.layouts.get_layout_for_entity(self)
+        except DXFKeyError:  # is a generic block
+            block_rec = self.doc.entitydb[self.dxf.owner]
+            block_name = block_rec.dxf.name
+            layout = doc.blocks.get(block_name)
+        return layout
+
+    def assign_layout(self, layout: 'BaseLayout') -> None:
+        """ Assign entity to a modelspace or paperspace layout. """
+        self.set_owner(layout.layout_key, paperspace=int(layout.is_active_paperspace))
+
+    def set_owner(self, owner: str, paperspace: int = 0) -> None:
+        self.dxf.owner = owner
+        if paperspace:
+            self.dxf.paperspace = paperspace
+        else:
+            self.dxf.discard('paperspace')
+        for e in self.linked_entities():  # type: DXFGraphic
+            e.set_owner(owner, paperspace)
+
+    def linked_entities(self) -> Iterable['DXFEntity']:
+        """ Yield linked entities: VERTEX or ATTRIB, different handling than attached entities. """
+        return []
+
+    def attached_entities(self) -> Iterable['DXFEntity']:
+        """ Yield attached entities: MTEXT,  different handling than linked entities. """
+        return []
+
+    def link_entity(self, entity: 'DXFEntity') -> None:
+        """ Store linked or attached entities. Same API for both types of appended data. """
+        pass
 
     @property
     def zorder(self):
@@ -288,3 +324,75 @@ class DXFGraphic(DXFEntity):
         auditor.check_if_linetype_exists(self)
         auditor.check_for_valid_color_index(self)
         auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
+
+LINKED_ENTITIES = {
+    'INSERT': 'ATTRIB',
+    'POLYLINE': 'VERTEX'
+}
+
+
+# todo: MTEXT attached to ATTRIB & ATTDEF
+# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT') therefor separated entity, but without the
+# base class: no handle, no owner nor AppData, and a limited AcDbEntity subclass.
+# Detect attached entities (more than MTEXT?) by required but missing handle and owner tags
+# use DXFEntity.link_entity() for linking to preceding entity, INSERT & POLYLINE do not have attached entities, so reuse
+# of API for ATTRIB & ATTDEF should be safe.
+
+
+def entity_linker() -> Callable[[DXFEntity], bool]:
+    main_entity = None  # type: Optional[DXFEntity]
+    prev = None  # type: Optional[DXFEntity] # store preceding entity
+    expected = ""
+
+    def entity_linker_(entity: DXFEntity) -> bool:
+        nonlocal main_entity, expected, prev
+        dxftype = entity.dxftype()  # type: str
+        are_linked_entities = False  # INSERT & POLYLINE are not linked entities, they are stored in the entity space
+        if main_entity is not None:
+            are_linked_entities = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
+            if dxftype == 'SEQEND':
+                # do not store SEQEND entity
+                main_entity = None
+            # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
+            elif dxftype == expected:
+                main_entity.link_entity(entity)
+            else:
+                raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
+        # linked entities
+        elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
+            if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
+                # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
+                #   INSERT with no ATTRIBS, attribs_follow == 0
+                #   ATTRIB as stand alone entity
+                #   ....
+                #   INSERT with ATTRIBS, attribs_follow == 1
+                #   ATTRIB as connected entity
+                #   SEQEND
+                #
+                # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
+                pass
+            else:
+                main_entity = entity
+                expected = LINKED_ENTITIES[dxftype]
+        # attached entities
+        elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):  # attached MTEXT entity
+            if prev:
+
+                prev.link_entity(entity)
+                are_linked_entities = True
+            else:
+                raise DXFStructureError("Attached MTEXT entity without a preceding entity.")
+        prev = entity
+        return are_linked_entities  # caller should know, if *tags* should be stored in the entity space or not
+
+    return entity_linker_
+
+
+def export_seqend(tagwriter: 'TagWriter', entity: DXFEntity) -> None:
+    handle = entity.entitydb.next_handle()
+    tagwriter.write_tag2(0, 'SEQEND')
+    tagwriter.write_tag2(5, handle)
+    if tagwriter.dxfversion > DXF12:
+        owner = entity.dxf.owner
+        tagwriter.write_tag2(OWNER_CODE, owner)
+        tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbEntity')

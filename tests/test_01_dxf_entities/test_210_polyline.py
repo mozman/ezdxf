@@ -116,7 +116,7 @@ def test_copy_polyline(doc):
     assert isinstance(polyline, Polyline)
     assert len(polyline) == 3
 
-    copy = polyline.copy_entity()
+    copy = polyline.copy()
     assert isinstance(polyline, Polyline)
     assert len(copy) == 3
     assert list(polyline.points()) == list(copy.points())

@@ -2,6 +2,8 @@
 # License: MIT License
 # created 2019-02-14
 import pytest
+import ezdxf
+
 from ezdxf.entities.dxfgfx import DXFGraphic
 
 
@@ -47,6 +49,11 @@ def test_default_attributes():
 
 
 def test_clone_graphical_entity(entity):
+    doc = ezdxf.new2()
+    entity.doc = doc
+    msp = doc.modelspace()
+    msp.add_entity(entity)
+
     entity.dxf.handle = 'EFEF'
     entity.dxf.owner = 'ABBA'
     entity.dxf.layer = 'Layer1'
@@ -55,7 +62,7 @@ def test_clone_graphical_entity(entity):
     entity.set_xdata('MOZMAN', [(1000, 'extended data')])
     clone = entity.copy()
     assert clone.dxf is not entity.dxf, 'should be different objects'
-    assert clone.dxf.handle is None
+    assert clone.dxf.handle in doc.entitydb, 'should be stored in entity db'
     assert clone.dxf.owner is None
     assert clone.dxf.layer == 'Layer1'
     assert clone.dxf.color == 13

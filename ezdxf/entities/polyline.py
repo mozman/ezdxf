@@ -82,15 +82,8 @@ class Polyline(DXFGraphic):
         self.vertices.append(entity)
 
     def _copy_data(self, entity: 'Polyline') -> None:
-        """ Copy vertices, but do not store the clones in the entity database, this is a second step.
-        """
+        """ Copy vertices and store the copies into the entity database. """
         entity.vertices = [vertex.copy() for vertex in self.vertices]
-
-    def _add_data_to_db(self) -> None:
-        """ Add copied vertices  to database. """
-        for vertex in self.vertices:
-            vertex.dxf.handle = None  # get a new handle from database
-            self.entitydb.add(vertex)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """

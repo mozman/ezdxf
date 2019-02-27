@@ -2,19 +2,20 @@
 # License: MIT License
 # Created 2019-02-13
 # DXFEntity - Root Entity
-from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Callable, Type, TypeVar
+from typing import TYPE_CHECKING, List, Any, Iterable, Optional, Union, Type, TypeVar
 import copy
 from ezdxf import options
-from ezdxf.lldxf.types import handle_code, dxftag, cast_value, DXFTag, SUBCLASS_MARKER
+from ezdxf.lldxf.types import handle_code, dxftag, cast_value
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
 from ezdxf.lldxf.const import ACAD_REACTORS, ACAD_XDICTIONARY
-from ezdxf.lldxf.const import DXFAttributeError, DXFKeyError, DXFValueError, DXFStructureError, DXFTypeError
+from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFTypeError
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
-from .appdata import AppData, Reactors, ExtensionDict
+from .appdata import AppData, Reactors
+from .xdict import ExtensionDict
 import logging
 
 logger = logging.getLogger('ezdxf')
@@ -22,7 +23,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import Auditor, TagWriter, Drawing, EntityDB, EntityFactory, Dictionary, BaseLayout
 
-__all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class', 'entity_linker']
+__all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class']
 
 """
 DXFEntity() is the base class of **all** DXF entities.
@@ -64,7 +65,7 @@ class DXFNamespace:
             self.reset_handles()
             self.rewire(entity)
 
-    def clone(self, entity: 'DXFEntity'):
+    def copy(self, entity: 'DXFEntity'):
         namespace = self.__class__()
         for k, v in self.__dict__.items():
             namespace.__dict__[k] = v
@@ -72,7 +73,7 @@ class DXFNamespace:
         return namespace
 
     def __deepcopy__(self, memodict: dict = None):
-        return self.clone(self._entity)
+        return self.copy(self._entity)
 
     def reset_handles(self):
         """ Reset handle and owner to None. """
@@ -424,10 +425,10 @@ class DXFEntity:
         """
         entity = self.__class__(doc=self.doc)
         # copy and bind dxf namespace to new entity
-        entity.dxf = self.dxf.clone(entity)
+        entity.dxf = self.dxf.copy(entity)
         if self.extension_dict:
             # copy and bind existing extension dictionary to new entity
-            entity.extension_dict = self.extension_dict.clone(entity)
+            entity.extension_dict = self.extension_dict.copy(entity)
         # what about reactors of cloned DXF objects? For now: just delete it!
         entity.reactors = Reactors()
 
@@ -442,14 +443,13 @@ class DXFEntity:
         entity.dxf.handle = None
         entity.dxf.owner = None
 
+        self.entitydb.add(entity)
         # using the linked_entities() interface is maybe not sufficient
         self._copy_data(entity)
         return entity
 
     def _copy_data(self, entity: 'DXFEntity') -> None:
-        """ Clone entity data like vertices or attribs, do not store the clones in the entity database, this is a
-        second step, this is just real cloning.
-        """
+        """ Copy entity data like vertices or attribs and store the copies into the entity database. """
         pass
 
     def __deepcopy__(self, memodict: dict = None):
@@ -465,40 +465,6 @@ class DXFEntity:
             copy = self.copy()
             memodict[id(self)] = copy
             return copy
-
-    def _add_to_db(self) -> None:
-        """ Adds entity and all its sub entities to the entity database and all of them get a new handle (e.g. POLYLINE,
-        INSERT).
-
-        Intended usage see copy_entity()
-
-            copy = entity.clone()
-            copy._add_to_db()
-
-        """
-        # what about reactors of cloned DXF objects? Just delete it?
-        if self.entitydb:
-            self.dxf.handle = None  # to be safe, getting a new handle from entity database
-            self.entitydb.add(self)
-            self._add_data_to_db()  # als add sub entities e.g. VERTEX or ATTRIB
-
-    def _add_data_to_db(self) -> None:
-        """ Add data (payload) to database if needed. Intended to add data from clones to the entity database. """
-        pass
-
-    def copy_entity(self) -> 'DXFEntity':
-        """ Returns a copy of `self` and all its data as new database entries, with same owner but without reactors.
-        This new entity does not reside in any layout or block just the owner handle is not enough to be in this block,
-        adding to a layout has to be done manually by :meth:`BaseLayout.add_entity`.
-
-        DXF objects not stored in DICTIONARY objects have to be added to the objects section
-        :meth:`ObjectsSection.add_object`. DICTIONARY is a container entity and does copied child assignment to the
-        object section by itself.
-
-        """
-        copy = self.copy()
-        copy._add_to_db()
-        return copy
 
     def load_tags(self, tags: ExtendedTags) -> None:
         if tags:
@@ -581,29 +547,6 @@ class DXFEntity:
     def dxftype(self) -> str:
         return self.DXFTYPE
 
-    def assign_layout(self, layout: 'BaseLayout') -> None:
-        """ Assign entity to a modelspace or paperspace layout. """
-        self.set_owner(layout.layout_key, paperspace=int(layout.is_active_paperspace))
-
-    def set_owner(self, owner: str, paperspace: int = 0) -> None:
-        self.dxf.owner = owner
-        if paperspace:
-            self.dxf.paperspace = paperspace
-        else:
-            self.dxf.discard('paperspace')
-        for e in self.linked_entities():
-            e.set_owner(owner, paperspace)
-
-    def layout(self) -> Optional['BaseLayout']:
-        doc = self.doc
-        try:  # is modelspace or paperspace
-            layout = doc.layouts.get_layout_for_entity(self)
-        except DXFKeyError:  # is a generic block
-            block_rec = self.doc.entitydb[self.dxf.owner]
-            block_name = block_rec.dxf.name
-            layout = doc.blocks.get(block_name)
-        return layout
-
     def __str__(self) -> str:
         """
         Returns a simple string representation.
@@ -631,18 +574,6 @@ class DXFEntity:
 
     def get_flag_state(self, flag: int, name: str = 'flags') -> bool:
         return bool(self.dxf.get(name, 0) & flag)
-
-    def linked_entities(self) -> Iterable['DXFEntity']:
-        """ Yield linked entities: VERTEX or ATTRIB, different handling than attached entities. """
-        return []
-
-    def attached_entities(self) -> Iterable['DXFEntity']:
-        """ Yield attached entities: MTEXT,  different handling than linked entities. """
-        return []
-
-    def link_entity(self, entity: 'DXFEntity') -> None:
-        """ Store linked or attached entities. Same API for both types of appended data. """
-        pass
 
     @property
     def is_alive(self):
@@ -772,13 +703,13 @@ class DXFEntity:
     def has_extension_dict(self) -> bool:
         return self.extension_dict is not None
 
-    def get_extension_dict(self) -> 'Dictionary':
+    def get_extension_dict(self) -> 'ExtensionDict':
         def new_extension_dict():
-            self.extension_dict = ExtensionDict(self)
-            return self.extension_dict.get()
+            self.extension_dict = ExtensionDict.new(self)
+            return self.extension_dict
 
         if self.has_extension_dict():
-            return self.extension_dict.get()
+            return self.extension_dict
         else:
             return new_extension_dict()
 
@@ -910,74 +841,3 @@ class DXFTagStorage(DXFEntity):
         super().destroy()
 
 
-LINKED_ENTITIES = {
-    'INSERT': 'ATTRIB',
-    'POLYLINE': 'VERTEX'
-}
-
-
-# todo: MTEXT attached to ATTRIB & ATTDEF
-# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT') therefor separated entity, but without the
-# base class: no handle, no owner nor AppData, and a limited AcDbEntity subclass.
-# Detect attached entities (more than MTEXT?) by required but missing handle and owner tags
-# use DXFEntity.link_entity() for linking to preceding entity, INSERT & POLYLINE do not have attached entities, so reuse
-# of API for ATTRIB & ATTDEF should be safe.
-
-
-def entity_linker() -> Callable[[DXFEntity], bool]:
-    main_entity = None  # type: Optional[DXFEntity]
-    prev = None  # type: Optional[DXFEntity] # store preceding entity
-    expected = ""
-
-    def entity_linker_(entity: DXFEntity) -> bool:
-        nonlocal main_entity, expected, prev
-        dxftype = entity.dxftype()  # type: str
-        are_linked_entities = False  # INSERT & POLYLINE are not linked entities, they are stored in the entity space
-        if main_entity is not None:
-            are_linked_entities = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
-            if dxftype == 'SEQEND':
-                # do not store SEQEND entity
-                main_entity = None
-            # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
-            elif dxftype == expected:
-                main_entity.link_entity(entity)
-            else:
-                raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
-        # linked entities
-        elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
-            if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
-                # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
-                #   INSERT with no ATTRIBS, attribs_follow == 0
-                #   ATTRIB as stand alone entity
-                #   ....
-                #   INSERT with ATTRIBS, attribs_follow == 1
-                #   ATTRIB as connected entity
-                #   SEQEND
-                #
-                # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
-                pass
-            else:
-                main_entity = entity
-                expected = LINKED_ENTITIES[dxftype]
-        # attached entities
-        elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):  # attached MTEXT entity
-            if prev:
-
-                prev.link_entity(entity)
-                are_linked_entities = True
-            else:
-                raise DXFStructureError("Attached MTEXT entity without a preceding entity.")
-        prev = entity
-        return are_linked_entities  # caller should know, if *tags* should be stored in the entity space or not
-
-    return entity_linker_
-
-
-def export_seqend(tagwriter: 'TagWriter', entity: DXFEntity) -> None:
-    handle = entity.entitydb.next_handle()
-    tagwriter.write_tag2(0, 'SEQEND')
-    tagwriter.write_tag2(5, handle)
-    if tagwriter.dxfversion > DXF12:
-        owner = entity.dxf.owner
-        tagwriter.write_tag2(OWNER_CODE, owner)
-        tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbEntity')

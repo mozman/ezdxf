@@ -139,11 +139,11 @@ def test_clone_with_insert(doc):
     insert = Insert(doc)
     insert.add_attrib('T1', 'value1', (0, 0))
     clone = insert.copy()
-    assert clone.dxf.handle is None
+    assert clone.dxf.handle in doc.entitydb
     assert clone.dxf.owner is None
     assert len(clone.attribs) == 1
     attrib = clone.attribs[0]
-    assert attrib.dxf.handle is None
+    assert attrib.dxf.handle in doc.entitydb
     assert attrib.dxf.tag == 'T1'
     assert attrib.dxf.text == 'value1'
     # change cloned attrib
@@ -167,7 +167,7 @@ def test_copy_with_insert(doc):
     # attribs stored in the entity database
     assert len(doc.entitydb) == db_count + 2
 
-    copy = insert.copy_entity()
+    copy = insert.copy()
     # not duplicated in entity space
     assert len(msp) == msp_count + 1
     # duplicated in entity database
