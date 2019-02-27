@@ -46,15 +46,15 @@ class Insert(DXFGraphic):
     def link_entity(self, entity: 'DXFEntity') -> None:
         self.attribs.append(entity)
 
-    def _clone_data(self, entity: 'Insert') -> None:
-        """ Clone ATTRIB entities, but do not store the clones into database, this is a second step, this is just real
+    def _copy_data(self, entity: 'Insert') -> None:
+        """ Copy ATTRIB entities, but do not store the copies into database, this is a second step, this is just real
         cloning.
 
         """
-        entity.attribs = [attrib.clone() for attrib in self.attribs]
+        entity.attribs = [attrib.copy() for attrib in self.attribs]
 
     def _add_data_to_db(self) -> None:
-        """ Add cloned ATTRIB entities to database. """
+        """ Add copied ATTRIB entities to database. """
         for attrib in self.attribs:
             attrib.dxf.handle = None  # get a new handle from database
             self.entitydb.add(attrib)

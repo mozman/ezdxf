@@ -53,7 +53,7 @@ def test_clone_graphical_entity(entity):
     entity.dxf.color = 13
     entity.set_reactors(['A', 'F'])
     entity.set_xdata('MOZMAN', [(1000, 'extended data')])
-    clone = entity.clone()
+    clone = entity.copy()
     assert clone.dxf is not entity.dxf, 'should be different objects'
     assert clone.dxf.handle is None
     assert clone.dxf.owner is None

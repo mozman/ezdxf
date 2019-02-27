@@ -85,7 +85,10 @@ class EntityDB:
         handle = entity.dxf.handle  # type: str
         if handle is None:
             handle = self.next_handle()
-            entity.dxf.handle = handle
+            # update_handle() requires the objects section to update the owner handle of the extension dictionary,
+            # but this is no problem at file loading, all entities have handles, and DXF R12 (without handles) have no
+            # extension dictionaries.
+            entity.update_handle(handle)
         self[handle] = entity
 
     def delete_entity(self, entity: DXFEntity) -> None:
@@ -101,7 +104,7 @@ class EntityDB:
         This is not a deep copy in the meaning of Python, because handle and link is changed.
 
         """
-        new_entity = entity.clone()  # type: DXFEntity
+        new_entity = entity.copy()  # type: DXFEntity
         new_entity.dxf.handle = self.next_handle()
         self.add(new_entity)
         return new_entity

@@ -81,14 +81,13 @@ class Polyline(DXFGraphic):
         assert isinstance(entity, DXFVertex)
         self.vertices.append(entity)
 
-    def _clone_data(self, entity: 'Polyline') -> None:
-        """ Clone vertices, but do not store the clones in the entity database, this is a second step, this is just real
-        cloning.
+    def _copy_data(self, entity: 'Polyline') -> None:
+        """ Copy vertices, but do not store the clones in the entity database, this is a second step.
         """
-        entity.vertices = [vertex.clone() for vertex in self.vertices]
+        entity.vertices = [vertex.copy() for vertex in self.vertices]
 
     def _add_data_to_db(self) -> None:
-        """ Add cloned vertices  to database. """
+        """ Add copied vertices  to database. """
         for vertex in self.vertices:
             vertex.dxf.handle = None  # get a new handle from database
             self.entitydb.add(vertex)

@@ -52,9 +52,9 @@ class Dictionary(DXFObject):
         super().__init__(doc)
         self._data = dict()  # type: Dict[str, Union[str, DXFEntity]]
 
-    def _clone_data(self, entity: 'Dictionary') -> None:
-        """ Clone hard owned entities but do not store the clones in the entity database, this is a
-        second step, this is just real cloning.
+    def _copy_data(self, entity: 'Dictionary') -> None:
+        """ Copy hard owned entities but do not store the copies in the entity database, this is a
+        second step, this is just real copying.
         """
         # todo: what about owner and reactors of cloned DXF objects?
         if self.dxf.hard_owned:
@@ -63,7 +63,7 @@ class Dictionary(DXFObject):
             entity._data = {key: entity for key, entity in self.items()}
 
     def _add_data_to_db(self) -> None:
-        """ Add hard owned and therefor cloned entities into database and the objects section.  """
+        """ Add hard owned and therefor copied entities into database and the objects section.  """
         # todo: don't know how to proceed with reactors of cloned objects, may this should be handled by the objects itself.
         if self.dxf.hard_owned:
             my_handle = self.dxf.handle

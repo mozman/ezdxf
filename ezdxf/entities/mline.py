@@ -96,7 +96,7 @@ class MLine(DXFGraphic):
         super().__init__(doc)
         self.vertices = MLineVertices([])
 
-    def clone(self):
+    def copy(self):
         raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -191,8 +191,8 @@ class MLineStyle(DXFObject):
         super().__init__(doc)
         self.style_elements = MLineStyleElements()
 
-    def clone(self):
-        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+    def copy(self):
+        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

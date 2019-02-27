@@ -40,8 +40,8 @@ class DXFGroup(DXFObject):
         super().__init__(doc)
         self._data = list()  # type: List[Union[str, DXFEntity]]
 
-    def clone(self):
-        raise DXFTypeError('Cloning of GROUP not supported.')
+    def copy(self):
+        raise DXFTypeError('Copying of GROUP not supported.')
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

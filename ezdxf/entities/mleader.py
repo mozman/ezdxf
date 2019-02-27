@@ -32,7 +32,7 @@ class MLeader(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2007
 
-    def clone(self):
+    def copy(self):
         raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -108,8 +108,8 @@ class MLeaderStyle(DXFObject):
     DXFATTRIBS = DXFAttributes(base_class, acdb_mleader_style)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2007
 
-    def clone(self):
-        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+    def copy(self):
+        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

@@ -119,6 +119,15 @@ class DXFGraphic(DXFEntity):
         else:
             return None
 
+    @property
+    def zorder(self):
+        """ Inverted priority order (lowest value first) """
+        return -self.priority
+
+    @zorder.setter
+    def zorder(self, value):
+        self.priority = -value
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
         # base class (handle, appid, reactors, xdict, owner) export is done by parent class
@@ -175,10 +184,7 @@ class DXFGraphic(DXFEntity):
         Returns: new created entity as DXFEntity() object
 
         """
-        raise NotImplementedError()
-        new_entity = self.clone()
-        new_entity.dxf.handle = None
-        self.entitydb.add(new_entity)
+        new_entity = self.copy_entity()
         layout.add_entity(new_entity)
         return new_entity
 

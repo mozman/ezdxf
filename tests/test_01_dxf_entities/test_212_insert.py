@@ -138,7 +138,7 @@ def test_clone_with_insert(doc):
     #   owner tag is not enough to assign an entity to a layout, use Layout.add_entity()
     insert = Insert(doc)
     insert.add_attrib('T1', 'value1', (0, 0))
-    clone = insert.clone()
+    clone = insert.copy()
     assert clone.dxf.handle is None
     assert clone.dxf.owner is None
     assert len(clone.attribs) == 1

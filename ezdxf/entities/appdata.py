@@ -6,11 +6,11 @@
 # DXFObject - non graphical entities stored in OBJECTS section
 # DXFGraphical - graphical DXF entities stored in ENTITIES and BLOCKS sections
 #
-from typing import TYPE_CHECKING, List, cast, Union, Iterable, Set, Sequence
+from typing import TYPE_CHECKING, List, cast, Union, Iterable, Set, Sequence, Optional
 from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
+from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import ACAD_XDICTIONARY, ACAD_REACTORS, XDICT_HANDLE_CODE, REACTOR_HANDLE_CODE, APP_DATA_MARKER
 
 if TYPE_CHECKING:
@@ -124,24 +124,31 @@ class Reactors:
 
 class ExtensionDict:
     # todo: test, but requires objects section
-    def __init__(self, owner: 'DXFEntity' = None, handle=None):
+    def __init__(self, owner: 'DXFEntity', xdict: Union[str, 'Dictionary']):
         # back link owner, so __clone__() necessary
         self.owner = owner
-        # _dict is None -> empty dict
-        # _dict as string -> handle to dict
-        # _dict as DXFDictionary
-        self._xdict = handle  # type: Union[str, Dictionary, None]
+        # _xdict is None -> empty dict
+        # _xdict as string -> handle to dict
+        # _xdict as Dictionary
+        self._xdict = xdict
 
-    def clone(self):
-        # Real clone: dict and owner copied
-        copy = self._xdict
-        if not isinstance(copy, str):
-            copy = self._xdict.clone()
-        return self.__class__(self.owner, copy)
+    def copy(self, owner: 'DXFEntity') -> Optional['ExtensionDict']:
+        """ Create a clone of the extension dictionary with new `owner`. """
+        assert self._xdict is not None
+        xdict = self.get()
+        copy = xdict.copy()
+        # The copy of an extension dictionary can not have the same owner as the source dictionary.
+        return self.__class__(owner, copy)
+
+    def update_owner(self, owner: 'DXFEntity') -> None:
+        assert self._xdict is not None
+        self.owner = owner.dxf.handle
+        xdict = self.get()
+        xdict.dxf.owner = self.owner
 
     def __deepcopy__(self, memodict: dict = None):
-        """ Extension dict is owned by just one entity, multiple references are not possible """
-        return self.clone()
+        """ Extension dict is owned by just one entity, multiple references are not (should not?) possible """
+        return self.copy(self.owner)
 
     @classmethod
     def from_tags(cls, entity: 'DXFEntity', tags: Tags = None):
@@ -159,19 +166,22 @@ class ExtensionDict:
 
     def get(self) -> 'Dictionary':
         """
-        Get associated extension dictionary as DXFDictionary() object.
+        Get associated extension dictionary as Dictionary() object.
 
         """
         if self._xdict is None:
             self._xdict = self._new()
         elif isinstance(self._xdict, str):
             # replace handle string by DXFDictionary object
-            self._xdict = cast('DXFDictionary', self.owner.entitydb.get(self._xdict))
+            self._xdict = cast('Dictionary', self.owner.entitydb.get(self._xdict))
         return self._xdict
 
     def _new(self) -> 'Dictionary':
-        xdict = self.doc.objects.add_dictionary(owner=self.owner.dxf.handle)
-        return cast('DXFDictionary', xdict)
+        xdict = self.doc.objects.add_dictionary(
+            owner=self.owner.dxf.handle,
+            hard_owned=True,  # I guess all data in the extension dictionary belongs only to the owner
+        )
+        return cast('Dictionary', xdict)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         xdict = self._xdict

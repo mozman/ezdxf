@@ -7,9 +7,9 @@ __all__ = ['priority', 'zorder']
 
 
 def priority_key(item) -> int:
-    if hasattr(item, '__priority__'):
-        return item.__priority__()
-    else:
+    try:
+        return item.priority
+    except AttributeError:
         return 0
 
 

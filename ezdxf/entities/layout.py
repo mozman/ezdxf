@@ -135,7 +135,7 @@ class PlotSettings(DXFObject):
     DXFTYPE = 'PLOTSETTINGS'
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings)
 
-    def clone(self):
+    def copy(self):
         raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -202,8 +202,8 @@ class DXFLayout(PlotSettings):
     DXFTYPE = 'LAYOUT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings, acdb_layout)
 
-    def clone(self):
-        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+    def copy(self):
+        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

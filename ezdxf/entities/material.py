@@ -190,8 +190,8 @@ class Material(DXFObject):
         self.refraction_mapper_matrix = None  # type: Matrix44  # group code 147
         self.normal_mapper_matrix = None  # type: Matrix44  # group code 43 ???
 
-    def clone(self):
-        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
+    def copy(self):
+        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

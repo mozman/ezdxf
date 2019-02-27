@@ -22,7 +22,6 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import Auditor, TagWriter, Drawing, EntityDB, EntityFactory, Dictionary, BaseLayout
 
-
 __all__ = ['DXFNamespace', 'DXFEntity', 'DXFTagStorage', 'SubclassProcessor', 'base_class', 'entity_linker']
 
 """
@@ -65,14 +64,15 @@ class DXFNamespace:
             self.reset_handles()
             self.rewire(entity)
 
-    def clone(self):
+    def clone(self, entity: 'DXFEntity'):
         namespace = self.__class__()
         for k, v in self.__dict__.items():
             namespace.__dict__[k] = v
+        namespace.rewire(entity)
         return namespace
 
     def __deepcopy__(self, memodict: dict = None):
-        return self.clone()
+        return self.clone(self._entity)
 
     def reset_handles(self):
         """ Reset handle and owner to None. """
@@ -368,7 +368,7 @@ class DXFEntity:
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         self.doc = doc  # type: Drawing
-        # order of appearance in entity spaces, 100 (top) before 0 (default) before -100 (bottom)
+        # priority order: highest value first - 100 (top) before 0 (default) before -100 (bottom)
         # whole int range allowed
         self.priority = 0  # type: int
         # create extended data only if needed
@@ -414,29 +414,39 @@ class DXFEntity:
         entity.doc.entitydb.add(entity)  # same handle -> replaces other
         return entity
 
-    def clone(self: T) -> T:
-        """ Returns a real clone but without handle, no owner and no reactors. This clone is not stored in the entity
+    def copy(self: T) -> T:
+        """ Returns a copy of `self` but without handle, owner and reactors. This copy is not stored in the entity
         database nor does it reside in any layout, block, table or objects section!
+
+        Copying is not trivial, because of linked resources and the lack of documentation hoe to handle this
+        linked resources: extension dictionary, handles in appdata, xdata or embedded objects.
 
         """
         entity = self.__class__(doc=self.doc)
-        entity.dxf = self.dxf.clone()
-        entity.dxf.rewire(entity)
+        # copy and bind dxf namespace to new entity
+        entity.dxf = self.dxf.clone(entity)
         if self.extension_dict:
-            entity.extension_dict = self.extension_dict.clone()
-
-        # what about reactors of cloned DXF objects? Just clone it!
+            # copy and bind existing extension dictionary to new entity
+            entity.extension_dict = self.extension_dict.clone(entity)
+        # what about reactors of cloned DXF objects? For now: just delete it!
         entity.reactors = Reactors()
+
+        # if appdata contains handles, they are treated as shared resources
         entity.appdata = copy.deepcopy(self.appdata)
+
+        # if xdata contains handles, they are treated as shared resources
         entity.xdata = copy.deepcopy(self.xdata)
+
+        # if embedded objects contains handles, they are treated as shared resources
         entity.embedded_objects = copy.deepcopy(self.embedded_objects)
         entity.dxf.handle = None
         entity.dxf.owner = None
+
         # using the linked_entities() interface is maybe not sufficient
-        self._clone_data(entity)
+        self._copy_data(entity)
         return entity
 
-    def _clone_data(self, entity: 'DXFEntity') -> None:
+    def _copy_data(self, entity: 'DXFEntity') -> None:
         """ Clone entity data like vertices or attribs, do not store the clones in the entity database, this is a
         second step, this is just real cloning.
         """
@@ -452,7 +462,7 @@ class DXFEntity:
         try:
             return memodict[id(self)]
         except KeyError:
-            copy = self.clone()
+            copy = self.copy()
             memodict[id(self)] = copy
             return copy
 
@@ -486,7 +496,7 @@ class DXFEntity:
         object section by itself.
 
         """
-        copy = self.clone()
+        copy = self.copy()
         copy._add_to_db()
         return copy
 
@@ -524,9 +534,6 @@ class DXFEntity:
         entity.post_new_hook()
         return entity
 
-    def __priority__(self) -> int:
-        return self.priority
-
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
         for key, value in dxfattribs.items():
             self.dxf.set(key, value)
@@ -548,6 +555,11 @@ class DXFEntity:
                 self.extension_dict = ExtensionDict.from_tags(self, data)
             else:
                 self.set_app_data(appid, data)
+
+    def update_handle(self, handle: str) -> None:
+        self.dxf.handle = handle
+        if self.extension_dict:
+            self.extension_dict.update_owner(self)
 
     @property
     def dxffactory(self) -> 'EntityFactory':
@@ -865,7 +877,7 @@ class DXFTagStorage(DXFEntity):
         super().__init__(doc)
         self.xtags = []  # type: ExtendedTags
 
-    def clone(self) -> 'DXFEntity':
+    def copy(self) -> 'DXFEntity':
         raise DXFTypeError('Cloning of tag storage {} not supported.'.format(self.DXFTYPE))
 
     @property

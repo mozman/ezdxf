@@ -134,7 +134,7 @@ class Table:
         if entitydb:
             new_entry = entitydb.duplicate_entity(entry)
         else:
-            new_entry = entry.clone()
+            new_entry = entry.copy()
         new_entry.dxf.name = new_name
         self._append(new_entry)
         return new_entry
