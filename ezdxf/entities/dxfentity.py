@@ -42,6 +42,15 @@ conversion between different DXF versions, ezdxf is still not a CAD application.
 ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute "{}" for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
 
+# supported event handler called by setting DXF attributes
+# for usage, implement a method named like the dict-value, that accepts the new value as argument e.g.:
+#
+#   Polyline.on_layer_change(name) -> changes also layers of all vertices
+#
+SETTER_EVENTS = {
+    'layer': 'on_layer_change',
+}
+
 
 class DXFNamespace:
     """
@@ -118,6 +127,11 @@ class DXFNamespace:
                 self.__dict__[key] = cast_value(attrib_def.code, value)
         else:
             raise DXFAttributeError(ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype))
+
+        if key in SETTER_EVENTS:
+            handler = getattr(self._entity, SETTER_EVENTS[key], None)
+            if handler:
+                handler(value)
 
     def __delattr__(self, key: str) -> None:
         if self.hasattr(key):

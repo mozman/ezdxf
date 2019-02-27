@@ -9,8 +9,8 @@ from ezdxf import DXFValueError
 
 @pytest.fixture(scope='module')
 def modelspace():
-    dwg = ezdxf.new('AC1009')
-    msp = dwg.modelspace()
+    doc = ezdxf.new2()
+    msp = doc.modelspace()
     msp.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
     msp.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})
     msp.add_text("TEST", dxfattribs={'layer': 'lay_text', 'color': 6})

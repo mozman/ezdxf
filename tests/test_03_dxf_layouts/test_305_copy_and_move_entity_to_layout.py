@@ -10,7 +10,6 @@ def doc():
 
 
 def test_copy_simple_entity(doc):
-    pytest.skip(msg='copy to layout not implemented yet')
     msp = doc.modelspace()
     psp = doc.layout('Layout1')
     circle = msp.add_circle(center=(2, 3), radius=1.5)
@@ -24,7 +23,6 @@ def test_copy_simple_entity(doc):
 
 
 def test_copy_polyline_entity(doc):
-    pytest.skip(msg='copy to layout not implemented yet')
     msp = doc.modelspace()
     psp = doc.layout('Layout1')
     polyline = msp.add_polyline3d(points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)])

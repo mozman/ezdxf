@@ -220,7 +220,7 @@ class DXFGraphic(DXFEntity):
         Returns: new created entity as DXFEntity() object
 
         """
-        new_entity = self.copy_entity()
+        new_entity = self.copy()
         layout.add_entity(new_entity)
         return new_entity
 

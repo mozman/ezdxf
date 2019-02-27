@@ -138,6 +138,17 @@ class Polyline(DXFGraphic):
         del self.vertices
         super().destroy()
 
+    def on_layer_change(self, layer: str):
+        """
+        Event handler for layer change. Changes also the layer of all vertices.
+
+        Args:
+            layer: new layer as string
+
+        """
+        for v in self.vertices:
+            v.dxf.layer = layer
+
     def get_vertex_flags(self) -> int:
         return const.VERTEX_FLAGS[self.get_mode()]
 
@@ -284,6 +295,22 @@ class Polyface(Polyline):
         """
         self.append_faces([face], dxfattribs)
 
+    def _points_to_dxf_vertices(self, points: Iterable['Vertex'], dxfattribs: dict) -> List['DXFVertex']:
+        """ Converts point (x,y, z)-tuples into DXFVertex objects.
+
+        Args:
+            points: list of (x, y,z)-tuples
+            dxfattribs: dict of DXF attributes
+
+        """
+        dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
+        dxfattribs['layer'] = self.get_dxf_attrib('layer', '0')  # all vertices on the same layer as the POLYLINE entity
+        vertices = []  # type: List[DXFVertex]
+        for point in points:
+            dxfattribs['location'] = point
+            vertices.append(cast('DXFVertex', self._new_compound_entity('VERTEX', dxfattribs)))
+        return vertices
+
     def append_faces(self, faces: Iterable['FaceType'], dxfattribs: dict = None) -> None:
         """
         Append multiple *faces*. *faces* is a list of single faces and a single face is a list of (x, y, z)-tuples.
@@ -296,6 +323,8 @@ class Polyface(Polyline):
 
         def new_face_record() -> 'DXFVertex':
             dxfattribs['flags'] = const.VTX_3D_POLYFACE_MESH_VERTEX
+            # location of face record vertex is always (0, 0, 0)
+            dxfattribs['location'] = Vector()
             return self._new_compound_entity('VERTEX', dxfattribs)
 
         dxfattribs = dxfattribs or {}

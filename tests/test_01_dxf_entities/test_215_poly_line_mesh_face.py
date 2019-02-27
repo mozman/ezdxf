@@ -8,13 +8,13 @@ from ezdxf import DXFIndexError
 
 
 @pytest.fixture(scope='module')
-def dwg():
-    return ezdxf.new('AC1009')
+def doc():
+    return ezdxf.new2()
 
 
 @pytest.fixture(scope='module')
-def modelspace(dwg):
-    return dwg.modelspace()
+def modelspace(doc):
+    return doc.modelspace()
 
 
 def test_create_polyline2D(modelspace):
@@ -22,7 +22,6 @@ def test_create_polyline2D(modelspace):
     assert (0., 0.) == polyline[0].dxf.location
     assert (1., 1.) == polyline[1].dxf.location
     assert 'AcDb2dPolyline' == polyline.get_mode()
-    assert hasattr(polyline, '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_create_polyline3D(modelspace):
@@ -31,13 +30,12 @@ def test_create_polyline3D(modelspace):
     assert (4., 5., 6.) == polyline[1].dxf.location
     assert VTX_3D_POLYLINE_VERTEX == polyline[0].dxf.flags
     assert 'AcDb3dPolyline' == polyline.get_mode()
-    assert hasattr(polyline[0], '__dict__') is False, "Invalid usage of __slots__"
 
 
 def test_polyline3d_vertex_layer(modelspace):
     attribs = {'layer': 'polyline_layer'}
     polyline = modelspace.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
-    for vertex in polyline.vertices():
+    for vertex in polyline.vertices:
         assert 'polyline_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
@@ -45,8 +43,8 @@ def test_polyline3d_change_polyline_layer(modelspace):
     attribs = {'layer': 'polyline_layer'}
     polyline = modelspace.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
     polyline.dxf.layer = "changed_layer"
-    for vertex in polyline.vertices():
-        assert 'changed_layer' ==  vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
+    for vertex in polyline.vertices:
+        assert 'changed_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
 def test_polyline2d_set_vertex(modelspace):
@@ -84,14 +82,14 @@ def test_polyline2d_insert_vertices(modelspace):
 
 def test_polyline2d_delete_one_vertex(modelspace):
     polyline = modelspace.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
-    polyline.delete_vertices(0)
+    del polyline.vertices[0]
     assert (1, 1) == polyline[0].dxf.location
     assert 3 == len(polyline)
 
 
 def test_polyline2d_delete_two_vertices(modelspace):
     polyline = modelspace.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
-    polyline.delete_vertices(pos=0, count=2)
+    del polyline.vertices[0:2]
     assert (2, 2) == polyline[0].dxf.location
     assert 2 == len(polyline)
 
@@ -174,7 +172,7 @@ def test_polyface_faces(modelspace):
     points1 = [vertex.dxf.location for vertex in result[0]]
     # the last vertex is the face_record and is always (0, 0, 0)
     # the face_record contains indices to the face building vertices
-    assert [(0, 0), (1, 1), (2, 2), (3, 3), (0, 0, 0)] == points1
+    assert [(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0), (0, 0, 0)] == points1
 
 
 def test_polyface_optimized_cube(modelspace):
