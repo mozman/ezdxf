@@ -27,8 +27,6 @@ class BlocksSection:
     like AutoCAD.
 
     """
-    name = 'BLOCKS'
-
     def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None, block_records: 'Table' = None):
         # Mapping of BlockLayouts, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().

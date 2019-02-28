@@ -66,8 +66,6 @@ REQUIRED_CLASSES = {
 
 
 class ClassesSection:
-    name = 'CLASSES'
-
     def __init__(self, doc: 'Drawing' = None, entities: Iterable[DXFEntity] = None):
         self.classes = OrderedDict()  # DXFClasses are not stored in the entities database, because CLASS has no handle
         self.doc = doc
@@ -80,7 +78,7 @@ class ClassesSection:
     def load(self, entities: Iterator[DXFEntity]) -> None:
         section_head = next(entities)  # type: DXFTagStorage
 
-        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, self.name.upper()):
+        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'CLASSES'):
             raise DXFStructureError("Critical structure error in CLASSES section.")
 
         for cls_entity in entities:

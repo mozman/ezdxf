@@ -72,7 +72,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault, DictionaryVar
 
     # DXF entities
-    from ezdxf.entities.dxfentity import DXFEntity, DXFNamespace
+    from ezdxf.entities.dxfentity import DXFEntity, DXFNamespace, DXFTagStorage
     from ezdxf.entities.line import Line
     from ezdxf.entities.point import Point
     from ezdxf.entities.circle import Circle
