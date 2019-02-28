@@ -177,7 +177,10 @@ class BlockRecord(DXFEntity):
 
         """
         # assign layout
-        entity.set_owner(self.dxf.handle, paperspace=int(self.is_any_paperspace))
+        if hasattr(entity, 'set_owner'):
+            entity.set_owner(self.dxf.handle, paperspace=int(self.is_any_paperspace))
+        else:
+            logger.debug('Unexpected entity {}'.format(entity))
         self.entity_space.add(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:

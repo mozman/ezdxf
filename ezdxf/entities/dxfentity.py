@@ -841,6 +841,8 @@ class DXFTagStorage(DXFEntity):
         # 1. tag of 1. subclass is the structure tag (0, DXFTYPE)
         self.xtags = tags
         self.DXFTYPE = self.base_class[0].value
+        # just fake it
+        self.dxf.__dict__['paperspace'] = 0
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Write subclass tags as they are
@@ -853,5 +855,4 @@ class DXFTagStorage(DXFEntity):
     def destroy(self) -> None:
         del self.xtags
         super().destroy()
-
 

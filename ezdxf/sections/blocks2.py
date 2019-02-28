@@ -35,6 +35,7 @@ class BlocksSection:
         self.doc = doc
         if entities is not None:
             self.load(entities)
+        self._repair_block_records()
         self._anonymous_block_counter = 0
 
     def __len__(self):
@@ -58,12 +59,6 @@ class BlocksSection:
         """
         Load DXF entities into BlockLayouts. `entities` is a stream of entity tags, separated by BLOCK and ENDBLK
         entities into block layouts.
-
-        Args:
-            entities: steam of entities
-            block_records:
-
-        Returns:
 
         """
         def load_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
@@ -108,18 +103,18 @@ class BlocksSection:
                     )
                 self.add(BlockLayout(block_record))
                 block_entities = []
-        self._repair_block_records()
 
     def _repair_block_records(self):
         for block_record in self.doc.block_records:  # type: BlockRecord
             if block_record.block is None:
-                block = self.doc.dxffactory.create_db_entry('BLOCK', attribs={
+                block = self.doc.dxffactory.create_db_entry('BLOCK', dxfattribs={
                     'name': block_record.dxf.name,
                     'name2': block_record.dxf.name,
-                    'insert': (0, 0, 0),
+                    'base_point': (0, 0, 0),
                 })
-                endblk = self.doc.dxffactory.create_db_entry('ENDBLK')
+                endblk = self.doc.dxffactory.create_db_entry('ENDBLK', dxfattribs={})
                 block_record.set_block(block, endblk)
+                self.add(BlockLayout(block_record))
 
     def add(self, block_layout: 'BlockLayout') -> None:
         """

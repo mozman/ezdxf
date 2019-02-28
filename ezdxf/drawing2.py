@@ -233,8 +233,12 @@ class Drawing:
         # create sections:
         self.classes = ClassesSection(self, sections.get('CLASSES', None))
         self.tables = TablesSection(self, sections.get('TABLES', None))
+        # create *Model_space and *Paper_Space BLOCK_RECORDS
+        # BlockSection setup takes care about the rest
+        self._create_required_block_records()
         # table records available
         self.blocks = BlocksSection(self, sections.get('BLOCKS', None))
+
         self.entities = EntitySection(self, sections.get('ENTITIES', None))
         self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
         for name, data in sections.items():
@@ -259,6 +263,12 @@ class Drawing:
         # repair.setup_layouts(self)
         self.layouts = Layouts.load(self)
         self._finalize_setup()
+
+    def _create_required_block_records(self):
+        if '*Model_Space' not in self.block_records:
+            self.block_records.new('*Model_Space')
+        if '*Paper_Space' not in self.block_records:
+            self.block_records.new('*Paper_Space')
 
     def saveas(self, filename, encoding=None, dxfversion=None) -> None:
         dxfversion = self.which_dxfversion(dxfversion)

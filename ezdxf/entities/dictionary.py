@@ -372,7 +372,7 @@ class DictionaryVar(DXFObject):
         if processor is None:
             return dxf
 
-        processor.load_dxfattribs_into_namespace(dxf, acdb_dict_var.name)
+        processor.load_dxfattribs_into_namespace(dxf, acdb_dict_var)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

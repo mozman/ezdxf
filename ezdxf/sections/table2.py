@@ -83,6 +83,7 @@ class Table:
             raise DXFTableEntryError('%s %s already exists!' % (self._head.dxf.name, name))
         dxfattribs = dxfattribs or {}
         dxfattribs['name'] = name
+        dxfattribs['owner'] = self._head.dxf.handle
         return self.new_entry(dxfattribs)
 
     def get(self, name: str) -> 'DXFEntity':
