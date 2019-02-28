@@ -38,7 +38,8 @@ TABLESMAP = {
 
 
 class TablesSection:
-    def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None):
+    def __init__(self, doc: 'Drawing', entities: List['DXFEntity'] = None):
+        assert doc is not None
         self.doc = doc
         self.layers = None
         self.linetypes = None
@@ -77,8 +78,7 @@ class TablesSection:
                 table_records.append(entity)
 
         if len(table_records):
-            # last ENDTAB entity is missing
-            # TABLE entity without preceding ENDTAB entity, should we care?
+            # last ENDTAB entity is missing, should we care?
             logger.debug('Ignore missing ENDTAB entity in table "{}".'.format(table_name))
             self._load_table(table_name, table_records)
 
@@ -109,7 +109,6 @@ class TablesSection:
             table_name: TableSection attribute name e.g. viewports
 
         """
-        assert self.doc is not None
         handle = self.doc.entitydb.next_handle()
         table_class = TABLESMAP[record_name]
         table = table_class.new_table(record_name, handle, self.doc)

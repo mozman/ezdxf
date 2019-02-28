@@ -9,7 +9,7 @@ from ezdxf.lldxf.validator import is_valid_name
 from .layout import Layout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import DXFEntity, Dictionary, Drawing
+    from ezdxf.eztypes2 import DXFEntity, Dictionary, Drawing, BlockRecord
 
 logger = logging.getLogger('ezdxf')
 
@@ -19,11 +19,11 @@ def _link_entities_section_into_blocks(doc: 'Drawing') -> None:
     Link entity spaces from entities section into associated block layouts.
 
     """
-    blocks = doc.blocks
-    model_space_block = blocks.get('*MODEL_SPACE')
-    model_space_block.set_entity_space(doc.entities.model_space_entities())
-    active_layout_block = blocks.get('*PAPER_SPACE')
-    active_layout_block.set_entity_space(doc.entities.active_layout_entities())
+    block_records = doc.block_records
+    msp_block_record = block_records.get('*MODEL_SPACE')  # type: BlockRecord
+    msp_block_record.set_entity_space(doc.entities.model_space_entities())
+    active_psp_block_record = block_records.get('*PAPER_SPACE')  # type: BlockRecord
+    active_psp_block_record.set_entity_space(doc.entities.active_layout_entities())
     doc.entities.clear()  # remove entities for entities section -> stored in blocks
 
 

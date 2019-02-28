@@ -130,10 +130,6 @@ class DXFGraphic(DXFEntity):
             layout = doc.blocks.get(block_name)
         return layout
 
-    def assign_layout(self, layout: 'BaseLayout') -> None:
-        """ Assign entity to a modelspace or paperspace layout. """
-        self.set_owner(layout.layout_key, paperspace=int(layout.is_active_paperspace))
-
     def set_owner(self, owner: str, paperspace: int = 0) -> None:
         self.dxf.owner = owner
         if paperspace:

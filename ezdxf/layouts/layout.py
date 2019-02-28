@@ -8,13 +8,12 @@ from .base import BaseLayout
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData, SortEntitiesTable
-    from ezdxf.eztypes2 import Vertex, Viewport, TagWriter, Drawing, Dictionary, DXFLayout, DXFEntity, BlockLayout
+    from ezdxf.eztypes2 import Vertex, Viewport, Drawing, Dictionary, DXFLayout, DXFGraphic, BlockLayout
 
 
 def get_block_entity_space(doc: 'Drawing', block_record_handle: str) -> 'EntitySpace':
     block_record = doc.entitydb[block_record_handle]
-    block = doc.blocks.get(block_record.dxf.name)
-    return block.get_entity_space()
+    return block_record.entity_space
 
 
 class Layout(BaseLayout):
@@ -67,20 +66,31 @@ class Layout(BaseLayout):
 
     def __init__(self, layout: 'DXFLayout', doc: 'Drawing'):
         self.dxf_layout = layout
-        block_record_handle = layout.dxf.block_record
-        block_record = doc.entitydb[block_record_handle]
+        block_record = doc.entitydb[layout.dxf.block_record]
         # link maybe broken
         block_record.dxf.layout = layout.dxf.handle
-        entity_space = get_block_entity_space(doc, block_record_handle)
-        super().__init__(block_record, doc, entity_space)
+        super().__init__(block_record)
 
     @classmethod
-    def new(cls, name: str, block_name: str, doc: 'Drawing', dxfattribs: dict = None):
+    def new(cls, name: str, block_name: str, doc: 'Drawing', dxfattribs: dict = None) -> 'Layout':
+        """
+        Creates the required structures for a paper space layout:
+
+            - a BlockLayout with BLOCK_RECORD, BLOCK and ENDBLK entities
+            - LAYOUT entity in the objects section
+
+        Args:
+            name: layout name as shown in tabs of CAD applications e.g. 'Layout2'
+            block_name: layout block name e.g. '*Paper_Space2'
+            doc: drawing document
+            dxfattribs: additional DXF attributes for LAYOUT entity
+
+        """
         block_layout = doc.blocks.new(block_name)  # type: BlockLayout
         dxfattribs = dxfattribs or {}
         dxfattribs.update({
             'name': name,
-            'block_record': block_layout.block_record.dxf.handle
+            'block_record': block_layout.block_record_handle
         })
         dxf_layout = doc.objects.create_new_dxf_entity('LAYOUT', dxfattribs=dxfattribs)
         return cls(dxf_layout, doc)
@@ -126,8 +136,8 @@ class Layout(BaseLayout):
         return self.doc.blocks.get(self.block_record_name)
 
     @property
-    def is_modelspace(self):
-        return self.block_record_name.lower() == '*model_space'
+    def is_modelspace(self) -> bool:
+        return self.block_record.is_modelspace
 
     def _repair_owner_tags(self) -> None:
         """
@@ -142,7 +152,7 @@ class Layout(BaseLayout):
             if entity.dxf.paperspace != paperspace:
                 entity.dxf.paperspace = paperspace
 
-    def __contains__(self, entity: Union['DXFEntity', str]) -> bool:
+    def __contains__(self, entity: Union['DXFGraphic', str]) -> bool:
         if isinstance(entity, str):  # entity is a handle string
             entity = self.entitydb[entity]
         return entity.dxf.owner == self.layout_key
@@ -152,11 +162,11 @@ class Layout(BaseLayout):
         Delete all member entities and the layout itself from entity database and all other structures.
 
         """
-        self.delete_all_entities()
+        # all entities are managed by BLOCK_RECORD
         self.doc.blocks.delete_block(self.block.name)
         self.doc.objects.delete_entity(self.dxf_layout)
 
-    def viewports(self) -> List['DXFEntity']:
+    def viewports(self) -> List['DXFGraphic']:
         """
         Get all VIEWPORT entities defined in the layout. Returns a list of Viewport() objects, sorted by id, the first
         entity is always the paper space view with the id=1.
@@ -170,15 +180,12 @@ class Layout(BaseLayout):
         for num, viewport in enumerate(self.viewports(), start=1):
             viewport.dxf.id = num
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        self.entity_space.export_dxf(tagwriter)
-
     def add_viewport_r12(self,
                          center: Tuple[float, float],
                          size: Tuple[float, float],
                          view_center_point: Tuple[float, float],
                          view_height: float,
-                         dxfattribs: dict = None) -> 'DXFEntity':
+                         dxfattribs: dict = None) -> 'DXFGraphic':
         if dxfattribs is None:
             dxfattribs = {}
         else:

@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, \
         LoftedSurface
 
-    from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFEntity
+    from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic
     from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline
 
@@ -43,7 +43,7 @@ class CreatorInterface:
     def is_active_paperscape(self):
         return False
 
-    def new_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
+    def new_entity(self, type_: str, dxfattribs: dict) -> 'DXFGraphic':
         """
         Create entity in drawing database and add entity to the entity space.
 
@@ -56,7 +56,7 @@ class CreatorInterface:
         self.add_entity(entity)
         return entity
 
-    def add_entity(self, entity: 'DXFEntity') -> None:
+    def add_entity(self, entity: 'DXFGraphic') -> None:
         pass
 
     def add_point(self, location: 'Vertex', dxfattribs: dict = None) -> 'Point':
@@ -219,7 +219,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['text'] = text
-        dxfattribs.setdefault('insert', (0, 0))
+        dxfattribs.setdefault('insert', Vector())
         return self.new_entity('TEXT', dxfattribs)
 
     def add_blockref(self, name: str, insert: 'Vertex', dxfattribs: dict = None) -> 'Insert':
@@ -381,7 +381,7 @@ class CreatorInterface:
         polyface.close(m_close, n_close)
         return polyface.cast()
 
-    def _add_quadrilateral(self, type_: str, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'DXFEntity':
+    def _add_quadrilateral(self, type_: str, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'DXFGraphic':
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):

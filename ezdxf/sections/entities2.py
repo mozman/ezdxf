@@ -70,8 +70,8 @@ class EntitySection(AbstractSection):
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         layouts = self.doc.layouts
-        tagwriter.write_str("  0\nSECTION\n  2\n%s\n" % self.name.upper())
+        tagwriter.write_str("  0\nSECTION\n  2\nENTITIES\n")
         # Just write *Model_Space and the active *Paper_Space into the ENTITIES section.
-        layouts.modelspace().export_dxf(tagwriter)
-        layouts.active_layout().export_dxf(tagwriter)
+        layouts.modelspace().entity_space.export_dxf(tagwriter)
+        layouts.active_layout().entity_space.export_dxf(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")

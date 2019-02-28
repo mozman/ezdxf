@@ -2,12 +2,10 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Optional
-from ezdxf.lldxf.const import LAYOUT_NAMES
-from ezdxf.entitydb import EntitySpace
 from .base import BaseLayout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Drawing, BlockRecord, Block, EndBlk, DXFEntity, AttDef
+    from ezdxf.eztypes2 import TagWriter, DXFGraphic, AttDef
 
 
 class BlockLayout(BaseLayout):
@@ -15,22 +13,8 @@ class BlockLayout(BaseLayout):
     BlockLayout has the same factory-function as Layout, but is managed
     in the BlocksSection() class. It represents a DXF Block definition.
 
-    Attributes:
-        block:  BLOCK entity
-        endblk: ENDBLK entity
-
     """
-
-    def __init__(self,
-                 block_record: 'BlockRecord',
-                 block: 'Block',
-                 endblk: 'EndBlk',
-                 doc: 'Drawing' = None, ):
-        super().__init__(block_record, doc, EntitySpace())
-        self.block = block
-        self.endblk = endblk
-
-    def __contains__(self, entity: 'DXFEntity') -> bool:
+    def __contains__(self, entity: 'DXFGraphic') -> bool:
         """
         Returns True if block contains entity else False. *entity* can be a handle-string, Tags(),
         ExtendedTags() or a wrapped entity.
@@ -43,23 +27,14 @@ class BlockLayout(BaseLayout):
     @property
     def name(self) -> str:
         """ Get block name """
-        return self.block.dxf.name
+        return self.block_record.dxf.name
 
     @name.setter
     def name(self, new_name) -> None:
-        """ Set block name """
-        block = self.block
-        block.dxf.name = new_name
-        block.dxf.name2 = new_name
+        """ Set block and block_record name """
+        self.block_record.rename(new_name)
 
-    def get_entity_space(self) -> EntitySpace:
-        return self.entity_space
-
-    def set_entity_space(self, entity_space: EntitySpace) -> None:
-        self.entity_space = entity_space
-
-    def add_attdef(self, tag: str, insert: Sequence[float] = (0, 0), text: str = '',
-                   dxfattribs: dict = None) -> 'DXFEntity':
+    def add_attdef(self, tag: str, insert: Sequence[float] = (0, 0), text: str = '', dxfattribs: dict = None) -> 'DXFGraphic':
         """
         Add an :class:`Attdef` entity.
 
@@ -71,6 +46,7 @@ class BlockLayout(BaseLayout):
             tag: attribute name (tag) as string without spaces
             insert: attribute insert point relative to block origin (0, 0, 0)
             text: preset text for attribute
+            dxfattribs: DXF attributes for the new ATTDEF entity
 
         """
         if dxfattribs is None:
@@ -97,7 +73,7 @@ class BlockLayout(BaseLayout):
         """
         return self.get_attdef(tag) is not None
 
-    def get_attdef(self, tag: str) -> Optional['DXFEntity']:
+    def get_attdef(self, tag: str) -> Optional['DXFGraphic']:
         """
         Get attached :class:`Attdef` entity by `tag`.
 
@@ -127,53 +103,8 @@ class BlockLayout(BaseLayout):
 
     # end of public interface
 
-    def add_entity(self, entity: 'DXFEntity') -> None:
-        """
-        Add an existing DXF entity to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity
-        from the previous owner layout.
-
-        Args:
-            entity: :class:`DXFEntity`
-
-        """
-        # set a model space, because paper space layout is a different class
-        entity.set_owner(self.block_record_handle, paperspace=0)
-        self.entity_space.add(entity)
-
-    def add_handle(self, handle: str) -> None:
-        """
-        Add entity by handle to the block entity space.
-
-        """
-        self.add_entity(self.entitydb[handle])
-
-    def export_dxf_block(self, tagwriter: 'TagWriter') -> None:
-        self.block.export_dxf(tagwriter)
-        self.entity_space.export_dxf(tagwriter)
-        self.endblk.export_dxf(tagwriter)
-
     def export_dxf(self, tagwriter: 'TagWriter'):
-        # BLOCK section: do not write content of model space and active layout
-        if self.name.lower() in LAYOUT_NAMES:
-            save = self.entity_space
-            self.entity_space = EntitySpace()
-            self.export_dxf_block(tagwriter)
-            self.entity_space = save
-        else:
-            self.export_dxf_block(tagwriter)
-
-    def delete_all_entities(self) -> None:
-        # 1. delete from database
-        for entity in self.entity_space:
-            self.entitydb.delete_entity(entity)
-        # 2. delete from entity space
-        self.entity_space.clear()
-
-    def destroy(self) -> None:
-        self.doc.block_records.remove(self.name)
-        self.delete_all_entities()
-        self.entitydb.delete_entity(self.block)
-        self.entitydb.delete_entity(self.endblk)
+        self.block_record.export_block_definition(tagwriter)
 
     def get_const_attdefs(self) -> Iterable['AttDef']:
         """

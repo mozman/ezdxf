@@ -1,6 +1,7 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, List
+from collections import OrderedDict
 import logging
 
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError
@@ -27,10 +28,11 @@ class BlocksSection:
     like AutoCAD.
 
     """
+
     def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None, block_records: 'Table' = None):
         # Mapping of BlockLayouts, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().
-        self._block_layouts = dict()
+        self._block_layouts = OrderedDict()
         self.doc = doc
         if entities is not None:
             self.load(entities, block_records)
@@ -55,7 +57,7 @@ class BlocksSection:
 
     def load(self, entities: List['DXFEntity'], block_records: 'Table') -> None:
 
-        def build_block_layout(block_entities: Sequence['DXFEntity']) -> 'BlockLayout':
+        def build_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
             block = block_entities[0]  # type: Block
             endblk = block_entities[-1]  # type: EndBlk
 
@@ -63,13 +65,13 @@ class BlocksSection:
                 block_record = block_records.get(block.dxf.name)  # type: BlockRecord
             except DXFTableEntryError:  # special case DXF R12 - not block record exists
                 block_record = block_records.new(block.dxf.name)  # type: BlockRecord
-                block.dxf.owner = block_record.dxf.handle
-                endblk.dxf.owner = block_record.dxf.handle
 
-            block_layout = BlockLayout(block_record, block, endblk, self.doc)
+            # block_record stores all the information about a block definition
+            block_record.set_block(block, endblk)
             for entity in block_entities[1:-1]:
-                block_layout.add_entity(entity)
-            return block_layout
+                block_record.add_entity(entity)
+                # block_record.add_entity(entity)  # add to block_record?
+            return block_record
 
         def link_entities() -> Iterable['DXFEntity']:
             linked = entity_linker()
@@ -85,16 +87,16 @@ class BlocksSection:
         for entity in link_entities():
             block_entities.append(entity)
             if entity.dxftype() == 'ENDBLK':
-                block_layout = build_block_layout(block_entities)
+                block_record = build_block_record(block_entities)
                 try:
-                    name = block_layout.name
+                    name = block_record.dxf.name
                 except DXFAttributeError:
                     raise
                 if name in self:
                     logger.warning(
-                        'Warning! Multiple block definitions with name "{}", replacing previous definition'.format(
-                            block_layout.name))
-                self.add(block_layout)
+                        'Multiple block definitions with name "{}", replacing previous definition'.format(name)
+                    )
+                self.add(BlockLayout(block_record))
                 block_entities = []
 
     def add(self, block_layout: 'BlockLayout') -> None:
@@ -145,10 +147,11 @@ class BlocksSection:
         dxfattribs['name'] = name
         dxfattribs['name2'] = name
         dxfattribs['base_point'] = base_point
-
         head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)  # type: Block
         tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})  # type: EndBlk
-        block_layout = BlockLayout(block_record, head, tail, self.doc)
+        block_record.set_block(head, tail)
+
+        block_layout = BlockLayout(block_record)
         self.add(block_layout)
         return block_layout
 
@@ -184,11 +187,8 @@ class BlocksSection:
 
         """
         block_layout = self.get(old_name)  # block key is lower case
+        # set name in BLOCK and BLOCK_RECORD
         block_layout.name = new_name
-
-        if self.doc.dxfversion > 'AC1009':
-            block_record = self.doc.block_records.get(old_name)
-            block_record.dxf.name = new_name
         self.__delitem__(old_name)
         self.add(block_layout)  # add new dict entry
 
@@ -231,18 +231,12 @@ class BlocksSection:
             return name.lower() not in references if safe else True
 
         # do not delete blocks defined for layouts
-        if self.doc.dxfversion > 'AC1009':
-            layout_keys = set(layout.layout_key for layout in self.doc.layouts)
-            for block in list(self):
-                name = block.name
-                if block.block_record_handle not in layout_keys and is_save(name):
-                    # safety check is already done
-                    self.delete_block(name, safe=False)
-        else:
-            for block_name in list(self._block_layouts.keys()):
-                if block_name not in ('$model_space', '$paper_space') and is_save(block_name):
-                    # safety check is already done
-                    self.delete_block(block_name, safe=False)
+        layout_keys = set(layout.layout_key for layout in self.doc.layouts)
+        for block in list(self):
+            name = block.name
+            if block.block_record_handle not in layout_keys and is_save(name):
+                # safety check is already done
+                self.delete_block(name, safe=False)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
