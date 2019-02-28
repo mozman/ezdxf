@@ -1,36 +1,88 @@
-# Purpose: entity section
 # Created: 13.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, cast
+from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError, RASTER_UNITS, DXFKeyError
-from ezdxf.entities.dxfgroups import GroupCollection
-from ezdxf.entities.material import MaterialCollection
-from ezdxf.modern.mleader import MLeaderStyleManager
-from ezdxf.modern.mline import MLineStyleManager
-from ezdxf.modern.tablestyle import TableStyleManager
-
 from ezdxf.entitydb import EntitySpace
-from .abstract2 import AbstractSection
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.entities import DXFEntity
+    from ezdxf.eztypes2 import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage
+
 logger = logging.getLogger('ezdxf')
 
 
-class ObjectsSection(AbstractSection):
-    name = 'OBJECTS'
-
+class ObjectsSection:
     def __init__(self, doc: 'Drawing', entities: Iterable['DXFEntity'] = None):
-        super(ObjectsSection, self).__init__(EntitySpace(), entities, doc)
+        self.doc = doc
+        self._entity_space = EntitySpace()
+        if entities is not None:
+            self._build(iter(entities))
 
     def __iter__(self) -> Iterable['DXFEntity']:
         return iter(self._entity_space)
+
+    @property
+    def dxffactory(self) -> 'EntityFactory':
+        return self.doc.dxffactory
+
+    @property
+    def entitydb(self) -> 'EntityDB':
+        return self.doc.entitydb
+
+    def get_entity_space(self) -> 'EntitySpace':
+        return self._entity_space
+
+    def _build(self, entities: Iterator['DXFEntity']) -> None:
+        section_head = next(entities)  # type: DXFTagStorage
+
+        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'OBJECTS'):
+            raise DXFStructureError("Critical structure error in 'OBJECTS' section.")
+
+        for entity in entities:
+            self._entity_space.add(entity)
+
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        tagwriter.write_str("  0\nSECTION\n  2\nOBJECTS\n")
+        self._entity_space.export_dxf(tagwriter)
+        tagwriter.write_tag2(0, "ENDSEC")
+
+    def create_new_dxf_entity(self, _type: str, dxfattribs: dict) -> 'DXFEntity':
+        """
+        Create new DXF entity add it to the entity database and add it to the entity space.
+
+        """
+        dxf_entity = self.dxffactory.create_db_entry(_type, dxfattribs)
+        self._entity_space.add(dxf_entity)
+        return dxf_entity
+
+    def delete_entity(self, entity: 'DXFEntity') -> None:
+        self._entity_space.remove(entity)
+        self.entitydb.delete_entity(entity)
+
+    # start of public interface
+
+    def __len__(self) -> int:
+        return len(self._entity_space)
+
+    def __contains__(self, entity: 'DXFEntity') -> bool:
+        return entity in self._entity_space
+
+    def query(self, query: str = '*') -> EntityQuery:
+        return EntityQuery(iter(self), query)
+
+    def delete_all_entities(self) -> None:
+        """ Delete all entities. """
+        db = self.entitydb
+        for entity in self._entity_space:
+            db.delete_entity(entity)
+        self._entity_space.clear()
+
+    # end of public interface
 
     @property
     def rootdict(self) -> Dictionary:

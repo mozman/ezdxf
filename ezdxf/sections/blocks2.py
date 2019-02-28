@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entities.blockrecord import BlockRecord
     from ezdxf.entities.block import Block, EndBlk
-    from ezdxf.sections.tables2 import Table
 
 
 class BlocksSection:
@@ -29,13 +28,13 @@ class BlocksSection:
 
     """
 
-    def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None, block_records: 'Table' = None):
+    def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None):
         # Mapping of BlockLayouts, for dict() order of blocks is random,
         # if turns out later, that blocks order is important: use an OrderedDict().
         self._block_layouts = OrderedDict()
         self.doc = doc
         if entities is not None:
-            self.load(entities, block_records)
+            self.load(entities)
         self._anonymous_block_counter = 0
 
     def __len__(self):
@@ -55,9 +54,19 @@ class BlocksSection:
     def dxffactory(self) -> 'EntityFactory':
         return self.doc.dxffactory
 
-    def load(self, entities: List['DXFEntity'], block_records: 'Table') -> None:
+    def load(self, entities: List['DXFEntity']) -> None:
+        """
+        Load DXF entities into BlockLayouts. `entities` is a stream of entity tags, separated by BLOCK and ENDBLK
+        entities into block layouts.
 
-        def build_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
+        Args:
+            entities: steam of entities
+            block_records:
+
+        Returns:
+
+        """
+        def load_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
             block = block_entities[0]  # type: Block
             endblk = block_entities[-1]  # type: EndBlk
 
@@ -79,6 +88,7 @@ class BlocksSection:
                 if not linked(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in block layout
                     yield entity
 
+        block_records = self.doc.block_records
         section_head = entities[0]  # type: DXFTagStorage
         if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'BLOCKS'):
             raise DXFStructureError("Critical structure error in BLOCKS section.")
@@ -87,7 +97,7 @@ class BlocksSection:
         for entity in link_entities():
             block_entities.append(entity)
             if entity.dxftype() == 'ENDBLK':
-                block_record = build_block_record(block_entities)
+                block_record = load_block_record(block_entities)
                 try:
                     name = block_record.dxf.name
                 except DXFAttributeError:
@@ -98,6 +108,18 @@ class BlocksSection:
                     )
                 self.add(BlockLayout(block_record))
                 block_entities = []
+        self._repair_block_records()
+
+    def _repair_block_records(self):
+        for block_record in self.doc.block_records:  # type: BlockRecord
+            if block_record.block is None:
+                block = self.doc.dxffactory.create_db_entry('BLOCK', attribs={
+                    'name': block_record.dxf.name,
+                    'name2': block_record.dxf.name,
+                    'insert': (0, 0, 0),
+                })
+                endblk = self.doc.dxffactory.create_db_entry('ENDBLK')
+                block_record.set_block(block, endblk)
 
     def add(self, block_layout: 'BlockLayout') -> None:
         """

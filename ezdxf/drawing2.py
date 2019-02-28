@@ -1,5 +1,5 @@
 # Created: 11.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple
 from datetime import datetime
@@ -234,7 +234,7 @@ class Drawing:
         self.classes = ClassesSection(self, sections.get('CLASSES', None))
         self.tables = TablesSection(self, sections.get('TABLES', None))
         # table records available
-        self.blocks = BlocksSection(self, sections.get('BLOCKS', None), self.block_records)
+        self.blocks = BlocksSection(self, sections.get('BLOCKS', None))
         self.entities = EntitySection(self, sections.get('ENTITIES', None))
         self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
         for name, data in sections.items():

@@ -1,15 +1,14 @@
-# Purpose: entity section
 # Created: 13.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List
+from typing import TYPE_CHECKING, Iterable, List, Iterator
 from itertools import chain
 
-from ezdxf.entitydb import EntitySpace
-from .abstract2 import AbstractSection
+from ezdxf.lldxf.tags import DXFStructureError
+from ezdxf.entities.dxfgfx import entity_linker
 
-if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import TagWriter, Drawing, DXFEntity, Tags
+if TYPE_CHECKING:
+    from ezdxf.eztypes2 import TagWriter, Drawing, DXFEntity, Tags, DXFTagStorage, DXFGraphic, BlockRecord
 
 
 class StoredSection:
@@ -24,17 +23,16 @@ class StoredSection:
         tagwriter.write_str('  0\nENDSEC\n')
 
 
-class EntitySection(AbstractSection):
+class EntitySection:
     """
-    The new EntitySection() collects only at startup the entities in the ENTITIES section. By creating the Layouts()
-    object all entities form the EntitySection() moved into the Layout() objects, and the entity space of the
-    EntitySection() will be deleted by calling EntitySection.clear().
+    The EntitySection() collects all entities from modelspace and paperspace and store them in the associated
+    BlockRecord().
 
     """
-    name = 'ENTITIES'
-
     def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
-        super().__init__(EntitySpace(), entities, doc)
+        self.doc = doc
+        if entities is not None:
+            self._build(iter(entities))
 
     def __iter__(self) -> 'DXFEntity':
         layouts = self.doc.layouts
@@ -47,26 +45,23 @@ class EntitySection(AbstractSection):
 
     # none public interface
 
-    def clear(self) -> None:
-        # remove entities for entities section -> stored in layouts
-        del self._entity_space
+    def _build(self, entities: Iterator['DXFEntity']) -> None:
+        section_head = next(entities)  # type: DXFTagStorage
+        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'ENTITIES'):
+            raise DXFStructureError("Critical structure error in ENTITIES section.")
 
-    def model_space_entities(self) -> 'EntitySpace':
-        # required for the drawing setup process
-        return EntitySpace(self._filter_entities(paper_space=0))
+        def add(entity: 'DXFGraphic'):
+            if entity.dxf.paperspace:
+                psp.add_entity(entity)
+            else:
+                msp.add_entity(entity)
 
-    def active_layout_entities(self) -> 'EntitySpace':
-        # required for the drawing setup process
-        return EntitySpace(self._filter_entities(paper_space=1))
-
-    def _filter_entities(self, paper_space: int = 0) -> Iterable['DXFEntity']:
-        # required for the drawing setup process
-        return (entity for entity in self._entity_space if entity.dxf.paperspace == paper_space)
-
-    def delete_all_entities(self) -> None:
-        layouts = self.doc.layouts
-        layouts.modelspace().delete_all_entities()
-        layouts.active_layout().delete_all_entities()
+        msp = self.doc.block_records.get('*Model_Space')  # type: BlockRecord
+        psp = self.doc.block_records.get('*Paper_Space')  # type: BlockRecord
+        linked_entities = entity_linker()
+        for entity in entities:
+            if not linked_entities(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
+                add(entity)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         layouts = self.doc.layouts

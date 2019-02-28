@@ -1,5 +1,5 @@
 # Created: 21.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List
 import logging
@@ -12,19 +12,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes2 import DXFEntity, Dictionary, Drawing, BlockRecord
 
 logger = logging.getLogger('ezdxf')
-
-
-def _link_entities_section_into_blocks(doc: 'Drawing') -> None:
-    """
-    Link entity spaces from entities section into associated block layouts.
-
-    """
-    block_records = doc.block_records
-    msp_block_record = block_records.get('*MODEL_SPACE')  # type: BlockRecord
-    msp_block_record.set_entity_space(doc.entities.model_space_entities())
-    active_psp_block_record = block_records.get('*PAPER_SPACE')  # type: BlockRecord
-    active_psp_block_record.set_entity_space(doc.entities.active_layout_entities())
-    doc.entities.clear()  # remove entities for entities section -> stored in blocks
 
 
 class Layouts:
@@ -94,7 +81,6 @@ class Layouts:
     @classmethod
     def load(cls, doc: 'Drawing') -> 'Layouts':
         """ Constructor if loading from file. """
-        _link_entities_section_into_blocks(doc)
         layouts = cls(doc)
         layouts.setup_from_rootdict()
 
