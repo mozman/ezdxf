@@ -2,16 +2,26 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2018, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, List
 from itertools import chain
 
 from ezdxf.entitydb import EntitySpace
 from .abstract2 import AbstractSection
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.entities import DXFEntity
+    from ezdxf.eztypes2 import TagWriter, Drawing, DXFEntity, Tags
+
+
+class StoredSection:
+    def __init__(self, entities: List['Tags']):
+        self.entities = entities
+
+    def export_dxf(self, tagwriter: 'TagWriter'):
+        # (0, SECTION) (2, NAME) is stored in entities
+        for entity in self.entities:
+            tagwriter.write_tags(entity)
+        # ENDSEC not stored in entities !!!
+        tagwriter.write_str('  0\nENDSEC\n')
 
 
 class EntitySection(AbstractSection):

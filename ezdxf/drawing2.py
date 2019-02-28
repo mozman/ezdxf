@@ -12,12 +12,12 @@ from ezdxf.lldxf.const import DXF13, DXF14, DXF2007, DXF12, DXF2013, versions_su
 from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database2
 from ezdxf.lldxf import repair
+from .lldxf.tagwriter import TagWriter
 
 from ezdxf.entitydb import EntityDB
 from ezdxf.entities.factory import EntityFactory
 from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
-from ezdxf.sections.sections2 import Sections
 from ezdxf.tools.juliandate import juliandate
 
 from ezdxf.tools import guid
@@ -26,17 +26,26 @@ from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.render.dimension import DimensionRenderer
 
+from ezdxf.sections.header import HeaderSection
+from ezdxf.sections.classes2 import ClassesSection
+from ezdxf.sections.tables2 import TablesSection
+from ezdxf.sections.blocks2 import BlocksSection
+from ezdxf.sections.entities2 import EntitySection, StoredSection
+from ezdxf.sections.objects2 import ObjectsSection
+
 from ezdxf.entities.dxfgroups import GroupCollection
 from ezdxf.entities.material import MaterialCollection
 from ezdxf.entities.mleader import MLeaderStyleCollection
 from ezdxf.entities.mline import MLineStyleCollection
 
 logger = logging.getLogger('ezdxf')
+MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS'}
 
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import HandleGenerator, DXFTag, SectionDict, SectionType, Table, ViewportTable
-    from ezdxf.eztypes2 import HeaderSection, BlocksSection, Dictionary, BlockLayout, Layout
+    from ezdxf.eztypes2 import Dictionary, BlockLayout, Layout
     from ezdxf.eztypes2 import DXFEntity, Layer, DXFLayout, BlockRecord
+
     LayoutType = Union[Layout, BlockLayout]
 
 
@@ -53,8 +62,22 @@ class Drawing:
         self._dxfversion = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
         self.encoding = 'cp1252'
         self.filename = None  # type: str # read/write
-        self.sections = None  # type: Sections
+
+        # named objects dictionary
         self.rootdict = None  # type: Dictionary
+
+        # DXF sections
+        self.header = None  # type: HeaderSection
+        self.classes = None  # type: ClassesSection
+        self.tables = None  # type: TablesSection
+        self.blocks = None  # type: BlocksSection
+        self.entities = None  # type: EntitySection
+        self.objects = None  # type: ObjectsSection
+        self.stored_sections = []
+
+        # DXF Tables
+        # todo
+
         self.layouts = None  # type: Layouts
         self.groups = None  # type: GroupCollection  # read only
         self.materials = None  # type: MaterialCollection # read only
@@ -78,7 +101,13 @@ class Drawing:
         return toencoding(codepage)
 
     def _setup(self):
-        self.sections = Sections(self)
+        self.header = HeaderSection.new()
+        self.classes = ClassesSection(self)
+        self.tables = TablesSection(self)
+        self.blocks = BlocksSection(self)
+        self.entities = EntitySection(self)
+        self.objects = ObjectsSection(self)
+
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
         self.layouts = Layouts.setup(self)
@@ -180,31 +209,41 @@ class Drawing:
         return doc
 
     def _load(self, tagger: Iterable['DXFTag']):
-        def get_header(sections: 'SectionDict') -> 'SectionType':
-            from .sections.header import HeaderSection
-            header_entities = sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
-            if header_entities is None:  # create default header
-                return HeaderSection.new(dxfversion=DXF12)  # file without header are by default DXF R12
-            else:
-                return HeaderSection.load(header_entities)
-
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
-        # create section HEADER
-        header = get_header(sections)
-        self._dxfversion = header.get('$ACADVER', DXF12)  # type: str # read only  # no $ACADVER -> DXF R12
-        self.encoding = toencoding(header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
+        # -----------------------------------------------------------------------------------
+        # create header section:
+        # all header tags are the first DXF structure entity
+        header_entities = sections.get('HEADER', [None])[0]
+        if header_entities is None:
+            # create default header, files without header are by default DXF R12
+            self.header = HeaderSection.new(dxfversion=DXF12)
+        else:
+            self.header = HeaderSection.load(header_entities)
+        # -----------------------------------------------------------------------------------
+        self._dxfversion = self.header.get('$ACADVER', DXF12)  # type: str # read only  # no $ACADVER -> DXF R12
+        self.encoding = toencoding(self.header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
-        seed = header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
+        seed = self.header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
         # setup handles
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
         fill_database2(sections, self.dxffactory)
         # all handles used in the DXF file are known at this point
-        # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
-        self.sections = Sections(doc=self, sections=sections, header=header)
+        # -----------------------------------------------------------------------------------
+        # create sections:
+        self.classes = ClassesSection(self, sections.get('CLASSES', None))
+        self.tables = TablesSection(self, sections.get('TABLES', None))
+        # table records available
+        self.blocks = BlocksSection(self, sections.get('BLOCKS', None), self.block_records)
+        self.entities = EntitySection(self, sections.get('ENTITIES', None))
+        self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
+        for name, data in sections.items():
+            if name not in MANAGED_SECTIONS:
+                self.stored_sections.append(StoredSection(data))
+        # -----------------------------------------------------------------------------------
 
         if self.dxfversion == DXF12:
-            self.sections.tables.create_table_handles()
+            self.tables.create_table_handles()
             # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
             # and each table entry has an owner tag, pointing to the TABLE entry
             # todo: assign each TABLE entity a handle, which is only now possible, when all used handles in the DXF file are known
@@ -221,12 +260,12 @@ class Drawing:
         self.layouts = Layouts.load(self)
         self._finalize_setup()
 
-    def saveas(self, filename, encoding=None, dxfversion=None):
+    def saveas(self, filename, encoding=None, dxfversion=None) -> None:
         dxfversion = self.which_dxfversion(dxfversion)
         self.filename = filename
         self.save(encoding=encoding, dxfversion=dxfversion)
 
-    def save(self, encoding=None, dxfversion=None):
+    def save(self, encoding=None, dxfversion=None) -> None:
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
         dxfversion = self.which_dxfversion(dxfversion)
@@ -240,10 +279,8 @@ class Drawing:
         with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
             self.write(fp, dxfversion)
 
-    def write(self, stream, dxfversion=None):
+    def write(self, stream, dxfversion=None) -> None:
         dxfversion = self.which_dxfversion(dxfversion)
-
-        from .lldxf.tagwriter import TagWriter
         if dxfversion == DXF12:
             handles = bool(self.header['$HANDLING'])
         else:
@@ -254,12 +291,31 @@ class Drawing:
         self._create_appids()
         self._update_metadata()
         tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
-        self.sections.export_dxf(tagwriter)
+        self.export_sections(tagwriter)
+
+    def export_sections(self, tagwriter: 'TagWriter') -> None:
+        dxfversion = tagwriter.dxfversion
+        self.header.export_dxf(tagwriter)
+        if dxfversion > DXF12:
+            self.classes.export_dxf(tagwriter)
+        self.tables.export_dxf(tagwriter)
+        self.blocks.export_dxf(tagwriter)
+        self.entities.export_dxf(tagwriter)
+        if dxfversion > DXF12:
+            self.objects.export_dxf(tagwriter)
+
+        for section in self.stored_sections:
+            section.export_dxf(tagwriter)
+
+        tagwriter.write_tag2(0, 'EOF')
 
     def _register_required_classes(self, dxfversion):
-        self.sections.classes.add_required_classes(dxfversion)
+        self.classes.add_required_classes(dxfversion)
         for dxftype in self.tracker.dxftypes:
-            self.sections.classes.add_class(dxftype)
+            self.classes.add_class(dxftype)
+
+    def update_class_instance_counters(self):
+        self.classes.update_instance_counters()
 
     def _update_metadata(self):
         now = datetime.now()
@@ -281,56 +337,40 @@ class Drawing:
         return acad_release.get(self.dxfversion, "unknown")
 
     @property
-    def header(self) -> 'HeaderSection':
-        return self.sections.header
-
-    @property
-    def blocks(self) -> 'BlocksSection':
-        return self.sections.blocks
-
-    @property
-    def entities(self):
-        return self.sections.entities
-
-    @property
-    def objects(self):
-        return self.sections.objects
-
-    @property
     def layers(self) -> 'Table':
-        return self.sections.tables.layers
+        return self.tables.layers
 
     @property
     def linetypes(self) -> 'Table':
-        return self.sections.tables.linetypes
+        return self.tables.linetypes
 
     @property
     def styles(self) -> 'Table':
-        return self.sections.tables.styles
+        return self.tables.styles
 
     @property
     def dimstyles(self) -> 'Table':
-        return self.sections.tables.dimstyles
+        return self.tables.dimstyles
 
     @property
     def ucs(self) -> 'Table':
-        return self.sections.tables.ucs
+        return self.tables.ucs
 
     @property
     def appids(self) -> 'Table':
-        return self.sections.tables.appids
+        return self.tables.appids
 
     @property
     def views(self) -> 'Table':
-        return self.sections.tables.views
+        return self.tables.views
 
     @property
     def block_records(self) -> 'Table':
-        return self.sections.tables.block_records
+        return self.tables.block_records
 
     @property
     def viewports(self) -> 'ViewportTable':
-        return self.sections.tables.viewports
+        return self.tables.viewports
 
     @property
     def plotstyles(self) -> 'Dictionary':
@@ -364,7 +404,8 @@ class Drawing:
         """ Returns the active paperspace layout name, name as displayed in tabs of CAD applications, defined by block
         record name '*Paper_Space'
         """
-        active_layout_block_record = self.block_records.get('*Paper_Space')  # type: BlockRecord # block names are case insensitive
+        active_layout_block_record = self.block_records.get(
+            '*Paper_Space')  # type: BlockRecord # block names are case insensitive
         dxf_layout = active_layout_block_record.dxf.layout  # type: DXFLayout
         return dxf_layout.dxf.name
 
@@ -386,12 +427,6 @@ class Drawing:
     def reset_versionguid(self):
         self.header['$VERSIONGUID'] = guid()
 
-
-class DrawingX(Drawing):
-    """
-    The Central Data Object
-    """
-
     @property
     def acad_compatible(self) -> bool:
         return self._acad_compatible
@@ -401,6 +436,12 @@ class DrawingX(Drawing):
         if msg not in self._acad_incompatibility_reason:
             self._acad_incompatibility_reason.add(msg)
             logger.warning('Drawing is incompatible to AutoCAD, because {}.'.format(msg))
+
+
+class DrawingX(Drawing):
+    """
+    The Central Data Object
+    """
 
     @property
     def _handles(self) -> 'HandleGenerator':
@@ -531,38 +572,6 @@ class DrawingX(Drawing):
             'xref_path': filename
         })
 
-    def saveas(self, filename, encoding=None):
-        self.filename = filename
-        self.save(encoding=encoding)
-
-    def save(self, encoding=None):
-        # DXF R12, R2000, R2004 - ASCII encoding
-        # DXF R2007 and newer - UTF-8 encoding
-        if encoding is None:
-            enc = 'utf-8' if self.dxfversion >= 'AC1021' else self.encoding
-        else:  # override default encoding, for applications that handles encoding different than AutoCAD
-            enc = encoding
-        # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
-        with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
-            self.write(fp)
-
-    def write(self, stream):
-        from .lldxf.tagwriter import TagWriter
-        if self.dxfversion == 'AC1009':
-            handles = bool(self.header['$HANDLING'])
-        else:
-            handles = True
-        if self.dxfversion > 'AC1009':
-            self._register_required_classes()
-            if self.dxfversion < 'AC1018':
-                # remove unsupported group code 91
-                repair.fix_classes(self)
-
-        self._create_appids()
-        self._update_metadata()
-        tagwriter = TagWriter(stream, write_handles=handles)
-        self.sections.write(tagwriter)
-
     def query(self, query='*'):
         """
         Entity query over all layouts and blocks.
@@ -632,8 +641,3 @@ class DrawingX(Drawing):
             return False
         else:
             return True
-
-    def update_class_instance_counters(self):
-        if 'classes' in self.sections:
-            self._register_required_classes()
-            self.sections.classes.update_instance_counters()
