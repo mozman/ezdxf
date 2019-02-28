@@ -75,17 +75,18 @@ The ENTITIES section is also mostly same, but with handles, owner tags and new E
 
 And the new OBJECTS section - now its getting complicated!
 
-Most information about the OBJECTS section is just guessed or gathered by trail and error (reverse engineering), because
+Most information about the OBJECTS section is just guessed or gathered by trail and error, because
 the documentation of the OBJECTS section and its objects in the DXF reference provided by Autodesk is very shallow.
 This is also the reason why I started the DXF Internals section, may be it helps other developers to start one or two
 steps above level zero.
 
 The OBJECTS sections stores all the non-graphical entities of the DXF drawing.
-Non-graphical entities from now on just called 'objects' to differentiate them from graphical entities, just called
-'entities'. The OBJECTS section follows commonly the ENTITIES section, but this is not mandatory. DXF R13
-introduces also several new DXF objects, which resides exclusive in the OBJECTS section, taken from the DXF R14 reference,
-because I have no access to the DXF R13 reference, the DXF R13 reference is a compiled .hlp file which can't be read on
-Windows 10, a drastic real world example why it is better to avoid closed (proprietary) data formats ;):
+Non-graphical entities from now on just called 'DXF objects' to differentiate them from graphical entities, just called
+'entities'. The OBJECTS section follows commonly the ENTITIES section, but this is not mandatory.
+
+DXF R13 introduces several new DXF objects, which resides exclusive in the OBJECTS section, taken from the DXF R14
+reference, because I have no access to the DXF R13 reference, the DXF R13 reference is a compiled .hlp file which can't
+be read on Windows 10, a drastic real world example why it is better to avoid closed (proprietary) data formats ;):
 
     - DICTIONARY: a general structural entity as a <name: handle> container
     - ACDBDICTIONARYWDFLT: a DICTIONARY with a default value
