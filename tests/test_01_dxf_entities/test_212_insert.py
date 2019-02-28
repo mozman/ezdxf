@@ -124,10 +124,10 @@ def test_write_dxf(txt, ver):
 
 def test_add_attribs(doc):
     insert = Insert(doc)
-    assert insert._attribs_follow() is False
+    assert insert.attribs_follow is False
     insert.add_attrib('T1', 'value1', (0, 0))
     assert len(insert.attribs) == 1
-    assert insert._attribs_follow() is True
+    assert insert.attribs_follow is True
 
 
 def test_clone_with_insert(doc):

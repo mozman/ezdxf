@@ -11,7 +11,7 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF2000, STRUCTURE_MARKER, OWNER_CODE, DXF12
 from ezdxf.lldxf.const import ACAD_REACTORS, ACAD_XDICTIONARY
-from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFTypeError
+from ezdxf.lldxf.const import DXFAttributeError, DXFValueError, DXFTypeError, DXFKeyError
 from ezdxf.tools import set_flag_state
 from .xdata import XData, EmbeddedObjects
 from .appdata import AppData, Reactors
@@ -841,8 +841,12 @@ class DXFTagStorage(DXFEntity):
         # 1. tag of 1. subclass is the structure tag (0, DXFTYPE)
         self.xtags = tags
         self.DXFTYPE = self.base_class[0].value
-        # just fake it
-        self.dxf.__dict__['paperspace'] = 0
+        try:
+            acdb_entity = tags.get_subclass('AcDbEntity')
+            self.dxf.__dict__['paperspace'] = acdb_entity.get_first_value(67, 0)
+        except DXFKeyError:
+            # just fake it
+            self.dxf.__dict__['paperspace'] = 0
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Write subclass tags as they are

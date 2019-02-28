@@ -355,7 +355,7 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
             else:
                 raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
         # linked entities
-        elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
+        elif dxftype in LINKED_ENTITIES:  # only these two DXF types have this special linked structure
             if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
                 #   INSERT with no ATTRIBS, attribs_follow == 0
@@ -373,7 +373,6 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
         # attached entities
         elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):  # attached MTEXT entity
             if prev:
-
                 prev.link_entity(entity)
                 are_linked_entities = True
             else:

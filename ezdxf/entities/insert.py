@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 __all__ = ['Insert']
 
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
-    'attribs_follow': DXFAttr(66, xtype=XType.callback, getter='_attribs_follow'),
+    'attribs_follow': DXFAttr(66, default=0, optional=True),
     'name': DXFAttr(2),
     'insert': DXFAttr(10, xtype=XType.any_point),
     'xscale': DXFAttr(41, default=1, optional=True),
@@ -46,12 +46,13 @@ class Insert(DXFGraphic):
     def link_entity(self, entity: 'DXFEntity') -> None:
         self.attribs.append(entity)
 
+    @property
+    def attribs_follow(self) -> bool:
+        return bool(len(self.attribs))
+
     def _copy_data(self, entity: 'Insert') -> None:
         """ Copy ATTRIB entities, and store the copies into database. """
         entity.attribs = [attrib.copy() for attrib in self.attribs]
-
-    def _attribs_follow(self) -> bool:
-        return bool(len(self.attribs))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
@@ -73,7 +74,7 @@ class Insert(DXFGraphic):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
         # for all DXF versions
-        if self._attribs_follow():
+        if self.attribs_follow:
             tagwriter.write_tag2(66, 1)
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'insert',

@@ -55,7 +55,7 @@ def test_blockref_add_new_attribs(msp):
     assert len(msp) == entity_count+1
     assert len(msp.entitydb) == db_count+2
 
-    assert blockref.dxf.attribs_follow == 1
+    assert blockref.attribs_follow == 1
     attrib = blockref.get_attrib('TEST')
     assert attrib.dxf.text == 'text'
 
@@ -88,16 +88,12 @@ def test_lockref_grid(msp):
 
 def test_blockref_attribs_follow_abuse(msp):
     blockref = msp.add_blockref("TESTBLOCK", (0, 0))
-    # set attribs follow without attaching an ATTRIB entity
-    with pytest.raises(ezdxf.DXFAttributeError):
-        blockref.dxf.attribs_follow = 1, 'setting attribs_follow not allowed'
-
     assert len(blockref.attribs) == 0, 'Attrib count should be 0'
     assert blockref.has_attrib('TEST') is False, 'Attrib should not exists'
 
     blockref.add_attrib('TEST', 'Text')
     assert len(blockref.attribs) == 1
-    assert blockref.dxf.attribs_follow is True
+    assert blockref.attribs_follow is True
 
 
 def test_blockref_delete_not_existing_attrib(msp):
@@ -130,11 +126,11 @@ def test_blockref_delete_one_of_many_attribs(msp):
     blockref.add_attrib('TEST1', 'Text')
     blockref.add_attrib('TEST2', 'Text')
     assert len(blockref.attribs) == 3
-    assert blockref.dxf.attribs_follow == 1
+    assert blockref.attribs_follow is True
 
     blockref.delete_attrib('TEST1')
     assert len(blockref.attribs) == 2
-    assert blockref.dxf.attribs_follow == 1
+    assert blockref.attribs_follow is True
 
     assert blockref.has_attrib('TEST0') is True
     assert blockref.has_attrib('TEST1') is False
@@ -146,11 +142,11 @@ def test_blockref_delete_first_of_many_attribs(msp):
     blockref.add_attrib('TEST0', 'Text')
     blockref.add_attrib('TEST1', 'Text')
     assert len(blockref.attribs) == 2
-    assert blockref.dxf.attribs_follow == 1
+    assert blockref.attribs_follow is True
 
     blockref.delete_attrib('TEST0')
     assert len(blockref.attribs) == 1
-    assert blockref.dxf.attribs_follow == 1
+    assert blockref.attribs_follow is True
 
     assert blockref.has_attrib('TEST0') is False
     assert blockref.has_attrib('TEST1') is True
@@ -167,7 +163,7 @@ def test_blockref_delete_all_attribs(msp):
     blockref.add_attrib('TEST1', 'Text')
     blockref.add_attrib('TEST2', 'Text')
     assert len(blockref.attribs) == 3
-    assert blockref.dxf.attribs_follow == 1
+    assert blockref.attribs_follow is True
 
     blockref.delete_all_attribs()
     assert len(blockref.attribs) == 0
