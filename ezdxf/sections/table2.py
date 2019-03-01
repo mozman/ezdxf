@@ -95,12 +95,26 @@ class Table:
         else:
             raise DXFTableEntryError(name)
 
+    def discard(self, name: str) -> None:
+        """ Remove table entry without destroying object. """
+        del self.entries[self.key(name)]
+
+    def replace(self, name: str, entry: 'DXFEntity') -> None:
+        """ Replace table entry name by new `entry`.
+
+        Used for renaming entries and replacing old entry by renamed entry. Because renaming is not the same procedure
+        for all table entries types.
+
+        """
+        self.discard(name)
+        self._append(entry)
+
     def remove(self, name: str) -> None:
         """ Remove table-entry from table and entitydb by name. """
         key = self.key(name)
         entry = self.get(name)
         self.entitydb.delete_entity(entry)
-        del self.entries[key]
+        self.discard(key)
 
     def __len__(self) -> int:
         return len(self.entries)
@@ -183,6 +197,7 @@ class LayerTable(Table):
         layer = super().new_entry(dxfattribs)  # type: Layer
         if self.doc:
             layer.set_required_attributes()
+        return layer
 
 
 class StyleTable(Table):

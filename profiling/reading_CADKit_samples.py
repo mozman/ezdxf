@@ -32,8 +32,7 @@ for filename in glob.glob(CADKIT):
     new_count = len(msp)
     new_timing = datetime.now() - start_reading
     print('NEW: loaded {} entities in {} sec'.format(new_count, new_timing))
-
-    print('ratio OLD/NEW = {}'.format(old_timing / new_timing))
+    print('ratio OLD/NEW = 1:{:.1f}'.format(new_timing/old_timing))
 
     if new_count != old_count:
         new_keys = set(new_entities.keys())

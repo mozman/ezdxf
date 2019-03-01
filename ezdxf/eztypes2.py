@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from ezdxf.entitydb import EntityDB
 
     # Sections and Tables
-    from ezdxf.sections.table import Table, ViewportTable
+    from ezdxf.sections.table2 import Table, ViewportTable, LayerTable, StyleTable
     from ezdxf.sections.blocks2 import BlocksSection
     from ezdxf.sections.header import HeaderSection
     from ezdxf.sections.tables2 import TablesSection

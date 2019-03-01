@@ -128,14 +128,6 @@ class Layout(BaseLayout):
         return self.block_record.dxf.name
 
     @property
-    def block(self) -> 'BlockLayout':
-        """
-        Returns the associated `BlockLayout` object.
-
-        """
-        return self.doc.blocks.get(self.block_record_name)
-
-    @property
     def is_modelspace(self) -> bool:
         return self.block_record.is_modelspace
 
@@ -163,7 +155,7 @@ class Layout(BaseLayout):
 
         """
         # all entities are managed by BLOCK_RECORD
-        self.doc.blocks.delete_block(self.block.name)
+        self.doc.blocks.delete_block(self.block_record.dxf.name)
         self.doc.objects.delete_entity(self.dxf_layout)
 
     def viewports(self) -> List['DXFGraphic']:
@@ -179,34 +171,6 @@ class Layout(BaseLayout):
     def renumber_viewports(self) -> None:
         for num, viewport in enumerate(self.viewports(), start=1):
             viewport.dxf.id = num
-
-    def add_viewport_r12(self,
-                         center: Tuple[float, float],
-                         size: Tuple[float, float],
-                         view_center_point: Tuple[float, float],
-                         view_height: float,
-                         dxfattribs: dict = None) -> 'DXFGraphic':
-        if dxfattribs is None:
-            dxfattribs = {}
-        else:
-            dxfattribs = dict(dxfattribs)
-        width, height = size
-        attribs = {
-            'center': center,
-            'width': width,
-            'height': height,
-            'status': 1,  # by default highest priority (stack order)
-            'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
-        }
-        attribs.update(dxfattribs)
-        # DXF R12 (AC1009): view_center_point and view_height (as many other viewport attributes) are not usual
-        # DXF attributes, they are stored as extended DXF tags.
-        viewport = self.new_entity('VIEWPORT', attribs)
-        viewport.dxf.id = viewport.get_next_viewport_id()
-        with viewport.edit_data() as vp_data:
-            vp_data.view_center_point = view_center_point
-            vp_data.view_height = view_height
-        return viewport
 
     def add_viewport(self, center: 'Vertex',
                      size: Tuple[float, float],

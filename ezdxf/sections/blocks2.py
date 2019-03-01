@@ -1,10 +1,9 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, List
-from collections import OrderedDict
 import logging
 
-from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError
+from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError
 from ezdxf.lldxf import const
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
@@ -12,13 +11,8 @@ from ezdxf.layouts.blocklayout import BlockLayout
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
-    from ezdxf.drawing2 import Drawing
-    from ezdxf.entitydb import EntityDB
-    from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-    from ezdxf.entities.factory import EntityFactory
-    from ezdxf.entities.blockrecord import BlockRecord
-    from ezdxf.entities.block import Block, EndBlk
+    from ezdxf.eztypes2 import TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table
+    from ezdxf.eztypes2 import EntityFactory, BlockRecord, Block, EndBlk
 
 
 class BlocksSection:
@@ -29,23 +23,25 @@ class BlocksSection:
     """
 
     def __init__(self, doc: 'Drawing' = None, entities: List['DXFEntity'] = None):
-        # Mapping of BlockLayouts, for dict() order of blocks is random,
-        # if turns out later, that blocks order is important: use an OrderedDict().
-        self._block_layouts = OrderedDict()
+        # BlockLayouts stored as block_layout attribute in the BlockRecord object
         self.doc = doc
         if entities is not None:
             self.load(entities)
-        self._repair_block_records()
+        self._reconstruct_orphaned_block_records()
         self._anonymous_block_counter = 0
 
     def __len__(self):
-        return len(self._block_layouts)
+        return len(self.block_records)
 
     @staticmethod
     def key(entity: Union[str, 'BlockLayout']) -> str:
         if not isinstance(entity, str):
             entity = entity.name
         return entity.lower()  # block key is lower case
+
+    @property
+    def block_records(self) -> 'Table':
+        return self.doc.block_records
 
     @property
     def entitydb(self) -> 'EntityDB':
@@ -61,6 +57,7 @@ class BlocksSection:
         entities into block layouts.
 
         """
+
         def load_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
             block = block_entities[0]  # type: Block
             endblk = block_entities[-1]  # type: EndBlk
@@ -83,7 +80,7 @@ class BlocksSection:
                 if not linked(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in block layout
                     yield entity
 
-        block_records = self.doc.block_records
+        block_records = self.block_records
         section_head = entities[0]  # type: DXFTagStorage
         if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'BLOCKS'):
             raise DXFStructureError("Critical structure error in BLOCKS section.")
@@ -93,19 +90,16 @@ class BlocksSection:
             block_entities.append(entity)
             if entity.dxftype() == 'ENDBLK':
                 block_record = load_block_record(block_entities)
-                try:
-                    name = block_record.dxf.name
-                except DXFAttributeError:
-                    raise
-                if name in self:
-                    logger.warning(
-                        'Multiple block definitions with name "{}", replacing previous definition'.format(name)
-                    )
-                self.add(BlockLayout(block_record))
+                self.add(block_record)
                 block_entities = []
 
-    def _repair_block_records(self):
-        for block_record in self.doc.block_records:  # type: BlockRecord
+    def _reconstruct_orphaned_block_records(self):
+        """
+        Find BLOCK_RECORD entries without block definition in the blocks section and create block definitions for this
+        orphaned block records.
+
+        """
+        for block_record in self.block_records:  # type: BlockRecord
             if block_record.block is None:
                 block = self.doc.dxffactory.create_db_entry('BLOCK', dxfattribs={
                     'name': block_record.dxf.name,
@@ -114,48 +108,46 @@ class BlocksSection:
                 })
                 endblk = self.doc.dxffactory.create_db_entry('ENDBLK', dxfattribs={})
                 block_record.set_block(block, endblk)
-                self.add(BlockLayout(block_record))
+                self.add(block_record)
 
-    def add(self, block_layout: 'BlockLayout') -> None:
+    def add(self, block_record: 'BlockRecord') -> 'BlockLayout':
+        """ Add or replace a block layout object defined by its block record.
         """
-        Add or replace a block object.
-
-        Args:
-            block_layout: BlockLayout() object
-
-        """
-        self._block_layouts[self.key(block_layout.name)] = block_layout
+        block_layout = BlockLayout(block_record)
+        block_record.block_layout = block_layout
+        assert self.block_records.has_entry(block_record.dxf.name)
+        return block_layout
 
     def __iter__(self) -> Iterable['BlockLayout']:
-        return iter(self._block_layouts.values())
+        return (block_record.block_layout for block_record in self.block_records)
 
     def __contains__(self, name: str) -> bool:
-        return self.key(name) in self._block_layouts
+        return self.block_records.has_entry(name)
 
     def __getitem__(self, name: str) -> 'BlockLayout':
-        return self._block_layouts[self.key(name)]
+        try:
+            block_record = self.block_records.get(name)  # type: BlockRecord
+            return block_record.block_layout
+        except DXFTableEntryError:
+            raise DXFKeyError(name)
 
     def __delitem__(self, name: str) -> None:
-        del self._block_layouts[self.key(name)]
+        self.block_records.remove(name)
 
     def get(self, name: str, default=None) -> 'BlockLayout':
         try:
             return self.__getitem__(name)
-        except KeyError:  # internal exception
+        except DXFKeyError:
             return default
 
     def get_block_layout_by_handle(self, block_record_handle: str) -> 'BlockLayout':
+        """ Returns a block layout by block record handle.
         """
-        Returns a block layout by block record handle.
-
-        """
-        block_record = self.doc.entitydb[block_record_handle]
-        return self.get(block_record.dxf.name)
+        block_record = self.doc.entitydb[block_record_handle]  # type: BlockRecord
+        return block_record.block_layout
 
     def new(self, name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> 'BlockLayout':
-        """
-        Create a new named block.
-
+        """ Create a new named block.
         """
         block_record = self.doc.block_records.new(name)  # type: BlockRecord
 
@@ -167,10 +159,7 @@ class BlocksSection:
         head = self.dxffactory.create_db_entry('BLOCK', dxfattribs)  # type: Block
         tail = self.dxffactory.create_db_entry('ENDBLK', {'owner': block_record.dxf.handle})  # type: EndBlk
         block_record.set_block(head, tail)
-
-        block_layout = BlockLayout(block_record)
-        self.add(block_layout)
-        return block_layout
+        return self.add(block_record)
 
     def new_anonymous_block(self, type_char: str = 'U', base_point: Sequence[float] = (0, 0)) -> 'BlockLayout':
         blockname = self.anonymous_blockname(type_char)
@@ -178,8 +167,7 @@ class BlocksSection:
         return block
 
     def anonymous_blockname(self, type_char: str) -> str:
-        """
-        Create name for an anonymous block.
+        """ Create name for an anonymous block.
 
         Args:
             type_char: letter
@@ -199,15 +187,12 @@ class BlocksSection:
                 return blockname
 
     def rename_block(self, old_name: str, new_name: str) -> None:
+        """ Renames the block and the associated block record.
         """
-        Renames the block and the associated block record.
-
-        """
-        block_layout = self.get(old_name)  # block key is lower case
-        # set name in BLOCK and BLOCK_RECORD
-        block_layout.name = new_name
-        self.__delitem__(old_name)
-        self.add(block_layout)  # add new dict entry
+        block_record = self.block_records.get(old_name)  # type: BlockRecord
+        block_record.rename(new_name)
+        self.block_records.replace(old_name, block_record)
+        self.add(block_record)
 
     def delete_block(self, name: str, safe: bool = True) -> None:
         """
@@ -228,8 +213,6 @@ class BlocksSection:
                 raise DXFBlockInUseError(
                     'Block "{}" is still in use and can not deleted. (Hint: block name is case insensitive!)'.format(
                         name))
-        block_layout = self[name]
-        block_layout.destroy()
         self.__delitem__(name)
 
     def delete_all_blocks(self, safe: bool = True) -> None:
@@ -257,18 +240,6 @@ class BlocksSection:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
-        for block in self._block_layouts.values():
-            block.export_dxf(tagwriter)
+        for block_record in self.block_records:  # type: BlockRecord
+            block_record.export_block_definition(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
-
-    def new_layout_block(self) -> 'BlockLayout':
-
-        def block_name(_count):
-            return "*Paper_Space%d" % _count
-
-        count = 0
-        while block_name(count) in self:
-            count += 1
-
-        block_layout = self.new(block_name(count))
-        return block_layout

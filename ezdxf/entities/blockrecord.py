@@ -13,7 +13,7 @@ from .factory import register_entity
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic, EntitySpace
+    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic, EntitySpace, BlockLayout
 
 __all__ = ['BlockRecord']
 
@@ -81,6 +81,8 @@ class BlockRecord(DXFEntity):
         self.entity_space = EntitySpace()
         self.block = None  # type: Block
         self.endblk = None  # type: EndBlk
+        # stores also the block layout structure
+        self.block_layout = None  # type: BlockLayout
 
     def set_block(self, block: 'Block', endblk: 'EndBlk'):
         self.block = block
@@ -141,6 +143,10 @@ class BlockRecord(DXFEntity):
         db.delete_entity(self.endblk)
         for entity in self.entity_space:
             db.delete_entity(entity)
+        # remove attributes to find invalid access after death
+        del self.block
+        del self.endblk
+        del self.block_layout
         super().destroy()
 
     @property

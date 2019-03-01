@@ -31,10 +31,6 @@ BINARAY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = 'Embedded Object'
 
 
-def name_key(name: str) -> str:
-    return name.upper()
-
-
 def handle_code(dxftype: str) -> int:
     return 105 if dxftype == 'DIMSTYLE' else 5
 

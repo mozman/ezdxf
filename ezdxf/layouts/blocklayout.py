@@ -103,9 +103,6 @@ class BlockLayout(BaseLayout):
 
     # end of public interface
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
-        self.block_record.export_block_definition(tagwriter)
-
     def get_const_attdefs(self) -> Iterable['AttDef']:
         """
         Returns a generator for constant ATTDEF entities.
