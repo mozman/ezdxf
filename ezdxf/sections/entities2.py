@@ -51,13 +51,24 @@ class EntitySection:
             raise DXFStructureError("Critical structure error in ENTITIES section.")
 
         def add(entity: 'DXFGraphic'):
-            if entity.dxf.paperspace:
+            handle = entity.dxf.owner
+            # higher priority for owner handle
+            if handle == msp_layout_key:
+                paperspace = 0
+            elif handle == psp_layout_key:
+                paperspace = 1
+            else:  # paperspace flag as fallback
+                paperspace = entity.dxf.paperspace
+
+            if paperspace:
                 psp.add_entity(entity)
             else:
                 msp.add_entity(entity)
 
         msp = self.doc.block_records.get('*Model_Space')  # type: BlockRecord
         psp = self.doc.block_records.get('*Paper_Space')  # type: BlockRecord
+        msp_layout_key = msp.dxf.handle
+        psp_layout_key = psp.dxf.handle
         linked_entities = entity_linker()
         for entity in entities:
             if not linked_entities(entity):  # don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space

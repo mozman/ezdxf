@@ -23,7 +23,7 @@ for filename in glob.glob(CADKIT):
     old_entities = count_entities(msp)
     old_count = len(msp)
     old_timing = datetime.now() - start_reading
-    print('OLD: loaded {} entities in {} sec'.format(old_count, old_timing))
+    print('OLD: loaded {} entities in {:.1f} sec'.format(old_count, old_timing.total_seconds()))
 
     start_reading = datetime.now()
     doc = ezdxf.readfile2(filename)
@@ -31,7 +31,7 @@ for filename in glob.glob(CADKIT):
     new_entities = count_entities(msp)
     new_count = len(msp)
     new_timing = datetime.now() - start_reading
-    print('NEW: loaded {} entities in {} sec'.format(new_count, new_timing))
+    print('NEW: loaded {} entities in {:.1f} sec'.format(new_count, new_timing.total_seconds()))
     print('ratio OLD/NEW = 1:{:.1f}'.format(new_timing/old_timing))
 
     if new_count != old_count:

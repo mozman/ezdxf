@@ -115,7 +115,7 @@ class MLine(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mline.name)
-        self.dxf.export_dxf_attribs(tagwriter, acdb_mline.attribs.key())
+        self.dxf.export_dxf_attribs(tagwriter, acdb_mline.attribs.keys())
         self.vertices.export_dxf(tagwriter)
 
 

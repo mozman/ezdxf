@@ -605,7 +605,7 @@ acdb_vertex = DefSubclass('AcDbVertex', {  # last subclass index -1
     # negative if the arc goes clockwise from the start point to the endpoint. A bulge of 0 indicates a straight
     # segment, and a bulge of 1 is a semicircle.
     'bulge': DXFAttr(42, default=0, optional=True),
-    'flags': DXFAttr(70),
+    'flags': DXFAttr(70, default=0),
     'tangent': DXFAttr(50, optional=True),  # Curve fit tangent direction (in degrees?)
     'vtx0': DXFAttr(71, optional=True),
     'vtx1': DXFAttr(72, optional=True),
