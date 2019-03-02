@@ -152,7 +152,7 @@ class Dimension(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRotatedDimension')
         elif dim_type == 1:  # aligned
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['insert', 'defpoint2', 'defpoint3', 'angle'])
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
         elif dim_type == 2 or dim_type == 5:  # angular & angulr3p
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])

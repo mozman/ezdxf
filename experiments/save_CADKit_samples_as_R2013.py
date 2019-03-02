@@ -9,7 +9,7 @@ outpath = Path(r"C:\Users\manfred\Desktop\Outbox")
 
 
 def outname(fname: Path) -> Path:
-    name = fname.stem + '_R2013.dxf'
+    name = fname.stem + '_ezdxf.dxf'
     return outpath / name
 
 
@@ -24,6 +24,6 @@ for filename in Path(CADKIT_PATH).glob('*.dxf'):
 
         print('writing file: {}'.format(new_name))
         start = datetime.datetime.now()
-        doc.saveas(new_name, dxfversion=ezdxf.DXF2013)
+        doc.saveas(new_name)
         end = datetime.datetime.now()
         print(' ... in {:.1f} sec'.format((end - start).total_seconds()))

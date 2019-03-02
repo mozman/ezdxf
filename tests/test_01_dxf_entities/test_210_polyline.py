@@ -41,6 +41,8 @@ AcDbEntity
 0
 100
 AcDb2dPolyline
+66
+1
 10
 0.0
 20

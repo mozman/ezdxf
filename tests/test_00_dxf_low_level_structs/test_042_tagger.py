@@ -130,7 +130,7 @@ def test_ext_coord_error_tag():
 
 def test_polyline_with_xdata():
     tags = list(tag_compiler(low_level_tagger(StringIO(POLYLINE_WITH_XDATA))))
-    assert len(tags) == 44
+    assert len(tags) == 49
 
 
 TAGS1 = """999

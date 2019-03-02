@@ -292,7 +292,7 @@ class Drawing:
     def write(self, stream, dxfversion=None) -> None:
         dxfversion = self.which_dxfversion(dxfversion)
         if dxfversion == DXF12:
-            handles = bool(self.header['$HANDLING'])
+            handles = bool(self.header.get('$HANDLING', 0))
         else:
             handles = True
         if dxfversion > DXF12:

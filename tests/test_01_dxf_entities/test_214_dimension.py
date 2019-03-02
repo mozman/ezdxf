@@ -108,12 +108,6 @@ Standard
 0.0
 100
 AcDbAlignedDimension
-12
-0.0
-22
-0.0
-32
-0.0
  13
 0.0
  23

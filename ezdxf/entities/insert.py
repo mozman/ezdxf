@@ -90,7 +90,7 @@ class Insert(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
-            if self.dxf.column_count > 0 or self.row_count > 0:
+            if (self.dxf.column_count > 1) or (self.dxf.row_count > 1):
                 tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbMInsertBlock')
             else:
                 tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbBlockReference')
