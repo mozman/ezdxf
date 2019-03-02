@@ -5,7 +5,6 @@
 from typing import Optional, Iterable, Tuple, Union, TYPE_CHECKING
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.entities.dxfentity import DXFEntity
-from ezdxf.entities.dxfgfx import export_seqend
 from ezdxf.order import priority, zorder
 
 if TYPE_CHECKING:
@@ -190,7 +189,7 @@ class EntitySpace:
                     linked.export_dxf(tagwriter)
 
             if seqend:
-                export_seqend(tagwriter, entity)
+                entity.export_seqend(tagwriter)
 
     def remove(self, entity: 'DXFEntity') -> None:
         """ Remove `entity` from entity space """

@@ -89,6 +89,10 @@ def low_level_tagger(stream: TextIO) -> Iterator[DXFTag]:
             return
 
 
+# invalid point codes if not part of a point started with 1010, 1011, 1012, 1013
+INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
+
+
 def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
     """
     Compiles DXF tag values imported by low_level_tagger() into Python types.

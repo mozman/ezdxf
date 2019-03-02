@@ -49,7 +49,7 @@ def pretty_print(filename: Path):
     html_filename = filename.parent / (filename.stem + '.html')
     try:
         with io.open(html_filename, mode='wt', encoding='utf-8') as fp:
-            fp.write(dxfpp(tagger))
+            fp.write(dxfpp(tagger, filename.name))
     except IOError:
         print("IOError: can not write file '{}'.".format(html_filename))
     return html_filename

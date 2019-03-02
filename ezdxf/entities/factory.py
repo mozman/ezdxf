@@ -43,6 +43,10 @@ class EntityFactory:
         """ Create new entity and add to drawing-database. """
         entity = self.new_entity(dxftype=type_, dxfattribs=dxfattribs)
         self.doc.entitydb.add(entity)
+        if hasattr(entity, 'seqend'):
+            seqend = self.create_db_entry('SEQEND', dxfattribs={})
+            self.doc.entitydb.add(seqend)
+            entity.seqend = seqend
         return entity
 
     def load(self, tags: Union['ExtendedTags', 'Tags']) -> 'DXFEntity':

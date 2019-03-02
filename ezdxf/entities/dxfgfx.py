@@ -14,11 +14,12 @@ from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS
 from ezdxf.tools.rgb import int2rgb, rgb2int
 from ezdxf.tools import float2transparency, transparency2float
+from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import Auditor, TagWriter, Vertex, Matrix44, BaseLayout, DXFNamespace
 
-__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'export_seqend']
+__all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 
 acdb_entity = DefSubclass('AcDbEntity', {
     'layer': DXFAttr(8, default='0'),  # layername as string
@@ -321,6 +322,12 @@ class DXFGraphic(DXFEntity):
         auditor.check_for_valid_color_index(self)
         auditor.check_pointer_target_exists(self, zero_pointer_valid=False)
 
+
+@register_entity
+class SeqEnd(DXFGraphic):
+    DXFTYPE = 'SEQEND'
+
+
 LINKED_ENTITIES = {
     'INSERT': 'ATTRIB',
     'POLYLINE': 'VERTEX'
@@ -347,7 +354,7 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
         if main_entity is not None:
             are_linked_entities = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
             if dxftype == 'SEQEND':
-                # do not store SEQEND entity
+                main_entity.link_seqend(entity)
                 main_entity = None
             # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
             elif dxftype == expected:
@@ -381,13 +388,3 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
         return are_linked_entities  # caller should know, if *tags* should be stored in the entity space or not
 
     return entity_linker_
-
-
-def export_seqend(tagwriter: 'TagWriter', entity: DXFEntity) -> None:
-    handle = entity.entitydb.next_handle()
-    tagwriter.write_tag2(0, 'SEQEND')
-    tagwriter.write_tag2(5, handle)
-    if tagwriter.dxfversion > DXF12:
-        owner = entity.dxf.owner
-        tagwriter.write_tag2(OWNER_CODE, owner)
-        tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbEntity')

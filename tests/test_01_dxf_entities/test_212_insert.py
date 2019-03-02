@@ -136,7 +136,7 @@ def test_clone_with_insert(doc):
     # - copy_entity clones the entity and assigns the new entity to the same owner as the source and adds the entity
     #   and it linked entities (ATTRIB & VERTEX) to the entity database, but does not adding entity to a layout, setting
     #   owner tag is not enough to assign an entity to a layout, use Layout.add_entity()
-    insert = Insert(doc)
+    insert = doc.dxffactory.create_db_entry('INSERT', dxfattribs={})
     insert.add_attrib('T1', 'value1', (0, 0))
     clone = insert.copy()
     assert clone.dxf.handle in doc.entitydb
@@ -160,18 +160,22 @@ def test_copy_with_insert(doc):
     db_count = len(doc.entitydb)
 
     insert = msp.add_blockref('Test', insert=(0, 0))
+    assert insert.seqend.dxf.owner == insert.dxf.owner
+    assert insert.seqend.dxf.handle is not None
+    assert insert.seqend.dxf.handle in doc.entitydb
+
     insert.add_attrib('T1', 'value1')
 
     # linked attribs not stored in the entity space
     assert len(msp) == msp_count + 1
-    # attribs stored in the entity database
-    assert len(doc.entitydb) == db_count + 2
+    # attribs stored in the entity database + SEQEND
+    assert len(doc.entitydb) == db_count + 3
 
     copy = insert.copy()
     # not duplicated in entity space
     assert len(msp) == msp_count + 1
-    # duplicated in entity database
-    assert len(doc.entitydb) == db_count + 4
+    # duplicated in entity database (2x SEQEND)
+    assert len(doc.entitydb) == db_count + 6
 
     # get 1. paperspace in tab order
     psp = doc.layout()

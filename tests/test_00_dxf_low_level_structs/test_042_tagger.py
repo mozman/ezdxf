@@ -94,6 +94,12 @@ def test_ext_one_point_reader():
     assert (100, 200, 300) == point_tag.value
 
 
+def test_xdata_coords():
+    tags = list(external_tag_compiler(XDATA_COORDS))
+    assert tags[0] == (1011, (100, 200, 300))
+    assert len(tags) == 1
+
+
 def test_ext_read_2D_points():
     stri = internal_tag_compiler(POINT_2D_TAGS)
     tags = list(stri)
@@ -120,6 +126,11 @@ def test_ext_float_to_int():
 def test_ext_coord_error_tag():
     with pytest.raises(DXFStructureError):
         list(external_tag_compiler(TAGS_WITH_COORD_ERROR))
+
+
+def test_polyline_with_xdata():
+    tags = list(tag_compiler(low_level_tagger(StringIO(POLYLINE_WITH_XDATA))))
+    assert len(tags) == 44
 
 
 TAGS1 = """999
@@ -149,6 +160,14 @@ $EXTMIN
  20
 200
  30
+300
+"""
+
+XDATA_COORDS = """1011
+100
+1021
+200
+1031
 300
 """
 
@@ -182,7 +201,6 @@ $EXTMIN
 1000
  21
 2000"""
-
 
 TEST_TAGREADER = """  0
 SECTION
@@ -287,3 +305,122 @@ $EXTMIN
 1.0  
 """
 
+POLYLINE_WITH_XDATA = """  0
+POLYLINE
+  5
+2A
+  8
+T-POLYFACE-3DS
+ 62
+     3
+ 66
+     1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+    64
+ 71
+     8
+ 72
+    12
+1001
+AVE_FINISH
+1002
+{
+1070
+     0
+1005
+0
+1002
+}
+1001
+AVE_ENTITY_MATERIAL
+1002
+{
+1000
+
+1002
+{
+1071
+        0
+1070
+     0
+1070
+     0
+1002
+{
+1070
+     0
+1070
+     0
+1070
+     0
+1040
+0.0
+1002
+}
+1070
+     0
+1070
+     0
+1002
+{
+1002
+}
+1002
+}
+1002
+{
+1002
+}
+1002
+{
+1002
+}
+1011
+0.0
+1021
+0.0
+1031
+0.0
+1021
+0.0
+1031
+0.0
+1011
+1.0
+1021
+0.0
+1031
+0.0
+1021
+0.0
+1031
+0.0
+1011
+0.0
+1021
+0.0
+1031
+0.0
+1021
+1.0
+1031
+0.0
+1011
+0.0
+1021
+0.0
+1031
+0.0
+1021
+0.0
+1031
+1.0
+1002
+}
+"""

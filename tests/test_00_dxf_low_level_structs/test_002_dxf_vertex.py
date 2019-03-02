@@ -26,3 +26,8 @@ def test_dxf_tags():
 def test_dxf_string():
     v = DXFVertex(10, (1, 2, 3))
     assert v.dxfstr() == " 10\n1.0\n 20\n2.0\n 30\n3.0\n"
+
+
+def test_xdata_string():
+    v = DXFVertex(1011, (1, 2, 3))
+    assert v.dxfstr() == "1011\n1.0\n1021\n2.0\n1031\n3.0\n"

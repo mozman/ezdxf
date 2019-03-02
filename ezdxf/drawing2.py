@@ -196,7 +196,7 @@ class Drawing:
 
         tagger = low_level_tagger(stream)
         if legacy_mode:
-            tagger = repair.tag_reorder_layer(tagger)
+            tagger = repair.filter_out_of_order_point_codes(repair.tag_reorder_layer(tagger))
         tagreader = tag_compiler(tagger)
         doc = Drawing()
         doc._load(tagreader)

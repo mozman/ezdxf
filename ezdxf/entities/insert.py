@@ -6,7 +6,7 @@ from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 __all__ = ['Insert']
 
+# multiple insert has subclass id AcDbMInsertBlock
 acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'attribs_follow': DXFAttr(66, default=0, optional=True),
     'name': DXFAttr(2),
@@ -39,12 +40,19 @@ class Insert(DXFGraphic):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self.attribs = []  # type: List[Attrib]
+        self.seqend = None  # type: SeqEnd
 
     def linked_entities(self) -> Iterable['DXFEntity']:
+        # dont't yield seqend here, because it is not a DXFGraphic entity
         return self.attribs
 
-    def link_entity(self, entity: 'DXFEntity') -> None:
+    def link_entity(self, entity: 'DXFGraphic') -> None:
+        entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self.attribs.append(entity)
+
+    def link_seqend(self, seqend: 'DXFEntity') -> None:
+        seqend.dxf.owner = self.dxf.owner
+        self.seqend = seqend
 
     @property
     def attribs_follow(self) -> bool:
@@ -53,6 +61,15 @@ class Insert(DXFGraphic):
     def _copy_data(self, entity: 'Insert') -> None:
         """ Copy ATTRIB entities, and store the copies into database. """
         entity.attribs = [attrib.copy() for attrib in self.attribs]
+        entity.seqend = self.seqend.copy()
+
+    def set_owner(self, owner: str, paperspace: int = 0):
+        # At loading form file, INSERT will be added to layout before attribs are linked, so set_owner() of INSERT
+        # does not set owner of attribs
+        super().set_owner(owner, paperspace)
+        # attribs handled by super class by linked_entities() interface
+        if self.seqend:  # has no paperspace flag
+            self.seqend.dxf.owner = owner
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
@@ -61,7 +78,8 @@ class Insert(DXFGraphic):
         """
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_block_reference)
+            # always use 2nd subclass, could be AcDbBlockReference or AcDbMInsertBlock
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_block_reference, 2)
             if len(tags) and not processor.r12:
                 processor.log_unprocessed_tags(tags, subclass=acdb_block_reference.name)
         return dxf
@@ -72,7 +90,10 @@ class Insert(DXFGraphic):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
+            if self.dxf.column_count > 0 or self.row_count > 0:
+                tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbMInsertBlock')
+            else:
+                tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbBlockReference')
         # for all DXF versions
         if self.attribs_follow:
             tagwriter.write_tag2(66, 1)
@@ -88,12 +109,18 @@ class Insert(DXFGraphic):
         # xdata and embedded objects export will be done by parent clas
         # ATTRIBS and following SEQEND is exported by EntitySpace()
 
+    def export_seqend(self, tagwriter: 'TagWriter'):
+        # export at same layer, don't know if ATTRIB entities must have the same layer
+        self.seqend.dxf.layer = self.dxf.layer
+        self.seqend.export_dxf(tagwriter)
+
     def destroy(self) -> None:
         """
         Delete all data and references.
 
         """
         self.delete_all_attribs()
+        self.entitydb.delete_entity(self.seqend)
         super().destroy()
 
     def place(self, insert: 'Vertex' = None,

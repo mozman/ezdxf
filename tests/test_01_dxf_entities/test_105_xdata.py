@@ -5,6 +5,7 @@ import pytest
 import copy
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.entities.xdata import XData
 
 
@@ -193,6 +194,130 @@ def test_replace_xdata_list(xdata):
     data = xdata.get('ACAD')
     assert len(data) == 6 + 5 + 3
 
+
+def test_poyline_with_xdata():
+    xdata = XData(ExtendedTags.from_text(POLYLINE_WITH_XDATA).xdata)
+    assert len(xdata) == 2
+    assert len(xdata.get('AVE_ENTITY_MATERIAL')) == 27
+
+
+def test_group_tags_poyline_with_xdata():
+    tags = Tags.from_text(POLYLINE_WITH_XDATA)
+    assert len(tags) == 44
+
+    entity = list(group_tags(tags))
+    pass
+
+
+POLYLINE_WITH_XDATA = """  0
+POLYLINE
+  5
+2A
+330
+195
+100
+AcDbEntity
+  8
+T-POLYFACE-3DS
+ 62
+     3
+100
+AcDbPolyFaceMesh
+ 66
+     1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+    64
+ 71
+     8
+ 72
+    12
+1001
+AVE_FINISH
+1002
+{
+1070
+     0
+1005
+0
+1002
+}
+1001
+AVE_ENTITY_MATERIAL
+1002
+{
+1000
+
+1002
+{
+1071
+        0
+1070
+     0
+1070
+     0
+1002
+{
+1070
+     0
+1070
+     0
+1070
+     0
+1040
+0.0
+1002
+}
+1070
+     0
+1070
+     0
+1002
+{
+1002
+}
+1002
+}
+1002
+{
+1002
+}
+1002
+{
+1002
+}
+1011
+0.0
+1021
+0.0
+1031
+0.0
+1011
+1.0
+1021
+0.0
+1031
+0.0
+1011
+0.0
+1021
+1.0
+1031
+0.0
+1011
+0.0
+1021
+0.0
+1031
+1.0
+1002
+}
+"""
 
 if __name__ == '__main__':
     pytest.main([__file__])

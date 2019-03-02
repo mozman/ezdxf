@@ -15,8 +15,6 @@ from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.loader import load_dxf_structure
 from ezdxf.tools import escape
 from ezdxf.sections.sections import KNOWN_SECTIONS
-from ezdxf.lldxf.packedtags import PackedTags
-
 from .reflinks import get_reference_link
 
 # Tag groups
@@ -268,10 +266,6 @@ class DXF2HtmlConverter:
                     vstr = vstr[:(MAX_STR_LEN - 15)] + " ... " + vstr[-10:]
                 return vstr
 
-            if isinstance(tag, PackedTags):
-                # inflate packed tags
-                return ''.join(tag2html(tag) for tag in tag.dxftags())
-
             tpl = TAG_TPL
             if tag.code in HANDLE_CODES:  # is handle definition
                 tpl = TAG_HANDLE_DEF_TPL
@@ -372,10 +366,10 @@ class DXF2HtmlConverter:
         return BLOCK_TPL.format(name=block_name, block=block_html, entities=entities_html, endblk=endblk_html)
 
 
-def dxfpp(tagger: Iterable[DXFTag]) -> str:
+def dxfpp(tagger: Iterable[DXFTag], filename: str) -> str:
     """Creates a structured HTML view of the DXF tags - not a CAD drawing!
     """
-    return DXF2HtmlConverter(tagger).dxf2html()
+    return DXF2HtmlConverter(tagger, filename).dxf2html()
 
 
 def load_resource(filename: str) -> str:

@@ -11,7 +11,9 @@ import logging
 
 from .extendedtags import ExtendedTags
 from .tags import DXFTag, Tags
+from .types import POINT_CODES
 from .const import DXFInternalEzdxfError, DXFValueError, DXFKeyError, SUBCLASS_MARKER, DXF12
+
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward declarations
@@ -68,7 +70,7 @@ def setup_layout_space(dwg: 'Drawing', layout_name: str, block_name: str, tag_st
         raise NotImplementedError("'%s' block setup not implemented, send an email to "
                                   "<ezdxf@mozman.at> with your DXF file." % real_block_name)
     else:
-        block_layout.set_block_record_handle(block_record_handle)   # grant valid linking
+        block_layout.set_block_record_handle(block_record_handle)  # grant valid linking
 
     layout_handle = create_layout_tags(dwg, block_record_handle, owner=layout_dict.dxf.handle, tag_string=tag_string)
     logger.debug('creating entry in ACAD_LAYOUT dictionary for {}'.format(layout_name))
@@ -105,6 +107,7 @@ def upgrade_to_ac1015(dwg: 'Drawing'):
     """
     Upgrade DXF versions AC1012 and AC1014 to AC1015.
     """
+
     def upgrade_layout_table():
         if 'ACAD_LAYOUT' in dwg.rootdict:
             setup_model_space(dwg)  # setup layout entity and link to proper block and block_record entities
@@ -242,6 +245,41 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
                 tag = None  # do not yield collected tag yet
         if tag is not None:
             yield tag
+
+
+# invalid point codes if not part of a point started with 1010, 1011, 1012, 1013
+INVALID_Y_CODES = {code + 10 for code in POINT_CODES}
+INVALID_Z_CODES = {code + 20 for code in POINT_CODES}
+INVALID_CODES = INVALID_Y_CODES | INVALID_Z_CODES
+X_CODES = POINT_CODES
+
+
+def filter_out_of_order_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+    """
+    Filter point group codes if out of order e.g. 10, 20, 30, 20!
+
+    Args:
+        tagger: low level tagger
+
+    """
+    logger.debug('Filtering out of order point codes.')
+    expected_code = 0
+    point = 0
+
+    for tag in tagger:
+        code = tag[0]
+        if point and code == expected_code:
+            expected_code += 10
+            if expected_code - point > 20:
+                point = 0
+        else:
+            point = 0
+            if code in INVALID_CODES:
+                continue
+            if code in X_CODES:
+                point = code
+                expected_code = point + 10
+        yield tag
 
 
 def fix_coordinate_order(tags, codes=(10, 11)):

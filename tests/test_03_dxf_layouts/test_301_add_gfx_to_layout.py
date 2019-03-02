@@ -16,7 +16,11 @@ def test_delete_polyline3d(msp):
     db_count = len(msp.entitydb)
     pline = msp.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
     assert entity_count + 1 == len(msp), 'vertices should be linked to the POLYLINE entity'
-    assert db_count+4 == len(msp.entitydb), 'database should get 4 additional entities'
+    assert db_count+5 == len(msp.entitydb), 'database should get 4 vertices and 1 seqend'
+
+    assert pline.seqend.dxf.owner == pline.dxf.owner
+    assert pline.seqend.dxf.handle is not None
+    assert pline.seqend.dxf.handle in msp.doc.entitydb
 
     assert len(pline) == 3
     assert pline.vertices[0].dxf.location == (0, 0, 0)

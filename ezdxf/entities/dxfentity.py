@@ -426,7 +426,7 @@ class DXFEntity:
         entity.xdata = other.xdata
         entity.embedded_objects = other.embedded_objects
         entity.dxf.rewire(entity)
-        entity.doc.entitydb.add(entity)  # same handle -> replaces other
+        entity.doc.entitydb[entity.dxf.handle] = entity  # replace entity in entity db, can't call add() here
         return entity
 
     def copy(self: T) -> T:
@@ -456,10 +456,10 @@ class DXFEntity:
         entity.embedded_objects = copy.deepcopy(self.embedded_objects)
         entity.dxf.handle = None
         entity.dxf.owner = None
-
+        self._copy_data(entity)
         self.entitydb.add(entity)
         # using the linked_entities() interface is maybe not sufficient
-        self._copy_data(entity)
+
         return entity
 
     def _copy_data(self, entity: 'DXFEntity') -> None:

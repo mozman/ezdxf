@@ -8,7 +8,7 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -73,17 +73,33 @@ class Polyline(DXFGraphic):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self.vertices = []  # type: List[DXFVertex]
+        self.seqend = None  # type: SeqEnd
 
     def linked_entities(self) -> Iterable['DXFVertex']:
+        # dont't yield seqend here, because it is not a DXFGraphic entity
         return self.vertices
 
     def link_entity(self, entity: 'DXFEntity') -> None:
         assert isinstance(entity, DXFVertex)
+        entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self.vertices.append(entity)
+
+    def link_seqend(self, seqend: 'DXFEntity') -> None:
+        seqend.dxf.owner = self.dxf.owner
+        self.seqend = seqend
 
     def _copy_data(self, entity: 'Polyline') -> None:
         """ Copy vertices and store the copies into the entity database. """
         entity.vertices = [vertex.copy() for vertex in self.vertices]
+        entity.seqend = self.seqend.copy()
+
+    def set_owner(self, owner: str, paperspace: int = 0):
+        # At loading form file, POLYLINE will be added to layout before vertices are linked, so set_owner() of POLYLINE
+        # does not set owner of vertices
+        super().set_owner(owner, paperspace)
+        # vertices handled by super class by linked_entities() interface
+        if self.seqend:  # has no paperspace flag
+            self.seqend.dxf.owner = owner
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
@@ -109,8 +125,8 @@ class Polyline(DXFGraphic):
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, self.get_mode())
-        else:
-            tagwriter.write_tag2(66, 1)  # entities follow, required for R12? (sure not for R2000+)
+
+        tagwriter.write_tag2(66, 1)  # entities follow, required for R12? (sure not for R2000+)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'elevation',
@@ -128,6 +144,10 @@ class Polyline(DXFGraphic):
         # xdata and embedded objects export will be done by parent class
         # following VERTEX entities and SEQEND is exported by EntitySpace()
 
+    def export_seqend(self, tagwriter: 'TagWriter'):
+        self.seqend.dxf.layer = self.dxf.layer
+        self.seqend.export_dxf(tagwriter)
+
     def destroy(self) -> None:
         """
         Delete all data and references.
@@ -136,6 +156,7 @@ class Polyline(DXFGraphic):
         for v in self.vertices:
             self.entitydb.delete_entity(v)
         del self.vertices
+        self.entitydb.delete_entity(self.seqend)
         super().destroy()
 
     def on_layer_change(self, layer: str):
@@ -280,6 +301,7 @@ class Polyface(Polyline):
     def from_polyline(cls, polyline: Polyline) -> 'Polyface':
         polyface = cls.shallow_copy(polyline)
         polyface.vertices = polyline.vertices
+        polyface.seqend = polyline.seqend
         # do not destroy polyline - all data would be lost
         return polyface
 
@@ -513,6 +535,7 @@ class Polymesh(Polyline):
     def from_polyline(cls, polyline: Polyline) -> 'Polymesh':
         polymesh = cls.shallow_copy(polyline)
         polymesh.vertices = polyline.vertices
+        polymesh.seqend = polyline.seqend
         # do not destroy polyline - all data would be lost
         return polymesh
 

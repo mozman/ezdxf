@@ -29,7 +29,7 @@ def test_duplicate_polyline_entity(doc):
     polyline = msp.add_polyline3d(points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)], dxfattribs={'layer': 'test', 'color': 4})
     start_len = len(doc.entitydb)
     new_polyline = polyline.copy()
-    assert len(doc.entitydb) == start_len+4  # POLYLINE, 3x VERTEX, no SEQEND
+    assert len(doc.entitydb) == start_len+5  # POLYLINE, 3x VERTEX, 1x SEQEND
     assert polyline.dxf.handle != new_polyline.dxf.handle, "expected new handle"
     assert new_polyline.dxf.layer == 'test'
     assert new_polyline.dxf.color == 4
@@ -48,7 +48,7 @@ def test_duplicate_insert_with_attribs_entity(doc):
     insert.add_attrib('TAG2', 'content2', insert=(6, 6))
     start_len = len(doc.entitydb)
     new_insert = insert.copy()
-    assert len(doc.entitydb) == start_len+3  # INSERT, 2x ATTRIB, no SEQEND
+    assert len(doc.entitydb) == start_len+4  # INSERT, 2x ATTRIB, 1x SEQEND
     assert insert.dxf.handle != new_insert.dxf.handle, "expected new handle"
 
     assert new_insert.dxf.owner is None  # undefined owner/layout

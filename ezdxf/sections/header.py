@@ -136,7 +136,7 @@ class HeaderSection:
         return section
 
     @classmethod
-    def new(cls, dxfversion=LATEST_DXF_VERSION)->'HeaderSection':
+    def new(cls, dxfversion=LATEST_DXF_VERSION) -> 'HeaderSection':
         section = HeaderSection()
         section.hdrvars = default_vars()
         section['$ACADVER'] = dxfversion
@@ -218,7 +218,12 @@ class HeaderSection:
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         def _write(name: str, value: Any) -> None:
             tagwriter.write_tag2(9, name)
+            vardef = HEADER_VAR_MAP[name]
+            # fix invalid group codes
+            if vardef.code != value.code:
+                value = HeaderVar((vardef.code, value.value))
             tagwriter.write_str(str(value))
+
         dxfversion = tagwriter.dxfversion
         write_handles = tagwriter.write_handles
 

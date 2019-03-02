@@ -1,6 +1,5 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-import pytest
 import ezdxf
 
 from ezdxf.pp.__main__ import readfile, dxfpp
@@ -13,6 +12,6 @@ def test_dxf_drawing_to_html(tmpdir):
 
     tagger = readfile(name)
     # checks only if pretty printer is still working
-    result = dxfpp(tagger)
+    result = dxfpp(tagger, 'test.dxf')
     assert len(result) > 0
 
