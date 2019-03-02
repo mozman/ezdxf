@@ -2,7 +2,7 @@
 # Created: 16.07.2015
 # Copyright (C) 2015, Manfred Moitzi
 # License: MIT License
-
+from typing import Iterable
 import sys
 import io
 import argparse
@@ -10,18 +10,35 @@ from pathlib import Path
 
 from .dxfpp import dxfpp
 from .rawpp import rawpp
-from ezdxf import readfile, options
+from ezdxf import options
 from ezdxf.lldxf.const import DXFError, DXFStructureError
 from ezdxf.lldxf.tagger import low_level_tagger, tag_compiler
+from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.validator import is_dxf_file
 from ezdxf.filemanagement import dxf_file_info
 from ezdxf.lldxf.repair import tag_reorder_layer
 import webbrowser
 
 
-def pretty_print(filename):
+def readfile(filename: str, legacy_mode: bool = False, compile_tags=True) -> Iterable[DXFTag]:
+    from ezdxf.lldxf.validator import is_dxf_file
+
+    if not is_dxf_file(filename):
+        raise IOError("File '{}' is not a DXF file.".format(filename))
+
+    info = dxf_file_info(filename)
+    fp = open(filename, mode='rt', encoding=info.encoding, errors='ignore')
+    tagger = low_level_tagger(fp)
+    if legacy_mode:
+        tagger = tag_reorder_layer(tagger)
+    if compile_tags:
+        tagger = tag_compiler(tagger)
+    return tagger
+
+
+def pretty_print(filename: Path):
     try:
-        dwg = readfile(str(filename), legacy_mode=True)
+        tagger = readfile(str(filename), legacy_mode=True)
     except IOError:
         print("Unable to read DXF file '{}'.".format(filename))
         sys.exit(1)
@@ -32,15 +49,15 @@ def pretty_print(filename):
     html_filename = filename.parent / (filename.stem + '.html')
     try:
         with io.open(html_filename, mode='wt', encoding='utf-8') as fp:
-            fp.write(dxfpp(dwg))
+            fp.write(dxfpp(tagger))
     except IOError:
         print("IOError: can not write file '{}'.".format(html_filename))
     return html_filename
 
 
-def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
+def raw_pretty_print(filename: Path, compile_tags=True, legacy_mode=False):
     try:
-        info = dxf_file_info(str(filename))
+        tagger = readfile(str(filename), legacy_mode=legacy_mode, compile_tags=compile_tags)
     except IOError:
         print("Unable to read DXF file '{}'.".format(filename))
         sys.exit(1)
@@ -48,20 +65,14 @@ def raw_pretty_print(filename, nocompile=True, legacy_mode=False):
         print(str(e))
         sys.exit(2)
 
-    with io.open(filename, mode='rt', encoding=info.encoding, errors='ignore') as dxf:
-        tagger = low_level_tagger(dxf)
-        if legacy_mode:
-            tagger = tag_reorder_layer(tagger)
-        if nocompile is False:
-            tagger = tag_compiler(tagger)
-        html_filename = filename.parent / (filename.stem + '.html')
-        try:
-            with io.open(html_filename, mode='wt', encoding='utf-8') as html:
-                html.write(rawpp(tagger, str(filename)))
-        except IOError:
-            print("IOError: can not write file '{}'.".format(html_filename))
-        except DXFStructureError as e:
-            print("DXFStructureError: {}".format(str(e)))
+    html_filename = filename.parent / (filename.stem + '.html')
+    try:
+        with io.open(html_filename, mode='wt', encoding='utf-8') as html:
+            html.write(rawpp(tagger, str(filename)))
+    except IOError:
+        print("IOError: can not write file '{}'.".format(html_filename))
+    except DXFStructureError as e:
+        print("DXFStructureError: {}".format(str(e)))
     return html_filename
 
 
@@ -93,6 +104,12 @@ def main():
         action='store_true',
         help="legacy mode - reorders DXF point coordinates",
     )
+    parser.add_argument(
+        '-s', '--sections',
+        action='store',
+        default='hctbeo',
+        help="choose sections to include and their order, h=HEADER, c=CLASSES, t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
+    )
     args = parser.parse_args(sys.argv[1:])
 
     options.compress_binary_data = True
@@ -106,7 +123,7 @@ def main():
             continue
 
         if args.raw:
-            html_path = raw_pretty_print(Path(filename), args.nocompile, args.legacy)
+            html_path = raw_pretty_print(Path(filename), compile_tags=not args.nocompile, legacy_mode=args.legacy)
         else:
             html_path = pretty_print(Path(filename))  # legacy mode is always used
 

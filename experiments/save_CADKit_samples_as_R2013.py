@@ -20,7 +20,7 @@ for filename in Path(CADKIT_PATH).glob('*.dxf'):
         doc = ezdxf.readfile2(str(filename))
         end = datetime.datetime.now()
         print(' ... in {:.1f} sec'.format((end-start).total_seconds()))
-        
+
         print('writing file: {}'.format(new_name))
         start = datetime.datetime.now()
         doc.saveas(new_name, dxfversion=ezdxf.DXF2013)

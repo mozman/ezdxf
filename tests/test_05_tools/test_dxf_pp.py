@@ -3,16 +3,16 @@
 import pytest
 import ezdxf
 
-from ezdxf.pp.dxfpp import dxfpp
+from ezdxf.pp.__main__ import readfile, dxfpp
 
 
-@pytest.fixture(scope='module', params=['R12', 'R2000'])
-def dwg(request):
-    return ezdxf.new(request.param)
+def test_dxf_drawing_to_html(tmpdir):
+    name = tmpdir.join('test.dxf')
+    doc = ezdxf.new2()
+    doc.saveas(name)
 
-
-def test_dxf_drawing_to_html(dwg):
+    tagger = readfile(name)
     # checks only if pretty printer is still working
-    result = dxfpp(dwg)
+    result = dxfpp(tagger)
     assert len(result) > 0
 

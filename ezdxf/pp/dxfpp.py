@@ -6,17 +6,18 @@
 Creates a structured HTML view of the DXF tags - not a CAD drawing!
 """
 import os
-from typing import TYPE_CHECKING, Sequence, Tuple, Iterable, Dict, Set
-from ezdxf.lldxf.types import tag_type, is_point_code, is_pointer_code, is_binary_data
-from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS
+from typing import Sequence, Tuple, Iterable, Dict, Set, List
+from collections import defaultdict
+from ezdxf.lldxf.types import tag_type, is_point_code, is_pointer_code, is_binary_data, DXFTag
+from ezdxf.lldxf.types import GROUP_MARKERS, HEX_HANDLE_CODES, HANDLE_CODES, BINARY_FLAGS, POINTER_CODES
+from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.loader import load_dxf_structure
 from ezdxf.tools import escape
 from ezdxf.sections.sections import KNOWN_SECTIONS
 from ezdxf.lldxf.packedtags import PackedTags
 
 from .reflinks import get_reference_link
-
-if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import Drawing, Table, DXFEntity, ExtendedTags, DXFTag
 
 # Tag groups
 
@@ -102,17 +103,37 @@ def with_bitmask(value: int) -> str:
     return "{0}, b{0:08b}".format(int(value))
 
 
+def pointer_collector(tagger: Iterable[DXFTag], handles: List[str], pointers: Dict[str, Set[str]]) -> Iterable[DXFTag]:
+    entity = None
+    handle = None
+    for tag in tagger:
+        code, value = tag
+        if code == 0:
+            entity = value
+            handle = None
+        elif code == 5 or (code == 105 and entity == 'DIMSTYLE'):
+            handle = value
+            handles.append(value)
+        elif (code in POINTER_CODES) and handle:
+            # value is referenced by handle
+            pointers[value].add(handle)
+        yield tag
+
+
 class DXF2HtmlConverter:
-    def __init__(self, drawing: 'Drawing'):
-        self.drawing = drawing
-        self.entitydb = drawing.entitydb
+    def __init__(self, tagger: Iterable[DXFTag], filename=None, section_order='hctbeo'):
+        self.filename = filename
+        self.section_order = section_order
+        self.handles = []
+        self.pointers = defaultdict(set)  # type: Dict[str, Set[str]]
+        tagger = pointer_collector(tagger, self.handles, self.pointers)
+        self.dxf_structure = load_dxf_structure(tagger, ignore_missing_eof=True)
         self.section_names_in_write_order = self._section_names_in_write_order()
-        self.existing_pointers = self.collect_all_pointers()
 
     def _section_names_in_write_order(self) -> Sequence[str]:
-        sections = self.drawing.sections
-        write_order = list(name for name in KNOWN_SECTIONS if name in sections)
-        write_order.extend(frozenset(sections.names()) - frozenset(KNOWN_SECTIONS))
+        section_names = set(self.dxf_structure.keys())
+        write_order = list(name for name in KNOWN_SECTIONS if name in section_names)
+        write_order.extend(frozenset(section_names) - frozenset(KNOWN_SECTIONS))
         return write_order
 
     def dxf2html(self) -> str:
@@ -120,10 +141,10 @@ class DXF2HtmlConverter:
         """
 
         def get_name() -> str:
-            if self.drawing.filename is None:
+            if self.filename is None:
                 return "unknown"
             else:
-                filename = os.path.basename(self.drawing.filename)
+                filename = os.path.basename(self.filename)
                 return os.path.splitext(filename)[0]
 
         template = load_resource('dxfpp.html')
@@ -136,20 +157,18 @@ class DXF2HtmlConverter:
         )
 
     def sections2html(self) -> str:
-        """Creates a <div> container of all DXF sections.
-        """
+        """ Creates a <div> container of all DXF sections. """
         sections_html = []
-        sections = self.drawing.sections
+        sections = self.dxf_structure
         for section_name in self.section_names_in_write_order:
-            section = sections.get(section_name)
+            section = sections[section_name]
             if section is not None:
-                section_template = self.create_section_html_template(section.name)
-                sections_html.append(self.section2html(section, section_template))
+                section_template = self.create_section_html_template(section_name)
+                sections_html.append(self.section2html(section_name, section_template))
         return ALL_SECTIONS_TPL.format(content="\n".join(sections_html))
 
     def create_section_html_template(self, name: str) -> str:
-        """Creates a section template with buttons to the previous and next section.
-        """
+        """ Creates a section template with buttons to the previous and next section. """
 
         def nav_targets() -> Tuple[str, str]:
             section_names = self.section_names_in_write_order
@@ -168,7 +187,7 @@ class DXF2HtmlConverter:
             next=next_button)
 
     def sections_link_bar(self) -> str:
-        """Creates a <div> container as link bar to all DXF sections.
+        """ Creates a <div> container as link bar to all DXF sections.
         """
         section_links = []
         for section_name in self.section_names_in_write_order:
@@ -178,74 +197,60 @@ class DXF2HtmlConverter:
             ))
         return SECTION_LINKS_TPL.format(buttons=' \n'.join(section_links))
 
-    def entities(self) -> Iterable['DXFEntity']:
-        return iter(self.drawing.entities)
+    def entities(self) -> List['Tags']:
+        return self.dxf_structure['ENTITIES']
 
-    def section2html(self, section, section_template: str) -> str:
-        """Creates a <div> container of a specific DXF sections.
-        """
-        if section.name == 'HEADER':
-            return section_template.format(content=self.hdrvars2html(section.hdrvars, section.custom_vars))
-        elif section.name == 'ENTITIES':
-            return section_template.format(content=self.entities2html(self.entities(), create_ref_links=True))
-        elif section.name == 'CLASSES':
-            return section_template.format(content=self.entities2html(section.classes.values()), create_ref_links=False,
+    def section2html(self, section_name: str, section_template: str) -> str:
+        """ Creates a <div> container of a specific DXF sections. """
+        if section_name == 'HEADER':
+            return section_template.format(content=self.hdrvars2html())
+        elif section_name == 'ENTITIES':
+            return section_template.format(
+                content=self.entities2html(self.dxf_structure['ENTITIES'][1:], create_ref_links=True))
+        elif section_name == 'CLASSES':
+            return section_template.format(content=self.entities2html(self.dxf_structure['CLASSES'][1:]),
+                                           create_ref_links=False,
                                            show_ref_status=False)
-        elif section.name == 'OBJECTS':
-            return section_template.format(content=self.entities2html(iter(section), create_ref_links=True,
-                                                                      show_ref_status=True))
-        elif section.name == 'TABLES':
-            return section_template.format(content=self.tables2html(section))  # no iterator!
-        elif section.name == 'BLOCKS':
-            return section_template.format(content=self.blocks2html(iter(section)))
+        elif section_name == 'OBJECTS':
+            return section_template.format(
+                content=self.entities2html(self.dxf_structure['OBJECTS'][1:], create_ref_links=True,
+                                           show_ref_status=True))
+        elif section_name == 'TABLES':
+            return section_template.format(content=self.tables2html())
+        elif section_name == 'BLOCKS':
+            return section_template.format(content=self.blocks2html())
         else:
-            return section_template.format(content=self.tags2html(section.tags()))
+            return section_template.format(content=self.entities2html(self.dxf_structure[section_name]))
 
-    @staticmethod
-    def hdrvars2html(hdrvars, custom_vars) -> str:
-        """DXF header section as <div> container.
+    def hdrvars2html(self) -> str:
+        """ DXF header section as <div> container.
         """
+        return HEADER_SECTION_TPL.format(content=self.tags2html(self.dxf_structure['HEADER'][0][2:]))
 
-        def vartype(hdrvar) -> str:
-            if is_point_code(hdrvar.code):
-                dim = len(hdrvar.value) - 2
-                return ("<point 2D>", "<point 3D>")[dim]
-            else:
-                return tag_type_str(hdrvar.code)
-
-        varstrings = [
-            HEADER_VAR_TPL.format(code=name, value=escape(str(hdrvar.value)), type=escape(vartype(hdrvar)))
-            for name, hdrvar in hdrvars.items()
-        ]
-
-        custom_property_strings = [
-            CUSTOM_VAR_TPL.format(tag=escape(str(tag)), value=escape(str(value)))
-            for tag, value in custom_vars
-        ]
-        varstrings.extend(custom_property_strings)
-
-        return HEADER_SECTION_TPL.format(content="\n".join(varstrings))
-
-    def entities2html(self, entities: Iterable['DXFEntity'], create_ref_links=False, show_ref_status=False) -> str:
+    def entities2html(self, entities: Iterable['Tags'], create_ref_links=False, show_ref_status=False) -> str:
         """DXF entities as <div> container.
         """
         entity_strings = (self.entity2html(entity, create_ref_links, show_ref_status) for entity in entities)
         return ENTITIES_TPL.format("\n".join(entity_strings))
 
-    def entity2html(self, entity: 'DXFEntity', create_ref_links=False, show_ref_status=False):
+    def entity2html(self, tags: Tags, create_ref_links=False, show_ref_status=False):
         """DXF entity as <div> container.
         """
-        tags = entity.tags
-        name = entity.dxftype()
+        tags = Tags(tags)
+        name = tags.dxftype()
         if create_ref_links:  # use entity name as link to the DXF reference
             name = build_ref_link_button(name)
         refs = ""
         if show_ref_status:
-            handle = tags.get_handle()
-            if handle not in self.existing_pointers:
-                refs = '<div class="ref-no">[unreferenced]</div>'
+            try:
+                handle = tags.get_handle()
+            except DXFValueError:
+                pass
             else:
-                refs = self.pointers2html(self.existing_pointers[handle])
+                if handle not in self.pointers:
+                    refs = '<div class="ref-no">[unreferenced]</div>'
+                else:
+                    refs = self.pointers2html(self.pointers[handle])
         return ENTITY_TPL.format(name=name, tags=self.tags2html(tags), references=refs)
 
     def pointers2html(self, pointers: Iterable[str]) -> str:
@@ -253,7 +258,7 @@ class DXF2HtmlConverter:
                                   sorted(pointers, key=lambda x: int(x, 16))))
         return '<div class="ref-yes"> referenced by: {pointers}</div>'.format(pointers=pointers_str)
 
-    def tags2html(self, tags: 'ExtendedTags') -> str:
+    def tags2html(self, tags: 'Tags') -> str:
         """DXF tag list as <div> container.
         """
 
@@ -271,7 +276,7 @@ class DXF2HtmlConverter:
             if tag.code in HANDLE_CODES:  # is handle definition
                 tpl = TAG_HANDLE_DEF_TPL
             elif is_pointer_code(tag.code):  # is handle link
-                if tag.value in self.entitydb:
+                if tag.value in self.handles:
                     tpl = TAG_VALID_LINK_TPL
                 else:
                     tpl = TAG_INVALID_LINK_TPL
@@ -291,78 +296,86 @@ class DXF2HtmlConverter:
         def group_marker(tag: 'DXFTag', tag_html: str) -> str:
             return tag_html if tag.code not in GROUP_MARKERS else MARKER_TPL.format(tag=tag_html)
 
-        expanded_tags = self.expand_linked_tags(tags)
-        tag_strings = (group_marker(tag, tag2html(tag)) for tag in expanded_tags)
+        tag_strings = (group_marker(tag, tag2html(tag)) for tag in tags)
         return TAG_LIST_TPL.format(content='\n'.join(tag_strings))
 
-    def tables2html(self, tables: Iterable['Table']) -> str:
-        """DXF tables section as <div> container.
+    def build_tables(self):
+        table = []
+        for entry in self.dxf_structure['TABLES'][1:]:
+            if entry.dxftype() == 'TABLE':
+                if len(table):
+                    yield table
+                table = [entry]
+            else:
+                table.append(entry)
+        if len(table):
+            yield table
+
+    def tables2html(self) -> str:
+        """ DXF tables section as <div> container.
         """
+        tables = list(self.build_tables())
         navigation = self.create_table_navigation(tables)
         tables_html_strings = [self.table2html(table, navigation) for table in tables]
         return TABLES_SECTION_TPL.format(content='\n'.join(tables_html_strings))
 
     @staticmethod
-    def create_table_navigation(table_section: Iterable['Table']) -> str:
+    def create_table_navigation(table_section: List[List['Tags']]) -> str:
         """Create a button bar with links to all DXF tables as <div> container.
         """
         buttons = []
         for table in table_section:
-            name = table.name.upper()
+            table_head = table[0]
+            name = table_head[1].value.upper()
             link = "{}-table".format(name)
             buttons.append(BUTTON_TPL.format(name=name, target=link))
         return BUTTON_BAR_TPL.format(content="\n".join(buttons))
 
-    def table2html(self, table: 'Table', navigation='') -> str:
+    def table2html(self, table: List['Tags'], navigation='') -> str:
         """DXF table as <div> container.
         """
-        header = ENTITY_TPL.format(name="TABLE HEADER", tags=self.tags2html(table._table_header), references="")
-        entries = self.entities2html(table)
-        table_name = table.name.upper()
+        header = ENTITY_TPL.format(name="TABLE HEADER", tags=self.tags2html(table[0]), references="")
+        entries = self.entities2html(table[1:])
+        table_name = table[0][1].value.upper()
         return TABLE_TPL.format(name=table_name, ref_link=build_ref_link_button(table_name), nav=navigation,
                                 header=header, entries=entries)
 
-    def expand_linked_tags(self, tags: 'ExtendedTags') -> 'DXFTag':
-        while True:
-            yield from tags
-            if not hasattr(tags, 'link') or tags.link is None:
-                return
-            tags = self.entitydb[tags.link]
+    def build_blocks(self):
+        block = []
+        for entry in self.dxf_structure['BLOCKS'][1:]:
+            if entry.dxftype() == 'BLOCK':
+                if len(block):
+                    yield block
+                block = [entry]
+            else:
+                block.append(entry)
+        if len(block):
+            yield block
 
-    def collect_all_pointers(self) -> Dict[str, Set[str]]:
-        existing_pointers = dict()
-        for tags in self.entitydb.values():
-            handle = tags.get_handle()
-
-            for tag in self.expand_linked_tags(tags):
-                if is_pointer_code(tag.code):
-                    pointers = existing_pointers.setdefault(tag.value, set())
-                    pointers.add(handle)
-
-        return existing_pointers
-
-    def blocks2html(self, blocks: Iterable) -> str:
+    def blocks2html(self) -> str:
         """DXF blocks section as <div> container.
         """
-        block_strings = (self.block2html(block) for block in blocks)
+        block_strings = (self.block2html(block) for block in self.build_blocks())
         return BLOCKS_SECTION_TPL.format(content='\n'.join(block_strings))
 
-    def block2html(self, block_layout) -> str:
+    def block2html(self, entities: List['Tags']) -> str:
         """DXF block entity as <div> container.
         """
-        block_html = self.entity2html(block_layout.block, create_ref_links=True)
-        if block_layout.name.upper() not in ('*MODEL_SPACE', '*PAPER_SPACE'):
-            entities_html = self.entities2html(iter(block_layout), create_ref_links=True)
+        block = entities[0]
+        block_html = self.entity2html(block, create_ref_links=True)
+        block_name = block.get_first_value(2)
+        if block_name.upper() not in ('*MODEL_SPACE', '*PAPER_SPACE'):
+            entities_html = self.entities2html(entities[1:-1], create_ref_links=True)
         else:
             entities_html = ''
-        endblk_html = self.entity2html(block_layout.endblk, create_ref_links=True)
-        return BLOCK_TPL.format(name=block_layout.name, block=block_html, entities=entities_html, endblk=endblk_html)
+        endblk_html = self.entity2html(entities[-1], create_ref_links=True)
+        return BLOCK_TPL.format(name=block_name, block=block_html, entities=entities_html, endblk=endblk_html)
 
 
-def dxfpp(drawing: 'Drawing') -> str:
+def dxfpp(tagger: Iterable[DXFTag]) -> str:
     """Creates a structured HTML view of the DXF tags - not a CAD drawing!
     """
-    return DXF2HtmlConverter(drawing).dxf2html()
+    return DXF2HtmlConverter(tagger).dxf2html()
 
 
 def load_resource(filename: str) -> str:
