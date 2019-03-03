@@ -62,7 +62,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimse2': DXFAttr(76, default=0),
     'dimtad': DXFAttr(77, default=1),
     'dimzin': DXFAttr(78, default=8),
-    'dimazin': DXFAttr(79, default=8, dxfversion=DXF2000),
+    'dimazin': DXFAttr(79, default=0, dxfversion=DXF2000),
     'dimalt': DXFAttr(170, default=0),
     'dimaltd': DXFAttr(171, default=3),
     'dimtofl': DXFAttr(172, default=1),

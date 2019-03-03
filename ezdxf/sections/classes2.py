@@ -14,6 +14,7 @@ if TYPE_CHECKING:  # import forward declarations
     from ezdxf.eztypes import TagWriter
 
 # name: cpp_class_name, app_name, flags, was_a_proxy, is_an_entity
+# multiple entries for 'name' possible
 CLASS_DEFINITIONS = {
     'ACDBDICTIONARYWDFLT': ['AcDbDictionaryWithDefault', 'ObjectDBX Classes', 0, 0, 0],
     'SUN': ['AcDbSun', 'SCENEOE', 1153, 0, 0],
@@ -67,6 +68,7 @@ REQUIRED_CLASSES = {
 
 class ClassesSection:
     def __init__(self, doc: 'Drawing' = None, entities: Iterable[DXFEntity] = None):
+        # multiple entries for 'name' possible -> key is (name, cpp_class_name)
         self.classes = OrderedDict()  # DXFClasses are not stored in the entities database, because CLASS has no handle
         self.doc = doc
         if entities is not None:
@@ -92,12 +94,12 @@ class ClassesSection:
             classes = (classes,)
 
         for dxfclass in classes:
-            dxftype = dxfclass.dxf.name
-            if dxftype not in self.classes:
-                self.classes[dxftype] = dxfclass
+            key = dxfclass.key
+            if key not in self.classes:
+                self.classes[key] = dxfclass
 
     def add_class(self, name: str):
-        if (name in self.classes) or (name not in CLASS_DEFINITIONS):
+        if name not in CLASS_DEFINITIONS:
             return
         cls_data = CLASS_DEFINITIONS[name]
         cls = DXFClass(self.doc)
@@ -110,7 +112,7 @@ class ClassesSection:
             'was_a_proxy': proxy,
             'is_an_entity': entity,
         })
-        self.classes[name] = cls
+        self.register(cls)
 
     def add_required_classes(self, dxfversion):
         names = REQUIRED_CLASSES.get(dxfversion, REQ_R2004)

@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 from .dxfentity import DXFEntity, SubclassProcessor, DXFNamespace
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF2004, DXF2000
@@ -77,3 +77,7 @@ class DXFClass(DXFEntity):
         attribs.export_dxf_attribs(tagwriter, [
             'name', 'cpp_class_name', 'app_name', 'flags', 'instance_count', 'was_a_proxy', 'is_an_entity',
         ])
+
+    @property
+    def key(self) -> Tuple[str, str]:
+        return self.dxf.name, self.dxf.cpp_class_name

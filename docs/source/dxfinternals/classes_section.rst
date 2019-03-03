@@ -16,6 +16,12 @@ The CLASSES section in DXF files holds the information for application-defined c
 the BLOCKS, ENTITIES, and OBJECTS sections of the database. It is assumed that a class definition is permanently
 fixed in the class hierarchy. All fields are required.
 
+**Update 2019-03-03:**
+
+Class names are not unique, Autodesk Architectural Desktop 2007 uses the same name, but with different CPP class names
+in the CLASS section, so storing classes in a dictionary by name as key caused loss of class entries in ezdxf, using
+a tuple of (name, cpp_class_name) as storage key solved the problem.
+
 CLASS Entities
 --------------
 
@@ -33,7 +39,7 @@ CLASS entities have no handle and therefore ezdxf does not store the CLASS entit
     CLASSES
     0           <<< first CLASS entity
     CLASS
-    1           <<< class DXF entity name; always unique
+    1           <<< class DXF entity name; THIS ENTRY IS MAYBE NOT UNIQUE
     ACDBDICTIONARYWDFLT
     2           <<< C++ class name; always unique
     AcDbDictionaryWithDefault
