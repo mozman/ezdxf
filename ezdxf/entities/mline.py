@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Dict, Iterable, Sequence
 from collections import OrderedDict
 
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007, DXFTypeError
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2004, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -90,7 +90,7 @@ class MLineVertices:
 class MLine(DXFGraphic):
     DXFTYPE = 'MLINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mline)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
@@ -185,7 +185,7 @@ class MLineStyleElements:
 class MLineStyle(DXFObject):
     DXFTYPE = 'MLINESTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mline_style)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
