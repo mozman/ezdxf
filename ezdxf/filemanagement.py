@@ -21,13 +21,13 @@ def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = Non
     return doc
 
 
-def read2(stream: TextIO, legacy_mode: bool = False) -> 'Drawing2':
+def read2(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
     from ezdxf.drawing2 import Drawing
 
-    return Drawing.read(stream, legacy_mode=legacy_mode)
+    return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
 
-def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing2':
+def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
     from ezdxf.lldxf.validator import is_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
 
@@ -36,7 +36,7 @@ def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False) ->
 
     info = dxf_file_info(filename)
     with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
-        doc = read2(fp, legacy_mode=legacy_mode)
+        doc = read2(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):

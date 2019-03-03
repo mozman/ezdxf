@@ -5,8 +5,9 @@ import pytest
 import copy
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.tags import Tags, group_tags
+from ezdxf.lldxf.tags import Tags
 from ezdxf.entities.xdata import XData
+from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 
 
 class TagWriter:
@@ -196,33 +197,30 @@ def test_replace_xdata_list(xdata):
 
 
 def test_poyline_with_xdata():
-    xdata = XData(ExtendedTags.from_text(POLYLINE_WITH_XDATA).xdata)
+    xdata = XData(
+        ExtendedTags(
+            filter_invalid_xdata_group_codes(
+                Tags.from_text(POLYLINE_WITH_INVALID_XDATA)
+            )).xdata)
     assert len(xdata) == 2
     assert len(xdata.get('AVE_ENTITY_MATERIAL')) == 27
 
 
 def test_group_tags_poyline_with_xdata():
-    tags = Tags.from_text(POLYLINE_WITH_XDATA)
-    assert len(tags) == 44
+    tags = Tags.from_text(POLYLINE_WITH_INVALID_XDATA)
+    assert len(tags) == 49
+    tags2 = list(filter_invalid_xdata_group_codes(tags))
+    assert len(tags2) == 41
 
-    entity = list(group_tags(tags))
-    pass
 
-
-POLYLINE_WITH_XDATA = """  0
+POLYLINE_WITH_INVALID_XDATA = """  0
 POLYLINE
   5
 2A
-330
-195
-100
-AcDbEntity
   8
 T-POLYFACE-3DS
  62
      3
-100
-AcDbPolyFaceMesh
  66
      1
  10
@@ -297,8 +295,16 @@ AVE_ENTITY_MATERIAL
 0.0
 1031
 0.0
+1021
+0.0
+1031
+0.0
 1011
 1.0
+1021
+0.0
+1031
+0.0
 1021
 0.0
 1031
@@ -306,10 +312,18 @@ AVE_ENTITY_MATERIAL
 1011
 0.0
 1021
+0.0
+1031
+0.0
+1021
 1.0
 1031
 0.0
 1011
+0.0
+1021
+0.0
+1031
 0.0
 1021
 0.0

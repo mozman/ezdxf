@@ -6,6 +6,7 @@ from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFKeyError, XDATA_MARKER, DXFValueError
 from ezdxf.lldxf.tags import xdata_list, remove_named_list_from_xdata, get_named_list_from_xdata, NotFoundException
+from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import TagWriter
@@ -50,6 +51,7 @@ class XData:
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         sorted_appids = sorted(self.data.keys())
         for appid in sorted_appids:
+            # todo tags = list(filter_invalid_xdata_group_codes(self.data[appid]))
             tagwriter.write_tags(self.data[appid])
 
     def has_xlist(self, appid: str, name: str) -> bool:

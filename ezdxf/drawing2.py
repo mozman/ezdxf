@@ -1,7 +1,7 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple
+from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable
 from datetime import datetime
 import io
 import logging
@@ -48,6 +48,10 @@ if TYPE_CHECKING:
 
     LayoutType = Union[Layout, BlockLayout]
 
+TFilterStack = Sequence[Sequence[Callable[[Iterable['DXFTag']], Iterable['DXFTag']]]]
+
+
+# [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
 
 class Drawing:
     def __init__(self, dxfversion=DXF2013):
@@ -190,16 +194,49 @@ class Drawing:
         return acad_release_to_dxf_version.get(dxfversion, dxfversion)
 
     @classmethod
-    def read(cls, stream: TextIO, legacy_mode: bool = False) -> 'Drawing':
-        """ Open an existing drawing. """
-        from .lldxf.tagger import low_level_tagger, tag_compiler
+    def read(cls, stream: TextIO, legacy_mode: bool = False, filter_stack: TFilterStack = None) -> 'Drawing':
+        """ Open an existing drawing.
 
-        tagger = low_level_tagger(stream)
+        Args:
+             stream: text stream yielding text (unicode) strings by readline()
+             legacy_mode: apply some low level filters to correct some quirks allowed in legacy (R12) files
+             filter_stack: interface to put filters between reading layers, list of callable filters, for now
+                           two levels are supported, after low level tagging (DXFVertex) and after compiling tags to
+                           DXFVertex and DXFBinaryTag.
+
+                TFilterStack: Sequence[Sequence[Callable[[Iterable[DXFTag]], Iterable[DXFTag]]]]
+                e.g. [(raw_tag_filter1, raw_tag_filter2), (compiled_tag_filter1, )]
+
+        """
+        from .lldxf.tagger import low_level_tagger, tag_compiler
+        raw_tag_filters = []
+        compiled_tag_filters = []
+
+        if filter_stack:
+            # maybe more levels in the future
+            raw_tag_filters, compiled_tag_filters, *_ = filter_stack
+
+        # legacy mode overrides filter_stack
         if legacy_mode:
-            tagger = repair.filter_out_of_order_point_codes(repair.tag_reorder_layer(tagger))
-        tagreader = tag_compiler(tagger)
+            raw_tag_filters = [repair.tag_reorder_layer, repair.filter_invalid_yz_point_codes]
+            compiled_tag_filters = []
+
+        # low level tag compiler, creates simple tuple like tags DXFTag(group code, value)
+        tagger = low_level_tagger(stream)
+
+        # apply low level filters
+        for _filter in raw_tag_filters:
+            tagger = _filter(tagger)
+
+        # compiles vertices and binary tags into DXFVertex() or DXFBinaryTag()
+        tagger = tag_compiler(tagger)
+
+        # apply compiled tags filter
+        for _filter in compiled_tag_filters:
+            tagger = _filter(tagger)
+
         doc = Drawing()
-        doc._load(tagreader)
+        doc._load(tagger)
         return doc
 
     @classmethod

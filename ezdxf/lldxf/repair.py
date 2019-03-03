@@ -223,6 +223,8 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     """
     Reorder coordinates of legacy DXF Entities, for now only LINE.
 
+    Input Raw tag filter.
+
     Args:
         tagger: low level tagger
 
@@ -254,9 +256,11 @@ INVALID_CODES = INVALID_Y_CODES | INVALID_Z_CODES
 X_CODES = POINT_CODES
 
 
-def filter_out_of_order_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+def filter_invalid_yz_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     """
     Filter point group codes if out of order e.g. 10, 20, 30, 20!
+
+    Input Raw tag filter
 
     Args:
         tagger: low level tagger
@@ -334,6 +338,15 @@ def fix_coordinate_order(tags, codes=(10, 11)):
 COORDINATE_FIXING_TOOLBOX = {
     'LINE': partial(fix_coordinate_order, codes=(10, 11)),
 }
+
+
+VALID_XDATA_CODES = set(range(1000, 1019)) | set(range(1040, 1072))
+
+
+def filter_invalid_xdata_group_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+    for tag in tagger:
+        if tag.code < 1000 or tag.code in VALID_XDATA_CODES:
+            yield tag
 
 
 def fix_classes(dwg):
