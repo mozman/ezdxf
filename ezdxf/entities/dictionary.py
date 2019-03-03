@@ -114,6 +114,8 @@ class Dictionary(DXFObject):
     def export_dict(self, tagwriter: 'TagWriter'):
         # key: dict key string
         # value: DXFEntity
+        # Ignore invalid handles at export, because removing can create an empty dictionary, which is more a problem for
+        # AutoCAD than invalid handles, and removing the whole dictionary is also a problem maybe.
         for key, value in self._data.items():
             tagwriter.write_tag2(KEY_CODE, key)
             # value can be a handle string or a DXFEntity

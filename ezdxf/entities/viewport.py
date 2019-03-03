@@ -32,8 +32,8 @@ acdb_viewport = DefSubclass('AcDbViewport', {
     'id': DXFAttr(69, default=2),
     'view_center_point': DXFAttr(12, xtype=XType.point2d, default=Vector(0, 0)),  # View center point (in DCS)
     'snap_base_point': DXFAttr(13, xtype=XType.point2d, default=Vector(0, 0)),
-    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vector(0, 0)),
-    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vector(0, 0)),
+    'snap_spacing': DXFAttr(14, xtype=XType.point2d, default=Vector(10, 10)),
+    'grid_spacing': DXFAttr(15, xtype=XType.point2d, default=Vector(10, 10)),
     'view_direction_vector': DXFAttr(16, xtype=XType.point3d, default=Vector(0, 0, 0)),  # View direction vector (WCS)
     'view_target_point': DXFAttr(17, xtype=XType.point3d, default=Vector(0, 0, 0)),  # View target point (in WCS)
     'perspective_lens_length': DXFAttr(42, default=50),

@@ -143,7 +143,7 @@ class Dimension(DXFGraphic):
             'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'text', 'oblique_angle',
             'text_rotation', 'horizontal_direction', 'extrusion',
         ])
-
+        dxfversion = tagwriter.dxfversion
         dim_type = self.dim_type
         if dim_type == 0:  # linear
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
@@ -153,8 +153,8 @@ class Dimension(DXFGraphic):
         elif dim_type == 1:  # aligned
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
-        elif dim_type == 2 or dim_type == 5:  # angular & angulr3p
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
+        elif dim_type == 2:  # angular & angulr3p
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb2LineAngularDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
         elif dim_type == 3:  # diameter
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDiametricDimension')
@@ -162,6 +162,9 @@ class Dimension(DXFGraphic):
         elif dim_type == 4:  # radius
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRadialDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
+        elif dim_type == 5:  # angular & angulr3p
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
         elif dim_type == 6:  # ordinate
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbOrdinateDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint3', 'defpoint3'])

@@ -90,7 +90,6 @@ class MLineVertices:
 class MLine(DXFGraphic):
     DXFTYPE = 'MLINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mline)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
@@ -185,7 +184,6 @@ class MLineStyleElements:
 class MLineStyle(DXFObject):
     DXFTYPE = 'MLINESTYLE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_mline_style)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
