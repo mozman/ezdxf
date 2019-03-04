@@ -6,12 +6,12 @@ from ezdxf.addons import MText
 
 
 @pytest.fixture(scope='module')
-def dxf():
-    return ezdxf.new('R12')
+def doc():
+    return ezdxf.new2('R12')
 
 
-def test_horiz_top(dxf):
-    layout = dxf.blocks.new('test_horiz_top')
+def test_horiz_top(doc):
+    layout = doc.blocks.new('test_horiz_top')
     text = "lineA\nlineB"
     mtext = MText(text, (0., 0., 0.), 1.0)
     mtext.render(layout)
@@ -27,8 +27,8 @@ def test_horiz_top(dxf):
     assert lines[0].dxf.halign == MText.LEFT
 
 
-def test_horiz_bottom(dxf):
-    layout = dxf.blocks.new('test_horiz_bottom')
+def test_horiz_bottom(doc):
+    layout = doc.blocks.new('test_horiz_bottom')
     text = "lineA\nlineB"
     mtext = MText(text, (0., 0., 0.), 1.0, align='BOTTOM_LEFT')
     mtext.render(layout)
@@ -44,8 +44,8 @@ def test_horiz_bottom(dxf):
     assert lines[0].dxf.halign == MText.LEFT
 
 
-def test_horiz_middle(dxf):
-    layout = dxf.blocks.new('test_horiz_middle')
+def test_horiz_middle(doc):
+    layout = doc.blocks.new('test_horiz_middle')
     text = "lineA\nlineB"
     mtext = MText(text, (0., 0., 0.), 1.0, align='MIDDLE_LEFT')
     mtext.render(layout)
@@ -61,8 +61,8 @@ def test_horiz_middle(dxf):
     assert lines[0].dxf.halign == MText.LEFT
 
 
-def test_45deg_top(dxf):
-    layout = dxf.blocks.new('test_45deg_top')
+def test_45deg_top(doc):
+    layout = doc.blocks.new('test_45deg_top')
     text = "lineA\nlineB\nlineC"
     mtext = MText(text, (0., 0., 0.), 1.0, align='TOP_LEFT', rotation=45)
     mtext.render(layout)
@@ -82,8 +82,8 @@ def test_45deg_top(dxf):
     assert lines[0].dxf.halign == MText.LEFT
 
 
-def test_45deg_bottom(dxf):
-    layout = dxf.blocks.new('test_45deg_top')
+def test_45deg_bottom(doc):
+    layout = doc.blocks.new('test_45deg_bottom')
     text = "lineA\nlineB\nlineC"
     mtext = MText(text, (0., 0., 0.), 1.0, align='BOTTOM_LEFT', rotation=45)
     mtext.render(layout)
@@ -103,8 +103,8 @@ def test_45deg_bottom(dxf):
     assert lines[0].dxf.halign == MText.LEFT
 
 
-def test_one_liner(dxf):
-    layout = dxf.blocks.new('test_one_liner')
+def test_one_liner(doc):
+    layout = doc.blocks.new('test_one_liner')
     text = "OneLine"
     mtext = MText(text, (0., 0., 0.))
     mtext.render(layout)

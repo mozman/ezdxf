@@ -1,8 +1,6 @@
-#coding:utf-8
 # Created: 21.03.2010, adapted 2018 for ezdxf
-# Copyright (C) 2010-2018, Manfred Moitzi
+# Copyright (C) 2010-2019, Manfred Moitzi
 # License: MIT License
-__author__ = "mozman <me@mozman.at>"
 import pytest
 import ezdxf
 from ezdxf.addons.table import Table, CustomCell
@@ -11,7 +9,7 @@ from ezdxf.addons.table import Grid, Style, DEFAULT_BORDER_COLOR
 
 @pytest.fixture(scope='module')
 def dxf():
-    return ezdxf.new('R12')
+    return ezdxf.new2('R12')
 
 
 class MockCell(CustomCell):
