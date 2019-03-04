@@ -2,7 +2,7 @@
 # Created: 27.01.2019
 # License: MIT License
 from ezdxf.math.line import ConstructionLine
-import math
+
 
 class TestConstructionLine:
     def test_is_vertical(self):

@@ -2,7 +2,6 @@
 # Purpose: test convex_hull_2d
 # Created: 28.02.2010
 # License: MIT License
-
 import pytest
 from ezdxf.math.convexhull import convex_hull_2d
 from io import StringIO

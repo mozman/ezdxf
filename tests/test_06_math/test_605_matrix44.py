@@ -1,8 +1,7 @@
 # Author:  mozman
 # Created: 19.04.2010
 # License: MIT License
-
-import unittest
+import pytest
 from math import radians, sin, cos, pi, isclose
 from ezdxf.math.matrix44 import Matrix44
 
@@ -38,89 +37,89 @@ def equal_vectors(p1, p2):
     return True
 
 
-class TestMatrix44(unittest.TestCase):
+class TestMatrix44:
     def test_init_0(self):
         matrix = Matrix44()
-        self.assertAlmostEqual(matrix[0, 0], 1.)
-        self.assertAlmostEqual(matrix[1, 1], 1.)
-        self.assertAlmostEqual(matrix[2, 2], 1.)
-        self.assertAlmostEqual(matrix[3, 3], 1.)
+        isclose(matrix[0, 0], 1.)
+        isclose(matrix[1, 1], 1.)
+        isclose(matrix[2, 2], 1.)
+        isclose(matrix[3, 3], 1.)
 
     def test_init_1(self):
         matrix = Matrix44([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
-        self.assertEqual(matrix.get_row(0), (0.0, 1.0, 2.0, 3.0))
-        self.assertEqual(matrix.get_row(1), (4.0, 5.0, 6.0, 7.0))
-        self.assertEqual(matrix.get_row(2), (8.0, 9.0, 10.0, 11.0))
-        self.assertEqual(matrix.get_row(3), (12.0, 13.0, 14.0, 15.0))
+        assert matrix.get_row(0) == (0.0, 1.0, 2.0, 3.0)
+        assert matrix.get_row(1) == (4.0, 5.0, 6.0, 7.0)
+        assert matrix.get_row(2) == (8.0, 9.0, 10.0, 11.0)
+        assert matrix.get_row(3) == (12.0, 13.0, 14.0, 15.0)
 
     def test_init_4(self):
         matrix = Matrix44((0, 1, 2, 3),
                           (4, 5, 6, 7),
                           (8, 9, 10, 11),
                           (12, 13, 14, 15))
-        self.assertEqual(matrix.get_row(0), (0.0, 1.0, 2.0, 3.0))
-        self.assertEqual(matrix.get_row(1), (4.0, 5.0, 6.0, 7.0))
-        self.assertEqual(matrix.get_row(2), (8.0, 9.0, 10.0, 11.0))
-        self.assertEqual(matrix.get_row(3), (12.0, 13.0, 14.0, 15.0))
+        assert matrix.get_row(0) == (0.0, 1.0, 2.0, 3.0)
+        assert matrix.get_row(1) == (4.0, 5.0, 6.0, 7.0)
+        assert matrix.get_row(2) == (8.0, 9.0, 10.0, 11.0)
+        assert matrix.get_row(3) == (12.0, 13.0, 14.0, 15.0)
 
     def test_invalid_init(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Matrix44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15, 16))
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Matrix44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Matrix44([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Matrix44([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
 
     def test_iter(self):
         values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
         matrix = Matrix44(values)
         for v1, m1 in zip(values, matrix):
-            self.assertAlmostEqual(v1, m1)
+            assert isclose(v1, m1)
 
     def test_copy(self):
         values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
         m1 = Matrix44(values)
         matrix = m1.copy()
         for v1, m1 in zip(values, matrix):
-            self.assertAlmostEqual(v1, m1)
+            assert isclose(v1, m1)
 
     def test_get_row(self):
         matrix = Matrix44()
-        self.assertEqual(matrix.get_row(0), (1.0, 0.0, 0.0, 0.0))
-        self.assertEqual(matrix.get_row(1), (0.0, 1.0, 0.0, 0.0))
-        self.assertEqual(matrix.get_row(2), (0.0, 0.0, 1.0, 0.0))
-        self.assertEqual(matrix.get_row(3), (0.0, 0.0, 0.0, 1.0))
+        assert matrix.get_row(0) == (1.0, 0.0, 0.0, 0.0)
+        assert matrix.get_row(1) == (0.0, 1.0, 0.0, 0.0)
+        assert matrix.get_row(2) == (0.0, 0.0, 1.0, 0.0)
+        assert matrix.get_row(3) == (0.0, 0.0, 0.0, 1.0)
 
     def test_set_row(self):
         matrix = Matrix44()
         matrix.set_row(0, (2., 3., 4., 5.))
-        self.assertEqual(matrix.get_row(0), (2.0, 3.0, 4.0, 5.0))
+        assert matrix.get_row(0) == (2.0, 3.0, 4.0, 5.0)
         matrix.set_row(1, (6., 7., 8., 9.))
-        self.assertEqual(matrix.get_row(1), (6.0, 7.0, 8.0, 9.0))
+        assert matrix.get_row(1) == (6.0, 7.0, 8.0, 9.0)
         matrix.set_row(2, (10., 11., 12., 13.))
-        self.assertEqual(matrix.get_row(2), (10.0, 11.0, 12.0, 13.0))
+        assert matrix.get_row(2) == (10.0, 11.0, 12.0, 13.0)
         matrix.set_row(3, (14., 15., 16., 17.))
-        self.assertEqual(matrix.get_row(3), (14.0, 15.0, 16.0, 17.0))
+        assert matrix.get_row(3) == (14.0, 15.0, 16.0, 17.0)
 
     def test_get_col(self):
         matrix = Matrix44()
-        self.assertEqual(matrix.get_col(0), (1.0, 0.0, 0.0, 0.0))
-        self.assertEqual(matrix.get_col(1), (0.0, 1.0, 0.0, 0.0))
-        self.assertEqual(matrix.get_col(2), (0.0, 0.0, 1.0, 0.0))
-        self.assertEqual(matrix.get_col(3), (0.0, 0.0, 0.0, 1.0))
+        assert matrix.get_col(0) == (1.0, 0.0, 0.0, 0.0)
+        assert matrix.get_col(1) == (0.0, 1.0, 0.0, 0.0)
+        assert matrix.get_col(2) == (0.0, 0.0, 1.0, 0.0)
+        assert matrix.get_col(3) == (0.0, 0.0, 0.0, 1.0)
 
     def test_set_col(self):
         matrix = Matrix44()
         matrix.set_col(0, (2., 3., 4., 5.))
-        self.assertEqual(matrix.get_col(0), (2.0, 3.0, 4.0, 5.0))
+        assert matrix.get_col(0) == (2.0, 3.0, 4.0, 5.0)
         matrix.set_col(1, (6., 7., 8., 9.))
-        self.assertEqual(matrix.get_col(1), (6.0, 7.0, 8.0, 9.0))
+        assert matrix.get_col(1) == (6.0, 7.0, 8.0, 9.0)
         matrix.set_col(2, (10., 11., 12., 13.))
-        self.assertEqual(matrix.get_col(2), (10.0, 11.0, 12.0, 13.0))
+        assert matrix.get_col(2) == (10.0, 11.0, 12.0, 13.0)
         matrix.set_col(3, (14., 15., 16., 17.))
-        self.assertEqual(matrix.get_col(3), (14.0, 15.0, 16.0, 17.0))
+        assert matrix.get_col(3) == (14.0, 15.0, 16.0, 17.0)
 
     def test_set(self):
         matrix = Matrix44()
@@ -129,10 +128,10 @@ class TestMatrix44(unittest.TestCase):
                    (10., 11., 12., 13.),
                    (14., 15., 16., 17.)
                    )
-        self.assertEqual(matrix.get_row(0), (2.0, 3.0, 4.0, 5.0))
-        self.assertEqual(matrix.get_row(1), (6.0, 7.0, 8.0, 9.0))
-        self.assertEqual(matrix.get_row(2), (10.0, 11.0, 12.0, 13.0))
-        self.assertEqual(matrix.get_row(3), (14.0, 15.0, 16.0, 17.0))
+        assert matrix.get_row(0) == (2.0, 3.0, 4.0, 5.0)
+        assert matrix.get_row(1) == (6.0, 7.0, 8.0, 9.0)
+        assert matrix.get_row(2) == (10.0, 11.0, 12.0, 13.0)
+        assert matrix.get_row(3) == (14.0, 15.0, 16.0, 17.0)
 
     def test_translate(self):
         t = Matrix44.translate(10, 20, 30)
@@ -140,12 +139,12 @@ class TestMatrix44(unittest.TestCase):
         x[3, 0] = 10.
         x[3, 1] = 20.
         x[3, 2] = 30.
-        self.assertTrue(equal_matrix(t, x))
+        assert equal_matrix(t, x) is True
 
     def test_scale(self):
         t = Matrix44.scale(10, 20, 30)
         x = diag((10., 20., 30., 1.))
-        self.assertTrue(equal_matrix(t, x))
+        assert equal_matrix(t, x) is True
 
     def test_x_rotate(self):
         alpha = radians(25)
@@ -155,7 +154,7 @@ class TestMatrix44(unittest.TestCase):
         x[2, 1] = -sin(alpha)
         x[1, 2] = sin(alpha)
         x[2, 2] = cos(alpha)
-        self.assertTrue(equal_matrix(t, x))
+        assert equal_matrix(t, x) is True
 
     def test_y_rotate(self):
         alpha = radians(25)
@@ -165,7 +164,7 @@ class TestMatrix44(unittest.TestCase):
         x[2, 0] = sin(alpha)
         x[0, 2] = -sin(alpha)
         x[2, 2] = cos(alpha)
-        self.assertTrue(equal_matrix(t, x))
+        assert equal_matrix(t, x) is True
 
     def test_z_rotate(self):
         alpha = radians(25)
@@ -175,7 +174,7 @@ class TestMatrix44(unittest.TestCase):
         x[1, 0] = -sin(alpha)
         x[0, 1] = sin(alpha)
         x[1, 1] = cos(alpha)
-        self.assertTrue(equal_matrix(t, x))
+        assert equal_matrix(t, x) is True
 
     def test_chain(self):
         s = Matrix44.scale(10, 20, 30)
@@ -186,7 +185,7 @@ class TestMatrix44(unittest.TestCase):
         x[3, 0] = 10.
         x[3, 1] = 20.
         x[3, 2] = 30.
-        self.assertTrue(equal_matrix(c, x))
+        assert equal_matrix(c, x) is True
 
     def test_chain2(self):
         s = Matrix44.scale(10, 20, 30)
@@ -200,12 +199,12 @@ class TestMatrix44(unittest.TestCase):
 
         c = Matrix44.chain(s, t, r)
         p2 = c.transform_vectors(points)
-        self.assertTrue(equal_vectors(p1, p2))
+        assert equal_vectors(p1, p2) is True
 
     def test_transform(self):
         t = Matrix44.scale(2., .5, 1.)
         r = t.transform((10., 20., 30.))
-        self.assertEqual(r, (20., 10., 30.))
+        assert r == (20., 10., 30.)
 
     def test_transpose(self):
         matrix = Matrix44((0, 1, 2, 3),
@@ -213,11 +212,11 @@ class TestMatrix44(unittest.TestCase):
                           (8, 9, 10, 11),
                           (12, 13, 14, 15))
         matrix.transpose()
-        self.assertEqual(matrix.get_row(0), (0.0, 4.0, 8.0, 12.0))
-        self.assertEqual(matrix.get_row(1), (1.0, 5.0, 9.0, 13.0))
-        self.assertEqual(matrix.get_row(2), (2.0, 6.0, 10.0, 14.0))
-        self.assertEqual(matrix.get_row(3), (3.0, 7.0, 11.0, 15.0))
+        assert matrix.get_row(0) == (0.0, 4.0, 8.0, 12.0)
+        assert matrix.get_row(1) == (1.0, 5.0, 9.0, 13.0)
+        assert matrix.get_row(2) == (2.0, 6.0, 10.0, 14.0)
+        assert matrix.get_row(3) == (3.0, 7.0, 11.0, 15.0)
 
     def test_inverse_error(self):
         m = Matrix44([1] * 16)
-        self.assertRaises(ZeroDivisionError, m.inverse)
+        pytest.raises(ZeroDivisionError, m.inverse)

@@ -5,6 +5,7 @@ import pytest
 
 from ezdxf.math import xround
 from ezdxf.math.construct2d import *
+from ezdxf.math.points import closest_point
 from math import isclose, radians
 
 
@@ -39,7 +40,7 @@ def test_left_of_line_or_on_the_line():
 
 def test_is_close_points():
     with pytest.raises(TypeError):
-            is_close_points((1, 1, 0), (1, 1))
+        is_close_points((1, 1, 0), (1, 1))
 
     assert is_close_points((1, 1, 1), (1, 1, 1)) is True
     assert is_close_points((1, 1, 1), (1, 1, 1.0000000001)) is True
@@ -85,3 +86,19 @@ def test_enclosing_angles():
 
     assert enclosing_angles(radians(270), start_angle=radians(135), end_angle=radians(45), ccw=True) is True
     assert enclosing_angles(radians(270), start_angle=radians(135), end_angle=radians(45), ccw=False) is False
+
+
+def test_no_points():
+    assert closest_point((0, 0), []) is None
+
+
+def test_one_points():
+    assert closest_point((0, 0), [(1, 1)]) == (1, 1)
+
+
+def test_two_points():
+    assert closest_point((0, 0), [(0, 0, 1), (1, 1, 1)]) == (0, 0, 1)
+
+
+def test_more_points():
+    assert closest_point((0, 0), [(0, 0, 1), (1, 1, 1), (2, 2, 2), (0, 0, -.5)]) == (0, 0, -.5)

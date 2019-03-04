@@ -15,9 +15,7 @@ if TYPE_CHECKING:
 def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
     doc = Drawing2.new(dxfversion)
     if setup:
-        pass
-        # does not work yet
-        # setup_drawing(dwg, topics=setup)
+        setup_drawing(doc, topics=setup)
     return doc
 
 

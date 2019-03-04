@@ -8,17 +8,17 @@ from ezdxf.options import options
 import logging
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import Drawing, DimStyle
+    from ezdxf.eztypes2 import Drawing, DimStyle
 
 logger = logging.getLogger('ezdxf')
 
 
-def setup_drawing(dwg: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
+def setup_drawing(doc: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
     """
     Setup default linetypes, text styles or dimension styles.
 
     Args:
-        dwg: DXF document
+        doc: DXF document
         topics: 'all' or True to setup everything
             Tuple of strings to specify setup:
                 - 'linetypes': setup linetypes
@@ -46,10 +46,10 @@ def setup_drawing(dwg: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
         topics = list(t.lower() for t in topics)
 
     if setup_all or 'linetypes' in topics:
-        setup_linetypes(dwg)
+        setup_linetypes(doc)
 
     if setup_all or 'styles' in topics:
-        setup_styles(dwg)
+        setup_styles(doc)
 
     dimstyles = get_token('dimstyles')
     if setup_all or len(dimstyles):
@@ -57,46 +57,46 @@ def setup_drawing(dwg: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
             domain = dimstyles[1]
         else:
             domain = 'all'
-        setup_dimstyles(dwg, domain=domain)
+        setup_dimstyles(doc, domain=domain)
 
 
-def setup_linetypes(dwg: 'Drawing') -> None:
+def setup_linetypes(doc: 'Drawing') -> None:
     for name, desc, pattern in linetypes():
-        if name in dwg.linetypes:
+        if name in doc.linetypes:
             continue
-        dwg.linetypes.new(name, dxfattribs={
+        doc.linetypes.new(name, dxfattribs={
             'description': desc,
             'pattern': pattern,
         })
 
 
-def setup_styles(dwg: 'Drawing') -> None:
-    dwg.header['$TEXTSTYLE'] = 'OpenSans'
+def setup_styles(doc: 'Drawing') -> None:
+    doc.header['$TEXTSTYLE'] = 'OpenSans'
     for name, font in styles():
-        if name in dwg.styles:
+        if name in doc.styles:
             continue
-        dwg.styles.new(name, dxfattribs={
+        doc.styles.new(name, dxfattribs={
             'font': font,
         })
 
 
-def setup_dimstyles(dwg: 'Drawing', domain: str = 'all') -> None:
-    setup_styles(dwg)
-    ezdxf_dimstyle = setup_dimstyle(dwg, name='EZDXF', fmt='EZ_M_100_H25_CM',
+def setup_dimstyles(doc: 'Drawing', domain: str = 'all') -> None:
+    setup_styles(doc)
+    ezdxf_dimstyle = setup_dimstyle(doc, name='EZDXF', fmt='EZ_M_100_H25_CM',
                                     style=options.default_dimension_text_style,
                                     blk=ARROWS.architectural_tick)
     ezdxf_dimstyle.dxf.dimasz *= .7  # smaller arch ticks
-    dwg.header['$DIMSTYLE'] = 'EZDXF'
-    ezdxf_dimstyle.copy_to_header(dwg)
+    doc.header['$DIMSTYLE'] = 'EZDXF'
+    ezdxf_dimstyle.copy_to_header(doc)
 
     if domain in ('metric', 'all'):
-        setup_dimstyle(dwg, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
-        setup_dimstyle(dwg, fmt='EZ_M_50_H25_CM', style=options.default_dimension_text_style)
-        setup_dimstyle(dwg, fmt='EZ_M_25_H25_CM', style=options.default_dimension_text_style)
-        setup_dimstyle(dwg, fmt='EZ_M_20_H25_CM', style=options.default_dimension_text_style)
-        setup_dimstyle(dwg, fmt='EZ_M_10_H25_CM', style=options.default_dimension_text_style)
-        setup_dimstyle(dwg, fmt='EZ_M_5_H25_CM', style=options.default_dimension_text_style)
-        setup_dimstyle(dwg, fmt='EZ_M_1_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_100_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_50_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_25_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_20_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_10_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_5_H25_CM', style=options.default_dimension_text_style)
+        setup_dimstyle(doc, fmt='EZ_M_1_H25_CM', style=options.default_dimension_text_style)
     elif domain in ('us', 'all'):
         pass
 
@@ -160,7 +160,7 @@ class DimStyleFmt:
         return .25 * self.unit_factor
 
 
-def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> 'DimStyle':
+def setup_dimstyle(doc: 'Drawing', fmt: str, style: str = None, blk: str = None, name: str = '') -> 'DimStyle':
     """
     Easy DimStyle setup, the `fmt` string defines four essential dimension parameters separated by the `_` character.
     Tested and works with the metric system, I don't touch the 'english unit' system.
@@ -174,7 +174,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
         5. 'EZ_M_100_H25_<CM>': defines the units for the measurement text, valid values are 'M', 'DM', 'CM', 'MM'
 
     Args:
-        dwg: DXF drawing
+        doc: DXF drawing
         fmt: format string
         style: text style for measurement
         blk: block name for arrow None for oblique stroke
@@ -184,11 +184,11 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
     style = style or options.default_dimension_text_style
     fmt = DimStyleFmt(fmt)
     name = name or fmt.name
-    if dwg.dimstyles.has_entry(name):
+    if doc.dimstyles.has_entry(name):
         logging.debug('DimStyle "{}" already exists.'.format(name))
-        return cast('DimStyle', dwg.dimstyles.get(name))
+        return cast('DimStyle', doc.dimstyles.get(name))
 
-    dimstyle = cast('DimStyle', dwg.dimstyles.new(name))
+    dimstyle = cast('DimStyle', doc.dimstyles.new(name))
     dimstyle.dxf.dimtxt = fmt.dimtxt
     dimstyle.dxf.dimlfac = fmt.dimlfac  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
     dimstyle.dxf.dimgap = fmt.dimtxt * .4  # gap between text and dimension line
@@ -207,7 +207,7 @@ def setup_dimstyle(dwg: 'Drawing', fmt: str, style: str = None, blk: str = None,
     else:  # arrow or block
         dimstyle.set_arrows(blk=blk)
         dimstyle.dxf.dimasz = fmt.dimasz
-    if dwg.dxfversion > 'AC1009':
+    if doc.dxfversion > 'AC1009':
         # set text style
         dimstyle.dxf.dimtmove = 2  # move freely without leader
         dimstyle.dxf.dimtxsty = style

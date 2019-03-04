@@ -1,6 +1,5 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-
 import pytest
 import math
 from ezdxf.math.vector import Vec2, Vector
