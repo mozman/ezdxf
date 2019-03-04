@@ -28,7 +28,10 @@ class DimStyleOverride:
 
     @property
     def drawing(self) -> 'Drawing':
-        return self.dimension.drawing
+        try:
+            return self.dimension.doc
+        except AttributeError:
+            return self.dimension.drawing
 
     @property
     def dxfversion(self) -> str:

@@ -44,3 +44,31 @@ def test_copy_entity(doc, entity):
     assert len(entity.extension_dict.dictionary) == 1
     assert len(new_entity.extension_dict.dictionary) == 2
 
+
+def test_line_new_extension_dict(doc):
+    msp = doc.modelspace()
+    entity = msp.add_line((0, 0), (10, 0))
+    assert entity.has_extension_dict() is False
+    xdict = entity.get_extension_dict()
+    dxf_dict = xdict.dictionary
+    assert dxf_dict.dxftype() == 'DICTIONARY'
+    assert dxf_dict.dxf.owner == entity.dxf.handle
+    assert entity.has_app_data('{ACAD_XDICTIONARY') is False, 'extension dictionary is a separated storage'
+    assert entity.has_extension_dict() is True
+
+    xdict2 = entity.get_extension_dict()
+    dxf_dict2 = xdict2.dictionary
+    assert dxf_dict.dxf.handle == dxf_dict2.dxf.handle
+
+
+def test_del_entity_with_ext_dict(doc):
+    msp = doc.modelspace()
+    entity = msp.add_line((0, 0), (10, 0))
+    xdict = entity.get_extension_dict()
+
+    objects = doc.objects
+    assert xdict.dictionary in objects
+    store_xdict = xdict.dictionary
+    msp.delete_entity(entity)
+    assert xdict.is_alive is False
+    assert store_xdict not in objects

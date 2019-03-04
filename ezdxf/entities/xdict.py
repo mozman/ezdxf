@@ -44,6 +44,10 @@ class ExtensionDict:
         # The copy of an extension dictionary can not have the same owner as the source dictionary.
         return self.__class__(owner, copy)
 
+    @property
+    def is_alive(self):
+        return self._xdict is not None
+
     def update_owner(self, owner: 'DXFEntity') -> None:
         """ Update owner attribute, but also owner tag of contained DXF Dictionary. """
         assert self._xdict is not None

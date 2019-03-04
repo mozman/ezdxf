@@ -2,7 +2,6 @@
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.lldxf.const import DXFAttributeError
 from ezdxf.render.dimension import format_text, DXFValueError
 
 
