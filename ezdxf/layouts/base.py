@@ -37,6 +37,10 @@ class BaseLayout(CreatorInterface):
         return self.doc.entitydb
 
     @property
+    def is_alive(self):
+        return self.block_record.is_alive
+
+    @property
     def is_active_paperspace(self) -> bool:
         """ True if is "active" layout. """
         return self.block_record.is_active_paperspace

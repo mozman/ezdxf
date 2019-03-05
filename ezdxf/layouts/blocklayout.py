@@ -34,6 +34,11 @@ class BlockLayout(BaseLayout):
         """ Set block and block_record name """
         self.block_record.rename(new_name)
 
+    @property
+    def dxf(self):
+        """ Pass DXF name space of associated BLOCK_RECORD. """
+        return self.block_record.dxf
+
     def add_attdef(self, tag: str, insert: Sequence[float] = (0, 0), text: str = '', dxfattribs: dict = None) -> 'DXFGraphic':
         """
         Add an :class:`Attdef` entity.

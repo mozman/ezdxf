@@ -40,7 +40,7 @@ class CreatorInterface:
         return self.doc.dxffactory
 
     @property
-    def is_active_paperscape(self):
+    def is_active_paperspace(self):
         return False
 
     def new_entity(self, type_: str, dxfattribs: dict) -> 'DXFGraphic':

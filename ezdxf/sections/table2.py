@@ -72,7 +72,7 @@ class Table:
     def name(self) -> str:
         return tablename(self._head.dxf.name)
 
-    def has_entry(self, name: str) -> bool:
+    def has_entry(self, name: Union[str, 'DXFEntity']) -> bool:
         """ Check if an table-entry 'name' exists. """
         return self.key(name) in self.entries
 

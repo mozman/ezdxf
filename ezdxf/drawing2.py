@@ -494,6 +494,55 @@ class Drawing:
             self._acad_incompatibility_reason.add(msg)
             logger.warning('Drawing is incompatible to AutoCAD, because {}.'.format(msg))
 
+    def query(self, query='*'):
+        """
+        Entity query over all layouts and blocks.
+
+        Excluding the OBJECTS section!
+
+        Args:
+            query: query string
+
+        Returns: EntityQuery() container
+
+        """
+        return EntityQuery(self.chain_layouts_and_blocks(), query)
+
+    def groupby(self, dxfattrib="", key=None):
+        """
+        Groups DXF entities of all layouts and blocks by an DXF attribute or a key function.
+
+        Excluding the OBJECTS section!
+
+        Args:
+            dxfattrib: grouping DXF attribute like 'layer'
+            key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for ignore
+                 this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+
+        Returns: dict
+
+        """
+        return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)
+
+    def chain_layouts_and_blocks(self) -> Iterable['DXFEntity']:
+        """
+        Chain entity spaces of all layouts and blocks. Yields an iterator for all entities in all layouts and blocks.
+
+        Returns: yields all entities as DXFEntity() objects
+
+        """
+        layouts = list(self.layouts_and_blocks())
+        return chain.from_iterable(layouts)
+
+    def layouts_and_blocks(self) -> Iterable['LayoutType']:
+        """
+        Iterate over all layouts (mode space and paper space) and all block definitions.
+
+        Returns: yields Layout() objects
+
+        """
+        return iter(self.blocks)
+
 
 class DrawingX(Drawing):
     """
