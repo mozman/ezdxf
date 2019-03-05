@@ -25,10 +25,10 @@ KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS'
 
 
 class Sections:
-    def __init__(self, sections: Dict, drawing: 'Drawing', header: HeaderSection = None):
+    def __init__(self, sections: Dict, doc: 'Drawing', header: HeaderSection = None):
         self._sections = {
             'HEADER': header if header is not None else HeaderSection.load(tags=None)}  # type: Dict[str, SectionType]
-        self._setup_sections(sections, drawing)
+        self._setup_sections(sections, doc)
 
     def __iter__(self) -> Iterable['SectionType']:
         return iter(self._sections.values())
@@ -37,20 +37,20 @@ class Sections:
     def key(name: str) -> str:
         return name.upper()
 
-    def _setup_sections(self, sections: Dict, drawing: 'Drawing') -> None:
+    def _setup_sections(self, sections: Dict, doc: 'Drawing') -> None:
         # required sections
-        self._sections['TABLES'] = TablesSection(sections.get('TABLES', None), drawing)
-        self._sections['BLOCKS'] = BlocksSection(sections.get('BLOCKS', None), drawing)
-        self._sections['ENTITIES'] = EntitySection(sections.get('ENTITIES', None), drawing)
-        if drawing.dxfversion > 'AC1009':
+        self._sections['TABLES'] = TablesSection(sections.get('TABLES', None), doc)
+        self._sections['BLOCKS'] = BlocksSection(sections.get('BLOCKS', None), doc)
+        self._sections['ENTITIES'] = EntitySection(sections.get('ENTITIES', None), doc)
+        if doc.dxfversion > 'AC1009':
             # required sections
-            self._sections['CLASSES'] = ClassesSection(sections.get('CLASSES', None), drawing)
-            self._sections['OBJECTS'] = ObjectsSection(sections.get('OBJECTS', None), drawing)
+            self._sections['CLASSES'] = ClassesSection(sections.get('CLASSES', None), doc)
+            self._sections['OBJECTS'] = ObjectsSection(sections.get('OBJECTS', None), doc)
             # sections just stored, if exists
             if 'THUMBNAILIMAGE' in sections:
-                self._sections['THUMBNAILIMAGE'] = UnsupportedSection(sections['THUMBNAILIMAGE'], drawing)
+                self._sections['THUMBNAILIMAGE'] = UnsupportedSection(sections['THUMBNAILIMAGE'], doc)
             if 'ACDSDATA' in sections:
-                self._sections['ACDSDATA'] = UnsupportedSection(sections['ACDSDATA'], drawing)
+                self._sections['ACDSDATA'] = UnsupportedSection(sections['ACDSDATA'], doc)
 
         for section_name in sections.keys():
             if section_name not in KNOWN_SECTIONS:

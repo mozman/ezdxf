@@ -74,7 +74,7 @@ class Drawing:
         # store all necessary DXF entities in the drawing database
         fill_database(self.entitydb, sections, dxfversion=self.dxfversion)
         # create sections: TABLES, BLOCKS, ENTITIES, CLASSES, OBJECTS
-        self.sections = Sections(sections, drawing=self, header=header)
+        self.sections = Sections(sections, doc=self, header=header)
 
         if self.dxfversion > DXF12:
             self.rootdict = self.objects.rootdict

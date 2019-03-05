@@ -1,10 +1,10 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.database import EntityDB
-from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.entitydb import EntityDB
+from ezdxf.entities.dxfentity import DXFEntity
 
-ENTITY = ExtendedTags.from_text("0\nTEST\n5\nFFFF\n")
+ENTITY = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def test_get_value(db):
 
 
 def test_set_value(db):
-    new_entity = ExtendedTags.from_text("0\nTEST\n5\nFFFF\n")
+    new_entity = DXFEntity.from_text("0\nTEST\n5\nFFFF\n")
     db['0'] = new_entity
     assert new_entity is db['0']
 
@@ -49,7 +49,7 @@ def test_get(db):
 
 def test_add_tags():
     db = EntityDB()
-    db.add_tags(ENTITY)
+    db.add(ENTITY)
     assert 'FFFF' in db
 
 
