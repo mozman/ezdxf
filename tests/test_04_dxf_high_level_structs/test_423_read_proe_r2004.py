@@ -9,8 +9,8 @@ FILE = r"D:\Source\dxftest\ProE_AC1018.dxf"
 
 @pytest.mark.skipif(not os.path.exists(FILE), reason="Skip reading ProE AC1018: test file '{}' not available.".format(FILE))
 def test_open_proe_ac1018():
-    dwg = ezdxf.readfile(FILE)
-    modelspace = dwg.modelspace()
+    doc = ezdxf.readfile2(FILE)
+    modelspace = doc.modelspace()
 
     # are there entities in model space
     assert 17 == len(modelspace)
