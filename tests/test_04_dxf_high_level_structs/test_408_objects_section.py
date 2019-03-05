@@ -1,46 +1,18 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-import pytest
-from io import StringIO
-
 import ezdxf
-from ezdxf.tools.test import normlines, load_section
-from ezdxf.sections.objects import ObjectsSection
-from ezdxf.lldxf.tagwriter import TagWriter
+from ezdxf.tools.test import load_entities
+from ezdxf.sections.objects2 import ObjectsSection
 
 
-@pytest.fixture
-def section():
-    dwg = ezdxf.new('R2000')
-    return ObjectsSection(load_section(TESTOBJECTS, 'OBJECTS', dwg.entitydb), dwg)
+def test_load_section():
+    doc = ezdxf.new2('R2000')
+    ent = load_entities(TESTOBJECTS, 'OBJECTS', doc)
 
+    section = ObjectsSection(doc, ent)
+    assert len(section) == 6
+    assert section[0].dxftype() == 'DICTIONARY'
 
-def test_write(section):
-    stream = StringIO()
-    section.write(TagWriter(stream))
-    result = stream.getvalue()
-    stream.close()
-    assert normlines(TESTOBJECTS) == normlines(result)
-
-
-def test_empty_section():
-    ent = load_section(EMPTYSEC, 'OBJECTS')
-    dwg = ezdxf.new('R2000')
-    section = ObjectsSection(ent, dwg)
-    stream = StringIO()
-    section.write(TagWriter(stream))
-    result = stream.getvalue()
-    stream.close()
-    assert EMPTYSEC == result
-
-
-EMPTYSEC = """  0
-SECTION
-  2
-OBJECTS
-  0
-ENDSEC
-"""
 
 TESTOBJECTS = """  0
 SECTION

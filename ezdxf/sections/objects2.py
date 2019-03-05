@@ -26,6 +26,9 @@ class ObjectsSection:
     def __iter__(self) -> Iterable['DXFEntity']:
         return iter(self._entity_space)
 
+    def __getitem__(self, item):
+        return self._entity_space[item]
+
     @property
     def dxffactory(self) -> 'EntityFactory':
         return self.doc.dxffactory

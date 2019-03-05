@@ -2,15 +2,13 @@
 # License: MIT License
 import pytest
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ezdxf.drawing import Drawing
-from ezdxf.templates import TemplateLoader
-from ezdxf import is_dxf_file
+from ezdxf.drawing2 import Drawing
 from ezdxf import DXFValueError
 
 
 def test_dxfversion_1():
-    dwg = Drawing(internal_tag_compiler(TEST_HEADER))
-    assert 'AC1009' == dwg.dxfversion
+    doc = Drawing.from_tags(internal_tag_compiler(TEST_HEADER))
+    assert 'AC1009' == doc.dxfversion
 
 
 @pytest.fixture(scope='module')
@@ -79,14 +77,9 @@ def test_r2000_acad_release(dwg_r2000):
         assert 'R2000' == dwg_r2000.acad_release
 
 
-def test_template():
-    template_file = TemplateLoader().filepath('AC1009')
-    assert is_dxf_file(template_file) is True
-
-
 @pytest.fixture
 def min_r12():
-    return Drawing(internal_tag_compiler(MINIMALISTIC_DXF12))
+    return Drawing.from_tags(internal_tag_compiler(MINIMALISTIC_DXF12))
 
 
 def test_min_r12_header_section(min_r12):
@@ -97,22 +90,30 @@ def test_min_r12_header_section(min_r12):
 
 def test_min_r12_layers_table(min_r12):
     assert hasattr(min_r12, 'layers')
-    assert len(min_r12.layers) == 0
+    assert len(min_r12.layers) == 2
+    assert '0' in min_r12.layers
+    assert 'Defpoints' in min_r12.layers
 
 
 def test_min_r12_styles_table(min_r12):
     assert hasattr(min_r12, 'styles')
-    assert len(min_r12.styles) == 0
+    assert len(min_r12.styles) == 1
+    assert 'Standard' in min_r12.styles
 
 
 def test_min_r12_linetypes_table(min_r12):
     assert hasattr(min_r12, 'linetypes')
-    assert len(min_r12.linetypes) == 0
+    assert len(min_r12.linetypes) == 3
+    assert 'continuous' in min_r12.linetypes
+    assert 'ByLayer' in min_r12.linetypes
+    assert 'ByBlock' in min_r12.linetypes
 
 
 def test_min_r12_blocks_section(min_r12):
     assert hasattr(min_r12, 'blocks')
-    assert len(min_r12.blocks) == 0
+    assert len(min_r12.blocks) == 2
+    assert '*Model_Space' in min_r12.blocks
+    assert '*Paper_Space' in min_r12.blocks
 
 
 def test_min_r12_entity_section(min_r12):
