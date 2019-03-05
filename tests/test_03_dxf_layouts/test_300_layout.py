@@ -136,7 +136,6 @@ def test_rename_layout(doc):
     with pytest.raises(KeyError):
         layouts.rename('mozman', 'XXX')
 
-    pytest.skip('Layout.rename() not implemented')
-    layouts.rename('Layout1', 'ezdxf')
-    layout = layouts.get('ezdxf')
-    assert layout.name == 'ezdxf'
+    layouts.rename('Layout1', 'ezdxf-new')
+    layout = layouts.get('ezdxf-new')
+    assert layout.name == 'ezdxf-new'

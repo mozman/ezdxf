@@ -158,6 +158,11 @@ class Layout(BaseLayout):
         self.doc.blocks.delete_block(self.block_record.dxf.name)
         self.doc.objects.delete_entity(self.dxf_layout)
 
+    def rename(self, name: str) -> None:
+        """ Rename layout to `name`, changes the name displayed in tab by CAD applications, not the internal BLOCK name.
+        """
+        self.dxf_layout.dxf.name = name
+
     def viewports(self) -> List['DXFGraphic']:
         """
         Get all VIEWPORT entities defined in the layout. Returns a list of Viewport() objects, sorted by id, the first

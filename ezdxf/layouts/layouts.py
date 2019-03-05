@@ -199,9 +199,9 @@ class Layouts:
 
         """
         if old_name == 'Model':
-            raise ValueError('Can not rename model space.')
+            raise DXFValueError('Can not rename model space.')
         if new_name in self._layouts:
-            raise ValueError('Layout "{}" already exists.'.format(new_name))
+            raise DXFValueError('Layout "{}" already exists.'.format(new_name))
 
         layout = self._layouts[old_name]
         layout.rename(new_name)
