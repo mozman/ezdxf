@@ -37,7 +37,7 @@ class EntityFactory:
         """ Create a new entity. """
         class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
         entity = class_.new(handle=None, owner=None, dxfattribs=dxfattribs, doc=self.doc)
-        return entity
+        return entity.cast() if hasattr(entity, 'cast') else entity
 
     def create_db_entry(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
         """ Create new entity and add to drawing-database. """
@@ -60,7 +60,7 @@ class EntityFactory:
         dxftype = tags.dxftype()
         class_ = ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
         entity = class_.load(tags, self.doc)
-        return entity
+        return entity.cast() if hasattr(entity, 'cast') else entity
 
     def next_image_key(self, checkfunc=lambda k: True) -> str:
         while True:

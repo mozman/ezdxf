@@ -212,7 +212,7 @@ class GroupCollection(ObjectCollection):
             raise DXFTypeError(group.dxftype())
 
         if name in self:
-            super().delete(group)
+            super().delete(name)
         else:
             raise DXFValueError("GROUP not in group table registered.")
 

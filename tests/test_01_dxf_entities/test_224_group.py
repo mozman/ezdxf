@@ -6,8 +6,8 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def groups():
-    dwg = ezdxf.new('AC1015')
-    return dwg.groups
+    doc = ezdxf.new2('R2000')
+    return doc.groups
 
 
 def test_group_table_is_empty(groups):
@@ -39,9 +39,11 @@ def test_create_unnamed_group(groups):
 
 
 def test_delete_group_by_entity(groups):
+    assert len(groups) == 0
     g = groups.new('MyGroup')
+    assert len(groups) == 1
     groups.delete(g)
-    assert 0 == len(groups)
+    assert len(groups) == 0
 
 
 def test_delete_group_by_name(groups):

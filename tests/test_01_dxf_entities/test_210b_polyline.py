@@ -3,13 +3,14 @@
 import pytest
 import ezdxf
 from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
-from ezdxf.tools.test import load_section
-from ezdxf.sections.entities import EntitySection
+from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.tools.test import load_entities
+from ezdxf.sections.entities2 import EntitySection
 
 
 @pytest.fixture(scope='module')
 def dwg():
-    return ezdxf.new('AC1015')
+    return ezdxf.new2('R2000')
 
 
 @pytest.fixture(scope='module')
@@ -35,7 +36,7 @@ def test_create_polyline3D(layout):
 def test_vertex_layer(layout):
     attribs = {'layer': 'polyline_layer'}
     polyline = layout.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
-    for vertex in polyline.vertices():
+    for vertex in polyline.vertices:
         assert 'polyline_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
@@ -43,7 +44,7 @@ def test_change_polyline_layer(layout):
     attribs = {'layer': 'polyline_layer'}
     polyline = layout.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
     polyline.dxf.layer = "changed_layer"
-    for vertex in polyline.vertices():
+    for vertex in polyline.vertices:
         assert 'changed_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
@@ -82,14 +83,14 @@ def test_insert_vertices(layout):
 
 def test_delete_one_vertex(layout):
     polyline = layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
-    polyline.delete_vertices(0)
+    del polyline.vertices[0]
     assert (1, 1) == polyline[0].dxf.location
     assert 3 == len(polyline)
 
 
 def test_delete_two_vertices(layout):
     polyline = layout.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
-    polyline.delete_vertices(pos=0, count=2)
+    del polyline.vertices[0:2]
     assert (2, 2) == polyline[0].dxf.location
     assert 2 == len(polyline)
 
@@ -202,45 +203,72 @@ def cube_faces():
     ]
 
 
-def test_internals_polyline2d(layout):
+def test_export_polyline2d(layout):
     polyline = layout.add_polyline2d([(0, 0), (1, 1)])
-    assert 'AcDb2dPolyline' == polyline.tags.subclasses[2][0].value
-    vertex = polyline[0]
-    assert 'AcDbVertex' == vertex.tags.subclasses[2][0].value
-    assert 'AcDb2dVertex' == vertex.tags.subclasses[3][0].value
+    collector = TagCollector()
+    polyline.export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDb2dPolyline') in tags
+    collector.reset()
+    polyline[0].export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbVertex') in tags
+    assert (100, 'AcDb2dVertex') in tags
 
 
-def test_internals_polyline3d(layout):
+def test_export_polyline3d(layout):
     polyline = layout.add_polyline3d([(0, 0), (1, 1)])
-    assert 'AcDb3dPolyline' == polyline.tags.subclasses[2][0].value
-    vertex = polyline[0]
-    assert 'AcDbVertex'== vertex.tags.subclasses[2][0].value
-    assert 'AcDb3dPolylineVertex' == vertex.tags.subclasses[3][0].value
+    collector = TagCollector()
+    polyline.export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDb3dPolyline') in tags
+    collector.reset()
+    polyline[0].export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbVertex') in tags
+    assert (100, 'AcDb3dPolylineVertex') in tags
 
 
 def test_internals_polymesh(layout):
     mesh = layout.add_polymesh((4, 4))
-    vertex = mesh[0]
-    assert 'AcDbVertex' == vertex.tags.subclasses[2][0].value
-    assert 'AcDbPolygonMeshVertex' == vertex.tags.subclasses[3][0].value
+    collector = TagCollector()
+    mesh.export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbPolygonMesh') in tags
+    collector.reset()
+    mesh[0].export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbVertex') in tags
+    assert (100, 'AcDbPolygonMeshVertex') in tags
 
 
 def test_internals_polyface(layout):
     face = layout.add_polyface()
     face.append_face([(0, 0), (1, 1), (2, 2), (3, 3)])
-    vertex = face[0]
-    assert 'AcDbVertex' == vertex.tags.subclasses[2][0].value
-    assert 'AcDbPolyFaceMeshVertex' == vertex.tags.subclasses[3][0].value
 
-    vertex = face[4]
-    assert len(vertex.tags.subclasses[2]) == 0
-    assert 'AcDbFaceRecord' == vertex.tags.subclasses[3][0].value
+    collector = TagCollector()
+    face.export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbPolyFaceMesh') in tags
+
+    collector.reset()
+    face[0].export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbVertex') in tags
+    assert (100, 'AcDbPolyFaceMeshVertex') in tags
+
+    collector.reset()
+    face[4].export_dxf(collector)
+    tags = collector.tags
+    assert (100, 'AcDbVertex') not in tags
+    assert (100, 'AcDbFaceRecord') in tags
 
 
-def test_new_style_polyface_face_count(dwg):
-    section = EntitySection(load_section(NEW_STYLE_POLYFACE, 'ENTITIES', dwg.entitydb, dwg.dxfversion), dwg)
-    entities = section.model_space_entities()
-    polyface = dwg.get_dxf_entity(list(entities)[0])
+def test_new_style_polyface_face_count():
+    doc = ezdxf.new2()
+    section = EntitySection(doc, load_entities(NEW_STYLE_POLYFACE, 'ENTITIES', doc))
+    entities = list(section)
+    polyface = entities[0]
     faces = list(polyface.faces())
     assert 6 == len(faces)
 

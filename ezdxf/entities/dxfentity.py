@@ -554,6 +554,9 @@ class DXFEntity:
     def del_dxf_attrib(self, key: str) -> None:
         self.dxf.delete(key)
 
+    def dxf_attrib_exists(self, key: str) -> bool:
+        return self.dxf.hasattr(key)
+
     @property
     def entitydb(self) -> 'EntityDB':
         return self.doc.entitydb

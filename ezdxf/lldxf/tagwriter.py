@@ -88,6 +88,9 @@ class TagCollector:
     def has_all_tags(self, other: 'TagCollector'):
         return all(tag in self.tags for tag in other.tags)
 
+    def reset(self):
+        self.tags = []
+
 
 def basic_tags_from_text(text: str) -> List[DXFTag]:
     """
