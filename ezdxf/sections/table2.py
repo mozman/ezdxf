@@ -297,7 +297,10 @@ class ViewportTable(Table):
                 entry.dxf.owner = owner_handle
 
     def get_config(self, name: str) -> List['DXFEntity']:
-        return self.entries[self.key(name)]
+        try:
+            return self.entries[self.key(name)]
+        except KeyError:
+            raise DXFTableEntryError(name)
 
     def delete_config(self, name: str) -> None:
         self.remove(name)

@@ -2,29 +2,23 @@
 # License: MIT License
 import pytest
 
-import ezdxf
 from ezdxf.sections.acdsdata import AcDsDataSection
 from ezdxf import DXFKeyError
-from ezdxf.tools.test import load_section
+from ezdxf.lldxf.tags import internal_tag_compiler, group_tags
 
 
-@pytest.fixture(scope='module')
-def dwg():
-    return ezdxf.new('AC1027')
+@pytest.fixture
+def section():
+    entities = group_tags(internal_tag_compiler(ACDSSECTION))
+    return AcDsDataSection(entities)
 
 
-@pytest.fixture(scope='module')
-def section(dwg):
-    dxf = load_section(ACDSSECTION, 'ACDSDATA')
-    return AcDsDataSection(dxf, dwg)
-
-
-def test_build(section):
+def test_loader(section):
     assert 'ACDSDATA' == section.name.upper()
     assert len(section.entities) > 0
 
 
-def test_acdsrecord(section):
+def test_acds_record(section):
     records = [entity for entity in section.entities if entity.dxftype() == 'ACDSRECORD']
     assert len(records) > 0
     record = records[0]
@@ -32,7 +26,7 @@ def test_acdsrecord(section):
     assert record.has_section('AcDbDs::ID') is True
     assert record.has_section('mozman') is False
     with pytest.raises(DXFKeyError):
-        asm_data = record['mozman']
+        _ = record['mozman']
 
     asm_data = record['ASM_Data']
     binary_data = (tag for tag in asm_data if tag.code == 310)

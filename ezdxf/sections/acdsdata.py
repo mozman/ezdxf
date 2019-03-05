@@ -81,16 +81,15 @@ from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import Drawing, TagWriter
+    from ezdxf.eztypes2 import TagWriter
 
 
 class AcDsDataSection:
     name = 'ACDSDATA'
 
-    def __init__(self, entities: Iterable[Tags], drawing: 'Drawing'):
+    def __init__(self, entities: Iterable[Tags]):
         self.entities = []  # type: List[AcDsData]
         self.section_info = []  # type: Tags
-        self.drawing = drawing
         if entities is not None:
             self.load_tags(iter(entities))
 
@@ -109,11 +108,11 @@ class AcDsDataSection:
             entity = cls(entity.tags)
         self.entities.append(entity)
 
-    def write(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nACDSDATA\n")
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:
-            entity.write(tagwriter)
+            entity.export_dxf(tagwriter)
         tagwriter.write_tag2(0, 'ENDSEC')
 
 
@@ -121,7 +120,7 @@ class AcDsData:
     def __init__(self, tags: Tags):
         self.tags = tags
 
-    def write(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: 'TagWriter'):
         tagwriter.write_tags(self.tags)
 
     def dxftype(self) -> str:
