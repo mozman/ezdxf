@@ -59,11 +59,12 @@ class Drawing:
         self.dxffactory = EntityFactory(self)
         self.tracker = Tracker()  # still required
 
-        # Targeted DXF version, but drawing could be exported as any DXF version.
+        # Targeted DXF version, but drawing could be exported as another DXF version.
         # If target version is set, it is possible to warn user, if they try to use unsupported features, where they
         # use it and not at exporting, where the location of the code who created that features is not known.
         target_dxfversion = dxfversion.upper()
         self._dxfversion = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
+        self._loaded_dxfversion = None  # if loaded from file, store original dxf version
         self.encoding = 'cp1252'
         self.filename = None  # type: str # read/write
 
@@ -78,10 +79,6 @@ class Drawing:
         self.entities = None  # type: EntitySection
         self.objects = None  # type: ObjectsSection
         self.stored_sections = []
-
-        # DXF Tables
-        # todo
-
         self.layouts = None  # type: Layouts
         self.groups = None  # type: GroupCollection  # read only
         self.materials = None  # type: MaterialCollection # read only
@@ -177,17 +174,29 @@ class Drawing:
         self.reset_versionguid()
 
     @property
-    def dxfversion(self):
+    def dxfversion(self) -> str:
         return self._dxfversion
 
     @dxfversion.setter
-    def dxfversion(self, version):
+    def dxfversion(self, version) -> None:
+        self._dxfversion = self._validate_dxf_version(version)
+        self.header['$ACADVER'] = version
+
+    def _validate_dxf_version(self, version: str) -> str:
         version = version.upper()
         version = acad_release_to_dxf_version.get(version, version)  # translates 'R12' -> 'AC1009'
         if version not in versions_supported_by_save:
-            raise DXFVersionError("Can not save DXF drawings as DXF version '{}'.".format(version))
-        self._dxfversion = version
-        self.header['$ACADVER'] = version
+            raise DXFVersionError('Unsupported DXF version "{}".'.format(version))
+        if version == DXF12:
+            if self._dxfversion > DXF12:
+                logger.warning('Downgrade from DXF {} to R12 may create an invalid DXF file.'.format(
+                    self.acad_release
+                ))
+        elif version < self._dxfversion:
+            logger.info('Downgrade from DXF {} to {} can cause lost of features.'.format(
+                self.acad_release, acad_release[version]
+            ))
+        return version
 
     def which_dxfversion(self, dxfversion=None) -> str:
         dxfversion = dxfversion if dxfversion is not None else self.dxfversion
@@ -258,6 +267,7 @@ class Drawing:
             self.header = HeaderSection.load(header_entities)
         # -----------------------------------------------------------------------------------
         self._dxfversion = self.header.get('$ACADVER', DXF12)  # type: str # read only  # no $ACADVER -> DXF R12
+        self._loaded_dxfversion = self._dxfversion  # save dxf version of loaded file
         self.encoding = toencoding(self.header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
         seed = self.header.get('$HANDSEED', str(self.entitydb.handles))  # type: str
@@ -282,16 +292,15 @@ class Drawing:
             if name not in MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))
         # -----------------------------------------------------------------------------------
+        if self.dxfversion < DXF12:
+            # upgrade to DXF R12
+            logger.info('Upgrading drawing to DXF R12.')
+            self.dxfversion = DXF12
 
         if self.dxfversion == DXF12:
-            self.tables.create_table_handles()
             # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
             # and each table entry has an owner tag, pointing to the TABLE entry
-            # todo: assign each TABLE entity a handle, which is only now possible, when all used handles in the DXF file are known
-            # todo: assign all TABLE entries the new handle of TABLE as new owner tag.
-
-            # All entities have handles, despite DXF R12 works also without handles, ezdxf need it.
-            pass  # todo: for r12 create block_records and rename $Model_Space and $Paper_Space before Layout setup
+            self.tables.create_table_handles()
 
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
@@ -328,6 +337,7 @@ class Drawing:
 
     def write(self, stream, dxfversion=None) -> None:
         dxfversion = self.which_dxfversion(dxfversion)
+        dxfversion = self._validate_dxf_version(dxfversion)
         if dxfversion == DXF12:
             handles = bool(self.header.get('$HANDLING', 0))
         else:
