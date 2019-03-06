@@ -14,6 +14,10 @@ from ezdxf.tools import take2
 from ezdxf.tools.indexing import Index
 
 
+def array_from_tags(tags: Tags, code: int, dtype='f') -> array:
+    return array(dtype, (tag.value for tag in tags if tag.code == code))
+
+
 class PackedTags:
     __slots__ = ()
 
