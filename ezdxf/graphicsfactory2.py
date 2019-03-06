@@ -18,13 +18,13 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import Spline, ImageDef, Image
     from ezdxf.eztypes import UnderlayDef, Underlay
-    from ezdxf.eztypes import Hatch, Mesh, Ellipse, MText, Ray, XLine, DimStyleOverride
+    from ezdxf.eztypes import Hatch, Mesh, DimStyleOverride
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface, \
         LoftedSurface
 
     from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic
     from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
-    from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline
+    from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray
 
 
 class CreatorInterface:
@@ -462,7 +462,7 @@ class CreatorInterface:
             raise DXFVersionError('MTEXT requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         mtext = self.new_entity('MTEXT', dxfattribs)
-        mtext.set_text(text)
+        mtext.text = text
         return mtext
 
     def add_ray(self, start: 'Vertex', unit_vector: 'Vertex', dxfattribs: dict = None) -> 'Ray':

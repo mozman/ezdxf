@@ -89,6 +89,9 @@ if TYPE_CHECKING:
     from ezdxf.entities.viewport import Viewport
     from ezdxf.entities.block import Block, EndBlk
     from ezdxf.entities.lwpolyline import LWPolyline
+    from ezdxf.entities.ellipse import Ellipse
+    from ezdxf.entities.xline import XLine, Ray
+    from ezdxf.entities.mtext import MText
 
     # other
     from ezdxf.audit import Auditor

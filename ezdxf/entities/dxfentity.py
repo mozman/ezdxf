@@ -552,7 +552,7 @@ class DXFEntity:
         self.dxf.set(key, value)
 
     def del_dxf_attrib(self, key: str) -> None:
-        self.dxf.delete(key)
+        self.dxf.discard(key)
 
     def dxf_attrib_exists(self, key: str) -> bool:
         return self.dxf.hasattr(key)

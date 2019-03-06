@@ -1,53 +1,169 @@
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
+# created 2019-02-15
 import pytest
 import ezdxf
-from ezdxf.modern.mtext import split_string_in_chunks, MTextData
 from ezdxf.lldxf import const
 
+from ezdxf.entities.mtext import MText, split_string_in_chunks, MTextData
+from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+
+
+MTEXT = """0
+MTEXT
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
+100
+AcDbMText
+ 10
+0
+ 20
+0
+ 30
+0
+40
+1.0
+71
+1
+1
+
+73
+1
+"""
+
+@pytest.fixture
+def entity():
+    return MText.from_text(MTEXT)
+
+
+def test_registered():
+    from ezdxf.entities.factory import ENTITY_CLASSES
+    assert 'MTEXT' in ENTITY_CLASSES
+
+
+def test_default_init():
+    dxfclass = MText()
+    assert dxfclass.dxftype() == 'MTEXT'
+    assert dxfclass.dxf.handle is None
+    assert dxfclass.dxf.owner is None
+
+
+def test_default_new():
+    entity = MText.new(handle='ABBA', owner='0', dxfattribs={
+        'color': 7,
+        'insert': (1, 2, 3),
+        'char_height': 1.8,
+        'width': 20,
+        'defined_height': 30,
+        'attachment_point': 3,
+        'flow_direction': 3,
+        'style': 'OpenSans',
+        'extrusion': (4, 5, 6),
+        'text_direction': (7, 8, 9),
+        'rect_width': 42,
+        'rect_height': 43,
+        'rotation': 50,
+        'line_spacing_style': 2,
+        'line_spacing_factor': 1.7,
+        'box_fill_scale': 1.1,
+        'bg_fill': 3,
+        'bg_fill_color': 14,
+        'bg_fill_true_color': 111222,
+        'bg_fill_color_name': 'magenta',
+        'bg_fill_transparency': 1,
+    })
+    assert entity.dxf.layer == '0'
+    assert entity.dxf.color == 7
+    assert entity.dxf.insert == (1, 2, 3)
+    assert entity.dxf.char_height == 1.8
+    assert entity.dxf.width == 20
+    assert entity.dxf.defined_height == 30
+    assert entity.dxf.attachment_point == 3
+    assert entity.dxf.flow_direction == 3
+    assert entity.dxf.extrusion == (4, 5, 6)
+    assert entity.dxf.text_direction == (7, 8, 9)
+    assert entity.dxf.rect_width == 42
+    assert entity.dxf.rect_height == 43
+    assert entity.dxf.rotation == 50
+    assert entity.dxf.line_spacing_style == 2
+    assert entity.dxf.line_spacing_factor == 1.7
+    assert entity.dxf.box_fill_scale == 1.1
+    assert entity.dxf.bg_fill == 3
+    assert entity.dxf.bg_fill_color == 14
+    assert entity.dxf.bg_fill_true_color == 111222
+    assert entity.dxf.bg_fill_color_name == 'magenta'
+    assert entity.dxf.bg_fill_transparency == 1
+
+
+def test_load_from_text(entity):
+    assert entity.dxf.layer == '0'
+    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.insert == (0, 0, 0)
+    assert entity.dxf.char_height == 1.
+    assert entity.dxf.attachment_point == 1
+    assert entity.dxf.line_spacing_style == 1
+    assert entity.text == ''
+
+
+def test_write_dxf():
+    entity = MText.from_text(MTEXT)
+    collector = TagCollector()
+    entity.export_dxf(collector)
+    result = collector.tags
+    expected = basic_tags_from_text(MTEXT)
+    assert result == expected
+
 
 @pytest.fixture(scope='module')
-def dwg():
-    return ezdxf.new('R2007')
+def doc():
+    return ezdxf.new2('R2007')
 
 
 @pytest.fixture(scope='module')
-def layout(dwg):
-    return dwg.modelspace()
+def layout(doc):
+    return doc.modelspace()
 
 
 def test_new_short_mtext(layout):
     mtext = layout.add_mtext("a new mtext")
-    assert "a new mtext" == mtext.get_text()
+    assert "a new mtext" == mtext.text
 
 
 def test_new_long_mtext(layout):
     text = "0123456789" * 25 + "a new mtext"
     mtext = layout.add_mtext(text)
-    assert text == mtext.get_text()
+    assert text == mtext.text
 
 
 def test_new_long_mtext_2(layout):
     text = "0123456789" * 25 + "abcdefghij" * 25
     mtext = layout.add_mtext(text)
-    assert text == mtext.get_text()
+    assert text == mtext.text
 
 
 def test_last_text_chunk_mtext(layout):
     # this tests none public details of MText class
     text = "0123456789" * 25 + "abcdefghij" * 25 + "a new mtext"
     mtext = layout.add_mtext(text)
-    tags = mtext.tags.get_subclass("AcDbMText")
+    collector = TagCollector()
+    mtext.export_dxf(collector)
+    tags = collector.tags
     last_text_chunk = ""
     for tag in tags:
-        if tag.code == 1:
+        if tag[0] == 1:
             last_text_chunk = tag.value
     assert last_text_chunk == "a new mtext"
 
 
 def test_get_rotation(layout):
     mtext = layout.add_mtext('TEST')
-    mtext.dxf.text_direction = (1, 1, 0) # 45 deg
+    mtext.dxf.text_direction = (1, 1, 0)  # 45 deg
     mtext.dxf.rotation = 30
     assert 45 == mtext.get_rotation()
 
@@ -66,7 +182,7 @@ def test_buffer(layout):
     mtext = layout.add_mtext(text)
     with mtext.edit_data() as data:
         data.text = text2
-    assert text2 == mtext.get_text()
+    assert text2 == mtext.text
 
 
 def test_set_location(layout):
