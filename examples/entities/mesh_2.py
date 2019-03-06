@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Manfred Moitzi
+# Copyright (c) 2016-2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
 
@@ -14,8 +14,8 @@ p = [
     (0, 1, 1),
 ]
 
-dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
-msp = dwg.modelspace()
+doc = ezdxf.new2('R2000')  # mesh requires the DXF 2000 or newer format
+msp = doc.modelspace()
 mesh = msp.add_mesh()
 
 with mesh.edit_data() as mesh_data:
@@ -27,4 +27,4 @@ with mesh.edit_data() as mesh_data:
     mesh_data.add_face([p[0], p[3], p[7], p[4]])
     mesh_data.optimize()
 
-dwg.saveas("cube_mesh_2.dxf")
+doc.saveas("cube_mesh_2.dxf")

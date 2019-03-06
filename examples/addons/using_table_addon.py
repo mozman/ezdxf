@@ -1,13 +1,13 @@
 # Purpose: examples for add-on table usage
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.addons import Table
 
 
-def get_mat_symbol(dwg):
-    symbol = dwg.blocks.new('matsymbol')
+def get_mat_symbol(doc):
+    symbol = doc.blocks.new('matsymbol')
     p1 = 0.5
     p2 = 0.25
     points = [(p1, p2), (p2, p1), (-p2, p1), (-p1, p2), (-p1, -p2),
@@ -27,8 +27,8 @@ def get_mat_symbol(dwg):
 
 
 name = 'table.dxf'
-dwg = ezdxf.new('R12')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R12')
+msp = doc.modelspace()
 
 table = Table(insert=(0, 0), nrows=20, ncols=10)
 # create a new styles
@@ -81,7 +81,7 @@ table.new_cell_style(
     top=vborder,
     bottom=vborder,
 )
-mat_symbol = get_mat_symbol(dwg)
+mat_symbol = get_mat_symbol(doc)
 
 table.new_cell_style(
     name='matsym',
@@ -109,7 +109,7 @@ table.text_cell(6, 3, "line one\nline two\nand line three", span=(3, 3), style='
 
 # 2. table rendering
 # create anonymous block
-block = dwg.blocks.new_anonymous_block()
+block = doc.blocks.new_anonymous_block()
 # render table into block at 0, 0
 table.render(block, insert=(0, 0))
 # add block reference into model space at 80, 20
@@ -132,5 +132,5 @@ for pos in [3, 4, 5, 6]:
 # 3. table rendering
 # render table to a layout: can be the model space, a paper space or a block definition.
 table.render(msp, insert=(0, 0))
-dwg.saveas(name)
+doc.saveas(name)
 print("drawing '%s' created.\n" % name)

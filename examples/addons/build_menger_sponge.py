@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 import math
 import ezdxf
@@ -7,10 +7,10 @@ from ezdxf.math.matrix44 import Matrix44
 
 
 def write(filename, sponge, merge=False):
-    dwg = ezdxf.new('R2000')
+    doc = ezdxf.new2('R2000')
     transform = Matrix44.chain(Matrix44.z_rotate(math.radians(45)), Matrix44.translate(5, 3, 4))
-    sponge.render(dwg.modelspace(), merge=merge, matrix=transform)
-    dwg.saveas(filename)
+    sponge.render(doc.modelspace(), merge=merge, matrix=transform)
+    doc.saveas(filename)
 
 
 def main(filename, level=3, kind=0, merge=False):

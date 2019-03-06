@@ -1,6 +1,6 @@
 # Purpose: examples for using MText() add-on
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.addons import MText
@@ -39,8 +39,8 @@ def rotate_text(text, insert, parts=16, color=3):
 
 
 # MText for DXF R12
-dwg = ezdxf.new('R12')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R12')
+msp = doc.modelspace()
 
 txt = "Das ist ein mehrzeiliger Text\nZeile 2\nZeile 3\nUnd eine lange lange" \
         " ................ Zeile4"
@@ -73,5 +73,5 @@ txt = "--------------------------------------------------Zeile 1\n" \
 rotate_text(txt, (600, 100), parts=16, color=3)
 
 NAME = "mtext.dxf"
-dwg.saveas(NAME)
+doc.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)

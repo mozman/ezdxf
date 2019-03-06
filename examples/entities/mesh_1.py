@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Manfred Moitzi
+# Copyright (c) 2016-2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
 
@@ -36,8 +36,8 @@ polygon5_face = [
     [0, 1, 2, 3, 4]
 ]
 
-dwg = ezdxf.new('R2000')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R2000')
+msp = doc.modelspace()
 mesh = msp.add_mesh()
 with mesh.edit_data() as mesh_data:
     mesh_data.vertices = cube_vertices
@@ -48,4 +48,4 @@ with mesh5.edit_data() as mesh_data:
     mesh_data.vertices = polygon5_vertices
     mesh_data.faces = polygon5_face
 
-dwg.saveas("cube_mesh_1.dxf")
+doc.saveas("cube_mesh_1.dxf")

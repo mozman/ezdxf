@@ -1,9 +1,10 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
+# Created 2019-03-06
 from typing import TYPE_CHECKING, Iterable, Sequence
 import array
 import copy
+from itertools import chain
 from contextlib import contextmanager
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -50,11 +51,6 @@ class SplineData:
         self.control_points = spline.control_points
         self.knots = spline.knots
         self.weights = spline.weights
-
-
-def flatten_points(points: Iterable['Vertex']) -> Iterable[float]:
-    for point in points:
-        yield from point
 
 
 REMOVE_CODES = {10, 11, 40, 41, 72, 73, 74}
@@ -122,14 +118,6 @@ class Spline(DXFGraphic):
         self.export_spline_data(tagwriter)
 
     def export_spline_data(self, tagwriter: 'TagWriter'):
-        def export_points(points, point_code: int):
-            delta = 0
-            for c in points:
-                tagwriter.write_tag2(point_code + delta, c)
-                delta += 10
-                if delta > 20:
-                    delta = 0
-
         for value in self._knots:
             tagwriter.write_tag2(40, value)
 
@@ -137,8 +125,8 @@ class Spline(DXFGraphic):
             for value in self._weights:
                 tagwriter.write_tag2(41, value)
 
-        export_points(self._control_points.value, point_code=10)
-        export_points(self._fit_points.value, point_code=11)
+        self._control_points.export_dxf(tagwriter, code=10)
+        self._fit_points.export_dxf(tagwriter, code=11)
 
     @property
     def closed(self) -> bool:
@@ -181,7 +169,7 @@ class Spline(DXFGraphic):
 
     @control_points.setter
     def control_points(self, points: Iterable['Vertex']) -> None:
-        self._control_points = VertexArray(flatten_points(points))
+        self._control_points = VertexArray(chain.from_iterable(points))
 
     def control_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_control_points
         return len(self.control_points)
@@ -196,7 +184,7 @@ class Spline(DXFGraphic):
 
     @fit_points.setter
     def fit_points(self, points: Iterable['Vertex']) -> None:
-        self._fit_points = VertexArray(flatten_points(points))
+        self._fit_points = VertexArray(chain.from_iterable(points))
 
     def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
         return len(self.fit_points)

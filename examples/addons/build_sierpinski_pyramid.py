@@ -1,13 +1,13 @@
-# Copyright (C) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.addons import SierpinskyPyramid
 
 
 def write(filename, pyramids, merge=False):
-    dwg = ezdxf.new('R2000')
-    pyramids.render(dwg.modelspace(), merge=merge)
-    dwg.saveas(filename)
+    doc = ezdxf.new2('R2000')
+    pyramids.render(doc.modelspace(), merge=merge)
+    doc.saveas(filename)
 
 
 def main(filename, level, sides=3, merge=False):

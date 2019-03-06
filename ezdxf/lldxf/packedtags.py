@@ -12,6 +12,7 @@ from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from ezdxf.tools import take2
 from ezdxf.tools.indexing import Index
+from ezdxf.lldxf.tagwriter import TagWriter
 
 
 class PackedTags:
@@ -209,6 +210,14 @@ class VertexArray(PackedTags):
     def dxftags(self) -> Iterable[DXFVertex]:
         for point in self:
             yield DXFVertex(self.VERTEX_CODE, point)
+
+    def export_dxf(self, tagwriter: 'TagWriter', code=10):
+        delta = 0
+        for c in self.value:
+            tagwriter.write_tag2(code + delta, c)
+            delta += 10
+            if delta > 20:
+                delta = 0
 
     def append(self, point: Sequence[float]) -> None:
         if len(point) != self.VERTEX_SIZE:

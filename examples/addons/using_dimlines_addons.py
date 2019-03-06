@@ -1,6 +1,6 @@
 # Purpose: examples for using Dimension add-ons
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.addons import dimstyles, LinearDimension, AngularDimension
@@ -8,8 +8,8 @@ from ezdxf.addons import ArcDimension, RadialDimension
 
 # create a new drawing: dxfwrite.DXFEngine.drawing(filename)
 NAME = 'dimlines.dxf'
-dwg = ezdxf.new('R12')
-msp = dwg.modelspace()
+doc = ezdxf.new('R12')
+msp = doc.modelspace()
 
 
 def render(dimline):
@@ -17,7 +17,7 @@ def render(dimline):
 
 
 # add block and layer definition to drawing
-dimstyles.setup(dwg)
+dimstyles.setup(doc)
 
 # create a dimension line for following points
 points = [(1.7, 2.5), (0, 0), (3.3, 6.9), (8, 12)]
@@ -34,7 +34,7 @@ render(LinearDimension((0, 3), points, angle=90.))
 render(LinearDimension((-2, 14), points, dimstyle='arrow', angle=-10))
 
 # next dimline is added as anonymous block
-block = dwg.blocks.new_anonymous_block()
+block = doc.blocks.new_anonymous_block()
 msp.add_blockref(block.name, insert=(0, 0), dxfattribs={'layer': 'DIMENSIONS'})
 dimline = LinearDimension((-2, 3), points, dimstyle='dots2', angle=90.)
 dimline.set_text(1, 'CATCH')
@@ -59,5 +59,5 @@ render(ArcDimension(pos=(23, 5), center=(20, 0), start=(25, 0), end=(25, 5), dim
 dimstyles.new("radius", height=0.25, prefix='R=')
 render(RadialDimension((20, 0), (24, 1.5), dimstyle='radius'))
 
-dwg.saveas(NAME)
+doc.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)

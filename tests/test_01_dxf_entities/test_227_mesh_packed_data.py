@@ -1,39 +1,21 @@
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-import ezdxf
-from ezdxf.modern.mesh import Mesh, tag_processor
 from ezdxf.lldxf.extendedtags import ExtendedTags
-
-
-@pytest.fixture(scope='module')
-def dwg():
-    return ezdxf.new('AC1015')
-
-
-@pytest.fixture(scope='module')
-def msp(dwg):
-    return dwg.modelspace()
+from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.entities.mesh import Mesh
+from ezdxf.entities.mesh import create_vertex_array, create_face_list, create_edge_array, create_crease_array
+from ezdxf.entities.mesh import face_to_array
 
 
 @pytest.fixture
-def mesh(dwg):
-    tags = tag_processor(ExtendedTags.from_text(MESH))
-    return Mesh(tags, dwg)
+def mesh():
+    return Mesh.from_text(MESH)
 
 
-def test_mesh_properties(mesh):
-    assert 'MESH' == mesh.dxftype()
-    assert 256 == mesh.dxf.color
-    assert '0' == mesh.dxf.layer
-    assert 'BYLAYER' == mesh.dxf.linetype
-    assert mesh.dxf.paperspace == 0
-
-
-def test_mesh_dxf_attribs(mesh):
-    assert 2 == mesh.dxf.version
-    assert 0 == mesh.dxf.blend_crease
-    assert 3 == mesh.dxf.subdivision_levels
+@pytest.fixture
+def mesh_tags():
+    return ExtendedTags.from_text(MESH).subclasses[2]
 
 
 def test_mesh_geometric_data(mesh):
@@ -44,69 +26,61 @@ def test_mesh_geometric_data(mesh):
         assert 108 == len(mesh_data.edge_crease_values)
 
 
-def test_create_empty_mesh(msp):
-    mesh = msp.add_mesh()
-    assert 2 == mesh.dxf.version
-    assert 0 == mesh.dxf.blend_crease
-    assert 0 == mesh.dxf.subdivision_levels
+def dxftags(entity):
+    collector = TagCollector()
+    entity.export_dxf(collector)
+    return collector.tags
 
 
-def test_add_faces(msp):
-    mesh = msp.add_mesh()
-    with mesh.edit_data() as mesh_data:
-        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
-        assert 4 == len(mesh_data.vertices)
-        assert 1 == len(mesh_data.faces)
-        assert [0, 1, 2, 3] == mesh_data.faces[0]
+def test_create_vertex_array(mesh_tags):
+    start_index = mesh_tags.tag_index(92) + 1
+    vertices = create_vertex_array(mesh_tags, start_index)
+    assert len(vertices) == 56
+
+    tags = dxftags(vertices)
+    assert len(tags) == 3 * len(vertices)
 
 
-def test_add_edges(msp):
-    mesh = msp.add_mesh()
-    with mesh.edit_data() as mesh_data:
-        mesh_data.add_edge([(0, 0, 0), (1, 0, 0)])
-        assert 2 == len(mesh_data.vertices)
-        assert 1 == len(mesh_data.edges)
-        assert [0, 1] == mesh_data.edges[0]
+def test_create_face_list(mesh_tags):
+    start_index = mesh_tags.tag_index(93) + 1
+    faces = create_face_list(mesh_tags, start_index)
+    assert len(faces) == 54
+
+    tags = dxftags(faces)
+    assert tags[0].code == 93
+    assert tags[0].value == 270
+    assert faces.tag_count() == 270
+    # tag count + counter
+    assert len(tags) == 271
 
 
-def test_vertex_format(msp):
-    mesh = msp.add_mesh()
-    with mesh.edit_data() as mesh_data:
-        with pytest.raises(ezdxf.DXFValueError):
-            mesh_data.add_vertex((0, 0))  # only (x, y, z) vertices allowed
+def test_create_edge_array(mesh_tags):
+    start_index = mesh_tags.tag_index(94) + 1
+    edges = create_edge_array(mesh_tags, start_index)
+    assert len(edges) == 108
+
+    tags = dxftags(edges)
+    assert tags[0].code == 94
+    assert tags[0].value == 108
+    # always two tags per edge + counter
+    assert len(tags) == 217
 
 
-def test_optimize(msp):
-    vertices = [
-        (0, 0, 0),
-        (1, 0, 0),
-        (1, 1, 0),
-        (0, 1, 0),
-        (0, 0, 1),
-        (1, 0, 1),
-        (1, 1, 1),
-        (0, 1, 1),
-    ]
+def test_create_crease_array(mesh_tags):
+    start_index = mesh_tags.tag_index(95) + 1
+    creases = create_crease_array(mesh_tags, start_index)
+    assert len(creases) == 108
 
-    # 6 cube faces
-    cube_faces = [
-        [0, 1, 2, 3],
-        [4, 5, 6, 7],
-        [0, 1, 5, 4],
-        [1, 2, 6, 5],
-        [3, 2, 6, 7],
-        [0, 3, 7, 4]
-    ]
-    mesh = msp.add_mesh()
-    with mesh.edit_data() as mesh_data:
-        for face in cube_faces:
-            mesh_data.add_face([vertices[index] for index in face])
-        assert 24 == len(mesh_data.vertices)
-        assert 6 == len(mesh_data.faces)
-        mesh_data.optimize()
-        assert 8 == len(mesh_data.vertices), "Doublettes not removed"
-        assert 6 == len(mesh_data.faces)
-        assert 0 == len(mesh_data.edges)
+
+def test_face_indices_as_array():
+    a = face_to_array([0, 1, 2, 3])
+    assert a.typecode == 'B'
+
+    a = face_to_array([0, 1, 2, 512])
+    assert a.typecode == 'I'
+
+    a = face_to_array([0, 1, 2, 100000])
+    assert a.typecode == 'L'
 
 
 MESH = """  0
