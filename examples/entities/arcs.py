@@ -1,12 +1,11 @@
-# Purpose: ARC example
 # Created: 09.07.2018
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.math import Vector, ConstructionArc, UCS
 
-dwg = ezdxf.new('R2000')
-modelspace = dwg.modelspace()
+doc = ezdxf.new2('R2000')
+modelspace = doc.modelspace()
 
 # create a 2D arcs in xy-plane
 delta = 30
@@ -54,6 +53,6 @@ arc = ConstructionArc.from_2p_radius(p1, p2, 100, ccw=False, center_is_left=Fals
 arc.add_to_layout(modelspace, dxfattribs={'color': 4})
 
 # saving DXF file
-filename = 'using_arcs.dxf'
-dwg.saveas(filename)
+filename = 'arcs.dxf'
+doc.saveas(filename)
 print("drawing '%s' created.\n" % filename)

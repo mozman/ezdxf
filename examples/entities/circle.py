@@ -3,13 +3,13 @@
 # License: MIT License
 import ezdxf
 
-dwg = ezdxf.new2('R12', setup=True)
-modelspace = dwg.modelspace()
+doc = ezdxf.new2('R12', setup=True)
+modelspace = doc.modelspace()
 modelspace.add_circle(center=(0, 0), radius=1.5, dxfattribs={
     'layer': 'test',
     'linetype': 'DASHED',
 })
 
 filename = 'circle.dxf'
-dwg.saveas(filename)
+doc.saveas(filename)
 print("drawing '%s' created.\n" % filename)

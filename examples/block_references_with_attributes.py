@@ -1,6 +1,6 @@
 # Purpose: 'flag' example
 # Created: 04.11.2010
-# Copyright (c) 2010, 2011 Manfred Moitzi
+# Copyright (c) 2010-2019 Manfred Moitzi
 # License: MIT License
 import random
 import ezdxf
@@ -17,11 +17,11 @@ SAMPLE_COORDS = [get_random_point() for x in range(50)]
 flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
 
 
-dwg = ezdxf.new('ac1024')
-dwg.layers.new('FLAGS')
+doc = ezdxf.new2('R2007')
+doc.layers.new('FLAGS')
 
 # first create a block
-flag = dwg.blocks.new(name='FLAG')
+flag = doc.blocks.new(name='FLAG')
 
 # add dxf entities to the block (the flag)
 # use base_point = (x, y) to define an other base_point than (0, 0)
@@ -29,10 +29,10 @@ flag.add_polyline2d(flag_symbol)
 flag.add_circle((0, 0), .4, dxfattribs={'color': 2})
 
 # define some attributes
-flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
-flag.add_attdef('XPOS', (0.5, -1.0), {'height': 0.25, 'color': 4})
-flag.add_attdef('YPOS', (0.5, -1.5), {'height': 0.25, 'color': 4})
-modelspace = dwg.modelspace()
+flag.add_attdef('NAME', (0.5, -0.5), dxfattribs={'height': 0.5, 'color': 3})
+flag.add_attdef('XPOS', (0.5, -1.0), dxfattribs={'height': 0.25, 'color': 4})
+flag.add_attdef('YPOS', (0.5, -1.5), dxfattribs={'height': 0.25, 'color': 4})
+modelspace = doc.modelspace()
 for number, point in enumerate(SAMPLE_COORDS):
     values = {
         'NAME': "P(%d)" % (number+1),
@@ -48,5 +48,5 @@ for number, point in enumerate(SAMPLE_COORDS):
     })
 
 filename = 'flags.dxf'
-dwg.saveas(filename)
+doc.saveas(filename)
 print("drawing '%s' created.\n" % filename)

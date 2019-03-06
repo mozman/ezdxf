@@ -1,11 +1,10 @@
-# Purpose: 'mtext' example
 # Created: 18.02.2017
-# Copyright (c) 2017 Manfred Moitzi
+# Copyright (c) 2017-2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
 
-dwg = ezdxf.new('ac1015')
-modelspace = dwg.modelspace()
+doc = ezdxf.new2('R2000')
+modelspace = doc.modelspace()
 modelspace.add_mtext("This is a text in the YZ-plane",
                      dxfattribs={
                          'width': 12,  # reference rectangle width
@@ -13,5 +12,5 @@ modelspace.add_mtext("This is a text in the YZ-plane",
                          'extrusion': (1, 0, 0)  # normal vector of the text plane
                      })
 
-dwg.saveas('mtext_in_yz_plane.dxf')
+doc.saveas('mtext_in_yz_plane.dxf')
 

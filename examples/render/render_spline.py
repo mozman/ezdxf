@@ -1,6 +1,6 @@
 # Purpose: examples for using Spline() add-on
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.render import Spline
@@ -11,8 +11,8 @@ next_frame = Matrix44.translate(0, 5, 0)
 right_frame = Matrix44.translate(10, 0, 0)
 
 NAME = 'spline.dxf'
-dwg = ezdxf.new('R2000')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R2000')
+msp = doc.modelspace()
 
 
 def draw(points):
@@ -72,5 +72,5 @@ Spline(spline_points).render_closed_rbspline(msp, weights=weights, degree=3, dxf
 msp.add_closed_rational_spline(control_points=spline_points, weights=weights, degree=3, dxfattribs={'color': 4})
 msp.add_text("Spline.render_closed_rbspline() matches 'periodic closed' AutoCAD", dxfattribs={'height': .1}).set_pos(spline_points[0])
 
-dwg.saveas(NAME)
+doc.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)

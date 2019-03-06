@@ -92,6 +92,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.ellipse import Ellipse
     from ezdxf.entities.xline import XLine, Ray
     from ezdxf.entities.mtext import MText
+    from ezdxf.entities.spline import Spline
 
     # other
     from ezdxf.audit import Auditor
