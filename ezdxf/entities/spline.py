@@ -7,9 +7,8 @@ import copy
 from contextlib import contextmanager
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
-from ezdxf.lldxf.packedtags import VertexArray, array_from_tags
+from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.math.bspline import knot_uniform, knot_open_uniform
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -45,28 +44,6 @@ acdb_spline = DefSubclass('AcDbSpline', {
 })
 
 
-class ControlPoints(VertexArray):
-    code = None  # DXFTag compatibility is not necessary
-    VERTEX_CODE = 10
-    VERTEX_SIZE = 3
-
-    def dxftags(self) -> Iterable[DXFTag]:
-        # control point count
-        yield DXFTag(73, len(self))
-        yield from super().dxftags()
-
-
-class FitPoints(VertexArray):
-    code = None  # DXFTag compatibility is not necessary
-    VERTEX_CODE = 11
-    VERTEX_SIZE = 3
-
-    def dxftags(self) -> Iterable[DXFTag]:
-        # fit point count
-        yield DXFTag(74, len(self))
-        yield from super().dxftags()
-
-
 class SplineData:
     def __init__(self, spline: 'Spline'):
         self.fit_points = spline.fit_points
@@ -97,10 +74,10 @@ class Spline(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self._fit_points = FitPoints()  # data stored as array.array('f')
-        self._control_points = ControlPoints()  # data stored as array.array('f')
-        self._knots = array.array('d', [])
-        self._weights = array.array('d', [])
+        self.fit_points = []  # data stored as array.array('d')
+        self.control_points = []  # data stored as array.array('d')
+        self.knots = []  # data stored as array.array('d')
+        self.weights = []  # data stored as array.array('d')
 
     def _copy_data(self, entity: 'Spline') -> None:
         """ Copy data: control_points, fit_points, weights, knot_values. """
@@ -122,10 +99,10 @@ class Spline(DXFGraphic):
         return dxf
 
     def load_spline_data(self, spline_tags: 'Tags') -> None:
-        self._control_points = ControlPoints.from_tags(spline_tags)
-        self._fit_points = FitPoints.from_tags(spline_tags)
-        self._knots = array_from_tags(spline_tags, code=40)
-        self._weights = array_from_tags(spline_tags, code=41)
+        self.control_points = (value for code, value in spline_tags if code == 10)
+        self.fit_points = (value for code, value in spline_tags if code == 11)
+        self.knots = (value for code, value in spline_tags if code == 40)
+        self.weights = (value for code, value in spline_tags if code == 41)
         spline_tags.remove_tags(codes=REMOVE_CODES)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -195,7 +172,7 @@ class Spline(DXFGraphic):
         self._weights = array.array('d', values)
 
     @property
-    def control_points(self) -> ControlPoints:  # group code 10
+    def control_points(self) -> VertexArray:  # group code 10
         """
         Returns spline control points as ControlPoints() object.
 
@@ -204,13 +181,13 @@ class Spline(DXFGraphic):
 
     @control_points.setter
     def control_points(self, points: Iterable['Vertex']) -> None:
-        self._control_points = ControlPoints(flatten_points(points))
+        self._control_points = VertexArray(flatten_points(points))
 
     def control_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_control_points
         return len(self.control_points)
 
     @property
-    def fit_points(self) -> FitPoints:  # group code 11
+    def fit_points(self) -> VertexArray:  # group code 11
         """
         Returns spline fit points as FitPoints() object.
 
@@ -219,7 +196,7 @@ class Spline(DXFGraphic):
 
     @fit_points.setter
     def fit_points(self, points: Iterable['Vertex']) -> None:
-        self._fit_points = FitPoints(flatten_points(points))
+        self._fit_points = VertexArray(flatten_points(points))
 
     def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
         return len(self.fit_points)
