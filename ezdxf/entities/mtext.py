@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
+# Created 2019-03-06
 from typing import TYPE_CHECKING, Union, Tuple, List
 import math
 from contextlib import contextmanager
@@ -87,6 +87,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
     'bg_fill_transparency': DXFAttr(441, dxfversion='AC1021'),
 
 })
+
 
 # ----------------------------------------------------------------------
 # NO MULTI-COLUMN SUPPORT
@@ -226,6 +227,12 @@ class MText(DXFGraphic):
 
     buffer = edit_data  # alias
 
+    def get_text(self) -> str:
+        return self.text
+
+    def set_text(self, text: str) -> None:
+        self.text = text
+
 
 ##################################################
 # MTEXT inline codes
@@ -283,20 +290,20 @@ class MText(DXFGraphic):
 
 
 class MTextData:
-    UNDERLINE_START = '\\L;'
-    UNDERLINE_STOP = '\\l;'
+    UNDERLINE_START = r'\L;'
+    UNDERLINE_STOP = r'\l;'
     UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
-    OVERSTRIKE_START = '\\O;'
-    OVERSTRIKE_STOP = '\\o;'
+    OVERSTRIKE_START = r'\O;'
+    OVERSTRIKE_STOP = r'\o;'
     OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
-    STRIKE_START = '\\K;'
-    STRIKE_STOP = '\\k;'
+    STRIKE_START = r'\K;'
+    STRIKE_STOP = r'\k;'
     STRIKE = STRIKE_START + '%s' + STRIKE_STOP
-    NEW_LINE = '\\P;'
+    NEW_LINE = r'\P;'
     GROUP_START = '{'
     GROUP_END = '}'
     GROUP = GROUP_START + '%s' + GROUP_END
-    NBSP = '\\~'  # none breaking space
+    NBSP = r'\~'  # none breaking space
 
     def __init__(self, text: str):
         self.text = text
@@ -311,14 +318,14 @@ class MTextData:
                  pitch: int = 0) -> None:
         bold_flag = 1 if bold else 0
         italic_flag = 1 if italic else 0
-        s = "\\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
+        s = r"\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
         self.append(s)
 
     def set_color(self, color_name: str) -> None:
-        self.append("\\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
+        self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
 
     def add_stacked_text(self, upr: str, lwr: str, t: str = '^') -> None:
-        """ Add stacked text `upr` over `lwr`, `t` defines the kind of stacking:
+        r""" Add stacked text `upr` over `lwr`, `t` defines the kind of stacking:
 
             "^": vertical stacked without divider line, e.g. \SA^B:
                  A
@@ -334,7 +341,7 @@ class MTextData:
 
         """
         # space ' ' in front of {lwr} is important
-        self.append('\\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
+        self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
 
 def split_string_in_chunks(s: str, size: int = 250) -> List[str]:

@@ -1,10 +1,6 @@
-# Purpose: repair/setup required DXF structures in existing DXF files (created by other DXF libs)
 # Created: 05.03.2016
-# Copyright (C) 2016, Manfred Moitzi
+# Copyright (c) 2016-2019, Manfred Moitzi
 # License: MIT License
-# --------------------------------------------------- #
-# Welcome to the place, where it gets dirty and ugly! #
-# --------------------------------------------------- #
 from typing import TYPE_CHECKING, Iterable, Optional, List
 from functools import partial
 import logging
@@ -20,6 +16,7 @@ if TYPE_CHECKING:  # import forward declarations
     from ezdxf.eztypes import Drawing
 
 
+# todo: no more required by new entity system
 def setup_layouts(dwg: 'Drawing'):
     layout_dict = dwg.rootdict.get_required_dict('ACAD_LAYOUT')
     if 'Model' not in layout_dict:  # do it only if model space is not defined
@@ -27,14 +24,17 @@ def setup_layouts(dwg: 'Drawing'):
         setup_paper_space(dwg)
 
 
+# todo: no more required by new entity system
 def setup_model_space(dwg: 'Drawing'):
     setup_layout_space(dwg, 'Model', '*Model_Space', _MODEL_SPACE_LAYOUT_TPL)
 
 
+# todo: no more required by new entity system
 def setup_paper_space(dwg: 'Drawing'):
     setup_layout_space(dwg, 'Layout1', '*Paper_Space', _PAPER_SPACE_LAYOUT_TPL)
 
 
+# todo: no more required by new entity system
 def setup_layout_space(dwg: 'Drawing', layout_name: str, block_name: str, tag_string: str):
     # This is just necessary for existing DXF drawings without properly setup management structures.
     # Layout structure is not initialized at this runtime phase
@@ -83,6 +83,7 @@ def setup_layout_space(dwg: 'Drawing', layout_name: str, block_name: str, tag_st
         dwg.blocks.rename_block(real_block_name, block_name)
 
 
+# todo: no more required by new entity system
 def create_layout_tags(dwg: 'Drawing', block_record_handle: str, owner: str, tag_string: str):
     # Problem: ezdxf was not designed to handle the absence of model/paper space LAYOUT entities
     # Layout structure is not initialized at this runtime phase
@@ -103,6 +104,7 @@ def create_layout_tags(dwg: 'Drawing', block_record_handle: str, owner: str, tag
     return layout_handle
 
 
+# todo: no more required by new entity system
 def upgrade_to_ac1015(dwg: 'Drawing'):
     """
     Upgrade DXF versions AC1012 and AC1014 to AC1015.
@@ -167,6 +169,7 @@ def upgrade_to_ac1015(dwg: 'Drawing'):
     dwg.header['$ACADVER'] = 'AC1015'
 
 
+# todo: no more required by new entity system
 def upgrade_to_ac1009(dwg: 'Drawing'):
     """
     Upgrade DXF versions prior to AC1009 (R12) to AC1009.
@@ -178,6 +181,7 @@ def upgrade_to_ac1009(dwg: 'Drawing'):
     # as far I know, nothing else to do
 
 
+# todo: no more required by new entity system
 def cleanup_r12(dwg: 'Drawing'):
     """
     Remove unsupported sections and tables, repair tag structure.
@@ -198,6 +202,7 @@ def cleanup_r12(dwg: 'Drawing'):
         del dwg.sections.tables['BLOCK_RECORDS']
 
 
+# todo: no more required by new entity system
 def filter_subclass_marker(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     """
     Filter subclass marker from malformed DXF R12 files. (like from Leica Disto Units)
@@ -349,6 +354,7 @@ def filter_invalid_xdata_group_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTa
             yield tag
 
 
+# todo: no more required by new entity system
 def fix_classes(dwg):
     def remove_group_code_91():
         logger.debug('Deleting group code 91 tags from CLASS entities for DXF Versions prior AC1018.')
@@ -364,6 +370,7 @@ def fix_classes(dwg):
         remove_group_code_91()
 
 
+# todo: no more required by new entity system
 _MODEL_SPACE_LAYOUT_TPL = """  0
 LAYOUT
   5
@@ -486,6 +493,7 @@ Model
 0
 """
 
+# todo: no more required by new entity system
 _PAPER_SPACE_LAYOUT_TPL = """  0
 LAYOUT
   5

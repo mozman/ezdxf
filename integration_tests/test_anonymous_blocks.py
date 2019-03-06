@@ -1,6 +1,5 @@
-# Copyright 2018, Manfred Moitzi
+# Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 import os
 import ezdxf
@@ -9,7 +8,7 @@ from ezdxf.lldxf.const import versions_supported_by_new
 
 @pytest.fixture(params=versions_supported_by_new)
 def drawing(request):
-    return ezdxf.new(request.param)
+    return ezdxf.new2(request.param)
 
 
 def test_create_anonymous_block(drawing, tmpdir):

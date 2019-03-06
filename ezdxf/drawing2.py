@@ -8,7 +8,7 @@ import logging
 from itertools import chain
 
 from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError, acad_release_to_dxf_version
-from ezdxf.lldxf.const import DXF13, DXF14, DXF2007, DXF12, DXF2013, versions_supported_by_save
+from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, versions_supported_by_save
 from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database2
 from ezdxf.lldxf import repair
@@ -301,6 +301,11 @@ class Drawing:
             # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
             # and each table entry has an owner tag, pointing to the TABLE entry
             self.tables.create_table_handles()
+
+        if self.dxfversion in (DXF13, DXF14):
+            # upgrade to DXF R2000
+            # todo: more?
+            self.dxfversion = DXF2000
 
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables

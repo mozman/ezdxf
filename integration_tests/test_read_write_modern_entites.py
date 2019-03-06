@@ -1,6 +1,5 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import pytest
 import os
 import ezdxf
@@ -8,7 +7,7 @@ from ezdxf.lldxf.const import LATEST_DXF_VERSION
 
 
 def test_lwpolyline(tmpdir):
-    dwg = ezdxf.new(LATEST_DXF_VERSION)
+    dwg = ezdxf.new2(LATEST_DXF_VERSION)
     msp = dwg.modelspace()
     # point format = (x, y, [start_width, [end_width, [bulge]]])
     points = [(0, 0, 0, .05), (3, 0, .1, .2, -.5), (6, 0, .1, .05), (9, 0)]
@@ -22,7 +21,7 @@ def test_lwpolyline(tmpdir):
     assert os.path.exists(filename)
 
     del dwg
-    dwg = ezdxf.readfile(filename)
+    dwg = ezdxf.readfile2(filename)
     msp = dwg.modelspace()
     lwpolyline = msp.query('LWPOLYLINE')[0]
     assert len(lwpolyline) == 4

@@ -1,6 +1,5 @@
-# Copyright 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from __future__ import unicode_literals
 import os
 import pytest
 import ezdxf
@@ -32,14 +31,14 @@ def test_entities_iterator(dxfversion, tmpdir):
     filename = tmpdir.join('polyline_{}.dxf'.format(dxfversion))
     #  filename = r'C:\Users\manfred\Desktop\Now\polyline_{}.dxf'.format(dxfversion)
     filename = str(filename)
-    drawing = ezdxf.new(dxfversion)
+    drawing = ezdxf.new2(dxfversion)
     modelspace = drawing.modelspace()
     modelspace.add_polyline3d(POINTS)
     drawing.saveas(filename)
 
     assert os.path.exists(filename)
 
-    dxf = ezdxf.readfile(filename)
+    dxf = ezdxf.readfile2(filename)
     for entity in dxf.entities:
         if entity.dxftype() == 'POLYLINE':  # iterator ok
             points = list(entity.points())

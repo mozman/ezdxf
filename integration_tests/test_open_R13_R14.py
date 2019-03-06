@@ -1,4 +1,4 @@
-# Copyright 2018, Manfred Moitzi
+# Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 import os
 import pytest
@@ -18,11 +18,12 @@ def filename(request):
 
 
 def test_open_R13_R14(filename, tmpdir):
-    dwg = ezdxf.readfile(filename)
-    assert 'Model' in dwg.layouts, 'Model space not found'
-    assert 'Layout1' in dwg.layouts, 'Paper space not found'
-    msp = dwg.modelspace()
+    doc = ezdxf.readfile2(filename)
+    assert 'Model' in doc.layouts, 'Model space not found'
+    assert 'Layout1' in doc.layouts, 'Paper space not found'
+    assert doc.dxfversion >= 'AC1015'
+    msp = doc.modelspace()
     msp.add_line((0, 0), (10, 3))
     converted = str(tmpdir.join("converted_AC1015.dxf"))
-    dwg.saveas(converted)
+    doc.saveas(converted)
     assert os.path.exists(converted)

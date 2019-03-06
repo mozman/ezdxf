@@ -1,4 +1,4 @@
-# Copyright 2018, Manfred Moitzi
+# Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 import os
 import pytest
@@ -19,7 +19,7 @@ def filename(request):
 
 def test_coordinate_order_problem(filename):
     try:
-        dwg = ezdxf.readfile(filename, legacy_mode=True)
+        dwg = ezdxf.readfile2(filename, legacy_mode=True)
     except ezdxf.DXFError as e:
         pytest.fail(str(e))
     else:
