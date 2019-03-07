@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError
+from ezdxf.lldxf.const import DXFInternalEzdxfError, DXFValueError, DXFTableEntryError
 from ezdxf.lldxf.types import get_xcode_for
 from ezdxf.tools import take2
 import logging
@@ -203,8 +203,12 @@ class Dimension(DXFGraphic):
         # replace virtual 'dimtxsty' attribute by 'dimtxsty_handle'
         if 'dimtxsty' in data:
             dimtxsty = data.pop('dimtxsty')
-            txtstyle = self.doc.styles.get(dimtxsty)
-            data['dimtxsty_handle'] = txtstyle.dxf.handle
+            try:
+                txtstyle = self.doc.styles.get(dimtxsty)
+            except DXFTableEntryError:
+                logger.info('Required text style "{}" does not exist.'.format(dimtxsty))
+            else:
+                data['dimtxsty_handle'] = txtstyle.dxf.handle
 
         tags = []
         dim_style_attributes = self.dim_style_attributes()
