@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 import math
 import ezdxf
@@ -6,10 +6,10 @@ from ezdxf.render import forms
 
 
 def write_mesh(filename, mesh):
-    dwg = ezdxf.new('R2000')
-    mesh.render(dwg.modelspace())
+    doc = ezdxf.new2('R2000')
+    mesh.render(doc.modelspace())
     try:
-        dwg.saveas(filename)
+        doc.saveas(filename)
     except IOError as e:
         print('ERROR: can not write "{0}": {1}'.format(e.filename, e.strerror))
     else:

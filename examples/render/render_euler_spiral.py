@@ -1,6 +1,5 @@
-# Purpose: examples for using EulerSpiral() add-on
 # Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 from math import radians
 import ezdxf
@@ -32,14 +31,13 @@ def tmatrix(dx, dy, sx=1, sy=1, angle=0):
 
 
 NAME = 'euler_spiral.dxf'
-dwg = ezdxf.new('R2000')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R2000', setup=True)
+msp = doc.modelspace()
 
 msp.add_line((-20, 0), (20, 0), dxfattribs={'linetype': "PHANTOM"})
 msp.add_line((0, -20), (0, 20), dxfattribs={'linetype': "PHANTOM"})
 for rotation in [0, 30, 45, 60, 75, 90]:
     four_c(10., 25, rotation)
 
-if dwg.validate(print_report=True):
-    dwg.saveas(NAME)
-    print("drawing '%s' created.\n" % NAME)
+doc.saveas(NAME)
+print("drawing '%s' created.\n" % NAME)

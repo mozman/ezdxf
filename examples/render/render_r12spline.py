@@ -1,6 +1,5 @@
-# Purpose: examples for using R12Spline() add-on
 # Created: 01.03.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.render import R12Spline
@@ -10,8 +9,8 @@ next_frame = Matrix44.translate(0, 7, 0)
 
 NAME = 'r12spline.dxf'
 SEGMENTS = 40
-dwg = ezdxf.new('R12')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R12')
+msp = doc.modelspace()
 
 
 def draw(points, extrusion=None):
@@ -32,7 +31,7 @@ spline_points = [Vector(p) for p in base_spline_points]
 draw(spline_points)
 msp.add_text("Open Quadratic R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
 R12Spline(spline_points, degree=2, closed=False).render(msp, segments=SEGMENTS, dxfattribs={'color': 3})
-if dwg.dxfversion > 'AC1009':
+if doc.dxfversion > 'AC1009':
     msp.add_open_spline(control_points=spline_points, degree=2, dxfattribs={'color': 4})
 
 # open cubic b-spline
@@ -40,7 +39,7 @@ spline_points = next_frame.transform_vectors(spline_points)
 draw(spline_points)
 msp.add_text("Open Cubic R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
 R12Spline(spline_points, degree=3, closed=False).render(msp, segments=SEGMENTS, dxfattribs={'color': 3})
-if dwg.dxfversion > 'AC1009':
+if doc.dxfversion > 'AC1009':
     msp.add_open_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
 
 # closed cubic b-spline
@@ -48,7 +47,7 @@ spline_points = next_frame.transform_vectors(spline_points)
 draw(spline_points)
 msp.add_text("Closed Cubic R12Spline", dxfattribs={'height': .1}).set_pos(spline_points[0])
 R12Spline(spline_points, degree=3, closed=True).render(msp, segments=SEGMENTS, dxfattribs={'color': 3})
-if dwg.dxfversion > 'AC1009':
+if doc.dxfversion > 'AC1009':
     msp.add_closed_spline(control_points=spline_points, degree=3, dxfattribs={'color': 4})
 
 # place open cubic b-spline in 3D space
@@ -64,5 +63,5 @@ msp.add_text(
 R12Spline(base_spline_points, degree=3, closed=False).render(msp, segments=SEGMENTS, ucs=ucs, dxfattribs={'color': 3})
 
 
-dwg.saveas(NAME)
+doc.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)

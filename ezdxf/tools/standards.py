@@ -5,6 +5,7 @@
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
 from ezdxf.render.arrows import ARROWS
 from ezdxf.options import options
+from ezdxf.lldxf.const import DXF12
 import logging
 
 if TYPE_CHECKING:  # import forward declarations
@@ -207,7 +208,7 @@ def setup_dimstyle(doc: 'Drawing', fmt: str, style: str = None, blk: str = None,
     else:  # arrow or block
         dimstyle.set_arrows(blk=blk)
         dimstyle.dxf.dimasz = fmt.dimasz
-    if doc.dxfversion > 'AC1009':
+    if doc.dxfversion > DXF12:
         # set text style
         dimstyle.dxf.dimtmove = 2  # move freely without leader
         dimstyle.dxf.dimtxsty = style

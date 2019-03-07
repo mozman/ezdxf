@@ -34,10 +34,20 @@ class LinetypePattern:
         return len(self.tags)
 
     def export_dxf(self, tagwriter: 'TagWriter'):
-        tagwriter.write_tags(self.tags)
+        if tagwriter.dxfversion <= DXF12:
+            self.export_r12_dxf(tagwriter)
+        else:
+            tagwriter.write_tags(self.tags)
+
+    def export_r12_dxf(self, tagwriter: 'TagWriter'):
+        tags49 = Tags(tag for tag in self.tags if tag.code == 49)
+        tagwriter.write_tag2(72, 65)
+        tagwriter.write_tag2(73, len(tags49))
+        tagwriter.write_tag(self.tags.get_first_tag(40))
+        tagwriter.write_tags(tags49)
 
     def is_complex_type(self):
-        return False
+        return self.tags.has_tag(340)
 
 
 @register_entity

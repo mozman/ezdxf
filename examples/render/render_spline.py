@@ -1,4 +1,3 @@
-# Purpose: examples for using Spline() add-on
 # Created: 09.02.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License

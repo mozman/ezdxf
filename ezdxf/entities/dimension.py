@@ -109,6 +109,15 @@ class Dimension(DXFGraphic):
     """ DXF DIMENSION entity """
     DXFTYPE = 'DIMENSION'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_dimension_dummy)
+    LINEAR = 0
+    ALIGNED = 1
+    ANGULAR = 2
+    DIAMETER = 3
+    RADIUS = 4
+    ANGULAR_3P = 5
+    ORDINATE = 6
+    ORDINATE_TYPE = 64
+    USER_LOCATION_OVERRIDE = 128
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

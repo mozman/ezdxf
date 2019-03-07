@@ -1,9 +1,7 @@
-# Purpose: examples for using Bezier() add-ons
-# Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
-from algebra.vector import Vector
+from ezdxf.math.vector import Vector
 from ezdxf.render import Bezier
 
 
@@ -20,8 +18,8 @@ def draw_control_point(point, tangent1, tangent2=(0, 0)):
 
 
 NAME = 'bezier.dxf'
-dwg = ezdxf.new('R12')
-msp = dwg.modelspace()
+doc = ezdxf.new2('R12')
+msp = doc.modelspace()
 
 bezier = Bezier()
 
@@ -42,5 +40,5 @@ bezier.append((16, 9, 20), tangent1=(-0.5, -3, 0))
 draw_control_point((16, 9, 20), (-0.5, -3, 0))
 
 bezier.render(msp, dxfattribs={'color': 4})
-dwg.saveas(NAME)
+doc.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)

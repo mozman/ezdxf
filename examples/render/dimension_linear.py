@@ -14,6 +14,8 @@ import logging
 if TYPE_CHECKING:
     from ezdxf.eztypes import DimStyle, DimStyleOverride
 
+new = ezdxf.new2
+
 # ========================================
 # IMPORTANT:
 # this script uses f-strings (Python 3.6)
@@ -25,7 +27,7 @@ if sys.version_info < (3, 6):
 # ========================================
 # Setup logging
 # ========================================
-logging.basicConfig(level='INFO')
+logging.basicConfig(level='WARNING')
 
 # ========================================
 # Setup your preferred output directory
@@ -50,16 +52,16 @@ DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 BRICSCAD = False
 
 
-def set_text_style(dwg, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
-    if dwg.dxfversion == 'AC1009':
+def set_text_style(doc, textstyle=DIM_TEXT_STYLE, name='EZDXF'):
+    if doc.dxfversion == 'AC1009':
         return
-    dimstyle = dwg.dimstyles.get(name)  # type: DimStyle
+    dimstyle = doc.dimstyles.get(name)  # type: DimStyle
     dimstyle.dxf.dimtxsty = textstyle
 
 
 def linear_tutorial(dxfversion='R12'):
-    dwg = ezdxf.new(dxfversion, setup=True)
-    msp = dwg.modelspace()
+    doc = new(dxfversion, setup=True)
+    msp = doc.modelspace()
     msp.add_line((0, 0), (3, 0))
 
     # horizontal DIMENSION
@@ -94,7 +96,7 @@ def linear_tutorial(dxfversion='R12'):
     dim2.set_text_align(halign='right')
     dim2.render()
 
-    dwg.saveas(OUTDIR / f'dim_linear_{dxfversion}_tutorial.dxf')
+    doc.saveas(OUTDIR / f'dim_linear_{dxfversion}_tutorial.dxf')
 
 
 def example_background_fill(dxfversion='R12'):
@@ -102,8 +104,8 @@ def example_background_fill(dxfversion='R12'):
     This example shows the background fill feature, ezdxf uses MTEXT for this feature and has no effect in DXF R12.
 
     """
-    dwg = ezdxf.new(dxfversion, setup=True)
-    msp = dwg.modelspace()
+    doc = new(dxfversion, setup=True)
+    msp = doc.modelspace()
     msp.add_line((0, 2.2), (10, 2.2))
 
     dim = msp.add_linear_dim(base=(0, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF',
@@ -120,53 +122,53 @@ def example_background_fill(dxfversion='R12'):
                              })  # type: DimStyleOverride
     dim.set_text('cyan')
     dim.render()
-    dwg.saveas(OUTDIR / f'background_fill_example_{dxfversion}.dxf')
+    doc.saveas(OUTDIR / f'background_fill_example_{dxfversion}.dxf')
 
 
 def example_for_all_text_placings_R12():
-    dwg = ezdxf.new('R12', setup=True)
-    example_for_all_text_placings(dwg, 'dim_linear_text_placing_R12.dxf')
+    doc = new('R12', setup=True)
+    example_for_all_text_placings(doc, 'dim_linear_text_placing_R12.dxf')
 
 
 def example_for_all_text_placings_ucs_R12():
     ucs = UCS(origin=(10, 10, 0), ux=(3, 1, 0), uz=(0, 0, 1))
-    dwg = ezdxf.new('R12', setup=True)
-    example_for_all_text_placings(dwg, 'dim_linear_text_placing_ucs_R12.dxf', ucs)
+    doc = new('R12', setup=True)
+    example_for_all_text_placings(doc, 'dim_linear_text_placing_ucs_R12.dxf', ucs)
 
 
 def example_for_all_text_placings_in_space_R12():
     ucs = UCS(ux=(1, 1, 0), uy=(0, 0, 1))
-    dwg = ezdxf.new('R12', setup=True)
-    example_for_all_text_placings(dwg, 'dim_linear_text_placing_in_space_R12.dxf', ucs)
+    doc = new('R12', setup=True)
+    example_for_all_text_placings(doc, 'dim_linear_text_placing_in_space_R12.dxf', ucs)
 
 
 def example_for_all_text_placings_R2007():
-    dwg = ezdxf.new('R2007', setup=True)
-    set_text_style(dwg)
-    example_for_all_text_placings(dwg, 'dim_linear_text_placing_R2007.dxf')
+    doc = new('R2007', setup=True)
+    set_text_style(doc)
+    example_for_all_text_placings(doc, 'dim_linear_text_placing_R2007.dxf')
 
 
 def example_for_all_text_placings_ucs_R2007():
     ucs = UCS(origin=(10, 10, 0), ux=(3, 1, 0), uz=(0, 0, 1))
-    dwg = ezdxf.new('R2007', setup=True)
-    set_text_style(dwg)
-    example_for_all_text_placings(dwg, 'dim_linear_text_placing_ucs_R2007.dxf', ucs)
+    doc = ezdxf.new('R2007', setup=True)
+    set_text_style(doc)
+    example_for_all_text_placings(doc, 'dim_linear_text_placing_ucs_R2007.dxf', ucs)
 
 
 def example_for_all_text_placings_in_space_R2007():
     ucs = UCS(ux=(1, 1, 0), uy=(0, 0, 1))
-    dwg = ezdxf.new('R2007', setup=True)
-    set_text_style(dwg)
-    example_for_all_text_placings(dwg, 'dim_linear_text_placing_in_space_R2007.dxf', ucs)
+    doc = new('R2007', setup=True)
+    set_text_style(doc)
+    example_for_all_text_placings(doc, 'dim_linear_text_placing_in_space_R2007.dxf', ucs)
 
 
-def example_for_all_text_placings(dwg, filename, ucs=None):
+def example_for_all_text_placings(doc, filename, ucs=None):
     """
     This example shows many combinations of dimension text placing by `halign`, `valign` and user defined location
     override.
 
     Args:
-        dwg: DXF drawing
+        doc: DXF drawing
         filename: file name for saving
         ucs: user defined coordinate system
 
@@ -185,19 +187,19 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
             msp.add_text(line, dxfattribs=attribs).set_pos(location)
             insert -= delta
 
-    msp = dwg.modelspace()
-    setup_dimstyle(dwg,
+    msp = doc.modelspace()
+    setup_dimstyle(doc,
                    name='TICK',
                    fmt='EZ_M_100_H25_CM',
                    style=DIM_TEXT_STYLE,
                    )
-    setup_dimstyle(dwg,
+    setup_dimstyle(doc,
                    name='ARCHTICK',
                    fmt='EZ_M_100_H25_CM',
                    blk=ezdxf.ARROWS.architectural_tick,
                    style=DIM_TEXT_STYLE,
                    )
-    setup_dimstyle(dwg,
+    setup_dimstyle(doc,
                    name='CLOSEDBLANK',
                    fmt='EZ_M_100_H25_CM',
                    blk=ezdxf.ARROWS.closed_blank,
@@ -336,7 +338,7 @@ def example_for_all_text_placings(dwg, filename, ucs=None):
         text(dimstyle, x=col * xoffset, y=row * yoffset, halign='above1', valign='above', oblique=80)
         row += 1
 
-    dwg.saveas(OUTDIR / filename)
+    doc.saveas(OUTDIR / filename)
 
 
 def example_multi_point_linear_dimension():
@@ -347,17 +349,17 @@ def example_multi_point_linear_dimension():
     This feature works best with DXF R2007+.
 
     """
-    dwg = ezdxf.new('R2007', setup=True)
-    msp = dwg.modelspace()
+    doc = new('R2007', setup=True)
+    msp = doc.modelspace()
     points = [(0, 0), (5, 1), (5.2, 1), (5.4, 0), (7, 0), (10, 3)]
     msp.add_lwpolyline(points)
 
     # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
-    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')  # type: DimStyle
+    dimstyle = doc.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')  # type: DimStyle
     dimstyle.dxf.dimtfill = 1
 
     msp.add_multi_point_linear_dim(base=(0, 5), points=points, dimstyle='WITHTFILL')
-    dwg.saveas(OUTDIR / f'multi_point_linear_dim_R2007.dxf')
+    doc.saveas(OUTDIR / f'multi_point_linear_dim_R2007.dxf')
 
 
 def random_point(start, end):
@@ -373,20 +375,20 @@ def example_random_multi_point_linear_dimension(count=10, length=20, discard=BRI
     This feature works best with DXF R2007+.
 
     """
-    dwg = ezdxf.new('R2007', setup=True)
-    msp = dwg.modelspace()
+    doc = new('R2007', setup=True)
+    msp = doc.modelspace()
 
     # create a random polyline.
     points = [random_point(0, length) for _ in range(count)]
     msp.add_lwpolyline(points, dxfattribs={'color': 1})
 
     # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
-    dimstyle = dwg.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')  # type: DimStyle
+    dimstyle = doc.dimstyles.duplicate_entry('EZDXF', 'WITHTFILL')  # type: DimStyle
 
     dimstyle.dxf.dimtfill = 1
     dimstyle.dxf.dimdec = 2
 
-    dimstyle = dwg.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')  # type: DimStyle
+    dimstyle = doc.dimstyles.duplicate_entry('WITHTFILL', 'WITHTXT')  # type: DimStyle
     dimstyle.dxf.dimblk = ezdxf.ARROWS.closed
     dimstyle.dxf.dimtxsty = 'STANDARD'
     dimstyle.dxf.dimrnd = .5
@@ -395,7 +397,7 @@ def example_random_multi_point_linear_dimension(count=10, length=20, discard=BRI
     msp.add_multi_point_linear_dim(base=(0, length + 2), points=points, dimstyle='WITHTFILL', discard=discard)
     msp.add_multi_point_linear_dim(base=(-2, 0), points=points, angle=90, dimstyle='WITHTFILL', discard=discard)
     msp.add_multi_point_linear_dim(base=(10, -10), points=points, angle=45, dimstyle='WITHTXT', discard=discard)
-    dwg.saveas(OUTDIR / f'multi_random_point_linear_dim_R2007.dxf')
+    doc.saveas(OUTDIR / f'multi_random_point_linear_dim_R2007.dxf')
 
 
 def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2=None, filename=""):
@@ -410,10 +412,10 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
         filename: filename for saving
 
     """
-    dwg = ezdxf.new(version, setup=True)
-    msp = dwg.modelspace()
-    ezdxf_dimstyle = dwg.dimstyles.get('EZDXF')  # type: DimStyle
-    ezdxf_dimstyle.copy_to_header(dwg)
+    doc = new(version, setup=True)
+    msp = doc.modelspace()
+    ezdxf_dimstyle = doc.dimstyles.get('EZDXF')  # type: DimStyle
+    ezdxf_dimstyle.copy_to_header(doc)
 
     for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
         y = index * 4
@@ -436,7 +438,7 @@ def linear_all_arrow_style(version='R12', dimltype=None, dimltex1=None, dimltex2
     if not filename:
         filename = 'all_arrow_styles_dim_{}.dxf'.format(version)
 
-    dwg.saveas(OUTDIR / filename)
+    doc.saveas(OUTDIR / filename)
 
 
 def linear_tutorial_using_tolerances(version='R2000'):
@@ -451,13 +453,13 @@ def linear_tutorial_using_tolerances(version='R2000'):
         version: DXF version
 
     """
-    dwg = ezdxf.new(version, setup=True)
-    msp = dwg.modelspace()
+    doc = new(version, setup=True)
+    msp = doc.modelspace()
 
     # DO NOT RENDER BY EZDXF for DXF R12
     discard = version == 'R12'
 
-    tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'TOLERANCE')  # type: DimStyle
+    tol_style = doc.dimstyles.duplicate_entry('EZDXF', 'TOLERANCE')  # type: DimStyle
     # not all features are supported by DXF R12:
     # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
     tol_style.set_tolerance(.1, hfactor=.5, align="top", dec=2)
@@ -468,7 +470,7 @@ def linear_tutorial_using_tolerances(version='R2000'):
     dim.set_tolerance(.1, .15, hfactor=.4, align="middle", dec=2)
     dim.render(discard=discard)
 
-    dwg.saveas(OUTDIR / f'dimensions_with_tolerance_{version}.dxf')
+    doc.saveas(OUTDIR / f'dimensions_with_tolerance_{version}.dxf')
 
 
 def linear_tutorial_using_limits(version='R2000'):
@@ -484,12 +486,12 @@ def linear_tutorial_using_limits(version='R2000'):
         version: DXF version
 
     """
-    dwg = ezdxf.new(version, setup=True)
-    msp = dwg.modelspace()
+    doc = new(version, setup=True)
+    msp = doc.modelspace()
     # DO NOT RENDER BY EZDXF for DXF R12
     discard = version == 'R12'
 
-    tol_style = dwg.dimstyles.duplicate_entry('EZDXF', 'LIMITS')  # type: DimStyle
+    tol_style = doc.dimstyles.duplicate_entry('EZDXF', 'LIMITS')  # type: DimStyle
 
     # not all features are supported by DXF R12:
     # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
@@ -497,7 +499,7 @@ def linear_tutorial_using_limits(version='R2000'):
 
     msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='limits').render(discard=discard)
     msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='limits').render(discard=discard)
-    dwg.saveas(OUTDIR / f'dimensions_with_limits_{version}.dxf')
+    doc.saveas(OUTDIR / f'dimensions_with_limits_{version}.dxf')
 
 
 def linear_tutorial_using_tvp():
@@ -506,26 +508,26 @@ def linear_tutorial_using_tvp():
     up and down (DIMTVP). Vertical distance dimension line to text center =  text_height * vshift (DIMTVP)
 
     """
-    dwg = ezdxf.new('R2000', setup=True)
-    msp = dwg.modelspace()
-    style = dwg.dimstyles.duplicate_entry('EZDXF', 'TVP')  # type: DimStyle
+    doc = new('R2000', setup=True)
+    msp = doc.modelspace()
+    style = doc.dimstyles.duplicate_entry('EZDXF', 'TVP')  # type: DimStyle
     # shift text upwards
     style.set_text_align(valign='center', vshift=2.0)
     msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle='TVP').render()
     msp.add_linear_dim(base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle='TVP').render()
 
-    style = dwg.dimstyles.duplicate_entry('EZDXF', 'TVP2')  # type: DimStyle
+    style = doc.dimstyles.duplicate_entry('EZDXF', 'TVP2')  # type: DimStyle
     # shift text downwards
     style.set_text_align(valign='center', vshift=-2.0)
     msp.add_linear_dim(base=(0, 7), p1=(0, 5), p2=(10, 5), dimstyle='TVP2').render()
     msp.add_linear_dim(base=(0, 7), p1=(15, 5), p2=(15.5, 5), dimstyle='TVP2').render()
 
-    dwg.saveas(OUTDIR / 'dimensions_with_dimtvp.dxf')
+    doc.saveas(OUTDIR / 'dimensions_with_dimtvp.dxf')
 
 
 def linear_tutorial_ext_lines():
-    dwg = ezdxf.new('R12', setup=True)
-    msp = dwg.modelspace()
+    doc = new('R12', setup=True)
+    msp = doc.modelspace()
 
     msp.add_line((0, 0), (3, 0))
 
@@ -545,37 +547,37 @@ def linear_tutorial_ext_lines():
     }
     msp.add_linear_dim(base=(10, 2), p1=(7, 0), p2=(10, 0), angle=-30, dimstyle='EZDXF', override=attributes).render()
     msp.add_linear_dim(base=(3, 5), p1=(0, 10), p2=(3, 10), dimstyle='EZDXF', override=attributes).render()
-    dwg.saveas(OUTDIR / 'dim_linear_R12_ext_lines.dxf')
+    doc.saveas(OUTDIR / 'dim_linear_R12_ext_lines.dxf')
 
 
 def linear_EZ_M(fmt):
-    dwg = ezdxf.new('R12', setup=('linetypes', 'styles'))
-    msp = dwg.modelspace()
-    ezdxf.setup_dimstyle(dwg, fmt)
+    doc = new('R12', setup=('linetypes', 'styles'))
+    msp = doc.modelspace()
+    ezdxf.setup_dimstyle(doc, fmt)
 
     msp.add_line((0, 0), (1, 0))
     msp.add_linear_dim(base=(0, 1), p1=(0, 0), p2=(1, 0), dimstyle=fmt).render()
-    dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
+    doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
 def linear_EZ_CM(fmt):
-    dwg = ezdxf.new('R12', setup=('linetypes', 'styles'))
-    msp = dwg.modelspace()
-    ezdxf.setup_dimstyle(dwg, fmt)
+    doc = new('R12', setup=('linetypes', 'styles'))
+    msp = doc.modelspace()
+    ezdxf.setup_dimstyle(doc, fmt)
 
     msp.add_line((0, 0), (100, 0))
     msp.add_linear_dim(base=(0, 100), p1=(0, 0), p2=(100, 0), dimstyle=fmt).render()
-    dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
+    doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
 def linear_EZ_MM(fmt):
-    dwg = ezdxf.new('R12', setup=('linetypes', 'styles'))
-    msp = dwg.modelspace()
-    ezdxf.setup_dimstyle(dwg, fmt)
+    doc = new('R12', setup=('linetypes', 'styles'))
+    msp = doc.modelspace()
+    ezdxf.setup_dimstyle(doc, fmt)
 
     msp.add_line((0, 0), (1000, 0))
     msp.add_linear_dim(base=(0, 1000), p1=(0, 0), p2=(1000, 0), dimstyle=fmt).render()
-    dwg.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
+    doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
 ALL = True

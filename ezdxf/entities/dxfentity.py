@@ -394,6 +394,11 @@ class DXFEntity:
         self.embedded_objects = None  # type: Optional[EmbeddedObjects]
         self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
 
+    # todo: for compatibility
+    @property
+    def drawing(self):
+        return self.doc
+
     @classmethod
     def load(cls: Type[T], tags: Union[ExtendedTags, Tags], doc: 'Drawing' = None) -> T:
         """

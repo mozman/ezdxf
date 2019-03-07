@@ -29,6 +29,11 @@ class CreatorInterface:
     def __init__(self, doc: 'Drawing'):
         self.doc = doc
 
+    # todo: for compatibility
+    @property
+    def drawing(self):
+        return self.doc
+
     @property
     def dxfversion(self) -> str:
         return self.doc.dxfversion
@@ -607,7 +612,7 @@ class CreatorInterface:
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_uniform(list(control_points), degree)
         if knots is not None:
-            spline.set_knot_values(list(knots))
+            spline.knots = knots
         return spline
 
     def add_closed_spline(self, control_points: Iterable['Vertex'], degree: int = 3, knots: Iterable[float] = None,
@@ -629,7 +634,7 @@ class CreatorInterface:
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic(list(control_points), degree)
         if knots is not None:
-            spline.set_knot_values(list(knots))
+            spline.knots = knots
         return spline
 
     def add_rational_spline(self, control_points: Iterable['Vertex'], weights: Sequence[float], degree: int = 3,
@@ -655,7 +660,7 @@ class CreatorInterface:
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(list(control_points), weights, degree)
         if knots is not None:
-            spline.set_knot_values(list(knots))
+            spline.knots = knots
         return spline
 
     def add_closed_rational_spline(self, control_points: Iterable['Vertex'], weights: Sequence[float], degree: int = 3,
@@ -681,7 +686,7 @@ class CreatorInterface:
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_periodic_rational(list(control_points), weights, degree)
         if knots is not None:
-            spline.set_knot_values(list(knots))
+            spline.knots = knots
         return spline
 
     def add_body(self, acis_data: str = None, dxfattribs: dict = None) -> 'Body':
@@ -955,7 +960,7 @@ class CreatorInterface:
 
         """
         type_ = {'dimtype': const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint'] = Vector(base)

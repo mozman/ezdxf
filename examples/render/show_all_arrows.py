@@ -3,7 +3,7 @@
 
 import ezdxf
 
-dwg = ezdxf.new('R2018', setup=True)
+dwg = ezdxf.new2('R2018', setup=True)
 msp = dwg.modelspace()
 y = 0
 
