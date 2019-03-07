@@ -13,36 +13,6 @@ if TYPE_CHECKING:
 
 
 def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
-    doc = Drawing2.new(dxfversion)
-    if setup:
-        setup_drawing(doc, topics=setup)
-    return doc
-
-
-def read2(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
-    from ezdxf.drawing2 import Drawing
-
-    return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
-
-
-def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
-    from ezdxf.lldxf.validator import is_dxf_file
-    from ezdxf.tools.codepage import is_supported_encoding
-
-    if not is_dxf_file(filename):
-        raise IOError("File '{}' is not a DXF file.".format(filename))
-
-    info = dxf_file_info(filename)
-    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
-        doc = read2(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
-
-    doc.filename = filename
-    if encoding is not None and is_supported_encoding(encoding):
-        doc.encoding = encoding
-    return doc
-
-
-def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
     """
     Create a new DXF drawing.
 
@@ -69,18 +39,13 @@ def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) 
                   - 'dimstyles:imperial' ... setup imperial dimension styles (not implemented yet)
 
     """
-    from ezdxf.drawing import Drawing
-
-    dwg = Drawing.new(dxfversion)
-    if dwg.dxfversion > DXF12:
-        dwg.reset_fingerprintguid()
-        dwg.reset_versionguid()
+    doc = Drawing2.new(dxfversion)
     if setup:
-        setup_drawing(dwg, topics=setup)
-    return dwg
+        setup_drawing(doc, topics=setup)
+    return doc
 
 
-def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'Drawing':
+def read2(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
     """
     Read DXF drawing from a text stream, which only needs a readline() method.
 
@@ -103,9 +68,67 @@ def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'D
     Args:
         stream: input text stream opened with correct encoding, requires only a readline() method.
         legacy_mode:  True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
-        dxfversion: DXF version, None = auto detect, just important for legacy mode.
+        filter_stack: interface to put filters between reading layers, see :class:`Drawing.read` for more information
 
     """
+    from ezdxf.drawing2 import Drawing
+
+    return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
+
+
+def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
+    """
+    Read DXF drawing specified by *filename* from file system.
+
+    Supported DXF versions:
+
+    - pre AC1009 DXF versions will be upgraded to AC1009
+    - AC1009: AutoCAD R12 (DXF R12)
+    - AC1012: AutoCAD R13 upgraded to AC1015
+    - AC1014: AutoCAD R14 upgraded to AC1015
+    - AC1015: AutoCAD 2000
+    - AC1018: AutoCAD 2004
+    - AC1021: AutoCAD 2007, fixates encoding='utf-8'
+    - AC1024: AutoCAD 2010, fixates encoding='utf-8'
+    - AC1027: AutoCAD 2013, fixates encoding='utf-8'
+    - AC1032: AutoCAD 2018, fixates encoding='utf-8'
+
+    Args:
+        filename: DXF filename
+        encoding: use None for auto detect, or set a specific encoding like 'utf-8'
+        legacy_mode: True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
+        filter_stack: interface to put filters between reading layers, see :class:`Drawing.read` for more information
+
+    """
+    from ezdxf.lldxf.validator import is_dxf_file
+    from ezdxf.tools.codepage import is_supported_encoding
+
+    if not is_dxf_file(filename):
+        raise IOError("File '{}' is not a DXF file.".format(filename))
+
+    info = dxf_file_info(filename)
+    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
+        doc = read2(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
+
+    doc.filename = filename
+    if encoding is not None and is_supported_encoding(encoding):
+        doc.encoding = encoding
+    return doc
+
+
+def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
+    from ezdxf.drawing import Drawing
+
+    dwg = Drawing.new(dxfversion)
+    if dwg.dxfversion > DXF12:
+        dwg.reset_fingerprintguid()
+        dwg.reset_versionguid()
+    if setup:
+        setup_drawing(dwg, topics=setup)
+    return dwg
+
+
+def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'Drawing':
     from ezdxf.drawing import Drawing
 
     return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
@@ -140,28 +163,6 @@ def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
 
 
 def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing':
-    """
-    Read DXF drawing specified by *filename* from file system.
-
-    Supported DXF versions:
-
-    - pre AC1009 DXF versions will be upgraded to AC1009
-    - AC1009: AutoCAD R12 (DXF R12)
-    - AC1012: AutoCAD R13 upgraded to AC1015
-    - AC1014: AutoCAD R14 upgraded to AC1015
-    - AC1015: AutoCAD 2000
-    - AC1018: AutoCAD 2004
-    - AC1021: AutoCAD 2007, fixates encoding='utf-8'
-    - AC1024: AutoCAD 2010, fixates encoding='utf-8'
-    - AC1027: AutoCAD 2013, fixates encoding='utf-8'
-    - AC1032: AutoCAD 2018, fixates encoding='utf-8'
-
-    Args:
-        filename: DXF filename
-        encoding: use None for auto detect, or set a specific encoding like 'utf-8'
-        legacy_mode: True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
-
-    """
     from ezdxf.lldxf.validator import is_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
 
@@ -204,6 +205,6 @@ def readzip(zipfile: str, filename: str = None) -> 'Drawing':
     from ezdxf.tools.zipmanager import ctxZipReader
 
     with ctxZipReader(zipfile, filename) as zipstream:
-        dwg = read(zipstream, dxfversion=zipstream.dxfversion)
+        dwg = read(zipstream)
         dwg.filename = zipstream.dxf_file_name
     return dwg

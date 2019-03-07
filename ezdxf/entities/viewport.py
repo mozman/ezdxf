@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, List, Iterable
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.tags import Tags
 from ezdxf.tools import set_flag_state
 from ezdxf.lldxf import const
@@ -276,10 +276,7 @@ class Viewport(DXFGraphic):
 
     def export_acdb_viewport_r12(self, tagwriter: 'TagWriter'):
         self.dxf.export_dxf_attribs(tagwriter, [
-            'center', 'width', 'height', 'status', 'id', 'view_center_point', 'snap_base_point', 'snap_spacing',
-            'grid_spacing', 'view_direction_vector', 'view_target_point', 'perspective_lens_length',
-            'front_clip_plane_z_value', 'back_clip_plane_z_value', 'view_height', 'snap_angle', 'view_twist_angle',
-            'circle_zoom', 'flags',
+            'center', 'width', 'height', 'status', 'id',
         ])
         tagwriter.write_tags(self.dxftags())
 
@@ -293,8 +290,8 @@ class Viewport(DXFGraphic):
             DXFTag(1000, 'MVIEW'),
             DXFTag(1002, '{'),
             DXFTag(1070, 16),  # extended data version, always 16 for R11/12
-            DXFTag(1010, dxf.view_target_point),
-            DXFTag(1010, dxf.view_direction_vector),
+            DXFVertex(1010, dxf.view_target_point),
+            DXFVertex(1010, dxf.view_direction_vector),
             DXFTag(1040, dxf.view_twist_angle),
             DXFTag(1040, dxf.view_height),
             DXFTag(1040, dxf.view_center_point[0]),
