@@ -1,6 +1,7 @@
 import ezdxf
 from pathlib import Path
 import datetime
+from pympler import tracker
 
 CADKIT_PATH = r"D:\Source\dxftest\CADKitSamples"
 R12_FILES = r"D:\Source\dxftest\R12_test_files"
@@ -17,9 +18,11 @@ for filename in Path(CADKIT_PATH).glob('*.dxf'):
     new_name = outname(filename)
     if not new_name.exists():
         print('reading file: {}'.format(filename))
+        tr1 = tracker.SummaryTracker()
         start = datetime.datetime.now()
         doc = ezdxf.readfile2(str(filename), legacy_mode=False)
         end = datetime.datetime.now()
+        tr1.print_diff()
         print(' ... in {:.1f} sec'.format((end-start).total_seconds()))
         print('writing file: {}'.format(new_name))
         start = datetime.datetime.now()

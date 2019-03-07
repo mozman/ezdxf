@@ -123,9 +123,51 @@ class ExtendedTags:
     def _setup(self, iterable: Iterable[DXFTag]) -> None:
         tagstream = iter(iterable)
 
+        def is_end_of_class(tag):
+            # fast path
+            if tag.code not in {100, 101, 1001}:
+                return False
+            else:
+                # really an embedded object
+                if tag.code == 101 and tag.value != 'Embedded Object':
+                    return False
+                else:
+                    return True
+
+        def collect_base_class() -> DXFTag:
+            """
+            The base class contains appdata, but not XDATA, ends with
+            SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
+
+            """
+            # All subclasses begin with (100, subclass name)
+            # EXCEPT DIMASSOC has one subclass starting with: (1, AcDbOsnapPointRef). Well done, Autodesk!
+            # This special subclass is ignored by ezdxf, content is included in the preceding subclass: (100, AcDbDimAssoc)
+            #
+            # TEXT contains 2x the (100, AcDbText). Also well done, Autodesk! Therefore it is not possible to use an
+            # (ordered) dict where subclass name is key, but usual use case is access by index.
+
+            data = Tags()
+            try:
+                while True:
+                    tag = next(tagstream)
+                    if is_app_data_marker(tag):
+                        app_data_pos = len(self.appdata)
+                        data.append(DXFTag(tag.code, app_data_pos))
+                        collect_app_data(tag)
+                    elif is_end_of_class(tag):
+                        self.subclasses.append(data)
+                        return tag
+                    else:
+                        data.append(tag)
+            except StopIteration:
+                pass
+            self.subclasses.append(data)
+            return NONE_TAG
+
         def collect_subclass(starttag: Optional[DXFTag]) -> DXFTag:
             """
-            A subclass can contain appdata, but not XDATA, ends with
+            A subclass does NOT can contain appdata or XDATA, ends with
             SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
 
             """
@@ -144,7 +186,7 @@ class ExtendedTags:
                         app_data_pos = len(self.appdata)
                         data.append(DXFTag(tag.code, app_data_pos))
                         collect_app_data(tag)
-                    elif tag.code in (SUBCLASS_MARKER, XDATA_MARKER) or is_embedded_object_marker(tag):
+                    elif is_end_of_class(tag):
                         self.subclasses.append(data)
                         return tag
                     else:
