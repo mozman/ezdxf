@@ -562,6 +562,9 @@ class DXFEntity:
     def dxf_attrib_exists(self, key: str) -> bool:
         return self.dxf.hasattr(key)
 
+    def supports_dxf_attrib(self, key: str) -> bool:
+        return key in self.DXFATTRIBS
+
     @property
     def entitydb(self) -> 'EntityDB':
         return self.doc.entitydb

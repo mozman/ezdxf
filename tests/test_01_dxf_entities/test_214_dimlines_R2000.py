@@ -1,21 +1,20 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.lldxf.const import DXFAttributeError
-from ezdxf.modern.dimension import Dimension
+from ezdxf.entities.dimension import Dimension
 
 
 @pytest.fixture(scope='module')
 def dxf2000():
-    dwg = ezdxf.new('R2000', setup='all')
-    return dwg
+    doc = ezdxf.new2('R2000', setup='all')
+    return doc
 
 
 @pytest.fixture(scope='module')
 def dxf2007():
-    dwg = ezdxf.new('R2007', setup='all')
-    return dwg
+    doc = ezdxf.new2('R2007', setup='all')
+    return doc
 
 
 def test_dimstyle_standard_exist(dxf2000):
@@ -27,14 +26,8 @@ def test_rotated_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.LINEAR
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    aligned = dimline.tags.subclasses[3][0]
-    assert aligned.code == 100 and aligned.value == 'AcDbAlignedDimension'
-    rotated = dimline.tags.subclasses[4][0]
-    assert rotated.code == 100 and rotated.value == 'AcDbRotatedDimension'
-    assert len(dimline.tags.subclasses) == 5
-
-    dimline = dimline.cast()
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.LINEAR
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.insert == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
@@ -48,12 +41,8 @@ def test_aligned_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.ALIGNED
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    aligned = dimline.tags.subclasses[3][0]
-    assert aligned.code == 100 and aligned.value == 'AcDbAlignedDimension'
-    assert len(dimline.tags.subclasses) == 4
-
-    dimline = dimline.cast()
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.ALIGNED
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.insert == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
@@ -67,12 +56,8 @@ def test_angular_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.ANGULAR
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    angular = dimline.tags.subclasses[3][0]
-    assert angular.code == 100 and angular.value == 'AcDb3dPointAngularDimension'
-    assert len(dimline.tags.subclasses) == 4
-
-    dimline = dimline.cast()
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.ANGULAR
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
     assert dimline.dxf.defpoint3 == (0, 0, 0)
@@ -85,10 +70,8 @@ def test_angular_3p_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.ANGULAR_3P
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    angular = dimline.tags.subclasses[3][0]
-    assert angular.code == 100 and angular.value == 'AcDb3dPointAngularDimension'
-    assert len(dimline.tags.subclasses) == 4
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.ANGULAR_3P
 
 
 def test_radius_dimline(dxf2000):
@@ -96,12 +79,8 @@ def test_radius_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.RADIUS
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    radius = dimline.tags.subclasses[3][0]
-    assert radius.code == 100 and radius.value == 'AcDbRadialDimension'
-    assert len(dimline.tags.subclasses) == 4
-
-    dimline = dimline.cast()
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.RADIUS
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint4 == (0, 0, 0)
     assert dimline.supports_dxf_attrib('leader_length')
@@ -112,12 +91,8 @@ def test_diameter_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.DIAMETER
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    diameter = dimline.tags.subclasses[3][0]
-    assert diameter.code == 100 and diameter.value == 'AcDbDiametricDimension'
-    assert len(dimline.tags.subclasses) == 4
-
-    dimline = dimline.cast()
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.DIAMETER
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint4 == (0, 0, 0)
     assert dimline.supports_dxf_attrib('leader_length')
@@ -128,12 +103,8 @@ def test_ordinate_dimline(dxf2000):
     dxfattribs = {
         'dimtype': Dimension.ORDINATE
     }
-    dimline = msp.build_and_add_entity('DIMENSION', dxfattribs)
-    ordinate = dimline.tags.subclasses[3][0]
-    assert ordinate.code == 100 and ordinate.value == 'AcDbOrdinateDimension'
-    assert len(dimline.tags.subclasses) == 4
-
-    dimline = dimline.cast()
+    dimline = msp.new_entity('DIMENSION', dxfattribs)
+    assert dimline.dim_type == Dimension.ORDINATE
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
     assert dimline.dxf.defpoint3 == (0, 0, 0)
