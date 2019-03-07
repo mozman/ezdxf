@@ -219,8 +219,7 @@ class Dimension(DXFGraphic):
                 continue
             dxf_attr = dim_style_attributes.get(key)
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
-                required_dxfversion = DXF12 if dxf_attr.dxfversion is None else dxf_attr.dxfversion
-                if required_dxfversion > actual_dxfversion:
+                if dxf_attr.dxfversion > actual_dxfversion:
                     logging.debug('Unsupported DIMSTYLE attribute "{}" for DXF version {}'.format(key, self.doc.acad_release))
                     continue
                 code = dxf_attr.code

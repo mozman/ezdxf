@@ -4,7 +4,7 @@ from collections import namedtuple
 from enum import Enum
 from typing import Any, Tuple, Iterable, List, Dict, Union, ItemsView, KeysView, TYPE_CHECKING
 
-from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError
+from .const import DXFAttributeError, DXFValueError, DXFInternalEzdxfError, DXFStructureError, DXF12
 from .types import dxftag, DXFVertex
 from .tags import Tags
 from .extendedtags import ExtendedTags
@@ -48,7 +48,7 @@ class DXFAttr:
                  xtype: XType = None,
                  default=None,
                  optional=False,
-                 dxfversion: str = None,
+                 dxfversion: str = DXF12,
                  getter: str = None,  # name of getter method
                  setter: str = None,  # name of setter method
                  ):
@@ -126,7 +126,7 @@ class DXFAttr:
         except DXFValueError:
             if default is DXFValueError:
                 # no DXF default values if DXF version is incorrect
-                if self.dxfversion is not None and entity.drawing.dxfversion < self.dxfversion:
+                if self.dxfversion > DXF12 and entity.drawing.dxfversion < self.dxfversion:
                     msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
                     raise DXFValueError(msg.format(key, entity.drawing.dxfversion, self.dxfversion))
                 result = self.default  # default value defined by DXF specs
@@ -175,7 +175,7 @@ class DXFAttr:
             value: attribute value
 
         """
-        if self.dxfversion is not None:
+        if self.dxfversion > DXF12:
             if entity.drawing.dxfversion < self.dxfversion:
                 msg = "DXFAttrib '{0}' not supported by DXF version '{1}', requires at least DXF version '{2}'."
                 raise DXFAttributeError(msg.format(key, entity.drawing.dxfversion, self.dxfversion))

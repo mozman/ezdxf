@@ -563,7 +563,10 @@ class DXFEntity:
         return self.dxf.hasattr(key)
 
     def supports_dxf_attrib(self, key: str) -> bool:
-        return key in self.DXFATTRIBS
+        if key in self.DXFATTRIBS:
+            return self.doc.dxfversion >= self.DXFATTRIBS[key].dxfversion
+        else:
+            return False
 
     @property
     def entitydb(self) -> 'EntityDB':
