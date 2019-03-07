@@ -589,22 +589,11 @@ ACAD_ROUNDTRIP_PRE2007_TABLESTYLE
 def test_xrecord_with_long_closing_tag():
     tags = ExtendedTags(Tags.from_text(XRECORD_APP_DATA_LONG_CLOSING_TAG))
     assert tags.dxftype() == 'XRECORD'
-    assert len(tags.appdata) == 5
+    # real app data just exists only in the base class, app data marker in AcDbXrecord are just tags, interpreted by
+    # the associated application
+    assert len(tags.appdata) == 1
+    assert len(tags.subclasses[1]) == 35
 
-    attr_rec = tags.appdata[4]
-    assert attr_rec[0] == (102, '{ATTRRECORD')
-    assert attr_rec[1] == (341, '2FD')
-    assert len(list(tags)) * 2 + 1 == len(XRECORD_APP_DATA_LONG_CLOSING_TAG.split('\n'))  # +1 == appending '\n'
-
-    # test USUAL_102_TAG_INSIDE_APP_DATA
-    attr_rec = tags.appdata[1]
-    assert attr_rec[0] == (102, '{ATTRRECORD')
-    assert attr_rec[1] == (341, '2FA')
-    assert attr_rec[2] == (102, 'USUAL_102_TAG_INSIDE_APP_DATA')
-
-    # test USUAL_102_TAG_OUTSIDE_APP_DATA
-    xrecord = tags.get_subclass('AcDbXrecord')
-    assert xrecord[4] == (102, 'USUAL_102_TAG_OUTSIDE_APP_DATA')
 
 XRECORD_APP_DATA_LONG_CLOSING_TAG = """  0
 XRECORD
