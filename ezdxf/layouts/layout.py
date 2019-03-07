@@ -154,9 +154,10 @@ class Layout(BaseLayout):
         Delete all member entities and the layout itself from entity database and all other structures.
 
         """
-        # all entities are managed by BLOCK_RECORD
-        self.doc.blocks.delete_block(self.block_record.dxf.name)
+
         self.doc.objects.delete_entity(self.dxf_layout)
+        # super() deletes block_record and associated entity space
+        super().destroy()
 
     def rename(self, name: str) -> None:
         """ Rename layout to `name`, changes the name displayed in tab by CAD applications, not the internal BLOCK name.

@@ -177,4 +177,4 @@ class BaseLayout(CreatorInterface):
     def destroy(self) -> None:
         # block_records table is owner of block_record has to delete it
         # the block_record is the owner of the entities and deletes them all
-        self.doc.block_records.remove(self.block_record.name)
+        self.doc.block_records.remove(self.block_record.dxf.name)

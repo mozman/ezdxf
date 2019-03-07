@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-22
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Iterable
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.types import DXFTag
@@ -168,6 +168,11 @@ class Viewport(DXFGraphic):
         self._frozen_layers = bag
         self._frozen_layers_content_type = 'names'
         return bag
+
+    @frozen_layers.setter
+    def frozen_layers(self, names: Iterable[str]):
+        self._frozen_layers = list(names)
+        self._frozen_layers_content_type = 'names'
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

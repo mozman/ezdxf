@@ -4,6 +4,7 @@
 import pytest
 
 from ezdxf.entities.viewport import Viewport
+from ezdxf.entities.layer import Layer
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -233,6 +234,21 @@ def test_default_new():
     assert entity.dxf.view_direction_vector.x == 1, 'is not Vector compatible'
     assert entity.dxf.view_direction_vector.y == 2, 'is not Vector compatible'
     assert entity.dxf.view_direction_vector.z == 3, 'is not Vector compatible'
+    assert entity.dxf.view_target_point == (0, 0, 0)
+    assert entity.dxf.view_twist_angle == 0
+    assert entity.dxf.view_height == 1
+    assert entity.dxf.view_center_point == (0, 0)
+    assert entity.dxf.perspective_lens_length == 50
+    assert entity.dxf.front_clip_plane_z_value == 0
+    assert entity.dxf.back_clip_plane_z_value == 0
+    assert entity.dxf.flags == 0
+    assert entity.dxf.circle_zoom == 100
+    assert entity.dxf.ucs_icon == 0
+    assert entity.dxf.snap_angle == 0
+    assert entity.dxf.snap_base_point == (0, 0)
+    assert entity.dxf.snap_spacing == (10, 10)
+    assert entity.dxf.grid_spacing == (10, 10)
+    assert len(list(entity.frozen_layers)) == 0
 
 
 def test_load_from_text(entity):
@@ -264,3 +280,8 @@ def test_write_dxf_r12():
     assert xdata[-1] == (1002, '}')
 
 
+def test_viewport_set_frozen_layer_names():
+    viewport = Viewport.new('F000')
+    layer_names = ['bricks', 'steel', 'glass']
+    viewport.frozen_layers = layer_names
+    assert layer_names == viewport.frozen_layers

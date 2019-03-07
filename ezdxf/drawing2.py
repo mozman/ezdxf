@@ -548,16 +548,6 @@ class Drawing:
         """
         return iter(self.blocks)
 
-
-class DrawingX(Drawing):
-    """
-    The Central Data Object
-    """
-
-    @property
-    def _handles(self) -> 'HandleGenerator':
-        return self.entitydb.handles
-
     def delete_layout(self, name):
         if name not in self.layouts:
             raise DXFValueError("Layout '{}' does not exist.".format(name))
@@ -569,35 +559,6 @@ class DrawingX(Drawing):
             raise DXFValueError("Layout '{}' already exists.".format(name))
         else:
             return self.layouts.new(name, dxfattribs)
-
-    def layouts_and_blocks(self) -> Iterable['LayoutType']:
-        """
-        Iterate over all layouts (mode space and paper space) and all block definitions.
-
-        Returns: yields Layout() objects
-
-        """
-        return iter(self.blocks)
-
-    def chain_layouts_and_blocks(self) -> Iterable['DXFEntity']:
-        """
-        Chain entity spaces of all layouts and blocks. Yields an iterator for all entities in all layouts and blocks.
-
-        Returns: yields all entities as DXFEntity() objects
-
-        """
-        layouts = list(self.layouts_and_blocks())
-        return chain.from_iterable(layouts)
-
-    def get_active_entity_space_layout_keys(self) -> Sequence[str]:
-        layout_keys = [self.modelspace().layout_key]
-        active_layout_key = self.layouts.get_active_layout_key()
-        if active_layout_key is not None:
-            layout_keys.append(active_layout_key)
-        return layout_keys
-
-    def get_dxf_entity(self, handle: str) -> 'DXFEntity':
-        return self.entitydb[handle]
 
     def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int], name=None):
         """
@@ -615,7 +576,7 @@ class DrawingX(Drawing):
         """
 
         if 'ACAD_IMAGE_VARS' not in self.rootdict:
-            self.objects.set_raster_variables(frame=0, quality=1, units=3)
+            self.objects.set_raster_variables(frame=0, quality=1, units='m')
         if name is None:
             name = filename
         return self.objects.add_image_def(filename, size_in_pixel, name)
@@ -682,36 +643,6 @@ class DrawingX(Drawing):
             'flags': flags,
             'xref_path': filename
         })
-
-    def query(self, query='*'):
-        """
-        Entity query over all layouts and blocks.
-
-        Excluding the OBJECTS section!
-
-        Args:
-            query: query string
-
-        Returns: EntityQuery() container
-
-        """
-        return EntityQuery(self.chain_layouts_and_blocks(), query)
-
-    def groupby(self, dxfattrib="", key=None):
-        """
-        Groups DXF entities of all layouts and blocks by an DXF attribute or a key function.
-
-        Excluding the OBJECTS section!
-
-        Args:
-            dxfattrib: grouping DXF attribute like 'layer'
-            key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for ignore
-                 this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
-
-        Returns: dict
-
-        """
-        return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)
 
     def cleanup(self, groups=True):
         """

@@ -34,3 +34,16 @@ def test_pattern_tags_details(linetype):
     assert linetype.pattern_tags.tags[0] == (72, 65)
     assert linetype.pattern_tags.tags[2].value == .2
 
+
+def test_complex_linetype_name():
+    complex_ltype = Linetype.new('FFFF', dxfattribs={
+        'name': 'GASLEITUNG',
+        'description': 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--',
+        'length': 3.0,  # length is required for complex line types
+        'pattern': 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
+    })
+
+    assert complex_ltype.dxf.name == 'GASLEITUNG'
+    assert complex_ltype.dxf.description == 'Gasleitung ----GAS----GAS----GAS----GAS----GAS----GAS--'
+    assert len(complex_ltype.pattern_tags) == 16
+
