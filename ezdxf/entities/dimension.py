@@ -183,7 +183,7 @@ class Dimension(DXFGraphic):
         return self.dxf.dimtype & 7
 
     def dim_style(self) -> 'DimStyle':
-        if self.drawing is None:
+        if self.doc is None:
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
 
         dim_style_name = self.dxf.dimstyle
@@ -212,12 +212,17 @@ class Dimension(DXFGraphic):
 
         tags = []
         dim_style_attributes = self.dim_style_attributes()
+        actual_dxfversion = self.doc.dxfversion
         for key, value in data.items():
             if key not in dim_style_attributes:  # ignore unknown attributes, but log
-                logging.debug('ignore unknown DIMSTYLE attribute: "{}"'.format(key))
+                logging.debug('Ignore unknown DIMSTYLE attribute: "{}"'.format(key))
                 continue
             dxf_attr = dim_style_attributes.get(key)
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
+                required_dxfversion = DXF12 if dxf_attr.dxfversion is None else dxf_attr.dxfversion
+                if required_dxfversion > actual_dxfversion:
+                    logging.debug('Unsupported DIMSTYLE attribute "{}" for DXF version {}'.format(key, self.doc.acad_release))
+                    continue
                 code = dxf_attr.code
                 tags.append((1070, code))
                 if code == 5:  # DimStyle 'dimblk' has group code 5 but is not a handle

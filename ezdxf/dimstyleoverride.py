@@ -1,6 +1,8 @@
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
 from typing import Any, TYPE_CHECKING, Tuple
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
+from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD, DXF12, DXF2007
 from ezdxf.render.arrows import ARROWS
 from ezdxf.math import Vector
 import logging
@@ -97,7 +99,7 @@ class DimStyleOverride:
             ltype = self.drawing.linetypes.get(linetype_name)
             self.dimstyle_attribs[attrib_name + '_handle'] = ltype.dxf.handle
 
-        if self.drawing.dxfversion > 'AC1009':
+        if self.drawing.dxfversion > DXF12:
             # transform block names into block record handles
             blocks = self.drawing.blocks
             for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
@@ -108,7 +110,7 @@ class DimStyleOverride:
                 else:
                     set_arrow_handle(attrib_name, block_name)
 
-        if self.drawing.dxfversion >= 'AC1021':
+        if self.drawing.dxfversion >= DXF2007:
             # transform linetype names into LTYPE entry handles
             for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
                 try:
