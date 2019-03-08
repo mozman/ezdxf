@@ -198,7 +198,7 @@ class Hatch(DXFGraphic):
         self.pattern = Pattern.load_tags(pattern_tags)
 
         # delete pattern data including length tag 78
-        del tags[index: index + len(pattern_tags) + 2]
+        del tags[index: index + len(pattern_tags) + 1]
         return tags
 
     def load_gradient(self, tags: Tags) -> Tags:
@@ -899,8 +899,11 @@ class PatternLine:
 
 class Gradient:
     def __init__(self):
+        self.kind = 1  # 1 for gradient by default, 0 for Solid
         self.color1 = (0, 0, 0)  # type: RGB
+        self.aci1 = None
         self.color2 = (255, 255, 255)  # type: RGB
+        self.aci2 = None
         self.one_color = 0  # if 1 - a fill that uses a smooth transition between color1 and a specified tint
         self.rotation = 0.  # use grad NOT radians here, because there should be ONE system for all angles
         self.centered = 0.
@@ -911,11 +914,12 @@ class Gradient:
     def load_tags(cls, tags: Tags) -> 'Gradient':
         gdata = cls()
         assert tags[0].code == 450
-        # if tags[0].value == 0 hatch is a solid ????
+        gdata.kind = tags[0].value  # 0 for solid - 1 for gradient
         first_color_value = True
+        first_aci_value = True
         for code, value in tags:
             if code == 460:
-                gdata.rotation = (value / math.pi) * 180.  # radians to grad
+                gdata.rotation = math.degrees(value)  # radians to grad
             elif code == 461:
                 gdata.centered = value
             elif code == 452:
@@ -924,8 +928,13 @@ class Gradient:
                 gdata.tint = value
             elif code == 470:
                 gdata.name = value
+            elif code == 63:
+                if first_aci_value:
+                    gdata.aci1 = value
+                    first_aci_value = False
+                else:
+                    gdata.aci2 = value
             elif code == 421:
-                # code == 63 color as ACI, can be ignored
                 if first_color_value:
                     gdata.color1 = int2rgb(value)
                     first_color_value = False
@@ -934,18 +943,22 @@ class Gradient:
         return gdata
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        # order matters!
         write_tag = tagwriter.write_tag2
-        write_tag(450, 1)  # gradient
+        write_tag(450, self.kind)  # gradient or solid
         write_tag(451, 0)  # reserved for the future
-        write_tag(452, self.one_color)  # one (1) or two (0) color gradient
-        write_tag(453, 2)  # number of colors
-        write_tag(460, (self.rotation / 180.) * math.pi)  # rotation angle in radians
+        write_tag(460, math.radians(self.rotation))  # rotation angle in radians
         write_tag(461, self.centered)  # see DXF standard
+        write_tag(452, self.one_color)  # one (1) or two (0) color gradient
         write_tag(462, self.tint)  # see DXF standard
+        write_tag(453, 2)  # number of colors
         write_tag(463, 0)  # first value, see DXF standard
+        if self.aci1 is not None:
+            write_tag(63, self.aci1)
         # code == 63 "color as ACI" can be left off
         write_tag(421, rgb2int(self.color1))  # first color
         write_tag(463, 1)  # second value, see DXF standard
-        #  code 63 "color as ACI" can be left off
+        if self.aci2 is not None:
+            write_tag(63, self.aci2)  # code 63 "color as ACI" could be left off
         write_tag(421, rgb2int(self.color2))  # second color
         write_tag(470, self.name)

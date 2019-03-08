@@ -44,7 +44,8 @@ class LinetypePattern:
         tagwriter.write_tag2(72, 65)
         tagwriter.write_tag2(73, len(tags49))
         tagwriter.write_tag(self.tags.get_first_tag(40))
-        tagwriter.write_tags(tags49)
+        if len(tags49):
+            tagwriter.write_tags(tags49)
 
     def is_complex_type(self):
         return self.tags.has_tag(340)
