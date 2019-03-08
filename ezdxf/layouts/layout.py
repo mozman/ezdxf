@@ -545,7 +545,7 @@ class Layout(BaseLayout):
         plot origin = lower left corner of printable area + plot origin offset
 
         """
-        return self.dxf.limmin, self.dxf.limmax
+        return self.dxf.limmin[0:2], self.dxf.limmax[0:2]
 
     def reset_viewports(self) -> None:
         """

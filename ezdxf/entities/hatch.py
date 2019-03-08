@@ -138,6 +138,7 @@ PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 @register_entity
 class Hatch(DXFGraphic):
     """ DXF HATCH entity """
+    # todo: HATCH with UCS
     DXFTYPE = 'HATCH'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
     DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
@@ -180,7 +181,7 @@ class Hatch(DXFGraphic):
             raise const.DXFStructureError(
                 "HATCH: Missing required DXF tag 'Number of boundary paths (loops)' (code=91).")
 
-        path_tags = tags.collect_consecutive_tags(PATH_CODES, start=start_index+1)
+        path_tags = tags.collect_consecutive_tags(PATH_CODES, start=start_index + 1)
         if len(path_tags):
             self.paths = BoundaryPaths.load_tags(path_tags)
         end_index = start_index + len(path_tags) + 1
@@ -401,7 +402,6 @@ class BoundaryPaths:
 
     def __getitem__(self, item):
         return self.paths[item]
-
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'BoundaryPaths':

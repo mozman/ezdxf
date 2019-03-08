@@ -4,7 +4,7 @@
 import ezdxf
 
 
-def create_dwg(filename):
+def create_doc(filename):
     def add_justify_text(content, p1, p2, align):
         msp.add_text(content).set_pos(p1, p2, align)
         msp.add_line(p1, p2)
@@ -44,14 +44,14 @@ def create_dwg(filename):
         msp.add_text('TOP_CENTER', dxfattribs=attribs).set_pos((x + dx, y), align='TOP_CENTER')
         msp.add_text('TOP_RIGHT', dxfattribs=attribs).set_pos((x + width, y), align='TOP_RIGHT')
 
-    dwg = ezdxf.new(dxfversion='R2000')  # AutoCAD R2004
-    msp = dwg.modelspace()
+    doc = ezdxf.new2(dxfversion='R2004')
+    msp = doc.modelspace()
     add_justify_text("ALIGNED-TEXT", (15, 0), (35, 5), 'ALIGNED')
     add_justify_text("FITTED-TEXT", (15, 10), (35, 5), 'FIT')
     add_grid((0, 0), width=10, height=10)
 
-    dwg.saveas(filename)
+    doc.saveas(filename)
 
 
 if __name__ == '__main__':
-    create_dwg("text_alignment.dxf")
+    create_doc("text_alignment.dxf")
