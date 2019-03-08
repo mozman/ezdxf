@@ -94,6 +94,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.mtext import MText
     from ezdxf.entities.spline import Spline
     from ezdxf.entities.mesh import Mesh
+    from ezdxf.entities.hatch import Hatch
 
     # other
     from ezdxf.audit import Auditor

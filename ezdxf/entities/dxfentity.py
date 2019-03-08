@@ -326,7 +326,6 @@ class SubclassProcessor:
 
         # r12 has always unprocessed tags, because there are all tags in one subclass and one subclass definition never
         # covers all tags e.g. handle is processed in main_call, so it is an unprocessed tag in AcDbEntity.
-        unprocessed_tags = Tags()
         if self.r12:
             tags = self.subclasses[0]
         else:
@@ -335,13 +334,30 @@ class SubclassProcessor:
             else:
                 tags = self.subclass_by_index(index)
             if tags is None:
-                return unprocessed_tags
+                return Tags()
+        return self.load_tags_into_namespace(dxf, tags[1:], subclass_definition)
 
+    @staticmethod
+    def load_tags_into_namespace(dxf: DXFNamespace, tags: Tags, subclass_definition: DefSubclass) -> Tags:
+        """
+        Load all existing DXF attribute into DXFNamespace and return unprocessed tags, without leading subclass marker
+        (102, ...).
+
+        Args:
+            dxf: target namespace
+            tags: tags to process
+            subclass_definition: DXF attribute definitions (name=subclass_name, attribs={key=attribute name, value=DXFAttr})
+
+        Returns:
+             Tags: unprocessed tags
+
+        """
+        unprocessed_tags = Tags()
         # do not cache group codes, content of group code will be deleted while processing
         group_codes = {dxfattr.code: dxfattr for dxfattr in subclass_definition.attribs.values()}
 
         # iterate without leading subclass marker or for r12 without leading (0, ...) structure tag
-        for tag in tags[1:]:
+        for tag in tags:
             code, value = tag
             if code in group_codes:
                 attrib = group_codes[code]  # type: DXFAttr
@@ -873,4 +889,3 @@ class DXFTagStorage(DXFEntity):
     def destroy(self) -> None:
         del self.xtags
         super().destroy()
-

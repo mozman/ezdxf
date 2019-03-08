@@ -369,7 +369,7 @@ class BoundaryPathData:
 def pop_source_boundary_objects_tags(all_path_tags: Tags) -> List[DXFTag]:
     source_boundary_object_tags = []
     while len(all_path_tags):
-        if all_path_tags[-1].code in (97, 333):
+        if all_path_tags[-1].code in (97, 330):
             last_tag = all_path_tags.pop()
             if last_tag.code == 330:
                 source_boundary_object_tags.append(last_tag)

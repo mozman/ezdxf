@@ -1,8 +1,10 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-13
-# New entity system with unified DXF attribute system for DXF R12 and DXF R2000+
-
+#
+# Unified Entity System (UES) with unified DXF attribute system for DXF R12 and DXF R2000+
+# ========================================================================================
+#
 # Goals:
 # ------
 #
@@ -35,7 +37,7 @@ from . import dxfgfx
 from . import line, point, circle, arc, shape, solid, text, insert, block, polyline, attrib, dimension, viewport
 
 # register graphical entities R2000
-from . import lwpolyline, ellipse, xline, mtext, spline, mesh
+from . import lwpolyline, ellipse, xline, mtext, spline, mesh, hatch
 
 # register graphical entities R2004
 

@@ -1,7 +1,7 @@
 # Created: 13.01.2018
 # Copyright (c) 2018, Manfred Moitzi
 # License: MIT License
-from typing import Any, TextIO, TYPE_CHECKING, Union, List
+from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable
 from .types import TAG_STRING_FORMAT, cast_tag_value
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
@@ -51,6 +51,10 @@ class TagWriter:
     def write_tag2(self, code: int, value: Any) -> None:
         self._stream.write(TAG_STRING_FORMAT % (code, value))
 
+    def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
+        for index, value in enumerate(vertex):
+            self.write_tag2(code + index * 10, value)
+
     def write_str(self, s: str) -> None:
         self._stream.write(s)
 
@@ -81,6 +85,10 @@ class TagCollector:
 
     def write_tag2(self, code: int, value: Any) -> None:
         self.tags.append(DXFTag(code, cast_tag_value(int(code), value)))
+
+    def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
+        for index, value in enumerate(vertex):
+            self.write_tag2(code + index * 10, value)
 
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))

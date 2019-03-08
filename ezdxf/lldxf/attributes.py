@@ -51,6 +51,7 @@ class DXFAttr:
                  dxfversion: str = DXF12,
                  getter: str = None,  # name of getter method
                  setter: str = None,  # name of setter method
+                 alias: str = None,  # alias name
                  ):
         self.name = ''  # type: str  # set by DXFAttributes._add_subclass_attribs()
         self.code = code  # DXF group code
@@ -64,6 +65,7 @@ class DXFAttr:
         self.dxfversion = dxfversion
         self.getter = getter  # DXF entity getter method name for callback attributes
         self.setter = setter  # DXF entity setter method name for callback attributes
+        self.alias = alias
 
     def __str__(self):
         return "({}, {})".format(self.name, self.code)

@@ -7,7 +7,6 @@ import math
 from ezdxf.entities.ellipse import Ellipse
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
-
 ELLIPSE = """0
 ELLIPSE
 5
@@ -39,6 +38,7 @@ AcDbEllipse
 42
 6.283185307179586
 """
+
 
 @pytest.fixture
 def entity():
@@ -82,7 +82,7 @@ def test_load_from_text(entity):
     assert entity.dxf.major_axis == (1, 0, 0)
     assert entity.dxf.ratio == 1
     assert entity.dxf.start_param == 0
-    assert entity.dxf.end_param == math.pi*2
+    assert entity.dxf.end_param == math.pi * 2
 
 
 def test_write_dxf():
@@ -92,5 +92,3 @@ def test_write_dxf():
     result = collector.tags
     expected = basic_tags_from_text(ELLIPSE)
     assert result == expected
-
-
