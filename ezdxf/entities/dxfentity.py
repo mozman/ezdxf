@@ -786,7 +786,7 @@ class DXFEntity:
 
     def get_xdata(self, appid: str) -> Tags:
         if self.xdata:
-            return self.xdata.get(appid)[1:]
+            return Tags(self.xdata.get(appid)[1:])
         else:
             raise DXFValueError(appid)
 

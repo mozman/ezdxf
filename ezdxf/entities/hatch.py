@@ -27,7 +27,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     'elevation': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # OCS
 
     # Extrusion direction (optional; default = 0, 0, 1)
-    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
+    'extrusion': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),
 
     # Hatch pattern name
     'pattern_name': DXFAttr(2, default='SOLID'),  # for solid fill
@@ -83,7 +83,7 @@ acdb_hatch = DefSubclass('AcDbHatch', {
     'pixel_size': DXFAttr(47, optional=True),
 
     # Number of seed points
-    'n_seed_points': DXFAttr(98),  # number of seed points
+    'n_seed_points': DXFAttr(98, default=0),  # number of seed points
     # 10, 20: Seed point (in OCS) 2D point (multiple entries)
 
     # For MPolygon, offset vector
@@ -140,18 +140,19 @@ class Hatch(DXFGraphic):
     """ DXF HATCH entity """
     DXFTYPE = 'HATCH'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
+    DEFAULT_ATTRIBS = {'color': 1, 'layer': '0'}
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self.loops = BoundaryPaths()
+        self.paths = BoundaryPaths()
         self.pattern = None  # type: Pattern
         self.gradient = None  # type: Gradient
         self.seeds = []
 
     def _copy_data(self, entity: 'Hatch') -> None:
         """ Copy loops, pattern, gradient, seeds. """
-        entity.loops = copy.deepcopy(self.loops)
+        entity.paths = copy.deepcopy(self.paths)
         entity.pattern = copy.deepcopy(self.pattern)
         entity.gradient = copy.deepcopy(self.gradient)
         entity.seeds = copy.deepcopy(self.seeds)
@@ -160,7 +161,7 @@ class Hatch(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = Tags(processor.subclasses[2][1:])  # copy without subclass marker
-            tags = self.load_loops(tags)  # removes loop data from tags
+            tags = self.load_paths(tags)  # removes boundary path data from tags
             tags = self.load_gradient(tags)  # removes gradient data
             tags = self.load_pattern(tags)  # removes pattern tags
             tags = self.load_seeds(tags)  # removes seed tags
@@ -171,7 +172,7 @@ class Hatch(DXFGraphic):
                 processor.log_unprocessed_tags(tags, subclass=acdb_hatch.name)
         return dxf
 
-    def load_loops(self, tags: Tags) -> Tags:
+    def load_paths(self, tags: Tags) -> Tags:
         # find first group code 91 = count of loops, Spline data also contains group code 91!
         try:
             start_index = tags.tag_index(91)
@@ -179,10 +180,10 @@ class Hatch(DXFGraphic):
             raise const.DXFStructureError(
                 "HATCH: Missing required DXF tag 'Number of boundary paths (loops)' (code=91).")
 
-        loop_tags = tags.collect_consecutive_tags(PATH_CODES, start=start_index)
-        if len(loop_tags):
-            self.loops = BoundaryPaths.load_tags(loop_tags)
-        end_index = start_index + len(loop_tags) + 1
+        path_tags = tags.collect_consecutive_tags(PATH_CODES, start=start_index+1)
+        if len(path_tags):
+            self.paths = BoundaryPaths.load_tags(path_tags)
+        end_index = start_index + len(path_tags) + 1
         del tags[start_index: end_index]
         return tags
 
@@ -236,7 +237,7 @@ class Hatch(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, [
             'elevation', 'extrusion', 'pattern_name', 'solid_fill', 'mp_pattern_fill_color', 'associative',
         ])
-        self.loops.export_dxf(tagwriter)
+        self.paths.export_dxf(tagwriter)
         self.dxf.export_dxf_attribs(tagwriter, ['hatch_style', 'pattern_type'])
         if self.pattern:
             self.dxf.export_dxf_attribs(tagwriter, ['pattern_angle', 'pattern_scale', 'pattern_double'])
@@ -287,8 +288,7 @@ class Hatch(DXFGraphic):
     # just for compatibility
     @contextmanager
     def edit_boundary(self) -> 'BoundaryPaths':
-
-        yield self.loops
+        yield self.paths
 
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
         self.gradient = None
@@ -302,6 +302,9 @@ class Hatch(DXFGraphic):
         self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
         if rgb is not None:  # if a rgb value is present, the color value is ignored by AutoCAD
             self.rgb = rgb  # rgb should be a (r, g, b) tuple
+
+    def get_gradient(self):
+        return self.gradient
 
     def set_gradient(self,
                      color1: 'RGB' = (0, 0, 0),
@@ -373,7 +376,7 @@ class Hatch(DXFGraphic):
             lines: list of definition lines
 
         """
-        self.pattern.lines = [PatternLine(line[0], line[1], line[2], line[3]) for line in lines]
+        self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
 
     def get_seed_points(self) -> List:
         return self.seeds
@@ -383,6 +386,7 @@ class Hatch(DXFGraphic):
             raise const.DXFValueError(
                 "Param points should be a collection of 2D points and requires at least one point.")
         self.seeds = list(points)
+        self.dxf.n_seed_points = len(self.seeds)
 
 
 TPath = Union['PolylinePath', 'EdgePath']
@@ -392,11 +396,18 @@ class BoundaryPaths:
     def __init__(self, paths: List[TPath] = None):
         self.paths = paths or []  # type: List[TPath]
 
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, item):
+        return self.paths[item]
+
+
     @classmethod
     def load_tags(cls, tags: Tags) -> 'BoundaryPaths':
         paths = []
-        assert tags[0].code == 91
-        grouped_path_tags = group_tags(tags[1:], splitcode=92)
+        assert tags[0].code == 92
+        grouped_path_tags = group_tags(tags, splitcode=92)
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
             is_polyline_path = bool(path_type_flags & 2)
@@ -513,7 +524,7 @@ class PolylinePath:
         write_tag(73, int(self.is_closed))
         write_tag(93, len(self.vertices))
         for x, y, bulge in self.vertices:
-            write_tag(10, (float(x), float(y)))
+            tagwriter.write_vertex(10, (float(x), float(y)))
             if has_bulge:
                 write_tag(42, float(bulge))
 
@@ -744,7 +755,7 @@ class SplineEdge:
         self.end_tangent = (0, 0)  # type: Tuple[float, float]
 
     @classmethod
-    def from_tags(cls, tags: Tags) -> 'SplineEdge':
+    def load_tags(cls, tags: Tags) -> 'SplineEdge':
         edge = cls()
         for tag in tags:
             code, value = tag

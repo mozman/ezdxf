@@ -99,6 +99,12 @@ class TagCollector:
     def reset(self):
         self.tags = []
 
+    @classmethod
+    def dxftags(cls, entity: 'DXFEntity', dxfversion=LATEST_DXF_VERSION):
+        collector = cls(dxfversion=dxfversion)
+        entity.export_dxf(collector)
+        return Tags(collector.tags)
+
 
 def basic_tags_from_text(text: str) -> List[DXFTag]:
     """

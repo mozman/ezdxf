@@ -29,6 +29,7 @@ class XData:
         return appid in self.data
 
     def _add(self, tags: Tags) -> None:
+        tags = Tags(tags)
         if len(tags):
             appid = tags[0].value
             self.data[appid] = tags
