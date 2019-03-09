@@ -1,7 +1,7 @@
 # Created: 13.03.2011
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator
+from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator, Union
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
@@ -12,6 +12,7 @@ from ezdxf.query import EntityQuery
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData
     from ezdxf.eztypes2 import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage
+    from ezdxf.eztypes2 import ImageDefReactor, ImageDef
 
 logger = logging.getLogger('ezdxf')
 
@@ -72,7 +73,12 @@ class ObjectsSection:
     def __len__(self) -> int:
         return len(self._entity_space)
 
-    def __contains__(self, entity: 'DXFEntity') -> bool:
+    def __contains__(self, entity: Union['DXFEntity', str]) -> bool:
+        if isinstance(entity, str):
+            try:
+                entity = self.entitydb[entity]
+            except KeyError:
+                return False
         return entity in self._entity_space
 
     def query(self, query: str = '*') -> EntityQuery:
@@ -153,7 +159,7 @@ class ObjectsSection:
     def set_raster_variables(self, frame: int = 0, quality: int = 1, units: str = 'm') -> None:
         units = RASTER_UNITS.get(units, 0)
         try:
-            raster_vars = self.rootdict.get_entity('ACAD_IMAGE_VARS')
+            raster_vars = self.rootdict['ACAD_IMAGE_VARS']
         except DXFKeyError:
             raster_vars = self.add_dxf_object_with_reactor('RASTERVARIABLES', dxfattribs={
                 'owner': self.rootdict.dxf.handle,
@@ -169,7 +175,7 @@ class ObjectsSection:
 
     def set_wipeout_variables(self, frame: int = 0) -> None:
         try:
-            wipeout_vars = self.rootdict.get_entity('ACAD_WIPEOUT_VARS')
+            wipeout_vars = self.rootdict['ACAD_WIPEOUT_VARS']
         except DXFKeyError:
             wipeout_vars = self.add_dxf_object_with_reactor('WIPEOUTVARIABLES', dxfattribs={
                 'owner': self.rootdict.dxf.handle,
@@ -179,7 +185,7 @@ class ObjectsSection:
         else:
             wipeout_vars.dxf.frame = int(frame)
 
-    def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int], name=None) -> 'DXFEntity':
+    def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int], name=None) -> 'ImageDef':
         # removed auto-generated name
         # use absolute image paths for filename and AutoCAD loads images automatically
         if name is None:
@@ -191,13 +197,14 @@ class ObjectsSection:
             'image_size': size_in_pixel,
         })
         image_dict[name] = image_def.dxf.handle
-        return image_def
+        return cast('ImageDef', image_def)
 
-    def add_image_def_reactor(self, image_handle: str) -> 'DXFEntity':
-        return self.create_new_dxf_entity('IMAGEDEF_REACTOR', dxfattribs={
+    def add_image_def_reactor(self, image_handle: str) -> 'ImageDefReactor':
+        image_def_reactor = self.create_new_dxf_entity('IMAGEDEF_REACTOR', dxfattribs={
             'owner': image_handle,
-            'image': image_handle,
+            'image_handle': image_handle,
         })
+        return cast('ImageDefReactor', image_def_reactor)
 
     def add_underlay_def(self, filename: str, format: str = 'pdf', name: str = None) -> 'DXFEntity':
         fmt = format.upper()

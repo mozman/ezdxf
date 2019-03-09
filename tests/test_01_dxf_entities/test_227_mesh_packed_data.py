@@ -26,18 +26,12 @@ def test_mesh_geometric_data(mesh):
         assert 108 == len(mesh_data.edge_crease_values)
 
 
-def dxftags(entity):
-    collector = TagCollector()
-    entity.export_dxf(collector)
-    return collector.tags
-
-
 def test_create_vertex_array(mesh_tags):
     start_index = mesh_tags.tag_index(92) + 1
     vertices = create_vertex_array(mesh_tags, start_index)
     assert len(vertices) == 56
 
-    tags = dxftags(vertices)
+    tags = TagCollector.dxftags(vertices)
     assert len(tags) == 3 * len(vertices)
 
 
@@ -46,7 +40,7 @@ def test_create_face_list(mesh_tags):
     faces = create_face_list(mesh_tags, start_index)
     assert len(faces) == 54
 
-    tags = dxftags(faces)
+    tags = TagCollector.dxftags(faces)
     assert tags[0].code == 93
     assert tags[0].value == 270
     assert faces.tag_count() == 270
@@ -59,7 +53,7 @@ def test_create_edge_array(mesh_tags):
     edges = create_edge_array(mesh_tags, start_index)
     assert len(edges) == 108
 
-    tags = dxftags(edges)
+    tags = TagCollector.dxftags(edges)
     assert tags[0].code == 94
     assert tags[0].value == 108
     # always two tags per edge + counter

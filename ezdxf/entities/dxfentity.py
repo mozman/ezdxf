@@ -252,14 +252,7 @@ class DXFNamespace:
             if value is None and not optional:  # force default value e.g. layer
                 value = default  # default value could be None
 
-            if attrib.dxfversion:
-                required_dxf_version = attrib.dxfversion
-            else:
-                required_dxf_version = DXF12
-
-            # align_point is optional but default is None, write if exists and ignore force
-            # optional and default value=None is handled correct
-            if (value is not None) and (export_dxf_version >= required_dxf_version):  # do not export None
+            if (value is not None) and (export_dxf_version >= attrib.dxfversion):  # do not export None
                 # check optional value == default value
                 if optional and not_force_optional and default is not None and (default == value):
                     return  # do not write explicit optional attribs if equal to default value

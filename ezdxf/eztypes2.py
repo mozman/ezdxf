@@ -95,6 +95,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.spline import Spline
     from ezdxf.entities.mesh import Mesh
     from ezdxf.entities.hatch import Hatch
+    from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables
 
     # other
     from ezdxf.audit import Auditor

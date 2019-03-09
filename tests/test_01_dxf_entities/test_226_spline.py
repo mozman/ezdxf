@@ -84,9 +84,7 @@ def test_load_from_text():
 
 def test_write_dxf():
     entity = Spline.from_text(SPLINE2)
-    collector = TagCollector()
-    entity.export_dxf(collector)
-    result = collector.tags
+    result = TagCollector.dxftags(entity)
     expected = basic_tags_from_text(SPLINE2)
     assert cmp_tags(result, expected, abs_tol=1e-4) == 0
 

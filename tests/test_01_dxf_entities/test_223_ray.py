@@ -71,8 +71,6 @@ def test_load_from_text(entity):
 
 def test_write_dxf():
     entity = Ray.from_text(RAY)
-    collector = TagCollector()
-    entity.export_dxf(collector)
-    result = collector.tags
+    result = TagCollector.dxftags(entity)
     expected = basic_tags_from_text(RAY)
     assert result == expected

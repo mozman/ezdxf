@@ -93,7 +93,7 @@ class Reactors:
         if tags is None:
             return cls(None)
 
-        if len(tags) < 3:
+        if len(tags) < 2:  # no reactors are valid
             raise DXFStructureError("ACAD_REACTORS error")
         return cls((handle.value for handle in tags[1:-1]))
 

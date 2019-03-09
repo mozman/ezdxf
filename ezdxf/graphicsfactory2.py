@@ -6,7 +6,7 @@ import math
 import logging
 
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFValueError, DXFVersionError
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
 from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
@@ -16,13 +16,13 @@ from ezdxf.render.dimension import multi_point_linear_dimension
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import ImageDef, Image, UnderlayDef, Underlay, DimStyleOverride, LoftedSurface
+    from ezdxf.eztypes import UnderlayDef, Underlay, DimStyleOverride, LoftedSurface
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
     from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic
     from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
-    from ezdxf.eztypes2 import Mesh, Hatch
+    from ezdxf.eztypes2 import Mesh, Hatch, Image, ImageDef
 
 
 class CreatorInterface:
@@ -240,7 +240,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['name'] = name
         dxfattribs['insert'] = insert
-        blockref = self.new_entity('INSERT', dxfattribs)
+        blockref = self.new_entity('INSERT', dxfattribs)  # type: Insert
         return blockref
 
     def add_auto_blockref(self, name: str, insert: 'Vertex', values: Dict[str, str], dxfattribs: dict = None) \
@@ -319,7 +319,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         closed = dxfattribs.pop('closed', False)
-        polyline = self.new_entity('POLYLINE', dxfattribs)
+        polyline = self.new_entity('POLYLINE', dxfattribs)  # type: Polyline
         polyline.close(closed)
         polyline.append_vertices(points)
         return polyline
@@ -359,7 +359,7 @@ class CreatorInterface:
         dxfattribs['n_count'] = n_size
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
-        polymesh = self.new_entity('POLYLINE', dxfattribs)
+        polymesh = self.new_entity('POLYLINE', dxfattribs)  # type: Polymesh
 
         points = [(0, 0, 0)] * (m_size * n_size)
         polymesh.append_vertices(points)  # init mesh vertices
@@ -380,7 +380,7 @@ class CreatorInterface:
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | const.POLYLINE_POLYFACE
         m_close = dxfattribs.pop('m_close', False)
         n_close = dxfattribs.pop('n_close', False)
-        polyface = self.new_entity('POLYLINE', dxfattribs)
+        polyface = self.new_entity('POLYLINE', dxfattribs)  # type: Polyface
         polyface.close(m_close, n_close)
         return polyface.cast()
 
@@ -440,11 +440,11 @@ class CreatorInterface:
         Returns: :class:`LWPolyline`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('LWPOLYLINE requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         closed = dxfattribs.pop('closed', False)
-        lwpolyline = self.new_entity('LWPOLYLINE', dxfattribs)
+        lwpolyline = self.new_entity('LWPOLYLINE', dxfattribs)  # type: LWPolyline
         lwpolyline.set_points(points, format=format)
         lwpolyline.closed = closed
         return lwpolyline
@@ -461,10 +461,10 @@ class CreatorInterface:
         Returns: :class:`MText`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('MTEXT requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
-        mtext = self.new_entity('MTEXT', dxfattribs)
+        mtext = self.new_entity('MTEXT', dxfattribs)  # type: MText
         mtext.text = text
         return mtext
 
@@ -481,7 +481,7 @@ class CreatorInterface:
         Returns: :class:`Ray`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('RAY requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['start'] = start
@@ -501,7 +501,7 @@ class CreatorInterface:
         Returns: :class:`XLine`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('XLINE requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['start'] = start
@@ -526,11 +526,11 @@ class CreatorInterface:
         Returns: :class:`Spline`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('SPLINE requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['degree'] = degree
-        spline = self.new_entity('SPLINE', dxfattribs)
+        spline = self.new_entity('SPLINE', dxfattribs)  # type: Spline
         if fit_points is not None:
             spline.fit_points = fit_points
         return spline
@@ -739,7 +739,7 @@ class CreatorInterface:
         Returns: :class:`Surface`
 
         """
-        if self.dxfversion < 'AC1021':
+        if self.dxfversion < DXF2007:
             raise DXFVersionError('SURFACE requires DXF version R2007+')
         return cast('Surface', self._add_acis_entiy('SURFACE', acis_data, dxfattribs))
 
@@ -754,7 +754,7 @@ class CreatorInterface:
         Returns: :class:`ExtrudedSurface`
 
         """
-        if self.dxfversion < 'AC1021':
+        if self.dxfversion < DXF2007:
             raise DXFVersionError('EXTRUDEDSURFACE requires DXF version R2007+')
         return cast('ExtrudedSurface', self._add_acis_entiy('EXTRUDEDSURFACE', acis_data, dxfattribs))
 
@@ -769,7 +769,7 @@ class CreatorInterface:
         Returns: :class:`LoftedSurface`
 
         """
-        if self.dxfversion < 'AC1021':
+        if self.dxfversion < DXF2007:
             raise DXFVersionError('LOFTEDSURFACE requires DXF version R2007+')
         return cast('LoftedSurface', self._add_acis_entiy('LOFTEDSURFACE', acis_data, dxfattribs))
 
@@ -784,7 +784,7 @@ class CreatorInterface:
         Returns: :class:`RevolvedSurface`
 
         """
-        if self.dxfversion < 'AC1021':
+        if self.dxfversion < DXF2007:
             raise DXFVersionError('REVOLVEDSURFACE requires DXF version R2007+')
         return cast('RevolvedSurface', self._add_acis_entiy('REVOLVEDSURFACE', acis_data, dxfattribs))
 
@@ -799,15 +799,15 @@ class CreatorInterface:
         Returns: :class:`SweptSurface`
 
         """
-        if self.dxfversion < 'AC1021':
+        if self.dxfversion < DXF2007:
             raise DXFVersionError('SWEPT requires DXF version R2007+')
         return cast('SweptSurface', self._add_acis_entiy('SWEPTSURFACE', acis_data, dxfattribs))
 
     def _add_acis_entiy(self, name, acis_data: str, dxfattribs: dict) -> 'Body':
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('{} requires DXF version R2000+'.format(name))
         dxfattribs = dict(dxfattribs or {})
-        entity = self.new_entity(name, dxfattribs)
+        entity = self.new_entity(name, dxfattribs)  # type: Body
         if acis_data is not None:
             entity.set_acis_data(acis_data)
         return entity
@@ -823,7 +823,7 @@ class CreatorInterface:
         Returns: :class:`Hatch`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('HATCH requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['solid_fill'] = 1
@@ -841,7 +841,7 @@ class CreatorInterface:
         Returns: :class:`Mesh`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('MESH requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         return self.new_entity('MESH', dxfattribs)
@@ -869,10 +869,10 @@ class CreatorInterface:
             y = math.sin(angle_in_rad) * units_per_pixel
             return round(x, 6), round(y, 6), 0  # supports only images in the xy-plane
 
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('IMAGE requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
-        x_pixels, y_pixels = image_def.dxf.image_size
+        x_pixels, y_pixels = image_def.dxf.image_size.vec2
         x_units, y_units = size_in_units
         x_units_per_pixel = x_units / x_pixels
         y_units_per_pixel = y_units / y_pixels
@@ -882,14 +882,14 @@ class CreatorInterface:
         dxfattribs['insert'] = Vector(insert)
         dxfattribs['u_pixel'] = to_vector(x_units_per_pixel, x_angle_rad)
         dxfattribs['v_pixel'] = to_vector(y_units_per_pixel, y_angle_rad)
-        dxfattribs['image_def'] = image_def.dxf.handle
+        dxfattribs['image_def_handle'] = image_def.dxf.handle
         dxfattribs['image_size'] = image_def.dxf.image_size
 
-        image = self.new_entity('IMAGE', dxfattribs)
-        if self.drawing is not None:
-            image_def_reactor = self.drawing.objects.add_image_def_reactor(image.dxf.handle)
+        image = self.new_entity('IMAGE', dxfattribs)  # type: Image
+        if self.doc is not None:
+            image_def_reactor = self.doc.objects.add_image_def_reactor(image.dxf.handle)
             reactor_handle = image_def_reactor.dxf.handle
-            image.dxf.image_def_reactor = reactor_handle
+            image.dxf.image_def_reactor_handle = reactor_handle
             image_def.append_reactor_handle(reactor_handle)
         return image
 

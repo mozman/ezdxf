@@ -229,7 +229,7 @@ class LWPolyline(DXFGraphic):
         """
         return [format_point(p, format=format) for p in self.lwpoints]
 
-    def set_points(self, points: List[Sequence[float]], format: str = DEFAULT_FORMAT) -> None:
+    def set_points(self, points: Iterable[Sequence[float]], format: str = DEFAULT_FORMAT) -> None:
         """
         Remove all points and append new points.
 
