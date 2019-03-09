@@ -1,8 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-03-09
-from typing import TYPE_CHECKING, Iterable, Sequence, List, cast
-import copy
+from typing import TYPE_CHECKING, Iterable, List, cast
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010, DXFTypeError

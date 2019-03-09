@@ -98,6 +98,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables
     from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
     from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDef
+    from ezdxf.entities.acis import Body, Region, Solid3d
 
     # other
     from ezdxf.audit import Auditor

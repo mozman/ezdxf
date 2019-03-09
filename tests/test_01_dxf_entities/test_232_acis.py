@@ -6,8 +6,8 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def layout():
-    dwg = ezdxf.new('AC1024')
-    return dwg.modelspace()
+    doc = ezdxf.new2('R2007')
+    return doc.modelspace()
 
 
 def test_body_default_settings(layout):
@@ -17,36 +17,38 @@ def test_body_default_settings(layout):
 
 def test_body_getting_acis_data(layout):
     body = layout.add_body(acis_data=TEST_DATA.splitlines())
-    assert TEST_DATA == "\n".join(body.get_acis_data())
+    assert TEST_DATA == body.tostring()
 
 
-def test_body_acis_data_context_manager(layout):
+def test_backward_compatibility(layout):
     body = layout.add_body()
     with body.edit_data() as data:
         data.text_lines.extend(TEST_DATA.splitlines())
-    data = list(body.get_acis_data())
-    assert TEST_DATA == "\n".join(data)
+
+    assert TEST_DATA == "\n".join(body.get_acis_data())
+    body.set_acis_data(TEST_DATA.splitlines())
+    assert TEST_DATA == body.tostring()
 
 
 def test_region_default_settings(layout):
     region = layout.add_region()
-    assert '0' == region.dxf.layer
+    assert region.dxf.layer == '0'
 
 
 def test_region_getting_acis_data(layout):
     region = layout.add_region(acis_data=TEST_DATA.splitlines())
-    assert TEST_DATA == "\n".join(region.get_acis_data())
+    assert TEST_DATA == region.tostring()
 
 
 def test_3dsolid_default_settings(layout):
     _3dsolid = layout.add_3dsolid()
-    assert '0' == _3dsolid.dxf.layer
-    assert '0' == _3dsolid.dxf.history
+    assert _3dsolid.dxf.layer == '0'
+    assert _3dsolid.dxf.history_handle == '0'
 
 
 def test_3dsolid_getting_acis_data(layout):
     _3dsolid = layout.add_3dsolid(acis_data=TEST_DATA.splitlines())
-    assert TEST_DATA == "\n".join(_3dsolid.get_acis_data())
+    assert TEST_DATA == _3dsolid.tostring()
 
 
 TEST_DATA = """21200 115 2 26

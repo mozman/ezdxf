@@ -37,7 +37,7 @@ from . import dxfgfx
 from . import line, point, circle, arc, shape, solid, text, insert, block, polyline, attrib, dimension, viewport
 
 # register graphical entities R2000
-from . import lwpolyline, ellipse, xline, mtext, spline, mesh, hatch, image, underlay
+from . import lwpolyline, ellipse, xline, mtext, spline, mesh, hatch, image, underlay, acis
 
 # register graphical entities R2004
 

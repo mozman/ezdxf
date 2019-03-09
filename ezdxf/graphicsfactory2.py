@@ -16,13 +16,12 @@ from ezdxf.render.dimension import multi_point_linear_dimension
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import LoftedSurface
-    from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
+    from ezdxf.eztypes import LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
     from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic, DimStyleOverride
     from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
-    from ezdxf.eztypes2 import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef
+    from ezdxf.eztypes2 import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef, Body, Region, Solid3d
 
 
 class CreatorInterface:
@@ -809,7 +808,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(name, dxfattribs)  # type: Body
         if acis_data is not None:
-            entity.set_acis_data(acis_data)
+            entity.acis_data = acis_data
         return entity
 
     def add_hatch(self, color: int = 7, dxfattribs: dict = None) -> 'Hatch':

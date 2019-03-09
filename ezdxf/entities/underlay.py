@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-15
+# Created 2019-03-09
 from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, cast
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
