@@ -13,7 +13,8 @@ def dxf(request, tmpdir_factory):
     psp = doc.layout()
     psp.add_circle((0, 0), 1)
     filename = tmpdir_factory.mktemp(request.param).join("test.dxf")
-    doc.saveas(filename, dxfversion=request.param)
+    doc.dxfversion = request.param
+    doc.saveas(filename)
     return filename
 
 

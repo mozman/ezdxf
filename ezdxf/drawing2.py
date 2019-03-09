@@ -198,10 +198,6 @@ class Drawing:
             ))
         return version
 
-    def which_dxfversion(self, dxfversion=None) -> str:
-        dxfversion = dxfversion if dxfversion is not None else self.dxfversion
-        return acad_release_to_dxf_version.get(dxfversion, dxfversion)
-
     @classmethod
     def read(cls, stream: TextIO, legacy_mode: bool = False, filter_stack: TFilterStack = None) -> 'Drawing':
         """ Open an existing drawing.
@@ -321,34 +317,31 @@ class Drawing:
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
 
-    def saveas(self, filename, encoding=None, dxfversion=None) -> None:
-        dxfversion = self.which_dxfversion(dxfversion)
+    def saveas(self, filename, encoding=None) -> None:
         self.filename = filename
-        self.save(encoding=encoding, dxfversion=dxfversion)
+        self.save(encoding=encoding)
 
-    def save(self, encoding=None, dxfversion=None) -> None:
+    def save(self, encoding=None) -> None:
         # DXF R12, R2000, R2004 - ASCII encoding
         # DXF R2007 and newer - UTF-8 encoding
-        dxfversion = self.which_dxfversion(dxfversion)
 
         if encoding is None:
-            enc = 'utf-8' if dxfversion >= DXF2007 else self.encoding
+            enc = 'utf-8' if self.dxfversion >= DXF2007 else self.encoding
         else:  # override default encoding, for applications that handles encoding different than AutoCAD
             enc = encoding
         # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.
 
         with io.open(self.filename, mode='wt', encoding=enc, errors='dxfreplace') as fp:
-            self.write(fp, dxfversion)
+            self.write(fp)
 
-    def write(self, stream, dxfversion=None) -> None:
-        dxfversion = self.which_dxfversion(dxfversion)
-        dxfversion = self._validate_dxf_version(dxfversion)
+    def write(self, stream) -> None:
+        dxfversion = self.dxfversion
         if dxfversion == DXF12:
             handles = bool(self.header.get('$HANDLING', 0))
         else:
             handles = True
         if dxfversion > DXF12:
-            self._register_required_classes(dxfversion)
+            self.classes.add_required_classes(dxfversion)
 
         self._create_appids()
         self._update_metadata()
@@ -370,14 +363,6 @@ class Drawing:
             section.export_dxf(tagwriter)
 
         tagwriter.write_tag2(0, 'EOF')
-
-    def _register_required_classes(self, dxfversion):
-        self.classes.add_required_classes(dxfversion)
-        for dxftype in self.tracker.dxftypes:
-            self.classes.add_class(dxftype)
-
-    def update_class_instance_counters(self):
-        self.classes.update_instance_counters()
 
     def _update_metadata(self):
         now = datetime.now()

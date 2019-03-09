@@ -4,4 +4,5 @@ OUTPATH = r"C:\Users\manfred\Desktop\Outbox\{}.dxf"
 doc = ezdxf.new2()
 
 for version in versions_supported_by_save:
-    doc.saveas(filename=OUTPATH.format(acad_release[version]), dxfversion=version)
+    doc.dxfversion = version
+    doc.saveas(filename=OUTPATH.format(acad_release[version]))

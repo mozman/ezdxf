@@ -119,6 +119,27 @@ class ClassesSection:
         for name in names:
             self.add_class(name)
 
+        if self.doc is None:  # testing environment
+            return
+
+        dxftypes = self.doc.tracker.dxftypes
+        if 'IMAGE' in dxftypes:
+            self.add_class('IMAGE')
+            self.add_class('IMAGEDEF')
+            self.add_class('IMAGEDEF_REACTOR')
+        if 'PDFUNDERLAY' in dxftypes:
+            self.add_class('PDFDEFINITION')
+            self.add_class('PDFUNDERLAY')
+        if 'DWFUNDERLAY' in dxftypes:
+            self.add_class('DWFDEFINITION')
+            self.add_class('DWFUNDERLAY')
+        if 'DGNUNDERLAY' in dxftypes:
+            self.add_class('DGNDEFINITION')
+            self.add_class('DGNUNDERLAY')
+
+        for dxftype in dxftypes:
+            self.add_class(dxftype)
+
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")
         for dxfclass in self.classes.values():

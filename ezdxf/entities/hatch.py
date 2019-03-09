@@ -152,7 +152,7 @@ class Hatch(DXFGraphic):
         self.seeds = []
 
     def _copy_data(self, entity: 'Hatch') -> None:
-        """ Copy loops, pattern, gradient, seeds. """
+        """ Copy paths, pattern, gradient, seeds. """
         entity.paths = copy.deepcopy(self.paths)
         entity.pattern = copy.deepcopy(self.pattern)
         entity.gradient = copy.deepcopy(self.gradient)
@@ -379,6 +379,7 @@ class Hatch(DXFGraphic):
         """
         self.pattern = Pattern([PatternLine(line[0], line[1], line[2], line[3]) for line in lines])
 
+    # just for compatibility
     def get_seed_points(self) -> List:
         return self.seeds
 

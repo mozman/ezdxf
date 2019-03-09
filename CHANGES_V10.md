@@ -23,7 +23,9 @@ Disadvantage, I have to interpret all group codes of supported entities and Auto
 codes in the official DXF reference, this unknown group codes will be lost by saving a modified DXF drawing, 
 unsupported and unknown entities are still stored an preserved as dumb tag lists (unsupported is my term for documented 
 entities just stored for preservation). I try to log unknown tags, but I don't have the time and will to research the 
-functionality of these unknown tags.
+functionality of these unknown tags. This new entity system also causes a little time penalty for loading and saving DXF
+files, the actual loading process is optimized for the old entity system and could be optimized for the new entity system 
+later, but the penalty is only ~1.5x to 2x and is only noticeable at really large files (>5MB).
 
 SOME DATA MAYBE LOST BY MODIFYING EXISTING DXF FILES.
 
@@ -65,6 +67,10 @@ Changes in Detail
 - VIEWPORT: same treatment for all DXF versions
 - POLYLINE: `Polyline.vertices()` is now an attribute `Polyline.vertices`, implemented as regular Python list.
 - INSERT: `Insert.attribs()` is now an attribute `Insert.attribs`, implemented as regular Python list.
+- VIEWPORT: renamed `Viewport.dxf.center_point` to `Viewport.dxf.center` 
+- VIEWPORT: renamed `Viewport.dxf.target_point` to `Viewport.dxf.target`
+- HATCH: direct access to paths (`Hatch.paths`), pattern (`Hatch.pattern`) and gradient (`Hatch.gradient`), context 
+  manager to edit this data not needed anymore, but still available for backward compatibility  
 - Options:
     - removed `template_dir`, no more needed
     - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 
