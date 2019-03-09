@@ -44,10 +44,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = XLine()
-    assert dxfclass.dxftype() == 'XLINE'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = XLine()
+    assert entity.dxftype() == 'XLINE'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

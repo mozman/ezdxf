@@ -1,8 +1,8 @@
-# Copyright (c) 2016 Manfred Moitzi
+# Copyright (c) 2016-2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
 
-dwg = ezdxf.new('AC1015')  # underlay requires the DXF R2000 format or newer
+dwg = ezdxf.new2('R2000')  # underlay requires the DXF R2000 format or newer
 pdf_underlay_def = dwg.add_underlay_def(filename='underlay.pdf', name='1')  # name = page to display
 dwf_underlay_def = dwg.add_underlay_def(filename='underlay.dwf',
                                         name="Underlay_R2013-Model")  # don't know how to get this name
@@ -25,4 +25,4 @@ msp.add_underlay(dwf_underlay_def, insert=(0, 15, 0), scale=1.)
 # get existing underlay definitions, Important: UNDERLAYDEFs resides in the objects section
 pdf_defs = dwg.objects.query('PDFDEFINITION')  # get all pdf underlay defs in drawing
 
-dwg.saveas("dxf_with_underlay.dxf")
+dwg.saveas("underlay.dxf")

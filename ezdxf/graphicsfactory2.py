@@ -16,13 +16,13 @@ from ezdxf.render.dimension import multi_point_linear_dimension
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import UnderlayDef, Underlay, DimStyleOverride, LoftedSurface
+    from ezdxf.eztypes import LoftedSurface
     from ezdxf.eztypes import Solid3d, Region, Body, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
-    from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic
+    from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic, DimStyleOverride
     from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
-    from ezdxf.eztypes2 import Mesh, Hatch, Image, ImageDef
+    from ezdxf.eztypes2 import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef
 
 
 class CreatorInterface:
@@ -894,8 +894,7 @@ class CreatorInterface:
         return image
 
     def add_underlay(self, underlay_def: 'UnderlayDef', insert: 'Vertex' = (0, 0, 0),
-                     scale: Tuple[float, float, float] = (1, 1, 1),
-                     rotation: float = 0., dxfattribs: dict = None) -> 'Underlay':
+                     scale=(1, 1, 1), rotation: float = 0., dxfattribs: dict = None) -> 'Underlay':
         """
         Add an :class:`Underlay` entity. Create :class:`UnderlayDef` by the :class:`Drawing` factory function
         :meth:`~Drawing.add_underlay_def`, see :ref:`tut_underlay`. (requires DXF R2000+)
@@ -903,22 +902,22 @@ class CreatorInterface:
         Args:
             underlay_def: required underlay definition as :class:`UnderlayDef`
             insert: insertion point as 3D point in :ref:`WCS`
-            scale:  underlay scaling factor as (x, y, z) tuple
+            scale:  underlay scaling factor as (x, y, z) tuple or as single value for uniform scaling for x, y and z
             rotation: rotation angle around the z-axis in degrees
             dxfattribs (dict): additional DXF attributes for :class:`Underlay` entity
 
         Returns: :class:`Underlay`
 
         """
-        if self.dxfversion < 'AC1015':
+        if self.dxfversion < DXF2000:
             raise DXFVersionError('UNDERLAY requires DXF version R2000+')
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['insert'] = insert
-        dxfattribs['underlay_def'] = underlay_def.dxf.handle
+        dxfattribs['underlay_def_handle'] = underlay_def.dxf.handle
         dxfattribs['rotation'] = rotation
 
-        underlay = self.new_entity(underlay_def.entity_name, dxfattribs)
-        underlay.scale = scale
+        underlay = self.new_entity(underlay_def.entity_name, dxfattribs)  # type: Underlay
+        underlay.scaling = scale
         underlay_def.append_reactor_handle(underlay.dxf.handle)
         return underlay
 

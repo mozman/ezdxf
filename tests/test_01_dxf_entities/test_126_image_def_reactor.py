@@ -32,10 +32,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = ImageDefReactor()
-    assert dxfclass.dxftype() == 'IMAGEDEF_REACTOR'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = ImageDefReactor()
+    assert entity.dxftype() == 'IMAGEDEF_REACTOR'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

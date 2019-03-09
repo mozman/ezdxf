@@ -42,10 +42,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = RasterVariables()
-    assert dxfclass.dxftype() == 'RASTERVARIABLES'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = RasterVariables()
+    assert entity.dxftype() == 'RASTERVARIABLES'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

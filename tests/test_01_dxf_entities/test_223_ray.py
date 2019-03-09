@@ -44,10 +44,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = Ray()
-    assert dxfclass.dxftype() == 'RAY'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = Ray()
+    assert entity.dxftype() == 'RAY'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

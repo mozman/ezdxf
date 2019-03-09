@@ -96,6 +96,8 @@ if TYPE_CHECKING:
     from ezdxf.entities.mesh import Mesh
     from ezdxf.entities.hatch import Hatch
     from ezdxf.entities.image import Image, ImageDef, ImageDefReactor, RasterVariables
+    from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
+    from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDef
 
     # other
     from ezdxf.audit import Auditor

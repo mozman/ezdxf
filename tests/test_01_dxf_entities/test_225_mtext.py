@@ -48,10 +48,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = MText()
-    assert dxfclass.dxftype() == 'MTEXT'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = MText()
+    assert entity.dxftype() == 'MTEXT'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

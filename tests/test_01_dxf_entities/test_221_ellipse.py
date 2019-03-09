@@ -51,10 +51,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = Ellipse()
-    assert dxfclass.dxftype() == 'ELLIPSE'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = Ellipse()
+    assert entity.dxftype() == 'ELLIPSE'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

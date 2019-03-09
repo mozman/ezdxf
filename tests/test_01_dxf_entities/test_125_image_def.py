@@ -50,10 +50,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = ImageDef()
-    assert dxfclass.dxftype() == 'IMAGEDEF'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = ImageDef()
+    assert entity.dxftype() == 'IMAGEDEF'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():

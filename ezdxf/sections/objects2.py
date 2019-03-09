@@ -12,7 +12,7 @@ from ezdxf.query import EntityQuery
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData
     from ezdxf.eztypes2 import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage
-    from ezdxf.eztypes2 import ImageDefReactor, ImageDef
+    from ezdxf.eztypes2 import ImageDefReactor, ImageDef, UnderlayDef
 
 logger = logging.getLogger('ezdxf')
 
@@ -206,7 +206,7 @@ class ObjectsSection:
         })
         return cast('ImageDefReactor', image_def_reactor)
 
-    def add_underlay_def(self, filename: str, format: str = 'pdf', name: str = None) -> 'DXFEntity':
+    def add_underlay_def(self, filename: str, format: str = 'pdf', name: str = None) -> 'UnderlayDef':
         fmt = format.upper()
         if fmt in ('PDF', 'DWF', 'DGN'):
             underlay_dict_name = 'ACAD_{}DEFINITIONS'.format(fmt)
@@ -232,7 +232,7 @@ class ObjectsSection:
         # auto-generated underlay key
         key = self.dxffactory.next_underlay_key(lambda k: k not in underlay_dict)
         underlay_dict[key] = underlay_def.dxf.handle
-        return underlay_def
+        return cast('UnderlayDef', underlay_def)
 
     def add_geodata(self, owner: str = '0', dxfattribs: dict = None) -> 'GeoData':
         if dxfattribs is None:

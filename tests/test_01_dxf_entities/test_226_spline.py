@@ -39,10 +39,10 @@ def test_registered():
 
 
 def test_default_init():
-    dxfclass = Spline()
-    assert dxfclass.dxftype() == 'SPLINE'
-    assert dxfclass.dxf.handle is None
-    assert dxfclass.dxf.owner is None
+    entity = Spline()
+    assert entity.dxftype() == 'SPLINE'
+    assert entity.dxf.handle is None
+    assert entity.dxf.owner is None
 
 
 def test_default_new():
