@@ -99,6 +99,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay, Underlay
     from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDef
     from ezdxf.entities.acis import Body, Region, Solid3d
+    from ezdxf.entities.acis import Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
 
     # other
     from ezdxf.audit import Auditor

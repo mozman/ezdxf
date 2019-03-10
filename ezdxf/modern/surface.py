@@ -69,14 +69,16 @@ class Surface(Body):
     )
 
     def _get_matrix(self, code: int) -> 'Matrix44':
-        subclass = self.tags.subclasses[4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
+        subclass = self.tags.subclasses[
+            4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
         try:
             return matrix_accessors.get_matrix(subclass, code)
         except DXFStructureError:
             raise DXFStructureError('Invalid transformation matrix in entity ' + self.__str__())
 
     def _set_matrix(self, code: int, data: Iterable[float]):
-        subclass = self.tags.subclasses[4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
+        subclass = self.tags.subclasses[
+            4]  # always 5th subclass, Surface has no transform matrix, but inherited classes
         matrix_accessors.set_matrix(subclass, code, list(data))
 
 
@@ -418,7 +420,6 @@ AcDbLoftedSurface
 1
 """
 
-
 _LOFTEDSURFACE_CLS = """0
 CLASS
 1
@@ -598,7 +599,6 @@ ObjectDBX Classes
 281
 1
 """
-
 
 _ACDBASSOCREVOLVEDSURFACEACTIONBODY_CLS = """0
 CLASS
@@ -846,7 +846,6 @@ AcDbSweptSurface
 0.0
 """
 
-
 _SWEPTSURFACE_CLS = """0
 CLASS
 1
@@ -864,7 +863,6 @@ ObjectDBX Classes
 281
 1
 """
-
 
 _ACDBASSOCSWEPTSURFACEACTIONBODY_CLS = """0
 CLASS
@@ -969,7 +967,6 @@ ObjectDBX Classes
 281
 1
 """
-
 
 # TODO: related by a handle to any surface entity
 _NURBSURFACE_CLS = """0

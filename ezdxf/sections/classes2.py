@@ -49,6 +49,17 @@ CLASS_DEFINITIONS = {
     'MENTALRAYRENDERSETTINGS': ['AcDbMentalRayRenderSettings', 'SCENEOE', 1024, 0, 0],
     'ACDBPLACEHOLDER': ['AcDbPlaceHolder', 'ObjectDBX Classes', 0, 0, 0],
     'LAYOUT': ['AcDbLayout', 'ObjectDBX Classes', 0, 0, 0],
+    'SURFACE': ['AcDbSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'EXTRUDEDSURFACE': ['AcDbExtrudedSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'LOFTEDSURFACE': ['AcDbLoftedSurface', 'ObjectDBX Classes', 0, 0, 1],
+    'REVOLVEDSURFACE': ['AcDbRevolvedSurface', 'ObjectDBX Classes', 0, 0, 1],
+    'SWEPTSURFACE': ['AcDbSweptSurface', 'ObjectDBX Classes', 0, 0, 1],
+    'PLANESURFACE': ['AcDbPlaneSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'NURBSSURFACE': ['AcDbNurbSurface', 'ObjectDBX Classes', 4095, 0, 1],
+    'ACDBASSOCEXTRUDEDSURFACEACTIONBODY': ['AcDbAssocExtrudedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBASSOCLOFTEDSURFACEACTIONBODY': ['AcDbAssocLoftedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBASSOCREVOLVEDSURFACEACTIONBODY': ['AcDbAssocRevolvedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'ACDBASSOCSWEPTSURFACEACTIONBODY': ['AcDbAssocSweptSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
 
 }
 
@@ -136,6 +147,18 @@ class ClassesSection:
         if 'DGNUNDERLAY' in dxftypes:
             self.add_class('DGNDEFINITION')
             self.add_class('DGNUNDERLAY')
+        if 'EXTRUDEDSURFACE' in dxftypes:
+            self.add_class('EXTRUDEDSURFACE')
+            self.add_class('ACDBASSOCEXTRUDEDSURFACEACTIONBODY')
+        if 'LOFTEDSURFACE' in dxftypes:
+            self.add_class('LOFTEDSURFACE')
+            self.add_class('ACDBASSOCLOFTEDSURFACEACTIONBODY')
+        if 'REVOLVEDSURFACE' in dxftypes:
+            self.add_class('REVOLVEDSURFACE')
+            self.add_class('ACDBASSOCREVOLVEDSURFACEACTIONBODY')
+        if 'SWEPTSURFACE' in dxftypes:
+            self.add_class('SWEPTSURFACE')
+            self.add_class('ACDBASSOCSWEPTSURFACEACTIONBODY')
 
         for dxftype in dxftypes:
             self.add_class(dxftype)

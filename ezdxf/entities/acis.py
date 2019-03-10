@@ -3,9 +3,10 @@
 # Created 2019-03-09
 from typing import TYPE_CHECKING, Iterable, List, Union
 from contextlib import contextmanager
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError, DXF2013, DXFStructureError, DXFValueError
 from ezdxf.lldxf.tags import Tags, DXFTag
+from ezdxf.math.matrix44 import Matrix44
 from ezdxf.tools import crypt
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -14,13 +15,16 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing
 
-__all__ = ['Body']
+__all__ = [
+    'Body', 'Solid3d', 'Region', 'Surface', 'ExtrudedSurface', 'LoftedSurface', 'RevolvedSurface', 'SweptSurface',
+]
 
 acdb_modeler_geometry = DefSubclass('AcDbModelerGeometry', {
     'version': DXFAttr(70, default=1),
     'flags': DXFAttr(290, dxfversion=DXF2013),
     'uid': DXFAttr(2, dxfversion=DXF2013),
 })
+
 
 # with R2013/AC1027 Modeler Geometry of ACIS data is stored in the ACDSDATA section as binary encoded information
 # detection:
@@ -227,3 +231,298 @@ class Solid3d(Body):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_3dsolid.name)
         self.dxf.export_dxf_attribs(tagwriter, 'history_handle')
 
+
+def load_matrix(subclass: 'Tags', code: int) -> Matrix44:
+    values = [tag.value for tag in subclass.find_all(code)]
+    if len(values) != 16:
+        raise DXFStructureError('Invalid transformation matrix.')
+    return Matrix44(values)
+
+
+def export_matrix(tagwriter: 'TagWriter', code: int, matrix: Matrix44) -> None:
+    for value in matrix.matrix:
+        tagwriter.write_tag2(code, value)
+
+
+acdb_surface = DefSubclass('AcDbSurface', {
+    'u_count': DXFAttr(71),
+    'v_count': DXFAttr(72),
+})
+
+
+@register_entity
+class Surface(Body):
+    """ DXF SURFACE entity - container entity for embedded ACIS data. """
+    DXFTYPE = 'SURFACE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface)
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_surface)
+        return dxf
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        # AcDbModelerGeometry export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_surface.name)
+        self.dxf.export_dxf_attribs(tagwriter, ['u_count', 'v_count'])
+
+
+acdb_extruded_surface = DefSubclass('AcDbExtrudedSurface', {
+    'class_id': DXFAttr(90),
+    'sweep_vector': DXFAttr(10, xtype=XType.point3d),
+    # 16x group code 40: Transform matrix of extruded entity (16 floats; row major format; default = identity matrix)
+    'draft_angle': DXFAttr(42, default=0.),  # in radians
+    'draft_start_distance': DXFAttr(43, default=0.),
+    'draft_end_distance': DXFAttr(44, default=0.),
+    'twist_angle': DXFAttr(45, default=0.),  # in radians?
+    'scale_factor': DXFAttr(48, default=0.),
+    'align_angle': DXFAttr(49, default=0.),  # in radians
+    # 16x group code 46: Transform matrix of sweep entity (16 floats; row major format; default = identity matrix)
+    # 16x group code 47: Transform matrix of path entity (16 floats; row major format; default = identity matrix)
+    'solid': DXFAttr(290, default=0),  # true/false
+    'sweep_alignment_flags': DXFAttr(70, default=0),  # 0=No alignment; 1=Align sweep entity to path
+    'unknown1': DXFAttr(71, default=0),
+    # 2=Translate sweep entity to path; 3=Translate path to sweep entity
+    'align_start': DXFAttr(292, default=0),  # true/false
+    'bank': DXFAttr(293, default=0),  # true/false
+    'base_point_set': DXFAttr(294, default=0),  # true/false
+    'sweep_entity_transform_computed': DXFAttr(295, default=0),  # true/false
+    'path_entity_transform_computed': DXFAttr(296, default=0),  # true/false
+    'reference_vector_for_controlling_twist': DXFAttr(11, xtype=XType.point3d),
+})
+
+
+@register_entity
+class ExtrudedSurface(Surface):
+    """ DXF EXTRUDEDSURFACE entity - container entity for embedded ACIS data. """
+    DXFTYPE = 'EXTRUDEDSURFACE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_extruded_surface)
+
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.transformation_matrix_extruded_entity = Matrix44()
+        self.sweep_entity_transformation_matrix = Matrix44()
+        self.path_entity_transformation_matrix = Matrix44()
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_extruded_surface)
+            self.load_matrices(processor.subclasses[4])
+        return dxf
+
+    def load_matrices(self, tags: Tags):
+        self.transformation_matrix_extruded_entity = load_matrix(tags, code=40)
+        self.sweep_entity_transformation_matrix = load_matrix(tags, code=46)
+        self.path_entity_transformation_matrix = load_matrix(tags, code=47)
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        # AcDbModelerGeometry export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_extruded_surface.name)
+        self.dxf.export_dxf_attribs(tagwriter, ['class_id', 'sweep_vector'])
+        export_matrix(tagwriter, code=40, matrix=self.transformation_matrix_extruded_entity)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'draft_angle', 'draft_start_distance', 'draft_end_distance', 'twist_angle', 'scale_factor', 'align_angle',
+        ])
+        export_matrix(tagwriter, code=46, matrix=self.sweep_entity_transformation_matrix)
+        export_matrix(tagwriter, code=47, matrix=self.path_entity_transformation_matrix)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'solid', 'sweep_alignment_flags', 'unknown1', 'align_start', 'bank', 'base_point_set',
+            'sweep_entity_transform_computed', 'path_entity_transform_computed',
+            'reference_vector_for_controlling_twist'
+        ])
+
+
+acdb_lofted_surface = DefSubclass('AcDbLoftedSurface', {
+    # 16x group code 40: Transform matrix of loft entity (16 floats; row major format; default = identity matrix)
+    'plane_normal_lofting_type': DXFAttr(70),
+    'start_draft_angle': DXFAttr(41, default=0.),  # in radians
+    'end_draft_angle': DXFAttr(42, default=0.),  # in radians
+    'start_draft_magnitude': DXFAttr(43, default=0.),
+    'end_draft_magnitude': DXFAttr(44, default=0.),
+    'arc_length_parameterization': DXFAttr(290, default=0),  # true/false
+    'no_twist': DXFAttr(291, default=1),  # true/false
+    'align_direction': DXFAttr(292, default=1),  # true/false
+    'simple_surfaces': DXFAttr(293, default=1),  # true/false
+    'closed_surfaces': DXFAttr(294, default=0),  # true/false
+    'solid': DXFAttr(295, default=0),  # true/false
+    'ruled_surface': DXFAttr(296, default=0),  # true/false
+    'virtual_guide': DXFAttr(297, default=0),  # true/false
+})
+
+
+@register_entity
+class LoftedSurface(Surface):
+    """ DXF LOFTEDSURFACE entity - container entity for embedded ACIS data. """
+    DXFTYPE = 'LOFTEDSURFACE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_lofted_surface)
+
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.transformation_matrix_lofted_entity = Matrix44()
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_lofted_surface)
+            self.load_matrices(processor.subclasses[4])
+        return dxf
+
+    def load_matrices(self, tags: Tags):
+        self.transformation_matrix_lofted_entity = load_matrix(tags, code=40)
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        # AcDbModelerGeometry export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lofted_surface.name)
+        export_matrix(tagwriter, code=40, matrix=self.transformation_matrix_lofted_entity)
+        self.dxf.export_dxf_attribs(tagwriter, acdb_lofted_surface.attribs.keys())
+
+
+acdb_revolved_surface = DefSubclass('AcDbRevolvedSurface', {
+    'class_id': DXFAttr(90, default=0.),
+    'axis_point': DXFAttr(10, xtype=XType.point3d),
+    'axis_vector': DXFAttr(11, xtype=XType.point3d),
+    'revolve_angle': DXFAttr(40),  # in radians
+    'start_angle': DXFAttr(41),  # in radians
+    # 16x group code 42: Transform matrix of revolved entity (16 floats; row major format; default = identity matrix)
+    'draft_angle': DXFAttr(43),  # in radians
+    'start_draft_distance': DXFAttr(44, default=0),
+    'end_draft_distance': DXFAttr(45, default=0),
+    'twist_angle': DXFAttr(46, default=0),  # in radians
+    'solid': DXFAttr(290, default=0),  # true/false
+    'close_to_axis': DXFAttr(291, default=0),  # true/false
+})
+
+
+@register_entity
+class RevolvedSurface(Surface):
+    """ DXF REVOLVEDSURFACE entity - container entity for embedded ACIS data. """
+    DXFTYPE = 'REVOLVEDSURFACE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_revolved_surface)
+
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.transformation_matrix_revolved_entity = Matrix44()
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_revolved_surface)
+            self.load_matrices(processor.subclasses[4])
+        return dxf
+
+    def load_matrices(self, tags: Tags):
+        self.transformation_matrix_revolved_entity = load_matrix(tags, code=42)
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        # AcDbModelerGeometry export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_revolved_surface.name)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'class_id', 'axis_point', 'axis_vector', 'revolve_angle', 'start_angle',
+        ])
+        export_matrix(tagwriter, code=42, matrix=self.transformation_matrix_revolved_entity)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'draft_angle', 'start_draft_distance', 'end_draft_distance', 'twist_angle', 'solid',
+            'close_to_axis',
+        ])
+
+
+acdb_swept_surface = DefSubclass('AcDbSweptSurface', {
+    'swept_entity_id': DXFAttr(90),
+    # 90: size of binary data (lost on saving)
+    # 310: binary data  (lost on saving)
+    'path_entity_id': DXFAttr(91),
+    # 90: size of binary data  (lost on saving)
+    # 310: binary data  (lost on saving)
+
+    # 16x group code 40: Transform matrix of sweep entity (16 floats; row major format; default = identity matrix)
+    # 16x group code 41: Transform matrix of path entity (16 floats; row major format; default = identity matrix)
+
+    'draft_angle': DXFAttr(42),  # in radians
+    'draft_start_distance': DXFAttr(43, default=0),
+    'draft_end_distance': DXFAttr(44, default=0),
+    'twist_angle': DXFAttr(45, default=0),  # in radians
+    'scale_factor': DXFAttr(48, default=1),
+    'align_angle': DXFAttr(49, default=0),  # in radians
+    # don't know the meaning of this matrices
+    # 16x group code 46: Transform matrix of sweep entity (16 floats; row major format; default = identity matrix)
+    # 16x group code 47: Transform matrix of path entity (16 floats; row major format; default = identity matrix)
+    'solid': DXFAttr(290, default=0),  # in radians
+    'sweep_alignment': DXFAttr(70, default=0),  # 0=No alignment; 1= align sweep entity to path;
+    'unknown1': DXFAttr(71, default=0),
+    # 2=Translate sweep entity to path; 3=Translate path to sweep entity
+    'align_start': DXFAttr(292, default=0),  # true/false
+    'bank': DXFAttr(293, default=0),  # true/false
+    'base_point_set': DXFAttr(294, default=0),  # true/false
+    'sweep_entity_transform_computed': DXFAttr(295, default=0),  # true/false
+    'path_entity_transform_computed': DXFAttr(296, default=0),  # true/false
+    'reference_vector_for_controlling_twist': DXFAttr(11, xtype=XType.point3d),
+})
+
+
+@register_entity
+class SweptSurface(Surface):
+    """ DXF SWEPTSURFACE entity - container entity for embedded ACIS data. """
+    DXFTYPE = 'SWEPTSURFACE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry, acdb_surface, acdb_swept_surface)
+
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.transformation_matrix_sweep_entity = Matrix44()
+        self.transformation_matrix_path_entity = Matrix44()
+        self.sweep_entity_transformation_matrix = Matrix44()
+        self.path_entity_transformation_matrix = Matrix44()
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_swept_surface)
+            self.load_matrices(processor.subclasses[4])
+        return dxf
+
+    def load_matrices(self, tags: Tags):
+        self.transformation_matrix_sweep_entity = load_matrix(tags, code=40)
+        self.transformation_matrix_path_entity = load_matrix(tags, code=41)
+        self.sweep_entity_transformation_matrix = load_matrix(tags, code=46)
+        self.path_entity_transformation_matrix = load_matrix(tags, code=47)
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        # AcDbModelerGeometry export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_swept_surface.name)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'swept_entity_id', 'path_entity_id',
+        ])
+        export_matrix(tagwriter, code=40, matrix=self.transformation_matrix_sweep_entity)
+        export_matrix(tagwriter, code=41, matrix=self.transformation_matrix_path_entity)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'draft_angle', 'draft_start_distance', 'draft_end_distance', 'twist_angle', 'scale_factor', 'align_angle'
+        ])
+
+        export_matrix(tagwriter, code=46, matrix=self.sweep_entity_transformation_matrix)
+        export_matrix(tagwriter, code=47, matrix=self.path_entity_transformation_matrix)
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'solid', 'sweep_alignment', 'unknown1', 'align_start', 'bank', 'base_point_set',
+            'sweep_entity_transform_computed', 'path_entity_transform_computed',
+            'reference_vector_for_controlling_twist'
+        ])

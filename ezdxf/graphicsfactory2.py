@@ -16,12 +16,11 @@ from ezdxf.render.dimension import multi_point_linear_dimension
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
-
     from ezdxf.eztypes2 import UCS, Vertex, Drawing, DXFGraphic, DimStyleOverride
     from ezdxf.eztypes2 import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes2 import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
     from ezdxf.eztypes2 import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef, Body, Region, Solid3d
+    from ezdxf.eztypes2 import LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
 
 class CreatorInterface:
