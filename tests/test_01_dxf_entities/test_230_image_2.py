@@ -8,7 +8,7 @@ from ezdxf.entities.image import ImageDef, Image
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new('R2000')
+    return ezdxf.new2('R2000')
 
 
 @pytest.fixture(scope='module')
@@ -147,6 +147,17 @@ def test_create_and_delete_image(new_doc):
     assert reactor_handle not in new_doc.objects, "IMAGEDEF_REACTOR not deleted for objects section"
     assert reactor_handle not in new_doc.entitydb, "IMAGEDEF_REACTOR not deleted for entity database"
     assert reactor_handle not in image_def2.get_reactors(), "Reactor handle not deleted from IMAGE_DEF reactors."
+
+
+def test_generic_wipeout(doc):
+    msp = doc.modelspace()
+    wipeout = msp.new_entity('WIPEOUT', {'insert': (0, 0, 0)})
+    assert wipeout.dxftype() == 'WIPEOUT'
+    assert wipeout.dxf.insert == (0, 0, 0)
+
+    doc.set_wipeout_variables(frame=1)
+    wipeout_variables = doc.rootdict['ACAD_WIPEOUT_VARS']
+    assert wipeout_variables.dxf.frame == 1
 
 
 IMAGE_DEF = """  0

@@ -13,7 +13,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import TagWriter, DXFNamespace, Tags, Drawing, Vertex
 
-__all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables']
+__all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
 acdb_image = DefSubclass('AcDbRasterImage', {
     'class_version': DXFAttr(90, dxfversion=DXF2000, default=0),
@@ -46,6 +46,7 @@ class Image(DXFGraphic):
     """ DXF IMAGE entity """
     DXFTYPE = 'IMAGE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_image)
+    _CLS_ATTRIBS = acdb_image
     DEFAULT_ATTRIBS = {'layer': '0', 'flags': 3}
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -65,9 +66,9 @@ class Image(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_boundary_path(processor.subclasses[2])
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_image)
+            tags = processor.load_dxfattribs_into_namespace(dxf, self._CLS_ATTRIBS)
             if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=acdb_image.name)
+                processor.log_unprocessed_tags(tags, subclass=self._CLS_ATTRIBS.name)
             if len(self.boundary_path) < 2:  # something is wrong
                 self.dxf = dxf
                 self.reset_boundary_path()
@@ -89,7 +90,7 @@ class Image(DXFGraphic):
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_image.name)
+        tagwriter.write_tag2(SUBCLASS_MARKER, self._CLS_ATTRIBS.name)
         self.dxf.count_boundary_points = len(self.boundary_path)
         self.dxf.export_dxf_attribs(tagwriter, [
             'class_version', 'insert', 'u_pixel', 'v_pixel', 'image_size', 'image_def_handle', 'flags', 'clipping',
@@ -145,6 +146,24 @@ class Image(DXFGraphic):
             self.doc.objects.delete_entity(reactor)
         del self._boundary_path
         super().destroy()
+
+
+acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))
+
+
+@register_entity
+class Wipeout(Image):
+    """ DXF WIPEOUT entity """
+    DXFTYPE = 'WIPEOUT'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_wipeout)
+    DEFAULT_ATTRIBS = {
+        'layer': '0',
+        'flags': 3,
+        'image_size': (1, 1),
+        'image_def_handle': '0',
+        'image_def_reactor_handle': '0',
+    }
+    _CLS_ATTRIBS = acdb_wipeout
 
 
 acdb_image_def = DefSubclass('AcDbRasterImageDef', {
@@ -241,3 +260,31 @@ class RasterVariables(DXFObject):
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_raster_variables.name)
         self.dxf.export_dxf_attribs(tagwriter, ['class_version', 'frame', 'quality', 'units'])
+
+
+acdb_wipeout_variables = DefSubclass('AcDbWipeoutVariables', {
+    'frame': DXFAttr(70, default=0),  # Display-image-frame flag: 0 = No frame; 1 = Display frame
+})
+
+
+@register_entity
+class WipeoutVariables(DXFObject):
+    """ DXF WIPEOUTVARIABLES entity """
+    DXFTYPE = 'WIPEOUTVARIABLES'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_wipeout_variables)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_wipeout_variables)
+            if len(tags):
+                processor.log_unprocessed_tags(tags, subclass=acdb_wipeout_variables.name)
+        return dxf
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_wipeout_variables.name)
+        self.dxf.export_dxf_attribs(tagwriter, 'frame')

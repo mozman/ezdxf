@@ -60,6 +60,9 @@ CLASS_DEFINITIONS = {
     'ACDBASSOCLOFTEDSURFACEACTIONBODY': ['AcDbAssocLoftedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
     'ACDBASSOCREVOLVEDSURFACEACTIONBODY': ['AcDbAssocRevolvedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
     'ACDBASSOCSWEPTSURFACEACTIONBODY': ['AcDbAssocSweptSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
+    'HELIX': ['AcDbHelix', 'ObjectDBX Classes', 4095, 0, 1],
+    'WIPEOUT': ['AcDbWipeout', 'WipeOut|Product Desc: Object Enabler for WipeOut entity | Company: Autodesk, Inc. | WEB Address: www.autodesk.com', 2175, 0, 1],
+    'WIPEOUTVARIABLES': ['AcDbWipeoutVariables', 'WipeOut|Product Desc:     WipeOut Dbx Application|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com', 2175, 0, 1],
 
 }
 
