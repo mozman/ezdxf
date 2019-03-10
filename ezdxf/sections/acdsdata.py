@@ -1,6 +1,6 @@
 # Purpose: acdsdata section manager
 # Created: 05.05.2014
-# Copyright (c) 2014-2018, Manfred Moitzi
+# Copyright (c) 2014-2019, Manfred Moitzi
 # License: MIT License
 """
 ACDSDATA entities have NO handles, therefore they can not be stored in the drawing entity database.
@@ -63,7 +63,7 @@ section structure (work in progress):
 0 <str> ACDSRECORD               # dxftype: data record
 90 <int> 0                       # ??? flag
 2 <str> AcDbDs::ID               # subsection name
-280 <int> 10                     # subsection type 10 = handle to owner entity, 3DSOLID???
+280 <int> 10                     # subsection type 10 = handle to owner entity, 3DSOLID/REGION
 320 <str> 339                    # handle
 2 <str> ASM_Data                 # subsection name
 280 <int> 15                     # subsection type 15 = binary data
@@ -81,17 +81,22 @@ from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import TagWriter
+    from ezdxf.eztypes2 import TagWriter, Drawing
 
 
 class AcDsDataSection:
     name = 'ACDSDATA'
 
-    def __init__(self, entities: Iterable[Tags]):
+    def __init__(self, doc: 'Drawing', entities: Iterable[Tags] = None):
+        self.doc = doc
         self.entities = []  # type: List[AcDsData]
         self.section_info = []  # type: Tags
         if entities is not None:
             self.load_tags(iter(entities))
+
+    @property
+    def is_valid(self):
+        return len(self.section_info)
 
     def load_tags(self, entities: Iterator[Tags]) -> None:
         section_head = next(entities)
@@ -100,20 +105,42 @@ class AcDsDataSection:
 
         self.section_info = section_head
         for entity in entities:
-            self._append_entity(AcDsData(entity))  # tags have no subclasses
+            self.append(AcDsData(entity))  # tags have no subclasses
 
-    def _append_entity(self, entity: 'AcDsData') -> None:
-        cls = ACDSDATA_TYPES.get(entity.dxftype())
-        if cls is not None:
-            entity = cls(entity.tags)
+        # remove ENDSEC entry
+        self.entities.pop()
+
+    def append(self, entity: 'AcDsData') -> None:
+        cls = ACDSDATA_TYPES.get(entity.dxftype(), AcDsData)
+        entity = cls(entity.tags)
         self.entities.append(entity)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        tagwriter.write_str("  0\nSECTION\n  2\nACDSDATA\n")
+        if not self.is_valid:
+            return
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:
             entity.export_dxf(tagwriter)
         tagwriter.write_tag2(0, 'ENDSEC')
+
+    @property
+    def acdsrecords(self) -> Iterable['AcDsRecord']:
+        return (entity for entity in self.entities if entity.dxftype() == 'ACDSRECORD')
+
+    def get_acis_data(self, handle: str) -> List[str]:
+        for record in self.acdsrecords:
+            try:
+                section = record.get_section('AcDbDs::ID')
+            except DXFKeyError:  # not present
+                continue
+            asm_handle = section.get_first_value(320, None)
+            if asm_handle == handle:
+                try:
+                    asm_data = record.get_section('ASM_Data')
+                except DXFKeyError:  # no data stored
+                    break
+                return [tag.value for tag in asm_data if tag.code == 310]
+        return []
 
 
 class AcDsData:
@@ -148,7 +175,7 @@ class AcDsRecord:
         self.sections = [Section(tags) for tags in group_tags(islice(tags, 2, None), splitcode=2)]
 
     def dxftype(self) -> str:
-        return self._dxftype.value
+        return 'ACDSRECORD'
 
     def has_section(self, name: str) -> bool:
         return self.get_section(name, default=None) is not None
@@ -162,13 +189,16 @@ class AcDsRecord:
         else:
             return default
 
-    def __getitem__(self, name: str) -> Section:
-        return self.get_section(name)
+    def __len__(self):
+        return len(self.sections)
+
+    def __getitem__(self, item) -> Section:
+        return self.sections[item]
 
     def _write_header(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tags(Tags([self._dxftype, self.flags]))
 
-    def write(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: 'TagWriter') -> None:
         self._write_header(tagwriter)
         for section in self.sections:
             tagwriter.write_tags(section)

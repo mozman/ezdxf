@@ -3,6 +3,8 @@
 import pytest
 import ezdxf
 
+from ezdxf.entities.acis import tags2textlines, textlines2tags
+
 
 @pytest.fixture(scope='module')
 def layout():
@@ -60,3 +62,27 @@ ref_vt-eye-attrib $-1 -1 $-1 $-1 $1 $4 $5 #
 lump $6 -1 $-1 $-1 $7 $1 #
 eye_refinement $-1 -1 @5 grid  1 @3 tri 1 @4 surf 0 @3 adj 0 @4 grad 0 @9 postcheck 0 @4 stol 0.020115179941058159 @4 ntol 30 @4 dsil 0 @8 flatness 0 @7 pixarea 0 @4 hmax 0 @6 gridar 0 @5 mgrid 3000 @5 ugrid 0 @5 vgrid 0 @10 end_fields #
 vertex_template $-1 -1 3 0 1 8 #"""
+
+
+def test_tag2lines():
+    expected = 'AB' * 50 + 'CD' * 50 + 'EF' * 50
+    tags = [
+        (1, 'AB' * 50),
+        (3, 'CD' * 50),
+        (3, 'EF' * 50),
+    ]
+    assert list(tags2textlines(tags))[0] == expected
+
+
+def test_lines2tags():
+    line = 'AB' * 100 + 'CD' * 100 + 'EF' * 100
+    result = list(textlines2tags([line]))
+    code, value = result[0]
+    assert code == 1
+    assert value == line[:255]
+    code, value = result[1]
+    assert code == 3
+    assert value == line[255:510]
+    code, value = result[2]
+    assert code == 3
+    assert value == line[510:]

@@ -5,12 +5,13 @@ import pytest
 from ezdxf.sections.acdsdata import AcDsDataSection
 from ezdxf import DXFKeyError
 from ezdxf.lldxf.tags import internal_tag_compiler, group_tags
+from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 
 @pytest.fixture
 def section():
     entities = group_tags(internal_tag_compiler(ACDSSECTION))
-    return AcDsDataSection(entities)
+    return AcDsDataSection(None, entities)
 
 
 def test_loader(section):
@@ -26,12 +27,18 @@ def test_acds_record(section):
     assert record.has_section('AcDbDs::ID') is True
     assert record.has_section('mozman') is False
     with pytest.raises(DXFKeyError):
-        _ = record['mozman']
+        _ = record.get_section('mozman')
 
-    asm_data = record['ASM_Data']
+    asm_data = record.get_section('ASM_Data')
     binary_data = (tag for tag in asm_data if tag.code == 310)
     length = sum(len(tag.value) for tag in binary_data)
     assert asm_data[2].value == length
+
+
+def test_write_dxf(section):
+    result = TagCollector.dxftags(section)
+    expected = basic_tags_from_text(ACDSSECTION)
+    assert result == expected
 
 
 ACDSSECTION = """0

@@ -32,6 +32,7 @@ from ezdxf.sections.tables2 import TablesSection
 from ezdxf.sections.blocks2 import BlocksSection
 from ezdxf.sections.entities2 import EntitySection, StoredSection
 from ezdxf.sections.objects2 import ObjectsSection
+from ezdxf.sections.acdsdata import AcDsDataSection
 
 from ezdxf.entities.dxfgroups import GroupCollection
 from ezdxf.entities.material import MaterialCollection
@@ -39,7 +40,7 @@ from ezdxf.entities.mleader import MLeaderStyleCollection
 from ezdxf.entities.mline import MLineStyleCollection
 
 logger = logging.getLogger('ezdxf')
-MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS'}
+MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'}
 
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import HandleGenerator, DXFTag, SectionDict, SectionType, Table, ViewportTable
@@ -78,6 +79,10 @@ class Drawing:
         self.blocks = None  # type: BlocksSection
         self.entities = None  # type: EntitySection
         self.objects = None  # type: ObjectsSection
+
+        # DXF R2013 and later
+        self.acdsdata = None  # type: AcDsDataSection
+
         self.stored_sections = []
         self.layouts = None  # type: Layouts
         self.groups = None  # type: GroupCollection  # read only
@@ -108,7 +113,8 @@ class Drawing:
         self.blocks = BlocksSection(self)
         self.entities = EntitySection(self)
         self.objects = ObjectsSection(self)
-
+        self.acdsdata = AcDsDataSection(self)
+        # AcDSData section is not supported for new drawings
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
         self.layouts = Layouts.setup(self)
@@ -252,6 +258,10 @@ class Drawing:
 
     def _load(self, tagger: Iterable['DXFTag']):
         sections = load_dxf_structure(tagger)  # load complete DXF entity structure
+        try:  # discard section THUMBNAILIMAGE
+            del sections['THUMBNAILIMAGE']
+        except KeyError:
+            pass
         # -----------------------------------------------------------------------------------
         # create header section:
         # all header tags are the first DXF structure entity
@@ -284,6 +294,9 @@ class Drawing:
 
         self.entities = EntitySection(self, sections.get('ENTITIES', None))
         self.objects = ObjectsSection(self, sections.get('OBJECTS', None))
+        # only valid for DXF R2013 and later
+        self.acdsdata = AcDsDataSection(self, sections.get('ACDSDATA', None))
+
         for name, data in sections.items():
             if name not in MANAGED_SECTIONS:
                 self.stored_sections.append(StoredSection(data))
@@ -358,7 +371,8 @@ class Drawing:
         self.entities.export_dxf(tagwriter)
         if dxfversion > DXF12:
             self.objects.export_dxf(tagwriter)
-
+        if self.acdsdata.is_valid:
+            self.acdsdata.export_dxf(tagwriter)
         for section in self.stored_sections:
             section.export_dxf(tagwriter)
 
