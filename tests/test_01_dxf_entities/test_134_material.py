@@ -1,16 +1,16 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 
 
 @pytest.fixture(scope='module')
-def dwg():
-    return ezdxf.new('R2010')
+def doc():
+    return ezdxf.new2('R2010')
 
 
-def test_material_manager(dwg):
-    materials = dwg.materials
+def test_material_manager(doc):
+    materials = doc.materials
     assert 'ByLayer' in materials
     assert 'ByBlock' in materials
     assert 'Global' in materials

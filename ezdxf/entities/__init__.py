@@ -30,7 +30,7 @@ from . import dxfclass, table
 from . import ltype, layer, textstyle, dimstyle, view, vport, ucs, appid, blockrecord
 
 # register DXF objects R2000
-from . import dxfobj, dictionary, layout, idbuffer
+from . import dxfobj, dictionary, layout, idbuffer, sun
 
 # register entities R12
 from . import dxfgfx
