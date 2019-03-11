@@ -27,6 +27,15 @@ def test_new_extension_dict(doc, entity):
     assert 'TEST' in xdict.dictionary
 
 
+def test_direct_interface(entity):
+    xdict = entity.get_extension_dict()
+    placeholder = xdict.add_placeholder('TEST')
+    assert 'TEST' in xdict
+    placeholder2 = xdict['TEST']
+    assert placeholder is placeholder2
+    xdict['TEST2'] = placeholder2
+
+
 def test_copy_entity(doc, entity):
     xdict = entity.get_extension_dict()  # create a new extension dict if not exists
     placeholder = xdict.add_placeholder('Test')

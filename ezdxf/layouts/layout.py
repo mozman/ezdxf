@@ -227,10 +227,10 @@ class Layout(BaseLayout):
             dxfattribs = {}
         xdict = self.get_extension_dict()
         geodata = self.doc.objects.add_geodata(
-            owner=xdict.dxf.handle,
+            owner=xdict.dictionary.dxf.handle,
             dxfattribs=dxfattribs,
         )
-        xdict['ACAD_GEOGRAPHICDATA'] = geodata.dxf.handle
+        xdict['ACAD_GEOGRAPHICDATA'] = geodata
         return geodata
 
     def get_geodata(self) -> Optional['GeoData']:
@@ -243,7 +243,7 @@ class Layout(BaseLayout):
         except DXFValueError:
             return None
         try:
-            return xdict.get_entity('ACAD_GEOGRAPHICDATA')
+            return xdict['ACAD_GEOGRAPHICDATA']
         except DXFKeyError:
             return None
 

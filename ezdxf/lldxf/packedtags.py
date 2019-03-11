@@ -231,6 +231,10 @@ class VertexArray(PackedTags):
     def clear(self) -> None:
         del self.value[:]
 
+    def set(self, points: Iterable[Sequence[float]]) -> None:
+        self.clear()
+        self.extend(points)
+
 
 def replace_tags(tags: Tags, codes: Sequence[int], packed_data: PackedTags):
     """

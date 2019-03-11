@@ -27,6 +27,15 @@ class ExtensionDict:
         # _xdict as DXF Dictionary
         self._xdict = xdict
 
+    def __getitem__(self, key: str):
+        return self._xdict[key]
+
+    def __setitem__(self, key: str, value):
+        self._xdict[key] = value
+
+    def __contains__(self, key: str):
+        return key in self._xdict
+
     @classmethod
     def new(cls, owner: 'DXFEntity'):
         xdict = owner.doc.objects.add_dictionary(
