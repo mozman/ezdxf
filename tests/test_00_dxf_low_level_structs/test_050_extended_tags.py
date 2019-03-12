@@ -8,7 +8,6 @@ from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.lldxf.repair import filter_subclass_marker
 
 
 @pytest.fixture
@@ -395,15 +394,6 @@ Title:
   7
 ARIALNARROW
 """
-
-
-def test_repair_leica_disto_files():
-    tags = ExtendedTags(filter_subclass_marker(Tags.from_text(LEICA_DISTO_TAGS)))
-    assert 9 == len(tags.noclass)
-    assert 1 == len(tags.subclasses)
-    assert tags.noclass[0] == (0, 'LINE')
-    assert tags.noclass[1] == (8, 'LEICA_DISTO_3D')
-    assert tags.noclass[-1] == (210, (0, 0, 1))
 
 
 def test_legacy_mode():
