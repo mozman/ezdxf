@@ -267,3 +267,35 @@ class SortEntsTable(DXFObject):
             del self.table[handle]
         except KeyError:
             pass
+
+
+acdb_field = DefSubclass('AcDbField', {
+    'evaluator_id': DXFAttr(1),
+    'field_code': DXFAttr(2),
+    'field_code_overflow': DXFAttr(3),  # Overflow of field code string
+    'n_child_fields': DXFAttr(90),  # Number of child fields
+    # 360:  Child field ID (AcDbHardOwnershipId); repeats for number of children
+    #  97:  Number of object IDs used in the field code
+    # 331:  Object ID used in the field code (AcDbSoftPointerId); repeats for the number of object IDs used in the field code
+    #  93:  Number of the data set in the field
+    #   6:  Key string for the field data; a key-field pair is repeated for the number of data sets in the field
+    #   7:  Key string for the evaluated cache; this key is hard-coded as ACFD_FIELD_VALUE
+    #  90:  Data type of field value
+    #  91:  Long value (if data type of field value is long)
+    # 140:  Double value (if data type of field value is double)
+    # 330:  ID value, AcDbSoftPointerId (if data type of field value is ID)
+    #  92:  Binary data buffer size (if data type of field value is binary)
+    # 310:  Binary data (if data type of field value is binary)
+    # 301:  Format string
+    #   9:  Overflow of Format string
+    #  98:  Length of format string
+
+})
+
+
+# todo: implement FIELD
+# register when done
+class Field(DXFObject):
+    """ DXF VBA_PROJECT entity """
+    DXFTYPE = 'FIELD'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_field)

@@ -66,6 +66,7 @@ CLASS_DEFINITIONS = {
     'FIELDLIST': ['AcDbFieldList', 'ObjectDBX Classes', 1152, 0, 0],
     'GEODATA': ['AcDbGeoData', 'ObjectDBX Classes', 4095, 0, 0],
     'SORTENTSTABLE': ['AcDbSortentsTable', 'ObjectDBX Classes', 0, 0, 0],
+    'ACAD_TABLE': ['AcDbTable', 'ObjectDBX Classes', 1025, 0, 1],
 }
 
 REQ_R2000 = ['ACDBDICTIONARYWDFLT', 'SUN', 'VISUALSTYLE', 'MATERIAL', 'SCALE', 'TABLESTYLE', 'MLEADERSTYLE',

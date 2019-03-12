@@ -1,87 +1,28 @@
-# Created: 09.04.2018
-# Copyright (c) 2018, Manfred Moitzi
-# License: MIT-License
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
+# Created 2019-03-12
 from typing import TYPE_CHECKING
-from .graphics import ExtendedTags, DXFAttr, DefSubclass, DXFAttributes, XType
-from .graphics import none_subclass, entity_subclass, ModernGraphicEntity
+import copy
+from ezdxf.math import Vector
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
+from .dxfentity import base_class, SubclassProcessor
+from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfobj import DXFObject
+from .objectcollection import ObjectCollection
+from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Tags
+    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Tags, Drawing
 
-_ACAD_TABLE_CLS = """0
-CLASS
-1
-ACAD_TABLE
-2
-AcDbTable
-3
-ObjectDBX Classes
-90
-1025
-91
-0
-280
-0
-281
-1
-"""
+__all__ = ['ACADTable']
 
-_ACAD_TABLE_TPL = """  0
-ACAD_TABLE
-5
-0
-330
-0
-100
-AcDbEntity
-8
-0
-100
-AcDbBlockReference
-2
-*T1
-10
-0.0
-20
-0.0
-30
-0.0
-100
-AcDbTable
-280
-0
-342
-0
-343
-0
-11
-1.0
-21
-0.0
-31
-0.0
-90
-22
-91
-4
-92
-5
-93
-0
-94
-0
-95
-0
-96
-0
-"""
-
-block_reference_subclass = DefSubclass('AcDbBlockReference', {
+acdb_block_reference = DefSubclass('AcDbBlockReference', {
     'block_name': DXFAttr(2),  # Block name; an anonymous block begins with a *T value
-    'insert': DXFAttr(10, xtype=XType.point3d),  # Insertion point
+    'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # Insertion point
 })
 
-table_subclass = DefSubclass('AcDbTable', {
+acdb_table = DefSubclass('AcDbTable', {
     'version': DXFAttr(280),  # Table data version number: 0 = 2010
     'table_style_id': DXFAttr(342),  # Hard pointer ID of the TABLESTYLE object
     'block_record': DXFAttr(343),  # Hard pointer ID of the owning BLOCK record
@@ -189,13 +130,90 @@ table_subclass = DefSubclass('AcDbTable', {
 })
 
 
-class ACADTable(ModernGraphicEntity):
-    __slots__ = ()
-    # Requires AC1024/R2010
-    TEMPLATE = ExtendedTags.from_text(_ACAD_TABLE_TPL)
-    CLASS = ExtendedTags.from_text(_ACAD_TABLE_CLS)
-    DXFATTRIBS = DXFAttributes(none_subclass, entity_subclass, block_reference_subclass, table_subclass)
+# todo: implement ACAD_TABLE
+# @register_entity - register when implemented
+class ACADTable(DXFGraphic):
+    """ DXF ACAD_TABLE entity """
+    DXFTYPE = 'ACAD_TABLE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference, acdb_table)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
 
-    @property
-    def AcDbTable(self) -> 'Tags':
-        return self.tags.subclasses[3]
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.data = None
+
+    def _copy_data(self, entity: 'ACADTable') -> None:
+        """ Copy data. """
+        entity.data = copy.deepcopy(self.data)
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.load_dxfattribs_into_namespace(dxf, acdb_block_reference)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_table)
+            self.load_table(tags)
+        return dxf
+
+    def load_table(self, tags: 'Tags'):
+        pass
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
+        self.dxf.export_dxf_attribs(tagwriter, ['block_name', 'insert'])
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_table.name)
+        self.dxf.export_dxf_attribs(tagwriter, [
+
+        ])
+        self.export_table(tagwriter)
+
+    def export_table(self, tagwriter: 'TagWriter'):
+        pass
+
+
+acdb_table_style = DefSubclass('AcDbTableStyle', {
+    'version': DXFAttr(280),  # 0 = 2010
+    'name': DXFAttr(3),  # Table style description (string; 255 characters maximum)
+    'flow_direction': DXFAttr(7),  # FlowDirection (integer):
+    # 0 = Down
+    # 1 = Up
+    'flags': DXFAttr(7),  # Flags (bit-coded)
+    'horizontal_cell_margin': DXFAttr(40),  # Horizontal cell margin (real; default = 0.06)
+    'vertical_cell_margin': DXFAttr(41),  # Vertical cell margin (real; default = 0.06)
+    'suppress_title': DXFAttr(280),  # Flag for whether the title is suppressed: 0/1 = not suppressed/suppressed
+    'suppress_column_header': DXFAttr(281),
+    # Flag for whether the column heading is suppressed: 0/1 = not suppressed/suppressed
+    # The following group codes are repeated for every cell in the table
+    #   7: Text style name (string; default = STANDARD)
+    # 140: Text height (real)
+    # 170: Cell alignment (integer)
+    #  62: Text color (integer; default = BYBLOCK)
+    #  63: Cell fill color (integer; default = 7)
+    # 283: Flag for whether background color is enabled (default = 0): 0/1 = disabled/enabled
+    #  90: Cell data type
+    #  91: Cell unit type
+    # 274-279: Lineweight associated with each border type of the cell (default = kLnWtByBlock)
+    # 284-289: Flag for visibility associated with each border type of the cell (default = 1): 0/1 = Invisible/Visible
+    # 64-69: Color value associated with each border type of the cell (default = BYBLOCK)
+})
+
+
+# todo: implement TABLESTYLE
+class TableStyle(DXFObject):
+    """ DXF TABLESTYLE entity
+
+    Every ACAD_TABLE has its own table style.
+
+    Requires DXF version AC1021/R2007
+    """
+    DXFTYPE = 'TABLESTYLE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_table_style)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+
+
+class TableStyleManager(ObjectCollection):
+    def __init__(self, doc: 'Drawing'):
+        super().__init__(doc, dict_name='ACAD_TABLESTYLE', object_type='TABLESTYLE')

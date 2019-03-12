@@ -220,7 +220,8 @@ class Dimension(DXFGraphic):
             dxf_attr = dim_style_attributes.get(key)
             if dxf_attr and dxf_attr.code > 0:  # skip internal and virtual tags
                 if dxf_attr.dxfversion > actual_dxfversion:
-                    logging.debug('Unsupported DIMSTYLE attribute "{}" for DXF version {}'.format(key, self.doc.acad_release))
+                    logging.debug(
+                        'Unsupported DIMSTYLE attribute "{}" for DXF version {}'.format(key, self.doc.acad_release))
                     continue
                 code = dxf_attr.code
                 tags.append((1070, code))
@@ -245,3 +246,44 @@ class Dimension(DXFGraphic):
             if group_code in codes:
                 attribs[codes[group_code]] = value
         return attribs
+
+
+# todo: DIMASSOC
+acdb_dim_assoc = DefSubclass('AcDbDimAssoc', {
+    'dimension': DXFAttr(330),  # handle of dimension object
+    'point_flag': DXFAttr(90),  # Associativity flag (bit-coded)
+    # 1 = First point reference
+    # 2 = Second point reference
+    # 4 = Third point reference
+    # 8 = Fourth point reference
+    'trans_space': DXFAttr(70),  # Trans-space flag (true/false)
+    'rotated_dim_type': DXFAttr(71),  # Rotated Dimension type (parallel, perpendicular)
+    # Autodesk gone crazy: subclass AcDbOsnapPointRef with group code 1!!!!!
+    #  }), DefSubclass('AcDbOsnapPointRef', {
+    'osnap_type': DXFAttr(72),  # Object Osnap type
+    # 0 = None
+    # 1 = Endpoint
+    # 2 = Midpoint
+    # 3 = Center
+    # 4 = Node
+    # 5 = Quadrant
+    # 6 = Intersection
+    # 7 = Insertion
+    # 8 = Perpendicular
+    # 9 = Tangent
+    # 10 = Nearest
+    # 11 = Apparent intersection
+    # 12 = Parallel
+    # 13 = Start point
+    'object_id': DXFAttr(331),  # ID of main object (geometry)
+    'object_subtype': DXFAttr(73),  # SubentType of main object (edge, face)
+    'object_gs_marker': DXFAttr(91),  # GsMarker of main object (index)
+    'object_xref_id': DXFAttr(301),  # Handle (string) of Xref object
+    'near_param': DXFAttr(40),  # Geometry parameter for Near Osnap
+    'osnap_point': DXFAttr(10, xtype=XType.point3d),  # Osnap point in WCS
+    'intersect_id': DXFAttr(332),  # ID of intersection object (geometry)
+    'intersect_subtype': DXFAttr(74),  # SubentType of intersection object (edge/face)
+    'intersect_gs_marker': DXFAttr(92),  # GsMarker of intersection object (index)
+    'intersect_xref_id': DXFAttr(302),  # Handle (string) of intersection Xref object
+    'has_last_point_ref': DXFAttr(75),  # hasLastPointRef flag (true/false)
+})
