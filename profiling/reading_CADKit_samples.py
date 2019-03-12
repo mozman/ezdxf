@@ -42,46 +42,19 @@ def count_entities(msp):
     return counter
 
 
-OLD = False
-NEW = True
 PYMPLER = False
 
-for _name in [FILES[0]]:
+for _name in FILES:
     filename = os.path.join(CADKIT, _name)
     print('reading file: {}'.format(filename))
-    if OLD:
-        if PYMPLER:
-            tr_old = tracker.SummaryTracker()
-        start_reading = datetime.now()
-        doc = ezdxf.readfile(filename)
-        msp = doc.modelspace()
-        old_entities = count_entities(msp)
-        old_count = len(msp)
-        old_timing = datetime.now() - start_reading
-        print('OLD: loaded {} entities in {:.1f} sec'.format(old_count, old_timing.total_seconds()))
-        if PYMPLER:
-            tr_old.print_diff()
-    if NEW:
-        if PYMPLER:
-            tr_new = tracker.SummaryTracker()
-        start_reading = datetime.now()
-        doc = ezdxf.readfile(filename)
-        msp = doc.modelspace()
-        new_entities = count_entities(msp)
-        new_count = len(msp)
-        new_timing = datetime.now() - start_reading
-        if PYMPLER:
-            tr_new.print_diff()
-        print('NEW: loaded {} entities in {:.1f} sec'.format(new_count, new_timing.total_seconds()))
-
-    if OLD and NEW:
-        print('ratio OLD/NEW = 1:{:.1f}'.format(new_timing / old_timing))
-
-        if new_count != old_count:
-            new_keys = set(new_entities.keys())
-            old_keys = set(old_entities.keys())
-            for key in sorted(new_keys | old_keys):
-                n = new_entities[key]
-                o = old_entities[key]
-                if n != o:
-                    print('{}  NEW: {} OLD: {}'.format(key, n, o))
+    if PYMPLER:
+        tr_new = tracker.SummaryTracker()
+    start_reading = datetime.now()
+    doc = ezdxf.readfile(filename)
+    msp = doc.modelspace()
+    new_entities = count_entities(msp)
+    new_count = len(msp)
+    new_timing = datetime.now() - start_reading
+    if PYMPLER:
+        tr_new.print_diff()
+    print('loaded {} entities in {:.1f} sec'.format(new_count, new_timing.total_seconds()))

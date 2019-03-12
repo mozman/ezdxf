@@ -718,6 +718,10 @@ class DXFEntity:
     def audit(self, auditor: 'Auditor') -> None:
         pass
 
+    def check_pointers(self)->List[str]:
+        """ Return all pointers to check by auditor. """
+        return [self.dxf.owner]
+
     def _new_compound_entity(self, type_: str, dxfattribs: dict) -> 'DXFEntity':
         """
         Create new entity with same layout settings as `self`.

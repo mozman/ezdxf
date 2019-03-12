@@ -394,7 +394,6 @@ class Error:
     INVALID_LAYER_NAME = 200
     INVALID_COLOR_INDEX = 201
     INVALID_OWNER_HANDLE = 202
-    INVALID_GROUP_CODE_IN_CLASS_DEFINITION = 203
 
 
 INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '`'])

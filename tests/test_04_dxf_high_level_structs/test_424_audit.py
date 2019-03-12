@@ -42,7 +42,7 @@ def test_target_pointer_zero_invalid(entity, auditor):
 
 def test_target_pointer_ignore_codes(entity, auditor):
     entity.dxf.owner = '0'
-    auditor.check_pointer_target_exists(entity, ignore_codes=(330, ))
+    auditor.check_pointer_target_exists(entity, zero_pointer_valid=True)
     assert len(auditor) == 0, '0 should be a valid target pointer'
 
 

@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError
 from ezdxf.entities.table import TableHead
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.eztypes import TagWriter, Auditor
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entitydb import EntityDB
     from ezdxf.drawing import Drawing
@@ -190,6 +190,9 @@ class Table:
         if self._head.dxf.handle is None:
             self._head.dxf.handle = handle
             self._update_owner_handles()
+
+    def audit(self, auditor: 'Auditor'):
+        pass
 
 
 class LayerTable(Table):

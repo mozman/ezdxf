@@ -63,12 +63,15 @@ class XRecord(DXFObject):
             if tags:
                 if len(tags) < 2:
                     raise DXFStructureError('Invalid AcDbXrecord')
-                code, value = tags[1]
-                if code == 280:
-                    dxf.cloning = value
-                else:
-                    raise DXFStructureError('Expected group code 280 as first tag in AcDbXrecord')
-                self.tags = Tags(tags[2:])
+                if self.doc is None or self.doc.dxfversion >= DXF2000:
+                    code, value = tags[1]
+                    if code == 280:
+                        dxf.cloning = value
+                    else:
+                        raise DXFStructureError('Expected group code 280 as first tag in AcDbXrecord')
+                    self.tags = Tags(tags[2:])
+                else:  # R13 or R14 loaded from file
+                    self.tags = Tags(tags[1:])
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

@@ -4,6 +4,7 @@
 import pytest
 
 from ezdxf.lldxf.types import DXFTag
+from ezdxf.lldxf.const import DXF2000
 from ezdxf.entities.dxfobj import XRecord
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -18,7 +19,6 @@ AcDbXrecord
 280
 1
 """
-
 
 @pytest.fixture
 def entity():
