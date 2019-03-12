@@ -1,10 +1,10 @@
 # Created: 08.04.2018
 # Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, Sequence
-from collections import OrderedDict
+from typing import TYPE_CHECKING, Dict, Iterable, List
+from collections import OrderedDict, namedtuple
 
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2004, DXFTypeError
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
@@ -93,6 +93,7 @@ class MLine(DXFGraphic):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
+        # todo: MLINE implementation
         self.vertices = MLineVertices([])
 
     def copy(self):
@@ -133,16 +134,18 @@ acdb_mline_style = DefSubclass('AcDbMlineStyle', {
     'fill_color': DXFAttr(62, default=256),  # Fill color (integer, default = 256)
     'start_angle': DXFAttr(51, default=90),  # Start angle (real, default is 90 degrees)
     'end_angle': DXFAttr(52, default=90),  # End angle (real, default is 90 degrees)
-    'element_count': DXFAttr(71, default=2),  # Number of elements
+    # 71: Number of elements
     # 49: Element offset (real, no default). Multiple entries can exist; one entry for each element
     # 62: Element color (integer, default = 0). Multiple entries can exist; one entry for each element
     # 6: Element linetype (string, default = BYLAYER). Multiple entries can exist; one entry for each element
 })
 
+MLineStyleElement = namedtuple('MLineStyleElement', 'offset color linetype')
+
 
 class MLineStyleElements:
     def __init__(self, tags: Tags = None):
-        self.elements = []
+        self.elements = []  # type: List[MLineStyleElement]
         if tags:
             for e in self.parse_tags(tags):
                 data = (e.get('offset', 1.), e.get('color', 0), e.get('linetype', 'BYLAYER'))
@@ -156,13 +159,14 @@ class MLineStyleElements:
 
     def export_dxf(self, tagwriter: 'TagWriter'):
         write_tag = tagwriter.write_tag2
+        write_tag(71, len(self.elements))
         for offset, color, linetype in self.elements:
             write_tag(49, offset)
             write_tag(62, color)
             write_tag(6, linetype)
 
     def append(self, offset: float, color: int = 0, linetype: str = 'BYLAYER') -> None:
-        self.elements.append((offset, color, linetype))
+        self.elements.append(MLineStyleElement(offset, color, linetype))
 
     @staticmethod
     def parse_tags(tags: Tags) -> Iterable[Dict]:
@@ -187,7 +191,7 @@ class MLineStyle(DXFObject):
 
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
-        self.style_elements = MLineStyleElements()
+        self.elements = MLineStyleElements()
 
     def copy(self):
         raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
@@ -198,7 +202,7 @@ class MLineStyle(DXFObject):
             return dxf
 
         tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mline_style)
-        self.style_elements = MLineStyleElements(tags)
+        self.elements = MLineStyleElements(tags)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -206,9 +210,8 @@ class MLineStyle(DXFObject):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mline_style.name)
-        self.dxf.element_count = len(self.style_elements)
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys())
-        self.style_elements.export_dxf(tagwriter)
+        self.elements.export_dxf(tagwriter)
 
 
 class MLineStyleCollection(ObjectCollection):
@@ -219,5 +222,5 @@ class MLineStyleCollection(ObjectCollection):
     def create_required_entries(self) -> None:
         if 'Standard' not in self.object_dict:
             entity = self.new('Standard')  # type: MLineStyle
-            entity.style_elements.append(.5, 256)
-            entity.style_elements.append(-.5, 256)
+            entity.elements.append(.5, 256)
+            entity.elements.append(-.5, 256)

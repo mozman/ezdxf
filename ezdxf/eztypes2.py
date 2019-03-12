@@ -67,9 +67,10 @@ if TYPE_CHECKING:
     from ezdxf.dimstyleoverride import DimStyleOverride
 
     # DXF objects
-    from ezdxf.entities.dxfobj import DXFObject, AcDbPlaceholder
+    from ezdxf.entities.dxfobj import DXFObject, AcDbPlaceholder, XRecord
     from ezdxf.entities.layout import DXFLayout
     from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault, DictionaryVar
+    from ezdxf.entities.idbuffer import IDBuffer, FieldList, LayerFilter
 
     # DXF entities
     from ezdxf.entities.dxfentity import DXFEntity, DXFNamespace, DXFTagStorage
@@ -100,6 +101,10 @@ if TYPE_CHECKING:
     from ezdxf.entities.underlay import PdfDefinition, DwfDefinition, DgnDefinition, UnderlayDef
     from ezdxf.entities.acis import Body, Region, Solid3d
     from ezdxf.entities.acis import Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
+    from ezdxf.entities.sun import Sun
+    from ezdxf.entities.geodata import GeoData
+    from ezdxf.entities.light import Light
+    from ezdxf.entities.leader import Leader
 
     # other
     from ezdxf.audit import Auditor

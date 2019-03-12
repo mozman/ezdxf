@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from collections import OrderedDict
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2004, DXFTypeError
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
+from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -22,7 +23,7 @@ __all__ = ['MLeader', 'MLeaderStyle', 'MLeaderStyleCollection']
 # D:\source\dxftest\CADKitSamples\house design.dxf
 
 acdb_mleader = DefSubclass('AcDbMLeader', {
-    'leader_style_id': DXFAttr(340, default='0'),  # handle of MLEADERSTYLE?
+    'leader_style_handle': DXFAttr(340, default='0'),  # handle of MLEADERSTYLE?
 })
 
 
@@ -32,6 +33,11 @@ class MLeader(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        # todo: MLEADER implementation
+        self.tags = Tags()
+
     def copy(self):
         raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
 
@@ -40,17 +46,15 @@ class MLeader(DXFGraphic):
         if processor is None:
             return dxf
 
-        tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mleader)
-        if len(tags):
-            processor.log_unprocessed_tags(tags, subclass=acdb_mleader.name)
+        processor.load_dxfattribs_into_namespace(dxf, acdb_mleader)
+        self.tags = processor.subclasses[2]
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mleader.name)
-        self.dxf.export_dxf_attribs(tagwriter, 'leader_style_id')
+        tagwriter.write_tags(self.tags)
 
 
 acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', OrderedDict({  # preserve tag order

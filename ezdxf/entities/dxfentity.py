@@ -403,7 +403,7 @@ class DXFEntity:
         self.embedded_objects = None  # type: Optional[EmbeddedObjects]
         self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
 
-    # todo: for compatibility
+    # todo: remove compatibility drawing property
     @property
     def drawing(self):
         return self.doc
