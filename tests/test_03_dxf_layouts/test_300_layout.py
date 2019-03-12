@@ -26,7 +26,7 @@ def test_dxffactory_property(doc, modelspace):
 
 
 def test_delete_entity():
-    doc = ezdxf.new('AC1009')
+    doc = ezdxf.new2('R12')
     layout = doc.modelspace()
     for _ in range(5):
         layout.add_line((0, 0), (10, 0))
@@ -34,9 +34,7 @@ def test_delete_entity():
     assert 5 == len(lines)
     line3 = lines[2]
     layout.delete_entity(line3)
-    assert line3.dxf.paperspace < 0, "Paper space attribute has to be invalid (<0)."
-    assert line3 not in layout
-    assert line3.dxf.handle not in doc.entitydb
+    assert line3.is_alive is False
 
 
 def test_delete_all_entities(doc):

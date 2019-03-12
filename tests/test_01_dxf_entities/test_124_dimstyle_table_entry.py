@@ -63,7 +63,7 @@ def test_set_text_format(dimstyle):
 @pytest.fixture(scope='module')
 def dimstyle2():
     import ezdxf
-    doc = ezdxf.new('R2007', setup=('linetypes',))
+    doc = ezdxf.new2('R2007', setup=('linetypes',))
     doc.blocks.new('left_arrow')
     doc.blocks.new('right_arrow')
     doc.blocks.new('arrow')

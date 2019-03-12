@@ -93,7 +93,7 @@ def test_spatial_arc_from_3p():
     def_point_ucs = Vector(0, 0)
 
     arc = ConstructionArc.from_3p(start_point_ucs, end_point_ucs, def_point_ucs)
-    dwg = ezdxf.new('R12')
+    dwg = ezdxf.new2('R12')
     msp = dwg.modelspace()
 
     dxf_arc = arc.add_to_layout(msp, ucs)

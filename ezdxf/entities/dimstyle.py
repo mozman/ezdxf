@@ -172,6 +172,10 @@ class DimStyle(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_dimstyle)
     CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(dim_filter))
 
+    @property
+    def dxfversion(self):
+        return self.doc.dxfversion
+
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -273,7 +277,7 @@ class DimStyle(DXFEntity):
 
         handle = self.get_dxf_attrib(dimvar, None)
         if handle:
-            ltype = self.ocrawing.get_dxf_entity(handle)
+            ltype = self.entitydb[handle]
             return ltype.dxf.name
         else:
             return None

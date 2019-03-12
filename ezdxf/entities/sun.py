@@ -51,7 +51,7 @@ class Sun(DXFObject):
             'version', 'status', 'color', 'true_color', 'intensity', 'shadows', 'julian_day', 'time',
             'daylight_savings_time', 'shadow_type', 'shadow_map_size', 'shadow_softness'
         ])
-        
+
 
 # todo: implement SUNSTUDY?
 acdb_sunstudy = DefSubclass('AcDbSun', {

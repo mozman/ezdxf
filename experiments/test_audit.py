@@ -7,7 +7,7 @@ from ezdxf.audit import Auditor, Error
 
 @pytest.fixture(scope='module')
 def dxf():
-    return ezdxf.new('R2000')
+    return ezdxf.new2('R2000')
 
 
 @pytest.fixture

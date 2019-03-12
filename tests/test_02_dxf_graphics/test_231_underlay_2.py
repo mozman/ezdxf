@@ -8,7 +8,7 @@ from ezdxf.entities.underlay import PdfDefinition, PdfUnderlay
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new('AC1015')
+    return ezdxf.new2('R2000')
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 # Purpose: DXF file testing and opening
 # Created: 05.01.2018
-# Copyright (C) 2018, Manfred Moitzi
+# Copyright (C) 2018-2019, Manfred Moitzi
 # License: MIT License
 # Local imports to avoid cyclic import
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
@@ -117,7 +117,7 @@ def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, fi
     return doc
 
 
-def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
+def new_(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
     from ezdxf.drawing import Drawing
 
     dwg = Drawing.new(dxfversion)
@@ -129,7 +129,7 @@ def new(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) 
     return dwg
 
 
-def read(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'Drawing':
+def read_(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'Drawing':
     from ezdxf.drawing import Drawing
 
     return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
@@ -163,7 +163,7 @@ def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
     return info
 
 
-def readfile(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing':
+def readfile_(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing':
     from ezdxf.lldxf.validator import is_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
 
@@ -206,6 +206,6 @@ def readzip(zipfile: str, filename: str = None) -> 'Drawing':
     from ezdxf.tools.zipmanager import ctxZipReader
 
     with ctxZipReader(zipfile, filename) as zipstream:
-        dwg = read(zipstream)
+        dwg = read2(zipstream)
         dwg.filename = zipstream.dxf_file_name
     return dwg

@@ -30,7 +30,7 @@ def test_vertex_merger_index_of():
 
 
 def test_mesh_builder():
-    dwg = ezdxf.new('R2000')
+    dwg = ezdxf.new2('R2000')
     pyramid = SierpinskyPyramid(level=4, sides=3)
     pyramid.render(dwg.modelspace(), merge=False)
     meshes = dwg.modelspace().query('MESH')
@@ -38,7 +38,7 @@ def test_mesh_builder():
 
 
 def test_vertex_merger():
-    dwg = ezdxf.new('R2000')
+    dwg = ezdxf.new2('R2000')
     pyramid = SierpinskyPyramid(level=4, sides=3)
     pyramid.render(dwg.modelspace(), merge=True)
     meshes = dwg.modelspace().query('MESH')
