@@ -121,7 +121,6 @@ def test_create_layout(doc):
     with pytest.raises(ezdxf.DXFValueError):
         doc.layouts.new('invalid characters: <>/\":;?*|=`')
 
-    pytest.skip('Layout.page_setup() not implemented')
     layout.page_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"
 

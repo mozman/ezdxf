@@ -43,21 +43,25 @@ def test_empty_section():
 
 def test_count_class_instances():
     def instance_count(name):
-        return classes[name].dxf.instance_count
-    pytest.skip('Need Drawing.new() support')
-    dwg = ezdxf.new2('R2004')
-    classes = dwg.sections.classes.classes
-    dwg.update_class_instance_counters()
+        return doc.classes.get(name).dxf.instance_count
+    doc = ezdxf.new2('R2004')
+
+    doc.classes.add_class('IMAGE')
+    doc.classes.add_class('IMAGEDEF')
+    doc.classes.add_class('IMAGEDEF_REACTOR')
+    doc.classes.add_class('RASTERVARIABLES')
+
+    doc.classes.update_instance_counters()
     assert instance_count('IMAGE') == 0
     assert instance_count('IMAGEDEF') == 0
     assert instance_count('IMAGEDEF_REACTOR') == 0
     assert instance_count('RASTERVARIABLES') == 0
 
-    image_def = dwg.add_image_def('test', size_in_pixel=(400, 400))
-    msp = dwg.modelspace()
+    image_def = doc.add_image_def('test', size_in_pixel=(400, 400))
+    msp = doc.modelspace()
     msp.add_image(image_def, insert=(0, 0), size_in_units=(10, 10))
 
-    dwg.update_class_instance_counters()
+    doc.classes.update_instance_counters()
     assert instance_count('IMAGE') == 1
     assert instance_count('IMAGEDEF') == 1
     assert instance_count('IMAGEDEF_REACTOR') == 1

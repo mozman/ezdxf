@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast
 from collections import Counter, OrderedDict
 
-from ezdxf.lldxf.const import DXFStructureError, DXF2004, DXF2000
+from ezdxf.lldxf.const import DXFStructureError, DXF2004, DXF2000, DXFKeyError
 from ezdxf.entities.dxfclass import DXFClass
 from ezdxf.entities.dxfentity import DXFEntity
 
@@ -61,8 +61,12 @@ CLASS_DEFINITIONS = {
     'ACDBASSOCREVOLVEDSURFACEACTIONBODY': ['AcDbAssocRevolvedSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
     'ACDBASSOCSWEPTSURFACEACTIONBODY': ['AcDbAssocSweptSurfaceActionBody', 'ObjectDBX Classes', 1025, 0, 0],
     'HELIX': ['AcDbHelix', 'ObjectDBX Classes', 4095, 0, 1],
-    'WIPEOUT': ['AcDbWipeout', 'WipeOut|Product Desc: Object Enabler for WipeOut entity | Company: Autodesk, Inc. | WEB Address: www.autodesk.com', 2175, 0, 1],
-    'WIPEOUTVARIABLES': ['AcDbWipeoutVariables', 'WipeOut|Product Desc:     WipeOut Dbx Application|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com', 2175, 0, 1],
+    'WIPEOUT': ['AcDbWipeout',
+                'WipeOut|Product Desc: Object Enabler for WipeOut entity | Company: Autodesk, Inc. | WEB Address: www.autodesk.com',
+                2175, 0, 1],
+    'WIPEOUTVARIABLES': ['AcDbWipeoutVariables',
+                         'WipeOut|Product Desc:     WipeOut Dbx Application|Company:          Autodesk, Inc.|WEB Address:      www.autodesk.com',
+                         2175, 0, 1],
     'FIELDLIST': ['AcDbFieldList', 'ObjectDBX Classes', 1152, 0, 0],
     'GEODATA': ['AcDbGeoData', 'ObjectDBX Classes', 4095, 0, 0],
     'SORTENTSTABLE': ['AcDbSortentsTable', 'ObjectDBX Classes', 0, 0, 0],
@@ -130,6 +134,14 @@ class ClassesSection:
             'is_an_entity': entity,
         })
         self.register(cls)
+
+    def get(self, name: str) -> DXFClass:
+        # key is a combination of name & cpp_class_name, because there are some classes with multiple entries with
+        # different cpp_class_names -> get() returns just the first one
+        for cls in self.classes.values():
+            if cls.dxf.name == name:
+                return cls
+        raise DXFKeyError(name)
 
     def add_required_classes(self, dxfversion):
         names = REQUIRED_CLASSES.get(dxfversion, REQ_R2004)

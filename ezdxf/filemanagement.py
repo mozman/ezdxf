@@ -117,24 +117,6 @@ def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, fi
     return doc
 
 
-def new_(dxfversion: str = DXF12, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
-    from ezdxf.drawing import Drawing
-
-    dwg = Drawing.new(dxfversion)
-    if dwg.dxfversion > DXF12:
-        dwg.reset_fingerprintguid()
-        dwg.reset_versionguid()
-    if setup:
-        setup_drawing(dwg, topics=setup)
-    return dwg
-
-
-def read_(stream: TextIO, legacy_mode: bool = True, dxfversion: str = None) -> 'Drawing':
-    from ezdxf.drawing import Drawing
-
-    return Drawing.read(stream, legacy_mode=legacy_mode, dxfversion=dxfversion)
-
-
 def dxf_file_info(filename: str) -> 'DXFInfo':
     """
     Reads basic file information from DXF files: DXF version, encoding and handle seed.
@@ -161,23 +143,6 @@ def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
     if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8
         info.encoding = 'utf-8'
     return info
-
-
-def readfile_(filename: str, encoding: str = None, legacy_mode: bool = False) -> 'Drawing':
-    from ezdxf.lldxf.validator import is_dxf_file
-    from ezdxf.tools.codepage import is_supported_encoding
-
-    if not is_dxf_file(filename):
-        raise IOError("File '{}' is not a DXF file.".format(filename))
-
-    info = dxf_file_info(filename)
-    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
-        dwg = read(fp, legacy_mode=legacy_mode, dxfversion=info.version)
-
-    dwg.filename = filename
-    if encoding is not None and is_supported_encoding(encoding):
-        dwg.encoding = encoding
-    return dwg
 
 
 def readzip(zipfile: str, filename: str = None) -> 'Drawing':
