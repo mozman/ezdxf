@@ -3,11 +3,13 @@
 # Created 2019-02-13
 #
 # DXFObject - non graphical entities stored in OBJECTS section
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Dict, Tuple
+import array
 from ezdxf.lldxf.const import DXF2000, DXFStructureError, SUBCLASS_MARKER
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.types import dxftag, DXFTag
+from ezdxf.lldxf.types import dxftag, DXFTag, DXFBinaryTag
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.tools import take2
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from .factory import register_entity
 
@@ -32,7 +34,7 @@ acdb_xrecord = DefSubclass('AcDbXrecord', {
 })
 
 
-def totags(tags: Iterable)->Iterable[DXFTag]:
+def totags(tags: Iterable) -> Iterable[DXFTag]:
     for tag in tags:
         if isinstance(tag, DXFTag):
             yield tag
@@ -42,6 +44,7 @@ def totags(tags: Iterable)->Iterable[DXFTag]:
 
 @register_entity
 class XRecord(DXFObject):
+    """ DXF XRECORD entity """
     DXFTYPE = 'XRECORD'
     DXFATTRIBS = DXFAttributes(base_class, acdb_xrecord)
 
@@ -50,14 +53,10 @@ class XRecord(DXFObject):
         self.tags = Tags()
 
     def _copy_data(self, entity: 'XRecord') -> None:
-        """ Copy tag. """
+        """ Copy tags. """
         entity.tags = Tags(entity.tags)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        """
-        Adds subclass processing for AcDbPolyline, requires previous base class and AcDbEntity processing by parent
-        class.
-        """
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclasses[1]
@@ -80,3 +79,191 @@ class XRecord(DXFObject):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_xrecord.name)
         tagwriter.write_tag2(280, self.dxf.cloning)
         tagwriter.write_tags(Tags(totags(self.tags)))
+
+
+acdb_vba_project = DefSubclass('AcDbVbaProject', {
+    # 90: Number of bytes of binary chunk data (contained in the group code 310 records that follow)
+    # 310: DXF: Binary object data (multiple entries containing VBA project data)
+})
+
+
+@register_entity
+class VBAProject(DXFObject):
+    """ DXF VBA_PROJECT entity """
+    DXFTYPE = 'VBA_PROJECT'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_vba_project)
+
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.data = b''
+
+    def _copy_data(self, entity: 'VBAProject') -> None:
+        """ Copy tags. """
+        entity.tags = Tags(entity.tags)
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            self.load_byte_data(processor.subclasses[1])
+        return dxf
+
+    def load_byte_data(self, tags: 'Tags') -> None:
+        byte_array = array.array('B')
+        for byte_data in (tag.value for tag in tags if tag.code == 310):
+            byte_array.extend(byte_data)
+        self.data = byte_array.tobytes()
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_vba_project.name)
+        tagwriter.write_tag2(90, len(self.data))
+        self.export_data(tagwriter)
+
+    def export_data(self, tagwriter: 'TagWriter'):
+        data = self.data
+        while data:
+            tagwriter.write_tag(DXFBinaryTag(310, data[:127]))
+            data = data[127:]
+
+    def clear(self) -> None:
+        self.data = b''
+
+
+acdb_sort_ents_table = DefSubclass('AcDbSortentsTable', {
+    'block_record_handle': DXFAttr(330),
+    # Soft-pointer ID/handle to owner (currently only the *MODEL_SPACE or *PAPER_SPACE blocks)
+    # in ezdxf the block_record handle for a layout is also called layout_key
+    # 331: Soft-pointer ID/handle to an entity (zero or more entries may exist)
+    #   5: Sort handle (zero or more entries may exist)
+})
+
+
+@register_entity
+class SortEntsTable(DXFObject):
+    """ DXF VBA_PROJECT entity """
+    # should work with AC1015/R2000 but causes problems with TrueView/AutoCAD LT 2019: "expected was-a-zombie-flag"
+    # No problems with AC1018/R2004 and later
+    #
+    # If the header variable $SORTENTS Regen flag (bit-code value 16) is set, AutoCAD regenerates entities in ascending
+    # handle order.
+    #
+    # When the DRAWORDER command is used, a SORTENTSTABLE object is attached to the *Model_Space or *Paper_Space block's
+    # extension dictionary under the name ACAD_SORTENTS. The SORTENTSTABLE object related to this dictionary associates
+    # a different handle with each entity, which redefines the order in which the entities are regenerated.
+    #
+    # $SORTENTS (280): Controls the object sorting methods (bitcode):
+    # 0 = Disables SORTENTS
+    # 1 = Sorts for object selection
+    # 2 = Sorts for object snap
+    # 4 = Sorts for redraws; obsolete
+    # 8 = Sorts for MSLIDE command slide creation; obsolete
+    # 16 = Sorts for REGEN commands
+    # 32 = Sorts for plotting
+    # 64 = Sorts for PostScript output; obsolete
+
+    DXFTYPE = 'SORTENTSTABLE'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_sort_ents_table)
+
+    def __init__(self, doc: 'Drawing' = None):
+        super().__init__(doc)
+        self.table = dict()  # type: Dict[str, str]
+
+    def _copy_data(self, entity: 'SortEntsTable') -> None:
+        """ Copy table. """
+        entity.tags = dict(entity.table)
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_sort_ents_table)
+            self.load_table(tags)
+        return dxf
+
+    def load_table(self, tags: 'Tags') -> None:
+        for handle, sort_handle in take2(tags):
+            if handle.code != 331:
+                raise DXFStructureError('Invalid handle code {}, expected 331'.format(handle.code))
+            if sort_handle.code != 5:
+                raise DXFStructureError('Invalid sort handle code {}, expected 5'.format(handle.code))
+            self.table[handle.value] = sort_handle.value
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_sort_ents_table.name)
+        tagwriter.write_tag2(330, self.dxf.block_record_handle)
+        self.export_table(tagwriter)
+
+    def export_table(self, tagwriter: 'TagWriter'):
+        for handle, sort_handle in self.table.items():
+            tagwriter.write_tag2(331, handle)
+            tagwriter.write_tag2(5, sort_handle)
+
+    def __len__(self) -> int:
+        return len(self.table)
+
+    def __iter__(self) -> Iterable:
+        """
+        Yields all redraw associations as (object_handle, sort_handle) tuples.
+
+        """
+        return iter(self.table.items())
+
+    def append(self, handle: str, sort_handle: str) -> None:
+        """
+        Append redraw association (handle, sort_handle).
+
+        Args:
+            handle: DXF entity handle (uppercase hex value without leading '0x')
+            sort_handle: sort handle (uppercase hex value without leading '0x')
+
+        """
+        self.table[handle] = sort_handle
+
+    def clear(self):
+        """
+        Remove all handles from redraw order table.
+
+        """
+        self.table = dict()
+
+    def set_handles(self, handles: Iterable[Tuple[str, str]]) -> None:
+        """
+        Set all redraw associations from iterable `handles`, after removing all existing associations.
+
+        Args:
+            handles: iterable yielding (object_handle, sort_handle) tuples
+
+        """
+        # The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
+        # can use existing handles too.
+        #
+        # The '0' handle can be used, but this sort_handle will be drawn as latest (on top of all other entities) and
+        # not as first as expected. Invalid entity handles will be ignored by AutoCAD.
+        self.table = dict(handles)
+
+    def remove_invalid_handles(self) -> None:
+        """
+        Remove all handles which do not exists in the drawing database.
+
+        """
+        entitydb = self.doc.entitydb
+        self.table = {handle: sort_handle for handle, sort_handle in self.table.items() if handle in entitydb}
+
+    def remove_handle(self, handle: str) -> None:
+        """
+        Remove handle of DXF entity from redraw order table.
+
+        Args:
+            handle: DXF entity handle (uppercase hex value without leading '0x')
+
+        """
+        try:
+            del self.table[handle]
+        except KeyError:
+            pass

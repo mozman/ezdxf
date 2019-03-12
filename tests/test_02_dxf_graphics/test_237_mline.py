@@ -21,7 +21,7 @@ def test_standard_mline_style(doc):
     mline_style = doc.mline_styles.get('Standard')
     assert mline_style.dxftype() == 'MLINESTYLE'
 
-    elements = list(mline_style.elements)
+    elements = mline_style.elements
     assert len(elements) == 2
     assert elements[0].offset == 0.5
     assert elements[0].color == 256

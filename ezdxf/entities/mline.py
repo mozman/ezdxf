@@ -148,7 +148,7 @@ class MLineStyleElements:
         self.elements = []  # type: List[MLineStyleElement]
         if tags:
             for e in self.parse_tags(tags):
-                data = (e.get('offset', 1.), e.get('color', 0), e.get('linetype', 'BYLAYER'))
+                data = MLineStyleElement(e.get('offset', 1.), e.get('color', 0), e.get('linetype', 'BYLAYER'))
                 self.elements.append(data)
 
     def __len__(self):
