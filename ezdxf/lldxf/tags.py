@@ -322,7 +322,7 @@ OPEN_LIST = (1002, '{')
 CLOSE_LIST = (1002, '}')
 
 
-def xdata_list(name: str, xdata_tags: 'IterableTags') -> List[Tuple]:
+def xdata_list(name: str, xdata_tags: Iterable) -> List[Tuple]:
     tags = []
     if name:
         tags.append((1000, name))

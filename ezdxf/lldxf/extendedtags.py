@@ -1,7 +1,7 @@
 # Created: 30.04.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Optional, Callable, List
+from typing import TYPE_CHECKING, Iterable, Optional, List
 from itertools import chain
 import logging
 from .types import tuples_to_tags
@@ -22,7 +22,7 @@ class ExtendedTags:
     Manage Subclasses, AppData and Extended Data
 
     """
-    __slots__ = ('subclasses', 'appdata', 'xdata', 'link', 'embedded_objects')
+    __slots__ = ('subclasses', 'appdata', 'xdata', 'embedded_objects')
 
     def __init__(self, iterable: Iterable[DXFTag] = None, legacy=False):
         if isinstance(iterable, str):
@@ -31,7 +31,6 @@ class ExtendedTags:
         self.appdata = list()  # type: List[Tags] # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.subclasses = list()  # type: List[Tags] # code == 100, keys are "subclassname", values are Tags()
         self.xdata = list()  # type: List[Tags] # code >= 1000, keys are "APPNAME", values are Tags()
-        self.link = None  # type: Optional[str] # link (as handle) to following entities like INSERT -> ATTRIB and POLYLINE -> VERTEX
 
         # store embedded objects as list, but embedded objects are rare, so storing an empty list for every DXF entity
         # is waste of memory
@@ -99,7 +98,6 @@ class ExtendedTags:
         clone.xdata = copy(self.xdata)
         if self.embedded_objects is not None:
             clone.embedded_objects = copy(self.embedded_objects)
-        clone.link = self.link  # important for dxf importer!
         return clone
 
     clone = __copy__
@@ -399,58 +397,3 @@ class ExtendedTags:
     @classmethod
     def from_text(cls, text: str, legacy=False) -> 'ExtendedTags':
         return cls(internal_tag_compiler(text), legacy=legacy)
-
-
-LINKED_ENTITIES = {
-    'INSERT': 'ATTRIB',
-    'POLYLINE': 'VERTEX'
-}
-
-
-def get_xtags_linker() -> Callable[[ExtendedTags], bool]:
-    prev = None  # type: Optional[ExtendedTags]
-    expected = ""
-
-    def xtags_linker(tags: ExtendedTags) -> bool:
-        nonlocal prev, expected
-        handle = tags.get_handle()
-
-        def attribs_follow() -> bool:
-            try:
-                ref_tags = tags.get_subclass('AcDbBlockReference')
-            except DXFKeyError:
-                return False
-            else:
-                return bool(ref_tags.get_first_value(66, 0))
-
-        dxftype = tags.dxftype()  # type: str
-        are_linked_tags = False  # INSERT & POLYLINE are not linked tags, they are stored in the entity space
-        if prev is not None:
-            are_linked_tags = True  # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in the entity space
-            if dxftype == 'SEQEND':
-                prev.link = handle
-                prev = None
-            # check for valid DXF structure just VERTEX follows POLYLINE and just ATTRIB follows INSERT
-            elif dxftype == expected:
-                prev.link = handle
-                prev = tags
-            else:
-                raise DXFStructureError("expected DXF entity {} or SEQEND".format(dxftype))
-        elif dxftype in ('INSERT', 'POLYLINE'):  # only these two DXF types have this special linked structure
-            if dxftype == 'INSERT' and not attribs_follow():
-                # INSERT must not have following ATTRIBS, ATTRIB can be a stand alone entity:
-                #   INSERT with no ATTRIBS, attribs_follow == 0
-                #   ATTRIB as stand alone entity
-                #   ....
-                #   INSERT with ATTRIBS, attribs_follow == 1
-                #   ATTRIB as connected entity
-                #   SEQEND
-                #
-                # Therefore a ATTRIB following an INSERT doesn't mean that these entities are connected.
-                pass
-            else:
-                prev = tags
-                expected = LINKED_ENTITIES[dxftype]
-        return are_linked_tags  # caller should know, if *tags* should be stored in the entity space or not
-
-    return xtags_linker

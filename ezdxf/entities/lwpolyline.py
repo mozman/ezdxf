@@ -252,7 +252,7 @@ class LWPolyline(DXFGraphic):
 
 
 class LWPolylinePoints(VertexArray):
-    __slots__ = ('value',)
+    __slots__ = ('values',)
     VERTEX_CODE = 10
     START_WIDTH_CODE = 40
     END_WIDTH_CODE = 41

@@ -10,7 +10,7 @@ from itertools import chain
 from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError, acad_release_to_dxf_version
 from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, versions_supported_by_save
 from ezdxf.lldxf.const import DXFVersionError
-from ezdxf.lldxf.loader import load_dxf_structure, fill_database2
+from ezdxf.lldxf.loader import load_dxf_structure, fill_database
 from ezdxf.lldxf import repair
 from .lldxf.tagwriter import TagWriter
 
@@ -279,7 +279,7 @@ class Drawing:
         # setup handles
         self.entitydb.handles.reset(seed)
         # store all necessary DXF entities in the drawing database
-        fill_database2(sections, self.dxffactory)
+        fill_database(sections, self.dxffactory)
         # all handles used in the DXF file are known at this point
         # -----------------------------------------------------------------------------------
         # create sections:

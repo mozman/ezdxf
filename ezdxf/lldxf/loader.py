@@ -1,12 +1,12 @@
 # Purpose: DXF structure loader and validator
 # Created: 25.01.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2019, Manfred Moitzi
 # License: MIT License
 import logging
 from typing import Callable, Dict, Iterable, List, Union, TYPE_CHECKING
 from collections import OrderedDict
 
-from .const import DXFStructureError, DXF12
+from .const import DXFStructureError
 from .tags import group_tags, DXFTag, Tags
 from .extendedtags import ExtendedTags
 from .validator import entity_structure_validator
@@ -14,7 +14,6 @@ from .validator import entity_structure_validator
 from ezdxf.options import options
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import EntityDB
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entities.dxfentity import DXFEntity
 
@@ -25,39 +24,6 @@ modern_post_load_tag_processors = {}  # type: Dict[str, TagProcessor]
 legacy_post_load_tag_processors = {}  # type: Dict[str, TagProcessor]
 
 SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
-
-
-def is_registered(entity: str, legacy: bool = False):
-    # just for testing
-    processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
-    return entity in processors
-
-
-def register(entity: str, legacy: bool = False) -> Callable:
-    """
-    Register (decorator) functions to process from DXF file loaded tags.
-
-    Args:
-        entity: DXF type like 'LINE' or 'VERTEX'
-        legacy: use for legacy tag structure (DXF version <= AC1009) or modern tag structures
-
-    """
-    logger.debug('Register post load tag processor for DXF type: {}; legacy: {}'.format(entity, legacy))
-
-    def decorator(processor: TagProcessor) -> TagProcessor:
-        """
-
-        Args:
-            processor: function with one parameter 'tags'
-
-        Returns: processor
-
-        """
-        processors = legacy_post_load_tag_processors if legacy else modern_post_load_tag_processors
-        processors[entity] = processor
-        return processor
-
-    return decorator
 
 
 def load_dxf_structure(tagger: Iterable[DXFTag], ignore_missing_eof: bool = False) -> SectionDict:
@@ -143,39 +109,6 @@ def load_dxf_structure(tagger: Iterable[DXFTag], ignore_missing_eof: bool = Fals
     return sections
 
 
-DATABASE_EXCLUDE = frozenset(['SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'])
-
-
-def load_dxf_entities_into_database(database: 'EntityDB', dxf_entities: List[Tags]) -> Iterable[ExtendedTags]:
-    check_tag_structure = options.check_entity_tag_structures
-    for entity in dxf_entities:
-        if len(entity) == 0:
-            raise DXFStructureError('Invalid empty DXF entity.')
-        code, dxftype = entity[0]
-        if code != 0:
-            raise DXFStructureError('Invalid first tag in DXF entity, group code={} .'.format(code))
-        if dxftype not in DATABASE_EXCLUDE:
-            if check_tag_structure:
-                entity = entity_structure_validator(entity)
-            entity = ExtendedTags(entity)
-            database.add_tags(entity)
-        yield entity
-
-
-def fill_database(database: 'EntityDB', sections: SectionDict, dxfversion: str = DXF12) -> None:
-    post_processors = legacy_post_load_tag_processors if dxfversion <= 'AC1009' else modern_post_load_tag_processors
-    for name in ['TABLES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
-        if name in sections:
-            section = sections[name]
-            # entities stored in the database are converted from Tags() to ExtendedTags()
-            for index, entity in enumerate(load_dxf_entities_into_database(database, section)):
-                # entities not stored in database are still Tags() e.g. CLASS
-                processor = post_processors.get(entity.dxftype())
-                if processor:
-                    processor(entity)
-                section[index] = entity
-
-
 EXCLUDE_STRUCTURE_CHECK = {'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'}
 
 
@@ -193,7 +126,7 @@ def load_dxf_entities(dxf_entities: List[Tags], factory: 'EntityFactory') -> Ite
         yield factory.load(entity)
 
 
-def fill_database2(sections: Dict, factory: 'EntityFactory') -> None:
+def fill_database(sections: Dict, factory: 'EntityFactory') -> None:
     # CLASSES and HEADER have no EntityDB entries.
     for name in ['TABLES', 'CLASSES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
         if name in sections:

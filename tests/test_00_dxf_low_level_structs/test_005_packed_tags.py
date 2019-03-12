@@ -1,8 +1,9 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.lldxf.packedtags import TagArray, TagDict, VertexArray
+from ezdxf.lldxf.packedtags import TagArray, VertexArray
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.tagwriter import TagCollector
 
 
 @pytest.fixture()
@@ -12,100 +13,25 @@ def numbers():
 
 def test_tag_array_init(numbers):
     array = TagArray(data=numbers)
-    for index, value in enumerate(array.value):
+    for index, value in enumerate(array.values):
         assert value == numbers[index]
-
-
-def test_tag_array_dxf_tags(numbers):
-    array = TagArray(data=numbers)
-    tags = list(array.dxftags())
-    assert len(tags) == len(numbers)
-    for index, value in enumerate(tags):
-        assert value == (TagArray.VALUE_CODE, numbers[index])
-
-
-def test_empty_tag_array_dxf_tags():
-    array = TagArray()
-    tags = list(array.dxftags())
-    assert len(tags) == 0
-    assert array.dxfstr() == ''
 
 
 def test_tag_array_clone(numbers):
     array = TagArray(data=numbers)
     array2 = array.clone()
-    array2.value[-1] = 9999
-    assert array.value[:-1] == array2.value[:-1]
-    assert array.value[-1] != array2.value[-1]
+    array2.values[-1] = 9999
+    assert array.values[:-1] == array2.values[:-1]
+    assert array.values[-1] != array2.values[-1]
 
 
 def test_inherited_array(numbers):
     class FloatArray(TagArray):
-        VALUE_CODE = 40
         DTYPE = 'f'
 
     floats = FloatArray(data=numbers)
-    for index, value in enumerate(floats.value):
+    for index, value in enumerate(floats.values):
         assert value == numbers[index]
-
-    tags = list(floats.dxftags())
-    for index, value in enumerate(tags):
-        assert value == (FloatArray.VALUE_CODE, numbers[index])
-
-
-@pytest.fixture()
-def dict_data():
-    return {
-        'Name': 'mozman',
-        'number': '4711',
-        'handle': 'ABCDEF',
-    }
-
-
-def test_tag_dict_init(dict_data):
-    d = TagDict()
-    assert len(d.value) == 0
-
-    d = TagDict(data=dict_data)
-    assert d.value['Name'] == 'mozman'
-    assert len(d.value) == len(dict_data)
-
-    assert isinstance(d.value, dict)
-
-
-def test_tag_dict_clone(dict_data):
-    d1 = TagDict(dict_data)
-    d2 = d1.clone()
-
-    assert d1.value == d2.value
-    d2.value['Name'] = 'test'
-    assert d1.value != d2.value
-
-
-def test_tag_dict_dxf_tags(dict_data):
-    d = TagDict(dict_data)
-
-    tags = list(d.dxftags())
-    assert len(tags) == 6
-    assert tags[0] == (3, 'Name')
-    assert tags[1] == (350, 'mozman')
-    assert tags[2] == (3, 'number')
-    assert tags[3] == (350, '4711')
-    assert tags[4] == (3, 'handle')
-    assert tags[5] == (350, 'ABCDEF')
-
-
-def test_dict_from_tags():
-    root_dict = ExtendedTags.from_text(ROOTDICT)
-    tags = root_dict.get_subclass('AcDbDictionary')
-    d = TagDict.from_tags(tags)
-    data = d.value
-    assert len(data) == 14
-    assert data['ACAD_MATERIAL'] == '72'
-
-    assert len(tags) == 30
-    d.replace_tags(tags)
-    assert len(tags) == 3
 
 
 def test_vertex_array_basics():
@@ -119,9 +45,9 @@ def test_vertex_array_basics():
     # test negative index
     assert vertices[-1] == (60., 60., 60.)
     with pytest.raises(IndexError):
-        vertices[-8]
+        _ = vertices[-8]
     with pytest.raises(IndexError):
-        vertices[8]
+        _ = vertices[8]
 
 
 def test_vertex_array_advanced():
@@ -193,11 +119,11 @@ def test_vertex_array_insert():
 def test_vertex_array_to_dxf_tags():
     tags = ExtendedTags.from_text(SPLINE)
     vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
-    tags = list(vertices.dxftags())
-    assert len(tags) == 7
-    assert tags[0] == (10, (0., 0., 0.))
-    assert tags[1] == (10, (10., 10., 10.))
-    assert tags[-1] == (10, (60., 60., 60.))
+    tags = TagCollector.dxftags(vertices)
+    assert len(tags) == 7*3
+    assert tags[0] == (10,  0.)
+    assert tags[3] == (10, 10.)
+    assert tags[-1] == (30, 60.)
 
 
 ROOTDICT = """0

@@ -52,52 +52,48 @@ acdb_mesh = DefSubclass('AcDbSubDMesh', {
 
 
 class EdgeArray(TagArray):
-    code = None
-    VALUE_CODE = 90  # 32 bit integer
     DTYPE = 'L'
 
     def __len__(self) -> int:
-        return len(self.value) // 2
+        return len(self.values) // 2
 
     def __iter__(self) -> Iterable[Tuple[int, int]]:
-        for edge in take2(self.value):
+        for edge in take2(self.values):
             yield edge
 
     def set_data(self, edges: Iterable[Tuple[int, int]]) -> None:
-        self.value = array.array(self.DTYPE, chain.from_iterable(edges))
+        self.values = array.array(self.DTYPE, chain.from_iterable(edges))
 
     def export_dxf(self, tagwriter: 'TagWriter'):
         # count = count of edges not tags!
-        tagwriter.write_tag2(94, len(self.value) // 2)
-        for index in self.value:
+        tagwriter.write_tag2(94, len(self.values) // 2)
+        for index in self.values:
             tagwriter.write_tag2(90, index)
 
 
 class FaceList(TagList):
-    code = None
-
     def __len__(self) -> int:
-        return len(self.value)
+        return len(self.values)
 
     def __iter__(self) -> Iterable[array.array]:
-        return iter(self.value)
+        return iter(self.values)
 
     def export_dxf(self, tagwriter: 'TagWriter'):
         # count = count of tags not faces!
         tagwriter.write_tag2(93, self.tag_count())
-        for face in self.value:
+        for face in self.values:
             tagwriter.write_tag2(90, len(face))
             for index in face:
                 tagwriter.write_tag2(90, index)
 
     def tag_count(self) -> int:
-        return len(self.value) + sum(len(f) for f in self.value)
+        return len(self.values) + sum(len(f) for f in self.values)
 
     def set_data(self, faces: Iterable[Sequence[int]]) -> None:
         _faces = []
         for face in faces:
             _faces.append(face_to_array(face))
-        self.value = _faces
+        self.values = _faces
 
 
 def face_to_array(face: Sequence[int]) -> array.array:
@@ -118,7 +114,7 @@ def create_vertex_array(tags: 'Tags', start_index: int) -> 'VertexArray':
 
 def create_face_list(tags: 'Tags', start_index: int) -> 'FaceList':
     faces = FaceList()
-    faces_list = faces.value
+    faces_list = faces.values
     face = []
     counter = 0
     for tag in tags.collect_consecutive_tags(codes=(90,), start=start_index):
@@ -223,7 +219,7 @@ class Mesh(DXFGraphic):
             else:
                 edges = create_edge_array(mesh_tags, edge_count_index + 1)
                 # remove edge count tag and all edge tags
-                end_index = edge_count_index + 1 + len(edges.value)
+                end_index = edge_count_index + 1 + len(edges.values)
                 del mesh_tags[edge_count_index:end_index]
                 return edges
 
