@@ -85,7 +85,7 @@ def test_write_dxf():
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 @pytest.fixture(scope='module')

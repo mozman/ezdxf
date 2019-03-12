@@ -44,7 +44,7 @@ def test_empty_section():
 def test_count_class_instances():
     def instance_count(name):
         return doc.classes.get(name).dxf.instance_count
-    doc = ezdxf.new2('R2004')
+    doc = ezdxf.new('R2004')
 
     doc.classes.add_class('IMAGE')
     doc.classes.add_class('IMAGEDEF')

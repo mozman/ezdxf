@@ -13,7 +13,7 @@ import ezdxf
 
 
 def test_iterate_entities_section():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     m = doc.modelspace()
     m.add_line((0, 0), (1, 1))
     entity = list(doc.entities)[-1]

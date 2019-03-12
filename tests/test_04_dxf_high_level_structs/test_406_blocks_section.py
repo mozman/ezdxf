@@ -10,7 +10,7 @@ from ezdxf.lldxf.tagwriter import TagCollector
 
 @pytest.fixture
 def dxf12():
-    return ezdxf.new2('R12')
+    return ezdxf.new('R12')
 
 
 @pytest.fixture
@@ -149,7 +149,7 @@ def test_rename_block(blocks):
 
 @pytest.fixture(scope='module')
 def dxf2000():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 @pytest.fixture

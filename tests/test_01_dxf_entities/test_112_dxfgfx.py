@@ -49,7 +49,7 @@ def test_default_attributes():
 
 
 def test_clone_graphical_entity(entity):
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     entity.doc = doc
     msp = doc.modelspace()
     msp.add_entity(entity)

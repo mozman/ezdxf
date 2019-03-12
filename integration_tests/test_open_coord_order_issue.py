@@ -19,7 +19,7 @@ def filename(request):
 
 def test_coordinate_order_problem(filename):
     try:
-        dwg = ezdxf.readfile2(filename, legacy_mode=True)
+        dwg = ezdxf.readfile(filename, legacy_mode=True)
     except ezdxf.DXFError as e:
         pytest.fail(str(e))
     else:

@@ -65,7 +65,7 @@ for _name in [FILES[0]]:
         if PYMPLER:
             tr_new = tracker.SummaryTracker()
         start_reading = datetime.now()
-        doc = ezdxf.readfile2(filename)
+        doc = ezdxf.readfile(filename)
         msp = doc.modelspace()
         new_entities = count_entities(msp)
         new_count = len(msp)

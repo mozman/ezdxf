@@ -44,7 +44,7 @@ def create_doc(filename):
         msp.add_text('TOP_CENTER', dxfattribs=attribs).set_pos((x + dx, y), align='TOP_CENTER')
         msp.add_text('TOP_RIGHT', dxfattribs=attribs).set_pos((x + width, y), align='TOP_RIGHT')
 
-    doc = ezdxf.new2(dxfversion='R2004')
+    doc = ezdxf.new(dxfversion='R2004')
     msp = doc.modelspace()
     add_justify_text("ALIGNED-TEXT", (15, 0), (35, 5), 'ALIGNED')
     add_justify_text("FITTED-TEXT", (15, 10), (35, 5), 'FIT')

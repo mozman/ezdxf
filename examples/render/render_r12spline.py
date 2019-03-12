@@ -9,7 +9,7 @@ next_frame = Matrix44.translate(0, 7, 0)
 
 NAME = 'r12spline.dxf'
 SEGMENTS = 40
-doc = ezdxf.new2('R12')
+doc = ezdxf.new('R12')
 msp = doc.modelspace()
 
 

@@ -6,7 +6,7 @@ from ezdxf.render.forms import ellipse
 from ezdxf.math import Matrix44
 
 NAME = 'ellipse.dxf'
-doc = ezdxf.new2('R12', setup=True)
+doc = ezdxf.new('R12', setup=True)
 msp = doc.modelspace()
 
 

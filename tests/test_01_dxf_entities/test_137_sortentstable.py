@@ -7,7 +7,7 @@ from ezdxf.entities.dxfobj import SortEntsTable
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 def get_entry(table, index):

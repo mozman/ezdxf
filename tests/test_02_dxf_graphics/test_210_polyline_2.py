@@ -10,7 +10,7 @@ from ezdxf.sections.entities import EntitySection
 
 @pytest.fixture(scope='module')
 def dwg():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 @pytest.fixture(scope='module')
@@ -265,7 +265,7 @@ def test_internals_polyface(layout):
 
 
 def test_new_style_polyface_face_count():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     section = EntitySection(doc, load_entities(NEW_STYLE_POLYFACE, 'ENTITIES', doc))
     entities = list(section)
     polyface = entities[0]

@@ -10,7 +10,7 @@ next_frame = Matrix44.translate(0, 5, 0)
 right_frame = Matrix44.translate(10, 0, 0)
 
 NAME = 'spline.dxf'
-doc = ezdxf.new2('R2000')
+doc = ezdxf.new('R2000')
 msp = doc.modelspace()
 
 

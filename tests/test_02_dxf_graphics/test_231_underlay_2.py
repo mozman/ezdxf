@@ -8,7 +8,7 @@ from ezdxf.entities.underlay import PdfDefinition, PdfUnderlay
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ def test_set_scale(pdf):
 @pytest.fixture
 def new_doc():
     # setting up a drawing is expensive - use as few test methods as possible
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 def test_new_pdf_underlay_def(new_doc):

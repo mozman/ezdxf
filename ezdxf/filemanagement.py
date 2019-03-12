@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFInfo
 
 
-def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
+def new(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
     """
     Create a new DXF drawing.
 
@@ -46,7 +46,7 @@ def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = Non
     return doc
 
 
-def read2(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
+def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
     """
     Read DXF drawing from a text stream, which only needs a readline() method.
 
@@ -77,7 +77,7 @@ def read2(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Draw
     return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
 
-def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
+def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
     """
     Read DXF drawing specified by *filename* from file system.
 
@@ -109,7 +109,7 @@ def readfile2(filename: str, encoding: str = None, legacy_mode: bool = False, fi
 
     info = dxf_file_info(filename)
     with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
-        doc = read2(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
+        doc = read(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):
@@ -171,6 +171,6 @@ def readzip(zipfile: str, filename: str = None) -> 'Drawing':
     from ezdxf.tools.zipmanager import ctxZipReader
 
     with ctxZipReader(zipfile, filename) as zipstream:
-        dwg = read2(zipstream)
+        dwg = read(zipstream)
         dwg.filename = zipstream.dxf_file_name
     return dwg

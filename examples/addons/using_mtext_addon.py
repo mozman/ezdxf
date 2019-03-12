@@ -39,7 +39,7 @@ def rotate_text(text, insert, parts=16, color=3):
 
 
 # MText for DXF R12
-doc = ezdxf.new2('R12')
+doc = ezdxf.new('R12')
 msp = doc.modelspace()
 
 txt = "Das ist ein mehrzeiliger Text\nZeile 2\nZeile 3\nUnd eine lange lange" \

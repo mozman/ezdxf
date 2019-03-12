@@ -128,7 +128,7 @@ def test_write_dxf():
 
 
 def test_generic_helix():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     msp = doc.modelspace()
     helix = msp.new_entity('HELIX', {})
     assert helix.dxftype() == 'HELIX'

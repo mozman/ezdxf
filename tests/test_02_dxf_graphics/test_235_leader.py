@@ -120,7 +120,7 @@ def test_write_dxf():
 
 
 def test_add_leader():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     msp = doc.modelspace()
     leader = msp.new_entity('LEADER', {})  # type: Leader
     assert leader.dxftype() == 'LEADER'

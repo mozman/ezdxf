@@ -3,7 +3,7 @@
 # License: MIT License
 import ezdxf
 
-doc = ezdxf.new2('R12', setup=True)
+doc = ezdxf.new('R12', setup=True)
 modelspace = doc.modelspace()
 modelspace.add_circle(center=(0, 0), radius=1.5, dxfattribs={
     'layer': 'test',

@@ -97,7 +97,7 @@ def test_write_dxf():
 
 
 def test_sun():
-    doc = ezdxf.new2('R2007')
+    doc = ezdxf.new('R2007')
     sun = doc.objects.new_entity('SUN', {})
     assert sun.dxftype() == 'SUN'
     assert sun.dxf.version == 1

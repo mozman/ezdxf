@@ -6,7 +6,7 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def tables():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     return doc.tables
 
 

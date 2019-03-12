@@ -9,7 +9,7 @@ from ezdxf import DXFIndexError
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2()
+    return ezdxf.new()
 
 
 @pytest.fixture(scope='module')

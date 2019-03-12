@@ -7,7 +7,7 @@ from ezdxf.lldxf.const import LATEST_DXF_VERSION
 
 
 def test_lwpolyline(tmpdir):
-    dwg = ezdxf.new2(LATEST_DXF_VERSION)
+    dwg = ezdxf.new(LATEST_DXF_VERSION)
     msp = dwg.modelspace()
     # point format = (x, y, [start_width, [end_width, [bulge]]])
     points = [(0, 0, 0, .05), (3, 0, .1, .2, -.5), (6, 0, .1, .05), (9, 0)]
@@ -21,7 +21,7 @@ def test_lwpolyline(tmpdir):
     assert os.path.exists(filename)
 
     del dwg
-    dwg = ezdxf.readfile2(filename)
+    dwg = ezdxf.readfile(filename)
     msp = dwg.modelspace()
     lwpolyline = msp.query('LWPOLYLINE')[0]
     assert len(lwpolyline) == 4

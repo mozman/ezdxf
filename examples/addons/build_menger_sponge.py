@@ -7,7 +7,7 @@ from ezdxf.math.matrix44 import Matrix44
 
 
 def write(filename, sponge, merge=False):
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     transform = Matrix44.chain(Matrix44.z_rotate(math.radians(45)), Matrix44.translate(5, 3, 4))
     sponge.render(doc.modelspace(), merge=merge, matrix=transform)
     doc.saveas(filename)

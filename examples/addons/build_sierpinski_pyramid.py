@@ -5,7 +5,7 @@ from ezdxf.addons import SierpinskyPyramid
 
 
 def write(filename, pyramids, merge=False):
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     pyramids.render(doc.modelspace(), merge=merge)
     doc.saveas(filename)
 

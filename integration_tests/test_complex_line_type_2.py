@@ -7,7 +7,7 @@ import ezdxf
 
 
 def test_complex_line_type(tmpdir):
-    dwg = ezdxf.new2('R2018')  # DXF R13 or later is required
+    dwg = ezdxf.new('R2018')  # DXF R13 or later is required
     dwg.linetypes.new('GASLEITUNG2', dxfattribs={
         'description': 'Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--',
         'length': 1,  # required for complex line types

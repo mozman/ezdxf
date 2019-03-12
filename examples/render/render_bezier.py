@@ -18,7 +18,7 @@ def draw_control_point(point, tangent1, tangent2=(0, 0)):
 
 
 NAME = 'bezier.dxf'
-doc = ezdxf.new2('R12')
+doc = ezdxf.new('R12')
 msp = doc.modelspace()
 
 bezier = Bezier()

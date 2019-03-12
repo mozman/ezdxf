@@ -10,7 +10,7 @@ CONTROL_POINTS = [(8.55, 2.96), (8.55, -.03), (2.75, -.03), (2.76, 3.05), (4.29,
 
 @pytest.fixture(scope='module')
 def msp():
-    return ezdxf.new2('R12').modelspace()
+    return ezdxf.new('R12').modelspace()
 
 
 def test_r12_quadratic_spline(msp):

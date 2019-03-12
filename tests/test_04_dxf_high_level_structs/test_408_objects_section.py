@@ -6,7 +6,7 @@ from ezdxf.sections.objects import ObjectsSection
 
 
 def test_load_section():
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     ent = load_entities(TESTOBJECTS, 'OBJECTS', doc)
 
     section = ObjectsSection(doc, ent)

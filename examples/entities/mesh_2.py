@@ -14,7 +14,7 @@ p = [
     (0, 1, 1),
 ]
 
-doc = ezdxf.new2('R2000')  # mesh requires the DXF 2000 or newer format
+doc = ezdxf.new('R2000')  # mesh requires the DXF 2000 or newer format
 msp = doc.modelspace()
 mesh = msp.add_mesh()
 

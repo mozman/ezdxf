@@ -14,7 +14,7 @@ import logging
 if TYPE_CHECKING:
     from ezdxf.eztypes2 import DimStyle, DimStyleOverride
 
-new = ezdxf.new2
+new = ezdxf.new
 
 # ========================================
 # IMPORTANT:

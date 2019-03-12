@@ -8,7 +8,7 @@ from ezdxf.pp.rawpp import rawpp
 
 def test_dxf_drawing_to_html(tmpdir):
     name = tmpdir.join('test.dxf')
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     doc.saveas(name)
 
     tagger = readfile(name)

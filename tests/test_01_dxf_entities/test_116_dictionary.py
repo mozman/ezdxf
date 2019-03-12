@@ -129,7 +129,7 @@ class TestEmptyDXFDict:
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2()
+    return ezdxf.new()
 
 
 def test_get_entity_invalid_handle(doc):

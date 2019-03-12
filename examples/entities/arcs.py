@@ -4,7 +4,7 @@
 import ezdxf
 from ezdxf.math import Vector, ConstructionArc, UCS
 
-doc = ezdxf.new2('R2000')
+doc = ezdxf.new('R2000')
 modelspace = doc.modelspace()
 
 # create a 2D arcs in xy-plane

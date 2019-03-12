@@ -6,7 +6,7 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def groups():
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     return doc.groups
 
 
@@ -54,7 +54,7 @@ def test_delete_group_by_name(groups):
 
 
 def test_add_entities():
-    dwg = ezdxf.new2('R2000')
+    dwg = ezdxf.new('R2000')
     group = dwg.groups.new()
     # the group itself is not an entity space, DXF entities has to be placed in model space, paper space
     # or in a block

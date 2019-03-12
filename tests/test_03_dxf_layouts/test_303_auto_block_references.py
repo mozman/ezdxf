@@ -8,7 +8,7 @@ import ezdxf
 class TestAutoBlockReference:
     @pytest.fixture
     def doc(self):
-        return ezdxf.new2()
+        return ezdxf.new()
 
     @pytest.fixture
     def block(self, doc):

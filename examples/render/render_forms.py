@@ -6,7 +6,7 @@ from ezdxf.render import forms
 
 
 def write_mesh(filename, mesh):
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     mesh.render(doc.modelspace())
     try:
         doc.saveas(filename)

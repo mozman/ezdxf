@@ -11,7 +11,7 @@ from ezdxf.math.vector import Vector
 
 @pytest.fixture(params=versions_supported_by_new)
 def drawing(request):
-    return ezdxf.new2(request.param, setup=True)
+    return ezdxf.new(request.param, setup=True)
 
 
 def test_linear_dimline_all_arrow_style(drawing, tmpdir):
@@ -51,7 +51,7 @@ def test_random_multi_point_linear_dimension(tmpdir):
     count = 10
     fname = "multi_random_point_linear_dim_R2007.dxf"
 
-    dwg = ezdxf.new2('R2007', setup=True)
+    dwg = ezdxf.new('R2007', setup=True)
     msp = dwg.modelspace()
     points = [random_point(0, length) for _ in range(count)]
     msp.add_lwpolyline(points, dxfattribs={'color': 1})

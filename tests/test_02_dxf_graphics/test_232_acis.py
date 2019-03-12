@@ -8,7 +8,7 @@ from ezdxf.entities.acis import tags2textlines, textlines2tags
 
 @pytest.fixture(scope='module')
 def layout():
-    doc = ezdxf.new2('R2007')
+    doc = ezdxf.new('R2007')
     return doc.modelspace()
 
 

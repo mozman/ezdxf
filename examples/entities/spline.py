@@ -6,8 +6,8 @@ import ezdxf
 from ezdxf.math.bspline import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.math import BSpline, Vector
 
-new = ezdxf.new2
-readfile = ezdxf.readfile2
+new = ezdxf.new
+readfile = ezdxf.readfile
 
 
 def clone_spline():

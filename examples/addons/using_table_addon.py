@@ -27,7 +27,7 @@ def get_mat_symbol(doc):
 
 
 name = 'table.dxf'
-doc = ezdxf.new2('R12')
+doc = ezdxf.new('R12')
 msp = doc.modelspace()
 
 table = Table(insert=(0, 0), nrows=20, ncols=10)

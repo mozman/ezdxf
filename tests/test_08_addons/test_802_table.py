@@ -9,7 +9,7 @@ from ezdxf.addons.table import Grid, Style, DEFAULT_BORDER_COLOR
 
 @pytest.fixture(scope='module')
 def dxf():
-    return ezdxf.new2('R12')
+    return ezdxf.new('R12')
 
 
 class MockCell(CustomCell):

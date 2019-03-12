@@ -8,7 +8,7 @@ from ezdxf.query import EntityQuery, name_query
 
 @pytest.fixture(scope='module')
 def modelspace():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     modelspace = doc.modelspace()
     modelspace.add_line((0, 0), (10, 0), {'layer': 'lay_lines', 'color': 7})
     modelspace.add_polyline2d([(0, 0), (3, 1), (7, 4), (10, 0)], {'layer': 'lay_lines', 'color': 6})

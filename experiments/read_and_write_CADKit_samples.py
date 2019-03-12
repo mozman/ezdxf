@@ -20,7 +20,7 @@ for filename in Path(CADKIT_PATH).glob('*.dxf'):
         print('reading file: {}'.format(filename))
         # tr1 = tracker.SummaryTracker()
         start = datetime.datetime.now()
-        doc = ezdxf.readfile2(str(filename), legacy_mode=False)
+        doc = ezdxf.readfile(str(filename), legacy_mode=False)
         end = datetime.datetime.now()
         # tr1.print_diff()
         print(' ... in {:.1f} sec'.format((end-start).total_seconds()))

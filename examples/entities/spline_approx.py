@@ -44,7 +44,7 @@ fit_points = [
     (545.9428017097962, 3243.430209582181, 0.0)
 ]
 
-dwg = ezdxf.new2('R2000')
+dwg = ezdxf.new('R2000')
 msp = dwg.modelspace()
 
 msp.add_open_spline(control_points=fit_points, degree=3, dxfattribs={'color': 4})

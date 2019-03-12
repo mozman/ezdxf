@@ -31,14 +31,14 @@ def test_entities_iterator(dxfversion, tmpdir):
     filename = tmpdir.join('polyline_{}.dxf'.format(dxfversion))
     #  filename = r'C:\Users\manfred\Desktop\Now\polyline_{}.dxf'.format(dxfversion)
     filename = str(filename)
-    drawing = ezdxf.new2(dxfversion)
+    drawing = ezdxf.new(dxfversion)
     modelspace = drawing.modelspace()
     modelspace.add_polyline3d(POINTS)
     drawing.saveas(filename)
 
     assert os.path.exists(filename)
 
-    dxf = ezdxf.readfile2(filename)
+    dxf = ezdxf.readfile(filename)
     for entity in dxf.entities:
         if entity.dxftype() == 'POLYLINE':  # iterator ok
             points = list(entity.points())

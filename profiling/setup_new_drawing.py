@@ -14,7 +14,7 @@ def setup_old_style_dxf():
 
 
 def setup_new_style_dxf():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     _ = doc.dxfversion
 
 

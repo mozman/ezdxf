@@ -65,7 +65,7 @@ def layout_page_setup(doc):
 
 
 if __name__ == '__main__':
-    doc = ezdxf.new2('R12')
+    doc = ezdxf.new('R12')
     draw_raster(doc)
     setup_active_viewport(doc)
     layout_page_setup(doc)

@@ -93,7 +93,7 @@ def test_write_dxf():
 
 
 def test_add_light():
-    doc = ezdxf.new2('R2007')
+    doc = ezdxf.new('R2007')
     msp = doc.modelspace()
     light = msp.new_entity('LIGHT', {'name': 'Licht'})
     assert light.dxftype() == 'LIGHT'

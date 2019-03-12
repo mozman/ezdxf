@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import versions_supported_by_new
 
 @pytest.fixture(params=versions_supported_by_new)
 def drawing(request):
-    return ezdxf.new2(request.param)
+    return ezdxf.new(request.param)
 
 
 def test_create_anonymous_block(drawing, tmpdir):

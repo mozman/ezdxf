@@ -6,7 +6,7 @@ from ezdxf.lldxf.tagwriter import TagCollector
 
 
 def test_vba_project():
-    doc = ezdxf.new2('R2007')
+    doc = ezdxf.new('R2007')
     vba = doc.objects.new_entity('VBA_PROJECT', {})  # type: VBAProject
     assert vba.dxftype() == 'VBA_PROJECT'
     assert len(vba.data) == 0

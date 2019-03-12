@@ -19,14 +19,14 @@ def filename(request):
 
 
 def test_check_R12_has_handles(filename):
-    dwg = ezdxf.readfile2(filename)
+    dwg = ezdxf.readfile(filename)
     assert dwg.header['$HANDLING'] > 0
     for entity in dwg.modelspace():
         assert int(entity.dxf.handle, 16) > 0
 
 
 def test_write_R12_without_handles(filename, tmpdir):
-    dwg = ezdxf.readfile2(filename)
+    dwg = ezdxf.readfile(filename)
     dwg.header['$HANDLING'] = 0
     export_path = str(tmpdir.join("dxf_r12_without_handles.dxf"))
     dwg.saveas(export_path)

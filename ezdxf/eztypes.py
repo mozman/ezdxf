@@ -47,7 +47,6 @@ if TYPE_CHECKING:
     from ezdxf.sections.classes import ClassesSection
     from ezdxf.sections.objects import ObjectsSection
     from ezdxf.sections.entities import EntitySection
-    from ezdxf.sections.unsupported import UnsupportedSection
 
     # Table entries
     from ezdxf.entities.blockrecord import BlockRecord

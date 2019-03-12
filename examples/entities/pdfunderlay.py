@@ -2,7 +2,7 @@
 # License: MIT License
 import ezdxf
 
-dwg = ezdxf.new2('R2000')  # underlay requires the DXF R2000 format or newer
+dwg = ezdxf.new('R2000')  # underlay requires the DXF R2000 format or newer
 pdf_underlay_def = dwg.add_underlay_def(filename='underlay.pdf', name='1')  # name = page to display
 dwf_underlay_def = dwg.add_underlay_def(filename='underlay.dwf',
                                         name="Underlay_R2013-Model")  # don't know how to get this name

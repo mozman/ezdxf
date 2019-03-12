@@ -234,7 +234,7 @@ def test_geodata_coordinate_system_definition(geodata):
 
 
 def test_create_new_geo_data_for_model_space():
-    doc = ezdxf.new2('R2010')
+    doc = ezdxf.new('R2010')
     msp = doc.modelspace()
     assert msp.get_geodata() is None
     geodata = msp.new_geodata()

@@ -5,7 +5,7 @@ import os
 
 IMAGE_PATH = 'mycat.jpg'
 ABS_IMAGE_PATH = os.path.abspath(IMAGE_PATH)
-doc = ezdxf.new2('R2004')  # image requires the DXF 2000 or newer format
+doc = ezdxf.new('R2004')  # image requires the DXF 2000 or newer format
 my_image_def = doc.add_image_def(filename=ABS_IMAGE_PATH, size_in_pixel=(640, 360))
 # image definition is like a block definition
 

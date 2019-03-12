@@ -21,7 +21,7 @@ def test_arrow_name():
 
 
 def test_closed_arrow_doc_r12():
-    doc = ezdxf.new2(dxfversion='R12', setup=True)
+    doc = ezdxf.new(dxfversion='R12', setup=True)
     blocks = doc.blocks
     name = ARROWS.create_block(blocks, ARROWS.closed)
     arrow_entities = list(blocks.get(name))
@@ -29,7 +29,7 @@ def test_closed_arrow_doc_r12():
 
 
 def test_closed_arrow_doc_r2000():
-    doc = ezdxf.new2(dxfversion='R2000', setup=True)
+    doc = ezdxf.new(dxfversion='R2000', setup=True)
     blocks = doc.blocks
     name = ARROWS.create_block(blocks, ARROWS.closed)
     arrow_entities = list(blocks.get(name))

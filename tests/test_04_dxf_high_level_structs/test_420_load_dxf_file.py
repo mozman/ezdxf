@@ -7,7 +7,7 @@ import ezdxf
 
 @pytest.fixture(scope='module', params=['R12', 'R2000'])
 def dxf(request, tmpdir_factory):
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     msp = doc.modelspace()
     msp.add_line((0, 0), (1, 0))
     psp = doc.layout()
@@ -19,7 +19,7 @@ def dxf(request, tmpdir_factory):
 
 
 def test_load_dxf(dxf):
-    doc = ezdxf.readfile2(dxf)
+    doc = ezdxf.readfile(dxf)
 
     msp = doc.modelspace()
     assert len(msp) == 1

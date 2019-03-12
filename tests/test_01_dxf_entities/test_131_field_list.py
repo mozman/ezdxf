@@ -65,7 +65,7 @@ def test_write_dxf():
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2007')
+    return ezdxf.new('R2007')
 
 
 def test_generic_field_list(doc):

@@ -7,7 +7,7 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2()
+    return ezdxf.new()
 
 
 @pytest.fixture(scope='module')
@@ -26,7 +26,7 @@ def test_dxffactory_property(doc, modelspace):
 
 
 def test_delete_entity():
-    doc = ezdxf.new2('R12')
+    doc = ezdxf.new('R12')
     layout = doc.modelspace()
     for _ in range(5):
         layout.add_line((0, 0), (10, 0))

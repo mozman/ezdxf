@@ -13,7 +13,7 @@ HEIGHT = 3.
 
 @pytest.fixture(params=versions_supported_by_new)
 def drawing(request):
-    return ezdxf.new2(request.param)
+    return ezdxf.new(request.param)
 
 
 def build_mesh(polymesh):

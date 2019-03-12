@@ -3,7 +3,7 @@
 # License: MIT License
 import ezdxf
 
-doc = ezdxf.new2('R2007')
+doc = ezdxf.new('R2007')
 msp = doc.modelspace()
 attribs = {
     'char_height': 0.7,

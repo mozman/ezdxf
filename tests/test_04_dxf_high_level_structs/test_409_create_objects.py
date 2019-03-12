@@ -20,7 +20,7 @@ _OBJECT_TABLE_NAMES = [
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 def test_setup_rootdict(doc):

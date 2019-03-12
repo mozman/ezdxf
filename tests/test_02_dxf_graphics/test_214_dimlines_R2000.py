@@ -7,12 +7,12 @@ from ezdxf.entities.dimension import Dimension
 
 @pytest.fixture(scope='module')
 def dxf2000():
-    return ezdxf.new2('R2000', setup='all')
+    return ezdxf.new('R2000', setup='all')
 
 
 @pytest.fixture(scope='module')
 def dxf2007():
-    return ezdxf.new2('R2007', setup='all')
+    return ezdxf.new('R2007', setup='all')
 
 
 def test_dimstyle_standard_exist(dxf2000):

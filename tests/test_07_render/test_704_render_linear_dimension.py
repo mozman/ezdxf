@@ -9,7 +9,7 @@ from ezdxf.render.dimension import LinearDimension, DimStyleOverride
 
 @pytest.fixture(scope='module')
 def dwg():
-    return ezdxf.new2('R2007', setup=True)
+    return ezdxf.new('R2007', setup=True)
 
 
 def test_linear_dimension_with_one_tolerance(dwg):

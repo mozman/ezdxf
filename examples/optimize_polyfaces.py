@@ -26,7 +26,7 @@ def optimize_polyfaces(polyfaces):
 def optimize(filename, new_filename):
     print('opening DXF file: {}'.format(filename))
     start_time = time.time()
-    doc = ezdxf.readfile2(filename)
+    doc = ezdxf.readfile(filename)
     msp = doc.modelspace()
     end_time = time.time()
     print('time for reading: {:.1f} seconds'.format(end_time - start_time))

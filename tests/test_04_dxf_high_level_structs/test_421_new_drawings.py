@@ -2,7 +2,7 @@
 # License: MIT License
 import ezdxf
 
-new = ezdxf.new2
+new = ezdxf.new
 
 
 def test_new_AC1009():

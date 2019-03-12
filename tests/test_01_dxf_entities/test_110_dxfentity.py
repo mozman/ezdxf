@@ -320,7 +320,7 @@ class TestReactors:
 class TestGetLayout:
     @pytest.fixture(scope='class')
     def doc(self):
-        return ezdxf.new2()
+        return ezdxf.new()
 
     def test_get_layout_model_space(self, doc):
         msp = doc.modelspace()

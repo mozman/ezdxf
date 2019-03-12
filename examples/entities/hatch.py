@@ -6,7 +6,7 @@ from ezdxf.lldxf import const
 
 
 def create_solid_polyline_hatch():
-    doc = ezdxf.new2("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch(color=2)  # by default a SOLID fill
     # if only 1 path - flags = 1 (external) by default
@@ -15,7 +15,7 @@ def create_solid_polyline_hatch():
 
 
 def create_pattern_fill_polyline_hatch():
-    doc = ezdxf.new2("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
     hatch.set_pattern_fill('ANSI33', color=7, scale=0.01)
@@ -25,7 +25,7 @@ def create_pattern_fill_polyline_hatch():
 
 
 def create_pattern_fill_hatch_with_bgcolor():
-    doc = ezdxf.new2("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
     hatch.set_pattern_fill('ANSI33', color=7, scale=0.01)
@@ -58,7 +58,7 @@ def using_hatch_style():
         # partly 1. inner loop - flags = 16 (outermost)
         hatch.paths.add_polyline_path(map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
 
-    doc = ezdxf.new2("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     # first create DXF hatch entities
     hatch_style_0 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 0})
@@ -112,7 +112,7 @@ def using_hatch_style_with_edge_path():
             add_edge_path(editor, map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]), flags=const.BOUNDARY_PATH_OUTERMOST)
             add_edge_path(editor, map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
 
-    doc = ezdxf.new2("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     # first create DXF hatch entities
     hatch_style_0 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 0})
@@ -135,7 +135,7 @@ def using_hatch_style_with_edge_path():
 
 
 def using_hatch_with_spline_edge():
-    doc = ezdxf.new2("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     # draw outline
     fitpoints = [(8, 0, 0), (10, 2, 0), (6, 6, 0), (8, 8, 0)]

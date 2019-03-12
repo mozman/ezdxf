@@ -17,7 +17,7 @@ def filename(request):
 
 def test_leica_disto_r12(filename):
     # new entity system: legacy mode not necessary
-    dwg = ezdxf.readfile2(filename, legacy_mode=False)
+    dwg = ezdxf.readfile(filename, legacy_mode=False)
     msp = dwg.modelspace()
     points = list(msp.query('POINT'))
     assert len(points) == 11

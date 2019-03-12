@@ -31,7 +31,7 @@ def tmatrix(dx, dy, sx=1, sy=1, angle=0):
 
 
 NAME = 'euler_spiral.dxf'
-doc = ezdxf.new2('R2000', setup=True)
+doc = ezdxf.new('R2000', setup=True)
 msp = doc.modelspace()
 
 msp.add_line((-20, 0), (20, 0), dxfattribs={'linetype': "PHANTOM"})

@@ -7,7 +7,7 @@ from ezdxf.addons import MText
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R12')
+    return ezdxf.new('R12')
 
 
 def test_horiz_top(doc):

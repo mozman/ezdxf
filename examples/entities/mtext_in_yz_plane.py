@@ -3,7 +3,7 @@
 # License: MIT License
 import ezdxf
 
-doc = ezdxf.new2('R2000')
+doc = ezdxf.new('R2000')
 modelspace = doc.modelspace()
 modelspace.add_mtext("This is a text in the YZ-plane",
                      dxfattribs={

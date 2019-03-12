@@ -89,7 +89,7 @@ def test_write_dxf():
 
 
 def test_add_tolerance():
-    doc = ezdxf.new2()
+    doc = ezdxf.new()
     msp = doc.modelspace()
     light = msp.new_entity('TOLERANCE', {})
     assert light.dxftype() == 'TOLERANCE'

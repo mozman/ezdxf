@@ -36,7 +36,7 @@ polygon5_face = [
     [0, 1, 2, 3, 4]
 ]
 
-doc = ezdxf.new2('R2000')
+doc = ezdxf.new('R2000')
 msp = doc.modelspace()
 mesh = msp.add_mesh()
 with mesh.edit_data() as mesh_data:

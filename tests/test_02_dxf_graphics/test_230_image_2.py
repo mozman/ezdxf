@@ -8,7 +8,7 @@ from ezdxf.entities.image import ImageDef, Image
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 @pytest.fixture(scope='module')
@@ -17,7 +17,7 @@ def image_def(doc):
 
 
 def test_set_raster_variables():
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     assert 'ACAD_IMAGE_VARS' not in doc.rootdict
     doc.set_raster_variables(frame=0, quality=1, units='m')
     raster_vars = doc.rootdict['ACAD_IMAGE_VARS']
@@ -93,7 +93,7 @@ def test_set_boundary_path(image):
 
 @pytest.fixture
 def new_doc():
-    return ezdxf.new2('R2000')
+    return ezdxf.new('R2000')
 
 
 def test_new_image_def(new_doc):

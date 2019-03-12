@@ -6,7 +6,7 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2('R2010')
+    return ezdxf.new('R2010')
 
 
 def test_material_manager(doc):

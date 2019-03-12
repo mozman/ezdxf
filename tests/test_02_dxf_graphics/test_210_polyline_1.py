@@ -56,7 +56,7 @@ AcDb2dPolyline
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2()
+    return ezdxf.new()
 
 
 @pytest.fixture(params=[ENTITY_R12, ENTITY_R2000])

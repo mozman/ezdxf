@@ -6,7 +6,7 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def dxf12():
-    dwg = ezdxf.new2('R12', setup='all')
+    dwg = ezdxf.new('R12', setup='all')
     return dwg
 
 

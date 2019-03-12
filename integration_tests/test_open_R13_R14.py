@@ -18,7 +18,7 @@ def filename(request):
 
 
 def test_open_R13_R14(filename, tmpdir):
-    doc = ezdxf.readfile2(filename)
+    doc = ezdxf.readfile(filename)
     assert 'Model' in doc.layouts, 'Model space not found'
     assert 'Layout1' in doc.layouts, 'Paper space not found'
     assert doc.dxfversion >= 'AC1015'

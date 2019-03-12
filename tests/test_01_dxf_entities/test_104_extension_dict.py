@@ -7,7 +7,7 @@ import ezdxf
 
 @pytest.fixture(scope='module')
 def doc():
-    return ezdxf.new2()
+    return ezdxf.new()
 
 
 @pytest.fixture()

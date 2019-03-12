@@ -48,7 +48,7 @@ EOF
 
 
 def test_new_drawing():
-    dwg = ezdxf.new2('AC1009')
+    dwg = ezdxf.new('AC1009')
     assert 'AC1009' == dwg.dxfversion
 
 

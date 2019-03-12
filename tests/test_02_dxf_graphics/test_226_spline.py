@@ -241,7 +241,7 @@ def test_set_periodic_rational(spline, points, weights):
 
 @pytest.fixture(scope='module')
 def msp():
-    doc = ezdxf.new2('R2000')
+    doc = ezdxf.new('R2000')
     return doc.modelspace()
 
 

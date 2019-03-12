@@ -17,7 +17,7 @@ SAMPLE_COORDS = [get_random_point() for x in range(50)]
 flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
 
 
-doc = ezdxf.new2('R2007')
+doc = ezdxf.new('R2007')
 doc.layers.new('FLAGS')
 
 # first create a block
