@@ -17,7 +17,7 @@ from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import Auditor, TagWriter, Vertex, Matrix44, BaseLayout, DXFNamespace
+    from ezdxf.eztypes import Auditor, TagWriter, Vertex, Matrix44, BaseLayout, DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 

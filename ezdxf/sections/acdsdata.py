@@ -81,7 +81,7 @@ from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import TagWriter, Drawing
+    from ezdxf.eztypes import TagWriter, Drawing
 
 
 class AcDsDataSection:

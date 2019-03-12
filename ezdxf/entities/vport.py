@@ -13,7 +13,7 @@ from .factory import register_entity
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = ['VPort']
 

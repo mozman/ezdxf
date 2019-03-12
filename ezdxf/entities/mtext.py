@@ -16,7 +16,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity, Vertex
 
 __all__ = ['MText']
 

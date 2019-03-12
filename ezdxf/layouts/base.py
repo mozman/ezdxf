@@ -9,7 +9,7 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.graphicsfactory2 import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import BlockRecord, DXFGraphic
+    from ezdxf.eztypes import BlockRecord, DXFGraphic
 
 
 class BaseLayout(CreatorInterface):

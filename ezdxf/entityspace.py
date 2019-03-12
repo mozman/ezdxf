@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import EntityDB, ExtendedTags, TagWriter, DXFEntity
+    from ezdxf.eztypes import EntityDB, ExtendedTags, TagWriter, DXFEntity
 
 
 class EntitySpace(list):

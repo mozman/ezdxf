@@ -10,7 +10,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 
 __all__ = ['Block', 'EndBlk']

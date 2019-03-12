@@ -13,7 +13,7 @@ from .factory import register_entity
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic, EntitySpace, BlockLayout
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Block, EndBlk, DXFGraphic, EntitySpace, BlockLayout
 
 __all__ = ['BlockRecord']
 

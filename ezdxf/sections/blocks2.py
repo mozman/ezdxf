@@ -11,8 +11,8 @@ from ezdxf.layouts.blocklayout import BlockLayout
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table
-    from ezdxf.eztypes2 import EntityFactory, BlockRecord, Block, EndBlk
+    from ezdxf.eztypes import TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table
+    from ezdxf.eztypes import EntityFactory, BlockRecord, Block, EndBlk
 
 
 class BlocksSection:

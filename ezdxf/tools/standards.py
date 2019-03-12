@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXF12
 import logging
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import Drawing, DimStyle
+    from ezdxf.eztypes import Drawing, DimStyle
 
 logger = logging.getLogger('ezdxf')
 

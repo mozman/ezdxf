@@ -11,7 +11,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Tags, Drawing, Vertex
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing, Vertex
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 

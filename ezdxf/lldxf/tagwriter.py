@@ -7,7 +7,7 @@ from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import ExtendedTags
+    from ezdxf.eztypes import ExtendedTags
 
 __all__ = ['TagWriter', 'TagCollector', 'basic_tags_from_text']
 

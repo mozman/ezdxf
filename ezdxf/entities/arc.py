@@ -10,7 +10,7 @@ from .circle import acdb_circle, Circle
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace
 
 __all__ = ['Arc']
 

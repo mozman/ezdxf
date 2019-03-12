@@ -7,7 +7,7 @@ import math
 from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import Vertex, GenericLayoutType, Matrix44
+    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
 
 HEIGHT4 = 1. / math.sqrt(2.)  # pyramid4 height (* length)
 HEIGHT3 = math.sqrt(6.) / 3.  # pyramid3 height (* length)

@@ -11,8 +11,8 @@ from ezdxf.tools import set_flag_state
 from ezdxf.math import OCS
 
 if TYPE_CHECKING:  # import forward dependencies
-    from ezdxf.eztypes2 import TagValue, IterableTags, DXFAttr, DXFDictionary
-    from ezdxf.eztypes2 import Drawing, EntityDB, DXFFactoryType, GenericLayoutType
+    from ezdxf.eztypes import TagValue, IterableTags, DXFAttr, DXFDictionary
+    from ezdxf.eztypes import Drawing, EntityDB, DXFFactoryType, GenericLayoutType
 
 ACAD_REACTORS = '{ACAD_REACTORS'
 ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'

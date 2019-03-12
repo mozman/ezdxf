@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import ACAD_XDICTIONARY, XDICT_HANDLE_CODE, APP_DATA_MARK
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.eztypes2 import Dictionary, Drawing, DXFEntity, ObjectsSection
+    from ezdxf.eztypes import Dictionary, Drawing, DXFEntity, ObjectsSection
 
 __all__ = ['ExtensionDict']
 

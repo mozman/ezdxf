@@ -10,7 +10,7 @@ from ezdxf.math.vector import Vector
 from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagValue
+    from ezdxf.eztypes import TagValue
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
 POINT_CODES = {10, 11, 12, 13, 14, 15, 16, 17, 18, 110, 111, 112, 210, 211, 212, 213, 1010, 1011, 1012, 1013}

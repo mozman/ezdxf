@@ -13,7 +13,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
 __all__ = [
     'Body', 'Solid3d', 'Region', 'Surface', 'ExtrudedSurface', 'LoftedSurface', 'RevolvedSurface', 'SweptSurface',

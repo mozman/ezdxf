@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXF12, DXF2013
 from ezdxf.drawing2 import Drawing as Drawing2
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import Drawing, DXFInfo
+    from ezdxf.eztypes import Drawing, DXFInfo
 
 
 def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':

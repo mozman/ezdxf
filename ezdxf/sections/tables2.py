@@ -8,7 +8,7 @@ from ezdxf.lldxf.const import DXFStructureError, DXF12
 from .table2 import Table, ViewportTable, StyleTable, LayerTable
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Drawing, DXFEntity, DXFTagStorage
+    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, DXFTagStorage
 
 logger = logging.getLogger('ezdxf')
 

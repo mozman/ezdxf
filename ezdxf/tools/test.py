@@ -4,7 +4,6 @@
 # License: MIT License
 from typing import Sequence, TYPE_CHECKING, Iterable, List, Set
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ezdxf.modern import ModernDXFFactory
 
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.eztypes import DXFTag, EntityDB, ExtendedTags, DXFEntity
@@ -33,9 +32,7 @@ def load_entities(text: str, name: str, doc):
     return load_dxf_entities(dxf[name], doc.dxffactory)
 
 
-SUPPORTED_ENTITIES = ModernDXFFactory(None).ENTITY_WRAPPERS
-
-
+# todo: adapt to new dxffactory
 def find_unsupported_entities(container: Iterable['DXFEntity']) -> Set[str]:
     unsupported_entities = set()
     for entity in container:

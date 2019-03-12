@@ -10,7 +10,7 @@ from .tags import Tags
 from .extendedtags import ExtendedTags
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import DXFEntity, TagValue
+    from ezdxf.eztypes import DXFEntity, TagValue
 
 DefSubclass = namedtuple('DefSubclass', 'name attribs')
 VIRTUAL_TAG = -666

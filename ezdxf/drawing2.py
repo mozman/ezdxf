@@ -43,9 +43,9 @@ logger = logging.getLogger('ezdxf')
 MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'}
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import HandleGenerator, DXFTag, SectionDict, SectionType, Table, ViewportTable
-    from ezdxf.eztypes2 import Dictionary, BlockLayout, Layout
-    from ezdxf.eztypes2 import DXFEntity, Layer, DXFLayout, BlockRecord
+    from ezdxf.eztypes import HandleGenerator, DXFTag, SectionDict, SectionType, Table, ViewportTable
+    from ezdxf.eztypes import Dictionary, BlockLayout, Layout
+    from ezdxf.eztypes import DXFEntity, Layer, DXFLayout, BlockRecord
 
     LayoutType = Union[Layout, BlockLayout]
 

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Sequence, Optional
 from .base import BaseLayout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFGraphic, AttDef
+    from ezdxf.eztypes import TagWriter, DXFGraphic, AttDef
 
 
 class BlockLayout(BaseLayout):

@@ -15,7 +15,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import Drawing, TagWriter, DXFNamespace
+    from ezdxf.eztypes import Drawing, TagWriter, DXFNamespace
 
 __all__ = ['Viewport']
 

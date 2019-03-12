@@ -4,7 +4,7 @@ import pytest
 
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.types import is_embedded_object_marker
-from ezdxf.modern.mtext import MText
+from ezdxf.entities.mtext import MText
 MTEXT = r"""0
 MTEXT
 5
@@ -101,18 +101,17 @@ def test_embedded_object_structure(mtext_tags):
 def test_mtext_structure(mtext_tags):
     assert len(mtext_tags.subclasses[2]) == 10
 
-    mtext = MText(mtext_tags)
+    mtext = MText.from_text(MTEXT)
     assert mtext.dxf.handle == '278'
     assert mtext.dxf.line_spacing_factor == 1.0
 
 
 def test_mtext_set_text(mtext_tags):
-    mtext = MText(mtext_tags)
+    mtext = MText.from_text(MTEXT)
     mtext.set_text('Hello?')
     assert mtext.get_text() == 'Hello?'
     assert mtext.dxf.line_spacing_factor == 1.0
-    assert len(mtext.tags.subclasses[2]) == 10
-    assert len(mtext.tags.embedded_objects[0]) == 15
+    assert len(mtext.embedded_objects.embedded_objects[0]) == 15
 
 
 @pytest.fixture

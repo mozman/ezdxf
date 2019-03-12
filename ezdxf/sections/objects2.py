@@ -11,8 +11,8 @@ from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData
-    from ezdxf.eztypes2 import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage
-    from ezdxf.eztypes2 import ImageDefReactor, ImageDef, UnderlayDef
+    from ezdxf.eztypes import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage
+    from ezdxf.eztypes import ImageDefReactor, ImageDef, UnderlayDef
 
 logger = logging.getLogger('ezdxf')
 

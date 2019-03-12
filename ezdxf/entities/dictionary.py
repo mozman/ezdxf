@@ -9,7 +9,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Drawing, DXFNamespace, Auditor
+    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 

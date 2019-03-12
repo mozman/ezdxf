@@ -12,7 +12,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Vertex, Drawing, Tags
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Drawing, Tags
 
 __all__ = ['PdfUnderlay', 'DwfUnderlay', 'DgnUnderlay', 'PdfDefinition', 'DgnDefinition', 'DwfDefinition', 'Underlay',
            'UnderlayDef']

@@ -10,7 +10,7 @@ from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef
+    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, DXFEntity, Drawing, Attrib, AttDef
 
 __all__ = ['Insert']
 

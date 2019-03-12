@@ -14,7 +14,7 @@ from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import Auditor, Drawing, DXFNamespace, TagWriter
+    from ezdxf.eztypes import Auditor, Drawing, DXFNamespace, TagWriter
 
 __all__ = ['DXFObject', 'AcDbPlaceholder']
 

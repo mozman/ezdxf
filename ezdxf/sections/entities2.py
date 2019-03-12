@@ -8,7 +8,7 @@ from ezdxf.lldxf.tags import DXFStructureError
 from ezdxf.entities.dxfgfx import entity_linker
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Drawing, DXFEntity, Tags, DXFTagStorage, DXFGraphic, BlockRecord
+    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, Tags, DXFTagStorage, DXFGraphic, BlockRecord
 
 
 class StoredSection:

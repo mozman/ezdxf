@@ -29,7 +29,7 @@ from ezdxf.math.vector import Vector, distance, lerp
 from ezdxf.math.line import ConstructionRay
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import Drawing, GenericLayoutType, Vertex
+    from ezdxf.eztypes import Drawing, GenericLayoutType, Vertex
 
 DIMENSIONS_MIN_DISTANCE = 0.05
 DIMENSIONS_FLOATINGPOINT = '.'

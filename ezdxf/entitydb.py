@@ -8,7 +8,7 @@ from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.order import priority, zorder
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter
+    from ezdxf.eztypes import TagWriter
 
 DATABASE_EXCLUDE = {'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACDSRECORD', 'ACDSSCHEMA'}
 

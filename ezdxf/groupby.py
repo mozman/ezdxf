@@ -7,7 +7,7 @@ from typing import Callable, Iterable, Hashable, Dict, List, TYPE_CHECKING
 from ezdxf.lldxf.const import DXFValueError, DXFAttributeError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import DXFEntity, KeyFunc
+    from ezdxf.eztypes import DXFEntity, KeyFunc
 
 
 def groupby(entities: Iterable['DXFEntity'], dxfattrib: str = '', key: 'KeyFunc' = None) \

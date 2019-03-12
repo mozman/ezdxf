@@ -10,7 +10,7 @@ from ezdxf import options
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter
+    from ezdxf.eztypes import TagWriter
 
 __all__ = ['XData', 'EmbeddedObjects']
 

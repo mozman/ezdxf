@@ -14,7 +14,7 @@ from ezdxf.lldxf import const
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, Drawing, DXFNamespace
+    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
 
 __all__ = ['DimStyle']
 

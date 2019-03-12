@@ -14,7 +14,7 @@ from .validator import entity_structure_validator
 from ezdxf.options import options
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes2 import EntityDB
+    from ezdxf.eztypes import EntityDB
     from ezdxf.entities.factory import EntityFactory
     from ezdxf.entities.dxfentity import DXFEntity
 

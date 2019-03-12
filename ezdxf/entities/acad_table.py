@@ -13,7 +13,7 @@ from .objectcollection import ObjectCollection
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import TagWriter, DXFNamespace, Tags, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing
 
 __all__ = ['ACADTable']
 

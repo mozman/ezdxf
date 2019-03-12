@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable, cast
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes2 import DXFObject, Dictionary, Drawing, ObjectsSection
+    from ezdxf.eztypes import DXFObject, Dictionary, Drawing, ObjectsSection
 
 
 class ObjectCollection:
