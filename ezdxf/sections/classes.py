@@ -10,7 +10,7 @@ from ezdxf.entities.dxfentity import DXFEntity
 
 if TYPE_CHECKING:  # import forward declarations
     from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.drawing import Drawing
     from ezdxf.eztypes import TagWriter
 
 # name: cpp_class_name, app_name, flags, was_a_proxy, is_an_entity

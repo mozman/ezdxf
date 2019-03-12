@@ -5,7 +5,7 @@ from io import StringIO
 
 import ezdxf
 from ezdxf.tools.test import load_entities, internal_tag_compiler
-from ezdxf.sections.table2 import Table
+from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagCollector
 
 

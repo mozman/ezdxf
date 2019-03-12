@@ -3,8 +3,8 @@
 # created: 2019-02-18
 import pytest
 
-from ezdxf.drawing2 import Drawing
-from ezdxf.sections.objects2 import _OBJECT_TABLE_NAMES
+from ezdxf.drawing import Drawing
+from ezdxf.sections.objects import _OBJECT_TABLE_NAMES
 
 
 @pytest.fixture

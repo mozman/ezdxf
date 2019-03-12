@@ -4,10 +4,10 @@ import pytest
 from io import StringIO
 import ezdxf
 from ezdxf.lldxf.tags import internal_tag_compiler
-from ezdxf.sections.classes2 import ClassesSection
+from ezdxf.sections.classes import ClassesSection
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.tools.test import load_section
-from ezdxf.drawing2 import Drawing
+from ezdxf.drawing import Drawing
 
 
 @pytest.fixture(scope='module')

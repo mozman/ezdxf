@@ -4,7 +4,7 @@ import pytest
 
 import ezdxf
 from ezdxf.tools.test import load_entities
-from ezdxf.sections.blocks2 import BlocksSection
+from ezdxf.sections.blocks import BlocksSection
 from ezdxf.lldxf.tagwriter import TagCollector
 
 

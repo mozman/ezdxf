@@ -27,11 +27,11 @@ from ezdxf.groupby import groupby
 from ezdxf.render.dimension import DimensionRenderer
 
 from ezdxf.sections.header import HeaderSection
-from ezdxf.sections.classes2 import ClassesSection
-from ezdxf.sections.tables2 import TablesSection
-from ezdxf.sections.blocks2 import BlocksSection
-from ezdxf.sections.entities2 import EntitySection, StoredSection
-from ezdxf.sections.objects2 import ObjectsSection
+from ezdxf.sections.classes import ClassesSection
+from ezdxf.sections.tables import TablesSection
+from ezdxf.sections.blocks import BlocksSection
+from ezdxf.sections.entities import EntitySection, StoredSection
+from ezdxf.sections.objects import ObjectsSection
 from ezdxf.sections.acdsdata import AcDsDataSection
 
 from ezdxf.entities.dxfgroups import GroupCollection

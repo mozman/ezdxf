@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.entities.dimstyle import DimStyle
-from ezdxf.drawing2 import Drawing
+from ezdxf.drawing import Drawing
 
 
 @pytest.fixture

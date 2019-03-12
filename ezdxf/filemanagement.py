@@ -6,7 +6,7 @@
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF12, DXF2013
-from ezdxf.drawing2 import Drawing as Drawing2
+from ezdxf.drawing import Drawing as Drawing2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFInfo
@@ -72,7 +72,7 @@ def read2(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Draw
         filter_stack: interface to put filters between reading layers, see :class:`Drawing.read` for more information
 
     """
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.drawing import Drawing
 
     return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
 

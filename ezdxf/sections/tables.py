@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, List
 import logging
 from ezdxf.lldxf.const import DXFStructureError, DXF12
-from .table2 import Table, ViewportTable, StyleTable, LayerTable
+from .table import Table, ViewportTable, StyleTable, LayerTable
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, DXFTagStorage

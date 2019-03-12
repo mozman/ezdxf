@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.sections.classes2 import ClassesSection
+from ezdxf.sections.classes import ClassesSection
 from ezdxf.entities.dxfclass import DXFClass
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.tools.test import load_entities

@@ -5,7 +5,7 @@ import ezdxf
 from ezdxf.lldxf.const import VTX_3D_POLYLINE_VERTEX
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.tools.test import load_entities
-from ezdxf.sections.entities2 import EntitySection
+from ezdxf.sections.entities import EntitySection
 
 
 @pytest.fixture(scope='module')

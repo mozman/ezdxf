@@ -6,7 +6,7 @@ from ezdxf.lldxf.const import DXFValueError
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntityDB
-from ezdxf.graphicsfactory2 import CreatorInterface
+from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import BlockRecord, DXFGraphic

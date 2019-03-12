@@ -35,18 +35,18 @@ if TYPE_CHECKING:
 
     # Entities manager
     from ezdxf.entitydb import EntitySpace
-    from ezdxf.drawing2 import Drawing
+    from ezdxf.drawing import Drawing
     from ezdxf.entitydb import EntityDB
 
     # Sections and Tables
-    from ezdxf.sections.table2 import Table, ViewportTable, LayerTable, StyleTable
-    from ezdxf.sections.blocks2 import BlocksSection
+    from ezdxf.sections.table import Table, ViewportTable, LayerTable, StyleTable
+    from ezdxf.sections.blocks import BlocksSection
     from ezdxf.sections.header import HeaderSection
-    from ezdxf.sections.tables2 import TablesSection
-    from ezdxf.sections.blocks2 import BlocksSection
-    from ezdxf.sections.classes2 import ClassesSection
-    from ezdxf.sections.objects2 import ObjectsSection
-    from ezdxf.sections.entities2 import EntitySection
+    from ezdxf.sections.tables import TablesSection
+    from ezdxf.sections.blocks import BlocksSection
+    from ezdxf.sections.classes import ClassesSection
+    from ezdxf.sections.objects import ObjectsSection
+    from ezdxf.sections.entities import EntitySection
     from ezdxf.sections.unsupported import UnsupportedSection
 
     # Table entries

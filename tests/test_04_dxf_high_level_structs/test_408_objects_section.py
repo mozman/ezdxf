@@ -2,7 +2,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.tools.test import load_entities
-from ezdxf.sections.objects2 import ObjectsSection
+from ezdxf.sections.objects import ObjectsSection
 
 
 def test_load_section():
