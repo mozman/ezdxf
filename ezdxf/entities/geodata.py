@@ -119,9 +119,8 @@ class GeoData(DXFObject):
         # 303, 303, 301, Coordinate system definition string, always XML?
         lines = []
         for tag in tags:
-            code, value = tag
-            if code in (301, 303):
-                lines.append(value.replace('^J', '\n'))
+            if tag.code in (301, 303):
+                lines.append(tag.value.replace('^J', '\n'))
             else:
                 yield tag
         if len(lines):
@@ -144,7 +143,7 @@ class GeoData(DXFObject):
                     face = []
                 face.append(value)
         if len(face):  # collect last face
-            self.faces.append(face)
+            self.faces.append(tuple(face))
         if len(self.source_vertices) != len(self.target_vertices):
             raise DXFStructureError("GEODATA mesh definition error: source and target point count does not match.")
 
@@ -171,8 +170,8 @@ class GeoData(DXFObject):
 
         tagwriter.write_tag2(93, len(self.source_vertices))
         for s, t in zip(self.source_vertices, self.target_vertices):
-            tagwriter.write_vertex(13, s[:2])
-            tagwriter.write_vertex(14, t[:2])
+            tagwriter.write_vertex(13, s)
+            tagwriter.write_vertex(14, t)
 
         tagwriter.write_tag2(96, len(self.faces))
         for face in self.faces:
