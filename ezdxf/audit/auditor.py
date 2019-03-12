@@ -11,7 +11,7 @@ import sys
 from ezdxf.lldxf.types import is_pointer_code, DXFTag
 from ezdxf.lldxf.const import Error
 from ezdxf.lldxf.validator import is_valid_layer_name, is_adsk_special_layer
-from ezdxf.dxfentity import DXFEntity
+from ezdxf.entities.dxfentity import DXFEntity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing, ExtendedTags

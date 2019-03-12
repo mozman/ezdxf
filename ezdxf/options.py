@@ -6,8 +6,6 @@
 
 class Options:
     def __init__(self):
-        self.template_dir = None  # type: str
-
         # check app data and xdata tag structures, turn this option off for a little performance boost
         self.check_entity_tag_structures = True
         self.filter_invalid_xdata_group_codes = False
