@@ -63,13 +63,13 @@ def doc():
 
 
 def test_generic_id_buffer(doc):
-    id_buffer = doc.objects.create_new_dxf_entity('IDBUFFER', {})
+    id_buffer = doc.objects.new_entity('IDBUFFER', {})
     assert id_buffer.dxftype() == 'IDBUFFER'
     assert len(id_buffer.handles) == 0
 
 
 def test_set_get_id_buffer(doc):
-    id_buffer = doc.objects.create_new_dxf_entity('IDBUFFER', {})
+    id_buffer = doc.objects.new_entity('IDBUFFER', {})
     assert id_buffer.dxftype() == 'IDBUFFER'
     id_buffer.handles = ['FF', 'EE', 'DD']
     handles = id_buffer.handles
@@ -84,7 +84,7 @@ def test_set_get_id_buffer(doc):
 
 
 def test_dxf_tags(doc):
-    id_buffer = cast(IDBuffer, doc.objects.create_new_dxf_entity('IDBUFFER', {}))
+    id_buffer = cast(IDBuffer, doc.objects.new_entity('IDBUFFER', {}))
     id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     tags = TagCollector.dxftags(id_buffer)[-4:]
 
@@ -94,7 +94,7 @@ def test_dxf_tags(doc):
 
 
 def test_clone(doc):
-    id_buffer = cast(IDBuffer, doc.objects.create_new_dxf_entity('IDBUFFER', {}))
+    id_buffer = cast(IDBuffer, doc.objects.new_entity('IDBUFFER', {}))
     id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
     buffer2 = cast(IDBuffer, id_buffer.copy())
     buffer2.handles[-1] = 'ABCD'

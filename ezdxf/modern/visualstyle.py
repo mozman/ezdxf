@@ -96,6 +96,7 @@ visualstyle_subclass = DefSubclass('AcDbVisualStyle', {
     'style_display_settings': DXFAttr(93),
     'brightness': DXFAttr(44),
     'shadow_type': DXFAttr(173),
+    'internal_flag': DXFAttr(291),
 })
 
 

@@ -65,7 +65,7 @@ class BlocksSection:
             try:
                 block_record = block_records.get(block.dxf.name)  # type: BlockRecord
             except DXFTableEntryError:  # special case DXF R12 - not block record exists
-                block_record = block_records.new(block.dxf.name)  # type: BlockRecord
+                block_record = block_records.new(block.dxf.name, dxfattribs={'scale': 0})  # type: BlockRecord
 
             # block_record stores all the information about a block definition
             block_record.set_block(block, endblk)

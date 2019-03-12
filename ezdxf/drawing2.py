@@ -113,8 +113,7 @@ class Drawing:
         self.blocks = BlocksSection(self)
         self.entities = EntitySection(self)
         self.objects = ObjectsSection(self)
-        self.acdsdata = AcDsDataSection(self)
-        # AcDSData section is not supported for new drawings
+        self.acdsdata = AcDsDataSection(self)  # AcDSData section is not supported for new drawings
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
         self.layouts = Layouts.setup(self)

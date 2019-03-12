@@ -55,7 +55,7 @@ class ObjectsSection:
         self._entity_space.export_dxf(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
 
-    def create_new_dxf_entity(self, _type: str, dxfattribs: dict) -> 'DXFEntity':
+    def new_entity(self, _type: str, dxfattribs: dict) -> 'DXFEntity':
         """
         Create new DXF entity add it to the entity database and add it to the entity space.
 
@@ -131,19 +131,19 @@ class ObjectsSection:
         self._entity_space.add(entity)
 
     def add_dxf_object_with_reactor(self, dxftype: str, dxfattribs: dict) -> 'DXFEntity':
-        dxfobject = self.create_new_dxf_entity(dxftype, dxfattribs)
+        dxfobject = self.new_entity(dxftype, dxfattribs)
         dxfobject.set_reactors([dxfattribs['owner']])
         return dxfobject
 
     def add_dictionary(self, owner: str = '0', hard_owned: bool = False) -> Dictionary:
-        entity = self.create_new_dxf_entity('DICTIONARY', dxfattribs={
+        entity = self.new_entity('DICTIONARY', dxfattribs={
             'owner': owner,
             'hard_owned': hard_owned,
         })
         return cast(Dictionary, entity)
 
     def add_dictionary_with_default(self, owner='0', default='0', hard_owned: bool = False) -> 'Dictionary':
-        entity = self.create_new_dxf_entity('ACDBDICTIONARYWDFLT', dxfattribs={
+        entity = self.new_entity('ACDBDICTIONARYWDFLT', dxfattribs={
             'owner': owner,
             'default': default,
             'hard_owned': hard_owned,
@@ -151,10 +151,10 @@ class ObjectsSection:
         return cast(Dictionary, entity)
 
     def add_xrecord(self, owner: str = '0') -> 'DXFEntity':
-        return self.create_new_dxf_entity('XRECORD', dxfattribs={'owner': owner})
+        return self.new_entity('XRECORD', dxfattribs={'owner': owner})
 
     def add_placeholder(self, owner: str = '0') -> 'DXFEntity':
-        return self.create_new_dxf_entity('ACDBPLACEHOLDER', dxfattribs={'owner': owner})
+        return self.new_entity('ACDBPLACEHOLDER', dxfattribs={'owner': owner})
 
     def set_raster_variables(self, frame: int = 0, quality: int = 1, units: str = 'm') -> None:
         units = RASTER_UNITS.get(units, 0)
@@ -200,7 +200,7 @@ class ObjectsSection:
         return cast('ImageDef', image_def)
 
     def add_image_def_reactor(self, image_handle: str) -> 'ImageDefReactor':
-        image_def_reactor = self.create_new_dxf_entity('IMAGEDEF_REACTOR', dxfattribs={
+        image_def_reactor = self.new_entity('IMAGEDEF_REACTOR', dxfattribs={
             'owner': image_handle,
             'image_handle': image_handle,
         })
@@ -223,7 +223,7 @@ class ObjectsSection:
                 name = 'Model'  # Display model space for DWF ???
 
         underlay_dict = self.rootdict.get_required_dict(underlay_dict_name)
-        underlay_def = self.create_new_dxf_entity(underlay_def_entity, dxfattribs={
+        underlay_def = self.new_entity(underlay_def_entity, dxfattribs={
             'owner': underlay_dict.dxf.handle,
             'filename': filename,
             'name': name,

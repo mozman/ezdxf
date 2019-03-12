@@ -65,13 +65,13 @@ def doc():
 
 
 def test_generic_field_list(doc):
-    layers = doc.objects.create_new_dxf_entity('LAYER_FILTER', {})
+    layers = doc.objects.new_entity('LAYER_FILTER', {})
     assert layers.dxftype() == 'LAYER_FILTER'
     assert len(layers.handles) == 0
 
 
 def test_set_get_field_list(doc):
-    field_list = doc.objects.create_new_dxf_entity('LAYER_FILTER', {})
+    field_list = doc.objects.new_entity('LAYER_FILTER', {})
     assert field_list.dxftype() == 'LAYER_FILTER'
     field_list.handles = ['FF', 'EE', 'DD']
     handles = field_list.handles
@@ -83,7 +83,7 @@ def test_set_get_field_list(doc):
 
 
 def test_dxf_tags(doc):
-    buffer = cast(LayerFilter, doc.objects.create_new_dxf_entity('LAYER_FILTER', {}))
+    buffer = cast(LayerFilter, doc.objects.new_entity('LAYER_FILTER', {}))
     buffer.handles = ['FF', 'EE', 'DD', 'CC']
     tags = TagCollector.dxftags(buffer)[-4:]
 
@@ -93,7 +93,7 @@ def test_dxf_tags(doc):
 
 
 def test_clone(doc):
-    layers = cast(LayerFilter, doc.objects.create_new_dxf_entity('LAYER_FILTER', {}))
+    layers = cast(LayerFilter, doc.objects.new_entity('LAYER_FILTER', {}))
     layers.handles = ['FF', 'EE', 'DD', 'CC']
     layers2 = cast(LayerFilter, layers.copy())
     layers2.handles[-1] = 'ABCD'

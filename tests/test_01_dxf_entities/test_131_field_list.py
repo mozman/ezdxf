@@ -69,13 +69,13 @@ def doc():
 
 
 def test_generic_field_list(doc):
-    field_list = doc.objects.create_new_dxf_entity('FIELDLIST', {})
+    field_list = doc.objects.new_entity('FIELDLIST', {})
     assert field_list.dxftype() == 'FIELDLIST'
     assert len(field_list.handles) == 0
 
 
 def test_set_get_field_list(doc):
-    field_list = doc.objects.create_new_dxf_entity('FIELDLIST', {})
+    field_list = doc.objects.new_entity('FIELDLIST', {})
     assert field_list.dxftype() == 'FIELDLIST'
     field_list.handles = ['FF', 'EE', 'DD']
     handles = field_list.handles
@@ -87,7 +87,7 @@ def test_set_get_field_list(doc):
 
 
 def test_dxf_tags(doc):
-    buffer = cast(FieldList, doc.objects.create_new_dxf_entity('FIELDLIST', {}))
+    buffer = cast(FieldList, doc.objects.new_entity('FIELDLIST', {}))
     buffer.handles = ['FF', 'EE', 'DD', 'CC']
     tags = TagCollector.dxftags(buffer)[-4:]
 
@@ -97,7 +97,7 @@ def test_dxf_tags(doc):
 
 
 def test_clone(doc):
-    buffer = cast(FieldList, doc.objects.create_new_dxf_entity('FIELDLIST', {}))
+    buffer = cast(FieldList, doc.objects.new_entity('FIELDLIST', {}))
     buffer.handles = ['FF', 'EE', 'DD', 'CC']
     buffer2 = cast(FieldList, buffer.copy())
     buffer2.handles[-1] = 'ABCD'

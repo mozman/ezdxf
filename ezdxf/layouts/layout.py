@@ -92,7 +92,7 @@ class Layout(BaseLayout):
             'name': name,
             'block_record': block_layout.block_record_handle
         })
-        dxf_layout = doc.objects.create_new_dxf_entity('LAYOUT', dxfattribs=dxfattribs)
+        dxf_layout = doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs)
         return cls(dxf_layout, doc)
 
     @classmethod
@@ -263,11 +263,11 @@ class Layout(BaseLayout):
             sortents_table = xdict.get_entity('ACAD_SORTENTS')
         except DXFKeyError:
             if create:
-                sortents_table = self.doc.objects.create_new_dxf_entity(
+                sortents_table = self.doc.objects.new_entity(
                     'SORTENTSTABLE',
                     dxfattribs={
                         'owner': xdict.dxf.handle,
-                        'block_record': self.layout_key
+                        'block_record_handle': self.layout_key
                     },
                 )
                 xdict['ACAD_SORTENTS'] = sortents_table.dxf.handle

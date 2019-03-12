@@ -122,7 +122,7 @@ class Layouts:
             'block_record': block_layout.block_record_handle,
             'taborder': taborder,
         }
-        dxf_layout = self.doc.objects.create_new_dxf_entity('LAYOUT', dxfattribs=dxfattribs)
+        dxf_layout = self.doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs)
         layout = Layout.load(dxf_layout, self.doc)
         self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout

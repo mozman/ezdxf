@@ -37,6 +37,7 @@ def new2(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = Non
                   - 'dimstyles ... setup all dimension styles
                   - 'dimstyles:metric' ... setup metric dimension styles
                   - 'dimstyles:imperial' ... setup imperial dimension styles (not implemented yet)
+                  - 'visualstyles ... setup 25 standard visual styles
 
     """
     doc = Drawing2.new(dxfversion)

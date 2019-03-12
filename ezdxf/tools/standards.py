@@ -23,8 +23,9 @@ def setup_drawing(doc: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
         topics: 'all' or True to setup everything
             Tuple of strings to specify setup:
                 - 'linetypes': setup linetypes
-                - 'styles'; setup text styles
+                - 'styles': setup text styles
                 - 'dimstyles[:all|metric|us]': setup dimension styles (us not implemented)
+                - 'visualstyles': setup 25 standard visual styles
 
     Returns:
 
@@ -51,6 +52,9 @@ def setup_drawing(doc: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
 
     if setup_all or 'styles' in topics:
         setup_styles(doc)
+
+    if setup_all or 'visualstyles' in topics:
+        setup_visual_styles(doc)
 
     dimstyles = get_token('dimstyles')
     if setup_all or len(dimstyles):
@@ -297,3 +301,68 @@ def styles():
         ('LiberationMono-BoldItalic', 'LiberationMono-BoldItalic.ttf'),
         ('LiberationMono-Italic', 'LiberationMono-Italic.ttf'),
     ]
+
+
+VISUAL_STYLES = [
+    {'description': '2dWireframe', 'style_type': 4, 'internal_flag': 0, 'face_modifiers': 0, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Basic', 'style_type': 7, 'internal_flag': 1, 'face_modifiers': 1, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Brighten', 'style_type': 12, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'ColorChange', 'style_type': 16, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 8, 'edge_hide_precision': 0},
+    {'description': 'Conceptual', 'style_type': 9, 'internal_flag': 0, 'face_modifiers': 3, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Dim', 'style_type': 11, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'EdgeColorOff', 'style_type': 22, 'internal_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Facepattern', 'style_type': 15, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Flat', 'style_type': 0, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'FlatWithEdges', 'style_type': 1, 'internal_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Gouraud', 'style_type': 2, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'GouraudWithEdges', 'style_type': 3, 'internal_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Hidden', 'style_type': 6, 'internal_flag': 0, 'face_modifiers': 1, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'JitterOff', 'style_type': 20, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Linepattern', 'style_type': 14, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Modeling', 'style_type': 10, 'internal_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'OverhangOff', 'style_type': 21, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Realistic', 'style_type': 8, 'internal_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Shaded', 'style_type': 27, 'internal_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Shaded with edges', 'style_type': 26, 'internal_flag': 0, 'face_modifiers': 2,
+     'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Shades of Gray', 'style_type': 23, 'internal_flag': 0, 'face_modifiers': 2,
+     'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Sketchy', 'style_type': 24, 'internal_flag': 0, 'face_modifiers': 1, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Thicken', 'style_type': 13, 'internal_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'Wireframe', 'style_type': 5, 'internal_flag': 0, 'face_modifiers': 0, 'face_opacity_level': 0.6,
+     'color1': 7, 'edge_hide_precision': 0},
+    {'description': 'X-Ray', 'style_type': 25, 'internal_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.5,
+     'color1': 7, 'edge_hide_precision': 0},
+
+]
+
+
+def setup_visual_styles(doc: 'Drawing'):
+    objects = doc.objects
+    vstyle_dict = doc.rootdict.get_required_dict('ACAD_VISUALSTYLE')
+    vstyle_dict_handle = vstyle_dict.dxf.handle
+    for vstyle in VISUAL_STYLES:
+        vstyle['owner'] = vstyle_dict_handle
+        vstyle_object = objects.add_dxf_object_with_reactor('VISUALSTYLE', dxfattribs=vstyle)
+        vstyle_dict[vstyle_object.dxf.description] = vstyle_object

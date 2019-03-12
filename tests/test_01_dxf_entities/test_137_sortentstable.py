@@ -15,7 +15,7 @@ def get_entry(table, index):
 
 
 def test_sort_entities_table(doc):
-    sort_entities_table = doc.objects.create_new_dxf_entity('SORTENTSTABLE', {'block_record_handle': 'FFFF'})
+    sort_entities_table = doc.objects.new_entity('SORTENTSTABLE', {'block_record_handle': 'FFFF'})
     assert sort_entities_table.dxftype() == 'SORTENTSTABLE'
     assert sort_entities_table.dxf.block_record_handle == 'FFFF'
     assert len(sort_entities_table) == 0
@@ -24,7 +24,7 @@ def test_sort_entities_table(doc):
 
 
 def test_sort_entities_table_as_list(doc):
-    sort_entities_table = doc.objects.create_new_dxf_entity('SORTENTSTABLE', {})
+    sort_entities_table = doc.objects.new_entity('SORTENTSTABLE', {})
     sort_entities_table.set_handles([
         ('AAA', 'BBB'), ('CCC', 'DDD'), ('EEE', 'FFF'),
     ])
@@ -37,7 +37,7 @@ def test_sort_entities_table_as_list(doc):
 
 
 def test_sort_entities_table_to_dict(doc):
-    sort_entities_table = doc.objects.create_new_dxf_entity('SORTENTSTABLE', {})
+    sort_entities_table = doc.objects.new_entity('SORTENTSTABLE', {})
     sort_entities_table.set_handles([
         ('AAA', 'BBB'), ('CCC', 'DDD'), ('EEE', 'FFF'),
     ])
@@ -52,7 +52,7 @@ def test_sort_entities_table_to_dict(doc):
 
 
 def test_remove_invalid_handles(doc):
-    sort_entities_table = doc.objects.create_new_dxf_entity('SORTENTSTABLE', {})
+    sort_entities_table = doc.objects.new_entity('SORTENTSTABLE', {})
     sort_entities_table.set_handles([
         ('AAA', 'BBB'), ('CCC', 'DDD'), ('EEE', 'FFF'),
     ])
@@ -62,7 +62,7 @@ def test_remove_invalid_handles(doc):
 
 
 def test_remove_handle(doc):
-    sort_entities_table = doc.objects.create_new_dxf_entity('SORTENTSTABLE', {})
+    sort_entities_table = doc.objects.new_entity('SORTENTSTABLE', {})
     sort_entities_table.set_handles([
         ('AAA', 'BBB'), ('CCC', 'DDD'), ('EEE', 'FFF'),
     ])
