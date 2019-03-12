@@ -17,7 +17,7 @@ import ezdxf
 from ezdxf.lldxf import const
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType
+    from ezdxf.eztypes2 import Vertex, GenericLayoutType
 
 
 class MText(SubscriptAttributes):

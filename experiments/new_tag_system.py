@@ -68,7 +68,7 @@ from ezdxf.math.vector import Vector
 from ezdxf.lldxf.types import POINT_CODES, cast_tag_value
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.eztypes2 import Vertex
 
 TAG_STRING_FORMAT = '%3d\n%s\n'
 NONE_CODE = -9999

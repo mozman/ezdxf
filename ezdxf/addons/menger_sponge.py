@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple
 from ezdxf.render.mesh import MeshBuilder, MeshVertexMerger
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44
+    from ezdxf.eztypes2 import Vertex, GenericLayoutType, Matrix44
 
 all_cubes_size_3_template = [
     (0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0),

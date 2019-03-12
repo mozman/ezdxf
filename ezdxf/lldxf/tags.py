@@ -10,7 +10,7 @@ from .tagger import internal_tag_compiler, low_level_tagger
 from ezdxf.tools.codepage import toencoding
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagValue
+    from ezdxf.eztypes2 import TagValue
 
 COMMENT_CODE = 999
 

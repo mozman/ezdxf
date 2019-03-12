@@ -13,7 +13,7 @@ from .const import DXFInternalEzdxfError, DXFValueError, DXFKeyError, SUBCLASS_M
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward declarations
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes2 import Drawing
 
 
 # todo: no more required by new entity system

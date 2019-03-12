@@ -14,7 +14,7 @@ from .tagger import internal_tag_compiler
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import IterableTags
+    from ezdxf.eztypes2 import IterableTags
 
 
 class ExtendedTags:

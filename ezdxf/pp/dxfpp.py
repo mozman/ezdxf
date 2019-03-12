@@ -14,9 +14,9 @@ from ezdxf.lldxf.const import DXFValueError
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.loader import load_dxf_structure
 from ezdxf.tools import escape
-from ezdxf.sections.sections import KNOWN_SECTIONS
 from .reflinks import get_reference_link
 
+KNOWN_SECTIONS = ('HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'THUMBNAILIMAGE', 'ACDSDATA')
 # Tag groups
 
 # HTML templates

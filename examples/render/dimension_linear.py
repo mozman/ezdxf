@@ -12,7 +12,7 @@ from ezdxf.math import Vector, UCS
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DimStyle, DimStyleOverride
+    from ezdxf.eztypes2 import DimStyle, DimStyleOverride
 
 new = ezdxf.new2
 

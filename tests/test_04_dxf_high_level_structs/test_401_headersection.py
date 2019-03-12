@@ -2,7 +2,6 @@
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.drawing import Drawing
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2018
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.header import HeaderSection
@@ -51,11 +50,6 @@ EOF
 def test_new_drawing():
     dwg = ezdxf.new2('AC1009')
     assert 'AC1009' == dwg.dxfversion
-
-
-def test_min_r12_drawing():
-    tags = Tags.from_text(MINIMALISTIC_DXF12)
-    return Drawing(tags)
 
 
 def test_valid_header():

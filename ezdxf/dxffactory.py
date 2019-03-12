@@ -7,7 +7,7 @@ from ezdxf.legacy import LegacyDXFFactory
 from ezdxf.modern import ModernDXFFactory
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFFactoryType, Drawing
+    from ezdxf.eztypes2 import DXFFactoryType, Drawing
 
 
 def dxffactory(drawing: 'Drawing') -> 'DXFFactoryType':

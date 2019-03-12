@@ -105,6 +105,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.geodata import GeoData
     from ezdxf.entities.light import Light
     from ezdxf.entities.leader import Leader
+    from ezdxf.render.dimension import BaseDimensionRenderer
 
     # other
     from ezdxf.audit import Auditor

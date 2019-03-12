@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, UCS, Drawing, DimStyle, Vertex, BaseDimensionRenderer
+    from ezdxf.eztypes2 import Dimension, UCS, Drawing, DimStyle, Vertex, BaseDimensionRenderer
 
 
 class DimStyleOverride:

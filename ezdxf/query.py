@@ -11,7 +11,7 @@ from ezdxf.queryparser import EntityQueryParser
 from ezdxf.groupby import groupby
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import DXFEntity
+    from ezdxf.eztypes2 import DXFEntity
 
 
 class EntityQuery(abc.Sequence):

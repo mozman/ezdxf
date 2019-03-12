@@ -7,7 +7,7 @@ from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXF2010, DXFTypeError,
 from .base import BaseLayout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GeoData, SortEntitiesTable
+    from ezdxf.eztypes2 import GeoData, SortEntsTable
     from ezdxf.eztypes2 import Vertex, Viewport, Drawing, Dictionary, DXFLayout, DXFGraphic, BlockLayout
 
 
