@@ -4,19 +4,21 @@
 #
 # DXFObject - non graphical entities stored in OBJECTS section
 from typing import TYPE_CHECKING, Iterable, Dict, Tuple
+import logging
 import array
 from ezdxf.lldxf.const import DXF2000, DXFStructureError, SUBCLASS_MARKER
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import dxftag, DXFTag, DXFBinaryTag
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.tools import take2
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from .factory import register_entity
 
+logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, Drawing, DXFNamespace, TagWriter
 
-__all__ = ['DXFObject', 'AcDbPlaceholder']
+__all__ = ['DXFObject', 'AcDbPlaceholder', 'XRecord', 'VBAProject', 'SortEntsTable', 'Field']
 
 
 class DXFObject(DXFEntity):
@@ -30,7 +32,12 @@ class AcDbPlaceholder(DXFObject):
 
 acdb_xrecord = DefSubclass('AcDbXrecord', {
     'cloning': DXFAttr(280, default=1),
-    # 0=not applicable; 1=keep existing; 2=use clone; 3=<xref>$0$<name>; 4=$0$<name>; 5=Unmangle name
+    # 0 = not applicable
+    # 1 = keep existing
+    # 2 = use clone
+    # 3 = <xref>$0$<name>
+    # 4 = $0$<name>
+    # 5 = Unmangle name
 })
 
 
@@ -53,29 +60,32 @@ class XRecord(DXFObject):
         self.tags = Tags()
 
     def _copy_data(self, entity: 'XRecord') -> None:
-        """ Copy tags. """
         entity.tags = Tags(entity.tags)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = processor.subclasses[1]
-            if tags:
-                if len(tags) < 2:
-                    raise DXFStructureError('Invalid AcDbXrecord')
+            try:
+                tags = processor.subclasses[1]
+            except IndexError:
+                raise DXFStructureError('Missing subclass AcDbXrecord in XRecord (#{})'.format(dxf.handle))
+            start_index = 1
+            if len(tags) > 1:
+                # first tag is group code 280, but not for DXF R13/R14
+                # for testing doc may be None, but then doc also can not be R13/R14 - ezdxf does not create R13/R14
                 if self.doc is None or self.doc.dxfversion >= DXF2000:
                     code, value = tags[1]
                     if code == 280:
                         dxf.cloning = value
-                    else:
-                        raise DXFStructureError('Expected group code 280 as first tag in AcDbXrecord')
-                    self.tags = Tags(tags[2:])
-                else:  # R13 or R14 loaded from file
-                    self.tags = Tags(tags[1:])
+                        start_index = 2
+                    else:  # just log recoverable error
+                        logger.info(
+                            'XRecord (#{}): expected group code 280 as first tag in AcDbXrecord'.format(dxf.handle)
+                        )
+            self.tags = Tags(tags[start_index:])
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
@@ -101,7 +111,6 @@ class VBAProject(DXFObject):
         self.data = b''
 
     def _copy_data(self, entity: 'VBAProject') -> None:
-        """ Copy tags. """
         entity.tags = Tags(entity.tags)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -117,7 +126,6 @@ class VBAProject(DXFObject):
         self.data = byte_array.tobytes()
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
@@ -175,7 +183,6 @@ class SortEntsTable(DXFObject):
         self.table = dict()  # type: Dict[str, str]
 
     def _copy_data(self, entity: 'SortEntsTable') -> None:
-        """ Copy table. """
         entity.tags = dict(entity.table)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
@@ -194,7 +201,6 @@ class SortEntsTable(DXFObject):
             self.table[handle.value] = sort_handle.value
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
