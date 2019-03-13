@@ -9,6 +9,8 @@ VERSION = __version__
 __author__ = "mozman <me@mozman.at>"
 
 PYPY = hasattr(sys, 'pypy_version_info')
+PYPY_ON_WINDOWS = sys.platform.startswith('win') and PYPY
+
 # name space imports - do not remove
 from ezdxf.options import options  # example: ezdxf.options.template_dir = 'c:\templates'
 from ezdxf.tools import transparency2float, float2transparency  # convert transparency integer values to floats 0..1

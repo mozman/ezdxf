@@ -18,6 +18,7 @@ def dxf(request, tmpdir_factory):
     return filename
 
 
+@pytest.mark.skipif(ezdxf.PYPY_ON_WINDOWS, reason='Does not work on Windows with PyPy 3.5.3')
 def test_load_dxf(dxf):
     doc = ezdxf.readfile(dxf)
 
