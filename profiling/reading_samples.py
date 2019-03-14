@@ -5,7 +5,7 @@ from datetime import datetime
 from pympler import tracker
 
 CADKIT = r"D:\Source\dxftest\CADKitSamples"
-FILES = [
+CADKIT_FILES = [
     "A_000217.dxf",  # 0
     "AEC Plan Elev Sample.dxf",  # 1
     "backhoe.dxf",  # 2
@@ -34,6 +34,11 @@ FILES = [
     "WOOD DETAILS.dxf",  # 25
 ]
 
+STD_FILES = [
+    r"D:\Source\dxftest\ACAD_R12.dxf",
+    r"D:\Source\dxftest\FW25-R12.dxf",
+]
+
 
 def count_entities(msp):
     counter = Counter()
@@ -44,7 +49,7 @@ def count_entities(msp):
 
 PYMPLER = False
 
-for _name in FILES:
+for _name in STD_FILES:
     filename = os.path.join(CADKIT, _name)
     print('reading file: {}'.format(filename))
     if PYMPLER:

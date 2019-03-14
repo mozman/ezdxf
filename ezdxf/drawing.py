@@ -305,6 +305,10 @@ class Drawing:
             logger.info('Upgrading drawing to DXF R12.')
             self.dxfversion = DXF12
 
+        # DIMSTYLE: ezdxf uses names for blocks, linetypes and text style as internal data, handles are set at export
+        # requires BLOCKS and TABLES section!
+        self.tables.resolve_dimstyle_names()
+
         if self.dxfversion == DXF12:
             # TABLE requires in DXF12 no handle and has no owner tag, but DXF R2000+, requires a TABLE with handle
             # and each table entry has an owner tag, pointing to the TABLE entry

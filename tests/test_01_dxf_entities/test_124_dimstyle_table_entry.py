@@ -66,9 +66,26 @@ def dimstyle2():
     doc = ezdxf.new('R2007', setup=('linetypes',))
     doc.blocks.new('left_arrow')
     doc.blocks.new('right_arrow')
+    doc.blocks.new('TestArrow')
     doc.blocks.new('arrow')
     doc.styles.new('TestStyle')
     return doc.dimstyles.new('testing')
+
+
+def test_handle_export(dimstyle2):
+    dimstyle2.set_arrows('', 'left_arrow', 'right_arrow', 'arrow')
+    # test handles
+    blocks = dimstyle2.doc.blocks
+    left_arrow = blocks.get('left_arrow')
+    right_arrow = blocks.get('right_arrow')
+    leader_arrow = blocks.get('arrow')
+
+    # prepare for export
+    dimstyle2.set_handles()
+    assert dimstyle2.dxf.hasattr('dimblk_handle') is False
+    assert dimstyle2.dxf.dimblk1_handle == left_arrow.block_record_handle
+    assert dimstyle2.dxf.dimblk2_handle == right_arrow.block_record_handle
+    assert dimstyle2.dxf.dimldrblk_handle == leader_arrow.block_record_handle
 
 
 def test_dimstyle_name(dimstyle2):
@@ -81,66 +98,48 @@ def test_dimstyle_blk1_and_blk2_ticks(dimstyle2):
     assert dimstyle2.get_dxf_attrib('dimblk1') == 'left_arrow'
     assert dimstyle2.get_dxf_attrib('dimblk2') == 'right_arrow'
 
-    # test handles
-    blocks = dimstyle2.drawing.blocks
-    left_arrow = blocks.get('left_arrow')
-    right_arrow = blocks.get('right_arrow')
-    assert dimstyle2.dxf.dimblk1_handle == left_arrow.block_record_handle
-    assert dimstyle2.dxf.dimblk2_handle == right_arrow.block_record_handle
-
 
 def test_dimstyle_both_ticks(dimstyle2):
-    blocks = dimstyle2.drawing.blocks
     dimstyle2.set_arrows('arrow')
     assert dimstyle2.get_dxf_attrib('dimblk') == 'arrow'
     assert dimstyle2.get_dxf_attrib('dimblk1') == ''  # closed filled
     assert dimstyle2.get_dxf_attrib('dimblk2') == ''  # closed filled
 
-    # test handles
-    blocks = dimstyle2.drawing.blocks
-    arrow = blocks.get('arrow')
-    assert dimstyle2.dxf.dimblk_handle == arrow.block_record_handle
     assert dimstyle2.get_dxf_attrib('dimblk1') == ''
     assert dimstyle2.get_dxf_attrib('dimblk2') == ''
 
 
 def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):
-    dwg = dimstyle2.drawing
-    style_handle = dwg.styles.get('TestStyle').dxf.handle
     dimstyle2.dxf.dimtxsty = 'TestStyle'
-    assert dimstyle2.dxf.dimtxsty_handle == style_handle
     assert dimstyle2.dxf.dimtxsty == 'TestStyle'
+
+    # prepare for export
+    dimstyle2.set_handles()
+    assert dimstyle2.dxf.dimtxsty_handle == dimstyle2.doc.styles.get('TestStyle').dxf.handle
 
 
 def test_dimstyle_virtual_dimldrblk_attribute(dimstyle2):
-    dwg = dimstyle2.drawing
-
     dimstyle2.dxf.dimldrblk = 'CLOSED'
-    handle = dwg.blocks.get('_CLOSED').block_record_handle
-    assert dimstyle2.dxf.dimldrblk_handle == handle
 
-    arrow = dwg.blocks.new('TestArrow')
     dimstyle2.dxf.dimldrblk = 'TestArrow'
-    assert dimstyle2.dxf.dimldrblk_handle == arrow.block_record_handle
     assert dimstyle2.dxf.dimldrblk == 'TestArrow'
 
 
 def test_dimstyle_virtual_linetypes_attributes(dimstyle2):
-    linetypes = dimstyle2.drawing.linetypes
-    dimstyle2.set_linetype('DOT2')
-    assert dimstyle2.get_linetype() == 'DOT2'
+    dimstyle2.dxf.dimltype = 'DOT2'
     assert dimstyle2.dxf.dimltype == 'DOT2'
-    assert dimstyle2.dxf.dimltype_handle == linetypes.get('DOT2').dxf.handle
 
-    dimstyle2.set_ext1_linetype('DOT')
-    assert dimstyle2.get_ext1_linetype() == 'DOT'
+    dimstyle2.dxf.dimltex1 = 'DOT'
     assert dimstyle2.dxf.dimltex1 == 'DOT'
-    assert dimstyle2.dxf.dimltex1_handle == linetypes.get('DOT').dxf.handle
 
-    dimstyle2.set_ext2_linetype('DOTX2')
-    assert dimstyle2.get_ext2_linetype() == 'DOTX2'
+    dimstyle2.dxf.dimltex2 = 'DOTX2'
     assert dimstyle2.dxf.dimltex2 == 'DOTX2'
-    assert dimstyle2.dxf.dimltex2_handle == linetypes.get('DOTX2').dxf.handle
+
+    # prepare for export
+    dimstyle2.set_handles()
+    assert dimstyle2.dxf.dimltype_handle == dimstyle2.doc.linetypes.get('DOT2').dxf.handle
+    assert dimstyle2.dxf.dimltex1_handle == dimstyle2.doc.linetypes.get('DOT').dxf.handle
+    assert dimstyle2.dxf.dimltex2_handle == dimstyle2.doc.linetypes.get('DOTX2').dxf.handle
 
 
 def test_dimstyle_group_codes(dimstyle):
@@ -156,7 +155,7 @@ def test_dimstyle_set_align(dimstyle2):
     assert dimstyle2.dxf.dimjust == 3
 
 
-def test_set_text_format(dimstyle2):
+def test_set_text_format_2(dimstyle2):
     dimstyle2.set_text_format(
         prefix='+',
         postfix=' cm',

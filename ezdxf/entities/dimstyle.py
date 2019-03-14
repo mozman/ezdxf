@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Iterable, Tuple
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, VIRTUAL_TAG
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFKeyError, LINEWEIGHT_BYBLOCK, DXF2007, DXF2000, DXFValueError
+from ezdxf.lldxf.const import DXFTableEntryError
 from ezdxf.entities.dxfentity import SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -23,16 +24,16 @@ base_class = DefSubclass(None, {
     'owner': DXFAttr(330),
 })
 
-
 acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'name': DXFAttr(2, default='Standard'),
     'flags': DXFAttr(70, default=0),
     'dimpost': DXFAttr(3, default=''),
     'dimapost': DXFAttr(4, default=''),
-    # redirect dimblk/dimblk1/dimblk2 -> dimblk_handle/dimblk1_handle/dimblk2_handle
-    'dimblk': DXFAttr(5, xtype=XType.callback, getter='get_dimblk', setter='set_dimblk', default=''),
-    'dimblk1': DXFAttr(6, xtype=XType.callback, getter='get_dimblk1', setter='set_dimblk1', default=''),
-    'dimblk2': DXFAttr(7, xtype=XType.callback, getter='get_dimblk2', setter='set_dimblk2', default=''),
+
+    'dimblk': DXFAttr(5, default=''),  # name is the base data -> handle (DXF2000) is set at export
+    'dimblk1': DXFAttr(6, default=''),  # name is the base data -> handle (DXF2000) is set at export
+    'dimblk2': DXFAttr(7, default=''),  # name is the base data -> handle (DXF2000) is set at export
+
     'dimscale': DXFAttr(40, default=1),
     'dimasz': DXFAttr(41, default=2.5),
     'dimexo': DXFAttr(42, default=0.625),
@@ -42,7 +43,8 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimdle': DXFAttr(46, default=0),
     'dimtp': DXFAttr(47, default=0),
     'dimtm': DXFAttr(48, default=0),
-    'dimfxl': DXFAttr(49, dxfversion=DXF2007, default=2.5),  # undocumented: length of extension line if fixed (dimfxlon = 1)
+    'dimfxl': DXFAttr(49, dxfversion=DXF2007, default=2.5),
+# undocumented: length of extension line if fixed (dimfxlon = 1)
     'dimtxt': DXFAttr(140, default=2.5),
     'dimcen': DXFAttr(141, default=2.5),
     'dimtsz': DXFAttr(142, default=0),
@@ -94,42 +96,38 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimupt': DXFAttr(288, dxfversion=DXF2000, default=0),
     'dimatfit': DXFAttr(289, dxfversion=DXF2000, default=3),
     'dimfxlon': DXFAttr(290, dxfversion=DXF2007, default=0),  # undocumented: 1 = fixed extension line length
+
+    # virtual DXF attribute 'dimtxsty': set/get STYLE by name
+    'dimtxsty': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2000),
+
+    # virtual DXF attribute 'dimldrblk': set/get leader arrow by block name
+    'dimldrblk': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2000),
+
+    # virtual DXF attribute 'dimldtype': set/get LINETYPE by name
+    'dimltype': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
+
+    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
+    'dimltex2': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
+
+    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
+    'dimltex1': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
+
+    # handles not used internally, handles are set at export
     'dimtxsty_handle': DXFAttr(340, dxfversion=DXF2000),  # handle of referenced STYLE entry
-    # virtual DXF attribute 'dimtxsty': set/get referenced STYLE by name as callback
-    'dimtxsty': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_text_style', setter='set_text_style'),
-    # virtual DXF attribute 'dimldrblk': set/get referenced STYLE by name as callback
-    'dimldrblk': DXFAttr(VIRTUAL_TAG, xtype=XType.callback, getter='get_dimldrblk', setter='set_dimldrblk'),
-    'dimldrblk_handle': DXFAttr(341, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
     'dimblk_handle': DXFAttr(342, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
     'dimblk1_handle': DXFAttr(343, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
     'dimblk2_handle': DXFAttr(344, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
-
+    'dimldrblk_handle': DXFAttr(341, dxfversion=DXF2000),  # handle of referenced BLOCK_RECORD
     'dimltype_handle': DXFAttr(345, dxfversion=DXF2007),  # handle of linetype for dimension line
-    # virtual DXF attribute 'dimldtype': set/get referenced LINETYPE by name as callback
-    'dimltype': DXFAttr(VIRTUAL_TAG,
-                        xtype=XType.callback,
-                        getter='get_linetype',
-                        setter='set_linetype',
-                        dxfversion=DXF2007),
-
     'dimltex1_handle': DXFAttr(346, dxfversion=DXF2007),  # handle of linetype for extension line 1
-    # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
-    'dimltex1': DXFAttr(VIRTUAL_TAG,
-                        xtype=XType.callback,
-                        getter='get_ext1_linetype',
-                        setter='set_ext1_linetype',
-                        dxfversion=DXF2007),
-
     'dimltex2_handle': DXFAttr(347, dxfversion=DXF2007),  # handle of linetype for extension line 2
-    # virtual DXF attribute 'dimltex2': set/get referenced LINETYPE by name as callback
-    'dimltex2': DXFAttr(VIRTUAL_TAG,
-                        xtype=XType.callback,
-                        getter='get_ext2_linetype',
-                        setter='set_ext2_linetype',
-                        dxfversion=DXF2007),
 
-    'dimlwd': DXFAttr(371, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),  # dimension line lineweight enum value, default BYBLOCK
-    'dimlwe': DXFAttr(372, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),  # extension line lineweight enum value, default BYBLOCK
+    # dimension line lineweight enum value, default BYBLOCK
+    'dimlwd': DXFAttr(371, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
+
+    # extension line lineweight enum value, default BYBLOCK
+    'dimlwe': DXFAttr(372, default=LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
+
 })
 
 EXPORT_MAP_R2007 = [
@@ -192,9 +190,8 @@ class DimStyle(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimstyle.name)
 
         if tagwriter.dxfversion > DXF12:
-            # set required values
-            if not self.dxf.hasattr('dimtxsty_handle'):
-                self.dxf.dimtxsty_handle = self.doc.styles.get('Standard').dxf.handle
+            # set handles from dimblk names
+            self.set_handles()
 
         # for all DXF versions
         if tagwriter.dxfversion == DXF12:
@@ -205,7 +202,28 @@ class DimStyle(DXFEntity):
             attribs = EXPORT_MAP_R2007
         self.dxf.export_dxf_attribs(tagwriter, attribs)
 
-    def _set_blk_handle(self, attr: str, arrow_name: str) -> None:
+    def set_handles(self):
+        style = self.dxf.get('dimtxsty', None)
+        if style is not None:
+            self.dxf.dimtxsty_handle = self.doc.styles.get(style).dxf.handle
+
+        for blk_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
+            name = self.dxf.get(blk_name)
+            if name is not None:
+                self.set_blk_handle(blk_name + '_handle', name)
+
+        for ltype_name in ('dimltype', 'dimltex1', 'dimltex2'):
+            get_linetype = self.doc.linetypes.get
+            name = self.dxf.get(ltype_name, None)
+            if name is not None:
+                handle = get_linetype(name).dxf.handle
+                self.dxf.set(ltype_name + '_handle', handle)
+
+    def discard_handles(self):
+        for attr in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk', 'dimltype', 'dimltex1', 'dimltex2', 'dimtxsty'):
+            self.dxf.discard(attr + '_handle')
+
+    def set_blk_handle(self, attr: str, arrow_name: str) -> None:
         if arrow_name == ARROWS.closed_filled:
             # special arrow, no handle needed (is '0' if set)
             # do not create block by default, this will be done if arrow is used
@@ -226,7 +244,7 @@ class DimStyle(DXFEntity):
         else:
             raise DXFValueError('Block {} does not exist.'.format(arrow_name))
 
-    def _get_arrow_block_name(self, name: str) -> str:
+    def get_arrow_block_name(self, name: str) -> str:
         handle = self.get_dxf_attrib(name, None)
         if handle in (None, '0'):
             # unset handle or handle '0' is default closed filled arrow
@@ -235,85 +253,16 @@ class DimStyle(DXFEntity):
             block_name = get_block_name_by_handle(handle, self.doc)
             return ARROWS.arrow_name(block_name)  # if arrow return standard arrow name else just the block name
 
-    def get_text_style(self) -> str:
-        handle = self.get_dxf_attrib('dimtxsty_handle', None)
-        if handle:
-            return get_text_style_by_handle(handle, self.doc)
-        else:
-            logging.warning('DIMSTYLE "{}": text style handle not set.'.format(self.dxf.name))
-            return 'Standard'
-
-    def set_text_style(self, name: str) -> None:
-        style = self.doc.styles.get(name)
-        self.set_dxf_attrib('dimtxsty_handle', style.dxf.handle)
-
-    def get_dimblk(self) -> str:
-        return self._get_arrow_block_name('dimblk_handle')
-
-    def set_dimblk(self, name) -> None:
-        self._set_blk_handle('dimblk_handle', name)
-
-    def get_dimblk1(self) -> str:
-        return self._get_arrow_block_name('dimblk1_handle')
-
-    def set_dimblk1(self, name) -> None:
-        self._set_blk_handle('dimblk1_handle', name)
-
-    def get_dimblk2(self) -> str:
-        return self._get_arrow_block_name('dimblk2_handle')
-
-    def set_dimblk2(self, name) -> None:
-        self._set_blk_handle('dimblk2_handle', name)
-
-    def get_dimldrblk(self) -> str:
-        return self._get_arrow_block_name('dimldrblk_handle')
-
-    def set_dimldrblk(self, name) -> None:
-        self._set_blk_handle('dimldrblk_handle', name)
-
-    def get_ltype_name(self, dimvar: str) -> Optional[str]:
-        if self.dxfversion < 'AC1021':
-            logger.debug('Linetype support for DIMSTYLE requires DXF R2007 or later.')
-
-        handle = self.get_dxf_attrib(dimvar, None)
-        if handle:
-            ltype = self.entitydb[handle]
-            return ltype.dxf.name
-        else:
-            return None
-
-    def get_linetype(self):
-        return self.get_ltype_name('dimltype_handle')
-
-    def get_ext1_linetype(self):
-        return self.get_ltype_name('dimltex1_handle')
-
-    def get_ext2_linetype(self):
-        return self.get_ltype_name('dimltex2_handle')
-
-    def get_ltype_handle(self, linetype_name: str) -> str:
-        ltype = self.doc.linetypes.get(linetype_name)
-        return ltype.dxf.handle
-
-    def set_linetype(self, name: str) -> None:
-        self.dxf.dimltype_handle = self.get_ltype_handle(name)
-
-    def set_ext1_linetype(self, name: str) -> None:
-        self.dxf.dimltex1_handle = self.get_ltype_handle(name)
-
-    def set_ext2_linetype(self, name: str) -> None:
-        self.dxf.dimltex2_handle = self.get_ltype_handle(name)
-
     def set_linetypes(self, dimline=None, ext1=None, ext2=None) -> None:
-        if self.dxfversion >= 'AC1021':
-            if dimline is not None:
-                self.set_linetype(dimline)
-            if ext1 is not None:
-                self.set_ext1_linetype(ext1)
-            if ext2 is not None:
-                self.set_ext2_linetype(ext2)
-        else:
+        if self.dxfversion < DXF2007:
             logger.debug('Linetype support requires DXF R2007 or later.')
+
+        if dimline is not None:
+            self.dxf.dimltype = dimline
+        if ext1 is not None:
+            self.dxf.dimltex1 = ext1
+        if ext2 is not None:
+            self.dxf.dimltex2 = ext2
 
     # -- legacy --
 
@@ -339,7 +288,7 @@ class DimStyle(DXFEntity):
                 except DXFKeyError:
                     logger.debug('Unsupported header variable: {}.'.format(header_var))
 
-    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '') -> None:
+    def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '', ldrblk: str = '') -> None:
         """
         Set arrows by block names or AutoCAD standard arrow names, set dimtsz = 0 which disables tick.
 
@@ -347,17 +296,19 @@ class DimStyle(DXFEntity):
             blk: block/arrow name for both arrows, if dimsah == 0
             blk1: block/arrow name for first arrow, if dimsah == 1
             blk2: block/arrow name for second arrow, if dimsah == 1
+            ldrblk: block/arrow name for leader
 
         """
         self.set_dxf_attrib('dimblk', blk)
         self.set_dxf_attrib('dimblk1', blk1)
         self.set_dxf_attrib('dimblk2', blk2)
+        self.set_dxf_attrib('dimldrblk', ldrblk)
         self.set_dxf_attrib('dimtsz', 0)  # use blocks
 
         # only existing BLOCK definitions allowed
         if self.doc:
             blocks = self.doc.blocks
-            for b in (blk, blk1, blk2):
+            for b in (blk, blk1, blk2, ldrblk):
                 if ARROWS.is_acad_arrow(b):  # not real blocks
                     continue
                 if b and b not in blocks:
@@ -586,17 +537,6 @@ class DimStyle(DXFEntity):
         self.dxf.dimtolj = 0  # set bottom as default
         if dec is not None:
             self.dxf.dimtdec = int(dec)
-
-
-def get_text_style_by_handle(handle, doc: 'Drawing', default='STANDARD') -> str:
-    try:
-        entry = doc.entitydb[handle]
-    except DXFKeyError:
-        logging.warning('Invalid text style handle "{}".'.format(handle))
-        text_style_name = default
-    else:
-        text_style_name = entry.dxf.name
-    return text_style_name
 
 
 def get_block_name_by_handle(handle, doc: 'Drawing', default='') -> str:
