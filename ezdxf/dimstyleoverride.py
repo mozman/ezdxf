@@ -2,8 +2,7 @@
 # License: MIT License
 from typing import Any, TYPE_CHECKING, Tuple
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD, DXF12, DXF2007
-from ezdxf.render.arrows import ARROWS
+from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.math import Vector
 import logging
 
@@ -17,7 +16,7 @@ class DimStyleOverride:
     def __init__(self, dimension: 'Dimension', override: dict = None):
         self.dimension = dimension  # type: Dimension
         dim_style_name = dimension.get_dxf_attrib('dimstyle', 'STANDARD')
-        self.dimstyle = self.drawing.dimstyles.get(dim_style_name)  # type: DimStyle
+        self.dimstyle = self.doc.dimstyles.get(dim_style_name)  # type: DimStyle
         self.dimstyle_attribs = self.get_dstyle_dict()  # type: dict
 
         # special ezdxf attributes beyond the DXF reference, therefore not stored in the DSTYLE data.
@@ -29,15 +28,12 @@ class DimStyleOverride:
         self.update(override or {})
 
     @property
-    def drawing(self) -> 'Drawing':
-        try:
-            return self.dimension.doc
-        except AttributeError:
-            return self.dimension.drawing
+    def doc(self) -> 'Drawing':
+        return self.dimension.doc
 
     @property
     def dxfversion(self) -> str:
-        return self.dimension.drawing.dxfversion
+        return self.dimension.doc.dxfversion
 
     def get_dstyle_dict(self) -> dict:
         return self.dimension.get_acad_dstyle(self.dimstyle)
@@ -83,43 +79,6 @@ class DimStyleOverride:
         Write overwritten DIMSTYLE attributes into XDATA section of the DIMENSION entity.
 
         """
-
-        def set_arrow_handle(attrib_name, block_name):
-            attrib_name += '_handle'
-            if block_name in ARROWS:  # create all arrows on demand
-                block_name = ARROWS.create_block(blocks, block_name)
-            if block_name == '_CLOSEDFILLED':  # special arrow
-                handle = '0'  # set special #0 handle for closed filled arrow
-            else:
-                block = blocks.get(block_name)
-                handle = block.block_record_handle
-            self.dimstyle_attribs[attrib_name] = handle
-
-        def set_linetype_handle(attrib_name, linetype_name):
-            ltype = self.drawing.linetypes.get(linetype_name)
-            self.dimstyle_attribs[attrib_name + '_handle'] = ltype.dxf.handle
-
-        if self.drawing.dxfversion > DXF12:
-            # transform block names into block record handles
-            blocks = self.drawing.blocks
-            for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
-                try:
-                    block_name = self.dimstyle_attribs.pop(attrib_name)
-                except KeyError:
-                    pass
-                else:
-                    set_arrow_handle(attrib_name, block_name)
-
-        if self.drawing.dxfversion >= DXF2007:
-            # transform linetype names into LTYPE entry handles
-            for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
-                try:
-                    linetype_name = self.dimstyle_attribs.pop(attrib_name)
-                except KeyError:
-                    pass
-                else:
-                    set_linetype_handle(attrib_name, linetype_name)
-
         self.dimension.set_acad_dstyle(self.dimstyle_attribs)
 
     def set_arrows(self, blk: str = None, blk1: str = None, blk2: str = None, ldrblk: str = None,
@@ -425,7 +384,7 @@ class DimStyleOverride:
         self.dimstyle_attribs['relative_user_location'] = relative
 
     def get_renderer(self, ucs: 'UCS' = None):
-        return self.drawing.dimension_renderer.dispatch(self, ucs)
+        return self.doc.dimension_renderer.dispatch(self, ucs)
 
     def render(self, ucs: 'UCS' = None, discard=False) -> 'BaseDimensionRenderer':
         """
@@ -448,9 +407,9 @@ class DimStyleOverride:
 
         renderer = self.get_renderer(ucs)
         if discard:
-            self.drawing.add_acad_incompatibility_message('DIMENSION without geometry as BLOCK (discard=True)')
+            self.doc.add_acad_incompatibility_message('DIMENSION without geometry as BLOCK (discard=True)')
         else:
-            block = self.drawing.blocks.new_anonymous_block(type_char='D')
+            block = self.doc.blocks.new_anonymous_block(type_char='D')
             self.dimension.dxf.geometry = block.name
             renderer.render(block)
 

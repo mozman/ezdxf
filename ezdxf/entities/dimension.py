@@ -4,7 +4,8 @@
 from typing import TYPE_CHECKING
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
+from ezdxf.render.arrows import ARROWS
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -196,20 +197,83 @@ class Dimension(DXFGraphic):
     def dim_style_attributes(self) -> 'DXFAttributes':
         return self.dim_style().DXFATTRIBS
 
+    def attrib_names_to_handles(self, data: dict) -> dict:
+        """
+        ezdxf uses internally only resource names for arrows, line types and text styles, but
+        DXF 2000 and later requires handles for these resources, this method translates resource names
+        into related handles. (e.g. 'dimtxsty': 'FancyStyle' -> 'dimtxsty_handle', <handle of FancyStyle>)
+
+        Args:
+            data: dictionary of overridden DimStyle attributes
+
+        Returns: dictionary with resource names replaced by handles
+
+        Raises:
+            DXFTableEntry: text style or line type does not exist
+            DXFKeyError: referenced block does not exist
+
+        """
+        data = dict(data)  # shallow copy dict
+        blocks = self.doc.blocks
+        dxfversion = self.doc.dxfversion
+
+        def set_arrow_handle(attrib_name, block_name):
+            attrib_name += '_handle'
+            if block_name in ARROWS:  # create all arrows on demand
+                block_name = ARROWS.create_block(blocks, block_name)
+            if block_name == '_CLOSEDFILLED':  # special arrow
+                handle = '0'  # set special #0 handle for closed filled arrow
+            else:
+                block = blocks[block_name]
+                handle = block.block_record_handle
+            data[attrib_name] = handle
+
+        def set_linetype_handle(attrib_name, linetype_name):
+            try:
+                ltype = self.doc.linetypes.get(linetype_name)
+            except DXFTableEntryError:
+                logger.info('Required line type "{}" does not exist.'.format(linetype_name))
+            else:
+                data[attrib_name + '_handle'] = ltype.dxf.handle
+
+        if dxfversion > DXF12:
+            # transform block names into block record handles
+            blocks = self.doc.blocks
+            for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
+                try:
+                    block_name = data.pop(attrib_name)
+                except KeyError:
+                    pass
+                else:
+                    set_arrow_handle(attrib_name, block_name)
+
+            # replace 'dimtxsty' attribute by 'dimtxsty_handle'
+            try:
+                dimtxsty = data.pop('dimtxsty')
+            except KeyError:
+                pass
+            else:
+                txtstyle = self.doc.styles.get(dimtxsty)
+                data['dimtxsty_handle'] = txtstyle.dxf.handle
+
+        if dxfversion >= DXF2007:
+            # transform linetype names into LTYPE entry handles
+            for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
+                try:
+                    linetype_name = data.pop(attrib_name)
+                except KeyError:
+                    pass
+                else:
+                    set_linetype_handle(attrib_name, linetype_name)
+        return data
+
     def set_acad_dstyle(self, data: dict) -> None:
         if self.doc is None:
             raise DXFInternalEzdxfError('Dimension.doc attribute not initialized.')
 
-        # replace virtual 'dimtxsty' attribute by 'dimtxsty_handle'
-        if 'dimtxsty' in data:
-            dimtxsty = data.pop('dimtxsty')
-            try:
-                txtstyle = self.doc.styles.get(dimtxsty)
-            except DXFTableEntryError:
-                logger.info('Required text style "{}" does not exist.'.format(dimtxsty))
-            else:
-                data['dimtxsty_handle'] = txtstyle.dxf.handle
-
+        # ezdxf uses internally only resource names for arrows, line types and text styles, but
+        # DXF 2000 and later requires handles for these resources
+        data = self.attrib_names_to_handles(data)
         tags = []
         dim_style_attributes = self.dim_style_attributes()
         actual_dxfversion = self.doc.dxfversion
@@ -245,6 +309,7 @@ class Dimension(DXFGraphic):
             value = value_tag.value
             if group_code in codes:
                 attribs[codes[group_code]] = value
+        # todo: translate resource handles to names?
         return attribs
 
 
