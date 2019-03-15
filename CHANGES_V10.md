@@ -47,31 +47,3 @@ use argument`ignore=True` to silently skip entity, if transformation is not supp
 
 And _ezdxf_ is still not a CAD application.
 
-Changes in Detail
------------------
-
-- unified entity system for all DXF versions
-- save as any DXF version you want, independent of the source DXF version, maybe data loss if saving as older DXF 
-  version than source DXF version (no converter)
-- `templates` no more needed and removed from package but preserved in repository
-- renamed central data object in entities from `DXFEntity.drawing` to `DXFEntity.doc`, this should not impact users
-  because they have to save the `Drawing` object in an own variable, else it would be removed by th GC.
-- DXFEntity: get_xdata() keyword `xdata_tag` renamed to `tags`
-- DXFEntity: set_xdata() keyword `xdata_tag` renamed to `tags`
-- DXFEntity: `remove_reactor_handle()` renamed to `discard_reactor_handle()`
-- DXFEntity: get_extension_dict() returns `ExtensionDict` instead of the raw DICTIONARY object
-- LAYER: renamed DXF atributes:
-    - removed `line_weight` as synonym for `lineweight`
-    - `plot_style_name` renamed to `plotstyle_handle` 
-    - `material` renamed to `material_handle` 
-- VIEWPORT: same treatment for all DXF versions
-- POLYLINE: `Polyline.vertices()` is now an attribute `Polyline.vertices`, implemented as regular Python list.
-- INSERT: `Insert.attribs()` is now an attribute `Insert.attribs`, implemented as regular Python list.
-- VIEWPORT: renamed `Viewport.dxf.center_point` to `Viewport.dxf.center` 
-- VIEWPORT: renamed `Viewport.dxf.target_point` to `Viewport.dxf.target`
-- HATCH: direct access to paths (`Hatch.paths`), pattern (`Hatch.pattern`) and gradient (`Hatch.gradient`), context 
-  manager to edit this data not needed anymore, but still available for backward compatibility  
-- Options:
-    - removed `template_dir`, no more needed
-    - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 
-- restructured package, module and tests file organization

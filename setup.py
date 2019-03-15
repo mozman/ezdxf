@@ -47,7 +47,6 @@ setup(
     entry_points={
         'console_scripts': [
             'dxfpp = ezdxf.pp.__main__:main',  # DXF Pretty Printer
-            'dxfaudit = ezdxf.audit.__main__:main',  # DXF Audit
         ]
     },
     provides=['ezdxf'],
@@ -59,7 +58,7 @@ setup(
     platforms="OS Independent",
     license="MIT License",
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
@@ -72,3 +71,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
 )
+
+# Development Status :: 3 - Alpha
+# Development Status :: 4 - Beta
+# Development Status :: 5 - Production/Stable
+# Development Status :: 6 - Mature
+# Development Status :: 7 - Inactive

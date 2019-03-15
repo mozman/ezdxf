@@ -2,6 +2,36 @@
 News
 ====
 
+Version 0.10a0 - 2019-03-15
+---------------------------
+
+Alpha release for testing - work in progress
+
+- unified entity system for all DXF versions
+- change of DXF version independent of the source DXF version, maybe data loss if changing to an older DXF 
+  version than source DXF version (_ezdxf_ is not a DXF converter)
+- `templates` no more needed and removed from package
+- renamed central data object in entities from `DXFEntity.drawing` to `DXFEntity.doc`
+- DXFEntity: get_xdata() keyword `xdata_tag` renamed to `tags`
+- DXFEntity: set_xdata() keyword `xdata_tag` renamed to `tags`
+- DXFEntity: `remove_reactor_handle()` renamed to `discard_reactor_handle()`
+- DXFEntity: get_extension_dict() returns `ExtensionDict` instead of the raw DICTIONARY object
+- LAYER: renamed DXF atributes:
+    - removed `line_weight` as synonym for `lineweight`
+    - `plot_style_name` renamed to `plotstyle_handle` 
+    - `material` renamed to `material_handle` 
+- VIEWPORT: same treatment for all DXF versions
+- POLYLINE: `Polyline.vertices()` is now an attribute `Polyline.vertices`, implemented as regular Python list.
+- INSERT: `Insert.attribs()` is now an attribute `Insert.attribs`, implemented as regular Python list.
+- VIEWPORT: renamed `Viewport.dxf.center_point` to `Viewport.dxf.center` 
+- VIEWPORT: renamed `Viewport.dxf.target_point` to `Viewport.dxf.target`
+- HATCH: direct access to paths (`Hatch.paths`), pattern (`Hatch.pattern`) and gradient (`Hatch.gradient`), context 
+  manager to edit this data not needed anymore, but still available for backward compatibility  
+- Options:
+    - removed `template_dir`, no more needed
+    - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 
+- restructured package, module and tests file organization
+
 Version 0.9 - 2019-02-24
 ------------------------
 
