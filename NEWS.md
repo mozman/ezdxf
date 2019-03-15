@@ -2,10 +2,14 @@
 News
 ====
 
-Version 0.10a0 - 2019-03-15
----------------------------
+Version 0.10a1 - dev
+--------------------
 
-Alpha release for testing - work in progress
+Alpha release
+
+- placeholder
+
+__Version 0.10a0 - 2019-03-15__
 
 - unified entity system for all DXF versions
 - change of DXF version independent of the source DXF version, maybe data loss if changing to an older DXF 
