@@ -197,14 +197,15 @@ class Dimension(DXFGraphic):
     def dim_style_attributes(self) -> 'DXFAttributes':
         return self.dim_style().DXFATTRIBS
 
-    def attrib_names_to_handles(self, data: dict) -> dict:
+    def dim_style_attr_names_to_handles(self, data: dict, dxfversion: str) -> dict:
         """
         ezdxf uses internally only resource names for arrows, line types and text styles, but
         DXF 2000 and later requires handles for these resources, this method translates resource names
         into related handles. (e.g. 'dimtxsty': 'FancyStyle' -> 'dimtxsty_handle', <handle of FancyStyle>)
 
         Args:
-            data: dictionary of overridden DimStyle attributes
+            data: dictionary of overridden DimStyle attributes as names (ezdxf)
+            dxfversion: target DXF version
 
         Returns: dictionary with resource names replaced by handles
 
@@ -215,7 +216,6 @@ class Dimension(DXFGraphic):
         """
         data = dict(data)  # shallow copy dict
         blocks = self.doc.blocks
-        dxfversion = self.doc.dxfversion
 
         def set_arrow_handle(attrib_name, block_name):
             attrib_name += '_handle'
@@ -238,7 +238,6 @@ class Dimension(DXFGraphic):
 
         if dxfversion > DXF12:
             # transform block names into block record handles
-            blocks = self.doc.blocks
             for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
                 try:
                     block_name = data.pop(attrib_name)
@@ -273,10 +272,10 @@ class Dimension(DXFGraphic):
 
         # ezdxf uses internally only resource names for arrows, line types and text styles, but
         # DXF 2000 and later requires handles for these resources
-        data = self.attrib_names_to_handles(data)
+        actual_dxfversion = self.doc.dxfversion
+        data = self.dim_style_attr_names_to_handles(data, actual_dxfversion)
         tags = []
         dim_style_attributes = self.dim_style_attributes()
-        actual_dxfversion = self.doc.dxfversion
         for key, value in data.items():
             if key not in dim_style_attributes:  # ignore unknown attributes, but log
                 logging.debug('Ignore unknown DIMSTYLE attribute: "{}"'.format(key))
@@ -297,6 +296,87 @@ class Dimension(DXFGraphic):
         if len(tags):
             self.set_xdata_list('ACAD', 'DSTYLE', tags)
 
+    def dim_style_attr_handles_to_names(self, data: dict) -> dict:
+        """
+        ezdxf uses internally only resource names for arrows, line types and text styles, but
+        DXF 2000 and later requires handles for these resources, this method translates resource handles
+        into related names. (e.g. 'dimtxsty_handle', <handle of FancyStyle> -> 'dimtxsty': 'FancyStyle')
+
+        Args:
+            data: dictionary of overridden DimStyle attributes as handles (DXF2000)
+
+        Returns: dictionary with resource as handles replaced by names
+
+        Raises:
+            DXFTableEntry: text style or line type does not exist
+            DXFKeyError: referenced block does not exist
+
+        """
+        data = dict(data)  # shallow copy dict
+        db = self.doc.entitydb
+
+        def set_arrow_name(attrib_name: str, handle: str):
+            if handle == '0':  # special handle for default arrow CLOSEDFILLED
+                data[attrib_name] = ''  # special name for default arrow CLOSEDFILLED
+                return
+            try:
+                block_record = db[handle]
+            except KeyError:
+                logger.info(
+                    'Required arrow block #{} does not exist, ignoring {} override.'.format(handle, attrib_name.upper())
+                )
+                return
+            name = block_record.dxf.name
+            if name.startswith('_'):  # translate block name into ACAD standard name _OPEN30 -> OPEN30
+                acad_arrow_name = name[1:]
+                if ARROWS.is_acad_arrow(acad_arrow_name):
+                    name = acad_arrow_name
+            data[attrib_name] = name
+
+        def set_ltype_name(attrib_name: str, handle: str):
+            try:
+                ltype = db[handle]
+            except KeyError:
+                logger.info(
+                    'Required line type #{} does not exist, ignoring {} override.'.format(handle, attrib_name.upper())
+                )
+            else:
+                data[attrib_name] = ltype.dxf.name
+
+        # transform block record handles into block names
+        for attrib_name in ('dimblk', 'dimblk1', 'dimblk2', 'dimldrblk'):
+            try:
+                blkrec_handle = data.pop(attrib_name + '_handle')
+            except KeyError:
+                pass
+            else:
+                set_arrow_name(attrib_name, blkrec_handle)
+
+        # replace 'dimtxsty_handle' attribute by 'dimtxsty_handle'
+        try:
+            dimtxsty_handle = data.pop('dimtxsty_handle')
+        except KeyError:
+            pass
+        else:
+            try:
+                txtstyle = db[dimtxsty_handle]
+            except KeyError:
+                logger.info(
+                    'Required text style #{} does not exist, ignoring DIMTXSTY override.'.format(dimtxsty_handle)
+                )
+            else:
+                data['dimtxsty'] = txtstyle.dxf.name
+
+        # transform linetype handles into LTYPE entry names
+        for attrib_name in ('dimltype', 'dimltex1', 'dimltex2'):
+            try:
+                handle = data.pop(attrib_name + '_handle')
+            except KeyError:
+                pass
+            else:
+                set_ltype_name(attrib_name, handle)
+        return data
+
     def get_acad_dstyle(self, dim_style: 'DimStyle') -> dict:
         try:
             data = self.get_xdata_list('ACAD', 'DSTYLE')
@@ -309,8 +389,7 @@ class Dimension(DXFGraphic):
             value = value_tag.value
             if group_code in codes:
                 attribs[codes[group_code]] = value
-        # todo: translate resource handles to names?
-        return attribs
+        return self.dim_style_attr_handles_to_names(attribs)
 
 
 # todo: DIMASSOC

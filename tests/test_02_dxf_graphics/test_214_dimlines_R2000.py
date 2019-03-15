@@ -145,7 +145,7 @@ def test_dimstyle_override(dxf2000):
         dxf2000.styles.new('TEST')
 
     preset = {
-        'dimtxsty': 'TEST',  # virtual attribute - 'dimtxsty_handle' stores the text style handle
+        'dimtxsty': 'TEST',
         'dimexe': 0.777,
     }
     dimstyle.update(preset)
@@ -154,16 +154,21 @@ def test_dimstyle_override(dxf2000):
 
     assert dimstyle['invalid'] is None
     dimstyle.update({'invalid': 7})
+    # ezdxf 0.10 and later uses internally only resource names not handles for dim style attributes
     # unknown attributes are ignored
     dstyle_orig = dimstyle.get_dstyle_dict()
     assert len(dstyle_orig) == 0
 
     dimstyle.commit()
+    # ezdxf 0.10 and later uses internally only resource names not handles for dim style attributes
     dstyle = dimstyle.get_dstyle_dict()
+
     assert dstyle['dimexe'] == 0.777
-    assert 'dimtxsty' not in dstyle, 'do not store "dimtxsty" in dstyle, because virtual attribute'
-    assert 'dimtxsty_handle' in dstyle, 'expected handle of text style'
-    assert dstyle['dimtxsty_handle'] == dxf2000.styles.get('TEST').dxf.handle
+
+    # handle attributes not available, just stored transparent in XDATA
+    assert 'dimtxsty_handle' not in dstyle
+
+    assert dstyle['dimtxsty'] == 'TEST'
 
 
 def test_linetype_override_R2000(dxf2000):
@@ -185,13 +190,18 @@ def test_linetype_override_R2000(dxf2000):
     assert dimstyle['dimltex2'] == 'DOTX2'
 
     dimstyle.commit()
+    # ezdxf 0.10 and later uses internally only resource names not handles for dim style attributes
     dstyle = dimstyle.get_dstyle_dict()
-    assert 'dimltype_handle' not in dstyle, "not supported by DXF R2000"
-    assert 'dimltex1_handle' not in dstyle, "not supported by DXF R2000"
-    assert 'dimltex2_handle' not in dstyle, "not supported by DXF R2000"
-    assert 'dimltype' not in dstyle, "not a real dimvar"
-    assert 'dimltex1' not in dstyle, "not a real dimvar"
-    assert 'dimltex2' not in dstyle, "not a real dimvar"
+
+    # handle attributes not available, just stored transparent in XDATA
+    assert 'dimltype_handle' not in dstyle
+    assert 'dimltex1_handle' not in dstyle
+    assert 'dimltex2_handle' not in dstyle
+
+    # line type not supported by DXF R2000
+    assert 'dimltype' not in dstyle
+    assert 'dimltex1' not in dstyle
+    assert 'dimltex2' not in dstyle
 
 
 def test_linetype_override_R2007(dxf2007):
@@ -213,14 +223,17 @@ def test_linetype_override_R2007(dxf2007):
     assert dimstyle['dimltex2'] == 'DOTX2'
 
     dimstyle.commit()
-
+    # ezdxf 0.10 and later uses internally only resource names not handles for dim style attributes
     dstyle = dimstyle.get_dstyle_dict()
-    assert dstyle['dimltype_handle'] == dxf2007.linetypes.get('DOT').dxf.handle
-    assert dstyle['dimltex1_handle'] == dxf2007.linetypes.get('DOT2').dxf.handle
-    assert dstyle['dimltex2_handle'] == dxf2007.linetypes.get('DOTX2').dxf.handle
-    assert 'dimltype' not in dstyle, "not a real dimvar"
-    assert 'dimltex1' not in dstyle, "not a real dimvar"
-    assert 'dimltex2' not in dstyle, "not a real dimvar"
+
+    # handle attributes not available, just stored transparent in XDATA
+    assert 'dimltype_handle' not in dstyle
+    assert 'dimltex1_handle' not in dstyle
+    assert 'dimltex2_handle' not in dstyle
+
+    assert dstyle['dimltype'] == 'DOT'
+    assert dstyle['dimltex1'] == 'DOT2'
+    assert dstyle['dimltex2'] == 'DOTX2'
 
 
 def test_dimstyle_override_arrows(dxf2000):
@@ -228,17 +241,10 @@ def test_dimstyle_override_arrows(dxf2000):
     arrows = ezdxf.ARROWS
     blocks = dxf2000.blocks
 
-    dot_blank = arrows.create_block(blocks, arrows.dot_blank)
-    dimblk = blocks.get(dot_blank)
-
-    box = arrows.create_block(blocks, arrows.box)
-    dimblk1 = blocks.get(box)
-
-    closed = arrows.create_block(blocks, arrows.closed)
-    dimblk2 = blocks.get(closed)
-
-    closed_filled = arrows.create_block(blocks, arrows.closed_filled)
-    dimldrblk = blocks.get(closed_filled)
+    arrows.create_block(blocks, arrows.dot_blank)
+    arrows.create_block(blocks, arrows.box)
+    arrows.create_block(blocks, arrows.closed)
+    arrows.create_block(blocks, arrows.closed_filled)
 
     preset = {
         'dimblk': arrows.dot_blank,
@@ -263,17 +269,19 @@ def test_dimstyle_override_arrows(dxf2000):
     assert len(dstyle_orig) == 0
 
     dimstyle.commit()
-    # now store blocks as block handles
+    # ezdxf 0.10 and later uses internally only resource names not handles for dim style attributes
     dstyle = dimstyle.get_dstyle_dict()
-    assert 'dimblk' not in dstyle, 'Do not store block name, dimblk_handle is required'
-    assert 'dimblk1' not in dstyle, 'Do not store block name, dimblk1_handle is required'
-    assert 'dimblk2' not in dstyle, 'Do not store block name, dimblk2_handle is required'
-    assert 'dimldrblk' not in dstyle, 'Do not store block name, dimldrblk_handle is required'
 
-    assert dstyle['dimblk_handle'] == dimblk.block_record_handle
-    assert dstyle['dimblk1_handle'] == dimblk1.block_record_handle
-    assert dstyle['dimblk2_handle'] == dimblk2.block_record_handle
-    assert dstyle['dimldrblk_handle'] == '0'  # special handle for closed filled
+    # handle attributes not available, just stored transparent in XDATA
+    assert 'dimblk_handle' not in dstyle
+    assert 'dimblk1_handle' not in dstyle
+    assert 'dimblk2_handle' not in dstyle
+    assert 'dimldrblk_handle' not in dstyle
+
+    assert dstyle['dimblk'] == arrows.dot_blank
+    assert dstyle['dimblk1'] == arrows.box
+    assert dstyle['dimblk2'] == arrows.closed
+    assert dstyle['dimldrblk'] == ''  # special handle for closed filled
 
     dimstyle.set_arrows(blk=arrows.closed, blk1=arrows.dot_blank, blk2=arrows.box, ldrblk=arrows.dot_small)
     assert dimstyle['dimblk'] == arrows.closed
@@ -282,9 +290,10 @@ def test_dimstyle_override_arrows(dxf2000):
     assert dimstyle['dimldrblk'] == arrows.dot_small
 
     dimstyle.commit()
+    # ezdxf 0.10 and later uses internally only resource names not handles for dim style attributes
     dstyle = dimstyle.get_dstyle_dict()
-    assert dstyle['dimblk_handle'] == dimblk2.block_record_handle
-    assert dstyle['dimblk1_handle'] == dimblk.block_record_handle
-    assert dstyle['dimblk2_handle'] == dimblk1.block_record_handle
+    assert dstyle['dimblk'] == arrows.closed
+    assert dstyle['dimblk1'] == arrows.dot_blank
+    assert dstyle['dimblk2'] == arrows.box
     # create acad arrows on demand
-    assert dstyle['dimldrblk_handle'] == blocks.get(arrows.block_name(arrows.dot_small)).block_record_handle
+    assert dstyle['dimldrblk'] == arrows.dot_small
