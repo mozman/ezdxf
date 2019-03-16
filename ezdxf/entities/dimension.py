@@ -61,6 +61,9 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     # range from 0.25 to 4.00
     'actual_measurement': DXFAttr(42, dxfversion=DXF2000, optional=True),
     # Actual measurement (optional; read-only value)
+    'unknown1': DXFAttr(73, dxfversion=DXF2000, optional=True),
+    'unknown2': DXFAttr(74, dxfversion=DXF2000, optional=True),
+    'unknown3': DXFAttr(75, dxfversion=DXF2000, optional=True),
     'text': DXFAttr(1, default='', optional=True),  # Dimension text explicitly entered by the user
     # default is the measurement.
     # If null or “<>”, the dimension measurement is drawn as the text,
@@ -150,10 +153,9 @@ class Dimension(DXFGraphic):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimension.name)
         self.dxf.export_dxf_attribs(tagwriter, [
             'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'dimtype', 'attachment_point',
-            'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'text', 'oblique_angle',
-            'text_rotation', 'horizontal_direction', 'extrusion',
+            'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'unknown2', 'unknown3',
+            'text', 'oblique_angle', 'text_rotation', 'horizontal_direction', 'extrusion',
         ])
-        dxfversion = tagwriter.dxfversion
         dim_type = self.dim_type
         if dim_type == 0:  # linear
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
