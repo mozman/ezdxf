@@ -78,7 +78,6 @@ class View(DXFEntity):
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_view)
             if len(tags) and not processor.r12:
                 processor.log_unprocessed_tags(tags, subclass=acdb_view.name)
-        # todo support for associated UCS
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

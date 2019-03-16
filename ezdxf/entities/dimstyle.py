@@ -43,8 +43,9 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimdle': DXFAttr(46, default=0),
     'dimtp': DXFAttr(47, default=0),
     'dimtm': DXFAttr(48, default=0),
+
+    # undocumented: length of extension line if fixed (dimfxlon = 1)
     'dimfxl': DXFAttr(49, dxfversion=DXF2007, default=2.5),
-# undocumented: length of extension line if fixed (dimfxlon = 1)
     'dimtxt': DXFAttr(140, default=2.5),
     'dimcen': DXFAttr(141, default=2.5),
     'dimtsz': DXFAttr(142, default=0),
@@ -65,6 +66,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimtad': DXFAttr(77, default=1),
     'dimzin': DXFAttr(78, default=8),
     'dimazin': DXFAttr(79, default=0, dxfversion=DXF2000),
+    'unknown1': DXFAttr(90, dxfversion=DXF2000, optional=True),
     'dimalt': DXFAttr(170, default=0),
     'dimaltd': DXFAttr(171, default=3),
     'dimtofl': DXFAttr(172, default=1),
@@ -76,7 +78,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimclrt': DXFAttr(178, default=0),
     'dimadec': DXFAttr(179, dxfversion=DXF2000, default=0),
     'dimunit': DXFAttr(270),  # obsolete
-    'dimdec': DXFAttr(271, dxfversion=DXF2000, default=0),
+    'dimdec': DXFAttr(271, dxfversion=DXF2000, default=0),  # can appear multiple times ???
     'dimtdec': DXFAttr(272, dxfversion=DXF2000, default=2),
     'dimaltu': DXFAttr(273, dxfversion=DXF2000, default=2),
     'dimalttd': DXFAttr(274, dxfversion=DXF2000, default=3),
@@ -133,7 +135,8 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
 EXPORT_MAP_R2007 = [
     'name', 'flags', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimfxl',
     'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap', 'dimaltrnd', 'dimtfill',
-    'dimtfillclr', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin', 'dimalt',
+    'dimtfillclr', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin',
+    'unknown1', 'dimalt',
     'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt', 'dimadec', 'dimdec',
     'dimtdec', 'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep', 'dimtmove', 'dimjust', 'dimsd1',
     'dimsd2', 'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit', 'dimfxlon', 'dimtxsty_handle',
@@ -144,7 +147,8 @@ EXPORT_MAP_R2007 = [
 EXPORT_MAP_R2000 = [
     'name', 'flags', 'dimpost', 'dimapost', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe', 'dimrnd', 'dimdle',
     'dimtp', 'dimtm', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap', 'dimaltrnd',
-    'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin', 'dimalt', 'dimaltd',
+    'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin', 'unknown1', 'dimalt',
+    'dimaltd',
     'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt', 'dimadec', 'dimdec', 'dimtdec',
     'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep', 'dimtmove', 'dimjust', 'dimsd1', 'dimsd2',
     'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit', 'dimtxsty_handle', 'dimldrblk_handle',
