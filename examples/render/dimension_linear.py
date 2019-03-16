@@ -580,7 +580,7 @@ def linear_EZ_MM(fmt):
     doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = True
+ALL = False
 
 if __name__ == '__main__':
     linear_tutorial_using_tvp()
@@ -588,6 +588,7 @@ if __name__ == '__main__':
     linear_tutorial_using_limits('R12')
     linear_tutorial_using_tolerances('R2000')
     linear_tutorial_using_tolerances('R12')
+    example_for_all_text_placings_ucs_R2007()
 
     if ALL:
         linear_tutorial('R2007')
@@ -595,7 +596,7 @@ if __name__ == '__main__':
         example_background_fill('R2007')
         example_for_all_text_placings_R12()
         example_for_all_text_placings_R2007()
-        example_for_all_text_placings_ucs_R2007()
+
         example_multi_point_linear_dimension()
         example_random_multi_point_linear_dimension(count=10, length=20)
 

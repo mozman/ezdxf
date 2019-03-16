@@ -29,6 +29,11 @@ acdb_dimension = DefSubclass('AcDbDimension', {
     # shortcut Drawings.dimstyles property
     'defpoint': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # definition point for all dimension types
     'text_midpoint': DXFAttr(11, xtype=XType.point3d),  # midpoint of dimension text
+
+    # Insertion point for clones of a  dimension—Baseline and Continue (in OCS)
+    # located in AcDbDimension? Another error in the DXF reference?
+    'insert': DXFAttr(12, xtype=XType.point3d, default=Vector(0, 0, 0), optional=True),
+
     'dimtype': DXFAttr(70, default=0),  # Dimension type:
     # Values 0–6 are integer values that represent the dimension type.
     # Values 32, 64, and 128 are bit values, which are added to the integer values
@@ -85,8 +90,6 @@ acdb_dimension = DefSubclass('AcDbDimension', {
 })
 
 acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
-    'insert': DXFAttr(12, xtype=XType.point3d, default=Vector(0, 0, 0)),  # Insertion point for clones of a
-    # dimension—Baseline and Continue (in OCS)
     'defpoint2': DXFAttr(13, xtype=XType.point3d, default=Vector(0, 0, 0)),
     # Definition point for linear and angular dimensions (in WCS)
     'defpoint3': DXFAttr(14, xtype=XType.point3d, default=Vector(0, 0, 0)),
@@ -151,12 +154,13 @@ class Dimension(DXFGraphic):
 
         # else DXF2000+
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimension.name)
+        dim_type = self.dim_type
         self.dxf.export_dxf_attribs(tagwriter, [
-            'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'dimtype', 'attachment_point',
+            'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'attachment_point',
             'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'unknown2', 'unknown3',
             'text', 'oblique_angle', 'text_rotation', 'horizontal_direction', 'extrusion',
         ])
-        dim_type = self.dim_type
+
         if dim_type == 0:  # linear
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
