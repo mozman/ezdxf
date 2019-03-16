@@ -69,7 +69,7 @@ acdb_vport = DefSubclass('AcDbViewportTableRecord', {
     'ucs_xaxis': DXFAttr(111, xtype=XType.point3d, dxfversion=DXF2000),
     'ucs_yaxis': DXFAttr(112, xtype=XType.point3d, dxfversion=DXF2000),
     # handle of AcDbUCSTableRecord if UCS is a named UCS. If not present, then UCS is unnamed
-    'ucs_handle': DXFAttr(345),
+    'ucs_handle': DXFAttr(345, dxfversion=DXF2000),
     # handle of AcDbUCSTableRecord of base UCS if UCS is orthographic (79 code is non-zero). If not present and 79 code
     # is non-zero, then base UCS is taken to be WORLD
     'base_ucs_handle': DXFAttr(346, dxfversion=DXF2000),

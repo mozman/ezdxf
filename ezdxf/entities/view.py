@@ -40,6 +40,24 @@ acdb_view = DefSubclass('AcDbViewTableRecord', {
     # 5 = Flat shaded with wireframe
     # 6 = Gouraud shaded with wireframe
     'ucs': DXFAttr(72, default=0),  # 1 if there is a UCS associated to this view, 0 otherwise.
+    'ucs_origin': DXFAttr(110, xtype=XType.point3d, dxfversion=DXF2000),
+    'ucs_xaxis': DXFAttr(111, xtype=XType.point3d, dxfversion=DXF2000),
+    'ucs_yaxis': DXFAttr(112, xtype=XType.point3d, dxfversion=DXF2000),
+    'ucs_ortho_type': DXFAttr(79, dxfversion=DXF2000),
+    # 0 = UCS is not orthographic
+    # 1 = Top
+    # 2 = Bottom
+    # 3 = Front
+    # 4 = Back
+    # 5 = Left
+    # 6 = Right
+    'elevation': DXFAttr(146, dxfversion=DXF2000, default=0),
+    # handle of AcDbUCSTableRecord if UCS is a named UCS. If not present, then UCS is unnamed
+    'ucs_handle': DXFAttr(345, dxfversion=DXF2000),
+    # handle of AcDbUCSTableRecord of base UCS if UCS is orthographic (79 code is non-zero). If not present and 79 code
+    # is non-zero, then base UCS is taken to be WORLD
+    'base_ucs_handle': DXFAttr(346, dxfversion=DXF2000),
+
     'camera_plottable': DXFAttr(73, default=0, dxfversion=DXF2007),  # 1 if the camera is plottable
     'background_handle': DXFAttr(332, optional=True, dxfversion=DXF2007),
     'live_selection_handle': DXFAttr(334, optional=True, dxfversion=DXF2007),
@@ -70,10 +88,9 @@ class View(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_view.name)
 
-        if self.dxf.hasattr('ucs'):
-            self.dxf.ucs = 0  # todo support for associated UCS
         self.dxf.export_dxf_attribs(tagwriter, [
-            'name', 'flags', 'height', 'center', 'width', 'direction', 'focal_length', 'front_clipping',
-            'back_clipping', 'view_twist', 'view_mode', 'render_mode', 'ucs', 'camera_plottable', 'background_handle',
-            'live_selection_handle', 'visual_style_handle',
+            'name', 'flags', 'height', 'width', 'center', 'direction', 'target', 'focal_length', 'front_clipping',
+            'back_clipping', 'view_twist', 'view_mode', 'render_mode', 'ucs', 'ucs_origin', 'ucs_xaxis', 'ucs_yaxis',
+            'ucs_ortho_type', 'elevation', 'ucs_handle', 'base_ucs_handle', 'camera_plottable', 'background_handle',
+            'live_selection_handle', 'visual_style_handle', 'sun_handle'
         ])
