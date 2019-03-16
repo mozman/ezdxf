@@ -28,6 +28,10 @@ DXF Attributes for Layer
 
     Layer color, but use :meth:`Layer.get_color`, because color is negative for layer status *off* (int)
 
+.. attribute:: Layer.dxf.true_color
+
+    Layer true color value as int (DXF R2004+)
+
 .. attribute:: Layer.dxf.linetype
 
     Name of line type (str)

@@ -49,7 +49,7 @@ def outname(fname: Path) -> Path:
 
 SEP_LINE = '-----------------------------------------------------------------------'
 
-for filename in CADKIT_FILES[:9]:
+for filename in CADKIT_FILES[:12]:
     filename = CADKIT / filename
     new_name = outname(filename)
     if not new_name.exists():

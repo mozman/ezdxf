@@ -103,6 +103,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', OrderedDict({  # preserve t
     'mtext_attachment_direction': DXFAttr(271, default=0),  # 0 = Horizontal; 1 = Vertical
     'bottom_text_attachment_direction': DXFAttr(272, default=9),  # 9 = Center; 10 = Underline and Center
     'top_text_attachment_direction': DXFAttr(272, default=9),  # 9 = Center; 10 = Overline and Center
+    'unknown2': DXFAttr(273, optional=True),  # also an attachment direction ?
 }))
 
 

@@ -4,7 +4,7 @@
 from typing import TYPE_CHECKING
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXFInvalidLayerName
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, DXFInvalidLayerName
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .factory import register_entity
@@ -22,6 +22,7 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     'name': DXFAttr(2),  # layer name
     'flags': DXFAttr(70, default=0),
     'color': DXFAttr(62, default=7),  # dxf color index
+    'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),  # true color
     'linetype': DXFAttr(6, default='Continuous'),  # linetype name
     'plot': DXFAttr(290, default=1, dxfversion=DXF2000, optional=True),  # don't plot this layer if 0 else 1
     'lineweight': DXFAttr(370, default=-3, dxfversion=DXF2000),  # 1/100 mm, min 13 = 0.13mm, max 200 = 2.0mm
@@ -31,7 +32,8 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     # uses tag(390, ...) from the '0' layer1
     'plotstyle_handle': DXFAttr(390, dxfversion=DXF2000),  # handle to PlotStyleName object
     'material_handle': DXFAttr(347, dxfversion=DXF2007),  # handle to Material object
-    'unknown1': DXFAttr(348, dxfversion=DXF2007, default=0),  # ???
+    'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),  # handle to ???
+
 })
 
 
@@ -64,8 +66,8 @@ class Layer(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layer_table_record.name)
 
         self.dxf.export_dxf_attribs(tagwriter, [
-            'name', 'flags', 'color', 'linetype', 'plot', 'lineweight', 'plotstyle_handle', 'material_handle',
-            'unknown1',
+            'name', 'flags', 'color', 'true_color', 'linetype', 'plot', 'lineweight', 'plotstyle_handle',
+            'material_handle', 'unknown1',
         ])
 
     def post_new_hook(self) -> None:

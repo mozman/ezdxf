@@ -49,6 +49,9 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 3 = Ignores shadows
     'material_handle': DXFAttr(347, dxfversion=DXF2007, optional=True),  # shadow_mode
     'plotstyle_handle': DXFAttr(390, dxfversion=DXF2007, optional=True),  # shadow_mode
+    # 92 or 160?: Number of bytes in the proxy entity graphics represented in the subsequent 310 groups, which are binary
+    # chunk records (optional)
+    # 310: Proxy entity graphics data (multiple lines; 256 characters max. per line) (optional)
 })
 
 
