@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import acdb_entity
+from .dxfgfx import acdb_entity, DXFGraphic
 from .text import Text, acdb_text
 from .factory import register_entity
 
@@ -154,9 +154,13 @@ class AttDef(BaseAttrib):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attdef)  # don't add acdb_attdef_xrecord here
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        dxf = super().load_dxf_attribs(processor)
-        # acdb_text processing is done by super class
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        # do not call Text loader
         if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
+
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attdef)
             if len(tags) and not processor.r12:
                 processor.log_unprocessed_tags(tags, subclass=acdb_attdef.name)
@@ -216,9 +220,13 @@ class Attrib(BaseAttrib):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_attrib_text, acdb_attrib)  # don't add acdb_attdef_xrecord here
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        dxf = super().load_dxf_attribs(processor)
-        # acdb_text processing is done by super class
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        # do not call Text loader
         if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attrib_text)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_attrib_text.name)
+
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attrib)
             if len(tags) and not processor.r12:
                 processor.log_unprocessed_tags(tags, subclass=acdb_attrib.name)
