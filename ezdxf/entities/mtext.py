@@ -128,8 +128,8 @@ class MText(DXFGraphic):
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
-        self.load_mtext(processor.subclasses[2])
         if processor:
+            self.load_mtext(processor.subclasses[2])
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_mtext)
             if len(tags):
                 processor.log_unprocessed_tags(tags, subclass=acdb_mtext.name)

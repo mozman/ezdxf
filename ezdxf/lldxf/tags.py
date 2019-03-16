@@ -208,7 +208,7 @@ class Tags(list):
         Returns: Tags() object
 
         """
-        self[:] = [tag for tag in self if tag.code not in frozenset(codes)]
+        self[:] = [tag for tag in self if tag.code not in set(codes)]
 
     def remove_tags_except(self, codes: Iterable[int]) -> None:
         """
@@ -218,7 +218,17 @@ class Tags(list):
             codes: iterable of group codes
 
         """
-        self[:] = [tag for tag in self if tag.code in frozenset(codes)]
+        self[:] = [tag for tag in self if tag.code in set(codes)]
+
+    def filter(self, codes: Iterable[int]) -> Iterable[DXFTag]:
+        """
+        Iterate and filter tags by group `codes`.
+
+        Args:
+            codes: group codes to filter
+
+        """
+        return (tag for tag in self if tag.code not in set(codes))
 
     def collect_consecutive_tags(self, codes: Iterable[int], start: int = 0, end: int = None) -> 'Tags':
         """

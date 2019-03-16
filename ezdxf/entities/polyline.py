@@ -115,7 +115,9 @@ class Polyline(DXFGraphic):
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_polyline, index=2)
             name = processor.subclasses[2][0].value
             if len(tags):
-                processor.log_unprocessed_tags(tags, subclass=name)
+                # do not log:
+                # 66: attribs follow, not required
+                processor.log_unprocessed_tags(tags.filter((66, )), subclass=name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:

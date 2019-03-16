@@ -273,19 +273,19 @@ class DXFGraphic(DXFEntity):
         if not ignore:
             raise DXFUnsupportedFeature(self.DXFTYPE)
 
-    def rotate(self, angle: float, ucs: UCS = None, ignore: bool = False) -> None:
+    def rotate(self, angle: float, axis: Vector = Vector(0, 0, 1), ignore: bool = False) -> None:
         """
-        Rotate entity about the z-axis of `ucs` if supported, else raises :class:`DXFUnsupportedFeature` except
-        `ignore` is True. If ucs is None, WCS is used.
+        Rotate entity about the rotation `axis` if supported, else raises :class:`DXFUnsupportedFeature` except
+        `ignore` is True. Default rotation axis is the z-axis (0, 0, 1)
 
         Args:
             angle: rotation angle in degrees (all angles in DXF are degrees)
-            ucs: z-axis of ucs is the rotation axis
+            axis: rotation axis located at the origin (0, 0, 0), default is the z-axis (0, 0, 1)
             ignore: don't raise exception if not supported
 
         """
         angle = float(angle)
-        ucs = ucs or UCS()  # ucs or WCS
+        axis = Vector(axis)
         if not ignore:
             raise DXFUnsupportedFeature(self.DXFTYPE)
 

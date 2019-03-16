@@ -284,10 +284,10 @@ class SubclassProcessor:
     def base_class(self):
         return self.subclasses[0]
 
-    def log_unprocessed_tags(self, unprocessed_tags: List, subclass='<?>') -> None:
-        if options.log_unprocessed_tags and len(unprocessed_tags):
+    def log_unprocessed_tags(self, unprocessed_tags: Iterable, subclass='<?>') -> None:
+        if options.log_unprocessed_tags:
             for tag in unprocessed_tags:
-                logger.debug("unprocessed tag: {} in {}(#{}).{}".format(str(tag), self.name, self.handle, subclass))
+                logger.info("ignored {} in {}(#{}) {}".format(repr(tag), self.name, self.handle, subclass))
 
     def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:
