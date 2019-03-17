@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
 acdb_dictionary = DefSubclass('AcDbDictionary', {
-    'hard_owned': DXFAttr(280, default=0),  # Hard-owner flag.
+    'hard_owned': DXFAttr(280, default=0, optional=True),  # Hard-owner flag.
     # If set to 1, indicates that elements of the dictionary are to be treated as hard-owned
     'cloning': DXFAttr(281, default=1),  # Duplicate record cloning flag (determines how to merge duplicate entries):
     # 0 = not applicable
@@ -51,12 +51,14 @@ class Dictionary(DXFObject):
     def __init__(self, doc: 'Drawing' = None):
         super().__init__(doc)
         self._data = dict()  # type: Dict[str, Union[str, DXFEntity]]
+        self._value_code = VALUE_CODE  # some dict have 360 handles for values
 
     def _copy_data(self, entity: 'Dictionary') -> None:
         """ Copy hard owned entities but do not store the copies in the entity database, this is a
         second step, this is just real copying.
         """
         # todo: what about reactors of cloned DXF objects?
+        entity._value_code = self._value_code
         if self.dxf.hard_owned:
             entity._data = {key: entity.copy() for key, entity in self.items()}
         else:
@@ -84,10 +86,12 @@ class Dictionary(DXFObject):
     def load_dict(self, tags):
         entry_handle = None
         dict_key = None
+        value_code = VALUE_CODE
         for code, value in tags:
             if code in SEARCH_CODES:
                 # first store handles, because at this point, not all objects are stored in the EntityDB,
                 # at access convert the handle to DXFEntity
+                value_code = code
                 entry_handle = value
             elif code == KEY_CODE:
                 dict_key = value
@@ -100,6 +104,7 @@ class Dictionary(DXFObject):
                 self._data[dict_key] = entity
                 entry_handle = None
                 dict_key = None
+        self._value_code = value_code  # use same value code as loaded
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Export entity specific data as DXF tags. """
@@ -109,7 +114,6 @@ class Dictionary(DXFObject):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dictionary.name)
         self.dxf.export_dxf_attribs(tagwriter, ['hard_owned', 'cloning'])
         self.export_dict(tagwriter)
-        # xdata and embedded objects export will be done by parent class
 
     def export_dict(self, tagwriter: 'TagWriter'):
         # key: dict key string
@@ -121,7 +125,7 @@ class Dictionary(DXFObject):
             # value can be a handle string or a DXFEntity
             if not isinstance(value, str):
                 value = value.dxf.handle
-            tagwriter.write_tag2(VALUE_CODE, value)
+            tagwriter.write_tag2(self._value_code, value)  # use same value code as loaded
 
     @property
     def is_hard_owner(self) -> bool:

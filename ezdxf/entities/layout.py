@@ -219,5 +219,5 @@ class DXFLayout(PlotSettings):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layout.name)
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'layout_flags', 'taborder', 'limmin', 'limmax', 'insert_base', 'extmin', 'extmax', 'elevation',
-            'ucs_origin', 'ucs_xaxis', 'ucs_yaxis', 'ucs_type', 'block_record'
+            'ucs_origin', 'ucs_xaxis', 'ucs_yaxis', 'ucs_type', 'block_record', 'viewport', 'ucs', 'base_ucs',
         ])

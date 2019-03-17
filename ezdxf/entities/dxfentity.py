@@ -687,10 +687,10 @@ class DXFEntity:
             tagwriter.write_tag2(handle_code(self.dxf.dxftype), self.dxf.handle)
             if self.appdata:
                 self.appdata.export_dxf(tagwriter)
-            if self.reactors:
-                self.reactors.export_dxf(tagwriter)
             if self.extension_dict:
                 self.extension_dict.export_dxf(tagwriter)
+            if self.reactors:
+                self.reactors.export_dxf(tagwriter)
             tagwriter.write_tag2(OWNER_CODE, self.dxf.owner)
         else:  # DXF R12
             if tagwriter.write_handles:
