@@ -205,10 +205,25 @@ class Tags(list):
         Args:
             codes: iterable of group codes
 
-        Returns: Tags() object
-
         """
         self[:] = [tag for tag in self if tag.code not in set(codes)]
+
+    def pop_tags(self, codes: Iterable[int]) -> Iterable[DXFTag]:
+        """
+        Pop tags with group codes specified in codes.
+
+        Args:
+            codes: iterable of group codes
+
+        """
+        remaining = []
+        codes = set(codes)
+        for tag in self:
+            if tag.code in codes:
+                yield tag
+            else:
+                remaining.append(tag)
+        self[:] = remaining
 
     def remove_tags_except(self, codes: Iterable[int]) -> None:
         """

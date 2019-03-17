@@ -132,7 +132,7 @@ class Dimension(DXFGraphic):
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
             if len(tags) and not processor.r12:
                 processor.log_unprocessed_tags(tags, subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension_dummy, index=4)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension_dummy, index=3)
             # ignore possible 5. subclass AcDbRotatedDimension, has no content
             if len(tags) and not processor.r12:
                 processor.log_unprocessed_tags(tags, subclass=acdb_dimension_dummy.name)

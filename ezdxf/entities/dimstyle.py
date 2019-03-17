@@ -1,11 +1,11 @@
 # Created: 17.02.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Iterable, Tuple
+from typing import TYPE_CHECKING, Iterable, Tuple
 import logging
-from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType, VIRTUAL_TAG
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFKeyError, LINEWEIGHT_BYBLOCK, DXF2007, DXF2000, DXFValueError
-from ezdxf.lldxf.const import DXFTableEntryError
+from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, VIRTUAL_TAG
+from ezdxf.lldxf.const import DXF12, DXF2007, DXF2000, DXF2018
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFKeyError, LINEWEIGHT_BYBLOCK, DXFValueError
 from ezdxf.entities.dxfentity import SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
@@ -46,6 +46,8 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
 
     # undocumented: length of extension line if fixed (dimfxlon = 1)
     'dimfxl': DXFAttr(49, dxfversion=DXF2007, default=2.5),
+    # jog angle, Angle of oblique dimension line segment in jogged radius dimension
+    'dimjogang': DXFAttr(50, dxfversion=DXF2007, default=90, optional=True),
     'dimtxt': DXFAttr(140, default=2.5),
     'dimcen': DXFAttr(141, default=2.5),
     'dimtsz': DXFAttr(142, default=0),
@@ -134,14 +136,13 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
 
 EXPORT_MAP_R2007 = [
     'name', 'flags', 'dimscale', 'dimasz', 'dimexo', 'dimdli', 'dimexe', 'dimrnd', 'dimdle', 'dimtp', 'dimtm', 'dimfxl',
-    'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap', 'dimaltrnd', 'dimtfill',
-    'dimtfillclr', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin', 'dimazin',
-    'unknown1', 'dimalt',
-    'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre', 'dimclrt', 'dimadec', 'dimdec',
-    'dimtdec', 'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep', 'dimtmove', 'dimjust', 'dimsd1',
-    'dimsd2', 'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit', 'dimfxlon', 'dimtxsty_handle',
-    'dimldrblk_handle', 'dimblk_handle', 'dimblk1_handle', 'dimblk2_handle', 'dimltype_handle',
-    'dimltex1_handle', 'dimltex2_handle', 'dimlwd', 'dimlwe'
+    'dimjogang', 'dimtxt', 'dimcen', 'dimtsz', 'dimaltf', 'dimlfac', 'dimtvp', 'dimtfac', 'dimgap', 'dimaltrnd',
+    'dimtfill', 'dimtfillclr', 'dimtol', 'dimlim', 'dimtih', 'dimtoh', 'dimse1', 'dimse2', 'dimtad', 'dimzin',
+    'dimazin', 'unknown1', 'dimalt', 'dimaltd', 'dimtofl', 'dimsah', 'dimtix', 'dimsoxd', 'dimclrd', 'dimclre',
+    'dimclrt', 'dimadec', 'dimdec', 'dimtdec', 'dimaltu', 'dimalttd', 'dimaunit', 'dimfrac', 'dimlunit', 'dimdsep',
+    'dimtmove', 'dimjust', 'dimsd1', 'dimsd2', 'dimtolj', 'dimtzin', 'dimaltz', 'dimalttz', 'dimupt', 'dimatfit',
+    'dimfxlon', 'dimtxsty_handle', 'dimldrblk_handle', 'dimblk_handle', 'dimblk1_handle', 'dimblk2_handle',
+    'dimltype_handle', 'dimltex1_handle', 'dimltex2_handle', 'dimlwd', 'dimlwe'
 ]
 
 EXPORT_MAP_R2000 = [

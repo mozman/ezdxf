@@ -209,6 +209,27 @@ class TestTags:
     def test_has_not_tag(self, tags):
         assert tags.has_tag(7) is False
 
+    def test_pop_tags(self):
+        tags = Tags([
+            DXFTag(1, 'name1'),
+            DXFTag(40, 1),
+            DXFTag(40, 2),
+
+            DXFTag(1, 'name2'),
+            DXFTag(40, 3),
+            DXFTag(1, 'name3'),
+            DXFTag(40, 4),
+            DXFTag(1, 'name4'),
+        ])
+        result = list(tags.pop_tags(codes=(40, )))
+        assert len(result) == 4
+        assert result[0] == (40, 1)
+        assert result[-1] == (40, 4)
+
+        assert len(tags) == 4
+        assert tags[0] == (1, 'name1')
+        assert tags[-1] == (1, 'name4')
+
 
 DUPLICATETAGS = """  0
 FIRST

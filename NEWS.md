@@ -7,7 +7,8 @@ Version 0.10a1 - dev
 
 Alpha release
 
-- placeholder
+- support for layer true color attribute (DXF R2004+, undocumented)
+- fixed some subclass errors, mostly DXF reference errors
 
 __Version 0.10a0 - 2019-03-15__
 

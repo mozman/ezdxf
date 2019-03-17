@@ -57,7 +57,7 @@ class MLeader(DXFGraphic):
         tagwriter.write_tags(self.tags)
 
 
-acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', OrderedDict({  # preserve tag order
+acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'unknown1': DXFAttr(179, default=2),
     'content_type': DXFAttr(170, default=2),
     'draw_mleader_order_type': DXFAttr(171, default=1),
@@ -104,7 +104,8 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', OrderedDict({  # preserve t
     'bottom_text_attachment_direction': DXFAttr(272, default=9),  # 9 = Center; 10 = Underline and Center
     'top_text_attachment_direction': DXFAttr(272, default=9),  # 9 = Center; 10 = Overline and Center
     'unknown2': DXFAttr(273, optional=True),  # also an attachment direction ?
-}))
+    'unknown3': DXFAttr(298, optional=True),  # boolean flag ?
+})
 
 
 @register_entity

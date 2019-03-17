@@ -107,9 +107,6 @@ class AcDsDataSection:
         for entity in entities:
             self.append(AcDsData(entity))  # tags have no subclasses
 
-        # remove ENDSEC entry
-        self.entities.pop()
-
     def append(self, entity: 'AcDsData') -> None:
         cls = ACDSDATA_TYPES.get(entity.dxftype(), AcDsData)
         entity = cls(entity.tags)

@@ -491,6 +491,7 @@ DIMTFILLCLR         70      Text fill custom color as color index
 DIMFXLON            290     Extension line has fixed length if set to 1
 DIMFXL              49      Length of extension line below dimension line if fixed (DIMFXLON is 1), DIMEXE defines the
                             the length above the dimension line
+DIMJOGANG           50      Angle of oblique dimension line segment in jogged radius dimension
 DIMLTYPE_HANDLE     345     Specifies the LINETYPE of the dimension line. Handle to LTYPE table entry
 DIMLTEX1_HANDLE     346     Specifies the LINETYPE of the extension line 1. Handle to LTYPE table entry
 DIMLTEX2_HANDLE     347     Specifies the LINETYPE of the extension line 2. Handle to LTYPE table entry

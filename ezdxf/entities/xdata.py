@@ -2,12 +2,15 @@
 # License: MIT License
 # Created 2019-02-13
 from typing import TYPE_CHECKING, List, Iterable, Tuple, Dict
+from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFKeyError, XDATA_MARKER, DXFValueError
 from ezdxf.lldxf.tags import xdata_list, remove_named_list_from_xdata, get_named_list_from_xdata, NotFoundException
 from ezdxf import options
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
+import logging
+logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -18,7 +21,7 @@ __all__ = ['XData', 'EmbeddedObjects']
 class XData:
     def __init__(self, xdata: List[Tags] = None):
         # no back links, no self.clone() required, use deepcopy
-        self.data = dict()
+        self.data = OrderedDict()
         for data in (xdata or []):
             self._add(data)
 
@@ -32,6 +35,8 @@ class XData:
         tags = Tags(tags)
         if len(tags):
             appid = tags[0].value
+            if appid in self.data:
+                logger.info('Duplicate XDATA appid {} in one entity'.format(appid))
             self.data[appid] = tags
 
     def add(self, appid: str, tags: Iterable) -> None:
@@ -51,9 +56,7 @@ class XData:
             del self.data[appid]
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        sorted_appids = sorted(self.data.keys())
-        for appid in sorted_appids:
-            tags = self.data[appid]
+        for appid, tags in self.data.items():
             if options.filter_invalid_xdata_group_codes:
                 tags = list(filter_invalid_xdata_group_codes(tags))
             tagwriter.write_tags(tags)

@@ -47,8 +47,18 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # 1 = Casts shadows
     # 2 = Receives shadows
     # 3 = Ignores shadows
-    'material_handle': DXFAttr(347, dxfversion=DXF2007, optional=True),  # shadow_mode
+    'material_handle': DXFAttr(347, dxfversion=DXF2007, optional=True),
+    'visualstyle_handle': DXFAttr(348, dxfversion=DXF2007, optional=True),
+
+    # objects may use the full range, but entity classes only use 381-389 DXF group codes in their representation, for
+    # the same reason as the Lineweight range above
+    'plotstyle_enum': DXFAttr(380, dxfversion=DXF2007, default=1, optional=True),
+
+    # Handle value of the PlotStyleName object, basically a hard pointer, but has a different range to make backward
+    # compatibility easier to deal with.
     'plotstyle_handle': DXFAttr(390, dxfversion=DXF2007, optional=True),  # shadow_mode
+
+    # PlotStyleName type enum (AcDb::PlotStyleNameType). Stored and moved around as a 16-bit integer. Custom non-entity
     # 92 or 160?: Number of bytes in the proxy entity graphics represented in the subsequent 310 groups, which are binary
     # chunk records (optional)
     # 310: Proxy entity graphics data (multiple lines; 256 characters max. per line) (optional)
@@ -179,7 +189,8 @@ class DXFGraphic(DXFEntity):
 
         self.dxf.export_dxf_attribs(tagwriter, [
             'layer', 'linetype', 'material_handle', 'color', 'paperspace', 'lineweight', 'ltscale', 'true_color',
-            'color_name', 'transparency', 'plotstyle_handle', 'shadow_mode',
+            'color_name', 'transparency', 'plotstyle_enum', 'plotstyle_handle', 'shadow_mode',
+            'visualstyle_handle',
         ])
 
     def get_layout(self) -> Optional['BaseLayout']:

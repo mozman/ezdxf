@@ -11,7 +11,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing, Vertex
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing, Vertex, DXFTag
 
 __all__ = ['Image', 'ImageDef', 'ImageDefReactor', 'RasterVariables', 'Wipeout']
 
@@ -65,7 +65,8 @@ class Image(DXFGraphic):
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            self.load_boundary_path(processor.subclasses[2])
+            path_tags = processor.subclasses[2].pop_tags(codes=(14, ))
+            self.load_boundary_path(path_tags)
             tags = processor.load_dxfattribs_into_namespace(dxf, self._CLS_ATTRIBS)
             if len(tags):
                 processor.log_unprocessed_tags(tags, subclass=self._CLS_ATTRIBS.name)
@@ -74,7 +75,7 @@ class Image(DXFGraphic):
                 self.reset_boundary_path()
         return dxf
 
-    def load_boundary_path(self, tags: 'Tags'):
+    def load_boundary_path(self, tags: Iterable['DXFTag']):
         self._boundary_path = [value for code, value in tags if code == 14]
 
     @property

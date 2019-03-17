@@ -217,6 +217,9 @@ class HeaderSection:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         def _write(name: str, value: Any) -> None:
+            if value.value is None:
+                logger.info('did not write header var {}, value is None.'.format(name))
+                return
             tagwriter.write_tag2(9, name)
             vardef = HEADER_VAR_MAP[name]
             # fix invalid group codes

@@ -180,6 +180,30 @@ def test_dxf_export_two_attribute(entity, processor):
     assert tagwriter.tags[1] == (330, 'ABBA')
 
 
+def test_load_doublettes():
+    from ezdxf.lldxf.attributes import DefSubclass, DXFAttr
+    from ezdxf.lldxf.tags import Tags, DXFTag
+    subclass = DefSubclass('AcDbTest', {
+        'test1': DXFAttr(1),
+        'test2': DXFAttr(2),
+        'test3': DXFAttr(1),  # same group code for different attribute
+    })
+
+    class TestEntity(DXFEntity):
+        DXFATTRIBS = DXFAttributes(subclass)
+
+    data = Tags([
+        DXFTag(1, '1'),
+        DXFTag(2, '2'),
+        DXFTag(1, '3'),
+    ])
+    ns = DXFNamespace(entity=TestEntity())
+    SubclassProcessor.load_tags_into_namespace(ns, data, subclass)
+    assert ns.test1 == '1'
+    assert ns.test2 == '2'
+    assert ns.test3 == '3'
+
+
 TEST_1 = """0
 DXFENTITY
 5
@@ -190,4 +214,3 @@ ABBA
 
 if __name__ == '__main__':
     pytest.main([__file__])
-

@@ -2046,6 +2046,22 @@ HEADER_VAR_MAP = {
         maxdxf=DXF2018,
         priority=24800,
         default=256),
+    '$INTERFEREOBJVS': HeaderVarDef(
+        name='$INTERFEREOBJVS',
+        code=345,
+        factory=partial(SingleValue, code=345),
+        mindxf=DXF2007,
+        maxdxf=DXF2018,
+        priority=24810,
+        default=None),  # will not be written, if not set
+    '$INTERFEREVPVS': HeaderVarDef(
+        name='$INTERFEREVPVS',
+        code=346,
+        factory=partial(SingleValue, code=346),
+        mindxf=DXF2007,
+        maxdxf=DXF2018,
+        priority=24820,
+        default=None),  # will not be written, if not set
     '$CSHADOW': HeaderVarDef(
         name='$CSHADOW',
         code=280,

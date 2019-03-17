@@ -108,9 +108,9 @@ def test_dxf_export(xdata):
     xdata.export_dxf(tagwriter)
     result = tagwriter.tags
     assert len(result) == 2
-    # sorted appids!
-    assert result[0][0] == (1001, 'ACAD')
-    assert result[1][0] == (1001, 'MOZMAN')
+    # appids in original order
+    assert result[0][0] == (1001, 'MOZMAN')
+    assert result[1][0] == (1001, 'ACAD')
 
 
 def test_has_xdata_list(xdata):

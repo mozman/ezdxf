@@ -187,22 +187,16 @@ class AttDef(BaseAttrib):
         ])
 
 
-# copy AcDbText subclass definition
-acdb_attrib_text = DefSubclass('AcDbText', dict(acdb_text.attribs))
-# remove 'text_generation_flag', because ATTRIB has 'text_generation_flag' in subclass AcDbAttribute
-del acdb_attrib_text.attribs['text_generation_flag']
-
-# DXF Reference for ATTRIB is a total mess and incorrect
+# DXF Reference for ATTRIB is a total mess and incorrect, AcDbText in Attrib same as in Text
 acdb_attrib = DefSubclass('AcDbAttribute', {
     'version': DXFAttr(280, default=0, dxfversion=DXF2010),  # Version number: 0 = 2010
     'tag': DXFAttr(2, default=''),  # Tag string (cannot contain spaces)
     'flags': DXFAttr(70, default=0),
-    # comes from AcDbText - what a mess
-    'text_generation_flag': DXFAttr(71, default=0, optional=True),  # Text generation flags (optional)
     # 1 = Attribute is invisible (does not appear)
     # 2 = This is a constant attribute
     # 4 = Verification is required on input of this attribute
     # 8 = Attribute is preset (no prompt during insertion)
+
     'field_length': DXFAttr(73, default=0, optional=True),  # Field length (optional) (not currently used)
     # Vertical text justification type (optional); see group code 73 in TEXT
     'valign': DXFAttr(74, default=0, optional=True),
@@ -217,15 +211,15 @@ class Attrib(BaseAttrib):
     """ DXF ATTRIB entity """
 
     DXFTYPE = 'ATTRIB'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_attrib_text, acdb_attrib)  # don't add acdb_attdef_xrecord here
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attrib)  # don't add acdb_attdef_xrecord here
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         # do not call Text loader
         if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attrib_text)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text)
             if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_attrib_text.name)
+                processor.log_unprocessed_tags(tags, subclass=acdb_text.name)
 
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_attrib)
             if len(tags) and not processor.r12:
@@ -245,13 +239,13 @@ class Attrib(BaseAttrib):
             self.export_attached_mtext(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: 'TagWriter') -> None:
-        # difference to export_acdb_text(): do not export 'text_generation_flag'
+        # difference to export_acdb_text():
         if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attrib_text.name)
+            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
             'insert', 'height', 'text', 'thickness', 'rotation', 'oblique', 'style', 'width',
-            'halign', 'align_point', 'extrusion'
+            'halign', 'align_point', 'text_generation_flag', 'extrusion'
         ])
 
     def export_acdb_attrib(self, tagwriter: 'TagWriter') -> None:
@@ -259,5 +253,5 @@ class Attrib(BaseAttrib):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attrib.name)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, [
-            'version', 'tag', 'flags',  'text_generation_flag', 'field_length', 'valign', 'lock_position',
+            'version', 'tag', 'flags',  'field_length', 'valign', 'lock_position',
         ])

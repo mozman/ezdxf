@@ -345,9 +345,24 @@ class SubclassProcessor:
              Tags: unprocessed tags
 
         """
+        def replace_attrib(code):
+            for index, dxfattr in enumerate(doublets):
+                if dxfattr.code == code:
+                    group_codes[code] = dxfattr
+                    del doublets[index]
+                    return
+            # remove group code if no more doublets are available
+            del group_codes[code]
+
         unprocessed_tags = Tags()
         # do not cache group codes, content of group code will be deleted while processing
-        group_codes = {dxfattr.code: dxfattr for dxfattr in subclass_definition.attribs.values()}
+        group_codes = dict()
+        doublets = []
+        for dxfattr in subclass_definition.attribs.values():
+            if dxfattr.code in group_codes:
+                doublets.append(dxfattr)
+            else:
+                group_codes[dxfattr.code] = dxfattr
 
         # iterate without leading subclass marker or for r12 without leading (0, ...) structure tag
         for tag in tags:
@@ -356,9 +371,7 @@ class SubclassProcessor:
                 attrib = group_codes[code]  # type: DXFAttr
                 if (attrib.xtype != XType.callback) or (attrib.setter is not None):
                     dxf.set(attrib.name, value)
-                # remove group code because only the first occurrence is needed, group codes sometimes are used multiple times
-                # in the same subclass for different purposes.
-                del group_codes[code]
+                replace_attrib(code)
             else:
                 unprocessed_tags.append(tag)
         return unprocessed_tags
