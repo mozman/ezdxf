@@ -44,26 +44,26 @@ CADKIT_FILES = [
 
 
 AUTODESK_FILES = [
-    r"AutodeskProducts\Civil3D_2018.dxf",
-    r"AutodeskProducts\Map3D_2017.dxf",
-    r"AutodeskSamples\architectural_-_annotation_scaling_and_multileaders.dxf",
-    r"AutodeskSamples\architectural_example-imperial.dxf",
-    r"AutodeskSamples\blocks_and_tables_-_imperial.dxf",
-    r"AutodeskSamples\blocks_and_tables_-_metric.dxf",
-    r"AutodeskSamples\civil_example-imperial.dxf",
-    r"AutodeskSamples\colorwh.dxf",
-    r"AutodeskSamples\lineweights.dxf",
-    r"AutodeskSamples\mechanical_example-imperial.dxf",
-    r"AutodeskSamples\plot_screening_and_fill_patterns.dxf",
-    r"AutodeskSamples\tablet.dxf",
-    r"AutodeskSamples\title_block-ansi.dxf",
-    r"AutodeskSamples\title_block-arch.dxf",
-    r"AutodeskSamples\title_block-iso.dxf",
-    r"AutodeskSamples\truetype.dxf",
-    r"AutodeskSamples\visualization_-_aerial.dxf",
-    r"AutodeskSamples\visualization_-_condominium_with_skylight.dxf",
-    r"AutodeskSamples\visualization_-_conference_room.dxf",
-    r"AutodeskSamples\visualization_-_sun_and_sky_demo.dxf",
+    r"AutodeskProducts\Civil3D_2018.dxf",  # 0
+    r"AutodeskProducts\Map3D_2017.dxf",  # 1
+    r"AutodeskSamples\architectural_-_annotation_scaling_and_multileaders.dxf",  # 2
+    r"AutodeskSamples\architectural_example-imperial.dxf",  # 3
+    r"AutodeskSamples\blocks_and_tables_-_imperial.dxf",  # 4
+    r"AutodeskSamples\blocks_and_tables_-_metric.dxf",  # 5
+    r"AutodeskSamples\civil_example-imperial.dxf",  # 6
+    r"AutodeskSamples\colorwh.dxf",  # 7
+    r"AutodeskSamples\lineweights.dxf",  # 8
+    r"AutodeskSamples\mechanical_example-imperial.dxf",  # 9
+    r"AutodeskSamples\plot_screening_and_fill_patterns.dxf",  # 10
+    r"AutodeskSamples\tablet.dxf",  # 11
+    r"AutodeskSamples\title_block-ansi.dxf",  # 12
+    r"AutodeskSamples\title_block-arch.dxf",  # 13
+    r"AutodeskSamples\title_block-iso.dxf",  # 14
+    r"AutodeskSamples\truetype.dxf",  # 15
+    r"AutodeskSamples\visualization_-_aerial.dxf",  # 16
+    r"AutodeskSamples\visualization_-_condominium_with_skylight.dxf",  # 17
+    r"AutodeskSamples\visualization_-_conference_room.dxf",  # 18
+    r"AutodeskSamples\visualization_-_sun_and_sky_demo.dxf",  # 19
 ]
 
 
@@ -74,7 +74,7 @@ def outname(fname: Path) -> Path:
 
 SEP_LINE = '-----------------------------------------------------------------------'
 
-for filename in CADKIT_FILES[:5]:
+for filename in AUTODESK_FILES[8:9]:
     filename = DXFTEST_PATH / filename
     new_name = outname(filename)
     if not new_name.exists():

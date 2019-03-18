@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 __all__ = ['Block', 'EndBlk']
 
 acdb_entity = DefSubclass('AcDbEntity', {
+    'paperspace': DXFAttr(67, default=0, optional=True),
     'layer': DXFAttr(8, default='0'),
 })
 
@@ -86,6 +87,8 @@ class Block(DXFEntity):
 
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
+        if self.dxf.hasattr('paperspace'):
+            tagwriter.write_tag2(67, 1)  # set paper space flag
         self.dxf.export_dxf_attribs(tagwriter, 'layer')
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_begin.name)
@@ -106,10 +109,7 @@ class Block(DXFEntity):
 
     @property
     def is_layout_block(self) -> bool:
-        """
-        True if block is a model space or paper space block definition.
-
-        """
+        """ True if block is a model space or paper space block definition. """
         name = self.dxf.name.lower()
         return name.startswith('*model_space') or name.startswith('*paper_space')
 
@@ -139,6 +139,8 @@ class EndBlk(DXFEntity):
 
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
+        if self.dxf.hasattr('paperspace'):
+            tagwriter.write_tag2(67, 1)  # set paper space flag
         self.dxf.export_dxf_attribs(tagwriter, 'layer')
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_end.name)

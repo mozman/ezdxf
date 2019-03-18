@@ -67,17 +67,17 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'second_segment_angle_constraint': DXFAttr(41, default=0.0),  # Second Segment Angle Constraint
     'leader_line_type': DXFAttr(173, default=1),
     'leader_line_color': DXFAttr(91, default=-1056964608),
-    'leader_line_type_id': DXFAttr(340, default=14),  # handle
+    'leader_line_type_handle': DXFAttr(340),  # handle
     'leader_line_weight': DXFAttr(92, default=-2),
     'enable_landing': DXFAttr(290, default=1),
     'landing_gap': DXFAttr(42, default=2.0),
     'enable_dog_leg': DXFAttr(291, default=1),
     'dog_leg_length': DXFAttr(43, default=8),
     'name': DXFAttr(3, default='Standard'),
-    'arrow_head_id': DXFAttr(341, default=0),
+    'arrow_head_handle': DXFAttr(341),  # no handle is default arrow 'closed filled'
     'arrow_head_size': DXFAttr(44, default=4),
     'default_mtext_contents': DXFAttr(300, default=''),
-    'mtext_style_id': DXFAttr(342, default=11),
+    'text_style_handle': DXFAttr(342),  # handle to text style 'Standard'
     'text_left_attachment_type': DXFAttr(174, default=1),
     'text_angle_type': DXFAttr(175, default=1),
     'text_alignment_type': DXFAttr(176, default=0),
@@ -88,7 +88,7 @@ acdb_mleader_style = DefSubclass('AcDbMLeaderStyle', {
     'text_align_always_left': DXFAttr(297, default=0),
     'align_space': DXFAttr(46, default=4),
     'enable_block_content_scale': DXFAttr(293),
-    'block_content_id': DXFAttr(343, default=0),
+    'block_content_handle': DXFAttr(343),
     'block_content_color': DXFAttr(94, default=-1056964608),
     'block_content_scale_x': DXFAttr(47, default=1),
     'block_content_scale_y': DXFAttr(49, default=0),
@@ -141,4 +141,7 @@ class MLeaderStyleCollection(ObjectCollection):
     def create_required_entries(self) -> None:
         for name in ('Standard',):
             if name not in self.object_dict:
-                self.new(name)
+                mleader_style = self.new(name)
+                # set standard text style
+                text_style = self.doc.styles.get('Standard')
+                mleader_style.dxf.text_style_handle = text_style.dxf.handle

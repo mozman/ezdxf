@@ -188,7 +188,7 @@ class DXFGraphic(DXFEntity):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_entity.name)
 
         self.dxf.export_dxf_attribs(tagwriter, [
-            'layer', 'linetype', 'material_handle', 'color', 'paperspace', 'lineweight', 'ltscale', 'true_color',
+            'paperspace', 'layer', 'linetype', 'material_handle', 'color', 'lineweight', 'ltscale', 'true_color',
             'color_name', 'transparency', 'plotstyle_enum', 'plotstyle_handle', 'shadow_mode',
             'visualstyle_handle',
         ])

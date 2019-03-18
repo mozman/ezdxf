@@ -6,13 +6,13 @@
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF12, DXF2013
-from ezdxf.drawing import Drawing as Drawing2
+from ezdxf.drawing import Drawing
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, DXFInfo
+    from ezdxf.eztypes import DXFInfo
 
 
-def new(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing2':
+def new(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None) -> 'Drawing':
     """
     Create a new DXF drawing.
 
@@ -40,13 +40,13 @@ def new(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None
                   - 'visualstyles ... setup 25 standard visual styles
 
     """
-    doc = Drawing2.new(dxfversion)
+    doc = Drawing.new(dxfversion)
     if setup:
         setup_drawing(doc, topics=setup)
     return doc
 
 
-def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
+def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawing':
     """
     Read DXF drawing from a text stream, which only needs a readline() method.
 
@@ -77,7 +77,7 @@ def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawi
     return Drawing.read(stream, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
 
-def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing2':
+def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, filter_stack=None) -> 'Drawing':
     """
     Read DXF drawing specified by *filename* from file system.
 

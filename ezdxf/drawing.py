@@ -123,11 +123,14 @@ class Drawing:
         """ Common setup tasks for new and loaded DXF drawings. """
         self.groups = GroupCollection(self)
         self.materials = MaterialCollection(self)
-        self.mleader_styles = MLeaderStyleCollection(self)
+
         self.mline_styles = MLineStyleCollection(self)
         # all required internal structures are ready
         # now do the stuff to please AutoCAD
         self._create_required_table_entries()
+
+        # mleader_styles requires text styles
+        self.mleader_styles = MLeaderStyleCollection(self)
         self._set_required_layer_attributes()
         self._setup_metadata()
 

@@ -102,7 +102,7 @@ class Linetype(DXFEntity):
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_linetype.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'description', 'flags'])
+        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'description'])
         if self.pattern_tags:
             self.pattern_tags.export_dxf(tagwriter)
 
