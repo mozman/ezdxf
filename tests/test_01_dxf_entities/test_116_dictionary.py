@@ -15,6 +15,7 @@ class MockDoc:
 
     def __init__(self):
         self.entitydb = MockDoc.MockEntityDB()
+        self.dxfversion = 'AC1015'
 
 
 class TestNoneEmptyDXFDict:

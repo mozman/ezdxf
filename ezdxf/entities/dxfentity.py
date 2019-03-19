@@ -266,14 +266,15 @@ class DXFNamespace:
 
 
 class SubclassProcessor:
-    def __init__(self, tags: ExtendedTags, r12=None):
+    def __init__(self, tags: ExtendedTags, dxfversion=None):
         if len(tags.subclasses) == 0:
             raise ValueError('Invalid tags.')
         self.subclasses = list(tags.subclasses)  # type: List[Tags] # copy subclasses
+        self.dxfversion = dxfversion
         # DXF R12 and prior have no subclass marker system, all tags of an entity in one flat list
         # Where later DXF versions have at least 2 subclasses base_class and AcDbEntity
         # Exception CLASS has also only one subclass and no subclass marker, handled as DXF R12 entity
-        self.r12 = len(self.subclasses) == 1 if r12 is None else r12
+        self.r12 = (dxfversion == DXF12) or (len(self.subclasses) == 1)
         self.name = tags.dxftype()
         try:
             self.handle = tags.get_handle()
@@ -515,7 +516,11 @@ class DXFEntity:
                 self.xdata = XData(tags.xdata)  # same process for every entity
             if tags.embedded_objects:
                 self.embedded_objects = EmbeddedObjects(tags.embedded_objects)  # same process for every entity
-            processor = SubclassProcessor(tags)
+            if self.doc:
+                dxfversion = self.doc.dxfversion
+            else:  # test cases
+                dxfversion = None
+            processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
     @classmethod
