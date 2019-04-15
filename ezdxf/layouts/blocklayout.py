@@ -25,6 +25,14 @@ class BlockLayout(BaseLayout):
         return entity in self.entity_space
 
     @property
+    def block(self):
+        return self.block_record.block
+
+    @property
+    def endblk(self):
+        return self.block_record.endblk
+
+    @property
     def name(self) -> str:
         """ Get block name """
         return self.block_record.dxf.name

@@ -660,8 +660,14 @@ class LineEdge:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(72, 1)  # edge type
-        tagwriter.write_vertex(10, self.start)
-        tagwriter.write_vertex(11, self.end)
+
+        x, y, *_ = self.start
+        tagwriter.write_tag2(10, float(x))
+        tagwriter.write_tag2(20, float(y))
+
+        x, y, *_ = self.end
+        tagwriter.write_tag2(11, float(x))
+        tagwriter.write_tag2(21, float(y))
 
 
 class ArcEdge:
@@ -693,7 +699,9 @@ class ArcEdge:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(72, 2)  # edge type
-        tagwriter.write_vertex(10, self.center)
+        x, y, *_ = self.center
+        tagwriter.write_tag2(10, float(x))
+        tagwriter.write_tag2(20, float(y))
         tagwriter.write_tag2(40, self.radius)
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
@@ -733,8 +741,12 @@ class EllipseEdge:
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         tagwriter.write_tag2(72, 3)  # edge type
-        tagwriter.write_vertex(10, self.center)
-        tagwriter.write_vertex(11, self.major_axis)
+        x, y, *_ = self.center
+        tagwriter.write_tag2(10, float(x))
+        tagwriter.write_tag2(20, float(y))
+        x, y, *_ = self.major_axis
+        tagwriter.write_tag2(11, float(x))
+        tagwriter.write_tag2(21, float(y))
         tagwriter.write_tag2(40, self.ratio)
         tagwriter.write_tag2(50, self.start_angle)
         tagwriter.write_tag2(51, self.end_angle)
@@ -752,8 +764,9 @@ class SplineEdge:
         self.control_points = []  # type: List[Tuple[float, float]]
         self.fit_points = []  # type: List[Tuple[float, float]]
         self.weights = []  # type: List[float]
-        self.start_tangent = (0, 0)  # type: Tuple[float, float]
-        self.end_tangent = (0, 0)  # type: Tuple[float, float]
+        # do not set tangents by default to (0, 0)
+        self.start_tangent = None  # type: Optional[Tuple[float, float]]
+        self.end_tangent = None  # type: Optional[Tuple[float, float]]
 
     @classmethod
     def load_tags(cls, tags: Tags) -> 'SplineEdge':
@@ -798,8 +811,9 @@ class SplineEdge:
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
-        for value in self.control_points:
-            tagwriter.write_vertex(10, (float(value[0]), float(value[1])))
+        for x, y, *_ in self.control_points:
+            tagwriter.write_tag2(10, float(x))
+            tagwriter.write_tag2(20, float(y))
 
         # build weights list, optional
         for value in self.weights:
@@ -809,11 +823,19 @@ class SplineEdge:
         # fit points have to be present and valid, otherwise AutoCAD crashes
         # edit 2016-12-20: this is not true - there are examples with no fit points and without crashing AutoCAD
         write_tag(97, len(self.fit_points))
-        for value in self.fit_points:
-            tagwriter.write_vertex(11, (float(value[0]), float(value[1])))
+        for x, y, *_ in self.fit_points:
+            tagwriter.write_tag2(11, float(x))
+            tagwriter.write_tag2(21, float(y))
 
-        tagwriter.write_vertex(12, (float(self.start_tangent[0]), float(self.start_tangent[1])))
-        tagwriter.write_vertex(13, (float(self.end_tangent[0]), float(self.end_tangent[1])))
+        if self.start_tangent is not None:
+            x, y, *_ = self.start_tangent
+            tagwriter.write_tag2(12, float(x))
+            tagwriter.write_tag2(22, float(y))
+
+        if self.end_tangent is not None:
+            x, y, *_ = self.end_tangent
+            tagwriter.write_tag2(13, float(x))
+            tagwriter.write_tag2(23, float(y))
 
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
