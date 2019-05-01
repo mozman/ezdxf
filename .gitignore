@@ -1,3 +1,6 @@
+.tox
+.cache
+DXFResearch
 build/*
 dist/*
 .idea/*
@@ -7,3 +10,4 @@ examples/*.dxf
 examples/addons/*.dxf
 tools/plotstyles/*
 newctb.ctb
+__pycache__
