@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.lldxf import const
 
-from ezdxf.entities.mtext import MText, split_string_in_chunks, MTextData
+from ezdxf.entities.mtext import MText, split_mtext_string, MTextData
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 
@@ -128,6 +128,11 @@ def layout(doc):
     return doc.modelspace()
 
 
+def test_backslashes():
+    s = r"Swiss 721 (helvetica-like)\P\P\pt7.1875,8.38542;{\H0.6667x;Regular\P\P\pl0.899488,t8.38542;Swiss Light^I\fSwis721 Lt BT|b0|i0|c0|p34;\C5;abcdefghijABCDEFGHIJ123456789!@#$%^ &*()\P\Ftxt.shx|c1;\P\C256;Swiss Light Italic\Ftxt.shx|c0;^I\fSwis721 Lt BT|b0|i"
+    assert len(s) == 253
+
+
 def test_new_short_mtext(layout):
     mtext = layout.add_mtext("a new mtext")
     assert "a new mtext" == mtext.text
@@ -227,20 +232,20 @@ TESTSTR = "0123456789"
 
 def test_empty_string():
     s = ""
-    chunks = split_string_in_chunks(s, 20)
+    chunks = split_mtext_string(s, 20)
     assert 0 == len(chunks)
 
 
 def test_short_string():
     s = TESTSTR
-    chunks = split_string_in_chunks(s, 20)
+    chunks = split_mtext_string(s, 20)
     assert 1 == len(chunks)
     assert TESTSTR == chunks[0]
 
 
 def test_long_string():
     s = TESTSTR * 3
-    chunks = split_string_in_chunks(s, 20)
+    chunks = split_mtext_string(s, 20)
     assert 2 == len(chunks)
     assert TESTSTR*2 == chunks[0]
     assert TESTSTR == chunks[1]
@@ -248,10 +253,19 @@ def test_long_string():
 
 def test_long_string_2():
     s = TESTSTR * 4
-    chunks = split_string_in_chunks(s, 20)
+    chunks = split_mtext_string(s, 20)
     assert 2 == len(chunks)
     assert TESTSTR*2 == chunks[0]
     assert TESTSTR*2 == chunks[1]
+
+
+def test_do_not_split_at_carret():
+    # do not split at '^'
+    s = 'a'*19 + '^Ixxx^'
+    chunks = split_mtext_string(s, 20)
+    assert 2 == len(chunks)
+    assert chunks[0] == 'a' * 19
+    assert chunks[1] == '^Ixxx^'
 
 
 def test_new_buffer():

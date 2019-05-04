@@ -165,7 +165,7 @@ class MText(DXFGraphic):
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        str_chunks = split_string_in_chunks(self.text, size=250)
+        str_chunks = split_mtext_string(self.text, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
         while len(str_chunks) > 1:
@@ -344,16 +344,20 @@ class MTextData:
         self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
 
-def split_string_in_chunks(s: str, size: int = 250) -> List[str]:
+def split_mtext_string(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
         chunk = s[pos:pos + size]
-        chunk_len = len(chunk)
-        if chunk_len:
-            chunks.append(chunk)
-            if chunk_len < size:
+        if len(chunk):
+            if len(chunk) < size:
+                chunks.append(chunk)
                 return chunks
             pos += size
+            # do not split chunks at '^'
+            if chunk[-1] == '^':
+                chunk = chunk[:-1]
+                pos -= 1
+            chunks.append(chunk)
         else:
             return chunks
