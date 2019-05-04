@@ -2,18 +2,19 @@
 News
 ====
 
-Version 0.10a1 - dev
+Version 0.10b0 - dev
 --------------------
 
-Alpha release
+__Version 0.10b0 - 2019-05-04__
 
+- fixed MTEXT and GEODATA text splitting errors (do not split at '^')
 - support for layer true color attribute (DXF R2004+, undocumented)
 - fixed some subclass errors, mostly DXF reference errors
 
 __Version 0.10a0 - 2019-03-15__
 
 - unified entity system for all DXF versions
-- change of DXF version independent of the source DXF version, maybe data loss if changing to an older DXF 
+- saving as later DXF version than the source DXF version is possible, but maybe data loss if saving as an older DXF 
   version than source DXF version (_ezdxf_ is not a DXF converter)
 - `templates` no more needed and removed from package
 - renamed central data object in entities from `DXFEntity.drawing` to `DXFEntity.doc`
@@ -35,7 +36,7 @@ __Version 0.10a0 - 2019-03-15__
 - Options:
     - removed `template_dir`, no more needed
     - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 
-- restructured package, module and tests file organization
+- restructured package, module and test file organization
 
 Version 0.9 - 2019-02-24
 ------------------------
