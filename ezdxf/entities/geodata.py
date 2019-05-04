@@ -10,6 +10,7 @@ from ezdxf.math.vector import Vector
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
+from .mtext import split_mtext_string
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
@@ -184,10 +185,9 @@ class GeoData(DXFObject):
 
     def export_coordinate_system_definition(self, tagwriter: 'TagWriter'):
         text = self.coordinate_system_definition.replace('\n', '^J')
-        while text:
-            part = text[:255]
-            text = text[255:]
-            if text:  # is there remaining text
-                tagwriter.write_tag2(303, part)
-            else:
-                tagwriter.write_tag2(301, part)
+        chunks = split_mtext_string(text, size=255)
+        if len(chunks) == 0:
+            chunks.append("")
+        while len(chunks) > 1:
+            tagwriter.write_tag2(303, chunks.pop(0))
+        tagwriter.write_tag2(301, chunks[0])
