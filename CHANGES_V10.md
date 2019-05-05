@@ -34,10 +34,10 @@ Simple Transformation Interface
 Added a simple transformation interface for graphical entities, but don't expect too much, I only implement
 features which could be done easily and ACIS entities will never be supported.
 
-- `transform(direction)`: move entity in `direction` 
+- `translate(direction)`: move entity in `direction` 
 - `scale(factor)`: scale entity uniform about `factor`
 - `scale_xyz(sx, sy, sz)`: scale entity none uniform about `sx` in x-axis, `sy` ...
-- `rotate(angle, ucs)`: rotated entity `angle` degrees about the x-axis of the given `ucs`
+- `rotate(angle, axis)`: rotated entity `angle` degrees about `axis`
 - `transform(matrix)`: apply transformation `matrix` to entity
 - `to_wcs(ucs)`: transform entity coordinates from ucs into WCS, required OCS transformation for 2D entities included.
 

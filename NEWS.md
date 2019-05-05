@@ -2,8 +2,10 @@
 News
 ====
 
-Version 0.10b1 - dev
+Version 0.10b2 - dev
 --------------------
+
+__Version 0.10b2 - ...__
 
 __Version 0.10b1 - 2019-05-05__
 
