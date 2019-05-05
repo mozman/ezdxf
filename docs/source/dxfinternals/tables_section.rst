@@ -10,5 +10,6 @@ TABLES Section
    vport_table
    linetype_table
    dimstyle_table
+   block_record_table
 
 TODO

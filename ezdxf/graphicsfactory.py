@@ -1123,20 +1123,20 @@ class CreatorInterface:
                    override: dict = None,
                    dxfattribs: dict = None) -> 'Leader':
         """
-        The LEADER entity represents an arrow, made up of one or more vertices (or spline fit points) and an arrowhead.
-        The label or other content to which the LEADER is attached is stored as a separate entity, and is not part of
-        the LEADER itself.
+        The :class:`Leader` entity represents an arrow, made up of one or more vertices (or spline fit points) and an
+        arrowhead. The label or other content to which the :class:`Leader` is attached is stored as a separate entity,
+        and is not part of the :class:`Leader` itself.
 
-        LEADER shares its styling infrastructure with DIMENSION.
+        :class:`Leader` shares its styling infrastructure with :class:`Dimension`.
 
-        By default a LEADER without any annotation is created. For creating more fancy leaders see documentation
-        provided by Autodesk.
+        By default a :class:`Leader` without any annotation is created. For creating more fancy leaders and annotations
+        see documentation provided by Autodesk or `Demystifying DXF: LEADER and MULTILEADER implementation notes <https://atlight.github.io/formats/dxf-leader.html>`_  .
 
         Args:
             vertices: leader vertices (in WCS)
             dimstyle: dimension style name (:class:`DimStyle` table entry), default is "EZDXF"
             override: override :class:`DimStyle` attributes
-            dxfattribs: DXF attributes for :class:`Dimension` entity
+            dxfattribs: DXF attributes for :class:`Leader` entity
 
         """
 

@@ -71,6 +71,7 @@ Entities
     dxfentities/ellipse
     dxfentities/hatch
     dxfentities/image
+    dxfentities/leader
     dxfentities/line
     dxfentities/lwpolyline
     dxfentities/mesh
