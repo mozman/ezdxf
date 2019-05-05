@@ -76,7 +76,7 @@ def test_default_new():
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 7
     assert entity.dxf.dimstyle == 'Standard'
-    assert entity.dxf.has_arrowhead == 0
+    assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
     assert entity.dxf.hookline_direction == 0
@@ -96,7 +96,7 @@ def test_load_from_text(entity):
     assert entity.dxf.layer == '0'
     assert entity.dxf.color == 256, 'default color is 256 (by layer)'
     assert entity.dxf.dimstyle == 'DIMSTYLE'
-    assert entity.dxf.has_arrowhead == 0
+    assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
     assert entity.dxf.hookline_direction == 0

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger('ezdxf')
 
-__all__ = ['Dimension']
+__all__ = ['Dimension', 'OverrideMixin']
 
 acdb_dimension = DefSubclass('AcDbDimension', {
     'version': DXFAttr(280, default=0, dxfversion=DXF2010),  # Version number: 0 = 2010
@@ -111,94 +111,14 @@ acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
 })
 
 
-@register_entity
-class Dimension(DXFGraphic):
-    """ DXF DIMENSION entity """
-    DXFTYPE = 'DIMENSION'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_dimension_dummy)
-    LINEAR = 0
-    ALIGNED = 1
-    ANGULAR = 2
-    DIAMETER = 3
-    RADIUS = 4
-    ANGULAR_3P = 5
-    ORDINATE = 6
-    ORDINATE_TYPE = 64
-    USER_LOCATION_OVERRIDE = 128
-
-    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        dxf = super().load_dxf_attribs(processor)
-        if processor:
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_dimension.name)
-            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension_dummy, index=3)
-            # ignore possible 5. subclass AcDbRotatedDimension, has no content
-            if len(tags) and not processor.r12:
-                processor.log_unprocessed_tags(tags, subclass=acdb_dimension_dummy.name)
-
-        return dxf
-
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
-        # base class export is done by parent class
-        super().export_entity(tagwriter)
-        # AcDbEntity export is done by parent class
-        if tagwriter.dxfversion == DXF12:
-            self.dxf.export_dxf_attribs(tagwriter, [
-                'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'text', 'defpoint2',
-                'defpoint3', 'defpoint4', 'defpoint5', 'leader_length', 'angle', 'horizontal_direction',
-                'oblique_angle', 'text_rotation'
-            ])
-            return
-
-        # else DXF2000+
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimension.name)
-        dim_type = self.dim_type
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'attachment_point',
-            'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'unknown2', 'unknown3',
-            'text', 'oblique_angle', 'text_rotation', 'horizontal_direction', 'extrusion',
-        ])
-
-        if dim_type == 0:  # linear
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
-            # empty but required subclass
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRotatedDimension')
-        elif dim_type == 1:  # aligned
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
-        elif dim_type == 2:  # angular & angulr3p
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb2LineAngularDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
-        elif dim_type == 3:  # diameter
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDiametricDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
-        elif dim_type == 4:  # radius
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRadialDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
-        elif dim_type == 5:  # angular & angulr3p
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
-        elif dim_type == 6:  # ordinate
-            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbOrdinateDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint3', 'defpoint3'])
-
-    @property
-    def dim_type(self) -> int:
-        return self.dxf.dimtype & 7
-
+class OverrideMixin:
     def dim_style(self) -> 'DimStyle':
         if self.doc is None:
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
 
         dim_style_name = self.dxf.dimstyle
         # raises ValueError if not exists, but all used dim styles should exists!
-        return self.drawing.dimstyles.get(dim_style_name)
-
-    def cast(self) -> 'Dimension':  # for modern dimension lines
-        return self
+        return self.doc.dimstyles.get(dim_style_name)
 
     def dim_style_attributes(self) -> 'DXFAttributes':
         return self.dim_style().DXFATTRIBS
@@ -396,6 +316,88 @@ class Dimension(DXFGraphic):
             if group_code in codes:
                 attribs[codes[group_code]] = value
         return self.dim_style_attr_handles_to_names(attribs)
+
+
+@register_entity
+class Dimension(DXFGraphic, OverrideMixin):
+    """ DXF DIMENSION entity """
+    DXFTYPE = 'DIMENSION'
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_dimension, acdb_dimension_dummy)
+    LINEAR = 0
+    ALIGNED = 1
+    ANGULAR = 2
+    DIAMETER = 3
+    RADIUS = 4
+    ANGULAR_3P = 5
+    ORDINATE = 6
+    ORDINATE_TYPE = 64
+    USER_LOCATION_OVERRIDE = 128
+
+    def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension)
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_dimension.name)
+            tags = processor.load_dxfattribs_into_namespace(dxf, acdb_dimension_dummy, index=3)
+            # ignore possible 5. subclass AcDbRotatedDimension, has no content
+            if len(tags) and not processor.r12:
+                processor.log_unprocessed_tags(tags, subclass=acdb_dimension_dummy.name)
+
+        return dxf
+
+    def export_entity(self, tagwriter: 'TagWriter') -> None:
+        """ Export entity specific data as DXF tags. """
+        # base class export is done by parent class
+        super().export_entity(tagwriter)
+        # AcDbEntity export is done by parent class
+        if tagwriter.dxfversion == DXF12:
+            self.dxf.export_dxf_attribs(tagwriter, [
+                'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'text', 'defpoint2',
+                'defpoint3', 'defpoint4', 'defpoint5', 'leader_length', 'angle', 'horizontal_direction',
+                'oblique_angle', 'text_rotation'
+            ])
+            return
+
+        # else DXF2000+
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimension.name)
+        dim_type = self.dim_type
+        self.dxf.export_dxf_attribs(tagwriter, [
+            'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'attachment_point',
+            'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'unknown2', 'unknown3',
+            'text', 'oblique_angle', 'text_rotation', 'horizontal_direction', 'extrusion',
+        ])
+
+        if dim_type == 0:  # linear
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
+            # empty but required subclass
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRotatedDimension')
+        elif dim_type == 1:  # aligned
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
+        elif dim_type == 2:  # angular & angulr3p
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb2LineAngularDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
+        elif dim_type == 3:  # diameter
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbDiametricDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
+        elif dim_type == 4:  # radius
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRadialDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
+        elif dim_type == 5:  # angular & angulr3p
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
+        elif dim_type == 6:  # ordinate
+            tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbOrdinateDimension')
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint3', 'defpoint3'])
+
+    @property
+    def dim_type(self) -> int:
+        return self.dxf.dimtype & 7
+
+    def cast(self) -> 'Dimension':  # for modern dimension lines
+        return self
 
 
 # todo: DIMASSOC

@@ -16,9 +16,10 @@ from ezdxf.render.dimension import multi_point_linear_dimension
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import UCS, Vertex, Drawing, DXFGraphic, DimStyleOverride
+    from ezdxf.eztypes import UCS, Vertex, Drawing, DXFGraphic
     from ezdxf.eztypes import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
+    from ezdxf.eztypes import Leader
     from ezdxf.eztypes import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef, Body, Region, Solid3d
     from ezdxf.eztypes import LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
@@ -1115,3 +1116,45 @@ class CreatorInterface:
     def add_arrow_blockref(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,
                            dxfattribs: dict = None) -> Vector:
         return ARROWS.insert_arrow(self, name=name, insert=insert, size=size, rotation=rotation, dxfattribs=dxfattribs)
+
+    def add_leader(self,
+                   vertices: Iterable['Vertex'],
+                   dimstyle: str = 'EZDXF',
+                   override: dict = None,
+                   dxfattribs: dict = None) -> 'Leader':
+        """
+        The LEADER entity represents an arrow, made up of one or more vertices (or spline fit points) and an arrowhead.
+        The label or other content to which the LEADER is attached is stored as a separate entity, and is not part of
+        the LEADER itself.
+
+        LEADER shares its styling infrastructure with DIMENSION.
+
+        By default a LEADER without any annotation is created. For creating more fancy leaders see documentation
+        provided by Autodesk.
+
+        Args:
+            vertices: leader vertices (in WCS)
+            dimstyle: dimension style name (:class:`DimStyle` table entry), default is "EZDXF"
+            override: override :class:`DimStyle` attributes
+            dxfattribs: DXF attributes for :class:`Dimension` entity
+
+        """
+
+        def filter_unsupported_dimstyle_attributes(attribs: dict) -> dict:
+            return {k: v for k, v in attribs.items() if k not in LEADER_UNSUPPORTED_DIMSTYLE_ATTRIBS}
+
+        dxfattribs = dxfattribs or {}
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs.setdefault('annotation_type', 3)
+        leader = self.new_entity('LEADER', dxfattribs)  # type: Leader
+        leader.set_vertices(vertices)
+        if override:
+            override = filter_unsupported_dimstyle_attributes(override)
+            if 'dimldrblk' in override:
+                self.doc.acquire_arrow(override['dimldrblk'])
+            # Class Leader() supports the required OverrideMixin() interface
+            DimStyleOverride(cast('Dimension', leader), override=override).commit()
+        return leader
+
+
+LEADER_UNSUPPORTED_DIMSTYLE_ATTRIBS = {'dimblk', 'dimblk1', 'dimblk2'}

@@ -7,6 +7,8 @@ Version 0.10b1 - dev
 
 __Version 0.10b1 - ...__
 
+- NEW: adding LEADER entities
+
 __Version 0.10b0 - 2019-05-04__
 
 - fixed MTEXT and GEODATA text splitting errors (do not split at '^')

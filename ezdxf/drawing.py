@@ -336,6 +336,16 @@ class Drawing:
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
 
+    def acquire_arrow(self, name: str):
+        """ For standard ACAD and ezdxf arrows create block definitions if required, otherwise check if block definition
+        `name` exists.
+        """
+        from ezdxf.render.arrows import ARROWS
+        if ARROWS.is_acad_arrow(name) or ARROWS.is_ezdxf_arrow(name):
+            ARROWS.create_block(self.blocks, name)
+        elif name not in self.blocks:
+            raise DXFValueError('Arrow block "{}" does not exist.'.format(name))
+
     def saveas(self, filename, encoding=None) -> None:
         self.filename = filename
         self.save(encoding=encoding)

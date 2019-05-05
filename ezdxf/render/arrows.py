@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Iterable
 from ezdxf.math import Vec2, Shape2d
 from .forms import open_arrow, arrow2
 
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType
 

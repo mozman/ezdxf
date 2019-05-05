@@ -315,6 +315,8 @@ class DimStyle(DXFEntity):
             blocks = self.doc.blocks
             for b in (blk, blk1, blk2, ldrblk):
                 if ARROWS.is_acad_arrow(b):  # not real blocks
+                    # todo: create default arrow blocks!!!
+                    ARROWS.create_block(blocks, b)
                     continue
                 if b and b not in blocks:
                     raise DXFValueError('BLOCK "{}" does not exist.'.format(blk))

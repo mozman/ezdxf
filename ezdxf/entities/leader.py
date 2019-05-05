@@ -9,9 +9,10 @@ from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .dimension import OverrideMixin
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex
 
 __all__ = ['Leader']
 
@@ -19,7 +20,7 @@ acdb_leader = DefSubclass('AcDbLeader', {
     'dimstyle': DXFAttr(3, default='Standard'),
 
     # Arrowhead flag: 0/1 = no/yes
-    'has_arrowhead': DXFAttr(71, default=0, optional=True),
+    'has_arrowhead': DXFAttr(71, default=1, optional=True),
 
     # Leader path type: 0 = Straight line segments; 1 = Spline
     'path_type': DXFAttr(72, default=0, optional=True),
@@ -40,10 +41,10 @@ acdb_leader = DefSubclass('AcDbLeader', {
     'has_hookline': DXFAttr(75, default=0, optional=True),
 
     # Text annotation height
-    'text_height': DXFAttr(40, default=1),
+    'text_height': DXFAttr(40, default=1, optional=True),
 
     # Text annotation width
-    'text_width': DXFAttr(41, default=1),
+    'text_width': DXFAttr(41, default=1, optional=True),
 
     # 76: Number of vertices in leader (ignored for OPEN)
     # 10, 20, 30: Vertex coordinates (one entry for each vertex)
@@ -52,9 +53,9 @@ acdb_leader = DefSubclass('AcDbLeader', {
     'block_color': DXFAttr(77, default=7, optional=True),
 
     # Hard reference to associated annotation (mtext, tolerance, or insert entity)
-    'annotation_handle': DXFAttr(340, default='0'),
+    'annotation_handle': DXFAttr(340, default='0', optional=True),
 
-    'normal_vector': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1)),
+    'normal_vector': DXFAttr(210, xtype=XType.point3d, default=Vector(0, 0, 1), optional=True),
 
     # 'horizontal' direction for leader
     'horizontal_direction': DXFAttr(211, xtype=XType.point3d, default=Vector(1, 0, 0), optional=True),
@@ -63,7 +64,7 @@ acdb_leader = DefSubclass('AcDbLeader', {
     'leader_offset_block_ref': DXFAttr(212, xtype=XType.point3d, default=Vector(0, 0, 0), optional=True),
 
     # Offset of last leader vertex from annotation placement point
-    'leader_offset_annotation_placement': DXFAttr(213, xtype=XType.point3d, default=Vector(0, 0, 0)),
+    'leader_offset_annotation_placement': DXFAttr(213, xtype=XType.point3d, default=Vector(0, 0, 0), optional=True),
 
     # Xdata belonging to the application ID "ACAD" follows a leader entity if any dimension overrides
     # have been applied to this entity. See Dimension Style Overrides.
@@ -71,7 +72,7 @@ acdb_leader = DefSubclass('AcDbLeader', {
 
 
 @register_entity
-class Leader(DXFGraphic):
+class Leader(DXFGraphic, OverrideMixin):
     """ DXF LEADER entity """
     DXFTYPE = 'LEADER'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_leader)
@@ -123,3 +124,6 @@ class Leader(DXFGraphic):
         tagwriter.write_tag2(76, len(self.vertices))
         for vertex in self.vertices:
             tagwriter.write_vertex(10, vertex)
+
+    def set_vertices(self, vertices: Iterable['Vertex']):
+        self.vertices = [Vector(v) for v in vertices]

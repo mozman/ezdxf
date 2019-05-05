@@ -74,7 +74,7 @@ def outname(fname: Path) -> Path:
 
 SEP_LINE = '-----------------------------------------------------------------------'
 
-for filename in [AUTODESK_FILES[15], AUTODESK_FILES[1]]:
+for filename in [CADKIT_FILES[25]]:
     filename = DXFTEST_PATH / filename
     new_name = outname(filename)
     if not new_name.exists():
