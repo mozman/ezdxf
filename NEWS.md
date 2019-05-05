@@ -5,9 +5,9 @@ News
 Version 0.10b1 - dev
 --------------------
 
-__Version 0.10b1 - ...__
+__Version 0.10b1 - 2019-05-05__
 
-- NEW: adding LEADER entities
+- NEW: support for adding LEADER entities
 
 __Version 0.10b0 - 2019-05-04__
 
