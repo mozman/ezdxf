@@ -28,21 +28,3 @@ later, but the penalty is only ~1.5x to 2x and is only noticeable at really larg
 
 CAUTION: SOME DATA MAYBE LOST BY MODIFYING EXISTING DXF FILES.
 
-Simple Transformation Interface
--------------------------------
-
-Added a simple transformation interface for graphical entities, but don't expect too much, I only implement
-features which could be done easily and ACIS entities will never be supported.
-
-- `translate(direction)`: move entity in `direction` 
-- `scale(factor)`: scale entity uniform about `factor`
-- `scale_xyz(sx, sy, sz)`: scale entity none uniform about `sx` in x-axis, `sy` ...
-- `rotate(angle, axis)`: rotated entity `angle` degrees about `axis`
-- `transform(matrix)`: apply transformation `matrix` to entity
-- `to_wcs(ucs)`: transform entity coordinates from ucs into WCS, required OCS transformation for 2D entities included.
-
-Not every entity will support all transformations and will raise `DXFUnsupportedFeature` for unsupported features or 
-use argument`ignore=True` to silently skip entity, if transformation is not supported. 
-
-And _ezdxf_ is still not a CAD application.
-
