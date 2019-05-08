@@ -158,9 +158,10 @@ def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vec
     return Vector(-size, h), Vector(0, 0), Vector(-size, -h), Vector(-size + back_step, 0)
 
 
-def ngon(count: int, length: float = None, radius: float = None, rotation: float = 0.) -> Iterable[Vector]:
+def ngon(count: int, length: float = None, radius: float = None, rotation: float = 0.,
+         elevation: float = 0., close: bool = False) -> Iterable[Vector]:
     """
-    Returns the corners of a regular polygon as iterable of Vector (z=0). The polygon size is determined by the
+    Returns the corners of a regular polygon as iterable of Vector (z=`elevation`). The polygon size is determined by the
     edge `length` or the circum `radius` argument. If both are given `length` will be taken.
 
     Args:
@@ -168,6 +169,8 @@ def ngon(count: int, length: float = None, radius: float = None, rotation: float
         length: length of polygon side
         radius: circum radius
         rotation: rotation angle in radians
+        elevation: z axis for all vertices
+        close: yields first vertex also as last vertex if True.
 
     """
     if count < 3:
@@ -184,14 +187,22 @@ def ngon(count: int, length: float = None, radius: float = None, rotation: float
 
     delta = 2. * pi / count
     angle = rotation
+    first = None
     for _ in range(count):
-        yield Vector(radius * cos(angle), radius * sin(angle))
+        v = Vector(radius * cos(angle), radius * sin(angle), elevation)
+        if first is None:
+            first = v
+        yield v
         angle += delta
+        
+    if close:
+        yield first
 
 
-def star(spikes: int, r1: float, r2: float, rotation: float = 0.) -> Iterable[Vector]:
+def star(spikes: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0.,
+         close: bool = False) -> Iterable[Vector]:
     """
-    Create a star shape as iterable of Vector (z=0).
+    Create a star shape as iterable of Vector (z=`elevation`).
 
     Argument `spikes` defines the count of star spikes, `r1` defines the radius of the "outer" vertices and `r2`
     defines the radius of the "inner" vertices, but this does not mean that `r1` has to greater than `r2`.
@@ -201,6 +212,8 @@ def star(spikes: int, r1: float, r2: float, rotation: float = 0.) -> Iterable[Ve
         r1: radius 1
         r2: radius 2
         rotation: rotation angle in radians
+        elevation: z axis for all vertices
+        close: yields first vertex also as last vertex if True.
 
     """
     if spikes < 3:
@@ -210,11 +223,17 @@ def star(spikes: int, r1: float, r2: float, rotation: float = 0.) -> Iterable[Ve
     if r2 <= 0.:
         raise ValueError('Argument `r2` has to be greater than 0.')
 
-    corners1 = ngon(spikes, radius=r1, rotation=rotation)
-    corners2 = ngon(spikes, radius=r2, rotation=pi / spikes + rotation)
+    corners1 = ngon(spikes, radius=r1, rotation=rotation, elevation=elevation, close=False)
+    corners2 = ngon(spikes, radius=r2, rotation=pi / spikes + rotation, elevation=elevation, close=False)
+    first = None
     for s1, s2 in zip(corners1, corners2):
+        if first is None:
+            first = s1
         yield s1
         yield s2
+
+    if close:
+        yield first
 
 
 def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterable[Vector]:
