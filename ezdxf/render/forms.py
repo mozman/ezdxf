@@ -158,9 +158,68 @@ def arrow2(size: float = 1., angle: float = 30., beta: float = 45.) -> Tuple[Vec
     return Vector(-size, h), Vector(0, 0), Vector(-size, -h), Vector(-size + back_step, 0)
 
 
+def ngon(count: int, length: float = None, radius: float = None, rotation: float = 0.) -> Iterable[Vector]:
+    """
+    Returns the corners of a regular polygon as iterable of Vector (z=0). The polygon size is determined by the
+    edge `length` or the circum `radius` argument. If both are given `length` will be taken.
+
+    Args:
+        count: count of polygon corners
+        length: length of polygon side
+        radius: circum radius
+        rotation: rotation angle in radians
+
+    """
+    if count < 3:
+        raise ValueError('Argument `count` has to be greater than 2.')
+    if length is not None:
+        if length <= 0.:
+            raise ValueError('Argument `length` has to be greater than 0.')
+        radius = length / 2. / sin(pi / count)
+    elif radius is not None:
+        if radius <= 0.:
+            raise ValueError('Argument `radius` has to be greater than 0.')
+    else:
+        raise ValueError('Argument `length` or `radius` required.')
+
+    delta = 2. * pi / count
+    angle = rotation
+    for _ in range(count):
+        yield Vector(radius * cos(angle), radius * sin(angle))
+        angle += delta
+
+
+def star(spikes: int, r1: float, r2: float, rotation: float = 0.) -> Iterable[Vector]:
+    """
+    Create a star shape as iterable of Vector (z=0).
+
+    Argument `spikes` defines the count of star spikes, `r1` defines the radius of the "outer" vertices and `r2`
+    defines the radius of the "inner" vertices, but this does not mean that `r1` has to greater than `r2`.
+
+    Args:
+        spikes: spike count
+        r1: radius 1
+        r2: radius 2
+        rotation: rotation angle in radians
+
+    """
+    if spikes < 3:
+        raise ValueError('Argument `spikes` has to be greater than 2.')
+    if r1 <= 0.:
+        raise ValueError('Argument `r1` has to be greater than 0.')
+    if r2 <= 0.:
+        raise ValueError('Argument `r2` has to be greater than 0.')
+
+    corners1 = ngon(spikes, radius=r1, rotation=rotation)
+    corners2 = ngon(spikes, radius=r2, rotation=pi / spikes + rotation)
+    for s1, s2 in zip(corners1, corners2):
+        yield s1
+        yield s2
+
+
 def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterable[Vector]:
     """
-    Simple translation, faster than a Matrix44 transformation.
+    Translate `vertices` along `vec`, faster than a Matrix44 transformation.
 
     Args:
         vertices: iterable of vertices
@@ -176,7 +235,7 @@ def translate(vertices: Iterable['Vertex'], vec: 'Vertex' = (0, 0, 1)) -> Iterab
 
 def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> Iterable[Vector]:
     """
-    Simple rotation about to z-axis at to origin (0, 0), faster than a Matrix44 transformation.
+    Rotate `vertices` about to z-axis at to origin (0, 0), faster than a Matrix44 transformation.
 
     Args:
         vertices: iterable of vertices
@@ -190,6 +249,23 @@ def rotate(vertices: Iterable['Vertex'], angle: 0., deg: bool = True) -> Iterabl
         return (Vector(v).rotate_deg(angle) for v in vertices)
     else:
         return (Vector(v).rotate(angle) for v in vertices)
+
+
+def scale(vertices: Iterable['Vertex'], scaling=(1., 1., 1.)) -> Iterable[Vector]:
+    """
+    Scale `vertices` around the origin (0, 0), faster than a Matrix44 transformation.
+
+    Args:
+        vertices: iterable of vertices
+        scaling: scale factors as tuple of floats for x-, y- and z-axis
+
+    Returns: yields scaled vertices
+
+    """
+    sx, sy, sz = scaling
+    for v in vertices:
+        v = Vector(v)
+        yield Vector(v.x * sx, v.y * sy, v.z * sz)
 
 
 def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:

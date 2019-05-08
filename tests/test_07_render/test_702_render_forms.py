@@ -1,10 +1,11 @@
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone, square, box
+from ezdxf.render.forms import circle, close_polygon, cube, extrude, cylinder, cone, square, box, ngon
 from ezdxf.render.forms import open_arrow, arrow2
 from ezdxf.render.forms import spline_interpolation, spline_interpolated_profiles
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form
+from ezdxf.render.forms import translate, rotate, scale
 from ezdxf.math.construct2d import is_close_points
 from ezdxf.math import Vector
 
@@ -142,3 +143,45 @@ def test_rotation_form():
     mesh = rotation_form(count=16, profile=profile, axis=(1, 0, 0))  # rotation axis is the x-axis
     assert len(mesh.vertices) == 16 * 4
     assert len(mesh.faces) == 16 * 3
+
+
+def test_translate():
+    p = [(1, 2, 3), (4, 5, 6)]
+    r = list(translate(p, (3, 2, 1)))
+    assert is_close_points(r[0], (4, 4, 4))
+    assert is_close_points(r[1], (7, 7, 7))
+
+
+def test_scale():
+    p = [(1, 2, 3), (4, 5, 6)]
+    r = list(scale(p, (3, 2, 1)))
+    assert is_close_points(r[0], (3, 4, 3))
+    assert is_close_points(r[1], (12, 10, 6))
+
+
+def test_rotate():
+    p = [(1, 0, 3), (0, 1, 6)]
+    r = list(rotate(p, 90, deg=True))
+    assert is_close_points(r[0], (0, 1, 3))
+    assert is_close_points(r[1], (-1, 0, 6))
+
+
+def test_square_by_radius():
+    corners = list(ngon(4, radius=1))
+    assert len(corners) == 4
+    assert is_close_points(corners[0], (1, 0, 0))
+    assert is_close_points(corners[1], (0, 1, 0))
+    assert is_close_points(corners[2], (-1, 0, 0))
+    assert is_close_points(corners[3], (0, -1, 0))
+
+
+def test_heptagon_by_edge_length():
+    corners = list(ngon(7, length=10))
+    assert len(corners) == 7
+    assert is_close_points(corners[0], (11.523824354812433, 0, 0))
+    assert is_close_points(corners[1], (7.184986963636852, 9.009688679024192, 0))
+    assert is_close_points(corners[2], (-2.564292158181384, 11.234898018587335, 0))
+    assert is_close_points(corners[3], (-10.382606982861683, 5, 0))
+    assert is_close_points(corners[4], (-10.382606982861683, -5, 0))
+    assert is_close_points(corners[5], (-2.564292158181387, -11.234898018587335, 0))
+    assert is_close_points(corners[6], (7.18498696363685, -9.009688679024192, 0))
