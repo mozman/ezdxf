@@ -27,6 +27,14 @@ def build_cylinder(filename, sides=16):
     write_mesh(filename, cylinder)
 
 
+def create_gear(filename, teeth=20, outside_radius=10, width=3, height=2):
+    doc = ezdxf.new('R2000')
+    msp = doc.modelspace()
+    msp.add_lwpolyline(forms.gear(count=teeth, width=width, height=height, radius=outside_radius), dxfattribs={'closed': True})
+    doc.saveas(filename)
+
+
 if __name__ == '__main__':
     build_cylinder("forms_cylinder_16.dxf", sides=16)
     build_rotation_form("forms_rotate_profile_32.dxf", sides=32)
+    create_gear('gear.dxf')

@@ -3,7 +3,7 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
-from math import pi, sin, cos, radians, tan, isclose
+from math import pi, sin, cos, radians, tan, isclose, asin
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.construct2d import is_close_points
 from ezdxf.math.bspline import bspline_control_frame
@@ -165,7 +165,7 @@ def ngon(count: int, length: float = None, radius: float = None, rotation: float
     edge `length` or the circum `radius` argument. If both are given `length` will be taken.
 
     Args:
-        count: count of polygon corners
+        count: count of polygon corners >= 3
         length: length of polygon side
         radius: circum radius
         rotation: rotation angle in radians
@@ -194,21 +194,21 @@ def ngon(count: int, length: float = None, radius: float = None, rotation: float
             first = v
         yield v
         angle += delta
-        
+
     if close:
         yield first
 
 
-def star(spikes: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0.,
+def star(count: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0.,
          close: bool = False) -> Iterable[Vector]:
     """
     Create a star shape as iterable of Vector (z=`elevation`).
 
-    Argument `spikes` defines the count of star spikes, `r1` defines the radius of the "outer" vertices and `r2`
+    Argument `count` defines the count of star spikes, `r1` defines the radius of the "outer" vertices and `r2`
     defines the radius of the "inner" vertices, but this does not mean that `r1` has to greater than `r2`.
 
     Args:
-        spikes: spike count
+        count: spike count >= 3
         r1: radius 1
         r2: radius 2
         rotation: rotation angle in radians
@@ -216,21 +216,76 @@ def star(spikes: int, r1: float, r2: float, rotation: float = 0., elevation: flo
         close: yields first vertex also as last vertex if True.
 
     """
-    if spikes < 3:
-        raise ValueError('Argument `spikes` has to be greater than 2.')
+    if count < 3:
+        raise ValueError('Argument `count` has to be greater than 2.')
     if r1 <= 0.:
         raise ValueError('Argument `r1` has to be greater than 0.')
     if r2 <= 0.:
         raise ValueError('Argument `r2` has to be greater than 0.')
 
-    corners1 = ngon(spikes, radius=r1, rotation=rotation, elevation=elevation, close=False)
-    corners2 = ngon(spikes, radius=r2, rotation=pi / spikes + rotation, elevation=elevation, close=False)
+    corners1 = ngon(count, radius=r1, rotation=rotation, elevation=elevation, close=False)
+    corners2 = ngon(count, radius=r2, rotation=pi / count + rotation, elevation=elevation, close=False)
     first = None
     for s1, s2 in zip(corners1, corners2):
         if first is None:
             first = s1
         yield s1
         yield s2
+
+    if close:
+        yield first
+
+
+def gear(count: int, width: float, height: float, radius: float, elevation: float = 0,
+         close: bool = False) -> Iterable[Vector]:
+    """
+    Create gear (cogwheel) vertices as iterable of Vector (z=`elevation`)
+
+    Warning: this function does not create mechanical correct gears!
+
+    see also: https://en.wikipedia.org/wiki/Gear
+
+    Args:
+        count: teeth count >= 3
+        width: teeth width at outside radius
+        height: teeth height; base radius = outside radius - height
+        radius: outside radius
+        elevation: z axis for all vertices
+        close: yields first vertex also as last vertex if True.
+
+    """
+    if count < 3:
+        raise ValueError('Argument `count` has to be greater than 2.')
+    if radius <= 0.:
+        raise ValueError('Argument `radius` has to be greater than 0.')
+    if width <= 0.:
+        raise ValueError('Argument `width` has to be greater than 0.')
+    if height <= 0.:
+        raise ValueError('Argument `height` has to be greater than 0.')
+    if height >= radius:
+        raise ValueError('Argument `height` has to be smaller than `radius`')
+
+    base_radius = radius - height
+    alpha = asin(width / 2. / radius)
+    beta = (2. * pi - count * alpha) / count
+    angle = 0.
+    side = False
+    first = None
+    for _ in range(2 * count):
+        cos_angle = cos(angle)
+        sin_angle = sin(angle)
+        top = Vector(radius * cos_angle, radius * sin_angle, elevation)
+        bottom = Vector(base_radius * cos_angle, base_radius * sin_angle, elevation)
+        if first is None:
+            first = top
+        if side:
+            top, bottom = bottom, top
+            angle += beta
+        else:
+            angle += alpha
+        yield top
+        yield bottom
+        side = not side
 
     if close:
         yield first

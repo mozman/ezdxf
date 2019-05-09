@@ -67,7 +67,7 @@ def test_overwrite_existing_block(blocks):
     assert len(blocks) == old_len, 'should not create block "TEST"'
 
     blocks.delete_block('Test', safe=False)
-    assert len(blocks) == old_len-1, 'should remove existing block "TEST"'
+    assert len(blocks) == old_len - 1, 'should remove existing block "TEST"'
     blocks.new('Test')
     assert len(blocks) == old_len, 'should create new block "Test"'
 
@@ -116,8 +116,6 @@ def test_delete_block(blocks, dxf12):
 
 def test_safe_delete_block(blocks, dxf12):
     # block names are case insensitive
-    msp = dxf12.modelspace()
-    msp.add_blockref('_archtick', insert=(0, 0))
     with pytest.raises(ezdxf.DXFBlockInUseError):
         blocks.delete_block('_ArchTick', safe=True)
 
@@ -126,10 +124,20 @@ def test_delete_all_blocks(blocks):
     blocks.delete_all_blocks(safe=False)
     blocks = list(blocks)
     # assure not deleting layout blocks
-    assert 2 == len(blocks)
+    assert len(blocks) == 2
     block_names = [block.name for block in blocks]
     block_names.sort()
     assert ['*Model_Space', '*Paper_Space'] == block_names
+
+
+def test_safe_delete_all_blocks(blocks):
+    blocks.delete_all_blocks(safe=True)
+    blocks = list(blocks)
+    # assure not deleting layout blocks
+    assert len(blocks) == 4
+    block_names = [block.name for block in blocks]
+    block_names.sort()
+    assert ['*Model_Space', '*Paper_Space', '_ARCHTICK', '_OPEN30'] == block_names
 
 
 def test_rename_block(blocks):
@@ -183,7 +191,7 @@ def test_dxf2000_delete_block(dxf2000_blocks, dxf2000):
     dxf2000_blocks.delete_block(block_name)
 
     # removed from blocks load_section?
-    assert block_count-1 == len(dxf2000_blocks)
+    assert block_count - 1 == len(dxf2000_blocks)
     assert block_name not in dxf2000_blocks
 
     # all block related management data deleted?
@@ -202,12 +210,12 @@ def test_dxf2000_delete_all_blocks(dxf2000_blocks):
     dxf2000_blocks.delete_all_blocks()
     blocks = list(dxf2000_blocks)
 
-    # assure not deleting layout blocks
-    assert 2 == len(blocks)
+    # assure not deleting layout blocks or arrow blocks
+    assert len(blocks) == 2
 
     block_names = [block.name for block in blocks]
     block_names.sort()
-    assert ['*Model_Space', '*Paper_Space'], block_names
+    assert ['*Model_Space', '*Paper_Space'] == block_names
 
 
 def test_dxf2000_rename_block(dxf2000_blocks):

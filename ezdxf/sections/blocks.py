@@ -7,12 +7,29 @@ from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUs
 from ezdxf.lldxf import const
 from ezdxf.entities.dxfgfx import entity_linker
 from ezdxf.layouts.blocklayout import BlockLayout
+from ezdxf.render.arrows import ARROWS
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, EntityDB, DXFEntity, DXFTagStorage, Table
     from ezdxf.eztypes import EntityFactory, BlockRecord, Block, EndBlk
+
+
+def is_special_block(name: str) -> bool:
+    name = name.upper()
+    # Anonymous dimension, groups and table blocks do not have explicit references by INSERT entity
+    if name.startswith('*D') or name.startswith('*A') or name.startswith('*T'):
+        return True
+
+    # Arrow blocks maybe used in LEADER override without INSERT reference.
+    if ARROWS.is_ezdxf_arrow(name):
+        return True
+    if name.startswith('_'):
+        if ARROWS.is_acad_arrow(ARROWS.arrow_name(name)):
+            return True
+
+    return False
 
 
 class BlocksSection:
@@ -200,7 +217,7 @@ class BlocksSection:
 
         Args:
             name: block name (case insensitive)
-            safe: check if block is still referenced
+            safe: check if block is still referenced or special block without explicit references
 
         Raises:
             DXFKeyError() if block not exists
@@ -208,6 +225,9 @@ class BlocksSection:
 
         """
         if safe:
+            if is_special_block(name):
+                raise DXFBlockInUseError('Special block "{}" maybe used without explicit INSERT entity.'.format(name))
+
             block_refs = self.doc.query("INSERT[name=='{}']i".format(name))  # ignore case
             if len(block_refs):
                 raise DXFBlockInUseError(
@@ -220,7 +240,7 @@ class BlocksSection:
         Delete all blocks except layout blocks (model space or paper space).
 
         Args:
-            safe: check if block is still referenced and ignore them if so
+            safe: check if block is still referenced or special block without explicit references
 
         """
         if safe:
@@ -228,6 +248,8 @@ class BlocksSection:
             references = set(entity.dxf.name.lower() for entity in self.doc.query('INSERT'))
 
         def is_save(name: str) -> bool:
+            if safe and is_special_block(name):
+                return False
             return name.lower() not in references if safe else True
 
         # do not delete blocks defined for layouts
