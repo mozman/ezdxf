@@ -299,7 +299,7 @@ class MTextData:
     STRIKE_START = r'\K;'
     STRIKE_STOP = r'\k;'
     STRIKE = STRIKE_START + '%s' + STRIKE_STOP
-    NEW_LINE = r'\P;'
+    NEW_LINE = r'\P'
     GROUP_START = '{'
     GROUP_END = '}'
     GROUP = GROUP_START + '%s' + GROUP_END

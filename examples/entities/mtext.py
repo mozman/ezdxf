@@ -13,6 +13,9 @@ msp.add_line((-10, -1), (10, -2))
 mtext = msp.add_mtext("This is a long MTEXT line with line wrapping!", attribs)
 mtext.set_bg_color((108, 204, 193))
 
+# line break \P
+msp.add_mtext("Line 1\\PLine 2", attribs).set_location(insert=(0, 10))
+
 filename = 'mtext.dxf'
 doc.saveas(filename)
 print("drawing '%s' created.\n" % filename)
