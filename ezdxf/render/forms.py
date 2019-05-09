@@ -4,6 +4,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 from math import pi, sin, cos, radians, tan, isclose, asin
+from enum import IntEnum
 from ezdxf.math import Vector, Matrix44
 from ezdxf.math.construct2d import is_close_points
 from ezdxf.math.bspline import bspline_control_frame
@@ -236,7 +237,14 @@ def star(count: int, r1: float, r2: float, rotation: float = 0., elevation: floa
         yield first
 
 
-def gear(count: int, width: float, height: float, radius: float, elevation: float = 0,
+class _Gear(IntEnum):
+    TOP_START = 0
+    TOP_END = 1
+    BOTTOM_START = 2
+    BOTTOM_END = 3
+
+
+def gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, elevation: float = 0,
          close: bool = False) -> Iterable[Vector]:
     """
     Create gear (cogwheel) vertices as iterable of Vector (z=`elevation`)
@@ -247,45 +255,58 @@ def gear(count: int, width: float, height: float, radius: float, elevation: floa
 
     Args:
         count: teeth count >= 3
-        width: teeth width at outside radius
+        top_width: teeth width at outside radius
+        bottom_width: teeth width at base radius
         height: teeth height; base radius = outside radius - height
-        radius: outside radius
+        outside_radius: outside radius
         elevation: z axis for all vertices
         close: yields first vertex also as last vertex if True.
 
     """
     if count < 3:
         raise ValueError('Argument `count` has to be greater than 2.')
-    if radius <= 0.:
+    if outside_radius <= 0.:
         raise ValueError('Argument `radius` has to be greater than 0.')
-    if width <= 0.:
+    if top_width <= 0.:
+        raise ValueError('Argument `width` has to be greater than 0.')
+    if bottom_width <= 0.:
         raise ValueError('Argument `width` has to be greater than 0.')
     if height <= 0.:
         raise ValueError('Argument `height` has to be greater than 0.')
-    if height >= radius:
+    if height >= outside_radius:
         raise ValueError('Argument `height` has to be smaller than `radius`')
 
-    base_radius = radius - height
-    alpha = asin(width / 2. / radius)
-    beta = (2. * pi - count * alpha) / count
-    angle = 0.
-    side = False
+    base_radius = outside_radius - height
+    alpha_top = asin(top_width / 2. / outside_radius)  # angle at tooth top
+    alpha_bottom = asin(bottom_width / 2. / base_radius)  # angle at tooth bottom
+    alpha_difference = (alpha_bottom - alpha_top) / 2.  # alpha difference at start and end of tooth
+    beta = (2. * pi - count * alpha_bottom) / count
+    angle = -alpha_top / 2.  # center of first tooth is in x-axis direction
+    state = _Gear.TOP_START
     first = None
-    for _ in range(2 * count):
-        cos_angle = cos(angle)
-        sin_angle = sin(angle)
-        top = Vector(radius * cos_angle, radius * sin_angle, elevation)
-        bottom = Vector(base_radius * cos_angle, base_radius * sin_angle, elevation)
-        if first is None:
-            first = top
-        if side:
-            top, bottom = bottom, top
-            angle += beta
+    for _ in range(4 * count):
+        if state == _Gear.TOP_START or state == _Gear.TOP_END:
+            radius = outside_radius
         else:
-            angle += alpha
-        yield top
-        yield bottom
-        side = not side
+            radius = base_radius
+        v = Vector(radius * cos(angle), radius * sin(angle), elevation)
+
+        if state == _Gear.TOP_START:
+            angle += alpha_top
+        elif state == _Gear.TOP_END:
+            angle += alpha_difference
+        elif state == _Gear.BOTTOM_START:
+            angle += beta
+        elif state == _Gear.BOTTOM_END:
+            angle += alpha_difference
+
+        if first is None:
+            first = v
+        yield v
+
+        state += 1
+        if state > _Gear.BOTTOM_END:
+            state = _Gear.TOP_START
 
     if close:
         yield first

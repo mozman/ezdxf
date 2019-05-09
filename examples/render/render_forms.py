@@ -16,7 +16,7 @@ def write_mesh(filename, mesh):
         print('saving cylinder as "{}": done'.format(filename))
 
 
-def build_rotation_form(filename, alpha=2*math.pi, sides=16):
+def build_rotation_form(filename, alpha=2 * math.pi, sides=16):
     profile = forms.spline_interpolation([(0, 0.1), (1, 1), (3, 1.5), (5, 3)], subdivide=8)  # in xy-plane
     mesh = forms.rotation_form(sides, profile, angle=alpha, axis=(1, 0, 0))
     write_mesh(filename, mesh)
@@ -30,7 +30,10 @@ def build_cylinder(filename, sides=16):
 def create_gear(filename, teeth=20, outside_radius=10, width=3, height=2):
     doc = ezdxf.new('R2000')
     msp = doc.modelspace()
-    msp.add_lwpolyline(forms.gear(count=teeth, width=width, height=height, radius=outside_radius), dxfattribs={'closed': True})
+    msp.add_lwpolyline(
+        forms.gear(count=teeth, top_width=width, bottom_width=width*1.1, height=height, outside_radius=outside_radius),
+        dxfattribs={'closed': True}
+    )
     doc.saveas(filename)
 
 
