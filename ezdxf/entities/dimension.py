@@ -399,6 +399,14 @@ class Dimension(DXFGraphic, OverrideMixin):
     def cast(self) -> 'Dimension':  # for modern dimension lines
         return self
 
+    def destroy(self):
+        """ Destroy associated anonymous block """
+        blocks = self.doc.blocks
+        block_name = self.dxf.geometry
+        if block_name in blocks:
+            blocks.delete_block(block_name, safe=False)
+        super().destroy()
+
 
 # todo: DIMASSOC
 acdb_dim_assoc = DefSubclass('AcDbDimAssoc', {

@@ -221,7 +221,7 @@ class BlocksSection:
 
         Raises:
             DXFKeyError() if block not exists
-            DXFValueError() if block is still referenced, and save is True
+            DXFBlockInUseError() if block is still referenced, and save is True
 
         """
         if safe:
@@ -237,7 +237,8 @@ class BlocksSection:
 
     def delete_all_blocks(self, safe: bool = True) -> None:
         """
-        Delete all blocks except layout blocks (model space or paper space).
+        Delete all blocks except layout blocks (model space or paper space). In safe mode protected blocks are ignored
+        silently.
 
         Args:
             safe: check if block is still referenced or special block without explicit references

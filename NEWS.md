@@ -7,6 +7,9 @@ Version 0.10b2 - dev
 
 __Version 0.10b2 - ...__
 
+- DIMENSION removes associated anonymous block at deletion
+- `safe` block deletion protects not explicit referenced anonymous blocks like DIMENSION blocks and arrow blocks
+ 
 __Version 0.10b1 - 2019-05-05__
 
 - NEW: support for adding LEADER entities
