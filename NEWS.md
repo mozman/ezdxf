@@ -7,8 +7,10 @@ Version 0.10b2 - dev
 
 __Version 0.10b2 - ...__
 
-- DIMENSION removes associated anonymous block at deletion
+- CHANGE: Dimension() removes associated anonymous dimension block at deletion
+- NEW: Dimension.get_geometry_block(), returns the associated anonymous dimension block or None
 - `safe` block deletion protects not explicit referenced anonymous blocks like DIMENSION blocks and arrow blocks
+- NEW: EntityQuery() `first` and `last` properties, to get first or last entity or `None` if query result is empty
  
 __Version 0.10b1 - 2019-05-05__
 
