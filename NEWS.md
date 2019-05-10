@@ -5,24 +5,6 @@ News
 Version 0.10b2 - dev
 --------------------
 
-__Version 0.10b2 - ...__
-
-- CHANGE: `Dimension()` removes associated anonymous dimension block at deletion
-- NEW: `Dimension.get_geometry_block()`, returns the associated anonymous dimension block or None
-- `safe` block deletion protects not explicit referenced anonymous blocks like anonymous dimension blocks and arrow blocks
-- NEW: `EntityQuery()` got `first` and `last` properties, to get first or last entity or `None` if query result is empty
-- NEW: added `ngon()`, `star()` and `gear()` to `ezdxf.render.forms`
- 
-__Version 0.10b1 - 2019-05-05__
-
-- NEW: support for adding LEADER entities
-
-__Version 0.10b0 - 2019-05-04__
-
-- fixed MTEXT and GEODATA text splitting errors (do not split at '^')
-- support for layer true color attribute (DXF R2004+, undocumented)
-- fixed some subclass errors, mostly DXF reference errors
-
 __Version 0.10a0 - 2019-03-15__
 
 - unified entity system for all DXF versions
@@ -49,6 +31,25 @@ __Version 0.10a0 - 2019-03-15__
     - removed `template_dir`, no more needed
     - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 
 - restructured package, module and test file organization
+
+__Version 0.10b0 - 2019-05-04__
+
+- NEW: support for LAYER `true_color` attribute (DXF R2004+, undocumented)
+- BUGFIX: fixed MTEXT and GEODATA text splitting errors (do not split at '^')
+- BUGFIX: fixed some subclass errors, mostly DXF reference errors
+
+__Version 0.10b1 - 2019-05-05__
+
+- NEW: support for adding LEADER entities
+
+__Version 0.10b2 - ...__
+
+- CHANGE: `Dimension()` removes associated anonymous dimension block at deletion
+- CHANGE: `safe` block deletion protects not explicit referenced blocks like anonymous dimension blocks and arrow blocks
+- NEW: `Dimension.get_geometry_block()`, returns the associated anonymous dimension block or `None`
+- NEW: `EntityQuery()` got `first` and `last` properties, to get first or last entity or `None` if query result is empty
+- NEW: added `ngon()`, `star()` and `gear()` to `ezdxf.render.forms`
+ 
 
 Version 0.9 - 2019-02-24
 ------------------------
