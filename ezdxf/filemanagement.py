@@ -27,11 +27,13 @@ def new(dxfversion: str = DXF2013, setup: Union[str, bool, Sequence[str]] = None
     - AC1032 or R2018: AutoCAD 2018 (DXF R2018)
 
     Args:
-        dxfversion: DXF version specifier, default is AC1009
+        dxfversion: DXF version specifier as string, default is R2013
         setup: setup drawing standard for linetypes, text styles, dimension styles
-               None or False: no setup
-               'all' or True: setup all
+               - None or False: no setup
+               - 'all' or True: setup all
+
                list of topics as strings:
+
                   - 'linetypes' ... setup line types
                   - 'styles'  ... setup text styles
                   - 'dimstyles ... setup all dimension styles
@@ -68,7 +70,8 @@ def read(stream: TextIO, legacy_mode: bool = False, filter_stack=None) -> 'Drawi
 
     Args:
         stream: input text stream opened with correct encoding, requires only a readline() method.
-        legacy_mode:  True - adds an extra trouble shooting import layer; False - requires DXF file from modern CAD apps
+        legacy_mode:  True - adds an extra trouble shooting import layer; False - requires DXF file created by a modern
+            CAD application
         filter_stack: interface to put filters between reading layers, see :class:`Drawing.read` for more information
 
     """

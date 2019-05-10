@@ -274,7 +274,8 @@ class Drawing:
         else:
             self.header = HeaderSection.load(header_entities)
         # -----------------------------------------------------------------------------------
-        self._dxfversion = self.header.get('$ACADVER', DXF12)  # type: str # read only  # no $ACADVER -> DXF R12
+        # missing $ACADVER defaults to DXF R12
+        self._dxfversion = self.header.get('$ACADVER', DXF12)  # type: str
         self._loaded_dxfversion = self._dxfversion  # save dxf version of loaded file
         self.encoding = toencoding(self.header.get('$DWGCODEPAGE', 'ANSI_1252'))  # type: str # read/write
         # get handle seed
@@ -288,7 +289,7 @@ class Drawing:
         # create sections:
         self.classes = ClassesSection(self, sections.get('CLASSES', None))
         self.tables = TablesSection(self, sections.get('TABLES', None))
-        # create *Model_space and *Paper_Space BLOCK_RECORDS
+        # create *Model_Space and *Paper_Space BLOCK_RECORDS
         # BlockSection setup takes care about the rest
         self._create_required_block_records()
         # table records available
@@ -325,8 +326,6 @@ class Drawing:
         self.rootdict = self.objects.rootdict
         self.objects.setup_objects_management_tables(self.rootdict)  # create missing tables
 
-        # some applications don't setup properly the model and paper space layouts
-        # repair.setup_layouts(self)
         self.layouts = Layouts.load(self)
         self._finalize_setup()
 
@@ -335,16 +334,6 @@ class Drawing:
             self.block_records.new('*Model_Space')
         if '*Paper_Space' not in self.block_records:
             self.block_records.new('*Paper_Space')
-
-    def acquire_arrow(self, name: str):
-        """ For standard ACAD and ezdxf arrows create block definitions if required, otherwise check if block definition
-        `name` exists.
-        """
-        from ezdxf.render.arrows import ARROWS
-        if ARROWS.is_acad_arrow(name) or ARROWS.is_ezdxf_arrow(name):
-            ARROWS.create_block(self.blocks, name)
-        elif name not in self.blocks:
-            raise DXFValueError('Arrow block "{}" does not exist.'.format(name))
 
     def saveas(self, filename, encoding=None) -> None:
         self.filename = filename
@@ -574,6 +563,16 @@ class Drawing:
             raise DXFValueError("Layout '{}' already exists.".format(name))
         else:
             return self.layouts.new(name, dxfattribs)
+
+    def acquire_arrow(self, name: str):
+        """ For standard ACAD and ezdxf arrows create block definitions if required, otherwise check if block definition
+        `name` exists.
+        """
+        from ezdxf.render.arrows import ARROWS
+        if ARROWS.is_acad_arrow(name) or ARROWS.is_ezdxf_arrow(name):
+            ARROWS.create_block(self.blocks, name)
+        elif name not in self.blocks:
+            raise DXFValueError('Arrow block "{}" does not exist.'.format(name))
 
     def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int], name=None):
         """

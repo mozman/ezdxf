@@ -277,4 +277,4 @@ def test_append_text():
     b = MTextData("abc")
     b += "def" + b.NEW_LINE
 
-    assert "abcdef\\P;" == b.text
+    assert "abcdef\\P" == b.text

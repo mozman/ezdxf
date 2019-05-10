@@ -3,6 +3,7 @@
 import math
 import ezdxf
 from ezdxf.render import forms
+from itertools import cycle
 
 
 def write_mesh(filename, mesh):
@@ -27,11 +28,22 @@ def build_cylinder(filename, sides=16):
     write_mesh(filename, cylinder)
 
 
-def create_gear(filename, teeth=20, outside_radius=10, width=3, height=2):
+def create_gear(filename, teeth=20, outside_radius=10, top_width=2, bottom_width=3, height=2):
     doc = ezdxf.new('R2000')
     msp = doc.modelspace()
+    vertices = zip(
+        forms.gear(
+            count=teeth,
+            top_width=top_width,
+            bottom_width=bottom_width,
+            height=height,
+            outside_radius=outside_radius,
+        ),
+        cycle([0, .1, 0, .1])  # bulge values: top, down flank,  bottom, up flank
+    )
     msp.add_lwpolyline(
-        forms.gear(count=teeth, top_width=width, bottom_width=width*1.1, height=height, outside_radius=outside_radius),
+        vertices,
+        format='vb',
         dxfattribs={'closed': True}
     )
     doc.saveas(filename)
