@@ -98,6 +98,28 @@ class EntityQuery(abc.Sequence):
     def __getitem__(self, item: int) -> 'DXFEntity':
         return self.entities.__getitem__(item)
 
+    @property
+    def first(self):
+        """
+        Returns first entity or None.
+
+        """
+        if len(self.entities):
+            return self.entities[0]
+        else:
+            return None
+
+    @property
+    def last(self):
+        """
+        Returns last entity or None.
+
+        """
+        if len(self.entities):
+            return self.entities[-1]
+        else:
+            return None
+
     def extend(self, entities: Iterable['DXFEntity'], query: str = '*', unique: bool = True) -> 'EntityQuery':
         """
         Extent the query container by entities matching a additional query.

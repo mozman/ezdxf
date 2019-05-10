@@ -30,6 +30,16 @@ def test_select_all(modelspace):
     assert len(result) == 3
 
 
+def test_first(modelspace):
+    result = EntityQuery(modelspace, '*')
+    assert result.first.dxftype() == 'LINE'
+
+
+def test_last(modelspace):
+    result = EntityQuery(modelspace, '*')
+    assert result.last.dxftype() == 'TEXT'
+
+
 def test_new_query_select_all(modelspace):
     result = ezdxf.query.new(modelspace, '*')
     # 1xLINE, 1xPOLYLINE, 0xVERTEX, 0xSEQEND, 1x TEXT

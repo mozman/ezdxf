@@ -79,6 +79,15 @@ EntityQuery Class
     to filter the container. Supports the standard sequence methods and protocols.
     `(Python Sequence Docs) <http://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence>`_
 
+
+.. attribute:: EntityQuery.first
+
+    Returns first entity or `None`.
+
+.. attribute:: EntityQuery.last
+
+    Returns last entity or `None`.
+
 .. method:: EntityQuery.__init__(entities, query='*')
 
    Setup container with entities matching the initial query.
