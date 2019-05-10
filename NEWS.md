@@ -7,10 +7,11 @@ Version 0.10b2 - dev
 
 __Version 0.10b2 - ...__
 
-- CHANGE: Dimension() removes associated anonymous dimension block at deletion
-- NEW: Dimension.get_geometry_block(), returns the associated anonymous dimension block or None
-- `safe` block deletion protects not explicit referenced anonymous blocks like DIMENSION blocks and arrow blocks
-- NEW: EntityQuery() `first` and `last` properties, to get first or last entity or `None` if query result is empty
+- CHANGE: `Dimension()` removes associated anonymous dimension block at deletion
+- NEW: `Dimension.get_geometry_block()`, returns the associated anonymous dimension block or None
+- `safe` block deletion protects not explicit referenced anonymous blocks like anonymous dimension blocks and arrow blocks
+- NEW: `EntityQuery()` got `first` and `last` properties, to get first or last entity or `None` if query result is empty
+- NEW: added `ngon()`, `star()` and `gear()` to `ezdxf.render.forms`
  
 __Version 0.10b1 - 2019-05-05__
 
