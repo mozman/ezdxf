@@ -146,7 +146,8 @@ def test_horizontal_dimline(dxf12):
     block_name = dimline.dxf.geometry
     assert block_name.startswith('*D')
 
-    block = dxf12.blocks.get(block_name)
+    # shortcut for: block = dxf12.blocks.get(block_name)
+    block = dimline.get_geometry_block()
     assert len(list(block.query('TEXT'))) == 1
     assert len(list(block.query('INSERT'))) == 2
     assert len(list(block.query('LINE'))) == 3  # dimension line + 2 extension lines

@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-22
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
@@ -15,7 +15,7 @@ from ezdxf.tools import take2
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout
 
 logger = logging.getLogger('ezdxf')
 
@@ -376,7 +376,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         elif dim_type == 1:  # aligned
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbAlignedDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'angle'])
-        elif dim_type == 2:  # angular & angulr3p
+        elif dim_type == 2:  # angular & angular3p
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb2LineAngularDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
         elif dim_type == 3:  # diameter
@@ -385,7 +385,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         elif dim_type == 4:  # radius
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbRadialDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint4', 'leader_length'])
-        elif dim_type == 5:  # angular & angulr3p
+        elif dim_type == 5:  # angular & angular3p
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDb3dPointAngularDimension')
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
         elif dim_type == 6:  # ordinate
@@ -406,6 +406,17 @@ class Dimension(DXFGraphic, OverrideMixin):
         if block_name in blocks:
             blocks.delete_block(block_name, safe=False)
         super().destroy()
+
+    def get_geometry_block(self) -> Optional['BlockLayout']:
+        """
+        Returns :class:`BlockLayout` of associated anonymous dimension block, which contains the dimension entities as
+        simple DXF entities like LINE, INSERT, POINT and (M)TEXT.
+
+        Returns: None if block name is not set or the block itself does not exist
+
+        """
+        block_name = self.get_dxf_attrib('geometry', None)
+        return self.doc.blocks.get(block_name)
 
 
 # todo: DIMASSOC
