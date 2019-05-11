@@ -23,8 +23,8 @@ What ezdxf is NOT
 -----------------
 
 - *ezdxf* is not a DXF converter: *ezdxf* can not convert between different DXF versions, if you are looking for an
-  appropriate program, use *DWG TrueView* from `Autodesk`_, but the latest version can only convert to the DWG format,
-  for converting between DXF versions you need at least AutoCAD LT.
+  appropriate application, try the free `ODAFileConverter`_ from the `Open Design Alliance`_, which converts between
+  different DXF version and also between the DXF and the DWG file format.
 - *ezdxf* is not a CAD file format converter: *ezdxf* can not convert DXF files to **ANY** other format, like SVG, PDF
   or DWG
 - *ezdxf* is not a DXF renderer, it does not create a visual representation of the DXF file content (see above).
@@ -68,6 +68,10 @@ License
 *ezdxf* is licensed under the very liberal MIT-License_.
 
 .. _Autodesk: http://usa.autodesk.com/
+
+.. _Open Design Alliance: https://www.opendesign.com/
+
+.. _ODAFileConverter: https://www.opendesign.com/guestfiles/oda_file_converter
 
 .. _DXF: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3
 

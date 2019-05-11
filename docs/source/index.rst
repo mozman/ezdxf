@@ -49,7 +49,9 @@ Issue Tracker at GitHub: http://github.com/mozman/ezdxf/issues
 Questions and Feedback at Google Groups
 ---------------------------------------
 
-https://groups.google.com/d/forum/python-ezdxf
+Please post questions at the `forum <https://groups.google.com/d/forum/python-ezdxf>`_ or
+`stack overflow <https://stackoverflow.com/>`_ to make answers available to other users as well.
+
 
 Contents
 ========

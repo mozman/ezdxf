@@ -126,4 +126,7 @@ Manfred
 Contact
 -------
 
+Please post questions at the [forum](https://groups.google.com/d/forum/python-ezdxf) or 
+[stack overflow](https://stackoverflow.com/) to make answers available to other users as well.
+
 ezdxf@mozman.at
