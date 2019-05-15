@@ -445,7 +445,7 @@ def linear_tutorial_using_tolerances(version='R2000'):
     """
     Shows usage of tolerances for the dimension text.
 
-    ezdxf uses MTEXT features for tolerance rendering and therefor requires DXF R2000+, but if you are using a
+    ezdxf uses MTEXT features for tolerance rendering and therefore requires DXF R2000+, but if you are using a
     friendly CAD application like BricsCAD, you can let the CAD application do the rendering job, be aware this files
     are not AutoCAD compatible.
 
@@ -478,7 +478,7 @@ def linear_tutorial_using_limits(version='R2000'):
     Shows usage of limits for the dimension text, limits are the lower and upper limit for the measured distance, the
     measurement itself is not shown.
 
-    ezdxf uses MTEXT features for limits rendering and therefor requires DXF R2000+, but if you are using a
+    ezdxf uses MTEXT features for limits rendering and therefore requires DXF R2000+, but if you are using a
     friendly CAD application like BricsCAD, you can let the CAD application do the rendering job, be aware this files
     are not AutoCAD compatible.
 

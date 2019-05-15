@@ -255,7 +255,7 @@ LINKED_ENTITIES = {
 
 
 # todo: MTEXT attached to ATTRIB & ATTDEF
-# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT') therefor separated entity, but without the
+# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT') therefore separated entity, but without the
 # base class: no handle, no owner nor AppData, and a limited AcDbEntity subclass.
 # Detect attached entities (more than MTEXT?) by required but missing handle and owner tags
 # use DXFEntity.link_entity() for linking to preceding entity, INSERT & POLYLINE do not have attached entities, so reuse

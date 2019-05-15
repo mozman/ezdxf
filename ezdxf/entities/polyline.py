@@ -76,7 +76,7 @@ class Polyline(DXFGraphic):
         self.seqend = None  # type: SeqEnd
 
     def linked_entities(self) -> Iterable['DXFVertex']:
-        # dont't yield seqend here, because it is not a DXFGraphic entity
+        # don't yield seqend here, because it is not a DXFGraphic entity
         return self.vertices
 
     def link_entity(self, entity: 'DXFEntity') -> None:

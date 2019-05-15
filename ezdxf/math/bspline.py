@@ -357,7 +357,7 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
         degree: degree of B-spline (order = degree + 1)
         knots: knot vector
 
-    Returns: basis vector as list fo floats, len(basis) == count
+    Returns: basis vector as list of floats, len(basis) == count
 
     """
     assert len(knots) == (count + degree + 1)
@@ -654,7 +654,7 @@ class BSpline:
     """
     Calculate the points of a B-spline curve, using an uniform open knot vector ("clamped").
 
-    Accepts 2d points as definition points, but output ist always 3d (z-axis is 0).
+    Accepts 2d points as definition points, but output is always 3d (z-axis is 0).
 
     """
 

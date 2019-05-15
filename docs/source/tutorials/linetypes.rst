@@ -101,7 +101,7 @@ Example for complex line type TEXT::
 
 
 The pattern always starts with an ``A``, the following float values have the same meaning as for simple line types, a
-value > 0 is a line, a value < 0 is a gap, and a 0 ist a point, the ``[`` starts the complex part of the line pattern.
+value > 0 is a line, a value < 0 is a gap, and a 0 is a point, the ``[`` starts the complex part of the line pattern.
 A following text in quotes defines a TEXT type, a following text without quotes defines a SHAPE type, in .lin files the
 shape type is a shape name, but ezdxf can not translate this name into the required shape file index, so *YOU* have to
 translate this name into the shape file index (e.g. saving the file with AutoCAD as DXF and searching for the line type

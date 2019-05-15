@@ -43,7 +43,7 @@ class Insert(DXFGraphic):
         self.seqend = None  # type: SeqEnd
 
     def linked_entities(self) -> Iterable['DXFEntity']:
-        # dont't yield seqend here, because it is not a DXFGraphic entity
+        # don't yield seqend here, because it is not a DXFGraphic entity
         return self.attribs
 
     def link_entity(self, entity: 'DXFGraphic') -> None:
