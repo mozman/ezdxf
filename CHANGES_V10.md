@@ -1,8 +1,5 @@
-Changes Log for ezdxf v0.10
-===========================
-
 New Entity System
------------------
+=================
 
 Complete rewrite of the entity system by keeping the high level interface unchanged, changes for users should be 
 minimal, but there are some greater changes that could impact users too. 
