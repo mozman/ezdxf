@@ -167,7 +167,7 @@ class ConstructionRay:
 
 class ConstructionLine(ConstructionTool):
     """
-    ConstructionLine is similar to ConstructionRay, but has a start and endpoint and therefor also an direction.
+    ConstructionLine is similar to ConstructionRay, but has a start and endpoint and therefore also an direction.
     The direction goes from start to end, 'left of line' is always in relation to this line direction.
 
     """

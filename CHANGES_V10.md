@@ -11,7 +11,7 @@ Entities are no more stored as tag lists, instead as proper Python objects like 
 versions, by overhauling the complete system I decided to use a unified entity system for __ALL__ DXF versions. 
 
 Advantage is a faster and __easier__ internal processing, and you can save as any DXF version you want by the cost
-of loosing data and attributes if you choose to save in an older DXF version,  because _ezdxf_ is still not a DXF 
+of losing data and attributes if you choose to save in an older DXF version,  because _ezdxf_ is still not a DXF 
 converter or CAD application. Otherwise saving an older DXF versions as a newer DXF version should work properly e.g. 
 open a DXF R12 and save it as DXF R2018.
 

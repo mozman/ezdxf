@@ -67,7 +67,7 @@ class Bezier:
     """
     A general Bezier curve.
 
-    Accepts 2d points as definition points, but output ist always 3d (z-axis is 0).
+    Accepts 2d points as definition points, but output is always 3d (z-axis is 0).
 
     """
 

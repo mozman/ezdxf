@@ -33,7 +33,7 @@ def test_section(doc):
 
 def test_viewports(doc):
     assert len(doc.viewports) == 1
-    # viewport table can have multiple entries with same name, therefor returns a list
+    # viewport table can have multiple entries with same name, therefore returns a list
     assert len(doc.viewports.get('*Active')) == 1
 
     assert len(doc.linetypes) == 3

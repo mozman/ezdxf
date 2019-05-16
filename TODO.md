@@ -32,7 +32,7 @@ DXF Entities
     - radius dim, planned for v0.11 or later
     - angular 3 point dim, planned for v0.11 or later
     - ordinate dim, planned for v0.11 or later
-- LEADER rendering, planed
+- LEADER rendering, planned
 - MLEADER rendering ???
 - MLINE rendering ???
 

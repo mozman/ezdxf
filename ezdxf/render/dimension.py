@@ -506,7 +506,7 @@ class BaseDimensionRenderer:
         Args:
             location: text midpoint
             leader: use leader or not (movement rules)
-            relative: is location absolut (in UCS) or relative to dimension line center.
+            relative: is location absolute (in UCS) or relative to dimension line center.
 
         """
         self.dim_style.set_location(location, leader, relative)

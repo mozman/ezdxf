@@ -519,7 +519,7 @@ class CreatorInterface:
 
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`, if None -> user defined spline
-            degree: degree fo B-spline
+            degree: degree of B-spline
             dxfattribs (dict): additional DXF attributes for :class:`Spline` entity
 
         Returns: :class:`Spline`

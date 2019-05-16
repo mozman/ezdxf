@@ -65,7 +65,7 @@ class Dictionary(DXFObject):
             entity._data = {key: entity for key, entity in self.items()}
 
     def _add_data_to_db(self) -> None:
-        """ Add hard owned and therefor copied entities into database and the objects section.  """
+        """ Add hard owned and therefore copied entities into database and the objects section.  """
         # todo: don't know how to proceed with reactors of cloned objects?
         if self.dxf.hard_owned:
             my_handle = self.dxf.handle
