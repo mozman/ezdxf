@@ -86,15 +86,13 @@ class SourceCodeGenerator:
     def add_source_code_line(self, code: str) -> None:
         self.source_code.append(code)
 
-    def simple_entity_code(self, dxftype: str, dxfattribs: dict) -> str:
+    def entity_source_code(self, dxftype: str, dxfattribs: dict) -> str:
         """
-        Returns the source code for simple DXF entities, which only uses DXFv attributes.
+        Returns the source code string to create a DXF entity.
 
         Args:
             dxftype: DXF entity type as string, like 'LINE'
             dxfattribs: DXF attributes dictionary
-
-        Returns: source code string
 
         """
         dxfattribs = vector_to_tuple(purge_dxf_attributes(dxfattribs))
@@ -107,58 +105,58 @@ class SourceCodeGenerator:
     # simple types
 
     def _line(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('LINE', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('LINE', entity.dxfattribs()))
 
     def _point(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('POINT', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('POINT', entity.dxfattribs()))
 
     def _circle(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('CIRCLE', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('CIRCLE', entity.dxfattribs()))
 
     def _arc(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('ARC', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('ARC', entity.dxfattribs()))
 
     def _text(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('TEXT', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('TEXT', entity.dxfattribs()))
 
     def _solid(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('SOLID', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('SOLID', entity.dxfattribs()))
 
     def _trace(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('TRACE', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('TRACE', entity.dxfattribs()))
 
     def _3dface(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('3DFACE', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('3DFACE', entity.dxfattribs()))
 
     def _shape(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('SHAPE', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('SHAPE', entity.dxfattribs()))
 
     def _insert(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('INSERT', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('INSERT', entity.dxfattribs()))
 
     def _attrib(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('ATTRIB', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('ATTRIB', entity.dxfattribs()))
 
     def _attdef(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('ATTDEF', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('ATTDEF', entity.dxfattribs()))
 
     def _ellipse(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_line(self.simple_entity_code('ELLIPSE', entity.dxfattribs()))
+        self.add_source_code_line(self.entity_source_code('ELLIPSE', entity.dxfattribs()))
 
     # complex types
 
     def _mtext(self, entity: 'MText') -> None:
-        self.add_source_code_line('e = ' + self.simple_entity_code('MTEXT', entity.dxfattribs()))
+        self.add_source_code_line('e = ' + self.entity_source_code('MTEXT', entity.dxfattribs()))
         # mtext content 'text' is not a single DXF tag and therefore not a DXF attribute
         self.add_source_code_line('e.text = {}'.format(json.dumps(entity.text)))
 
     def _lwpolyline(self, entity: 'LWPolyline') -> None:
-        self.add_source_code_line('e = ' + self.simple_entity_code('LWPOLYLINE', entity.dxfattribs()))
+        self.add_source_code_line('e = ' + self.entity_source_code('LWPOLYLINE', entity.dxfattribs()))
         # lwpolyline points are not DXF attributes
         self.add_source_code_line('e.set_points([{}])'.format(', '.join(str(p) for p in entity.get_points())))
 
     def _spline(self, entity: 'Spline') -> None:
-        self.add_source_code_line('e = ' + self.simple_entity_code('SPLINE', entity.dxfattribs()))
+        self.add_source_code_line('e = ' + self.entity_source_code('SPLINE', entity.dxfattribs()))
         # spline points, knots and weights are not DXF attributes
         if len(entity.fit_points):
             self.add_source_code_line('e.fit_points = [{}]'.format(', '.join(str(fp) for fp in entity.fit_points)))
@@ -173,7 +171,7 @@ class SourceCodeGenerator:
             self.add_source_code_line('e.weights = [{}]'.format(', '.join(str(w) for w in entity.weights)))
 
     def _polyline(self, entity: 'Polyline') -> None:
-        self.add_source_code_line('e = ' + self.simple_entity_code('POLYLINE', entity.dxfattribs()))
+        self.add_source_code_line('e = ' + self.entity_source_code('POLYLINE', entity.dxfattribs()))
         # polyline vertices are separate DXF entities and therefore not DXF attributes
         for v in entity.vertices:
             attribs = purge_dxf_attributes(v.dxfattribs())
@@ -186,6 +184,13 @@ class SourceCodeGenerator:
                 Vector(location).xyz,
                 attribs,
             ))
+    # TODO: MESH and HATCH
+
+    # I don't think to support following DXF entities:
+    # ------------------------------------------------
+    # DIMENSION: complex override mechanism and the requirement of a graphical representation as BLOCK
+    # LEADER: complex override mechanism
+    # IMAGE: requires additional IMAGEDEF and IMAGEDEFREACTOR entities in the OBJECTS section
 
     def tostring(self, indent=0) -> str:
         lead_str = ' ' * indent
