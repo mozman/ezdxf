@@ -2,113 +2,182 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 """
-Translate DXF entities into Python code.
+Translate DXF entities into Python source code.
 
 """
 from typing import TYPE_CHECKING, Iterable, List
+import json
 import logging
 
+from ezdxf.math import Vector
+
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic
+    from ezdxf.eztypes import DXFGraphic, MText, LWPolyline, Polyline
 
 logger = logging.getLogger('ezdxf')
 
 __all__ = ['entities_to_code']
 
 
-def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout') -> 'EntityTranslator':
-    translator = EntityTranslator(layout=layout)
-    for entity in entities:
-        dxftype = entity.dxftype()
-        try:
-            entity_translator = getattr(translator, dxftype.lower())
-        except AttributeError:
-            logger.debug('entities_to_code() does not support {} entity'.format(dxftype))
-        else:
-            entity_translator(entity)
-    return translator
+def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout') -> 'SourceCodeGenerator':
+    code_generator = SourceCodeGenerator(layout=layout)
+    code_generator.translate_entities(entities)
+    return code_generator
 
 
-HANDLE_ATTRIBUTES = {'handle', 'owner', 'paperspace', 'material_handle', 'visualstyle_handle', 'plotstyle_handle'}
+PURGE_DXF_ATTRIBUTES = {'handle', 'owner', 'paperspace', 'material_handle', 'visualstyle_handle', 'plotstyle_handle'}
 
 
-def purge_handles(attribs: dict) -> dict:
-    return {k: v for k, v in attribs.items() if k not in HANDLE_ATTRIBUTES}
+def purge_dxf_attributes(attribs: dict) -> dict:
+    """
+    Purge DXF attributes which will be invalid in a new document (handles), or which will be set automatically by
+    adding an entity to a layout (paperspace).
+
+    Args:
+        attribs: entity DXF attributes dictionary
+
+    """
+    return {k: v for k, v in attribs.items() if k not in PURGE_DXF_ATTRIBUTES}
 
 
-class EntityTranslator:
+def vector_to_tuple(attribs: dict) -> dict:
+    """
+    Converts Vector() objects to simple tuples, which produces nicer str(dict) results and doesn't require a Vector
+    class import to execute the source code.
+
+    Args:
+        attribs: entity DXF attributes dictionary
+
+    """
+
+    def v2t(e):
+        return e.xyz if hasattr(e, 'xyz') else e
+
+    return {k: v2t(v) for k, v in attribs.items()}
+
+
+class SourceCodeGenerator:
+    """
+    The SourceCodeGenerator translates DXF entities into Python source code for creating the same DXF entity in another
+    model space or block definition.
+
+    Args:
+        layout: variable name of the layout (model space or block)
+
+    """
+
     def __init__(self, layout: str = 'layout'):
         self.layout = layout
-        self.source = []  # type: List[str]
+        self.source_code = []  # type: List[str]
 
-    def line(self, entity: 'DXFGraphic') -> None:
-        dxfattribs = purge_handles(entity.dxfattribs())
-        start = dxfattribs.pop('start', '(0, 0, 0)')
-        end = dxfattribs.pop('end', '(0, 0, 0)')
+    def translate_entity(self, entity: 'DXFGraphic') -> None:
+        dxftype = entity.dxftype()
+        try:
+            entity_translator = getattr(self, '_' + dxftype.lower())
+        except AttributeError:
+            self.add_source_code_line('# unsupported DXF entity "{}"'.format(dxftype))
+        else:
+            entity_translator(entity)
 
-        code = '{}.add_line(start={}, end={}, dxfattribs={})'.format(
+    def translate_entities(self, entities: Iterable['DXFGraphic']) -> None:
+        for entity in entities:
+            self.translate_entity(entity)
+
+    def add_source_code_line(self, code: str) -> None:
+        self.source_code.append(code)
+
+    def simple_entity_code(self, dxftype: str, dxfattribs: dict) -> str:
+        """
+        Returns the source code for simple DXF entities, which only uses DXFv attributes.
+
+        Args:
+            dxftype: DXF entity type as string, like 'LINE'
+            dxfattribs: DXF attributes dictionary
+
+        Returns: source code string
+
+        """
+        dxfattribs = vector_to_tuple(purge_dxf_attributes(dxfattribs))
+        return "{}.new_entity('{}', dxfattribs={})".format(
             self.layout,
-            start,
-            end,
+            dxftype,
             str(dxfattribs)
         )
-        self.source.append(code)
 
-    def point(self, entity: 'DXFGraphic') -> None:
-        dxfattribs = purge_handles(entity.dxfattribs())
-        location = dxfattribs.pop('location', '(0, 0, 0)')
+    # simple types
 
-        code = '{}.add_point(location={}, dxfattribs={})'.format(
-            self.layout,
-            location,
-            str(dxfattribs)
-        )
-        self.source.append(code)
+    def _line(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('LINE', entity.dxfattribs()))
 
-    def circle(self, entity: 'DXFGraphic') -> None:
-        dxfattribs = purge_handles(entity.dxfattribs())
-        center = dxfattribs.pop('center', '(0, 0, 0)')
-        radius = dxfattribs.pop('radius', 1)
+    def _point(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('POINT', entity.dxfattribs()))
 
-        code = '{}.add_circle(center={}, radius={}, dxfattribs={})'.format(
-            self.layout,
-            center,
-            radius,
-            str(dxfattribs)
-        )
-        self.source.append(code)
+    def _circle(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('CIRCLE', entity.dxfattribs()))
 
-    def arc(self, entity: 'DXFGraphic') -> None:
-        dxfattribs = purge_handles(entity.dxfattribs())
-        center = dxfattribs.pop('center', '(0, 0, 0)')
-        radius = dxfattribs.pop('radius', 1)
-        start_angle = dxfattribs.pop('start_angle', 0)
-        end_angle = dxfattribs.pop('end_angle', 360)
+    def _arc(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('ARC', entity.dxfattribs()))
 
-        code = '{}.add_arc(center={}, radius={}, start_angle={}, end_angle={}, dxfattribs={})'.format(
-            self.layout,
-            center,
-            radius,
-            start_angle,
-            end_angle,
-            str(dxfattribs)
-        )
-        self.source.append(code)
+    def _text(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('TEXT', entity.dxfattribs()))
 
-    def text(self, entity: 'DXFGraphic') -> None:
-        dxfattribs = purge_handles(entity.dxfattribs())
-        text = dxfattribs.pop('text', '')
+    def _solid(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('SOLID', entity.dxfattribs()))
 
-        code = "{}.add_text(text='{}', dxfattribs={})".format(
-            self.layout,
-            text,
-            str(dxfattribs)
-        )
-        self.source.append(code)
+    def _trace(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('TRACE', entity.dxfattribs()))
+
+    def _3dface(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('3DFACE', entity.dxfattribs()))
+
+    def _shape(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('SHAPE', entity.dxfattribs()))
+
+    def _insert(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('INSERT', entity.dxfattribs()))
+
+    def _attrib(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('ATTRIB', entity.dxfattribs()))
+
+    def _attdef(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('ATTDEF', entity.dxfattribs()))
+
+    def _ellipse(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_line(self.simple_entity_code('ELLIPSE', entity.dxfattribs()))
+
+    # complex types
+
+    def _mtext(self, entity: 'MText') -> None:
+        self.add_source_code_line('e = ' + self.simple_entity_code('MTEXT', entity.dxfattribs()))
+        # mtext content 'text' is not a single DXF tag and therefore not a DXF attribute
+        self.add_source_code_line('e.text = {}'.format(json.dumps(entity.text)))
+
+    def _lwpolyline(self, entity: 'LWPolyline') -> None:
+        self.add_source_code_line('e = ' + self.simple_entity_code('LWPOLYLINE', entity.dxfattribs()))
+        # lwpolyline points are not a single DXF tags and therefore not a DXF attributes
+        self.add_source_code_line('e.set_points([')
+        for p in entity.get_points():
+            self.add_source_code_line('    {},'.format(p))
+        self.add_source_code_line('])')
+
+    def _polyline(self, entity: 'Polyline') -> None:
+        self.add_source_code_line('e = ' + self.simple_entity_code('POLYLINE', entity.dxfattribs()))
+        # polyline vertices are separate DXF entities and therefore not a DXF attributes
+        for v in entity.vertices:
+            attribs = purge_dxf_attributes(v.dxfattribs())
+            location = attribs.pop('location')
+            if 'layer' in attribs:
+                del attribs['layer']  # layer is automatically set to the POLYLINE layer
+
+            # each VERTEX can have different DXF attributes: bulge, start_width, end_width ...
+            self.add_source_code_line('e.append_vertex({}, dxfattribs={})'.format(
+                Vector(location).xyz,
+                attribs,
+            ))
 
     def tostring(self, indent=0) -> str:
         lead_str = ' ' * indent
-        return ''.join(lead_str + line for line in self.source)
+        return '\n'.join(lead_str + line for line in self.source_code)
 
     def __str__(self) -> str:
         return self.tostring()

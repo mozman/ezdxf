@@ -117,7 +117,7 @@ class Polyline(DXFGraphic):
             if len(tags):
                 # do not log:
                 # 66: attribs follow, not required
-                processor.log_unprocessed_tags(tags.filter((66, )), subclass=name)
+                processor.log_unprocessed_tags(tags.filter((66,)), subclass=name)
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
@@ -240,8 +240,13 @@ class Polyline(DXFGraphic):
 
     append_vertices = extend
 
+    def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
+        dxfattribs = dxfattribs or {}
+        self.vertices.extend(self._build_dxf_vertices([point], dxfattribs))
+
     def insert_vertices(self, pos: int, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
         """ Insert `points` at position `pos``.
+
         Args:
             pos: insertion position
             points: list of (x, y, z)-tuples
@@ -255,7 +260,7 @@ class Polyline(DXFGraphic):
         """ Converts point (x, y, z)-tuples into DXFVertex objects.
 
         Args:
-            points: list of (x, y,z)-tuples
+            points: list of (x, y, z)-tuples
             dxfattribs: dict of DXF attributes
         """
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()

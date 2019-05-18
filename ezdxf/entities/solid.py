@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 __all__ = ['Solid', 'Trace', 'Face3d']
 
-
 acdb_trace = DefSubclass('AcDbTrace', {
     'vtx0': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),  # 1. corner Solid WCS; Trace OCS
     'vtx1': DXFAttr(11, xtype=XType.point3d, default=Vector(0, 0, 0)),  # 2. corner Solid WCS; Trace OCS
@@ -95,12 +94,12 @@ class Face3d(_Base):
     DXFTYPE = '3DFACE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_face)
 
-    def is_invisible_edge(self, num)->bool:
+    def is_invisible_edge(self, num) -> bool:
         """ Returns True if edge `num` is an invisible edge. """
         return bool(self.dxf.invisible & (1 << num))
 
     def set_edge_visibilty(self, num, status=False):
-        """ Set visibilty of edge `num`, status `True` for visible, status `False` for invisible. """
+        """ Set visibility of edge `num`, status `True` for visible, status `False` for invisible. """
         if status:
             self.dxf.invisible = self.dxf.invisible | (1 << num)
         else:

@@ -49,7 +49,9 @@ __Version 0.10b2 - ...__
 - NEW: `Dimension.get_geometry_block()`, returns the associated anonymous dimension block or `None`
 - NEW: `EntityQuery()` got `first` and `last` properties, to get first or last entity or `None` if query result is empty
 - NEW: added `ngon()`, `star()` and `gear()` to `ezdxf.render.forms`
- 
+- NEW: Source code generator to create Python source code from DXF entities, using `ezdxf` to create the source DXF 
+  entities in another application. This tool creates only simple structures as a useful starting point for parametric 
+  DXF entity creation. Not all DXF entities are supported!
 
 Version 0.9 - 2019-02-24
 ------------------------
