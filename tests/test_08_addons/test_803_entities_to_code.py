@@ -200,3 +200,23 @@ def test_polyline_to_code():
         assert np == ep
 
 
+def test_spline_to_code():
+    from ezdxf.entities.spline import Spline
+    entity = Spline.new(handle='ABBA', owner='0', dxfattribs={
+        'color': '7',
+        'degree': 3,
+    })
+    entity.fit_points = [(1, 2, 0), (4, 3, 0), (7, 8, 0)]
+    entity.control_points = [(1, 2, 0), (4, 3, 0), (7, 8, 0)]
+    entity.knots = [1, 2, 3, 4, 5, 6, 7]
+    entity.weights = [1., 2., 3.]
+    new_entity = translate_to_code_and_execute(entity)
+    for name in ('color', 'n_knots', 'n_control_points', 'n_fit_points', 'degree'):
+        assert new_entity.get_dxf_attrib(name) == entity.get_dxf_attrib(name)
+
+    assert new_entity.knots == entity.knots
+    assert new_entity.control_points.values == entity.control_points.values
+    assert new_entity.fit_points.values == entity.fit_points.values
+    assert new_entity.weights == entity.weights
+
+

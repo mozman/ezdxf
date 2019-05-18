@@ -12,7 +12,7 @@ import logging
 from ezdxf.math import Vector
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, MText, LWPolyline, Polyline
+    from ezdxf.eztypes import DXFGraphic, MText, LWPolyline, Polyline, Spline
 
 logger = logging.getLogger('ezdxf')
 
@@ -154,15 +154,27 @@ class SourceCodeGenerator:
 
     def _lwpolyline(self, entity: 'LWPolyline') -> None:
         self.add_source_code_line('e = ' + self.simple_entity_code('LWPOLYLINE', entity.dxfattribs()))
-        # lwpolyline points are not a single DXF tags and therefore not a DXF attributes
-        self.add_source_code_line('e.set_points([')
-        for p in entity.get_points():
-            self.add_source_code_line('    {},'.format(p))
-        self.add_source_code_line('])')
+        # lwpolyline points are not DXF attributes
+        self.add_source_code_line('e.set_points([{}])'.format(', '.join(str(p) for p in entity.get_points())))
+
+    def _spline(self, entity: 'Spline') -> None:
+        self.add_source_code_line('e = ' + self.simple_entity_code('SPLINE', entity.dxfattribs()))
+        # spline points, knots and weights are not DXF attributes
+        if len(entity.fit_points):
+            self.add_source_code_line('e.fit_points = [{}]'.format(', '.join(str(fp) for fp in entity.fit_points)))
+
+        if len(entity.control_points):
+            self.add_source_code_line('e.control_points = [{}]'.format(', '.join(str(cp) for cp in entity.control_points)))
+
+        if len(entity.knots):
+            self.add_source_code_line('e.knots = [{}]'.format(', '.join(str(k) for k in entity.knots)))
+
+        if len(entity.weights):
+            self.add_source_code_line('e.weights = [{}]'.format(', '.join(str(w) for w in entity.weights)))
 
     def _polyline(self, entity: 'Polyline') -> None:
         self.add_source_code_line('e = ' + self.simple_entity_code('POLYLINE', entity.dxfattribs()))
-        # polyline vertices are separate DXF entities and therefore not a DXF attributes
+        # polyline vertices are separate DXF entities and therefore not DXF attributes
         for v in entity.vertices:
             attribs = purge_dxf_attributes(v.dxfattribs())
             location = attribs.pop('location')
