@@ -2,25 +2,31 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 """
-Translate DXF entities into Python source code.
+Translate DXF entities and structures into Python source code.
 
 """
 from typing import TYPE_CHECKING, Iterable, List, TextIO, Mapping, Set
 import json
-import logging
-
-from ezdxf.math import Vector
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Insert, MText, LWPolyline, Polyline, Spline, Leader, Dimension, Image
     from ezdxf.eztypes import Mesh, Hatch
 
-logger = logging.getLogger('ezdxf')
-
 __all__ = ['entities_to_code']
 
 
 def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout') -> 'SourceCodeGenerator':
+    """
+    Translates DXF entities into Python source code for creating the same DXF entities in another
+    model space or block definition.
+
+    Args:
+        entities: iterable of DXFGraphic
+        layout: variable name of the layout (model space or block)
+
+    Returns: :class:`SourceCodeGenerator`
+
+    """
     code_generator = SourceCodeGenerator(layout=layout)
     code_generator.translate_entities(entities)
     return code_generator
@@ -39,22 +45,6 @@ def purge_dxf_attributes(attribs: dict) -> dict:
 
     """
     return {k: v for k, v in attribs.items() if k not in PURGE_DXF_ATTRIBUTES}
-
-
-def vector_to_tuple(attribs: dict) -> dict:
-    """
-    Converts Vector() objects to simple tuples, which produces nicer str(dict) results and doesn't require a Vector
-    class import to execute the source code.
-
-    Args:
-        attribs: entity DXF attributes dictionary
-
-    """
-
-    def v2t(e):
-        return e.xyz if hasattr(e, 'xyz') else e
-
-    return {k: v2t(v) for k, v in attribs.items()}
 
 
 def fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
@@ -209,6 +199,10 @@ class SourceCodeGenerator:
     def _ellipse(self, entity: 'DXFGraphic') -> None:
         self.add_source_code_lines(self.entity_source_code('ELLIPSE', entity.dxfattribs()))
 
+    def _viewport(self, entity: 'DXFGraphic') -> None:
+        self.add_source_code_lines(self.entity_source_code('VIEWPORT', entity.dxfattribs()))
+        self.add_source_code_line('# Set valid handles or remove attributes ending with "_handle", else the DXF file is invalid for AutoCAD')
+
     # complex types
 
     def _insert(self, entity: 'Insert') -> None:
@@ -232,7 +226,6 @@ class SourceCodeGenerator:
         self.add_list_source_code(entity.get_points(), prolog='e.set_points([', epilog='])')
 
     def _spline(self, entity: 'Spline') -> None:
-
         self.add_source_code_lines(self.entity_source_code('SPLINE', entity.dxfattribs(), prefix='e = '))
         # spline points, knots and weights are not DXF attributes
         if len(entity.fit_points):
@@ -258,7 +251,7 @@ class SourceCodeGenerator:
 
             # each VERTEX can have different DXF attributes: bulge, start_width, end_width ...
             self.add_source_code_line('e.append_vertex({}, dxfattribs={})'.format(
-                Vector(location).xyz,
+                str(location),
                 attribs,
             ))
 
@@ -281,7 +274,8 @@ class SourceCodeGenerator:
         # remove handles which will be invalid in a new document
         self.add_source_code_line('# Image requires IMAGEDEF and IMAGEDEFREACTOR objects in the OBJECTS section!')
         self.add_source_code_lines(self.entity_source_code('IMAGE', entity.dxfattribs()))
-        self.add_source_code_line('# Set valid image_def_handle and image_def_reactor_handle, else the DXF file is invalid for AutoCAD')
+        self.add_source_code_line(
+            '# Set valid image_def_handle and image_def_reactor_handle, else the DXF file is invalid for AutoCAD')
 
     def _mesh(self, entity: 'Mesh'):
         def to_tuples(l):
@@ -300,5 +294,3 @@ class SourceCodeGenerator:
 
     def _hatch(self, entity: 'Hatch'):  # TODO
         self.add_source_code_line('# unsupported DXF entity "HATCH"')
-
-
