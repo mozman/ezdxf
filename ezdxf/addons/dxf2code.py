@@ -201,7 +201,8 @@ class SourceCodeGenerator:
 
     def _viewport(self, entity: 'DXFGraphic') -> None:
         self.add_source_code_lines(self.entity_source_code('VIEWPORT', entity.dxfattribs()))
-        self.add_source_code_line('# Set valid handles or remove attributes ending with "_handle", else the DXF file is invalid for AutoCAD')
+        self.add_source_code_line(
+            '# Set valid handles or remove attributes ending with "_handle", else the DXF file is invalid for AutoCAD')
 
     # complex types
 
@@ -292,5 +293,72 @@ class SourceCodeGenerator:
         if len(entity.creases):
             self.add_list_source_code(entity.creases, prolog='e.creases = [', epilog=']')
 
-    def _hatch(self, entity: 'Hatch'):  # TODO
-        self.add_source_code_line('# unsupported DXF entity "HATCH"')
+    def _hatch(self, entity: 'Hatch'):
+        dxfattribs = entity.dxfattribs()
+        dxfattribs['associative'] = 0  # associative hatch not supported
+        self.add_source_code_lines(self.entity_source_code('HATCH', dxfattribs, prefix='e = '))
+        if len(entity.seeds):
+            self.add_source_code_line("e.set_seed_points({})".format(str(entity.seeds)))
+        if entity.pattern:
+            self.add_source_code_line('e.set_pattern_definition([')
+            for line in entity.pattern.lines:
+                self.add_source_code_line('    {},'.format(str(line)))
+            self.add_source_code_line('])')
+        arg = "    '{}'={},"
+        if entity.has_gradient_data:
+            g = entity.gradient
+            self.add_source_code_line('e.set_gradient(')
+            self.add_source_code_line(arg.format('color1', str(g.color1)))
+            self.add_source_code_line(arg.format('color2', str(g.color2)))
+            self.add_source_code_line(arg.format('rotation', g.rotation))
+            self.add_source_code_line(arg.format('centered', g.centered))
+            self.add_source_code_line(arg.format('one_color', g.one_color))
+            self.add_source_code_line(arg.format('name', json.dumps(g.name)))
+            self.add_source_code_line(')')
+        for count, path in enumerate(entity.paths, start=1):
+            if path.PATH_TYPE == 'PolylinePath':
+                self.add_source_code_line('# {}. polyline path'.format(count))
+                self.add_source_code_line('e.path.add_polyline_path([')
+                self.add_source_code_lines(fmt_list(path.vertices, indent=8))
+                self.add_source_code_line('    ],')
+                self.add_source_code_line(arg.format('is_closed', str(path.is_closed)))
+                self.add_source_code_line(arg.format('flags', str(path.path_type_flags)))
+                self.add_source_code_line(')')
+            else:  # EdgePath
+                self.add_source_code_line('# {}. edge path: associative hatch not supported'.format(count))
+                self.add_source_code_line('ep = e.path.add_edge_path(flags={})'.format(path.path_type_flags))
+                for edge in path.edges:
+                    if edge.EDGE_TYPE == 'LineEdge':
+                        self.add_source_code_line('ep.add_line({}, {})'.format(str(edge.start[:2]), str(edge.end[:2])))
+                    elif edge.EDGE_TYPE == 'ArcEdge':
+                        self.add_source_code_line('ep.add_arc(')
+                        self.add_source_code_line(arg.format('center', str(edge.center[:2])))
+                        self.add_source_code_line(arg.format('radius', edge.radius))
+                        self.add_source_code_line(arg.format('start_angle', edge.start_angle))
+                        self.add_source_code_line(arg.format('end_angle', edge.end_angle))
+                        self.add_source_code_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
+                        self.add_source_code_line(')')
+                    elif edge.EDGE_TYPE == 'EllipseEdge':
+                        self.add_source_code_line('ep.add_ellipse(')
+                        self.add_source_code_line(arg.format('center', str(edge.center[:2])))
+                        self.add_source_code_line(arg.format('major_axis', str(edge.major_axis[:2])))
+                        self.add_source_code_line(arg.format('ratio', edge.ratio))
+                        self.add_source_code_line(arg.format('start_angle', edge.start_angle))
+                        self.add_source_code_line(arg.format('end_angle', edge.end_angle))
+                        self.add_source_code_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
+                        self.add_source_code_line(')')
+                    elif edge.EDGE_TYPE == 'SplineEdge':
+                        self.add_source_code_line('ep.add_spline(')
+                        if edge.fit_points:
+                            self.add_source_code_line(arg.format('fit_points', str([fp[:2] for fp in edge.fit_points])))
+                        if edge.control_points:
+                            self.add_source_code_line(
+                                arg.format('control_points', str([cp[:2] for cp in edge.control_points])))
+                        if edge.knot_values:
+                            self.add_source_code_line(arg.format('knot_values', str(edge.knot_values)))
+                        if edge.weights:
+                            self.add_source_code_line(arg.format('weights', str(edge.weights)))
+                        self.add_source_code_line(arg.format('degree', edge.degree))
+                        self.add_source_code_line(arg.format('rational', edge.rational))
+                        self.add_source_code_line(arg.format('periodic', edge.periodic))
+                        self.add_source_code_line(')')
