@@ -1,6 +1,8 @@
 Import data from other DXF drawings
 ===================================
 
+The importer add-on is not included in ezdxf v0.10 and later, will be replaced by a better solution (maybe).
+
 .. warning::
 
     Internal structures of modern DXF files are too complex and too undocumented to support importing data in a reliable

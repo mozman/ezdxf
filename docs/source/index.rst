@@ -28,7 +28,8 @@ Quick-Info
 - additional read support for older DXF versions than R12 (upgraded to R12)
 - preserves third-party DXF content
 - additional :ref:`r12writer`, that creates just an ENTITIES section with support for the basic DXF entities
-
+- source code generator as add-on to generate Python code from DXF structures as starting point for parametric
+  DXF entity creation from existing DXF files.
 
 Website
 -------
