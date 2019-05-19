@@ -1,10 +1,44 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.addons.dxf2code import entities_to_code
+from ezdxf.addons.dxf2code import entities_to_code, fmt_mapping, fmt_list
 
 doc = ezdxf.new('R2010')
 msp = doc.modelspace()
+
+
+def test_fmt_mapping():
+    from ezdxf.math import Vector
+    d = {'a': 1, 'b': 'str', 'c': Vector(), 'd': 'xxx "yyy" \'zzz\''}
+    r = list(fmt_mapping(d))
+    assert r[0] == "'a': 1,"
+    assert r[1] == "'b': \"str\","
+    assert r[2] == "'c': (0.0, 0.0, 0.0),"
+    assert r[3] == "'d': \"xxx \\\"yyy\\\" 'zzz'\","
+
+
+def test_fmt_int_list():
+    l = [1, 2, 3]
+    r = list(fmt_list(l))
+    assert r[0] == '1,'
+    assert r[1] == '2,'
+    assert r[2] == '3,'
+
+
+def test_fmt_float_list():
+    l = [1., 2., 3.]
+    r = list(fmt_list(l))
+    assert r[0] == '1.0,'
+    assert r[1] == '2.0,'
+    assert r[2] == '3.0,'
+
+
+def test_fmt_vector_list():
+    from ezdxf.math import Vector
+    l = [Vector(), (1., 2., 3.)]
+    r = list(fmt_list(l))
+    assert r[0] == '(0.0, 0.0, 0.0),'
+    assert r[1] == '(1.0, 2.0, 3.0),'
 
 
 def translate_to_code_and_execute(entity):
@@ -161,7 +195,7 @@ def test_mtext_to_code():
     new_entity = translate_to_code_and_execute(entity)
     for name in ('color', 'insert'):
         assert new_entity.get_dxf_attrib(name) == entity.get_dxf_attrib(name)
-    assert new_entity.text == text
+    assert new_entity.text == "xxx \"yyy\" 'zzz'"
 
 
 def test_lwpolyline_to_code():
