@@ -265,7 +265,8 @@ class SourceCodeGenerator:
         self.add_source_code_line('# Dimension style attribute overriding is not supported!')
         self.add_source_code_lines(self.entity_source_code('DIMENSION', entity.dxfattribs(), prefix='e = '))
         self.add_source_code_lines([
-            '# Create the required graphical representation as block, else the DXF file is invalid for AutoCAD',
+            '# You have to create the required graphical representation for the DIMENSION entity as anonymous block, ',
+            '# otherwise the DXF file is invalid for AutoCAD (but not for BricsCAD):',
             '# from ezdxf.dimstyleoverride import DimStyleOverride',
             '# DimStyleOverride(e).render()',
             ''

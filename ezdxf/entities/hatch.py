@@ -557,7 +557,7 @@ class EdgePath:
         else:
             raise const.DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
 
-    def add_line(self, start: int, end: int) -> 'LineEdge':
+    def add_line(self, start: Sequence[float], end: Sequence[float]) -> 'LineEdge':
         line = LineEdge()
         line.start = start
         line.end = end
