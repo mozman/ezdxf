@@ -254,3 +254,36 @@ def test_spline_to_code():
     assert new_entity.weights == entity.weights
 
 
+def test_leader_to_code():
+    from ezdxf.entities.leader import Leader
+    entity = Leader.new(handle='ABBA', owner='0', dxfattribs={
+        'color': '7',
+    })
+    entity.set_vertices([
+        (1, 2, 0, 0, 0),
+        (4, 3, 0, 0, 0),
+        (7, 8, 0, 0, 0),
+    ])
+    new_entity = translate_to_code_and_execute(entity)
+    assert new_entity.dxf.color == entity.dxf.color
+    for np, ep in zip(new_entity.vertices, entity.vertices):
+        assert np == ep
+
+
+def test_mesh_to_code():
+    from ezdxf.entities.mesh import Mesh
+    from ezdxf.render.forms import cube
+
+    entity = Mesh.new(handle='ABBA', owner='0', dxfattribs={
+        'color': '7',
+    })
+    c = cube()
+    entity.vertices = c.vertices
+    entity.edges = c.edges
+    entity.faces = c.faces
+
+    assert len(entity.vertices) == 8
+    new_entity = translate_to_code_and_execute(entity)
+    assert list(entity.vertices) == list(new_entity.vertices)
+    assert list(entity.faces) == list(new_entity.faces)
+

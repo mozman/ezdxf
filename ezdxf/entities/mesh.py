@@ -291,6 +291,10 @@ class Mesh(DXFGraphic):
     def faces(self):
         return self._faces
 
+    @faces.setter
+    def faces(self, faces: Iterable[Sequence[int]]) -> None:
+        self._faces.set_data(faces)
+
     def get_data(self) -> 'MeshData':
         return MeshData(self)
 

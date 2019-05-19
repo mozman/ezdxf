@@ -5,14 +5,15 @@
 Translate DXF entities into Python source code.
 
 """
-from typing import TYPE_CHECKING, Iterable, List, TextIO, Mapping
+from typing import TYPE_CHECKING, Iterable, List, TextIO, Mapping, Set
 import json
 import logging
 
 from ezdxf.math import Vector
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, MText, LWPolyline, Polyline, Spline
+    from ezdxf.eztypes import DXFGraphic, Insert, MText, LWPolyline, Polyline, Spline, Leader, Dimension, Image
+    from ezdxf.eztypes import Mesh, Hatch
 
 logger = logging.getLogger('ezdxf')
 
@@ -87,6 +88,11 @@ class SourceCodeGenerator:
     def __init__(self, layout: str = 'layout'):
         self.layout = layout
         self.source_code = []  # type: List[str]
+        self.used_layers = set()  # type: Set[str]  # layer names as string
+        self.used_styles = set()  # type: Set[str]  # text style name as string, requires a TABLE entry
+        self.used_linetypes = set()  # type: Set[str]  # line type names as string, requires a TABLE entry
+        self.used_dimstyles = set()  # type: Set[str]  # dimension style names as string, requires a TABLE entry
+        self.used_blocks = set()  # type: Set[str]  # block names as string, requires a BLOCK definition
 
     def translate_entity(self, entity: 'DXFGraphic') -> None:
         dxftype = entity.dxftype()
@@ -100,6 +106,16 @@ class SourceCodeGenerator:
     def translate_entities(self, entities: Iterable['DXFGraphic']) -> None:
         for entity in entities:
             self.translate_entity(entity)
+
+    def add_used_resources(self, dxfattribs: Mapping) -> None:
+        if 'layer' in dxfattribs:
+            self.used_layers.add(dxfattribs['layer'])
+        if 'linetype' in dxfattribs:
+            self.used_linetypes.add(dxfattribs['linetype'])
+        if 'style' in dxfattribs:
+            self.used_styles.add(dxfattribs['style'])
+        if 'dimstyle' in dxfattribs:
+            self.used_dimstyles.add(dxfattribs['dimstyle'])
 
     def add_source_code_line(self, code: str) -> None:
         self.source_code.append(code)
@@ -130,6 +146,7 @@ class SourceCodeGenerator:
 
         """
         dxfattribs = purge_dxf_attributes(dxfattribs)
+        self.add_used_resources(dxfattribs)
         s = [
             prefix + "{}.new_entity(".format(self.layout),
             "    '{}',".format(dxftype),
@@ -183,9 +200,6 @@ class SourceCodeGenerator:
     def _shape(self, entity: 'DXFGraphic') -> None:
         self.add_source_code_lines(self.entity_source_code('SHAPE', entity.dxfattribs()))
 
-    def _insert(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('INSERT', entity.dxfattribs()))
-
     def _attrib(self, entity: 'DXFGraphic') -> None:
         self.add_source_code_lines(self.entity_source_code('ATTRIB', entity.dxfattribs()))
 
@@ -196,6 +210,16 @@ class SourceCodeGenerator:
         self.add_source_code_lines(self.entity_source_code('ELLIPSE', entity.dxfattribs()))
 
     # complex types
+
+    def _insert(self, entity: 'Insert') -> None:
+        self.used_blocks.add(entity.dxf.name)
+        self.add_source_code_lines(self.entity_source_code('INSERT', entity.dxfattribs(), prefix='e = '))
+        if len(entity.attribs):
+            for attrib in entity.attribs:
+                dxfattribs = attrib.dxfattribs()
+                dxfattribs['layer'] = entity.dxf.layer  # set ATTRIB layer to same as INSERT
+                self.add_source_code_lines(self.entity_source_code('ATTRIB', attrib.dxfattribs(), prefix='a = '))
+                self.add_source_code_lines('e.attribs.append(a)')
 
     def _mtext(self, entity: 'MText') -> None:
         self.add_source_code_lines(self.entity_source_code('MTEXT', entity.dxfattribs(), prefix='e = '))
@@ -237,10 +261,44 @@ class SourceCodeGenerator:
                 Vector(location).xyz,
                 attribs,
             ))
-    # TODO: MESH and HATCH
 
-    # I don't think to support following DXF entities:
-    # ------------------------------------------------
-    # DIMENSION: complex override mechanism and the requirement of a graphical representation as BLOCK
-    # LEADER: complex override mechanism
-    # IMAGE: requires additional IMAGEDEF and IMAGEDEFREACTOR entities in the OBJECTS section
+    def _leader(self, entity: 'Leader'):
+        self.add_source_code_line('# Dimension style attribute overriding is not supported!')
+        self.add_source_code_lines(self.entity_source_code('LEADER', entity.dxfattribs(), prefix='e = '))
+        self.add_list_source_code(entity.vertices, prolog='e.set_vertices([', epilog='])')
+
+    def _dimension(self, entity: 'Dimension'):
+        self.add_source_code_line('# Dimension style attribute overriding is not supported!')
+        self.add_source_code_lines(self.entity_source_code('DIMENSION', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines([
+            '# Create the required graphical representation as block, else the DXF file is invalid for AutoCAD',
+            '# from ezdxf.dimstyleoverride import DimStyleOverride',
+            '# DimStyleOverride(e).render()',
+            ''
+        ])
+
+    def _image(self, entity: 'Image'):
+        # remove handles which will be invalid in a new document
+        self.add_source_code_line('# Image requires IMAGEDEF and IMAGEDEFREACTOR objects in the OBJECTS section!')
+        self.add_source_code_lines(self.entity_source_code('IMAGE', entity.dxfattribs()))
+        self.add_source_code_line('# Set valid image_def_handle and image_def_reactor_handle, else the DXF file is invalid for AutoCAD')
+
+    def _mesh(self, entity: 'Mesh'):
+        def to_tuples(l):
+            for e in l:
+                yield tuple(e)
+
+        self.add_source_code_lines(self.entity_source_code('MESH', entity.dxfattribs(), prefix='e = '))
+        if len(entity.vertices):
+            self.add_list_source_code(entity.vertices, prolog='e.vertices = [', epilog=']')
+        if len(entity.edges):
+            self.add_list_source_code(to_tuples(entity.edges), prolog='e.edges = [', epilog=']')
+        if len(entity.faces):
+            self.add_list_source_code(to_tuples(entity.faces), prolog='e.faces = [', epilog=']')
+        if len(entity.creases):
+            self.add_list_source_code(entity.creases, prolog='e.creases = [', epilog=']')
+
+    def _hatch(self, entity: 'Hatch'):  # TODO
+        self.add_source_code_line('# unsupported DXF entity "HATCH"')
+
+

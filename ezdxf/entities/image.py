@@ -21,7 +21,7 @@ acdb_image = DefSubclass('AcDbRasterImage', {
     'u_pixel': DXFAttr(11, xtype=XType.point3d),
     # U-vector of a single pixel (points along the visual bottom of the image, starting at the insertion point)
     'v_pixel': DXFAttr(12, xtype=XType.point3d),
-    # V2-vector of a single pixel (points along the visual left side of the image, starting at the insertion point)
+    # V-vector of a single pixel (points along the visual left side of the image, starting at the insertion point)
     'image_size': DXFAttr(13, xtype=XType.point2d),  # Image size in pixels
     'image_def_handle': DXFAttr(340),  # Hard reference to image def object
     'flags': DXFAttr(70, default=3),  # Image display properties:
