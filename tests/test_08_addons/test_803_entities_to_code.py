@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.addons.dxf2code import entities_to_code, fmt_mapping, fmt_list
+from ezdxf.addons.dxf2code import entities_to_code, fmt_mapping, fmt_list, fmt_api_call
 
 doc = ezdxf.new('R2010')
 msp = doc.modelspace()
@@ -39,6 +39,17 @@ def test_fmt_vector_list():
     r = list(fmt_list(l))
     assert r[0] == '(0.0, 0.0, 0.0),'
     assert r[1] == '(1.0, 2.0, 3.0),'
+
+
+def test_fmt_api_call():
+    r = fmt_api_call('msp.add_line(', ['start', 'end'], dxfattribs={'start': (0, 0), 'end': (1, 0), 'color': 7})
+    assert r[0] == "msp.add_line("
+    assert r[1] == "    start=(0, 0),"
+    assert r[2] == "    end=(1, 0),"
+    assert r[3] == "    dxfattribs={"
+    assert r[4] == "        'color': 7,"
+    assert r[5] == "    },"
+    assert r[6] == ")"
 
 
 def translate_to_code_and_execute(entity):
@@ -286,4 +297,3 @@ def test_mesh_to_code():
     new_entity = translate_to_code_and_execute(entity)
     assert list(entity.vertices) == list(new_entity.vertices)
     assert list(entity.faces) == list(new_entity.faces)
-

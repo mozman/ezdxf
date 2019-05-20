@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 __all__ = ['entities_to_code']
 
 
-def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout') -> 'SourceCodeGenerator':
+def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout',
+                     ignore: Iterable[str] = None) -> 'SourceCodeGenerator':
     """
     Translates DXF entities into Python source code for creating the same DXF entities in another
     model space or block definition.
@@ -23,21 +24,22 @@ def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout') -
     Args:
         entities: iterable of DXFGraphic
         layout: variable name of the layout (model space or block)
+        ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
 
     Returns: :class:`SourceCodeGenerator`
 
     """
     code_generator = SourceCodeGenerator(layout=layout)
-    code_generator.translate_entities(entities)
+    code_generator.translate_entities(entities, ignore=ignore)
     return code_generator
 
 
 PURGE_DXF_ATTRIBUTES = {'handle', 'owner', 'paperspace', 'material_handle', 'visualstyle_handle', 'plotstyle_handle'}
 
 
-def purge_dxf_attributes(attribs: dict) -> dict:
+def purge_handles(attribs: dict) -> dict:
     """
-    Purge DXF attributes which will be invalid in a new document (handles), or which will be set automatically by
+    Purge handles from DXF attributes which will be invalid in a new document, or which will be set automatically by
     adding an entity to a layout (paperspace).
 
     Args:
@@ -65,6 +67,32 @@ def fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
         yield (fmt.format(str(v)))
 
 
+def fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[str]:
+    attributes = dict(dxfattribs)
+    args = list(args) if args else []
+
+    def fmt_keywords() -> Iterable[str]:
+        for arg in args:
+            if arg not in attributes:
+                continue
+            value = attributes.pop(arg)
+            if isinstance(value, str):
+                valuestr = json.dumps(value)  # quoted string!
+            else:
+                valuestr = str(value)
+            yield "    {}={},".format(arg, valuestr)
+
+    s = [func_call]
+    s.extend(fmt_keywords())
+    s.append('    dxfattribs={')
+    s.extend(fmt_mapping(attributes, indent=8))
+    s.extend([
+        "    },",
+        ")",
+    ])
+    return s
+
+
 class SourceCodeGenerator:
     """
     The SourceCodeGenerator translates DXF entities into Python source code for creating the same DXF entity in another
@@ -85,6 +113,14 @@ class SourceCodeGenerator:
         self.used_blocks = set()  # type: Set[str]  # block names as string, requires a BLOCK definition
 
     def translate_entity(self, entity: 'DXFGraphic') -> None:
+        """
+        Translates one DXF entity into Python source code. The generated source code is appended to the
+        attribute `source_code`.
+
+        Args:
+            entity: DXFGraphic object
+
+        """
         dxftype = entity.dxftype()
         try:
             entity_translator = getattr(self, '_' + dxftype.lower())
@@ -93,11 +129,30 @@ class SourceCodeGenerator:
         else:
             entity_translator(entity)
 
-    def translate_entities(self, entities: Iterable['DXFGraphic']) -> None:
+    def translate_entities(self, entities: Iterable['DXFGraphic'], ignore: Iterable[str] = None) -> None:
+        """
+        Translates multiple DXF entities into Python source code. The generated source code is appended to the
+        attribute `source_code`.
+
+        Args:
+            entities: iterable of DXFGraphic
+            ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
+
+        """
+        ignore = set(ignore) if ignore else set()
+
         for entity in entities:
-            self.translate_entity(entity)
+            if entity.dxftype() not in ignore:
+                self.translate_entity(entity)
 
     def add_used_resources(self, dxfattribs: Mapping) -> None:
+        """
+        Register used resources like layers, line types, text styles and dimension styles.
+
+        Args:
+            dxfattribs: DXF attributes dictionary
+
+        """
         if 'layer' in dxfattribs:
             self.used_layers.add(dxfattribs['layer'])
         if 'linetype' in dxfattribs:
@@ -125,22 +180,22 @@ class SourceCodeGenerator:
         self.add_source_code_lines(fmt_mapping(mapping, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
-    def entity_source_code(self, dxftype: str, dxfattribs: dict, prefix: str = '') -> Iterable[str]:
+    def generic_api_call(self, dxftype: str, dxfattribs: dict, prefix: str = 'e = ') -> Iterable[str]:
         """
-        Returns the source code string to create a DXF entity.
+        Returns the source code strings to create a DXF entity by a generic `new_entity()` call.
 
         Args:
             dxftype: DXF entity type as string, like 'LINE'
             dxfattribs: DXF attributes dictionary
-            prefix: prefix string like a variable assigment 'e = '
+            prefix: prefix string like variable assignment 'e = '
 
         """
-        dxfattribs = purge_dxf_attributes(dxfattribs)
+        dxfattribs = purge_handles(dxfattribs)
         self.add_used_resources(dxfattribs)
         s = [
-            prefix + "{}.new_entity(".format(self.layout),
+            "{}{}.new_entity(".format(prefix, self.layout),
             "    '{}',".format(dxftype),
-            "     dxfattribs={"
+            "     dxfattribs={",
         ]
         s.extend(fmt_mapping(dxfattribs, indent=8))
         s.extend([
@@ -148,6 +203,20 @@ class SourceCodeGenerator:
             ")",
         ])
         return s
+
+    def api_call(self, api_call: str, args: Iterable[str], dxfattribs: dict, prefix: str = 'e = ') -> Iterable[str]:
+        """
+        Returns the source code strings to create a DXF entity by the specialised API call.
+
+        Args:
+            api_call: API function call like 'add_line('
+            args: DXF attributes to pass as arguments
+            dxfattribs: DXF attributes dictionary
+            prefix: prefix string like variable assignment 'e = '
+        """
+        dxfattribs = purge_handles(dxfattribs)
+        func_call = '{}{}.{}'.format(prefix, self.layout, api_call)
+        return fmt_api_call(func_call, args, dxfattribs)
 
     def tostring(self, indent: int = 0) -> str:
         lead_str = ' ' * indent
@@ -164,70 +233,73 @@ class SourceCodeGenerator:
     # simple types
 
     def _line(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('LINE', entity.dxfattribs()))
+        self.add_source_code_lines(self.api_call('add_line(', ['start', 'end'], entity.dxfattribs()))
 
     def _point(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('POINT', entity.dxfattribs()))
+        self.add_source_code_lines(self.api_call('add_point(', ['location'], entity.dxfattribs()))
 
     def _circle(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('CIRCLE', entity.dxfattribs()))
+        self.add_source_code_lines(self.api_call('add_circle(', ['center', 'radius'], entity.dxfattribs()))
 
     def _arc(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('ARC', entity.dxfattribs()))
+        self.add_source_code_lines(
+            self.api_call('add_arc(', ['center', 'radius', 'start_angle', 'end_angle'], entity.dxfattribs()))
 
     def _text(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('TEXT', entity.dxfattribs()))
+        self.add_source_code_lines(self.api_call('add_text(', ['text'], entity.dxfattribs()))
 
     def _solid(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('SOLID', entity.dxfattribs()))
+        self.add_source_code_lines(self.generic_api_call('SOLID', entity.dxfattribs()))
 
     def _trace(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('TRACE', entity.dxfattribs()))
+        self.add_source_code_lines(self.generic_api_call('TRACE', entity.dxfattribs()))
 
     def _3dface(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('3DFACE', entity.dxfattribs()))
+        self.add_source_code_lines(self.generic_api_call('3DFACE', entity.dxfattribs()))
 
     def _shape(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('SHAPE', entity.dxfattribs()))
+        self.add_source_code_lines(self.api_call('add_shape(', ['name', 'insert', 'size'], entity.dxfattribs()))
 
     def _attrib(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('ATTRIB', entity.dxfattribs()))
+        self.add_source_code_lines(self.api_call('add_attrib(', ['tag', 'text', 'insert'], entity.dxfattribs()))
 
     def _attdef(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('ATTDEF', entity.dxfattribs()))
+        self.add_source_code_lines(self.generic_api_call('ATTDEF', entity.dxfattribs()))
 
     def _ellipse(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('ELLIPSE', entity.dxfattribs()))
+        self.add_source_code_lines(
+            self.api_call('add_ellipse(', ['center', 'major_axis', 'ratio', 'start_param', 'end_param'],
+                          entity.dxfattribs()))
 
     def _viewport(self, entity: 'DXFGraphic') -> None:
-        self.add_source_code_lines(self.entity_source_code('VIEWPORT', entity.dxfattribs()))
-        self.add_source_code_line(
-            '# Set valid handles or remove attributes ending with "_handle", else the DXF file is invalid for AutoCAD')
+        self.add_source_code_lines(self.generic_api_call('VIEWPORT', entity.dxfattribs()))
+        self.add_source_code_line('# Set valid handles or remove attributes ending with "_handle", otherwise the DXF '
+                                  'file is invalid for AutoCAD')
 
     # complex types
 
     def _insert(self, entity: 'Insert') -> None:
         self.used_blocks.add(entity.dxf.name)
-        self.add_source_code_lines(self.entity_source_code('INSERT', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.api_call('add_blockref(', ['name', 'insert'], entity.dxfattribs()))
         if len(entity.attribs):
             for attrib in entity.attribs:
                 dxfattribs = attrib.dxfattribs()
                 dxfattribs['layer'] = entity.dxf.layer  # set ATTRIB layer to same as INSERT
-                self.add_source_code_lines(self.entity_source_code('ATTRIB', attrib.dxfattribs(), prefix='a = '))
+                self.add_source_code_lines(self.generic_api_call('ATTRIB', attrib.dxfattribs(), prefix='a = '))
                 self.add_source_code_lines('e.attribs.append(a)')
 
     def _mtext(self, entity: 'MText') -> None:
-        self.add_source_code_lines(self.entity_source_code('MTEXT', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.generic_api_call('MTEXT', entity.dxfattribs()))
         # mtext content 'text' is not a single DXF tag and therefore not a DXF attribute
         self.add_source_code_line('e.text = {}'.format(json.dumps(entity.text)))
 
     def _lwpolyline(self, entity: 'LWPolyline') -> None:
-        self.add_source_code_lines(self.entity_source_code('LWPOLYLINE', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.generic_api_call('LWPOLYLINE', entity.dxfattribs()))
         # lwpolyline points are not DXF attributes
         self.add_list_source_code(entity.get_points(), prolog='e.set_points([', epilog='])')
 
     def _spline(self, entity: 'Spline') -> None:
-        self.add_source_code_lines(self.entity_source_code('SPLINE', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.api_call('add_spline(', ['degree'], entity.dxfattribs()))
         # spline points, knots and weights are not DXF attributes
         if len(entity.fit_points):
             self.add_list_source_code(entity.fit_points, prolog='e.fit_points = [', epilog=']')
@@ -242,10 +314,10 @@ class SourceCodeGenerator:
             self.add_list_source_code(entity.weights, prolog='e.weights = [', epilog=']')
 
     def _polyline(self, entity: 'Polyline') -> None:
-        self.add_source_code_lines(self.entity_source_code('POLYLINE', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.generic_api_call('POLYLINE', entity.dxfattribs()))
         # polyline vertices are separate DXF entities and therefore not DXF attributes
         for v in entity.vertices:
-            attribs = purge_dxf_attributes(v.dxfattribs())
+            attribs = purge_handles(v.dxfattribs())
             location = attribs.pop('location')
             if 'layer' in attribs:
                 del attribs['layer']  # layer is automatically set to the POLYLINE layer
@@ -258,12 +330,12 @@ class SourceCodeGenerator:
 
     def _leader(self, entity: 'Leader'):
         self.add_source_code_line('# Dimension style attribute overriding is not supported!')
-        self.add_source_code_lines(self.entity_source_code('LEADER', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.generic_api_call('LEADER', entity.dxfattribs()))
         self.add_list_source_code(entity.vertices, prolog='e.set_vertices([', epilog='])')
 
     def _dimension(self, entity: 'Dimension'):
         self.add_source_code_line('# Dimension style attribute overriding is not supported!')
-        self.add_source_code_lines(self.entity_source_code('DIMENSION', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.generic_api_call('DIMENSION', entity.dxfattribs()))
         self.add_source_code_lines([
             '# You have to create the required graphical representation for the DIMENSION entity as anonymous block, ',
             '# otherwise the DXF file is invalid for AutoCAD (but not for BricsCAD):',
@@ -273,93 +345,93 @@ class SourceCodeGenerator:
         ])
 
     def _image(self, entity: 'Image'):
-        # remove handles which will be invalid in a new document
         self.add_source_code_line('# Image requires IMAGEDEF and IMAGEDEFREACTOR objects in the OBJECTS section!')
-        self.add_source_code_lines(self.entity_source_code('IMAGE', entity.dxfattribs()))
-        self.add_source_code_line(
-            '# Set valid image_def_handle and image_def_reactor_handle, else the DXF file is invalid for AutoCAD')
+        self.add_source_code_lines(self.generic_api_call('IMAGE', entity.dxfattribs()))
+        if len(entity.boundary_path):
+            self.add_list_source_code(
+                (v[:2] for v in entity.boundary_path),  # just x, y axis
+                prolog='e.set_boundary_path([',
+                epilog='])',
+            )
+        self.add_source_code_line('# Set valid image_def_handle and image_def_reactor_handle, otherwise the DXF file'
+                                  ' is invalid for AutoCAD')
 
     def _mesh(self, entity: 'Mesh'):
-        def to_tuples(l):
-            for e in l:
-                yield tuple(e)
-
-        self.add_source_code_lines(self.entity_source_code('MESH', entity.dxfattribs(), prefix='e = '))
+        self.add_source_code_lines(self.api_call('add_mesh(', [], entity.dxfattribs()))
         if len(entity.vertices):
             self.add_list_source_code(entity.vertices, prolog='e.vertices = [', epilog=']')
         if len(entity.edges):
-            self.add_list_source_code(to_tuples(entity.edges), prolog='e.edges = [', epilog=']')
+            # array.array -> tuple
+            self.add_list_source_code((tuple(e) for e in entity.edges), prolog='e.edges = [', epilog=']')
         if len(entity.faces):
-            self.add_list_source_code(to_tuples(entity.faces), prolog='e.faces = [', epilog=']')
+            # array.array -> tuple
+            self.add_list_source_code((tuple(f) for f in entity.faces), prolog='e.faces = [', epilog=']')
         if len(entity.creases):
             self.add_list_source_code(entity.creases, prolog='e.creases = [', epilog=']')
 
     def _hatch(self, entity: 'Hatch'):
+        add_line = self.add_source_code_line
         dxfattribs = entity.dxfattribs()
         dxfattribs['associative'] = 0  # associative hatch not supported
-        self.add_source_code_lines(self.entity_source_code('HATCH', dxfattribs, prefix='e = '))
+        self.add_source_code_lines(self.api_call('add_hatch(', ['color'], dxfattribs))
         if len(entity.seeds):
-            self.add_source_code_line("e.set_seed_points({})".format(str(entity.seeds)))
+            add_line("e.set_seed_points({})".format(str(entity.seeds)))
         if entity.pattern:
-            self.add_source_code_line('e.set_pattern_definition([')
-            for line in entity.pattern.lines:
-                self.add_source_code_line('    {},'.format(str(line)))
-            self.add_source_code_line('])')
+            self.add_list_source_code(entity.pattern.lines, prolog='e.set_pattern_definition([', epilog='])')
         arg = "    '{}'={},"
+
         if entity.has_gradient_data:
             g = entity.gradient
-            self.add_source_code_line('e.set_gradient(')
-            self.add_source_code_line(arg.format('color1', str(g.color1)))
-            self.add_source_code_line(arg.format('color2', str(g.color2)))
-            self.add_source_code_line(arg.format('rotation', g.rotation))
-            self.add_source_code_line(arg.format('centered', g.centered))
-            self.add_source_code_line(arg.format('one_color', g.one_color))
-            self.add_source_code_line(arg.format('name', json.dumps(g.name)))
-            self.add_source_code_line(')')
+            add_line('e.set_gradient(')
+            add_line(arg.format('color1', str(g.color1)))
+            add_line(arg.format('color2', str(g.color2)))
+            add_line(arg.format('rotation', g.rotation))
+            add_line(arg.format('centered', g.centered))
+            add_line(arg.format('one_color', g.one_color))
+            add_line(arg.format('name', json.dumps(g.name)))
+            add_line(')')
         for count, path in enumerate(entity.paths, start=1):
             if path.PATH_TYPE == 'PolylinePath':
-                self.add_source_code_line('# {}. polyline path'.format(count))
-                self.add_source_code_line('e.path.add_polyline_path([')
-                self.add_source_code_lines(fmt_list(path.vertices, indent=8))
-                self.add_source_code_line('    ],')
-                self.add_source_code_line(arg.format('is_closed', str(path.is_closed)))
-                self.add_source_code_line(arg.format('flags', str(path.path_type_flags)))
-                self.add_source_code_line(')')
+                add_line('# {}. polyline path'.format(count))
+                self.add_list_source_code(path.vertices, prolog='e.path.add_polyline_path([', epilog='    ],')
+                add_line(arg.format('is_closed', str(path.is_closed)))
+                add_line(arg.format('flags', str(path.path_type_flags)))
+                add_line(')')
             else:  # EdgePath
-                self.add_source_code_line('# {}. edge path: associative hatch not supported'.format(count))
-                self.add_source_code_line('ep = e.path.add_edge_path(flags={})'.format(path.path_type_flags))
+                add_line('# {}. edge path: associative hatch not supported'.format(count))
+                add_line('ep = e.path.add_edge_path(flags={})'.format(path.path_type_flags))
                 for edge in path.edges:
                     if edge.EDGE_TYPE == 'LineEdge':
-                        self.add_source_code_line('ep.add_line({}, {})'.format(str(edge.start[:2]), str(edge.end[:2])))
+                        add_line('ep.add_line({}, {})'.format(str(edge.start[:2]), str(edge.end[:2])))
                     elif edge.EDGE_TYPE == 'ArcEdge':
-                        self.add_source_code_line('ep.add_arc(')
-                        self.add_source_code_line(arg.format('center', str(edge.center[:2])))
-                        self.add_source_code_line(arg.format('radius', edge.radius))
-                        self.add_source_code_line(arg.format('start_angle', edge.start_angle))
-                        self.add_source_code_line(arg.format('end_angle', edge.end_angle))
-                        self.add_source_code_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
-                        self.add_source_code_line(')')
+                        add_line('ep.add_arc(')
+                        add_line(arg.format('center', str(edge.center[:2])))
+                        add_line(arg.format('radius', edge.radius))
+                        add_line(arg.format('start_angle', edge.start_angle))
+                        add_line(arg.format('end_angle', edge.end_angle))
+                        add_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
+                        add_line(')')
                     elif edge.EDGE_TYPE == 'EllipseEdge':
-                        self.add_source_code_line('ep.add_ellipse(')
-                        self.add_source_code_line(arg.format('center', str(edge.center[:2])))
-                        self.add_source_code_line(arg.format('major_axis', str(edge.major_axis[:2])))
-                        self.add_source_code_line(arg.format('ratio', edge.ratio))
-                        self.add_source_code_line(arg.format('start_angle', edge.start_angle))
-                        self.add_source_code_line(arg.format('end_angle', edge.end_angle))
-                        self.add_source_code_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
-                        self.add_source_code_line(')')
+                        add_line('ep.add_ellipse(')
+                        add_line(arg.format('center', str(edge.center[:2])))
+                        add_line(arg.format('major_axis', str(edge.major_axis[:2])))
+                        add_line(arg.format('ratio', edge.ratio))
+                        add_line(arg.format('start_angle', edge.start_angle))
+                        add_line(arg.format('end_angle', edge.end_angle))
+                        add_line(arg.format('is_counter_clockwise', edge.is_counter_clockwise))
+                        add_line(')')
                     elif edge.EDGE_TYPE == 'SplineEdge':
-                        self.add_source_code_line('ep.add_spline(')
+                        add_line('ep.add_spline(')
                         if edge.fit_points:
-                            self.add_source_code_line(arg.format('fit_points', str([fp[:2] for fp in edge.fit_points])))
+                            add_line(arg.format('fit_points', str([fp[:2] for fp in edge.fit_points])))
                         if edge.control_points:
-                            self.add_source_code_line(
+                            add_line(
                                 arg.format('control_points', str([cp[:2] for cp in edge.control_points])))
                         if edge.knot_values:
-                            self.add_source_code_line(arg.format('knot_values', str(edge.knot_values)))
+                            add_line(arg.format('knot_values', str(edge.knot_values)))
                         if edge.weights:
-                            self.add_source_code_line(arg.format('weights', str(edge.weights)))
-                        self.add_source_code_line(arg.format('degree', edge.degree))
-                        self.add_source_code_line(arg.format('rational', edge.rational))
-                        self.add_source_code_line(arg.format('periodic', edge.periodic))
-                        self.add_source_code_line(')')
+                            add_line(arg.format('weights', str(edge.weights)))
+                        add_line(arg.format('degree', edge.degree))
+                        add_line(arg.format('rational', edge.rational))
+                        add_line(arg.format('periodic', edge.periodic))
+                        add_line(')')
