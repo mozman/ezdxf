@@ -8,18 +8,20 @@ Translate DXF entities and structures into Python source code.
 from typing import TYPE_CHECKING, Iterable, List, TextIO, Mapping, Set
 import json
 
+from ezdxf.sections.tables import TABLENAMES
+from ezdxf.lldxf.tags import Tags
+
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic, Insert, MText, LWPolyline, Polyline, Spline, Leader, Dimension, Image
-    from ezdxf.eztypes import Mesh, Hatch
+    from ezdxf.eztypes import Insert, MText, LWPolyline, Polyline, Spline, Leader, Dimension, Image, Mesh, Hatch
+    from ezdxf.eztypes import DXFEntity, Linetype, DXFTag, BlockLayout
 
-__all__ = ['entities_to_code']
+__all__ = ['entities_to_code', 'block_to_code', 'table_entries_to_code']
 
 
-def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout',
+def entities_to_code(entities: Iterable['DXFEntity'], layout: str = 'layout',
                      ignore: Iterable[str] = None) -> 'SourceCodeGenerator':
     """
-    Translates DXF entities into Python source code for creating the same DXF entities in another
-    model space or block definition.
+    Translates DXF entities into Python source code to recreate this entities by ezdxf.
 
     Args:
         entities: iterable of DXFGraphic
@@ -32,6 +34,37 @@ def entities_to_code(entities: Iterable['DXFGraphic'], layout: str = 'layout',
     code_generator = SourceCodeGenerator(layout=layout)
     code_generator.translate_entities(entities, ignore=ignore)
     return code_generator
+
+
+def block_to_code(block: 'BlockLayout', drawing: str = 'doc', ignore: Iterable[str] = None) -> 'SourceCodeGenerator':
+    """
+    Translates a BLOCK into Python source code to recreate the BLOCK by ezdxf.
+
+    Args:
+        block: block definition layout
+        drawing: variable name of the drawing
+        ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
+
+    Returns: :class:`SourceCodeGenerator`
+
+    """
+    dxfattribs = purge_handles(block.block.dxfattribs())
+    block_name = dxfattribs.pop('name')
+    base_point = dxfattribs.pop('base_point')
+    code = SourceCodeGenerator(layout='block')
+    prolog = 'block = {}.blocks.new("{}", base_point={}, dxfattribs={{'.format(drawing, block_name, str(base_point))
+    code.add_source_code_line(prolog)
+    code.add_source_code_lines(fmt_mapping(dxfattribs, indent=4))
+    code.add_source_code_line('    }')
+    code.add_source_code_line(')')
+    code.translate_entities(block, ignore=ignore)
+    return code
+
+
+def table_entries_to_code(entities: Iterable['DXFEntity'], drawing='doc') -> 'SourceCodeGenerator':
+    code = SourceCodeGenerator(doc=drawing)
+    code.translate_entities(entities)
+    return code
 
 
 PURGE_DXF_ATTRIBUTES = {'handle', 'owner', 'paperspace', 'material_handle', 'visualstyle_handle', 'plotstyle_handle'}
@@ -64,7 +97,7 @@ def fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
 def fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
     fmt = ' ' * indent + '{},'
     for v in l:
-        yield (fmt.format(str(v)))
+        yield fmt.format(str(v))
 
 
 def fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[str]:
@@ -93,17 +126,30 @@ def fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[
     return s
 
 
+def fmt_dxf_tags(tags: Iterable['DXFTag'], indent: int = 0):
+    fmt = ' ' * indent + 'dxftag({}, {}),'
+    for code, value in tags:
+        assert isinstance(code, int)
+        if isinstance(value, str):
+            value = json.dumps(value)  # for correct escaping of quotes
+        else:
+            value = str(value)  # format uses repr() for Vectors
+        yield fmt.format(code, value)
+
+
 class SourceCodeGenerator:
     """
     The SourceCodeGenerator translates DXF entities into Python source code for creating the same DXF entity in another
     model space or block definition.
 
     Args:
-        layout: variable name of the layout (model space or block)
+        layout: variable name of the layout (model space or block), required for graphical entities
+        doc: variable name of the document, required for table entries
 
     """
 
-    def __init__(self, layout: str = 'layout'):
+    def __init__(self, layout: str = 'layout', doc: str = 'doc'):
+        self.doc = doc
         self.layout = layout
         self.source_code = []  # type: List[str]
         self.used_layers = set()  # type: Set[str]  # layer names as string
@@ -111,8 +157,9 @@ class SourceCodeGenerator:
         self.used_linetypes = set()  # type: Set[str]  # line type names as string, requires a TABLE entry
         self.used_dimstyles = set()  # type: Set[str]  # dimension style names as string, requires a TABLE entry
         self.used_blocks = set()  # type: Set[str]  # block names as string, requires a BLOCK definition
+        self.required_imports = set()  # type: Set[str]
 
-    def translate_entity(self, entity: 'DXFGraphic') -> None:
+    def translate_entity(self, entity: 'DXFEntity') -> None:
         """
         Translates one DXF entity into Python source code. The generated source code is appended to the
         attribute `source_code`.
@@ -129,7 +176,7 @@ class SourceCodeGenerator:
         else:
             entity_translator(entity)
 
-    def translate_entities(self, entities: Iterable['DXFGraphic'], ignore: Iterable[str] = None) -> None:
+    def translate_entities(self, entities: Iterable['DXFEntity'], ignore: Iterable[str] = None) -> None:
         """
         Translates multiple DXF entities into Python source code. The generated source code is appended to the
         attribute `source_code`.
@@ -162,6 +209,9 @@ class SourceCodeGenerator:
         if 'dimstyle' in dxfattribs:
             self.used_dimstyles.add(dxfattribs['dimstyle'])
 
+    def add_import_statement(self, statement: str) -> None:
+        self.required_imports.add(statement)
+
     def add_source_code_line(self, code: str) -> None:
         self.source_code.append(code)
 
@@ -180,6 +230,12 @@ class SourceCodeGenerator:
         self.add_source_code_lines(fmt_mapping(mapping, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
+    def add_tags_source_code(self, tags: Tags, prolog='tags = Tags(', epilog=')', indent=4):
+        fmt_str = ' ' * indent + '{}'
+        self.add_source_code_line(fmt_str.format(prolog))
+        self.add_source_code_lines(fmt_dxf_tags(tags, indent=4 + indent))
+        self.add_source_code_line(fmt_str.format(epilog))
+
     def generic_api_call(self, dxftype: str, dxfattribs: dict, prefix: str = 'e = ') -> Iterable[str]:
         """
         Returns the source code strings to create a DXF entity by a generic `new_entity()` call.
@@ -195,7 +251,7 @@ class SourceCodeGenerator:
         s = [
             "{}{}.new_entity(".format(prefix, self.layout),
             "    '{}',".format(dxftype),
-            "     dxfattribs={",
+            "    dxfattribs={",
         ]
         s.extend(fmt_mapping(dxfattribs, indent=8))
         s.extend([
@@ -218,6 +274,35 @@ class SourceCodeGenerator:
         func_call = '{}{}.{}'.format(prefix, self.layout, api_call)
         return fmt_api_call(func_call, args, dxfattribs)
 
+    def new_table_entry(self, dxftype: str, dxfattribs: dict) -> Iterable[str]:
+        """
+        Returns the source code strings to create a new table entity by ezdxf.
+
+        Args:
+            dxftype: table entry type as string, like 'LAYER'
+            dxfattribs: DXF attributes dictionary
+
+        """
+        table = '{}.{}'.format(self.doc, TABLENAMES[dxftype])
+        dxfattribs = purge_handles(dxfattribs)
+        name = dxfattribs.pop('name')
+        s = [
+            "if '{}' not in {}:".format(name, table),
+            "    t = {}.new(".format(table),
+            "        '{}',".format(name),
+            "        dxfattribs={",
+        ]
+        s.extend(fmt_mapping(dxfattribs, indent=12))
+        s.extend([
+            "        },",
+            "    )",
+        ])
+        return s
+
+    def imports(self, indent: int = 0) -> str:
+        lead_str = ' ' * indent
+        return '\n'.join(lead_str + line for line in self.required_imports)
+
     def tostring(self, indent: int = 0) -> str:
         lead_str = ' ' * indent
         return '\n'.join(lead_str + line for line in self.source_code)
@@ -230,7 +315,7 @@ class SourceCodeGenerator:
         for line in self.source_code:
             stream.write(fmt.format(line))
 
-    # simple types
+    # simple graphical types
 
     def _line(self, entity: 'DXFGraphic') -> None:
         self.add_source_code_lines(self.api_call('add_line(', ['start', 'end'], entity.dxfattribs()))
@@ -276,7 +361,7 @@ class SourceCodeGenerator:
         self.add_source_code_line('# Set valid handles or remove attributes ending with "_handle", otherwise the DXF '
                                   'file is invalid for AutoCAD')
 
-    # complex types
+    # complex graphical types
 
     def _insert(self, entity: 'Insert') -> None:
         self.used_blocks.add(entity.dxf.name)
@@ -334,12 +419,12 @@ class SourceCodeGenerator:
         self.add_list_source_code(entity.vertices, prolog='e.set_vertices([', epilog='])')
 
     def _dimension(self, entity: 'Dimension'):
+        self.add_import_statement('from ezdxf.dimstyleoverride import DimStyleOverride')
         self.add_source_code_line('# Dimension style attribute overriding is not supported!')
         self.add_source_code_lines(self.generic_api_call('DIMENSION', entity.dxfattribs()))
         self.add_source_code_lines([
             '# You have to create the required graphical representation for the DIMENSION entity as anonymous block, ',
             '# otherwise the DXF file is invalid for AutoCAD (but not for BricsCAD):',
-            '# from ezdxf.dimstyleoverride import DimStyleOverride',
             '# DimStyleOverride(e).render()',
             ''
         ])
@@ -435,3 +520,24 @@ class SourceCodeGenerator:
                         add_line(arg.format('rational', edge.rational))
                         add_line(arg.format('periodic', edge.periodic))
                         add_line(')')
+
+    # simple table entries
+    def _layer(self, layer: 'DXFEntity'):
+        self.add_source_code_lines(self.new_table_entry('LAYER', layer.dxfattribs()))
+
+    def _ltype(self, ltype: 'Linetype'):
+        self.add_import_statement('from ezdxf.lldxf.tags import Tags')
+        self.add_import_statement('from ezdxf.lldxf.types import dxftag')
+        self.add_import_statement('from ezdxf.entities.ltype import LinetypePattern')
+        self.add_source_code_lines(self.new_table_entry('LTYPE', ltype.dxfattribs()))
+        self.add_tags_source_code(ltype.pattern_tags.tags, prolog='tags = Tags([', epilog='])', indent=4)
+        self.add_source_code_line('    t.pattern_tags = LinetypePattern(tags)')
+
+    def _style(self, style: 'DXFEntity'):
+        self.add_source_code_lines(self.new_table_entry('STYLE', style.dxfattribs()))
+
+    def _dimstyle(self, dimstyle: 'DXFEntity'):
+        self.add_source_code_lines(self.new_table_entry('DIMSTYLE', dimstyle.dxfattribs()))
+
+    def _appid(self, appid: 'DXFEntity'):
+        self.add_source_code_lines(self.new_table_entry('APPID', appid.dxfattribs()))

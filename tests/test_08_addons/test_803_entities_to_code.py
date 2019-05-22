@@ -1,7 +1,12 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import ezdxf
-from ezdxf.addons.dxf2code import entities_to_code, fmt_mapping, fmt_list, fmt_api_call
+from ezdxf.addons.dxf2code import entities_to_code, table_entries_to_code, block_to_code
+from ezdxf.addons.dxf2code import fmt_mapping, fmt_list, fmt_api_call, fmt_dxf_tags
+
+from ezdxf.lldxf.types import dxftag
+from ezdxf.lldxf.tags import Tags  # required by exec() or eval()
+from ezdxf.entities.ltype import LinetypePattern  # required by exec() or eval()
 
 doc = ezdxf.new('R2010')
 msp = doc.modelspace()
@@ -50,6 +55,16 @@ def test_fmt_api_call():
     assert r[4] == "        'color': 7,"
     assert r[5] == "    },"
     assert r[6] == ")"
+
+
+def test_fmt_dxf_tags():
+    tags = [
+        dxftag(1, 'TEXT'),
+        dxftag(10, (1, 2, 3))
+    ]
+    code = "[{}]".format(''.join(fmt_dxf_tags(tags)))
+    r = eval(code, globals())
+    assert r == tags
 
 
 def translate_to_code_and_execute(entity):
@@ -297,3 +312,43 @@ def test_mesh_to_code():
     new_entity = translate_to_code_and_execute(entity)
     assert list(entity.vertices) == list(new_entity.vertices)
     assert list(entity.faces) == list(new_entity.faces)
+
+
+def test_layer_entry():
+    from ezdxf.entities.layer import Layer
+    layer = Layer.new('LAYER', dxfattribs={'name': 'TestTest', 'color': 3})
+    code = table_entries_to_code([layer], drawing='doc')
+    exec(str(code), globals())
+    layer = doc.layers.get('TestTest')
+    assert layer.dxf.color == 3
+
+
+def test_ltype_entry():
+    from ezdxf.entities.ltype import Linetype
+    ltype = Linetype.new('FFFF', dxfattribs={
+        'name': 'TEST',
+        'description': 'TESTDESC',
+        'pattern': [0.2, 0.1, -0.1]
+    })
+    code = table_entries_to_code([ltype], drawing='doc')
+    code.translate_entities([ltype])
+    exec(str(code), globals())
+    new_ltype = doc.linetypes.get('TEST')
+    assert new_ltype.dxf.description == ltype.dxf.description
+    assert new_ltype.pattern_tags.tags == ltype.pattern_tags.tags
+    # all imports added
+    assert any(line.endswith('Tags') for line in code.required_imports)
+    assert any(line.endswith('dxftag') for line in code.required_imports)
+    assert any(line.endswith('LinetypePattern') for line in code.required_imports)
+
+
+def test_block_to_code():
+    testdoc = ezdxf.new()
+    block = testdoc.blocks.new('TestBlock', dxfattribs={'description': 'test'})
+    block.add_line((1, 1), (2, 2))
+    code = block_to_code(block, drawing='doc')
+    exec(str(code), globals())
+    new_block = doc.blocks.get('TestBlock')
+    assert new_block.block.dxf.description == block.block.dxf.description
+    assert new_block[0].dxftype() == block[0].dxftype()
+
