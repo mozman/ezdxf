@@ -6,4 +6,4 @@ from .mtext import MText
 from .menger_sponge import MengerSponge
 from .sierpinski_pyramid import SierpinskyPyramid
 from .dimlines import LinearDimension, AngularDimension, ArcDimension, RadialDimension, dimstyles
-from .importer import Importer
+from .importer import CarefulImporter

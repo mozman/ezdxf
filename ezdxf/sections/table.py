@@ -148,7 +148,7 @@ class Table:
         entitydb = self.entitydb
         if entitydb:
             new_entry = entitydb.duplicate_entity(entry)
-        else:
+        else:  # only for testing!
             new_entry = entry.copy()
         new_entry.dxf.name = new_name
         self._append(new_entry)
@@ -157,9 +157,9 @@ class Table:
     def _append(self, entry: 'DXFEntity') -> None:
         self.entries[self.key(entry.dxf.name)] = entry
 
-    def import_entry(self, entry: 'DXFEntity') -> None:
+    def add_entry(self, entry: 'DXFEntity') -> None:
         """
-        Import a table entry, created by other than this table.
+        Add a table entry, created by other object than this table.
 
         Args:
             entry: DXF table entry
