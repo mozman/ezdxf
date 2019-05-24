@@ -458,10 +458,15 @@ class DXFEntity:
         return entity
 
     def copy(self: T) -> T:
-        """ Returns a copy of `self` but without handle, owner and reactors. This copy is NOT stored in the entity
-        database and does NOT reside in any layout, block, table or objects section!
+        """
+        Returns a copy of `self` but without handle, owner and reactors. This copy is NOT stored in the entity
+        database and does NOT reside in any layout, block, table or objects section! Extension dictionary and
+        reactors are not copied.
 
-        Copying is not trivial, because of linked resources and the lack of documentation hoe to handle this
+        Don't use this function to duplicate DXF entities in drawing, use :meth:`EntityDB.duplicate_entity`
+        instead for this task.
+
+        Copying is not trivial, because of linked resources and the lack of documentation how to handle this
         linked resources: extension dictionary, handles in appdata, xdata or embedded objects.
 
         """

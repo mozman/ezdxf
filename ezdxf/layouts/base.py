@@ -89,10 +89,13 @@ class BaseLayout(CreatorInterface):
 
     def add_entity(self, entity: 'DXFGraphic') -> None:
         """
-        Add an existing :class:`DXFGraphic` to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first the entity
-        from the previous owner layout.
+        Add an existing :class:`DXFGraphic` to a layout, but be sure to unlink (:meth:`~Layout.unlink_entity()`) first
+        the entity from the previous owner layout. Adding entities from a different DXF drawing is not supported.
 
         """
+        if entity.doc != self.doc:
+            raise DXFStructureError('Adding entities from a different DXF drawing is not supported.')
+
         self.block_record.add_entity(entity)
 
     def unlink_entity(self, entity: 'DXFGraphic') -> None:
@@ -164,11 +167,11 @@ class BaseLayout(CreatorInterface):
 
         Args:
             entity: DXF entity to move
-            layout: any layout (model space, paper space, block)
+            layout: any layout (model space, paper space, block) form same drawing
 
         """
         if entity.doc != layout.doc:
-            raise DXFStructureError('Moving between different DXF drawings not supported.')
+            raise DXFStructureError('Moving between different DXF drawings is not supported.')
 
         try:
             self.unlink_entity(entity)

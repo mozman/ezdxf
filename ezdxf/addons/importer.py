@@ -118,6 +118,8 @@ def new_clean_entity(entity: 'DXFEntity', xdata: bool = False) -> 'DXFEntity':
     # clear drawing link
     new_entity.doc = None
     new_entity.appdata = None
+    new_entity.reactors = None
+    new_entity.extension_dict = None
     if not xdata:
         new_entity.xdata = None
     return new_entity

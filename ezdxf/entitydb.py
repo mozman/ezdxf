@@ -92,6 +92,7 @@ class EntityDB:
         self[handle] = entity
 
         # add sub entities like ATTRIB, VERTEX and SEQEND to database
+        # only INSERT and POLYLINE using this feature
         if hasattr(entity, 'add_sub_entities_to_entitydb'):
             entity.add_sub_entities_to_entitydb()
 
@@ -101,11 +102,16 @@ class EntityDB:
 
     def duplicate_entity(self, entity: DXFEntity) -> DXFEntity:
         """
-        Deep copy of tags with new handle and duplicated linked entities (VERTEX, ATTRIB, SEQEND) with also new handles.
-        An existing owner tag is not changed because this is not the domain of the EntityDB() class.
-        The new entity tags are added to the drawing database.
+        Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND) and store them with new handles in the
+        drawing database. This is the recommend method to duplicate DXF entities in a drawing. Graphical entities
+        have to be added to a layout by :meth:`Layout.add_entity`, for other DXF entities: DON'T DUPLICATE THEM.
 
-        This is not a deep copy in the meaning of Python, because handle and link is changed.
+        To duplicate DXF entities into another drawing (import) use the :class:`~ezdxf.addons.importer.Importer` add-on.
+
+        An existing owner tag is not changed because this is not the domain of the EntityDB() class, will be set by
+        adding the duplicated entity to a layout.
+
+        This is not a deep copy in the meaning of Python, because handles and links are changed.
 
         """
         new_entity = entity.copy()  # type: DXFEntity
