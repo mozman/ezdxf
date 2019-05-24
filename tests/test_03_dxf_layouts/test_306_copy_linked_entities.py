@@ -13,7 +13,7 @@ def doc():
 def test_duplicate_simple_entity(doc):
     msp = doc.modelspace()
     circle = msp.add_circle(center=(2, 3), radius=1.5, dxfattribs={'layer': 'test', 'color': 4})
-    new_circle = circle.copy()
+    new_circle = doc.entitydb.duplicate_entity(circle)
     assert circle.dxf.handle != new_circle.dxf.handle, "expected new handle"
     assert new_circle.dxf.center == (2, 3)
     assert new_circle.dxf.radius == 1.5
@@ -28,7 +28,8 @@ def test_duplicate_polyline_entity(doc):
     msp = doc.modelspace()
     polyline = msp.add_polyline3d(points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)], dxfattribs={'layer': 'test', 'color': 4})
     start_len = len(doc.entitydb)
-    new_polyline = polyline.copy()
+    new_polyline = doc.entitydb.duplicate_entity(polyline)
+
     assert len(doc.entitydb) == start_len+5  # POLYLINE, 3x VERTEX, 1x SEQEND
     assert polyline.dxf.handle != new_polyline.dxf.handle, "expected new handle"
     assert new_polyline.dxf.layer == 'test'
@@ -47,7 +48,8 @@ def test_duplicate_insert_with_attribs_entity(doc):
     insert.add_attrib('TAG1', 'content1', insert=(5, 6))
     insert.add_attrib('TAG2', 'content2', insert=(6, 6))
     start_len = len(doc.entitydb)
-    new_insert = insert.copy()
+    new_insert = doc.entitydb.duplicate_entity(insert)
+
     assert len(doc.entitydb) == start_len+4  # INSERT, 2x ATTRIB, 1x SEQEND
     assert insert.dxf.handle != new_insert.dxf.handle, "expected new handle"
 

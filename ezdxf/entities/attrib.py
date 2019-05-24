@@ -82,6 +82,8 @@ class BaseAttrib(Text):
         entity.xrecord = copy.deepcopy(self.xrecord)
         if self.attached_mtext:
             entity.attached_mtext = self.attached_mtext.copy()
+            # attached mtext entity is not stored in the entity database
+            # no further action required
 
     def link_entity(self, entity: 'DXFEntity'):
         self.attached_mtext = entity

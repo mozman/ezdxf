@@ -232,7 +232,10 @@ class DXFGraphic(DXFEntity):
         Returns: new created entity as DXFEntity() object
 
         """
+        if self.doc != layout.doc:
+            raise DXFStructureError('Copying between different DXF drawings not supported.')
         new_entity = self.copy()
+        self.entitydb.add(new_entity)
         layout.add_entity(new_entity)
         return new_entity
 

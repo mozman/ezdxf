@@ -2,6 +2,7 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Union, Iterable, cast
+from copy import deepcopy
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
@@ -61,6 +62,10 @@ class Linetype(DXFEntity):
         """ Default constructor """
         super().__init__(doc)
         self.pattern_tags = LinetypePattern(Tags())
+
+    def _copy_data(self, entity: 'Linetype') -> None:
+        """ Copy pattern_tags. """
+        entity.pattern_tags = deepcopy(self.pattern_tags)
 
     @classmethod
     def new(cls, handle: str = None, owner: str = None, dxfattribs: dict = None, doc: 'Drawing' = None) -> 'DXFEntity':

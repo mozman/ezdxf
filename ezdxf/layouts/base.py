@@ -2,7 +2,7 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List, Hashable
-from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf.const import DXFValueError, DXFStructureError
 from ezdxf.query import EntityQuery
 from ezdxf.groupby import groupby
 from ezdxf.entitydb import EntityDB
@@ -167,6 +167,9 @@ class BaseLayout(CreatorInterface):
             layout: any layout (model space, paper space, block)
 
         """
+        if entity.doc != layout.doc:
+            raise DXFStructureError('Moving between different DXF drawings not supported.')
+
         try:
             self.unlink_entity(entity)
         except ValueError:

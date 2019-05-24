@@ -458,8 +458,8 @@ class DXFEntity:
         return entity
 
     def copy(self: T) -> T:
-        """ Returns a copy of `self` but without handle, owner and reactors. This copy is not stored in the entity
-        database nor does it reside in any layout, block, table or objects section!
+        """ Returns a copy of `self` but without handle, owner and reactors. This copy is NOT stored in the entity
+        database and does NOT reside in any layout, block, table or objects section!
 
         Copying is not trivial, because of linked resources and the lack of documentation hoe to handle this
         linked resources: extension dictionary, handles in appdata, xdata or embedded objects.
@@ -468,11 +468,9 @@ class DXFEntity:
         entity = self.__class__(doc=self.doc)
         # copy and bind dxf namespace to new entity
         entity.dxf = self.dxf.copy(entity)
-        if self.extension_dict:
-            # copy and bind existing extension dictionary to new entity
-            entity.extension_dict = self.extension_dict.copy(entity)
-        # what about reactors of cloned DXF objects? For now: just delete it!
-        entity.reactors = Reactors()
+        entity.dxf.reset_handles()
+        entity.extension_dict = None
+        entity.reactors = None
 
         # if appdata contains handles, they are treated as shared resources
         entity.appdata = copy.deepcopy(self.appdata)
@@ -482,12 +480,7 @@ class DXFEntity:
 
         # if embedded objects contains handles, they are treated as shared resources
         entity.embedded_objects = copy.deepcopy(self.embedded_objects)
-        entity.dxf.handle = None
-        entity.dxf.owner = None
         self._copy_data(entity)
-        self.entitydb.add(entity)
-        # using the linked_entities() interface is maybe not sufficient
-
         return entity
 
     def _copy_data(self, entity: 'DXFEntity') -> None:

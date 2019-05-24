@@ -89,9 +89,18 @@ class Polyline(DXFGraphic):
         self.seqend = seqend
 
     def _copy_data(self, entity: 'Polyline') -> None:
-        """ Copy vertices and store the copies into the entity database. """
+        """ Copy vertices, does not store the copies into the entity database. """
         entity.vertices = [vertex.copy() for vertex in self.vertices]
         entity.seqend = self.seqend.copy()
+
+    def add_sub_entities_to_entitydb(self):
+        """ Called by Entitydb.add(). """
+        for vertex in self.vertices:
+            vertex.doc = self.doc  # grant same document
+            self.entitydb.add(vertex)
+        if self.seqend:
+            self.seqend.doc = self.doc  # grant same document
+            self.entitydb.add(self.seqend)
 
     def set_owner(self, owner: str, paperspace: int = 0):
         # At loading form file, POLYLINE will be added to layout before vertices are linked, so set_owner() of POLYLINE

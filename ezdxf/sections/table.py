@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, Iterable, Iterator, Union, Optional, List
 from collections import OrderedDict
 
-from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError
+from ezdxf.lldxf.const import DXFTableEntryError, DXFStructureError, DXFTypeError
 from ezdxf.entities.table import TableHead
 
 if TYPE_CHECKING:
@@ -80,7 +80,7 @@ class Table:
 
     def new(self, name: str, dxfattribs: dict = None) -> 'DXFEntity':
         if self.has_entry(name):
-            raise DXFTableEntryError('%s %s already exists!' % (self._head.dxf.name, name))
+            raise DXFTableEntryError('{} {} already exists!'.format(self._head.dxf.name, name))
         dxfattribs = dxfattribs or {}
         dxfattribs['name'] = name
         dxfattribs['owner'] = self._head.dxf.handle
@@ -156,6 +156,23 @@ class Table:
 
     def _append(self, entry: 'DXFEntity') -> None:
         self.entries[self.key(entry.dxf.name)] = entry
+
+    def import_entry(self, entry: 'DXFEntity') -> None:
+        """
+        Import a table entry, created by other than this table.
+
+        Args:
+            entry: DXF table entry
+
+        """
+        if entry.dxftype() != self._head.dxf.name:
+            raise DXFTypeError('Invalid table entry type {} for table {}'.format(entry.dxftype(), self.name))
+        name = entry.dxf.name
+        if self.has_entry(name):
+            raise DXFTableEntryError('{} {} already exists!'.format(self._head.dxf.name, name))
+        entry.doc = self.doc
+        entry.owner = self._head.dxf.handle
+        self._append(entry)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         """ Write DXF representation to stream, stream opened with mode='wt'. """

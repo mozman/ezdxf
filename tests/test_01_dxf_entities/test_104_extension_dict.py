@@ -38,20 +38,11 @@ def test_direct_interface(entity):
 
 def test_copy_entity(doc, entity):
     xdict = entity.get_extension_dict()  # create a new extension dict if not exists
-    placeholder = xdict.add_placeholder('Test')
+    xdict.add_placeholder('Test')
 
     new_entity = entity.copy()
-    assert new_entity.has_extension_dict()
-    assert entity.extension_dict is not new_entity.extension_dict
-    assert entity.dxf.handle == entity.extension_dict.dictionary.dxf.owner, 'owner handle should be entity handle'
-
-    new_placeholder = new_entity.extension_dict.dictionary['Test']
-    assert new_placeholder.dxf.owner != placeholder.dxf.owner
-    assert new_entity.extension_dict.dictionary['Test'].dxf.owner != placeholder.dxf.owner
-
-    new_entity.extension_dict.add_placeholder('Test2')
-    assert len(entity.extension_dict.dictionary) == 1
-    assert len(new_entity.extension_dict.dictionary) == 2
+    # copying of extension dict is not supported
+    assert new_entity.has_extension_dict() is False
 
 
 def test_line_new_extension_dict(doc):

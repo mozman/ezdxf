@@ -24,7 +24,7 @@ def entities_to_code(entities: Iterable['DXFEntity'], layout: str = 'layout',
     Translates DXF entities into Python source code to recreate this entities by ezdxf.
 
     Args:
-        entities: iterable of DXFGraphic
+        entities: iterable of DXFEntity
         layout: variable name of the layout (model space or block)
         ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
 
@@ -165,7 +165,7 @@ class SourceCodeGenerator:
         attribute `source_code`.
 
         Args:
-            entity: DXFGraphic object
+            entity: DXFEntity object
 
         """
         dxftype = entity.dxftype()
@@ -182,7 +182,7 @@ class SourceCodeGenerator:
         attribute `source_code`.
 
         Args:
-            entities: iterable of DXFGraphic
+            entities: iterable of DXFEntity
             ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
 
         """
@@ -317,46 +317,46 @@ class SourceCodeGenerator:
 
     # simple graphical types
 
-    def _line(self, entity: 'DXFGraphic') -> None:
+    def _line(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.api_call('add_line(', ['start', 'end'], entity.dxfattribs()))
 
-    def _point(self, entity: 'DXFGraphic') -> None:
+    def _point(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.api_call('add_point(', ['location'], entity.dxfattribs()))
 
-    def _circle(self, entity: 'DXFGraphic') -> None:
+    def _circle(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.api_call('add_circle(', ['center', 'radius'], entity.dxfattribs()))
 
-    def _arc(self, entity: 'DXFGraphic') -> None:
+    def _arc(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(
             self.api_call('add_arc(', ['center', 'radius', 'start_angle', 'end_angle'], entity.dxfattribs()))
 
-    def _text(self, entity: 'DXFGraphic') -> None:
+    def _text(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.api_call('add_text(', ['text'], entity.dxfattribs()))
 
-    def _solid(self, entity: 'DXFGraphic') -> None:
+    def _solid(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.generic_api_call('SOLID', entity.dxfattribs()))
 
-    def _trace(self, entity: 'DXFGraphic') -> None:
+    def _trace(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.generic_api_call('TRACE', entity.dxfattribs()))
 
-    def _3dface(self, entity: 'DXFGraphic') -> None:
+    def _3dface(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.generic_api_call('3DFACE', entity.dxfattribs()))
 
-    def _shape(self, entity: 'DXFGraphic') -> None:
+    def _shape(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.api_call('add_shape(', ['name', 'insert', 'size'], entity.dxfattribs()))
 
-    def _attrib(self, entity: 'DXFGraphic') -> None:
+    def _attrib(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.api_call('add_attrib(', ['tag', 'text', 'insert'], entity.dxfattribs()))
 
-    def _attdef(self, entity: 'DXFGraphic') -> None:
+    def _attdef(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.generic_api_call('ATTDEF', entity.dxfattribs()))
 
-    def _ellipse(self, entity: 'DXFGraphic') -> None:
+    def _ellipse(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(
             self.api_call('add_ellipse(', ['center', 'major_axis', 'ratio', 'start_param', 'end_param'],
                           entity.dxfattribs()))
 
-    def _viewport(self, entity: 'DXFGraphic') -> None:
+    def _viewport(self, entity: 'DXFEntity') -> None:
         self.add_source_code_lines(self.generic_api_call('VIEWPORT', entity.dxfattribs()))
         self.add_source_code_line('# Set valid handles or remove attributes ending with "_handle", otherwise the DXF '
                                   'file is invalid for AutoCAD')

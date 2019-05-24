@@ -59,9 +59,18 @@ class Insert(DXFGraphic):
         return bool(len(self.attribs))
 
     def _copy_data(self, entity: 'Insert') -> None:
-        """ Copy ATTRIB entities, and store the copies into database. """
+        """ Copy ATTRIB entities, does not store the copies into database. """
         entity.attribs = [attrib.copy() for attrib in self.attribs]
         entity.seqend = self.seqend.copy()
+
+    def add_sub_entities_to_entitydb(self):
+        """ Called by EntityDB.add() """
+        for attrib in self.attribs:
+            attrib.doc = self.doc  # grant same document
+            self.entitydb.add(attrib)
+        if self.seqend:
+            self.seqend.doc = self.doc  # grant same document
+            self.entitydb.add(self.seqend)
 
     def set_owner(self, owner: str, paperspace: int = 0):
         # At loading form file, INSERT will be added to layout before attribs are linked, so set_owner() of INSERT

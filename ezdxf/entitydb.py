@@ -91,6 +91,10 @@ class EntityDB:
             entity.update_handle(handle)
         self[handle] = entity
 
+        # add sub entities like ATTRIB, VERTEX and SEQEND to database
+        if hasattr(entity, 'add_sub_entities_to_entitydb'):
+            entity.add_sub_entities_to_entitydb()
+
     def delete_entity(self, entity: DXFEntity) -> None:
         del self[entity.dxf.handle]
         entity.destroy()

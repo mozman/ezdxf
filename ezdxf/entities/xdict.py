@@ -47,9 +47,8 @@ class ExtensionDict:
     def copy(self, owner: 'DXFEntity') -> Optional['ExtensionDict']:
         """ Create a copy of the extension dictionary with new `owner`. """
         assert self._xdict is not None
-        xdict = self.dictionary
-        copy = xdict.copy()
-        self.objects.add_object(copy)
+        copy = self.dictionary.copy()
+        # the copy is not added to objects section nor to the entity database!
         # The copy of an extension dictionary can not have the same owner as the source dictionary.
         return self.__class__(owner, copy)
 
