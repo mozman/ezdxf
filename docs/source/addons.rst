@@ -9,5 +9,6 @@ Add-ons
    addons/mtext
    addons/table
    addons/importer
+   addons/dxf2code
    addons/forms
 

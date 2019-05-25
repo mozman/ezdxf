@@ -1,10 +1,29 @@
 # Created: 17.05.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-"""
+r"""
+dxf2code
+========
+
 Translate DXF entities and structures into Python source code.
 
+Example::
+
+    import ezdxf
+    from ezdxf.addons.dxf2code import entities_to_code
+
+    doc = ezdxf.readfile('original.dxf')
+    msp = doc.modelspace()
+    source = entities_to_code(msp)
+
+    with open('source.py', mode='wt') as f:
+        f.write(source.imports())
+        f.write('\n\n')
+        f.write(source.tostring())
+        f.write('\n')
+
 """
+
 from typing import TYPE_CHECKING, Iterable, List, TextIO, Mapping, Set
 import json
 
@@ -25,8 +44,8 @@ def entities_to_code(entities: Iterable['DXFEntity'], layout: str = 'layout',
 
     Args:
         entities: iterable of DXFEntity
-        layout: variable name of the layout (model space or block)
-        ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
+        layout: variable name of the layout (model space or block) as string
+        ignore: iterable of entities types to ignore as strings like ``['IMAGE', 'DIMENSION']``
 
     Returns: :class:`SourceCodeGenerator`
 
@@ -42,7 +61,7 @@ def block_to_code(block: 'BlockLayout', drawing: str = 'doc', ignore: Iterable[s
 
     Args:
         block: block definition layout
-        drawing: variable name of the drawing
+        drawing: variable name of the drawing as string
         ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
 
     Returns: :class:`SourceCodeGenerator`
@@ -142,9 +161,11 @@ class SourceCodeGenerator:
     The SourceCodeGenerator translates DXF entities into Python source code for creating the same DXF entity in another
     model space or block definition.
 
-    Args:
-        layout: variable name of the layout (model space or block), required for graphical entities
-        doc: variable name of the document, required for table entries
+    This class is NOT to be meant to be initiated by lib user, it's just the result of the source code generator
+    functions.
+
+    :ivar source_code: list of source code lines without line endings
+    :ivar required_imports: list of import source code lines, which are required to create executable Python code.
 
     """
 
@@ -300,20 +321,31 @@ class SourceCodeGenerator:
         return s
 
     def imports(self, indent: int = 0) -> str:
+        """
+        Returns required imports as a single string.
+
+        Args:
+            indent: source code indentation count by spaces
+
+        """
         lead_str = ' ' * indent
         return '\n'.join(lead_str + line for line in self.required_imports)
 
     def tostring(self, indent: int = 0) -> str:
+        """
+        Returns the source code as a single string.
+
+        Args:
+            indent: source code indentation count by spaces
+
+        """
         lead_str = ' ' * indent
         return '\n'.join(lead_str + line for line in self.source_code)
 
     def __str__(self) -> str:
-        return self.tostring()
+        """ Returns the source code as a single string. """
 
-    def writelines(self, stream: TextIO, indent: int = 0):
-        fmt = ' ' * indent + '{}\n'
-        for line in self.source_code:
-            stream.write(fmt.format(line))
+        return self.tostring()
 
     # simple graphical types
 
