@@ -6,7 +6,8 @@
 Importer
 ========
 
-This rewritten Importer class from ezdxf v0.10 is not compatible previous ezdxf versions.
+This rewritten Importer class from ezdxf v0.10 is not compatible to previous ezdxf versions, but previous implementation
+was already broken.
 
 This add-on is meant to import graphical entities from another DXF drawing and their required table entries like LAYER,
 LTYPE or STYLE.
