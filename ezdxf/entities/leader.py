@@ -2,6 +2,7 @@
 # License: MIT License
 # Created 2019-03-12
 from typing import TYPE_CHECKING, List, Iterable
+import copy
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.tags import Tags, DXFTag
@@ -84,8 +85,7 @@ class Leader(DXFGraphic, OverrideMixin):
 
     def _copy_data(self, entity: 'Leader') -> None:
         """ Copy vertices. """
-        entity.vertices = [vertex.copy() for vertex in self.vertices]
-        entity.seqend = self.seqend.copy()
+        entity.vertices = copy.deepcopy(self.vertices)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)

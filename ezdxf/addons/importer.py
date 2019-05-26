@@ -22,7 +22,7 @@ Removed data which could contain source drawing dependencies: Extension Dictiona
 The new Importer() supports following data import:
 
   - entities which are really safe to import: LINE, POINT, CIRCLE, ARC, TEXT, SOLID, TRACE, 3DFACE, SHAPE, POLYLINE,
-    ATTRIB, ATTDEF, INSERT, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY
+    ATTRIB, INSERT, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY
   - table and table entry import is restricted to LAYER, LTYPE and STYLE
   - import of BLOCK definitions is supported
 
@@ -68,7 +68,7 @@ logger = logging.getLogger('ezdxf')
 
 IMPORT_TABLES = ['linetypes', 'layers', 'styles']
 IMPORT_ENTITIES = {
-    'LINE', 'POINT', 'CIRCLE', 'ARC', 'TEXT', 'SOLID', 'TRACE', '3DFACE', 'SHAPE', 'POLYLINE', 'ATTRIB', 'ATTDEF',
+    'LINE', 'POINT', 'CIRCLE', 'ARC', 'TEXT', 'SOLID', 'TRACE', '3DFACE', 'SHAPE', 'POLYLINE', 'ATTRIB',
     'INSERT', 'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY'
 }
 
@@ -182,6 +182,9 @@ class Importer:
                     logger.debug('Replacing already existing entry "{}" of {} table.'.format(entry_name, name))
                     target_table.remove(table_entry.dxf.name)
 
+            if name == 'layers':
+                self.used_linetypes.add(table_entry.get_dxf_attrib('linetype', 'Continuous'))
+
             # duplicate table entry
             new_table_entry = new_clean_entity(table_entry)
             new_table_entry.doc = self.target
@@ -213,7 +216,7 @@ class Importer:
             logger.debug('Import of {} not supported'.format(str(entity)))
             return
         self._add_used_resources(entity)
-        new_entity = cast('DXFGraphic', entity.copy())
+        new_entity = cast('DXFGraphic', new_clean_entity(entity))
         new_entity.doc = self.target
         self.target.entitydb.add(new_entity)
         target_layout.add_entity(new_entity)
@@ -273,6 +276,8 @@ class Importer:
 
         for block_name in block_names:
             if (block_name in self.target.blocks) and conflict == 'discard':
+                # discarded blocks keep their original name
+                self.imported_blocks[block_name] = block_name
                 continue
             self.import_block(block_name)
 
@@ -346,6 +351,7 @@ class Importer:
         Import required tables entries collected while importing entities into target drawing.
 
         """
+        # 1. layers, because layers import adds additional required linetype resources
         if len(self.used_layers):
             self.import_table('layers', self.used_layers)
         if len(self.used_linetypes):
@@ -359,8 +365,8 @@ class Importer:
         drawing is maybe invalid fore AutoCAD. Call :meth:`~Importer.finalize()` as last step of the import process.
 
         """
-        self.import_required_table_entries()
         self.resolve_inserts()
+        self.import_required_table_entries()
 
 
 def new_clean_entity(entity: 'DXFEntity', xdata: bool = False) -> 'DXFEntity':
