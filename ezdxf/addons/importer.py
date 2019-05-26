@@ -335,16 +335,13 @@ class Importer:
         in the target drawing and conflict resolving method was ``rename``.
 
         """
-        inserts = list(self.imported_inserts)
-        # clear imported inserts, block import may append additional inserts
-        self.imported_inserts = []
-        for insert in inserts:
-            block_name = self.import_block(insert.dxf.name)
-            insert.dxf.name = block_name
-
-        # additional inserts added by block imports?
-        if len(self.imported_inserts):
-            self.resolve_inserts()
+        while len(self.imported_inserts):
+            inserts = list(self.imported_inserts)
+            # clear imported inserts, block import may append additional inserts
+            self.imported_inserts = []
+            for insert in inserts:
+                block_name = self.import_block(insert.dxf.name)
+                insert.dxf.name = block_name
 
     def import_required_table_entries(self) -> None:
         """

@@ -5,7 +5,7 @@ import ezdxf
 
 
 def custom_header_vars():
-    doc = ezdxf.new('AC1015')
+    doc = ezdxf.new('R2000')
     msp = doc.modelspace()
 
     points = [(0, 0), (3, 0), (6, 3), (6, 6)]

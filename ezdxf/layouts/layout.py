@@ -260,7 +260,7 @@ class Layout(BaseLayout):
         """
         xdict = self.get_extension_dict()
         try:
-            sortents_table = xdict.get_entity('ACAD_SORTENTS')
+            sortents_table = xdict['ACAD_SORTENTS']
         except DXFKeyError:
             if create:
                 sortents_table = self.doc.objects.new_entity(
@@ -314,7 +314,7 @@ class Layout(BaseLayout):
             return empty
 
         try:
-            sortents_table = xdict.get_entity('ACAD_SORTENTS')
+            sortents_table = xdict['ACAD_SORTENTS']
         except DXFKeyError:
             return empty
         return iter(sortents_table)

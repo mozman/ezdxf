@@ -4,8 +4,8 @@ import ezdxf
 DXFPATH = Path(r"D:\Source\dxftest\DXF_with_ACIS_data")
 DELIMITER = '\n' + '='*80 + '\n'
 
-dwg = ezdxf.readfile(DXFPATH / "All_Surfaces_R2010.dxf")
-msp = dwg.modelspace()
+doc = ezdxf.readfile(DXFPATH / "All_Surfaces_R2010.dxf")
+msp = doc.modelspace()
 
 
 with open(DXFPATH / "All_Surfaces_R2010.sat", 'wt') as f:

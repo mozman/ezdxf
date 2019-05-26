@@ -27,14 +27,31 @@ class ExtensionDict:
         # _xdict as DXF Dictionary
         self._xdict = xdict
 
+    @property
+    def dictionary(self) -> 'Dictionary':
+        """
+        Get associated extension dictionary as Dictionary() object.
+
+        """
+        assert self._xdict is not None
+        if isinstance(self._xdict, str):
+            # replace handle string by DXFDictionary object
+            self._xdict = cast('Dictionary', self.owner.entitydb.get(self._xdict))
+        return self._xdict
+
     def __getitem__(self, key: str):
-        return self._xdict[key]
+
+        return self.dictionary[key]
 
     def __setitem__(self, key: str, value):
-        self._xdict[key] = value
+        self.dictionary[key] = value
 
     def __contains__(self, key: str):
-        return key in self._xdict
+        return key in self.dictionary
+
+    @property
+    def dxf(self):
+        return self.dictionary.dxf
 
     @classmethod
     def new(cls, owner: 'DXFEntity'):
@@ -82,18 +99,6 @@ class ExtensionDict:
     def objects(self) -> 'ObjectsSection':
         return self.owner.doc.objects
 
-    @property
-    def dictionary(self) -> 'Dictionary':
-        """
-        Get associated extension dictionary as Dictionary() object.
-
-        """
-        assert self._xdict is not None
-        if isinstance(self._xdict, str):
-            # replace handle string by DXFDictionary object
-            self._xdict = cast('Dictionary', self.owner.entitydb.get(self._xdict))
-        return self._xdict
-
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
         assert self._xdict is not None
         xdict = self._xdict
@@ -116,4 +121,3 @@ class ExtensionDict:
         placeholder = self.objects.add_placeholder(dictionary.dxf.handle)
         dictionary[name] = placeholder
         return placeholder
-

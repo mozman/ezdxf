@@ -35,13 +35,13 @@ def lines_with_default_weight(msp, x1, x2):
         )
 
 
-dwg = ezdxf.new('AC1018')
-msp = dwg.modelspace()
-lines_layer = dwg.layers.new(LAYER_NAME)
+doc = ezdxf.new('R2004')
+msp = doc.modelspace()
+lines_layer = doc.layers.new(LAYER_NAME)
 # set default line width as enum
 lines_layer.dxf.lineweight = 35
 
 lines_with_lineweight(msp, x1=0, x2=100)
 lines_with_default_weight(msp, x1=150, x2=250)
 
-dwg.saveas("using_lineweight.dxf")
+doc.saveas("using_lineweight.dxf")

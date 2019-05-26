@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 import ezdxf
 import random
@@ -12,10 +12,10 @@ def get_random_point():
 
 
 # Create a new drawing in the DXF format of AutoCAD 2010
-dwg = ezdxf.new('ac1024')
+doc = ezdxf.new('R2010')
 
 # Create a block with the name 'FLAG'
-flag = dwg.blocks.new(name='FLAG')
+flag = doc.blocks.new(name='FLAG')
 
 # Add DXF entities to the block 'FLAG'.
 # The default base point (= insertion point) of the block is (0, 0).
@@ -23,7 +23,7 @@ flag.add_polyline2d([(0, 0), (0, 5), (4, 3), (0, 3)])  # the flag as 2D polyline
 flag.add_circle((0, 0), .4, dxfattribs={'color': 2})  # mark the base point with a circle
 
 # Get the modelspace of the drawing.
-modelspace = dwg.modelspace()
+modelspace = doc.modelspace()
 
 # Get 50 random placing points.
 placing_points = [get_random_point() for _ in range(50)]
@@ -39,12 +39,12 @@ for point in placing_points:
     })
 
 # Save the drawing.
-dwg.saveas("blockref_tutorial.dxf")
+doc.saveas("blockref_tutorial.dxf")
 
 # Define some attributes for the block 'FLAG', placed relative to the base point, (0, 0) in this case.
-flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
-flag.add_attdef('XPOS', (0.5, -1.0), {'height': 0.25, 'color': 4})
-flag.add_attdef('YPOS', (0.5, -1.5), {'height': 0.25, 'color': 4})
+flag.add_attdef('NAME', (0.5, -0.5), dxfattribs={'height': 0.5, 'color': 3})
+flag.add_attdef('XPOS', (0.5, -1.0), dxfattribs={'height': 0.25, 'color': 4})
+flag.add_attdef('YPOS', (0.5, -1.5), dxfattribs={'height': 0.25, 'color': 4})
 
 # Get another 50 random placing points.
 placing_points = [get_random_point() for _ in range(50)]
@@ -66,7 +66,7 @@ for number, point in enumerate(placing_points):
     })
 
 # Save the drawing.
-dwg.saveas("auto_blockref_tutorial.dxf")
+doc.saveas("auto_blockref_tutorial.dxf")
 
 # Collect all anonymous block references starting with '*U'
 anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
@@ -75,7 +75,7 @@ anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
 flag_refs = []
 for block_ref in anonymous_block_refs:
     # Get the block layout of the anonymous block
-    block = dwg.blocks.get(block_ref.dxf.name)
+    block = doc.blocks.get(block_ref.dxf.name)
     # Find all block references to 'FLAG' in the anonymous block
     flag_refs.extend(block.query('INSERT[name=="FLAG"]'))
 

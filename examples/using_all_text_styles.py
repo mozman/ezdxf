@@ -3,8 +3,8 @@
 
 import ezdxf
 from ezdxf.tools.standards import styles
-dwg = ezdxf.new('R12', setup=True)
-msp = dwg.modelspace()
+doc = ezdxf.new('R12', setup=True)
+msp = doc.modelspace()
 
 y = 0
 height = .5
@@ -13,4 +13,4 @@ for style, font in styles():
     msp.add_text(style, {'style': style, 'height': height}).set_pos((0, y))
     y += height * line_height
 
-dwg.saveas('using_all_text_styles.dxf')
+doc.saveas('using_all_text_styles.dxf')

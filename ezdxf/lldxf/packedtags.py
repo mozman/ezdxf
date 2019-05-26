@@ -67,6 +67,15 @@ class VertexArray:
         else:
             self._del_point(self._index(index))
 
+    def __str__(self):
+        name = self.__class__.__name__
+        data = ",\n".join(str(p) for p in self)
+        return "{} = [\n{}\n]".format(name, data)
+
+    def __iter__(self):
+        for index in range(len(self)):
+            yield self[index]
+
     def insert(self, pos: int, point: Sequence[float]):
         """
         Insert point in front of point at index pos.

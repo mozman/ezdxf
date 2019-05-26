@@ -6,9 +6,9 @@ import ezdxf
 
 FILENAME = 'complex_linetype_example.dxf'
 
-dwg = ezdxf.new('R2018')  # DXF R13 or later is required
+doc = ezdxf.new('R2018')  # DXF R13 or later is required
 
-dwg.linetypes.new('GASLEITUNG2', dxfattribs={
+doc.linetypes.new('GASLEITUNG2', dxfattribs={
     'description': 'Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--',
     'length': 1,  # required for complex line types
     # line type definition in acadlt.lin:
@@ -16,7 +16,7 @@ dwg.linetypes.new('GASLEITUNG2', dxfattribs={
 })
 
 # shapes only work if the ltypeshp.shx and the DXF file are in the same directory
-dwg.linetypes.new('GRENZE2', dxfattribs={
+doc.linetypes.new('GRENZE2', dxfattribs={
     'description': 'Grenze eckig ----[]-----[]----[]-----[]----[]--',
     'length': 1.45,  # required for complex line types
     # line type definition in acadlt.lin:
@@ -26,8 +26,8 @@ dwg.linetypes.new('GRENZE2', dxfattribs={
 })
 
 
-msp = dwg.modelspace()
+msp = doc.modelspace()
 msp.add_line((0, 0), (100, 0), dxfattribs={'linetype': 'GASLEITUNG2'})
 msp.add_line((0, 50), (100, 50), dxfattribs={'linetype': 'GRENZE2'})
 
-dwg.saveas(FILENAME)
+doc.saveas(FILENAME)

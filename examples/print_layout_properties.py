@@ -58,9 +58,9 @@ def print_layouts(layouts):
 
 
 def process_file(filename):
-    dwg = ezdxf.readfile(filename)
-    if dwg.dxfversion > 'AC1009':
-        print_layouts(dwg.layouts)
+    doc = ezdxf.readfile(filename)
+    if doc.dxfversion > 'AC1009':
+        print_layouts(doc.layouts)
     else:
         print("DXF R12 not supported: {}".format(filename))
 

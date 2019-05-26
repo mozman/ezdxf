@@ -16,7 +16,6 @@ SAMPLE_COORDS = [get_random_point() for x in range(50)]
 
 flag_symbol = [(0, 0), (0, 5), (4, 3), (0, 3)]
 
-
 doc = ezdxf.new('R2007')
 doc.layers.new('FLAGS')
 
@@ -35,7 +34,7 @@ flag.add_attdef('YPOS', (0.5, -1.5), dxfattribs={'height': 0.25, 'color': 4})
 modelspace = doc.modelspace()
 for number, point in enumerate(SAMPLE_COORDS):
     values = {
-        'NAME': "P(%d)" % (number+1),
+        'NAME': "P(%d)" % (number + 1),
         'XPOS': "x = %.3f" % point[0],
         'YPOS': "y = %.3f" % point[1]
     }

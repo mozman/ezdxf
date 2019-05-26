@@ -73,21 +73,21 @@ def remove_solids(msp, color=6):
 
 
 def run():
-    dwg = ezdxf.new('R2004')  # does not work with AC1015/R2000, but it should
-    dwg.header['$SORTENTS'] = SortEntities.REGEN
-    msp = dwg.modelspace()
+    doc = ezdxf.new('R2004')  # does not work with AC1015/R2000, but it should
+    doc.header['$SORTENTS'] = SortEntities.REGEN
+    msp = doc.modelspace()
 
     add_solids(msp, count=1000, min_size=3, max_size=7)
-    dwg.saveas('sort_solids_unordered.dxf')
+    doc.saveas('sort_solids_unordered.dxf')
     order_solids_by_color(msp)  # 1 -> 7
-    dwg.saveas('sort_solids_ordered.dxf')
+    doc.saveas('sort_solids_ordered.dxf')
     reverse_order_solids_by_color(msp)  # 7 -> 1
-    dwg.saveas('sort_solids_reversed_ordered.dxf')
+    doc.saveas('sort_solids_reversed_ordered.dxf')
     move_solids_on_top(msp, 6)  # 7, 5, 4, 3, 2, 1, 6
-    dwg.saveas('sort_solids_6_on_top.dxf')  # 6 is magenta
+    doc.saveas('sort_solids_6_on_top.dxf')  # 6 is magenta
     # AutoCAD has no problem with removed entities in the redraw order table (SORTENTSTABLE)
     remove_solids(msp, 6)
-    dwg.saveas('sort_solids_removed_color_6.dxf')
+    doc.saveas('sort_solids_removed_color_6.dxf')
 
 
 if __name__ == '__main__':

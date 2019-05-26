@@ -6,14 +6,14 @@ import ezdxf
 DXF_TEST = Path(r'D:\Source\dxftest')
 PRODUCTS = DXF_TEST / 'AutodeskProducts'
 
-dwg = ezdxf.readfile(PRODUCTS/'Map3D_2017.dxf')
-msp = dwg.modelspace()
+doc = ezdxf.readfile(PRODUCTS/'Map3D_2017.dxf')
+msp = doc.modelspace()
 
 for block_ref in msp.query("INSERT[layer=='VO_body+cisla']"):
     print('\nINSERT')
     pprint(block_ref.dxfattribs())
     # GEODATA handle is stored in the associated BLOCK_RECORD
-    block_record = dwg.block_records.get(block_ref.dxf.name)
+    block_record = doc.block_records.get(block_ref.dxf.name)
     try:  # GEODATA handle is stored in an extension dictionary
         xdict = block_record.get_extension_dict()
     except ezdxf.DXFValueError:
@@ -30,5 +30,7 @@ geodata = msp.get_geodata()
 print("\nNEW NEW NEW!")
 print('Model space uses: ' + str(geodata))
 pprint(geodata.dxfattribs())
-print(geodata.get_coordinate_system_definition())
-pprint(geodata.get_mesh_data(), width=160)
+print(geodata.coordinate_system_definition)
+print(str(geodata.source_vertices))
+print(str(geodata.target_vertices))
+pprint(geodata.faces, width=160)

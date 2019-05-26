@@ -9,11 +9,11 @@ import ezdxf
 
 def copydxf(fromfile, tofile):
     starttime = time.time()
-    dwg = ezdxf.readfile(fromfile)
-    dwg.saveas(tofile)
+    doc = ezdxf.readfile(fromfile)
+    doc.saveas(tofile)
     endtime = time.time()
-    print('copy time: %.2f seconds' % (endtime-starttime))
+    print('copy time: %.2f seconds' % (endtime - starttime))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     copydxf(sys.argv[1], sys.argv[2])

@@ -1,10 +1,13 @@
+# Copyright (c) 2019 Manfred Moitzi
+# License: MIT License
+
 import ezdxf
 from ezdxf.math import UCS, OCS
 
 
 def main(filename):
-    dwg = ezdxf.new('R2010')
-    msp = dwg.modelspace()
+    doc = ezdxf.new('R2010')
+    msp = doc.modelspace()
 
     origin = (3, 3, 3)
     axis = (1, 0, -1)
@@ -22,7 +25,7 @@ def main(filename):
             'color': 2,
             'extrusion': ucs.uz,
         })
-    dwg.saveas(filename)
+    doc.saveas(filename)
 
 
 if __name__ == '__main__':

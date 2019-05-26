@@ -5,9 +5,9 @@ import ezdxf
 
 DIMPATH = r"C:\Users\manfred\Desktop\outbox"
 
-dwg = ezdxf.readfile(os.path.join(DIMPATH, "brics_R2000.dxf"))
+doc = ezdxf.readfile(os.path.join(DIMPATH, "brics_R2000.dxf"))
 
-for dimstyle in dwg.dimstyles:
+for dimstyle in doc.dimstyles:
     print("Dimstyle: {}".format(dimstyle.dxf.name))
     print("flags: {:x}".format(dimstyle.dxf.flags))
     dimstyle.print_dim_attribs()

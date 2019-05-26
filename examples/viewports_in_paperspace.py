@@ -1,5 +1,3 @@
-# Purpose: viewports in paperspace
-# Created: 11.10.2015
 # Copyright (c) 2015, Manfred Moitzi
 # License: MIT License
 import math
@@ -91,23 +89,23 @@ def create_viewports(paperspace, dxfversion):
 
 def main():
     def make(dxfversion, filename):
-        dwg = ezdxf.new(dxfversion)
-        if 'VIEWPORTS' not in dwg.layers:
-            vp_layer = dwg.layers.new('VIEWPORTS')
+        doc = ezdxf.new(dxfversion)
+        if 'VIEWPORTS' not in doc.layers:
+            vp_layer = doc.layers.new('VIEWPORTS')
         else:
-            vp_layer = dwg.layers.get('VIEWPORTS')
+            vp_layer = doc.layers.get('VIEWPORTS')
         # switch viewport layer off to hide the viewport border lines
         vp_layer.off()
 
-        create_2d_modelspace_content(dwg.modelspace())
-        create_3d_modelspace_content(dwg.modelspace())
+        create_2d_modelspace_content(doc.modelspace())
+        create_3d_modelspace_content(doc.modelspace())
         # IMPORTANT: DXF R12 supports only one paper space aka layout, every layout name returns the same layout
-        layout = dwg.layout('Layout1')  # default layout
+        layout = doc.layout('Layout1')  # default layout
         layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units='inch')
         create_viewports(layout, dxfversion)
 
         try:
-            dwg.saveas(filename)
+            doc.saveas(filename)
         except IOError:
             print("Can't write: '%s'" % filename)
 
