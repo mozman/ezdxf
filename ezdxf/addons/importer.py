@@ -22,7 +22,7 @@ Removed data which could contain source drawing dependencies: Extension Dictiona
 The new Importer() supports following data import:
 
   - entities which are really safe to import: LINE, POINT, CIRCLE, ARC, TEXT, SOLID, TRACE, 3DFACE, SHAPE, POLYLINE,
-    ATTRIB, ATTDEF, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY
+    ATTRIB, ATTDEF, INSERT, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY
   - table and table entry import is restricted to LAYER, LTYPE and STYLE
   - import of BLOCK definitions is supported
 
@@ -59,7 +59,7 @@ Example::
 
 from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
 import logging
-from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
+from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFTableEntryError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFEntity, BaseLayout, DXFGraphic, BlockLayout
@@ -69,7 +69,7 @@ logger = logging.getLogger('ezdxf')
 IMPORT_TABLES = ['linetypes', 'layers', 'styles']
 IMPORT_ENTITIES = {
     'LINE', 'POINT', 'CIRCLE', 'ARC', 'TEXT', 'SOLID', 'TRACE', '3DFACE', 'SHAPE', 'POLYLINE', 'ATTRIB', 'ATTDEF',
-    'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY'
+    'INSERT', 'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY'
 }
 
 
@@ -88,6 +88,7 @@ class Importer:
     :ivar used_styles: Set of used text style name as string, these styles require a TABLE entry or AutoCAD will crash.
 
     """
+
     def __init__(self, source: 'Drawing', target: 'Drawing'):
         self.source = source  # type: Drawing
         self.target = target  # type: Drawing
@@ -167,7 +168,11 @@ class Importer:
             else:  # import just one table entry
                 entries = (entries,)
         for entry_name in entries:
-            table_entry = source_table.get(entry_name)
+            try:
+                table_entry = source_table.get(entry_name)
+            except DXFTableEntryError:
+                logger.warning('Required table entry "{}" in table {} not found.'.format(entry_name, name))
+                continue
             entry_name = table_entry.dxf.name
             if entry_name in target_table:
                 if conflict == 'discard':
@@ -307,10 +312,11 @@ class Importer:
 
         target_blocks = self.target.blocks
         new_block_name = get_new_block_name()
-        target_block = target_blocks.new(new_block_name, base_point=source_block.dxf.base_point, dxfattribs={
-            'description': source_block.dxf.description,
-            'flags': source_block.dxf.flags,
-            'xref_path': source_block.dxf.xref_path,
+        block = source_block.block
+        target_block = target_blocks.new(new_block_name, base_point=block.dxf.base_point, dxfattribs={
+            'description': block.dxf.description,
+            'flags': block.dxf.flags,
+            'xref_path': block.dxf.xref_path,
         })
         self.import_entities(source_block, target_layout=target_block)
         self.imported_blocks[block_name] = new_block_name

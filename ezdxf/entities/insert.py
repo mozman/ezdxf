@@ -61,7 +61,8 @@ class Insert(DXFGraphic):
     def _copy_data(self, entity: 'Insert') -> None:
         """ Copy ATTRIB entities, does not store the copies into database. """
         entity.attribs = [attrib.copy() for attrib in self.attribs]
-        entity.seqend = self.seqend.copy()
+        if self.seqend:  # is None for INSERTS loaded from file with attached ATTRIBS
+            entity.seqend = self.seqend.copy()
 
     def add_sub_entities_to_entitydb(self):
         """ Called by EntityDB.add() """
@@ -253,7 +254,15 @@ class Insert(DXFGraphic):
         dxfattribs['insert'] = insert
         attrib = cast('Attrib', self._new_compound_entity('ATTRIB', dxfattribs))
         self.attribs.append(attrib)
+
+        # this case is only possible if INSERT is read from file without attached ATTRIBS
+        if self.seqend is None:
+            self.new_seqend()
         return attrib
+
+    def new_seqend(self):
+        seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={'layer': self.dxf.layer})
+        self.link_seqend(seqend)
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
         """

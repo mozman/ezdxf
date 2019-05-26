@@ -45,7 +45,7 @@ class EntityFactory:
         entity = self.new_entity(dxftype=type_, dxfattribs=dxfattribs)
         self.doc.entitydb.add(entity)
         if hasattr(entity, 'seqend'):
-            seqend = self.create_db_entry('SEQEND', dxfattribs={})
+            seqend = self.create_db_entry('SEQEND', dxfattribs={'layer': entity.dxf.layer})
             self.doc.entitydb.add(seqend)
             entity.seqend = seqend
         return entity

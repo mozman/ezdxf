@@ -56,7 +56,7 @@ class LWPolyline(DXFGraphic):
 
     def _copy_data(self, entity: 'LWPolyline') -> None:
         """ Copy lwpoints. """
-        entity.lwpoints = copy.deepcopy(self.lwpoint)
+        entity.lwpoints = copy.deepcopy(self.lwpoints)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """

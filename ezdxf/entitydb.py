@@ -195,6 +195,7 @@ class EntitySpace:
             seqend = False
             if hasattr(entity, 'linked_entities'):  # only POLYLINE & INSERT can have linked entities
                 for linked in entity.linked_entities():
+                    # INSERT: entity.seqend can be present, without attached ATTRIBS, if ATTRIBS were deleted
                     seqend = True
                     linked.export_dxf(tagwriter)
 
