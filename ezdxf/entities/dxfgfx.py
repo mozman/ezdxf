@@ -58,7 +58,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
 
     # Handle value of the PlotStyleName object, basically a hard pointer, but has a different range to make backward
     # compatibility easier to deal with.
-    'plotstyle_handle': DXFAttr(390, dxfversion=DXF2007, optional=True),  # shadow_mode
+    'plotstyle_handle': DXFAttr(390, dxfversion=DXF2007, optional=True),
 
     # 92 or 160?: Number of bytes in the proxy entity graphics represented in the subsequent 310 groups, which are binary
     # chunk records (optional)

@@ -33,7 +33,7 @@ acdb_attdef = DefSubclass('AcDbAttributeDefinition', {
     # Vertical text justification type (optional); see group code 73 in TEXT
     # Lock position flag. Locks the position of the attribute within the block reference
     # example of double use of group codes in one sub class
-    'lock_position': DXFAttr(280, default=0, dxfversion=DXF2010),
+    'lock_position': DXFAttr(280, default=0, dxfversion=DXF2010, optional=True),
 })
 
 # in xrecord definition, order is important, and group codes appear multiple times
@@ -204,7 +204,7 @@ acdb_attrib = DefSubclass('AcDbAttribute', {
     'valign': DXFAttr(74, default=0, optional=True),
     # Lock position flag. Locks the position of the attribute within the block reference
     # example of double use of group codes in one sub class
-    'lock_position': DXFAttr(280, default=0, dxfversion=DXF2010),
+    'lock_position': DXFAttr(280, default=0, dxfversion=DXF2010, optional=True),
 })
 
 

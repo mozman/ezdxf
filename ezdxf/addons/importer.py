@@ -62,14 +62,14 @@ import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFTableEntryError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, DXFEntity, BaseLayout, DXFGraphic, BlockLayout
+    from ezdxf.eztypes import Drawing, DXFEntity, BaseLayout, DXFGraphic, BlockLayout, Hatch, Insert
 
 logger = logging.getLogger('ezdxf')
 
 IMPORT_TABLES = ['linetypes', 'layers', 'styles']
 IMPORT_ENTITIES = {
     'LINE', 'POINT', 'CIRCLE', 'ARC', 'TEXT', 'SOLID', 'TRACE', '3DFACE', 'SHAPE', 'POLYLINE', 'ATTRIB',
-    'INSERT', 'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY'
+    'INSERT', 'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY', 'ATTDEF'
 }
 
 
@@ -103,6 +103,8 @@ class Importer:
         # collects all imported block names and their assigned new name
         # imported_block[original_name] = new_name
         self.imported_blocks = dict()  # type: Dict[str, str]
+        self._default_plotstyle_handle = target.plotstyles['Normal'].dxf.handle
+        self._default_material_handle = target.materials['Global'].dxf.handle
 
     def _add_used_resources(self, entity: 'DXFEntity') -> None:
         """ Register used resources. """
@@ -110,7 +112,7 @@ class Importer:
         self.used_linetypes.add(entity.get_dxf_attrib('linetype', 'BYLAYER'))
 
         dxftype = entity.dxftype()
-        if dxftype in {'TEXT', 'MTEXT'}:
+        if dxftype in {'TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'}:
             self.used_styles.add(entity.get_dxf_attrib('style', 'Standard'))
 
     def import_tables(self, table_names: Union[str, Iterable[str]] = "*", conflict: str = "discard") -> None:
@@ -155,6 +157,14 @@ class Importer:
             ValueError: invalid `conflict` argument
             TypeError: unsupported table type
         """
+
+        def set_dxf_attribs(e):
+            e.doc = self.target
+            if e.dxf.hasattr('plotstyle_handle'):
+                e.dxf.plotstyle_handle = self._default_plotstyle_handle
+            if e.dxf.hasattr('material_handle'):
+                e.dxf.material_handle = self._default_material_handle
+
         if conflict not in ('replace', 'discard'):
             raise ValueError('Invalid value "{}" for argument conflict.'.format(conflict))
         if name not in IMPORT_TABLES:
@@ -187,7 +197,8 @@ class Importer:
 
             # duplicate table entry
             new_table_entry = new_clean_entity(table_entry)
-            new_table_entry.doc = self.target
+            set_dxf_attribs(new_table_entry)
+
             # create a new handle and add entity to target entity database
             self.target.entitydb.add(new_table_entry)
             # add new table entry to target table and set owner attributes
@@ -206,6 +217,14 @@ class Importer:
             DXFStructureError: `target_layout` is not a layout of target drawing
 
         """
+
+        def set_dxf_attribs(e):
+            e.doc = self.target
+            # remove invalid resources
+            e.dxf.discard('plotstyle_handle')
+            e.dxf.discard('material_handle')
+            e.dxf.discard('visualstyle_handle')
+
         if target_layout is None:
             target_layout = self.target.modelspace()
         elif target_layout.doc != self.target:
@@ -217,12 +236,20 @@ class Importer:
             return
         self._add_used_resources(entity)
         new_entity = cast('DXFGraphic', new_clean_entity(entity))
-        new_entity.doc = self.target
+        set_dxf_attribs(new_entity)
         self.target.entitydb.add(new_entity)
         target_layout.add_entity(new_entity)
 
-        if dxftype == 'INSERT':
-            self.imported_inserts.append(new_entity)
+        try:  # additional processing
+            getattr(self, '_import_' + dxftype.lower())(new_entity)
+        except AttributeError:
+            pass
+
+    def _import_insert(self, insert: 'Insert'):
+        self.imported_inserts.append(insert)
+
+    def _import_hatch(self, hatch: 'Hatch'):
+        hatch.dxf.discard('associative')
 
     def import_entities(self, entities: Iterable['DXFEntity'], target_layout: 'BaseLayout' = None) -> None:
         """
