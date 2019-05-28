@@ -62,7 +62,7 @@ import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFTableEntryError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, DXFEntity, BaseLayout, DXFGraphic, BlockLayout, Hatch, Insert
+    from ezdxf.eztypes import Drawing, DXFEntity, BaseLayout, DXFGraphic, BlockLayout, Hatch, Insert, Polyline
 
 logger = logging.getLogger('ezdxf')
 
@@ -247,6 +247,14 @@ class Importer:
 
     def _import_insert(self, insert: 'Insert'):
         self.imported_inserts.append(insert)
+        # remove all possible source drawing dependencies from sub entities
+        for attrib in insert.attribs:
+            remove_dependencies(attrib)
+
+    def _import_polyline(self, polyline: 'Polyline'):
+        # remove all possible source drawing dependencies from sub entities
+        for vertex in polyline.vertices:
+            remove_dependencies(vertex)
 
     def _import_hatch(self, hatch: 'Hatch'):
         hatch.dxf.discard('associative')
@@ -281,7 +289,7 @@ class Importer:
         """
         self.import_entities(self.source.modelspace(), target_layout=target_layout)
 
-    def import_blocks(self, block_names: Iterable[str], conflict: str = "discard") -> None:
+    def import_blocks(self, block_names: Iterable[str], conflict: str = 'discard') -> None:
         """
         Import block definitions. If block already exist the `conflict` argument defines the conflict solution:
 
@@ -298,28 +306,28 @@ class Importer:
             ValueError: source block not found
 
         """
-        if conflict not in ('rename', 'discard'):
-            raise ValueError('Invalid value "{}" for argument conflict.'.format(conflict))
-
         for block_name in block_names:
-            if (block_name in self.target.blocks) and conflict == 'discard':
-                # discarded blocks keep their original name
-                self.imported_blocks[block_name] = block_name
-                continue
-            self.import_block(block_name)
+            self.import_block(block_name, conflict=conflict)
 
-    def import_block(self, block_name: str) -> str:
+    def import_block(self, block_name: str, conflict: str = 'rename') -> str:
         """
-        Import one block definition. Block will be renamed if block name already exist in the target drawing.
+        Import one block definition. If block already exist the `conflict` argument defines the conflict solution:
+
+            - ``discard`` for using the target block and discarding the source block
+            - ``rename`` for renaming the target block at import, required name resolving for imported block references
+              (INSERT), will be done in :meth:`Importer.finalize`.
+
         To replace an existing block in the target drawing, just delete it before importing:
         :code:`target.blocks.delete_block(block_name, safe=False)`
 
         Args:
             block_name: name of block to import
+            conflict: ``discard`` | ``rename``
 
         Returns: block name (renamed)
 
         Raises:
+            ValueError: invalid `conflict` argument
             ValueError: source block not found
 
         """
@@ -332,6 +340,9 @@ class Importer:
                 num += 1
             return name
 
+        if conflict not in ('rename', 'discard'):
+            raise ValueError('Invalid value "{}" for argument conflict.'.format(conflict))
+
         try:  # already imported block?
             return self.imported_blocks[block_name]
         except KeyError:
@@ -343,6 +354,10 @@ class Importer:
             raise ValueError('Source block "{}" not found.'.format(block_name))
 
         target_blocks = self.target.blocks
+        if block_name in target_blocks and conflict == 'discard':
+            self.imported_blocks[block_name] = block_name
+            return block_name
+
         new_block_name = get_new_block_name()
         block = source_block.block
         target_block = target_blocks.new(new_block_name, base_point=block.dxf.base_point, dxfattribs={
@@ -405,9 +420,21 @@ def new_clean_entity(entity: 'DXFEntity', xdata: bool = False) -> 'DXFEntity':
     new_entity = entity.copy()
     # clear drawing link
     new_entity.doc = None
-    new_entity.appdata = None
-    new_entity.reactors = None
-    new_entity.extension_dict = None
+    return remove_dependencies(new_entity, xdata=xdata)
+
+
+def remove_dependencies(entity: 'DXFEntity', xdata: bool = False) -> 'DXFEntity':
+    """
+    Remove all external dependencies.
+
+    Args:
+        entity: DXF entity
+        xdata: remove xdata flag
+
+    """
+    entity.appdata = None
+    entity.reactors = None
+    entity.extension_dict = None
     if not xdata:
-        new_entity.xdata = None
-    return new_entity
+        entity.xdata = None
+    return entity

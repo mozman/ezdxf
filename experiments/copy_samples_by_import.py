@@ -80,7 +80,7 @@ def import_msp(source, target):
 
 SEP_LINE = '-----------------------------------------------------------------------'
 
-for filename in CADKIT_FILES[:1]:
+for filename in AUTODESK_FILES:
     filename = DXFTEST_PATH / filename
     new_name = outname(filename)
     if not new_name.exists():
