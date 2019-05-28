@@ -22,11 +22,13 @@ Removed data which could contain source drawing dependencies: Extension Dictiona
 The new Importer() supports following data import:
 
   - entities which are really safe to import: LINE, POINT, CIRCLE, ARC, TEXT, SOLID, TRACE, 3DFACE, SHAPE, POLYLINE,
-    ATTRIB, INSERT, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY
-  - table and table entry import is restricted to LAYER, LTYPE and STYLE
+    ATTRIB, ATTDEF, INSERT, ELLIPSE, MTEXT, LWPOLYLINE, SPLINE, HATCH, MESH, XLINE, RAY, DIMENSION, LEADER
+  - table and table entry import is restricted to LAYER, LTYPE, STYLE, DIMSTYLE
   - import of BLOCK definitions is supported
 
 Import of DXF objects from the OBJECTS section is not supported.
+
+DIMSTYLE override for entities DIMENSION and LEADER is not supported.
 
 Example::
 
@@ -50,7 +52,7 @@ Example::
     importer.import_entities(ents, tblock)
 
     # This is ALWAYS the last & required step, without finalizing the target drawing is maybe invalid!
-    # Imports required table entries and required block definitions.
+    # This step imports required table entries and block definitions.
     importer.finalize()
 
     tdoc.saveas('imported.dxf')
@@ -60,16 +62,19 @@ Example::
 from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFTableEntryError
+from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFEntity, BaseLayout, DXFGraphic, BlockLayout, Hatch, Insert, Polyline
+    from ezdxf.eztypes import DimStyle, Dimension
 
 logger = logging.getLogger('ezdxf')
 
-IMPORT_TABLES = ['linetypes', 'layers', 'styles']
+IMPORT_TABLES = ['linetypes', 'layers', 'styles', 'dimstyles']
 IMPORT_ENTITIES = {
     'LINE', 'POINT', 'CIRCLE', 'ARC', 'TEXT', 'SOLID', 'TRACE', '3DFACE', 'SHAPE', 'POLYLINE', 'ATTRIB',
-    'INSERT', 'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY', 'ATTDEF'
+    'INSERT', 'ELLIPSE', 'MTEXT', 'LWPOLYLINE', 'SPLINE', 'HATCH', 'MESH', 'XLINE', 'RAY', 'ATTDEF',
+    'DIMENSION', 'LEADER',  # dimension style override not supported!
 }
 
 
@@ -96,6 +101,8 @@ class Importer:
         self.used_layers = set()  # type: Set[str]
         self.used_linetypes = set()  # type: Set[str]
         self.used_styles = set()  # type: Set[str]
+        self.used_dimstyles = set()  # type: Set[str]
+        self.used_arrows = set()  # type: Set[str]
 
         # collects all imported INSERT entities, for later name resolving.
         self.imported_inserts = list()  # type: List[DXFEntity]  # imported inserts
@@ -110,10 +117,10 @@ class Importer:
         """ Register used resources. """
         self.used_layers.add(entity.get_dxf_attrib('layer', '0'))
         self.used_linetypes.add(entity.get_dxf_attrib('linetype', 'BYLAYER'))
-
-        dxftype = entity.dxftype()
-        if dxftype in {'TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'}:
+        if entity.supports_dxf_attrib('style'):
             self.used_styles.add(entity.get_dxf_attrib('style', 'Standard'))
+        if entity.supports_dxf_attrib('dimstyle'):
+            self.used_dimstyles.add(entity.get_dxf_attrib('dimstyle', 'Standard'))
 
     def import_tables(self, table_names: Union[str, Iterable[str]] = "*", conflict: str = "discard") -> None:
         """ Import DXF tables from source drawing into target drawing. If table entries already exist the `conflict`
@@ -204,6 +211,32 @@ class Importer:
             # add new table entry to target table and set owner attributes
             target_table.add_entry(new_table_entry)
 
+    def _add_dimstyle_resources(self, dimstyle: 'DimStyle') -> None:
+        self.used_styles.add(dimstyle.get_dxf_attrib('dimtxsty', 'Standard'))
+        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltype', 'BYLAYER'))
+        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltex1', 'BYLAYER'))
+        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltex2', 'BYLAYER'))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk', ''))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk1', ''))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk2', ''))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimldrblk', ''))
+
+    def import_dimstyles(self, dimestyle_names: Iterable[str]) -> None:
+        for name in dimestyle_names:
+            if self.target.dimstyles.has_entry(name):
+                logger.debug('Skipping already existing dimstyle "{}"'.format(name))
+                continue
+            try:
+                dimestyle = cast('DimStyle', self.source.dimstyles.get(name))
+            except DXFTableEntryError:
+                logger.warning('Required source dimstyle "{}" not found.'.format(name))
+                continue
+            self._add_dimstyle_resources(dimestyle)
+            # create and add new table entry
+            new_table_entry = new_clean_entity(dimestyle)
+            self.target.entitydb.add(new_table_entry)
+            self.target.dimstyles.add_entry(new_table_entry)
+
     def import_entity(self, entity: 'DXFEntity', target_layout: 'BaseLayout' = None) -> None:
         """
         Imports a single DXF `entity` into `target_layout` or the modelspace of the target drawing, if `target_layout`
@@ -259,6 +292,37 @@ class Importer:
     def _import_hatch(self, hatch: 'Hatch'):
         hatch.dxf.discard('associative')
 
+    def _import_dimension(self, dimension: 'Dimension'):
+        def import_arrow_blocks():
+            """ Special import, because dimension blocks (arrows) must not renamed if block already exist in target
+            drawing.
+
+            """
+            for insert in self.imported_inserts:
+                self.import_block(insert.dxf.name, rename=False)
+
+        block_name = dimension.get_dxf_attrib('geometry')
+        if block_name:
+            if block_name not in self.source.blocks:
+                msg = 'Required anonymous DIMENSION block "{}" does not exist in source drawing.'.format(block_name)
+                logger.error(msg)
+                return
+
+            # INSERT entities in an anonymous dimension block gets special treatment:
+            # Do NOT rename BLOCK if already exist! -> import_arrow_blocks()
+            save_imported_inserts = self.imported_inserts
+            self.imported_inserts = []
+            name = self.import_block(block_name, rename=True)
+            dimension.dxf.geometry = name
+
+            # special treatment for arrow blocks!
+            import_arrow_blocks()
+            # restore previous collected INSERT entities
+            self.imported_inserts = save_imported_inserts
+
+        else:
+            logger.error('Required anonymous geometry block for DIMENSION not defined.')
+
     def import_entities(self, entities: Iterable['DXFEntity'], target_layout: 'BaseLayout' = None) -> None:
         """
         Import all `entities` into `target_layout` or the modelspace of the target drawing, if `target_layout` is
@@ -289,45 +353,39 @@ class Importer:
         """
         self.import_entities(self.source.modelspace(), target_layout=target_layout)
 
-    def import_blocks(self, block_names: Iterable[str], conflict: str = 'discard') -> None:
+    def import_blocks(self, block_names: Iterable[str], rename=False) -> None:
         """
-        Import block definitions. If block already exist the `conflict` argument defines the conflict solution:
-
-            - ``discard`` for using the target block and discarding the source block
-            - ``rename`` for renaming the target block at import, required name resolving for imported block references
-              (INSERT), will be done in :meth:`Importer.finalize`.
+        Import block definitions. If block already exist the block will be renamed if argument `rename` is True,
+        else the existing target block will be used instead of the source block. Required name resolving for imported
+        block references (INSERT), will be done in :meth:`Importer.finalize`.
 
         Args:
             block_names: names of blocks to import
-            conflict: ``discard`` | ``rename``
+            rename: rename block if exists in target drawing
 
         Raises:
-            ValueError: invalid `conflict` argument
             ValueError: source block not found
 
         """
         for block_name in block_names:
-            self.import_block(block_name, conflict=conflict)
+            self.import_block(block_name, rename=rename)
 
-    def import_block(self, block_name: str, conflict: str = 'rename') -> str:
+    def import_block(self, block_name: str, rename=True) -> str:
         """
-        Import one block definition. If block already exist the `conflict` argument defines the conflict solution:
-
-            - ``discard`` for using the target block and discarding the source block
-            - ``rename`` for renaming the target block at import, required name resolving for imported block references
-              (INSERT), will be done in :meth:`Importer.finalize`.
+        Import one block definition. If block already exist the block will be renamed if argument `rename` is True,
+        else the existing target block will be used instead of the source block. Required name resolving for imported
+        block references (INSERT), will be done in :meth:`Importer.finalize`.
 
         To replace an existing block in the target drawing, just delete it before importing:
         :code:`target.blocks.delete_block(block_name, safe=False)`
 
         Args:
             block_name: name of block to import
-            conflict: ``discard`` | ``rename``
+            rename: rename block if exists in target drawing
 
         Returns: block name (renamed)
 
         Raises:
-            ValueError: invalid `conflict` argument
             ValueError: source block not found
 
         """
@@ -340,9 +398,6 @@ class Importer:
                 num += 1
             return name
 
-        if conflict not in ('rename', 'discard'):
-            raise ValueError('Invalid value "{}" for argument conflict.'.format(conflict))
-
         try:  # already imported block?
             return self.imported_blocks[block_name]
         except KeyError:
@@ -354,7 +409,7 @@ class Importer:
             raise ValueError('Source block "{}" not found.'.format(block_name))
 
         target_blocks = self.target.blocks
-        if block_name in target_blocks and conflict == 'discard':
+        if (block_name in target_blocks) and (rename is False):
             self.imported_blocks[block_name] = block_name
             return block_name
 
@@ -368,6 +423,19 @@ class Importer:
         self.import_entities(source_block, target_layout=target_block)
         self.imported_blocks[block_name] = new_block_name
         return new_block_name
+
+    def create_missing_arrows(self):
+        """
+        Create or import required arrows, used by LEADER or DIMSTYLE, which are not imported automatically because they
+        are not actually used in an anonymous  DIMENSION blocks.
+
+        """
+        self.used_arrows.discard('')  # standard default arrow '' needs no block definition
+        for arrow_name in self.used_arrows:
+            if ARROWS.is_acad_arrow(arrow_name):
+                self.target.acquire_arrow(arrow_name)
+            else:
+                self.import_block(arrow_name, rename=False)
 
     def resolve_inserts(self) -> None:
         """
@@ -390,9 +458,14 @@ class Importer:
         Import required tables entries collected while importing entities into target drawing.
 
         """
-        # 1. layers, because layers import adds additional required linetype resources
+        # 1. dimstyles import adds additional required linetype and style resources and required arrows
+        self.import_dimstyles(self.used_dimstyles)
+
+        # 2. layers import add additional required linetype resources
         if len(self.used_layers):
             self.import_table('layers', self.used_layers)
+
+        # linetypes and styles to not add additional required resources
         if len(self.used_linetypes):
             self.import_table('linetypes', self.used_linetypes)
         if len(self.used_styles):
@@ -406,6 +479,7 @@ class Importer:
         """
         self.resolve_inserts()
         self.import_required_table_entries()
+        self.create_missing_arrows()
 
 
 def new_clean_entity(entity: 'DXFEntity', xdata: bool = False) -> 'DXFEntity':

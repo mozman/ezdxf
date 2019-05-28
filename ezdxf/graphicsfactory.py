@@ -318,7 +318,7 @@ class CreatorInterface:
             insert: insert location as 2D/3D point in :ref:`WCS`
             text: tag value as string
             dxfattribs (dict): additional DXF attributes for :class:`Attrib` entity
-            
+
         Returns: :class:`Attdef`
 
         """

@@ -99,7 +99,7 @@ def test_import_block_without_conflict(importer):
 
 
 def test_import_block_with_conflict_discard(importer):
-    importer.import_blocks(['ConflictBlock'], conflict='discard')
+    importer.import_blocks(['ConflictBlock'], rename=False)
     importer.finalize()
 
     block = importer.target.blocks.get('ConflictBlock')
@@ -108,7 +108,7 @@ def test_import_block_with_conflict_discard(importer):
 
 
 def test_import_block_with_conflict_rename(importer):
-    importer.import_blocks(['ConflictBlock'], conflict='rename')
+    importer.import_blocks(['ConflictBlock'], rename=True)
     importer.finalize()
 
     block = importer.target.blocks.get('ConflictBlock0')
@@ -117,7 +117,7 @@ def test_import_block_with_conflict_rename(importer):
 
 
 def test_import_block_with_conflict_rename_resolve_block_ref(importer):
-    importer.import_blocks(['ConflictBlock'], conflict='rename')
+    importer.import_blocks(['ConflictBlock'], rename=True)
     inserts = importer.source.query('INSERT')
     importer.import_entities(inserts)
     importer.finalize()
@@ -128,7 +128,7 @@ def test_import_block_with_conflict_rename_resolve_block_ref(importer):
 
 def test_import_block_with_conflict_rename_resolve_block_ref_inside_block_def(importer):
     src_blocks = [block.name for block in importer.source.blocks if not block.is_any_layout]
-    importer.import_blocks(src_blocks, conflict='rename')
+    importer.import_blocks(src_blocks, rename=True)
     importer.finalize()
 
     block = importer.target.blocks.get('RefToConflictBlock')
