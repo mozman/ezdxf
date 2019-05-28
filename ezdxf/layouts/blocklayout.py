@@ -47,28 +47,6 @@ class BlockLayout(BaseLayout):
         """ Pass DXF name space of associated BLOCK_RECORD. """
         return self.block_record.dxf
 
-    def add_attdef(self, tag: str, insert: Sequence[float] = (0, 0), text: str = '', dxfattribs: dict = None) -> 'DXFGraphic':
-        """
-        Add an :class:`Attdef` entity.
-
-        Set position and alignment by the idiom::
-
-            myblock.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
-
-        Args:
-            tag: attribute name (tag) as string without spaces
-            insert: attribute insert point relative to block origin (0, 0, 0)
-            text: preset text for attribute
-            dxfattribs: DXF attributes for the new ATTDEF entity
-
-        """
-        if dxfattribs is None:
-            dxfattribs = {}
-        dxfattribs['tag'] = tag
-        dxfattribs['insert'] = insert
-        dxfattribs['text'] = text
-        return self.new_entity('ATTDEF', dxfattribs)
-
     def attdefs(self) -> Iterable['AttDef']:
         """
         Iterate for all :class:`Attdef` entities.

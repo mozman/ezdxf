@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import UCS, Vertex, Drawing, DXFGraphic
     from ezdxf.eztypes import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
     from ezdxf.eztypes import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
-    from ezdxf.eztypes import Leader
+    from ezdxf.eztypes import Leader, Attdef
     from ezdxf.eztypes import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef, Body, Region, Solid3d
     from ezdxf.eztypes import LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
@@ -304,6 +304,27 @@ class CreatorInterface:
         dxfattribs['text'] = text
         dxfattribs['insert'] = insert
         return self.new_entity('ATTRIB', dxfattribs)
+
+    def add_attdef(self, tag: str, insert: 'Vertex' = (0, 0), text: str = '', dxfattribs: dict = None) -> 'Attdef':
+        """
+        Add an :class:`Attdef` as stand alone DXF entity.
+
+        Set position and alignment by the idiom::
+
+            layout.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
+
+        Args:
+            tag: tag name as string
+            insert: insert location as 2D/3D point in :ref:`WCS`
+            text: tag value as string
+            dxfattribs (dict): additional DXF attributes for :class:`Attrib` entity
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs['tag'] = tag
+        dxfattribs['insert'] = insert
+        dxfattribs['text'] = text
+        return self.new_entity('ATTDEF', dxfattribs)
 
     def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
         """

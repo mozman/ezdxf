@@ -44,7 +44,7 @@ class TestAutoBlockReference:
         assert block.get_attdef('TAG1_Z') is None
 
     def test_get_attdef_text(self, block):
-        block.add_attdef('TAGX', (0, 0), text='PRESET_TEXT')
+        block.add_attdef('TAGX', insert=(0, 0), text='PRESET_TEXT')
         text = block.get_attdef_text('TAGX')
         assert text == 'PRESET_TEXT'
 
