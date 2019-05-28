@@ -75,6 +75,8 @@ Create New Entities
 
 .. automethod:: ezdxf.layouts.layout.Layout.add_attrib
 
+.. automethod:: ezdxf.layouts.layout.Layout.add_attdef
+
 .. automethod:: ezdxf.layouts.layout.Layout.add_polyline2d
 
 .. automethod:: ezdxf.layouts.layout.Layout.add_polyline3d
@@ -192,8 +194,6 @@ BlockLayout
 .. attribute:: BlockLayout.is_layout_block
 
     True if block is a model space or paper space block definition.
-
-.. automethod:: ezdxf.layouts.blocklayout.BlockLayout.add_attdef
 
 .. automethod:: ezdxf.layouts.blocklayout.BlockLayout.attdefs
 
