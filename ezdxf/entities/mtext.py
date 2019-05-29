@@ -290,14 +290,14 @@ class MText(DXFGraphic):
 
 
 class MTextData:
-    UNDERLINE_START = r'\L;'
-    UNDERLINE_STOP = r'\l;'
+    UNDERLINE_START = r'\L'
+    UNDERLINE_STOP = r'\l'
     UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
-    OVERSTRIKE_START = r'\O;'
-    OVERSTRIKE_STOP = r'\o;'
+    OVERSTRIKE_START = r'\O'
+    OVERSTRIKE_STOP = r'\o'
     OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
-    STRIKE_START = r'\K;'
-    STRIKE_STOP = r'\k;'
+    STRIKE_START = r'\K'
+    STRIKE_STOP = r'\k'
     STRIKE = STRIKE_START + '%s' + STRIKE_STOP
     NEW_LINE = r'\P'
     GROUP_START = '{'
