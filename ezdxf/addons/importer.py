@@ -90,7 +90,8 @@ class Importer:
     :ivar target: target drawing
     :ivar used_layer: Set of used layer names as string, AutoCAD accepts layer names without a LAYER table entry.
     :ivar used_linetypes: Set of used linetype names as string, these linetypes require a TABLE entry or AutoCAD will crash.
-    :ivar used_styles: Set of used text style name as string, these styles require a TABLE entry or AutoCAD will crash.
+    :ivar used_styles: Set of used text style names, these text styles require a TABLE entry or AutoCAD will crash.
+    :ivar used_dimstyles: Set of used dimension style names, these dimension styles require a TABLE entry or AutoCAD will crash.
 
     """
 
@@ -122,20 +123,25 @@ class Importer:
         if entity.supports_dxf_attrib('dimstyle'):
             self.used_dimstyles.add(entity.get_dxf_attrib('dimstyle', 'Standard'))
 
-    def import_tables(self, table_names: Union[str, Iterable[str]] = "*", conflict: str = "discard") -> None:
-        """ Import DXF tables from source drawing into target drawing. If table entries already exist the `conflict`
-        argument defines the conflict solution:
+    def _add_dimstyle_resources(self, dimstyle: 'DimStyle') -> None:
+        self.used_styles.add(dimstyle.get_dxf_attrib('dimtxsty', 'Standard'))
+        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltype', 'BYLAYER'))
+        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltex1', 'BYLAYER'))
+        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltex2', 'BYLAYER'))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk', ''))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk1', ''))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk2', ''))
+        self.used_arrows.add(dimstyle.get_dxf_attrib('dimldrblk', ''))
 
-          - ``discard`` for using the target table entry and discarding the source table entry
-          - ``replace`` for replacing the target table entry by the source table entry
+    def import_tables(self, table_names: Union[str, Iterable[str]] = "*", replace=False) -> None:
+        """ Import DXF tables from source drawing into target drawing.
 
         Args:
             table_names: iterable of tables names as strings, or a single table name as string or ``*``
                          for all supported tables
-            conflict: ``discard`` | ``replace``, default is discard
+            replace: True to replace already existing table entries else ignore existing entries
 
         Raises:
-            ValueError: invalid `conflict` argument
             TypeError: unsupported table type
 
         """
@@ -145,35 +151,21 @@ class Importer:
             else:  # import one specific table
                 table_names = (table_names,)
         for table_name in table_names:
-            self.import_table(table_name, entries="*", conflict=conflict)
+            self.import_table(table_name, entries="*", replace=replace)
 
-    def import_table(self, name: str, entries: Union[str, Iterable[str]] = "*", conflict: str = "discard") -> None:
+    def import_table(self, name: str, entries: Union[str, Iterable[str]] = "*", replace=False) -> None:
         """
-        Import specific table entries from source drawing into target drawing. If table entries already exist the
-        `conflict` argument defines the conflict solution:
-
-          - ``discard`` for using the target table entry and discarding the source table entry
-          - ``replace`` for replacing the target table entry by the source table entry
+        Import specific table entries from source drawing into target drawing.
 
         Args:
             name: valid table names are ``layers``, ``linetypes`` and ``styles``
             entries: Iterable of table names as strings, or a single table name or ``*`` for all table entries
-            conflict: ``discard`` | ``replace``
+            replace: True to replace already existing table entry else ignore existing entry
 
         Raises:
-            ValueError: invalid `conflict` argument
             TypeError: unsupported table type
+
         """
-
-        def set_dxf_attribs(e):
-            e.doc = self.target
-            if e.dxf.hasattr('plotstyle_handle'):
-                e.dxf.plotstyle_handle = self._default_plotstyle_handle
-            if e.dxf.hasattr('material_handle'):
-                e.dxf.material_handle = self._default_material_handle
-
-        if conflict not in ('replace', 'discard'):
-            raise ValueError('Invalid value "{}" for argument conflict.'.format(conflict))
         if name not in IMPORT_TABLES:
             raise TypeError('Table "{}" import not supported.'.format(name))
         source_table = getattr(self.source.tables, name)
@@ -192,50 +184,36 @@ class Importer:
                 continue
             entry_name = table_entry.dxf.name
             if entry_name in target_table:
-                if conflict == 'discard':
-                    logger.debug('Discarding already existing entry "{}" of {} table.'.format(entry_name, name))
-                    continue
-                else:  # replace existing entry
+                if replace:
                     logger.debug('Replacing already existing entry "{}" of {} table.'.format(entry_name, name))
                     target_table.remove(table_entry.dxf.name)
+                else:
+                    logger.debug('Discarding already existing entry "{}" of {} table.'.format(entry_name, name))
+                    continue
 
             if name == 'layers':
                 self.used_linetypes.add(table_entry.get_dxf_attrib('linetype', 'Continuous'))
-
+            elif name == 'dimstyles':
+                self._add_dimstyle_resources(table_entry)
             # duplicate table entry
-            new_table_entry = new_clean_entity(table_entry)
-            set_dxf_attribs(new_table_entry)
-
-            # create a new handle and add entity to target entity database
-            self.target.entitydb.add(new_table_entry)
-            # add new table entry to target table and set owner attributes
+            new_table_entry = self._duplicate_table_entry(table_entry)
             target_table.add_entry(new_table_entry)
 
-    def _add_dimstyle_resources(self, dimstyle: 'DimStyle') -> None:
-        self.used_styles.add(dimstyle.get_dxf_attrib('dimtxsty', 'Standard'))
-        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltype', 'BYLAYER'))
-        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltex1', 'BYLAYER'))
-        self.used_linetypes.add(dimstyle.get_dxf_attrib('dimltex2', 'BYLAYER'))
-        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk', ''))
-        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk1', ''))
-        self.used_arrows.add(dimstyle.get_dxf_attrib('dimblk2', ''))
-        self.used_arrows.add(dimstyle.get_dxf_attrib('dimldrblk', ''))
+    def _set_table_entry_dxf_attribs(self, entity: 'DXFEntity') -> None:
+        entity.doc = self.target
+        if entity.dxf.hasattr('plotstyle_handle'):
+            entity.dxf.plotstyle_handle = self._default_plotstyle_handle
+        if entity.dxf.hasattr('material_handle'):
+            entity.dxf.material_handle = self._default_material_handle
 
-    def import_dimstyles(self, dimestyle_names: Iterable[str]) -> None:
-        for name in dimestyle_names:
-            if self.target.dimstyles.has_entry(name):
-                logger.debug('Skipping already existing dimstyle "{}"'.format(name))
-                continue
-            try:
-                dimestyle = cast('DimStyle', self.source.dimstyles.get(name))
-            except DXFTableEntryError:
-                logger.warning('Required source dimstyle "{}" not found.'.format(name))
-                continue
-            self._add_dimstyle_resources(dimestyle)
-            # create and add new table entry
-            new_table_entry = new_clean_entity(dimestyle)
-            self.target.entitydb.add(new_table_entry)
-            self.target.dimstyles.add_entry(new_table_entry)
+    def _duplicate_table_entry(self, entry: 'DXFEntity') -> 'DXFEntity':
+        # duplicate table entry
+        new_entry = new_clean_entity(entry)
+        self._set_table_entry_dxf_attribs(entry)
+
+        # create a new handle and add entity to target entity database
+        self.target.entitydb.add(new_entry)
+        return new_entry
 
     def import_entity(self, entity: 'DXFEntity', target_layout: 'BaseLayout' = None) -> None:
         """
@@ -459,13 +437,14 @@ class Importer:
 
         """
         # 1. dimstyles import adds additional required linetype and style resources and required arrows
-        self.import_dimstyles(self.used_dimstyles)
+        if len(self.used_dimstyles):
+            self.import_table('dimstyles', self.used_dimstyles)
 
-        # 2. layers import add additional required linetype resources
+        # 2. layers import adds additional required linetype resources
         if len(self.used_layers):
             self.import_table('layers', self.used_layers)
 
-        # linetypes and styles to not add additional required resources
+        # linetypes and styles do not add additional required resources
         if len(self.used_linetypes):
             self.import_table('linetypes', self.used_linetypes)
         if len(self.used_styles):

@@ -74,7 +74,7 @@ def test_import_tables_without_conflict(importer):
 
 
 def test_import_tables_with_conflict_discard(importer):
-    importer.import_table('layers', conflict="discard")
+    importer.import_table('layers', replace=False)
     importer.finalize()
 
     layer = importer.target.layers.get('TestConflict')
@@ -82,7 +82,7 @@ def test_import_tables_with_conflict_discard(importer):
 
 
 def test_import_tables_with_conflict_replace(importer):
-    importer.import_table('layers', conflict="replace")
+    importer.import_table('layers', replace=True)
     importer.finalize()
 
     layer = importer.target.layers.get('TestConflict')
