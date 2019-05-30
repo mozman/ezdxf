@@ -78,6 +78,13 @@ def import_msp(source, target):
     importer.finalize()
 
 
+def import_msp_and_psp(source, target):
+    importer = Importer(source, target)
+    importer.import_modelspace()
+    importer.import_paperspace_layouts()
+    importer.finalize()
+
+
 SEP_LINE = '-----------------------------------------------------------------------'
 
 for filename in CADKIT_FILES[:2]:
@@ -92,10 +99,10 @@ for filename in CADKIT_FILES[:2]:
         end = datetime.datetime.now()
         print(' ... in {:.1f} sec'.format((end - start).total_seconds()))
 
-        print('importing modelspace from: {}'.format(filename), end=' ')
+        print('importing modelspace and paperspace layouts from: {}'.format(filename), end=' ')
         start = datetime.datetime.now()
         new_doc = ezdxf.new('R2010')
-        import_msp(doc, new_doc)
+        import_msp_and_psp(doc, new_doc)
         end = datetime.datetime.now()
         print(' ... in {:.1f} sec\n'.format((end - start).total_seconds()))
 
