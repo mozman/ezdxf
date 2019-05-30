@@ -148,7 +148,7 @@ acdb_material = DefSubclass('AcDbMaterial', {
     'transmittance_scale': DXFAttr(463),
     'two_sided_material': DXFAttr(290),
     'luminance': DXFAttr(464),
-    'luminance_mode': DXFAttr(270),
+    'luminance_mode': DXFAttr(270),  # multiple usage of group code 270
     'materials_anonymous': DXFAttr(293),
     'global_illumination_mode': DXFAttr(272),
     'final_gather_mode': DXFAttr(273),
@@ -161,9 +161,9 @@ acdb_material = DefSubclass('AcDbMaterial', {
     'gen_proc_val_color_index': DXFAttr(62),
     'gen_proc_val_color_rgb': DXFAttr(420),
     'gen_proc_val_color_name': DXFAttr(430),
-    'map_utile': DXFAttr(270),
+    'map_utile': DXFAttr(270),  # multiple usage of group code 270
     'translucence': DXFAttr(148),
-    'self_illuminaton': DXFAttr(90),
+    'self_illumination': DXFAttr(90),
     'reflectivity': DXFAttr(468),
     'illumination_model': DXFAttr(93),
     'channel_flags': DXFAttr(94, default=63),
@@ -190,8 +190,18 @@ class Material(DXFObject):
         self.refraction_mapper_matrix = None  # type: Matrix44  # group code 147
         self.normal_mapper_matrix = None  # type: Matrix44  # group code 43 ???
 
-    def copy(self):
-        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
+    def _copy_data(self, entity: 'Material') -> None:
+        """ Copy material mapper matrices """
+        def copy(matrix):
+            return None if matrix is None else matrix.copy()
+
+        entity.diffuse_mapper_matrix = copy(self.diffuse_mapper_matrix)
+        entity.specular_mapper_matrix = copy(self.specular_mapper_matrix)
+        entity.reflexion_mapper_matrix = copy(self.reflexion_mapper_matrix)
+        entity.opacity_mapper_matrix = copy(self.opacity_mapper_matrix)
+        entity.bump_mapper_matrix = copy(self.bump_mapper_matrix)
+        entity.refraction_mapper_matrix = copy(self.refraction_mapper_matrix)
+        entity.normal_mapper_matrix = copy(self.normal_mapper_matrix)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
@@ -273,7 +283,7 @@ class Material(DXFObject):
             'two_sided_material', 'luminance', 'luminance_mode', 'materials_anonymous', 'global_illumination_mode',
             'final_gather_mode', 'gen_proc_name', 'gen_proc_val_bool', 'gen_proc_val_int', 'gen_proc_val_real',
             'gen_proc_val_text', 'gen_proc_table_end', 'gen_proc_val_color_index', 'gen_proc_val_color_rgb',
-            'gen_proc_val_color_name', 'map_utile', 'translucence', 'self_illuminaton', 'reflectivity',
+            'gen_proc_val_color_name', 'map_utile', 'translucence', 'self_illumination', 'reflectivity',
             'illumination_model', 'channel_flags',
         ])
 

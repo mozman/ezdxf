@@ -4,13 +4,8 @@ TODO
 Python Code
 -----------
 
-- correct entity copy:
-    - BLOCK: BLOCK_RECORD, Entities
-    - layout: including BLOCK, BLOCK_RECORD, LAYOUT
 - import data from DXF files
-    - import table entries
-    - import entities including extended data and resources in the objects section
-    - import layouts (modelspace, paperspace and blocks)
+    - import paper space layouts
 - optimized Vector class, SVec for simple or speedy vectors? profiling required!!!
 
 DXF Entities
@@ -40,3 +35,16 @@ DXF Audit & Cleanup
 - find unreferenced objects:
     - DICTIONARY e.g. orphaned extension dicts; cleanup: delete
 - find unused BLOCK definitions: has no corresponding INSERT (except layout blocks); cleanup: delete
+
+Documentation
+-------------
+
+- use auto-doc feature of sphinx
+  - for all DXF entities
+  - for all DXF objects
+  - for all table entries
+  - for all modules
+
+- DIMENSION docs & tutorials
+- HATCH tutorial with islands
+- MTEXT tutorial

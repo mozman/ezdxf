@@ -66,7 +66,7 @@ class Layout(BaseLayout):
 
     def __init__(self, layout: 'DXFLayout', doc: 'Drawing'):
         self.dxf_layout = layout
-        block_record = doc.entitydb[layout.dxf.block_record]
+        block_record = doc.entitydb[layout.dxf.block_record_handle]
         # link maybe broken
         block_record.dxf.layout = layout.dxf.handle
         super().__init__(block_record)
@@ -90,7 +90,7 @@ class Layout(BaseLayout):
         dxfattribs = dxfattribs or {}
         dxfattribs.update({
             'name': name,
-            'block_record': block_layout.block_record_handle
+            'block_record_handle': block_layout.block_record_handle
         })
         dxf_layout = doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs)
         return cls(dxf_layout, doc)
@@ -601,7 +601,7 @@ class Layout(BaseLayout):
         )
         main_viewport.dxf.id = 1  # set as main viewport
         main_viewport.dxf.flags = 557088  # AutoCAD default value
-        dxf.viewport = main_viewport.dxf.handle
+        dxf.viewport_handle = main_viewport.dxf.handle
 
     def set_plot_type(self, value: int = 5) -> None:
         """

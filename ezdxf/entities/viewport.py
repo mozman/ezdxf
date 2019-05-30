@@ -149,6 +149,9 @@ class Viewport(DXFGraphic):
         self._frozen_layers = []  # type: List[str]
         self._frozen_layers_content_type = 'names'
 
+    def _copy_data(self, entity: 'Viewport') -> None:
+        entity.frozen_layers = self.frozen_layers
+
     @property
     def frozen_layers(self) -> List[str]:
         type_ = self._frozen_layers_content_type

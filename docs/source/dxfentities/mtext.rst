@@ -219,8 +219,8 @@ Code    Description
 
 \\T     Tracking, char.spacing - e.g. \\T2;
 \\~     Non-wrapping space, hard space
-{}	    Braces - define the text area influenced by the code
-\\	    Escape character - e.g. \\ = "\\", \\{ = "{", codes and braces can be nested up to 8 levels deep
+{}	    Braces - define the text area influenced by the code, codes and braces can be nested up to 8 levels deep
+\\	    Escape character - e.g. \\{ = "{"
 ======= ===========
 
 MTextData

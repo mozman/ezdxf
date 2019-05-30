@@ -194,7 +194,7 @@ class MLineStyle(DXFObject):
         self.elements = MLineStyleElements()
 
     def copy(self):
-        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
+        raise DXFTypeError('Copying of MLINESTYLE not supported.')
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
@@ -215,8 +215,8 @@ class MLineStyle(DXFObject):
 
 
 class MLineStyleCollection(ObjectCollection):
-    def __init__(self, drawing: 'Drawing'):
-        super().__init__(drawing, dict_name='ACAD_MLINESTYLE', object_type='MLINESTYLE')
+    def __init__(self, doc: 'Drawing'):
+        super().__init__(doc, dict_name='ACAD_MLINESTYLE', object_type='MLINESTYLE')
         self.create_required_entries()
 
     def create_required_entries(self) -> None:

@@ -100,7 +100,7 @@ class Layouts:
             br.dxf.handle for br in doc.block_records if br.dxf.name.lower().startswith('*paper_space')
         }
         psp_layout_br_handles = {
-            layout.dxf.block_record for layout in layouts._layouts.values() if layout.dxf.name != 'Model'
+            layout.dxf.block_record_handle for layout in layouts._layouts.values() if layout.dxf.name != 'Model'
         }
         mismatch = psp_br_handles.difference(psp_layout_br_handles)
         if len(mismatch):
@@ -119,7 +119,7 @@ class Layouts:
         dxfattribs = {
             'owner': self._dxf_layouts.dxf.handle,
             'name': name,
-            'block_record': block_layout.block_record_handle,
+            'block_record_handle': block_layout.block_record_handle,
             'taborder': taborder,
         }
         dxf_layout = self.doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs)

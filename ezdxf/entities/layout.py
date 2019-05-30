@@ -2,7 +2,7 @@
 # License: MIT-License
 # Created: 2019-02-18
 from typing import TYPE_CHECKING
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFTypeError
+from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 __all__ = ['PlotSettings', 'DXFLayout']
 
 acdb_plot_settings = DefSubclass('AcDbPlotSettings', {
+    # acdb_plot_settings is also part of LAYOUT and LAYOUT has a 'name' attribute
     'page_setup_name': DXFAttr(1, default=''),
     'plot_configuration_file': DXFAttr(2, default='Adobe PDF'),
     'paper_size': DXFAttr(4, default='A4'),
@@ -135,9 +136,6 @@ class PlotSettings(DXFObject):
     DXFTYPE = 'PLOTSETTINGS'
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings)
 
-    def copy(self):
-        raise DXFTypeError('Cloning of {} not supported.'.format(self.DXFTYPE))
-
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
@@ -183,14 +181,14 @@ acdb_layout = DefSubclass('AcDbLayout', {
     'ucs_type': DXFAttr(76, default=1),
     # Orthographic type of UCS 0 = UCS is not orthographic;
     # 1 = Top; 2 = Bottom; 3 = Front; 4 = Back; 5 = Left; 6 = Right
-    'block_record': DXFAttr(330),
-    'viewport': DXFAttr(331),
+    'block_record_handle': DXFAttr(330),
+    'viewport_handle': DXFAttr(331),
     # ID/handle to the viewport that was last active in this
     # layout when the layout was current
-    'ucs': DXFAttr(345),
+    'ucs_handle': DXFAttr(345),
     # ID/handle of AcDbUCSTableRecord if UCS is a named
     # UCS. If not present, then UCS is unnamed
-    'base_ucs': DXFAttr(346),
+    'base_ucs_handle': DXFAttr(346),
     # ID/handle of AcDbUCSTableRecord of base UCS if UCS is
     # orthographic (76 code is non-zero). If not present and
     # 76 code is non-zero, then base UCS is taken to be WORLD
@@ -201,9 +199,6 @@ acdb_layout = DefSubclass('AcDbLayout', {
 class DXFLayout(PlotSettings):
     DXFTYPE = 'LAYOUT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings, acdb_layout)
-
-    def copy(self):
-        raise DXFTypeError('Copying of {} not supported.'.format(self.DXFTYPE))
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
@@ -219,5 +214,6 @@ class DXFLayout(PlotSettings):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layout.name)
         self.dxf.export_dxf_attribs(tagwriter, [
             'name', 'layout_flags', 'taborder', 'limmin', 'limmax', 'insert_base', 'extmin', 'extmax', 'elevation',
-            'ucs_origin', 'ucs_xaxis', 'ucs_yaxis', 'ucs_type', 'block_record', 'viewport', 'ucs', 'base_ucs',
+            'ucs_origin', 'ucs_xaxis', 'ucs_yaxis', 'ucs_type', 'block_record_handle', 'viewport_handle', 'ucs_handle',
+            'base_ucs_handle',
         ])

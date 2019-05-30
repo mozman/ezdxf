@@ -61,7 +61,7 @@ Example::
 
 from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
 import logging
-from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFTableEntryError
+from ezdxf.lldxf.const import DXFKeyError, DXFStructureError, DXFTableEntryError, DXFTypeError
 from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
@@ -246,7 +246,13 @@ class Importer:
             logger.debug('Import of {} not supported'.format(str(entity)))
             return
         self._add_used_resources(entity)
-        new_entity = cast('DXFGraphic', new_clean_entity(entity))
+
+        try:
+            new_entity = cast('DXFGraphic', new_clean_entity(entity))
+        except DXFTypeError:
+            logger.debug('Copying for DXF type {} not supported.'.format(dxftype))
+            return
+
         set_dxf_attribs(new_entity)
         self.target.entitydb.add(new_entity)
         target_layout.add_entity(new_entity)
