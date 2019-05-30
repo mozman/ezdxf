@@ -3,8 +3,35 @@
 Forms
 =====
 
-Basic Forms
------------
+    This module provides functions to create 2D and 3D forms as vertices or mesh objects.
+
+    2D Forms
+
+    - :meth:`circle`
+    - :meth:`ellipse`
+    - :meth:`euler_spiral`
+    - :meth:`ngon`
+    - :meth:`star`
+    - :meth:`gear`
+
+    3D Forms
+
+    - :meth:`cube`
+    - :meth:`cylinder`
+    - :meth:`cone`
+
+    3D Form Builder
+
+    - :meth:`extrude`
+    - :meth:`from_profiles_linear`
+    - :meth:`from_profiles_spline`
+    - :meth:`rotation_form`
+
+2D Forms
+--------
+
+    Basic 2D shapes as iterable of :class:`~ezdxf.math.Vector`.
+
 
 .. function:: circle(count, radius=1, elevation=0, close=False)
 
@@ -41,6 +68,57 @@ Basic Forms
     :param elevation: z-axis for all vertices
     :returns: yields :class:`~ezdxf.math.Vector` objects
 
+.. function:: ngon(count, length=None, radius=0, rotation=0, elevation=0, close=False)
+
+    Returns the corners of a regular polygon as iterable of :class:`~ezdxf.math.Vector` (z=`elevation`). The polygon
+    size is determined by the edge `length` or the circum `radius` argument. If both are given `length` will be taken.
+
+    :param count: count of polygon corners >= 3
+    :param length: length of polygon side
+    :param radius: circum radius
+    :param rotation: rotation angle in radians
+    :param elevation: z axis for all vertices
+    :param close: yields first vertex also as last vertex if True.
+    :returns: yields :class:`~ezdxf.math.Vector` objects
+
+.. function:: star(count, r1, r2, rotation=0, elevation=0, close=False)
+
+    Create a star shape as iterable of :class:`~ezdxf.math.Vector` (z=`elevation`).
+
+    Argument `count` defines the count of star spikes, `r1` defines the radius of the "outer" vertices and `r2`
+    defines the radius of the "inner" vertices, but this does not mean that `r1` has to greater than `r2`.
+
+    :param count: spike count >= 3
+    :param r1: radius 1
+    :param r2: radius 2
+    :param rotation: rotation angle in radians
+    :param elevation: z axis for all vertices
+    :param close: yields first vertex also as last vertex if True.
+    :returns: yields :class:`~ezdxf.math.Vector` objects
+
+.. function:: gear(count, top_width, bottom_width, height, outside_radius, close=False)
+
+    Create gear (cogwheel) vertices as iterable of :class:`~ezdxf.math.Vector` (z=`elevation`)
+
+    Warning: this function does not create mechanical correct gears!
+
+    see also: https://en.wikipedia.org/wiki/Gear
+
+    :param count: teeth count >= 3
+    :param top_width: teeth width at outside radius
+    :param bottom_width: teeth width at base radius
+    :param height: teeth height; base radius = outside radius - height
+    :param outside_radius: outside radius
+    :param elevation: z axis for all vertices
+    :param close: yields first vertex also as last vertex if True.
+    :returns: yields :class:`~ezdxf.math.Vector` objects
+
+3D Forms
+--------
+
+Create 3D forms as :class:`~ezdxf.render.MeshBuilder` or :class:`~ezdxf.render.MeshVertexMerger`.
+
+
 .. function:: cube(center=True, matrix=None)
 
     Create a cube.
@@ -70,8 +148,8 @@ Basic Forms
     :param caps: add a bottom face if true
     :returns: :class:`~ezdxf.render.MeshVertexMerger`
 
-Form Builder
-------------
+3D Form Builder
+---------------
 
 .. function:: extrude(profile, path, close=True)
 
