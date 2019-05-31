@@ -23,15 +23,20 @@ class TestEntityQueryParserWithoutAttributes:
 
     def test_wrong_star_wildcard(self):
         with pytest.raises(ParseException):
-            EntityQueryParser.parseString("LIN*[]", parseAll=True)
+            EntityQueryParser.parseString("LIN*", parseAll=True)
 
-    def test_wrong_star_wildcard_2(self):
-        with pytest.raises(ParseException):
-            EntityQueryParser.parseString("* LINE[]", parseAll=True)
+    def test_star_wildcard_2(self):
+        result = EntityQueryParser.parseString("* !LINE", parseAll=True)
+        assert result.EntityQuery[0] == '*'
+        assert result.EntityQuery[1] == '!LINE'
 
-    def test_wrong_star_wildcard_3(self):
+    def test_star_wildcard_3(self):
         with pytest.raises(ParseException):
-            EntityQueryParser.parseString("LINE *[]", parseAll=True)
+            EntityQueryParser.parseString("!LINE *", parseAll=True)
+
+    def test_star_wildcard_4(self):
+        with pytest.raises(ParseException):
+            EntityQueryParser.parseString("* LINE", parseAll=True)
 
 
 class TestEntityQueryParserWithAttributes:
@@ -142,5 +147,3 @@ class TestInfixBoolQuery:
         assert ('a', '!=', 1) == tuple(rel1)
         assert '&' == op
         assert ('b', '!=', 2) == tuple(rel2)
-
-

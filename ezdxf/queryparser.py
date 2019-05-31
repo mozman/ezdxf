@@ -50,13 +50,15 @@ number = Regex(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 number.addParseAction(lambda t: float(t[0]))  # convert to float
 string_ = quotedString.addParseAction(lambda t: t[0][1:-1])  # remove quotes
 
-EntityName = Word(alphanums+'_')
-AttribName = EntityName
+EntityName = Word(alphanums + '_')
+# ExcludeEntityName = Word(alphanums + '_!')
+ExcludeEntityName = Regex(r"[!][\w]+")
+AttribName = Word(alphanums + '_')
 Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
 
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
-EntityNames = Group(Literal('*') | OneOrMore(EntityName)).setResultsName('EntityQuery')
+EntityNames = Group((Literal('*') + ZeroOrMore(ExcludeEntityName)) | OneOrMore(EntityName)).setResultsName('EntityQuery')
 
 InfixBoolQuery = infixNotation(AttribQuery, (
     ('!', 1, opAssoc.RIGHT),

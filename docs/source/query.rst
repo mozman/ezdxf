@@ -26,7 +26,8 @@ Entity Query
 ------------
 
 The entity query is a whitespace separated list of DXF entity names or the special name ``'*'``.
-Where ``'*'`` means all DXF entities, all other DXF names have to be uppercase.
+Where ``'*'`` means all DXF entities, exclude some entity types by appending their names with a preceding ``!``
+(e.g. all entities except LINE = ``'* !LINE'``). All DXF names have to be uppercase.
 
 Attribute Query
 ---------------

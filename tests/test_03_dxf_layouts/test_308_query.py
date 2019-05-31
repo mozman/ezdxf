@@ -6,6 +6,24 @@ import ezdxf
 from ezdxf.query import EntityQuery, name_query
 
 
+class TestNameQuery:
+    @pytest.fixture
+    def entities(self):
+        return ['LINE', 'CIRCLE', 'POLYLINE', 'MESH', 'SOLID']
+
+    def test_all_names(self, entities):
+        result = list(name_query(entities, '*'))
+        assert result == entities
+
+    def test_some_names(self, entities):
+        result = list(name_query(entities, 'LINE SOLID'))
+        assert result == ['LINE', 'SOLID']
+
+    def test_exclude_some_names(self, entities):
+        result = list(name_query(entities, '* !SOLID'))
+        assert 'SOLID' not in result
+
+
 @pytest.fixture(scope='module')
 def modelspace():
     doc = ezdxf.new()
@@ -64,9 +82,20 @@ def test_select_layer_1(modelspace):
     assert len(result) == 2
 
 
+def test_select_layer_1_exclude_line(modelspace):
+    result = EntityQuery(modelspace, '* !LINE[layer=="lay_lines"]')
+    # 1xPOLYLINE
+    assert len(result) == 1
+
+
 def test_match_regex(modelspace):
     result = EntityQuery(modelspace, '*[layer ? "lay_.*"]')
     assert len(result) == 3
+
+
+def test_match_regex_not_text(modelspace):
+    result = EntityQuery(modelspace, '* !TEXT[layer ? "lay_.*"]')
+    assert len(result) == 2
 
 
 def test_match_whole_string(modelspace):
@@ -145,11 +174,3 @@ def test_match_full_string():
     names = "ONEONE TWO THREE"
     result = list(name_query(names.split(), 'ONE'))
     assert len(result) == 0
-
-
-def test_match_more_strings():
-    names = "ONE_1 ONE_2 THREE"
-    result = list(name_query(names.split(), 'ONE_.*'))
-    assert "ONE_1" == result[0]
-    assert "ONE_2" == result[1]
-    assert 2 == len(result)

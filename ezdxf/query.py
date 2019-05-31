@@ -33,7 +33,8 @@ class EntityQuery(abc.Sequence):
     ------------
 
     The entity query is a whitespace separated list of DXF entity names or the special name ``*``.
-    Where ``*`` means all DXF entities, all other DXF names have to be uppercase.
+    Where ``*`` means all DXF entities, exclude some entity types by appending their names with a preceding ``!``
+    (e.g. all entities except LINE = ``* !LINE``). All DXF names have to be uppercase.
 
     Attribute Query
     ---------------
@@ -174,12 +175,20 @@ def entity_matcher(query: str) -> Callable[['DXFEntity'], bool]:
     return matcher
 
 
-def build_entity_name_matcher(names: Sequence[str]) -> Callable[['DXFEntity'], bool]:
+def build_entity_name_matcher_old(names: Sequence[str]) -> Callable[['DXFEntity'], bool]:
     entity_names = frozenset(names)
     if names[0] == '*':
         return lambda e: True
     else:
         return lambda e: e.dxftype() in entity_names
+
+
+def build_entity_name_matcher(names: Sequence[str]) -> Callable[['DXFEntity'], bool]:
+    def match(e: 'DXFEntity') -> bool:
+        return _match(e.dxftype())
+
+    _match = name_matcher(query=' '.join(names))
+    return match
 
 
 class Relation:
@@ -293,16 +302,43 @@ def unique_entities(entities: Iterable['DXFEntity']) -> Iterable['DXFEntity']:
 
 
 def name_query(names: Iterable[str], query: str = "*") -> Iterable[str]:
-    def build_regexp_matcher() -> Callable[[str], bool]:
-        if query == "*":
-            return lambda n: True
-        else:
-            # always match until end of string
-            matcher = re.compile(query + '$')
-            return lambda n: matcher.match(n) is not None
+    """
+    Filters `names` by `query` string. The `query` string of entity names divided by spaces. The special name "*"
+    matches any given name, a preceding "!" means exclude this name. Excluding names is only useful if the match any
+    name is also given (e.g. "LINE !CIRCLE" is equal to just "LINE", where "* !CIRCLE" matches everything except
+    CIRCLE").
 
-    match = build_regexp_matcher()
+    Args:
+        names: iterable of names to test
+        query: query string of entity names separated by spaces
+
+    Returns: yield matching names
+
+    """
+    match = name_matcher(query)
     return (name for name in names if match(name))
+
+
+def name_matcher(query: str = "*") -> Callable[[str], bool]:
+    def match(e: str) -> bool:
+        if take_all:
+            return e not in exclude
+        else:
+            return e in include
+
+    match_strings = set(query.upper().split())
+    take_all = False
+    exclude = set()
+    include = set()
+    for name in match_strings:
+        if name == '*':
+            take_all = True
+        elif name.startswith('!'):
+            exclude.add(name[1:])
+        else:
+            include.add(name)
+
+    return match
 
 
 def new(entities=None, query='*'):
