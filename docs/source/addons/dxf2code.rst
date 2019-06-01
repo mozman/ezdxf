@@ -6,7 +6,7 @@
 
 .. autofunction:: table_entries_to_code
 
-.. autoclass:: SourceCodeGenerator
-    :members: translate_entity, translate_entities, imports, tostring, __str__
+.. autoclass:: Code
+
 
 

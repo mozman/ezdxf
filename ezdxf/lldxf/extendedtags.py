@@ -1,6 +1,13 @@
 # Created: 30.04.2011
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
+"""
+Extended Tags
+-------------
+
+Represents the extended DXF tag structure introduced with DXF R13.
+
+"""
 from typing import TYPE_CHECKING, Iterable, Optional, List
 from itertools import chain
 import logging
@@ -19,13 +26,22 @@ if TYPE_CHECKING:
 
 class ExtendedTags:
     """
-    Manage Subclasses, AppData and Extended Data
+    Manages DXF tags located in sub structures:
+
+        - Subclasses
+        - AppData
+        - Extended Data (XDATA)
+        - Embedded objects
+
+    Args:
+        tags: iterable of :class:`~ezdxf.lldxf.types.DXFTag`
+        legacy: flag for DXF R12 tags
 
     """
     __slots__ = ('subclasses', 'appdata', 'xdata', 'embedded_objects')
 
-    def __init__(self, iterable: Iterable[DXFTag] = None, legacy=False):
-        if isinstance(iterable, str):
+    def __init__(self, tags: Iterable[DXFTag] = None, legacy=False):
+        if isinstance(tags, str):
             raise DXFValueError("use ExtendedTags.from_text() to create tags from a string.")
 
         self.appdata = list()  # type: List[Tags] # code == 102, keys are "{<arbitrary name>", values are Tags()
@@ -35,12 +51,13 @@ class ExtendedTags:
         # store embedded objects as list, but embedded objects are rare, so storing an empty list for every DXF entity
         # is waste of memory
         self.embedded_objects = None  # type: Optional[List[Tags]]
-        if iterable is not None:
-            self._setup(iterable)
+        if tags is not None:
+            self._setup(tags)
             if legacy:
                 self.legacy_repair()
 
     def legacy_repair(self):
+        """ Legacy (DXF R12) tags handling and repair. """
         self.flatten_subclasses()
         # ... and we can do some checks:
         # I think DXF R12 does not support (102, '{APPID') ... structures
@@ -55,10 +72,11 @@ class ExtendedTags:
             self.debug('Found embedded object in DXF R12.')
 
     def flatten_subclasses(self):
-        """ Flatten subclasses in legacy mode.
+        """ Flatten subclasses in legacy mode (DXF R12).
 
         There exists DXF R12 with subclass markers, technical incorrect but works if reader ignore subclass marker tags,
-        unfortunately ezdxf, tries to use this subclass markers and R12 parsing by ezdxf does not work.
+        unfortunately ezdxf, tries to use this subclass markers and therefore R12 parsing by ezdxf does not work without
+        removing this subclass markers.
 
         This method removes the subclass markers and flattens all subclasses into 'noclass'.
 
@@ -83,8 +101,8 @@ class ExtendedTags:
         """
         Shallow copy - linked entities are not duplicated!
 
-        ExtendedTags() knows nothing about the entity database, and has no access to, so it is not possible for
-        ExtendedTags() to do a deep copy, by also copying linked entities (VERTEX, ATTRIB, SEQEND).
+        :class:`ExtendedTags` knows nothing about the entity database, and has no access to, so it is not possible for
+        :class:`ExtendedTags` to do a deep copy, by also copying linked entities (VERTEX, ATTRIB, SEQEND).
         To do a deep copy you have to go one level up and use DXFEntity.copy()
 
         """
@@ -107,6 +125,7 @@ class ExtendedTags:
 
     @property
     def noclass(self) -> Tags:
+        """ Property to access self.subclasses[0] """
         return self.subclasses[0]
 
     def get_handle(self) -> str:
@@ -367,7 +386,7 @@ class ExtendedTags:
         """
         Append a new app data block to subclass *subclass_name*.
 
-        Assumes that no app data block with the same appid already exists::
+        Assumes that no app data block with the same appid already exist::
 
             try:
                 app_data = tags.get_app_data('{ACAD_REACTORS', tags)

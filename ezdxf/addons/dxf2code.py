@@ -10,21 +10,27 @@ Translate DXF entities and structures into Python source code.
 Example::
 
     import ezdxf
-    from ezdxf.addons.dxf2code import entities_to_code
+    from ezdxf.addons.dxf2code import entities_to_code, block_to_code
 
     doc = ezdxf.readfile('original.dxf')
     msp = doc.modelspace()
     source = entities_to_code(msp)
 
+    # create source code for a block definition
+    block_source = block_to_code(doc.blocks['MyBlock'])
+
+    # merge source code objects
+    source.merge(block_source)
+
     with open('source.py', mode='wt') as f:
-        f.write(source.imports())
+        f.write(source.import_str())
         f.write('\n\n')
-        f.write(source.tostring())
+        f.write(source.code_str())
         f.write('\n')
 
 """
 
-from typing import TYPE_CHECKING, Iterable, List, TextIO, Mapping, Set
+from typing import TYPE_CHECKING, Iterable, List, Mapping, Set
 import json
 
 from ezdxf.sections.tables import TABLENAMES
@@ -38,7 +44,7 @@ __all__ = ['entities_to_code', 'block_to_code', 'table_entries_to_code']
 
 
 def entities_to_code(entities: Iterable['DXFEntity'], layout: str = 'layout',
-                     ignore: Iterable[str] = None) -> 'SourceCodeGenerator':
+                     ignore: Iterable[str] = None) -> 'Code':
     """
     Translates DXF entities into Python source code to recreate this entities by ezdxf.
 
@@ -47,15 +53,15 @@ def entities_to_code(entities: Iterable['DXFEntity'], layout: str = 'layout',
         layout: variable name of the layout (model space or block) as string
         ignore: iterable of entities types to ignore as strings like ``['IMAGE', 'DIMENSION']``
 
-    Returns: :class:`SourceCodeGenerator`
+    Returns: :class:`Code`
 
     """
-    code_generator = SourceCodeGenerator(layout=layout)
-    code_generator.translate_entities(entities, ignore=ignore)
-    return code_generator
+    code = _SourceCodeGenerator(layout=layout)
+    code.translate_entities(entities, ignore=ignore)
+    return code.code
 
 
-def block_to_code(block: 'BlockLayout', drawing: str = 'doc', ignore: Iterable[str] = None) -> 'SourceCodeGenerator':
+def block_to_code(block: 'BlockLayout', drawing: str = 'doc', ignore: Iterable[str] = None) -> 'Code':
     """
     Translates a BLOCK into Python source code to recreate the BLOCK by ezdxf.
 
@@ -64,32 +70,109 @@ def block_to_code(block: 'BlockLayout', drawing: str = 'doc', ignore: Iterable[s
         drawing: variable name of the drawing as string
         ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
 
-    Returns: :class:`SourceCodeGenerator`
+    Returns: :class:`Code`
 
     """
-    dxfattribs = purge_handles(block.block.dxfattribs())
+    dxfattribs = _purge_handles(block.block.dxfattribs())
     block_name = dxfattribs.pop('name')
     base_point = dxfattribs.pop('base_point')
-    code = SourceCodeGenerator(layout='block')
-    prolog = 'block = {}.blocks.new("{}", base_point={}, dxfattribs={{'.format(drawing, block_name, str(base_point))
+    code = _SourceCodeGenerator(layout='b')
+    prolog = 'b = {}.blocks.new("{}", base_point={}, dxfattribs={{'.format(drawing, block_name, str(base_point))
     code.add_source_code_line(prolog)
-    code.add_source_code_lines(fmt_mapping(dxfattribs, indent=4))
+    code.add_source_code_lines(_fmt_mapping(dxfattribs, indent=4))
     code.add_source_code_line('    }')
     code.add_source_code_line(')')
     code.translate_entities(block, ignore=ignore)
-    return code
+    return code.code
 
 
-def table_entries_to_code(entities: Iterable['DXFEntity'], drawing='doc') -> 'SourceCodeGenerator':
-    code = SourceCodeGenerator(doc=drawing)
+def table_entries_to_code(entities: Iterable['DXFEntity'], drawing='doc') -> 'Code':
+    code = _SourceCodeGenerator(doc=drawing)
     code.translate_entities(entities)
-    return code
+    return code.code
 
 
-PURGE_DXF_ATTRIBUTES = {'handle', 'owner', 'paperspace', 'material_handle', 'visualstyle_handle', 'plotstyle_handle'}
+class Code:
+    """ Source code container.
+
+    :ivar code: source code line storage, store lines without line ending ``\\n``
+    :ivar imports: source code line storage for global imports, store lines without line ending ``\\n``
+
+    :ivar layers: layers used by the generated source code, AutoCAD accepts layer names without a LAYER table entry.
+    :ivar linetypes: linetypes used by the generated source code, these linetypes require a TABLE entry or AutoCAD will crash.
+    :ivar styles: text styles used by the generated source code, these text styles require a TABLE entry or AutoCAD will crash.
+    :ivar dimstyles: dimension styles  used by the generated source code, these dimension styles require a TABLE entry or AutoCAD will crash.
+    :ivar blocks: blocks used by the generated source code, these blocks require a BLOCK definition in the BLOCKS section or AutoCAD will crash.
+
+    """
+
+    def __init__(self):
+        self.code = []  # type: List[str]
+        self.imports = set()  # type: Set[str]  # global imports -> indention level 0
+        self.layers = set()  # type: Set[str]  # layer names as string
+        self.styles = set()  # type: Set[str]  # text style name as string, requires a TABLE entry
+        self.linetypes = set()  # type: Set[str]  # line type names as string, requires a TABLE entry
+        self.dimstyles = set()  # type: Set[str]  # dimension style names as string, requires a TABLE entry
+        self.blocks = set()  # type: Set[str]  # block names as string, requires a BLOCK definition
+
+    def code_str(self, indent: int = 0) -> str:
+        """
+        Returns the source code as a single string.
+
+        Args:
+            indent: source code indentation count by spaces
+
+        """
+        lead_str = ' ' * indent
+        return '\n'.join(lead_str + line for line in self.code)
+
+    def __str__(self) -> str:
+        """ Returns the source code as a single string. """
+
+        return self.code_str()
+
+    def import_str(self, indent: int = 0) -> str:
+        """
+        Returns required imports as a single string.
+
+        Args:
+            indent: source code indentation count by spaces
+
+        """
+        lead_str = ' ' * indent
+        return '\n'.join(lead_str + line for line in self.imports)
+
+    def add_import(self, statement: str) -> None:
+        """ Add import statement, identical import statements are merged together. """
+        self.imports.add(statement)
+
+    def add_line(self, code: str, indent: int = 0) -> None:
+        """ Add a single source code line without line ending ``\\n``. """
+        self.code.append(' ' * indent + code)
+
+    def add_lines(self, code: Iterable[str], indent: int = 0) -> None:
+        """ Add multiple source code lines without line ending ``\\n``. """
+        for line in code:
+            self.add_line(line, indent=indent)
+
+    def merge(self, code: 'Code', indent: int = 0) -> None:
+        """ Add another :class:`Code` object. """
+        # merge used resources
+        self.imports.update(code.imports)
+        self.layers.update(code.layers)
+        self.linetypes.update(code.linetypes)
+        self.styles.update(code.styles)
+        self.dimstyles.update(code.dimstyles)
+        self.blocks.update(code.blocks)
+
+        # append source code lines
+        self.add_lines(self.code, indent=indent)
 
 
-def purge_handles(attribs: dict) -> dict:
+_PURGE_DXF_ATTRIBUTES = {'handle', 'owner', 'paperspace', 'material_handle', 'visualstyle_handle', 'plotstyle_handle'}
+
+
+def _purge_handles(attribs: dict) -> dict:
     """
     Purge handles from DXF attributes which will be invalid in a new document, or which will be set automatically by
     adding an entity to a layout (paperspace).
@@ -98,10 +181,10 @@ def purge_handles(attribs: dict) -> dict:
         attribs: entity DXF attributes dictionary
 
     """
-    return {k: v for k, v in attribs.items() if k not in PURGE_DXF_ATTRIBUTES}
+    return {k: v for k, v in attribs.items() if k not in _PURGE_DXF_ATTRIBUTES}
 
 
-def fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
+def _fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
     # key is always a string
     fmt = ' ' * indent + "'{}': {},"
     for k, v in mapping.items():
@@ -113,13 +196,13 @@ def fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
         yield fmt.format(k, v)
 
 
-def fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
+def _fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
     fmt = ' ' * indent + '{},'
     for v in l:
         yield fmt.format(str(v))
 
 
-def fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[str]:
+def _fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[str]:
     attributes = dict(dxfattribs)
     args = list(args) if args else []
 
@@ -137,7 +220,7 @@ def fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[
     s = [func_call]
     s.extend(fmt_keywords())
     s.append('    dxfattribs={')
-    s.extend(fmt_mapping(attributes, indent=8))
+    s.extend(_fmt_mapping(attributes, indent=8))
     s.extend([
         "    },",
         ")",
@@ -145,7 +228,7 @@ def fmt_api_call(func_call: str, args: Iterable[str], dxfattribs: dict) -> List[
     return s
 
 
-def fmt_dxf_tags(tags: Iterable['DXFTag'], indent: int = 0):
+def _fmt_dxf_tags(tags: Iterable['DXFTag'], indent: int = 0):
     fmt = ' ' * indent + 'dxftag({}, {}),'
     for code, value in tags:
         assert isinstance(code, int)
@@ -156,15 +239,12 @@ def fmt_dxf_tags(tags: Iterable['DXFTag'], indent: int = 0):
         yield fmt.format(code, value)
 
 
-class SourceCodeGenerator:
+class _SourceCodeGenerator:
     """
-    The SourceCodeGenerator translates DXF entities into Python source code for creating the same DXF entity in another
-    model space or block definition.
+    The :class:`_SourceCodeGenerator` translates DXF entities into Python source code for creating the same DXF entity
+    in another model space or block definition.
 
-    This class is NOT to be meant to be initiated by lib user, it's just the result of the source code generator
-    functions.
-
-    :ivar source_code: list of source code lines without line endings
+    :ivar code: list of source code lines without line endings
     :ivar required_imports: list of import source code lines, which are required to create executable Python code.
 
     """
@@ -172,13 +252,7 @@ class SourceCodeGenerator:
     def __init__(self, layout: str = 'layout', doc: str = 'doc'):
         self.doc = doc
         self.layout = layout
-        self.source_code = []  # type: List[str]
-        self.used_layers = set()  # type: Set[str]  # layer names as string
-        self.used_styles = set()  # type: Set[str]  # text style name as string, requires a TABLE entry
-        self.used_linetypes = set()  # type: Set[str]  # line type names as string, requires a TABLE entry
-        self.used_dimstyles = set()  # type: Set[str]  # dimension style names as string, requires a TABLE entry
-        self.used_blocks = set()  # type: Set[str]  # block names as string, requires a BLOCK definition
-        self.required_imports = set()  # type: Set[str]
+        self.code = Code()
 
     def translate_entity(self, entity: 'DXFEntity') -> None:
         """
@@ -222,39 +296,39 @@ class SourceCodeGenerator:
 
         """
         if 'layer' in dxfattribs:
-            self.used_layers.add(dxfattribs['layer'])
+            self.code.layers.add(dxfattribs['layer'])
         if 'linetype' in dxfattribs:
-            self.used_linetypes.add(dxfattribs['linetype'])
+            self.code.linetypes.add(dxfattribs['linetype'])
         if 'style' in dxfattribs:
-            self.used_styles.add(dxfattribs['style'])
+            self.code.styles.add(dxfattribs['style'])
         if 'dimstyle' in dxfattribs:
-            self.used_dimstyles.add(dxfattribs['dimstyle'])
+            self.code.dimstyles.add(dxfattribs['dimstyle'])
 
     def add_import_statement(self, statement: str) -> None:
-        self.required_imports.add(statement)
+        self.code.add_import(statement)
 
     def add_source_code_line(self, code: str) -> None:
-        self.source_code.append(code)
+        self.code.add_line(code)
 
     def add_source_code_lines(self, code: Iterable[str]) -> None:
-        self.source_code.extend(code)
+        self.code.add_lines(code)
 
     def add_list_source_code(self, values: Iterable, prolog: str = '[', epilog: str = ']', indent: int = 0) -> None:
         fmt_str = ' ' * indent + '{}'
         self.add_source_code_line(fmt_str.format(prolog))
-        self.add_source_code_lines(fmt_list(values, indent=4 + indent))
+        self.add_source_code_lines(_fmt_list(values, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
     def add_dict_source_code(self, mapping: Mapping, prolog: str = '{', epilog: str = '}', indent: int = 0) -> None:
         fmt_str = ' ' * indent + '{}'
         self.add_source_code_line(fmt_str.format(prolog))
-        self.add_source_code_lines(fmt_mapping(mapping, indent=4 + indent))
+        self.add_source_code_lines(_fmt_mapping(mapping, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
     def add_tags_source_code(self, tags: Tags, prolog='tags = Tags(', epilog=')', indent=4):
         fmt_str = ' ' * indent + '{}'
         self.add_source_code_line(fmt_str.format(prolog))
-        self.add_source_code_lines(fmt_dxf_tags(tags, indent=4 + indent))
+        self.add_source_code_lines(_fmt_dxf_tags(tags, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
     def generic_api_call(self, dxftype: str, dxfattribs: dict, prefix: str = 'e = ') -> Iterable[str]:
@@ -267,14 +341,14 @@ class SourceCodeGenerator:
             prefix: prefix string like variable assignment 'e = '
 
         """
-        dxfattribs = purge_handles(dxfattribs)
+        dxfattribs = _purge_handles(dxfattribs)
         self.add_used_resources(dxfattribs)
         s = [
             "{}{}.new_entity(".format(prefix, self.layout),
             "    '{}',".format(dxftype),
             "    dxfattribs={",
         ]
-        s.extend(fmt_mapping(dxfattribs, indent=8))
+        s.extend(_fmt_mapping(dxfattribs, indent=8))
         s.extend([
             "    },",
             ")",
@@ -291,9 +365,9 @@ class SourceCodeGenerator:
             dxfattribs: DXF attributes dictionary
             prefix: prefix string like variable assignment 'e = '
         """
-        dxfattribs = purge_handles(dxfattribs)
+        dxfattribs = _purge_handles(dxfattribs)
         func_call = '{}{}.{}'.format(prefix, self.layout, api_call)
-        return fmt_api_call(func_call, args, dxfattribs)
+        return _fmt_api_call(func_call, args, dxfattribs)
 
     def new_table_entry(self, dxftype: str, dxfattribs: dict) -> Iterable[str]:
         """
@@ -305,7 +379,7 @@ class SourceCodeGenerator:
 
         """
         table = '{}.{}'.format(self.doc, TABLENAMES[dxftype])
-        dxfattribs = purge_handles(dxfattribs)
+        dxfattribs = _purge_handles(dxfattribs)
         name = dxfattribs.pop('name')
         s = [
             "if '{}' not in {}:".format(name, table),
@@ -313,39 +387,12 @@ class SourceCodeGenerator:
             "        '{}',".format(name),
             "        dxfattribs={",
         ]
-        s.extend(fmt_mapping(dxfattribs, indent=12))
+        s.extend(_fmt_mapping(dxfattribs, indent=12))
         s.extend([
             "        },",
             "    )",
         ])
         return s
-
-    def imports(self, indent: int = 0) -> str:
-        """
-        Returns required imports as a single string.
-
-        Args:
-            indent: source code indentation count by spaces
-
-        """
-        lead_str = ' ' * indent
-        return '\n'.join(lead_str + line for line in self.required_imports)
-
-    def tostring(self, indent: int = 0) -> str:
-        """
-        Returns the source code as a single string.
-
-        Args:
-            indent: source code indentation count by spaces
-
-        """
-        lead_str = ' ' * indent
-        return '\n'.join(lead_str + line for line in self.source_code)
-
-    def __str__(self) -> str:
-        """ Returns the source code as a single string. """
-
-        return self.tostring()
 
     # simple graphical types
 
@@ -396,7 +443,7 @@ class SourceCodeGenerator:
     # complex graphical types
 
     def _insert(self, entity: 'Insert') -> None:
-        self.used_blocks.add(entity.dxf.name)
+        self.code.blocks.add(entity.dxf.name)
         self.add_source_code_lines(self.api_call('add_blockref(', ['name', 'insert'], entity.dxfattribs()))
         if len(entity.attribs):
             for attrib in entity.attribs:
@@ -434,7 +481,7 @@ class SourceCodeGenerator:
         self.add_source_code_lines(self.generic_api_call('POLYLINE', entity.dxfattribs()))
         # polyline vertices are separate DXF entities and therefore not DXF attributes
         for v in entity.vertices:
-            attribs = purge_handles(v.dxfattribs())
+            attribs = _purge_handles(v.dxfattribs())
             location = attribs.pop('location')
             if 'layer' in attribs:
                 del attribs['layer']  # layer is automatically set to the POLYLINE layer

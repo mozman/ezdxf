@@ -1,6 +1,13 @@
 # created: 19.04.2018
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
+"""
+Packed DXF Tags
+---------------
+
+Store  DXF tags in compact data structures as list or array.array to reduce memory usage.
+
+"""
 from array import array
 from typing import Iterable, Sequence
 
@@ -12,9 +19,17 @@ from ezdxf.lldxf.tagwriter import TagWriter
 
 
 class TagList:
+    """ Store data in a standard Python list.
+
+    Args:
+        data: iterable of DXF tag values.
+
+    :ivar values: data storage as list
+
+    """
     __slots__ = ('values',)
 
-    def __init__(self, data=None):
+    def __init__(self, data: Iterable = None):
         self.values = list(data or [])
 
     def clone(self) -> 'TagList':
@@ -29,6 +44,15 @@ class TagList:
 
 
 class TagArray(TagList):
+    """ Store data in an array.array(). Array type is defined by class variable DTYPE.
+
+    Args:
+        data: iterable of DXF tag values.
+
+    :ivar values: data storage as array.array
+
+    """
+
     __slots__ = ('values',)
     DTYPE = 'i'
 
@@ -40,6 +64,15 @@ class TagArray(TagList):
 
 
 class VertexArray:
+    """ Store vertices in an array.array('d'). Vertex size is defined by class variable VERTEX_SIZE.
+
+    Args:
+        data: iterable of vertex values as linear list e.g. [x1, y1, x2, y2, x3, y3, ...].
+
+    :ivar values: vertex storage as array.array('d')
+
+    """
+
     VERTEX_SIZE = 3  # set to 2 for 2d points
     __slots__ = ('values',)
 

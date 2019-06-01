@@ -2,7 +2,7 @@
 # License: MIT License
 import ezdxf
 from ezdxf.addons.dxf2code import entities_to_code, table_entries_to_code, block_to_code
-from ezdxf.addons.dxf2code import fmt_mapping, fmt_list, fmt_api_call, fmt_dxf_tags
+from ezdxf.addons.dxf2code import _fmt_mapping, _fmt_list, _fmt_api_call, _fmt_dxf_tags
 
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags  # required by exec() or eval()
@@ -15,7 +15,7 @@ msp = doc.modelspace()
 def test_fmt_mapping():
     from ezdxf.math import Vector
     d = {'a': 1, 'b': 'str', 'c': Vector(), 'd': 'xxx "yyy" \'zzz\''}
-    r = list(fmt_mapping(d))
+    r = list(_fmt_mapping(d))
     assert r[0] == "'a': 1,"
     assert r[1] == "'b': \"str\","
     assert r[2] == "'c': (0.0, 0.0, 0.0),"
@@ -24,7 +24,7 @@ def test_fmt_mapping():
 
 def test_fmt_int_list():
     l = [1, 2, 3]
-    r = list(fmt_list(l))
+    r = list(_fmt_list(l))
     assert r[0] == '1,'
     assert r[1] == '2,'
     assert r[2] == '3,'
@@ -32,7 +32,7 @@ def test_fmt_int_list():
 
 def test_fmt_float_list():
     l = [1., 2., 3.]
-    r = list(fmt_list(l))
+    r = list(_fmt_list(l))
     assert r[0] == '1.0,'
     assert r[1] == '2.0,'
     assert r[2] == '3.0,'
@@ -41,13 +41,13 @@ def test_fmt_float_list():
 def test_fmt_vector_list():
     from ezdxf.math import Vector
     l = [Vector(), (1., 2., 3.)]
-    r = list(fmt_list(l))
+    r = list(_fmt_list(l))
     assert r[0] == '(0.0, 0.0, 0.0),'
     assert r[1] == '(1.0, 2.0, 3.0),'
 
 
 def test_fmt_api_call():
-    r = fmt_api_call('msp.add_line(', ['start', 'end'], dxfattribs={'start': (0, 0), 'end': (1, 0), 'color': 7})
+    r = _fmt_api_call('msp.add_line(', ['start', 'end'], dxfattribs={'start': (0, 0), 'end': (1, 0), 'color': 7})
     assert r[0] == "msp.add_line("
     assert r[1] == "    start=(0, 0),"
     assert r[2] == "    end=(1, 0),"
@@ -62,7 +62,7 @@ def test_fmt_dxf_tags():
         dxftag(1, 'TEXT'),
         dxftag(10, (1, 2, 3))
     ]
-    code = "[{}]".format(''.join(fmt_dxf_tags(tags)))
+    code = "[{}]".format(''.join(_fmt_dxf_tags(tags)))
     r = eval(code, globals())
     assert r == tags
 
@@ -325,21 +325,21 @@ def test_layer_entry():
 
 def test_ltype_entry():
     from ezdxf.entities.ltype import Linetype
+
     ltype = Linetype.new('FFFF', dxfattribs={
         'name': 'TEST',
         'description': 'TESTDESC',
         'pattern': [0.2, 0.1, -0.1]
     })
     code = table_entries_to_code([ltype], drawing='doc')
-    code.translate_entities([ltype])
     exec(str(code), globals())
     new_ltype = doc.linetypes.get('TEST')
     assert new_ltype.dxf.description == ltype.dxf.description
     assert new_ltype.pattern_tags.tags == ltype.pattern_tags.tags
     # all imports added
-    assert any(line.endswith('Tags') for line in code.required_imports)
-    assert any(line.endswith('dxftag') for line in code.required_imports)
-    assert any(line.endswith('LinetypePattern') for line in code.required_imports)
+    assert any(line.endswith('Tags') for line in code.imports)
+    assert any(line.endswith('dxftag') for line in code.imports)
+    assert any(line.endswith('LinetypePattern') for line in code.imports)
 
 
 def test_block_to_code():
