@@ -667,9 +667,18 @@ class DBasisU(DBasis):
 
 class BSpline:
     """
-    Calculate the points of a B-spline curve, using an uniform open knot vector ("clamped").
+    Calculate the points of a B-spline curve, using an uniform open `knot`_ vector ("clamped").
 
     Accepts 2d points as definition points, but output is always 3d (z-axis is 0).
+
+    Args:
+        control_points: iterable of control points
+        order: spline order
+        knots: iterable of knot values
+        weights: iterable of weight values
+
+    :ivar BSpline.control_points: control points as list of :class:`~ezdxf.math.Vector`
+    :ivar BSpline.order: order of B-spline = degree +  1
 
     """
 
@@ -697,26 +706,36 @@ class BSpline:
 
     @property
     def count(self) -> int:
+        """ Count of control points, (n + 1 in math definition). """
         return len(self.control_points)
 
     @property
     def max_t(self) -> float:
+        """ Max `knot`_ value. """
         return self.basis.max_t
 
     @property
     def degree(self) -> int:
+        """ Degree (p) of B-spline = order - 1 """
         return self.order - 1
 
     def knot_values(self) -> List[float]:
+        """ Returns a list of `knot`_ values as floats, the knot vector always has order+count values
+        (n + p + 2 in math definition).
+        """
         return self.basis.knots
 
     def basis_values(self, t: float) -> List[float]:
+        """ Returns the `basis`_ vector for position t. """
         return self.basis.basis(t)
 
     def step_size(self, segments: int) -> float:
         return self.max_t / float(segments)
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
+        """ Approximates the whole B-spline from 0 to max_t, by line segments as a list of vertices, vertices count =
+        segments + 1.
+        """
         step = self.step_size(segments)
         for point_index in range(segments + 1):
             yield self.point(point_index * step)
@@ -777,7 +796,7 @@ class BSpline:
 
 class BSplineU(BSpline):
     """
-    Calculate the points of a B-spline curve, uniform (periodic) knot vector (not "clamped").
+    Calculate the points of a B-spline curve, uniform (periodic) `knot`_ vector (`open curve`_).
 
     """
 
@@ -801,7 +820,7 @@ class BSplineU(BSpline):
 
 class BSplineClosed(BSplineU):
     """
-    Calculate the points of a closed uniform B-spline curve.
+    Calculate the points of a closed uniform B-spline curve (`closed curve`_).
 
     """
 
@@ -841,7 +860,7 @@ class DerivativePoint:  # Mixin
 
 class DBSpline(DerivativePoint, BSpline):
     """
-    Calculate the Points and Derivative of an open uniform B-spline curve ("clamped").
+    Calculate points and derivative of a B-spline curve, using an uniform open `knot`_ vector (`clamped curve`_).
 
     """
 
@@ -855,7 +874,7 @@ class DBSpline(DerivativePoint, BSpline):
 
 class DBSplineU(DerivativePoint, BSplineU):
     """
-    Calculate the Points and Derivative of an uniform B-spline curve (not "clamped").
+    Calculate points and derivative of a B-spline curve, uniform (periodic) `knot`_ vector (`open curve`_).
 
     """
 
@@ -866,7 +885,7 @@ class DBSplineU(DerivativePoint, BSplineU):
 
 class DBSplineClosed(DerivativePoint, BSplineClosed):
     """
-    Calculate the Points and Derivative of a closed B-spline curve.
+    Calculate the points and derivative of a closed uniform B-spline curve (`closed curve`_).
 
     UNTESTED!
     """

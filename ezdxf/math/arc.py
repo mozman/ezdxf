@@ -17,6 +17,16 @@ QUARTER_ANGLES = [0, math.pi * .5, math.pi, math.pi * 1.5]
 
 
 class ConstructionArc(ConstructionTool):
+    """ This is a helper class to create parameters for the DXF :class:`~ezdxf.entities.arc.Arc` class.
+
+    Args:
+        center: center point
+        radius: radius
+        start_angle: start angle in degrees
+        end_angle: end angle in degrees
+        is_counter_clockwise: swaps start- and end angle if False
+
+    """
     def __init__(self,
                  center: 'Vertex' = (0, 0),
                  radius: float = 1,
@@ -34,15 +44,18 @@ class ConstructionArc(ConstructionTool):
             self.end_angle = start_angle
 
     @property
-    def start_point(self):
+    def start_point(self) -> 'Vec2':
+        """ Returns start point of arc. """
         return self.center + Vec2.from_deg_angle(self.start_angle, self.radius)
 
     @property
-    def end_point(self):
+    def end_point(self) -> 'Vec2':
+        """ Returns end point of arc. """
         return self.center + Vec2.from_deg_angle(self.end_angle, self.radius)
 
     @property
     def bounding_box(self) -> 'BoundingBox2d':
+        """ Returns bounding box of arc. """
         bbox = BoundingBox2d((self.start_point, self.end_point))
         bbox.extend(self.main_axis_points())
         return bbox
@@ -57,14 +70,17 @@ class ConstructionArc(ConstructionTool):
                 yield center + Vec2.from_angle(angle, radius)
 
     def move(self, dx: float, dy: float) -> None:
+        """ Moves arc if (dx, dy) direction. """
         self.center += Vec2((dx, dy))
 
     @property
     def start_angle_rad(self) -> float:
+        """ Returns start angle in radians. """
         return math.radians(self.start_angle)
 
     @property
     def end_angle_rad(self) -> float:
+        """ Returns end angle in radians. """
         return math.radians(self.end_angle)
 
     @staticmethod
@@ -196,7 +212,7 @@ class ConstructionArc(ConstructionTool):
             ucs: arc properties transformation from ucs to ocs
             dxfattribs: usual DXF attributes supported by ARC
 
-        Returns: DXF ConstructionArc() object
+        Returns: :class:`~ezdxf.entities.arc.Arc`
 
         """
 

@@ -23,6 +23,17 @@ def floats(items: Iterable) -> List[float]:
 
 
 class Matrix44:
+    """
+    This is a pure Python implementation for 4x4 transformation matrices, to avoid dependency to big numerical packages
+    like numpy, and before binary wheels, installation of these packages wasn't always easy on Windows.
+
+    Matrix44 initialization:
+
+        - Matrix44() is the identity matrix.
+        - Matrix44(values) values is an iterable with the 16 components of the matrix.
+        - Matrix44(row1, row2, row3, row4) four rows, each row with four values.
+
+    """
     _identity = (
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
@@ -47,11 +58,9 @@ class Matrix44:
         """
         Reset matrix values.
 
-        set() creates the identity matrix.
-
-        set(values) values is an iterable with the 16 components of the matrix.
-
-        set(row1, row2, row3, row4) four rows, each row with four values.
+            - set() creates the identity matrix.
+            - set(values) values is an iterable with the 16 components of the matrix.
+            - set(row1, row2, row3, row4) four rows, each row with four values.
 
         """
         nargs = len(args)
@@ -67,6 +76,9 @@ class Matrix44:
             raise ValueError("Invalid matrix count")
 
     def __repr__(self) -> str:
+        """ Returns the representation string of the matrix:
+        ``Matrix44((col0, col1, col2, col3), (...), (...), (...))``
+        """
         def format_row(row):
             return "(%s)" % ", ".join(str(value) for value in row)
 
@@ -74,16 +86,33 @@ class Matrix44:
                ", ".join(format_row(row) for row in self.rows())
 
     def get_row(self, row: int) -> Tuple4Float:
+        """ Get row as list of of four float values.
+
+        Args:
+            row: row index [0..3]
+
+        """
         index = row * 4
         return tuple(self.matrix[index:index + 4])
 
     def set_row(self, row: int, values: Sequence[float]) -> None:
+        """
+        Sets the values in a row.
+
+        Args:
+            row: row index [0..3]
+            values: four row values as iterable.
+
+        """
         index = row * 4
         self.matrix[index:index + len(values)] = floats(values)
 
     def get_col(self, col: int) -> Tuple4Float:
         """
         Returns a column as a tuple of four floats.
+
+        Args;
+            col: column index [0..3]
         """
         m = self.matrix
         return m[col], m[col + 4], m[col + 8], m[col + 12]
@@ -91,6 +120,11 @@ class Matrix44:
     def set_col(self, col: int, values: Sequence[float]):
         """
         Sets the values in a column.
+
+        Args:
+            col: column index [0..3]
+            values: four column values as iterable.
+
         """
         m = self.matrix
         a, b, c, d = values
@@ -100,6 +134,7 @@ class Matrix44:
         m[col + 12] = float(d)
 
     def copy(self) -> 'Matrix44':
+        """ Copy of :class:`Matrix` """
         return self.__class__(self.matrix)
 
     __copy__ = copy
@@ -386,7 +421,7 @@ class Matrix44:
         Multiplies this matrix with other matrix.
 
         Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
-        rotations,  translations and scales. fast_mul is approximately 25% quicker than the *= operator.
+        rotations,  translations and scales. fast_mul is approximately 25% quicker than the \*= operator.
 
         """
         m1 = self.matrix
@@ -482,6 +517,7 @@ class Matrix44:
         return matrix
 
     def determinant(self) -> float:
+        """ Returns determinant. """
         e11, e12, e13, e14, \
         e21, e22, e23, e24, \
         e31, e32, e33, e34, \
@@ -497,7 +533,9 @@ class Matrix44:
         """
         Calculates the inverse of the matrix.
 
-        Raises ZeroDivisionError if matrix has no inverse.
+        Raises:
+             ZeroDivisionError: if matrix has no inverse.
+
         """
         det = self.determinant()
         f = 1. / det  # catch ZeroDivisionError by caller

@@ -144,12 +144,7 @@ Math Utilities
 .. toctree::
    :maxdepth: 1
 
-   math/functions
-   math/ocs_ucs
-   math/vector
-   math/matrix44
-   math/bspline
-   math/arc
+   math
 
 Tag Data Structures
 -------------------

@@ -9,16 +9,32 @@ if TYPE_CHECKING:
 
 
 class BoundingBox:
+    """ 3D bounding box.
+
+    Args:
+        vertices: iterable of points as tuple or :class:`Vector`
+
+    :ivar extmin: "lower left" corner of bounding box
+    :ivar extmax: "upper right" corner of bounding box
+
+    """
     def __init__(self, vertices: Iterable['Vertex']):
         self.extmin, self.extmax = extends(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
+        """ Returns True if `vertex` is inside bounding box. """
         x, y, z = Vector(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
         return (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
 
     def extend(self, vertices: Iterable['Vertex']) -> None:
+        """ Extend bounds by `vertices`.
+
+        Args:
+            vertices: iterable of points
+
+        """
         v = [self.extmin, self.extmax]
         v.extend(vertices)
         self.extmin, self.extmax = extends(v)
@@ -50,16 +66,33 @@ def extends(vertices: Iterable['Vertex']) -> Tuple[Vector, Vector]:
 
 
 class BoundingBox2d:
+    """ Optimized 2D bounding box.
+
+    Args:
+        vertices: iterable of points as tuple or :class:`Vector`
+
+    :ivar extmin: "lower left" corner of bounding box
+    :ivar extmax: "upper right" corner of bounding box
+
+    """
+
     def __init__(self, vertices: Iterable['Vertex']):
         self.extmin, self.extmax = extends2d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
+        """ Returns True if `vertex` is inside bounding box. """
         v = Vec2(vertex)
         min_ = self.extmin
         max_ = self.extmax
         return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
 
     def extend(self, vertices: Iterable['Vertex']) -> None:
+        """ Extend bounds by `vertices`.
+
+        Args:
+            vertices: iterable of points
+
+        """
         v = [self.extmin, self.extmax]
         v.extend(vertices)
         self.extmin, self.extmax = extends(v)

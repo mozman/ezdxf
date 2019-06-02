@@ -10,6 +10,16 @@ if TYPE_CHECKING:
 
 
 class ConstructionBox(ConstructionTool):
+    """
+    Helper class to create rectangles.
+
+    Args:
+        center: center of rectangle
+        width: width of rectangle
+        height: height of rectangle
+        angle: angle of rectangle in degrees
+
+    """
     def __init__(self, center: 'Vertex' = (0, 0), width: float = 1, height: float = 1, angle: float = 0):
         self._center = Vec2(center)
         self._width = abs(width)  # type: float
@@ -20,6 +30,7 @@ class ConstructionBox(ConstructionTool):
 
     @classmethod
     def from_points(cls, p1: 'Vertex', p2: 'Vertex') -> 'ConstructionBox':
+        """ Creates a :class:`ConstructionBox` from two opposite corners. """
         p1 = Vec2(p1)
         p2 = Vec2(p2)
         width = abs(p2.x - p1.x)
@@ -43,10 +54,12 @@ class ConstructionBox(ConstructionTool):
 
     @property
     def bounding_box(self) -> BoundingBox2d:
+        """ Returns :class:`BoundingBox2d`. """
         return BoundingBox2d(self.corners)
 
     @property
     def center(self) -> Vec2:
+        """ center """
         return self._center
 
     @center.setter
@@ -56,6 +69,7 @@ class ConstructionBox(ConstructionTool):
 
     @property
     def width(self) -> float:
+        """ width """
         return self._width
 
     @width.setter
@@ -65,6 +79,7 @@ class ConstructionBox(ConstructionTool):
 
     @property
     def height(self) -> float:
+        """ height """
         return self._height
 
     @height.setter
@@ -74,14 +89,17 @@ class ConstructionBox(ConstructionTool):
 
     @property
     def incircle_radius(self) -> float:
+        """ incircle radius """
         return min(self._width, self._height) / 2.
 
     @property
     def circumcircle_radius(self) -> float:
+        """ circum circle radius"""
         return math.hypot(self._width, self._height) / 2.
 
     @property
     def angle(self) -> float:
+        """ angle """
         return self._angle
 
     @angle.setter
@@ -91,33 +109,41 @@ class ConstructionBox(ConstructionTool):
 
     @property
     def corners(self) -> Sequence[Vec2]:
+        """ :class:`ConstructionBox` corners as sequence of 2d points. """
         self.update()
         return self._corners
 
     def __iter__(self) -> Iterable[Vec2]:
+        """ Iterate over corners. """
         return iter(self.corners)
 
     def __getitem__(self, corner) -> Vec2:
+        """ Get corner by index `corner`. """
         return self.corners[corner]
 
     def __repr__(self) -> str:
         return "ConstructionBox({0.center}, {0.width}, {0.height}, {0.angle})".format(self)
 
     def move(self, dx: float, dy: float) -> None:
+        """ Move :class:`ConstructionBox` in direction (dx, dy). """
         self.center += Vec2((dx, dy))
 
     def expand(self, dw: float, dh: float) -> None:
+        """ Expand :class:`ConstructionBox`. `dw` expand width, `dh` expand height. """
         self.width += dw
         self.height += dh
 
     def scale(self, sx: float, sy: float) -> None:
+        """ Scale :class:`ConstructionBox`. """
         self.width *= sx
         self.height *= sy
 
     def rotate(self, angle: float) -> None:
+        """ Rotate :class:`ConstructionBox`. """
         self.angle += angle
 
     def is_inside(self, point: 'Vertex') -> bool:
+        """ Returns True if `point` is inside of :class:`ConstructionBox`. """
         point = Vec2(point)
         delta = self.center - point
         if math.isclose(self.angle, 0.):  # fast path for horizontal rectangles
@@ -136,9 +162,11 @@ class ConstructionBox(ConstructionTool):
                 )
 
     def is_any_corner_inside(self, other: 'ConstructionBox') -> bool:
+        """ Returns True if any corner of `other` :class:`ConstructionBox` is inside this :class:`ConstructionBox`. """
         return any(self.is_inside(p) for p in other.corners)
 
     def is_overlapping(self, other: 'ConstructionBox') -> bool:
+        """ Retruns True if `self` and `other` do overlap. """
         distance = (self.center - other.center).magnitude
         max_distance = self.circumcircle_radius + other.circumcircle_radius
         if distance > max_distance:
@@ -168,6 +196,7 @@ class ConstructionBox(ConstructionTool):
         return False
 
     def border_lines(self) -> Sequence[ConstructionLine]:
+        """ Returns border lines of :class:`ConstructionBox` as sequence of :class:`ConstructionLine`. """
         p1, p2, p3, p4 = self.corners
         return (
             ConstructionLine(p1, p2),
