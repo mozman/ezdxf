@@ -392,17 +392,32 @@ def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], kn
 
 def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance', power: float = .5):
     """
-    Calculate B-spline control frame, given are the fit points and the degree of the B-spline.
+    Generates the control points for the  B-spline control frame by `Curve Global Interpolation`_.
+    Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
+    parameter vector t:
 
-        1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
-        2. method = 'distance', creates a t vector with values proportional to the fit point distances
-        3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+        1. method = ``uniform``, creates a uniform t vector, form 0 to 1 evenly spaced; see `uniform`_ method
+        2. method = ``distance``, creates a t vector with values proportional to the fit point distances, see `chord length`_ method
+        3. method = ``centripetal``, creates a t vector with values proportional to the fit point distances^power; see `centripetal`_ method
 
     Args:
-        fit_points: fit points of B-spline
+        fit_points: fit points of B-spline, as list of (x, y[, z]) tuples
         degree: degree of B-spline
         method: calculation method for parameter vector t
         power: power for centripetal method
+
+
+
+
+    Returns:
+        :class:`~ezdxf.math.BSpline`, with :attr:`~ezdxf.math.BSpline.control_points` containing the calculated control
+        points, also :meth:`~ezdxf.math.BSpline.knot_values` returns the used `knot`_ values.
+
+    .. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
+    .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html
+    .. _chord length: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-chord-length.html
+    .. _centripetal: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-centripetal.html
+    .. _knot: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-knot-generation.html
 
     """
 

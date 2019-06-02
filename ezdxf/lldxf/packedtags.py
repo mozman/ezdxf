@@ -54,6 +54,7 @@ class TagArray(TagList):
     """
 
     __slots__ = ('values',)
+    #: Defines the data type of array.array()
     DTYPE = 'i'
 
     def __init__(self, data: Iterable = None):
@@ -72,7 +73,7 @@ class VertexArray:
     :ivar values: vertex storage as array.array('d')
 
     """
-
+    #: Defines the vertex size
     VERTEX_SIZE = 3  # set to 2 for 2d points
     __slots__ = ('values',)
 

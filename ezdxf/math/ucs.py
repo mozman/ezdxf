@@ -46,6 +46,13 @@ class Matrix33:
 
 
 class OCS:
+    """
+    Establish an :ref:`OCS` for a given extrusion vector.
+
+    Args:
+        extrusion: extrusion vector.
+    """
+
     def __init__(self, extrusion: 'Vertex' = Z_AXIS):
         Az = Vector(extrusion).normalize()
         self.transform = not Az.isclose(Z_AXIS)
@@ -61,37 +68,49 @@ class OCS:
 
     @property
     def ux(self) -> Vector:
+        """ x unit vector """
         return self.matrix.ux if self.transform else X_AXIS
 
     @property
     def uy(self) -> Vector:
+        """ y unit vector """
         return self.matrix.uy if self.transform else Y_AXIS
 
     @property
     def uz(self) -> Vector:
+        """ z unit vector """
         return self.matrix.uz if self.transform else Z_AXIS
 
     def from_wcs(self, point: 'Vertex') -> 'Vertex':
+        """ Calculate object coordinates for point in world coordinates.
+        """
         if self.transform:
             return self.transpose.transform(point)
         else:
             return point
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
+        """ Translate multiple world coordinates into object coordinates (generator).
+        """
         for point in points:
             yield self.from_wcs(point)
 
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
+        """ Calculate world coordinates for point in object coordinates.
+        """
         if self.transform:
             return self.matrix.transform(point)
         else:
             return point
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
+        """ Translate multiple object coordinates into world coordinates (generator).
+        """
         for point in points:
             yield self.to_wcs(point)
 
     def render_axis(self, layout: 'GenericLayoutType', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
+        """ Render axis as 3D lines into a `layout`. """
         render_axis(
             layout,
             start=(0, 0, 0),
@@ -105,6 +124,22 @@ class OCS:
 
 
 class UCS:
+    """
+    Establish an User Coordinate System (:ref:`UCS`). The UCS is defined by the origin and two unit vectors for the x-,
+    y- or z-axis, all axis in :ref:`WCS`. The missing axis is the cross product of the given axis.
+
+    If x- and y-axis are None: ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1).
+
+    Normalization of unit vectors is not required.
+
+    Args:
+        origin: defines the UCS origin in world coordinates
+        ux: defines the UCS x-axis as vector in :ref:`WCS`
+        uy: defines the UCS y-axis as vector in :ref:`WCS`
+        uz: defines the UCS z-axis as vector in :ref:`WCS`
+
+    """
+
     def __init__(self, origin: 'Vertex' = (0, 0, 0), ux: 'Vertex' = None, uy: 'Vertex' = None, uz: 'Vertex' = None):
         self.origin = Vector(origin)
         if ux is None and uy is None:
@@ -133,24 +168,27 @@ class UCS:
 
     @property
     def ux(self) -> Vector:
+        """ x unit vector """
         return self.matrix.ux
 
     @property
     def uy(self) -> Vector:
+        """ y unit vector """
         return self.matrix.uy
 
     @property
     def uz(self) -> Vector:
+        """ z unit vector """
         return self.matrix.uz
 
-    def to_wcs(self, point: 'Vertex') -> Vector:
+    def to_wcs(self, point: 'Vertex') -> 'Vector':
         """
         Calculate world coordinates for point in UCS coordinates.
 
         """
         return self.origin + self.matrix.transform(point)
 
-    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+    def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """
         Translate multiple user coordinates into world coordinates (generator).
 
@@ -208,14 +246,14 @@ class UCS:
         vec = self.to_ocs(vec) - self.origin
         return vec.angle
 
-    def from_wcs(self, point: 'Vertex') -> Vector:
+    def from_wcs(self, point: 'Vertex') -> 'Vector':
         """
         Calculate UCS coordinates for point in world coordinates.
 
         """
         return self.transpose.transform(point - self.origin)
 
-    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable[Vector]:
+    def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
         """
         Translate multiple world coordinates into user coordinates (generator).
 
@@ -225,16 +263,34 @@ class UCS:
 
     @property
     def is_cartesian(self) -> bool:
+        """ True if cartesian coordinate system """
         return self.uy.cross(self.uz).isclose(self.ux)
 
     @staticmethod
     def from_x_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
+        """ Returns an new :class:`UCS` defined by the origin, the x-axis vector and an arbitrary point in the xy-plane.
+
+        Args:
+            origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+            axis: x-axis vector as (x, y, z) tuple in :ref:`WCS`
+            point: arbitrary point unlike the origin in the xy-plane as (x, y, z) tuple in :ref:`WCS`
+
+        """
         x_axis = Vector(axis)
         z_axis = x_axis.cross(Vector(point) - origin)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
     @staticmethod
     def from_x_axis_and_point_in_xz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
+        """
+        Returns an new :class:`UCS` defined by the origin, the x-axis vector and an arbitrary point in the xz-plane.
+
+        Args:
+            origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+            axis: x-axis vector as (x, y, z) tuple in :ref:`WCS`
+            point: arbitrary point unlike the origin in the xz-plane as (x, y, z) tuple in :ref:`WCS`
+
+        """
         x_axis = Vector(axis)
         xz_vector = Vector(point) - origin
         y_axis = xz_vector.cross(x_axis)
@@ -242,6 +298,15 @@ class UCS:
 
     @staticmethod
     def from_y_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
+        """
+        Returns an new :class:`UCS` defined by the origin, the y-axis vector and an arbitrary point in the xy-plane.
+
+        Args:
+            origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+            axis: y-axis vector as (x, y, z) tuple in :ref:`WCS`
+            point: arbitrary point unlike the origin in the xy-plane as (x, y, z) tuple in :ref:`WCS`
+
+        """
         y_axis = Vector(axis)
         xy_vector = Vector(point) - origin
         z_axis = xy_vector.cross(y_axis)
@@ -249,6 +314,15 @@ class UCS:
 
     @staticmethod
     def from_y_axis_and_point_in_yz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
+        """
+        Returns an new :class:`UCS` defined by the origin, the y-axis vector and an arbitrary point in the yz-plane.
+
+        Args:
+            origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+            axis: y-axis vector as (x, y, z) tuple in :ref:`WCS`
+            point: arbitrary point unlike the origin in the yz-plane as (x, y, z) tuple in :ref:`WCS`
+
+        """
         y_axis = Vector(axis)
         yz_vector = Vector(point) - origin
         x_axis = yz_vector.cross(y_axis)
@@ -256,18 +330,37 @@ class UCS:
 
     @staticmethod
     def from_z_axis_and_point_in_xz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
+        """
+        Returns an new :class:`UCS` defined by the origin, the z-axis vector and an arbitrary point in the xz-plane.
+
+        Args:
+            origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+            axis: z-axis vector as (x, y, z) tuple in :ref:`WCS`
+            point: arbitrary point unlike the origin in the xz-plane as (x, y, z) tuple in :ref:`WCS`
+
+        """
         z_axis = Vector(axis)
         y_axis = z_axis.cross(Vector(point) - origin)
         return UCS(origin=origin, uy=y_axis, uz=z_axis)
 
     @staticmethod
     def from_z_axis_and_point_in_yz(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
+        """
+        Returns an new :class:`UCS` defined by the origin, the z-axis vector and an arbitrary point in the yz-plane.
+
+        Args:
+            origin: UCS origin as (x, y, z) tuple in :ref:`WCS`
+            axis: z-axis vector as (x, y, z) tuple in :ref:`WCS`
+            point: arbitrary point unlike the origin in the yz-plane as (x, y, z) tuple in :ref:`WCS`
+
+        """
         z_axis = Vector(axis)
         yz_vector = Vector(point) - origin
         x_axis = yz_vector.cross(z_axis)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
     def render_axis(self, layout: 'GenericLayoutType', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
+        """ Render axis as 3D lines into a `layout`. """
         render_axis(
             layout,
             start=self.origin,

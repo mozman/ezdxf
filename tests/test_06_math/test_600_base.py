@@ -5,7 +5,6 @@ import pytest
 
 from ezdxf.math import xround
 from ezdxf.math.construct2d import *
-from ezdxf.math.points import closest_point
 from math import isclose, radians
 
 

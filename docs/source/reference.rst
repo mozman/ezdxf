@@ -17,9 +17,9 @@ Quoted from the original DXF 12 Reference which is **not** available on the web:
 Drawing
 -------
 
-The :class:`Drawing` class manages all entities and tables related to a
-DXF drawing. You can read DXF drawings from file-system or from a text-stream
-and you can also write the drawing to file-system or to a text-stream.
+The :class:`Drawing` class manages all entities and tables related to a DXF drawing.
+You can read/write DXF drawings from/to file-system or from/to a text-stream.
+
 
 .. toctree::
    :maxdepth: 2

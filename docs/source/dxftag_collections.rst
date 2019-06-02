@@ -13,11 +13,11 @@
 
 .. automodule:: ezdxf.lldxf.packedtags
 
-.. autoclass:: TagList
+.. autoclass:: TagList(data: Iterable = None)
     :members:
 
-.. autoclass:: TagArray(TagList)
+.. autoclass:: TagArray(data: Iterable = None)
     :members:
 
-.. autoclass:: VertexArray
+.. autoclass:: VertexArray(data: Iterable = None)
     :members:

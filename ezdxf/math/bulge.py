@@ -35,7 +35,7 @@ def angle(p1: Any, p2: Any) -> float:
     return (Vec2(p2) - Vec2(p1)).angle
 
 
-def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float, radius: float) -> Tuple[Vec2, Vec2, float]:
+def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float, radius: float) -> Tuple['Vec2', 'Vec2', float]:
     """
     Calculate bulge parameters from arc parameters.
 
@@ -74,7 +74,7 @@ def bulge_3_points(start_point: 'Vertex', end_point: 'Vertex', point: 'Vertex') 
     return math.sin(a) / math.cos(a)
 
 
-def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Tuple[Vec2, float, float, float]:
+def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Tuple['Vec2', float, float, float]:
     """
     Calculate arc parameters from bulge parameters.
 
@@ -97,7 +97,7 @@ def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Tu
         return c, angle(c, start_point), angle(c, end_point), abs(r)
 
 
-def bulge_center(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Vec2:
+def bulge_center(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> 'Vec2':
     """
     Calculate center of arc described by the given bulge parameters.
 
@@ -106,9 +106,9 @@ def bulge_center(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Ve
     Args:
         start_point: start point (x, y) as args accepted by Vec2()
         end_point: end point (x, y) as args accepted by Vec2()
-        bulge: bulge value
+        bulge: bulge value as float
 
-    Returns: Vector
+    Returns: :class:`~ezdxf.math.Vec2`
 
     """
     start_point = Vec2(start_point)

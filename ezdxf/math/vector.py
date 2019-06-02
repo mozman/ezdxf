@@ -13,23 +13,48 @@ isclose = partial(math.isclose, abs_tol=1e-12)
 
 class Vector:
     """
-    Vector represents a universal 3D Vector (x, y, z). This class is immutable and optimized for universality not for
-    speed.
-
+    This is an immutable universal 3d vector object. This class is optimized for universality not for speed.
     Immutable means you can't change (x, y, z) components after initialization::
 
+        v1 = Vector(1, 2, 3)
+        v2 = v1
+        v2.z = 7  # this is not possible, raises AttributeError
+        v2 = Vector(v2.x, v2.y, 7)  # this creates a new Vector() object
+        assert v1.z == 3  # and v1 remains unchanged
+
+
+    Vector initialization:
+
+    - Vector(), returns Vector(0, 0, 0)
+
+    - Vector((x, y)), returns Vector(x, y, 0)
+
+    - Vector((x, y, z)), returns Vector(x, y, z)
+
+    - Vecotr(x, y), returns Vector(x, y, 0)
+
+    - Vector(x, y, z), returns  Vector(x, y, z)
+
+    Addition, subtraction, scalar multiplication and scalar division left and right handed are supported::
+
         v = Vector(1, 2, 3)
-        v.x = 10  # raises AttributeError
-        v = Vector(10, v.y, v.z)  # create a new vector instead
+        v + (1, 2, 3) == Vector(2, 4, 6)
+        (1, 2, 3) + v == Vector(2, 4, 6)
+        v - (1, 2, 3) == Vector(0, 0, 0)
+        (1, 2, 3) - v == Vector(0, 0, 0)
+        v * 3 == Vector(3, 6, 9)
+        3 * v == Vector(3, 6, 9)
+        Vector(3, 6, 9) / 3 == Vector(1, 2, 3)
+        -Vector(1, 2, 3) == (-1, -2, -3)
 
-    Valid __init__() arguments are:
+    Comparison between vectors and vectors to tuples is supported::
 
-        no args: decompose() -> (0, 0, 0)
-        1 arg: decompose(arg), arg is tuple or list, tuple has to be an (x, y[, z]) tuple, decompose((x, y)) -> (x, y, 0.)
-        2 args: decompose(x, y), returns (x, y, 0.) tuple
-        3 args: decompose(x, y, z) -> (x, y, z)
+        Vector(1, 2, 3) < Vector (2, 2, 2)
+        (1, 2, 3) < tuple(Vector(2, 2, 2))  # conversion necessary
+        Vector(1, 2, 3) == (1, 2, 3)
 
-    Vector() is a super set of Vec2(), test by feature for 2d or 3d vector: if len(v) == 2: Vec2() else Vector().
+        bool(Vector(1, 2, 3)) is True
+        bool(Vector(0, 0, 0)) is False
 
     """
     __slots__ = ['_x', '_y', '_z']
@@ -39,14 +64,17 @@ class Vector:
 
     @property
     def x(self) -> float:
+        """ x axis """
         return self._x
 
     @property
     def y(self) -> float:
+        """ y axis """
         return self._y
 
     @property
     def z(self) -> float:
+        """ z axis """
         return self._z
 
     @property
@@ -74,6 +102,7 @@ class Vector:
         return Vec2((self._x, self._y))
 
     def replace(self, x: float = None, y: float = None, z: float = None) -> 'Vector':
+        """ Returns a copy of vector with replaced x-, y- or z-axis. """
         if x is None:
             x = self._x
         if y is None:
@@ -84,18 +113,22 @@ class Vector:
 
     @classmethod
     def list(cls, items: Iterable[Iterable]) -> List['Vector']:
+        """ Returns a list of :class:`Vector`. """
         return list(cls.generate(items))
 
     @classmethod
     def generate(cls, items: Iterable[Iterable]) -> Iterable['Vector']:
+        """ Returns a generator of :class:`Vector`. """
         return (cls(item) for item in items)
 
     @classmethod
     def from_angle(cls, angle: float, length: float = 1.) -> 'Vector':
+        """ Returns a vector from `angle` in radians in the xy-plane, z=0. """
         return cls(math.cos(angle) * length, math.sin(angle) * length, 0.)
 
     @classmethod
     def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vector':
+        """ Returns a vector from `angle` in degrees in the xy-plane, z=0. """
         return cls.from_angle(math.radians(angle), length)
 
     @staticmethod  # allows overriding by inheritance
@@ -140,18 +173,23 @@ class Vector:
         raise ValueError('invalid arguments {}'.format(str(args)))
 
     def __str__(self) -> str:
+        """ Return ``(x, y, z)`` as string. """
         return '({0.x}, {0.y}, {0.z})'.format(self)
 
     def __repr__(self) -> str:
+        """ Return ``Vector(x, y, z)`` as string. """
         return 'Vector' + self.__str__()
 
     def __len__(self) -> int:
+        """ Returns always 3. """
         return 3
 
     def __hash__(self) -> int:
+        """ Returns hash value of vector. """
         return hash(self.xyz)
 
     def copy(self) -> 'Vector':
+        """ Returns a copy of vector. """
         return self.__class__(self._x, self._y, self._z)
 
     __copy__ = copy
@@ -165,18 +203,22 @@ class Vector:
             return v
 
     def __getitem__(self, index: int) -> float:
+        """ Support for indexing :code:`v[0] == v.x; v[1] == v.y; v[2] == v.z;` """
         return self.xyz[index]
 
     def __iter__(self) -> Iterable[float]:
+        """ Support for the Python iterator protocol. """
         yield self._x
         yield self._y
         yield self._z
 
     def __abs__(self) -> float:
+        """ Returns length (magnitude) of vector. """
         return self.magnitude
 
     @property
     def magnitude(self) -> float:
+        """ Returns length of vector. """
         return self.magnitude_square ** .5
 
     @property
@@ -189,11 +231,13 @@ class Vector:
 
     @property
     def magnitude_square(self) -> float:
+        """ Returns square length of vector. """
         x, y, z = self._x, self._y, self._z
         return x * x + y * y + z * z
 
     @property
     def is_null(self) -> bool:
+        """ Returns True for Vector(0, 0, 0) else False. """
         return self.__eq__((0, 0, 0))  # __eq__ uses is_close()
 
     @property
@@ -218,24 +262,12 @@ class Vector:
 
     @property
     def angle(self) -> float:
-        """
-        Angle of vector in the xy-plane
-
-        Returns:
-            angle in radians
-
-        """
+        """ Returns angle of vector in the xy-plane in radians. """
         return math.atan2(self._y, self._x)
 
     @property
     def angle_deg(self) -> float:
-        """
-        Angle of vector in the xy-plane
-
-        Returns:
-            angle in degrees
-
-        """
+        """ Returns angle of vector in the xy-plane in degrees. """
         return math.degrees(self.angle)
 
     def orthogonal(self, ccw: bool = True) -> 'Vector':
@@ -271,14 +303,17 @@ class Vector:
         return uv * uv.dot(other)
 
     def normalize(self, length: float = 1.) -> 'Vector':
+        """ Returns new normalized :class:`Vector`, optional scaled by length. """
         return self.__mul__(length / self.magnitude)
 
     def reversed(self) -> 'Vector':
+        """ Returns -vector. """
         return self.__mul__(-1.)
 
     __neg__ = reversed
 
     def __bool__(self) -> bool:
+        """ Returns True if vector != (0, 0, 0). """
         return not self.is_null
 
     def isclose(self, other: Any, abs_tol: float = 1e-12) -> bool:
@@ -292,7 +327,7 @@ class Vector:
         Equal operator.
 
         Args:
-            other: point as args accepted by Vector()
+            other: point as args accepted by :class:`Vector`
         """
         x, y, z = self.decompose(other)
         return isclose(self._x, x) and isclose(self._y, y) and isclose(self._z, z)
@@ -302,7 +337,7 @@ class Vector:
         Lower than operator.
 
         Args:
-            other: point as args accepted by Vector()
+            other: point as args accepted by :class:`Vector`
 
         """
         x, y, z = self.decompose(other)
@@ -319,7 +354,7 @@ class Vector:
         Add operator: `self` + `other`
 
         Args:
-            other: point as args accepted by Vector()
+            other: point as args accepted by :class:`Vector`
 
         """
         if isinstance(other, (float, int)):
@@ -334,7 +369,7 @@ class Vector:
         RAdd operator: `other` + `self`
 
         Args:
-            other: point as args accepted by Vector()
+            other: point as args accepted by :class:`Vector`
 
         """
         return self.__add__(other)
@@ -344,7 +379,7 @@ class Vector:
         Sub operator: `self` - `other`
 
         Args:
-            other: point as args accepted by Vector()
+            other: point as args accepted by :class:`Vector`
 
         """
         if isinstance(other, (float, int)):
@@ -359,7 +394,7 @@ class Vector:
         RSub operator: `other` - `self`
 
         Args:
-            other: point as args accepted by Vector()
+            other: point as args accepted by :class:`Vector`
 
         """
         if isinstance(other, (float, int)):
@@ -417,7 +452,7 @@ class Vector:
         Dot operator: `self` . `other`
 
         Args:
-            other: vector as args accepted by Vector()
+            other: vector as args accepted by :class:`Vector`
         """
         x, y, z = self.decompose(other)
         return self._x * x + self._y * y + self._z * z
@@ -427,12 +462,13 @@ class Vector:
         Dot operator: `self` x `other`
 
         Args:
-            other: vector as args accepted by Vector()
+            other: vector as args accepted by :class:`Vector`
         """
         x, y, z = self.decompose(other)
         return self.__class__(self._y * z - self._z * y, self._z * x - self._x * z, self._x * y - self._y * x)
 
     def distance(self, other: Any) -> float:
+        """ Returns distance between vector and other. """
         v = self.__class__(other)
         return v.__sub__(self).magnitude
 
@@ -441,7 +477,7 @@ class Vector:
         Calculate angle between `self` and `other` in radians. +angle is counter clockwise orientation.
 
         Args:
-            other: vector as args accepted by Vector()
+            other: vector as args accepted by :class:`Vector`
 
         """
         v1 = self.normalize()
@@ -513,13 +549,15 @@ TVec2 = Union["VecXY", Sequence[float]]
 
 class Vec2:
     """
-    Vec2 represents a special 2d vector (x, y). The Vec2() class is optimized for speed and not immutable, iadd, isub,
-    imul and idiv modifies the vector itself, the Vector() class returns a new object.
+    Vec2 represents a special 2d vector (x, y). The :class:`Vec2` class is optimized for speed and not immutable,
+    :meth:`iadd`, :meth:`isub`, :meth:`imul` and :meth:`idiv` modifies the vector itself, the :class:`Vector` class
+    returns a new object.
 
     Args:
         v: vector class with x and y attributes/properties or sequence of float [x, y, ...]
 
-    Vec2() implements a subset of Vector(), test by feature for 2d or 3d vector: if len(v) == 2: Vec2() else Vector().
+    :class:`Vec2` implements a subset of :class:`Vector`, test by feature for 2d or 3d vector: if len(v) == 2:
+    :class:`Vec2` else :class:`Vector`.
 
 
     """

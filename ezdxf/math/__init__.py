@@ -2,7 +2,7 @@
 # Created: 27.03.2010, 2018 integrated into ezdxf
 # Copyright (c) 2010-2019 Manfred Moitzi
 # License: MIT License
-from .construct2d import is_close_points
+from .construct2d import is_close_points, closest_point, convex_hull
 from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS
 from .matrix44 import Matrix44
 from .matrix import Matrix
@@ -18,8 +18,6 @@ from .circle import ConstructionCircle
 from .box import ConstructionBox
 from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox
-from .convexhull import convex_hull_2d
-from .points import closest_point
 
 
 def xround(value: float, rounding: float = 0.) -> float:
@@ -27,6 +25,7 @@ def xround(value: float, rounding: float = 0.) -> float:
     Extended rounding.
 
     `rounding` defines the rounding limit:
+
         - 0 = remove fraction
         - 0.1 = round next to x.1, x.2, ... x.0
         - 0.25 = round next to x.25, x.50, x.75 or x.00
