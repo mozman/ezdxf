@@ -67,6 +67,7 @@ Contents
    addons
    howto
    dxfinternals
+   devguides
 
 Indices and tables
 ------------------

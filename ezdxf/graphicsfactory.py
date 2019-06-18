@@ -50,8 +50,8 @@ class CreatorInterface:
         Create entity in drawing database and add entity to the entity space.
 
         Args:
-            type_ (str): DXF type string, like 'LINE', 'CIRCLE' or 'LWPOLYLINE'
-            dxfattribs (dict): DXF attributes for the new entity
+            type_ : DXF type string, like 'LINE', 'CIRCLE' or 'LWPOLYLINE'
+            dxfattribs: DXF attributes for the new entity
 
         """
         entity = self.dxffactory.create_db_entry(type_, dxfattribs)
@@ -63,13 +63,11 @@ class CreatorInterface:
 
     def add_point(self, location: 'Vertex', dxfattribs: dict = None) -> 'Point':
         """
-        Add a :class:`Point` element at `location`.
+        Add a :class:`~ezdxf.entities.point.Point` element at `location`.
 
         Args:
             location: 2D/3D point in :ref:`WCS`
-            dxfattribs (dist): additional DXF attributes for :class:`Point` entity
-
-        Returns: :class:`Point`
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
@@ -78,14 +76,12 @@ class CreatorInterface:
 
     def add_line(self, start: 'Vertex', end: 'Vertex', dxfattribs: dict = None) -> 'Line':
         """
-        Add a :class:`Line` element from `start` to `end`.
+        Add a :class:`~ezdxf.entities.line.Line` element from `start` to `end`.
 
         Args:
             start: 2D/3D point in :ref:`WCS`
             end: 2D/3D point in :ref:`WCS`
-            dxfattribs (dict): additional DXF attributes for :class:`Line` entity
-
-        Returns: :class:`Line`
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
@@ -95,14 +91,13 @@ class CreatorInterface:
 
     def add_circle(self, center: 'Vertex', radius: float, dxfattribs: dict = None) -> 'Circle':
         """
-        Add a :class:`Circle` element. This is an 2D element, which can be placed in space by using :ref:`OCS`.
+        Add a :class:`~ezdxf.entities.circle.Circle` element. This is an 2D element, which can be placed in space by
+        using :ref:`OCS`.
 
         Args:
             center: 2D/3D point in :ref:`WCS`
             radius: circle radius
-            dxfattribs (dcit): additional DXF attributes for :class:`Circle` entity
-
-        Returns: :class:`Circle`
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
@@ -113,9 +108,9 @@ class CreatorInterface:
     def add_ellipse(self, center: 'Vertex', major_axis: 'Vertex' = (1, 0, 0), ratio: float = 1, start_param: float = 0,
                     end_param: float = 2 * math.pi, dxfattribs: dict = None) -> 'Ellipse':
         """
-        Add an :class:`Ellipse` element, `ratio` is the ratio of minor axis to major axis, `start_param` and `end_param`
-        defines start and end point of the ellipse, a full ellipse goes from 0 to 2*pi. The ellipse goes from start to
-        end param in `counter clockwise` direction.
+        Add an :class:`~ezdxf.entities.ellipse.Ellipse` element, `ratio` is the ratio of minor axis to major axis,
+        `start_param` and `end_param` defines start and end point of the ellipse, a full ellipse goes from 0 to 2*pi.
+        The ellipse goes from start to end param in `counter clockwise` direction.
 
         Args:
             center: center of ellipse as 2D/3D point in :ref:`WCS`
@@ -123,9 +118,7 @@ class CreatorInterface:
             ratio: ratio of minor axis to major axis
             start_param: start of ellipse curve
             end_param: end param of ellipse curve
-            dxfattribs (dict): additional DXF attributes for :class:`Ellipse` entity
-
-        Returns: :class:`Ellipse`
+            dxfattribs: additional DXF attributes
 
         """
         if self.dxfversion < 'AC1015':
@@ -144,8 +137,8 @@ class CreatorInterface:
     def add_arc(self, center: 'Vertex', radius: float, start_angle: float, end_angle: float,
                 is_counter_clockwise: bool = True, dxfattribs: dict = None) -> 'Arc':
         """
-        Add an :class:`Arc` element. The arc goes from `start_angle` to `end_angle` in counter clockwise
-        direction by default, set parameter `is_counter_clockwise` to False for clockwise orientation.
+        Add an :class:`~ezdxf.entities.arc.Arc` element. The arc goes from `start_angle` to `end_angle` in counter
+        clockwise direction by default, set parameter `is_counter_clockwise` to False for clockwise orientation.
 
         Args:
             center: center of arc as 2D/3D point in :ref:`WCS`
@@ -153,9 +146,7 @@ class CreatorInterface:
             start_angle: start angle in degrees
             end_angle: end angle in degrees
             is_counter_clockwise: False for clockwise orientation
-            dxfattribs (dict): additional DXF attributes for :class:`Arc` entity
-
-        Returns: :class:`Arc`
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
@@ -855,12 +846,12 @@ class CreatorInterface:
 
     def add_mesh(self, dxfattribs: dict = None) -> 'Mesh':
         """
-        Add a :class:`Mesh` entity. (requires DXF R2007+)
+        Add a :class:`~ezdxf.entities.mesh.Mesh` entity. (requires DXF R2007+)
 
         Args:
-            dxfattribs (dict): additional DXF attributes for :class:`Mesh` entity
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.mesh.Mesh` entity
 
-        Returns: :class:`Mesh`
+        Returns: :class:`~ezdxf.entities.mesh.Mesh`
 
         """
         if self.dxfversion < DXF2000:

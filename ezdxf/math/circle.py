@@ -35,6 +35,7 @@ class ConstructionCircle(ConstructionTool):
 
     @property
     def bounding_box(self) -> 'BoundingBox2d':
+        """ Returns :class:`BoundingBox2d`. """
         rvec = Vec2((self.radius, self.radius))
         return BoundingBox2d((self.center - rvec, self.center + rvec))
 

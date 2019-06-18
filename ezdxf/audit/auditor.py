@@ -124,7 +124,7 @@ class Auditor:
         """
         Check for usage of undefined line types. AutoCAD does not load DXF files with undefined line types.
         """
-        if not entity.supports_dxf_attrib('linetype'):
+        if not entity.is_supported_dxf_attrib('linetype'):
             return
         linetype = entity.dxf.linetype
         if linetype.lower() in ('bylayer', 'byblock'):  # no table entry in linetypes required
@@ -141,7 +141,7 @@ class Auditor:
         """
         Check for usage of undefined text styles.
         """
-        if not entity.supports_dxf_attrib('style'):
+        if not entity.is_supported_dxf_attrib('style'):
             return
         style = entity.dxf.style
         if style not in self.doc.styles:
@@ -155,7 +155,7 @@ class Auditor:
         """
         Check for usage of undefined dimension styles.
         """
-        if not entity.supports_dxf_attrib('dimstyle'):
+        if not entity.is_supported_dxf_attrib('dimstyle'):
             return
         dimstyle = entity.dxf.dimstyle
         if dimstyle not in self.doc.dimstyles:
@@ -169,7 +169,7 @@ class Auditor:
         """
         Check layer names for invalid characters: <>/\":;?*|='
         """
-        if not entity.supports_dxf_attrib('layer'):
+        if not entity.is_supported_dxf_attrib('layer'):
             return
         name = entity.dxf.layer
         if not is_valid_layer_name(name):
@@ -182,7 +182,7 @@ class Auditor:
             )
 
     def check_for_valid_color_index(self, entity: 'DXFEntity') -> None:
-        if not entity.supports_dxf_attrib('color'):
+        if not entity.is_supported_dxf_attrib('color'):
             return
         color = entity.dxf.color
         # 0 == BYBLOCK
@@ -196,7 +196,7 @@ class Auditor:
             )
 
     def check_for_existing_owner(self, entity: 'DXFEntity') -> None:
-        if not entity.supports_dxf_attrib('owner'):
+        if not entity.is_supported_dxf_attrib('owner'):
             return
         owner_handle = entity.dxf.owner
         if owner_handle not in self.doc.entitydb:

@@ -24,7 +24,7 @@ acdb_line = DefSubclass('AcDbLine', {
 
 @register_entity
 class Line(DXFGraphic):
-    """ DXF LINE entity """
+    """ The LINE entity represents a 3D line from `start` to `end` """
     DXFTYPE = 'LINE'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_line)
 

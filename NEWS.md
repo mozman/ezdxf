@@ -61,6 +61,8 @@ __Version 0.10b3 - ... __
 - CHANGE: entity query - exclude DXF types from `'*'` search, by appending type name with a preceding '!' e.g. query for 
   all entities except LINE = `"* !LINE"`
 - CHANGE: entity query - removed regular expression support for type name match
+- CHANGE: renamed `DXFEntity.supports_dxf_attrib()` to `DXFEntity.is_supported_dxf_attrib()`
+- CHANGE: renamed `DXFEntity.dxf_attrib_exists()` to `DXFEntity.has_dxf_attrib()`
 
 Version 0.9 - 2019-02-24
 ------------------------

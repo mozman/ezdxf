@@ -7,7 +7,7 @@ Utility functions located in module :mod:`ezdxf.math`::
     from ezdxf.math import Vector
 
 Functions
----------
+=========
 
 .. autofunction:: is_close_points
 
@@ -33,6 +33,8 @@ Bulge Related Functions
 
 .. autofunction:: bulge_3_points
 
+Transformation Classes
+======================
 
 OCS Class
 ---------
@@ -62,6 +64,9 @@ Matrix44
 .. autoclass:: Matrix44
     :members:
     :special-members:
+
+Curves
+======
 
 BSpline
 -------
@@ -99,6 +104,15 @@ DBSplineClosed
 
 .. autoclass:: DBSplineClosed
     :members:
+
+EulerSpiral
+-----------
+
+.. autoclass:: EulerSpiral
+    :members:
+
+Construction Tools
+==================
 
 BoundingBox
 -----------

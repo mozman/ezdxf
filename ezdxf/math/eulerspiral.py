@@ -7,9 +7,12 @@ from ezdxf.math.bspline import bspline_control_frame, BSpline
 
 class EulerSpiral:
     """
-    This object represents an euler spiral (clothoid) for *curvature* (Radius of curvature).
+    This class represents an euler spiral (clothoid) for `curvature` (Radius of curvature).
 
     This is a parametric curve, which always starts at the origin = (0, 0).
+
+    Args:
+        curvature: radius of curvature
 
     """
 
@@ -20,7 +23,7 @@ class EulerSpiral:
 
     def radius(self, t: float) -> float:
         """
-        Get radius of circle at distance 't'.
+        Get radius of circle at distance `t`.
 
         """
         if t > 0.:
@@ -38,7 +41,7 @@ class EulerSpiral:
 
     def distance(self, radius: float) -> float:
         """
-        Get distance L from origin for radius.
+        Get distance L from origin for `radius`.
 
         """
         return self.curvature_powers[2] / float(radius)

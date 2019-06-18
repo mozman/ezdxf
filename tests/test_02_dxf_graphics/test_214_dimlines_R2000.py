@@ -81,7 +81,7 @@ def test_radius_dimline(dxf2000):
     assert dimline.dim_type == Dimension.RADIUS
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint4 == (0, 0, 0)
-    assert dimline.supports_dxf_attrib('leader_length')
+    assert dimline.is_supported_dxf_attrib('leader_length')
 
 
 def test_diameter_dimline(dxf2000):
@@ -93,7 +93,7 @@ def test_diameter_dimline(dxf2000):
     assert dimline.dim_type == Dimension.DIAMETER
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint4 == (0, 0, 0)
-    assert dimline.supports_dxf_attrib('leader_length')
+    assert dimline.is_supported_dxf_attrib('leader_length')
 
 
 def test_ordinate_dimline(dxf2000):

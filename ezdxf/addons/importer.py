@@ -128,9 +128,9 @@ class Importer:
         """ Register used resources. """
         self.used_layers.add(entity.get_dxf_attrib('layer', '0'))
         self.used_linetypes.add(entity.get_dxf_attrib('linetype', 'BYLAYER'))
-        if entity.supports_dxf_attrib('style'):
+        if entity.is_supported_dxf_attrib('style'):
             self.used_styles.add(entity.get_dxf_attrib('style', 'Standard'))
-        if entity.supports_dxf_attrib('dimstyle'):
+        if entity.is_supported_dxf_attrib('dimstyle'):
             self.used_dimstyles.add(entity.get_dxf_attrib('dimstyle', 'Standard'))
 
     def _add_dimstyle_resources(self, dimstyle: 'DimStyle') -> None:
@@ -315,8 +315,8 @@ class Importer:
                 logger.error(msg)
                 return
 
-            # INSERT entities in an anonymous dimension block gets special treatment:
-            # Do NOT rename BLOCK if already exist! -> import_arrow_blocks()
+            # INSERT entities in an anonymous dimension block (arrows) gets special treatment:
+            # Do NOT rename BLOCK (arrow) if already exist! -> import_arrow_blocks()
             save_imported_inserts = self.imported_inserts
             self.imported_inserts = []
             name = self.import_block(block_name, rename=True)

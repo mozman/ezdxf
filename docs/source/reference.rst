@@ -61,7 +61,8 @@ Entities
 .. toctree::
     :maxdepth: 1
 
-    dxfentities/graphic_base_class
+    dxfentities/dxfentity
+    dxfentities/dxfgfx
     dxfentities/3dface
     dxfentities/3dsolid
     dxfentities/arc

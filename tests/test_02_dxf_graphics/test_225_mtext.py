@@ -223,8 +223,8 @@ def test_delete_bg_color(layout):
 def test_set_bg_canvas_color(layout):
     mtext = layout.add_mtext("TEST").set_bg_color('canvas')
     assert mtext.dxf.bg_fill == 3
-    assert mtext.dxf_attrib_exists('bg_fill_color') is True, "bg_fill_color must exists, else AutoCAD complains"
-    assert mtext.dxf_attrib_exists('box_fill_scale') is True, "box_fill_scale must exists, else AutoCAD complains"
+    assert mtext.has_dxf_attrib('bg_fill_color') is True, "bg_fill_color must exists, else AutoCAD complains"
+    assert mtext.has_dxf_attrib('box_fill_scale') is True, "box_fill_scale must exists, else AutoCAD complains"
 
 
 TESTSTR = "0123456789"

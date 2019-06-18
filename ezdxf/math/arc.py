@@ -70,7 +70,14 @@ class ConstructionArc(ConstructionTool):
                 yield center + Vec2.from_angle(angle, radius)
 
     def move(self, dx: float, dy: float) -> None:
-        """ Moves arc if (dx, dy) direction. """
+        """
+        Move arc about `dx` in x-axis and about `dy` in y-axis.
+
+        Args:
+            dx: translation in x-axis
+            dy: translation in y-axis
+
+        """
         self.center += Vec2((dx, dy))
 
     @property

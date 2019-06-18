@@ -125,7 +125,14 @@ class ConstructionBox(ConstructionTool):
         return "ConstructionBox({0.center}, {0.width}, {0.height}, {0.angle})".format(self)
 
     def move(self, dx: float, dy: float) -> None:
-        """ Move :class:`ConstructionBox` in direction (dx, dy). """
+        """
+        Move :class:`ConstructionBox` about `dx` in x-axis and about `dy` in y-axis.
+
+        Args:
+            dx: translation in x-axis
+            dy: translation in y-axis
+
+        """
         self.center += Vec2((dx, dy))
 
     def expand(self, dw: float, dh: float) -> None:

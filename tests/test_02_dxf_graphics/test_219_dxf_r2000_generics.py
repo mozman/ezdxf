@@ -30,9 +30,9 @@ def line(doc):
 
 def test_ac1018_default_settings(line):
     line = line
-    assert line.dxf_attrib_exists('true_color') is False  # no default true color
-    assert line.dxf_attrib_exists('color_name') is False  # no default color name
-    assert line.dxf_attrib_exists('transparency') is False  # no default transparency
+    assert line.has_dxf_attrib('true_color') is False  # no default true color
+    assert line.has_dxf_attrib('color_name') is False  # no default color name
+    assert line.has_dxf_attrib('transparency') is False  # no default transparency
 
 
 def test_ac1018_true_color(line):
@@ -58,7 +58,7 @@ def test_ac1018_transparency(line):
 
 
 def test_ac1021_default_settings(line):
-    assert line.dxf_attrib_exists('shadow_mode') is False  # no default shadow_mode
+    assert line.has_dxf_attrib('shadow_mode') is False  # no default shadow_mode
 
 
 @pytest.fixture(scope='module')

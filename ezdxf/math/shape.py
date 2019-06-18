@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class Shape2d(ConstructionTool):
     """
-    2d geometry object as vertices list which can be moved, rotated and scaled.
+    2d geometry object as vertices, list which can be moved, rotated and scaled.
 
     """
 
@@ -23,7 +23,7 @@ class Shape2d(ConstructionTool):
     def move(self, dx: float, dy: float) -> None:
         self.translate(Vec2((dx, dy)))
 
-    def bounding_box(self)->BoundingBox2d:
+    def bounding_box(self) -> BoundingBox2d:
         return BoundingBox2d(self.vertices)
 
     def translate(self, vector: 'Vertex') -> None:
