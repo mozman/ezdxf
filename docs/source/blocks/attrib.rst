@@ -69,7 +69,7 @@ Text generation flags (int)
 Attrib Attributes
 -----------------
 
-.. attribute:: Attrib.is_invisibe
+.. attribute:: Attrib.is_invisible
 
 (read/write) Attribute is invisible (does not appear).
 
