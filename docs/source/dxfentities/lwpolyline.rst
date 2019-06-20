@@ -65,7 +65,7 @@ User Defined Point Format Codes
 DXF Attributes for LWPolyline
 -----------------------------
 
-    :ref:`Common DXF attributes for DXF R13 or later`
+    :ref:`Common graphical DXF attributes`
 
 .. attribute:: LWPolyline.dxf.elevation
 

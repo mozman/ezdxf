@@ -15,7 +15,7 @@ Create a Block
 Blocks are managed by the :class:`BlocksSection` class and every drawing has only one blocks section:
 :attr:`Drawing.blocks`.
 
-::
+.. code-block:: python
 
     import ezdxf
     import random  # needed for random placing points
@@ -28,10 +28,10 @@ Blocks are managed by the :class:`BlocksSection` class and every drawing has onl
         return x, y
 
     # Create a new drawing in the DXF format of AutoCAD 2010
-    dwg = ezdxf.new('ac1024')
+    doc = ezdxf.new('R2010')
 
     # Create a block with the name 'FLAG'
-    flag = dwg.blocks.new(name='FLAG')
+    flag = doc.blocks.new(name='FLAG')
 
     # Add DXF entities to the block 'FLAG'.
     # The default base point (= insertion point) of the block is (0, 0).
@@ -45,10 +45,12 @@ A block reference is a DXF :class:`Insert` entity and can be placed in any :ref:
 :ref:`model space`, any :ref:`paper space` or a :ref:`block layout` (which enables blocks in blocks).
 Every block reference can be scaled and rotated individually.
 
-Lets insert some random flags into the modelspace::
+Lets insert some random flags into the modelspace:
+
+.. code-block:: python
 
     # Get the modelspace of the drawing.
-    modelspace = dwg.modelspace()
+    msp = doc.modelspace()
 
     # Get 50 random placing points.
     placing_points = [get_random_point() for _ in range(50)]
@@ -57,14 +59,14 @@ Lets insert some random flags into the modelspace::
         # Every flag has a different scaling and a rotation of -15 deg.
         random_scale = 0.5 + random.random() * 2.0
         # Add a block reference to the block named 'FLAG' at the coordinates 'point'.
-        modelspace.add_blockref('FLAG', point, dxfattribs={
+        msp.add_blockref('FLAG', point, dxfattribs={
             'xscale': random_scale,
             'yscale': random_scale,
             'rotation': -15
         })
 
     # Save the drawing.
-    dwg.saveas("blockref_tutorial.dxf")
+    doc.saveas("blockref_tutorial.dxf")
 
 What are Attributes?
 --------------------
@@ -85,7 +87,9 @@ all attributes are placed relative to the block base point with the same rotatio
 the disadvantage, that the block reference is wrapped into an anonymous block, which makes evaluation of attributes more
 complex.
 
-Using attribute definitions (:class:`Attdef`)::
+Using attribute definitions (:class:`Attdef`):
+
+.. code-block:: python
 
     # Define some attributes for the block 'FLAG', placed relative to the base point, (0, 0) in this case.
     flag.add_attdef('NAME', (0.5, -0.5), {'height': 0.5, 'color': 3})
@@ -105,14 +109,14 @@ Using attribute definitions (:class:`Attdef`)::
 
         # Every flag has a different scaling and a rotation of +15 deg.
         random_scale = 0.5 + random.random() * 2.0
-        modelspace.add_auto_blockref('FLAG', point, values, dxfattribs={
+        msp.add_auto_blockref('FLAG', point, values, dxfattribs={
             'xscale': random_scale,
             'yscale': random_scale,
             'rotation': 15
         })
 
     # Save the drawing.
-    dwg.saveas("auto_blockref_tutorial.dxf")
+    doc.saveas("auto_blockref_tutorial.dxf")
 
 Get/Set Attributes of Existing Block References
 -----------------------------------------------
@@ -122,7 +126,9 @@ See the howto: :ref:`howto_get_attribs`
 Evaluate wrapped block references
 ---------------------------------
 
-As mentioned above evaluation of block references wrapped into anonymous blocks is complex::
+As mentioned above evaluation of block references wrapped into anonymous blocks is complex:
+
+.. code-block:: python
 
     # Collect all anonymous block references starting with '*U'
     anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
@@ -131,7 +137,7 @@ As mentioned above evaluation of block references wrapped into anonymous blocks 
     flag_refs = []
     for block_ref in anonymous_block_refs:
         # Get the block layout of the anonymous block
-        block = dwg.blocks.get(block_ref.dxf.name)
+        block = doc.blocks.get(block_ref.dxf.name)
         # Find all block references to 'FLAG' in the anonymous block
         flag_refs.extend(block.query('INSERT[name=="FLAG"]'))
 

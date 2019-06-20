@@ -13,7 +13,7 @@ All points in :ref:`OCS` as (x, y) tuples (:attr:`~Hatch.dxf.elevation` is the z
 DXF Attributes for Hatch
 ------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Hatch.dxf.pattern_name
 

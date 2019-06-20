@@ -5,11 +5,11 @@
 import ezdxf
 from ezdxf.math import UCS, Vector
 
-dwg = ezdxf.new('R2010')
-msp = dwg.modelspace()
+doc = ezdxf.new('R2010')
+msp = doc.modelspace()
 
 # thickness for text works only with shx fonts not with true type fonts
-dwg.styles.new('TXT', dxfattribs={'font': 'romans.shx'})
+doc.styles.new('TXT', dxfattribs={'font': 'romans.shx'})
 
 ucs = UCS(origin=(0, 2, 2), ux=(1, 0, 0), uz=(0, 1, 1))
 # calculation of text direction as angle in OCS:
@@ -34,4 +34,4 @@ text.set_pos(ucs.to_ocs((0, 0, 0)), align='MIDDLE_CENTER')
 # include-end
 
 ucs.render_axis(msp)
-dwg.saveas('ocs_text.dxf')
+doc.saveas('ocs_text.dxf')

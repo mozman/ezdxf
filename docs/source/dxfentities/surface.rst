@@ -12,7 +12,7 @@ Create :class:`Surface` objects in layouts and blocks by factory function
 DXF Attributes for Surface
 --------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Surface.dxf.u_count
 

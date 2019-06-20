@@ -12,7 +12,7 @@ Create :class:`3DSolid` objects in layouts and blocks by factory function :meth:
 DXF Attributes for 3DSolid
 --------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: 3DSolid.dxf.history
 

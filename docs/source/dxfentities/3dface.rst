@@ -10,9 +10,7 @@ Create 3DFaces in layouts and blocks by factory function :meth:`~ezdxf.modern.la
 DXF Attributes for 3DFace
 -------------------------
 
-:ref:`Common DXF attributes for DXF R12`
-
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: 3DFace.dxf.vtx0
 

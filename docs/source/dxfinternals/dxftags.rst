@@ -84,7 +84,7 @@ Group Code        Meaning
 49                Repeated value - multiple 49 groups may appear in one entity for variable length tables (such as the dash
                   lengths in the LTYPE table). A 7x group always appears before the first 49 group to specify the table
                   length
-50-58             Angles
+50-58             Angles in degree
 62                Color number (fixed)
 66                "Entities follow" flag (fixed), only in INSERT and POLYLINE entities
 67                Identifies whether entity is in model space or paper space

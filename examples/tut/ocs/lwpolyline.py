@@ -4,8 +4,8 @@
 import ezdxf
 from ezdxf.math import Vector, UCS
 
-dwg = ezdxf.new('R2010')
-msp = dwg.modelspace()
+doc = ezdxf.new('R2010')
+msp = doc.modelspace()
 
 # center point of the pentagon should be (0, 2, 2), and the shape is
 # rotated around x-axis about 45 degree, to accomplish this I use an
@@ -39,4 +39,4 @@ msp.add_lwpolyline(
 from ezdxf.math import OCS
 OCS(ucs.uz).render_axis(msp)
 ucs.render_axis(msp)
-dwg.saveas('ocs_lwpolyline.dxf')
+doc.saveas('ocs_lwpolyline.dxf')

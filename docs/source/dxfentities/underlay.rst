@@ -17,7 +17,7 @@ polygon path. The clipping coordinates are 2D OCS/ECS coordinates and in drawing
 DXF Attributes for Underlay
 ---------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: underlay.dxf.insert
 

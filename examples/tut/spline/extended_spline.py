@@ -1,8 +1,8 @@
 import ezdxf
 
-dwg = ezdxf.readfile("simple_spline.dxf")
+doc = ezdxf.readfile("simple_spline.dxf")
 
-msp = dwg.modelspace()
+msp = doc.modelspace()
 spline = msp.query('SPLINE')[0]  # take the first spline
 
 # use the context manager
@@ -16,4 +16,4 @@ with spline.edit_data() as data:  # data contains standard python lists
 
 # the context manager calls automatically spline.set_fit_points(data.fit_points)
 
-dwg.saveas("extended_spline.dxf")
+doc.saveas("extended_spline.dxf")

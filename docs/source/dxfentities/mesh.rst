@@ -15,7 +15,7 @@ Mesh
 DXF Attributes for Mesh
 -----------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Mesh.dxf.version
 

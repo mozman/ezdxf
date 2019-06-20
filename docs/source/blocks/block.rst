@@ -8,9 +8,7 @@ Blocks are embedded into the :class:`BlockLayout` object. The BLOCK entity is ac
 DXF Attributes for Block
 ------------------------
 
-:ref:`Common DXF attributes for DXF R12`
-
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Block.dxf.name
 

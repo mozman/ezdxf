@@ -11,7 +11,7 @@ blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_xline`.
 DXF Attributes for XLine
 ------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: XLine.dxf.start
 

@@ -16,7 +16,7 @@ MText
 DXF Attributes for MText
 ------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: MText.dxf.insert
 

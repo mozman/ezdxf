@@ -5,7 +5,7 @@ DXF Entity Base Class
 
 .. class:: DXFEntity
 
-    Common base class for all DXF entities.
+    Common base class for all DXF entities and objects.
 
     .. warning::
 
@@ -13,16 +13,39 @@ DXF Entity Base Class
 
     .. attribute:: dxf
 
-        The DXF attributes namespace, access DXF attributes by this attribute, like :code:`entity.dxf.layer = 'MyLayer'`.
-        Just the :attr:`dxf` attribute is read only, the DXF attributes are read- and writeable.
+        The DXF attributes namespace::
+
+            # set attribute value
+            entity.dxf.layer = 'MyLayer'
+
+            # get attribute value
+            linetype = entity.dxf.linetype
+
+            # delete attribute
+            del entity.dxf.linetype
+
+
+
+    .. attribute:: DXFEntity.dxf.handle
+
+        DXF `handle` is a unique identifier as plain hex string like ``F000``. (feature for experts)
+
+    .. attribute:: DXFEntity.dxf.owner
+
+        Handle to `owner` as plain hex string like ``F000``. (feature for experts)
 
     .. attribute:: doc
 
-        Get the associated :class:`~ezdxf.drawing.Drawing`. (read only)
+        Get the associated :class:`~ezdxf.drawing.Drawing` instance.
 
         .. versionchanged:: 0.10
 
             renamed from ``drawing``
+
+    .. attribute:: priority
+
+        Integer value defining order of entities: highest value first ``100`` (top) before ``0`` (default) before
+        ``-100`` (bottom), priority support not implemented yet, setting :attr:`priority` has no effect.
 
     .. autoattribute:: is_alive
 
@@ -32,15 +55,15 @@ DXF Entity Base Class
 
     .. automethod:: __repr__
 
+    .. automethod:: has_dxf_attrib
+
+    .. automethod:: is_supported_dxf_attrib
+
     .. automethod:: get_dxf_attrib
 
     .. automethod:: set_dxf_attrib
 
     .. automethod:: del_dxf_attrib
-
-    .. automethod:: has_dxf_attrib
-
-    .. automethod:: is_supported_dxf_attrib
 
     .. automethod:: dxfattribs
 
@@ -68,7 +91,15 @@ DXF Entity Base Class
 
     .. automethod:: set_xdata(appid: str, tags: Iterable)
 
-    .. automethod:: discard_xdata
+    .. automethod:: has_xdata_list
+
+    .. automethod:: get_xdata_list(appid: str, name: str) -> Tags
+
+    .. automethod:: set_xdata_list(appid: str, name: str, tags: Iterable)
+
+    .. automethod:: discard_xdata_list
+
+    .. automethod:: replace_xdata_list(appid: str, name: str, tags: Iterable)
 
     .. automethod:: has_reactors
 
@@ -79,26 +110,4 @@ DXF Entity Base Class
     .. automethod:: append_reactor_handle
 
     .. automethod:: discard_reactor_handle
-
-.. _Common DXF attributes for DXF R12:
-
-Common DXF Attributes for DXF R12
----------------------------------
-
-    .. attribute:: DXFEntity.dxf.handle
-
-        DXF handle (feature for experts), unique identifier as plain hex string like ``F000``.
-
-.. _Common DXF attributes for DXF R13 or later:
-
-Common DXF Attributes for DXF R13 or later
-------------------------------------------
-
-    .. attribute:: DXFEntity.dxf.handle
-
-        DXF handle (feature for experts), unique identifier as plain hex string like ``F000``.
-
-    .. attribute:: DXFEntity.dxf.owner
-
-        Handle to owner (feature for experts)
 

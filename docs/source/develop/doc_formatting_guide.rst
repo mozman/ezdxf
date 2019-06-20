@@ -32,6 +32,7 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
         - literal tags: ``(5, 'F000')``
         - inline code: call a :code:`example_func(x)`
         - Python keywords: ``None``, ``True``, ``False``
+        - Exception classes: :class:`DXFAttributeError`
 
 .. class:: ExampleCls(**kwargs)
 
@@ -51,6 +52,24 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
     .. method:: example_method(flag:bool=False)->None
 
         Method :meth:`example_method` of class :class:`ExampleCls`
+
+Text Formatting
+---------------
+
+DXF Types
+    DXF types are always written in uppercase letters but without further formatting: DXF, LINE, CIRCLE
+
+(internal API)
+    Marks methods as internal API, gets no public documentation.
+
+(internal class)
+    Marks classes only for internal usage, gets not public documentation.
+
+Spatial Dimensions
+    2D and 3D with an uppercase letter D
+
+Axis
+    x-axis, y-axis and z-axis
 
 .. _Sphinx: http://www.sphinx-doc.org/en/master/
 .. _autodoc: http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#module-sphinx.ext.autodoc

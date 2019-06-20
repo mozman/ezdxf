@@ -14,114 +14,20 @@ Quoted from the original DXF 12 Reference which is **not** available on the web:
    of AutoCAD accept this format and are able to convert it to and from
    their internal drawing file representation.
 
-Drawing
--------
 
-The :class:`Drawing` class manages all entities and tables related to a DXF drawing.
-You can read/write DXF drawings from/to file-system or from/to a text-stream.
-
+DXF Structures
+--------------
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   dwgmanagement
-   drawing
-   header_section
-
-Tables
-------
-
-
-.. toctree::
-   :maxdepth: 1
-
-   tables/tables
-   tables/layer_table_entry
-   tables/style_table_entry
-   tables/linetype_table_entry
-   tables/dimstyle_table_entry
-   tables/vport_table_entry
-   tables/view_table_entry
-   tables/appid_table_entry
-   tables/ucs_table_entry
-   tables/blockrecord_table_entry
-
-Layouts
--------
-
-.. toctree::
-   :maxdepth: 2
-
-   layout_manager
-   layouts
-
-Entities
---------
-
-.. toctree::
-    :maxdepth: 1
-
-    dxfentities/dxfentity
-    dxfentities/dxfgfx
-    dxfentities/3dface
-    dxfentities/3dsolid
-    dxfentities/arc
-    dxfentities/body
-    dxfentities/circle
-    dxfentities/dimension
-    dxfentities/ellipse
-    dxfentities/hatch
-    dxfentities/image
-    dxfentities/leader
-    dxfentities/line
-    dxfentities/lwpolyline
-    dxfentities/mesh
-    dxfentities/mtext
-    dxfentities/point
-    dxfentities/polyline
-    dxfentities/ray
-    dxfentities/region
-    dxfentities/shape
-    dxfentities/solid
-    dxfentities/spline
-    dxfentities/surface
-    dxfentities/text
-    dxfentities/trace
-    dxfentities/underlay
-    dxfentities/xline
-
-
-Blocks
-------
-
-.. toctree::
-   :maxdepth: 1
-
-   blocks/blocks
-   blocks/block
-   blocks/insert
-   blocks/attdef
-   blocks/attrib
-
-Groups
-------
-
-.. toctree::
-   :maxdepth: 1
-
-   groups
-
-Objects
--------
-
-.. toctree::
-   :maxdepth: 1
-
-   dxfobjects/object_base_class
-   dxfobjects/imagedef
-   dxfobjects/underlaydef
-   dxfobjects/geodata
-
+    drawing/index
+    tables/index
+    blocks/index
+    layouts/index
+    groups
+    dxfentities/index
+    dxfobjects/index
 
 Data Query
 ----------

@@ -1,8 +1,8 @@
 import ezdxf
 
-dwg = ezdxf.new('R12', setup=True)  # TEXT is a basic entity and exists in every DXF standard
+doc = ezdxf.new('R12', setup=True)  # TEXT is a basic entity and exists in every DXF standard
 # setup=True for adding standard line types and text styles
-msp = dwg.modelspace()
+msp = doc.modelspace()
 
 # use set_pos() for proper TEXT alignment - the relations between halign, valign, insert and align_point are tricky.
 msp.add_text("A Simple Text").set_pos((2, 3), align='MIDDLE_RIGHT')
@@ -10,4 +10,4 @@ msp.add_text("A Simple Text").set_pos((2, 3), align='MIDDLE_RIGHT')
 # using text styles
 msp.add_text("Text Style Example: Liberation Serif", dxfattribs={'style': 'LiberationSerif', 'height': 0.35}).set_pos((2, 6), align='LEFT')
 
-dwg.saveas("simple_text.dxf")
+doc.saveas("simple_text.dxf")

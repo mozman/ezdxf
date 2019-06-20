@@ -11,24 +11,24 @@ Create a simple polyline::
 
     import ezdxf
 
-    dwg = ezdxf.new('R2000')
-    msp = dwg.modelspace()
+    doc = ezdxf.new('R2000')
+    msp = doc.modelspace()
 
     points = [(0, 0), (3, 0), (6, 3), (6, 6)]
     msp.add_lwpolyline(points)
 
-    dwg.saveas("lwpolyline1.dxf")
+    doc.saveas("lwpolyline1.dxf")
 
 
 Append points to a polyline::
 
-    dwg = ezdxf.readfile("lwpolyline1.dxf")
-    msp = dwg.modelspace()
+    doc = ezdxf.readfile("lwpolyline1.dxf")
+    msp = doc.modelspace()
 
     line = msp.query('LWPOLYLINE')[0]  # take first LWPolyline
     line.append_points([(8, 7), (10, 7)])
 
-    dwg.saveas("lwpolyline2.dxf")
+    doc.saveas("lwpolyline2.dxf")
 
 Getting points always returns a 5-tuple (x, y, start_width, ent_width, bulge), start_width, end_width and bulge is 0
 if not present (0 is the DXF default value if not present)::
@@ -38,8 +38,8 @@ if not present (0 is the DXF default value if not present)::
 
 Use context manager to edit polyline::
 
-    dwg = ezdxf.readfile("lwpolyline2.dxf")
-    msp = dwg.modelspace()
+    doc = ezdxf.readfile("lwpolyline2.dxf")
+    msp = doc.modelspace()
 
     line = msp.query('LWPOLYLINE')[0]  # take first LWPolyline
 
@@ -54,12 +54,12 @@ Use context manager to edit polyline::
         # points[-2:] = [(4, 7), (0, 7)]
     # implicit call of line.set_points(points) at context manager exit
 
-    dwg.saveas("lwpolyline3.dxf")
+    doc.saveas("lwpolyline3.dxf")
 
 Each line segment can have a different start/end width, if omitted start/end width = 0::
 
-    dwg = ezdxf.new('R2000')
-    msp = dwg.modelspace()
+    doc = ezdxf.new('R2000')
+    msp = doc.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
     # set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
@@ -67,7 +67,7 @@ Each line segment can have a different start/end width, if omitted start/end wid
     points = [(0, 0, .1, .15), (3, 0, .2, .25), (6, 3, .3, .35), (6, 6)]
     msp.add_lwpolyline(points)
 
-    dwg.saveas("lwpolyline4.dxf")
+    doc.saveas("lwpolyline4.dxf")
 
 The first vertex (point) carries the start/end width of the first segment, the second vertex of the second segment and
 so on, the start/end width value of the last vertex is ignored. Start/end width only works if the DXF attribute
@@ -77,8 +77,8 @@ so on, the start/end width value of the last vertex is ignored. Start/end width 
 
 LWPolyline can also have curved elements, they are defined by the `bulge` value::
 
-    dwg = ezdxf.new('R2000')
-    msp = dwg.modelspace()
+    doc = ezdxf.new('R2000')
+    msp = doc.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
     # set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
@@ -86,7 +86,7 @@ LWPolyline can also have curved elements, they are defined by the `bulge` value:
     points = [(0, 0, 0, .05), (3, 0, .1, .2, -.5), (6, 0, .1, .05), (9, 0)]
     msp.add_lwpolyline(points)
 
-    dwg.saveas("lwpolyline5.dxf")
+    doc.saveas("lwpolyline5.dxf")
 
 .. image:: gfx/LWPolyline5.PNG
 

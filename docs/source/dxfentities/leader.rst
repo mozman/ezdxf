@@ -23,7 +23,7 @@ extruding the base ellipse.
 DXF Attributes for Ellipse
 --------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Leader.dxf.dimstyle
 

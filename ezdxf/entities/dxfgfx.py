@@ -68,7 +68,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
 
 class DXFGraphic(DXFEntity):
     """
-    Base class for all graphical DXF entities like Text() or Line().
+    Common base class for all graphic entities, a subclass of :class:`~ezdxf.entities.dxfentity.DXFEntity`.
 
     This entities resides in entity spaces like modelspace, any paperspace or blocks.
     """
@@ -77,7 +77,9 @@ class DXFGraphic(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)  # DXF attribute definitions
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
-        """ Adds subclass processing for 'AcDbEntity', requires previous base class processing by parent class. """
+        """ Adds subclass processing for 'AcDbEntity', requires previous base class processing by parent class.
+        (internal API)
+        """
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -88,6 +90,7 @@ class DXFGraphic(DXFEntity):
         return dxf
 
     def post_new_hook(self):
+        """ Post processing and integrity validation after entity creation (internal API) """
         ns = self.dxf
         if not is_valid_layer_name(ns.layer):
             raise DXFInvalidLayerName(ns.layer)
@@ -124,8 +127,8 @@ class DXFGraphic(DXFEntity):
 
     def ocs(self) -> Optional[OCS]:
         """
-        Return object coordinate system (OCS) for 2D entities like Text() or Circle().
-        Returns None for entities without OCS support.
+        Returns object coordinate system (:ref:`ocs`) for 2D entities like :class:`Text` or :class:`Circle`,
+        returns ``None`` for entities without OCS support.
 
         """
         # extrusion is only defined for 2D entities like Text, Circle, ...
@@ -135,17 +138,8 @@ class DXFGraphic(DXFEntity):
         else:
             return None
 
-    def layout(self) -> Optional['BaseLayout']:
-        doc = self.doc
-        try:  # is modelspace or paperspace
-            layout = doc.layouts.get_layout_for_entity(self)
-        except DXFKeyError:  # is a generic block
-            block_rec = self.doc.entitydb[self.dxf.owner]
-            block_name = block_rec.dxf.name
-            layout = doc.blocks.get(block_name)
-        return layout
-
     def set_owner(self, owner: str, paperspace: int = 0) -> None:
+        """ Set owner attribute and paperspace flag. (internal API)"""
         self.dxf.owner = owner
         if paperspace:
             self.dxf.paperspace = paperspace
@@ -155,15 +149,15 @@ class DXFGraphic(DXFEntity):
             e.set_owner(owner, paperspace)
 
     def linked_entities(self) -> Iterable['DXFEntity']:
-        """ Yield linked entities: VERTEX or ATTRIB, different handling than attached entities. """
+        """ Yield linked entities: VERTEX or ATTRIB, different handling than attached entities. (internal API)"""
         return []
 
     def attached_entities(self) -> Iterable['DXFEntity']:
-        """ Yield attached entities: MTEXT,  different handling than linked entities. """
+        """ Yield attached entities: MTEXT,  different handling than linked entities. (internal API)"""
         return []
 
     def link_entity(self, entity: 'DXFEntity') -> None:
-        """ Store linked or attached entities. Same API for both types of appended data. """
+        """ Store linked or attached entities. Same API for both types of appended data. (internal API)"""
         pass
 
     @property
@@ -176,13 +170,13 @@ class DXFGraphic(DXFEntity):
         self.priority = -value
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export entity specific data as DXF tags. (internal API)"""
         # base class (handle, appid, reactors, xdict, owner) export is done by parent class
         self.export_acdb_entity(tagwriter)
         # xdata and embedded objects  export is also done by parent
 
     def export_acdb_entity(self, tagwriter: 'TagWriter'):
-        """ Export subclass 'AcDbEntity' as DXF tags. """
+        """ Export subclass 'AcDbEntity' as DXF tags. (internal API)"""
         # Full control over tag order and YES, sometimes order matters
         dxfversion = tagwriter.dxfversion
         if dxfversion > DXF12:
@@ -195,6 +189,7 @@ class DXFGraphic(DXFEntity):
         ])
 
     def get_layout(self) -> Optional['BaseLayout']:
+        """ Returns the owner layout or returns ``None`` if entity is not assigned to any layout. """
         if self.dxf.owner is None:  # unlinked entity
             return None
         try:
@@ -209,11 +204,14 @@ class DXFGraphic(DXFEntity):
     def move_to_layout(self, layout: 'BaseLayout', source: 'BaseLayout' = None) -> None:
         """
         Move entity from model space or a paper space layout to another layout. For block layout as source, the
-        block layout has to be specified.
+        block layout has to be specified. Moving between different DXF drawings is not supported.
 
         Args:
             layout: any layout (model space, paper space, block)
             source: provide source layout, faster for DXF R12, if entity is in a block layout
+
+        Raises:
+            DXFStructureError: for moving between different DXF drawings
 
         """
         if source is None:
@@ -224,12 +222,14 @@ class DXFGraphic(DXFEntity):
 
     def copy_to_layout(self, layout: 'BaseLayout') -> 'DXFEntity':
         """
-        Copy entity to another layout.
+        Copy entity to another `layout`, returns new created entity as :class:`DXFEntity` object. Copying between
+        different DXF drawings not supported.
 
         Args:
             layout: any layout (model space, paper space, block)
 
-        Returns: new created entity as DXFEntity() object
+        Raises:
+            DXFStructureError: for copying between different DXF drawings
 
         """
         if self.doc != layout.doc:
@@ -240,6 +240,7 @@ class DXFGraphic(DXFEntity):
         return new_entity
 
     def audit(self, auditor: 'Auditor') -> None:
+        """ Validity check. (internal API) """
         super().audit(auditor)
         auditor.check_for_valid_layer_name(self)
         auditor.check_if_linetype_exists(self)

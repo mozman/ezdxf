@@ -32,7 +32,7 @@ DXF Attributes for Spline
 
     All points in :ref:`WCS` as (x, y, z) tuples
 
-    :ref:`Common DXF attributes for DXF R13 or later`
+    :ref:`Common graphical DXF attributes`
 
 .. attribute:: Spline.dxf.degree
 

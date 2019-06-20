@@ -5,8 +5,8 @@ import math
 import ezdxf
 from ezdxf.math import UCS, Matrix44
 
-dwg = ezdxf.new('R2010')
-msp = dwg.modelspace()
+doc = ezdxf.new('R2010')
+msp = doc.modelspace()
 
 # using an UCS simplifies 3D operations, but UCS definition can happen later
 # calculating corner points in local (UCS) coordinates without Vector class
@@ -42,4 +42,4 @@ for corner in corners_wcs:
 # include-end
 
 ucs.render_axis(msp)
-dwg.saveas('ucs_polyline3d.dxf')
+doc.saveas('ucs_polyline3d.dxf')

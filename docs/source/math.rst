@@ -2,9 +2,7 @@
 
 .. module:: ezdxf.math
 
-Utility functions located in module :mod:`ezdxf.math`::
-
-    from ezdxf.math import Vector
+Utility functions and classes located in module :mod:`ezdxf.math`.
 
 Functions
 =========

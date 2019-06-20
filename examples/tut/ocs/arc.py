@@ -4,8 +4,8 @@
 import ezdxf
 from ezdxf.math import UCS, Vector
 
-dwg = ezdxf.new('R2010')
-msp = dwg.modelspace()
+doc = ezdxf.new('R2010')
+msp = doc.modelspace()
 
 # include-start
 ucs = UCS(origin=(0, 2, 2), ux=(1, 0, 0), uz=(0, 1, 1))
@@ -32,4 +32,4 @@ msp.add_line(
 # include-end
 
 ucs.render_axis(msp)
-dwg.saveas('ocs_arc.dxf')
+doc.saveas('ocs_arc.dxf')

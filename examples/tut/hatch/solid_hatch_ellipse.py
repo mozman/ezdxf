@@ -1,7 +1,7 @@
 import ezdxf
 
-dwg = ezdxf.new('R2000')  # hatch requires the DXF R2000 (AC1015) format or later
-msp = dwg.modelspace()  # adding entities to the model space
+doc = ezdxf.new('R2000')  # hatch requires the DXF R2000 (AC1015) format or later
+msp = doc.modelspace()  # adding entities to the model space
 
 # important: major axis >= minor axis (ratio <= 1.)
 msp.add_ellipse((0, 0), major_axis=(0, 10), ratio=0.5)  # minor axis length = major axis length * ratio
@@ -14,4 +14,4 @@ edge_path = hatch.paths.add_edge_path()
 # important: major axis >= minor axis (ratio <= 1.)
 edge_path.add_ellipse((0, 0), major_axis=(0, 10), ratio=0.5)
 
-dwg.saveas("solid_hatch_ellipse.dxf")
+doc.saveas("solid_hatch_ellipse.dxf")

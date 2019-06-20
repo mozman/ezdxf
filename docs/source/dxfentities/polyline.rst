@@ -18,9 +18,7 @@ For 3D entities all points in :ref:`WCS`.
 DXF Attributes for Polyline
 ---------------------------
 
-:ref:`Common DXF attributes for DXF R12`
-
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Polyline.dxf.elevation
 

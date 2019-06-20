@@ -39,32 +39,33 @@ FF
 
 class CustomVars:
     """
-    Custom Properties are stored as string tuples ('CustomTag', 'CustomValue') in a list object.
-
-    Multiple occurrence of the same 'CustomTag' is allowed, but not well supported by the interface.
+    Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG and $CUSTOMPROPERTY values. Custom properties are
+    just supported by DXF R2004 (AC1018) or later. `ezdxf` can create custom properties at older DXF versions,
+    but AutoCAD will not show this properties.
     """
 
     def __init__(self):
         self.properties = list()  # type: List[Tuple[str, str]]
 
     def __len__(self) -> int:
+        """ Count of custom properties. """
         return len(self.properties)
 
     def __iter__(self) -> Iterable[Tuple[str, str]]:
+        """ Iterate over all custom properties as ``(tag, value)`` tuples. """
         return iter(self.properties)
 
     def clear(self) -> None:
-        """ Remove all custom properties.
-        """
+        """ Remove all custom properties. """
         self.properties.clear()
 
     def append(self, tag: str, value: str) -> None:
+        """ Add custom property as ``(tag, value)`` tuple. """
         # custom properties always stored as strings
         self.properties.append((tag, str(value)))
 
     def get(self, tag: str, default: str = None):
-        """ Get value of first occurrence of 'tag'.
-        """
+        """ Returns the value of the first custom property `tag`. """
         for key, value in self.properties:
             if key == tag:
                 return value
@@ -72,10 +73,12 @@ class CustomVars:
             return default
 
     def has_tag(self, tag: str) -> bool:
+        """ Returns ``True`` if custom property `tag` exist. """
         return self.get(tag) is not None
 
     def remove(self, tag: str, all: bool = False) -> None:
-        """ Remove first occurrence of 'tag', removes all occurrences if param all is True.
+        """ Removes the first occurrence of custom property `tag`, removes all occurrences if `all` is ``True``.
+        Raises `:class:`DXFValueError` if `tag`  does not exist.
         """
         found_tag = False
         for item in self.properties:
@@ -89,6 +92,7 @@ class CustomVars:
 
     def replace(self, tag: str, value: str) -> None:
         """ Replaces the value of the first custom property `tag` by a new `value`.
+        Raises :class:`DXFValueError` if `tag`  does not exist.
         """
         properties = self.properties
         for index in range(len(properties)):
@@ -100,6 +104,7 @@ class CustomVars:
         raise DXFValueError("Tag '%s' does not exist" % tag)
 
     def write(self, tagwriter: 'TagWriter') -> None:
+        """ Export custom properties as DXF tags. (internal API) """
         for tag, value in self.properties:
             s = "  9\n$CUSTOMPROPERTYTAG\n  1\n{0}\n  9\n$CUSTOMPROPERTY\n  1\n{1}\n".format(tag, value)
             tagwriter.write_str(s)
@@ -128,6 +133,7 @@ class HeaderSection:
         Args:
             tags: DXF tags as Tags() or ExtendedTags()
 
+        (internal API)
         """
         if tags is None:  # create default header
             return cls.new(dxfversion=DXF12)  # file without header are by default DXF R12
@@ -187,35 +193,19 @@ class HeaderSection:
             raise DXFKeyError('Invalid header variable {}.'.format(key))
 
     def __len__(self) -> int:
+        """ Returns count of header variables. """
         return len(self.hdrvars)
 
     def __contains__(self, key) -> bool:
+        """ Returns ``True`` if header variable `key` exist. """
         return key in self.hdrvars
 
     def varnames(self) -> KeysView:
+        """ Returns an iterable of all header variable names. """
         return self.hdrvars.keys()
 
-    def write(self, tagwriter: 'TagWriter') -> None:
-        def _write(name: str, value: Any) -> None:
-            tagwriter.write_tag2(9, name)
-            tagwriter.write_str(str(value))
-
-        if self.get('$ACADVER', DXF12) == DXF12 and self.get('$HANDLING', 1) == 0:
-            write_handles = False
-        else:
-            write_handles = True
-
-        tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
-        # for name, value in self.hdrvars.items():
-        for name, value in header_vars_by_priority(self.hdrvars, tagwriter.dxfversion):
-            if not write_handles and name == '$HANDSEED':
-                continue  # skip $HANDSEED
-            _write(name, value)
-            if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
-                self.custom_vars.write(tagwriter)
-        tagwriter.write_str("  0\nENDSEC\n")
-
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        """ Exports header section as DXF tags. (internal API) """
         def _write(name: str, value: Any) -> None:
             if value.value is None:
                 logger.info('did not write header var {}, value is None.'.format(name))
@@ -243,18 +233,21 @@ class HeaderSection:
         tagwriter.write_str("  0\nENDSEC\n")
 
     def get(self, key: str, default: Any = None) -> Any:
+        """ Returns value of header variable `key` if exist, else the `default` value. """
         if key in self.hdrvars:
             return self.__getitem__(key)
         else:
             return default
 
     def __getitem__(self, key: str) -> Any:
+        """ Get header variable `key` by index operator like: :code:`drawing.header['$ACADVER']` """
         try:
             return self.hdrvars[key].value
         except KeyError:  # map exception
             raise DXFKeyError(str(key))
 
     def __setitem__(self, key: str, value: Any) -> None:
+        """ Set header variable `key` to `value` by index operator like: :code:`drawing.header['$ANGDIR'] = 1`"""
         try:
             tags = self._headervar_factory(key, value)
         except (IndexError, ValueError):
@@ -262,6 +255,7 @@ class HeaderSection:
         self.hdrvars[key] = HeaderVar(tags)
 
     def __delitem__(self, key: str) -> None:
+        """ Delete header variable `key` by index operator like: :code:`del drawing.header['$ANGDIR']` """
         try:
             del self.hdrvars[key]
         except KeyError:  # map exception

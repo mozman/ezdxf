@@ -16,7 +16,7 @@ the *v_pixel* vectors by yourself.
 DXF Attributes for Image
 ------------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Image.dxf.insert
 

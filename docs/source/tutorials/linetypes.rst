@@ -22,7 +22,7 @@ Create a new linetype definition::
     import ezdxf
     from ezdxf.tools.standards import linetypes  # some predefined line types
 
-    dwg = ezdxf.new()
+    doc = ezdxf.new()
     msp = modelspace()
 
     my_line_types = [
@@ -31,14 +31,14 @@ Create a new linetype definition::
         ("DOTTED2", "Dotted (.5) . . . . . . . . . . . . . . . . . . . ", [0.1, 0.0, -0.1]),
     ]
     for name, desc, pattern in my_line_types:
-        if name not in dwg.linetypes:
-            dwg.linetypes.new(name=name, dxfattribs={'description': desc, 'pattern': pattern})
+        if name not in doc.linetypes:
+            doc.linetypes.new(name=name, dxfattribs={'description': desc, 'pattern': pattern})
 
 Setup some predefined linetypes::
 
     for name, desc, pattern in linetypes():
-        if name not in dwg.linetypes:
-            dwg.linetypes.new(name=name, dxfattribs={'description': desc, 'pattern': pattern})
+        if name not in doc.linetypes:
+            doc.linetypes.new(name=name, dxfattribs={'description': desc, 'pattern': pattern})
 
 Check Available Linetypes
 -------------------------
@@ -47,14 +47,14 @@ The linetypes object supports some standard Python protocols::
 
     # iteration
     print('available line types:')
-    for linetype in dwg.linetypes:
+    for linetype in doc.linetypes:
         print('{}: {}'.format(linetype.dxf.name, linetype.dxf.description))
 
     # check for existing line type
-    if 'DOTTED' in dwg.linetypes:
+    if 'DOTTED' in doc.linetypes:
         pass
 
-    count = len(dwg.linetypes) # total count of linetypes
+    count = len(doc.linetypes) # total count of linetypes
 
 Removing Linetypes
 ------------------
@@ -65,7 +65,7 @@ Removing Linetypes
 
 You can delete a linetype::
 
-    dwg.layers.remove('DASHED')
+    doc.layers.remove('DASHED')
 
 This just deletes the linetype definition, all DXF entity with the DXF attribute linetype set to ``DASHED`` still
 refers to linetype ``DASHED`` and AutoCAD will not open DXF files with undefined line types.
@@ -90,9 +90,9 @@ in AutoCAD .lin files.
 
 Example for complex line type TEXT::
 
-    dwg = ezdxf.new('R2018')  # DXF R13 or later is required
+    doc = ezdxf.new('R2018')  # DXF R13 or later is required
 
-    dwg.linetypes.new('GASLEITUNG2', dxfattribs={
+    doc.linetypes.new('GASLEITUNG2', dxfattribs={
         'description': 'Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--',
         'length': 1,  # required for complex line types
         # line type definition in acadlt.lin:
@@ -125,7 +125,7 @@ least the sum of all line and gap definitions (absolute values).
 
 Example for complex line type SHAPE::
 
-    dwg.linetypes.new('GRENZE2', dxfattribs={
+    doc.linetypes.new('GRENZE2', dxfattribs={
         'description': 'Grenze eckig ----[]-----[]----[]-----[]----[]--',
         'length': 1.45,  # required for complex line types
         # line type definition in acadlt.lin:

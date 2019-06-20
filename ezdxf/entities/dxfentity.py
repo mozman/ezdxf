@@ -59,6 +59,7 @@ class DXFNamespace:
     The namespace can only contain immutable objects: string, int, float, bool, Vector
     Because of the immutability, copy and deepcopy are the same.
 
+    (internal class)
     """
 
     def __init__(self, processor: 'SubclassProcessor' = None, entity: 'DXFEntity' = None):
@@ -266,6 +267,7 @@ class DXFNamespace:
 
 
 class SubclassProcessor:
+    """  Helper class for loading tags into entities. (internal class) """
     def __init__(self, tags: ExtendedTags, dxfversion=None):
         if len(tags.subclasses) == 0:
             raise ValueError('Invalid tags.')
@@ -395,11 +397,7 @@ T = TypeVar('T', bound='DXFEntity')
 
 
 class DXFEntity:
-    """ Common base class for all DXF entities.
-
-    DO NOT INSTANTIATE ENTITY CLASSES BY YOURSELF - ALWAYS USE THE PROVIDED FACTORY FUNCTIONS!
-
-    """
+    """ Common base class for all DXF entities. """
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(base_class)  # DXF attribute definitions
     DEFAULT_ATTRIBS = None  # type: dict
@@ -411,17 +409,20 @@ class DXFEntity:
 
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor. (internal API)"""
+        # public attributes for package users
         self.doc = doc  # type: Drawing
+        self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
         # priority order: highest value first - 100 (top) before 0 (default) before -100 (bottom)
         # whole int range allowed
-        self.priority = 0  # type: int
+        self.priority = 0  # type: int  # public
+
+        # none public attributes for package users
         # create extended data only if needed
         self.appdata = None  # type: Optional[AppData]
         self.reactors = None  # type: Optional[Reactors]
         self.extension_dict = None  # type: Optional[ExtensionDict]
         self.xdata = None  # type: Optional[XData]
         self.embedded_objects = None  # type: Optional[EmbeddedObjects]
-        self.dxf = DXFNamespace(entity=self)  # type: DXFNamespace
 
     # todo: remove compatibility drawing property
     @property
@@ -558,7 +559,7 @@ class DXFEntity:
             self.dxf.set(key, value)
 
     def post_new_hook(self):
-        # for post processing and integrity validation after entity creation (internal API)
+        """ Post processing and integrity validation after entity creation (internal API) """
         pass
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> DXFNamespace:
@@ -589,39 +590,45 @@ class DXFEntity:
 
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         """
-        Get DXF attribute `key`, returns `default` if key doesn't exist, or raise ``DXFValueError`` if `default` is
-        ``DXFValueError`` and no DXF default value is defined ::
+        Get DXF attribute `key`, returns `default` if key doesn't exist, or raise :class:`DXFValueError` if `default` is
+        :class:`DXFValueError` and no DXF default value is defined::
 
             layer = entity.get_dxf_attrib("layer")
             # same as
             layer = entity.dxf.layer
+
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
 
         """
         return self.dxf.get(key, default)
 
     def set_dxf_attrib(self, key: str, value: Any) -> None:
         """
-        Set DXF attribute `key` to `value`::
+        Set new `value` for DXF attribute `key`::
 
            entity.set_dxf_attrib("layer", "MyLayer")
            # same as
            entity.dxf.layer = "MyLayer"
+
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
 
         """
         self.dxf.set(key, value)
 
     def del_dxf_attrib(self, key: str) -> None:
         """
-        Delete DXF attribute `key`, does not raise an error if attribute is supported but not present. Raises
-        :class:`AttributeError` if `key` is not an supported DXF attribute.
+        Delete DXF attribute `key`, does not raise an error if attribute is supported but not present.
+
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
 
         """
         self.dxf.discard(key)
 
     def has_dxf_attrib(self, key: str) -> bool:
         """
-        Returns ``True`` if DXF attribute `key` really exist else ``False``. Raises :class:`AttributeError` if `key`
-        isn't supported.
+        Returns ``True`` if DXF attribute `key` really exist else ``False``.
+
+        Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
 
         .. versionchanged:: 0.10
 
@@ -665,11 +672,7 @@ class DXFEntity:
         return str(self.__class__) + " " + str(self)
 
     def dxfattribs(self) -> dict:
-        """
-        Create a ``dict`` with all accessible DXF attributes and their values, not all data is accessible by dxf
-        attributes like definition points of :class:`LWPolyline` or :class:`Spline`.
-
-        """
+        """ Returns a ``dict`` with all existing DXF attributes and their values. """
         return self.dxf.all_existing_dxf_attribs()
 
     def set_flag_state(self, flag: int, state: bool = True, name: str = 'flags') -> None:
@@ -801,7 +804,7 @@ class DXFEntity:
         pass
 
     def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check. (internal API)"""
+        """ Validity check. (internal API) """
         pass
 
     def check_pointers(self) -> List[str]:
@@ -923,27 +926,63 @@ class DXFEntity:
             self.xdata.discard(appid)
 
     def has_xdata_list(self, appid: str, name: str) -> bool:
+        """ Returns ``True`` if a tag list `name` for extended data `appid` exist. """
         if self.has_xdata(appid):
             return self.xdata.has_xlist(appid, name)
         else:
             return False
 
-    def get_xdata_list(self, appid: str, name: str) -> List:
+    def get_xdata_list(self, appid: str, name: str) -> Tags:
+        """ Returns tag list `name` for extended data `appid`.
+
+        Args:
+            appid: application name as defined in the APPID table.
+            name: extended data list name
+
+        Raises:
+            DXFValueError: no extended data for `appid` found or no data list `name` not found
+
+        """
         if self.xdata:
-            return self.xdata.get_xlist(appid, name)
+            return Tags(self.xdata.get_xlist(appid, name))
         else:
             raise DXFValueError(appid)
 
     def set_xdata_list(self, appid: str, name: str, tags: Iterable) -> None:
+        """ Set tag list `name` for extended data `appid` as iterable of tags.
+
+        Args:
+             appid: application name as defined in the APPID table.
+             name: extended data list name
+             tags: iterable of (code, value) tuples or :class:`~ezdxf.lldxf.types.DXFTag`
+
+        """
         if self.xdata is None:
             self.xdata = XData()
         self.xdata.set_xlist(appid, name, tags)
 
     def discard_xdata_list(self, appid: str, name: str) -> None:
+        """
+        Discard tag list `name` for extended data `appid`. Does not raise an exception if no extended data for `appid`
+        or no tag list `name` exist.
+        """
         if self.xdata:
             self.xdata.discard_xlist(appid, name)
 
     def replace_xdata_list(self, appid: str, name: str, tags: Iterable) -> None:
+        """
+        Replaces tag list `name` for existing extended data `appid` by `tags`. Appends new list if tag list `name` do
+        not exist, but raises :class:`DXFValueError` if extended data `appid` do not exist.
+
+        Args:
+             appid: application name as defined in the APPID table.
+             name: extended data list name
+             tags: iterable of (code, value) tuples or :class:`~ezdxf.lldxf.types.DXFTag`
+
+        Raises:
+            DXFValueError: no extended data for `appid` found
+
+        """
         self.xdata.replace_xlist(appid, name, tags)
 
     def has_reactors(self) -> bool:
@@ -973,7 +1012,7 @@ class DXFEntity:
 
 
 class DXFTagStorage(DXFEntity):
-    """ Just store all the tags as they are """
+    """ Just store all the tags as they are. (internal class) """
 
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """

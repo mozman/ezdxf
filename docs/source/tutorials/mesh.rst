@@ -30,15 +30,15 @@ Create a cube mesh by direct access to base data structures::
         [0, 3, 7, 4]
     ]
 
-    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
-    msp = dwg.modelspace()
+    doc = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
+    msp = doc.modelspace()
     mesh = msp.add_mesh()
     mesh.dxf.subdivision_levels = 0  # do not subdivide cube, 0 is the default value
     with mesh.edit_data() as mesh_data:
         mesh_data.vertices = cube_vertices
         mesh_data.faces = cube_faces
 
-    dwg.saveas("cube_mesh_1.dxf")
+    doc.saveas("cube_mesh_1.dxf")
 
 Create a cube mesh by method calls::
 
@@ -57,8 +57,8 @@ Create a cube mesh by method calls::
         (0, 1, 1),
     ]
 
-    dwg = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
-    msp = dwg.modelspace()
+    doc = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
+    msp = doc.modelspace()
     mesh = msp.add_mesh()
 
     with mesh.edit_data() as mesh_data:
@@ -70,4 +70,4 @@ Create a cube mesh by method calls::
         mesh_data.add_face([p[0], p[3], p[7], p[4]])
         mesh_data.optimize()  # optional, minimizes vertex count
 
-    dwg.saveas("cube_mesh_2.dxf")
+    doc.saveas("cube_mesh_2.dxf")

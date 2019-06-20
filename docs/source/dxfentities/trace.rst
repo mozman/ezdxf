@@ -11,9 +11,8 @@ Create traces in layouts and blocks by factory function :meth:`~ezdxf.modern.lay
 DXF Attributes for Trace
 ------------------------
 
-:ref:`Common DXF attributes for DXF R12`
+:ref:`Common graphical DXF attributes`
 
-:ref:`Common DXF attributes for DXF R13 or later`
 
 .. attribute:: Trace.dxf.vtx0
 

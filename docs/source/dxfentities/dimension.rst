@@ -19,9 +19,7 @@ Create dimensions in layouts and blocks by following factory functions
 DXF Attributes for Dimension
 ----------------------------
 
-:ref:`Common DXF attributes for DXF R12`
-
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Line.dxf.defpoint
 

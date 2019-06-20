@@ -61,13 +61,13 @@ Contents
    :maxdepth: 2
 
    introduction
-   tutorials
+   tutorials/index
    reference
-   render
-   addons
+   render/index
+   addons/index
    howto
-   dxfinternals
-   devguides
+   dxfinternals/index
+   develop/index
 
 Indices and tables
 ------------------

@@ -1,7 +1,7 @@
 import ezdxf
 
-dwg = ezdxf.new('R2000')  # hatch requires the DXF R2000 (AC1015) format or later
-msp = dwg.modelspace()  # adding entities to the model space
+doc = ezdxf.new('R2000')  # hatch requires the DXF R2000 (AC1015) format or later
+msp = doc.modelspace()  # adding entities to the model space
 
 hatch = msp.add_hatch(color=2)  # by default a solid fill hatch with fill color=7 (white/black)
 
@@ -12,4 +12,4 @@ hatch = msp.add_hatch(color=2)  # by default a solid fill hatch with fill color=
 # bulge value < 0 ... arc is left of line
 hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=1)
 
-dwg.saveas("solid_hatch_polyline_path_with_bulge.dxf")
+doc.saveas("solid_hatch_polyline_path_with_bulge.dxf")

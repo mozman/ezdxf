@@ -9,7 +9,7 @@ At first load the drawing::
 
     import ezdxf
 
-    dwg = ezdxf.readfile("your_dxf_file.dxf")
+    doc = ezdxf.readfile("your_dxf_file.dxf")
 
 
 .. seealso::
@@ -38,7 +38,7 @@ Iterate over all DXF entities in model space. Although this is a possible way to
 would like to point out that `entity queries`_ are the better way.::
 
     # iterate over all entities in model space
-    msp = dwg.modelspace()
+    msp = doc.modelspace()
     for e in msp:
         if e.dxftype() == 'LINE':
             print_entity(e)
@@ -63,10 +63,8 @@ All DXF attributes of an entity are grouped in the namespace :attr:`e.dxf`::
     e.dxf.layer  # layer of the entity as string
     e.dxf.color  # color of the entity as integer
 
-See common DXF attributes:
+See :ref:`Common graphical DXF attributes`
 
-- :ref:`Common DXF attributes for DXF R12`
-- :ref:`Common DXF attributes for DXF R13 or later`
 
 If a DXF attribute is not set (a valid DXF attribute has no value), a ``DXFValueError`` will be raised. To avoid this use
 the :meth:`GraphicEntity.get_dxf_attrib` method with a default value::
@@ -81,11 +79,11 @@ Getting a Paper Space
 
 .. code::
 
-    paperspace = dwg.layout('layout0')
+    paperspace = doc.layout('layout0')
 
 Retrieves the paper space named ``layout0``, the usage of the layout object is the same as of the model space object.
 The DXF12 standard provides only one paper space, therefore the paper space name in the method call
-`dwg.layout('layout0')` is ignored or can be left off. For the later standards you get a list of the names of the
+`doc.layout('layout0')` is ignored or can be left off. For the later standards you get a list of the names of the
 available layouts by :meth:`Drawing.layout_names`.
 
 .. _entity queries:
@@ -112,7 +110,7 @@ entity already match the entity query. The attribute query is a boolean expressi
 
 Get all `LINE` entities from the model space::
 
-    modelspace = dwg.modelspace()
+    modelspace = doc.modelspace()
     lines = modelspace.query('LINE')
 
 The result container also provides the `query()` method, get all LINE entities at layer ``construction``::
@@ -128,7 +126,7 @@ All together as one query::
 
 The ENTITIES section also supports the `query()` method::
 
-    all_lines_and_circles_at_the_construction_layer = dwg.entities.query('LINE CIRCLE[layer=="construction"]')
+    all_lines_and_circles_at_the_construction_layer = doc.entities.query('LINE CIRCLE[layer=="construction"]')
 
 Get all model space entities at layer ``construction``, but no entities with the `linestyle` ``DASHED``::
 

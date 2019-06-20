@@ -11,7 +11,7 @@ function :meth:`~ezdxf.modern.layouts.Layout.add_ray`.
 DXF Attributes for Ray
 ----------------------
 
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Ray.dxf.start
 

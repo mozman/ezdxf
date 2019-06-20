@@ -21,9 +21,9 @@ Create a new layer definition::
 
     import ezdxf
 
-    dwg = ezdxf.new()
+    doc = ezdxf.new()
     msp = modelspace()
-    dwg.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
+    doc.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
 
 The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
 by using ``BYLAYER`` as linetype string and `256` as color, both values are default values for new entities so you can
@@ -38,7 +38,7 @@ Changing Layer State
 
 First get the layer definition object::
 
-    my_lines = dwg.layers.get('MyLines')
+    my_lines = doc.layers.get('MyLines')
 
 Now you check the state of the layer::
 
@@ -58,7 +58,7 @@ because the color value is misused for switching the layer on and off, layer is 
 Changing the default layer values::
 
     my_lines.dxf.linetype = 'DOTTED'
-    my lines.set_color(13)  # preserves the layer on/off state
+    my_lines.set_color(13)  # preserves the layer on/off state
 
 .. seealso::
 
@@ -70,22 +70,22 @@ Check Available Layers
 The layers object supports some standard Python protocols::
 
     # iteration
-    for layer in dwg.layers:
+    for layer in doc.layers:
         if layer.dxf.name != '0':
             layer.off()  # switch all layers off except layer '0'
 
     # check for existing layer definition
-    if 'MyLines' in dwg.layers::
-        layer = dwg.layers.get('MyLines')
+    if 'MyLines' in doc.layers::
+        layer = doc.layers.get('MyLines')
 
-    layer_count = len(dwg.layers) # total count of layer definitions
+    layer_count = len(doc.layers) # total count of layer definitions
 
 Deleting a Layer
 ----------------
 
 You can delete a layer definition::
 
-    dwg.layers.remove('MyLines')
+    doc.layers.remove('MyLines')
 
 This just deletes the layer definition, all DXF entity with the DXF attribute layer set to ``MyLines`` are still there,
 but if they inherit color and/or linetype from the layer definition they will be drawn now with linetype `Continuous`

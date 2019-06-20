@@ -12,9 +12,8 @@ Create text in layouts and blocks by factory function :meth:`~ezdxf.modern.layou
 DXF Attributes for Text
 -----------------------
 
-:ref:`Common DXF attributes for DXF R12`
+:ref:`Common graphical DXF attributes`
 
-:ref:`Common DXF attributes for DXF R13 or later`
 
 .. attribute:: Text.dxf.text
 

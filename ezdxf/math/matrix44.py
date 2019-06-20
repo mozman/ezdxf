@@ -421,7 +421,7 @@ class Matrix44:
         Multiplies this matrix with other matrix.
 
         Assumes that both matrices have a right column of (0, 0, 0, 1). This is True for matrices composed of
-        rotations,  translations and scales. fast_mul is approximately 25% quicker than the \*= operator.
+        rotations,  translations and scales. fast_mul is approximately 25% quicker than the ``*=`` operator.
 
         """
         m1 = self.matrix

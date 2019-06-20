@@ -7,4 +7,4 @@ This section is only for me, because of the long pauses between develop iteratio
 .. toctree::
    :maxdepth: 1
 
-   develop/doc_formatting_guide
+   doc_formatting_guide

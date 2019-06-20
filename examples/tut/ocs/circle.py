@@ -5,8 +5,8 @@
 import ezdxf
 from ezdxf.math import OCS
 
-dwg = ezdxf.new('R2010')
-msp = dwg.modelspace()
+doc = ezdxf.new('R2010')
+msp = doc.modelspace()
 
 # For this example the OCS is rotated around x-axis about 45 degree
 # OCS z-axis: x=0, y=1, z=1
@@ -30,4 +30,4 @@ msp.add_point((0, 2, 2), dxfattribs={'color': 2})
 
 print("center in OCS: {}".format(ocs.from_wcs((0, 2, 2))))
 ocs.render_axis(msp)
-dwg.saveas('ocs_circle.dxf')
+doc.saveas('ocs_circle.dxf')

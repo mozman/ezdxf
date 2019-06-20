@@ -9,9 +9,7 @@ Create points in layouts and blocks by factory function :meth:`~ezdxf.modern.lay
 DXF Attributes for Point
 ------------------------
 
-:ref:`Common DXF attributes for DXF R12`
-
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Point.dxf.location
 

@@ -1,8 +1,8 @@
 import ezdxf
 
-dwg = ezdxf.readfile("AutoCAD_generated.dxf")
+doc = ezdxf.readfile("AutoCAD_generated.dxf")
 
-msp = dwg.modelspace()
+msp = doc.modelspace()
 spline = msp.query('SPLINE')[0]  # take the first spline
 with spline.edit_data() as data:  # context manager
     data.fit_points.append((2250, 2500, 0))  # data.fit_points is a standard python list
@@ -12,4 +12,4 @@ with spline.edit_data() as data:  # context manager
     data.weights = []  # delete weights, this could modify the geometry of the spline
     data.control_points = []  # delete control points, this could modify the geometry of the spline
 
-dwg.saveas("modified_spline.dxf")
+doc.saveas("modified_spline.dxf")
