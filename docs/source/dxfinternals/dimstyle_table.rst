@@ -122,10 +122,10 @@ DIMGAP              147     Sets the distance around the dimension text when the
 DIMLFAC             144     Sets a scale factor for linear dimension measurements. All linear dimension distances,
                             including radii, diameters, and coordinates, are multiplied by DIMLFAC before being
                             converted to dimension text. Positive values of DIMLFAC are applied to dimensions in both
-                            model space and paper space; negative values are applied to paper space only.
+                            modelspace and paperspace; negative values are applied to paperspace only.
 
                             DIMLFAC applies primarily to nonassociative dimensions (DIMASSOC set 0 or 1). For
-                            nonassociative dimensions in paper space, DIMLFAC must be set individually for each layout
+                            nonassociative dimensions in paperspace, DIMLFAC must be set individually for each layout
                             viewport to accommodate viewport scaling.
 
                             DIMLFAC has no effect on angular dimensions, and is not applied to the values held in
@@ -164,8 +164,8 @@ DIMSCALE            40      Sets the overall scale factor applied to dimensionin
                             Use MLEADERSCALE to scale multileader objects created with the MLEADER command.
 
                             * 0.0 = A reasonable default value is computed based on the scaling between the current model
-                              space viewport and paper space. If you are in paper space or model space and not using the
-                              paper space feature, the scale factor is 1.0.
+                              space viewport and paperspace. If you are in paperspace or modelspace and not using the
+                              paperspace feature, the scale factor is 1.0.
                             * >0 = A scale factor is computed that leads text sizes, arrowhead sizes, and other scaled
                               distances to plot at their face values.
 

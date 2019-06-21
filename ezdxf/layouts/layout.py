@@ -85,6 +85,8 @@ class Layout(BaseLayout):
             doc: drawing document
             dxfattribs: additional DXF attributes for LAYOUT entity
 
+        (internal API)
+
         """
         block_layout = doc.blocks.new(block_name)  # type: BlockLayout
         dxfattribs = dxfattribs or {}
@@ -97,39 +99,30 @@ class Layout(BaseLayout):
 
     @classmethod
     def load(cls, layout: 'DXFLayout', doc: 'Drawing'):
+        """ Loading interface, internal API """
         layout = cls(layout, doc)
         layout._repair_owner_tags()
         return layout
 
     @property
     def name(self) -> str:
-        """
-        Returns layout name (as shown in tabs).
-
-        """
+        """ Layout name as shown in tabs of CAD applications, modelspace has the fixed name ``'Model'``. """
         return self.dxf_layout.dxf.name
 
     @property
     def dxf(self) -> Any:  # dynamic DXF attribute dispatching, e.g. DXFLayout.dxf.layout_flags
         """
-        Returns the DXF name space attribute of the associated DXF ``LAYOUT`` entity.
+        Returns the DXF name space attribute of the associated :class:`DXFLayout` entity.
 
-        This enables direct access to the ``LAYOUT`` entity, e.g. Layout.dxf.layout_flags
+        This enables direct access to the underlying :class:`DXFLayout` entity, e.g. ``Layout.dxf.layout_flags``
 
         """
         return self.dxf_layout.dxf
 
     @property
     def block_record_name(self) -> str:
-        """
-        Returns the name of the associated ``BLOCK_RECORD`` as string.
-
-        """
+        """ Returns the name of the associated BLOCK_RECORD as string. """
         return self.block_record.dxf.name
-
-    @property
-    def is_modelspace(self) -> bool:
-        return self.block_record.is_modelspace
 
     def _repair_owner_tags(self) -> None:
         """
@@ -145,14 +138,20 @@ class Layout(BaseLayout):
                 entity.dxf.paperspace = paperspace
 
     def __contains__(self, entity: Union['DXFGraphic', str]) -> bool:
+        """ Returns ``True`` if `entity` if stored in this layout.
+
+        Args:
+             entity: :class:`DXFGraphic` object or handle as hex string
+
+        """
         if isinstance(entity, str):  # entity is a handle string
             entity = self.entitydb[entity]
         return entity.dxf.owner == self.layout_key
 
     def destroy(self) -> None:
-        """
-        Delete all member entities and the layout itself from entity database and all other structures.
+        """ Delete all entities and the layout itself from entity database and all linked structures.
 
+        (internal API)
         """
 
         self.doc.objects.delete_entity(self.dxf_layout)
@@ -160,14 +159,15 @@ class Layout(BaseLayout):
         super().destroy()
 
     def rename(self, name: str) -> None:
-        """ Rename layout to `name`, changes the name displayed in tab by CAD applications, not the internal BLOCK name.
+        """ Rename layout to `name`, changes the name displayed in tabs by CAD applications, not the internal BLOCK
+        name.
         """
         self.dxf_layout.dxf.name = name
 
     def viewports(self) -> List['DXFGraphic']:
         """
-        Get all VIEWPORT entities defined in the layout. Returns a list of Viewport() objects, sorted by id, the first
-        entity is always the paper space view with the id=1.
+        Get all VIEWPORT entities defined in the layout. Returns a list of :class:`~ezdxf.entities.viewport.Viewport`
+        objects, sorted by id, the first entity is always the paper space view with an id of ``1``.
 
         """
         vports = [entity for entity in self if entity.dxftype() == 'VIEWPORT']
@@ -175,6 +175,7 @@ class Layout(BaseLayout):
         return vports
 
     def renumber_viewports(self) -> None:
+        """ Reassign viewport ids. (internal API) """
         for num, viewport in enumerate(self.viewports(), start=1):
             viewport.dxf.id = num
 
@@ -183,6 +184,7 @@ class Layout(BaseLayout):
                      view_center_point: 'Vertex',
                      view_height: float,
                      dxfattribs: dict = None) -> 'Viewport':
+        """ Add a :class:`~ezdxf.entities.viewport.Viewport` entity. """
         dxfattribs = dxfattribs or {}
         width, height = size
         attribs = {
@@ -217,7 +219,7 @@ class Layout(BaseLayout):
         it is also available in paper space layouts.
 
         Args:
-            dxfattribs (dict): DXF attributes for the :class:`GeoData` entity
+            dxfattribs: DXF attributes for the :class:`GeoData` entity
 
         """
         if self.doc.dxfversion < DXF2010:
@@ -256,6 +258,8 @@ class Layout(BaseLayout):
 
         Raises:
             DXFValueError: if table not exists and `create` is False
+
+        (internal API)
 
         """
         xdict = self.get_extension_dict()
@@ -425,11 +429,11 @@ class Layout(BaseLayout):
         Args:
             size: paper size as (width, height) tuple
             margins: (top, right, bottom, left) hint: clockwise
-            units: "mm" or "inch"
+            units: ``'mm'`` or ``'inch'``
             offset: plot origin offset is 2D point
-            rotation: see table `Rotation`
-            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. (1, 50) for 1:50
-            name: paper name prefix '{name}_({width}_x_{height}_{unit})'
+            rotation: see table Rotation
+            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. ``(1, 50)`` for 1:50
+            name: paper name prefix ``'{name}_({width}_x_{height}_{unit})'``
             device: device .pc3 configuration file or system printer name
 
         === ============
@@ -558,10 +562,7 @@ class Layout(BaseLayout):
         self.add_new_main_viewport()
 
     def add_new_main_viewport(self) -> None:
-        """
-        Add a new main viewport.
-
-        """
+        """ Add a new main viewport. (internal API) """
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inches
             unit_factor = 25.4

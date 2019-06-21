@@ -3,7 +3,7 @@
 VPORT Configuration Table
 =========================
 
-The `VPORT`_ table stores the model space viewport configurations. A viewport configuration is a tiled view of multiple
+The `VPORT`_ table stores the modelspace viewport configurations. A viewport configuration is a tiled view of multiple
 viewports or just one viewport.
 
 .. image:: gfx/tiled_view.png
@@ -21,11 +21,11 @@ corner (1, 1).
 
 The following statements refer to a 2D plan view: the view-target-point defines the origin of the DCS (Display Coordinate
 system), the view-direction vector defines the z-axis of the DSC, the view-center-point (in DCS) defines the point in
-model space translated to the center point of the viewport, the view height and the aspect-ratio defines how much of
-the model space is displayed. AutoCAD tries to fit the model space area into the available viewport space e.g. view
-height is 15 units and aspect-ratio is 2.0 the model space to display is 30 units wide and 15 units high, if the
-viewport has an aspect ratio of 1.0, AutoCAD displays 30x30 units of the model space in the viewport. If the model space
-aspect-ratio is 1.0 the model space to display is 15x15 units and fits properly into the viewport area.
+modelspace translated to the center point of the viewport, the view height and the aspect-ratio defines how much of
+the modelspace is displayed. AutoCAD tries to fit the modelspace area into the available viewport space e.g. view
+height is 15 units and aspect-ratio is 2.0 the modelspace to display is 30 units wide and 15 units high, if the
+viewport has an aspect ratio of 1.0, AutoCAD displays 30x30 units of the modelspace in the viewport. If the modelspace
+aspect-ratio is 1.0 the modelspace to display is 15x15 units and fits properly into the viewport area.
 
 But tests show that the translation of the view-center-point to the middle of the viewport not always work as I
 expected. (still digging...)

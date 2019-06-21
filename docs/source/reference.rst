@@ -22,6 +22,7 @@ DXF Structures
     :maxdepth: 2
 
     drawing/index
+    sections/index
     tables/index
     blocks/index
     layouts/index
@@ -53,14 +54,16 @@ Math Utilities
 
    math
 
-Tag Data Structures
--------------------
+Internal Data Structures
+------------------------
 
 .. toctree::
    :maxdepth: 2
 
+   entitydb
    dxftags
    dxftag_collections
+
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

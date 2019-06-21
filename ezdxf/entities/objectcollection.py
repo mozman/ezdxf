@@ -55,6 +55,8 @@ class ObjectCollection:
         Raises:
             DXFValueError: if object name already exist
 
+        (internal API)
+
         """
         if name in self.object_dict:
             raise DXFValueError('{} entry {} already exists.'.format(self.object_type, name))

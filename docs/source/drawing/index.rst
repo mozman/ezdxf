@@ -10,4 +10,3 @@ You can read/write DXF drawings from/to file-system or from/to a text-stream.
 
    dwgmanagement
    drawing
-   header_section

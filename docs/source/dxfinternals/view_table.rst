@@ -3,7 +3,7 @@
 VIEW Table
 ==========
 
-The `VIEW`_ entry stores a named view of the model or a paper space layout. This stored views makes parts of the
+The `VIEW`_ entry stores a named view of the model or a paperspace layout. This stored views makes parts of the
 drawing or some view points of the model in a CAD applications more accessible. This views have no influence to the
 drawing content or to the generated output by exporting PDFs or plotting on paper sheets, they are just for the
 convenience of CAD application users.
@@ -21,8 +21,8 @@ DXF R12
     VIEW
     2       <<< name of view
     VIEWNAME
-    70      <<< flags bit-coded: 1st bit -> (0/1 = model space/paper space)
-    0       <<< model space
+    70      <<< flags bit-coded: 1st bit -> (0/1 = modelspace/paperspace)
+    0       <<< modelspace
     40      <<< view width in Display Coordinate System (DCS)
     20.01
     10      <<< view center point in DCS

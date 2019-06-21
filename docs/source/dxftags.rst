@@ -1,32 +1,35 @@
-Single Tags
-===========
-
 .. automodule:: ezdxf.lldxf.types
 
-Functions
----------
+DXFTag Factory Functions
+========================
 
 .. autofunction:: dxftag
 
 .. autofunction:: tuples_to_tags
 
 
-Classes
--------
+DXFTag
+======
 
 .. autoclass:: DXFTag
     :members: __str__, __repr__, __getitem__, __iter__, __eq__, __hash__, dxfstr, clone
 
 
+DXFBinaryTag
+============
+
 .. autoclass:: DXFBinaryTag(DXFTag)
     :members:
+
+DXFVertex
+=========
 
 .. autoclass:: DXFVertex(DXFTag)
     :members:
 
 
-Constants
----------
+NONE_TAG
+========
 
 .. attribute:: NONE_TAG
 

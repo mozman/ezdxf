@@ -46,6 +46,29 @@ text-stream requires at least a :meth:`write` method.
 
 .. _globaloptions:
 
+Drawing Settings
+----------------
+
+The :class:`~ezdxf.sections.header.HeaderSection` stores meta data like modelspace extensions, user name or saving time
+and current application settings, like actual layer, text style or dimension style settings. These settings are not
+necessary to process DXF data and therefore many of this settings are not maintained by `ezdxf` automatically.
+
+Header variables set at new
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    - $ACADVER: DXF version
+    - $TDCREATE: date/time at creating the drawing
+    - $FINGERPRINTGUID: every drawing gets a GUID
+
+Header variables updated at saving
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    - $TDUPDATE: actual date/time at saving
+    - $HANDSEED: next available handle as hex string
+    - $DWGCODEPAGE: encoding setting
+    - $VERSIONGUID: every saved version gets a new GUID
+
+
 Global Options
 --------------
 

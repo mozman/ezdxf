@@ -33,12 +33,12 @@ The DXF R12 data model is identical to the file structure:
     - HEADER section: common settings for the DXF drawing
     - TABLES section: definitions for LAYERS, LINETYPE, STYLES ....
     - BLOCKS section: block definitions and its content
-    - ENTITIES section: model space and paper space content
+    - ENTITIES section: modelspace and paperspace content
 
 References are realized by simple names. The INSERT entity references the BLOCK definition by the BLOCK name, a TEXT
 entity defines the associated STYLE and LAYER by its name and so on, handles are not needed. Layout association of
 graphical entities in the ENTITIES section by the paper_space tag :code:`(67, 0 or 1)`, 0 or missing tag means model
-space, 1 means paper space. The content of BLOCK definitions is enclosed by the BLOCK and the ENDBLK entity, no
+space, 1 means paperspace. The content of BLOCK definitions is enclosed by the BLOCK and the ENDBLK entity, no
 additional references are needed.
 
 A clean and simple file structure and data model, which seems to be the reason why the DXF R12 Reference (released 1992)
@@ -66,7 +66,7 @@ understood.
 
 The TABLES section got a new BLOCK_RECORD table - see :ref:`Block Management Structures` for more information.
 
-The BLOCKS sections is mostly the same, but with handles, owner tags and new ENTITY types. Not active paper space
+The BLOCKS sections is mostly the same, but with handles, owner tags and new ENTITY types. Not active paperspace
 layouts store their content also in the BLOCKS section - see :ref:`Layout Management Structures` for more information.
 
 The ENTITIES section is also mostly same, but with handles, owner tags and new ENTITY types.
@@ -106,14 +106,14 @@ be read on Windows 10, a drastic real world example why it is better to avoid cl
     - XRECORD: used to store and manage arbitrary data. This object is similar in concept to XDATA but is not
       limited by size or order. Not supported by R13c0 through R13c3.
 
-Still missing the LAYOUT object, which is mandatory in DXF R2000 to manage multiple paper space layouts. I don't know
+Still missing the LAYOUT object, which is mandatory in DXF R2000 to manage multiple paperspace layouts. I don't know
 how DXF R13/R14 manages multiple layouts or if they even support this feature, but I don't care much about DXF R13/R14,
 because AutoCAD has no write support for this two formats anymore. ezdxf tries to upgrade this two DXF versions to DXF
 R2000 with the advantage of only two different data models to support: DXF R12 and DXF R2000+
 
 New objects introduced by DXF R2000:
 
-    - LAYOUT: management object for model space and multiple paper space layouts
+    - LAYOUT: management object for modelspace and multiple paperspace layouts
     - ACDBPLACEHOLDER: surprise - just a place holder
 
 New objects in DXF R2004:
@@ -215,7 +215,7 @@ Root DICTIONARY content for DXF R2018
     ACAD_GROUP
     350
     4FC     <<< points to a DICTIONARY
-    3       <<< LAYOUT management, mandatory if more than the *active* paper space is used
+    3       <<< LAYOUT management, mandatory if more than the *active* paperspace is used
     ACAD_LAYOUT
     350
     4FD     <<< points to a DICTIONARY

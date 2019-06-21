@@ -9,9 +9,7 @@ appended to an :class:`Insert` entity, but it can also appear as standalone enti
 DXF Attributes for Attrib
 -------------------------
 
-:ref:`Common DXF attributes for DXF R12`
-
-:ref:`Common DXF attributes for DXF R13 or later`
+:ref:`Common graphical DXF attributes`
 
 .. attribute:: Attrib.dxf.text
 

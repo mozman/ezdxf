@@ -5,8 +5,8 @@ Layout Management Structures
 
 Layouts are separated entity spaces, there are three different Layout types:
 
-    1. Model space contains the 'real' world representation of the drawing subject in real world units.
-    2. Paper space are used to create different drawing sheets of the subject for printing or PDF export
+    1. modelspace contains the 'real' world representation of the drawing subject in real world units.
+    2. paperspace are used to create different drawing sheets of the subject for printing or PDF export
     3. Blocks are reusable sets of graphical entities, inserted by the INSERT entity.
 
 All layouts have at least a BLOCK definition in the BLOCKS section and since DXF R13 exists the BLOCK_RECORD table with
@@ -17,14 +17,14 @@ an entry for every BLOCK in the BLOCKS section.
     Information about :ref:`Block Management Structures`
 
 
-The name of the model space BLOCK is ``*Model_Space`` (DXF R12: ``$MODEL_SPACE``) and the name of the `active` paper
+The name of the modelspace BLOCK is ``*Model_Space`` (DXF R12: ``$MODEL_SPACE``) and the name of the `active` paper
 space BLOCK is ``*Paper_Space`` (DXF R12: ``$PAPER_SPACE``), the entities of these two layouts are
-stored in the ENTITIES section, DXF R12 supports just one paper space layout.
+stored in the ENTITIES section, DXF R12 supports just one paperspace layout.
 
-DXF R13 and later supports multiple paper space layouts, the `active` layout is still called ``*Paper_Space``, the
-additional `inactive` paper space layouts are named by the scheme ``*Paper_Spacennnn``, where the first inactive paper
+DXF R13 and later supports multiple paperspace layouts, the `active` layout is still called ``*Paper_Space``, the
+additional `inactive` paperspace layouts are named by the scheme ``*Paper_Spacennnn``, where the first inactive paper
 space is called ``*Paper_Space0``, the second ``*Paper_Space1`` and so on.
-A none consecutive numbering is tolerated by AutoCAD. The content of the inactive paper space layouts are stored
+A none consecutive numbering is tolerated by AutoCAD. The content of the inactive paperspace layouts are stored
 as BLOCK content in the BLOCKS section. These names are just the DXF internal layout names, each layout has an
 additional layout name which is displayed to the user by the CAD application.
 
@@ -40,7 +40,7 @@ in the root DICTIONARY of the DXF file.
 LAYOUT Entiy
 ------------
 
-Since DXF R2000 model space and paper space layouts require the DXF
+Since DXF R2000 modelspace and paperspace layouts require the DXF
 `LAYOUT <http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-433D25BF-655D-4697-834E-C666EDFD956D>`_ entity.
 
 .. code-block:: none
@@ -189,19 +189,19 @@ Since DXF R2000 model space and paper space layouts require the DXF
     ...
 
 And as it seems this is also not enough for a well defined LAYOUT, at least a "main" VIEWPORT entity with ID=1 is
-required for paper space layouts, located in the entity space of the layout.
+required for paperspace layouts, located in the entity space of the layout.
 
-The model space layout requires (?) a VPORT entity in the VPORT table (group code 331 in the AcDbLayout subclass).
+The modelspace layout requires (?) a VPORT entity in the VPORT table (group code 331 in the AcDbLayout subclass).
 
 Main VIEWPORT Entity for LAYOUT
 -------------------------------
 
 The "main" viewport for layout ``Layout1`` shown above. This viewport is located in the associated BLOCK definition called
 ``*Paper_Space0``. Group code 330 in subclass AcDbLayout points to the BLOCK_RECORD of ``*Paper_Space0``.
-Remember: the entities of the `active` paper space layout are located in the ENTITIES section, therefore ``Layout1`` is not
-the active paper space layout.
+Remember: the entities of the `active` paperspace layout are located in the ENTITIES section, therefore ``Layout1`` is not
+the active paperspace layout.
 
-The "main" VIEWPORT describes, how the application shows the paper space layout on the screen, and I guess only AutoCAD
+The "main" VIEWPORT describes, how the application shows the paperspace layout on the screen, and I guess only AutoCAD
 needs this values. And the most values
 
 .. image:: gfx/main_viewport.jpg
@@ -223,8 +223,8 @@ needs this values. And the most values
     58      <<< points to BLOCK_RECORD (same as group code 330 in AcDbLayout of "Layout1")
     100
     AcDbEntity
-    67      <<< paper space flag
-    1       <<< 0 = model space; 1 = paper space
+    67      <<< paperspace flag
+    1       <<< 0 = modelspace; 1 = paperspace
     8       <<< layer,
     0
     100
@@ -235,9 +235,9 @@ needs this values. And the most values
     4.00    <<<     y value
     30      <<<     group code for z value
     0.0     <<<     z value
-    40      <<< width in paper space units
+    40      <<< width in paperspace units
     23.55   <<< VIEW size in AutoCAD, depends on the workstation configuration
-    41      <<< height in paper space units
+    41      <<< height in paperspace units
     9.00    <<< VIEW size in AutoCAD, depends on the workstation configuration
     68      <<< viewport status field -1/0/n
     2       <<< >0  On and active. The value indicates the order of stacking for the viewports, where 1 is the active viewport, 2 is the next, and so forth
@@ -247,15 +247,15 @@ needs this values. And the most values
     5.25    <<<     x value
     22      <<<     group code for y value
     4.00    <<<     y value
-    13      <<< snap base point in model space
+    13      <<< snap base point in modelspace
     0.0     <<<     x value
     23      <<<     group code for y value
     0.0     <<<     y value
-    14      <<< snap spacing in model space units
+    14      <<< snap spacing in modelspace units
     0.5     <<<     x value
     24      <<<     group code for y value
     0.5     <<<     y value
-    15      <<< grid spacing in model space units
+    15      <<< grid spacing in modelspace units
     0.5     <<<     x value
     25      <<<     group code for y value
     0.5     <<<     y value
@@ -277,7 +277,7 @@ needs this values. And the most values
     0.0     <<<     z value
     44      <<<     back clip plane z value
     0.0     <<<     z value
-    45      <<<     view height (in model space units)
+    45      <<<     view height (in modelspace units)
     9.00
     50      <<< snap angle
     0.0

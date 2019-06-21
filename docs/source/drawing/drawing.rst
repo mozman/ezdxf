@@ -5,23 +5,24 @@ Drawing Object
 
 .. class:: Drawing
 
-    The :class:`Drawing` class manages all entities and tables related to a DXF drawing. Every drawing has its own
-    character :attr:`encoding` which is only important for saving to disk.
+    The :class:`Drawing` class manages all entities and tables related to a DXF drawing.
 
     .. attribute:: dxfversion
 
-        contains the DXF version as string like ``'AC1009'``, set by the
-        :func:`~ezdxf.new` or the :func:`~ezdxf.readfile` function.
+        Actual DXF version like ``'AC1009'``, set by :func:`ezdxf.new` or :func:`ezdxf.readfile`.
+
+        For supported DXF versions see :ref:`dwgmanagement`
 
     .. attribute:: acad_release
 
-        The AutoCAD release number string like ``'R12'`` or ``'R2000'`` for actual DXF version of this drawing.
+        The AutoCAD release name like ``'R12'`` or ``'R2000'`` for actual :attr:`dxfversion`.
 
     .. attribute:: encoding
 
-        DXF drawing text encoding, the default encoding for new drawings is
-        ``'cp1252'``. Starting with DXF version R2007 (AC1021) DXF files are written
-        as UTF-8 encoded text files, regardless of the attribute :attr:`encoding` (read/write)
+        Text encoding of :class:`Drawing`, the default encoding for new drawings is ``'cp1252'``. Starting with
+        DXF R2007 (AC1021), DXF files are written as UTF-8 encoded text files, regardless of the attribute
+        :attr:`encoding`. Text encoding can be changed to encodings listed below.
+
         see also: :ref:`dxf file encoding`
 
         ============ =================
@@ -45,23 +46,17 @@ Drawing Object
 
     .. attribute:: filename
 
-        Contains the drawing filename, if the drawing was opened with the
-        :func:`readfile` function else set to `None`. (read/write)
-
-    .. attribute:: dxffactory
-
-        DXF entity creation factory, see also :class:`DXFFactory` (read only).
+        :class:`Drawing` filename, if loaded by :func:`ezdxf.readfile` else ``None``.
 
     .. attribute:: header
 
-        Reference to the :class:`HeaderSection` of the drawing, where
-        you can change the drawing settings.
+        Reference to the :class:`~ezdxf.sections.header.HeaderSection`, get/set drawing settings as header variables.
 
     .. attribute:: entities
 
         Reference to the :class:`EntitySection` of the drawing, where all graphical entities are stored, but only from
-        model space and the *active* layout (paper space). Just for your information: Entities of other layouts are stored
-        as blocks in the :class:`BlocksSection`.
+        modelspace and the *active* paperspace layout. Just for your information: Entities of other paperspace layouts
+        are stored as :class:`~ezdxf.layouts.BlockLayout` in the :class:`~ezdxf.sections.blocks.BlocksSection`.
 
     .. attribute:: objects
 
@@ -81,13 +76,13 @@ Drawing Object
 
     .. attribute:: layouts
 
-        Reference to the layout management object, see also :class:`Layouts`.
+        Reference to the layout manager, see also :class:`~ezdxf.layouts.Layouts`.
 
     .. attribute:: groups
 
-        requires DXF version R13 or later
+        Collection of all groups, see also :class:`~ezdxf.entities.dxfgroups.GroupCollection`.
 
-        Table (dict) of all groups used in this drawing, see also :class:`DXFGroupTable`.
+        requires DXF R13 or later
 
     .. attribute:: layers
 

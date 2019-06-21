@@ -41,9 +41,9 @@ Blocks are managed by the :class:`BlocksSection` class and every drawing has onl
 Insert a Block
 --------------
 
-A block reference is a DXF :class:`Insert` entity and can be placed in any :ref:`layout`:
-:ref:`model space`, any :ref:`paper space` or a :ref:`block layout` (which enables blocks in blocks).
-Every block reference can be scaled and rotated individually.
+A block reference is a DXF :class:`Insert` entity and can be placed in any :class:`~ezdxf.layouts.Layout`:
+:class:`~ezdxf.layouts.Modelspace`, any :class:`~ezdxf.layouts.Paperspace` or a :class:`~ezdxf.layouts.BlockLayout`
+(which enables block references in blocks). Every block reference can be scaled and rotated individually.
 
 Lets insert some random flags into the modelspace:
 

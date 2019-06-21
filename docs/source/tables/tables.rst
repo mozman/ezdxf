@@ -69,7 +69,7 @@ Viewport Table Class
 
 .. class:: ViewportTable(Table)
 
-The viewport table stores the model space viewport configurations. A viewport configuration is a tiled view of multiple
+The viewport table stores the modelspace viewport configurations. A viewport configuration is a tiled view of multiple
 viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries with the same
 name, because all viewport entries of a multi-viewport configuration are having the same name - the viewport
 configuration name.

@@ -4,11 +4,11 @@ BLOCKS Section
 ==============
 
 The BLOCKS section contains all BLOCK definitions, beside the 'normal' reusable BLOCKS used by the INSERT entity, all
-layouts, as there are the model space and all paper space layouts, have at least a corresponding BLOCK definition in the
-BLOCKS section. The name of the model space BLOCK is ``*Model_Space`` (DXF R12: ``$MODEL_SPACE``) and the name of the
-`active` paper space BLOCK is ``*Paper_Space`` (DXF R12: ``$PAPER_SPACE``), the entities of these two layouts are stored
-in the ENTITIES section, the `inactive` paper space layouts are named by the scheme ``*Paper_Spacennnn``, and the
-content of the inactive paper space layouts are stored in their BLOCK definition in the BLOCKS section.
+layouts, as there are the modelspace and all paperspace layouts, have at least a corresponding BLOCK definition in the
+BLOCKS section. The name of the modelspace BLOCK is ``*Model_Space`` (DXF R12: ``$MODEL_SPACE``) and the name of the
+`active` paperspace BLOCK is ``*Paper_Space`` (DXF R12: ``$PAPER_SPACE``), the entities of these two layouts are stored
+in the ENTITIES section, the `inactive` paperspace layouts are named by the scheme ``*Paper_Spacennnn``, and the
+content of the inactive paperspace layouts are stored in their BLOCK definition in the BLOCKS section.
 
 The content entities of blocks are stored between the BLOCK and the ENDBKL entity.
 

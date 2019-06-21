@@ -4,14 +4,14 @@
 """
 
 DXF Types
----------
+=========
 
 Required DXF tag interface:
 
-    - property code: group code as int
-    - property value: tag value of unspecific type
-    - method dxfstr(): returns the DXF string
-    - method clone(): returns a deep copy of tag
+    - property :attr:`code`: group code as int
+    - property :attr:`value`: tag value of unspecific type
+    - :meth:`dxfstr`: returns the DXF string
+    - :meth:`clone`: returns a deep copy of tag
 
 """
 from typing import Union, Tuple, Iterable, Callable, Sequence, Any, TYPE_CHECKING
@@ -66,28 +66,28 @@ class DXFTag:
         self._value = value  # type: TagValue
 
     def __str__(self) -> str:
-        """ Returns content string (code, value). """
+        """ Returns content string ``'(code, value)'``. """
         return str((self.code, self.value))
 
     def __repr__(self) -> str:
-        """ Returns representation string DXFTag(code, value). """
+        """ Returns representation string ``'DXFTag(code, value)'``. """
         return "DXFTag{}".format(str(self))
 
     @property
     def value(self) -> 'TagValue':
         return self._value
 
-    def __getitem__(self, item: int):
-        """ Returns code for index 0 and value for index 1, emulates a tuple."""
-        return (self.code, self.value)[item]
+    def __getitem__(self, index: int):
+        """ Returns :attr:`code` for index ``0`` and :attr:`value` for index ``1``, emulates a tuple."""
+        return (self.code, self.value)[index]
 
     def __iter__(self) -> Iterable:
-        """ Returns (code, value) """
+        """ Returns (code, value) tuples. """
         yield self.code
         yield self.value
 
     def __eq__(self, other) -> bool:
-        """ True if `other` and `self` has same content for code and value. """
+        """ ``True`` if `other` and `self` has same content for :attr:`code` and :attr:`value`. """
         return (self.code, self.value) == other
 
     def __hash__(self):

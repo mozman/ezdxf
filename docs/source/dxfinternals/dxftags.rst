@@ -87,7 +87,7 @@ Group Code        Meaning
 50-58             Angles in degree
 62                Color number (fixed)
 66                "Entities follow" flag (fixed), only in INSERT and POLYLINE entities
-67                Identifies whether entity is in model space or paper space
+67                Identifies whether entity is in modelspace or paperspace
 68                Identifies whether viewport is on but fully off screen, is not active, or is off
 69                Viewport identification number
 70-78             Integer values such as repeat counts, flag bits, or modes

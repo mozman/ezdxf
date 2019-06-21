@@ -17,12 +17,54 @@ A Layout represents and manages DXF entities, there are three different layout o
 
     Do not instantiate layout classes by yourself - always use the provided factory functions!
 
+Entity Ownership
+----------------
+
+A layout owns all entities residing in their entity space, this means the :attr:`dxf.owner` attribute of
+any :class:`~ezdxf.entities.dxfgfx.DXFGraphic` in this layout is the :attr:`dxf.handle` of the layout, and deleting
+an entity from a layout is the end of life of this entity, because also deleted from :class:`~ezdxf.entitydb.EntityDB`.
+But it is possible to just unlink an entity from a layout, so it can be assigned to another layout, use the
+:meth:`~BaseLayout.move_to_layout` method to move entities between layouts.
+
+
 BaseLayout
 ==========
 
 .. class:: BaseLayout
 
     :class:`BaseLayout` is the common base class for :class:`Layout` and :class:`BlockLayout`.
+
+    .. autoattribute:: is_alive
+
+    .. autoattribute:: is_active_paperspace
+
+    .. autoattribute:: is_any_paperspace
+
+    .. autoattribute:: is_modelspace
+
+    .. autoattribute:: is_any_layout
+
+    .. autoattribute:: is_block_layout
+
+    .. automethod:: __len__
+
+    .. automethod:: __iter__
+
+    .. automethod:: __getitem__
+
+    .. automethod:: delete_entity
+
+    .. automethod:: delete_all_entities
+
+    .. automethod:: unlink_entity
+
+    .. automethod:: query(query: str = '*') -> EntityQuery
+
+    .. automethod:: groupby
+
+    .. automethod:: move_to_layout
+
+    .. automethod:: add_entity
 
     .. automethod:: add_point
 
@@ -121,23 +163,21 @@ Layout
 
     :class:`Layout` is a subclass of :class:`BaseLayout`.
 
-    .. automethod:: Layout.__iter__
+    .. autoattribute:: name
 
-    .. automethod:: __len__
+    .. autoattribute:: dxf
 
     .. automethod:: __contains__
 
-    .. automethod:: query
+    .. automethod:: rename
 
-    .. automethod:: groupby
+    .. automethod:: viewports
 
-    .. automethod:: add_entity
+    .. automethod:: add_viewport
 
-    .. automethod:: unlink_entity
+    .. automethod:: get_extension_dict
 
-    .. automethod:: delete_entity
-
-    .. automethod:: page_setup
+    .. automethod:: page_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
 
     .. automethod:: reset_viewports
 
@@ -157,27 +197,53 @@ Layout
 
     .. automethod:: get_redraw_order
 
-    .. automethod:: Layout.new_geodata
+    .. automethod:: new_geodata
 
-    .. automethod:: Layout.get_geodata
+    .. automethod:: get_geodata
 
+    .. automethod:: plot_viewport_borders
 
-.. _model space:
+    .. automethod:: show_plot_styles
 
-Model Space
-===========
+    .. automethod:: plot_centered
 
-   At this time the :class:`Modelspace` class is the :class:`Layout` class.
+    .. automethod:: plot_hidden
 
+    .. automethod:: use_standard_scale
 
-.. _paper space:
+    .. automethod:: use_plot_styles
 
-Paper Space
-===========
+    .. automethod:: scale_lineweights
 
-   At this time the :class:`Paperspace` class is the :class:`Layout` class.
+    .. automethod:: print_lineweights
 
-.. _block layout:
+    .. automethod:: draw_viewports_first
+
+    .. automethod:: model_type
+
+    .. automethod:: update_paper
+
+    .. automethod:: zoom_to_paper_on_update
+
+    .. automethod:: plot_flags_initializing
+
+    .. automethod:: prev_plot_init
+
+    .. automethod:: set_plot_flags
+
+Modelspace
+==========
+
+.. class:: Modelspace
+
+   :class:`Modelspace` class is the :class:`Layout` class.
+
+Paperspace
+==========
+
+.. class:: Paperspace
+
+   :class:`Paperspace` class is the :class:`Layout` class.
 
 BlockLayout
 ===========
@@ -188,15 +254,13 @@ BlockLayout
 
     .. attribute:: name
 
-       The name of the associated block element. (read/write)
+       Get/set name of the associated BLOCK and BLOCK_RECORD entities.
 
-    .. attribute:: block
+    .. autoattribute:: block
 
-       Get the associated DXF *BLOCK* entity.
+    .. autoattribute:: dxf
 
-    .. attribute:: is_layout_block
-
-        True if block is a model space or paper space block definition.
+    .. automethod:: __contains__
 
     .. automethod:: attdefs
 

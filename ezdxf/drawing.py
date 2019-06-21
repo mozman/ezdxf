@@ -493,8 +493,8 @@ class Drawing:
         self._dimension_renderer = renderer
 
     def modelspace(self) -> 'Layout':
-        """ Returns the modelspace layout, displayed as 'Model' tab in CAD applications, defined by block record name
-        ``*Model_Space``.
+        """ Returns the modelspace layout, displayed as ``'Model'`` tab in CAD applications, defined by block record
+        named ``'*Model_Space'``.
         """
         return self.layouts.modelspace()
 
@@ -503,7 +503,7 @@ class Drawing:
         return self.layouts.get(name)
 
     def active_layout(self) -> 'Layout':
-        """ Returns the active paperspace layout, defined by block record name ``*Paper_Space``. """
+        """ Returns the active paperspace layout, defined by block record name ``'*Paper_Space'``. """
         return self.layouts.active_layout()
 
     def layout_names(self) -> Iterable[str]:
@@ -576,7 +576,7 @@ class Drawing:
 
     def layouts_and_blocks(self) -> Iterable['LayoutType']:
         """
-        Iterate over all layouts (mode space and paper space) and all block definitions.
+        Iterate over all layouts (modespace and paperspace) and all block definitions.
 
         """
         return iter(self.blocks)
@@ -584,7 +584,7 @@ class Drawing:
     def delete_layout(self, name: str) -> None:
         """
         Delete paper space layout `name` and all entities owned by this layout. Available only for DXF R2000 or later,
-        DXF12 supports only one paper space and it can't be deleted.
+        DXF R12 supports only one paperspace and it can't be deleted.
 
         """
         if name not in self.layouts:
@@ -594,16 +594,16 @@ class Drawing:
 
     def new_layout(self, name, dxfattribs=None) -> 'Layout':
         """
-        Create a new paper space layout `name`. Returns a :class:`~ezdxf.layouts.layout.Layout` object.
-        DXF R12 (AC1009) supports only one paper space, only the active paper space is saved, other layouts are
-        dismissed.
+        Create a new paperspace layout `name`. Returns a :class:`~ezdxf.layouts.Layout` object.
+        DXF R12 (AC1009) supports only one paperspace layout, only the active paperspace layout is saved, other layouts
+        are dismissed.
 
         Args:
             name: unique layout name
-            dxfattribs: additional DXF attributes for the :class:`DXFLayout` entity
+            dxfattribs: additional DXF attributes for the :class:`~ezdxf.entities.layout.DXFLayout` entity
 
         Raises:
-            DXFValueError: Layout `name` already exist
+            DXFValueError: :class:`~ezdxf.layouts.Layout` `name` already exist
 
         """
         if name in self.layouts:
@@ -613,8 +613,8 @@ class Drawing:
 
     def acquire_arrow(self, name: str):
         """
-        For standard ACAD and ezdxf arrows create block definitions if required, otherwise check if block definition
-        `name` exists. (internal API)
+        For standard AutoCAD and ezdxf arrows create block definitions if required, otherwise check if block `name`
+        exist. (internal API)
 
         """
         from ezdxf.render.arrows import ARROWS
@@ -682,7 +682,7 @@ class Drawing:
         Set wipeout variables.
 
         Args:
-            frame: 0 = do not show image frame; 1 = show image frame
+            frame: ``0`` = do not show image frame; ``1`` = show image frame
 
         """
         self.objects.set_wipeout_variables(frame=frame)
@@ -695,8 +695,8 @@ class Drawing:
 
         Args:
             filename: underlay file name
-            format: file format as string ``'pdf|dwf|dgn'`` or ``'ext'`` for getting file format from filename extension
-            name: pdf format = page number to display; dgn format = 'default'; dwf: ????
+            format: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'`` for getting file format from filename extension
+            name: pdf format = page number to display; dgn format = ``'default'``; dwf: ????
 
         .. seealso::
 
@@ -722,12 +722,12 @@ class Drawing:
             'xref_path': filename
         })
 
-    def cleanup(self, groups=True):
+    def cleanup(self, groups=True) -> None:
         """
         Cleanup drawing. Call it before saving the drawing but only if necessary, the process could take a while.
 
         Args:
-            groups (bool): removes deleted and invalid entities from groups
+            groups: removes deleted and invalid entities from groups
 
         """
         if groups and self.groups is not None:
@@ -744,14 +744,14 @@ class Drawing:
         from ezdxf.audit.auditor import Auditor
         return Auditor(self)
 
-    def validate(self, print_report=True):
+    def validate(self, print_report=True) -> bool:
         """
         Simple way to run an audit process.
 
         Args:
             print_report: print report to stdout
 
-        Returns: True if no errors occurred else False
+        Returns: ``True`` if no errors occurred
 
         """
         auditor = self.auditor()

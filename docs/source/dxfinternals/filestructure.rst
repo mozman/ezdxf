@@ -41,12 +41,12 @@ tag signals the end of file.
    * Block Record table (BLOCK_RECORD) (DXF R13 and Later)
 
 4. **BLOCKS:** Contains all block definitions. The block name \*Model_Space or \*MODEL_SPACE is reserved for the
-   drawing model space and the block name \*Paper_Space or \*PAPER_SPACE is reserved for the *active* paper space layout.
-   Both block definitions are empty, the content of the model space and the *active* paper space is stored in the
+   drawing modelspace and the block name \*Paper_Space or \*PAPER_SPACE is reserved for the *active* paperspace layout.
+   Both block definitions are empty, the content of the modelspace and the *active* paperspace is stored in the
    ENTITIES section. The entities of other layouts are stored in special block definitions called \*Paper_Spacennn,
    nnn is an arbitrary but unique number.
 
-5. **ENTITIES:** Contains all graphical entities of the model space and the *active* paper space layout. Entities of
+5. **ENTITIES:** Contains all graphical entities of the modelspace and the *active* paperspace layout. Entities of
    other layouts are stored in the BLOCKS sections.
 
 6. **OBJECTS:** Contains all non-graphical objects of the drawing (DXF R13 and later)

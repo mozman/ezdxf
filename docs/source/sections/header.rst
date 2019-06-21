@@ -1,5 +1,5 @@
-Drawing Header Section
-======================
+Header Section
+==============
 
 .. module:: ezdxf.sections.header
 

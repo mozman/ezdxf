@@ -43,4 +43,4 @@ DXF Attributes for Block
 
 .. attribute:: Block.is_layout_block
 
-    True if block is a model space or paper space block definition.
+    True if block is a modelspace or paperspace block definition.

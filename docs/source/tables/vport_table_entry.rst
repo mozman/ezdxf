@@ -1,12 +1,12 @@
 VPort
 =====
 
-The viewport table stores the model space viewport configurations. So this entries just model space viewports, not paper
-space viewports, for paper space viewports see the :class:`Viewport` entity.
+The viewport table stores the modelspace viewport configurations. So this entries just modelspace viewports, not paper
+space viewports, for paperspace viewports see the :class:`Viewport` entity.
 
 .. class:: VPort
 
-Defines a viewport to the model space.
+Defines a viewport to the modelspace.
 
 DXF Attributes for VPort
 ------------------------

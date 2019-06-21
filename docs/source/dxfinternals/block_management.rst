@@ -3,7 +3,7 @@
 Block Management Structures
 ===========================
 
-A BLOCK is a kind of layout like the model space or a paper space, with the similarity that all these layouts
+A BLOCK is a kind of layout like the modelspace or a paperspace, with the similarity that all these layouts
 are containers for other graphical DXF entities. This block definition can be referenced in other layouts by the
 INSERT entity. By using block references the same set of graphical entities can be located multiple times at
 different layouts, this block references can be stretched and rotated without modifying the original entities. A
@@ -55,7 +55,7 @@ DXF R12 BLOCKS structure:
     SECTION
     2           <<< start of BLOCKS section
     BLOCKS
-    ...         <<< model space and paper space block definitions not shown,
+    ...         <<< modelspace and paperspace block definitions not shown,
     ...         <<< see layout management
     ...
     0           <<< start of a BLOCK definition
@@ -123,9 +123,9 @@ maintained.
 Especially the concept of ownership is important. Since DXF R13 every graphic entity is associated to a specific layout,
 and a BLOCK definition is a kind of layout. So all entities in the BLOCK definition, including the BLOCK and the ENDBLK
 entities, have an owner tag :code:`(330, ...)`, which points to a BLOCK_RECORD entry in the BLOCK_RECORD table.
-As you can see in the chapter about :ref:`Layout Management Structures`, this concept is also valid for model space
-and paper space layouts, because these layouts are also BLOCKS, with the special difference, that entities of the model
-space and the `active` paper space are stored in the ENTITIES section.
+As you can see in the chapter about :ref:`Layout Management Structures`, this concept is also valid for modelspace
+and paperspace layouts, because these layouts are also BLOCKS, with the special difference, that entities of the model
+space and the `active` paperspace are stored in the ENTITIES section.
 
 .. image:: gfx/block_definition.png
     :align: center
@@ -146,7 +146,7 @@ DXF R13 BLOCKS structure:
     SECTION
     2           <<< start of BLOCKS section
     BLOCKS
-    ...         <<< model space and paper space block definitions not shown,
+    ...         <<< modelspace and paperspace block definitions not shown,
     ...         <<< see layout management
     0           <<< start of BLOCK definition
     BLOCK
@@ -267,7 +267,7 @@ DXF R13 BLOCK_RECORD structure:
     281         <<< AC1021 (R2007) block scalability
     0
 
-    ...         <<< paper space not shown
+    ...         <<< paperspace not shown
     ...
     0           <<< next BLOCK_RECORD
     BLOCK_RECORD

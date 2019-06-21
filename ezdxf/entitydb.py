@@ -16,27 +16,29 @@ DATABASE_EXCLUDE = {'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'CLASS', 'ACD
 class EntityDB:
     """ A simple key/entity database.
 
-    The new Data Model
-
     Every entity/object, except tables and sections, are represented as DXFEntity or inherited types, this entities are
     stored in the drawing-associated database, database-key is the `handle` as string (group code == 5 or 105).
 
     """
+
     def __init__(self):
         self._database = {}
         self.handles = HandleGenerator()
 
     def __getitem__(self, handle: str) -> DXFEntity:
+        """ Get entity by `handle`. """
         return self._database[handle]
 
     def __setitem__(self, handle: str, entity: DXFEntity) -> None:
+        """ Set `entity` for `handle`. """
         self._database[handle] = entity
 
     def __delitem__(self, handle: str) -> None:
+        """ Delete entity by `handle`. Removes entity only from database, does not destroy the entity. """
         del self._database[handle]
 
     def __contains__(self, item: Union[str, DXFEntity]) -> bool:
-        """ Database contains handle? """
+        """ ``True`` if database contains `item`, `item` can be a handle or an entity. """
         if isinstance(item, str):
             handle = item
         else:
@@ -48,10 +50,11 @@ class EntityDB:
         return len(self._database)
 
     def __iter__(self) -> Iterable[str]:
-        """ Iterate over all handles. """
+        """ Iterable of all handles. """
         return iter(self._database.keys())
 
     def get(self, handle: str) -> Optional[DXFEntity]:
+        """ Returns entity for `handle` or ``None`` if no entry for `handle` exist. """
         try:
             return self.__getitem__(handle)
         except KeyError:  # internal exception
@@ -65,18 +68,19 @@ class EntityDB:
                 return handle
 
     def keys(self) -> Iterable[str]:
-        """ Iterate over all handles. """
+        """ Iterable of all handles. """
         return self._database.keys()
 
     def values(self) -> Iterable[DXFEntity]:
-        """ Iterate over all entities. """
+        """ Iterable of all entities. """
         return self._database.values()
 
     def items(self) -> Iterable[Tuple[str, DXFEntity]]:
-        """ Iterate over all (handle, entities) pairs. """
+        """ Iterable of all (handle, entities) pairs. """
         return self._database.items()
 
     def add(self, entity: DXFEntity) -> None:
+        """ Add `entity` to database, assign a new handle if existing handle is ``None``. """
         if entity.dxftype() in DATABASE_EXCLUDE:
             if entity.dxf.handle is not None:
                 # store entities with handles (TABLE, maybe others) to avoid reassigning of its handle
@@ -97,6 +101,7 @@ class EntityDB:
             entity.add_sub_entities_to_entitydb()
 
     def delete_entity(self, entity: DXFEntity) -> None:
+        """ Removes `entity` from database and destroys the `entity`. """
         del self[entity.dxf.handle]
         entity.destroy()
 
@@ -104,12 +109,13 @@ class EntityDB:
         """
         Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND) and store them with new handles in the
         drawing database. This is the recommend method to duplicate DXF entities in a drawing. Graphical entities
-        have to be added to a layout by :meth:`Layout.add_entity`, for other DXF entities: DON'T DUPLICATE THEM.
+        have to be added to a layout by :meth:`~ezdxf.layouts.BaseLayout.add_entity`, for other DXF entities:
+        DON'T DUPLICATE THEM.
 
-        To duplicate DXF entities into another drawing (import) use the :class:`~ezdxf.addons.importer.Importer` add-on.
+        To import DXF entities into another drawing use the :class:`~ezdxf.addons.importer.Importer` add-on.
 
-        An existing owner tag is not changed because this is not the domain of the EntityDB() class, will be set by
-        adding the duplicated entity to a layout.
+        An existing owner tag is not changed because this is not the domain of the :class:`EntityDB` class, will be set
+        by adding the duplicated entity to a layout.
 
         This is not a deep copy in the meaning of Python, because handles and links are changed.
 
@@ -122,9 +128,11 @@ class EntityDB:
 
 class EntitySpace:
     """
-    An EntitySpace is a collection of drawing entities.
-    The ENTITY section is such an entity space, but also blocks.
-    The EntitySpace stores only handles to the drawing entity database.
+    An :class:`EntitySpace` is a collection of :class:`~ezdxf.entities.dxfentity.DXFEntity` objects, that stores only
+    references to :class:`~ezdxf.entities.dxfentity.DXFEntity` objects.
+
+    The :class:`~ezdxf.layouts.Modelspace`, any :class:`~ezdxf.layouts.Paperspace` layout and
+    :class:`~ezdxf.layouts.BlockLayout` objects have an :class:`EntitySpace` container to store their entities.
 
     """
 
@@ -133,26 +141,36 @@ class EntitySpace:
         self.entities = list(e for e in entities if e.is_alive)
 
     def __iter__(self) -> Iterable['DXFEntity']:
+        """ Iterable of all entities. """
         return (e for e in self.entities if e.is_alive)
 
-    def __getitem__(self, item) -> 'DXFEntity':
-        return self.entities[item]
+    def __getitem__(self, index) -> 'DXFEntity':
+        """ Get entity at index `item`
 
-    def __len__(self):
+        :class:`EntitySpace` has a standard Python list like interface, therefore `index`
+        can be any valid list indexing or slicing term, like a single index ``layout[-1]`` to get the last entity, or
+        an index slice ``layout[:10]`` to get the first 10 or less entities as ``List[DXFEntity]``.
+
+        """
+        return self.entities[index]
+
+    def __len__(self) -> int:
+        """ Count of entities. """
         return len(self.entities)
 
-    def has_handle(self, handle: str):
+    def has_handle(self, handle: str) -> bool:
+        """ ``True`` if `handle` is present. """
         return any(e.dxf.handle == handle for e in self)
 
     def purge(self):
         """ Remove deleted entities. """
         self.entities = list(self)
 
-    def reorder(self, order=1):
+    def reorder(self, order: int = 1) -> None:
         """ Reorder entities in place.
 
         Args:
-             order: 1 = priority order (highest first), 2 = z-order (inverted priority, lowest first)
+             order: ``1`` = priority order (highest first), ``2`` = z-order (inverted priority, lowest first)
 
         """
         if order == 1:
@@ -164,11 +182,12 @@ class EntitySpace:
 
         self.entities.sort(key=lambda e: e.priority, reverse=reverse)
 
-    def add(self, entity: 'DXFEntity'):
-        """ Add `entity` to entity space. """
+    def add(self, entity: 'DXFEntity') -> None:
+        """ Add `entity`. """
         self.entities.append(entity)
 
     def extend(self, entities: Iterable['DXFEntity']) -> None:
+        """ Add multiple `entities`."""
         self.entities.extend(entities)
 
     def export_dxf(self, tagwriter: 'TagWriter', order=0) -> None:
@@ -180,6 +199,7 @@ class EntitySpace:
             order: 0 = order of appearance, 1 = priority order (highest first), 2 = z-order (inverted priority,
                    lowest first)
 
+        (internal API)
         """
         if order == 0:
             entities = iter(self)
@@ -203,10 +223,10 @@ class EntitySpace:
                 entity.export_seqend(tagwriter)
 
     def remove(self, entity: 'DXFEntity') -> None:
-        """ Remove `entity` from entity space """
+        """ Remove `entity`. """
         self.entities.remove(entity)
 
     def clear(self) -> None:
-        """ Remove all entities from entity space. """
+        """ Remove all entities. """
         # do not delete database objects - entity space just manage handles
         self.entities = list()

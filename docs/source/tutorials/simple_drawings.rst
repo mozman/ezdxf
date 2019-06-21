@@ -17,11 +17,11 @@ Create a new DXF drawing with :func:`ezdxf.new` to use all available DXF entitie
 
     doc = ezdxf.new('R2010')  # create a new DXF R2010 drawing, official DXF version name: 'AC1024'
 
-    msp = doc.modelspace()  # add new entities to the model space
+    msp = doc.modelspace()  # add new entities to the modelspace
     msp.add_line((0, 0), (10, 0))  # add a LINE entity
     doc.saveas('line.dxf')
 
-New entities are always added to layouts, a layout can be the model space, a paper space layout or a block layout.
+New entities are always added to layouts, a layout can be the modelspace, a paperspace layout or a block layout.
 
 .. seealso::
 

@@ -47,7 +47,7 @@ The :class:`BlocksSection` class manages all block definitions of a drawing docu
 
 .. method:: BlockSection.delete_all_blocks(safe=True)
 
-    Delete all blocks except layout blocks (model space or paper space).
+    Delete all blocks except layout blocks (modelspace or paperspace).
 
     :param safe: check if block is still referenced before deleting and ignore them if so
 

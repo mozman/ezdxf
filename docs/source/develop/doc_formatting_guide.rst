@@ -31,7 +31,7 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
         - literal string values: ``'a String'``
         - literal tags: ``(5, 'F000')``
         - inline code: call a :code:`example_func(x)`
-        - Python keywords: ``None``, ``True``, ``False``
+        - Python keywords: ``None``, ``True``, ``False``, ``tuple``, ``list``, ``dict``, ``str``, ``int``, ``float``
         - Exception classes: :class:`DXFAttributeError`
 
 .. class:: ExampleCls(**kwargs)
@@ -56,6 +56,9 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
 Text Formatting
 ---------------
 
+DXF version
+    DXF R12 (AC1009), DXF R2004 (AC1018)
+
 DXF Types
     DXF types are always written in uppercase letters but without further formatting: DXF, LINE, CIRCLE
 
@@ -70,6 +73,12 @@ Spatial Dimensions
 
 Axis
     x-axis, y-axis and z-axis
+
+Planes
+    xy-plane, xz-plane, yz-plane
+
+Layouts
+    modelspace, paperspace [layout], block [layout]
 
 .. _Sphinx: http://www.sphinx-doc.org/en/master/
 .. _autodoc: http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#module-sphinx.ext.autodoc

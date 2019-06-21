@@ -4,34 +4,28 @@
 
 .. class:: 3DSolid(Body)
 
-Introduced in DXF version R13 (AC1012), dxftype is 3DSOLID.
+    Introduced in DXF R13 (AC1012), dxftype is 3DSOLID.
 
-A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
-Create :class:`3DSolid` objects in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_3dsolid`.
+    A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+    Create :class:`3DSolid` objects in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_3dsolid`.
 
-DXF Attributes for 3DSolid
---------------------------
+    :ref:`Common graphical DXF attributes`
 
-:ref:`Common graphical DXF attributes`
+    .. attribute:: dxf.history
 
-.. attribute:: 3DSolid.dxf.history
+        Handle to history object.
 
-Handle to history object, see: :ref:`low_level_access_to_dxf_entities`
+    .. method:: get_acis_data()
 
-3DSolid Methods
----------------
+        Get the ACIS source code as a list of strings.
 
-.. method:: 3DSolid.get_acis_data()
+    .. method:: set_acis_data(test_lines)
 
-    Get the ACIS source code as a list of strings.
+        Set the ACIS source code as a list of strings **without** line endings.
 
-.. method:: 3DSolid.set_acis_data(test_lines)
+    .. method:: edit_data()
 
-    Set the ACIS source code as a list of strings **without** line endings.
-
-.. method:: 3DSolid.edit_data()
-
-    Context manager for  ACIS text lines, returns :class:`ModelerGeometryData`.
+        Context manager for  ACIS text lines, returns :class:`ModelerGeometryData`.
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
 
