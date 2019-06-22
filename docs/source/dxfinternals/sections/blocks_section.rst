@@ -1,4 +1,4 @@
-.. _Blocks Section:
+.. _blocks_section_internals:
 
 BLOCKS Section
 ==============

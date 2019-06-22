@@ -7,7 +7,9 @@ Simple line type example:
 
 .. image:: gfx/ltype_simple.jpg
 
-You can define your own line types. A DXF linetype definition consists of name, description and elements::
+You can define your own line types. A DXF linetype definition consists of name, description and elements:
+
+.. code-block:: python
 
     elements = [total_pattern_length, elem1, elem2, ...]
 
@@ -17,7 +19,9 @@ total_pattern_length
 elem
     if elem > 0 it is a line, if elem < 0 it is gap, if elem == 0.0 it is a dot
 
-Create a new linetype definition::
+Create a new linetype definition:
+
+.. code-block:: python
 
     import ezdxf
     from ezdxf.tools.standards import linetypes  # some predefined line types
@@ -34,7 +38,9 @@ Create a new linetype definition::
         if name not in doc.linetypes:
             doc.linetypes.new(name=name, dxfattribs={'description': desc, 'pattern': pattern})
 
-Setup some predefined linetypes::
+Setup some predefined linetypes:
+
+.. code-block:: python
 
     for name, desc, pattern in linetypes():
         if name not in doc.linetypes:
@@ -43,7 +49,10 @@ Setup some predefined linetypes::
 Check Available Linetypes
 -------------------------
 
-The linetypes object supports some standard Python protocols::
+The linetypes object supports some standard Python protocols:
+
+.. code-block:: python
+
 
     # iteration
     print('available line types:')
@@ -63,7 +72,9 @@ Removing Linetypes
 
     Deleting of linetypes still in use generates invalid DXF files.
 
-You can delete a linetype::
+You can delete a linetype:
+
+.. code-block:: python
 
     doc.layers.remove('DASHED')
 
@@ -88,7 +99,9 @@ Complex line type example with shapes:
 For simplicity the pattern string for complex line types is mostly the same string as the pattern definition strings
 in AutoCAD .lin files.
 
-Example for complex line type TEXT::
+Example for complex line type TEXT:
+
+.. code-block:: python
 
     doc = ezdxf.new('R2018')  # DXF R13 or later is required
 
@@ -105,7 +118,7 @@ value > 0 is a line, a value < 0 is a gap, and a 0 is a point, the ``[`` starts 
 A following text in quotes defines a TEXT type, a following text without quotes defines a SHAPE type, in .lin files the
 shape type is a shape name, but ezdxf can not translate this name into the required shape file index, so *YOU* have to
 translate this name into the shape file index (e.g. saving the file with AutoCAD as DXF and searching for the line type
-definition, see also DXF Internals: :ref:`LTYPE Table`).
+definition, see also DXF Internals: :ref:`ltype_table_internals`).
 
 The second parameter is the text style for a TEXT type and the shape file name for the SHAPE type, the shape file has to
 be in the same directory as the DXF file. The following parameters in the scheme of ``S=1.0`` are:
@@ -123,7 +136,9 @@ factor, the center of the text is on the line. For the x direction it seems to b
 front of the text and after the text, find x shifting value and gap sizes by try and error. The overall length is at
 least the sum of all line and gap definitions (absolute values).
 
-Example for complex line type SHAPE::
+Example for complex line type SHAPE:
+
+.. code-block:: python
 
     doc.linetypes.new('GRENZE2', dxfattribs={
         'description': 'Grenze eckig ----[]-----[]----[]-----[]----[]--',

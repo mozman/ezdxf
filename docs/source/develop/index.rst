@@ -1,8 +1,20 @@
 Developer Guides
 ================
 
-This section is only for me, because of the long pauses between develop iterations, I often forget to be consistent in
-``code`` and ``documentation`` formatting.
+Information about `ezdxf` internals.
+
+Internal Data Structures
+------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   entitydb
+   dxftags
+   dxftag_collections
+
+Documentation Guide
+-------------------
 
 .. toctree::
    :maxdepth: 1

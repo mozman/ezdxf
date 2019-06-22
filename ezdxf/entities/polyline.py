@@ -14,7 +14,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing
 
-__all__ = ['Polyline', 'Polyface']
+__all__ = ['Polyline', 'Polyface', 'Polymesh']
 
 acdb_polyline = DefSubclass('AcDbPolylineDummy', {  # AcDbPolylineDummy is a temp solution while importing
     # 66: obsolete - not read and not written, because POLYLINE without vertices makes no sense

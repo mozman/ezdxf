@@ -52,6 +52,7 @@ class UCSTable(DXFEntity):
         self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'origin', 'xaxis', 'yaxis'])
 
     def ucs(self) -> UCS:
+        """ Returns an :class:`ezdxf.math.UCS` object for this UCS table entry. """
         return UCS(
             origin=self.dxf.origin,
             ux=self.dxf.xaxis,

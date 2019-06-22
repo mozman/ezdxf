@@ -120,6 +120,7 @@ class ClassesSection:
                 self.classes[key] = dxfclass
 
     def add_class(self, name: str):
+        """ Register a known class by `name`. """
         if name not in CLASS_DEFINITIONS:
             return
         cls_data = CLASS_DEFINITIONS[name]
@@ -136,14 +137,19 @@ class ClassesSection:
         self.register(cls)
 
     def get(self, name: str) -> DXFClass:
-        # key is a combination of name & cpp_class_name, because there are some classes with multiple entries with
-        # different cpp_class_names -> get() returns just the first one
+        """ Returns the first class matching `name`.
+
+        Storage key is the ``(name, cpp_class_name)`` tuple, because there are some classes with
+        the same :attr:`name` but different :attr:`cpp_class_names`.
+
+        """
         for cls in self.classes.values():
             if cls.dxf.name == name:
                 return cls
         raise DXFKeyError(name)
 
-    def add_required_classes(self, dxfversion):
+    def add_required_classes(self, dxfversion: str) -> None:
+        """ Add all required CLASS definitions for `dxfversion`. """
         names = REQUIRED_CLASSES.get(dxfversion, REQ_R2004)
         for name in names:
             self.add_class(name)
@@ -182,12 +188,14 @@ class ClassesSection:
             self.add_class(dxftype)
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
+        """ Export DXF tags. (internal API) """
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")
         for dxfclass in self.classes.values():
             dxfclass.export_dxf(tagwriter)
         tagwriter.write_str("  0\nENDSEC\n")
 
     def update_instance_counters(self) -> None:
+        """ Update CLASS instance counter for all registered classes, requires DXF R2004 or later. """
         if self.doc.dxfversion < DXF2004:
             return  # instance counter not supported
         counter = Counter()

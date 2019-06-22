@@ -1,75 +1,74 @@
 VPort
 =====
 
-The viewport table stores the modelspace viewport configurations. So this entries just modelspace viewports, not paper
-space viewports, for paperspace viewports see the :class:`Viewport` entity.
+.. module:: ezdxf.entities
 
-.. class:: VPort
-
-Defines a viewport to the modelspace.
-
-DXF Attributes for VPort
-------------------------
-
-.. attribute:: VPort.dxf.handle
-
-.. attribute:: VPort.dxf.owner
-
-requires DXF R13 or later
-
-.. attribute:: VPort.dxf.name
-
-.. attribute:: VPort.dxf.flags
-
-.. attribute:: VPort.dxf.lower_left
-
-.. attribute:: VPort.dxf.upper_right
-
-.. attribute:: VPort.dxf.center_point
-
-.. attribute:: VPort.dxf.snap_base
-
-.. attribute:: VPort.dxf.snap_spacing
-
-.. attribute:: VPort.dxf.grid_spacing
-
-.. attribute:: VPort.dxf.direction_point
-
-.. attribute:: VPort.dxf.target_point
-
-.. attribute:: VPort.dxf.height
-
-.. attribute:: VPort.dxf.aspect_ratio
-
-.. attribute:: VPort.dxf.lens_length
-
-.. attribute:: VPort.dxf.front_clipping
-
-.. attribute:: VPort.dxf.back_clipping
-
-.. attribute:: VPort.dxf.snap_rotation
-
-.. attribute:: VPort.dxf.view_twist
-
-.. attribute:: VPort.dxf.status
-
-.. attribute:: VPort.dxf.view_mode
-
-.. attribute:: VPort.dxf.circle_zoom
-
-.. attribute:: VPort.dxf.fast_zoom
-
-.. attribute:: VPort.dxf.ucs_icon
-
-.. attribute:: VPort.dxf.snap_on
-
-.. attribute:: VPort.dxf.grid_on
-
-.. attribute:: VPort.dxf.snap_style
-
-.. attribute:: VPort.dxf.snap_isopair
+The viewport table stores the modelspace viewport configurations. So this entries just modelspace viewports,
+not paperspace viewports, for paperspace viewports see the :class:`Viewport` entity.
 
 .. seealso::
 
-    DXF Internals: :ref:`VPORT Table`
+    DXF Internals: :ref:`vport_table_internals`
+
+.. class:: VPort
+
+    Subclass of :class:`DXFEntity`
+
+    Defines a viewport configurations for the modelspace.
+
+    .. attribute:: dxf.owner
+
+        Handle to owner (:class:`~ezdxf.sections.table.ViewportTable`).
+
+    .. attribute:: dxf.name
+
+    .. attribute:: dxf.flags
+
+    .. attribute:: dxf.lower_left
+
+    .. attribute:: dxf.upper_right
+
+    .. attribute:: dxf.center_point
+
+    .. attribute:: dxf.snap_base
+
+    .. attribute:: dxf.snap_spacing
+
+    .. attribute:: dxf.grid_spacing
+
+    .. attribute:: dxf.direction_point
+
+    .. attribute:: dxf.target_point
+
+    .. attribute:: dxf.height
+
+    .. attribute:: dxf.aspect_ratio
+
+    .. attribute:: dxf.lens_length
+
+    .. attribute:: dxf.front_clipping
+
+    .. attribute:: dxf.back_clipping
+
+    .. attribute:: dxf.snap_rotation
+
+    .. attribute:: dxf.view_twist
+
+    .. attribute:: dxf.status
+
+    .. attribute:: dxf.view_mode
+
+    .. attribute:: dxf.circle_zoom
+
+    .. attribute:: dxf.fast_zoom
+
+    .. attribute:: dxf.ucs_icon
+
+    .. attribute:: dxf.snap_on
+
+    .. attribute:: dxf.grid_on
+
+    .. attribute:: dxf.snap_style
+
+    .. attribute:: dxf.snap_isopair
 

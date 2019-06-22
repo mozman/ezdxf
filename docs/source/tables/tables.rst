@@ -1,85 +1,116 @@
-Table Class
-===========
+Table Classes
+=============
 
+.. module:: ezdxf.sections.table
 
 Generic Table Class
 -------------------
 
 .. class:: Table
 
-    Table entry names are case insensitive: 'Test' == 'TEST'.
+    Generic collection of table entries. Table entry names are case insensitive: ``'Test' == 'TEST'``.
 
-.. method:: Table.new(name, dxfattribs=None)
+    .. automethod:: key(entity: Union[str, DXFEntity]) -> str
 
-:param str name: name of the new table-entry
-:param dict dxfattribs: optional table-parameters, these parameters are described at the table-entry-classes below.
-:returns: table-entry-class, can be ignored
+    .. automethod:: has_entry(name: Union[str, DXFEntity]) -> bool
 
-Table entry creation is for all tables the same procedure::
+    .. automethod:: __contains__(name: Union[str, DXFEntity]) -> bool
 
-    drawing.tablename.new(name, dxfattribs)
+    .. automethod:: __len__
 
-Where `tablename` can be: `layers`, `styles`, `linetypes`, `views`, `viewports`
-or `dimstyles`.
+    .. automethod:: __iter__() -> Iterable[DXFEntity]
+
+    .. automethod:: new(name: str, dxfattribs: dict = None) -> DXFEntity
+
+    .. automethod:: get(name: str) -> DXFEntity
+
+    .. automethod:: remove
+
+    .. automethod:: duplicate_entry(name: str, new_name: str) -> DXFEntity
+
+Layer Table
+-----------
+
+.. class:: LayerTable
+
+    Subclass of :class:`Table`.
+
+    Collection of :class:`~ezdxf.entities.Layer` objects.
+
+Linetype Table
+--------------
+
+Generic table class  of :class:`Table`.
+
+Collection of :class:`~ezdxf.entities.Linetype` objects.
 
 
+Style Table
+-----------
 
-.. method:: Table.get(name)
+.. class:: StyleTable
 
-Get table-entry `name`. Raises ``DXFValueError`` if table-entry is not
-present.
+    Subclass of :class:`Table`.
 
-.. method:: Table.remove(name)
+    Collection of :class:`~ezdxf.entities.Textstyle` objects.
 
-Removes table-entry `name`. Raises ``DXFValueError`` if table-entry is not
-present.
+    .. automethod:: get_shx(shxname: str) -> Textstyle
 
-.. method:: Table.__len__()
+    .. automethod:: find_shx(shxname: str) -> Optional[Textstyle]
 
-Get count of table-entries.
 
-.. method:: Table.has_entry(name)
+DimStyle Table
+--------------
 
-`True` if table contains a table-entry `name`.
+Generic table class of :class:`Table`.
 
-.. method:: Table.__contains__(name)
+Collection of :class:`~ezdxf.entities.DimStyle` objects.
 
-`True` if table contains a table-entry `name`.
 
-.. method:: Table.__iter__()
+AppID Table
+-----------
 
-Iterate over all table.entries, yields table-entry-objects.
+Generic table class of :class:`Table`.
 
-Style Table Class
------------------
+Collection of :class:`~ezdxf.entities.AppID` objects.
 
-.. class:: StyleTable(Table)
+UCS Table
+---------
 
-.. method:: StyleTable.get_shx(name)
+Generic table class of :class:`Table`.
 
-Get existing shx entry, or create a new entry.
+Collection of :class:`~ezdxf.entities.UCSTable` objects.
 
-.. method:: StyleTable.find_shx(name)
+View Table
+----------
 
-Find .shx shape file table entry, by a case insensitive search. A .shx shape file table entry has no name, so you
-have to search by the font attribute.
+Generic table class of :class:`Table`.
 
-Viewport Table Class
---------------------
+Collection of :class:`~ezdxf.entities.View` objects.
 
-.. class:: ViewportTable(Table)
 
-The viewport table stores the modelspace viewport configurations. A viewport configuration is a tiled view of multiple
-viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries with the same
-name, because all viewport entries of a multi-viewport configuration are having the same name - the viewport
-configuration name.
+Viewport Table
+--------------
 
-The name of the actual displayed viewport configuration is "\*ACTIVE".
+.. class:: ViewportTable
 
-.. method:: ViewportTable.get_config(name)
+    The viewport table stores the modelspace viewport configurations. A viewport configuration is a tiled view of
+    multiple viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries
+    with the same name, because all viewport entries of a multi-viewport configuration are having the same name - the
+    viewport configuration name.
 
-Returns a list of :class:`Viewport` objects, of the multi-viewport configuration *name*.
+    The name of the actual displayed viewport configuration is ``'*ACTIVE'``.
 
-.. method:: ViewportTable.delete_config(name):
+    Duplication of table entries is not supported: :meth:`duplicate_entry` raises :class:`NotImplementedError`
 
-Delete all :class:`Viewport` objects of the multi-viewport configuration *name*.
+    .. automethod:: get_config(self, name: str) -> List[Viewport]
+
+    .. automethod:: delete_config
+
+
+Block Record Table
+------------------
+
+Generic table class of :class:`Table`.
+
+Collection of :class:`~ezdxf.entities.BlockRecord` objects.

@@ -3,7 +3,7 @@ Reference
 
 The `DXF Reference`_ is online available at `Autodesk`_.
 
-Quoted from the original DXF 12 Reference which is **not** available on the web:
+Quoted from the original DXF 12 Reference which is not available on the web:
 
    Since the AutoCAD drawing database (.dwg file) is written in a
    compact format that changes significantly as new features are added
@@ -38,14 +38,6 @@ Data Query
 
    query
 
-Fast DXF R12 File/Stream Writer
--------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   r12writer
-
 Math Utilities
 --------------
 
@@ -54,16 +46,13 @@ Math Utilities
 
    math
 
-Internal Data Structures
-------------------------
+Fast DXF R12 File/Stream Writer
+-------------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   entitydb
-   dxftags
-   dxftag_collections
-
+   r12writer
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

@@ -1,4 +1,4 @@
-.. _VIEW Table:
+.. _view_table_internals:
 
 VIEW Table
 ==========

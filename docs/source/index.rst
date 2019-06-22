@@ -62,6 +62,7 @@ Contents
 
    introduction
    tutorials/index
+   concepts/index
    reference
    render/index
    addons/index

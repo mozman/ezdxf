@@ -9,9 +9,8 @@ What is ezdxf
 it allows developers to read and modify existing DXF drawings or create new DXF drawings.
 
 The main objective in the development of *ezdxf* was to hide complex DXF details from the programmer
-but still support all the possibilities of the `DXF`_ format. Nevertheless, a basic understanding of the DXF
-format is an advantage (but not necessary), also to understand what is possible with the DXF file format and what is
-not.
+but still support most capabilities of the `DXF`_ format. Nevertheless, a basic understanding of the DXF
+format is required, also to understand which goals are possible to accomplish with the DXF format.
 
 Not all DXF features are supported yet, but additional features will be added in the future gradually.
 

@@ -1,7 +1,5 @@
-.. _Tables Section:
-
-TABLES Section
-==============
+DXF Tables
+==========
 
 .. toctree::
    :maxdepth: 1
@@ -11,5 +9,3 @@ TABLES Section
    linetype_table
    dimstyle_table
    block_record_table
-
-TODO

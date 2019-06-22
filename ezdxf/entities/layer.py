@@ -81,38 +81,54 @@ class Layer(DXFEntity):
             self.dxf.plotstyle_handle = self.doc.plotstyles['Normal'].dxf.handle
 
     def is_frozen(self) -> bool:
+        """ Returns ``True`` if layer is frozen. """
         return self.dxf.flags & Layer.FROZEN > 0
 
     def freeze(self) -> None:
+        """ Freeze layer. """
         self.dxf.flags = self.dxf.flags | Layer.FROZEN
 
     def thaw(self) -> None:
+        """ Thaw layer."""
         self.dxf.flags = self.dxf.flags & Layer.THAW
 
     def is_locked(self) -> bool:
+        """ Returns ``True`` if layer is locked. """
         return self.dxf.flags & Layer.LOCK > 0
 
     def lock(self) -> None:
+        """ Lock layer, entities on this layer are not editable - just important in CAD applications. """
         self.dxf.flags = self.dxf.flags | Layer.LOCK
 
     def unlock(self) -> None:
+        """ Unlock layer, entities on this layer are editable - just important in CAD applications. """
         self.dxf.flags = self.dxf.flags & Layer.UNLOCK
 
     def is_off(self) -> bool:
+        """ Returns ``True`` if layer is off. """
         return self.dxf.color < 0
 
     def is_on(self) -> bool:
+        """ Returns ``True`` if layer is on. """
         return not self.is_off()
 
     def on(self) -> None:
+        """ Switch layer `on` (visible)."""
         self.dxf.color = abs(self.dxf.color)
 
     def off(self) -> None:
+        """ Switch layer `off` (invisible). """
         self.dxf.color = -abs(self.dxf.color)
 
     def get_color(self) -> int:
+        """ Get layer color, preferred method for getting the layer color, because color is negative for layer
+        status `off`.
+        """
         return abs(self.dxf.color)
 
     def set_color(self, color: int) -> None:
+        """ Set layer `color`, preferred method for setting the layer color, because color is negative for layer
+        status `off`.
+        """
         color = abs(color) if self.is_on() else -abs(color)
         self.dxf.color = color

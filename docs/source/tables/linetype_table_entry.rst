@@ -1,35 +1,36 @@
 Linetype
 ========
 
-.. class:: Linetype
-
-Defines a linetype.
-
-DXF Attributes for Linetype
----------------------------
-
-.. attribute:: Linetype.dxf.name
-
-Linetype name (str)
-
-.. attribute:: Linetype.dxf.owner
-
-requires DXF R13 or later
-
-.. attribute:: Linetype.dxf.description
-
-Linetype description (str)
-
-.. attribute:: Linetype.dxf.length
-
-Total pattern length in drawing units (float)
-
-.. attribute:: Linetype.dxf.items
-
-Number of linetype elements (int)
+.. module:: ezdxf.entities
 
 .. seealso::
 
     :ref:`tut_linetypes`
 
-    DXF Internals: :ref:`LTYPE Table`
+    DXF Internals: :ref:`ltype_table_internals`
+
+.. class:: Linetype
+
+    Subclass of :class:`DXFEntity`
+
+    Defines a linetype.
+
+    .. attribute:: dxf.name
+
+        Linetype name (str).
+
+    .. attribute:: dxf.owner
+
+        Handle to owner (:class:`~ezdxf.sections.table.Table`).
+
+    .. attribute:: dxf.description
+
+        Linetype description (str).
+
+    .. attribute:: dxf.length
+
+        Total pattern length in drawing units (float).
+
+    .. attribute:: dxf.items
+
+        Number of linetype elements (int).

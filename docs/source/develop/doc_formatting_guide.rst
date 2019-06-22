@@ -1,7 +1,10 @@
 .. sphinx comments
 
-Documentation Formatting Guide
-==============================
+Formatting Guide
+================
+
+This section is only for me, because of the long pauses between develop iterations, I often forget to be consistent in
+documentation formatting.
 
 Documentation is written with `Sphinx`_ and `reSturcturedText`_.
 
@@ -79,6 +82,9 @@ Planes
 
 Layouts
     modelspace, paperspace [layout], block [layout]
+
+Extended Entity Data
+    AppData, XDATA, embedded object, APPID
 
 .. _Sphinx: http://www.sphinx-doc.org/en/master/
 .. _autodoc: http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#module-sphinx.ext.autodoc

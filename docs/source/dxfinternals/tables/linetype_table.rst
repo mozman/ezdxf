@@ -1,4 +1,4 @@
-.. _LTYPE Table:
+.. _ltype_table_internals:
 
 LTYPE Table
 ===========
@@ -68,7 +68,9 @@ Table Structure DXF R2000+
 Simple Line Type
 ----------------
 
-ezdxf setup for line type 'CENTER'::
+`ezdxf` setup for line type 'CENTER':
+
+.. code-block:: python
 
     dwg.linetypes.new("CENTER", dxfattribs={
         description = "Center ____ _ ____ _ ____ _ ____ _ ____ _ ____",
@@ -123,7 +125,9 @@ Simple Line Type Tag Structure DXF R2000+
 Complex Line Type TEXT
 ----------------------
 
-ezdxf setup for line type 'GASLEITUNG'::
+`ezdxf` setup for line type 'GASLEITUNG':
+
+.. code-block:: python
 
     dwg.linetypes.new('GASLEITUNG', dxfattribs={
         'description': 'Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--',

@@ -10,52 +10,52 @@ The points associated with each entity are expressed in terms of the entity's ow
 The OCS was referred to as ECS in previous releases of AutoCAD.
 
 With OCS, the only additional information needed to describe the entity's position in 3D space is the 3D vector
-describing the Z axis of the OCS, and the elevation value.
+describing the z-axis of the OCS, and the elevation value.
 
-For a given Z axis (or extrusion) direction, there are an infinite number of coordinate systems, defined by translating
-the origin in 3D space and by rotating the X and Y axes around the Z axis. However, for the same Z axis direction,
+For a given z-axis (or extrusion) direction, there are an infinite number of coordinate systems, defined by translating
+the origin in 3D space and by rotating the x- and y-axis around the z-axis. However, for the same z-axis direction,
 there is only one OCS. It has the following properties:
 
 - Its origin coincides with the WCS origin.
-- The orientation of the X and Y axes within the XY plane are calculated in an arbitrary but consistent manner. AutoCAD
-  performs this calculation using the arbitrary axis algorithm.
+- The orientation of the x- and y-axis within the xy-plane are calculated in an arbitrary but consistent manner.
+  AutoCAD performs this calculation using the arbitrary axis algorithm.
 
 These entities do not lie in a particular plane. All points are expressed in world coordinates. Of these entities,
-only lines and points can be extruded. Their extrusion direction can differ from the world Z axis.
+only lines and points can be extruded. Their extrusion direction can differ from the world z-axis.
 
-- :class:`Line`
-- :class:`Point`
-- :class:`3DFace`
-- :class:`Polyline` (3D)
-- :class:`Vertex` (3D)
-- :class:`Polymesh`
-- :class:`Polyface`
-- :class:`Viewport`
+- :class:`~ezdxf.entities.Line`
+- :class:`~ezdxf.entities.Point`
+- :class:`~ezdxf.entities.3DFace`
+- :class:`~ezdxf.entities.Polyline` (3D)
+- :class:`~ezdxf.entities.Vertex` (3D)
+- :class:`~ezdxf.entities.Polymesh`
+- :class:`~ezdxf.entities.Polyface`
+- :class:`~ezdxf.entities.Viewport`
 
 These entities are planar in nature. All points are expressed in object coordinates. All of these entities can be
-extruded. Their extrusion direction can differ from the world Z axis.
+extruded. Their extrusion direction can differ from the world z-axis.
 
-- :class:`Circle`
-- :class:`Arc`
-- :class:`Solid`
-- :class:`Trace`
-- :class:`Text`
-- :class:`Attrib`
-- :class:`Attdef`
-- :class:`Shape`
-- :class:`Insert`
-- :class:`Polyline` (2D)
-- :class:`Vertex` (2D)
-- :class:`LWPolyline`
-- :class:`Hatch`
-- :class:`Image`
+- :class:`~ezdxf.entities.Circle`
+- :class:`~ezdxf.entities.Arc`
+- :class:`~ezdxf.entities.Solid`
+- :class:`~ezdxf.entities.Trace`
+- :class:`~ezdxf.entities.Text`
+- :class:`~ezdxf.entities.Attrib`
+- :class:`~ezdxf.entities.Attdef`
+- :class:`~ezdxf.entities.Shape`
+- :class:`~ezdxf.entities.Insert`
+- :class:`~ezdxf.entities.Polyline` (2D)
+- :class:`~ezdxf.entities.Vertex` (2D)
+- :class:`~ezdxf.entities.LWPolyline`
+- :class:`~ezdxf.entities.Hatch`
+- :class:`~ezdxf.entities.Image`
 
-Some of a :class:`Dimension`'s points are expressed in WCS and some in OCS.
+Some of a :class:`~ezdxf.entities.Dimension`'s points are expressed in WCS and some in OCS.
 
 Elevation
 ---------
 
-Elevation Group code 38:
+Elevation group code 38:
 
 Exists only in output from versions prior to R11. Otherwise, Z coordinates are supplied as part of each of the entity's
 defining points.
@@ -70,11 +70,13 @@ Arbitrary Axis Algorithm
 The arbitrary axis algorithm is used by AutoCAD internally to implement the arbitrary but consistent generation of
 object coordinate systems for all entities that use object coordinates.
 
-Given a unit-length vector to be used as the Z axis of a coordinate system, the arbitrary axis algorithm generates a
-corresponding X axis for the coordinate system. The Y axis follows by application of the right-hand rule.
+Given a unit-length vector to be used as the z-axis of a coordinate system, the arbitrary axis algorithm generates a
+corresponding x-axis for the coordinate system. The y-axis follows by application of the right-hand rule.
 
-We are looking for the arbitrary X and Y axes to go with the normal Az (the arbitrary Z axis).
-They will be called Ax and Ay (using :class:`~ezdxf.math.Vector`)::
+We are looking for the arbitrary x- and y-axis to go with the normal Az (the arbitrary z-axis).
+They will be called Ax and Ay (using :class:`~ezdxf.math.Vector`):
+
+.. code-block:: python
 
     Az = Vector(entity.dxf.extrusion).normalize()  # normal (extrusion) vector
     # Extrusion vector normalization should not be necessary, but don't rely on any DXF content
@@ -88,7 +90,7 @@ They will be called Ax and Ay (using :class:`~ezdxf.math.Vector`)::
 WCS to OCS
 ----------
 
-.. code::
+.. code-block:: python
 
     def wcs_to_ocs(point):
         px, py, pz = Vector(point)  # point in WCS
@@ -100,7 +102,7 @@ WCS to OCS
 OCS to WCS
 ----------
 
-.. code::
+.. code-block:: python
 
     Wx = wcs_to_ocs((1, 0, 0))
     Wy = wcs_to_ocs((0, 1, 0))

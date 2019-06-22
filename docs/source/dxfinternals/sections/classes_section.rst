@@ -1,4 +1,4 @@
-.. _Classes Section:
+.. _classes_section_internals:
 
 CLASSES Section
 ===============
@@ -11,6 +11,8 @@ The CLASSES sections was introduced with DXF AC1015 (AutoCAD Release R13).
 .. seealso::
 
     DXF Reference: `About the DXF CLASSES Section`_
+
+    Documentation of `ezdxf` :class:`~ezdxf.sections.classes.ClassesSection` class.
 
 The CLASSES section in DXF files holds the information for application-defined classes whose instances appear in
 the BLOCKS, ENTITIES, and OBJECTS sections of the database. It is assumed that a class definition is permanently
@@ -28,6 +30,7 @@ CLASS Entities
 .. seealso::
 
     DXF Reference: `Group Codes for the CLASS entity`_
+
 
 CLASS entities have no handle and therefore ezdxf does not store the CLASS entity in the drawing entities database!
 

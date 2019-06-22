@@ -1,4 +1,4 @@
-.. _VPORT Table:
+.. _vport_table_internals:
 
 VPORT Configuration Table
 =========================

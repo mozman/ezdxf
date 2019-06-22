@@ -1,4 +1,4 @@
-.. _Objects Section:
+.. _objects_section_internals:
 
 OBJECTS Section
 ===============

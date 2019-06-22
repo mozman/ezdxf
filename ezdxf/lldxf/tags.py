@@ -85,11 +85,10 @@ class Tags(list):
 
     def get_handle(self) -> str:
         """
-        Get DXF handle. Raises DXFValueError if handle not exists.
+        Get DXF handle. Raises :class:`DXFValueError` if handle not exist.
 
-        Returns: handle as hex-string like 'FF'
-
-        Raises: DXFValueError: if handle not exist.
+        Returns:
+            handle as hex-string like ``'FF'``
 
         """
         try:
@@ -110,7 +109,7 @@ class Tags(list):
         Replace existing handle.
 
         Args:
-            new_handle: new handle as hex string e.g. ``ABBA``
+            new_handle: new handle as hex string e.g. ``'ABBA'``
 
         """
         for index, tag in enumerate(self):
@@ -119,12 +118,12 @@ class Tags(list):
                 return
 
     def dxftype(self) -> str:
-        """ Returns DXF type of entity, e.g. ``LINE``. """
+        """ Returns DXF type of entity, e.g. ``'LINE'``. """
         return self[0].value
 
     def has_tag(self, code: int) -> bool:
         """
-        Returns True if a :class:`~ezdxf.lldxf.types.DXFTag` with group code == `code` is present else False.
+        Returns ``True`` if a :class:`~ezdxf.lldxf.types.DXFTag` with group code == `code` is present.
 
         Args:
             code: group code as int
@@ -135,11 +134,11 @@ class Tags(list):
     def get_first_value(self, code: int, default=DXFValueError) -> 'TagValue':
         """
         Returns value of first :class:`~ezdxf.lldxf.types.DXFTag` with given group code or default if `default` !=
-        `DXFValueError`, else raises `DXFValueError`.
+        `DXFValueError`, else raises :class:`DXFValueError`.
 
         Args:
             code: group code as int
-            default: return value for default case or raises `DXFValueError`
+            default: return value for default case or raises :class:`DXFValueError`
 
         """
         for tag in self:
@@ -153,11 +152,11 @@ class Tags(list):
     def get_first_tag(self, code: int, default=DXFValueError) -> DXFTag:
         """
         Returns first :class:`~ezdxf.lldxf.types.DXFTag` with given group code or `default`, if `default` !=
-        `DXFValueError`, else raises `DXFValueError`.
+        :class:`DXFValueError`, else raises :class:`DXFValueError`.
 
         Args:
             code: group code as int
-            default: return value for default case or raises `DXFValueError`
+            default: return value for default case or raises :class:`DXFValueError`
 
         """
         for tag in self:
@@ -185,7 +184,7 @@ class Tags(list):
         Args:
             code: group code as int
             start: start index as int
-            end: end index as int, if None end index = len(self)
+            end: end index as int, ``None`` for end index = ``len(self)``
 
         """
         if end is None:
@@ -199,7 +198,7 @@ class Tags(list):
 
     def update(self, tag: DXFTag) -> None:
         """
-        Update first existing tag with same group code as `tag`, raises `DXFValueError` if tag not exist.
+        Update first existing tag with same group code as `tag`, raises :class:`DXFValueError` if tag not exist.
 
         """
         index = self.tag_index(tag.code)
@@ -207,7 +206,7 @@ class Tags(list):
 
     def set_first(self, tag: DXFTag) -> None:
         """
-        Update first existing tag with group code `tag.code` or append tag.
+        Update first existing tag with group code ``tag.code`` or append tag.
 
         """
         try:
@@ -270,9 +269,10 @@ class Tags(list):
         Args:
             codes: iterable of group codes
             start: start index as int
-            end: end index as int, if None end index = len(self)
+            end: end index as int, ``None`` for end index = ``len(self)``
 
-        Returns: collected tags as :class:`Tags`
+        Returns:
+            collected tags as :class:`Tags`
 
         """
         codes = frozenset(codes)
@@ -319,10 +319,8 @@ def group_tags(tags: Iterable[DXFTag], splitcode: int = STRUCTURE_MARKER) -> Ite
     A SplitTag is a tag with code == splitcode, like (0, 'SECTION') for splitcode == 0.
 
     Args:
-        tags: iterable of DXFTag()
+        tags: iterable of :class:`DXFTag`
         splitcode int: group code of split tag
-
-    Yields: list of DXFTag()
 
     """
 

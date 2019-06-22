@@ -1,14 +1,14 @@
 DXF Graphic Entity Base Class
 =============================
 
-.. module:: ezdxf.entities.dxfgfx
+.. module:: ezdxf.entities
 
 
 .. class:: DXFGraphic
 
-    ============ ===========================================
-    Subclass of  :class:`ezdxf.entities.dxfentity.DXFEntity`
-    ============ ===========================================
+    ============ =================================
+    Subclass of  :class:`ezdxf.entities.DXFEntity`
+    ============ =================================
 
     Common base class for all graphical DXF entities.
 
@@ -39,7 +39,7 @@ DXF Graphic Entity Base Class
 
     .. attribute:: zorder
 
-        Inverted :attr:`~ezdxf.entities.dxfentity.DXFEntity.priority` order (lowest value first), :attr:`zorder` support
+        Inverted :attr:`~ezdxf.entities.DXFEntity.priority` order (lowest value first), :attr:`zorder` support
         not implemented, setting :attr:`zorder` has no effect.
 
     .. automethod:: ocs() -> OCS

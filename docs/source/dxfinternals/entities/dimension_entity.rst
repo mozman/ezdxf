@@ -6,7 +6,7 @@ DIMENSION Entity
 .. seealso::
 
     - DXF Reference: `DIMENSION`_
-    - DXFInternals: :ref:`DIMSTYLE Table`
+    - DXFInternals: :ref:`dimstyle_table_internals`
 
 
 .. image:: gfx/dimension_defpoints.svg

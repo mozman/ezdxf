@@ -1,112 +1,108 @@
 Layer
 =====
 
+.. module:: ezdxf.entities
+
+.. seealso::
+
+    :ref:`layer_concept` and :ref:`tut_layers`
+
 .. class:: Layer
+
+    Subclass of :class:`DXFEntity`
 
     Layer definition, defines attribute values for entities on this layer for their attributes set to ``BYLAYER``.
 
-DXF Attributes for Layer
-------------------------
+    .. attribute:: dxf.handle
 
-.. attribute:: Layer.dxf.handle
+        DXF handle (feature for experts)
 
-    DXF handle (feature for experts)
+    .. attribute:: dxf.owner
 
-.. attribute:: Layer.dxf.owner
+        Handle to owner (:class:`~ezdxf.sections.table.LayerTable`).
 
-    requires DXF R13 or later
+    .. attribute:: dxf.name
 
-.. attribute:: Layer.dxf.name
+        Layer name (str)
 
-    Layer name (str)
+    .. attribute:: dxf.flags
 
-.. attribute:: Layer.dxf.flags
+        Layer flags (bit-coded values, feature for experts)
 
-    Layer flags (feature for experts)
+        === ==========================================
+        1   Layer is frozen; otherwise layer is thawed; use :meth:`is_frozen`, :meth:`freeze` and :meth:`thaw`
+        2   Layer is frozen by default in new viewports
+        4   Layer is locked; use :meth:`is_locked`, :meth:`lock`, :meth:`unlock`
+        16  If set, table entry is externally dependent on an xref
+        32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
+        64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
+            edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF
+            files and need not be set by programs that write DXF files)
+        === ==========================================
 
-.. attribute:: Layer.dxf.color
+    .. attribute:: dxf.color
 
-    Layer color, but use :meth:`Layer.get_color`, because color is negative for layer status *off* (int)
+        Layer color, but use :meth:`Layer.get_color`, because color is negative for layer status `off` (int)
 
-.. attribute:: Layer.dxf.true_color
+    .. attribute:: true_color
 
-    Layer true color value as int (DXF R2004+)
+        Layer true color value as int (requires DXF R2004)
 
-.. attribute:: Layer.dxf.linetype
+    .. attribute:: dxf.linetype
 
-    Name of line type (str)
+        Name of line type (str)
 
-.. attribute:: Layer.dxf.plot
+    .. attribute:: dxf.plot
 
-    Plot flag (int)
+        Plot flag (int)
 
-    === ============================
-    1   plot layer (default value)
-    0   don't plot layer
-    === ============================
+        === ============================
+        1   plot layer (default value)
+        0   don't plot layer
+        === ============================
 
-.. attribute:: Layer.dxf.lineweight
+    .. attribute:: dxf.lineweight
 
-    Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200, values
-    outside this range prevents AutoCAD from loading the file.
+        Line weight in mm times 100 (e.g. 0.13mm = 13). Smallest line weight is 13 and biggest line weight is 200,
+        values outside this range prevents AutoCAD from loading the file.
 
-    :code:`ezdxf.lldxf.const.LINEWEIGHT_DEFAULT` for using global default line weight.
+        :code:`ezdxf.lldxf.const.LINEWEIGHT_DEFAULT` for using global default line weight.
 
-    requires DXF R13 or later
+        (requires DXF R13)
 
-.. attribute:: Layer.dxf.plot_style_name
+    .. attribute:: dxf.plotstyle_handle
 
-    Handle to PlotStyleName (feature for experts)
+        Handle to PlotStyleName (feature for experts)
 
-    requires DXF R13 or later
+        (requires DXF R13)
 
-.. attribute:: Layer.dxf.line_weight
 
-    requires DXF R13 or later
+    .. attribute:: dxf.material_handle
 
-.. attribute:: Layer.dxf.plot_style_name
+        Handle to default :class:`~ezdxf.entities.Material`.
 
-    requires DXF R13 or later
+        (requires DXF R13)
 
-.. attribute:: Layer.dxf.material
+    .. automethod:: is_frozen
 
-    requires DXF R13 or later
+    .. automethod:: freeze
 
-Layer Methods
--------------
+    .. automethod:: thaw
 
-.. method:: Layer.is_frozen()
+    .. automethod:: is_locked
 
-.. method:: Layer.freeze()
+    .. automethod:: lock
 
-.. method:: Layer.thaw()
+    .. automethod:: unlock
 
-.. method:: Layer.is_locked()
+    .. automethod:: is_off
 
-.. method:: Layer.lock()
+    .. automethod:: is_on
 
-    Lock layer, entities on this layer are not editable - just important in CAD applications.
+    .. automethod:: on
 
-.. method:: Layer.unlock()
+    .. automethod:: off
 
-    Unlock layer, entities on this layer are editable - just important in CAD applications.
+    .. automethod:: get_color
 
-.. method:: Layer.is_off()
-
-.. method:: Layer.is_on()
-
-.. method:: Layer.on()
-
-    Switch layer *on* (visible).
-
-.. method:: Layer.off()
-
-    Switch layer *off* (invisible).
-
-.. method:: Layer.get_color()
-
-    Get layer color, preferred method for getting the layer color, because color is negative for layer status *off*.
-
-.. method:: Layer.set_color(color)
-
-    Set layer color to *color*, preferred method for setting the layer color, because color is negative for layer status *off*.
+    .. automethod:: set_color

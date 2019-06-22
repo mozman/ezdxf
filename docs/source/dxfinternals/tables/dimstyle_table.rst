@@ -1,4 +1,4 @@
-.. _DIMSTYLE Table:
+.. _dimstyle_table_internals:
 
 DIMSTYLE Table
 ==============
@@ -545,4 +545,4 @@ This XDATA groups requires also an appropriate APPID entry in the APPID table. T
 .. _CADDManger Blog: http://www.caddmanager.com/CMB/2009/09/cad-standards-autocad-dimension-variables/
 
 
-.. include:: reflinks.inc
+.. include:: ../reflinks.inc

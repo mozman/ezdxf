@@ -1,32 +1,49 @@
 UCS
 ====
 
-.. class:: UCS
+.. module:: ezdxf.entities
 
-Defines an user coordinate system (UCS).
+.. seealso::
 
-DXF Attributes for UCS
-----------------------
+    :ref:`ocs`
 
-.. attribute:: UCS.dxf.handle
+.. class:: UCSTable
 
-.. attribute:: UCS.dxf.owner
+    Subclass of :class:`DXFEntity`
 
-requires DXF R13 or later
+    Defines an user coordinate system (UCS).
 
-.. attribute:: UCS.dxf.name
+    .. attribute:: dxf.owner
 
-.. attribute:: UCS.dxf.flags
+        Handle to owner (:class:`~ezdxf.sections.table.Table`).
 
-.. attribute:: UCS.dxf.origin
+    .. attribute:: dxf.name
 
-.. attribute:: UCS.dxf.xaxis
+        UCS name (str).
 
-.. attribute:: UCS.dxf.yaxis
+    .. attribute:: dxf.flags
 
-UCS Methods
------------
+        Standard flags (bit-coded values):
 
-.. method:: UCS.ucs()
+        === ========================================================
+        16  If set, table entry is externally dependent on an xref
+        32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
+        64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
+            edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF
+            files and need not be set by programs that write DXF files)
+        === ========================================================
 
-    Returns an :class:`ezdxf.math.UCS` object for this UCS table entry.
+    .. attribute:: dxf.origin
+
+        Origin  as (x, y, z) tuple
+
+    .. attribute:: dxf.xaxis
+
+        X-axis direction as (x, y, z) tuple
+
+    .. attribute:: dxf.yaxis
+
+        Y-axis direction as (x, y, z) tuple
+
+    .. automethod:: ucs
+

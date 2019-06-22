@@ -1,9 +1,7 @@
-.. _Header Section:
+.. _header_section_internals:
 
 HEADER Section
 ==============
-
-Documentation to ezdxf :class:`HeaderSection` class.
 
 In DXF R12 an prior the HEADER section was optional, but since DXF R13 the HEADER section is mandatory. The overall
 structure is:
@@ -26,6 +24,8 @@ A header variable has a name defined by a :code:`(9, Name)` tag and following va
 
 
 .. seealso::
+
+    Documentation of `ezdxf` :class:`~ezdxf.sections.header.HeaderSection` class.
 
     DXF Reference: `Header Variables`_
 

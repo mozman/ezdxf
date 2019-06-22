@@ -44,9 +44,9 @@ Object coordinate system - coordinates relative to the object itself. These poin
 current UCS, or current DCS, according to the intended use of the object. Conversely, points must be translated into an
 OCS before they are written to the database. This is also known as the entity coordinate system.
 
-Because ezdxf is just an interface to DXF, it does not automatically convert OCS into WCS, this is the domain of the
-user/application. And further more, the main goal of OCS is to place 2D elements in 3D space, this may be was useful
-in the beginning of CAD, I think nowadays this is an not often used feature, but I am not an AutoCAD user.
+Because `ezdxf` is just an interface to DXF, it does not automatically convert OCS into WCS, this is the domain of the
+user/application. And further more, the main goal of OCS is to place 2D elements in 3D space, this maybe was useful
+in the early years of CAD, I think nowadays this is an not often used feature, but I am not an AutoCAD user.
 
 OCS differ from WCS only if extrusion != (0, 0, 1), convert OCS into WCS::
 

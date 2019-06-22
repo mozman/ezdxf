@@ -24,22 +24,21 @@ class StoredSection:
 
 
 class EntitySection:
-    """
-    The EntitySection() collects all entities from modelspace and paperspace and store them in the associated
-    BlockRecord().
-
+    """ :class:`EntitiesSection` is just a proxy for :class:`Modelspace` and active :class:`Paperspace` linked together.
     """
     def __init__(self, doc: 'Drawing' = None, entities: Iterable['DXFEntity'] = None):
         self.doc = doc
         if entities is not None:
             self._build(iter(entities))
 
-    def __iter__(self) -> 'DXFEntity':
+    def __iter__(self) -> Iterable['DXFEntity']:
+        """ Iterable for all entities of modelspace and active paperspace. """
         layouts = self.doc.layouts
         for entity in chain(layouts.modelspace(), layouts.active_layout()):
             yield entity
 
     def __len__(self) -> int:
+        """ Returns count of all entities of modelspace and active paperspace. """
         layouts = self.doc.layouts
         return len(layouts.modelspace()) + len(layouts.active_layout())
 

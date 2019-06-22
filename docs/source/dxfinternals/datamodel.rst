@@ -15,7 +15,7 @@ features:
 
     - A handle whose value is unique to the drawing/DXF file, and is constant for the lifetime of the drawing. This
       format has existed since AutoCAD Release 10, and as of AutoCAD Release 13, handles are always enabled.
-    - An optional xdata table, as entities have had since AutoCAD Release 11.
+    - An optional XDATA table, as entities have had since AutoCAD Release 11.
     - An optional persistent reactor table.
     - An optional ownership pointer to an extension dictionary which, in turn, owns subobjects placed in it by an
       application.

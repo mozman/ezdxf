@@ -7,6 +7,10 @@ The drawing settings are stored in the HEADER section, which is accessible by th
 attribute of the :class:`~ezdxf.drawing.Drawing` object. See the online documentation from Autodesk for available
 `header variables`_.
 
+.. seealso::
+
+    DXF Internals: :ref:`header_section_internals`
+
 .. class:: HeaderSection
 
     .. attribute:: custom_vars

@@ -281,7 +281,8 @@ class DimStyle(DXFEntity):
             if value is not None:
                 print("{name} ({code}) = {value}".format(name=name, value=value, code=code))
 
-    def copy_to_header(self, dwg):
+    def copy_to_header(self, dwg: 'Drawing'):
+        """ Copy all dimension style variables to HEADER section of `dwg`. """
         attribs = self.dxfattribs()
         header = dwg.header
         header['$DIMSTYLE'] = self.dxf.name
@@ -295,12 +296,12 @@ class DimStyle(DXFEntity):
 
     def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '', ldrblk: str = '') -> None:
         """
-        Set arrows by block names or AutoCAD standard arrow names, set dimtsz = 0 which disables tick.
+        Set arrows by block names or AutoCAD standard arrow names, set DIMTSZ to ``0`` which disables tick.
 
         Args:
-            blk: block/arrow name for both arrows, if dimsah == 0
-            blk1: block/arrow name for first arrow, if dimsah == 1
-            blk2: block/arrow name for second arrow, if dimsah == 1
+            blk: block/arrow name for both arrows, if DIMSAH is ``0``
+            blk1: block/arrow name for first arrow, if DIMSAH is ``1``
+            blk2: block/arrow name for second arrow, if DIMSAH is ``1``
             ldrblk: block/arrow name for leader
 
         """
@@ -323,24 +324,24 @@ class DimStyle(DXFEntity):
 
     def set_tick(self, size: float = 1) -> None:
         """
-        Use oblique stroke as tick, disables arrows.
+        Set tick `size`, which also disables arrows, a tick is just an oblique stroke as marker.
 
         Args:
-            size: arrow size in daring units
+            size: arrow size in drawing units
 
         """
         self.set_dxf_attrib('dimtsz', size)
 
     def set_text_align(self, halign: str = None, valign: str = None, vshift: float = None) -> None:
         """
-        Set measurement text alignment, `halign` defines the horizontal alignment (requires DXFR2000+),
+        Set measurement text alignment, `halign` defines the horizontal alignment (requires DXF R2000),
         `valign` defines the vertical  alignment, `above1` and `above2` means above extension line 1 or 2 and aligned
         with extension line.
 
         Args:
-            halign: `left`, `right`, `center`, `above1`, `above2`, requires DXF R2000+
-            valign: `above`, `center`, `below`
-            vshift: vertical text shift, if `valign` is `center`; >0 shift upward, <0 shift downwards
+            halign: ``left``, ``right``, ``center`, `above1``, ``above2`` (requires DXF R2000)
+            valign: ``above``, ``center``, ``below``
+            vshift: vertical text shift, if `valign` is ``center``; >0 shift upward, <0 shift downwards
 
         """
         if valign:
@@ -360,13 +361,13 @@ class DimStyle(DXFEntity):
         Args:
             prefix: Dimension text prefix text as string
             postfix: Dimension text postfix text as string
-            rnd: Rounds all dimensioning distances to the specified value, for instance, if DIMRND is set to 0.25, all
-                 distances round to the nearest 0.25 unit. If you set DIMRND to 1.0, all distances round to the nearest
-                 integer.
-            dec: Sets the number of decimal places displayed for the primary units of a dimension. requires DXF R2000+
-            sep: "." or "," as decimal separator requires DXF R2000+
-            leading_zeros: suppress leading zeros for decimal dimensions if False
-            trailing_zeros: suppress trailing zeros for decimal dimensions if False
+            rnd: Rounds all dimensioning distances to the specified value, for instance, if DIMRND is set to ``0.25``,
+                 all distances round to the nearest ``0.25`` unit. If you set DIMRND to ``1.0``, all distances round to
+                 the nearest integer.
+            dec: Sets the number of decimal places displayed for the primary units of a dimension. (requires DXF R2000)
+            sep: ``'.'`` or ``','`` as decimal separator (requires DXF R2000)
+            leading_zeros: suppress leading zeros for decimal dimensions if ``False``
+            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False``
 
         """
         if prefix or postfix:
@@ -395,11 +396,11 @@ class DimStyle(DXFEntity):
 
         Args:
             color: color index
-            linetype: linetype as string, requires DXF R2007+
-            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm, requires DXF R2000+
+            linetype: linetype as string (requires DXF R2007)
+            lineweight: line weight as int, ``13`` = 0.13mm, ``200`` = 2.00mm (requires DXF R2000)
             extension: extension length
-            disable1: True to suppress first part of dimension line, requires DXF R2000+
-            disable2: True to suppress second part of dimension line, requires DXF R2000+
+            disable1: ``True`` to suppress first part of dimension line (requires DXF R2000)
+            disable2: ``True`` to suppress second part of dimension line (requires DXF R2000)
 
         """
         if color is not None:
@@ -423,7 +424,7 @@ class DimStyle(DXFEntity):
 
         Args:
             color: color index
-            lineweight: line weight as int, 13 = 0.13mm, 200 = 2.00mm
+            lineweight: line weight as int, ``13`` = 0.13mm, ``200`` = 2.00mm
             extension: extension length above dimension line
             offset: offset from measurement point
             fixed_length: set fixed length extension line, length below the dimension line
@@ -446,8 +447,8 @@ class DimStyle(DXFEntity):
         Set extension line 1 attributes.
 
         Args:
-            linetype: linetype for extension line 1, requires DXF R2007+
-            disable: disable extension line 1 if True
+            linetype: linetype for extension line 1 (requires DXF R2007)
+            disable: disable extension line 1 if ``True``
 
         """
         if disable:
@@ -460,8 +461,8 @@ class DimStyle(DXFEntity):
         Set extension line 2 attributes.
 
         Args:
-            linetype: linetype for extension line 2, requires DXF R2007+
-            disable: disable extension line 2 if True
+            linetype: linetype for extension line 2 (requires DXF R2007)
+            disable: disable extension line 2 if ``True``
 
         """
         if disable:
@@ -478,12 +479,12 @@ class DimStyle(DXFEntity):
 
         Args:
             upper: upper tolerance value
-            lower: lower tolerance value, if None same as upper
+            lower: lower tolerance value, if ``None`` same as upper
             hfactor: tolerance text height factor in relation to the dimension text height
-            align: tolerance text alignment "TOP", "MIDDLE", "BOTTOM", required DXF R2000+
-            dec: Sets the number of decimal places displayed, required DXF R2000+
-            leading_zeros: suppress leading zeros for decimal dimensions if False, required DXF R2000+
-            trailing_zeros: suppress trailing zeros for decimal dimensions if False, required DXF R2000+
+            align: tolerance text alignment ``'TOP'``, ``'MIDDLE'``, ``'BOTTOM'`` (requires DXF R2000)
+            dec: Sets the number of decimal places displayed (requires DXF R2000)
+            leading_zeros: suppress leading zeros for decimal dimensions if ``False`` (requires DXF R2000)
+            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False`` (requires DXF R2000)
 
         """
         # exclusive tolerances
@@ -521,9 +522,9 @@ class DimStyle(DXFEntity):
             upper: upper limit value added to measurement value
             lower: lower lower value subtracted from measurement value
             hfactor: limit text height factor in relation to the dimension text height
-            dec: Sets the number of decimal places displayed, required DXF R2000+
-            leading_zeros: suppress leading zeros for decimal dimensions if False, required DXF R2000+
-            trailing_zeros: suppress trailing zeros for decimal dimensions if False, required DXF R2000+
+            dec: Sets the number of decimal places displayed (requires DXF R2000)
+            leading_zeros: suppress leading zeros for decimal dimensions if ``False`` (requires DXF R2000)
+            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False`` (requires DXF R2000)
 
         """
         # exclusive limits

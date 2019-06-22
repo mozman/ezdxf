@@ -78,7 +78,7 @@ class ExtendedTags:
         unfortunately ezdxf, tries to use this subclass markers and therefore R12 parsing by ezdxf does not work without
         removing this subclass markers.
 
-        This method removes the subclass markers and flattens all subclasses into 'noclass'.
+        This method removes the subclass markers and flattens all subclasses into :attr:`ExtendedTags.noclass`.
 
         """
         if len(self.subclasses) < 2:
@@ -103,7 +103,7 @@ class ExtendedTags:
 
         :class:`ExtendedTags` knows nothing about the entity database, and has no access to, so it is not possible for
         :class:`ExtendedTags` to do a deep copy, by also copying linked entities (VERTEX, ATTRIB, SEQEND).
-        To do a deep copy you have to go one level up and use DXFEntity.copy()
+        To do a deep copy, go one layer up and use :meth:`DXFEntity.copy`.
 
         """
 
@@ -125,7 +125,7 @@ class ExtendedTags:
 
     @property
     def noclass(self) -> Tags:
-        """ Property to access self.subclasses[0] """
+        """ Property to access :code:`self.subclasses[0]`. """
         return self.subclasses[0]
 
     def get_handle(self) -> str:
@@ -153,7 +153,7 @@ class ExtendedTags:
 
         def collect_base_class() -> DXFTag:
             """
-            The base class contains appdata, but not XDATA, ends with
+            The base class contains AppData, but not XDATA, ends with
             SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
 
             """
@@ -184,8 +184,8 @@ class ExtendedTags:
 
         def collect_subclass(starttag: DXFTag) -> DXFTag:
             """
-            A subclass does NOT can contain appdata or XDATA, ends with
-            SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
+            A subclass does NOT contain AppData or XDATA, and ends with ``SUBCLASS_MARKER``, ``XDATA_MARKER`` or
+            ``EMBEDDED_OBJ_MARKER``.
 
             """
             # All subclasses begin with (100, subclass name)
@@ -214,9 +214,10 @@ class ExtendedTags:
 
         def collect_app_data(starttag: DXFTag) -> None:
             """
-            AppData, cannot contain XDATA or subclasses.
+            AppData can't contain XDATA or subclasses.
 
             I guess AppData can only appear in the first subclass (unnamed)
+
             """
             data = Tags([starttag])
             closing_strings = ('}', starttag.value[1:] + '}')  # alternative closing tag 'APPID}'
@@ -233,7 +234,7 @@ class ExtendedTags:
 
         def collect_xdata(starttag: DXFTag) -> DXFTag:
             """
-            XDATA is always at the end of the entity and can not contain appdata or subclasses
+            XDATA is always at the end of the entity and can not contain AppData or subclasses.
 
             NEW: 09.08.2018
 
@@ -343,9 +344,9 @@ class ExtendedTags:
 
     def new_xdata(self, appid: str, tags: 'IterableTags' = None) -> Tags:
         """
-        Append a new xdata block.
+        Append a new XDATA block.
 
-        Assumes that no xdata block with the same appid already exists::
+        Assumes that no XDATA block with the same `appid` already exists::
 
             try:
                 xdata = tags.get_xdata('EZDXF')
@@ -363,7 +364,7 @@ class ExtendedTags:
 
     def get_app_data(self, appid: str) -> Tags:
         """
-        Get app data including first and last marker tag.
+        Get AppData including first and last marker tag.
 
         """
         for appdata in self.appdata:
@@ -373,7 +374,7 @@ class ExtendedTags:
 
     def get_app_data_content(self, appid: str) -> Tags:
         """
-        Get app data without first and last marker tag.
+        Get AppData without first and last marker tag.
 
         """
         return Tags(self.get_app_data(appid)[1:-1])
@@ -384,9 +385,9 @@ class ExtendedTags:
 
     def new_app_data(self, appid: str, tags: 'IterableTags' = None, subclass_name: str = None) -> Tags:
         """
-        Append a new app data block to subclass *subclass_name*.
+        Append a new AppData block to subclass `subclass_name`.
 
-        Assumes that no app data block with the same appid already exist::
+        Assumes that no app data block with the same `appid` already exist::
 
             try:
                 app_data = tags.get_app_data('{ACAD_REACTORS', tags)

@@ -5,7 +5,7 @@
 Packed DXF Tags
 ---------------
 
-Store  DXF tags in compact data structures as list or array.array to reduce memory usage.
+Store  DXF tags in compact data structures as ``list`` or :class:`array.array` to reduce memory usage.
 
 """
 from array import array
@@ -19,12 +19,12 @@ from ezdxf.lldxf.tagwriter import TagWriter
 
 
 class TagList:
-    """ Store data in a standard Python list.
+    """ Store data in a standard Python ``list``.
 
     Args:
         data: iterable of DXF tag values.
 
-    :ivar values: data storage as list
+    :ivar values: data storage as ``list``
 
     """
     __slots__ = ('values',)
@@ -44,12 +44,12 @@ class TagList:
 
 
 class TagArray(TagList):
-    """ Store data in an array.array(). Array type is defined by class variable DTYPE.
+    """ Store data in an :class:`array.array`. Array type is defined by class variable ``DTYPE``.
 
     Args:
         data: iterable of DXF tag values.
 
-    :ivar values: data storage as array.array
+    :ivar values: data storage as :class:`array.array`
 
     """
 
@@ -65,12 +65,12 @@ class TagArray(TagList):
 
 
 class VertexArray:
-    """ Store vertices in an array.array('d'). Vertex size is defined by class variable VERTEX_SIZE.
+    """ Store vertices in an ``array.array('d')``. Vertex size is defined by class variable ``VERTEX_SIZE``.
 
     Args:
-        data: iterable of vertex values as linear list e.g. [x1, y1, x2, y2, x3, y3, ...].
+        data: iterable of vertex values as linear list e.g. :code:`[x1, y1, x2, y2, x3, y3, ...]`.
 
-    :ivar values: vertex storage as array.array('d')
+    :ivar values: vertex storage as ``array.array('d')``
 
     """
     #: Defines the vertex size
@@ -137,7 +137,7 @@ class VertexArray:
         Setup point array from extended tags.
 
         Args:
-            tags: Tags() object
+            tags: :class:`~ezdxf.lldxf.tags.Tags` object
             code: group code to collect
 
         """

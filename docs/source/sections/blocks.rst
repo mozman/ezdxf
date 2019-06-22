@@ -1,65 +1,70 @@
 Blocks Section
 ==============
 
-The :class:`BlocksSection` class manages all block definitions of a drawing document.
+.. module:: ezdxf.sections.blocks
+
+The BLOCKS section is the home all block definitions of a DXF document.
+
+.. seealso::
+
+    DXF Internals: :ref:`blocks_section_internals` and :ref:`Block Management Structures`
 
 .. class:: BlocksSection
 
-.. method:: BlocksSection.__iter__()
+    .. method:: __iter__()
 
-    Iterate over all block definitions, yielding :class:`BlockLayout` objects.
+        Iterate over all block definitions, yielding :class:`BlockLayout` objects.
 
-.. method:: BlocksSection.__contains__(entity)
+    .. method:: __contains__(entity)
 
-    Test if :class:`BlocksSection` contains the block definition `entity`, `entity` can be a block name as `str` or the
-    :class:`Block` definition itself.
+        Test if :class:`BlocksSection` contains the block definition `entity`, `entity` can be a block name as `str` or the
+        :class:`Block` definition itself.
 
-.. method:: BlocksSection.__getitem__(name)
+    .. method:: __getitem__(name)
 
-    Get the :class:`Block` definition by `name`, raises ``DXFKeyError`` if no block `name` exists.
+        Get the :class:`Block` definition by `name`, raises ``DXFKeyError`` if no block `name` exists.
 
-.. method:: BlocksSection.get(name, default=None)
+    .. method:: get(name, default=None)
 
-    Get the :class:`Block` definition by `name`, returns `default` if no block `name` exists.
+        Get the :class:`Block` definition by `name`, returns `default` if no block `name` exists.
 
-.. method:: BlocksSection.new(name, base_point=(0, 0), dxfattribs=None)
+    .. method:: new(name, base_point=(0, 0), dxfattribs=None)
 
-    Create and add a new :class:`Block`, `name` is the block-name, `base_point` is the insertion point of the block.
+        Create and add a new :class:`Block`, `name` is the block-name, `base_point` is the insertion point of the block.
 
-.. method:: BlocksSection.new_anonymous_block(type_char='U', base_point=(0, 0))
+    .. method:: new_anonymous_block(type_char='U', base_point=(0, 0))
 
-    Create and add a new anonymous :class:`Block`, `type_char` is the block-type,`base_point` is the insertion point of
-    the block.
+        Create and add a new anonymous :class:`Block`, `type_char` is the block-type,`base_point` is the insertion point of
+        the block.
 
-.. method:: BlocksSection.rename_block(old_name, new_name)
+        ========= ==========
+        type_char Anonymous Block Type
+        ========= ==========
+        U         \*U### anonymous blocks
+        E         \*E### anonymous non-uniformly scaled blocks
+        X         \*X### anonymous hatches
+        D         \*D### anonymous dimensions
+        A         \*A### anonymous groups
+        T         \*T### anonymous block for ACAD_TABLE content
+        ========= ==========
 
-    Rename block 'old_name' in 'new_name'.
+    .. method:: rename_block(old_name, new_name)
 
-.. method:: BlockSection.delete_block(name, safe=True)
+        Rename block 'old_name' in 'new_name'.
 
-    Delete block *name*. If *safe* is True, check if block is still referenced.
+    .. method:: delete_block(name, safe=True)
 
-    :param name: block name (case insensitive)
-    :param safe: check if block is still referenced
+        Delete block *name*. If *safe* is True, check if block is still referenced.
 
-    :raises DXFKeyError: if block *name* does not exist
-    :raises DXFBlockInUseError: if block *name* is still referenced, and *safe* is True
+        :param name: block name (case insensitive)
+        :param safe: check if block is still referenced
 
-.. method:: BlockSection.delete_all_blocks(safe=True)
+        :raises DXFKeyError: if block *name* does not exist
+        :raises DXFBlockInUseError: if block *name* is still referenced, and *safe* is True
 
-    Delete all blocks except layout blocks (modelspace or paperspace).
+    .. method:: delete_all_blocks(safe=True)
 
-    :param safe: check if block is still referenced before deleting and ignore them if so
+        Delete all blocks except layout blocks (modelspace or paperspace).
 
-
-========= ==========
-type_char Anonymous Block Type
-========= ==========
-U         \*U### anonymous blocks
-E         \*E### anonymous non-uniformly scaled blocks
-X         \*X### anonymous hatches
-D         \*D### anonymous dimensions
-A         \*A### anonymous groups
-T         \*T### anonymous block for ACAD_TABLE content
-========= ==========
+        :param safe: check if block is still referenced before deleting and ignore them if so
 

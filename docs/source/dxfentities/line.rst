@@ -1,12 +1,12 @@
 Line
 ====
 
-.. module:: ezdxf.entities.line
+.. module:: ezdxf.entities
 
 The LINE entity represents a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
 
 ======================== ==========================================
-Subclass of              :class:`ezdxf.entities.dxfgfx.DXFGraphic`
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'LINE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_line`
 Inherited DXF Attributes :ref:`Common graphical DXF attributes`
@@ -30,7 +30,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.thickness
 
         Line thickness in 3D space in direction :attr:`extrusion`, default value is ``0``. This value should not be
-        confused with the :attr:`~ezdxf.entities.dxfgfx.DXFGraphic.dxf.lineweight` value.
+        confused with the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` value.
 
     .. attribute:: dxf.extrusion
 

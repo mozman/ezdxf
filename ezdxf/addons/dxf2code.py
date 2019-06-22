@@ -53,7 +53,8 @@ def entities_to_code(entities: Iterable['DXFEntity'], layout: str = 'layout',
         layout: variable name of the layout (model space or block) as string
         ignore: iterable of entities types to ignore as strings like ``['IMAGE', 'DIMENSION']``
 
-    Returns: :class:`Code`
+    Returns:
+        :class:`Code`
 
     """
     code = _SourceCodeGenerator(layout=layout)
@@ -70,7 +71,8 @@ def block_to_code(block: 'BlockLayout', drawing: str = 'doc', ignore: Iterable[s
         drawing: variable name of the drawing as string
         ignore: iterable of entities types to ignore as strings like ['IMAGE', 'DIMENSION']
 
-    Returns: :class:`Code`
+    Returns:
+        :class:`Code`
 
     """
     dxfattribs = _purge_handles(block.block.dxfattribs())
@@ -93,18 +95,7 @@ def table_entries_to_code(entities: Iterable['DXFEntity'], drawing='doc') -> 'Co
 
 
 class Code:
-    """ Source code container.
-
-    :ivar code: source code line storage, store lines without line ending ``\\n``
-    :ivar imports: source code line storage for global imports, store lines without line ending ``\\n``
-
-    :ivar layers: layers used by the generated source code, AutoCAD accepts layer names without a LAYER table entry.
-    :ivar linetypes: linetypes used by the generated source code, these linetypes require a TABLE entry or AutoCAD will crash.
-    :ivar styles: text styles used by the generated source code, these text styles require a TABLE entry or AutoCAD will crash.
-    :ivar dimstyles: dimension styles  used by the generated source code, these dimension styles require a TABLE entry or AutoCAD will crash.
-    :ivar blocks: blocks used by the generated source code, these blocks require a BLOCK definition in the BLOCKS section or AutoCAD will crash.
-
-    """
+    """ Source code container. """
 
     def __init__(self):
         self.code = []  # type: List[str]

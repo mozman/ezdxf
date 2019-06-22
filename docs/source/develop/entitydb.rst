@@ -3,7 +3,7 @@
 Entity Database
 ===============
 
-The :class:`EntityDB` is a simple key/:class:`~ezdxf.entities.dxfentity.DXFEntity` database and every
+The :class:`EntityDB` is a simple key/:class:`~ezdxf.entities.DXFEntity` database and every
 :class:`~ezdxf.drawing.Drawing` has its own :class:`EntityDB`, stored in the :class:`~ezdxf.drawing.Drawing` attribute
 :attr:`~ezdxf.drawing.Drawing.entitydb`.
 

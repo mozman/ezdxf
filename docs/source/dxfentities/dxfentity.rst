@@ -1,7 +1,7 @@
 DXF Entity Base Class
 =====================
 
-.. module:: ezdxf.entities.dxfentity
+.. module:: ezdxf.entities
 
 .. class:: DXFEntity
 

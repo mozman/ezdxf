@@ -3,9 +3,9 @@
 Block Management Structures
 ===========================
 
-A BLOCK is a kind of layout like the modelspace or a paperspace, with the similarity that all these layouts
+A BLOCK is a kind of layout like the modelspace or a paperspace layout, with the similarity that all these layouts
 are containers for other graphical DXF entities. This block definition can be referenced in other layouts by the
-INSERT entity. By using block references the same set of graphical entities can be located multiple times at
+INSERT entity. By using block references, the same set of graphical entities can be located multiple times at
 different layouts, this block references can be stretched and rotated without modifying the original entities. A
 block is referenced only by its name defined by the DXF tag :code:`(2, name)`, there is a second DXF tag
 :code:`(3, name2)` for the block name, which is not further documented by Autodesk, and I haven't tested what happens I
@@ -23,7 +23,7 @@ and BLOCK 'B' -> INSERT BLOCK 'A'.
 
 .. seealso::
 
-    - ezdxf DXF Internals: :ref:`Blocks Section`
+    - ezdxf DXF Internals: :ref:`blocks_section_internals`
     - DXF Reference: `BLOCKS Section`_
     - DXF Reference: `BLOCK Entity`_
     - DXF Reference: `ENDBLK Entity`_
@@ -133,7 +133,7 @@ space and the `active` paperspace are stored in the ENTITIES section.
 .. seealso::
 
     - :ref:`Tag Structure DXF R13 and later`
-    - ezdxf DXF Internals: :ref:`Tables Section`
+    - ezdxf DXF Internals: :ref:`tables_section_internals`
     - DXF Reference: `TABLES Section`_
     - DXF Reference: `BLOCK_RECORD Entity`_
 

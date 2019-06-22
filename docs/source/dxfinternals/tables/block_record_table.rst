@@ -1,4 +1,4 @@
-.. _BLOCK_RECORD Table:
+.. _block_record_table_internals:
 
 BLOCK_RECORD Table
 ==================
