@@ -52,6 +52,8 @@ BaseLayout
 
     .. automethod:: __getitem__
 
+    .. automethod:: get_extension_dict
+
     .. automethod:: delete_entity
 
     .. automethod:: delete_all_entities
@@ -161,7 +163,8 @@ Layout
 
 .. class:: Layout
 
-    :class:`Layout` is a subclass of :class:`BaseLayout`.
+    :class:`Layout` is a subclass of :class:`BaseLayout` and common base class of :class:`Modelspace` and
+    :class:`Paperspace`.
 
     .. autoattribute:: name
 
@@ -169,23 +172,7 @@ Layout
 
     .. automethod:: __contains__
 
-    .. automethod:: rename
-
-    .. automethod:: viewports
-
-    .. automethod:: add_viewport
-
-    .. automethod:: get_extension_dict
-
-    .. automethod:: page_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
-
-    .. automethod:: reset_viewports
-
     .. automethod:: reset_extends
-
-    .. automethod:: reset_paper_limits
-
-    .. automethod:: get_paper_limits
 
     .. automethod:: set_plot_type
 
@@ -196,10 +183,6 @@ Layout
     .. automethod:: set_redraw_order
 
     .. automethod:: get_redraw_order
-
-    .. automethod:: new_geodata
-
-    .. automethod:: get_geodata
 
     .. automethod:: plot_viewport_borders
 
@@ -236,14 +219,37 @@ Modelspace
 
 .. class:: Modelspace
 
-   :class:`Modelspace` class is the :class:`Layout` class.
+    :class:`Modelspace` is a subclass of :class:`Layout`.
+
+    .. autoattribute:: name
+
+    .. automethod:: new_geodata
+
+    .. automethod:: get_geodata
 
 Paperspace
 ==========
 
 .. class:: Paperspace
 
-   :class:`Paperspace` class is the :class:`Layout` class.
+    :class:`Paperspace` is a subclass of :class:`Layout`.
+
+    .. autoattribute:: name
+
+    .. automethod:: page_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
+
+    .. automethod:: rename
+
+    .. automethod:: viewports
+
+    .. automethod:: add_viewport
+
+    .. automethod:: reset_viewports
+
+    .. automethod:: reset_paper_limits
+
+    .. automethod:: get_paper_limits
+
 
 BlockLayout
 ===========

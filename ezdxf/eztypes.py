@@ -83,7 +83,7 @@ if TYPE_CHECKING:
 
     from ezdxf.entities.polyline import Polyline, Polyface, Polymesh, DXFVertex
     from ezdxf.entities.insert import Insert
-    from ezdxf.entities.attrib import Attdef, Attrib
+    from ezdxf.entities.attrib import AttDef, Attrib
     from ezdxf.entities.dimension import Dimension
     from ezdxf.entities.text import Text
     from ezdxf.entities.viewport import Viewport

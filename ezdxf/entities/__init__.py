@@ -51,6 +51,7 @@ from .point import Point
 from .circle import Circle
 from .arc import Arc
 from .shape import Shape
+from .solid import Solid, Face3d, Trace
 from .text import Text
 from .insert import Insert
 from .block import Block, EndBlk

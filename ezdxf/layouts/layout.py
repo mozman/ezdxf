@@ -18,7 +18,7 @@ def get_block_entity_space(doc: 'Drawing', block_record_handle: str) -> 'EntityS
 
 class Layout(BaseLayout):
     """
-    Layout representation
+    Layout representation - base class for :class:`Modelspace` and :class:`Paperspace`
 
     Every layout consist of a LAYOUT entity in the OBJECTS section, an associated BLOCK in the BLOCKS section and a
     BLOCK_RECORD_TABLE entry.
@@ -27,25 +27,19 @@ class Layout(BaseLayout):
 
     There are 3 different layout types:
 
-    1. Model Space - not deletable, all entities of this layout are stored in the DXF file in the ENTITIES section, the
-       associated ``*Model_Space`` block is empty, block name ``*Model_Space`` is mandatory, the layout name is
-       ``Model`` and it is mandatory.
+    1. :class:`Modelspace`
 
-    2. Active Layout - all entities of this layout are stored in the ENTITIES section, the associated ``*Paper_Space``
-       block is empty, block name ``*Paper_Space`` is mandatory and also marks the active layout, the layout name can
-       be an arbitrary string.
+    2. :class:`Paperspace` - Active Layout
 
-    3. Inactive Layout - all entities of this layouts are stored in the associated BLOCK called ``*Paper_SpaceN``, where
-       ``N`` is an arbitrary number, I don't know if the block name schema '*Paper_SpaceN' is mandatory, the layout
-       name can be an arbitrary string.
-
-    There is no different handling for active layouts and inactive layouts in ezdxf, this differentiation is just
-    for AutoCAD important and it is not documented in the DXF reference.
+    3. :class:`Paperspace` - Inactive Layout
 
     Internal Structure
 
-    For **every** layout exists a BlockLayout() object in the BLOCKS section and a Layout() object in Layouts().
-    The entity space of the BlockLayout() object and the entity space of the Layout() object are the **same** object.
+    For **every** layout exists a :class:`BlockLayout` object in  :class:`BlocksSection` and a :class:`Layout` object
+    (as :class:`Modelspace` or :class:`Paperspace`) in :class:`Layouts.
+
+    The entity space of the :class:`BlockLayout` object and the entity space of the :class:`Layout` object are the
+    **same** object.
 
     """
     # plot_layout_flags of LAYOUT entity
@@ -74,9 +68,9 @@ class Layout(BaseLayout):
     @classmethod
     def new(cls, name: str, block_name: str, doc: 'Drawing', dxfattribs: dict = None) -> 'Layout':
         """
-        Creates the required structures for a paper space layout:
+        Creates the required structures for a layout:
 
-            - a BlockLayout with BLOCK_RECORD, BLOCK and ENDBLK entities
+            - a :class:`BlockLayout` with BLOCK_RECORD, BLOCK and ENDBLK entities
             - LAYOUT entity in the objects section
 
         Args:
@@ -106,7 +100,7 @@ class Layout(BaseLayout):
 
     @property
     def name(self) -> str:
-        """ Layout name as shown in tabs of CAD applications, modelspace has the fixed name ``'Model'``. """
+        """ Layout name as shown in tabs of CAD applications. """
         return self.dxf_layout.dxf.name
 
     @property
@@ -138,7 +132,7 @@ class Layout(BaseLayout):
                 entity.dxf.paperspace = paperspace
 
     def __contains__(self, entity: Union['DXFGraphic', str]) -> bool:
-        """ Returns ``True`` if `entity` if stored in this layout.
+        """ Returns ``True`` if `entity` stored in this layout.
 
         Args:
              entity: :class:`DXFGraphic` object or handle as hex string
@@ -158,55 +152,200 @@ class Layout(BaseLayout):
         # super() deletes block_record and associated entity space
         super().destroy()
 
-    def rename(self, name: str) -> None:
-        """ Rename layout to `name`, changes the name displayed in tabs by CAD applications, not the internal BLOCK
-        name.
+    def get_sortents_table(self, create: bool = True) -> 'SortEntsTable':
         """
-        self.dxf_layout.dxf.name = name
+        Get/Create to layout associated SORTENTSTABLE object.
 
-    def viewports(self) -> List['DXFGraphic']:
-        """
-        Get all VIEWPORT entities defined in the layout. Returns a list of :class:`~ezdxf.entities.viewport.Viewport`
-        objects, sorted by id, the first entity is always the paper space view with an id of ``1``.
+        Args:
+            create: new table if table do not exist and `create` is ``True``
 
-        """
-        vports = [entity for entity in self if entity.dxftype() == 'VIEWPORT']
-        vports.sort(key=lambda e: e.dxf.id)
-        return vports
+        Raises:
+            DXFValueError: if table not exist and `create` is ``False``
 
-    def renumber_viewports(self) -> None:
-        """ Reassign viewport ids. (internal API) """
-        for num, viewport in enumerate(self.viewports(), start=1):
-            viewport.dxf.id = num
-
-    def add_viewport(self, center: 'Vertex',
-                     size: Tuple[float, float],
-                     view_center_point: 'Vertex',
-                     view_height: float,
-                     dxfattribs: dict = None) -> 'Viewport':
-        """ Add a :class:`~ezdxf.entities.viewport.Viewport` entity. """
-        dxfattribs = dxfattribs or {}
-        width, height = size
-        attribs = {
-            'center': center,
-            'width': width,
-            'height': height,
-            'status': 1,  # by default highest priority (stack order)
-            'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
-            'view_center_point': view_center_point,
-            'view_height': view_height,
-        }
-        attribs.update(dxfattribs)
-        viewport = cast('Viewport', self.new_entity('VIEWPORT', attribs))
-        viewport.dxf.id = viewport.get_next_viewport_id()
-        return viewport
-
-    def get_extension_dict(self) -> 'Dictionary':
-        """
-        Returns the associated extension dictionary, creates a new one if necessary.
+        (internal API)
 
         """
-        return self.block_record.get_extension_dict()
+        xdict = self.get_extension_dict()
+        try:
+            sortents_table = xdict['ACAD_SORTENTS']
+        except DXFKeyError:
+            if create:
+                sortents_table = self.doc.objects.new_entity(
+                    'SORTENTSTABLE',
+                    dxfattribs={
+                        'owner': xdict.dxf.handle,
+                        'block_record_handle': self.layout_key
+                    },
+                )
+                xdict['ACAD_SORTENTS'] = sortents_table.dxf.handle
+            else:
+                raise DXFValueError('Extension dictionary entry ACAD_SORTENTS do not exist.')
+        return sortents_table
+
+    def set_redraw_order(self, handles: Union[Dict, Iterable[Tuple[str, str]]]) -> None:
+        """
+        If the header variable $SORTENTS `Regen` flag (bit-code value ``16``) is set, AutoCAD regenerates entities in
+        ascending handles order.
+
+        To change redraw order associate a different sort handle to entities, this redefines the order in which the
+        entities are regenerated. `handles` can be a dict of object_handle and sort_handle as (key, value) pairs, or an
+        iterable of (object_handle,  sort_handle) tuples.
+
+        The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
+        can use existing handles too.
+
+        The ``'0'`` handle can be used, but this sort_handle will be drawn as latest (on top of all other entities) and
+        not as first as expected.
+
+        Args:
+            handles: iterable or dict of handle associations; for iterable an association
+                     is a tuple (object_handle, sort_handle); for dict the association is
+                     key: object_handle, value: sort_handle
+
+        """
+        sortents = self.get_sortents_table()
+        if isinstance(handles, dict):
+            handles = handles.items()
+        sortents.set_handles(handles)
+
+    def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
+        """
+        Returns iterable for all existing table entries as (object_handle, sort_handle) pairs.
+        (see also :meth:`~Layout.set_redraw_order`)
+
+        """
+        empty = []
+        if self.block_record.has_extension_dict():
+            xdict = self.get_extension_dict()
+        else:
+            return empty
+
+        try:
+            sortents_table = xdict['ACAD_SORTENTS']
+        except DXFKeyError:
+            return empty
+        return iter(sortents_table)
+
+    def reset_extends(self) -> None:
+        """ Reset extends. """
+        dxf = self.dxf_layout.dxf
+        dxf.extmin = (+1e20, +1e20, +1e20)  # AutoCAD default
+        dxf.extmax = (-1e20, -1e20, -1e20)  # AutoCAD default
+
+    def set_plot_type(self, value: int = 5) -> None:
+        """
+        === ============================================================
+        0   last screen display
+        1   drawing extents
+        2   drawing limits
+        3   view specific (defined by Layout.dxf.plot_view_name)
+        4   window specific (defined by Layout.set_plot_window_limits())
+        5   layout information (default)
+        === ============================================================
+
+        Args:
+            value:  plot type
+
+        Raises:
+            DXFValueError: for `value` out of range
+
+        """
+        if 0 <= int(value) <= 5:
+            self.dxf.plot_type = value  # type: ignore
+        else:
+            raise DXFValueError('Plot type value out of range (0-5).')
+
+    def set_plot_style(self, name: str = 'ezdxf.ctb', show: bool = False) -> None:
+        """
+        Set plot style file of type `.ctb`.
+
+        Args:
+            name: plot style filename
+            show: show plot style effect in preview? (AutoCAD specific attribute)
+
+        """
+        self.dxf_layout.dxf.current_style_sheet = name
+        self.use_plot_styles(True)
+        self.show_plot_styles(show)
+
+    def set_plot_window(self,
+                        lower_left: Tuple[float, float] = (0, 0),
+                        upper_right: Tuple[float, float] = (0, 0)) -> None:
+        """
+        Set plot window size in (scaled) paper space units.
+
+        Args:
+            lower_left: lower left corner as 2D point
+            upper_right: upper right corner as 2D point
+
+        """
+        x1, y1 = lower_left
+        x2, y2 = upper_right
+        dxf = self.dxf_layout.dxf
+        dxf.plot_window_x1 = x1
+        dxf.plot_window_y1 = y1
+        dxf.plot_window_x2 = x2
+        dxf.plot_window_y2 = y2
+        self.set_plot_type(4)
+
+    # plot layout flags setter
+    def plot_viewport_borders(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PLOT_VIEWPORT_BORDERS, state)
+
+    def show_plot_styles(self, state: bool = True) -> None:
+        self.set_plot_flags(self.SHOW_PLOT_STYLES, state)
+
+    def plot_centered(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PLOT_CENTERED, state)
+
+    def plot_hidden(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PLOT_HIDDEN, state)
+
+    def use_standard_scale(self, state: bool = True) -> None:
+        self.set_plot_flags(self.USE_STANDARD_SCALE, state)
+
+    def use_plot_styles(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PLOT_PLOTSTYLES, state)
+
+    def scale_lineweights(self, state: bool = True) -> None:
+        self.set_plot_flags(self.SCALE_LINEWEIGHTS, state)
+
+    def print_lineweights(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
+
+    def draw_viewports_first(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
+
+    def model_type(self, state: bool = True) -> None:
+        self.set_plot_flags(self.MODEL_TYPE, state)
+
+    def update_paper(self, state: bool = True) -> None:
+        self.set_plot_flags(self.UPDATE_PAPER, state)
+
+    def zoom_to_paper_on_update(self, state: bool = True) -> None:
+        self.set_plot_flags(self.ZOOM_TO_PAPER_ON_UPDATE, state)
+
+    def plot_flags_initializing(self, state: bool = True) -> None:
+        self.set_plot_flags(self.INITIALIZING, state)
+
+    def prev_plot_init(self, state: bool = True) -> None:
+        self.set_plot_flags(self.PREV_PLOT_INIT, state)
+
+    def set_plot_flags(self, flag, state: bool = True) -> None:
+        self.dxf_layout.set_flag_state(flag, state=state, name='plot_layout_flags')
+
+
+class Modelspace(Layout):
+    """
+    :class:`Modelspace` - not deletable, all entities of this layout are stored in the ENTITIES section of the DXF file,
+    the associated ``*Model_Space`` block is empty, block name is fixed as ``*Model_Space``, the name is fixed as
+    ``Model``.
+
+    """
+    @property
+    def name(self) -> str:
+        """ Name of modelspace is fixed as ``'Model'``."""
+        return 'Model'
 
     def new_geodata(self, dxfattribs: dict = None) -> 'GeoData':
         """
@@ -249,79 +388,241 @@ class Layout(BaseLayout):
         except DXFKeyError:
             return None
 
-    def get_sortents_table(self, create: bool = True) -> 'SortEntitiesTable':
+
+class Paperspace(Layout):
+    """
+    Two kind of paperspace layouts:
+
+    1. Active Layout - all entities of this layout are stored in the ENTITIES section, the associated ``*Paper_Space``
+       block is empty, block name ``*Paper_Space`` is mandatory and also marks the active layout, the layout name can
+       be an arbitrary string.
+
+    2. Inactive Layout - all entities of this layouts are stored in the associated BLOCK called ``*Paper_SpaceN``, where
+       ``N`` is an arbitrary number, I don't know if the block name schema '*Paper_SpaceN' is mandatory, the layout
+       name can be an arbitrary string.
+
+    There is no different handling for active layouts and inactive layouts in ezdxf, this differentiation is just
+    for AutoCAD important and it is not documented in the DXF reference.
+
+    """
+    def rename(self, name: str) -> None:
+        """ Rename layout to `name`, changes the name displayed in tabs by CAD applications, not the internal BLOCK
+        name.
         """
-        Get/Create to layout associated ``SORTENTSTABLE`` object.
+        self.dxf_layout.dxf.name = name
+
+    def viewports(self) -> List['DXFGraphic']:
+        """
+        Get all VIEWPORT entities defined in paperspace layout. Returns a list of :class:`~ezdxf.entities.Viewport`
+        objects, sorted by id, the first entity is always the paperspace view with an id of ``1``.
+
+        """
+        vports = [entity for entity in self if entity.dxftype() == 'VIEWPORT']
+        vports.sort(key=lambda e: e.dxf.id)
+        return vports
+
+    def renumber_viewports(self) -> None:
+        """ Reassign viewport ids. (internal API) """
+        for num, viewport in enumerate(self.viewports(), start=1):
+            viewport.dxf.id = num
+
+    def add_viewport(self, center: 'Vertex',
+                     size: Tuple[float, float],
+                     view_center_point: 'Vertex',
+                     view_height: float,
+                     dxfattribs: dict = None) -> 'Viewport':
+        """ Add a :class:`~ezdxf.entities.Viewport` entity. """
+        dxfattribs = dxfattribs or {}
+        width, height = size
+        attribs = {
+            'center': center,
+            'width': width,
+            'height': height,
+            'status': 1,  # by default highest priority (stack order)
+            'layer': 'VIEWPORTS',  # use separated layer to turn off for plotting
+            'view_center_point': view_center_point,
+            'view_height': view_height,
+        }
+        attribs.update(dxfattribs)
+        viewport = cast('Viewport', self.new_entity('VIEWPORT', attribs))
+        viewport.dxf.id = viewport.get_next_viewport_id()
+        return viewport
+
+    def reset_viewports(self) -> None:
+        """ Delete all existing viewports, and add a new main viewport. """
+        # remove existing viewports
+        for viewport in self.viewports():
+            self.delete_entity(viewport)
+        self.add_new_main_viewport()
+
+    def add_new_main_viewport(self) -> None:
+        """ Add a new main viewport. (internal API) """
+        dxf = self.dxf_layout.dxf
+        if dxf.plot_paper_units == 0:  # inches
+            unit_factor = 25.4
+        else:  # mm
+            unit_factor = 1.0
+
+        # all paper parameters in mm!
+        # all viewport parameters in paper space units inch/mm + scale factor!
+        scale_factor = dxf.scale_denominator / dxf.scale_numerator
+
+        def paper_units(value):
+            return value / unit_factor * scale_factor
+
+        paper_width = paper_units(dxf.paper_width)
+        paper_height = paper_units(dxf.paper_height)
+        # plot origin offset
+        x_offset = paper_units(dxf.plot_origin_x_offset)
+        y_offset = paper_units(dxf.plot_origin_y_offset)
+
+        # printing area
+        printable_width = paper_width - paper_units(dxf.left_margin) - paper_units(dxf.right_margin)
+        printable_height = paper_height - paper_units(dxf.bottom_margin) - paper_units(dxf.top_margin)
+
+        # AutoCAD viewport (window) size
+        vp_width = paper_width * 1.1
+        vp_height = paper_height * 1.1
+
+        # center of printing area
+        center = (printable_width / 2 - x_offset, printable_height / 2 - y_offset)
+
+        # create 'main' viewport
+        main_viewport = self.add_viewport(
+            center=center,  # no influence to 'main' viewport?
+            size=(vp_width, vp_height),  # I don't get it, just use paper size!
+            view_center_point=center,  # same as center
+            view_height=vp_height,  # view height in paper space units
+        )
+        main_viewport.dxf.id = 1  # set as main viewport
+        main_viewport.dxf.flags = 557088  # AutoCAD default value
+        dxf.viewport_handle = main_viewport.dxf.handle
+
+    def page_setup(self, size: Tuple[int, int] = (297, 210),
+                   margins: Tuple[float, float, float, float] = (10, 15, 10, 15),
+                   units: str = 'mm',
+                   offset: Tuple[float, float] = (0, 0),
+                   rotation: int = 0,
+                   scale: int = 16,
+                   name: str = 'ezdxf',
+                   device: str = 'DWG to PDF.pc3') -> None:
+        """
+        Setup plot settings and paper size and reset viewports. All parameters in given `units` (mm or inch).
+
+        Reset paper limits, extends and viewports.
 
         Args:
-            create (bool): new table if table do not exists and create is True
+            size: paper size as (width, height) tuple
+            margins: (top, right, bottom, left) hint: clockwise
+            units: ``'mm'`` or ``'inch'``
+            offset: plot origin offset is 2D point
+            rotation: see table Rotation
+            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. ``(1, 50)`` for 1:50
+            name: paper name prefix ``'{name}_({width}_x_{height}_{unit})'``
+            device: device .pc3 configuration file or system printer name
 
-        Raises:
-            DXFValueError: if table not exists and `create` is False
-
-        (internal API)
-
-        """
-        xdict = self.get_extension_dict()
-        try:
-            sortents_table = xdict['ACAD_SORTENTS']
-        except DXFKeyError:
-            if create:
-                sortents_table = self.doc.objects.new_entity(
-                    'SORTENTSTABLE',
-                    dxfattribs={
-                        'owner': xdict.dxf.handle,
-                        'block_record_handle': self.layout_key
-                    },
-                )
-                xdict['ACAD_SORTENTS'] = sortents_table.dxf.handle
-            else:
-                raise DXFValueError('Extension dictionary entry ACAD_SORTENTS do not exist.')
-        return sortents_table
-
-    def set_redraw_order(self, handles: Union[Dict, Iterable[Tuple[str, str]]]) -> None:
-        """
-        If the header variable $SORTENTS `Regen` flag (bit-code value 16) is set, AutoCAD regenerates entities in
-        ascending handles order.
-
-        To change redraw order associate a different sort handle to entities, this redefines the order in which the
-        entities are regenerated. `handles` can be a dict of object_handle and sort_handle as (key, value) pairs, or an
-        iterable of (object_handle,  sort_handle) tuples.
-
-        The sort_handle doesn't have to be unique, same or all handles can share the same sort_handle and sort_handles
-        can use existing handles too.
-
-        The '0' handle can be used, but this sort_handle will be drawn as latest (on top of all other entities) and not
-        as first as expected.
-
-        Args:
-            handles: iterable or dict of handle associations; for iterable an association
-                     is a tuple (object_handle, sort_handle); for dict the association is
-                     key: object_handle, value: sort_handle
+        === ============
+        int Rotation
+        === ============
+        0   no rotation
+        1   90 degrees counter-clockwise
+        2   upside-down
+        3   90 degrees clockwise
+        === ============
 
         """
-        sortents = self.get_sortents_table()
-        if isinstance(handles, dict):
-            handles = handles.items()
-        sortents.set_handles(handles)
+        if int(rotation) not in (0, 1, 2, 3):
+            raise DXFValueError("valid rotation values: 0-3")
 
-    def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
-        """
-        Returns iterable for all existing table entries as (object_handle, sort_handle) pairs.
-        (see also :meth:`~Layout.set_redraw_order`)
-
-        """
-        empty = []
-        if self.block_record.has_extension_dict():
-            xdict = self.get_extension_dict()
+        if isinstance(scale, tuple):
+            standard_scale = 16
+        elif isinstance(scale, int):
+            standard_scale = scale
+            scale = STD_SCALES.get(standard_scale, (1, 1))
         else:
-            return empty
+            raise DXFTypeError("scale has to be an int or a tuple(numerator, denominator)")
+        if scale[0] == 0:
+            raise DXFValueError("scale numerator can't be 0.")
+        if scale[1] == 0:
+            raise DXFValueError("scale denominator can't be 0.")
 
-        try:
-            sortents_table = xdict['ACAD_SORTENTS']
-        except DXFKeyError:
-            return empty
-        return iter(sortents_table)
+        self.use_standard_scale(False)  # works best, don't know why
+        paper_width, paper_height = size
+        margin_top, margin_right, margin_bottom, margin_left = margins
+        units = units.lower()
+        if units.startswith('inch'):
+            units = 'Inches'
+            plot_paper_units = 0
+            unit_factor = 25.4  # inch to mm
+        elif units == 'mm':
+            units = 'MM'
+            plot_paper_units = 1
+            unit_factor = 1.0
+        else:
+            raise DXFValueError('Supported units: "mm" and "inch"')
+
+        # Setup PLOTSETTINGS
+        # all paper sizes in mm
+        dxf = self.dxf_layout.dxf
+        dxf.page_setup_name = ''
+        dxf.plot_configuration_file = device
+        dxf.paper_size = '{0}_({1:.2f}_x_{2:.2f}_{3})'.format(name, paper_width, paper_height, units)
+        dxf.left_margin = margin_left * unit_factor
+        dxf.bottom_margin = margin_bottom * unit_factor
+        dxf.right_margin = margin_right * unit_factor
+        dxf.top_margin = margin_top * unit_factor
+        dxf.paper_width = paper_width * unit_factor
+        dxf.paper_height = paper_height * unit_factor
+        dxf.scale_numerator = scale[0]
+        dxf.scale_denominator = scale[1]
+        dxf.plot_paper_units = plot_paper_units
+        dxf.plot_rotation = rotation
+
+        x_offset, y_offset = offset
+        dxf.plot_origin_x_offset = x_offset * unit_factor  # conversion to mm
+        dxf.plot_origin_y_offset = y_offset * unit_factor  # conversion to mm
+        dxf.standard_scale_type = standard_scale
+        dxf.unit_factor = 1. / unit_factor  # 1/1 for mm; 1/25.4 ... for inch
+
+        # Setup Layout
+        self.reset_paper_limits()
+        self.reset_extends()
+        self.reset_viewports()
+
+    def reset_paper_limits(self) -> None:
+        """
+        Set paper limits to default values, all values in paperspace units but without plot scale (?).
+
+        """
+        dxf = self.dxf_layout.dxf
+        if dxf.plot_paper_units == 0:  # inch
+            unit_factor = 25.4
+        else:  # mm
+            unit_factor = 1.0
+
+        # all paper sizes are stored in mm
+        paper_width = dxf.paper_width / unit_factor  # in plot paper units
+        paper_height = dxf.paper_height / unit_factor  # in plot paper units
+        left_margin = dxf.left_margin / unit_factor
+        bottom_margin = dxf.bottom_margin / unit_factor
+        x_offset = dxf.plot_origin_x_offset / unit_factor
+        y_offset = dxf.plot_origin_y_offset / unit_factor
+        # plot origin is the lower left corner of the printable paper area
+        # limits are the paper borders relative to the plot origin
+        shift_x = left_margin + x_offset
+        shift_y = bottom_margin + y_offset
+        dxf.limmin = (-shift_x, -shift_y)  # paper space units
+        dxf.limmax = (paper_width - shift_x, paper_height - shift_y)
+
+    def get_paper_limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        """
+        Returns paper limits in plot paper units, relative to the plot origin, as tuple ((x1, y1), (x2, y2)).
+        Lower left corner is (x1, y1), upper right corner is (x2, y2).
+
+        plot origin = lower left corner of printable area + plot origin offset
+
+        """
+        return self.dxf.limmin[0:2], self.dxf.limmax[0:2]
 
     def page_setup_r12(self, size: Tuple[int, int] = (297, 210),
                        margins: Tuple[int, int, int, int] = (0, 0, 0, 0),
@@ -414,294 +715,3 @@ class Layout(BaseLayout):
         limmin = self.doc.header.get('$PLIMMIN', (0, 0))
         limmax = self.doc.header.get('$PLIMMAX', (0, 0))
         return limmin, limmax
-
-    def page_setup(self, size: Tuple[int, int] = (297, 210),
-                   margins: Tuple[float, float, float, float] = (10, 15, 10, 15),
-                   units: str = 'mm',
-                   offset: Tuple[float, float] = (0, 0),
-                   rotation: int = 0,
-                   scale: int = 16,
-                   name: str = 'ezdxf',
-                   device: str = 'DWG to PDF.pc3') -> None:
-        """
-        Setup plot settings and paper size and reset viewports. All parameters in given `units` (mm or inch).
-
-        Args:
-            size: paper size as (width, height) tuple
-            margins: (top, right, bottom, left) hint: clockwise
-            units: ``'mm'`` or ``'inch'``
-            offset: plot origin offset is 2D point
-            rotation: see table Rotation
-            scale: int 0-32 = standard scale type or tuple(numerator, denominator) e.g. ``(1, 50)`` for 1:50
-            name: paper name prefix ``'{name}_({width}_x_{height}_{unit})'``
-            device: device .pc3 configuration file or system printer name
-
-        === ============
-        int Rotation
-        === ============
-        0   no rotation
-        1   90 degrees counter-clockwise
-        2   upside-down
-        3   90 degrees clockwise
-        === ============
-
-        """
-        if self.name == 'Model':
-            raise DXFTypeError("No paper setup for model space.")
-        if int(rotation) not in (0, 1, 2, 3):
-            raise DXFValueError("valid rotation values: 0-3")
-
-        if isinstance(scale, tuple):
-            standard_scale = 16
-        elif isinstance(scale, int):
-            standard_scale = scale
-            scale = STD_SCALES.get(standard_scale, (1, 1))
-        else:
-            raise DXFTypeError("scale has to be an int or a tuple(numerator, denominator)")
-        if scale[0] == 0:
-            raise DXFValueError("scale numerator can't be 0.")
-        if scale[1] == 0:
-            raise DXFValueError("scale denominator can't be 0.")
-
-        self.use_standard_scale(False)  # works best, don't know why
-        paper_width, paper_height = size
-        margin_top, margin_right, margin_bottom, margin_left = margins
-        units = units.lower()
-        if units.startswith('inch'):
-            units = 'Inches'
-            plot_paper_units = 0
-            unit_factor = 25.4  # inch to mm
-        elif units == 'mm':
-            units = 'MM'
-            plot_paper_units = 1
-            unit_factor = 1.0
-        else:
-            raise DXFValueError('Supported units: "mm" and "inch"')
-
-        # Setup PLOTSETTINGS
-        # all paper sizes in mm
-        dxf = self.dxf_layout.dxf
-        dxf.page_setup_name = ''
-        dxf.plot_configuration_file = device
-        dxf.paper_size = '{0}_({1:.2f}_x_{2:.2f}_{3})'.format(name, paper_width, paper_height, units)
-        dxf.left_margin = margin_left * unit_factor
-        dxf.bottom_margin = margin_bottom * unit_factor
-        dxf.right_margin = margin_right * unit_factor
-        dxf.top_margin = margin_top * unit_factor
-        dxf.paper_width = paper_width * unit_factor
-        dxf.paper_height = paper_height * unit_factor
-        dxf.scale_numerator = scale[0]
-        dxf.scale_denominator = scale[1]
-        dxf.plot_paper_units = plot_paper_units
-        dxf.plot_rotation = rotation
-
-        x_offset, y_offset = offset
-        dxf.plot_origin_x_offset = x_offset * unit_factor  # conversion to mm
-        dxf.plot_origin_y_offset = y_offset * unit_factor  # conversion to mm
-        dxf.standard_scale_type = standard_scale
-        dxf.unit_factor = 1. / unit_factor  # 1/1 for mm; 1/25.4 ... for inch
-
-        # Setup Layout
-        self.reset_paper_limits()
-        self.reset_extends()
-        self.reset_viewports()
-
-    def reset_extends(self) -> None:
-        """
-        Reset paper space extends. (in :meth:`~Layout.page_setup` included)
-
-        """
-        dxf = self.dxf_layout.dxf
-        dxf.extmin = (+1e20, +1e20, +1e20)  # AutoCAD default
-        dxf.extmax = (-1e20, -1e20, -1e20)  # AutoCAD default
-
-    def reset_paper_limits(self) -> None:
-        """
-        Set paper limits to default values, all values in paper space units but without plot scale (?).
-        (in :meth:`~Layout.page_setup` included)
-
-        """
-        dxf = self.dxf_layout.dxf
-        if dxf.plot_paper_units == 0:  # inch
-            unit_factor = 25.4
-        else:  # mm
-            unit_factor = 1.0
-
-        # all paper sizes are stored in mm
-        paper_width = dxf.paper_width / unit_factor  # in plot paper units
-        paper_height = dxf.paper_height / unit_factor  # in plot paper units
-        left_margin = dxf.left_margin / unit_factor
-        bottom_margin = dxf.bottom_margin / unit_factor
-        x_offset = dxf.plot_origin_x_offset / unit_factor
-        y_offset = dxf.plot_origin_y_offset / unit_factor
-        # plot origin is the lower left corner of the printable paper area
-        # limits are the paper borders relative to the plot origin
-        shift_x = left_margin + x_offset
-        shift_y = bottom_margin + y_offset
-        dxf.limmin = (-shift_x, -shift_y)  # paper space units
-        dxf.limmax = (paper_width - shift_x, paper_height - shift_y)
-
-    def get_paper_limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
-        """
-        Returns paper limits in plot paper units, relative to the plot origin, as tuple ((x1, y1), (x2, y2)).
-        Lower left corner is (x1, y1), upper right corner is (x2, y2).
-
-        plot origin = lower left corner of printable area + plot origin offset
-
-        """
-        return self.dxf.limmin[0:2], self.dxf.limmax[0:2]
-
-    def reset_viewports(self) -> None:
-        """
-        Delete all existing viewports, and add a new main viewport. (in :meth:`~Layout.page_setup` included)
-
-        """
-        # remove existing viewports
-        for viewport in self.viewports():
-            self.delete_entity(viewport)
-        self.add_new_main_viewport()
-
-    def add_new_main_viewport(self) -> None:
-        """ Add a new main viewport. (internal API) """
-        dxf = self.dxf_layout.dxf
-        if dxf.plot_paper_units == 0:  # inches
-            unit_factor = 25.4
-        else:  # mm
-            unit_factor = 1.0
-
-        # all paper parameters in mm!
-        # all viewport parameters in paper space units inch/mm + scale factor!
-        scale_factor = dxf.scale_denominator / dxf.scale_numerator
-
-        def paper_units(value):
-            return value / unit_factor * scale_factor
-
-        paper_width = paper_units(dxf.paper_width)
-        paper_height = paper_units(dxf.paper_height)
-        # plot origin offset
-        x_offset = paper_units(dxf.plot_origin_x_offset)
-        y_offset = paper_units(dxf.plot_origin_y_offset)
-
-        # printing area
-        printable_width = paper_width - paper_units(dxf.left_margin) - paper_units(dxf.right_margin)
-        printable_height = paper_height - paper_units(dxf.bottom_margin) - paper_units(dxf.top_margin)
-
-        # AutoCAD viewport (window) size
-        vp_width = paper_width * 1.1
-        vp_height = paper_height * 1.1
-
-        # center of printing area
-        center = (printable_width / 2 - x_offset, printable_height / 2 - y_offset)
-
-        # create 'main' viewport
-        main_viewport = self.add_viewport(
-            center=center,  # no influence to 'main' viewport?
-            size=(vp_width, vp_height),  # I don't get it, just use paper size!
-            view_center_point=center,  # same as center
-            view_height=vp_height,  # view height in paper space units
-        )
-        main_viewport.dxf.id = 1  # set as main viewport
-        main_viewport.dxf.flags = 557088  # AutoCAD default value
-        dxf.viewport_handle = main_viewport.dxf.handle
-
-    def set_plot_type(self, value: int = 5) -> None:
-        """
-        === ============================================================
-        0   last screen display
-        1   drawing extents
-        2   drawing limits
-        3   view specific (defined by Layout.dxf.plot_view_name)
-        4   window specific (defined by Layout.set_plot_window_limits())
-        5   layout information (default)
-        === ============================================================
-
-        Args:
-            value:  plot type
-
-        Raises:
-            DXFValueError: for `value` out of range
-
-        """
-        if 0 <= int(value) <= 5:
-            self.dxf.plot_type = value  # type: ignore
-        else:
-            raise DXFValueError('Plot type value out of range (0-5).')
-
-    def set_plot_style(self, name: str = 'ezdxf.ctb', show: bool = False) -> None:
-        """
-        Set plot style file of type `ctb`.
-
-        Args:
-            name: plot style filename
-            show: show plot style effect in preview? (AutoCAD specific attribute)
-
-        """
-        self.dxf_layout.dxf.current_style_sheet = name
-        self.use_plot_styles(True)
-        self.show_plot_styles(show)
-
-    def set_plot_window(self,
-                        lower_left: Tuple[float, float] = (0, 0),
-                        upper_right: Tuple[float, float] = (0, 0)) -> None:
-        """
-        Set plot window size in (scaled) paper space units.
-
-        Args:
-            lower_left: lower left corner as 2D point
-            upper_right: upper right corner as 2D point
-
-        """
-        x1, y1 = lower_left
-        x2, y2 = upper_right
-        dxf = self.dxf_layout.dxf
-        dxf.plot_window_x1 = x1
-        dxf.plot_window_y1 = y1
-        dxf.plot_window_x2 = x2
-        dxf.plot_window_y2 = y2
-        self.set_plot_type(4)
-
-    # plot layout flags setter
-    def plot_viewport_borders(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PLOT_VIEWPORT_BORDERS, state)
-
-    def show_plot_styles(self, state: bool = True) -> None:
-        self.set_plot_flags(self.SHOW_PLOT_STYLES, state)
-
-    def plot_centered(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PLOT_CENTERED, state)
-
-    def plot_hidden(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PLOT_HIDDEN, state)
-
-    def use_standard_scale(self, state: bool = True) -> None:
-        self.set_plot_flags(self.USE_STANDARD_SCALE, state)
-
-    def use_plot_styles(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PLOT_PLOTSTYLES, state)
-
-    def scale_lineweights(self, state: bool = True) -> None:
-        self.set_plot_flags(self.SCALE_LINEWEIGHTS, state)
-
-    def print_lineweights(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
-
-    def draw_viewports_first(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
-
-    def model_type(self, state: bool = True) -> None:
-        self.set_plot_flags(self.MODEL_TYPE, state)
-
-    def update_paper(self, state: bool = True) -> None:
-        self.set_plot_flags(self.UPDATE_PAPER, state)
-
-    def zoom_to_paper_on_update(self, state: bool = True) -> None:
-        self.set_plot_flags(self.ZOOM_TO_PAPER_ON_UPDATE, state)
-
-    def plot_flags_initializing(self, state: bool = True) -> None:
-        self.set_plot_flags(self.INITIALIZING, state)
-
-    def prev_plot_init(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PREV_PLOT_INIT, state)
-
-    def set_plot_flags(self, flag, state: bool = True) -> None:
-        self.dxf_layout.set_flag_state(flag, state=state, name='plot_layout_flags')

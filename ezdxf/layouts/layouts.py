@@ -3,10 +3,10 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List
 import logging
-from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError, DXFTableEntryError
+from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
 from ezdxf.lldxf.validator import is_valid_name
-from .layout import Layout
+from .layout import Layout, Modelspace, Paperspace
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Dictionary, Drawing, BlockRecord, DXFLayout
@@ -31,17 +31,17 @@ class Layouts:
 
     def setup_modelspace(self):
         """ Modelspace setup. (internal API) """
-        self._new_special('Model', MODEL_SPACE_R2000, dxfattribs={'taborder': 0})
+        self._new_special(Modelspace, 'Model', MODEL_SPACE_R2000, dxfattribs={'taborder': 0})
 
     def setup_paperspace(self):
         """ First layout setup. (internal API) """
-        self._new_special('Layout1', PAPER_SPACE_R2000, dxfattribs={'taborder': 1})
+        self._new_special(Paperspace, 'Layout1', PAPER_SPACE_R2000, dxfattribs={'taborder': 1})
 
-    def _new_special(self, name: str, block_name: str, dxfattribs: dict) -> 'Layout':
+    def _new_special(self, cls, name: str, block_name: str, dxfattribs: dict) -> 'Layout':
         if name in self._layouts:
             raise DXFValueError('Layout "{}" already exists'.format(name))
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
-        layout = Layout.new(name, block_name, self.doc, dxfattribs=dxfattribs)
+        layout = cls.new(name, block_name, self.doc, dxfattribs=dxfattribs)
         self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout
 
@@ -56,7 +56,7 @@ class Layouts:
         return "*Paper_Space%d" % count
 
     def new(self, name: str, dxfattribs: dict = None) -> 'Layout':
-        """ Create a new :class:`~ezdxf.layouts.Layout`.
+        """ Create a new :class:`~ezdxf.layouts.Paperspace`.
 
         Args:
             name: layout name as shown in tab
@@ -77,7 +77,7 @@ class Layouts:
         dxfattribs['owner'] = self._dxf_layouts.dxf.handle
         dxfattribs.setdefault('taborder', len(self._layouts) + 1)
         block_name = self.unique_paperspace_name()
-        layout = Layout.new(name, block_name, self.doc, dxfattribs=dxfattribs)
+        layout = Paperspace.new(name, block_name, self.doc, dxfattribs=dxfattribs)
 
         self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout
@@ -130,7 +130,11 @@ class Layouts:
             'taborder': taborder,
         }
         dxf_layout = self.doc.objects.new_entity('LAYOUT', dxfattribs=dxfattribs)
-        layout = Layout.load(dxf_layout, self.doc)
+        if name == 'Model':
+            layout = Modelspace.load(dxf_layout, self.doc)
+        else:
+            layout = Paperspace.load(dxf_layout, self.doc)
+
         self._dxf_layouts[name] = layout.dxf_layout
         self._layouts[name] = layout
         return layout
@@ -138,7 +142,11 @@ class Layouts:
     def setup_from_rootdict(self) -> None:
         """ Setup layout manger from root dictionary. (internal API) """
         for name, dxf_layout in self._dxf_layouts.items():
-            self._layouts[name] = Layout(dxf_layout, self.doc)
+            if name == 'Model':
+                layout = Modelspace(dxf_layout, self.doc)
+            else:
+                layout = Paperspace(dxf_layout, self.doc)
+            self._layouts[name] = layout
 
     def __len__(self) -> int:
         """ Returns the count for layouts. """

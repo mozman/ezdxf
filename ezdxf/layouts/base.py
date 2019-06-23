@@ -9,7 +9,7 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockRecord, DXFGraphic
+    from ezdxf.eztypes import BlockRecord, DXFGraphic, Dictionary
 
 
 class BaseLayout(CreatorInterface):
@@ -67,6 +67,13 @@ class BaseLayout(CreatorInterface):
     def is_block_layout(self) -> bool:
         """ ``True`` if not any kind of modelspace or paperspace layout, just a regular block definition. """
         return self.block_record.is_block_layout
+
+    def get_extension_dict(self) -> 'Dictionary':
+        """
+        Returns the associated extension dictionary, creates a new one if necessary.
+
+        """
+        return self.block_record.get_extension_dict()
 
     def __len__(self) -> int:
         """
