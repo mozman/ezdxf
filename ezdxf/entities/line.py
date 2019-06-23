@@ -31,7 +31,7 @@ class Line(DXFGraphic):
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """
         Adds subclass processing for 'AcDbLine', requires previous base class and 'AcDbEntity' processing by parent
-        class.
+        class. (internal API)
         """
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -41,7 +41,7 @@ class Line(DXFGraphic):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export entity specific data as DXF tags. (internal API) """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class

@@ -29,17 +29,17 @@ class Layout(BaseLayout):
 
     1. :class:`Modelspace`
 
-    2. :class:`Paperspace` - Active Layout
+    2. active :class:`Paperspace` layout
 
-    3. :class:`Paperspace` - Inactive Layout
+    3. inactive :class:`Paperspace` layout
 
     Internal Structure
 
-    For **every** layout exists a :class:`BlockLayout` object in  :class:`BlocksSection` and a :class:`Layout` object
-    (as :class:`Modelspace` or :class:`Paperspace`) in :class:`Layouts.
+    For every layout exist a :class:`BlockLayout` object in  :class:`BlocksSection` and a :class:`Layout` object
+    (as :class:`Modelspace` or :class:`Paperspace`) in :class:`Layouts`.
 
     The entity space of the :class:`BlockLayout` object and the entity space of the :class:`Layout` object are the
-    **same** object.
+    same object.
 
     """
     # plot_layout_flags of LAYOUT entity
@@ -93,7 +93,7 @@ class Layout(BaseLayout):
 
     @classmethod
     def load(cls, layout: 'DXFLayout', doc: 'Drawing'):
-        """ Loading interface, internal API """
+        """ Loading interface. (internal API) """
         layout = cls(layout, doc)
         layout._repair_owner_tags()
         return layout
@@ -106,9 +106,9 @@ class Layout(BaseLayout):
     @property
     def dxf(self) -> Any:  # dynamic DXF attribute dispatching, e.g. DXFLayout.dxf.layout_flags
         """
-        Returns the DXF name space attribute of the associated :class:`DXFLayout` entity.
+        Returns the DXF name space attribute of the associated LAYOUT entity.
 
-        This enables direct access to the underlying :class:`DXFLayout` entity, e.g. ``Layout.dxf.layout_flags``
+        This enables direct access to the underlying LAYOUT entity, e.g. ``Layout.dxf.layout_flags``
 
         """
         return self.dxf_layout.dxf
@@ -238,8 +238,8 @@ class Layout(BaseLayout):
         0   last screen display
         1   drawing extents
         2   drawing limits
-        3   view specific (defined by Layout.dxf.plot_view_name)
-        4   window specific (defined by Layout.set_plot_window_limits())
+        3   view specific (defined by :attr:`Layout.dxf.plot_view_name`)
+        4   window specific (defined by :meth:`Layout.set_plot_window_limits`)
         5   layout information (default)
         === ============================================================
 
@@ -344,25 +344,24 @@ class Modelspace(Layout):
     """
     @property
     def name(self) -> str:
-        """ Name of modelspace is fixed as ``'Model'``."""
+        """ Name of modelspace is fixed as ``'Model'``. """
         return 'Model'
 
     def new_geodata(self, dxfattribs: dict = None) -> 'GeoData':
         """
-        Creates a new :class:`GeoData` entity and replaces existing ones. The GEODATA entity resides in the OBJECTS section
-        and NOT in the layout entity space and it is linked to the layout by an extension dictionary located in BLOCK_RECORD
-        of the layout.
+        Creates a new :class:`GeoData` entity and replaces existing ones. The GEODATA entity resides in the OBJECTS
+        section and `not` in the modelspace, it is linked to the modelspace by an :class:`~ezdxf.entities.ExtensionDict`
+        located in BLOCK_RECORD of the modelspace.
 
-        The GEODATA entity requires DXF version R2010+. The DXF Reference does not document if other layouts than model
-        space supports geo referencing, so getting/setting geo data may only make sense for the model space layout, but
-        it is also available in paper space layouts.
+        The GEODATA entity requires DXF R2010. The DXF reference does not document if other layouts than the modelspace
+        supports geo referencing, so I assume getting/setting geo data may only make sense for the modelspace.
 
         Args:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.GeoData` entity
 
         """
         if self.doc.dxfversion < DXF2010:
-            raise DXFValueError('GEODATA entity requires DXF version R2010 or later.')
+            raise DXFValueError('GEODATA entity requires DXF R2010 or later.')
 
         if dxfattribs is None:
             dxfattribs = {}
@@ -376,7 +375,7 @@ class Modelspace(Layout):
 
     def get_geodata(self) -> Optional['GeoData']:
         """
-        Returns the :class:`GeoData` entity associated to this layout or None.
+        Returns the :class:`~ezdxf.entities.GeoData` entity associated to the modelspace or ``None``.
 
         """
         try:
@@ -391,7 +390,7 @@ class Modelspace(Layout):
 
 class Paperspace(Layout):
     """
-    Two kind of paperspace layouts:
+    There are two kind of paperspace layouts:
 
     1. Active Layout - all entities of this layout are stored in the ENTITIES section, the associated ``*Paper_Space``
        block is empty, block name ``*Paper_Space`` is mandatory and also marks the active layout, the layout name can
@@ -401,7 +400,7 @@ class Paperspace(Layout):
        ``N`` is an arbitrary number, I don't know if the block name schema '*Paper_SpaceN' is mandatory, the layout
        name can be an arbitrary string.
 
-    There is no different handling for active layouts and inactive layouts in ezdxf, this differentiation is just
+    There is no different handling for active layouts and inactive layouts in `ezdxf`, this differentiation is just
     for AutoCAD important and it is not documented in the DXF reference.
 
     """
@@ -630,8 +629,6 @@ class Paperspace(Layout):
                        offset: Tuple[int, int] = (0, 0),
                        rotation: float = 0,
                        scale: int = 16) -> None:
-        if self.is_modelspace:
-            raise DXFTypeError("No paper setup for model space.")
 
         # remove existing viewports
         for viewport in self.viewports():
@@ -708,10 +705,7 @@ class Paperspace(Layout):
             vpdata.view_mode = 1000  # AutoDesk default
 
     def get_paper_limits_r12(self) -> Tuple[float, float]:
-        """
-        Returns paper limits in plot paper units
-
-        """
+        """  Returns paper limits in plot paper units. """
         limmin = self.doc.header.get('$PLIMMIN', (0, 0))
         limmax = self.doc.header.get('$PLIMMAX', (0, 0))
         return limmin, limmax

@@ -1,29 +1,38 @@
 Arc
 ===
 
-.. class:: Arc(GraphicEntity)
+.. module:: ezdxf.entities
 
-An arc at location *center* and *radius* from *start_angle* to *end_angle*, *dxftype* is ARC. The arc goes from
-*start_angle* to *end_angle* in *counter clockwise* direction. Create arcs in layouts and blocks by factory function
-:meth:`~ezdxf.modern.layouts.Layout.add_arc`.
+ARC center at location :attr:`dxf.center` and radius of :attr:`dxf.radius` from :attr:`dxf.start_angle` to
+:attr:`dxf.end_angle`. ARC goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in counter clockwise
+orientation around the :attr:`dxf.extrusion` vector, which is ``(0, 0, 1)`` by default and the usual case for 2D
+arcs.
 
-DXF Attributes for Arc
-----------------------
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.Circle`
+DXF type                 ``'ARC'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_arc`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-:ref:`Common graphical DXF attributes`
+.. warning::
 
-.. attribute:: Arc.dxf.center
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-    center point of arc (2D/3D Point in :ref:`OCS`)
+.. class:: Arc
 
-.. attribute:: Arc.dxf.radius
+    .. attribute:: dxf.center
 
-    radius of arc (float)
+        Center point of arc (2D/3D Point in :ref:`OCS`)
 
-.. attribute:: Arc.dxf.start_angle
+    .. attribute:: dxf.radius
 
-    start angle in degrees (float)
+        Radius of arc (float)
 
-.. attribute:: Arc.dxf.end_angle
+    .. attribute:: dxf.start_angle
 
-    end angle in degrees (float)
+        Start angle in degrees (float)
+
+    .. attribute:: dxf.end_angle
+
+        End angle in degrees (float)

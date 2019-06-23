@@ -1,32 +1,39 @@
 Trace
 =====
 
-.. class:: Trace(GraphicEntity)
-
-A Trace is solid filled triangle or quadrilateral, dxftype is TRACE. Access corner points by name
-(:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`). I don't know the difference
-between SOLID and TRACE.
-Create traces in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_trace`.
-
-DXF Attributes for Trace
-------------------------
-
-:ref:`Common graphical DXF attributes`
+.. module:: ezdxf.entities
 
 
-.. attribute:: Trace.dxf.vtx0
+A TRACE is solid filled triangle or quadrilateral. Access vertices by name
+(:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
+I don't know the difference between SOLID and TRACE.
 
-location of the 1. point (2D/3D Point in :ref:`OCS`)
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'TRACE'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_trace`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-.. attribute:: Trace.dxf.vtx1
+.. warning::
 
-location of the 2. point (2D/3D Point in :ref:`OCS`)
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-.. attribute:: Trace.dxf.vtx2
 
-location of the 3. point (2D/3D Point in :ref:`OCS`)
+.. class:: Trace
 
-.. attribute:: Trace.dxf.vtx3
+    .. attribute:: dxf.vtx0
 
-location of the 4. point (2D/3D Point in :ref:`OCS`)
+        Location of 1. vertex (2D/3D Point in :ref:`OCS`)
 
+    .. attribute:: dxf.vtx1
+
+        Location of 2. vertex (2D/3D Point in :ref:`OCS`)
+
+    .. attribute:: dxf.vtx2
+
+        Location of 3. vertex (2D/3D Point in :ref:`OCS`)
+
+    .. attribute:: dxf.vtx3
+
+        Location of 4. vertex (2D/3D Point in :ref:`OCS`)

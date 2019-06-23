@@ -46,6 +46,7 @@ class Solid(_Base):
         return self.dxf.set(VERTEXNAMES[num], value)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_trace)
@@ -54,7 +55,7 @@ class Solid(_Base):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export entity specific data as DXF tags. (internal API) """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class

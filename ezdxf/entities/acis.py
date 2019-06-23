@@ -84,12 +84,15 @@ class Body(DXFGraphic):
 
     @property
     def has_binary_data(self):
+        """ Returns ``True`` if ACIS data is of type ``List[bytes]``, ``False`` if data is of type ``List[str]``. """
         return self.doc.dxfversion >= DXF2013
 
     def copy(self):
+        """ Prevent copying. (internal interface)"""
         raise DXFTypeError('Copying of ACIS data not supported.')
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        """ Loading interface. (internal API)"""
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.load_dxfattribs_into_namespace(dxf, acdb_modeler_geometry)
@@ -98,11 +101,12 @@ class Body(DXFGraphic):
         return dxf
 
     def load_acis_data(self, tags: Tags):
+        """ Loading interface. (internal API)"""
         text_lines = tags2textlines(tag for tag in tags if tag.code in (1, 3))
         self.acis_data = crypt.decode(text_lines)
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export entity specific data as DXF tags. (internal API)"""
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
@@ -118,6 +122,7 @@ class Body(DXFGraphic):
             self.export_acis_data(tagwriter)
 
     def export_acis_data(self, tagwriter: 'TagWriter') -> None:
+        """ Export ACIS data as DXF tags. (internal API)"""
         def cleanup(lines):
             for line in lines:
                 yield line.rstrip().replace('\n', '')
@@ -130,7 +135,7 @@ class Body(DXFGraphic):
         self.acis_data = text.split(sep)
 
     def tostring(self) -> str:
-        """ Returns ACIS data as one string for DXF R2000 - R2010. """
+        """ Returns ACIS data as one string for DXF R2000 to R2010. """
         if self.has_binary_data:
             return ""
         else:
@@ -144,10 +149,12 @@ class Body(DXFGraphic):
             return b""
 
     def get_acis_data(self):
+        """ Get the ACIS source code as a list of strings. """
         # for backward compatibility
         return self.acis_data
 
     def set_acis_data(self, text_lines: Iterable[str]) -> None:
+        """ Set the ACIS source code as a list of strings **without** line endings. """
         # for backward compatibility
         self.acis_data = text_lines
 

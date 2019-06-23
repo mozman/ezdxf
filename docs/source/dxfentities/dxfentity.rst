@@ -3,13 +3,13 @@ DXF Entity Base Class
 
 .. module:: ezdxf.entities
 
+Common base class for all DXF entities and objects.
+
+.. warning::
+
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
+
 .. class:: DXFEntity
-
-    Common base class for all DXF entities and objects.
-
-    .. warning::
-
-        Do not instantiate entity classes by yourself - always use the provided factory functions!
 
     .. attribute:: dxf
 

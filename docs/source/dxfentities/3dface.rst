@@ -1,43 +1,52 @@
-3DFace
+Face3d
 ======
 
-A 3DFace is real 3D solid filled triangle or quadrilateral, dxftype is 3DFACE. Access corner points by name
+.. module:: ezdxf.entities
+
+A 3DFACE is real 3D solid filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
-Create 3DFaces in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_3dface`.
 
-.. class:: 3DFace(GraphicEntity)
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'3DFACE'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_3dface`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-DXF Attributes for 3DFace
--------------------------
+.. warning::
 
-:ref:`Common graphical DXF attributes`
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-.. attribute:: 3DFace.dxf.vtx0
+.. class:: Face3d
 
-    location of the 1. point (3D Point in :ref:`WCS`)
+    :class:`Face3d` because :class:`3dface` is not a valid Python class name.
 
-.. attribute:: 3DFace.dxf.vtx1
+    .. attribute:: dxf.vtx0
 
-    location of the 2. point (3D Point in :ref:`WCS`)
+        Location of 1. vertex (3D Point in :ref:`WCS`)
 
-.. attribute:: 3DFace.dxf.vtx2
+    .. attribute:: dxf.vtx1
 
-    location of the 3. point (3D Point in :ref:`WCS`)
+        Location of 2. vertex (3D Point in :ref:`WCS`)
 
-.. attribute:: 3DFace.dxf.vtx3
+    .. attribute:: dxf.vtx2
 
-    location of the 4. point (3D Point in :ref:`WCS`)
+        Location of 3. vertex (3D Point in :ref:`WCS`)
 
-.. attribute:: 3DFace.dxf.invisible_edge
+    .. attribute:: dxf.vtx3
 
-    invisible edge flag (int, default=0)
+        Location of 4. vertex (3D Point in :ref:`WCS`)
 
-    === ==============================
-    1   first edge is invisible
-    2   second edge is invisible
-    4   third edge is invisible
-    8   fourth edge is invisible
-    === ==============================
+    .. attribute:: dxf.invisible_edge
 
-    Combine values by adding them, e.g. 1+4 = first and third edge is invisible.
+        invisible edge flag (int, default=0)
+
+        === ==============================
+        1   first edge is invisible
+        2   second edge is invisible
+        4   third edge is invisible
+        8   fourth edge is invisible
+        === ==============================
+
+        Combine values by adding them, e.g. 1+4 = first and third edge is invisible.
 

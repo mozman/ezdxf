@@ -3,16 +3,20 @@ DXF Graphic Entity Base Class
 
 .. module:: ezdxf.entities
 
+Common base class for all graphical DXF entities.
+
+This entities resides in entity spaces like :class:`~ezdxf.layouts.Modelspace`, any :class:`~ezdxf.layouts.Paperspace`
+or :class:`~ezdxf.layouts.BlockLayout`.
+
+============ =================================
+Subclass of  :class:`ezdxf.entities.DXFEntity`
+============ =================================
+
+.. warning::
+
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
 .. class:: DXFGraphic
-
-    ============ =================================
-    Subclass of  :class:`ezdxf.entities.DXFEntity`
-    ============ =================================
-
-    Common base class for all graphical DXF entities.
-
-    This entities resides in entity spaces like modelspace, any paperspace or blocks.
 
     .. attribute:: rgb
 

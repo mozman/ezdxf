@@ -3,7 +3,7 @@ Line
 
 .. module:: ezdxf.entities
 
-The LINE entity represents a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
+LINE entity is a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
