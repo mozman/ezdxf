@@ -11,7 +11,7 @@ ezdxf does not support binary encoded DXF files (yet?).
 
 .. seealso::
 
-    For more information about DXF tags see: :ref:`DXF Tags`
+    For more information about DXF tags see: :ref:`dxf_tags_internals`
 
 
 A usual DXF file is organized in sections, starting with the DXF tag

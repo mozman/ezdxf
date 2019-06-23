@@ -1,4 +1,4 @@
-.. _DXF Tags:
+.. _dxf_tags_internals:
 
 DXF Tags
 ========
@@ -97,7 +97,7 @@ Group Code        Meaning
 
 For explanation of all group codes see: `DXF Group Codes in Numerical Order Reference`_ provided by Autodesk
 
-.. _xdata_tags:
+.. _xdata_internals:
 
 Extended Data
 -------------
@@ -244,11 +244,12 @@ In `LWPOLYLINE` the order of tags is important, if the `count` tag is not the fi
 AutoCAD will not close the polyline when the `close` flag is set, by the way other applications like BricsCAD ignores
 the tag order and renders the polyline always correct.
 
+.. _extension_dict_internals:
 
 Extension Dictionary
 ~~~~~~~~~~~~~~~~~~~~
 
-The extension dictionary is an optional sequence that stores the handle of a dictionary object that belongs to the
+The extension dictionary is an optional sequence that stores the handle of a DICTIONARY object that belongs to the
 current object, which in turn may contain entries. This facility allows attachment of arbitrary database objects to any
 database object. Any object or entity may have this section.
 
@@ -262,6 +263,8 @@ The extension dictionary tag sequence:
   Hard-owner ID/handle to owner dictionary
   102
   }
+
+.. _reactors_internals:
 
 Persistent Reactors
 ~~~~~~~~~~~~~~~~~~~
@@ -283,7 +286,7 @@ The persistent reactors tag sequence:
   102
   }
 
-.. _app_data_tags:
+.. _app_data_internals:
 
 Application-Defined Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -317,7 +320,7 @@ and by default ezdxf adds new app data in front of the first subclass marker to 
 **Exception XRECORD:** Tags with group code 102 and a value string without a preceding "{" or the scheme "YOURAPPID}",
 should be treated as usual group codes.
 
-.. _Embedded Objects:
+.. _embedded_objects_internals:
 
 Embedded Objects
 ~~~~~~~~~~~~~~~~
@@ -341,7 +344,7 @@ Quote from `Embedded and Encapsulated Objects`_:
 
 - Embedded object start with :code:`(101, "Embedded Object")` tag
 - Embedded object is appended to the encapsulated object
-- :code:`(101, "Embedded Object")` tag is the end of the encapsulating object, also of its :ref:`xdata_tags`
+- :code:`(101, "Embedded Object")` tag is the end of the encapsulating object, also of its `Extended Data`_
 - Embedded object tags can contain any group code except the DXF structure tag :code:`(0, ...)`
 
 **Unconfirmed assumptions:**

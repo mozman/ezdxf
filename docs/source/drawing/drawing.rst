@@ -48,6 +48,10 @@ Drawing Object
 
         :class:`Drawing` filename, if loaded by :func:`ezdxf.readfile` else ``None``.
 
+    .. attribute:: rootdict
+
+        Reference to the root dictionary of the OBJECTS section.
+
     .. attribute:: header
 
         Reference to the :class:`~ezdxf.sections.header.HeaderSection`, get/set drawing settings as header variables.
@@ -160,6 +164,8 @@ Drawing Object
     .. automethod:: add_image_def
 
     .. automethod:: set_raster_variables
+
+    .. automethod:: set_wipeout_variables
 
     .. automethod:: add_underlay_def
 

@@ -305,6 +305,6 @@ acdb_field = DefSubclass('AcDbField', {
 # todo: implement FIELD
 # register when done
 class Field(DXFObject):
-    """ DXF VBA_PROJECT entity """
+    """ DXF FIELD entity """
     DXFTYPE = 'FIELD'
     DXFATTRIBS = DXFAttributes(base_class, acdb_field)

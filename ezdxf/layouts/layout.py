@@ -358,7 +358,7 @@ class Modelspace(Layout):
         it is also available in paper space layouts.
 
         Args:
-            dxfattribs: DXF attributes for the :class:`GeoData` entity
+            dxfattribs: DXF attributes for :class:`~ezdxf.entities.GeoData` entity
 
         """
         if self.doc.dxfversion < DXF2010:

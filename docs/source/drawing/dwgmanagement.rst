@@ -84,8 +84,8 @@ Global options stored in :mod:`ezdxf.options`
 
 .. attribute:: ezdxf.options.check_entity_tag_structures
 
-    Check app data (:ref:`app_data_tags`) and XDATA (:ref:`xdata_tags`) tag structures, set this option to ``False`` for
-    a little performance boost, default value is ``True``.
+    Check app data (:ref:`app_data_internals`) and XDATA (:ref:`xdata_internals`) tag structures, set this option to
+    ``False`` for a little performance boost, default value is ``True``.
 
 .. attribute:: ezdxf.options.filter_invalid_xdata_group_codes
 

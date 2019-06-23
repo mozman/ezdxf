@@ -76,14 +76,11 @@ class BaseLayout(CreatorInterface):
         return self.block_record.get_extension_dict()
 
     def __len__(self) -> int:
-        """
-        Returns count of entities owned by the layout.
-
-        """
+        """ Returns count of entities owned by the layout. """
         return len(self.entity_space)
 
     def __iter__(self) -> Iterable['DXFGraphic']:
-        """ Iterate over all drawing entities in this layout. """
+        """ Returns iterable of all drawing entities in this layout. """
         return iter(self.entity_space)
 
     def __getitem__(self, index):
