@@ -74,6 +74,7 @@ class Text(DXFGraphic):
     UPSIDE_DOWN = MIRROR_Y
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_text, 2)
@@ -86,7 +87,7 @@ class Text(DXFGraphic):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export entity specific data as DXF tags. (internal API) """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
@@ -94,6 +95,7 @@ class Text(DXFGraphic):
         self.export_acdb_text2(tagwriter)
 
     def export_acdb_text(self, tagwriter: 'TagWriter') -> None:
+        """ Export TEXT data as DXF tags. (internal API) """
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
         # for all DXF versions
@@ -103,11 +105,39 @@ class Text(DXFGraphic):
         ])
 
     def export_acdb_text2(self, tagwriter: 'TagWriter') -> None:
+        """ Export TEXT data as DXF tags. (internal API) """
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text2.name)
         self.dxf.export_dxf_attribs(tagwriter, 'valign')
 
     def set_pos(self, p1: 'Vertex', p2: 'Vertex' = None, align: str = None) -> 'Text':
+        """
+        Set text alignment, valid alignments are:
+
+        ============   =============== ================= =====
+        Vertical       Left            Center            Right
+        ============   =============== ================= =====
+        Top            TOP_LEFT        TOP_CENTER        TOP_RIGHT
+        Middle         MIDDLE_LEFT     MIDDLE_CENTER     MIDDLE_RIGHT
+        Bottom         BOTTOM_LEFT     BOTTOM_CENTER     BOTTOM_RIGHT
+        Baseline       LEFT            CENTER            RIGHT
+        ============   =============== ================= =====
+
+        Alignments ``'ALIGNED'`` and ``'FIT'`` are special, they require a second alignment point, text is aligned
+        on the virtual line between these two points and has vertical alignment `Baseline`.
+
+        - ``'ALIGNED'``: Text is stretched or compressed to fit exactly between `p1` and `p2` and the text height is also
+          adjusted to preserve height/width ratio.
+        - ``'FIT'``: Text is stretched or compressed to fit exactly between `p1` and `p2` but only the text width is
+          adjusted, the text height is fixed by the :attr:`dxf.height` attribute.
+        - ``'MIDDLE'``: also a special adjustment, but the result is the same as for ``'MIDDLE_CENTER'``.
+
+        Args:
+            p1: first alignment point as (x, y[, z]) tuple
+            p2: second alignment point as (x, y[, z]) tuple, required for ``'ALIGNED'`` and ``'FIT'`` else ignored
+            align: new alignment, ``None`` for preserve existing alignment.
+
+        """
         if align is None:
             align = self.get_align()
         align = align.upper()
@@ -122,6 +152,11 @@ class Text(DXFGraphic):
         return self
 
     def get_pos(self) -> Tuple[str, 'Vertex', Union['Vertex', None]]:
+        """
+        Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method, `p1` is the alignment point, `p2` is
+        only relevant if `align` is ``'ALIGNED'`` or ``'FIT'``, otherwise it is ``None``.
+
+        """
         p1 = self.dxf.insert
         p2 = self.get_dxf_attrib('align_point', (0., 0., 0.))
         align = self.get_align()
@@ -132,6 +167,14 @@ class Text(DXFGraphic):
         return align, p2, None
 
     def set_align(self, align: str = 'LEFT') -> 'Text':
+        """
+        Just for experts: Sets the text alignment without setting the alignment points, set adjustment points
+        attr:`dxf.insert` and :attr:`dxf.align_point` manually.
+
+        Args:
+            align: test alignment, see also :meth:`set_pos`
+
+        """
         align = align.upper()
         halign, valign = const.TEXT_ALIGN_FLAGS[align]
         self.set_dxf_attrib('halign', halign)
@@ -139,6 +182,7 @@ class Text(DXFGraphic):
         return self
 
     def get_align(self) -> str:
+        """ Returns the actual text alignment as string, see also :meth:`set_pos`. """
         halign = self.get_dxf_attrib('halign', 0)
         valign = self.get_dxf_attrib('valign', 0)
         if halign > 2:

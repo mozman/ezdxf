@@ -229,6 +229,7 @@ TEXT_ALIGNMENT_BY_FLAGS = dict((flags, name) for name, flags in TEXT_ALIGN_FLAGS
 LEFT = 0
 CENTER = 1
 RIGHT = 2
+BASELINE = 0
 BOTTOM = 1
 MIDDLE = 2
 TOP = 3

@@ -1,107 +1,101 @@
 Text
 ====
 
-.. class:: Text(GraphicEntity)
+.. module:: ezdxf.entities
 
-A simple one line text, dxftype is TEXT. Text height is in drawing units and defaults to 1, but it depends on
-the rendering software what you really get. Width is a scaling factor, but it is not defined what is scaled (I
-assume the text height), but it also depends on the rendering software what you get. This is one reason why DXF and
-also DWG are not reliable for exchanging exact styling, they are just reliable for exchanging exact geometry.
-Create text in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_text`.
-
-DXF Attributes for Text
------------------------
-
-:ref:`Common graphical DXF attributes`
+A simple one line text. :attr:`Text.dxf.height` in drawing units and defaults to ``1``, but it also depends on the
+font rendering of the CAD application. :attr:`Text.dxf.width` is a scaling factor, but the DXF reference does not define
+the base value to scale, in practice the text :attr:`Text.dxf.height` is the base value, the effective text width
+depends on the font defined by :attr:`Text.dxf.style` and the font rendering of the CAD application, especially for
+proportional fonts, text width calculation is nearly impossible without knowlegde of the used CAD application and their
+font rendering behavior. This is one reason why the DXF and also DWG file format are not reliable for exchanging exact
+text layout, they are just reliable for exchanging exact geometry.
 
 
-.. attribute:: Text.dxf.text
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'TEXT'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_text`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-the content text itself (str)
+.. warning::
 
-.. attribute:: Text.dxf.insert
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-first alignment point of text (2D/3D Point in :ref:`OCS`), relevant for the adjustments LEFT, ALIGN and FIT.
+.. class:: Text
 
-.. attribute:: Text.dxf.align_point
+    .. attribute:: dxf.text
 
-second alignment point of text (2D/3D Point in :ref:`OCS`), if the justification is anything other than LEFT, the second
-alignment point specify also the first alignment point: (or just the second alignment point for ALIGN and FIT)
+        Text content. (str)
 
-.. attribute:: Text.dxf.height
+    .. attribute:: dxf.insert
 
-text height in drawing units (float); default=1
+        First alignment point of text (2D/3D Point in :ref:`OCS`), relevant for the adjustments ``'LEFT'``, ``'ALIGN'``
+        and ``'FIT'``.
 
-.. attribute:: Text.dxf.rotation
+    .. attribute:: dxf.align_point
 
-text rotation in degrees (float); default=0
+    second alignment point of text (2D/3D Point in :ref:`OCS`), if the justification is anything other than ``'LEFT'``,
+    the second alignment point specify also the first alignment point: (or just the second alignment point for
+    ``'ALIGN'`` and ``'FIT'``)
 
-.. attribute:: Text.dxf.oblique
+    .. attribute:: dxf.height
 
-text oblique angle (float); default=0
+        Text height in drawing units (float); default value is ``1``
 
-.. attribute:: Text.dxf.style
+    .. attribute:: dxf.rotation
 
-text style name (str); default=STANDARD
+        Text rotation in degrees (float); default value is ``0``
 
-.. attribute:: Text.dxf.width
+    .. attribute:: dxf.oblique
 
-width scale factor (float); default=1
+        Text oblique angle in degrees (float); default value is ``0`` (straight vertical text)
 
-.. attribute:: Text.dxf.halign
+    .. attribute:: dxf.style
 
-horizontal alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`; default=0
+        :class:`Textstyle` name (str); default value is ``'Standard'``
 
-.. attribute:: Text.dxf.valign
+    .. attribute:: dxf.width
 
-vertical alignment flag (int), use :meth:`Text.set_pos` and :meth:`Text.get_align`; default=0
+        Width scale factor (float); default value is ``1``
 
-.. attribute:: Text.dxf.text_generation_flag
+    .. attribute:: dxf.halign
 
-text generation flags (int)
+        Horizontal alignment flag (int), use :meth:`~Text.set_pos` and :meth:`~Text.get_align`; default value is ``0``
 
-- 2 = text is backward (mirrored in X)
-- 4 = text is upside down (mirrored in Y)
+        === ===================================
+        0   Left
+        2   Right
+        3   Aligned (if vertical alignment = 0)
+        4   Middle (if vertical alignment = 0)
+        5   Fit (if vertical alignment = 0)
+        === ===================================
 
-Text Methods
-------------
+    .. attribute:: dxf.valign
 
-.. method:: Text.set_pos(p1, p2=None, align=None)
+        Vertical alignment flag (int), use :meth:`~Text.set_pos` and :meth:`~Text.get_align`; default value is ``0``
 
-:param p1: first alignment point as (x, y[, z])-tuple
-:param p2: second alignment point as (x, y[, z])-tuple, required for ALIGNED and FIT else ignored
-:param str align: new alignment, None for preserve existing alignment.
+        === ===========
+        0   Baseline
+        1   Bottom
+        2   Middle
+        3   Top
+        === ===========
 
-Set text alignment, valid positions are:
+    .. attribute:: dxf.text_generation_flag
 
-============   =============== ================= =====
-Vert/Horiz     Left            Center            Right
-============   =============== ================= =====
-Top            TOP_LEFT        TOP_CENTER        TOP_RIGHT
-Middle         MIDDLE_LEFT     MIDDLE_CENTER     MIDDLE_RIGHT
-Bottom         BOTTOM_LEFT     BOTTOM_CENTER     BOTTOM_RIGHT
-Baseline       LEFT            CENTER            RIGHT
-============   =============== ================= =====
+        Text generation flags (int)
 
-Special alignments are, ALIGNED and FIT, they require a second alignment point, the text
-is justified with the vertical alignment `Baseline` on the virtual line between these two points.
+        === ===================================
+        2   text is backward (mirrored in X)
+        4   text is upside down (mirrored in Y)
+        === ===================================
 
-- ALIGNED: Text is stretched or compressed to fit exactly between `p1` and `p2` and the text height is also adjusted to
-  preserve height/width ratio.
-- FIT: Text is stretched or compressed to fit exactly between `p1` and `p2` but only the text width is adjusted, the
-  text height is fixed by the `height` attribute.
-- MIDDLE: also a `special` adjustment, but the result is the same as for MIDDLE_CENTER.
+    .. automethod:: set_pos
 
-.. method:: Text.get_pos()
+    .. automethod:: get_pos
 
-Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment method, `p1` is the alignment point, `p2` is only
-relevant if `align` is ALIGNED or FIT, else it's None.
+    .. automethod:: get_align
 
-.. method:: Text.get_align()
-
-Returns the actual text alignment as string, see tables above.
-
-.. method:: Text.set_align(align='LEFT')
-
-Just for experts: Sets the text alignment without setting the alignment points, set adjustment points `insert`
-and `alignpoint` manually.
+    .. automethod:: set_align(align: str = 'LEFT') -> Text

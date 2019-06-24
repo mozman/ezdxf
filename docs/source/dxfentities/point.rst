@@ -1,16 +1,27 @@
 Point
 =====
 
-.. class:: Point(GraphicEntity)
+.. module:: ezdxf.entities
 
-A point at location *point*, *dxftype* is POINT.
-Create points in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_point`.
+POINT at location :attr:`dxf.point`.
 
-DXF Attributes for Point
-------------------------
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'POINT'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_point`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-:ref:`Common graphical DXF attributes`
+.. warning::
 
-.. attribute:: Point.dxf.location
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-Location of the point (2D/3D Point in :ref:`WCS`)
+.. class:: Point
+
+    .. attribute:: dxf.location
+
+        Location of the point (2D/3D Point in :ref:`WCS`)
+
+    .. attribute:: dxf.angle
+
+        Angle in degrees of the x-axis for the UCS in effect when POINT was drawn (float); used when PDMODE is nonzero.

@@ -31,6 +31,7 @@ class Point(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_point)
 
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        """ Loading interface. (internal API) """
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.load_dxfattribs_into_namespace(dxf, acdb_point)
@@ -39,7 +40,7 @@ class Point(DXFGraphic):
         return dxf
 
     def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+        """ Export entity specific data as DXF tags. (internal API) """
         # base class export is done by parent class
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
