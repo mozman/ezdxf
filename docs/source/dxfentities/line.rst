@@ -3,7 +3,7 @@ Line
 
 .. module:: ezdxf.entities
 
-LINE entity is a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
+LINE (`DXF Reference`_) entity is a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -37,3 +37,4 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
         extrusion vector, default value is ``(0, 0, 1)``
 
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-FCEF5726-53AE-4C43-B4EA-C84EB8686A66

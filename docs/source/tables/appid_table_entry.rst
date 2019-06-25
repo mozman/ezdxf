@@ -3,11 +3,15 @@ AppID
 
 .. module:: ezdxf.entities
 
+Defines an APPID (`DXF Reference`_). These table entries maintain a set of names for all registered applications.
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'APPID'``
+Factory function         :meth:`ezdxf.Drawing.appids.new`
+======================== ==========================================
+
 .. class:: AppID
-
-    Subclass of :class:`DXFEntity`
-
-    Defines an AppID. These table entries maintain a set of names for all registered applications.
 
     .. attribute:: dxf.owner
 
@@ -25,6 +29,7 @@ AppID
         16  If set, table entry is externally dependent on an xref
         32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
         64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
-            edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF
-            files and need not be set by programs that write DXF files)
+            edited. (This flag is only for the benefit of AutoCAD)
         === =========================================================
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-6E3140E9-E560-4C77-904E-480382F0553E

@@ -3,18 +3,22 @@ View
 
 .. module:: ezdxf.entities
 
-The View table stores named views of the model or paperspace layouts. This stored views makes parts of the
-drawing or some view points of the model in a CAD applications more accessible. This views have no influence to the
-drawing content or to the generated output by exporting PDFs or plotting on paper sheets, they are just for the
+The View table (`DXF Reference`_) stores named views of the model or paperspace layouts. This stored views makes parts
+of the drawing or some view points of the model in a CAD applications more accessible. This views have no influence
+to the drawing content or to the generated output by exporting PDFs or plotting on paper sheets, they are just for the
 convenience of CAD application users.
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'VIEW'``
+Factory function         :meth:`ezdxf.Drawing.views.new`
+======================== ==========================================
 
 .. seealso::
 
     DXF Internals: :ref:`view_table_internals`
 
 .. class:: View
-
-    Subclass of :class:`DXFEntity`
 
     .. attribute:: dxf.owner
 
@@ -33,8 +37,7 @@ convenience of CAD application users.
         16  If set, table entry is externally dependent on an xref
         32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
         64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
-            edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF
-            files and does not need to be set by programs that write DXF files)
+            edited. (This flag is only for the benefit of AutoCAD)
         === =========================================================
 
     .. attribute:: dxf.height
@@ -153,3 +156,5 @@ convenience of CAD application users.
     .. attribute:: dxf.sun_handle
 
         Sun hard ownership handle.
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-CF3094AB-ECA9-43C1-8075-7791AC84F97C

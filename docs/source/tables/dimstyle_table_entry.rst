@@ -11,13 +11,16 @@ DimStyle
     :align: center
     :width: 800px
 
+DIMSTYLE (`DXF Reference`_) defines the appearance of :class:`Dimension` entities. Each of this dimension variables
+starting with ``dim...`` can be overridden for any :class:`Dimension` entity individually.
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'DIMSTYLE'``
+Factory function         :meth:`ezdxf.Drawing.dimstyles.new`
+======================== ==========================================
+
 .. class:: DimStyle
-
-    Subclass of :class:`DXFEntity`
-
-    Defines the appearance of :class:`Dimension` entities. Each of this dimension variables starting
-    with ``dim...`` can be overridden for any :class:`Dimension` entity individually.
-
 
     .. attribute:: dxf.owner
 
@@ -35,8 +38,7 @@ DimStyle
         16      If set, table entry is externally dependent on an xref
         32      If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
         64      If set, the table entry was referenced by at least one entity in the drawing the last time the drawing
-                was edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read
-                DXF files and need not be set by programs that write DXF files)
+                was edited. (This flag is only for the benefit of AutoCAD)
         ======= ==============================================================================================
 
     .. attribute:: dxf.dimpost
@@ -395,3 +397,4 @@ DimStyle
 
     .. automethod:: set_limits
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F2FAD36F-0CE3-4943-9DAD-A9BCD2AE81DA

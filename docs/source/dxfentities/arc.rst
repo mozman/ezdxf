@@ -3,7 +3,7 @@ Arc
 
 .. module:: ezdxf.entities
 
-ARC center at location :attr:`dxf.center` and radius of :attr:`dxf.radius` from :attr:`dxf.start_angle` to
+ARC (`DXF Reference`_) center at location :attr:`dxf.center` and radius of :attr:`dxf.radius` from :attr:`dxf.start_angle` to
 :attr:`dxf.end_angle`. ARC goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in counter clockwise
 orientation around the :attr:`dxf.extrusion` vector, which is ``(0, 0, 1)`` by default and the usual case for 2D
 arcs.
@@ -36,3 +36,5 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.end_angle
 
         End angle in degrees (float)
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0B14D8F1-0EBA-44BF-9108-57D8CE614BC8

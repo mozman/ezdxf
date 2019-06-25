@@ -3,6 +3,14 @@ Linetype
 
 .. module:: ezdxf.entities
 
+Defines a linetype (`DXF Reference`_).
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'LTYPE'``
+Factory function         :meth:`ezdxf.Drawing.linetypes.new`
+======================== ==========================================
+
 .. seealso::
 
     :ref:`tut_linetypes`
@@ -10,10 +18,6 @@ Linetype
     DXF Internals: :ref:`ltype_table_internals`
 
 .. class:: Linetype
-
-    Subclass of :class:`DXFEntity`
-
-    Defines a linetype.
 
     .. attribute:: dxf.name
 
@@ -34,3 +38,5 @@ Linetype
     .. attribute:: dxf.items
 
         Number of linetype elements (int).
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F57A316C-94A2-416C-8280-191E34B182AC

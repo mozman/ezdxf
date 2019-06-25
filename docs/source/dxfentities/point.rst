@@ -3,7 +3,7 @@ Point
 
 .. module:: ezdxf.entities
 
-POINT at location :attr:`dxf.point`.
+POINT (`DXF Reference`_) at location :attr:`dxf.point`.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -25,3 +25,5 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.angle
 
         Angle in degrees of the x-axis for the UCS in effect when POINT was drawn (float); used when PDMODE is nonzero.
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-9C6AD32D-769D-4213-85A4-CA9CCB5C5317

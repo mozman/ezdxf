@@ -3,7 +3,7 @@ Face3d
 
 .. module:: ezdxf.entities
 
-A 3DFACE is real 3D solid filled triangle or quadrilateral. Access vertices by name
+A 3DFACE (`DXF Reference`_) is real 3D solid filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
 
 ======================== ==========================================
@@ -50,3 +50,4 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         Combine values by adding them, e.g. 1+4 = first and third edge is invisible.
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-747865D5-51F0-45F2-BEFE-9572DBC5B151

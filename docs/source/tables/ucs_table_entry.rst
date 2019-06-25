@@ -3,15 +3,20 @@ UCS
 
 .. module:: ezdxf.entities
 
+Defines an named or unnamed user coordinate system (`DXF Reference`_) for usage in CAD applications. This UCS does not
+interact with `ezdxf` in any way, to do coordinate transformations by `ezdxf` use the :class:`ezdxf.math.UCS` class.
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'UCS'``
+Factory function         :meth:`ezdxf.Drawing.ucs.new`
+======================== ==========================================
+
 .. seealso::
 
-    :ref:`ocs`
+    :ref:`ucs` and :ref:`ocs`
 
 .. class:: UCSTable
-
-    Subclass of :class:`DXFEntity`
-
-    Defines an user coordinate system (UCS).
 
     .. attribute:: dxf.owner
 
@@ -29,8 +34,7 @@ UCS
         16  If set, table entry is externally dependent on an xref
         32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
         64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
-            edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF
-            files and need not be set by programs that write DXF files)
+            edited. (This flag is only for the benefit of AutoCAD)
         === ========================================================
 
     .. attribute:: dxf.origin
@@ -47,3 +51,4 @@ UCS
 
     .. automethod:: ucs
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-1906E8A7-3393-4BF9-BD27-F9AE4352FB8B

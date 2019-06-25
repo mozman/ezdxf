@@ -3,12 +3,21 @@ Style
 
 .. module:: ezdxf.entities
 
+Defines a text style (`DXF Reference`_), can be used by entities: :class:`Text`, :class:`Attrib` and
+:class:`Attdef`.
+
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'STYLE'``
+Factory function         :meth:`ezdxf.Drawing.styles.new`
+======================== ==========================================
+
+.. seealso::
+
+    :ref:`tut_text` and DXF internals for :ref:`dimstyle_table_internals`.
+
 .. class:: Textstyle
-
-    Subclass of :class:`DXFEntity`
-
-    Defines a text style, can be used by entities: :class:`Text`, :class:`Attrib` and
-    :class:`Attdef`.
 
     .. attribute:: dxf.handle
 
@@ -32,7 +41,7 @@ Style
         16  If set, table entry is externally dependent on an xref
         32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
         64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
-            edited. (This flag is for the benefit of AutoCADcommands. It can be ignored by most programs that read DXF
+            edited. (This flag is only for the benefit of AutoCAD)commands. It can be ignored by most programs that read DXF
             files and need not be set by programs that write DXF files)
         === =======================================================
 
@@ -68,3 +77,5 @@ Style
     .. attribute:: dxf.bigfont
 
         Big font name, blank if none (str)
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EF68AF7C-13EF-45A1-8175-ED6CE66C8FC9

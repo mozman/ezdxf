@@ -3,7 +3,7 @@ Region
 
 .. module:: ezdxf.entities
 
-An object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+REGION (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 
 `ezdxf` will never interpret ACIS source code, don't ask me for this feature.
 
@@ -24,3 +24,5 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     Same attributes and methods as parent class :class:`Body`.
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-644BF0F0-FD79-4C5E-AD5A-0053FCC5A5A4

@@ -3,15 +3,20 @@ Layer
 
 .. module:: ezdxf.entities
 
+LAYER (`DXF Reference`_) definition, defines attribute values for entities on this layer for their attributes set to
+``BYLAYER``.
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'LAYER'``
+Factory function         :meth:`ezdxf.Drawing.layers.new`
+======================== ==========================================
+
 .. seealso::
 
     :ref:`layer_concept` and :ref:`tut_layers`
 
 .. class:: Layer
-
-    Subclass of :class:`DXFEntity`
-
-    Layer definition, defines attribute values for entities on this layer for their attributes set to ``BYLAYER``.
 
     .. attribute:: dxf.handle
 
@@ -76,7 +81,6 @@ Layer
 
         (requires DXF R13)
 
-
     .. attribute:: dxf.material_handle
 
         Handle to default :class:`~ezdxf.entities.Material`.
@@ -106,3 +110,5 @@ Layer
     .. automethod:: get_color
 
     .. automethod:: set_color
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB

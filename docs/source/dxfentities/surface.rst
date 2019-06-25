@@ -3,7 +3,7 @@ Surface
 
 .. module:: ezdxf.entities
 
-A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+SURFACE (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 
 `ezdxf` will never interpret ACIS source code, don't ask me for this feature.
 
@@ -35,6 +35,8 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 ExtrudedSurface
 ===============
+
+(`DXF Reference`_)
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Surface`
@@ -102,6 +104,8 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 LoftedSurface
 =============
 
+(`DXF Reference`_)
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Surface`
 DXF type                 ``'LOFTEDSURFACE'``
@@ -147,6 +151,8 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 RevolvedSurface
 ===============
 
+(`DXF Reference`_)
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Surface`
 DXF type                 ``'REVOLVEDSURFACE'``
@@ -187,6 +193,8 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 SweptSurface
 ============
+
+(`DXF Reference`_)
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Surface`
@@ -248,3 +256,4 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         type: :class:`~ezdxf.math.Matrix44`
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-BB62483A-89C3-47C4-80E5-EA3F08979863

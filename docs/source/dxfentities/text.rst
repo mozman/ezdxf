@@ -3,14 +3,17 @@ Text
 
 .. module:: ezdxf.entities
 
-A simple one line text. :attr:`Text.dxf.height` in drawing units and defaults to ``1``, but it also depends on the
+One line TEXT (`DXF Reference`_) entity. :attr:`Text.dxf.height` in drawing units and defaults to ``1``, but it also depends on the
 font rendering of the CAD application. :attr:`Text.dxf.width` is a scaling factor, but the DXF reference does not define
-the base value to scale, in practice the text :attr:`Text.dxf.height` is the base value, the effective text width
+the base value to scale, in practice the :attr:`Text.dxf.height` is the base value, the effective text width
 depends on the font defined by :attr:`Text.dxf.style` and the font rendering of the CAD application, especially for
 proportional fonts, text width calculation is nearly impossible without knowlegde of the used CAD application and their
 font rendering behavior. This is one reason why the DXF and also DWG file format are not reliable for exchanging exact
 text layout, they are just reliable for exchanging exact geometry.
 
+.. seealso::
+
+    :ref:`tut_text`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -99,3 +102,6 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. automethod:: get_align
 
     .. automethod:: set_align(align: str = 'LEFT') -> Text
+
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-62E5383D-8A14-47B4-BFC4-35824CAE8363

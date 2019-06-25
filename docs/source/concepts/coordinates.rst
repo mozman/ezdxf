@@ -66,7 +66,7 @@ DCS
 ---
 
 Display coordinate system - the coordinate system into which objects are transformed before they are displayed. The
-origin of the DCS is the point stored in the AutoCAD system variable TARGET, and its Z axis is the viewing direction.
+origin of the DCS is the point stored in the AutoCAD system variable TARGET, and its z-axis is the viewing direction.
 In other words, a viewport is always a plan view of its DCS. These coordinates can be used to determine where something
 will be displayed to the AutoCAD user.
 

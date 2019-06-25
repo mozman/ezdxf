@@ -3,12 +3,18 @@ BlockRecord
 
 .. module:: ezdxf.entities
 
+BLOCK_RECORD (`DXF Reference`_) is a basic management structure for :class:`~ezdxf.layouts.BlockLayout` and
+:class:`~ezdxf.layouts.Layout`. `ezdxf` take care of correct BLOCK_RECORDS management, users don't have to worry about.
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFEntity`
+DXF type                 ``'BLOCK_RECORD'``
+Factory function         :meth:`ezdxf.Drawing.block_records.new`
+======================== ==========================================
+
+
+
 .. class:: BlockRecord
-
-    Subclass of :class:`DXFEntity`
-
-    :class:`BlockRecord` is a basic management structure for :class:`~ezdxf.layouts.BlockLayout` and
-    :class:`~ezdxf.layouts.Layout`.
 
     .. attribute:: dxf.owner
 
@@ -61,3 +67,5 @@ BlockRecord
         23  US Survey Yard
         24  US Survey Mile
         === ===================
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A1FD1934-7EF5-4D35-A4B0-F8AE54A9A20A

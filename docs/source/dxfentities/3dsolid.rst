@@ -3,7 +3,7 @@ Solid3d
 
 .. module:: ezdxf.entities
 
-A 3D object created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
+3DSOLID (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 
 `ezdxf` will never interpret ACIS source code, don't ask me for this feature.
 
@@ -30,3 +30,4 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-19AB1C40-0BE0-4F32-BCAB-04B37044A0D3

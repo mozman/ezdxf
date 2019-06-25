@@ -3,7 +3,7 @@ Circle
 
 .. module:: ezdxf.entities
 
-CIRCLE center at location :attr:`dxf.center` and radius of :attr:`dxf.radius`.
+CIRCLE (`DXF Reference`_) center at location :attr:`dxf.center` and radius of :attr:`dxf.radius`.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -25,3 +25,5 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.radius
 
     Radius of circle (float)
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-8663262B-222C-414D-B133-4A8506A27C18

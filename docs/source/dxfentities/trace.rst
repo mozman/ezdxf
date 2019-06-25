@@ -4,7 +4,7 @@ Trace
 .. module:: ezdxf.entities
 
 
-A TRACE is solid filled triangle or quadrilateral. Access vertices by name
+A TRACE (`DXF Reference`_) is solid filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
 I don't know the difference between SOLID and TRACE.
 
@@ -37,3 +37,5 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.vtx3
 
         Location of 4. vertex (2D/3D Point in :ref:`OCS`)
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EA6FBCA8-1AD6-4FB2-B149-770313E93511
