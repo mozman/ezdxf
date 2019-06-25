@@ -10,7 +10,7 @@ Defines a text style (`DXF Reference`_), can be used by entities: :class:`Text`,
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'STYLE'``
-Factory function         :meth:`ezdxf.Drawing.styles.new`
+Factory function         :meth:`Drawing.styles.new`
 ======================== ==========================================
 
 .. seealso::

@@ -9,7 +9,7 @@ BLOCK_RECORD (`DXF Reference`_) is a basic management structure for :class:`~ezd
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'BLOCK_RECORD'``
-Factory function         :meth:`ezdxf.Drawing.block_records.new`
+Factory function         :meth:`Drawing.block_records.new`
 ======================== ==========================================
 
 

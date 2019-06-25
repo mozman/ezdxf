@@ -3,13 +3,14 @@ UCS
 
 .. module:: ezdxf.entities
 
-Defines an named or unnamed user coordinate system (`DXF Reference`_) for usage in CAD applications. This UCS does not
-interact with `ezdxf` in any way, to do coordinate transformations by `ezdxf` use the :class:`ezdxf.math.UCS` class.
+Defines an named or unnamed user coordinate system (`DXF Reference`_) for usage in CAD applications. This UCS table
+entry does not interact with `ezdxf` in any way, to do coordinate transformations by `ezdxf` use the
+:class:`ezdxf.math.UCS` class.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'UCS'``
-Factory function         :meth:`ezdxf.Drawing.ucs.new`
+Factory function         :meth:`Drawing.ucs.new`
 ======================== ==========================================
 
 .. seealso::
@@ -39,16 +40,16 @@ Factory function         :meth:`ezdxf.Drawing.ucs.new`
 
     .. attribute:: dxf.origin
 
-        Origin  as (x, y, z) tuple
+        Origin  as ``(x, y, z)`` tuple
 
     .. attribute:: dxf.xaxis
 
-        X-axis direction as (x, y, z) tuple
+        X-axis direction as ``(x, y, z)`` tuple
 
     .. attribute:: dxf.yaxis
 
-        Y-axis direction as (x, y, z) tuple
+        Y-axis direction as ``(x, y, z)`` tuple
 
-    .. automethod:: ucs
+    .. automethod:: ucs() -> UCS
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-1906E8A7-3393-4BF9-BD27-F9AE4352FB8B

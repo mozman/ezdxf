@@ -52,6 +52,13 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
 
         .. versionadded:: 0.9
 
+    .. method:: set_axis(axis)
+
+        axis as ``(x, y, z)`` tuple
+
+        Args:
+            axis: ``(x, y, z)`` tuple
+
     .. method:: example_method(flag:bool=False)->None
 
         Method :meth:`example_method` of class :class:`ExampleCls`

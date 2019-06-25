@@ -9,7 +9,7 @@ viewports, not paperspace viewports, for paperspace viewports see the :class:`Vi
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'VPORT'``
-Factory function         :meth:`ezdxf.Drawing.viewports.new`
+Factory function         :meth:`Drawing.viewports.new`
 ======================== ==========================================
 
 .. seealso::

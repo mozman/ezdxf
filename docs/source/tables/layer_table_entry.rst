@@ -9,7 +9,7 @@ LAYER (`DXF Reference`_) definition, defines attribute values for entities on th
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'LAYER'``
-Factory function         :meth:`ezdxf.Drawing.layers.new`
+Factory function         :meth:`Drawing.layers.new`
 ======================== ==========================================
 
 .. seealso::

@@ -8,7 +8,7 @@ Defines a linetype (`DXF Reference`_).
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'LTYPE'``
-Factory function         :meth:`ezdxf.Drawing.linetypes.new`
+Factory function         :meth:`Drawing.linetypes.new`
 ======================== ==========================================
 
 .. seealso::

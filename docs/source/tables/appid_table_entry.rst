@@ -8,7 +8,7 @@ Defines an APPID (`DXF Reference`_). These table entries maintain a set of names
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'APPID'``
-Factory function         :meth:`ezdxf.Drawing.appids.new`
+Factory function         :meth:`Drawing.appids.new`
 ======================== ==========================================
 
 .. class:: AppID

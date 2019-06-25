@@ -137,15 +137,13 @@ class Insert(DXFGraphic):
               scale: Tuple[float, float, float] = None,
               rotation: float = None) -> 'Insert':
         """
-        Set placing attributes of the INSERT entity.
+        Set block reference placing location `insert`, scaling and rotation attributes.
+        Parameters which are ``None`` will not be altered.
 
         Args:
-            insert: insert position as (x, y [,z]) tuple
-            scale: (scale_x, scale_y, scale_z) tuple
-            rotation (float): rotation angle in degrees
-
-        Returns:
-            Insert object (fluent interface)
+            insert: insert location as ``(x, y [,z])`` tuple
+            scale: ``(x-scale, y-scale, z-scale)`` tuple
+            rotation : rotation angle in degrees
 
         """
         if insert is not None:
@@ -163,14 +161,12 @@ class Insert(DXFGraphic):
 
     def grid(self, size: Tuple[int, int] = (1, 1), spacing: Tuple[float, float] = (1, 1)) -> 'Insert':
         """
-        Set grid placing attributes of the INSERT entity.
+        Place block reference in a grid layout, grid `size` defines the row- and column count,
+        `spacing` defines the distance between two block references.
 
         Args:
-            size: grid size as (row_count, column_count) tuple
-            spacing: distance between placing as (row_spacing, column_spacing) tuple
-
-        Returns:
-            Insert object (fluent interface)
+            size: grid size as ``(row_count, column_count)`` tuple
+            spacing: distance between placing as ``(row_spacing, column_spacing)`` tuple
 
         """
         if len(size) != 2:
@@ -185,14 +181,16 @@ class Insert(DXFGraphic):
 
     def get_attrib(self, tag: str, search_const: bool = False) -> Optional[Union['Attrib', 'AttDef']]:
         """
-        Get attached ATTRIB entity by `tag`.
+        Get attached :class:`Attrib` entity with :code:`dxf.tag == tag`, returns ``None`` if not found.
+        Some applications may not attach constant ATTRIB entities, set `search_const` to ``True``,
+        to get at least the associated :class:`AttDef` entity.
 
         Args:
             tag: tag name
             search_const: search also const ATTDEF entities
 
         Returns:
-            Attrib or Attdef object
+            ATTRIB or ATTDEF object
 
         """
         for attrib in self.attribs:
@@ -207,15 +205,14 @@ class Insert(DXFGraphic):
 
     def get_attrib_text(self, tag: str, default: str = None, search_const: bool = False) -> str:
         """
-        Get content text of attached ATTRIB entity `tag`.
+        Get content text of attached :class:`Attrib` entity with :code:`dxf.tag == tag`, returns `default` if not found.
+        Some applications may not attach constant ATTRIB entities, set `search_const` to ``True``,
+        to get content text of the associated :class:`AttDef` entity.
 
         Args:
             tag: tag name
-            default: default value if tag is absent
+            default: default value if ATTRIB `tag` is absent
             search_const: search also const ATTDEF entities
-
-        Returns:
-            content text as str
 
         """
         attrib = self.get_attrib(tag, search_const)
@@ -225,10 +222,10 @@ class Insert(DXFGraphic):
 
     def has_attrib(self, tag: str, search_const: bool = False) -> bool:
         """
-        Check if ATTRIB for *tag* exists.
+        Returns ``True`` if ATTRIB `tag` exist, for `search_const` doc see :meth:`get_attrib`.
 
         Args:
-            tag: tag name
+            tag: tag name as string
             search_const: search also const ATTDEF entities
 
         """
@@ -236,16 +233,17 @@ class Insert(DXFGraphic):
 
     def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0), dxfattribs: dict = None) -> 'Attrib':
         """
-        Add new ATTRIB entity.
+        Attach an :class:`Attrib` entity to the block reference.
+
+        Example for appending an attribute to an INSERT entity with none standard alignment::
+
+            e.add_attrib('EXAMPLETAG', 'example text').set_pos((3, 7), align='MIDDLE_CENTER')
 
         Args:
-            tag: tag name
-            text: content text
-            insert: insert position as tuple (x, y[, z])
-            dxfattribs: additional DXF attributes
-
-        Returns:
-            Attrib object
+            tag: tag name as string
+            text: content text as string
+            insert: insert position as tuple ``(x, y[, z])``
+            dxfattribs: additional DXF attributes for the ATTRIB entity
 
         """
         dxfattribs = dxfattribs or {}
@@ -261,17 +259,21 @@ class Insert(DXFGraphic):
         return attrib
 
     def new_seqend(self):
+        """ Create new ENDSEQ. (internal API)"""
         seqend = self.doc.dxffactory.create_db_entry('SEQEND', dxfattribs={'layer': self.dxf.layer})
         self.link_seqend(seqend)
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
         """
-        Delete attached ATTRIB entity `tag`, raises a KeyError exception if `tag` does not exist, set `ignore` to True,
-        to ignore not existing ATTRIB entities.
+        Delete an attached :class:`Attrib` entity from INSERT. If `ignore` is ``False``, an :class:`DXFKeyError`
+        exception is raised, if ATTRIB `tag` does not exist.
 
         Args:
             tag: ATTRIB name
-            ignore: False -> raise KeyError exception if `tag` does not exist
+            ignore: ``False`` for raising :class:`DXFKeyError` if ATTRIB `tag` does not exist.
+
+        Raises:
+            DXFKeyError: if ATTRIB `tag` does not exist.
 
         """
         for index, attrib in enumerate(self.attribs):
@@ -283,7 +285,7 @@ class Insert(DXFGraphic):
             raise DXFKeyError(tag)
 
     def delete_all_attribs(self) -> None:
-        """ Delete all ATTRIB entities attached to the INSERT entity. """
+        """ Delete all :class:`Attrib` entities attached to the INSERT entity. """
         db = self.entitydb
         for attrib in self.attribs:
             db.delete_entity(attrib)

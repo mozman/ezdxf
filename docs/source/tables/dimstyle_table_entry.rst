@@ -17,7 +17,7 @@ starting with ``dim...`` can be overridden for any :class:`Dimension` entity ind
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'DIMSTYLE'``
-Factory function         :meth:`ezdxf.Drawing.dimstyles.new`
+Factory function         :meth:`Drawing.dimstyles.new`
 ======================== ==========================================
 
 .. class:: DimStyle

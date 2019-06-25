@@ -11,7 +11,7 @@ convenience of CAD application users.
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'VIEW'``
-Factory function         :meth:`ezdxf.Drawing.views.new`
+Factory function         :meth:`Drawing.views.new`
 ======================== ==========================================
 
 .. seealso::

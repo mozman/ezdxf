@@ -1,103 +1,88 @@
 Insert
 ======
 
-.. class:: Insert
+.. module:: ezdxf.entities
 
-   A block reference (DXF type: INSERT) with the possibility to append attributes (:class:`Attrib`).
+Block reference (`DXF Reference`_) with maybe attached attributes (:class:`Attrib`).
 
-DXF Attributes for Insert
--------------------------
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'INSERT'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_blockref`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-:ref:`Common graphical DXF attributes`
+.. seealso::
+
+    :ref:`tut_blocks`
 
 TODO: influence of layer, linetype, color DXF attributes to block entities
 
-.. attribute:: Insert.dxf.name
+.. class:: Insert
 
-Block name (str)
+    .. attribute:: dxf.name
 
-.. attribute:: Insert.dxf.insert
+        BLOCK name (str)
 
-Insertion point as (2D/3D Point in :ref:`OCS`)
+    .. attribute:: dxf.insert
 
-.. attribute:: Insert.dxf.xscale
+        Insertion location of the BLOCK base point as (2D/3D Point in :ref:`OCS`)
 
-Scale factor for x direction (float)
+    .. attribute:: dxf.xscale
 
-.. attribute:: Insert.dxf.yscale
+        Scale factor for x direction (float)
 
-Scale factor for y direction (float)
+    .. attribute:: dxf.yscale
 
-.. attribute:: Insert.dxf.zscale
+        Scale factor for y direction (float)
 
-Scale factor for z direction (float)
+        Not all CAD applications support non-uniform scaling (e.g. LibreCAD).
 
-.. attribute:: Insert.dxf.rotation
+    .. attribute:: dxf.zscale
 
-Rotation angle in degrees (float)
+        Scale factor for z direction (float)
 
-.. attribute:: Insert.dxf.row_count
+        Not all CAD applications support non-uniform scaling (e.g. LibreCAD).
 
-Count of repeated insertions in row direction (int)
+    .. attribute:: dxf.rotation
 
-.. attribute:: Insert.dxf.row_spacing
+        Rotation angle in degrees (float)
 
-Distance between two insert points in row direction (float)
+    .. attribute:: dxf.row_count
 
-.. attribute:: Insert.dxf.column_count
+        Count of repeated insertions in row direction (int)
 
-Count of repeated insertions in column direction (int)
+    .. attribute:: dxf.row_spacing
 
-.. attribute:: Insert.dxf.column_spacing
+        Distance between two insert points in row direction (float)
 
-Distance between two insert points in column direction (float)
+    .. attribute:: dxf.column_count
+
+        Count of repeated insertions in column direction (int)
+
+    .. attribute:: dxf.column_spacing
+
+        Distance between two insert points in column direction (float)
+
+    .. attribute:: attribs
+
+        A ``list`` of all attached :class:`Attrib` entities.
+
+    .. automethod:: place
+
+    .. automethod:: grid(size: Tuple[int, int] = (1, 1), spacing: Tuple[float, float] = (1, 1)) -> Insert
+
+    .. automethod:: has_attrib
+
+    .. automethod:: get_attrib
+
+    .. automethod:: get_attrib_text
+
+    .. automethod:: add_attrib
+
+    .. automethod:: delete_attrib
+
+    .. automethod:: delete_all_attribs
 
 
-Insert Methods
---------------
-
-.. method:: Insert.place(insert=None, scale=None, rotation=None)
-
-Place block reference as point `insert` with scaling and rotation. `scale` has to be a (x, y, z)-tuple and `rotation`
-a rotation angle in degrees. Parameters which are *None* will not be altered.
-
-.. method:: Insert.grid(size=(1, 1), spacing=(1, 1))
-
-Place block references in a grid layout with grid size=(rows, columns)-tuple and
-spacing=(row_spacing, column_spacing)-tuple. `spacing` is the distance from insertion point to insertion point.
-
-.. method:: Insert.attribs()
-
-Iterate over appended :class:`Attrib` objects.
-
-.. method:: Insert.has_attrib(tag, search_const=False)
-
-Returns `True` if an attrib `tag` exists else `False`, for *search_const* doc see :meth:`Insert.get_attrib`.
-
-.. method:: Insert.get_attrib(tag, search_const=False)
-
-Get the appended :class:`Attrib` object with :code:`object.dxf.tag == tag`, returns
-:code:`None` if not found. Some applications may not attach :class:`Attrib`, which do represent constant values, set
-*search_const=True* and you get at least the associated :class:`Attdef` entity.
-
-.. method:: Insert.get_attrib_text(tag, default=None, search_const=False)
-
-Get content text for attrib `tag` as string or return `default` if no attrib `tag` exists, for *search_const* doc
-see :meth:`Insert.get_attrib`.
-
-.. method:: Insert.add_attrib(tag, text, insert=(0, 0), attribs={})
-
-Append an :class:`Attrib` to the block reference. Returns an :class:`Attrib` object.
-
-Example for appending an attribute to an INSERT entity with none standard alignment::
-
-    insert_entity.add_attrib("TAG", "example text").set_pos((3, 7), align='MIDDLE_CENTER')
-
-.. method:: Insert.delete_attrib(tag, ignore=False)
-
-Delete an :class:`Attrib` from :class:`Insert`. If `ignore` is `False`, an ``DXFKeyError`` exception is raised, if
-:class:`Attrib` `tag` does not exist.
-
-.. method:: Insert.delete_all_attribs()
-
-Delete all attached :class:`Attrib` entities.
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-28FA4CFB-9D5E-4880-9F11-36C97578252F
