@@ -185,6 +185,9 @@ class Polyline(DXFGraphic):
         return const.VERTEX_FLAGS[self.get_mode()]
 
     def get_mode(self) -> str:
+        """ Returns a string: ``'AcDb2dPolyline'``, ``'AcDb3dPolyline'``, ``'AcDbPolygonMesh'`` or
+        ``'AcDbPolyFaceMesh'``
+        """
         if self.is_3d_polyline:
             return 'AcDb3dPolyline'
         elif self.is_polygon_mesh:
@@ -196,70 +199,101 @@ class Polyline(DXFGraphic):
 
     @property
     def is_2d_polyline(self) -> bool:
+        """ ``True`` if POLYLINE is a 2D polyline. """
         return self.dxf.flags & self.ANY3D == 0
 
     @property
     def is_3d_polyline(self) -> bool:
+        """ ``True`` if POLYLINE is a 3D polyline. """
         return bool(self.dxf.flags & self.POLYLINE_3D)
 
     @property
     def is_polygon_mesh(self) -> bool:
+        """ ``True`` if POLYLINE is a polygon mesh, see :class:`Polymesh` """
         return bool(self.dxf.flags & self.POLYMESH)
 
     @property
     def is_poly_face_mesh(self) -> bool:
+        """ ``True`` if POLYLINE is a poly face mesh, see :class:`Polyface` """
         return bool(self.dxf.flags & self.POLYFACE)
 
     @property
     def is_closed(self) -> bool:
+        """ ``True`` if POLYLINE is closed. """
         return bool(self.dxf.flags & self.CLOSED)
 
     @property
     def is_m_closed(self) -> bool:
+        """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in m direction. """
         return bool(self.dxf.flags & self.MESH_CLOSED_M_DIRECTION)
 
     @property
     def is_n_closed(self) -> bool:
+        """ ``True`` if POLYLINE (as :class:`Polymesh`) is closed in n direction. """
         return bool(self.dxf.flags & self.MESH_CLOSED_N_DIRECTION)
 
     def m_close(self) -> None:
+        """ Close :class:`Polymesh` in m direction (also closes polylines). """
         self.dxf.flags = self.dxf.flags | self.MESH_CLOSED_M_DIRECTION
 
     def n_close(self) -> None:
+        """ Close :class:`Polymesh` in n direction. """
         self.dxf.flags = self.dxf.flags | self.MESH_CLOSED_N_DIRECTION
 
     def close(self, m_close, n_close=False) -> None:
+        """ Close :class:`Polymesh` in m direction (if `mclose` is ``True``) and/or n direction
+        (if `nclose` is ``True``).
+        """
         if m_close:
             self.m_close()
         if n_close:
             self.n_close()
 
     def __len__(self) -> int:
+        """ Returns count of :class:`Vertex` entities. """
         return len(self.vertices)
 
     def __getitem__(self, pos) -> 'DXFVertex':
+        """ Get :class:`Vertex` entity at position `pos`, supports ``list`` slicing. """
         return self.vertices[pos]
 
     def points(self) -> Iterable[Vector]:
+        """ Returns iterable of all polyline vertices as ``(x, y, z)`` tuples, not as :class:`Vertex` objects."""
         return (vertex.dxf.location for vertex in self.vertices)
 
     def extend(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
+        """ Append multiple :class:`Vertex` entities at location `points`.
+
+        Args:
+            points: iterable of ``(x, y[, z])`` tuples
+            dxfattribs: dict of DXF attributes for :class:`Vertex` class
+
+        """
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices(points, dxfattribs))
 
     append_vertices = extend
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
+        """
+        Append single :class:`Vertex` entity at location `point`.
+
+        Args:
+            point: as ``(x, y[, z])`` tuple
+            dxfattribs: dict of DXF attributes for :class:`Vertex` class
+
+        """
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices([point], dxfattribs))
 
     def insert_vertices(self, pos: int, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
-        """ Insert `points` at position `pos``.
+        """ Insert :class:`Vertex` entities at location `points` at insertion position `pos``
+        of list :attr:`Polyline.vertices`.
 
         Args:
-            pos: insertion position
-            points: list of (x, y, z)-tuples
-            dxfattribs: dict of DXF attributes
+            pos: insertion position of list :attr:`Polyline.vertices`
+            points: list of ``(x, y[, z])`` tuples
+            dxfattribs: dict of DXF attributes for :class:`Vertex` class
 
         """
         dxfattribs = dxfattribs or {}
@@ -323,12 +357,11 @@ class Polyface(Polyline):
 
     def append_face(self, face: 'FaceType', dxfattribs: dict = None) -> None:
         """
-        Appends a single face. Appending single faces is very inefficient, try collecting single faces and use
-        Polyface.append_faces().
+        Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
 
         Args:
-            face: list of (x, y, z)-tuples
-            dxfattribs: dict of DXF attributes
+            face: List[``(x, y, z)`` tuples]
+            dxfattribs: dict of DXF attributes for :class:`Vertex` entity
 
         """
         self.append_faces([face], dxfattribs)
@@ -337,8 +370,8 @@ class Polyface(Polyline):
         """ Converts point (x,y, z)-tuples into DXFVertex objects.
 
         Args:
-            points: list of (x, y,z)-tuples
-            dxfattribs: dict of DXF attributes
+            points: List[``(x, y, z)`` tuples]
+            dxfattribs: dict of DXF attributes for :class:`Vertex` entity
 
         """
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
@@ -351,11 +384,11 @@ class Polyface(Polyline):
 
     def append_faces(self, faces: Iterable['FaceType'], dxfattribs: dict = None) -> None:
         """
-        Append multiple *faces*. *faces* is a list of single faces and a single face is a list of (x, y, z)-tuples.
+        Append multiple `faces`. `faces` is a list of single faces and a single face is a list of ``(x, y, z)`` tuples.
 
         Args:
-            faces: list of (list of (x, y, z)-tuples)
-            dxfattribs: dict of DXF attributes
+            faces: list of List[``(x, y, z)`` tuples]
+            dxfattribs: dict of DXF attributes for :class:`Vertex` entity
 
         """
 
@@ -403,8 +436,8 @@ class Polyface(Polyline):
 
     def optimize(self, precision: int = 6) -> None:
         """
-        Rebuilds polyface with vertex optimization. Merges vertices with nearly same vertex locations.
-        Polyfaces created by *ezdxf* are optimized automatically.
+        Rebuilds :class:`Polyface` with vertex optimization. Merges vertices with nearly same vertex locations.
+        Polyfaces created by `ezdxf` are optimized automatically.
 
         Args:
             precision: decimal precision for determining identical vertex locations
@@ -413,10 +446,12 @@ class Polyface(Polyline):
         vertices, faces = self.indexed_faces()
         self._rebuild(faces, precision)
 
-    def faces(self) -> Iterable['DXFVertex']:
+    def faces(self) -> Iterable[List['DXFVertex']]:
         """
-        Iterate over all faces, a face is a tuple of vertices.
-        result is a list: vertex, vertex, vertex, [vertex,] face_record
+        Iterable of all faces, a face is a tuple of vertices.
+
+        Returns:
+             list: [vertex, vertex, vertex, [vertex,] face_record]
 
         """
         _, faces = self.indexed_faces()  # just need the faces generator
@@ -429,6 +464,7 @@ class Polyface(Polyline):
         """
         Returns a list of all vertices and a generator of FaceProxy() objects.
 
+        (internal API)
         """
         vertices = []
         face_records = []
@@ -442,7 +478,7 @@ class Polyface(Polyline):
 class FaceProxy:
     __slots__ = ('vertices', 'face_record', 'indices')
     """
-    Represents a single face of a polyface structure.
+    Represents a single face of a polyface structure. (internal class)
 
     vertices:
 
@@ -462,20 +498,30 @@ class FaceProxy:
     """
 
     def __init__(self, face_record: 'DXFVertex', vertices: Sequence['DXFVertex']):
+        """ Returns iterable of all face vertices as :class:`Vertex` entities. """
         self.vertices = vertices  # type: Sequence[DXFVertex]
         self.face_record = face_record  # type: DXFVertex
         self.indices = self._indices()  # type: Sequence[int]
 
     def __len__(self) -> int:
+        """ Returns count of face vertices (without face_record). """
         return len(self.indices)
 
     def __getitem__(self, pos: int) -> 'DXFVertex':
+        """
+        Returns :class:`Vertex` at position `pos`.
+
+        Args:
+            pos: vertex position 0-based
+
+        """
         return self.vertices[self.indices[pos]]
 
     def __iter__(self) -> Iterable['DXFVertex']:
         return (self.vertices[index] for index in self.indices)
 
     def points(self) -> Iterable['Vertex']:
+        """ Returns iterable of all face vertex locations as ``(x, y, z)`` tuples. """
         return (vertex.dxf.location for vertex in self)
 
     def _raw_indices(self) -> Iterable[int]:
@@ -485,11 +531,19 @@ class FaceProxy:
         return tuple(abs(index) - 1 for index in self._raw_indices() if index != 0)
 
     def is_edge_visible(self, pos: int) -> bool:
+        """
+        Returns ``True`` if edge starting at vertex `pos` is visible.
+
+        Args:
+            pos: vertex position 0-based
+
+        """
         name = const.VERTEXNAMES[pos]
         return self.face_record.get_dxf_attrib(name) > 0
 
 
 class PolyfaceBuilder:
+    """ Optimized polyface builder. (internal class) """
     def __init__(self, faces: Iterable['FaceProxy'], precision: int = 6):
         self.precision = precision
         self.faces = []
@@ -575,7 +629,7 @@ class Polymesh(Polyline):
         Get location of a single mesh vertex.
 
         Args:
-            pos: 0-based (row, col)-tuple, position of mesh vertex
+            pos: 0-based ``(row, col)`` tuple, position of mesh vertex
 
         """
         m_count = self.dxf.m_count
@@ -589,8 +643,8 @@ class Polymesh(Polyline):
 
     def get_mesh_vertex_cache(self) -> 'MeshVertexCache':
         """
-        Get a MeshVertexCache() object for this Polymesh. The caching object provides fast access to the location
-        attributes of the mesh vertices.
+        Get a :class:`MeshVertexCache` object for this polymesh. The caching object provides fast access
+        to the :attr:`location` attribute of mesh vertices.
 
         """
         return MeshVertexCache(self)
@@ -619,7 +673,10 @@ class MeshVertexCache:
 
     def __getitem__(self, pos: Tuple[int, int]) -> 'Vertex':
         """
-        Get mesh vertex location as (x, y, z)-tuple.
+        Get mesh vertex location as ``(x, y, z)`` tuple.
+
+        Args:
+            pos: 0-based ``(row, col)`` tuple.
         """
         try:
             return self.vertices[pos].dxf.location
@@ -628,7 +685,12 @@ class MeshVertexCache:
 
     def __setitem__(self, pos: Tuple[int, int], location: 'Vertex') -> None:
         """
-        Get mesh vertex location as (x, y, z)-tuple.
+        Get mesh vertex location as ``(x, y, z)`` tuple.
+
+        Args:
+            pos: 0-based ``(row, col)`` tuple.
+            location: ``(x, y, z)`` tuple
+
         """
         try:
             self.vertices[pos].dxf.location = location

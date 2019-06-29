@@ -29,16 +29,30 @@ class DimStyleOverride:
 
     @property
     def doc(self) -> 'Drawing':
+        """ Drawing object (internal API) """
         return self.dimension.doc
 
     @property
     def dxfversion(self) -> str:
+        """ DXF version (internal API) """
         return self.dimension.doc.dxfversion
 
     def get_dstyle_dict(self) -> dict:
+        """ Get XDATA section ACAD:DSTYLE, to override DIMSTYLE attributes for this DIMENSION entity.
+        Returns a ``dict`` with DIMSTYLE attribute names as keys.
+
+        (internal API)
+        """
         return self.dimension.get_acad_dstyle(self.dimstyle)
 
     def get(self, attribute: str, default: Any = None) -> Any:
+        """ Returns DIMSTYLE `attribute` from override dict :attr:`dimstyle_attribs` or base :class:`DimStyle`.
+
+        Returns `default` value for attributes not supported by DXF R12. This is a hack to use the same algorithm to
+        render DXF R2000 and DXF R12 DIMENSION entities. But the DXF R2000 attributes are not stored in the DXF R12
+        file! Does not catch invalid attributes names! Look into debug log for ignored DIMSTYLE attributes.
+
+        """
         if attribute in self.dimstyle_attribs:
             result = self.dimstyle_attribs[attribute]
         else:
@@ -54,21 +68,35 @@ class DimStyleOverride:
         return result
 
     def pop(self, attribute: str, default: Any = None) -> Any:
+        """ Returns DIMSTYLE `attribute` from override dict :attr:`dimstyle_attribs` and removes this `attribute`
+        from override dict.
+
+        """
         value = self.get(attribute, default)
         # delete just from override dict
         del self[attribute]
         return value
 
     def update(self, attribs: dict) -> None:
+        """
+        Update override dict :attr:`dimstyle_attribs`.
+
+        Args:
+            attribs: ``dict`` of DIMSTYLE attributes
+
+        """
         self.dimstyle_attribs.update(attribs)
 
-    def __getitem__(self, item: str) -> Any:
-        return self.get(item)
+    def __getitem__(self, key: str) -> Any:
+        """ Returns DIMSTYLE attribute `key`, see also :meth:`get`. """
+        return self.get(key)
 
     def __setitem__(self, key: str, value: Any) -> None:
+        """ Set DIMSTYLE attribute `key` in :attr:`dimstyle_attribs`. """
         self.dimstyle_attribs[key] = value
 
     def __delitem__(self, key: str) -> None:
+        """ Deletes DIMSTYLE attribute `key` from :attr:`dimstyle_attribs`, ignores :class:`KeyErrors` silently. """
         try:
             del self.dimstyle_attribs[key]
         except KeyError:  # silent discard
@@ -76,7 +104,7 @@ class DimStyleOverride:
 
     def commit(self) -> None:
         """
-        Write overwritten DIMSTYLE attributes into XDATA section of the DIMENSION entity.
+        Writes overridden DIMSTYLE attributes into ACAD:DSTYLE section of XDATA of the DIMENSION entity.
 
         """
         self.dimension.set_acad_dstyle(self.dimstyle_attribs)
@@ -117,7 +145,10 @@ class DimStyleOverride:
 
     def get_arrow_names(self) -> Tuple[str, str]:
         """
-        Get arrows as name strings like 'ARCHTICK'.
+        Get arrow names as strings like 'ARCHTICK'.
+
+        Returns:
+            Tuple[str, str]: tuple of [dimblk1, dimblk2]
 
         """
         dimtsz = self.get('dimtsz')
@@ -351,16 +382,13 @@ class DimStyleOverride:
         if disable:
             self.dimstyle_attribs['dimse2'] = 1
 
-    def set_text(self, text='<>') -> None:
+    def set_text(self, text: str = '<>') -> None:
         """
         Set dimension text.
 
-            - text == ' ' ... suppress dimension text
-            - text == '' or '<>' ... use measured distance as dimension text
-            - else use text literally
-
-        Args:
-            text: string
+            - `text` = ``' '`` to suppress dimension text
+            - `text` = ``''`` or ``'<>'`` to use measured distance as dimension text
+            - else use `text` literally
 
         """
         self.dimension.dxf.text = text
@@ -377,13 +405,23 @@ class DimStyleOverride:
         self.dimstyle_attribs['text_shift_h'] = dh
         self.dimstyle_attribs['text_shift_v'] = dv
 
-    def set_location(self, location: 'Vertex', leader=False, relative=False):
+    def set_location(self, location: 'Vertex', leader=False, relative=False) -> None:
+        """
+        Set text location by user.
+
+        Args:
+            location: user defined text location (Vertex)
+            leader: create leader from text to dimension line
+            relative: `location` is relative to default location.
+
+        """
         self.dimstyle_attribs['dimtmove'] = 1 if leader else 2
         self.dimension.set_flag_state(self.dimension.USER_LOCATION_OVERRIDE, state=True, name='dimtype')
         self.dimstyle_attribs['user_location'] = Vector(location)
         self.dimstyle_attribs['relative_user_location'] = relative
 
     def get_renderer(self, ucs: 'UCS' = None):
+        """ Get designated DIMENSION renderer. (internal API) """
         return self.doc.dimension_renderer.dispatch(self, ucs)
 
     def render(self, ucs: 'UCS' = None, discard=False) -> 'BaseDimensionRenderer':
@@ -393,15 +431,16 @@ class DimStyleOverride:
 
         For a friendly CAD applications like BricsCAD you can discard the dimension line rendering, because it is done
         automatically by BricsCAD, if no dimension rendering BLOCK is available and it is likely to get better results
-        as by ezdxf.
+        as by `ezdxf`.
 
-        AutoCAD does not render DIMENSION entities automatically, so I rate AutoCAD as unfriendly CAD application.
+        AutoCAD does not render DIMENSION entities automatically, so I rate AutoCAD as an unfriendly CAD application.
 
         Args:
             ucs: user coordinate system
-            discard: discard rendering done by ezdxf (works with BricsCAD, but not with AutoCAD)
+            discard: discard rendering done by `ezdxf` (works with BricsCAD, but not with AutoCAD)
 
-        Returns: used renderer for analytics
+        Returns:
+            BaseDimensionRenderer: Rendering object used to render the DIMENSION entity for analytics
 
         """
 

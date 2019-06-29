@@ -10,16 +10,16 @@ from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
 from ezdxf.math import Vector
 from ezdxf.math import bspline_control_frame, bspline_control_frame_approx
 from ezdxf.render.arrows import ARROWS
-from ezdxf.dimstyleoverride import DimStyleOverride
+from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dimension import multi_point_linear_dimension
 
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:  # import forward references
     from ezdxf.eztypes import UCS, Vertex, Drawing, DXFGraphic
-    from ezdxf.eztypes import Line, Arc, Circle, Point, Polyline, Shape, DXFEntity, Solid, Trace, Face3d
+    from ezdxf.eztypes import Line, Arc, Circle, Point, Polyline, Shape, Solid, Trace, Face3d
     from ezdxf.eztypes import Insert, Attrib, Polyface, Polymesh, Text, LWPolyline, Ellipse, MText, XLine, Ray, Spline
-    from ezdxf.eztypes import Leader, Attdef
+    from ezdxf.eztypes import Leader, AttDef
     from ezdxf.eztypes import Mesh, Hatch, Image, ImageDef, Underlay, UnderlayDef, Body, Region, Solid3d
     from ezdxf.eztypes import LoftedSurface, Surface, RevolvedSurface, ExtrudedSurface, SweptSurface
 
@@ -296,7 +296,7 @@ class CreatorInterface:
         dxfattribs['insert'] = insert
         return self.new_entity('ATTRIB', dxfattribs)
 
-    def add_attdef(self, tag: str, insert: 'Vertex' = (0, 0), text: str = '', dxfattribs: dict = None) -> 'Attdef':
+    def add_attdef(self, tag: str, insert: 'Vertex' = (0, 0), text: str = '', dxfattribs: dict = None) -> 'AttDef':
         """
         Add an :class:`Attdef` as stand alone DXF entity.
 

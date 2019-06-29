@@ -48,9 +48,10 @@ from .solid import Solid, Face3d, Trace
 from .text import Text
 from .insert import Insert
 from .block import Block, EndBlk
-from .polyline import Polyline, Polyface, Polymesh
+from .polyline import Polyline, Polyface, Polymesh, MeshVertexCache
 from .attrib import Attrib, AttDef
 from .dimension import Dimension
+from .dimstyleoverride import DimStyleOverride
 from .viewport import Viewport
 
 

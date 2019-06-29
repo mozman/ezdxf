@@ -19,6 +19,10 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     :ref:`tut_blocks`
 
+.. warning::
+
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
+
 .. class:: Attrib
 
     ATTRIB supports all DXF attributes and methods of parent class :class:`Text`.
@@ -31,7 +35,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         Attribute content as text (str)
 
-    .. attribute:: is_invisibe
+    .. attribute:: is_invisible
 
         Attribute is invisible (does not appear).
 

@@ -1,41 +1,47 @@
 Shape
 =====
 
-.. class:: Shape(GraphicEntity)
+.. module:: ezdxf.entities
 
-Shapes (dxftype is SHAPE) are objects that you use like blocks. Shapes are stored in external shape files
-(\*.SHX). You can specify the scale and rotation for each shape reference as you add it. You can not create shapes
-with *ezdxf*, you can just insert shape references.
+SHAPES  (`DXF Reference`_) are objects that are used like block references, each SHAPE reference can be scaled and
+rotated individually.
+The SHAPE definitions are stored in external shape files (\*.SHX), and `ezdxf` can not create this shape files.
 
-Create a :class:`Shape` reference in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_shape`.
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'SHAPE'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_shape`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-DXF Attributes for Shape
-------------------------
+.. warning::
 
-:ref:`Common graphical DXF attributes`
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
 
+.. class:: Shape
 
-.. attribute:: Shape.dxf.insert
+    .. attribute:: dxf.insert
 
-Insertion point as (2D/3D Point in :ref:`OCS`)
+        Insertion location as (2D/3D Point in :ref:`WCS`)
 
-.. attribute:: Shape.dxf.name
+    .. attribute:: dxf.name
 
-Shape name
+        Shape name (str)
 
-.. attribute:: Shape.dxf.size
+    .. attribute:: dxf.size
 
-Shape size
+        Shape size (float)
 
-.. attribute:: Shape.dxf.rotation
+    .. attribute:: dxf.rotation
 
-Rotation angle in degrees; default=0
+        Rotation angle in degrees; default value is ``0``
 
-.. attribute:: Shape.dxf.xscale
+    .. attribute:: dxf.xscale
 
-Relative X scale factor; default=1
+        Relative X scale factor (float); default value is ``1``
 
-.. attribute:: Shape.dxf.oblique
+    .. attribute:: dxf.oblique
 
-Oblique angle; default=0
+        Oblique angle in degrees (float); default value is ``0``
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0988D755-9AAB-4D6C-8E26-EC636F507F2C

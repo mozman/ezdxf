@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.material import MaterialCollection
     from ezdxf.entities.mleader import MLeaderStyleCollection
     from ezdxf.entities.mline import MLineStyleCollection
-    from ezdxf.dimstyleoverride import DimStyleOverride
+    from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
     # DXF objects
     from ezdxf.entities.dxfobj import DXFObject, AcDbPlaceholder, XRecord, VBAProject, SortEntsTable

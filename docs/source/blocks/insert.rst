@@ -16,6 +16,10 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     :ref:`tut_blocks`
 
+.. warning::
+
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
+
 TODO: influence of layer, linetype, color DXF attributes to block entities
 
 .. class:: Insert

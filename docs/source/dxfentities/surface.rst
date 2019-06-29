@@ -34,7 +34,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
 
 ExtrudedSurface
-===============
+---------------
 
 (`DXF Reference`_)
 
@@ -102,7 +102,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
         type: :class:`~ezdxf.math.Matrix44`
 
 LoftedSurface
-=============
+-------------
 
 (`DXF Reference`_)
 
@@ -149,7 +149,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
         type: :class:`~ezdxf.math.Matrix44`
 
 RevolvedSurface
-===============
+---------------
 
 (`DXF Reference`_)
 
@@ -192,7 +192,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
         type: :class:`~ezdxf.math.Matrix44`
 
 SweptSurface
-============
+------------
 
 (`DXF Reference`_)
 

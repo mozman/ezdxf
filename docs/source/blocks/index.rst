@@ -6,7 +6,7 @@ multiply times at different layouts or other blocks as references to the block d
 
 .. seealso::
 
-    :ref:`tut_blocks`
+    :ref:`tut_blocks` and DXF Internals: :ref:`Block Management Structures`
 
 .. toctree::
     :maxdepth: 1

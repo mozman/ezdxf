@@ -1,6 +1,10 @@
 DXF Entities
 ============
 
+.. warning::
+
+    Do not instantiate entity classes by yourself - always use the provided factory functions!
+
 .. toctree::
     :maxdepth: 1
 

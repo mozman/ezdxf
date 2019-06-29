@@ -14,7 +14,7 @@ Factory function         :meth:`Drawing.blocks.new` (returns a :class:`~ezdxf.la
 
 .. seealso::
 
-    :ref:`tut_blocks`
+    :ref:`tut_blocks` and DXF Internals: :ref:`Block Management Structures`
 
 
 .. class:: Block

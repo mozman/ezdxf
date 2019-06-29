@@ -25,7 +25,7 @@ def test_rotated_dimline(dxf2000):
         'dimtype': Dimension.LINEAR
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.LINEAR
+    assert dimline.dimtype == Dimension.LINEAR
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.insert == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
@@ -40,7 +40,7 @@ def test_aligned_dimline(dxf2000):
         'dimtype': Dimension.ALIGNED
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.ALIGNED
+    assert dimline.dimtype == Dimension.ALIGNED
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.insert == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
@@ -55,7 +55,7 @@ def test_angular_dimline(dxf2000):
         'dimtype': Dimension.ANGULAR
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.ANGULAR
+    assert dimline.dimtype == Dimension.ANGULAR
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
     assert dimline.dxf.defpoint3 == (0, 0, 0)
@@ -69,7 +69,7 @@ def test_angular_3p_dimline(dxf2000):
         'dimtype': Dimension.ANGULAR_3P
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.ANGULAR_3P
+    assert dimline.dimtype == Dimension.ANGULAR_3P
 
 
 def test_radius_dimline(dxf2000):
@@ -78,7 +78,7 @@ def test_radius_dimline(dxf2000):
         'dimtype': Dimension.RADIUS
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.RADIUS
+    assert dimline.dimtype == Dimension.RADIUS
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint4 == (0, 0, 0)
     assert dimline.is_supported_dxf_attrib('leader_length')
@@ -90,7 +90,7 @@ def test_diameter_dimline(dxf2000):
         'dimtype': Dimension.DIAMETER
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.DIAMETER
+    assert dimline.dimtype == Dimension.DIAMETER
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint4 == (0, 0, 0)
     assert dimline.is_supported_dxf_attrib('leader_length')
@@ -102,7 +102,7 @@ def test_ordinate_dimline(dxf2000):
         'dimtype': Dimension.ORDINATE
     }
     dimline = msp.new_entity('DIMENSION', dxfattribs)
-    assert dimline.dim_type == Dimension.ORDINATE
+    assert dimline.dimtype == Dimension.ORDINATE
     assert dimline.dxf.defpoint == (0, 0, 0)
     assert dimline.dxf.defpoint2 == (0, 0, 0)
     assert dimline.dxf.defpoint3 == (0, 0, 0)

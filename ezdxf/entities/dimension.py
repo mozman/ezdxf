@@ -112,7 +112,8 @@ acdb_dimension_dummy = DefSubclass('AcDbDimensionDummy', {
 
 
 class OverrideMixin:
-    def dim_style(self) -> 'DimStyle':
+    def get_dim_style(self) -> 'DimStyle':
+        """ Returns the associated :class:`DimStyle` entity. """
         if self.doc is None:
             raise DXFInternalEzdxfError('Dimension.drawing attribute not initialized.')
 
@@ -121,11 +122,12 @@ class OverrideMixin:
         return self.doc.dimstyles.get(dim_style_name)
 
     def dim_style_attributes(self) -> 'DXFAttributes':
-        return self.dim_style().DXFATTRIBS
+        """ Returns all valid DXF attributes (internal API). """
+        return self.get_dim_style().DXFATTRIBS
 
     def dim_style_attr_names_to_handles(self, data: dict, dxfversion: str) -> dict:
         """
-        ezdxf uses internally only resource names for arrows, line types and text styles, but
+        `ezdxf` uses internally only resource names for arrows, line types and text styles, but
         DXF 2000 and later requires handles for these resources, this method translates resource names
         into related handles. (e.g. 'dimtxsty': 'FancyStyle' -> 'dimtxsty_handle', <handle of FancyStyle>)
 
@@ -138,6 +140,8 @@ class OverrideMixin:
         Raises:
             DXFTableEntry: text style or line type does not exist
             DXFKeyError: referenced block does not exist
+
+        (internal API)
 
         """
         data = dict(data)  # shallow copy dict
@@ -193,6 +197,13 @@ class OverrideMixin:
         return data
 
     def set_acad_dstyle(self, data: dict) -> None:
+        """ Set XDATA section ACAD:DSTYLE, to override DIMSTYLE attributes for this DIMENSION entity.
+
+        Args:
+            data: ``dict`` with DIMSTYLE attribute names as keys.
+
+        (internal API)
+        """
         if self.doc is None:
             raise DXFInternalEzdxfError('Dimension.doc attribute not initialized.')
 
@@ -224,7 +235,7 @@ class OverrideMixin:
 
     def dim_style_attr_handles_to_names(self, data: dict) -> dict:
         """
-        ezdxf uses internally only resource names for arrows, line types and text styles, but
+        `ezdxf` uses internally only resource names for arrows, line types and text styles, but
         DXF 2000 and later requires handles for these resources, this method translates resource handles
         into related names. (e.g. 'dimtxsty_handle', <handle of FancyStyle> -> 'dimtxsty': 'FancyStyle')
 
@@ -237,6 +248,7 @@ class OverrideMixin:
             DXFTableEntry: text style or line type does not exist
             DXFKeyError: referenced block does not exist
 
+        (internal API)
         """
         data = dict(data)  # shallow copy dict
         db = self.doc.entitydb
@@ -304,6 +316,11 @@ class OverrideMixin:
         return data
 
     def get_acad_dstyle(self, dim_style: 'DimStyle') -> dict:
+        """ Get XDATA section ACAD:DSTYLE, to override DIMSTYLE attributes for this DIMENSION entity.
+        Returns a ``dict`` with DIMSTYLE attribute names as keys.
+
+        (internal API)
+        """
         try:
             data = self.get_xdata_list('ACAD', 'DSTYLE')
         except DXFValueError:
@@ -361,7 +378,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         # else DXF2000+
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dimension.name)
-        dim_type = self.dim_type
+        dim_type = self.dimtype
         self.dxf.export_dxf_attribs(tagwriter, [
             'version', 'geometry', 'dimstyle', 'defpoint', 'text_midpoint', 'insert', 'dimtype', 'attachment_point',
             'line_spacing_style', 'line_spacing_factor', 'actual_measurement', 'unknown1', 'unknown2', 'unknown3',
@@ -393,14 +410,12 @@ class Dimension(DXFGraphic, OverrideMixin):
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint3', 'defpoint3'])
 
     @property
-    def dim_type(self) -> int:
+    def dimtype(self) -> int:
+        """ :attr:`dxf.dimtype` without binary flags (32, 62, 128). """
         return self.dxf.dimtype & 7
 
-    def cast(self) -> 'Dimension':  # for modern dimension lines
-        return self
-
     def destroy(self):
-        """ Destroy associated anonymous block """
+        """ Destroy associated anonymous block (internal API)"""
         blocks = self.doc.blocks
         block_name = self.dxf.geometry
         if block_name in blocks:
@@ -409,10 +424,9 @@ class Dimension(DXFGraphic, OverrideMixin):
 
     def get_geometry_block(self) -> Optional['BlockLayout']:
         """
-        Returns :class:`BlockLayout` of associated anonymous dimension block, which contains the dimension entities as
-        simple DXF entities like LINE, INSERT, POINT and (M)TEXT.
-
-        Returns: None if block name is not set or the block itself does not exist
+        Returns :class:`~ezdxf.layouts.BlockLayout` of associated anonymous dimension block, which contains the
+        entities that make up the dimension picture. Returns ``None`` if block name is not set or the BLOCK itself
+        does not exist
 
         """
         block_name = self.get_dxf_attrib('geometry', None)
