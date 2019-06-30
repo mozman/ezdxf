@@ -61,10 +61,10 @@ from .ellipse import Ellipse
 from .xline import XLine
 from .mtext import MText
 from .spline import Spline
-from .mesh import Mesh
+from .mesh import Mesh, MeshData
 from .hatch import Hatch
 from .image import Image, ImageDef
-from .underlay import Underlay, UnderlayDef
+from .underlay import Underlay, UnderlayDef, PdfUnderlay, DgnUnderlay, DwfUnderlay
 from .leader import Leader
 from .tolerance import Tolerance
 from .helix import Helix

@@ -9,7 +9,9 @@ Introduced in DXF R13 (``'AC1012'``).
 
 All vertices in :ref:`WCS` as (x, y, z) tuples
 
-Since *ezdxf* v0.8.9 :class:`Mesh` stores vertices, edges, faces and creases as packed data (:class:`array.array`).
+.. versionchanged:: 0.8.9
+
+    :class:`Mesh` stores vertices, edges, faces and creases as packed data.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -18,72 +20,62 @@ Factory function         :meth:`ezdxf.layouts.BaseLayout.add_mesh`
 Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
-.. class:: Mesh
-
-DXF Attributes for Mesh
------------------------
-
-:ref:`Common graphical DXF attributes`
-
-.. attribute:: Mesh.dxf.version
-
-.. attribute:: Mesh.dxf.blend_crease
-
-0 = off, 1 = on
-
-.. attribute:: Mesh.dxf.subdivision_levels
-
-int >= 0, 0 = no smoothing
-
-Mesh Methods
-------------
-
-.. method:: Mesh.edit_data()
-
-Context manager various mesh data, returns :class:`MeshData`.
-
 .. seealso::
 
-    :ref:`tut_image`
+    :ref:`tut_mesh` and helper classes: :class:`~ezdxf.render.MeshBuilder`, :class:`~ezdxf.render.MeshVertexMerger`
+
+.. class:: Mesh
+
+    .. attribute:: dxf.version
+
+    .. attribute:: dxf.blend_crease
+
+        ``0`` = off, ``1`` = on
+
+    .. attribute:: dxf.subdivision_levels
+
+        ``0`` for no smoothing else integer greater than ``0``.
+
+    .. autoattribute:: vertices
+
+    .. autoattribute:: edges
+
+    .. autoattribute:: faces
+
+    .. autoattribute:: creases
+
+    .. automethod:: edit_data
+
 
 MeshData
 --------
 
 .. class:: MeshData
 
-.. attribute:: MeshData.vertices
+    .. attribute:: vertices
 
-A standard Python list with (x, y, z) tuples (read/write)
+        A standard Python list with (x, y, z) tuples (read/write)
 
-.. attribute:: MeshData.faces
+    .. attribute:: faces
 
-A standard Python list with (v1, v2, v3,...) tuples (read/write)
+        A standard Python list with (v1, v2, v3,...) tuples (read/write)
 
-Each face consist of a list of vertex indices (= index in :attr:`MeshData.vertices`).
+        Each face consist of a list of vertex indices (= index in :attr:`vertices`).
 
-.. attribute:: MeshData.edges
+    .. attribute:: edges
 
-A standard Python list with (v1, v2) tuples (read/write)
+        A standard Python list with (v1, v2) tuples (read/write)
 
-Each edge consist of exact two vertex indices (= index in :attr:`MeshData.vertices`).
+        Each edge consist of exact two vertex indices (= index in :attr:`vertices`).
 
-.. attribute:: MeshData.edge_crease_values
+    .. attribute:: edge_crease_values
 
-A standard Python list of float values, one value for each edge. (read/write)
+        A standard Python list of float values, one value for each edge. (read/write)
 
-.. method:: MeshData.add_face(vertices)
+    .. automethod:: add_face
 
-Add a face by coordinates, vertices is a list of (x, y, z) tuples.
+    .. automethod:: add_edge
 
-.. method:: MeshData.add_edge(vertices)
+    .. automethod:: optimize
 
-Add an edge by coordinates, vertices is a list of two (x, y, z) tuples.
 
-.. method:: MeshData.optimize(precision=6)
-
-Tries to reduce vertex count by merging near vertices. *precision* defines the decimal places for coordinate
-be equal to merge two vertices.
-
-.. seealso::
-
-    :ref:`tut_mesh`

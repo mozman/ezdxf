@@ -26,103 +26,87 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 .. class:: PdfUnderlay
 
-DXF Attributes for Underlay
----------------------------
+    .. attribute:: dxf.insert
 
-:ref:`Common graphical DXF attributes`
+        Insertion point, lower left corner of the image in :ref:`OCS`.
 
-.. attribute:: underlay.dxf.insert
+    .. attribute:: dxf.scale_x
 
-Insertion point, lower left corner of the image in :ref:`OCS`.
+        Scaling factor in x-direction (float)
 
-.. attribute:: underlay.dxf.scale_x
+    .. attribute:: dxf.scale_y
 
-scaling factor in x direction (float)
+        Scaling factor in y-direction (float)
 
-.. attribute:: underlay.dxf.scale_y
+    .. attribute:: dxf.scale_z
 
-scaling factor in y direction (float)
+        Scaling factor in z-direction (float)
 
-.. attribute:: underlay.dxf.scale_z
+    .. attribute:: dxf.rotation
 
-scaling factor in z direction (float)
+        ccw rotation in degrees around the extrusion vector (float)
 
-.. attribute:: underlay.dxf.rotation
+    .. attribute:: dxf.extrusion
 
-ccw rotation in degrees around the extrusion vector (float)
+        extrusion vector, default = ``(0, 0, 1)``
 
-.. attribute:: underlay.dxf.extrusion
+    .. attribute:: dxf.underlay_def
 
-extrusion vector (default=0, 0, 1)
+        Handle to the underlay definition entity, see :class:`UnderlayDefinition`
 
-.. attribute:: underlay.dxf.underlay_def
+    .. attribute:: dxf.flags
 
-Handle to the underlay definition entity, see :class:`UnderlayDefinition`
+        ============================== ======= ===========
+        Underlay.dxf.flags             Value   Description
+        ============================== ======= ===========
+        UNDERLAY_CLIPPING              1       clipping is on/off
+        UNDERLAY_ON                    2       underlay is on/off
+        UNDERLAY_MONOCHROME            4       Monochrome
+        UNDERLAY_ADJUST_FOR_BACKGROUND 8       Adjust for background
+        ============================== ======= ===========
 
-.. attribute:: underlay.dxf.flags
+    .. attribute:: dxf.contrast
 
-============================== ======= ===========
-Underlay.dxf.flags             Value   Description
-============================== ======= ===========
-UNDERLAY_CLIPPING              1       clipping is on/off
-UNDERLAY_ON                    2       underlay is on/off
-UNDERLAY_MONOCHROME            4       Monochrome
-UNDERLAY_ADJUST_FOR_BACKGROUND 8       Adjust for background
-============================== ======= ===========
+        Contrast value (``20`` - ``100``; default = ``100``)
 
-.. attribute:: underlay.dxf.contrast
+    .. attribute:: dxf.fade
 
-Contrast value (20-100; default = 100)
-
-.. attribute:: underlay.dxf.fade
-
-Fade value (0-80; default = 0)
+        Fade value (``0`` - ``80``; default = ``0``)
 
 
-Underlay Attributes
--------------------
+    .. attribute:: clipping
 
+        ``True`` or ``False`` (read/write)
 
-.. attribute:: Underlay.clipping
+    .. attribute:: on
 
-True or False (read/write)
+        ``True`` or ``False`` (read/write)
 
-.. attribute:: Underlay.on
+    .. attribute:: monochrome
 
-True or False (read/write)
+        ``True`` or ``False`` (read/write)
 
-.. attribute:: Underlay.monochrome
+    .. attribute:: adjust_for_background
 
-True or False (read/write)
+        ``True`` or ``False`` (read/write)
 
-.. attribute:: Underlay.adjust_for_background
+    .. attribute:: scale
 
-True or False (read/write)
+        Scaling ``(x, y, z)`` tuple (read/write)
 
-.. attribute:: Underlay.scale
+    .. attribute:: boundary_path
 
-Scaling (x, y, z) tuple (read/write)
+        Boundary path as list of vertices (read/write).
 
-Underlay Methods
-----------------
+        Two vertices describe a rectangle (lower left and upper right corner), more than 2 vertices
+        is a polygon as clipping path.
 
-.. method:: Underlay.get_boundary()
+    .. attribute:: underlay_def
 
-Returns a list of vertices as pixel coordinates, just two values represent the lower left and the upper right
-corners of the clipping rectangle, more vertices describe a clipping polygon.
+        Associated (PDF)DEFINITION entity. see :class:`UnderlayDefinition`.
 
-.. method:: Underlay.reset_boundary()
+    .. automethod:: reset_boundary_path()
 
-Removes the clipping path.
-
-.. method:: Underlay.set_boundary(vertices)
-
-Set boundary path to vertices. 2 points describe a rectangle (lower left and upper right corner), more than 2 points
-is a polygon as clipping path. Sets clipping state to 1.
-
-.. method:: Underlay.get_underlay_def()
-
-returns the associated (PDF)DEFINITION entity. see :class:`UnderlayDefinition`.
 
 DwfUnderlay
 -----------

@@ -69,7 +69,7 @@ Creates only new meshes.
         Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
 
-        :param layout: ezdxf :class:`Layout` object
+        :param layout: ezdxf :class:`~ezdxf.layouts.BaseLayout` object
         :param dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
         :param matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
 

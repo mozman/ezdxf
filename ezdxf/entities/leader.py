@@ -126,4 +126,7 @@ class Leader(DXFGraphic, OverrideMixin):
             tagwriter.write_vertex(10, vertex)
 
     def set_vertices(self, vertices: Iterable['Vertex']):
+        """ Set vertices of the leader, vertices is an iterable of ``(x, y [,z])`` tuples or
+        :class:`~ezdxf.math.Vector`.
+        """
         self.vertices = [Vector(v) for v in vertices]

@@ -24,98 +24,89 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 .. class:: Leader
 
+    .. attribute:: dxf.dimstyle
+
+        Name of :class:`Dimstyle` as string.
+
+    .. attribute:: dxf.has_arrowhead
+
+        == ============
+        0  Disabled
+        1  Enabled
+        == ============
+
+    .. attribute:: dxf.path_type
+
+        Leader path type:
+
+        == ==========================
+        0  Straight line segments
+        1  Spline
+        == ==========================
 
 
-.. attribute:: Leader.dxf.dimstyle
+    .. attribute:: dxf.annotation_type
 
-    Name of :class:`Dimstyle` as string.
+        == ===========================================
+        0  Created with text annotation
+        1  Created with tolerance annotation
+        2  Created with block reference annotation
+        3  Created without any annotation (default)
+        == ===========================================
 
-.. attribute:: Leader.dxf.has_arrowhead
+    .. attribute:: dxf.hookline_direction
 
-    == ============
-    0  Disabled
-    1  Enabled
-    == ============
+        Hook line direction flag:
 
-.. attribute:: Leader.dxf.path_type
+        == =================================================================
+        0  Hookline (or end of tangent for a splined leader) is the opposite direction from the horizontal vector
+        1  Hookline (or end of tangent for a splined leader) is the same direction as horizontal vector (see ``has_hook_line``)
+        == =================================================================
 
-    Leader path type:
+    .. attribute:: dxf.has_hookline
 
-    == ==========================
-    0  Straight line segments
-    1  Spline
-    == ==========================
+        == ==================
+        0  No hookline
+        1  Has a hookline
+        == ==================
 
+    .. attribute:: dxf.text_height
 
-.. attribute:: Leader.dxf.annotation_type
+        Text annotation height in drawing units.
 
-    == ===========================================
-    0  Created with text annotation
-    1  Created with tolerance annotation
-    2  Created with block reference annotation
-    3  Created without any annotation (default)
-    == ===========================================
+    .. attribute:: dxf.text_width
 
-.. attribute:: Leader.dxf.hookline_direction
+        Text annotation width.
 
-    Hook line direction flag:
+    .. attribute:: dxf.block_color
 
-    == =================================================================
-    0  Hookline (or end of tangent for a splined leader) is the opposite direction from the horizontal vector
-    1  Hookline (or end of tangent for a splined leader) is the same direction as horizontal vector (see ``has_hook_line``)
-    == =================================================================
+        Color to use if leader's DIMCLRD = BYBLOCK
 
-.. attribute:: Leader.dxf.has_hookline
+    .. attribute:: dxf.annotation_handle
 
-    == ==================
-    0  No hookline
-    1  Has a hookline
-    == ==================
+        Hard reference (handle) to associated annotation (:class:`MText`, :class:`Tolerance`,
+        or :class:`Insert` entity)
 
-.. attribute:: Leader.dxf.text_height
+    .. attribute:: dxf.normal_vector
 
-    Text annotation height.
+        Extrusion vector? default = ``(0, 0, 1)``.
 
-.. attribute:: Leader.dxf.text_width
+    .. attribute:: .dxf.horizontal_direction
 
-    Text annotation width.
+        `Horizontal` direction for leader, default = ``(1, 0, 0)``.
 
-.. attribute:: Leader.dxf.block_color
+    .. attribute:: dxf.leader_offset_block_ref
 
-    Color to use if leader's DIMCLRD = BYBLOCK
+        Offset of last leader vertex from block reference insertion point, default = ``(0, 0, 0)``.
 
-.. attribute:: Leader.dxf.annotation_handle
+    .. attribute:: dxf.leader_offset_annotation_placement
 
-    Hard reference (handle) to associated annotation (:class:`MText`, :class:`Tolerance`,
-    or :class:`Insert` entity)
-
-.. attribute:: Leader.dxf.normal_vector
-
-    Default: (0, 0, 1)
-
-.. attribute:: Leader.dxf.horizontal_direction
-
-    "Horizontal" direction for leader, Default: (1, 0, 0)
-
-.. attribute:: Leader.dxf.leader_offset_block_ref
-
-    Offset of last leader vertex from block reference insertion point, Default: (0, 0, 0)
-
-.. attribute:: Leader.dxf.leader_offset_annotation_placement
-
-    Offset of last leader vertex from annotation placement point, Default: (0, 0, 0)
+        Offset of last leader vertex from annotation placement point, default = ``(0, 0, 0)``.
 
 
-Leader Attributes
------------------
+    .. attribute:: vertices
 
-.. attribute:: Leader.vertices
+        List of :class:`~ezdxf.math.Vector` objects, representing the vertices of the leader (3D Point in :ref:`WCS`).
 
-    List of :class:`~ezdxf.math.Vector` objects, representing the vertices of the leader (3D Point in :ref:`WCS`).
+    .. automethod:: Leader.set_vertices
 
-Leader Methods
---------------
-
-.. method:: Leader.set_vertices(vertices)
-
-    Set vertices of the leader, vertices is an iterable of (x, y [,z]) tuples or :class:`~ezdxf.math.Vector`.

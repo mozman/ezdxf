@@ -138,8 +138,8 @@ class PdfUnderlay(DXFGraphic):
         self.dxf.scale_y = y
         self.dxf.scale_z = z
 
-    def set_boundary_path(self,
-                          vertices: Iterable['Vertex']) -> None:  # path coordinates as drawing coordinates but unscaled
+    def set_boundary_path(self, vertices: Iterable['Vertex']) -> None:
+        # path coordinates as drawing coordinates but unscaled
         vertices = list(vertices)
         if len(vertices):
             self._boundary_path = vertices
@@ -148,6 +148,7 @@ class PdfUnderlay(DXFGraphic):
             self.reset_boundary_path()
 
     def reset_boundary_path(self) -> None:
+        """ Removes the clipping path. """
         self._boundary_path = []
         self.clipping = False
 

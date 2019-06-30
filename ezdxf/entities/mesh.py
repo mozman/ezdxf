@@ -19,7 +19,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, Vertex, Tags
 
-__all__ = ['Mesh']
+__all__ = ['Mesh', 'MeshData']
 
 acdb_mesh = DefSubclass('AcDbSubDMesh', {
     'version': DXFAttr(71, default=2),
@@ -265,6 +265,7 @@ class Mesh(DXFGraphic):
 
     @property
     def creases(self) -> 'array.array':  # group code 40
+        """ Creases as :class:`array.array`. (read/write)"""
         return self._creases
 
     @creases.setter
@@ -273,6 +274,7 @@ class Mesh(DXFGraphic):
 
     @property
     def vertices(self):
+        """ Vertices as list like :class:`~ezdxf.lldxf.packedtags.VertexArray`. (read/write)"""
         return self._vertices
 
     @vertices.setter
@@ -281,6 +283,7 @@ class Mesh(DXFGraphic):
 
     @property
     def edges(self):
+        """ Edges as list like :class:`~ezdxf.lldxf.packedtags.TagArray`. (read/write)"""
         return self._edges
 
     @edges.setter
@@ -289,6 +292,7 @@ class Mesh(DXFGraphic):
 
     @property
     def faces(self):
+        """ Faces as list like :class:`~ezdxf.lldxf.packedtags.TagList`. (read/write)"""
         return self._faces
 
     @faces.setter
@@ -306,6 +310,12 @@ class Mesh(DXFGraphic):
 
     @contextmanager
     def edit_data(self) -> 'MeshData':
+        """ Context manager various mesh data, returns :class:`MeshData`.
+
+        Despite that vertices, edge and faces since `ezdxf` v0.8.9 are accessible as packed data types, the usage
+        of :class:`MeshData` by context manager :meth:`edit_data` is still recommended.
+
+        """
         data = self.get_data()
         yield data
         self.set_data(data)
@@ -319,9 +329,11 @@ class MeshData:
         self.edge_crease_values = mesh.creases  # type: array.array
 
     def add_face(self, vertices: Iterable[Sequence[float]]) -> Sequence[int]:
+        """ Add a face by coordinates, vertices is a list of ``(x, y, z)`` tuples. """
         return self.add_entity(vertices, self.faces)
 
     def add_edge(self, vertices: Sequence[Sequence[float]]) -> Sequence[int]:
+        """ Add an edge by coordinates, vertices is a list of two ``(x, y, z)`` tuples. """
         if len(vertices) != 2:
             raise DXFValueError("Parameter vertices has to be a list/tuple of 2 vertices [(x1, y1, z1), (x2, y2, z2)].")
         return self.add_entity(vertices, self.edges)
@@ -339,6 +351,11 @@ class MeshData:
         return index
 
     def optimize(self, precision: int = 6):
+        """
+        Tries to reduce vertex count by merging near vertices. `precision` defines the decimal places for coordinate
+        be equal to merge two vertices.
+
+        """
         def remove_doublette_vertices() -> Dict[int, int]:
             def prepare_vertices() -> Iterable[Tuple[float, float, float]]:
                 for index, vertex in enumerate(self.vertices):
