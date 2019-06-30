@@ -256,18 +256,32 @@ class Hatch(DXFGraphic):
 
     @property
     def has_solid_fill(self) -> bool:
+        """ ``True`` if hatch has a solid fill. (read only) """
         return bool(self.dxf.solid_fill)
 
     @property
     def has_pattern_fill(self) -> bool:
+        """ ``True`` if hatch has a pattern fill. (read only) """
         return not bool(self.dxf.solid_fill)
 
     @property
     def has_gradient_data(self) -> bool:
+        """ ``True`` if hatch has a gradient fill. A hatch with gradient fill has also a solid fill. (read only) """
         return bool(self.gradient)
 
     @property
     def bgcolor(self) -> Optional['RGB']:
+        """
+        Property background color as ``(r, g, b)`` tuple, rgb values in range 0..255 (read/write/del)
+
+        usage::
+
+            color = hatch.bgcolor  # get background color as (r, g, b) tuple
+            hatch.bgcolor = (10, 20, 30)  # set background color
+            del hatch.bgcolor  # delete background color
+
+
+        """
         try:
             xdata_bgcolor = self.get_xdata('HATCHBACKGROUNDCOLOR')
         except const.DXFValueError:
@@ -289,9 +303,20 @@ class Hatch(DXFGraphic):
     # just for compatibility
     @contextmanager
     def edit_boundary(self) -> 'BoundaryPaths':
+        """ Context manager to edit hatch boundary data, yields a :class:`BoundaryPaths` object. """
         yield self.paths
 
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: 'RGB' = None):
+        """
+        Set :class:`Hatch` to solid fill mode and removes all gradient and pattern fill related data.
+
+        Args:
+            color: :ref:`ACI`, (``0`` = BYBLOCK; ``256`` = BYLAYER)
+            style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
+            rgb: true color value as ``(r, g, b)`` tuple - has higher priority than `color``.
+                 True color support requires DXF R2000.
+
+        """
         self.gradient = None
         if self.has_pattern_fill:
             self.pattern = None
@@ -305,6 +330,7 @@ class Hatch(DXFGraphic):
             self.rgb = rgb  # rgb should be a (r, g, b) tuple
 
     def get_gradient(self):
+        """ Returns gradient data as :class:`GradientData` object. """
         return self.gradient
 
     def set_gradient(self,
@@ -315,8 +341,35 @@ class Hatch(DXFGraphic):
                      one_color: int = 0,
                      tint: float = 0.,
                      name: str = 'LINEAR') -> None:
+        """
+        Set :class:`Hatch` to gradient fill mode and removes all pattern fill related data. Gradient support requires
+        DXF DXF R2004. A gradient filled hatch is also a solid filled hatch.
+
+        Valid gradient type names are:
+
+
+            - ``'LINEAR'``
+            - ``'CYLINDER'``
+            - ``'INVCYLINDER'``
+            - ``'SPHERICAL'``
+            - ``'INVSPHERICAL'``
+            - ``'HEMISPHERICAL'``
+            - ``'INVHEMISPHERICAL'``
+            - ``'CURVED'``
+            - ``'INVCURVED'``
+
+        Args:
+            color1: ``(r, g, b)`` tuple for first color, rgb values as int in range 0..255
+            color2: ``(r, g, b)`` tuple for second color, rgb values as int in range 0..255
+            rotation: rotation in degrees
+            centered: determines whether the gradient is centered or not
+            one_color: ``1`` for gradient from `color1` to tinted `color1``
+            tint: determines the tinted target `color1` for a one color gradient. (valid range ``0.0`` to ``1.0``)
+            name: name of gradient type, default ``'LINEAR'``
+
+        """
         if self.doc is not None and self.drawing.dxfversion < DXF2004:
-            raise const.DXFVersionError("Gradient support requires at least DXF R2004")
+            raise const.DXFVersionError("Gradient support requires DXF R2004")
         if name not in const.GRADIENT_TYPES:
             raise const.DXFValueError('Invalid gradient type name: %s' % name)
 
@@ -338,12 +391,28 @@ class Hatch(DXFGraphic):
     # just for compatibility
     @contextmanager
     def edit_gradient(self) -> 'Gradient':
+        """ Context manager to edit hatch gradient data, yields a :class:`GradientData` object. """
         if not self.gradient:
             raise const.DXFValueError('HATCH has no gradient data.')
         yield self.gradient
 
     def set_pattern_fill(self, name: str, color: int = 7, angle: float = 0., scale: float = 1., double: int = 0,
                          style: int = 1, pattern_type: int = 1, definition=None) -> None:
+        """
+        Set :class:`Hatch` to pattern fill mode. Removes all gradient related data.
+
+        Args:
+            name: pattern name as string
+            color: pattern color as :ref:`ACI`
+            angle: angle of pattern fill in degrees
+            scale: pattern scaling as float
+            double: double size flag
+            style: hatch style (``0`` = normal; ``1`` = outer; ``2`` = ignore)
+            pattern_type: pattern type (``0`` = user-defined; ``1`` = predefined; ``2`` = custom) ???
+            definition: list of definition lines and a definition line is a 4-tuple [angle, base_point,
+                        offset, dash_length_items], see :meth:`set_pattern_definition`
+
+        """
         self.gradient = None
         self.dxf.solid_fill = 0
         self.dxf.pattern_name = name
@@ -359,6 +428,7 @@ class Hatch(DXFGraphic):
     # just for compatibility
     @contextmanager
     def edit_pattern(self) -> 'Pattern':
+        """ Context manager to edit hatch pattern data, yields a :class:`PatternData` object. """
         if not self.pattern:
             raise const.DXFValueError('Solid fill HATCH has no pattern data.')
         yield self.pattern
@@ -381,9 +451,17 @@ class Hatch(DXFGraphic):
 
     # just for compatibility
     def get_seed_points(self) -> List:
+        """
+        Returns seed points as list of ``(x, y)`` points, I don't know why there can be more than one seed point.
+        All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value).
+        """
         return self.seeds
 
     def set_seed_points(self, points: Sequence[Tuple[float, float]]) -> None:
+        """
+        Set seed points, `points` is a list of ``(x, y)`` tuples, I don't know why there can be more than one
+        seed point. All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
+        """
         if len(points) < 1:
             raise const.DXFValueError(
                 "Param points should be a collection of 2D points and requires at least one point.")
@@ -418,10 +496,20 @@ class BoundaryPaths:
         return cls(paths)
 
     def clear(self) -> None:
+        """ Remove all boundary paths. """
         self.paths = []
 
     def add_polyline_path(self, path_vertices: Sequence[Tuple[float, float]], is_closed: bool = True,
                           flags: int = 1) -> 'PolylinePath':
+        """
+        Create and add a new :class:`PolylinePath` object.
+
+        Args:
+            path_vertices: list of polyline vertices as ``(x, y)`` or ``(x, y, bulge)`` tuples.
+            is_closed: ``1`` for a closed polyline else ``0``
+            flags: external(``1``) or outermost(``16``) or default (``0``)
+
+        """
         new_path = PolylinePath()
         new_path.set_vertices(path_vertices, is_closed)
         new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
@@ -429,6 +517,13 @@ class BoundaryPaths:
         return new_path
 
     def add_edge_path(self, flags: int = 1) -> 'EdgePath':
+        """
+        Create and add a new :class:`EdgePath` object.
+
+        Args:
+            flags: external(``1``) or outermost(``16``) or default (``0``)
+
+        """
         new_path = EdgePath()
         new_path.path_type_flags = flags
         self.paths.append(new_path)
@@ -492,6 +587,8 @@ class PolylinePath:
         return path
 
     def set_vertices(self, vertices: Sequence[Sequence[float]], is_closed: bool = True) -> None:
+        """ Set new `vertices` as new polyline path, a vertex has to be a ``(x, y)`` or a ``(x, y, bulge)`` tuple.
+        """
         new_vertices = []
         for vertex in vertices:
             if len(vertex) == 2:
@@ -506,6 +603,7 @@ class PolylinePath:
         self.is_closed = is_closed
 
     def clear(self) -> None:
+        """ Removes all vertices and all handles to associated DXF objects (:attr:`source_boundary_objects`). """
         self.vertices = []
         self.is_closed = False
         self.source_boundary_objects = []
@@ -558,6 +656,14 @@ class EdgePath:
             raise const.DXFStructureError("HATCH: unknown edge type: {}".format(edge_type))
 
     def add_line(self, start: Sequence[float], end: Sequence[float]) -> 'LineEdge':
+        """
+        Add a :class:`LineEdge` from `start` to `end`.
+
+        Args:
+            start: start point of line, ``(x, y)`` tuple
+            end: end point of line, ``(x, y)`` tuple
+
+        """
         line = LineEdge()
         line.start = start
         line.end = end
@@ -569,6 +675,23 @@ class EdgePath:
                 start_angle: float = 0.,
                 end_angle: float = 360.,
                 is_counter_clockwise: int = 0) -> 'ArcEdge':
+        """
+        Add an :class:`ArcEdge`.
+
+        :param tuple center:
+        :param float radius: radius of circle
+        :param float start_angle: start angle of arc in degrees
+        :param float end_angle: end angle of arc in degrees
+        :param int is_counter_clockwise: 1 for yes 0 for no
+
+        Args:
+            center: center point of arc, ``(x, y)`` tuple
+            radius: radius of circle
+            start_angle: start angle of arc in degrees
+            end_angle: end angle of arc in degrees
+            is_counter_clockwise: ``1`` for counter clockwise ``0`` for clockwise orientation
+
+        """
         arc = ArcEdge()
         arc.center = center
         arc.radius = radius
@@ -584,6 +707,18 @@ class EdgePath:
                     start_angle: float = 0.,
                     end_angle: float = 360.,
                     is_counter_clockwise: int = 0) -> 'EllipseEdge':
+        """
+        Add an :class:`EllipseEdge`.
+
+        Args:
+            center: center point of ellipse, ``(x, y)`` tuple
+            major_axis: vector of major axis as ``(x, y)`` tuple
+            ratio: ratio of minor axis to major axis as float
+            start_angle: start angle of arc in degrees
+            end_angle: end angle of arc in degrees
+            is_counter_clockwise: ``1`` for counter clockwise ``0`` for clockwise orientation
+
+        """
         if ratio > 1.:
             raise const.DXFValueError("Parameter 'ratio' has to be <= 1.0")
         ellipse = EllipseEdge()
@@ -603,6 +738,30 @@ class EdgePath:
                    degree: int = 3,
                    rational: int = 0,
                    periodic: int = 0) -> 'SplineEdge':
+        """
+        Add a :class:`SplineEdge`.
+
+        Args:
+            fit_points: points through which the spline must go, at least 3 fit points are required.
+                        list of ``(x, y)`` tuples
+            control_points: affects the shape of the spline, mandatory amd AutoCAD crashes on invalid data.
+                            list of ``(x, y)`` tuples
+            knot_values: (knot vector) mandatory and AutoCAD crashes on invalid data. list of floats;
+                         `ezdxf` provides two tool functions to calculate valid knot values:
+                         :func:`ezdxf.math.bspline.knot_values` and
+                         :func:`ezdxf.math.bspline.knot_values_uniform`
+            weights: weight of control point, not mandatory, list of floats.
+            degree: degree of spline (int)
+            rational: ``1`` for rational spline, ``0`` for none rational spline
+            periodic: ``1`` for periodic spline, ``0`` for none periodic spline
+
+        .. warning::
+
+            Unlike for the spline entity AutoCAD does not calculate the necessary `knot_values` for the spline edge
+            itself. On the contrary, if the `knot_values` in the spline edge are missing or invalid
+            AutoCAD **crashes**.
+
+        """
         spline = SplineEdge()
         if fit_points is not None:
             spline.fit_points = list(fit_points)
@@ -630,6 +789,7 @@ class EdgePath:
         )
 
     def clear(self) -> None:
+        """ Delete all edges."""
         self.edges = []
 
     def export_dxf(self, tagwriter: 'TagWriter') -> None:
@@ -852,6 +1012,7 @@ class Pattern:
         return cls([PatternLine.load_tags(line_tags) for line_tags in grouped_line_tags])
 
     def clear(self) -> None:
+        """ Delete all pattern definition lines. """
         self.lines = []
 
     def add_line(self,
@@ -859,6 +1020,7 @@ class Pattern:
                  base_point: Tuple[float, float] = (0., 0.),
                  offset: Tuple[float, float] = (0., 0.),
                  dash_length_items: List[float] = None) -> None:
+        """ Create a new pattern definition line and add the line to the :attr:`Pattern.lines` attribute. """
         self.lines.append(self.new_line(angle, base_point, offset, dash_length_items))
 
     @staticmethod
@@ -866,6 +1028,10 @@ class Pattern:
                  base_point: Tuple[float, float] = (0., 0.),
                  offset: Tuple[float, float] = (0., 0.),
                  dash_length_items: List[float] = None) -> 'PatternLine':
+        """
+        Create a new pattern definition line, but does not add the line to the :attr:`Pattern.lines` attribute.
+
+        """
         if dash_length_items is None:
             raise const.DXFValueError("Parameter 'dash_length_items' must not be None.")
         return PatternLine(angle, base_point, offset, dash_length_items)
