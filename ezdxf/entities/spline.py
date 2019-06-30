@@ -130,6 +130,9 @@ class Spline(DXFGraphic):
 
     @property
     def closed(self) -> bool:
+        """ ``True`` if spline is closed. A closed spline has a connection from the last control point
+        to the first control point. (read/write)
+        """
         return self.get_flag_state(self.CLOSED, name='flags')
 
     @closed.setter
@@ -138,6 +141,7 @@ class Spline(DXFGraphic):
 
     @property
     def knots(self) -> 'array.array':  # group code 40
+        """ Knot values as :code:`array.array('d')`. """
         return self._knots
 
     @knots.setter
@@ -145,14 +149,12 @@ class Spline(DXFGraphic):
         self._knots = array.array('d', values)
 
     def knot_count(self) -> int:  # DXF callback attribute Spline.dxf.n_knots
+        """ Count of knot values. """
         return len(self._knots)
 
     @property
     def weights(self) -> 'array.array':  # group code 41
-        """
-        Returns spline control point weights as array.array('f').
-
-        """
+        """ Control point weights as :code:`array.array('d')`. """
         return self._weights
 
     @weights.setter
@@ -161,10 +163,7 @@ class Spline(DXFGraphic):
 
     @property
     def control_points(self) -> VertexArray:  # group code 10
-        """
-        Returns spline control points as ControlPoints() object.
-
-        """
+        """ :class:`~ezdxf.lldxf.packedtags.VertexArray` of control points in :ref:`WCS`. """
         return self._control_points
 
     @control_points.setter
@@ -172,14 +171,12 @@ class Spline(DXFGraphic):
         self._control_points = VertexArray(chain.from_iterable(points))
 
     def control_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_control_points
+        """ Count of control points. """
         return len(self.control_points)
 
     @property
     def fit_points(self) -> VertexArray:  # group code 11
-        """
-        Returns spline fit points as FitPoints() object.
-
-        """
+        """ :class:`~ezdxf.lldxf.packedtags.VertexArray` of fit points in :ref:`WCS`. """
         return self._fit_points
 
     @fit_points.setter
@@ -187,6 +184,7 @@ class Spline(DXFGraphic):
         self._fit_points = VertexArray(chain.from_iterable(points))
 
     def fit_point_count(self) -> int:  # DXF callback attribute Spline.dxf.n_fit_points
+        """ Count of fit points. """
         return len(self.fit_points)
 
     def set_open_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
@@ -262,13 +260,17 @@ class Spline(DXFGraphic):
     @contextmanager
     def edit_data(self) -> 'SplineData':
         """
-        Edit spline data by context manager, usage::
+        Context manager for all spline data, returns :class:`SplineData`.
 
-        with spline.edit_data() as data:
-            # set uniform knot vector
-            data.knots = list(range(spline.dxf.n_control_points+spline.dxf.degree+1))
+        Fit points, control points, knot values and weights can be manipulated as lists by using the general
+        context manager :meth:`Spline.edit_data`::
 
-        Yields: SplineData()
+            with spline.edit_data() as spline_data:
+                # spline_data contains list like objects: add, change or delete items as you want
+                # fit_points and control_points have to be (x, y, z) tuples
+                # knot_values and weights have to be numbers
+                spline_data.fit_points.append((200, 300, 0))  # append a fit point
+                # on exit the context manager sets spline data automatically and updates all counters
 
         """
         data = SplineData(self)

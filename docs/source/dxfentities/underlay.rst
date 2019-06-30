@@ -1,18 +1,30 @@
 Underlay
 ========
 
-.. class:: Underlay(GraphicEntity)
+.. module:: ezdxf.entities
 
-Introduced in DXF version R13 (AC1012), dxftype is PDFUNDERLAY, DWFUNDERLAY or DGNUNDERLAY.
+Introduced in DXF R13 (``'AC1012'``).
 
 Add an underlay file to the DXF file, the file itself is not embedded into the DXF file, it is always a separated file.
 The (PDF)UNDERLAY entity is like a block reference, you can use it multiple times to add the underlay on different
 locations with different scales and rotations. But therefore you need a also a (PDF)DEFINITION entity, see
 :class:`UnderlayDefinition`.
-Create :class:`Underlay` in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_underlay`. The DXF standard
-supports three different fileformats: PDF, DWF (DWFx) and DGN. An Underlay can be clipped by a rectangle or a
-polygon path. The clipping coordinates are 2D OCS/ECS coordinates and in drawing units but without scaling.
 
+The DXF standard supports three different file formats: PDF, DWF (DWFx) and DGN. An Underlay can be clipped by a
+rectangle or a polygon path. The clipping coordinates are 2D :ref:`OCS` coordinates in drawing units but
+without scaling.
+
+PdfUnderlay
+-----------
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'PDFUNDERLAY'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
+
+.. class:: PdfUnderlay
 
 DXF Attributes for Underlay
 ---------------------------
@@ -111,3 +123,27 @@ is a polygon as clipping path. Sets clipping state to 1.
 .. method:: Underlay.get_underlay_def()
 
 returns the associated (PDF)DEFINITION entity. see :class:`UnderlayDefinition`.
+
+DwfUnderlay
+-----------
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.PdfUnderlay`
+DXF type                 ``'DWFUNDERLAY'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
+
+.. class:: DwfUnderlay
+
+DgnUnderlay
+-----------
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.PdfUnderlay`
+DXF type                 ``'DGNUNDERLAY'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
+
+.. class:: DgnUnderlay

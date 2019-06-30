@@ -1,9 +1,9 @@
 Leader
 ======
 
-.. class:: Leader(GraphicEntity)
+.. module:: ezdxf.entities
 
-Introduced in AutoCAD R13 (DXF version AC1012), *dxftype* is LEADER.
+Introduced in DXF R13 (``'AC1012'``).
 
 The :class:`Leader` entity represents an arrow, made up of one or more vertices (or spline fit points) and an
 arrowhead. The label or other content to which the :class:`Leader` is attached is stored as a separate entity,
@@ -14,16 +14,17 @@ and is not part of the :class:`Leader` itself.
 By default a :class:`Leader` without any annotation is created. For creating more fancy leaders and annotations
 see documentation provided by Autodesk or `Demystifying DXF: LEADER and MULTILEADER implementation notes <https://atlight.github.io/formats/dxf-leader.html>`_  .
 
-Create leader in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_leader`.
 
-:attr:`Ellipse.dxf.extrusion` is supported, but does not establish an :ref:`OCS`, it is used to create an 3D entity by
-extruding the base ellipse.
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'LEADER'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_leader`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
+
+.. class:: Leader
 
 
-DXF Attributes for Ellipse
---------------------------
-
-:ref:`Common graphical DXF attributes`
 
 .. attribute:: Leader.dxf.dimstyle
 

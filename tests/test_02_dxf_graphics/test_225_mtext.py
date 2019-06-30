@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.lldxf import const
 
-from ezdxf.entities.mtext import MText, split_mtext_string, MTextData
+from ezdxf.entities.mtext import MText, split_mtext_string
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 
@@ -179,13 +179,10 @@ def test_set_rotation(layout):
     assert mtext.dxf.hasattr('text_direction') is False, "dxfattrib 'text_direction' should be deleted!"
 
 
-def test_buffer(layout):
-    text = "0123456789" * 27
-    text2 = "abcdefghij" * 27
-    mtext = layout.add_mtext(text)
-    with mtext.edit_data() as data:
-        data.text = text2
-    assert text2 == mtext.text
+def test_append_text(layout):
+    mtext = layout.add_mtext('abc')
+    mtext += 'def'
+    assert mtext.text == 'abcdef'
 
 
 def test_set_location(layout):
@@ -266,15 +263,3 @@ def test_do_not_split_at_carret():
     assert 2 == len(chunks)
     assert chunks[0] == 'a' * 19
     assert chunks[1] == '^Ixxx^'
-
-
-def test_new_buffer():
-    b = MTextData("abc")
-    assert "abc" == b.text
-
-
-def test_append_text():
-    b = MTextData("abc")
-    b += "def" + b.NEW_LINE
-
-    assert "abcdef\\P" == b.text

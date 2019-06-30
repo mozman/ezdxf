@@ -129,12 +129,15 @@ class ExtendedTags:
         return self.subclasses[0]
 
     def get_handle(self) -> str:
+        """ Returns handle as hex string. """
         return self.noclass.get_handle()
 
     def dxftype(self) -> str:
+        """ Returns DXF type as string like ``'LINE'``."""
         return self.noclass[0].value
 
     def replace_handle(self, handle: str) -> None:
+        """ Replace `handle`. """
         self.noclass.replace_handle(handle)
 
     def _setup(self, iterable: Iterable[DXFTag]) -> None:
@@ -320,6 +323,14 @@ class ExtendedTags:
             yield from chain.from_iterable(self.embedded_objects)
 
     def get_subclass(self, name: str, pos: int = 0) -> Tags:
+        """
+        Get subclass `name`.
+
+        Args:
+            name: subclass name as string like ``'AcDbEntity'``
+            pos: start searching at subclass `pos`.
+
+        """
         for index, subclass in enumerate(self.subclasses):
             try:
                 if (index >= pos) and (subclass[0].value == name):
@@ -330,15 +341,18 @@ class ExtendedTags:
         raise DXFKeyError("Subclass '%s' does not exist." % name)
 
     def has_xdata(self, appid: str) -> bool:
+        """ ``True`` if has XDATA for `appid`. """
         return any(xdata[0].value == appid for xdata in self.xdata)
 
     def get_xdata(self, appid: str) -> Tags:
+        """ Returns XDATA for `appid` as :class:`Tags`. """
         for xdata in self.xdata:
             if xdata[0].value == appid:
                 return xdata
         raise DXFValueError("No extended data for APPID '%s'" % appid)
 
     def set_xdata(self, appid: str, tags: 'IterableTags') -> None:
+        """ Set `tags` as XDATA for `appid`. """
         xdata = self.get_xdata(appid)
         xdata[1:] = tuples_to_tags(tags)
 
@@ -360,32 +374,29 @@ class ExtendedTags:
         return xtags
 
     def has_app_data(self, appid: str) -> bool:
+        """ ``True`` if has application defined data for `appid`. """
         return any(appdata[0].value == appid for appdata in self.appdata)
 
     def get_app_data(self, appid: str) -> Tags:
-        """
-        Get AppData including first and last marker tag.
-
-        """
+        """ Returns application defined data for `appid` as :class:`Tags` including marker tags. """
         for appdata in self.appdata:
             if appdata[0].value == appid:
                 return appdata
         raise DXFValueError("Application defined group '%s' does not exist." % appid)
 
     def get_app_data_content(self, appid: str) -> Tags:
-        """
-        Get AppData without first and last marker tag.
-
+        """ Returns application defined data for `appid` as :class:`Tags`  without first and last marker tag.
         """
         return Tags(self.get_app_data(appid)[1:-1])
 
     def set_app_data_content(self, appid: str, tags: 'IterableTags') -> None:
+        """ Set application defined data for `appid` for already exiting data. """
         app_data = self.get_app_data(appid)
         app_data[1:-1] = tuples_to_tags(tags)
 
     def new_app_data(self, appid: str, tags: 'IterableTags' = None, subclass_name: str = None) -> Tags:
         """
-        Append a new AppData block to subclass `subclass_name`.
+        Append a new application defined data to subclass `subclass_name`.
 
         Assumes that no app data block with the same `appid` already exist::
 
@@ -416,4 +427,5 @@ class ExtendedTags:
 
     @classmethod
     def from_text(cls, text: str, legacy=False) -> 'ExtendedTags':
+        """ Create :class:`ExtendedTags` from DXF text. """
         return cls(internal_tag_compiler(text), legacy=legacy)

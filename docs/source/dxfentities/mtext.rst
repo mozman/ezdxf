@@ -1,185 +1,166 @@
 MText
 =====
 
-.. class:: MText(GraphicEntity)
+.. module:: ezdxf.entities
 
-    Introduced in DXF version R13 (AC1012), extended in DXF version R2007 (AC1021), dxftype is MTEXT.
+Introduced in DXF R13 (``'AC1012'``), extended in DXF R2007 (``'AC1021'``).
 
-    Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
-    words or characters within the MText. Create :class:`MText` in layouts and blocks by factory function
-    :meth:`~ezdxf.modern.layouts.Layout.add_mtext`.
+Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
+words or characters within the MText.
 
 .. seealso::
 
     :ref:`tut_mtext`
 
-DXF Attributes for MText
-------------------------
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'MTEXT'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_mtext`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-:ref:`Common graphical DXF attributes`
+.. class:: MText
 
-.. attribute:: MText.dxf.insert
 
-    Insertion point (3D Point in :ref:`OCS`)
+    .. attribute:: dxf.insert
 
-.. attribute:: MText.dxf.char_height
+        Insertion point (3D Point in :ref:`OCS`)
 
-    Initial text height (float); default=1.0
+    .. attribute:: dxf.char_height
 
-.. attribute:: MText.dxf.width
+        Initial text height (float); default=1.0
 
-    Reference rectangle width (float)
+    .. attribute:: dxf.width
 
-.. attribute:: MText.dxf.attachment_point
+        Reference rectangle width (float)
 
-    Constants defined in :mod:`ezdxf.const`:
+    .. attribute:: dxf.attachment_point
 
-    ============================== =======
-    MText.dxf.attachment_point     Value
-    ============================== =======
-    MTEXT_TOP_LEFT                 1
-    MTEXT_TOP_CENTER               2
-    MTEXT_TOP_RIGHT                3
-    MTEXT_MIDDLE_LEFT              4
-    MTEXT_MIDDLE_CENTER            5
-    MTEXT_MIDDLE_RIGHT             6
-    MTEXT_BOTTOM_LEFT              7
-    MTEXT_BOTTOM_CENTER            8
-    MTEXT_BOTTOM_RIGHT             9
-    ============================== =======
+        Constants defined in :mod:`ezdxf.lldxf.const`:
 
-.. attribute:: MText.dxf.flow_direction
+        ============================== =======
+        MText.dxf.attachment_point     Value
+        ============================== =======
+        MTEXT_TOP_LEFT                 1
+        MTEXT_TOP_CENTER               2
+        MTEXT_TOP_RIGHT                3
+        MTEXT_MIDDLE_LEFT              4
+        MTEXT_MIDDLE_CENTER            5
+        MTEXT_MIDDLE_RIGHT             6
+        MTEXT_BOTTOM_LEFT              7
+        MTEXT_BOTTOM_CENTER            8
+        MTEXT_BOTTOM_RIGHT             9
+        ============================== =======
 
-    Constants defined in :mod:`ezdxf.const`:
+    .. attribute:: dxf.flow_direction
 
-    ============================== ======= ===========
-    MText.dxf.flow_direction       Value   Description
-    ============================== ======= ===========
-    MTEXT_LEFT_TO_RIGHT            1       left to right
-    MTEXT_TOP_TO_BOTTOM            3       top to bottom
-    MTEXT_BY_STYLE                 5       by style (the flow direction is inherited from the associated text style)
-    ============================== ======= ===========
+        Constants defined in :mod:`ezdxf.const`:
 
+        ============================== ======= ===========
+        MText.dxf.flow_direction       Value   Description
+        ============================== ======= ===========
+        MTEXT_LEFT_TO_RIGHT            1       left to right
+        MTEXT_TOP_TO_BOTTOM            3       top to bottom
+        MTEXT_BY_STYLE                 5       by style (the flow direction is inherited from the associated text style)
+        ============================== ======= ===========
 
-.. attribute:: MText.dxf.style
 
-    Text style (string); default='STANDARD'
+    .. attribute:: dxf.style
 
-.. attribute:: MText.dxf.text_direction
+        Text style (string); default = ``'STANDARD'``
 
-    X-axis direction vector in :ref:`WCS` (3D Point); default=(1, 0, 0); if rotation and text_direction are present,
-    text_direction wins
+    .. attribute:: dxf.text_direction
 
-.. attribute:: MText.dxf.rotation
+        X-axis direction vector in :ref:`WCS` (3D Point); default value is ``(1, 0, 0)``; if :attr:`dxf.rotation` and
+        :attr:`dxf.text_direction` are present,  :attr:`dxf.text_direction` wins.
 
-    Text rotation in degrees (float); default=0
+    .. attribute:: dxf.rotation
 
-.. attribute:: MText.dxf.line_spacing_style
+        Text rotation in degrees (float); default = ``0``
 
-    line spacing style (int), see table below
+    .. attribute:: dxf.line_spacing_style
 
-.. attribute:: MText.dxf.line_spacing_factor
+        Line spacing style (int), see table below
 
-    Percentage of default (3-on-5) line spacing to be applied. Valid values range from 0.25 to 4.00 (float)
+    .. attribute:: dxf.line_spacing_factor
 
-    Constants defined in :mod:`ezdxf.const`:
+        Percentage of default (3-on-5) line spacing to be applied. Valid values range from ``0.25`` to ``4.00`` (float).
 
-    ============================== ======= ===========
-    MText.dxf.line_spacing_style   Value   Description
-    ============================== ======= ===========
-    MTEXT_AT_LEAST                 1       taller characters will override
-    MTEXT_EXACT                    2       taller characters will not override
-    ============================== ======= ===========
+        Constants defined in :mod:`ezdxf.lldxf.const`:
 
-.. attribute:: MText.dxf.bg_fill
+        ============================== ======= ===========
+        MText.dxf.line_spacing_style   Value   Description
+        ============================== ======= ===========
+        MTEXT_AT_LEAST                 1       taller characters will override
+        MTEXT_EXACT                    2       taller characters will not override
+        ============================== ======= ===========
 
-    Defines the background fill type. (DXF R2007)
+    .. attribute:: dxf.bg_fill
 
-    ============================== ======= ===========
-    MText.dxf.bg_fill              Value   Description
-    ============================== ======= ===========
-    MTEXT_BG_OFF                   0       no background color
-    MTEXT_BG_COLOR                 1       use specified color
-    MTEXT_BG_WINDOW_COLOR          2       use window color (?)
-    MTEXT_BG_CANVAS_COLOR          3       use canvas background color
-    ============================== ======= ===========
+        Defines the background fill type. (DXF R2007)
 
-.. attribute:: MText.dxf.box_fill_scale
+        ============================== ======= ===========
+        MText.dxf.bg_fill              Value   Description
+        ============================== ======= ===========
+        MTEXT_BG_OFF                   0       no background color
+        MTEXT_BG_COLOR                 1       use specified color
+        MTEXT_BG_WINDOW_COLOR          2       use window color (?)
+        MTEXT_BG_CANVAS_COLOR          3       use canvas background color
+        ============================== ======= ===========
 
-    Determines how much border there is around the text.  (DXF R2007)
+    .. attribute:: dxf.box_fill_scale
 
-    Requires: `bg_fill`, `bg_fill_color` else AutoCAD complains
+        Determines how much border there is around the text.  (DXF R2007)
 
-    Better use :meth:`MText.set_bg_color`
+        Requires: `bg_fill`, `bg_fill_color` else AutoCAD complains
 
-.. attribute:: MText.dxf.bg_fill_color
+        Better use :meth:`set_bg_color`
 
-    Background fill color as ACI (1-255) (DXF R2007)
+    .. attribute:: dxf.bg_fill_color
 
-    Better use :meth:`MText.set_bg_color`
+        Background fill color as :ref:`ACI` (DXF R2007)
 
-.. attribute:: MText.dxf.bg_fill_true_color
+        Better use :meth:`set_bg_color`
 
-    Background fill color as true color value (DXF R2007), also `bg_fill_color` must be present,
-    else AutoCAD complains.
+    .. attribute:: dxf.bg_fill_true_color
 
-    Better use :meth:`MText.set_bg_color`
+        Background fill color as true color value (DXF R2007), also :attr:`dxf.bg_fill_color` must be present,
+        else AutoCAD complains.
 
-.. attribute:: MText.dxf.bg_fill_color_name
+        Better use :meth:`set_bg_color`
 
-    Background fill color as name string (?) (DXF R2007), also `bg_fill_color` must be present,
-    else AutoCAD complains.
+    .. attribute:: dxf.bg_fill_color_name
 
-    Better use :meth:`MText.set_bg_color`
+        Background fill color as name string (?) (DXF R2007), also :attr:`dxf.bg_fill_color` must be present,
+        else AutoCAD complains.
 
-.. attribute:: MText.dxf.transparency
+        Better use :meth:`set_bg_color`
 
-    Transparency of background fill color (DXF R2007), not supported by AutoCAD or BricsCAD.
+    .. attribute:: dxf.transparency
 
+        Transparency of background fill color (DXF R2007), not supported by AutoCAD or BricsCAD.
 
-MText Methods
--------------
+    .. attribute:: text
 
-.. method:: MText.get_text()
+        MTEXT content as string (read/write).
 
-    Returns content of :class:`MText` as string.
+    .. automethod:: set_location
 
-.. method:: MText.set_text(text)
+    .. automethod:: get_rotation
 
-    Set *text* as :class:`MText` content.
+    .. automethod:: set_rotation
 
-.. method:: MText.set_location(insert, rotation=None, attachment_point=None)
+    .. automethod:: set_bg_color
 
-    Set DXF attributes *insert*, *rotation* and *attachment_point*, *None* for *rotation* or *attachment_point*
-    preserves the existing value.
+    .. automethod:: __iadd__(text: str) -> MText
 
-.. method:: MText.get_rotation()
+    .. automethod:: append(text: str) -> MText
 
-    Get text rotation in degrees, independent if it is defined by *rotation* or *text_direction*
+    .. automethod:: set_font
 
-.. method:: MText.set_rotation(angle)
+    .. automethod:: set_color
 
-    Set DXF attribute *rotation* to *angle* (in degrees) and deletes *text_direction* if present.
-
-.. method:: MText.set_bg_color(color, scale=1.5)
-
-    Set background color as ACI value (1-255) or as name string or as RGB tuple (r, g, b).
-
-    Use special color name ``canvas``, to set background color to canvas background color.
-
-    :param color: color as ACI, string or RGB tuple
-    :param float scale: determines how much border there is around the text
-
-.. method:: MText.edit_data()
-
-Context manager for :class:`MText` content::
-
-    with mtext.edit_data() as data:
-        data += "append some text" + data.NEW_LINE
-
-        # or replace whole text
-        data.text = "Replacement for the existing text."
-
+    .. automethod:: add_stacked_text
 
 MText Inline Codes
 ------------------
@@ -223,39 +204,8 @@ Code    Description
 \\	    Escape character - e.g. \\{ = "{"
 ======= ===========
 
-MTextData
----------
-
-.. class:: MTextData
-
-    Temporary object to manage the :class:`MText` content. Create context object by :meth:`MText.edit_data`.
-
-.. seealso::
-
-    :ref:`tut_mtext`
-
-.. attribute:: MTextData.text
-
-    Represents the :class:`MText` content, treat it like a normal string. (read/write)
-
-.. method:: MTextData.__iadd__(text)
-
-    Append *text* to the :attr:`MTextData.text` attribute.
-
-.. method:: MTextData.append(text)
-
-    Synonym for :meth:`MTextData.__iadd__`.
-
-.. method:: MTextData.set_font(name, bold=False, italic=False, codepage=1252, pitch=0)
-
-    Change actual font inline.
-
-.. method:: MTextData.set_color(color_name)
-
-    Set text color to ``red``, ``yellow``, ``green``, ``cyan``, ``blue``, ``magenta`` or ``white``.
-
-Convenient constants defined in MTextData:
-------------------------------------------
+Convenient constants defined in MText:
+--------------------------------------
 
 =================== ===========
 Constant            Description

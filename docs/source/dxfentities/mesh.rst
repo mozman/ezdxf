@@ -1,16 +1,24 @@
 Mesh
 ====
 
-.. class:: Mesh(GraphicEntity)
+.. module:: ezdxf.entities
 
-    Introduced in DXF version R13 (AC1012), dxftype is MESH.
+Introduced in DXF R13 (``'AC1012'``).
 
-    3D mesh entity similar to the :class:`Polyface` entity. Create :class:`Mesh` in layouts and
-    blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_mesh`.
+3D mesh entity similar to the :class:`Polyface` entity.
 
-    All points in :ref:`WCS` as (x, y, z) tuples
+All vertices in :ref:`WCS` as (x, y, z) tuples
 
-    Since *ezdxf* v0.8.9 :class:`Mesh` stores vertices, edges, faces and creases as packed data (:code:`array.array()`).
+Since *ezdxf* v0.8.9 :class:`Mesh` stores vertices, edges, faces and creases as packed data (:class:`array.array`).
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'MESH'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_mesh`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
+
+.. class:: Mesh
 
 DXF Attributes for Mesh
 -----------------------

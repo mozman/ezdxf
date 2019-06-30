@@ -1,19 +1,23 @@
 Hatch
 =====
 
-.. class:: Hatch
+.. module:: ezdxf.entities
 
-Introduced in DXF version R13 (AC1012), *dxftype* is HATCH.
+Introduced in DXF R13 (``'AC1012'``).
 
 Fills an enclosed area defined by one or more boundary paths with a hatch pattern, solid fill, or gradient fill.
-Create :class:`Hatch` in layouts and blocks by factory function :meth:`~ezdxf.modern.layouts.Layout.add_hatch`.
 
-All points in :ref:`OCS` as (x, y) tuples (:attr:`~Hatch.dxf.elevation` is the z-axis value).
+All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the z-axis value).
 
-DXF Attributes for Hatch
-------------------------
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'HATCH'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_hatch`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-:ref:`Common graphical DXF attributes`
+.. class:: Hatch
+
 
 .. attribute:: Hatch.dxf.pattern_name
 

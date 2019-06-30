@@ -1,23 +1,26 @@
 Ray
 ===
 
-.. class:: Ray(GraphicEntity)
+.. module:: ezdxf.entities
 
-Introduced in DXF version R13 (AC1012), dxftype is RAY.
+Introduced in DXF R13 (``'AC1012'``).
 
-A :class:`Ray` starts at a point and continues to infinity. Create :class:`Ray` in layouts and blocks by factory
-function :meth:`~ezdxf.modern.layouts.Layout.add_ray`.
+A :class:`Ray` starts at :attr:`Ray.dxf.point` and continues to infinity (construction line).
 
-DXF Attributes for Ray
-----------------------
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'RAY'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_ray`
+Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+======================== ==========================================
 
-:ref:`Common graphical DXF attributes`
+.. class:: Ray
 
-.. attribute:: Ray.dxf.start
+    .. attribute:: dxf.start
 
-Start point as (3D Point in :ref:`WCS`)
+    Start point as (3D Point in :ref:`WCS`)
 
-.. attribute:: Ray.dxf.unit_vector
+    .. attribute:: dxf.unit_vector
 
-Unit direction vector as (3D Point in :ref:`WCS`)
+    Unit direction vector as (3D Point in :ref:`WCS`)
 

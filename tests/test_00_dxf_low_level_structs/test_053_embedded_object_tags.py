@@ -108,8 +108,8 @@ def test_mtext_structure(mtext_tags):
 
 def test_mtext_set_text(mtext_tags):
     mtext = MText.from_text(MTEXT)
-    mtext.set_text('Hello?')
-    assert mtext.get_text() == 'Hello?'
+    mtext.text = 'Hello?'
+    assert mtext.text == 'Hello?'
     assert mtext.dxf.line_spacing_factor == 1.0
     assert len(mtext.embedded_objects.embedded_objects[0]) == 15
 

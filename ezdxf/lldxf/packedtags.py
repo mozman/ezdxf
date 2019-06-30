@@ -1,13 +1,6 @@
 # created: 19.04.2018
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-"""
-Packed DXF Tags
----------------
-
-Store  DXF tags in compact data structures as ``list`` or :class:`array.array` to reduce memory usage.
-
-"""
 from array import array
 from typing import Iterable, Sequence
 
@@ -19,40 +12,35 @@ from ezdxf.lldxf.tagwriter import TagWriter
 
 
 class TagList:
-    """ Store data in a standard Python ``list``.
-
-    Args:
-        data: iterable of DXF tag values.
-
-    :ivar values: data storage as ``list``
-
-    """
+    """ Store data in a standard Python ``list``. """
     __slots__ = ('values',)
 
     def __init__(self, data: Iterable = None):
         self.values = list(data or [])
 
     def clone(self) -> 'TagList':
+        """ Returns a deep copy. """
         return self.__class__(data=self.values)
 
     @classmethod
     def from_tags(cls, tags: Tags, code: int) -> 'TagList':
+        """
+        Setup list from iterable tags.
+
+        Args:
+            tags: tag collection as :class:`~ezdxf.lldxf.tags.Tags`
+            code: group code to collect
+
+        """
         return cls(data=(tag.value for tag in tags if tag.code == code))
 
     def clear(self) -> None:
+        """ Delete all data values. """
         del self.values[:]
 
 
 class TagArray(TagList):
-    """ Store data in an :class:`array.array`. Array type is defined by class variable ``DTYPE``.
-
-    Args:
-        data: iterable of DXF tag values.
-
-    :ivar values: data storage as :class:`array.array`
-
-    """
-
+    """ Store data in an :class:`array.array`. Array type is defined by class variable ``DTYPE``. """
     __slots__ = ('values',)
     #: Defines the data type of array.array()
     DTYPE = 'i'
@@ -61,18 +49,12 @@ class TagArray(TagList):
         self.values = array(self.DTYPE, data or [])
 
     def set_values(self, values: Iterable) -> None:
+        """ Replace data by `values`. """
         self.values[:] = array(self.DTYPE, values)
 
 
 class VertexArray:
-    """ Store vertices in an ``array.array('d')``. Vertex size is defined by class variable ``VERTEX_SIZE``.
-
-    Args:
-        data: iterable of vertex values as linear list e.g. :code:`[x1, y1, x2, y2, x3, y3, ...]`.
-
-    :ivar values: vertex storage as ``array.array('d')``
-
-    """
+    """ Store vertices in an ``array.array('d')``. Vertex size is defined by class variable ``VERTEX_SIZE``. """
     #: Defines the vertex size
     VERTEX_SIZE = 3  # set to 2 for 2d points
     __slots__ = ('values',)
@@ -81,38 +63,44 @@ class VertexArray:
         self.values = array('d', data or [])
 
     def __len__(self) -> int:
+        """ Count of vertices. """
         return len(self.values) // self.VERTEX_SIZE
 
     def __getitem__(self, index: int):
+        """ Get vertex at `index`, extended slicing supported. """
         if isinstance(index, slice):
             return list(self._get_points(self._slicing(index)))
         else:
             return self._get_point(self._index(index))
 
     def __setitem__(self, index: int, point: Sequence[float]) -> None:
+        """ Set vertex `point` at `index`, extended slicing not supported. """
         if isinstance(index, slice):
             raise DXFTypeError('slicing not supported')
         else:
             self._set_point(self._index(index), point)
 
     def __delitem__(self, index: int) -> None:
+        """ Delete vertex at `index`, extended slicing supported. """
         if isinstance(index, slice):
             self._del_points(self._slicing(index))
         else:
             self._del_point(self._index(index))
 
     def __str__(self):
+        """ String representation. """
         name = self.__class__.__name__
         data = ",\n".join(str(p) for p in self)
         return "{} = [\n{}\n]".format(name, data)
 
     def __iter__(self):
+        """ Returns iterable of vertices. """
         for index in range(len(self)):
             yield self[index]
 
     def insert(self, pos: int, point: Sequence[float]):
         """
-        Insert point in front of point at index pos.
+        Insert `point` in front of vertex at index `pos`.
 
         Args:
             pos: insert position
@@ -129,15 +117,16 @@ class VertexArray:
             _insert(pos, value)
 
     def clone(self) -> 'VertexArray':
+        """ Returns a deep copy. """
         return self.__class__(data=self.values)
 
     @classmethod
     def from_tags(cls, tags: Iterable[DXFTag], code: int = 10) -> 'VertexArray':
         """
-        Setup point array from extended tags.
+        Setup point array from iterable tags.
 
         Args:
-            tags: :class:`~ezdxf.lldxf.tags.Tags` object
+            tags: iterable of :class:`~ezdxf.lldxf.types.DXFVertex`
             code: group code to collect
 
         """
@@ -191,17 +180,21 @@ class VertexArray:
                 delta = 0
 
     def append(self, point: Sequence[float]) -> None:
+        """ Append `point`. """
         if len(point) != self.VERTEX_SIZE:
             raise DXFValueError('point requires exact {} components.'.format(self.VERTEX_SIZE))
         self.values.extend(point)
 
     def extend(self, points: Iterable[Sequence[float]]) -> None:
+        """ Extend array by `points`. """
         for point in points:
             self.append(point)
 
     def clear(self) -> None:
+        """ Delete all vertices. """
         del self.values[:]
 
     def set(self, points: Iterable[Sequence[float]]) -> None:
+        """ Replace all vertices by `points`. """
         self.clear()
         self.extend(points)

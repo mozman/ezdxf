@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.10b2 - dev
+Version 0.10b3 - dev
 --------------------
 
 __Version 0.10a0 - 2019-03-15__
@@ -63,6 +63,8 @@ __Version 0.10b3 - ... __
 - CHANGE: entity query - removed regular expression support for type name match
 - CHANGE: renamed `DXFEntity.supports_dxf_attrib()` to `DXFEntity.is_supported_dxf_attrib()`
 - CHANGE: renamed `DXFEntity.dxf_attrib_exists()` to `DXFEntity.has_dxf_attrib()`
+- CHANGE: integration of `MTextData` methods into `MText`
+- CHANGE: removed from `MText` methods: `edit_data`, `get_text`, `set_text`
 
 Version 0.9 - 2019-02-24
 ------------------------

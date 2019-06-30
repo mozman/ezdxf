@@ -34,25 +34,25 @@ Data Query
 ----------
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   query
+    query
 
 Math Utilities
 --------------
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   math
+    math
 
 Fast DXF R12 File/Stream Writer
 -------------------------------
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   r12writer
+    r12writer
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

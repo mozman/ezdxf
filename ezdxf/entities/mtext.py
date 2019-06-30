@@ -117,6 +117,21 @@ class MText(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mtext)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
+    UNDERLINE_START = r'\L'
+    UNDERLINE_STOP = r'\l'
+    UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
+    OVERSTRIKE_START = r'\O'
+    OVERSTRIKE_STOP = r'\o'
+    OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
+    STRIKE_START = r'\K'
+    STRIKE_STOP = r'\k'
+    STRIKE = STRIKE_START + '%s' + STRIKE_STOP
+    NEW_LINE = r'\P'
+    GROUP_START = '{'
+    GROUP_END = '}'
+    GROUP = GROUP_START + '%s' + GROUP_END
+    NBSP = r'\~'  # none breaking space
+
     def __init__(self, doc: 'Drawing' = None):
         """ Default constructor """
         super().__init__(doc)
@@ -173,6 +188,9 @@ class MText(DXFGraphic):
         tagwriter.write_tag2(1, str_chunks[0])
 
     def get_rotation(self) -> float:
+        """ Get text rotation in degrees, independent if it is defined by :attr:`dxf.rotation` or
+        :attr:`dxf.text_direction`.
+        """
         if self.dxf.hasattr('text_direction'):
             vector = self.dxf.text_direction
             radians = math.atan2(vector[1], vector[0])  # ignores z-axis
@@ -182,12 +200,17 @@ class MText(DXFGraphic):
         return rotation
 
     def set_rotation(self, angle: float) -> 'MText':
+        """ Set attribute :attr:`rotation` to `angle` (in degrees) and deletes :attr:`dxf.text_direction` if present.
+        """
         # text_direction has higher priority than rotation, therefore delete it
         self.dxf.discard('text_direction')
         self.dxf.rotation = angle
         return self  # fluent interface
 
     def set_location(self, insert: 'Vertex', rotation: float = None, attachment_point: int = None) -> 'MText':
+        """ Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and :attr:`dxf.attachment_point`,
+        ``None`` for :attr:`dxf.rotation` or :attr:`dxf.attachment_point` preserves the existing value.
+        """
         self.dxf.insert = Vector(insert)
         if rotation is not None:
             self.set_rotation(rotation)
@@ -196,6 +219,16 @@ class MText(DXFGraphic):
         return self  # fluent interface
 
     def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None], scale: float = 1.5):
+        """
+        Set background color as :ref:`ACI` value or as name string or as RGB tuple ``(r, g, b)``.
+
+        Use special color name ``canvas``, to set background color to canvas background color.
+
+        Args:
+            color: color as :ref:`ACI`, string or RGB tuple
+            scale: determines how much border there is around the text
+
+        """
         self.dxf.box_fill_scale = scale
         if color is None:
             self.dxf.discard('bg_fill')
@@ -218,20 +251,57 @@ class MText(DXFGraphic):
                 self.dxf.bg_fill_true_color = rgb2int(color)
         return self  # fluent interface
 
-    # for backward compatibility
-    @contextmanager
-    def edit_data(self) -> 'MTextData':
-        buffer = MTextData(self.text)
-        yield buffer
-        self.text = buffer.text
+    def __iadd__(self, text: str) -> 'MText':
+        """ Append `text` to existing content (:attr:`.text` attribute). """
+        self.text += text
+        return self
 
-    buffer = edit_data  # alias
+    append = __iadd__
 
-    def get_text(self) -> str:
-        return self.text
+    def set_font(self, name: str, bold: bool = False, italic: bool = False, codepage: int = 1252,
+                 pitch: int = 0) -> None:
+        """ Append font change (e.g. ``'\\Fkroeger|b0|i0|c238|p10'`` ) to existing content (:attr:`.text` attribute).
 
-    def set_text(self, text: str) -> None:
-        self.text = text
+        Args:
+            name: font name
+            bold: flag
+            italic: flag
+            codepage: character codepage
+            pitch: font size
+
+        """
+        bold_flag = 1 if bold else 0
+        italic_flag = 1 if italic else 0
+        s = r"\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
+        self.append(s)
+
+    def set_color(self, color_name: str) -> None:
+        """ Append text color change to existing content, `color_name` as ``red``, ``yellow``, ``green``, ``cyan``,
+        ``blue``, ``magenta`` or ``white``.
+        """
+        self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
+
+    def add_stacked_text(self, upr: str, lwr: str, t: str = '^') -> None:
+        r"""
+        Add stacked text `upr` over `lwr`, `t` defines the kind of stacking:
+
+        .. code-block:: none
+
+            "^": vertical stacked without divider line, e.g. \SA^B:
+                 A
+                 B
+
+            "/": vertical stacked with divider line,  e.g. \SX/Y:
+                 X
+                 -
+                 Y
+
+            "#": diagonal stacked, with slanting divider line, e.g. \S1#4:
+                 1/4
+
+        """
+        # space ' ' in front of {lwr} is important
+        self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
 
 ##################################################
@@ -287,61 +357,6 @@ class MText(DXFGraphic):
 # \	Escape character - e.g. \\ = "\", \{ = "{"
 #
 # Codes and braces can be nested up to 8 levels deep
-
-
-class MTextData:
-    UNDERLINE_START = r'\L'
-    UNDERLINE_STOP = r'\l'
-    UNDERLINE = UNDERLINE_START + '%s' + UNDERLINE_STOP
-    OVERSTRIKE_START = r'\O'
-    OVERSTRIKE_STOP = r'\o'
-    OVERSTRIKE = OVERSTRIKE_START + '%s' + OVERSTRIKE_STOP
-    STRIKE_START = r'\K'
-    STRIKE_STOP = r'\k'
-    STRIKE = STRIKE_START + '%s' + STRIKE_STOP
-    NEW_LINE = r'\P'
-    GROUP_START = '{'
-    GROUP_END = '}'
-    GROUP = GROUP_START + '%s' + GROUP_END
-    NBSP = r'\~'  # none breaking space
-
-    def __init__(self, text: str):
-        self.text = text
-
-    def __iadd__(self, text: str) -> 'MTextData':
-        self.text += text
-        return self
-
-    append = __iadd__
-
-    def set_font(self, name: str, bold: bool = False, italic: bool = False, codepage: int = 1252,
-                 pitch: int = 0) -> None:
-        bold_flag = 1 if bold else 0
-        italic_flag = 1 if italic else 0
-        s = r"\F{}|b{}|i{}|c{}|p{};".format(name, bold_flag, italic_flag, codepage, pitch)
-        self.append(s)
-
-    def set_color(self, color_name: str) -> None:
-        self.append(r"\C%d" % const.MTEXT_COLOR_INDEX[color_name.lower()])
-
-    def add_stacked_text(self, upr: str, lwr: str, t: str = '^') -> None:
-        r""" Add stacked text `upr` over `lwr`, `t` defines the kind of stacking:
-
-            "^": vertical stacked without divider line, e.g. \SA^B:
-                 A
-                 B
-
-            "/": vertical stacked with divider line,  e.g. \SX/Y:
-                 X
-                 -
-                 Y
-
-            "#": diagonal stacked, with slanting divider line, e.g. \S1#4:
-                 1/4
-
-        """
-        # space ' ' in front of {lwr} is important
-        self.append(r'\S{upr}{t} {lwr};'.format(upr=upr, lwr=lwr, t=t))
 
 
 def split_mtext_string(s: str, size: int = 250) -> List[str]:
