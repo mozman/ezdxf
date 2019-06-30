@@ -15,7 +15,6 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, Vertex, DXFNamespace
 
@@ -94,6 +93,9 @@ class LWPolyline(DXFGraphic):
 
     @property
     def closed(self) -> bool:
+        """ ``True`` if polyline is closed. A closed polyline has a connection from the last vertex to the
+        first vertex. (read/write)
+         """
         return self.get_flag_state(LWPOLYLINE_CLOSED, name='flags')
 
     @closed.setter
@@ -101,29 +103,35 @@ class LWPolyline(DXFGraphic):
         self.set_flag_state(LWPOLYLINE_CLOSED, status, name='flags')
 
     # same as POLYLINE
-    def close(self, state=True) -> None:
+    def close(self, state: bool = True) -> None:
+        """ Compatibility interface to :class:`Polyline`. """
         self.closed = state
 
     def __len__(self) -> int:
+        """ Returns count of polyline points. """
         return len(self.lwpoints)
 
     def __iter__(self) -> Iterable[LWPointType]:
-        """
-        Yielding tuples of (x, y, start_width, end_width, bulge).
-
-        """
+        """ Returns iterable of tuples (x, y, start_width, end_width, bulge). """
         return iter(self.lwpoints)
 
     def __getitem__(self, index: int) -> LWPointType:
         """
-        Returns polyline point at position index as (x, y, start_width, end_width, bulge) tuple.
+        Returns point at position `index` as (x, y, start_width, end_width, bulge) tuple. start_width, end_width and
+        bulge is ``0`` if not present, supports extended slicing. Point format is fixed as ``'xyseb'``.
+
+        All coordinates in :ref:`OCS`.
 
         """
         return self.lwpoints[index]
 
     def __setitem__(self, index: int, value: Sequence[float]) -> None:
         """
-        Set polyline point at position index. Point format is fixed as 'xyseb'.
+        Set point at position `index` as (x, y, [start_width, [end_width, [bulge]]]) tuple. If start_width or end_width
+        is ``0`` or left off the default value is used. If the bulge value is left off, bulge is ``0`` by default
+        (straight line). Does NOT support extend slicing. Point format is fixed as ``'xyseb'``.
+
+        All coordinates in :ref:`OCS`.
 
         Args:
             index: point index
@@ -133,11 +141,12 @@ class LWPolyline(DXFGraphic):
         self.lwpoints[index] = compile_array(value)
 
     def __delitem__(self, index: int) -> None:
+        """ Delete point at position `index`, supports extended slicing. """
         del self.lwpoints[index]
 
     def vertices(self) -> Iterable[Tuple[float, float]]:
         """
-        Yields all points as (x, y) tuples.
+        Returns iterable of all polyline points as (x, y) tuples in :ref:`OCS` (:attr:`dxf.elevation` is the z-axis value).
 
         """
         for point in self:
@@ -145,7 +154,7 @@ class LWPolyline(DXFGraphic):
 
     def vertices_in_wcs(self) -> Iterable['Vertex']:
         """
-        Yields all points as (x, y, z) tuples in WCS.
+        Returns iterable of all polyline points as (x, y, z) tuples in :ref:`WCS`.
 
         """
         ocs = self.ocs()
@@ -155,35 +164,27 @@ class LWPolyline(DXFGraphic):
 
     def append(self, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         """
-        Append point to polyline, format specifies a user defined point format.
+        Append `point` to polyline, `format`` specifies a user defined point format.
+
+        All coordinates in :ref:`OCS`.
 
         Args:
             point: (x, y, [start_width, [end_width, [bulge]]]) tuple
-            format: format string, default is 'xyseb'
-                x = x coordinate
-                y = y coordinate
-                s = start width
-                e = end width
-                b = bulge value
-                v = (x, y) as tuple
+            format: format string, default is ``'xyseb'``, see: `format codes`_
 
         """
         self.lwpoints.append(point, format=format)
 
     def insert(self, pos: int, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         """
-        Insert new point in front of positions pos, format specifies a user defined point format.
+        Insert new point in front of positions `pos`, `format` specifies a user defined point format.
+
+        All coordinates in :ref:`OCS`.
 
         Args:
             pos: insert position
             point: point data
-            format: format string, default is 'xyseb'
-                x = x coordinate
-                y = y coordinate
-                s = start width
-                e = end width
-                b = bulge value
-                v = (x, y) as tuple
+            format: format string, default is 'xyseb', see: `format codes`_
 
         """
         data = compile_array(point, format=format)
@@ -191,17 +192,13 @@ class LWPolyline(DXFGraphic):
 
     def append_points(self, points: Iterable[Sequence[float]], format: str = DEFAULT_FORMAT) -> None:
         """
-        Append new points to polyline, format specifies a user defined point format.
+        Append new `points` to polyline, `format` specifies a user defined point format.
+
+        All coordinates in :ref:`OCS`.
 
         Args:
             points: iterable of point, point is (x, y, [start_width, [end_width, [bulge]]]) tuple
-            format: format string, default is 'xyseb'
-                x = x coordinate
-                y = y coordinate
-                s = start width
-                e = end width
-                b = bulge value
-                v = (x, y) as tuple
+            format: format string, default is ``'xyseb'``, see: `format codes`_
 
         """
         for point in points:
@@ -209,6 +206,16 @@ class LWPolyline(DXFGraphic):
 
     @contextmanager
     def points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
+        """
+        Context manager for polyline points. Returns a standard Python list of points,
+        according to the format string.
+
+        All coordinates in :ref:`OCS`.
+
+        Args:
+            format: format string, see `format codes`_
+
+        """
         points = self.get_points(format=format)
         yield points
         self.set_points(points, format=format)
@@ -217,37 +224,30 @@ class LWPolyline(DXFGraphic):
         """
         Returns all points as list of tuples, format specifies a user defined point format.
 
+        All points in :ref:`OCS` as (x, y) tuples (:attr:`dxf.elevation` is the z-axis value).
+
         Args:
-            format: format string, default is 'xyseb'
-                x = x coordinate
-                y = y coordinate
-                s = start width
-                e = end width
-                b = bulge value
-                v = (x, y) as tuple
+            format: format string, default is ``'xyseb'``, see `format codes`_
 
         """
         return [format_point(p, format=format) for p in self.lwpoints]
 
     def set_points(self, points: Iterable[Sequence[float]], format: str = DEFAULT_FORMAT) -> None:
         """
-        Remove all points and append new points.
+        Remove all points and append new `points`.
+
+        All coordinates in :ref:`OCS`.
 
         Args:
             points: iterable of point, point is (x, y, [start_width, [end_width, [bulge]]]) tuple
-            format: format string, default is 'xyseb'
-                x = x coordinate
-                y = y coordinate
-                s = start width
-                e = end width
-                b = bulge value
-                v = (x, y) as tuple
+            format: format string, default is ``'xyseb'``, see `format codes`_
 
         """
         self.lwpoints.clear()
         self.append_points(points, format=format)
 
     def clear(self) -> None:
+        """ Remove all points. """
         self.lwpoints.clear()
 
 
@@ -307,17 +307,21 @@ def format_point(point: Sequence[float], format: str = 'xyseb') -> Sequence[floa
     """
     Reformat point components.
 
+    Format codes:
+
+        - ``x`` = x-coordinate
+        - ``y`` = y-coordinate
+        - ``s`` = start width
+        - ``e`` = end width
+        - ``b`` = bulge value
+        - ``v`` = (x, y) as tuple
+
     Args:
         point: list or tuple of (x, y, start_width, end_width, bulge)
         format: format string, default is 'xyseb'
-            x = x coordinate
-            y = y coordinate
-            s = start width
-            e = end width
-            b = bulge value
-            v = (x, y) as tuple
 
-    Returns: tuple of selected components
+    Returns:
+        Sequence[float]: tuple of selected components
 
     """
     x, y, s, e, b = point
@@ -326,21 +330,25 @@ def format_point(point: Sequence[float], format: str = 'xyseb') -> Sequence[floa
     return tuple(vars[code] for code in format.lower() if code in FORMAT_CODES)
 
 
-def compile_array(data: Sequence[float], format='xyseb'):
+def compile_array(data: Sequence[float], format='xyseb') -> array.array:
     """
     Gather point components from input data.
+
+    Format codes:
+
+        - ``x`` = x-coordinate
+        - ``y`` = y-coordinate
+        - ``s`` = start width
+        - ``e`` = end width
+        - ``b`` = bulge value
+        - ``v`` = (x, y [,z]) tuple (z-axis is ignored)
 
     Args:
         data: list or tuple of point components
         format: format string, default is 'xyseb'
-            x = x coordinate
-            y = y coordinate
-            s = start width
-            e = end width
-            b = bulge value
-            v = (x, y) as tuple
 
-    Returns: array.array('d', (x, y, start_width, end_width, bulge))
+    Returns:
+        array.array: array.array('d', (x, y, start_width, end_width, bulge))
 
     """
     a = array.array('d', (0., 0., 0., 0., 0.))

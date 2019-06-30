@@ -17,9 +17,14 @@ Functions
 
 .. autofunction:: xround
 
+.. _bulge_related_functions:
 
 Bulge Related Functions
 -----------------------
+
+.. seealso::
+
+    Description of the :ref:`bulge value`.
 
 .. autofunction:: bulge_center
 
