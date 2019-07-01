@@ -11,8 +11,8 @@ SURFACE (`DXF Reference`_) created by an ACIS based geometry kernel provided by 
 Subclass of              :class:`ezdxf.entities.Body`
 DXF type                 ``'SURFACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_surface`
-Required DXF version     DXF R2000
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. warning::
@@ -42,8 +42,8 @@ ExtrudedSurface
 Subclass of              :class:`ezdxf.entities.Surface`
 DXF type                 ``'EXTRUDEDSURFACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_extruded_surface`
-Required DXF version     DXF R2007
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2007 (``'AC1021'``)
 ======================== ==========================================
 
 .. class:: ExtrudedSurface
@@ -110,8 +110,8 @@ LoftedSurface
 Subclass of              :class:`ezdxf.entities.Surface`
 DXF type                 ``'LOFTEDSURFACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_lofted_surface`
-Required DXF version     DXF R2007
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2007 (``'AC1021'``)
 ======================== ==========================================
 
 .. class:: LoftedSurface
@@ -157,8 +157,8 @@ RevolvedSurface
 Subclass of              :class:`ezdxf.entities.Surface`
 DXF type                 ``'REVOLVEDSURFACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_revolved_surface`
-Required DXF version     DXF R2007
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2007 (``'AC1021'``)
 ======================== ==========================================
 
 .. class:: RevolvedSurface
@@ -200,8 +200,8 @@ SweptSurface
 Subclass of              :class:`ezdxf.entities.Surface`
 DXF type                 ``'SWEPTSURFACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_swept_surface`
-Required DXF version     DXF R2007
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2007 (``'AC1021'``)
 ======================== ==========================================
 
 .. class:: SweptSurface

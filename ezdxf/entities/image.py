@@ -65,7 +65,7 @@ class Image(DXFGraphic):
     def load_dxf_attribs(self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            path_tags = processor.subclasses[2].pop_tags(codes=(14, ))
+            path_tags = processor.subclasses[2].pop_tags(codes=(14,))
             self.load_boundary_path(path_tags)
             tags = processor.load_dxfattribs_into_namespace(dxf, self._CLS_ATTRIBS)
             if len(tags):
@@ -80,6 +80,11 @@ class Image(DXFGraphic):
 
     @property
     def boundary_path(self):
+        """
+        A list of vertices as pixel coordinates, Two vertices describe a rectangle, lower left corner is
+        ``(-0.5, -0.5)`` and upper right corner is ``(ImageSizeX-0.5, ImageSizeY-0.5)``, more than
+        two vertices is a polygon as clipping path. All vertices as pixel coordinates. (read/write)
+        """
         return self._boundary_path
 
     @boundary_path.setter
@@ -110,6 +115,11 @@ class Image(DXFGraphic):
         self.reset_boundary_path()
 
     def set_boundary_path(self, vertices: Iterable['Vertex']) -> None:
+        """
+        Set boundary path to `vertices`. Two vertices describe a rectangle (lower left and upper right corner),
+        more than two vertices is a polygon as clipping path.
+
+        """
         vertices = list(vertices)
         if len(vertices):
             if len(vertices) > 2 and vertices[-1] != vertices[0]:
@@ -123,6 +133,8 @@ class Image(DXFGraphic):
             self.reset_boundary_path()
 
     def reset_boundary_path(self) -> None:
+        """ Reset boundary path to the default rectangle [(-0.5, -0.5), (ImageSizeX-0.5, ImageSizeY-0.5)].
+        """
         lower_left_corner = (-.5, -.5)
         upper_right_corner = Vector(self.dxf.image_size) + lower_left_corner
         self._boundary_path = [lower_left_corner, upper_right_corner[:2]]
@@ -131,10 +143,8 @@ class Image(DXFGraphic):
         self.dxf.clipping_boundary_type = 1
         self.dxf.count_boundary_points = 2
 
-    def get_boundary_path(self) -> List['Vertex']:
-        return self._boundary_path
-
     def get_image_def(self) -> 'ImageDef':
+        """ Returns the associated IMAGEDEF entity. see :class:`ImageDef`."""
         return cast('ImageDef', self.entitydb[self.dxf.image_def_handle])
 
     def destroy(self) -> None:
@@ -147,6 +157,10 @@ class Image(DXFGraphic):
             self.doc.objects.delete_entity(reactor)
         del self._boundary_path
         super().destroy()
+
+    # only for compatibility to ezdxf prior v.0.8.9
+    def get_boundary_path(self) -> List['Vertex']:
+        return self._boundary_path
 
 
 acdb_wipeout = DefSubclass('AcDbWipeout', dict(acdb_image.attribs))

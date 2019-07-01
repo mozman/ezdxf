@@ -3,16 +3,8 @@ LWPolyline
 
 .. module:: ezdxf.entities
 
-Introduced in DXF version R13 (AC1012), dxftype is LWPOLYLINE.
 
-======================== ==========================================
-Subclass of              :class:`ezdxf.entities.DXFGraphic`
-DXF type                 ``'LWPOLYLINE'``
-factory function         :meth:`~ezdxf.layouts.BaseLayout.add_lwpolyline`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
-======================== ==========================================
-
-The :class:`LWPolyline` is defined as a single graphic entity, which differs from the
+The LWPOLYLINE entity (`DXF Reference`_) is defined as a single graphic entity, which differs from the
 old-style :class:`Polyline` entity, which is defined as a group of sub-entities.
 :class:`LWPolyline` display faster (in AutoCAD) and consume less disk space, it is a planar element,
 therefore all points in :ref:`OCS` as ``(x, y)`` tuples (:attr:`LWPolyline.dxf.elevation` is the z-axis value).
@@ -21,6 +13,16 @@ therefore all points in :ref:`OCS` as ``(x, y)`` tuples (:attr:`LWPolyline.dxf.e
 .. versionchanged:: 0.8.9
 
     :class:`LWPolyline` stores point data as packed data (:class:`array.array`).
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.DXFGraphic`
+DXF type                 ``'LWPOLYLINE'``
+factory function         :meth:`~ezdxf.layouts.BaseLayout.add_lwpolyline`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
+======================== ==========================================
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-748FC305-F3F2-4F74-825A-61F04D757A50
 
 .. _bulge value:
 

@@ -24,7 +24,7 @@ Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'POLYLINE'``
 2D factory function      :meth:`ezdxf.layouts.BaseLayout.add_polyline2d`
 3D factory function      :meth:`ezdxf.layouts.BaseLayout.add_polyline3d`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::
@@ -244,7 +244,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 .. class:: Polymesh
 
     A polymesh is a grid of :attr:`m_count` x :attr:`n_count` vertices, every vertex has its own
-    ``(x, y, z)`` location. The :class:`Polymesh` is an subclass of :class:`Polyline`, dxftype is also
+    ``(x, y, z)`` location. The :class:`Polymesh` is an subclass of :class:`Polyline`, DXF type is also
     ``'POLYLINE'`` but :meth:`get_mode` returns ``'AcDbPolygonMesh'``.
 
     .. automethod:: get_mesh_vertex
@@ -290,7 +290,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 .. class:: Polyface
 
     A polyface consist of multiple location independent 3D areas called faces.
-    The :class:`Polyface` is a subclass of :class:`Polyline`, dxftype is also ``'POLYLINE'`` but
+    The :class:`Polyface` is a subclass of :class:`Polyline`, DXF type is also ``'POLYLINE'`` but
     :meth:`~Polyline.get_mode` returns ``'AcDbPolyFaceMesh'``.
 
     .. automethod:: append_face

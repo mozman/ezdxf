@@ -10,7 +10,7 @@ A 3DFACE (`DXF Reference`_) is real 3D solid filled triangle or quadrilateral. A
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'3DFACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_3dface`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

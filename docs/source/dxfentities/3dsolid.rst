@@ -11,8 +11,8 @@ Solid3d
 Subclass of              :class:`ezdxf.entities.Body`
 DXF type                 ``'3DSOLID'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_3dsolid`
-Required DXF version     DXF R2000
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. warning::

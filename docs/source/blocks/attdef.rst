@@ -10,7 +10,7 @@ create an attached :class:`Attrib` entity for an :class:`Insert` entity.
 Subclass of              :class:`ezdxf.entities.Text`
 DXF type                 ``'ATTDEF'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_attdef`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. seealso::

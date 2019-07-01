@@ -13,12 +13,14 @@ DXF Entities
     3dface
     3dsolid
     arc
+    ../blocks/attrib
     body
     circle
     dimension
     ellipse
     hatch
     image
+    ../blocks/insert
     leader
     line
     lwpolyline

@@ -3,10 +3,8 @@ MText
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``), extended in DXF R2007 (``'AC1021'``).
-
-Multiline text fits a specified width but can extend vertically to an indefinite length. You can format individual
-words or characters within the MText.
+The MTEXT entity (`DXF Reference`_) fits a multiline text in a specified width but can extend vertically to an indefinite
+length. You can format individual words or characters within the :class:`MText`.
 
 .. seealso::
 
@@ -16,11 +14,13 @@ words or characters within the MText.
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'MTEXT'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_mtext`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
-.. class:: MText
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-5E5DB93B-F8D3-4433-ADF7-E92E250D2BAB
 
+.. class:: MText
 
     .. attribute:: dxf.insert
 

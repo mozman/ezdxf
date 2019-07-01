@@ -4,7 +4,7 @@ Trace
 .. module:: ezdxf.entities
 
 
-A TRACE (`DXF Reference`_) is solid filled triangle or quadrilateral. Access vertices by name
+TRACE entity (`DXF Reference`_) is solid filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
 I don't know the difference between SOLID and TRACE.
 
@@ -12,7 +12,7 @@ I don't know the difference between SOLID and TRACE.
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'TRACE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_trace`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

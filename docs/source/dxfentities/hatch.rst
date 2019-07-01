@@ -3,9 +3,8 @@ Hatch
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``).
-
-Fills an enclosed area defined by one or more boundary paths with a hatch pattern, solid fill, or gradient fill.
+The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or more boundary paths with a
+hatch pattern, solid fill, or gradient fill.
 
 All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the z-axis value).
 
@@ -13,13 +12,15 @@ All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the z-
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'HATCH'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_hatch`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. seealso::
 
     :ref:`tut_hatch`
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-C6C71CED-CE0F-4184-82A5-07AD6241F15B
 
 .. rubric:: Boundary paths helper classes
 

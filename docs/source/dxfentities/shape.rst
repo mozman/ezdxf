@@ -11,7 +11,7 @@ The SHAPE definitions are stored in external shape files (\*.SHX), and `ezdxf` c
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'SHAPE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_shape`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

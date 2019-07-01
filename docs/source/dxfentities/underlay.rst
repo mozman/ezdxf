@@ -3,16 +3,16 @@ Underlay
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``).
-
-Add an underlay file to the DXF file, the file itself is not embedded into the DXF file, it is always a separated file.
-The (PDF)UNDERLAY entity is like a block reference, you can use it multiple times to add the underlay on different
-locations with different scales and rotations. But therefore you need a also a (PDF)DEFINITION entity, see
-:class:`UnderlayDefinition`.
+UNDERLAY entity (`DXF Reference`_) links an underlay file to the DXF file, the file itself is not embedded into the
+DXF file, it is always a separated file. The (PDF)UNDERLAY entity is like a block reference, you can use it
+multiple times to add the underlay on different locations with different scales and rotations. But therefore
+you need a also a (PDF)DEFINITION entity, see :class:`UnderlayDefinition`.
 
 The DXF standard supports three different file formats: PDF, DWF (DWFx) and DGN. An Underlay can be clipped by a
 rectangle or a polygon path. The clipping coordinates are 2D :ref:`OCS` coordinates in drawing units but
 without scaling.
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3EC8FBCC-A85A-4B0B-93CD-C6C785959077
 
 PdfUnderlay
 -----------
@@ -21,7 +21,8 @@ PdfUnderlay
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'PDFUNDERLAY'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. class:: PdfUnderlay
@@ -57,7 +58,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.flags
 
         ============================== ======= ===========
-        Underlay.dxf.flags             Value   Description
+        :attr:`dxf.flags`              Value   Description
         ============================== ======= ===========
         UNDERLAY_CLIPPING              1       clipping is on/off
         UNDERLAY_ON                    2       underlay is on/off
@@ -98,7 +99,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         Boundary path as list of vertices (read/write).
 
-        Two vertices describe a rectangle (lower left and upper right corner), more than 2 vertices
+        Two vertices describe a rectangle (lower left and upper right corner), more than two vertices
         is a polygon as clipping path.
 
     .. attribute:: underlay_def
@@ -115,7 +116,8 @@ DwfUnderlay
 Subclass of              :class:`ezdxf.entities.PdfUnderlay`
 DXF type                 ``'DWFUNDERLAY'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. class:: DwfUnderlay
@@ -127,7 +129,8 @@ DgnUnderlay
 Subclass of              :class:`ezdxf.entities.PdfUnderlay`
 DXF type                 ``'DGNUNDERLAY'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. class:: DgnUnderlay

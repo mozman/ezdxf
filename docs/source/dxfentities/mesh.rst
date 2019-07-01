@@ -3,9 +3,7 @@ Mesh
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``).
-
-3D mesh entity similar to the :class:`Polyface` entity.
+The MESH entity (`DXF Reference`_) is a 3D mesh similar to the :class:`Polyface` entity.
 
 All vertices in :ref:`WCS` as (x, y, z) tuples
 
@@ -17,12 +15,15 @@ All vertices in :ref:`WCS` as (x, y, z) tuples
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'MESH'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_mesh`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. seealso::
 
     :ref:`tut_mesh` and helper classes: :class:`~ezdxf.render.MeshBuilder`, :class:`~ezdxf.render.MeshVertexMerger`
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-4B9ADA67-87C8-4673-A579-6E4C76FF7025
 
 .. class:: Mesh
 

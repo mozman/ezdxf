@@ -12,7 +12,7 @@ Subclass of              :class:`ezdxf.entities.Text`
 DXF type                 ``'ATTRIB'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_attrib` (stand alone entity)
 Factory function         :meth:`Insert.add_attrib` (attached to :class:`Insert`)
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. seealso::

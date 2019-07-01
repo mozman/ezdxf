@@ -3,9 +3,7 @@ Ellipse
 
 .. module:: ezdxf.entities
 
-Introduced in AutoCAD R13 (DXF version ``'AC1012'``).
-
-An ellipse with center point at location :attr:`dxf.center` and a major axis :attr:`dxf.major_axis` as vector.
+ELLIPSE (`DXF Reference`_) with center point at location :attr:`dxf.center` and a major axis :attr:`dxf.major_axis` as vector.
 :attr:`dxf.ratio` is the ratio of minor axis to major axis. :attr:`dxf.start_param` and :attr:`dxf.end_param`
 defines the starting- and the end point of the ellipse, a full ellipse goes from ``0`` to ``2*pi``.
 The ellipse goes from starting- to end param in counter clockwise direction.
@@ -17,7 +15,8 @@ extruding the base ellipse in direction of the :attr:`dxf.extrusion` vector.
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'ELLIPSE'``
 factory function         :meth:`~ezdxf.layouts.BaseLayout.add_ellipse`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. class:: Ellipse
@@ -42,3 +41,4 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         End parameter (float), default value is ``2*pi``.
 
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-107CB04F-AD4D-4D2F-8EC9-AC90888063AB

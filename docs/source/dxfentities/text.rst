@@ -3,7 +3,7 @@ Text
 
 .. module:: ezdxf.entities
 
-One line TEXT (`DXF Reference`_) entity. :attr:`Text.dxf.height` in drawing units and defaults to ``1``, but it also depends on the
+One line TEXT entity (`DXF Reference`_). :attr:`Text.dxf.height` in drawing units and defaults to ``1``, but it also depends on the
 font rendering of the CAD application. :attr:`Text.dxf.width` is a scaling factor, but the DXF reference does not define
 the base value to scale, in practice the :attr:`Text.dxf.height` is the base value, the effective text width
 depends on the font defined by :attr:`Text.dxf.style` and the font rendering of the CAD application, especially for
@@ -19,7 +19,7 @@ text layout, they are just reliable for exchanging exact geometry.
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'TEXT'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_text`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

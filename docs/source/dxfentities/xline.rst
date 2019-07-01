@@ -3,16 +3,17 @@ XLine
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``).
-
-A construction line that extents to infinity in both directions.
+XLINE entity (`DXF Reference`_) is a construction line that extents to infinity in both directions.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'XLINE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_xline`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-55080553-34B6-40AA-9EE2-3F3A3A2A5C0A
 
 .. class:: XLine
 

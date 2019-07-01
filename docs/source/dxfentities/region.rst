@@ -11,8 +11,8 @@ REGION (`DXF Reference`_) created by an ACIS based geometry kernel provided by t
 Subclass of              :class:`ezdxf.entities.Body`
 DXF type                 ``'REGION'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_region`
-Required DXF version     DXF R2000
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. warning::

@@ -3,24 +3,24 @@ Leader
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``).
-
-The :class:`Leader` entity represents an arrow, made up of one or more vertices (or spline fit points) and an
-arrowhead. The label or other content to which the :class:`Leader` is attached is stored as a separate entity,
-and is not part of the :class:`Leader` itself.
+The LEADER entity (`DXF Reference`_) represents an arrow, made up of one or more vertices
+(or spline fit points) and an arrowhead. The label or other content to which the :class:`Leader` is attached
+is stored as a separate entity, and is not part of the :class:`Leader` itself.
 
 :class:`Leader` shares its styling infrastructure with :class:`Dimension`.
 
 By default a :class:`Leader` without any annotation is created. For creating more fancy leaders and annotations
 see documentation provided by Autodesk or `Demystifying DXF: LEADER and MULTILEADER implementation notes <https://atlight.github.io/formats/dxf-leader.html>`_  .
 
-
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'LEADER'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_leader`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-396B2369-F89F-47D7-8223-8B7FB794F9F3
 
 .. class:: Leader
 

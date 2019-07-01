@@ -12,7 +12,7 @@ arcs.
 Subclass of              :class:`ezdxf.entities.Circle`
 DXF type                 ``'ARC'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_arc`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

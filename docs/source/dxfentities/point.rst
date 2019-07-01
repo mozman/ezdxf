@@ -9,7 +9,7 @@ POINT (`DXF Reference`_) at location :attr:`dxf.point`.
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'POINT'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_point`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

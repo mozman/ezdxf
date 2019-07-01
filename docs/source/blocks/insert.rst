@@ -9,7 +9,7 @@ Block reference (`DXF Reference`_) with maybe attached attributes (:class:`Attri
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'INSERT'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_blockref`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. seealso::

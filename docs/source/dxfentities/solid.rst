@@ -4,14 +4,14 @@ Solid
 .. module:: ezdxf.entities
 
 
-A SOLID (`DXF Reference`_) is a filled triangle or quadrilateral. Access vertices by name
+SOLID (`DXF Reference`_) is a filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'SOLID'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_solid`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

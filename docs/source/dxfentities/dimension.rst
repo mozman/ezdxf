@@ -12,7 +12,7 @@ For more information about dimensions see the online help from AutoDesk: `About 
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'DIMENSION'``
 factory function         see table below
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 Factory Functions

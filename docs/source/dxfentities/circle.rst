@@ -9,7 +9,7 @@ CIRCLE (`DXF Reference`_) center at location :attr:`dxf.center` and radius of :a
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'CIRCLE'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_circle`
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
 ======================== ==========================================
 
 .. warning::

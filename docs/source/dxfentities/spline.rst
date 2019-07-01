@@ -3,9 +3,7 @@ Spline
 
 .. module:: ezdxf.entities
 
-Introduced in DXF R13 (``'AC1012'``).
-
-A spline curve, all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
+SPLINE curve (`DXF Reference`_), all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
 
 The spline curve is defined by control points, knot values and weights. The control points establish the spline,
 the various types of knot vector determines the shape of the curve and the weights of rational splines define how
@@ -28,7 +26,8 @@ Since *ezdxf* v0.8.9 :class:`Spline` stores fit- and control points, knots and w
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'SPLINE'``
 Factory function         see table below
-Inherited DXF Attributes :ref:`Common graphical DXF attributes`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 Factory Functions
@@ -43,6 +42,8 @@ Closed uniform spline                       :meth:`~ezdxf.layouts.BaseLayout.add
 Open rational uniform spline                :meth:`~ezdxf.layouts.BaseLayout.add_rational_spline`
 Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add_closed_rational_spline`
 =========================================== ==========================================
+
+.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-E1F884F8-AA90-4864-A215-3182D47A9C74
 
 .. class:: Spline
 
