@@ -6,8 +6,7 @@ from typing import BinaryIO, cast, TextIO, List
 import zipfile
 from contextlib import contextmanager
 
-from ezdxf.lldxf.tags import dxf_info
-from ezdxf.lldxf.validator import is_dxf_stream
+from ezdxf.lldxf.validator import is_dxf_stream, dxf_info
 
 WIN_NEW_LINE = b'\r\n'
 NEW_LINE = b'\n'

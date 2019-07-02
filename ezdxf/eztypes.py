@@ -66,7 +66,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
     # DXF objects
-    from ezdxf.entities.dxfobj import DXFObject, AcDbPlaceholder, XRecord, VBAProject, SortEntsTable
+    from ezdxf.entities.dxfobj import DXFObject, Placeholder, XRecord, VBAProject, SortEntsTable
     from ezdxf.entities.layout import DXFLayout
     from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault, DictionaryVar
     from ezdxf.entities.idbuffer import IDBuffer, FieldList, LayerFilter

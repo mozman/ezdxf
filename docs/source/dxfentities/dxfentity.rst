@@ -9,6 +9,8 @@ Common base class for all DXF entities and objects.
 
     Do not instantiate entity classes by yourself - always use the provided factory functions!
 
+.. if adding features - also update DXFObject
+
 .. class:: DXFEntity
 
     .. attribute:: dxf
@@ -26,11 +28,11 @@ Common base class for all DXF entities and objects.
 
 
 
-    .. attribute:: DXFEntity.dxf.handle
+    .. attribute:: dxf.handle
 
         DXF `handle` is a unique identifier as plain hex string like ``F000``. (feature for experts)
 
-    .. attribute:: DXFEntity.dxf.owner
+    .. attribute:: dxf.owner
 
         Handle to `owner` as plain hex string like ``F000``. (feature for experts)
 

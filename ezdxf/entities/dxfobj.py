@@ -18,7 +18,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import Auditor, Drawing, DXFNamespace, TagWriter
 
-__all__ = ['DXFObject', 'AcDbPlaceholder', 'XRecord', 'VBAProject', 'SortEntsTable', 'Field']
+__all__ = ['DXFObject', 'Placeholder', 'XRecord', 'VBAProject', 'SortEntsTable', 'Field']
 
 
 class DXFObject(DXFEntity):
@@ -26,7 +26,7 @@ class DXFObject(DXFEntity):
 
 
 @register_entity
-class AcDbPlaceholder(DXFObject):
+class Placeholder(DXFObject):
     DXFTYPE = 'ACDBPLACEHOLDER'
 
 

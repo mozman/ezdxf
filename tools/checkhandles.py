@@ -1,14 +1,13 @@
-#!/usr/bin/env python
-#coding:utf-8
-# Author:  mozman -- <mozman@gmx.at>
+# Author:  mozman <me@mozman.at>
 # Purpose: check dxf handles
 # Created: 14.03.2011
-# Copyright (C) 2011, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 
 import sys
 
-from ezdxf.lldxf.tags import low_level_tagger, dxf_info
+from ezdxf.lldxf.tags import low_level_tagger
+from ezdxf.lldxf.validator import dxf_info
 
 FORMAT = 'ACAD release: {0.release}\n'\
          'DXF Version: {0.version}\n'\

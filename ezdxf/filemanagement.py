@@ -147,7 +147,7 @@ def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
         DXF info object with attributes: version, release, handseed, encoding
 
     """
-    from ezdxf.lldxf.tags import dxf_info
+    from ezdxf.lldxf.validator import dxf_info
 
     info = dxf_info(stream)
     if info.version >= 'AC1021':  # R2007 files and later are always encoded as UTF-8

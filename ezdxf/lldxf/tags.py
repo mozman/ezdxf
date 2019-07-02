@@ -24,50 +24,10 @@ if TYPE_CHECKING:
 
 COMMENT_CODE = 999
 
-
-class DXFInfo(object):
-    def __init__(self):
-        self.release = 'R12'
-        self.version = 'AC1009'
-        self.encoding = 'cp1252'
-        self.handseed = '0'
-
-    def set_header_var(self, name: str, value: str) -> int:
-        if name == '$ACADVER':
-            self.version = value
-            self.release = acad_release.get(value, 'R12')
-        elif name == '$DWGCODEPAGE':
-            self.encoding = toencoding(value)
-        elif name == '$HANDSEED':
-            self.handseed = value
-        else:
-            return 0
-        return 1
-
-
-def dxf_info(stream: TextIO) -> DXFInfo:
-    info = DXFInfo()
-    tagger = low_level_tagger(stream)  # filters already comments
-    if next(tagger) != (0, 'SECTION'):  # maybe a DXF structure error, handled by later processing
-        return info
-    if next(tagger) != (2, 'HEADER'):  # no leading HEADER section like DXF R12 with only ENTITIES section
-        return info
-    tag = NONE_TAG
-    found = 0
-    while tag != (0, 'ENDSEC'):  # until end of HEADER section
-        tag = next(tagger)
-        if tag.code != HEADER_VAR_MARKER:
-            continue
-        name = tag.value
-        value = next(tagger).value
-        found += info.set_header_var(name, value)
-        if found > 2:  # all expected values collected
-            break
-    return info
-
-
 class Tags(list):
     """
+    Subclass of ``list``.
+
     Collection of :class:`~ezdxf.lldxf.types.DXFTag` as flat list. Low level tag container, only required for advanced
     stuff.
 
@@ -88,7 +48,7 @@ class Tags(list):
         Get DXF handle. Raises :class:`DXFValueError` if handle not exist.
 
         Returns:
-            handle as hex-string like ``'FF'``
+            handle as hex string like ``'FF00'``
 
         """
         try:
@@ -134,7 +94,7 @@ class Tags(list):
     def get_first_value(self, code: int, default=DXFValueError) -> 'TagValue':
         """
         Returns value of first :class:`~ezdxf.lldxf.types.DXFTag` with given group code or default if `default` !=
-        `DXFValueError`, else raises :class:`DXFValueError`.
+        :class:`DXFValueError`, else raises :class:`DXFValueError`.
 
         Args:
             code: group code as int

@@ -1,85 +1,60 @@
-Object Base Class
-=================
+DXFObject
+=========
+
+.. module:: ezdxf.entities
+
+Common base class for all non-graphical DXF objects.
+
+.. warning::
+
+    Do not instantiate object classes by yourself - always use the provided factory functions!
 
 .. class:: DXFObject
 
-   Common base class for all non-graphical DXF objects.
+    Subclass of :class:`ezdxf.entities.DXFEntity`
 
-.. attribute:: DXFObject.dxf
+XRecord
+=======
 
-   (read only) The DXF attributes namespace, access DXF attributes by this attribute, like
-   :code:`entity.dxf.layer = 'MyLayer'`. Just the *dxf* attribute is read only, the DXF attributes are read- and
-   writeable.
+Important class for storing application defined data in DXF files.
 
-.. attribute:: DXFObject.drawing
+`XRECORD`_ objects are used to store and manage arbitrary data. They are composed of DXF group codes ranging
+from ``1`` through ``369``. This object is similar in concept to XDATA but is not limited by size or order.
 
-   (read only) Get the associated drawing.
+To reference a XRECORD by an DXF entity, store the handle of the XRECORD in the XDATA section, application defined data
+or the :class:`ExtensionDict` of the DXF entity.
 
-.. attribute:: DXFObject.dxffactory
+.. _XRECORD: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-24668FAF-AE03-41AE-AFA4-276C3692827F
 
-   (read only) Get the associated DXF factory. (feature for experts)
+.. class:: XRecord
 
-.. method:: DXFObject.dxftype()
+    Subclass of :class:`ezdxf.entities.DXFObject`
 
-   Get the DXF type string, like ``GEODATA`` for the geo data entity.
+    .. attribute:: dxf.coning
 
-.. method:: DXFObject.copy()
+        Duplicate record cloning flag (determines how to merge duplicate entries, ignored by `ezdxf`):
 
-   Deep copy of DXFObject with new handle. This is not a deep copy in the meaning of Python, because handle, link and
-   owner is changed.
+        === ==================
+        0   not applicable
+        1   keep existing
+        2   use clone
+        3   <xref>$0$<name>
+        4   $0$<name>
+        5   Unmangle name
+        === ==================
 
-.. method:: DXFObject.get_dxf_attrib(key, default=DXFValueError)
+    .. attribute:: tags
 
-   Get DXF attribute *key*, returns *default* if key doesn't exist, or raise
-   ``DXFValueError`` if *default* is ``DXFValueError`` and no DXF default
-   value is defined.
+        Raw DXF tag container :class:`~ezdxf.lldxf.tags.Tags`. Be careful `ezdxf` does not validate the content of
+        XRECORDS.
 
-.. method:: DXFObject.set_dxf_attrib(key, value)
+Placeholder
+===========
 
-.. method:: DXFObject.del_dxf_attrib(key)
+The `ACDBPLACEHOLDER`_ object for internal usage.
 
-   Delete/remove DXF attribute *key*. Raises :class:`AttributeError` if *key* isn't supported.
+.. class:: Placeholder
 
-.. method:: DXFObject.dxf_attrib_exists(key)
+    Subclass of :class:`ezdxf.entities.DXFObject`
 
-   Returns *True* if DXF attrib *key* really exists else *False*. Raises :class:`AttributeError` if *key* isn't supported
-
-.. method:: DXFObject.supported_dxf_attrib(key)
-
-   Returns *True* if DXF attrib *key* is supported by this entity else *False*. Does not grant that attrib
-   *key* really exists.
-
-.. method:: DXFObject.valid_dxf_attrib_names(key)
-
-   Returns a list of supported DXF attribute names.
-
-.. method:: DXFObject.dxfattribs()
-
-   Create a dict() with all accessible DXF attributes and their value, not all data is accessible by dxf attributes like
-   definition points of :class:`LWPolyline` or :class:`Spline`
-
-.. method:: DXFObject.update_attribs(dxfattribs)
-
-   Set DXF attributes by a dict() like :code:`{'layer': 'test', 'color': 4}`.
-
-.. method:: DXFObject.set_flag_state(flag, state=True, name='flags')
-
-   Set binary coded `flag` of DXF attribute `name` to 1 (on) if `state` is True, set `flag` to 0 (off) if `state`
-   is False.
-
-.. method:: DXFObject.get_flag_state(flag, name='flags')
-
-   Returns True if any `flag` of DXF attribute is 1 (on), else False. Always check just one flag state at the time.
-
-.. _Common DXF objects attributes:
-
-Common DXF Object Attributes
-----------------------------
-
-.. attribute:: DXFObject.dxf.handle
-
-    DXF handle (feature for experts)
-
-.. attribute:: DXFObject.dxf.owner
-
-    handle to owner, it's a BLOCK_RECORD entry (feature for experts)
+.. _ACDBPLACEHOLDER: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3BC75FF1-6139-49F4-AEBB-AE2AB4F437E4

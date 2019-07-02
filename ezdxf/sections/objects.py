@@ -12,7 +12,7 @@ from ezdxf.query import EntityQuery
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData
     from ezdxf.eztypes import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage, DXFObject
-    from ezdxf.eztypes import ImageDefReactor, ImageDef, UnderlayDef, DictionaryWithDefault, XRecord, AcDbPlaceholder
+    from ezdxf.eztypes import ImageDefReactor, ImageDef, UnderlayDef, DictionaryWithDefault, XRecord, Placeholder
 
 logger = logging.getLogger('ezdxf')
 
@@ -203,7 +203,7 @@ class ObjectsSection:
         """
         return self.new_entity('XRECORD', dxfattribs={'owner': owner})
 
-    def add_placeholder(self, owner: str = '0') -> 'AcDbPlaceholder':
+    def add_placeholder(self, owner: str = '0') -> 'Placeholder':
         """
         Add a new :class:`~ezdxf.entities.AcDbPlaceholder` object.
 

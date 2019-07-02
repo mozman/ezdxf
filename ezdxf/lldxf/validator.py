@@ -8,11 +8,53 @@ from typing import TextIO, Iterable, List
 
 from .const import DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError
 from .const import APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER
-from .const import INVALID_LAYER_NAME_CHARACTERS
+from .const import INVALID_LAYER_NAME_CHARACTERS, acad_release
 from .tagger import low_level_tagger
-from .types import is_embedded_object_marker, DXFTag
+from .types import is_embedded_object_marker, DXFTag, NONE_TAG
+from ezdxf.tools.codepage import toencoding
 
 logger = logging.getLogger('ezdxf')
+
+
+class DXFInfo:
+    def __init__(self):
+        self.release = 'R12'
+        self.version = 'AC1009'
+        self.encoding = 'cp1252'
+        self.handseed = '0'
+
+    def set_header_var(self, name: str, value: str) -> int:
+        if name == '$ACADVER':
+            self.version = value
+            self.release = acad_release.get(value, 'R12')
+        elif name == '$DWGCODEPAGE':
+            self.encoding = toencoding(value)
+        elif name == '$HANDSEED':
+            self.handseed = value
+        else:
+            return 0
+        return 1
+
+
+def dxf_info(stream: TextIO) -> DXFInfo:
+    info = DXFInfo()
+    tagger = low_level_tagger(stream)  # filters already comments
+    if next(tagger) != (0, 'SECTION'):  # maybe a DXF structure error, handled by later processing
+        return info
+    if next(tagger) != (2, 'HEADER'):  # no leading HEADER section like DXF R12 with only ENTITIES section
+        return info
+    tag = NONE_TAG
+    found = 0
+    while tag != (0, 'ENDSEC'):  # until end of HEADER section
+        tag = next(tagger)
+        if tag.code != HEADER_VAR_MARKER:
+            continue
+        name = tag.value
+        value = next(tagger).value
+        found += info.set_header_var(name, value)
+        if found > 2:  # all expected values collected
+            break
+    return info
 
 
 def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
@@ -89,7 +131,9 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
         if xdata and not embedded_object:
             if tag.code < 1000:
                 dxftype = tags[0].value
-                raise DXFXDataError('Invalid XDATA structure in entity {}(#{}), only group code >=1000 allowed in XDATA section'.format(dxftype, handle))
+                raise DXFXDataError(
+                    'Invalid XDATA structure in entity {}(#{}), only group code >=1000 allowed in XDATA section'.format(
+                        dxftype, handle))
             if tag.code == 1002:
                 value = tag.value
                 if value == '{':
@@ -97,43 +141,58 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
                 elif value == '}':
                     xdata_list_level -= 1
                 else:
-                    raise DXFXDataError('Invalid XDATA control string (1002, "{}") entity {}(#{}).'.format(value, dxftype, handle))
+                    raise DXFXDataError(
+                        'Invalid XDATA control string (1002, "{}") entity {}(#{}).'.format(value, dxftype, handle))
                 if xdata_list_level < 0:  # more closing than opening tags
-                    raise DXFXDataError('Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "{{").'.format(dxftype, handle))
+                    raise DXFXDataError(
+                        'Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "{{").'.format(
+                            dxftype, handle))
 
         if tag.code == APP_DATA_MARKER:
             value = tag.value
             if value.startswith('{'):
                 if app_data:  # already in app data mode
-                    raise DXFAppDataError('Invalid APP DATA structure in entity {}(#{}), APP DATA can not be nested.'.format(dxftype, handle))
+                    raise DXFAppDataError(
+                        'Invalid APP DATA structure in entity {}(#{}), APP DATA can not be nested.'.format(dxftype,
+                                                                                                           handle))
                 app_data = True
                 # 'APPID}' is also a valid closing tag
                 app_data_closing_tag = value[1:] + '}'
             elif value == '}' or value == app_data_closing_tag:
                 if not app_data:
-                    raise DXFAppDataError('Invalid APP DATA structure in entity {}(#{}), found (102, "}}") tag without opening tag.'.format(dxftype, handle))
+                    raise DXFAppDataError(
+                        'Invalid APP DATA structure in entity {}(#{}), found (102, "}}") tag without opening tag.'.format(
+                            dxftype, handle))
                 app_data = False
                 app_data_closing_tag = '}'
             else:
                 if dxftype != 'XRECORD':  # group code 102 as non app data allowed in XRECORD
-                    raise DXFAppDataError('Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(value, dxftype, handle))
+                    raise DXFAppDataError(
+                        'Invalid APP DATA structure tag (102, "{}") in entity {}(#{}).'.format(value, dxftype, handle))
 
         # XDATA section starts with (1001, APPID) and is always at the end of an entity,
         # since AutoCAD 2018, embedded objects may follow XDATA
         if tag.code == XDATA_MARKER and xdata is False:
             xdata = True
             if app_data:
-                raise DXFAppDataError('Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(dxftype, handle))
+                raise DXFAppDataError(
+                    'Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(dxftype,
+                                                                                                            handle))
         yield tag
 
     if app_data:
-        raise DXFAppDataError('Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(dxftype, handle))
+        raise DXFAppDataError(
+            'Invalid APP DATA structure in entity {}(#{}), missing closing tag (102, "}}").'.format(dxftype, handle))
 
     if xdata:
         if xdata_list_level < 0:
-            raise DXFXDataError('Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "{{").'.format(dxftype, handle))
+            raise DXFXDataError(
+                'Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "{{").'.format(
+                    dxftype, handle))
         elif xdata_list_level > 0:
-            raise DXFXDataError('Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "}}").'.format(dxftype, handle))
+            raise DXFXDataError(
+                'Invalid XDATA structure in entity {}(#{}), unbalanced list markers, missing  (1002, "}}").'.format(
+                    dxftype, handle))
 
 
 def is_dxf_file(filename: str) -> bool:

@@ -1,7 +1,49 @@
 .. automodule:: ezdxf.lldxf.tags
 
-.. autoclass:: Tags(list)
-    :members:
+.. class:: Tags
+
+    Subclass of ``list``.
+
+    Collection of :class:`~ezdxf.lldxf.types.DXFTag` as flat list. Low level tag container, only required for advanced
+    stuff.
+
+    .. automethod:: from_text(text: str) -> Tags
+
+    .. automethod:: dxftype
+
+    .. automethod:: get_handle
+
+    .. automethod:: replace_handle
+
+    .. automethod:: has_tag
+
+    .. automethod:: has_embedded_objects
+
+    .. automethod:: get_first_tag(code: int, default=DXFValueError) -> DXFTag
+
+    .. automethod:: get_first_value(code: int, default=DXFValueError) -> Any
+
+    .. automethod:: find_all(code: int) -> List[DXFTag]
+
+    .. automethod:: filter(codes: Iterable[int]) -> Iterable[DXFTag]
+
+    .. automethod:: collect_consecutive_tags(codes: Iterable[int], start: int = 0, end: int = None) -> Tags
+
+    .. automethod:: tag_index
+
+    .. automethod:: update(tag: DXFTag)
+
+    .. automethod:: set_first(tag: DXFTag)
+
+    .. automethod:: remove_tags
+
+    .. automethod:: remove_tags_except
+
+    .. automethod:: pop_tags(codes: Iterable[int]) -> Iterable[DXFTag]
+
+    .. automethod:: strip(tags: Tags, codes: Iterable[int]) -> Tags
+
+.. autofunction:: group_tags(tags: Iterable[DXFTag], splitcode: int = 0) -> Iterable[Tags]
 
 
 .. module:: ezdxf.lldxf.extendedtags
