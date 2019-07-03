@@ -1,5 +1,5 @@
 # Created: 10.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 """
 Tags
@@ -48,7 +48,10 @@ class Tags(list):
         Get DXF handle. Raises :class:`DXFValueError` if handle not exist.
 
         Returns:
-            handle as hex string like ``'FF00'``
+            handle as plain hex string like ``'FF00'``
+
+        Raises:
+            DXFValueError: no handle found
 
         """
         try:
@@ -69,7 +72,7 @@ class Tags(list):
         Replace existing handle.
 
         Args:
-            new_handle: new handle as hex string e.g. ``'ABBA'``
+            new_handle: new handle as plain hex string e.g. ``'FF00'``
 
         """
         for index, tag in enumerate(self):
@@ -83,13 +86,13 @@ class Tags(list):
 
     def has_tag(self, code: int) -> bool:
         """
-        Returns ``True`` if a :class:`~ezdxf.lldxf.types.DXFTag` with group code == `code` is present.
+        Returns ``True`` if a :class:`~ezdxf.lldxf.types.DXFTag` with given group `code` is present.
 
         Args:
             code: group code as int
 
         """
-        return any(True for tag in self if tag.code == code)
+        return any(tag.code == code for tag in self)
 
     def get_first_value(self, code: int, default=DXFValueError) -> 'TagValue':
         """

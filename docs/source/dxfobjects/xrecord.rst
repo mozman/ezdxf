@@ -1,18 +1,3 @@
-DXFObject
-=========
-
-.. module:: ezdxf.entities
-
-Common base class for all non-graphical DXF objects.
-
-.. warning::
-
-    Do not instantiate object classes by yourself - always use the provided factory functions!
-
-.. class:: DXFObject
-
-    Subclass of :class:`ezdxf.entities.DXFEntity`
-
 XRecord
 =======
 
@@ -26,11 +11,19 @@ or the :class:`ExtensionDict` of the DXF entity.
 
 .. _XRECORD: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-24668FAF-AE03-41AE-AFA4-276C3692827F
 
+======================== ===========================================================
+Subclass of              :class:`ezdxf.entities.DXFObject`
+DXF type                 ``'XRECORD'``
+Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_xrecord`
+======================== ===========================================================
+
+.. warning::
+
+    Do not instantiate object classes by yourself - always use the provided factory functions!
+
 .. class:: XRecord
 
-    Subclass of :class:`ezdxf.entities.DXFObject`
-
-    .. attribute:: dxf.coning
+    .. attribute:: dxf.cloning
 
         Duplicate record cloning flag (determines how to merge duplicate entries, ignored by `ezdxf`):
 
@@ -47,14 +40,3 @@ or the :class:`ExtensionDict` of the DXF entity.
 
         Raw DXF tag container :class:`~ezdxf.lldxf.tags.Tags`. Be careful `ezdxf` does not validate the content of
         XRECORDS.
-
-Placeholder
-===========
-
-The `ACDBPLACEHOLDER`_ object for internal usage.
-
-.. class:: Placeholder
-
-    Subclass of :class:`ezdxf.entities.DXFObject`
-
-.. _ACDBPLACEHOLDER: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3BC75FF1-6139-49F4-AEBB-AE2AB4F437E4

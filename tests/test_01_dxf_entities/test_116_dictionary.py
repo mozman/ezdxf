@@ -161,6 +161,15 @@ def test_add_sub_dict(doc):
     assert 'MOZMAN_TEST' in rootdict
 
 
+def test_add_dict_var(doc):
+    rootdict = doc.rootdict
+    assert 'MOZMAN_VAR' not in rootdict
+    new_var = rootdict.add_dict_var('MOZMAN_VAR', 'Hallo')
+    assert new_var.dxftype() == 'DICTIONARYVAR'
+    assert 'MOZMAN_VAR' in rootdict
+    assert new_var.dxf.value == 'Hallo'
+
+
 class TestDXFDictWithDefault:
     @pytest.fixture
     def dxfdict(self):

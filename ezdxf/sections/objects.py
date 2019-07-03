@@ -10,7 +10,7 @@ from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GeoData
+    from ezdxf.eztypes import GeoData, DictionaryVar
     from ezdxf.eztypes import Drawing, DXFEntity, EntityFactory, TagWriter, EntityDB, DXFTagStorage, DXFObject
     from ezdxf.eztypes import ImageDefReactor, ImageDef, UnderlayDef, DictionaryWithDefault, XRecord, Placeholder
 
@@ -88,6 +88,7 @@ class ObjectsSection:
 
     def setup_objects_management_tables(self, rootdict: Dictionary) -> None:
         """ Setup required management tables. (internal API)"""
+
         def setup_plot_style_name_table():
             plot_style_name_dict = self.add_dictionary_with_default(owner=rootdict.dxf.handle)
             placeholder = self.add_placeholder(owner=plot_style_name_dict.dxf.handle)
@@ -193,6 +194,17 @@ class ObjectsSection:
         })
         return cast('DictionaryWithDefault', entity)
 
+    def add_dictionary_var(self, owner: str = '0', value: str = '') -> 'DictionaryVar':
+        """
+        Add a new :class:`~ezdxf.entities.DictionaryVar` object.
+
+        Args:
+            owner: handle to owner as hex string.
+            value: value as string
+
+        """
+        return self.new_entity('DICTIONARYVAR', dxfattribs={'owner': owner, 'value': value})
+
     def add_xrecord(self, owner: str = '0') -> 'XRecord':
         """
         Add a new :class:`~ezdxf.entities.XRecord` object.
@@ -205,7 +217,7 @@ class ObjectsSection:
 
     def add_placeholder(self, owner: str = '0') -> 'Placeholder':
         """
-        Add a new :class:`~ezdxf.entities.AcDbPlaceholder` object.
+        Add a new :class:`~ezdxf.entities.Placeholder` object.
 
         Args:
             owner: handle to owner as hex string.
@@ -295,8 +307,6 @@ class ObjectsSection:
             size_in_pixel: image size in pixel as (x, y) tuple
             name: image name for internal use, None for using filename as name (best for AutoCAD)
 
-        (internal API), public interface :meth:`~ezdxf.drawing.Drawing.add_image_def`
-
         """
         # removed auto-generated name
         # use absolute image paths for filename and AutoCAD loads images automatically
@@ -329,8 +339,6 @@ class ObjectsSection:
             filename: underlay file name
             format: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'`` for getting file format from filename extension
             name: pdf format = page number to display; dgn format = ``'default'``; dwf: ????
-
-        (internal API), public interface :meth:`~ezdxf.drawing.Drawing.add_underlay_def`
 
         """
         fmt = format.upper()
@@ -374,7 +382,6 @@ class ObjectsSection:
             owner: handle to owner as hex string
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.GeoData` entity
 
-        (internal API), public interface :meth:`~ezdxf.layouts.Modelspace.new_geodata`
 
         """
         if dxfattribs is None:

@@ -129,64 +129,46 @@ class Dictionary(DXFObject):
 
     @property
     def is_hard_owner(self) -> bool:
+        """ ``True`` if :class:`Dictionary` is hard owner of entities. Hard owned entities will be deleted by deleting
+        the dictionary.
+        """
         return bool(self.dxf.hard_owned)
 
     def keys(self) -> KeysView:
-        """
-        Generator for the dictionary's keys.
-
-        """
+        """ Returns :class:`KeysView` of all dictionary keys. """
         return self._data.keys()
 
     def items(self) -> ItemsView:
-        """
-        Generator for the dictionary's items as (key, DXFEntity) pairs.
-
-        """
+        """ Returns :class:`ItemsView` for all dictionary entries as (:attr:`key`, :class:`DXFEntity`) pairs. """
         for key in self.keys():
             yield (key, self.get(key))  # maybe handle -> DXFEntity
 
     def __getitem__(self, key: str) -> 'DXFEntity':
-        """
-        Return the value for `key` if key is in the dictionary, else raises a `KeyError`.
-
-        """
+        """ Return the value for `key`, raises a :class:`DXFKeyError` if `key` does not exist. """
         return self.get(key)
 
     def __setitem__(self, key: str, value: 'DXFEntity') -> None:
-        """
-        Add item `(key, value)` to dictionary.
-
-        """
+        """ Add item as ``(key, value)`` pair to dictionary.  """
         return self.add(key, value)
 
     def __delitem__(self, key: str) -> None:
-        """
-        Remove element `key` from the dictionary. Raises `KeyError` if key is not contained in the dictionary.
-
-        """
+        """ Delete entry `key` from the dictionary, raises :class:`DXFKeyError` if key does not exist. """
         return self.remove(key)
 
     def __contains__(self, key: str) -> bool:
-        """
-        Return True if the dictionary has `key`, else False.
-
-        """
+        """ Returns ``True`` if `key` exist. """
         return key in self._data
 
     def __len__(self) -> int:
-        """
-        Return the number of items in the dictionary.
-
-        """
+        """ Returns count of items. """
         return len(self._data)
 
     count = __len__
 
     def get(self, key: str, default: Any = DXFKeyError) -> 'DXFEntity':
         """
-        Return DXFEntity for `key` if `key` is in the dictionary, else `default` or raises a `DXFKeyError`
-        for `default`=`DXFKeyError`.
+        Returns :class:`DXFEntity` for `key`, if `key` exist, else `default` or raises a :class:`DXFKeyError`
+        for `default` = :class:`DXFKeyError`.
 
         """
         try:
@@ -205,10 +187,7 @@ class Dictionary(DXFObject):
             return entity
 
     def add(self, key: str, value: 'DXFEntity') -> None:
-        """
-        Add item `(key, value)` to dictionary.
-
-        """
+        """ Add entry ``(key, value)``. """
         if isinstance(value, str):
             try:
                 value = self.entitydb[value]
@@ -218,7 +197,7 @@ class Dictionary(DXFObject):
 
     def remove(self, key: str) -> None:
         """
-        Remove element `key` from the dictionary. Raises `DXFKeyError` if `key` not exists. Deletes hard owned DXF
+        Delete entry `key`. Raises :class:`DXFKeyError`, if `key` does not exist. Deletes also hard owned DXF
         objects from OBJECTS section.
 
         """
@@ -234,7 +213,8 @@ class Dictionary(DXFObject):
 
     def discard(self, key: str) -> None:
         """
-        Remove `key` from dictionary, if exists. Does NOT delete hard owned entities!
+        Delete entry `key` if exists. Does NOT raise an exception if `key` not exist and does not delete hard
+        owned DXF objects.
 
         """
         try:
@@ -243,15 +223,12 @@ class Dictionary(DXFObject):
             pass
 
     def clear(self) -> None:
-        """
-        Removes all entries from DXFDictionary, and also deletes all hard owned DXF objects from OBJECTS section.
-
-        """
+        """  Delete all entries from DXFDictionary, deletes hard owned DXF objects from OBJECTS section. """
         if self.is_hard_owner:
-            self.delete_hard_owned_entries()
+            self._delete_hard_owned_entries()
         self._data.clear()
 
-    def delete_hard_owned_entries(self) -> None:
+    def _delete_hard_owned_entries(self) -> None:
         # Presumption: hard owned DXF objects always reside in the OBJECTS section
         objects = self.doc.objects
         for key, entity in self.items():
@@ -259,7 +236,7 @@ class Dictionary(DXFObject):
 
     def add_new_dict(self, key: str, hard_owned: bool = False) -> 'Dictionary':
         """
-        Create a new sub dictionary.
+        Create a new sub :class:`Dictionary`.
 
         Args:
             key: name of the sub dictionary
@@ -270,11 +247,20 @@ class Dictionary(DXFObject):
         self.add(key, dxf_dict)
         return dxf_dict
 
-    def get_required_dict(self, key: str) -> 'Dictionary':
-        """
-        Get DXFDictionary `key`, if exists or create a new DXFDictionary.
+    def add_dict_var(self, key: str, value: str) -> 'DictionaryVar':
+        """ Add new :class:`DictionaryVar`.
+
+        Args:
+             key: entry name as string
+             value: entry value as string
 
         """
+        new_var = self.doc.objects.add_dictionary_var(owner=self.dxf.handle, value=value)
+        self.add(key, new_var)
+        return new_var
+
+    def get_required_dict(self, key: str) -> 'Dictionary':
+        """ Get entry `key` or create a new :class:`Dictionary`, if `Key` not exit. """
         try:
             dxf_dict = self.get(key)
         except DXFKeyError:
@@ -286,7 +272,7 @@ class Dictionary(DXFObject):
 
     def destroy(self) -> None:
         if self.is_hard_owner:
-            self.delete_hard_owned_entries()
+            self._delete_hard_owned_entries()
 
 
 acdb_dict_with_default = DefSubclass('AcDbDictionaryWithDefault', {
@@ -317,9 +303,10 @@ class DictionaryWithDefault(Dictionary):
         self.dxf.export_dxf_attribs(tagwriter, 'default')
 
     def get(self, key: str, default: Any = DXFKeyError) -> DXFEntity:
+        # `default` argument is ignored, exist only for API compatibility,
         """
-        Return DXFEntity for `key` if exists else returns the predefined dictionary wide `default` entity. Parameter
-        `default` is always ignored!
+        Returns :class:`DXFEntity` for `key` or the predefined dictionary wide :attr:`dxf.default`
+        entity if `key` does not exist.
 
         """
         if self._default is None:
@@ -327,6 +314,12 @@ class DictionaryWithDefault(Dictionary):
         return super().get(key, default=self._default)
 
     def set_default(self, default) -> None:
+        """ Set dictionary wide default entry.
+
+        Args:
+            default: default entry as hex string or as :class:`DXFEntity`
+
+        """
         if isinstance(default, str):
             self._default = self.entitydb[default]
         else:
