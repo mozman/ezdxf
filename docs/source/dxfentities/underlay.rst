@@ -14,18 +14,17 @@ without scaling.
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3EC8FBCC-A85A-4B0B-93CD-C6C785959077
 
-PdfUnderlay
------------
-
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
-DXF type                 ``'PDFUNDERLAY'``
+DXF type                 internal base class
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
-.. class:: PdfUnderlay
+.. class:: Underlay
+
+    Base class of :class:`PdfUnderlay`, :class:`DwfUnderlay` and :class:`DgnUnderlay`
 
     .. attribute:: dxf.insert
 
@@ -104,16 +103,30 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: underlay_def
 
-        Associated (PDF)DEFINITION entity. see :class:`UnderlayDefinition`.
+        Associated DEFINITION entity. see :class:`UnderlayDefinition`.
 
     .. automethod:: reset_boundary_path()
 
+PdfUnderlay
+-----------
+
+======================== ==========================================
+Subclass of              :class:`ezdxf.entities.Underlay`
+DXF type                 ``'PDFUNDERLAY'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
+Inherited DXF attributes :ref:`Common graphical DXF attributes`
+Required DXF version     DXF R2000 (``'AC1015'``)
+======================== ==========================================
+
+.. class:: PdfUnderlay
+
+    PDF underlay.
 
 DwfUnderlay
 -----------
 
 ======================== ==========================================
-Subclass of              :class:`ezdxf.entities.PdfUnderlay`
+Subclass of              :class:`ezdxf.entities.Underlay`
 DXF type                 ``'DWFUNDERLAY'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
@@ -122,11 +135,13 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. class:: DwfUnderlay
 
+    DWF underlay.
+
 DgnUnderlay
 -----------
 
 ======================== ==========================================
-Subclass of              :class:`ezdxf.entities.PdfUnderlay`
+Subclass of              :class:`ezdxf.entities.Underlay`
 DXF type                 ``'DGNUNDERLAY'``
 Factory function         :meth:`ezdxf.layouts.BaseLayout.add_underlay`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
@@ -134,3 +149,5 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
 .. class:: DgnUnderlay
+
+    DGN underlay.

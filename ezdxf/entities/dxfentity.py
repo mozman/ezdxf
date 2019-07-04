@@ -400,6 +400,11 @@ class DXFEntity:
     """ Common base class for all DXF entities. """
     DXFTYPE = 'DXFENTITY'  # storing as class var needs less memory
     DXFATTRIBS = DXFAttributes(base_class)  # DXF attribute definitions
+
+    # Default DXF attributes are set at instantiating a new object, the the difference to attribute default
+    # values is, that this attributes are really set, this means there is an real object in the dxf
+    # namespace defined, where default attribute values get returned on access without an existing object
+    # in the dxf namespace.
     DEFAULT_ATTRIBS = None  # type: dict
     MIN_DXF_VERSION_FOR_EXPORT = DXF12
 

@@ -64,7 +64,7 @@ from .spline import Spline
 from .mesh import Mesh, MeshData
 from .hatch import Hatch, BoundaryPaths, PolylinePath, EdgePath, LineEdge, ArcEdge, EllipseEdge, SplineEdge, Pattern, PatternLine, Gradient
 from .image import Image, ImageDef
-from .underlay import Underlay, UnderlayDef, PdfUnderlay, DgnUnderlay, DwfUnderlay
+from .underlay import Underlay, UnderlayDefinition, PdfUnderlay, DgnUnderlay, DwfUnderlay
 from .leader import Leader
 from .tolerance import Tolerance
 from .helix import Helix

@@ -1,6 +1,8 @@
 Placeholder
 ===========
 
+.. module:: ezdxf.entities
+
 The `ACDBPLACEHOLDER`_ object for internal usage.
 
 ======================== =============================================================

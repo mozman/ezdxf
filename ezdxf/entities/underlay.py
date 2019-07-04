@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Drawing, Tags
 
 __all__ = ['PdfUnderlay', 'DwfUnderlay', 'DgnUnderlay', 'PdfDefinition', 'DgnDefinition', 'DwfDefinition', 'Underlay',
-           'UnderlayDef']
+           'UnderlayDefinition']
 
 acdb_underlay = DefSubclass('AcDbUnderlayReference', {
     'underlay_def_handle': DXFAttr(340),  # Hard reference to underlay definition object
@@ -35,10 +35,9 @@ acdb_underlay = DefSubclass('AcDbUnderlayReference', {
 })
 
 
-@register_entity
-class PdfUnderlay(DXFGraphic):
-    """ DXF PDFUNDERLAY entity - BricsCAD export PDFREFERENCE """
-    DXFTYPE = 'PDFUNDERLAY'
+class Underlay(DXFGraphic):
+    """ Virtual UNDERLAY entity. """
+    # DXFTYPE = 'UNDERLAY'
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_underlay)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -160,13 +159,19 @@ class PdfUnderlay(DXFGraphic):
 
 
 @register_entity
-class DwfUnderlay(PdfUnderlay):
+class PdfUnderlay(Underlay):
+    """ DXF PDFUNDERLAY entity - BricsCAD export PDFREFERENCE """
+    DXFTYPE = 'PDFUNDERLAY'
+
+
+@register_entity
+class DwfUnderlay(Underlay):
     """ DXF DWFUNDERLAY entity """
     DXFTYPE = 'DWFUNDERLAY'
 
 
 @register_entity
-class DgnUnderlay(PdfUnderlay):
+class DgnUnderlay(Underlay):
     """ DXF DGNUNDERLAY entity """
     DXFTYPE = 'DGNUNDERLAY'
 
@@ -179,10 +184,9 @@ acdb_underlay_def = DefSubclass('AcDbUnderlayDefinition', {
 
 # (PDF|DWF|DGN)DEFINITION - requires entry in objects table ACAD_(PDF|DWF|DGN)DEFINITIONS,
 # ACAD_(PDF|DWF|DGN)DEFINITIONS do not exist by default
-@register_entity
-class PdfDefinition(DXFObject):
-    """ DXF PDFDEFINITION entity  - BricsCAD export PDFREFERENCE"""
-    DXFTYPE = 'PDFDEFINITION'
+class UnderlayDefinition(DXFObject):
+    """ Virtual UNDERLAY DEFINITION entity. """
+    DXFTYPE = 'UNDERLAYDEFINITION'
     DXFATTRIBS = DXFAttributes(base_class, acdb_underlay_def)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -210,16 +214,18 @@ class PdfDefinition(DXFObject):
 
 
 @register_entity
-class DwfDefinition(PdfDefinition):
+class PdfDefinition(UnderlayDefinition):
+    """ DXF PDFDEFINITION entity  - BricsCAD export PDFREFERENCE"""
+    DXFTYPE = 'PDFDEFINITION'
+
+
+@register_entity
+class DwfDefinition(UnderlayDefinition):
     """ DXF DWFDEFINITION entity """
     DXFTYPE = 'DWFDEFINITION'
 
 
 @register_entity
-class DgnDefinition(PdfDefinition):
+class DgnDefinition(UnderlayDefinition):
     """ DXF DGNDEFINITION entity """
     DXFTYPE = 'DGNDEFINITION'
-
-
-UnderlayDef = Union[PdfDefinition, DgnDefinition, DwfDefinition]
-Underlay = Union[PdfUnderlay, DgnUnderlay, DwfUnderlay]

@@ -1,6 +1,8 @@
 XRecord
 =======
 
+.. module:: ezdxf.entities
+
 Important class for storing application defined data in DXF files.
 
 `XRECORD`_ objects are used to store and manage arbitrary data. They are composed of DXF group codes ranging

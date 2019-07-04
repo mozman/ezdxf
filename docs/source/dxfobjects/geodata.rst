@@ -1,116 +1,128 @@
 GeoData
 =======
 
-.. class:: GeoData(DXFObject)
+.. module:: ezdxf.entities
 
-    Introduced in DXF version R2010 (AC1024), dxftype is GEODATA
+The `GEODATA`_ entity is associated to the :class:`~ezdxf.layouts.Modelspace` object.
 
-    The GEODATA entity is associated to the :class:`Modelspace` object, create new geo data by
-    :meth:`Modelspace.new_geodata`, or get existing geo data by :meth:`Modelspace.get_geodata`.
+======================== =============================================================
+Subclass of              :class:`ezdxf.entities.DXFObject`
+DXF type                 ``'GEODATA'``
+Factory function         :meth:`ezdxf.layouts.Modelspace.new_geodata`
+Required DXF version     R2010 (``'AC1024'``)
+======================== =============================================================
 
 .. seealso::
 
     `using_geodata.py <https://github.com/mozman/ezdxf/blob/master/examples/using_geodata.py>`_
 
-DXF Attributes for GeoData
---------------------------
+.. warning::
 
-.. attribute:: GeoData.dxf.version
+    Do not instantiate object classes by yourself - always use the provided factory functions!
 
-    - 1 = 2009
-    - 2 = 2010
+.. _GEODATA: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-104FE0E2-4801-4AC8-B92C-1DDF5AC7AB64
 
-.. attribute:: GeoData.dxf.coordinate_type
+.. class:: GeoData
 
-    - 0 = unknown
-    - 1 = local grid
-    - 2 = projected grid
-    - 3 = geographic (latitude/longitude)
+    .. attribute:: dxf.version
 
-.. attribute:: GeoData.dxf.block_record
+        === =========
+        1   R2009
+        2   R2010
+        === =========
 
-    Handle of host block table record.
+    .. attribute:: dxf.coordinate_type
 
-.. attribute:: GeoData.dxf.design_point
+        === =================================
+        0   unknown
+        1   local grid
+        2   projected grid
+        3   geographic (latitude/longitude)
+        === =================================
 
-    Reference point in WCS coordinates.
+    .. attribute:: GeoData.dxf.block_record_handle
 
-.. attribute:: GeoData.dxf.reference_point
+        Handle of host BLOCK_RECORD table entry, in general the :class:`~ezdxf.layouts.Modelspace`.
 
-    Reference point in coordinate system coordinates, valid only when coordinate type is Local Grid.
+        .. versionchanged:: 0.10
 
-.. attribute:: GeoData.dxf.north_direction
+            renamed from :attr:`dxf.block_record`
 
-    North direction as 2D vector.
+    .. attribute:: dxf.design_point
 
-.. attribute:: GeoData.dxf.horizontal_unit_scale
+        Reference point in :ref:`WCS` coordinates.
 
-    Horizontal unit scale, factor which converts horizontal design coordinates to meters by multiplication.
+    .. attribute:: dxf.reference_point
 
-.. attribute:: GeoData.dxf.vertical_unit_scale
+        Reference point in coordinate system coordinates, valid only when coordinate type is `local grid`.
 
-    Vertical unit scale, factor which converts vertical design coordinates to meters by multiplication.
+    .. attribute:: dxf.north_direction
 
-.. attribute:: GeoData.dxf.horizontal_units
+        North direction as 2D vector.
 
-    Horizontal units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by horizontal
-    unit scale is not supported by AutoCAD enumeration.
+    .. attribute:: dxf.horizontal_unit_scale
 
-.. attribute:: GeoData.dxf.vertical_units
+        Horizontal unit scale, factor which converts horizontal design coordinates to meters by multiplication.
 
-    Vertical units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by vertical unit scale is not
-    supported by AutoCAD enumeration.
+    .. attribute:: dxf.vertical_unit_scale
 
-.. attribute:: GeoData.dxf.up_direction
+        Vertical unit scale, factor which converts vertical design coordinates to meters by multiplication.
 
-    Up direction as 3D vector.
+    .. attribute:: dxf.horizontal_units
 
-.. attribute:: GeoData.dxf.scale_estimation_method
+        Horizontal units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by horizontal
+        unit scale is not supported by AutoCAD enumeration.
 
-    - 1 = none
-    - 2 = user specified scale factor
-    - 3 = grid scale at reference point
-    - 4 = prismoidal
+    .. attribute:: dxf.vertical_units
 
-.. attribute:: GeoData.dxf.sea_level_correction
+        Vertical units per UnitsValue enumeration. Will be kUnitsUndefined if units specified by vertical unit scale
+        is not supported by AutoCAD enumeration.
 
-    Bool flag specifying whether to do sea level correction.
+    .. attribute:: dxf.up_direction
 
-.. attribute:: GeoData.dxf.user_scale_factor
+        Up direction as 3D vector.
 
-.. attribute:: GeoData.dxf.sea_level_elevation
+    .. attribute:: dxf.scale_estimation_method
 
-.. attribute:: GeoData.dxf.coordinate_projection_radius
+        === ========================================
+        1   none
+        2   user specified scale factor
+        3   grid scale at reference point
+        4   prismoidal
+        === ========================================
 
-.. attribute:: GeoData.dxf.geo_rss_tag
+    .. attribute:: dxf.sea_level_correction
 
-.. attribute:: GeoData.dxf.observation_from_tag
+        Bool flag specifying whether to do sea level correction.
 
-.. attribute:: GeoData.dxf.observation_to_tag
+    .. attribute:: dxf.user_scale_factor
 
-.. attribute:: GeoData.dxf.mesh_faces_count
+    .. attribute:: dxf.sea_level_elevation
 
+    .. attribute:: dxf.coordinate_projection_radius
 
-GeoData Methods
----------------
+    .. attribute:: dxf.geo_rss_tag
 
-.. method:: GeoData.get_coordinate_system_definition()
+    .. attribute:: dxf.observation_from_tag
 
-    :returns: Coordinate system definition string (always a XML string?)
+    .. attribute:: dxf.observation_to_tag
 
-.. method:: GeoData.set_coordinate_system_definition(text)
+    .. attribute:: dxf.mesh_faces_count
 
-.. method:: GeoData.get_mesh_data()
+    .. attribute:: source_vertices
 
-    Returns mesh as list of vertices and list of faces.
-    Each vertex entry is a 2-tuple of source and target point, vertices are 2D points.
-    Each face entry is a 3-tuple of vertex indices (0 based).
+        2D source vertices as :class:`~ezdxf.lldxf.packedtags.VertexArray`.
 
-    :returns: tuple (vertices, faces)
+    .. attribute:: target_vertices
 
-.. method:: GeoData.set_mesh_data(vertices=None, faces=None)
+        2D target vertices as :class:`~ezdxf.lldxf.packedtags.VertexArray`.
 
-    Each vertex entry is a 2-tuple of source and target point, all vertices are 2D points.
-    Each face entry is a 3-tuple of vertex indices (0 based), faces are optional.
+    .. attribute:: faces
+
+        List of face definition tuples, each face entry is a 3-tuple of vertex indices (0-based).
+
+    .. attribute:: coordinate_system_definition
+
+        The coordinate system definition string. (Always a XML string?)
 
 

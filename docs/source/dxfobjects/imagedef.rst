@@ -1,37 +1,52 @@
 ImageDef
 ========
 
-.. class:: ImageDef(DXFObject)
+.. module:: ezdxf.entities
 
-Introduced in DXF version R13 (AC1012), dxftype is IMAGEDEF.
+`IMAGEDEF`_ entity defines an image file, which can be placed by the :class:`Image` entity.
 
-:class:`ImageDef` defines an image, which can be placed by the :class:`Image` entity. Create :class:`ImageDef` by
-the :class:`Drawing` factory function :meth:`~Drawing.add_image_def`.
+======================== ===========================================================
+Subclass of              :class:`ezdxf.entities.DXFObject`
+DXF type                 ``'IMAGEDEF'``
+Factory function (1)     :meth:`ezdxf.drawing.Drawing.add_image_def`
+Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_image_def`
+======================== ===========================================================
+
+.. warning::
+
+    Do not instantiate object classes by yourself - always use the provided factory functions!
+
+.. _IMAGEDEF: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EFE5319F-A71A-4612-9431-42B6C7C3941F
 
 
-DXF Attributes for ImageDef
----------------------------
+.. class:: ImageDef
 
-.. attribute:: ImageDef.dxf.filename
+    .. attribute:: dxf.class_version
 
-    Relative (to the DXF file) or absolute path to the image file as string
+        Current version is ``0``.
 
-.. attribute:: ImageDef.dxf.image_size
+    .. attribute:: dxf.filename
 
-    Image size in pixel as (x, y) tuple
+        Relative (to the DXF file) or absolute path to the image file as string.
 
-.. attribute:: ImageDef.dxf.pixel_size
+    .. attribute:: dxf.image_size
 
-    Default size of one pixel in AutoCAD units (x, y) tuple
+        Image size in pixel as ``(x, y)`` tuple.
 
-.. attribute:: ImageDef.dxf.loaded
+    .. attribute:: dxf.pixel_size
 
-    Default = 1
+        Default size of one pixel in drawing units as ``(x, y)`` tuple.
 
-.. attribute:: ImageDef.dxf.resolution_units
+    .. attribute:: dxf.loaded
 
-    - 0 = No units
-    - 2 = Centimeters
-    - 5 = Inch
-    - default is 0
+        ``0`` = unloaded; ``1`` = loaded, default = ``1``
 
+    .. attribute:: dxf.resolution_units
+
+        === ==================
+        0   No units
+        2   Centimeters
+        5   Inch
+        === ==================
+
+        Default = ``0``
