@@ -9,5 +9,6 @@ DXF Objects
     geodata
     imagedef
     placeholder
+    sun
     underlaydef
     xrecord

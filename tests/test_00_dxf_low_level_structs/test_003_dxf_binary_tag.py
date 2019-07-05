@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
-from ezdxf.lldxf.types import DXFBinaryTag, encode_hex_code_string_to_bytes
+from ezdxf.lldxf.types import DXFBinaryTag, hexstr_to_bytes
 
 
 def test_init():
@@ -32,11 +32,11 @@ def test_long_string():
     assert tag.value == clone.value
 
 
-def test_encode_hex_code_string():
+def test_hexstr_to_bytes():
     import array
     s = ''.join('%0.2X' % byte for byte in range(256))
     assert len(s) == 512
-    bytes_ = encode_hex_code_string_to_bytes(s)
+    bytes_ = hexstr_to_bytes(s)
     assert len(bytes_) == 256
     # works in Python 2.7 & Python 3
     for x, y in zip(array.array('B', bytes_), range(256)):

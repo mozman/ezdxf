@@ -20,7 +20,7 @@ from itertools import chain
 import reprlib
 from ezdxf.math.vector import Vector
 
-from ezdxf.tools import encode_hex_code_string_to_bytes, byte_to_hexstr
+from ezdxf.tools.binarydata import hexstr_to_bytes, byte_to_hexstr
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -183,7 +183,7 @@ class DXFBinaryTag(DXFTag):
 
     @classmethod
     def from_string(cls, code: int, value: str):
-        return cls(code, encode_hex_code_string_to_bytes(value))
+        return cls(code, hexstr_to_bytes(value))
 
 
 def dxftag(code: int, value: 'TagValue') -> DXFTag:

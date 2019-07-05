@@ -54,5 +54,13 @@ Fast DXF R12 File/Stream Writer
 
     r12writer
 
+Miscellaneous
+-------------
+
+.. toctree::
+    :maxdepth: 1
+
+    tools
+
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

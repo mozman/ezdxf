@@ -50,3 +50,14 @@ Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_image_
         === ==================
 
         Default = ``0``
+
+
+ImageDefReactor
+===============
+
+
+.. class:: ImageDefReactor
+
+    .. attribute:: dxf.class_version
+
+    .. attribute:: dxf.image_handle

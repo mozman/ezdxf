@@ -4,8 +4,10 @@
 from typing import Tuple, Any, Iterable
 from uuid import uuid1
 import functools
-import array
 import html
+from .juliandate import juliandate, calendardate
+from .rgb import int2rgb, rgb2int, aci2rgb
+from .binarydata import hexstr_to_bytes, hexstr_data_to_bytes, byte_to_hexstr, bytes_to_hexstr
 
 escape = functools.partial(html.escape, quote=True)
 
@@ -21,6 +23,14 @@ def transparency2float(value):
 
 
 def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
+    """ Set/Clear `flag` in `flags`.
+
+    Args:
+        flags: data value
+        flag: flag to set/clear
+        state: ``True`` for setting, ``False`` for clearing
+
+    """
     if state:
         flags = flags | flag
     else:
@@ -29,10 +39,16 @@ def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
 
 
 def guid() -> str:
+    """ Returns a General unique ID, based on :func:`uuid.uuid1`. """
     return str(uuid1()).upper()
 
 
 def take2(iterable: Iterable) -> Tuple[Any, Any]:
+    """ Iterate `iterable` as 2-tuples.
+
+    :code:`[1, 2, 3, 4, ...] -> (1, 2), (3, 4), ...`
+
+    """
     store = None
     for item in iterable:
         if store is None:
@@ -41,17 +57,15 @@ def take2(iterable: Iterable) -> Tuple[Any, Any]:
             yield store, item
             store = None
 
-
-def encode_hex_code_string_to_bytes(data: str) -> bytes:
-    byte_array = array.array('B', (int(data[index:index + 2], 16) for index in range(0, len(data), 2)))
-    return byte_array.tobytes()
-
-
-def byte_to_hexstr(byte: int) -> str:
-    return "%0.2X" % byte
-
-
 def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
+    """ Suppress leading and/or trailing ``0`` of string `s`.
+
+    Args:
+         s: data string
+         leading: suppress leading ``0``
+         trailing: suppress trailing ``0``
+
+    """
     if (not leading) and (not trailing):
         return s
 
@@ -70,4 +84,4 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
         s = s.rstrip('0')
     if s[-1] in '.,':
         s = s[:-1]
-    return sign+s
+    return sign + s

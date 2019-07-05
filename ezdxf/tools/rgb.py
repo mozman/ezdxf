@@ -8,6 +8,7 @@ RGB = Tuple[int, int, int]
 
 
 def int2rgb(value: int) -> RGB:
+    """ Split RGB integer `value` into ``(r, g, b)`` tuple. """
     return (
         (value >> 16) & 0xFF,  # red
         (value >> 8) & 0xFF,  # green
@@ -16,14 +17,16 @@ def int2rgb(value: int) -> RGB:
 
 
 def rgb2int(rgb: RGB) -> int:
+    """ Combined integer value from ``(r, g, b)`` tuple."""
     r, g, b = rgb
     return ((int(r) & 0xff) << 16) | ((int(g) & 0xff) << 8) | (int(b) & 0xff)
 
 
 def aci2rgb(index: int) -> RGB:
-        if index < 1:
-            raise IndexError(index)
-        return int2rgb(dxf_default_colors[index])
+    """ Convert :ref:`ACI` into ``(r, g, b)`` tuple, based on default AutoCAD colors. """
+    if index < 1:
+        raise IndexError(index)
+    return int2rgb(dxf_default_colors[index])
 
 
 dxf_default_colors = [

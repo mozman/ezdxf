@@ -13,6 +13,12 @@ Glossary
     bulge
         The `bulge` value is used to create arc shaped line segments in polylines.
 
+    true color
+        RGB color representation, a combination red, green and blue values to define a color.
+
+    ACI
+        :ref:`ACI`
+
 .. _Autodesk: http://www.autodesk.com/
 
 .. _AutoCAD: https://www.autodesk.com/products/autocad/overview

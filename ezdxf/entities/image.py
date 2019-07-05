@@ -217,7 +217,7 @@ class ImageDef(DXFObject):
 
 
 acdb_image_def_reactor = DefSubclass('AcDbRasterImageDefReactor', {
-    'class_version': DXFAttr(90, default=2),  # handle to image
+    'class_version': DXFAttr(90, default=2),
     'image_handle': DXFAttr(330),  # handle to image
 })
 
