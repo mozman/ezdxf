@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from ezdxf.tools.perlin import snoise2, snoise3
+from ezdxf.math.perlin import snoise2, snoise3
 
 
 def test_simplex_2d_range():

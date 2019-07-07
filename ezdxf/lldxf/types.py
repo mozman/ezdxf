@@ -20,7 +20,7 @@ from itertools import chain
 import reprlib
 from ezdxf.math.vector import Vector
 
-from ezdxf.tools.binarydata import hexstr_to_bytes, byte_to_hexstr
+from ezdxf.tools.binarydata import hexstr_to_bytes, int_to_hexstr
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -175,7 +175,7 @@ class DXFBinaryTag(DXFTag):
 
     def tostring(self) -> str:  # value to string
         """ Returns binary value as single hex-string. """
-        return ''.join(byte_to_hexstr(b) for b in self.value)
+        return ''.join(int_to_hexstr(b) for b in self.value)
 
     def dxfstr(self) -> str:
         """ Returns the DXF string for all vertex components. """

@@ -5,7 +5,7 @@ from typing import Iterable
 from array import array
 
 
-def hexstr_data_to_bytes(data: Iterable[str]) -> bytes:
+def hex_strings_to_bytes(data: Iterable[str]) -> bytes:
     """ Convert multiple hex strings `data` into bytes. """
     byte_array = array('B')
     for hexstr in data:
@@ -19,13 +19,13 @@ def hexstr_to_bytes(data: str) -> bytes:
     return byte_array.tobytes()
 
 
-def byte_to_hexstr(data: int) -> str:
+def int_to_hexstr(data: int) -> str:
     """ Convert integer `data` into a plain hex string. """
     return "%0.2X" % data
 
 
 def bytes_to_hexstr(data: bytes) -> str:
     """ Convert bytes `data` into a plain hex string. """
-    return ''.join(byte_to_hexstr(byte) for byte in data)
+    return ''.join(int_to_hexstr(byte) for byte in data)
 
 

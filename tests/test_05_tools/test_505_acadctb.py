@@ -10,7 +10,7 @@ from ezdxf.acadctb import *
 
 class TestUserStyleAPI:
     def test_init(self):
-        style = UserStyle(0, dict(
+        style = PlotStyle(0, dict(
             description="memo",
             color_policy=3,
             physical_pen_number=7,
@@ -38,37 +38,37 @@ class TestUserStyleAPI:
         assert style.fill_style == 3
 
     def test_get_set_color(self):
-        style = UserStyle(0)
-        style.set_color(123, 23, 77)
-        assert style.get_color() == (123, 23, 77)
+        style = PlotStyle(0)
+        style.color = (123, 23, 77)
+        assert style.color == (123, 23, 77)
 
     def test_object_color(self):
-        style = UserStyle(0)
-        style.set_color(123, 77, 1)
+        style = PlotStyle(0)
+        style.color = (123, 77, 1)
         style.set_object_color()
         assert style.has_object_color()
 
     def test_dithering(self):
-        style = UserStyle(0)
+        style = PlotStyle(0)
         style.dithering = True
         assert style.dithering
         style.dithering = False
         assert style.dithering is False
 
     def test_grayscale(self):
-        style = UserStyle(0)
+        style = PlotStyle(0)
         style.grayscale = True
         assert style.grayscale
         style.grayscale = False
         assert style.grayscale is False
 
     def test_dxf_color_index(self):
-        style = UserStyle(0)
-        assert style.get_dxf_color_index() == 1
+        style = PlotStyle(0)
+        assert style.aci == 1
 
     def test_set_lineweight(self):
-        styles = UserStyles()
-        style = styles.get_style(5)
+        styles = ColorDependentPlotStyles()
+        style = styles[5]
         style.set_lineweight(0.5)
         assert style.lineweight == 13
 
@@ -92,7 +92,7 @@ class TestUserStyleImplementation:
                    '  end_style=4\n' \
                    '  join_style=5\n' \
                    ' }\n'
-        style = UserStyle(0)
+        style = PlotStyle(0)
         fp = StringIO()
         style.write(fp)
         result = fp.getvalue()
@@ -100,36 +100,31 @@ class TestUserStyleImplementation:
         assert result == expected
 
 
-class TestUserStylesAPI:
+class TestColorDependentPlotStyles:
     @pytest.fixture
     def styles(self):
-        return UserStyles(description='TestCase')
-
-    def test_check_index(self, styles):
-        pytest.raises(IndexError, styles.check_color_index, 0)
-        pytest.raises(IndexError, styles.check_color_index, 256)
+        return ColorDependentPlotStyles(description='TestCase')
 
     def test_set_style(self, styles):
-        style = styles.set_style(3, dict(description='TestCase'))
+        style = styles.new_style(3, dict(description='TestCase'))
         assert style.description == 'TestCase'
 
     def test_get_style(self, styles):
-        styles.set_style(3, dict(description='TestCase'))
-        style = styles.get_style(3)
-        assert style.description == 'TestCase'
+        styles.new_style(3, dict(description='TestCase'))
+        assert styles[3].description == 'TestCase'
 
     def test_get_color(self, styles):
-        style = styles.set_style(4, dict(description='TestCase'))
-        style.set_color(123, 17, 99)
-        assert styles.get_color(4) == (123, 17, 99)
+        style = styles.new_style(4, dict(description='TestCase'))
+        style.color = (123, 17, 99)
+        assert styles[4].color == (123, 17, 99)
 
     def test_get_lineweight(self, styles):
-        style = styles.set_style(5, dict(description='TestCase'))
+        style = styles.new_style(5, dict(description='TestCase'))
         style.set_lineweight(0.70)
         assert math.isclose(styles.get_lineweight(5), 0.70, abs_tol=1e-6)
 
     def test_get_lineweight_none(self, styles):
-        style = styles.set_style(5, dict(description='TestCase'))
+        style = styles.new_style(5, dict(description='TestCase'))
         style.set_lineweight(0.0)
         assert styles.get_lineweight(5) is None
 
@@ -149,14 +144,14 @@ class TestUserStylesAPI:
         assert math.isclose(styles.get_table_lineweight(index), 7.77, abs_tol=1e-6)
 
 
-class TestUserStylesImplementation:
+class TestColorDependentPlotStylesImplementation:
     def test_write_header(self):
         expected = 'description="\n' \
                    'aci_table_available=TRUE\n' \
                    'scale_factor=1.0\n' \
                    'apply_factor=FALSE\n' \
                    'custom_lineweight_display_units=0\n'
-        styles = UserStyles()
+        styles = ColorDependentPlotStyles()
         fp = StringIO()
         styles._write_header(fp)
         result = fp.getvalue()
@@ -167,7 +162,7 @@ class TestUserStylesImplementation:
         expected = 'aci_table{\n' + '\n'.join(
             (' %s="Color_%d' % (index, index + 1)
              for index in range(255))) + '\n}\n'
-        styles = UserStyles()
+        styles = ColorDependentPlotStyles()
         fp = StringIO()
         styles._write_aci_table(fp)
         result = fp.getvalue()
@@ -182,7 +177,7 @@ class TestUserStylesImplementation:
                    ' 15=0.60\n 16=0.65\n 17=0.70\n 18=0.80\n 19=0.90\n' \
                    ' 20=1.00\n 21=1.06\n 22=1.20\n 23=1.40\n 24=1.58\n' \
                    ' 25=2.00\n 26=2.11\n}\n'
-        styles = UserStyles()
+        styles = ColorDependentPlotStyles()
         fp = StringIO()
         styles._write_lineweights(fp)
         result = fp.getvalue()
@@ -210,10 +205,10 @@ class TestCtbImport:
 
     def test_style_1(self, ctb):
         """all attribs are user defined."""
-        style = ctb.get_style(1)
-        assert isinstance(style, UserStyle)
-        assert style.get_dxf_color_index() == 1
-        assert style.get_color() == (235, 135, 20)
+        style = ctb[1]
+        assert isinstance(style, PlotStyle)
+        assert style.aci == 1
+        assert style.color == (235, 135, 20)
         assert style.dithering is True
         assert style.grayscale is True
         assert style.has_object_color() is False
@@ -221,16 +216,16 @@ class TestCtbImport:
         assert style.virtual_pen_number == 5
         assert style.screen == 95
         assert style.linetype == 1
-        assert style.end_style == ENDSTYLE_SQUARE
-        assert style.join_style == JOINSTYLE_ROUND
+        assert style.end_style == END_STYLE_SQUARE
+        assert style.join_style == JOIN_STYLE_ROUND
         assert style.fill_style == FILL_STYLE_SOLID
 
     def test_style_3(self, ctb):
         """all attribs are default or auto"""
-        style = ctb.get_style(3)
-        assert isinstance(style, UserStyle)
-        assert style.get_dxf_color_index() == 3
-        assert style.get_color() is None
+        style = ctb[3]
+        assert isinstance(style, PlotStyle)
+        assert style.aci == 3
+        assert style.color is None
         assert style.dithering is True
         assert style.grayscale is False
         assert style.has_object_color() is True
@@ -238,15 +233,15 @@ class TestCtbImport:
         assert style.virtual_pen_number == AUTOMATIC
         assert style.screen == 100
         assert style.linetype == OBJECT_LINETYPE
-        assert style.end_style == ENDSTYLE_OBJECT
-        assert style.join_style == JOINSTYLE_OBJECT
+        assert style.end_style == END_STYLE_OBJECT
+        assert style.join_style == JOIN_STYLE_OBJECT
         assert style.fill_style == FILL_STYLE_OBJECT
 
 
 class TestCtbExport:
     def test_create_ctb(self, tmpdir):
         filename = str(tmpdir.join('newctb.ctb'))
-        styles = UserStyles("TestCTB")
+        styles = PlotStyleTable("TestCTB")
         styles.save(filename)
         assert os.path.exists(filename)
 

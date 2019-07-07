@@ -1,27 +1,27 @@
-#!/usr/bin/env python
-# coding:utf-8
-# Purpose: read, create and write acad ctb files
+# Purpose: read and write AutoCAD CTB files
 # Created: 23.03.2010 for dxfwrite, added to ezdxf package on 2016-03-06
-# Copyright (C) 2010, Manfred Moitzi
+# Copyright (c) 2010-2019, Manfred Moitzi
 # License: MIT License
 # IMPORTANT: use only standard 7-Bit ascii code
-from typing import Union, Tuple, Optional, BinaryIO, TextIO, Iterable, List, Any
+
+from typing import Union, Tuple, Optional, BinaryIO, TextIO, Iterable, List, Any, Dict
+from abc import abstractmethod
 from io import StringIO
 from array import array
 from struct import pack
 import zlib
 
-ENDSTYLE_BUTT = 0
-ENDSTYLE_SQUARE = 1
-ENDSTYLE_ROUND = 2
-ENDSTYLE_DIAMOND = 3
-ENDSTYLE_OBJECT = 4
+END_STYLE_BUTT = 0
+END_STYLE_SQUARE = 1
+END_STYLE_ROUND = 2
+END_STYLE_DIAMOND = 3
+END_STYLE_OBJECT = 4
 
-JOINSTYLE_MITER = 0
-JOINSTYLE_BEVEL = 1
-JOINSTYLE_ROUND = 2
-JOINSTYLE_DIAMOND = 3
-JOINSTYLE_OBJECT = 5
+JOIN_STYLE_MITER = 0
+JOIN_STYLE_BEVEL = 1
+JOIN_STYLE_ROUND = 2
+JOIN_STYLE_DIAMOND = 3
+JOIN_STYLE_OBJECT = 5
 
 FILL_STYLE_SOLID = 64
 FILL_STYLE_CHECKERBOARD = 65
@@ -75,6 +75,20 @@ DEFAULT_LINE_WEIGHTS = [
     2.11,  # 26
 ]
 
+# color_type: (thx to Rammi)
+
+# Take color from layer, ignore other bytes.
+COLOR_BY_LAYER = 0xc0
+
+# Take color from insertion, ignore other bytes
+COLOR_BY_BLOCK = 0xc1
+
+# RGB value, other bytes are R,G,B.
+COLOR_RGB = 0xc2
+
+# ACI, AutoCAD color index, other bytes are 0,0,index
+COLOR_ACI = 0xc3
+
 
 def color_name(index: int) -> str:
     return 'Color_%d' % (index + 1)
@@ -92,11 +106,13 @@ def get_bool(value: Union[str, bool]) -> bool:
     return value
 
 
-class UserStyle:
-    def __init__(self, index: int, data: dict = None, parent: 'UserStyles' = None):
+class PlotStyle:
+    def __init__(self, index: int, data: dict = None, parent: 'PlotStyleTable' = None):
         data = data or {}
         self.parent = parent
         self.index = int(index)
+        self.name = str(data.get('name', color_name(index)))
+        self.localized_name = str(data.get('localized_name', color_name(index)))
         self.description = str(data.get('description', ""))
         # do not set _color, _mode_color or _color_policy directly
         # use set_color() method, and the properties dithering and grayscale
@@ -110,101 +126,90 @@ class UserStyle:
         self.linepattern_size = float(data.get('linepattern_size', 0.5))
         self.linetype = int(data.get('linetype', OBJECT_LINETYPE))  # 0 .. 30
         self.adaptive_linetype = get_bool(data.get('adaptive_linetype', True))
+
+        # lineweight index
         self.lineweight = int(data.get('lineweight', OBJECT_LINEWEIGHT))
-        self.end_style = int(data.get('end_style', ENDSTYLE_OBJECT))
-        self.join_style = int(data.get('join_style', JOINSTYLE_OBJECT))
+        self.end_style = int(data.get('end_style', END_STYLE_OBJECT))
+        self.join_style = int(data.get('join_style', JOIN_STYLE_OBJECT))
         self.fill_style = int(data.get('fill_style', FILL_STYLE_OBJECT))
 
-    def set_color(self, red: int, green: int, blue: int) -> None:
-        """
-        Set color as rgb-tuple.
-
-        """
-        self._mode_color = mode_color2int(red, green, blue)
-        # when defining a user-color, <mode_color> represents the real truecolor
-        # as rgb-tuple with the magic number 0xC2 as highest byte, the <color>
-        # value calculated for a user-color is not a rgb-tuple and has the magic
-        # number 0xC3 (sometimes), I set for <color> the same value a for
-        # <mode_color>, because Autocad corrects the <color> value by itself.
-        self._color = self._mode_color
-
-    def set_object_color(self) -> None:
-        """
-        Set color to object color.
-
-        """
-        self._color = OBJECT_COLOR
-        self._mode_color = OBJECT_COLOR
-
-    def set_lineweight(self, lineweight: float) -> None:
-        """Set lineweight. Use 0.0 to set lineweight by object.
-
-        lineweight in mm! not the lineweight index
-
-        """
-        self.lineweight = self.parent.get_lineweight_index(lineweight)
-
-    def get_lineweight(self) -> float:
-        """
-        Returns the lineweight in millimeters.
-
-        :returns: lineweight in mm or 0.0 for use entity lineweight
-
-        """
-        return self.parent.lineweights[self.lineweight]
-
-    def has_object_color(self) -> bool:
-        """
-        True if style has object color.
-
-        """
-        return self._color == OBJECT_COLOR or \
-               self._color == OBJECT_COLOR2
-
-    def get_color(self) -> Optional[Tuple[int, int, int, int]]:
-        """
-        Get style color as rgb-tuple or None if style has object color.
-
-        """
+    @property
+    def color(self) -> Optional[Tuple[int, int, int, int]]:
+        """  Get style color as ``(r, g, b)`` tuple or ``None``, if style has object color. """
         if self.has_object_color():
             return None  # object color
         else:
             return int2color(self._mode_color)[:3]
 
-    def get_dxf_color_index(self) -> int:
+    @color.setter
+    def color(self, rgb: Tuple[int, int, int]) -> None:
+        """ Set color as RGB values. """
+        r, g, b = rgb
+        # when defining a user-color, `mode_color` represents the real true_color as (r, g, b) tuple and
+        # color_type = COLOR_RGB (0xC2) as highest byte, the `color` value calculated for a user-color is not a
+        # (r, g, b) tuple and has color_type = COLOR_ACI (0xC3) (sometimes), set for `color` the same value as for
+        # `mode_color`, because AutoCAD corrects the `color` value by itself.
+        self._mode_color = mode_color2int(r, g, b)
+        self._color = self._mode_color
+
+    def set_object_color(self) -> None:
+        """ Set color to object color. """
+        self._color = OBJECT_COLOR
+        self._mode_color = OBJECT_COLOR
+
+    def set_lineweight(self, lineweight: float) -> None:
+        """ Set `lineweight` in millimeters. Use ``0.0`` to set lineweight by object. """
+        self.lineweight = self.parent.get_lineweight_index(lineweight)
+
+    def get_lineweight(self) -> float:
+        """ Returns the lineweight in millimeters or `0.0` for use entity lineweight. """
+        return self.parent.lineweights[self.lineweight]
+
+    def has_object_color(self) -> bool:
+        """ ``True`` if style has object color. """
+        return self._color in (OBJECT_COLOR, OBJECT_COLOR2)
+
+    @property
+    def aci(self) -> int:
+        """ :ref:`ACI` in range from ``1`` to ``255``. Has no meaning for named plot styles. """
         return self.index + 1
 
-    def get_dithering(self) -> bool:
+    @property
+    def dithering(self) -> bool:
+        """ Depending on the capabilities of your plotter, dithering approximates the colors with dot patterns.
+        When this option is not active, the colors are mapped to the nearest color, resulting in a smaller range of
+        colors when plotting.
+
+        Dithering is available only whether you select the object’s color or assign a plot style color.
+
+        """
         return bool(self._color_policy & DITHERING_ON)
 
-    def set_dithering(self, status: bool) -> None:
+    @dithering.setter
+    def dithering(self, status: bool) -> None:
         if status:
             self._color_policy |= DITHERING_ON
         else:
             self._color_policy &= ~DITHERING_ON
 
-    dithering = property(get_dithering, set_dithering)
-
-    def get_grayscale(self) -> bool:
+    @property
+    def grayscale(self) -> bool:
+        """  Plot colors in grayscale. """
         return bool(self._color_policy & GRAYSCALE_ON)
 
-    def set_grayscale(self, status: bool) -> None:
+    @grayscale.setter
+    def grayscale(self, status: bool) -> None:
         if status:
             self._color_policy |= GRAYSCALE_ON
         else:
             self._color_policy &= ~GRAYSCALE_ON
 
-    grayscale = property(get_grayscale, set_grayscale)
-
     def write(self, stream: TextIO) -> None:
-        """
-        Write style data to file-like object <stream>.
-
-        """
+        """ Write style data to file-like object `stream`. """
         index = self.index
         stream.write(' %d{\n' % index)
-        stream.write('  name="%s\n' % color_name(index))
-        stream.write('  localized_name="%s\n' % color_name(index))
+        stream.write('  name="%s\n' % self.name)
+        stream.write('  localized_name="%s\n' % self.localized_name)
         stream.write('  description="%s\n' % self.description)
         stream.write('  color=%d\n' % self._color)
         if self._color != OBJECT_COLOR:
@@ -223,195 +228,83 @@ class UserStyle:
         stream.write(' }\n')
 
 
-class UserStyles:
-    """
-    UserStyle container
+class PlotStyleTable:
+    """ PlotStyle container """
 
-    """
-
-    def __init__(self, description: str = "", scale_factor: float = 1.0, apply_factor: bool = False):
+    def __init__(self, description: str = '', scale_factor: float = 1.0, apply_factor: bool = False):
         self.description = description
         self.scale_factor = scale_factor
         self.apply_factor = apply_factor
 
-        # set custom_line... to 1 for showing lineweights in inch in the Autocad
-        # ctb editor window, but lineweights are always defined in mm
+        # set custom_lineweight_display_units to 1 for showing lineweight in inch in AutoCAD CTB editor window, but
+        # lineweight is always defined in mm
         self.custom_lineweight_display_units = 0
-        self.styles = [None] * (STYLE_COUNT + 1)  # type: List[UserStyle]
         self.lineweights = array('f', DEFAULT_LINE_WEIGHTS)
-        self.set_default_styles()
-
-    def set_default_styles(self) -> None:
-        for index in range(STYLE_COUNT):
-            self._set_style(UserStyle(index))
-
-    @staticmethod
-    def check_color_index(dxf_color_index: int) -> int:
-        if 0 < dxf_color_index < 256:
-            return dxf_color_index
-        raise IndexError('color index has to be in the range [1 .. 255].')
-
-    def iter_styles(self) -> Iterable[UserStyle]:
-        return (style for style in self.styles[1:])
-
-    def _set_style(self, style: UserStyle) -> None:
-        style.parent = self
-        self.styles[style.get_dxf_color_index()] = style
-
-    def set_style(self, dxf_color_index: int, data: dict = None) -> UserStyle:
-        """
-        Set <dxf_color_index> to new attributes defined in init_dict.
-
-        """
-        dxf_color_index = self.check_color_index(dxf_color_index)
-        # ctb table index is dxf_color_index - 1
-        # ctb table starts with index 0, where dxf_color_index=0 means BYBLOCK
-        style = UserStyle(dxf_color_index - 1, data)
-        self._set_style(style)
-        return style
-
-    def get_style(self, dxf_color_index: int) -> UserStyle:
-        """
-        Get style for <dxf_color_index>.
-
-        """
-        dxf_color_index = self.check_color_index(dxf_color_index)
-        return self.styles[dxf_color_index]
-
-    def get_color(self, dxf_color_index: int) -> Optional[Tuple[int, int, int, int]]:
-        """
-        Get rgb-color-tuple for <dxf_color_index> or None if not specified.
-
-        """
-        style = self.get_style(dxf_color_index)
-        return style.get_color()
-
-    def get_lineweight(self, dxf_color_index: int):
-        """
-        Returns the assigned lineweight for <dxf_color_index> in mm.
-
-        """
-        style = self.get_style(dxf_color_index)
-        lineweight = style.get_lineweight()
-        if lineweight == 0.0:
-            return None
-        else:
-            return lineweight
 
     def get_lineweight_index(self, lineweight: float) -> int:
-        """
-        Get index of lineweight in the lineweight table or append lineweight to lineweight table.
-
-        """
+        """ Get index of `lineweight` in the lineweight table or append `lineweight` to lineweight table. """
         try:
             return self.lineweights.index(lineweight)
         except ValueError:
             self.lineweights.append(lineweight)
             return len(self.lineweights) - 1
 
-    def set_table_lineweight(self, index: int, weight: float) -> int:
+    def set_table_lineweight(self, index: int, lineweight: float) -> int:
         """
-        Index is the lineweight table index, not the dxf color index.
+        Argument `index` is the lineweight table index, not the :ref:`ACI`.
 
-        :param int index: lineweight table index = UserStyle.lineweight
-        :param float weight: in millimeters
+        Args:
+            index: lineweight table index = :attr:`PlotStyle.lineweight`
+            lineweight: in millimeters
 
         """
         try:
-            self.lineweights[index] = weight
+            self.lineweights[index] = lineweight
             return index
         except IndexError:
-            self.lineweights.append(weight)
+            self.lineweights.append(lineweight)
             return len(self.lineweights) - 1
 
     def get_table_lineweight(self, index: int) -> float:
         """
-        Returns lineweight in millimeters.
+        Returns lineweight in millimeters of lineweight table entry `index`.
 
-        :param int index: lineweight table index = UserStyle.lineweight
-        :returns: lineweight in mm or 0.0 for use entity lineweight
+        Args:
+            index: lineweight table index = :attr:`PlotStyle.lineweight`
+
+        Returns:
+            lineweight in mm or ``0.0`` for use entity lineweight
 
         """
         return self.lineweights[index]
 
     def save(self, filename: str) -> None:
-        """
-        Save ctb-file to <filename>.
-
-        """
+        """ Save CTB or STB file as `filename` to the file system. """
         with open(filename, 'wb') as stream:
             self.write(stream)
 
-    def write(self, stream: BinaryIO):
-        """
-        Create and compress the ctb-file to <stream>.
-
-        """
+    def write(self, stream: BinaryIO) -> None:
+        """ Compress and write the CTB or STB file to binary `stream`. """
         memfile = StringIO()
         self.write_content(memfile)
         memfile.write(chr(0))  # end of file
         body = memfile.getvalue()
         memfile.close()
-        self._compress(stream, body)
+        _compress(stream, body)
 
+    @abstractmethod
     def write_content(self, stream: TextIO) -> None:
-        """
-        Write the ctb-file to <fileobj>.
-
-        """
-        self._write_header(stream)
-        self._write_aci_table(stream)
-        self._write_ctb_plot_styles(stream)
-        self._write_lineweights(stream)
-
-    def _write_header(self, stream: TextIO) -> None:
-        """
-        Write header values of ctb-file to <stream>.
-
-        """
-        stream.write('description="%s\n' % self.description)
-        stream.write('aci_table_available=TRUE\n')
-        stream.write('scale_factor=%.1f\n' % self.scale_factor)
-        stream.write('apply_factor=%s\n' % str(self.apply_factor).upper())
-        stream.write('custom_lineweight_display_units=%s\n' % str(
-            self.custom_lineweight_display_units))
-
-    def _write_aci_table(self, stream: TextIO) -> None:
-        """
-        Write autocad color index table to ctb-file <stream>.
-
-        """
-        stream.write('aci_table{\n')
-        for style in self.iter_styles():
-            index = style.index
-            stream.write(' %d="%s\n' % (index, color_name(index)))
-        stream.write('}\n')
-
-    def _write_ctb_plot_styles(self, stream: TextIO) -> None:
-        """
-        Write user styles to ctb-file <stream>.
-
-        """
-        stream.write('plot_style{\n')
-        for style in self.iter_styles():
-            style.write(stream)
-        stream.write('}\n')
+        pass
 
     def _write_lineweights(self, stream: TextIO) -> None:
-        """
-        Write custom lineweights table to ctb-file <stream>.
-
-        """
+        """ Write custom lineweight table to text `stream`. """
         stream.write('custom_lineweight_table{\n')
         for index, weight in enumerate(self.lineweights):
             stream.write(' %d=%.2f\n' % (index, weight))
         stream.write('}\n')
 
     def parse(self, text: str) -> None:
-        """
-        Parse and get values of plot styles from <text>.
-
-        """
+        """ Parse plot styles from CTB string `text`. """
 
         def set_lineweights(lineweights):
             if lineweights is None:
@@ -420,73 +313,265 @@ class UserStyles:
             for key, value in lineweights.items():
                 self.lineweights[int(key)] = float(value)
 
-        def set_styles(styles):
-            for index, style in styles.items():
-                style = UserStyle(index, style)
-                self._set_style(style)
-
-        parser = CtbParser(text)
+        parser = PlotStyleFileParser(text)
         self.description = parser.get('description', "")
         self.scale_factor = float(parser.get('scale_factor', 1.0))
         self.apply_factor = get_bool(parser.get('apply_factor', True))
         self.custom_lineweight_display_units = int(
             parser.get('custom_lineweight_display_units', 0))
         set_lineweights(parser.get('custom_lineweight_table', None))
-        set_styles(parser.get('plot_style', {}))
+        self.load_styles(parser.get('plot_style', {}))
 
-    def _compress(self, stream: BinaryIO, body: str):
+    @abstractmethod
+    def load_styles(self, styles):
+        pass
+
+
+class ColorDependentPlotStyles(PlotStyleTable):
+    def __init__(self, description: str = '', scale_factor: float = 1.0, apply_factor: bool = False):
+        super().__init__(description, scale_factor, apply_factor)
+        self._styles = [PlotStyle(index, parent=self) for index in range(STYLE_COUNT)]  # type: List[PlotStyle]
+        self._styles.insert(0, PlotStyle(256))  # 1-based array: insert dummy value for index 0
+
+    def __getitem__(self, aci: int) -> PlotStyle:
+        """ Returns :class:`PlotStyle` for `aci`. """
+        if 0 < aci < 256:
+            return self._styles[aci]
+        else:
+            raise IndexError(aci)
+
+    def __setitem__(self, aci: int, style: PlotStyle):
+        """ Set plot `style` for `aci`. """
+        if 0 < aci < 256:
+            style.parent = self
+            self._styles[aci] = style
+        else:
+            raise IndexError(aci)
+
+    def __iter__(self) -> Iterable[PlotStyle]:
+        """ Iterable of all plot styles. """
+        return iter(self._styles[1:])
+
+    def new_style(self, aci: int, data: dict = None) -> PlotStyle:
+        """ Set `aci` to new attributes defined by `data` dict.
+
+        Args:
+            aci: :ref:`ACI`
+            data: ``dict`` of :class:`PlotStyle` attributes: description, color, physical_pen_number,
+                  virtual_pen_number, screen, linepattern_size, linetype, adaptive_linetype,
+                  lineweight, end_style, join_style, fill_style
+
         """
-        Compress ctb-file-body and write it to <stream>.
+        # ctb table index = aci - 1
+        # ctb table starts with index 0, where aci == 0 means BYBLOCK
+        style = PlotStyle(aci - 1, data)
+        self[aci] = style
+        return style
+
+    def get_lineweight(self, aci: int):
+        """ Returns the assigned lineweight for :class:`PlotStyle` `aci` in millimeter. """
+        style = self[aci]
+        lineweight = style.get_lineweight()
+        if lineweight == 0.0:
+            return None
+        else:
+            return lineweight
+
+    def write_content(self, stream: TextIO) -> None:
+        """ Write the CTB-file to text `stream`. """
+        self._write_header(stream)
+        self._write_aci_table(stream)
+        self._write_plot_styles(stream)
+        self._write_lineweights(stream)
+
+    def _write_header(self, stream: TextIO) -> None:
+        """ Write header values of CTB-file to text `stream`. """
+        stream.write('description="%s\n' % self.description)
+        stream.write('aci_table_available=TRUE\n')
+        stream.write('scale_factor=%.1f\n' % self.scale_factor)
+        stream.write('apply_factor=%s\n' % str(self.apply_factor).upper())
+        stream.write('custom_lineweight_display_units=%s\n' % str(
+            self.custom_lineweight_display_units))
+
+    def _write_aci_table(self, stream: TextIO) -> None:
+        """ Write AutoCAD Color Index table to text `stream`. """
+        stream.write('aci_table{\n')
+        for style in self:
+            index = style.index
+            stream.write(' %d="%s\n' % (index, color_name(index)))
+        stream.write('}\n')
+
+    def _write_plot_styles(self, stream: TextIO) -> None:
+        """ Write user styles to text `stream`. """
+        stream.write('plot_style{\n')
+        for style in self:
+            style.write(stream)
+        stream.write('}\n')
+
+    def load_styles(self, styles):
+        for index, style in styles.items():
+            index = int(index)
+            style = PlotStyle(index, style)
+            aci = index + 1
+            self[aci] = style
+
+
+class NamedPlotStyles(PlotStyleTable):
+    def __init__(self, description: str = '', scale_factor: float = 1.0, apply_factor: bool = False):
+        super().__init__(description, scale_factor, apply_factor)
+        normal = PlotStyle(0, data={
+            'name': 'Normal',
+            'localized_name': 'Normal',
+        })
+        self._styles = {'Normal': normal}  # type: Dict[str, PlotStyle]
+
+    def __iter__(self) -> Iterable[str]:
+        """ Iterable of all plot style names. """
+        return self.keys()
+
+    def __getitem__(self, name: str) -> PlotStyle:
+        """ Returns :class:`PlotStyle` by `name`. """
+        return self._styles[name]
+
+    def __delitem__(self, name: str) -> None:
+        """ Delete plot style `name`. Plot style ``'Normal'`` is not deletable. """
+        if name != 'Normal':
+            del self._styles[name]
+        else:
+            raise ValueError("Can't delete plot style 'Normal'. ")
+
+    def keys(self) -> Iterable[str]:
+        """ Iterable of all plot style names. """
+        keys = set(self._styles.keys())
+        keys.discard('Normal')
+        result = ['Normal']
+        result.extend(sorted(keys))
+        return iter(result)
+
+    def items(self) -> Iterable[Tuple[str, PlotStyle]]:
+        """ Iterable of all plot styles as (``name``, class:`PlotStyle`) tuples. """
+        for key in self.keys():
+            yield key, self._styles[key]
+
+    def values(self) -> Iterable[PlotStyle]:
+        """ Iterable of all class:`PlotStyle` objects. """
+        for key, value in self.items():
+            yield value
+
+    def new_style(self, name: str, localized_name: str = None, data: dict = None) -> PlotStyle:
+        """ Create new class:`PlotStyle` `name` by attribute dict `data`, replaces existing class:`PlotStyle` objects.
+
+        Args:
+            name: plot style name
+            localized_name: localized plot style name, uses `name` if ``None``
+            data: ``dict`` of :class:`PlotStyle` attributes: description, color, physical_pen_number,
+                  virtual_pen_number, screen, linepattern_size, linetype, adaptive_linetype,
+                  lineweight, end_style, join_style, fill_style
 
         """
+        data = data or {}
+        data['name'] = name
+        data['localized_name'] = localized_name or name
+        index = len(self._styles)
+        style = PlotStyle(index, data)
+        self._styles[name] = style
+        return style
 
-        def writestr(s):
-            stream.write(s.encode())
+    def get_lineweight(self, name: str):
+        """ Returns the assigned lineweight for :class:`PlotStyle` `name` in millimeter. """
+        style = self[name]
+        lineweight = style.get_lineweight()
+        if lineweight == 0.0:
+            return None
+        else:
+            return lineweight
 
-        body = body.encode()
-        comp_body = zlib.compress(body)
-        adler_chksum = zlib.adler32(comp_body)
-        writestr('PIAFILEVERSION_2.0,CTBVER1,compress\r\npmzlibcodec')
-        stream.write(pack('LLL', adler_chksum, len(body), len(comp_body)))
-        stream.write(comp_body)
+    def write_content(self, stream: TextIO) -> None:
+        """ Write the STB-file to text `stream`. """
+        self._write_header(stream)
+        self._write_plot_styles(stream)
+        self._write_lineweights(stream)
+
+    def _write_header(self, stream: TextIO) -> None:
+        """ Write header values of CTB-file to text `stream`. """
+        stream.write('description="%s\n' % self.description)
+        stream.write('aci_table_available=FALSE\n')
+        stream.write('scale_factor=%.1f\n' % self.scale_factor)
+        stream.write('apply_factor=%s\n' % str(self.apply_factor).upper())
+        stream.write('custom_lineweight_display_units=%s\n' % str(
+            self.custom_lineweight_display_units))
+
+    def _write_plot_styles(self, stream: TextIO) -> None:
+        """ Write user styles to text `stream`. """
+        stream.write('plot_style{\n')
+        for index, style in enumerate(self.values()):
+            style.index = index
+            style.write(stream)
+        stream.write('}\n')
+
+    def load_styles(self, styles):
+        for index, style in styles.items():
+            index = int(index)
+            style = PlotStyle(index, style)
+            self._styles[style.name] = style
 
 
-def read(stream: BinaryIO) -> UserStyles:
-    """
-    Read a ctb-file from the file-like object <stream>.
-
-    """
+def _read_ctb(stream: BinaryIO) -> ColorDependentPlotStyles:
+    """ Read a CTB-file from from binary `stream`. """
     content = _decompress(stream)
     content = content.decode()
-    styles = UserStyles()
+    styles = ColorDependentPlotStyles()
     styles.parse(content)
     return styles
 
 
-def load(filename: str) -> UserStyles:
-    """
-    Load the ctb-file <filename>.
+def _read_stb(stream: BinaryIO) -> NamedPlotStyles:
+    """ Read a STB-file from from binary `stream`. """
+    content = _decompress(stream)
+    content = content.decode()
+    styles = NamedPlotStyles()
+    styles.parse(content)
+    return styles
 
-    """
+
+def load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
+    """ Load the CTB or STB file `filename` from file system. """
+
     with open(filename, 'rb') as stream:
-        ctbfile = read(stream)
-    return ctbfile
+        if filename.lower().endswith('.ctb'):
+            table = _read_ctb(stream)
+        elif filename.lower().endswith('.stb'):
+            table = _read_stb(stream)
+        else:
+            raise ValueError('Invalid file type: "{}"'.format(filename))
+    return table
 
 
 def _decompress(stream: BinaryIO) -> bytes:
-    """
-    Read and decompress the file content of the file-like object <stream>.
-
-    """
+    """ Read and decompress the file content from binray `stream`. """
     content = stream.read()
     data = zlib.decompress(content[60:])  # type: bytes
     return data[:-1]  # truncate trailing \nul
 
 
-class CtbParser:
+def _compress(stream: BinaryIO, content: str):
+    """ Compress `content` and write to binary `stream`. """
+
+    def writestr(s):
+        stream.write(s.encode())
+
+    content = content.encode()
+    comp_body = zlib.compress(content)
+    adler_chksum = zlib.adler32(comp_body)
+    writestr('PIAFILEVERSION_2.0,CTBVER1,compress\r\npmzlibcodec')
+    stream.write(pack('LLL', adler_chksum, len(content), len(comp_body)))
+    stream.write(comp_body)
+
+
+class PlotStyleFileParser:
     """
-    A very simple ctb-file parser. Ctb-files are created by programs, so the file structure should be correct
-    in the most cases.
+    A very simple CTB/STB file parser. CTB/STB files are created by applications, so the file structure should be
+    correct in the most cases.
 
     """
 
@@ -496,7 +581,7 @@ class CtbParser:
 
         """
         self.data = {}
-        for element, value in CtbParser.iteritems(text):
+        for element, value in PlotStyleFileParser.iteritems(text):
             self.data[element] = value
 
     @staticmethod
@@ -571,22 +656,8 @@ class CtbParser:
         return self.data.get(name, default)
 
 
-# color_type: (thx to Rammi)
-# Take color from layer, ignore other bytes.
-COLOR_BY_LAYER = 0xc0
-# Take color from insertion, ignore other bytes
-COLOR_BY_BLOCK = 0xc1
-# RGB value, other bytes are R,G,B.
-COLOR_RGB = 0xc2
-# ACI, AutoCAD color index, other bytes are 0,0,index
-COLOR_ACI = 0xc3
-
-
 def int2color(color: int) -> Tuple[int, int, int, int]:
-    """
-    Convert color integer value from ctb-file to rgb-tuple plus a magic number.
-
-    """
+    """ Convert color integer value from CTB-file to ``(r, g, b, color_type) tuple. """
     # Take color from layer, ignore other bytes.
     color_type = (color & 0xff000000) >> 24
     red = (color & 0xff0000) >> 16
@@ -596,16 +667,10 @@ def int2color(color: int) -> Tuple[int, int, int, int]:
 
 
 def mode_color2int(red: int, green: int, blue: int, color_type=COLOR_RGB) -> int:
-    """
-    Convert rgb-tuple to an int value.
-
-    """
+    """ Convert mode_color (r, g, b, color_type) tuple to integer. """
     return -color2int(red, green, blue, color_type)
 
 
 def color2int(red: int, green: int, blue: int, color_type: int) -> int:
-    """
-    Convert rgb-tuple to an int value.
-
-    """
+    """ Convert color (r, g, b, color_type) to integer. """
     return -((color_type << 24) + (red << 16) + (green << 8) + blue) & 0xffffffff

@@ -14,6 +14,7 @@ for c in range(0x41, 0x5F):
 
 
 def decode(text_lines: Iterable[str]) -> Iterable[str]:
+    """ Decode the Standard :term:`ACIS` Text (SAT) format "encrypted" by AutoCAD. """
     def _decode(text):
         dectab = _decode_table  # fast local var
         s = []
@@ -42,6 +43,7 @@ for c in range(0x41, 0x5F):
 
 
 def encode(text_lines: Iterable[str]) -> Iterable[str]:
+    """ Encode the Standard :term:`ACIS` Text (SAT) format by AutoCAD "encryption" algorithm. """
     def _encode(text):
         s = []
         enctab = _encode_table  # fast local var

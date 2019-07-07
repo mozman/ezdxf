@@ -19,9 +19,9 @@ Some handy tool functions used internally by ``ezdxf``.
 
 .. autofunction:: hexstr_to_bytes
 
-.. autofunction:: hexstr_data_to_bytes
+.. autofunction:: hex_strings_to_bytes
 
-.. autofunction:: byte_to_hexstr
+.. autofunction:: int_to_hexstr
 
 .. autofunction:: bytes_to_hexstr
 
@@ -32,3 +32,10 @@ Some handy tool functions used internally by ``ezdxf``.
 .. autofunction:: rgb2int
 
 .. autofunction:: aci2rgb
+
+SAT Format "Encryption"
+-----------------------
+
+.. autofunction:: ezdxf.tools.crypt.encode
+
+.. autofunction:: ezdxf.tools.crypt.decode
