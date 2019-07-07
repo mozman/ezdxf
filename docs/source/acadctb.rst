@@ -172,15 +172,15 @@ PlotStyle
 
     .. attribute:: end_style
 
-        Line end cap style, see table below, default is:attr:`ENDSTYLE_OBJECT`
+        Line end cap style, see table below, default is :attr:`END_STYLE_OBJECT`
 
     .. attribute:: join_style
 
-        Line join style, see table below, default is:attr:`JOINSTYLE_OBJECT`
+        Line join style, see table below, default is :attr:`JOIN_STYLE_OBJECT`
 
     .. attribute:: fill_style
 
-        Line fill style, see table below, default is:attr:`FILL_STYLE_OBJECT`
+        Line fill style, see table below, default is :attr:`FILL_STYLE_OBJECT`
 
     .. autoattribute:: dithering
 
@@ -237,6 +237,9 @@ Predefined Values
 Line End Style
 --------------
 
+.. image:: gfx/ctb_line_end_style.png
+   :align: center
+
 =========================== =================================
 END_STYLE_BUTT               ``0``
 END_STYLE_SQUARE             ``1``
@@ -248,6 +251,9 @@ END_STYLE_OBJECT             ``4``
 Line Join Style
 ---------------
 
+.. image:: gfx/ctb_line_join_style.png
+   :align: center
+
 =========================== =================================
 JOIN_STYLE_MITER             ``0``
 JOIN_STYLE_BEVEL             ``1``
@@ -258,6 +264,9 @@ JOIN_STYLE_OBJECT            ``5``
 
 Fill Style
 ----------
+
+.. image:: gfx/ctb_line_fill_style.png
+   :align: center
 
 =========================== =================================
 FILL_STYLE_SOLID            ``64``
@@ -271,6 +280,54 @@ FILL_STYLE_SQUARE_DOTS      ``71``
 FILL_STYLE_VERICAL_BARS     ``72``
 FILL_STYLE_OBJECT           ``73``
 =========================== =================================
+
+Linetypes
+---------
+
+.. image:: gfx/ctb_linetypes_1.png
+   :align: center
+
+.. image:: gfx/ctb_linetypes_2.png
+   :align: center
+
+=================================== ====================
+Linetype name                       Value
+=================================== ====================
+Solid                               0
+Dashed                              1
+Dotted                              2
+Dash Dot                            3
+Short Dash                          4
+Medium Dash                         5
+Long Dash                           6
+Short Dash x2                       7
+Medium Dash x2                      8
+Long Dash x2                        9
+Medium Lang Dash                    10
+Medium Dash Short Dash Short Dash   11
+Long Dash Short Dash                12
+Long Dash Dot Dot                   13
+Long Dash Dot                       14
+Medium Dash Dot Short Dash Dot      15
+Sparse Dot                          16
+ISO Dash                            17
+ISO Dash Space                      18
+ISO Long Dash Dot                   19
+ISO Long Dash Double Dot            20
+ISO Long Dash Triple Dot            21
+ISO Dot                             22
+ISO Long Dash Short Dash            23
+ISO Long Dash Double Short Dash     24
+ISO Dash Dot                        25
+ISO Double Dash Dot                 26
+ISO Dash Double Dot                 27
+ISO Double Dash Double Dot          28
+ISO Dash Triple Dot                 29
+ISO Double Dash Triple Dot          30
+Use entity linetype                 31
+=================================== ====================
+
+
 
 .. _install: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/sfdcarticles/sfdcarticles/How-to-insert-a-CTB-or-STB-file-from-another-end-user-in-your-DWG-file.html
 

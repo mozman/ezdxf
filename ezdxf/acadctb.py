@@ -36,6 +36,7 @@ FILL_STYLE_OBJECT = 73
 
 DITHERING_ON = 1  # bit coded color_policy
 GRAYSCALE_ON = 2  # bit coded color_policy
+NAMED_COLOR = 4  # bit coded color_policy
 
 AUTOMATIC = 0
 OBJECT_LINEWEIGHT = 0
@@ -86,7 +87,7 @@ COLOR_BY_BLOCK = 0xc1
 # RGB value, other bytes are R,G,B.
 COLOR_RGB = 0xc2
 
-# ACI, AutoCAD color index, other bytes are 0,0,index
+# ACI, AutoCAD color index, other bytes are 0,0,index ???
 COLOR_ACI = 0xc3
 
 
@@ -117,6 +118,7 @@ class PlotStyle:
         # do not set _color, _mode_color or _color_policy directly
         # use set_color() method, and the properties dithering and grayscale
         self._color = int(data.get('color', OBJECT_COLOR))
+        self._color_type = COLOR_RGB
         if self._color != OBJECT_COLOR:
             self._mode_color = int(data.get('mode_color', self._color))
         self._color_policy = int(data.get('color_policy', DITHERING_ON))
@@ -149,8 +151,19 @@ class PlotStyle:
         # color_type = COLOR_RGB (0xC2) as highest byte, the `color` value calculated for a user-color is not a
         # (r, g, b) tuple and has color_type = COLOR_ACI (0xC3) (sometimes), set for `color` the same value as for
         # `mode_color`, because AutoCAD corrects the `color` value by itself.
-        self._mode_color = mode_color2int(r, g, b)
+        self._mode_color = mode_color2int(r, g, b, color_type=self._color_type)
         self._color = self._mode_color
+
+    @property
+    def color_type(self):
+        if self.has_object_color():
+            return None  # object color
+        else:
+            return self._color_type
+
+    @color_type.setter
+    def color_type(self, value: int):
+        self._color_type = value
 
     def set_object_color(self) -> None:
         """ Set color to object color. """
@@ -203,6 +216,17 @@ class PlotStyle:
             self._color_policy |= GRAYSCALE_ON
         else:
             self._color_policy &= ~GRAYSCALE_ON
+
+    @property
+    def named_color(self) -> bool:
+        return bool(self._color_policy & NAMED_COLOR)
+
+    @named_color.setter
+    def named_color(self, status: bool) -> None:
+        if status:
+            self._color_policy |= NAMED_COLOR
+        else:
+            self._color_policy &= ~NAMED_COLOR
 
     def write(self, stream: TextIO) -> None:
         """ Write style data to file-like object `stream`. """
@@ -364,7 +388,8 @@ class ColorDependentPlotStyles(PlotStyleTable):
         """
         # ctb table index = aci - 1
         # ctb table starts with index 0, where aci == 0 means BYBLOCK
-        style = PlotStyle(aci - 1, data)
+        style = PlotStyle(index=aci - 1, data=data)
+        style.color_type = COLOR_RGB
         self[aci] = style
         return style
 
@@ -412,6 +437,7 @@ class ColorDependentPlotStyles(PlotStyleTable):
         for index, style in styles.items():
             index = int(index)
             style = PlotStyle(index, style)
+            style.color_type = COLOR_RGB
             aci = index + 1
             self[aci] = style
 
@@ -458,22 +484,26 @@ class NamedPlotStyles(PlotStyleTable):
         for key, value in self.items():
             yield value
 
-    def new_style(self, name: str, localized_name: str = None, data: dict = None) -> PlotStyle:
+    def new_style(self, name: str, data: dict = None, localized_name: str = None) -> PlotStyle:
         """ Create new class:`PlotStyle` `name` by attribute dict `data`, replaces existing class:`PlotStyle` objects.
 
         Args:
             name: plot style name
-            localized_name: localized plot style name, uses `name` if ``None``
+            localized_name: name shown in plot style editor, uses `name` if ``None``
             data: ``dict`` of :class:`PlotStyle` attributes: description, color, physical_pen_number,
                   virtual_pen_number, screen, linepattern_size, linetype, adaptive_linetype,
                   lineweight, end_style, join_style, fill_style
 
         """
+        if name.lower() == 'Normal':
+            raise ValueError("Can't replace or modify plot style 'Normal'. ")
         data = data or {}
         data['name'] = name
         data['localized_name'] = localized_name or name
         index = len(self._styles)
-        style = PlotStyle(index, data)
+        style = PlotStyle(index=index, data=data, parent=self)
+        style.color_type = COLOR_ACI
+        style.named_color = True
         self._styles[name] = style
         return style
 
@@ -513,6 +543,7 @@ class NamedPlotStyles(PlotStyleTable):
         for index, style in styles.items():
             index = int(index)
             style = PlotStyle(index, style)
+            style.color_type = COLOR_ACI
             self._styles[style.name] = style
 
 
