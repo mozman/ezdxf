@@ -66,7 +66,7 @@ Group Code        Meaning
 1                 The primary text value for an entity
 2                 A name: Attribute tag, Block name, and so on. Also used to identify a DXF section or table name.
 3-4               Other textual or name values
-5                 Entity handle expressed as a hex string (fixed)
+5                 Entity handle as hex string (fixed)
 6                 Line type name (fixed)
 7                 Text style name (fixed)
 8                 Layer name (fixed)
@@ -87,11 +87,20 @@ Group Code        Meaning
 50-58             Angles in degree
 62                Color number (fixed)
 66                "Entities follow" flag (fixed), only in INSERT and POLYLINE entities
-67                Identifies whether entity is in modelspace or paperspace
+67                Identifies whether entity is in modelspace (0) or paperspace (1)
 68                Identifies whether viewport is on but fully off screen, is not active, or is off
 69                Viewport identification number
 70-78             Integer values such as repeat counts, flag bits, or modes
 210, 220, 230     X, Y, and Z components of extrusion direction (fixed)
+310               Proxy entity graphics as binary encoded data
+330               Owner handle as hex string
+347               MATERIAL handle as hex string
+348               VISUALSTYLE  handle as hex string
+370               Lineweight in mm times 100 (e.g. 0.13mm = 13).
+390               PLOTSTYLE handle as hex string
+420               True color value as 0x00RRGGBB 24-bit value
+430               Color name as string
+440               Transparency value 0x020000TT 0 = fully transparent / 255 = opaque
 999               Comments
 ================= =======
 
@@ -115,7 +124,7 @@ Group Code        Description
 1000              Strings in extended data can be up to 255 bytes long (with the 256th byte reserved
                   for the null character)
 1001              (fixed) Registered application name (ASCII string up to 31 bytes long) for XDATA
-1002              (fixed) An extended data control string can be either “{”or “}”.
+1002              (fixed) An extended data control string can be either ``'{'`` or ``'}'``.
                   These braces enable applications to organize their data by subdividing
                   the data into lists. Lists can be nested.
 1003              Name of the layer associated with the extended data
@@ -155,7 +164,7 @@ Within an application group, the sequence of extended data groups and their mean
 
 .. _String Value Encoding:
 
-String Value Encoding
+String value encoding
 ---------------------
 
 String values stored in a DXF file is plain ASCII or UTF-8, AutoCAD also supports CIF (Common Interchange Format) and MIF
@@ -163,9 +172,8 @@ String values stored in a DXF file is plain ASCII or UTF-8, AutoCAD also support
 
 ezdxf on import converts all strings into Python unicode strings without encoding or decoding CIF/MIF.
 
-String values containing Unicode characters are represented with control character sequences.
-
-For example, 'TEST\U+7F3A\U+4E4F\U+89E3\U+91CA\U+6B63THIS\U+56FE'
+String values containing Unicode characters are represented with control character sequences ``\U+nnnn``.
+(e.g. ``r'TEST\U+7F3A\U+4E4F\U+89E3\U+91CA\U+6B63THIS\U+56FE'``)
 
 To support the DXF unicode encoding ezdxf registers an encoding codec `dxf_backslash_replace`, defined in
 :func:`ezdxf.lldxf.encoding`.
@@ -180,11 +188,11 @@ String values can be stored with these dxf group codes:
 - 470 - 479
 - 999 - 1003
 
-Multi Tag Text (MTEXT)
+Multi tag text (MTEXT)
 ----------------------
 
 If the text string is less than 250 characters, all characters appear in tag :code:`(1, ...)`. If the text string is
-greater than 250 characters, the string is divided into 250-character chunks, which appear in one or more
+longer than 250 characters, the string is divided into 250-character chunks, which appear in one or more
 :code:`(3, ...)` tags. If :code:`(3, ...)` tags are used, the last group is a :code:`(1, ...)` tag and has fewer than
 250 characters:
 
@@ -205,7 +213,7 @@ As far I know this is only supported by the MTEXT entity.
 
 .. _Tag Structure DXF R13 and later:
 
-Tag Structure DXF R13 and later
+DXF R13 and later tag structure
 -------------------------------
 
 With the introduction of DXF R13 Autodesk added additional group codes and DXF tag structures to the DXF Standard.
@@ -217,7 +225,7 @@ Subclass markers :code:`(100, Subclass Name)` divides DXF objects into several s
 in different sections. A subclass ends with the following subclass marker or at the beginning of xdata or the end of the
 object. See `Subclass Marker Example`_ in the DXF Reference.
 
-Quote About Group Codes from the DXF Reference
+Quote about group codes from the DXF reference
 ----------------------------------------------
 
     Some group codes that define an entity always appear; others are optional and appear only if their values differ
@@ -231,16 +239,16 @@ Quote About Group Codes from the DXF Reference
     in an entity. With each new AutoCAD release, new group codes will be added to entities to accommodate additional
     features.
 
-Usage of Group Codes in Subclasses Twice
+Usage of group codes in subclasses twice
 ----------------------------------------
 
 Some later entities entities contains the same group code twice for different purposes, so order in the sense of which
 one comes first is important. (e.g. ATTDEF group code 280)
 
-Tag Order is Sometimes Important Especially for AutoCAD
+Tag order is sometimes important especially for AutoCAD
 -------------------------------------------------------
 
-In `LWPOLYLINE` the order of tags is important, if the `count` tag is not the first tag in the `AcDbPolyline` subclass,
+In LWPOLYLINE the order of tags is important, if the `count` tag is not the first tag in the AcDbPolyline subclass,
 AutoCAD will not close the polyline when the `close` flag is set, by the way other applications like BricsCAD ignores
 the tag order and renders the polyline always correct.
 

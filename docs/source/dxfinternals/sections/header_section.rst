@@ -3,7 +3,7 @@
 HEADER Section
 ==============
 
-In DXF R12 an prior the HEADER section was optional, but since DXF R13 the HEADER section is mandatory. The overall
+In DXF R12 and prior the HEADER section was optional, but since DXF R13 the HEADER section is mandatory. The overall
 structure is:
 
 .. code-block:: none

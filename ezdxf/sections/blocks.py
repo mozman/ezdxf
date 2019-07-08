@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Union, Sequence, List
+from typing import TYPE_CHECKING, Iterable, Union, Sequence, List, cast
 import logging
 
 from ezdxf.lldxf.const import DXFStructureError, DXFAttributeError, DXFBlockInUseError, DXFTableEntryError, DXFKeyError
@@ -76,13 +76,13 @@ class BlocksSection:
         """
 
         def load_block_record(block_entities: Sequence['DXFEntity']) -> 'BlockRecord':
-            block = block_entities[0]  # type: Block
-            endblk = block_entities[-1]  # type: EndBlk
+            block = cast('Block', block_entities[0])
+            endblk = cast('EndBlk', block_entities[-1])
 
             try:
-                block_record = block_records.get(block.dxf.name)  # type: BlockRecord
+                block_record = cast('BlockRecord', block_records.get(block.dxf.name))
             except DXFTableEntryError:  # special case DXF R12 - not block record exists
-                block_record = block_records.new(block.dxf.name, dxfattribs={'scale': 0})  # type: BlockRecord
+                block_record = cast('BlockRecord', block_records.new(block.dxf.name, dxfattribs={'scale': 0}))
 
             # block_record stores all the information about a block definition
             block_record.set_block(block, endblk)
@@ -128,7 +128,7 @@ class BlocksSection:
                 self.add(block_record)
 
     def add(self, block_record: 'BlockRecord') -> 'BlockLayout':
-        """ Add or replace a block layout object defined by its block record.
+        """ Add or replace a block layout object defined by its block record. (internal API)
         """
         block_layout = BlockLayout(block_record)
         block_record.block_layout = block_layout
@@ -136,35 +136,46 @@ class BlocksSection:
         return block_layout
 
     def __iter__(self) -> Iterable['BlockLayout']:
+        """ Iterable of all :class:`~ezdxf.layouts.BlockLayout` objects. """
         return (block_record.block_layout for block_record in self.block_records)
 
     def __contains__(self, name: str) -> bool:
+        """ Returns ``True`` if :class:`~ezdxf.layouts.BlockLayout` `name` exist. """
         return self.block_records.has_entry(name)
 
     def __getitem__(self, name: str) -> 'BlockLayout':
+        """ Returns :class:`~ezdxf.layouts.BlockLayout` `name`, raises :class:`DXFKeyError` if `name` not exist. """
         try:
-            block_record = self.block_records.get(name)  # type: BlockRecord
+            block_record = cast('BlockRecord', self.block_records.get(name))
             return block_record.block_layout
         except DXFTableEntryError:
             raise DXFKeyError(name)
 
     def __delitem__(self, name: str) -> None:
-        self.block_records.remove(name)
+        """ Deletes :class:`~ezdxf.layouts.BlockLayout` `name` and all of its content, raises
+        :class:`DXFKeyError` if `name` not exist.
+        """
+        if name in self:
+            self.block_records.remove(name)
+        else:
+            raise DXFKeyError(name)
 
     def get(self, name: str, default=None) -> 'BlockLayout':
+        """ Returns :class:`~ezdxf.layouts.BlockLayout` `name`, returns `default` if `name` not exist. """
         try:
             return self.__getitem__(name)
         except DXFKeyError:
             return default
 
     def get_block_layout_by_handle(self, block_record_handle: str) -> 'BlockLayout':
-        """ Returns a block layout by block record handle.
+        """ Returns a block layout by block record handle. (internal API)
         """
         block_record = self.doc.entitydb[block_record_handle]  # type: BlockRecord
         return block_record.block_layout
 
     def new(self, name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> 'BlockLayout':
-        """ Create a new named block.
+        """ Create and add a new :class:`~ezdxf.layouts.BlockLayout`, `name` is the BLOCK name, `base_point` is the
+        insertion point of the BLOCK.
         """
         block_record = self.doc.block_records.new(name)  # type: BlockRecord
 
@@ -179,12 +190,27 @@ class BlocksSection:
         return self.add(block_record)
 
     def new_anonymous_block(self, type_char: str = 'U', base_point: Sequence[float] = (0, 0)) -> 'BlockLayout':
+        """ Create and add a new anonymous :class:`~ezdxf.layouts.BlockLayout`, `type_char` is the BLOCK type,
+        `base_point` is the insertion point of the BLOCK.
+
+            ========= ==========
+            type_char Anonymous Block Type
+            ========= ==========
+            ``'U'``   ``'*U###'`` anonymous BLOCK
+            ``'E'``   ``'*E###'`` anonymous non-uniformly scaled BLOCK
+            ``'X'``   ``'*X###'`` anonymous HATCH graphic
+            ``'D'``   ``'*D###'`` anonymous DIMENSION graphic
+            ``'A'``   ``'*A###'`` anonymous GROUP
+            ``'T'``   ``'*T###'`` anonymous block for ACAD_TABLE content
+            ========= ==========
+
+        """
         blockname = self.anonymous_blockname(type_char)
         block = self.new(blockname, base_point, {'flags': const.BLK_ANONYMOUS})
         return block
 
     def anonymous_blockname(self, type_char: str) -> str:
-        """ Create name for an anonymous block.
+        """ Create name for an anonymous block. (internal API)
 
         Args:
             type_char: letter
@@ -204,8 +230,7 @@ class BlocksSection:
                 return blockname
 
     def rename_block(self, old_name: str, new_name: str) -> None:
-        """ Renames the block and the associated block record.
-        """
+        """ Rename :class:`~ezdxf.layouts.BlockLayout` `old_name` to `new_name` """
         block_record = self.block_records.get(old_name)  # type: BlockRecord
         block_record.rename(new_name)
         self.block_records.replace(old_name, block_record)
@@ -213,7 +238,7 @@ class BlocksSection:
 
     def delete_block(self, name: str, safe: bool = True) -> None:
         """
-        Delete block. If save is True, check if block is still referenced.
+        Delete block. If `save` is ``True``, check if block is still referenced.
 
         Args:
             name: block name (case insensitive)
@@ -237,7 +262,7 @@ class BlocksSection:
 
     def delete_all_blocks(self, safe: bool = True) -> None:
         """
-        Delete all blocks except layout blocks (model space or paper space). In safe mode protected blocks are ignored
+        Delete all blocks except layout blocks (modelspace or paperspace). In safe mode, protected blocks are ignored
         silently.
 
         Args:
