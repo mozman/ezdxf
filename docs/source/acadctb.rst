@@ -1,3 +1,5 @@
+.. _plot_style_files:
+
 Plot Style Files (CTB/STB)
 ==========================
 
@@ -18,6 +20,8 @@ style tables, STB files contain named plot style tables.
 .. module:: ezdxf.acadctb
 
 .. autofunction:: load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]
+
+.. autofunction:: new(table_type: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]
 
 ColorDependentPlotStyles
 ------------------------

@@ -578,6 +578,23 @@ def load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
     return table
 
 
+def new(table_type: str = 'ctb') -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
+    """ Create a new CTB or STB file.
+
+    Args:
+        table_type: color table type ``'ctb'`` for color-dependent styles or ``'stb'`` for named styles.
+
+    """
+    table_type = table_type.lower()
+    if table_type == 'ctb':
+        table = ColorDependentPlotStyles()
+    elif table_type == 'stb':
+        table = NamedPlotStyles()
+    else:
+        raise ValueError('Invalid table type "{}".'.format(table_type))
+    return table
+
+
 def _decompress(stream: BinaryIO) -> bytes:
     """ Read and decompress the file content from binray `stream`. """
     content = stream.read()
