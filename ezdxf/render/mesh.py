@@ -159,7 +159,7 @@ class MeshBuilder:
         Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
         Args:
-            layout: ezdxf :class:`~ezdxf.layouts.BaseLayout` object
+            layout: :class:`~ezdxf.layouts.BaseLayout` object
             dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
             matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
@@ -197,10 +197,8 @@ class MeshVertexMerger(MeshBuilder):
 
     def __init__(self, precision: int = 6):
         """
-        Constructor
-
         Args:
-            precision: floating point precision for vertices
+            precision: floating point precision for vertex rounding
 
         """
         super().__init__()

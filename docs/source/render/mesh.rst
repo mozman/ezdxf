@@ -54,11 +54,10 @@ Same functionality as :class:`MeshBuilder`, but creates meshes with unique verti
 but :class:`MeshVertexMerger` needs extra memory for bookkeeping.
 
 
-.. class:: MeshVertexMerger(precision: int = 6)
+.. class:: MeshVertexMerger
 
     Subclass of :class:`MeshBuilder`
 
-    Args:
-        precision: floating point precision for vertex rounding
+    .. automethod:: __init__
 
     .. automethod:: add_vertices
