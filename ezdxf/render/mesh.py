@@ -6,7 +6,7 @@ from ezdxf.math.vector import Vector
 from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Matrix44, GenericLayoutType
+    from ezdxf.eztypes import Vertex, Matrix44, BaseLayout
 
 
 class MeshBuilder:
@@ -22,28 +22,26 @@ class MeshBuilder:
     """
 
     def __init__(self):
-        self.vertices = []  # type: list[Vector]  # vertex storage, list of (x, y, z) tuples or Vector() objects
+        self.vertices = []  # type: List[Vector]  # vertex storage, list of (x, y, z) tuples or Vector() objects
         self.faces = []  # type: List[Sequence[int]]  # face storage, each face is a list/tuple of vertex indices (v0, v1, v2, v3, ....), AutoCAD supports ngons
-        self.edges = []  # type: list[Tuple[int, int]]  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
+        self.edges = []  # type: List[Tuple[int, int]]  # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
 
     def add_face(self, vertices: Iterable['Vertex']) -> None:
         """
-        Add a face as vertices list to the mesh. A face requires at least 3 vertices, each vertex is a (x, y, z) tuple.
-        A face is stored as index list, which means, a face does not contain the vertex itself, but the indices of the
-        vertices in the vertex list.
-
-        list [index v1, index v2, index v3, ...].
+        Add a face as vertices list to the mesh. A face requires at least 3 vertices, each vertex is a ``(x, y, z)``
+        tuple or :class:`~ezdxf.math.Vector` object. The new vertex indices are stored as face in the :attr:`faces`
+        list.
 
         Args:
-            vertices: list of at least 3 vertices [(x1, y1, z1), (x2, y2, z2), (x3, y3, y3), ...]
+            vertices: list of at least 3 vertices ``[(x1, y1, z1), (x2, y2, z2), (x3, y3, y3), ...]``
 
         """
         self.faces.append(self.add_vertices(vertices))
 
     def add_edge(self, vertices: Iterable['Vertex']) -> None:
         """
-        An edge consist of two vertices [v1, v2]. Each vertex is a (x, y, z) tuple and will be added to the mesh
-        and the resulting vertex indices will be added to the mesh edges list. The stored edge is [index v1, index v2]
+        An edge consist of two vertices ``[v1, v2]``, each vertex is a ``(x, y, z)`` tuple or a
+        :class:`~ezdxf.math.Vector` object. The new vertex indices are stored as edge in the :attr:`edges` list.
 
         Args:
             vertices: list of 2 vertices : [(x1, y1, z1), (x2, y2, z2)]
@@ -55,17 +53,19 @@ class MeshBuilder:
         else:
             raise DXFValueError('Invalid vertices count, expected two vertices.')
 
-    def add_vertices(self, vertices: Iterable['Vertex']) -> Tuple:
+    def add_vertices(self, vertices: Iterable['Vertex']) -> Sequence[int]:
         """
-        Add new vertices to the mesh.
+        Add new vertices to the mesh, each vertex is a ``(x, y, z)`` tuple or a :class:`~ezdxf.math.Vector` object,
+        returns the indices of the `vertices` added to the :attr:`vertices` list.
 
-        e.g. adding 4 vertices to an empty mesh, returns the indices (0, 1, 2, 3), adding additional 4 vertices
-        return s the indices (4, 5, 6, 7)
+        e.g. adding 4 vertices to an empty mesh, returns the indices ``(0, 1, 2, 3)``, adding additional 4 vertices
+        returns the indices ``(4, 5, 6, 7)``.
 
         Args:
-            vertices: list of vertices, vertex as (x, y, z) tuple
+            vertices: list of vertices, vertex as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` objects
 
-        Returns: a tuple of vertex indices.
+        Returns:
+            tuple: indices of the `vertices` added to the :attr:`vertices` list
 
         """
         start_index = len(self.vertices)
@@ -76,15 +76,18 @@ class MeshBuilder:
                  vertices: List[Vector] = None,
                  faces: List[Sequence[int]] = None,
                  edges: List[Tuple[int, int]] = None,
-                 mesh: 'MeshBuilder' = None) -> None:
+                 mesh=None) -> None:
         """
         Add another mesh to this mesh.
 
+        A `mesh` can be a :class:`MeshBuilder`, :class:`MeshVertexMerger` or :class:`~ezdxf.entities.Mesh` object
+        or requires the attributes :attr:`vertices`, :attr:`edges` and :attr:`faces`.
+
         Args:
-            vertices: list of vertices, a vertex is a (x, y, z)
+            vertices: list of vertices, a vertex is a ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
             faces: list of faces, a face is a list of vertex indices
             edges: list of edges, an edge is a list of vertex indices
-            mesh: another mesh entity, mesh overrides vertices, faces and edges
+            mesh: another mesh entity
 
         """
         if mesh is not None:
@@ -94,10 +97,8 @@ class MeshBuilder:
 
         if vertices is None:
             raise ValueError("Requires vertices or another mesh.")
-        if faces is None:
-            faces = []
-        if edges is None:
-            edges = []
+        faces = faces or []
+        edges = edges or []
         indices = self.add_vertices(vertices)
 
         for v1, v2 in edges:
@@ -108,12 +109,10 @@ class MeshBuilder:
 
     def transform(self, matrix: 'Matrix44') -> 'MeshBuilder':
         """
-        Transform actual mesh into a new mesh by applying the transformation matrix to vertices.
+        Transform actual mesh into a new mesh by applying the transformation `matrix` to vertices.
 
         Args:
-            matrix: 4x4 transformation matrix as Matrix44() object
-
-        Returns: new Mesh() object
+            matrix: 4x4 transformation matrix as :class:`~ezdxf.math.Matrix44` object
 
         """
         mesh = self.__class__()
@@ -128,6 +127,11 @@ class MeshBuilder:
         """
         Translate mesh inplace.
 
+        Args:
+            x: translation in x-axis
+            y: translation in y-axis
+            z: translation in z-axis
+
         """
         if isinstance(x, (float, int)):
             t = Vector(x, y, z)
@@ -140,19 +144,24 @@ class MeshBuilder:
         """
         Scale mesh inplace.
 
+        Args:
+            sx: scale factor for x-axis
+            sy: scale factor for y-axis
+            sz: scale factor for z-axis
+
         """
         self.vertices = [Vector(v[0] * sx, v[1] * sy, v[2] * sz) for v in self.vertices]
         for index, vertex in enumerate(self.vertices):
             self.vertices[index] = Vector(vertex[0] * sx, vertex[1] * sy, vertex[2] * sz)
 
-    def render(self, layout: 'GenericLayoutType', dxfattribs: dict = None, matrix: 'Matrix44' = None):
+    def render(self, layout: 'BaseLayout', dxfattribs: dict = None, matrix: 'Matrix44' = None):
         """
-        Render mesh as MESH entity into layout.
+        Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
         Args:
-            layout: ezdxf Layout() object
-            dxfattribs: dict of DXF attributes e.g. {'layer': 'mesh', 'color': 7}
-            matrix: transformation matrix, requires a .transform_vectors() method
+            layout: ezdxf :class:`~ezdxf.layouts.BaseLayout` object
+            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
+            matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
         """
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
@@ -165,7 +174,15 @@ class MeshBuilder:
             data.faces = self.faces
 
     @classmethod
-    def from_mesh(cls, other: 'MeshBuilder') -> 'MeshBuilder':
+    def from_mesh(cls, other) -> 'MeshBuilder':
+        """
+        Create new mesh from other mesh as class method.
+
+        Args:
+            other: `mesh` of type :class:`MeshBuilder`, :class:`MeshVertexMerger` or :class:`~ezdxf.entities.Mesh` or
+                   any object providing attributes :attr:`vertices`, :attr:`edges` and :attr:`faces`.
+
+        """
         mesh = cls()
         mesh.add_mesh(mesh=other)
         return mesh
@@ -176,29 +193,35 @@ class MeshVertexMerger(MeshBuilder):
     Mesh with unique vertices. Resulting meshes have no doublets, but MeshVertexMerger() needs extra memory for
     bookkeeping.
 
-    Can only create new meshes.
-
     """
 
     def __init__(self, precision: int = 6):
+        """
+        Constructor
+
+        Args:
+            precision: floating point precision for vertices
+
+        """
         super().__init__()
         self.ledger = {}
         self.precision = precision
 
     def key(self, vertex: 'Vertex') -> 'Vertex':
+        """ Returns rounded vertex. (internal API) """
         p = self.precision
         return round(vertex[0], p), round(vertex[1], p), round(vertex[2], p)
 
     def add_vertices(self, vertices: Iterable['Vertex']) -> Sequence[int]:
         """
-        Add new vertices only, if no vertex with identical x, y, z coordinates already exists, else the index of the
-        existing vertex is returned as index of the new (not added) vertex.
+        Add new `vertices` only, if no vertex with identical ``(x, y, z)`` coordinates already exist, else the index of
+        the existing vertex is returned as index of the added vertices.
 
         Args:
-            vertices: list of vertices, vertex as (x, y, z) tuple
+            vertices: list of vertices, vertex as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` objects
 
         Returns:
-            A tuples of the vertex indices.
+            tuple: indices of the `vertices` added to the :attr:`~MeshBuilder.vertices` list
 
         """
         indices = []
@@ -215,13 +238,12 @@ class MeshVertexMerger(MeshBuilder):
 
     def index(self, vertex: 'Vertex') -> int:
         """
-        Get index of vertex, raise KeyError if not found.
+        Get index of `vertex`, raise :class:`KeyError` if not found.
 
         Args:
-            vertex: (x, y, z) vertex
+            vertex: ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
 
-        Returns: index of vertex as int
-
+        (internal API)
         """
         try:
             return self.ledger[self.key(vertex)]
