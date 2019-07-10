@@ -273,7 +273,8 @@ class EulerSpiral:
             matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
-        Returns: :class:`~ezdxf.entities.Polyline`
+        Returns:
+            :class:`~ezdxf.entities.Polyline`
 
         """
         points = self.spiral.approximate(length, segments)
@@ -294,7 +295,8 @@ class EulerSpiral:
             matrix: transformation matrix as :class:`~ezdxf.math.Matrix44`
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Spline`
 
-        Returns: :class:`~ezdxf.entities.Spline`
+        Returns:
+            :class:`~ezdxf.entities.Spline`
 
         """
         spline = self.spiral.bspline(length, fit_points, degree=degree)
