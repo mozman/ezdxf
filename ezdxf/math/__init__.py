@@ -23,18 +23,18 @@ from .bbox import BoundingBox2d, BoundingBox
 
 def xround(value: float, rounding: float = 0.) -> float:
     """
-    Extended rounding.
+    Extended rounding function, argument `rounding` defines the rounding limit:
 
-    `rounding` defines the rounding limit:
-
-        - 0 = remove fraction
-        - 0.1 = round next to x.1, x.2, ... x.0
-        - 0.25 = round next to x.25, x.50, x.75 or x.00
-        - 0.5 = round next to x.5 or x.0
-        - 1. = round to a multiple of 1: remove fraction
-        - 2. = round to a multiple of 2: xxx2, xxx4, xxx6 ...
-        - 5. = round to a multiple of 5: xxx5 or xxx0
-        - 10. = round to a multiple of 10: xx10, xx20, ...
+    ======= ======================================
+    0       remove fraction
+    0.1     round next to x.1, x.2, ... x.0
+    0.25    round next to x.25, x.50, x.75 or x.00
+    0.5     round next to x.5 or x.0
+    1.0     round to a multiple of 1: remove fraction
+    2.0     round to a multiple of 2: xxx2, xxx4, xxx6 ...
+    5.0     round to a multiple of 5: xxx5 or xxx0
+    10.0    round to a multiple of 10: xx10, xx20, ...
+    ======= ======================================
 
     Args:
         value: float value to round

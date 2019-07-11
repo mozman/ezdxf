@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
 from .vector import Vector, X_AXIS, Y_AXIS, Z_AXIS
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GenericLayoutType, Vertex
+    from ezdxf.eztypes import GenericLayoutType, Vertex, BaseLayout
 
 
-def render_axis(layout: 'GenericLayoutType',
+def render_axis(layout: 'BaseLayout',
                 start: 'Vertex',
                 points: Sequence['Vertex'],
                 colors: Tuple[int, int, int] = (1, 3, 5)) -> None:
@@ -68,21 +68,21 @@ class OCS:
 
     @property
     def ux(self) -> Vector:
-        """ x unit vector """
+        """ x-axis unit vector """
         return self.matrix.ux if self.transform else X_AXIS
 
     @property
     def uy(self) -> Vector:
-        """ y unit vector """
+        """ y-axis unit vector """
         return self.matrix.uy if self.transform else Y_AXIS
 
     @property
     def uz(self) -> Vector:
-        """ z unit vector """
+        """ z-axis unit vector """
         return self.matrix.uz if self.transform else Z_AXIS
 
     def from_wcs(self, point: 'Vertex') -> 'Vertex':
-        """ Calculate object coordinates for point in world coordinates.
+        """ Calculate object coordinates for point in :ref:`WCS`.
         """
         if self.transform:
             return self.transpose.transform(point)
@@ -90,13 +90,13 @@ class OCS:
             return point
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
-        """ Translate multiple world coordinates into object coordinates (generator).
+        """ Translate multiple :ref:`WCS` coordinates into object coordinates.
         """
         for point in points:
             yield self.from_wcs(point)
 
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
-        """ Calculate world coordinates for point in object coordinates.
+        """ Calculate :ref:`WCS` coordinates for point in object coordinates.
         """
         if self.transform:
             return self.matrix.transform(point)
@@ -104,12 +104,12 @@ class OCS:
             return point
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
-        """ Translate multiple object coordinates into world coordinates (generator).
+        """ Translate multiple object coordinates into :ref:`WCS` coordinates.
         """
         for point in points:
             yield self.to_wcs(point)
 
-    def render_axis(self, layout: 'GenericLayoutType', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
+    def render_axis(self, layout: 'BaseLayout', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         """ Render axis as 3D lines into a `layout`. """
         render_axis(
             layout,
@@ -128,7 +128,7 @@ class UCS:
     Establish an User Coordinate System (:ref:`UCS`). The UCS is defined by the origin and two unit vectors for the x-,
     y- or z-axis, all axis in :ref:`WCS`. The missing axis is the cross product of the given axis.
 
-    If x- and y-axis are None: ux=(1, 0, 0), uy=(0, 1, 0), uz=(0, 0, 1).
+    If x- and y-axis are ``None``: ux = ``(1, 0, 0)``, uy = ``(0, 1, 0)``, uz = ``(0, 0, 1)``.
 
     Normalization of unit vectors is not required.
 
@@ -168,17 +168,17 @@ class UCS:
 
     @property
     def ux(self) -> Vector:
-        """ x unit vector """
+        """ x-axis unit vector """
         return self.matrix.ux
 
     @property
     def uy(self) -> Vector:
-        """ y unit vector """
+        """ y-axis unit vector """
         return self.matrix.uy
 
     @property
     def uz(self) -> Vector:
-        """ z unit vector """
+        """ z-axis unit vector """
         return self.matrix.uz
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
@@ -359,7 +359,7 @@ class UCS:
         x_axis = yz_vector.cross(z_axis)
         return UCS(origin=origin, ux=x_axis, uz=z_axis)
 
-    def render_axis(self, layout: 'GenericLayoutType', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
+    def render_axis(self, layout: 'BaseLayout', length: float = 1, colors: Tuple[int, int, int] = (1, 3, 5)):
         """ Render axis as 3D lines into a `layout`. """
         render_axis(
             layout,

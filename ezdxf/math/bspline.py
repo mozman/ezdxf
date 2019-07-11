@@ -396,18 +396,17 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
     Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
     parameter vector t:
 
-        1. method = ``uniform``, creates a uniform t vector, form 0 to 1 evenly spaced; see `uniform`_ method
-        2. method = ``distance``, creates a t vector with values proportional to the fit point distances, see `chord length`_ method
-        3. method = ``centripetal``, creates a t vector with values proportional to the fit point distances^power; see `centripetal`_ method
+        1. method = ``'uniform'``, creates a uniform t vector, form 0 to 1 evenly spaced; see `uniform`_ method
+        2. method = ``'distance'``, creates a t vector with values proportional to the fit point distances,
+           see `chord length`_ method
+        3. method = ``'centripetal'``, creates a t vector with values proportional to the
+           fit point ``distances^power``; see `centripetal`_ method
 
     Args:
-        fit_points: fit points of B-spline, as list of (x, y[, z]) tuples
+        fit_points: fit points of B-spline, as list of ``(x, y[, z])`` tuples
         degree: degree of B-spline
         method: calculation method for parameter vector t
         power: power for centripetal method
-
-
-
 
     Returns:
         :class:`~ezdxf.math.BSpline`, with :attr:`~ezdxf.math.BSpline.control_points` containing the calculated control

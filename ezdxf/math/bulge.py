@@ -15,7 +15,7 @@ def polar(p: Any, angle: float, distance: float) -> Vec2:
     Returns the point at a specified `angle` and `distance` from point `p`.
 
     Args:
-        p: point (x, y) as args accepted by Vec2()
+        p: point ``(x, y)`` as args accepted by :class:`Vec2`
         angle: angle in radians
         distance: distance
 
@@ -25,11 +25,11 @@ def polar(p: Any, angle: float, distance: float) -> Vec2:
 
 def angle(p1: Any, p2: Any) -> float:
     """
-    Returns an angle in radians of a line defined by two endpoints
+    Returns angle a line defined by two endpoints and x-axis in radians.
 
     Args:
-        p1: start point (x, y) as args accepted by Vec2()
-        p2: end point (x, y) as args accepted by Vec2()
+        p1: start point ``(x, y)`` as args accepted by :class:`Vec2`
+        p2: end point ``(x, y)`` as args accepted by :class:`Vec2`
 
     """
     return (Vec2(p2) - Vec2(p1)).angle
@@ -40,12 +40,13 @@ def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float, radius:
     Calculate bulge parameters from arc parameters.
 
     Args:
-        center: circle center point (x, y) as args accepted by Vec2()
+        center: circle center point ``(x, y)`` as args accepted by :class:`Vec2`
         start_angle: start angle in radians
         end_angle: end angle in radians
         radius: circle radius
 
-    Returns: (start_point, end_point, bulge)
+    Returns:
+        Tuple: (start_point, end_point, bulge)
 
     """
     start_point = polar(center, start_angle, radius)
@@ -60,14 +61,12 @@ def bulge_3_points(start_point: 'Vertex', end_point: 'Vertex', point: 'Vertex') 
     """
     Calculate bulge value defined by three points.
 
-    Args:
-        start_point: start point (x, y) of arc as args accepted by Vec2()
-        end_point: end point (x, y) of arc as args accepted by Vec2()
-        point: arbitrary point (x, y) on arc as args accepted by Vec2()
-
-    Returns: bulge value
-
     Based on 3-Points to Bulge by Lee Mac
+
+    Args:
+        start_point: start point ``(x, y)`` of arc as args accepted by :class:`Vec2`
+        end_point: end point ``(x, y)`` of arc as args accepted by :class:`Vec2`
+        point: arbitrary point ``(x, y)`` on arc as args accepted by :class:`Vec2`
 
     """
     a = (math.pi - angle(point, start_point) + angle(point, end_point)) / 2
@@ -81,11 +80,12 @@ def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Tu
     Based on Bulge to Arc by Lee Mac
 
     Args:
-        start_point: start vertex (x, y) as args accepted by Vec2()
-        end_point: end vertex (x, y) as args accepted by Vec2()
+        start_point: start vertex ``(x, y)`` as args accepted by :class:`Vec2`
+        end_point: end vertex ``(x, y)`` as args accepted by :class:`Vec2`
         bulge: bulge value
 
-    Returns: (center, start_angle, end_angle, radius)
+    Returns:
+        Tuple: (center, start_angle, end_angle, radius)
 
     """
     r = signed_bulge_radius(start_point, end_point, bulge)
@@ -104,11 +104,10 @@ def bulge_center(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> 'V
     Based on  Bulge Center by Lee Mac.
 
     Args:
-        start_point: start point (x, y) as args accepted by Vec2()
-        end_point: end point (x, y) as args accepted by Vec2()
+        start_point: start point ``(x, y)`` as args accepted by :class:`Vec2`
+        end_point: end point ``(x, y)`` as args accepted by :class:`Vec2`
         bulge: bulge value as float
 
-    Returns: :class:`~ezdxf.math.Vec2`
 
     """
     start_point = Vec2(start_point)
@@ -127,8 +126,8 @@ def bulge_radius(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> fl
     Based on Bulge Radius by Lee Mac
 
     Args:
-        start_point: start point (x, y) as args accepted by Vec2()
-        end_point: end point (x, y) as args accepted by Vec2()
+        start_point: start point ``(x, y)`` as args accepted by :class:`Vec2`
+        end_point: end point ``(x, y)`` as args accepted by :class:`Vec2`
         bulge: bulge value
 
     """

@@ -22,7 +22,7 @@ DOUBLE_PI = math.pi * 2.
 
 class ConstructionRay:
     """
-    Infinite construction ray.
+    Infinite 2D construction ray.
 
     Args:
         p1: definition point 1
@@ -167,8 +167,8 @@ class ConstructionRay:
 
 class ConstructionLine(ConstructionTool):
     """
-    ConstructionLine is similar to :class:`ConstructionRay`, but has a start and endpoint and therefore also an direction.
-    The direction goes from start to end, 'left of line' is always in relation to this line direction.
+    2D ConstructionLine is similar to :class:`ConstructionRay`, but has a start and endpoint and therefore also an
+    direction. The direction goes from start to end, 'left of line' is always in relation to this line direction.
 
     Args:
         start: start point of line

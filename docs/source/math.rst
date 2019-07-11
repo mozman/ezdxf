@@ -43,14 +43,50 @@ OCS Class
 ---------
 
 .. autoclass:: OCS
-    :members:
+
+    .. autoattribute:: ux
+
+    .. autoattribute:: uy
+
+    .. autoattribute:: uz
+
+    .. automethod:: from_wcs
+
+    .. automethod:: points_from_wcs
+
+    .. automethod:: to_wcs
+
+    .. automethod:: points_to_wcs
+
+    .. automethod:: render_axis
 
 
 UCS Class
 ---------
 
 .. autoclass:: UCS
-    :members:
+
+    .. autoattribute:: ux
+
+    .. autoattribute:: uy
+
+    .. autoattribute:: uz
+
+    .. automethod:: to_wcs
+
+    .. automethod:: points_to_wcs
+
+    .. automethod:: to_ocs
+
+    .. automethod:: points_to_ocs
+
+    .. automethod:: to_ocs_angle_deg
+
+    .. automethod:: to_ocs_angle_rad
+
+    .. automethod:: from_wcs
+
+    .. automethod:: points_from_wcs
 
 Vector
 ------
