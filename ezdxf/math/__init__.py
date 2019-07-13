@@ -3,7 +3,7 @@
 # Copyright (c) 2010-2019 Manfred Moitzi
 # License: MIT License
 from .construct2d import is_close_points, closest_point, convex_hull
-from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS
+from .vector import Vector, Vec2, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from .matrix44 import Matrix44
 from .matrix import Matrix
 from .bspline import bspline_control_frame, bspline_control_frame_approx

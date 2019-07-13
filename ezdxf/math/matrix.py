@@ -11,7 +11,7 @@ def zip_to_list(*args) -> Iterable[List]:
 
 class Matrix:
     """
-    Simple unoptimized Matrix math.
+    Simple unoptimized Matrix implementation.
 
     Initialization:
 
