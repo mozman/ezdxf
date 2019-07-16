@@ -238,7 +238,8 @@ def knot_open_uniform(n: int, order: int) -> List[float]:
         n: count of control points
         order: spline order
 
-    Returns: list of floats (knot vector)
+    Returns:
+        List[float]: knot vector
 
     """
     nplusc = n + order
@@ -265,7 +266,8 @@ def knot_uniform(n: int, order: int) -> List[float]:
         n: count of control points
         order: spline order
 
-    Returns: list of floats (knot vector)
+    Returns:
+        List[float]: knot vector
 
     """
     return [float(knot_value) for knot_value in range(0, n + order)]
@@ -319,7 +321,8 @@ def bspline_basis(u: float, index: int, degree: int, knots: Sequence[float]) -> 
         degree: degree of B-spline
         knots: knots vector
 
-    Returns: basis value N_i,p(u) as float
+    Returns:
+        float: basis value N_i,p(u)
 
     """
     cache = {}  # type: Dict[Tuple[int, int], float]
@@ -357,7 +360,8 @@ def bspline_basis_vector(u: float, count: int, degree: int, knots: Sequence[floa
         degree: degree of B-spline (order = degree + 1)
         knots: knot vector
 
-    Returns: basis vector as list of floats, len(basis) == count
+    Returns:
+        List[float]: basis vector, len(basis) == count
 
     """
     assert len(knots) == (count + degree + 1)
@@ -378,8 +382,6 @@ def bspline_vertex(u: float, degree: int, control_points: Sequence['Vertex'], kn
         degree: degree of B-spline (order = degree + 1)
         control_points: control points as list of (x, y[,z]) tuples
         knots: knot vector as list of floats, len(knots) == (count + order)
-
-    Returns: Vector() object
 
     """
     basis_vector = bspline_basis_vector(u, count=len(control_points), degree=degree, knots=knots)
@@ -409,14 +411,7 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
         power: power for centripetal method
 
     Returns:
-        :class:`~ezdxf.math.BSpline`, with :attr:`~ezdxf.math.BSpline.control_points` containing the calculated control
-        points, also :meth:`~ezdxf.math.BSpline.knot_values` returns the used `knot`_ values.
-
-    .. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
-    .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html
-    .. _chord length: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-chord-length.html
-    .. _centripetal: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-centripetal.html
-    .. _knot: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-knot-generation.html
+        :class:`BSpline`
 
     """
 
@@ -449,9 +444,11 @@ def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, deg
     """
     Approximate B-spline by a reduced count of control points, given are the fit points and the degree of the B-spline.
 
-        1. method = 'uniform', creates a uniform t vector, [0 .. 1] equally spaced
-        2. method = 'distance', creates a t vector with values proportional to the fit point distances
-        3. method = 'centripetal', creates a t vector with values proportional to the fit point distances^power
+        1. method = ``'uniform'``, creates a uniform t vector, form 0 to 1 evenly spaced; see `uniform`_ method
+        2. method = ``'distance'``, creates a t vector with values proportional to the fit point distances,
+           see `chord length`_ method
+        3. method = ``'centripetal'``, creates a t vector with values proportional to the
+           fit point ``distances^power``; see `centripetal`_ method
 
     Args:
         fit_points: all fit points of B-spline
@@ -459,6 +456,9 @@ def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, deg
         degree: degree of B-spline
         method: calculation method for parameter vector t
         power: power for centripetal method
+
+    Returns:
+        :class:`BSpline`
 
     """
 
@@ -493,7 +493,8 @@ def control_frame_knots(n: int, p: int, t_vector: Iterable[float]) -> Iterable[f
         p: degree of spline
         t_vector: parameter vector, length(t_vector) == n+1
 
-    Yields: n+p+2 knot values as floats
+    Returns:
+        Iterable[float]: n+p+2 knot values
 
     """
     order = int(p + 1)
@@ -537,7 +538,8 @@ def global_curve_approximation(fit_points: Iterable['Vertex'],
         t_vector: parameter vector
         knots: knot vector
 
-    Returns: BSpline() object
+    Returns:
+        List[Vector]: control points
 
     """
     # source: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-APP-global.html
@@ -668,16 +670,13 @@ class BSpline:
     """
     Calculate the points of a B-spline curve, using an uniform open `knot`_ vector ("clamped").
 
-    Accepts 2d points as definition points, but output is always 3d (z-axis is 0).
+    Accepts 2D points as definition points, but output is always 3D (z-axis = ``0``).
 
     Args:
         control_points: iterable of control points
         order: spline order
         knots: iterable of knot values
         weights: iterable of weight values
-
-    :ivar BSpline.control_points: control points as list of :class:`~ezdxf.math.Vector`
-    :ivar BSpline.order: order of B-spline = degree +  1
 
     """
 
@@ -710,7 +709,7 @@ class BSpline:
 
     @property
     def max_t(self) -> float:
-        """ Max `knot`_ value. """
+        """ Biggest `knot`_ value. """
         return self.basis.max_t
 
     @property
@@ -795,6 +794,8 @@ class BSpline:
 
 class BSplineU(BSpline):
     """
+    Subclass of :class:`BSpline`
+
     Calculate the points of a B-spline curve, uniform (periodic) `knot`_ vector (`open curve`_).
 
     """
@@ -819,6 +820,8 @@ class BSplineU(BSpline):
 
 class BSplineClosed(BSplineU):
     """
+    Subclass of :class:`BSpline`
+
     Calculate the points of a closed uniform B-spline curve (`closed curve`_).
 
     """
@@ -837,7 +840,7 @@ class DerivativePoint:  # Mixin
     def point(self, t: float) -> Tuple[Vector, Vector, Vector]:
         """
         Get point, 1st and 2nd derivative at B-spline(t) as tuple (p, d1, d3),
-        where p, d1 nad d2 is a tuple (x, y, z).
+        where p, d1 and d2 are :class:`Vector` objects.
 
         Args:
             t: parameter in range [0, max_t]
@@ -859,6 +862,8 @@ class DerivativePoint:  # Mixin
 
 class DBSpline(DerivativePoint, BSpline):
     """
+    Subclass of :class:`BSpline`
+
     Calculate points and derivative of a B-spline curve, using an uniform open `knot`_ vector (`clamped curve`_).
 
     """
@@ -873,6 +878,8 @@ class DBSpline(DerivativePoint, BSpline):
 
 class DBSplineU(DerivativePoint, BSplineU):
     """
+    Subclass of :class:`DBSpline`
+
     Calculate points and derivative of a B-spline curve, uniform (periodic) `knot`_ vector (`open curve`_).
 
     """
@@ -884,6 +891,8 @@ class DBSplineU(DerivativePoint, BSplineU):
 
 class DBSplineClosed(DerivativePoint, BSplineClosed):
     """
+    Subclass of :class:`DBSpline`
+
     Calculate the points and derivative of a closed uniform B-spline curve (`closed curve`_).
 
     UNTESTED!

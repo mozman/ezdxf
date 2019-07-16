@@ -15,6 +15,8 @@ Functions
 
 .. autofunction:: bspline_control_frame
 
+.. autofunction:: bspline_control_frame_approx
+
 .. autofunction:: xround
 
 .. _bulge_related_functions:
@@ -303,44 +305,78 @@ BSpline
 -------
 
 .. autoclass:: BSpline
-    :members:
+
+    .. attribute:: control_points
+
+        control points as list of :class:`~ezdxf.math.Vector`
+
+    .. autoattribute:: count
+
+    .. attribute:: degree
+
+    .. attribute:: order
+
+        order of B-spline = degree +  1
+
+    .. autoattribute:: max_t
+
+    .. automethod:: knot_values
+
+    .. automethod:: basis_values
+
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: point(t: float) -> Vector
+
+    .. automethod:: insert_knot
+
 
 BSplineU
 --------
 
 .. autoclass:: BSplineU
-    :members:
 
 BSplineClosed
 -------------
 
 .. autoclass:: BSplineClosed
-    :members:
 
 
 DBSpline
 --------
 
 .. autoclass:: DBSpline
-    :members:
+
+    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
 
 DBSplineU
 ---------
 
 .. autoclass:: DBSplineU
-    :members:
 
 DBSplineClosed
 --------------
 
 .. autoclass:: DBSplineClosed
-    :members:
 
 EulerSpiral
 -----------
 
 .. autoclass:: EulerSpiral
-    :members:
+
+    .. automethod:: radius
+
+    .. automethod:: tangent(t: float) -> Vector
+
+    .. automethod:: distance
+
+    .. automethod:: point(t: float) -> Vector
+
+    .. automethod:: circle_center(t: float) -> Vector
+
+    .. automethod:: approximate(length: float, segments: int) -> Iterable[Vector]
+
+    .. automethod:: bspline(length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline
 
 Construction Tools
 ==================

@@ -9,7 +9,7 @@ class EulerSpiral:
     """
     This class represents an euler spiral (clothoid) for `curvature` (Radius of curvature).
 
-    This is a parametric curve, which always starts at the origin = (0, 0).
+    This is a parametric curve, which always starts at the origin = ``(0, 0)``.
 
     Args:
         curvature: radius of curvature
@@ -33,7 +33,7 @@ class EulerSpiral:
 
     def tangent(self, t: float) -> Vector:
         """
-        Get tangent at distance `t` as Vector() object.
+        Get tangent at distance `t` as :class.`Vector` object.
 
         """
         angle = t ** 2 / (2. * self.curvature_powers[2])
@@ -48,7 +48,7 @@ class EulerSpiral:
 
     def point(self, t: float) -> Vector:
         """
-        Get point at distance `t` as Vector().
+        Get point at distance `t` as :class.`Vector`.
 
         """
 
@@ -67,7 +67,7 @@ class EulerSpiral:
         """
         Approximate curve of length with line segments.
 
-        Generates segments+1 vertices as Vector() objects.
+        Generates segments+1 vertices as :class:`Vector` objects.
 
         """
         delta_l = float(length) / float(segments)
@@ -75,9 +75,13 @@ class EulerSpiral:
         for index in range(1, segments + 1):
             yield self.point(delta_l * index)
 
-    def circle_midpoint(self, t: float) -> Vector:
+    def circle_center(self, t: float) -> Vector:
         """
-        Get circle midpoint at distance `t`.
+        Get circle center at distance `t`.
+
+        .. versionchanged:: 0.10
+
+                renamed from `circle_midpoint`
 
         """
         p = self.point(t)
@@ -86,7 +90,7 @@ class EulerSpiral:
 
     def bspline(self, length: float, segments: int = 10, degree: int = 3, method: str = 'uniform') -> BSpline:
         """
-        Approximate euler spiral by B-spline.
+        Approximate euler spiral as B-spline.
 
         Args:
             length: length of euler spiral
@@ -94,9 +98,15 @@ class EulerSpiral:
             degree: degree of BSpline
             method: calculation method for parameter vector t
 
+        Returns:
+            :class:`BSpline`
+
         """
         fit_points = list(self.approximate(length, segments=segments))
         spline = bspline_control_frame(fit_points, degree, method=method)
         knots = [v * length for v in spline.knot_values()]  # scale knot values to length
         spline.basis.knots = knots
         return spline
+
+    # backward compatibility
+    circle_midpoint = circle_center

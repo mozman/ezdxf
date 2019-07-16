@@ -45,7 +45,7 @@ def test_distance():
 
 def test_circle_midpoint():
     spiral = EulerSpiral(2.0)
-    m = spiral.circle_midpoint(2.0)
+    m = spiral.circle_center(2.0)
     assert is_close_points(m, (0.9917242992178723, 2.082593218533209, 0))
 
 
