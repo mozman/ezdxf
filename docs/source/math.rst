@@ -221,6 +221,8 @@ Vector
 
     :code:`Vector(0, 0, 0)`
 
+Vec2
+----
 
 .. autoclass:: Vec2(v)
 
@@ -359,6 +361,53 @@ DBSplineClosed
 
 .. autoclass:: DBSplineClosed
 
+Bezier
+------
+
+.. autoclass:: Bezier
+
+    .. autoattribute:: control_points
+
+    .. automethod:: approximate(segments: int = 20) -> Iterable[Vector]
+
+    .. automethod:: point(t: float) -> Vector
+
+DBezier
+-------
+
+.. autoclass:: DBezier
+
+    .. automethod:: point(t: float) -> Tuple[Vector, Vector, Vector]
+
+Bezier4P
+--------
+
+.. autoclass:: Bezier4P
+
+    .. autoattribute:: control_points
+
+    .. automethod:: point
+
+    .. automethod:: tangent
+
+    .. automethod:: approximate
+
+    .. automethod:: approximated_length
+
+BezierSurface
+-------------
+
+.. autoclass:: BezierSurface
+
+    .. autoattribute:: nrows
+
+    .. autoattribute:: ncols
+
+    .. automethod:: point
+
+    .. automethod:: approximate
+
+
 EulerSpiral
 -----------
 
@@ -387,41 +436,247 @@ BoundingBox
 .. autoclass:: BoundingBox
     :members:
 
+    .. attribute:: extmin
+
+        "lower left" corner of bounding box
+
+    .. attribute:: extmax
+
+        "upper right" corner of bounding box
+
+
 BoundingBox2d
 -------------
 
 .. autoclass:: BoundingBox2d
     :members:
 
+    .. attribute:: extmin
+
+        "lower left" corner of bounding box
+
+    .. attribute:: extmax
+
+        "upper right" corner of bounding box
+
 ConstructionRay
 ---------------
 
 .. autoclass:: ConstructionRay
-    :members:
+
+    .. autoattribute:: location
+
+    .. autoattribute:: direction
+
+    .. autoattribute:: slope
+
+    .. autoattribute:: angle
+
+    .. autoattribute:: angle_deg
+
+    .. autoattribute:: is_vertical
+
+    .. autoattribute:: is_horizontal
+
+    .. automethod:: __str__
+
+    .. automethod:: is_parallel(self, other: ConstructionRay) -> bool
+
+    .. automethod:: intersect(other: ConstructionRay) -> Vec2
+
+    .. automethod:: orthogonal(location: 'Vertex') -> ConstructionRay
+
+    .. automethod:: bisectrix(other: ConstructionRay) -> ConstructionRay:
+
+    .. automethod:: yof
+
+    .. automethod:: xof
 
 ConstructionLine
 ----------------
 
 .. autoclass:: ConstructionLine
-    :members:
+
+    .. attribute:: start
+
+        start point as :class:`Vec2`
+
+    .. attribute:: end
+
+        end point as :class:`Vec2`
+
+    .. autoattribute:: bounding_box
+
+    .. autoattribute:: ray
+
+    .. autoattribute:: is_vertical
+
+    .. automethod:: __str__
+
+    .. automethod:: move
+
+    .. automethod:: length
+
+    .. automethod:: midpoint() -> Vec2
+
+    .. automethod:: inside_bounding_box
+
+    .. automethod:: intersect(other: ConstructionLine) -> Optional[Vec2]
+
+    .. automethod:: has_intersection(other: ConstructionLine) -> bool
+
+    .. automethod:: left_of_line
+
 
 ConstructionCircle
 ------------------
 
 .. autoclass:: ConstructionCircle
-    :members:
+
+    .. attribute:: center
+
+        center point as :class:`Vec2`
+
+    .. attribute:: radius
+
+        radius as float
+
+    .. autoattribute:: bounding_box
+
+    .. automethod:: from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> ConstructionCircle
+
+    .. automethod:: __str__
+
+    .. automethod:: move
+
+    .. automethod:: point_at(angle: float) -> Vec2
+
+    .. automethod:: inside
+
+    .. automethod:: tangent(angle: float) -> ConstructionRay
+
+    .. automethod:: intersect_ray(ray: ConstructionRay, abs_tol: float = 1e-12) -> Sequence[Vec2]
+
+    .. automethod:: intersect_circle(other: ConstructionCircle, abs_tol: float = 1e-12) -> Sequence[Vec2]
 
 ConstructionArc
 ---------------
 
 .. autoclass:: ConstructionArc
-    :members:
+
+    .. attribute:: center
+
+        center point as :class:`Vec2`
+
+    .. attribute:: radius
+
+        radius as float
+
+    .. attribute:: start_angle
+
+        start angle in degrees
+
+    .. attribute:: end_angle
+
+        end angle in degrees
+
+    .. autoattribute:: start_angle_rad
+
+    .. autoattribute:: end_angle_rad
+
+    .. autoattribute:: start_point
+
+    .. autoattribute:: end_point
+
+    .. autoattribute:: bounding_box
+
+    .. automethod:: move
+
+    .. automethod:: from_2p_angle(start_point: Vertex, end_point: Vertex, angle: float, ccw: bool = True) -> ConstructionArc
+
+    .. automethod:: from_2p_radius(start_point: Vertex, end_point: Vertex, radius: float, ccw: bool = True,  center_is_left: bool = True) -> ConstructionArc
+
+    .. automethod:: from_3p(start_point: Vertex, end_point: Vertex, def_point: Vertex, ccw: bool = True) -> ConstructionArc
+
+    .. automethod:: add_to_layout(layout: BaseLayout, ucs: UCS = None, dxfattribs: dict = None) -> Arc
 
 ConstructionBox
 ---------------
 
 .. autoclass:: ConstructionBox
-    :members:
+
+    .. autoattribute:: center
+
+    .. autoattribute:: width
+
+    .. autoattribute:: height
+
+    .. autoattribute:: angle
+
+    .. autoattribute:: corners
+
+    .. autoattribute:: bounding_box
+
+    .. autoattribute:: incircle_radius
+
+    .. autoattribute:: circumcircle_radius
+
+    .. automethod:: __iter__() -> Iterable[Vec2]
+
+    .. automethod:: __getitem__(corner) -> Vec2
+
+    .. automethod:: __repr__
+
+    .. automethod:: from_points(p1: Vertex, p2: Vertex) -> ConstructionBox
+
+    .. automethod:: move
+
+    .. automethod:: expand
+
+    .. automethod:: scale
+
+    .. automethod:: rotate
+
+    .. automethod:: is_inside
+
+    .. automethod:: is_any_corner_inside(other: ConstructionBox) -> bool
+
+    .. automethod:: is_overlapping(other: ConstructionBox) -> bool
+
+    .. automethod:: border_lines() -> Sequence[ConstructionLine]
+
+    .. automethod:: intersect(line: ConstructionLine) -> List[Vec2]
+
+Shape2d
+-------
+
+.. autoclass:: Shape2d
+
+    .. attribute:: vertices
+
+        list of :class:`Vec2` objects
+
+    .. autoattribute:: bounding_box
+
+    .. automethod:: __len__
+
+    .. automethod:: __getitem__(item) -> Vec2
+
+    .. automethod:: move
+
+    .. automethod:: translate
+
+    .. automethod:: scale
+
+    .. automethod:: scale_uniform
+
+    .. automethod:: rotate
+
+    .. automethod:: rotate_rad
+
+    .. automethod:: append
+
+    .. automethod:: extend
 
 
 .. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
@@ -433,3 +688,6 @@ ConstructionBox
 .. _open curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve-open.html
 .. _closed curve: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-curve-closed.html
 .. _basis: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-basis.html
+.. _B-spline: https://en.wikipedia.org/wiki/B-spline
+.. _Bézier curve: https://en.wikipedia.org/wiki/B%C3%A9zier_curve
+.. _Lee Mac: http://www.lee-mac.com/bulgeconversion.html

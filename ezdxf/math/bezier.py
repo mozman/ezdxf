@@ -65,9 +65,16 @@ Any Bezier curve is infinitely differentiable within itself, and is therefore co
 
 class Bezier:
     """
-    A general Bezier curve.
+    A `Bézier curve`_ is a parametric curve used in computer graphics and related fields. Bézier curves are used to
+    model smooth curves that can be scaled indefinitely. "Paths", as they are commonly referred to in image
+    manipulation programs, are combinations of linked Bézier curves. Paths are not bound by the limits of
+    rasterized images and are intuitive to modify. (Source: Wikipedia)
 
-    Accepts 2d points as definition points, but output is always 3d (z-axis is 0).
+    This is a general implementation which works with any count of definition points greater than ``2``, but it is a
+    simple and slow implementation. For more performance look at the specialized :class:`Bezier4P` class.
+
+    Args:
+        defpoints: iterable of definition points as :class:`Vector` compatible objects.
 
     """
 
@@ -76,21 +83,30 @@ class Bezier:
 
     @property
     def control_points(self) -> List[Vector]:
+        """ control points as list of :class:`Vector` objects. """
         return self._defpoints
 
     def approximate(self, segments: int = 20) -> Iterable[Vector]:
+        """
+        Approximate `Bézier curve`_ by vertices, yields `segments` + 1 vertices as :class:`Vector` objects.
+
+        Args:
+            segments: count of segments for approximation
+
+        """
         step = 1.0 / float(segments)
         for point_index in range(segments + 1):
             yield self.point(point_index * step)
 
     def point(self, t: float) -> Vector:
         """
-        Returns point at BezierCurve(t) as tuple (x, y, z)
+        Returns a point for location `t` at the `Bézier curve`_ as :class:`Vector` object.
+
+        A `Bézier curve`_ is a parametric curve, parameter `t` goes from ``0`` to ``1``, where ``0`` is the first
+        definition point anf ``1`` is the last definition point.
 
         Args:
-            t: parameter in range [0, 1]
-
-        Returns: Vector(x, y, z)
+            t: parameter in range ``[0, 1]``
 
         """
         if t < 0. or t > 1.:
@@ -110,21 +126,19 @@ class Bezier:
 
 class DBezier(Bezier):
     """
-    Calculate the Points and Derivative of a Bezier curve.
+    Subclass of :class:`Bezier`.
+
+    Calculate vertices and derivative of a `Bézier curve`_.
 
     """
 
     def point(self, t: float) -> Tuple[Vector, Vector, Vector]:
         """
-        Returns (point, derivative1, derivative2) at BezierCurve(t)
+        Returns (point, 1st derivative, 2nd derivative) tuple for location `t` at the `Bézier curve`_,
+        all values  as :class:`Vector` objects.
 
         Args:
-            t: parameter in range [0, 1]
-
-        Returns: (point, derivative1, derivative2)
-            point -- Vector(x, y, z)
-            derivative1 -- Vector(x, y, z)
-            derivative2 -- Vector(x, y, z)
+            t: parameter in range ``[0, 1]``
 
         """
         if t < 0. or t > 1.:

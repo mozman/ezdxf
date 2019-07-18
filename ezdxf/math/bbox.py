@@ -12,17 +12,14 @@ class BoundingBox:
     """ 3D bounding box.
 
     Args:
-        vertices: iterable of points as tuple or :class:`Vector`
-
-    :ivar extmin: "lower left" corner of bounding box
-    :ivar extmax: "upper right" corner of bounding box
+        vertices: iterable of ``(x, y, z)`` tuples or :class:`Vector` objects
 
     """
     def __init__(self, vertices: Iterable['Vertex']):
         self.extmin, self.extmax = extends(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns True if `vertex` is inside bounding box. """
+        """ Returns ``True`` if `vertex` is inside bounding box. """
         x, y, z = Vector(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
@@ -32,7 +29,7 @@ class BoundingBox:
         """ Extend bounds by `vertices`.
 
         Args:
-            vertices: iterable of points
+            vertices: iterable of ``(x, y, z)`` tuples or :class:`Vector` objects
 
         """
         v = [self.extmin, self.extmax]
@@ -69,10 +66,7 @@ class BoundingBox2d:
     """ Optimized 2D bounding box.
 
     Args:
-        vertices: iterable of points as tuple or :class:`Vector`
-
-    :ivar extmin: "lower left" corner of bounding box
-    :ivar extmax: "upper right" corner of bounding box
+        vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vector` objects
 
     """
 
@@ -80,7 +74,7 @@ class BoundingBox2d:
         self.extmin, self.extmax = extends2d(vertices)
 
     def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns True if `vertex` is inside bounding box. """
+        """ Returns ``True`` if `vertex` is inside bounding box. """
         v = Vec2(vertex)
         min_ = self.extmin
         max_ = self.extmax
@@ -90,7 +84,7 @@ class BoundingBox2d:
         """ Extend bounds by `vertices`.
 
         Args:
-            vertices: iterable of points
+            vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vector` objects
 
         """
         v = [self.extmin, self.extmax]

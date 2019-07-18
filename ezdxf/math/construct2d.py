@@ -21,8 +21,8 @@ def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=1e-12) -> bool:
     Returns ``True`` if `p1` is very close to `p2`.
 
     Args:
-        p1: first vertex as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
-        p2: second vertex as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
+        p1: first vertex as :class:`Vector` compatible object
+        p2: second vertex as :class:`Vector` compatible object
         abs_tol: absolute tolerance
 
     Raises:
@@ -43,8 +43,8 @@ def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vector':
     Returns closest point to `base`.
 
     Args:
-        base: base point as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
-        points: iterable of points as ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vector` object
+        base: base point as :class:`Vector` compatible object
+        points: iterable of points as :class:`Vector` compatible object
 
 
     """
@@ -64,8 +64,7 @@ def convex_hull(points: Iterable['Vertex']) -> List['Vertex']:
     """ Returns 2D convex hull for `points`.
 
     Args:
-        points: iterable of points as as ``(x, y [, z])`` tuple or :class:`~ezdxf.math.Vector` object,
-                z-axis is ignored
+        points: iterable of points as :class:`Vector` compatible objects, z-axis is ignored
 
     """
 

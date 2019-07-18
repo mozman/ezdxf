@@ -550,6 +550,9 @@ class Vec2:
     immutable, :meth:`iadd`, :meth:`isub`, :meth:`imul` and :meth:`idiv` modifies the vector itself, the
     :class:`Vector` class returns a new object.
 
+    :class:`Vec2` initialization accepts only 2- and 3-tuples ``(x, y[, z])`` or :class:`Vec2` and
+    :class:`Vector` objects.
+
     Args:
         v: vector class with :attr:`x` and :attr:`y` attributes/properties or a sequence of float ``[x, y, ...]``
 

@@ -15,7 +15,7 @@ def polar(p: Any, angle: float, distance: float) -> Vec2:
     Returns the point at a specified `angle` and `distance` from point `p`.
 
     Args:
-        p: point ``(x, y)`` as args accepted by :class:`Vec2`
+        p: point as :class:`Vec2` compatible object
         angle: angle in radians
         distance: distance
 
@@ -28,8 +28,8 @@ def angle(p1: Any, p2: Any) -> float:
     Returns angle a line defined by two endpoints and x-axis in radians.
 
     Args:
-        p1: start point ``(x, y)`` as args accepted by :class:`Vec2`
-        p2: end point ``(x, y)`` as args accepted by :class:`Vec2`
+        p1: start point as :class:`Vec2` compatible object
+        p2: end point as :class:`Vec2` compatible object
 
     """
     return (Vec2(p2) - Vec2(p1)).angle
@@ -37,16 +37,16 @@ def angle(p1: Any, p2: Any) -> float:
 
 def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float, radius: float) -> Tuple['Vec2', 'Vec2', float]:
     """
-    Calculate bulge parameters from arc parameters.
+    Returns bulge parameters from arc parameters.
 
     Args:
-        center: circle center point ``(x, y)`` as args accepted by :class:`Vec2`
+        center: circle center point as :class:`Vec2` compatible object
         start_angle: start angle in radians
         end_angle: end angle in radians
         radius: circle radius
 
     Returns:
-        Tuple: (start_point, end_point, bulge)
+        tuple: (start_point, end_point, bulge)
 
     """
     start_point = polar(center, start_angle, radius)
@@ -59,14 +59,14 @@ def arc_to_bulge(center: 'Vertex', start_angle: float, end_angle: float, radius:
 
 def bulge_3_points(start_point: 'Vertex', end_point: 'Vertex', point: 'Vertex') -> float:
     """
-    Calculate bulge value defined by three points.
+    Returns bulge value defined by three points.
 
-    Based on 3-Points to Bulge by Lee Mac
+    Based on 3-Points to Bulge by `Lee Mac`_.
 
     Args:
-        start_point: start point ``(x, y)`` of arc as args accepted by :class:`Vec2`
-        end_point: end point ``(x, y)`` of arc as args accepted by :class:`Vec2`
-        point: arbitrary point ``(x, y)`` on arc as args accepted by :class:`Vec2`
+        start_point: start point as :class:`Vec2` compatible object
+        end_point: end point as :class:`Vec2` compatible object
+        point: arbitrary point as :class:`Vec2` compatible object
 
     """
     a = (math.pi - angle(point, start_point) + angle(point, end_point)) / 2
@@ -75,13 +75,13 @@ def bulge_3_points(start_point: 'Vertex', end_point: 'Vertex', point: 'Vertex') 
 
 def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Tuple['Vec2', float, float, float]:
     """
-    Calculate arc parameters from bulge parameters.
+    Returns arc parameters from bulge parameters.
 
-    Based on Bulge to Arc by Lee Mac
+    Based on Bulge to Arc by `Lee Mac`_.
 
     Args:
-        start_point: start vertex ``(x, y)`` as args accepted by :class:`Vec2`
-        end_point: end vertex ``(x, y)`` as args accepted by :class:`Vec2`
+        start_point: start vertex as :class:`Vec2` compatible object
+        end_point: end vertex as :class:`Vec2` compatible object
         bulge: bulge value
 
     Returns:
@@ -99,13 +99,13 @@ def bulge_to_arc(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> Tu
 
 def bulge_center(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> 'Vec2':
     """
-    Calculate center of arc described by the given bulge parameters.
+    Returns center of arc described by the given bulge parameters.
 
-    Based on  Bulge Center by Lee Mac.
+    Based on  Bulge Center by `Lee Mac`_.
 
     Args:
-        start_point: start point ``(x, y)`` as args accepted by :class:`Vec2`
-        end_point: end point ``(x, y)`` as args accepted by :class:`Vec2`
+        start_point: start point as :class:`Vec2` compatible object
+        end_point: end point as :class:`Vec2` compatible object
         bulge: bulge value as float
 
 
@@ -121,13 +121,13 @@ def signed_bulge_radius(start_point: 'Vertex', end_point: 'Vertex', bulge: float
 
 def bulge_radius(start_point: 'Vertex', end_point: 'Vertex', bulge: float) -> float:
     """
-    Calculate radius of arc defined by the given bulge parameters.
+    Returns radius of arc defined by the given bulge parameters.
 
-    Based on Bulge Radius by Lee Mac
+    Based on Bulge Radius by `Lee Mac`_
 
     Args:
-        start_point: start point ``(x, y)`` as args accepted by :class:`Vec2`
-        end_point: end point ``(x, y)`` as args accepted by :class:`Vec2`
+        start_point: start point as :class:`Vec2` compatible object
+        end_point: end point as :class:`Vec2` compatible object
         bulge: bulge value
 
     """

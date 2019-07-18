@@ -14,15 +14,26 @@ HALF_PI = math.pi / 2.
 
 
 class ConstructionCircle(ConstructionTool):
+    """ Circle construction tool.
+
+    Args:
+        center: center point as :class:`Vec2` compatible object
+        radius: circle radius > `0`
+
+    """
     def __init__(self, center: 'Vertex', radius: float = 1.0):
         self.center = Vec2(center)
         self.radius = float(radius)
         if self.radius <= 0.:
             raise ValueError("Radius has to be > 0.")
 
+    def __str__(self) -> str:
+        """ Returns string representation of circle ``ConstructionCircle(center, radius)``. """
+        return 'ConstructionCircle({0.center}, {0.radius})'.format(self)
+
     @staticmethod
     def from_3p(p1: 'Vertex', p2: 'Vertex', p3: 'Vertex') -> 'ConstructionCircle':
-        """ Creates a circle from three points. """
+        """ Creates a circle from three points, all points have to be compatible to :class:`Vec2` class. """
         p1 = Vec2(p1)
         p2 = Vec2(p2)
         p3 = Vec2(p3)
@@ -35,7 +46,7 @@ class ConstructionCircle(ConstructionTool):
 
     @property
     def bounding_box(self) -> 'BoundingBox2d':
-        """ Returns :class:`BoundingBox2d`. """
+        """ 2D bounding box of circle as  :class:`BoundingBox2d` object. """
         rvec = Vec2((self.radius, self.radius))
         return BoundingBox2d((self.center - rvec, self.center + rvec))
 
@@ -52,7 +63,7 @@ class ConstructionCircle(ConstructionTool):
 
     def point_at(self, angle: float) -> Vec2:
         """
-        Returns point on circle at `angle` as 2d vector.
+        Returns point on circle at `angle` as :class:`Vec2` object.
 
         Args:
             angle: angle in radians
@@ -61,12 +72,12 @@ class ConstructionCircle(ConstructionTool):
         return self.center + Vec2.from_angle(angle, self.radius)
 
     def inside(self, point: 'Vertex') -> bool:
-        """ Test if `point` is inside circle. """
+        """ Returns ``True`` if `point` is inside circle. """
         return self.radius >= self.center.distance(Vec2(point))
 
     def tangent(self, angle: float) -> ConstructionRay:
         """
-        Returns tangent to circle at `angle` as ConstructionRay().
+        Returns tangent to circle at `angle` as :class:`ConstructionRay` object.
 
         Args:
             angle: angle in radians
@@ -78,18 +89,22 @@ class ConstructionCircle(ConstructionTool):
 
     def intersect_ray(self, ray: ConstructionRay, abs_tol: float = 1e-12) -> Sequence[Vec2]:
         """
-        Returns intersection points for intersection of this circle with `ray` as sequence of 2d points.
+        Returns intersection points of circle and `ray` as sequence of :class:`Vec2` objects.
 
         Args:
             ray: intersection ray
             abs_tol: absolute tolerance for tests (e.g. test for tangents)
 
-        Returns: tuple of Vec2()
+        Returns:
+            tuple of :class:`Vec2` objects
 
-            tuple contains:
-            0 points .. no intersection
-            1 point .. ray is a tangent on the circle
-            2 points .. ray intersects with the circle
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           ray is a tangent to circle
+            2           ray intersects with the circle
+            =========== ==================================
 
         """
         ortho_ray = ray.orthogonal(self.center)
@@ -114,18 +129,22 @@ class ConstructionCircle(ConstructionTool):
 
     def intersect_circle(self, other: 'ConstructionCircle', abs_tol: float = 1e-12) -> Sequence[Vec2]:
         """
-        Returns intersection points of two circles as sequence of 2d points.
+        Returns intersection points of two circles as sequence of :class:`Vec2` objects.
 
         Args:
             other: intersection circle
             abs_tol: absolute tolerance for tests (e.g. test for circle touch point)
 
-        Returns: tuple of Vec2()
+        Returns:
+            tuple of :class:`Vec2` objects
 
-            tuple contains:
-            0 points .. no intersection
-            1 point .. circle touches the other_circle in one point
-            2 points .. circle intersects with the other_circle
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           circle touches the `other` circle at one point
+            2           circle intersects with the `other` circle
+            =========== ==================================
 
         """
         r1 = self.radius

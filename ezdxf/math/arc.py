@@ -10,21 +10,22 @@ from .ucs import OCS, UCS
 import math
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType
+    from ezdxf.eztypes import Vertex, BaseLayout
     from ezdxf.eztypes import Arc as DXFArc
 
 QUARTER_ANGLES = [0, math.pi * .5, math.pi, math.pi * 1.5]
 
 
 class ConstructionArc(ConstructionTool):
-    """ This is a helper class to create parameters for the DXF :class:`~ezdxf.entities.arc.Arc` class.
+    """
+    This is a helper class to create parameters for the DXF :class:`~ezdxf.entities.Arc` class.
 
     Args:
-        center: center point
+        center: center point as :class:`Vec2` compatible object
         radius: radius
         start_angle: start angle in degrees
         end_angle: end angle in degrees
-        is_counter_clockwise: swaps start- and end angle if False
+        is_counter_clockwise: swaps start- and end angle if ``False``
 
     """
     def __init__(self,
@@ -45,17 +46,17 @@ class ConstructionArc(ConstructionTool):
 
     @property
     def start_point(self) -> 'Vec2':
-        """ Returns start point of arc. """
+        """ start point of arc as :class:`Vec2`. """
         return self.center + Vec2.from_deg_angle(self.start_angle, self.radius)
 
     @property
     def end_point(self) -> 'Vec2':
-        """ Returns end point of arc. """
+        """ end point of arc as :class:`Vec2`. """
         return self.center + Vec2.from_deg_angle(self.end_angle, self.radius)
 
     @property
     def bounding_box(self) -> 'BoundingBox2d':
-        """ Returns bounding box of arc. """
+        """ bounding box of arc as :class:`BoundingBox2d`. """
         bbox = BoundingBox2d((self.start_point, self.end_point))
         bbox.extend(self.main_axis_points())
         return bbox
@@ -82,12 +83,12 @@ class ConstructionArc(ConstructionTool):
 
     @property
     def start_angle_rad(self) -> float:
-        """ Returns start angle in radians. """
+        """ start angle in radians. """
         return math.radians(self.start_angle)
 
     @property
     def end_angle_rad(self) -> float:
-        """ Returns end angle in radians. """
+        """ end angle in radians. """
         return math.radians(self.end_angle)
 
     @staticmethod
@@ -103,14 +104,13 @@ class ConstructionArc(ConstructionTool):
                       ccw: bool = True) -> 'ConstructionArc':
         """
         Create arc from two points and enclosing angle. Additional precondition: arc goes by default in counter
-        clockwise orientation from start_point to end_point, can be changed by ccw=False.
-        Z-axis of start_point and end_point has to be 0 if given.
+        clockwise orientation from `start_point` to `end_point`, can be changed by `ccw` = ``False``.
 
         Args:
-            start_point: start point (x, y) as args accepted by Vec2()
-            end_point: end point (x, y) as args accepted by Vec2()
+            start_point: start point as :class:`Vec2` compatible object
+            end_point: end point as :class:`Vec2` compatible object
             angle: enclosing angle in degrees
-            ccw: counter clockwise direction True/False
+            ccw: counter clockwise direction if ``True``
 
         """
         start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
@@ -143,18 +143,18 @@ class ConstructionArc(ConstructionTool):
                        center_is_left: bool = True) -> 'ConstructionArc':
         """
         Create arc from two points and arc radius. Additional precondition: arc goes by default in counter clockwise
-        orientation from start_point to end_point can be changed by ccw=False.
-        Z-axis of start_point and end_point has to be 0 if given.
+        orientation from `start_point` to `end_point` can be changed by `ccw` = ``False``.
 
-        The parameter *center_is_left* defines if the center of the arc is left or right of the line *start point* ->
-        *end point*. Parameter ccw=False swaps start- and end point, which inverts the meaning of center_is_left.
+        The parameter `center_is_left` defines if the center of the arc is left or right of the line from `start_point`
+        to `end_point`. Parameter `ccw` = ``False`` swaps start- and end point, which inverts the meaning of
+        ``center_is_left``.
 
         Args:
-            start_point: start point (x, y) as args accepted by Vec2()
-            end_point: end point (x, y) as args accepted by Vec2()
+            start_point: start point as :class:`Vec2` compatible object
+            end_point: end point as :class:`Vec2` compatible object
             radius: arc radius
-            ccw: counter clockwise direction True/False
-            center_is_left: center point of arc is left of line SP->EP if True, else on the right side of this line
+            ccw: counter clockwise direction if ``True``
+            center_is_left: center point of arc is left of line from start- to end point if ``True``
 
         """
         start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
@@ -183,13 +183,13 @@ class ConstructionArc(ConstructionTool):
                 ccw: bool = True) -> 'ConstructionArc':
         """
         Create arc from three points. Additional precondition: arc goes in counter clockwise
-        orientation from start_point to end_point. Z-axis of start_point, end_point and def_point has to be 0 if given.
+        orientation from `start_point` to `end_point`.
 
         Args:
-            start_point: start point (x, y)  as args accepted by Vec2()
-            end_point: end point (x, y) as args accepted by Vec2()
-            def_point: additional definition point as (x, y)  as args accepted by Vec2()
-            ccw: counter clockwise direction True/False
+            start_point: start point as :class:`Vec2` compatible object
+            end_point: end point as :class:`Vec2` compatible object
+            def_point: additional definition point as :class:`Vec2` compatible object
+            ccw: counter clockwise direction if ``True``
 
         """
         start_point, end_point = cls.validate_start_and_end_point(start_point, end_point)
@@ -207,19 +207,17 @@ class ConstructionArc(ConstructionTool):
             is_counter_clockwise=ccw,
         )
 
-    def add_to_layout(self, layout: 'GenericLayoutType', ucs: UCS = None, dxfattribs: dict = None) -> 'DXFArc':
+    def add_to_layout(self, layout: 'BaseLayout', ucs: UCS = None, dxfattribs: dict = None) -> 'DXFArc':
         """
-        Add arc as DXF entity to a layout.
+        Add arc as DXF :class:`~ezdxf.entities.Arc` entity to a layout.
 
-        Supports 3D arcs by using an UCS. An ConstructionArc is always defined in the xy-plane, but by using an arbitrary UCS, the
-        arc can be placed in 3D space, automatically OCS transformation included.
+        Supports 3D arcs by using an :ref:`UCS`. An :class:`ConstructionArc` is always defined in the xy-plane, but by
+        using an arbitrary UCS, the arc can be placed in 3D space, automatically OCS transformation included.
 
         Args:
-            layout: destination layout (model space, paper space or block)
-            ucs: arc properties transformation from ucs to ocs
-            dxfattribs: usual DXF attributes supported by ARC
-
-        Returns: :class:`~ezdxf.entities.arc.Arc`
+            layout: destination layout as :class:`~ezdxf.layouts.BaseLayout` object
+            ucs: place arc in 3D space by :class:`~ezdxf.math.UCS` object
+            dxfattribs: additional DXF attributes for DXF :class:`~ezdxf.entities.Arc` entity
 
         """
 
