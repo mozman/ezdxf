@@ -632,7 +632,7 @@ class DXFEntity:
 
     def has_dxf_attrib(self, key: str) -> bool:
         """
-        Returns ``True`` if DXF attribute `key` really exist else ``False``.
+        Returns ``True`` if DXF attribute `key` really exist.
 
         Raises :class:`DXFAttributeError` if `key` is not an supported DXF attribute.
 
@@ -647,8 +647,8 @@ class DXFEntity:
 
     def is_supported_dxf_attrib(self, key: str) -> bool:
         """
-        Returns ``True`` if DXF attrib `key` is supported by this entity else `False`. Does not grant that attribute
-        `key` really exists.
+        Returns ``True`` if DXF attrib `key` is supported by this entity. Does not grant that attribute
+        `key` really exist.
 
         .. versionchanged:: 0.10
 
@@ -754,7 +754,6 @@ class DXFEntity:
         # write xdata, embedded objects
         self.export_xdata(tagwriter)
         self.export_embedded_objects(tagwriter)
-        self.post_export(tagwriter)
 
     def export_base_class(self, tagwriter: 'TagWriter') -> None:
         """ Export base class DXF attributes and structures. (internal API) """
@@ -799,15 +798,6 @@ class DXFEntity:
         """ Export embedded objects by `tagwriter`. (internal API)"""
         if self.embedded_objects:
             self.embedded_objects.export_dxf(tagwriter)
-
-    def post_export(self, tagwriter: 'TagWriter'):
-        """ Called after for entity export.
-
-        Only for INSERT & POLYLINE to add SEQEND
-
-        (internal API)
-        """
-        pass
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
