@@ -93,6 +93,8 @@ Common base class for all DXF entities and objects.
 
     .. automethod:: set_xdata(appid: str, tags: Iterable)
 
+    .. automethod:: discard_xdata
+
     .. automethod:: has_xdata_list
 
     .. automethod:: get_xdata_list(appid: str, name: str) -> Tags

@@ -330,6 +330,21 @@ class Polyline(DXFGraphic):
             dxfattribs['location'] = point
             yield create_vertex('VERTEX', dxfattribs)
 
+    def update_vertices(self) -> None:
+        """
+        Update DXF attributes of sub entities :attr:`Polyline.vertices`. Only use if there are problems with CAD
+        applications.
+
+        """
+        has_linetype = self.dxf.hasattr('linetype')
+        for vertex in self.vertices:
+            vertex.dxf.owner = self.dxf.owner
+            vertex.dxf.layer = self.dxf.layer
+            if has_linetype:
+                vertex.dxf.linetype = self.dxf.linetype
+            else:
+                vertex.dxf.discard('linetype')
+
     def cast(self) -> Union['Polyline', 'Polymesh', 'Polyface']:
         mode = self.get_mode()
         if mode == 'AcDbPolyFaceMesh':

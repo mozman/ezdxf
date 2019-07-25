@@ -148,6 +148,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: insert_vertices
 
+    .. automethod:: update_vertices
+
 Vertex
 ======
 
