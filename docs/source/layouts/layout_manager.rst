@@ -10,7 +10,8 @@ attribute of the :class:`~ezdxf.drawing.Drawing` object.
 
 .. class:: Layouts
 
-    The :class:`Layouts` class manages paperspace layouts and the modelspace.
+    The :class:`Layouts` class manages :class:`~ezdxf.layouts.Paperspace` layouts and
+    the :class:`~ezdxf.layouts.Modelspace`.
 
     .. automethod:: __len__
 
@@ -18,22 +19,22 @@ attribute of the :class:`~ezdxf.drawing.Drawing` object.
 
     .. automethod:: __iter__() -> Iterable[Layout]
 
-    .. automethod:: modelspace() -> Layout
-
     .. automethod:: names
-
-    .. automethod:: get(name: str) -> Layout
-
-    .. automethod:: get_layout_for_entity(entity: DXFEntity) -> Layout
-
-    .. automethod:: rename
 
     .. automethod:: names_in_taborder
 
-    .. automethod:: new(name: str, dxfattribs: dict = None) -> Layout
+    .. automethod:: modelspace() -> Modelspace
 
-    .. automethod:: active_layout() -> Layout
+    .. automethod:: get(name: str) -> Layout
+
+    .. automethod:: new(name: str, dxfattribs: dict = None) -> Paperspace
+
+    .. automethod:: rename
+
+    .. automethod:: delete
+
+    .. automethod:: active_layout() -> Paperspace
 
     .. automethod:: set_active_layout
 
-    .. automethod:: delete
+    .. automethod:: get_layout_for_entity(entity: DXFEntity) -> Layout

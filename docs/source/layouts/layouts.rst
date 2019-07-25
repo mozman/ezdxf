@@ -221,6 +221,8 @@ Modelspace
 
     :class:`Modelspace` is a subclass of :class:`Layout`.
 
+    The modelspace contains the "real" world representation of the drawing subjects in real world units.
+
     .. autoattribute:: name
 
     .. automethod:: new_geodata
@@ -233,6 +235,9 @@ Paperspace
 .. class:: Paperspace
 
     :class:`Paperspace` is a subclass of :class:`Layout`.
+
+    Paperspace layouts are used to create different drawing sheets of the modelspace subjects for printing or
+    PDF export.
 
     .. autoattribute:: name
 
@@ -258,11 +263,17 @@ BlockLayout
 
     :class:`BlockLayout` is a subclass of :class:`BaseLayout`.
 
+    Block layouts are reusable sets of graphical entities, which can be referenced by multiple
+    :class:`~ezdxf.entities.Insert` entities. Each reference can be placed, scaled and rotated individually and can
+    have it's own set of DXF :class:`~ezdxf.entities.Attrib` entities attached.
+
     .. attribute:: name
 
-       Get/set name of the associated BLOCK and BLOCK_RECORD entities.
+       name of the associated BLOCK and BLOCK_RECORD entities.
 
     .. autoattribute:: block
+
+    .. autoattribute:: endblk
 
     .. autoattribute:: dxf
 

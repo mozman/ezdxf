@@ -68,7 +68,7 @@ class Layout(BaseLayout):
     @classmethod
     def new(cls, name: str, block_name: str, doc: 'Drawing', dxfattribs: dict = None) -> 'Layout':
         """
-        Creates the required structures for a layout:
+        Returns the required structures for a new layout:
 
             - a :class:`BlockLayout` with BLOCK_RECORD, BLOCK and ENDBLK entities
             - LAYOUT entity in the objects section
@@ -100,13 +100,13 @@ class Layout(BaseLayout):
 
     @property
     def name(self) -> str:
-        """ Layout name as shown in tabs of CAD applications. """
+        """ Layout name as shown in tabs of :term:`CAD` applications. """
         return self.dxf_layout.dxf.name
 
     @property
     def dxf(self) -> Any:  # dynamic DXF attribute dispatching, e.g. DXFLayout.dxf.layout_flags
         """
-        Returns the DXF name space attribute of the associated LAYOUT entity.
+        Returns the DXF name space attribute of the associated :class:`~ezdxf.entities.DXFLayout` object.
 
         This enables direct access to the underlying LAYOUT entity, e.g. ``Layout.dxf.layout_flags``
 
@@ -430,7 +430,7 @@ class Paperspace(Layout):
                      view_center_point: 'Vertex',
                      view_height: float,
                      dxfattribs: dict = None) -> 'Viewport':
-        """ Add a :class:`~ezdxf.entities.Viewport` entity. """
+        """ Add a new :class:`~ezdxf.entities.Viewport` entity. """
         dxfattribs = dxfattribs or {}
         width, height = size
         attribs = {
@@ -615,10 +615,12 @@ class Paperspace(Layout):
 
     def get_paper_limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         """
-        Returns paper limits in plot paper units, relative to the plot origin, as tuple ((x1, y1), (x2, y2)).
-        Lower left corner is (x1, y1), upper right corner is (x2, y2).
+        Returns paper limits in plot paper units, relative to the plot origin.
 
         plot origin = lower left corner of printable area + plot origin offset
+
+        Returns:
+            tuple ((x1, y1), (x2, y2)), lower left corner is (x1, y1), upper right corner is (x2, y2).
 
         """
         return self.dxf.limmin[0:2], self.dxf.limmax[0:2]

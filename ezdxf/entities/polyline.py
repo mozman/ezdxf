@@ -181,6 +181,17 @@ class Polyline(DXFGraphic):
         for v in self.vertices:
             v.dxf.layer = layer
 
+    def on_linetype_change(self, linetype: str):
+        """
+        Event handler for linetype change. Changes also the linetype of all vertices.
+
+        Args:
+            linetype: new linetype as string
+
+        """
+        for v in self.vertices:
+            v.dxf.linetype = linetype
+
     def get_vertex_flags(self) -> int:
         return const.VERTEX_FLAGS[self.get_mode()]
 
@@ -307,7 +318,13 @@ class Polyline(DXFGraphic):
             dxfattribs: dict of DXF attributes
         """
         dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
+
+        # same DXF attributes for VERTEX entities as for POLYLINE
+        dxfattribs['owner'] = self.dxf.owner
         dxfattribs['layer'] = self.dxf.layer
+        if self.dxf.hasattr('linetype'):
+            dxfattribs['linetype'] = self.dxf.linetype
+
         create_vertex = self.doc.dxffactory.create_db_entry
         for point in points:
             dxfattribs['location'] = point

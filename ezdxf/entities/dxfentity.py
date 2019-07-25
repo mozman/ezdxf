@@ -49,6 +49,7 @@ ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'
 #
 SETTER_EVENTS = {
     'layer': 'on_layer_change',
+    'linetype': 'on_linetype_change',
 }
 
 

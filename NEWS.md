@@ -66,6 +66,7 @@ __Version 0.10b3 - ... __
 - CHANGE: renamed `DXFEntity.dxf_attrib_exists()` to `DXFEntity.has_dxf_attrib()`
 - CHANGE: integration of `MTextData` methods into `MText`
 - CHANGE: removed from `MText` methods: `edit_data`, `get_text`, `set_text`
+- BUGFIX: VERTEX entity inherit `owner` and `linetype` attribute from POLYLINE entity
 
 Version 0.9 - 2019-02-24
 ------------------------

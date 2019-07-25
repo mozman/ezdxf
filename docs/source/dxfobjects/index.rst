@@ -8,7 +8,9 @@ DXF Objects
     dictionary
     geodata
     imagedef
+    dxflayout
     placeholder
+    plotsettings
     sun
     underlaydef
     xrecord

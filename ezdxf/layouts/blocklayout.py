@@ -15,7 +15,7 @@ class BlockLayout(BaseLayout):
 
     """
     def __contains__(self, entity: Union['DXFGraphic', str]) -> bool:
-        """ Returns ``True`` if `entity` if stored in this block.
+        """ Returns ``True`` if block contains `entity`.
 
         Args:
              entity: :class:`DXFGraphic` object or handle as hex string
@@ -27,17 +27,17 @@ class BlockLayout(BaseLayout):
 
     @property
     def block(self):
-        """ Get the associated BLOCK entity. """
+        """ the associated :class:`~ezdxf.entities.Block` entity. """
         return self.block_record.block
 
     @property
     def endblk(self):
-        """ Get the associated ENDBLK entity. """
+        """ the associated :class:`~ezdxf.entities.EndBlk` entity. """
         return self.block_record.endblk
 
     @property
     def name(self) -> str:
-        """ Get block name """
+        """ Get block and block_record name """
         return self.block_record.dxf.name
 
     @name.setter
@@ -47,31 +47,31 @@ class BlockLayout(BaseLayout):
 
     @property
     def dxf(self):
-        """ DXF name space of associated BLOCK_RECORD. """
+        """ DXF name space of associated :class:`~ezdxf.entities.BlockRecord` table entry. """
         return self.block_record.dxf
 
     def attdefs(self) -> Iterable['AttDef']:
-        """ Iterate for all :class:`~ezdxf.entities.attrib.Attdef` entities. """
+        """ Returns iterable of all :class:`~ezdxf.entities.attrib.Attdef` entities. """
         return (entity for entity in self if entity.dxftype() == 'ATTDEF')
 
     def has_attdef(self, tag: str) -> bool:
-        """ Returns ``True`` if an :class:`~ezdxf.entities.attrib.Attdef` for `tag`. """
+        """ Returns ``True`` if an :class:`~ezdxf.entities.attrib.Attdef` for `tag` exist. """
         return self.get_attdef(tag) is not None
 
     def get_attdef(self, tag: str) -> Optional['DXFGraphic']:
-        """ Get attached :class:`~ezdxf.entities.attrib.Attdef` entity by `tag`. """
+        """ Returns attached :class:`~ezdxf.entities.attrib.Attdef` entity by `tag` name. """
         for attdef in self.attdefs():
             if tag == attdef.dxf.tag:
                 return attdef
 
     def get_attdef_text(self, tag: str, default: str = None) -> str:
         """
-        Get content text for :class:`~ezdxf.entities.attrib.Attdef` `tag` as string or returns `default` if no
+        Returns text content for :class:`~ezdxf.entities.attrib.Attdef` `tag` as string or returns `default` if no
         :class:`Attdef` for `tag` exist.
 
         Args:
-            tag: tag name
-            default: default value if tag is absent
+            tag: name of tag
+            default: default value if `tag` not exist
 
         """
         attdef = self.get_attdef(tag)
@@ -80,5 +80,5 @@ class BlockLayout(BaseLayout):
         return attdef.dxf.text
 
     def get_const_attdefs(self) -> Iterable['AttDef']:
-        """ Returns a generator for constant ATTDEF entities. (internal API) """
+        """ Returns iterable for all constant ATTDEF entities. (internal API) """
         return (attdef for attdef in self.attdefs() if attdef.is_const)

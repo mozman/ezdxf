@@ -1,7 +1,7 @@
 # Created: 21.03.2011
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List
+from typing import TYPE_CHECKING, Dict, Iterable, List, cast
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import MODEL_SPACE_R2000, PAPER_SPACE_R2000, TMP_PAPER_SPACE_NAME
@@ -9,7 +9,7 @@ from ezdxf.lldxf.validator import is_valid_name
 from .layout import Layout, Modelspace, Paperspace
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, Dictionary, Drawing, BlockRecord, DXFLayout
+    from ezdxf.eztypes import DXFEntity, Dictionary, Drawing
 
 logger = logging.getLogger('ezdxf')
 
@@ -55,11 +55,11 @@ class Layouts:
             count += 1
         return "*Paper_Space%d" % count
 
-    def new(self, name: str, dxfattribs: dict = None) -> 'Layout':
-        """ Create a new :class:`~ezdxf.layouts.Paperspace`.
+    def new(self, name: str, dxfattribs: dict = None) -> Paperspace:
+        """ Returns a new :class:`~ezdxf.layouts.Paperspace` layout.
 
         Args:
-            name: layout name as shown in tab
+            name: layout name as shown in tabs in :term:`CAD` applications
             dxfattribs: additional DXF attributes for the :class:`~ezdxf.entities.layout.DXFLayout` entity
 
         Raises:
@@ -149,21 +149,21 @@ class Layouts:
             self._layouts[name] = layout
 
     def __len__(self) -> int:
-        """ Returns the count for layouts. """
+        """ Returns count of existing layouts, including the modelspace layout. """
         return len(self._layouts)
 
     def __contains__(self, name: str) -> bool:
-        """ Returns ``True`` if layout `name` exist, support for the :code:`in` operator. """
+        """ Returns ``True`` if layout `name` exist. """
         return name in self._layouts
 
     def __iter__(self) -> Iterable['Layout']:
-        """ Iterate over modelspace layout and all paperspace layouts as :class:`~ezdxf.layouts.Layout` objects.
+        """ Returns iterable of all layouts as :class:`~ezdxf.layouts.Layout` objects, including the modelspace layout.
         """
         return iter(self._layouts.values())
 
-    def modelspace(self) -> 'Layout':
-        """ Returns the modelspace :class:`~ezdxf.layouts.Layout` object. """
-        return self.get('Model')
+    def modelspace(self) -> Modelspace:
+        """ Returns the :class:`~ezdxf.layouts.Modelspace` layout. """
+        return cast(Modelspace, self.get('Model'))
 
     def names(self) -> Iterable[str]:
         """ Returns iterable of all layout names. """
@@ -171,10 +171,10 @@ class Layouts:
 
     def get(self, name: str) -> 'Layout':
         """
-        Get layout by `name``.
+        Returns :class:`~ezdxf.layouts.Layout` by `name`.
 
         Args:
-            name: layout name as shown in tab, e.g. ``'Model'`` for model space
+            name: layout name as shown in tab, e.g. ``'Model'`` for modelspace
 
         """
         if name is None:
@@ -184,7 +184,8 @@ class Layouts:
             return self._layouts[name]
 
     def rename(self, old_name: str, new_name: str) -> None:
-        """ Rename a layout. Layout ``Model`` can not renamed and the new name of a layout must not exist.
+        """ Rename a layout from `old_name` to `new_name`.
+        Can not rename layout ``'Model'`` and the new name of a layout must not exist.
 
         Args:
             old_name: actual layout name
@@ -193,6 +194,7 @@ class Layouts:
         Raises:
             DXFValueError: try to rename ``'Model'``
             DXFValueError: Layout `new_name` already exist.
+
         """
         if old_name == 'Model':
             raise DXFValueError('Can not rename model space.')
@@ -205,12 +207,12 @@ class Layouts:
         self._layouts[new_name] = layout
 
     def names_in_taborder(self) -> List[str]:
-        """ Returns all layout names in tab order as a list of strings. """
+        """ Returns all layout names in tab order as shown in :term:`CAD` applications. """
         names = [(layout.dxf.taborder, name) for name, layout in self._layouts.items()]
         return [name for order, name in sorted(names)]
 
     def get_layout_for_entity(self, entity: 'DXFEntity') -> 'Layout':
-        """ Returns the owner layout for `entity`. """
+        """ Returns the owner layout for a DXF `entity`. """
         return self.get_layout_by_key(entity.dxf.owner)
 
     def get_layout_by_key(self, layout_key: str) -> 'Layout':
@@ -267,12 +269,12 @@ class Layouts:
         del self._layouts[layout.name]
         layout.destroy()
 
-    def active_layout(self) -> 'Layout':
+    def active_layout(self) -> Paperspace:
         """
         Returns the active paperspace layout.
 
         """
         for layout in self:
             if layout.is_active_paperspace:
-                return layout
-        raise DXFInternalEzdxfError('No active paper space found.')
+                return cast(Paperspace, layout)
+        raise DXFInternalEzdxfError('No active paperspace layout found.')

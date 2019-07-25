@@ -5,8 +5,8 @@ Layout Management Structures
 
 Layouts are separated entity spaces, there are three different Layout types:
 
-    1. modelspace contains the 'real' world representation of the drawing subject in real world units.
-    2. paperspace are used to create different drawing sheets of the subject for printing or PDF export
+    1. modelspace contains the 'real' world representation of the drawing subjects in real world units.
+    2. paperspace layouts are used to create different drawing sheets of the modelspace subjects for printing or PDF export
     3. Blocks are reusable sets of graphical entities, inserted by the INSERT entity.
 
 All layouts have at least a BLOCK definition in the BLOCKS section and since DXF R13 exists the BLOCK_RECORD table with
