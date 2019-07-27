@@ -20,8 +20,8 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. attribute:: rgb
 
-        Get/Set DXF attribute :attr:`~DXFGraphic.dxf.true_color` as ``(r, g, b)`` tuple, returns ``None`` if attribute
-        :attr:`true_color` is not set.
+        Get/Set DXF attribute :attr:`dxf.true_color` as ``(r, g, b)`` tuple, returns ``None`` if attribute
+        :attr:`dxf.true_color` is not set.
 
         .. code-block:: python
 
@@ -29,10 +29,10 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
             r, g, b = entity.rgb
 
         This is the recommend method to get/set RGB values, when ever possible do not use the DXF low level attribute
-        :attr:`DXFGraphic.dxf.true_color`.
+        :attr:`dxf.true_color`.
 
         This attribute requires DXF R2004 or later, returns ``None`` for prior DXF versions
-        and raises :class:`DXFAttributeError` for setting `rgb` in older DXF versions.
+        and raises :class:`DXFAttributeError` for setting :attr:`rgb` in older DXF versions.
 
     .. attribute:: transparency
 

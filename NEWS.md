@@ -59,6 +59,7 @@ __Version 0.10b2 - 2019-05-30__
 __Version 0.10b3 - ... __
 
 - NEW: support for named plot style files (STB)
+- NEW: `Layer` entry got `rgb` and `color` properties
 - CHANGE: entity query - exclude DXF types from `'*'` search, by appending type name with a preceding '!' e.g. query for 
   all entities except LINE = `"* !LINE"`
 - CHANGE: entity query - removed regular expression support for type name match

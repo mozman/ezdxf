@@ -53,6 +53,13 @@ def test_set_color_for_off_layer(layer):
     assert -7 == layer.dxf.color
 
 
+def test_color_as_property(layer):
+    layer.color = 7
+    layer.off()
+    assert 7 == layer.color
+    assert -7 == layer.dxf.color
+
+
 def test_is_locked(layer):
     layer.lock()
     assert layer.is_locked() is True
@@ -92,3 +99,13 @@ def test_thaw(layer):
 def test_invald_layer_name():
     with pytest.raises(DXFInvalidLayerName):
         Layer.new('FFFF', dxfattribs={'name': 'Layer/'})
+
+
+def test_set_true_color_as_rgb(layer):
+    layer.rgb = (10, 10, 10)
+    assert layer.dxf.true_color == 657930
+
+
+def test_get_true_color_as_rgb(layer):
+    layer.dxf.true_color = 657930
+    assert layer.rgb == (10, 10, 10)

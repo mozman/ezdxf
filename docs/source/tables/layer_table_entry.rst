@@ -47,11 +47,13 @@ Factory function         :meth:`Drawing.layers.new`
 
     .. attribute:: dxf.color
 
-        Layer color, but use :meth:`Layer.get_color`, because color is negative for layer status `off` (int)
+        Layer color, but use property :attr:`Layer.color` to get/set color value, because color is negative for
+        layer status `off` (int)
 
-    .. attribute:: true_color
+    .. attribute:: dxf.true_color
 
-        Layer true color value as int (requires DXF R2004)
+        Layer true color value as int, use property :attr:`Layer.rgb` to set/get true color value as
+        ``(r, g, b)`` tuple.  (requires DXF R2004)
 
     .. attribute:: dxf.linetype
 
@@ -77,7 +79,7 @@ Factory function         :meth:`Drawing.layers.new`
 
     .. attribute:: dxf.plotstyle_handle
 
-        Handle to PlotStyleName (feature for experts)
+        Handle to plot style name?
 
         (requires DXF R13)
 
@@ -86,6 +88,27 @@ Factory function         :meth:`Drawing.layers.new`
         Handle to default :class:`~ezdxf.entities.Material`.
 
         (requires DXF R13)
+
+    .. attribute:: rgb
+
+        Get/set DXF attribute :attr:`dxf.true_color` as ``(r, g, b)`` tuple, returns ``None`` if attribute
+        :attr:`dxf.true_color` is not set.
+
+        .. code-block:: python
+
+            layer.rgb = (30, 40, 50)
+            r, g, b = layer.rgb
+
+        This is the recommend method to get/set RGB values, when ever possible do not use the DXF low level attribute
+        :attr:`dxf.true_color`.
+
+        This attribute requires DXF R2004 or later, returns ``None`` for prior DXF versions
+        and raises :class:`DXFAttributeError` for setting :attr:`rgb` in older DXF versions.
+
+    .. attribute:: color
+
+        Get/set layer color, preferred method for getting the layer color, because :attr:`dxf.color` is negative
+        for layer status `off`.
 
     .. automethod:: is_frozen
 
@@ -107,8 +130,12 @@ Factory function         :meth:`Drawing.layers.new`
 
     .. automethod:: off
 
-    .. automethod:: get_color
+    .. method:: get_color() -> int
 
-    .. automethod:: set_color
+        Use property :attr:`Layer.color` instead.
+
+    .. method:: set_color(value: int) -> None
+
+        Use property :attr:`Layer.color` instead.
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB

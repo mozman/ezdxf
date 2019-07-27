@@ -1,12 +1,14 @@
 # Created: 17.02.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Tuple
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, DXFInvalidLayerName
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.lldxf.validator import is_valid_layer_name
+from ezdxf.tools import rgb2int, int2rgb
+
 from .factory import register_entity
 
 logger = logging.getLogger('ezdxf')
@@ -121,14 +123,42 @@ class Layer(DXFEntity):
         self.dxf.color = -abs(self.dxf.color)
 
     def get_color(self) -> int:
-        """ Get layer color, preferred method for getting the layer color, because color is negative for layer
-        status `off`.
+        """ Get layer color, safe method for getting the layer color, because dxf.color is negative
+        for layer status `off`.
         """
         return abs(self.dxf.color)
 
     def set_color(self, color: int) -> None:
-        """ Set layer `color`, preferred method for setting the layer color, because color is negative for layer
-        status `off`.
+        """ Set layer color, safe method for setting the layer color, because dxf.color is negative
+        for layer status `off`.
         """
         color = abs(color) if self.is_on() else -abs(color)
         self.dxf.color = color
+
+    @property
+    def rgb(self) -> Optional[Tuple[int, int, int]]:
+        """ Returns RGB true color as (r, g, b)-tuple or None if attribute dxf.true_color is not set. """
+        if self.dxf.hasattr('true_color'):
+            return int2rgb(self.dxf.get('true_color'))
+        else:
+            return None
+
+    @rgb.setter
+    def rgb(self, rgb: Tuple[int, int, int]) -> None:
+        """ Set RGB true color as (r, g, b)-tuple e.g. (12, 34, 56). """
+        self.dxf.set('true_color', rgb2int(rgb))
+
+    @property
+    def color(self) -> int:
+        """ Get layer color, safe method for getting the layer color, because dxf.color is negative
+        for layer status `off`.
+        """
+        return self.get_color()
+
+    @color.setter
+    def color(self, value: int) -> None:
+        """ Set layer color, safe method for setting the layer color, because dxf.color is negative
+        for layer status `off`.
+        """
+        self.set_color(value)
+

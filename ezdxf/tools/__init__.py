@@ -57,6 +57,7 @@ def take2(iterable: Iterable) -> Tuple[Any, Any]:
             yield store, item
             store = None
 
+
 def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
     """ Suppress leading and/or trailing ``0`` of string `s`.
 
