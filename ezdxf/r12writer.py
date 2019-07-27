@@ -31,7 +31,14 @@ TEXT_ALIGN_FLAGS = {
 
 
 @contextmanager
-def r12writer(stream: Union[TextIO, str], fixed_tables=False) -> 'R12FastStreamWriter':
+def r12writer(stream: Union[TextIO, str], fixed_tables: bool=False) -> 'R12FastStreamWriter':
+    """
+    Context manager for writing DXF entities to a stream/file. `stream` can be any file like object
+    with a :func:`write` method or just a string for writing DXF entities to the file system.
+    If `fixed_tables` is ``True``, a standard TABLES section is written in front of the ENTITIES
+    section and some predefined text styles and line types can be used.
+
+    """
     if hasattr(stream, 'write'):
         writer = R12FastStreamWriter(stream, fixed_tables)
         try:
@@ -48,6 +55,14 @@ def r12writer(stream: Union[TextIO, str], fixed_tables=False) -> 'R12FastStreamW
 
 
 class R12FastStreamWriter:
+    """ Fast stream writer to create simple DXF R12 drawings.
+
+    Args:
+        stream: a file like object with a :func:`write` method.
+        fixed_tables: if `fixed_tables` is ``True``, a standard TABLES section is written in front of the
+                      ENTITIES section and some predefined text styles and line types can be used.
+
+    """
     def __init__(self, stream: TextIO, fixed_tables=False):
         self.stream = stream
         if fixed_tables:
@@ -55,6 +70,7 @@ class R12FastStreamWriter:
         stream.write("0\nSECTION\n2\nENTITIES\n")  # write header
 
     def close(self) -> None:
+        """ Writes the DXF tail. Call is not necessary when using the context manager :func:`r12writer`. """
         self.stream.write("0\nENDSEC\n0\nEOF\n")  # write tail
 
     def add_line(self,
@@ -63,6 +79,21 @@ class R12FastStreamWriter:
                  layer: str = "0",
                  color: int = None,
                  linetype: str = None) -> None:
+        """
+        Add a LINE entity from `start` to `end`.
+
+        Args:
+            start: start vertex as ``(x, y[, z])`` tuple
+            end: end vertex as  as ``(x, y[, z])`` tuple
+            layer: layer name as string, without a layer definition the assigned color = ``7`` (black/white) and
+                   line type is ``'Continuous'``.
+            color: color as :ref:`ACI` in the range from ``0`` to ``256``,
+                   ``0`` is `ByBlock` and ``256`` is `ByLayer`, default is `ByLayer` which is always
+                   color = ``7`` (black/white) without a layer definition.
+            linetype: line type as string, if FIXED-TABLES are written some predefined line types are available, else
+                      line type is always `ByLayer`, which is always ``'Continuous'`` without a LAYERS table.
+
+        """
         dxf = ["0\nLINE\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(start, code=10))
@@ -75,6 +106,17 @@ class R12FastStreamWriter:
                    layer: str = "0",
                    color: int = None,
                    linetype: str = None) -> None:
+        """
+        Add a CIRCLE entity.
+
+        Args:
+            center: circle center point as ``(x, y)`` tuple
+            radius: circle radius as float
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
         dxf = ["0\nCIRCLE\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(center))
@@ -89,6 +131,19 @@ class R12FastStreamWriter:
                 layer: str = "0",
                 color: int = None,
                 linetype: str = None) -> None:
+        """
+        Add an ARC entity. The arc goes counter clockwise from `start` angle to `end` angle.
+
+        Args:
+            center: arc center point as ``(x, y)`` tuple
+            radius: arc radius as float
+            start: arc start angle in degrees as float
+            end: arc end angle in degrees as float
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
         dxf = ["0\nARC\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(center))
@@ -102,6 +157,16 @@ class R12FastStreamWriter:
                   layer: str = "0",
                   color: int = None,
                   linetype: str = None) -> None:
+        """
+        Add a POINT entity.
+
+        Args:
+            location: point location as ``(x, y [,z])`` tuple
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
         dxf = ["0\nPOINT\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(location))
@@ -113,6 +178,25 @@ class R12FastStreamWriter:
                    layer: str = "0",
                    color: int = None,
                    linetype: str = None) -> None:
+        """
+        Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices, all vertices have to be in the same plane.
+
+        Args:
+            vertices: iterable of 3 or 4 ``(x, y, z)`` vertices.
+            invisible: bit coded flag to define the invisible edges,
+
+                       1. edge = 1
+                       2. edge = 2
+                       3. edge = 4
+                       4. edge = 8
+
+                       Add edge values to set multiple edges invisible, 1. edge + 3. edge = 1 + 4 = 5, all edges = 15
+
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
         self._add_quadrilateral('3DFACE', vertices, invisible, layer, color, linetype)
 
     def add_solid(self,
@@ -120,6 +204,16 @@ class R12FastStreamWriter:
                   layer: str = "0",
                   color: int = None,
                   linetype: str = None) -> None:
+        """
+        Add a SOLID entity. SOLID is a solid filled area with 3 or 4 edges and SOLID is a 2D entity.
+
+        Args:
+            vertices: iterable of 3 or 4 ``(x, y[, z])`` tuples, z-axis will be ignored.
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
         self._add_quadrilateral('SOLID', vertices, 0, layer, color, linetype)
 
     def _add_quadrilateral(self,
@@ -146,6 +240,16 @@ class R12FastStreamWriter:
                      layer: str = "0",
                      color: int = None,
                      linetype: str = None) -> None:
+        """
+        Add a POLYLINE entity. The first vertex (axis count) defines, if the POLYLINE is 2D or 3D.
+
+        Args:
+            vertices: iterable of ``(x, y[, z])`` tuples
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+            linetype: line type as string see :meth:`add_line`
+
+        """
         def write_polyline(flags: int) -> None:
             dxf = ["0\nPOLYLINE\n"]
             dxf.append(dxf_attribs(layer, color, linetype))
@@ -181,6 +285,34 @@ class R12FastStreamWriter:
                  style: str = 'STANDARD',
                  layer: str = "0",
                  color: int = None) -> None:
+        """
+        Add a one line TEXT entity.
+
+        Args:
+            text: the text as string
+            insert: insert location as ``(x, y)`` tuple
+            height: text height in drawing units
+            width: text width as factor
+            align: text alignment, see table below
+            rotation: text rotation in degrees as float
+            oblique: oblique in degrees as float, vertical = ``0`` (default)
+            style: text style name as string, if FIXED-TABLES are written some predefined text styles are available,
+                   else text style is always ``'STANDARD'``.
+            layer: layer name as string see :meth:`add_line`
+            color: color as :ref:`ACI` see :meth:`add_line`
+
+        ============   =============== ================= =====
+        Vert/Horiz     Left            Center            Right
+        ============   =============== ================= =====
+        Top            ``TOP_LEFT``    ``TOP_CENTER``    ``TOP_RIGHT``
+        Middle         ``MIDDLE_LEFT`` ``MIDDLE_CENTER`` ``MIDDLE_RIGHT``
+        Bottom         ``BOTTOM_LEFT`` ``BOTTOM_CENTER`` ``BOTTOM_RIGHT``
+        Baseline       ``LEFT``        ``CENTER``         ``RIGHT``
+        ============   =============== ================= =====
+
+        The special alignments ``ALIGNED`` and ``FIT`` are not available.
+
+        """
         # text style is always STANDARD without a TABLES section
         dxf = ["0\nTEXT\n"]
         dxf.append(dxf_attribs(layer, color))
