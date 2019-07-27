@@ -17,6 +17,12 @@ Functions
 
 .. autofunction:: bspline_control_frame_approx
 
+.. autofunction:: uniform_knot_vector
+
+.. autofunction:: open_uniform_knot_vector
+
+.. autofunction:: required_knot_values
+
 .. autofunction:: xround
 
 .. _bulge_related_functions:

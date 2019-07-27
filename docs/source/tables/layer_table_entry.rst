@@ -53,7 +53,9 @@ Factory function         :meth:`Drawing.layers.new`
     .. attribute:: dxf.true_color
 
         Layer true color value as int, use property :attr:`Layer.rgb` to set/get true color value as
-        ``(r, g, b)`` tuple.  (requires DXF R2004)
+        ``(r, g, b)`` tuple.
+
+        (requires DXF R2004)
 
     .. attribute:: dxf.linetype
 
@@ -102,13 +104,14 @@ Factory function         :meth:`Drawing.layers.new`
         This is the recommend method to get/set RGB values, when ever possible do not use the DXF low level attribute
         :attr:`dxf.true_color`.
 
-        This attribute requires DXF R2004 or later, returns ``None`` for prior DXF versions
-        and raises :class:`DXFAttributeError` for setting :attr:`rgb` in older DXF versions.
+        .. versionadded:: 0.10
 
     .. attribute:: color
 
         Get/set layer color, preferred method for getting the layer color, because :attr:`dxf.color` is negative
         for layer status `off`.
+
+        .. versionadded:: 0.10
 
     .. automethod:: is_frozen
 

@@ -230,16 +230,15 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-def knot_open_uniform(n: int, order: int) -> List[float]:
+def open_uniform_knot_vector(n: int, order: int) -> List[float]:
     """
-    Returns a open uniform knot vector.
+    Returns an open uniform knot vector for a B-spline of `order` and `n` control points.
+
+    `order` = degree + 1
 
     Args:
         n: count of control points
         order: spline order
-
-    Returns:
-        List[float]: knot vector
 
     """
     nplusc = n + order
@@ -258,28 +257,36 @@ def is_uniform_knots(knots: Sequence[float], places: int = 4) -> bool:
     return len(deltas) == 1
 
 
-def knot_uniform(n: int, order: int) -> List[float]:
+def uniform_knot_vector(n: int, order: int) -> List[float]:
     """
-    Returns a uniform knot vector.
+    Returns an uniform knot vector for a B-spline of `order` and `n` control points.
+
+    `order` = degree + 1
 
     Args:
         n: count of control points
         order: spline order
-
-    Returns:
-        List[float]: knot vector
 
     """
     return [float(knot_value) for knot_value in range(0, n + order)]
 
 
 def required_knot_values(count: int, order: int) -> int:
-    # just to show the connections
-    # count = count of control points = n + 1
-    # k = order of spline = degree + 1
-    # 2 <= k <= n + 1
-    # p = degree
-    # order = p + 1
+    """
+    Returns the count of required knot values for a B-spline of `order` and `count` control points.
+
+    degree =  degree of B-spline, in math papers often called: `p`
+
+    Args:
+        count: count of control points, in math papers often called:  `n` + 1
+        order: order of B-Spline, in math papers often called:  `k`
+
+    Relationships:
+
+    - `k` (order) = `p` (degree) + 1
+    - 2 ≤ `k` (order) ≤ `n` + 1 (count)
+
+    """
     k = order
     n = count - 1
     p = k - 1
@@ -398,14 +405,16 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
     Given are the fit points and the degree of the B-spline. The function provides 3 methods for generating the
     parameter vector t:
 
-        1. method = ``'uniform'``, creates a uniform t vector, form 0 to 1 evenly spaced; see `uniform`_ method
-        2. method = ``'distance'``, creates a t vector with values proportional to the fit point distances,
-           see `chord length`_ method
-        3. method = ``'centripetal'``, creates a t vector with values proportional to the
-           fit point ``distances^power``; see `centripetal`_ method
+    =================== ============================================================
+    Method              Description
+    =================== ============================================================
+    ``'uniform'``       creates a uniform t vector, from ``0`` to ``1`` evenly spaced; see `uniform`_ method
+    ``'distance'``      creates a t vector with values proportional to the fit point distances, see `chord length`_ method
+    ``'centripetal'``   creates a t vector with values proportional to the fit point distances ^ ``power``; see `centripetal`_ method
+    =================== ============================================================
 
     Args:
-        fit_points: fit points of B-spline, as list of :class:`Vector` compatible object
+        fit_points: fit points of B-spline, as list of :class:`Vector` compatible objects
         degree: degree of B-spline
         method: calculation method for parameter vector t
         power: power for centripetal method
@@ -442,19 +451,14 @@ def bspline_control_frame(fit_points: Iterable['Vertex'], degree: int = 3, metho
 def bspline_control_frame_approx(fit_points: Iterable['Vertex'], count: int, degree: int = 3, method: str = 'distance',
                                  power: float = .5):
     """
-    Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of the B-spline.
-
-        1. method = ``'uniform'``, creates a uniform t vector, form 0 to 1 evenly spaced; see `uniform`_ method
-        2. method = ``'distance'``, creates a t vector with values proportional to the fit point distances,
-           see `chord length`_ method
-        3. method = ``'centripetal'``, creates a t vector with values proportional to the
-           fit point ``distances^power``; see `centripetal`_ method
+    Approximate `B-spline`_ by a reduced count of control points, given are the fit points and the degree of
+    the B-spline.
 
     Args:
         fit_points: all fit points of B-spline as :class:`Vector` compatible objects
         count: count of designated control points
         degree: degree of B-spline
-        method: calculation method for parameter vector t
+        method: calculation method for parameter vector t, see :func:`bspline_control_frame`
         power: power for centripetal method
 
     Returns:
@@ -691,7 +695,7 @@ class BSpline:
             raise DXFValueError('Invalid need more control points for order {}'.format(order))
 
         if knots is None:
-            knots = knot_open_uniform(self.count, self.order)
+            knots = open_uniform_knot_vector(self.count, self.order)
         else:
             knots = list(knots)
             if len(knots) != self.nplusc:
@@ -803,7 +807,7 @@ class BSplineU(BSpline):
 
     def __init__(self, control_points: Iterable['Vertex'], order: int = 4, weights: Iterable[float] = None):
         control_points = list(control_points)
-        knots = knot_uniform(len(control_points), order)
+        knots = uniform_knot_vector(len(control_points), order)
         super().__init__(control_points, order=order, knots=knots, weights=weights)
 
     def step_size(self, segments: int) -> float:

@@ -31,8 +31,6 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
         This is the recommend method to get/set RGB values, when ever possible do not use the DXF low level attribute
         :attr:`dxf.true_color`.
 
-        This attribute requires DXF R2004 or later, returns ``None`` for prior DXF versions
-        and raises :class:`DXFAttributeError` for setting :attr:`rgb` in older DXF versions.
 
     .. attribute:: transparency
 

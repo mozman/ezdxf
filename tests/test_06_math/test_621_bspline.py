@@ -4,7 +4,7 @@
 import pytest
 from math import isclose
 from ezdxf.math.bspline import BSpline, DBSpline
-from ezdxf.math.bspline import bspline_basis_vector, Basis, knot_open_uniform
+from ezdxf.math.bspline import bspline_basis_vector, Basis, open_uniform_knot_vector
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.), (50., 0., 30.)]
 
@@ -24,7 +24,7 @@ def test_bspine_points():
 def test_bspline_basis_vector():
     degree = 3
     count = 10
-    knots = list(knot_open_uniform(count, order=degree+1))
+    knots = list(open_uniform_knot_vector(count, order=degree + 1))
     max_t = max(knots)
     basis_func = Basis(knots=knots, order=degree+1, count=count)
     for u in (0, 2., 2.5, 3.5, 4., max_t):

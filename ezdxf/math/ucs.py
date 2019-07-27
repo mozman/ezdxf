@@ -82,30 +82,26 @@ class OCS:
         return self.matrix.uz if self.transform else Z_AXIS
 
     def from_wcs(self, point: 'Vertex') -> 'Vertex':
-        """ Calculate object coordinates for point in :ref:`WCS`.
-        """
+        """ Returns OCS vector for WCS `point`. """
         if self.transform:
             return self.transpose.transform(point)
         else:
             return point
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
-        """ Translate multiple :ref:`WCS` coordinates into object coordinates.
-        """
+        """ Returns iterable of OCS vectors from WCS `points`. """
         for point in points:
             yield self.from_wcs(point)
 
     def to_wcs(self, point: 'Vertex') -> 'Vertex':
-        """ Calculate :ref:`WCS` coordinates for point in object coordinates.
-        """
+        """ Returns WCS vector for OCS `point`. """
         if self.transform:
             return self.matrix.transform(point)
         else:
             return point
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
-        """ Translate multiple object coordinates into :ref:`WCS` coordinates.
-        """
+        """ Returns iterable of WCS vectors for OCS `points`. """
         for point in points:
             yield self.to_wcs(point)
 
@@ -125,7 +121,7 @@ class OCS:
 
 class UCS:
     """
-    Establish an User Coordinate System (:ref:`UCS`). The UCS is defined by the origin and two unit vectors for the x-,
+    Establish an user coordinate system (:ref:`UCS`). The UCS is defined by the origin and two unit vectors for the x-,
     y- or z-axis, all axis in :ref:`WCS`. The missing axis is the cross product of the given axis.
 
     If x- and y-axis are ``None``: ux = ``(1, 0, 0)``, uy = ``(0, 1, 0)``, uz = ``(0, 0, 1)``.
@@ -182,25 +178,19 @@ class UCS:
         return self.matrix.uz
 
     def to_wcs(self, point: 'Vertex') -> 'Vector':
-        """
-        Calculate world coordinates for point in UCS coordinates.
-
-        """
+        """ Returns WCS vector for UCS `point`. """
         return self.origin + self.matrix.transform(point)
 
     def points_to_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
-        """
-        Translate multiple user coordinates into world coordinates (generator).
-
-        """
+        """ Returns iterable of WCS vectors for UCS `points`. """
         for point in points:
             yield self.to_wcs(point)
 
     def to_ocs(self, point: 'Vertex') -> 'Vertex':
         """
-        Calculate OCS coordinates for point in UCS coordinates.
+        Returns OCS vector for UCS `point`.
 
-        OCS is defined by the z-axis of the UCS.
+        The :class:`OCS` is defined by the z-axis of the :class:`UCS`.
 
         """
         wpoint = self.to_wcs(point)
@@ -208,9 +198,9 @@ class UCS:
 
     def points_to_ocs(self, points: Iterable['Vertex']) -> Iterable['Vertex']:
         """
-        Translate multiple user coordinates into OCS coordinates (generator).
+        Returns iterable of OCS vectors for UCS `points`.
 
-        OCS is defined by the z-axis of the UCS.
+        The :class:`OCS` is defined by the z-axis of the :class:`UCS`.
 
         """
         wcs = self.to_wcs
@@ -220,12 +210,11 @@ class UCS:
 
     def to_ocs_angle_deg(self, angle: float) -> float:
         """
-        Transform angle in UCS xy-plane to angle in OCS xy-plane.
+        Returns angle between the UCS vector in the xy-plane defined by `angle` and OCS x-axis, :class:`OCS`
+        is defined by the UCS z-axis.
 
         Args:
             angle: in UCS in degrees
-
-        Returns: angle in OCS in degrees
 
         """
         vec = Vector.from_deg_angle(angle)
@@ -234,12 +223,11 @@ class UCS:
 
     def to_ocs_angle_rad(self, angle: float) -> float:
         """
-        Transform angle in UCS xy-plane to angle in OCS xy-plane.
+        Returns angle between the UCS vector in the xy-plane defined by `angle` and OCS x-axis, :class:`OCS`
+        is defined by the UCS z-axis.
 
         Args:
             angle: in UCS in radians
-
-        Returns: angle in OCS in radians
 
         """
         vec = Vector.from_angle(angle)
@@ -247,28 +235,23 @@ class UCS:
         return vec.angle
 
     def from_wcs(self, point: 'Vertex') -> 'Vector':
-        """
-        Calculate UCS coordinates for point in world coordinates.
-
-        """
+        """ Returns UCS vector for WCS `point`. """
         return self.transpose.transform(point - self.origin)
 
     def points_from_wcs(self, points: Iterable['Vertex']) -> Iterable['Vector']:
-        """
-        Translate multiple world coordinates into user coordinates (generator).
-
-        """
+        """ Returns iterable of UCS vectors from WCS `points`. """
         for point in points:
             yield self.from_wcs(point)
 
     @property
     def is_cartesian(self) -> bool:
-        """ True if cartesian coordinate system """
+        """ Returns ``True`` if cartesian coordinate system. """
         return self.uy.cross(self.uz).isclose(self.ux)
 
     @staticmethod
     def from_x_axis_and_point_in_xy(origin: 'Vertex', axis: 'Vertex', point: 'Vertex') -> 'UCS':
-        """ Returns an new :class:`UCS` defined by the origin, the x-axis vector and an arbitrary point in the xy-plane.
+        """
+        Returns an new :class:`UCS` defined by the origin, the x-axis vector and an arbitrary point in the xy-plane.
 
         Args:
             origin: UCS origin as (x, y, z) tuple in :ref:`WCS`

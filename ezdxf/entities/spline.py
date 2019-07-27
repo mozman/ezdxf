@@ -10,7 +10,7 @@ from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray
-from ezdxf.math.bspline import knot_uniform, knot_open_uniform
+from ezdxf.math.bspline import uniform_knot_vector, open_uniform_knot_vector
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
@@ -195,7 +195,7 @@ class Spline(DXFGraphic):
         self.dxf.flags = 0  # clear all flags
         self.dxf.degree = degree
         self.control_points = control_points
-        self.knots = knot_open_uniform(len(control_points), degree + 1)
+        self.knots = open_uniform_knot_vector(len(control_points), degree + 1)
 
     def set_uniform(self, control_points: Sequence['Vertex'], degree: int = 3) -> None:
         """
@@ -205,7 +205,7 @@ class Spline(DXFGraphic):
         self.dxf.flags = 0  # clear all flags
         self.dxf.degree = degree
         self.control_points = control_points
-        self.knots = knot_uniform(len(control_points), degree + 1)
+        self.knots = uniform_knot_vector(len(control_points), degree + 1)
 
     def set_periodic(self, control_points: Sequence['Vertex'], degree=3) -> None:
         """
