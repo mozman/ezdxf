@@ -1,4 +1,5 @@
 .. module:: ezdxf.render
+    :noindex:
 
 MeshBuilder
 ===========

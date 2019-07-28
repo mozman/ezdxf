@@ -2,6 +2,7 @@ Underlay
 ========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 UNDERLAY entity (`DXF Reference`_) links an underlay file to the DXF file, the file itself is not embedded into the
 DXF file, it is always a separated file. The (PDF)UNDERLAY entity is like a block reference, you can use it

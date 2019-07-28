@@ -2,6 +2,7 @@ Circle
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 CIRCLE (`DXF Reference`_) center at location :attr:`dxf.center` and radius of :attr:`dxf.radius`.
 

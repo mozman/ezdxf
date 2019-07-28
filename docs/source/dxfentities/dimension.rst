@@ -2,6 +2,7 @@ Dimension
 =========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The DIMENSION entity (`DXF Reference`_) represents several types of dimensions in many orientations and alignments.
 The basic types of dimensioning are linear, radial, angular, ordinate, and arc length.

@@ -2,6 +2,7 @@ Polyline
 ========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The POLYLINE entity (`POLYLINE DXF Reference`_) is very complex, it's used to build 2D/3D polylines,
 3D meshes and 3D polyfaces. For every type exists a different wrapper class but they all have the

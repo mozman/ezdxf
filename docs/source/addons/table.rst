@@ -1,4 +1,5 @@
 .. module:: ezdxf.addons
+    :noindex:
 
 Table
 =====

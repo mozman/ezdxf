@@ -2,6 +2,7 @@ Style
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Defines a text style (`DXF Reference`_), can be used by entities: :class:`Text`, :class:`Attrib` and
 :class:`Attdef`.

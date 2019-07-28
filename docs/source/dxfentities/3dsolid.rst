@@ -2,6 +2,7 @@ Solid3d
 =======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 3DSOLID (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 

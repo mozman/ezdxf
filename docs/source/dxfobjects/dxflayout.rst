@@ -2,6 +2,7 @@ DXFLayout
 =========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 `LAYOUT`_ entity is part of a modelspace or paperspace layout definitions.
 

@@ -2,6 +2,7 @@ XRecord
 =======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Important class for storing application defined data in DXF files.
 

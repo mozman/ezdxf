@@ -2,6 +2,7 @@ Ellipse
 =======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 ELLIPSE (`DXF Reference`_) with center point at location :attr:`dxf.center` and a major axis :attr:`dxf.major_axis` as vector.
 :attr:`dxf.ratio` is the ratio of minor axis to major axis. :attr:`dxf.start_param` and :attr:`dxf.end_param`

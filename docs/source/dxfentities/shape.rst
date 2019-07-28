@@ -2,6 +2,7 @@ Shape
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 SHAPES  (`DXF Reference`_) are objects that are used like block references, each SHAPE reference can be scaled and
 rotated individually.

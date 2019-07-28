@@ -2,6 +2,7 @@ GeoData
 =======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The `GEODATA`_ entity is associated to the :class:`~ezdxf.layouts.Modelspace` object.
 

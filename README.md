@@ -120,7 +120,7 @@ python-ezdxf@googlegroups.com
 
 Questions at __Stack Overflow__:
 
-Post questions at [stack overflow](https://stackoverflow.com/) and use the tags `dxf` or `ezdxf`.
+Post questions at [stack overflow](https://stackoverflow.com/) and use the tag `dxf`.
 
 Issue tracker at __GitHub__:
 

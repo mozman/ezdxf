@@ -2,6 +2,7 @@ PlotSettings
 ============
 
 .. module:: ezdxf.entities
+    :noindex:
 
 All `PLOTSETTINGS`_ attributes are part of the :class:`~ezdxf.entities.DXFLayout` entity, I don't know if this
 entity also appears as standalone entity.

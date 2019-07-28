@@ -2,6 +2,7 @@ Sun
 ===
 
 .. module:: ezdxf.entities
+    :noindex:
 
 `SUN`_ entity defines properties of the sun.
 

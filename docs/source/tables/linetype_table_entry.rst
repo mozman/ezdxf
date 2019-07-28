@@ -2,6 +2,7 @@ Linetype
 ========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Defines a linetype (`DXF Reference`_).
 

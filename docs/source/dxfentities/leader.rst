@@ -2,6 +2,7 @@ Leader
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The LEADER entity (`DXF Reference`_) represents an arrow, made up of one or more vertices
 (or spline fit points) and an arrowhead. The label or other content to which the :class:`Leader` is attached

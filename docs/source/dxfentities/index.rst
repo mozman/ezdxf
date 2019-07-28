@@ -1,6 +1,8 @@
 DXF Entities
 ============
 
+.. module:: ezdxf.entities
+
 .. warning::
 
     Do not instantiate entity classes by yourself - always use the provided factory functions!

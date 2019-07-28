@@ -2,6 +2,7 @@ Layer
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 LAYER (`DXF Reference`_) definition, defines attribute values for entities on this layer for their attributes set to
 ``BYLAYER``.

@@ -2,6 +2,7 @@ AppID
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Defines an APPID (`DXF Reference`_). These table entries maintain a set of names for all registered applications.
 

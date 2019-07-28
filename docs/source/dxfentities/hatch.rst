@@ -2,6 +2,7 @@ Hatch
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or more boundary paths with a
 hatch pattern, solid fill, or gradient fill.

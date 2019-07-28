@@ -2,6 +2,7 @@ View
 ====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The View table (`DXF Reference`_) stores named views of the model or paperspace layouts. This stored views makes parts
 of the drawing or some view points of the model in a CAD applications more accessible. This views have no influence

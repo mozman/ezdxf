@@ -2,6 +2,7 @@ Arc
 ===
 
 .. module:: ezdxf.entities
+    :noindex:
 
 ARC (`DXF Reference`_) center at location :attr:`dxf.center` and radius of :attr:`dxf.radius` from :attr:`dxf.start_angle` to
 :attr:`dxf.end_angle`. ARC goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in counter clockwise

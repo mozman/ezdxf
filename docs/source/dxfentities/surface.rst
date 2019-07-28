@@ -2,6 +2,7 @@ Surface
 =======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 SURFACE (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 

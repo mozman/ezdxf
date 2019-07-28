@@ -2,6 +2,7 @@ Insert
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Block reference (`DXF Reference`_) with maybe attached attributes (:class:`Attrib`).
 

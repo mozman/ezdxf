@@ -2,6 +2,7 @@ ImageDef
 ========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 `IMAGEDEF`_ entity defines an image file, which can be placed by the :class:`Image` entity.
 

@@ -1,5 +1,7 @@
 .. _add-ons:
 
+.. module:: ezdxf.addons
+
 Add-ons
 =======
 

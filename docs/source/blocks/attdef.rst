@@ -2,6 +2,7 @@ AttDef
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The ATTDEF (`DXF Reference`_) entity is a template in a :class:`~ezdxf.layouts.BlockLayout`, which will be used to
 create an attached :class:`Attrib` entity for an :class:`Insert` entity.

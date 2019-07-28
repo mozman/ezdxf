@@ -2,6 +2,7 @@ VPort
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The viewport table (`DXF Reference`_) stores the modelspace viewport configurations. So this entries just modelspace
 viewports, not paperspace viewports, for paperspace viewports see the :class:`Viewport` entity.

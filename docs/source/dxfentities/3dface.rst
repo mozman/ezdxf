@@ -2,6 +2,7 @@ Face3d
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 A 3DFACE (`DXF Reference`_) is real 3D solid filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).

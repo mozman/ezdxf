@@ -2,6 +2,7 @@ Block
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 BLOCK (`DXF Reference`_) entity is embedded into the :class:`~ezdxf.layouts.BlockLayout` object.
 The BLOCK entity is accessible by the :attr:`BlockLayout.block` attribute.

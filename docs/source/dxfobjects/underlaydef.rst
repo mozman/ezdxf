@@ -2,6 +2,7 @@ UnderlayDefinition
 ==================
 
 .. module:: ezdxf.entities
+    :noindex:
 
 :class:`UnderlayDefinition` (`DXF Reference`_) defines an underlay file, which can be placed by the :class:`Underlay` entity.
 

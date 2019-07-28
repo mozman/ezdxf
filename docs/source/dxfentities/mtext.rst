@@ -2,6 +2,7 @@ MText
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The MTEXT entity (`DXF Reference`_) fits a multiline text in a specified width but can extend vertically to an indefinite
 length. You can format individual words or characters within the :class:`MText`.

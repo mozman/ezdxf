@@ -2,6 +2,7 @@ Region
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 REGION (`DXF Reference`_) created by an ACIS based geometry kernel provided by the `Spatial Corp.`_
 

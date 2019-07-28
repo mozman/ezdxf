@@ -2,6 +2,7 @@ DXF Entity Base Class
 =====================
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Common base class for all DXF entities and objects.
 

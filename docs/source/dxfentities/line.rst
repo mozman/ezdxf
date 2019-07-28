@@ -2,6 +2,7 @@ Line
 ====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 LINE (`DXF Reference`_) entity is a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
 

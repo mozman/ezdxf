@@ -2,6 +2,7 @@ Image
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Add a raster IMAGE (`DXF Reference`_) to the DXF file, the file itself is not embedded into the DXF file, it is always a separated file.
 The IMAGE entity is like a block reference, you can use it multiple times to add the image on different locations

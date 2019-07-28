@@ -28,6 +28,7 @@ The CLASSES section in DXF files holds the information for application-defined c
     .. automethod:: update_instance_counters
 
 .. module:: ezdxf.entities
+    :noindex:
 
 .. class:: DXFClass
 

@@ -54,7 +54,7 @@ __Version 0.10b2 - 2019-05-30__
 - NEW: Source code generator to create Python source code from DXF entities, to recreate this entities by `ezdxf`. 
   This tool creates only simple structures as a useful starting point for parametric DXF entity creation from existing 
   DXF files. Not all DXF entities are supported!
-- CHANGE: moved `add_attdef()` to generic layout interface, adding ATTDEF to model and paper space is possible
+- CHANGE: moved `add_attdef()` to generic layout interface, adding ATTDEF to model- and paperspace is possible
 
 __Version 0.10b3 - 2019-07-28__
 

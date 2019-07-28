@@ -2,7 +2,7 @@ Solid
 =====
 
 .. module:: ezdxf.entities
-
+    :noindex:
 
 SOLID (`DXF Reference`_) is a filled triangle or quadrilateral. Access vertices by name
 (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).

@@ -4,6 +4,7 @@ Layout Types
 ============
 
 .. module:: ezdxf.layouts
+    :noindex:
 
 A Layout represents and manages DXF entities, there are three different layout objects:
 

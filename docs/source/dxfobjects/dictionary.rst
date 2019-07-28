@@ -2,6 +2,7 @@ Dictionary
 ==========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The `DICTIONARY`_ is a general storage entity.
 

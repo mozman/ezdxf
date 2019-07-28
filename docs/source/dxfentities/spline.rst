@@ -2,6 +2,7 @@ Spline
 ======
 
 .. module:: ezdxf.entities
+    :noindex:
 
 SPLINE curve (`DXF Reference`_), all coordinates have to be 3D coordinates even the spline is only a 2D planar curve.
 

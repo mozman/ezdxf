@@ -2,6 +2,7 @@ Mesh
 ====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The MESH entity (`DXF Reference`_) is a 3D mesh similar to the :class:`Polyface` entity.
 

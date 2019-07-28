@@ -2,6 +2,7 @@ UCS
 ====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Defines an named or unnamed user coordinate system (`DXF Reference`_) for usage in CAD applications. This UCS table
 entry does not interact with `ezdxf` in any way, to do coordinate transformations by `ezdxf` use the

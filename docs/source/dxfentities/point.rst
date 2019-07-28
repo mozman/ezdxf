@@ -2,6 +2,7 @@ Point
 =====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 POINT (`DXF Reference`_) at location :attr:`dxf.point`.
 

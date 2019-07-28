@@ -1,4 +1,5 @@
 .. module:: ezdxf.render.forms
+    :noindex:
 
 Forms
 =====

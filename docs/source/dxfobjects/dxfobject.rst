@@ -2,6 +2,7 @@ DXFObject
 =========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 Common base class for all non-graphical DXF objects.
 

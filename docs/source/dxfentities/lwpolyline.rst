@@ -2,7 +2,7 @@ LWPolyline
 ==========
 
 .. module:: ezdxf.entities
-
+    :noindex:
 
 The LWPOLYLINE entity (`DXF Reference`_) is defined as a single graphic entity, which differs from the
 old-style :class:`Polyline` entity, which is defined as a group of sub-entities.

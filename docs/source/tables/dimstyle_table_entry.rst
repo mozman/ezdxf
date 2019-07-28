@@ -2,6 +2,7 @@ DimStyle
 ========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 .. image:: ../dxfinternals/tables/gfx/dimvars1.svg
     :align: center

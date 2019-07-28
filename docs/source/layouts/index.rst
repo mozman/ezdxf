@@ -1,6 +1,8 @@
 Layouts
 =======
 
+.. module:: ezdxf.layouts
+
 .. toctree::
    :maxdepth: 2
 

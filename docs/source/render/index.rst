@@ -1,5 +1,7 @@
 .. _render:
 
+.. module:: ezdxf.render
+
 Rendering
 =========
 

@@ -2,6 +2,7 @@ Text
 ====
 
 .. module:: ezdxf.entities
+    :noindex:
 
 One line TEXT entity (`DXF Reference`_). :attr:`Text.dxf.height` in drawing units and defaults to ``1``, but it also depends on the
 font rendering of the CAD application. :attr:`Text.dxf.width` is a scaling factor, but the DXF reference does not define

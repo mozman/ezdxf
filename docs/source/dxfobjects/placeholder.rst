@@ -2,6 +2,7 @@ Placeholder
 ===========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 The `ACDBPLACEHOLDER`_ object for internal usage.
 

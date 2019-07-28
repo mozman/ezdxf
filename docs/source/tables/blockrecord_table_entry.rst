@@ -2,6 +2,7 @@ BlockRecord
 ===========
 
 .. module:: ezdxf.entities
+    :noindex:
 
 BLOCK_RECORD (`DXF Reference`_) is a basic management structure for :class:`~ezdxf.layouts.BlockLayout` and
 :class:`~ezdxf.layouts.Layout`. `ezdxf` take care of correct BLOCK_RECORDS management, users don't have to worry about.
