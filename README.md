@@ -57,12 +57,11 @@ Example for the *r12writer*, which writes a simple DXF R12 file without in-memor
 from random import random
 from ezdxf.r12writer import r12writer
 
-MAX_X_COORD = 1000.0
-MAX_Y_COORD = 1000.0
-CIRCLE_COUNT = 100000
+MAX_X_COORD = 1000
+MAX_Y_COORD = 1000
 
 with r12writer("many_circles.dxf") as doc:
-    for i in range(CIRCLE_COUNT):
+    for _ in range(100000):
         doc.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
 ```
 
