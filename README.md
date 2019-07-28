@@ -24,30 +24,34 @@ Quick-Info
 - preserves third-party DXF content
 - additional fast DXF R12 writer, that creates just an ENTITIES section with support for the basic DXF entities
 
-a simple example:
+A simple example:
 
 ```python
 import ezdxf
 
-drawing = ezdxf.new(dxfversion='R2010')  
-# alternative:  use the AutoCAD release name 
-# ezdxf.new(dxfversion='R2010')
-modelspace = drawing.modelspace()
-modelspace.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
-drawing.layers.new('TEXTLAYER', dxfattribs={'color': 2})
+# Create a new DXF document.
+doc = ezdxf.new(dxfversion='R2010')
 
-# use set_pos() for proper TEXT alignment:
-# the relations between halign, valign, insert and align_point are tricky.
-modelspace.add_text(
+# Create new table entries (layers, linetypes, text styles, ...).
+doc.layers.new('TEXTLAYER', dxfattribs={'color': 2})
+
+# DXF entities (LINE, TEXT, ...) reside in a layout (modelspace, 
+# paperspace layout or block definition).  
+msp = doc.modelspace()
+
+# Add entities to a layout by factory methods: layout.add_...() 
+msp.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
+msp.add_text(
     'Test', 
     dxfattribs={
         'layer': 'TEXTLAYER'
     }).set_pos((0, 0.2), align='CENTER')
-    
-drawing.saveas('test.dxf')
+
+# Save DXF document.
+doc.saveas('test.dxf')
 ```
 
-example for the *r12writer*, writes a simple DXF R12 file without in-memory structures:
+Example for the *r12writer*, which writes a simple DXF R12 file without in-memory structures:
 
 ```python
 from random import random
@@ -57,9 +61,9 @@ MAX_X_COORD = 1000.0
 MAX_Y_COORD = 1000.0
 CIRCLE_COUNT = 100000
 
-with r12writer("many_circles.dxf") as dxf:
+with r12writer("many_circles.dxf") as doc:
     for i in range(CIRCLE_COUNT):
-        dxf.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
+        doc.add_circle((MAX_X_COORD*random(), MAX_Y_COORD*random()), radius=2)
 ```
 
 The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER, TABLES or BLOCKS section is
@@ -100,7 +104,7 @@ Documentation of latest release at http://ezdxf.readthedocs.io/
 Contribution
 ------------
 
-The source code of ezdxf can be found at GitHub.com:
+The source code of ezdxf can be found at __GitHub__:
 
 http://github.com/mozman/ezdxf.git
 
@@ -109,19 +113,19 @@ Only pull requests for the **develop** branch will be accepted.
 Feedback
 --------
 
-Issue Tracker at:
-
-http://github.com/mozman/ezdxf/issues
-
-Questions and Feedback at Google Groups:
+Questions and feedback at __Google Groups__:
 
 https://groups.google.com/d/forum/python-ezdxf
 
 python-ezdxf@googlegroups.com
 
-Feedback is greatly appreciated.
+Questions at __Stack Overflow__:
 
-Manfred
+Post questions at [stack overflow](https://stackoverflow.com/) and use the tags `dxf` or `ezdxf`.
+
+Issue tracker at __GitHub__:
+
+http://github.com/mozman/ezdxf/issues
 
 Contact
 -------
@@ -130,3 +134,7 @@ Please post questions at the [forum](https://groups.google.com/d/forum/python-ez
 [stack overflow](https://stackoverflow.com/) to make answers available to other users as well.
 
 ezdxf@mozman.at
+
+Feedback is greatly appreciated.
+
+Manfred
