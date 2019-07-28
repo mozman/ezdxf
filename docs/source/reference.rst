@@ -60,6 +60,7 @@ Miscellaneous
 .. toctree::
     :maxdepth: 1
 
+    options
     tools
     acadctb
 

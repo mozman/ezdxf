@@ -6,7 +6,7 @@ You can read/write DXF drawings from/to file-system or from/to a text-stream.
 
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   dwgmanagement
-   drawing
+    dwgmanagement
+    drawing
