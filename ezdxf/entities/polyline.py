@@ -76,7 +76,7 @@ class Polyline(DXFGraphic):
         self.seqend = None  # type: SeqEnd
 
     def linked_entities(self) -> Iterable['DXFVertex']:
-        # don't yield seqend here, because it is not a DXFGraphic entity
+        # don't yield SEQEND here, because it is not a DXFGraphic entity
         return self.vertices
 
     def link_entity(self, entity: 'DXFEntity') -> None:
@@ -94,7 +94,7 @@ class Polyline(DXFGraphic):
         entity.seqend = self.seqend.copy()
 
     def add_sub_entities_to_entitydb(self):
-        """ Called by Entitydb.add(). """
+        """ Called by Entitydb.add(). (internal API) """
         for vertex in self.vertices:
             vertex.doc = self.doc  # grant same document
             self.entitydb.add(vertex)
@@ -103,10 +103,11 @@ class Polyline(DXFGraphic):
             self.entitydb.add(self.seqend)
 
     def set_owner(self, owner: str, paperspace: int = 0):
-        # At loading form file, POLYLINE will be added to layout before vertices are linked, so set_owner() of POLYLINE
+        # At loading from file:
+        # POLYLINE will be added to layout before vertices are linked, so set_owner() of POLYLINE
         # does not set owner of vertices
         super().set_owner(owner, paperspace)
-        # vertices handled by super class by linked_entities() interface
+        # assigning new owner to vertices is done by super class set_owner() method
         if self.seqend:  # has no paperspace flag
             self.seqend.dxf.owner = owner
 
@@ -156,6 +157,7 @@ class Polyline(DXFGraphic):
         # following VERTEX entities and SEQEND is exported by EntitySpace()
 
     def export_seqend(self, tagwriter: 'TagWriter'):
+        self.seqend.dxf.owner = self.dxf.owner
         self.seqend.dxf.layer = self.dxf.layer
         self.seqend.export_dxf(tagwriter)
 
@@ -272,7 +274,7 @@ class Polyline(DXFGraphic):
         """ Returns iterable of all polyline vertices as ``(x, y, z)`` tuples, not as :class:`Vertex` objects."""
         return (vertex.dxf.location for vertex in self.vertices)
 
-    def extend(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
+    def append_vertices(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
         """ Append multiple :class:`Vertex` entities at location `points`.
 
         Args:
@@ -282,8 +284,6 @@ class Polyline(DXFGraphic):
         """
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices(points, dxfattribs))
-
-    append_vertices = extend
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
         """
@@ -298,7 +298,8 @@ class Polyline(DXFGraphic):
         self.vertices.extend(self._build_dxf_vertices([point], dxfattribs))
 
     def insert_vertices(self, pos: int, points: Iterable['Vertex'], dxfattribs: dict = None) -> None:
-        """ Insert :class:`Vertex` entities at location `points` at insertion position `pos``
+        """
+        Insert :class:`Vertex` entities at location `points` at insertion position `pos``
         of list :attr:`Polyline.vertices`.
 
         Args:
@@ -329,21 +330,6 @@ class Polyline(DXFGraphic):
         for point in points:
             dxfattribs['location'] = point
             yield create_vertex('VERTEX', dxfattribs)
-
-    def update_vertices(self) -> None:
-        """
-        Update DXF attributes of sub entities :attr:`Polyline.vertices`. Only use if there are problems with CAD
-        applications.
-
-        """
-        has_linetype = self.dxf.hasattr('linetype')
-        for vertex in self.vertices:
-            vertex.dxf.owner = self.dxf.owner
-            vertex.dxf.layer = self.dxf.layer
-            if has_linetype:
-                vertex.dxf.linetype = self.dxf.linetype
-            else:
-                vertex.dxf.discard('linetype')
 
     def cast(self) -> Union['Polyline', 'Polymesh', 'Polyface']:
         mode = self.get_mode()

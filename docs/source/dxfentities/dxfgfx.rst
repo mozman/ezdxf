@@ -20,7 +20,7 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. attribute:: rgb
 
-        Get/Set DXF attribute :attr:`dxf.true_color` as ``(r, g, b)`` tuple, returns ``None`` if attribute
+        Get/set DXF attribute :attr:`dxf.true_color` as ``(r, g, b)`` tuple, returns ``None`` if attribute
         :attr:`dxf.true_color` is not set.
 
         .. code-block:: python
@@ -34,17 +34,17 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. attribute:: transparency
 
-        Get/Set transparency value as float. Value range ``0.0`` to ``1.0``, where ``0.0`` means entity is opaque and
-        ``1.0`` means entity is 100% transparent (invisible). This is the recommend method to get/set transparency
+        Get/set transparency value as float. Value range ``0`` to ``1``, where ``0`` means entity is opaque and
+        ``1`` means entity is 100% transparent (invisible). This is the recommend method to get/set transparency
         values, when ever possible do not use the DXF low level attribute :attr:`DXFGraphic.dxf.transparency`
 
         This attribute requires DXF R2004 or later, returns ``0`` for prior DXF versions
-        and raises :class:`DXFAttributeError` for setting `rgb` in older DXF versions.
+        and raises :class:`DXFAttributeError` for setting `transparency` in older DXF versions.
 
     .. attribute:: zorder
 
         Inverted :attr:`~ezdxf.entities.DXFEntity.priority` order (lowest value first), :attr:`zorder` support
-        not implemented, setting :attr:`zorder` has no effect.
+        not implemented yet, setting :attr:`zorder` has no effect.
 
     .. automethod:: ocs() -> OCS
 

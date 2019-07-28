@@ -317,7 +317,7 @@ class CreatorInterface:
         closed = dxfattribs.pop('closed', False)
         polyline = self.new_entity('POLYLINE', dxfattribs)  # type: Polyline
         polyline.close(closed)
-        polyline.extend(points)
+        polyline.append_vertices(points)
         return polyline
 
     def add_polyline3d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':

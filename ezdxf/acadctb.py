@@ -358,7 +358,7 @@ class ColorDependentPlotStyles(PlotStyleTable):
         self._styles.insert(0, PlotStyle(256))  # 1-based array: insert dummy value for index 0
 
     def __getitem__(self, aci: int) -> PlotStyle:
-        """ Returns :class:`PlotStyle` for `aci`. """
+        """ Returns :class:`PlotStyle` for :ref:`ACI` `aci`. """
         if 0 < aci < 256:
             return self._styles[aci]
         else:

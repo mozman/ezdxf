@@ -83,8 +83,10 @@ Show all available line types::
     import ezdxf
 
     LINETYPES = [
-        'CONTINUOUS', 'CENTER', 'CENTERX2', 'CENTER2', 'DASHED', 'DASHEDX2', 'DASHED2', 'PHANTOM', 'PHANTOMX2',
-        'PHANTOM2', 'DASHDOT', 'DASHDOTX2', 'DASHDOT2', 'DOT', 'DOTX2', 'DOT2', 'DIVIDE', 'DIVIDEX2', 'DIVIDE2',
+        'CONTINUOUS', 'CENTER', 'CENTERX2', 'CENTER2',
+        'DASHED', 'DASHEDX2', 'DASHED2', 'PHANTOM', 'PHANTOMX2',
+        'PHANTOM2', 'DASHDOT', 'DASHDOTX2', 'DASHDOT2', 'DOT',
+        'DOTX2', 'DOT2', 'DIVIDE', 'DIVIDEX2', 'DIVIDE2',
     ]
 
     with r12writer('r12_linetypes.dxf', fixed_tables=True) as dxf:

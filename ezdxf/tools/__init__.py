@@ -13,17 +13,34 @@ escape = functools.partial(html.escape, quote=True)
 
 
 def float2transparency(value: float) -> int:
+    """
+    Returns DXF transparency value as integer in the range from ``0`` to ``255``, where ``0`` is 100% transparent
+    and ``255`` is opaque.
+
+    Args:
+        value: transparency value as float in the range from ``0`` to ``1``, where ``0`` is opaque
+               and ``1`` is 100% transparency.
+
+    """
     return int((1. - float(value)) * 255) | 0x02000000
 
 
-def transparency2float(value):
+def transparency2float(value: int) -> float:
+    """
+    Returns transparency value as float from ``0`` to ``1``, ``0`` for no transparency (opaque) and ``1``
+    for 100% transparency.
+
+    Args:
+        value: DXF integer transparency value, ``0`` for 100% transparency and ``255`` for opaque
+
+    """
     # 255 -> 0.
     # 0 -> 1.
     return 1. - float(int(value) & 0xFF) / 255.
 
 
 def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
-    """ Set/Clear `flag` in `flags`.
+    """ Set/clear binary `flag` in data `flags`.
 
     Args:
         flags: data value
@@ -39,7 +56,7 @@ def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
 
 
 def guid() -> str:
-    """ Returns a General unique ID, based on :func:`uuid.uuid1`. """
+    """ Returns a general unique ID, based on :func:`uuid.uuid1`. """
     return str(uuid1()).upper()
 
 
@@ -59,7 +76,7 @@ def take2(iterable: Iterable) -> Tuple[Any, Any]:
 
 
 def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
-    """ Suppress leading and/or trailing ``0`` of string `s`.
+    """ Suppress trailing and/or leading ``0`` of string `s`.
 
     Args:
          s: data string
@@ -67,22 +84,29 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
          trailing: suppress trailing ``0``
 
     """
+    # is anything to do?
     if (not leading) and (not trailing):
         return s
 
+    # if `s` represents zero
     if float(s) == 0.:
         return '0'
 
+    # preserve sign
     if s[0] in '-+':
         sign = s[0]
         s = s[1:]
     else:
         sign = ""
 
+    # strip zeros
     if leading:
         s = s.lstrip('0')
     if trailing:
         s = s.rstrip('0')
+
+    # remove comma if no decimals follow
     if s[-1] in '.,':
         s = s[:-1]
+
     return sign + s

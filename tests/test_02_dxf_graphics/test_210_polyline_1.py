@@ -124,7 +124,7 @@ def test_copy_polyline(doc):
     assert list(polyline.points()) == list(copy.points())
     assert polyline.vertices is not copy.vertices
     assert polyline.vertices[0] is not copy.vertices[0]
-    copy.extend([(9, 9)])
+    copy.append_vertices([(9, 9)])
     assert len(polyline) == 3
     assert len(copy) == 4
 

@@ -144,11 +144,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: append_vertex
 
-    .. automethod:: extend
+    .. automethod:: append_vertices
 
     .. automethod:: insert_vertices
-
-    .. automethod:: update_vertices
 
 Vertex
 ======

@@ -56,7 +56,7 @@ __Version 0.10b2 - 2019-05-30__
   DXF files. Not all DXF entities are supported!
 - CHANGE: moved `add_attdef()` to generic layout interface, adding ATTDEF to model and paper space is possible
 
-__Version 0.10b3 - ... __
+__Version 0.10b3 - 2019-07-28 __
 
 - NEW: support for named plot style files (STB)
 - NEW: `Layer` entry got `rgb` and `color` properties
@@ -68,6 +68,8 @@ __Version 0.10b3 - ... __
 - CHANGE: integration of `MTextData` methods into `MText`
 - CHANGE: removed from `MText` methods: `edit_data`, `get_text`, `set_text`
 - BUGFIX: VERTEX entity inherit `owner` and `linetype` attribute from POLYLINE entity
+
+__Version 0.10b4 - ... __
 
 Version 0.9 - 2019-02-24
 ------------------------

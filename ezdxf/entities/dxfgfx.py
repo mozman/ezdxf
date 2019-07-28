@@ -6,9 +6,8 @@
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Callable
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXFValueError, DXFKeyError, DXFTableEntryError
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType, DXFUnsupportedFeature
-from ezdxf.lldxf.const import DXFStructureError, OWNER_CODE
-from ezdxf.math import Vector, UCS
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFInvalidLayerName, DXFInvalidLineType
+from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.validator import is_valid_layer_name
 from .dxfentity import DXFEntity, base_class, SubclassProcessor
 from ezdxf.math import OCS
@@ -17,7 +16,7 @@ from ezdxf.tools import float2transparency, transparency2float
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, Vertex, Matrix44, BaseLayout, DXFNamespace
+    from ezdxf.eztypes import Auditor, TagWriter, BaseLayout, DXFNamespace
 
 __all__ = ['DXFGraphic', 'acdb_entity', 'entity_linker', 'SeqEnd']
 
@@ -101,7 +100,7 @@ class DXFGraphic(DXFEntity):
 
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:
-        """ Returns RGB true color as (red, green, blue) tuple or None if true_color is not set. """
+        """ Returns RGB true color as (r, g, b) tuple or None if true_color is not set. """
         if self.dxf.hasattr('true_color'):
             return int2rgb(self.dxf.get('true_color'))
         else:
@@ -109,12 +108,12 @@ class DXFGraphic(DXFEntity):
 
     @rgb.setter
     def rgb(self, rgb: Tuple[int, int, int]) -> None:
-        """ Set RGB true color as (red, green , blue) tuple e.g. (12, 34, 56) . """
+        """ Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56). """
         self.dxf.set('true_color', rgb2int(rgb))
 
     @property
     def transparency(self) -> float:
-        """ Get transparency as float value between 0 and 1, 0 is opaque and 1 is fully transparent (invisible) """
+        """ Get transparency as float value between 0 and 1, 0 is opaque and 1 is 100% transparent (invisible). """
         if self.dxf.hasattr('transparency'):
             return transparency2float(self.dxf.get('transparency'))
         else:
@@ -122,7 +121,7 @@ class DXFGraphic(DXFEntity):
 
     @transparency.setter
     def transparency(self, transparency: float) -> None:
-        """ Set transparency as float value between 0 and 1, 0 is opaque and 1 is fully transparent (invisible) """
+        """ Set transparency as float value between 0 and 1, 0 is opaque and 1 is 100% transparent (invisible). """
         self.dxf.set('transparency', float2transparency(transparency))
 
     def ocs(self) -> Optional[OCS]:
@@ -157,7 +156,11 @@ class DXFGraphic(DXFEntity):
         return []
 
     def link_entity(self, entity: 'DXFEntity') -> None:
-        """ Store linked or attached entities. Same API for both types of appended data. (internal API)"""
+        """ Store linked or attached entities. Same API for both types of appended data, because entities with linked
+        entities (POLYLINE, INSERT) have no attached entities and vice versa.
+
+        (internal API)
+        """
         pass
 
     @property
