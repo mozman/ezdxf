@@ -1,13 +1,10 @@
 .. _name query string:
 
-Name Query String
-=================
+.. module:: ezdxf.query
 
-A name query string is just a standard regular expression see: http://docs.python.org/3/library/re.html
+.. seealso::
 
-A ``'$'`` will be appended to the query string.
-
-For general usage of the query features see the tutorial: :ref:`tut_getting_data`
+    For usage of the query features see the tutorial: :ref:`tut_getting_data`
 
 .. _entity query string:
 
@@ -60,7 +57,7 @@ Query Result
 The :class:`EntityQuery` class is the return type of all :meth:`query` methods.
 :class:`EntityQuery` contains all DXF entities of the source collection,
 which matches one name of the entity query AND the whole attribute query.
-If a DXF entity does not have or support a required attribute, the corresponding attribute search term is false.
+If a DXF entity does not have or support a required attribute, the corresponding attribute search term is ``False``.
 
 examples::
 
@@ -73,56 +70,34 @@ examples::
 EntityQuery Class
 =================
 
-.. class:: EntityQuery(Sequence)
+.. class:: EntityQuery
 
     The :class:`EntityQuery` class is a result container, which is filled with dxf entities matching the query string.
     It is possible to add entities to the container (extend), remove entities from the container and
-    to filter the container. Supports the standard sequence methods and protocols.
-    `(Python Sequence Docs) <http://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence>`_
+    to filter the container. Supports the standard `Python Sequence`_ methods and protocols.
 
+    .. autoattribute:: first
 
-.. attribute:: EntityQuery.first
+    .. autoattribute:: last
 
-    Returns first entity or `None`.
+    .. automethod:: __len__
 
-.. attribute:: EntityQuery.last
+    .. automethod:: __getitem__
 
-    Returns last entity or `None`.
+    .. automethod:: __iter__
 
-.. method:: EntityQuery.__init__(entities, query='*')
+    .. automethod:: extend
 
-   Setup container with entities matching the initial query.
+    .. automethod:: remove
 
-   :param entities: sequence of wrapped DXF entities (at least :class:`GraphicEntity` class)
-   :param str query: `entity query string`_
+    .. automethod:: query
 
-
-.. method:: EntityQuery.extend(entities, query='*', unique=True)
-
-   Extent the query container by entities matching an additional query.
-
-.. method:: EntityQuery.remove(query='*')
-
-   Remove all entities from result container matching this additional query.
-
-.. method:: EntityQuery.query(query='*')
-
-   Returns a new result container with all entities matching this additional query.
-
-.. method:: EntityQuery.groupby(dxfattrib='', key=None)
-
-   Returns a mapping of this result container, where entities are grouped by a dxfattrib or a key function.
-
-   :param str dxfattrib: grouping DXF attribute like 'layer'
-   :param function key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or
-       None for ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+    .. automethod:: groupby
 
 
 The new() Function
 ------------------
 
-.. method:: ezdxf.query.new(entities, query='*')
+.. automethod:: ezdxf.query.new(entities: Iterable['DXFEntity'] = None, query: str = '*') -> EntityQuery
 
-   Start a new query based on a sequence `entities`. The sequence `entities` has to provide the Python iterator
-   protocol and has to yield at least subclasses of :class:`GenericWrapper` or better :class:`GraphicEntity`.
-   Returns an object of type :class:`EntityQuery`.
+.. _Python Sequence: http://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence

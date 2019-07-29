@@ -5,7 +5,7 @@ Tutorial for Getting Data from DXF Files
 
 In this tutorial I show you how to get data from an existing DXF drawing.
 
-At first load the DXF drawing:
+Loading the DXF file:
 
 .. code-block:: Python
 
@@ -100,18 +100,20 @@ of the available layouts by :meth:`~ezdxf.drawing.Drawing.layout_names`.
 Retrieve Entities by Query Language
 -----------------------------------
 
-Inspired by the `jQuery <http://www.jquery.com>`_ framework, I created a flexible query language for DXF
-entities. To start a query use the :meth:`~ezdxf.layouts.Layout.query` method, provided by all sort of layouts or use
-the :meth:`ezdxf.query.new` function.
+Inspired by the `jQuery <http://www.jquery.com>`_ framework, `ezdxf` provides a flexible query language for DXF
+entities. All Layout types have a :meth:`~ezdxf.layouts.BaseLayout.query` method to start an entity query
+or use the :meth:`ezdxf.query.new` function.
 
 The query string is the combination of two queries, first the required entity query and second the optional attribute
 query, enclosed in square brackets: ``'EntityQuery[AttributeQuery]'``
 
 The entity query is a whitespace separated list of DXF entity names or the special name ``*``.
-Where ``*`` means all DXF entities, all other DXF names have to be uppercase. The attribute query is used to select DXF
-entities by its DXF attributes. The attribute query is an addition to the entity query and matches only if the
-entity already match the entity query. The attribute query is a boolean expression, supported operators: ``and``,
-``or``, ``!``.
+Where ``*`` means all DXF entities, all other DXF names have to be uppercase. The ``*`` search can exclude entity types
+by adding the entity name with a presceding ``!`` (e.g. ``* !LINE``, search all entities except lines).
+
+The attribute query is used to select DXF entities by its DXF attributes. The attribute query is an addition to the
+entity query and matches only if the entity already match the entity query. The attribute query is a
+boolean expression, supported operators: ``and``, ``or``, ``!``.
 
 .. seealso::
 
@@ -121,10 +123,11 @@ Get all LINE entities from the modelspace:
 
 .. code-block:: Python
 
-    modelspace = doc.modelspace()
-    lines = modelspace.query('LINE')
+    msp = doc.modelspace()
+    lines = msp.query('LINE')
 
-The result container also provides the :meth:`query()` method, get all LINE entities at layer ``construction``:
+The result container :class:`~ezdxf.query.EntityQuery` also provides the :meth:`query()` method,
+get all LINE entities at layer ``construction``:
 
 .. code-block:: Python
 
@@ -137,19 +140,19 @@ All together as one query:
 
 .. code-block:: Python
 
-    lines = modelspace.query('LINE[layer=="construction"]')
+    lines = msp.query('LINE[layer=="construction"]')
 
 The ENTITIES section also supports the :meth:`query` method:
 
 .. code-block:: Python
 
-    all_lines_and_circles_at_the_construction_layer = doc.entities.query('LINE CIRCLE[layer=="construction"]')
+    lines_and_circles = doc.entities.query('LINE CIRCLE[layer=="construction"]')
 
-Get all modelspace entities at layer ``construction``, but no entities with the `linestyle` ``DASHED``:
+Get all modelspace entities at layer ``construction``, but excluding entities with linetype ``DASHED``:
 
 .. code-block:: Python
 
-    not_dashed_entities = modelspace.query('*[layer=="construction" and linestyle!="DASHED"]')
+    not_dashed_entities = msp.query('*[layer=="construction" and linetype!="DASHED"]')
 
 
 .. _groupby:

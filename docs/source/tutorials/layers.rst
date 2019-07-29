@@ -17,8 +17,8 @@ Create a Layer Definition
     doc.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
 
 The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
-by using ``'BYLAYER'`` as linetype string and ``256`` as color, both values are default values for new entities so you can
-left off this assignments:
+by using ``'BYLAYER'`` as linetype string and ``256`` as color, both values are default values for new entities
+so you can left off this assignments:
 
 .. code-block:: python
 
@@ -48,23 +48,25 @@ And you can change the state of the layer:
 
 .. code-block:: python
 
-    my_lines.off()  # switch layer off, will not shown in CAD programs/viewers
-    my_lines.lock()  # layer is not editable in CAD programs
+    # switch layer off, entities at this layer will not shown in CAD applications/viewers
+    my_lines.off()
 
-Setting/Getting the default color of the layer should be done with :meth:`~ezdxf.entities.Layer.get_color` and
-:meth:`~ezdxf.entities.Layer.set_color`
-because the color value is misused for switching the layer on and off, layer is off if the color value is negative.
+    # lock layer, entities at this layer are not editable in CAD applications
+    my_lines.lock()
+
+Get/set default color of a layer by property :attr:`Layer.color`, because the DXF attribute :attr:`Layer.dxf.color`
+is misused for switching the layer on and off, layer is off if the color value is negative.
 
 Changing the default layer values:
 
 .. code-block:: python
 
     my_lines.dxf.linetype = 'DOTTED'
-    my_lines.set_color(13)  # preserves the layer on/off state
+    my_lines.color = 13  # preserves on/off state of layer
 
 .. seealso::
 
-    for all methods and attributes see class :class:`~ezdxf.entities.Layer`.
+    For all methods and attributes see class :class:`~ezdxf.entities.Layer`.
 
 Check Available Layers
 ----------------------

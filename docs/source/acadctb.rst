@@ -21,7 +21,9 @@ style tables, STB files contain named plot style tables.
 
 .. autofunction:: load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]
 
-.. autofunction:: new(table_type: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]
+.. autofunction:: new_ctb() -> ColorDependentPlotStyles
+
+.. autofunction:: new_stb() -> NamedPlotStyles
 
 ColorDependentPlotStyles
 ------------------------
@@ -80,7 +82,6 @@ Named plot style table (STB file), table entries are :class:`PlotStyle` objects.
 
 .. class:: NamedPlotStyles
 
-
     .. attribute:: description
 
         Custom description of plot style file.
@@ -133,58 +134,59 @@ PlotStyle
 
     .. attribute:: index
 
-        Table index (0-based).
+        Table index (0-based). (int)
 
     .. autoattribute:: aci
 
     .. attribute:: description
 
-        Custom description of plot style.
+        Custom description of plot style. (str)
 
     .. attribute:: physical_pen_number
 
-        Specifies physical plotter pen, valid range from ``1`` to ``32`` or :attr:`AUTOMATIC`.
+        Specifies physical plotter pen, valid range from ``1`` to ``32`` or :attr:`AUTOMATIC`. (int)
 
     .. attribute:: virtual_pen_number
 
         Only used by non-pen plotters and only if they are configured for virtual pens. valid range from ``1`` to
-        ``255`` or :attr:`AUTOMATIC`.
+        ``255`` or :attr:`AUTOMATIC`. (int)
 
     .. attribute:: screen
 
-        Specifies the color intensity of the plot on the paper, valid range is from ``0`` to ``100``.
+        Specifies the color intensity of the plot on the paper, valid range is from ``0`` to ``100``. (int)
 
         If you select ``100`` the drawing will plotted with its full color intensity. In order for screening to work,
         the :attr:`dithering` option must be active.
 
     .. attribute:: linetype
 
-        Overrides the entity linetype, default value is :attr:`OBJECT_LINETYPE`
+        Overrides the entity linetype, default value is :attr:`OBJECT_LINETYPE`. (bool)
 
     .. attribute:: adaptive_linetype
 
-        ``True`` if a complete linetype pattern is more important than a correct linetype scaling, default is ``True``.
+        ``True`` if a complete linetype pattern is more important than a correct linetype scaling,
+        default is ``True``. (bool)
 
     .. attribute:: linepattern_size
 
-        Line pattern size, default = ``0.5``.
+        Line pattern size, default = ``0.5``. (float)
 
     .. attribute:: lineweight
 
         Overrides the entity lineWEIGHT, default value is :attr:`OBJECT_LINEWEIGHT`. This is an index into the
-        :attr:`UserStyles.lineweights` table.
+        :attr:`UserStyles.lineweights` table. (int)
 
     .. attribute:: end_style
 
-        Line end cap style, see table below, default is :attr:`END_STYLE_OBJECT`
+        Line end cap style, see table below, default is :attr:`END_STYLE_OBJECT` (int)
 
     .. attribute:: join_style
 
-        Line join style, see table below, default is :attr:`JOIN_STYLE_OBJECT`
+        Line join style, see table below, default is :attr:`JOIN_STYLE_OBJECT` (int)
 
     .. attribute:: fill_style
 
-        Line fill style, see table below, default is :attr:`FILL_STYLE_OBJECT`
+        Line fill style, see table below, default is :attr:`FILL_STYLE_OBJECT` (int)
 
     .. autoattribute:: dithering
 

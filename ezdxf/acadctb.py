@@ -184,13 +184,13 @@ class PlotStyle:
 
     @property
     def aci(self) -> int:
-        """ :ref:`ACI` in range from ``1`` to ``255``. Has no meaning for named plot styles. """
+        """ :ref:`ACI` in range from ``1`` to ``255``. Has no meaning for named plot styles. (int) """
         return self.index + 1
 
     @property
     def dithering(self) -> bool:
         """ Depending on the capabilities of your plotter, dithering approximates the colors with dot patterns.
-        When this option is not active, the colors are mapped to the nearest color, resulting in a smaller range of
+        When this option is ``False``, the colors are mapped to the nearest color, resulting in a smaller range of
         colors when plotting.
 
         Dithering is available only whether you select the object’s color or assign a plot style color.
@@ -207,7 +207,7 @@ class PlotStyle:
 
     @property
     def grayscale(self) -> bool:
-        """  Plot colors in grayscale. """
+        """  Plot colors in grayscale. (bool) """
         return bool(self._color_policy & GRAYSCALE_ON)
 
     @grayscale.setter
@@ -578,21 +578,26 @@ def load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
     return table
 
 
-def new(table_type: str = 'ctb') -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
-    """ Create a new CTB or STB file.
+def new_ctb() -> ColorDependentPlotStyles:
+    """
+    Create a new CTB file.
 
-    Args:
-        table_type: color table type ``'ctb'`` for color-dependent styles or ``'stb'`` for named styles.
+    .. versionchanged:: 0.10
+
+        renamed from :func:`new`
 
     """
-    table_type = table_type.lower()
-    if table_type == 'ctb':
-        table = ColorDependentPlotStyles()
-    elif table_type == 'stb':
-        table = NamedPlotStyles()
-    else:
-        raise ValueError('Invalid table type "{}".'.format(table_type))
-    return table
+    return ColorDependentPlotStyles()
+
+
+def new_stb() -> NamedPlotStyles:
+    """
+    Create a new STB file.
+
+    .. versionadded:: 0.10
+
+    """
+    return NamedPlotStyles()
 
 
 def _decompress(stream: BinaryIO) -> bytes:

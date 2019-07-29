@@ -90,21 +90,20 @@ class EntityQuery(abc.Sequence):
             self.entities = [entity for entity in entities if match(entity)]
 
     def __len__(self) -> int:
-        """
-        Count of result entities.
-
-        """
+        """ Returns count of DXF entities. """
         return len(self.entities)
 
     def __getitem__(self, item: int) -> 'DXFEntity':
+        """ Returns DXFEntity at index `item`, supports negative indices and slicing. """
         return self.entities.__getitem__(item)
+
+    def __iter__(self) -> Iterable['DXFEntity']:
+        """ Returns iterable of DXFEntity objects. """
+        return iter(self.entities)
 
     @property
     def first(self):
-        """
-        Returns first entity or None.
-
-        """
+        """ First entity or ``None``. """
         if len(self.entities):
             return self.entities[0]
         else:
@@ -112,36 +111,27 @@ class EntityQuery(abc.Sequence):
 
     @property
     def last(self):
-        """
-        Returns last entity or None.
-
-        """
+        """ Last entity or ``None``. """
         if len(self.entities):
             return self.entities[-1]
         else:
             return None
 
     def extend(self, entities: Iterable['DXFEntity'], query: str = '*', unique: bool = True) -> 'EntityQuery':
-        """
-        Extent the query container by entities matching a additional query.
-
-        """
+        """ Extent the :class:`EntityQuery` container by entities matching an additional query. """
         self.entities.extend(EntityQuery(entities, query))
         if unique:
             self.entities = list(unique_entities(self.entities))
         return self
 
     def remove(self, query: str = '*') -> None:
-        """
-        Remove all entities from result container matching this additional query.
-
-        """
+        """ Remove all entities from :class:`EntityQuery` container matching this additional query. """
         handles_of_entities_to_remove = frozenset(entity.dxf.handle for entity in self.query(query))
         self.entities = [entity for entity in self.entities if entity.dxf.handle not in handles_of_entities_to_remove]
 
     def query(self, query: str = '*') -> 'EntityQuery':
         """
-        Returns a new result container with all entities matching this additional query.
+        Returns a new :class:`EntityQuery` container with all entities matching this additional query.
 
         raises: ParseException (pyparsing.py)
 
@@ -151,14 +141,12 @@ class EntityQuery(abc.Sequence):
     def groupby(self, dxfattrib: str = '', key: Callable[['DXFEntity'], Hashable] = None) \
             -> Dict[Hashable, List['DXFEntity']]:
         """
-        Returns a dict of entity lists, where entities are grouped by a dxfattrib or a key function.
+        Returns a dict of entity lists, where entities are grouped by a DXF attribute or a key function.
 
         Args:
-            dxfattrib: grouping DXF attribute like 'layer'
+            dxfattrib: grouping DXF attribute as string like ``'layer'``
             key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for
-            ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
-
-        Returns: dict
+                 ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
 
         """
         return groupby(self.entities, dxfattrib, key)
@@ -341,5 +329,11 @@ def name_matcher(query: str = "*") -> Callable[[str], bool]:
     return match
 
 
-def new(entities=None, query='*'):
+def new(entities: Iterable['DXFEntity'] = None, query: str = '*') -> EntityQuery:
+    """
+    Start a new query based on a sequence `entities`. The sequence `entities` has to provide the Python iterator
+    protocol and has to yield at least subclasses of :class:`GenericWrapper` or better :class:`GraphicEntity`.
+    Returns an object of type :class:`EntityQuery`.
+
+    """
     return EntityQuery(entities, query)

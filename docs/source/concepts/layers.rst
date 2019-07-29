@@ -12,10 +12,12 @@ layers, for a couple of reasons:
 * Layers give you a way to turn groups of objects on and off - both on the screen and on the plot.
 * Layers provide the most efficient way of controlling object color and linetype
 
-First you have to create layers, assigning them names and properties such as color and linetype. Then you can assign
-those layers to other drawing entities. To assign a layer just use its name as string. It is not recommend but it is
-possible to use layers without a layer definition, just use the layer name without a definition, the layer has the
-default linetype ``'Continuous'`` and the default color is ``1``.
+Create a layer table entry :class:`~ezdxf.entities.Layer` by :meth:`Drawing.layers.new`, assign the layer
+properties such as color and linetype. Then assign those layers to other DXF entities by setting the DXF attribute
+:attr:`~ezdxf.entities.DXFGraphic.dxf.layer` to the layer name as string.
+
+It is possible to use layers without a layer definition but not recommend, just use a layer name without a
+layer definition, the layer has the default linetype ``'Continuous'`` and the default color is ``7``.
 
 The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
 by using ``'BYLAYER'`` as linetype string and ``256`` as color, both values are default values for new entities.
