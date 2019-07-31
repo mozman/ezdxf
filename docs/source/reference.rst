@@ -37,6 +37,7 @@ Data Query
     :maxdepth: 1
 
     query
+    groupby
 
 Math Utilities
 --------------

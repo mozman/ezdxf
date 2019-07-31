@@ -1,6 +1,6 @@
 .. _tut_simple_drawings:
 
-Tutorial for Creating Simple DXF Drawings
+Tutorial for creating simple DXF drawings
 =========================================
 
 :ref:`r12writer` - create simple DXF R12 drawings with a restricted entities set: LINE, CIRCLE, ARC, TEXT, POINT,

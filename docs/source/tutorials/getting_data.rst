@@ -1,6 +1,6 @@
 .. _tut_getting_data:
 
-Tutorial for Getting Data from DXF Files
+Tutorial for getting data from DXF files
 ========================================
 
 In this tutorial I show you how to get data from an existing DXF drawing.
@@ -33,7 +33,7 @@ There are three different layout types:
 A DXF drawing consist of exact one modelspace and at least of one paperspace. DXF R12 has only one unnamed
 paperspace the later DXF versions support more than one paperspace and each paperspace has a name.
 
-Iterate over DXF Entities of a Layout
+Iterate over DXF entities of a layout
 -------------------------------------
 
 Iterate over all DXF entities in modelspace. Although this is a possible way to retrieve DXF entities, I
@@ -58,7 +58,7 @@ would like to point out that `entity queries`_ are the better way.
 
 All layout objects supports the standard Python iterator protocol and the ``in`` operator.
 
-Access DXF Attributes of an Entity
+Access DXF attributes of an entity
 ----------------------------------
 
 Check the type of an DXF entity by :meth:`e.dxftype`. The DXF type is always uppercase.
@@ -83,7 +83,7 @@ the :meth:`~ezdxf.entities.dxfentity.DXFEntity.get_dxf_attrib` method with a def
 An unsupported DXF attribute raises an :class:`DXFAttributeError`.
 
 
-Getting a Paperspace Layout
+Getting a paperspace layout
 ---------------------------
 
 .. code:: Python
@@ -97,7 +97,7 @@ of the available layouts by :meth:`~ezdxf.drawing.Drawing.layout_names`.
 
 .. _entity queries:
 
-Retrieve Entities by Query Language
+Retrieve entities by query language
 -----------------------------------
 
 Inspired by the `jQuery <http://www.jquery.com>`_ framework, `ezdxf` provides a flexible query language for DXF
@@ -155,17 +155,62 @@ Get all modelspace entities at layer ``construction``, but excluding entities wi
     not_dashed_entities = msp.query('*[layer=="construction" and linetype!="DASHED"]')
 
 
-.. _groupby:
+.. _using_groupby:
 
-Retrieve Entities by groupby
-----------------------------
+Retrieve entities by groupby() function
+---------------------------------------
 
-TODO
+Search and group entities by a user defined criteria. As example let's group all entities from modelspace by layer, the
+result will be a dict with layer names as dict-key and a list of all entities from modelspace matching this layer as
+dict-value. Usage as dedicated function call:
 
-Default Layer Settings
-----------------------
+.. code-block:: Python
+
+    from ezdxf.groupby import groupby
+    group = groupby(entities=msp, dxfattrib='layer')
+
+The `entities` argument can be any container or generator which yields :class:`~ezdxf.entities.DXFEntity` or
+inherited objects. Shorter and simpler to use as method of :class:`~ezdxf.layouts.BaseLayout` (modelspace,
+paperspace layouts, blocks) and query results as :class:`~ezdxf.query.EntityQuery` objects:
+
+.. code-block:: Python
+
+    group = msp.groupby(dxfattrib='layer')
+
+    for layer, entities in group.items():
+        print(f'Layer "{layer}" contains following entities:')
+        for entity in entities:
+            print('    {}'.format(str(entity)))
+        print('-'*40)
+
+The previous example shows how to group entities by a single DXF attribute, but it is also possible to group entities
+by a custom key, to do so create a custom key function, which accepts a DXF entity as argument and returns a
+hashable value as dict-key or ``None`` to exclude the entity.
+The following example shows how to group entities by layer and color, so each result entry has a tuple
+``(layer, color)`` as key and a list of entities with matching DXF attributes:
+
+.. code-block:: Python
+
+    def layer_and_color_key(entity):
+        # return None to exclude entities from result container
+        if entity.dxf.layer == '0':  # exclude entities from default layer '0'
+            return None
+        else:
+            return entity.dxf.layer, entity.dxf.color
+
+    group = msp.groupby(key=layer_and_color_key)
+    for key, entities in group.items():
+        print(f'Grouping criteria "{key}" matches following entities:')
+        for entity in entities:
+            print('    {}'.format(str(entity)))
+        print('-'*40)
+
+To exclude entities from the result container the `key` function should return ``None``.
+The :func:`~ezdxf.groupby.groupby` function catches :class:`DXFAttributeError` exceptions while processing entities and
+excludes this entities from the result container. So there is no need to worry about DXF entities which do not support
+certain attributes, they will be excluded automatically.
 
 .. seealso::
 
-    :ref:`tut_layers` and class :class:`~ezdxf.entities.layer.Layer`
+    :func:`~ezdxf.groupby.groupby` documentation
 

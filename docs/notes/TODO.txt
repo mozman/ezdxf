@@ -47,8 +47,6 @@ DXF Objects
 Low Level Structure
 -------------------
 
-- docs for DXFTag
-- docs for Tags
 - docs for ExtendedTags
 
 DXF Internals
@@ -67,7 +65,6 @@ Tutorials
 
 - tutorial for extended HATCH usage
 - tutorial for lineweight
-- tutorial for groupby (in getting_data.rst)
 - tutorial for getting all entities on a layer (query & groupby) (in layers.rst)
 - tutorial for HELIX
 - tutorial for LEADER
@@ -87,22 +84,8 @@ Addons
 - docs for add-on mtext
 - docs for add-on dimlines (replaced by native DIMENSION?)
 
-Misc
-----
-
-- look at ACIS geometry again
-
 Auditor
 -------
 
 - docs for Auditor
 - check for existence of all referenced BLOCK definitions.
-
-
-Candidates for Packed Data
-----------------------------
-
-- LAYER_FILTER
-- MATERIAL: matrices
-- HATCH ?!?!? a really complex structure
-- SORTENTSTABLE

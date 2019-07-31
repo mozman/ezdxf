@@ -543,7 +543,7 @@ class Drawing:
 
         .. seealso::
 
-            :ref:`name query string` and :ref:`entity queries`
+            :ref:`entity query string` and :ref:`entity queries`
 
         """
         return EntityQuery(self.chain_layouts_and_blocks(), query)
@@ -555,13 +555,12 @@ class Drawing:
 
         Args:
             dxfattrib: grouping DXF attribute like ``'layer'``
-            key: key function, which accepts a :class:`DXFEntity` as argument, returns grouping key for this entity or
-                 ``None`` to ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this
-                 entity type.
+            key: key function, which accepts a :class:`DXFEntity` as argument and returns a hashable grouping key
+                 or ``None`` to ignore this entity.
 
         .. seealso::
 
-            :ref:`groupby`
+            :func:`~ezdxf.groupby.groupby` documentation
 
         """
         return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)

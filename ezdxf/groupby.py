@@ -2,7 +2,7 @@
 # Created: 03.02.2017
 # Copyright (C) 2017, Manfred Moitzi
 # License: MIT License
-from typing import Callable, Iterable, Hashable, Dict, List, TYPE_CHECKING
+from typing import Iterable, Hashable, Dict, List, TYPE_CHECKING
 
 from ezdxf.lldxf.const import DXFValueError, DXFAttributeError
 
@@ -13,16 +13,48 @@ if TYPE_CHECKING:
 def groupby(entities: Iterable['DXFEntity'], dxfattrib: str = '', key: 'KeyFunc' = None) \
         -> Dict[Hashable, List['DXFEntity']]:
     """
-    Groups a sequence of DXF entities by an DXF attribute like 'layer', returns the result as dict. Just specify
-    argument `dxfattrib` OR a `key` function.
+    Groups a sequence of DXF entities by a DXF attribute like ``'layer'``, returns a dict with `dxfattrib` values
+    as key and a list of entities matching this `dxfattrib`.
+    A `key` function can be used to combine some DXF attributes (e.g. layer and color) and should return a
+    hashable data type like a tuple of strings, integers or floats, `key` function example::
+
+        def group_key(entity: DXFEntity):
+            return entity.dxf.layer, entity.dxf.color
+
+    For not suitable DXF entities return ``None`` to exclude this entity, in this case it's not required, because
+    :func:`groupby` catches :class:`DXFAttributeError` exceptions to exclude entities, which do not provide
+    layer and/or color attributes, automatically.
+
+    Result dict for `dxfattrib` = ``'layer'`` may look like this::
+
+        {
+            '0': [ ... list of entities ],
+            'ExampleLayer1': [ ... ],
+            'ExampleLayer2': [ ... ],
+            ...
+        }
+
+    Result dict for `key` = `group_key`, which returns a ``(layer, color)`` tuple, may look like this::
+
+        {
+            ('0', 1): [ ... list of entities ],
+            ('0', 3): [ ... ],
+            ('0', 7): [ ... ],
+            ('ExampleLayer1', 1): [ ... ],
+            ('ExampleLayer1', 2): [ ... ],
+            ('ExampleLayer1', 5): [ ... ],
+            ('ExampleLayer2', 7): [ ... ],
+            ...
+        }
+
+    All entity containers (modelspace, paperspace layouts and blocks) and the :class:`~ezdxf.query.EntityQuery` object
+    have a dedicated :meth:`groupby` method.
 
     Args:
-        entities: sequence of DXF entities to group by a key
-        dxfattrib: grouping DXF attribute like 'layer'
-        key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for ignore
-             this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
-
-    Returns: dict
+        entities: sequence of DXF entities to group by a DXF attribute or a `key` function
+        dxfattrib: grouping DXF attribute like ``'layer'``
+        key: key function, which accepts a :class:`DXFEntity` as argument and returns a hashable grouping key
+             or ``None`` to ignore this entity.
 
     """
     if all((dxfattrib, key)):

@@ -1,5 +1,3 @@
-.. _name query string:
-
 .. module:: ezdxf.query
 
 .. seealso::
@@ -98,6 +96,8 @@ EntityQuery Class
 The new() Function
 ------------------
 
-.. automethod:: ezdxf.query.new(entities: Iterable['DXFEntity'] = None, query: str = '*') -> EntityQuery
+.. autofunction:: ezdxf.query.new(entities: Iterable['DXFEntity'] = None, query: str = '*') -> EntityQuery
 
 .. _Python Sequence: http://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence
+
+
