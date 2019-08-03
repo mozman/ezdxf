@@ -21,13 +21,11 @@ def setup_drawing(doc: 'Drawing', topics: Union[str, bool, Sequence] = 'all'):
     Args:
         doc: DXF document
         topics: 'all' or True to setup everything
-            Tuple of strings to specify setup:
-                - 'linetypes': setup linetypes
-                - 'styles': setup text styles
-                - 'dimstyles[:all|metric|us]': setup dimension styles (us not implemented)
-                - 'visualstyles': setup 25 standard visual styles
-
-    Returns:
+                Tuple of strings to specify setup:
+                    - 'linetypes': setup linetypes
+                    - 'styles': setup text styles
+                    - 'dimstyles[:all|metric|us]': setup dimension styles (us not implemented)
+                    - 'visualstyles': setup 25 standard visual styles
 
     """
     if not topics:  # topics is None, False or ''

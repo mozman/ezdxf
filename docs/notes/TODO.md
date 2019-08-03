@@ -19,9 +19,6 @@ DXF Entities
 DXF Objects
 -----------
 
-- docs for DICTIONARY Reference/Objects
-- docs for DICTIONARYVAR Reference/Objects
-- docs for XRECORD Reference/Objects
 - docs for LAYOUT Reference/Objects
 - docs for PLOTSETTINGS Reference/Objects
 - docs for DATATABLE Reference/Objects
@@ -29,7 +26,6 @@ DXF Objects
 - docs for MLEADERSTYLE Reference/Objects
 - docs for MATERIAL Reference/Objects
 - docs for RASTERVARIABLES/WIPEOUTVARIABLES Reference/Objects
-- docs for GROUP Reference/Objects
 - docs for FIELD Reference/Objects
 - docs for IDBUFFER Reference/Objects
 - docs for LAYER_FILTER Reference/Objects
@@ -38,23 +34,23 @@ DXF Objects
 - docs for SECTION Reference/Objects
 - docs for SORTENTSTABLE Reference/Objects
 - docs for SPATIAL_FILTER Reference/Objects
-- docs for SUN Reference/Objects
 - docs for SUNSTUDY Reference/Objects
 - docs for TABLESTYLE Reference/Objects
 - docs for VBA_PROJECT Reference/Objects
 - docs for VISUALSTYLE Reference/Objects
 
-Low Level Structure
--------------------
+Concepts
+--------
 
-- docs for ExtendedTags
+- true color
+- lineweight
 
 DXF Internals
 -------------
 
 - DXF Internals for extension dictionaries
 - DXF Internals for reactors
-- DXF Internals for colors/ctb/lineweight
+- DXF Internals for true color/lineweight
 - DXF Internals for POLYLINE
 - DXF Internals for GEODATA
 - DXF Internals for DICTIONARY
@@ -65,7 +61,6 @@ Tutorials
 
 - tutorial for extended HATCH usage
 - tutorial for lineweight
-- tutorial for getting all entities on a layer (query & groupby) (in layers.rst)
 - tutorial for HELIX
 - tutorial for LEADER
 - tutorial for MLEADER
@@ -75,7 +70,6 @@ Tutorials
 - tutorial for WIPEOUT
 - tutorial for TOLERANCE?
 - tutorial for Auditor
-- howto get all entities of a layer (in howto.rst)
 
 Addons
 ------
