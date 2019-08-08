@@ -1,7 +1,9 @@
 Howto
 =====
 
-General preconditions::
+General preconditions:
+
+.. code-block:: python
 
     import ezdxf
     dwg = ezdxf.readfile("your_dxf_file.dxf")
@@ -10,7 +12,9 @@ General preconditions::
 Set/Get Header Variables
 ------------------------
 
-*ezdxf* has an interface to get and set HEADER variables::
+`ezdxf` has an interface to get and set HEADER variables:
+
+.. code-block:: python
 
     dwg.header['VarName'] = value
     value = dwg.header['VarName']
@@ -21,8 +25,8 @@ Set DXF Drawing Units
 ---------------------
 
 Use this HEADER variables to setup the default units for CAD applications opening the DXF file.
-This settings are not relevant for *ezdxf* API calls, which are *unitless* for length values and coordinates
-and *decimal degrees* for angles (in most cases).
+This settings are not relevant for `ezdxf` API calls, which are unitless for length values and coordinates
+and decimal degrees for angles (in most cases).
 
 Sets drawing units:
 
@@ -89,10 +93,12 @@ Set default drawing units for AutoCAD DesignCenter blocks:
 Get/Set block reference attributes
 ----------------------------------
 
-Block references (:class:`Insert`) can have attached attributes (:class:`Attrib`), these are simple text annotations
-with an associated tag appended to the block reference.
+Block references (:class:`~ezdxf.entities.Insert`) can have attached attributes (:class:`~ezdxf.entities.Attrib`),
+these are simple text annotations with an associated tag appended to the block reference.
 
-Iterate over all appended attributes::
+Iterate over all appended attributes:
+
+.. code-block:: python
 
     # get all INSERT entities with entity.dxf.name == "Part12"
     blockrefs = modelspace.query('INSERT[name=="Part12"]')
@@ -102,8 +108,19 @@ Iterate over all appended attributes::
             if attrib.dxf.tag == "diameter":  # identify attribute by tag
                 attrib.dxf.text = "17mm"  # change attribute content
 
+.. versionchanged:: 0.10
 
-Get attribute by tag::
+    :meth:`attribs` replaced by a ``list`` of :class:`~ezdxf.entities.Attrib` objects, new code:
+
+.. code-block:: python
+
+    for attrib in entity.attribs:
+        if attrib.dxf.tag == "diameter":  # identify attribute by tag
+            attrib.dxf.text = "17mm"  # change attribute content
+
+Get attribute by tag:
+
+.. code-block:: python
 
     diameter = entity.get_attrib('diameter')
     if diameter is not None:
@@ -118,7 +135,9 @@ Create More Readable DXF Files (DXF Pretty Printer)
 DXF files are plain text files, you can open this files with every text editor which handles bigger files.
 But it is not really easy to get quick the information you want.
 
-Create a more readable HTML file (DXF Pretty Printer)::
+Create a more readable HTML file (DXF Pretty Printer):
+
+.. code-block::
 
     # on Windows
     py -3 -m ezdxf.pp your_dxf_file.dxf
@@ -126,11 +145,13 @@ Create a more readable HTML file (DXF Pretty Printer)::
     # on Linux/Mac
     python3 -m ezdxf.pp your_dxf_file.dxf
 
-This produces a HTML file *your_dxf_file.html* with a nicer layout than a plain DXF file and DXF handles as links
+This produces a HTML file `your_dxf_file.html` with a nicer layout than a plain DXF file and DXF handles as links
 between DXF entities, this simplifies the navigation between the DXF entities.
 
-Since ezdxf `v0.8.3 <https://ezdxf.mozman.at/release-v0-8-3.html>`_, a script called *dxfpp* will be added to your Python
-script path:
+.. versionchanged:: 0.8.3
+
+    Since ezdxf `v0.8.3 <https://ezdxf.mozman.at/release-v0-8-3.html>`_, a script called ``dxfpp`` will be added
+    to your Python script path:
 
 .. code-block:: none
 
@@ -153,11 +174,14 @@ script path:
 Adding New XDATA to Entity
 --------------------------
 
-Adding XDATA as list of tuples (group code, value)::
+Adding XDATA as list of tuples (group code, value):
+
+.. code-block:: python
 
     dwg.appids.new('YOUR_APP_NAME')  # IMPORTANT: create an APP ID entry
 
     circle = modelspace.add_circle((10, 10), 100)
+    # remove attribute tags for v0.10 and later, see remark below
     circle.tags.new_xdata('YOUR_APP_NAME',
                      [
                          (1000, 'your_web_link.org'),
@@ -171,6 +195,10 @@ Adding XDATA as list of tuples (group code, value)::
 
 For group code meaning see DXF reference section `DXF Group Codes in Numerical Order Reference`, valid group codes are
 in the range 1000 - 1071.
+
+.. versionchanged:: 0.10
+
+    Attribute :attr:`tags` is no more available, just remove the attribute reference: :code:`circle.new_xdata(...)`
 
 A360 Viewer Problems
 --------------------
