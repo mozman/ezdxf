@@ -73,6 +73,7 @@ __Version 0.10b4 - ...__
 
 - NEW: get/set layer description
 - NEW: get/set layer transparency
+- BUGFIX: MTEXT - replacement of `\n` by `\P` at DXF export to avoid invalid DXF files.
 
 Version 0.9 - 2019-02-24
 ------------------------

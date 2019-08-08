@@ -33,7 +33,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.width
 
-        Reference rectangle width (float)
+        Reference text width (float), forces text wrapping at given width.
 
     .. attribute:: dxf.attachment_point
 
@@ -144,6 +144,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
     .. attribute:: text
 
         MTEXT content as string (read/write).
+
+        Line endings ``\n`` will be replaced by the MTEXT line endings ``\P`` at DXF export, but **not**
+        vice versa ``\P`` by ``\n`` at DXF file loading.
 
     .. automethod:: set_location
 

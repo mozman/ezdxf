@@ -23,7 +23,7 @@ __all__ = ['MText']
 acdb_mtext = DefSubclass('AcDbMText', {
     'insert': DXFAttr(10, xtype=XType.point3d, default=Vector(0, 0, 0)),
     'char_height': DXFAttr(40, default=2.5),  # nominal (initial) text height
-    'width': DXFAttr(41, default=2.5, optional=True),  # reference column width
+    'width': DXFAttr(41, optional=True),  # reference column width
     'defined_height': DXFAttr(46, dxfversion='AC1021'),  # found in BricsCAD export
 
     # 1 = Top left; 2 = Top center; 3 = Top right
@@ -180,7 +180,9 @@ class MText(DXFGraphic):
         tags.remove_tags((1, 3))
 
     def export_mtext(self, tagwriter: 'TagWriter') -> None:
-        str_chunks = split_mtext_string(self.text, size=250)
+        # replacing '\n' by '\P' is required, else an invalid DXF file would be created
+        txt = self.text.replace('\n', '\\P')
+        str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
             str_chunks.append("")
         while len(str_chunks) > 1:
@@ -226,10 +228,14 @@ class MText(DXFGraphic):
 
         Args:
             color: color as :ref:`ACI`, string or RGB tuple
-            scale: determines how much border there is around the text
+            scale: determines how much border there is around the text, the value is based on the text height,
+                   and should be in the range of ``1`` - ``5``, where ``1`` fits exact the MText entity.
 
         """
-        self.dxf.box_fill_scale = scale
+        if 1 <= scale <= 5:
+            self.dxf.box_fill_scale = scale
+        else:
+            raise ValueError('argument scale has to be in range from 1 to 5.')
         if color is None:
             self.dxf.discard('bg_fill')
             self.dxf.discard('box_fill_scale')
