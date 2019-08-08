@@ -7,7 +7,8 @@ from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, DXFInvalidLayerName
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.lldxf.validator import is_valid_layer_name
-from ezdxf.tools import rgb2int, int2rgb
+from ezdxf.tools import rgb2int, int2rgb, transparency2float, float2transparency
+from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
 
 from .factory import register_entity
 
@@ -37,6 +38,9 @@ acdb_layer_table_record = DefSubclass('AcDbLayerTableRecord', {
     'unknown1': DXFAttr(348, dxfversion=DXF2007, optional=True),  # handle to ???
 
 })
+
+AcAecLayerStandard = "AcAecLayerStandard"
+AcCmTransparency = "AcCmTransparency"
 
 
 @register_entity
@@ -162,3 +166,39 @@ class Layer(DXFEntity):
         """
         self.set_color(value)
 
+    @property
+    def description(self) -> str:
+        try:
+            xdata = self.get_xdata(AcAecLayerStandard)
+        except DXFValueError:
+            return ""
+        else:
+            return xdata[1].value
+
+    @description.setter
+    def description(self, value: str) -> None:
+        # create AppID table entry if not present
+        if self.doc and AcAecLayerStandard not in self.doc.appids:
+            self.doc.appids.new(AcAecLayerStandard)
+        self.discard_xdata(AcAecLayerStandard)
+        self.set_xdata(AcAecLayerStandard, [(1000, ''), (1000, value)])
+
+    @property
+    def transparency(self) -> float:
+        try:
+            xdata = self.get_xdata(AcCmTransparency)
+        except DXFValueError:
+            return 0
+        else:
+            return transparency2float(xdata[0].value)
+
+    @transparency.setter
+    def transparency(self, value: float) -> None:
+        # create AppID table entry if not present
+        if self.doc and AcCmTransparency not in self.doc.appids:
+            self.doc.appids.new(AcCmTransparency)
+        if 0 <= value <= 1:
+            self.discard_xdata(AcCmTransparency)
+            self.set_xdata(AcCmTransparency, [(1071, float2transparency(value))])
+        else:
+            raise ValueError('Value out of range (0 .. 1).')

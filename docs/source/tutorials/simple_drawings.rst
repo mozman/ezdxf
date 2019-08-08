@@ -11,7 +11,9 @@ written direct to the file/stream without building a drawing data structure in m
 
     :ref:`r12writer`
 
-Create a new DXF drawing with :func:`ezdxf.new` to use all available DXF entities::
+Create a new DXF drawing with :func:`ezdxf.new` to use all available DXF entities:
+
+.. code-block:: Python
 
     import ezdxf
 
@@ -25,4 +27,4 @@ New entities are always added to layouts, a layout can be the modelspace, a pape
 
 .. seealso::
 
-    Look at the :ref:`layout` factory methods to see all the available DXF entities.
+    Look at factory methods of the :class:`~ezdxf.layouts.BaseLayout` class to see all the available DXF entities.

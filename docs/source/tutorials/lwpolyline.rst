@@ -35,8 +35,8 @@ Append multiple points to a polyline:
 
     doc.saveas("lwpolyline2.dxf")
 
-Getting points always returns a 5-tuple (x, y, start_width, ent_width, bulge), start_width, end_width and bulge is ``0``
-if not present:
+Getting points always returns a 5-tuple ``(x, y, start_width, ent_width, bulge)``, start_width, end_width and
+bulge is ``0`` if not present:
 
 .. code-block:: python
 
@@ -52,7 +52,7 @@ required anymore. Advantage of the context manager is the ability to use a user 
     doc = ezdxf.readfile("lwpolyline2.dxf")
     msp = doc.modelspace()
 
-    line = msp.query('LWPOLYLINE')[0]  # take first LWPolyline
+    line = msp.query('LWPOLYLINE').first # take first LWPolyline, 'first' was introduced with v0.10
 
     with line.points('xyseb') as points:
         # points is a standard python list
@@ -64,11 +64,10 @@ required anymore. Advantage of the context manager is the ability to use a user 
         points.extend([(4, 7), (0, 7)])  # adding 2 other points
         # the same as one command
         # points[-2:] = [(4, 7), (0, 7)]
-    # implicit call of line.set_points(points) at context manager exit
 
     doc.saveas("lwpolyline3.dxf")
 
-Each line segment can have a different start- and end width, if omitted start- and end width is ``0``:
+Each line segment can have a different start- and end-width, if omitted start- and end-width is ``0``:
 
 .. code-block:: python
 
@@ -83,9 +82,9 @@ Each line segment can have a different start- and end width, if omitted start- a
 
     doc.saveas("lwpolyline4.dxf")
 
-The first point carries the start- and end width of the first segment, the second point of the second
-segment and so on, the start- and end width value of the last point is used for the closing segment if polyline is
-closed else the values are ignored. Start- and end width only works if the DXF attribute :attr:`dxf.const_width` is
+The first point carries the start- and end-width of the first segment, the second point of the second
+segment and so on, the start- and end-width value of the last point is used for the closing segment if polyline is
+closed else the values are ignored. Start- and end-width only works if the DXF attribute :attr:`dxf.const_width` is
 unset, to be sure delete it:
 
 .. code-block:: python
@@ -110,7 +109,7 @@ unset, to be sure delete it:
 .. image:: gfx/LWPolyline5.PNG
 
 The curved segment is drawn from the point which defines the `bulge` value to the following point, the curved segment
-is always a circle, The bulge value defines the ratio of the arc sagitta (segment height `h`) to half line segment length
+is always aa arc, The bulge value defines the ratio of the arc sagitta (segment height `h`) to half line segment length
 (point distance), a bulge value of ``1`` defines a semicircle. `bulge` > ``0`` the curve is on the right side of
 the vertex connection line, `bulge` < ``0`` the curve is on the left side.
 

@@ -29,13 +29,13 @@ The new created line will be drawn with color ``7`` and linetype ``'DASHED'``.
 Changing Layer State
 --------------------
 
-First get the layer definition object:
+Get the layer definition object:
 
 .. code-block:: python
 
     my_lines = doc.layers.get('MyLines')
 
-Now you check the state of the layer:
+Check the state of the layer:
 
 .. code-block:: python
 
@@ -44,7 +44,7 @@ Now you check the state of the layer:
     my_lines.is_locked()  # True if layer is locked
     layer_name = my_lines.dxf.name  # get the layer name
 
-And you can change the state of the layer:
+Change the state of the layer:
 
 .. code-block:: python
 
@@ -89,7 +89,7 @@ The layers object supports some standard Python protocols:
 Deleting a Layer
 ----------------
 
-You can delete a layer definition:
+Delete a layer definition:
 
 .. code-block:: python
 

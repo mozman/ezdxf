@@ -71,6 +71,9 @@ __Version 0.10b3 - 2019-07-28__
 
 __Version 0.10b4 - ...__
 
+- NEW: get/set layer description
+- NEW: get/set layer transparency
+
 Version 0.9 - 2019-02-24
 ------------------------
 

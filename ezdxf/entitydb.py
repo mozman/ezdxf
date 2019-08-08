@@ -80,7 +80,7 @@ class EntityDB:
         return self._database.items()
 
     def add(self, entity: DXFEntity) -> None:
-        """ Add `entity` to database, assign a new handle if existing handle is ``None``. """
+        """ Add `entity` to database, assigns a new handle to the `entity` if :attr:`entity.dxf.handle` is ``None``. """
         if entity.dxftype() in DATABASE_EXCLUDE:
             if entity.dxf.handle is not None:
                 # store entities with handles (TABLE, maybe others) to avoid reassigning of its handle

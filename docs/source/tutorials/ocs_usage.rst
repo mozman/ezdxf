@@ -1,3 +1,6 @@
+.. module:: ezdxf.math
+    :noindex:
+
 .. _tut_coordinates:
 
 .. _tut_ocs:
@@ -27,9 +30,9 @@ Extrusion
 ~~~~~~~~~
 
 The extrusion vector defines the OCS, it is a normal vector to the base plane of a planar entity. This `base plane` is
-always located in the origin of the :ref:`WCS`. But there are some entities like :class:`Ellipse`, which have an
-extrusion vector, but do not establish an OCS. For this entities the extrusion vector defines only the extrusion
-direction and thickness defines the extrusion distance, but all other points in WCS.
+always located in the origin of the :ref:`WCS`. But there are some entities like :class:`~ezdxf.entities.Ellipse`,
+which have an extrusion vector, but do not establish an OCS. For this entities the extrusion vector defines
+only the extrusion direction and thickness defines the extrusion distance, but all other points in WCS.
 
 Elevation
 ~~~~~~~~~
@@ -38,9 +41,10 @@ The elevation value defines the z-axis value for all points of a planar entity, 
 the distance of the entity plane from the `base plane`.
 
 This value exists only in output from DXF versions prior to R11 as separated DXF attribute (group code 38).
-In DXF version R12 and later, the elevation value is supplied as z-axis value of each point. But as always in DXF, this
-simple rule does not apply to all entities: :class:`LWPolyline` has an elevation attribute, :class:`Hatch` has an
-elevation point (z=elevation , x=y=0), and so on.
+In DXF R12 and later, the elevation value is supplied as z-axis value of each point. But as always in DXF, this
+simple rule does not apply to all entities: :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Hatch`
+have an DXF attribute :attr:`elevation`, where the z-axis of this point is the elevation height and
+the x-axis = y-axis = ``0``.
 
 Thickness
 ~~~~~~~~~
@@ -61,8 +65,8 @@ The colors for axis follow the AutoCAD standard:
     :end-before: # include-end
 
 The following image shows the 2D circle in 3D space in AutoCAD `Left` and `Front` view. The blue line shows the OCS z-axis
-(extrusion direction), elevation is the distance from the origin to the center of the circle in this case `2.828`,
-and you see that the x- and y- axis of OCS and WCS are not aligned.
+(extrusion direction), elevation is the distance from the origin to the center of the circle in this case 2.828,
+and you see that the x- and y-axis of OCS and WCS are not aligned.
 
 .. image:: gfx/ocs-circle-side-view.png
     :alt: circle in ocs as side view
@@ -96,8 +100,8 @@ the pentagon have the same elevation, and you see that the y- axis of UCS, OCS a
 Using UCS to Place 3D Polyline
 ------------------------------
 
-It is much simpler to use a 3D :class:`Polyline` to create the 3D pentagon. The :class:`UCS` class is handy for
-this example and all kind of 3D operations.
+It is much simpler to use a 3D :class:`~ezdxf.entities.Polyline` to create the 3D pentagon.
+The :class:`UCS` class is handy for this example and all kind of 3D operations.
 
 .. literalinclude:: ../../../examples/tut/ocs/polyline3d.py
     :start-after: # include-start
@@ -110,13 +114,14 @@ Placing 2D Text in 3D space
 ---------------------------
 
 The problem by placing text in 3D space is the text rotation, which is always counter clockwise around the OCS z-axis,
-and 0 degree is in the positive OCS x-axis, and the x-axis is calculated by the :ref:`Arbitrary Axis Algorithm`.
+and ``0`` degree is in direction of the positive OCS x-axis, and the OCS x-axis is calculated by the
+:ref:`Arbitrary Axis Algorithm`.
 
-Calculate the OCS rotation angle by converting the rotation angle in UCS or WCS into a vector or start with text
+Calculate the OCS rotation angle by converting the TEXT rotation angle (in UCS or WCS) into a vector or begin with text
 direction as vector, transform this direction vector into OCS and convert the OCS vector back into an angle in the OCS
-xy-plane (see example).
+xy-plane (see example), this procedure is available as :meth:`UCS.to_ocs_angle_deg` or :meth:`UCS.to_ocs_angle_rad`.
 
-AutoCAD supports thickness for the TEXT entity only for shx fonts and not for true type fonts.
+AutoCAD supports thickness for the TEXT entity only for `.shx` fonts and not for true type fonts.
 
 .. literalinclude:: ../../../examples/tut/ocs/text.py
     :start-after: # include-start

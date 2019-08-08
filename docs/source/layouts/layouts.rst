@@ -23,7 +23,8 @@ Entity Ownership
 
 A layout owns all entities residing in their entity space, this means the :attr:`dxf.owner` attribute of
 any :class:`~ezdxf.entities.dxfgfx.DXFGraphic` in this layout is the :attr:`dxf.handle` of the layout, and deleting
-an entity from a layout is the end of life of this entity, because also deleted from :class:`~ezdxf.entitydb.EntityDB`.
+an entity from a layout is the end of life of this entity, because it is also deleted from the
+:class:`~ezdxf.entitydb.EntityDB`.
 But it is possible to just unlink an entity from a layout, so it can be assigned to another layout, use the
 :meth:`~BaseLayout.move_to_layout` method to move entities between layouts.
 

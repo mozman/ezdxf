@@ -425,13 +425,13 @@ class Drawing:
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
         self.reset_version_guid()
 
-    def _create_appids(self):
-        def create_appid_if_not_exist(name, flags=0):
-            if name not in self.appids:
-                self.appids.new(name, {'flags': flags})
+    def _create_appid_if_not_exist(self, name: str, flags: int = 0) -> None:
+        if name not in self.appids:
+            self.appids.new(name, {'flags': flags})
 
+    def _create_appids(self):
         if 'HATCH' in self.tracker.dxftypes:
-            create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
+            self._create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
 
     @property
     def acad_release(self) -> str:

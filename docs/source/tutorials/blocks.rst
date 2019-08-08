@@ -25,7 +25,7 @@ and every drawing has only one blocks section: :attr:`Drawing.blocks`.
 
 
     def get_random_point():
-        """Creates random x, y coordinates."""
+        """Returns random x, y coordinates."""
         x = random.randint(-100, 100)
         y = random.randint(-100, 100)
         return x, y
@@ -38,7 +38,7 @@ and every drawing has only one blocks section: :attr:`Drawing.blocks`.
 
     # Add DXF entities to the block 'FLAG'.
     # The default base point (= insertion point) of the block is (0, 0).
-    flag.add_polyline2d([(0, 0), (0, 5), (4, 3), (0, 3)])  # the flag as 2D polyline
+    flag.add_lwpolyline([(0, 0), (0, 5), (4, 3), (0, 3)])  # the flag symbol as 2D polyline
     flag.add_circle((0, 0), .4, dxfattribs={'color': 2})  # mark the base point with a circle
 
 Block References (Insert)

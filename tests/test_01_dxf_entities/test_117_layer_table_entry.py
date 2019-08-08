@@ -109,3 +109,41 @@ def test_set_true_color_as_rgb(layer):
 def test_get_true_color_as_rgb(layer):
     layer.dxf.true_color = 657930
     assert layer.rgb == (10, 10, 10)
+
+
+def test_get_default_description(layer):
+    assert layer.description == ""
+
+
+def test_set_description(layer):
+    layer.description = "my Layer"
+    assert layer.description == "my Layer"
+
+    # test DXF internals
+    assert "AcAecLayerStandard" in layer.xdata
+
+
+def test_replace_description(layer):
+    layer.description = "my Layer"
+    assert layer.description == "my Layer"
+    layer.description = "new Description"
+    assert layer.description == "new Description"
+
+
+def test_get_default_transparency(layer):
+    assert layer.transparency == 0
+
+
+def test_set_transparency(layer):
+    layer.transparency = 0.11
+    assert round(layer.transparency, 2) == 0.11
+
+    # test DXF internals
+    assert "AcCmTransparency" in layer.xdata
+
+
+def test_replace_transparency(layer):
+    layer.transparency = 0.11
+    assert round(layer.transparency, 2) == 0.11
+    layer.transparency = 0.77
+    assert round(layer.transparency, 2) == 0.77

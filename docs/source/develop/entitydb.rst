@@ -3,11 +3,11 @@
 Entity Database
 ===============
 
-The :class:`EntityDB` is a simple key/:class:`~ezdxf.entities.DXFEntity` database and every
-:class:`~ezdxf.drawing.Drawing` has its own :class:`EntityDB`, stored in the :class:`~ezdxf.drawing.Drawing` attribute
-:attr:`~ezdxf.drawing.Drawing.entitydb`.
+The :class:`EntityDB` is a simple key/value database to store :class:`~ezdxf.entities.DXFEntity` objects by it's handle,
+every :class:`~ezdxf.drawing.Drawing` has its own :class:`EntityDB`, stored in the :class:`~ezdxf.drawing.Drawing`
+attribute :attr:`~ezdxf.drawing.Drawing.entitydb`.
 
-Every entity/object, except tables and sections, are represented as :class:`~ezdxf.entities.dxfentity.DXFEntity` or
+Every DXF entity/object, except tables and sections, are represented as :class:`~ezdxf.entities.dxfentity.DXFEntity` or
 inherited types, this entities are stored in the :class:`EntityDB`, database-key is the :attr:`dxf.handle` as plain hex
 string (group code 5 or 105).
 

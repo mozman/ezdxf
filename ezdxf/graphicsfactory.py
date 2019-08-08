@@ -960,7 +960,7 @@ class CreatorInterface:
                                     dimension entities
             dimstyle: dimension style name (DimStyle table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for :class:`Dimension` entity
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
             discard: discard rendering result for friendly CAD applications like BricsCAD to get a native and likely
                      better rendering result. (does not work with AutoCAD)
 
@@ -991,9 +991,10 @@ class CreatorInterface:
         for dimension line rendering, all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
 
-        This method returns a :class:`DimStyleOverride` object, to create the necessary dimension geometry, you have to
-        call :meth:`DimStyleOverride.render` manually, this two step process allows additional processing steps on the
-        :class:`Dimension` entity between creation and rendering.
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object, to create the necessary
+        dimension geometry, you have to  call :meth:`DimStyleOverride.render` manually, this two step process
+        allows additional processing steps on the  :class:`~ezdxf.entities.Dimension` entity between creation
+        and rendering.
 
         Args:
             p1: measurement point 1 and start point of extension line 1 (in UCS)
@@ -1001,11 +1002,11 @@ class CreatorInterface:
             distance: distance of dimension line from measurement points
             text: None or "<>" the measurement is drawn as text, " " (one space) suppresses the dimension text,
                   everything else `text` is drawn as dimension text
-            dimstyle: dimension style name (:class:`DimStyle` table entry), default is ``'EZDXF'``
-            override: :class:`DimStyleOverride` attributes
-            dxfattribs: DXF attributes for :class:`Dimension` entity
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: DXF attributes for :class:`~ezdxf.entities.Dimension` entity
 
-        Returns: :class:`DimStyleOverride`
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
         """
         p1 = Vector(p1)

@@ -163,6 +163,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: add_stacked_text
 
+.. _mtext_inline_codes:
+
 MText Inline Codes
 ------------------
 

@@ -114,6 +114,19 @@ Factory function         :meth:`Drawing.layers.new`
 
         .. versionadded:: 0.10
 
+    .. attribute:: description
+
+        Get/set layer description as string
+
+        .. versionadded:: 0.10
+
+    .. attribute:: transparency
+
+        Get/set layer transparency as float value in the range from ``0`` to ``1``.
+        ``0`` for no transparency (opaque) and ``1`` for 100% transparency.
+
+        .. versionadded:: 0.10
+
     .. automethod:: is_frozen
 
     .. automethod:: freeze

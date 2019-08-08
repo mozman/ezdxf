@@ -3,7 +3,9 @@
 Tutorial for Mesh
 =================
 
-Create a cube mesh by direct access to base data structures::
+Create a cube mesh by direct access to base data structures:
+
+.. code-block:: python
 
     import ezdxf
 
@@ -30,7 +32,7 @@ Create a cube mesh by direct access to base data structures::
         [0, 3, 7, 4]
     ]
 
-    doc = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
+    doc = ezdxf.new('R2000')  # MESH requires DXF R2000 or later
     msp = doc.modelspace()
     mesh = msp.add_mesh()
     mesh.dxf.subdivision_levels = 0  # do not subdivide cube, 0 is the default value
@@ -40,7 +42,9 @@ Create a cube mesh by direct access to base data structures::
 
     doc.saveas("cube_mesh_1.dxf")
 
-Create a cube mesh by method calls::
+Create a cube mesh by method calls:
+
+.. code-block:: python
 
     import ezdxf
 
@@ -57,7 +61,7 @@ Create a cube mesh by method calls::
         (0, 1, 1),
     ]
 
-    doc = ezdxf.new('AC1015')  # mesh requires the DXF 2000 or newer format
+    doc = ezdxf.new('R2000')  # MESH requires DXF R2000 or later
     msp = doc.modelspace()
     mesh = msp.add_mesh()
 

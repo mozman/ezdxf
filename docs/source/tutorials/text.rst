@@ -43,7 +43,7 @@ Setup some standard text styles and linetypes by argument :code:`setup=True`::
 
     doc = ezdxf.new('R12', setup=True)
 
-Replaced all proprietary font declarations in :code:`setup_sytles()` (ARIAL, ARIAL_NARROW, ISOCPEUR and TIMES) by open
+Replaced all proprietary font declarations in :code:`setup_styles()` (ARIAL, ARIAL_NARROW, ISOCPEUR and TIMES) by open
 source fonts, this is also the style name (e.g. :code:`{'style': 'OpenSans-Italic'}`):
 
 .. image:: gfx/fonts.png
@@ -63,7 +63,7 @@ This shows the required steps to get the font name for `Open Sans`:
     - open font folder `c:\\windows\\fonts`
     - select and open the font-family `Open Sans`
     - right-click on `Open Sans Standard` and select `Properties`
-    - on top of the first tab you see the font name: `OpenSans-Regular.ttf`
+    - on top of the first tab you see the font name: ``'OpenSans-Regular.ttf'``
 
 The style name has to be unique in the DXF document, else `ezdxf` will raise an :class:`DXFTableEntryError` exception.
 To replace an existing entry, delete the existing entry by :code:`doc.styles.remove(name)`, and add the replacement
@@ -73,4 +73,4 @@ entry.
 -------
 
 It is possible to place the 2D :class:`Text` entity into 3D space by using the :ref:`OCS`,
-for further infromation see: :ref:`tut_ocs`.
+for further information see: :ref:`tut_ocs`.
