@@ -575,7 +575,7 @@ class Drawing:
 
     def layouts_and_blocks(self) -> Iterable['LayoutType']:
         """
-        Iterate over all layouts (modespace and paperspace) and all block definitions.
+        Iterate over all layouts (modelspace and paperspace) and all block definitions.
 
         """
         return iter(self.blocks)

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Tuple
 import logging
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2000, DXF2007, DXF2004, DXFInvalidLayerName
+from ezdxf.lldxf.const import INVALID_NAME_CHARACTERS
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.lldxf.validator import is_valid_layer_name
 from ezdxf.tools import rgb2int, int2rgb, transparency2float, float2transparency
@@ -202,3 +203,48 @@ class Layer(DXFEntity):
             self.set_xdata(AcCmTransparency, [(1071, float2transparency(value))])
         else:
             raise ValueError('Value out of range (0 .. 1).')
+
+    def rename(self, name: str) -> None:
+        """
+        Rename layer and all entity references to this layer. Does not rename layers without a layer table entry.
+
+        .. warning::
+
+            Renaming layers may damage the DXF file in some circumstances!
+
+        Args:
+             name: new layer name
+
+        Raises:
+            ValueError: `name` contains invalid characters: <>/\\":;?*|=`
+            ValueError: layer `name` already exist
+            ValueError: renaming of layers ``'0'`` and ``'DEFPOINTS'`` not possible
+
+        """
+        if not is_valid_layer_name(name):
+            raise ValueError('Name contains invalid characters: {}.'.format(INVALID_NAME_CHARACTERS))
+        layers = self.doc.layers
+        if self.dxf.name.lower() in ('0', 'defpoints'):
+            raise ValueError('Can not rename layer "{}".'.format(self.dxf.name))
+        if layers.has_entry(name):
+            raise ValueError('Layer "{}" already exist.'.format(name))
+        old = self.dxf.name
+        self.dxf.name = name
+        layers.replace(old, self)
+        self._rename_layer_references(old, name)
+
+    def _rename_layer_references(self, old_name: str, new_name: str) -> None:
+        key = self.doc.layers.key
+        old_key = key(old_name)
+        for e in self.doc.entitydb.values():
+            if e.dxf.hasattr('layer') and key(e.dxf.layer) == old_key:
+                e.dxf.layer = new_name
+            entity_type = e.dxftype()
+            if entity_type == 'VIEWPORT':
+                e.rename_frozen_layer(old_name, new_name)
+            elif entity_type == 'LAYER_FILTER':
+                # todo: if LAYER_FILTER implemented, add support for renaming layers
+                logger.debug('renaming layer "{}" - document contains LAYER_FILTER'.format(old_name))
+            elif entity_type == 'LAYER_INDEX':
+                # todo: if LAYER_INDEX implemented, add support for renaming layers
+                logger.debug('renaming layer "{}" - document contains LAYER_INDEX'.format(old_name))

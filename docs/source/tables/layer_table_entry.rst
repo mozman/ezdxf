@@ -29,7 +29,7 @@ Factory function         :meth:`Drawing.layers.new`
 
     .. attribute:: dxf.name
 
-        Layer name (str)
+        Layer name, case insensitive and can not contain any of this characters: ``<>/\":;?*|=``` (str)
 
     .. attribute:: dxf.flags
 
@@ -154,5 +154,7 @@ Factory function         :meth:`Drawing.layers.new`
     .. method:: set_color(value: int) -> None
 
         Use property :attr:`Layer.color` instead.
+
+    .. automethod:: rename
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB

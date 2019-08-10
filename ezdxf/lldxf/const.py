@@ -397,7 +397,9 @@ class Error:
     INVALID_OWNER_HANDLE = 202
 
 
-INVALID_LAYER_NAME_CHARACTERS = frozenset(['<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '`'])
+INVALID_NAME_CHARACTERS = '<>/\\":;?*|=`'
+INVALID_LAYER_NAME_CHARACTERS = set(INVALID_NAME_CHARACTERS)
+
 
 STD_SCALES = {
     1: (1. / 128., 12.),

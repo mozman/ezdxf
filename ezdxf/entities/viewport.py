@@ -326,3 +326,8 @@ class Viewport(DXFGraphic):
             DXFTag(1002, '}'),  # MVIEW
         ])
         return Tags(tags)
+
+    def rename_frozen_layer(self, old_name: str, new_name: str) -> None:
+        key = self.doc.layers.key
+        old_key = key(old_name)
+        self.frozen_layers = [(name if key(name) != old_key else new_name) for name in self.frozen_layers]
