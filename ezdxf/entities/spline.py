@@ -260,6 +260,11 @@ class Spline(DXFGraphic):
     @contextmanager
     def edit_data(self) -> 'SplineData':
         """
+        .. versionchanged:: 0.10
+
+            This method only exist for backward compatibility, since v0.10 SPLINE attributes :attr:`fit_points`,
+            :attr:`control_points`, :attr:`knots` and :attr:`weights` are read- and writeable list-like containers.
+
         Context manager for all spline data, returns :class:`SplineData`.
 
         Fit points, control points, knot values and weights can be manipulated as lists by using the general

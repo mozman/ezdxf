@@ -128,30 +128,6 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: set_periodic_rational
 
-    .. method:: Spline.edit_data
-
-
-SplineData
-----------
-
-.. class:: SplineData
-
-    .. attribute:: fit_points
-
-        :class:`~ezdxf.lldxf.packedtags.VertexArray` object  with list like behavior.
-
-    .. attribute:: control_points
-
-        :class:`~ezdxf.lldxf.packedtags.VertexArray` object with list like behavior.
-
-    .. attribute:: knot_values
-
-        Knot values as :code:`array.array('d')`.
-
-    .. attribute:: weights
-
-        Control point weights as :code:`array.array('d')`.
-
 
 .. _Cambridge: https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node4.html
 
