@@ -1,3 +1,5 @@
+.. include:: ../spline-links.inc
+
 .. _layout:
 
 Layout Types
@@ -288,3 +290,4 @@ BlockLayout
     .. automethod:: get_attdef
 
     .. automethod:: get_attdef_text
+

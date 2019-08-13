@@ -57,13 +57,12 @@ The :class:`EntityQuery` class is the return type of all :meth:`query` methods.
 which matches one name of the entity query AND the whole attribute query.
 If a DXF entity does not have or support a required attribute, the corresponding attribute search term is ``False``.
 
-examples::
+examples:
 
-    'LINE[text ? ".*"]' is always empty, because the LINE entity has no text attribute.
-
-    'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
-    '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
-    '*[layer=="construction"]i' => (ignore case) all entities with layer == "construction" | "Construction" | "ConStruction" ...
+    - :code:`LINE[text ? ".*"]`: always empty, because the LINE entity has no text attribute.
+    - :code:`LINE CIRCLE[layer=="construction"]`: all LINE and CIRCLE entities with layer  == ``"construction"``
+    - :code:`*[!(layer=="construction" & color<7)]`: all entities except those with layer  == ``"construction"`` and color < ``7``
+    - :code:`*[layer=="construction"]i`, (ignore case) all entities with layer == ``"construction"`` | ``"Construction"`` | ``"ConStruction"`` ...
 
 EntityQuery Class
 =================

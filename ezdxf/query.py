@@ -331,9 +331,8 @@ def name_matcher(query: str = "*") -> Callable[[str], bool]:
 
 def new(entities: Iterable['DXFEntity'] = None, query: str = '*') -> EntityQuery:
     """
-    Start a new query based on a sequence `entities`. The sequence `entities` has to provide the Python iterator
-    protocol and has to yield at least subclasses of :class:`GenericWrapper` or better :class:`GraphicEntity`.
-    Returns an object of type :class:`EntityQuery`.
+    Start a new query based on sequence `entities`. The `entities` argument has to be an iterable of
+    :class:`~ezdxf.entities.DXFEntity` or inherited objects and returns an :class:`EntityQuery` object.
 
     """
     return EntityQuery(entities, query)

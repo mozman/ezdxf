@@ -507,7 +507,7 @@ class CreatorInterface:
         (requires DXF R2000)
 
         AutoCAD creates a spline through fit points by a proprietary algorithm. `ezdxf` can not reproduce the control
-        point calculation.
+        point calculation. See also: :ref:`tut_spline`.
 
         Args:
             fit_points: iterable of fit points as ``(x, y[, z])`` in :ref:`WCS`,
@@ -528,13 +528,18 @@ class CreatorInterface:
     def add_spline_control_frame(self, fit_points: Iterable['Vertex'], degree: int = 3, method: str = 'distance',
                                  power: float = .5, dxfattribs: dict = None) -> 'Spline':
         """
-        Create and add B-spline (:class:`~ezdxf.entities.Spline` entity) control frame from fit points.
+        Add a :class:`~ezdxf.entities.Spline` entity trough fit points but defined by control points.
 
-            1. `method` = ``'uniform'``, creates a uniform t vector, [0...1] equally spaced
-            2. `method` = ``'distance'``, creates a t-vector proportional to the fit point distances
-            3. `method` = ``'centripetal'``, creates a t-vector proportional to the fit point distances ^ `power`
+        =================== ============================================================
+        Method              Description
+        =================== ============================================================
+        ``'uniform'``       creates a uniform t vector, from ``0`` to ``1`` evenly spaced; see `uniform`_ method
+        ``'distance'``      creates a t vector with values proportional to the fit point distances, see `chord length`_ method
+        ``'centripetal'``   creates a t vector with values proportional to the fit point distances ^ ``power``; see `centripetal`_ method
+        =================== ============================================================
 
         None of this methods matches the spline created from fit points by AutoCAD.
+        See also: :ref:`tut_spline`.
 
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
@@ -558,11 +563,13 @@ class CreatorInterface:
         Approximate B-spline (:class:`~ezdxf.entities.Spline` entity) by a reduced count of control points, given are
         the fit points and the degree of the B-spline.
 
-            1. `method` = ``'uniform'``, creates a uniform t vector, [0...1] equally spaced
-            2. `method` = ``'distance'``, creates a t-vector proportional to the fit point distances
-            3. `method` = ``'centripetal'``, creates a t-vector proportional to the fit point distances ^ `power`
-
-        (requires DXF R2000)
+        =================== ============================================================
+        Method              Description
+        =================== ============================================================
+        ``'uniform'``       creates a uniform t vector, from ``0`` to ``1`` evenly spaced; see `uniform`_ method
+        ``'distance'``      creates a t vector with values proportional to the fit point distances, see `chord length`_ method
+        ``'centripetal'``   creates a t vector with values proportional to the fit point distances ^ ``power``; see `centripetal`_ method
+        =================== ============================================================
 
         Args:
             fit_points: all fit points of B-spline

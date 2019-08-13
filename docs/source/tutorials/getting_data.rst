@@ -100,8 +100,8 @@ of the available layouts by :meth:`~ezdxf.drawing.Drawing.layout_names`.
 Retrieve entities by query language
 -----------------------------------
 
-Inspired by the `jQuery <http://www.jquery.com>`_ framework, `ezdxf` provides a flexible query language for DXF
-entities. All Layout types have a :meth:`~ezdxf.layouts.BaseLayout.query` method to start an entity query
+`ezdxf` provides a flexible query language for DXF entities.
+All layout types have a :meth:`~ezdxf.layouts.BaseLayout.query` method to start an entity query
 or use the :meth:`ezdxf.query.new` function.
 
 The query string is the combination of two queries, first the required entity query and second the optional attribute
