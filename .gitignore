@@ -1,5 +1,6 @@
 .tox
 .cache
+.eggs
 DXFResearch
 build/*
 dist/*
