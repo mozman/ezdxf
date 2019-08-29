@@ -5,7 +5,7 @@ Entities Section
 
 The ENTITIES section is the home of all :class:`~ezdxf.layouts.Modelspace` and active
 :class:`~ezdxf.layouts.Paperspace` layout entities. This is a real section in the DXF file,
-in `ezdxf` is the :class:`EntitySection` just a proxy for modelspace and the active paperspace linked together.
+for `ezdxf` the :class:`EntitySection` is just a proxy for modelspace and the active paperspace linked together.
 
 .. seealso::
 

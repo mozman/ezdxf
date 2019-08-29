@@ -7,7 +7,7 @@ The OBJECTS section is the home of all none graphical objects of a DXF document.
 The OBJECTS section is accessible by :attr:`Drawing.objects`.
 
 
-Convenience methods of :class:`~ezdxf.drawing.Drawing` to create required structures in the OBJECTS section:
+Convenience methods of the :class:`~ezdxf.drawing.Drawing` object to create required structures in the OBJECTS section:
 
     - IMAGEDEF: :meth:`~ezdxf.drawing.Drawing.add_image_def`
     - UNDERLAYDEF: :meth:`~ezdxf.drawing.Drawing.add_underlay_def`

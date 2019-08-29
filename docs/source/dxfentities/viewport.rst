@@ -21,7 +21,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.center
 
-        Center point of the viewport in modelspace circle (3D point in :ref:`WCS`)
+        Center point of the viewport in modelspace (3D point in :ref:`WCS`).
 
     .. attribute:: dxf.width
 
