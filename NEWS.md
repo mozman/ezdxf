@@ -69,12 +69,13 @@ __Version 0.10b3 - 2019-07-28__
 - CHANGE: removed from `MText` methods: `edit_data`, `get_text`, `set_text`
 - BUGFIX: VERTEX entity inherit `owner` and `linetype` attribute from POLYLINE entity
 
-__Version 0.10b4 - ...__
+__Version 0.10b4 - 2019-08-29__
 
 - NEW: get/set layer description
 - NEW: get/set layer transparency
 - NEW: rename layer, renames also references to layer but use with care
 - BUGFIX: MTEXT - replacement of `\n` by `\P` at DXF export to avoid invalid DXF files.
+- tested with CPython 3.8b3
 
 Version 0.9 - 2019-02-24
 ------------------------
