@@ -11,3 +11,7 @@ examples/addons/*.dxf
 tools/plotstyles/*
 newctb.ctb
 __pycache__
+venv36
+venv37
+venv38
+

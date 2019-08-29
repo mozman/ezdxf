@@ -76,6 +76,7 @@ __Version 0.10b4 - 2019-08-29__
 - NEW: rename layer, renames also references to layer but use with care
 - BUGFIX: MTEXT - replacement of `\n` by `\P` at DXF export to avoid invalid DXF files.
 - tested with CPython 3.8b3
+- removed batch files (.bat) for testing, use `tox` instead
 
 Version 0.9 - 2019-02-24
 ------------------------
