@@ -206,7 +206,7 @@ class Layer(DXFEntity):
 
     def rename(self, name: str) -> None:
         """
-        Rename layer and all entity references to this layer. Does not rename layers without a layer table entry.
+        Rename layer and all known (documented) references to this layer.
 
         .. warning::
 

@@ -2,8 +2,10 @@
 News
 ====
 
-Version 0.10 - develop
-----------------------
+Version 0.10 - 2019-09-01
+-------------------------
+
+Release notes: https://ezdxf.mozman.at/release-v0-10.html
 
 __Version 0.10a0 - 2019-03-15__
 
@@ -14,7 +16,7 @@ __Version 0.10a0 - 2019-03-15__
 - renamed central data object in entities from `DXFEntity.drawing` to `DXFEntity.doc`
 - DXFEntity: get_xdata() keyword `xdata_tag` renamed to `tags`
 - DXFEntity: set_xdata() keyword `xdata_tag` renamed to `tags`
-- DXFEntity: `remove_reactor_handle()` renamed to `discard_reactor_handle()`
+- DXFEntity: remove_reactor_handle() renamed to `discard_reactor_handle()`
 - DXFEntity: get_extension_dict() returns `ExtensionDict` instead of the raw DICTIONARY object
 - LAYER: renamed DXF attributes:
     - removed `line_weight` as synonym for `lineweight`
@@ -26,7 +28,7 @@ __Version 0.10a0 - 2019-03-15__
 - VIEWPORT: renamed `Viewport.dxf.center_point` to `Viewport.dxf.center` 
 - VIEWPORT: renamed `Viewport.dxf.target_point` to `Viewport.dxf.target`
 - HATCH: direct access to paths (`Hatch.paths`), pattern (`Hatch.pattern`) and gradient (`Hatch.gradient`), context 
-  manager to edit this data not needed anymore, but still available for backward compatibility  
+  manager to edit this data is not needed anymore, but still available for backward compatibility  
 - Options:
     - removed `template_dir`, no more needed
     - new `log_unprocessed_tags` to log unprocessed (unknown) DXF tags 

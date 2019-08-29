@@ -39,4 +39,5 @@ DXF Entities
     text
     trace
     underlay
+    viewport
     xline

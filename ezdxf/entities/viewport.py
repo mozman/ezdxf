@@ -154,6 +154,8 @@ class Viewport(DXFGraphic):
 
     @property
     def frozen_layers(self) -> List[str]:
+        """ Set/get frozen layers as list of layer names.
+        """
         type_ = self._frozen_layers_content_type
         if type_ == 'names':
             return self._frozen_layers

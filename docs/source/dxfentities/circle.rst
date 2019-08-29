@@ -21,10 +21,10 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.center
 
-    Center point of circle (2D/3D Point in :ref:`OCS`)
+        Center point of circle (2D/3D Point in :ref:`OCS`)
 
     .. attribute:: dxf.radius
 
-    Radius of circle (float)
+        Radius of circle (float)
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-8663262B-222C-414D-B133-4A8506A27C18
