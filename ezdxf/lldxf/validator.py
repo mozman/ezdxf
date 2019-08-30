@@ -203,9 +203,17 @@ def is_dxf_file(filename: str) -> bool:
 def is_dxf_stream(stream: TextIO) -> bool:
     try:
         reader = low_level_tagger(stream)
-        return next(reader) == (0, 'SECTION')
     except DXFError:
         return False
+    for tag in reader:
+        # The common case for well formed DXF files
+        if tag == (0, 'SECTION'):
+            return True
+        # Accept/Ignore tags in front of first SECTION - like AutoCAD and BricsCAD
+        # But group code should be < 1000, until reality proofs otherwise
+        if tag.code > 999:
+            return False
+    return False
 
 
 def is_valid_layer_name(name: str) -> bool:
