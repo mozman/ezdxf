@@ -28,4 +28,4 @@
 #   2. bug fix release: VERSION = "0.9.2"; version = (0, 9, 2, 'release')
 
 version = (0, 10, 1, 'b0')
-__version__ = "0.10.1b1"
+__version__ = "0.10.1b0"

@@ -212,11 +212,13 @@ class HeaderSection:
                 return
             tagwriter.write_tag2(9, name)
             vardef = HEADER_VAR_MAP[name]
+
             # group code for header var $ACADMAINTVER changed from 70 to 90 in DXF version R2018.
-            if name == '$ACADMAINTVER' and dxfversion >= DXF2018:
-                value = HeaderVar((90, value.value))
+            if name == '$ACADMAINTVER':
+                vardef.code = 70 if dxfversion < DXF2018 else 90
+
             # fix invalid group codes
-            elif vardef.code != value.code:
+            if vardef.code != value.code:
                 value = HeaderVar((vardef.code, value.value))
             tagwriter.write_str(str(value))
 
@@ -230,7 +232,7 @@ class HeaderSection:
             if not write_handles and name == '$HANDSEED':
                 continue  # skip $HANDSEED
             _write(name, value)
-            if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
+            if name == '$LASTSAVEDBY':  # ugly hack, but necessary for AutoCAD
                 self.custom_vars.write(tagwriter)
         self['$ACADVER'] = save
         tagwriter.write_str("  0\nENDSEC\n")
