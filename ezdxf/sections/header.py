@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
-from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12, LATEST_DXF_VERSION
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError, DXFKeyError, DXF12, LATEST_DXF_VERSION, DXF2018
 from ezdxf.lldxf.validator import header_validator
 from ezdxf.sections.headervars import HEADER_VAR_MAP
 import logging
@@ -212,8 +212,11 @@ class HeaderSection:
                 return
             tagwriter.write_tag2(9, name)
             vardef = HEADER_VAR_MAP[name]
+            # group code for header var $ACADMAINTVER changed from 70 to 90 in DXF version R2018.
+            if name == '$ACADMAINTVER' and dxfversion >= DXF2018:
+                value = HeaderVar((90, value.value))
             # fix invalid group codes
-            if vardef.code != value.code:
+            elif vardef.code != value.code:
                 value = HeaderVar((vardef.code, value.value))
             tagwriter.write_str(str(value))
 

@@ -4,8 +4,6 @@ TODO
 Python Code
 -----------
 
-- import data from DXF files
-    - import paper space layouts
 - optimized Vector class, SVec for simple or speedy vectors? profiling required!!!
 
 DXF Entities
@@ -34,17 +32,12 @@ DXF Audit & Cleanup
 - VERTEX on same layer as POLYLINE; cleanup: set VERTEX layer to POLYLINE layer
 - find unreferenced objects:
     - DICTIONARY e.g. orphaned extension dicts; cleanup: delete
-- find unused BLOCK definitions: has no corresponding INSERT (except layout blocks); cleanup: delete
+- find unused BLOCK definitions: has no corresponding INSERT; cleanup: delete
+    - EXCEPTION: layout blocks
+    - EXCEPTION: anonymous blocks without explicit INSERT like DIMENSION geometry
 
 Documentation
 -------------
 
-- use auto-doc feature of sphinx
-  - for all DXF entities
-  - for all DXF objects
-  - for all table entries
-  - for all modules
-
 - DIMENSION docs & tutorials
 - HATCH tutorial with islands
-- MTEXT tutorial

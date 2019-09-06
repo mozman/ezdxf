@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.10.1 - 2019-09-06
+---------------------------
+
+- BUGFIX: group code for header var $ACADMAINTVER is 90 for DXF R2018+ and 70 for previous DXF versions
+ 
 Version 0.10 - 2019-09-01
 -------------------------
 
