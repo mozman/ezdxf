@@ -26,9 +26,18 @@ acad_release = {
     DXF2018: 'R2018',
 }
 
+acad_maint_ver = {
+    DXF12: 0,
+    DXF2000: 6,
+    DXF2004: 0,
+    DXF2007: 25,
+    DXF2010: 6,
+    DXF2013: 105,
+    DXF2018: 4,
+}
+
 versions_supported_by_new = [DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018]
 versions_supported_by_save = versions_supported_by_new
-
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
 acad_release_to_dxf_version = {
@@ -400,7 +409,6 @@ class Error:
 INVALID_NAME_CHARACTERS = '<>/\\":;?*|=`'
 INVALID_LAYER_NAME_CHARACTERS = set(INVALID_NAME_CHARACTERS)
 
-
 STD_SCALES = {
     1: (1. / 128., 12.),
     2: (1. / 64., 12.),
@@ -446,7 +454,6 @@ RASTER_UNITS = {
     'yd': 7,
     'mi': 8,
 }
-
 
 MODEL_SPACE_R2000 = '*Model_Space'
 MODEL_SPACE_R12 = '$Model_Space'

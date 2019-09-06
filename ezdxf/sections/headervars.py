@@ -16,8 +16,8 @@ HEADER_VAR_MAP = {
         default='AC1032'),
     '$ACADMAINTVER': HeaderVarDef(
         name='$ACADMAINTVER',
-        code=90,
-        factory=partial(SingleValue, code=90), 
+        code=70,
+        factory=partial(SingleValue, code=70),
         mindxf=DXF2000,
         maxdxf=DXF2018,
         priority=100,
@@ -1997,7 +1997,7 @@ HEADER_VAR_MAP = {
         mindxf=DXF2007,
         maxdxf=DXF2018,
         priority=24200,
-        default='45'),
+        default='45'),  # default value '0' crashes BricsCAD
     '$SOLIDHIST': HeaderVarDef(
         name='$SOLIDHIST',
         code=280,

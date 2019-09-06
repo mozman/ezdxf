@@ -396,6 +396,7 @@ class Drawing:
             self.classes.add_required_classes(dxfversion)
 
         self._create_appids()
+        self._update_header_vars()
         self._update_metadata()
         tagwriter = TagWriter(stream, write_handles=handles, dxfversion=dxfversion)
         self.export_sections(tagwriter)
@@ -417,6 +418,20 @@ class Drawing:
             section.export_dxf(tagwriter)
 
         tagwriter.write_tag2(0, 'EOF')
+
+    def _update_header_vars(self):
+        from ezdxf.lldxf.const import acad_maint_ver
+
+        # set or correct $CMATERIAL handle
+        material = self.entitydb.get(self.header['$CMATERIAL'])
+        if material is None or material.dxftype() != 'MATERIAL':
+            if 'ByLayer' in self.materials:
+                self.header['$CMATERIAL'] = self.materials.get('ByLayer').dxf.handle
+            else:  # set any invalid handle, except '0' which crashes BricsCAD
+                self.header['$CMATERIAL'] = '45'
+
+        # set ACAD maintenance version - same values as used by BricsCAD
+        self.header['$ACADMAINTVER'] = acad_maint_ver.get(self.dxfversion, 0)
 
     def _update_metadata(self):
         now = datetime.now()
