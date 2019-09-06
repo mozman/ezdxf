@@ -423,7 +423,7 @@ class Drawing:
         from ezdxf.lldxf.const import acad_maint_ver
 
         # set or correct $CMATERIAL handle
-        material = self.entitydb.get(self.header['$CMATERIAL'])
+        material = self.entitydb.get(self.header.get('$CMATERIAL', None))
         if material is None or material.dxftype() != 'MATERIAL':
             if 'ByLayer' in self.materials:
                 self.header['$CMATERIAL'] = self.materials.get('ByLayer').dxf.handle
