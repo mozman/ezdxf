@@ -429,11 +429,13 @@ class Dimension(DXFGraphic, OverrideMixin):
         entities that make up the dimension picture. Returns ``None`` if block name is not set or the BLOCK itself
         does not exist
 
+        .. versionadded:: 0.10
+
         """
         block_name = self.get_dxf_attrib('geometry', None)
         return self.doc.blocks.get(block_name)
 
-    def get_measurement(self):
+    def get_measurement(self) -> Optional[float]:
         """ Returns the actual dimension measurement in :ref:`WCS` units, no scaling applied.
 
         Angular and ordinate dimensions are not supported yet.
