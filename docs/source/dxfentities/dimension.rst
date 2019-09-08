@@ -194,11 +194,11 @@ Factory Functions
 
     .. autoattribute:: dimtype
 
-    .. automethod:: get_measurement
+    .. automethod:: get_dim_style
 
     .. automethod:: get_geometry_block
 
-    .. automethod:: get_dim_style
+    .. automethod:: get_measurement
 
 DimStyleOverride
 ----------------
