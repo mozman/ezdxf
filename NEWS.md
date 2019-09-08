@@ -5,8 +5,9 @@ News
 Version 0.10.1 - 2019-09-07
 ---------------------------
 
-- BUGFIX: group code for header var $ACADMAINTVER is 90 for DXF R2018+ and 70 for previous DXF versions; critical error
-  because AutoCAD 2012/2013 do not open DXF files with invalid group code 90 for header var $ACADMAINTVER
+- BUGFIX: group code for header var $ACADMAINTVER is 90 for DXF R2018+ and 70 for previous DXF versions. This is a 
+  critical bug because AutoCAD 2012/2013 (and possibly earlier versions) will not open DXF files with the new group 
+  code 90 for header variable $ACADMAINTVER.
  
 Version 0.10 - 2019-09-01
 -------------------------

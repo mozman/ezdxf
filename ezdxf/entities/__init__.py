@@ -34,6 +34,7 @@ from .dictionary import Dictionary, DictionaryVar, DictionaryWithDefault
 from .layout import DXFLayout
 from .idbuffer import IDBuffer
 from .sun import Sun
+from .material import Material, MaterialCollection
 
 # register DXF objects R2007
 from .visualstyle import VisualStyle
@@ -69,6 +70,8 @@ from .leader import Leader
 from .tolerance import Tolerance
 from .helix import Helix
 from .acis import Body, Solid3d, Region, Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, SweptSurface
+from .mline import MLine, MLineStyle, MLineStyleCollection
+from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection
 
 # register graphical entities R2004
 

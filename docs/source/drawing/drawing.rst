@@ -137,6 +137,22 @@ Drawing Object
 
         Reference to the appids table, see also :class:`AppID`.
 
+    .. attribute:: groups
+
+        :class:`~ezdxf.entities.dxfgroups.GroupCollection` of all :class:`~ezdxf.entities.dxfgroups.DXFGroup` objects.
+
+    .. attribute:: materials
+
+        :class:`~ezdxf.entities.MaterialCollection` of all :class:`~ezdxf.entities.Material` objects.
+
+    .. attribute:: mline_styles
+
+        :class:`~ezdxf.entities.MLineStyleCollection` of all :class:`~ezdxf.entities.MLineStyle` objects.
+
+    .. attribute:: mleader_styles
+
+        :class:`~ezdxf.entities.MLeaderStyleCollection` of all :class:`~ezdxf.entities.MLeaderStyle` objects.
+
     .. automethod:: save
 
     .. automethod:: saveas
