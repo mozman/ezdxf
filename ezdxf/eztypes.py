@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from ezdxf.math.vector import Vector, Vec2
     from ezdxf.math.matrix44 import Matrix44
     from ezdxf.math.bbox import BoundingBox, BoundingBox2d
-    from ezdxf.math.ucs import UCS
+    from ezdxf.math.ucs import UCS, OCS
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
     from ezdxf.lldxf.attributes import XType, DXFAttr

@@ -1,8 +1,9 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-22
+import math
 from typing import TYPE_CHECKING, Optional
-from ezdxf.math import Vector
+from ezdxf.math import Vector, X_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
 from ezdxf.render.arrows import ARROWS
@@ -15,7 +16,7 @@ from ezdxf.tools import take2
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout
+    from ezdxf.eztypes import TagWriter, DimStyle, DXFNamespace, BlockLayout, OCS
 
 logger = logging.getLogger('ezdxf')
 
@@ -407,7 +408,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3', 'defpoint4', 'defpoint5'])
         elif dim_type == 6:  # ordinate
             tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbOrdinateDimension')
-            self.dxf.export_dxf_attribs(tagwriter, ['defpoint3', 'defpoint3'])
+            self.dxf.export_dxf_attribs(tagwriter, ['defpoint2', 'defpoint3'])
 
     @property
     def dimtype(self) -> int:
@@ -431,6 +432,28 @@ class Dimension(DXFGraphic, OverrideMixin):
         """
         block_name = self.get_dxf_attrib('geometry', None)
         return self.doc.blocks.get(block_name)
+
+    def get_measurement(self):
+        """ Returns the actual dimension measurement in :ref:`WCS` units, no scaling applied.
+
+        Angular and ordinate dimensions are not supported yet.
+
+        .. versionadded:: 0.10.2
+
+        """
+        if self.dimtype in (0, 1):  # linear, aligned
+            return linear_measurement(
+                self.dxf.defpoint2,
+                self.dxf.defpoint3,
+                math.radians(self.dxf.get('angle', 0)),
+                self.ocs(),
+            )
+        elif self.dimtype in (3, 4):  # diameter, radius
+            p1 = Vector(self.dxf.defpoint)
+            p2 = Vector(self.dxf.defpoint4)
+            return (p2 - p1).magnitude
+        else:
+            return None
 
 
 # todo: DIMASSOC
@@ -461,14 +484,32 @@ acdb_dim_assoc = DefSubclass('AcDbDimAssoc', {
     # 12 = Parallel
     # 13 = Start point
     'object_id': DXFAttr(331),  # ID of main object (geometry)
-    'object_subtype': DXFAttr(73),  # SubentType of main object (edge, face)
+    'object_subtype': DXFAttr(73),  # Subtype of main object (edge, face)
     'object_gs_marker': DXFAttr(91),  # GsMarker of main object (index)
     'object_xref_id': DXFAttr(301),  # Handle (string) of Xref object
     'near_param': DXFAttr(40),  # Geometry parameter for Near Osnap
     'osnap_point': DXFAttr(10, xtype=XType.point3d),  # Osnap point in WCS
     'intersect_id': DXFAttr(332),  # ID of intersection object (geometry)
-    'intersect_subtype': DXFAttr(74),  # SubentType of intersection object (edge/face)
+    'intersect_subtype': DXFAttr(74),  # Subtype of intersection object (edge/face)
     'intersect_gs_marker': DXFAttr(92),  # GsMarker of intersection object (index)
     'intersect_xref_id': DXFAttr(302),  # Handle (string) of intersection Xref object
     'has_last_point_ref': DXFAttr(75),  # hasLastPointRef flag (true/false)
 })
+
+
+def linear_measurement(p1: Vector, p2: Vector, angle: float = 0, ocs: 'OCS' = None) -> float:
+    """ Returns distance from `p1` to `p2` projected onto ray defined by `angle`, `angle` in radians in the xy-plane.
+    """
+    if ocs is not None and ocs.uz != (0, 0, 1):
+        p1 = ocs.to_wcs(p1)
+        p2 = ocs.to_wcs(p2)
+        # angle in OCS xy-plane
+        ocs_direction = Vector.from_angle(angle)
+        measurement_direction = ocs.to_wcs(ocs_direction)
+    else:
+        # angle in WCS xy-plane
+        measurement_direction = Vector.from_angle(angle)
+
+    t1 = measurement_direction.project(p1)
+    t2 = measurement_direction.project(p2)
+    return (t2 - t1).magnitude

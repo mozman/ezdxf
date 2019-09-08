@@ -2,8 +2,10 @@
 # License: MIT License
 # created 2019-02-15
 import pytest
+import math
+from ezdxf.math import Vector
 
-from ezdxf.entities.dimension import Dimension
+from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.render.dimension import format_text, DXFValueError
@@ -201,3 +203,13 @@ def test_format_text():
     with pytest.raises(DXFValueError):
         _ = format_text(-0.51, dimpost='<')
 
+
+def test_linear_measurement_without_ocs():
+    measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0))
+    assert measurement == 1
+
+    measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0), angle=math.radians(45))
+    assert math.isclose(measurement, 1./math.sqrt(2.))
+
+    measurement = linear_measurement(Vector(0, 0, 0), Vector(1, 0, 0), angle=math.radians(90))
+    assert math.isclose(measurement, 0, abs_tol=1e-12)

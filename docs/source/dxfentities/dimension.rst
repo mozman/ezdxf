@@ -188,11 +188,13 @@ Factory Functions
 
         Indicates the horizontal direction for the dimension entity (float).
 
-        The dimension entity determines the orientation of dimension text and lines for horizontal, vertical, and
-        rotated linear dimensions. This value is the negative of the angle between the OCS x-axis and the UCS x-axis.
-        It is always in the xy-plane of the OCS.
+        This attribute determines the orientation of dimension text and lines for horizontal, vertical, and
+        rotated linear dimensions. This value is the negative of the angle in the OCS xy-plane between the dimension
+        line and the OCS x-axis.
 
     .. autoattribute:: dimtype
+
+    .. automethod:: get_measurement
 
     .. automethod:: get_geometry_block
 
