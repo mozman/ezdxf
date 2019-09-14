@@ -12,7 +12,7 @@ DEFAULT_ARROW_ANGLE = 18.924644
 DEFAULT_BETA = 45.
 
 
-# The base Arrow is for the 'Right' side ->| of the Dimension oriented, reverse is the 'Left' side |<-.
+# The base arrow is oriented for the right hand side ->| of the dimension line, reverse is the left hand side |<-.
 class BaseArrow:
     def __init__(self, vertices: Iterable['Vertex']):
         self.shape = Shape2d(vertices)
@@ -395,10 +395,10 @@ class _Arrows:
     def block_name(self, name):
         if not self.is_acad_arrow(name):  # common BLOCK definition
             return name.upper()  # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
-        elif name == "":  # special AutoCAD arrow symbols 'CLOSED_FILLED' has no name
+        elif name == '':  # special AutoCAD arrow symbol 'CLOSED_FILLED' has no name
             # ezdxf uses blocks for ALL arrows, but '_' (closed filled) as block name?
-            return "_CLOSEDFILLED"  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
-        else:  # special AutoCAD arrow symbols have leading '_' as common practice!
+            return '_CLOSEDFILLED'  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
+        else:  # add preceding '_' to AutoCAD arrow symbol names
             return '_' + name.upper()  # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'
 
     def arrow_name(self, block_name: str) -> str:
@@ -417,7 +417,7 @@ class _Arrows:
                      rotation: float = 0,
                      dxfattribs: dict = None) -> Vec2:
 
-        block_name = self.create_block(layout.drawing.blocks, name)
+        block_name = self.create_block(layout.doc.blocks, name)
 
         dxfattribs = dict(dxfattribs) if dxfattribs else {}  # copy attribs
         dxfattribs['rotation'] = rotation
