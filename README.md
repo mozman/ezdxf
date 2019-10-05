@@ -75,7 +75,7 @@ Install with pip:
 
     pip install ezdxf
 
-Install develop version (only if you have to)::
+Install development version (only if you have to)::
 
     pip install git+https://github.com/mozman/ezdxf.git@develop
 
@@ -107,7 +107,7 @@ The source code of ezdxf can be found at __GitHub__:
 
 http://github.com/mozman/ezdxf.git
 
-Only pull requests for the **develop** branch will be accepted.
+Only pull requests which can be merged into the **develop** branch will be accepted.
 
 Feedback
 --------
@@ -120,7 +120,7 @@ python-ezdxf@googlegroups.com
 
 Questions at __Stack Overflow__:
 
-Post questions at [stack overflow](https://stackoverflow.com/) and use the tag `dxf`.
+Post questions at [stack overflow](https://stackoverflow.com/) and use the tag `dxf` or `ezdxf`.
 
 Issue tracker at __GitHub__:
 

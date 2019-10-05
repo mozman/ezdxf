@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.10.2b0 - dev
-----------------------
+Version 0.10.2 - 2019-10-05
+---------------------------
 
 - NEW: `Dimension.get_measurement()` returns the actual dimension measurement in WCS units, no scaling applied; angular 
   and ordinate dimension are not supported yet. 
