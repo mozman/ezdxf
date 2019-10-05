@@ -417,6 +417,9 @@ class Hatch(DXFGraphic):
         self.dxf.solid_fill = 0
         self.dxf.pattern_name = name
         self.dxf.color = color
+        self.dxf.pattern_scale = float(scale)
+        self.dxf.pattern_angle = float(angle)
+        self.dxf.pattern_double = int(double)
         self.dxf.hatch_style = style
         self.dxf.pattern_type = pattern_type
 

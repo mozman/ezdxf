@@ -8,6 +8,7 @@ Version 0.10.2b0 - dev
 - NEW: `Dimension.get_measurement()` returns the actual dimension measurement in WCS units, no scaling applied; angular 
   and ordinate dimension are not supported yet. 
 - BUGFIX: ordinate dimension exports wrong feature location
+- BUGFIX: `Hatch.set_pattern_fill()` did not set pattern scale, angle and double values
 
 Version 0.10.1 - 2019-09-07
 ---------------------------
