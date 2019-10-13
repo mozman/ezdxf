@@ -24,10 +24,21 @@ def maurer_rose(n: int, d: int, radius: float) -> Iterable[Tuple[float, float]]:
         i += STEP360
 
 
+def maurer_rose_outline(n: int, radius: float) -> Iterable[Tuple[float, float]]:
+    i = 0
+    while i < TWO_PI:
+        r = radius * math.sin(n * i)
+        x = r * math.cos(i)
+        y = r * math.sin(i)
+        yield x, y
+        i += STEP360
+
+
 def main(filename: str, n: int, d: int) -> None:
     doc = ezdxf.new()
     msp = doc.modelspace()
-    msp.add_lwpolyline(maurer_rose(n, d, 250), dxfattribs={'closed': True})
+    msp.add_lwpolyline(maurer_rose_outline(n, 250), dxfattribs={'closed': True, 'color': 1})
+    msp.add_lwpolyline(maurer_rose(n, d, 250), dxfattribs={'closed': True, 'color': 5})
     doc.saveas(filename)
 
 
