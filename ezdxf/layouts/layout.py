@@ -497,7 +497,7 @@ class Paperspace(Layout):
         main_viewport.dxf.flags = 557088  # AutoCAD default value
         dxf.viewport_handle = main_viewport.dxf.handle
 
-    def page_setup(self, size: Tuple[int, int] = (297, 210),
+    def page_setup(self, size: Tuple[float, float] = (297, 210),
                    margins: Tuple[float, float, float, float] = (10, 15, 10, 15),
                    units: str = 'mm',
                    offset: Tuple[float, float] = (0, 0),
