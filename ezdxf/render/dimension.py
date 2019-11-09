@@ -99,7 +99,7 @@ class BaseDimensionRenderer:
         self.default_color = self.dimension.dxf.color  # type: int
         self.default_layer = self.dimension.dxf.layer  # type: str
 
-        # ezdxf creates ALWAYS attachment points in the text center.
+        # ezdxf locates attachment points always in the text center.
         self.text_attachment_point = 5  # type: int # fixed for ezdxf rendering
 
         # ignored by ezdxf
@@ -367,11 +367,10 @@ class BaseDimensionRenderer:
 
     def render(self, block: 'GenericLayoutType'):  # interface definition
         self.block = block
-        # tolerance requires MTEXT support, switch of rendering of tolerances and limits
+        # tolerance requires MTEXT support, switch off rendering of tolerances and limits
         if not self.supports_dxf_r2000:
             self.dim_tolerance = 0
             self.dim_limits = 0
-
 
     @property
     def char_height(self) -> float:
