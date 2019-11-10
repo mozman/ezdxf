@@ -1118,7 +1118,7 @@ class CreatorInterface:
 
         """
         type_ = {'dimtype': const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['text'] = text
@@ -1134,15 +1134,19 @@ class CreatorInterface:
         return style
 
     def add_diameter_dim(self,
-                         p1: 'Vertex',
-                         p2: 'Vertex',
+                         center: 'Vertex',
+                         p1: 'Vertex' = None,
+                         radius: float = None,
+                         angle: float = None,
                          location: 'Vertex' = None,
                          text: str = "<>",
                          dimstyle: str = 'EZDXF',
                          override: dict = None,
                          dxfattribs: dict = None) -> DimStyleOverride:
         """
-        Add diameter :class:`~ezdxf.entities.Dimension` line.
+        Add a diameter :class:`~ezdxf.entities.Dimension` line. The diameter dimension line requires a `center` point
+        and a point `p1` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
+
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
         function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
@@ -1153,8 +1157,10 @@ class CreatorInterface:
         and rendering.
 
         Args:
-            p1: measurement point 1 on the circle (in UCS)
-            p2: opposite measurement point 2 on the circle (in UCS)
+            center: specifies the center of the circle (in UCS)
+            p1: specifies the measurement point on the circle (in UCS)
+            radius: specify radius, requires argument `angle`, overrides `p1` argument
+            angle: specify angle of dimension line in degrees, requires argument `radius`, overrides `p1` argument
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
@@ -1164,7 +1170,18 @@ class CreatorInterface:
 
         """
         type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
+        center = Vector(center)
+        if p1 is None:
+            if angle is None:
+                raise ValueError("Argument `angle` or `p1` required.")
+            if radius is None:
+                raise ValueError("Argument `radius` or `p1` required.")
+            radius_vec = Vector.from_deg_angle(angle, radius)
+        else:
+            radius_vec = Vector(p1) - center
+        p1 = center - radius_vec
+        p2 = center + radius_vec
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint4'] = Vector(p1)  # group code 15
@@ -1178,15 +1195,19 @@ class CreatorInterface:
         return style
 
     def add_radius_dim(self,
-                       p1: 'Vertex',
                        center: 'Vertex',
+                       p1: 'Vertex' = None,
+                       radius: float = None,
+                       angle: float = None,
                        location: 'Vertex' = None,
                        text: str = "<>",
                        dimstyle: str = 'EZDXF',
                        override: dict = None,
                        dxfattribs: dict = None) -> DimStyleOverride:
         """
-        Add radial :class:`~ezdxf.entities.Dimension` line.
+        Add a radial :class:`~ezdxf.entities.Dimension` line. The radial dimension line requires a `center` point and
+        a point `p1` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
+
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
         function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
@@ -1197,8 +1218,10 @@ class CreatorInterface:
         and rendering.
 
         Args:
-            p1: measurement point on the circle (in UCS)
             center: specifies the center of the circle (in UCS)
+            p1: specifies the measurement point on the circle (in UCS)
+            radius: specify radius, requires argument `angle`, overrides `p1` argument
+            angle: specify angle of dimension line in degrees, requires argument `radius`, overrides `p1` argument
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
@@ -1208,7 +1231,14 @@ class CreatorInterface:
 
         """
         type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
+        if p1 is None:
+            if angle is None:
+                raise ValueError("Argument `angle` or `p1` required.")
+            if radius is None:
+                raise ValueError("Argument `radius` or `p1` required.")
+            p1 = Vector(center) + Vector.from_deg_angle(angle, radius)
+
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint4'] = Vector(p1)  # group code 15
@@ -1254,7 +1284,7 @@ class CreatorInterface:
 
         """
         type_ = {'dimtype': const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
         dxfattribs['defpoint'] = Vector(origin)  # group code 10

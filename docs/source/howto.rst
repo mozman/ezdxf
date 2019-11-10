@@ -6,8 +6,8 @@ General preconditions:
 .. code-block:: python
 
     import ezdxf
-    dwg = ezdxf.readfile("your_dxf_file.dxf")
-    modelspace = dwg.modelspace()
+    doc = ezdxf.readfile("your_dxf_file.dxf")
+    modelspace = doc.modelspace()
 
 Set/Get Header Variables
 ------------------------
@@ -16,8 +16,8 @@ Set/Get Header Variables
 
 .. code-block:: python
 
-    dwg.header['VarName'] = value
-    value = dwg.header['VarName']
+    doc.header['VarName'] = value
+    value = doc.header['VarName']
 
 .. seealso:: :class:`HeaderSection` and online documentation from Autodesk for available `header variables`_.
 
@@ -33,7 +33,7 @@ Sets drawing units:
 .. code-block:: python
 
 
-    dwg.header['$MEASUREMENT'] = 1
+    doc.header['$MEASUREMENT'] = 1
 
 === ===============
 0   English
@@ -44,7 +44,7 @@ Set Units format for angles:
 
 .. code-block:: python
 
-    dwg.header['$AUNITS'] = 0
+    doc.header['$AUNITS'] = 0
 
 === ===============
 0   Decimal degrees
@@ -58,7 +58,7 @@ Set default drawing units for AutoCAD DesignCenter blocks:
 .. code-block:: python
 
 
-    dwg.header['$INSUNITS'] = 6
+    doc.header['$INSUNITS'] = 6
 
 === ===============
 0   Unitless
@@ -178,7 +178,7 @@ Adding XDATA as list of tuples (group code, value):
 
 .. code-block:: python
 
-    dwg.appids.new('YOUR_APP_NAME')  # IMPORTANT: create an APP ID entry
+    doc.appids.new('YOUR_APP_NAME')  # IMPORTANT: create an APP ID entry
 
     circle = modelspace.add_circle((10, 10), 100)
     # remove attribute tags for v0.10 and later, see remark below
@@ -222,6 +222,19 @@ Thanks to `David Booth <https://github.com/worlds6440>`_:
     A workaround (to show IMAGES on loading) appears to be to save the full file path in the DXF or save it as a DWG.
 
 So far - no solution for showing IMAGES with relative paths on loading.
+
+Set Initial View/Zoom for the Modelspace
+----------------------------------------
+
+To show an arbitrary location of the modelspace centered in the CAD application window, set the ``'*Active'`` VPORT to
+this location. The DXF attribute :attr:`dxf.center` defines the location in the modelspace, and the :attr:`dxf.height`
+specifies the area of the modelspace to view. Shortcut function:
+
+.. code-block:: Python
+
+    doc.set_modelspace_vport(height=10, center=(10, 10))
+
+.. versionadded:: 0.11
 
 .. _A360: https://a360.autodesk.com/viewer/
 .. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A

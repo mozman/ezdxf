@@ -68,7 +68,7 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimasz
 
-        Dimension line and arrowhead size. (default=0.28)
+        Dimension line and arrowhead size. (default=0.25)
 
     .. attribute:: dxf.dimexo
 

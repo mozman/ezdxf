@@ -663,22 +663,7 @@ class BaseDimensionRenderer:
         self.add_line(p2, p3, dxfattribs)
 
     def transform_ucs_to_wcs(self) -> None:
-        """
-        Transforms dimension definition points into WCS or if required into OCS.
-
-        Can not be called in __init__(), because inherited classes may be need unmodified values.
-
-        """
-
-        def from_ucs(attr, func):
-            point = self.dimension.get_dxf_attrib(attr)
-            self.dimension.set_dxf_attrib(attr, func(point))
-
-        from_ucs('defpoint', self.wcs)
-        from_ucs('defpoint2', self.wcs)
-        from_ucs('defpoint3', self.wcs)
-        from_ucs('text_midpoint', self.ocs)
-        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
+        pass  # abstract method
 
     def finalize(self) -> None:
         self.transform_ucs_to_wcs()
@@ -1158,6 +1143,56 @@ class LinearDimension(BaseDimensionRenderer):
         else:
             return (self.text_height / 2. + self.text_gap) * self.vertical_placement
 
+    def transform_ucs_to_wcs(self) -> None:
+        """
+        Transforms dimension definition points into WCS or if required into OCS.
+
+        Can not be called in __init__(), because inherited classes may be need unmodified values.
+
+        """
+
+        def from_ucs(attr, func):
+            point = self.dimension.get_dxf_attrib(attr)
+            self.dimension.set_dxf_attrib(attr, func(point))
+
+        from_ucs('defpoint', self.wcs)
+        from_ucs('defpoint2', self.wcs)
+        from_ucs('defpoint3', self.wcs)
+        from_ucs('text_midpoint', self.ocs)
+        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
+
+
+class RadialDimension(BaseDimensionRenderer):
+    """
+    Radial dimension line renderer.
+
+    Args:
+        dimension: DXF entity DIMENSION
+        ucs: user defined coordinate system
+        override: dimension style override management object
+
+    """
+
+    def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
+        super().__init__(dimension, ucs, override)
+
+    def transform_ucs_to_wcs(self) -> None:
+        """
+        Transforms dimension definition points into WCS or if required into OCS.
+
+        Can not be called in __init__(), because inherited classes may be need unmodified values.
+
+        """
+
+        def from_ucs(attr, func):
+            point = self.dimension.get_dxf_attrib(attr)
+            self.dimension.set_dxf_attrib(attr, func(point))
+
+        from_ucs('defpoint', self.wcs)
+        from_ucs('defpoint4', self.wcs)
+        # from_ucs('text_midpoint', self.ocs)
+        # self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
+
 
 class DimensionRenderer:
     def dispatch(self, override: 'DimStyleOverride', ucs: 'UCS') -> BaseDimensionRenderer:
@@ -1192,7 +1227,7 @@ class DimensionRenderer:
         raise NotImplemented
 
     def radius(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        raise NotImplemented
+        return RadialDimension(dimension, ucs, override)
 
     def angular3p(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented

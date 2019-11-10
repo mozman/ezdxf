@@ -196,3 +196,5 @@ Drawing Object
     .. automethod:: reset_fingerprint_guid
 
     .. automethod:: reset_version_guid
+
+    .. automethod:: set_modelspace_vport

@@ -1,7 +1,7 @@
 # Created: 11.03.2011
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable
+from typing import TYPE_CHECKING, TextIO, Iterable, Union, Sequence, Tuple, Callable, cast
 from datetime import datetime
 import io
 import logging
@@ -43,7 +43,7 @@ logger = logging.getLogger('ezdxf')
 MANAGED_SECTIONS = {'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'}
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFTag, Table, ViewportTable
+    from ezdxf.eztypes import DXFTag, Table, ViewportTable, VPort
     from ezdxf.eztypes import Dictionary, BlockLayout, Layout
     from ezdxf.eztypes import DXFEntity, Layer, DXFLayout, BlockRecord
 
@@ -776,3 +776,18 @@ class Drawing:
             return False
         else:
             return True
+
+    def set_modelspace_vport(self, height, center=(0, 0)) -> 'VPort':
+        """ Set initial view/zoom location for the modelspace, this replaces the actual
+        ``'*Active'`` viewport configuration.
+
+        Args:
+             height: modelspace area to view
+             center: modelspace location to view in the center of the CAD application window.
+
+        """
+        self.viewports.delete_config('*Active')
+        vport = cast('VPort', self.viewports.new('*Active'))
+        vport.dxf.center = center
+        vport.dxf.height = height
+        return vport
