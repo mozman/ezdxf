@@ -2,8 +2,10 @@
 News
 ====
 
-Version 0.10.3b0 - dev
-----------------------
+Version 0.11a0 - dev
+--------------------
+
+- NEW: `Dimension.get_measurement()` supports angular, angular3p and ordinate dimensions
 
 Version 0.10.2 - 2019-10-05
 ---------------------------

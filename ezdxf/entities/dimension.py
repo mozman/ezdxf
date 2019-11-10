@@ -2,7 +2,7 @@
 # License: MIT License
 # Created 2019-02-22
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 from ezdxf.math import Vector, X_AXIS
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010, DXF2000, DXF2007
@@ -435,14 +435,23 @@ class Dimension(DXFGraphic, OverrideMixin):
         block_name = self.get_dxf_attrib('geometry', None)
         return self.doc.blocks.get(block_name)
 
-    def get_measurement(self) -> Optional[float]:
-        """ Returns the actual dimension measurement in :ref:`WCS` units, no scaling applied.
-
-        Angular and ordinate dimensions are not supported yet.
+    def get_measurement(self) -> Union[float, Vector]:
+        """ Returns the actual dimension measurement in :ref:`WCS` units, no scaling applied for linear dimensions.
+        Returns angle in degrees for angular dimension from 2 lines and angular dimension from 3 points.
+        Returns vector from origin to feature location for ordinate dimensions.
 
         .. versionadded:: 0.10.2
 
+        .. versionadded:: 0.11
+
+            Support for angular and ordinate dimensions.
+
         """
+
+        def angle_between(v1: Vector, v2: Vector) -> float:
+            angle = v2.angle_deg - v1.angle_deg
+            return angle + 360 if angle < 0 else angle
+
         if self.dimtype in (0, 1):  # linear, aligned
             return linear_measurement(
                 self.dxf.defpoint2,
@@ -454,8 +463,28 @@ class Dimension(DXFGraphic, OverrideMixin):
             p1 = Vector(self.dxf.defpoint)
             p2 = Vector(self.dxf.defpoint4)
             return (p2 - p1).magnitude
+        elif self.dimtype == 2:  # angular from 2 lines
+            p1 = Vector(self.dxf.defpoint2)  # 1. point of 1. extension line
+            p2 = Vector(self.dxf.defpoint3)  # 2. point of 1. extension line
+            p3 = Vector(self.dxf.defpoint4)  # 1. point of 2. extension line
+            p4 = Vector(self.dxf.defpoint)  # 2. point of 2. extension line
+            dir1 = p2 - p1  # direction of 1. extension line
+            dir2 = p4 - p3  # direction of 2. extension line
+            return angle_between(dir1, dir2)
+        elif self.dimtype == 5:  # angular from 2 lines
+            p1 = Vector(self.dxf.defpoint4)  # center
+            p2 = Vector(self.dxf.defpoint2)  # 1. extension line
+            p3 = Vector(self.dxf.defpoint3)  # 2. extension line
+            dir1 = p2 - p1  # direction of 1. extension line
+            dir2 = p3 - p1  # direction of 2. extension line
+            return angle_between(dir1, dir2)
+        elif self.dimtype == 6:  # ordinate
+            origin = Vector(self.dxf.defpoint)
+            feature_location = Vector(self.dxf.defpoint2)
+            return feature_location - origin
         else:
-            return None
+            logger.debug("get_measurement() - unknown DIMENSION type {}.".format(self.dimtype))
+            return 0
 
 
 # todo: DIMASSOC
