@@ -924,10 +924,10 @@ class CreatorInterface:
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
-        dxfattribs['defpoint'] = Vector(base)
+        dxfattribs['defpoint'] = Vector(base)  # group code 10
         dxfattribs['text'] = text
-        dxfattribs['defpoint2'] = Vector(p1)
-        dxfattribs['defpoint3'] = Vector(p2)
+        dxfattribs['defpoint2'] = Vector(p1)  # group code 13
+        dxfattribs['defpoint3'] = Vector(p2)  # group code 14
         dxfattribs['angle'] = float(angle)
         # text_rotation ALWAYS overrides implicit angles as absolute angle (0 is horizontal)!
         if text_rotation is not None:
@@ -1032,44 +1032,240 @@ class CreatorInterface:
             dxfattribs=dxfattribs,
         )
 
-    def add_angular_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
+    def add_angular_dim(self,
+                        base: 'Vertex',
+                        line1: Tuple['Vertex', 'Vertex'],
+                        line2: Tuple['Vertex', 'Vertex'],
+                        location: 'Vertex' = None,
+                        text: str = "<>",
+                        dimstyle: str = 'EZDXF',
+                        override: dict = None,
+                        dxfattribs: dict = None) -> DimStyleOverride:
+        """
+        Add angular :class:`~ezdxf.entities.Dimension` from 2 lines.
+        If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
+        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object - to create the necessary dimension
+        geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
+        allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
+        and rendering.
+
+        Args:
+            base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
+            line1: specifies start leg of the angle (start point, end point) and determines extension line 1 (in UCS)
+            line2: specifies end leg of the angle (start point, end point) and determines extension line 2 (in UCS)
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        """
         type_ = {'dimtype': const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+
         dxfattribs = dict(dxfattribs or {})
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['text'] = text
+
+        dxfattribs['defpoint2'] = Vector(line1[0])  # group code 13
+        dxfattribs['defpoint3'] = Vector(line1[1])  # group code 14
+        dxfattribs['defpoint4'] = Vector(line2[0])  # group code 15
+        dxfattribs['defpoint'] = Vector(line2[1])  # group code 10
+        dxfattribs['defpoint5'] = Vector(base)  # group code 16
+
         dimline.update_dxf_attribs(dxfattribs)
         style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.set_location(location, leader=False, relative=False)
         return style
 
-    def add_diameter_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
-        type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
-        dxfattribs = dict(dxfattribs or {})
-        dimline.update_dxf_attribs(dxfattribs)
-        style = DimStyleOverride(dimline, override=override)
-        return style
+    def add_angular_3p_dim(self,
+                           base: 'Vertex',
+                           center: 'Vertex',
+                           p1: 'Vertex',
+                           p2: 'Vertex',
+                           location: 'Vertex' = None,
+                           text: str = "<>",
+                           dimstyle: str = 'EZDXF',
+                           override: dict = None,
+                           dxfattribs: dict = None) -> DimStyleOverride:
+        """
+        Add angular :class:`~ezdxf.entities.Dimension` from 3 points (center, p1, p2).
+        If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
+        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
 
-    def add_radius_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
-        type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
-        dxfattribs = dict(dxfattribs or {})
-        dimline.update_dxf_attribs(dxfattribs)
-        style = DimStyleOverride(dimline, override=override)
-        return style
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object - to create the necessary dimension
+        geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
+        allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
+        and rendering.
 
-    def add_angular_3p_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
+        Args:
+            base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
+            center: specifies the vertex of the angle
+            p1: specifies start leg of the angle (center -> p1) and end point of extension line 1 (in UCS)
+            p2: specifies end leg of the  angle (center -> p2) and end point of extension line 2 (in UCS)
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        """
         type_ = {'dimtype': const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = dict(dxfattribs or {})
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['text'] = text
+        dxfattribs['defpoint'] = Vector(base)
+        dxfattribs['defpoint2'] = Vector(p1)
+        dxfattribs['defpoint3'] = Vector(p2)
+        dxfattribs['defpoint4'] = Vector(center)
+
         dimline.update_dxf_attribs(dxfattribs)
         style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.set_location(location, leader=False, relative=False)
         return style
 
-    def add_ordinate_dim(self, override: dict = None, dxfattribs: dict = None) -> DimStyleOverride:
+    def add_diameter_dim(self,
+                         p1: 'Vertex',
+                         p2: 'Vertex',
+                         location: 'Vertex' = None,
+                         text: str = "<>",
+                         dimstyle: str = 'EZDXF',
+                         override: dict = None,
+                         dxfattribs: dict = None) -> DimStyleOverride:
+        """
+        Add diameter :class:`~ezdxf.entities.Dimension` line.
+        If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
+        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object - to create the necessary dimension
+        geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
+        allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
+        and rendering.
+
+        Args:
+            p1: measurement point 1 on the circle (in UCS)
+            p2: opposite measurement point 2 on the circle (in UCS)
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        """
+        type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['defpoint4'] = Vector(p1)  # group code 15
+        dxfattribs['defpoint'] = Vector(p2)  # group code 10
+        dxfattribs['text'] = text
+        dimline.update_dxf_attribs(dxfattribs)
+
+        style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.set_location(location, leader=False, relative=False)
+        return style
+
+    def add_radius_dim(self,
+                       p1: 'Vertex',
+                       center: 'Vertex',
+                       location: 'Vertex' = None,
+                       text: str = "<>",
+                       dimstyle: str = 'EZDXF',
+                       override: dict = None,
+                       dxfattribs: dict = None) -> DimStyleOverride:
+        """
+        Add radial :class:`~ezdxf.entities.Dimension` line.
+        If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
+        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object - to create the necessary dimension
+        geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
+        allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
+        and rendering.
+
+        Args:
+            p1: measurement point on the circle (in UCS)
+            center: specifies the center of the circle (in UCS)
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        """
+        type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
+        dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['defpoint4'] = Vector(p1)  # group code 15
+        dxfattribs['defpoint'] = Vector(center)  # group code 10
+        dxfattribs['text'] = text
+        dimline.update_dxf_attribs(dxfattribs)
+
+        style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.set_location(location, leader=False, relative=False)
+        return style
+
+    def add_ordinate_dim(self,
+                         origin: 'Vertex',
+                         feature_location: 'Vertex',
+                         leader_endpoint: 'Vertex',
+                         location: 'Vertex' = None,
+                         text: str = "<>",
+                         dimstyle: str = 'EZDXF',
+                         override: dict = None,
+                         dxfattribs: dict = None) -> DimStyleOverride:
+        """
+        Add ordinate :class:`~ezdxf.entities.Dimension` line.
+        If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
+        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object - to create the necessary dimension
+        geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
+        allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
+        and rendering.
+
+        Args:
+            origin: specifies the origin of the ordinate coordinate system (in UCS)
+            feature_location: feature location in UCS
+            leader_endpoint: leader endpoint in UCS
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        """
         type_ = {'dimtype': const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_).cast())
         dxfattribs = dict(dxfattribs or {})
+        dxfattribs['dimstyle'] = dimstyle
+        dxfattribs['defpoint'] = Vector(origin)  # group code 10
+        dxfattribs['defpoint2'] = Vector(feature_location)  # group code 13
+        dxfattribs['defpoint3'] = Vector(leader_endpoint)  # group code 14
+        dxfattribs['text'] = text
         dimline.update_dxf_attribs(dxfattribs)
+
         style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.set_location(location, leader=False, relative=False)
         return style
 
     def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,
@@ -1108,6 +1304,7 @@ class CreatorInterface:
 
         def filter_unsupported_dimstyle_attributes(attribs: dict) -> dict:
             return {k: v for k, v in attribs.items() if k not in LEADER_UNSUPPORTED_DIMSTYLE_ATTRIBS}
+
         if self.dxfversion < DXF2000:
             raise DXFVersionError('LEADER requires DXF R2000')
 
