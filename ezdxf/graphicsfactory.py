@@ -914,8 +914,7 @@ class CreatorInterface:
                   dimension text, everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             angle: angle from ucs/wcs x-axis to dimension line in degrees
-            text_rotation: rotation angle of the dimension text away from its default orientation
-                           (the direction of the dimension line) in degrees
+            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
 
@@ -929,7 +928,8 @@ class CreatorInterface:
         dxfattribs['defpoint2'] = Vector(p1)  # group code 13
         dxfattribs['defpoint3'] = Vector(p2)  # group code 14
         dxfattribs['angle'] = float(angle)
-        # text_rotation ALWAYS overrides implicit angles as absolute angle (0 is horizontal)!
+
+        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
         if text_rotation is not None:
             dxfattribs['text_rotation'] = float(text_rotation)
         dimline.update_dxf_attribs(dxfattribs)
@@ -1038,6 +1038,7 @@ class CreatorInterface:
                         line2: Tuple['Vertex', 'Vertex'],
                         location: 'Vertex' = None,
                         text: str = "<>",
+                        text_rotation: float = None,
                         dimstyle: str = 'EZDXF',
                         override: dict = None,
                         dxfattribs: dict = None) -> DimStyleOverride:
@@ -1059,6 +1060,7 @@ class CreatorInterface:
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
@@ -1077,6 +1079,10 @@ class CreatorInterface:
         dxfattribs['defpoint'] = Vector(line2[1])  # group code 10
         dxfattribs['defpoint5'] = Vector(base)  # group code 16
 
+        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
+        if text_rotation is not None:
+            dxfattribs['text_rotation'] = float(text_rotation)
+
         dimline.update_dxf_attribs(dxfattribs)
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
@@ -1090,6 +1096,7 @@ class CreatorInterface:
                            p2: 'Vertex',
                            location: 'Vertex' = None,
                            text: str = "<>",
+                           text_rotation: float = None,
                            dimstyle: str = 'EZDXF',
                            override: dict = None,
                            dxfattribs: dict = None) -> DimStyleOverride:
@@ -1112,6 +1119,7 @@ class CreatorInterface:
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
@@ -1127,6 +1135,10 @@ class CreatorInterface:
         dxfattribs['defpoint3'] = Vector(p2)
         dxfattribs['defpoint4'] = Vector(center)
 
+        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
+        if text_rotation is not None:
+            dxfattribs['text_rotation'] = float(text_rotation)
+
         dimline.update_dxf_attribs(dxfattribs)
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
@@ -1140,6 +1152,7 @@ class CreatorInterface:
                          angle: float = None,
                          location: 'Vertex' = None,
                          text: str = "<>",
+                         text_rotation: float = None,
                          dimstyle: str = 'EZDXF',
                          override: dict = None,
                          dxfattribs: dict = None) -> DimStyleOverride:
@@ -1164,6 +1177,7 @@ class CreatorInterface:
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
@@ -1187,6 +1201,11 @@ class CreatorInterface:
         dxfattribs['defpoint4'] = Vector(p1)  # group code 15
         dxfattribs['defpoint'] = Vector(p2)  # group code 10
         dxfattribs['text'] = text
+
+        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
+        if text_rotation is not None:
+            dxfattribs['text_rotation'] = float(text_rotation)
+
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)
@@ -1201,6 +1220,7 @@ class CreatorInterface:
                        angle: float = None,
                        location: 'Vertex' = None,
                        text: str = "<>",
+                       text_rotation: float = None,
                        dimstyle: str = 'EZDXF',
                        override: dict = None,
                        dxfattribs: dict = None) -> DimStyleOverride:
@@ -1225,6 +1245,7 @@ class CreatorInterface:
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
@@ -1244,6 +1265,11 @@ class CreatorInterface:
         dxfattribs['defpoint4'] = Vector(p1)  # group code 15
         dxfattribs['defpoint'] = Vector(center)  # group code 10
         dxfattribs['text'] = text
+
+        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
+        if text_rotation is not None:
+            dxfattribs['text_rotation'] = float(text_rotation)
+
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)

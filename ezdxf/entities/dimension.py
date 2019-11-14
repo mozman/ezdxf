@@ -442,9 +442,9 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         .. versionadded:: 0.10.2
 
-        .. versionadded:: 0.11
+        .. versionchanged:: 0.11
 
-            Support for angular and ordinate dimensions.
+            Added support for angular and ordinate dimensions.
 
         """
 
