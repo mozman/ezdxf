@@ -409,6 +409,21 @@ class BaseDimensionRenderer:
             'color': self.default_color,  # type: int
         }
 
+    def dim_line_attributes(self) -> dict:
+        """
+        Returns default dimension line DXF attributes as dict.
+
+        """
+        attribs = {
+            'color': self.dim_line_color
+        }
+        if self.dim_linetype is not None:
+            attribs['linetype'] = self.dim_linetype
+
+        if self.supports_dxf_r2000:
+            attribs['lineweight'] = self.dim_lineweight
+        return attribs
+
     def wcs(self, point: 'Vertex') -> Vector:
         """
         Transform `point` in UCS coordinates into WCS coordinates.
@@ -1083,14 +1098,7 @@ class LinearDimension(BaseDimensionRenderer):
         if self.arrow2_name is None or ARROWS.has_extension_line(self.arrow2_name):
             end = end + extension
 
-        attribs = {
-            'color': self.dim_line_color
-        }
-        if self.dim_linetype is not None:
-            attribs['linetype'] = self.dim_linetype
-
-        if self.supports_dxf_r2000:
-            attribs['lineweight'] = self.dim_lineweight
+        attribs = self.dim_line_attributes()
 
         if self.suppress_dim1_line or self.suppress_dim2_line:
             if not self.suppress_dim1_line:
@@ -1162,7 +1170,7 @@ class LinearDimension(BaseDimensionRenderer):
         self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(self.dimension.dxf.angle)
 
 
-class RadialDimension(BaseDimensionRenderer):
+class RadiusDimension(BaseDimensionRenderer):
     """
     Radial dimension line renderer.
 
@@ -1172,6 +1180,7 @@ class RadialDimension(BaseDimensionRenderer):
         override: dimension style override management object
 
     """
+
     # supported sezenarios:
     # - default location inside
     # - default location inside horizontal
@@ -1189,7 +1198,7 @@ class RadialDimension(BaseDimensionRenderer):
         self.dim_line_vec = direction.normalize()
         self.dim_line_angle = self.dim_line_vec.angle_deg
         self.measurement = direction.magnitude
-        self.outside_default_distance = self.measurement + self.arrow_size + self.text_gap
+        self.outside_default_distance = self.measurement + 2 * self.arrow_size
         self.outside_default_defpoint = self.center + (self.dim_line_vec * self.outside_default_distance)
 
         # final dimension text (without limits or tolerance)
@@ -1266,21 +1275,23 @@ class RadialDimension(BaseDimensionRenderer):
         """
         if self.text_outside and self.text_outside_horizontal:
             hdist = self.dim_text_width / 2.
+            if self.vertical_placement == 0:  # shift text horizontal if vertical centered
+                hdist += self.arrow_size
             angle = self.dim_line_angle % 360.  # normalize 0 .. 360
             if 90 < angle <= 270:
                 hdist = -hdist
             return self.outside_default_defpoint + Vec2((hdist, self.text_vertical_distance()))
+
+        text_direction = Vec2.from_deg_angle(self.text_rotation)
+        vertical_direction = text_direction.orthogonal(ccw=True)
+        vertical_distance = self.text_vertical_distance()
+        if self.text_inside:
+            hdist = (self.measurement - self.arrow_size) / 2
+            text_midpoint = self.center + (self.dim_line_vec * hdist)
         else:
             hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
-            if self.text_outside:
-                direction = self.dim_line_vec
-            else:  # inside
-                direction = -self.dim_line_vec
-            text_midpoint = self.point_on_circle + (direction * hdist)
-            vertical_distance = self.text_vertical_distance()
-            text_direction = Vec2.from_deg_angle(self.text_rotation)
-            vertical_direction = text_direction.orthogonal(ccw=True)
-            return text_midpoint + (vertical_direction * vertical_distance)
+            text_midpoint = self.point_on_circle + (self.dim_line_vec * hdist)
+        return text_midpoint + (vertical_direction * vertical_distance)
 
     def is_location_outside(self, location: Vec2) -> bool:
         radius = (location - self.center).magnitude
@@ -1296,6 +1307,15 @@ class RadialDimension(BaseDimensionRenderer):
         """
         # call required to setup some requirements
         super().render(block)
+        if self.user_location is not None:
+            self.render_user_location()
+        else:
+            self.render_default_location()
+        # add POINT entities at definition points
+        self.add_defpoints([self.center, self.point_on_circle])
+
+    def render_default_location(self) -> None:
+        """ Create dimension geometry at the default locations. """
         # radius dimension has no extension lines!
         # add dimension line
         if not self.suppress_dim1_line:
@@ -1305,7 +1325,11 @@ class RadialDimension(BaseDimensionRenderer):
             else:
                 arrow_connection_point = self.point_on_circle
             if self.text_outside:
-                self.add_dimension_line(self.point_on_circle, ext_line_start=arrow_connection_point)
+                self.add_dimension_line(self.point_on_circle)
+                if self.text_outside_horizontal:
+                    self.add_horiz_ext_line(arrow_connection_point)
+                else:
+                    self.add_radial_ext_line(arrow_connection_point)
             else:
                 self.add_dimension_line(arrow_connection_point)
 
@@ -1316,11 +1340,12 @@ class RadialDimension(BaseDimensionRenderer):
             else:
                 text = self.text
             self.add_measurement_text(text, self.text_location, self.text_rotation)
-            if self.text_has_leader:
-                self.add_leader(self.point_on_circle, self.leader1, self.leader2)
 
         # add POINT entities at definition points
         self.add_defpoints([self.center, self.point_on_circle])
+
+    def render_user_location(self) -> None:
+        """ Create dimension geometry at user defiend locations. """
 
     def add_arrow(self) -> Vec2:
         """
@@ -1353,30 +1378,49 @@ class RadialDimension(BaseDimensionRenderer):
             location = connection_point(arrow_name, location, scale, angle)
         return location
 
-    def add_dimension_line(self, end: 'Vertex', ext_line_start=None) -> None:
+    def add_dimension_line(self, end: 'Vertex') -> None:
         """
         Add dimension line to dimension BLOCK. Removes line parts hidden by dimension text.
 
         Args:
             end: dimension line end
-            ext_line_start: start point of outside extension line
 
         """
-        attribs = {
-            'color': self.dim_line_color
-        }
-        if self.dim_linetype is not None:
-            attribs['linetype'] = self.dim_linetype
-
-        if self.supports_dxf_r2000:
-            attribs['lineweight'] = self.dim_lineweight
+        attribs = self.dim_line_attributes()
         self.add_line(self.center, end, dxfattribs=attribs, remove_hidden_lines=True)
 
-        if ext_line_start is not None:
-            start = ext_line_start
-            hdist = self.dim_text_width + self.arrow_size + self.text_gap
-            end = start + self.dim_line_vec * hdist
-            self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
+    def add_horiz_ext_line(self, start: 'Vertex') -> None:
+        """
+        Add horizontal outside extension line from start.
+
+        Args:
+            start: start of extension line
+
+        """
+        attribs = self.dim_line_attributes()
+        self.add_line(start, self.outside_default_defpoint, dxfattribs=attribs)
+        if self.vertical_placement == 0:
+            hdist = self.arrow_size
+        else:
+            hdist = self.dim_text_width
+        angle = self.dim_line_angle % 360.  # normalize 0 .. 360
+        if 90 < angle <= 270:
+            hdist = -hdist
+        end = self.outside_default_defpoint + Vec2((hdist, 0))
+        self.add_line(self.outside_default_defpoint, end, dxfattribs=attribs)
+
+    def add_radial_ext_line(self, start: 'Vertex') -> None:
+        """
+        Add radial outside extension line from start.
+
+        Args:
+            start: start of extension line
+
+        """
+        attribs = self.dim_line_attributes()
+        length = self.text_gap + self.dim_text_width
+        end = start + self.dim_line_vec * length
+        self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
     def add_measurement_text(self, dim_text: str, pos: Vec2, rotation: float) -> None:
         """
@@ -1443,7 +1487,7 @@ class DimensionRenderer:
         raise NotImplemented
 
     def radius(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        return RadialDimension(dimension, ucs, override)
+        return RadiusDimension(dimension, ucs, override)
 
     def angular3p(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
         raise NotImplemented

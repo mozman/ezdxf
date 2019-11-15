@@ -55,7 +55,7 @@ render(AngularDimension(pos=(18, 5), center=(15, 0), start=(20, 0), end=(20, 5),
 render(AngularDimension(pos=(18, 10), center=(15, 5), start=(20, 5), end=(20, 10), roundval=1))
 render(ArcDimension(pos=(23, 5), center=(20, 0), start=(25, 0), end=(25, 5), dimstyle='dots2'))
 
-# RadialDimension has a special tick
+# RadiusDimension has a special tick
 dimstyles.new("radius", height=0.25, prefix='R=')
 render(RadialDimension((20, 0), (24, 1.5), dimstyle='radius'))
 

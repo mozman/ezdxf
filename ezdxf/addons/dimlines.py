@@ -10,7 +10,7 @@ OBJECTS
 - LinearDimension
 - AngularDimension
 - ArcDimension
-- RadialDimension
+- RadiusDimension
 
 PUBLIC MEMBERS
 
@@ -598,7 +598,7 @@ class ArcDimension(AngularDimension):
 
 class RadialDimension(_DimensionBase):
     """
-    Draw a radius dimension line from `target` in direction of `center` with length drawing units. RadialDimension has
+    Draw a radius dimension line from `target` in direction of `center` with length drawing units. RadiusDimension has
     a special tick!!
     """
 

@@ -52,20 +52,20 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimcen': DXFAttr(141, default=2.5),
     'dimtsz': DXFAttr(142, default=0),
     'dimaltf': DXFAttr(143, default=0.03937007874),
-    'dimlfac': DXFAttr(144, default=1),
-    'dimtvp': DXFAttr(145, default=0),
+    'dimlfac': DXFAttr(144, default=1),  # length factor
+    'dimtvp': DXFAttr(145, default=0),  # text vertical position if dimtad=0
     'dimtfac': DXFAttr(146, default=1),
-    'dimgap': DXFAttr(147, default=.625),
+    'dimgap': DXFAttr(147, default=.625),  # default text gap
     'dimaltrnd': DXFAttr(148, dxfversion=DXF2000, default=0),
     'dimtfill': DXFAttr(69, dxfversion=DXF2007, default=0),  # 0=None, 1=canvas color, 2=dimtfillclr
     'dimtfillclr': DXFAttr(70, dxfversion=DXF2007, default=0),  # color index for dimtfill==2
     'dimtol': DXFAttr(71, default=0),
     'dimlim': DXFAttr(72, default=0),
-    'dimtih': DXFAttr(73, default=0),
-    'dimtoh': DXFAttr(74, default=0),
-    'dimse1': DXFAttr(75, default=0),
-    'dimse2': DXFAttr(76, default=0),
-    'dimtad': DXFAttr(77, default=1),
+    'dimtih': DXFAttr(73, default=0),  # text inside  horizontal
+    'dimtoh': DXFAttr(74, default=0),  # text outside horizontal
+    'dimse1': DXFAttr(75, default=0),  # suppress extension line 1
+    'dimse2': DXFAttr(76, default=0),  # suppress extension line 2
+    'dimtad': DXFAttr(77, default=1),  # 0=center; 1+2+3=above; 4=below
     'dimzin': DXFAttr(78, default=8),
     'dimazin': DXFAttr(79, default=0, dxfversion=DXF2000),
     'unknown1': DXFAttr(90, dxfversion=DXF2000, optional=True),
@@ -73,11 +73,11 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimaltd': DXFAttr(171, default=3),
     'dimtofl': DXFAttr(172, default=1),
     'dimsah': DXFAttr(173, default=0),
-    'dimtix': DXFAttr(174, default=0),
+    'dimtix': DXFAttr(174, default=0),  # force dimension text inside
     'dimsoxd': DXFAttr(175, default=0),
-    'dimclrd': DXFAttr(176, default=0),
-    'dimclre': DXFAttr(177, default=0),
-    'dimclrt': DXFAttr(178, default=0),
+    'dimclrd': DXFAttr(176, default=0),  # dimension line color
+    'dimclre': DXFAttr(177, default=0),  # extension line color
+    'dimclrt': DXFAttr(178, default=0),  # text color
     'dimadec': DXFAttr(179, dxfversion=DXF2000, default=0),
     'dimunit': DXFAttr(270),  # obsolete
     'dimdec': DXFAttr(271, dxfversion=DXF2000, default=0),  # can appear multiple times ???
