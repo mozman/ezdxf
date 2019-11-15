@@ -110,3 +110,19 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
         s = s[:-1]
 
     return sign + s
+
+
+def normalize_text_angle(angle: float, fix_upside_down=True) -> float:
+    """
+    Normalizes text `angle` to the range from 0 to 360 degrees and fixes upside down text angles.
+
+    Args:
+        angle: text angle in degrees
+        fix_upside_down: rotate upside down text angle about 180 degree
+
+    """
+    angle = angle % 360.  # normalize angle (0 .. 360)
+    if fix_upside_down and (90 < angle <= 270):  # flip text orientation
+        angle -= 180
+        angle = angle % 360.  # normalize again
+    return angle

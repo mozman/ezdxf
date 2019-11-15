@@ -8,7 +8,7 @@ from ezdxf.math import UCS, PassTroughUCS
 from ezdxf.lldxf import const
 from ezdxf.options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
-from ezdxf.tools import suppress_zeros
+from ezdxf.tools import suppress_zeros, normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
@@ -1172,6 +1172,13 @@ class RadialDimension(BaseDimensionRenderer):
         override: dimension style override management object
 
     """
+    # supported sezenarios:
+    # - default location inside
+    # - default location inside horizontal
+    # - default location outside
+    # - default location outside horizontal
+    # - user location without leader
+    # - user location with leader
 
     def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
         super().__init__(dimension, ucs, override)
@@ -1181,7 +1188,9 @@ class RadialDimension(BaseDimensionRenderer):
         direction = self.point_on_circle - self.center
         self.dim_line_vec = direction.normalize()
         self.dim_line_angle = self.dim_line_vec.angle_deg
-        self.measurement = direction.magnitude  # type: float
+        self.measurement = direction.magnitude
+        self.outside_default_distance = self.measurement + self.arrow_size + self.text_gap
+        self.outside_default_defpoint = self.center + (self.dim_line_vec * self.outside_default_distance)
 
         # final dimension text (without limits or tolerance)
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)  # type: str
@@ -1208,10 +1217,7 @@ class RadialDimension(BaseDimensionRenderer):
                 rotation = 0
 
         # final absolute text rotation (x-axis=0)
-        rotation = rotation % 360.  # normalize angle (0 .. 360)
-        if 90 < rotation <= 270:  # flip text orientation
-            rotation -= 180
-        self.text_rotation = rotation
+        self.text_rotation = normalize_text_angle(rotation, fix_upside_down=True)
 
         # final text location
         self.text_location = self.get_text_location()  # type: Vec2
@@ -1223,13 +1229,13 @@ class RadialDimension(BaseDimensionRenderer):
             angle=self.text_rotation,
             gap=self.text_gap * .75
         )
-        if self.text_has_leader:
-            p1, p2, *_ = self.text_box.corners
-            self.leader1, self.leader2 = order_leader_points(self.point_on_circle, p1, p2)
-            # not exact what BricsCAD (AutoCAD) expect, but close enough
-            self.dimension.dxf.text_midpoint = self.leader1
+        # write final text location into DIMENSION entity
+        if self.user_location:  # todo
+            self.dimension.dxf.text_midpoint = self.user_location
+        # default locations
+        elif self.text_outside and self.text_outside_horizontal:
+            self.dimension.dxf.text_midpoint = self.outside_default_defpoint
         else:
-            # write final text location into DIMENSION entity
             self.dimension.dxf.text_midpoint = self.text_location
 
     def text_override(self, measurement: float) -> str:
@@ -1258,16 +1264,23 @@ class RadialDimension(BaseDimensionRenderer):
         Calculate default text location in UCS based on `self.text_valign` and `self.text_outside`
 
         """
-        hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
-        if self.text_outside:
-            direction = self.dim_line_vec
-        else:  # inside
-            direction = -self.dim_line_vec
-        text_midpoint = self.point_on_circle + (direction * hdist)
-        vertical_distance = self.text_vertical_distance()
-        text_direction = Vec2.from_deg_angle(self.text_rotation)
-        vertical_direction = text_direction.orthogonal(ccw=True)
-        return text_midpoint + (vertical_direction * vertical_distance)
+        if self.text_outside and self.text_outside_horizontal:
+            hdist = self.dim_text_width / 2.
+            angle = self.dim_line_angle % 360.  # normalize 0 .. 360
+            if 90 < angle <= 270:
+                hdist = -hdist
+            return self.outside_default_defpoint + Vec2((hdist, self.text_vertical_distance()))
+        else:
+            hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
+            if self.text_outside:
+                direction = self.dim_line_vec
+            else:  # inside
+                direction = -self.dim_line_vec
+            text_midpoint = self.point_on_circle + (direction * hdist)
+            vertical_distance = self.text_vertical_distance()
+            text_direction = Vec2.from_deg_angle(self.text_rotation)
+            vertical_direction = text_direction.orthogonal(ccw=True)
+            return text_midpoint + (vertical_direction * vertical_distance)
 
     def is_location_outside(self, location: Vec2) -> bool:
         radius = (location - self.center).magnitude
@@ -1357,13 +1370,13 @@ class RadialDimension(BaseDimensionRenderer):
 
         if self.supports_dxf_r2000:
             attribs['lineweight'] = self.dim_lineweight
-        self.add_line(self.center, end, dxfattribs=attribs, remove_hidden_lines=False)
+        self.add_line(self.center, end, dxfattribs=attribs, remove_hidden_lines=True)
 
         if ext_line_start is not None:
             start = ext_line_start
             hdist = self.dim_text_width + self.arrow_size + self.text_gap
             end = start + self.dim_line_vec * hdist
-            self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=False)
+            self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
     def add_measurement_text(self, dim_text: str, pos: Vec2, rotation: float) -> None:
         """

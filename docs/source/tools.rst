@@ -33,6 +33,8 @@ Some handy tool functions used internally by ``ezdxf``.
 
 .. autofunction:: aci2rgb
 
+.. autofunction:: normalize_text_angle
+
 SAT Format "Encryption"
 -----------------------
 

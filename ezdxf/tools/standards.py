@@ -102,6 +102,22 @@ def setup_dimstyles(doc: 'Drawing', domain: str = 'all') -> None:
         setup_dimstyle(doc, fmt='EZ_M_1_H25_CM', style=options.default_dimension_text_style)
     elif domain in ('us', 'all'):
         pass
+    if domain in ('radius', 'all'):
+        ez_radius = cast('DimStyle', doc.dimstyles.duplicate_entry('EZDXF', 'EZ_RADIUS'))
+        ez_radius.set_arrows(blk=ARROWS.closed_blank)  # default closed filled arrow
+        ez_radius.dxf.dimasz = 0.25  # set arrow size
+
+        # use leader, is the best setting for text outside to preserves appearance of DIMENSION entity,
+        # if editing DIMENSION afterwards in BricsCAD (AutoCAD)
+        ez_radius.dxf.dimtmove = 1
+
+        ez_radius_inside = doc.dimstyles.duplicate_entry('EZ_RADIUS', 'EZ_RADIUS_INSIDE')
+        # dimtmove = 0: keep dim line with text, is the best setting for text inside to preserves appearance of
+        # DIMENSION entity, if editing DIMENSION afterwards in BricsCAD (AutoCAD)
+        ez_radius_inside.dxf.dimtmove = 0
+        ez_radius_inside.dxf.dimtix = 1  # force text inside
+        ez_radius_inside.dxf.dimatfit = 0    # force text inside
+        ez_radius_inside.dxf.dimtad = 0  # center text vertical
 
 
 class DimStyleFmt:
@@ -302,55 +318,75 @@ def styles():
 
 
 VISUAL_STYLES = [
-    {'description': '2dWireframe', 'style_type': 4, 'internal_use_only_flag': 0, 'face_modifiers': 0, 'face_opacity_level': 0.6,
+    {'description': '2dWireframe', 'style_type': 4, 'internal_use_only_flag': 0, 'face_modifiers': 0,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Basic', 'style_type': 7, 'internal_use_only_flag': 1, 'face_modifiers': 1, 'face_opacity_level': 0.6,
+    {'description': 'Basic', 'style_type': 7, 'internal_use_only_flag': 1, 'face_modifiers': 1,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Brighten', 'style_type': 12, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Brighten', 'style_type': 12, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'ColorChange', 'style_type': 16, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'ColorChange', 'style_type': 16, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 8, 'edge_hide_precision': 0},
-    {'description': 'Conceptual', 'style_type': 9, 'internal_use_only_flag': 0, 'face_modifiers': 3, 'face_opacity_level': 0.6,
+    {'description': 'Conceptual', 'style_type': 9, 'internal_use_only_flag': 0, 'face_modifiers': 3,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Dim', 'style_type': 11, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Dim', 'style_type': 11, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
     {'description': 'EdgeColorOff', 'style_type': 22, 'internal_use_only_flag': 1, 'face_modifiers': 2,
      'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Facepattern', 'style_type': 15, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Facepattern', 'style_type': 15, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Flat', 'style_type': 0, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Flat', 'style_type': 0, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
     {'description': 'FlatWithEdges', 'style_type': 1, 'internal_use_only_flag': 1, 'face_modifiers': 2,
      'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Gouraud', 'style_type': 2, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Gouraud', 'style_type': 2, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
     {'description': 'GouraudWithEdges', 'style_type': 3, 'internal_use_only_flag': 1, 'face_modifiers': 2,
      'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Hidden', 'style_type': 6, 'internal_use_only_flag': 0, 'face_modifiers': 1, 'face_opacity_level': 0.6,
+    {'description': 'Hidden', 'style_type': 6, 'internal_use_only_flag': 0, 'face_modifiers': 1,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'JitterOff', 'style_type': 20, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'JitterOff', 'style_type': 20, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Linepattern', 'style_type': 14, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Linepattern', 'style_type': 14, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Modeling', 'style_type': 10, 'internal_use_only_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Modeling', 'style_type': 10, 'internal_use_only_flag': 0, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'OverhangOff', 'style_type': 21, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'OverhangOff', 'style_type': 21, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Realistic', 'style_type': 8, 'internal_use_only_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Realistic', 'style_type': 8, 'internal_use_only_flag': 0, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Shaded', 'style_type': 27, 'internal_use_only_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Shaded', 'style_type': 27, 'internal_use_only_flag': 0, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
     {'description': 'Shaded with edges', 'style_type': 26, 'internal_use_only_flag': 0, 'face_modifiers': 2,
      'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
     {'description': 'Shades of Gray', 'style_type': 23, 'internal_use_only_flag': 0, 'face_modifiers': 2,
      'face_opacity_level': 0.6, 'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Sketchy', 'style_type': 24, 'internal_use_only_flag': 0, 'face_modifiers': 1, 'face_opacity_level': 0.6,
+    {'description': 'Sketchy', 'style_type': 24, 'internal_use_only_flag': 0, 'face_modifiers': 1,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Thicken', 'style_type': 13, 'internal_use_only_flag': 1, 'face_modifiers': 2, 'face_opacity_level': 0.6,
+    {'description': 'Thicken', 'style_type': 13, 'internal_use_only_flag': 1, 'face_modifiers': 2,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'Wireframe', 'style_type': 5, 'internal_use_only_flag': 0, 'face_modifiers': 0, 'face_opacity_level': 0.6,
+    {'description': 'Wireframe', 'style_type': 5, 'internal_use_only_flag': 0, 'face_modifiers': 0,
+     'face_opacity_level': 0.6,
      'color1': 7, 'edge_hide_precision': 0},
-    {'description': 'X-Ray', 'style_type': 25, 'internal_use_only_flag': 0, 'face_modifiers': 2, 'face_opacity_level': 0.5,
+    {'description': 'X-Ray', 'style_type': 25, 'internal_use_only_flag': 0, 'face_modifiers': 2,
+     'face_opacity_level': 0.5,
      'color1': 7, 'edge_hide_precision': 0},
 
 ]

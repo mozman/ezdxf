@@ -1215,18 +1215,18 @@ class CreatorInterface:
 
     def add_radius_dim(self,
                        center: 'Vertex',
-                       p1: 'Vertex' = None,
+                       mpoint: 'Vertex' = None,
                        radius: float = None,
                        angle: float = None,
                        location: 'Vertex' = None,
                        text: str = "<>",
                        text_rotation: float = None,
-                       dimstyle: str = 'EZDXF',
+                       dimstyle: str = 'EZ_RADIUS',
                        override: dict = None,
                        dxfattribs: dict = None) -> DimStyleOverride:
         """
         Add a radial :class:`~ezdxf.entities.Dimension` line. The radial dimension line requires a `center` point and
-        a point `p1` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
+        a point `mpoint` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
 
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
@@ -1237,32 +1237,45 @@ class CreatorInterface:
         allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
 
+        Following render types are supported:
+
+        - Default text location outside: text aligned with dimension line; dimension style: ``'EZ_RADIUS'``
+        - Default text location outside horizontal: ``'EZ_RADIUS'`` + dimtoh=1
+        - Default text location inside: text aligned with dimension line; dimension style: ``'EZ_RADIUS_INSIDE'``
+        - Default text location inside horizontal:``'EZ_RADIUS_INSIDE'`` + dimtih=1
+        - User defined text location: argument `location` != ``None``, text aligned with dimension line; dimension
+          style: ``'EZ_RADIUS'``
+
+        .. note::
+
+            `ezdxf` ignores many DIMSTYLE variables, so render results mostly differ from BricsCAD or AutoCAD.
+
         Args:
             center: specifies the center of the circle (in UCS)
-            p1: specifies the measurement point on the circle (in UCS)
-            radius: specify radius, requires argument `angle`, overrides `p1` argument
-            angle: specify angle of dimension line in degrees, requires argument `radius`, overrides `p1` argument
+            mpoint: specifies the measurement point on the circle (in UCS)
+            radius: specify radius, requires argument `angle`, overrides `mpoint` argument
+            angle: specify angle of dimension line in degrees, requires argument `radius`, overrides `mpoint` argument
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
             text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
-            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZ_RADIUS'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
 
         """
         type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
-        if p1 is None:
+        if mpoint is None:
             if angle is None:
-                raise ValueError("Argument `angle` or `p1` required.")
+                raise ValueError("Argument angle or mpoint required.")
             if radius is None:
-                raise ValueError("Argument `radius` or `p1` required.")
-            p1 = Vector(center) + Vector.from_deg_angle(angle, radius)
+                raise ValueError("Argument radius or mpoint required.")
+            mpoint = Vector(center) + Vector.from_deg_angle(angle, radius)
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
-        dxfattribs['defpoint4'] = Vector(p1)  # group code 15
+        dxfattribs['defpoint4'] = Vector(mpoint)  # group code 15
         dxfattribs['defpoint'] = Vector(center)  # group code 10
         dxfattribs['text'] = text
 

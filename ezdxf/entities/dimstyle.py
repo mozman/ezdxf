@@ -88,6 +88,10 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimfrac': DXFAttr(276, dxfversion=DXF2000, default=0),
     'dimlunit': DXFAttr(277, dxfversion=DXF2000, default=2),
     'dimdsep': DXFAttr(278, dxfversion=DXF2000, default=44),
+
+    # 0 = Moves the dimension line with dimension text
+    # 1 = Adds a leader when dimension text is moved
+    # 2 = Allows text to be moved freely without a leader
     'dimtmove': DXFAttr(279, dxfversion=DXF2000, default=0),
     'dimjust': DXFAttr(280, dxfversion=DXF2000, default=0),
     'dimsd1': DXFAttr(281, dxfversion=DXF2000, default=0),
@@ -98,7 +102,13 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimalttz': DXFAttr(286, dxfversion=DXF2000, default=0),
     'dimfit': DXFAttr(287),  # obsolete, now use DIMATFIT and DIMTMOVE
     'dimupt': DXFAttr(288, dxfversion=DXF2000, default=0),
+
+    # 0 = Places both text and arrows outside extension lines
+    # 1 = Moves arrows first, then text
+    # 2 = Moves text first, then arrows
+    # 3 = Moves either text or arrows, whichever fits best
     'dimatfit': DXFAttr(289, dxfversion=DXF2000, default=3),
+
     'dimfxlon': DXFAttr(290, dxfversion=DXF2007, default=0),  # undocumented: 1 = fixed extension line length
 
     # virtual DXF attribute 'dimtxsty': set/get STYLE by name
