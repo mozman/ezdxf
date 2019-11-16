@@ -893,7 +893,7 @@ class CreatorInterface:
                        text_rotation: float = None,
                        dimstyle: str = 'EZDXF',
                        override: dict = None,
-                       dxfattribs: dict = None) -> DimStyleOverride:
+                       dxfattribs: dict = None) -> 'DimStyleOverride':
         """
         Add horizontal, vertical and rotated :class:`~ezdxf.entities.Dimension` line.
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
@@ -904,6 +904,10 @@ class CreatorInterface:
         geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
         allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
+
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
 
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
@@ -917,6 +921,8 @@ class CreatorInterface:
             text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
         """
         type_ = {'dimtype': const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
@@ -958,6 +964,10 @@ class CreatorInterface:
         required nor possible :meth:`~ezdxf.entities.DimStyleOverride.render` call.
         This method is easy to use but you get what you get.
 
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
+
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
             points: iterable of measurement points (in UCS)
@@ -992,7 +1002,7 @@ class CreatorInterface:
                         text: str = "<>",
                         dimstyle: str = 'EZDXF',
                         override: dict = None,
-                        dxfattribs: dict = None) -> DimStyleOverride:
+                        dxfattribs: dict = None) -> 'DimStyleOverride':
         """
         Add linear dimension aligned with measurement points `p1` and `p2`. If an :class:`~ezdxf.math.UCS` is used
         for dimension line rendering, all point definitions in UCS coordinates, translation into :ref:`WCS`
@@ -1002,6 +1012,10 @@ class CreatorInterface:
         dimension geometry, you have to  call :meth:`DimStyleOverride.render` manually, this two step process
         allows additional processing steps on the  :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
+
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
 
         Args:
             p1: measurement point 1 and start point of extension line 1 (in UCS)
@@ -1041,7 +1055,7 @@ class CreatorInterface:
                         text_rotation: float = None,
                         dimstyle: str = 'EZDXF',
                         override: dict = None,
-                        dxfattribs: dict = None) -> DimStyleOverride:
+                        dxfattribs: dict = None) -> 'DimStyleOverride':
         """
         Add angular :class:`~ezdxf.entities.Dimension` from 2 lines.
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
@@ -1052,6 +1066,10 @@ class CreatorInterface:
         geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
         allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
+
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
 
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
@@ -1064,6 +1082,10 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        (not implemented yet!)
 
         """
         type_ = {'dimtype': const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
@@ -1099,7 +1121,7 @@ class CreatorInterface:
                            text_rotation: float = None,
                            dimstyle: str = 'EZDXF',
                            override: dict = None,
-                           dxfattribs: dict = None) -> DimStyleOverride:
+                           dxfattribs: dict = None) -> 'DimStyleOverride':
         """
         Add angular :class:`~ezdxf.entities.Dimension` from 3 points (center, p1, p2).
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
@@ -1110,6 +1132,10 @@ class CreatorInterface:
         geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
         allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
+
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
 
         Args:
             base: location of dimension line, any point on the dimension line or its extension will do (in UCS)
@@ -1123,6 +1149,10 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        (not implemented yet!)
 
         """
         type_ = {'dimtype': const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
@@ -1152,10 +1182,9 @@ class CreatorInterface:
                          angle: float = None,
                          location: 'Vertex' = None,
                          text: str = "<>",
-                         text_rotation: float = None,
                          dimstyle: str = 'EZDXF',
                          override: dict = None,
-                         dxfattribs: dict = None) -> DimStyleOverride:
+                         dxfattribs: dict = None) -> 'DimStyleOverride':
         """
         Add a diameter :class:`~ezdxf.entities.Dimension` line. The diameter dimension line requires a `center` point
         and a point `p1` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
@@ -1169,6 +1198,10 @@ class CreatorInterface:
         allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
 
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
+
         Args:
             center: specifies the center of the circle (in UCS)
             p1: specifies the measurement point on the circle (in UCS)
@@ -1177,10 +1210,13 @@ class CreatorInterface:
             location: user defined location for text mid point (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
-            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        (not implemented yet!)
 
         """
         type_ = {'dimtype': const.DIM_DIAMETER | const.DIM_BLOCK_EXCLUSIVE}
@@ -1202,10 +1238,6 @@ class CreatorInterface:
         dxfattribs['defpoint'] = Vector(p2)  # group code 10
         dxfattribs['text'] = text
 
-        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
-        if text_rotation is not None:
-            dxfattribs['text_rotation'] = float(text_rotation)
-
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)
@@ -1220,12 +1252,11 @@ class CreatorInterface:
                        angle: float = None,
                        location: 'Vertex' = None,
                        text: str = "<>",
-                       text_rotation: float = None,
                        dimstyle: str = 'EZ_RADIUS',
                        override: dict = None,
-                       dxfattribs: dict = None) -> DimStyleOverride:
+                       dxfattribs: dict = None) -> 'DimStyleOverride':
         """
-        Add a radial :class:`~ezdxf.entities.Dimension` line. The radial dimension line requires a `center` point and
+        Add a radius :class:`~ezdxf.entities.Dimension` line. The radius dimension line requires a `center` point and
         a point `mpoint` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
 
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
@@ -1243,35 +1274,53 @@ class CreatorInterface:
         - Default text location outside horizontal: ``'EZ_RADIUS'`` + dimtoh=1
         - Default text location inside: text aligned with dimension line; dimension style: ``'EZ_RADIUS_INSIDE'``
         - Default text location inside horizontal:``'EZ_RADIUS_INSIDE'`` + dimtih=1
-        - User defined text location: argument `location` != ``None``, text aligned with dimension line; dimension
-          style: ``'EZ_RADIUS'``
+        - User defined text location: argument `location` != ``None``, text aligned with dimension line;
+          dimension style: ``'EZ_RADIUS'``
+        - User defined text location horizontal: argument `location` != ``None``, ``'EZ_RADIUS'`` + dimtoh=1
+          for text outside horizontal, ``'EZ_RADIUS'`` + dimtih=1 for text inside horizontal
+
+        Placing the dimension text at a user defined `location`, overrides the `mpoint` and the `angle` argument, but
+        requires a given `radius` argument. The `location` argument does not define the exact text location, instead it
+        defines the dimension line starting at `center` and the measurement text midpoint projected on this dimension
+        line going through `location`, if text is aligned to the dimension line. If text is horizontal,
+        `location` is the kink point of the dimension line from radial to horizontal direction.
 
         .. note::
 
-            `ezdxf` ignores many DIMSTYLE variables, so render results mostly differ from BricsCAD or AutoCAD.
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
 
         Args:
-            center: specifies the center of the circle (in UCS)
-            mpoint: specifies the measurement point on the circle (in UCS)
-            radius: specify radius, requires argument `angle`, overrides `mpoint` argument
-            angle: specify angle of dimension line in degrees, requires argument `radius`, overrides `mpoint` argument
-            location: user defined location for text mid point (in UCS)
+            center: center point of the circle (in UCS)
+            mpoint: measurement point on the circle, overrides `angle` and `radius` (in UCS)
+            radius: radius in drawing units, requires argument `angle`
+            angle: specify angle of dimension line in degrees, requires argument `radius`
+            location: user defined dimension text location, overrides `mpoint` and `angle`, but requires
+                      `radius` (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
                   dimension text, everything else `text` is drawn as dimension text
-            text_rotation: rotation angle of the dimension text as absolute angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZ_RADIUS'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
 
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
         """
         type_ = {'dimtype': const.DIM_RADIUS | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast('Dimension', self.new_entity('DIMENSION', dxfattribs=type_))
-        if mpoint is None:
-            if angle is None:
-                raise ValueError("Argument angle or mpoint required.")
+        center = Vector(center)
+        if location is not None:
             if radius is None:
-                raise ValueError("Argument radius or mpoint required.")
-            mpoint = Vector(center) + Vector.from_deg_angle(angle, radius)
+                raise ValueError("Argument radius is required.")
+            location = Vector(location)
+            radius_vec = (location - center).normalize(length=radius)
+            mpoint = center + radius_vec
+        else:  # defined by mpoint = measurement point on circle
+            if mpoint is None:  # defined by radius and angle
+                if angle is None:
+                    raise ValueError("Argument angle or mpoint required.")
+                if radius is None:
+                    raise ValueError("Argument radius or mpoint required.")
+                mpoint = center + Vector.from_deg_angle(angle, radius)
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs['dimstyle'] = dimstyle
@@ -1279,16 +1328,75 @@ class CreatorInterface:
         dxfattribs['defpoint'] = Vector(center)  # group code 10
         dxfattribs['text'] = text
 
-        # text_rotation ALWAYS overrides implicit angles as absolute angle (x-axis=0, y-axis=90)!
-        if text_rotation is not None:
-            dxfattribs['text_rotation'] = float(text_rotation)
-
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            style.set_location(location, leader=False, relative=False)
+            leader = style.get('dimtmove', 1) != 2
+            style.set_location(location, leader=leader, relative=False)
         return style
+
+    def add_radius_dim_2p(self,
+                          center: 'Vertex',
+                          mpoint: 'Vertex',
+                          text: str = "<>",
+                          dimstyle: str = 'EZ_RADIUS',
+                          override: dict = None,
+                          dxfattribs: dict = None) -> 'DimStyleOverride':
+        """
+        Shortcut method to create a radius dimension by center point, measurement point on the circle and the
+        measurement text at the default location defined by the associated `dimstyle`, for further information see
+        general method :func:`add_radius_dim`.
+
+        - dimstyle ``'EZ_RADIUS'``: places the dimension text outside
+        - dimstyle ``'EZ_RADIUS_INSIDE'``: places the dimension text inside
+
+        Args:
+            center: center point of the circle (in UCS)
+            mpoint: measurement point on the circle (in UCS)
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZ_RADIUS'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        """
+        return self.add_radius_dim(center, mpoint, text=text, dimstyle=dimstyle,
+                                   override=override, dxfattribs=dxfattribs)
+
+    def add_radius_dim_cra(self,
+                           center: 'Vertex',
+                           radius: float,
+                           angle: float,
+                           text: str = "<>",
+                           dimstyle: str = 'EZ_RADIUS',
+                           override: dict = None,
+                           dxfattribs: dict = None) -> 'DimStyleOverride':
+        """
+        Shortcut method to create a radius dimension by (c)enter point, (r)adius and (a)ngle, the measurement
+        text is placed at the default location defined by the associated `dimstyle`, for further information see
+        general method :func:`add_radius_dim`.
+
+        - dimstyle ``'EZ_RADIUS'``: places the dimension text outside
+        - dimstyle ``'EZ_RADIUS_INSIDE'``: places the dimension text inside
+
+        Args:
+            center: center point of the circle (in UCS)
+            radius: radius in drawing units
+            angle: angle of dimension line in degrees
+            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "`` (one space) suppresses the
+                  dimension text, everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZ_RADIUS'``
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        """
+        return self.add_radius_dim(center, radius=radius, angle=angle, text=text, dimstyle=dimstyle,
+                                   override=override, dxfattribs=dxfattribs)
 
     def add_ordinate_dim(self,
                          origin: 'Vertex',
@@ -1310,6 +1418,10 @@ class CreatorInterface:
         allows additional processing steps on the :class:`~ezdxf.entities.Dimension` entity between creation
         and rendering.
 
+        .. note::
+
+            `ezdxf` ignores some DIMSTYLE variables, so render results may differ from BricsCAD or AutoCAD.
+
         Args:
             origin: specifies the origin of the ordinate coordinate system (in UCS)
             feature_location: feature location in UCS
@@ -1320,6 +1432,10 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle` table entry), default is ``'EZDXF'``
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        (not implemented yet!)
 
         """
         type_ = {'dimtype': const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}

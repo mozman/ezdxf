@@ -122,20 +122,20 @@ def radius_default_inside(dxfversion='R2000', delta=10):
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
         add_dim(x, y, dimtad=1)  # above
-        add_dim(x+3*delta, y, dimtad=0)  # center
-        add_dim(x+6*delta, y, dimtad=4)  # below
+        add_dim(x + 3 * delta, y, dimtad=0)  # center
+        add_dim(x + 6 * delta, y, dimtad=4)  # below
 
     doc.set_modelspace_vport(height=3 * delta)
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_inside.dxf')
 
 
-def radius_default_outside_horizontal(dxfversion='R2000', delta=10, dimtad=1):
+def radius_default_outside_horizontal(dxfversion='R2000', delta=10):
     def add_dim(x, y, dimtad):
         msp.add_circle((x, y), radius=3)
         dim = msp.add_radius_dim(center=(x, y), radius=3, angle=angle, dimstyle='EZ_RADIUS',
                                  override={
                                      'dimtoh': 1,  # force text outside horizontal
-                                     'dimtad': dimtad,  # above
+                                     'dimtad': dimtad,
                                  })
         dim.render(discard=BRICSCAD)
 
@@ -144,10 +144,10 @@ def radius_default_outside_horizontal(dxfversion='R2000', delta=10, dimtad=1):
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
         add_dim(x, y, dimtad=1)  # above
-        add_dim(x+3*delta, y, dimtad=0)  # center
-        add_dim(x+6*delta, y, dimtad=4)  # below
+        add_dim(x + 3 * delta, y, dimtad=0)  # center
+        add_dim(x + 6 * delta, y, dimtad=4)  # below
 
-    doc.set_modelspace_vport(height=3 * delta, center=(4.5*delta, 0))
+    doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_outside_horizontal.dxf')
 
 
@@ -168,8 +168,106 @@ def radius_default_inside_horizontal(dxfversion='R2000', delta=10):
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_inside_horizontal.dxf')
 
 
+def radius_user_defined_outside(dxfversion='R2000', delta=15):
+    def add_dim(x, y, radius, dimtad):
+        center = Vector(x, y)
+        msp.add_circle((x, y), radius=3)
+        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim = msp.add_radius_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
+                                 override={
+                                     'dimtad': dimtad,
+                                 })
+        dim.render(discard=BRICSCAD)
+
+    doc = new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    for x, y in multiple_locations(delta=delta):
+        angle = Vector(x, y).angle_deg
+        add_dim(x, y, 5, dimtad=1)  # above
+        add_dim(x + 3 * delta, y, 5, dimtad=0)  # center
+        add_dim(x + 6 * delta, y, 5, dimtad=4)  # below
+
+    doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_outside.dxf')
+
+
+def radius_user_defined_outside_horizontal(dxfversion='R2000', delta=15):
+    def add_dim(x, y, radius, dimtad):
+        center = Vector(x, y)
+        msp.add_circle((x, y), radius=3)
+        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim = msp.add_radius_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
+                                 override={
+                                     'dimtad': dimtad,
+                                     'dimtoh': 1,  # force text outside horizontal
+                                 })
+        dim.render(discard=BRICSCAD)
+
+    doc = new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    for x, y in multiple_locations(delta=delta):
+        angle = Vector(x, y).angle_deg
+        add_dim(x, y, 5, dimtad=1)  # above
+        add_dim(x + 3 * delta, y, 5, dimtad=0)  # center
+        add_dim(x + 6 * delta, y, 5, dimtad=4)  # below
+
+    doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_outside_horizontal.dxf')
+
+
+def radius_user_defined_inside(dxfversion='R2000', delta=10):
+    def add_dim(x, y, radius, dimtad):
+        center = Vector(x, y)
+        msp.add_circle((x, y), radius=3)
+        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim = msp.add_radius_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
+                                 override={
+                                     'dimtad': dimtad,
+                                 })
+        dim.render(discard=BRICSCAD)
+
+    doc = new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    for x, y in multiple_locations(delta=delta):
+        angle = Vector(x, y).angle_deg
+        add_dim(x, y, 1, dimtad=1)  # above
+        add_dim(x + 3 * delta, y, 1, dimtad=0)  # center
+        add_dim(x + 6 * delta, y, 1, dimtad=4)  # below
+
+    doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_inside.dxf')
+
+
+def radius_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
+    def add_dim(x, y, radius, dimtad):
+        center = Vector(x, y)
+        msp.add_circle((x, y), radius=3)
+        dim_location = center + Vector.from_deg_angle(angle, radius)
+        dim = msp.add_radius_dim(center=(x, y), radius=3, location=dim_location, dimstyle='EZ_RADIUS',
+                                 override={
+                                     'dimtad': dimtad,
+                                     'dimtih': 1,  # force text inside horizontal
+                                 })
+        dim.render(discard=BRICSCAD)
+
+    doc = new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    for x, y in multiple_locations(delta=delta):
+        angle = Vector(x, y).angle_deg
+        add_dim(x, y, 1, dimtad=1)  # above
+        add_dim(x + 3 * delta, y, 1, dimtad=0)  # center
+        add_dim(x + 6 * delta, y, 1, dimtad=4)  # below
+
+    doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_inside_horizontal.dxf')
+
+
 if __name__ == '__main__':
     radius_default_outside()
     radius_default_inside()
     radius_default_outside_horizontal()
     radius_default_inside_horizontal()
+    radius_user_defined_outside()
+    radius_user_defined_outside_horizontal()
+    radius_user_defined_inside()
+    radius_user_defined_inside_horizontal()

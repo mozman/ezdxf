@@ -132,7 +132,7 @@ class Layout(BaseLayout):
                 entity.dxf.paperspace = paperspace
 
     def __contains__(self, entity: Union['DXFGraphic', str]) -> bool:
-        """ Returns ``True`` if `entity` stored in this layout.
+        """ Returns ``True`` if `entity` is stored in this layout.
 
         Args:
              entity: :class:`DXFGraphic` object or handle as hex string
