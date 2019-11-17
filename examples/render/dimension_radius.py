@@ -96,7 +96,7 @@ def radius_default_outside(dxfversion='R2000', delta=10):
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_outside.dxf')
 
 
-def radius_default_inside(dxfversion='R2000', delta=10):
+def radius_default_inside(dxfversion='R2000', delta=10, dimtmove=0):
     def add_dim(x, y, dimtad):
         msp.add_circle((x, y), radius=3)
         dim = msp.add_radius_dim(center=(x, y), radius=3, angle=angle, dimstyle='EZ_RADIUS_INSIDE',
@@ -106,6 +106,8 @@ def radius_default_inside(dxfversion='R2000', delta=10):
         dim.render(discard=BRICSCAD)
 
     doc = new(dxfversion, setup=True)
+    style = doc.dimstyles.get('EZ_RADIUS_INSIDE')
+    style.dxf.dimtmove = dimtmove
 
     # Default DimStyle EZ_RADIUS_INSIDE: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
     # closed filled arrow, size 0.25
@@ -126,7 +128,7 @@ def radius_default_inside(dxfversion='R2000', delta=10):
         add_dim(x + 6 * delta, y, dimtad=4)  # below
 
     doc.set_modelspace_vport(height=3 * delta)
-    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_inside.dxf')
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_inside_dimtmove_{dimtmove}.dxf')
 
 
 def radius_default_outside_horizontal(dxfversion='R2000', delta=10):
@@ -151,8 +153,10 @@ def radius_default_outside_horizontal(dxfversion='R2000', delta=10):
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_outside_horizontal.dxf')
 
 
-def radius_default_inside_horizontal(dxfversion='R2000', delta=10):
+def radius_default_inside_horizontal(dxfversion='R2000', delta=10, dimtmove=0):
     doc = new(dxfversion, setup=True)
+    style = doc.dimstyles.get('EZ_RADIUS_INSIDE')
+    style.dxf.dimtmove = dimtmove
 
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
@@ -165,7 +169,7 @@ def radius_default_inside_horizontal(dxfversion='R2000', delta=10):
                                  })
         dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=3 * delta)
-    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_inside_horizontal.dxf')
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_default_inside_horizontal_dimtmove_{dimtmove}.dxf')
 
 
 def radius_user_defined_outside(dxfversion='R2000', delta=15):
@@ -215,7 +219,7 @@ def radius_user_defined_outside_horizontal(dxfversion='R2000', delta=15):
     doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_outside_horizontal.dxf')
 
 
-def radius_user_defined_inside(dxfversion='R2000', delta=10):
+def radius_user_defined_inside(dxfversion='R2000', delta=10, dimtmove=0):
     def add_dim(x, y, radius, dimtad):
         center = Vector(x, y)
         msp.add_circle((x, y), radius=3)
@@ -227,6 +231,9 @@ def radius_user_defined_inside(dxfversion='R2000', delta=10):
         dim.render(discard=BRICSCAD)
 
     doc = new(dxfversion, setup=True)
+    style = doc.dimstyles.get('EZ_RADIUS')
+    style.dxf.dimtmove = dimtmove
+
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
@@ -235,7 +242,7 @@ def radius_user_defined_inside(dxfversion='R2000', delta=10):
         add_dim(x + 6 * delta, y, 1, dimtad=4)  # below
 
     doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
-    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_inside.dxf')
+    doc.saveas(OUTDIR / f'dim_radius_{dxfversion}_user_defined_inside_dimtmove_{dimtmove}.dxf')
 
 
 def radius_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
@@ -264,10 +271,13 @@ def radius_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
 
 if __name__ == '__main__':
     radius_default_outside()
-    radius_default_inside()
+    radius_default_inside(dimtmove=0)  # dimline from center
+    radius_default_inside(dimtmove=1)  # dimline from text
     radius_default_outside_horizontal()
-    radius_default_inside_horizontal()
+    radius_default_inside_horizontal(dimtmove=0)  # dimline from center
+    radius_default_inside_horizontal(dimtmove=1)  # dimline from text
     radius_user_defined_outside()
     radius_user_defined_outside_horizontal()
-    radius_user_defined_inside()
+    radius_user_defined_inside(dimtmove=0)  # dimline from text, also for 1
+    radius_user_defined_inside(dimtmove=2)  # dimline from center
     radius_user_defined_inside_horizontal()

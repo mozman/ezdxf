@@ -163,9 +163,6 @@ class BaseDimensionRenderer:
         self.text_vertical_position = get('dimtvp', 0.)  # type: float  # not supported yet
 
         self.text_movement_rule = get('dimtmove', 2)  # type: int # move text freely
-        if self.text_movement_rule == 0:
-            # moves the dimension line with dimension text and makes no sense for ezdxf (just set `base` argument)
-            self.text_movement_rule = 2
 
         # requires a leader?
         self.text_has_leader = self.user_location is not None and self.text_movement_rule == 1  # type: bool
@@ -728,6 +725,10 @@ class LinearDimension(BaseDimensionRenderer):
 
     def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
         super().__init__(dimension, ucs, override)
+        if self.text_movement_rule == 0:
+            # moves the dimension line with dimension text, this makes no sense for ezdxf (just set `base` argument)
+            self.text_movement_rule = 2
+
         self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 90)  # type: float
         self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)  # type: float
         self.dim_line_angle_rad = math.radians(self.dim_line_angle)  # type: float
@@ -1193,6 +1194,12 @@ class RadiusDimension(BaseDimensionRenderer):
         super().__init__(dimension, ucs, override)
         self.center = Vec2(self.dimension.dxf.defpoint)
         self.point_on_circle = Vec2(self.dimension.dxf.defpoint4)
+        # modify parameters for special scenarios
+        if self.user_location is None:  # default location
+            if self.text_inside and self.text_inside_horizontal and self.text_movement_rule == 1:  # move text, add leader
+                # use algorithm for user define dimension line location
+                self.user_location = self.center.lerp(self.point_on_circle)
+                self.text_valign = 0  # text vertical centered
 
         direction = self.point_on_circle - self.center
         self.dim_line_vec = direction.normalize()
@@ -1213,6 +1220,21 @@ class RadiusDimension(BaseDimensionRenderer):
         if self.text:
             # text width and required space
             self.dim_text_width = self.text_width(self.text)  # type: float
+            if self.dim_tolerance:
+                self.dim_text_width += self.tol_text_width
+
+            elif self.dim_limits:
+                # limits show the upper and lower limit of the measurement as stacked values
+                # and with the size of tolerances
+                measurement = self.measurement * self.dim_measurement_factor
+                self.measurement_upper_limit = measurement + self.tol_maximum
+                self.measurement_lower_limit = measurement - self.tol_minimum
+                self.tol_text_upper = self.format_tolerance_text(self.measurement_upper_limit)
+                self.tol_text_lower = self.format_tolerance_text(self.measurement_lower_limit)
+                self.tol_text_width = self.tolerance_text_width(max(len(self.tol_text_upper), len(self.tol_text_lower)))
+
+                # only limits are displayed so:
+                self.dim_text_width = self.tol_text_width
 
         # default rotation is angle of dimension line, from center to point on circle.
         rotation = self.dim_line_angle
@@ -1337,7 +1359,13 @@ class RadiusDimension(BaseDimensionRenderer):
             else:
                 self.add_radial_ext_line_default(arrow_connection_point)
         else:
-            self.add_radial_dim_line(arrow_connection_point)
+            if self.text_movement_rule == 1:
+                # move text, add leader -> dimline from text to point on circle
+                self.add_radial_dim_line_from_text(self.center.lerp(self.point_on_circle), arrow_connection_point)
+                self.add_center_mark()
+            else:
+                # dimline from center to point on circle
+                self.add_radial_dim_line(arrow_connection_point)
 
     def render_user_location(self) -> None:
         """ Create dimension geometry at user defined dimension locations. """
@@ -1363,7 +1391,14 @@ class RadiusDimension(BaseDimensionRenderer):
             if self.text_inside_horizontal:
                 self.add_horiz_ext_line_user(arrow_connection_point)
             else:
-                self.add_radial_dim_line(arrow_connection_point)
+                if self.text_movement_rule == 2:  # move text, no leader!
+                    # dimline from center to point on circle
+                    self.add_radial_dim_line(arrow_connection_point)
+                else:
+                    # move text, add leader -> dimline from text to point on circle
+                    self.add_radial_dim_line_from_text(self.user_location, arrow_connection_point)
+                    self.add_center_mark()
+
         self.text_outside = preserve_outside
 
     def add_arrow(self) -> Vec2:
@@ -1396,6 +1431,14 @@ class RadiusDimension(BaseDimensionRenderer):
         """  Add radial dimension line. """
         attribs = self.dim_line_attributes()
         self.add_line(self.center, end, dxfattribs=attribs, remove_hidden_lines=True)
+
+    def add_radial_dim_line_from_text(self, start, end: 'Vertex') -> None:
+        """  Add radial dimension line, starting point at the measurement text. """
+        attribs = self.dim_line_attributes()
+        hshift = self.dim_text_width / 2
+        if self.vertical_placement != 0:  # not center
+            hshift = -hshift
+        self.add_line(start + self.dim_line_vec * hshift, end, dxfattribs=attribs, remove_hidden_lines=False)
 
     def add_horiz_ext_line_default(self, start: 'Vertex') -> None:
         """ Add horizontal outside extension line from start for default locations. """
@@ -1460,8 +1503,8 @@ class RadiusDimension(BaseDimensionRenderer):
             mark_x_vec = Vec2((mark_size, 0))
             mark_y_vec = Vec2((0, mark_size))
 
-        self.add_line(center-mark_x_vec, center+mark_x_vec)
-        self.add_line(center-mark_y_vec, center+mark_y_vec)
+        self.add_line(center - mark_x_vec, center + mark_x_vec)
+        self.add_line(center - mark_y_vec, center + mark_y_vec)
 
     def transform_ucs_to_wcs(self) -> None:
         """
