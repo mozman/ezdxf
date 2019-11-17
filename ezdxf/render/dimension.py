@@ -163,9 +163,6 @@ class BaseDimensionRenderer:
         self.text_vertical_position = get('dimtvp', 0.)  # type: float  # not supported yet
 
         self.text_movement_rule = get('dimtmove', 2)  # type: int # move text freely
-        if self.text_movement_rule == 0:
-            # moves the dimension line with dimension text and makes no sense for ezdxf (just set `base` argument)
-            self.text_movement_rule = 2
 
         # requires a leader?
         self.text_has_leader = self.user_location is not None and self.text_movement_rule == 1  # type: bool
@@ -728,6 +725,10 @@ class LinearDimension(BaseDimensionRenderer):
 
     def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
         super().__init__(dimension, ucs, override)
+        if self.text_movement_rule == 0:
+            # moves the dimension line with dimension text, this makes no sense for ezdxf (just set `base` argument)
+            self.text_movement_rule = 2
+
         self.oblique_angle = self.dimension.get_dxf_attrib('oblique_angle', 90)  # type: float
         self.dim_line_angle = self.dimension.get_dxf_attrib('angle', 0)  # type: float
         self.dim_line_angle_rad = math.radians(self.dim_line_angle)  # type: float
@@ -1174,6 +1175,14 @@ class RadiusDimension(BaseDimensionRenderer):
     """
     Radial dimension line renderer.
 
+    Supported render types:
+    - default location inside, text aligned with radial dimension line
+    - default location inside horizontal text
+    - default location outside, text aligned with radial dimension line
+    - default location outside horizontal text
+    - user defined location, text aligned with radial dimension line
+    - user defined location horizontal text
+
     Args:
         dimension: DXF entity DIMENSION
         ucs: user defined coordinate system
@@ -1181,18 +1190,16 @@ class RadiusDimension(BaseDimensionRenderer):
 
     """
 
-    # supported sezenarios:
-    # - default location inside
-    # - default location inside horizontal
-    # - default location outside
-    # - default location outside horizontal
-    # - user location without leader
-    # - user location with leader
-
     def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
         super().__init__(dimension, ucs, override)
         self.center = Vec2(self.dimension.dxf.defpoint)
         self.point_on_circle = Vec2(self.dimension.dxf.defpoint4)
+        # modify parameters for special scenarios
+        if self.user_location is None:  # default location
+            if self.text_inside and self.text_inside_horizontal and self.text_movement_rule == 1:  # move text, add leader
+                # use algorithm for user define dimension line location
+                self.user_location = self.center.lerp(self.point_on_circle)
+                self.text_valign = 0  # text vertical centered
 
         direction = self.point_on_circle - self.center
         self.dim_line_vec = direction.normalize()
@@ -1200,7 +1207,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.measurement = direction.magnitude
         self.outside_default_distance = self.measurement + 2 * self.arrow_size
         self.outside_default_defpoint = self.center + (self.dim_line_vec * self.outside_default_distance)
-
+        self.outside_text_force_dimline = self.dim_style.get('dimtofl', 1)
         # final dimension text (without limits or tolerance)
         self.text = self.text_override(self.measurement * self.dim_measurement_factor)  # type: str
 
@@ -1213,17 +1220,28 @@ class RadiusDimension(BaseDimensionRenderer):
         if self.text:
             # text width and required space
             self.dim_text_width = self.text_width(self.text)  # type: float
+            if self.dim_tolerance:
+                self.dim_text_width += self.tol_text_width
 
-        # user_text_rotation always overrides default rotation, as absolute angle (x-axis=0)
-        if self.user_text_rotation is not None:
-            rotation = self.user_text_rotation
-        else:
-            # default rotation is angle of dimension line, from center to point on circle.
-            rotation = self.dim_line_angle
-            if self.text_outside and self.text_outside_horizontal:
-                rotation = 0
-            elif self.text_inside and self.text_inside_horizontal:
-                rotation = 0
+            elif self.dim_limits:
+                # limits show the upper and lower limit of the measurement as stacked values
+                # and with the size of tolerances
+                measurement = self.measurement * self.dim_measurement_factor
+                self.measurement_upper_limit = measurement + self.tol_maximum
+                self.measurement_lower_limit = measurement - self.tol_minimum
+                self.tol_text_upper = self.format_tolerance_text(self.measurement_upper_limit)
+                self.tol_text_lower = self.format_tolerance_text(self.measurement_lower_limit)
+                self.tol_text_width = self.tolerance_text_width(max(len(self.tol_text_upper), len(self.tol_text_lower)))
+
+                # only limits are displayed so:
+                self.dim_text_width = self.tol_text_width
+
+        # default rotation is angle of dimension line, from center to point on circle.
+        rotation = self.dim_line_angle
+        if self.text_outside and self.text_outside_horizontal:
+            rotation = 0
+        elif self.text_inside and self.text_inside_horizontal:
+            rotation = 0
 
         # final absolute text rotation (x-axis=0)
         self.text_rotation = normalize_text_angle(rotation, fix_upside_down=True)
@@ -1239,7 +1257,7 @@ class RadiusDimension(BaseDimensionRenderer):
             gap=self.text_gap * .75
         )
         # write final text location into DIMENSION entity
-        if self.user_location:  # todo
+        if self.user_location:
             self.dimension.dxf.text_midpoint = self.user_location
         # default locations
         elif self.text_outside and self.text_outside_horizontal:
@@ -1255,24 +1273,14 @@ class RadiusDimension(BaseDimensionRenderer):
         return text
 
     def get_text_location(self) -> Vec2:
-        """
-        Get text midpoint in UCS from user defined location or default text location.
-
-        """
-        # apply relative text shift as user location override without leader
+        """ Returns text midpoint from user defined location or default text location. """
         if self.user_location is not None:
-            location = self.user_location
-            if self.relative_user_location:
-                location = self.point_on_circle + location
+            return self.get_user_defined_text_location()
         else:
-            location = self.default_text_location()
-        return location
+            return self.get_default_text_location()
 
-    def default_text_location(self) -> Vec2:
-        """
-        Calculate default text location in UCS based on `self.text_valign` and `self.text_outside`
-
-        """
+    def get_default_text_location(self) -> Vec2:
+        """ Returns default text midpoint based on `self.text_valign` and `self.text_outside` """
         if self.text_outside and self.text_outside_horizontal:
             hdist = self.dim_text_width / 2.
             if self.vertical_placement == 0:  # shift text horizontal if vertical centered
@@ -1293,45 +1301,35 @@ class RadiusDimension(BaseDimensionRenderer):
             text_midpoint = self.point_on_circle + (self.dim_line_vec * hdist)
         return text_midpoint + (vertical_direction * vertical_distance)
 
+    def get_user_defined_text_location(self) -> Vec2:
+        """ Returns text midpoint for user defined dimension location. """
+        text_outside_horiz = self.text_outside and self.text_outside_horizontal
+        text_inside_horiz = self.text_inside and self.text_inside_horizontal
+        if text_outside_horiz or text_inside_horiz:
+            hdist = self.dim_text_width / 2
+            if self.vertical_placement == 0:  # shift text horizontal if vertical centered
+                hdist += self.arrow_size
+            if self.user_location.x <= self.point_on_circle.x:
+                hdist = -hdist
+            vdist = self.text_vertical_distance()
+            return self.user_location + Vec2((hdist, vdist))
+        else:
+            text_normal_vec = Vec2.from_deg_angle(self.text_rotation).orthogonal()
+            return self.user_location + text_normal_vec * self.text_vertical_distance()
+
     def is_location_outside(self, location: Vec2) -> bool:
         radius = (location - self.center).magnitude
         return radius > self.measurement
 
     def render(self, block: 'GenericLayoutType') -> None:
-        """
-        Main method to create dimension geometry of basic DXF entities in the associated BLOCK layout.
-
-        Args:
-            block: target BLOCK for rendering
-
-        """
+        """ Create dimension geometry of basic DXF entities in the associated BLOCK layout. """
         # call required to setup some requirements
         super().render(block)
-        if self.user_location is not None:
-            self.render_user_location()
-        else:
-            self.render_default_location()
-        # add POINT entities at definition points
-        self.add_defpoints([self.center, self.point_on_circle])
-
-    def render_default_location(self) -> None:
-        """ Create dimension geometry at the default locations. """
-        # radius dimension has no extension lines!
-        # add dimension line
         if not self.suppress_dim1_line:
-            # add arrow symbol (block references)
-            if not self.suppress_arrow1:
-                arrow_connection_point = self.add_arrow()
+            if self.user_location is not None:
+                self.render_user_location()
             else:
-                arrow_connection_point = self.point_on_circle
-            if self.text_outside:
-                self.add_dimension_line(self.point_on_circle)
-                if self.text_outside_horizontal:
-                    self.add_horiz_ext_line(arrow_connection_point)
-                else:
-                    self.add_radial_ext_line(arrow_connection_point)
-            else:
-                self.add_dimension_line(arrow_connection_point)
+                self.render_default_location()
 
         # add measurement text as last entity to see text fill properly
         if self.text:
@@ -1344,16 +1342,67 @@ class RadiusDimension(BaseDimensionRenderer):
         # add POINT entities at definition points
         self.add_defpoints([self.center, self.point_on_circle])
 
+    def render_default_location(self) -> None:
+        """ Create dimension geometry at the default dimension line locations. """
+        if not self.suppress_arrow1:
+            arrow_connection_point = self.add_arrow()
+        else:
+            arrow_connection_point = self.point_on_circle
+
+        if self.text_outside:
+            if self.outside_text_force_dimline:
+                self.add_radial_dim_line(self.point_on_circle)
+            else:
+                self.add_center_mark()
+            if self.text_outside_horizontal:
+                self.add_horiz_ext_line_default(arrow_connection_point)
+            else:
+                self.add_radial_ext_line_default(arrow_connection_point)
+        else:
+            if self.text_movement_rule == 1:
+                # move text, add leader -> dimline from text to point on circle
+                self.add_radial_dim_line_from_text(self.center.lerp(self.point_on_circle), arrow_connection_point)
+                self.add_center_mark()
+            else:
+                # dimline from center to point on circle
+                self.add_radial_dim_line(arrow_connection_point)
+
     def render_user_location(self) -> None:
-        """ Create dimension geometry at user defiend locations. """
+        """ Create dimension geometry at user defined dimension locations. """
+        preserve_outside = self.text_outside
+        leader = self.text_movement_rule != 2
+        if not leader:
+            self.text_outside = False  # render dimension line like text inside
+        # add arrow symbol (block references)
+        if not self.suppress_arrow1:
+            arrow_connection_point = self.add_arrow()
+        else:
+            arrow_connection_point = self.point_on_circle
+        if self.text_outside:
+            if self.outside_text_force_dimline:
+                self.add_radial_dim_line(self.point_on_circle)
+            else:
+                self.add_center_mark()
+            if self.text_outside_horizontal:
+                self.add_horiz_ext_line_user(arrow_connection_point)
+            else:
+                self.add_radial_ext_line_user(arrow_connection_point)
+        else:
+            if self.text_inside_horizontal:
+                self.add_horiz_ext_line_user(arrow_connection_point)
+            else:
+                if self.text_movement_rule == 2:  # move text, no leader!
+                    # dimline from center to point on circle
+                    self.add_radial_dim_line(arrow_connection_point)
+                else:
+                    # move text, add leader -> dimline from text to point on circle
+                    self.add_radial_dim_line_from_text(self.user_location, arrow_connection_point)
+                    self.add_center_mark()
+
+        self.text_outside = preserve_outside
 
     def add_arrow(self) -> Vec2:
-        """
-        Add arrow or tick to dimension line.
-
-        Returns: dimension line connection point
-
-        """
+        """ Add arrow or tick to dimension line, returns dimension line connection point. """
         attribs = {
             'color': self.dim_line_color,
         }
@@ -1378,25 +1427,21 @@ class RadiusDimension(BaseDimensionRenderer):
             location = connection_point(arrow_name, location, scale, angle)
         return location
 
-    def add_dimension_line(self, end: 'Vertex') -> None:
-        """
-        Add dimension line to dimension BLOCK. Removes line parts hidden by dimension text.
-
-        Args:
-            end: dimension line end
-
-        """
+    def add_radial_dim_line(self, end: 'Vertex') -> None:
+        """  Add radial dimension line. """
         attribs = self.dim_line_attributes()
         self.add_line(self.center, end, dxfattribs=attribs, remove_hidden_lines=True)
 
-    def add_horiz_ext_line(self, start: 'Vertex') -> None:
-        """
-        Add horizontal outside extension line from start.
+    def add_radial_dim_line_from_text(self, start, end: 'Vertex') -> None:
+        """  Add radial dimension line, starting point at the measurement text. """
+        attribs = self.dim_line_attributes()
+        hshift = self.dim_text_width / 2
+        if self.vertical_placement != 0:  # not center
+            hshift = -hshift
+        self.add_line(start + self.dim_line_vec * hshift, end, dxfattribs=attribs, remove_hidden_lines=False)
 
-        Args:
-            start: start of extension line
-
-        """
+    def add_horiz_ext_line_default(self, start: 'Vertex') -> None:
+        """ Add horizontal outside extension line from start for default locations. """
         attribs = self.dim_line_attributes()
         self.add_line(start, self.outside_default_defpoint, dxfattribs=attribs)
         if self.vertical_placement == 0:
@@ -1409,33 +1454,57 @@ class RadiusDimension(BaseDimensionRenderer):
         end = self.outside_default_defpoint + Vec2((hdist, 0))
         self.add_line(self.outside_default_defpoint, end, dxfattribs=attribs)
 
-    def add_radial_ext_line(self, start: 'Vertex') -> None:
-        """
-        Add radial outside extension line from start.
+    def add_horiz_ext_line_user(self, start: 'Vertex') -> None:
+        """ Add horizontal extension line from start for user defined locations. """
+        attribs = self.dim_line_attributes()
+        self.add_line(start, self.user_location, dxfattribs=attribs)
+        if self.vertical_placement == 0:
+            hdist = self.arrow_size
+        else:
+            hdist = self.dim_text_width
+        if self.user_location.x <= self.point_on_circle.x:
+            hdist = -hdist
+        end = self.user_location + Vec2((hdist, 0))
+        self.add_line(self.user_location, end, dxfattribs=attribs)
 
-        Args:
-            start: start of extension line
-
-        """
+    def add_radial_ext_line_default(self, start: 'Vertex') -> None:
+        """ Add radial outside extension line from start for default locations. """
         attribs = self.dim_line_attributes()
         length = self.text_gap + self.dim_text_width
         end = start + self.dim_line_vec * length
         self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
+    def add_radial_ext_line_user(self, start: 'Vertex') -> None:
+        """ Add radial outside extension line from start for user defined location. """
+        attribs = self.dim_line_attributes()
+        length = self.dim_text_width / 2
+        if self.vertical_placement == 0:
+            length = -length
+        end = self.user_location + self.dim_line_vec * length
+        self.add_line(start, end, dxfattribs=attribs)
+
     def add_measurement_text(self, dim_text: str, pos: Vec2, rotation: float) -> None:
-        """
-        Add measurement text to dimension BLOCK.
-
-        Args:
-            dim_text: dimension text
-            pos: text location
-            rotation: text rotation in degrees
-
-        """
+        """ Add measurement text to dimension BLOCK. """
         attribs = {
             'color': self.text_color,
         }
         self.add_text(dim_text, pos=Vector(pos), rotation=rotation, dxfattribs=attribs)
+
+    def add_center_mark(self):
+        mark_size = self.dim_style.get('dimcen', 0)
+        if mark_size == 0:
+            return
+        center = self.center
+        if mark_size > 0:  # draw mark
+            mark_x_vec = Vec2((mark_size, 0))
+            mark_y_vec = Vec2((0, mark_size))
+        else:  # draw line
+            mark_size = -mark_size + self.measurement
+            mark_x_vec = Vec2((mark_size, 0))
+            mark_y_vec = Vec2((0, mark_size))
+
+        self.add_line(center - mark_x_vec, center + mark_x_vec)
+        self.add_line(center - mark_y_vec, center + mark_y_vec)
 
     def transform_ucs_to_wcs(self) -> None:
         """

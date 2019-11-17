@@ -104,19 +104,20 @@ def setup_dimstyles(doc: 'Drawing', domain: str = 'all') -> None:
         pass
     if domain in ('radius', 'all'):
         ez_radius = cast('DimStyle', doc.dimstyles.duplicate_entry('EZDXF', 'EZ_RADIUS'))
-        ez_radius.set_arrows(blk=ARROWS.closed_blank)  # default closed filled arrow
+        ez_radius.set_arrows(blk=ARROWS.closed_blank)
         ez_radius.dxf.dimasz = 0.25  # set arrow size
-
-        # use leader, is the best setting for text outside to preserves appearance of DIMENSION entity,
+        ez_radius.dxf.dimtofl = 0  # force dimension line if text outside
+        ez_radius.dxf.dimcen = 0.25  # size of center mark, 0=disable, >0=draw mark, <0=draw lines
+        # dimtmove: use leader, is the best setting for text outside to preserves appearance of DIMENSION entity,
         # if editing DIMENSION afterwards in BricsCAD (AutoCAD)
         ez_radius.dxf.dimtmove = 1
 
         ez_radius_inside = doc.dimstyles.duplicate_entry('EZ_RADIUS', 'EZ_RADIUS_INSIDE')
-        # dimtmove = 0: keep dim line with text, is the best setting for text inside to preserves appearance of
+        # dimtmove: keep dim line with text, is the best setting for text inside to preserves appearance of
         # DIMENSION entity, if editing DIMENSION afterwards in BricsCAD (AutoCAD)
         ez_radius_inside.dxf.dimtmove = 0
         ez_radius_inside.dxf.dimtix = 1  # force text inside
-        ez_radius_inside.dxf.dimatfit = 0    # force text inside
+        ez_radius_inside.dxf.dimatfit = 0  # required by BricsCAD (AutoCAD) to force text inside
         ez_radius_inside.dxf.dimtad = 0  # center text vertical
 
 
