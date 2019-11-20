@@ -898,7 +898,7 @@ class CreatorInterface:
         Add horizontal, vertical and rotated :class:`~ezdxf.entities.Dimension` line.
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering
-        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+        function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default. See also: :ref:`tut_linear_dimension`
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object - to create the necessary dimension
         geometry, you have to call :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step process
@@ -959,7 +959,8 @@ class CreatorInterface:
         """
         Add multiple linear dimensions for iterable `points`. If an :class:`~ezdxf.math.UCS` is used for dimension line
         rendering, all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the
-        rendering function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+        rendering function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default. See also:
+        :ref:`tut_linear_dimension`
 
         This method sets many design decisions by itself, the necessary geometry will be generated automatically, no
         required nor possible :meth:`~ezdxf.entities.DimStyleOverride.render` call.
@@ -1007,7 +1008,8 @@ class CreatorInterface:
         """
         Add linear dimension aligned with measurement points `p1` and `p2`. If an :class:`~ezdxf.math.UCS` is used
         for dimension line rendering, all point definitions in UCS coordinates, translation into :ref:`WCS`
-        and :ref:`OCS` is done by the rendering function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by default.
+        and :ref:`OCS` is done by the rendering function. Extrusion vector is defined by UCS or ``(0, 0, 1)`` by
+        default. See also: :ref:`tut_linear_dimension`
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object, to create the necessary
         dimension geometry, you have to  call :meth:`DimStyleOverride.render` manually, this two step process
@@ -1259,6 +1261,7 @@ class CreatorInterface:
         """
         Add a radius :class:`~ezdxf.entities.Dimension` line. The radius dimension line requires a `center` point and
         a point `mpoint` on the circle or as an alternative a `radius` and a dimension line `angle` in degrees.
+        See also: :ref:`tut_radius_dimension`
 
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS` and :ref:`OCS` is done by the rendering

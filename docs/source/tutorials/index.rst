@@ -20,3 +20,5 @@ Tutorials
    underlay
    linetypes
    ocs_usage
+   linear_dimension
+   radius_dimension

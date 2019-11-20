@@ -6,6 +6,7 @@ import pytest
 from ezdxf.entities.circle import Circle
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Vector
 
 TEST_CLASS = Circle
 TEST_TYPE = 'CIRCLE'
@@ -60,7 +61,7 @@ def test_registered():
 
 
 def test_default_init():
-    entity= TEST_CLASS()
+    entity = TEST_CLASS()
     assert entity.dxftype() == TEST_TYPE
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
@@ -93,6 +94,28 @@ def test_load_from_text(entity):
     assert entity.dxf.color == 256, 'default color is 256 (by layer)'
     assert entity.dxf.center == (0, 0, 0)
     assert entity.dxf.radius == 1
+
+
+def test_get_point_2d_circle():
+    radius = 2.5
+    z = 3.0
+    circle = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'center': (1, 2, z),
+        'radius': radius,
+    })
+    assert circle.get_point(90).isclose(Vector(0, radius, z))
+
+
+def test_get_point_with_ocs():
+    radius = 2.5
+    z = 3.0
+    circle = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'center': (1, 2, z),
+        'radius': radius,
+        'extrusion': (0, 0, -1),
+    })
+    assert circle.get_point(90).isclose(Vector(0, radius, -z), abs_tol=1e-6)
+    assert circle.get_point(180).isclose(Vector(radius, 0, -z), abs_tol=1e-6)
 
 
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])

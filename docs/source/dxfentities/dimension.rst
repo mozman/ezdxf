@@ -25,7 +25,7 @@ Factory Functions
 `Angular Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim`
 `Angular 3P Dimension (DXF)`_               :meth:`~ezdxf.layouts.BaseLayout.add_angular_3p_dim`
 `Diameter Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_diameter_dim`
-`Radial Dimension (DXF)`_                   :meth:`~ezdxf.layouts.BaseLayout.add_radial_dim`
+`Radius Dimension (DXF)`_                   :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim`
 `Ordinate Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim`
 =========================================== ==========================================
 
@@ -63,7 +63,7 @@ Factory Functions
         1   `Aligned Dimension (DXF)`_
         2   `Angular Dimension (DXF)`_
         3   `Diameter Dimension (DXF)`_
-        4   `Radial Dimension (DXF)`_
+        4   `Radius Dimension (DXF)`_
         5   `Angular 3P Dimension (DXF)`_
         6   `Ordinate Dimension (DXF)`_
         32  Indicates that graphical representation :attr:`geometry` is referenced by this dimension only.
@@ -266,6 +266,8 @@ The :class:`DimStyleOverride` class manages all the complex dependencies between
 
     .. automethod:: set_location
 
+    .. automethod:: set_user_location
+
     .. automethod:: render
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-239A1BDD-7459-4BB9-8DD7-08EC79BF1EB0
@@ -282,7 +284,7 @@ The :class:`DimStyleOverride` class manages all the complex dependencies between
 
 .. _Ordinate Dimension (DXF): http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-72F01288-0D63-43E8-8179-8CE3BA544C40
 
-.. _Radial Dimension (DXF): http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-165A992D-9017-4C1E-B8CC-E70A17191BFE
+.. _Radius Dimension (DXF): http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-165A992D-9017-4C1E-B8CC-E70A17191BFE
 
 .. _Diameter Dimension (DXF): http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-165A992D-9017-4C1E-B8CC-E70A17191BFE
 

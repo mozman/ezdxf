@@ -2,7 +2,7 @@
 # License: MIT License
 # created 2019-02-15
 import pytest
-
+from ezdxf.math import Vector
 from ezdxf.entities.arc import Arc
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -100,6 +100,21 @@ def test_default_new():
     assert entity.dxf.shadow_mode == 1
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
     assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+
+
+def test_get_start_and_end_point_with_ocs():
+    radius = 2.5
+    z = 3.0
+    arc = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
+        'center': (1, 2, z),
+        'radius': radius,
+        'start_angle': 90,
+        'end_angle': 180,
+        'extrusion': (0, 0, -1),
+    })
+
+    assert arc.start_point.isclose(Vector(0, radius, -z), abs_tol=1e-6)
+    assert arc.end_point.isclose(Vector(radius, 0, -z), abs_tol=1e-6)
 
 
 def test_load_from_text(entity):

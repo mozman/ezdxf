@@ -2,6 +2,8 @@
 # License: MIT License
 # Created 2019-02-15
 from typing import TYPE_CHECKING
+import math
+
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
@@ -45,3 +47,16 @@ class Circle(DXFGraphic):
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_circle.name)
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness', 'extrusion'])
+
+    def get_point(self, angle: float) -> Vector:
+        """
+        Returns point on circle at `angle` in WCS. This method takes into account a local OCS.
+
+        Args:
+            angle: angle in OCS as degrees, angle goes counter clockwise around the extrusion vector, ocs x-axis=0 deg.
+
+        """
+        v = Vector.from_deg_angle(angle, self.dxf.radius)
+        # all points of a planar entity have the same z-coordinate in the OCS.
+        v = v.replace(z=self.dxf.center.z)
+        return self.ocs().to_wcs(v)

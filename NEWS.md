@@ -7,8 +7,10 @@ Version 0.11a0 - dev
 
 - NEW: `Dimension.get_measurement()` supports angular, angular3p and ordinate dimensions
 - NEW: `Drawing.set_modelspace_vport()` set initial view/zoom location for the modelspace
-- NEW: `Layout.add_radius_dim()` implemented, but for now just at default measurement locations, user 
-  defined measurement location is not supported yet.
+- NEW: `Layout.add_radius_dim()` implemented
+- NEW: shortcut calls `Layout.add_radius_dim_2p()` and `Layout.add_radius_dim_cra()`
+- NEW: `Circle.get_point(angle)`:  returns point at angle in WCS
+- NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
 
 Version 0.10.2 - 2019-10-05
 ---------------------------

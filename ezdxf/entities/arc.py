@@ -10,7 +10,7 @@ from .circle import acdb_circle, Circle
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Vector
 
 __all__ = ['Arc']
 
@@ -46,3 +46,10 @@ class Arc(Circle):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['start_angle', 'end_angle'])
 
+    @property
+    def start_point(self) -> 'Vector':
+        return self.get_point(self.dxf.start_angle)
+
+    @property
+    def end_point(self) -> 'Vector':
+        return self.get_point(self.dxf.end_angle)

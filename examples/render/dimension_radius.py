@@ -7,15 +7,11 @@ import sys
 import pathlib
 import random
 import ezdxf
-from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.math import Vector, UCS
-from ezdxf.render.arrows import ARROWS
 import logging
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DimStyle, DimStyleOverride, Drawing
-
-new = ezdxf.new
 
 # ========================================
 # IMPORTANT:
@@ -33,7 +29,7 @@ logging.basicConfig(level='WARNING')
 # ========================================
 # Setup your preferred output directory
 # ========================================
-OUTDIR = pathlib.Path(r'C:\Users\manfred\Desktop\Outbox')
+OUTDIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 if not OUTDIR.exists():
     OUTDIR = pathlib.Path()
 
@@ -68,7 +64,7 @@ def multiple_locations(delta=10, center=(0, 0)):
 
 
 def radius_default_outside(dxfversion='R2000', delta=10):
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
@@ -105,7 +101,7 @@ def radius_default_inside(dxfversion='R2000', delta=10, dimtmove=0):
                                  })
         dim.render(discard=BRICSCAD)
 
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     style = doc.dimstyles.get('EZ_RADIUS_INSIDE')
     style.dxf.dimtmove = dimtmove
 
@@ -141,7 +137,7 @@ def radius_default_outside_horizontal(dxfversion='R2000', delta=10):
                                  })
         dim.render(discard=BRICSCAD)
 
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
@@ -154,7 +150,7 @@ def radius_default_outside_horizontal(dxfversion='R2000', delta=10):
 
 
 def radius_default_inside_horizontal(dxfversion='R2000', delta=10, dimtmove=0):
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     style = doc.dimstyles.get('EZ_RADIUS_INSIDE')
     style.dxf.dimtmove = dimtmove
 
@@ -183,7 +179,7 @@ def radius_user_defined_outside(dxfversion='R2000', delta=15):
                                  })
         dim.render(discard=BRICSCAD)
 
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
@@ -207,7 +203,7 @@ def radius_user_defined_outside_horizontal(dxfversion='R2000', delta=15):
                                  })
         dim.render(discard=BRICSCAD)
 
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
@@ -230,7 +226,7 @@ def radius_user_defined_inside(dxfversion='R2000', delta=10, dimtmove=0):
                                  })
         dim.render(discard=BRICSCAD)
 
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     style = doc.dimstyles.get('EZ_RADIUS')
     style.dxf.dimtmove = dimtmove
 
@@ -257,7 +253,7 @@ def radius_user_defined_inside_horizontal(dxfversion='R2000', delta=10):
                                  })
         dim.render(discard=BRICSCAD)
 
-    doc = new(dxfversion, setup=True)
+    doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
         angle = Vector(x, y).angle_deg
