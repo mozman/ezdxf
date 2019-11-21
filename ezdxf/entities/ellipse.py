@@ -59,7 +59,7 @@ class Ellipse(DXFGraphic):
             params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
                     extrusion vector, major_axis = local x-axis = 0 rad.
 
-        .. versionadded:: v0.11
+        .. versionadded:: 0.11
 
         """
         # get main axis

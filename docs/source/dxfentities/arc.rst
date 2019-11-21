@@ -50,6 +50,4 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         .. versionadded:: 0.11
 
-    .. automethod:: vertices(angle:Iterable[float]) -> Iterable[Vector]
-
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0B14D8F1-0EBA-44BF-9108-57D8CE614BC8
