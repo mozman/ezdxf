@@ -56,7 +56,6 @@ class Circle(DXFGraphic):
             angle: angle in OCS as degrees, angle goes counter clockwise around the extrusion vector, ocs x-axis=0 deg.
 
         """
-        v = Vector.from_deg_angle(angle, self.dxf.radius)
-        # all points of a planar entity have the same z-coordinate in the OCS.
-        v = v.replace(z=self.dxf.center.z)
+        v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
+        # convert from OCS to WCS
         return self.ocs().to_wcs(v)

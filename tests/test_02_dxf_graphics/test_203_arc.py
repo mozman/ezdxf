@@ -103,18 +103,17 @@ def test_default_new():
 
 
 def test_get_start_and_end_point_with_ocs():
-    radius = 2.5
-    z = 3.0
+
     arc = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'center': (1, 2, z),
-        'radius': radius,
+        'center': (1, 2, 3),
+        'radius': 2.5,
         'start_angle': 90,
         'end_angle': 180,
         'extrusion': (0, 0, -1),
     })
 
-    assert arc.start_point.isclose(Vector(0, radius, -z), abs_tol=1e-6)
-    assert arc.end_point.isclose(Vector(radius, 0, -z), abs_tol=1e-6)
+    assert arc.start_point.isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
+    assert arc.end_point.isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
 
 
 def test_load_from_text(entity):
