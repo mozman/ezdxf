@@ -103,7 +103,8 @@ def test_get_point_2d_circle():
         'center': (1, 2, z),
         'radius': radius,
     })
-    assert circle.get_point(90).isclose(Vector(1, 2+radius, z))
+    vertices = list(circle.vertices([90]))
+    assert vertices[0].isclose(Vector(1, 2+radius, z))
 
 
 def test_get_point_with_ocs():
@@ -112,8 +113,9 @@ def test_get_point_with_ocs():
         'radius': 2.5,
         'extrusion': (0, 0, -1),
     })
-    assert circle.get_point(90).isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
-    assert circle.get_point(180).isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
+    vertices = list(circle.vertices([90, 180]))
+    assert vertices[0].isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
+    assert vertices[1].isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
 
 
 @pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])

@@ -4,6 +4,7 @@
 import pytest
 import math
 
+from ezdxf.math import Vector
 from ezdxf.entities.ellipse import Ellipse
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -83,6 +84,30 @@ def test_load_from_text(entity):
     assert entity.dxf.ratio == 1
     assert entity.dxf.start_param == 0
     assert entity.dxf.end_param == math.pi * 2
+
+
+def test_get_start_and_end_vertex():
+
+    ellipse = Ellipse.new(handle='ABBA', owner='0', dxfattribs={
+        'center': (1, 2, 3),
+        'major_axis': (4, 3, 0),
+        'ratio': .7,
+        'start_param': math.pi/2,
+        'end_param': math.pi,
+        'extrusion': (0, 0, -1),
+    })
+
+    start, end = list(ellipse.vertices([
+        ellipse.dxf.start_param,
+        ellipse.dxf.end_param,
+    ]))
+    # test values from BricsCAD
+    assert start.isclose(Vector(3.1, -0.8, 3), abs_tol=1e-6)
+    assert end.isclose(Vector(-3, -1, 3), abs_tol=1e-6)
+
+    # for convenience, but Ellipse.vertices is much more efficient:
+    assert ellipse.start_point.isclose(Vector(3.1, -0.8, 3), abs_tol=1e-6)
+    assert ellipse.end_point.isclose(Vector(-3, -1, 3), abs_tol=1e-6)
 
 
 def test_write_dxf():

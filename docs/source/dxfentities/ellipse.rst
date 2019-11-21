@@ -42,4 +42,18 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         End parameter (float), default value is ``2*pi``.
 
+    .. attribute:: start_point
+
+        Returns the start point of the ellipse in WCS.
+
+        .. versionadded:: 0.11
+
+    .. attribute:: end_point
+
+        Returns the end point of the ellipse in WCS.
+
+        .. versionadded:: 0.11
+
+    .. automethod:: vertices(params:Iterable[float]) -> Iterable[Vector]
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-107CB04F-AD4D-4D2F-8EC9-AC90888063AB

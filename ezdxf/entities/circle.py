@@ -1,8 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING
-import math
+from typing import TYPE_CHECKING, Iterable
 
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -48,14 +47,19 @@ class Circle(DXFGraphic):
         # for all DXF versions
         self.dxf.export_dxf_attribs(tagwriter, ['center', 'radius', 'thickness', 'extrusion'])
 
-    def get_point(self, angle: float) -> Vector:
+    def vertices(self, angles: Iterable[float]) -> Iterable[Vector]:
         """
-        Returns point on circle at `angle` in WCS. This method takes into account a local OCS.
+        Yields vertices of the circle for iterable `angles` in WCS. This method takes into account a local OCS.
 
         Args:
-            angle: angle in OCS as degrees, angle goes counter clockwise around the extrusion vector, ocs x-axis=0 deg.
+            angles: iterable of angles in OCS as degrees, angle goes counter clockwise around the extrusion vector,
+                    ocs x-axis = 0 deg.
+
+        .. versionadded:: 0.11
 
         """
-        v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
-        # convert from OCS to WCS
-        return self.ocs().to_wcs(v)
+        ocs = self.ocs()
+        for angle in angles:
+            v = Vector.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
+            # convert from OCS to WCS
+            yield ocs.to_wcs(v)

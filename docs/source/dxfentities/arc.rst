@@ -42,9 +42,14 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Returns the start point of the arc in WCS. This property takes into account a local OCS.
 
+        .. versionadded:: 0.11
+
     .. attribute:: end_point
 
         Returns the end point of the arc in WCS. This property takes into account a local OCS.
 
+        .. versionadded:: 0.11
+
+    .. automethod:: vertices(angle:Iterable[float]) -> Iterable[Vector]
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0B14D8F1-0EBA-44BF-9108-57D8CE614BC8

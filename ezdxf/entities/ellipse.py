@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 # Created 2019-02-15
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 import math
 from ezdxf.math import Vector
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass, XType
@@ -50,3 +50,46 @@ class Ellipse(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, [
             'center', 'major_axis', 'extrusion', 'ratio', 'start_param', 'end_param',
         ])
+
+    def vertices(self, params: Iterable[float]) -> Iterable[Vector]:
+        """
+        Yields vertices on ellipse for iterable `params` in WCS.
+
+        Args:
+            params: param values in the range from ``0`` to ``2*pi`` in radians, param goes counter clockwise around the
+                    extrusion vector, major_axis = local x-axis = 0 rad.
+
+        .. versionadded:: v0.11
+
+        """
+        # get main axis
+        major_axis = Vector(self.dxf.major_axis)  # local x-axis, 0 rad
+        extrusion = Vector(self.dxf.extrusion)  # local z-axis, normal vector of the ellipse plane
+        minor_axis = extrusion.cross(major_axis)  # local y-axis, pi/2 rad, need only normalized direction
+
+        # normal vectors for local x- and y-axis
+        x_axis = major_axis.normalize()
+        y_axis = minor_axis.normalize()
+
+        # point on ellipse calculation
+        radius_x = major_axis.magnitude
+        radius_y = radius_x * self.dxf.ratio
+        center = Vector(self.dxf.center)
+        for param in params:
+            # all DXF angles in degrees by definition (reference)
+            x = math.cos(param) * radius_x
+            y = math.sin(param) * radius_y
+
+            # construct WCS coordinates, do not convert from OCS to WCS, extrusion defines only the normal vector of
+            # the ellipse plane.
+            yield center + (x_axis * x) + (y_axis * y)
+
+    @property
+    def start_point(self) -> 'Vector':
+        v = list(self.vertices([self.dxf.start_param]))
+        return v[0]
+
+    @property
+    def end_point(self) -> 'Vector':
+        v = list(self.vertices([self.dxf.end_param]))
+        return v[0]

@@ -102,7 +102,7 @@ def test_default_new():
     assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
 
 
-def test_get_start_and_end_point_with_ocs():
+def test_get_start_and_end_vertices_with_ocs():
 
     arc = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
         'center': (1, 2, 3),
@@ -111,9 +111,14 @@ def test_get_start_and_end_point_with_ocs():
         'end_angle': 180,
         'extrusion': (0, 0, -1),
     })
-
+    # convenient properties
     assert arc.start_point.isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
     assert arc.end_point.isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
+
+    # more efficient method:
+    start, end = list(arc.vertices([arc.dxf.start_angle, arc.dxf.end_angle]))
+    assert start.isclose(Vector(-1, 4.5, -3), abs_tol=1e-6)
+    assert end.isclose(Vector(1.5, 2, -3), abs_tol=1e-6)
 
 
 def test_load_from_text(entity):

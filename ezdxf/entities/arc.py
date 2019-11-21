@@ -48,8 +48,10 @@ class Arc(Circle):
 
     @property
     def start_point(self) -> 'Vector':
-        return self.get_point(self.dxf.start_angle)
+        v = list(self.vertices([self.dxf.start_angle]))
+        return v[0]
 
     @property
     def end_point(self) -> 'Vector':
-        return self.get_point(self.dxf.end_angle)
+        v = list(self.vertices([self.dxf.end_angle]))
+        return v[0]
