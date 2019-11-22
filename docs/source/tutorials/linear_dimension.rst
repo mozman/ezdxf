@@ -28,17 +28,23 @@ Horizontal Dimension
 
     import ezdxf
 
-    # DXF R2010 drawing, official DXF version name: 'AC1024',
-    # setup=True setups the default dimension styles
+    # Argument setup=True setups the default dimension styles
     doc = ezdxf.new('R2010', setup=True)
 
-    msp = doc.modelspace()  # add new dimension entities to the modelspace
-    msp.add_line((0, 0), (3, 0))  # add a LINE entity, not required
-    # add a horizontal dimension
-    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), dimstyle='EZDXF')
+    # Add new dimension entities to the modelspace
+    msp = doc.modelspace()
+    # Add a LINE entity, not required
+    msp.add_line((0, 0), (3, 0))
+    # Add a horizontal dimension, default dimension style is 'EZDXF'
+    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0))
     # Necessary second step, to create the BLOCK entity with the dimension geometry.
+    # Additional processing of the dimension line could happen between adding and
+    # rendering call.
     dim.render()
-    doc.saveas('linear_dimension.dxf')
+    doc.saveas('dim_linear_horiz.dxf')
+
+.. image:: gfx/dim_linear_horiz.png
+
 
 The example above creates a horizontal :class:`~ezdxf.entities.Dimension` entity, the default dimension style
 ``'EZDXF'`` is defined as 1 drawing unit is 1m in reality, drawing scale 1:100 and the length factor is 100, which
@@ -54,7 +60,18 @@ returned, the dimension entity is stored as `dim.dimension`.
 Vertical and Rotated Dimension
 ------------------------------
 
-TODO
+Argument `angle` defines the angle of the dimension line in relation to the x-axis of the WCS or UCS, measurement
+is the distance between first and second measurement point in direction of `angle`.
+
+.. code-block:: Python
+
+    # assignment to dim is not necessary, if no additional processing happens
+    msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), angle=-30).render()
+    doc.saveas('dim_linear_rotated.dxf')
+
+.. image:: gfx/dim_linear_rotated.png
+
+For a vertical dimension set argument `angle` to 90 degree, but in this example the vertical distance would be 0.
 
 Aligned Dimension
 -----------------
@@ -76,6 +93,29 @@ User Defined Text Locations
 
 TODO
 
+.. _dimension_line_properties:
+
+Dimension Line Properties
+-------------------------
+
+- Color
+- Linetype
+- Arrows
+- Dimension Line Extension
+
+TODO
+
+.. _extension_line_properties:
+
+Extension Line Properties
+-------------------------
+
+- Color
+- Linetype
+- Length
+
+TODO
+
 .. _overriding_measurement_text:
 
 Overriding Measurement Text
@@ -83,10 +123,18 @@ Overriding Measurement Text
 
 TODO
 
-.. _styling_measurement_text:
+.. _measurement_text_formatting_and_styling:
 
-Styling Measurement Text
-------------------------
+Measurement Text Formatting and Styling
+---------------------------------------
+
+- Decimal Places
+- Decimal Point
+- Rounding
+- Zero Trimming
+- Measurement Factor
+- Text Color
+- Background Filling
 
 TODO
 

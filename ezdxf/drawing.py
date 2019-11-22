@@ -785,6 +785,8 @@ class Drawing:
              height: modelspace area to view
              center: modelspace location to view in the center of the CAD application window.
 
+        .. versionadded:: 0.11
+
         """
         self.viewports.delete_config('*Active')
         vport = cast('VPort', self.viewports.new('*Active'))

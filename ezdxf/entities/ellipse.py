@@ -76,7 +76,7 @@ class Ellipse(DXFGraphic):
         radius_y = radius_x * self.dxf.ratio
         center = Vector(self.dxf.center)
         for param in params:
-            # all DXF angles in degrees by definition (reference)
+            # Ellipse params in radians by definition (DXF Reference)
             x = math.cos(param) * radius_x
             y = math.sin(param) * radius_y
 

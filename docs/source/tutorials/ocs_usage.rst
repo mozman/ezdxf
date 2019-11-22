@@ -8,8 +8,8 @@
 Tutorial for OCS/UCS Usage
 ==========================
 
-First you need an understanding of vectors, if you don't have it, watch the YouTube tutorials of `3Blue1Brown`_ about
-`Linear Algebra`_.
+For OCS/UCS usage is a basic understanding of vectors required, for a brush up watch the YouTube tutorials of
+`3Blue1Brown`_ about `Linear Algebra`_.
 
 Second read the :ref:`Coordinate Systems` introduction please.
 

@@ -61,6 +61,7 @@ def linear_tutorial(dxfversion='R12'):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     msp.add_line((0, 0), (3, 0))
+    msp.add_line((0, 7), (10, 0))
 
     # horizontal DIMENSION
     # Default DimStyle EZDXF: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
@@ -94,6 +95,7 @@ def linear_tutorial(dxfversion='R12'):
     dim2.set_text_align(halign='right')
     dim2.render()
 
+    doc.set_modelspace_vport(height=5, center=(5, 0))
     doc.saveas(OUTDIR / f'dim_linear_{dxfversion}_tutorial.dxf')
 
 
@@ -578,9 +580,10 @@ def linear_EZ_MM(fmt):
     doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = True
+ALL = False
 
 if __name__ == '__main__':
+    linear_tutorial('R2007')
     linear_tutorial_using_tvp()
     linear_tutorial_using_limits('R2000')
     linear_tutorial_using_limits('R12')
