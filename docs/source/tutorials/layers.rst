@@ -11,8 +11,14 @@ Create a Layer Definition
 .. code-block:: python
 
     import ezdxf
+    from ezdxf.tools.standards import linetypes  # some predefined line types
 
     doc = ezdxf.new()
+    
+    for name, desc, pattern in linetypes():
+        if name not in doc.linetypes:
+            doc.linetypes.new(name=name, dxfattribs={'description': desc, 'pattern': pattern})
+    
     msp = modelspace()
     doc.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
 
