@@ -14,6 +14,7 @@ Version 0.11a0 - dev
 - NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
 - NEW: Ellipse properties `start_point` and `end_point` returns start- and end point of ellipse in WCS
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
+- BUGFIX: fixed base point calculation of aligned dimensions
 
 Version 0.10.2 - 2019-10-05
 ---------------------------

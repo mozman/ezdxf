@@ -1037,7 +1037,7 @@ class CreatorInterface:
         p2 = Vector(p2)
         direction = p2 - p1
         angle = direction.angle_deg
-        base = direction.orthogonal().normalize(distance)
+        base = direction.orthogonal().normalize(distance) + p1
         return self.add_linear_dim(
             base=base,
             p1=p1,

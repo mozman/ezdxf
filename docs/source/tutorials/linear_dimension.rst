@@ -16,10 +16,10 @@ Don't expect to get the same rendering results by `ezdxf` as you get from AutoCA
 to be as close to the results rendered by BricsCAD, but it was not possible to implement all
 the various combinations of dimension style parameters.
 
-Text rendering is another problem, because `ezdxf` has no real rendering engine, font properties, like the real
-text width, are not available to `ezdxf` and also my differ slightly for different CAD applications.
-The text properties in `ezdxf` are based on the default monospaced standard font, but for true type fonts space
-around the text is much bigger as needed.
+Text rendering is another problem, because `ezdxf` has no real rendering engine. Some font properties, like the real
+text width, are not available to `ezdxf` and may also vary slightly for different CAD applications.
+The text properties in `ezdxf` are based on the default monospaced standard font, but for TrueType fonts the space
+around the text is much bigger than needed.
 
 Horizontal Dimension
 --------------------
@@ -47,12 +47,13 @@ Horizontal Dimension
 
 
 The example above creates a horizontal :class:`~ezdxf.entities.Dimension` entity, the default dimension style
-``'EZDXF'`` is defined as 1 drawing unit is 1m in reality, drawing scale 1:100 and the length factor is 100, which
-creates a measurement text in cm.
+``'EZDXF'`` and is defined as 1 drawing unit is 1m in reality, the drawing scale 1:100 and the length factor is 100,
+which creates a measurement text in cm.
 
-The `base` point defines the dimension line, `ezdxf` accepts any point on the dimension line, the point `p1` defines
-the start point of the first extension line, which also defines the first measurement point and the point `p2`
-defines the start point of the second extension line, which also defines the second measurement point.
+The `base` point defines the location of the dimension line, `ezdxf` accepts any point on the dimension line,
+the point `p1` defines the start point of the first extension line, which also defines the first measurement point
+and the point `p2` defines the start point of the second extension line, which also defines the second
+measurement point.
 
 The return value `dim` is **not** a dimension entity, instead a :class:`~ezdxf.entities.DimStyleOverride` object is
 returned, the dimension entity is stored as `dim.dimension`.
@@ -76,7 +77,17 @@ For a vertical dimension set argument `angle` to 90 degree, but in this example 
 Aligned Dimension
 -----------------
 
-TODO
+An aligned dimension line is parallel to the line defined by the definition points `p1` and `p2`. The placement of the
+dimension line is defined by the argument `distance`, which is the distance between the definition line and the
+dimension line. The `distance` of the dimension line is orthogonal to the base line in counter clockwise orientation.
+
+.. code-block:: Python
+
+    msp.add_line((0, 2), (3, 0))
+    dim = msp.add_aligned_dim(p1=(0, 2), p2=(3, 0), distance=1)
+    doc.saveas('dim_linear_aligned.dxf')
+
+.. image:: gfx/dim_linear_aligned.png
 
 Placing Measurement Text
 ------------------------
