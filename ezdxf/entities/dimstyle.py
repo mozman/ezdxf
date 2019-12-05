@@ -93,9 +93,11 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # 1 = Adds a leader when dimension text is moved
     # 2 = Allows text to be moved freely without a leader
     'dimtmove': DXFAttr(279, dxfversion=DXF2000, default=0),
-    'dimjust': DXFAttr(280, dxfversion=DXF2000, default=0),
-    'dimsd1': DXFAttr(281, dxfversion=DXF2000, default=0),
-    'dimsd2': DXFAttr(282, dxfversion=DXF2000, default=0),
+
+
+    'dimjust': DXFAttr(280, dxfversion=DXF2000, default=0),  # 0=center; 1=left; 2=right; 3=above ext1; 4=above ext2
+    'dimsd1': DXFAttr(281, dxfversion=DXF2000, default=0),  # suppress first part of the dimension line
+    'dimsd2': DXFAttr(282, dxfversion=DXF2000, default=0),  # suppress second part of the dimension line
     'dimtolj': DXFAttr(283, dxfversion=DXF2000, default=0),
     'dimtzin': DXFAttr(284, dxfversion=DXF2000, default=8),
     'dimaltz': DXFAttr(285, dxfversion=DXF2000, default=0),

@@ -89,15 +89,85 @@ dimension line. The `distance` of the dimension line is orthogonal to the base l
 
 .. image:: gfx/dim_linear_aligned.png
 
+Dimension Style Override
+------------------------
+
+Many dimension styling options are defined by the associated :class:`~ezdxf.entities.DimStyle` entity.
+But often you wanna change just a few settings without creating a new dimension style, therefore the
+DXF format has a protocol to store this changed settings in the dimension entity itself.
+This protocol is supported by `ezdxf` and every factory function which creates dimension
+entities supports the `override` argument.
+This `override` argument is a simple Python dictionary
+(e.g. :code:`override = {'dimtad': 4}`, place measurement text below dimension line).
+
+The overriding protocol is managed by the :class:`~ezdxf.entities.DimStyleOverride` object,
+which is returned by the most dimension factory functions.
+
 Placing Measurement Text
 ------------------------
 
-TODO
+The "default" location of the measurement text depends on various :class:`~ezdxf.entities.DimStyle` parameters and is
+applied if no user defined text location is defined.
 
 Default Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+"Horizontal direction" means in direction of the dimension line and "vertical direction" means perpendicular to the
+dimension line direction.
+
+The **"horizontal"** location of the measurement text is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimjust`:
+
+=== =====
+0   Center of dimension line
+1   Left side of the dimension line, near first extension line
+2   Right side of the dimension line, near second extension line
+3   Over first extension line
+4   Over second extension line
+=== =====
+
+.. code-block:: Python
+
+    msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), override={'dimjust': 1}).render()
+
+.. image:: gfx/dim_linear_dimjust.png
+
+The **"vertical"** location of the measurement text relative to the dimension line is defined by
+:attr:`~ezdxf.entities.DimStyle.dxf.dimtad`:
+
+=== =====
+0   Center, it is possible to adjust the vertical location by :attr:`~ezdxf.entities.DimStyle.dxf.dimtvp`
+1   Above
+2   Outside, handled like `Above` by `ezdxf`
+3   JIS, handled like `Above` by `ezdxf`
+4   Below
+=== =====
+
+.. code-block:: Python
+
+    msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0), override={'dimtad': 4}).render()
+
+.. image:: gfx/dim_linear_dimtad.png
+
+The distance between text and dimension line is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimgap`.
+
+The :class:`~ezdxf.entities.DimStyleOverride` object has a method :meth:`~ezdxf.entities.DimStyleOverride.set_text_align`
+to set the default text location in an easy way, this is also the reason for the 2 step creation process of
+dimension entities:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0))
+    dim.set_text_align(halign='left', valign='center')
+    dim.render()
+
+====== =====
+halign ``'left'``, ``'right'``, ``'center'``, ``'above1'``, ``'above2'``
+valign ``'above'``, ``'center'``, ``'below'``
+====== =====
+
+Run function :func:`example_for_all_text_placings_R2007` in the example script `dimension_linear.py`_
+to create a DXF file with all text placings supported by `ezdxf`.
+
 
 User Defined Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,7 +232,4 @@ Alternative Units
 Alternative units are not supported.
 
 
-Definition Points Explained
----------------------------
-
-TODO
+.. _dimension_linear.py:  https://github.com/mozman/ezdxf/blob/master/examples/render/dimension_linear.py

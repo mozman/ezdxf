@@ -57,12 +57,7 @@ Overriding Measurement Text
 
 See Linear Dimension Tutorial: :ref:`overriding_measurement_text`
 
-Styling Measurement Text
-------------------------
+Measurement Text Formatting and Styling
+---------------------------------------
 
-See Linear Dimension Tutorial: :ref:`styling_measurement_text`
-
-Definition Points Explained
----------------------------
-
-TODO
+See Linear Dimension Tutorial: :ref:`measurement_text_formatting_and_styling`

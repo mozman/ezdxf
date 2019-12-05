@@ -12,7 +12,7 @@ Create a Layer Definition
 
     import ezdxf
 
-    doc = ezdxf.new()
+    doc = ezdxf.new(setup=True)  # setup required line types
     msp = modelspace()
     doc.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
 
