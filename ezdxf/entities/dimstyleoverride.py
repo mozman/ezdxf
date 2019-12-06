@@ -407,7 +407,8 @@ class DimStyleOverride:
 
     def set_location(self, location: 'Vertex', leader=False, relative=False) -> None:
         """
-        Set text location by user, special version for linear dimension.
+        Set text location by user, special version for linear dimensions, behaves for other dimension types like
+        :meth:`user_location_override`.
 
         Args:
             location: user defined text location (Vertex)
@@ -415,16 +416,13 @@ class DimStyleOverride:
             relative: `location` is relative to default location.
 
         """
-        # This method was created for linear dimensions and sets the `dimtmove` var to 1 or 2, which was a bad
-        # decision, because other dimension types, also need the 0 state.
-        # But this mistake is hard to correct now, so there is another `set_user_location()` method, to do this
-        # task the correct way, without modifying th `dimtmove` var.
+        self.user_location_override(location)
+        linear = self.dimension.dimtype in (0, 1)
+        if linear:
+            self.dimstyle_attribs['dimtmove'] = 1 if leader else 2
+            self.dimstyle_attribs['relative_user_location'] = relative
 
-        self.set_user_location(location)
-        self.dimstyle_attribs['dimtmove'] = 1 if leader else 2
-        self.dimstyle_attribs['relative_user_location'] = relative
-
-    def set_user_location(self, location: 'Vertex') -> None:
+    def user_location_override(self, location: 'Vertex') -> None:
         """ Set text location by user. """
         self.dimension.set_flag_state(self.dimension.USER_LOCATION_OVERRIDE, state=True, name='dimtype')
         self.dimstyle_attribs['user_location'] = Vector(location)

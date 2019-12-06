@@ -266,7 +266,7 @@ The :class:`DimStyleOverride` class manages all the complex dependencies between
 
     .. automethod:: set_location
 
-    .. automethod:: set_user_location
+    .. automethod:: user_location_override
 
     .. automethod:: render
 

@@ -942,7 +942,7 @@ class CreatorInterface:
 
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            # special version, just for linear dimension - API design error!
+            # special version, just for linear dimension
             style.set_location(location, leader=False, relative=False)
         return style
 
@@ -1111,7 +1111,7 @@ class CreatorInterface:
         dimline.update_dxf_attribs(dxfattribs)
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            style.set_user_location(location)
+            style.user_location_override(location)
         return style
 
     def add_angular_3p_dim(self,
@@ -1175,7 +1175,7 @@ class CreatorInterface:
         dimline.update_dxf_attribs(dxfattribs)
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            style.set_user_location(location)
+            style.user_location_override(location)
         return style
 
     def add_diameter_dim(self,
@@ -1245,7 +1245,7 @@ class CreatorInterface:
 
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            style.set_user_location(location)
+            style.user_location_override(location)
         return style
 
     def add_radius_dim(self,
@@ -1336,7 +1336,7 @@ class CreatorInterface:
 
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            style.set_user_location(location)
+            style.user_location_override(location)
 
         return style
 
@@ -1454,7 +1454,7 @@ class CreatorInterface:
 
         style = DimStyleOverride(dimline, override=override)
         if location is not None:
-            style.set_user_location(location)
+            style.user_location_override(location)
         return style
 
     def add_arrow(self, name: str, insert: 'Vertex', size: float = 1., rotation: float = 0,

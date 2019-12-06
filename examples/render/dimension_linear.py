@@ -150,7 +150,7 @@ def example_for_all_text_placings_R2007():
 
 def example_for_all_text_placings_ucs_R2007():
     ucs = UCS(origin=(10, 10, 0), ux=(3, 1, 0), uz=(0, 0, 1))
-    doc = ezdxf.ezdxf.new('R2007', setup=True)
+    doc = ezdxf.new('R2007', setup=True)
     set_text_style(doc)
     example_for_all_text_placings(doc, 'dim_linear_text_placing_ucs_R2007.dxf', ucs)
 
