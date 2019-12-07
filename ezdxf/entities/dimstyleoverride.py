@@ -423,7 +423,11 @@ class DimStyleOverride:
             self.dimstyle_attribs['relative_user_location'] = relative
 
     def user_location_override(self, location: 'Vertex') -> None:
-        """ Set text location by user. """
+        """
+        Set text location by user, `location` is relative to the origin of the UCS defined in the :meth:`render`
+        method or WCS if the `ucs` argument is ``None``.
+
+        """
         self.dimension.set_flag_state(self.dimension.USER_LOCATION_OVERRIDE, state=True, name='dimtype')
         self.dimstyle_attribs['user_location'] = Vector(location)
 

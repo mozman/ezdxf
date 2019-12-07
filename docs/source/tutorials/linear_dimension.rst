@@ -172,7 +172,54 @@ to create a DXF file with all text placings supported by `ezdxf`.
 User Defined Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+Beside the default location, it is possible to locate the measurement text freely.
+
+Location Relative to Origin
++++++++++++++++++++++++++++
+
+The user defined text location can be set by the argument `location` in most dimension factory functions and
+always references the midpoint of the measurement text:
+
+.. code-block:: Python
+
+    msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0), location=(4, 4)).render()
+
+.. image:: gfx/dim_linear_user_location_absolute.png
+
+The `location` is relative to origin of the active coordinate system or WCS if no UCS is defined in the
+:meth:`~ezdxf.entities.DimStyleOverride.render` method, the user defined `location` can also be set by
+:meth:`~ezdxf.entities.DimStyleOverride.user_location_override`.
+
+Location Relative to Center of Dimension Line
++++++++++++++++++++++++++++++++++++++++++++++
+
+The method :meth:`~ezdxf.entities.DimStyleOverride.set_location` has additional features for linear dimensions.
+Argument `leader` = ``True`` adds a simple leader from the measurement text to the center of the dimension line and
+argument `relative` = ``True`` places the measurement text relative to the center of the dimension line.
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_location(location=(-1, 1), leader=True, relative=True)
+    dim.render()
+
+.. image:: gfx/dim_linear_user_location_relative.png
+
+Location Relative to Default Location
++++++++++++++++++++++++++++++++++++++
+
+The method :meth:`~ezdxf.entities.DimStyleOverride.shift_text` shifts the measurement text away from the default text
+location. Shifting directions are aligned to the text direction, which is the direction of the dimension line in most
+cases, `dh` (for delta horizontal) shifts the text parallel to the text direction, `dv` (for delta vertical) shifts the
+text perpendicular to the text direction. This method does not support leaders.
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.shift_text(dh=1, dv=1)
+    dim.render()
+
+.. image:: gfx/dim_linear_user_location_shift.png
 
 .. _dimension_line_properties:
 
