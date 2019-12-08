@@ -280,10 +280,10 @@ class BaseDimensionRenderer:
         self.ext_line_offset = get('dimexo', 0.) * self.dim_scale  # type: float
 
         # fixed length extension line, leenght above dimension line is still self.ext_line_extension
-        self.ext_line_fixed = get('dimflxon', 0)  # type: bool
+        self.ext_line_fixed = get('dimfxlon', 0)  # type: bool
 
         # length below the dimension line:
-        self.ext_line_length = get('dimflx', self.ext_line_extension) * self.dim_scale  # type: float
+        self.ext_line_length = get('dimfxl', self.ext_line_extension) * self.dim_scale  # type: float
 
         # ---------------------------------------------
         # TOLERANCES & LIMITS
@@ -1102,10 +1102,13 @@ class LinearDimension(BaseDimensionRenderer):
         attribs = self.dim_line_attributes()
 
         if self.suppress_dim1_line or self.suppress_dim2_line:
+            # TODO: results not as expected, but good enough
+            # center should take into account text location
+            center = start.lerp(end)
             if not self.suppress_dim1_line:
-                self.add_line(start, self.dim_line_center, dxfattribs=attribs, remove_hidden_lines=True)
+                self.add_line(start, center, dxfattribs=attribs, remove_hidden_lines=True)
             if not self.suppress_dim2_line:
-                self.add_line(self.dim_line_center, end, dxfattribs=attribs, remove_hidden_lines=True)
+                self.add_line(center, end, dxfattribs=attribs, remove_hidden_lines=True)
         else:
             self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 

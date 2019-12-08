@@ -21,6 +21,18 @@ text width, are not available to `ezdxf` and may also vary slightly for differen
 The text properties in `ezdxf` are based on the default monospaced standard font, but for TrueType fonts the space
 around the text is much bigger than needed.
 
+Not all DIMENSION and DIMSTYLE features are supported by all DXF versions, especially DXF R12 does not support many
+features, but in this case the required rendering of dimension lines is an advantage, because if the application
+just shows the rendered block, all features which can be used in DXF R12 are displayed like linetypes, but they
+disappear if the dimension line is edited in the application. `ezdxf` writes only the supported DIMVARS of the
+used DXF version to avoid invalid DXF files. So it is not that critical to know all the supported features of a
+DXF version, except for limits and tolerances, `ezdxf` uses the advanced features of MTEXT to create limits
+and tolerances and therefore they are not supported (displayed) in DXF R12 files.
+
+.. seealso::
+
+    Graphical reference of many DIMVARS and some advanced information: :ref:`dimstyle_table_internals`
+
 Horizontal Dimension
 --------------------
 
@@ -221,52 +233,221 @@ text perpendicular to the text direction. This method does not support leaders.
 
 .. image:: gfx/dim_linear_user_location_shift.png
 
-.. _dimension_line_properties:
-
-Dimension Line Properties
--------------------------
-
-- Color
-- Linetype
-- Arrows
-- Dimension Line Extension
-
-TODO
-
-.. _extension_line_properties:
-
-Extension Line Properties
--------------------------
-
-- Color
-- Linetype
-- Length
-
-TODO
-
-.. _overriding_measurement_text:
-
-Overriding Measurement Text
----------------------------
-
-TODO
-
-.. _measurement_text_formatting_and_styling:
+.. _tut_measurement_text_formatting_and_styling:
 
 Measurement Text Formatting and Styling
 ---------------------------------------
 
-- Decimal Places
-- Decimal Point
-- Rounding
-- Zero Trimming
-- Measurement Factor
-- Text Color
-- Background Filling
+Text Properties
+~~~~~~~~~~~~~~~
+
+The measurement text color is defined by the DIMVAR :attr:`~ezdxf.entities.DimStyle.dxf.dimclrt` as :ref:`ACI`.
+The text style is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimtxsty` (DXF R2000) and the text height by
+:attr:`~ezdxf.entities.DimStyle.dxf.dimtxt`.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimtxsty': 'Standard',
+            'dimtxt': 0.35,
+            'dimclrt': 1,
+        }).render()
+
+.. image:: gfx/dim_linear_text.png
+
+Background Filling
+~~~~~~~~~~~~~~~~~~
+
+Background fillings are supported since DXF R2007, and `ezdxf` uses the MTEXT entity to implement this
+feature, so setting background filling in DXF R12 has no effect.
+
+Set :attr:`~ezdxf.entities.DimStyle.dxf.dimtfill` to ``1`` to use the canvas color as background filling or set
+:attr:`~ezdxf.entities.DimStyle.dxf.dimtfill` to ``2`` to use :attr:`~ezdxf.entities.DimStyle.dxf.dimtfillclr` as
+background filling, color value as :ref:`ACI`. Set :attr:`~ezdxf.entities.DimStyle.dxf.dimtfill` to ``0`` to
+disable background filling.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimtfill': 2,
+            'dimtfillclr': 1,
+        }).render()
+
+.. image:: gfx/dim_linear_bg_filling.png
+
+Text Formatting
+~~~~~~~~~~~~~~~
+
+- Set decimal Places: :attr:`~ezdxf.entities.DimStyle.dxf.dimdec` defines the number of decimal places displayed for the
+  primary units of a dimension. (DXF R2000)
+- Set decimal point character: :attr:`~ezdxf.entities.DimStyle.dxf.dimdsep` defines the decimal point as ASCII code,
+  use :code:`ord('.')`
+- Set rounding: :attr:`~ezdxf.entities.DimStyle.dxf.dimrnd`, rounds all dimensioning distances to the specified
+  value, for instance, if :attr:`dimrnd` is set to ``0.25``, all distances round to the nearest 0.25 unit.
+  If :attr:`dimrnd` is set to ``1.0``, all distances round to the nearest integer.
+- Set zero trimming: :attr:`~ezdxf.entities.DimStyle.dxf.dimzin`, `ezdxf` supports only: ``4`` suppress leading zeros
+  and ``8``: suppress trailing zeros and both as ``12``.
+- Set measurement factor: scale measurement by factor :attr:`~ezdxf.entities.DimStyle.dxf.dimlfac`, e.g. to get the
+  dimensioning text in cm for a DXF file where 1 drawing unit represents 1m, set :attr:`dimlfac` to ``100``.
+- Text template for measurement text is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimpost`, ``'<>'`` represents the
+  measurement text, e.g. ``'~<>cm'`` produces ``'~300cm'`` for measurement in previous example.
+
+To set this values the :meth:`ezdxf.entities.DimStyle.set_text_format` and
+:meth:`ezdxf.entities.DimStyleOverride.set_text_format` methods are very recommended.
+
+.. _tut_overriding_measurement_text:
+
+Overriding Measurement Text
+---------------------------
+
+Measurement text overriding is stored in the :class:`~ezdxf.entities.Dimension` entity, the content of
+to DXF attribute :class:`~ezdxf.entities.Dimension.dxf.text` represents the override value as string.
+Special values are one space ``' '`` to just suppress the measurement text, an empty string ``''``  or ``'<>'``
+to get the regular measurement.
+
+All factory functions have an explicit `text` argument, which always replaces the `text` value in the
+`dxfattribs` dict.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0), text='>1m').render()
+
+.. image:: gfx/dim_linear_text_override.png
+
+.. _tut_dimension_line_properties:
+
+Dimension Line Properties
+-------------------------
+
+The dimension line color is defined by the DIMVAR :attr:`~ezdxf.entities.DimStyle.dxf.dimclrd` as :ref:`ACI`,
+dimclrd also defines the color of the arrows. The linetype is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimltype`
+but requires DXF R2007 for full support by CAD Applications and the line weight is defined by
+:attr:`~ezdxf.entities.DimStyle.dxf.dimlwd` (DXF R2000), see also the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight`
+reference for valid values.
+The :attr:`~ezdxf.entities.DimStyle.dxf.dimdle` is the extension of the dimension line beyond
+the extension lines, this dimension line extension is not supported for all arrows.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimclrd': 1,  # red
+            'dimdle': 0.25,
+            'dimltype': 'DASHED2',
+            'dimlwd': 35,  # 0.35mm line weight
+        }).render()
+
+.. image:: gfx/dim_linear_dimline_properties.png
+
+:meth:`~ezdxf.entities.DimStyleOverride` method:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_dimline_format(color=1, linetype='DASHED2', lineweight=35, extension=0.25)
+    dim.render()
+
+.. _tut_extension_line_properties:
+
+Extension Line Properties
+-------------------------
+
+The extension line color is defined by the DIMVAR :attr:`~ezdxf.entities.DimStyle.dxf.dimclre` as :ref:`ACI`.
+The linetype for first and second extension line is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimltex1` and
+:attr:`~ezdxf.entities.DimStyle.dxf.dimltex2` but requires DXF R2007 for full support by CAD Applications and the line
+weight is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimlwe` (DXF R2000),
+see also the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` reference for valid values.
+
+The :attr:`~ezdxf.entities.DimStyle.dxf.dimexe` is the extension of the extension line beyond
+the dimension line, and :attr:`~ezdxf.entities.DimStyle.dxf.dimexo` defines the offset of the extension line from the
+measurement point.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimclre': 1,   # red
+            'dimltex1': 'DASHED2',
+            'dimltex2': 'CENTER2',
+            'dimlwe': 35,   # 0.35mm line weight
+            'dimexe': 0.3,  # length above dimension line
+            'dimexo': 0.1,  # offset from measurement point
+        }).render()
+
+.. image:: gfx/dim_linear_extline_properties.png
+
+:meth:`~ezdxf.entities.DimStyleOverride` methods:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_extline_format(color=1, lineweight=35, extension=0.3, offset=0.1)
+    dim.set_extline1(linetype='DASHED2')
+    dim.set_extline2(linetype='CENTER2')
+    dim.render()
+
+Fixed length extension lines are supported in DXF R2007+, set :attr:`~ezdxf.entities.DimStyle.dxf.dimfxlon` to ``1``
+and :attr:`~ezdxf.entities.DimStyle.dxf.dimfxl` defines the length of the extension line starting at the dimension line.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimfxlon': 1,  # fixed length extension lines
+            'dimexe': 0.2,  # length above dimension line
+            'dimfxl': 0.4,  # length below dimension line
+        }).render()
+
+.. image:: gfx/dim_linear_extline_dimfxl.png
+
+:meth:`~ezdxf.entities.DimStyleOverride` method:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_extline_format(extension=0.2, fixed_length=0.4)
+    dim.render()
+
+To suppress extension lines set :attr:`~ezdxf.entities.DimStyle.dxf.dimse1` = ``1`` to suppress the first extension
+line and :attr:`~ezdxf.entities.DimStyle.dxf.dimse2` = ``1`` to suppress the second extension line.
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimse1': 1,  # suppress first extension line
+            'dimse2': 1,  # suppress second extension line
+            'dimblk': ezdxf.ARROWS.closed_filled,  # arrows just looks better
+        }).render()
+
+.. image:: gfx/dim_linear_extline_suppress.png
+
+:meth:`~ezdxf.entities.DimStyleOverride` methods:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_arrows(blk=ezdxf.ARROWS.closed_filled)
+    dim.set_extline1(disable=True)
+    dim.set_extline2(disable=True)
+    dim.render()
+
+.. _tut_arrows:
+
+Arrows
+------
 
 TODO
 
-.. _tolerances_and_limits:
+.. _tut_tolerances_and_limits:
 
 Tolerances and Limits
 ---------------------

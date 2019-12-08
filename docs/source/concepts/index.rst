@@ -6,5 +6,6 @@ Basic Concepts
 
     aci
     layers
+    linetypes
     coordinates
     ocs

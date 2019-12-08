@@ -340,7 +340,6 @@ class DimStyleOverride:
             extension: extension length above dimension line
             offset: offset from measurement point
             fixed_length: set fixed length extension line, length below the dimension line
-
         """
         if color is not None:
             self.dimstyle_attribs['dimclre'] = color
@@ -351,8 +350,8 @@ class DimStyleOverride:
         if offset is not None:
             self.dimstyle_attribs['dimexo'] = offset
         if fixed_length is not None:
-            self.dimstyle_attribs['dimflxon'] = 1
-            self.dimstyle_attribs['dimflx'] = fixed_length
+            self.dimstyle_attribs['dimfxlon'] = 1
+            self.dimstyle_attribs['dimfxl'] = fixed_length
 
     def set_extline1(self, linetype: str = None, disable=False):
         """

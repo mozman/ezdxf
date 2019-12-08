@@ -3,8 +3,8 @@
 
 import ezdxf
 
-dwg = ezdxf.new('R2018', setup=True)
-msp = dwg.modelspace()
+doc = ezdxf.new('R2018', setup=True)
+msp = doc.modelspace()
 y = 0
 
 for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
@@ -36,4 +36,4 @@ msp.add_line((0, 0), (0, y))
 msp.add_line((4, 0), (4, y))
 msp.add_line((8, 0), (8, y))
 
-dwg.saveas('all_arrows_{}.dxf'.format(dwg.acad_release))
+doc.saveas('all_arrows_{}.dxf'.format(doc.acad_release))

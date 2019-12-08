@@ -84,7 +84,7 @@ refers to linetype ``DASHED`` and AutoCAD will not open DXF files with undefined
 Tutorial for Complex Linetypes
 ==============================
 
-With DXF R13 Autodesk introduced complex line types, containing TEXT or SHAPES in line types. ezdxf v0.8.4 and later
+In DXF R13 Autodesk introduced complex line types, containing TEXT or SHAPES in line types. `ezdxf` v0.8.4 and later
 supports complex line types.
 
 Complex line type example with text:

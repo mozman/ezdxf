@@ -40,7 +40,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimdli': DXFAttr(43, default=3.75),
     'dimexe': DXFAttr(44, default=1.25),
     'dimrnd': DXFAttr(45, default=0),
-    'dimdle': DXFAttr(46, default=0),
+    'dimdle': DXFAttr(46, default=0),  # dimension line extension
     'dimtp': DXFAttr(47, default=0),
     'dimtm': DXFAttr(48, default=0),
 
@@ -48,20 +48,20 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     'dimfxl': DXFAttr(49, dxfversion=DXF2007, default=2.5),
     # jog angle, Angle of oblique dimension line segment in jogged radius dimension
     'dimjogang': DXFAttr(50, dxfversion=DXF2007, default=90, optional=True),
-    'dimtxt': DXFAttr(140, default=2.5),
-    'dimcen': DXFAttr(141, default=2.5),
+    'dimtxt': DXFAttr(140, default=2.5),  # measurement text height
+    'dimcen': DXFAttr(141, default=2.5),  # center marks and center lines; 0 = off, <0 = center line, >0 = center mark
     'dimtsz': DXFAttr(142, default=0),
     'dimaltf': DXFAttr(143, default=0.03937007874),
     'dimlfac': DXFAttr(144, default=1),  # length factor
     'dimtvp': DXFAttr(145, default=0),  # text vertical position if dimtad=0
     'dimtfac': DXFAttr(146, default=1),
-    'dimgap': DXFAttr(147, default=.625),  # default text gap
+    'dimgap': DXFAttr(147, default=.625),  # default gap around the measurement text
     'dimaltrnd': DXFAttr(148, dxfversion=DXF2000, default=0),
     'dimtfill': DXFAttr(69, dxfversion=DXF2007, default=0),  # 0=None, 1=canvas color, 2=dimtfillclr
     'dimtfillclr': DXFAttr(70, dxfversion=DXF2007, default=0),  # color index for dimtfill==2
     'dimtol': DXFAttr(71, default=0),
     'dimlim': DXFAttr(72, default=0),
-    'dimtih': DXFAttr(73, default=0),  # text inside  horizontal
+    'dimtih': DXFAttr(73, default=0),  # text inside horizontal
     'dimtoh': DXFAttr(74, default=0),  # text outside horizontal
     'dimse1': DXFAttr(75, default=0),  # suppress extension line 1
     'dimse2': DXFAttr(76, default=0),  # suppress extension line 2
@@ -119,7 +119,7 @@ acdb_dimstyle = DefSubclass('AcDbDimStyleTableRecord', {
     # virtual DXF attribute 'dimldrblk': set/get leader arrow by block name
     'dimldrblk': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2000),
 
-    # virtual DXF attribute 'dimldtype': set/get LINETYPE by name
+    # virtual DXF attribute 'dimltype': set/get LINETYPE by name
     'dimltype': DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
 
     # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name as callback
