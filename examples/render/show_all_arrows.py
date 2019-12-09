@@ -3,7 +3,7 @@
 
 import ezdxf
 
-doc = ezdxf.new('R2018', setup=True)
+doc = ezdxf.new('R2007', setup=True)
 msp = doc.modelspace()
 y = 0
 

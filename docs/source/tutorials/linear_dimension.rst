@@ -282,13 +282,14 @@ disable background filling.
 Text Formatting
 ~~~~~~~~~~~~~~~
 
-- Set decimal Places: :attr:`~ezdxf.entities.DimStyle.dxf.dimdec` defines the number of decimal places displayed for the
+- Set decimal places: :attr:`~ezdxf.entities.DimStyle.dxf.dimdec` defines the number of decimal places displayed for the
   primary units of a dimension. (DXF R2000)
 - Set decimal point character: :attr:`~ezdxf.entities.DimStyle.dxf.dimdsep` defines the decimal point as ASCII code,
   use :code:`ord('.')`
 - Set rounding: :attr:`~ezdxf.entities.DimStyle.dxf.dimrnd`, rounds all dimensioning distances to the specified
   value, for instance, if :attr:`dimrnd` is set to ``0.25``, all distances round to the nearest 0.25 unit.
-  If :attr:`dimrnd` is set to ``1.0``, all distances round to the nearest integer.
+  If :attr:`dimrnd` is set to ``1.0``, all distances round to the nearest integer. For more information look at
+  the documentation of the :func:`ezdxf.math.xround` function.
 - Set zero trimming: :attr:`~ezdxf.entities.DimStyle.dxf.dimzin`, `ezdxf` supports only: ``4`` suppress leading zeros
   and ``8``: suppress trailing zeros and both as ``12``.
 - Set measurement factor: scale measurement by factor :attr:`~ezdxf.entities.DimStyle.dxf.dimlfac`, e.g. to get the
@@ -445,7 +446,92 @@ line and :attr:`~ezdxf.entities.DimStyle.dxf.dimse2` = ``1`` to suppress the sec
 Arrows
 ------
 
-TODO
+"Arrows" mark then beginning and the end of a dimension line, and most of them do not look like arrows.
+
+DXF distinguish between the simple tick and arrows as blocks.
+
+Using the simple tick by setting tick size :attr:`~ezdxf.entities.DimStyle.dxf.dimtsz` != ``0``
+also disables arrow blocks as side effect:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_tick(size=0.25)
+    dim.render()
+
+`ezdxf` uses the ``"ARCHTICK"`` block at double size to render the tick (AutoCAD and BricsCad just
+draw a simple line), so there is no advantage of using the tick instead of an arrow.
+
+Using arrows:
+
+.. code-block:: Python
+
+    dim = msp.add_linear_dim(base=(3, 2), p1=(3, 0), p2=(6, 0))
+    dim.set_arrow(blk="OPEN_30", size=0.25)
+    dim.render()
+
+Set arrow blocks by DIMVARS:
+
+- :attr:`~ezdxf.entities.DimStyle.dxf.dimblk`: set both arrow block names at once
+- :attr:`~ezdxf.entities.DimStyle.dxf.dimblk1`: first arrow block name
+- :attr:`~ezdxf.entities.DimStyle.dxf.dimblk2`: second arrow block name
+- :attr:`~ezdxf.entities.DimStyle.dxf.dimasz`: arrow size in drawing units
+
+.. code-block:: Python
+
+    msp.add_linear_dim(
+        base=(3, 2), p1=(3, 0), p2=(6, 0),
+        override={
+            'dimtsz': 0,  # set tick size to 0, to enable arrow usage
+            'dimasz': 0.25,  # arrow size in drawing units
+            'dimblk': "OPEN_30",  # arrow block name
+        }).render()
+
+Dimension line extension (:attr:`~ezdxf.entities.DimStyle.dxf.dimdle`) works only for a few arrow blocks
+and the simple tick:
+
+- ``"ARCHTICK"``
+- ``"OBLIQUE"``
+- ``"NONE"``
+- ``"SMALL"``
+- ``"DOTSMALL"``
+- ``"INTEGRAL"``
+
+Arrow Shapes
+~~~~~~~~~~~~
+
+.. image:: gfx/all_arrows.png
+
+Arrow Names
+~~~~~~~~~~~
+
+The arrow names are stored as attributes in the :code:`ezdxf.ARROWS` object.
+
+=========================== ========================
+closed_filled               ``""`` (empty string)
+dot                         ``"DOT"``
+dot_small                   ``"DOTSMALL"``
+dot_blank                   ``"DOTBLANK"``
+origin_indicator            ``"ORIGIN"``
+origin_indicator_2          ``"ORIGIN2"``
+open                        ``"OPEN"``
+right_angle                 ``"OPEN90"``
+open_30                     ``"OPEN30"``
+closed                      ``"CLOSED"``
+dot_smallblank              ``"SMALL"``
+none                        ``"NONE"``
+oblique                     ``"OBLIQUE"``
+box_filled                  ``"BOXFILLED"``
+box                         ``"BOXBLANK"``
+closed_blank                ``"CLOSEDBLANK"``
+datum_triangle_filled       ``"DATUMFILLED"``
+datum_triangle              ``"DATUMBLANK"``
+integral                    ``"INTEGRAL"``
+architectural_tick          ``"ARCHTICK"``
+ez_arrow                    ``"EZ_ARROW"``
+ez_arrow_blank              ``"EZ_ARROW_BLANK"``
+ez_arrow_filled             ``"EZ_ARROW_FILLED"``
+=========================== ========================
 
 .. _tut_tolerances_and_limits:
 
