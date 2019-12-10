@@ -18,7 +18,7 @@ def load_comments(stream):
                 raise ValueError('Invalid group code "{}" at line {}.'.format(code, line))
             else:
                 if code == 999:  # just yield comments
-                    yield value
+                    yield value.rstrip('\n')
                 line += 2
         else:
             return
