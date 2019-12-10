@@ -28,6 +28,8 @@ def open_stream(filename):
     if is_dxf_file(filename):
         info = dxf_file_info(filename)
         return open(filename, mode='rt', encoding=info.encoding)
+    else:
+        raise IOError('File "{}" is not a DXF file.'.format(filename))
 
 
 if __name__ == '__main__':
