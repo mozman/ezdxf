@@ -98,6 +98,18 @@ class Vector:
             z = self._z
         return self.__class__(x, y, z)
 
+    def round(self, ndigits=None) -> 'Vector':
+        """
+        Returns a new vector where all components are rounded to `ndigits`.
+
+        Uses standard Python :func:`round` function for rounding.
+        """
+        return self.__class__(
+            round(self._x, ndigits),
+            round(self._y, ndigits),
+            round(self._z, ndigits),
+        )
+
     @classmethod
     def list(cls, items: Iterable[Sequence[float]]) -> List['Vector']:
         """ Returns a list of :class:`Vector` objects. """
@@ -554,6 +566,14 @@ class Vec2:
 
         """
         return Vector(self.x, self.y, 0)
+
+    def round(self, ndigits=None) -> 'Vec2':
+        """
+        Returns a new vector where all components are rounded to `ndigits`.
+
+        Uses standard Python :func:`round` function for rounding.
+        """
+        return self.__class__((round(self.x, ndigits), round(self.y, ndigits)))
 
     @classmethod
     def list(cls, items: Iterable[TVec2]) -> List['Vec2']:

@@ -66,6 +66,12 @@ def test_vec2():
     assert v2 == (1, 2)
 
 
+def test_round():
+    v = Vector(1.123, 2.123, 3.123)
+    v2 = v.round(1)
+    assert v2 == (1.1, 2.1, 3.1)
+
+
 def test_iter():
     assert sum(Vector(1, 2, 3)) == 6
 

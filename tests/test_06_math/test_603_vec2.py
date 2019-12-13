@@ -41,6 +41,12 @@ def test_vec3():
     assert v3 == (1, 2, 0)
 
 
+def test_round():
+    v = Vec2((1.123, 2.123))
+    v2 = v.round(1)
+    assert v2 == (1.1, 2.1)
+
+
 def test_from_angle(vcls):
     angle = math.radians(50)
     length = 3.
