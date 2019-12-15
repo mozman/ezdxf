@@ -29,8 +29,8 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed=False
 
     Args:
         vertices: source shape defined by vertices
-        offset: line offset in direction of shape segments defined by vertices order, offset > ``0`` is 'left' of line
-                segment, offset < ``0`` is 'right' of line segment
+        offset: line offset perpendicular to direction of shape segments defined by vertices order, offset > ``0`` is
+                'left' of line segment, offset < ``0`` is 'right' of line segment
         closed: ``True`` to handle as closed shape
 
     """
