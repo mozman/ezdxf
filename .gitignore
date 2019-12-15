@@ -7,8 +7,10 @@ dist/*
 .idea/*
 ezdxf.egg-info/*
 docs/build/*
-examples/*.dxf
-examples/addons/*.dxf
+examples/**/*.dxf
+experiments/**/*.dxf
+issues/**/*.dxf
+issues/**/*.html
 tools/plotstyles/*
 newctb.ctb
 __pycache__
