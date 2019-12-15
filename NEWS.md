@@ -14,6 +14,8 @@ Version 0.11a0 - dev
 - NEW: Arc properties `start_point` and `end_point` returns start- and end point of arc in WCS
 - NEW: Ellipse properties `start_point` and `end_point` returns start- and end point of ellipse in WCS
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
+- NEW: Workbench add-on
+- NEW: Workbench tool `ezdxf.addons.workbench.offset_vertices_2d()`
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
 
