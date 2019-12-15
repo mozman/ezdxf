@@ -29,7 +29,7 @@ a point on the ellipse to the closest intersection with the circle described by
 the major axis. Then do the same with the minor axis, starting from the
 elliptical point and drawing perpendicular to the minor axis until the line
 intersects the circle described by the minor axis. The two points of
-intersection with the circles are colinear with the center of the ellipse. The
+intersection with the circles are collinear with the center of the ellipse. The
 angle between the line containing these three points and the major axis is the
 parametric angle specified by group code 41.
 
