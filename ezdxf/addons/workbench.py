@@ -24,8 +24,8 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed=False
 
     .. warning::
 
-        Adjacent collinear segments in `opposite` directions, same as a turn by 180 degree (u-turn), leads to
-        incorrect results.
+        Adjacent collinear segments in `opposite` directions, same as a turn by 180 degree (U-turn), leads to
+        unexpected results.
 
     Args:
         vertices: source shape defined by vertices
@@ -58,14 +58,12 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed=False
     # yield intersection points of offset_segments
     if len(offset_segments) > 1:
         for (start1, end1), (start2, end2) in zip(offset_segments[:-1], offset_segments[1:]):
-            if end1.isclose(start2):
-                # segments are parallel, no intersection point exist
+            try:  # the usual case
+                yield ConstructionRay(start1, end1).intersect(ConstructionRay(start2, end2))
+            except ParallelRaysError:  # collinear segments
                 yield end1
-            else:
-                try:
-                    yield ConstructionRay(start1, end1).intersect(ConstructionRay(start2, end2))
-                except ParallelRaysError:
-                    # for closed shapes with first segment is collinear to last segment
+                if not end1.isclose(start2):  # it's an U-turn (180 deg)
+                    # creates an additional vertex!
                     yield start2
 
     # last offset vertex = end point of last segment for open shapes
