@@ -679,13 +679,17 @@ Shape2d
 
     .. attribute:: vertices
 
-        list of :class:`Vec2` objects
+        List of :class:`Vec2` objects
 
     .. autoattribute:: bounding_box
 
     .. automethod:: __len__
 
     .. automethod:: __getitem__(item) -> Vec2
+
+    .. automethod:: append
+
+    .. automethod:: extend
 
     .. automethod:: move
 
@@ -698,10 +702,6 @@ Shape2d
     .. automethod:: rotate
 
     .. automethod:: rotate_rad
-
-    .. automethod:: append
-
-    .. automethod:: extend
 
     .. automethod:: offset
 

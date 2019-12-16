@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 
-def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed=False) -> Iterable['Vec2']:
+def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed: bool = False) -> Iterable['Vec2']:
     """
     Yields vertices of the offset line to the shape defined by `vertices`. The source shape consist
     of straight segments and is located in the xy-plane, the z-axis of input vertices is ignored.
