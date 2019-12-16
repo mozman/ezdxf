@@ -13,4 +13,3 @@ Add-ons
    importer
    dxf2code
    forms
-   workbench

@@ -21,6 +21,7 @@ from .circle import ConstructionCircle
 from .box import ConstructionBox
 from .shape import Shape2d
 from .bbox import BoundingBox2d, BoundingBox
+from .offset2d import offset_vertices_2d
 
 
 def xround(value: float, rounding: float = 0.) -> float:

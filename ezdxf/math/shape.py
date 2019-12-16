@@ -5,6 +5,7 @@ from typing import Union, Iterable, List, TYPE_CHECKING
 import math
 from .vector import Vec2
 from .construct2d import ConstructionTool
+from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:
@@ -90,3 +91,17 @@ class Shape2d(ConstructionTool):
 
         """
         self.vertices.extend(Vec2.generate(vertices))
+
+    def offset(self, offset, closed=False) -> 'Shape2d':
+        """
+        Returns a new offset shape, for more information see also :func:`ezdxf.math.offset_vertices_2d` function.
+
+        .. versionadded:: 0.11
+
+        Args:
+            offset: line offset perpendicular to direction of shape segments defined by vertices order,
+                    offset > ``0`` is 'left' of line segment, offset < ``0`` is 'right' of line segment
+            closed: ``True`` to handle as closed shape
+
+        """
+        return Shape2d(offset_vertices_2d(self.vertices, offset=offset, closed=closed))

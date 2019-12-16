@@ -1,10 +1,6 @@
 # Created: 15.12.2019
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
-"""
-A collection of construction tools, some in a CAD-like manner, but far away form real CAD tools.
-
-"""
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.math import Vec2
 from ezdxf.math.line import ConstructionRay, ParallelRaysError
@@ -27,6 +23,8 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed=False
         Adjacent collinear segments in `opposite` directions, same as a turn by 180 degree (U-turn), leads to
         unexpected results.
 
+    .. versionadded:: 0.11
+
     Args:
         vertices: source shape defined by vertices
         offset: line offset perpendicular to direction of shape segments defined by vertices order, offset > ``0`` is
@@ -34,7 +32,7 @@ def offset_vertices_2d(vertices: Iterable['Vertex'], offset: float, closed=False
         closed: ``True`` to handle as closed shape
 
     """
-    vertices = list(Vec2(v) for v in vertices)
+    vertices = Vec2.list(vertices)
     if len(vertices) < 2:
         raise ValueError('2 or more vertices required.')
 

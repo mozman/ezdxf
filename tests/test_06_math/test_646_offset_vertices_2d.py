@@ -1,8 +1,7 @@
 # Copyright (c) 2019, Manfred Moitzi
 # License: MIT License
 
-from ezdxf.addons.workbench import offset_vertices_2d
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, offset_vertices_2d
 
 PRECISION = 1e-3
 
