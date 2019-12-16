@@ -80,7 +80,7 @@ def convex_hull(points: Iterable['Vertex']) -> List['Vertex']:
     points = sorted(set(points))  # remove duplicate points
 
     if len(points) < 3:
-        raise ValueError("ConvexHull(): Less than 3 unique points given!")
+        raise ValueError("Convex hull calculation requires 3 or more unique points.")
 
     upper_hull = points[:2]  # first two points
     for next_point in points[2:]:

@@ -705,6 +705,8 @@ Shape2d
 
     .. automethod:: offset
 
+    .. automethod:: convex_hull
+
 
 .. _Curve Global Interpolation: http://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/CURVE-INT-global.html
 .. _uniform: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/INT-APP/PARA-uniform.html
