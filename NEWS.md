@@ -15,6 +15,7 @@ Version 0.11a0 - dev
 - NEW: Ellipse properties `start_point` and `end_point` returns start- and end point of ellipse in WCS
 - NEW: `Drawing.set_modelspace_vport(height, center)` set initial view/zoom location for the modelspace
 - NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
+- NEW: `Drawing.output_encoding`  returns required output encoding
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
 

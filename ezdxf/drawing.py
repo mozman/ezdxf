@@ -195,6 +195,11 @@ class Drawing:
         self._dxfversion = self._validate_dxf_version(version)
         self.header['$ACADVER'] = version
 
+    @property
+    def output_encoding(self):
+        """ Returns required output encoding for saving to filesystem. """
+        return 'utf-8' if self.dxfversion >= DXF2007 else self.encoding
+
     def _validate_dxf_version(self, version: str) -> str:
         version = version.upper()
         version = acad_release_to_dxf_version.get(version, version)  # translates 'R12' -> 'AC1009'
@@ -369,7 +374,7 @@ class Drawing:
         # DXF R2007 and newer - UTF-8 encoding
 
         if encoding is None:
-            enc = 'utf-8' if self.dxfversion >= DXF2007 else self.encoding
+            enc = self.output_encoding
         else:  # override default encoding, for applications that handles encoding different than AutoCAD
             enc = encoding
         # in ASCII mode, unknown characters will be escaped as \U+nnnn unicode characters.

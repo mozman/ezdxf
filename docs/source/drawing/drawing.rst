@@ -44,6 +44,12 @@ Drawing Object
         ``'cp1258'`` Vietnam
         ============ =================
 
+    .. attribute:: output_encoding
+
+        Returns required output encoding for saving to filesystem or encoding to binary data.
+
+        .. versionadded:: 0.11
+
     .. attribute:: filename
 
         :class:`Drawing` filename, if loaded by :func:`ezdxf.readfile` else ``None``.
