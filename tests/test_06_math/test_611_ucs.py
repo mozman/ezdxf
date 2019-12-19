@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
-from math import isclose
+from math import isclose, radians
 from ezdxf.math import UCS, Vector, X_AXIS, Y_AXIS, Z_AXIS
 
 
@@ -101,3 +101,24 @@ def test_constructor_functions():
     ucs = UCS.from_z_axis_and_point_in_yz(origin, axis=axis, point=def_point)
     assert ucs.is_cartesian
     assert isclose(ucs.from_wcs(def_point).x, 0)
+
+
+def test_rotate_x_axis():
+    ucs = UCS().rotate((1, 0, 0), radians(90))
+    assert ucs.ux.isclose((1, 0, 0))
+    assert ucs.uy.isclose((0, 0, 1))
+    assert ucs.uz.isclose((0, -1, 0))
+
+
+def test_rotate_y_axis():
+    ucs = UCS().rotate((0, 1, 0), radians(90))
+    assert ucs.ux.isclose((0, 0, -1))
+    assert ucs.uy.isclose((0, 1, 0))
+    assert ucs.uz.isclose((1, 0, 0))
+
+
+def test_rotate_z_axis():
+    ucs = UCS().rotate((0, 0, 1), radians(90))
+    assert ucs.ux.isclose((0, 1, 0))
+    assert ucs.uy.isclose((-1, 0, 0))
+    assert ucs.uz.isclose((0, 0, 1))

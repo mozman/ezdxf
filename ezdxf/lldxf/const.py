@@ -145,6 +145,29 @@ COMPRESSED_TAGS = -10
 BYBLOCK = 0
 BYLAYER = 256
 BYOBJECT = 257
+RED = 1
+YELLOW = 2
+GREEN = 3
+CYAN = 4
+BLUE = 5
+MAGENTA = 6
+BLACK = 7
+WHITE = 7
+
+
+class ACI(IntEnum):
+    BYBLOCK = 0
+    BYLAYER = 256
+    BYOBJECT = 257
+    RED = 1
+    YELLOW = 2
+    GREEN = 3
+    CYAN = 4
+    BLUE = 5
+    MAGENTA = 6
+    BLACK = 7
+    WHITE = 7
+
 
 LINEWEIGHT_BYLAYER = -1
 LINEWEIGHT_BYBLOCK = -2
@@ -275,13 +298,13 @@ MTEXT_AT_LEAST = 1
 MTEXT_EXACT = 2
 
 MTEXT_COLOR_INDEX = {
-    'red': 1,
-    'yellow': 2,
-    'green': 3,
-    'cyan': 4,
-    'blue': 5,
-    'magenta': 6,
-    'white': 7,
+    'red': RED,
+    'yellow': YELLOW,
+    'green': GREEN,
+    'cyan': CYAN,
+    'blue': BLUE,
+    'magenta': MAGENTA,
+    'white': WHITE,
 }
 
 MTEXT_BG_OFF = 0

@@ -8,6 +8,7 @@
 from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
 from math import sin, cos, tan
 from itertools import chain
+from .vector import Vector
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
@@ -462,18 +463,18 @@ class Matrix44:
         """
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
-    def transform(self, vector: 'Vertex') -> Tuple[float, float, float]:
+    def transform(self, vector: 'Vertex') -> Vector:
         """
         Transforms a 3D vector and returns the result as a tuple.
 
         """
         m = self.matrix
         x, y, z = vector
-        return (x * m[0] + y * m[4] + z * m[8] + m[12],
+        return Vector(x * m[0] + y * m[4] + z * m[8] + m[12],
                 x * m[1] + y * m[5] + z * m[9] + m[13],
                 x * m[2] + y * m[6] + z * m[10] + m[14])
 
-    def transform_vectors(self, vectors: Iterable['Vertex']) -> List['Vertex']:
+    def transform_vectors(self, vectors: Iterable['Vertex']) -> List[Vector]:
         """
         Returns a list of transformed vectors.
 
@@ -482,7 +483,7 @@ class Matrix44:
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self.matrix
         for vector in vectors:
             x, y, z = vector
-            result.append((
+            result.append(Vector(
                 x * m0 + y * m4 + z * m8 + m12,
                 x * m1 + y * m5 + z * m9 + m13,
                 x * m2 + y * m6 + z * m10 + m14
