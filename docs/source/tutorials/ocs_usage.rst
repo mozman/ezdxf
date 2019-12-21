@@ -334,8 +334,32 @@ This is just an excerpt of the important parts, see the whole code of `insert.py
 .. image:: gfx/insert_1.png
 .. image:: gfx/insert_2.png
 
+To rotate a block reference around another axis than the block z-axis, you have to find the rotated z-axis
+(= extrusion vector) of the rotated block reference, following example rotates the block reference around the
+block x-axis by 15 degrees:
+
+.. code-block:: python
+
+    # t is a transformation matrix to rotate 15 degree around the x-axis
+    t = Matrix44.axis_rotate(axis=X_AXIS, angle=math.radians(15))
+    # transform the block z-axis into new UCS z-axis (= extrusion vector)
+    uz = Vector(t.transform(Z_AXIS))
+    # create new UCS at the insertion point, because we are rotating around the x-axis,
+    # ux is the same as the WCS x-axis and uz is the rotated z-axis.
+    ucs = UCS(origin=(1, 2, 0), ux=X_AXIS, uz=uz)
+    # transform insert location to OCS, block base_point=(0, 0, 0)
+    insert = ucs.to_ocs((0, 0, 0))
+    # for this case a rotation around the z-axis is not required
+    rotation = 0
+    msp.add_blockref('CSYS', insert, dxfattribs={
+        'extrusion': ucs.uz,
+        'rotation': rotation,
+    })
+
+.. image:: gfx/insert_3.png
+.. image:: gfx/insert_4.png
 
 
 .. _Linear Algebra: https://www.youtube.com/watch?v=kjBOesZCoqc&list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab
 .. _3Blue1Brown: https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw
-.. _insert.py: https://github.com/mozman/ezdxf/blob/develop/examples/tut/ocs/insert.py
+.. _insert.py: https://github.com/mozman/ezdxf/blob/master/examples/tut/ocs/insert.py
