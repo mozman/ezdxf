@@ -126,8 +126,8 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, fil
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):
-        # store overridden encoding if supported by AutoCAD, else default encoding 'cp1252' is used
-        # as document encoding.
+        # store overridden encoding if supported by AutoCAD, else default encoding stored in $DWGENCODING is used
+        # as document encoding or 'cp1252' if $DWGENCODING is unset.
         doc.encoding = encoding
     return doc
 

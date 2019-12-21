@@ -220,7 +220,7 @@ class UCS:
 
         """
         vec = Vector.from_deg_angle(angle)
-        vec = self.to_ocs(vec) - self.origin
+        vec = self.to_ocs(vec) - self.to_ocs((0, 0, 0))
         return vec.angle_deg
 
     def to_ocs_angle_rad(self, angle: float) -> float:
@@ -233,7 +233,7 @@ class UCS:
 
         """
         vec = Vector.from_angle(angle)
-        vec = self.to_ocs(vec) - self.origin
+        vec = self.to_ocs(vec) - self.to_ocs((0, 0, 0))
         return vec.angle
 
     def from_wcs(self, point: 'Vertex') -> 'Vector':

@@ -19,6 +19,7 @@ Version 0.11a0 - dev
 - NEW: `UCS.rotate(axis, angle)` returns a new rotated UCS
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
+- BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
 
 Version 0.10.2 - 2019-10-05
 ---------------------------

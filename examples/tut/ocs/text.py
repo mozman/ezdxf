@@ -25,7 +25,7 @@ text = msp.add_text(
         'rotation': rotation,
         'extrusion': ucs.uz,
         'thickness': .333,
-        'color': 2,
+        'color': 1,
         'style': 'TXT',
     })
 # set text position in OCS

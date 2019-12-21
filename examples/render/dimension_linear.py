@@ -580,7 +580,7 @@ def linear_EZ_MM(fmt):
     doc.saveas(OUTDIR / f'dim_linear_R12_{fmt}.dxf')
 
 
-ALL = False
+ALL = True
 
 if __name__ == '__main__':
     linear_tutorial('R2007')

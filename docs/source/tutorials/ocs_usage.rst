@@ -239,16 +239,16 @@ AutoCAD supports thickness for the TEXT entity only for `.shx` fonts and not for
             'rotation': rotation,
             'extrusion': ucs.uz,
             'thickness': .333,
-            'color': 2,
+            'color': 1,
             'style': 'TXT',
         })
     # set text position in OCS
     text.set_pos(ucs.to_ocs((0, 0, 0)), align='MIDDLE_CENTER')
 
-.. image:: gfx/ocs-text-top-view.png
+.. image:: gfx/ocs-text-top.png
     :alt: text in ucs as top view
 
-.. image:: gfx/ocs-text-front-view.png
+.. image:: gfx/ocs-text-front.png
     :alt: text in ucs as front view
 
 .. hint::
@@ -272,23 +272,23 @@ this example also shows a shortcut for calculating the OCS angles.
         end_angle=ucs.to_ocs_angle_deg(270),  # shortcut
         dxfattribs={
             'extrusion': ucs.uz,
-            'color': 2,
+            'color': 1,
         })
     center = ucs.to_wcs((0, 0))
     msp.add_line(
         start=center,
         end=ucs.to_wcs(Vector.from_deg_angle(45)),
-        dxfattribs={'color': 2},
+        dxfattribs={'color': 1},
     )
     msp.add_line(
         start=center,
         end=ucs.to_wcs(Vector.from_deg_angle(270)),
-        dxfattribs={'color': 2},
+        dxfattribs={'color': 1},
     )
 
-.. image:: gfx/ocs-arc-top-view.png
+.. image:: gfx/ocs-arc-top.png
     :alt: arc in ucs as top view
-.. image:: gfx/ocs-arc-front-view.png
+.. image:: gfx/ocs-arc-front.png
     :alt: arc in ucs as front view
 
 Placing Block References in 3D Space
