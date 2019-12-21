@@ -58,11 +58,11 @@ def main():
     # To rotate the block reference around the WCS x-axis,
     # you have to transform the block z-axis into the WCS x-axis:
     # rotate block axis 90 deg ccw around y-axis, by using an UCS
-    ucs = ucs_rotation(UCS(), axis=Y_AXIS, angle=math.radians(90))
+    ucs = ucs_rotation(UCS(), axis=Y_AXIS, angle=90)
     # transform insert location, not required for (0, 0, 0)
     insert = ucs.to_ocs((0, 0, 0))
     # rotation angle about the z-axis (= WCS x-axis)
-    rotation = 15
+    rotation = ucs.to_ocs_angle_deg(15)
     msp.add_blockref('CSYS', insert, dxfattribs={
         'extrusion': ucs.uz,
         'rotation': rotation,
@@ -81,10 +81,10 @@ def main():
     insert = ucs.to_ocs((0, 0, 0))
     # for this case is no rotation around the z-axis required
     rotation = 0
-    msp.add_blockref('CSYS', insert, dxfattribs={
-        'extrusion': ucs.uz,
-        'rotation': rotation,
-    })
+    #msp.add_blockref('CSYS', insert, dxfattribs={
+    #    'extrusion': ucs.uz,
+    #    'rotation': rotation,
+    #})
 
     doc.set_modelspace_vport(5)
     doc.saveas(r'C:\Users\manfred\Desktop\Outbox\ocs-insert.dxf')

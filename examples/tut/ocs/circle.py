@@ -22,10 +22,10 @@ msp.add_circle(
         # here the extrusion vector should be normalized,
         # which is granted by using the ocs.uz
         'extrusion': ocs.uz,
-        'color': 2,
+        'color': 1,
     })
 # mark center point of circle in WCS
-msp.add_point((0, 2, 2), dxfattribs={'color': 2})
+msp.add_point((0, 2, 2), dxfattribs={'color': 1})
 # include-end
 
 print("center in OCS: {}".format(ocs.from_wcs((0, 2, 2))))

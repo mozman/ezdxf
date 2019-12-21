@@ -32,13 +32,13 @@ msp.add_polyline3d(
     points=corners_wcs,
     dxfattribs={
         'closed': True,
-        'color': 2,
+        'color': 1,
     })
 
 # add lines from center to corners
 center_wcs = ucs.to_wcs((0, .333, .333))
 for corner in corners_wcs:
-    msp.add_line(center_wcs, corner, dxfattribs={'color': 2})
+    msp.add_line(center_wcs, corner, dxfattribs={'color': 1})
 # include-end
 
 ucs.render_axis(msp)

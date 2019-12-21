@@ -32,7 +32,7 @@ msp.add_lwpolyline(
         'elevation': elevation,
         'extrusion': ucs.uz,
         'closed': True,
-        'color': 2,
+        'color': 1,
     })
 # include-end
 

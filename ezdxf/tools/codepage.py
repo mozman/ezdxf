@@ -22,10 +22,10 @@ codepage_to_encoding = {
 
 encoding_to_codepage = {
     codec: ansi for ansi, codec in codepage_to_encoding.items()
-    }
+}
 
 
-def is_supported_encoding(encoding: str='cp1252') -> bool:
+def is_supported_encoding(encoding: str = 'cp1252') -> bool:
     return encoding in encoding_to_codepage
 
 
@@ -38,4 +38,3 @@ def toencoding(dxfcodepage: str) -> str:
 
 def tocodepage(encoding: str) -> str:
     return 'ANSI_' + encoding_to_codepage.get(encoding, '1252')
-
