@@ -118,12 +118,16 @@ def readfile(filename: str, encoding: str = None, legacy_mode: bool = False, fil
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
     info = dxf_file_info(filename)
-    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
+    en = ""
+    if encoding is not None:
+        en = encoding
+    else:
+        en = info.encoding,
+    with open(filename, mode='rt', encoding=en, errors='ignore') as fp:
         doc = read(fp, legacy_mode=legacy_mode, filter_stack=filter_stack)
 
     doc.filename = filename
-    if encoding is not None and is_supported_encoding(encoding):
-        doc.encoding = encoding
+    doc.encoding = en
     return doc
 
 
