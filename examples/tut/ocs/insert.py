@@ -63,10 +63,10 @@ def main():
     insert = ucs.to_ocs((0, 0, 0))
     # rotation angle about the z-axis (= WCS x-axis)
     rotation = ucs.to_ocs_angle_deg(15)
-    msp.add_blockref('CSYS', insert, dxfattribs={
-        'extrusion': ucs.uz,
-        'rotation': rotation,
-    })
+    # msp.add_blockref('CSYS', insert, dxfattribs={
+    #    'extrusion': ucs.uz,
+    #    'rotation': rotation,
+    # })
 
     # To rotate a block reference around the block x-axis,
     # you have to find the rotated z-axis (= extrusion vector)
@@ -82,10 +82,44 @@ def main():
     insert = ucs.to_ocs((0, 0, 0))
     # for this case a rotation around the z-axis is not required
     rotation = 0
-    msp.add_blockref('CSYS', insert, dxfattribs={
+    blockref = msp.add_blockref('CSYS', insert, dxfattribs={
         'extrusion': ucs.uz,
         'rotation': rotation,
     })
+
+    # translate a block references with an established OCS
+    translation = Vector(-3, -1, 1)
+    # get established OCS
+    ocs = blockref.ocs()
+    # get insert location in WCS
+    actual_wcs_location = ocs.to_wcs(blockref.dxf.insert)
+    # translate location
+    new_wcs_location = actual_wcs_location + translation
+    # convert WCS location to OCS location
+    blockref.dxf.insert = ocs.from_wcs(new_wcs_location)
+
+    # rotate a block references with an established OCS around the block y-axis about 90 degree
+    ocs = blockref.ocs()
+    # convert block y-axis (= rotation axis) into WCS vector
+    rotation_axis = ocs.to_wcs((0, 1, 0))
+    # convert local z-axis (=extrusion vector) into WCS vector
+    local_z_axis = ocs.to_wcs((0, 0, 1))
+    # build transformation matrix
+    t = Matrix44.axis_rotate(axis=rotation_axis, angle=math.radians(-90))
+    uz = t.transform(local_z_axis)
+    uy = rotation_axis
+    # the block reference origin stays at the same location, no rotation needed
+    wcs_insert = ocs.to_wcs(blockref.dxf.insert)
+    # build new UCS to convert WCS locations and angles into OCS
+    ucs = UCS(origin=wcs_insert, uy=uy, uz=uz)
+
+    # set new OCS
+    blockref.dxf.extrusion = ucs.uz
+    # set new insert
+    blockref.dxf.insert = ucs.to_ocs((0, 0, 0))
+    # set new rotation: we do not rotate the block reference around the local z-axis,
+    # but the new block x-axis (0 deg) differs from OCS x-axis and has to be adjusted
+    blockref.dxf.rotation = ucs.to_ocs_angle_deg(0)
 
     doc.set_modelspace_vport(5)
     doc.saveas('ocs_insert.dxf')

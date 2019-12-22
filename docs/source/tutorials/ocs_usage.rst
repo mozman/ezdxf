@@ -335,7 +335,7 @@ This is just an excerpt of the important parts, see the whole code of `insert.py
 .. image:: gfx/insert_2.png
 
 To rotate a block reference around another axis than the block z-axis, you have to find the rotated z-axis
-(= extrusion vector) of the rotated block reference, following example rotates the block reference around the
+(extrusion vector) of the rotated block reference, following example rotates the block reference around the
 block x-axis by 15 degrees:
 
 .. code-block:: python
@@ -351,7 +351,7 @@ block x-axis by 15 degrees:
     insert = ucs.to_ocs((0, 0, 0))
     # for this case a rotation around the z-axis is not required
     rotation = 0
-    msp.add_blockref('CSYS', insert, dxfattribs={
+    blockref = msp.add_blockref('CSYS', insert, dxfattribs={
         'extrusion': ucs.uz,
         'rotation': rotation,
     })
@@ -359,6 +359,69 @@ block x-axis by 15 degrees:
 .. image:: gfx/insert_3.png
 .. image:: gfx/insert_4.png
 
+The next example shows how to translate a block references with an already established OCS:
+
+.. code-block:: python
+
+    translation = Vector(-3, -1, 1)
+    # get established OCS
+    ocs = blockref.ocs()
+    # get insert location in WCS
+    actual_wcs_location = ocs.to_wcs(blockref.dxf.insert)
+    # translate location
+    new_wcs_location = actual_wcs_location + translation
+    # convert WCS location to OCS location
+    blockref.dxf.insert = ocs.from_wcs(new_wcs_location)
+
+Setting a new insert location is the same procedure without adding a translation vector, just transform the new
+insert location into the OCS.
+
+.. image:: gfx/insert_5.png
+.. image:: gfx/insert_6.png
+
+The next operation is to rotate a block reference with an established OCS, rotation axis is the block y-axis,
+rotation angle is -90 degrees. First transform block y-axis (rotation axis) and block z-axis (extrusion vector)
+from OCS into WCS:
+
+.. code-block:: python
+
+    ocs = blockref.ocs()
+    # convert block y-axis (= rotation axis) into WCS vector
+    rotation_axis = ocs.to_wcs((0, 1, 0))
+    # convert local z-axis (=extrusion vector) into WCS vector
+    local_z_axis = ocs.to_wcs((0, 0, 1))
+
+Build transformation matrix and transform extrusion vector and build new UCS:
+
+.. code-block:: python
+
+    # build transformation matrix
+    t = Matrix44.axis_rotate(axis=rotation_axis, angle=math.radians(-90))
+    uz = t.transform(local_z_axis)
+    uy = rotation_axis
+    # the block reference origin stays at the same location, no rotation needed
+    wcs_insert = ocs.to_wcs(blockref.dxf.insert)
+    # build new UCS to convert WCS locations and angles into OCS
+    ucs = UCS(origin=wcs_insert, uy=uy, uz=uz)
+
+Set new OCS attributes, we also have to set the rotation attribute even though we do not rotate the block reference
+around the local z-axis, the new block x-axis (0 deg) differs from OCS x-axis and has to be adjusted:
+
+.. code-block:: python
+
+    # set new OCS
+    blockref.dxf.extrusion = ucs.uz
+    # set new insert
+    blockref.dxf.insert = ucs.to_ocs((0, 0, 0))
+    # set new rotation: we do not rotate the block reference around the local z-axis,
+    # but the new block x-axis (0 deg) differs from OCS x-axis and has to be adjusted
+    blockref.dxf.rotation = ucs.to_ocs_angle_deg(0)
+
+
+.. image:: gfx/insert_7.png
+.. image:: gfx/insert_8.png
+
+And here is the point, where my math knowledge ends, for more advanced CAD operation you have to look elsewhere.
 
 .. _Linear Algebra: https://www.youtube.com/watch?v=kjBOesZCoqc&list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab
 .. _3Blue1Brown: https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw
