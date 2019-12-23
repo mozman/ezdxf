@@ -241,9 +241,13 @@ Measurement Text Formatting and Styling
 Text Properties
 ~~~~~~~~~~~~~~~
 
-The measurement text color is defined by the DIMVAR :attr:`~ezdxf.entities.DimStyle.dxf.dimclrt` as :ref:`ACI`.
-The text style is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimtxsty` (DXF R2000) and the text height by
-:attr:`~ezdxf.entities.DimStyle.dxf.dimtxt`.
+=================== ===========================================
+DIMVAR              Description
+=================== ===========================================
+:attr:`dimtxsty`    Specifies the text style of the dimension as :class:`~ezdxf.entities.Textstyle` name.
+:attr:`dimtxt`      Text height in drawing units.
+:attr:`dimclrt`     Measurement text color as :ref:`ACI`.
+=================== ===========================================
 
 .. code-block:: Python
 
@@ -257,6 +261,7 @@ The text style is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimtxsty` (DXF 
 
 .. image:: gfx/dim_linear_text.png
 
+
 Background Filling
 ~~~~~~~~~~~~~~~~~~
 
@@ -267,6 +272,21 @@ Set :attr:`~ezdxf.entities.DimStyle.dxf.dimtfill` to ``1`` to use the canvas col
 :attr:`~ezdxf.entities.DimStyle.dxf.dimtfill` to ``2`` to use :attr:`~ezdxf.entities.DimStyle.dxf.dimtfillclr` as
 background filling, color value as :ref:`ACI`. Set :attr:`~ezdxf.entities.DimStyle.dxf.dimtfill` to ``0`` to
 disable background filling.
+
+=================== ==============================================================================
+DIMVAR              Description
+=================== ==============================================================================
+:attr:`dimtfill`    Enables background filling if bigger than ``0``
+:attr:`dimtfillclr` Fill color as :ref:`ACI`, if :attr:`dimtfill` is ``2``
+=================== ==============================================================================
+
+=================== ====================================================
+:attr:`dimtfill`    Description
+=================== ====================================================
+``0``               disabled
+``1``               canvas color
+``2``               color defined by :attr:`dimtfillclr`
+=================== ====================================================
 
 .. code-block:: Python
 
@@ -324,13 +344,21 @@ All factory functions have an explicit `text` argument, which always replaces th
 Dimension Line Properties
 -------------------------
 
-The dimension line color is defined by the DIMVAR :attr:`~ezdxf.entities.DimStyle.dxf.dimclrd` as :ref:`ACI`,
-dimclrd also defines the color of the arrows. The linetype is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimltype`
+The dimension line color is defined by the DIMVAR :attr:`dimclrd` as :ref:`ACI`,
+:attr:`dimclrd` also defines the color of the arrows. The linetype is defined by :attr:`dimltype`
 but requires DXF R2007 for full support by CAD Applications and the line weight is defined by
-:attr:`~ezdxf.entities.DimStyle.dxf.dimlwd` (DXF R2000), see also the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight`
-reference for valid values.
-The :attr:`~ezdxf.entities.DimStyle.dxf.dimdle` is the extension of the dimension line beyond
-the extension lines, this dimension line extension is not supported for all arrows.
+:attr:`dimlwd` (DXF R2000), see also the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` reference
+for valid values. The :attr:`dimdle` is the extension of the dimension line beyond the extension
+lines, this dimension line extension is not supported for all arrows.
+
+=================== ==============================================================================
+DIMVAR              Description
+=================== ==============================================================================
+:attr:`dimclrd`     dimension line and arrows color as :ref:`ACI`
+:attr:`dimltype`    linetype of dimension line
+:attr:`dimlwd`      line weight of dimension line
+:attr:`dimdle`      extension of dimension line in drawing units
+=================== ==============================================================================
 
 .. code-block:: Python
 
@@ -358,15 +386,28 @@ the extension lines, this dimension line extension is not supported for all arro
 Extension Line Properties
 -------------------------
 
-The extension line color is defined by the DIMVAR :attr:`~ezdxf.entities.DimStyle.dxf.dimclre` as :ref:`ACI`.
-The linetype for first and second extension line is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimltex1` and
-:attr:`~ezdxf.entities.DimStyle.dxf.dimltex2` but requires DXF R2007 for full support by CAD Applications and the line
-weight is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimlwe` (DXF R2000),
-see also the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` reference for valid values.
+The extension line color is defined by the DIMVAR :attr:`dimclre` as :ref:`ACI`.
+The linetype for first and second extension line is defined by :attr:`dimltex1` and :attr:`dimltex2` but requires DXF
+R2007 for full support by CAD Applications and the line weight is defined by :attr:`dimlwe` (DXF R2000), see also the
+:attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` reference for valid values.
 
-The :attr:`~ezdxf.entities.DimStyle.dxf.dimexe` is the extension of the extension line beyond
-the dimension line, and :attr:`~ezdxf.entities.DimStyle.dxf.dimexo` defines the offset of the extension line from the
-measurement point.
+The :attr:`dimexe` is the extension of the extension line beyond the dimension line, and :attr:`dimexo` defines the
+offset of the extension line from the measurement point.
+
+=================== ================================================================================================
+DIMVAR              Description
+=================== ================================================================================================
+:attr:`dimclre`     extension line color as :ref:`ACI`
+:attr:`dimltex1`    linetype of first extension line
+:attr:`dimltex2`    linetype of second extension line
+:attr:`dimlwe`      line weight of extension line
+:attr:`dimexe`      extension beyond dimension line in drawing units
+:attr:`dimexo`      offset of extension line from measurement point
+:attr:`dimfxlon`    set to ``1`` to enable fixed length extension line
+:attr:`dimfxl`      length of fixed length extension line in drawing units
+:attr:`dimse1`      suppress first extension line if ``1``
+:attr:`dimse2`      suppress second extension line if ``1``
+=================== ================================================================================================
 
 .. code-block:: Python
 
@@ -393,8 +434,8 @@ measurement point.
     dim.set_extline2(linetype='CENTER2')
     dim.render()
 
-Fixed length extension lines are supported in DXF R2007+, set :attr:`~ezdxf.entities.DimStyle.dxf.dimfxlon` to ``1``
-and :attr:`~ezdxf.entities.DimStyle.dxf.dimfxl` defines the length of the extension line starting at the dimension line.
+Fixed length extension lines are supported in DXF R2007+, set :attr:`dimfxlon` to ``1`` and :attr:`dimfxl` defines
+the length of the extension line starting at the dimension line.
 
 .. code-block:: Python
 
@@ -416,8 +457,8 @@ and :attr:`~ezdxf.entities.DimStyle.dxf.dimfxl` defines the length of the extens
     dim.set_extline_format(extension=0.2, fixed_length=0.4)
     dim.render()
 
-To suppress extension lines set :attr:`~ezdxf.entities.DimStyle.dxf.dimse1` = ``1`` to suppress the first extension
-line and :attr:`~ezdxf.entities.DimStyle.dxf.dimse2` = ``1`` to suppress the second extension line.
+To suppress extension lines set :attr:`dimse1` = ``1`` to suppress the first extension
+line and :attr:`dimse2` = ``1`` to suppress the second extension line.
 
 .. code-block:: Python
 
@@ -470,25 +511,28 @@ Using arrows:
     dim.set_arrow(blk="OPEN_30", size=0.25)
     dim.render()
 
-Set arrow blocks by DIMVARS:
 
-- :attr:`~ezdxf.entities.DimStyle.dxf.dimblk`: set both arrow block names at once
-- :attr:`~ezdxf.entities.DimStyle.dxf.dimblk1`: first arrow block name
-- :attr:`~ezdxf.entities.DimStyle.dxf.dimblk2`: second arrow block name
-- :attr:`~ezdxf.entities.DimStyle.dxf.dimasz`: arrow size in drawing units
+=================== ====================================================================================
+DIMVAR              Description
+=================== ====================================================================================
+:attr:`dimtsz`      tick size in drawing units, set to ``0`` to use arrows
+:attr:`dimblk`      set both arrow block names at once
+:attr:`dimblk1`     first arrow block name
+:attr:`dimblk2`     second arrow block name
+:attr:`dimasz`      arrow size in drawing units
+=================== ====================================================================================
 
 .. code-block:: Python
 
     msp.add_linear_dim(
         base=(3, 2), p1=(3, 0), p2=(6, 0),
         override={
-            'dimtsz': 0,  # set tick size to 0, to enable arrow usage
+            'dimtsz': 0,  # set tick size to 0 to enable arrow usage
             'dimasz': 0.25,  # arrow size in drawing units
             'dimblk': "OPEN_30",  # arrow block name
         }).render()
 
-Dimension line extension (:attr:`~ezdxf.entities.DimStyle.dxf.dimdle`) works only for a few arrow blocks
-and the simple tick:
+Dimension line extension (:attr:`dimdle`) works only for a few arrow blocks and the simple tick:
 
 - ``"ARCHTICK"``
 - ``"OBLIQUE"``
@@ -538,7 +582,38 @@ ez_arrow_filled             ``"EZ_ARROW_FILLED"``
 Tolerances and Limits
 ---------------------
 
-TODO
+The tolerances ans limits features are implemented by using the :class:`~ezdxf.entities.MText` entity, therefore
+DXF R2000+ is required to use these features. It is not possible to use both tolerances and limits at the same time.
+
+Tolerances
+~~~~~~~~~~
+
+Geometrical tolerances are shown as additional text appended to the measurement text.
+It is recommend to use :meth:`~ezdxf.entities.DimStyleOverride.set_tolerance` method in
+:class:`~ezdxf.entities.DimStyleOverride` or :class:`~ezdxf.entities.DimStyle`.
+
+The attribute :attr:`dimtp` defines the upper tolerance value, :attr:`dimtm` defines the lower tolerance value if
+present, else the lower tolerance value is the same as the upper tolerance value.
+Tolerance values are always in drawing units!
+
+=================== ====================================================================================
+DIMVAR              Description
+=================== ====================================================================================
+:attr:`dimtol`      set to ``1`` to enable tolerances
+=================== ====================================================================================
+
+Limits
+~~~~~~
+
+The geometrical limits are shown as upper and lower measurement limit and replaces the usual
+measurement text. It is recommend to use :meth:`~ezdxf.entities.DimStyleOverride.set_limits` method in
+:class:`~ezdxf.entities.DimStyleOverride` or :class:`~ezdxf.entities.DimStyle`.
+
+=================== ====================================================================================
+DIMVAR              Description
+=================== ====================================================================================
+:attr:`dimlim`      set to ``1`` to enable limits
+=================== ====================================================================================
 
 Alternative Units
 -----------------

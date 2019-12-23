@@ -17,6 +17,7 @@ Version 0.11a0 - dev
 - NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
 - NEW: `Drawing.output_encoding`  returns required output encoding
 - NEW: `UCS.rotate(axis, angle)` returns a new rotated UCS
+- NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`) 
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`

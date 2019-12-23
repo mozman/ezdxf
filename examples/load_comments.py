@@ -1,42 +1,22 @@
 import sys
-from ezdxf.lldxf.validator import is_dxf_file
-from ezdxf.filemanagement import dxf_file_info
 
-
-def load_comments(stream):
-    line = 1
-    while True:
-        try:
-            code = stream.readline()
-            value = stream.readline()
-        except EOFError:
-            return
-        if code and value:  # StringIO(): empty strings indicates EOF
-            try:
-                code = int(code)
-            except ValueError:
-                raise ValueError('Invalid group code "{}" at line {}.'.format(code, line))
-            else:
-                if code == 999:  # just yield comments
-                    yield value.rstrip('\n')
-                line += 2
-        else:
-            return
-
-
-def open_stream(filename):
-    if is_dxf_file(filename):
-        info = dxf_file_info(filename)
-        return open(filename, mode='rt', encoding=info.encoding)
-    else:
-        raise IOError('File "{}" is not a DXF file.'.format(filename))
-
+from ezdxf import comments
 
 if __name__ == '__main__':
     filename = sys.argv[1]
-    stream = open_stream(filename)
-    try:
-        for comment in load_comments(stream):
-            print(comment)
-    finally:
-        stream.close()
+    comment_collector = []
+    for code, value in comments.from_file(filename, handles=True, structure=True):
+        # get also handles and structure tags to associated prepending comments to DXF entities
+        if code == 5:
+            handle = value
+            print('Handle: {}'.format(value))
+            print('Prepending comments:')
+            for comment in comment_collector:
+                print(comment)
+            comment_collector = []
+        elif code == 0 and value == 'ENDSEC':
+            # delete collected comments at end of section like the HEADER section
+            # this removes 'noise'.
+            comment_collector = []
+        elif code == 999:
+            comment_collector.append(value)

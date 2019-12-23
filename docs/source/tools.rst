@@ -41,3 +41,10 @@ SAT Format "Encryption"
 .. autofunction:: ezdxf.tools.crypt.encode
 
 .. autofunction:: ezdxf.tools.crypt.decode
+
+Load DXF Comments
+-----------------
+
+.. autofunction:: ezdxf.comments.from_stream
+
+.. autofunction:: ezdxf.comments.from_file
