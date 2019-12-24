@@ -75,6 +75,19 @@ def external_tag_compiler(text):
     return tag_compiler(low_level_tagger(StringIO(text)))
 
 
+def test_low_level_tagger_skip_comments():
+    tags = list(low_level_tagger(StringIO('999\ncomment\n0\nEOF\n')))
+    assert (0, 'EOF') == tags[0]
+    assert len(tags) == 1
+
+
+def test_low_level_tagger_not_skip_comments():
+    tags = list(low_level_tagger(StringIO('999\ncomment\n0\nEOF\n'), skip_comments=False))
+    assert (999, 'comment') == tags[0]
+    assert (0, 'EOF') == tags[1]
+    assert len(tags) == 2
+
+
 @pytest.fixture
 def reader():
     return external_tag_compiler(TEST_TAGREADER)

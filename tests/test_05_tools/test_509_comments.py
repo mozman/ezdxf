@@ -34,7 +34,7 @@ def test_load_only_comments():
 
 def test_load_handles_and_comments():
     stream = StringIO(DXF)
-    tags = list(comments.from_stream(stream, handles=True))
+    tags = list(comments.from_stream(stream, codes={5}))
     assert len(tags) == 5
     assert tags[0] == (999, 'preceding comment')
     assert tags[1] == (5, 'ABBA')
@@ -45,7 +45,7 @@ def test_load_handles_and_comments():
 
 def test_load_structure_and_comments():
     stream = StringIO(DXF)
-    tags = list(comments.from_stream(stream, structure=True))
+    tags = list(comments.from_stream(stream, codes={0}))
     assert len(tags) == 6
     assert tags[0] == (999, 'preceding comment')
     assert tags[1] == (0, 'SECTION')

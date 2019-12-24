@@ -55,18 +55,22 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
-def low_level_tagger(stream: TextIO) -> Iterator[DXFTag]:
+def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
     """
-    Generates DXFTag(code, value) tuples from a stream (untrusted external source) and does not optimize coordinates.
-    Skip comment tags 999. code is always an int and value is always an unicode string without a trailing '\n'.
-    Works with file system streams and StringIO() streams, only required feature is the readline() method.
+    Yields :class:`DXFTag` objects from a text `stream` (untrusted external source) and does not
+    optimize coordinates. Comment tags (group code == 999) will be skipped if argument `skip_comments` is `True`.
+    :attr:`DXFTag.code` is always an int and :attr:`DXFTag.value` is always an unicode string without a trailing
+    ``'\n'``.  Works with file system streams and :class:`StringIO` streams, only required feature is the
+    :meth:`readline` method.
 
     Args:
         stream: text stream
+        skip_comments: skip comment tags (group code == 999) if `True`
 
     Yields: DXFTag()
 
-    Raises: DXFStructureError() for invalid group codes.
+    Raises:
+        DXFStructureError: for invalid group codes.
 
     """
     line = 1
@@ -82,7 +86,7 @@ def low_level_tagger(stream: TextIO) -> Iterator[DXFTag]:
             except ValueError:
                 raise DXFStructureError('Invalid group code "{}" at line {}.'.format(code, line))
             else:
-                if code != 999:  # skip comments
+                if code != 999 or skip_comments is False:
                     yield DXFTag(code, value.rstrip('\n'))
                 line += 2
         else:
