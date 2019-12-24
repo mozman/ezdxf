@@ -11,14 +11,12 @@ from .types import POINT_CODES, TYPE_TABLE, BINARAY_DATA
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
     """
-    Generates DXFTag() from trusted (internal) source - relies on
+    Yields DXFTag() from trusted (internal) source - relies on
     well formed and error free DXF format. Does not skip comment
-    tags 999.
+    tags (group code == 999).
 
     Args:
         s: DXF unicode string, lines separated by universal line endings '\n'
-
-    Yields: DXFTag() or inherited
 
     """
     assert isinstance(s, str)
@@ -55,22 +53,19 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
             yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
 
 
-def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
+def low_level_tagger(stream: TextIO, skip_comments: bool = True) -> Iterable[DXFTag]:
     """
-    Yields :class:`DXFTag` objects from a text `stream` (untrusted external source) and does not
+    Yields DXFTag() objects from a text `stream` (untrusted external source) and does not
     optimize coordinates. Comment tags (group code == 999) will be skipped if argument `skip_comments` is `True`.
-    :attr:`DXFTag.code` is always an int and :attr:`DXFTag.value` is always an unicode string without a trailing
-    ``'\n'``.  Works with file system streams and :class:`StringIO` streams, only required feature is the
-    :meth:`readline` method.
+    DXFTag.code is always an int and DXFTag.value is always an unicode string without a trailing '\n'.
+    Works with file system streams and StringIO() streams, only required feature is the readline() method.
 
     Args:
         stream: text stream
         skip_comments: skip comment tags (group code == 999) if `True`
 
-    Yields: DXFTag()
-
     Raises:
-        DXFStructureError: for invalid group codes.
+        DXFStructureError: Found invalid group code.
 
     """
     line = 1
@@ -111,11 +106,10 @@ def tag_compiler(tagger: Iterator[DXFTag]) -> Iterable[DXFTag]:
         tag_compiler(tag_reorder_layer(low_level_tagger(stream)))
 
     Args:
-        tagger: DXF tag generator/iterator like low_level_tagger() or skip_comments()
+        tagger: DXF tag generator e.g. low_level_tagger()
 
-    Yields: DXFTag() or inherited
-
-    Raises: DXFStructureError() for invalid dxf values and unexpected coordinate order.
+    Raises:
+        DXFStructureError: Found invalid DXF tag or unexpected coordinate order.
 
     """
 
