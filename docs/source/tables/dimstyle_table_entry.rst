@@ -176,11 +176,30 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimzin
 
-        Zero suppression for primary units dimensions. (default imperial=0, default metric=8) ???
+        Zero suppression for primary units dimensions. (default imperial=0, default metric=8)
+
+        Values 0-3 affect feet-and-inch dimensions only.
+
+        === =======================================================================================
+        0   Suppresses zero feet and precisely zero inches
+        1   Includes zero feet and precisely zero inches
+        2   Includes zero feet and suppresses zero inches
+        3   Includes zero inches and suppresses zero feet
+        4   Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
+        8   Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
+        12  Suppresses both leading and trailing zeros (for example, 0.5000 becomes .5)
+        === =======================================================================================
 
     .. attribute:: dxf.dimazin
 
         Controls zero suppression for angular dimensions. (default=0)
+
+        === =======================================================================================
+        0   Displays all leading and trailing zeros
+        1   Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
+        2   Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
+        3   Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
+        === =======================================================================================
 
     .. attribute:: dxf.dimalt
 
@@ -292,6 +311,16 @@ Factory function         :meth:`Drawing.dimstyles.new`
     .. attribute:: dxf.dimtolj
 
         Vertical justification for dimension tolerance text. (default=1)
+
+        === ====================================================
+        0   Align with bottom line of dimension text
+        1   Align vertical centered to dimension text
+        2   Align with top line of dimension text
+        === ====================================================
+
+    .. attribute:: dxf.dimtzin
+
+        Zero suppression for tolerances values, see :attr:`DimStyle.dxf.dimzin`
 
     .. attribute:: dxf.dimaltz
 

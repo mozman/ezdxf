@@ -14,7 +14,7 @@ def from_stream(stream: TextIO, codes: Set[int] = None) -> Iterable[DXFTag]:
 
     Args:
         stream: input text stream
-        codes: set of group codes to yields additional tags e.g. {5, 0} to also yield handle and structure tags
+        codes: set of group codes to yield additional DXF tags e.g. {5, 0} to also yield handle and structure tags
 
     """
     codes = codes or set()

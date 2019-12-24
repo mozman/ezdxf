@@ -40,6 +40,9 @@ def test_load_handles_and_comments():
     assert tags[1] == (5, 'ABBA')
     assert tags[2] == (999, 'comment before LINE')
     assert tags[3] == (5, 'FEFE')
+    # get associated LINE entity:
+    # handle = tags[3].value
+    # entity = doc.entitydb[handle]
     assert tags[4] == (999, 'comment after LINE')
 
 

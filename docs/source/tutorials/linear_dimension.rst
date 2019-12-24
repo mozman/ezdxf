@@ -594,12 +594,57 @@ It is recommend to use :meth:`~ezdxf.entities.DimStyleOverride.set_tolerance` me
 
 The attribute :attr:`dimtp` defines the upper tolerance value, :attr:`dimtm` defines the lower tolerance value if
 present, else the lower tolerance value is the same as the upper tolerance value.
-Tolerance values are always in drawing units!
+Tolerance values are shown as given!
+
+Same upper and lower tolerance value:
+
+.. code-block:: python
+
+    dim = msp.add_linear_dim(base=(0, 3), p1=(3, 0), p2=(6.5, 0))
+    dim.set_tolerance(.1, hfactor=.4, align="top", dec=2)
+    dim.render()
+
+.. image:: gfx/dim_linear_tol.png
+
+Different upper and lower tolerance values:
+
+.. code-block:: python
+
+    dim = msp.add_linear_dim(base=(0, 3), p1=(3, 0), p2=(6.5, 0))
+    dim.set_tolerance(upper=.1, lower=.15, hfactor=.4, align="middle", dec=2)
+    dim.render()
+
+.. image:: gfx/dim_linear_tol_upr_lwr.png
+
+The attribute :attr:`dimtfac` specifies a scale factor for the text height of limits and tolerance values
+relative to the dimension text height, as set by :attr:`dimtxt`. For example, if :attr:`dimtfac` is set to
+``1.0``, the text height of fractions and tolerances is the same height as the dimension text.
+If :attr:`dimtxt` is set to ``0.75``, the text height of limits and tolerances is three-quarters the
+size of dimension text.
+
+Vertical justification for tolerances is specified by :attr:`dimtolj`:
+
+=================== ====================================================
+:attr:`dimtolj`     Description
+=================== ====================================================
+``0``               Align with bottom line of dimension text
+``1``               Align vertical centered to dimension text
+``2``               Align with top line of dimension text
+=================== ====================================================
 
 =================== ====================================================================================
 DIMVAR              Description
 =================== ====================================================================================
 :attr:`dimtol`      set to ``1`` to enable tolerances
+:attr:`dimtp`       set the maximum (or upper) tolerance limit for dimension text
+:attr:`dimtm`       set the minimum (or lower) tolerance limit for dimension text
+:attr:`dimtfac`     specifies a scale factor for the text height of limits and tolerance values
+                    relative to the dimension text height, as set by :attr:`dimtxt`.
+:attr:`dimtzin`     ``4`` to suppress leading zeros, ``8`` to suppress trailing zeros or ``12`` to
+                    suppress both, like :attr:`dimzin` for dimension text, see also `Text Formatting`_
+:attr:`dimtolj`     set the vertical justification for tolerance values relative to the nominal
+                    dimension text.
+:attr:`dimtdec`     set the number of decimal places to display in tolerance values
 =================== ====================================================================================
 
 Limits
@@ -608,6 +653,21 @@ Limits
 The geometrical limits are shown as upper and lower measurement limit and replaces the usual
 measurement text. It is recommend to use :meth:`~ezdxf.entities.DimStyleOverride.set_limits` method in
 :class:`~ezdxf.entities.DimStyleOverride` or :class:`~ezdxf.entities.DimStyle`.
+
+For limits the tolerance values are drawing units scaled by measurement factor :attr:`dimlfac`, the upper
+limit is scaled measurement value + :attr:`dimtp` and the lower limit is scaled measurement value -
+:attr:`dimtm`.
+
+The attributes :attr:`dimtfac`, :attr:`dimtzin` and :attr:`dimtdec` have the same meaning for limits as
+for tolerances.
+
+.. code-block:: python
+
+    dim = msp.add_linear_dim(base=(0, 3), p1=(3, 0), p2=(6.5, 0))
+    dim.set_limits(upper=.1, lower=.15, hfactor=.4, dec=2)
+    dim.render()
+
+.. image:: gfx/dim_linear_limits.png
 
 =================== ====================================================================================
 DIMVAR              Description
