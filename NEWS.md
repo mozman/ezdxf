@@ -5,6 +5,10 @@ News
 Version 0.11a0 - dev
 --------------------
 
+- Using standard git branches: 
+  - `master`: development state
+  - `stable`: latest release
+- Requires Python 3.6
 - NEW: `Dimension.get_measurement()` supports angular, angular3p and ordinate dimensions
 - NEW: `Drawing.set_modelspace_vport()` set initial view/zoom location for the modelspace
 - NEW: `Layout.add_radius_dim()` implemented
