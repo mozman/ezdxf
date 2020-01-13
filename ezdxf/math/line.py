@@ -116,11 +116,23 @@ class ConstructionRay:
         ray2 = other
         if not ray1.is_parallel(ray2):
             if ray1._is_vertical:
-                x = self._location.x
-                y = ray2.yof(x)
+                x = ray1._location.x
+                if ray2.is_horizontal:
+                    y = ray2._location.y
+                else:
+                    y = ray2.yof(x)
             elif ray2._is_vertical:
                 x = ray2._location.x
-                y = ray1.yof(x)
+                if ray1.is_horizontal:
+                    y = ray1._location.y
+                else:
+                    y = ray1.yof(x)
+            elif ray1.is_horizontal:
+                y = ray1._location.y
+                x = ray2.xof(y)
+            elif ray2.is_horizontal:
+                y = ray2._location.y
+                x = ray1.xof(y)
             else:
                 # calc intersection with the 'straight-line-equation'
                 # based on y(x) = y0 + x*slope
