@@ -80,7 +80,7 @@ Install with pip for Python 3.5, this version will get critical bug fixes:
 
     pip install ezdxf<0.11
 
-Install latest development version with pip from GitHub::
+Install latest development version with pip from GitHub:
 
     pip install git+https://github.com/mozman/ezdxf.git@master
 

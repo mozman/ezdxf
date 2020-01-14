@@ -57,9 +57,7 @@ class TestConstructionRay:
         point = ray1.intersect(ray2)
         assert point.y == 10
         assert point.isclose(Vector(0.0, 10.0), abs_tol=1e-4)
-        with pytest.raises(ArithmeticError):
-            _ = ray1.yof(1)
-            
+
     def test_ray2d_intersect_with_vertical_and_horizontal(self):
         ray1 = ConstructionRay((-10, 10), (10, 10))
         ray2 = ConstructionRay((5, 0), (5, 20))
@@ -67,8 +65,6 @@ class TestConstructionRay:
         assert point.y == 10
         assert point.x == 5
         assert point.isclose(Vector(5.0, 10.0), abs_tol=1e-4)
-        with pytest.raises(ArithmeticError):
-            _ = ray1.yof(1)
 
     def test_ray2d_parallel_vertical(self):
         ray1 = ConstructionRay((10, 1), (10, -7))
