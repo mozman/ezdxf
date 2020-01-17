@@ -10,6 +10,7 @@ from ezdxf.lldxf import const
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, SeqEnd
 from .factory import register_entity
+from .lwpolyline import FORMAT_CODES
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Vertex, FaceType, DXFNamespace, DXFEntity, Drawing
@@ -284,6 +285,32 @@ class Polyline(DXFGraphic):
         """
         dxfattribs = dxfattribs or {}
         self.vertices.extend(self._build_dxf_vertices(points, dxfattribs))
+
+    def append_formatted_vertices(self, points: Iterable['Vertex'], format: str = 'xy',
+                                  dxfattribs: dict = None) -> None:
+        """ Append multiple :class:`Vertex` entities at location `points`.
+
+        Args:
+            points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuple
+            format: format: format string, default is ``'xy'``, see: :ref:`format codes`
+            dxfattribs: dict of DXF attributes for :class:`Vertex` class
+
+        """
+        dxfattribs = dxfattribs or {}
+        dxfattribs['flags'] = dxfattribs.get('flags', 0) | self.get_vertex_flags()
+
+        # same DXF attributes for VERTEX entities as for POLYLINE
+        dxfattribs['owner'] = self.dxf.owner
+        dxfattribs['layer'] = self.dxf.layer
+        if self.dxf.hasattr('linetype'):
+            dxfattribs['linetype'] = self.dxf.linetype
+
+        create_vertex = self.doc.dxffactory.create_db_entry
+
+        for point in points:
+            attribs = vertex_attribs(point, format)
+            attribs.update(dxfattribs)
+            self.vertices.append(create_vertex('VERTEX', attribs))
 
     def append_vertex(self, point: 'Vertex', dxfattribs: dict = None) -> None:
         """
@@ -562,6 +589,7 @@ class FaceProxy:
 
 class PolyfaceBuilder:
     """ Optimized polyface builder. (internal class) """
+
     def __init__(self, faces: Iterable['FaceProxy'], precision: int = 6):
         self.precision = precision
         self.faces = []
@@ -810,3 +838,46 @@ class DXFVertex(DXFGraphic):
     @property
     def is_face_record(self) -> bool:
         return (self.dxf.flags & self.FACE_FLAGS) == self.POLYFACE_MESH_VERTEX
+
+
+def vertex_attribs(data: Sequence[float], format='xyseb') -> dict:
+    """
+    Create VERTEX attributes from input data.
+
+    Format codes:
+
+        - ``x`` = x-coordinate
+        - ``y`` = y-coordinate
+        - ``s`` = start width
+        - ``e`` = end width
+        - ``b`` = bulge value
+        - ``v`` = (x, y [,z]) tuple (z-axis is ignored)
+
+    Args:
+        data: list or tuple of point components
+        format: format string, default is 'xyseb'
+
+    Returns:
+       dict with keys: 'location', 'bulge', 'start_width', 'end_width'
+
+    """
+    attribs = dict()
+    format = [code for code in format.lower() if code in FORMAT_CODES]
+    location = Vector()
+    for code, value in zip(format, data):
+        if code not in FORMAT_CODES:
+            continue
+        if code == 'v':
+            location = cast('Vertex', value)
+        elif code == 'b':
+            attribs['bulge'] = value
+        elif code == 's':
+            attribs['start_width'] = value
+        elif code == 'e':
+            attribs['end_width'] = value
+        elif code == 'x':
+            location = location.replace(x=value)
+        elif code == 'y':
+            location = location.replace(y=value)
+    attribs['location'] = location
+    return attribs

@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.11a1 - dev
+Version 0.11a2 - dev
 --------------------
 
 - Using standard git branches: 
@@ -21,7 +21,10 @@ Version 0.11a1 - dev
 - NEW: 2d construction function `ezdxf.math.offset_vertices_2d()`
 - NEW: `Drawing.output_encoding`  returns required output encoding
 - NEW: `UCS.rotate(axis, angle)` returns a new rotated UCS
-- NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`) 
+- NEW: load DXF comments from file (`ezdxf.comments.from_file`) or stream (`ezdxf.comments.from_stream`)
+- NEW: user defined point format support for 2d POLYLINE entities: 
+  `add_polyline2d([(1, 2 .5), (3, 4, 0)], format='xyb')` 
+- NEW: `Polyline.append_formatted_points()` with user defined point format support 
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`

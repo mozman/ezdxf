@@ -304,20 +304,28 @@ class CreatorInterface:
         dxfattribs['text'] = text
         return self.new_entity('ATTDEF', dxfattribs)
 
-    def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
+    def add_polyline2d(self, points: Iterable['Vertex'], dxfattribs: dict = None, format: str = None,) -> 'Polyline':
         """
         Add a 2D :class:`~ezdxf.entities.Polyline` entity.
 
         Args:
             points: iterable of 2D points in :ref:`WCS`
             dxfattribs: additional DXF attributes
+            format: user defined point format like :meth:`add_lwpolyline`, default is ``None``
+
+        .. versionadded:: 0.11
+
+            user defined point format
 
         """
         dxfattribs = dict(dxfattribs or {})
         closed = dxfattribs.pop('closed', False)
         polyline = self.new_entity('POLYLINE', dxfattribs)  # type: Polyline
         polyline.close(closed)
-        polyline.append_vertices(points)
+        if format is not None:
+            polyline.append_formatted_vertices(points, format=format)
+        else:
+            polyline.append_vertices(points)
         return polyline
 
     def add_polyline3d(self, points: Iterable['Vertex'], dxfattribs: dict = None) -> 'Polyline':
