@@ -8,7 +8,8 @@ import logging
 from itertools import chain
 
 from ezdxf.lldxf.const import acad_release, BLK_XREF, BLK_EXTERNAL, DXFValueError, acad_release_to_dxf_version
-from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, versions_supported_by_save
+from ezdxf.lldxf.const import DXF13, DXF14, DXF2000, DXF2007, DXF12, DXF2013, \
+    versions_supported_by_save, versions_supported_by_new
 from ezdxf.lldxf.const import DXFVersionError
 from ezdxf.lldxf.loader import load_dxf_structure, fill_database
 from ezdxf.lldxf import repair
@@ -58,13 +59,11 @@ class Drawing:
     def __init__(self, dxfversion=DXF2013):
         self.entitydb = EntityDB()
         self.dxffactory = EntityFactory(self)
-        self.tracker = Tracker()  # still required
-
-        # Targeted DXF version, but drawing could be exported as another DXF version.
-        # If target version is set, it is possible to warn user, if they try to use unsupported features, where they
-        # use it and not at exporting, where the location of the code who created that features is not known.
+        self.tracker = Tracker()
         target_dxfversion = dxfversion.upper()
         self._dxfversion = acad_release_to_dxf_version.get(target_dxfversion, target_dxfversion)
+        if self._dxfversion not in versions_supported_by_new:
+            raise DXFVersionError('Unsupported DXF version "{}".'.format(self.dxfversion))
         self._loaded_dxfversion = None  # if loaded from file, store original dxf version
         self.encoding = 'cp1252'
         self.filename = None  # type: str # read/write

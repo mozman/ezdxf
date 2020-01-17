@@ -25,6 +25,7 @@ Version 0.11a1 - dev
 - BUGFIX: fixed base point calculation of aligned dimensions
 - BUGFIX: fixed length extension line support
 - BUGFIX: `UCS.to_ocs_angle_deg()` and `UCS.to_ocs_angle_rad()`
+- BUGFIX: check for unsupported DXF versions at new()
 
 Version 0.10.2 - 2019-10-05
 ---------------------------
