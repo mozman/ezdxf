@@ -22,9 +22,9 @@ def create_group():
 def read_group():
     doc = ezdxf.readfile('group.dxf')
     for name, group in doc.groups:
-        print("GROUP: {}\n".format(name))
+        print(f"GROUP: {name}\n")
         for entity in group:
-            print("  ENTITY: {}".format(entity.dxftype()))
+            print(f"  ENTITY: {entity.dxftype()}")
 
 
 create_group()

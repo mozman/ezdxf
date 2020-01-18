@@ -11,4 +11,4 @@ modelspace.add_circle(center=(0, 0), radius=1.5, dxfattribs={
 
 filename = 'circle_R2018.dxf'
 doc.saveas(filename)
-print("drawing '%s' created.\n" % filename)
+print(f"DXF file '{filename}' created.")

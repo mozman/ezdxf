@@ -62,13 +62,13 @@ def reverse_order_solids_by_color(msp):
 def move_solids_on_top(msp, color, sort_handle='FFFF'):
     # This also works if a redraw order is already set
     order = dict(msp.get_redraw_order())  # returns a list of [(object_handle, sort_handle), ...] -> dict
-    for solid in msp.query('SOLID[color=={}]'.format(color)):
+    for solid in msp.query(f'SOLID[color=={color}]'):
         order[solid.dxf.handle] = sort_handle
     msp.set_redraw_order(order)  # accepts also a dict
 
 
 def remove_solids(msp, color=6):
-    for solid in msp.query('SOLID[color=={}]'.format(color)):
+    for solid in msp.query(f'SOLID[color=={color}]'):
         msp.delete_entity(solid)
 
 

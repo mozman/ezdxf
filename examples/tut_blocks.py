@@ -53,8 +53,8 @@ for number, point in enumerate(placing_points):
     # values is a dict with the attribute tag as item-key and the attribute text content as item-value.
     values = {
         'NAME': "P(%d)" % (number + 1),
-        'XPOS': "x = %.3f" % point[0],
-        'YPOS': "y = %.3f" % point[1]
+        'XPOS': f"x = {point[0]:.3f}",
+        'YPOS': f"y = {point[1]:.3f}",
     }
 
     # Every flag has a different scaling and a rotation of +15 deg.
@@ -69,7 +69,7 @@ for number, point in enumerate(placing_points):
 doc.saveas("auto_blockref_tutorial.dxf")
 
 # Collect all anonymous block references starting with '*U'
-anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
+anonymous_block_refs = modelspace.query(r'INSERT[name ? "^\*U.+"]')
 
 # Collect real references to 'FLAG'
 flag_refs = []

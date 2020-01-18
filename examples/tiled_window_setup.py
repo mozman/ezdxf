@@ -24,8 +24,8 @@ def draw_raster(doc):
             xcoord = x * 10
             ycoord = y * 10
             values = {
-                'XPOS': "x = %d" % xcoord,
-                'YPOS': "y = %d" % ycoord
+                'XPOS': f"x = {xcoord}",
+                'YPOS': f"y = {ycoord}",
             }
             modelspace.add_auto_blockref('MARKER', (xcoord, ycoord), values)
 
@@ -60,4 +60,4 @@ if __name__ == '__main__':
     draw_raster(doc)
     setup_active_viewport(doc)
     doc.saveas(FILENAME)
-    print("drawing '%s' created.\n" % FILENAME)
+    print(f"DXF file '{FILENAME}' created.")

@@ -5,7 +5,7 @@ from ezdxf import comments
 if __name__ == '__main__':
     filename = sys.argv[1]
     comment_collector = []
-    for code, value in comments.from_file(filename, handles=True, structure=True):
+    for code, value in comments.from_file(filename, codes={0, 5}):
         # get also handles and structure tags to associated prepending comments to DXF entities
         if code == 5:
             handle = value

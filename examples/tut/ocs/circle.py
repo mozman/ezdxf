@@ -28,6 +28,6 @@ msp.add_circle(
 msp.add_point((0, 2, 2), dxfattribs={'color': 1})
 # include-end
 
-print("center in OCS: {}".format(ocs.from_wcs((0, 2, 2))))
+print(f"center in OCS: {ocs.from_wcs((0, 2, 2))}")
 ocs.render_axis(msp)
 doc.saveas('ocs_circle.dxf')

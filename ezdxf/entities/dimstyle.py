@@ -259,7 +259,7 @@ class DimStyle(DXFEntity):
         if blk is not None:
             self.set_dxf_attrib(attr, blk.block_record_handle)
         else:
-            raise DXFValueError('Block {} does not exist.'.format(arrow_name))
+            raise DXFValueError(f'Block {arrow_name} does not exist.')
 
     def get_arrow_block_name(self, name: str) -> str:
         handle = self.get_dxf_attrib(name, None)
@@ -291,7 +291,7 @@ class DimStyle(DXFEntity):
             code = attrib.code
             value = self.get_dxf_attrib(name, None)
             if value is not None:
-                print("{name} ({code}) = {value}".format(name=name, value=value, code=code))
+                print(f"{name} ({code}) = {value}")
 
     def copy_to_header(self, dwg: 'Drawing'):
         """ Copy all dimension style variables to HEADER section of `dwg`. """
@@ -304,7 +304,7 @@ class DimStyle(DXFEntity):
                 try:
                     header[header_var] = value
                 except DXFKeyError:
-                    logger.debug('Unsupported header variable: {}.'.format(header_var))
+                    logger.debug(f'Unsupported header variable: {header_var}.')
 
     def set_arrows(self, blk: str = '', blk1: str = '', blk2: str = '', ldrblk: str = '') -> None:
         """

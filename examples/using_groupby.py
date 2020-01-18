@@ -40,16 +40,16 @@ def calc(dxffile):
     with open(outname(dxffile), 'wt', encoding='utf-8') as f:
         f.write("File: {}\n".format(dxffile))
         if columns is not None:
-            f.write("Stützen Anzahl={}\n".format(len(columns)))
+            f.write(f"Stützen Anzahl={len(columns)}\n")
         if outer_walls is not None:
-            f.write("Aussenwände Anzahl={}\n".format(len(outer_walls)))
-            f.write("Aussenwände Gesamtlänge={}\n".format(length(outer_walls)))
+            f.write(f"Aussenwände Anzahl={len(outer_walls)}\n")
+            f.write(f"Aussenwände Gesamtlänge={length(outer_walls)}\n")
         if inner_walls is not None:
-            f.write("Innenwände Anzahl={}\n".format(len(inner_walls)))
-            f.write("Innenwände Gesamtlänge={}\n".format(length(inner_walls)))
+            f.write(f"Innenwände Anzahl={len(inner_walls)}\n")
+            f.write(f"Innenwände Gesamtlänge={length(inner_walls)}\n")
         if beams is not None:
-            f.write("Träger Anzahl={}\n".format(len(beams)))
-            f.write("Träger Gesamtlänge={}\n".format(length(beams)))
+            f.write(f"Träger Anzahl={len(beams)}\n")
+            f.write(f"Träger Gesamtlänge={length(beams)}\n")
 
 
 if __name__ == '__main__':

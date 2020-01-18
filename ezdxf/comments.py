@@ -40,4 +40,4 @@ def from_file(filename: str, codes: Set[int] = None) -> Iterable['DXFTag']:
         with open(filename, mode='rt', encoding=info.encoding) as fp:
             yield from from_stream(fp, codes=codes)
     else:
-        raise IOError('File "{}" is not a DXF file.'.format(filename))
+        raise IOError(f'File "{filename}" is not a DXF file.')

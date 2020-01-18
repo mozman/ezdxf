@@ -34,9 +34,9 @@ flag.add_attdef('YPOS', (0.5, -1.5), dxfattribs={'height': 0.25, 'color': 4})
 modelspace = doc.modelspace()
 for number, point in enumerate(SAMPLE_COORDS):
     values = {
-        'NAME': "P(%d)" % (number + 1),
-        'XPOS': "x = %.3f" % point[0],
-        'YPOS': "y = %.3f" % point[1]
+        'NAME': f"P({number + 1})",
+        'XPOS': f"x = {point[0]:.3f}",
+        'YPOS': f"y = {point[1]:.3f}",
     }
     randomscale = 0.5 + random.random() * 2.0
     modelspace.add_auto_blockref('FLAG', point, values, dxfattribs={

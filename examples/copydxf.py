@@ -12,7 +12,7 @@ def copydxf(fromfile, tofile):
     doc = ezdxf.readfile(fromfile)
     doc.saveas(tofile)
     endtime = time.time()
-    print('copy time: %.2f seconds' % (endtime - starttime))
+    print(f'copy time: {endtime - starttime:.2f} seconds')
 
 
 if __name__ == '__main__':

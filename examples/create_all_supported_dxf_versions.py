@@ -15,7 +15,7 @@ def create_doc(dxfversion):
         'linetype': 'DASHED',
     })
 
-    filename = os.path.join(EXPORT_DIR, '{}.dxf'.format(doc.acad_release))
+    filename = os.path.join(EXPORT_DIR, f'{doc.acad_release}.dxf')
     doc.saveas(filename)
     print("drawing '%s' created.\n" % filename)
 
