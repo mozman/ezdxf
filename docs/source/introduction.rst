@@ -34,7 +34,7 @@ What ezdxf is NOT
 Supported Python Versions
 -------------------------
 
-`ezdxf` requires at least Python 3.5, for Python 2 support use `ezdxf` < v0.9.0, I run unit tests with the latest
+`ezdxf` requires at least Python 3.6, for Python 2 support use `ezdxf` < v0.9, I run unit tests with the latest
 stable CPython 3 version and the latest stable release of pypy3 during development.
 
 `ezdxf` is written in pure Python and requires only `pyparser` as additional library beside the Python Standard Library.
